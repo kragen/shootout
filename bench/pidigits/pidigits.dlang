@@ -4,11 +4,13 @@
    contributed by Isaac Gouy
 
    converted to D by Dave Fladebo
+   compile: dmd -O -inline -release pidigits.d gmp4d/gmppool.d gmp4d/mpz.d -Igmp4d -L-lgmp
 
-   compile: dmd -O -inline -release pidigits.d gmp4d/gmp.d gmp4d/gmppool.d gmp4d/mpz.d -L-lgmp
+   GMP for D library provided by Ben Hinkle (http://home.comcast.net/~benhinkle/gmp-d/)
+   Original D code optimized by Ben Hinkle to recycle GMP objects.
 */
 
-import std.conv, std.stdio, std.string, mpz;
+import std.conv, std.stdio, std.string, mpz, gmp;
 
 const int L = 10;
 
@@ -19,16 +21,16 @@ void main(char[][] args)
 
     PiDigitSpigot digits = new PiDigitSpigot();
 
-    while (n > 0){
-       if (n >= L){
-          for (int i = 0; i < L; i++) writef(digits.next());
+    while(n > 0){
+       if(n >= L){
+          for (int i = 0; i < L; i++) writef("%d",digits.next());
           j += L;
        } else {
-          for (int i = 0; i < n; i++) writef(digits.next());
+          for (int i = 0; i < n; i++) writef("%d",digits.next());
           for (int i = n; i < L; i++) writef(" ");
           j += n;
        }
-       writef("\t:"); writefln(j);
+       writef("\t:"); writefln("%d",j);
        n -= L;
     }
 }
@@ -51,10 +53,14 @@ public:
         int y = digit();
         if(isSafe(y))
         {
+            Transformation oldz = z;
             z = produce(y);
+            oldz.recycle();
             return y;
         } else {
+            Transformation oldz = z;
             z = consume( x.next() );
+            oldz.recycle();
             return next();
         }
     }
@@ -89,78 +95,61 @@ private:
 public:
     this(int q, int r, int s, int t)
     {
-        this.q = new BigInteger(q);
-        this.r = new BigInteger(r);
-        this.s = new BigInteger(s);
-        this.t = new BigInteger(t);
+        this.q = new BigInteger(q,Recycle.Temp);
+        this.r = new BigInteger(r,Recycle.Temp);
+        this.s = new BigInteger(s,Recycle.Temp);
+        this.t = new BigInteger(t,Recycle.Temp);
         k = 0;
     }
 
-    this(BigInteger q, BigInteger r, BigInteger s, BigInteger t)
+    this(BigInteger q_, BigInteger r_, BigInteger s_, BigInteger t_)
     {
-        this.q = q;
-        this.r = r;
-        this.s = s;
-        this.t = t;
+        q = q_;
+        r = r_;
+        s = s_;
+        t = t_;
         k = 0;
     }
 
+    void recycle() 
+    {
+        mpzpool.recycle(q);
+        mpzpool.recycle(s);
+        mpzpool.recycle(r);
+        mpzpool.recycle(t);
+    }
+  
     Transformation next()
     {
         k++;
-        q = new BigInteger(k);
-        r = new BigInteger(4 * k + 2);
-        s = new BigInteger(0);
-        t = new BigInteger(2 * k + 1);
+        q.si = k;
+        r.si = 4 * k + 2;
+        s.si = 0;
+        t.si = 2 * k + 1;
         return this;
     }
 
     int extract(int j)
     {
-        BigInteger numerator = new BigInteger(q);
-        numerator *= j;
-        numerator += r;
-
-        BigInteger denominator = new BigInteger(s);
-        denominator *= j;
-        denominator += t;
-
-        return atoi((numerator / denominator).toString());
+        return atoi(((q * j + r) / (s * j + t)).toString);
     }
 
-    Transformation qrst(int q, int r, int s, int t)
+    Transformation qrst(int q_, int r_, int s_, int t_)
     {
-        this.q = new BigInteger(q);
-        this.r = new BigInteger(r);
-        this.s = new BigInteger(s);
-        this.t = new BigInteger(t);
+        q.si = q_;
+        r.si = r_;
+        s.si = s_;
+        t.si = t_;
         k = 0;
         return this;
     }
 
     Transformation compose(Transformation a)
     {
-        BigInteger tq = new BigInteger(q);
-        tq *= a.q;
-
-        BigInteger tr = new BigInteger(q);
-        tr *= a.r;
-        BigInteger tr1 = new BigInteger(r);
-        tr1 *= a.t;
-        tr += tr1;
-
-        BigInteger ts = new BigInteger(s);
-        ts *= a.q;
-        BigInteger ts1 = new BigInteger(t);
-        ts1 *= a.s;
-        ts += ts1;
-
-        BigInteger tt = new BigInteger(s);
-        tt *= a.r;
-        BigInteger tt1 = new BigInteger(t);
-        tt1 *= a.t;
-        tt += tt1;
-
+        mpz tq = (q * a.q).save;
+        mpz tr = ((q * a.r) + (r * a.t)).save;
+        mpz ts = ((s * a.q) + (t * a.s)).save;
+        mpz tt = ((s * a.r) + (t * a.t)).save;
         return new Transformation(tq,tr,ts,tt);
     }
 }

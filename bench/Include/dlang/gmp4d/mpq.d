@@ -2,7 +2,7 @@
  * \brief Object wrapper for mpq_t
  */
 
-/* Copyright Ben Hinkle 2003-2004 bhinkle4@juno.com,
+/* Copyright Ben Hinkle 2003-2005 benhinkle@gmail.com
  * http://home.comcast.net/~benhinkle 
  *
  * Permission to use, copy, modify, distribute and sell this software
@@ -34,8 +34,8 @@ private import std.string;
  */
 class mpq {
 
-  public mpq_t mp;       ///< low-level mpq_t data structure
-  public bit isTemporary;///< flag that value is temporary
+  mpq_t mp;       ///< low-level mpq_t data structure
+  int recycle;    ///< flag that value is temporary
 
   /** Construct mpq object and initialize to zero.*/
   this() {
@@ -45,54 +45,60 @@ class mpq {
   /** Construct mpq object and initialize.
    * \param y the value to initialize to
    */
-  this(mpq y) {
+  this(mpq y, int recycle = Recycle.Never) {
     mpq_init(mp);
     mpq_set(mp,y.mp);
+    this.recycle = recycle;
   }
 
   /** Construct mpq object and initialize.
    * \param y the value to initialize to
    */
-  this(double y) {
+  this(double y, int recycle = Recycle.Never) {
     mpq_init(mp);
     mpq_set_d(mp,y);
+    this.recycle = recycle;
   }
 
   /** Construct mpq object and initialize.
    * \param num the numerator
    * \param den the denominator
    */
-  this(gmp_ulong num, gmp_ulong den) {
+  this(gmp_ulong num, gmp_ulong den, int recycle = Recycle.Never) {
     mpq_init(mp);
     mpq_set_ui(mp,num,den);
+    this.recycle = recycle;
   }
 
   /** Construct mpq object and initialize.
    * \param num the numerator
    * \param den the denominator
    */
-  this(int num, int den) {
+  this(int num, int den, int recycle = Recycle.Never) {
     mpq_init(mp);
     mpq_set_si(mp,cast(gmp_long)num,cast(gmp_long)den);
+    this.recycle = recycle;
   }
 
   /** Construct mpq object and initialize.
    * \param num the numerator
    * \param den the denominator
    */
-  this(mpz num, mpz den) {
+  this(mpz num, mpz den, int recycle = Recycle.Never) {
     mpq_init(mp);
     mpq_set_num(mp,num.mp);
     mpq_set_den(mp,den.mp);
+    this.recycle = recycle;
   }
 
   /** Construct mpq object and initialize.
    * \param y the value to initialize to
    * \param base the base of the digits in y
    */
-  this(char[] y,int base) {
+  this(char[] y,int base, int recycle = Recycle.Never) {
     mpq_init(mp);
     mpq_set_str(mp,toStringz(y),base);
+    this.recycle = recycle;
   }
 
   /** Property to mark an mpq object as no longer temporary. It 
@@ -100,13 +106,13 @@ class mpq {
    * \return this
    */
   final mpq save() {
-    isTemporary = false;
+    recycle |= Recycle.Temp;
     return this;
   }
   
   private static this() {
     mpqpool = new TGmpPool!(mpq);
-    mpqpool.clear_all();
+    mpqpool.clearAll();
   }
   
   /** Compute absolute value
@@ -119,8 +125,8 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("abs(%Qd) got %Qd\n",&x.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (x.isTemporary)
+    res.recycle = (x.recycle & Recycle.Never);
+    if (x.recycle == Recycle.Self)
       mpqpool.recycle(x);
     return res;
   }
@@ -135,10 +141,10 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("%Qd + %Qd got %Qd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
+    res.recycle = (y.recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
-    if (isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -152,7 +158,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf(" += %Qd got %Qd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
     return this;
   }
@@ -166,7 +172,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("cmp(%Qd,%d) got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -180,9 +186,9 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("cmp(%Qd,%Qd) got %d\n",&mp,&y.mp,res);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -209,11 +215,11 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("%Qd / %Qd got %Qd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
-      mpqpool.recycle(this);
-    if (y.isTemporary)
+    res.recycle = (y.recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
+    if (recycle == Recycle.Self)
+      mpqpool.recycle(this);
     return res;
   }
 
@@ -238,7 +244,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("%Qd == %d got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -252,9 +258,9 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("%Qd == %Qd got %d\n",&mp,&y.mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
     return res;
   }
@@ -268,8 +274,8 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("1/%Qd got %Qd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -277,14 +283,14 @@ class mpq {
   /** Get numerator
    * \return numerator integer
    */
-  final mpz get_num() {
+  final mpz num() {
     mpz res = mpzpool.allocate();
     mpq_get_num(res.mp,mp);
     debug (MPQ_DEBUG) {
       gmp_printf("get_num(%Qd) got %Zd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -292,14 +298,14 @@ class mpq {
   /** Get denominator
    * \return denominator integer
    */
-  final mpz get_den() {
+  final mpz den() {
     mpz res = mpzpool.allocate();
     mpq_get_den(res.mp,mp);
     debug (MPQ_DEBUG) {
       gmp_printf("get_den(%Qd) got %Zd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -312,7 +318,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("get_d(%Qd) got %g\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -331,7 +337,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("toString(%Qd) got %.*s\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -346,10 +352,10 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("%Qd * %Qd got %Qd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
-    if (isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -363,7 +369,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf(" *= %Qd got %Qd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
     return this;
   }
@@ -377,8 +383,8 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("-%Qd got %Qd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -393,10 +399,10 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf("%Qd - %Qd got %Qd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
-    if (isTemporary)
+    if (recycle == Recycle.Self)
       mpqpool.recycle(this);
     return res;
   }
@@ -410,7 +416,7 @@ class mpq {
     debug (MPQ_DEBUG) {
       gmp_printf(" -= %Qd got %Qd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpqpool.recycle(y);
     return this;
   }
@@ -451,7 +457,7 @@ class mpq {
     assert(b == 10);
     b += b;
     assert(b == 20);
-    assert(b.toString() == "20");
+    assert(strcmp(b.toString(),"20")==0);
     assert(b.get_d() == 20.0);
 
     mpq c = new mpq(b);
@@ -475,9 +481,9 @@ static TGmpPool!(mpq) mpqpool;
  * \param val the value to assign to x
  */
 void assign(inout mpq x, mpq val) {
-  if (!(x is null))
+  if (x !== null && x.recycle != Recycle.Never)
     mpqpool.recycle(x);
-  val.isTemporary = false;
+  val.recycle |= Recycle.Temp;
   x = val;
 }
 

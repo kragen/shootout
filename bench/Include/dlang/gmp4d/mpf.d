@@ -2,7 +2,7 @@
  * \brief Object wrapper for mpf_t
  */
 
-/* Copyright Ben Hinkle 2003-2004 bhinkle4@juno.com,
+/* Copyright Ben Hinkle 2003-2005 benhinkle@gmail.com
  * http://home.comcast.net/~benhinkle 
  *
  * Permission to use, copy, modify, distribute and sell this software
@@ -33,8 +33,8 @@ private import std.string;
  */
 class mpf {
 
-  public mpf_t mp;       ///< low-level mpf_t data structure
-  public bit isTemporary;///< flag that value is temporary
+  mpf_t mp;       ///< low-level mpf_t data structure
+  int recycle;    ///< flag that value is temporary
 
   /** Construct mpf object and initialize to zero.*/
   this() {
@@ -44,37 +44,42 @@ class mpf {
   /** Construct mpf object and initialize.
    * \param y the value to initialize to
    */
-  this(mpf y) {
+  this(mpf y, Recycle recycle = Recycle.Never) {
     mpf_init_set(mp,y.mp);
+    this.recycle = recycle;
   }
 
   /** Construct mpf object and initialize.
    * \param y the value to initialize to
    */
-  this(double y) {
+  this(double y, Recycle recycle = Recycle.Never) {
     mpf_init_set_d(mp,y);
+    this.recycle = recycle;
   }
 
   /** Construct mpf object and initialize.
    * \param y the value to initialize to
    */
-  this(gmp_ulong y) {
+  this(gmp_ulong y, Recycle recycle = Recycle.Never) {
     mpf_init_set_ui(mp,y);
+    this.recycle = recycle;
   }
 
   /** Construct mpf object and initialize.
    * \param y the value to initialize to
    */
-  this(int y) {
+  this(int y, Recycle recycle = Recycle.Never) {
     mpf_init_set_si(mp,cast(gmp_long)y);
+    this.recycle = recycle;
   }
 
   /** Construct mpf object and initialize.
    * \param y the value to initialize to
    * \param base the base of the digits in y
    */
-  this(char[] y,int base) {
+  this(char[] y,int base, Recycle recycle = Recycle.Never) {
     mpf_init_set_str(mp,toStringz(y),base);
+    this.recycle = recycle;
   }
 
   /** Property to mark an mpf object as no longer temporary. It 
@@ -82,13 +87,13 @@ class mpf {
    * \return this
    */
   final mpf save() {
-    isTemporary = false;
+    recycle |= Recycle.Temp;
     return this;
   }
   
   private static this() {
     mpfpool = new TGmpPool!(mpf);
-    mpfpool.clear_all();
+    mpfpool.clearAll();
   }
   
   /** Compute absolute value
@@ -101,8 +106,8 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("abs(%Fg) got %Fg\n",&x.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (x.isTemporary)
+    res.recycle = (x.recycle & Recycle.Never);
+    if (x.recycle == Recycle.Self)
       mpfpool.recycle(x);
     return res;
   }
@@ -121,8 +126,8 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg / %d got %Fg\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -153,11 +158,11 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg + %Fg got %Fg\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
-      mpfpool.recycle(y);
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never)|(y.recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
+    if (y.recycle == Recycle.Self)
+      mpfpool.recycle(y);
     return res;
   }
 
@@ -170,7 +175,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf(" += %Fg got %Fg\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpfpool.recycle(y);
     return this;
   }
@@ -185,9 +190,9 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("eq(%Fg,%Fg,%d) got %d\n",&mp,&y.mp,n,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpfpool.recycle(y);
     return res;
   }
@@ -201,7 +206,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("cmp(%Fg,%d) got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -215,7 +220,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("cmp(%Fg,%g) got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -229,10 +234,10 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("cmp(%Fg,%Fg) got %d\n",&mp,&y.mp,res);
     }
-    if (y.isTemporary)
-      mpfpool.recycle(y);
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
+    if (y.recycle == Recycle.Self)
+      mpfpool.recycle(y);
     return res;
   }
 
@@ -246,10 +251,10 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg / %Fg got %Fg\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never)|(y.recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpfpool.recycle(y);
     return res;
   }
@@ -281,8 +286,8 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg / %d got %Fg\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -313,7 +318,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg == %d got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -327,9 +332,9 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg == %Fg got %d\n",&mp,&y.mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpfpool.recycle(y);
     return res;
   }
@@ -342,7 +347,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("get_d(%Fg) got %g\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -361,7 +366,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("toString(%Fg) got %.*s\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -376,11 +381,11 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg * %Fg got %Fg\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
-      mpfpool.recycle(y);
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never)|(y.recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
+    if (y.recycle == Recycle.Self)
+      mpfpool.recycle(y);
     return res;
   }
 
@@ -393,7 +398,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf(" *= %Fg got %Fg\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpfpool.recycle(y);
     return this;
   }
@@ -407,8 +412,8 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("-%Fg got %Fg\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
     return res;
   }
@@ -423,11 +428,11 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf("%Fg - %Fg got %Fg\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
-      mpfpool.recycle(y);
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never)|(y.recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpfpool.recycle(this);
+    if (y.recycle == Recycle.Self)
+      mpfpool.recycle(y);
     return res;
   }
 
@@ -440,7 +445,7 @@ class mpf {
     debug (MPF_DEBUG) {
       gmp_printf(" -= %Fg got %Fg\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpfpool.recycle(y);
     return this;
   }
@@ -481,7 +486,7 @@ class mpf {
     assert(b == 10);
     b += b;
     assert(b == 20);
-    assert(b.toString() == "2E2");
+    assert(strcmp(b.toString(),"2E2")==0);
     assert(b.get_d() == 20.0);
 
     mpf c = new mpf(b);
@@ -505,9 +510,9 @@ static TGmpPool!(mpf) mpfpool;
  * \param val the value to assign to x
  */
 void assign(inout mpf x, mpf val) {
-  if (!(x is null))
+  if (x !== null && x.recycle != Recycle.Never)
     mpfpool.recycle(x);
-  val.isTemporary = false;
+  val.recycle |= Recycle.Temp;
   x = val;
 }
 
@@ -518,7 +523,7 @@ final void setPrecision(gmp_ulong n) {
   gmp_ulong oldn = mpf_get_default_prec();
   if (n != oldn) {
     mpf_set_default_prec(n);
-    mpfpool.clear_all();
+    mpfpool.clearAll();
   }
 }
   

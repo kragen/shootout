@@ -48,7 +48,7 @@
  */
 
 /* Translated from gmp.h for gmp-4.1.2
- * Copyright Ben Hinkle 2003-2004 bhinkle4@juno.com
+ * Copyright Ben Hinkle 2003-2005 ben.hinkle@gmail.com
  * http://home.comcast.net/~benhinkle 
  *
  * Permission to use, copy, modify, distribute and sell this software

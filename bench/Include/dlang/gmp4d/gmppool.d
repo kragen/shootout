@@ -6,7 +6,7 @@
  * high performance loops.
  */
 
-/* Copyright Ben Hinkle 2003-2004 bhinkle4@juno.com, 
+/* Copyright Ben Hinkle 2003-2004 ben.hinkle@gmail.com
  * http://home.comcast.net/~benhinkle 
  *
  * Permission to use, copy, modify, distribute and sell this software
@@ -24,14 +24,17 @@ import gmp;
 
 private import std.string;
 
+enum Recycle {
+  Self,    ///< recycle and recycle computed values
+  Temp,    ///< do not recycle this value but recycle computed values
+  Never    ///< do not recycle any value
+}
+
 /** 
  * \brief GMP object pool template.
  *
- * Each gmp class has two object pools. One pool is a list of 
- * recycled objects. Another is a list of temporary objects that
- * have been created as the result of an operation inside of a
- * <tt>begin</tt>/<tt>end</tt> section. See the mpz
- * class, for example, for typical usage of the mpz pool.
+ * Each gmp class has an object pool of recycled objects available
+ * for arithmetic operation to reuse.
  */
 class TGmpPool(T) {
 
@@ -80,7 +83,7 @@ class TGmpPool(T) {
    
   /** Clear pool. Releases references to any allocated objects.
    */
-  void clear_all() {
+  void clearAll() {
     freelist[] = null;
     freen = 0;
     freelist.length = 0;
@@ -90,7 +93,6 @@ class TGmpPool(T) {
 /* Garbage Collected allocation routines for GMP */
 
 private extern (C) void *gmp_gc_alloc (uint len) {
-  //void *p = (void*)(&(new ubyte[len])[0]);
   void *p = cast(void*)(&(new ubyte[len])[0]);
   debug (MEM_DEBUG) {
     printf("gmp_gc_alloc(%d) got %x \n", len, p);
@@ -99,7 +101,6 @@ private extern (C) void *gmp_gc_alloc (uint len) {
 }
 private extern (C) void *gmp_gc_realloc (void*p,size_t oldlen, size_t len) {
   // can't use D's array resizing since we only have the pointer part.
-  //void *p2 = (void*)(&(new ubyte[len])[0]); 
   void *p2 = cast(void*)(&(new ubyte[len])[0]); 
   memcpy(p2,p,oldlen<len?oldlen:len);
   debug (MEM_DEBUG) {

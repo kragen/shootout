@@ -2,7 +2,7 @@
  * \brief Object wrapper for mpz_t
  */
 
-/* Copyright Ben Hinkle 2003-2004 bhinkle4@juno.com,
+/* Copyright Ben Hinkle 2003-2005 benhinkle@gmail.com
  * http://home.comcast.net/~benhinkle 
  *
  * Permission to use, copy, modify, distribute and sell this software
@@ -58,8 +58,8 @@ private import std.string;
  */
 class mpz {
 
-  public mpz_t mp;       ///< low-level mpz_t data structure
-  public bit isTemporary;///< flag that value is temporary
+  mpz_t mp;       ///< low-level mpz_t data structure
+  int recycle = Recycle.Never; ///< flag that value is temporary
 
   /** Construct mpz object and initialize to zero.*/
   this() {mpz_init(mp);}
@@ -67,36 +67,48 @@ class mpz {
   /** Construct mpz object and initialize.
    * \param y the value to initialize to
    */
-  this(mpz y) {mpz_init_set(mp,y.mp);}
+  this(mpz y, Recycle recycle = Recycle.Never) {
+    mpz_init_set(mp,y.mp);
+    this.recycle = recycle;
+  }
 
   /** Construct mpz object and initialize.
    * \param y the value to initialize to
    */
-  this(gmp_ulong y) {mpz_init_set_ui(mp,y);}
+  this(gmp_ulong y, Recycle recycle = Recycle.Never) {
+    mpz_init_set_ui(mp,y);
+    this.recycle = recycle;
+  }
 
   /** Construct mpz object and initialize.
    * \param y the value to initialize to
    */
-  this(int y) {mpz_init_set_si(mp,cast(gmp_long)y);}
+  this(int y, Recycle recycle = Recycle.Never) {
+    mpz_init_set_si(mp,cast(gmp_long)y);
+    this.recycle = recycle;
+  }
 
   /** Construct mpz object and initialize.
    * \param y the value to initialize to
    * \param base the base of the digits in y
    */
-  this(char[] y,int base) {mpz_init_set_str(mp,toStringz(y),base);}
+  this(char[] y,int base, Recycle recycle = Recycle.Never) {
+    mpz_init_set_str(mp,toStringz(y),base);
+    this.recycle = recycle;
+  }
 
   /** Property to mark an mpz object as no longer temporary. It 
    * will not be recycled after being used in an arithmetic operation.
    * \return this
    */
   final mpz save() {
-    isTemporary = false;
+    recycle |= Recycle.Temp;
     return this;
   }
   
   private static this() {
     mpzpool = new TGmpPool!(mpz);
-    mpzpool.clear_all();
+    mpzpool.clearAll();
   }
   
   /** Compute absolute value
@@ -109,8 +121,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("abs(%Zd) got %Zd\n",&x.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (x.isTemporary)
+    res.recycle = (x.recycle & Recycle.Never);
+    if (x.recycle == Recycle.Self)
       mpzpool.recycle(x);
     return res;
   }
@@ -128,8 +140,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd + %d got %Zd\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -144,10 +156,10 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd + %Zd got %Zd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
-    if (isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -176,7 +188,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf(" += %Zd got %Zd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
     return this;
   }
@@ -192,8 +204,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("bin(%Zd,%d) got %Zd\n",&n.mp,k,&res.mp);
     }
-    res.isTemporary = true;
-    if (n.isTemporary)
+    res.recycle = (n.recycle & Recycle.Never);
+    if (n.recycle == Recycle.Self)
       mpzpool.recycle(n);
     return res;
   }
@@ -207,7 +219,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("cmp(%Zd,%d) got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -221,9 +233,9 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("cmp(%Zd,%Zd) got %d\n",&mp,&y.mp,res);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -238,8 +250,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd / %d got %Zd\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -254,11 +266,11 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd / %Zd got %Zd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
-      mpzpool.recycle(this);
-    if (y.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
+    if (recycle == Recycle.Self)
+      mpzpool.recycle(this);
     return res;
   }
 
@@ -266,8 +278,8 @@ class mpz {
     * \param y the value to divide
     * \return the quotient of this and y, truncated
     */
-   final gmp_ulong opDiv_r(int y) {
-      gmp_ulong res = cast(gmp_long)y/get_ui();
+   final gmp_long opDiv_r(int y) {
+      gmp_long res = cast(gmp_long)y/si();
       debug (MPZ_DEBUG) {
 	 gmp_printf("%d / %Zd got %d\n",y,&mp,res);
       }
@@ -312,7 +324,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd == %d got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -326,9 +338,9 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd == %Zd got %d\n",&mp,&y.mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
     return res;
   }
@@ -336,27 +348,41 @@ class mpz {
   /** Convert to gmp_ulong
    * \return this as a gmp_ulong
    */
-  final gmp_ulong get_ui() {
+  final gmp_ulong ui() {
     gmp_ulong res = mpz_get_ui(mp);
     debug (MPZ_DEBUG) {
-      gmp_printf("get_ui(%Zd) got %u\n",&mp,res);
+      gmp_printf("ui(%Zd) got %u\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
+  }
+
+  /** Set new unsigned value
+   * \param x the new value
+   */
+  final void ui(gmp_ulong x) {
+    mpz_set_ui(mp,x);
   }
 
   /** Convert to gmp_long
    * \return this as a gmp_long
    */
-  final gmp_long get_si() {
+  final gmp_long si() {
     gmp_long res = mpz_get_si(mp);
     debug (MPZ_DEBUG) {
       gmp_printf("get_si(%Zd) got %d\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
+  }
+
+  /** Set new signed value
+   * \param x the new value
+   */
+  final void si(gmp_long x) {
+    mpz_set_si(mp,x);
   }
 
   /** Convert to double
@@ -367,7 +393,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("get_d(%Zd) got %g\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -385,7 +411,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("toString(%Zd) got %.*s\n",&mp,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -399,7 +425,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd %% %d got %d\n",&mp,y,res);
     }
-    if (this.isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -414,10 +440,10 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd %% %Zd got %Zd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (this.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
     return res;
   }
@@ -444,7 +470,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf(" %%= %Zd got %Zd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
     return this;
   }
@@ -453,11 +479,13 @@ class mpz {
    * \param y the base for 
    * \return the remainder of y/this.
    */
-  final gmp_ulong opMod_r(int y) {
-    gmp_ulong res = cast(gmp_long)y % get_ui();
+  final gmp_long opMod_r(int y) {
+    gmp_long res = cast(gmp_long)y % si();
     debug (MPZ_DEBUG) {
       gmp_printf("%d %% %Zd got %d\n",y,&mp,res);
     }
+    if (recycle == Recycle.Self)
+      mpzpool.recycle(this);
     return res;
   }
 
@@ -471,8 +499,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd * %d got %Zd\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -487,10 +515,10 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd * %Zd got %Zd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
-    if (isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -516,8 +544,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf(" *= %Zd got %Zd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
-      mpzpool.recycle(y);
+    if (recycle == Recycle.Self)
+      mpzpool.recycle(this);
     return this;
   }
 
@@ -530,13 +558,13 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("-%Zd got %Zd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
 
-  /** Pre decrement
+  /** Post decrement
    * \return original value before decrementing
    */
   final mpz opPostDec() {
@@ -546,7 +574,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("postdec got %Zd, returning %Zd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
+    res.recycle = (recycle & Recycle.Never);
     return res;
   }
 
@@ -560,7 +588,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("postinc got %Zd, returning %Zd\n",&mp,&res.mp);
     }
-    res.isTemporary = true;
+    res.recycle = (recycle & Recycle.Never);
     return res;
   }
 
@@ -575,8 +603,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("root(%Zd,%d) got %Zd\n",&x.mp,n,&res.mp);
     }
-    res.isTemporary = true;
-    if (x.isTemporary)
+    res.recycle = (x.recycle & Recycle.Never);
+    if (x.recycle == Recycle.Self)
       mpzpool.recycle(x);
     return res;
   }
@@ -592,8 +620,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("root(%Zd,%d) got %Zd\n",&x.mp,n,&res.mp);
     }
-    res.isTemporary = true;
-    if (x.isTemporary)
+    res.recycle = (x.recycle & Recycle.Never);
+    if (x.recycle == Recycle.Self)
       mpzpool.recycle(x);
     return res;
   }
@@ -608,8 +636,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd << %d got %Zd\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -624,8 +652,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd >> %d got %Zd\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -640,8 +668,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("sqrt(%Zd) got %Zd\n",&x.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (x.isTemporary)
+    res.recycle = (x.recycle & Recycle.Never);
+    if (x.recycle == Recycle.Self)
       mpzpool.recycle(x);
     return res;
   }
@@ -659,8 +687,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd - %d got %Zd\n",&mp,y,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -675,10 +703,10 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%Zd - %Zd got %Zd\n",&mp,&y.mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (y.isTemporary)
+    res.recycle = (recycle & Recycle.Never) | (y.recycle & Recycle.Never);
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
-    if (isTemporary)
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -698,8 +726,8 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf("%d - %Zd got %Zd\n",y,&mp,&res.mp);
     }
-    res.isTemporary = true;
-    if (isTemporary)
+    res.recycle = (recycle & Recycle.Never);
+    if (recycle == Recycle.Self)
       mpzpool.recycle(this);
     return res;
   }
@@ -728,7 +756,7 @@ class mpz {
     debug (MPZ_DEBUG) {
       gmp_printf(" -= %Zd got %Zd\n",&y.mp,&mp);
     }
-    if (y.isTemporary)
+    if (y.recycle == Recycle.Self)
       mpzpool.recycle(y);
     return this;
   }
@@ -737,7 +765,6 @@ class mpz {
    */
   mpz urandomb(gmp_randstate_t seed, ulong n) {
     mpz_urandomb(mp,seed,n);
-    isTemporary = true;
     return this;
   }
 
@@ -783,10 +810,10 @@ class mpz {
     assert(b == 10);
     b += b;
     assert(b == 20);
-    assert(b.toString() == "20");
-    assert(b.get_si() == 20);
-    assert(b.get_ui() == 20);
-    assert(b.get_d() == 20.0);
+    assert(strcmp(b.toString,"20")==0);
+    assert(b.si == 20);
+    assert(b.ui == 20);
+    assert(b.get_d == 20.0);
 
     mpz c = new mpz(b);
     c /= 2;
@@ -823,9 +850,9 @@ static TGmpPool!(mpz) mpzpool;
  * \param val the value to assign to x
  */
 void assign(inout mpz x, mpz val) {
-  if (!(x is null))
+  if (x !== null && x.recycle != Recycle.Never)
     mpzpool.recycle(x);
-  val.isTemporary = false;
+  val.recycle |= Recycle.Temp;
   x = val;
 }
 
