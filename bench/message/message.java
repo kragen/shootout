@@ -1,20 +1,27 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+ 
+   contributed by Isaac Gouy
+*/
+
+
 public class message {
 
    public static void main(String args[]) {
       int n = Integer.parseInt(args[0]);
-      int m = Integer.parseInt(args[1]);
+      int length = 3000;
 
-      EndLink chainEnd = new EndLink(null, n * m);
+      EndLink chainEnd = new EndLink(null, n * length);
       chainEnd.start();
       Link chain = chainEnd;
          
-      for (int i=2; i<=n; i++){
+      for (int i=2; i<=length; i++){
          Link link = new Link(chain);             
          link.start();
          chain = link;
       }
 
-      for (int i=0; i<m; i++) chain.put(0);     
+      for (int i=0; i<n; i++) chain.put(0);     
       try { chainEnd.join(); } catch (InterruptedException e){} 
 
       System.out.println(chainEnd.count);

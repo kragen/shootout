@@ -1,10 +1,16 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+ 
+   contributed by Isaac Gouy
+*/
+
+
 public class process {
 
    public static void main(String args[]) {
       int n = Integer.parseInt(args[0]);
-      int m = Integer.parseInt(args[1]);
 
-      EndLink chainEnd = new EndLink(null, n * m);
+      EndLink chainEnd = new EndLink(null, n);
       chainEnd.start();
       Link chain = chainEnd;
          
@@ -14,7 +20,7 @@ public class process {
          chain = link;
       }
 
-      for (int i=0; i<m; i++) chain.put(0);     
+      chain.put(0);     
       try { chainEnd.join(); } catch (InterruptedException e){} 
 
       System.out.println(chainEnd.count);
