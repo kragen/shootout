@@ -1,8 +1,6 @@
--- $Id: objinst.lua,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
--- http://shootout.alioth.debian.org
+-- $Id: objinst.lua,v 1.3 2004-07-04 07:29:52 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
 -- contributed by Roberto Ierusalimschy
-
-
 
 --------------------------------------------------------------
 -- Toggle class
@@ -26,7 +24,6 @@ function Toggle:new (start_state)
   return o
 end
 
-
 --------------------------------------------------------------
 -- NthToggle class
 --------------------------------------------------------------
@@ -49,11 +46,9 @@ function NthToggle:new (start_state, max_counter)
   return o
 end
 
-
 -----------------------------------------------------------
 -- main
 -----------------------------------------------------------
-
 function main ()
     local N = tonumber((arg and arg[1])) or 1
     local toggle = Toggle:new(1)
