@@ -1,0 +1,49 @@
+-- $Id: heapsort.ghc-2.ghc,v 1.1 2005-03-06 17:36:36 ekarttun-guest Exp $
+-- http://shootout.alioth.debian.org/
+-- Contributed by Einar Karttunen
+
+import Numeric
+import System
+import Data.Array.Base
+import Control.Monad
+import Control.Monad.ST
+
+main = do ~[n] <- getArgs
+          putStrLn (showFFloat (Just 10) (runST (work $ read n)) "")
+
+work :: Int -> ST s Double
+work n = do
+  arr <- newArray_ (0,n)
+  foldM (randl arr 100) 42 [1..n]
+  heapsort n arr
+  readArray arr n
+
+heapsort :: Int -> STUArray s Int Double -> ST s ()
+heapsort n arr = do
+  let loop l ir =  
+        if l > 1 
+           then let l' = l-1 in unsafeRead arr l' >>= cont l' ir 
+           else do rra <- unsafeRead arr ir
+                   unsafeRead arr 1 >>= unsafeWrite arr ir 
+                   if ir == 2 then unsafeWrite arr 1 rra else cont l (ir-1) rra
+      cont l ir rra = inner l (l*2) ir rra >> loop l ir
+      inner i j ir rra = 
+        if j > ir 
+           then unsafeWrite arr i rra 
+           else do
+             raj <- unsafeRead arr j
+             raj'<- unsafeRead arr (j+1)
+             let j' = if j < ir && raj < raj' then j+1 else j
+             raj <- unsafeRead arr j'
+             if rra < raj
+                then unsafeWrite arr i raj >> inner j' (j'+j') ir rra
+                else inner i (ir+1) ir rra
+  loop ((n `div` 2)+1) n
+
+randl :: STUArray s Int Double -> Double -> Int -> Int -> ST s Int
+randl arr max seed n = unsafeWrite arr n newrand >> return newseed
+    where newseed = (seed * ia + ic) `mod` im
+          newrand = (fromIntegral newseed) * (max / fromIntegral im)
+          im = 139968
+          ia = 3877
+          ic = 29573
