@@ -1,44 +1,50 @@
-<p>Originally the synchronize benchmark was a <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> test of pre-emptive kernel thread synchronization using a mutex and a condition variable.</p>
+<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a>  &#8212;  the same way as this <a href="benchmark.php?test=prodcons&lang=python&sort=<?=$Sort;?>">Python program</a>.</p>
 
-<p>Now it includes so many producer-consumer programs implemented with cooperative lightweight threads and other forms of concurrency, it has become a <a
-  href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a> test.</p>
+
+<p>Each program should use producer and consumer <b>threads</b>. Lightweight threads and other forms of concurrency are included in the <a href="benchmark.php?test=process&lang=all&sort=<?=$Sort;?>">process benchmark</a> and <a href="benchmark.php?test=message&lang=all&sort=<?=$Sort;?>">message benchmark</a>.</p>
+
+<ul>
+<li>producer thread
+<ul>
+<li>for i = 1 through n
+<ul>
+<li>lock mutex to enter critical section</li>
+<li>while count not equal zero wait for condition variable</li>
+<li>put value of i into data buffer</li>
+<li>increment count</li>
+<li>signal condition that resource is ready (data buffer full)</li>
+<li>increment produced</li>
+</ul>
+</li>
+</ul>
+</li>
+
+<li>consumer thread
+<ul>
+<li>repeat
+<ul>
+<li>lock mutex to enter critical section</li>
+<li>while count equal zero wait for condition variable</li>
+<li>retrieve value of i from data buffer</li>
+<li>decrement count</li>
+<li>signal condition that resource is ready (data buffer empty)</li>
+<li>increment consumed</li>
+</ul>
+</li>
+</ul>
+</li>
+
+<li>main thread
+<ul>
+<li>start producer</li>
+<li>start consumer</li>
+<li>join threads</li>
+<li>print values of produced and consumed</li>
+</ul>
+</li>
+
+</ul>
+
 
 <p>Correct output N = 1000 is:
-<pre>
-1000 1000
-</pre>
-</p>
-<br/>
-
-
-<p>The original benchmark specification:
-<pre>
- producer thread:
-   for i = 1 through n:
-     lock mutex to enter critical section
-     while count not equal zero wait for condition variable
-     put value of i into data buffer
-     increment count
-     signal condition that resource is ready (data buffer full)
-     increment produced
-
- consumer thread:
-   repeat: 
-     lock mutex to enter critical section
-     while count equal zero wait for condition variable
-     retrieve value of i from data buffer
-     decrement count
-     signal condition that resource is ready (data buffer empty)
-     increment consumed
-
- main thread:
-   start producer
-   start consumer
-   join threads
-   print values of produced and consumed
-</pre>
-</p>
-
-
-<p><b>Please Note:</b> this test is due for an overhaul.</p>
+<pre>1000 1000</pre></p>
