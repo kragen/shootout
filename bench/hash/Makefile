@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:09:56 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-22 04:58:45 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -6,10 +6,10 @@ TITLE   := Hash (Associative Array) Access
 
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
 
-MLTONDEPS := /usr/local/smlnj/src/smlnj-lib/Util/hash-string.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/hash-table-rep.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/hash-table-sig.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/hash-table.sml
+MLTONDEPS := ../../Include/sml-src/hash-string.sml \
+	     ../../Include/sml-src/hash-table-rep.sml \
+	     ../../Include/sml-src/hash-table-sig.sml \
+	     ../../Include/sml-src/hash-table.sml
 
 GHCOPTS := -package data -O2
 MB_GHCRTS  := +RTS -K10000000
