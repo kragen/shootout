@@ -3,7 +3,7 @@
 <p>Each program generates 5 random DNA sequence fragments, and writes them line-by-line in <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a>.</p>
 
 
-<p>Correct output N = 1000 is in this 6KB 
+<p>Correct output N = 1000 is in this 16KB 
 <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=output">output file</a>.</p>
 
 
