@@ -11,7 +11,7 @@ To run:
 */
 
 module hash
-import StdEnv, LanguageShootout 
+import StdEnv, StdOverloadedList, LanguageShootout 
       
 Start = toString(hashOps argi) +++ "\n"
 
@@ -35,7 +35,7 @@ hashOps n
    
    
    
-:: HexConverter = Hc Int Int !.String   
+:: HexConverter = Hc !Int !Int !.String   
    
 newHexConverter :: *HexConverter   
 newHexConverter = Hc 31 32 {' ' \\ i<-[1..32]}
@@ -69,48 +69,39 @@ primes =: [
             , val::a 
             }
 
-:: HashTable a = { nBuckets::Int 
-                 , table::!.{[Item a]}
-                 , nItems::Int 
+:: HashTable a = { nBuckets::Int
+                 , table::!.{![!Item a!]}
                  }
 
-
 hash :: !{#.Char} !(HashTable .a) -> Int
-hash key ht=:{nBuckets} 
-   = (abs (loop key (size key - 1) 0)) rem nBuckets   
+hash key ht=:{nBuckets}
+   = (abs (loop key (size key - 1) 0)) rem nBuckets  
    where
    loop k n h
-      | n>(-1) = loop k (n-1) (5*h + toInt k.[n])         
-      = h
-
+      | n>(-1) = loop k (n-1) (11*h + toInt k.[n])       
+               = h
 
 htNew n = { nBuckets = nprime
-        , table = {[] \\ i <- [1..nprime]}
-        , nItems = 0
+        , table = {[] \\ i <- [0..nprime-1]}
         }
-   where    
-   nprime = hd (dropWhile (\x = x < n) primes)         
-      
-      
-htHasKey :: !{#.Char} !.(HashTable a) -> .Bool               
-htHasKey k ht=:{table}= findIn k table.[hash k ht]    
+   where   
+   nprime = hd (dropWhile (\x = x < n) primes)        
+     
+htHasKey :: !{#.Char} !.(HashTable a) -> .Bool             
+htHasKey k ht=:{table}= findIn k table.[hash k ht]   
 
-
-htAdd k v ht=:{table,nItems} 
+htAdd k v ht=:{table}
    #! i = hash k ht
    #! (b,table) = uselect table i
-   = if (findIn k b) 
-      {ht & table = update ht.table i (addItem k v b [])}
-      {ht & table = update ht.table i [{key=k,val=v}:b], nItems = nItems+1}
-         
-      
-findIn k [] = False
-findIn k [item:ls] 
-   | item.key == k   = True
-   = findIn k ls   
-   
-   
-addItem k v [] ls` = ls`
-addItem k v [item:ls] ls`
-   | item.key == k    = [{item & val=v}:ls] ++ ls`
-   = addItem k v ls [item:ls`]   
+   = if (findIn k b)
+      {ht & table = update ht.table i (addItem k v b [|])}
+      {ht & table = update ht.table i [|{key=k,val=v}:b]}
+     
+findIn k [|] = False
+findIn k [|item:ls] = item.key == k || findIn k ls  
+  
+addItem k v [|] ls` = ls`
+addItem k v [|item:ls] ls`
+    | item.key == k  
+        = [|{item & val=v}:ls++|ls`]
+        = addItem k v ls [|item:ls`] 

@@ -2,6 +2,7 @@
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy (Clean novice)
+   and optimized by John van Groningen
 
 To compile:	
    cleanIDE.exe --batch-force-build "e:\shoot\contrib\clean\lists.prj"
@@ -15,77 +16,154 @@ module lists
 import StdEnv, LanguageShootout
 
 Start = toString (iter argi listOps 10000) +++ "\n"
-
 listOps size
-   # l1 = (Dq (balance (size, [1..size], [])))
-   # l2 = copy l1
-   # (l2, l3) = headToTailLoop l2 emptyDq
-   # (l3, l2) = tailToTailLoop l3 l2
-   # l1 = reverseDq l1
-   = if ((first l1 == size) && (equal l1 l2)) (length l1) (abort "Test Failed!")
-   
-   where   
-      headToTailLoop :: !.(Deque a) !u:(Deque a) -> (.(Deque b),v:(Deque a)), [u <= v]
-      headToTailLoop (Dq (0,[],[])) y = (emptyDq,y)
-      headToTailLoop x y
-         # (z,x) = popFirst x
-         # y = addLast z y
-         = headToTailLoop x y
-   
-      tailToTailLoop (Dq (0,[],[])) y = (emptyDq,y)
-      tailToTailLoop x y
-         # (z,x) = popLast x
-         # y = addLast z y
-         = tailToTailLoop x y
+    # d1 = iota size
+    # (d2,d1) = copy d1
+    # d3 = empty size
+    # (d2,d3) = headToTailLoop d2 d3
+    # (d3,d2) = tailToTailLoop d3 d2
+    # d1 = reverseDq d1
+    | firstDq d1==size && equal d1 d2
+        = lengthDq d1
+        = abort "Test Failed!"
+  where
+    headToTailLoop :: !*(Deque a) !*(Deque a) -> (!*Deque a,!*Deque a)
+    headToTailLoop x y
+        | emptyDq x   = (x,y)
+                      # (z,x) = popFirst x
+                      # y = addLast z y
+                      = headToTailLoop x y
 
+    tailToTailLoop :: !*(Deque a) !*(Deque a) -> (!*Deque a,!*Deque a)
+    tailToTailLoop x y
+        | emptyDq x = (x,y)
+                    # (z,x) = popLast x
+                    # y = addLast z y
+                    = tailToTailLoop x y
 
-// To do this in the "same way" we need to define a Deque
-// Let's only define the functions we need for this test
+:: Deque a = { first ::!Int, last ::!Int, size :: !Int, a :: !.{!a} }
 
-:: Deque a = Dq !(!Int,[a],[a])
+empty :: !Int -> *Deque Int
+empty n
+    # n=inc n
+    = { first=0, last=0, size=n,a = createArray n 0 }
 
-emptyDq = Dq (0,[],[])
+iota :: !Int -> *Deque Int
+iota n
+    #! size=inc n
+    = { first=1, last=0, size=size, a = {i \\ i<-[0..n]} }
 
-copy (Dq (n,xs,ys)) = Dq (n,xs,ys) // copy would be implicit 
+emptyDq :: !(Deque a) -> Bool
+emptyDq {first,last,size} = first==last
 
-addLast a (Dq (n,xs,ys)) = Dq (balance (n+1,xs,[a:ys]))
+lengthDq :: !(Deque a) -> Int
+lengthDq {first,last,size} = up (last-first) size
 
-popFirst (Dq (n,[x:xs],ys)) = (x, (Dq (balance (n-1,xs,ys))))
-popFirst (Dq (_,[],[y])) = (y, emptyDq)  
+up n s :== n+((n>>31) bitand s) // if (n < 0) (n + s) n
 
-popLast (Dq (n,xs,[y:ys])) = (y, (Dq (balance (n-1,xs,ys))))
-popLast (Dq (_,[x],[])) = (x, emptyDq)
+popFirst :: !*(Deque a) -> (!a,!*Deque a)
+popFirst {first,last,size,a}
+    | first <> last
+        #! e = a.[first]
+        # first=first+1
+        | first<>size
+            = (e,{first=first,last=last,size=size,a=a})
+            = (e,{first=0,last=last,size=size,a=a})
+        = abort "popFirst: empty"
 
-first (Dq (_,[x:_],_)) = x
-first (Dq (_,[],[y])) = y
+popLast :: !*(Deque a) -> (!a,!*Deque a)
+popLast {first,last,size,a}
+    | first <> last
+        | last>0
+            # last = last-1
+            #! e = a.[last]
+            = (e,{first=first,last=last,size=size,a=a})
+            # last = size-1
+            #! e = a.[last]
+            = (e,{first=first,last=last,size=size,a=a})
+        = abort "popLast: empty"
 
-reverseDq (Dq (n,xs,ys)) = (Dq (n,ys,xs))
+addLast :: !a !*(Deque a) -> *Deque a
+addLast elem {first,last,size,a}
+    # last`=last+1
+    | last` <> size
+        | last` <> first
+                = {first=first,last=last`,size=size,a={a & [last]=elem}}
+                = abort "addLast : Full"
+        | 0 <> first
+                = {first=first,last=0,size=size,a={a & [last]=elem}}
+                = abort "addLast : Full"
 
-equal (Dq (n1,x1,y1)) (Dq (n2,x2,y2)) = 
-   n1==n2 && equal_ x1 (reverse y1) x2 (reverse y2)
-      where      
-      equal_ [] [] [] [] = True  
-      equal_ [] y1 x2 y2
-         | y1<>[] = equal_ y1 [] x2 y2
-         = False
-      equal_ x1 y1 [] y2 
-          | y2<>[] = equal_ x1 y1 y2 []
-          = False
-      equal_ [a:as] y1 [b:bs] y2
-         | a==b = equal_ as y1 bs y2
-         = False
+firstDq :: !(Deque a) -> a
+firstDq {first,last,size,a}
+    | first <> last
+        = a.[first]
+        = abort "popFirst: empty"
 
-//   Instances of overloaded functions:
-instance length Deque
-   where length (Dq (n,_,_)) = n
+copy :: *(Deque a) -> (!*Deque a,!*Deque a)
+copy {first,last,size,a}
+    | size==0
+        = ({first=first,last=last,size=size,a={}},{first=first,last=last,size=size,a=a})
+    #! e=a.[0]
+    # (a1,a2) = copy_array 0 size (createArray size e) a
+    = ({first=first,last=last,size=size,a=a1},{first=first,last=last,size=size,a=a2})
+  where
+    copy_array :: !Int !.Int !*{!a} !u:{!a} -> (!.{!a},!v:{!a}), [u <= v]
+    copy_array i s a1 a2
+        | i<s
+            #! e=a2.[i]
+            = copy_array (i+1) s {a1 & [i]=e} a2
+            = (a1,a2)
 
-// balance would be private to a Deque module
-balance (n,[],ys)
-   | n <= 1   = (n,[],ys)
-   = (n, reverse f, r)
-      where (r,f) = splitAt (n/2) ys
-balance (n,xs,[])
-   | n <= 1   = (n,xs,[])
-   = (n, f, reverse r)
-      where (f,r) = splitAt (n/2) xs
-balance dq = dq
+reverseDq :: *(Deque a) -> *Deque a
+reverseDq {first,last,size,a}
+    #! w=up (last-first) size // length
+    # a = reverse_a ((w>>1)+1) first (up (last-1) size) size a
+    = {first=first,last=last,size=size,a=a}
+    where
+        reverse_a :: !Int !Int !Int !Int !*{!a} -> *{!a}
+        reverse_a n i1 i2 size a
+            | n==0
+                = a
+            #! m=min (size-i1) n
+            #! m=min (i2+1) m
+            # a = reverse_a2 i1 i2 m a
+              i1=i1+m
+              i2=i2-m
+              i1=if (i1>=size) (i1-size) i1
+              i2=if (i2<0) (i2+size) i2
+            = reverse_a (n-m) i1 i2 size a
+
+        reverse_a2 :: !Int !Int !Int !*{!a} -> *{!a}
+        reverse_a2 i1 i2 e1 a
+            | i1<e1
+                # (v1,a) = a![i1]
+                # (v2,a) = a![i2]
+                = reverse_a2 (i1+1) (i2-1) e1 {a & [i1]=v2,[i2]=v1}
+                = a
+
+equal :: !.(Deque a) !.(Deque a) -> .Bool | == a
+equal {first=first1,last=last1,size=size1,a=a1} {first=first2,last=last2,size=size2,a=a2}
+    #! len1=up (last1-first1) size1 // length
+    #! len2=up (last2-first2) size2 // length
+    = len1==len2 && equal_a len1 first1 first2 size1 size2 a1 a2
+where
+    equal_a :: !Int !Int !Int !Int !Int !.{!a} !.{!a} -> .Bool | == a
+    equal_a n i1 i2 s1 s2 a1 a2
+        | n==0
+            = True
+        #! m=min (s1-i1) n
+        #! m=min (s2-i2) m
+        | equal_a2 i1 i2 (i1+m) a1 a2
+            # i1=i1+m
+              i2=i2+m
+              i1=if (i1>=s1) (i1-s1) i1
+              i2=if (i2>=s2) (i2-s2) i2
+            = equal_a (n-m) i1 i2 s1 s2 a1 a2
+            = False
+
+    equal_a2 :: !Int !Int !Int !.{!a} !.{!a} -> .Bool | == a
+    equal_a2 i1 i2 e1 a1 a2
+        | i1<e1
+            = a1.[i1]==a2.[i2] && equal_a2 (i1+1) (i2+1) e1 a1 a2
+            = True

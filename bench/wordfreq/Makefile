@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-06-25 07:57:50 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-07-01 05:24:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
@@ -6,7 +6,7 @@ TITLE   := Word Frequency
 SE_OPTS := -case_insensitive
 GHCOPTS := -package data
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: echo.tcl,v 1.1 2004-05-19 18:09:38 bfulgham Exp $
+# $Id: echo.tcl,v 1.2 2004-07-01 05:23:59 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 # from: Kristoffer Lawson
@@ -25,20 +25,20 @@ proc runClient {n addr port} {
     fconfigure $sock -buffering line -encoding unicode
     set msg "Hello there sailor"
 
-    incr n
-    while {[incr n -1]} {
-	puts $sock $msg
-	if {[string equal [gets $sock] $msg]} continue
-	error "Received different message: $r."
+    while {$n} {
+        puts $sock $msg
+	if {[gets $sock] != $msg} {
+	    error "Received different message: $r."
+	}
+	incr n -1
     }
 }
-
 
 set n [lindex $argv 0]
 
 if {[llength $argv] < 2} {
-    socket -server newClient -myaddr localhost 10000
-    #exec tclsh [info script] $n client &
+    socket -server newClient 10000 -myaddr localhost 10000
+    exec [info nameofexecutable] [info script] $n client &
     vwait forever
 } else {
     runClient $n localhost 10000

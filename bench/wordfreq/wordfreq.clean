@@ -1,0 +1,162 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   by John van Groningen
+
+*/
+
+module wordfreq
+
+import StdEnv,StdStrictLists
+
+Start :: *World -> (!Bool,!*World)
+Start world
+    # (console,world) = stdio world
+    # ht = htNew 2048
+    # (ht,console) = read_words_in_file0 console ht
+    # items = sort (htToList ht)
+    # console = write_items items console
+    = fclose console world
+
+read_words_in_file0 :: *File !(HashTable Int) -> (!HashTable Int,!*File)
+read_words_in_file0 f ht
+    # (s,f) = freads f 4096
+    | size s==0
+        = (ht,f)
+    # (ia,s) = skip_to_alpha_char 0 s
+    = read_words_in_string1 ia s f ht
+
+read_words_in_string0 :: Int *{#Char} *File !(HashTable Int) -> (!HashTable Int,!*File)
+read_words_in_string0 i s f ht
+    # (ia,s) = skip_to_alpha_char i s
+    = read_words_in_string1 ia s f ht
+
+read_words_in_string1 :: Int *{#Char} *File !(HashTable Int) -> (!HashTable Int,!*File)
+read_words_in_string1 ia s f ht
+    # (ina,s) = skip_alpha_chars_and_convert_to_lower_case ia s
+    | ia==ina
+        = read_words_in_file0 f ht
+    #! word = s % (ia,ina-1)
+    | ina<4096
+        # ht = htUpdate (\ item=:{val} = {item & val=val+1}) word 0 ht
+        = read_words_in_string0 ina s f ht
+        = read_words_in_file1 word f ht
+
+read_words_in_file1 :: {#Char} *File !(HashTable Int) -> (!HashTable Int,!*File)
+read_words_in_file1 word f ht
+    # (s,f) = freads f 4096
+    | size s==0
+        = (htUpdate (\ item=:{val} = {item & val=val+1}) word 0 ht,f)
+    # (ia,s) = skip_to_alpha_char 0 s
+    | ia<>0
+        # ht = htUpdate (\ item=:{val} = {item & val=val+1}) word 0 ht
+        = read_words_in_string1 ia s f ht
+    # (ina,s) = skip_alpha_chars_and_convert_to_lower_case ia s
+    | ina<4096
+        #! rest_of_word = s % (0,ina-1)
+        # ht = htUpdate (\ item=:{val} = {item & val=val+1}) (word+++rest_of_word) 0 ht
+        = read_words_in_string0 ina s f ht
+        = read_words_in_file1 (word+++s) f ht
+
+skip_alpha_chars_and_convert_to_lower_case :: !Int !*{#Char} -> (!Int,!*{#Char})
+skip_alpha_chars_and_convert_to_lower_case i s
+    | i<size s
+        #! c=s.[i]
+        | c>='a' && c<='z'
+            = skip_alpha_chars_and_convert_to_lower_case (i+1) s
+        | c>='A' && c<='Z'
+            = skip_alpha_chars_and_convert_to_lower_case (i+1) {s & [i]=toChar (toInt c+32)}
+            = (i,s)
+        = (i,s)
+
+skip_to_alpha_char :: !Int !*{#Char} -> (!Int,!*{#Char})
+skip_to_alpha_char i s
+    | i<size s
+        #! c=s.[i]
+        | c<'A' || c>'z' || ( c>'Z' && c<'a')
+            = skip_to_alpha_char (i+1) s
+            = (i,s)
+        = (i,s)
+
+instance < (Item Int) where
+        (<) {val=v1,key=k1} {val=v2,key=k2}
+            | v1<>v2
+                = v1>v2
+                = k1>k2
+
+write_items [{key,val}:items] fo
+    # s = toString val
+    # fo = if (size s<7) (fwrites (createArray (7-size s) ' ') fo) fo
+    = write_items items (fo <<< s <<< ' ' <<< key <<< '\n')
+write_items [] fo
+    = fo
+
+
+// SimpleHash implementation would normally be imported
+  
+primes =: [
+   53,         97,         193,       389,       769,
+   1543,       3079,       6151,      12289,     24593,
+   49157,      98317,      196613,    93241,     786433,
+   1572869,    3145739,    6291469,   12582917,  25165843,
+   50331653,   100663319,  201326611, 402653189, 805306457
+   ]
+
+:: Item a = { key::!String
+            , val::!a
+            }
+
+:: SHashTable a = { nBuckets::!Int
+                 , table::!.{!.[!Item a!]}
+                 }
+
+:: *HashTable a :== SHashTable a
+
+hash :: !{#.Char} !Int -> Int
+hash key nBuckets
+   = (abs (loop key (size key - 1) 0)) rem nBuckets  
+   where
+   loop :: !{#Char} !Int !Int -> Int
+   loop k n h
+      | n>=0
+          = loop k (n-1) (5*h + toInt k.[n])       
+          = h
+
+htNew n = { nBuckets = nprime
+        , table = {[|] \\ i <- [0..nprime-1]}
+        }
+   where   
+   nprime = hd (dropWhile (\x = x < n) primes)        
+
+htUpdate :: ((Item a) -> Item a) !{#.Char} !a !*(HashTable a) -> *HashTable a
+htUpdate f k v ht=:{table,nBuckets}
+    #! i = hash k nBuckets
+    #! (b,table) = replace table i [|]
+    # b = updateItem b k v f
+    = {ht & table = {table & [i] = b}}
+where
+    updateItem :: !*[!(Item a)!] !{#.Char} a ((Item a) -> Item a) -> *[!(Item a)!]
+    updateItem [|item:ls] k v f
+       | item.key <> k
+               = [|item : updateItem ls k v f]
+               = [|f item:ls]
+    updateItem [|] k v f
+        = [|f {key=k,val=v}]
+
+htToList :: !(HashTable a) -> [Item a]
+htToList ht=:{nBuckets,table}
+    = ht_to_list 0 nBuckets table []
+    where
+        ht_to_list i n table l
+            | i<n
+                # (list,table) = table![i]
+                #! l=ht_buckets_to_list list l
+                = ht_to_list (i+1) n table l
+                = l
+
+        ht_buckets_to_list :: *[!Item a!] [Item a] -> [Item a]
+        ht_buckets_to_list [|i:is] l
+            = ht_buckets_to_list is [i:l]
+    ht_buckets_to_list [|] l
+            = l
+

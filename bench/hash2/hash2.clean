@@ -1,0 +1,138 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   by John van Groningen
+
+*/
+
+module hash2
+
+import StdEnv, LanguageShootout
+import StdOverloadedList
+
+Start = hashOps argi
+
+hashOps n
+   # hashtable1 = htNew 10000
+   # hashtable2 = htNew 10000
+   # hashtable1 = addKeys 0 hashtable1
+   # (hashtable1,hashtable2) = repeat_inserts n hashtable1 hashtable2
+   # (foo_1_1,hashtable1) = htFind "foo_1" hashtable1
+   # (foo_9999_1,hashtable1) = htFind "foo_9999" hashtable1
+   # (foo_1_2,hashtable2) = htFind "foo_1" hashtable2
+   # (foo_9999_2,hashtable2) = htFind "foo_9999" hashtable2
+   =    toString foo_1_1.val+++" "+++
+        toString foo_9999_1.val+++" "+++
+        toString foo_1_2.val+++" "+++
+        toString foo_9999_2.val+++"\n"
+  where
+    addKeys i ht
+         | i>9999
+             = ht
+             = addKeys (i+1) (htAdd ("foo_"+++toString i) i ht)
+
+    repeat_inserts :: !Int (HashTable Int) (HashTable Int) -> (HashTable Int,!HashTable Int)
+    repeat_inserts n hashtable1 hashtable2
+        | n>0
+            # (hashtable1,hashtable2) = htFold add_val hashtable1 hashtable2
+            = repeat_inserts (n-1) hashtable1 hashtable2
+            = (hashtable1,hashtable2)
+
+    add_val {key,val=val1} hashtable2
+        = htUpdate (\ item=:{val} = {item & val=val+val1}) key 0 hashtable2
+
+// SimpleHash implementation would normally be imported
+  
+primes =: [
+   53,         97,         193,       389,       769,
+   1543,       3079,       6151,      12289,     24593,
+   49157,      98317,      196613,    93241,     786433,
+   1572869,    3145739,    6291469,   12582917,  25165843,
+   50331653,   100663319,  201326611, 402653189, 805306457
+   ]
+
+:: Item a = { key::!String
+            , val::!a
+            }
+
+:: SHashTable a = { nBuckets::!Int
+                 , table::!.{!.[!Item a!]}
+                 }
+
+:: *HashTable a :== SHashTable a
+
+hash :: !{#.Char} !Int -> Int
+hash key nBuckets
+   = (abs (loop key (size key - 1) 0)) rem nBuckets  
+   where
+   loop :: !{#Char} !Int !Int -> Int
+   loop k n h
+      | n>=0
+          = loop k (n-1) (11*h + toInt k.[n])       
+          = h
+
+htNew n = { nBuckets = nprime
+        , table = {[|] \\ i <- [0..nprime-1]}
+        }
+   where   
+   nprime = hd (dropWhile (\x = x < n) primes)        
+
+htFind :: !{#.Char} !(HashTable a) -> (!Item a,HashTable a)              
+htFind k ht=:{table,nBuckets}
+    # (list,table) = table![hash k nBuckets]
+    = (find k list,{ht & table=table})
+    where
+        find k [|item:ls]
+            | item.key == k
+                   = item
+                   = find k ls
+
+htUpdate :: ((Item a) -> Item a) !{#.Char} a !*(HashTable a) -> *HashTable a
+htUpdate f k v ht=:{table,nBuckets}
+    #! i = hash k nBuckets
+    #! (b,table) = replace table i [|]
+    # b = updateItem k v b f
+    = {ht & table = {table & [i] = b}}
+where
+    updateItem :: !{#.Char} a !*[!(Item a)!] ((Item a) -> Item a) -> *[!(Item a)!]
+    updateItem k v [|item:ls] f
+       | item.key <> k
+               = [|item : updateItem k v ls f]
+               = [|f item:ls]
+    updateItem k v [|] f
+        = [|f {key=k,val=v}]
+
+htAdd :: !{#.Char} !a !*(HashTable a) -> *HashTable a
+htAdd k v ht=:{table,nBuckets}
+    #! i = hash k nBuckets
+    #! (b,table) = replace table i [|]
+    # b = addItem k v b
+    = {ht & table = {table & [i] = b}}
+where
+    addItem :: !{#.Char} .a !*[!u:(Item .a)!] -> *[!v:(Item .a)!], [u<=v]
+    addItem k v [|item:ls]
+       | item.key <> k
+               = [|item : addItem k v ls]
+               = [|{item & val=v}:ls]
+    addItem k v [|]
+        = [|{key=k,val=v}]
+
+htFold :: ((Item a) -> .(.b -> .b)) !(HashTable a) .b -> (!HashTable a,!.b)
+htFold f ht=:{nBuckets,table} s
+    # (table,s) = ht_fold 0 nBuckets table s
+    = ({ht & table=table},s)
+    where
+        ht_fold i n table s
+            | i<n
+                # (list,table) = table![i]
+                #! s=ht_fold_list list s
+                = ht_fold (i+1) n table s
+                = (table,s)
+
+        ht_fold_list [|e:l] s
+            #! s = f e s
+            = ht_fold_list l s
+        ht_fold_list [|] s
+            = s
+
+

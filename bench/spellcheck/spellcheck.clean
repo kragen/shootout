@@ -16,10 +16,10 @@ To run:
 */
 
 module spellcheck
-import StdEnv, SimpleHash
+import StdEnv, StdStrictLists
   
 Start world 
-	# dictionary = htNew 20000
+	# dictionary = htNew 40000
 	# (dictionary,world) = readUsrDictWords world dictionary
 	= checkInputWords world dictionary 
 
@@ -27,14 +27,13 @@ readUsrDictWords world ht
 	# (openok, file, world) = fopen "Usr.Dict.Words" FReadText world
 	| not openok = abort ("Cannot open Usr.Dict.Words\n")
 	# ht = readWords file ht
-	= (ht,world)
-	
+	= (ht,world)	
 	where
 	readWords f ht 
-   		#! (atEnd,f) = fend f
-   		| atEnd = ht
-   		#! (line, f) = freadline f
-   		= readWords f (htAdd line 1 ht)
+   		# (line,f) = freadline f
+		| size line == 0
+	        = ht
+		    = readWords f (htAdd line 1 ht)
    		   		
 /*   		
 checkInputWords world ht 
@@ -48,11 +47,64 @@ checkInputWords world ht
 	= missingWords console ht []	
 
 missingWords f ht missing	
-	#! (atEnd,f) = fend f
-	| atEnd = map withNewline missing
-	#! (line, f) = freadline f
+	# (line,f) = freadline f
+	| (size line == 0) = map withNewline missing
 	| (htHasKey line ht) = missingWords f ht missing
 	= missingWords f ht [line:missing]	
 	where
 	withNewline s
 		= if (s.[size s - 1] == '\n') s (s+++"\n")
+
+// SimpleHash implementation would normally be imported
+  
+primes =: [
+   53,         97,         193,       389,       769,
+   1543,       3079,       6151,      12289,     24593,
+   49157,      98317,      196613,    93241,     786433,
+   1572869,    3145739,    6291469,   12582917,  25165843,
+   50331653,   100663319,  201326611, 402653189, 805306457
+   ]
+
+:: Item a = { key::!String
+            , val::!a
+            }
+
+:: HashTable a = { nBuckets::!Int
+                 , table::!.{!.[!Item a!]}
+                 }
+
+hash :: !{#.Char} !Int -> Int
+hash key nBuckets
+   = (abs (loop key (size key - 1) 0)) rem nBuckets  
+   where
+   loop k n h
+      | n>=0
+          = loop k (n-1) (5*h + toInt k.[n])        
+          = h
+
+htNew n = { nBuckets = nprime
+        , table = {[|] \\ i <- [0..nprime-1]}
+        }
+   where   
+   nprime = hd (dropWhile (\x = x < n) primes)        
+
+htHasKey :: !{#.Char} !.(HashTable a) -> .Bool
+htHasKey k ht=:{table,nBuckets}= findIn k table.[hash k nBuckets]
+where
+    findIn k [|item:ls] = item.key == k || findIn k ls
+    findIn k [|] = False
+
+htAdd :: !{#.Char} !a !*(HashTable a) -> *HashTable a
+htAdd k v ht=:{table,nBuckets}
+    #! i = hash k nBuckets
+    #! (b,table) = replace table i [|]
+    # b = addItem k v b
+    = {ht & table = {table & [i] = b}}
+where
+    addItem :: !{#.Char} .a !*[!u:(Item .a)!] -> *[!v:(Item .a)!], [u<=v]
+    addItem k v [|item:ls]
+       | item.key <> k
+               = [|item : addItem k v ls]
+               = [|{item & val=v}:ls]
+    addItem k v [|]
+        = [|{key=k,val=v}]
