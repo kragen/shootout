@@ -1,4 +1,4 @@
-// $Id: fibo.java,v 1.1 2004-05-23 04:49:47 bfulgham Exp $
+// $Id: fibo.java,v 1.2 2005-03-19 00:32:56 igouy-guest Exp $
 // http://www.bagley.org/~doug/shootout/
 
 public class fibo {
@@ -7,7 +7,7 @@ public class fibo {
 	System.out.println(fib(N));
     }
     public static int fib(int n) {
-	if (n < 2) return(1);
+	if (n < 2) return(n);
 	return( fib(n-2) + fib(n-1) );
     }
 }

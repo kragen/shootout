@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: fibo.perl,v 1.2 2004-06-30 07:28:57 bfulgham Exp $
+# $Id: fibo.perl,v 1.3 2005-03-19 00:32:56 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 
 use strict;
@@ -13,7 +13,7 @@ use integer;
 
 # from Leif Stensson
 sub fib {
-    return $_[0] < 2 ? 1 : fib($_[0]-2) + fib($_[0]-1);
+    return $_[0] < 2 ? $_[0] : fib($_[0]-2) + fib($_[0]-1);
 }
 
 my $N = ($ARGV[0] < 1) ? 1 : $ARGV[0];

@@ -1,15 +1,15 @@
 <p>Each program should calculate the Fibonacci function using the same na&#239ve recursive-algorithm
 <pre>
-F(x)
-  x = 0     = 1
-  x = 1     = 1
-  otherwise = F(x-2) + F(x-1)
+F(n)
+  n = 0     = 0
+  n = 1     = 1
+  otherwise = F(n-2) + F(n-1)
 </pre>
 </p><br/>
 
 <p>Calculate F(N). Correct output N = 32 is:
 <pre>
-3524578
+2178309
 </pre>
 </p><br/>
 
