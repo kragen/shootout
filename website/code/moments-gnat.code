@@ -1,138 +1,129 @@
-<span class="slc">-- $Id: moments-gnat.code,v 1.14 2005-03-25 07:59:16 bfulgham Exp $
+<span class="slc">-- $Id: moments-gnat.code,v 1.15 2005-03-30 21:26:00 bfulgham Exp $
 </span><span class="slc">-- http://shootout.alioth.debian.org
 </span><span class="slc">-- Contributed by Pascal Obry on 2005/03/22
 </span><span class="slc">-- Revised by Vasiliy Fofanov 2005/03/23
+</span><span class="slc">-- Modified by Pascal Obry on 2005/03/30
 </span>
-<span class="kwa">with</span> System<span class="sym">,</span> Ada.Numerics.Generic_Elementary_Functions<span class="sym">;
-</span><span class="kwa">with</span> Ada.Text_IO<span class="sym">;</span> <span class="kwa">use</span> Ada.Text_IO<span class="sym">;
+<span class="kwa">generic
+   type</span> Item_Type <span class="kwa">is private</span><span class="sym">;
+</span>   <span class="kwa">with function</span> <span class="str">&quot;&lt;=&quot;</span> <span class="sym">(</span>X<span class="sym">,</span> Y <span class="sym">:</span> Item_Type<span class="sym">)</span> <span class="kwa">return</span> <span class="kwb">Boolean</span><span class="sym">;
+</span>   <span class="kwa">type</span> Sequence <span class="kwa">is array</span> <span class="sym">(</span><span class="kwb">Integer</span> <span class="kwa">range</span> <span class="sym">&lt;&gt;)</span> <span class="kwa">of</span> Item_Type<span class="sym">;
+</span><span class="kwa">procedure</span> Quick_Sort <span class="sym">(</span>S <span class="sym">:</span> <span class="kwa">in out</span> Sequence<span class="sym">;</span> Lwb<span class="sym">,</span> Upb <span class="sym">:</span> <span class="kwa">in</span> <span class="kwb">Integer</span><span class="sym">);
 
-</span><span class="kwa">with</span> GNAT.Dynamic_Tables<span class="sym">;
+</span><span class="kwa">procedure</span> Quick_Sort <span class="sym">(</span>S <span class="sym">:</span> <span class="kwa">in out</span> Sequence<span class="sym">;</span> Lwb<span class="sym">,</span> Upb <span class="sym">:</span> <span class="kwa">in</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">is
+</span>   Pivot <span class="sym">:</span> Item_Type <span class="sym">:=</span> S <span class="sym">(</span>Upb<span class="sym">);
+</span>   Front <span class="sym">:</span> <span class="kwb">Integer</span> <span class="sym">:=</span> Lwb<span class="sym">;
+</span>   Back  <span class="sym">:</span> <span class="kwb">Integer</span> <span class="sym">:=</span> Upb<span class="sym">;
+</span>   Temp  <span class="sym">:</span> Item_Type<span class="sym">;
+</span><span class="kwa">begin
+   if</span> Lwb <span class="sym">&lt;</span> Upb <span class="kwa">then
+      while</span>  <span class="sym">(</span>Front <span class="sym">&lt;=</span> Back<span class="sym">)</span>  <span class="kwa">loop
+         while not</span>  <span class="sym">(</span>Pivot <span class="sym">&lt;=</span> S <span class="sym">(</span>Front<span class="sym">))</span> <span class="kwa">loop
+</span>            Front <span class="sym">:=</span> Front <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>         <span class="kwa">end loop</span><span class="sym">;
+</span>         <span class="kwa">while not</span>  <span class="sym">(</span>S <span class="sym">(</span>Back<span class="sym">) &lt;=</span> Pivot<span class="sym">)</span> <span class="kwa">loop
+</span>            Back <span class="sym">:=</span> Back <span class="num">- 1</span><span class="sym">;
+</span>         <span class="kwa">end loop</span><span class="sym">;
+</span>         <span class="kwa">if</span> Front <span class="sym">&lt;=</span> Back <span class="kwa">then
+</span>            Temp <span class="sym">:=</span> S <span class="sym">(</span>Front<span class="sym">);
+</span>            S <span class="sym">(</span>Front<span class="sym">) :=</span> S <span class="sym">(</span>Back<span class="sym">);
+</span>            S <span class="sym">(</span>Back<span class="sym">) :=</span> Temp<span class="sym">;
+</span>            Front <span class="sym">:=</span> Front <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>            Back  <span class="sym">:=</span> Back <span class="num">- 1</span><span class="sym">;
+</span>         <span class="kwa">end if</span><span class="sym">;
+</span>      <span class="kwa">end loop</span><span class="sym">;
+</span>      Quick_Sort <span class="sym">(</span>S<span class="sym">,</span> Lwb<span class="sym">,</span> Back<span class="sym">);
+</span>      Quick_Sort <span class="sym">(</span>S<span class="sym">,</span> Front<span class="sym">,</span> Upb<span class="sym">);
+</span>   <span class="kwa">end if</span><span class="sym">;
+</span><span class="kwa">end</span> Quick_Sort<span class="sym">;
 
-</span><span class="kwa">procedure</span> Moments <span class="kwa">is
-
-   type</span> Real <span class="kwa">is new</span> <span class="kwb">Long_Float</span><span class="sym">;
-
-</span>   <span class="kwa">package</span> AF <span class="kwa">is new
-</span>     Ada.Numerics.Generic_Elementary_Functions <span class="sym">(</span>Float_Type <span class="sym">=&gt;</span> Real<span class="sym">);
-</span>   <span class="kwa">package</span> RIO <span class="kwa">is new</span> Ada.Text_IO.Float_IO <span class="sym">(</span>Num <span class="sym">=&gt;</span> Real<span class="sym">);
-
-</span>   <span class="kwa">procedure</span> Put
-     <span class="sym">(</span>Item <span class="sym">:</span> Real<span class="sym">;</span> Fore <span class="sym">:</span> Field <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span> Aft <span class="sym">:</span> Field <span class="sym">:=</span> <span class="num">6</span><span class="sym">;
-</span>      Exp  <span class="sym">:</span> Field <span class="sym">:=</span> <span class="num">0</span><span class="sym">)</span> <span class="kwa">renames</span> RIO.Put<span class="sym">;
-
-</span>   <span class="kwa">package</span> Real_Table <span class="kwa">is
-      new</span> GNAT.Dynamic_Tables <span class="sym">(</span>Real<span class="sym">,</span> <span class="kwb">Integer</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">4096</span><span class="sym">,</span> <span class="num">200</span><span class="sym">);
-
-</span>   <span class="kwa">generic
-       type</span> Item_Type <span class="kwa">is private</span><span class="sym">;
-</span>       <span class="kwa">with function</span> <span class="str">&quot;&lt;=&quot;</span> <span class="sym">(</span>X<span class="sym">,</span> Y <span class="sym">:</span> Item_Type<span class="sym">)</span> <span class="kwa">return</span> <span class="kwb">Boolean</span><span class="sym">;
-</span>       <span class="kwa">type</span> Sequence <span class="kwa">is array</span> <span class="sym">(</span><span class="kwb">Integer</span> <span class="kwa">range</span> <span class="sym">&lt;&gt;)</span> <span class="kwa">of</span> Item_Type<span class="sym">;
-</span>   <span class="kwa">package</span> Sort_Pkg <span class="kwa">is
-      procedure</span> Quick_Sort <span class="sym">(</span>S <span class="sym">:</span> <span class="kwa">in out</span> Sequence<span class="sym">);
-</span>   <span class="kwa">end</span> Sort_Pkg<span class="sym">;</span>  <span class="slc">--  Copied from Southampton Ada MPICH supercomputer bindings
+</span><span class="slc">-- $Id: moments-gnat.code,v 1.15 2005-03-30 21:26:00 bfulgham Exp $
+</span><span class="slc">-- http://shootout.alioth.debian.org
+</span><span class="slc">-- Contributed by Pascal Obry on 2005/03/22
+</span><span class="slc">-- Revised by Vasiliy Fofanov 2005/03/23
+</span><span class="slc">-- Modified by Pascal Obry on 2005/03/30
 </span>
-   <span class="kwa">package body</span> Sort_Pkg <span class="kwa">is
-      procedure</span> Quick_Sort <span class="sym">(</span>S <span class="sym">:</span> <span class="kwa">in out</span> Sequence<span class="sym">)</span> <span class="kwa">is
-         procedure</span> Sort_Recursive <span class="sym">(</span>Lwb<span class="sym">,</span> Upb <span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">is
-</span>            Pivot    <span class="sym">:</span> Item_Type <span class="sym">:=</span> S <span class="sym">(</span>Upb<span class="sym">);
-</span>            Front    <span class="sym">:</span> <span class="kwb">Integer</span> <span class="sym">:=</span> Lwb<span class="sym">;
-</span>            Back     <span class="sym">:</span> <span class="kwb">Integer</span> <span class="sym">:=</span> Upb<span class="sym">;
-</span>            Temp     <span class="sym">:</span> Item_Type<span class="sym">;
-</span>         <span class="kwa">begin
-            if</span> Lwb <span class="sym">&lt;</span> Upb <span class="kwa">then
-               while</span>  <span class="sym">(</span>Front <span class="sym">&lt;=</span> Back<span class="sym">)</span>  <span class="kwa">loop
-                  while not</span>  <span class="sym">(</span>Pivot <span class="sym">&lt;=</span> S <span class="sym">(</span>Front<span class="sym">))</span> <span class="kwa">loop
-</span>                     Front <span class="sym">:=</span> Front <span class="sym">+</span> <span class="num">1</span><span class="sym">;
-</span>                  <span class="kwa">end loop</span><span class="sym">;
-</span>                  <span class="kwa">while not</span>  <span class="sym">(</span>S <span class="sym">(</span>Back<span class="sym">) &lt;=</span> Pivot<span class="sym">)</span> <span class="kwa">loop
-</span>                     Back <span class="sym">:=</span> Back <span class="num">- 1</span><span class="sym">;
-</span>                  <span class="kwa">end loop</span><span class="sym">;
-</span>                  <span class="kwa">if</span> Front <span class="sym">&lt;=</span> Back <span class="kwa">then
-</span>                     Temp <span class="sym">:=</span> S <span class="sym">(</span>Front<span class="sym">);
-</span>                     S <span class="sym">(</span>Front<span class="sym">) :=</span> S <span class="sym">(</span>Back<span class="sym">);
-</span>                     S <span class="sym">(</span>Back<span class="sym">) :=</span> Temp<span class="sym">;
-</span>                     Front <span class="sym">:=</span> Front <span class="sym">+</span> <span class="num">1</span><span class="sym">;
-</span>                     Back  <span class="sym">:=</span> Back <span class="num">- 1</span><span class="sym">;
-</span>                  <span class="kwa">end if</span><span class="sym">;
-</span>               <span class="kwa">end loop</span><span class="sym">;
-</span>               Sort_Recursive <span class="sym">(</span>Lwb<span class="sym">,</span> Back<span class="sym">);
-</span>               Sort_Recursive <span class="sym">(</span>Front<span class="sym">,</span> Upb<span class="sym">);
-</span>            <span class="kwa">end if</span><span class="sym">;
-</span>         <span class="kwa">end</span> Sort_Recursive<span class="sym">;
-</span>      <span class="kwa">begin
-</span>         Sort_Recursive <span class="sym">(</span>S<span class="sym">'</span>First<span class="sym">,</span> S<span class="sym">'</span>Last<span class="sym">);
-</span>      <span class="kwa">end</span> Quick_Sort<span class="sym">;
-</span>   <span class="kwa">end</span> Sort_Pkg<span class="sym">;
+<span class="kwa">with</span> System<span class="sym">,</span> Ada.Numerics.Generic_Elementary_Functions<span class="sym">;
+</span><span class="kwa">with</span> Ada.Text_IO<span class="sym">;</span> <span class="kwa">use</span> Ada.Text_IO<span class="sym">;
+</span><span class="kwa">with</span> Quick_Sort<span class="sym">;
+</span><span class="kwa">with</span> GNAT.Dynamic_Tables<span class="sym">;
 
-</span>   <span class="kwa">package</span> Sort <span class="kwa">is new</span> Sort_Pkg <span class="sym">(</span>Real<span class="sym">,</span> <span class="str">&quot;&lt;=&quot;</span><span class="sym">,</span> Real_Table.Table_Type<span class="sym">);
+</span><span class="kwa">procedure</span> Moments <span class="kwa">is
 
-</span>   Table                    <span class="sym">:</span> Real_Table.Instance<span class="sym">;
+   type</span> Real <span class="kwa">is new</span> <span class="kwb">Long_Float</span><span class="sym">;
 
-</span>   Dev<span class="sym">,</span> D_2<span class="sym">,</span> Mean<span class="sym">,</span> Median   <span class="sym">:</span> Real<span class="sym">;
-</span>   Standard_Deviation       <span class="sym">:</span> Real<span class="sym">;
-</span>   Sum<span class="sym">,</span> Avg_Abs_Deviation   <span class="sym">:</span> Real    <span class="sym">:=</span> <span class="num">0.0</span><span class="sym">;
-</span>   Variance<span class="sym">,</span> Skew<span class="sym">,</span> Kurtosis <span class="sym">:</span> Real    <span class="sym">:=</span> <span class="num">0.0</span><span class="sym">;
-</span>   M                        <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
-</span>   Value                    <span class="sym">:</span> Real<span class="sym">;
+</span>   <span class="kwa">package</span> AF <span class="kwa">is new
+</span>     Ada.Numerics.Generic_Elementary_Functions <span class="sym">(</span>Float_Type <span class="sym">=&gt;</span> Real<span class="sym">);
+</span>   <span class="kwa">package</span> RIO <span class="kwa">is new</span> Ada.Text_IO.Float_IO <span class="sym">(</span>Num <span class="sym">=&gt;</span> Real<span class="sym">);
 
-</span><span class="kwa">begin
-</span>   Real_Table.Init <span class="sym">(</span>Table<span class="sym">);
+</span>   <span class="kwa">procedure</span> Put
+     <span class="sym">(</span>Item <span class="sym">:</span> Real<span class="sym">;</span> Fore <span class="sym">:</span> Field <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span> Aft <span class="sym">:</span> Field <span class="sym">:=</span> <span class="num">6</span><span class="sym">;
+</span>      Exp  <span class="sym">:</span> Field <span class="sym">:=</span> <span class="num">0</span><span class="sym">)</span> <span class="kwa">renames</span> RIO.Put<span class="sym">;
 
-</span>   <span class="kwa">declare
-</span>      Buffer <span class="sym">:</span> <span class="kwb">String</span> <span class="sym">(</span><span class="num">1</span> .. <span class="num">1</span>_024<span class="sym">);
-</span>      Last   <span class="sym">:</span> <span class="kwb">Natural</span><span class="sym">;
-</span>   <span class="kwa">begin
-      while not</span> End_Of_File <span class="kwa">loop
-</span>         M <span class="sym">:=</span> M <span class="sym">+</span> <span class="num">1</span><span class="sym">;
-</span>         RIO.Get <span class="sym">(</span>Item <span class="sym">=&gt;</span> Value<span class="sym">);
-</span>         Real_Table.Append <span class="sym">(</span>Table<span class="sym">,</span> Value<span class="sym">);
-</span>         Sum <span class="sym">:=</span> Sum <span class="sym">+</span> Value<span class="sym">;
-</span>      <span class="kwa">end loop</span><span class="sym">;
-</span>   <span class="kwa">exception
-      when</span> Data_Error <span class="sym">=&gt;
-</span>         Put_Line <span class="sym">(</span><span class="str">&quot;Error on line &quot;</span> <span class="sym">&amp;</span> M<span class="sym">'</span>Img<span class="sym">);
-</span>         Get_Line <span class="sym">(</span>Buffer<span class="sym">,</span> Last<span class="sym">);
-</span>         Put_Line <span class="sym">(</span><span class="str">&quot;   &gt; &quot;</span> <span class="sym">&amp;</span> Last<span class="sym">'</span>Img<span class="sym">);
-</span>         Put_Line <span class="sym">(</span><span class="str">&quot;   &gt; &quot;</span> <span class="sym">&amp;</span> <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">(</span>Buffer <span class="sym">(</span><span class="num">1</span><span class="sym">))'</span>Img<span class="sym">);
-</span>         Put_Line <span class="sym">(</span><span class="str">&quot;   &gt; &quot;</span> <span class="sym">&amp;</span> Buffer <span class="sym">(</span><span class="num">1</span> .. Last<span class="sym">));
-</span>   <span class="kwa">end</span><span class="sym">;
+</span>   <span class="kwa">package</span> Real_Table <span class="kwa">is
+      new</span> GNAT.Dynamic_Tables <span class="sym">(</span>Real<span class="sym">,</span> <span class="kwb">Integer</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">4</span>_096<span class="sym">,</span> <span class="num">200</span><span class="sym">);
 
-</span>   Mean <span class="sym">:=</span> Sum <span class="sym">/</span> Real <span class="sym">(</span>M<span class="sym">);
+</span>   <span class="kwa">procedure</span> Sort <span class="kwa">is new</span> Quick_Sort <span class="sym">(</span>Real<span class="sym">,</span> <span class="str">&quot;&lt;=&quot;</span><span class="sym">,</span> Real_Table.Table_Type<span class="sym">);
 
-</span>   <span class="kwa">for</span> K <span class="kwa">in</span> <span class="num">1</span> .. M <span class="kwa">loop
-</span>      Dev               <span class="sym">:=</span> Table.Table <span class="sym">(</span>K<span class="sym">) -</span> Mean<span class="sym">;
-</span>      Avg_Abs_Deviation <span class="sym">:=</span> Avg_Abs_Deviation <span class="sym">+</span> <span class="kwa">abs</span> Dev<span class="sym">;
-</span>      D_2               <span class="sym">:=</span> Dev <span class="sym">*</span> Dev<span class="sym">;
-</span>      Variance          <span class="sym">:=</span> Variance <span class="sym">+</span> D_2<span class="sym">;
-</span>      Skew              <span class="sym">:=</span> Skew <span class="sym">+ (</span>D_2 <span class="sym">*</span> Dev<span class="sym">);
-</span>      Kurtosis          <span class="sym">:=</span> Kurtosis <span class="sym">+ (</span>D_2 <span class="sym">*</span> D_2<span class="sym">);
-</span>   <span class="kwa">end loop</span><span class="sym">;
+</span>   Table                    <span class="sym">:</span> Real_Table.Instance<span class="sym">;
 
-</span>   Avg_Abs_Deviation  <span class="sym">:=</span> Avg_Abs_Deviation <span class="sym">/</span> Real <span class="sym">(</span>M<span class="sym">);
-</span>   Variance           <span class="sym">:=</span> Variance <span class="sym">/</span> Real <span class="sym">(</span>M <span class="num">- 1</span><span class="sym">);
-</span>   Standard_Deviation <span class="sym">:=</span> AF.Sqrt <span class="sym">(</span>Variance<span class="sym">);
+</span>   Dev<span class="sym">,</span> D_2<span class="sym">,</span> Mean<span class="sym">,</span> Median   <span class="sym">:</span> Real<span class="sym">;
+</span>   Standard_Deviation       <span class="sym">:</span> Real<span class="sym">;
+</span>   Sum<span class="sym">,</span> Avg_Abs_Deviation   <span class="sym">:</span> Real    <span class="sym">:=</span> <span class="num">0.0</span><span class="sym">;
+</span>   Variance<span class="sym">,</span> Skew<span class="sym">,</span> Kurtosis <span class="sym">:</span> Real    <span class="sym">:=</span> <span class="num">0.0</span><span class="sym">;
+</span>   M                        <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span>   Value                    <span class="sym">:</span> Real<span class="sym">;
 
-</span>   <span class="kwa">if</span> Variance <span class="sym">&lt;</span> <span class="num">10.0</span> <span class="sym">*</span> Real<span class="sym">'</span>Model_Epsilon <span class="kwa">then
-</span>      Put_Line <span class="sym">(</span><span class="str">&quot;&gt; Reduced accuracy results: 0 = ((Variance/10 + 1) - 1)&quot;</span><span class="sym">);
-</span>   <span class="kwa">else
-</span>      Skew     <span class="sym">:=</span> Skew <span class="sym">/ (</span>Real <span class="sym">(</span>M<span class="sym">) *</span> Variance <span class="sym">*</span> Standard_Deviation<span class="sym">);
-</span>      Kurtosis <span class="sym">:= -</span><span class="num">3.0</span> <span class="sym">+</span> Kurtosis <span class="sym">/ (</span>Real <span class="sym">(</span>M<span class="sym">) *</span> Variance <span class="sym">*</span> Variance<span class="sym">);
-</span>   <span class="kwa">end if</span><span class="sym">;
+</span><span class="kwa">begin
+</span>   Real_Table.Init <span class="sym">(</span>Table<span class="sym">);
 
-</span>   Sort.Quick_Sort <span class="sym">(</span>Table.Table <span class="sym">(</span><span class="num">1</span> .. M<span class="sym">));
+</span>   <span class="kwa">begin
+      loop
+</span>         RIO.Get <span class="sym">(</span>Item <span class="sym">=&gt;</span> Value<span class="sym">);
+</span>         M <span class="sym">:=</span> M <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>         Real_Table.Append <span class="sym">(</span>Table<span class="sym">,</span> Value<span class="sym">);
+</span>         Sum <span class="sym">:=</span> Sum <span class="sym">+</span> Value<span class="sym">;
+</span>      <span class="kwa">end loop</span><span class="sym">;
+</span>   <span class="kwa">exception
+      when others</span> <span class="sym">=&gt;</span> <span class="kwa">null</span><span class="sym">;
+</span>   <span class="kwa">end</span><span class="sym">;
 
-</span>   <span class="kwa">if</span> <span class="num">1</span> <span class="sym">= (</span>M <span class="kwa">mod</span> <span class="num">2</span><span class="sym">)</span> <span class="kwa">then
-</span>      Median <span class="sym">:=</span> Table.Table <span class="sym">((</span>M <span class="sym">+</span> <span class="num">1</span><span class="sym">) /</span> <span class="num">2</span><span class="sym">);
-</span>   <span class="kwa">else
-</span>      Median <span class="sym">:= (</span>Table.Table <span class="sym">(</span>M <span class="sym">/</span> <span class="num">2</span><span class="sym">) +</span> Table.Table <span class="sym">(</span><span class="num">1</span> <span class="sym">+</span> M <span class="sym">/</span> <span class="num">2</span><span class="sym">)) /</span> <span class="num">2.0</span><span class="sym">;
-</span>   <span class="kwa">end if</span><span class="sym">;
+</span>   Mean <span class="sym">:=</span> Sum <span class="sym">/</span> Real <span class="sym">(</span>M<span class="sym">);
 
-</span>   Put_Line <span class="sym">(</span><span class="str">&quot;n:                 &quot;</span> <span class="sym">&amp;</span> <span class="kwb">Integer</span><span class="sym">'</span>Image <span class="sym">(</span>M<span class="sym">));
-</span>   Put <span class="sym">(</span><span class="str">&quot;median:             &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Median<span class="sym">);</span>              New_Line<span class="sym">;
-</span>   Put <span class="sym">(</span><span class="str">&quot;mean:               &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Mean<span class="sym">);</span>                New_Line<span class="sym">;
-</span>   Put <span class="sym">(</span><span class="str">&quot;average_deviation:  &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Avg_Abs_Deviation<span class="sym">);</span>   New_Line<span class="sym">;
-</span>   Put <span class="sym">(</span><span class="str">&quot;standard_deviation: &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Standard_Deviation<span class="sym">);</span>  New_Line<span class="sym">;
-</span>   Put <span class="sym">(</span><span class="str">&quot;variance:           &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Variance<span class="sym">);</span>            New_Line<span class="sym">;
-</span>   Put <span class="sym">(</span><span class="str">&quot;skew:               &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Skew<span class="sym">);</span>                New_Line<span class="sym">;
-</span>   Put <span class="sym">(</span><span class="str">&quot;kurtosis:           &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Kurtosis<span class="sym">);</span>            New_Line<span class="sym">;
-</span><span class="kwa">end</span> Moments<span class="sym">;</span>
+</span>   <span class="kwa">for</span> K <span class="kwa">in</span> <span class="num">1</span> .. M <span class="kwa">loop
+</span>      Dev               <span class="sym">:=</span> Table.Table <span class="sym">(</span>K<span class="sym">) -</span> Mean<span class="sym">;
+</span>      Avg_Abs_Deviation <span class="sym">:=</span> Avg_Abs_Deviation <span class="sym">+</span> <span class="kwa">abs</span> Dev<span class="sym">;
+</span>      D_2               <span class="sym">:=</span> Dev <span class="sym">*</span> Dev<span class="sym">;
+</span>      Variance          <span class="sym">:=</span> Variance <span class="sym">+</span> D_2<span class="sym">;
+</span>      Skew              <span class="sym">:=</span> Skew <span class="sym">+ (</span>D_2 <span class="sym">*</span> Dev<span class="sym">);
+</span>      Kurtosis          <span class="sym">:=</span> Kurtosis <span class="sym">+ (</span>D_2 <span class="sym">*</span> D_2<span class="sym">);
+</span>   <span class="kwa">end loop</span><span class="sym">;
+
+</span>   Avg_Abs_Deviation  <span class="sym">:=</span> Avg_Abs_Deviation <span class="sym">/</span> Real <span class="sym">(</span>M<span class="sym">);
+</span>   Variance           <span class="sym">:=</span> Variance <span class="sym">/</span> Real <span class="sym">(</span>M <span class="num">- 1</span><span class="sym">);
+</span>   Standard_Deviation <span class="sym">:=</span> AF.Sqrt <span class="sym">(</span>Variance<span class="sym">);
+
+</span>   <span class="kwa">if</span> Variance <span class="sym">&lt;</span> <span class="num">10.0</span> <span class="sym">*</span> Real<span class="sym">'</span>Model_Epsilon <span class="kwa">then
+</span>      Put_Line <span class="sym">(</span><span class="str">&quot;&gt; Reduced accuracy results: 0 = ((Variance/10 + 1) - 1)&quot;</span><span class="sym">);
+</span>   <span class="kwa">else
+</span>      Skew     <span class="sym">:=</span> Skew <span class="sym">/ (</span>Real <span class="sym">(</span>M<span class="sym">) *</span> Variance <span class="sym">*</span> Standard_Deviation<span class="sym">);
+</span>      Kurtosis <span class="sym">:= -</span><span class="num">3.0</span> <span class="sym">+</span> Kurtosis <span class="sym">/ (</span>Real <span class="sym">(</span>M<span class="sym">) *</span> Variance <span class="sym">*</span> Variance<span class="sym">);
+</span>   <span class="kwa">end if</span><span class="sym">;
+
+</span>   Sort <span class="sym">(</span>Table.Table.<span class="kwa">all</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> M<span class="sym">);
+
+</span>   <span class="kwa">if</span> <span class="num">1</span> <span class="sym">= (</span>M <span class="kwa">mod</span> <span class="num">2</span><span class="sym">)</span> <span class="kwa">then
+</span>      Median <span class="sym">:=</span> Table.Table <span class="sym">((</span>M <span class="sym">+</span> <span class="num">1</span><span class="sym">) /</span> <span class="num">2</span><span class="sym">);
+</span>   <span class="kwa">else
+</span>      Median <span class="sym">:= (</span>Table.Table <span class="sym">(</span>M <span class="sym">/</span> <span class="num">2</span><span class="sym">) +</span> Table.Table <span class="sym">(</span><span class="num">1</span> <span class="sym">+</span> M <span class="sym">/</span> <span class="num">2</span><span class="sym">)) /</span> <span class="num">2.0</span><span class="sym">;
+</span>   <span class="kwa">end if</span><span class="sym">;
+
+</span>   Put_Line <span class="sym">(</span><span class="str">&quot;n:                 &quot;</span> <span class="sym">&amp;</span> <span class="kwb">Integer</span><span class="sym">'</span>Image <span class="sym">(</span>M<span class="sym">));
+</span>   Put <span class="sym">(</span><span class="str">&quot;median:             &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Median<span class="sym">);</span>              New_Line<span class="sym">;
+</span>   Put <span class="sym">(</span><span class="str">&quot;mean:               &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Mean<span class="sym">);</span>                New_Line<span class="sym">;
+</span>   Put <span class="sym">(</span><span class="str">&quot;average_deviation:  &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Avg_Abs_Deviation<span class="sym">);</span>   New_Line<span class="sym">;
+</span>   Put <span class="sym">(</span><span class="str">&quot;standard_deviation: &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Standard_Deviation<span class="sym">);</span>  New_Line<span class="sym">;
+</span>   Put <span class="sym">(</span><span class="str">&quot;variance:           &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Variance<span class="sym">);</span>            New_Line<span class="sym">;
+</span>   Put <span class="sym">(</span><span class="str">&quot;skew:               &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Skew<span class="sym">);</span>                New_Line<span class="sym">;
+</span>   Put <span class="sym">(</span><span class="str">&quot;kurtosis:           &quot;</span><span class="sym">);</span> Put <span class="sym">(</span>Kurtosis<span class="sym">);</span>            New_Line<span class="sym">;
+</span><span class="kwa">end</span> Moments<span class="sym">;</span>
