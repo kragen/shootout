@@ -4,6 +4,8 @@
      #{ Lang => 'Language',
      #  Home => 'URL of homepage',
      #  Down => 'URL of download page',
+     #  Type => 'native compiled', 'bytecode'
+     #  Ext  => 'c', etc.
      #  Verfun => sub { }, # function to return version number
      #},
 
@@ -12,6 +14,7 @@
        Home => 'http://www.gnat.com',
        Down => 'ftp://gcc.gnu.org/pub/gcc/releases',
        Type => 'native compiled',
+       Ext  => 'ada',
        Verfun => sub {
 	   my $ver = `gnat -v`;
 	   $ver =~ /(GNAT\s.*)/;
@@ -24,6 +27,7 @@
        Home => 'http://www.gnu.org/software/gawk/gawk.html',
        Down => 'ftp://ftp.gnu.org/gnu/gawk/',
        Type => 'interpreted',
+       Ext  => 'awk',
        Verfun => sub {
 	   my $ver = `$ENV{GAWK} --version`;
 	   $ver =~ s/\n.*//s;
@@ -36,6 +40,7 @@
        Home => 'http://www.math.fu-berlin.de/~leitner/mawk/',
        Down => 'ftp://ftp.fu-berlin.de/pub/unix/languages/mawk/',
        Type => 'interpreted',
+       Ext  => 'awk',
        Verfun => sub {
 	   my $ver = `$ENV{MAWK} -W version 2>/dev/null`;
 	   $ver =~ s/\n.*//s;
@@ -48,6 +53,7 @@
        Home => 'http://www.gnu.org/software/bash/bash.html',
        Down => 'ftp://ftp.gnu.org/gnu/bash/',
        Type => 'interpreted',
+       Ext  => 'sh',
        Verfun => sub {
 	   $ENV{BASH} = '/bin/bash';
 	   chomp(my $ver = `echo ""|$ENV{BASH} --version`);
@@ -61,6 +67,7 @@
        Home => 'http://gcc.gnu.org/',
        Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
        Type => 'native compiled',
+       Ext  => 'c',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GCC} --version`);
 	   $ver =~ s/Copyright.*//s;
@@ -74,6 +81,7 @@
        Home => 'http://gcc.gnu.org/java',
        Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
        Type => 'native compiled',
+       Ext  => 'java',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GCJ} --version`);
 	   $ver =~ s/Copyright.*//s;
@@ -87,6 +95,7 @@
        Home => 'http://gcc.gnu.org/',
        Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
        Type => 'native compiled',
+       Ext  => 'c',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GXX} --version`);
 	   $ver =~ s/Copyright.*//s;
@@ -100,6 +109,7 @@
        Home => 'http://www.go-mono.com/',
        Down => 'http://www.go-mono.com/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'cs',
        Verfun => sub {
 	   #chomp(my $ver = `$ENV{MONOC} --version`);
 	   $ver = '0.96';
@@ -112,6 +122,7 @@
        Home => 'http://www.cs.kun.nl/~clean/index.html',
        Down => 'http://www.cs.kun.nl/~clean/Download/main/main.htm',
        Type => 'native compiled',
+       Ext  => 'hs',
        Verfun => sub {
 	   my $ver = "Clean 2.1";
 	   return($ver);
@@ -123,6 +134,7 @@
        Home => 'http://www.cons.org/cmucl/',
        Down => 'http://www.cons.org/cmucl/',
        Type => 'native compiled',
+       Ext  => 'lisp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{CMUCL} -batch -eval '(progn (princ COMMON-LISP::*LISP-IMPLEMENTATION-VERSION*) (quit))'`);
 	   $ver = "CMU Common Lisp $ver";
@@ -135,6 +147,7 @@
        Home => 'http://sbcl.sourceforge.net/',
        Down => 'http://sbcl.sourceforge.net/',
        Type => 'native compiled',
+       Ext  => 'lisp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SBCL} --version`);
 	   return($ver);
@@ -146,6 +159,7 @@
        Home => 'http://www.gwydiondylan.org',
        Down => 'http://www.gwydiondylan.org/download.html',
        Type => 'native compiled',
+       Ext  => 'dylan',
        Verfun => sub {
 	   my $ver = `$ENV{GWYDION} --version`;
 	   $ver =~ /(d2c\s.*)/;
@@ -158,6 +172,7 @@
        Home => 'http://smarteiffel.loria.fr/',
        Down => 'ftp://ftp.loria.fr/pub/loria/SmartEiffel/',
        Type => 'native compiled',
+       Ext  => 'e',
        Verfun => sub {
 	   my $ver = `$ENV{SE} -version`;
 	   $ver =~ /(Release\s.*?\))/;
@@ -170,6 +185,7 @@
        Home => 'http://www.elasticword.com/',
        Down => 'http://www.elasticword.com/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'c',
        Verfun => sub {
 	   my $ver = `$ENV{ELASTICC} -V 2>&1`;
 	   $ver =~ s/ecc version.*$//;
@@ -182,6 +198,7 @@
        Home => 'http://www.erlang.org/',
        Down => 'http://www.erlang.org/download.html',
        Type => 'bytecomped/interpreted',
+       Ext  => 'erl',
        Verfun => sub {
 	   my $ver = `$ENV{ERLANG} -version 2>&1`;
 	   $ver =~ s/\r?\n$//;
@@ -194,6 +211,7 @@
        Home => 'http://www.erlang.org/',
        Down => 'http://www.erlang.org/download.html',
        Type => 'native compiled',
+       Ext  => 'erl',
        Verfun => sub {
 	   my $ver = `$ENV{ERLANG} -version 2>&1`;
 	   $ver =~ s/\r?\n$//;
@@ -206,6 +224,7 @@
        Home => 'http://www.jwdt.com/~paysan/gforth.html',
        Down => 'http://www.complang.tuwien.ac.at/forth/gforth/',
        Type => 'interpreted',
+       Ext  => '4th',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GFORTH} --version 2>&1`);
 	   return($ver);
@@ -217,6 +236,7 @@
        Home => 'http://www.haskell.org/',
        Down => 'http://www.haskell.org/ghc/',
        Type => 'native compiled',
+       Ext  => 'hs',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GHC} --version 2>&1`);
 	   return($ver);
@@ -228,6 +248,7 @@
        Home => 'http://www.cs.arizona.edu/icon/',
        Down => 'http://www.cs.arizona.edu/icon/v93.htm',
        Type => 'interpreted',
+       Ext  => 'icn',
        Verfun => sub {
 	   chomp(my $ver = `unset STRSIZE BLOCKSIZE COEXPSIZE MSTKSIZE TRACE NOERRBUF ; echo 'procedure main() ; write(&version) ; end' | $ENV{ICON} - -x 2>/dev/null`);
 	   unlink("stdin");	# ick, leftover from icon
@@ -240,6 +261,7 @@
        Home => 'http://gcc.gnu.org/java/',
        Down => 'http://gcc.gnu.org/install/binaries.html',
        Type => 'interpreted',
+       Ext  => 'java',
        Verfun => sub {
 	   my $ver = `$ENV{GIJ} -version 2>&1`;
 	   $ver =~ /(gij.*)\n/;
@@ -252,6 +274,7 @@
        Home => 'http://sablevm.org/',
        Down => 'http://sablevm.sourceforge.net/download.html',
        Type => 'interpreted',
+       Ext  => 'java',
        Verfun => sub {
 	   my $ver = `$ENV{SABLEVM} --version 2>&1`;
 	   $ver =~ /(SableVM version.*)\n/;
@@ -264,6 +287,7 @@
        Home => 'http://kaffe.org',
        Down => 'http://www.kaffe.org/ftp/pub/kaffe/',
        Type => 'interpreted',
+       Ext  => 'java',
        Verfun => sub {
 	   my $ver = `$ENV{KAFFE} -version 2>&1`;
 	   $ver =~ /(Version.*) Java Version.*/;
@@ -276,6 +300,7 @@
        Home => 'http://www.blackdown.org/',
        Down => 'http://www.blackdown.org/',
        Type => 'interpreted',
+       Ext  => 'java',
        Verfun => sub {
 	   my $ver = `$ENV{JAVA} -version 2>&1`;
 	   $ver =~ /(Java HotSpot.*)/;
@@ -288,6 +313,7 @@
        Home => 'http://www.lua.org/',
        Down => 'http://www.lua.org/download.html',
        Type => 'interpreted',
+       Ext  => 'lua',
        Verfun => sub {
 	   my $ver = `$ENV{LUA} -v 2>&1`;
 	   $ver =~ /(Lua.*) Copyright.*/;
@@ -300,6 +326,7 @@
        Home => 'http://nice.sourceforge.net/',
        Down => 'http://nice.sourceforge.net/install.html',
        Type => 'native compiled',
+       Ext  => 'nice',
        Verfun => sub {
 	   my $ver = `$ENV{NICEC} --version 2>&1`;
 	   $ver =~ /(Nice compiler.*)\n/;
@@ -312,6 +339,7 @@
        Home => 'http://www.ocaml.org/',
        Down => 'http://caml.inria.fr/ocaml/distrib.html',
        Type => 'native compiled',
+       Ext  => 'ml',
        Verfun => sub {
 	   my $ver = `$ENV{OCAML} -v`;
 	   $ver =~ /^(.*)\n/;
@@ -324,6 +352,7 @@
        Home => 'http://www.ocaml.org/',
        Down => 'http://caml.inria.fr/ocaml/distrib.html',
        Type => 'bytecomped/interpreted',
+       Ext  => 'ml',
        Verfun => sub {
 	   my $ver = `$ENV{OCAMLB} -v`;
 	   $ver =~ /^(.*)\n/;
@@ -336,6 +365,7 @@
        Home => 'http://www.mozart-oz.org',
        Down => 'http://www.mozart-oz.org/download',
        Type => 'interpreted',
+       Ext  => 'pro',
        Verfun => sub {
 	   my $ver = `$ENV{OZC} -e d 2>&1`;
 	   $ver =~ /(Mozart Compiler\s.*)/;
@@ -348,6 +378,7 @@
        Home => 'http://www.php.net/',
        Down => 'http://www.php.net/downloads.php',
        Type => 'interpreted',
+       Ext  => 'php',
        Verfun => sub {
 	   my $ver = `$ENV{PHP} -v`;
 	   $ver =~ s/Copyright.*//s;
@@ -361,6 +392,7 @@
        Home => 'http://www.perl.org/',
        Down => 'http://www.cpan.org/src/5.0/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'pl',
        Verfun => sub {
 	   my $ver = `$ENV{PERL} -v`;
 	   $ver =~ /(This is perl.*)\n/;
@@ -373,6 +405,7 @@
        Home => 'http://pike.roxen.com/',
        Down => 'http://pike.roxen.com/download/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'pike',
        Verfun => sub {
 	   my $ver = `$ENV{PIKE} --version 2>&1`;
 	   $ver =~ /(Pike v.*?)Copy/;
@@ -385,6 +418,7 @@
        Home => 'http://prolog.inria.fr',
        Down => 'ftp://ftp.inria.fr/INRIA/Projects/contraintes/gprolog',
        Type => 'native compiled',
+       Ext  => 'pro',
        Verfun => sub {
            my $ver = `$ENV{GPLC} --version 2>&1`;
 	   $ver =~ /(GNU Prolog.*)/;
@@ -397,8 +431,9 @@
        Home => 'http://psyco.sourceforge.net/',
        Down => 'http://psyco.sourceforge.net/download.html',
        Type => 'native compiled',
+       Ext  => 'py',
        Verfun => sub {
-           return('0.9');
+           return('1.2');
        },
      },
 
@@ -407,6 +442,7 @@
        Home => 'http://www.python.org/',
        Down => 'http://www.python.org/download/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'py',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{PYTHON} -c 'import sys; print "Python %d.%d.%d" % sys.version_info[0:3]'`);
 	   return($ver);
@@ -418,6 +454,7 @@
        Home => 'http://librep.sourceforge.net/',
        Down => 'ftp://librep.sourceforge.net/pub/librep/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'lisp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{REP} --version`);
 	   return($ver);
@@ -429,6 +466,7 @@
        Home => 'http://www.ruby-lang.org/',
        Down => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
        Type => 'interpreted',
+       Ext  => 'rb',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{RUBY} -v`);
 	   return($ver);
@@ -440,6 +478,7 @@
        Home => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/',
        Down => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/bigloo-1.html',
        Type => 'native compiled',
+       Ext  => 'lisp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{BIGLOO} -version`);
 	   return($ver);
@@ -451,6 +490,7 @@
        Home => 'http://www.gnu.org/software/guile/guile.html',
        Down => 'ftp://ftp.gnu.org/pub/gnu/guile/',
        Type => 'interpreted',
+       Ext  => 'lisp',
        Verfun => sub {
 	   my $ver = `$ENV{GUILE} --version`;
 	   $ver =~ s/\n.*//s;
@@ -463,6 +503,7 @@
        Home => 'http://www.plt-scheme.org',
        Down => 'http://download.plt-scheme.org/drscheme/',
        Type => 'native compiled',
+       Ext  => 'lisp',
        Verfun => sub {
 	   my $ver = `$ENV{MZC} -h`;
 	   $ver =~ s/\n.*//s;
@@ -477,6 +518,7 @@
        Home => 'http://www.plt-scheme.org',
        Down => 'http://download.plt-scheme.org/drscheme/',
        Type => 'interpreted',
+       Ext  => 'lisp',
        Verfun => sub {
 	   my $ver = `$ENV{MZSCHEME} --version`;
 	   $ver =~ s/\n.*//s;
@@ -491,6 +533,7 @@
        Home => 'http://www.ece.purdue.edu/~qobi/software.html',
        Down => 'http://www.ece.purdue.edu/~qobi/software.html',
        Type => 'native compiled',
+       Ext  => 'lisp',
        Verfun => sub {
            return('0.9');
        },
@@ -501,6 +544,7 @@
        Home => 'http://www.s-lang.org/',
        Down => 'http://www-s-lang.org/download.html',
        Type => 'interpreted',
+       Ext  => 'c',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SLANG} --version`);
 	   $ver =~ s/slsh.*//;	# Dump the slsh version -- who cares!
@@ -513,6 +557,7 @@
        Home => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
        Down => 'http://cm.bell-labs.com/cm/cs/what/smlnj/software.html',
        Type => 'native compiled',
+       Ext  => 'sml',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SMLNJ} </dev/null`);
 	   $ver =~ s/\s*\[.*//;
@@ -525,6 +570,7 @@
        Home => 'http://www.mlton.org/',
        Down => 'http://www.mlton.org/download/',
        Type => 'native compiled',
+       Ext  => 'sml',
        Verfun => sub {
 	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} 2>&1`));
 	   $ver =~ s/\(built.*//;
@@ -537,6 +583,7 @@
        Home => 'http://tcl.tk/',
        Down => 'http://www.tcl.tk/software/tcltk/downloadnow84.tml',
        Type => 'bytecomped/interpreted',
+       Ext  => 'tcl',
        Verfun => sub {
 	   chomp(my $ver = `echo 'puts [info patchlevel]'|$ENV{TCL}`);
 	   return('Tcl ' . $ver);
@@ -548,6 +595,7 @@
        Home => 'http://www.xemacs.org/',
        Down => 'http://www.xemacs.org/Download/',
        Type => 'bytecomped/interpreted',
+       Ext  => 'lisp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{XEMACS} -vanilla -batch -eval '(princ (emacs-version))'`);
 	   $ver =~ s/ of .*//;
@@ -563,6 +611,7 @@
      'Ada'         => 'dash',
      'Awk'         => 'shell',
      'Bash'        => 'shell',
+     'bigloo'      => 'lisp',
      'C'           => 'c',
      'C++'         => 'c',
      'C#'          => 'c',
