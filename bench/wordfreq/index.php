@@ -31,9 +31,9 @@ word, frequency, count, counter" -->
 <p>The <b>bash</b> program is really a pipeline using <b>tr</b>,
   <b>grep</b>, <b>sort</b> and <b>uniq</b>.  This is the UNIX way of
   combining tools in the shell to get things done.</p>
-<p><a href="/data/shootout/wordfreq/Input">Input</a> file (it
+<p><a href="/bench/wordfreq/Input">Input</a> file (it
   is repeated N times).<br>
-  <a href="/data/shootout/wordfreq/Output">Output</a> file (for
+  <a href="/bench/wordfreq/Output">Output</a> file (for
   N=1).<br></p>
 <p>The input file to the tests is the text file <i>The Prince</i>, by
   Nicoló Machiavelli.  This input file is about 170KB, but it is

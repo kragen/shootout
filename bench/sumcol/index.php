@@ -19,7 +19,7 @@ sum a column" -->
   in constant space.</p>
 <p>For this test, each program can assume that no line will exceed 128
   characters (including newline).</p>
-<p><a href="/data/shootout/sumcol/Input">Input</a> file (it
+<p><a href="/bench/sumcol/Input">Input</a> file (it
   is repeated N times).</p>
 <div class="donemessage">
   <p>The correct output (for N = 100, i.e. 100 copies of the input)

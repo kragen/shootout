@@ -20,10 +20,10 @@ spell checker" -->
   lowercase letters.</p>
 <p>For this test, each program can assume that no line will exceed 128
   characters (including newline).</p>
-<p><a href="/data/shootout/spellcheck/Usr.Dict.Words">Dictionary</a>.<br>
-  <a href="/data/shootout/spellcheck/Input">Input</a> file (it is 
+<p><a href="/bench/spellcheck/Usr.Dict.Words">Dictionary</a>.<br>
+  <a href="/bench/spellcheck/Input">Input</a> file (it is 
   repeated N times).<br>
-  <a href="/data/shootout/spellcheck/Output">Output</a> file (for
+  <a href="/bench/spellcheck/Output">Output</a> file (for
   N=1).<br></p>
 
 <!--

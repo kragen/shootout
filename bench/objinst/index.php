@@ -15,7 +15,7 @@ computer, language, compare, cpu, memory, object instantiation" -->
   base and derived classes.</p>
 <p>These classes are also used in the <a href="../methcall/">Method
   Calls</a> test.  (See that page for more description of the test).</p>
-<p>The correct output looks like <a href="Output">this</a>.</p>
+<p>The correct output looks like <a href="/bench/objinst/Output">this</a>.</p>
 
 <h4>Observations</h4>
 <p>The <a href="objinst.se">SmallEiffel solution</a> (submitted by

@@ -19,8 +19,8 @@ reverse a file" -->
 <p>In this test, it's okay to use input methods other than line-oriented
   I/O, such as reading the entire input from stdin, as long as each
   read is no more than 4096 bytes at a time.</p>
-<p><a href="/data/shootout/reversefile/Input">Input</a> file (100K, it
-  is repeated N times).  <a href="/data/shootout/reversefile/Output">Output
+<p><a href="/bench/reversefile/Input">Input</a> file (100K, it
+  is repeated N times).  <a href="/bench/reversefile/Output">Output
   </a> file (500K, for N=5).</p>
 <p>For this test, solutions can assume that the file ends with a
   trailing newline.</p>

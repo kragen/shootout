@@ -18,8 +18,8 @@ statistical moments" -->
   input file all at once (since all the numbers need to be in
   memory together in order to do the calculations).</p>
 <p>
-  <a href="/data/shootout/moments/Input">Input</a> file.
-  <a href="/data/shootout/moments/Output">Output</a> file.
+  <a href="/bench/moments/Input">Input</a> file.
+  <a href="/bench/moments/Output">Output</a> file.
 </p>
 
 <!--

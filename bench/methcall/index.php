@@ -24,7 +24,7 @@ computer, language, compare, cpu, memory, method calls" -->
   inherit the boolean field and value() method.</p>
 <p>These classes are also used in the <a href="../objinst/">Object
   Instantiation</a> test.</p>
-<p>The correct output looks like <a href="Output">this</a>.</p>
+<p>The correct output looks like <a href="/bench/methcall/Output">this</a>.</p>
 
 <h4>Observations</h4>
 <p>In Perl, we could &nbsp; <code>use fields;</code> &nbsp; to declare the

@@ -23,8 +23,8 @@ language, compare, cpu, memory, recursion" -->
   "detail.php">detail page</a> for different values of N.</p>
 <p>Each program can assume that no line will exceed 128 characters
   (including newline).</p>
-<p><a href="/data/shootout/regexmatch/Input">Input</a> file.
-  <a href="/data/shootout/regexmatch/Output">Output</a> file.</p>
+<p><a href="/bench/regexmatch/Input">Input</a> file.
+  <a href="/bench/regexmatch/Output">Output</a> file.</p>
 <p>The telephone number pattern we are trying to match can be described
   this way:
   <ul>
