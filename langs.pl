@@ -370,8 +370,8 @@
 
      stalin =>
      { Lang => 'Scheme',
-       Home => 'http://www.neci.nec.com/homepages/qobi/software.html',
-       Down => 'http://www.neci.nec.com/homepages/qobi/software.html',
+       Home => 'http://www.ece.purdue.edu/~qobi/software.html',
+       Down => 'http://www.ece.purdue.edu/~qobi/software.html',
        Type => 'native compiled',
        Verfun => sub {
            return('0.9');
