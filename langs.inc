@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => 'SBCL 0.8.15.6'
+      'Version' => 'SBCL 0.8.15.7'
     ),
 
     'gwydion' => array(
@@ -155,7 +155,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://felix.sourceforge.net/',
       'Down'    => 'http://felix.sourceforge.net/download.html',
       'Type'    => 'native compiled',
-      'Version' => '1.0.11
+      'Version' => '1.0.12
 '
     ),
 
