@@ -724,7 +724,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 
 function MkScorecardMenuForm($Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
-   echo '<select name="test">', "\n";
+   echo '<p><select name="test">', "\n";
    echo '<option selected value="all">all ', TESTS_PHRASE, '</option>', "\n";
    echo '</select>', "\n";
 
@@ -733,7 +733,7 @@ function MkScorecardMenuForm($Sort){
    echo '</select>', "\n";
    echo '<input type="submit" value="Show" title="Show your Fast, Faster, Fastest languages"/>', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";   
-   echo '</form>', "\n";
+   echo '</p></form>', "\n";
 }
 
 
