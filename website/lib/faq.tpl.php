@@ -8,39 +8,21 @@
 <tr><td><p>You can send suggestions and comments without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <b>message form</b></a>.
  You can contribute faster more-elegant programs - send them, and your suggestions, to the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><b>mailing list</b></a>.</p></td></tr>
 
-
-
-<tr class="b"><td>Where can I see more?</td></tr>
+<tr class="b"><td>Where can I see which language version was used?</td></tr>
 <tr><td>
-<p>You can look at our other Shootout websites - </p>
+<p>You can see information about the language implementation, including the version number, at the bottom of each <b>rankings page</b>.</p>
+</td></tr>
 
+<tr class="b"><td>Where can I see which compiler and runtime options were used?</td></tr>
+<tr><td>
+<p>You can see the build commands and runtime commands in the <b>build & benchmark results</b> section, on each program page.</p>
+</td></tr>
 
-<p><a class="arevGreat" href="<?=GREAT_SITE;?>index.php?sort=<?=$Sort;?>" >The Great Computer Language Shootout</a> includes programming language implementations that have more than a few completed benchmark programs.
-</p>
-
-<p><a class="arevSandbox" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >The Sandbox</a> includes programming languages that only have a few completed benchmark programs, some really obscure programming languages; and some new benchmarks we're developing.
-</p>
-
-<p><a class="arevCore" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Computer Language Shootout</a> includes a smaller selection of programming languages. 
-</p>
-
-<p><a class="arevOld" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >The Old Great Computer Language Shootout</a> shows the benchmarks used in Doug Bagley's Shootout.
-
-</p>
 <tr class="b"><td>Where can I download the <b>data</b> from?</td></tr>
-
 <tr><td><p>You can <b>download</b> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="Not yet available">zip file of timings and memory use ~100KB</a>.</p></td></tr>
-
-
-
 <tr class="b"><td>Where can I see what other people think about the Language Shootout?</td></tr>
-
 <tr><td><p>You can start by reading the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription">mailing list archives.</a></p></td></tr>
-
-
-
 <tr class="b"><td>Where can I download the program sources and build scripts?</td></tr>
-
 <tr><td><p>You can browse the CVS tree on <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
 </td></tr>
 
@@ -48,71 +30,39 @@
 compressed tarball ~1.5MB</a>. The current distribution is only suitable for the adventurous.
 </p></td></tr>
 
-
 <tr class="b"><td>Where can I find out more?</td></tr>
-
 <tr><td><p>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
 </p></td></tr>
-
 <tr><td><p>You could learn about <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><b>benchmarking</b></a>.
-</p></td></tr>
-
-
-
+</p></td></tr>
 </table>
 
 
-
-
 <!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
-
 <table class="div">
 <tr><td><h3 class="rev">&nbsp;What does &#133; mean?</h3></td></tr>
-
-
-
 <tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
-
 <tr><td>
 <p>Full CPU Time means <b>program run-time</b> including program <b>startup time</b>. So for Java that includes the time to startup a JVM.</p>
-
-
 <p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
 <p>(Flaw #1 - normally we'd time a specific block of code within a program, and exclude startup time.)</p>
 </td></tr>
 
-
-
-
 <tr class="b"><td><a name="cpu">What does CPU Time mean?</a></td></tr>
-
 <tr><td><p>The CPU Time is the measured CPU time minus the average program startup time for the language.</p></td></tr>
-
-
 </table>
 
-
-
 <!-- HOW SHOULD I IMPLEMENT ...? /////////////////////////////////////// -->
-
-
 <table class="div">
 <tr><td><h3 class="rev">&nbsp;How should I implement&#133;?</h3></td></tr>
-
-
 <tr class="b"><td><a name="sameway">How should I implement a same way program?</a></td></tr>
-
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.
 </p><p>The <b>same way</b> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
 "Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&lang=all&sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
 <p>The same way programs often seem naive and unidiomatic.</p> 
-
-
 <p>(Flaw #2 - we'd like to compare apples & apples, but normally we'd solve problems using different approaches depending on the language.)</p>      
 </td></tr>
-
-
-
+
 <tr class="b"><td><a name="samething">How should I implement a same thing program?</a></td></tr>
 
 <tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may

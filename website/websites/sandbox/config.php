@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004
+// Copyright (c) Isaac Gouy 2004, 2005
 
 
 // FILE PATHS ///////////////////////////////////////////////////
@@ -35,8 +35,8 @@ define('HOMEPAGE_ROWS',35);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'sandbox');
-define('SITE_TITLE','The Sandbox');
-define('BANNER_TITLE','The&nbsp;Sandbox&nbsp;');
+define('SITE_TITLE','The Computer Language Shootout Sandbox');
+define('BANNER_TITLE','The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Sandbox');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');

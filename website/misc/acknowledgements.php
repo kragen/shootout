@@ -11,7 +11,7 @@ nhc98 interpreter) provided several enhanced Haskell implementations.</li>
   <li>Stephen Weeks contributed a number of SML solutions for MLton, and continues to provide valued input to the shootout.</li>
   <li>Isaac Gouy provided a slew of PHP, Clean, Erlang, Oberon 2, and many other implementations.</li>
   <li>John Goerzen and Tomasz Zielonka and Greg Buchholz and Einar Karttunen and Aaron Denney all worked on improving the GHC Haskell programs.</li>
-  <li>Felix Winkelmann (the creator of the excellent Chicken Scheme implementation) provided a great many Chicken test implementations.<li>
+  <li>Felix Winkelmann (the creator of the excellent Chicken Scheme implementation) provided a great many Chicken test implementations.</li>
   <li>John Skaller added programs in his FELIX language.</li>
   <li>Lutz Mueller added newLISP implementations.</li>
   <li>Raymond Racine spotted a couple of problems with the MLton code.</li>
