@@ -1,47 +1,55 @@
 ;;; The Great Computer Language Shootout
 ;;;   http://shootout.alioth.debian.org/
 
-;;;   contributed by Yannick Gingras <ygingras@ygingras.net>
+;;; contributed by Yannick Gingras <ygingras@ygingras.net>
 
-;;;   for a colorful web zoomer for the Mandelbrot Set by the same
-;;;   author see http://fract.ygingras.net/
-
-
-(declaim (optimize speed (debug 0) (safety 0)))
+(declaim (optimize speed (debug 0) (safety 0) (space 0)))
   
 (defun render (size &optional (stream *standard-output*))
   (declare (type fixnum size)
            (type stream stream))
-  (let* ((inc (/ 2.0 size))
+  (let* ((inc (/ 2.0d0 size))
          (code 0)
-         (mask 128))
-    (declare (type (unsigned-byte 8) code)
-             (type (unsigned-byte 8) mask))
+         (mask 128)
+         (zi 0.0d0)
+         (zr 0.0d0)
+         (tr 0.0d0)
+         (base-imag -1.0d0)
+         (base-real -1.5d0)
+         (str (make-string (* size (ceiling size 8))))
+         (cur-char -1))
+    (declare (type (unsigned-byte 8) code mask)
+             (type double-float zr zi tr base-real base-imag inc)
+             (type fixnum cur-char))
     (format stream "P4~%~d ~d~%" size size)
     (dotimes (y size)
       (declare (type fixnum y))
-      (let ((base-imag (+ (* inc y) -1.0)))
-        (declare (type single-float base-imag))
-        (dotimes (x size)
-          (declare (type fixnum x))
-          (let* ((z #c(0.0 0.0))
-                 (c (complex (+ (* inc x) -1.5) base-imag))
-                 (imag 0.0)
-                 (real 0.0))
-            (declare (type (complex single-float) z)
-                     (type (complex single-float) c))
-            (when (not (dotimes (n 50)
-                         (when (< 4.0 (+ (* imag imag) (* real real)))
-                           (return t))
-                         (setf z (+ (* z z) c))
-                         (setf imag (imagpart z))
-                         (setf real (realpart z))))
-              (setf code (logior mask code)))
-            (setf mask (ash mask -1))
-            (when (zerop mask)
-              (setf mask 128)
-              (write-char (code-char code) stream)
-              (setf code 0))))))))
+      (dotimes (x size)
+        (declare (type fixnum x))
+        (setf zr 0.0d0)
+        (setf zi 0.0d0)
+        (when (not (dotimes (n 51)
+                     (when (< 4.0d0 (+ (* zr zr) (* zi zi)))
+                       (return t))
+                     (setf tr (+ (* zr zr) (- (* zi zi)) base-real))
+                     (setf zi (+ (* 2.0d0 zr zi) base-imag))
+                     (setf zr tr)))
+          (setf code (logior mask code)))
+        (setf mask (ash mask -1))
+        (when (zerop mask)
+          (setf mask 128)
+          (setf (elt str (incf cur-char)) (code-char code))
+          (setf code 0))
+        (incf base-real inc))
+      (when (/= 128 mask)
+        (setf (elt str (incf cur-char)) (code-char code))
+        (setf code 0)
+        (setf mask 128))
+      (setf base-real -1.5d0)
+      (incf base-imag inc))
+    
+    (write-sequence str stream))
+  t)
 
 (defun main ()
   (let* ((args #+sbcl sb-ext:*posix-argv*
@@ -49,6 +57,4 @@
                #+gcl si::*command-args*)
          (n (parse-integer (car (last args)))))
     (render n)))
-
-
 

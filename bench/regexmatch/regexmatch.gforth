@@ -1,8 +1,8 @@
 \ -*- mode: forth -*-
-\ $Id: regexmatch.gforth,v 1.1 2004-05-25 03:50:52 bfulgham Exp $
+\ $Id: regexmatch.gforth,v 1.2 2005-03-30 07:42:40 bfulgham Exp $
 \ http://www.bagley.org/~doug/shootout/
 
-\ from Anton Ertl:
+\ from Anton Ertl, fixes by Ian Osgood:
 \ this uses the Gray parser generator, which is probably too big a
 \ cannon for this problem (it also needs a lot of setup code).
 \ Writing a recursive descent parser by hand is probably both smaller
@@ -14,16 +14,6 @@
 warnings off \ Gray is a little wordy
 
 require gray.fs
-
-: slurp-fid { fid -- addr u }
-    0 0 begin ( awhole uwhole )
-	dup 1024 + dup >r extend-mem ( anew awhole uwhole R: unew )
-	rot r@ fid read-file throw ( awhole uwhole uread R: unew )
-	r> 2dup =
-    while ( awhole uwhole uread unew )
-	2drop
-    repeat
-    - + dup >r resize throw r> ;
 
 : bit-equiv ( w1 w2 -- w3 )
     \ w3=~w1^w2
@@ -44,9 +34,9 @@ variable end-input \ pointer to end of input
 
 : get-input ( -- c )
     start end-input @ = if
-	eof-char
+        eof-char
     else
-	start c@
+        start c@
     endif ;
 
 256 max-member
@@ -93,37 +83,40 @@ telnum parser scan-telnum ( -- )
 
 : scan-for-nondigit ( addr1 -- addr2 )
     begin
-	count ( c@+ ) >r
-	r@ '0 < r@ '9 > or  r> '( <>  and
-	over end-input @ u>= or
+        count ( c@+ ) >r
+        r@ '0 < r@ '9 > or  r> '( <>  and
+        over end-input @ u>= or
     until ;
 
 variable count  0 count !
 
+defer on-match  ' noop is on-match
+
+: output-match ( -- )
+    1 count +! count @ 1 u.r ." : "
+    ." (" areacode 2@ type ." ) " exchange 2@ type ." -" last4 2@ type cr ;
+
 : scanfile ( addr u -- )
     over + end-input !
     begin ( addr1 )
-	dup input !
-	['] scan-telnum catch
-	dup dup scanfail <> and throw
-	if ( addr1 )
-	    scan-for-nondigit
-	else
-	    1 count +! count @ 1 u.r ." : "
-	    ." (" areacode 2@ type ." ) " exchange 2@ type ." -" last4 2@ type
-	    cr
-	    end-input @ over - #lf scan drop \ skip rest of line
-	endif
-	dup end-input @ u>=
+        dup input !
+        ['] scan-telnum catch
+        dup dup scanfail <> and throw
+        if ( addr1 )
+            scan-for-nondigit
+        else
+            on-match
+            end-input @ over - #lf scan drop \ skip rest of line
+        endif
+        dup end-input @ u>=
     until
     drop ;
 
 : mainloop ( addr u -- )
-    ['] 2drop [is] type
     NUM 1 +do
-	2dup scanfile
+        2dup scanfile
     loop
-    ['] (type) [is] type
+    ['] output-match [is] on-match
     scanfile ;
     
 stdin slurp-fid mainloop bye
