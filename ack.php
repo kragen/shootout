@@ -143,4 +143,4 @@ algorithms, languages, compare, cpu, memory" -->
     </td>
   </tr>
 </table>
-<? php require("html/footer.php"); ?>
+<?php require("html/footer.php"); ?>
