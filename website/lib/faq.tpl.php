@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004 ?>
+<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 <div>This FAQ is short. You can read it really quickly.</div>
 
 <!-- WHERE CAN I? ////////////////////////////////////////////////// -->
@@ -7,6 +7,12 @@
 <tr class="b"><td>Where can I send <b>suggestions</b> and comments and programs?</td></tr>
 <tr><td><p>You can send suggestions and comments without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <b>message form</b></a>.
  You can contribute faster more-elegant programs - send them, and your suggestions, to the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><b>mailing list</b></a>.</p></td></tr>
+<tr class="b"><td>Where can I see more about a <b>Timeout</b> or <b>Error</b>?</td></tr>
+<tr><td>
+<p>Sometimes a program may produce the correct results, within the timeout, for smaller workloads - so check the complete data-table on the <b>side-by-side comparison</b> page.</p>
+<p>You may find information about an Error in the 'build & benchmark results' section of the program page.</p>
+</td></tr>
+
 
 <tr class="b"><td>Where can I see which language version was used?</td></tr>
 <tr><td>
