@@ -74,7 +74,7 @@ public class knucleotide {
     for (int i=0; i<list.size(); i++) {
       knucleotide fragment = (knucleotide)list.get(i);
       double percent = (double)fragment.count/(double)sum * 100.0;
-      System.out.println(fragment.sequence + " " + nf.format(percent));
+      System.out.println(fragment.sequence + " " + nf.format(percent) );
     }
     System.out.println("");
   }
@@ -99,7 +99,7 @@ public class knucleotide {
   // indicate so, but it is not entirely clear. This method could easily
   // be folded up.
   void calculateFrequencies(Map map, int offset, int fragmentLength) {
-    int lastIndex = sequence.length() - fragmentLength;
+    int lastIndex = sequence.length() - fragmentLength + 1;
     for (int index=offset; index<lastIndex; index+=fragmentLength) {
       String temp = sequence.substring(index, index + fragmentLength);
       knucleotide fragment = (knucleotide)map.get(temp);
