@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2005-03-22 09:04:59 bfulgham Exp $
+# $Id: Makefile,v 1.20 2005-03-23 06:11:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fibo
@@ -13,7 +13,6 @@ BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
-ERLFLAGS := -noinput
 GHCOPTS  := -fasm
 GPLCOPTS := --fast-math
 
