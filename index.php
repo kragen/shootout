@@ -10,7 +10,7 @@
 
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
-<?php benchlist(true, "."); ?>
+<?php benchlist("."); ?>
       <div id="helptext" class="toolgroup">
         <div class="label">
 	  <strong>Notes:</strong>
