@@ -1,0 +1,79 @@
+-- $Id: tcprequest.gnat,v 1.1 2005-03-31 14:11:36 obry-guest Exp $
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Pascal Obry on 2005/03/31
+
+with Ada.Command_Line;    use Ada.Command_Line;
+with Ada.Text_IO;         use Ada.Text_IO;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+with Ada.Streams;         use Ada.Streams;
+with GNAT.Sockets;        use GNAT.Sockets;
+
+procedure TCPRequest is
+
+   N            : constant Positive := Positive'Value (Argument (1));
+   M            : constant := 100;
+   Reply_Size   : constant := 4_096;
+   Request_Size : constant := 64;
+
+   Reply   : constant Stream_Element_Array := (1 .. Reply_Size => 88);
+   Request : constant Stream_Element_Array := (1 .. Request_Size => 23);
+
+   Address : Sock_Addr_Type;
+
+   task Client is
+      entry Start;
+   end Client;
+
+   task body Client is
+      Socket : Socket_Type;
+      Buffer : Stream_Element_Array (1 .. Reply_Size);
+      Last   : Stream_Element_Offset;
+      Count  : Natural := 0;
+      Bytes  : Natural := 0;
+   begin
+      accept Start;
+
+      Create_Socket (Socket);
+      Connect_Socket (Socket, Address);
+
+      for K in 1 .. M * N loop
+         Send_Socket (Socket, Request, Last);
+
+         Bytes := 0;
+         while Bytes /= Reply_Size loop
+            Receive_Socket (Socket, Buffer, Last);
+            Bytes := Bytes + Natural (Last);
+         end loop;
+
+         Count := Count + Bytes;
+      end loop;
+
+      Close_Socket (Socket);
+
+      Put ("replies: "); Put (N * M, Width => 0);
+      Put (ASCII.HT & "bytes: "); Put (Count, Width => 0);
+   end Client;
+
+   Server_Socket : Socket_Type;
+   Socket        : Socket_Type;
+   Buffer        : Stream_Element_Array (1 .. Request_Size);
+   Last          : Stream_Element_Offset;
+
+begin
+   Address.Addr := Addresses (Get_Host_By_Name ("localhost"), 1);
+   Address.Port := 2987;
+
+   Create_Socket (Server_Socket);
+   Bind_Socket (Server_Socket, Address);
+   Listen_Socket (Server_Socket);
+
+   Client.Start;
+
+   Accept_Socket (Server_Socket, Socket, Address);
+
+   for K in 1 .. M * N loop
+      Receive_Socket (Socket, Buffer, Last);
+      Send_Socket (Socket, Reply, Last);
+   end loop;
+end TCPRequest;
