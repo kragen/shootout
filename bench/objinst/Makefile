@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-24 07:38:14 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-07-27 06:51:23 bfulgham Exp $
 include ../../Make.header
 
 TEST    := objinst
@@ -11,6 +11,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100000,400000,700000,1000000 \
 	  --ignore objinst.csharp \
+	  --ignore objinst.nice \
+	  --ignore objinst.gcj,objinst.gij \
 	  --ignore objinst.xemacs
 
 include ../../Make.footer

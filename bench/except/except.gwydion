@@ -8,6 +8,10 @@ define variable hi :: <integer> = 0;
 define variable lo  :: <integer> = 0;
 
 
+define sealed domain make (subclass(<hi-exception>));
+define sealed domain initialize (<hi-exception>);
+
+
 define class <hi-exception> (<error>)
   slot number :: <integer>, required-init-keyword: number:; // not really used for anything
 end;
