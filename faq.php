@@ -19,6 +19,7 @@
 	    <div><a href="#intro">Introduction</a></div>
 	    <div><a href="#why_doing">Why are you doing this?</a></div>
 	    <div><a href="#fair">Is your shootout a fair comparison?</a></div>
+	    <div><a href="#how_fix">How Can I Report Bugs or Suggest Improvements?</a></div>
 	    <div><a href="#fav_lang">Will you include my favorite language X?</a></div>
 	    <div><a href="#proprietary">Will you compare REBOL/Limbo/Miranda/Clean?</a></div>
 	    <div><a href="#gwydion">Will you include Gwydion Dylan?</a></div>
@@ -59,6 +60,14 @@
 	progress</strong>.  Maybe in a year it will be at a point where it is
 	&quot;fair&quot;.  Feel free to help out or come back later and decide
 	for yourself.  Thanks.</p>
+	<hr>
+
+	<div class="h3" id="how_fix"><h3>Q: How Can I Report Bugs or Suggest
+	Improvements?</h3></div>
+	<p>You can either submit a bug through the bug <a href=
+	"http://alioth.debian.org/tracker/?atid=411002&group_id=10039&func=browse">tracker</a>
+	or send an e-mail to the <a href="http://lists.alioth.debian.org/mailman/listinfo/shootout-list">
+	mailing list</a></p>
 	<hr>
 	    
         <div class="h3" id="fav_lang"><h3>Q: Will you include my favorite language X?</h3></div>
@@ -138,7 +147,7 @@
 	&quot;hello world&quot; program in Dylan.</p>
 	<p>In an excellent example of Open Source at work, the Gwydion Dylan
 	compiler was modified to support a single-file mode.  And now that
-	Brent is running things (and is a core Gwydion Dylan maintianer),
+	Brent is running things (and is a Gwydion Dylan maintianer),
 	we are happy to say that <a href="lang/gwydion">Gwydion Dylan</a>
 	is now supported.</p>
 	<p>Sometime soon, you will probably see Functional Developer in

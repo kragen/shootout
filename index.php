@@ -19,6 +19,7 @@
 	<div class="body">
 	  <div><a href="#">Not all languages are tested in every benchmark</a></div>
 	  <div><a href="http://shootout.alioth.debian.org/bench/report.txt">What solutions have not been implemented yet?</a></div>
+	  <div><a href="http://alioth.debian.org/tracker/?atid=411002&group_id=10039&func=browse">How can I report a bug or suggest an improvement?</a></div>
 	  <div><a href="http://alioth.debian.org/tarballs.php/?group_id=10039">Where can I get a copy of the shootout?</a></div>
 	  <div><a href="http://shootout.alioth.debian.org/rules_for_writers.php">What do I need to know if I want to write a new benchmark?</a></div>
 	  <div><a href="http://shootout.alioth.debian.org/perf_tips.php">How can I improve performance?</a></div>
@@ -106,23 +107,6 @@ href="mailto:(Brent Fulgham) bfulgham@users.alioth.debian(not .com).org">email</
 	      will try to keep the <a href="news.php">News</a> up-to-date to
 	      explain the new stuff.</p>
 	  </div>
-	  <div class="h3" id="links">
-	    <h3>Links</h3>
-	    <p>I found the following links of interest while working on this
-	    project:</p>
-	    <ul>
-	      <!-- busted link
-	  <li><a href="http://wwwipd.ira.uka.de/~prechelt/Biblio/jccpprt_computer2000.ps.gz">An empirical comparison of C, C++, Java, Perl, Python, Rexx, and Tcl for a search/string-processing program</a> by Lutz Prechelt (gzipped Postscript).</li> -->
-	      <p class="infomark">A Comparison of Programming Languages for Scientific Processing by D. McClain <small>Unfortunately, this reference is no longer available.</small></p>
-	      <p class="infomark"><a href="http://phaseit.net/claird/comp.lang.misc/language_comparisons.html"> Cameron Laird's personal notes on language comparisons</a></p>
-	      <p class="infomark"><a href="http://directory.google.com/Top/Computers/Programming/Languages/">Computers > Programming > Language</a> at Google Web directory.</p>
-	      <p class="infomark"><a href="http://www.tunes.org/Review/Languages.html">Review of existing Languages</a> at Tunes.org</p>
-	      <p class="infomark"><a href="http://www.people.Virginia.EDU/~sdm7g/LangCrit/">Programming Language Critiques</a> by Steven D. Majewski</p>
-	      <p class="infomark"><a href="http://www.angelfire.com/tx4/cus/shapes/index.html">OO Shape Examples</a> by Chris Rathman</p>
-	      <p class="infomark"><a href="http://pleac.sourceforge.net/">PLEAC - Programming Language Examples Alike Cookbook</a></p>
-	      <p class="infomark"><a href="http://www.uni-karlsruhe.de/~uu9r/lang/html/lang.en.html">Michael Neumann's page comparing some small programs over 100+ languages.</a></p>
-	    </ul>
-          </div>
         </div>
       </td>
     </tr>
