@@ -16,7 +16,7 @@ $LangTag = $Row[LANG_TAG];
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$LangName;?> rankings </h4>
+<h4 class="rev">&nbsp;<?=$LangName;?> benchmark rankings </h4>
 <p>&nbsp;<?=$LangTag;?></p>
 </td></tr>
 
@@ -54,7 +54,7 @@ foreach($Tests as $Row){
       $v = $Rank[$Link];   
 
       printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" 
-         title="%s program and logs for the %s benchmark">%s</a></td>', 
+         title="%s program and logs for the %s performance benchmark">%s</a></td>', 
          $Link, $SelectedLang, $v[DATA_ID], $Sort, $LangName, $Name, $Name);
 
       if ($v[DATA_LINES] > 0){ 
@@ -76,7 +76,7 @@ foreach($Tests as $Row){
 
    } else {
       printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" 
-         title="No %s program has been written for the %s benchmark">%s</a></td>', 
+         title="No %s program has been written for the %s performance benchmark">%s</a></td>', 
          $Link, $SelectedLang, $Sort, $LangName, $Name, $Name); echo "\n";
 
       $message = 'No&nbsp;program';

@@ -8,6 +8,10 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="robots" content="all" />
 <meta name="revisit" content="10 days" />
+<meta name="robots" content="noarchive" />
+<meta name="keywords" content="fast programming language performance benchmark shootout" />
+<meta name="description" content="Programming languages compared on more than 25 performance benchmarks, for more than 50 languages." />
+
 
 <title><?=$PageTitle;?></title>
 <style type="text/css" media="all">
@@ -22,8 +26,8 @@
 
 <body>
 <table class="hf"><tr><td>
-<h2><a class="arev" href="index.php?sort=<?=$Sort;?>" title="<?=SITE_TITLE;?> homepage"><?=$BannerTitle;?></a>
-<h2></td><td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" title="Where can I&#133;? How did you measure&#133;? Why don't you include&#133;?"><?=$FaqTitle;?> </a>
+<h2><a class="arev" href="index.php?sort=<?=$Sort;?>" ><?=$BannerTitle;?></a>
+<h2></td><td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" ><?=$FaqTitle;?> </a>
 </td></tr></table>
 
 <?=$PageBody;?>

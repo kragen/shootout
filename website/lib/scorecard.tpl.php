@@ -14,10 +14,10 @@
 
 <table class="div">
 <tr><td colspan="2">
-<h4 class="rev">&nbsp;The Scorecard</h4>
+<h4 class="rev">&nbsp;Fast, Faster, Fastest languages</h4>
 </td></tr>
 <tr><td colspan="2">
-<p>What fun! Can you manipulate the multipliers and weights to put your favourite language on top?</p>
+<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
 </td></tr> 
 
 
@@ -92,7 +92,7 @@ foreach($score as $k => $v){
 
    printf('<tr class="%s">',$RowClass); echo "\n";
 
-   printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="Check the %s rankings">%s</a></td>', 
+   printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="%s benchmark rankings and information">%s</a></td>', 
       $k,$Sort,$Name,$HtmlName); echo "\n";
 
    printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";
@@ -161,7 +161,7 @@ foreach($Tests as $t){
 
    printf('<tr class="%s">',$RowClass); echo "\n";
 
-   printf('<td><a href="benchmark.php?test=%s&lang=all&sort=%s" title="Compare performance on the %s benchmark">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&lang=all&sort=%s" title="%s performance measurements">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
 
    printf('<td><input type="text" size="2" name="%s" value="%d"></td>', $Link, $weight); echo "\n";
 
@@ -188,7 +188,7 @@ foreach($Tests as $t){
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
-<tr><td colspan="2"><h4 class="rev">&nbsp;about The Scorecard</h4></td></tr>
+<tr><td colspan="2"><h4 class="rev">&nbsp;about CRAPS!&#153;</h4></td></tr>
 <tr><td colspan="2"><?=$About;?></td></tr>  
 
 

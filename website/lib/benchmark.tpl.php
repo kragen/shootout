@@ -65,8 +65,8 @@ if ($Sort=='cpu'){
 <tr><td colspan="5">
 
 <img src="chart.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>"
-   alt="<?=SortName($Sort);?> chart for the <?=$TestName;?> benchmark"
-   title="<?=SortName($Sort);?> chart for the <?=$TestName;?> benchmark"
+   alt="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
+   title="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
    width="450" height="150"
  />
 
@@ -129,7 +129,7 @@ foreach($Accepted as $d){
    $lines = $d[DATA_LINES];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
+   printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s performance benchmark">%s</a></td>', 
       $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
    if ($SelectedTest==STARTUP){
@@ -163,7 +163,7 @@ foreach($Langs as $k => $v){
          $fullcpu = $d[DATA_FULLCPU];
          $lines = $d[DATA_LINES];     
                      
-         printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
+         printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s performance benchmark">%s</a></td>', 
             $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
@@ -181,7 +181,7 @@ foreach($Langs as $k => $v){
       $Name = $v[LANG_FULL];
       $HtmlName = $v[LANG_HTML];            
    
-      printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" title="No %s program has been written for the %s benchmark">%s</a></td>', 
+      printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" title="No %s program has been written for the %s performance benchmark">%s</a></td>', 
          $SelectedTest,$k,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
       echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';  

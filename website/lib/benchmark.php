@@ -47,7 +47,7 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard
    
-      $Title = 'The Scorecard';
+      $Title = 'Fast, Faster, Fastest languages';
       $TemplateName = 'scorecard.tpl.php';
 
       $About = & new Template(ABOUT_PATH);
@@ -62,12 +62,14 @@ if ($T=='all'){
    } else {           // Ranking 
    
       $LangName = $Langs[$L][LANG_FULL];    
-      $Title = $LangName.' rankings'; 
+      $Title = $LangName.' benchmark rankings'; 
       $TemplateName = 'ranking.tpl.php';
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
+ 
+      $About->set('Version', HtmlFragment(ABOUT_PATH.$L.SEPARATOR.'version.php'));
 
       $Body->set('Rank', RankData(DATA_PATH.'data.csv', $Langs, $L, $Incl, $Excl));    
   

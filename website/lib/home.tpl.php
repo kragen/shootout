@@ -12,7 +12,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <?=$Intro;?>
 </td></tr>
 
-<tr><td><h4 class="rev">&nbsp;A comparison of programming languages</h4></td></tr>
+<tr><td><h4 class="rev">&nbsp;Programming language performance</h4></td></tr>
 </table>
 
 <!-- // TABLE ////////////////////////////////////////////// -->
@@ -26,7 +26,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <th class="c" colspan="2">
 <b>2&nbsp;Check the rankings</b>
-<p class="thp">rankings for each language</p>
+<p class="thp">rankings and language information</p>
 </th>
 </tr>
 
@@ -37,7 +37,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       $TestName = $Row[TEST_NAME];
       $TestTag = $Row[TEST_TAG];
 
-      printf('<p class="a"><a title="Compare performance on the %s benchmark"', $TestName);
+      printf('<p class="a"><a title="%s performance measurements"', $TestName);
       printf('href="benchmark.php?test=%s&lang=all&sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
       echo "\n";
    }
@@ -53,7 +53,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       $LangTag = $Row[LANG_TAG];
       
       if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }
-      printf('<p class="c"><a title="Check the %s rankings"', $LangName);
+      printf('<p class="c"><a title="%s benchmark rankings and information"', $LangName);
       printf('href="benchmark.php?test=all&lang=%s&sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
    }
@@ -66,7 +66,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // SCORECARD /////////////////////////////////////////////////// -->
 
 <table class="div" >
-<tr><th class="a"><b>3&nbsp;Create</b> your own combined rankings on <b>The Scorecard</b></th></tr>
+<tr><th class="a"><b>3&nbsp;Find&nbsp;your own</b> Fast, Faster, Fastest languages</th></tr>
 
 <tr><td class="center"><p>
 <? MkScorecardMenuForm($Sort); ?>
