@@ -1,7 +1,6 @@
--- $Id: methcall.ghc,v 1.3 2004-10-03 00:44:28 bfulgham Exp $
+-- $Id: methcall.ghc,v 1.4 2004-12-27 11:46:16 ekarttun-guest Exp $
 -- http://shootout.alioth.debian.org/
 -- Author: Einar Karttunen
--- compile with: ghc -O2 -o methcall methcall.hs
 
 import Control.Monad
 import Data.IORef
@@ -14,18 +13,20 @@ class Toggle a where
 newtype ToggleC    = ToggleC (IORef Bool)
 newtype NthToggleC = NthToggleC (IORef (Bool, Int, Int))
 
+modr r x = do { v <- readIORef r; writeIORef r $! x v }
+
 newToggle s = newIORef s >>= return . ToggleC
 newNthToggle s m = newIORef (s,0,m) >>= return . NthToggleC
 
 instance Toggle ToggleC where 
-    activate (ToggleC t) = modifyIORef t not
-    value (ToggleC t)    = do { v <- readIORef t;  v `seq` return v }
+    activate (ToggleC t) = modr t not
+    value (ToggleC t)    = readIORef t
 
 instance Toggle NthToggleC where
-    activate (NthToggleC t) = modifyIORef t (\x@(s,v,m) -> x `seq` if v+1 == m then (not s,0,m) else (s,v+1,m))
-    value    (NthToggleC t) = do { (s,_,_) <- readIORef t; s `seq` return s }
+    activate (NthToggleC t) = modr t (\x@(s,v,m) -> x `seq` if v+1 == m then (not s,0,m) else (s,v+1,m))
+    value    (NthToggleC t) = do { ~(s,_,_) <- readIORef t; s `seq` return s }
 
-out b = putStrLn $ if b then "true" else "false"
+out b = putStrLn (if b then "true" else "false")
 
 main = do [num] <- getArgs
 	  toggle<- newToggle True
