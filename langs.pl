@@ -13,7 +13,7 @@
        Down => 'ftp://gcc.gnu.org/pub/gcc/releases',
        Type => 'native compiled',
        Verfun => sub {
-	   my $ver = `$ENV{GNAT}`;
+	   my $ver = `gnat -v`;
 	   $ver =~ /(GNAT\s.*)/;
 	   return($1);
        },
@@ -84,7 +84,7 @@
        Down => 'http://www.cs.kun.nl/~clean/Download/main/main.htm',
        Type => 'native compiled',
        Verfun => sub {
-	   my $ver = `2.1`;
+	   my $ver = "2.1";
 	   return($ver);
        },
      },
