@@ -17,7 +17,6 @@ local iubComplement = {
    ,H = "D"
    ,K = "M"
    ,M = "K"
-   ,N = "N"
    ,R = "Y"
    ,V = "B"
    ,Y = "R"
