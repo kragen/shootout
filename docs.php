@@ -1,4 +1,5 @@
-<?php require("html/header.php");
+<?php $title="Shootout Documentation";
+      require("html/header.php");
       require("html/toptabs.php");
       $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
       $current = $parts[count($parts) - 1];
@@ -58,7 +59,7 @@
 
 	<div id="perftip">
 	<h3>Performance Tips</h3>
-	<p>This <a href="/perf_tips">section</a> documents tips we've been made
+	<p>This <a href="/perf_tips.php">section</a> documents tips we've been made
 	aware of for speeding up programs in various languages.  The language
 	specific hints have been moved to the <a href="lang/">language summary
 	pages</a>, so this page now just contains the general hints.</p>

@@ -1,7 +1,8 @@
 <!--#set var="TITLE" value="Computer Language Shootout Acknowledgements" -->
 <!--#set var="KEYWORDS" value="performance, benchmark, computer,
 algorithms, languages, compare, cpu, memory" --> 
-<?php require("html/header.php");
+<?php $title = "Computer Language Shootout Acknowledgements";
+      require("html/header.php");
       require("html/toptabs.php");
       require("html/testnav.php");
      

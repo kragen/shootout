@@ -1,4 +1,5 @@
-<?php require("html/header.php");
+<?php $title="The Great Computer Language Shootout";
+      require("html/header.php");
       require("html/toptabs.php");
       require("html/testnav.php");
 

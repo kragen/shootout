@@ -1,7 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html>
 <head>
-  <title>The Great Computer Language Shootout</title>
+<?php
+  global $title;
+  echo "<title>$title</title>\n";
+?>
   <meta name="keywords" content="performance, benchmark, computer, algorithms, languages, compare, cpu, memory"> 
   <link REL="stylesheet" TYPE="text/css" HREF="/css/tigris.css" />
   <link REL="stylesheet" TYPE="text/css" HREF="/css/inst.css" />

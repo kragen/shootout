@@ -1,4 +1,5 @@
-<?php require("html/header.php");
+<?php $title="Methodology";
+      require("html/header.php");
       require("html/toptabs.php");
       $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
       $current = $parts[count($parts) - 1];

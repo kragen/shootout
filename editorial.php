@@ -1,7 +1,7 @@
-<!--#set var="TITLE" value="Shootout Editorial" -->
 <!--#set var="KEYWORDS" value="performance, benchmark, computer,
 algorithms, languages, compare, cpu, memory" --> 
-<?php require("html/header.php");
+<?php $title="Shootout Editorial";
+      require("html/header.php");
       require("html/toptabs.php");
       require("html/testnav.php");
      

@@ -1,7 +1,7 @@
-<!--#set var="TITLE" value="Computer Language Shootout Scorecard" -->
 <!--#set var="KEYWORDS" value="performance, benchmark, computer,
 algorithms, languages, compare, cpu, memory, lines of code" --> 
-<?php require("html/header.php");
+<?php $title="Computer Language Shootout Scorecard";
+      require("html/header.php");
       require("html/toptabs.php");
       require("html/testnav.php");
 
