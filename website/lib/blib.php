@@ -43,9 +43,9 @@ define('EXCLUDED','X');
 
 define('PROGRAM_TIMEOUT',-1);
 define('PROGRAM_ERROR',-2);
-define('LANGUAGE_EXCLUDED',-3);
-define('PROGRAM_SPECIAL','-4');
-define('PROGRAM_EXCLUDED',-5);
+define('PROGRAM_SPECIAL','-3');
+define('PROGRAM_EXCLUDED',-4);
+define('LANGUAGE_EXCLUDED',-5);
 
 
 define('N_LANG',0);
@@ -71,6 +71,7 @@ define('LOC_MAX',5);
 
 
 function ReadIncludeExclude(){
+   $incl = array();
    $f = @fopen('./include.csv','r') or die('Cannot open ./include.csv');
    $row = @fgetcsv($f,1024,','); // heading row
    while (!@feof ($f)){
@@ -80,6 +81,7 @@ function ReadIncludeExclude(){
    }
    @fclose($f);
    
+   $excl = array();
    $f = @fopen(DATA_PATH.'/exclude.csv','r') or die('Cannot open '.DATA_PATH.'/exclude.csv');
    $row = @fgetcsv($f,1024,','); // heading row
    while (!@feof ($f)){
@@ -215,18 +217,17 @@ function ExcludeData(&$d,&$langs,&$Excl){
 //######## Look for more efficient approach?   
    foreach($Excl as $x){   
       if ( ($d[DATA_TEST]==$x[EXCL_TEST]) && 
-              ($d[DATA_LANG]==$x[EXCL_LANG]) && ($d[DATA_ID]==$x[EXCL_ID]) ){
-           
-         if ($x[EXCL_USE]==EXCLUDED){ 
+              ($d[DATA_LANG]==$x[EXCL_LANG]) && ($d[DATA_ID]==$x[EXCL_ID]) ){         
+         if ($x[EXCL_USE]==EXCLUDED){         
             return PROGRAM_EXCLUDED; 
-         } else { 
+         } else {  
             return PROGRAM_SPECIAL; }
       }     
-   }
-         
+   }    
+     
    if( $d[DATA_FULLCPU] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
    if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }  
-   return FALSE;
+   return 0;
 }
 
 
@@ -381,7 +382,7 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
             // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
 
             if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
-                  ($row[DATA_FULLCPU] < $tests[$testId][DATA_FULLCPU])){                                 
+                  ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])){                                 
                $data[$lang][$test] = $row;  
             }
          }
@@ -466,12 +467,12 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
                  
-      $test = $row[DATA_TEST]; 
-      $exclude = ExcludeData($row,$Langs,$Excl);                
-      if (!$exclude && isset($Incl[$test]) && isset($Incl[$L])){ 
+      $test = $row[DATA_TEST];                    
+      if (isset($Incl[$test]) && isset($Incl[$L])){      
          settype($row[DATA_ID],'integer');
-
-         if ($row[DATA_LANG]==$L){                  
+         $exclude = ExcludeData($row,$Langs,$Excl);          
+ 
+         if (($row[DATA_LANG]==$L)&&($exclude > PROGRAM_SPECIAL)){                       
             if (isset( $tests[$test] )){
             
                // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU
@@ -485,7 +486,7 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
                $tests[$test] = $row;                    
             }
          }
-         else { 
+         elseif (!$exclude) { 
             if (isset( $data[$test] )){
                array_push( $data[$test], $row );
             }

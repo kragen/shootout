@@ -17,7 +17,7 @@ $LangTag = $Row[LANG_TAG];
 <table class="div">
 <tr><td>
 <h4 class="rev">&nbsp;<?=$LangName;?> benchmark rankings </h4>
-<p>&nbsp;<?=$LangTag;?></p>
+<p><?=$LangTag;?></p>
 </td></tr>
 
 
@@ -27,9 +27,9 @@ $LangTag = $Row[LANG_TAG];
 
 <tr>
 <th>Program & Logs</th>
-<th>CPU Time</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
+<th>CPU Time</th>
 <th>Code Lines</th>
 </tr>
 
@@ -59,11 +59,11 @@ foreach($Tests as $Row){
 
       if ($v[DATA_LINES] > 0){ 
          if ($Link==STARTUP){
-            printf('<td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">%d</td>', 
-               '&nbsp;', $v[DATA_FULLCPU], $v[DATA_MEMORY], $v[DATA_LINES]); 
+            printf('<td class="r">%d</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td>', 
+               $v[DATA_FULLCPU], $v[DATA_MEMORY], '&nbsp;', $v[DATA_LINES]); 
          } else {
-            printf('<td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">%d</td>', 
-               $v[DATA_CPU], $v[DATA_FULLCPU], $v[DATA_MEMORY], $v[DATA_LINES]); 
+            printf('<td class="r">%d</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td>', 
+               $v[DATA_FULLCPU], $v[DATA_MEMORY], $v[DATA_CPU], $v[DATA_LINES]); 
          }
 
       } else {   

@@ -21,6 +21,11 @@ else { $P3 = ''; }
 if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID]; } 
 else { $P4 = ''; }
 
+$NString = 'N=?';
+foreach($Accepted as $d){
+   if ($d[DATA_TESTVALUE]>0){ $NString = 'N='.number_format((double)$d[DATA_TESTVALUE]); break; }
+}
+
 ?>
 </div>
 
@@ -29,11 +34,9 @@ else { $P4 = ''; }
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$TestName;?> benchmark <?=DASH.SortName($Sort);?></h4>
-<p>&nbsp;<?=$TestTag;?>
-&nbsp;
-<a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
-title="Choose programs for side-by-side comparison">Side-by-side</a>
+<h4 class="rev"><?=$TestName;?> benchmark <?=DASH.SortName($Sort);?></h4>
+<p><?=$TestTag;?> <?=$NString;?>&nbsp;(Other values of N are shown in the <a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
+title="Choose programs for side-by-side comparison">side-by-side comparison</a>.)
 
 </p>
 </td></tr>
@@ -82,7 +85,14 @@ if ($Sort=='cpu'){
 
 <tr>
 <th class="c">&nbsp;</th>
-
+<th>
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=fullcpu" 
+   title="Sort by Full CPU Time, including Startup Time">sort</a>
+</th>
+<th>
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=kb" 
+   title="Sort by Memory Use">sort</a>
+</th>
 <th>
 <? // STARTUP TEST IS A SPECIAL CASE
    if ($SelectedTest==STARTUP){
@@ -93,22 +103,14 @@ if ($Sort=='cpu'){
    }
 ?>
 </th>
-<th>
-   <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=fullcpu" 
-   title="Sort by Full CPU Time, including Startup Time">sort</a>
-</th>
-<th>
-   <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=kb" 
-   title="Sort by Memory Use">sort</a>
-</th>
 <th class="c">&nbsp;</th>
 </tr>
 
 <tr>
 <th>Program & Logs</th>
-<th>CPU Time&nbsp;s</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>
+<th>CPU Time&nbsp;s</th>
 <th>Code Lines</th>
 </tr>
 
@@ -133,11 +135,11 @@ foreach($Accepted as $d){
       $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
    if ($SelectedTest==STARTUP){
-      printf('<td>&nbsp;</td><td %s>%0.2f</td><td %s>%s</td><td class="r">%d</td>',
+      printf('<td %s>%0.2f</td><td %s>%s</td><td>&nbsp;</td><td class="r">%d</td>',
          $C2, $fullcpu, $C3, $kb, $lines); echo "\n";
    } else {
-      printf('<td %s>%0.2f</td><td %s>%0.2f</td><td %s>%s</td><td class="r">%d</td>',
-         $C1, $cpu, $C2, $fullcpu, $C3, $kb, $lines); echo "\n";
+      printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%0.2f</td><td class="r">%d</td>',
+         $C2, $fullcpu, $C3, $kb, $C1, $cpu, $lines); echo "\n";
    }
    echo "</tr>\n";
 
@@ -220,11 +222,11 @@ if (sizeof($Special)>0){
 
       if ($fullcpu > PROGRAM_TIMEOUT){
          if ($SelectedTest==STARTUP){
-            printf('<td class="r">&nbsp;</td><td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
+            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">&nbsp;</td><td class="r">%d</td>',
                $fullcpu, $kb, $lines); echo "\n";
          } else {
-            printf('<td class="r">%0.2f</td><td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
-               $cpu, $fullcpu, $kb, $lines); echo "\n";
+            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%0.2f</td><td class="r">%d</td>',
+               $fullcpu, $kb, $cpu, $lines); echo "\n";
          }
       }
       else {
