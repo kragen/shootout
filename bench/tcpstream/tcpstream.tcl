@@ -1,8 +1,8 @@
 #!/usr/bin/tclsh
-# $Id: tcpstream.tcl,v 1.1 2005-03-18 06:26:27 bfulgham Exp $
+# $Id: tcpstream.tcl,v 1.2 2005-03-21 02:51:18 bfulgham Exp $
 # http://shootout.alioth.debian.org/
 #
-# Contributed by Robert Seeger
+# Contributed by Robert Seeger and Randy Melton
 proc Server {channel clientaddr clientport} {
     set reply [string repeat x 409600]
     fconfigure $channel -buffersize 409600 -encoding binary
