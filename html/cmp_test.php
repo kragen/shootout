@@ -1,5 +1,5 @@
 <?php
-# $Id: cmp_test.php,v 1.2 2004-06-02 03:31:16 bfulgham Exp $
+# $Id: cmp_test.php,v 1.3 2004-06-02 15:03:36 bfulgham Exp $
 #
 
 function read_dat($test, $which) {
@@ -69,7 +69,7 @@ function map_name_to_prog($test, $prognames)
 function lang_tab($test, $selected, $langs)
 {
     echo "<div class=\"axial\">\n";
-    echo "  <div class=\"h3\"><h3>Compare languages</h3>\n";
+    echo "  <div class=\"h4\"><h4>Compare languages</h4>\n";
     echo "    <form method=\"get\" action=\"detail.php\">\n";
     echo "      <div class=\"axial\">\n";
     echo "        <table border=\"0\" cellspacing=\"2\" cellpadding=\"3\">\n";
@@ -242,9 +242,12 @@ function cmp_test($test, $query_string)
     $pmref = map_name_to_prog($test, $langs);
     $cpu_img = plot_tab($cpu_date, $langs, $cpu, $test, 'cpu', 'CPU');
     $mem_img = plot_tab($mem_date, $langs, $mem, $test, 'mem', 'Memory');
+    echo "<div class=\"h4\"><h4>CPU Comparison</h4></div>\n";
     echo "<table><tr><td><img src=\"/tmp/.shootout/$test/$cpu_img\"></td><td>\n";
     print_tab($langs, $cpu, $pmref, 'CPU');
-    echo "</td></tr><tr><td><img src=\"/tmp/.shootout/$test/$mem_img\"></td><td>\n";
+    echo "</td></tr></table>\n";
+    echo "<div class=\"h4\"><h4>Memory Use Comparison</h4></div>\n";
+    echo "<table><tr><td><img src=\"/tmp/.shootout/$test/$mem_img\"></td><td>\n";
     print_tab($langs, $mem, $pmref, 'Memory');
     echo "</td></tr></table>\n";
 }
