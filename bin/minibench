@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.4 2004-05-31 08:06:42 bfulgham Exp $
+# $Id: minibench,v 1.5 2004-06-09 14:23:27 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -32,7 +32,7 @@ use strict;
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.4 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.5 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -261,7 +261,8 @@ sub swapusage () {
 # return current resident memory size for given pid in KB
 sub memsize ($) {
     my $pid = shift;
-    return((GTop->new->proc_mem($pid)->resident)/1024);
+    my $val = (GTop->new->proc_mem($pid)->resident)/1024;
+    return ($val);
 }
 
 # keep a cache of pids that are MAIN pids (not child threads)
@@ -275,7 +276,7 @@ sub is_main_pid {
     local(*F);
     if (open(F, "</proc/$pid/stat")) {
 	$_ = <F>;
-	my $xit_sig = (split)[-2];
+	my $xit_sig = (split)[-4];
 	#warn "DBG: xit_sig($pid) = $xit_sig\n";
 	close(F);
 	return($PID_CACHE{$pid} = ($xit_sig == 17));
@@ -294,7 +295,7 @@ sub childpids ($) {
     foreach my $cp (@{$allpids}) {
 	my $ppid = $gtop->proc_uid($cp)->ppid;
 	# keep list of children for each parent
-	push(@{$children{$ppid}}, $cp) if (is_main_pid($cp));
+	push(@{$children{$ppid}}, $cp) if (is_main_pid($cp))
     }
     my $count = 0;
     return() if not ($children{$pid});
@@ -982,7 +983,6 @@ sub run {
 	    # if the process runs for at least 1 second, then there shouldn't
 	    # be too much of a mis-measurement.
 	    #
-	    
 	    # fork the test
 	    my $pid = $self->start_test($cmdline, $inputfile);
 	    my $maxmem = 0;
@@ -993,6 +993,9 @@ sub run {
 	    flush_pid_cache();	# must be done before calling childpids first time
 	    # parent continues, waiting in loop for child to finish, testing memory size
 	    while (waitpid($pid, WNOHANG()) != -1) {
+
+	    	my @crap = childpids($$);
+	        
 		$maxmem = max($maxmem, total_child_size(childpids($$)));
 		select(undef, undef, undef, $OPT->{sampledelay});
 		check_abort_conditions($start_time);
