@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-05-23 07:46:30 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-06-11 02:45:11 bfulgham Exp $
 include ../../Make.header
 
 TEST    := lists
@@ -10,7 +10,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,4,8,12,16 \
 	  --ignore lists.ghc \
 	  --ignore lists.mercury \
-	  --ignore lists.mlton \
 	  --ignore lists.oz \
 	  --title "$(TITLE)" $(TEST).*
 
