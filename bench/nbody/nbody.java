@@ -1,13 +1,13 @@
 /* The Great Computer Language Shootout 
    http://shootout.alioth.debian.org/
 
-   contributed by Mark C. Williams and Isaac Gouy
+   contributed by Mark C. Williams
 */
 
 import java.text.*;
 
 public final class nbody {
-	public static void main(String[] args) {	
+	public static void main(String[] args) {		
 	   NumberFormat nf = NumberFormat.getInstance();
 	   nf.setMaximumFractionDigits(9);
 	   nf.setMinimumFractionDigits(9);
@@ -21,7 +21,7 @@ public final class nbody {
 		for (int i=0; i<n; ++i) {
 		   bodies.advance(0.01);
 		}
-		System.out.println(nf.format(bodies.energy()) );	
+		System.out.println(nf.format(bodies.energy()) );		
 	}
 }
 
