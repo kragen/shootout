@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-10-05 02:29:14 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-10-12 06:10:32 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fibo
@@ -20,6 +20,7 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 12,24,32 \
 	  --ignore fibo.csharp \
 	  --ignore fibo.bash \
-	  --ignore fibo.ciao 
+	  --ignore fibo.ciao \
+	  --ignore fibo.gprolog
 
 include ../../Make.footer

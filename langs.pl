@@ -828,6 +828,7 @@
      'Oberon-2'    => 'pascal',
      'Objective C' => 'c',
      'Ocaml'       => 'ml',
+     'Poplog'      => 'c',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',
      'PHP'         => 'php',
@@ -848,4 +849,5 @@
      'rep'         => 'scheme',
      'mzc'         => 'lisp',
      'mzscheme'    => 'lisp',
+     'poplog'      => 'c',
  );
