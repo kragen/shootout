@@ -1,29 +1,19 @@
 <p>Each program should be implemented in the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=fibo&lang=clean&sort=<?=$Sort;?>">Clean program</a>. All programs must use recursion.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=fibo&lang=clean&sort=<?=$Sort;?>">Clean program</a>.</p>
 
-<p>Programs recursively compute Fibonacci numbers using this
-  algorithm:</p>
-<p>
+<p>Each program calculates a recursive, integer, Fibonacci function:
 <pre>
-Fib(0) -> 1
-Fib(1) -> 1
-Fib(N) -> Fib(N-2) + Fib(N-1)
+F(x)
+  x = 0     = 1
+  x = 1     = 1
+  otherwise = F(x-2) + F(x-1)
 </pre>
-</p>
+</p><br/>
 
-
-<p>Correct output N = 32 is:
+<p>Calculate F(N). Correct output N = 32 is:
 <pre>
 3524578
 </pre>
-</p>
-<br/>
+</p><br/>
 
-
-<p>This <a href="http://cubbi.org/serious/fibonacci/bench.html">Fibonacci Benchmark</a> specifies that fib(0) = 1.<br/> It may
- be more correct to define fib(0) = 0, although I've seen plenty of
- references that define it either way.</p>
-
-<p>(What do rabbits, spiral patterns found in plants, the shell of the
-  nautilus, Greek architecture, and the golden ratio have in common? - 
-  The Fibonacci sequence.)</p>
+<p>For more information see Eric W. Weisstein, "Fibonacci Number." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/FibonacciNumber.html">http://mathworld.wolfram.com/FibonacciNumber.html</a></p>

@@ -1,10 +1,8 @@
 <p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.
 </p>
 
-<p>The origin of the process benchmark can be found in <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Concurrency For Free / Death by Concurrency</a>.</p>
-
-<p>(In some languages the same program (with different command-line arguments) might be used for both this process benchmark and the <a href="benchmark.php?test=message&lang=all&sort=<?=$Sort;?>">message benchmark</a>.)</p>
-
+<p>Each program counts the number of created process/threads, by incrementing an integer message sent between the process/threads:
+</p>
 
 <ul>
 <li>take 2 command line args N 1</li>
@@ -20,7 +18,6 @@
 </ul>
 </li>
 
-
 <li>the last process/thread... in the chain is different, it:
 <ul>
 <li>can receive an integer message</li>
@@ -32,6 +29,12 @@
 
 <li>send the integer message 0 to the first process/thread</li>
 <li>print the message received by the last process/thread</li>
-<li>exit</li>
-
 </ul>
+
+<p>Correct output N = 3000, M = 1 is: 
+<pre>3000</pre></p><br/>
+
+
+<p>With a large number of threads this becomes <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Death by Concurrency</a>.</p>
+
+<p>(In some languages the same program (with different command-line arguments) might be used for both this process benchmark and the <a href="benchmark.php?test=message&lang=all&sort=<?=$Sort;?>">message benchmark</a>.)</p>

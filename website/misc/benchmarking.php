@@ -69,6 +69,8 @@ Benchmarking PHP with no BS</a></p></li>
 
   <li><p><a href="http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html">Timing Trials, or, the Trials of Timing: Experiments with Scripting and User-Interface Languages</a></p></li>
 
+  <li><p><a href="http://www.idiom.com/~zilla/Computer/javaCbenchmark.html">Performance of Java versus C++</a></p></li>
+
 </ul>
 
 
