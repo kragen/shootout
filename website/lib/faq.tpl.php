@@ -237,7 +237,7 @@ For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" 
 
 <tr class="b"><td><a name="alternative">What does Interesting Alternative Program mean?</a></td></tr>
 <tr><td>
-<p>"Interesting Alternative Program" means that the program doesn't implement the benchmark, but <strong>we couldn't resist</strong> showing the program.</p>
+<p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </td></tr>
 
 <tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
@@ -618,13 +618,7 @@ fixes, you will soon understand this requirement.</li>
 
 
 <tr class="b"><td>Why are you doing this?</td></tr>
-
-
-
 <tr><td><p>To learn and to <strong>have fun</strong>.</p><p>We will continue as long as the fun holds out.</p></td></tr>
-
-
-
 
 
 </table>
