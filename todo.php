@@ -19,10 +19,9 @@
       <div id="apphead"><h2>Todo List</h2></div>
       <div class="app">
       <ul>
-        <li>Include SBCL, Chicken, and A+</li>
+        <li>Include Chicken and A+</li>
         <li>On language specific pages, put the total number of contenders in
 	  each test.</li>
-	<li>Investigate failure of mercury programs with gcc 3.0.</li>
 	<li>Modify lists test to be a better test of deques.  intermix
 	  operations from head and tail so that the reversal strategy does not
 	  work.</li>
@@ -45,26 +44,6 @@
 	  code" (objinst - mlton).  Try to cascade calculations so that the
 	  latter depend on the former.  Tests that need invariants removed:
 	  lists, regexmatch, matrix, sieve, objinst.</li>
-	<li>Bulent M. suggests that I change the scoring algorithm on the craps
-	  page so it reflects how much faster a language is.  I'm thinking I
-	  might want to try to reflect overall ranking instead.  add combined
-	  logarithmic score, and combined rank and subtract startup time
-	  buttons.</li>
-	<li>Stephen Weeks suggests: 10 * (best compiler CPU time / C's CPU time)</li>
-	<li> John Aarts suggests:
-	  <ul>
-	    <li>For each test determine the max CPU test score (We do the same
-	      for Memory and LOC scores)</li>
-	    <li>For each language, for each test, calculate the normalized
-	      score by dividing the test score by its related max test score
-	      and multiplying this by 1000.</li>
-	    <li>The language score is the weighted average of the normalized
-	      scores, which is calculated by summing: (the normalized test
-	      scores multiplied by their weights), and dividing this sum by the
-	      sum of the weights.</li>
-	    <li>The final language scores are now sorted in decreasing order
-	      (low numbers are better).</li>
-	  </ul></li>
 	<li>Add compile-times to results tables.</li>
 	<li>Add compile/run flags to language specific pages.</li>
 	<li>Implement a CGI to compare languages selected from the home page
@@ -86,8 +65,6 @@
 	    <li>maybe if a language overflows at higher N, we can extrapolate???</li>
 	  </ul>
 	</li>
-	<li>In the Makefiles, allow user to easily specify which subset of
-	  languages to run tests on</li>
 	<li>It might be interesting to print total counts (total CPU/Mem/LOC)
 	  on individual language summary pages.</li>
 	<li>Rebuild with gcc, create build.lang scripts:
@@ -99,7 +76,6 @@
 	  should change the red-level calculation so it is based on percent of
 	  score on each test.  rank range can vary widely over tests (depending
 	  on %-completenes).  The current Avg. Rank is possibly misleading.</li>
-	<li>Should limit producer/consumer to linux kernel threads.</li>
 	<li>Ensure non-OO entries in objinst/methcall tests do the same work.</li>
 	<li>Perhaps level the code length playing field by ignoring code for
 	  command line argument processing.</li>
@@ -130,27 +106,19 @@
 	  resize, allow value to be ptr to any type.  (allow key to be ptr to
 	  anything, and pass in hash_code function?)</li>
 	<li>Figure out why prodcons.rep started failing.</li>
-	<li>After rebuilding SmallEiffel with gcc-2.95.3, programs that use the
-	  dictionary class either run too long or dump core.  This needs to be
-	  debugged.</li>
 	<li>Have a results history comparison (speedup/slowdown???)</li>
 	<li>Plot seconds logarithmically (gnuplot)?</li>
 	<li>Check to see if we can reduce nestedloop line count for functional
 	  languages by defining a loop function.</li>
 	<li>New language requests:
 	  <ul>
-	    <li>Oscar Portela Arjona: Ciao Prolog
-	      (<a href="http://clip.dia.fi.upm.es">http://clip.dia.fi.upm.es</a>)</li>
 	    <li>JavaScript (http://www.mozilla.org/js/spidermonkey/)</li>
 	    <li>objective C</li>
 	    <li>simula</li>
 	    <li>modula3</li>
 	    <li>joy - http://www.latrobe.edu.au/www/philosophy/phimvt/j00syn.html (suggested by Julian Assange)</li>
-	    <li>elastiC</li>
-	    <li><a href="http://www.mozart-oz.org">http://www.mozart-oz.org</a></li>
 	    <li>smalltalk squeak: <a href="http://www-sor.inria.fr/~piumarta/squeak/">
 	      http://www-sor.inria.fr/~piumarta/squeak/</a></li>
-	    <li>Alex Shinn: GNU Smalltalk</li>
 	    <li>Andrew Sumner: Awka (awka.sourceforge.net)<li>
 	    <li>CLISP</li>
 	    <li>Rexx: http://www.rexxla.org/ (Mark Hessling -
@@ -177,10 +145,6 @@
 	  <li>dining philosophers: <a href="http://www.cis.temple.edu/~ingargio/cis307/readings/threads2.html">http://www.cis.temple.edu/~ingargio/cis307/readings/threads2.html</a></li>
 	</ul>
       <li>Use getpack to check for new versions (and report)</li>
-      <li>Christian Sunesson reports that MSIE can't properly display .java
-        files as text even though they are served with content-type:
-	text/plain!!!  Look into writing a CGI wrapper for displaying
-	sourcecode.</li>
       <li>Research:
         <ul>
 	  <li><a href="http://rsb.info.nih.gov/plasma/source.html">http://rsb.info.nih.gov/plasma/source.html</a></li>

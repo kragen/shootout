@@ -34,6 +34,17 @@
 
 <?php require("http://alioth.debian.org/export/projnews.php?group_id=10039&limit=20&flat=0&show_summaries=1"); ?>
 
+<b>2004-08-03</b>
+<ul>
+  <li>Lots of updates and improvements to the implementations.</li>
+  <li>Scorecard now uses a logarithmic scale to emphasize the differences
+      in languages at the "high performance" end of the scale.</li>
+  <li><a href="lang/mercury">mercury</a> has been reinstated!</li>
+  <li><a href="lang/oberon2">oberon2</a> has been added.</li>
+  <li><a href="lang/curry">curry</a> has been added.</li>
+  <li><a href="lang/ciao">ciao prolog</a> has been added.</li>
+  <li><a href="lang/gprolog">GNU prolog</a> has been added.</li>
+</ul>
 <b>2004-05-27</b>
 <ul>
   <li><b>The shootout is revived as a Debian Alioth project!</b></li>
