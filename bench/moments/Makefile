@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-06-16 04:38:28 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-06-17 03:38:05 sweeks Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -8,8 +8,6 @@ GCCOPTS := -lm
 
 #XLABEL  := N (number of copies of input data)
 
-#MLTONDEPS := /usr/local/smlnj/src/smlnj-lib/Util/array-sort-sig.sml \
-#             /usr/local/smlnj/src/smlnj-lib/Util/array-qsort.sml
 MLTONDEPS := ../../Include/mlton-src/basic.sml \
 	     ../../Include/mlton-src/insertion-sort.sml \
 	     ../../Include/mlton-src/quick-sort.sml
