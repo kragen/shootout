@@ -18,7 +18,7 @@ end
 
 -- Weighted selection from alphabet
 
-local function mkCumulative(a)
+local function makeCumulative(a)
    local cp = 0;
    for i,v in ipairs(a) do 
       cp = cp + v.p; 
@@ -36,7 +36,7 @@ end
 
 -- Generate and write FASTA format
 
-local function mkFastaFragment(id,desc,a,n)
+local function makeRandomFasta(id,desc,a,n)
    io.write(">",id," ",desc,"\n")
     
    local todo, length = n, 60
@@ -50,47 +50,75 @@ local function mkFastaFragment(id,desc,a,n)
 end
 
 
+local function makeRepeatFasta(id,desc,s,n)
+   io.write(">",id," ",desc,"\n")
+    
+   local todo, length, k, kn = n, 60, 1, string.len(s)
+   while todo > 0 do
+      local j, m = 1
+      if todo < length then m = todo else m = length end            
+      while j <= m do 
+         if k > kn then k = 1 end
+         io.write( string.sub(s,k,k) );
+         j = j + 1; k = k + 1
+      end
+      io.write("\n")  
+      todo = todo - length     
+   end   
+end
+
+
 -- Main -- define alphabets, make 5 fragments
 
-dna1 = { 
-    { c= "a", p= 0.3029549426680 }
-   ,{ c= "c", p= 0.1979883004921 }
-   ,{ c= "g", p= 0.1975473066391 }
-   ,{ c= "t", p= 0.3015094502008 }
+local homosapiens = { 
+    { c = "a", p = 0.3029549426680 }
+   ,{ c = "c", p = 0.1979883004921 }
+   ,{ c = "g", p = 0.1975473066391 }
+   ,{ c = "t", p = 0.3015094502008 }
   }
-mkCumulative(dna1)
+makeCumulative(homosapiens)
 
 
-dna2 = { 
-    { c= "a", p= 0.250 }
-   ,{ c= "c", p= 0.125 }
-   ,{ c= "g", p= 0.125 }
-   ,{ c= "t", p= 0.250 }
+local iub = { 
+    { c = "a", p = 0.270 }
+   ,{ c = "c", p = 0.125 }
+   ,{ c = "g", p = 0.125 }
+   ,{ c = "t", p = 0.270 }
 
-   ,{ c= "U", p= 0.019230769231 }
-   ,{ c= "R", p= 0.019230769231 }
-   ,{ c= "Y", p= 0.019230769231 }
-   ,{ c= "K", p= 0.019230769231 }
-   ,{ c= "M", p= 0.019230769231 }
-   ,{ c= "S", p= 0.019230769231 }
-   ,{ c= "W", p= 0.019230769231 }
-   ,{ c= "B", p= 0.019230769231 }
-   ,{ c= "D", p= 0.019230769231 }
-   ,{ c= "H", p= 0.019230769231 }
-   ,{ c= "V", p= 0.019230769231 }
-   ,{ c= "N", p= 0.019230769231 }
-   ,{ c= "-", p= 0.019230769231 }
+   ,{ c = "B", p = 0.02 }
+   ,{ c = "D", p = 0.02 }
+   ,{ c = "H", p = 0.02 }
+   ,{ c = "K", p = 0.02 }
+   ,{ c = "M", p = 0.02 }
+   ,{ c = "N", p = 0.02 }
+   ,{ c = "R", p = 0.02 }
+   ,{ c = "S", p = 0.02 }
+   ,{ c = "V", p = 0.02 }
+   ,{ c = "W", p = 0.02 }
+   ,{ c = "Y", p = 0.02 }
   }       
-mkCumulative(dna2)        
+makeCumulative(iub)       
 
 
+local alu = 
+   "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" ..
+   "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" ..
+   "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" ..
+   "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" ..
+   "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" ..
+   "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" ..
+   "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+
+ 
 
 local n = tonumber(arg and arg[1]) or 1000
 
-mkFastaFragment('TestOne','test fragment',dna2,n*1)
-mkFastaFragment('TestTwo','test fragment',dna1,n*2)
-mkFastaFragment('TestThree','test fragment',dna2,n*3)
-mkFastaFragment('TestFour','test fragment',dna1,n*4)
-mkFastaFragment('TestFive','test fragment',dna2,n*5)
+makeRepeatFasta('ONE','Homo sapiens alu',alu,n*1)
 
--- vim: ts=4 ft=lua
+makeRandomFasta('TWO','IUB ambiguity codes',iub,n*2)
+
+makeRandomFasta('THREE','Homo sapiens frequency',homosapiens,n*3)
+
+makeRandomFasta('FOUR','IUB ambiguity codes',iub,n*4)
+
+makeRandomFasta('FIVE','Homo sapiens frequency',homosapiens,n*5)
