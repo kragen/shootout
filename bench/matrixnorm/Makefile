@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-03-31 10:40:07 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-04-01 23:41:01 chris00-guest Exp $
 include ../../Make.header
 
 TEST    := matrixnorm
@@ -14,6 +14,8 @@ GCCOPTS := -lm
 
 BIGLOOOPTS := -farithmetic
 MB_CLRTS := -nr
+OCAMLOPTS  := -inline 10
+#OCAMLBOPTS := 
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
