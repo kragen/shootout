@@ -99,15 +99,16 @@ foreach($score as $k => $v){
 <!-- // SCORECARD FORM /////////////////////////////////////////// -->
 
 <td>
-<form method="GET" action="benchmark.php">
+<form method="get" action="benchmark.php">
+<div>
 <input type="hidden" name="test" value="all" />
 <input type="hidden" name="lang" value="all" />
 <input type="hidden" name="sort" value="<?=$Sort;?>" />
 
 <table>
 <tr class="c">
-<td><input type="submit" value="Calculate" /></td>
-<td><input type="reset" value="Reset" /></td>
+<td><p><input type="submit" value="Calculate" /></p></td>
+<td><p><input type="reset" value="Reset" /></p></td>
 </tr>
 
 <tr><th class="b" colspan="2">multipliers</th></tr>
@@ -115,21 +116,21 @@ foreach($score as $k => $v){
 <!--
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#cpu">CPU Time</a></td>
-<td><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>"></td>
+<td><p><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>"></p></td>
 </tr>
 -->
 
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#fullcpu">Full CPU Time</a></td>
-<td><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>"></td>
+<td><p><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>"></p></td>
 </tr>
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#memory">Memory Use</a></td>
-<td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>"></td>
+<td><p><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>"></p></td>
 </tr>
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#codelines">Code Lines</a></td>
-<td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>"></td>
+<td><p><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>"></p></td>
 </tr>
 
 <!-- THIS IS JUST FOR SPACING! SHOULD USE CSS! -->
@@ -145,18 +146,19 @@ foreach($Tests as $t){
 
    printf('<tr class="%s">',$RowClass); echo "\n";
    printf('<td><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s" title="%s performance measurements">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
-   printf('<td><input type="text" size="2" name="%s" value="%d"></td>', $Link, $weight); echo "\n";
+   printf('<td><p><input type="text" size="2" name="%s" value="%d"></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
 
 <tr class="c">
-<td><input type="submit" value="Calculate" /></td>
-<td><input type="reset" value="Reset" /></td>
+<td><p><input type="submit" value="Calculate" /></p></td>
+<td><p><input type="reset" value="Reset" /></p></td>
 </tr>
 
 </table>
+</div>
 </form>
 </td>
 </tr>
@@ -164,6 +166,6 @@ foreach($Tests as $t){
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
-<tr><td colspan="2"><h4 class="rev">&nbsp;about CRAPS!&#153;</h4></td></tr>
+<tr><td colspan="2"><h4 class="rev">&nbsp;about CRAPS!&#8482;</h4></td></tr>
 <tr><td colspan="2"><?=$About;?></td></tr>  
 </table>
