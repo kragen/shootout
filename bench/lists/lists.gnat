@@ -1,0 +1,326 @@
+-- $Id: lists.gnat,v 1.1 2004-11-10 07:07:16 bfulgham Exp $
+-- http://dada.perl.it/shootout/
+-- by James S. Rogers
+with Ada.Text_Io; use Ada.Text_Io;
+with Ada.Integer_Text_Io; use Ada.Integer_Text_IO;
+with Ada.Unchecked_Deallocation;
+with Ada.Command_Line; use Ada.Command_Line;
+
+procedure Listoperations is
+   pragma suppress(All_Checks);
+   package Listops is
+      Empty_List_Error : exception;
+      type List is private;
+      function Length(Item : in List) return Natural;
+      function Is_Empty(Item : in List) return Boolean;
+      type List_Element is private;
+      type Element_Access is access List_Element;
+      function First(Item : in List) return List_Element;
+      function Last(Item : in List) return List_Element;
+      procedure Push_Tail(Item : in out List; Element : in Integer);
+      procedure Pop_Tail(Item : in out List; Element : out Integer);
+      procedure Push_Head(Item : in out List; Element : in Integer);
+      procedure Pop_Head(Item : in out List; Element : out Integer);
+      function "="(Left, Right : in List) return Boolean;
+      function New_List return List;
+      function Sequence(From, To : Integer) return List;
+      function Copy(Source : List) return List;
+      procedure List_Reverse(Source : in out List);
+      procedure Empty_List(Source : in out List);
+      procedure Print(Msg : in String; Item : in List);
+      function Test_Lists return Integer;
+   private
+      type List_Element is record
+         Value : Integer := 0;
+         Previous : Element_Access := null;
+         Next     : Element_Access := null;
+      end record;
+      type List is record
+         Length : Natural := 0;
+         Head   : Element_Access := null;
+         Tail   : Element_Access := null;
+      end record;
+   end Listops;
+
+   package body Listops is
+      function Length(Item : in List) return Natural is
+      begin
+         return Item.Length;
+      end Length;
+      function Is_Empty(Item : in List) return Boolean is
+      begin
+         return Item.Length = 0;
+      end Is_Empty;
+      function First(Item : List) return List_Element is
+      begin
+         if Is_Empty(Item) then
+            raise Empty_List_Error;
+         end if;
+         return Item.Head.All;
+      end First;
+      function Last(Item : List) return List_Element is
+      begin
+         if Is_Empty(Item) then
+            raise Empty_List_Error;
+         end if;
+         return Item.Tail.All;
+      end Last;
+      procedure Push_Tail(Item : in out List; Element : in Integer) is
+         Tail : Element_Access := Item.Tail;
+         Temp : Element_Access := new List_Element;
+      begin
+         Temp.Value := Element;
+         Item.Length := Item.Length + 1;
+         Item.Tail := Temp;
+         if Tail /= null then
+            Temp.Previous := Tail;
+            Tail.Next := Temp;
+         else
+            Item.Head := Temp;
+         end if;
+      end Push_Tail;
+      procedure Pop_Tail(Item : in out List; Element : out Integer) is
+         procedure Free is new Ada.Unchecked_Deallocation(List_Element,
+Element_Access);
+         Temp : Element_Access := Item.Tail;
+      begin
+         if Item.Length >= 1 then
+            Item.Length := Item.Length - 1;
+            Element := Item.Tail.Value;
+            Item.Tail := Item.Tail.Previous;
+            if Item.Tail /= null then
+               Item.Tail.Next := null;
+            else
+               Item.Head := null;
+            end if;
+            if Temp /= null then
+               Free(Temp);
+            end if;
+         end if;
+      end Pop_Tail;
+      procedure Push_Head(Item : in out List; Element : in Integer) is
+         Head : Element_Access := Item.Head;
+         Temp : Element_Access := new List_Element;
+      begin
+         Temp.Value := Element;
+         Item.Length := Item.Length + 1;
+         Temp.Next := Head;
+         Item.Head := Temp;
+         if Head /= null then
+            Head.Previous := Temp;
+         else
+            Item.Tail := Temp;
+         end if;
+      end Push_Head;
+      procedure Pop_Head(Item : in out List; Element : out Integer) is
+         procedure Free is new Ada.Unchecked_Deallocation(List_Element,
+Element_Access);
+            Head : Element_Access := Item.Head;
+         begin
+            if Head /= null then
+               Element := Head.Value;
+               Item.Head := Item.Head.Next;
+               Item.Length := Item.Length - 1;
+               if Item.Head = null then
+                  Item.Tail := null;
+               else
+                  Item.Head.Previous := null;
+               end if;
+               Free(Head);
+            end if;
+         end Pop_Head;
+      function "="(Left, Right : List) return Boolean is
+         Left_Ptr : Element_Access := Left.Head;
+         Right_Ptr : Element_Access := Right.Head;
+         Result : Boolean := True;
+      begin
+         if Left.Length = Right.Length then
+            while Left_Ptr /= null loop
+               if Left_Ptr.Value /= Right_Ptr.Value then
+                  Result := False;
+                  exit;
+               end if;
+               Left_Ptr := Left_Ptr.Next;
+               Right_Ptr := Right_Ptr.Next;
+            end loop;
+         else
+            Result := False;
+         end if;
+         return Result;
+      end "=";
+      function New_List return List is
+         Result : List;
+      begin
+         return Result;
+      end New_List;
+      function Sequence(From, To : Integer) return List is
+         Result : List;
+         Temp : Integer;
+         Low : Integer := From;
+         High : Integer := To;
+      begin
+         if From > To then
+            Temp := From;
+            Low := To;
+            High := Temp;
+         end if;
+         for Val in Low..High loop
+            Push_Tail(Result, Val);
+         end loop;
+         return Result;
+      end Sequence;
+      function Copy(Source : List) return List is
+         Result : List;
+         Source_Ptr : Element_Access := Source.Head;
+      begin
+         while Source_Ptr /= null loop
+            Push_Tail(Item => Result, Element => Source_Ptr.Value);
+            Source_Ptr := Source_Ptr.Next;
+         end loop;
+         return Result;
+      end Copy;
+      procedure List_Reverse(Source : in out List) is
+         Head : Element_Access := Source.Head;
+         Temp : Element_Access;
+      begin
+         Temp := Source.Head;
+         Source.Head := Source.Tail;
+         Source.Tail := Temp;
+         if Head = null then
+            raise Empty_List_Error;
+         end if;
+         loop
+            Temp := Head.Next;
+            Head.Next := Head.Previous;
+            Head.Previous := Temp;
+            Head := Temp;
+            exit when Head = null;
+         end loop;
+      end List_Reverse;
+      procedure Empty_List(Source : in out List) is
+         procedure Free is new Ada.Unchecked_Deallocation(List_Element,
+Element_Access);
+         Source_Ptr : Element_Access := Source.Head;
+         Temp : Element_Access;
+      begin
+         while Source_Ptr /= null loop
+            Temp := Source_Ptr;
+            Source_Ptr := Source_Ptr.Next;
+            Free(Temp);
+         end loop;
+         Source := New_List;
+      end Empty_List;
+      procedure Print(Msg : in String; Item : in List) is
+         Source_Ptr : Element_Access := Item.Head;
+      begin
+         Put_Line(Msg);
+         Put_Line("Length:" & Integer'Image(Length(Item)));
+         while Source_Ptr /= null loop
+            if Source_Ptr.Previous /= null then
+               Put(Item => Source_Ptr.Previous.Value, Width => 6);
+            end if;
+            Put(Item => Source_Ptr.Value, Width => 6);
+            if Source_Ptr.Next /= null then
+               Put(Item => Source_Ptr.Next.Value, Width => 6);
+            end if;
+            New_Line;
+            Source_Ptr := Source_Ptr.Next;
+         end loop;
+      end Print;
+      function Test_Lists return Integer is
+         Size : constant Integer := 10_000;
+         Li1, Li2, Li3 : List; -- all are created as empty lists
+         Temp_Element : Integer;
+         Len : Integer;
+      begin
+         -- Create a list of integers from 1 to Size
+         Li1 := Sequence(1, Size);
+         -- Copy the list to Li2
+         Li2 := Copy(Li1);
+         -- Compare Li1 and Li2 for equality
+         if Li1 /= Li2 then
+            Put_Line("Li1 and Li2 are not equal!");
+            return -1;
+         end if;
+         while not Is_Empty(Li2) loop
+            Pop_Head(Li2, Temp_Element);
+            Push_Tail(Li3, Temp_Element);
+         end loop;
+         -- Li2 must be empty now
+         if not Is_Empty(Li2) then
+            Put_Line("Li2 should be empty now!");
+            return -1;
+         end if;
+         -- Append each item from Li3 to Li2
+         -- reversing the list
+         while not Is_Empty(Li3) loop
+            Pop_Tail(Li3, Temp_Element);
+            Push_Tail(Li2, Temp_Element);
+         end loop;
+         -- Li3 must be empty now
+         if not Is_Empty(Li3) then
+            Put_Line("Li3 should be empty now!");
+            return -1;
+         end if;
+         -- reverse Li1 in place
+         List_Reverse(Li1);
+         -- check that Li1's first item is still Size
+         if First(Li1).Value /= Size then
+            Put_Line("First Li1 value wrong. Wanted" & Integer'Image(Size) &
+               " got" & Integer'Image(First(Li1).Value));
+            return -1;
+         end if;
+         -- Ensure Li1 last value is now 1
+         if Last(Li1).Value /= 1 then
+            Put_Line("Last Li1 value wrong, wanted 1, got" &
+               Integer'Image(Last(Li1).Value));
+            return -1;
+         end if;
+         -- Check that Li2's first value is now Size
+         if First(Li2).Value /= Size then
+            Put_Line("First Li2 value wrong, wanted" &
+               Integer'Image(Size) & " got" &
+               Integer'Image(First(Li2).Value));
+            return -1;
+         end if;
+         -- Check that Li2's last item is now 1
+         if Last(Li2).Value /= 1 then
+            Put_Line("Last Li2 value wrong, wanted 1");
+            return -1;
+         end if;
+         -- Check that Li1's size is still Size
+         if Length(Li1) /= Size then
+            Put_Line("Li1 size wrong, wanted" &
+               Integer'Image(Size) & " got" &
+               Integer'Image(Length(Li1)));
+            return -1;
+         end if;
+         -- compare Li1 and Li2 for equality
+         if Li1 /= Li2 then
+            Put_Line("Li1 and Li2 are not equal.");
+            return -1;
+         end if;
+         Len := Length(Li1);
+         Empty_List(Li1);
+         Empty_List(Li2);
+         Empty_List(Li3);
+         return Len;
+      end Test_Lists;
+   end Listops;
+   Max : Positive;
+   Result : Natural;
+begin
+   begin
+      Max := Positive'Value(Argument(1));
+   exception
+      when others =>
+         Max := 16;
+   end;
+   for Iter in 1..Max loop
+      Result := Listops.Test_Lists;
+   end loop;
+   Ada.Integer_Text_IO.Put(Item => Result, Width => 0);
+   Ada.Text_IO.New_Line;
+end Listoperations;
+
+

@@ -1,0 +1,88 @@
+// -*- mode: c++ -*-
+// $Id: hash2.gpp-2.gpp,v 1.1 2004-11-10 07:07:16 bfulgham Exp $
+// http://shootout.alioth.debian.org/
+// from David Hedbor
+
+// this version uses a custom string and hash function
+
+#include <stdio.h>
+#include <hash_map.h>
+#include <string.h>
+using namespace std;
+
+// Simple hashing function
+struct sstr {
+    int refs;
+    size_t len;
+    size_t strhash;
+    char *data;
+    static size_t strhasher(const char *name, size_t mlen) {
+	size_t seed = (9248339*mlen);
+	for(size_t i = 4; i < mlen; i++) {
+	    seed ^= (seed <<8) + name[i];
+	}
+	seed  %= 0xefffff;
+	return seed;
+    }
+
+    sstr (const char *str) :
+	refs(1), len(strlen(str)), strhash(strhasher(str, len)),
+	data(strdup(str)) {
+    }
+    void free() { refs--; }
+    sstr *copy() { refs++; return this; }  
+};
+
+struct mystr {
+    sstr *data;
+    mystr() : data(0) { }
+    mystr(const char * dt) : data(new sstr(dt))
+	{   
+	}
+    ~mystr() {
+	if(data) {
+	    data->free();
+	    if(!data->refs) delete data;
+	}
+    }
+    bool operator==(const mystr &other) const {
+	return other.data->len == data->len &&
+	    !memcmp(other.data->data, data->data, data->len);
+    }
+    mystr &operator=(const mystr &other)  {
+	if(*this == other) return *this;
+	data = other.data->copy();
+	return *this;
+    }
+    mystr &operator=(const char *other)  {
+	data = new sstr(other);
+	return *this;
+    }
+    mystr(const mystr &other) : data(other.data->copy()) { }
+};
+
+struct mysthash {
+    size_t operator()(const mystr &str) const { return str.data->strhash; }
+};
+
+int
+main(int argc, char *argv[]) {
+    int n = ((argc == 2) ? atoi(argv[1]) : 1);
+    char buf[16];
+    typedef hash_map<const mystr, int, mysthash> HM;
+    HM hash1, hash2;
+
+    for (int i=0; i<10000; i++) {
+	sprintf(buf, "foo_%d", i);
+	hash1[buf] = i; 
+    }
+
+    for (int i=0; i<n; i++) {
+	for (HM::iterator k = hash1.begin(); k != hash1.end(); ++k) {
+	    hash2[(*k).first] += hash1[(*k).first];
+	}
+    }
+
+    printf("%d %d %d %d\n", hash1["foo_1"],  hash1["foo_9999"], 
+	   hash2["foo_1"], hash2["foo_9999"]);
+}
