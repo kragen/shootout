@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: loc,v 1.13 2004-06-19 17:00:26 bfulgham Exp $
+# $Id: loc,v 1.14 2004-06-20 10:03:17 dbr-guest Exp $
 ######################################################################
 
 # TBD - ignore braces and other block delimiters
@@ -15,6 +15,14 @@ BEGIN {
     # debug/help code into the program when it it actually needed.
     use constant HELP => grep(/^(?:-?-help)$/, @ARGV);# add -h| to allow "-h"
     use constant DBG => grep(/^(?:-?-debug)$/, @ARGV);# add -d| to allow "-d"
+
+    foreach my $d qw(. .. ../.. ../../..) {
+	my $file = "$d/langs.pl";
+	if (-f $file) {
+	    require $file;
+	    last;
+	}
+    }
 }
 use Getopt::Long;
 use strict;
@@ -24,7 +32,7 @@ use strict;
 # Globals
 ######################################################################
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.13 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.14 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -44,66 +52,13 @@ my %STYLE =
     (
      'dash'   => { eol => qr'-- ',  begin => undef,    end => undef },
      'forth'  => { eol => qr'\\ ',  begin => '\(',     end => '\)' },
-     'gcc'    => { eol => qr'//',   begin => qr'/\*',  end => qr'\*/' },
+     'c'      => { eol => qr'//',   begin => qr'/\*',  end => qr'\*/' },
      'lisp'   => { eol => qr';',    begin => undef,    end => undef },
      'ml'     => { eol => undef,    begin => qr'\(\*', end => qr'\*\)' },
      'php'    => { eol => undef,    begin => qr'/\*',  end => qr'\*/' },
      'prolog' => { eol => qr'%',    begin => undef,    end => undef },
      'scheme' => { eol => qr';',    begin => qr'#!',   end => qr'!#' },
      'shell'  => { eol => qr'#',    begin => undef,    end => undef },
-    );
-
-my %DAT =
-    (
-     'bash'    => $STYLE{shell},
-     'bigforth' => $STYLE{forth},
-     'bigloo'  => $STYLE{lisp},
-     'clean'   => $STYLE{gcc},
-     'cmucl'   => $STYLE{lisp},
-     'csharp'   => $STYLE{gcc},
-     'eiffel'  => $STYLE{dash},
-     'elastic' => $STYLE{gcc},
-     'erlang'  => $STYLE{prolog},
-     'g++'     => $STYLE{gcc},
-     'gawk'    => $STYLE{shell},
-     'gcc'     => $STYLE{gcc},
-     'gcj'     => $STYLE{gcc},
-     'gforth'  => $STYLE{forth},
-     'ghc'     => $STYLE{dash},
-     'gnat'    => $STYLE{dash},
-     'guile'   => $STYLE{scheme},
-     'gwydion' => $STYLE{gcc},
-     'hipe'    => $STYLE{prolog},
-     'icon'    => $STYLE{shell},
-     'java'    => $STYLE{gcc},
-     'kaffe'   => $STYLE{gcc},
-     'lua'     => $STYLE{dash},
-     'mawk'    => $STYLE{shell},
-     'mercury' => $STYLE{prolog},
-     'mlton'   => $STYLE{ml},
-     'mono'    => $STYLE{gcc},
-     'mzscheme'   => $STYLE{lisp},
-     'mzc'   => $STYLE{lisp},
-     'nice'    => $STYLE{gcc},
-     'njs'     => $STYLE{gcc},
-     'ocaml'   => $STYLE{ml},
-     'ocamlb'  => $STYLE{ml},
-     'oz'      => $STYLE{prolog},
-     'perl'    => $STYLE{shell},
-     'php'     => $STYLE{php},
-     'pike'    => $STYLE{gcc},
-     'psyco'   => $STYLE{shell},
-     'python'  => $STYLE{shell},
-     'rep'     => $STYLE{scheme},
-     'ruby'    => $STYLE{shell},
-     'sablevm' => $STYLE{gcc},
-     'sbcl'    => $STYLE{lisp},
-     'se'      => $STYLE{dash},
-     'slang'   => $STYLE{gcc},
-     'smlnj'   => $STYLE{ml},
-     'stalin'  => $STYLE{lisp},
-     'tcl'     => $STYLE{shell},
-     'xemacs'  => $STYLE{lisp},
     );
 
 ######################################################################
@@ -152,16 +107,34 @@ sub loc {
 	err "Can't open $src for input";
 	return(0);
     }
-    unless ($DAT{$lang}) {
+    my $family = $::FAMILY{$::LANG{$lang}->{Lang}};
+
+    unless ($family) {
 	err "***********************************************";
-	err "* do I know language: $lang?";
+	err "* What family does $::LANG{$lang}->{Lang} belong to?";
+	err "***********************************************";
+	err "     '$::LANG{$lang}->{Lang}'     => '',";
+	return(0);
+    }
+
+    my $style = $STYLE{$family};
+
+    unless ($style) {
+	err "***********************************************";
+	err "* What style does $lang have?";
 	err "***********************************************";
 	return(0);
     }
+
+    # Override style for specific languages
+    if ($::FAMILY{$lang}) {
+	$style = ${STYLE{$::FAMILY{$lang}}};
+    }
+
     print STDERR "\n\n\nSTUDYING: $src\n" if (DBG);
-    my $eol_comment   = $DAT{$lang}->{eol};
-    my $begin_comment = $DAT{$lang}->{begin};
-    my $end_comment   = $DAT{$lang}->{end};
+    my $eol_comment   = $style->{eol};
+    my $begin_comment = $style->{begin};
+    my $end_comment   = $style->{end};
     my $block_comments = (defined($begin_comment) && defined($end_comment));
     if (DBG) {
 	if ($block_comments) {

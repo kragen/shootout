@@ -532,3 +532,45 @@
        },
      },
     );
+
+# Used by bin/loc to know the syntax of comments.
+%::FAMILY =
+    (
+     # Language name => Family name
+     'Ada'         => 'dash',
+     'Awk'         => 'shell',
+     'Bash'        => 'shell',
+     'C'           => 'c',
+     'C++'         => 'c',
+     'C#'          => 'c',
+     'Clean'       => 'c',
+     'Common Lisp' => 'lisp',
+     'Eiffel'      => 'dash',
+     'ElastiC'     => 'c',
+     'Erlang'      => 'prolog',
+     'Java'        => 'c',
+     'Forth'       => 'forth',
+     'Haskell'     => 'dash',
+     'Dylan'       => 'c',
+     'Icon'        => 'shell',
+     'Lua'         => 'dash',
+     'Nice'        => 'c',
+     'Ocaml'       => 'ml',
+     'Mozart/Oz'   => 'prolog',
+     'Perl'        => 'shell',
+     'Pike'        => 'c',
+     'Python'      => 'shell',
+     'Lisp'        => 'lisp',
+     'Ruby'        => 'shell',
+     'S-Lang'      => 'c',
+     'SML'         => 'ml',
+     'Tcl'         => 'shell',
+     'Emacs Lisp'  => 'lisp',
+     'Scheme'      => 'scheme',
+
+     # Overrides for specific languages, which seem to belong to a different
+     # family that their languages hints at
+     'rep'         => 'scheme',
+     'mzc'         => 'lisp',
+     'mzscheme'    => 'lisp',
+ );
