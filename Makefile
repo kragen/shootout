@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-18 09:34:00 dbr-guest Exp $
+# $Id: Makefile,v 1.4 2004-06-19 06:14:49 bfulgham Exp $
 
 include Make.header
 
@@ -34,7 +34,23 @@ recent:
 	@bin/make_recent > recent.html
 
 links:
+	# All Java's use the same source
 	for j in `find bench -name '*.java'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.gcj; \
+	done
+
+	# Hipe and Erlang are the same
+	for j in `find bench -name '*.erlang'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.erlang'`.hipe; \
+	done
+
+	# Ocaml and Ocamlb are the same
+	for j in `find bench -name '*.ocaml'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ocaml'`.ocamlb; \
+	done
+
+	# MzScheme and Mzc are the same
+	for j in `find bench -name '*.mzscheme'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.mzscheme'`.mzc; \
 	done
