@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: heapsort.ruby,v 1.1 2004-05-19 18:10:10 bfulgham Exp $
+# $Id: heapsort.ruby,v 1.2 2004-06-17 05:37:50 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 IM = 139968
@@ -44,10 +44,7 @@ def heapsort(n, ra)
 end
 
 N = Integer(ARGV.shift || 1)
-ary = []
-for i in 1 .. N
-    ary[i] = gen_random(1.0)
-end
+ary = Array.new(N) { gen_random(1.0) }
 
 heapsort(N, ary)
 
