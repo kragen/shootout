@@ -62,30 +62,30 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 </p>
 
 <p>Track status with <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a>
-<ol>
+<ul>
 <li><em>Open items</em> are new contributions</li>
 <li><em>Pending items</em> have been added to CVS</li>
 <li><em>Closed items</em> are being shown on the website</li>
 <li><em>Deleted items</em> have been removed from the website</li>
-</ol>
+</ul>
 </p>
 </td></tr>
 
 <tr class="b"><td>How can I help with <strong>the chores</strong>?</td></tr>
 <tr><td>
 <p>We need volunteers to
-<ul>
+<ol>
 <li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a> for <em>Open items</em></li>
 <li>check the <em>Open item</em> programs do what's required</li>
 <li>add acceptable <em>Open item</em> programs to CVS</li>
 <li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
-</ul>
+</ol>
 </p>
 <p>And we need them to
-<ul>
+<ol>
 <li>remove slower less-elegant programs from CVS</li>
 <li>update the status of removed <em>Closed items</em> to <em>Deleted</em></li>
-</ul>
+</ol>
 </p>
 <p>Do you have the necessary programming language knowledge?<br/>
 Do you want to help with the chores?<br/>
