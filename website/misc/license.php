@@ -1,4 +1,5 @@
-<h4 class="rev">&nbsp;revised BSD license</h4>
+<p>This is a specific instance of the <a href="http://www.opensource.org/licenses/bsd-license.php" title="Open Source Initiative (OSI)">Open Source Initiative (OSI) BSD license template</a>.</p> 
+<h4 class="rev">&nbsp;Revised BSD license</h4>
 <p>Copyright &#169; 2004,2005 Brent Fulgham</p> 
 <p>All rights reserved.</p> 
 <p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</p>

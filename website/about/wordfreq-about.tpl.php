@@ -1,7 +1,5 @@
 <p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><strong>same&nbsp;thing</strong></a>.</p>
 
-<p>The word-frequency benchmark measures a <em>real world</em> computing task.</p>
-
 <p>Each program should:</p>
 <ul>
 <li>read a text file from stdin</li>
