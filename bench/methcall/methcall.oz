@@ -1,4 +1,4 @@
-%%% $Id: methcall.oz,v 1.1 2004-05-23 07:14:27 bfulgham Exp $
+%%% $Id: methcall.oz,v 1.2 2004-06-26 10:37:12 ekarttun-guest Exp $
 %%% http://dada.perl.it/shootout/
 %%% 
 %%% contributed by Isaac Gouy
@@ -41,11 +41,6 @@ class NthToggle from Toggle
    end
 end
 
-proc {ShowBool X}
-   if X then {System.showInfo "true"}
-   else {System.showInfo "false"} end
-end
-
 fun {MethodSends N T}
    local V in
       if N==0 then {T state(V)} V
@@ -60,8 +55,8 @@ in
    local Args N in
       [Args] = {Application.getArgs plain}
       N = {String.toInt Args}
-      {ShowBool {MethodSends N {New Toggle init(true)}}}
-      {ShowBool {MethodSends N {New NthToggle init(true 3)}}}   
+      {System.show {MethodSends N {New Toggle init(true)}}}
+      {System.show {MethodSends N {New NthToggle init(true 3)}}}   
    end
    {Application.exit 0}
 end

@@ -1,4 +1,4 @@
-%%% $Id: objinst.oz,v 1.2 2004-06-26 10:07:47 ekarttun-guest Exp $
+%%% $Id: objinst.oz,v 1.3 2004-06-26 10:37:12 ekarttun-guest Exp $
 %%% http://dada.perl.it/shootout/
 %%% 
 %%% contributed by Isaac Gouy
@@ -45,11 +45,6 @@ class NthToggle from Toggle
    end
 end
 
-proc {ShowBool X}
-   if X then {System.showInfo "true"}
-   else {System.showInfo "false"} end
-end
-
 in 
    local Args N T1 T2 in
       [Args] = {Application.getArgs plain}
@@ -57,7 +52,7 @@ in
 
       T1 = {New Toggle init(true)}
       for I in 1..5 do
-         local V in {T1 activate}{T1 state(V)}{ShowBool V} end
+         local V in {T1 activate}{T1 state(V)}{System.show V} end
       end
       {System.showInfo ""}
       for I in 1..N do
@@ -66,7 +61,7 @@ in
    
       T2 = {New NthToggle init(true 3)}
       for I in 1..8 do
-         local V in {T2 activate}{T2 state(V)}{ShowBool V} end
+         local V in {T2 activate}{T2 state(V)}{System.show V} end
       end
    
       for I in 1..N do
