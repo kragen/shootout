@@ -1,4 +1,4 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;way</b></a> &#8212; the same way as this <a href="benchmark.php?test=pidigits&lang=clean&sort=<?=$Sort;?>">Clean program</a> or this <a href="benchmark.php?test=pidigits&lang=gst&sort=<?=$Sort;?>">Smalltalk program</a>.</p>
+<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;way</b></a> &#8212; the same way as this <a href="benchmark.php?test=pidigits&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
 
 <p>Each program should
 
@@ -8,7 +8,7 @@
 </ul>
 </p>
 
-<p>Programs should implement the <b>unoptimised</b> unbounded spigot algorithm given on pages 4,6 & 7 of <a href="http://web.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/spigot.pdf">Unbounded Spigot Algorithms for the Digits&nbsp;of&nbsp;Pi</a>, Jeremy Gibbons, 2004, (156KB pdf) &#8212; adapted to stop after the first N digits.</p>
+<p>Programs should adapt the <b>step-by-step</b> algorithm given on pages 4,6 & 7 of <a href="http://web.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/spigot.pdf">Unbounded Spigot Algorithms for the Digits&nbsp;of&nbsp;Pi</a> (156KB pdf). (<b>Not</b> the deliberately obscure version given on page 2.)</p>
 
 <p>Correct output N = 27 is:
 <pre>

@@ -73,27 +73,27 @@ q: anInteger1 r: anInteger2 s: anInteger3 t: anInteger4
 
 
 
-Object subclass: #PiDigits
+Object subclass: #PiDigitSpigot
 instanceVariableNames: 'z x inverse'
 classVariableNames: ''
 poolDictionaries: ''
 category: nil !
 
 
-!PiDigits class methodsFor: 'instance creation'!
+!PiDigitSpigot class methodsFor: 'instance creation'!
 
 new
    ^super new initialize ! !
 
 
-!PiDigits methodsFor: 'initialize-release'!
+!PiDigitSpigot methodsFor: 'initialize-release'!
 
 initialize
    z := Transformation unity.
    x := Transformation new.
    inverse := Transformation new. ! !
 
-!PiDigits methodsFor: 'accessing'!
+!PiDigitSpigot methodsFor: 'accessing'!
 
 next
    | y |
@@ -102,7 +102,7 @@ next
       ifFalse: [z := self consume: x next. self next] ! !
 
 
-!PiDigits methodsFor: 'private'!
+!PiDigitSpigot methodsFor: 'private'!
 
 consume: aTransformation
    ^z * aTransformation !
@@ -123,7 +123,7 @@ produce: anInteger
 n := Smalltalk arguments first asInteger.
 i := 0.
 length := 10.
-pidigits := PiDigits new.
+pidigits := PiDigitSpigot new.
 
 stream := ReadWriteStream on: (String new: 30).
 
