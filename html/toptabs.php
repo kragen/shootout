@@ -7,7 +7,8 @@ function toptabs($current)
 		"langs.php" => "Languages",
 		"method.php" => "Methodology",
 		"news.php" => "News",
-		"lang/bash" => "Implementations");
+		"lang/bash" => "Implementations",
+		"faq.php" => "FAQ");
 
 	echo "<div class=\"tabs\" id=\"toptabs\">\n";
 	echo "  <table border=\"0\" cellspacing=\"0\" cellpadding=\"4\" id=\"main\">\n";

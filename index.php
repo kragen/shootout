@@ -105,7 +105,7 @@ href="mailto:(Brent Fulgham) bfulgham@users.alioth.debian(not .com).org">email</
 		settling of volume may occur.</p>
               <p class="warningmark"><strong>Disclaimer No. 3:</strong> <a href="http://www.lib.uchicago.edu/keith/crisis/disclaimer.html">ditto</a>.</p>
               <p class="warningmark"><strong>Disclaimer No. 4:</strong> Please read the pages on
-	        <a href="method.shtml">Methodology</a>, the <a href="faq.shtml">
+	        <a href="method.shtml">Methodology</a>, the <a href="faq.php">
 		FAQ</a>, and <a href="conclusion.shtml">Conclusions</a> before
 		you flame.</p>
             </ul>
