@@ -30,6 +30,7 @@
         <div><a href="../../lang/kaffe/">kaffe</a></div>
         <div><a href="../../lang/java/">java</a></div>
         <div><a href="../../lang/sablevm/">sablevm</a></div>
+        <div><a href="../../lang/newlisp/">newlisp</a></div>
         <div><a href="../../lang/rep/">rep</a></div>
         <div><a href="../../lang/lua/">lua</a></div>
         <div><a href="../../lang/mercury/"><b><i>mercury</i></b></a></div>
@@ -51,6 +52,7 @@
         <div><a href="../../lang/mlton/"><b><i>mlton</i></b></a></div>
         <div><a href="../../lang/bigloo/"><b><i>bigloo</i></b></a></div>
         <div><a href="../../lang/stalin/"><b><i>stalin</i></b></a></div>
+        <div><a href="../../lang/chicken/"><b><i>chicken</i></b></a></div>
         <div><a href="../../lang/guile/">guile</a></div>
         <div><a href="../../lang/mzscheme/">mzscheme</a></div>
         <div><a href="../../lang/mzc/"><b><i>mzc</i></b></a></div>

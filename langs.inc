@@ -15,7 +15,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
       'Type'    => 'native compiled',
-      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-9) Copyright 1996-2002 Free Software Foundation, Inc.'
+      'Version' => 'GNAT 3.4.2 (Debian 3.4.2-2) Copyright 1996-2004 Free Software Foundation, Inc.'
     ),
 
     'mawk' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-9)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-11)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-9)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-11)
 '
     ),
 
@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => 'SBCL 0.8.13.68'
+      'Version' => 'SBCL 0.8.14.21'
     ),
 
     'gwydion' => array(
@@ -105,7 +105,7 @@ $LANGS = array(
       'Home'    => 'http://www.gwydiondylan.org',
       'Down'    => 'http://www.gwydiondylan.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => 'd2c (Gwydion Dylan) 2.3.12pre3'
+      'Version' => 'd2c (Gwydion Dylan) 2.3.12pre4'
     ),
 
     'se' => array(
@@ -187,7 +187,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java/',
       'Down'    => 'http://gcc.gnu.org/install/binaries.html',
       'Type'    => 'interpreted',
-      'Version' => 'gij (GNU libgcj) version 3.4.1 (Debian 3.4.1-5)'
+      'Version' => 'gij (GNU libgcj) version 3.4.2 (Debian 3.4.2-2)'
     ),
 
     'gcj' => array(
@@ -195,7 +195,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcj-3.4 (GCC) 3.4.1'
+      'Version' => 'gcj-3.4 (GCC) 3.4.2'
     ),
 
     'kaffe' => array(
@@ -220,6 +220,14 @@ elastiC version: 0.0.36 (dec: 36)
       'Down'    => 'http://sablevm.sourceforge.net/download.html',
       'Type'    => 'interpreted',
       'Version' => 'SableVM version 1.1.6'
+    ),
+
+    'newlisp' => array(
+      'Lang'    => 'Lisp',
+      'Home'    => 'http://newlisp.org/',
+      'Down'    => 'http://newlisp.org/index.cgi?page=Downloads',
+      'Type'    => 'interpreted',
+      'Version' => 'newLISP v.8.1.4'
     ),
 
     'rep' => array(
@@ -251,7 +259,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.mozart-oz.org',
       'Down'    => 'http://www.mozart-oz.org/download',
       'Type'    => 'interpreted',
-      'Version' => 'Mozart Compiler 1.3.1 (20040813) playing Oz 3'
+      'Version' => 'Mozart Compiler 1.3.1 (20040823) playing Oz 3'
     ),
 
     'nice' => array(
@@ -259,7 +267,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://nice.sourceforge.net/',
       'Down'    => 'http://nice.sourceforge.net/install.html',
       'Type'    => 'native compiled',
-      'Version' => 'Nice compiler version 0.9.8 (build 2004.08.14, 14:46:16 UTC)'
+      'Version' => 'Nice compiler version 0.9.8 (build 2004.09.03, 10:58:58 UTC)'
     ),
 
     'oberon2' => array(
@@ -276,7 +284,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-9)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-11)
 '
     ),
 
@@ -285,7 +293,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
       'Type'    => 'native compiled',
-      'Version' => 'The Objective Caml native-code compiler, version 3.08.0'
+      'Version' => 'The Objective Caml native-code compiler, version 3.08.1'
     ),
 
     'ocamlb' => array(
@@ -293,7 +301,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'The Objective Caml compiler, version 3.08.0 (Byte Code)'
+      'Version' => 'The Objective Caml compiler, version 3.08.1 (Byte Code)'
     ),
 
     'php' => array(
@@ -301,7 +309,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.php.net/',
       'Down'    => 'http://www.php.net/downloads.php',
       'Type'    => 'interpreted',
-      'Version' => 'PHP 4.3.8-5 (cli) (built: Aug  9 2004 16:39:24)
+      'Version' => 'PHP 4.3.8-12 (cli) (built: Sep  6 2004 05:46:13)
 '
     ),
 
@@ -318,7 +326,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://pike.roxen.com/',
       'Down'    => 'http://pike.roxen.com/download/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Pike v7.6 release 11 '
+      'Version' => 'Pike v7.6 release 13 '
     ),
 
     'gprolog' => array(
@@ -350,7 +358,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ruby-lang.org/',
       'Down'    => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
       'Type'    => 'interpreted',
-      'Version' => 'ruby 1.8.2 (2004-08-15) [i386-linux]'
+      'Version' => 'ruby 1.8.2 (2004-08-24) [i386-linux]'
     ),
 
     'slang' => array(
@@ -393,6 +401,14 @@ S-Lang Library Version: 1.4.9'
       'Down'    => 'http://www.ece.purdue.edu/~qobi/software.html',
       'Type'    => 'native compiled',
       'Version' => '0.9'
+    ),
+
+    'chicken' => array(
+      'Lang'    => 'Scheme',
+      'Home'    => 'http://www.call-with-current-continuation.org/',
+      'Down'    => 'http://www.call-with-current-continuation.org/',
+      'Type'    => 'native compiled',
+      'Version' => 'Chicken 1.63 [linux-unix-gnu-x86]'
     ),
 
     'guile' => array(

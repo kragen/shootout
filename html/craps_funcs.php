@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_funcs.php,v 1.6 2004-08-30 06:23:16 bfulgham Exp $
+# $Id: craps_funcs.php,v 1.7 2004-09-17 13:48:19 bfulgham Exp $
 
 require 'langs.inc';
 
@@ -19,6 +19,7 @@ $weight = array(
      'moments' => 2,
      'nestedloop' => 4,
      'objinst' => 5,
+     'plugin' => 1,
      'prodcons' => 1,
      'random' => 3,
      'regexmatch' => 4,

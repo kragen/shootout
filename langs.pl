@@ -116,6 +116,19 @@
        },
      },
      
+     chicken =>
+     { Lang => 'Scheme',
+       Home => 'http://www.call-with-current-continuation.org/',
+       Down => 'http://www.call-with-current-continuation.org/',
+       Type => 'native compiled',
+       Ext  => 'lisp',
+       Verfun => sub {
+	   my $ver = `$ENV{CHICKEN} -version`;
+	   $ver =~ /Version (\d+), Build (\d+) - (.*)/;
+	   return("Chicken $1.$2 [$3]");
+       },
+     },
+
      clean =>
      { Lang => 'Clean',
        Home => 'http://www.cs.kun.nl/~clean/index.html',
@@ -353,6 +366,19 @@
        Verfun => sub {
            my $ver = `$ENV{MMC} --version 2>&1`;
 	   $ver =~ /(Mercury Compiler.*)\n/;
+	   return($1);
+       },
+     },
+
+     newlisp =>
+     { Lang => 'Lisp',
+       Home => 'http://newlisp.org/',
+       Down => 'http://newlisp.org/index.cgi?page=Downloads',
+       Type => 'interpreted',
+       Ext  => 'lisp',
+       Verfun => sub {
+	   my $ver = `$ENV{NEWLISP} -h 2>&1`;
+	   $ver =~ /(newLISP .*) Copyright.*/;
 	   return($1);
        },
      },
