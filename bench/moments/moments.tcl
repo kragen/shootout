@@ -1,14 +1,12 @@
 #!/usr/bin/tclsh
-# $Id: moments.tcl,v 1.2 2005-03-18 06:26:26 bfulgham Exp $
-# http://shootout.alioth.debian.org/
-#
-# Corrected by Randy Melton
+# $Id: moments.tcl,v 1.3 2005-03-22 05:34:10 bfulgham Exp $
+# http://www.bagley.org/~doug/shootout/
 
 proc main {} {
     set sum 0.0
-    set nums [read stdin]
+    set nums [lsort -real [read stdin]]
     foreach num $nums {
-        set sum [expr {$sum + $num}]
+	set sum [expr {$sum + $num}]
     }
     set n [llength $nums]
     set mean [expr {$sum / $n}]
@@ -17,13 +15,13 @@ proc main {} {
     set variance 0.0
     set skew 0.0
     set kurtosis 0.0
-    
+
     foreach num $nums {
-	set deviation [expr {$num - $mean}]
-	set average_deviation [expr {$average_deviation + abs($deviation)}]
-	set variance [expr {$variance + pow($deviation, 2)}]
-	set skew [expr {$skew + pow($deviation, 3)}]
-	set kurtosis [expr {$kurtosis + pow($deviation, 4)}]
+        set deviation [expr {$num - $mean}]
+        set average_deviation [expr {$average_deviation + abs($deviation)}]
+        set variance [expr {$variance + pow($deviation, 2)}]
+        set skew [expr {$skew + pow($deviation, 3)}]
+        set kurtosis [expr {$kurtosis + pow($deviation, 4)}]
     }
 
     set average_deviation [expr {$average_deviation / $n}]
@@ -31,20 +29,19 @@ proc main {} {
     set standard_deviation [expr {sqrt($variance)}]
 
     if {$variance} {
-	set skew [expr {$skew / ($n * $variance * $standard_deviation)}]
-	set kurtosis [expr {$kurtosis / ($n * $variance * $variance) - 3.0}]
+        set skew [expr {$skew / ($n * $variance * $standard_deviation)}]
+        set kurtosis [expr {($kurtosis / ($n * $variance * $variance)) - 3.0}]
     }
 
-    set nums [lsort -integer $nums]
     set mid [expr {int($n / 2)}]
     if [expr {$n % 2}] {
-	set median [lindex $nums $mid]
+        set median [lindex $nums $mid]
     } else {
-	set a [lindex $nums $mid]
-	set b [lindex $nums [expr {$mid - 1}]]
-	set median [expr {($a + $b) / 2.0}]
+        set a [lindex $nums $mid]
+        set b [lindex $nums [expr {$mid - 1}]]
+        set median [expr {($a + $b) / 2.0}]
     }
-	
+
     puts [format "n:                  %d" $n]
     puts [format "median:             %f" $median]
     puts [format "mean:               %f" $mean]
