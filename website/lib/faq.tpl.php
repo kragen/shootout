@@ -36,8 +36,6 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 <tr class="b"><td>Where can I send <strong>comments</strong> and suggestions?</td></tr>
 <tr><td><p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
 <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
-
-<p>Comments and suggestions sent from the <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list"> <strong>message form</strong></a> are seen by very few people - if you really want to be heard use the mailing-list.</p>
 </td></tr>
 
 <tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
@@ -46,9 +44,8 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 
 <p>Read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></p>
 
-<p><strong>Follow these instructions!</strong> All 7 steps!</p>
-
-<p>Start from the bottom of the
+<p>And then <strong>follow these instructions!</strong> <br/>
+Start from the bottom of the
    <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New">
    <strong>Contribute Programs Submit-New</strong></a> form and work your way up as follows:
 <ol>
