@@ -176,6 +176,10 @@ And then, <em>maybe</em>, we just-might consider it.</p>
 <tr><td><p>Don't manually unroll loops! </p> 
 </td></tr>
 
+<tr class="b"><td>How should I advertise my company, services, website&#133;?</td></tr>
+<tr><td><p><strong>We'll remove any promos</strong> that you add as comment text, so please don't waste our time.</p> 
+</td></tr>
+
 <tr class="b"><td>How should I grab bragging rights?</td></tr>
 <tr><td><p>Include a header comment in the program like this:
 <pre>
