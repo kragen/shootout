@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-09-13 01:23:34 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-09-15 13:43:43 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
@@ -17,6 +17,7 @@ RUNTESTS := $(MINIBENCH) --conf ./Minibench.conf \
 	  --ignore echo.guile \
 	  --ignore echo.csharp \
 	  --ignore echo.gcl \
+	  --ignore echo.nice \
 	  --ignore echo.oz \
 	  --range 40000,70000,100000,150000
 
