@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.8 2004-06-20 08:39:45 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-06-21 10:26:00 dbr-guest Exp $
 
 include Make.header
 
-all: versions links-stamp
+all: init versions
 	(cd bench ; make $@)
 	(cd bench ; make --no-print-directory report> report.txt)
 	make recent craps codelinks
@@ -17,7 +17,7 @@ clean:
 
 versions: versions.html
 
-versions.html: $(LANGS) bin/make_versions langs.pl
+versions.html: bin/make_versions langs.pl
 	bin/make_versions > versions.html.tmp && \
 	mv -f versions.html.tmp versions.html
 
@@ -32,6 +32,11 @@ craps:
 
 recent:
 	@bin/make_recent > recent.html
+
+init: init-stamp
+init-stamp: links-stamp
+	bin/make_dirs
+	touch init-stamp
 
 links:  links-stamp
 links-stamp:
