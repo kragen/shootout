@@ -304,7 +304,7 @@ fixes, you will soon understand this requirement.</li>
 
 <tr class="b"><td>Who started "The Great Computer Language Shootout"?</td></tr>
 
-<tr><td><p>Doug Bagley created "The Great Computer Language Shootout", and it was active until 2001.</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p><p>Brent Fulgham revived "The Great Computer Language Shootout" here on <a href="http://alioth.debian.org/projects/shootout" title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a> in 2004.</p></td></tr>
+<tr><td><p>Doug Bagley created "The Great Computer Language Shootout", and it was active until 2001.</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p><p>In mid-2004 (here on Alioth&nbsp;Debian.org) Brent Fulgham revived the <a href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >old Great Computer Language Shootout</a>.</p><p>Then things really started to change. First, the <a href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >website was redesigned</a>. Then some benchmarks were deprecated. Then all kinds of new benchmarks were added.</p><p>Who knows where it will end?</p></td></tr>
 
 
 <tr class="b"><td>Who has contributed?</td></tr>

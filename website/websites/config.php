@@ -18,6 +18,7 @@ define('MISC_PATH', '../misc/');
 define('CORE_SITE', './');
 define('SANDBOX_SITE', './sandbox/');
 define('GREAT_SITE', './great/');
+define('OLD_SITE', './old/');
 
 
 // CONSTANTS ///////////////////////////////////////////////////
