@@ -22,6 +22,7 @@ proc newClient {sock addr port} {
    exit
 }
 
+
 proc runClient {n addr port} {
    set sock [socket $addr $port]
    fconfigure $sock -buffering line -encoding unicode
@@ -30,7 +31,9 @@ proc runClient {n addr port} {
    incr n
    while {[incr n -1]} {
       puts $sock $msg
-      if {[gets $sock] != $msg} {error "Received different message: $r."}
+      if {[set r [gets $sock]] != $msg} {
+	      error "Received different message: $r."
+      }
    }
 }
 
