@@ -1,1 +1,1 @@
-<p>cyc version 0.9.7 (built on Thu Jun 24 08:01:06 PDT 2004)</p>
+<p>Zinc cyc version 1.0.2 (built on 20041222)</p>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2005-03-02 06:24:26 bfulgham Exp $
+# $Id: Makefile,v 1.19 2005-03-14 01:24:55 bfulgham Exp $
 
 include Make.header
 
@@ -53,7 +53,7 @@ links-stamp:
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.erlang'`.hipe; \
 	done
 
-	# Ocaml and Ocamlb are the same
+	 Ocaml and Ocamlb are the same
 	for j in `find bench -name '*.ocaml'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ocaml'`.ocamlb; \
 	done
@@ -81,6 +81,11 @@ links-stamp:
 	done
 	for j in `find bench -name '*.gpp'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.gpp'`.icpp; \
+	done
+
+	# G95 and Intel Fortran are the same
+	for j in `find bench -name '*.ifc'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ifc'`.g95; \
 	done
 
 	touch links-stamp

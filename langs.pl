@@ -369,14 +369,29 @@
        Home => 'http://www.intel.com/software/products/compilers/linux',
        Down => 'http://www.intel.com/software/products/compilers/flin/',
        Type => 'native compiled',
-       Note => 'C plus objects plus generics',
-       Ext  => 'c',
+       Note => 'Legendary Number Cruncher',
+       Ext  => 'f90',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{IFC} -V 2>&1`);
 	   return("Intel Fortran Compiler Version $ver");
        },
      },
 
+     g95 =>
+     { Lang => 'Fortran',
+       Name => 'GNU',
+       Status => '+',
+       Home => 'http://www.g95.org',
+       Down => 'http://sourceforge.net/projects/g95/',
+       Type => 'native compiled',
+       Note => 'Free Legendary Number Cruncher',
+       Ext  => 'f90',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{G95} --version 2>&1`);
+	   $ver =~ /(G95.*)\n.*/;
+	   return($1);
+       },
+     },
 
      gcl =>
      { Lang => 'Lisp',

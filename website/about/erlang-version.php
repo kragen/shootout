@@ -1,1 +1,1 @@
-<p>Erlang (HIPE) (BEAM) emulator version 5.4.4</p>
+<p>Erlang (THREADS) (BEAM) emulator version 5.4.2.1</p>
