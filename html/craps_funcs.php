@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_funcs.php,v 1.3 2004-06-22 03:04:54 bfulgham Exp $
+# $Id: craps_funcs.php,v 1.4 2004-06-22 08:08:16 bfulgham Exp $
 
 require 'langs.inc';
 
@@ -37,82 +37,54 @@ function do_craps($query_string)
 
     $M2INWT = 0;
     $MAXWT = 5;
-    $SCALE = 1;
     $xloc = 0;
     $xmem = 0;
     $xcpu = 1.0;
-
-    # Initialize the best scores to a high value
-    $tests = array_keys($weight);
-    foreach ($tests as $_test) {
-       $best_cpu[$_test] = 99.0;
-       $best_mem[$_test] = 99999.0;
-       $best_loc[$_test] = 9999.0;
-       #echo "Setting best($_test) => $best_cpu[$_test]<br>\n";
-    }
 
     if ($query_string != "")
     {
         $tests = Explode('&', $query_string);
 
-	foreach ($tests as $test)
-	{
-	    list($tn,$w) = preg_split("/=/", $test);
-	    if ($w > $MAXWT) {
-	        $w = $MAXWT;
+        foreach ($tests as $test)
+        {
+            list($tn,$w) = preg_split("/=/", $test);
+            if ($w > $MAXWT) {
+                $w = $MAXWT;
             } elseif ($w < $MINWT) {
-	        $w = 1;
-	    }
+                $w = 1;
+            }
 
-	    if ($tn == 'xloc') {
-	        $xloc = $w;
-	    } elseif ($tn == 'xmem') {
-	        $xmem = $w;
-	    } elseif ($tn == 'xcpu') {
-	        $xcpu = $w;
-	    } else {
-	        $weight[$tn] = $w;
-	    }
-	}
+            if ($tn == 'xloc') {
+                $xloc = $w;
+            } elseif ($tn == 'xmem') {
+                $xmem = $w;
+            } elseif ($tn == 'xcpu') {
+                $xcpu = $w;
+            } else {
+                $weight[$tn] = $w;
+            }
+        }
     }
 
     $craps_lines = file("$base/.craps.table");
 
-    # Read file once to get best scores for later calcs.
-    foreach ($craps_lines as $line_no => $line)
-    {
-        if (preg_match("/^SCORE/", $line)) {
-	    list($t, $_test, $_impl, $_cpu, $_mem, $_loc) = preg_split("/,/", $line);
-	    #echo "test = $_test, cpu=$_cpu ";
-	    if (! is_null($_cpu) && $_cpu != 0) {
-	        $best_cpu[$_test] = min($_cpu, $best_cpu[$_test]);
-		#echo "best($_test) = $best_cpu[$_test]";
-	    }
-	    #echo "<br>\n";
-	    if ($_mem != 0) $best_mem[$_test] = min($_mem, $best_mem[$_test]);
-	    if ($_loc != 0) $best_loc[$_test] = min($_loc, $best_loc[$_test]);
-	}
-    }
     foreach ($craps_lines as $line_no => $line)
     {
         if (preg_match("/^TITLE/", $line)) {
-	    list($t, $_test, $_title) = preg_split("/,/", $line);
-	    $title[$_test] = $_title;
-	} elseif (preg_match("/^LANG/", $line)) {
-	    list($t, $_lang, $_impl, $_missing) = preg_split("/,/", $line);
-	    $lang[$_impl] = $_lang;
-	    $missing[$_impl] = $_missing;
-	} elseif (preg_match("/^SCORE/", $line)) {
-	    list($t, $_test, $_impl, $_cpu, $_mem, $_loc) = preg_split("/,/", $line);
-	    if (! is_null($_cpu) && $_cpu != 0) {
-	        $cpu[$_impl] += 1 / (1 + $SCALE * log($_cpu/$best_cpu[$_test])/log(2)) * $weight[$_test];
-	    }
-	    
-	    $mem[$_impl] += $_mem * $weight[$_test];
-	    $loc[$_impl] += $_loc * $weight[$_test];
-	} else {
-	    # error
-	}
+            list($t, $_test, $_title) = preg_split("/,/", $line);
+            $title[$_test] = $_title;
+        } elseif (preg_match("/^LANG/", $line)) {
+            list($t, $_lang, $_impl, $_missing) = preg_split("/,/", $line);
+            $lang[$_impl] = $_lang;
+            $missing[$_impl] = $_missing;
+        } elseif (preg_match("/^SCORE/", $line)) {
+            list($t, $_test, $_impl, $_cpu, $_mem, $_loc) = preg_split("/,/", $line);
+            $cpu[$_impl] += $_cpu * $weight[$_test];
+            $mem[$_impl] += $_mem * $weight[$_test];
+            $loc[$_impl] += $_loc * $weight[$_test];
+        } else {
+            # error
+        }
     }
 
     echo "<div class=\"h3\"><h3>Patented CRAPS Calculator</h3></div>\n";
@@ -145,14 +117,14 @@ function do_craps($query_string)
             $usea = true;
         }
         echo "         <tr class=\"$ab\">\n";
-	for ($i=0; $i<2; $i++) {
-	    if ($test = array_shift($tests)) {
-		echo "            <td><a href=\"bench/$test/\">$title[$test]</td><td align=\"center\"><input type=\"text\" name=\"$test\" size=\"2\" value=\"$weight[$test]\"></td>\n";
-	    } else {
-		echo "            <td>&nbsp;</td><td>&nbsp;</td>\n";
-	    }
-	}
-	echo "         </tr>\n";
+        for ($i=0; $i<2; $i++) {
+            if ($test = array_shift($tests)) {
+                echo "            <td><a href=\"bench/$test/\">$title[$test]</td><td align=\"center\"><input type=\"text\" name=\"$test\" size=\"2\" value=\"$weight[$test]\"></td>\n";
+            } else {
+                echo "            <td>&nbsp;</td><td>&nbsp;</td>\n";
+            }
+        }
+        echo "         </tr>\n";
     }
 
     echo "        </table>\n";
@@ -167,23 +139,24 @@ function do_craps($query_string)
     echo "          </tr>\n";
 
     foreach (array_keys($cpu) as $lang) {
-	$score[$lang] = ($cpu[$lang] * $xcpu) + ($mem[$lang] * $xmem) + ($loc[$lang] * $xloc);
+        $score[$lang] = ($cpu[$lang] * $xcpu) + ($mem[$lang] * $xmem) + ($loc[$lang] * $xloc);
     }
 
     foreach (array_keys($score) as $lang) {
- 	$ranked[$lang] = $score[$lang];
+        $ranked[$lang] = $score[$lang];
     }
     array_multisort($score, SORT_ASC, $ranked);
    
     foreach ($ranked as $lang => $score) {
-	$lang_type = $LANGS[$lang]['Type'];
-	$language = $LANGS[$lang]['Lang'];
-	if (preg_match("/native compiled/", $lang_type)) {
-	    $lt_html = "<b><i>$lang</i></b>";
-	} else {
-	    $lt_html = "$lang";
-	}
-	$score = intval($score);
+        $lang_type = $LANGS[$lang]['Type'];
+        $language = $LANGS[$lang]['Lang'];
+        if (preg_match("/native compiled/", $lang_type)) {
+            $lt_html = "<b><i>$lang</i></b>";
+        } else {
+            $lt_html = "$lang";
+        }
+        $score = floatval($score);
+	$score_str = sprintf("%2.04f", $score);
         if ($usea) {
             $ab = "a";
             $usea = false;
@@ -191,7 +164,7 @@ function do_craps($query_string)
             $ab = "b";
             $usea = true;
         }
-	echo "         <tr class=\"$ab\"><td>$language</td><td><a href=\"lang/$lang/\">$lt_html</a></td><td align=\"right\">$score</td><td align=\"right\">$missing[$lang]</td></tr>\n";
+        echo "         <tr class=\"$ab\"><td>$language</td><td><a href=\"lang/$lang/\">$lt_html</a></td><td align=\"right\">$score_str</td><td align=\"right\">$missing[$lang]</td></tr>\n";
     }
 
     echo "          <tr><td colspan=\"4\"><p class=\"infomark\"><small>Languages that compile to native code are in <i><b>Bold Italics</b></i></small>.</p></td></tr>\n";
