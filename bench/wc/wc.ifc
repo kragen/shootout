@@ -1,0 +1,139 @@
+! The Great Computer Language Shootout
+! http://shootout.alioth.debian.org/
+!
+! contributed by Simon Geard, 27/02/2005
+!
+! ifort count-words.f90 -O3 -static-libcxa -o count-words
+!
+!
+program wc
+  implicit none
+  integer, parameter :: rsize = 64
+
+  character(len=8) argv
+  character(len=rsize), dimension(:), allocatable :: line     ! A line of text
+  character(len=rsize), dimension(:), allocatable :: work
+  character(len=rsize)                            :: str_blk  ! A block of chars read from the line
+  integer                                         :: bline    ! The number of rsize blocks used in a line of chars
+
+  integer :: nlines = 0 ! Line counter
+  integer :: nwords = 0 ! Word counter
+  integer :: nchars = 0 ! Char counter
+  integer :: i, nread
+
+  ! Read and count
+  allocate(line(100)) ! Allocates 100 x rsize characters for a line
+  readFile: do
+     bline = 0
+     readLine: do
+        bline = bline+1
+        read(5,fmt='(a)',end=100,eor=10,size=nread,advance='no') str_blk
+        call expandLine
+        line(bline) = str_blk(1:nread)
+        nchars = nchars + nread
+     end do readLine
+10   continue
+     call expandLine
+     if (nread == 0) then
+        bline = bline - 1
+     else
+        line(bline) = str_blk(1:nread)
+     end if
+     nchars = nchars + nread
+     if (bline > 0) then
+        nwords = nwords + numWords(line,bline)
+     end if
+     nlines = nlines + 1
+  end do readFile
+100 continue
+  nchars = nchars + nlines ! Have to add the number of nl characters
+  write(*,'(2(i0,a),i0)') nlines, ' ', nwords, ' ', nchars
+  stop
+
+contains
+  subroutine expandLine
+    if (bline > size(line)) then ! More space needed for line
+       ! Allocate more memory
+       allocate(work(size(line)))
+       work = line
+       deallocate(line)
+       allocate(line(2*size(work)))
+       line = work
+       deallocate(work)
+    end if
+  end subroutine expandLine
+
+  integer function numWords(l_line, bline)
+    character(len=*), dimension(:), intent(in) :: l_line
+    integer, parameter :: tab = 9
+    integer, intent(in) :: bline
+    integer i, j
+    logical :: ingap, started
+    character(len=rsize) :: line
+    integer :: ng
+
+    ingap = .false.
+    ng = 0
+    started = .false.
+
+    ! Search in the 1st block
+    line = l_line(1)
+    do i=1,len(line)
+       if (.not. started) then
+          started = (line(i:i) /= ' ')
+
+       elseif ( .not. ingap .and. (line(i:i) .eq. ' ' .or. line(i:i) .eq. achar(tab))) then
+          ng = ng + 1
+          ingap = .true.
+
+       elseif (ingap .and. ischar(line(i:i))) then
+          ingap = .false.
+
+       end if
+    end do
+    if (bline == 1) then
+       if (ingap) ng = ng - 1
+       numWords = ng + 1
+       return
+    end if
+
+    ! Do the next n-2 blocks
+    do j=2,bline-1
+       line = l_line(j)
+       do i=1,len(line)
+          if (.not. started) then
+             started = (line(i:i) /= ' ')
+
+          elseif (.not. ingap .and. (line(i:i) .eq. ' ' .or. line(i:i) .eq. achar(tab))) then
+             ng = ng + 1
+             ingap = .true.
+
+          elseif (ingap .and. ischar(line(i:i))) then
+             ingap = .false.
+          end if
+       end do
+    end do
+
+    ! Do the last block
+    line = trim(l_line(bline)) ! Ignore trailing wspace here
+    do i=1,len(trim(line))
+       if (.not. started) then
+          started = (line(i:i) /= ' ')
+
+       elseif (.not. ingap .and. (line(i:i) .eq. ' ' .or. line(i:i) .eq. achar(tab))) then
+          ng = ng + 1
+          ingap = .true.
+
+       else if (ingap .and. ischar(line(i:i))) then
+          ingap = .false.
+       end if
+    end do
+    numWords = ng + 1
+  end function numWords
+
+  logical function ischar(c)
+    character, intent(in) :: c
+    ischar = (iachar(c) > 32 .and. iachar(c) < 127)
+  end function ischar
+
+end program wc
