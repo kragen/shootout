@@ -9,6 +9,8 @@
 The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."
 </p><br/>
 
+<p>Please use the Oberon-2 program as an example of how to implement this benchmark. There are better algorithms; we're interested in this particular algorithm.</p>
+
 <p>Correct output N = 7 is:
 <pre>Pfannkuchen(7) = 16
 </pre></p><br/>
