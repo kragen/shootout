@@ -1,67 +1,65 @@
-<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
-<I><FONT COLOR="#B22222">-- $Id: wc-gnat.code,v 1.2 2004-11-08 08:15:54 bfulgham Exp $
-</FONT></I><I><FONT COLOR="#B22222">-- http://dada.perl.it/shootout/
-</FONT></I><I><FONT COLOR="#B22222">-- Ada 95 code by C.C.
-</FONT></I>
-<I><FONT COLOR="#B22222">-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
-</FONT></I>
-<B><FONT COLOR="#A020F0">with</FONT></B> Interfaces.C, System, Ada.Strings.Fixed, Ada.Text_IO;
-
-<B><FONT COLOR="#A020F0">procedure</FONT></B> Wc <B><FONT COLOR="#A020F0">is</FONT></B>
-   <B><FONT COLOR="#A020F0">package</FONT></B> IC <B><FONT COLOR="#A020F0">renames</FONT></B> Interfaces.C;
-   <B><FONT COLOR="#A020F0">function</FONT></B> L_Trim (Source : String; Side : Ada.Strings.Trim_End :=
-               Ada.Strings.Left) <B><FONT COLOR="#A020F0">return</FONT></B> String <B><FONT COLOR="#A020F0">renames</FONT></B> Ada.Strings.Fixed.Trim;
-
-   <B><FONT COLOR="#A020F0">package</FONT></B> Io <B><FONT COLOR="#A020F0">is</FONT></B>
-      <B><FONT COLOR="#A020F0">type</FONT></B> File_Descriptor <B><FONT COLOR="#A020F0">is</FONT></B> <B><FONT COLOR="#A020F0">new</FONT></B> IC.int;       <I><FONT COLOR="#B22222">--  STDIN=0, STDOUT=1, STDERR=2
-</FONT></I>      <B><FONT COLOR="#A020F0">type</FONT></B> Setmode_Flag <B><FONT COLOR="#A020F0">is</FONT></B> <B><FONT COLOR="#A020F0">new</FONT></B> IC.int;
-      STDIN       : <B><FONT COLOR="#A020F0">constant</FONT></B> File_Descriptor := 0;
-      O_BINARY    : <B><FONT COLOR="#A020F0">constant</FONT></B> Setmode_Flag := 16#8000#;
-
-      <B><FONT COLOR="#A020F0">function</FONT></B> C_Setmode (
-               FD       : File_Descriptor;
-               Mode     : Setmode_Flag)
-            <B><FONT COLOR="#A020F0">return</FONT></B> IC.int;
-
-      <B><FONT COLOR="#A020F0">function</FONT></B> C_Sysread (
-               FD       : File_Descriptor;
-               Buf      : System.Address;
-               NByte    : IC.int)
-            <B><FONT COLOR="#A020F0">return</FONT></B> IC.int;
-<I><FONT COLOR="#B22222">--   private
-</FONT></I><I><FONT COLOR="#B22222">--      pragma Import (C, C_Setmode, &quot;_setmode&quot;);          --  Microsoft Windows
-</FONT></I><I><FONT COLOR="#B22222">--      pragma Import (C, C_Sysread, &quot;_read&quot;);
-</FONT></I>   <B><FONT COLOR="#A020F0">end</FONT></B> Io;
-
-   Buffer      : String (1 .. 4 * 1024);
-   NL, NW, NC  : Natural := 0;
-   Inside_Word : Boolean := False;
-   C           : Character;
-   Last, R     : Integer;
-<B><FONT COLOR="#A020F0">begin</FONT></B>
-   R := Integer (Io.C_Setmode (Io.STDIN, Io.O_BINARY));  <I><FONT COLOR="#B22222">--  Read CR,LF right
-</FONT></I>   <B><FONT COLOR="#A020F0">loop</FONT></B>
-      Last := Integer (Io.C_Sysread (FD =&gt; Io.STDIN,
-                  Buf =&gt; Buffer (1)'Address, NByte =&gt; Buffer'Length));
-      <B><FONT COLOR="#A020F0">exit</FONT></B> <B><FONT COLOR="#A020F0">when</FONT></B> Last &lt;= 0;
-      NC := NC + Last;
-      <B><FONT COLOR="#A020F0">for</FONT></B> K <B><FONT COLOR="#A020F0">in</FONT></B> Buffer'First .. Last <B><FONT COLOR="#A020F0">loop</FONT></B>
-         C := Buffer (K);
-         <B><FONT COLOR="#A020F0">if</FONT></B> C = ASCII.LF <B><FONT COLOR="#A020F0">then</FONT></B>
-            NL := NL + 1;
-         <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B>;
-         <B><FONT COLOR="#A020F0">if</FONT></B> C = <B><FONT COLOR="#BC8F8F">' '</FONT></B> <B><FONT COLOR="#A020F0">or</FONT></B> C = ASCII.CR <B><FONT COLOR="#A020F0">or</FONT></B> C = ASCII.LF <B><FONT COLOR="#A020F0">or</FONT></B> C = ASCII.HT <B><FONT COLOR="#A020F0">then</FONT></B>
-            Inside_Word := False;
-         <B><FONT COLOR="#A020F0">elsif</FONT></B> <B><FONT COLOR="#A020F0">not</FONT></B> Inside_Word <B><FONT COLOR="#A020F0">then</FONT></B>
-            Inside_Word := True;
-            NW := NW + 1;
-         <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B>;
-      <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">loop</FONT></B>;
-   <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">loop</FONT></B>;
-   Ada.Text_IO.Put_Line (L_Trim (Natural'Image (NL)) &amp; Natural'Image (NW) &amp;
-            Natural'Image (NC));
-<B><FONT COLOR="#A020F0">end</FONT></B> Wc;
-   <I><FONT COLOR="#B22222">--  The &quot;Ada.Streams.Stream_IO.Read (File, Item, Last)&quot; procedure can't
-</FONT></I>   <I><FONT COLOR="#B22222">--  read from STDIN: can't associate Standard Input with File parameter.
-</FONT></I>   <I><FONT COLOR="#B22222">--  GNAT's Interfaces.C_Streams.fread function isn't from ISO/IEC 8652:1995.
-</FONT></I></pre></td></tr></table>
+<span class="line">    1 </span><span class="slc">-- $Id: wc-gnat.code,v 1.3 2004-11-11 07:14:19 bfulgham Exp $
+</span><span class="line">    2 </span><span class="slc"></span><span class="slc">-- http://dada.perl.it/shootout/
+</span><span class="line">    3 </span><span class="slc"></span><span class="slc">-- Ada 95 code by C.C.
+</span><span class="line">    4 </span><span class="slc"></span>
+<span class="line">    5 </span><span class="slc">-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+</span><span class="line">    6 </span><span class="slc"></span>
+<span class="line">    7 </span><span class="kwa">with</span> Interfaces.C<span class="sym">,</span> System<span class="sym">,</span> Ada.Strings.Fixed<span class="sym">,</span> Ada.Text_IO<span class="sym">;
+</span><span class="line">    8 </span><span class="sym">
+</span><span class="line">    9 </span><span class="sym"></span><span class="kwa">procedure</span> Wc <span class="kwa">is
+</span><span class="line">   10 </span><span class="kwa">   package</span> IC <span class="kwa">renames</span> Interfaces.C<span class="sym">;
+</span><span class="line">   11 </span><span class="sym"></span>   <span class="kwa">function</span> L_Trim <span class="sym">(</span>Source <span class="sym">:</span> <span class="kwb">String</span><span class="sym">;</span> Side <span class="sym">:</span> Ada.Strings.Trim_End <span class="sym">:=
+</span><span class="line">   12 </span><span class="sym"></span>               Ada.Strings.Left<span class="sym">)</span> <span class="kwa">return</span> <span class="kwb">String</span> <span class="kwa">renames</span> Ada.Strings.Fixed.Trim<span class="sym">;
+</span><span class="line">   13 </span><span class="sym">
+</span><span class="line">   14 </span><span class="sym"></span>   <span class="kwa">package</span> Io <span class="kwa">is
+</span><span class="line">   15 </span><span class="kwa">      type</span> File_Descriptor <span class="kwa">is new</span> IC.int<span class="sym">;</span>       <span class="slc">--  STDIN=0, STDOUT=1, STDERR=2
+</span><span class="line">   16 </span><span class="slc"></span>      <span class="kwa">type</span> Setmode_Flag <span class="kwa">is new</span> IC.int<span class="sym">;
+</span><span class="line">   17 </span><span class="sym"></span>      STDIN       <span class="sym">:</span> <span class="kwa">constant</span> File_Descriptor <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span><span class="line">   18 </span><span class="sym"></span>      O_BINARY    <span class="sym">:</span> <span class="kwa">constant</span> Setmode_Flag <span class="sym">:=</span> <span class="num">16</span>#<span class="num">8000</span>#<span class="sym">;
+</span><span class="line">   19 </span><span class="sym">
+</span><span class="line">   20 </span><span class="sym"></span>      <span class="kwa">function</span> C_Setmode <span class="sym">(
+</span><span class="line">   21 </span><span class="sym"></span>               FD       <span class="sym">:</span> File_Descriptor<span class="sym">;
+</span><span class="line">   22 </span><span class="sym"></span>               Mode     <span class="sym">:</span> Setmode_Flag<span class="sym">)
+</span><span class="line">   23 </span><span class="sym"></span>            <span class="kwa">return</span> IC.int<span class="sym">;
+</span><span class="line">   24 </span><span class="sym">
+</span><span class="line">   25 </span><span class="sym"></span>      <span class="kwa">function</span> C_Sysread <span class="sym">(
+</span><span class="line">   26 </span><span class="sym"></span>               FD       <span class="sym">:</span> File_Descriptor<span class="sym">;
+</span><span class="line">   27 </span><span class="sym"></span>               Buf      <span class="sym">:</span> System.Address<span class="sym">;
+</span><span class="line">   28 </span><span class="sym"></span>               NByte    <span class="sym">:</span> IC.int<span class="sym">)
+</span><span class="line">   29 </span><span class="sym"></span>            <span class="kwa">return</span> IC.int<span class="sym">;
+</span><span class="line">   30 </span><span class="sym"></span><span class="slc">--   private
+</span><span class="line">   31 </span><span class="slc"></span><span class="slc">--      pragma Import (C, C_Setmode, &quot;_setmode&quot;);          --  Microsoft Windows
+</span><span class="line">   32 </span><span class="slc"></span><span class="slc">--      pragma Import (C, C_Sysread, &quot;_read&quot;);
+</span><span class="line">   33 </span><span class="slc"></span>   <span class="kwa">end</span> Io<span class="sym">;
+</span><span class="line">   34 </span><span class="sym">
+</span><span class="line">   35 </span><span class="sym"></span>   Buffer      <span class="sym">:</span> <span class="kwb">String</span> <span class="sym">(</span><span class="num">1</span> .. <span class="num">4</span> <span class="sym">*</span> <span class="num">1024</span><span class="sym">);
+</span><span class="line">   36 </span><span class="sym"></span>   NL<span class="sym">,</span> NW<span class="sym">,</span> NC  <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span><span class="line">   37 </span><span class="sym"></span>   Inside_Word <span class="sym">:</span> <span class="kwb">Boolean</span> <span class="sym">:=</span> False<span class="sym">;
+</span><span class="line">   38 </span><span class="sym"></span>   C           <span class="sym">:</span> <span class="kwb">Character</span><span class="sym">;
+</span><span class="line">   39 </span><span class="sym"></span>   Last<span class="sym">,</span> R     <span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">;
+</span><span class="line">   40 </span><span class="sym"></span><span class="kwa">begin
+</span><span class="line">   41 </span><span class="kwa"></span>   R <span class="sym">:=</span> <span class="kwb">Integer</span> <span class="sym">(</span>Io.C_Setmode <span class="sym">(</span>Io.STDIN<span class="sym">,</span> Io.O_BINARY<span class="sym">));</span>  <span class="slc">--  Read CR,LF right
+</span><span class="line">   42 </span><span class="slc"></span>   <span class="kwa">loop
+</span><span class="line">   43 </span><span class="kwa"></span>      Last <span class="sym">:=</span> <span class="kwb">Integer</span> <span class="sym">(</span>Io.C_Sysread <span class="sym">(</span>FD <span class="sym">=&gt;</span> Io.STDIN<span class="sym">,
+</span><span class="line">   44 </span><span class="sym"></span>                  Buf <span class="sym">=&gt;</span> Buffer <span class="sym">(</span><span class="num">1</span><span class="sym">)'</span>Address<span class="sym">,</span> NByte <span class="sym">=&gt;</span> Buffer<span class="sym">'</span>Length<span class="sym">));
+</span><span class="line">   45 </span><span class="sym"></span>      <span class="kwa">exit when</span> Last <span class="sym">&lt;=</span> <span class="num">0</span><span class="sym">;
+</span><span class="line">   46 </span><span class="sym"></span>      NC <span class="sym">:=</span> NC <span class="sym">+</span> Last<span class="sym">;
+</span><span class="line">   47 </span><span class="sym"></span>      <span class="kwa">for</span> K <span class="kwa">in</span> Buffer<span class="sym">'</span>First .. Last <span class="kwa">loop
+</span><span class="line">   48 </span><span class="kwa"></span>         C <span class="sym">:=</span> Buffer <span class="sym">(</span>K<span class="sym">);
+</span><span class="line">   49 </span><span class="sym"></span>         <span class="kwa">if</span> C <span class="sym">=</span> ASCII.LF <span class="kwa">then
+</span><span class="line">   50 </span><span class="kwa"></span>            NL <span class="sym">:=</span> NL <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span><span class="line">   51 </span><span class="sym"></span>         <span class="kwa">end if</span><span class="sym">;
+</span><span class="line">   52 </span><span class="sym"></span>         <span class="kwa">if</span> C <span class="sym">= ' '</span> <span class="kwa">or</span> C <span class="sym">=</span> ASCII.CR <span class="kwa">or</span> C <span class="sym">=</span> ASCII.LF <span class="kwa">or</span> C <span class="sym">=</span> ASCII.HT <span class="kwa">then
+</span><span class="line">   53 </span><span class="kwa"></span>            Inside_Word <span class="sym">:=</span> False<span class="sym">;
+</span><span class="line">   54 </span><span class="sym"></span>         <span class="kwa">elsif not</span> Inside_Word <span class="kwa">then
+</span><span class="line">   55 </span><span class="kwa"></span>            Inside_Word <span class="sym">:=</span> True<span class="sym">;
+</span><span class="line">   56 </span><span class="sym"></span>            NW <span class="sym">:=</span> NW <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span><span class="line">   57 </span><span class="sym"></span>         <span class="kwa">end if</span><span class="sym">;
+</span><span class="line">   58 </span><span class="sym"></span>      <span class="kwa">end loop</span><span class="sym">;
+</span><span class="line">   59 </span><span class="sym"></span>   <span class="kwa">end loop</span><span class="sym">;
+</span><span class="line">   60 </span><span class="sym"></span>   Ada.Text_IO.Put_Line <span class="sym">(</span>L_Trim <span class="sym">(</span><span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>NL<span class="sym">)) &amp;</span> <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>NW<span class="sym">) &amp;
+</span><span class="line">   61 </span><span class="sym"></span>            <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>NC<span class="sym">));
+</span><span class="line">   62 </span><span class="sym"></span><span class="kwa">end</span> Wc<span class="sym">;
+</span><span class="line">   63 </span><span class="sym"></span>   <span class="slc">--  The &quot;Ada.Streams.Stream_IO.Read (File, Item, Last)&quot; procedure can't
+</span><span class="line">   64 </span><span class="slc"></span>   <span class="slc">--  read from STDIN: can't associate Standard Input with File parameter.
+</span><span class="line">   65 </span><span class="slc"></span>   <span class="slc">--  GNAT's Interfaces.C_Streams.fread function isn't from ISO/IEC 8652:1995.</span>

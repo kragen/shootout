@@ -1,28 +1,26 @@
 ;;; -*- mode: lisp -*-;
-;;; $Id: regexmatch.cmucl,v 1.7 2004-07-04 01:45:41 bfulgham Exp $
+;;; $Id: regexmatch.cmucl,v 1.8 2004-11-11 07:13:55 bfulgham Exp $
 ;;; http://shootout.alioth.debian.org/
 ;;; from Jochen Schmidt
 ;;; Multi-lisp modifications by Brent Fulgham
-;;; Enhanced by Juho Snellman
-
 ;;; Further modified (optimized & cleaned up a little) by Markus Ziegler
+
 (proclaim '(optimize (speed 3) (safety 0) (space 0) (debug 0) (compilation-speed 0)))
-#+cmucl (setf ext:*bytes-consed-between-gcs* 5000000)
+#+cmu (setf ext:*bytes-consed-between-gcs* 5000000)
 (declaim (inline typep digit-charp non-digit-charp))
 
+(use-package :meta)
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (use-package :meta)
-  (meta:enable-meta-syntax)
-
   (defun digit-charp (char)
     (declare (type base-char char))
     (char<= #\0 char #\9))
+
   (defun non-digit-charp (char)
     (declare (type base-char char))
     (not (or (char= char #\() (char= char #\)) (digit-charp char))))
 
   (deftype digit () '(satisfies digit-charp))
-  (deftype non-digit () '(satisfies non-digit-charp)))
+  (deftype non-digit () '(satisfies non-digit-charp))) 
 
 (defvar area-code     (make-array 3 :element-type 'base-char))
 (defvar exchange      (make-array 3 :element-type 'base-char))
@@ -31,27 +29,26 @@
 (defun parse-tel (input)
   (declare (type simple-base-string area-code exchange last-4-digits))
   (meta:with-string-meta (buffer input)
-    (labels ((skip-non-digits (&aux (d #\0))
-	       (meta:match $[@(non-digit d)]))
-	     (digit-triplet (result &aux (old-index index) (d #\0)) 
+    (labels ((skip-non-digits ()
+	       (meta:match (:while (:type non-digit))))
+	     (digit-triplet (result)
 	       (declare (type simple-base-string result))
-	       (or (meta:match [ @(digit d) !(setf (schar result 0) d)
-				 @(digit d) !(setf (schar result 1) d)
-				 @(digit d) !(setf (schar result 2) d) ])
-		   (progn (setq index old-index) nil)))
-	     (digit-4tuple (result &aux (old-index index) (d #\0))
+	       (meta:match (:and (:type digit (schar result 0)) 
+				 (:type digit (schar result 1)) 
+				 (:type digit (schar result 2)))))
+	     (digit-4tuple (result)
 	       (declare (type simple-base-string result))
-	       (or (meta:match [ @(digit d) !(setf (schar result 0) d)
-				 @(digit d) !(setf (schar result 1) d)
-				 @(digit d) !(setf (schar result 2) d)
-				 @(digit d) !(setf (schar result 3) d) ])
-		   (progn (setq index old-index) nil)))
-	     (telephone-nr (&aux (d #\0))
-	       (meta:match [ !(skip-non-digits)
-				  { [ #\( !(digit-triplet area-code) #\) ] !(digit-triplet area-code) }
-				  #\space !(digit-triplet exchange) { #\space #\- }
-				  !(digit-4tuple last-4-digits)
-				  { @(non-digit d) !(= index end) } ])))
+	       (meta:match (:and (:type digit (schar result 0))
+				 (:type digit (schar result 1))
+				 (:type digit (schar result 2))
+				 (:type digit (schar result 3)))))
+	     (telephone-nr () 
+	       (meta:match (:and (skip-non-digits)
+				 (:or (:and #\( (digit-triplet area-code) #\))
+				      (digit-triplet area-code))
+				 #\space (digit-triplet exchange) (:or #\space #\-)
+				 (digit-4tuple last-4-digits)
+				 (:or (:type non-digit) (= index end))))))
       (telephone-nr))))
 
 (defun main ()
@@ -59,7 +56,7 @@
                                          #+cmu  extensions:*command-line-strings*)) "1")))
         (input (loop for line = (read-line *standard-input* nil 'eof)
 		  until (eq line 'eof) collect line)))
-     (loop for i of-type fixnum from 1 below n do
+    (loop for i of-type fixnum from 1 below n do
 	 (loop for line of-type simple-base-string in input
 	    do (parse-tel line)))
     (loop with i of-type fixnum = 0

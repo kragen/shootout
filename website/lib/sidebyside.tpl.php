@@ -36,7 +36,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <!-- // SELECTED FULLCPU CHART //////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td>
+<tr><td width="160">
 
 <img src="chartcpu.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
    width="160" height="240" />
@@ -91,7 +91,7 @@ foreach($Selected as $row){
 <!-- // SELECTED MEMORY CHART //////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td>
+<tr><td width="160">
 
 <img src="chartmem.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
    width="160" height="240" />

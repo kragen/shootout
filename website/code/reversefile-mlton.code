@@ -1,81 +1,80 @@
-<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
-<I><FONT COLOR="#B22222">(* -*- mode: sml -*-
- * $Id: reversefile-mlton.code,v 1.2 2004-11-08 08:15:32 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Tom 7
- *)</FONT></I>
-
-<B><FONT COLOR="#A020F0">val</FONT></B> bufsize <B><FONT COLOR="#5F9EA0">=</FONT></B> 4096
-<B><FONT COLOR="#A020F0">val</FONT></B> rdbufsize <B><FONT COLOR="#5F9EA0">=</FONT></B> 4096
-
-<B><FONT COLOR="#A020F0">val</FONT></B> stdout <B><FONT COLOR="#5F9EA0">=</FONT></B> Posix.FileSys.wordToFD 0w1
-<B><FONT COLOR="#A020F0">val</FONT></B> stdin <B><FONT COLOR="#5F9EA0">=</FONT></B> Posix.FileSys.wordToFD 0w0
-
-<B><FONT COLOR="#A020F0">datatype</FONT></B> block <B><FONT COLOR="#5F9EA0">=</FONT></B> END
-               <B><FONT COLOR="#5F9EA0">|</FONT></B> MORE <B><FONT COLOR="#A020F0">of</FONT></B> <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> Word8Array.<B><FONT COLOR="#228B22">array</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> block
-
-<B><FONT COLOR="#A020F0">val</FONT></B> buff <B><FONT COLOR="#5F9EA0">=</FONT></B> Unsafe.Word8Array.create rdbufsize
-
-<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">out</FONT></I></B></FONT></B> END <B><FONT COLOR="#5F9EA0">=</FONT></B> ()
-  <B><FONT COLOR="#5F9EA0">|</FONT></B> out (MORE (ir <B><FONT COLOR="#A020F0">as</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> i, a, next)) <B><FONT COLOR="#5F9EA0">=</FONT></B>
-  <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
-    Posix.IO.writeArr (stdout, Word8ArraySlice.slice(a, i, <B><FONT COLOR="#5F9EA0">NONE</FONT></B>));
-    out next
-  <B><FONT COLOR="#A020F0">end</FONT></B>
-
-<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">rd</FONT></I></B></FONT></B> (start, len, count, b) <B><FONT COLOR="#5F9EA0">=</FONT></B>
-  <B><FONT COLOR="#A020F0">if</FONT></B> (start <B><FONT COLOR="#5F9EA0">+</FONT></B> len) <B><FONT COLOR="#5F9EA0">&gt;=</FONT></B> count <B><FONT COLOR="#A020F0">then</FONT></B> 
-    <I><FONT COLOR="#B22222">(* done with this block. 
-       Copy from start to the end of the array into
-       buff, then return the starting index into buff. *)</FONT></I>
-    <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
-      Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, start, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(len)),
-                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>buff, di<B><FONT COLOR="#5F9EA0">=</FONT></B>0};
-      (b, len)
-    <B><FONT COLOR="#A020F0">end</FONT></B>
-  <B><FONT COLOR="#A020F0">else</FONT></B>
-    <B><FONT COLOR="#A020F0">if</FONT></B> Unsafe.Word8Array.sub(buff, start <B><FONT COLOR="#5F9EA0">+</FONT></B> len) <B><FONT COLOR="#5F9EA0">=</FONT></B> 0w10 <B><FONT COLOR="#A020F0">then</FONT></B>
-      <I><FONT COLOR="#B22222">(* found newline *)</FONT></I>
-      <B><FONT COLOR="#A020F0">case</FONT></B> b <B><FONT COLOR="#A020F0">of</FONT></B> MORE(ir <B><FONT COLOR="#A020F0">as</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> i, a, _) <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
-        <B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> len <B><FONT COLOR="#A020F0">then</FONT></B>
-            <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
-              <I><FONT COLOR="#B22222">(* enough room *)</FONT></I>
-              Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, start, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1)),
-	                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>a, di<B><FONT COLOR="#5F9EA0">=</FONT></B>(i <B><FONT COLOR="#5F9EA0">-</FONT></B> len <B><FONT COLOR="#5F9EA0">-</FONT></B> 1)};
-              ir <B><FONT COLOR="#5F9EA0">:=</FONT></B> i <B><FONT COLOR="#5F9EA0">-</FONT></B> (len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1);
-              
-              rd(start <B><FONT COLOR="#5F9EA0">+</FONT></B> len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, 0, count, b)
-            <B><FONT COLOR="#A020F0">end</FONT></B>
-          <B><FONT COLOR="#A020F0">else</FONT></B> <I><FONT COLOR="#B22222">(* not enough room *)</FONT></I>
-            <B><FONT COLOR="#A020F0">let</FONT></B>
-              <I><FONT COLOR="#B22222">(* going to need a new buffer *)</FONT></I>
-              <B><FONT COLOR="#A020F0">val</FONT></B> na <B><FONT COLOR="#5F9EA0">=</FONT></B> Unsafe.Word8Array.create bufsize
-              <B><FONT COLOR="#A020F0">val</FONT></B> l <B><FONT COLOR="#5F9EA0">=</FONT></B> (len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1) <B><FONT COLOR="#5F9EA0">-</FONT></B> i
-            <B><FONT COLOR="#A020F0">in</FONT></B>
-              <I><FONT COLOR="#B22222">(* put the tail in whatever room is left *)</FONT></I>
-	      Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, (start <B><FONT COLOR="#5F9EA0">+</FONT></B> len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1) <B><FONT COLOR="#5F9EA0">-</FONT></B>i, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(i)),
-	                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>a, di<B><FONT COLOR="#5F9EA0">=</FONT></B> 0 };
-              <I><FONT COLOR="#B22222">(* put the head in a new buffer *)</FONT></I>
-              Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, start, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(l)),
-	                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>na, di<B><FONT COLOR="#5F9EA0">=</FONT></B>bufsize <B><FONT COLOR="#5F9EA0">-</FONT></B> l };
-              ir <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0;
-              rd(start <B><FONT COLOR="#5F9EA0">+</FONT></B> len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, 0, count, MORE(<B><FONT COLOR="#A020F0">ref</FONT></B> (bufsize <B><FONT COLOR="#5F9EA0">-</FONT></B> l), na, b))
-            <B><FONT COLOR="#A020F0">end</FONT></B>
-	<B><FONT COLOR="#A020F0">else</FONT></B> rd (start, len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, count, b)
-	
-<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> (b, s) <B><FONT COLOR="#5F9EA0">=</FONT></B>
-  <B><FONT COLOR="#A020F0">let</FONT></B> 
-    <B><FONT COLOR="#A020F0">val</FONT></B> count <B><FONT COLOR="#5F9EA0">=</FONT></B> Posix.IO.readArr (stdin, Word8ArraySlice.slice(buff, s, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(rdbufsize<B><FONT COLOR="#5F9EA0">-</FONT></B>s)))
-    <B><FONT COLOR="#A020F0">val</FONT></B> (bb, bs) <B><FONT COLOR="#5F9EA0">=</FONT></B> rd (0, s, count <B><FONT COLOR="#5F9EA0">+</FONT></B> s, b)
-  <B><FONT COLOR="#A020F0">in</FONT></B>
-    <B><FONT COLOR="#A020F0">case</FONT></B> count <B><FONT COLOR="#A020F0">of</FONT></B>
-      0 <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> out bb
-    <B><FONT COLOR="#5F9EA0">|</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> loop (bb, bs)
-  <B><FONT COLOR="#A020F0">end</FONT></B>
-
-<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">main</FONT></I></B></FONT></B>(name, args) <B><FONT COLOR="#5F9EA0">=</FONT></B>
-    ( loop (MORE(<B><FONT COLOR="#A020F0">ref</FONT></B> bufsize, Unsafe.Word8Array.create bufsize, END), 0);
-      OS.Process.success);
-
-<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> main( CommandLine.name(), CommandLine.arguments() );
-</pre></td></tr></table>
+<span class="line">    1 </span><span class="com">(* -*- mode: sml -*-
+</span><span class="line">    2 </span><span class="com"> * $Id: reversefile-mlton.code,v 1.3 2004-11-11 07:14:11 bfulgham Exp $
+</span><span class="line">    3 </span><span class="com"> * http://www.bagley.org/~doug/shootout/
+</span><span class="line">    4 </span><span class="com"> * from Tom 7
+</span><span class="line">    5 </span><span class="com"> *)</span>
+<span class="line">    6 </span>
+<span class="line">    7 </span><span class="kwa">val</span> bufsize <span class="sym">=</span> <span class="num">4096
+</span><span class="line">    8 </span><span class="num"></span><span class="kwa">val</span> rdbufsize <span class="sym">=</span> <span class="num">4096
+</span><span class="line">    9 </span><span class="num">
+</span><span class="line">   10 </span><span class="num"></span><span class="kwa">val</span> stdout <span class="sym">=</span> Posix.FileSys.wordToFD <span class="num">0w1
+</span><span class="line">   11 </span><span class="num"></span><span class="kwa">val</span> stdin <span class="sym">=</span> Posix.FileSys.wordToFD <span class="num">0w0
+</span><span class="line">   12 </span><span class="num">
+</span><span class="line">   13 </span><span class="num"></span><span class="kwa">datatype</span> block <span class="sym">=</span> END
+<span class="line">   14 </span>               <span class="sym">|</span> MORE <span class="kwa">of</span> <span class="kwb">int</span> ref <span class="sym">*</span> Word8Array.array <span class="sym">*</span> block
+<span class="line">   15 </span>
+<span class="line">   16 </span><span class="kwa">val</span> buff <span class="sym">=</span> Unsafe.Word8Array.create rdbufsize
+<span class="line">   17 </span>
+<span class="line">   18 </span><span class="kwa">fun</span> out END <span class="sym">= ()
+</span><span class="line">   19 </span><span class="sym">  |</span> out <span class="sym">(</span>MORE <span class="sym">(</span>ir <span class="kwa">as</span> ref i<span class="sym">,</span> a<span class="sym">,</span> next<span class="sym">)) =
+</span><span class="line">   20 </span><span class="sym"></span>  <span class="kwa">let in
+</span><span class="line">   21 </span><span class="kwa"></span>    Posix.IO.writeArr <span class="sym">(</span>stdout<span class="sym">,</span> Word8ArraySlice.slice<span class="sym">(</span>a<span class="sym">,</span> i<span class="sym">,</span> NONE<span class="sym">));
+</span><span class="line">   22 </span><span class="sym"></span>    out next
+<span class="line">   23 </span>  <span class="kwa">end
+</span><span class="line">   24 </span><span class="kwa">
+</span><span class="line">   25 </span><span class="kwa">fun</span> rd <span class="sym">(</span>start<span class="sym">,</span> len<span class="sym">,</span> count<span class="sym">,</span> b<span class="sym">) =
+</span><span class="line">   26 </span><span class="sym"></span>  <span class="kwa">if</span> <span class="sym">(</span>start <span class="sym">+</span> len<span class="sym">) &gt;=</span> count <span class="kwa">then
+</span><span class="line">   27 </span><span class="kwa"></span>    <span class="com">(* done with this block.
+</span><span class="line">   28 </span><span class="com">       Copy from start to the end of the array into
+</span><span class="line">   29 </span><span class="com">       buff, then return the starting index into buff. *)</span>
+<span class="line">   30 </span>    <span class="kwa">let in
+</span><span class="line">   31 </span><span class="kwa"></span>      Word8ArraySlice.copy <span class="sym">{</span>src<span class="sym">=</span>Word8ArraySlice.slice<span class="sym">(</span>buff<span class="sym">,</span> start<span class="sym">,</span> SOME<span class="sym">(</span>len<span class="sym">)),
+</span><span class="line">   32 </span><span class="sym"></span>                            dst<span class="sym">=</span>buff<span class="sym">,</span> di<span class="sym">=</span><span class="num">0</span><span class="sym">};
+</span><span class="line">   33 </span><span class="sym">      (</span>b<span class="sym">,</span> len<span class="sym">)
+</span><span class="line">   34 </span><span class="sym"></span>    <span class="kwa">end
+</span><span class="line">   35 </span><span class="kwa">  else
+</span><span class="line">   36 </span><span class="kwa">    if</span> Unsafe.Word8Array.sub<span class="sym">(</span>buff<span class="sym">,</span> start <span class="sym">+</span> len<span class="sym">) =</span> <span class="num">0w10</span> <span class="kwa">then
+</span><span class="line">   37 </span><span class="kwa"></span>      <span class="com">(* found newline *)</span>
+<span class="line">   38 </span>      <span class="kwa">case</span> b <span class="kwa">of</span> MORE<span class="sym">(</span>ir <span class="kwa">as</span> ref i<span class="sym">,</span> a<span class="sym">,</span> _<span class="sym">) =&gt;
+</span><span class="line">   39 </span><span class="sym"></span>        <span class="kwa">if</span> i <span class="sym">&gt;</span> len <span class="kwa">then
+</span><span class="line">   40 </span><span class="kwa">            let in
+</span><span class="line">   41 </span><span class="kwa"></span>              <span class="com">(* enough room *)</span>
+<span class="line">   42 </span>              Word8ArraySlice.copy <span class="sym">{</span>src<span class="sym">=</span>Word8ArraySlice.slice<span class="sym">(</span>buff<span class="sym">,</span> start<span class="sym">,</span> SOME<span class="sym">(</span>len <span class="sym">+</span> <span class="num">1</span><span class="sym">)),
+</span><span class="line">   43 </span><span class="sym"></span>                                    dst<span class="sym">=</span>a<span class="sym">,</span> di<span class="sym">=(</span>i <span class="sym">-</span> len <span class="num">- 1</span><span class="sym">)};
+</span><span class="line">   44 </span><span class="sym"></span>              ir <span class="sym">:=</span> i <span class="sym">- (</span>len <span class="sym">+</span> <span class="num">1</span><span class="sym">);
+</span><span class="line">   45 </span><span class="sym">
+</span><span class="line">   46 </span><span class="sym"></span>              rd<span class="sym">(</span>start <span class="sym">+</span> len <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> count<span class="sym">,</span> b<span class="sym">)
+</span><span class="line">   47 </span><span class="sym"></span>            <span class="kwa">end
+</span><span class="line">   48 </span><span class="kwa">          else</span> <span class="com">(* not enough room *)</span>
+<span class="line">   49 </span>            <span class="kwa">let
+</span><span class="line">   50 </span><span class="kwa"></span>              <span class="com">(* going to need a new buffer *)</span>
+<span class="line">   51 </span>              <span class="kwa">val</span> na <span class="sym">=</span> Unsafe.Word8Array.create bufsize
+<span class="line">   52 </span>              <span class="kwa">val</span> l <span class="sym">= (</span>len <span class="sym">+</span> <span class="num">1</span><span class="sym">) -</span> i
+<span class="line">   53 </span>            <span class="kwa">in
+</span><span class="line">   54 </span><span class="kwa"></span>              <span class="com">(* put the tail in whatever room is left *)</span>
+<span class="line">   55 </span>              Word8ArraySlice.copy <span class="sym">{</span>src<span class="sym">=</span>Word8ArraySlice.slice<span class="sym">(</span>buff<span class="sym">, (</span>start <span class="sym">+</span> len <span class="sym">+</span> <span class="num">1</span><span class="sym">) -</span>i<span class="sym">,</span> SOME<span class="sym">(</span>i<span class="sym">)),
+</span><span class="line">   56 </span><span class="sym"></span>                                    dst<span class="sym">=</span>a<span class="sym">,</span> di<span class="sym">=</span> <span class="num">0</span> <span class="sym">};
+</span><span class="line">   57 </span><span class="sym"></span>              <span class="com">(* put the head in a new buffer *)</span>
+<span class="line">   58 </span>              Word8ArraySlice.copy <span class="sym">{</span>src<span class="sym">=</span>Word8ArraySlice.slice<span class="sym">(</span>buff<span class="sym">,</span> start<span class="sym">,</span> SOME<span class="sym">(</span>l<span class="sym">)),
+</span><span class="line">   59 </span><span class="sym"></span>                                    dst<span class="sym">=</span>na<span class="sym">,</span> di<span class="sym">=</span>bufsize <span class="sym">-</span> l <span class="sym">};
+</span><span class="line">   60 </span><span class="sym"></span>              ir <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span><span class="line">   61 </span><span class="sym"></span>              rd<span class="sym">(</span>start <span class="sym">+</span> len <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> count<span class="sym">,</span> MORE<span class="sym">(</span>ref <span class="sym">(</span>bufsize <span class="sym">-</span> l<span class="sym">),</span> na<span class="sym">,</span> b<span class="sym">))
+</span><span class="line">   62 </span><span class="sym"></span>            <span class="kwa">end
+</span><span class="line">   63 </span><span class="kwa">        else</span> rd <span class="sym">(</span>start<span class="sym">,</span> len <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> count<span class="sym">,</span> b<span class="sym">)
+</span><span class="line">   64 </span><span class="sym">
+</span><span class="line">   65 </span><span class="sym"></span><span class="kwa">fun</span> loop <span class="sym">(</span>b<span class="sym">,</span> s<span class="sym">) =
+</span><span class="line">   66 </span><span class="sym"></span>  <span class="kwa">let
+</span><span class="line">   67 </span><span class="kwa">    val</span> count <span class="sym">=</span> Posix.IO.readArr <span class="sym">(</span>stdin<span class="sym">,</span> Word8ArraySlice.slice<span class="sym">(</span>buff<span class="sym">,</span> s<span class="sym">,</span> SOME<span class="sym">(</span>rdbufsize<span class="sym">-</span>s<span class="sym">)))
+</span><span class="line">   68 </span><span class="sym"></span>    <span class="kwa">val</span> <span class="sym">(</span>bb<span class="sym">,</span> bs<span class="sym">) =</span> rd <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> s<span class="sym">,</span> count <span class="sym">+</span> s<span class="sym">,</span> b<span class="sym">)
+</span><span class="line">   69 </span><span class="sym"></span>  <span class="kwa">in
+</span><span class="line">   70 </span><span class="kwa">    case</span> count <span class="kwa">of
+</span><span class="line">   71 </span><span class="kwa"></span>      <span class="num">0</span> <span class="sym">=&gt;</span> out bb
+<span class="line">   72 </span>    <span class="sym">|</span> _ <span class="sym">=&gt;</span> loop <span class="sym">(</span>bb<span class="sym">,</span> bs<span class="sym">)
+</span><span class="line">   73 </span><span class="sym"></span>  <span class="kwa">end
+</span><span class="line">   74 </span><span class="kwa">
+</span><span class="line">   75 </span><span class="kwa">fun</span> main<span class="sym">(</span>name<span class="sym">,</span> args<span class="sym">) =
+</span><span class="line">   76 </span><span class="sym">    (</span> loop <span class="sym">(</span>MORE<span class="sym">(</span>ref bufsize<span class="sym">,</span> Unsafe.Word8Array.create bufsize<span class="sym">,</span> END<span class="sym">),</span> <span class="num">0</span><span class="sym">);
+</span><span class="line">   77 </span><span class="sym"></span>      OS.Process.success<span class="sym">);
+</span><span class="line">   78 </span><span class="sym">
+</span><span class="line">   79 </span><span class="sym"></span><span class="kwa">val</span> _ <span class="sym">=</span> main<span class="sym">(</span> CommandLine.name<span class="sym">(),</span> CommandLine.arguments<span class="sym">() );
+</span><span class="line">   80 </span><span class="sym"></span>

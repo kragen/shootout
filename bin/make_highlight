@@ -4,30 +4,14 @@
 # Generates beautiful, highlighted source code for viewing
 # via Web Browsers
 #
-# Note:  Requires the GNU Enscript program by Markku Rossi
-# http://www.iki.fi/~mtr/genscript
+# Note:  Requires the Highlight program by André Simon <andre.simon1@gmx.de>
+# see http://www.andre-simon.de/
 #
 use File::Basename;
 use File::Copy;
-use IPC::Open2;
 
 BEGIN {
     require "langs.pl";
-}
-
-# Taken from Twiki SyntaxHighlightingPlugin
-# by Nicolas Tisserand
-sub pipeThru($) {
-    my ($executable) = @_;
-    $pid = open2( \*READER, \*WRITER, $executable);
-
-    my ($out);
-    while (<READER>) {
-        $out .= $_;
-    }
-    close (READER);
-
-    return $out;
 }
 
 sub genfile ($$$$) {
@@ -61,27 +45,12 @@ sub genfile ($$$$) {
 
     return 0 if ($dmtime >= $smtime);
 
-    # Highlighting code based on SyntaxHighlighting plugin for Twiki
-    # by Nicolas Tisserand
-    my $hltext = pipeThru("enscript --color --language=html --style=emacs_verbose --highlight=$ext -o - -q $source");
-    #system("enscript --color --language=html --style=emacs_verbose --highlight=$ext -o $dest -q $source");
+    my $command = "highlight -f -l -i $source -o $dest --syntax=$ext --style=typical --css-outfile=website/websites/css/highlight.css -t 8";
+    #print "Trying $command\n";
 
-    if ($hltext =~ s/.*\<PRE\>\n(.*?)\n?\<\/PRE\>.*/$1/os) {
-        if ($main::numbering) {
-            my $line = 1;
-            $hltext =~ s/(^.*)/sprintf("<b><font color=\"#000000\">%5d<\/font><\/b>\t%s", $line++, $1)/mgeo;
-        }
-
-        unlink($dest);
-            open DEST, ">$dest";
-
-        print DEST "<table width=\"100%\" border=\"0\" cellpadding=\"5\" cellspacing=\"0\">";
-        print DEST "<tr><td bgcolor=\"#FFFFFF\"><pre>\n";
-        print DEST $hltext;
-        print DEST "<\/pre><\/td><\/tr><\/table>\n";
-
-        close DEST;
-    }
+    unlink($dest);
+    system($command) == 0
+      or print "$command failed: $!";
 
     # Copy over the runlog as well.  We don't really care if it fails
     copy ($logsource, $logdest)
