@@ -73,8 +73,8 @@ $LANGS= array(
 
      'se' => array(
          'Lang' => 'Eiffel',
-	 'Home' => 'http://smalleiffel.loria.fr/',
-	 'Down' => 'ftp://ftp.loria.fr/pub/loria/genielog/SmallEiffel/',
+	 'Home' => 'http://smarteiffel.loria.fr/',
+	 'Down' => 'ftp://ftp.loria.fr/pub/loria/SmartEiffel/',
 	 'Type' => 'native compiled'
      ),
 
