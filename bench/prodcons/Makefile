@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-24 07:16:19 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-05-28 07:20:42 bfulgham Exp $
 include ../../Make.header
 
 TEST    := prodcons
@@ -10,8 +10,8 @@ OCAMLOPTS  := $(OCAMLOPTS) -thread unix.cmxa threads.cmxa
 GHCOPTS    := -package concurrent
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --ignore prodcons.rep \
 	  --ignore prodcons.mlton2.mlton \
+	  --ignore prodcons.rep \
 	  --range 10000,30000,70000,100000 \
 	  --title "$(TITLE)" $(TEST).*
 
