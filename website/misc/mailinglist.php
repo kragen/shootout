@@ -121,9 +121,11 @@
       <p>shootout-list is administered by <a href="mailto:bfulgham@debian.org">bfulgham@debian.org</a><br><a href="http://lists.alioth.debian.org/mailman/admin/shootout-list">Shootout-list administrative interface</a> (requires authorization).</p>
       </td>
    </tr>     
+<!--   
    <tr>
-      <td><img src="<?=MAIN_SITE;?>mailman.jpg" alt="Delivered by Mailman"</td>
-      <td><img src="<?=MAIN_SITE;?>PythonPowered.png" alt="Python Powered"</td>
-      <td><img src="<?=MAIN_SITE;?>gnu-head-tiny.jpg" alt="GNU's Not Unix"</td>
-   </tr>    
+      <td><img src="<?=IMAGE_PATH;?>mailman.jpg" alt="Delivered by Mailman"</td>
+      <td><img src="<?=IMAGE_PATH;?>PythonPowered.png" alt="Python Powered"</td>
+      <td><img src="<?=IMAGE_PATH;?>gnu-head-tiny.jpg" alt="GNU's Not Unix"</td>
+   </tr>   
+-->    
 </table>
