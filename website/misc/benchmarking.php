@@ -3,12 +3,12 @@
 
 <p>There's a wealth of easily available information on benchmarking programming languages. Read just a little and the flaws in "The Great Computer Language Shootout" will become obvious.</p>
 
-<p class="center"><b>"benchmarking without analysis is bogus"</b></p>
+<p class="center"><strong>"benchmarking without analysis is bogus"</strong></p>
 
 <p>What we can learn from benchmarking is detailed information about a particular language implementation, for example: <a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">"Performing Lisp Analysis of the FANNKUCH Benchmark"</a> (55KB postscript) and <a href="http://openmap.bbn.com/~kanderso/performance/postscript/courage-in-profiles.ps">"Courage in profiles"</a> (173KB postscript).
 </p>
 
-<p class="center"><b>"your application is the ultimate benchmark"</b></p>
+<p class="center"><strong>"your application is the ultimate benchmark"</strong></p>
 
 <p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric, the origin of which is unknown to me but that may very well be Wirth’s own invention. He used the compiler’s self-compilation speed as a measure of the compiler’s quality. Considering that Wirth’s compilers were written in the languages they compiled, and that compilers are substantial and non-trivial pieces of software in their own right, this introduced a highly practical benchmark that directly contested a compiler's complexity against its performance. Under the self compilation speed benchmark, only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much that the intrinsic cost of the new code addition was fully compensated." <a href="http://www.ics.uci.edu/~franz/pubs-pdf/BC03.pdf"><br/>Oberon: The Overlooked Jewel</a> page 4. (73KB pdf)</p>
 <br/>

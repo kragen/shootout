@@ -7,7 +7,7 @@
             suggestions, problems, new languages, unfair programs,&#133;
          </p>
          <p>
-            <b>Read the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">shootout-list archives</a></b>.
+            <strong>Read the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">shootout-list archives</a></strong>.
          </p>
       </td>
    </tr>
@@ -15,11 +15,11 @@
    <tr><td colspan="3"><h4 class="rev">&nbsp;Post&nbsp;a&nbsp;message</h4></td></tr>
    <tr>
       <td colspan="3">
-         <p><b>Only subscribers</b> can post a message to shootout-list. Post by sending email to 
+         <p><strong>Only subscribers</strong> can post a message to shootout-list. Post by sending email to 
             <a href="mailto:shootout-list@lists.alioth.debian.org">shootout-list@lists.alioth.debian.org</a>
          </p>
          
-         <p>Subscribing to the shootout-list allows you to post without requiring that you receive every post. Simply <b>change your subscription options</b> - choose a once-a-day digest email, or temporarily disable email delivery.
+         <p>Subscribing to the shootout-list allows you to post without requiring that you receive every post. Simply <strong>change your subscription options</strong> - choose a once-a-day digest email, or temporarily disable email delivery.
          </p>         
       </td>
    </tr>   
@@ -42,7 +42,7 @@
    </tr>
    <tr>
       <td colspan="3"><br/>
-      <p class="s">You must enter a privacy password. This provides only mild security, but should prevent others from messing with your subscription. <b>Do not use a valuable password</b> as it will occasionally be emailed back to you in cleartext.</p>
+      <p class="s">You must enter a privacy password. This provides only mild security, but should prevent others from messing with your subscription. <strong>Do not use a valuable password</strong> as it will occasionally be emailed back to you in cleartext.</p>
       </td>
    </tr>
    <tr>
@@ -93,7 +93,7 @@
 <table width="100%">     
    <tr><td colspan="3"><h4 class="rev">&nbsp;Subscriber&nbsp;list</h4></td></tr> 
    <tr>
-      <td colspan="3"><p><i>The subscriber list is only available to the list members.</i></p>
+      <td colspan="3"><p><em>The subscriber list is only available to the list members.</em></p>
          <p>Enter your address and password to see the subscriber list:</p>
       </td>
    </tr> 

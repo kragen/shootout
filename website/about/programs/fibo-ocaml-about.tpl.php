@@ -1,1 +1,1 @@
-<p><b>NOT ACCEPTED:</b> Program not recursive.</p>
+<p><strong>NOT ACCEPTED:</strong> Program not recursive.</p>

@@ -1,1 +1,0 @@
-<p><b>NOT ACCEPTED:</b> We're interested in programs that don't manually unroll loops.</p>

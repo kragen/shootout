@@ -15,7 +15,7 @@
 </td></tr>
 <tr><td colspan="2">
 <p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
-<p>And remember "For every complex problem, there is a solution that is simple, neat, <b>and wrong</b>."</p>
+<p>And remember "For every complex problem, there is a solution that is simple, neat, <strong>and wrong</strong>."</p>
 </td></tr> 
 
 

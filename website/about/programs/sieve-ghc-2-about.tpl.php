@@ -1,1 +1,1 @@
-<p><b>NOT ACCEPTED:</b> Program should perform the calculation 1200 times, but only seems to perform the calculation once.</p>
+<p><strong>NOT ACCEPTED:</strong> Program should perform the calculation 1200 times, but only seems to perform the calculation once.</p>

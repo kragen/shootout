@@ -12,7 +12,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr><td colspan="2"><?=$Intro;?></td></tr>
 
 <tr><td><h4 class="rev">&nbsp;Benchmarking programming languages</h4></td></tr>
-<tr><td><p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort? <i>Caveat emptor!</i></p></td></tr>
+<tr><td><p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort? <em>Caveat emptor!</em></p></td></tr>
 </table>
 
 <!-- // TABLE ////////////////////////////////////////////// -->
@@ -20,12 +20,12 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="div" >
 <tr>
 <th class="a">
-<b>1&nbsp;Compare</b>
+<strong>1&nbsp;Compare</strong>
 <p class="thp">time, memory, lines</p>
 </th>
 
 <th class="c" colspan="2">
-<b>2&nbsp;Check the rankings</b>
+<strong>2&nbsp;Check the rankings</strong>
 <p class="thp">rankings and language information</p>
 </th>
 </tr>
@@ -72,7 +72,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // SCORECARD /////////////////////////////////////////////////// -->
 
 <table class="div" >
-<tr><th class="a"><b>3&nbsp;Find&nbsp;your </b>Fast Faster Fastest programming languages</th></tr>
+<tr><th class="a"><strong>3&nbsp;Find&nbsp;your </strong>Fast Faster Fastest programming languages</th></tr>
 
 <tr class="a"><td class="center"><p>
 <? MkScorecardMenuForm($Sort); ?>
