@@ -1,6 +1,8 @@
 #!/usr/bin/tclsh
-# $Id: moments.tcl,v 1.1 2004-05-19 18:10:50 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: moments.tcl,v 1.2 2005-03-18 06:26:26 bfulgham Exp $
+# http://shootout.alioth.debian.org/
+#
+# Corrected by Randy Melton
 
 proc main {} {
     set sum 0.0
@@ -20,7 +22,7 @@ proc main {} {
 	set deviation [expr {$num - $mean}]
 	set average_deviation [expr {$average_deviation + abs($deviation)}]
 	set variance [expr {$variance + pow($deviation, 2)}]
-	set skew [expr {$skew + pow($skew, 3)}]
+	set skew [expr {$skew + pow($deviation, 3)}]
 	set kurtosis [expr {$kurtosis + pow($deviation, 4)}]
     }
 

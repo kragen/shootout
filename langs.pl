@@ -1126,7 +1126,6 @@
      'Fortran'     => 'fortran',
      'Haskell'     => 'dash',
      'Felix'       => 'c',
-     'Fortran'     => 'c',
      'gawk'        => 'shell',
      'Gawk'        => 'shell',
      'Icon'        => 'shell',

@@ -1,0 +1,212 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   contributed by Diederik van Arkel
+*/
+module nbody
+
+import StdEnv, LanguageShootout
+
+Start world
+	# n				= argi
+	# nbodies		= size ini_bodies
+	# bodies		= offset_momentum nbodies ini_bodies
+	# (io,world)	= stdio world
+	# (e,bodies)	= energy nbodies bodies
+	# io			= io <<< toStringWith 9 e <<< "\n"
+	# bodies		= advance n nbodies 0.01 bodies
+	# (e,bodies)	= energy nbodies bodies
+	# io			= io <<< toStringWith 9 e <<< "\n"
+	# (err,world)	= fclose io world
+	= world
+
+:: Planet = !
+	{ x		:: !Real
+	, y 	:: !Real
+	, z 	:: !Real
+	, vx	:: !Real
+	, vy	:: !Real
+	, vz	:: !Real
+	, mass	:: !Real
+	}
+
+dummy :: *Planet
+dummy =
+	{ x		= 0.0
+	, y		= 0.0
+	, z		= 0.0
+	, vx	= 0.0
+	, vy	= 0.0
+	, vz	= 0.0
+	, mass	= 0.0
+	}
+
+pi				:== 3.141592653589793
+solar_mass		=: 4.0 * pi * pi
+days_per_year	:== 365.24
+
+advance :: !Int !Int !Real !*{!*Planet} -> *{!*Planet}
+advance n nbodies dt bodies
+	| n == 0
+		= bodies
+	= advance_ n nbodies dt bodies dummy dummy
+where
+	advance_ :: !Int !Int !Real !*{!*Planet} !*Planet !*Planet-> *{!*Planet}
+	advance_ n nbodies dt bodies dummy1 dummy2
+		| n == 0
+			= bodies
+		#! (dummy1,dummy2,bodies)	= advance1 0 1 dt bodies dummy1 dummy2 nbodies
+		   (dummy1,bodies)			= advance2 0 dt bodies dummy1 nbodies
+		= advance_ (n-1) nbodies dt bodies dummy1 dummy2
+
+	advance1 :: !Int !Int !Real !*{!*Planet} !*Planet !*Planet !Int -> (!*Planet,!*Planet,!*{!*Planet})
+	advance1 i j dt bodies dummy1 dummy2 nbodies
+		#! (b1,bodies)	= replace bodies i dummy1
+		#! (b2,bodies)	= replace bodies j dummy2
+		= advance1_ i j dt bodies b1 b2 nbodies
+
+	advance1_ :: !Int !Int !Real !*{!*Planet} !*Planet !*Planet !Int -> (!*Planet,!*Planet,!*{!*Planet})
+	advance1_ i j dt bodies b1=:{x=x1,y=y1,z=z1,vx=vx1,vy=vy1,vz=vz1,mass=mass1} b2=:{x=x2,y=y2,z=z2,vx=vx2,vy=vy2,vz=vz2,mass=mass2} nbodies
+		#! dx			= x1 - x2
+		   dy			= y1 - y2
+		   dz			= z1 - z2
+		   distance2	= dx * dx + dy * dy + dz * dz
+		   distance		= sqrt distance2
+		   mag			= dt / (distance2 * distance)
+		   
+		   mm1			= mass1 * mag
+		   mm2			= mass2 * mag
+		   
+		   vx1`			= vx1 - dx * mm2
+		   vy1`			= vy1 - dy * mm2
+		   vz1`			= vz1 - dz * mm2
+		   vx2`			= vx2 + dx * mm1
+		   vy2`			= vy2 + dy * mm1
+		   vz2`			= vz2 + dz * mm1
+		   
+		   b1			= {b1 & vx = vx1`, vy = vy1`, vz = vz1`}
+		   b2			= {b2 & vx = vx2`, vy = vy2`, vz = vz2`}
+		   
+		   (dummy1,bodies)	= replace bodies i b1
+		   (dummy2,bodies)	= replace bodies j b2
+
+		#! j			= j + 1
+		| j == nbodies
+			#! i		= i + 1
+			   j		= i + 1
+			| i == nbodies
+				= (dummy1,dummy2,bodies)
+			| j == nbodies
+				= (dummy1,dummy2,bodies)
+			#! (b1,bodies)	= replace bodies i dummy1
+			#! (b2,bodies)	= replace bodies j dummy2
+			= advance1_ i j dt bodies b1 b2 nbodies
+		#! (b1,bodies)	= replace bodies i dummy1
+		#! (b2,bodies)	= replace bodies j dummy2
+		= advance1_ i j dt bodies b1 b2 nbodies
+	
+	advance2 :: !Int !Real !*{!*Planet} !*Planet !Int -> (!*Planet,!*{!*Planet})
+	advance2 i dt bodies dummy nbodies
+		# (b,bodies)		= replace bodies i dummy
+		= advance2_ i dt bodies b nbodies
+
+	advance2_ :: !Int !Real !*{!*Planet} !*Planet !Int -> (!*Planet,!*{!*Planet})
+	advance2_ i dt bodies b=:{x,y,z,vx,vy,vz} nbodies
+		#! b				= {b & x = x + dt*vx, y = y + dt*vy, z = z + dt*vz}
+		#! (dummy,bodies)	= replace bodies i b
+		#! i				= i + 1
+		| i == nbodies
+			= (dummy,bodies)
+		# (b,bodies)		= replace bodies i dummy
+		= advance2_ i dt bodies b nbodies
+
+energy :: !Int !*{!*Planet} -> (!Real,!*{!*Planet})
+energy nbodies bodies
+	# e				= 0.0
+	# (e,bodies)	= seq [energy1 i \\ i <- [0..nbodies-1]] (e,bodies)
+	= (e,bodies)
+where
+	energy1 :: !Int !(!Real,!*{!*Planet}) -> (!Real,!*{!*Planet})
+	energy1 i (e,bodies)
+		#!	(b1,bodies)		= bodies![i]
+		 	e				= e + 0.5 * b1.mass * (b1.vx * b1.vx + b1.vy*b1.vy + b1.vz*b1.vz)
+		 	(e,bodies)		= seq [energy2 i j \\ j <- [i+1..nbodies-1]] (e,bodies)
+		= (e,bodies)
+	energy2 :: !Int !Int !(!Real,!*{!*Planet}) -> (!Real,!*{!*Planet})
+	energy2 i j (e,bodies)
+		#!	(b1,bodies)		= bodies![i]
+			(b2,bodies)		= bodies![j]
+			dx				= b1.x - b2.x
+			dy				= b1.y - b2.y
+			dz				= b1.z - b2.z
+		 	distance2		= dx * dx + dy * dy + dz * dz
+		 	distance		= sqrt distance2
+			e				= e - (b1.mass * b2.mass) / distance
+		= (e,bodies)
+
+offset_momentum :: !Int !*{!*Planet} -> *{!*Planet}
+offset_momentum nbodies bodies
+	#!	px			= sum [body.vx * body.mass \\ body <-: bodies]
+		py			= sum [body.vy * body.mass \\ body <-: bodies]
+		pz			= sum [body.vz * body.mass \\ body <-: bodies]
+		(b0,bodies)	= bodies![0]
+		b0			= {b0 & vx =  ~ px / solar_mass
+					, vy = ~ py / solar_mass
+					, vz = ~ pz / solar_mass
+					}
+		bodies		= {bodies & [0] = b0}
+	= bodies
+
+ini_bodies :: *{!*Planet}
+ini_bodies =
+	{ sun, jupiter, saturn, uranus, neptune }
+
+sun =
+	{ x		= 0.0
+	, y		= 0.0
+	, z		= 0.0
+	, vx	= 0.0
+	, vy	= 0.0
+	, vz	= 0.0
+	, mass	= solar_mass
+	}
+
+jupiter =
+	{ x		=  4.84143144246472090E+00
+	, y		= -1.16032004402742839E+00
+	, z		= -1.03622044471123109E-01
+	, vx	=  1.66007664274403694E-03 * days_per_year
+	, vy	=  7.69901118419740425E-03 * days_per_year
+	, vz	= -6.90460016972063023E-05 * days_per_year
+	, mass	=  9.54791938424326609E-04 * solar_mass
+	}
+
+saturn =
+	{ x		=  8.34336671824457987E+00
+	, y		=  4.12479856412430479E+00
+	, z		= -4.03523417114321381E-01
+	, vx	= -2.76742510726862411E-03 * days_per_year
+	, vy	=  4.99852801234917238E-03 * days_per_year
+	, vz	=  2.30417297573763929E-05 * days_per_year
+	, mass	=  2.85885980666130812E-04 * solar_mass
+	}
+
+uranus =
+	{ x		=  1.28943695621391310E+01
+	, y		= -1.51111514016986312E+01
+	, z		= -2.23307578892655734E-01
+	, vx	=  2.96460137564761618E-03 * days_per_year
+	, vy	=  2.37847173959480950E-03 * days_per_year
+	, vz	= -2.96589568540237556E-05 * days_per_year
+	, mass	=  4.36624404335156298E-05 * solar_mass
+	}
+
+neptune =
+	{ x		=  1.53796971148509165E+01
+	, y		= -2.59193146099879641E+01
+	, z		=  1.79258772950371181E-01
+	, vx	=  2.68067772490389322E-03 * days_per_year
+	, vy	=  1.62824170038242295E-03 * days_per_year
+	, vz	= -9.51592254519715870E-05 * days_per_year
+	, mass	=  5.15138902046611451E-05 * solar_mass
+	}
