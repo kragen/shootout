@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2005-02-28 04:23:24 bfulgham Exp $
+# $Id: Makefile,v 1.18 2005-03-02 06:24:26 bfulgham Exp $
 
 include Make.header
 
@@ -22,7 +22,7 @@ versions: versions.html
 
 versions.html: bin/make_versions langs.pl
 	-bin/make_versions > versions.html.tmp && \
-	-mv -f versions.html.tmp versions.html
+	mv -f versions.html.tmp versions.html
 
 dist:
 	-bin/make_dist

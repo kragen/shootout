@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-11-23 08:08:45 bfulgham Exp $
+# $Id: Makefile,v 1.18 2005-03-02 06:24:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sieve
@@ -12,6 +12,7 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 300,600,900,1200 \
-			--ignore sieve.poly
+			--ignore sieve.poly \
+			--ignore sieve.elastic
 
 include ../../Make.footer

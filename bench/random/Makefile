@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2004-11-23 08:08:44 bfulgham Exp $
+# $Id: Makefile,v 1.19 2005-03-02 06:24:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -18,6 +18,7 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 9000,300000,600000,900000 \
-	  --ignore random.poly
+	  --ignore random.poly \
+	  --ignore random.elastic
 
 include ../../Make.footer
