@@ -15,7 +15,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'GNAT 3.3.4 (Debian) Copyright 1996-2002 Free Software Foundation, Inc.'
     ),
 
     'mawk' => array(
@@ -31,7 +31,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnu.org/software/gawk/gawk.html',
       'Down'    => 'ftp://ftp.gnu.org/gnu/gawk/',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'GNU Awk 3.1.3'
     ),
 
     'bash' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc (GCC) 3.3.4 (Debian)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian)
 '
     ),
 
@@ -56,7 +56,7 @@ $LANGS = array(
       'Home'    => 'http://www.go-mono.com/',
       'Down'    => 'http://www.go-mono.com/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ''
+      'Version' => 'Mono C# compiler version 0.96.0.0'
     ),
 
     'g++' => array(
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++ (GCC) 3.3.4 (Debian)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian)
 '
     ),
 
@@ -81,7 +81,7 @@ $LANGS = array(
       'Home'    => 'http://www.cons.org/cmucl/',
       'Down'    => 'http://www.cons.org/cmucl/',
       'Type'    => 'native compiled',
-      'Version' => 'CMU Common Lisp '
+      'Version' => 'CMU Common Lisp CVS release-18e-branch + minimal debian patches'
     ),
 
     'sbcl' => array(
@@ -89,7 +89,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'SBCL 0.8.10.48'
     ),
 
     'gwydion' => array(
@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://www.gwydiondylan.org',
       'Down'    => 'http://www.gwydiondylan.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => 'd2c (Gwydion Dylan) 2.3.8pre1'
+      'Version' => 'd2c (Gwydion Dylan) 2.3.12pre3'
     ),
 
     'se' => array(
@@ -113,7 +113,9 @@ $LANGS = array(
       'Home'    => 'http://www.elasticword.com/',
       'Down'    => 'http://www.elasticword.com/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ''
+      'Version' => 'ecc version: 0.03
+elastiC version: 0.0.36 (dec: 36)
+'
     ),
 
     'xemacs' => array(
@@ -121,7 +123,7 @@ $LANGS = array(
       'Home'    => 'http://www.xemacs.org/',
       'Down'    => 'http://www.xemacs.org/Download/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ''
+      'Version' => 'XEmacs 21.4 (patch 15) "Security Through Obscurity" [Lucid] (i386-debian-linux)'
     ),
 
     'hipe' => array(
@@ -129,7 +131,7 @@ $LANGS = array(
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.2'
     ),
 
     'erlang' => array(
@@ -137,7 +139,7 @@ $LANGS = array(
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ''
+      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.2'
     ),
 
     'gforth' => array(
@@ -145,7 +147,7 @@ $LANGS = array(
       'Home'    => 'http://www.jwdt.com/~paysan/gforth.html',
       'Down'    => 'http://www.complang.tuwien.ac.at/forth/gforth/',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'gforth 0.6.2'
     ),
 
     'ghc' => array(
@@ -153,7 +155,7 @@ $LANGS = array(
       'Home'    => 'http://www.haskell.org/',
       'Down'    => 'http://www.haskell.org/ghc/',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'The Glorious Glasgow Haskell Compilation System, version 6.2.1'
     ),
 
     'icon' => array(
@@ -161,7 +163,15 @@ $LANGS = array(
       'Home'    => 'http://www.cs.arizona.edu/icon/',
       'Down'    => 'http://www.cs.arizona.edu/icon/v93.htm',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'Icon Version 9.4.2, April 24, 2003'
+    ),
+
+    'gij' => array(
+      'Lang'    => 'Java',
+      'Home'    => 'http://gcc.gnu.org/java/',
+      'Down'    => 'http://gcc.gnu.org/install/binaries.html',
+      'Type'    => 'interpreted',
+      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian)'
     ),
 
     'gcj' => array(
@@ -169,7 +179,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcj-3.3 (GCC) 3.3.4 (Debian)
+      'Version' => 'gcj (GCC) 3.3.4 (Debian)
 '
     ),
 
@@ -183,10 +193,10 @@ $LANGS = array(
 
     'java' => array(
       'Lang'    => 'Java',
-      'Home'    => 'http://gcc.gnu.org/java/',
-      'Down'    => 'http://gcc.gnu.org/install/binaries.html',
+      'Home'    => 'http://www.blackdown.org/',
+      'Down'    => 'http://www.blackdown.org/',
       'Type'    => 'interpreted',
-      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian)'
+      'Version' => 'Java HotSpot(TM) Client VM (build Blackdown-1.4.2-rc1, mixed mode)'
     ),
 
     'sablevm' => array(
@@ -194,7 +204,7 @@ $LANGS = array(
       'Home'    => 'http://sablevm.org/',
       'Down'    => 'http://sablevm.sourceforge.net/download.html',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'SableVM version 1.1.5'
     ),
 
     'rep' => array(
@@ -202,7 +212,7 @@ $LANGS = array(
       'Home'    => 'http://librep.sourceforge.net/',
       'Down'    => 'ftp://librep.sourceforge.net/pub/librep/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ''
+      'Version' => 'rep version 0.17'
     ),
 
     'lua' => array(
@@ -210,7 +220,7 @@ $LANGS = array(
       'Home'    => 'http://www.lua.org/',
       'Down'    => 'http://www.lua.org/download.html',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'Lua 5.0.2 '
     ),
 
     'oz' => array(
@@ -218,7 +228,7 @@ $LANGS = array(
       'Home'    => 'http://www.mozart-oz.org',
       'Down'    => 'http://www.mozart-oz.org/download',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'Mozart Compiler 1.2.5 (20040201) playing Oz 3'
     ),
 
     'nice' => array(
@@ -234,7 +244,7 @@ $LANGS = array(
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'The Objective Caml native-code compiler, version 3.07+2'
     ),
 
     'ocamlb' => array(
@@ -242,7 +252,7 @@ $LANGS = array(
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ' (Byte Code)'
+      'Version' => 'The Objective Caml compiler, version 3.07+2 (Byte Code)'
     ),
 
     'php' => array(
@@ -250,7 +260,8 @@ $LANGS = array(
       'Home'    => 'http://www.php.net/',
       'Down'    => 'http://www.php.net/downloads.php',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'PHP 4.3.4 (cli) (built: Mar 27 2004 08:04:22)
+'
     ),
 
     'perl' => array(
@@ -266,7 +277,7 @@ $LANGS = array(
       'Home'    => 'http://pike.roxen.com/',
       'Down'    => 'http://pike.roxen.com/download/',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'Pike v7.6 release 9 '
     ),
 
     'python' => array(
@@ -290,7 +301,8 @@ $LANGS = array(
       'Home'    => 'http://www.s-lang.org/',
       'Down'    => 'http://www-s-lang.org/download.html',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => '
+S-Lang Library Version: 1.4.9'
     ),
 
     'smlnj' => array(
@@ -298,7 +310,8 @@ $LANGS = array(
       'Home'    => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
       'Down'    => 'http://cm.bell-labs.com/cm/cs/what/smlnj/software.html',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'Standard ML of New Jersey v110.44
+- '
     ),
 
     'mlton' => array(
@@ -306,7 +319,7 @@ $LANGS = array(
       'Home'    => 'http://www.mlton.org/',
       'Down'    => 'http://www.mlton.org/download/',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'MLton 20040227 '
     ),
 
     'bigloo' => array(
@@ -314,7 +327,7 @@ $LANGS = array(
       'Home'    => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/',
       'Down'    => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/bigloo-1.html',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'Bigloo (2.6e)'
     ),
 
     'stalin' => array(
@@ -330,7 +343,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnu.org/software/guile/guile.html',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/guile/',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'Guile 1.6.4'
     ),
 
     'mzscheme' => array(
@@ -338,7 +351,7 @@ $LANGS = array(
       'Home'    => 'http://www.plt-scheme.org',
       'Down'    => 'http://download.plt-scheme.org/drscheme/',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => ' MzScheme version 207'
     ),
 
     'mzc' => array(
@@ -346,7 +359,7 @@ $LANGS = array(
       'Home'    => 'http://www.plt-scheme.org',
       'Down'    => 'http://download.plt-scheme.org/drscheme/',
       'Type'    => 'native compiled',
-      'Version' => ''
+      'Version' => 'MzScheme compiler (mzc) version 207, '
     ),
 
     'tcl' => array(

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2004-06-20 04:32:26 bfulgham Exp $
+# $Id: Makefile,v 1.8 2004-06-20 08:39:45 bfulgham Exp $
 
 include Make.header
 
@@ -39,6 +39,8 @@ links-stamp:
 	for j in `find bench -name '*.java'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.gcj; \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.gij; \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.sablevm; \
 	done
 
 	# Hipe and Erlang are the same

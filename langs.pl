@@ -234,13 +234,13 @@
        },
      },
 
-     java =>
+     gij =>
      { Lang => 'Java',
        Home => 'http://gcc.gnu.org/java/',
        Down => 'http://gcc.gnu.org/install/binaries.html',
        Type => 'interpreted',
        Verfun => sub {
-	   my $ver = `$ENV{JAVA} -version 2>&1`;
+	   my $ver = `$ENV{GIJ} -version 2>&1`;
 	   $ver =~ /(gij.*)\n/;
 	   return($1);
        },
@@ -270,7 +270,19 @@
        },
      },
 
-     lua =>
+     java =>
+     { Lang => 'Java',
+       Home => 'http://www.blackdown.org/',
+       Down => 'http://www.blackdown.org/',
+       Type => 'interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{JAVA} -version 2>&1`;
+	   $ver =~ /(Java HotSpot.*)/;
+	   return($1);
+       },
+     },
+
+     'lua' =>
      { Lang => 'Lua',
        Home => 'http://www.lua.org/',
        Down => 'http://www.lua.org/download.html',

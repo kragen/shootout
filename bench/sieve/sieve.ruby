@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: sieve.ruby,v 1.2 2004-06-17 05:37:50 bfulgham Exp $
+# $Id: sieve.ruby,v 1.3 2004-06-20 08:39:47 bfulgham Exp $
 # http://shootout.alioth.debian.org/
 #
 # Revised implementation by Paul Sanchez
@@ -15,7 +15,8 @@ end
 
 NUM.times do
     flags = flags0.dup
-    for i in 2 .. Math.sqrt(max)
+    #for i in 2 .. Math.sqrt(max)	#<-- This is much faster
+    for i in 2 .. 8192 
 	next unless flags[i]
 	# remove all multiples of prime: i
 	(i+i).step(max, i) do |j|

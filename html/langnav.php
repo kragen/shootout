@@ -23,6 +23,7 @@
         <div><a href="../../lang/gforth/">gforth</a></div>
         <div><a href="../../lang/ghc/"><b><i>ghc</i></b></a></div>
         <div><a href="../../lang/icon/">icon</a></div>
+        <div><a href="../../lang/gij/">gij</a></div>
         <div><a href="../../lang/gcj/"><b><i>gcj</i></b></a></div>
         <div><a href="../../lang/kaffe/">kaffe</a></div>
         <div><a href="../../lang/java/">java</a></div>

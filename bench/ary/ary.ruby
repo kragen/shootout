@@ -1,8 +1,8 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: ary.ruby,v 1.2 2004-05-22 07:25:00 bfulgham Exp $
+# $Id: ary.ruby,v 1.3 2004-06-20 08:39:45 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
-# with help from Paul Brannan
+# with help from Paul Brannan and Mark Hubbart
 
 n = Integer(ARGV.shift || 1)
 
@@ -13,9 +13,9 @@ for i in 0 ... n
   x[i] = i + 1
 end
 
-for k in 0 .. 999
+(0 .. 999).each do
   (n-1).step(0,-1) do |i|
-    y[i] = y.at(i) + x.at(i)
+    y[i] += x.at(i)
   end
 end
 
