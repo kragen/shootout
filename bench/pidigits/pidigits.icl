@@ -1,0 +1,56 @@
+/* The Great Win32 Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   contributed by Isaac Gouy (Clean novice)
+*/
+
+
+module pidigits
+import StdEnv,ArgEnv,BigInt,Rational
+
+Start = format 1 1 (stream argi [] unit ts) ""     
+   
+stream n digits z [x:xs] 
+   | n > 0 
+      | isSafe z y 
+         = stream (n-1) (digits ++ [toChar(y + 48)])(produce z y) [x:xs]
+         = stream n digits (consume z x) xs
+   = digits
+   where y = next z   
+
+ts = [T (toBigInt k) (toBigInt(4*k+2)) zero (toBigInt(2*k+1)) \\ k <- [1..]]
+next z = entier (toReal (extract z three))
+isSafe z n = (n == entier (toReal (extract z four)) )
+produce z n = compose (T ten (toBigInt (-10*n)) zero one) z
+consume z z` = compose z z` 
+
+:: Transform = T BigInt BigInt BigInt BigInt
+extract (T q r s t) x = (q * x + r) /: (s * x + t)
+unit = T one zero zero one
+compose (T q r s t) (T q` r` s` t`) 
+	= (T (q*q` + r*s`)(q*r` + r*t`)(s*q` + t*s`)(s*r` + t*t`))	
+
+// BigInt constants
+three = toBigInt 3
+four = toBigInt 4
+ten = toBigInt 10	
+
+
+format :: !Int !Int !.[Char] !{#Char} -> {#Char}
+format n i [] s 
+   | n == 1   = s
+   | n < 10   = format (n+1) i [] (s +++ " ")
+              = (s +++ "\t :" +++ toString (i-1) +++ "\n")
+format n i [c:digits] s
+   | n < 10   = format (n+1)(i+1) digits s`
+              = format  1   (i+1) digits (s` +++ "\t :" +++ toString i +++ "\n")
+   where s` = s +++ toString c
+
+	
+argi = if (argAsInt <= 0) 1 argAsInt
+   where
+   argv = getCommandLine
+   argAsInt = if (size argv == 2)(toInt argv.[1]) 1	
+
+
+   
