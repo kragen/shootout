@@ -1,67 +1,71 @@
 /* The Great Computer Language Shootout 
-   contributed by Isaac Gouy */
+ *    http://shootout.alioth.debian.org/
+ * 
+ * contributed by Isaac Gouy */
 
 using System;
 using System.IO;
 using System.Collections;
-using System.Text;
 
 class WordFreq 
 {
    static void Main()
    { 
-      const int bufferSize = 4096;
-      Encoding code = Encoding.GetEncoding(0);
-      Stream s = Console.OpenStandardInput( bufferSize );
-      StreamReader stdin = new StreamReader(s, code, false, bufferSize);
+      const int size = 4096;
+      Hashtable wordCounts = new Hashtable(4000);      
 
-      int charValue, newCount;
-      char c;
-      StringBuilder wordBuffer = new StringBuilder(32);
-      Hashtable wordCounts = new Hashtable();
-      object count;
-      string word;
+      using (StreamReader r = new StreamReader(Console.OpenStandardInput(size)))
+      {      
+         char[] buffer = new char[size];
+         int charsRead;    
+         Cell count;
+         bool insideWord = false;
+         string prefix = null;
 
-      while ( (charValue = stdin.Read()) >= 0  ) {
-         c = (char)charValue;
-         if ( Char.IsLetter(c) )
-            wordBuffer.Append(Char.ToLower(c));
-         else
-            if (wordBuffer.Length > 0) 
-         {
-            word = wordBuffer.ToString(0, wordBuffer.Length);
-            if ((count = wordCounts[word]) == null) newCount = 1; 
-            else newCount = (int)count + 1;
-            wordCounts[word] = newCount;
-            wordBuffer.Length = 0;
+         while ((charsRead = r.Read(buffer,0,size)) > 0) {
+            int i = 0;
+            for (int j=0; j<charsRead; j++){
+               if (Char.IsLetter(buffer[j])){
+                  if (!insideWord){
+                     insideWord = true;
+                     i = j;
+                  }
+               }
+               else if (insideWord){
+                  insideWord = false;
+                  string w = (new String(buffer,i,j-i));
+
+                  if (prefix != null){
+                     w = string.Concat(prefix,w);
+                     prefix = null;
+                  }
+                  w = w.ToLower();
+
+                  if ((count = (Cell)wordCounts[w]) != null)
+                     count.value += 1;
+                  else
+                     wordCounts[w] = new Cell(1);
+               }
+            }
+            if (insideWord) prefix = (new String(buffer,i,charsRead-i));
          }
       }
-      // check that we added the last word in the file
-      // could put the repeated code in a method, but it's slower...
-      if (wordBuffer.Length > 0) 
-      { 
-         word = wordBuffer.ToString(0, wordBuffer.Length);
-         if ((count = wordCounts[word]) == null) newCount = 1; 
-         else newCount = (int)count + 1;
-         wordCounts[word] = newCount;
-         wordBuffer.Length = 0;
-      } 
 
       DictionaryEntry[] tuples = new DictionaryEntry[wordCounts.Count];
       wordCounts.CopyTo(tuples, 0);
 
       Array.Sort(tuples, new SortByFrequencyAndWord() );
 
-      string frequency;
       foreach (DictionaryEntry each in tuples) {
-         frequency = ((int)each.Value).ToString().PadLeft(7);
-         word = (string)each.Key;
+         string frequency = ((Cell)each.Value).value.ToString().PadLeft(7);
+         string word = (string)each.Key;
          Console.WriteLine("{0} {1}", frequency, word);
       }   
    }
 }
 
-public class SortByFrequencyAndWord : IComparer
+
+class SortByFrequencyAndWord : IComparer
 {
    public SortByFrequencyAndWord() {}
 
@@ -69,9 +73,23 @@ public class SortByFrequencyAndWord : IComparer
    int IComparer.Compare(object o1, object o2) {
       DictionaryEntry item1 = (DictionaryEntry)o1;
       DictionaryEntry item2 = (DictionaryEntry)o2;
-      int comparison = ((int)item1.Value).CompareTo((int)item2.Value);
-      // negate to provide descending order
-      if (comparison == 0) return -((string)item1.Key).CompareTo((string)item2.Key);
-      else return -comparison;
+      string k1 = (string)item1.Key;
+      string k2 = (string)item2.Key;
+      int v1 = ((Cell)item1.Value).value;
+      int v2 = ((Cell)item2.Value).value;
+
+      int comparison = v2.CompareTo(v1);
+      if (comparison == 0) return k2.CompareTo(k1);
+      else return comparison;
+   }
+}
+
+
+class Cell 
+{ 
+   internal int value; 
+
+   public Cell(int intialValue){
+      value = intialValue;
    }
 }
