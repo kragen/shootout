@@ -15,7 +15,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
       'Type'    => 'native compiled',
-      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-2) Copyright 1996-2002 Free Software Foundation, Inc.'
+      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-3) Copyright 1996-2002 Free Software Foundation, Inc.'
     ),
 
     'mawk' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-2)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-3)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-2)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-3)
 '
     ),
 
@@ -187,7 +187,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java/',
       'Down'    => 'http://gcc.gnu.org/install/binaries.html',
       'Type'    => 'interpreted',
-      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian 1:3.3.4-2)'
+      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian 1:3.3.4-3)'
     ),
 
     'gcj' => array(
@@ -195,7 +195,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcj (GCC) 3.3.4 (Debian 1:3.3.4-2)
+      'Version' => 'gcj (GCC) 3.3.4 (Debian 1:3.3.4-3)
 '
     ),
 
@@ -220,7 +220,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://sablevm.org/',
       'Down'    => 'http://sablevm.sourceforge.net/download.html',
       'Type'    => 'interpreted',
-      'Version' => 'SableVM version 1.1.5'
+      'Version' => 'SableVM version 1.1.6'
     ),
 
     'rep' => array(
@@ -310,7 +310,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://pike.roxen.com/',
       'Down'    => 'http://pike.roxen.com/download/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Pike v7.6 release 9 '
+      'Version' => 'Pike v7.6 release 11 '
     ),
 
     'gprolog' => array(
@@ -416,7 +416,7 @@ S-Lang Library Version: 1.4.9'
       'Home'    => 'http://www.gnu.org/software/smalltalk/smalltalk.html',
       'Down'    => '',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'GNU Smalltalk version 2.1.7'
+      'Version' => 'GNU Smalltalk version 2.1.8'
     ),
 
     'tcl' => array(

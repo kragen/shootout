@@ -11,7 +11,7 @@ MODULE LangShootout;
 
 IMPORT IntStr, ProgramArgs, TextRider;
 
-PROCEDURE IntArgs*() : LONGINT;
+PROCEDURE Argi*() : LONGINT;
 VAR n: LONGINT;
     rd: TextRider.Reader;
     line: ARRAY 256 OF CHAR;
@@ -30,6 +30,6 @@ BEGIN
       END;
   END;
   RETURN n;
-END IntArgs;
+END Argi;
 
 END LangShootout.
