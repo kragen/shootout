@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-18 07:02:44 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-18 08:08:23 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -9,7 +9,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 4,5,6,7,8 \
 	--ignore ackermann.bash \
-	--ignore ackermann.tcl \
-	--title "$(TITLE)" $(TEST).*
+	--ignore ackermann.tcl
 
 include ../../Make.footer

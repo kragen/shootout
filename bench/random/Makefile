@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-18 08:08:22 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := random
@@ -17,7 +17,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore random.bigforth,random.njs \
-	  --range 1000,300000,600000,900000 \
-	  --title "$(TITLE)" $(TEST).*
+	  --range 1000,300000,600000,900000
 
 include ../../Make.footer

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-18 08:08:22 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := strcat
@@ -20,7 +20,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore strcat.java2.java \
 	  --ignore strcat.se \
 	  --ignore strcat.smlnj2.smlnj \
-	  --ignore strcat.xemacs2.xemacs \
-	  --title "$(TITLE)" $(TEST).*
+	  --ignore strcat.xemacs2.xemacs
 
 include ../../Make.footer

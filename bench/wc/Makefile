@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-16 04:38:30 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-18 08:08:22 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -17,7 +17,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore wc.gnat \
 	  --ignore wc.rep \
 	  --ignore wc.stalin \
-	  --inputfile Input --geninput \
-	  --title "$(TITLE)" $(TEST).*
+	  --inputfile Input --geninput
 
 include ../../Make.footer

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-06-18 08:08:23 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := methcall
@@ -10,7 +10,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100000,400000,700000,1000000 \
-	  --ignore methcall.xemacs \
-	  --title "$(TITLE)" $(TEST).*
+	  --ignore methcall.xemacs
 
 include ../../Make.footer

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-06-18 08:08:23 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := matrix
@@ -12,7 +12,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore matrix.mawk,matrix.gawk \
-	  --range 1,100,200,300 \
-	  --title "$(TITLE)" $(TEST).*
+	  --range 1,100,200,300
 
 include ../../Make.footer

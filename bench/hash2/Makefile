@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-17 03:38:44 sweeks Exp $
+# $Id: Makefile,v 1.5 2004-06-18 08:08:23 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -14,7 +14,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10,50,100,150 \
-	  --ignore hash2.bash,hash2.se \
-	  --title "$(TITLE)" $(TEST).*
+	  --ignore hash2.bash,hash2.se
 
 include ../../Make.footer

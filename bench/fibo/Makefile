@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-16 04:38:24 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-06-18 08:08:23 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := fibo
@@ -13,7 +13,6 @@ BIGLOOOPTS := -farithmetic
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 8,24,32 \
-	  --ignore fibo.bash \
-	  --title "$(TITLE)" $(TEST).*
+	  --ignore fibo.bash
 
 include ../../Make.footer

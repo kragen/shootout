@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-18 08:08:23 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -18,7 +18,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore heapsort.njs \
 	  --ignore heapsort.rep \
 	  --ignore heapsort.stalin \
-          --range 1000,20000,40000,60000,80000 \
-	  --title "$(TITLE)" $(TEST).*
+          --range 1000,20000,40000,60000,80000
 
 include ../../Make.footer

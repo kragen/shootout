@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2004-06-17 03:38:44 sweeks Exp $
+# $Id: Makefile,v 1.7 2004-06-18 08:08:22 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -27,7 +27,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore spellcheck.erlang \
 	  --ignore spellcheck.hipe \
 	  --ignore spellcheck.se \
-	  --inputfile Input --geninput \
-	  --title "$(TITLE)" $(TEST).*
+	  --inputfile Input --geninput
 
 include ../../Make.footer

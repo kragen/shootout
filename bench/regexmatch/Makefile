@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-16 04:38:29 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-18 08:08:22 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -23,7 +23,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore regexmatch.g++ \
 	  --ignore regexmatch.java \
 	  --ignore regexmatch.sablevm \
-	  --inputfile Input \
-	  --title "$(TITLE)" $(TEST).*
+	  --inputfile Input
 
 include ../../Make.footer
