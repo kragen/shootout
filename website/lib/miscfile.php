@@ -35,6 +35,8 @@ $Body->set('MiscFile', MISC_PATH.$F.'.php');
 
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
 
+$Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
+
 echo $Page->fetch('page.tpl.php');
 
 ?>

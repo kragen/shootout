@@ -81,7 +81,11 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 <tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
 
 <tr><td>
-<p>The Full CPU Time includes program <b>startup time</b>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
+<p>Full CPU Time means <b>program run-time</b> including program <b>startup time</b>. So for Java that includes the time to startup a JVM.</p>
+
+
+<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
+<p>(Flaw #1 - normally we'd time a specific block of code within a program, and exclude startup time.)</p>
 </td></tr>
 
 
@@ -108,7 +112,10 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.
 </p><p>The <b>same way</b> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
 "Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&lang=all&sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
-<p>The same way programs often seem naive and unidiomatic.       
+<p>The same way programs often seem naive and unidiomatic.</p> 
+
+
+<p>(Flaw #2 - we'd like to compare apples & apples, but normally we'd solve problems using different approaches depending on the language.)</p>      
 </td></tr>
 
 
@@ -149,7 +156,8 @@ For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" 
 
 <tr><td><p>Each program was run as a child-process of a Perl script. The script waits for the child-process to exit and takes usr+sys times with (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3].</p>
 <p>The Full CPU time includes program <b>startup time</b>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
-Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.
+Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
+
 </td></tr>
 
 
@@ -260,12 +268,30 @@ fixes, you will soon understand this requirement.</li>
 <li><b>Used?</b> There are way too many dead languages and unused project languages.</li>
 <li><b>Interesting?</b> Is there something significant and interesting about the language that will be obvious from these benchmark programs?</li>
 </ol></p>
-<p>We will accept and reject languages in a capricious, unfair, biased fashion :-)</p>
+<p>We will accept <b>and reject</b> languages in a capricious, unfair, biased fashion :-)</p>
 </td></tr>
 
 
 </table>
 
+
+
+<!-- WHEN? /////////////////////////////////////////////////////////////////// -->
+
+<table class="div">
+<tr><td><h3 class="rev">&nbsp;When&#133;?</h3></td></tr>
+
+<tr class="b"><td>When will the Language Shootout be finished?</td></tr>
+
+<tr><td><p>There will always be new languages, new implementations of old languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#133;</p>
+
+<p>The Computer Language Shootout will never be finished - the project team will change over time, and the measurements and presentation will change with them.</p>
+
+</td></tr>
+
+
+
+</table>
 
 
 

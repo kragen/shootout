@@ -6,9 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="robots" content="all" />
-<meta name="revisit" content="10 days" />
-<meta name="robots" content="noarchive" />
+<?=$Robots;?>
 
 <meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
 <meta name="description" content="Benchmarking programming languages on more than 25 benchmark programs." />

@@ -59,6 +59,9 @@ if ($T=='all'){
 
       $Body->set('Data', ScoreData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl)); 
 
+      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
+
+
    } else {           // Ranking 
    
       $LangName = $Langs[$L][LANG_FULL];    
@@ -71,7 +74,9 @@ if ($T=='all'){
  
       $About->set('Version', HtmlFragment(ABOUT_PATH.$L.SEPARATOR.'version.php'));
 
-      $Body->set('Rank', RankData(DATA_PATH.'data.csv', $Langs, $L, $Incl, $Excl));    
+      $Body->set('Rank', RankData(DATA_PATH.'data.csv', $Langs, $L, $Incl, $Excl));  
+
+      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
   
    }
 } elseif ($L=='all'){ // Benchmark 
@@ -85,6 +90,8 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
       $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );
+
+      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
 
 } else {              // Program
 
@@ -108,6 +115,8 @@ if ($T=='all'){
       $Body->set('Log', HtmlFragment( LOG_PATH.$T.SEPARATOR.$L.$Id.'.log' ));
       $Body->set('Id', $I);
       $Body->set('Title', $Title);
+
+      $metaRobots = '<meta name="robots" content="noindex,nofollow" />';
 }
  
 
@@ -132,6 +141,8 @@ $Body->set('About', $About->fetch($AboutTemplateName));
 
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
+
+$Page->set('Robots', $metaRobots);
 
 echo $Page->fetch('page.tpl.php');
 ?>
