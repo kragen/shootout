@@ -1,4 +1,4 @@
-<p>Each program should solve the Josephus problem by simulation - like this <a href="benchmark.php?test=josephus&lang=java&sort=<?=$Sort;?>">Java program</a>. (Analystical solutions will not be accepted).</p>
+<p>Each program should solve the Josephus problem by simulation - like this <a href="benchmark.php?test=josephus&lang=java&sort=<?=$Sort;?>">Java program</a>. (Analytical solutions will not be accepted).</p>
 
 <p>Each program should, for M = 2 to 10
 <ul>
