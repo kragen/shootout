@@ -8,12 +8,6 @@
 use strict;
 use List::Util;
 
-sub round_even { 
-   my $ipart = int($_[0]);
-   my $fpart = $_[0] - $ipart;
-   return ($ipart + (($fpart == 0.5) ? 0 : ($fpart > 0.5)));
-}
-
 my @keys;
 my $sequence = "";
 
@@ -36,7 +30,7 @@ for my $n (1,2,3,4,6,12,18) {
 for my $k (@keys[1,2]) {
     my $sum = List::Util::sum values %$k;
 
-    printf "%s %4.3f\n",$_,round_even(10000 * $k->{$_} / $sum)/100
+    printf "%s %4.3f\n",$_,(100 * $k->{$_} / $sum)
       for sort { $k->{$b} <=> $k->{$a} or $a cmp $b }
         keys %$k;
    print "\n";
