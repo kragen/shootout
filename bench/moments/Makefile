@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2004-10-05 02:29:30 bfulgham Exp $
+# $Id: Makefile,v 1.24 2004-10-05 05:54:14 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -12,7 +12,7 @@ MLTONDEPS := ../../Include/mlton-src/basic.sml \
 	     ../../Include/mlton-src/insertion-sort.sml \
 	     ../../Include/mlton-src/quick-sort.sml
 
-MB_GHCRTS  := +RTS -K2046000
+MB_GHCRTS  := +RTS -K2M -H45M
 MB_NHCRTS  := +RTS -H40M
 HUGS_FLAGS := -h10000000
 

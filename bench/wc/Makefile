@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-10-05 02:29:46 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-10-05 05:54:15 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -7,7 +7,8 @@ TITLE   := Count Lines/Words/Chars
 #XLABEL  := N (number of copies of input data)
 
 GHCOPTS := -O2 -package lang
-MB_GHCRTS  := +RTS -M200m -K10m
+#MB_GHCRTS  := +RTS -M200m -K10m
+MB_GHCRTS  := +RTS -G1
 STALINOPTS := -q
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
