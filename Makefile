@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2005-02-28 02:16:16 bfulgham Exp $
+# $Id: Makefile,v 1.17 2005-02-28 04:23:24 bfulgham Exp $
 
 include Make.header
 
@@ -7,6 +7,7 @@ all: init versions
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
 	-make recent codelinks
+	-(cd website/code; ../../bin/add_strays)
 	-cvs commit -m "Rerun of benchmarks."
 
 test plot show loc:
