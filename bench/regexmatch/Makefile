@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:11:22 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-25 03:50:52 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -17,6 +17,8 @@ CMUCL_SRCS := ../../Include/meta.lisp
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
           --range 1,3000,6000,9000 \
+	  --ignore regexmatch.bigloo \
+	  --ignore regexmatch.g++ \
 	  --inputfile Input \
 	  --title "$(TITLE)" $(TEST).*
 
