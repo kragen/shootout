@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2005-02-19 17:05:39 bfulgham Exp $
+# $Id: Makefile,v 1.26 2005-03-06 05:21:25 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -31,6 +31,6 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 4,7,10,15 \
-	  --inputfile ../../website/data/spellcheck-input.txt --geninput
+	  --inputfile ../../website/desc/spellcheck-input.txt --geninput
 
 include ../../Make.footer

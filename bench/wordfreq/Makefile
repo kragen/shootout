@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-02-19 17:05:39 bfulgham Exp $
+# $Id: Makefile,v 1.27 2005-03-06 05:21:25 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
@@ -17,7 +17,7 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 5,10,15,20,25 \
-	  --inputfile ../../website/data/wordfreq-input.txt --geninput \
+	  --inputfile ../../website/desc/wordfreq-input.txt --geninput \
 	  --ignore wordfreq.poly
 
 include ../../Make.footer
