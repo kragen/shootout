@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 fibonacci numbers" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Fibonacci Numbers"); ?>
 
 <h4>About this test</h4>
 <p>

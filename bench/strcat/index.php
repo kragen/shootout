@@ -2,7 +2,8 @@
 <!--#set var="KEYWORDS" value="performance, benchmark, 
 computer, language, compare, cpu, memory, string concatenation" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("String Concatenation"); ?>
 
 <h4>About this test</h4>
 <p>

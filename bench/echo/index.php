@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory, sockets, echo client,
 echo server" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Echo Client/Server"); ?>
 
 <h4>About this test</h4>
 <p>

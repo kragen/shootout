@@ -3,7 +3,8 @@
 erlang, java, perl, python, computer, language, compare, cpu, memory,
 word, frequency, count, counter" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Word Frequency"); ?>
 
 <h4>About this test</h4>
 <p>

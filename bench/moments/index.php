@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 statistical moments" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Statistical Moments"); ?>
 
 <h4>About this test</h4>
 <p>

@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 spell checker" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Spell Checker"); ?>
 
 <h4>About this test</h4>
 <p>

@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 regular expression subsitution" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Regular Expression Substitution"); ?>
 
 <h4>About this test</h4>
 <p>

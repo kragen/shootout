@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 matrix multiplication" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Matrix Multiplication"); ?>
 
 <h4>About this test</h4>
 <p>

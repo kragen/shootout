@@ -2,7 +2,8 @@
 <!--#set var="KEYWORDS" value="performance, benchmark, 
 computer, language, compare, cpu, memory, array access" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Array Access"); ?>
 
 <h4>About this test</h4>
 <p>

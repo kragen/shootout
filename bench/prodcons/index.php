@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory, producer consumer,
 producer/consumer, threads, mutex, condition variable" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Producer/Consumer Threads"); ?>
 
 <h4>About this test</h4>
 <p>

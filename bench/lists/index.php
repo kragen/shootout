@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 list processing" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("List Processing"); ?>
 
 <h4>About this test</h4>
 <p>

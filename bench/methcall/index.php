@@ -2,7 +2,8 @@
 <!--#set var="KEYWORDS" value="performance, benchmark, 
 computer, language, compare, cpu, memory, method calls" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Method Calls"); ?>
 
 <h4>About this test</h4>
 <p>

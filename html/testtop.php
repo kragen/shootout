@@ -6,29 +6,39 @@
 
       toptabs($current);
 
-      require("../../html/testnav.php"); ?>
+      require("../../html/testnav.php");
 
-<table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
-  <tr valign="top">
+function testtop($title)
+{
+    echo "<table border=\"0\" cellspacing=\"0\" cellpadding=\"4\" id=\"main\" width=\"100%\">\n";
+    echo "  <tr valign=\"top\">\n";
 
-<?php benchlist("../..");
-      nav_list_end(); ?>
+    benchlist("../..");
+    nav_list_end();
 
-    <td>
-      <div id="bodycol">
-        <div class="app" id="test">
-	  <table width="70%">
-            <tr>
-              <td>
-<?php incdata(); ?>
-              </td>
-              <td>
-                <img src="data/max.png">
-<?php require("../../html/graph_note.php"); ?>
-                <p><small>[Results last updated: <?php require(".up_date"); ?> CDT]</small></p>
-              </td>
-            </tr>
-          </table>
-    <p>
-    <hr noshade size="5">
+    echo "    <td>\n";
+    echo "      <div id=\"bodycol\">\n";
+    echo "        <div class=\"app\" id=\"test\">\n";
+    echo "	  <div class=\"h3\"><h3>$title</h3><div>\n";
+    echo "	  <table width=\"70%\">\n";
+    echo "            <tr>\n";
+    echo "              <td>\n";
+
+    incdata();
+
+    echo "              </td>\n";
+    echo "              <td>\n";
+    echo "                <img src=\"data/max.png\">\n";
+
+    require("../../html/graph_note.php");
+
+    $date = require(".up_date");
+
+    echo "                <p><small>[Results last updated: $date CDT]</small></p>\n";
+    echo "              </td>\n";
+    echo "            </tr>\n";
+    echo "          </table>\n";
+    echo "    <p>\n";
+    echo "    <hr noshade size=\"5\">\n";
+}
 

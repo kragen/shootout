@@ -3,7 +3,7 @@
 function toptabs($current)
 {
 	$tablist = array(
-		"http://shootout.alioth.debian.org/index.php" => "Introduction",
+		"index.php" => "Introduction",
 		"langs.php" => "Languages",
 		"method.php" => "Methodology",
 		"news.php" => "News",
@@ -20,7 +20,7 @@ function toptabs($current)
 		{
 			$element = "th";
 		}
-		echo "     <$element><a href=\"$key\">$value</a></$element>\n";
+		echo "     <$element><a href=\"/$key\">$value</a></$element>\n";
 	}
 
 	echo "    </tr>\n";

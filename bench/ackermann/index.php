@@ -3,7 +3,8 @@ ackermann, ackerman's, ackermann's, function, c, erlang, guile, java,
 perl, python, computer, language, compare, cpu, memory, recursion" -->
 <!--#set var="TITLE" value="Ackermann's Function" -->
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Ackermann's Function"); ?>
 
 <h4>About this test</h4>
 <p>

@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory, hash access, associative
 array access" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Hash (Associative Array) Access"); ?>
 
 <h4>About this test</h4>
 <p>

@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 GIF deanimation" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("GIF Deanimation"); ?>
 
 <h4>About this test</h4>
 

@@ -3,7 +3,8 @@
 perl, python,
 exceptions, language, compare, cpu, memory" -->
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Exception Handling"); ?>
 
 <h4>About this test</h4>
 <p>

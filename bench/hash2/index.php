@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 nested loops" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Hashes, Part II"); ?>
 
 <h4>About this test</h4>
 <p>

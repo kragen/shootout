@@ -3,7 +3,8 @@
 expression, expressions, matching, c, perl, python, computer,
 language, compare, cpu, memory, recursion" -->
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Regular Expression Matching"); ?>
 
 <h4>About this test</h4>
 <p>

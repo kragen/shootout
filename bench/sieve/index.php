@@ -4,7 +4,8 @@ sieve, eratosthenes, erastosthenes, primes, c, eiffel, erlang, gawk,
 awk, guile, java, perl, python, tcl, computer, language, compare, cpu,
 memory" -->
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Sieve of Eratosthenes"); ?>
 
 <h4>About this test</h4>
 <p>

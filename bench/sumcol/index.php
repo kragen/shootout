@@ -3,7 +3,8 @@
 computer, language, compare, cpu, memory,
 sum a column" --> 
 
-<?php require("../../html/testtop.php"); ?>
+<?php require("../../html/testtop.php");
+      testtop("Sum a Column of Integers"); ?>
 
 <h4>About this test</h4>
 <p>
