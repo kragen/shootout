@@ -1,283 +1,215 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+#
+# The Great Computer Language Shootout
+# http://shootout.alioth.debian.org/
+#
+# Contributed by Sebastien Loisel
+#
+# OVERVIEW: In this test, we solve an ordinary differential equation
+#    u'=f(t,u)
+# using the Trapezoid numerical method, which can be written as
+#    (u[k+1]-u[k])=(f(t[k],u[k])+f(t[k]+dt,u[k+1]))*dt/2,
+# where t[k], u[k], dt and the function f are known and u[k+1] is the
+# unknown.
+#
+# Since u[k+1] appears on both sides of the equation, we use an iterative
+# solver called the newton iteration to compute u[k+1]. The newton iteration
+# computes the solution to
+#    h(x)=0
+# where h is a known function and x is the unknown 0 of h, using the method
+#    x[k+1]=x[k]-f(x[k])/f'(x[k]).
+# Here, f' denotes the derivative of f.
+#
+# To compute f' from the definition of f alone, we use a technique called
+# automatic differentiation. This works by replacing all floating point
+# variables by a special type we call ad (for automatic differentiation.)
+# If the python program for f is called with parameter x of type ad,
+# it will do the same work as if it were called with the equivalent parameter
+# of type floating point, but will also return f'. That's why it's called
+# "automatic."
+#
+# To shake things up, we also have another type, fl (for "float") which
+# works exactly like a double precision floating point, but with much
+# less precision.
+#
+# Summary of classes:
+#
+# ad -- automatic differentiation type
+# fl -- low precision floating point type
+# mycomplex -- complex numbers whose real and imaginary parts can be fl
+# trapezoid_method_rooter -- implements the function that the trapezoid method
+#                            must solve
 
-from copy import deepcopy
-from math import exp,log
+import sys
+from math import log,exp,floor
 
 def sqr(x):
+    """sqr(x): a helper function that computes the square of any "number" x."""
     return x*x
 
 def pwr(x,k):
+    """pwr(x,k): a helper function that computes the kth power of any
+    "number" x."""
     if k<=0:
         return 1
     elif (k&1):
         return x*pwr(x,k-1)
     return sqr(pwr(x,k/2))
 
-def sign(x):
-    if x<0:
-        return '-'
-    else:
-        return ''
-
-N=64L
-EN=2L**N
-N10=long(log(EN)/log(10))+1L
-E10=10L**N10
-
-class myfloat: # FIXME -- this is instead of "long double"
-    def __init__(self,v=0,e=None):
-        if e!=None:
-            if abs(v)!=0 and (abs(v)<EN or abs(v)>=2*EN):
-                raise "range error "+repr(v)+" "+repr(EN)
-            self.v,self.e=long(v),long(e)
+class fl:
+    """A low-precision floating point class."""
+    def __init__(x,a=0):
+        if a==0:
+            x.a=0
             return
-        if v==0:
-            self.v,self.e=0,0
-            return
-        e=0
-        while abs(v)<EN:
-            v=v*2
-            e=e-1
-        while abs(v)>=2*EN:
-            v=v/2
-            e=e+1
-        self.v,self.e=long(v),e
+        k=int(log(abs(a)))
+        x.a=floor(a*exp(-k+6)+0.5)*exp(k-6)
     def __add__(x,y):
-        if x.v==0:
-            return y
-        if y.v==0:
-            return x
-        if x.e<y.e:
-            a,ae,b,be=x.v,x.e,y.v,y.e
-        else:
-            b,be,a,ae=x.v,x.e,y.v,y.e
-        while ae<be-1:
-            ae=ae+1
-            a=a/2
-        if ae<be:
-            ae=ae+1
-            a=(a+1)/2
-        c=a+b
-        if c!=0:
-            while abs(c)<EN:
-                c=c*2
-                ae=ae-1
-        while abs(c)>=4*EN:
-            c=c/2
-            ae=ae+1
-        if abs(c)>=2*EN:
-            c=(c+1)/2
-            ae=ae+1
-        return myfloat(c,ae)
-    def __neg__(x):
-        return myfloat(-x.v,x.e)
-    def __sub__(x,y):
-        return x+(-y)
-    def __radd__(x,y):
+        return fl(x.a+y.a)
+    def __radd__(y,x):
         return x+y
-    def __rsub__(x,y):
-        return y+(-x)
+    def __sub__(x,y):
+        return fl(x.a-y.a)
     def __mul__(x,y):
-        if x.v==0 or y.v==0:
-            return myfloat(0,0)
-        a=x.v*y.v
-        e=x.e+y.e
-        while abs(a)>=4*EN:
-            a=a/2
-            e=e+1
-        if abs(a)>=2*EN:
-            a=a/2
-            e=e+1
-        return myfloat(a,e)
-    def __rmul__(x,y):
+        return fl(x.a*y.a)
+    def __rmul__(y,x):
         return x*y
     def __div__(x,y):
-        a=(x.v*2*EN+y.v/2)/y.v
-        e=x.e-N-1-y.e
-        if abs(a)>=2*EN:
-            a=(a+1)/2
-            e=e+1
-        return myfloat(a,e)
-    def __rdiv__(x,y):
-        if not isinstance(y,myfloat):
-            y=myfloat(y)
-        return y/x
+        return fl(x.a/y.a)
     def __coerce__(x,y):
-        if isinstance(y,myfloat):
+        if isinstance(y,fl):
             return (x,y)
-        return (x,myfloat(y))
-    def __cmp__(x,y):
-        z=y-x
-        if z.v>0:
-            return -1
-        if z.v<0:
-            return 1
-        return 0
-    def __abs__(x):
-        if x.v>=0:
-            return x
-        return -x
+        return (x,fl(y))
     def __repr__(x):
-        p=0
-        while x.e<0:
-            p=p-1
-            x=x*10
-        while x>=10*E10:
-            p=p+1
-            x=x/10
-        baz=str(x.v*(2**x.e))
-        return baz[0]+'.'+baz[1:]+'e'+str(p+N10+len(baz)-N10-1)
+        return repr(x.a)
 
-class mycomplex: # FIXME: should be complex of long double
-    def __init__(s,x=0,y=0):
-        if isinstance(x,complex):
-            s.x,s.y=x.real,x.imag
-            return
-        s.x,s.y=x,y
-    def __add__(x,y):
-        return mycomplex(x.x+y.x,x.y+y.y)
-    def __radd__(x,y):
-        return mycomplex(x.x+y.x,x.y+y.y)
-    def __sub__(x,y):
-        return mycomplex(x.x-y.x,x.y-y.y)
-    def __rsub__(y,x):
-        return mycomplex(x.x-y.x,x.y-y.y)
-    def __mul__(x,y):
-        return mycomplex(x.x*y.x-x.y*y.y,x.x*y.y+x.y*y.x)
-    def __rmul__(x,y):
-        return mycomplex(x.x*y.x-x.y*y.y,x.x*y.y+x.y*y.x)
-    def conjugate(x):
-        return mycomplex(x.x,-x.y)
-    def __div__(x,y):
-        mag=y.x*y.x+y.y*y.y
-        return mycomplex((x.x*y.x+x.y*y.y)/mag,(-x.x*y.y+x.y*y.x)/mag)
-    def __rdiv__(y,x):
-        mag=y.x*y.x+y.y*y.y
-        return mycomplex((x.x*y.x+x.y*y.y)/mag,(-x.x*y.y+x.y*y.x)/mag)
-    def __coerce__(x,y):
-        if isinstance(y,mycomplex):
-            return (x,y)
-        return (x,mycomplex(y))
-    def __repr__(x):
-        return repr(x.x)+' '+repr(x.y)
+class mycomplex:
+    """A complex type so that the type of the real or imaginary part can be
+    any kind of number."""
+    def __init__(x,a=0,b=0):
+        x.real=a
+        x.imag=b
+    def __add__(a,b):
+        return mycomplex(a.real+b.real,a.imag+b.imag)
+    def __radd__(b,a):
+        return a+b
+    def __sub__(a,b):
+        return mycomplex(a.real-b.real,a.imag-b.imag)
+    def __mul__(a,b):
+        return mycomplex(a.real*b.real-a.imag*b.imag,
+                       a.real*b.imag+a.imag*b.real)
+    def __rmul__(b,a):
+        return a*b
+    def __div__(a,b):
+        mag=b.real*b.real+b.imag*b.imag
+        return mycomplex((a.real*b.real+a.imag*b.imag)/mag,
+                         (a.imag*b.real-a.real*b.imag)/mag)
+    def __coerce__(a,b):
+        if isinstance(b,mycomplex):
+            return (a,b)
+        return (a,mycomplex(b))
+    def __repr__(a):
+        return repr(a.real)+' '+repr(a.imag)
 
-class AD:
-    def __init__(self,val,N,diff=0):
-        self.val=[0]*N
-        self.val[0]=val
-        self.val[1]=diff
-        self.N=N
-    def __add__(self,other):
-        ret=AD(0,self.N)
-        for i in range(self.N):
-            ret.val[i]=self.val[i]+other.val[i]
-        return ret
-    def __sub__(self,other):
-        ret=AD(0,self.N)
-        for i in range(self.N):
-            ret.val[i]=self.val[i]-other.val[i]
-        return ret
-    def __mul__(self,other):
-        ret=AD(0,self.N)
-        for i in range(self.N):
-            for j in range(i+1):
-                ret.val[i]=self.val[j]*other.val[i-j]+ret.val[i]
-        return ret
-    def compose(self,other):
-        ret=AD(0,self.N)
-        temp=deepcopy(other)
-        temp.val[0]=0
-        for i in range(self.N):
-            ret+=pwr(temp,i)*self.val[i]
-        return ret
-    def __invert__(self):
-        temp=AD(1/self.val[0],self.N)
-        for i in range(self.N):
-            temp.val[i]=(1-(i&1)*2)/pwr(self.val[0],i+1)
-        return temp.compose(self)
-    def __div__(self,other):
-        return self*(~other)
+class ad:
+    """Automatic differentiation type. An ad has two attributes, x and dx."""
+    def __init__(self,x=0,dx=0):
+        self.x,self.dx=x,dx
+    def __add__(a,b):
+        """ad's add like vectors."""
+        return ad(a.x+b.x,a.dx+b.dx)
+    def __sub__(a,b):
+        """ad's subtract like vectors."""
+        return ad(a.x-b.x,a.dx-b.dx)
+    def __mul__(a,b):
+        """The product of ad's is given by the "product rule" of differentation:
+        (x,dx)*(y,dy)=(xy,xdy+ydx)."""
+	return ad(a.x*b.x,a.dx*b.x+a.x*b.dx)
+    def __div__(a,b):
+        """The quotient rule of differentiation gives
+        (x,dx)/(y,dy)=(x/y,(ydx-xdy)/(y*y))."""
+        return ad(a.x/b.x,(a.dx*b.x-a.x*b.dx)/(b.x*b.x))
     def __coerce__(self,other):
-        if isinstance(other,AD):
+        if isinstance(other,ad):
             return (self,other)
-        return (self,AD(other,self.N))
+        return (self,ad(other))
     def __repr__(self):
-        k=repr(self.val[0])
-        for i in range(1,len(self.val)):
-            k=k+' '+repr(self.val[i])
-        return k
+        return repr(self.x)+' '+repr(self.dx)
 
 def rat(x):
+    """This is just a quotient of two polynomials p/q, with degree p=11 and
+    degree q=7."""
     return (x*2+pwr(x,2)*3+pwr(x,6)*7+pwr(x,11)*5+1)/(x*5-pwr(x,3)*6-pwr(x,7)*3+2)
 
-def mysqrt(x):
-    ret=1.0
-    for i in range(10):
-        ret=(x/ret+ret)/2.0
-    return ret
-
-def newton(x0,k,n,g,N):
+def newton(x0,n,g):
+    """The newton iteration computes the zero of g starting with initial guess
+    x0. This implementation iterates n times and then returns the answer."""
     for i in range(n):
-        val=g(AD(x0,N,1.0))
-        x0=x0-val.val[k]/(val.val[k+1]*(k+1))
+        val=g(ad(x0,1.0))
+        x0=x0-val.x/val.dx
     return x0
 
-def sqrfinder(a):
-    return lambda x: sqr(x)-a
-def mysqrtfinder(a):
-    return lambda x: mysqrt(x)-a
+def mysqrt(x):
+    """This isn't actually a square root. However, newton(1,10,mysqrt) should
+    return the square root of 2 (1.4142...)."""
+    return sqr(x)-ad(2)
 
 class trapezoid_method_rooter:
+    """The trapezoid method (see below) works by computing the solution of some
+    problem of the form h(x)=0. This class implements the function h needed
+    in the trapezoid method."""
     def __init__(self,g,y0,t0,t1):
         self.g,self.y0,self.t0,self.t1=g,y0,t0,t1
         self.g0=g(t0,y0)
     def __call__(self,y1):
-        return (self.g(AD(self.t1,2),y1)+self.g0)*((self.t1-self.t0)/2)+AD(self.y0,2)-y1
+        """The function is (g(t1,y1)-g(t0,y0))*(t1-t0)/2+y0-y1. The parameters
+        t0,y0,t1,g are set at construction time, so the only parameter left is
+        y1."""
+        return (self.g(ad(self.t1),y1)+self.g0)*((self.t1-self.t0)/2)+ad(self.y0)-y1
 
-def trapezoid_method(t0,dt,y0,g,numsteps,N):
+def trapezoid_method(t0,dt,y0,g,numsteps):
+    """This function will approximate the solution of y'=g(t,y) at time
+    t0+numsteps*dt with initial value y(t0)=y0 using the trapezoid method
+    of numerical integration."""
     for i in range(numsteps):
         foo=trapezoid_method_rooter(g,y0,t0,t0+dt)
-        y0=newton(y0,0,10,foo,N)
+        y0=newton(y0,10,foo)
         t0=t0+dt
     return y0
 
-def integrand1(t,y):
-    return y/pwr(t,3)*2
-
-def sanity_check():
-    x=AD(0.25,10,1)
-    print "rational_taylor_series:",rat(x)
-    x.val[0]=1000000
-    print "mysqrt_taylor_series:",mysqrt(x)
-    foo=sqrfinder(2.0)
-    print "newton-sqrt_2:",repr(newton(1.0,0,10,foo,2))
-    print "exp(-1/4):",repr(trapezoid_method(1.0,0.1,exp(-1.0),integrand1,10,2))
-    faz=newton(-2.3,6,20,rat,8)
-    x=AD(faz,8,1)
-    print "zero_of_rat_d6:",repr(faz),repr((rat(x).val[6]+1))
-
 def sqrintegrand(t,y):
+    """This is a version of sqr which has the correct signature so that it can
+    be passed to trapezoid_method. The first parameter, t, is ignored.
+    The second parameter, y, is passed on to sqr."""
     return sqr(y)
-def mysqrtintegrand(t,y):
-    return mysqrt(y)
 def ratintegrand(t,y):
-    return rat(y)
+    """This is a version of the rational function rat above that can be passed
+    to trapezoid_method. In this instance, we do use the t parameter."""
+    return rat(y)-t
 
 def myrepr(x):
+    """A helper function to print results."""
     if isinstance(x,complex):
         return repr(x.real)+' '+repr(x.imag)
     return repr(x)
 
 def integrate_functions(x0,n):
-    print 'i1',myrepr(trapezoid_method(1.0,1.0/n,x0,sqrintegrand,n,2))
-    print 'i2',myrepr(trapezoid_method(1.0,1.0/n,x0,mysqrtintegrand,n,2))
-    print 'i3',myrepr(trapezoid_method(1.0,1.0/n,x0,ratintegrand,n,2))
+    """Integrate sqrintegrand and ratintegrand with given initial value.
+    Depending on the type of initial value, this will result in float, complex,
+    iv or complex iv integration."""
+    print 'i1',myrepr(trapezoid_method(1.0,1.0/n,x0,sqrintegrand,n))
+    print 'i2',myrepr(trapezoid_method(1.0,1.0/n,x0,ratintegrand,n))
 
-sanity_check()
+try:
+    N = int(sys.argv[1])
+except:
+    N = 50
+print 'rational_taylor_series:',repr(rat(ad(0.25,1)))
+print 'newton-sqrt_2:',repr(newton(1.0,10,mysqrt))
+x=newton(-1.0,6,rat)
+print 'newton-rat:',x,rat(x)
+integrate_functions(0.02,4*N)
+integrate_functions(fl(0.02),N)
+integrate_functions(0.02+0.02j,N)
+integrate_functions(mycomplex(fl(0.02),fl(0.02)),N)
 
-integrate_functions(0.01,200) # FIXME: need a 32 bit float type
-integrate_functions(0.02,200)
-integrate_functions(myfloat(3)/100,200)
-integrate_functions(0.01+0.01j,50) # FIXME: need a 2x32 bit complex type.
-integrate_functions(0.02+0.02j,50)
-integrate_functions(mycomplex(3+3j)/myfloat(100),50)
