@@ -28,7 +28,7 @@ define('REV_COLOR_GREAT', '#991900');
 define('REV_COLOR_SANDBOX', '#cc9900'); 
 
 define('DEV',TRUE);                 // show excluded languages, tests, programs, when TRUE
-define('HOMEPAGE_ROWS',25);         // show N rows of languages on the homepage
+define('HOMEPAGE_ROWS',35);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'sandbox');
