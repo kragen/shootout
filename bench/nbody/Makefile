@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-03-30 13:32:08 igouy-guest Exp $
+# $Id: Makefile,v 1.8 2005-04-01 23:59:20 chris00-guest Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -14,6 +14,8 @@ GCCOPTS := -lm
 
 BIGLOOOPTS := -farithmetic
 MB_CLRTS := -nr
+OCAMLOPTS := -ffast-math -inline 3
+#OCAMLBOPTS := 
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
