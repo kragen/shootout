@@ -154,6 +154,6 @@ while n > 0 do
       for _ = 1,length do io.write( P.next(pidigit) ) end
       i = i + length
    end
-   io.write('\t :', i, '\n')
+   io.write('\t:', i, '\n')
    n = n - length
 end

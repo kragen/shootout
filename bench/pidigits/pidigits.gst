@@ -147,7 +147,7 @@ stream := ReadWriteStream on: (String new: 30).
          i := i + length.
          ].
 
-   stream tab; space; nextPut: $:.
+   stream tab nextPut: $:.
    i printOn: stream. 
    stream nl.
 

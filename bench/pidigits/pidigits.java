@@ -24,7 +24,7 @@ public class pidigits {
             for (int i=n; i<L; i++) System.out.print(" ");  
             j += n;   
          }
-         System.out.print("\t :"); System.out.println(j);
+         System.out.print("\t:"); System.out.println(j);
          n -= L;           
       }               
    }
