@@ -1,12 +1,12 @@
 #!/usr/bin/tclsh
-# $Id: fibo.tcl,v 1.3 2005-03-30 22:37:02 sgeard-guest Exp $
+# $Id: fibo.tcl,v 1.4 2005-04-02 07:16:04 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 
 # with help from: Kristoffer Lawson
 
 proc fib {n} {
     if {$n < 2} {
-	return 1
+	return $n
     } else {
 	return [expr {[fib [incr n -2]] + [fib [incr n]]}]
     }
