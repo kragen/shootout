@@ -141,6 +141,18 @@
        },
      },
 
+     hipe =>
+     { Lang => 'Erlang',
+       Home => 'http://www.erlang.org/',
+       Down => 'http://www.erlang.org/download.html',
+       Type => 'bytecomped/interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{ERLANG} -version 2>&1`;
+	   $ver =~ s/\r?\n$//;
+	   return($ver);
+       },
+     },
+
      gforth =>
      { Lang => 'Forth',
        Home => 'http://www.jwdt.com/~paysan/gforth.html',

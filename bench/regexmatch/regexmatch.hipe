@@ -1,0 +1,95 @@
+%%% -*- mode: erlang -*-
+%%% $Id: regexmatch.hipe,v 1.1 2004-06-11 15:18:09 bfulgham Exp $
+%%% http://www.bagley.org/~doug/shootout/
+
+-module(regexmatch).
+-export([main/0, main/1]).
+
+%% get the program argument, which is how many test iterations to run
+main() -> main(['1']).
+main([Arg]) ->
+    Num = list_to_integer(atom_to_list(Arg)),
+    {ok, Re} = regexp:parse(
+		 "(^|[^0-9\\(])"		% preceeding non-digit or bol
+		 "("				% area code
+		 "\\([0-9][0-9][0-9]\\)"	% is either 3 digits in parens
+		 "|"				% or
+		 "[0-9][0-9][0-9]"		% just 3 digits
+		 ")"				% end of area code
+		 " "				% area code is followed by one space
+		 "[0-9][0-9][0-9]"		% exchange is 3 digits
+		 "[ -]"				% separator is either space or dash
+		 "[0-9][0-9][0-9][0-9]"		% last 4 digits
+		 "($|[^0-9])"			% must be followed by a non-digit
+		),
+    Plist = readlines(),
+    test(Num, Re, Plist),
+    halt(0).
+
+
+test(1, Regexp, Plist) -> 
+    % display output on last iteration
+    Nums = match_phones(Regexp, Plist),
+    print_phones(1, Nums),
+    true;
+test(N, Regexp, Plist) ->
+    match_phones(Regexp, Plist),
+    test(N-1, Regexp, Plist).
+
+
+print_phones(Count, [H|T]) ->
+    [A,E,N] = H,
+    % A,E,N is a list of the matching sub-expressions, which are:
+    % Areacode (3 digits), Exchange (3 digits), Number (4 digits)
+    io:fwrite("~w: (~s) ~s-~s~n", [Count, A,E,N]),
+    print_phones(Count+1, T);
+print_phones(_, []) ->
+    true.
+
+
+match_phones(Regexp, List) ->
+    mapfilter(
+      fun(String) ->
+	      case regexp:matches(String, Regexp) of
+		  {match, []}      -> false;
+		  {match, Matches} -> parse_phone(String, Matches);
+		  _                -> false
+	      end
+      end,
+      List).
+
+
+parse_phone(Str, [H|T]) ->
+    {Start, Len} = H,
+    % Numstr is something that looks like a complete phone #
+    Numstr = string:substr(Str, Start, Len),
+    case regexp:matches(Numstr, "[0-9][0-9][0-9][0-9]*") of
+	{match, []}      -> false;
+	{match, Matches} ->
+	    lists:map(fun({Offset, Length}) ->
+			      string:substr(Numstr, Offset, Length) end,
+		      Matches);
+	_                -> false
+    end;
+parse_phone(Str, []) -> [].
+
+
+mapfilter(Fun, [H|T]) ->
+    case Fun(H) of
+	false -> mapfilter(Fun, T);
+	New   -> [New | mapfilter(Fun, T)]
+    end;
+mapfilter(_, []) -> [].
+
+
+readlines() ->
+    Port = open_port({fd, 0, 1}, [eof, {line, 512}]),
+    readlines_from_stream([], Port).
+
+readlines_from_stream(Lines, Port) ->
+    receive
+	{Port, eof} ->
+	    lists:reverse(Lines);
+	{Port, {_, {_, Line}}} ->
+	    readlines_from_stream([Line|Lines], Port)
+    end.

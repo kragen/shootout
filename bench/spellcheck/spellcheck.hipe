@@ -1,0 +1,64 @@
+%%% -*- mode: erlang -*-
+%%% $Id: spellcheck.hipe,v 1.1 2004-06-11 15:18:09 bfulgham Exp $
+%%% http://www.bagley.org/~doug/shootout/
+
+-module(spellcheck).
+-export([main/0, main/1]).
+
+
+main() -> main(['1']).
+main(Args) ->
+    % load dictionary into hash table (erlang ets table)
+    Dict = load_dict(),
+    % read words from stin and print those not in dictionary
+    spell(Dict),
+    halt(0).
+
+
+load_dict() ->
+    Dict = ets:new(i_am_a_carrot, [set]),
+    {ok, In} = file:open("Usr.Dict.Words", [raw]),
+    % I'm just guessing that the file opened above has fd=3
+    % this is a total hack, but I could find nothing in the Erlang
+    % documention on how to do this.
+    Port = open_port({fd, 3, 1}, [eof, {line, 64}]),
+    read_dict(Port, Dict),
+    file:close(In),
+    Dict.
+
+
+load_dict_1() ->
+    Dict = ets:new(i_am_a_carrot, [set]),
+    %{ok, In} = file:open("Usr.Dict.Words", [read]),
+    %Port = open_port({fd, ????, 1}, [eof, {line, 64}]),
+    Port = open_port({spawn, "cat Usr.Dict.Words"}, [eof, {line, 64}]),
+    read_dict(Port, Dict),
+    %file:close(In),
+    Dict.
+
+
+read_dict(Port, Dict) ->
+    receive
+	{Port, {_, {_, Word}}} ->
+	    Atom = list_to_atom(Word),
+	    ets:insert(Dict, { Atom, 1 }),
+	    read_dict(Port, Dict);
+	{Port, eof} -> ok
+    end.
+
+
+spell(Dict) ->
+    Port = open_port({fd, 0, 1}, [eof, {line, 64}]),
+    spell(Port, Dict).
+
+spell(Port, Dict) ->
+    receive
+	{Port, {_, {_, Word}}} ->
+	    Atom = list_to_atom(Word),
+	    case ets:lookup(Dict, Atom) of
+		[] -> io:format("~w~n",[Atom]);
+		_  -> ok
+	    end,
+	    spell(Port, Dict);
+	{Port, eof} -> ok
+    end.

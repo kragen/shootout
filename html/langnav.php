@@ -14,6 +14,7 @@
         <div><a href="../../lang/gwydion/"><b><i>gwydion</i></b></a></div>
         <div><a href="../../lang/se/"><b><i>se</i></b></a></div>
         <div><a href="../../lang/xemacs/">xemacs</a></div>
+        <div><a href="../../lang/hipe/">hipe</a></div>
         <div><a href="../../lang/erlang/">erlang</a></div>
         <div><a href="../../lang/gforth/">gforth</a></div>
         <div><a href="../../lang/ghc/"><b><i>ghc</i></b></a></div>

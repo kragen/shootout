@@ -1,0 +1,59 @@
+%%% -*- mode: erlang -*-
+%%% $Id: wordfreq.hipe,v 1.1 2004-06-11 15:18:13 bfulgham Exp $
+%%% http://www.bagley.org/~doug/shootout/
+
+%% Use ETS tables (Erlang's associative store).
+
+-module(wordfreq).
+-export([main/0, main/1]).
+
+%% ignore program argument
+main() -> main(['1']).
+main(Args) ->
+    OutL = fun ({Word, Count}) ->
+		io:format("~7w\t~s~n", [Count, Word])
+	   end,
+    lists:foreach(OutL, sortedfreqs()),
+    halt(0).
+
+
+% sort the results, descending
+sortedfreqs() -> 
+    Port = open_port({fd, 0, 1}, [eof, {line, 512}]),
+    WordCountList = count_words_from_stream(ets:new(freqtab, [ordered_set]), Port),
+    lists:reverse(lists:keysort(2, WordCountList)).
+
+
+count_words_from_stream(Table, Port) ->
+    receive
+	{Port, eof} ->
+	    ets:delete(Table, ''),
+	    ets:tab2list(Table);
+	{Port, {_, {_, Line}}} ->
+	    count_words([], Line, Table),
+	    count_words_from_stream(Table, Port)
+    end.
+
+count_word(Word, Table) ->
+    WordAtom = list_to_atom(Word),
+    case (catch ets:update_counter(Table, WordAtom, 1)) of
+	{'EXIT', {badarg, _}} ->
+	    ets:insert(Table, {WordAtom, 1});
+	_ ->
+	    true
+    end.
+
+% count_words(Word_Accumulator, Line_of_Chars, Table)
+count_words([], [], Table) -> true;
+count_words(Word, [], Table) ->
+    count_word(Word, Table);
+count_words(Word, [H|T], Table) when H >= $a, H=< $z ->
+    NewWord = lists:append(Word, [H]),
+    count_words(NewWord, T, Table);
+count_words(Word, [H|T], Table) when H >= $A, H=< $Z ->
+    NewWord = lists:append(Word, [(H - $A) + $a]),
+    count_words(NewWord, T, Table);
+% we hit a non-word character so count previous word and continue
+count_words(Word, [H|T], Table) ->
+    count_word(Word, Table),
+    count_words([], T, Table).

@@ -85,6 +85,13 @@ $LANGS= array(
 	 'Type' => 'bytecomped/interpreted'
      ),
 
+     'hipe' => array(
+         'Lang' => 'Erlang',
+	 'Home' => 'http://www.erlang.org/',
+	 'Down' => 'http://www.erlang.org/download.html',
+	 'Type' => 'bytecomped/interpreted'
+     ),
+
      'gforth' => array(
          'Lang' => 'Forth',
 	 'Home' => 'http://www.jwdt.com/~paysan/gforth.html',
