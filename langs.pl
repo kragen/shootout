@@ -29,7 +29,7 @@
      },
 
      gawk =>
-     { Lang => 'AWK',
+     { Lang => 'Awk',
        Name => 'gawk',
        Status => '+',
        Home => 'http://www.gnu.org/software/gawk/gawk.html',
@@ -45,7 +45,7 @@
      },
 
      mawk =>
-     { Lang => 'AWK',
+     { Lang => 'Awk',
        Name => 'mawk',
        Status => '+',
        Home => 'http://www.math.fu-berlin.de/~leitner/mawk/',
@@ -385,7 +385,7 @@
        Down => 'http://www.complang.tuwien.ac.at/forth/gforth/',
        Type => 'interpreted',
        Note => 'GNU postfix stack programming',
-       Ext  => 'forth',
+       Ext  => 'c',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GFORTH} --version 2>&1`);
 	   return($ver);
@@ -1073,6 +1073,7 @@
      # Language name => Family name
      'Ada'         => 'dash',
      'Ada 95'      => 'dash',
+     'awk'         => 'shell',
      'Awk'         => 'shell',
      'Bash'        => 'shell',
      'bigloo'      => 'scheme',
@@ -1091,6 +1092,7 @@
      'Haskell'     => 'dash',
      'Dylan'       => 'c',
      'Felix'       => 'c',
+     'Fortran'     => 'c',
      'Icon'        => 'shell',
      'Lua'         => 'dash',
      'Mercury'     => 'prolog',

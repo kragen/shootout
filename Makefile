@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2005-02-22 02:53:59 bfulgham Exp $
+# $Id: Makefile,v 1.15 2005-02-23 06:40:31 bfulgham Exp $
 
 include Make.header
 
@@ -6,7 +6,7 @@ all: init versions
 	-(cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
-	-make recent craps codelinks
+	-make recent codelinks
 	-cvs commit -m "Rerun of benchmarks."
 
 test plot show loc:
@@ -15,7 +15,7 @@ test plot show loc:
 clean:
 	-(cd bench ; make $@)
 
-.PHONY: dist report recent versions craps codelinks
+.PHONY: dist report recent versions codelinks
 
 versions: versions.html
 
@@ -29,9 +29,6 @@ dist:
 report codelinks:
 	-@bin/make_highlight
 	-@(cd bench ; make --no-print-directory $@)
-
-craps:
-	-@(cd bench ; make --no-print-directory $@) > .craps.table
 
 recent:
 	-@bin/make_recent > recent.html

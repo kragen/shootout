@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-02-19 17:05:39 bfulgham Exp $
+# $Id: Makefile,v 1.27 2005-02-23 06:40:35 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -27,6 +27,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 25,75,125,200 \
 	  --ignore moments.mercury \
 	  --ignore moments.stalin \
-	  --inputfile ../../website/moments-input.txt --geninput
+	  --inputfile ../../website/data/moments-input.txt --geninput
 
 include ../../Make.footer
