@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-17 03:38:44 sweeks Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -13,10 +13,8 @@ setup:
 	@[ -f tmp/Usr.Dict.Words ] || (cd tmp ; ln -s ../Usr.Dict.Words . )
 
 
-MLTONDEPS := ../../Include/sml-src/hash-string.sml \
-             ../../Include/sml-src/hash-table-rep.sml \
-             ../../Include/sml-src/hash-table-sig.sml \
-             ../../Include/sml-src/hash-table.sml
+MLTONDEPS := ../../Include/mlton-src/basic.sml \
+		../../Include/mlton-src/hash-table.sml
 
 GCCOPTS := -I ../../Include
 
