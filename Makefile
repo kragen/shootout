@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2005-04-04 14:56:32 bfulgham Exp $
+# $Id: Makefile,v 1.22 2005-04-05 14:33:42 bfulgham Exp $
 
 include Make.header
 
@@ -8,7 +8,9 @@ all: init versions
 	-bin/build_data_files
 	-make recent codelinks
 
-website: all
+website: 
+	-bin/build_data_files
+	-bin/make_highlight
 	-(cd website/code; ../../bin/add_strays)
 	-cvs commit -m "Rerun of benchmarks."
 
