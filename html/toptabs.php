@@ -18,7 +18,7 @@ function toptabs($current)
 
 	foreach ($tablist as $key => $value) {
 		$element = "td";
-		if ($key == $current)
+		if ( ($key == $current) || ($key == '/' . $current))
 		{
 			$element = "th";
 		}
