@@ -242,7 +242,7 @@
        Type => 'interpreted',
        Verfun => sub {
 	   my $ver = `$ENV{KAFFE} -version 2>&1`;
-	   $ver =~ /(Version.*) Java version.*\n/;
+	   $ver =~ /(Version.*) Java Version.*/;
 	   return($1);
        },
      },
