@@ -1,4 +1,5 @@
 <?php $title="The Great Computer Language Shootout";
+      $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");
       require("html/testnav.php");
@@ -28,6 +29,8 @@
 	  <strong>Other Language Comparisons</strong>
 	</div>
 	<div class="body">
+	  <div><a href="http://www.bagley.org/~doug/shootout/">The Original Shootout</a></div>
+	  <div><a href="http://dada.perl.it/shootout/">The Win32 Shootout</a></div>
 	  <div><a href="compare/binext/">Creating Binary Extensions</a></div>
 	</div>
       </div>

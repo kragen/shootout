@@ -1,4 +1,5 @@
 <?php $title = "Frequently Asked Questions";
+      $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");
       $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);

@@ -1,10 +1,15 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html>
 <head>
-<?php
-  global $title;
-  echo "<title>$title</title>\n";
-?>
+  <?php
+    global $title, $keywords;
+    if ($keywords == "")
+    {
+        $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
+    }
+    echo "<title>$title</title>\n";
+    echo "<meta name=\"keywords\" contents=\"$keywords\">\n";
+  ?>
   <meta name="keywords" content="performance, benchmark, computer, algorithms, languages, compare, cpu, memory"> 
   <link REL="stylesheet" TYPE="text/css" HREF="/css/tigris.css" />
   <link REL="stylesheet" TYPE="text/css" HREF="/css/inst.css" />

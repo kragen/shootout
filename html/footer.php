@@ -2,7 +2,7 @@
   <table border="0" cellspacing="0" cellpadding="4">
     <tr>
       <td><a href="index.phtml">Back to the Language Shootout</a></td>
-      <td align="right"><a href="contact.phtml">Send me comments or suggestions</a>.</td>
+      <td align="right"><a href="http://alioth.debian.org/sendmessage.php?touser=1230">Send me comments or suggestions</a>.</td>
     </tr>
   </table>
 </div>

@@ -1,6 +1,5 @@
-<!--#set var="KEYWORDS" value="performance, benchmark, computer,
-algorithms, languages, compare, cpu, memory, lines of code" --> 
 <?php $title="Computer Language Shootout Scorecard";
+      $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");
       require("html/testnav.php");
