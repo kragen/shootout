@@ -14,8 +14,11 @@
 <h4 class="rev">&nbsp;Fast Faster Fastest programming languages</h4>
 </td></tr>
 <tr><td colspan="2">
-<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
-<p>And remember "For every complex problem, there is a solution that is simple, neat, <strong>and wrong</strong>."</p>
+<p>What <em>fun</em>! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
+
+<p>And remember, languages that implement more benchmarks will move to the top of the list, and those with <strong>many missing benchmarks</strong> will stay at the bottom!</p>
+
+<p>And remember, "For every complex problem, there is a solution that is simple, neat, <strong>and wrong</strong>."</p>
 </td></tr> 
 
 
