@@ -1,62 +1,9 @@
 (* -*- mode: sml -*-
- * $Id: prodcons.mlton,v 1.1 2004-05-19 18:11:09 bfulgham Exp $
+ * $Id: prodcons.mlton,v 1.2 2004-05-24 07:16:19 bfulgham Exp $
  * http://www.bagley.org/~doug/shootout/
  * from Stephen Weeks
  *)
 (* Translated from prodcons.ocaml. *)
-
-functor Z (S: sig
-		 structure Primitive:
-		    sig
-		       structure Stdio:
-			  sig
-			     val print: string -> unit
-			  end
-		    end
-		 structure MLton:
-		    sig
-		       structure Itimer:
-			  sig
-			     datatype which =
-				Prof
-			      | Real
-			      | Virtual
-
-			     val set: which * {value: Time.time,
-					       interval: Time.time} -> unit
-			  end
-		       structure Thread:
-			  sig
-			     type 'a t
-
-			     val atomicBegin: unit -> unit
-			     val atomicEnd: unit -> unit
-			     val new: ('a -> unit) -> 'a t
-			     val switch: ('a t -> 'b t * 'b) -> 'a
-			  end
-		       structure Signal:
-			  sig
-			     type signal
-
-			     val alrm: signal
-
-			     structure Handler:
-				sig
-				   datatype t =
-				      Default
-				    | Ignore
-				    | Handler of unit Thread.t -> unit Thread.t
-
-				   val get: signal -> t
-				   val set: signal * t -> unit
-				   val simple: (unit -> unit) -> t
-				end
-			  end
-		    end
-	      end) =
-struct
-
-open S
 
 fun for (start, stop, f) =
    let
@@ -121,13 +68,14 @@ structure Thread:
 	 end
    end =
    struct
-      open MLton
-      open Itimer Signal Thread
+      open MLton.Itimer
+      open MLton.Signal
+      open MLton.Thread
 
-      val topLevel: unit Thread.t option ref = ref NONE
+      val topLevel: unit MLton.Thread.t option ref = ref NONE
 
       local
-	 val threads: unit Thread.t Queue.t = Queue.new ()
+	 val threads: unit MLton.Thread.t Queue.t = Queue.new ()
       in
 	 fun ready (t): unit = Queue.enque (threads, t)
 	 fun next () =
@@ -139,8 +87,8 @@ structure Thread:
    
       fun 'a exit (): 'a = switch (fn _ => (next (), ()))
       
-      fun new (f: unit -> unit): unit Thread.t =
-	 Thread.new (fn () => ((f () handle _ => exit ())
+      fun new (f: unit -> unit): unit MLton.Thread.t =
+	 MLton.Thread.new (fn () => ((f () handle _ => exit ())
 			      ; exit ()))
 	 
       fun schedule t =
@@ -153,24 +101,29 @@ structure Thread:
       val spawn = ready o new
 
       fun setItimer t =
-	 Itimer.set (Itimer.Real,
+	 MLton.Itimer.set (MLton.Itimer.Real,
 		     {value = t,
 		      interval = t})
 
       fun run (): unit =
+         let
+	    val which = MLton.Itimer.Real;
+	    val signal = MLton.Itimer.signal which;
+	 in
 	 (switch (fn t =>
 		  (topLevel := SOME t
-		   ; (new (fn () => (Handler.set (alrm, Handler.Handler schedule)
+		   ; (new (fn () => (MLton.Signal.setHandler (signal, Handler.handler (fn t => schedule t))
 				     ; setItimer (Time.fromMilliseconds 20))),
 		      ())))
 	  ; setItimer Time.zeroTime
-	  ; Handler.set (alrm, Handler.Ignore)
+	  ; MLton.Signal.setHandler (signal, MLton.Signal.Handler.ignore)
 	  ; topLevel := NONE)
+	  end
 	 
       structure Mutex =
 	 struct
 	    datatype t = T of {locked: bool ref,
-			       waiting: unit Thread.t Queue.t}
+			       waiting: unit MLton.Thread.t Queue.t}
 	       
 	    fun new () =
 	       T {locked = ref false,
@@ -180,17 +133,17 @@ structure Thread:
 	       let
 		  fun loop () =
 		     (print (concat [name, " lock looping\n"])
-		      ; Thread.atomicBegin ()
+		      ; MLton.Thread.atomicBegin ()
 		      ; if !locked
 			   then (print "mutex is locked\n"
 				 ; switch (fn t =>
-					   (Thread.atomicEnd ()
+					   (MLton.Thread.atomicEnd ()
 					    ; Queue.enque (waiting, t)
 					    ; (next (), ())))
 				 ; loop ())
 			else (print "mutex is not locked\n"
 			      ; locked := true
-			      ; Thread.atomicEnd ()))
+			      ; MLton.Thread.atomicEnd ()))
 	       in loop ()
 	       end
 	    
@@ -203,14 +156,14 @@ structure Thread:
 
 	    fun unlock (m: t) =
 	       (print "unlock atomicBegin\n"
-		; Thread.atomicBegin ()
+		; MLton.Thread.atomicBegin ()
 		; safeUnlock m
-		; Thread.atomicEnd ())
+		; MLton.Thread.atomicEnd ())
 	 end
 
       structure Condition =
 	 struct
-	    datatype t = T of {waiting: unit Thread.t Queue.t}
+	    datatype t = T of {waiting: unit MLton.Thread.t Queue.t}
 
 	    fun new () = T {waiting = Queue.new ()}
 
@@ -289,9 +242,4 @@ fun main (name, args) =
       ()
    end
 
-end
-
-structure Z = Z (structure MLton = MLton
-		 structure Primitive = Primitive)
-
-val _ = Z.main ( CommandLine.name (), CommandLine.arguments () )
+val _ = main ( CommandLine.name (), CommandLine.arguments () )
