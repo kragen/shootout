@@ -401,6 +401,18 @@
        },
      },
 
+     'slang' =>
+     { Lang => 'S-Lang',
+       Home => 'http://www.s-lang.org/',
+       Down => 'http://www-s-lang.org/download.html',
+       Type => 'interpreted',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{SLANG} --version`);
+	   $ver =~ s/S-Lang.*//s;
+	   return($ver);
+       },
+     },
+
      'smlnj' =>
      { Lang => 'SML',
        Home => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',

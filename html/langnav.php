@@ -32,6 +32,7 @@
         <div><a href="../../lang/pike/">pike</a></div>
         <div><a href="../../lang/python/">python</a></div>
         <div><a href="../../lang/ruby/">ruby</a></div>
+        <div><a href="../../lang/slang/">slang</a></div>
         <div><a href="../../lang/smlnj/"><b><i>smlnj</i></b></a></div>
         <div><a href="../../lang/mlton/"><b><i>mlton</i></b></a></div>
         <div><a href="../../lang/bigloo/"><b><i>bigloo</i></b></a></div>

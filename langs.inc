@@ -240,6 +240,13 @@ $LANGS= array(
 	 'Type' => 'native compiled'
      ),
 
+     'slang' => array(
+         'Lang' => 'S-Lang',
+	 'Home' => 'http://www.s-lang.org/',
+	 'Down' => 'http://www.s-lang.org/download.html',
+	 'Type' => 'interpreted'
+     ),
+
      'smlnj' => array(
          'Lang' => 'SML',
 	 'Home' => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
