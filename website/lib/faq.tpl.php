@@ -61,7 +61,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 </ol>
 </p>
 
-<p>Track status with <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>browse Contribute Programs</strong></a>
+<p>Track status with <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a>
 <ol>
 <li><em>Open items</em> are new contributions</li>
 <li><em>Pending items</em> have been added to CVS</li>
@@ -75,7 +75,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 <tr><td>
 <p>We need volunteers to
 <ul>
-<li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>browse Contribute Programs</strong></a> for <em>Open items</em></li>
+<li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a> for <em>Open items</em></li>
 <li>check the <em>Open item</em> programs do what's required</li>
 <li>add acceptable <em>Open item</em> programs to CVS</li>
 <li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
