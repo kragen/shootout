@@ -5,7 +5,7 @@ require_once(BLIB);
 require_once(LIB); 
 // $HTTP_GET_VARS ///////////////////////////////////////////
 if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'cpu'; }
+else { $S = 'fullcpu'; }
 
 // DATA ////////////////////////////////////////////////
 list($Incl,$Excl) = ReadIncludeExclude();

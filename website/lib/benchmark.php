@@ -17,7 +17,7 @@ else { $L = 'all'; }
 if (isset($HTTP_GET_VARS['id'])){ $I = $HTTP_GET_VARS['id']; } 
 else { $I = 0; }
 if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'cpu'; }
+else { $S = 'fullcpu'; }
 
 // PAGES ///////////////////////////////////////////////////
 // There are 4 kinds of test/lang combination
