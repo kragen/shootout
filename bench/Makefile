@@ -1,10 +1,9 @@
-# $Id: Makefile,v 1.9 2004-12-05 08:28:57 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-12-10 06:22:25 bfulgham Exp $
 
 TESTS = \
     hello \
     ackermann \
     ary \
-    div2sum \
     echo \
     except \
     fannkuch \

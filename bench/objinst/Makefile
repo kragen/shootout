@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-11-10 06:53:57 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-12-10 06:22:25 bfulgham Exp $
 include ../../Make.header
 
 TEST    := objinst
@@ -6,6 +6,8 @@ TITLE   := Object Instantiation
 
 ERLFLAGS := -noinput
 LOCDEPS := --dep=se:../Include/nth_toggle.e,../Include/toggle.e
+#CHICKENOPTS := -include-path /usr/share/chicken/meroon #-extends meroon #\
+#		-C "-O3 -fomit-frame-pointer -fno-strict-aliasing"
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 NHC98OPTS := -package base
