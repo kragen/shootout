@@ -8,9 +8,9 @@
 
 <p>Each program reads the input from standard input; counts lines, words (whitespace delimited tokens), and characters; and outputs those counts.  Programs should not read more than 4K input at a time. Programs can assume the file ends in a newline, and programs should handle arbitrarily long lines.</p>
 
-<p>Correct output for this 6KB <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=input">input file</a> (file content duplicated N = 500 times) is: 
+<p>Correct output for this 6KB <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=input">input file</a> is: 
 <pre>
-12500 68500 3048000
+25 137 6121
 </pre>
 </p>
 <br/>
@@ -18,4 +18,3 @@
 <p>(Note that as in the original version, whitespace is
   defined as space, newline and tab characters, which is a little
   different from the Unix <b>wc</b> command.)</p>
-
