@@ -7,6 +7,7 @@
 # http://shootout.alioth.debian.org
 #
 # contributed by Martin DeMello
+#
 
 include Math
 
