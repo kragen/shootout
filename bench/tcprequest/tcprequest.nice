@@ -1,0 +1,115 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   contributed by Isaac Gouy
+
+To compile:   
+   nicec --sourcepath=.. -d=. -a tcprequest.jar tcprequest
+
+To run:
+   java -jar tcprequest.jar 1000
+*/
+
+
+import java.io.*;
+import java.net.*;
+
+
+let int M = 100; // multiplier
+let int REPLY_SIZE = 4096;
+let int REQUEST_SIZE = 64;
+
+
+let int BUFFER_SIZE = 1024;
+let byte[] REPLY = new byte[REPLY_SIZE];
+let byte[] REQUEST = new byte[REQUEST_SIZE];
+
+
+void main(String[] args){
+   let n = toSinglePositiveInt(args) * M; 
+   let server = new TcpServer(port: 0);
+   let client = new TcpClient( 
+      address: InetAddress.getLocalHost(),  
+      port: server.getPort, 
+      repeat: n
+   );
+   client.start;
+}
+
+
+class TcpClient extends Thread {
+   InetAddress address;
+   int port;
+   int repeat;                  
+
+   run() {
+      let buffer = new byte[BUFFER_SIZE];  
+      var replies = 0; var bytes = 0;        
+      var ?Socket serverSocket = null;     
+     
+      try {
+         var byteCount = 0; 
+         let socket = new Socket(address, port);
+         serverSocket = socket;
+         
+         let in = socket.getInputStream;         
+         let out = socket.getOutputStream;
+         
+         while (repeat-- > 0) {
+            out.write(REQUEST);
+            out.flush;
+            
+            while ( (byteCount += in.read(buffer)) < REPLY_SIZE ) {} 
+            bytes += byteCount;
+            byteCount = 0;
+            replies++;
+         }                         
+      } 
+      catch (Exception e) { e.printStackTrace; } 
+      finally { notNull(serverSocket).close; }
+      
+      println("replies:\t" + replies + "\tbytes: " + bytes);      
+   }
+}
+
+
+class TcpServer extends Thread {
+   ?ServerSocket socket = null;
+   int port;
+   
+   {  
+      socket = new ServerSocket(port);
+      port = notNull(socket).getLocalPort;    
+      this.start;
+   }
+
+   int getPort(); getPort() = port;
+
+   run() {   
+      let buffer = new byte[BUFFER_SIZE];
+      var requests = 0; 
+      
+      try {
+         let socketClient = notNull(socket).accept;
+         let in = socketClient.getInputStream;
+         let out = socketClient.getOutputStream;
+         
+         while ((in.read(buffer,0,REQUEST_SIZE)) > -1) {                    
+            out.write(REPLY);
+            out.flush;
+            requests++;
+         }            
+      } catch (Exception e) { e.printStackTrace; }
+      
+      println("requests:\t" + requests);
+   }
+}
+
+
+int toSinglePositiveInt(String[] s){
+   try { 
+      int i =  Integer.parseInt(s[0]);
+      if (i>0) return i; else return 1;
+    }
+   catch (Exception e){ return 1; } }
+
