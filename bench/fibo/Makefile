@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-27 06:40:23 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-16 04:38:24 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fibo
@@ -6,7 +6,8 @@ TITLE   := Fibonacci Numbers
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean
 
 BIGLOOOPTS := -farithmetic
 

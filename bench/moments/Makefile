@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.8 2004-06-16 04:38:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -18,7 +18,7 @@ MB_GHCRTS  := +RTS -K2046000
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
-MB_CLRTS := -h 10000000
+MB_CLRTS := -h10000000
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,50,100,150 \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-15 05:45:40 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-16 04:38:29 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -9,6 +9,8 @@ GCCOPTS   := $(GCCOPTS) -lpcre
 OCAMLOPTS := str.cmxa pcre.cmxa -I +pcre
 OCAMLBOPTS := str.cma pcre.cma -I +pcre
 GHCOPTS := -package text
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean
 
 CMUCL_SRCS := ../../Include/meta.lisp
 
