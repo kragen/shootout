@@ -105,6 +105,16 @@
 	    Most of his comments have been incorporated into the shootout.</li>
 	  <li><a href="http://www.lissett.com/ben/bench1.htm">OO Richards
 	    Bench</a>:  Object-oriented version of the Richards benchmark.</li>
+	  <li>The <a href="http://merd.sourceforge.net/pixel/language-study/scripting-language/">
+	    Scriptometer</a> tries to measure whether a programming language
+	    is suitable for Script-Oriented Programming</li>
+	  <li>The <a href="http://scutigena.sourceforge.net">Scutigena</a>
+	    project is like the Shootout, and would have been a good thing
+	    to get involved with if I had known about it before-hand!  :-)</li>
+	  <li>Keith Lea used some of the shootout benchmarks to show that
+	    <a href="http://kano.net/javabench">Java is Faster than C++</a>.
+	    My own SableVM and GIJ tests don't bear this out, but perhaps
+	    using Sun's JVM would make a difference...</li>
 	</ul>
       </div>
       </div>

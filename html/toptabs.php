@@ -11,6 +11,7 @@ function toptabs($current)
 		"/craps.php" => "Scorecard",
 		"/recent.php" => "Recent Changes",
 		"http://lists.alioth.debian.org/mailman/listinfo/shootout-list" => "Mailing List",
+		"http://shootout.alioth.debian.org/wiki" => "Wiki",
 		"http://alioth.debian.org/projects/shootout" => "Alioth");
 
 	echo "<div class=\"tabs\" id=\"toptabs\">\n";
