@@ -217,7 +217,7 @@ Contact us!</p>
 
 <tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
 <p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
-<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.       
+<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
 </td></tr>
 
 
@@ -335,7 +335,7 @@ Each program was run once pre-test to reduce cache effects. Each program was the
 <p><strong>Must have</strong></p>
 <ol>
 <li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
-</br>Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
+<br />Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Documentation.</li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
