@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2004-08-01 07:59:06 bfulgham Exp $
+# $Id: Makefile,v 1.12 2004-08-10 15:16:14 bfulgham Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -14,7 +14,6 @@ OO2COPTS := -A --no-rtc
 ERLFLAGS := -noinput
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore heapsort.bigforth \
-	  --ignore heapsort.csharp \
 	  --ignore heapsort.icon \
 	  --ignore heapsort.njs \
 	  --ignore heapsort.oz \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2004-08-04 07:40:02 bfulgham Exp $
+# $Id: Makefile,v 1.11 2004-08-10 15:16:16 bfulgham Exp $
 include ../../Make.header
 
 TEST    := strcat
@@ -17,7 +17,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10000,20000,30000,40000 \
 	  --sampledelay 0.1 \
 	  --ignore strcat.bash \
-	  --ignore strcat.csharp \
 	  --ignore strcat.elastic \
 	  --ignore strcat.ghc2.ghc \
 	  --ignore strcat.guile2.guile \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-08-04 07:40:07 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-08-10 15:16:16 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -16,7 +16,6 @@ OO2COPTS := -A --no-rtc
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 500,1000,1500,2000 \
 	  --ignore wc.gnat \
-	  --ignore wc.csharp \
 	  --ignore wc.rep \
 	  --ignore wc.stalin \
 	  --inputfile Input --geninput

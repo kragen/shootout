@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2004-08-04 07:39:54 bfulgham Exp $
+# $Id: Makefile,v 1.13 2004-08-10 15:16:16 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -25,7 +25,6 @@ SBCL_SRCS := ../../Include/meta.lisp
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
           --range 1,3000,6000,9000 \
 	  --ignore regexmatch.bigloo \
-	  --ignore regexmatch.csharp \
 	  --ignore regexmatch.g++ \
 	  --ignore regexmatch.gcj \
 	  --ignore regexmatch.gij \

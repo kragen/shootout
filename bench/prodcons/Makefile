@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2004-08-04 07:39:54 bfulgham Exp $
+# $Id: Makefile,v 1.12 2004-08-10 15:16:16 bfulgham Exp $
 include ../../Make.header
 
 TEST    := prodcons
@@ -14,7 +14,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --ignore prodcons.csharp \
 	  --ignore prodcons.perl \
 	  --ignore prodcons.rep \
 	  --range 10000,30000,70000,100000
