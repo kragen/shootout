@@ -8,6 +8,4 @@ computer, language, compare, cpu, memory" -->
 <div class="h4"><h4>Measurements while N varies</h4></div>
 <p>N is the number of method calls.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("methcall", $_SERVER['QUERY_STRING']);?>

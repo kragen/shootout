@@ -9,6 +9,4 @@ computer, language, compare, cpu, memory" -->
 <p>The test parameter N is the size of the array of random numbers that
   we sort.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("heapsort", $_SERVER['QUERY_STRING']);?>

@@ -8,5 +8,4 @@ computer, language, compare, cpu, memory" -->
 <div class="h4"><h4>Measurements while N varies</h4></div>
 <p>N is the number of array elements we access.</p>
 
-<?php #include virtual="../../html/cmp_test.pl?$QUERY_STRING"
-      require("../../html/detail.php"); ?>
+<?php cmp_test("ary", $_SERVER['QUERY_STRING']);?>

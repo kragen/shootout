@@ -20,12 +20,13 @@ nested loops" -->
   is chosen is to keep the CPU used in hash key creation to a minimum.
   Some hash table implementations may be penalized somewhat by having
   to deal with many similar keys.  (But a good one won't :-)</p>
-<p>The correct output (for N = 10) looks like this:
-<pre>
-  <?php require("Output"); ?>
-</pre></p>
-<p>
-
+<div class="donemessage">
+  <p>The correct output (for N = 10) looks like this:
+  <pre>
+    <?php require("Output"); ?>
+  </pre></p>
+  <p>
+</div>
 <h4>Observations</h4>
 <p>The following programs exceed the time limit (300 CPU seconds) and
   are disqualified:

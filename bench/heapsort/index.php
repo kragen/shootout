@@ -16,8 +16,10 @@ computer, language, compare, cpu, memory, heapsort" -->
   double-precision floating point numbers.  We use the same naive
   (and lightweight) pseudo-random number generator used in the <a
   href="../random/">Random Number Generator</a> test.</p>
-<p>For the given value of <b>N = 1000</b>, each test should output the
-  answer: <?php require("Output"); ?></p>
+<div class="donemessage">
+  <p>For the given value of <b>N = 1000</b>, each test should output the
+    answer: <?php require("Output"); ?></p>
+</div>
 
 <h4>Observations</h4>
 <p>In order to be able to add bigloo I had to use different constants

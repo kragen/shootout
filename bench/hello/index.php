@@ -9,10 +9,12 @@ computer, language, compare, cpu, memory" -->
 <p>For this test, each program should be implemented in the <a
   href="../../method.php#sameway"><i>same way</i></a>.  Each program
   just prints out &quot;hello world&quot; and exits.</p>
-<p>The correct output (for N = 1) looks like this:
-<pre>
-  <?php require("Output"); ?>
-</pre></p>
+<div class="donemessage">
+  <p>The correct output (for N = 1) looks like this:
+  <pre>
+    <?php require("Output"); ?>
+  </pre></p>
+</div>
 <p>The purpose of this test is to try to show relative startup costs of
   the different languages.  In order to measure startup costs, this
   test is run differently than the others, each test program is run N

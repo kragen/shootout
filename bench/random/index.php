@@ -39,9 +39,11 @@ normalized to the interval [N,0].
   constants (or whatever is closest) to define the A, C, and M
   constants in the algorithm.  The program shouldn't use literal
   constants. </p>
-<p>For an input argument of 1000, the test should produce the answer:
-  <?php require("Output"); ?>
-</p>
+<div class="donemessage">
+  <p>For an input argument of 1000, the test should produce the answer:
+    <?php require("Output"); ?>
+  </p>
+</div>
 
 <h4>Observations</h4>
 <p>It sure would be nice to have a standard way to format floats :-)</p>

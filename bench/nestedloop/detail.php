@@ -9,6 +9,4 @@ computer, language, compare, cpu, memory" -->
 
 <p>The test parameter N is the number of times each nested loop iterates.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("nestedloop", $_SERVER['QUERY_STRING']);?>

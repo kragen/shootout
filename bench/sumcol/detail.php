@@ -10,6 +10,4 @@ computer, language, compare, cpu, memory" -->
   So if N is 2, the test is fed 2 copies of the input data on standard
   input.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("sumcol", $_SERVER['QUERY_STRING']);?>

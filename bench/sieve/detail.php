@@ -11,6 +11,4 @@ memory" -->
 <p>N is the number of times we compute the number of primes from 2
   through 8192.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("sieve", $_SERVER['QUERY_STRING']);?>

@@ -7,6 +7,4 @@
 <p>The test parameter N is used as the number of exceptions to be
   thrown in each test run.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("except", $_SERVER['QUERY_STRING']);?>

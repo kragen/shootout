@@ -7,6 +7,4 @@ computer, language, compare, cpu, memory" -->
 
 <p>N is the number of items produced/consumed.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("prodcons", $_SERVER['QUERY_STRING']);?>

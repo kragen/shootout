@@ -18,11 +18,12 @@ matrix multiplication" -->
  programs from that article.  You might note that I have sped some of
  them up a bit by removing some loop invariants (esp. subscript
  references).</p>
-<p>The correct output from each test program should look like this:
-<pre>
-  <?php require("Output"); ?>
-</pre>
-
+<div class="donemessage">
+  <p>The correct output from each test program should look like this:
+  <pre>
+    <?php require("Output"); ?>
+  </pre></p>
+</div>
 <h4>Observations</h4>
 <p>The following programs exceed the time limit (300 CPU seconds) and
  are disqualified:

@@ -21,11 +21,13 @@ array access" -->
   it's speed improved noticeably.</p>
 <p>Please refer to my second <a href="../hash2/">hash test</a> which
   tries to avoid the cost of hash key string generation.</p>
-<p>The correct output (for N = 20000) looks like this:
-<pre>
-  <?php require("Output"); ?>
-</pre></p>
-<p>
+<div class="donemessage">
+  <p>The correct output (for N = 20000) looks like this:
+  <pre>
+    <?php require("Output"); ?>
+  </pre></p>
+  <p>
+</div>
 
 <h4>Observations</h4>
 <p>The <a href="hash.gcc">C program</a> uses a simple Hash Table

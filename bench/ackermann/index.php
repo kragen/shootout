@@ -28,9 +28,11 @@ perl, python, computer, language, compare, cpu, memory, recursion" -->
   language's function call mechanism a workout.  However, this probably
   isn't so accurate for languages that do tail-call elimination, since
   they essentially turn recursive tail-calls into iterative loops.</p>
+<div class="donemessage">
 <p>The correct output (for N = 4) looks like this:
   <pre><?php require("Output"); ?></pre>
 </p>
+</div>
 
 <div class="h4"><h4>Observations</h4></div>
 <p>The <a href="ackermann.bash">bash program</a> is disqualified

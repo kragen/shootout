@@ -7,6 +7,4 @@ computer, language, compare, cpu, memory" -->
 <div class="h4"><h4>Measurements while N varies</h4></div>
 <p>The test parameter N is the number of times we extract the GIF frames.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("gifdeanim", $_SERVER['QUERY_STRING']);?>

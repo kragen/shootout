@@ -24,10 +24,12 @@ computer, language, compare, cpu, memory, array access" -->
   beginning.  This is to give the advantage to a random-access data
   structure, as an <i>array</i> should be, and not just any sequence
   data structure, as such as a <i>list</i>.</p>
+<div class="donemessage">
 <p>The correct output (for N = 1000) looks like this:
 <pre>
   <?php require("Output"); ?>
 </pre>
+</div>
 
 <!--
 <h4>Observations</h4>

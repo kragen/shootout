@@ -21,11 +21,13 @@ sum a column" -->
   characters (including newline).</p>
 <p><a href="/data/shootout/sumcol/Input">Input</a> file (it
   is repeated N times).</p>
-<p>The correct output (for N = 100, i.e. 100 copies of the input)
+<div class="donemessage">
+  <p>The correct output (for N = 100, i.e. 100 copies of the input)
   looks like this:
-<pre>
-  <?php require("Output"); ?>
-</pre></p>
+  <pre>
+    <?php require("Output"); ?>
+  </pre></p>
+</div>
 
 <h4><a href="alt/">Alternates</a></h4>
 <p><i>This section is for displaying alternate solutions that are either

@@ -9,7 +9,5 @@ computer, language, compare, cpu, memory" -->
 <p>The test parameter N is the number of times the first hash is added
   into the second hash.</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("hash2", $_SERVER['QUERY_STRING']);?>
 

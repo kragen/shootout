@@ -10,6 +10,4 @@ expression, computer, language, compare, cpu, memory" -->
 <p>N is the number of times we extract a list of phone numbers from the
   test input data.  (The input data is only read once).</p>
 
-<?php #$file = "../../html/cmp_test.pl?$_SERVER['QUERY_STRING']";
-      #require($file);
-      require("../../html/detail.php"); ?>
+<?php cmp_test("regexmatch", $_SERVER['QUERY_STRING']);?>
