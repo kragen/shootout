@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.26 2005-04-05 06:39:25 bfulgham Exp $
+# $Id: minibench,v 1.27 2005-04-06 14:49:53 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -33,7 +33,7 @@ use BSD::Resource qw(times);
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.26 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.27 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -399,13 +399,16 @@ sub main {
     # from now on our cwd is "rundir"
     my $testarg = ($OPT->{testfirst}) ? $RANGE[0] : undef;
     my @tests = ();
-    my $update = 0;
+    my $update = 1;
     foreach my $executable (@ARGV) {
 	next if (grep($executable eq $_, @{$OPT->{_ignore}}));
 	next if ($executable =~ m!~$!);
 	my $test = Minibench->new($executable);
 	push(@tests, $test);
 	next if ($test->up_to_date);
+
+	my ($source, $executable) = _get_source($executable);
+        $test->{cmdline} = _automake($executable, $test->{source}, $test->{runlog_file});
 	err "# Benchmarking: $executable";
 	if ($testarg) {
 	    err("running test phase for arg $testarg") if (DBG);
@@ -912,7 +915,7 @@ sub new {
 	      };
     abort("$class::new() dataset_name is null") if not $obj->{dataset_name};
     $obj->{runlog_file} = $obj->{dataset_name} . "_runlog";
-    ($obj->{source}, $obj->{cmdline}) = _automake($executable, $obj->{runlog_file});
+    ($obj->{source}, $obj->{executable}) = _get_source($executable);
     return(bless $obj, $class);
 }
 
@@ -931,9 +934,9 @@ sub _dataset_name {
     return($DATASET_NAME{$executable} = $executable);
 }
 
-sub _automake {
-    my($executable, $runlog_file) = @_;
-    my($base, $ext) = ($executable =~ /^(.*?)\.([^.]+)$/);
+sub _get_source {
+    my ($executable) = @_;
+    my ($base, $ext) = ($executable =~ /^(.*?)\.([^.]+)$/);
     my $source = '';
     if ($executable =~ m!^(.*?)_run$!) {
 	$source = $1;
@@ -943,6 +946,13 @@ sub _automake {
     } else {
 	$source = $executable;
     }
+
+    return ($source, $executable);
+}
+
+sub _automake {
+    my($executable, $source, $runlog_file) = @_;
+    my($base, $ext) = ($executable =~ /^(.*?)\.([^.]+)$/);
     err "Generating $executable from $source";
     if ($source ne $executable) {
 	my $makefile = _find_makefile();
@@ -962,6 +972,7 @@ sub _automake {
 	}
     } else {
     	# Provide a timestamp for scripts as well
+	warn "Source=$source, executable=$executable\n";
 	my $mkcmd;
 	if ($OPT->{runlog}) {
             $mkcmd = qq{(echo "EXECUTING SCRIPT: $source"; echo ; date ; echo) > ${runlog_file}.make 2>&1};
