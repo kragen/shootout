@@ -1,0 +1,56 @@
+;;; The Great Computer Language Shootout
+;;;   http://shootout.alioth.debian.org/
+
+;;; contributed by Yannick Gingras <ygingras@ygingras.net>
+
+(declaim (optimize speed (debug 0) (safety 0) (space 0)))
+  
+(defun render (size &optional (stream *standard-output*))
+  (declare (type fixnum size)
+           (type stream stream))
+  (let* ((code 0)
+         (mask 128)
+         (zi 0.0d0)
+         (zr 0.0d0)
+         (tr 0.0d0)
+         (base-imag -1.0d0)
+         (base-real -1.5d0)
+         (str (make-string (* size (ceiling size 8))))
+         (cur-char -1))
+    (declare (type (unsigned-byte 8) code mask)
+             (type double-float zr zi tr base-real base-imag)
+             (type fixnum cur-char))
+    (format stream "P4~%~d ~d~%" size size)
+    (dotimes (y size)
+      (declare (type fixnum y))
+      (setf base-imag (+ -1.0d0 (/ (* 2d0 y) size)))
+      (dotimes (x size)
+        (declare (type fixnum x))
+	(setf base-real (+ -1.5d0 (/ (* 2d0 x) size)))
+	(setf zr 0.0d0)
+        (setf zi 0.0d0)
+        (when (not (dotimes (n 51)
+                     (when (< 4.0d0 (+ (* zr zr) (* zi zi)))
+                       (return t))
+                     (setf tr (+ (* zr zr) (- (* zi zi)) base-real))
+                     (setf zi (+ (* 2.0d0 zr zi) base-imag))
+                     (setf zr tr)))
+          (setf code (logior mask code)))
+        (setf mask (ash mask -1))
+        (when (zerop mask)
+          (setf mask 128)
+          (setf (elt str (incf cur-char)) (code-char code))
+          (setf code 0)))
+      (when (/= 128 mask)
+	(setf (elt str (incf cur-char)) (code-char code))
+	(setf code 0)
+	(setf mask 128)))
+    
+    (write-sequence str stream)))
+
+(defun main ()
+  (let* ((args #+sbcl sb-ext:*posix-argv*
+               #+cmu extensions:*command-line-strings*
+               #+gcl si::*command-args*)
+         (n (parse-integer (car (last args)))))
+    (render n)))
