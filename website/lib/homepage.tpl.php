@@ -31,6 +31,11 @@
 <?=$PageBody;?>
 
 <form><input type="hidden" name="sort" value="<?=$Sort;?>" /></form>
-<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <strong>Send</strong>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">suggestions&nbsp;and&nbsp;comments</a></p></div>
-</body>
+<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license">revised&nbsp;BSD&nbsp;license</a> 
+
+<!-- 
+| <strong>Send</strong>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">suggestions&nbsp;and&nbsp;comments</a>
+-->
+
+</p></div></body>
 </html>
