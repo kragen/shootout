@@ -15,6 +15,7 @@ define('ABOUT_PROGRAMS_PATH', '../../about/programs/');
 define('CODE_PATH', '../../code/');
 define('LOG_PATH', '../../code/');
 define('MISC_PATH', '../../misc/');
+define('DOWNLOAD_PATH', '../download/');
 
 define('CORE_SITE', '../');
 define('SANDBOX_SITE', './');
