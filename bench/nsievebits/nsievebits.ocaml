@@ -5,44 +5,31 @@
 open Bigarray
 
 let nsieve m =
-  let nbits = 8 in let full = (1 lsl nbits) - 1 in
-  let bits = Array1.create int8_unsigned c_layout (m / nbits) in
-  Array1.fill bits full;
-  let clear i =
-    let rec clear' j = if j < m then
-      begin
-	let ix = j / nbits in
-	let old = Array1.get bits ix in
-	Array1.set bits ix (old land ((1 lsl (j mod nbits)) lxor full));
-	clear' (j + i)
-      end; in
-    clear' (i + i) in
-  let rec loop i n =
-    if i >= m then n
-    else if (Array1.get bits (i / nbits)) land (1 lsl (i mod nbits)) != 0 then
-      (clear i; loop (succ i) (succ n))
-    else loop (succ i) n in
-  loop 2 0
+  let a =  Array1.create int8_unsigned c_layout ((m lsr 3) + 1) in
+  Array1.fill a 0xFF;
+  let rec clear i j =
+    if j < m then (
+      let ic = j lsr 3 in
+      a.{ic} <- a.{ic} land lnot(1 lsl (j land 0x7));
+      clear i (j + i)
+    ) in
+  let count = ref 0 in
+  for i = 2 to m - 1 do
+    if a.{i lsr 3} land (1 lsl (i land 0x7)) > 0 then
+      (clear i (i+i); incr count)
+  done;
+  !count
+
 
 let test n =
-  let m = 1 lsl n * 10000 in
-  let count = nsieve m in
-  Printf.printf "Primes up to %8d%8d\n" m count
+  let m = (1 lsl n) * 10000 in
+  Printf.printf "Primes up to %8i%8i\n" m (nsieve m)
 
-let main () =
-  if Array.length Sys.argv < 2
-  then (Printf.printf "An argument is required\n"; 2)
-  else
-    let nopt =
-      try Some (int_of_string Sys.argv.(1)) with
-	| Failure _ -> (Printf.printf "An integer is required\n"; None) in
-    match nopt with
-      | None -> 2
-      | Some n ->
-	  if n >= 0 then test n;
-	  if n >= 1 then test (n - 1);
-	  if n >= 2 then test (n - 2);
-	  0
-;;
+let () =
+  let n =
+    try int_of_string Sys.argv.(1)
+    with _ -> (Printf.printf "usage: %s N" Sys.argv.(0); exit 2) in
+  test n;
+  if n >= 1 then test(n-1);
+  if n >= 2 then test(n-2)
 
-exit (main ())
