@@ -1,3 +1,7 @@
+// $Id: takfp.java,v 1.2 2004-11-27 03:42:24 bfulgham Exp $
+// http://shootout.alioth.debian.org/
+// Contributed by Isaac Gouy
+
 public class takfp {
     public static void main(String args[]) {
 	int n = Integer.parseInt(args[0]);

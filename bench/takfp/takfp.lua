@@ -1,3 +1,8 @@
+-- $Id: takfp.lua,v 1.2 2004-11-27 03:42:24 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
+-- implemented by: Isaac Gouy
+
+
 function Tak(x,y,z)
    if y>=x then 
       return z
@@ -7,7 +12,7 @@ function Tak(x,y,z)
 end
 
 n = tonumber(arg and arg[1]) or 1
-io.write( Tak(n*3.0,n*2.0,n*1.0), "\n")
+io.write( string.format("%.1f\n", Tak(n*3.0,n*2.0,n*1.0)) )
 
 
 
