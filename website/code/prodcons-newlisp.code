@@ -1,0 +1,60 @@
+#<span class="sym">!/</span>usr<span class="sym">/</span>bin<span class="sym">/</span>newlisp
+
+# prodcons.newlisp <span class="sym">-</span> benchmark Producer<span class="sym">/</span>consumer
+# newLISP v<span class="num">.8.3.0</span> <span class="kwa">or</span> later required
+# Note that newLISP does <span class="kwa">not</span> use Pthreads but classic UNIX<span class="sym">/</span>fork<span class="sym">()</span> threads
+# therefore no mutexes amd condition variables but semaphores <span class="kwa">and</span> shared memory
+#
+# Contributed by Lutz Mueller
+
+<span class="sym">(</span>constant <span class="str">'wait -1 '</span>signal <span class="num">1</span><span class="sym">)
+
+(</span>define <span class="sym">(</span>consumer n<span class="sym">)
+	(</span><span class="kwa">set</span> <span class="str">'i 0)
+	(while (&lt; i n)
+		(semaphore cons-sem wait)
+		(set '</span>i <span class="sym">(</span>share data<span class="sym">))
+		(</span>share consumed <span class="sym">(+ (</span>share consumed<span class="sym">)</span> <span class="num">1</span><span class="sym">))
+		(</span>semaphore prod<span class="sym">-</span>sem signal<span class="sym">))
+	(</span><span class="kwa">exit</span><span class="sym">))
+
+
+(</span>define <span class="sym">(</span>producer n<span class="sym">)
+	(</span>for <span class="sym">(</span>i <span class="num">1</span> n<span class="sym">)
+		(</span>semaphore prod<span class="sym">-</span>sem wait<span class="sym">)
+		(</span>share data i<span class="sym">)
+		(</span>share produced <span class="sym">(+ (</span>share produced<span class="sym">)</span> <span class="num">1</span><span class="sym">))
+		(</span>semaphore <span class="kwa">cons</span><span class="sym">-</span>sem signal<span class="sym">))
+	(</span><span class="kwa">exit</span><span class="sym">))
+
+
+(</span>define <span class="sym">(</span>main n<span class="sym">)
+	(</span><span class="kwa">set</span> <span class="str">'produced (share)) ; get shared mem addresses
+	(set '</span>consumed <span class="sym">(</span>share<span class="sym">))
+	(</span><span class="kwa">set</span> <span class="str">'data (share))
+
+	(share produced 0) ; init shared memory
+	(share consumed 0)
+	(share data 0)
+
+	(set '</span>prod<span class="sym">-</span>sem <span class="sym">(</span>semaphore<span class="sym">))</span> <span class="slc">; get semaphores
+</span>	<span class="sym">(</span><span class="kwa">set</span> <span class="str">'cons-sem (semaphore))
+
+	(set '</span>prod<span class="sym">-</span>pid <span class="sym">(</span>fork <span class="sym">(</span>producer n<span class="sym">)))</span> <span class="slc">; start threads
+</span>	<span class="sym">(</span><span class="kwa">set</span> <span class="str">'cons-pid (fork (consumer n)))
+	(semaphore prod-sem signal) ; get producer started
+
+	(wait-pid prod-pid) ; wait for threads to finish
+	(wait-pid cons-pid)
+	(semaphore cons-sem 0) ; release semaphore
+	(semaphore prod-sem 0) ; release semaphore
+
+	(println (share produced) &quot; &quot; (share consumed)))
+
+(main (integer (last (main-args))))
+
+(exit)
+
+
+
+</span>
