@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"></em>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=regex&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=regex&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
 
 <p>The regex benchmark measures regular expression pattern matching, extracting telephone numbers from a text.</p>
 

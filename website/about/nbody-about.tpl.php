@@ -1,4 +1,4 @@
-<p>Each program should model the orbits of Jovian planets, using the same simple symplectic-integrator - see the <a href="benchmark.php?test=nbody&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
+<p>Each program should model the orbits of Jovian planets, using the same simple symplectic-integrator - see the <a href="benchmark.php?test=nbody&amp;lang=java&amp;sort=<?=$Sort;?>">Java program</a>.</p>
 
 <p>Correct output N = 1000 is</p>
 <pre>

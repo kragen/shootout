@@ -2,29 +2,28 @@
 
 <p>Each program should</p>
 <ul>
-<li>create a chain of N threads such that:
+   <li>create a chain of N threads such that:
+      <ul>
+      <li>each thread
+         <ul>
+         <li>can receive an integer message</li>
+         <li>can store the received message</li>
+         <li>knows the next thread in the chain</li>
+         <li>can send the integer message + 1 to the next thread</li>
+         </ul>
+      </li>    
+      <li>the last thread... in the chain is different, it:
+         <ul>
+         <li>can receive an integer message</li>
+         <li>can store the received message</li>
+         <li>there is no next thread</li>
+         </ul>
+      </li>
+      </ul>
+   </li>      
 
-<ul>
-<li>each thread
-<ul>
-<li>can receive an integer message</li>
-<li>can store the received message</li>
-<li>knows the next thread in the chain</li>
-<li>can send the integer message + 1 to the next thread</li>
-</ul>
-</li>
-
-<li>the last thread... in the chain is different, it:
-<ul>
-<li>can receive an integer message</li>
-<li>can store the received message</li>
-<li>there is no next thread</li>
-</ul>
-</li>
-</ul>
-
-<li>send the integer message 0 to the first thread</li>
-<li>print the message received by the last thread</li>
+   <li>send the integer message 0 to the first thread</li>
+   <li>print the message received by the last thread</li>
 </ul>
 
 <p>Correct output N = 3000 is:</p>

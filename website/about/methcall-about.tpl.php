@@ -1,4 +1,4 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=methcall&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
+<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=methcall&amp;lang=java&amp;sort=<?=$Sort;?>">Java program</a>.</p>
 
 <p>The methods benchmark measures the speed of method calls in OO languages.  It measures a mixture of base class and derived class method calls.</p>
 
@@ -28,4 +28,4 @@ false
 <li>re-use the <em>Toggle</em> constructor</li>
 <li>inherit the <em>Toggle</em> value method</li>
 </ul>
-<p>(These classes are also used in the <a href="benchmark.php?test=objinst&lang=all&sort=<?=$Sort;?>">objects benchmark</a>.)</p>
+<p>(These classes are also used in the <a href="benchmark.php?test=objinst&amp;lang=all&amp;sort=<?=$Sort;?>">objects benchmark</a>.)</p>

@@ -1,13 +1,13 @@
-<p>Each program should count the prime numbers from 2 to M, using the same na&#239ve Sieve of Eratosthenes algorithm:</p>
+<p>Each program should count the prime numbers from 2 to M, using the same na&#239;ve Sieve of Eratosthenes algorithm:</p>
 <ul>
   <li>create an array of M <strong>bit flags</strong></li>
   <li>for each index number
      <ul>
-     <li>if the flag value at that index is true</li>
-     <ul>
-     <li>set all the flag values at multiples of that index false</li>
-     <li>increment the count</li>
-     </ul>
+     <li>if the flag value at that index is true
+      <ul>
+      <li>set all the flag values at multiples of that index false</li>
+      <li>increment the count</li>
+      </ul>
      </li>
      </ul>
    </li>
@@ -21,4 +21,4 @@ Primes up to    10000    1229
 </pre>
 <br />
 
-<p>A variation on the <a href="benchmark.php?test=nsieve&lang=all&sort=<?=$Sort;?>">nsieve benchmark</a>.</p>
+<p>A variation on the <a href="benchmark.php?test=nsieve&amp;lang=all&amp;sort=<?=$Sort;?>">nsieve benchmark</a>.</p>

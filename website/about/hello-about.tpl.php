@@ -1,7 +1,7 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=hello&lang=perl&sort=<?=$Sort;?>">Perl program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=hello&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
 
-<p>Each program should print &quot;hello world&quot and exit.</p>
+<p>Each program should print &quot;hello world&quot; and exit.</p>
 
 <p>Correct output N = 1 is:</p>
 <pre>
