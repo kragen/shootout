@@ -1,4 +1,4 @@
-%%% $Id: sumcol.oz,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+%%% $Id: sumcol.oz,v 1.2 2004-05-25 03:18:16 bfulgham Exp $
 %%% http://dada.perl.it/shootout/
 functor
 import 
@@ -39,3 +39,4 @@ in
         {System.printInfo SUM}
     end
     {Application.exit 0}
+end
