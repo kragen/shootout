@@ -1,11 +1,13 @@
-# $Id: Makefile,v 1.13 2005-02-19 17:05:38 bfulgham Exp $
+# $Id: Makefile,v 1.14 2005-02-22 02:53:59 bfulgham Exp $
 
 include Make.header
 
 all: init versions
 	-(cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
+	-bin/build_data_files
 	-make recent craps codelinks
+	-cvs commit -m "Rerun of benchmarks."
 
 test plot show loc:
 	-(cd bench ; make $@)
