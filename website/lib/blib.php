@@ -687,7 +687,7 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
 
 function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
-   echo '<select name="test">', "\n";
+   echo '<select name="test"><p>', "\n";
    echo '<option value="all">all ', TESTS_PHRASE, '</option>', "\n";
 
    foreach($Tests as $Row){
@@ -718,7 +718,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
    echo '</select>', "\n";
    echo '<input type="submit" value="Show" />', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";
-   echo '</form>', "\n";
+   echo '</p></form>', "\n";
 }
 
 
