@@ -111,13 +111,15 @@ end
 
 
 local function offsetMomentum(b)
-   local px, py = 0, 0
+   local px, py, pz = 0, 0, 0
    for i = 1,table.getn(b) do
       px = px + (b[i].vx * b[i].mass)
       py = py + (b[i].vy * b[i].mass)
+      pz = pz + (b[i].vz * b[i].mass)
    end
    b[1].vx = -px / SOLAR_MASS
    b[1].vy = -py / SOLAR_MASS
+   b[1].vz = -pz / SOLAR_MASS
 end
 
 

@@ -1,14 +1,27 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   contributed by Mark C. Williams and Isaac Gouy
+*/
+
+import java.text.*;
+
 public final class nbody {
-	public static void main(String[] args) {
+	public static void main(String[] args) {	
+	   NumberFormat nf = NumberFormat.getInstance();
+	   nf.setMaximumFractionDigits(9);
+	   nf.setMinimumFractionDigits(9);
+	   nf.setGroupingUsed(false);		
+	
 	   int n = Integer.parseInt(args[0]);
 	   
 		NBodySystem bodies = new NBodySystem();
 		
-		System.out.println( bodies.energy() );
+		System.out.println(nf.format(bodies.energy()) );
 		for (int i=0; i<n; ++i) {
 		   bodies.advance(0.01);
 		}
-		System.out.println( bodies.energy() );	
+		System.out.println(nf.format(bodies.energy()) );	
 	}
 }
 
@@ -26,12 +39,14 @@ final class NBodySystem {
 		   };
 		
 		double px = 0.0;
-		double py = 0.0;			
+		double py = 0.0;	
+		double pz = 0.0;				
 		for(int i=0; i < bodies.length; ++i) {			   		         					
 			px += bodies[i].vx * bodies[i].mass;
 			py += bodies[i].vy * bodies[i].mass;		
+			pz += bodies[i].vz * bodies[i].mass;				
 		}		
-		bodies[0].offsetMomentum(px,py);
+		bodies[0].offsetMomentum(px,py,pz);
 	}
 						   	
 	public void advance(double dt) {
@@ -150,10 +165,11 @@ final class Body {
 	   return p;
 	}			
 	
-	Body offsetMomentum(double px, double py){
+	Body offsetMomentum(double px, double py, double pz){
 	   vx = -px / SOLAR_MASS;
 	   vy = -py / SOLAR_MASS;
-	   return this;	   
+	   vz = -pz / SOLAR_MASS;	   
+	   return this;   
 	}			           			
 }
 
