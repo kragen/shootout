@@ -1,5 +1,5 @@
 (* -*- mode: sml -*-
- * $Id: reversefile.smlnj,v 1.1 2004-05-19 18:12:19 bfulgham Exp $
+ * $Id: reversefile.smlnj,v 1.2 2004-05-25 07:37:29 bfulgham Exp $
  * http://www.bagley.org/~doug/shootout/
  * from Tom 7
  *)
@@ -22,7 +22,7 @@ val buff = Unsafe.Word8Array.create rdbufsize
 fun out END = ()
   | out (MORE (ir as ref i, a, next)) =
   let in
-    Posix.IO.writeArr (stdout, {buf=a, i=i, sz=NONE});
+    Posix.IO.writeArr (stdout, Word8ArraySlice.slice(a, i, NONE));
     out next
   end
 
@@ -32,11 +32,8 @@ fun rd (start, len, count, b) =
        Copy from start to the end of the array into
        buff, then return the starting index into buff. *)
     let in
-      Word8Array.copy {di=0,
-                       dst=buff,
-                       src=buff,
-                       len=SOME len,
-                       si=start};
+      Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(len)),
+                            dst=buff, di=0};
       (b, len)
     end
   else
@@ -46,11 +43,8 @@ fun rd (start, len, count, b) =
         if i > len then
             let in
               (* enough room *)
-              Word8Array.copy {di=i-len - 1,
-                               dst=a,
-                               len=SOME(len + 1),
-                               si=start,
-                               src=buff};
+              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(len+1)),
+	                            dst=a, di=(i - len - 1)};
               ir := i - (len + 1);
               
               rd(start + len + 1, 0, count, b)
@@ -62,18 +56,12 @@ fun rd (start, len, count, b) =
               val l = (len + 1) - i
             in
               (* put the tail in whatever room is left *)
-              Word8Array.copy {di=0,
-                               dst=a,
-                               len=SOME i,
-                               si=(start + len + 1) - i,
-                               src=buff};
+              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, (start + len + 1) - i, SOME(i)),
+	                            dst=a, di=0 };
               
               (* put the head in a new buffer *)
-              Word8Array.copy {di=bufsize - l,
-                               dst=na,
-                               len=SOME l,
-                               si=start,
-                               src=buff};
+              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(l)),
+	                            dst=na, di=bufsize - l };
               ir := 0;
               rd(start + len + 1, 0, count, MORE(ref (bufsize - l), na, b))
             end
@@ -81,8 +69,7 @@ fun rd (start, len, count, b) =
 	
 fun loop (b, s) =
   let 
-    val count = Posix.IO.readArr (stdin, 
-                                  {buf=buff, i=s, sz=SOME (rdbufsize-s)})
+    val count = Posix.IO.readArr (stdin, Word8ArraySlice.slice(buff, s, SOME(rdbufsize-s))) 
     val (bb, bs) = rd (0, s, count + s, b)
   in
     case count of
