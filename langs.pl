@@ -286,8 +286,8 @@
        Type => 'interpreted',
        Ext  => 'haskell',
        Verfun => sub {
-	   chomp(my $ver = `$ENV{HUGS} -h 2>&1`);
-	   $ver =~ /(Version:.*\d\d\d\d)\n/;
+	   chomp(my $ver = `$ENV{HUGSI} -h 2>&1`);
+	   $ver =~ /Version:\s+(.*\d\d\d\d).*\n/;
 	   return($1);
        },
      },

@@ -188,7 +188,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.haskell.org/',
       'Down'    => 'http://www.haskell.org/hugs/',
       'Type'    => 'interpreted',
-      'Version' => ''
+      'Version' => 'November 2003'
     ),
 
     'curry' => array(
