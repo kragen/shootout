@@ -5,10 +5,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" >
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="robots" content="all" />
-<meta name="revisit" content="5 days" />
-<meta name="keywords" content="fast programming language performance benchmark shootout" />
-<meta name="description" content="Programming languages compared on more than 25 performance benchmarks, for more than 50 languages." />
+<?=$Robots;?>
+
+<!-- Benchmarking programming languages -->
+<meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
+<meta name="description" content="Benchmarking programming languages on more than 25 benchmark programs." />
+
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=CORE_SITE;?>benchmark.css" />

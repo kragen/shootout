@@ -9,8 +9,9 @@
 <meta name="robots" content="all" />
 <meta name="revisit" content="10 days" />
 <meta name="robots" content="noarchive" />
-<meta name="keywords" content="fast programming language performance benchmark shootout" />
-<meta name="description" content="Programming languages compared on more than 25 performance benchmarks, for more than 50 languages." />
+
+<meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
+<meta name="description" content="Benchmarking programming languages on more than 25 benchmark programs." />
 
 
 <title><?=$PageTitle;?></title>

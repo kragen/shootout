@@ -20,3 +20,4 @@ score for that benchmark.  If a language does not have an entry for a test its s
 <li>Add up all the scores for each language for each benchmark, and put them on this nice web page.</li>
 <li>And the result is <a href="http://en.wikipedia.org/wiki/Craps" title="Craps definition"><b>CRAPS!&#153;</b></a></li>
 </ul>
+

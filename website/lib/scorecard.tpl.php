@@ -14,10 +14,11 @@
 
 <table class="div">
 <tr><td colspan="2">
-<h4 class="rev">&nbsp;Fast, Faster, Fastest languages</h4>
+<h4 class="rev">&nbsp;Fast Faster Fastest programming languages</h4>
 </td></tr>
 <tr><td colspan="2">
 <p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
+<p>And remember, <b>"benchmarking without analysis is bogus"</b>!</p>
 </td></tr> 
 
 

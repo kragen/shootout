@@ -47,7 +47,7 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard
    
-      $Title = 'Fast, Faster, Fastest languages';
+      $Title = 'Fast Faster Fastest programming languages';
       $TemplateName = 'scorecard.tpl.php';
 
       $About = & new Template(ABOUT_PATH);

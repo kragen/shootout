@@ -31,7 +31,7 @@
 <p><a class="arevSandbox" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >The Sandbox</a> includes programming languages that only have a few completed benchmark programs, some really obscure programming languages; and some new benchmarks we're developing.
 </p>
 
-<p><a class="arevCore" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Core Computer Language Shootout</a> includes a smaller selection of programming languages. 
+<p><a class="arevCore" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Computer Language Shootout</a> includes a smaller selection of programming languages. 
 </p>
 
 <tr class="b"><td>Where can I download the <b>data</b> from?</td></tr>
@@ -58,8 +58,13 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 
 <tr class="b"><td>Where can I find out more?</td></tr>
 
-<tr><td><p>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org"><b>Alioth&nbsp;Debian.org</b></a>.
+<tr><td><p>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
 </p></td></tr>
+
+<tr><td><p>You could learn about <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><b>benchmarking</b></a>.
+</p></td></tr>
+
+
 
 </table>
 

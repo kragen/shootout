@@ -36,7 +36,7 @@ $Body = & new Template(LIB_PATH);
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Sort', $S);
-$Body->set('AboutName', 'The Computer Language Shootout');
+$Body->set('AboutName', 'The Language Shootout Benchmarks');
 $Body->set('Intro', HtmlFragment( ABOUT_PATH.SITE_NAME.SEPARATOR.'intro.about' ));
 
 $About = & new Template(ABOUT_PATH);
@@ -45,5 +45,14 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
+if (SITE_NAME=='sandbox'){
+   $metaRobots = '<meta name="robots" content="noindex,nofollow" />';
+} else {
+   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="5 days" />';
+}
+
+$Page->set('Robots', $metaRobots);
+
 echo $Page->fetch('homepage.tpl.php');
+
 ?>
