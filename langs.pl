@@ -383,6 +383,20 @@
        },
      },
 
+     objc =>
+     { Lang => 'Objective C',
+       Home => 'http://gcc.gnu.org/',
+       Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
+       Type => 'native compiled',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{GCC} --version`);
+	   $ver =~ s/Copyright.*//s;
+	   $ver =~ s/This is free.*//s;
+	   return($ver);
+       },
+     },
+
      ocaml =>
      { Lang => 'Ocaml',
        Home => 'http://www.ocaml.org/',
@@ -691,6 +705,7 @@
      'Mercury'     => 'prolog',
      'Nice'        => 'c',
      'Oberon-2'    => 'pascal',
+     'Objective C' => 'c',
      'Ocaml'       => 'ml',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',

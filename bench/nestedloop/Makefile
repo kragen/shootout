@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2004-08-12 16:27:15 bfulgham Exp $
+# $Id: Makefile,v 1.12 2004-08-19 07:27:31 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nestedloop
@@ -13,6 +13,7 @@ OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore nestedloop.bash \
+	  --ignore nestedloop.nice \
 	  --range 4,8,12,16
 
 include ../../Make.footer

@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => 'SBCL 0.8.13.62'
+      'Version' => 'SBCL 0.8.13.68'
     ),
 
     'gwydion' => array(
@@ -271,6 +271,15 @@ elastiC version: 0.0.36 (dec: 36)
 '
     ),
 
+    'objc' => array(
+      'Lang'    => 'Objective C',
+      'Home'    => 'http://gcc.gnu.org/',
+      'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
+      'Type'    => 'native compiled',
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-9)
+'
+    ),
+
     'ocaml' => array(
       'Lang'    => 'Ocaml',
       'Home'    => 'http://www.ocaml.org/',
@@ -341,7 +350,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ruby-lang.org/',
       'Down'    => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
       'Type'    => 'interpreted',
-      'Version' => 'ruby 1.8.2 (2004-07-29) [i386-linux]'
+      'Version' => 'ruby 1.8.2 (2004-08-15) [i386-linux]'
     ),
 
     'slang' => array(

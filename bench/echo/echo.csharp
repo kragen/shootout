@@ -1,0 +1,148 @@
+/* The Great Computer Language Shootout 
+   Based on the Synchronous Socket Examples in MSDN library.
+   contributed by Isaac Gouy */
+
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Diagnostics;
+
+class Echo
+{
+   static void Main(string[] args)
+   {
+      int n = 1;
+      if (args.Length > 1){
+         // we are the client process
+         n = Int32.Parse(args[1]);
+         EchoClient.Start(n);
+      }
+      else {
+         // we are the listener process
+         if (args.Length > 0) n = Int32.Parse(args[0]);
+         // start the listener
+         Thread serverThread = new Thread(new ThreadStart( EchoListener.Start ));
+         serverThread.Start();
+         // create a client process
+         Process p = new Process();
+         ProcessStartInfo i = p.StartInfo;
+         i.FileName = "echo.exe";
+         i.Arguments = "echoclient " + n;
+         i.UseShellExecute = false;
+         p.Start();
+      }
+   }
+}
+
+
+public class EchoListener 
+{
+   public static void Start() 
+   {
+      // Establish the local endpoint for the  socket.
+      IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+      IPAddress ipAddress = ipHostInfo.AddressList[0];
+      IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+
+      // Create a TCP/IP socket.
+      Socket listener = new Socket(AddressFamily.InterNetwork,
+         SocketType.Stream, ProtocolType.Tcp );
+
+      // Bind the socket to the local endpoint and 
+      // listen for incoming connections.
+      try 
+      {
+         listener.Bind(localEndPoint);
+         listener.Listen(10);
+
+         // Program is suspended while waiting for an incoming connection.
+         Socket handler = listener.Accept();
+
+         byte[] buffer = new byte[32];
+         int count = 0;
+         // An incoming connection needs to be processed.
+         int bytesRec;
+         while (true) {
+            bytesRec = handler.Receive(buffer);
+            if (bytesRec > 0) {
+               handler.Send(buffer, 0, bytesRec, SocketFlags.None);
+               count += bytesRec;
+            }
+            else break; // client released socket
+         }
+         Console.WriteLine("server processed {0} bytes", count);
+
+         handler.Shutdown(SocketShutdown.Both);
+         handler.Close();
+      } 
+      catch (Exception e){
+         Console.WriteLine(e.ToString());
+      }
+   }
+}
+
+
+public class EchoClient 
+{
+   private const string data = "Hello there sailor\n";
+
+   public static void Start(int n) 
+   {
+      // Data buffer for incoming data.
+      byte[] bytes = new byte[32];
+
+      // Connect to localhost.
+      try 
+      {
+         IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+         IPAddress ipAddress = ipHostInfo.AddressList[0];
+         IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+
+         // Create a TCP/IP  socket.
+         Socket sender = new Socket(AddressFamily.InterNetwork, 
+            SocketType.Stream, ProtocolType.Tcp );
+
+         // Connect the socket to the remote endpoint. Catch any errors.
+         try 
+         {
+            sender.Connect(remoteEP);
+            // Encode the data string into a byte array.
+            byte[] msg = Encoding.ASCII.GetBytes(data);
+            int bytesSent, bytesRec;
+            bool responseOK;
+            while (n-- > 0){
+               // Send the data through the  socket.
+               bytesSent = sender.Send(msg);
+
+               // Receive the response
+               bytesRec = sender.Receive(bytes);
+
+               // Check the response
+               responseOK = msg.Length == bytesRec;
+               if (responseOK)
+                  for (int i=0; i < bytesRec; i++)
+                     if ( !(responseOK = msg[i] == bytes[i]) )
+                        break;
+               if (!responseOK) Console.WriteLine("Response doesn't match message.");
+            }
+            // Release the socket.
+            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
+         } 
+         catch (ArgumentNullException ane){
+            Console.WriteLine("ArgumentNullException : {0}",ane.ToString());
+         } 
+         catch (SocketException se){
+            Console.WriteLine("SocketException : {0}",se.ToString());
+         } 
+         catch (Exception e){
+            Console.WriteLine("Unexpected exception : {0}", e.ToString());
+         }
+      } 
+      catch (Exception e){
+         Console.WriteLine( e.ToString());
+      }
+   }
+}
