@@ -1,59 +1,53 @@
 %%% -*- mode: erlang -*-
-%%% $Id: wordfreq.erlang,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
-%%% http://www.bagley.org/~doug/shootout/
-
-%% Use ETS tables (Erlang's associative store).
+%%% $Id: wordfreq.erlang,v 1.3 2004-08-18 06:00:32 bfulgham Exp $
+%%% http://shootout.alioth.debian.org/
+%%%
+%%% Contributed by Bengt Kleberg (Erlang Guru!)
 
 -module(wordfreq).
 -export([main/0, main/1]).
 
 %% ignore program argument
 main() -> main(['1']).
-main(Args) ->
-    OutL = fun ({Word, Count}) ->
-		io:format("~7w ~s~n", [Count, Word])
-	   end,
-    lists:foreach(OutL, sortedfreqs()),
-    halt(0).
+main(_Args) ->
+    Table = ets:new(freqtab, [set]),
+    {ok, Split_regexp} = regexp:parse("[^A-Za-z]*"),
+    insert_input(io:get_line(''), Split_regexp, Table),
+    List = sort( Table ),
+    print( List ),
+    halt().
 
+insert_input(eof, _Split_regexp, _Table) -> ok;
+insert_input(Line, Split_regexp, Table) ->
+    {ok, Words} = regexp:split(Line, Split_regexp),
+    Fun = fun ("") -> ok;   % ignore empty words
+              (Word) ->
+	          Lower = httpd_util:to_lower(Word),
+		  update_count(Table, Lower)
+	  end,
+    lists:foreach(Fun, Words),
+    insert_input(io:get_line(''), Split_regexp, Table).
 
-% sort the results, descending
-sortedfreqs() -> 
-    Port = open_port({fd, 0, 1}, [eof, {line, 512}]),
-    WordCountList = count_words_from_stream(ets:new(freqtab, [ordered_set]), Port),
-    lists:reverse(lists:keysort(2, WordCountList)).
+print( List ) ->
+    Fun = fun ({Word, Count}) ->
+               io:format("~7w ~s~n", [Count, Word])
+	  end,
+    lists:foreach(Fun, List).
 
+sort( Table ) ->
+    Fun = fun ({Word1, Count1}, {_Word2, Count2}) when (Count1 > Count2) ->
+                  true;
+              ({Word1, Count}, {Word2, Count}) when (Word1 > Word2) ->
+                  true;
+              (_A, _B) ->
+                  false
+           end,
+    lists:sort(Fun, ets:tab2list(Table)).
 
-count_words_from_stream(Table, Port) ->
-    receive
-	{Port, eof} ->
-	    ets:delete(Table, ''),
-	    ets:tab2list(Table);
-	{Port, {_, {_, Line}}} ->
-	    count_words([], Line, Table),
-	    count_words_from_stream(Table, Port)
+update_count(Table, Word) ->
+    case (catch ets:update_counter(Table, Word, 1)) of
+        {'EXIT', {badarg, _}} ->
+	    true = ets:insert(Table, {Word, 1});
+	_Integer ->
+	    ok
     end.
-
-count_word(Word, Table) ->
-    WordAtom = list_to_atom(Word),
-    case (catch ets:update_counter(Table, WordAtom, 1)) of
-	{'EXIT', {badarg, _}} ->
-	    ets:insert(Table, {WordAtom, 1});
-	_ ->
-	    true
-    end.
-
-% count_words(Word_Accumulator, Line_of_Chars, Table)
-count_words([], [], Table) -> true;
-count_words(Word, [], Table) ->
-    count_word(Word, Table);
-count_words(Word, [H|T], Table) when H >= $a, H=< $z ->
-    NewWord = lists:append(Word, [H]),
-    count_words(NewWord, T, Table);
-count_words(Word, [H|T], Table) when H >= $A, H=< $Z ->
-    NewWord = lists:append(Word, [(H - $A) + $a]),
-    count_words(NewWord, T, Table);
-% we hit a non-word character so count previous word and continue
-count_words(Word, [H|T], Table) ->
-    count_word(Word, Table),
-    count_words([], T, Table).

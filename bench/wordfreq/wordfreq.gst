@@ -28,5 +28,5 @@ wordCounts := Bag new.
 wordCounts sortedByValueAndKey do: [:each| | number |
    number := each value printString.
    (7 - number size) timesRepeat: [stdout nextPut: $ ]. 
-   stdout nextPutAll: number; tab; nextPutAll: each key; nl.
+   stdout nextPutAll: number; nextPutAll: ' '; nextPutAll: each key; nl.
 ] !
