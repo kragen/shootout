@@ -6,13 +6,13 @@
   <link REL="stylesheet" TYPE="text/css" HREF="/css/tigris.css" />
   <link REL="stylesheet" TYPE="text/css" HREF="/css/inst.css" />
 </head>
-<body class="composite">
-<div id="banner">
-  <table width="100%">
-    <tr>
-      <td><h2>The Great Computer Language Shootout</h2></td>
-      <td align="right"><a href="index.php">Back to the Language Shootout</a><br></td>
-    </tr>
-  </table>
-</div>
+<body onload="focus()" marginwidth="0" marginheight="0" class="composite">
+  <div id="banner">
+    <table width="100%">
+      <tr>
+        <td><h2>The Great Computer Language Shootout</h2></td>
+        <td align="right"><a href="index.php">Back to the Language Shootout</a><br></td>
+      </tr>
+    </table>
+  </div>
 
