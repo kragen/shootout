@@ -42,11 +42,14 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 
 <tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
 <tr><td>
+
 <p>Read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></p>
-<p>
-Start from the bottom of the
+
+<p><strong>Follow these instructions!</strong> All of them!</p>
+
+<p>Start from the bottom of the
    <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New">
-   <strong>Contribute Programs Submit-New</strong></a>  form and work your way up as follows:
+   <strong>Contribute Programs Submit-New</strong></a> form and work your way up as follows:
 <ol>
 <li>Check to Upload & Attach File: program source-code</li>
 <li>Browse to the program source-code file</li>
