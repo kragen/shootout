@@ -10,6 +10,7 @@ define('BLIB', '../../lib/blib.php');
 
 define('DATA_PATH', '../../data/');
 define('ABOUT_PATH', '../../about/');
+define('ABOUT_PROGRAMS_PATH', '../../about/programs/');
 define('CODE_PATH', '../../code/');
 define('LOG_PATH', '../../code/');
 define('MISC_PATH', '../../misc/');

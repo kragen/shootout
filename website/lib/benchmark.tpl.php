@@ -12,8 +12,14 @@ $TestTag = $Row[TEST_TAG];
 
 list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort);
 
-if (sizeof($Accepted)>0){ $P = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; } 
-else { $P = ''; }
+if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; } 
+else { $P1 = ''; }
+if (sizeof($Accepted)>1){ $P2 = $Accepted[1][DATA_LANG].'-'.$Accepted[1][DATA_ID]; } 
+else { $P2 = ''; }
+if (sizeof($Accepted)>2){ $P3 = $Accepted[2][DATA_LANG].'-'.$Accepted[2][DATA_ID]; } 
+else { $P3 = ''; }
+if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID]; } 
+else { $P4 = ''; }
 
 ?>
 </div>
@@ -26,7 +32,7 @@ else { $P = ''; }
 <h4 class="rev">&nbsp;<?=$TestName;?> benchmark <?=DASH.SortName($Sort);?></h4>
 <p>&nbsp;<?=$TestTag;?>
 &nbsp;
-<a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P;?>&p2=<?=$P;?>&p3=<?=$P;?>&p4=<?=$P;?>&sort=<?=$Sort;?>" 
+<a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
 title="Choose programs for side-by-side comparison">Side-by-side</a>
 
 </p>

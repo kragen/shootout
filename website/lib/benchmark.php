@@ -47,6 +47,8 @@ if ($T=='all'){
    
       $Title = 'The Scorecard';
       $TemplateName = 'scorecard.tpl.php';
+
+      $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = 'scorecard-about.tpl.php'; 
 
       $Weights = $HTTP_GET_VARS;
@@ -60,6 +62,8 @@ if ($T=='all'){
       $LangName = $Langs[$L][LANG_FULL];    
       $Title = $LangName.' rankings'; 
       $TemplateName = 'ranking.tpl.php';
+
+      $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
@@ -71,6 +75,8 @@ if ($T=='all'){
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 
       $TemplateName = 'benchmark.tpl.php'; 
+
+      $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php'; 
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
@@ -89,8 +95,9 @@ if ($T=='all'){
       $Id = '';
       if ($I > 0){ $Id = SEPARATOR.$I; } 
             
+      $About = & new Template(ABOUT_PROGRAMS_PATH);
       $AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php'; 
-      if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
+      if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
       $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, DATA_TEST, DATA_LANG) );      
       $Body->set('Code', HtmlFragment( CODE_PATH.$T.SEPARATOR.$L.$Id.'.code' ));    
@@ -113,8 +120,6 @@ $Body->set('Langs', $Langs);
 $Body->set('SelectedLang', $L);
 $Body->set('Sort', $S);
 
-
-$About = & new Template(ABOUT_PATH);
 $About->set('SelectedTest', $T);
 $About->set('SelectedLang', $L);
 $About->set('Sort', $S);

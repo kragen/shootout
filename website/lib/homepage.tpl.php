@@ -8,7 +8,7 @@
 <meta name="robots" content="all" />
 <meta name="revisit" content="10 days" />
 <meta name="keywords" content="compare performance ranking computer program language benchmark shootout " />
-<meta name="description" content="Compare the performance of 50 computer languages on each of 25 benchmark programs." />
+<meta name="description" content="Compare the performance of computer programming languages on each of 25 benchmark programs." />
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=CORE_SITE;?>benchmark.css" />

@@ -25,10 +25,10 @@
 <p>You can look at our other Shootout websites - </p>
 
 
-<p><a class="arevGreat" href="<?=GREAT_SITE;?>index.php?sort=<?=$Sort;?>" >The Great Computer Language Shootout</a> includes all the programming language implementations that have more than a few completed benchmark programs.
+<p><a class="arevGreat" href="<?=GREAT_SITE;?>index.php?sort=<?=$Sort;?>" >The Great Computer Language Shootout</a> includes programming language implementations that have more than a few completed benchmark programs.
 </p>
 
-<p><a class="arevSandbox" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >The Sandbox</a> includes programming languages that only have a few completed benchmark programs; and some new benchmarks we're developing.
+<p><a class="arevSandbox" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >The Sandbox</a> includes programming languages that only have a few completed benchmark programs, some really obscure programming languages; and some new benchmarks we're developing.
 </p>
 
 <p><a class="arevCore" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Core Computer Language Shootout</a> includes a smaller selection of programming languages. 
@@ -195,12 +195,6 @@ We reserve the right to format the code entries as we see fit, whatever the line
 
 
 
-<tr class="b"><td>Why don't you include Mono C#?</td></tr>
-
-<tr><td><p>Mono has a buglet which makes the <a href="http://lists.ximian.com/archives/public/mono-devel-list/2004-September/007766.html" title="An explanation on the Mono developers mailing-list">CPU times unreliable</a>.</p></td></tr>
-
-
-
 <tr class="b"><td>Why don't you include my favourite language?</td></tr>
 
 <tr><td><p>Maybe we will when you write 15 of the benchmark programs in your favourite language, and contribute them to "The Great Computer Language Shootout" :-)</p></td></tr>
@@ -279,7 +273,7 @@ fixes, you will soon understand this requirement.</li>
 
 <tr class="b"><td>Who started "The Great Computer Language Shootout"?</td></tr>
 
-<tr><td><p>Doug Bagley created "The Great Computer Language Shootout"</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a></p><p>Brent Fulgham revived "The Great Computer Language Shootout" here on <a href="http://alioth.debian.org/projects/shootout" title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a></p></td></tr>
+<tr><td><p>Doug Bagley created "The Great Computer Language Shootout", and it was active until 2001.</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p><p>Brent Fulgham revived "The Great Computer Language Shootout" here on <a href="http://alioth.debian.org/projects/shootout" title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a> in 2004.</p></td></tr>
 
 
 <tr class="b"><td>Who has contributed?</td></tr>
