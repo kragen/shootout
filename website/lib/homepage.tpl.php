@@ -11,7 +11,10 @@
 <meta name="description" content="Compare the performance of 50 computer languages on each of 25 benchmark programs." />
 
 <title><?=$PageTitle;?></title>
-<link rel="stylesheet" type="text/css" href="benchmark.css" />
+<link rel="stylesheet" type="text/css" href="<?=MAIN_SITE;?>benchmark.css" />
+<style type="text/css" media="all">
+   .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
+</style>
 </head>
 
 
@@ -25,6 +28,6 @@
 
 
 <form><input type="hidden" name="sort" value="<?=$Sort;?>" /></form>
-<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <b>Hosted</b>&nbsp;by&nbsp;<a href="http://alioth.debian.org/">Alioth&nbsp;Debian.org</a></p></div>
+<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <b>Send</b>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230">suggestions&nbsp;and&nbsp;comments</a></p></div>
 </body>
 </html>

@@ -92,7 +92,7 @@ foreach($score as $k => $v){
 
    printf('<tr class="%s">',$RowClass); echo "\n";
 
-   printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="Check all the rankings for %s">%s</a></td>', 
+   printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="Check the %s rankings">%s</a></td>', 
       $k,$Sort,$Name,$HtmlName); echo "\n";
 
    printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";

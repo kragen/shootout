@@ -26,7 +26,7 @@ $P = $SelectedLang.'-'.$Id;
 title="Compare performance on the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
 <?=BAR;?>
 <a href="benchmark.php?test=all&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>"  
-title="Check all the rankings for <?=$LangName;?>" >
+title="Check the <?=$LangName;?> rankings" >
 <?=$LangName;?> rankings</a>
 <?=BAR;?>
 <a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P;?>&p2=<?=$P;?>&p3=<?=$P;?>&p4=<?=$P;?>&sort=<?=$Sort;?>"  

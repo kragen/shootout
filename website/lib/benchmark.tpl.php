@@ -4,6 +4,7 @@
 
 <div>
 <? 
+
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); 
 $Row = $Tests[$SelectedTest];
 $TestName = $Row[TEST_NAME];
@@ -146,45 +147,44 @@ uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
 
    $no_program = isset($No_Program_Langs[$k]);
-   if ($no_program){              
-      foreach($Rejected as $d){                   
-         if ($d[DATA_LANG]==$k){         
-            printf('<tr class="%s">',$RowClass); echo "\n";             
-            $Name = $v[LANG_FULL];
-            $HtmlName = $v[LANG_HTML];    
-            if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }             
-                      
-            $id = $d[DATA_ID];                      
-            $fullcpu = $d[DATA_FULLCPU];
-            $lines = $d[DATA_LINES];     
-                        
-            printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
-               $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
-
-            if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
-            if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-            printf('<td class="r">%s</td><td></td><td></td><td class="r">%d</td>', $message, $lines);   
-            
-            echo "</tr>\n";
-            if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }    
-            $no_program = FALSE;         
-         }  
-      }                            
-
-      if ($no_program){  
+   
+   foreach($Rejected as $d){                   
+      if ($d[DATA_LANG]==$k){         
          printf('<tr class="%s">',$RowClass); echo "\n";             
          $Name = $v[LANG_FULL];
-         $HtmlName = $v[LANG_HTML];            
-    
-         printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" title="No %s program has been written for the %s benchmark">%s</a></td>', 
-            $SelectedTest,$k,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+         $HtmlName = $v[LANG_HTML];    
+         if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }             
+                     
+         $id = $d[DATA_ID];                      
+         $fullcpu = $d[DATA_FULLCPU];
+         $lines = $d[DATA_LINES];     
+                     
+         printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
+            $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
-         echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';  
+         if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
+         if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
+         printf('<td class="r">%s</td><td></td><td></td><td class="r">%d</td>', $message, $lines);   
          
          echo "</tr>\n";
-         if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }          
-      }            
-   }
+         if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }    
+         $no_program = FALSE;         
+      }  
+   }    
+      
+   if ($no_program){  
+      printf('<tr class="%s">',$RowClass); echo "\n";             
+      $Name = $v[LANG_FULL];
+      $HtmlName = $v[LANG_HTML];            
+   
+      printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" title="No %s program has been written for the %s benchmark">%s</a></td>', 
+         $SelectedTest,$k,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+
+      echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';  
+      
+      echo "</tr>\n";
+      if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }          
+   }                                                      
 }
 ?>
 
@@ -214,12 +214,19 @@ if (sizeof($Special)>0){
       printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="Alternative %s implementation for the %s benchmark">%s</a></td>', 
          $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
-      if ($SelectedTest==STARTUP){
-         printf('<td class="r">&nbsp;</td><td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
-            $fullcpu, $kb, $lines); echo "\n";
-      } else {
-         printf('<td class="r">%0.2f</td><td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
-            $cpu, $fullcpu, $kb, $lines); echo "\n";
+      if ($fullcpu > PROGRAM_TIMEOUT){
+         if ($SelectedTest==STARTUP){
+            printf('<td class="r">&nbsp;</td><td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
+               $fullcpu, $kb, $lines); echo "\n";
+         } else {
+            printf('<td class="r">%0.2f</td><td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
+               $cpu, $fullcpu, $kb, $lines); echo "\n";
+         }
+      }
+      else {
+         if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
+         if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
+         printf('<td class="r">%s</td><td></td><td></td><td class="r">%d</td>', $message, $lines);         
       }
       echo "</tr>\n";
 

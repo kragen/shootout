@@ -338,9 +338,10 @@ function ScoreData($FileName,&$Tests,&$Langs,$HasHeading=TRUE){
          $lang = $row[DATA_LANG];
       
          if (isset( $data[$lang][$test])){         
-            // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU    
-                    
-            if ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU]){            
+            // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
+
+            if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
+                  ($row[DATA_FULLCPU] < $tests[$testId][DATA_FULLCPU])){                                 
                $data[$lang][$test] = $row;  
             }
          }
@@ -434,7 +435,8 @@ function RankData($FileName,&$Langs,$L,$HasHeading=TRUE){
             
                // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU
                
-               if ($row[DATA_FULLCPU] < $tests[$testId][DATA_FULLCPU]){            
+               if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
+                     ($row[DATA_FULLCPU] < $tests[$testId][DATA_FULLCPU])){          
                   $tests[$testId] = $row;  
                }
             }

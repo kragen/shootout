@@ -9,8 +9,11 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <table class="div" >
 <tr><td colspan="2">
-<p><b>Compare</b> the performance of <?=$LangsPhrase;?> on each of <?=$TestsPhrase;?>. 
-Check the <b>rankings</b> for your favourite programming language.</p>
+<p>
+<b>1&nbsp;Compare</b> the performance of <?=$LangsPhrase;?> on each of <?=$TestsPhrase;?>. 
+<b>2&nbsp;Check the rankings</b> for your favourite programming language.
+<b>3&nbsp;Create</b> your own combined rankings on The Scorecard.
+</p>
 </td></tr>
 
 <tr><td><h4 class="rev">&nbsp;A comparison of programming languages</h4></td></tr>
@@ -21,13 +24,15 @@ Check the <b>rankings</b> for your favourite programming language.</p>
 <table class="div" >
 <tr>
 <th class="a">
-<b><?=$TestsPhrase;?></b>
+<!-- <b><?=$TestsPhrase;?></b> -->
+<b>1&nbsp;Compare</b>
 <p class="thp">time, memory, lines</p>
 </th>
 
 <th class="c" colspan="2">
-<b><?=$LangsPhrase;?></b>
-<p class="thp">rankings for each benchmark</p>
+<!-- <b><?=$LangsPhrase;?></b>  -->
+<b>2&nbsp;Check the rankings</b>
+<p class="thp">rankings for each language</p>
 </th>
 </tr>
 
@@ -54,14 +59,26 @@ Check the <b>rankings</b> for your favourite programming language.</p>
       $LangTag = $Row[LANG_TAG];
       
       if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }
-      printf('<p class="c"><a title="Check all the rankings for %s"', $LangName);
+      printf('<p class="c"><a title="Check the %s rankings"', $LangName);
       printf('href="benchmark.php?test=all&lang=%s&sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
    }
 ?>
 </td></tr>
+
 </table>
 
+
+<!-- // SCORECARD /////////////////////////////////////////////////// -->
+
+<table class="div" >
+<tr><th class="a"><b>3&nbsp;Create</b> your own combined rankings on <b>The Scorecard</b></th></tr>
+
+<tr><td class="center"><p>
+<? MkScorecardMenuForm($Sort); ?>
+</p></td></tr>
+
+</table>
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 

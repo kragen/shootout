@@ -12,7 +12,11 @@
 <title><?=$PageTitle;?></title>
 <style type="text/css" media="all">
    @import "<?=MAIN_SITE;?>highlight.css";
-   @import "benchmark.css";
+   @import "<?=MAIN_SITE;?>benchmark.css";
+   .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
+   .arevMain { background-color: <?=REV_COLOR_MAIN;?>; }
+   .arevGreater { background-color: <?=REV_COLOR_GREATER;?>; }
+   .arevDev { background-color: <?=REV_COLOR_DEV;?>; }
 </style>
 </head>
 
@@ -25,6 +29,6 @@
 <?=$PageBody;?>
 
 <form><input type="hidden" name="sort" value="<?=$Sort;?>"/></form>
-<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <b>Hosted</b>&nbsp;by&nbsp;<a href="http://alioth.debian.org/">Alioth&nbsp;Debian.org</a></p></div>
+<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <b>Send</b>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230">suggestions&nbsp;and&nbsp;comments</a></p></div>
 </body>
 </html>

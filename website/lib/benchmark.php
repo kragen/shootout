@@ -10,7 +10,6 @@ require_once(LIB);
 
 // DATA ///////////////////////////////////////////
 
-
 $Tests = ReadUniqueArrays('test.csv');
 uasort($Tests, 'CompareTestName');
 
@@ -59,7 +58,7 @@ if ($T=='all'){
    } else {           // Ranking 
    
       $LangName = $Langs[$L][LANG_FULL];    
-      $Title = 'rankings '.$LangName; 
+      $Title = $LangName.' rankings'; 
       $TemplateName = 'ranking.tpl.php';
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
@@ -82,7 +81,7 @@ if ($T=='all'){
       $TestName = $Tests[$T][TEST_NAME];
       $LangName = $Langs[$L][LANG_FULL];       
       $TemplateName = 'program.tpl.php';
-      $Title = $TestName.' '.$LangName.IdName($I);
+      $Title = $TestName.' '.$LangName.IdName($I).' program';
       
       // NOTE Sometimes there's an alternative program for the benchmark test and language
       //      so we need to look for files with a particular Id, as-well-as test and language 

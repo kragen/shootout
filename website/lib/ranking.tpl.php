@@ -16,7 +16,7 @@ $LangTag = $Row[LANG_TAG];
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;rankings <?=$LangName;?></h4>
+<h4 class="rev">&nbsp;<?=$LangName;?> rankings </h4>
 <p>&nbsp;<?=$LangTag;?></p>
 </td></tr>
 

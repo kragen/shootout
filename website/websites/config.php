@@ -16,10 +16,16 @@ define('MISC_PATH', '../misc/');
 
 define('MAIN_SITE', './');
 define('DEV_SITE', './dev/');
+define('GREATER_SITE', './greater/');
 
 
 // CONSTANTS ///////////////////////////////////////////////////
 
+
+define('REV_COLOR', 'navy');         // background color for banner etc
+define('REV_COLOR_MAIN', 'navy');         
+define('REV_COLOR_GREATER', '#991900');         
+define('REV_COLOR_DEV', '#cc9900');        
 
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',26);          // show 26 rows of languages on the homepage

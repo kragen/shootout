@@ -12,24 +12,41 @@
 <tr><td><h3 class="rev">&nbsp;Where can I&#133;?</h3></td></tr>
 
 
-<tr class="b"><td>Where can I compare every language for every benchmark program?</td></tr>
-
-<tr><td>The Scorecard ranking lets you compare all 50 languages for all 25 benchmarks. Buyer beware!</p><p>
-
-<? MkScorecardMenuForm($Sort); ?>
-
-</td></tr>
-
-
 <tr class="b"><td>Where can I send <b>suggestions</b> and comments and programs?</td></tr>
 
-<tr><td>You can <a href="http://alioth.debian.org/sendmessage.php?touser=1230">send suggestions and comments</a>, or you can <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list">post email directly to the mailing list</a>.</td></tr>
+<tr><td>You can <a href="http://alioth.debian.org/sendmessage.php?touser=1230">send suggestions and comments</a>, or you can <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list">post email directly to the <b>mailing list</b></a>.</td></tr>
 
+
+
+<tr class="b"><td>Where can I see more languages?</td></tr>
+<tr><td>
+
+<p>For clarity, just one or two implementations of the same language are shown on:
+<ul>
+<li> <a class="arevMain" href="<?=MAIN_SITE;?>index.php?sort=<?=$Sort;?>" >The Great Computer Language Shootout</a>
+<p>Main language implementations.</p>
+</li>
+</ul>
+</p>
+
+
+<p>More languages and language implementations are shown on: 
+<ul>
+<li><a class="arevGreater" href="<?=GREATER_SITE;?>index.php?sort=<?=$Sort;?>" >The Greater Computer Language Shootout</a>
+<p>Languages with a decent number of completed benchmark programs.</p>
+</li>
+
+<li><a class="arevDev" href="<?=DEV_SITE;?>index.php?sort=<?=$Sort;?>" >The DEV Computer Language Shootout</a>
+<p>Languages which only have a few completed benchmark programs, and benchmarks that are still under development.</p>
+</li>
+
+</ul>
+</p>
 
 
 <tr class="b"><td>Where can I download the <b>data</b> from?</td></tr>
 
-<tr><td>You can download a <a href="miscfile.php?sort=<?=$Sort;?>&file=data&title=Download data">zip file of timings and memory use ~100KB</a>.</td></tr>
+<tr><td>You can <b>download</b> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data">zip file of timings and memory use ~100KB</a>.</td></tr>
 
 
 
@@ -44,6 +61,7 @@
 <tr><td>You can <b>download</b> all the program sources and builds scripts as a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download Tarball">
 compressed tarball ~1.5MB</a>. The current distribution is only suitable for the adventurous.
 </td></tr>
+
 
 
 </table>
@@ -159,7 +177,7 @@ We reserve the right to format the code entries as we see fit, whatever the line
 
 <tr class="b"><td>What OS are you using on the test machine?</td></tr>
 
-<tr><td>Linux - Debian version xxx</td></tr>
+<tr><td><p>Debian 'unstable', Kernel 2.6.8-1-k7</p></td></tr>
 
 
 </table>
@@ -264,7 +282,7 @@ fixes, you will soon understand this requirement.</li>
 
 <tr class="b"><td>Who started "The Great Computer Language Shootout"?</td></tr>
 
-<tr><td>Doug Bagley created <a href="http://www.bagley.org/~doug/shootout/">"The Great Computer Language Shootout"</a></p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/">"The Great Win32 Computer Language Shootout"</a></p><p>Brent Fulgham revived "The Great Computer Language Shootout" and here we are!</td></tr>
+<tr><td>Doug Bagley created "The Great Computer Language Shootout"</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/">"The Great Win32 Computer Language Shootout"</a></p><p>Brent Fulgham revived "The Great Computer Language Shootout" here on <a href="http://alioth.debian.org/projects/shootout">Alioth&nbsp;Debian.org</a></td></tr>
 
 
 <tr class="b"><td>Who has contributed?</td></tr>
