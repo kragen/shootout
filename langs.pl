@@ -154,6 +154,18 @@
        },
      },
 
+     curry =>
+     { Lang => 'Haskell',
+       Home => 'http://danae.uni-muenster.de/~lux/curry/',
+       Down => 'http://danae.uni-muenster.de/~lux/curry/download',
+       Type => 'native compiled',
+       Ext => 'haskell',
+       Verfun => sub {
+           chomp(my $ver = `$ENV{CURRY} -v 2>&1`);
+	   return ($ver);
+       },
+     },
+
      gwydion =>
      { Lang => 'Dylan',
        Home => 'http://www.gwydiondylan.org',
@@ -616,6 +628,17 @@
        },
      },
 
+     gst =>
+     { Lang => 'Smalltalk',
+       Home => 'http://www.gnu.org/software/smalltalk/smalltalk.html',
+       Type => 'bytecomped/interpreted',
+       Ext => 'rb',
+       Verfun => sub {
+           chomp(my($ver) = grep(/^GNU.*/i,`$ENV{GST} --version 2>&1`));
+	   return ($ver);
+       },
+     },
+
      tcl =>
      { Lang => 'Tcl',
        Home => 'http://tcl.tk/',
@@ -678,6 +701,7 @@
      'Lisp'        => 'lisp',
      'Ruby'        => 'shell',
      'S-Lang'      => 'c',
+     'Smalltalk'   => 'smalltalk',
      'SML'         => 'ml',
      'Tcl'         => 'shell',
      'Emacs Lisp'  => 'lisp',

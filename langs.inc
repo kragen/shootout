@@ -166,6 +166,14 @@ elastiC version: 0.0.36 (dec: 36)
       'Version' => 'The Glorious Glasgow Haskell Compilation System, version 6.2.1'
     ),
 
+    'curry' => array(
+      'Lang'    => 'Haskell',
+      'Home'    => 'http://danae.uni-muenster.de/~lux/curry/',
+      'Down'    => 'http://danae.uni-muenster.de/~lux/curry/download',
+      'Type'    => 'native compiled',
+      'Version' => 'cyc version 0.9.7 (built on Thu Jun 24 08:01:06 PDT 2004)'
+    ),
+
     'icon' => array(
       'Lang'    => 'Icon',
       'Home'    => 'http://www.cs.arizona.edu/icon/',
@@ -401,6 +409,14 @@ S-Lang Library Version: 1.4.9'
       'Down'    => 'http://download.plt-scheme.org/drscheme/',
       'Type'    => 'native compiled',
       'Version' => 'MzScheme compiler (mzc) version 207, '
+    ),
+
+    'gst' => array(
+      'Lang'    => 'Smalltalk',
+      'Home'    => 'http://www.gnu.org/software/smalltalk/smalltalk.html',
+      'Down'    => '',
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => 'GNU Smalltalk version 2.1.7'
     ),
 
     'tcl' => array(

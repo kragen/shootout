@@ -23,6 +23,7 @@
         <div><a href="../../lang/erlang/">erlang</a></div>
         <div><a href="../../lang/gforth/">gforth</a></div>
         <div><a href="../../lang/ghc/"><b><i>ghc</i></b></a></div>
+        <div><a href="../../lang/curry/"><b><i>curry</i></b></a></div>
         <div><a href="../../lang/icon/">icon</a></div>
         <div><a href="../../lang/gij/">gij</a></div>
         <div><a href="../../lang/gcj/"><b><i>gcj</i></b></a></div>
@@ -52,6 +53,7 @@
         <div><a href="../../lang/guile/">guile</a></div>
         <div><a href="../../lang/mzscheme/">mzscheme</a></div>
         <div><a href="../../lang/mzc/"><b><i>mzc</i></b></a></div>
+        <div><a href="../../lang/gst/">gst</a></div>
         <div><a href="../../lang/tcl/">tcl</a></div>
       </div>
     </div>
