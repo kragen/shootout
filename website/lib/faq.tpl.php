@@ -58,11 +58,18 @@
 
 <tr class="b"><td>Where can I download the program sources and build scripts?</td></tr>
 
+<tr><td>You can browse the CVS tree on <a href="http://alioth.debian.org/projects/shootout">Alioth&nbsp;Debian.org</a>.
+</td></tr>
+
 <tr><td>You can <b>download</b> all the program sources and builds scripts as a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download Tarball">
 compressed tarball ~1.5MB</a>. The current distribution is only suitable for the adventurous.
 </td></tr>
 
 
+<tr class="b"><td>Where can I find out more?</td></tr>
+
+<tr><td>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"><b>Alioth&nbsp;Debian.org</b></a>.
+</td></tr>
 
 </table>
 

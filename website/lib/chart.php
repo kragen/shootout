@@ -61,6 +61,9 @@ list($Accepted) = FilterAndSortData($Langs,$Data,$S);
       elseif (($v[DATA_MEMORY] > 0.0) && ($v[DATA_MEMORY] < $minmem)){ $minmem = $v[DATA_MEMORY]; }
    }
 
+if ($minsec < 0.01){ $minsec = 0.01; }
+if ($minmem < 100){ $minmem = 100; }
+
 
 $im = ImageCreate($w,$h);
 ImageColorAllocate($im,204,204,204);
