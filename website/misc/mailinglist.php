@@ -7,7 +7,7 @@
             suggestions, problems, new languages, unfair programs,&#133;
          </p>
          <p>
-            <b>Read the <a href="/pipermail/shootout-list/">shootout-list archives</a></b>.
+            <b>Read the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">shootout-list archives</a></b>.
          </p>
       </td>
    </tr>
@@ -108,7 +108,7 @@
    <tr><td colspan="3"><h4 class="rev">&nbsp;about&nbsp;shootout-list</h4></td></tr> 
    <tr>
       <td colspan="3">
-      <p>shootout-list is administered by <a href="mailto:bfulgham@debian.org">bfulgham@debian.org</a><br><a href="../admin/shootout-list">Shootout-list administrative interface</a> (requires authorization).</p>
+      <p>shootout-list is administered by <a href="mailto:bfulgham@debian.org">bfulgham@debian.org</a><br><a href="http://lists.alioth.debian.org/mailman/admin/shootout-list">Shootout-list administrative interface</a> (requires authorization).</p>
       </td>
    </tr>     
    <tr>
