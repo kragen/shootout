@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: make_craps,v 1.2 2004-05-25 03:50:52 bfulgham Exp $
+# $Id: make_craps,v 1.3 2004-06-22 08:08:32 bfulgham Exp $
 
 use strict;
 
@@ -24,6 +24,23 @@ sub listfiles ($$) {
     return(@files);
 }
 
+sub weighting {
+    my($SCALE) = 1.0;
+    my($n) = shift;
+    my($goal) = shift;
+    if (! defined $n) {
+        return 0;
+    }
+    if ($n == 0) {
+        return 0;
+    }
+    if ($goal == 0) {
+        return 0;
+    }
+
+    return 1 / (1 + $SCALE * log($n/$goal)/log(2));
+}
+
 sub score {
     my $test = shift;
     local *S;
@@ -36,10 +53,14 @@ sub score {
 	next if (/^\#/);
 	if (/^([a-z]\S+)\s+(\d+\.\d+)\s+(\d+)$/) {
 	    my($lang, $cpu, $mem) = ($1, $2, $3);
-	    $cpumin = $cpu if ((not defined $cpumin) or ($cpu < $cpumin));
-	    $cpumax = $cpu if ((not defined $cpumax) or ($cpu > $cpumax));
-	    $memmin = $mem if ((not defined $memmin) or ($mem < $memmin));
-	    $memmax = $mem if ((not defined $memmax) or ($mem > $memmax));
+	    if ($cpu != 0) {
+                $cpumin = $cpu if ((not defined $cpumin) or ($cpu < $cpumin));
+	        $cpumax = $cpu if ((not defined $cpumax) or ($cpu > $cpumax));
+	    }
+	    if ($mem != 0) {
+	        $memmin = $mem if ((not defined $memmin) or ($mem < $memmin));
+	        $memmax = $mem if ((not defined $memmax) or ($mem > $memmax));
+	    }
 	    $score{$lang}->{CPU} = $cpu;
 	    $score{$lang}->{MEM} = $mem;
 	} else {
@@ -57,9 +78,10 @@ sub score {
 	next if (/^\#/);
 	if (/^([a-z]\S+)\s+(\d+)$/) {
 	    my($lang, $loc) = ($1, $2);
-	    $locmin = $loc if ((not defined $locmin) or ($loc < $locmin));
+	    $locmin = $loc if ((not defined $locmin) or (($loc != 0) && ($loc < $locmin)));
 	    $locmax = $loc if ((not defined $locmax) or ($loc > $locmax));
 	    $score{$lang}->{LOC} = $loc;
+	    #print "score for $lang is $loc\n";
 	} else {
 	    warn "Bad data in $datafile: $_";
 	}
@@ -70,12 +92,11 @@ sub score {
     my $topmem = ($memmax + $memmin);
     my $toploc = ($locmax + $locmin);
     foreach my $key (%score) {
-	$score{$key}->{CPU} = (defined $score{$key}->{CPU}) ?
-	    10 * ($topcpu - $score{$key}->{CPU})/$topcpu : 0;
-	$score{$key}->{MEM} = (defined $score{$key}->{MEM} && $topmem) ?
-	    10 * ($topmem - $score{$key}->{MEM})/$topmem : 0;
-	$score{$key}->{LOC} = (defined $score{$key}->{LOC}) ?
-	    10 * ($toploc - $score{$key}->{LOC})/$toploc : 0;
+	$score{$key}->{CPU} = weighting($score{$key}->{CPU}, $cpumin);
+	#print "MEM weighting: $key -> $score{$key}->{MEM}, $memmin\n";
+	$score{$key}->{MEM} = weighting($score{$key}->{MEM}, $memmin);
+	#print "LOC weighting: $key -> $score{$key}->{LOC}, $locmin\n";
+	$score{$key}->{LOC} = weighting($score{$key}->{LOC}, $locmin);
     }
     return(\%score);
 }
