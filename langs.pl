@@ -259,6 +259,18 @@
        },
      },
 
+     nice =>
+     { Lang => 'Nice',
+       Home => 'http://nice.sourceforge.net/',
+       Down => 'http://nice.sourceforge.net/install.html',
+       Type => 'native compiled',
+       Verfun => sub {
+	   my $ver = `$ENV{NICEC} --version 2>&1`;
+	   $ver =~ /(Nice compiler.*)\n/;
+	   return($1);
+       },
+     },
+
      ocaml =>
      { Lang => 'Ocaml',
        Home => 'http://www.ocaml.org/',
