@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-06-18 09:01:05 dbr-guest Exp $
+# $Id: Makefile,v 1.3 2004-06-18 09:34:00 dbr-guest Exp $
 
 include Make.header
 
@@ -36,4 +36,5 @@ recent:
 links:
 	for j in `find bench -name '*.java'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.gcj; \
 	done

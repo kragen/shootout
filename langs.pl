@@ -69,6 +69,19 @@
        },
      },
 
+     gcj =>
+     { Lang => 'Java',
+       Home => 'http://gcc.gnu.org/java',
+       Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
+       Type => 'native compiled',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{GCJ} --version`);
+	   $ver =~ s/Copyright.*//s;
+	   $ver =~ s/This is free.*//s;
+	   return($ver);
+       },
+     },
+
      'g++' =>
      { Lang => 'C++',
        Home => 'http://gcc.gnu.org/',
