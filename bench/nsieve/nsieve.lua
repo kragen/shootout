@@ -10,7 +10,7 @@ function nsieve(m,isPrime)
    count = 0
 
    for i=2,m do
-      if flags[i] then
+      if isPrime[i] then
          for k=i+i, m, i do
             isPrime[k] = false
          end
@@ -21,17 +21,15 @@ function nsieve(m,isPrime)
 end
  
 
-n = tonumber(arg and arg[1]) or 1
+local n = tonumber(arg and arg[1]) or 1
 if n < 2 then n = 2 end
-flags = {}
+local flags = {}
 
-m = (2^n)*10000 
-print( string.format("Primes up to %8d %8d", m, nsieve(m,flags)) )
+local m = (2^n)*10000 
+print( string.format("Primes up to %8d%8d", m, nsieve(m,flags)) )
 
 m = (2^(n-1))*10000
-print( string.format("Primes up to %8d %8d", m, nsieve(m,flags)) )
+print( string.format("Primes up to %8d%8d", m, nsieve(m,flags)) )
 
 m = (2^(n-2))*10000 
-print( string.format("Primes up to %8d %8d", m, nsieve(m,flags)) )
-
--- vim: ts=4 ft=lua
+print( string.format("Primes up to %8d%8d", m, nsieve(m,flags)) )
