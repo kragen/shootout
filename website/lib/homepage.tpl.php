@@ -18,7 +18,7 @@
    .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
    .arevCore { background-color: <?=REV_COLOR_CORE;?>; }
    .arevGreat { background-color: <?=REV_COLOR_GREAT;?>; }
-   .arevSandbox { background-color: <?=REV_COLOR_SANDBOX;?>; }
+   .arevSandbox { background-color: <?=REV_COLOR_SANDBOX;?>; }      .arevOld { background-color: <?=REV_COLOR_OLD;?>; }   
 </style>
 </head>
 

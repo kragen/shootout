@@ -15,11 +15,5 @@ The conjecture is that this maximum count is approximated by n*log(n) when n goe
 <p>Correct output N = 8 is:
 <pre>Pfannkuchen(8) = 22
 </pre></p><br/>
-<p>Correct output N = 9 is:
-<pre>Pfannkuchen(9) = 30
-</pre></p><br/>
-<p>Correct output N = 10 is:
-<pre>Pfannkuchen(10) = 38
-</pre></p><br/>
 
 <p>The fannkuch benchmark is defined in <a href="http://www.apl.jhu.edu/~hall/text/Papers/Lisp-Benchmarking-and-Fannkuch.ps">Performing Lisp Analysis of the FANNKUCH Benchmark</a>, Kenneth R. Anderson and Duane Rettig (26KB postscript)</p>
