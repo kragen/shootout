@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-03-06 05:21:23 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-03-09 05:35:47 bfulgham Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -17,8 +17,8 @@ ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 500,1000,2000 \
+	  --range 10000,20000,30000 \
 	  --inputfile ../../website/desc/knucleotide-input.txt \
-	  --geninput
+	  --uniqueinput
 
 include ../../Make.footer
