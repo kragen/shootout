@@ -1,4 +1,4 @@
-# $Id: Makefile.mb,v 1.13 2004-06-16 04:38:24 bfulgham Exp $
+# $Id: Makefile.mb,v 1.14 2004-06-16 07:57:06 bfulgham Exp $
 include ../../../Make.header
 
 ############################################################
@@ -323,6 +323,34 @@ CMUCL_TRACE :=
 	cp $< $@/$(TEST).java
 	( cd $@ ; $(JAVAC) -classpath '.' $(TEST).java )
 	touch $@
+
+########################################
+# SBCL (Common Lisp)
+########################################
+# (Note: arg to compile-file for trace: ':trace-file t')
+SBCL_TRACE :=
+#SBCL_TRACE := :trace-file t
+%.sbcl_run: $(MB_SRCDIR)/%.sbcl $(SBCL_SRCS) $(SBCL)
+	@rm -f $@ ; \
+	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $@ ; \
+	COMPILE=$@; COMPILE=$${COMPILE%_run}_compile ; \
+	FILES="" ; \
+	for f in $(SBCL_SRCS) ; do cp $$f . ; FILES="$$FILES $${f##*/}" ; done ; \
+	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $$COMPILE ; \
+	for src in $$FILES ; do \
+	    echo "(compile-file \"$$src\" $(SBCL_TRACE)) (load \"$$src\" :verbose nil :print nil)" >> $$COMPILE ; \
+	    base=$${src%.*} ; \
+	    echo "(load \"$$base.fasl\" :verbose nil :print nil)" >> $@ ; \
+	done ; \
+	cp $< . ; MAIN=$< ; MAIN=$${MAIN##*/} ; \
+	(echo "(compile-file \"$$MAIN\" $(SBCL_TRACE))"; echo "(quit)") >> $$COMPILE ; \
+	MAIN=$${MAIN%.*} ; MAIN="$${MAIN}.fasl" ; echo "(load \"$$MAIN\" :verbose nil :print nil)" >> $@ ; \
+	echo "SBCL built with: $(SBCL) -noinit -batch -eval '(load \"$$COMPILE\")'" ; \
+	echo "### START $$COMPILE" ; cat $$COMPILE ; echo "### END $$COMPILE" ; echo ; \
+	$(SBCL) --noinform --disable-debugger --load $$COMPILE; \
+	echo "(main) (quit)" >> $@
+	@echo "### START $@" ; cat $@ ; echo "### END $@" ; echo
+
 
 ########################################
 # SmartEiffel

@@ -64,6 +64,14 @@ $LANGS= array(
 	 'Type' => 'native compiled'
      ),
 
+     'sbcl' => array(
+         'Lang' => 'Common Lisp',
+	 'Home' => 'http://sbcl.sourceforge.net/',
+	 'Down' => 'http://sbcl.sourceforge.net/',
+	 'Type' => 'native compiled'
+     ),
+
+
      'gwydion' => array(
          'Lang' => 'Dylan',
 	 'Home' => 'http://www.gwydiondylan.org',

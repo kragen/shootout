@@ -105,6 +105,17 @@
        },
      },
 
+     sbcl =>
+     { Lang => 'Common Lisp',
+       Home => 'http://sbcl.sourceforge.net/',
+       Down => 'http://sbcl.sourceforge.net/',
+       Type => 'native compiled',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{SBCL} --version`);
+	   return($ver);
+       },
+     },
+
      gwydion =>
      { Lang => 'Dylan',
        Home => 'http://www.gwydiondylan.org',

@@ -11,6 +11,7 @@
         <div><a href="../../lang/g++/"><b><i>g++</i></b></a></div>
         <div><a href="../../lang/clean/"><b><i>clean</i></b></a></div>
         <div><a href="../../lang/cmucl/"><b><i>cmucl</i></b></a></div>
+        <div><a href="../../lang/sbcl/"><b><i>sbcl</i></b></a></div>
         <div><a href="../../lang/gwydion/"><b><i>gwydion</i></b></a></div>
         <div><a href="../../lang/se/"><b><i>se</i></b></a></div>
         <div><a href="../../lang/xemacs/">xemacs</a></div>
