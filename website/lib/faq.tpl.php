@@ -34,6 +34,9 @@
 <p><a class="arevCore" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Computer Language Shootout</a> includes a smaller selection of programming languages. 
 </p>
 
+<p><a class="arevOld" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >The Old Great Computer Language Shootout</a> shows the benchmarks used in Doug Bagley's Shootout.
+
+</p>
 <tr class="b"><td>Where can I download the <b>data</b> from?</td></tr>
 
 <tr><td><p>You can <b>download</b> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="Not yet available">zip file of timings and memory use ~100KB</a>.</p></td></tr>
@@ -304,7 +307,7 @@ fixes, you will soon understand this requirement.</li>
 
 <tr class="b"><td>Who started "The Great Computer Language Shootout"?</td></tr>
 
-<tr><td><p>Doug Bagley created "The Great Computer Language Shootout", and it was active until 2001.</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p><p>In mid-2004 (here on Alioth&nbsp;Debian.org) Brent Fulgham revived the <a class="arevOld" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >Old Great Computer Language Shootout</a>.</p><p>Then things really started to change. First, the <a href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >website was redesigned</a>. Then some benchmarks were deprecated. Then all kinds of new benchmarks were added.</p><p>Who knows where it will end?</p></td></tr>
+<tr><td><p>Doug Bagley created "The Great Computer Language Shootout", and it was active until 2001.</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p><p>In mid-2004 Brent Fulgham revived "The Great Computer Language Shootout" here on Alioth&nbsp;Debian.org</p><p>In the following months, things started to change. First, the website was redesigned. Then benchmarks were deprecated. Then new benchmarks were added. Who knows where it will end?</p></td></tr>
 
 
 <tr class="b"><td>Who has contributed?</td></tr>
