@@ -21,7 +21,7 @@ define main()
    foreach (i)
      {
 	i = ();
-	()=fprintf (stdout, "%7d\t%s\n", freqs[i], words[i]);
+	()=fprintf (stdout, "%7d %s\n", freqs[i], words[i]);
      }
 }
 

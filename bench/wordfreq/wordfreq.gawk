@@ -1,4 +1,4 @@
-# $Id: wordfreq.gawk,v 1.1 2004-05-19 18:14:16 bfulgham Exp $
+# $Id: wordfreq.gawk,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 BEGIN {
@@ -16,7 +16,7 @@ END {
     sort = "sort -nr"
     for (word in freq) {
 	if (word) {
-	    printf "%7d\t%s\n", freq[word], word | sort
+	    printf "%7d %s\n", freq[word], word | sort
 	}
     }
     close(sort)

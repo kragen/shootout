@@ -1,7 +1,7 @@
 #!/usr/bin/pike
 // -*- mode: pike -*-
-// $Id: wordfreq.pike,v 1.1 2004-05-19 18:14:17 bfulgham Exp $
-// http://www.bagley.org/~doug/shootout/
+// $Id: wordfreq.pike,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
+// http://shootout.alioth.debian.org/
 // from: Fredrik Noring
 
 void main()
@@ -55,6 +55,6 @@ void main()
 	  words = sort(revdictionary[freq]);
 	  
 	  for(int j = sizeof(words)-1; 0 <= j; j--)
-	      write("%7d\t%s\n", freq, words[j]);
+	      write("%7d %s\n", freq, words[j]);
     }
 }

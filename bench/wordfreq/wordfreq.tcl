@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh
-# $Id: wordfreq.tcl,v 1.1 2004-05-19 18:14:18 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: wordfreq.tcl,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
+# http://shootout.alioth.debian.org/
 # with help from: Tom Wilkason and Branko Vesligaj
 
 proc main {} {
@@ -18,7 +18,7 @@ proc main {} {
 	}
     }
     foreach {word cnt}  [array get count] {
-	lappend lines [format "%7d\t%s" $cnt $word]
+	lappend lines [format "%7d %s" $cnt $word]
     }
     puts [join [lsort -decreasing $lines] "\n"]
 }

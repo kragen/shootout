@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: wordfreq.ruby,v 1.1 2004-05-19 18:14:17 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: wordfreq.ruby,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
+# http://shootout.alioth.debian.org/
 
 freq = Hash.new(0)
 loop {
@@ -13,5 +13,5 @@ loop {
 freq.delete("")
 
 lines = Array.new
-freq.each{|w,c| lines << sprintf("%7d\t%s\n", c, w) }
+freq.each{|w,c| lines << sprintf("%7d %s\n", c, w) }
 print lines.sort.reverse

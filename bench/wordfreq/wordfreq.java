@@ -1,5 +1,5 @@
-// $Id: wordfreq.java,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
-// http://www.bagley.org/~doug/shootout/
+// $Id: wordfreq.java,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
+// http://shootout.alioth.debian.org/
 // Collection class code is from my friend Phil Chu, Thanks Phil!
 
 import java.io.*;
@@ -77,7 +77,7 @@ public class wordfreq {
             ent = (Map.Entry)it.next();
 	    word = ((String)ent.getKey());
 	    count = ((Counter)ent.getValue()).count;
-	    System.out.println(padleft(Integer.toString(count),7,' ') + "\t" + word);
+	    System.out.println(padleft(Integer.toString(count),7,' ') + " " + word);
         }
     }
 }

@@ -1,4 +1,4 @@
--- $Id: wordfreq.lua,v 1.2 2004-06-13 00:16:55 bfulgham Exp $
+-- $Id: wordfreq.lua,v 1.3 2004-07-03 05:36:11 bfulgham Exp $
 -- http://shootout.alioth.debian.org
 -- contributed by Roberto Ierusalimschy
 
@@ -29,6 +29,6 @@ end)
 
 for i=1,table.getn(words) do
   local w = words[i]
-  io.write(string.format("%7d\t%s\n", count[w], w))
+  io.write(string.format("%7d %s\n", count[w], w))
 end
 
