@@ -1,11 +1,12 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: sumcol.ruby,v 1.1 2004-05-19 18:13:44 bfulgham Exp $
+# $Id: sumcol.ruby,v 1.2 2004-11-10 06:43:14 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
-# from: Mathieu Bouchard
+# from: Mathieu Bouchard, revised by Dave Anderson
 
 count = 0
-while STDIN.gets()
-    count += $_.to_i
-end
+l=""
+STDIN.each{ |l|
+    count += l.to_i
+}
 puts count

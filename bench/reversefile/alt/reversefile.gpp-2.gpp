@@ -1,0 +1,137 @@
+// -*- mode: c++ -*-
+// $Id: reversefile.gpp-2.gpp,v 1.1 2004-11-10 06:51:38 bfulgham Exp $
+// http://www.bagley.org/~doug/shootout/
+// using Bill Lear's mmap class to allow in-memory reverse scanning.
+//
+
+#include <iostream>
+#include <utility>
+#include <fstream>
+#include <hash_map>
+#include <algorithm>
+#include <iomanip>
+#include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <errno.h>
+
+using namespace std;
+
+class mem_map {
+public:
+    mem_map(const char* file_name,
+            int flags = O_RDONLY,
+            int prot = PROT_READ,
+            int share = MAP_SHARED,
+            mode_t mode = 0,
+            void* addr = 0,
+            size_t length = 0,
+            off_t offset = 0)
+    : file_handle(0),
+      buffer_size(length),
+      input_buffer(0),
+      ok(false)
+    {
+        this->file_handle = open(file_name, flags, mode);
+
+        if (this->file_handle < 0) {
+            this->sys_error = "mem_map Error: ";
+            this->sys_error += string("Could not open file ");
+            this->sys_error += string(file_name);
+            this->sys_error += string(": ") + string(strerror(errno));
+            return;
+        }
+
+        if (this->buffer_size == 0) {
+            struct stat s;
+
+            if (fstat(this->file_handle, &s) < 0) {
+                this->sys_error = "mem_map Error: ";
+                this->sys_error += string("Could not stat file ");
+                this->sys_error += string(file_name);
+                this->sys_error += string(": ") + string(strerror(errno));
+                return;
+            }
+
+            this->buffer_size = s.st_size;
+        }
+
+        this->input_buffer = (char*) mmap((caddr_t)addr,
+                                          this->buffer_size,
+                                          prot,
+                                          share,
+                                          this->file_handle,
+                                          offset);
+
+        if (!this->input_buffer) {
+            this->sys_error = "mem_map Error: ";
+            this->sys_error += string("Could not mmap file ");
+            this->sys_error += string(file_name);
+            this->sys_error += string(": ") + string(strerror(errno));
+            return;
+        }
+
+        ok = true;
+    }
+
+    ~mem_map() {
+        munmap(this->input_buffer, this->buffer_size);
+        close(this->file_handle);
+    }
+
+    char* buffer() const { return this->input_buffer; }
+    size_t size() const { return this->buffer_size; }
+
+    char* begin() const { return this->input_buffer; }
+    char* end() const { return this->input_buffer + this->buffer_size; }
+
+    int operator!() const { return !this->ok; }
+
+    string error() const { return this->sys_error; }
+
+private:
+    int file_handle;
+    size_t buffer_size;
+    char* input_buffer;
+    bool ok;
+    string sys_error;
+
+    mem_map(const mem_map&) {}
+    mem_map& operator = (const mem_map&) { return *this; }
+};
+
+
+int main(int argc, char* argv[]) {
+    if (argc < 1) {
+        cerr << "Usage: " << argv[0] << " <file>\n";
+        return 1;
+    }
+    mem_map in(argv[1]);
+    if (!in) {
+        cerr << "Could not open " << argv[1] << '\n';
+        return 1;
+    }
+    
+    //
+    // reverse scanning from memory
+    //
+    const char* deadend = in.begin();
+    const char* line_end = in.end();
+    const char* line_begin = line_end-1;
+
+    while (*line_begin == '\n' && line_begin != deadend)
+	line_begin--;
+
+    while (line_begin != deadend) {
+	if (*line_begin == '\n' && line_begin < line_end) {
+	    copy(line_begin+1, line_end, ostream_iterator<char>(cout));
+	    line_end = line_begin+1; // to include the '\n' for the next print.
+	}
+	line_begin--;
+    }
+    if (line_begin < line_end)
+	copy(line_begin, line_end, ostream_iterator<char>(cout));
+}

@@ -1,0 +1,53 @@
+;;; -*- mode: lisp -*-
+;;; $Id: methcall.cmucl-2.cmucl,v 1.1 2004-11-10 06:49:03 bfulgham Exp $
+;;; http://shootout.alioth.debian.org
+;;; Multi-lisp modifications by Brent Fulgham
+
+;; OO with CLOS
+(proclaim '(optimize (speed 3)(safety 0)(space 0)(debug 0)(compilation-speed 0)))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defclass toggle ()
+    ((state :accessor toggle-state :type boolean :initform t :initarg :start-state))))
+
+(pcl::defconstructor make-toggle toggle ())
+
+(defmethod activate ((this toggle))
+  (setf (toggle-state this) (not (toggle-state this)))
+  this)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defclass nth-toggle (toggle)
+    ((count-max :accessor nth-toggle-count-max :type fixnum :initform 1
+		:initarg :max-counter)
+     (counter :accessor nth-toggle-counter :type fixnum :initform 0))))
+
+(pcl::defconstructor make-nth-toggle nth-toggle (cm)
+   :max-counter cm)
+
+(defmethod activate ((this nth-toggle))
+  (incf (nth-toggle-counter this))
+  (cond ((>= (nth-toggle-counter this)
+	     (nth-toggle-count-max this))
+	 (setf (toggle-state this) (not (toggle-state this)))
+	 (setf (nth-toggle-counter this) 0)))
+  this)
+
+(defun print-bool (b)
+  (format t (if b "true~%" "false~%")))
+
+(defun main ()
+  (let ((n (parse-integer (or (car (last #+sbcl sb-ext:*posix-argv*
+                                         #+cmu  extensions:*command-line-strings*)) "1")))
+	(val))
+    (declare (fixnum n val))
+    (let ((tog (make-toggle)))
+      (dotimes (i n)
+	(declare (fixnum i))
+	(setq val (toggle-state (activate tog))))
+      (print-bool (toggle-state tog))
+    (let ((ntog (make-nth-toggle 3)))
+      (dotimes (i n)
+	(declare (fixnum i))
+	(setq val (toggle-state (activate ntog))))
+      (print-bool (toggle-state ntog))))))

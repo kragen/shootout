@@ -1,0 +1,76 @@
+%%% -*- mode: erlang -*-
+%%% $Id: wordfreq.erlang-2.erlang,v 1.1 2004-11-10 06:40:32 bfulgham Exp $
+%%% http://www.bagley.org/~doug/shootout/
+
+%% frequency counter algorithm from Maurice Castro
+%% This version uses ETS tables - Erlang's associative store.
+
+%% This version is written to read input from a file.
+
+-module(wordfreq).
+-export([main/0, main/1]).
+
+%% get the program argument, which is how many test iterations to run
+main() -> main(['1']).
+main(Args) ->
+    [Arg] = Args,
+    % we throw away first value of list because it is ''
+    % we really should test for this and remove it explicitly
+    % but we're not flying the space shuttle here.
+    FreqList = tl(sortedfreqs(lists:concat(["Input.", Arg]))),
+    OutL = fun ({Word, Count}) ->
+		io:format("~7w\t~s~n", [Count, Word])
+	   end,
+    lists:foreach(OutL, FreqList),
+    halt(0).
+
+
+% sort the results, descending
+sortedfreqs(Datafile) -> 
+    Freqs = freq(Datafile),
+    lists:reverse(lists:keysort(2,Freqs)).
+
+
+freq(Filename) ->
+    {Status, Data} = file:open(Filename, [read]),
+    if 
+	Status == error ->
+	    io:format("Unable to open file ~s because ~w~n", [Filename, Data]);
+	true ->
+	    Table = ets:new(freqtab,[ordered_set]),
+	    FreqList = freqcnt(Data, Table),
+	    ets:delete(Table),
+	    file:close(Data),
+	    FreqList
+    end.
+
+freqcnt(Data, Table) ->
+    UpCnt = fun (Word) ->
+		    WordAtom = list_to_atom(Word),
+		    case (catch ets:update_counter(Table, WordAtom, 1)) of
+			{'EXIT', {badarg, _}} ->
+			    ets:insert(Table, {WordAtom, 1});
+			_ ->
+			    true
+		    end
+	    end,
+    case io:get_line(Data, '') of
+	eof ->
+	    ets:tab2list(Table);
+	Line -> 
+	    %% string:tokens(Line,"\n\r\t ")
+	    {ok,Words} = regexp:split(tolower(Line), "[^a-z]"),
+	    lists:foreach(UpCnt, Words),
+	    freqcnt(Data, Table)
+    end.
+
+
+%% how to lowercase a string from tklib.erl
+tolower([C|Cs]) ->
+    if C >= $A, C =< $Z -> [(C - $A) + $a | tolower(Cs)];
+	true -> [C | tolower(Cs)]
+    end;
+tolower([]) -> [];
+
+tolower(C) when C >= $A, C =< $Z -> (C - $A) + $a;
+tolower(C) -> C.

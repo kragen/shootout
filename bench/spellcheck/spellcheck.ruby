@@ -1,18 +1,18 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: spellcheck.ruby,v 1.1 2004-05-19 18:13:26 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: spellcheck.ruby,v 1.2 2004-11-10 06:47:52 bfulgham Exp $
+# http://shootout.alioth.debian.org/
+# Revised by Dave Anderson
 
 dict = Hash.new
-file = open("Usr.Dict.Words")
-while file.gets()
-    dict[$_.chomp!] = 1
-end
-file.close()
+l = ""
 
-count = word = 0
-while STDIN.gets()
-    unless dict.has_key? $_.chomp!
-	puts $_
-    end
+IO.foreach("Usr.Dict.Words") do |l|
+  dict[l.chomp!] = 1
+end 
+
+STDIN.each do |l|
+  unless dict.has_key? l.chomp!
+    puts l
+  end
 end

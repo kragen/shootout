@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2004-10-05 02:29:28 bfulgham Exp $
+# $Id: Makefile,v 1.15 2004-11-10 06:49:03 bfulgham Exp $
 include ../../Make.header
 
 TEST    := methcall
@@ -13,7 +13,6 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 100000,400000,700000,1000000 \
-	  --ignore methcall.xemacs,methcall.gnat,methcall.csharp
+	  --range 100000,400000,700000,1000000 
 
 include ../../Make.footer

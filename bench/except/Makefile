@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-10-21 13:04:14 dbr-guest Exp $
+# $Id: Makefile,v 1.18 2004-11-10 06:26:50 bfulgham Exp $
 include ../../Make.header
 
 TEST    := except
@@ -12,7 +12,6 @@ POLYOPTS := -q
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	--ignore except.csharp \
 	--range 100000,150000,200000,250000
 
 include ../../Make.footer

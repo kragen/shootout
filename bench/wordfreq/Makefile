@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2004-10-21 13:04:14 dbr-guest Exp $
+# $Id: Makefile,v 1.24 2004-11-10 06:40:31 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
@@ -17,9 +17,6 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 5,10,15,20,25 \
-	  --inputfile Input --geninput \
-	  --ignore wordfreq.csharp \
-	  --ignore wordfreq.hugs \
-	  --ignore wordfreq.mawk
+	  --inputfile Input --geninput
 
 include ../../Make.footer

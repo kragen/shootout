@@ -1,0 +1,93 @@
+-- $Id: wordfreq.ghc-2.ghc,v 1.1 2004-11-10 06:40:32 bfulgham Exp $
+-- http://www.bagley.org/~doug/shootout/
+-- from Brian Gregor
+
+module Main where
+
+import IO(isEOF)
+import FiniteMap 
+import Char(toLower,isAlpha)
+import List(sort)
+
+-- compile with: ghc -O -o foo -package data wordfreq.hs
+
+main :: IO ()
+main =  do
+          procInput emptyFM
+
+-- process input line-by-line
+procInput :: FiniteMap String Int -> IO ()
+procInput fm = do err <- isEOF 
+                  if (err) 
+                     then outputFM (mSort (fmToList fm))
+                     else (do line <- getLine
+                              procInput (updateFM fm (allWords [toLower x | x <-line])))
+
+-- printout the list in the required format
+outputFM :: [(String,Int)] -> IO ()
+outputFM ((s,y):xs) = do
+                    if (xs /= []) 
+                      then (do  putStrLn (concat [z,"\t",s]) 
+                                outputFM xs)
+                      else (do  putStrLn (concat [z,"\t",s])
+		                return ())
+                  where z = formatInt y
+
+-- update the Finite Map with each new word
+updateFM ::  FiniteMap String Int -> [String] -> FiniteMap String Int
+updateFM fm [] = fm
+updateFM fm (x:xs)         
+       -- see if it's in the map yet
+         | elemFM x fm = (updateFM (addToFM_C update fm x 1) xs)
+       -- if not add it
+         | otherwise   = updateFM (addToFM fm x 1) xs
+         where update old new = old+new
+
+-- take a string and return all the words in it
+allWords :: String -> [String]
+allWords s  = case dropWhile notAlpha s of
+                  "" -> []
+                  s' -> w: allWords s''
+                        where (w,s'') = break notAlpha s'
+
+-- return True if x is not a letter
+notAlpha :: Char -> Bool
+notAlpha x = not (isAlpha x)
+
+-- just a little formatting function
+formatInt :: Int -> String
+formatInt x =  concat [pad,out]
+      where pad = concat $ replicate n " "
+            n   = 7 - (length (out))
+            out = show x
+
+-- here's  an optimized mergesort from 
+-- "Algorithms - a Functional Approach" by
+-- Fethi Rabhe & Guy Lapalme
+--
+-- There's a default sortBy in the List module
+-- but it didn't handle tuples the way that's
+-- convenient for this program, so the sort function
+-- was modified for this.
+
+split :: ((Ord a),(Ord b)) => [(a,b)] -> [[(a,b)]]
+split [] = []
+split (x:xs) = [x]:split xs
+
+merge ::  ((Ord a),(Ord b)) => [(a,b)] -> [(a,b)] -> [(a,b)]
+merge [] b  = b
+merge a [] = a
+merge a@((x1,x2):xs) b@((y1,y2):ys)
+    | ( (x2>y2) && (x1<=y1) ) = (x1,x2) : (merge xs b)
+    | otherwise = (y1,y2) : (merge a ys)
+
+mergepairs :: ((Ord a),(Ord b)) => [[(a,b)]] -> [[(a,b)]]
+mergepairs [] = []
+mergepairs x@[l] = x
+mergepairs (l1:l2:rest) = (merge l1 l2) : (mergepairs $! rest)
+
+-- The actual sort
+mSort :: ((Ord a),(Ord b)) => [(a,b)] -> [(a,b)]
+mSort l = ms (split l)
+    where  ms [r] = r
+           ms l   = ms (mergepairs l)

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2004-10-18 07:15:07 bfulgham Exp $
+# $Id: Makefile,v 1.21 2004-11-10 06:51:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := reversefile
@@ -15,9 +15,8 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 RUNTESTS :=  $(MINIBENCH) --conf ../../Minibench.conf --range 10,15,20,25 \
-	  --inputfile Input --geninput \
-	  --ignore reversefile.csharp \
-	  --ignore reversefile.gnat \
-	  --ignore reversefile.stalin
+          --ignore reversefile.gnat \
+          --ignore reversefile.stalin \
+	  --inputfile Input --geninput
 
 include ../../Make.footer

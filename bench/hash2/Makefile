@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-10-11 04:47:31 bfulgham Exp $
+# $Id: Makefile,v 1.18 2004-11-10 06:36:29 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -18,12 +18,6 @@ MB_NHCRTS := +RTS -H40M
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 50,100,150,200 \
-	  --ignore hash2.csharp \
-	  --ignore hash2.bash \
-	  --ignore hash2.hugs \
-	  --ignore hash2.nhc98 \
-	  --ignore hash2.oz \
-	  --ignore hash2.poplisp
+	  --range 50,100,150,200 
 
 include ../../Make.footer

@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: sieve.ruby,v 1.3 2004-06-20 08:39:47 bfulgham Exp $
+# $Id: sieve.ruby,v 1.4 2004-11-10 06:48:59 bfulgham Exp $
 # http://shootout.alioth.debian.org/
 #
 # Revised implementation by Paul Sanchez
@@ -12,6 +12,8 @@ flags0 = Array.new(max+1)
 for i in 2 .. max
   flags0[i] = i
 end
+
+i=j=0
 
 NUM.times do
     flags = flags0.dup

@@ -1,0 +1,79 @@
+;;; -*- mode: lisp -*-
+;;; $Id: reversefile.cmucl-3.cmucl,v 1.1 2004-11-10 06:51:38 bfulgham Exp $
+;;; http://shootout.alioth.debian.org
+;;; from Bulent Murtezaoglu <bm@acm.org>
+;;; Multi-lisp changes by Brent Fulgham
+
+(setf *bytes-consed-between-gcs* 10000000) ;set to 1-5% of physical mem
+(declaim (optimize (speed 3) (debug 0) (safety 0) (space 0) (compilation-speed 0)))
+
+(defmacro with-fast-string-reader ((stream reader eof-p &key (avg-size 80) (buffer-size 4096) (max-string-size 100000)) &body body)
+  (let ((start (gensym))		;next unread char index of the internal buffer
+	(end (gensym))			;last valid char index of the internal buffer
+	(current (gensym))		;current character
+	(dim-limit (gensym))		;current limit of the output buffer 
+	(fill-ptr (gensym))		;fill pointer of the output buffer
+	(pending-buffer (gensym))	; the output buffer itself
+	(buffer (gensym))		; internal buffer
+	(sb-size (gensym))		; output buffer size
+	(mb-size (gensym))		; internal buffer size
+	(push-to-str (gensym)) ; these two are internal procs gensymed to not confuse the expansion env
+	(get-char-proc (gensym)))
+    `(let* ((,start 0)
+	    (,end 0)
+	    (,current #\X)
+	    (,sb-size ,avg-size) 
+	    (,dim-limit ,sb-size)
+	    (,fill-ptr 0)
+	    (,eof-p nil)
+	    (,pending-buffer (make-string ,sb-size))
+	    (,mb-size ,buffer-size))
+       (declare (type (integer 0 ,buffer-size) ,start ,end))
+       (declare (type (integer 0 ,max-string-size)  ,sb-size ,dim-limit ,fill-ptr))
+       (declare (simple-string ,pending-buffer))
+       (declare (inline make-string schar subseq lisp::shrink-vector))
+       (let ((,buffer (make-string ,mb-size)))
+	 (labels ((,get-char-proc ()
+				  (when (= ,start ,end)
+				    (setf ,start 0)
+				    (setf ,end (read-sequence ,buffer ,stream))
+				    (when (zerop ,end)
+				      (setf ,eof-p t)
+				      (return-from ,get-char-proc nil)))
+				  (setf ,current (schar ,buffer ,start))
+				  (incf ,start))
+		  (,push-to-str ()
+				(when (= ,fill-ptr ,dim-limit)
+				  (let ((new-buffer
+					 (make-string
+					  (setf ,dim-limit (+ ,fill-ptr ,sb-size)))))
+				    (setf (subseq new-buffer 0 ,fill-ptr)
+					  ,pending-buffer)
+				    (setf ,pending-buffer new-buffer)))
+				(setf (schar ,pending-buffer ,fill-ptr) ,current)
+				(incf ,fill-ptr)
+				)
+	     
+		  (,reader ()
+			   (loop while (and (,get-char-proc)
+					    (not (char= ,current #\newline)))
+			     do (,push-to-str))
+			   (lisp::shrink-vector ,pending-buffer ,fill-ptr)
+			   (prog1
+			       ,pending-buffer
+			     (setf ,fill-ptr 0)
+			     (setf ,dim-limit ,sb-size)
+			     (setf ,pending-buffer (make-string ,sb-size)))))
+	          (declare (inline ,reader ,push-to-str ,get-char-proc))
+	 ,@body)))))
+
+(defun main (&aux lines)
+  (with-fast-string-reader (*standard-input* reader eof :avg-size 15)
+			   (loop
+			     (let ((str (reader)))
+			       (if (not eof)
+				   (push str lines)
+				 (return))))
+			   (dolist (item lines)
+			     (declare (base-string item))
+			     (write-line item *standard-output*))))

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-10-05 05:54:15 bfulgham Exp $
+# $Id: Makefile,v 1.18 2004-11-10 06:42:03 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -17,9 +17,7 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1000,1500,2000,2500 \
-	  --ignore wc.csharp \
 	  --ignore wc.gnat \
-	  --ignore wc.rep \
 	  --inputfile Input --geninput
 
 include ../../Make.footer
