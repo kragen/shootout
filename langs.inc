@@ -39,7 +39,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnu.org/software/bash/bash.html',
       'Down'    => 'ftp://ftp.gnu.org/gnu/bash/',
       'Type'    => 'interpreted',
-      'Version' => 'GNU bash, version 3.00.0(1)'
+      'Version' => 'GNU bash, version 3.00.13(1)'
     ),
 
     'gcc' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-11)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-12)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-11)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-12)
 '
     ),
 
@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => 'SBCL 0.8.14.21'
+      'Version' => 'SBCL 0.8.14.24'
     ),
 
     'gwydion' => array(
@@ -227,7 +227,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://newlisp.org/',
       'Down'    => 'http://newlisp.org/index.cgi?page=Downloads',
       'Type'    => 'interpreted',
-      'Version' => 'newLISP v.8.1.4'
+      'Version' => 'newLISP v.8.2.0'
     ),
 
     'rep' => array(
@@ -284,7 +284,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-11)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-12)
 '
     ),
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-09-13 01:24:10 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-09-22 08:24:13 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -27,6 +27,14 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore regexmatch.bigloo \
 	  --ignore regexmatch.csharp \
 	  --ignore regexmatch.g++ \
+	  --ignore regexmatch.gcj \
+	  --ignore regexmatch.gij \
+	  --ignore regexmatch.java \
+	  --ignore regexmatch.kaffe \
+	  --ignore regexmatch.nice \
+	  --ignore regexmatch.ocaml \
+	  --ignore regexmatch.ocamlb \
+	  --ignore regexmatch.sablevm \
 	  --inputfile Input
 
 include ../../Make.footer

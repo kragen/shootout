@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-09-15 13:43:56 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-09-22 08:24:15 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -16,6 +16,8 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --inputfile Input --geninput \
 	  --ignore sumcol.bash \
 	  --ignore sumcol.csharp \
+	  --ignore sumcol.erlang \
+	  --ignore sumcol.hipe \
 	  --ignore sumcol.stalin 
 
 include ../../Make.footer
