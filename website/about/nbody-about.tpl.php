@@ -1,4 +1,4 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a> &#8212; each program should model the orbits of Jovian planets, using the same simple symplectic-integrator.</p>
+<p>Each program should model the orbits of Jovian planets, using the same simple symplectic-integrator - see the <a href="benchmark.php?test=nbody&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
 
 <p>Correct output N = 1000 is
 <pre>

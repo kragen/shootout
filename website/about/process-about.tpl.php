@@ -1,7 +1,7 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>. Programs may use kernel threads, lightweight threads, cooperative threads&#133;
+<p>Each program counts the number of created threads, by incrementing an integer message sent between the threads. Programs may use kernel threads, lightweight threads, cooperative threads&#133;
 </p>
 
-<p>Each program counts the number of created threads, by incrementing an integer message sent between the threads:
+<p>Each program should
 </p>
 
 <ul>

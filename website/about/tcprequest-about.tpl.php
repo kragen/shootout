@@ -1,4 +1,3 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.</p>
 <p><b>Note</b>: we're thinking about a better way to start client & server within our measurement framework.</p>
 
 <p>Each program (M = 100, REPLY_SIZE = 4096) should

@@ -1,6 +1,4 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=nsieve&lang=csharp&sort=<?=$Sort;?>">C# program</a>.
-
-<p>Count the prime numbers from 2 to M, finding each prime number with a na&#239ve implementation of the Sieve of Eratosthenes:
+<p>Each program should count the prime numbers from 2 to M, using the same na&#239ve Sieve of Eratosthenes algorithm:
 <ul>
   <li>create an array of M <b>bit flags</b></li>
   <li>for each index number

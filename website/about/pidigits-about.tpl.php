@@ -1,9 +1,8 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;way</b></a> &#8212; the same way as this <a href="benchmark.php?test=pidigits&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
+<p>Each program should use the same step-by-step spigot algorithm to calculate digits of Pi.
 
 <p>Each program should
-
 <ul>
-  <li>calculate the first N digits of Pi (by the unbounded spigot algorithm)</li>
+  <li>calculate the first N digits of Pi</li>
   <li>print the digits 10-to-a-line, with the running total of digits calculated</li>
 </ul>
 </p>
@@ -18,7 +17,6 @@
 </pre></p><br/>
 
 <p>Correct output N = 1000 is in this 2KB <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=output">output file</a>.</p>
-
 
 <p>For more information see Eric W. Weisstein, "Pi Digits." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/PiDigits.html">http://mathworld.wolfram.com/PiDigits.html</a></p>
 

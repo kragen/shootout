@@ -1,8 +1,6 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=nsieve&lang=lua&sort=<?=$Sort;?>">Lua program</a>.
-
-<p>Count the prime numbers from 2 to M, finding each prime number with a na&#239ve implementation of the Sieve of Eratosthenes:
+<p>Each program should count the prime numbers from 2 to M, using the same na&#239ve Sieve of Eratosthenes algorithm:
 <ul>
-  <li>create an array of M boolean flags</li>
+  <li>create a sequence of M boolean flags</li>
   <li>for each index number
      <ul>
      <li>if the flag value at that index is true</li>

@@ -1,6 +1,13 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> &#8212; the same way as this <a href="benchmark.php?test=fannkuch&lang=oberon2&sort=<?=$Sort;?>">Oberon-2 program</a>. (Also see the Lisp program in the article.)</p>
-
-<p>"Take a permutation of {1,...,n}, for example: {4,2,1,5,3}. Take the first element, here 4, and reverse the order of the first 4 elements: {5,1,2,4,3}. Repeat this until the first element is a 1, so flipping won't change anything more: {3,4,2,1,5}, {2,4,3,1,5}, {4,2,3,1,5}, {1,3,2,4,5}. Count the number of flips, here 5. Do this for all n! permutations, and record the maximum number of flips needed for any permutation. The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."</p>
+<p>Each program should 
+<ul>
+<li>"Take a permutation of {1,...,n}, for example: {4,2,1,5,3}.</li>
+<li>Take the first element, here 4, and reverse the order of the first 4 elements: {5,1,2,4,3}.</li>
+<li>Repeat this until the first element is a 1, so flipping won't change anything more: {3,4,2,1,5}, {2,4,3,1,5}, {4,2,3,1,5}, {1,3,2,4,5}.</li>
+<li>Count the number of flips, here 5.</li>
+<li>Do this for all n! permutations, and record the maximum number of flips needed for any permutation.</li>
+</ul>
+The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."
+</p><br/>
 
 <p>Correct output N = 7 is:
 <pre>Pfannkuchen(7) = 16

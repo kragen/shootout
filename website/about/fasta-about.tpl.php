@@ -1,6 +1,3 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> &#8212; the same way as this <a href="benchmark.php?test=fasta&lang=lua&sort=<?=$Sort;?>">Lua program</a>.</p>
-
-
 <p>Each program should
 <ul>
   <li>encode the expected cumulative probabilities for 2 alphabets</li>

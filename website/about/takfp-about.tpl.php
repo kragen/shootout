@@ -1,4 +1,4 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a>  &#8212;  the same way as this <a href="benchmark.php?test=takfp&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
+<p>Each program should implement the same recursive algorithm as this <a href="benchmark.php?test=takfp&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
 
 <p>Each program calculates a recursive, floating-point, TAK function:
 <pre>
