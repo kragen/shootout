@@ -694,7 +694,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
       $Link = $Row[TEST_LINK];
       $Name = $Row[TEST_NAME];
       if ($Link==$SelectedTest){
-         $Selected = 'selected';
+         $Selected = 'selected="selected"';
       } else {
          $Selected = '';
       }
@@ -709,7 +709,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
       $Link = $Row[LANG_LINK];
       $Name = $Row[LANG_FULL];
       if ($Link==$SelectedLang){
-         $Selected = 'selected';
+         $Selected = 'selected="selected"';
       } else {
          $Selected = '';
       }
@@ -725,7 +725,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 function MkScorecardMenuForm($Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
-   echo '<option selected value="all">all ', TESTS_PHRASE, '</option>', "\n";
+   echo '<option selected="selected" value="all">all ', TESTS_PHRASE, '</option>', "\n";
    echo '</select>', "\n";
 
    echo '<select name="lang">', "\n";
@@ -745,7 +745,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       $Link = $Row[TEST_LINK];
       $Name = $Row[TEST_NAME];
       if ($Link==$SelectedTest){
-         $Selected = 'selected';
+         $Selected = 'selected="selected"';
       } else {
          $Selected = '';
       }
@@ -776,7 +776,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       $Link = $Row[N_LANG].'-'.$Row[N_ID];
       $Name = $Row[N_FULL];
       if ($Link==$p1 && $first){ // avoid choosing the dummy value if possible
-         $Selected = 'selected'; $first = 0;
+         $Selected = 'selected="selected"'; $first = 0;
       } else {
          $Selected = '';
       }
@@ -790,7 +790,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       $Link = $Row[N_LANG].'-'.$Row[N_ID];
       $Name = $Row[N_FULL];
       if (($Link==$p2) && $first){ // avoid choosing the dummy value if possible
-         $Selected = 'selected'; $first = 0;
+         $Selected = 'selected="selected"'; $first = 0;
       } else {
          $Selected = '';
       }
@@ -806,7 +806,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       $Name = $Row[N_FULL];
 
       if ($Link==$p3 && $first){ // avoid choosing the dummy value if possible
-         $Selected = 'selected'; $first = 0;
+         $Selected = 'selected="selected"'; $first = 0;
       } else {
          $Selected = '';
       }
@@ -822,7 +822,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       $Name = $Row[N_FULL];
 
       if ($Link==$p4 && $first){ // avoid choosing the dummy value if possible
-         $Selected = 'selected'; $first = 0;
+         $Selected = 'selected="selected"'; $first = 0;
       } else {
          $Selected = '';
       }
