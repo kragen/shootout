@@ -1,37 +1,21 @@
 #!/usr/bin/tclsh
-# $Id: random.tcl,v 1.2 2005-03-18 06:26:26 bfulgham Exp $
+# $Id: random.tcl,v 1.3 2005-03-31 15:14:36 sgeard-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 # from Miguel Sofer
-#
-# Enhanced by Robert Seeger
 
-set IM 139968
-set IA   3877
-set IC  29573
-
-set last 42
+foreach {IM IA IC last} {139968 3877 29573 42} break
 
 proc make_gen_random {} {
-    global IM IA IC
-    set params [list IM $IM IA $IA IC $IC]
+    set params [list IM $::IM IA $::IA IC $::IC]
     set body [string map $params {
-        expr {($max * [set ::last [expr {($::last * IA + IC) % IM}]]) / IM}
-    }]
+	expr {($max * [set ::last [expr {($::last * IA + IC) % IM}]]) / IM}}]
     proc gen_random {max} $body
 }
 
-proc main {N} {
-    incr N -1
-
+proc main {n} {
     make_gen_random
-
-    while {$N} {
-        gen_random 100.0
-        incr N -1
-    }
-
+    while {[incr n -1] > 0} {gen_random 100.0}
     puts [format "%.9f" [gen_random 100.0]]
 }
 
-main [lindex $argv 0]
-
+main $argv

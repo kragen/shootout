@@ -1,7 +1,7 @@
 #!/usr/bin/tcl
 # The Great Computer Language Shootout
-# http://shootout.alioth.debian.org/
-# contributed by Yahalom emet, modified by Daniel South
+#    http://shootout.alioth.debian.org/
+#    contributed by Yahalom emet
 
 #    tcl 1500000
 
