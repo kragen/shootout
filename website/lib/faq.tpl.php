@@ -90,8 +90,19 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 <tr><td><p>Don't manually unroll the loops! We prefer plain vanilla programs - after all we're trying to compare language implementations not programmer effort and skill.</p> 
 </td></tr>
 
+<tr class="b"><td><a name="sameway">How should I grab bragging rights?</a></td></tr>
+<tr><td><p>Include a header comment in the program like this:
+<pre>
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
 
-<tr><td><h3 class="rev">&nbsp;How should I implement&#133;?</h3></td></tr>
+   contributed by ...
+   modified by ...
+*/
+</pre>
+</p> 
+</td></tr>
+
 
 <tr class="b"><td><a name="sameway">How should I implement a same way program?</a></td></tr>
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.
