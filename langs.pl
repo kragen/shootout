@@ -340,6 +340,20 @@
        },
      },
 
+     mzc =>
+     { Lang => 'Scheme',
+       Home => 'http://www.plt-scheme.org',
+       Down => 'http://download.plt-scheme.org/drscheme/',
+       Type => 'native compiled',
+       Verfun => sub {
+	   my $ver = `$ENV{MZC} -h`;
+	   $ver =~ s/\n.*//s;
+	   $ver =~ s/mzc \[ <flag>.*//s;
+	   $ver =~ s/Copyright.*//s;
+	   return($ver);
+       },
+     },
+
      mzscheme =>
      { Lang => 'Scheme',
        Home => 'http://www.plt-scheme.org',

@@ -35,6 +35,7 @@
         <div><a href="../../lang/bigloo/"><b><i>bigloo</i></b></a></div>
         <div><a href="../../lang/guile/">guile</a></div>
         <div><a href="../../lang/mzscheme/">mzscheme</a></div>
+        <div><a href="../../lang/mzc/"><b><i>mzc</i></b></a></div>
         <div><a href="../../lang/tcl/">tcl</a></div>
       </div>
     </div>
