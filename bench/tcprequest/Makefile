@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-02-20 02:46:01 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-02-23 23:03:29 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := tcprequest
@@ -18,6 +18,6 @@ GPLCOPTS := --fast-math
 GHCOPTS := -O2 -fexcess-precision
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 6,8,10
+	  --range 60,80,100
 
 include ../../Make.footer
