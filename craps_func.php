@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_func.php,v 1.1 2004-06-05 00:23:54 bfulgham Exp $
+# $Id: craps_func.php,v 1.2 2004-06-06 01:01:38 bfulgham Exp $
 
 require 'langs.inc';
 
@@ -106,7 +106,8 @@ function do_craps($query_string)
     $tests = array_keys($title);
     sort($tests);
     $usea = true;
-    for ($j = 0; $j < count($tests); $j++)
+    $total = count($tests);
+    while( count($tests) )
     {
         if ($usea) {
             $ab = "a";

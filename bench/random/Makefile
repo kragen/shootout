@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-28 07:28:50 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-06 01:01:39 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -16,6 +16,5 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore random.bigforth,random.njs \
 	  --range 1000,300000,600000,900000 \
 	  --title "$(TITLE)" $(TEST).*
-
 
 include ../../Make.footer
