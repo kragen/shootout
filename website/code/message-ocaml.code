@@ -1,0 +1,56 @@
+<span class="com">(*
+ * message.ocaml
+ *
+ * Contributed by William Douglas Neumann
+ *)</span>
+<span class="kwa">type</span> thCtx <span class="sym">=
+	{</span>	<span class="kwa">mutable</span> message <span class="sym">:</span> <span class="kwb">int</span><span class="sym">;
+</span>		<span class="kwa">mutable</span> busy <span class="sym">:</span> <span class="kwb">bool</span><span class="sym">;
+</span>		lock <span class="sym">:</span> Mutex.t<span class="sym">;
+</span>		cond <span class="sym">:</span> Condition.t <span class="sym">};;
+
+</span><span class="kwa">let</span> makeThread <span class="sym">() =
+	{</span> message <span class="sym">=</span> ~<span class="num">-1</span><span class="sym">;</span> busy <span class="sym">=</span> <span class="kwa">false</span><span class="sym">;</span> lock <span class="sym">=</span> Mutex.create <span class="sym">();</span> cond <span class="sym">=</span> Condition.create <span class="sym">() };;
+
+</span><span class="kwa">let</span> put th msg <span class="sym">=
+</span>	Mutex.lock th.lock<span class="sym">;
+</span>	<span class="kwa">while</span> th.busy <span class="kwa">do</span> Condition.wait th.cond th.lock <span class="kwa">done</span><span class="sym">;
+</span>	th.busy <span class="sym">&lt;-</span> <span class="kwa">true</span><span class="sym">;</span> th.message <span class="sym">&lt;-</span> msg<span class="sym">;
+</span>	Condition.signal th.cond<span class="sym">;
+</span>	<span class="kwa">while</span> th.message <span class="sym">&lt;&gt;</span> ~<span class="num">-1</span> <span class="kwa">do</span> Condition.wait th.cond th.lock <span class="kwa">done</span><span class="sym">;
+</span>	th.busy <span class="sym">&lt;-</span> <span class="kwa">false</span><span class="sym">;
+</span>	Condition.signal th.cond<span class="sym">;
+</span>	Mutex.unlock th.lock<span class="sym">;;
+
+</span><span class="kwa">let</span> take th <span class="sym">=
+</span>	<span class="kwa">while</span> th.message <span class="sym">=</span> ~<span class="num">-1</span> <span class="kwa">do</span> Condition.wait th.cond th.lock <span class="kwa">done</span><span class="sym">;
+</span>	<span class="kwa">let</span> m <span class="sym">=</span> th.message <span class="kwa">in
+</span>		th.message <span class="sym">&lt;-</span> ~<span class="num">-1</span><span class="sym">;
+</span>		Condition.signal th.cond<span class="sym">;
+		(</span>succ m<span class="sym">);;
+
+</span><span class="kwa">let</span> link th next <span class="sym">=
+</span>	<span class="kwa">while true do</span> put next <span class="sym">(</span>take th<span class="sym">)</span> <span class="kwa">done</span><span class="sym">;;
+
+</span><span class="kwa">let rec</span> endLink th count final <span class="sym">=
+</span>	<span class="kwa">let</span> cnt <span class="sym">=</span> count <span class="sym">+ (</span>take th<span class="sym">)</span> <span class="kwa">in
+	if</span> cnt <span class="sym">&lt;</span> final <span class="kwa">then</span> endLink th cnt final
+	<span class="kwa">else</span> <span class="sym">(</span>print_int cnt<span class="sym">;</span> print_newline <span class="sym">());;
+
+</span><span class="kwa">let rec</span> loop th n <span class="sym">=
+</span>	<span class="kwa">if</span> n <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span> <span class="sym">(</span>put th <span class="num">0</span><span class="sym">;</span> loop th <span class="sym">(</span>pred n<span class="sym">));;
+
+</span><span class="kwa">let</span> _ <span class="sym">=
+</span>	<span class="kwa">let</span> length <span class="sym">=</span> <span class="num">3000</span> <span class="kwa">and</span> n <span class="sym">=</span> int_of_string Sys.argv.<span class="sym">(</span><span class="num">1</span><span class="sym">)</span> <span class="kwa">in
+	let</span> thEnd <span class="sym">=</span> makeThread <span class="sym">()</span> <span class="kwa">in
+	let</span> chainEnd <span class="sym">=</span> Thread.create <span class="sym">(</span>endLink thEnd <span class="num">0</span><span class="sym">) (</span>n<span class="sym">*</span>length<span class="sym">)</span> <span class="kwa">in
+	let rec</span> mkLinks n next <span class="sym">=
+</span>		<span class="kwa">if</span> n <span class="sym">&lt;</span> <span class="num">1</span> <span class="kwa">then</span> next
+		<span class="kwa">else
+			let</span> cur <span class="sym">=</span> makeThread <span class="sym">()</span> <span class="kwa">in
+</span>				<span class="sym">(</span>ignore <span class="sym">(</span>Thread.create <span class="sym">(</span>link cur<span class="sym">)</span> next<span class="sym">);</span> mkLinks <span class="sym">(</span>pred n<span class="sym">)</span> cur<span class="sym">)</span> <span class="kwa">in
+	let</span> firstLink <span class="sym">=</span> mkLinks <span class="sym">(</span>pred length<span class="sym">)</span> thEnd <span class="kwa">in
+</span>	ignore <span class="sym">(</span>Thread.create <span class="sym">(</span>loop firstLink <span class="sym">)</span> n<span class="sym">);
+</span>	Thread.join chainEnd<span class="sym">;;
+
+</span><span class="com">(* vim: ts=4, ft=ocaml *)</span>

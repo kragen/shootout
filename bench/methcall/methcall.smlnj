@@ -1,92 +1,37 @@
-(* -*- mode: sml -*-
- * $Id: methcall.smlnj,v 1.1 2004-05-19 18:10:41 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Stephen Weeks
+(* method.sml
+ *
+ *   Simple "method call" benchmark.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
-(* Based on methcall.gcc. *)
+structure Test:sig val main:string*string list->OS.Process.status end = struct
 
-structure Test : sig
-    val main : (string * string list) -> OS.Process.status
-end = struct
+    (* the "methods" (work for both Toggle and NthToggle "objects") *)
+    fun Activate (t as { a, r }) = (a (); t)
+    fun Value { a, r } = !r
 
-fun for (start, stop, f) =
-   let
-      fun loop i =
-	 if i > stop
-	    then ()
-	 else (f i; loop (i + 1))
-   in
-      loop start
-   end
+    (* constructor for Toggle *)
+    fun Toggle b = let val r = ref b in { a = fn() => r:=not(!r), r = r } end
 
-structure Toggle =
-   struct
-      datatype 'a t = T of {
-			    state: 'a ref,
-			    value: 'a t -> 'a,
-			    activate: 'a t -> 'a t
-			    }
+    (* constructor for NthToggle *)
+    fun NthToggle (b, m) =
+	let val (r, n) = (ref b, ref 0)
+	    fun a () =
+		let val i = !n+1 in if i>=m then (r:=not(!r); n:=0) else n:=i end
+	in { a = a, r = r } end
 
-      fun new state =
-	 T {state = ref state,
-	    value = fn T {state, ...} => !state,
-	    activate = fn this as T {state, ...} => (state := not(!state); this)}
+    (* activate n times, then print the value *)
+    fun loop t = let fun l 0 = print (Bool.toString (Value t) ^ "\n")
+		       | l i = (ignore (Value (Activate t)); l (i-1))
+		 in l end
 
-      fun activate (this as T {activate, ...}) = activate this
-      fun value (this as T {value, ...}) = value this
-   end
+    (* try first for a Toggle object, then for an NthToggle object... *)
+    fun main' n =
+	(loop (Toggle true) n; loop (NthToggle (true, 3)) n; OS.Process.success)
 
-structure Ntoggle =
-   struct
-      datatype 'a t = T of {
-			    state: 'a ref,
-			    value: 'a t -> 'a,
-			    activate: 'a t -> 'a t,
-			    countMax: int,
-			    counter: int ref
-			    }
-
-      fun new (state, countMax) =
-	 T {
-	    state = ref state,
-	    value = fn T {state, ...} => !state,
-	    activate = (fn this as T {state, counter, countMax, ...} =>
-			let
-			   val newCounter = 1 + !counter
-			   val _ = counter := newCounter
-			   val _ = 
-			      if !counter >= countMax
-				 then (state := not(!state);
-				       counter := 0)
-			      else ()
-			in
-			   this
-			end),
-	    countMax = countMax,
-	    counter = ref 0
-	    }
-
-      fun activate (this as T {activate, ...}) = activate this
-      fun value (this as T {value, ...}) = value this
-   end
-
-fun atoi s = case Int.fromString s of SOME num => num | NONE => 0
-fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
-   
-fun main (name, args) =
-   let
-      val n = atoi (hd (args @ ["1"]))
-      val v = ref true
-      val tog = Toggle.new true
-      val _ = for (0, n - 1, fn _ => v := Toggle.value (Toggle.activate tog))
-      val _ = print (if !v then "true\n" else "false\n")
-      val _ = v := true
-      val ntog = Ntoggle.new (!v, 3)
-      val _ = for (0, n - 1, fn _ => v := Ntoggle.value (Ntoggle.activate ntog))
-      val _ = print (if !v then "true\n" else "false\n")
-   in
-      OS.Process.success
-   end
+    (* driver: *)
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
 end
-
-val _ = SMLofNJ.exportFn("methcall", Test.main);
