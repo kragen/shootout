@@ -1,7 +1,8 @@
 -- By Ray Racine (Haskell newbie)
 -- Usage for 10 iterations:: regexp 10 < Input.txt
 
-import IO
+import Control.Monad
+import Data.Maybe
 import System (getArgs)
 import RegexString (matchRegex, mkRegex)
 
@@ -17,35 +18,19 @@ phoneMatch = matchRegex $ mkRegex regex
 	               "([0-9][0-9][0-9])" ++
 	               "[ -]"  ++
 	               "([0-9][0-9][0-9][0-9])" ++
-	               "[^0-9]"
-
-
-loadFile ls  = do
-	       eof <- hIsEOF stdin
-	       if (not eof)
-		  then do
-		         inStr <- hGetLine stdin
-			 loadFile ((inStr ++ "\n") : ls)
-		  else 
-		        return $ reverse ls
+		       "($|[^0-9])"
 
 canonicalPhone matchGrps = "(" ++ areacode ++ ") " ++ phnum
                            where areacode = let (_,b) = splitAt 2 matchGrps in
 					    (head b) ++ (head . tail $ b)
 				 phnum = let (_,b) = splitAt 4 matchGrps in
 					 (head b) ++ "-" ++ (head . tail) b	
-	  
-findPhoneNums [] = []
-findPhoneNums (l:ls) = case matchInLine l of
-		       [] -> findPhoneNums ls
-		       x  -> [x] ++ findPhoneNums ls
-                       where matchInLine = maybe [] canonicalPhone . phoneMatch
-		     
-main = do
-       args <- getArgs
-       lines <- loadFile []
-       let n = read . head $ args in 
-	       sequence_ $ map displayLn $ zip [1..] $ doIterations n lines
-       return ()
-       where displayLn (n,l) = do putStrLn $ show n ++ ": " ++ l
-	     doIterations n lines = last $ take n (repeat (findPhoneNums lines))
+
+matches l = return $ concatMap (fun . phoneMatch) l
+    where fun Nothing = []
+	  fun (Just v)= [canonicalPhone v]
+
+main = do [num] <- getArgs
+	  lined <- getContents >>= return . lines
+	  foldM (\n _ -> matches lined >>= \v -> n `seq` return $ n + length v) 0 [2..(read num)] 
+	  matches lined >>= foldM_ (\n v -> putStrLn (show n ++ ": " ++ v) >> return (n+1)) 1
