@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-24 07:38:07 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-25 07:57:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := except
@@ -11,6 +11,10 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore except.csharp \
 	  --ignore except.java \
+	  --ignore except.gij \
+	  --ignore except.gcj \
+	  --ignore except.kaffe \
+	  --ignore except.sablevm \
           --range 50000,100000,150000,200000
 
 include ../../Make.footer

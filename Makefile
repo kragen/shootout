@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-06-21 10:26:00 dbr-guest Exp $
+# $Id: Makefile,v 1.10 2004-06-25 07:57:48 bfulgham Exp $
 
 include Make.header
 
@@ -25,6 +25,7 @@ dist:
 	bin/make_dist
 
 report codelinks:
+	@bin/make_highlight
 	@(cd bench ; make --no-print-directory $@)
 
 craps:

@@ -38,7 +38,7 @@
         <div><a href="../../lang/perl/">perl</a></div>
         <div><a href="../../lang/pike/">pike</a></div>
         <div><a href="../../lang/gprolog/"><b><i>gprolog</i></b></a></div>
-        <div><b><i>psyco</i></b></div>
+        <div><a href="../../lang/psyco/"><b><i>psyco</i></b></a></div>
         <div><a href="../../lang/python/">python</a></div>
         <div><a href="../../lang/ruby/">ruby</a></div>
         <div><a href="../../lang/slang/">slang</a></div>

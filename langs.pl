@@ -122,7 +122,7 @@
        Home => 'http://www.cs.kun.nl/~clean/index.html',
        Down => 'http://www.cs.kun.nl/~clean/Download/main/main.htm',
        Type => 'native compiled',
-       Ext  => 'hs',
+       Ext  => 'haskell',
        Verfun => sub {
 	   my $ver = "Clean 2.1";
 	   return($ver);
@@ -236,7 +236,7 @@
        Home => 'http://www.haskell.org/',
        Down => 'http://www.haskell.org/ghc/',
        Type => 'native compiled',
-       Ext  => 'hs',
+       Ext  => 'haskell',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GHC} --version 2>&1`);
 	   return($ver);

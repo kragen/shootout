@@ -1,53 +1,40 @@
 %%% -*- mode: erlang -*-
-%%% $Id: sieve.erlang,v 1.1 2004-05-19 18:12:27 bfulgham Exp $
+%%% $Id: sieve.erlang,v 1.2 2004-06-25 07:57:50 bfulgham Exp $
 %%% http://www.bagley.org/~doug/shootout/
+%%% Based on code by Maurice Castro (see bottom of file).
+%%% Originally tweaked by Doug Bagley.
+%%% Further tweaked and shrunk by James Hague.
 
 -module(sieve).
--export([main/0, main/1]).
--import(io, [fwrite/2]).
--import(lists, [seq/2]).
--import(math, [sqrt/1]).
+-export([main/0, main/1, test/2]).
 
-%% get the program argument, which is how many test iterations
-%% to run
+% The sieve loop is spawned into its own process with a heap size of
+% 50,000 words.  With all of the list creation done by this benchmark,
+% much time is spent resizing the initially tiny heap.  Starting with
+% a larger heap improves execution time by ~20%.
+
 main() -> main(['1']).
-main(Arg) ->
-    [Tmp] = Arg,
-    Num = list_to_integer(atom_to_list(Tmp)),
-    test(Num),
-    halt(0).
+main([Arg]) ->
+    Num = list_to_integer(atom_to_list(Arg)),
+    spawn_opt(sieve, test, [self(), Num], [{min_heap_size, 50000}]),
+    receive Num_primes -> io:fwrite("Count: ~w\n", [Num_primes]) end.
+    halt().
 
-test(N) ->
-    Primes = primes(8192),
-    Count = length(Primes),
-    case N > 1 of
-	true  -> test(N-1);
-	false -> fwrite("Count: ~w\n", [Count])
+test(From, N) -> test(From, N, math:sqrt(8192), lists:seq(2, 8192)).
+
+test(From, N, Max, Seq) ->
+    Num_primes = length(era(Max, Seq)),
+    if
+        N > 1 -> test(From, N-1, Max, Seq);
+        true  -> From ! Num_primes
     end.
 
-primes(Size) ->
-    era(sqrt(Size), seq(2,Size)).
-
-
-%% modified from Maurice Castro's original (below), sped it up 
-%% a fraction by reordering clauses and args, but if it's less
-%% clear now, that's my fault.
-%% -Doug
-
 era(Max, [H|T]) when H =< Max ->
-    [H | era(Max, sieve([H|T], H))];
-era(Max, L) -> 
-    L.
-
-sieve([H|T], N) when H rem N =/= 0 ->
-    [H | sieve(T, N)];
-sieve([H|T], N) ->
-    sieve(T, N);
-sieve([], N) ->
-    [].
+    [H | era(Max, [X || X <- T, X rem H =/= 0])];
+era(Max, L) ->  L.
 
 
-%%% eratosthenes algorithm from Maurice Castro, with permission, 
+%%% Eratosthenes algorithm from Maurice Castro, with permission, 
 %%% from his book, _Erlang in Real Time_, ISBN: 0864447434
 %%% http://www.serc.rmit.edu.au/~maurice/erlbk/eg/choice/erasto.erl
 %
@@ -63,3 +50,4 @@ sieve([], N) ->
 %    sieve(N, T);
 %sieve(N, [H|T]) ->
 %    [H | sieve(N, T)].
+

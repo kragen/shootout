@@ -131,7 +131,8 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.2'
+      'Version' => '/usr/bin/erl: line 10: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: No such file or directory
+/usr/bin/erl: line 10: exec: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: cannot execute: No such file or directory'
     ),
 
     'erlang' => array(
@@ -139,7 +140,8 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.2'
+      'Version' => '/usr/bin/erl: line 10: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: No such file or directory
+/usr/bin/erl: line 10: exec: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: cannot execute: No such file or directory'
     ),
 
     'gforth' => array(
@@ -293,7 +295,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://psyco.sourceforge.net/',
       'Down'    => 'http://psyco.sourceforge.net/download.html',
       'Type'    => 'native compiled',
-      'Version' => '0.9'
+      'Version' => '1.2'
     ),
 
     'python' => array(
