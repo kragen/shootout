@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: ary.tcl,v 1.1 2004-05-19 18:09:16 bfulgham Exp $
+# $Id: ary.tcl,v 1.2 2004-05-22 07:25:00 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 # this program is modified from:
@@ -11,15 +11,17 @@
 proc main {} {
     global argv
     set n [lindex $argv 0]
-
-    for {set i 0} {$i < $n} {incr i} {
-	set x($i) $i
-    }
     set last [expr {$n - 1}]
-    for {set j $last} {$j >= 0} {incr j -1} {
-	set y($j) $x($j)
+    for {set i 0} {$i < $n} {incr i} {
+	set x($i) [expr {$i + 1}]
+	set y($i) 0
     }
-    puts $y($last)
+    for {set k 0} {$k < 1000} {incr k} {
+	for {set j $last} {$j >= 0} {incr j -1} {
+	    set y($j) [expr {$x($j) + $y($j)}]
+	}
+    }
+    puts "$y(0) $y($last)"
 }
 
 main
