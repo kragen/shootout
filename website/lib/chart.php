@@ -11,7 +11,9 @@ require_once(BLIB);
 
 // DATA ////////////////////////////////////////////////////
 
-$Langs = ReadUniqueArrays('lang.csv');
+list($Incl,$Excl) = ReadIncludeExclude();
+
+$Langs = ReadUniqueArrays('lang.csv',$Incl);
 
 
 if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
@@ -25,9 +27,9 @@ if (($T==STARTUP)&&($S=='cpu')){ $S = 'fullcpu'; }
 
 // FILTER & SORT DATA ////////////////////////////////////////
 
-$Data = ReadSelectedDataArrays(DATA_PATH.'data.csv', $T);
+$Data = ReadSelectedDataArrays(DATA_PATH.'data.csv',$T,$Incl);
 
-list($Accepted) = FilterAndSortData($Langs,$Data,$S);
+list($Accepted) = FilterAndSortData($Langs,$Data,$S,$Excl);
 
 
 // CHART /////////////////////////////////////////////////////

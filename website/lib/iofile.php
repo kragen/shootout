@@ -10,7 +10,9 @@ require_once(LIB);
 
 // DATA ///////////////////////////////////////////
 
-$Tests = ReadUniqueArrays(DATA_PATH.'test.csv');
+list($Incl,$Excl) = ReadIncludeExclude();
+
+$Tests = ReadUniqueArrays('test.csv',$Incl);
 
 if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
 else { $T = 'ackermann'; }

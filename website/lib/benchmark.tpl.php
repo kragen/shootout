@@ -10,7 +10,7 @@ $Row = $Tests[$SelectedTest];
 $TestName = $Row[TEST_NAME];
 $TestTag = $Row[TEST_TAG];
 
-list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort);
+list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl);
 
 if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; } 
 else { $P1 = ''; }
@@ -63,8 +63,6 @@ if ($Sort=='cpu'){
 
 <table class="div">
 <tr><td colspan="5">
-
-<?  // MkVmlChart($Accepted,$Sort); // DEPRECATED ?>
 
 <img src="chart.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>"
    alt="<?=SortName($Sort);?> chart for the <?=$TestName;?> benchmark"

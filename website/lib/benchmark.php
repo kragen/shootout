@@ -10,10 +10,12 @@ require_once(LIB);
 
 // DATA ///////////////////////////////////////////
 
-$Tests = ReadUniqueArrays('test.csv');
+list($Incl,$Excl) = ReadIncludeExclude();
+
+$Tests = ReadUniqueArrays('test.csv',$Incl);
 uasort($Tests, 'CompareTestName');
 
-$Langs = ReadUniqueArrays('lang.csv');
+$Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
 if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
@@ -55,7 +57,7 @@ if ($T=='all'){
       unset($Weights['test'],$Weights['lang'],$Weights['id'],$Weights['sort']);
       $Body->set('W', $Weights);  
 
-      $Body->set('Data', ScoreData(DATA_PATH.'data.csv', $Tests, $Langs)); 
+      $Body->set('Data', ScoreData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl)); 
 
    } else {           // Ranking 
    
@@ -67,7 +69,7 @@ if ($T=='all'){
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
-      $Body->set('Rank', RankData(DATA_PATH.'data.csv', $Langs, $L));    
+      $Body->set('Rank', RankData(DATA_PATH.'data.csv', $Langs, $L, $Incl, $Excl));    
   
    }
 } elseif ($L=='all'){ // Benchmark 
@@ -80,7 +82,7 @@ if ($T=='all'){
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php'; 
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
-      $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, DATA_TEST, DATA_LANG) );
+      $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );
 
 } else {              // Program
 
@@ -99,7 +101,7 @@ if ($T=='all'){
       $AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php'; 
       if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
-      $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, DATA_TEST, DATA_LANG) );      
+      $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );      
       $Body->set('Code', HtmlFragment( CODE_PATH.$T.SEPARATOR.$L.$Id.'.code' ));    
       $Body->set('Log', HtmlFragment( LOG_PATH.$T.SEPARATOR.$L.$Id.'.log' ));
       $Body->set('Id', $I);
@@ -119,6 +121,7 @@ $Body->set('SelectedTest', $T);
 $Body->set('Langs', $Langs);
 $Body->set('SelectedLang', $L);
 $Body->set('Sort', $S);
+$Body->set('Excl', $Excl);
 
 $About->set('SelectedTest', $T);
 $About->set('SelectedLang', $L);

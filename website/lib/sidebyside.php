@@ -11,11 +11,14 @@ require_once(LIB);
 // DATA ///////////////////////////////////////////
 
 
-$Tests = ReadUniqueArrays('test.csv');
+list($Incl,$Excl) = ReadIncludeExclude();
+
+$Tests = ReadUniqueArrays('test.csv',$Incl);
 uasort($Tests, 'CompareTestName');
 
-$Langs = ReadUniqueArrays('lang.csv');
+$Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
+
 
 if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
 else { $T = 'ackermann'; }
@@ -57,7 +60,7 @@ $TemplateName = 'sidebyside.tpl.php';
 $AboutTemplateName = 'sidebyside-about.tpl.php'; 
 if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
-$Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'ndata.csv', $T, DATA_TEST, DATA_LANG) );
+$Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'ndata.csv', $T, $Incl) );
 
 
  
@@ -74,6 +77,7 @@ $Body->set('SelectedTest', $T);
 $Body->set('Langs', $Langs);
 $Body->set('SelectedLang', $L);
 $Body->set('Sort', $S);
+$Body->set('Excl', $Excl);
 
 $Body->set('P1', $P1);
 $Body->set('P2', $P2);

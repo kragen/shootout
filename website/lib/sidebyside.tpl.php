@@ -6,7 +6,7 @@
 // FILTER & SORT DATA ////////////////////////////////////////
 
 $p = array($P1,$P2,$P3,$P4);
-list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,$Sort,$p);
+list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,$Sort,$p,$Excl);
 
 $cols = sizeof($TestValues) + 1;
 

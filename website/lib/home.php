@@ -16,12 +16,13 @@ else { $S = 'cpu'; }
 
 // DATA ////////////////////////////////////////////////
 
-$Tests = ReadUniqueArrays('test.csv');
+list($Incl,$Excl) = ReadIncludeExclude();
+
+$Tests = ReadUniqueArrays('test.csv',$Incl);
 uasort($Tests, 'CompareTestName');
 
-$Langs = ReadUniqueArrays('lang.csv');
+$Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
-
 
 // TEMPLATE VARS /////////////////////////////////////////// 
 

@@ -11,7 +11,9 @@ require_once(BLIB);
 
 // DATA ////////////////////////////////////////////////////
 
-$Langs = ReadUniqueArrays('lang.csv');
+list($Incl,$Excl) = ReadIncludeExclude();
+
+$Langs = ReadUniqueArrays('lang.csv',$Incl);
 
 
 if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
@@ -35,9 +37,9 @@ else { $P4 = ''; }
 
 // FILTER & SORT DATA ////////////////////////////////////////
 
-$nd = ReadSelectedDataArrays(DATA_PATH.'ndata.csv', $T);
+$nd = ReadSelectedDataArrays(DATA_PATH.'ndata.csv',$T,$Incl);
 $p = array($P1,$P2,$P3,$P4);
-list($NData,$Selected,$TestValues) = ComparisonData($Langs,$nd,$S,$p);
+list($NData,$Selected,$TestValues) = ComparisonData($Langs,$nd,$S,$p,$Excl);
 usort($Selected,'CompareMaxMemory');
 
 
