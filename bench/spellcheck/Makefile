@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:12:59 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-25 02:26:33 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -13,16 +13,17 @@ setup:
 	@[ -f tmp/Usr.Dict.Words ] || (cd tmp ; ln -s ../Usr.Dict.Words . )
 
 
-MLTONDEPS := /usr/local/smlnj/src/smlnj-lib/Util/hash-string.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/hash-table-rep.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/hash-table-sig.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/hash-table.sml
+MLTONDEPS := ../../Include/sml-src/hash-string.sml \
+             ../../Include/sml-src/hash-table-rep.sml \
+             ../../Include/sml-src/hash-table-sig.sml \
+             ../../Include/sml-src/hash-table.sml
 
 GCCOPTS := -I ../../Include
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,4,7,10 \
 	  --ignore spellcheck.se \
+	  --ignore spellcheck.erlang \
 	  --inputfile Input --geninput \
 	  --title "$(TITLE)" $(TEST).*
 
