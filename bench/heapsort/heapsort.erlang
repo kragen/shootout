@@ -1,7 +1,7 @@
 %% The Great Computer Language Shootout
-%% contributed by Isaac Gouy (Erlang novice)
-%%
 %% http://shootout.alioth.debian.org/
+%% contributed by Isaac Gouy (Erlang novice)
+%% 20040619: Nicolas Niclausse: use ets instead of tuples.
 %%
 %% Quick and Dirty transliteration from the Mercury solution
 %% with +1 adjustment for array indexes. 
@@ -15,64 +15,66 @@
 -export([main/1]). 
 
 random_heap(I, Seed, H) ->
-    if 
-        I < size(H) -> 
+    case I < ets:info(H,size) of
+        true -> 
             {NextSeed, R} = gen_random(Seed),
             random_heap(I+1, NextSeed, up_heap(I, R, H));
-        true -> H
+        false -> H
     end.
-
 
 up_heap(N, Y, H) ->
     HalfN = N div 2,
-    X = element(HalfN+1, H), %%%% +1
-    Condition = 0 < N andalso X < Y,
-    if 
-        Condition -> up_heap(HalfN, Y, setelement(N+1, H, X)); %%%% +1
-        true -> setelement(N+1, H, Y) %%%% +1
+    X = ets:lookup_element(H, HalfN+1, 2), %%%% +1
+    case 0 < N andalso X < Y of
+        true -> up_heap(HalfN, Y, ets_setelement(N+1, H, X)); %%%% +1
+        false -> ets_setelement(N+1, H, Y) %%%% +1
     end.
-
 
 heapsort(0, H) -> H;
 heapsort(N, H) -> heapsort(N-1, remove_greatest(N, H)).
 
-
 remove_greatest(N, H) ->
-    X = element(0+1, H), %%%% +1
-    Y = element(N+1, H), %%%% +1
-    down_heap(0, N-1, Y, setelement(N+1, H, X)). %%%% +1
-
+    X = ets:lookup_element(H, 0+1, 2), %%%% +1
+    Y = ets:lookup_element(H, N+1, 2), %%%% +1
+    down_heap(0, N-1, Y, ets_setelement(N+1, H, X)). %%%% +1
 
 down_heap(I, N, X, H) -> 
     L = I + I + 1,
     R = L + 1,
-    if
-        N < L -> 
-            setelement(I+1, H, X); %%%% +1
+    case N < L of
         true ->
-            Condition = R < N andalso element(R+1, H) > element(L+1, H), %%%% +1
-            J = if 
-                   Condition -> R;
-                   true -> L
+            ets_setelement(I+1, H, X); %%%% +1
+        false ->
+            J = case R < N andalso ets:lookup_element(H, R+1, 2) > ets:lookup_element(H, L+1, 2) of %%%% +1
+                    true -> R;
+                    false -> L
                 end,
-            Y = element(J+1, H),
-            if
-                X > Y -> setelement(I+1, H, X); %%%% +1
-                true -> down_heap(J, N, X, setelement(I+1, H, Y)) %%%% +1
+            Y = ets:lookup_element(H, J+1, 2),
+            case X > Y of
+	        true -> ets_setelement(I+1, H, X); %%%% +1
+                false -> down_heap(J, N, X, ets_setelement(I+1, H, Y)) %%%% +1
             end
     end.
 
+ets_setelement(N,H,X)->
+    ets:insert(H,{N,X}),
+    H.
+
+clear_ets_array(H,0) -> ok;
+clear_ets_array(H,I) ->
+    ets:insert(H, {I,0}),
+    clear_ets_array(H,I - 1).
 
 gen_random(Seed) ->
     IM = 139968, IA = 3877, IC = 29573,
     S = ((Seed * IA) + IC) rem IM,
     {S, S/IM}.
 
-
 main([Arg]) ->
     N = list_to_integer(atom_to_list(Arg)),
-    Seed = 42,
-    RandomHeap = random_heap(0, Seed, erlang:make_tuple(N, 0.0)),
+    ets:new(h, [set, private, named_table]),
+    clear_ets_array(h,N),
+    RandomHeap = random_heap(0, 42, h),
     SortedHeap = heapsort(N-1, RandomHeap),
-    io:fwrite("~.10f~n", [element(N, SortedHeap)]),            
+    io:fwrite("~.10f~n", [ets:lookup_element(SortedHeap, N, 2)]),            
     halt(0).

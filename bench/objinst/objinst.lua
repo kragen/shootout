@@ -1,4 +1,4 @@
--- $Id: objinst.lua,v 1.3 2004-07-04 07:29:52 bfulgham Exp $
+-- $Id: objinst.lua,v 1.4 2004-07-04 22:26:59 bfulgham Exp $
 -- http://shootout.alioth.debian.org/
 -- contributed by Roberto Ierusalimschy
 
@@ -65,7 +65,7 @@ function main ()
     local ntoggle = NthToggle:new(1, 3)
     for i=1,8 do
       ntoggle:activate()
-      print(toggle:value() and "true" or "false")
+      print(ntoggle:value() and "true" or "false")
     end
     for i=1,N do
       ntoggle = NthToggle:new(1, 3)
