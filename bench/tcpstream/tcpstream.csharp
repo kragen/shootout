@@ -1,0 +1,84 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org
+
+   contributed by Isaac Gouy */
+
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Diagnostics;
+
+class tcprequest
+{
+   const int M = 1; // multiplier
+   const int REPLY_SIZE = 409600;
+   const int REQUEST_SIZE = 64;
+   const int BUFFER_SIZE = 1024;
+
+   static byte[] REPLY = new byte[REPLY_SIZE];
+   static byte[] REQUEST = new byte[REQUEST_SIZE];
+
+
+   static void Main(string[] args){
+      int n = 1;
+      if (args.Length > 0){
+         n = Int32.Parse(args[0]) * M;
+
+         Process p = new Process();
+         ProcessStartInfo i = p.StartInfo;
+         i.FileName = "mono";
+         i.Arguments = "tcpstream.csharp_run";
+         i.UseShellExecute = false;
+         p.Start();
+
+         Client.Start(n);
+      }
+      else {
+         Listener.Start();
+      }
+   }
+
+
+   class Listener 
+   {
+      public static void Start() {
+         TcpListener listener = new TcpListener(11000);
+         listener.Start();
+      
+         using (TcpClient client = listener.AcceptTcpClient()){
+            NetworkStream s = client.GetStream();
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            while (s.Read(buffer, 0, REQUEST_SIZE) > 0)
+               s.Write(REPLY, 0, REPLY_SIZE);
+         } 
+         listener.Stop();
+      }
+   }
+
+
+   class Client 
+   {
+      public static void Start(int n) {
+         byte[] buffer = new byte[BUFFER_SIZE];
+         int replies = 0, bytes = 0;
+
+         using (TcpClient client = new TcpClient("127.0.0.1",11000)){     
+            int byteCount = 0;
+            NetworkStream s = client.GetStream();         
+
+            while (n-- > 0){
+               s.Write(REQUEST, 0, REQUEST.Length);
+               while ((byteCount += s.Read(buffer, 0, buffer.Length)) < REPLY_SIZE){}
+
+               bytes += byteCount;
+               byteCount = 0;
+               replies++;
+            }
+         } 
+         Console.WriteLine("replies: {0}\tbytes: {1}", replies, bytes);
+      }
+   }
+}
