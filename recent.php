@@ -1,4 +1,5 @@
-<?php $title = "Recent Shootout Changes";
+<?php $base=".";
+      $title = "Recent Shootout Changes";
       $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");

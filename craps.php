@@ -1,4 +1,5 @@
-<?php $title="Computer Language Shootout Scorecard";
+<?php $base=".";
+      $title="Computer Language Shootout Scorecard";
       $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");

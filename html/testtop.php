@@ -1,4 +1,5 @@
-<?php require("../../html/header.php");
+<?php $base="../..";
+      require("../../html/header.php");
       require("../../html/nav.php");
       require("../../html/toptabs.php");
       require("../../html/datafuncs.php");

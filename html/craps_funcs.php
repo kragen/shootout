@@ -1,11 +1,11 @@
 <?php
-# $Id: craps_funcs.php,v 1.1 2004-06-07 21:23:07 bfulgham Exp $
+# $Id: craps_funcs.php,v 1.2 2004-06-21 10:38:16 dbr-guest Exp $
 
 require 'langs.inc';
 
 $weight = array(
      'ackermann' => 1,
-     'ary3' => 3,
+     'ary' => 3,
      'echo' => 5,
      'except' => 1,
      'fibo' => 2,
@@ -33,7 +33,7 @@ $weight = array(
 
 function do_craps($query_string)
 {
-    global $LANGS, $weight;
+    global $LANGS, $weight, $base;
 
     $M2INWT = 0;
     $MAXWT = 5;
@@ -66,7 +66,7 @@ function do_craps($query_string)
 	}
     }
 
-    $craps_lines = file("http://shootout.alioth.debian.org/.craps.table");
+    $craps_lines = file("$base/.craps.table");
 
     foreach ($craps_lines as $line_no => $line)
     {

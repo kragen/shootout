@@ -1,4 +1,5 @@
-<?php $title="The Great Computer Language Shootout";
+<?php $base=".";
+      $title="The Great Computer Language Shootout";
       $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");

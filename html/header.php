@@ -11,8 +11,8 @@
     echo "<meta name=\"keywords\" contents=\"$keywords\">\n";
   ?>
   <meta name="keywords" content="performance, benchmark, computer, algorithms, languages, compare, cpu, memory"> 
-  <link REL="stylesheet" TYPE="text/css" HREF="/css/tigris.css" />
-  <link REL="stylesheet" TYPE="text/css" HREF="/css/inst.css" />
+  <link REL="stylesheet" TYPE="text/css" HREF="<?php global $base; echo $base; ?>/css/tigris.css" />
+  <link REL="stylesheet" TYPE="text/css" HREF="<?php global $base; echo $base; ?>/css/inst.css" />
 </head>
 <body onload="focus()" marginwidth="0" marginheight="0" class="composite">
   <div id="banner">

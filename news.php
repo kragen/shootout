@@ -1,4 +1,5 @@
-<?php $title="Shootout News";
+<?php $base=".";
+      $title="Shootout News";
       $keywords = "performance, benchmark, computer, algorithms, languages, compare, cpu, memory";
       require("html/header.php");
       require("html/toptabs.php");

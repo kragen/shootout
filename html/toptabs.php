@@ -2,14 +2,16 @@
 
 function toptabs($current)
 {
+	global $base;
+
 	$tablist = array(
-		"/index.php" => "Introduction",
-		"/langs.php" => "Languages",
-		"/docs.php" => "Documentation",
-		"/news.php" => "News",
-		"/lang/bash" => "Implementations",
-		"/craps.php" => "Scorecard",
-		"/recent.php" => "Recent Changes",
+		"$base/index.php" => "Introduction",
+		"$base/langs.php" => "Languages",
+		"$base/docs.php" => "Documentation",
+		"$base/news.php" => "News",
+		"$base/lang/bash" => "Implementations",
+		"$base/craps.php" => "Scorecard",
+		"$base/recent.php" => "Recent Changes",
 		"http://lists.alioth.debian.org/mailman/listinfo/shootout-list" => "Mailing List",
 		"http://shootout.alioth.debian.org/wiki" => "Wiki",
 		"http://alioth.debian.org/projects/shootout" => "Alioth");
