@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-03-17 22:06:44 ekarttun-guest Exp $
+# $Id: Makefile,v 1.3 2005-03-18 03:44:06 bfulgham Exp $
 include ../../Make.header
 
 TEST    := harmonic
@@ -10,6 +10,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 
 BIGLOOOPTS := -farithmetic
+OCAMLOPTS := -inline 100
+OCAMLBOPTS := -inline 100
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
