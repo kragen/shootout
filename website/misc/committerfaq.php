@@ -94,6 +94,17 @@ If there's already a <em>nsieve.ruby</em> then rename the new source-code file a
 </li>
 </ul>
 <p>After committing the source-files to CVS <strong>update the status</strong> of the corresponding Contribute Programs items from <em>Open</em> to <em>Pending</em>.</p>
+<p>Mark the <em>Resolution</em> of the Contribute Programs item as Accepted.</p>
+</td></tr>
+
+<tr class="b"><td>Is there a problem with the contributed program?</td></tr>
+<tr><td>
+<p>Mark the <em>Resolution</em> of the Contribute Programs item as Invalid or Rejected or Duplicate. Mark the status Deleted. Explain why in the comment field.</p>
+</td></tr>
+
+<tr class="b"><td>&nbsp;Did the program run OK?</td></tr>
+<tr><td>
+<p><strong>Update the status</strong> of the corresponding Contribute Programs item from <em>Pending</em> to <em>Closed</em>.</p>
 </td></tr>
 
 
