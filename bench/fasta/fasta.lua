@@ -47,6 +47,7 @@ local function makeRandomFasta(id,desc,a,n)
       io.write("\n")  
       todo = todo - length     
    end   
+   io.write("\n")
 end
 
 

@@ -1117,6 +1117,7 @@
 
      # Overrides for specific languages, which seem to belong to a different
      # family that their languages hints at
+     'ifc'         => 'c',
      'rep'         => 'scheme',
      'mzc'         => 'scheme',
      'mzscheme'    => 'scheme',
