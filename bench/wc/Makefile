@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-07-31 09:19:08 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-08-04 07:40:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -11,6 +11,7 @@ MB_GHCRTS  := +RTS -M200m -K10m
 STALINOPTS := -q
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 500,1000,1500,2000 \

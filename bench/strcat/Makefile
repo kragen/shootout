@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-07-31 09:19:07 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-08-04 07:40:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := strcat
@@ -6,6 +6,7 @@ TITLE   := String Concatenation
 
 OCAMLOPTS := unix.cmxa
 OCAMLBOPTS := unix.cma
+OO2COPTS := -A --no-rtc
 
 GHCOPTS := -package lang
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \

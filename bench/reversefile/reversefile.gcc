@@ -2,11 +2,15 @@
  * from Alan Post <apost@recalcitrant.org>
  */
 
+#define __need_IOV_MAX
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <limits.h>
+#include <sys/uio.h>
 
 /*
  * Note that malloc(3) seems happier with chunks of 4096
@@ -19,9 +23,9 @@ typedef struct buf_t { char d[MAXREAD];
 
 static buf_t *read_lines( buf_t *tail )
 {
+    buf_t *curr = tail;
     tail->next = NULL;
 
-    buf_t *curr = tail;
     while ( 1 )
     {
         int nread = read( STDIN_FILENO, curr->d, MAXREAD );
@@ -33,12 +37,24 @@ static buf_t *read_lines( buf_t *tail )
     }
 }
 
-#define WRITEOUT \
+#define WRITEOUT( p_, l_ ) \
         do { \
-                fwrite( pos, end - pos, 1, stdout ); \
-                for (; loh != NULL; loh = loh->next ) \
-                    fwrite( loh->d, loh->len, 1, stdout ); \
+		vec[ ivec ].iov_base = (char*) (p_); \
+		vec[ ivec ].iov_len = (int) (l_); \
+		++ivec; \
+		if (ivec == IOV_MAX) \
+		{ \
+			writev( STDOUT_FILENO, vec, ivec ); \
+			ivec = 0; \
+		} \
         } while (0)
+
+#define LINEOUT \
+	do { \
+		WRITEOUT( pos, end - pos); \
+		for (; loh != NULL; loh = loh->next ) \
+			WRITEOUT( loh->d, loh->len ); \
+	} while (0)
 
 int main(int argc, char *argv[]) {
     buf_t tail;
@@ -46,6 +62,9 @@ int main(int argc, char *argv[]) {
 
     buf_t *loh = NULL;
     buf_t *curr = head;
+
+    struct iovec vec[ IOV_MAX ];
+    size_t ivec = 0;
 
     while ( 1 )
     {
@@ -60,7 +79,8 @@ int main(int argc, char *argv[]) {
 
                 if (new_curr == NULL )
                 {
-                    WRITEOUT;
+                    LINEOUT;
+		    writev( STDOUT_FILENO, vec, ivec);
                     return(EXIT_SUCCESS);
                 }
 
@@ -73,7 +93,7 @@ int main(int argc, char *argv[]) {
             }
             if ( *(pos-1) == '\n' )
             {
-                WRITEOUT;
+                LINEOUT;
                 end = pos;
             }
         }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2004-07-31 09:19:03 bfulgham Exp $
+# $Id: Makefile,v 1.8 2004-08-04 07:39:54 bfulgham Exp $
 include ../../Make.header
 
 TEST    := objinst
@@ -8,6 +8,7 @@ ERLFLAGS := -noinput
 LOCDEPS := --dep=se:../Include/nth_toggle.e,../Include/toggle.e
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100000,400000,700000,1000000 \

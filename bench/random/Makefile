@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-07-31 09:19:04 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-08-04 07:39:54 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -13,6 +13,7 @@ ERLFLAGS := -noinput
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+OO2COPTS := -A --no-rtc
 
 #	  --ignore random.bigforth,random.icon,random.rep,random.njs \
 
