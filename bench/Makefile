@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:09:05 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-23 05:18:56 bfulgham Exp $
 
 TESTS = \
     hello \
     ackermann \
-    ary3 \
+    ary \
     echo \
     except \
     fibo \
