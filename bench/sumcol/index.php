@@ -40,6 +40,8 @@ sum a column" -->
   <li>Paul Foley contributed a couple alternates for CMUCL <a
   href="alt/sumcol.cmucl3.cmucl">[1]</a>, <a href="alt/sumcol.cmucl4.cmucl">
   [2]</a>.</li>
+  <li>John Goerzen contributed a very concise <a href="alt/sumcol.ghc2.ghc">
+  Haskell</a> implementation.  It's not as fast as the current version.</li>
 </ul>
 
 <h4>Acknowledgements</h4>
