@@ -237,7 +237,7 @@
        Down => 'http://www.mozart-oz.org/download',
        Type => 'interpreted',
        Verfun => sub {
-	   my $ver = `$ENV{OZ} -e d`;
+	   my $ver = `$ENV{OZC} -e d`;
 	   $ver =~ /(Mozart Compiler\s.*)/;
 	   return($1);
        },

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:13:33 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-28 02:58:45 bfulgham Exp $
 include ../../Make.header
 
 TEST    := strcat
@@ -8,6 +8,7 @@ OCAMLOPTS := unix.cmxa
 OCAMLBOPTS := unix.cma
 
 GHCOPTS := -package lang
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10000,20000,30000,40000 \
