@@ -1,0 +1,212 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Marius Amado Alves
+--
+-- gnatmake -O3 -gnatp word_frequency.adb
+
+with Ada.Streams;
+with Ada.Streams.Stream_IO;
+with Ada.Text_IO;
+with Ada.Text_IO.Text_Streams;
+
+procedure WordFreq is
+
+    use Ada.Streams;
+
+    Buffer : Stream_Element_Array (1 .. 4096);
+    Input_Stream : Ada.Text_IO.Text_Streams.Stream_Access
+      := Ada.Text_IO.Text_Streams.Stream (Ada.Text_IO.Current_Input);
+    N : Stream_Element_Offset;
+    Is_Separator : array (Stream_Element) of Boolean :=
+      (Character'Pos ('A') .. Character'Pos ('Z') |
+       Character'Pos ('a') .. Character'Pos ('z') => False,
+       others => True);
+
+    -- N-ary tree of word counts
+    -- used to increment the counts in one pass of the input file
+    -- branches on the letter
+    -- carries the count
+    -- very fast
+    -- but very space consuming
+
+    subtype Letter is Stream_Element range
+       Character'Pos ('a') .. Character'Pos ('z');
+    type Word is array (Positive range <>) of Letter;
+    type Tree;
+    type Tree_Ptr is access Tree;
+    type Node is
+       record
+          Count : Natural := 0;
+          Subtree : Tree_Ptr := null;
+       end record;
+    type Tree is array (Letter) of Node;
+
+    procedure Inc (X : in out Integer) is begin X := X + 1; end;
+    procedure Dec (X : in out Integer) is begin X := X - 1; end;
+    pragma Inline (Inc, Dec);
+
+    procedure Inc_Word (Parent : Tree_Ptr; Descendents : Word) is
+    begin
+       if Descendents'Length > 0 then
+          declare
+             Child_Index : Positive := Descendents'First;
+             Child : Letter renames Descendents (Child_Index);
+          begin
+             if Descendents'Length = 1 then
+                Inc (Parent (Child).Count);
+             else
+                if Parent (Child).Subtree = null then
+                   Parent (Child).Subtree := new Tree;
+                end if;
+                Inc_Word
+                  (Parent (Child).Subtree,
+                   Descendents (Child_Index + 1 .. Descendents'Last));
+             end if;
+          end;
+       end if;
+    end;
+
+    -- Binary tree of word counts
+    -- used for sorting the result by the count (frequency)
+    -- branches on the word count
+    -- carries the word form
+
+    type Form_Ptr is access Word;
+    type Binary_Tree;
+    type Binary_Tree_Ptr is access Binary_Tree;
+    type Binary_Tree is
+       record
+          Form : Form_Ptr;
+          Count : Natural;
+          Left, Right : Binary_Tree_Ptr;
+       end record;
+
+    procedure Add_Node (Parent : in out Binary_Tree_Ptr; 
+                        Form : Form_Ptr; Count : Natural) is
+    begin
+       if Parent = null then
+          Parent := new Binary_Tree;
+          Parent.Form := Form;
+          Parent.Count := Count;
+       else
+          if Count < Parent.Count then
+             Add_Node (Parent.Left, Form, Count);
+          else
+             Add_Node (Parent.Right, Form, Count);
+          end if;
+       end if;
+    end;
+
+    -- end of binary tree primitives
+
+    Root : Tree_Ptr := new Tree;
+    Btree : Binary_Tree_Ptr := null;
+    Current_Word : Word (1 .. 1000);
+    Current_Word_Length : Natural range 0 .. Current_Word'Last := 0;
+    In_Word : Boolean := False;
+
+    procedure Append_To_Word (E : Letter) is
+    begin
+       Inc (Current_Word_Length);
+       Current_Word (Current_Word_Length) := E;
+       In_Word := True;
+    end;
+
+    procedure End_Word is
+    begin
+       if Current_Word_Length > 0 then
+          Inc_Word (Root, Current_Word (1 .. Current_Word_Length));
+       end if;
+       Current_Word_Length := 0;
+       In_Word := False;
+    end;
+
+    To_Lower : array (Stream_Element) of Letter;
+
+    procedure Initialise_To_Lower_Map is
+       D : Integer := Character'Pos ('a') - Character'Pos ('A');
+    begin
+       for I in Character'Pos ('a') .. Character'Pos ('z') loop
+          To_Lower (Stream_Element (I)) := Letter (I);
+          To_Lower (Stream_Element (I - D)) := Letter (I);
+       end loop;
+    end;
+
+    procedure Process (S : Stream_Element_Array) is
+    begin
+       for I in S'Range loop
+          if Is_Separator (S (I)) then
+             if In_Word then End_Word; end if;
+          else
+             Append_To_Word (To_Lower (S (I)));
+          end if;
+       end loop;
+    end;
+
+    pragma Inline (Append_To_Word, End_Word, Process);
+
+    procedure Populate_Btree (Ntree : Tree_Ptr) is
+    begin
+       Inc (Current_Word_Length);
+       for I in Letter'Range loop
+          Current_Word (Current_Word_Length) := I;
+          if Ntree (I).Count > 0 then
+             Add_Node
+                (Btree,
+                 Form => new Word'(Current_Word (1 .. Current_Word_Length)),
+                 Count => Ntree (I).Count);
+          end if;
+          if Ntree (I).Subtree /= null then
+             Populate_Btree (Ntree (I).Subtree);
+          end if;
+       end loop;
+       Dec (Current_Word_Length);
+    end;
+
+    procedure Populate_Btree is
+    begin
+       Current_Word_Length := 0;
+       Populate_Btree (Root);
+    end;
+
+    function To_String (X : Form_Ptr) return String is
+       S : String (X'Range);
+    begin
+       for I in X'Range loop
+          S (I) := Character'Val (X (I));
+       end loop;
+       return S;
+    end;
+
+    subtype String7 is String (1 .. 7);
+
+    function Img7 (X : Natural) return String7 is
+       S : String := Natural'Image (X);
+    begin
+       return String' (1 .. 8 - S'Length => ' ') & S (2 .. S'Last);
+    end;
+
+    pragma Inline (To_String, Img7);
+
+    procedure Dump_Btree (X : Binary_Tree_Ptr := Btree) is
+    begin
+       if X /= null then
+          Dump_Btree (X.Right);
+          Ada.Text_IO.Put_Line
+            (Img7 (X.Count) & " " & To_String (X.Form));
+          Dump_Btree (X.Left);
+       end if;
+    end;
+
+begin
+    Initialise_To_Lower_Map;
+    loop
+       Read (Root_Stream_Type'Class (Input_Stream.all), Buffer, N);
+       Process (Buffer (1 .. N));
+       exit when N < Buffer'Length;
+    end loop;
+    if In_Word then End_Word; end if;
+    Populate_Btree;
+    Dump_Btree;
+end;
