@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004 ?>
+<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
 <?
 if (LANGS_PHRASE){ $LangsPhrase = LANGS_PHRASE; } else { $LangsPhrase = ''; }

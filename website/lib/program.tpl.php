@@ -1,18 +1,14 @@
-<?   // Copyright (c) Isaac Gouy 2004 ?>
-
+<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
 <!-- // MENU /////////////////////////////////////////////////// -->
-
 <div>
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); 
 $TestName = $Tests[$SelectedTest][TEST_NAME];
 $LangName = $Langs[$SelectedLang][LANG_FULL];
-
 $P = $SelectedLang.'-'.$Id;
 ?>
 </div>
-
 <div>
 <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=all&sort=<?=$Sort;?>"
 title="Compare performance on the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
@@ -26,18 +22,12 @@ title="Choose programs for side-by-side comparison" >side-by-side&nbsp;compariso
 </div>
 
 <!-- // TAG /////////////////////////////////////////////////// -->
-
 <table class="div">
-
 <tr><td>
 <h4 class="rev">&nbsp;<?=$Title;?></h4>
 </td></tr>
-
-
 <!-- // SUMMARY TABLE //////////////////////////////////////// -->
-
 <tr><td><table>
-
 <tr>
 <th>&nbsp;N&nbsp;</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
@@ -45,8 +35,6 @@ title="Choose programs for side-by-side comparison" >side-by-side&nbsp;compariso
 <th>CPU Time&nbsp;s</th>
 <th>Code Lines</th>
 </tr>
-
-
 <?
 if (isset($Data[$SelectedLang])){   
    foreach($Data[$SelectedLang] as $d){                 
@@ -57,7 +45,6 @@ if (isset($Data[$SelectedLang])){
             } else { 
                $kb = number_format((double)$d[DATA_MEMORY]); 
             }
-
             if ($SelectedTest==STARTUP){ 
                $cpu = '&nbsp;'; 
             } else { 
@@ -69,10 +56,7 @@ if (isset($Data[$SelectedLang])){
             if ($d[DATA_FULLCPU]==PROGRAM_TIMEOUT){ $cpu = 'Timout'; }
             if ($d[DATA_FULLCPU]==PROGRAM_ERROR){ $cpu = 'Error'; }         
          }
-         
-         if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }
-
-         
+         if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }        
          printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td></tr>', 
             $n,$fullcpu,$kb,$cpu,$d[DATA_LINES]); echo "\n";
       }
@@ -81,32 +65,21 @@ if (isset($Data[$SelectedLang])){
    echo '<tr class="a"><td></td> <td></td> <td></td> <td></td></tr>'; echo "\n";
 }        
 ?>
-
 </table></td></tr>
 </table>
-
 <!-- // SOURCE CODE //////////////////////////////////////// -->
-
 <table class="div">
-
 <tr><td><pre><?=$Code;?></pre></td></tr> 
-
-
 <!-- // BUILD ///////////////////////////////////////////////// -->
-
 <table class="div">
 <tr><td>
 <h4 class="rev">&nbsp;build & benchmark results</h4>
 </td></tr>
 </table>
-
 <table class="div">
 <tr><td><pre><?=$Log;?></pre></td></tr>
 </table> 
-
-
 <!-- // ABOUT /////////////////////////////////////////////////// -->
-
 <table class="div">
 <tr><td><h4 class="rev">&nbsp;about the program</h4></td></tr>
 <tr><td><?=$About;?></td></tr>  

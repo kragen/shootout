@@ -1,21 +1,11 @@
 <?   // Copyright (c) Isaac Gouy 2004 ?>
-
-
 <div>This FAQ is short. You can read it really quickly.</div>
 
-
-
-
 <!-- WHERE CAN I? ////////////////////////////////////////////////// -->
-
 <table class="div">
 <tr><td><h3 class="rev">&nbsp;Where can I&#133;?</h3></td></tr>
-
-
 <tr class="b"><td>Where can I send <b>suggestions</b> and comments and programs?</td></tr>
-
 <tr><td><p>You can send suggestions and comments without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <b>message form</b></a>.
-
  You can contribute faster more-elegant programs - send them, and your suggestions, to the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><b>mailing list</b></a>.</p></td></tr>
 
 

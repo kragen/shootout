@@ -8,6 +8,7 @@ define('LIB_PATH', '../../lib/');
 define('LIB', '../../lib/lib.php');
 define('BLIB', '../../lib/blib.php');
 
+define('DESC_PATH', '../../desc/');
 define('DATA_PATH', '../../data/');
 define('ABOUT_PATH', '../../about/');
 define('ABOUT_PROGRAMS_PATH', '../../about/programs/');

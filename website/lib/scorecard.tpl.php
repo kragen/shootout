@@ -1,13 +1,10 @@
-<?   // Copyright (c) Isaac Gouy 2004 ?>
-
+<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
 <!-- // MENU /////////////////////////////////////////////////// -->
 
 <div>
 <? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); ?>
 </div>
-
-
 
 
 <!-- // TAG /////////////////////////////////////////////////// -->
@@ -18,16 +15,15 @@
 </td></tr>
 <tr><td colspan="2">
 <p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
-<p>And remember, "for every complex question, there is an answer which is simple, understandable, pleasant, <b>and plain wrong</b>."</p>
+<p>And remember "For every complex problem, there is a solution that is simple, neat, <b>and wrong</b>."</p>
 </td></tr> 
-
 
 
 <?  // SET WEIGHTS /////////////////////////////////////
 
 if (sizeof($W)==0){ // populate weights
 
-   // should define these in config or somewhere
+// should define these in config or somewhere
 //   $W['xcpu'] = 0; 
    $W['xfullcpu'] = 1;
    $W['xmem'] = 0;
@@ -47,7 +43,7 @@ foreach($W as $k => $v){
    elseif ($v < $minWeight){ $W[$k] = $minWeight; }
 }
 
-    // CALCULATE WEIGHTED SCORES /////////////////////////////////////
+// CALCULATE WEIGHTED SCORES /////////////////////////////////////
 
 foreach($Data as $k => $test){
    $s = 0.0;
@@ -68,8 +64,6 @@ uasort($score, 'CompareScore');
 
 ?>
 
-
-
 <tr>
 
 <!-- // SCORECARD LANGUAGE TABLE ///////////////////////////////////// -->
@@ -87,19 +81,13 @@ uasort($score, 'CompareScore');
 
 $RowClass = 'c';
 foreach($score as $k => $v){   
-  
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
-
    printf('<tr class="%s">',$RowClass); echo "\n";
-
    printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="%s benchmark rankings and information">%s</a></td>', 
       $k,$Sort,$Name,$HtmlName); echo "\n";
-
    printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";
-
    echo "</tr>\n";
-
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
@@ -116,10 +104,7 @@ foreach($score as $k => $v){
 <input type="hidden" name="lang" value="all" />
 <input type="hidden" name="sort" value="<?=$Sort;?>" />
 
-
-
 <table>
-
 <tr class="c">
 <td><input type="submit" value="Calculate" /></td>
 <td><input type="reset" value="Reset" /></td>
@@ -149,9 +134,7 @@ foreach($score as $k => $v){
 
 <!-- THIS IS JUST FOR SPACING! SHOULD USE CSS! -->
 <tr class="c"><td>&nbsp;</td><td>&nbsp;</td></tr>
-
 <tr><th>benchmark</th><th>weight</th></tr>
-
 
 <?  
 $RowClass = 'c';
@@ -161,27 +144,19 @@ foreach($Tests as $t){
    $weight = $W[ $t[TEST_LINK] ];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-
    printf('<td><a href="benchmark.php?test=%s&lang=all&sort=%s" title="%s performance measurements">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
-
    printf('<td><input type="text" size="2" name="%s" value="%d"></td>', $Link, $weight); echo "\n";
-
    echo "</tr>\n";
-
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
-
-
 
 <tr class="c">
 <td><input type="submit" value="Calculate" /></td>
 <td><input type="reset" value="Reset" /></td>
 </tr>
 
-
 </table>
-
 </form>
 </td>
 </tr>
@@ -191,6 +166,4 @@ foreach($Tests as $t){
 
 <tr><td colspan="2"><h4 class="rev">&nbsp;about CRAPS!&#153;</h4></td></tr>
 <tr><td colspan="2"><?=$About;?></td></tr>  
-
-
 </table>

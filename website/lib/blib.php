@@ -1,15 +1,11 @@
 <?php
-// Copyright (c) Isaac Gouy 2004
-
+// Copyright (c) Isaac Gouy 2004, 2005
 // DATA LAYOUT ///////////////////////////////////////////////////
-
 define('TEST_LINK',0);
 define('TEST_NAME',1);
 define('TEST_TAG',2);
 define('TEST_WEIGHT',3);
 define('TEST_DATE',4);         
-
-
 define('LANG_LINK',0);
 define('LANG_FAMILY',1);
 define('LANG_NAME',2);
@@ -17,7 +13,6 @@ define('LANG_FULL',3);
 define('LANG_HTML',4);
 define('LANG_TAG',5);
 define('LANG_DATE',6);         
-
 define('DATA_TEST',0);
 define('DATA_LANG',1);
 define('DATA_ID',2);
@@ -27,20 +22,15 @@ define('DATA_FULLCPU',5);
 define('DATA_MEMORY',6);
 define('DATA_LINES',7);
 define('DATA_DATE',8);
-
 define('INCL_LINK',0);
 define('INCL_NAME',1);
-
 define('EXCL_USE',0);
 define('EXCL_TEST',1);
 define('EXCL_LANG',2);
 define('EXCL_ID',3);
 
-
 // CONSTANTS ///////////////////////////////////////////////////
-
 define('EXCLUDED','X');
-
 define('PROGRAM_TIMEOUT',-1);
 define('PROGRAM_ERROR',-2);
 define('PROGRAM_SPECIAL','-3');
@@ -82,7 +72,7 @@ function ReadIncludeExclude(){
    @fclose($f);
    
    $excl = array();
-   $f = @fopen(DATA_PATH.'/exclude.csv','r') or die('Cannot open '.DATA_PATH.'/exclude.csv');
+   $f = @fopen(DESC_PATH.'/exclude.csv','r') or die('Cannot open '.DESC_PATH.'/exclude.csv');
    $row = @fgetcsv($f,1024,','); // heading row
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
@@ -99,7 +89,7 @@ function ReadUniqueArrays($FileName,$Incl,$HasHeading=TRUE){
    if (file_exists('./'.$FileName)){
       $f = @fopen('./'.$FileName,'r') or die('Cannot open '.$FileName);
    } else {
-      $f = @fopen(DATA_PATH.$FileName,'r') or die('Cannot open '.$FileName);
+      $f = @fopen(DESC_PATH.$FileName,'r') or die('Cannot open '.$FileName);
    }
 
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
@@ -216,6 +206,7 @@ function ExcludeData(&$d,&$langs,&$Excl){
 
 //######## Look for more efficient approach?   
    foreach($Excl as $x){   
+
       if ( ($d[DATA_TEST]==$x[EXCL_TEST]) && 
               ($d[DATA_LANG]==$x[EXCL_LANG]) && ($d[DATA_ID]==$x[EXCL_ID]) ){         
          if ($x[EXCL_USE]==EXCLUDED){         
@@ -271,21 +262,15 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
 
 function ComparisonData($langs,$data,$sort,$p,&$Excl){
    list($Accepted) = FilterAndSortData($langs,$data,$sort,&$Excl);
-
 // SELECTION DEPENDS ON THIS SORT ORDER
- 
    uasort($Accepted,'CompareTestValue');
-
 // TRANSFORM SELECTED DATA
-
    $lang = ""; $id = ""; 
    $NData = array(); $TestValues = array();
-
    foreach($Accepted as $d){
       if (($lang != $d[DATA_LANG])||($id != $d[DATA_ID])){
          $lang = $d[DATA_LANG];
          $id = $d[DATA_ID]; 
-
          $NData[] = array(
               $lang
             , $id
@@ -298,24 +283,19 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
             , 0
             , 0
             );
-
          $i = sizeof($NData)-1;         
       } 
       $NData[$i][N_FULLCPU][] = $d[DATA_FULLCPU];
       $NData[$i][N_MEMORY][] = $d[DATA_MEMORY];    
       $TestValues[ $d[DATA_TESTVALUE] ] = $d[DATA_TESTVALUE];
    }
-
-
 // SUB-SELECT DATA FOR SPECIFIC PROGRAMS
-
    $plang = array(); $pid = array();
    foreach($p as $pdash){  
       list($a, $b) = explode('-', $pdash);   
       $plang[] = $a; 
       $pid[] = $b;  
    }
-
    $Selected = array();
    foreach($NData as $d){
       if ((($plang[0]==$d[N_LANG])&&($pid[0]==$d[N_ID])) ||
@@ -327,31 +307,26 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
    }
 
 // MAX AND NAME FOR SPECIFIC PROGRAMS
-
    for ($i=0; $i<sizeof($Selected); $i++){
       $d = $Selected[$i];
       $lang = $d[N_LANG];
       $id = $d[N_ID]; 
-
       if (strlen($langs[$lang][LANG_NAME])>0){
          $Selected[$i][N_NAME] = $langs[$lang][LANG_NAME].IdName($id); }
       else {
          $Selected[$i][N_NAME] = $langs[$lang][LANG_FAMILY].IdName($id); } 
-
+         
       foreach($d[N_FULLCPU] as $v){
          if ($Selected[$i][N_CPU_MAX]<$v){ $Selected[$i][N_CPU_MAX] = $v; }
       }
       foreach($d[N_MEMORY] as $v){
          if ($Selected[$i][N_MEMORY_MAX]<$v){ $Selected[$i][N_MEMORY_MAX] = $v; }
       }
-
 // USE SAME COLOR FOR PROGRAM IN EVERY CHART
       $Selected[$i][N_COLOR] = $i; 
    }
-
    uasort($NData,'CompareNName');
    sort($TestValues);
-
    return array(&$NData,&$Selected,$TestValues);
 }
 
@@ -583,10 +558,7 @@ function MkScorecardMenuForm($Sort){
    echo '<input type="submit" value="Show" title="Show your Fast, Faster, Fastest languages"/>', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";   
    echo '</form">', "\n";
-}
-
-
-
+}
 function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,$Sort){
    echo '<form method="GET" action="sidebyside.php">', "\n";
    echo '<select name="test">', "\n";
@@ -601,7 +573,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
    echo '</select><br/><br/>', "\n";        
-      
+     
 // NASTY HACK      
 // ADD DUMMY VALUES TO PRESERVE SELECTION IN DROP-DOWN MENUS       
    list($a, $b) = explode('-', $p1); $c = $Langs[$a]; $d = IdName($b);    
@@ -612,8 +584,6 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
    $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);     
    list($a, $b) = explode('-', $p4); $c = $Langs[$a]; $d = IdName($b);
    $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);          
-    
-
    echo '<select name="p1">', "\n";
    $first = 1;
    foreach($Data as $Row){
@@ -627,7 +597,6 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
    echo '</select>', "\n";
-
    echo '<select name="p2">', "\n";
    $first = 1;   
    foreach($Data as $Row){
@@ -641,7 +610,6 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
    echo '</select>', "\n";
-
    echo '<select name="p3">', "\n";
    $first = 1;   
    foreach($Data as $Row){
@@ -655,8 +623,8 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
    echo '</select>', "\n";
-
    echo '<select name="p4">', "\n";
+   
    $first = 1;   
    foreach($Data as $Row){
       $Link = $Row[N_LANG].'-'.$Row[N_ID];
@@ -669,13 +637,10 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
    echo '</select>', "\n";
-
-
    echo '<input type="submit" value="Show" />', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";
    echo '</form>', "\n";
 }
-
 
 function HtmlFragment($FileName){
    if (is_readable($FileName)){
@@ -687,6 +652,4 @@ function HtmlFragment($FileName){
    }
    return $html;
 }
-
-
 ?>
