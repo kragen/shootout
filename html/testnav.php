@@ -20,6 +20,7 @@ function benchlist($level)
 		"nestedloop" => "Nested Loops",
 		"objinst" => "Object Instantiation",
 		"plugin" => "Plugin Test",
+		"procinst" => "Process Instantiation",
 		"prodcons" => "Producer/Consumer Threads",
 		"random" => "Random Number Generator",
 		"regexmatch" => "Regular Expression Matching",
