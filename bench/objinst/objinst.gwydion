@@ -1,7 +1,7 @@
-module:    objinst
-synopsis:  implemenation of "Object Instantiation" benchmark from http://shootout.alioth.debian.org
-author:    Peter Hinely
-copyright: public domain
+module:     objinst
+synopsis:   implementation of "Object Instantiation" benchmark
+author:     Peter Hinely
+copyright:  public domain
 
 
 define sealed domain make (singleton(<toggle>));
@@ -10,27 +10,28 @@ define sealed domain initialize (<toggle>);
 
 define class <toggle> (<object>)
   slot value :: <boolean>, required-init-keyword: start-state:;
-end;
+end class;
 
 
 define class <nth-toggle> (<toggle>)
   slot counter :: <integer> = 0;
   slot counter-maxiumum :: <integer>, required-init-keyword: counter-maxiumum:;
-end;
+end class;
 
 
-define method activate (t :: <toggle>) => ();
+define method activate (t :: <toggle>) => value :: <boolean>;
   t.value := ~t.value;
-end;
+end method;
 
 
-define method activate (t :: <nth-toggle>) => ();
+define method activate (t :: <nth-toggle>) => value :: <boolean>;
   t.counter := t.counter + 1;
   if (t.counter >= t.counter-maxiumum)
     t.value := ~t.value;
     t.counter := 0;
   end;
-end;
+  t.value;
+end method;
 
     
 define function main ()
@@ -44,7 +45,7 @@ define function main ()
   end;
 
   for (i from 1 to arg)
-	  let toggle2 = make(<toggle>, start-state: #t);
+    let toggle2 = make(<toggle>, start-state: #t);
   end;
 
   format-out("\n");
@@ -62,6 +63,4 @@ define function main ()
 end function main;
 
 
-begin
-  main();
-end
+main();

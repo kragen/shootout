@@ -1,24 +1,25 @@
-module: randum
+module:     randum
+synopsis:   implementation of "Random Number Generator" benchmark
+author:     Andreas Bogk
+copyright:  public domain
 
-define constant $IM :: <integer> = 139968;
-define constant $IA :: <integer> = 3877;
-define constant $IC :: <integer> = 29573;
+
+define constant $IM = 139968;
+define constant $IA = 3877;
+define constant $IC = 29573;
 define variable $LAST :: <integer> = 42;
 
-define method gen-random( max :: <float> )
-  => <float>;
+define method generate-random (max :: <double-float>) => <double-float>;
   $LAST := modulo($LAST * $IA + $IC, $IM);
   max * $LAST / $IM;
-end method gen-random;
-  
+end method;
+
 begin
-  let arg = application-arguments()[0].string-to-integer - 1;
+  let arg = string-to-integer(element(application-arguments(), 0, default: "1")) - 1;
 
-  while (arg > 0)
-    arg := arg - 1;
-    gen-random(100.0);
-  end while;
+  for (i from 1 to arg)
+    generate-random(100.0);
+  end;
 
-  format-out("%d\n", gen-random(100.0));
+  format-out("%=\n", generate-random(100.0));
 end;
-
