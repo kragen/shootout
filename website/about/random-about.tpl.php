@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=random&lang=gcc&sort=<?=$Sort;?>">C program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=random&amp;lang=gcc&amp;sort=<?=$Sort;?>">C program</a>.</p>
 
 <p>Implement a function that generates
   a random double-precision floating point number using a <i>linear congruential
@@ -17,14 +17,14 @@ are appropriately chosen integral constants.
 
 S[j] (seed) is calculated from S[j-1]
 R (random number) is normalized to the interval [N,0].
-</pre><br/>
+</pre>
+<br />
 
-<p>Correct output N = 1000 is
+<p>Correct output N = 1000 is</p>
 <pre>
 8.163294467
 </pre>
-</p> 
-<br/>
+<br />
 
 <p>Each program should use symbolic constants (or whatever is closest) to define the A, C, and M constants in the algorithm, not literal constants. </p>
 

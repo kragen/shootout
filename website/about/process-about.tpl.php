@@ -1,9 +1,6 @@
-<p>Each program counts the number of created threads, by incrementing an integer message sent between the threads. Programs may use kernel threads, lightweight threads, cooperative threads&#133;
-</p>
+<p>Each program counts the number of created threads, by incrementing an integer message sent between the threads. Programs may use kernel threads, lightweight threads, cooperative threads&#8230;</p>
 
-<p>Each program should
-</p>
-
+<p>Each program should</p>
 <ul>
 <li>create a chain of N threads such that:
 
@@ -30,10 +27,11 @@
 <li>print the message received by the last thread</li>
 </ul>
 
-<p>Correct output N = 3000 is: 
-<pre>3000</pre></p><br/>
+<p>Correct output N = 3000 is:</p>
+<pre>3000
+</pre>
+<br />
 
 
 <p>With a large number of threads this becomes <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Death by Concurrency</a>.</p>
-
-<p>(The threads benchmark is essentially the <a href="benchmark.php?test=message&lang=all&sort=<?=$Sort;?>">messages benchmark</a> with a single message send.)</p>
+<p>(The threads benchmark is essentially the <a href="benchmark.php?test=message&amp;lang=all&amp;sort=<?=$Sort;?>">messages benchmark</a> with a single message send.)</p>

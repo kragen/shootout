@@ -1,6 +1,6 @@
-<p><strong>Note</strong>: we're thinking about a better way to start client & server within our measurement framework.</p>
+<p><strong>Note</strong>: we're thinking about a better way to start client &amp; server within our measurement framework.</p>
 
-<p>Each program (M = 1, REPLY_SIZE = 409600) should
+<p>Each program (M = 1, REPLY_SIZE = 409600) should</p>
 <ul>
 <li>open a TCP/IP socket</li>
 <li>fork a client process that connects back to the socket
@@ -22,11 +22,11 @@
 </ul>
 </li>
 </ul>
-</p><p>Correct output N = 10 is:
+
+<p>Correct output N = 10 is:</p>
 <pre>
 replies: 10     bytes: 4096000
 </pre>
-</p>
-<br/>
+<br />
 
 <p>The only difference between the tcp-echo, tcp-request-reply, and tcp-stream programs, should be the values for M and REPLY_SIZE.</p>

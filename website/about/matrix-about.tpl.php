@@ -6,12 +6,11 @@
  R. Watters.  The Perl, Python, and Tcl programs are based on the
  programs from in article.</p> 
 
-<p>Correct output is:
+<p>Correct output is:</p>
 <pre>
 270165 1061760 1453695 1856025
 </pre>
-</p>
-<br/>
+<br />
 
 <p>Programs should not manually unroll the loops.</p>
 

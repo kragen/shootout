@@ -13,7 +13,7 @@
 <li>create N <em>NthToggle</em> objects</li>
 </ul>
 
-<p>Correct output is:
+<p>Correct output is:</p>
 <pre>
 false
 true
@@ -30,8 +30,7 @@ true
 true
 true
 </pre>
-</p>
-<br/>
+<br />
 
 <p>The base class <em>Toggle</em> toggles it's boolean state each time it is activated. The derived class <em>NthToggle</em> toggles it's boolean state the Nth time it is activated.</p>
 <p>The derived <em>NthToggle</em> class should:</p>
@@ -42,5 +41,5 @@ true
 <li>inherit the <em>Toggle</em> value method</li>
 </ul>
 
-<p>(These classes are also used in the <a href="benchmark.php?test=methcall&lang=all&sort=<?=$Sort;?>">methods benchmark</a>.)</p>
+<p>(These classes are also used in the <a href="benchmark.php?test=methcall&amp;lang=all&amp;sort=<?=$Sort;?>">methods benchmark</a>.)</p>
 <p>This benchmark needs to be re-designed a little to avoid the creation of invariant objects.</p>

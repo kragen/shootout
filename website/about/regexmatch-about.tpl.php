@@ -1,18 +1,16 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"></em>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=regex&lang=perl&sort=<?=$Sort;?>">Perl program</a>.</p></p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"></em>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=regex&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
 
 <p>The regex benchmark measures regular expression pattern matching, extracting telephone numbers from a text.</p>
 
-<p>Each program should:
+<p>Each program should:</p>
 <ul>
 <li>read text file</li>
 <li>match the pattern against the file contents N times</li>
 <li>print the text matches</li>
 </ul>
-</p>
 
-
-<p>Correct output for this 1KB <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=input">input file</a> is: 
+<p>Correct output for this 1KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=input">input file</a> is:</p>
 <pre>
 1: (111) 111-1111
 2: (111) 222-2222
@@ -27,27 +25,24 @@
 11: (111) 232-1111
 12: (111) 242-1111
 </pre>
-</p>
-<br/>
+<br />
 
-<p>The telephone number pattern:
-  <ul>
-    <li>there may be zero or one telephone numbers per line of input</li>
-    <li>a telephone number may start at the beginning of the line or be
-    preceeded by a non-digit, (which may be preceeded by anything)</li>
-    <li>it begins with a 3-digit <i>area code</i> that looks like this
-    (DDD) or DDD (where D is [0-9])</li>
-    <li>the <i>area code</i> is followed by one space</li>
-    <li>which is followed by the 3 digits of the <i>exchange</i>: DDD</li>
-    <li>the <i>exchange</i> is followed by a space or hyphen [ -]</li>
-    <li>which is followed by the last 4 digits: DDDD</li>
-    <li>which can be followed by end of line or a non-digit (which may be
-    followed by anything).</li>
-  </ul>
-</p>
+<p>The telephone number pattern:</p>
+<ul>
+   <li>there may be zero or one telephone numbers per line of input</li>
+   <li>a telephone number may start at the beginning of the line or be
+   preceeded by a non-digit, (which may be preceeded by anything)</li>
+   <li>it begins with a 3-digit <i>area code</i> that looks like this
+   (DDD) or DDD (where D is [0-9])</li>
+   <li>the <i>area code</i> is followed by one space</li>
+   <li>which is followed by the 3 digits of the <i>exchange</i>: DDD</li>
+   <li>the <i>exchange</i> is followed by a space or hyphen [ -]</li>
+   <li>which is followed by the last 4 digits: DDDD</li>
+   <li>which can be followed by end of line or a non-digit (which may be
+   followed by anything).</li>
+</ul>
 
-
-<p></em>Please Note:</strong> this test is due for an overhaul, because of the
+<p><strong>Please Note:</strong> this test is due for an overhaul, because of the
   variety of solutions for this test that aren't really using regular
   expressions.</p>
 

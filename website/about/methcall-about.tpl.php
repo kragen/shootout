@@ -12,13 +12,12 @@
 <li>print the object's boolean state</li>
 </ul>
 
-<p>Correct output is:
+<p>Correct output is:</p>
 <pre>
 true
 false
 </pre>
-</p>
-<br/>
+<br />
 
 
 <p>The base class <em>Toggle</em> toggles it's boolean state each time it is activated. The derived class <em>NthToggle</em> toggles it's boolean state the Nth time it is activated.</p>
@@ -29,6 +28,4 @@ false
 <li>re-use the <em>Toggle</em> constructor</li>
 <li>inherit the <em>Toggle</em> value method</li>
 </ul>
-
-
 <p>(These classes are also used in the <a href="benchmark.php?test=objinst&lang=all&sort=<?=$Sort;?>">objects benchmark</a>.)</p>
