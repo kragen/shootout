@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-11-23 08:08:43 bfulgham Exp $
+# $Id: Makefile,v 1.17 2005-02-02 18:57:29 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := fibo
@@ -14,6 +14,7 @@ OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
 ERLFLAGS := -noinput
+GHCOPTS  := -fasm
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
