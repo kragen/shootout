@@ -1,0 +1,59 @@
+%  The Great Computer Language Shootout
+%   http://shootout.alioth.debian.org/
+%  
+%   contributed by Mark Scandariato
+%
+% To run with a ring larger than 32K processes, use:
+%   erl -noshell -noinput +P LIMIT -run message main N M
+% where LIMIT is an integer greater than N. So:
+%   erl -noshell -noinput +P 500000 -run message main 400000 100
+%
+% Note that this will send M+1 messages around the ring 
+% (the final message terminates the ring).
+%
+% Note too that this doesn't wait for the ring to be completed 
+% before it starts sending messages.
+
+
+-module(message).
+-export([main/1, ring/2]).
+
+main([A1, A2]) ->
+    N = list_to_integer(A1),
+    M = list_to_integer(A2),
+    io:fwrite("~p~n", [ring(N, M)]),
+    erlang:halt(0).
+    
+ring(N, M) when M >= 0, N > 0 ->
+    First = spawn(fun() -> proc(N) end),
+    inject(First, M),
+    First ! self(),
+    receive
+        {done, A} -> A
+    end.
+
+inject(_, 0) -> ok;
+inject(Pid, M) ->
+    Pid ! 0,
+    inject(Pid, M-1).
+
+
+proc(0) -> 
+    acc(0);
+proc(N) ->
+    Next = spawn(fun() -> proc(N-1) end),
+    fwd(Next).
+
+fwd(Next) ->
+    receive
+        M when is_integer(M) -> 
+            Next ! M+1,
+            fwd(Next);
+        Pid when is_pid(Pid) -> Next ! Pid
+    end.
+
+acc(A) ->
+    receive
+        M when is_integer(M) -> acc(A+M);
+        Pid when is_pid(Pid) -> Pid ! {done, A}
+    end.

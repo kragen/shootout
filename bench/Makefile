@@ -1,22 +1,30 @@
-# $Id: Makefile,v 1.7 2004-11-30 07:10:02 bfulgham Exp $
+# $Id: Makefile,v 1.8 2004-12-05 01:59:48 bfulgham Exp $
 
 TESTS = \
     hello \
     ackermann \
     ary \
+    div2sum \
     echo \
     except \
+    fannkuch \
+    fasta \
     fibo \
     hash \
     hash2 \
     heapsort \
+    josephus \
     lists \
     matrix \
+    message \
     methcall \
     moments \
     nestedloop \
+    nsieve \
     objinst \
     plugin \
+    primesieve \
+    process \
     procinst \
     prodcons \
     random \
