@@ -15,7 +15,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
       'Type'    => 'native compiled',
-      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-4) Copyright 1996-2002 Free Software Foundation, Inc.'
+      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-9) Copyright 1996-2002 Free Software Foundation, Inc.'
     ),
 
     'mawk' => array(
@@ -31,7 +31,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnu.org/software/gawk/gawk.html',
       'Down'    => 'ftp://ftp.gnu.org/gnu/gawk/',
       'Type'    => 'interpreted',
-      'Version' => 'GNU Awk 3.1.3'
+      'Version' => 'GNU Awk 3.1.4'
     ),
 
     'bash' => array(
@@ -39,7 +39,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnu.org/software/bash/bash.html',
       'Down'    => 'ftp://ftp.gnu.org/gnu/bash/',
       'Type'    => 'interpreted',
-      'Version' => 'GNU bash, version 2.05b.0(1)'
+      'Version' => 'GNU bash, version 3.00.0(1)'
     ),
 
     'gcc' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-4)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-9)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-4)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-9)
 '
     ),
 
@@ -89,7 +89,7 @@ $LANGS = array(
       'Home'    => 'http://www.cons.org/cmucl/',
       'Down'    => 'http://www.cons.org/cmucl/',
       'Type'    => 'native compiled',
-      'Version' => 'CMU Common Lisp CVS release-18e-branch + minimal debian patches'
+      'Version' => 'CMU Common Lisp CVS release-19a 19a-release-20040728 + minimal debian patches'
     ),
 
     'sbcl' => array(
@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => 'SBCL 0.8.10.48'
+      'Version' => 'SBCL 0.8.13.62'
     ),
 
     'gwydion' => array(
@@ -187,7 +187,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java/',
       'Down'    => 'http://gcc.gnu.org/install/binaries.html',
       'Type'    => 'interpreted',
-      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian 1:3.3.4-4)'
+      'Version' => 'gij (GNU libgcj) version 3.4.1 (Debian 3.4.1-5)'
     ),
 
     'gcj' => array(
@@ -195,7 +195,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcj-3.3'
+      'Version' => 'gcj-3.4 (GCC) 3.4.1'
     ),
 
     'kaffe' => array(
@@ -211,7 +211,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.blackdown.org/',
       'Down'    => 'http://www.blackdown.org/',
       'Type'    => 'interpreted',
-      'Version' => 'Java HotSpot(TM) Client VM (build Blackdown-1.4.2-rc1, mixed mode)'
+      'Version' => 'Java HotSpot(TM) Client VM (build 1.4.2_05-b04, mixed mode)'
     ),
 
     'sablevm' => array(
@@ -251,7 +251,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.mozart-oz.org',
       'Down'    => 'http://www.mozart-oz.org/download',
       'Type'    => 'interpreted',
-      'Version' => 'Mozart Compiler 1.2.5 (20040201) playing Oz 3'
+      'Version' => 'Mozart Compiler 1.3.1 (20040813) playing Oz 3'
     ),
 
     'nice' => array(
@@ -259,7 +259,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://nice.sourceforge.net/',
       'Down'    => 'http://nice.sourceforge.net/install.html',
       'Type'    => 'native compiled',
-      'Version' => 'Nice compiler version 0.9.8 (build 2004.06.30, 11:23:09 UTC)'
+      'Version' => 'Nice compiler version 0.9.8 (build 2004.08.14, 14:46:16 UTC)'
     ),
 
     'oberon2' => array(
@@ -267,7 +267,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://oo2c.sourceforge.net/',
       'Down'    => 'http://oo2c.sourceforge.net/files',
       'Type'    => 'native compiled',
-      'Version' => 'oo2c 2.1.3 (using gcc)
+      'Version' => 'oo2c 2.1.4 (using gcc)
 '
     ),
 
@@ -276,7 +276,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
       'Type'    => 'native compiled',
-      'Version' => 'The Objective Caml native-code compiler, version 3.07+2'
+      'Version' => 'The Objective Caml native-code compiler, version 3.08.0'
     ),
 
     'ocamlb' => array(
@@ -284,7 +284,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'The Objective Caml compiler, version 3.07+2 (Byte Code)'
+      'Version' => 'The Objective Caml compiler, version 3.08.0 (Byte Code)'
     ),
 
     'php' => array(
@@ -292,7 +292,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.php.net/',
       'Down'    => 'http://www.php.net/downloads.php',
       'Type'    => 'interpreted',
-      'Version' => 'PHP 4.3.8 (cli) (built: Jul 26 2004 02:40:52)
+      'Version' => 'PHP 4.3.8-5 (cli) (built: Aug  9 2004 16:39:24)
 '
     ),
 
@@ -341,7 +341,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ruby-lang.org/',
       'Down'    => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
       'Type'    => 'interpreted',
-      'Version' => 'ruby 1.8.2 (2004-07-16) [i386-linux]'
+      'Version' => 'ruby 1.8.2 (2004-07-29) [i386-linux]'
     ),
 
     'slang' => array(
@@ -423,6 +423,6 @@ S-Lang Library Version: 1.4.9'
       'Home'    => 'http://tcl.tk/',
       'Down'    => 'http://www.tcl.tk/software/tcltk/downloadnow84.tml',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Tcl 8.4.6'
+      'Version' => 'Tcl 8.4.7'
     )
 );

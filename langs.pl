@@ -83,8 +83,8 @@
        Type => 'native compiled',
        Ext  => 'java',
        Verfun => sub {
-	   chomp(my $ver = `$ENV{GCJ} -h | grep Usage`);
-	   $ver =~ s/Usage: (gcj\-\d+\.\d+) .*/\1/;
+	   chomp(my $ver = `$ENV{GCJ} --version | grep Debian`);
+	   $ver =~ s/(gcj\-\d+\.\d+ \(GCC\) \d+\.\d+\.\d+) .*/\1/;
 	   return($ver);
        },
      },
@@ -135,7 +135,7 @@
        Type => 'native compiled',
        Ext  => 'lisp',
        Verfun => sub {
-	   chomp(my $ver = `$ENV{CMUCL} -batch -eval '(progn (princ COMMON-LISP::*LISP-IMPLEMENTATION-VERSION*) (quit))'`);
+	   chomp(my $ver = `$ENV{CMUCL} -batch -eval '(progn (princ (LISP-IMPLEMENTATION-VERSION)) (quit))'`);
 	   $ver = "CMU Common Lisp $ver";
 	   return($ver);
        },
