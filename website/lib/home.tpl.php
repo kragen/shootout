@@ -9,11 +9,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <table class="div" >
 <tr><td colspan="2">
-<p>
-<b>1&nbsp;Compare</b> the performance of <?=$LangsPhrase;?> on each of <?=$TestsPhrase;?>. 
-<b>2&nbsp;Check the rankings</b> for your favourite programming language.
-<b>3&nbsp;Create</b> your own combined rankings on The Scorecard.
-</p>
+<?=$Intro;?>
 </td></tr>
 
 <tr><td><h4 class="rev">&nbsp;A comparison of programming languages</h4></td></tr>
@@ -24,13 +20,11 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="div" >
 <tr>
 <th class="a">
-<!-- <b><?=$TestsPhrase;?></b> -->
 <b>1&nbsp;Compare</b>
 <p class="thp">time, memory, lines</p>
 </th>
 
 <th class="c" colspan="2">
-<!-- <b><?=$LangsPhrase;?></b>  -->
 <b>2&nbsp;Check the rankings</b>
 <p class="thp">rankings for each language</p>
 </th>

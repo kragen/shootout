@@ -31,8 +31,8 @@ consequently, CMUCL) out.</li>
   <li>Diederik van Arkel wrote a Clean solution for the regex benchmark.</li>
   <li>Bengt Kleberg continued to provide better Erlang programs.</li>
   <li>Juan Carlos Gil Montoro worked on the Tcl code.</li>
-  <li>Chris Rebert contributed improved Python.</li>
-  <li>Peter Hinley added new Dylan programs.</li>
+   <li>Chris Rebert contributed improved Python.</li>
+   <li>Peter Hinley added new Dylan programs.</li>
   <li>Jean-Philippe Bernardy revised many of the Haskell implementations.</li>
   <li>John van Groningen (a Clean Core Developer) provided fast new Clean programs.</li>
   <li>Simon Marlow and Bryn Keller wrote faster Haskell programs.</li>
@@ -42,7 +42,6 @@ consequently, CMUCL) out.</li>
   <li>Chris Dutton reworked heapsort in Ruby.</li>
   <li>Paul Sanchez improved the Ruby primes sieve program.</li>
   <li>Einar Karttunen made improvements to several Erlang programs</li>
-  <li>Dave Anderson revised several Ruby implementations.</li>
 </ul>
 
 <h4 class="rev">&nbsp;Aldo Calpini's Win32 project</h4>

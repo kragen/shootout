@@ -536,7 +536,7 @@ function MkScorecardMenuForm($Sort){
    echo '<select name="lang">', "\n";
    echo '<option value="all">all ', LANGS_PHRASE, '</option>', "\n";
    echo '</select>', "\n";
-   echo '<input type="submit" value="Show" />', "\n";
+   echo '<input type="submit" value="Show" title="Show The Scorecard"/>', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";   
    echo '</form">', "\n";
 }

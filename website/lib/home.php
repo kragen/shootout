@@ -35,8 +35,12 @@ $Body = & new Template(LIB_PATH);
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Sort', $S);
-$Body->set('AboutName', 'The Shootout');
-$Body->set('About', HtmlFragment( ABOUT_PATH.'home.about' ));
+$Body->set('AboutName', 'The Computer Language Shootout');
+$Body->set('Intro', HtmlFragment( ABOUT_PATH.SITE_NAME.SEPARATOR.'intro.about' ));
+
+$About = & new Template(ABOUT_PATH);
+$About->set('Sort', $S);
+$Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 

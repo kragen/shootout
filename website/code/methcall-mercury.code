@@ -1,120 +1,118 @@
-<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
-%% $Id: methcall-mercury.code,v 1.2 2004-11-08 08:15:17 bfulgham Exp $
-%% http:<I><FONT COLOR="#B22222">//www.bagley.org/~doug/shootout/
-</FONT></I>%% from Fergus Henderson
-
-% &quot;This test <B><FONT COLOR="#A020F0">uses</FONT></B> a base <B><FONT COLOR="#A020F0">class</FONT></B> Toggle, which implements a simple boolean
-% flip-flop device <B><FONT COLOR="#A020F0">and</FONT></B> a derived <B><FONT COLOR="#A020F0">class</FONT></B> NthToggle, which only flips every
-% Nth time it <B><FONT COLOR="#A020F0">is</FONT></B> activated.&quot;
-
-:- module mytest.
-:- <B><FONT COLOR="#A020F0">interface</FONT></B>.
-:- import_module io.
-
-:- pred main(io__state::di, io__state::uo) <B><FONT COLOR="#A020F0">is</FONT></B> det.
-
-:- <B><FONT COLOR="#A020F0">implementation</FONT></B>.
-:- import_module bool, int, <B><FONT COLOR="#A020F0">string</FONT></B>, list.
-
-% &quot;The base Toggle <B><FONT COLOR="#A020F0">class</FONT></B> should define a boolean
-% (<B><FONT COLOR="#A020F0">or</FONT></B> integer) field <B><FONT COLOR="#A020F0">to</FONT></B> hold a true/false value. It should define methods
-% <B><FONT COLOR="#A020F0">to</FONT></B> access the value, <B><FONT COLOR="#A020F0">and</FONT></B> <B><FONT COLOR="#A020F0">to</FONT></B> activate the toggle (flip it<B><FONT COLOR="#BC8F8F">'s value).&quot;
-
-:- type toggle ---&gt; toggle(toggle_value::bool).
-
-:- typeclass toggle(T) where [
-	func value(T) = bool,
-	func '</FONT></B>value :=<B><FONT COLOR="#BC8F8F">'(T, bool) = T,
-	func activate(T) = T
-].
-
-:- instance toggle(toggle) where [
-	func(value/1) is toggle_value,
-	func('</FONT></B>value :=<B><FONT COLOR="#BC8F8F">'/2) is '</FONT></B>toggle_value :=<B><FONT COLOR="#BC8F8F">',
-	activate(toggle(yes)) = toggle(no),
-	activate(toggle(no)) = toggle(yes)
-].
-
-% &quot;The derived NthToggle class should inherit the boolean field, and add a
-% counter and limit field. It should override the activate method so that
-% the boolean state is flipped after the activate method is called count
-% times. The constructor for NthToggle should use the constructor for
-% Toggle to inherit the boolean field and value() method.&quot;
-
-% Mercury doesn'</FONT></B>t have any direct support <B><FONT COLOR="#A020F0">for</FONT></B> inheritence <B><FONT COLOR="#A020F0">of</FONT></B> fields,
-% so we need <B><FONT COLOR="#A020F0">to</FONT></B> use composition instead.
-
-:- <B><FONT COLOR="#A020F0">type</FONT></B> nth_toggle ---&gt; nth_toggle(base::toggle, counter::int, limit::int).
-
-:- func make_nth_toggle(bool, int) = nth_toggle.
-make_nth_toggle(Val, Max) = nth_toggle(toggle(Val), 0, Max).
-
-% <B><FONT COLOR="#A020F0">If</FONT></B> the nth_toggle <B><FONT COLOR="#A020F0">class</FONT></B> added its own methods, <B><FONT COLOR="#A020F0">then</FONT></B> we<B><FONT COLOR="#BC8F8F">'d want to
-% create a derived typeclass like this:
-%
-% :- typeclass nth_toggle(T) &lt;= toggle(T) where [ ... ].
-% :- instance nth_toggle(nth_toggle) where [ ... ].
-%
-% But nth_toggle doesn'</FONT></B>t add any new methods, so we don<B><FONT COLOR="#BC8F8F">'t need that.
-% We just need to make it an instance of the base class,
-% delegating the field accessors.
-
-:- instance toggle(nth_toggle) where [
-	value(T) = T^base^value,
-	'</FONT></B>value :=<B><FONT COLOR="#BC8F8F">'(T, V) = T^base^value := V,
-	(activate(T) = NewT :-
-		C = T^counter + 1,
-		(if C &gt;= T^limit then
-			NewT = (T^counter := 0)^base := activate(T^base)
-		else
-			NewT = T^counter := C
-		))
-].
-
-main --&gt;
-	io__command_line_arguments(Args),
-	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
-
-	{ loop(N, yes, toggle(yes),
-		(pred(_V0::in, T0::in, V::out, T::out) is det :-
-			T = T0^activate, V = T^value),
-		Value1, _Toggle1) },
-	write_string(if Value1 = yes then &quot;true&quot; else &quot;false&quot;), nl,
-
-	{ loop(N, yes, make_nth_toggle(yes, 3),
-		(pred(_V0::in, T0::in, V::out, T::out) is det :-
-			T = T0^activate, V = T^value),
-		Value2, _Toggle2) },
-	write_string(if Value2 = yes then &quot;true&quot; else &quot;false&quot;), nl.
-
-:- pred loop(int, T1, T2, pred(T1, T2, T1, T2), T1, T2).
-:- mode loop(in, in, in, pred(in, in, out, out) is det, out, out) is det.
-loop(N, V0, T0, P, V, T) :-
-	(if N = 0 then
-		V = V0, T = T0
-	else
-		P(V0, T0, V1, T1),
-		loop(N - 1, V1, T1, P, V, T)
-	).
-
-% Alternatively, it can be written a little more elegantly as
-%
-% main --&gt;
-% 	io__command_line_arguments(Args),
-% 	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
-% 
-% 	{ {Value1, _Toggle1} = repeat_n(N, {yes, toggle(yes)},
-% 		(func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
-% 	write_string(if Value1 = yes then &quot;true&quot; else &quot;false&quot;), nl,
-% 
-% 	{ {Value2, _Toggle2} = repeat_n(N, {yes, make_nth_toggle(yes, 3)},
-% 		(func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
-% 	write_string(if Value2 = yes then &quot;true&quot; else &quot;false&quot;), nl.
-% 
-% :- func repeat_n(int, T, func(T) = T) = T.
-% repeat_n(N, X, F) =
-% 	(if N = 0 then X
-% 	else repeat_n(N - 1, F(X), F)).
-%
-% but the earlier code above is a little more efficient.
-</FONT></B></pre></td></tr></table>
+<span class="line">    1 </span><span class="slc">%% $Id: methcall-mercury.code,v 1.3 2004-11-13 07:42:17 bfulgham Exp $
+</span><span class="line">    2 </span><span class="slc"></span><span class="slc">%% http://www.bagley.org/~doug/shootout/
+</span><span class="line">    3 </span><span class="slc"></span><span class="slc">%% from Fergus Henderson
+</span><span class="line">    4 </span><span class="slc"></span>
+<span class="line">    5 </span><span class="slc">% &quot;This test uses a base class Toggle, which implements a simple boolean
+</span><span class="line">    6 </span><span class="slc"></span><span class="slc">% flip-flop device and a derived class NthToggle, which only flips every
+</span><span class="line">    7 </span><span class="slc"></span><span class="slc">% Nth time it is activated.&quot;
+</span><span class="line">    8 </span><span class="slc"></span>
+<span class="line">    9 </span><span class="sym">:-</span> module mytest.
+<span class="line">   10 </span><span class="sym">:-</span> interface.
+<span class="line">   11 </span><span class="sym">:-</span> import_module io.
+<span class="line">   12 </span>
+<span class="line">   13 </span><span class="sym">:-</span> pred main<span class="sym">(</span>io__state<span class="sym">::</span>di<span class="sym">,</span> io__state<span class="sym">::</span>uo<span class="sym">)</span> <span class="kwa">is</span> det.
+<span class="line">   14 </span>
+<span class="line">   15 </span><span class="sym">:-</span> implementation.
+<span class="line">   16 </span><span class="sym">:-</span> import_module bool<span class="sym">,</span> int<span class="sym">,</span> string<span class="sym">,</span> list.
+<span class="line">   17 </span>
+<span class="line">   18 </span><span class="slc">% &quot;The base Toggle class should define a boolean
+</span><span class="line">   19 </span><span class="slc"></span><span class="slc">% (or integer) field to hold a true/false value. It should define methods
+</span><span class="line">   20 </span><span class="slc"></span><span class="slc">% to access the value, and to activate the toggle (flip it's value).&quot;
+</span><span class="line">   21 </span><span class="slc"></span>
+<span class="line">   22 </span><span class="sym">:-</span> type toggle <span class="sym">---&gt;</span> toggle<span class="sym">(</span>toggle_value<span class="sym">::</span>bool<span class="sym">)</span>.
+<span class="line">   23 </span>
+<span class="line">   24 </span><span class="sym">:-</span> typeclass toggle<span class="sym">(</span>T<span class="sym">)</span> where <span class="sym">[
+</span><span class="line">   25 </span><span class="sym"></span>        func value<span class="sym">(</span>T<span class="sym">) =</span> bool<span class="sym">,
+</span><span class="line">   26 </span><span class="sym"></span>        func <span class="str">'value :='</span><span class="sym">(</span>T<span class="sym">,</span> bool<span class="sym">) =</span> T<span class="sym">,
+</span><span class="line">   27 </span><span class="sym"></span>        func activate<span class="sym">(</span>T<span class="sym">) =</span> T
+<span class="line">   28 </span><span class="sym">]</span>.
+<span class="line">   29 </span>
+<span class="line">   30 </span><span class="sym">:-</span> instance toggle<span class="sym">(</span>toggle<span class="sym">)</span> where <span class="sym">[
+</span><span class="line">   31 </span><span class="sym"></span>        func<span class="sym">(</span>value<span class="sym">/</span><span class="num">1</span><span class="sym">)</span> <span class="kwa">is</span> toggle_value<span class="sym">,
+</span><span class="line">   32 </span><span class="sym"></span>        func<span class="sym">(</span><span class="str">'value :='</span><span class="sym">/</span><span class="num">2</span><span class="sym">)</span> <span class="kwa">is</span> <span class="str">'toggle_value :='</span><span class="sym">,
+</span><span class="line">   33 </span><span class="sym"></span>        activate<span class="sym">(</span>toggle<span class="sym">(</span>yes<span class="sym">)) =</span> toggle<span class="sym">(</span>no<span class="sym">),
+</span><span class="line">   34 </span><span class="sym"></span>        activate<span class="sym">(</span>toggle<span class="sym">(</span>no<span class="sym">)) =</span> toggle<span class="sym">(</span>yes<span class="sym">)
+</span><span class="line">   35 </span><span class="sym">]</span>.
+<span class="line">   36 </span>
+<span class="line">   37 </span><span class="slc">% &quot;The derived NthToggle class should inherit the boolean field, and add a
+</span><span class="line">   38 </span><span class="slc"></span><span class="slc">% counter and limit field. It should override the activate method so that
+</span><span class="line">   39 </span><span class="slc"></span><span class="slc">% the boolean state is flipped after the activate method is called count
+</span><span class="line">   40 </span><span class="slc"></span><span class="slc">% times. The constructor for NthToggle should use the constructor for
+</span><span class="line">   41 </span><span class="slc"></span><span class="slc">% Toggle to inherit the boolean field and value() method.&quot;
+</span><span class="line">   42 </span><span class="slc"></span>
+<span class="line">   43 </span><span class="slc">% Mercury doesn't have any direct support for inheritence of fields,
+</span><span class="line">   44 </span><span class="slc"></span><span class="slc">% so we need to use composition instead.
+</span><span class="line">   45 </span><span class="slc"></span>
+<span class="line">   46 </span><span class="sym">:-</span> type nth_toggle <span class="sym">---&gt;</span> nth_toggle<span class="sym">(</span>base<span class="sym">::</span>toggle<span class="sym">,</span> counter<span class="sym">::</span>int<span class="sym">,</span> limit<span class="sym">::</span>int<span class="sym">)</span>.
+<span class="line">   47 </span>
+<span class="line">   48 </span><span class="sym">:-</span> func make_nth_toggle<span class="sym">(</span>bool<span class="sym">,</span> int<span class="sym">) =</span> nth_toggle.
+<span class="line">   49 </span>make_nth_toggle<span class="sym">(</span>Val<span class="sym">,</span> Max<span class="sym">) =</span> nth_toggle<span class="sym">(</span>toggle<span class="sym">(</span>Val<span class="sym">),</span> <span class="num">0</span><span class="sym">,</span> Max<span class="sym">)</span>.
+<span class="line">   50 </span>
+<span class="line">   51 </span><span class="slc">% If the nth_toggle class added its own methods, then we'd want to
+</span><span class="line">   52 </span><span class="slc"></span><span class="slc">% create a derived typeclass like this:
+</span><span class="line">   53 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">   54 </span><span class="slc"></span><span class="slc">% :- typeclass nth_toggle(T) &lt;= toggle(T) where [ ... ].
+</span><span class="line">   55 </span><span class="slc"></span><span class="slc">% :- instance nth_toggle(nth_toggle) where [ ... ].
+</span><span class="line">   56 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">   57 </span><span class="slc"></span><span class="slc">% But nth_toggle doesn't add any new methods, so we don't need that.
+</span><span class="line">   58 </span><span class="slc"></span><span class="slc">% We just need to make it an instance of the base class,
+</span><span class="line">   59 </span><span class="slc"></span><span class="slc">% delegating the field accessors.
+</span><span class="line">   60 </span><span class="slc"></span>
+<span class="line">   61 </span><span class="sym">:-</span> instance toggle<span class="sym">(</span>nth_toggle<span class="sym">)</span> where <span class="sym">[
+</span><span class="line">   62 </span><span class="sym"></span>        value<span class="sym">(</span>T<span class="sym">) =</span> T^base^value<span class="sym">,
+</span><span class="line">   63 </span><span class="sym"></span>        <span class="str">'value :='</span><span class="sym">(</span>T<span class="sym">,</span> V<span class="sym">) =</span> T^base^value <span class="sym">:=</span> V<span class="sym">,
+</span><span class="line">   64 </span><span class="sym">        (</span>activate<span class="sym">(</span>T<span class="sym">) =</span> NewT <span class="sym">:-
+</span><span class="line">   65 </span><span class="sym"></span>                C <span class="sym">=</span> T^counter <span class="sym">+</span> <span class="num">1</span><span class="sym">,
+</span><span class="line">   66 </span><span class="sym">                (</span>if C <span class="sym">&gt;=</span> T^limit then
+<span class="line">   67 </span>                        NewT <span class="sym">= (</span>T^counter <span class="sym">:=</span> <span class="num">0</span><span class="sym">)</span>^base <span class="sym">:=</span> activate<span class="sym">(</span>T^base<span class="sym">)
+</span><span class="line">   68 </span><span class="sym"></span>                else
+<span class="line">   69 </span>                        NewT <span class="sym">=</span> T^counter <span class="sym">:=</span> C
+<span class="line">   70 </span>                <span class="sym">))
+</span><span class="line">   71 </span><span class="sym">]</span>.
+<span class="line">   72 </span>
+<span class="line">   73 </span>main <span class="sym">--&gt;
+</span><span class="line">   74 </span><span class="sym"></span>        io__command_line_arguments<span class="sym">(</span>Args<span class="sym">),
+</span><span class="line">   75 </span><span class="sym">        {</span> N <span class="sym">= (</span>if Args <span class="sym">= [</span>Arg<span class="sym">],</span> to_int<span class="sym">(</span>Arg<span class="sym">,</span> N0<span class="sym">)</span> then N0 else <span class="num">1</span><span class="sym">) },
+</span><span class="line">   76 </span><span class="sym">
+</span><span class="line">   77 </span><span class="sym">        {</span> loop<span class="sym">(</span>N<span class="sym">,</span> yes<span class="sym">,</span> toggle<span class="sym">(</span>yes<span class="sym">),
+</span><span class="line">   78 </span><span class="sym">                (</span>pred<span class="sym">(</span>_V0<span class="sym">::</span>in<span class="sym">,</span> T0<span class="sym">::</span>in<span class="sym">,</span> V<span class="sym">::</span>out<span class="sym">,</span> T<span class="sym">::</span>out<span class="sym">)</span> <span class="kwa">is</span> det <span class="sym">:-
+</span><span class="line">   79 </span><span class="sym"></span>                        T <span class="sym">=</span> T0^activate<span class="sym">,</span> V <span class="sym">=</span> T^value<span class="sym">),
+</span><span class="line">   80 </span><span class="sym"></span>                Value1<span class="sym">,</span> _Toggle1<span class="sym">) },
+</span><span class="line">   81 </span><span class="sym"></span>        write_string<span class="sym">(</span>if Value1 <span class="sym">=</span> yes then <span class="str">&quot;true&quot;</span> else <span class="str">&quot;false&quot;</span><span class="sym">),</span> <span class="kwa">nl</span><span class="sym">,
+</span><span class="line">   82 </span><span class="sym">
+</span><span class="line">   83 </span><span class="sym">        {</span> loop<span class="sym">(</span>N<span class="sym">,</span> yes<span class="sym">,</span> make_nth_toggle<span class="sym">(</span>yes<span class="sym">,</span> <span class="num">3</span><span class="sym">),
+</span><span class="line">   84 </span><span class="sym">                (</span>pred<span class="sym">(</span>_V0<span class="sym">::</span>in<span class="sym">,</span> T0<span class="sym">::</span>in<span class="sym">,</span> V<span class="sym">::</span>out<span class="sym">,</span> T<span class="sym">::</span>out<span class="sym">)</span> <span class="kwa">is</span> det <span class="sym">:-
+</span><span class="line">   85 </span><span class="sym"></span>                        T <span class="sym">=</span> T0^activate<span class="sym">,</span> V <span class="sym">=</span> T^value<span class="sym">),
+</span><span class="line">   86 </span><span class="sym"></span>                Value2<span class="sym">,</span> _Toggle2<span class="sym">) },
+</span><span class="line">   87 </span><span class="sym"></span>        write_string<span class="sym">(</span>if Value2 <span class="sym">=</span> yes then <span class="str">&quot;true&quot;</span> else <span class="str">&quot;false&quot;</span><span class="sym">),</span> <span class="kwa">nl</span>.
+<span class="line">   88 </span>
+<span class="line">   89 </span><span class="sym">:-</span> pred loop<span class="sym">(</span>int<span class="sym">,</span> T1<span class="sym">,</span> T2<span class="sym">,</span> pred<span class="sym">(</span>T1<span class="sym">,</span> T2<span class="sym">,</span> T1<span class="sym">,</span> T2<span class="sym">),</span> T1<span class="sym">,</span> T2<span class="sym">)</span>.
+<span class="line">   90 </span><span class="sym">:-</span> mode loop<span class="sym">(</span>in<span class="sym">,</span> in<span class="sym">,</span> in<span class="sym">,</span> pred<span class="sym">(</span>in<span class="sym">,</span> in<span class="sym">,</span> out<span class="sym">,</span> out<span class="sym">)</span> <span class="kwa">is</span> det<span class="sym">,</span> out<span class="sym">,</span> out<span class="sym">)</span> <span class="kwa">is</span> det.
+<span class="line">   91 </span>loop<span class="sym">(</span>N<span class="sym">,</span> V0<span class="sym">,</span> T0<span class="sym">,</span> P<span class="sym">,</span> V<span class="sym">,</span> T<span class="sym">) :-
+</span><span class="line">   92 </span><span class="sym">        (</span>if N <span class="sym">=</span> <span class="num">0</span> then
+<span class="line">   93 </span>                V <span class="sym">=</span> V0<span class="sym">,</span> T <span class="sym">=</span> T0
+<span class="line">   94 </span>        else
+<span class="line">   95 </span>                P<span class="sym">(</span>V0<span class="sym">,</span> T0<span class="sym">,</span> V1<span class="sym">,</span> T1<span class="sym">),
+</span><span class="line">   96 </span><span class="sym"></span>                loop<span class="sym">(</span>N <span class="num">- 1</span><span class="sym">,</span> V1<span class="sym">,</span> T1<span class="sym">,</span> P<span class="sym">,</span> V<span class="sym">,</span> T<span class="sym">)
+</span><span class="line">   97 </span><span class="sym">        )</span>.
+<span class="line">   98 </span>
+<span class="line">   99 </span><span class="slc">% Alternatively, it can be written a little more elegantly as
+</span><span class="line">  100 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">  101 </span><span class="slc"></span><span class="slc">% main --&gt;
+</span><span class="line">  102 </span><span class="slc"></span><span class="slc">%         io__command_line_arguments(Args),
+</span><span class="line">  103 </span><span class="slc"></span><span class="slc">%         { N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
+</span><span class="line">  104 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">  105 </span><span class="slc"></span><span class="slc">%         { {Value1, _Toggle1} = repeat_n(N, {yes, toggle(yes)},
+</span><span class="line">  106 </span><span class="slc"></span><span class="slc">%                 (func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
+</span><span class="line">  107 </span><span class="slc"></span><span class="slc">%         write_string(if Value1 = yes then &quot;true&quot; else &quot;false&quot;), nl,
+</span><span class="line">  108 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">  109 </span><span class="slc"></span><span class="slc">%         { {Value2, _Toggle2} = repeat_n(N, {yes, make_nth_toggle(yes, 3)},
+</span><span class="line">  110 </span><span class="slc"></span><span class="slc">%                 (func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
+</span><span class="line">  111 </span><span class="slc"></span><span class="slc">%         write_string(if Value2 = yes then &quot;true&quot; else &quot;false&quot;), nl.
+</span><span class="line">  112 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">  113 </span><span class="slc"></span><span class="slc">% :- func repeat_n(int, T, func(T) = T) = T.
+</span><span class="line">  114 </span><span class="slc"></span><span class="slc">% repeat_n(N, X, F) =
+</span><span class="line">  115 </span><span class="slc"></span><span class="slc">%         (if N = 0 then X
+</span><span class="line">  116 </span><span class="slc"></span><span class="slc">%         else repeat_n(N - 1, F(X), F)).
+</span><span class="line">  117 </span><span class="slc"></span><span class="slc">%
+</span><span class="line">  118 </span><span class="slc"></span><span class="slc">% but the earlier code above is a little more efficient.</span>

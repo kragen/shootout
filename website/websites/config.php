@@ -14,25 +14,26 @@ define('CODE_PATH', '../code/');
 define('LOG_PATH', '../code/');
 define('MISC_PATH', '../misc/');
 
-define('MAIN_SITE', './');
-define('DEV_SITE', './dev/');
-define('GREATER_SITE', './greater/');
+define('CORE_SITE', './');
+define('SANDBOX_SITE', './sandbox/');
+define('GREAT_SITE', './great/');
 
 
 // CONSTANTS ///////////////////////////////////////////////////
 
 
 define('REV_COLOR', 'navy');         // background color for banner etc
-define('REV_COLOR_MAIN', 'navy');         
-define('REV_COLOR_GREATER', '#991900');         
-define('REV_COLOR_DEV', '#cc9900');        
+define('REV_COLOR_CORE', 'navy');         
+define('REV_COLOR_GREAT', '#991900');         
+define('REV_COLOR_SANDBOX', '#cc9900');        
 
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',26);          // show 26 rows of languages on the homepage
 
 
-define('SITE_TITLE','The Great Computer Language Shootout');
-define('BANNER_TITLE','The&nbsp;Great&nbsp;Computer&nbsp; </br>Language&nbsp;Shootout&nbsp;');
+define('SITE_NAME', 'core');
+define('SITE_TITLE','The Core Computer Language Shootout');
+define('BANNER_TITLE','The&nbsp;Core&nbsp;Computer&nbsp; </br>Language&nbsp;Shootout&nbsp;');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
@@ -47,7 +48,7 @@ define('CHART_V1',10);
 define('CHART_V2',100);
 define('CHART_V3',200);
   
-define('TESTS_PHRASE', '25 benchmarks');            
-define('LANGS_PHRASE','50 Languages');  
+define('TESTS_PHRASE', 'Benchmarks');            
+define('LANGS_PHRASE','Languages');  
            
 ?>

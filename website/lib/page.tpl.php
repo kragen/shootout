@@ -11,24 +11,24 @@
 
 <title><?=$PageTitle;?></title>
 <style type="text/css" media="all">
-   @import "<?=MAIN_SITE;?>highlight.css";
-   @import "<?=MAIN_SITE;?>benchmark.css";
+   @import "<?=CORE_SITE;?>highlight.css";
+   @import "<?=CORE_SITE;?>benchmark.css";
    .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
-   .arevMain { background-color: <?=REV_COLOR_MAIN;?>; }
-   .arevGreater { background-color: <?=REV_COLOR_GREATER;?>; }
-   .arevDev { background-color: <?=REV_COLOR_DEV;?>; }
+   .arevCore { background-color: <?=REV_COLOR_CORE;?>; }
+   .arevGreat { background-color: <?=REV_COLOR_GREAT;?>; }
+   .arevSandbox { background-color: <?=REV_COLOR_SANDBOX;?>; }
 </style>
 </head>
 
 <body>
 <table class="hf"><tr><td>
-<h2><a class="arev" href="index.php?sort=<?=$Sort;?>"><?=$BannerTitle;?></a>
-<h2></td><td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>"><?=$FaqTitle;?> </a>
+<h2><a class="arev" href="index.php?sort=<?=$Sort;?>" title="<?=SITE_TITLE;?> homepage"><?=$BannerTitle;?></a>
+<h2></td><td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" title="Where can I&#133;? How did you measure&#133;? Why don't you include&#133;?"><?=$FaqTitle;?> </a>
 </td></tr></table>
 
 <?=$PageBody;?>
 
 <form><input type="hidden" name="sort" value="<?=$Sort;?>"/></form>
-<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <b>Send</b>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230">suggestions&nbsp;and&nbsp;comments</a></p></div>
+<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license">revised&nbsp;BSD&nbsp;license</a> | <b>Send</b>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">suggestions&nbsp;and&nbsp;comments</a></p></div>
 </body>
 </html>

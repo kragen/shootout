@@ -13,15 +13,7 @@ $P = $SelectedLang.'-'.$Id;
 ?>
 </div>
 
-
-
-<!-- // TAG /////////////////////////////////////////////////// -->
-
-<table class="div">
-
-<tr><td>
-<h4 class="rev">&nbsp;<?=$Title;?></h4>
-<p>
+<div>
 <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=all&sort=<?=$Sort;?>"
 title="Compare performance on the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
 <?=BAR;?>
@@ -31,7 +23,14 @@ title="Check the <?=$LangName;?> rankings" >
 <?=BAR;?>
 <a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P;?>&p2=<?=$P;?>&p3=<?=$P;?>&p4=<?=$P;?>&sort=<?=$Sort;?>"  
 title="Choose programs for side-by-side comparison" >Side-by-side</a>
-</p>
+</div>
+
+<!-- // TAG /////////////////////////////////////////////////// -->
+
+<table class="div">
+
+<tr><td>
+<h4 class="rev">&nbsp;<?=$Title;?></h4>
 </td></tr>
 
 

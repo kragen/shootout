@@ -14,61 +14,51 @@
 
 <tr class="b"><td>Where can I send <b>suggestions</b> and comments and programs?</td></tr>
 
-<tr><td><p>You can <a href="http://alioth.debian.org/sendmessage.php?touser=1230">send suggestions and comments</a>, or you can <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list">post email directly to the <b>mailing list</b></a>.</p></td></tr>
+<tr><td><p>You can send suggestions and comments without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <b>message form</b></a>.
+
+ You can contribute faster more-elegant programs - send them, and your suggestions, to the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><b>mailing list</b></a>.</p></td></tr>
 
 
 
-<tr class="b"><td>Where can I see more languages?</td></tr>
+<tr class="b"><td>Where can I see more?</td></tr>
 <tr><td>
+<p>You can look at our other Shootout websites - </p>
 
-<p>For clarity, just one or two implementations of the same language are shown on:
-<ul>
-<li> <a class="arevMain" href="<?=MAIN_SITE;?>index.php?sort=<?=$Sort;?>" >The Great Computer Language Shootout</a>
-<p>Main language implementations.</p>
-</li>
-</ul>
+
+<p><a class="arevGreat" href="<?=GREAT_SITE;?>index.php?sort=<?=$Sort;?>" >The Great Computer Language Shootout</a> includes all the programming language implementations that have more than a few completed benchmark programs.
 </p>
 
-
-<p>More languages and language implementations are shown on: 
-<ul>
-<li><a class="arevGreater" href="<?=GREATER_SITE;?>index.php?sort=<?=$Sort;?>" >The Greater Computer Language Shootout</a>
-<p>Languages with a decent number of completed benchmark programs.</p>
-</li>
-
-<li><a class="arevDev" href="<?=DEV_SITE;?>index.php?sort=<?=$Sort;?>" >The DEV Computer Language Shootout</a>
-<p>Languages which only have a few completed benchmark programs, and benchmarks that are still under development.</p>
-</li>
-
-</ul>
+<p><a class="arevSandbox" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >The Sandbox</a> includes programming languages that only have a few completed benchmark programs; and some new benchmarks we're developing.
 </p>
 
+<p><a class="arevCore" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Core Computer Language Shootout</a> includes a smaller selection of programming languages. 
+</p>
 
 <tr class="b"><td>Where can I download the <b>data</b> from?</td></tr>
 
-<tr><td><p>You can <b>download</b> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data">zip file of timings and memory use ~100KB</a>.</p></td></tr>
+<tr><td><p>You can <b>download</b> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="Not yet available">zip file of timings and memory use ~100KB</a>.</p></td></tr>
 
 
 
 <tr class="b"><td>Where can I see what other people think about the Language Shootout?</td></tr>
 
-<tr><td><p>You can start by reading the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list">mailing list archives.</a></p></td></tr>
+<tr><td><p>You can start by reading the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription">mailing list archives.</a></p></td></tr>
 
 
 
 <tr class="b"><td>Where can I download the program sources and build scripts?</td></tr>
 
-<tr><td><p>You can browse the CVS tree on <a href="http://alioth.debian.org/projects/shootout">Alioth&nbsp;Debian.org</a>.
+<tr><td><p>You can browse the CVS tree on <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
 </td></tr>
 
-<tr><td><p>You can <b>download</b> all the program sources and builds scripts as a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download Tarball">
+<tr><td><p>You can <b>download</b> all the program sources and builds scripts as a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download Tarball" title="Not yet available">
 compressed tarball ~1.5MB</a>. The current distribution is only suitable for the adventurous.
 </p></td></tr>
 
 
 <tr class="b"><td>Where can I find out more?</td></tr>
 
-<tr><td><p>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"><b>Alioth&nbsp;Debian.org</b></a>.
+<tr><td><p>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org"><b>Alioth&nbsp;Debian.org</b></a>.
 </p></td></tr>
 
 </table>
@@ -86,7 +76,7 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 <tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
 
 <tr><td>
-<p>The Full CPU Time includes program <b>startup time</b>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>">startup benchmark</a> programs.</p>
+<p>The Full CPU Time includes program <b>startup time</b>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
 </td></tr>
 
 
@@ -112,7 +102,7 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.
 </p><p>The <b>same way</b> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&lang=all&sort=<?=$Sort;?>">primes</a> programs.</p>
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&lang=all&sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
 <p>The same way programs often seem naive and unidiomatic.       
 </td></tr>
 
@@ -123,7 +113,7 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 <tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may
 specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or ...
 </p><p>The <b>same thing</b> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?".
-For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>">word-frequency</a> programs.</p>
+For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
 <p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.       
 </td></tr>
 
@@ -152,8 +142,8 @@ For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>">
 
 <tr class="b"><td>How did you measure <b>CPU time?</b></td></tr>
 
-<tr><td><p>Each program was run as a child-process of a Perl script. The script waits for the child-process to exit and takes usr+sys times with (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl">BSD::Resource::times</a>)[2,3].</p>
-<p>The Full CPU time includes program <b>startup time</b>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>">startup benchmark</a> programs.</p><p>
+<tr><td><p>Each program was run as a child-process of a Perl script. The script waits for the child-process to exit and takes usr+sys times with (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3].</p>
+<p>The Full CPU time includes program <b>startup time</b>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
 Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.
 </td></tr>
 
@@ -207,7 +197,7 @@ We reserve the right to format the code entries as we see fit, whatever the line
 
 <tr class="b"><td>Why don't you include Mono C#?</td></tr>
 
-<tr><td><p>Mono has a buglet which makes the <a href="http://lists.ximian.com/archives/public/mono-devel-list/2004-September/007766.html">CPU times unreliable</a>.</p></td></tr>
+<tr><td><p>Mono has a buglet which makes the <a href="http://lists.ximian.com/archives/public/mono-devel-list/2004-September/007766.html" title="An explanation on the Mono developers mailing-list">CPU times unreliable</a>.</p></td></tr>
 
 
 
@@ -221,7 +211,7 @@ We reserve the right to format the code entries as we see fit, whatever the line
 
 <tr><td><p>Programming languages that can be used to write most of our benchmark programs!</p><p> 
 <ol><b>Must have</b>
-<li>A <a href="http://www.debian.org">Debian package</a> (either from Debian itself, or the primary authors of the language.)
+<li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
 </br>Or build and install with <code>./configure && make && make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Documentation.</li>
 <li>Command-line argument handling.</li>
@@ -289,12 +279,12 @@ fixes, you will soon understand this requirement.</li>
 
 <tr class="b"><td>Who started "The Great Computer Language Shootout"?</td></tr>
 
-<tr><td><p>Doug Bagley created "The Great Computer Language Shootout"</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/">"The Great Win32 Computer Language Shootout"</a></p><p>Brent Fulgham revived "The Great Computer Language Shootout" here on <a href="http://alioth.debian.org/projects/shootout">Alioth&nbsp;Debian.org</a></p></td></tr>
+<tr><td><p>Doug Bagley created "The Great Computer Language Shootout"</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a></p><p>Brent Fulgham revived "The Great Computer Language Shootout" here on <a href="http://alioth.debian.org/projects/shootout" title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a></p></td></tr>
 
 
 <tr class="b"><td>Who has contributed?</td></tr>
 
-<tr><td><p>So many people that we have an <a href="miscfile.php?sort=<?=$Sort;?>&file=acknowledgements&title=acknowledgements">acknowledgements page</a>!</p></td></tr>
+<tr><td><p>So many people that we have an <a href="miscfile.php?sort=<?=$Sort;?>&file=acknowledgements&title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
 
 
 </table>
