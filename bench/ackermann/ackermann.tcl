@@ -1,8 +1,12 @@
 #!/usr/bin/tclsh
-# $Id: ackermann.tcl,v 1.2 2005-02-19 17:05:38 bfulgham Exp $
+# $Id: ackermann.tcl,v 1.3 2005-03-15 06:17:49 bfulgham Exp $
 # http://shootout.alioth.debian.org/
 #
 # Updated based on ideas from Stefan Finzel
+#
+# Further optimized by Mark Butler.
+#
+# vim: set filetype=tcl:
 
 set NUM [lindex $argv 0]
 if {$NUM < 1} {
@@ -12,7 +16,11 @@ if {$NUM < 1} {
 proc ack {m n} {
     if {$m} {
 	if {$n} {
-	    return [ack [expr {$m - 1}] [ack $m [expr {$n - 1}]]]
+            #
+            # incr is quicker than an equivalent expr, as long as
+            # you don't mind altering the variable.
+            incr n -1
+	    return [ack [expr {$m - 1}] [ack $m $n]]
 	} else {
 	    return [ack [expr {$m - 1}] 1]
 	}
@@ -21,5 +29,5 @@ proc ack {m n} {
     }
 }
 
-set ack [ack 3 $NUM]
-puts "Ack(3,$NUM): $ack"
+interp recursionlimit {} 10000
+puts "Ack(3,$NUM): [ack 3 $NUM]"
