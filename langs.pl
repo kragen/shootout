@@ -500,6 +500,19 @@
        },
      },
 
+     fpascal =>
+     { Lang => 'Pascal',
+       Home => 'http://www.freepascal.org',
+       Down => 'http://www.freepascal.org/download.html',
+       Type => 'native compiled',
+       Ext  => 'pas',
+       Verfun => sub {
+           my $ver = `$ENV{FPASCAL} -i`;
+	   $ver =~ /Free Pascal.*(version [\d\.]+)/;
+	   return $1;
+       },
+     },
+
      php =>
      { Lang => 'PHP',
        Home => 'http://www.php.net/',
@@ -547,7 +560,7 @@
        Type => 'bytecomped/interpreted',
        Ext  => 'lisp',
        Verfun => sub {
-           my $tmp = `$ENV{POPLOG} ":popversion=>" 2>&1`;
+           my $tmp = `$ENV{POP11} ":popversion=>" 2>&1`;
 	   $tmp =~ /.*\s\((Version\s\d\d\.\d\d).*/;
 	   my $val = "$1-Lisp ";
            $tmp = `$ENV{POPLISP} ":(lisp-implementation-version)" 2>&1`;
@@ -577,7 +590,7 @@
        Type => 'bytecomped/interpreted',
        Ext  => 'sml',
        Verfun => sub {
-           my $val = `$ENV{POPLOG} ":popversion=>" 2>&1`;
+           my $val = `$ENV{POP11} ":popversion=>" 2>&1`;
 	   $val =~ /.*\s\((Version\s\d\d\.\d\d).*/;
 	   return ($1);
        },
@@ -832,6 +845,7 @@
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',
      'PHP'         => 'php',
+     'Pascal'      => 'pas',
      'Pike'        => 'c',
      'Prolog'      => 'prolog',
      'Python'      => 'shell',
@@ -850,4 +864,5 @@
      'mzc'         => 'lisp',
      'mzscheme'    => 'lisp',
      'Pop11'       => 'c',
+     'fpascal'     => 'pascal',
  );

@@ -105,7 +105,7 @@ $LANGS = array(
       'Home'    => 'http://www.gwydiondylan.org',
       'Down'    => 'http://www.gwydiondylan.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => 'd2c (Gwydion Dylan) 2.3.12pre4'
+      'Version' => 'd2c (Gwydion Dylan) 2.4.0RC1'
     ),
 
     'se' => array(
@@ -252,7 +252,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
       'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => '-Lisp '
+      'Version' => 'Version 15.53-Lisp Version 15.53'
     ),
 
     'newlisp' => array(
@@ -346,6 +346,14 @@ elastiC version: 0.0.36 (dec: 36)
 '
     ),
 
+    'fpascal' => array(
+      'Lang'    => 'Pascal',
+      'Home'    => 'http://www.freepascal.org',
+      'Down'    => 'http://www.freepascal.org/download.html',
+      'Type'    => 'native compiled',
+      'Version' => 'version 1.9.4'
+    ),
+
     'perl' => array(
       'Lang'    => 'Perl',
       'Home'    => 'http://www.perl.org/',
@@ -416,7 +424,7 @@ S-Lang Library Version: 1.4.9'
       'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
       'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => ''
+      'Version' => 'Version 15.53'
     ),
 
     'smlnj' => array(
@@ -424,7 +432,7 @@ S-Lang Library Version: 1.4.9'
       'Home'    => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
       'Down'    => 'http://cm.bell-labs.com/cm/cs/what/smlnj/software.html',
       'Type'    => 'native compiled',
-      'Version' => 'Standard ML of New Jersey v110.44
+      'Version' => 'Standard ML of New Jersey v110.49
 - '
     ),
 
