@@ -1,4 +1,7 @@
 /* -*- mode: c -*-
+ * $Id: reversefile.gcc,v 1.5 2004-10-18 07:15:07 bfulgham Exp $
+ * http://shootout.alioth.debian.org/
+ * 
  * from Alan Post <apost@recalcitrant.org>
  */
 
@@ -10,57 +13,36 @@
 #include <limits.h>
 #include <sys/uio.h>
 
-/*
- * Note that malloc(3) seems happier with chunks of 4096
- */
-#define MAXREAD (4096 - sizeof( size_t ) - sizeof( void* ))
+#define MAXREAD 4096
 #define IOV_MAX 1024
 
 typedef struct buf_t { char d[MAXREAD];
                        size_t len;
                        struct buf_t *next;} buf_t;
 
-static buf_t *read_lines( buf_t *tail )
+static print_string( char *data, size_t len,
+                     struct iovec *vec, size_t *p_ivec )
 {
-    buf_t *curr = tail;
-    tail->next = NULL;
-
-    while ( 1 )
+    vec[ *p_ivec ].iov_base = data;
+    vec[ *p_ivec ].iov_len = (int) len;
+    ++ *p_ivec;
+    if ( *p_ivec == IOV_MAX )
     {
-        buf_t *head;
-        int nread = read( STDIN_FILENO, curr->d, MAXREAD );
-        curr->len = nread;
-        if ( nread < MAXREAD ) return curr;
-        head = (buf_t*) malloc( sizeof( buf_t ));
-        head->next = curr;
-        curr = head;
+        writev( STDOUT_FILENO, vec, *p_ivec );
+        *p_ivec = 0;
     }
 }
 
-#define WRITEOUT( p_, l_ ) \
-        do { \
-            vec[ ivec ].iov_base = (char*) (p_); \
-            vec[ ivec ].iov_len = (int) (l_); \
-            ivec++; \
-            if ( ivec == IOV_MAX ) \
-            { \
-                writev( STDOUT_FILENO, vec, ivec ); \
-                ivec = 0; \
-            } \
-        } while (0)
-
-#define LINEOUT \
-        do { \
-            WRITEOUT( pos, end - pos); \
-            for (; loh != NULL; loh = loh->next ) \
-                WRITEOUT( loh->d, loh->len ); \
-        } while (0)
-
-int main(int argc, char *argv[])
+static print_line( char *pos, char *end, buf_t **p_loh,
+                   struct iovec *vec, size_t *p_ivec )
 {
-    buf_t tail;
-    buf_t *head = read_lines( &tail );
+    print_string( pos, end - pos, vec, p_ivec );
+    for (; *p_loh != NULL; *p_loh = (*p_loh)->next )
+        print_string( (*p_loh)->d, (*p_loh)->len, vec, p_ivec );
+}
 
+static void rev_print( buf_t *head )
+{
     buf_t *loh = NULL;
     buf_t *curr = head;
 
@@ -80,9 +62,9 @@ int main(int argc, char *argv[])
 
                 if ( new_curr == NULL )
                 {
-                    LINEOUT;
+                    print_line( pos, end, &loh, vec, &ivec );
                     writev( STDOUT_FILENO, vec, ivec );
-                    return EXIT_SUCCESS;
+                    return;
                 }
 
                 curr->len = end - buf;
@@ -94,12 +76,28 @@ int main(int argc, char *argv[])
             }
             if ( *(pos-1) == '\n' )
             {
-                LINEOUT;
+                print_line( pos, end, &loh, vec, &ivec );
                 end = pos;
             }
         }
     }
     assert( NULL == "unreachable" );
-    return EXIT_FAILURE;
+}
+
+static void f( buf_t *tail )
+{
+    buf_t head;
+
+    head.next = tail;
+    head.len = read( STDIN_FILENO, head.d, MAXREAD );
+
+    if ( head.len == MAXREAD ) f( &head );
+    else rev_print( &head );
+}
+
+int main(int argc, char *argv[])
+{
+    f( NULL );
+    return EXIT_SUCCESS;
 }
 
