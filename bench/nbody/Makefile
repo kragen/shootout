@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-02-21 07:23:02 bfulgham Exp $
+# $Id: Makefile,v 1.3 2005-02-26 07:07:18 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -19,7 +19,6 @@ ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 600000,800000,1000000 \
-	  --ignore nbody.csharp
+	  --range 600000,800000,1000000
 
 include ../../Make.footer
