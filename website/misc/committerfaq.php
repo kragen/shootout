@@ -7,8 +7,8 @@
 <li><strong>Move <em>Open item</em> source-code into CVS</strong></li>
 <li>Generate HTML from new CVS source-code</li>
 <li>Move HTML to website</li>
-<li>Build & Measure new CVS source-code</li>
-<li>Move Build & Benchmark results to website</li>
+<li>Build &amp; Measure new CVS source-code</li>
+<li>Move Build &amp; Benchmark results to website</li>
 </ol>
 <p>We're mainly concerned with timely CVS check-in, providing feedback, and deciding which programs should be shown on the website.</p>
 </td></tr>
@@ -18,7 +18,7 @@
 
 <tr class="b"><td>Browse Contribute Programs for <em>Open items</em></td></tr>
 <tr><td>
-<p>On the <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a> form, select <em>Open</em> state and maybe a particular language, and browse for new items.</p>
+<p>On the <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a> form, select <em>Open</em> state and maybe a particular language, and browse for new items.</p>
 </td></tr>
 
 

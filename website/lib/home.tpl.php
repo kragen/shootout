@@ -38,7 +38,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       $TestTag = $Row[TEST_TAG];
 
       printf('<p class="a"><a title="%s performance measurements"', $TestName);
-      printf('href="benchmark.php?test=%s&lang=all&sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
+      printf('href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
       echo "\n";
    }
 ?>
@@ -60,7 +60,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   
       printf('<p class="c"><a title="%s benchmark rankings and information"', $LangName);
-      printf('href="benchmark.php?test=all&lang=%s&sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
+      printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
    }
 ?>

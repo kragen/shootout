@@ -84,7 +84,7 @@ foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="%s benchmark rankings and information">%s</a></td>', 
+   printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s" title="%s benchmark rankings and information">%s</a></td>', 
       $k,$Sort,$Name,$HtmlName); echo "\n";
    printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";
    echo "</tr>\n";
@@ -144,7 +144,7 @@ foreach($Tests as $t){
    $weight = $W[ $t[TEST_LINK] ];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&lang=all&sort=%s" title="%s performance measurements">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s" title="%s performance measurements">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
    printf('<td><input type="text" size="2" name="%s" value="%d"></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 

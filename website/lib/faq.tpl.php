@@ -17,7 +17,7 @@
 <li>compare programming language productivity </li>
 <li><em>etc etc</em></li>
 </ul>
-We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><strong>micro-benchmarks</strong></a>.
+We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>micro-benchmarks</strong></a>.
 </p>
 </td></tr>
 
@@ -35,15 +35,15 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 
 <tr class="b"><td>Where can I send <strong>comments</strong> and suggestions?</td></tr>
 <tr><td><p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
-<a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
-<p>Use Tracker to report <a href="https://alioth.debian.org/tracker/?atid=411002&group_id=30402&func=browse"><strong>Bugs</strong></a> or document <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&atid=411005"><strong>Feature Requests<strong></a>.</p>
+<a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
+<p>Use Tracker to report <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a> or document <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests<strong></a>.</p>
 </td></tr>
 
 <tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
 <tr><td>
 <p>Before contributing programs
 <ul>
-<li>read the <a href="miscfile.php?sort=<?=$Sort;?>&file=license&title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a>. All contributed programs are published under this revised BSD license.</li>
+<li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a>. All contributed programs are published under this revised BSD license.</li>
 <li>read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></li>
 </ul>
 </p>
@@ -51,7 +51,7 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 
 <p>And then follow these instructions!</p>
 <p><strong>Start from the bottom</strong> of the
-   <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New">
+   <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Contribute Programs - Submit New">
    <strong>Contribute Programs Submit-New</strong></a> form and work your way up as follows:
 <ol>
 <li>Check to Upload & Attach File: program source-code</li>
@@ -67,7 +67,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 </ol>
 </p>
 
-<p>Track status with Browse <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a>
+<p>Track status with Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a>
 <ul>
 <li><em>Open items</em> are new contributions</li>
 <li><em>Pending items</em> have been added to CVS</li>
@@ -81,7 +81,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 <tr><td>
 <p>We need volunteers to
 <ol>
-<li>Browse <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a> for <em>Open items</em></li>
+<li>Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a> for <em>Open items</em></li>
 <li>check the <em>Open item</em> programs do what's required</li>
 <li>add acceptable <em>Open item</em> programs to CVS</li>
 <li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
@@ -93,7 +93,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 <li>update the status of removed <em>Closed items</em> to <em>Deleted</em></li>
 </ol>
 </p>
-<p>And other chores listed in the <a href="miscfile.php?sort=<?=$Sort;?>&file=committerfaq&title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
+<p>And other chores listed in the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=committerfaq&amp;title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
 <p>Do you have the necessary programming language knowledge?<br/>
 Do you want to help with the chores?<br/>
 Contact us!</p>
@@ -112,7 +112,7 @@ And then, <em>maybe</em>, we just-might consider it.</p>
 </td></tr>
 
 <tr><td>
-<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Benchmark</strong> to see if it's already been suggested.</p>
+<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Benchmark</strong> to see if it's already been suggested.</p>
 </td></tr>
 
 </table>
@@ -152,7 +152,7 @@ And then, <em>maybe</em>, we just-might consider it.</p>
 
 <tr class="b"><td>Where can I find out more?</td></tr>
 
-<tr><td><p>You could learn something more about <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
+<tr><td><p>You could learn something more about <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
 </p></td></tr>
 
 <tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
@@ -203,10 +203,10 @@ And then, <em>maybe</em>, we just-might consider it.</p>
 <tr class="b"><td><a name="sameway">How should I implement a same way program?</a></td></tr>
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.
 </p><p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&lang=all&sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
 <p>The same way programs often seem naive and unidiomatic.</p> 
 
-<p>(Flaw #2 - we'd like to compare apples & apples, but normally we'd solve problems using different approaches depending on the language.)</p>      
+<p>(Flaw #2 - we'd like to compare apples &amp; apples, but normally we'd solve problems using different approaches depending on the language.)</p>      
 </td></tr>
 
 
@@ -221,7 +221,7 @@ And then, <em>maybe</em>, we just-might consider it.</p>
 specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or ...
 
 </p><p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?".
-For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
 <p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.       
 </td></tr>
 
@@ -253,7 +253,7 @@ For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" 
 <tr><td>
 <p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
 
-<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
+<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
 <p>(Flaw #1 - normally we'd time a specific block of code within a program, and exclude startup time.)</p>
 </td></tr>
 
@@ -284,7 +284,7 @@ For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" 
 
 <tr><td><p>Each program was run as a child-process of a Perl script. The script waits for the child-process to exit and takes usr+sys times with (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3].</p>
 
-<p>The Full CPU time includes program <strong>startup time</strong>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
+<p>The Full CPU time includes program <strong>startup time</strong>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
 
 Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
 
@@ -377,13 +377,13 @@ We reserve the right to format the code entries as we see fit, whatever the line
 <ol><strong>Must have</strong>
 
 <li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
-</br>Or build and install with <code>./configure && make && make install</code> and a default target of <code>/usr/local.</code></li>
+</br>Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Documentation.</li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
 <li>Double precision floating point numbers.</li>
 <li>Dynamic hash tables and sequences (arrays or lists).</li>
-<li>Line-oriented read & write from stdin & stdout.</li>
+<li>Line-oriented read &amp; write from stdin &amp; stdout.</li>
 </ol>
 
 <ol><strong>Should have</strong>
@@ -423,7 +423,7 @@ fixes, you will soon understand this requirement.</li>
 </td></tr>
 
 <tr><td>
-<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.</p>
+<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.</p>
 </td></tr>
 
 </table>
@@ -495,7 +495,7 @@ fixes, you will soon understand this requirement.</li>
 
 
 
-<tr><td><p>So many people that we have an <a href="miscfile.php?sort=<?=$Sort;?>&file=acknowledgements&title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
+<tr><td><p>So many people that we have an <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
 
 
 

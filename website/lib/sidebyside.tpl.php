@@ -32,7 +32,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <table class="div">
 <tr><td width="160">
 
-<img src="chartcpu.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
+<img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
    width="160" height="240" />
 </td>
 
@@ -78,7 +78,7 @@ foreach($Selected as $row){
 
 <table class="div">
 <tr><td width="160">
-<img src="chartmem.php?test=<?=$SelectedTest;?>&p1=<?=$P1;?>&p2=<?=$P2;?>&p3=<?=$P3;?>&p4=<?=$P4;?>&sort=<?=$Sort;?>" 
+<img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
    width="160" height="240" />
 </td>
 
@@ -125,7 +125,7 @@ foreach($Selected as $row){
 <table class="div">
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
 <tr>
-<th>Program & Logs</th>
+<th>Program &amp; Logs</th>
 <? foreach($TestValues as $v){ printf('<th>%s</th>',$v); echo "\n"; } ?>
 </tr>
 
@@ -133,7 +133,7 @@ foreach($Selected as $row){
 $RowClass = 'c';
 foreach($NData as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
       $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_FULL],$TestName,$row[N_HTML]); echo "\n";
 
    foreach($row[N_FULLCPU] as $v){ 
@@ -160,7 +160,7 @@ foreach($NData as $row){
 <table class="div">
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
-<th>Program & Logs</th>
+<th>Program &amp; Logs</th>
 <? foreach($TestValues as $v){ printf('<th>%s</th>',$v); echo "\n"; } ?>
 </tr>
 
@@ -168,7 +168,7 @@ foreach($NData as $row){
 $RowClass = 'c';
 foreach($NData as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&lang=%s&id=%d&sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
       $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_FULL],$TestName,$row[N_HTML]); echo "\n";
 
    foreach($row[N_MEMORY] as $v){ 
