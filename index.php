@@ -1,5 +1,4 @@
 <?php require("html/header.php");
-      require("nav.html");
       require("html/toptabs.php");
       require("html/testnav.php");
 

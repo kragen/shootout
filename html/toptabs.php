@@ -9,6 +9,7 @@ function toptabs($current)
 		"/news.php" => "News",
 		"/lang/bash" => "Implementations",
 		"/craps.php" => "Scorecard",
+		"/recent.php" => "Recent Changes",
 		"http://alioth.debian.org/projects/shootout" => "Alioth");
 
 	echo "<div class=\"tabs\" id=\"toptabs\">\n";
