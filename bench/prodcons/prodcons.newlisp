@@ -1,0 +1,60 @@
+#!/usr/bin/newlisp
+
+# prodcons.newlisp - benchmark Producer/consumer 
+# newLISP v.8.3.0 or later required
+# Note that newLISP does not use Pthreads but classic UNIX/fork() threads 
+# therefore no mutexes amd condition variables but semaphores and shared memory
+#
+# Contributed by Lutz Mueller
+
+(constant 'wait -1 'signal 1)
+
+(define (consumer n)
+	(set 'i 0)
+	(while (< i n)
+		(semaphore cons-sem wait)
+		(set 'i (share data))
+		(share consumed (+ (share consumed) 1))
+		(semaphore prod-sem signal))  
+	(exit))
+		
+		
+(define (producer n)
+	(for (i 1 n)
+		(semaphore prod-sem wait)
+		(share data i)
+		(share produced (+ (share produced) 1))
+		(semaphore cons-sem signal))   
+	(exit))
+
+
+(define (main n)
+	(set 'produced (share)) ; get shared mem addresses
+	(set 'consumed (share))
+	(set 'data (share))	
+
+	(share produced 0) ; init shared memory
+	(share consumed 0)
+	(share data 0)
+
+	(set 'prod-sem (semaphore)) ; get semaphores
+	(set 'cons-sem (semaphore))
+
+	(set 'prod-pid (fork (producer n))) ; start threads
+	(set 'cons-pid (fork (consumer n)))
+	(semaphore prod-sem signal) ; get producer started
+
+	(wait-pid prod-pid) ; wait for threads to finish
+	(wait-pid cons-pid)
+	(semaphore cons-sem 0) ; release semaphore
+	(semaphore prod-sem 0) ; release semaphore
+
+	(println (share produced) " " (share consumed)))
+
+(main (integer (last (main-args))))
+
+(exit)
+
+
+	
+		

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2004-11-10 06:47:52 bfulgham Exp $
+# $Id: Makefile,v 1.24 2004-11-30 07:10:05 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -19,6 +19,9 @@ MLTONDEPS := ../../Include/mlton-src/basic.sml \
 		../../Include/mlton-src/hash-table.sml
 
 GCCOPTS := -I ../../Include
+GXXOPTS := -I ../../Include
+ICCOPTS := -I ../../Include
+ICPPOPTS := -I ../../Include
 
 CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean

@@ -1,5 +1,5 @@
 // -*- mode: c++ -*-
-// $Id: spellcheck.gpp,v 1.1 2004-11-10 07:07:16 bfulgham Exp $
+// $Id: spellcheck.gpp,v 1.2 2004-11-30 07:10:05 bfulgham Exp $
 // http://shootout.alioth.debian.org/
 // STL spell checker from Bill Lear
 
@@ -12,12 +12,18 @@
 
 using namespace std;
 
+#if defined(__INTEL_COMPILER)
+#define SGI_HASH_NAMESPACE std
+using std::hash;
+using std::hash_map;
+#else
 #define SGI_HASH_NAMESPACE __gnu_cxx
 
 namespace sgi {
     using SGI_HASH_NAMESPACE::hash;
     using SGI_HASH_NAMESPACE::hash_map;
 }
+#endif
 
 typedef std::pair<const char*, const char*> span;
 
@@ -35,12 +41,36 @@ namespace SGI_HASH_NAMESPACE {
 }
 
 namespace std {
-    template<> struct std::equal_to<span> {
+    template<> struct equal_to<span> {
         inline bool operator()(const span& s1, const span& s2) const {
             return (s1.second - s1.first) == (s2.second - s2.first) &&
-                std::equal(s1.first, s1.second, s2.first);
+                equal(s1.first, s1.second, s2.first);
         }
     };
+
+#if defined(__INTEL_COMPILER)
+    struct str_hash_compare {
+        enum { bucket_size = 4, min_buckets = 8 };
+
+        bool operator()(const span& s1, const span& s2) const {
+	    int len1 = s1.second - s1.first;
+	    int len2 = s2.second - s2.first;
+
+	    int min = (len1 > len2) ? len2 : len1;
+	    
+            return (strncmp(s1.first, s2.first, min) < 0);
+	}
+
+        inline size_t operator()(const span& s) const {
+            size_t h = 0;
+            const char* end = s.second;
+            for (const char* begin = s.first; begin != end; ++begin) {
+                h = 5 * h + *begin;
+            }
+            return h;
+        }
+     };
+#endif
 }
 class spell_checker {
 public:
@@ -69,7 +99,11 @@ public:
     }
 
 private:
+#if (defined(__INTEL_COMPILER))
+    std::hash_map<span, int, str_hash_compare> dict;
+#else
     __gnu_cxx::hash_map<span, int> dict;
+#endif
 };
 
 int main() {

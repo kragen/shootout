@@ -9,44 +9,32 @@
 structure Test : sig
     val main : (string * string list) -> OS.Process.status
 end = struct
-
-    structure A = Word8Array
-    structure AS = Word8ArraySlice
-    structure VS = Word8VectorSlice
-    structure IO = Posix.IO
-    structure FS = Posix.FileSys
-
     val max = 4096
-    val buf = A.array (max, 0w0)
+    val buf = Word8Array.array (max, 0w0)
     val sub = Byte.byteToChar o Unsafe.Word8Array.sub
-    infix ++
-    fun x ++ y = Word.toIntX (Word.fromInt x + Word.fromInt y)
+    fun x + y = Word.toIntX (Word.+ (Word.fromInt x, Word.fromInt y))
 
-    val c = ref 0
-    val l = ref 0
+    val (c, l) = (ref 0, ref 0)
 
     fun newblock (w, ow) =
-	let val n = IO.readArr (FS.stdin, AS.full buf)
-	in if n = 0 then w
-	   else (c := (n ++ !c); scan (0, n, w, ow))
+	let val n = Posix.IO.readArr (Posix.FileSys.stdin,
+				      Word8ArraySlice.full buf)
+	in if n = 0 then w else (c := (n + !c); scan (0, n, w, ow))
 	end
 
     and scan (i, n, w, ow) =
 	if i >= n then newblock (w, ow)
-	else let val i' = i ++ 1
+	else let val i' = i + 1
 	     in case sub (buf, i) of
-		    #"\n" => (l := (1 ++ !l); scan (i', n, w, 1))
+		    #"\n" => (l := (1 + !l); scan (i', n, w, 1))
 		  | (#" " | #"\t" | #"\r") => scan (i', n, w, 1)
-		  | _ => scan (i', n, w ++ ow, 0)
+		  | _ => scan (i', n, w + ow, 0)
 	     end
 
-    fun main _ = let
-	val i2s = Int.toString
-	fun p s = ignore (Posix.IO.writeVec (Posix.FileSys.stdout,
-					     VS.full (Byte.stringToBytes s)))
-	val w = newblock (0, 1)
-    in
-	app p [i2s (!l), " ", i2s w, " ", i2s (!c), "\n"];
-	OS.Process.success
-    end
+    fun main _ =
+	let val w = newblock (0, 1)
+	    open FormatComb
+	in print (format (int o sp 1 o int o sp 1 o int o nl) (!l) w (!c));
+	   OS.Process.success
+	end
 end

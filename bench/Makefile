@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2004-10-03 00:44:13 bfulgham Exp $
+# $Id: Makefile,v 1.7 2004-11-30 07:10:02 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -27,6 +27,7 @@ TESTS = \
     spellcheck \
     strcat \
     sumcol \
+    takfp \
     wc \
     wordfreq
 

@@ -1,63 +1,30 @@
-(* -*- mode: sml -*-
- * $Id: except.smlnj,v 1.1 2004-05-19 18:09:43 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * Translated from except.ocaml by Stephen Weeks
+(* except.sml
+ *
+ *   Timing exception handling.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
-
 structure Test : sig
     val main : (string * string list) -> OS.Process.status
 end = struct
+    open FormatComb
 
-fun incr r = r := !r + 1
-fun print_endline s = (print s; print "\n")
-fun for (start, stop, f) =
-   let
-      fun loop i =
-	 if i > stop
-	    then ()
-	 else (f i; loop (i + 1))
-   in
-      loop start
-   end
-   
-exception HiException of int
-exception LoException of int
+    exception HiExn and LoExn
+    val (hi, lo) = (ref 0, ref 0)
 
-val hi = ref 0
-val lo = ref 0
+    fun blowup flag = raise (if flag then LoExn else HiExn)
+    fun lo_fun flag = blowup flag handle LoExn => lo := !lo + 1
+    fun hi_fun flag = lo_fun flag handle HiExn => hi := !hi + 1
+    fun some_fun flag = hi_fun flag
+	handle e => (print "Should not get here.\n"; raise e)
 
-fun blowup n =
-  if n mod 2 = 0 then raise (LoException n)
-  else raise (HiException n)
+    fun loop (0, _) = print (format (text "Exceptions: HI=" o int o
+				     text " / LO=" o int o nl) (!hi) (!lo))
+      | loop (n, flag) = (some_fun flag; loop (n - 1, not flag))
 
-fun lo_fun n =
-  blowup n
-  handle LoException ex => incr lo
-
-fun hi_fun n =
-  lo_fun n
-  handle HiException ex => incr hi
-
-fun some_fun n =
-  hi_fun n
-  handle x =>
-     (print_endline "Should not get here.";
-      raise x)
-
-fun atoi s = case Int.fromString s of SOME num => num | NONE => 0;
-fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t );
-   
-fun main (name, args) =
-   let
-      val n = atoi (hd (args @ ["1"]))
-      val _ = for (1, n, some_fun)
-   in
-      printl ["Exceptions: HI=",
-	      Int.toString (!hi),
-	      " / LO=",
-	      Int.toString (!lo)];
-      OS.Process.success
-   end
+    fun main' n = (loop (n, n mod 2 = 0); OS.Process.success)
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
 end
-
-val _ = SMLofNJ.exportFn("except", Test.main);

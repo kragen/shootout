@@ -1,7 +1,7 @@
 #!/usr/bin/tclsh
-# $Id: hash2.tcl,v 1.1 2004-05-19 18:10:02 bfulgham Exp $
+# $Id: hash2.tcl,v 1.2 2004-11-30 07:10:03 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
-# with help from Branko Vesligaj
+# with help from Branko Vesligaj and Hemang Lavana
 
 proc main {} {
     global argv
@@ -11,7 +11,9 @@ proc main {} {
     }
     for {set i $n} {$i > 0} {incr i -1} {
 	foreach k [array names hash1] {
-	    if {[catch {set hash2($k) [expr {$hash1($k) + $hash2($k)}]}]} {
+            if {[info exists hash2($k)]} {
+                set hash2($k) [expr {$hash1($k) + $hash2($k)}]
+            } else {
 		set hash2($k) $hash1($k)
 	    }
 	}
