@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2005-03-25 07:59:06 bfulgham Exp $
+# $Id: Makefile,v 1.29 2005-04-04 14:56:35 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -13,9 +13,6 @@ POLYOPTS := -q
 NLOPTS   := -s 100000
 GHCOPTS  := -fasm
 
-RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 6,7,8,9,10 \
-             --ignore ackermann.ciao \
-	     --ignore ackermann.elastic \
-	     --ignore ackermann.poly
+RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 6,7,8,9,10
 
 include ../../Make.footer

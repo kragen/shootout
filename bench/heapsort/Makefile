@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2005-03-25 07:59:06 bfulgham Exp $
+# $Id: Makefile,v 1.24 2005-04-04 14:56:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -16,8 +16,6 @@ GHCOPTS := -fexcess-precision
 
 ERLFLAGS := -noinput -noshell
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --ignore heapsort.elastic \
-	  --ignore heapsort.stalin \
           --range 20000,40000,60000,80000,100000
 
 include ../../Make.footer

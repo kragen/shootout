@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2005-03-17 22:06:44 ekarttun-guest Exp $
+# $Id: Makefile,v 1.28 2005-04-04 14:56:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -23,8 +23,6 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 40000,60000,80000,100000 \
-	  --ignore hash.nhc98 \
-	  --ignore hash.elastic
+	  --range 40000,60000,80000,100000
 
 include ../../Make.footer

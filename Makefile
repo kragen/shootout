@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2005-04-01 11:08:27 loisel-guest Exp $
+# $Id: Makefile,v 1.21 2005-04-04 14:56:32 bfulgham Exp $
 
 include Make.header
 
@@ -7,6 +7,8 @@ all: init versions
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
 	-make recent codelinks
+
+website: all
 	-(cd website/code; ../../bin/add_strays)
 	-cvs commit -m "Rerun of benchmarks."
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2005-03-25 07:59:07 bfulgham Exp $
+# $Id: Makefile,v 1.21 2005-04-04 14:56:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := matrix
@@ -11,6 +11,6 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 10,200,400,600 --ignore matrix.poly
+	  --range 10,200,400,600
 
 include ../../Make.footer

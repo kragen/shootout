@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2005-03-14 01:25:01 bfulgham Exp $
+# $Id: Makefile,v 1.25 2005-04-04 14:56:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -25,7 +25,6 @@ SBCL_SRCS := ../../Include/meta.lisp
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
           --range 100,6000,9000,12000 \
-	  --ignore regexmatch.bigloo \
 	  --inputfile ../../website/desc/regexmatch-input.txt
 
 include ../../Make.footer

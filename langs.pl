@@ -1132,10 +1132,10 @@
      'Lua'         => 'dash',
      'Mercury'     => 'prolog',
      'mawk'        => 'shell',
-     'mzscheme'    => 'scheme',
-     'mzc'         => 'scheme',
-     'MzScheme'    => 'scheme',
-     'MZC'         => 'scheme',
+     'mzscheme'    => 'lisp',
+     'mzc'         => 'lisp',
+     'MzScheme'    => 'lisp',
+     'MZC'         => 'lisp',
      'newlisp'     => 'lisp',
      'Newlisp'     => 'lisp',
      'Nice'        => 'c',
@@ -1160,6 +1160,7 @@
      'Emacs Lisp'  => 'elisp',
      'Scheme'      => 'scheme',
      'XEmacs'      => 'lisp',
+     'Xemacs'      => 'lisp',
      'xemacs'      => 'lisp',
 
      # Overrides for specific languages, which seem to belong to a different
@@ -1168,8 +1169,6 @@
      'dlang'       => 'c',
      'ifc'         => 'c',
      'rep'         => 'scheme',
-     'mzc'         => 'scheme',
-     'mzscheme'    => 'scheme',
      'Pop11'       => 'c',
      'fpascal'     => 'pascal',
  );

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-03-25 07:59:08 bfulgham Exp $
+# $Id: Makefile,v 1.8 2005-04-04 14:56:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -21,6 +21,6 @@ ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 100,200,300 --ignore pidigits.clean
+	  --range 100,200,300
 
 include ../../Make.footer

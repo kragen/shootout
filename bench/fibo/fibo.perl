@@ -1,15 +1,9 @@
 #!/usr/bin/perl
-# $Id: fibo.perl,v 1.3 2005-03-19 00:32:56 igouy-guest Exp $
+# $Id: fibo.perl,v 1.4 2005-04-04 14:56:35 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 use strict;
 use integer;
-
-# Comments by Ernesto Hernandez-Novich
-# If memoization were allowed, we could gain some benefit by
-# using:
-# use Memoization;
-# memoize("fib");
 
 # from Leif Stensson
 sub fib {

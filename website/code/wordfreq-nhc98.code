@@ -1,19 +1,86 @@
-<span class="line">    1 </span><span class="slc">-- $Id: wordfreq-nhc98.code,v 1.4 2004-11-13 07:43:34 bfulgham Exp $
-</span><span class="line">    2 </span><span class="slc"></span><span class="slc">-- http://shootout.alioth.debian.org/
-</span><span class="line">    3 </span><span class="slc"></span><span class="slc">-- from Julian Assange
-</span><span class="line">    4 </span><span class="slc"></span><span class="slc">-- simplified by JP Bernardy
-</span><span class="line">    5 </span><span class="slc"></span>
-<span class="line">    6 </span><span class="slc">-- compile with:
-</span><span class="line">    7 </span><span class="slc"></span><span class="slc">-- ghc -O2 wordfreq.hs -o wordfreq
-</span><span class="line">    8 </span><span class="slc"></span>
-<span class="line">    9 </span><span class="kwa">import</span> <span class="kwb">Char</span><span class="sym">(</span>toLower<span class="sym">,</span>isAlpha<span class="sym">)
-</span><span class="line">   10 </span><span class="sym"></span><span class="kwa">import</span> Data.FiniteMap<span class="sym">(</span>fmToList<span class="sym">,</span>emptyFM<span class="sym">,</span>addToFM_C<span class="sym">)
-</span><span class="line">   11 </span><span class="sym"></span><span class="kwa">import</span> Data.List<span class="sym">(</span>sortBy<span class="sym">,</span> foldl<span class="str">')
-</span><span class="line">   12 </span><span class="str">
-</span><span class="line">   13 </span><span class="str">main = interact $ unlines . map pretty . sortBy myCompare . fmToList . makemap . words . map normalize
-</span><span class="line">   14 </span><span class="str">    where pretty (w,n) = pad 7 (show n) ++ &quot; &quot; ++ w
-</span><span class="line">   15 </span><span class="str">              where pad n s = replicate (n - length s) '</span> <span class="str">' ++ s
-</span><span class="line">   16 </span><span class="str">          myCompare (w0,n0) (w1,n1) = compare (n1,w1) (n0,w0)
-</span><span class="line">   17 </span><span class="str">          makemap = foldl'</span> addFM emptyFM
-<span class="line">   18 </span>              <span class="kwa">where</span> addFM fm x <span class="sym">=</span> addToFM_C <span class="sym">(+)</span> fm x <span class="sym">(</span><span class="num">1</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">)
-</span><span class="line">   19 </span><span class="sym"></span>          normalize x <span class="sym">=</span> if isAlpha x <span class="kwa">then</span> toLower x <span class="kwa">else</span> <span class="str">' '</span>
+
+<span class="slc">-- Implementation of 'wordfreq' benchmark optimised for time and memory
+</span><span class="slc">-- $Id: wordfreq-nhc98.code,v 1.5 2005-04-04 14:58:22 bfulgham Exp $
+</span><span class="slc">-- http://shootout.alioth.debian.org/
+</span><span class="slc">-- Author: Tomasz Zielonka &lt;t.zielonka&#64;students.mimuw.edu.pl&gt;
+</span><span class="slc">-- compile with: ghc -O2 -o wordfreq wordfreq.hs
+</span>
+<span class="kwa">import</span> System.IO
+<span class="kwa">import</span> Data.Array.IO
+<span class="kwa">import</span> Data.Array.Base
+<span class="kwa">import</span> Data.Word
+<span class="kwa">import</span> Data.<span class="kwb">Int
+</span><span class="kwa">import</span> Data.HashTable <span class="kwa">as</span> HashTable
+<span class="kwa">import</span> Data.IORef
+<span class="kwa">import</span> List
+<span class="kwa">import</span> <span class="kwb">Char
+
+</span>myHashString <span class="sym">::</span> String <span class="sym">-&gt;</span> Int32
+myHashString <span class="sym">=</span> fromIntegral . foldr f <span class="num">0
+</span>  <span class="kwa">where</span> f c m <span class="sym">=</span> ord c <span class="sym">+ (</span>m <span class="sym">*</span> <span class="num">67</span><span class="sym">)
+
+</span>main <span class="sym">::</span> IO <span class="sym">()
+</span>main <span class="sym">=</span> <span class="kwa">do
+</span>    ht <span class="sym">&lt;-</span> HashTable.new <span class="sym">(==)</span> myHashString
+
+    <span class="kwa">let</span> handleReversedWord rw <span class="sym">=</span> <span class="kwa">do
+</span>            l1 <span class="sym">&lt;-</span> HashTable.lookup ht rw
+            <span class="kwa">case</span> l1 <span class="kwa">of
+</span>                Just ref <span class="sym">-&gt;</span> incr ref
+                Nothing <span class="sym">-&gt;</span> <span class="kwa">do
+</span>                    ref <span class="sym">&lt;-</span> newIORef <span class="sym">(</span><span class="num">1</span> <span class="sym">::</span> <span class="kwb">Int</span><span class="sym">)
+</span>                    HashTable.insert ht rw ref
+
+    iterateOnReversedWords stdin handleReversedWord
+
+    l <span class="sym">&lt;-</span> HashTable.toList ht
+    l <span class="sym">&lt;-</span> mapM <span class="sym">(</span>\<span class="sym">(</span>rw<span class="sym">,</span> ref<span class="sym">) -&gt;</span> <span class="kwa">do</span> n <span class="sym">&lt;-</span> readIORef ref<span class="sym">;</span> return <span class="sym">(</span>n<span class="sym">,</span> reverse rw<span class="sym">))</span> l
+
+    mapM_ <span class="sym">(</span>putStrLn . pretty<span class="sym">) (</span>sortBy <span class="sym">(</span>flip compare<span class="sym">)</span> l<span class="sym">)
+
+</span>  <span class="kwa">where
+</span>    pretty <span class="sym">(</span>n<span class="sym">,</span>w<span class="sym">) =</span> pad <span class="num">7</span> <span class="sym">(</span>show n<span class="sym">) ++</span> <span class="str">&quot; &quot;</span> <span class="sym">++</span> w
+    pad n s <span class="sym">=</span> replicate <span class="sym">(</span>n <span class="sym">-</span> length s<span class="sym">)</span> <span class="str">' '</span> <span class="sym">++</span> s
+    incr ref <span class="sym">=</span> <span class="kwa">do
+</span>        x <span class="sym">&lt;-</span> readIORef ref
+        writeIORef ref $<span class="sym">! (</span>x <span class="sym">+</span> <span class="num">1</span><span class="sym">)
+
+</span><span class="slc">------------------------------------------------------------------
+</span>
+iterateOnReversedWords <span class="sym">::</span> Handle <span class="sym">-&gt; (</span>String <span class="sym">-&gt;</span> IO <span class="sym">()) -&gt;</span> IO <span class="sym">()
+</span>iterateOnReversedWords h f <span class="sym">=</span> <span class="kwa">do
+</span>    cs <span class="sym">&lt;-</span> fileIterate h <span class="str">&quot;&quot;</span> aux
+    aux cs <span class="str">' '</span>
+    return <span class="sym">()
+</span>  <span class="kwa">where
+</span>    aux cs c
+        <span class="sym">|</span> isAlpha c <span class="sym">=</span> <span class="kwa">do
+            let</span> c<span class="str">' = toLower c
+            return (c'</span> <span class="sym">:</span> cs<span class="sym">)
+        |</span> not <span class="sym">(</span>null cs<span class="sym">) =</span> <span class="kwa">do
+</span>            f cs
+            return <span class="sym">[]
+        |</span> otherwise <span class="sym">=</span> return <span class="sym">[]
+
+</span><span class="com">{-# INLINE fileIterate #-}</span>
+
+fileIterate <span class="sym">::</span> Handle <span class="sym">-&gt;</span> a <span class="sym">-&gt; (</span>a <span class="sym">-&gt;</span> <span class="kwb">Char</span> <span class="sym">-&gt;</span> IO a<span class="sym">) -&gt;</span> IO a
+fileIterate h a0 f <span class="sym">=</span> <span class="kwa">do
+</span>    buf <span class="sym">&lt;-</span> newArray_ <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> bufSize <span class="num">- 1</span><span class="sym">) ::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int</span> Word8<span class="sym">)
+</span>    <span class="kwa">let</span> loop i n a
+            <span class="sym">|</span> i <span class="sym">==</span> n <span class="sym">=
+</span>                <span class="kwa">do</span>  n<span class="str">' &lt;- hGetArray h buf bufSize
+                    if n'</span> <span class="sym">==</span> <span class="num">0
+</span>                        <span class="kwa">then</span> return a
+                        <span class="kwa">else</span> loop <span class="num">0</span> n<span class="str">' a
+            | otherwise =
+                do  c &lt;- fmap (toEnum . fromEnum) (readArray buf i)
+
+                    a'</span> <span class="sym">&lt;-</span> f a c
+
+                    loop <span class="sym">(</span>i <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span> n a<span class="str">'
+    loop 0 0 a0
+  where
+    bufSize :: Int
+    bufSize = 4096
+</span>

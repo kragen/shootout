@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: fibo.tcl,v 1.4 2005-04-02 07:16:04 igouy-guest Exp $
+# $Id: fibo.tcl,v 1.5 2005-04-04 14:56:35 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 # with help from: Kristoffer Lawson
@@ -12,4 +12,5 @@ proc fib {n} {
     }
 }
 
+interp recursionlimit {} 10000
 puts [fib $argv]
