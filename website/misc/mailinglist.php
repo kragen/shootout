@@ -4,7 +4,7 @@
    <tr>
       <td colspan="3">
          <p>shootout-list is a mailing list for all aspects of the "The Great Computer Language Shootout":  
-            suggestions, problems, new languages, unfair programs,&#133;
+            suggestions, problems, new languages, unfair programs,&#8230;
          </p>
          <p>
             <strong>Read the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">shootout-list archives</a></strong>.
@@ -38,7 +38,7 @@
 
    <tr>
       <td colspan="2">Your&nbsp;email&nbsp;address:</td>
-      <td><input type="text" name="email" size="30"></td>
+      <td><p><input type="text" name="email" size="30"></p></td>
    </tr>
    <tr>
       <td colspan="3"><br/>
@@ -47,22 +47,22 @@
    </tr>
    <tr>
       <td colspan="2">Pick&nbsp;a&nbsp;password:</td>
-      <td><input type="password" name="pw" size="15"></td>
+      <td><p><input type="password" name="pw" size="15"></p></td>
    </tr>
    <tr>
       <td colspan="2">Reenter&nbsp;password to confirm:</td>
-      <td><input type="password" name="pw-conf" size="15"></td>
+      <td><p><input type="password" name="pw-conf" size="15"></p></td>
    </tr>
    <tr>
       <td colspan="2"><br/>Would you like to receive list mail batched in a daily digest?</td>
-      <td><br/>
+      <td><br/><p>
          <input type="radio" name="digest" value="0" checked> No 
          <input type="radio" name="digest" value="1"> Yes
-      </td>
+      </p></td>
    </tr>
    <tr>
       <td colspan="2">&nbsp;</td>
-      <td><input type="submit" name="email-button" value="Subscribe"></td>
+      <td><p><input type="submit" name="email-button" value="Subscribe"></p></td>
    </tr>
    <tr><td colspan="3">&nbsp;</td></tr>   
       
@@ -78,11 +78,11 @@
    </tr>  
    <tr>
       <td colspan="2">Email&nbsp;address:</td>                
-      <td><input name="info" type="text" value="" size="30"></td>
+      <td><p><input name="info" type="text" value="" size="30"></p></td>
    </tr>  
    <tr>
       <td colspan="2">&nbsp;</td>             
-      <td><input name="UserOptions" type="submit" value="Edit Options"></td>        
+      <td><p><input name="UserOptions" type="submit" value="Edit Options"></p></td>        
    </tr>      
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>
@@ -99,15 +99,15 @@
    </tr> 
    <tr>
       <td colspan="2">Email&nbsp;address:</td>                
-      <td><input type="Text" name="roster-email" size="30"</td>
+      <td><p><input type="text" name="roster-email" size="30"</p></td>
    </tr>     
    <tr>
       <td colspan="2">Password:</td>                
-      <td><input type="Password" name="roster-pw" size="15"></td>
+      <td><p><input type="Password" name="roster-pw" size="15"></p></td>
    </tr>  
    <tr>
       <td colspan="2">&nbsp;</td>             
-      <td><input name="SubscriberRoster" type="submit" value="Subscriber List"></td>        
+      <td><p><input name="SubscriberRoster" type="submit" value="Subscriber List"></p></td>        
    </tr>      
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>
@@ -118,7 +118,7 @@
    <tr><td colspan="3"><h4 class="rev">&nbsp;about&nbsp;shootout-list</h4></td></tr> 
    <tr>
       <td colspan="3">
-      <p>shootout-list is administered by <a href="mailto:bfulgham@debian.org">bfulgham@debian.org</a><br><a href="http://lists.alioth.debian.org/mailman/admin/shootout-list">Shootout-list administrative interface</a> (requires authorization).</p>
+      <p>shootout-list is administered by <a href="mailto:bfulgham@debian.org">bfulgham@debian.org</a><br /><a href="http://lists.alioth.debian.org/mailman/admin/shootout-list">Shootout-list administrative interface</a> (requires authorization).</p>
       </td>
    </tr>     
 <!--   

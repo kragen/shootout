@@ -2,7 +2,7 @@
 <tr><td><h3 class="rev">&nbsp;Committer&nbsp;FAQ</h3></td></tr>
 
 <tr class="b"><td>Basic Workflow</td></tr>
-<tr><td><p>
+<tr><td>
 <ol>
 <li><strong>Move <em>Open item</em> source-code into CVS</strong></li>
 <li>Generate HTML from new CVS source-code</li>
@@ -64,7 +64,7 @@
 <p>Make sure the there are <strong>no promos or adverts</strong> in the comment text.</p>
 <p>If you changed the source-code file name then maybe you need to <strong>change class names or module names</strong> in the source-code to match the new file name.</p>
 
-<p>The build-scripts expect the <strong>file-extension</strong> to indicate the programming language. Mostly the file-extensions are just be the programming language or implementation name - look at the file-extensions used for the fibonacci programs. However there are some exceptions:
+<p>The build-scripts expect the <strong>file-extension</strong> to indicate the programming language. Mostly the file-extensions are just be the programming language or implementation name - look at the file-extensions used for the fibonacci programs. However there are some exceptions:</p>
 <table>
 <tr><th>&nbsp;language&nbsp;</th><th>&nbsp;file&nbsp;extension&nbsp;</th></tr>
 <tr><td>C#</td><td>csharp</td></tr>
@@ -75,7 +75,7 @@
 <tr><td>GNU Objective-C</td><td>objc</td></tr>
 <tr><td>Mozart/Oz</td><td>oz</td></tr>
 </table>
-</p>
+
 <p>Change the source-code file-extension to the extension used in CVS.</p>
 </td></tr>
 

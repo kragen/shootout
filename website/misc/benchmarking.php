@@ -10,12 +10,11 @@
 
 <p class="center"><strong>"your application is the ultimate benchmark"</strong></p>
 
-<p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric, the origin of which is unknown to me but that may very well be Wirth’s own invention. He used the compiler’s self-compilation speed as a measure of the compiler’s quality. Considering that Wirth’s compilers were written in the languages they compiled, and that compilers are substantial and non-trivial pieces of software in their own right, this introduced a highly practical benchmark that directly contested a compiler's complexity against its performance. Under the self compilation speed benchmark, only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much that the intrinsic cost of the new code addition was fully compensated." <a href="http://www.ics.uci.edu/~franz/pubs-pdf/BC03.pdf"><br/>Oberon: The Overlooked Jewel</a> page 4. (73KB pdf)</p>
+<p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric, the origin of which is unknown to me but that may very well be Wirth's own invention. He used the compiler's self-compilation speed as a measure of the compiler's quality. Considering that Wirth's compilers were written in the languages they compiled, and that compilers are substantial and non-trivial pieces of software in their own right, this introduced a highly practical benchmark that directly contested a compiler's complexity against its performance. Under the self compilation speed benchmark, only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much that the intrinsic cost of the new code addition was fully compensated." <a href="http://www.ics.uci.edu/~franz/pubs-pdf/BC03.pdf"><br/>Oberon: The Overlooked Jewel</a> page 4. (73KB pdf)</p>
 <br/>
 
 <h4 class="rev">&nbsp;benchmarking a language</h4>
 <ul>  
-  <br/>
 
 
   <li><p><a href="http://www.sei.cmu.edu/publications/documents/87.reports/87.tr.022.html">Factors Causing Unexpected Variations in Ada Benchmarks</a></p></li>
@@ -37,7 +36,7 @@ Benchmark Suite</a></p></li>
 
 
 
-  <li><p><a href="http://www-124.ibm.com/developerworks/oss/jmocha/index.html">The jMocha Microbenchmark Framework and Suite for Java&#153;</a></p></li>
+  <li><p><a href="http://www-124.ibm.com/developerworks/oss/jmocha/index.html">The jMocha Microbenchmark Framework and Suite for Java&#8482;</a></p></li>
 
   <li><p><a href="http://www.research.ibm.com/journal/sj/391/moreira.html">Java programming for high-performance numerical computing</a></p></li>
 
@@ -58,20 +57,17 @@ Benchmarking PHP with no BS</a></p></li>
 
 <h4 class="rev">&nbsp;comparing languages</h4>
 <ul>  
-  <br/> 
   <li><p><a href="http://www.freewebs.com/godaves/javabench_revisited/">'The Java Faster than C++' Benchmark Revisited</a></p></li>
 
-  <li><p><a href="http://www-fp.dcs.st-and.ac.uk/~kh/papers/pseudoknot/pseudoknot.html">Benchmarking Implementations of Functional Languages with ‘Pseudoknot’, a Float-Intensive Benchmark </a></p></li>
+  <li><p><a href="http://www-fp.dcs.st-and.ac.uk/~kh/papers/pseudoknot/pseudoknot.html">Benchmarking Implementations of Functional Languages with ‘Pseudoknot', a Float-Intensive Benchmark </a></p></li>
 
-  <li><p><a href="http://www.lissett.com/ben/">Martin Richards’ Bench</a></p></li>
+  <li><p><a href="http://www.lissett.com/ben/">Martin Richards' Bench</a></p></li>
 
-  <li><p><a href="http://www2.hursley.ibm.com/decimal/telco.html">The ‘telco’ benchmark</a></p></li>
+  <li><p><a href="http://www2.hursley.ibm.com/decimal/telco.html">The ‘telco' benchmark</a></p></li>
 
   <li><p><a href="http://page.mi.fu-berlin.de/~prechelt/Biblio/jccpprtTR.pdf">An empirical comparison of C, C++, Java, Perl, Python, Rexx, and Tcl for a search/string-processing program</a> (160KB pdf)</p></li>
 
   <li><p><a href="http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html">Timing Trials, or, the Trials of Timing: Experiments with Scripting and User-Interface Languages</a></p></li>
-
-
 
 </ul>
 
