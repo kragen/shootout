@@ -34,26 +34,40 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 <tr><td><h3 class="rev">&nbsp;How can I help?</h3></td></tr>
 
 <tr class="b"><td>Where can I send <strong>comments</strong> and suggestions?</td></tr>
-<tr><td><p>You can send comments and suggestions without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <strong>message form</strong></a>.</p>
-<p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
-<a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p></td></tr>
+<tr><td><p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
+<a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
+
+<p>Comments and suggestions sent from the <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list"> <strong>message form</strong></a> are seen by very few people - if you really want to be heard use the mailing-list.</p>
+</td></tr>
 
 <tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
 <tr><td>
 <p>Read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></p>
 <p>
-Work-up from the bottom of Contribute Programs
+Start from the bottom of the
+   <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New">
+   <strong>Contribute Programs Submit-New</strong></a>  form and work your way up as follows:
 <ol>
 <li>Check to Upload & Attach File: program source-code</li>
 <li>Browse to the program source-code file</li>
 <li>Description: what's different about this program</li>
-<li>Summary: language, benchmark, your-name, 24-hour-time<br/>
-<em>java nsieve isaac gouy 1422</em></li>
+<li>Summary: language, benchmark, your-name, date, (version)<br/>
+<em>Ruby nsieve Glenn Parker 2005-03-28</em><br/>
+This convention ensures that each item will have a unique Summary text. (Alioth Tracker insists that each Summary text be unique!)
+</li>
 <li>Category: select the language implementation</li>
 <li>Group: select the benchmark</li>
 <li>click the Submit button</li>
 </ol>
-Now, in a New Window, complete the <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New"><strong>Contribute Programs form</strong></a>.
+</p>
+
+<p>Track status with <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>browse Contribute Programs</strong></a>
+<ol>
+<li><em>Open items</em> are new contributions</li>
+<li><em>Pending items</em> have been added to CVS</li>
+<li><em>Closed items</em> are being shown on the website</li>
+<li><em>Deleted items</em> have been removed from the website</li>
+</ol>
 </p>
 </td></tr>
 
@@ -61,7 +75,7 @@ Now, in a New Window, complete the <a href="https://alioth.debian.org/tracker/?f
 <tr><td>
 <p>We need volunteers to
 <ul>
-<li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs tracker"><strong>browse Contribute Programs</strong></a> for <em>Open items</em></li>
+<li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>browse Contribute Programs</strong></a> for <em>Open items</em></li>
 <li>check the <em>Open item</em> programs do what's required</li>
 <li>add acceptable <em>Open item</em> programs to CVS</li>
 <li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
