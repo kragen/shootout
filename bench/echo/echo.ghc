@@ -1,4 +1,4 @@
--- $Id: echo.ghc,v 1.1 2004-05-19 18:09:36 bfulgham Exp $
+-- $Id: echo.ghc,v 1.2 2004-05-21 02:59:37 bfulgham Exp $
 -- http://www.bagley.org/~doug/shootout/
 -- Haskell echo/client server
 -- written by Brian Gregor
@@ -7,16 +7,19 @@
 
 module Main where
 
-import SocketPrim
 import Concurrent
-import System (getArgs,exitFailure)
+import GHC.IOBase
 import Exception(finally)
+import IO
 import MVar
+import Network.Socket
+import System (getArgs,exitFailure)
+import System.IO.Error
 
 server_sock = do
     s <- socket AF_INET Stream 6
     setSocketOption s ReuseAddr 1
-    bindSocket s (SockAddrInet (mkPortNumber portnum) iNADDR_ANY)
+    bindSocket s (SockAddrInet portnum iNADDR_ANY)
     listen s 2
     return s
 
@@ -27,21 +30,21 @@ echo_server s = do
     sClose s'
     where
        read_data sock totalbytes = do
-             (str,i) <- readSocket sock 19
-	     if (i >= 19) 
+	     str <- catch (recv sock 19) (\e -> if isEOFError e then return "" else ioError e)
+	     if ((length str) >= 19)
 	        then (do
-	          writ <- writeSocket sock str
-	          read_data sock $! (totalbytes+(length $! str)))
+	          writ <- send sock str
+		  read_data sock (totalbytes+(length str)))
 	        else (return totalbytes)
 
 local	    = "127.0.0.1"		
 message	    = "Hello there sailor\n"
-portnum     = 7001
+portnum :: PortNumber  = 7001
 
 client_sock = do
     s <- socket AF_INET Stream 6
     ia <- inet_addr local
-    connect s (SockAddrInet (mkPortNumber portnum) ia)
+    connect s (SockAddrInet portnum ia)
     return s
 
 echo_client n = do
@@ -51,8 +54,8 @@ echo_client n = do
     where
       server_echo sock n 
           | n > 0 =(do 
-                       writeSocket sock message
-	               (str,i) <- readSocket sock 19
+                       send sock message
+		       str <- catch (recv sock 19) (\e -> if isEOFError e then return "" else ioError e)
                        if (str /= message) then (do exitFailure)
  	                  else server_echo sock (n-1))
           | otherwise = (return [])
@@ -68,6 +71,7 @@ main = do
 	 c <- myForkIO (echo_client (read n::Int))
 	 -- let 'em run until they've signaled they're done
          join s ; join c
+	 hFlush stdout
 
 -- these are used to make the main thread wait until
 -- the child threads have exited

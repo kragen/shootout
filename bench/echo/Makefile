@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:09:34 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-21 02:59:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
@@ -6,7 +6,8 @@ TITLE   := Echo Client/Server
 OCAMLOPTS := unix.cmxa
 OCAMLBOPTS := unix.cma
 
-GHCOPTS  := -package net -package concurrent -package lang
+GHCOPTS  := -fglasgow-exts -package net -package concurrent -package lang
+MB_GHCRTS  := +RTS -M200m -K20m
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --commandline 'tcl: ../tclwrapper ../%X %A' \
