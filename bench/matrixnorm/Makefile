@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.1 2005-03-26 02:55:37 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-03-26 23:33:43 bfulgham Exp $
 include ../../Make.header
 
-TEST    := nbody
-TITLE   := N-Body orbit simulation
+TEST    := matrixnorm
+TITLE   := Infinite Matrix Determinant Test
 
 #XLABEL  := N (number of iterations)
 

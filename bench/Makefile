@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2005-02-28 01:26:27 bfulgham Exp $
+# $Id: Makefile,v 1.17 2005-03-26 23:33:40 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -18,6 +18,7 @@ TESTS = \
     lists \
     mandelbrot \
     matrix \
+    matrixnorm \
     message \
     methcall \
     moments \
