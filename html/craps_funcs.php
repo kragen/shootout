@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_funcs.php,v 1.4 2004-06-22 08:08:16 bfulgham Exp $
+# $Id: craps_funcs.php,v 1.5 2004-06-24 19:06:16 bfulgham Exp $
 
 require 'langs.inc';
 
@@ -145,7 +145,7 @@ function do_craps($query_string)
     foreach (array_keys($score) as $lang) {
         $ranked[$lang] = $score[$lang];
     }
-    array_multisort($score, SORT_ASC, $ranked);
+    array_multisort($score, SORT_DESC, $ranked);
    
     foreach ($ranked as $lang => $score) {
         $lang_type = $LANGS[$lang]['Type'];
@@ -155,7 +155,7 @@ function do_craps($query_string)
         } else {
             $lt_html = "$lang";
         }
-        $score = floatval($score);
+        #$score = floatval($score);
 	$score_str = sprintf("%2.04f", $score);
         if ($usea) {
             $ab = "a";
