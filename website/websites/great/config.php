@@ -32,8 +32,8 @@ define('HOMEPAGE_ROWS',26);          // show 26 rows of languages on the homepag
 
 
 define('SITE_NAME', 'great');
-define('SITE_TITLE','The Great Computer Language Shootout');
-define('BANNER_TITLE','The&nbsp;Great&nbsp;Computer&nbsp; </br>Language&nbsp;Shootout&nbsp;');
+define('SITE_TITLE','The Great Computer Language Shootout Benchmarks');
+define('BANNER_TITLE','The&nbsp;Great&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
