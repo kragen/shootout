@@ -2,7 +2,7 @@
 
 # Poplog support
 poplogroot=/usr/lib/poplog
-usepop=$poplogroot/current.poplog
+usepop=$poplogroot/current-poplog
 poplocal=$poplogroot
 local=$poplocal/local
 

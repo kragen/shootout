@@ -1,0 +1,114 @@
+\ nbody.gforth
+\ Contributed by Ian Osgood
+
+\ read NUM from last command line argument
+0. argc @ 1- arg >number 2drop drop constant NUM
+
+struct
+  float% field p>x
+  float% field p>y
+  float% field p>z
+  float% field p>vx
+  float% field p>vy
+  float% field p>vz
+  float% field p>mass
+end-struct planet%
+planet% nip constant planet
+
+pi fdup f* 4e f* fconstant solar-mass
+365.24e          fconstant days/year
+
+falign create bodies
+\ sun
+  0e f, 0e f, 0e f, 0e f, 0e f, 0e f, solar-mass f,
+\ jupiter
+    4.84143144246472090e+00 f,
+   -1.16032004402742839e+00 f,
+   -1.03622044471123109e-01 f,
+    1.66007664274403694e-03 days/year f* f,
+    7.69901118419740425e-03 days/year f* f,
+   -6.90460016972063023e-05 days/year f* f,
+    9.54791938424326609e-04 solar-mass f* f,
+\ saturn
+    8.34336671824457987e+00 f,
+    4.12479856412430479e+00 f,
+   -4.03523417114321381e-01 f,
+   -2.76742510726862411e-03 days/year f* f,
+    4.99852801234917238e-03 days/year f* f,
+    2.30417297573763929e-05 days/year f* f,
+    2.85885980666130812e-04 solar-mass f* f,
+\ uranus
+    1.28943695621391310e+01 f,
+   -1.51111514016986312e+01 f,
+   -2.23307578892655734e-01 f,
+    2.96460137564761618e-03 days/year f* f,
+    2.37847173959480950e-03 days/year f* f,
+   -2.96589568540237556e-05 days/year f* f,
+    4.36624404335156298e-05 solar-mass f* f,
+\ neptune
+    1.53796971148509165e+01 f,
+   -2.59193146099879641e+01 f,
+    1.79258772950371181e-01 f,
+    2.68067772490389322e-03 days/year f* f,
+    1.62824170038242295e-03 days/year f* f,
+   -9.51592254519715870e-05 days/year f* f,
+    5.15138902046611451e-05 solar-mass f* f,
+here constant end-bodies
+
+: offset-momentum  0e 0e 0e ( px py pz )
+  end-bodies bodies do
+    frot i p>vx f@ i p>mass f@ f* f+
+    frot i p>vy f@ i p>mass f@ f* f+
+    frot i p>vz f@ i p>mass f@ f* f+
+  planet +loop
+  solar-mass f/ fnegate bodies p>vz f!
+  solar-mass f/ fnegate bodies p>vy f!
+  solar-mass f/ fnegate bodies p>vx f! ;
+
+: energy ( -- float ) 0e
+  end-bodies bodies do
+    \ kinetic energy
+    i p>vx f@ fdup f* i p>vy f@ fdup f* f+ i p>vz f@ fdup f* f+
+    i p>mass f@ f* 2e f/ ( e ) f+
+    \ potential energy
+    end-bodies i planet + ?do
+      j p>x f@ i p>x f@ f- fdup f*
+      j p>y f@ i p>y f@ f- fdup f* f+
+      j p>z f@ i p>z f@ f- fdup f* f+ fsqrt
+      j p>mass f@ i p>mass f@ f* fswap f/ ( e ) f-
+    planet +loop
+  planet +loop ;
+
+: advance  0e 0e 0e { F: dx F: dy F: dz -- }
+  end-bodies bodies do
+    end-bodies i planet + ?do
+      j p>x f@ i p>x f@ f- to dx
+      j p>y f@ i p>y f@ f- to dy
+      j p>z f@ i p>z f@ f- to dz
+      dx fdup f* dy fdup f* f+ dz fdup f* f+ fsqrt
+      fdup fdup f* f* 1e-2 fswap f/  ( mag )
+      fdup j p>mass f@ f* fswap i p>mass f@ f* ( magM1 magM2 )
+      j p>vx f@ fover dx f* f- j p>vx f! 
+      j p>vy f@ fover dy f* f- j p>vy f! 
+      j p>vz f@ fswap dz f* f- j p>vz f! 
+      i p>vx f@ fover dx f* f+ i p>vx f! 
+      i p>vy f@ fover dy f* f+ i p>vy f! 
+      i p>vz f@ fswap dz f* f+ i p>vz f! 
+    planet +loop
+  planet +loop
+  end-bodies bodies do
+    i p>vx f@ 1e-2 f* i p>x f@ f+ i p>x f!
+    i p>vy f@ 1e-2 f* i p>y f@ f+ i p>y f!
+    i p>vz f@ 1e-2 f* i p>z f@ f+ i p>z f!
+  planet +loop ;
+
+\ specialized f. with no trailing space
+: ff.  f$ drop '0 emit '. emit scratch type ;
+
+\ run NUM time steps, printing total system energy before and after
+: main  9 set-precision
+  offset-momentum   energy ff. cr
+  0 do advance loop energy ff. cr ; 
+
+NUM main bye  \ done!
+
