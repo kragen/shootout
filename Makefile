@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-19 08:44:14 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-19 17:00:15 bfulgham Exp $
 
 include Make.header
 
@@ -33,7 +33,7 @@ craps:
 recent:
 	@bin/make_recent > recent.html
 
-links:
+links:  
 	# All Java's use the same source
 	for j in `find bench -name '*.java'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
