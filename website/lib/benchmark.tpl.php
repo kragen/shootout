@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004 ?>
+<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 <!-- // MENU /////////////////////////////////////////////////// -->
 <div>
 <? 
@@ -118,12 +118,12 @@ foreach($Accepted as $d){
    }
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
-}
+}?>
 
-// FAILED & MISSING PROGRAMS TABLE //////////////////////////
+
+<? // FAILED PROGRAMS TABLE //////////////////////////
 uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
-   $no_program = isset($No_Program_Langs[$k]);
    foreach($Rejected as $d){                   
       if ($d[DATA_LANG]==$k){         
          printf('<tr class="%s">',$RowClass); echo "\n";             
@@ -140,22 +140,10 @@ foreach($Langs as $k => $v){
          printf('<td class="r">%s</td><td></td><td></td><td class="r">%d</td>', $message, $lines);          
          echo "</tr>\n";
          if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }    
-         $no_program = FALSE;         
+         unset($No_Program_Langs[$k]);         
       }  
-   }    
-     
-   if ($no_program){  
-      printf('<tr class="%s">',$RowClass); echo "\n";             
-      $Name = $v[LANG_FULL];
-      $HtmlName = $v[LANG_HTML];            
-      printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" title="No %s program has been written for the %s performance benchmark">%s</a></td>', 
-         $SelectedTest,$k,$Sort,$Name,$TestName,$HtmlName); echo "\n";
-      echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';       
-      echo "</tr>\n";
-      if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }          
-   }                                                      
-}
-?>
+   }    }?>
+
 
 <!-- // SPECIAL PROGRAMS TABLE //////////////////////////////////////// -->
 <?
@@ -192,10 +180,34 @@ if (sizeof($Special)>0){
       }
       echo "</tr>\n";
       if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
-   }  
-   echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacing   
+   }
 }
 ?>
+
+<? // MISSING PROGRAMS TABLE //////////////////////////
+
+if (sizeof($No_Program_Langs)>0){
+   echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacing
+   echo '<tr><th colspan="5">missing programs</th></tr>', "\n";
+      
+   foreach($Langs as $k => $v){
+      $no_program = isset($No_Program_Langs[$k]);        
+      if ($no_program){  
+         printf('<tr class="%s">',$RowClass); echo "\n";             
+         $Name = $v[LANG_FULL];
+         $HtmlName = $v[LANG_HTML];            
+         printf('<td><a href="benchmark.php?test=%s&lang=%s&sort=%s" title="No %s program has been written for the %s performance benchmark">%s</a></td>', 
+            $SelectedTest,$k,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+         echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';       
+         echo "</tr>\n";
+         if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }          
+      }                                                      
+   }     
+}
+
+echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacing
+?>
+
 </table></td></tr>
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 <tr><td><h4 class="rev">&nbsp;about the <?=$TestName;?> benchmark</h4></td></tr>
