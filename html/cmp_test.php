@@ -1,6 +1,7 @@
 <?php
-# $Id: cmp_test.php,v 1.3 2004-06-02 15:03:36 bfulgham Exp $
+# $Id: cmp_test.php,v 1.4 2004-06-03 03:38:47 bfulgham Exp $
 #
+require('chart.php');
 
 function read_dat($test, $which) {
     $filedat = file("data/$which.mbtab");
@@ -100,8 +101,14 @@ function lang_tab($test, $selected, $langs)
 
 function plot_tab($dat_time, $langs, $dat, $test, $which, $title)
 {
+    $colors = array('red', 'green', 'blue', 'purple', 'peach', 'orange',
+        'mauve', 'olive', 'pink', 'light purple', 'light blue', 'plum',
+	'yellow', 'turquoise', 'light green', 'brown', 'red', 'green',
+	'blue', 'purple', 'peach', 'orange', 'mauve', 'olive', 'pink',
+	'light purple', 'light blue', 'plum', 'yellow', 'turquoise',
+	'light green', 'brown');
+	
     $TMPDIR = getcwd() . '/../../tmp/.shootout';
-    $PLOTCMD = '../../bin/plot --scale 1 --dsnames --width 550 --height 600 --type Lines --x_label "N" --ticklabels --graph_border 0 --gif_border 0 --brush_size 4 --title %T --imagefile %I';
 
     $all = array_keys($dat);
     sort($all);
@@ -109,7 +116,7 @@ function plot_tab($dat_time, $langs, $dat, $test, $which, $title)
 
     $dir = "$TMPDIR/$test";
     if (! is_dir($dir)) {
-	if( ! mkdir($dir) ) {
+	if( ! mkdir($dir, 0775) ) {
 		echo "cmp_test.php: mkdir($dir) -> $!\n";
 	}
     }
@@ -126,15 +133,6 @@ function plot_tab($dat_time, $langs, $dat, $test, $which, $title)
     }
 
     if ($dat_time > $test_time) {
-	#warn "DBG: running $PLOTCMD\n";
-	$cmd = preg_replace("/%I/", $imagefile, $PLOTCMD);
-	$cmd = preg_replace("/%T/", $title, $cmd);
-
-	$descriptorspec = array(
-		 0 => array("pipe", "r"),
-		 1 => array("pipe", "w"),
-		 2 => array("file", "/tmp/error-output.txt", "a"));
-
 	# Just want the list of ordinals
 	$temp = array_shift($dat);
 	$range = array_keys($temp);
@@ -142,30 +140,39 @@ function plot_tab($dat_time, $langs, $dat, $test, $which, $title)
 	
 	sort($range);
 	$last = $range[count($range) - 1];
+	$min = $range[0];
 
-	foreach ($langs as $name)
-	{
-		$names .= rtrim($name);
-		$names .= " ";
-	}
+	# Generate the chart
+	$chart = new chart(550, 600, $imagefile);
+	$chart->set_title($title);
+	$chart->set_labels('N', $which);
+	$chart->set_background_color('grey');
+	$chart->set_border(false, 0);
+	$chart->set_frame(true);
+	$chart->set_margins(50, 10, 20, 50);
+	$chart->set_font(3, 'internal', false);
 
-	$process = proc_open("$cmd", $descriptorspec, $pipes);
-	if (is_resource($process))
-	{
-	    fwrite($pipes[0], "# $names\n");
-	    foreach ($range as $num) {
-	        fwrite($pipes[0], $num);
-		foreach ($langs as $name) {
-		    $temp = $dat[$name];
-		    fwrite($pipes[0], " $temp[$num]");
+	# Legend?
+	$chart->set_x_ticks($range, "text");
+	$count = 0;
+	foreach ($langs as $name) {
+	    $row = $dat[$name];
+
+	    if (! is_null($row))
+	    {
+	        # Massage row for Plot's use
+		$pc=0;
+		foreach ($row as $k => $v) {
+		    $plotdata[$pc] = $v;
+		    $pc ++;
 		}
-		fwrite($pipes[0], "\n");
+		$chart->plot($plotdata ,false, $colors[$count]);
+		$chart->add_legend(rtrim($name), $colors[$count]);
+		$count++;
 	    }
-	    fclose($pipes[0]);
-	    fclose($pipes[1]);
-	} else {
-	    echo "cmp_test.php: Error opening $cmd for output\n";
 	}
+#	$chart->set_extrema(0,$last);
+	$chart->stroke();
     }
     $imagefile_parts = Explode('/', $imagefile);
     return($imagefile_parts[count($imagefile_parts) - 1]);
