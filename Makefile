@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.6 2004-06-19 17:00:15 bfulgham Exp $
+# $Id: Makefile,v 1.7 2004-06-20 04:32:26 bfulgham Exp $
 
 include Make.header
 
-all: versions links
+all: versions links-stamp
 	(cd bench ; make $@)
 	(cd bench ; make --no-print-directory report> report.txt)
 	make recent craps codelinks
@@ -33,7 +33,8 @@ craps:
 recent:
 	@bin/make_recent > recent.html
 
-links:  
+links:  links-stamp
+links-stamp:
 	# All Java's use the same source
 	for j in `find bench -name '*.java'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
@@ -59,3 +60,5 @@ links:
 	for j in `find bench -name '*.cmucl'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.sbcl; \
 	done
+
+	touch links-stamp
