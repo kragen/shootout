@@ -1,0 +1,36 @@
+\ threads.gforth
+\ contributed by Ian Osgood
+
+\ read NUM from last command line argument
+0. argc @ 1- arg >number 2drop drop constant NUM
+
+require tasker.fs
+
+variable receiver  \ task being poked
+variable data      \ data being poked
+
+: poke ( task data -- )
+  begin receiver @ while pause repeat
+  data ! dup receiver ! wake ;
+
+: peek? ( task -- data T | F )
+  receiver @ = dup if 0 receiver !  data @ swap then ;
+
+: task ( next-task -- new-task )
+  64 NewTask tuck 2 over pass
+
+  \ The remainder of this word is executed in the task context.
+  \ The task is killed when the word exits.
+
+  ( next-task this-task -- )
+  begin pause dup peek? until nip
+  1+ over if poke else 1 u.r cr drop then ;
+
+: main   0 receiver !
+  0 ( next-task )
+  NUM 0 do task loop
+  0 poke
+  \ wait for all tasks to finish
+  begin pause single-tasking? until ;
+
+main bye  \ done!

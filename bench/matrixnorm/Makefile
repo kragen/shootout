@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-03-26 23:33:43 bfulgham Exp $
+# $Id: Makefile,v 1.3 2005-03-31 10:40:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := matrixnorm
@@ -21,6 +21,6 @@ ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 100,500,1000
+	  --range 500,1000,2000
 
 include ../../Make.footer

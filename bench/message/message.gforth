@@ -1,0 +1,45 @@
+\ thread-flow.gforth
+\ contributed by Ian Osgood
+
+\ read NUM from last command line argument
+0. argc @ 1- arg >number 2drop drop constant NUM
+
+require tasker.fs
+
+variable receiver  \ task being poked
+variable data      \ data being poked
+variable finished
+
+: poke ( task data -- )
+  begin receiver @ while pause repeat
+  data ! dup receiver ! wake ;
+
+: peek? ( task -- data T | F )
+  receiver @ = dup if receiver off  data @ swap then ;
+
+: sum-task ( -- new-task )
+  64 NewTask dup dup 0 2 rot pass
+  ( this-task sum -- )
+  begin
+    begin pause over peek? until
+    1+ +
+  finished @ until
+  1 u.r cr drop ;
+
+: task ( next-task -- new-task )
+  64 NewTask tuck 2 over pass
+  ( next-task this-task -- )
+  begin
+    over begin pause over peek? until
+    1+ poke
+  finished @ until 2drop ;
+
+: main   receiver off
+  sum-task
+  3000 1 do task loop
+  NUM 0 do dup 0 poke loop drop
+  \ wait for all tasks to finish
+  finished on
+  begin pause single-tasking? until ;
+
+main bye  \ done!
