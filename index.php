@@ -6,6 +6,7 @@
     <tr>
       <th><a href="index.php">Introduction</a></th>
       <td><a href="langs.php">Languages</a></td>
+      <td><a href="method.php">Methodology</a></td>
     </tr>
   </table>
 </div>

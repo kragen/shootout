@@ -201,8 +201,8 @@
        Down => 'http://www.lua.org/download.html',
        Type => 'interpreted',
        Verfun => sub {
-	   my $ver = `$ENV{LUA} -v`;
-	   $ver =~ /^(.*?)\s+Copy/;
+	   my $ver = `$ENV{LUA} -v 2>&1`;
+	   $ver =~ /(Lua.*) Copyright.*/;
 	   return($1);
        },
      },
@@ -237,7 +237,7 @@
        Down => 'http://www.mozart-oz.org/download',
        Type => 'interpreted',
        Verfun => sub {
-	   my $ver = `$ENV{OZC} -e d`;
+	   my $ver = `$ENV{OZC} -e d 2>&1`;
 	   $ver =~ /(Mozart Compiler\s.*)/;
 	   return($1);
        },
@@ -365,7 +365,7 @@
        Down => 'http://www.sourcelight.com/MLton/',
        Type => 'native compiled',
        Verfun => sub {
-	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} -v 2>&1`));
+	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} 2>&1`));
 	   $ver =~ s/\(built.*//;
 	   return($ver);
        },

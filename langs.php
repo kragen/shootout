@@ -6,21 +6,22 @@
     <tr>
       <td><a href="index.php">Introduction</a></td>
       <th><a href="langs.php">Languages</a></th>
+      <td><a href="method.php">Methodology</a></td>
     </tr>
   </table>
 </div>
 
+<div id="bodycol">
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
-    <td id="leftcol" width="60%">
+    <td width="60%">
       <?php require("versions.html"); ?>
     </td>
     <td>
-      <div id="bodycol">
-	<div class="app">
-	  <div class="h3" id="langs">
-	    <h3>About the Languages</h3>
-	    <p>The languages compared here are a mixture of compiled and
+      <div class="app">
+        <div class="h3" id="langs">
+          <h3>About the Languages</h3>
+          <p>The languages compared here are a mixture of compiled and
 	      interpreted, functional and imperative.  Compiled languages have
 	      the natural advantage of running machine code that can be
 	      optimized by the compiler.  The interpreted languages are often
@@ -28,7 +29,7 @@
 	      originally designed to test imperative features, and do not fairly
 	      test some languages (like Haskell).  If you want to compare
 	      languages of the same <em>type</em>, consider:
-	    <ul>
+          <ul>
 	      <li>The languages that are in <b><i>bold italics</i></b> compile
 	        to machine code.  The others are either byte-compiled or just
 		interpreted.
