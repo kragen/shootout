@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_funcs.php,v 1.5 2004-06-24 19:06:16 bfulgham Exp $
+# $Id: craps_funcs.php,v 1.6 2004-08-30 06:23:16 bfulgham Exp $
 
 require 'langs.inc';
 
@@ -23,6 +23,7 @@ $weight = array(
      'random' => 3,
      'regexmatch' => 4,
      'reversefile' => 4,
+     'ringmsg' => 1,
      'sieve' => 4,
      'spellcheck' => 4,
      'strcat' => 2,

@@ -7,7 +7,7 @@ computer, language, compare, cpu, memory" -->
 
 <h4>About this test</h4>
 <p>For this test, each program should be implemented to do the <a
-  href="../../method.php#sameway"><i>same thing</i></a>, following
+  href="../../method.php#samething"><i>same thing</i></a>, following
   the guidelines below:</p>
 <p>Each program reads the input from standard input, and counts the
   lines, words (whitespace delimited tokens), and characters, and

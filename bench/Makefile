@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-07-09 14:37:25 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-08-30 06:23:13 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -20,6 +20,7 @@ TESTS = \
     random \
     regexmatch \
     reversefile \
+    ringmsg \
     sieve \
     spellcheck \
     strcat \
