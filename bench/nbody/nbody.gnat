@@ -1,0 +1,205 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Jim Rogers
+
+with Ada.Text_Io; use Ada.Text_Io;
+with Ada.Numerics.Generic_Elementary_Functions;
+with Ada.Command_Line; use Ada.Command_Line;
+
+procedure NBody is
+   package Utilities is 
+      Pi : constant Long_Float := 3.141592653589793;
+      Solar_Mass : constant Long_Float := 4.0 * Pi**2;
+      Days_Per_Year : constant Long_Float := 365.24;
+      
+      type A_Body is record
+         X : Long_Float := 0.0;
+         Y : Long_Float := 0.0;
+         Z : Long_Float := 0.0;
+         Vx : Long_Float := 0.0;
+         Vy : Long_Float := 0.0;
+         Vz : Long_Float := 0.0;
+         Mass : Long_Float := 0.0;
+      end record;
+      
+      function Jupiter return A_Body;
+      function Saturn return A_Body;
+      function Uranus return A_Body;
+      function Neptune return A_Body;
+      function Sun return A_Body;
+      procedure Offset_Momentum(The_Body : in out A_Body;
+         Px : Long_Float; 
+         Py : Long_Float;
+         Pz : Long_Float);
+         
+      type N_Body_System is private;
+      
+      function Create return N_Body_System;
+      procedure Advance(System : in out N_Body_System; Dt : Long_Float);
+      function Energy(System : N_Body_System) return Long_Float;
+      
+      private
+         
+      type Index is (Sun, Jupiter, Saturn, Uranus, Neptune);
+      type N_Body_System is array(Index) of A_Body;
+      
+   end Utilities;
+   
+   package body Utilities is
+      package Math is new Ada.Numerics.Generic_Elementary_Functions(Long_Float);
+      use Math;
+      
+      function Jupiter return A_Body is
+         p : A_Body;
+      begin
+         P.X := 4.84143144246472090e+00; 
+         P.Y := -1.16032004402742839e+00; 
+         P.Z := -1.03622044471123109e-01; 
+         P.Vx := 1.66007664274403694e-03 * Days_Per_Year; 
+         P.Vy := 7.69901118419740425e-03 * Days_Per_Year; 
+         P.Vz := -6.90460016972063023e-05 * Days_Per_Year; 
+         p.mass := 9.54791938424326609e-04 * SOLAR_MASS; 
+         return P;
+      end Jupiter;
+      
+      function Saturn return A_Body is
+         P : A_Body;
+      begin
+         P.X := 8.34336671824457987e+00; 
+         P.Y := 4.12479856412430479e+00; 
+         P.Z := -4.03523417114321381e-01; 
+         P.Vx := -2.76742510726862411e-03 * Days_Per_Year; 
+         P.Vy := 4.99852801234917238e-03 * Days_Per_Year; 
+         P.Vz := 2.30417297573763929e-05 * Days_Per_Year; 
+         p.mass := 2.85885980666130812e-04 * SOLAR_MASS;
+         Return P;
+      end Saturn;
+      
+      function Uranus return A_Body is
+         P : A_Body;
+      begin
+         P.X := 1.28943695621391310e+01; 
+         P.Y := -1.51111514016986312e+01; 
+         P.Z := -2.23307578892655734e-01; 
+         P.Vx := 2.96460137564761618e-03 * Days_Per_Year; 
+         P.Vy := 2.37847173959480950e-03 * Days_Per_Year; 
+         P.Vz := -2.96589568540237556e-05 * Days_Per_Year; 
+         P.Mass := 4.36624404335156298e-05 * Solar_Mass; 
+         return p;
+      end Uranus;
+      
+      function Neptune return A_Body is
+         P : A_Body;
+      begin
+         P.X := 1.53796971148509165e+01;
+         P.Y := -2.59193146099879641e+01; 
+         P.Z := 1.79258772950371181e-01; 
+         P.Vx := 2.68067772490389322e-03 * Days_Per_Year; 
+         P.Vy := 1.62824170038242295e-03 * Days_Per_Year; 
+         P.Vz := -9.51592254519715870e-05 * Days_Per_Year; 
+         P.Mass := 5.15138902046611451e-05 * Solar_Mass;
+         return P;
+      end Neptune;
+      
+      function Sun return A_Body is
+         P : A_Body;
+      begin
+         P.Mass := Solar_Mass;
+         return P;
+      end Sun;
+      
+      procedure Offset_Momentum(The_Body : in out A_Body;
+                                 Px : Long_Float; 
+                                 Py : Long_Float;
+                                 Pz : Long_Float) is
+      begin
+         The_Body.Vx := -Px / Solar_Mass;
+         The_Body.Vy := -Py / Solar_Mass;
+         The_Body.Vz := -Pz / Solar_Mass;
+      end Offset_Momentum;
+      
+      function Create return N_Body_System is
+         P : N_Body_System := (Sun => Sun,
+                              Jupiter => Jupiter,
+                              Saturn => Saturn,
+                              Uranus => Uranus,
+                              Neptune => Neptune);
+         Px, Py, Pz : Long_Float := 0.0;
+      begin
+         for I in P'range loop
+            Px := Px + P(I).Vx * P(I).Mass;
+            Py := Py + P(I).Vy * P(I).Mass;
+            Pz := Pz + P(I).Vz * P(I).Mass;
+         end loop;
+         Offset_Momentum(P(Sun), Px, Py, Pz);
+         return P;
+      end Create;
+      
+      procedure Advance(System : in out N_Body_System; Dt : Long_Float) is
+         Dx, Dy, Dz, Distance, Mag : Long_Float;
+      begin
+         for I in System'range loop
+            if I < Index'Last then
+               for J in Index'Succ(I)..Index'Last loop
+                  Dx := System(I).X - System(J).X;
+                  Dy := System(I).Y - System(J).Y;
+                  Dz := System(I).Z - System(J).Z;
+                  Distance := Sqrt(Dx**2 + Dy**2 + Dz**2);
+                  Mag := Dt / Distance**3;
+                  System(I).Vx := System(I).Vx - Dx * System(J).Mass * Mag;
+                  System(I).Vy := System(I).Vy - Dy * System(J).Mass * Mag;
+                  System(I).Vz := System(I).Vz - Dz * System(J).Mass * Mag;
+                  System(J).Vx := System(J).Vx + Dx * System(I).Mass * Mag;
+                  System(J).Vy := System(J).Vy + Dy * System(I).Mass * Mag;
+                  System(J).Vz := System(J).Vz + Dz * System(I).Mass * Mag;
+               end loop;
+            end if;
+         end loop;
+         for I in System'range loop
+            System(I).X := System(I).X + Dt * System(I).Vx;
+            System(I).Y := System(I).Y + Dt * System(I).Vy;
+            System(I).Z := System(I).Z + Dt * System(I).Vz;
+         end loop;
+      end Advance;
+      
+      function Energy(System : N_Body_System) return Long_Float is
+         Dx, Dy, Dz, Distance : Long_Float;
+         E : Long_Float := 0.0;
+      begin
+         for I in System'range loop
+            E := E + 0.5 * System(I).Mass *
+               (System(I).Vx**2 + System(I).Vy**2 + System(I).Vz**2);
+            if I < Index'Last then
+               for J in Index'Succ(I)..Index'Last loop
+                  Dx := System(I).X - System(J).X;
+                  Dy := System(I).Y - System(J).Y;
+                  Dz := System(I).Z - System(J).Z;
+                  Distance := Sqrt(Dx**2 + Dy**2 + Dz**2);
+                  e := e - (system(i).mass * system(j).mass)/distance;
+               end loop;
+            end if;
+         end loop;
+         return E;
+      end Energy;
+      
+   end Utilities;
+   use Utilities;
+   
+   package Doub_Io is new Ada.Text_Io.Float_Io(Long_Float);
+   use Doub_IO;
+   N : Natural := 1_000_000;
+   Bodies : N_Body_System := Create;
+ 
+begin
+   if Argument_Count > 0 then
+      N := Natural'Value(Argument(1));
+   end if;
+   Put(Item => Energy(Bodies), Exp => 0, Aft => 9);
+   New_Line;
+   for Num in 1..N loop
+      Advance(Bodies, 0.01);
+   end loop;
+   Put(Item => Energy(Bodies), Exp => 0, Aft => 9);
+   New_Line;
+end nbody;
