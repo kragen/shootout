@@ -1,38 +1,83 @@
 /* -*- mode: c -*-
- * $Id: reversefile.gcc,v 1.1 2004-05-19 18:12:18 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Brad Knotwell
+ * from Alan Post <apost@recalcitrant.org>
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
-#define MAXREAD 4096
+/*
+ * Note that malloc(3) seems happier with chunks of 4096
+ */
+#define MAXREAD (4096 - sizeof( size_t ) - sizeof( void* ))
+
+typedef struct buf_t { char d[MAXREAD];
+                       size_t len;
+                       struct buf_t *next;} buf_t;
+
+static buf_t *read_lines( buf_t *tail )
+{
+    tail->next = NULL;
+
+    buf_t *curr = tail;
+    while ( 1 )
+    {
+        int nread = read( STDIN_FILENO, curr->d, MAXREAD );
+        curr->len = nread;
+        if ( nread < MAXREAD ) return curr;
+        buf_t *head = (buf_t*) malloc( sizeof( buf_t ));
+        head->next = curr;
+        curr = head;
+    }
+}
+
+#define WRITEOUT \
+        do { \
+                fwrite( pos, end - pos, 1, stdout ); \
+                for (; loh != NULL; loh = loh->next ) \
+                    fwrite( loh->d, loh->len, 1, stdout ); \
+        } while (0)
 
 int main(int argc, char *argv[]) {
-    int nread, len = 0, size = (4 * MAXREAD);
-    char *cp, *buf = malloc(size + 1);
+    buf_t tail;
+    buf_t *head = read_lines( &tail );
 
-    while((nread = read(0,(buf+len),MAXREAD)) > 0) {
-        len += nread;
-        if(MAXREAD > (size - len)) {
-            size <<= 1;
-            if((buf = realloc(buf,size+1)) == NULL)
-                return(fprintf(stderr,"realloc failed\n"),EXIT_FAILURE);
+    buf_t *loh = NULL;
+    buf_t *curr = head;
+
+    while ( 1 )
+    {
+        char *buf = curr->d;
+        char *end = buf + curr->len;
+        char *pos = end;
+        for (;; pos--)
+        {
+            if ( pos <= buf )
+            {
+                buf_t *new_curr = curr->next;
+
+                if (new_curr == NULL )
+                {
+                    WRITEOUT;
+                    return(EXIT_SUCCESS);
+                }
+
+                curr->len = end - buf;
+                curr->next = loh;
+                loh = curr;
+                
+                curr = new_curr;
+                break;
+            }
+            if ( *(pos-1) == '\n' )
+            {
+                WRITEOUT;
+                end = pos;
+            }
         }
     }
-    
-    if(nread == -1) return(fprintf(stderr,"read\n"),EXIT_FAILURE);
-
-    for (cp = buf+len-1; cp != buf; --cp,nread++)
-	if ('\n' == *cp) {
-            fwrite(cp+1,nread,1,stdout);
-            nread = 0;
-	}
-
-    fwrite(cp,nread+1,1,stdout);
-    free(buf);
-    return(EXIT_SUCCESS);
+    assert( NULL == "unreachable" );
+    return(EXIT_FAILURE);
 }

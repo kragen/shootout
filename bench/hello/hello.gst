@@ -1,4 +1,7 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy"
+   contributed by Isaac Gouy
 
-Transcript show: 'hello world'; cr !
+   To run: gst -QI /usr/local/share/smalltalk/gst.im hello.st
+"
+
+Transcript show: 'hello world'; nl !

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2004-07-31 09:19:00 bfulgham Exp $
+# $Id: Makefile,v 1.16 2004-08-01 07:59:06 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -16,11 +16,13 @@ ERLFLAGS := -noinput
 CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 MB_CLRTS := -h 10000000
+OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 20000,40000,60000,80000 \
 	  --ignore hash.elastic \
 	  --ignore hash.nice \
+	  --ignore hash.oz \
 	  --ignore hash.csharp
 
 include ../../Make.footer

@@ -1,5 +1,5 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy
+   contributed by Isaac Gouy (improved by Paolo Bonzini)
 
    To run: gst -QI /usr/local/share/smalltalk/gst.im heapsort.st -a 80000
 "
@@ -8,34 +8,32 @@
 !Array methodsFor: 'sorting'!
 
 heapsort
-   | j i ir l d dj dj1 |
-   j := 0. i := 0. ir := self size.
-   l := self size bitShift: -1.  
+   | j i ir l r |
+   ir := self size.
+   l := self size // 2 + 1.  
    
-   [true] whileTrue: 
-      [  l > 1 
-         ifTrue: [
-            l := l - 1. 
-            d := self at: l]
+   [
+      l > 1 
+         ifTrue: [ r := self at: (l := l - 1)]
          ifFalse: [
-            d := self at: ir.
+            r := self at: ir.
             self at: ir put: (self at: 1).
             ir := ir - 1.
-            ir = 1 ifTrue: [self at: 1 put: d. ^self] ]. 
-         
+            ir = 1 ifTrue: [self at: 1 put: r. ^self] ]. 
+      
       i := l.
-      j := l bitShift: 1.
+      j := l * 2.
       [j <= ir] whileTrue: [
-         dj := self at: j.
-         dj1 := self at: j + 1.
-         (j < ir and: [dj < dj1]) ifTrue: [j := j+1].
-         dj := self at: j.
-         d < dj
-            ifTrue: [self at: i put: dj. i := j. j := j + i]
+         (j < ir and: [(self at: j) < (self at: j + 1)]) 
+            ifTrue: [j := j + 1].
+            
+         r < (self at: j)
+            ifTrue: [self at: i put: (self at: j). i := j. j := j + i]
             ifFalse: [j := ir + 1].
-         ].
-      self at: i put: d.
-      ] ! !
+      ].
+      self at: i put: r.
+   
+   ] repeat ! !
 
 
 Object subclass: #RandomNumber
@@ -72,16 +70,22 @@ to: anInteger
    scale := anInteger ! !
 
 
+!Float methodsFor: 'printing'!
+
+printStringRoundedTo: anInteger
+   | s |
+   s := (0.5d * (10 raisedToInteger: anInteger negated) + self) printString.
+   ^s copyFrom: 1 to: (s indexOf: $.) + anInteger ! !  
+
+
 
 | n data randomNumber |
 n := Smalltalk arguments first asInteger.
 data := Array new: n.
 randomNumber := RandomNumber initialize; to: 1.
-
 1 to: n do: [:i| data at: i put: randomNumber next]. 
 
 data heapsort.
-
-(((data at: n) roundTo: 0.0000000001) asScaledDecimal: 10) displayNl !
+(data last printStringRoundedTo: 10) displayNl !
 
 
