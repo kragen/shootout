@@ -7,6 +7,6 @@
 </p>
 
 
-<p>For background information see <a href="http://en.wikipedia.org/wiki/N-body_problem">N-body problem</a>.
+<p>For background information see <a href="http://en.wikipedia.org/wiki/N-body_problem">N-body problem</a>. Useful symplectic integrators are freely available, for example the <a href="http://janus.astro.umd.edu/HNBody/">HNBody Symplectic Integration Package</a>.
 </p>
 
