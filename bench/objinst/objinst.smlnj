@@ -1,109 +1,43 @@
-(* -*- mode: sml -*-
- * $Id: objinst.smlnj,v 1.1 2004-05-19 18:11:03 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Stephen Weeks
+(* objinst.sml
+ *
+ *   Simple "object creation" benchmark.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
-(* Based on objinst.gcc. *)
+structure Test:sig val main:string*string list->OS.Process.status end = struct
 
-structure Test : sig
-    val main : (string * string list) -> OS.Process.status
-end = struct
+    (* the "methods" (work for both Toggle and NthToggle "objects") *)
+    fun Activate (t as { a, r }) = (a (); t)
+    fun Value { a, r } = !r
 
-fun for (start, stop, f) =
-   let
-      fun loop i =
-	 if i > stop
-	    then ()
-	 else (f i; loop (i + 1))
-   in
-      loop start
-   end
+    (* constructor for Toggle *)
+    fun Toggle b = let val r = ref b in { a = fn() => r:=not(!r), r = r } end
 
-structure Toggle =
-   struct
-      datatype 'a t = T of {
-			    state: 'a ref,
-			    value: 'a t -> 'a,
-			    activate: 'a t -> 'a t
-			    }
+    (* constructor for NthToggle *)
+    fun NthToggle (b, m) =
+	let val ({ r, a }, n) = (Toggle b, ref 0)
+	    fun a' () =
+		let val i = !n+1 in if i>=m then (a(); n:=0) else n:=i end
+	in { a = a', r = r } end
 
-      fun new state =
-	 T {state = ref state,
-	    value = fn T {state, ...} => !state,
-	    activate = fn this as T {state, ...} => (state := not(!state); this)}
+    (* activate k times and print value every time *)
+    fun act t =
+	let fun l 0 = ()
+	      | l k = (print(Bool.toString(Value(Activate t))^"\n"); l(k-1))
+	in l end
 
-      fun activate (this as T {activate, ...}) = activate this
-      fun value (this as T {value, ...}) = value this
-   end
+    (* generate k instances given a constructor and its arguments *)
+    fun gen Con a = let fun l 0 = () | l k = (ignore (Con a); l(k-1)) in l end
 
-structure Ntoggle =
-   struct
-      datatype 'a t = T of {
-			    state: 'a ref,
-			    value: 'a t -> 'a,
-			    activate: 'a t -> 'a t,
-			    countMax: int,
-			    counter: int ref
-			    }
+    (* try first for a Toggle object, then for an NthToggle object... *)
+    fun main' n =
+	(act (Toggle true) 5; gen Toggle true n; print "\n";
+	 act (NthToggle (true, 3)) 8; gen NthToggle (true, 3) n;
+	 OS.Process.success)
 
-      fun new (state, countMax) =
-	 T {
-	    state = ref state,
-	    value = fn T {state, ...} => !state,
-	    activate = (fn this as T {state, counter, countMax, ...} =>
-			let
-			   val newCounter = 1 + !counter
-			   val _ = counter := newCounter
-			   val _ = 
-			      if !counter >= countMax
-				 then (state := not(!state);
-				       counter := 0)
-			      else ()
-			in
-			   this
-			end),
-	    countMax = countMax,
-	    counter = ref 0
-	    }
-
-      fun activate (this as T {activate, ...}) = activate this
-      fun value (this as T {value, ...}) = value this
-   end
-
-fun atoi s = case Int.fromString s of SOME num => num | NONE => 0
-fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
-   
-fun main (name, args) =
-   let
-      val n = atoi (hd (args @ ["1"]))
-      val v = ref true
-      val tog = Toggle.new true
-      val _ = for (0, 4, fn _ =>
-		   print (if Toggle.value (Toggle.activate tog)
-			     then "true\n"
-			  else "false\n"))
-
-	      
-      val r = ref (Toggle.new false)
-      val _ = for (0, n - 1, fn _ => r := Toggle.new true)
-      val _ = Toggle.activate (!r)
-
-
-      val _ = print "\n"
-      val ntog = Ntoggle.new (true, 3)
-      val _ = for (0, 7, fn _ =>
-		   print (if Ntoggle.value (Ntoggle.activate ntog)
-			     then "true\n"
-			  else "false\n"))
-
-
-      val r2 = ref (Ntoggle.new (true, 3))
-      val _ = for (0, n - 1, fn _ => r2 := Ntoggle.new (true, 3))
-      val _ = Ntoggle.activate (!r2)
-
-   in
-      OS.Process.success
-   end
+    (* driver: *)
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
 end
-
-val _ = SMLofNJ.exportFn("objinst", Test.main);

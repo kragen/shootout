@@ -1,0 +1,48 @@
+(* nsieve-bits benchmark for The Computer Language Shootout
+ * Written by Dima Dorfman, 2004
+ * Compile: ocamlopt -o nsieve_bits_ocaml bigarray.cmxa nsieve_bits.ml *)
+
+open Bigarray
+
+let nsieve m =
+  let nbits = 8 in let full = (1 lsl nbits) - 1 in
+  let bits = Array1.create int8_unsigned c_layout (m / nbits) in
+  Array1.fill bits full;
+  let clear i =
+    let rec clear' j = if j < m then
+      begin
+	let ix = j / nbits in
+	let old = Array1.get bits ix in
+	Array1.set bits ix (old land ((1 lsl (j mod nbits)) lxor full));
+	clear' (j + i)
+      end; in
+    clear' (i + i) in
+  let rec loop i n =
+    if i >= m then n
+    else if (Array1.get bits (i / nbits)) land (1 lsl (i mod nbits)) != 0 then
+      (clear i; loop (succ i) (succ n))
+    else loop (succ i) n in
+  loop 2 0
+
+let test n =
+  let m = 1 lsl n * 10000 in
+  let count = nsieve m in
+  Printf.printf "Primes up to %8d%8d\n" m count
+
+let main () =
+  if Array.length Sys.argv < 2
+  then (Printf.printf "An argument is required\n"; 2)
+  else
+    let nopt =
+      try Some (int_of_string Sys.argv.(1)) with
+	| Failure _ -> (Printf.printf "An integer is required\n"; None) in
+    match nopt with
+      | None -> 2
+      | Some n ->
+	  if n >= 0 then test n;
+	  if n >= 1 then test (n - 1);
+	  if n >= 2 then test (n - 2);
+	  0
+;;
+
+exit (main ())
