@@ -1,6 +1,6 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.</p>
+<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><strong>same&nbsp;thing</strong></a>.</p>
 
-<p>The word-frequency benchmark measures a <i>real world</i> computing task.</p>
+<p>The word-frequency benchmark measures a <em>real world</em> computing task.</p>
 
 <p>Each program should:</p>
 <ul>
@@ -17,9 +17,9 @@
 
 <p>Programs should use constant space over a range of input sizes. Programs may read the input file line-by-line, or with 4096 byte (or smaller) block reads.</p>
 
-<p>The input file to the tests is the text file <i>The Prince</i>, by
+<p>The input file to the tests is the text file <em>The Prince</em>, by
   Nicoló Machiavelli.</p>
 
-<p>(The <b>bash</b> program is really a pipeline using <b>tr</b>,
-  <b>grep</b>, <b>sort</b> and <b>uniq</b>.  This is the UNIX way of
+<p>(The <strong>bash</strong> program is really a pipeline using <strong>tr</strong>,
+  <strong>grep</strong>, <strong>sort</strong> and <strong>uniq</strong>.  This is the UNIX way of
   combining tools in the shell to get things done.)</p>

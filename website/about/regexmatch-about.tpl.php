@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=regex&lang=perl&sort=<?=$Sort;?>">Perl program</a>.</p></p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"></em>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=regex&lang=perl&sort=<?=$Sort;?>">Perl program</a>.</p></p>
 
 <p>The regex benchmark measures regular expression pattern matching, extracting telephone numbers from a text.</p>
 
@@ -10,6 +10,7 @@
 <li>print the text matches</li>
 </ul>
 </p>
+
 
 <p>Correct output for this 1KB <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=input">input file</a> is: 
 <pre>
@@ -46,7 +47,7 @@
 </p>
 
 
-<p><b>Please Note:</b> this test is due for an overhaul, because of the
+<p></em>Please Note:</strong> this test is due for an overhaul, because of the
   variety of solutions for this test that aren't really using regular
   expressions.</p>
 
@@ -62,8 +63,10 @@
   library, called ORO.  Apparently this package, once available from
   oroinc.com (defunct), is now maintained by the <a href="
   http://jakarta.apache.org/oro/">Apache Jakarta project</a>.</p>
+
 <p>Bigloo's regular <a href="regexmatch.bigloo">grammar facility</a> is
   very powerful.  I wish all languages offered this feature.  I think it
   shows that while it's nice to be able to do complex pattern matching,
   it is really more important how easily you can do something with the
   matched data.</p>
+

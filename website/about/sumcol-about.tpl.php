@@ -1,17 +1,22 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=sumcol&lang=icon&sort=<?=$Sort;?>">Icon program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=sumcol&lang=icon&sort=<?=$Sort;?>">Icon program</a>.</p>
 <p>The sum-file benchmark measures line-oriented I/O and string conversion.</p>
 <p>Each program should:</p>
 <ul>
 <li>read integers from stdin, one line at a time</li>
 <li>print the sum of those integers</li>
 </ul>
+
 <p>Correct output for this 6KB <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=input">input file</a> is: 
 <pre>
 500
 </pre>
 </p>
 <br/>
+
 <p>Programs should use built-in line-oriented I/O functions rather than custom-code. No line will exceed 128 characters, including newline. Reading one line at a time, the programs should run in constant space.</p>
+
+
+
 
 

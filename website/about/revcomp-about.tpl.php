@@ -36,7 +36,7 @@ N    G or A or T or C    N
 </pre></p><br/>
 
 <p>
-"by knowing the sequence of bases of one strand of DNA we immediately know the sequence of the DNA strand which will bind to it, this strand is called the <i><b>reverse complement</b></i>" <br/>
+"by knowing the sequence of bases of one strand of DNA we immediately know the sequence of the DNA strand which will bind to it, this strand is called the <em><strong>reverse complement</strong></em>" <br/>
 <a href="http://www.cse.ucsc.edu/~sugnet/documentation/biology_starter/DNA.html">DNA: Structure and Function</a>
 </p>
 

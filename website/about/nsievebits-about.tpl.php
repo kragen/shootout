@@ -1,6 +1,6 @@
 <p>Each program should count the prime numbers from 2 to M, using the same na&#239ve Sieve of Eratosthenes algorithm:
 <ul>
-  <li>create an array of M <b>bit flags</b></li>
+  <li>create an array of M <strong>bit flags</strong></li>
   <li>for each index number
      <ul>
      <li>if the flag value at that index is true</li>

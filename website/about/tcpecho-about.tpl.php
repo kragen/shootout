@@ -1,4 +1,4 @@
-<p><b>Note</b>: we're thinking about a better way to start client & server within our measurement framework.</p>
+<p><strong>Note</strong>: we're thinking about a better way to start client & server within our measurement framework.</p>
 
 <p>Each program (M = 6400, REPLY_SIZE = 64) should
 <ul>
@@ -13,16 +13,20 @@
 </ul>
 <li>close the socket</li>
 <li>print the count and sum</li>
-</li></ul></li><li>the server process should
+</li>
+</ul>
+</li><li>the server process should
 <ul>
 <li>read a request from the socket</li>
 <li>write a reply to the socket</li>
 </ul>
 </li>
-</ul></p><p>Correct output N = 10 is:
+</ul>
+</p><p>Correct output N = 10 is:
 <pre>
 replies: 64000  bytes: 4096000
 </pre>
 </p>
 <br/>
-<p>The only difference between the tcp-echo, tcp-request-reply, and tcp-stream programs, should be the values for M and REPLY_SIZE.</p>
+
+<p>The only difference between the tcp-echo, tcp-request-reply, and tcp-stream programs, should be the values for M and REPLY_SIZE.</p>
