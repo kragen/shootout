@@ -1,14 +1,14 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.</p>
+<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;way</b></a> &#8212; the same way as this <a href="benchmark.php?test=pidigits&lang=clean&sort=<?=$Sort;?>">Clean program</a> or this <a href="benchmark.php?test=pidigits&lang=gst&sort=<?=$Sort;?>">Smalltalk program</a>.</p>
 
-<p>Programs should
+<p>Each program should
 
 <ul>
-  <li>calculate pi to N digits (unbounded spigot algorithm)</li>
-  <li>either print one-digit-at-a-time, or accumulate and print all N digits</li>
+  <li>calculate the first N digits of Pi (by the unbounded spigot algorithm)</li>
+  <li>print the digits 10-to-a-line, with the running total of digits calculated</li>
 </ul>
 </p>
 
-<p>Adapt <b>the unoptimised version</b> of the unbounded spigot algorithm given on pages 4,6 & 7 of <a href="http://web.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/spigot.pdf">Unbounded Spigot Algorithms for the Digits&nbsp;of&nbsp;&#960;</a> Jeremy Gibbons, 2004. (156KB pdf), to stop after N digits.</p>
+<p>Programs should implement the <b>unoptimised</b> unbounded spigot algorithm given on pages 4,6 & 7 of <a href="http://web.comlab.ox.ac.uk/oucl/work/jeremy.gibbons/publications/spigot.pdf">Unbounded Spigot Algorithms for the Digits&nbsp;of&nbsp;Pi</a>, Jeremy Gibbons, 2004, (156KB pdf) &#8212; adapted to stop after the first N digits.</p>
 
 <p>Correct output N = 27 is:
 <pre>
