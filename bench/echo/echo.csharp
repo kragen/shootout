@@ -25,93 +25,66 @@ class Echo
          i.UseShellExecute = false;
          p.Start();
 
-         EchoClient.Start(n);
+         Client.Start(n);
       }
       else {
-         EchoListener.Start();
+         Listener.Start();
       }
    }
 }
 
 
-public class EchoListener 
+public class Listener 
 {
    public static void Start() 
    {
-      IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-      IPAddress ipAddress = ipHostInfo.AddressList[0];
-      IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
-
-      Socket listener = new Socket(AddressFamily.InterNetwork,
-         SocketType.Stream, ProtocolType.Tcp );
-
-      try {
-         listener.Bind(localEndPoint);
-         listener.Listen(10);
-         Socket handler = listener.Accept();
+      TcpListener listener = new TcpListener(11000);
+      listener.Start();
+      
+      using (TcpClient client = listener.AcceptTcpClient()){
+         NetworkStream s = client.GetStream();
 
          byte[] buffer = new byte[32];
          int count = 0;
-
-         int bytesRec;
          while (true) {
-            bytesRec = handler.Receive(buffer);
+            int bytesRec = s.Read(buffer, 0, buffer.Length);
+
             if (bytesRec > 0) {
-               handler.Send(buffer, 0, bytesRec, SocketFlags.None);
+               s.Write(buffer, 0, bytesRec);
                count += bytesRec;
             }
             else break; 
          }
          Console.WriteLine("server processed {0} bytes", count);
-
-         handler.Shutdown(SocketShutdown.Both);
-         handler.Close();
+         listener.Stop();
       } 
-      catch (Exception e){
-         Console.WriteLine(e.ToString());
-      }
    }
 }
 
 
-public class EchoClient 
+public class Client 
 {
    private const string data = "Hello there sailor\n";
 
    public static void Start(int n) 
    {
-      byte[] bytes = new byte[32];
+      byte[] msg = Encoding.ASCII.GetBytes(data);
+      byte[] buffer = new byte[32];
 
-      try {
-         IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-         IPAddress ipAddress = ipHostInfo.AddressList[0];
-         IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+      using (TcpClient client = new TcpClient("127.0.0.1",11000)){     
+         NetworkStream s = client.GetStream();         
 
-         Socket sender = new Socket(AddressFamily.InterNetwork, 
-         SocketType.Stream, ProtocolType.Tcp );
-         sender.Connect(remoteEP);
-
-         byte[] msg = Encoding.ASCII.GetBytes(data);
-         int bytesSent, bytesRec;
-         bool responseOK;
          while (n-- > 0){
-            bytesSent = sender.Send(msg);
-
-            bytesRec = sender.Receive(bytes);
-            responseOK = msg.Length == bytesRec;
+            s.Write(msg, 0, msg.Length);
+            int bytesRec = s.Read(buffer, 0, buffer.Length);
+            bool responseOK = msg.Length == bytesRec;
             if (responseOK)
                for (int i=0; i < bytesRec; i++)
-                  if ( !(responseOK = msg[i] == bytes[i]) )
+                  if ( !(responseOK = msg[i] == buffer[i]) )
                      break;
+
             if (!responseOK) Console.WriteLine("Response doesn't match message.");
          }
-
-         sender.Shutdown(SocketShutdown.Both);
-         sender.Close();
-
       } 
-      catch (Exception e){
-         Console.WriteLine( e.ToString());
-      }
    }
 }
