@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_funcs.php,v 1.2 2004-06-21 10:38:16 dbr-guest Exp $
+# $Id: craps_funcs.php,v 1.3 2004-06-22 03:04:54 bfulgham Exp $
 
 require 'langs.inc';
 
@@ -37,9 +37,19 @@ function do_craps($query_string)
 
     $M2INWT = 0;
     $MAXWT = 5;
+    $SCALE = 1;
     $xloc = 0;
     $xmem = 0;
     $xcpu = 1.0;
+
+    # Initialize the best scores to a high value
+    $tests = array_keys($weight);
+    foreach ($tests as $_test) {
+       $best_cpu[$_test] = 99.0;
+       $best_mem[$_test] = 99999.0;
+       $best_loc[$_test] = 9999.0;
+       #echo "Setting best($_test) => $best_cpu[$_test]<br>\n";
+    }
 
     if ($query_string != "")
     {
@@ -68,6 +78,21 @@ function do_craps($query_string)
 
     $craps_lines = file("$base/.craps.table");
 
+    # Read file once to get best scores for later calcs.
+    foreach ($craps_lines as $line_no => $line)
+    {
+        if (preg_match("/^SCORE/", $line)) {
+	    list($t, $_test, $_impl, $_cpu, $_mem, $_loc) = preg_split("/,/", $line);
+	    #echo "test = $_test, cpu=$_cpu ";
+	    if (! is_null($_cpu) && $_cpu != 0) {
+	        $best_cpu[$_test] = min($_cpu, $best_cpu[$_test]);
+		#echo "best($_test) = $best_cpu[$_test]";
+	    }
+	    #echo "<br>\n";
+	    if ($_mem != 0) $best_mem[$_test] = min($_mem, $best_mem[$_test]);
+	    if ($_loc != 0) $best_loc[$_test] = min($_loc, $best_loc[$_test]);
+	}
+    }
     foreach ($craps_lines as $line_no => $line)
     {
         if (preg_match("/^TITLE/", $line)) {
@@ -79,7 +104,10 @@ function do_craps($query_string)
 	    $missing[$_impl] = $_missing;
 	} elseif (preg_match("/^SCORE/", $line)) {
 	    list($t, $_test, $_impl, $_cpu, $_mem, $_loc) = preg_split("/,/", $line);
-	    $cpu[$_impl] += $_cpu * $weight[$_test];
+	    if (! is_null($_cpu) && $_cpu != 0) {
+	        $cpu[$_impl] += 1 / (1 + $SCALE * log($_cpu/$best_cpu[$_test])/log(2)) * $weight[$_test];
+	    }
+	    
 	    $mem[$_impl] += $_mem * $weight[$_test];
 	    $loc[$_impl] += $_loc * $weight[$_test];
 	} else {
