@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2005-02-09 06:26:25 bfulgham Exp $
+# $Id: Makefile,v 1.15 2005-02-19 07:43:37 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -9,6 +9,7 @@ TESTS = \
     fannkuch \
     fasta \
     fibo \
+    harmonic \
     hash \
     hash2 \
     heapsort \
@@ -38,6 +39,9 @@ TESTS = \
     strcat \
     sumcol \
     takfp \
+    tcpecho \
+    tcprequest \
+    tcpstream \
     wc \
     wordfreq
 
