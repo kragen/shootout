@@ -1,0 +1,40 @@
+(* mandelbrot.sml
+ *
+ *   Mandelbrot (fractal generation) benchmark.
+ *     (Loosely based on the C version.)
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
+ *)
+structure Test:sig val main:string*string list->OS.Process.status end = struct
+
+    val (K, L2) = (50, 4.0)
+    infix << val op << = Word8.<< fun b0 x = x<<0w1 fun b1 x = (b0 x) + 0w1
+
+    fun out w = TextIO.output1 (TextIO.stdOut, Byte.byteToChar w)
+    fun outs s = TextIO.output (TextIO.stdOut, s)
+
+    fun mandel (h, w) =
+	let val (hr', wr') = (2.0/real h, 2.0/real w)
+	    fun p(x,y) =
+		let val (Cr, Ci) = (real x*wr'-1.5, real y*hr'-1.0)
+		    fun l(r,i,k) =
+			let val (r2,i2)=(r*r,i*i)
+			in r2+i2<=L2 andalso (k>=K orelse l(r2-i2+Cr,2.0*r*i+Ci,k+1)) end
+		in l(0.0,0.0,0) end
+
+	    fun xl(x,y,b,n) =
+		if x>=w then (out(b<<n); yl(y+1))
+		else let val (b,n) = if n=0w0 then (out b; (0w0,0w8)) else (b,n)
+		     in xl(x+1,y,if p(x,y) then b1 b else b0 b, n-0w1) end
+
+	    and yl y = if y<h then xl(0,y,0w0,0w8) else OS.Process.success
+
+	in app outs ["P4\n", Int.toString h, " ", Int.toString w, "\n"]; yl 0
+	end
+
+    fun main' n = mandel (n, n)
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
+end

@@ -1,0 +1,90 @@
+(* nbody.sml
+ *
+ *   N-Body simulation (orbits of Jovian planets).
+ *   (Loosely based on the Oberon version.)
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
+ *)
+structure Test = struct
+
+    infix 8 $  val op $ = Unsafe.Array.sub
+    infix 3 <- fun (a, i) <- x = Unsafe.Array.update (a, i, x)
+
+    val SOLAR_MASS = 4.0 * Math.pi * Math.pi
+    val DAYS_PER_YEAR = 365.24
+
+    val bodies =  (* sun, jupiter, saturn, neptune, uranus *)
+	[(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+	 (4.84143144246472090,~1.16032004402742839,~1.03622044471123109e~1,
+	  1.66007664274403694e~3,7.69901118419740425e~3,~6.90460016972063023e~5,
+	  9.54791938424326609e~4),
+	 (8.34336671824457987,4.12479856412430479,~4.03523417114321381e~1,
+	  ~2.76742510726862411e~3,4.99852801234917238e~3,2.30417297573763929e~5,
+	  2.85885980666130812e~4),
+	 (1.28943695621391310e1,~1.51111514016986312e1,~2.23307578892655734e~1,
+	  2.96460137564761618e~3,2.37847173959480950e~3,~2.96589568540237556e~5,
+	  4.36624404335156298e~5),
+	 (1.53796971148509165e1,~2.59193146099879641e1,1.79258772950371181e~1,
+	  2.68067772490389322e~3,1.62824170038242295e~3,~9.51592254519715870e~5,
+	  5.15138902046611451e~5)]
+
+    fun main' n =
+	let val N = length bodies
+	    fun sm x = x * SOLAR_MASS  fun dpy x = x * DAYS_PER_YEAR
+	    fun get sel = Array.fromList (map sel bodies)
+	    val (x, y, z) = (get #1, get #2, get #3)
+	    val (vx, vy, vz) = (get (dpy o #4), get (dpy o #5), get (dpy o #6))
+	    val m = get (sm o #7)
+
+	    fun advance dt =	(* one step *)
+		let fun pl i = if i>=N then ()
+			       else ((x,i)<-x$i+dt*vx$i;
+				     (y,i)<-y$i+dt*vy$i;
+				     (z,i)<-z$i+dt*vz$i;
+				     pl (i+1))
+		    fun vl (i, j) =
+			if i>=N then pl 0
+			else if j>=N then vl (i+1,i+2)
+			else let val (dx,dy,dz)=(x$i-x$j,y$i-y$j,z$i-z$j)
+				 val dist = Math.sqrt(dx*dx+dy*dy+dz*dz)
+				 val mag = dt/(dist*dist*dist)
+				 val (mi, mj) = (m$i*mag,m$j*mag)
+			     in (vx,i)<-vx$i-dx*mj; (vx,j)<-vx$j+dx*mi;
+				(vy,i)<-vy$i-dy*mj; (vy,j)<-vy$j+dy*mi;
+				(vz,i)<-vz$i-dz*mj; (vz,j)<-vz$j+dz*mi;
+				vl (i, j+1)
+			     end
+		in vl (0, 1) end
+
+	    fun offmoment () =	(* calculate initial velocity for the sun *)
+		let fun %v = ~v / SOLAR_MASS
+		    fun loop (i, px, py, pz) =
+			if i>=N then ((vx,0)<- %px; (vy,0)<- %py; (vz,0)<- %pz)
+			else loop (i+1, px+vx$i*m$i, py+vy$i*m$i, pz+vz$i*m$i)
+		in loop (1, 0.0, 0.0, 0.0) end
+
+	    fun energy () =
+		let fun l (i, j, e) =
+			if j >= N then l0 (i+1, e)
+			else let val (dx,dy,dz)=(x$i-x$j,y$i-y$j,z$i-z$j)
+				 val dist = Math.sqrt(dx*dx+dy*dy+dz*dz)
+			     in l (i, j+1, e-m$i*m$j/dist) end
+		    and l0 (i, e) =
+			if i>=N then e
+			else let val (x, y, z) = (vx$i, vy$i, vz$i)
+			     in l (i, i+1, e+0.5*m$i*(x*x+y*y+z*z)) end
+		in l0 (0, 0.0) end
+
+	    fun addloop i = if i > 0 then (advance 0.01; addloop (i-1)) else ()
+
+	    fun pr x = Format.formatf "%0.9f\n" print [Format.REAL x]
+
+	in offmoment (); pr (energy ()); addloop n; pr (energy ());
+	   OS.Process.success
+	end
+
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
+end
