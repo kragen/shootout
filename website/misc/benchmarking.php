@@ -59,9 +59,11 @@ Benchmarking PHP with no BS</a></p></li>
 <h4 class="rev">&nbsp;comparing languages</h4>
 <ul>  
   <br/> 
+  <li><p><a href="http://www.freewebs.com/godaves/javabench_revisited/">'The Java Faster than C++' Benchmark Revisited</a></p></li>
+
   <li><p><a href="http://www-fp.dcs.st-and.ac.uk/~kh/papers/pseudoknot/pseudoknot.html">Benchmarking Implementations of Functional Languages with ‘Pseudoknot’, a Float-Intensive Benchmark </a></p></li>
 
-  <li><p><a href="http://www.cl.cam.ac.uk/users/mr/Bench.html">Martin Richards’ Bench (aka Richards benchmark) </a></p></li>
+  <li><p><a href="http://www.lissett.com/ben/">Martin Richards’ Bench</a></p></li>
 
   <li><p><a href="http://www2.hursley.ibm.com/decimal/telco.html">The ‘telco’ benchmark</a></p></li>
 
@@ -69,7 +71,7 @@ Benchmarking PHP with no BS</a></p></li>
 
   <li><p><a href="http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html">Timing Trials, or, the Trials of Timing: Experiments with Scripting and User-Interface Languages</a></p></li>
 
-  <li><p><a href="http://www.idiom.com/~zilla/Computer/javaCbenchmark.html">Performance of Java versus C++</a></p></li>
+
 
 </ul>
 
