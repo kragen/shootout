@@ -12,7 +12,7 @@ proc kFrequency {s k framesize} {
     set n [string length $s]
     incr k -1
     incr n -$k
-    for {set i $framesize} {$i < $n} {incr i} {
+    for {set i [incr framesize -1]} {$i < $n} {incr i} {
 	set c [string range $s $i [incr i $k]]
 	if {[catch {incr freq($c)}]} {set freq($c) 1}
     }
