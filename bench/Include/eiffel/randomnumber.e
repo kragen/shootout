@@ -1,6 +1,6 @@
 -- -*- mode: eiffel -*-
--- $Id: randomnumber.e,v 1.1 2004-05-19 18:09:07 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
+-- $Id: randomnumber.e,v 1.1 2004-08-02 08:06:45 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
 -- from Steve Thompson
 
 class RANDOMNUMBER

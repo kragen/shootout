@@ -1,6 +1,6 @@
 -- -*- mode: eiffel -*-
--- $Id: doubly_linked_list.e,v 1.1 2004-05-19 18:09:06 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
+-- $Id: doubly_linked_list.e,v 1.1 2004-08-02 08:06:45 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
 -- from Friedrich Dominicus
 
 class DOUBLY_LINKED_LIST[G]
