@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: matrix.tcl,v 1.1 2004-05-19 18:10:35 bfulgham Exp $
+# $Id: matrix.tcl,v 1.2 2005-03-31 14:42:10 sgeard-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 
 # This program based on the original from:
@@ -11,55 +11,43 @@
 
 # additional speedups by Kristoffer Lawson and Miguel Sofer
 
-set size 30;
+set size 30
 
 proc mkmatrix {rows cols} {
-    set count 1;
-    set mx [list]
-    for { set i 0 } { $i < $rows } { incr i } {
-	set row [list]
-	for { set j 0 } { $j < $cols } { incr j } {
-	    lappend row $count;
-	    incr count;
-	}
-	lappend mx $row;
+    set count 0
+    for {set i 0} {$i < $rows} {incr i} {
+	set row {}
+	for {set j 0} {$j < $cols} {incr j} {lappend row [incr count]}
+	lappend mx $row
     }
-    return $mx;
+    return $mx
 }
 
 proc mmult {m1 m2} {
-    set cols [lindex $m2 0]
+    set cols [lindex $m1 0]
     foreach row1 $m1 {
-        set row [list]
-        set i 0
-        foreach - $cols {
-            set elem 0
-            foreach elem1 $row1 row2 $m2 {
-                set elem [expr {$elem + $elem1 * [lindex $row2 $i]}]
-            }
-            lappend row $elem
-            incr i
-        }
-        lappend result $row
+	foreach {row i} {{} 0} break
+	foreach - $cols {
+	    set elem 0
+	    foreach elem1 $row1 row2 $m2 {
+		incr elem [expr {$elem1 * [lindex $row2 $i]}]
+	    }
+	    lappend row $elem
+	    incr i
+	}
+	lappend result $row
     }
     return $result
 }
 
-proc main {} {
-    global argv size
-    set num [lindex $argv 0]
-    if {$num < 1} {
-	set num 1
-    }
+proc main {n} {
+    set m1 [mkmatrix $::size $::size]
+    set m2 [mkmatrix $::size $::size]
+    while {[incr n -1] > -1} {set m [mmult $m1 $m2]}
 
-    set m1 [mkmatrix $size $size]
-    set m2 [mkmatrix $size $size]
-    while {$num > 0} {
-        incr num -1
-        set m [mmult $m1 $m2]
-    }
-
-    puts "[lindex [lindex $m 0] 0] [lindex [lindex $m 2] 3] [lindex [lindex $m 3] 2] [lindex [lindex $m 4] 4]"
+    puts "[lindex $m 0 0] [lindex $m 2 3] [lindex $m 3 2] [lindex $m 4 4]"
 }
 
-main
+set N [lindex $argv 0]
+if {$N < 1} {set N 1}
+main $N
