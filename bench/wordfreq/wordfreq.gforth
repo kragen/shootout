@@ -1,0 +1,103 @@
+\ -*- mode: forth -*-
+\ $Id: wordfreq.gforth,v 1.1 2004-05-25 03:43:33 bfulgham Exp $
+\ http://www.bagley.org/~doug/shootout/
+\ from Anton Ertl:
+
+wordlist constant word-counts
+create word-pointers 10000 cells allot
+variable endwp word-pointers endwp !
+1024 constant max-line
+create line max-line 2 + allot
+
+struct
+    cell% field    wf-count
+    cell% 2* field wf-name
+end-struct wf%
+
+: count-word ( addr u -- )
+    2dup word-counts search-wordlist if
+	1 swap >body +! 2drop
+    else
+	nextname get-current word-counts set-current create set-current
+	here endwp @ tuck ! cell+ endwp !
+	1 , last @ name>string 2,
+    endif ;
+
+: no-letter? ( c -- )
+    dup 'a < swap 'z > or ; 
+
+: process-word ( start end -- )
+    2dup u< if
+	over - count-word
+    else
+	2drop
+    endif ;
+
+: process-line ( addr u -- )
+    bounds 2dup ?do ( end wordstart )
+	i c@ $20 or dup i c! ( end wordstart c )
+	no-letter? if ( end wordstart )
+	    i process-word  i 1+ 
+	endif
+    loop ( end wordstart )
+    swap process-word ;
+
+: process-file ( fid -- )
+    >r begin
+	line max-line r@ read-line throw
+    while
+	line swap process-line
+    repeat
+    rdrop ;
+
+: output ( -- )
+    endwp @ word-pointers ?do
+	i @ dup wf-count @ 7 .r #tab emit wf-name 2@ type cr
+    cell +loop ;
+
+: wf< ( wf1 wf2 -- f )
+    over wf-count @ over wf-count @ 2dup = if
+	2drop >r wf-name 2@ r> wf-name 2@ compare 0>
+    else
+	u> nip nip
+    endif ;
+
+(field) cell- -1 cells ,
+
+: partition ( first last lessthan-xt -- middle )
+    \ partition array addr1 u1 into all elements less than pivot and all
+    \ others, addr1 u2 and addr3 u3 are the two partitions.
+    \ lessthan-xt ( elemptr1 elemptr2 -- f ) compares the two elements
+    { lessthan-xt }
+    over @ { pivot }
+    begin ( i j )
+	2dup u<
+    while
+	begin
+	    pivot over @ lessthan-xt execute
+	while
+	    cell-
+	repeat
+	swap over @ over !
+	begin ( j i )
+	    2dup u>
+	while
+	    pivot over @ lessthan-xt execute 0=
+	while
+	    cell+
+	repeat then
+	swap over @ over !
+    repeat
+    drop pivot over ! ;
+
+: sort1 ( first last lesstthan-xt -- ) recursive
+    >r begin
+	2dup u<
+    while
+	2dup r@ partition ( first last middle )
+	rot over cell- r@ sort1
+	cell+ swap
+    repeat
+    rdrop 2drop ;
+
+stdin process-file word-pointers endwp @ cell- ' wf< sort1 output bye
