@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2004-10-01 16:58:32 ekarttun-guest Exp $
+# $Id: Makefile,v 1.21 2004-10-03 00:44:26 bfulgham Exp $
 include ../../Make.header
 
 TEST    := lists
@@ -13,6 +13,6 @@ GHCOPTS  := -O2 -package data
 RUNTESTS := $(MINIBENCH) --conf ./Minibench.conf \
 	  --range 4,8,12,16,18 \
 	  --ignore lists.csharp \
-	  --ignore lists.guile 
+	  --ignore lists.guile
 
 include ../../Make.footer

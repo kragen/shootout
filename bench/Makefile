@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-09-17 13:47:41 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-10-03 00:44:13 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -17,6 +17,7 @@ TESTS = \
     nestedloop \
     objinst \
     plugin \
+    procinst \
     prodcons \
     random \
     regexmatch \
