@@ -53,7 +53,7 @@
        Home => 'http://www.gnu.org/software/bash/bash.html',
        Down => 'ftp://ftp.gnu.org/gnu/bash/',
        Type => 'interpreted',
-       Ext  => 'sh',
+       Ext  => 'bash',
        Verfun => sub {
 	   $ENV{BASH} = '/bin/bash';
 	   chomp(my $ver = `echo ""|$ENV{BASH} --version`);
@@ -89,12 +89,12 @@
        },
      },
 
-     'g++' =>
+     'gpp' =>
      { Lang => 'C++',
        Home => 'http://gcc.gnu.org/',
        Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
        Type => 'native compiled',
-       Ext  => 'c',
+       Ext  => 'cpp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GXX} --version`);
 	   $ver =~ s/Copyright.*//s;
@@ -108,7 +108,7 @@
        Home => 'http://www.go-mono.com/',
        Down => 'http://www.go-mono.com/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'cs',
+       Ext  => 'c',
        Verfun => sub {
 	   #chomp(my $ver = `$ENV{MONOC} --version`);
 	   $ver = '0.96';
@@ -121,7 +121,7 @@
        Home => 'http://www.call-with-current-continuation.org/',
        Down => 'http://www.call-with-current-continuation.org/',
        Type => 'native compiled',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   my $ver = `$ENV{CHICKEN} -version`;
 	   $ver =~ /Version (\d+), Build (\d+) - (.*)/;
@@ -146,7 +146,7 @@
        Home => 'http://www.cons.org/cmucl/',
        Down => 'http://www.cons.org/cmucl/',
        Type => 'native compiled',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{CMUCL} -batch -eval '(progn (princ (LISP-IMPLEMENTATION-VERSION)) (quit))'`);
 	   $ver = "CMU Common Lisp $ver";
@@ -159,7 +159,7 @@
        Home => 'http://sbcl.sourceforge.net/',
        Down => 'http://sbcl.sourceforge.net/',
        Type => 'native compiled',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SBCL} --version`);
 	   return($ver);
@@ -196,7 +196,7 @@
        Home => 'http://smarteiffel.loria.fr/',
        Down => 'ftp://ftp.loria.fr/pub/loria/SmartEiffel/',
        Type => 'native compiled',
-       Ext  => 'e',
+       Ext  => 'eiffel',
        Verfun => sub {
 	   my $ver = `$ENV{SE} -version`;
 	   $ver =~ /(Release\s.*?\))/;
@@ -222,7 +222,7 @@
        Home => 'http://www.erlang.org/',
        Down => 'http://www.erlang.org/download.html',
        Type => 'bytecomped/interpreted',
-       Ext  => 'erl',
+       Ext  => 'erlang',
        Verfun => sub {
 	   my $ver = `$ENV{ERLANG} -version 2>&1`;
 	   $ver =~ s/\r?\n$//;
@@ -235,7 +235,7 @@
        Home => 'http://www.erlang.org/',
        Down => 'http://www.erlang.org/download.html',
        Type => 'native compiled',
-       Ext  => 'erl',
+       Ext  => 'erlang',
        Verfun => sub {
 	   my $ver = `$ENV{ERLANG} -version 2>&1`;
 	   $ver =~ s/\r?\n$//;
@@ -260,7 +260,7 @@
        Home => 'http://www.jwdt.com/~paysan/gforth.html',
        Down => 'http://www.complang.tuwien.ac.at/forth/gforth/',
        Type => 'interpreted',
-       Ext  => '4th',
+       Ext  => 'forth',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GFORTH} --version 2>&1`);
 	   return($ver);
@@ -310,7 +310,7 @@
        Home => 'http://www.cs.arizona.edu/icon/',
        Down => 'http://www.cs.arizona.edu/icon/v93.htm',
        Type => 'interpreted',
-       Ext  => 'icn',
+       Ext  => 'icon',
        Verfun => sub {
 	   chomp(my $ver = `unset STRSIZE BLOCKSIZE COEXPSIZE MSTKSIZE TRACE NOERRBUF ; echo 'procedure main() ; write(&version) ; end' | $ENV{ICON} - -x 2>/dev/null`);
 	   unlink("stdin");	# ick, leftover from icon
@@ -381,7 +381,7 @@
        Home => 'http://librep.sourceforge.net/',
        Down => 'ftp://librep.sourceforge.net/pub/librep/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{REP} --version`);
 	   return($ver);
@@ -406,7 +406,7 @@
        Home => 'http://www.cs.mu.oz.au/mercury/',
        Down => 'http://www.cs.mu.oz.au/mercury/',
        Type => 'native compiled',
-       Ext  => 'pro',
+       Ext  => 'delphi',
        Verfun => sub {
            my $ver = `$ENV{MMC} --version 2>&1`;
 	   $ver =~ /(Mercury Compiler.*)\n/;
@@ -419,7 +419,7 @@
        Home => 'http://newlisp.org/',
        Down => 'http://newlisp.org/index.cgi?page=Downloads',
        Type => 'interpreted',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   my $ver = `$ENV{NEWLISP} -h 2>&1`;
 	   $ver =~ /(newLISP .*) Copyright.*/;
@@ -432,7 +432,7 @@
        Home => 'http://nice.sourceforge.net/',
        Down => 'http://nice.sourceforge.net/install.html',
        Type => 'interpreted',
-       Ext  => 'nice',
+       Ext  => 'java',
        Verfun => sub {
 	   my $ver = `$ENV{NICEC} --version 2>&1`;
 	   $ver =~ /(Nice compiler.*)\n/;
@@ -445,7 +445,7 @@
        Home => 'http://oo2c.sourceforge.net/',
        Down => 'http://oo2c.sourceforge.net/files',
        Type => 'native compiled',
-       Ext  => 'oberon',
+       Ext  => 'oberon2',
        Verfun => sub {
 	   my $ver = `$ENV{OO2C} --version 2>&1`;
 	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c \2 (using \1)/;
@@ -458,7 +458,7 @@
        Home => 'http://gcc.gnu.org/',
        Down => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
        Type => 'native compiled',
-       Ext  => 'c',
+       Ext  => 'objc',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GCC} --version`);
 	   $ver =~ s/Copyright.*//s;
@@ -472,7 +472,7 @@
        Home => 'http://www.ocaml.org/',
        Down => 'http://caml.inria.fr/ocaml/distrib.html',
        Type => 'native compiled',
-       Ext  => 'ml',
+       Ext  => 'sml',
        Verfun => sub {
 	   my $ver = `$ENV{OCAML} -v`;
 	   $ver =~ /^(.*)\n/;
@@ -485,7 +485,7 @@
        Home => 'http://www.ocaml.org/',
        Down => 'http://caml.inria.fr/ocaml/distrib.html',
        Type => 'bytecomped/interpreted',
-       Ext  => 'ml',
+       Ext  => 'sml',
        Verfun => sub {
 	   my $ver = `$ENV{OCAMLB} -v`;
 	   $ver =~ /^(.*)\n/;
@@ -498,7 +498,7 @@
        Home => 'http://www.mozart-oz.org',
        Down => 'http://www.mozart-oz.org/download',
        Type => 'interpreted',
-       Ext  => 'pro',
+       Ext  => 'oz',
        Verfun => sub {
 	   my $ver = `$ENV{OZC} -e d 2>&1`;
 	   $ver =~ /(Mozart Compiler\s.*)/;
@@ -511,7 +511,7 @@
        Home => 'http://www.freepascal.org',
        Down => 'http://www.freepascal.org/download.html',
        Type => 'native compiled',
-       Ext  => 'pas',
+       Ext  => 'pascal',
        Verfun => sub {
            my $ver = `$ENV{FPASCAL} -i`;
 	   $ver =~ /Free Pascal.*(version [\d\.]+)/;
@@ -524,7 +524,7 @@
        Home => 'http://www.php.net/',
        Down => 'http://www.php.net/downloads.php',
        Type => 'interpreted',
-       Ext  => 'php',
+       Ext  => 'perl',
        Verfun => sub {
 	   my $ver = `$ENV{PHP} -v`;
 	   $ver =~ s/Copyright.*//s;
@@ -538,7 +538,7 @@
        Home => 'http://www.perl.org/',
        Down => 'http://www.cpan.org/src/5.0/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'pl',
+       Ext  => 'perl',
        Verfun => sub {
 	   my $ver = `$ENV{PERL} -v`;
 	   $ver =~ /(This is perl.*)\n/;
@@ -551,7 +551,7 @@
        Home => 'http://pike.roxen.com/',
        Down => 'http://pike.roxen.com/download/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'pike',
+       Ext  => 'c',
        Verfun => sub {
 	   my $ver = `$ENV{PIKE} --version 2>&1`;
 	   $ver =~ /(Pike v.*?)Copy/;
@@ -564,7 +564,7 @@
        Home => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
        Down => 'http://www.cs.bham.ac.uk/research/poplog/new/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
            my $tmp = `$ENV{POP11} ":popversion=>" 2>&1`;
 	   $tmp =~ /.*\s\((Version\s\d\d\.\d\d).*/;
@@ -607,7 +607,7 @@
        Home => 'http://www.clip.dia.fi.upm.es',
        Down => 'http://www.clip.dia.fi.upm.es/Software/Ciao/index.html#ciao/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'pro',
+       Ext  => 'delphi',
        Verfun => sub {
            my $ver = `$ENV{CIAOC} 2>&1`;
 	   $ver =~ /(Ciao-Prolog.*)/;
@@ -620,7 +620,7 @@
        Home => 'http://prolog.inria.fr',
        Down => 'ftp://ftp.inria.fr/INRIA/Projects/contraintes/gprolog',
        Type => 'native compiled',
-       Ext  => 'pro',
+       Ext  => 'delphi',
        Verfun => sub {
            my $ver = `$ENV{GPLC} --version 2>&1`;
 	   $ver =~ /(GNU Prolog.*)/;
@@ -633,7 +633,7 @@
        Home => 'http://psyco.sourceforge.net/',
        Down => 'http://psyco.sourceforge.net/download.html',
        Type => 'native compiled',
-       Ext  => 'py',
+       Ext  => 'python',
        Verfun => sub {
            return('1.2');
        },
@@ -644,7 +644,7 @@
        Home => 'http://www.python.org/',
        Down => 'http://www.python.org/download/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'py',
+       Ext  => 'python',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{PYTHON} -c 'import sys; print "Python %d.%d.%d" % sys.version_info[0:3]'`);
 	   return($ver);
@@ -656,7 +656,7 @@
        Home => 'http://www.ruby-lang.org/',
        Down => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
        Type => 'interpreted',
-       Ext  => 'rb',
+       Ext  => 'ruby',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{RUBY} -v`);
 	   return($ver);
@@ -668,7 +668,7 @@
        Home => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/',
        Down => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/bigloo-1.html',
        Type => 'native compiled',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{BIGLOO} -version`);
 	   return($ver);
@@ -680,7 +680,7 @@
        Home => 'http://www.gnu.org/software/guile/guile.html',
        Down => 'ftp://ftp.gnu.org/pub/gnu/guile/',
        Type => 'interpreted',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   my $ver = `$ENV{GUILE} --version`;
 	   $ver =~ s/\n.*//s;
@@ -693,7 +693,7 @@
        Home => 'http://www.plt-scheme.org',
        Down => 'http://download.plt-scheme.org/drscheme/',
        Type => 'native compiled',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   my $ver = `$ENV{MZC} -h`;
 	   $ver =~ s/\n.*//s;
@@ -708,7 +708,7 @@
        Home => 'http://www.plt-scheme.org',
        Down => 'http://download.plt-scheme.org/drscheme/',
        Type => 'interpreted',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
 	   my $ver = `$ENV{MZSCHEME} --version`;
 	   $ver =~ s/\n.*//s;
@@ -723,7 +723,7 @@
        Home => 'http://www.ece.purdue.edu/~qobi/software.html',
        Down => 'http://www.ece.purdue.edu/~qobi/software.html',
        Type => 'native compiled',
-       Ext  => 'lisp',
+       Ext  => 'scheme',
        Verfun => sub {
            return('0.9');
        },
@@ -785,7 +785,7 @@
      { Lang => 'Smalltalk',
        Home => 'http://www.gnu.org/software/smalltalk/smalltalk.html',
        Type => 'bytecomped/interpreted',
-       Ext => 'rb',
+       Ext => 'perl',
        Verfun => sub {
            chomp(my($ver) = grep(/^GNU.*/i,`$ENV{GST} --version 2>&1`));
 	   return ($ver);
@@ -809,7 +809,7 @@
        Home => 'http://www.xemacs.org/',
        Down => 'http://www.xemacs.org/Download/',
        Type => 'bytecomped/interpreted',
-       Ext  => 'lisp',
+       Ext  => 'elisp',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{XEMACS} -vanilla -batch -eval '(princ (emacs-version))'`);
 	   $ver =~ s/ of .*//;
@@ -825,13 +825,13 @@
      'Ada'         => 'dash',
      'Awk'         => 'shell',
      'Bash'        => 'shell',
-     'bigloo'      => 'lisp',
+     'bigloo'      => 'scheme',
      'C'           => 'c',
      'C++'         => 'c',
      'C#'          => 'c',
      'Ciao Prolog' => 'prolog',
      'Clean'       => 'c',
-     'Common Lisp' => 'lisp',
+     'Common Lisp' => 'scheme',
      'Eiffel'      => 'dash',
      'ElastiC'     => 'c',
      'Erlang'      => 'prolog',
@@ -855,20 +855,20 @@
      'Pike'        => 'c',
      'Prolog'      => 'prolog',
      'Python'      => 'shell',
-     'Lisp'        => 'lisp',
+     'Lisp'        => 'scheme',
      'Ruby'        => 'shell',
      'S-Lang'      => 'c',
      'Smalltalk'   => 'smalltalk',
      'SML'         => 'ml',
      'Tcl'         => 'shell',
-     'Emacs Lisp'  => 'lisp',
+     'Emacs Lisp'  => 'elisp',
      'Scheme'      => 'scheme',
 
      # Overrides for specific languages, which seem to belong to a different
      # family that their languages hints at
      'rep'         => 'scheme',
-     'mzc'         => 'lisp',
-     'mzscheme'    => 'lisp',
+     'mzc'         => 'scheme',
+     'mzscheme'    => 'scheme',
      'Pop11'       => 'c',
      'fpascal'     => 'pascal',
  );
