@@ -47,7 +47,7 @@ Work-up from the bottom of Contribute Programs
 <li>Check to Upload & Attach File: program source-code</li>
 <li>Browse to the program source-code file</li>
 <li>Description: what's different about this program</li>
-<li>Summary: language benchmark your-name 24-hour-time<br/>
+<li>Summary: language, benchmark, your-name, 24-hour-time<br/>
 <em>java nsieve isaac gouy 1422</em></li>
 <li>Category: select the language implementation</li>
 <li>Group: select the benchmark</li>
