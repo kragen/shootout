@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:11:17 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-28 07:28:50 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -10,9 +10,10 @@ LOCDEPS := --dep=se:../Include/randomnumber.e
 
 STALINOPTS := -s
 
+#	  --ignore random.bigforth,random.icon,random.rep,random.njs \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --ignore random.bigforth,random.icon,random.rep,random.njs \
+	  --ignore random.bigforth,random.njs \
 	  --range 1000,300000,600000,900000 \
 	  --title "$(TITLE)" $(TEST).*
 
