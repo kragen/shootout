@@ -1,0 +1,165 @@
+// The Great Computer Language Shootout
+// http://shootout.alioth.debian.org/
+//
+// contributed by Diederik van Arkel
+
+module fasta
+
+import StdEnv, LanguageShootout, StdStrictLists, StdOverloadedList
+
+Start world
+	# n				= argi
+	# (io,world)	= stdio world
+	# rng			= makeRandomGenerator 42
+	# io			= makeRepeatFasta "ONE" "Homo sapiens alu" (n*2) io
+	# (rng,io)		= makeRandomFasta "TWO" "IUB ambiguity codes" iub (n*3) rng io
+	# (rng,io)		= makeRandomFasta "THREE" "Homo sapiens frequency" homosapiens (n*5) rng io
+	# (err,world)	= fclose io world
+	= world
+
+alu =:
+	"GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +++.
+	"GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +++.
+	"CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +++.
+	"ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" +++.
+	"GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" +++.
+	"AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" +++.
+	"AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+
+:: IUB =
+	{ c		:: !Char
+	, p		:: !Real
+	}
+
+:: Table	:== {!IUB}
+
+makeCumulative :: !*Table -> .Table
+makeCumulative table
+	#! maxi	= size table
+	= update_c 0.0 0 maxi table
+where
+	update_c prob i maxi table
+		| i >= maxi
+			= table
+		#! tbl		= table.[i]
+		#! prob		= prob + tbl.p
+		#! table	= {table & [i] = {tbl & p = prob}}
+		= update_c prob (i+1) maxi table
+
+iub =
+	{{ c = 'a', p = 0.27 }
+	,{ c = 'c', p = 0.12 }
+	,{ c = 'g', p = 0.12 }
+	,{ c = 't', p = 0.27 }
+	,{ c = 'B', p = 0.02 }
+	,{ c = 'D', p = 0.02 }
+	,{ c = 'H', p = 0.02 }
+	,{ c = 'K', p = 0.02 }
+	,{ c = 'M', p = 0.02 }
+	,{ c = 'N', p = 0.02 }
+	,{ c = 'R', p = 0.02 }
+	,{ c = 'S', p = 0.02 }
+	,{ c = 'V', p = 0.02 }
+	,{ c = 'W', p = 0.02 }
+	,{ c = 'Y', p = 0.02 }
+	}
+
+homosapiens =
+	{{ c = 'a', p = 0.3029549426680 }
+	,{ c = 'c', p = 0.1979883004921 }
+	,{ c = 'g', p = 0.1975473066391 }
+	,{ c = 't', p = 0.3015094502008 }
+	}
+
+makeRepeatFasta :: !String !String !Int !*File -> *File
+makeRepeatFasta id desc n io
+	# io	= io <<< ">" <<< id <<< " " <<< desc <<< "\n"
+	= repeat n 0 io
+where
+	length	= 60
+	kn		= size alu
+
+	repeat :: !Int !Int !*File -> *File
+	repeat todo k io
+		| todo <= 0
+			= io
+		# m			= min todo length
+		# (k,io)	= write 0 k m io
+		= repeat (todo - length) k io
+	
+	write :: !Int !Int !Int !*File -> (!Int,!*File)
+	write j k m io
+		| j >= m
+			= (k,io <<< "\n")
+		| k >= kn
+			= write j 0 m io
+		# io	= io <<< alu.[k]
+		= write (j+1) (k+1) m io
+
+makeRandomFasta :: !String !String !*Table !Int !RNG !*File -> (!RNG,!*File)
+makeRandomFasta id desc table n rng io
+	# io	= io <<< ">" <<< id <<< " " <<< desc <<< "\n"
+	# table	= makeCumulative table
+	= repeat n table rng io
+where
+	length	= 60
+
+	repeat :: !Int !Table !RNG !*File -> (!RNG,!*File)
+	repeat todo table rng io
+		| todo <= 0
+			= (rng,io)
+		# m					= min todo length
+		# (rng,s)			= write 0 m rng [!!]
+		# io				= io <<< s
+		= repeat (todo - length) table rng io
+	where
+		write :: !Int !Int !RNG ![!Char!] -> (!RNG,!String)
+		write j m rng s
+			| j >= m
+				= (rng,revlist2string [!'\n':s!])
+			# (rval,rng)	= genRandom 1.0 rng
+			# c				= find 0 rval
+			= write (j+1) m rng [!c:s!]
+
+		find :: !Int !Real -> Char
+		find k rval
+			# iub	= table.[k]
+			| iub.p < rval
+				= find (k+1) rval
+			= iub.c
+
+toArray :: ![!Char!] -> String
+toArray l
+	= {c \\ c <|- l}
+
+revlist2string :: ![!Char!] -> .String
+revlist2string l
+	# s	= length l
+	# a = createArray s '@'
+	= fillArray (s-1) l a
+where
+	fillArray :: !Int ![!Char!] !*String -> .String
+	fillArray i [!!] a
+		= a
+	fillArray i [!c:l!] a
+		= fillArray (i-1) l {a & [i] = c}
+
+// adapted from 'random' shootout
+
+:: RNG	:== Int
+
+makeRandomGenerator :: !Int -> RNG
+makeRandomGenerator seed
+	= seed
+
+genRandom :: !Real !RNG -> (!Real,!RNG)
+genRandom max seed
+	= (newran,newseed)
+where
+	newseed = (seed * ia + ic) rem im
+	newran =  max * toReal newseed / imd
+
+im :== 139968
+ia :== 3877
+ic :== 29573
+imd :== toReal im
