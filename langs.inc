@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-12)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-13)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-12)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-13)
 '
     ),
 
@@ -155,7 +155,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://felix.sourceforge.net/',
       'Down'    => 'http://felix.sourceforge.net/download.html',
       'Type'    => 'native compiled',
-      'Version' => '1.0.10
+      'Version' => '1.0.11
 '
     ),
 
@@ -293,7 +293,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-12)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-13)
 '
     ),
 

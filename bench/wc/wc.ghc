@@ -1,12 +1,56 @@
--- $Id: wc.ghc,v 1.2 2004-06-30 07:29:02 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
--- from JP Bernardy
+-- Implementation for 'wc' benchmark optimised for time and memory
+-- Author: Tomasz Zielonka <t.zielonka@students.mimuw.edu.pl>
+-- http://shootout.alioth.debian.org/
+-- compile with: ghc -O2 -o wc wc.hs
 
--- compile with:  ghc -O2 -o wc wc.hs
+import System.IO
+import Data.Array.IO
+import Data.Array.Base (unsafeRead)
+import Data.Word
+import List
 
-import IO
+isspace :: Char -> Bool
+isspace ' '  = True
+isspace '\n' = True
+isspace '\t' = True
+isspace  _   = False
 
-main = do file <- getContents
-	  putStrLn $ show (length $ lines file) ++ " " ++ 
-		     show (length $ words file) ++ " " ++ 
-		     show (length file)
+wc :: Handle -> IO (Int, Int, Int)
+wc h = do
+    buf <- newArray_ (0, bufSize - 1) :: IO (IOUArray Int Word8)
+    let
+        wcLoop :: Int -> Int -> Int -> Int -> Int -> Int -> IO (Int, Int, Int)
+        wcLoop prevIsSpace nl nw nc i n 
+            | prevIsSpace `seq` nl `seq` nw `seq` nc `seq` i `seq` n `seq` False =
+                undefined
+            | i == n =
+                do  n' <- hGetArray h buf bufSize
+                    if n' == 0
+                        then return (nl, nw, nc)
+                        else wcLoop prevIsSpace nl nw nc 0 n'
+            | otherwise =
+                do  c <- fmap (toEnum . fromEnum) (unsafeRead buf i)
+                    -- Watch out, unsafeRead used here. This gives about
+                    -- 1.6x times speedup.
+
+                    let cIsSpace = oneIf (isspace c)
+                    wcLoop
+                        cIsSpace
+                        (incIf nl (c == '\n'))
+                        (incIf nw (prevIsSpace > cIsSpace))
+                        (nc + 1)
+                        (i + 1)
+                        n
+    wcLoop 1 0 0 0 0 0
+  where
+    bufSize :: Int
+    bufSize = 4096
+
+    oneIf c = if c then 1 else 0
+    incIf n c = if c then n + 1 else n
+
+main :: IO ()
+main = do
+    (nl, nw, nc) <- wc stdin    
+    putStrLn $ concat $ intersperse " " $ map show [nl, nw, nc]
+
