@@ -1,0 +1,54 @@
+(* fannkuch.sml
+ *
+ *   The "Pfannkuchen flipping" benchmark.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
+ * Modified by sweeks@sweeks.com to run with MLton.
+ *)
+
+structure Test:sig val main:string*string list->OS.Process.status end = struct
+
+    infix 8 $  val op $ = Unsafe.Array.sub
+    infix 3 <- fun (a, i) <- x = Unsafe.Array.update (a, i, x)
+
+    fun main' N =
+	let val (a, b) = (Array.tabulate (N, fn i => i), Array.array (N, 0))
+	    val maxc = ref 0
+	    fun pk () =
+		let fun fl (i,j) =
+			 let val t = b$i val (k,l) = (i+1,j-1)
+			 in (b,i)<-b$j;(b,j)<-t; if k>=l then () else fl(k,l)
+			 end
+		    fun try c =
+			let val k = b$0
+			in if k=0 then c else (fl(0,k);try(c+1)) end
+		in Array.copy { src=a, dst=b, di=0 };
+		   maxc := Int.max (try 0, !maxc)
+		end
+	    fun sw (i,j) = let val t = a$i in (a,i)<-a$j; (a,j)<-t end
+	    fun go 0 = pk ()	(* odd case *)
+	      | go 1 = (pk (); sw(0,1); pk ()) (* shortcut *)
+	      | go n =
+		let val m = n-1
+		    fun l c = if c>n then () else (ge m; sw(0,n); l(c+1))
+		in l 0 end
+	    and ge 0 = pk ()	(* even case *)
+	      | ge 1 = (pk (); sw(0,1); pk ()) (* shortcut *)
+	      | ge n =
+		let val m = n-1
+		    fun l c = if c>n then () else (go m; sw(c,n); l(c+1))
+		in l 0 end
+	in if N mod 2 = 0 then ge (N-1) else go (N-1);
+	   print (concat ["Pfannkuchen(", Int.toString N, ") = ",
+			  Int.toString (!maxc), "\n"]);
+	   OS.Process.success
+	end
+
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
+end
+
+val () =
+   OS.Process.exit (Test.main (CommandLine.name(), CommandLine.arguments()))
