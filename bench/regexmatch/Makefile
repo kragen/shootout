@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-06-24 07:38:15 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-07-03 07:11:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -10,9 +10,12 @@ OCAMLOPTS := str.cmxa pcre.cmxa -I +pcre
 OCAMLBOPTS := str.cma pcre.cma -I +pcre
 GHCOPTS := -package text
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+		-I ../Include/clean -I ../../Include/clean \
+		-l /usr/lib/libpcre.a
+MB_CLRTS := -nr
 
 CMUCL_SRCS := ../../Include/meta.lisp
+SBCL_SRCS := ../../Include/meta.lisp
 
 
 # N is # of iter
@@ -24,6 +27,8 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore regexmatch.g++ \
 	  --ignore regexmatch.gcj \
 	  --ignore regexmatch.gij \
+	  --ignore regexmatch.kaffe \
+	  --ignore regexmatch.nice \
 	  --ignore regexmatch.sablevm \
 	  --inputfile Input
 
