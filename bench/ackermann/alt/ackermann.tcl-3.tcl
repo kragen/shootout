@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: ackermann.tcl-3.tcl,v 1.1 2005-03-30 22:06:09 sgeard-guest Exp $
+# $Id: ackermann.tcl-3.tcl,v 1.2 2005-03-30 22:24:56 sgeard-guest Exp $
 # http://shootout.alioth.debian.org/
 #
 # Updated based on ideas from Stefan Finzel
