@@ -1,8 +1,9 @@
-# $Id: Makefile,v 1.9 2004-06-24 07:38:14 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-07-31 09:19:03 bfulgham Exp $
 include ../../Make.header
 
 TEST    := prodcons
 TITLE   := Producer/Consumer Threads
+ERLFLAGS := -noinput
 GCCOPTS    := $(GCCOPTS) -lpthread
 GXXLDOPTS  := $(GXXLDOPTS) -lpthread
 OCAMLBOPTS := $(OCAMLBOPTS) -thread unix.cma threads.cma

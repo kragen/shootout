@@ -39,9 +39,19 @@ to: anInteger
    scale := anInteger ! !
 
 
+!Float methodsFor: 'printing'!
+
+printStringRoundedTo: anInteger
+   | n s |
+   n := 0.5d * (10 raisedToInteger: anInteger negated).
+   s := ((self sign < 0) ifTrue: [self - n] ifFalse: [self + n]) printString.
+   ^s copyFrom: 1 to: (s indexOf: $.) + anInteger ! !  
+
+
+
 | n random x |
 n := Smalltalk arguments first asInteger.
 
 random := RandomNumber initialize; to: 100.
 n timesRepeat: [x := random next].
-(x asScaledDecimal: 9) displayNl !
+(x printStringRoundedTo: 9) displayNl !

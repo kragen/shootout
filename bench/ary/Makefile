@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-07-07 01:42:53 sweeks Exp $
+# $Id: Makefile,v 1.9 2004-07-31 09:18:59 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ary
@@ -8,6 +8,7 @@ GHCOPTS := -package lang -fglasgow-exts
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 MLTONDEPS := ../../Include/mlton-src/basic.sml
+ERLFLAGS := -noinput
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore ary.csharp \

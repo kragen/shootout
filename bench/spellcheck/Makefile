@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2004-07-28 07:32:09 bfulgham Exp $
+# $Id: Makefile,v 1.15 2004-07-31 09:19:06 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -13,6 +13,7 @@ setup:
 	@[ -f tmp/Usr.Dict.Words ] || (cd tmp ; ln -s ../Usr.Dict.Words . )
 
 
+ERLFLAGS := -noinput
 MLTONDEPS := ../../Include/mlton-src/basic.sml \
 		../../Include/mlton-src/hash-table.sml
 
@@ -28,7 +29,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore spellcheck.nice \
 	  --ignore spellcheck.erlang \
 	  --ignore spellcheck.hipe \
-	  --ignore spellcheck.se \
 	  --inputfile Input --geninput
 
 include ../../Make.footer

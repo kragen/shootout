@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2004-07-10 07:06:40 bfulgham Exp $
+# $Id: Makefile,v 1.15 2004-07-31 09:19:00 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -12,6 +12,7 @@ MLTONDEPS := ../../Include/mlton-src/basic.sml \
 GHCOPTS := -package data -O2
 MB_GHCRTS  := +RTS -K10000000
 
+ERLFLAGS := -noinput
 CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 MB_CLRTS := -h 10000000

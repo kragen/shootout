@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-06-25 07:57:49 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-07-31 09:19:01 bfulgham Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 MONOOPTS := --unsafe
 
 
+ERLFLAGS := -noinput
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore heapsort.bigforth \
 	  --ignore heapsort.csharp \

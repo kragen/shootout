@@ -6,43 +6,98 @@
 
 
 MODULE Moments;
-IMPORT In, Out, LRealMath, LangShootout, SYSTEM;
+IMPORT IO, IO:StdChannels, S:=SYSTEM, RealConv, Out, LRealMath, LangShootout;
+
+CONST
+   readSize = 4096;
 
 TYPE
+   FixedBuffer = ARRAY readSize OF CHAR;
+   FixedBufferProc = PROCEDURE (VAR b: FixedBuffer; VAR pos: LONGINT);   
    Reals = POINTER TO ARRAY OF REAL;
 
 VAR
+   buffer: FixedBuffer;
    x: Reals;
    i, n, mid: LONGINT;
    sum, mean, dev, adev, dev2, var, skew, kurt, sdev, median: LONGREAL;
 
 
-PROCEDURE ReadReals(VAR i: LONGINT; VAR sum: LONGREAL): Reals;
+(* Separate special processing in procedure Process so we can use
+   FillAndProcess in other Shootout tests *)
+PROCEDURE FillAndProcess (VAR buffer: FixedBuffer; Process: FixedBufferProc);
 VAR
-   x, tmp: Reals;
-   xi: REAL;
-   size: LONGINT;
+   channel: IO.ByteChannel;
+   partialFill: BOOLEAN;
+   size, pos, count: LONGINT;
 BEGIN
-   i := 0; sum := 0.0; size := 4096;
-   NEW(x, size);
+   channel := StdChannels.stdin;
+   pos := 0;
+   size := readSize;
    LOOP
-      In.Real(xi); 
-      IF ~In.Done() THEN EXIT; END;
-      
-      sum := sum + xi;    
-      IF i = size THEN 
-         NEW(tmp, ASH(size,1));
-         SYSTEM.MOVE( SYSTEM.ADR(x[0]), SYSTEM.ADR(tmp[0]), size);  
-         x := tmp; tmp := NIL;    
+      TRY
+         count := channel.Read(buffer, pos, size * SIZE(CHAR)); 
+         partialFill := count < size; 
+         IF partialFill THEN size := pos + count; ELSE size := readSize; END;               
+         pos := size;	
+
+         Process(buffer,pos);
+
+         IF partialFill THEN EXIT; END;  
+         
+         IF pos = size THEN 
+            pos := 0;
+            size := readSize;
+         ELSE
+            S.MOVE(S.ADR(buffer[pos]), S.ADR(buffer[0]), (size-pos)*SIZE(CHAR));
+            pos := size - pos;
+            size := readSize - pos;
+         END;   
+                      
+      CATCH IO.Error:
+         EXIT;
       END;               
-      x[i] := xi; INC(i); 
    END;
-   RETURN x;
-END ReadReals;
+END FillAndProcess;
+
+
+PROCEDURE ReadReals(VAR buffer: FixedBuffer; VAR pos: LONGINT);
+TYPE
+   Chars = POINTER TO ARRAY 32 OF CHAR;
+VAR
+   i, j: LONGINT;
+   chars: Chars;
+   tmp: Reals;
+BEGIN
+   i := 0; j := 0; 
+   WHILE j < pos DO	
+      IF buffer[j] = 0AX THEN
+            
+         IF n = LEN(x^) THEN (* increase array size *)
+            NEW(tmp, ASH(LEN(x^),1));
+            S.MOVE(S.ADR(x[0]), S.ADR(tmp[0]), n*SIZE(REAL));            
+            x := tmp; tmp := NIL;
+         END;            
+            
+         buffer[j] := 0X;	       
+         chars := S.VAL(Chars, S.ADR(buffer[i]));           
+         x[n] := RealConv.ValueReal(chars^);                          
+         sum := sum + x[n]; INC(n);         
+         
+         INC(j); i := j;	
+      ELSE
+         INC(j);
+      END;                  
+   END;         
+      
+   IF j > i THEN pos := i; END; (* indicate buffer position *)
+END ReadReals; 
 
 
 BEGIN
-   x := ReadReals(n,sum);
+   n := 0; sum := 0.0; NEW(x,4096);
+   FillAndProcess(buffer, ReadReals);  
+   
    mean := sum / n;
    FOR i := 0 TO n-1 DO
       dev := x[i] - mean;
@@ -72,7 +127,7 @@ BEGIN
    Out.String("standard_deviation: "); Out.LongRealFix(sdev,0,6); Out.Ln;
    Out.String("variance:           "); Out.LongRealFix(var,0,6); Out.Ln;
    Out.String("skew:               "); Out.LongRealFix(skew,0,6); Out.Ln;
-   Out.String("kurtosis:           "); Out.LongRealFix(kurt,0,6); Out.Ln;
+   Out.String("kurtosis:           "); Out.LongRealFix(kurt,0,6); Out.Ln; 
 END Moments.
 
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-06-30 07:29:02 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-07-31 09:19:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := strcat
@@ -10,6 +10,7 @@ OCAMLBOPTS := unix.cma
 GHCOPTS := -package lang
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+ERLFLAGS := -noinput
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10000,20000,30000,40000 \
@@ -20,8 +21,7 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore strcat.ghc2.ghc \
 	  --ignore strcat.guile2.guile \
 	  --ignore strcat.gij \
-	  --ignore strcat.se \
-	  --ignore strcat.smlnj2.smlnj \
+	  --ignore strcat.oz \
 	  --ignore strcat.xemacs2.xemacs
 
 include ../../Make.footer

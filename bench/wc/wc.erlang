@@ -1,17 +1,41 @@
 %%% -*- mode: erlang -*-
-%%% $Id: wc.erlang,v 1.2 2004-06-30 07:29:02 bfulgham Exp $
+%%% $Id: wc.erlang,v 1.3 2004-07-31 09:19:08 bfulgham Exp $
 %%% http://www.bagley.org/~doug/shootout/
+%%%
+%%% Super-fast implementation by Mark Scandariato
 
 -module(wc).
 -export([main/0, main/1]).
 
 main() -> main(['1']).
 main(_Args) ->
-   wc(io:get_line(''), 0, 0, 0),
+   %io:fwrite("~p~n", [now()]),
+   ok = io:setopts([binary]),
+   s(next({0, <<>>}), 0, 0).
+
+next({C, <<Char:8, Rest/binary>>}) ->
+   {Char, {C+1, Rest}};
+
+next({C, <<>>}) ->
+   case io:get_chars('', 4096) of
+      eof -> {eof, C};
+      Bin -> next({C, Bin})
+   end.
+
+done(L, W, C) ->
+   io:fwrite("~p ~p ~p~n", [L, W, C]),
+   %io:fwrite("~p~n", [now()]),
    erlang:halt(0).
 
-wc(eof, Newlines, Words, Characters) ->
-   io:format("~w ~w ~w~n", [Newlines, Words, Characters]);
-wc(Line, NL, NW, NC) ->
-   Words = string:tokens(Line, " \t\n"),
-   wc(io:get_line(''), NL + 1, NW + string:len(Words), NC + string:len(Line) ).
+s({eof, C}, L, W) -> done(L, W, C);
+s({$\s, S}, L, W) -> s(next(S), L, W);
+s({$\t, S}, L, W) -> s(next(S), L, W);
+s({$\n, S}, L, W) -> s(next(S), L+1, W);
+s({_, S}, L, W)   -> w(next(S), L, W+1).
+
+w({eof, C}, L, W) -> done(L, W, C);
+w({$\s, S}, L, W) -> s(next(S), L, W);
+w({$\t, S}, L, W) -> s(next(S), L, W);
+w({$\n, S}, L, W) -> s(next(S), L+1, W);
+w({_, S}, L, W)   -> w(next(S), L, W).
+

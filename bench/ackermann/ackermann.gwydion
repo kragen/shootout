@@ -1,15 +1,14 @@
 module: ackermann
 
 begin
-  local method ackerman(M :: <integer>, N :: <integer>)
+  local method ackermann (M :: <integer>, N :: <integer>)
           case
             M = 0     => N + 1;
-            N = 0     => ackerman(M - 1, 1);
-            otherwise => ackerman(M - 1, ackerman(M, N - 1));
+            N = 0     => ackermann(M - 1, 1);
+            otherwise => ackermann(M - 1, ackermann(M, N - 1));
           end;
         end;
 
-  let arg = application-arguments()[0].string-to-integer;
-  format-out("Ack(3,%d): %d\n", arg, ackerman(3, arg));
+  let arg = string-to-integer(element(application-arguments(), 0, default: "1"));
+  format-out("Ack(3,%d): %d\n", arg, ackermann(3, arg));
 end;
-

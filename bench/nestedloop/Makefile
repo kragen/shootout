@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2004-06-30 07:29:01 bfulgham Exp $
+# $Id: Makefile,v 1.7 2004-07-31 09:19:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nestedloop
@@ -6,6 +6,7 @@ TITLE   := Nested Loops
 
 GHCOPTS := -fglasgow-exts
 
+ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 

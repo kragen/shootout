@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2004-06-25 07:57:49 bfulgham Exp $
+# $Id: Makefile,v 1.7 2004-07-31 09:19:00 bfulgham Exp $
 include ../../Make.header
 
 TEST    := except
@@ -6,6 +6,7 @@ TITLE   := Exceptions
 GHCOPTS := -package lang
 MB_GHCRTS  := +RTS -K2046000
 
+ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

@@ -1,61 +1,54 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy
+   contributed by Paolo Bonzini
 
    To run: gst -QI /usr/local/share/smalltalk/gst.im prodcons.st -a 100000 
 "
 
+| mutex empty full data consumed produced n join |
+n := Smalltalk arguments isEmpty
+   ifTrue: [ 10000 ]
+   ifFalse: [ 1 max: Smalltalk arguments first asInteger ].
 
-!RecursionLock methodsFor: 'accessing'!
+mutex := Semaphore forMutualExclusion.
+empty := Semaphore new.
+full := Semaphore new.
+consumed := produced := 0.
 
-waitWhile: aBlock onLock: aSemaphore
-    [aBlock value] whileTrue: [self waitOnLock: aSemaphore]!
+join := Semaphore new.
 
-waitOnLock: aSemaphore
-    self exit.
-    aSemaphore wait.
-    self enter! !
+empty signal.
 
-
-| n mutex control produced consumed count producer data consumer |
-
-n := (Smalltalk arguments at: 1) asInteger.
-
-mutex := RecursionLock new.
-control := Semaphore new.
-count := 0.
-produced := Promise new. 
-consumed := Promise new. 
-
-producer := [ | p | 
-   p := 0.
-   1 to: n do: [:i|
-      mutex critical: [
-         mutex waitWhile: [count = 1] onLock: control.
-         data := i.
-         count := 1.
-         control signal.
-      ].
-      p := p + 1.
-   ].
-   produced value: p.
-]. 
-
-consumer := [ | i c |  
-   c := 0.
+[
+   | i |
+   i := 0.
    [
-      mutex critical: [
-         mutex waitWhile: [count = 0] onLock: control.
-         i := data.
-         count := 0.
-         control signal.
-      ].
-      c := c + 1.
+      full wait.
+      mutex wait.
+      i := data.
+      mutex signal.
+      empty signal.
+      consumed := consumed + 1.
       i = n
-   ] whileFalse.
+    ] whileFalse.
 
-   consumed value: c.
-]. 
+    join signal.
+] fork.
 
-consumer fork.
-producer fork.
-produced value display. ' ' display. consumed value displayNl !
+
+[
+   1 to: n do: [ :i |
+      empty wait.
+      mutex wait.
+      data := i.
+      mutex signal.
+      full signal.
+      produced := produced + 1.
+   ].
+
+   join signal.
+] fork.
+
+join wait.
+join wait.
+
+('%1 %2' bindWith: produced with: consumed) displayNl !

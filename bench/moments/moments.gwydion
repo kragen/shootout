@@ -9,6 +9,37 @@ use-modules:    common-dylan, standard-io, streams, format-out, transcendental
 define constant <vector-of-doubles> = limited(<simple-vector>, of: <double-float>);
 
 
+define function kth-smallest (a :: <vector-of-doubles>, k :: <integer>) => kth-smallest :: <double-float>;
+  let L = 0;
+  let R = A.size - 1;
+  while (L < R)
+     let X = A[K];
+     let I = L;
+     let J = R;
+     until ((J < K) | (K < I))
+       while (A[I] < X) I := I + 1; end;
+       while (X < A[J]) J := J - 1; end;
+       let W = A[I]; A[I] := A[J]; A[J] := W;
+       I := I + 1; J := J - 1;
+     end;
+     if (J < K) L := I; end;
+     if (K < I) R := J; end;
+  end;
+  a[k];
+end; 
+
+
+define function maximum (vec :: <vector-of-doubles>, limit :: <integer>) => res :: <double-float>;
+  let current-max = vec[0];
+  for (i from 1 below limit)
+    if (vec[i] > current-max)
+       current-max := vec[i];
+    end;
+  end;
+  current-max;
+end;
+
+
 define function main () => ()
   let lines = make(<stretchy-vector>);
 
@@ -17,12 +48,13 @@ define function main () => ()
     add!(lines, line);
   end;
 
-  let nums = make(<vector-of-doubles>, size: lines.size);
+  let nums = make(<vector-of-doubles>, size: lines.size, fill: 0.0);
   map-into(nums, string-to-float, lines);
 
   let sum = 0.0;
 
-  // use a for loop instead of reduce1 so "+" can be resolved
+  // use a for loop instead of "reduce1" so "+" can be resolved.
+  // To-do: test that this is really necessary after we fix all the other gf_calls
   for (num in nums)
     sum := sum + num;
   end;
@@ -51,15 +83,15 @@ define function main () => ()
     kurtosis := (kurtosis / (n * variance * variance)) - 3.0;
   end;
 
-  sort!(nums); // We could improve execution speed by implementing quickselect instead of relying on quicksort
   let mid = floor/(n, 2);
 
-  let median = 0;
-  if (even?(n))
-    median := (nums[mid] + nums[mid - 1]) / 2;
-  else
-    median := nums[mid];
-  end;
+  kth-smallest(nums, mid);
+
+  let median = if (even?(n))
+                 floor/(nums[mid] + maximum(nums, mid), 2);
+               else
+                 nums[mid];
+               end;
 
   format-out("n:                  %d\n", n);
   format-out("median:             %=\n", median);
