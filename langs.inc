@@ -241,8 +241,8 @@ $LANGS= array(
 
      'mlton' => array(
          'Lang' => 'SML',
-	 'Home' => 'http://www.sourcelight.com/MLton/',
-	 'Down' => 'http://www.sourcelight.com/MLton/',
+	 'Home' => 'http://www.mlton.org/',
+	 'Down' => 'http://www.mlton.org/download/',
 	 'Type' => 'native compiled'
      ),
 
