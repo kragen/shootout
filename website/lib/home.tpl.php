@@ -46,13 +46,19 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <td>
 <?
-   $count = 0;
+   $count = 0; $showFeature = true;
    foreach($Langs as $Row){
       $LangLink = $Row[LANG_LINK];
       $LangName = $Row[LANG_FULL];
       $LangTag = $Row[LANG_TAG];
       
-      if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }
+      if (SITE_NAME == 'core' && $showFeature && $count == 0){
+         echo $Feature;
+         $showFeature = false;
+      }            
+      
+      if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
+                  
       printf('<p class="c"><a title="%s benchmark rankings and information"', $LangName);
       printf('href="benchmark.php?test=all&lang=%s&sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";

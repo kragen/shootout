@@ -24,8 +24,7 @@ $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Sort', $S);
 $Body->set('AboutName', 'The Language Shootout Benchmarks');
-$Body->set('Intro', HtmlFragment( ABOUT_PATH.SITE_NAME.SEPARATOR.'intro.about' ));$NavBar = & new Template(ABOUT_PATH);
-$NavBar->set('Sort', $S);$Body->set('NavBar', $NavBar->fetch('navbar.about'));
+$Body->set('Intro', HtmlFragment( ABOUT_PATH.SITE_NAME.SEPARATOR.'intro.about' ));$NavBar = & new Template(ABOUT_PATH);$NavBar->set('Sort', $S);$Body->set('NavBar', $NavBar->fetch('navbar.about'));$Feature = & new Template(ABOUT_PATH);$Feature->set('Sort', $S);$Body->set('Feature', $Feature->fetch('feature.about'));
 $About = & new Template(ABOUT_PATH);
 $About->set('Sort', $S);
 $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));

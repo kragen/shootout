@@ -22,7 +22,7 @@ define('REV_COLOR_CORE', 'navy');
 define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900');      define('REV_COLOR_OLD', 'gray');     
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
-define('HOMEPAGE_ROWS',26);          // show 26 rows of languages on the homepage
+define('HOMEPAGE_ROWS',35);          // show 26 rows of languages on the homepage
 
 define('SITE_NAME', 'core');
 define('SITE_TITLE','The Select Computer Language Shootout Benchmarks');
