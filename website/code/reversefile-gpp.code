@@ -1,0 +1,109 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">// -*- mode: c++ -*-
+</FONT></I><I><FONT COLOR="#B22222">// $Id: reversefile-gpp.code,v 1.1 2004-11-08 14:59:29 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">// http://shootout.alioth.debian.org/
+</FONT></I><I><FONT COLOR="#B22222">// 
+</FONT></I><I><FONT COLOR="#B22222">// Based on the C version by Alan Post &lt;apost@recalcitrant.org&gt;
+</FONT></I><I><FONT COLOR="#B22222">// C++-ified by Brent Fulgham, based on an idea by Mark Fitzgerald
+</FONT></I>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;assert.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/uio.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;iostream&gt;</FONT></B>
+
+using namespace std;
+
+<I><FONT COLOR="#B22222">//
+</FONT></I><I><FONT COLOR="#B22222">// Note that malloc(3) seems happier with chunks of 4096
+</FONT></I><I><FONT COLOR="#B22222">//
+</FONT></I><B><FONT COLOR="#228B22">const</FONT></B> <B><FONT COLOR="#228B22">int</FONT></B> MAXREAD = (4096 - <B><FONT COLOR="#A020F0">sizeof</FONT></B>( size_t ) - <B><FONT COLOR="#A020F0">sizeof</FONT></B>( <B><FONT COLOR="#228B22">void</FONT></B>* ));
+
+<B><FONT COLOR="#228B22">struct</FONT></B> buf_t
+{
+    <B><FONT COLOR="#228B22">char</FONT></B> d[MAXREAD];
+    size_t len;
+    buf_t *next;
+};
+
+<B><FONT COLOR="#228B22">static</FONT></B> buf_t* <B><FONT COLOR="#0000FF">read_lines</FONT></B>( buf_t* tail )
+{
+    buf_t* curr = tail;
+    tail-&gt;next = NULL;
+
+    <B><FONT COLOR="#A020F0">while</FONT></B> ( true )
+    {
+        cin.read(curr-&gt;d, MAXREAD );
+	<B><FONT COLOR="#228B22">int</FONT></B> nread = cin.gcount();
+	curr-&gt;len = nread;
+        <B><FONT COLOR="#A020F0">if</FONT></B> ( nread &lt; MAXREAD ) { <B><FONT COLOR="#A020F0">return</FONT></B> curr; }
+        buf_t* head = <B><FONT COLOR="#A020F0">new</FONT></B> buf_t;
+        head-&gt;next = curr;
+        curr = head;
+    }
+}
+
+#<B><FONT COLOR="#5F9EA0">define</FONT></B> <B><FONT COLOR="#0000FF">WRITEOUT</FONT></B>( p_, l_ ) \
+        <B><FONT COLOR="#A020F0">do</FONT></B> { \
+            vec[ ivec ].iov_base = (<B><FONT COLOR="#228B22">char</FONT></B>*) (p_); \
+            vec[ ivec ].iov_len = (<B><FONT COLOR="#228B22">int</FONT></B>) (l_); \
+            ivec++; \
+            <B><FONT COLOR="#A020F0">if</FONT></B> ( ivec == IOV_MAX ) \
+            { \
+                writev( STDOUT_FILENO, vec, ivec ); \
+                ivec = 0; \
+            } \
+        } <B><FONT COLOR="#A020F0">while</FONT></B> (0)
+
+#<B><FONT COLOR="#5F9EA0">define</FONT></B> <FONT COLOR="#B8860B">LINEOUT</FONT> \
+        <B><FONT COLOR="#A020F0">do</FONT></B> { \
+            WRITEOUT( pos, end - pos); \
+            <B><FONT COLOR="#A020F0">for</FONT></B> (; loh != NULL; loh = loh-&gt;next ) \
+                WRITEOUT( loh-&gt;d, loh-&gt;len ); \
+        } <B><FONT COLOR="#A020F0">while</FONT></B> (0)
+
+<B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#0000FF">main</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> argc, <B><FONT COLOR="#228B22">char</FONT></B>* argv[])
+{
+    buf_t tail;
+    buf_t* head = read_lines( &amp;tail );
+
+    buf_t* loh = NULL;
+    buf_t* curr = head;
+
+    <B><FONT COLOR="#228B22">struct</FONT></B> iovec vec[ IOV_MAX ];
+    size_t ivec = 0;
+
+    <B><FONT COLOR="#A020F0">while</FONT></B> ( true )
+    {
+        <B><FONT COLOR="#228B22">char</FONT></B>* buf = curr-&gt;d;
+        <B><FONT COLOR="#228B22">char</FONT></B>* end = buf + curr-&gt;len;
+        <B><FONT COLOR="#228B22">char</FONT></B>* pos = end;
+        <B><FONT COLOR="#A020F0">for</FONT></B> (;; pos--)
+        {
+            <B><FONT COLOR="#A020F0">if</FONT></B> ( pos &lt;= buf )
+            {
+                buf_t* new_curr = curr-&gt;next;
+
+                <B><FONT COLOR="#A020F0">if</FONT></B> ( new_curr == NULL )
+                {
+                    LINEOUT;
+                    writev( STDOUT_FILENO, vec, ivec );
+                    <B><FONT COLOR="#A020F0">return</FONT></B> EXIT_SUCCESS;
+                }
+
+                curr-&gt;len = end - buf;
+                curr-&gt;next = loh;
+                loh = curr;
+                
+                curr = new_curr;
+                <B><FONT COLOR="#A020F0">break</FONT></B>;
+            }
+            <B><FONT COLOR="#A020F0">if</FONT></B> ( *(pos-1) == <B><FONT COLOR="#BC8F8F">'\n'</FONT></B> )
+            {
+                LINEOUT;
+                end = pos;
+            }
+        }
+    }
+    assert( NULL == <B><FONT COLOR="#BC8F8F">&quot;unreachable&quot;</FONT></B> );
+    <B><FONT COLOR="#A020F0">return</FONT></B> EXIT_FAILURE;
+}
+</pre></td></tr></table>
