@@ -2,8 +2,6 @@
  * from Alan Post <apost@recalcitrant.org>
  */
 
-#define __need_IOV_MAX
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +14,7 @@
  * Note that malloc(3) seems happier with chunks of 4096
  */
 #define MAXREAD (4096 - sizeof( size_t ) - sizeof( void* ))
+#define IOV_MAX 1024
 
 typedef struct buf_t { char d[MAXREAD];
                        size_t len;
@@ -28,10 +27,11 @@ static buf_t *read_lines( buf_t *tail )
 
     while ( 1 )
     {
+        buf_t *head;
         int nread = read( STDIN_FILENO, curr->d, MAXREAD );
         curr->len = nread;
         if ( nread < MAXREAD ) return curr;
-        buf_t *head = (buf_t*) malloc( sizeof( buf_t ));
+        head = (buf_t*) malloc( sizeof( buf_t ));
         head->next = curr;
         curr = head;
     }
@@ -39,24 +39,25 @@ static buf_t *read_lines( buf_t *tail )
 
 #define WRITEOUT( p_, l_ ) \
         do { \
-		vec[ ivec ].iov_base = (char*) (p_); \
-		vec[ ivec ].iov_len = (int) (l_); \
-		++ivec; \
-		if (ivec == IOV_MAX) \
-		{ \
-			writev( STDOUT_FILENO, vec, ivec ); \
-			ivec = 0; \
-		} \
+            vec[ ivec ].iov_base = (char*) (p_); \
+            vec[ ivec ].iov_len = (int) (l_); \
+            ivec++; \
+            if ( ivec == IOV_MAX ) \
+            { \
+                writev( STDOUT_FILENO, vec, ivec ); \
+                ivec = 0; \
+            } \
         } while (0)
 
 #define LINEOUT \
-	do { \
-		WRITEOUT( pos, end - pos); \
-		for (; loh != NULL; loh = loh->next ) \
-			WRITEOUT( loh->d, loh->len ); \
-	} while (0)
+        do { \
+            WRITEOUT( pos, end - pos); \
+            for (; loh != NULL; loh = loh->next ) \
+                WRITEOUT( loh->d, loh->len ); \
+        } while (0)
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     buf_t tail;
     buf_t *head = read_lines( &tail );
 
@@ -77,11 +78,11 @@ int main(int argc, char *argv[]) {
             {
                 buf_t *new_curr = curr->next;
 
-                if (new_curr == NULL )
+                if ( new_curr == NULL )
                 {
                     LINEOUT;
-		    writev( STDOUT_FILENO, vec, ivec);
-                    return(EXIT_SUCCESS);
+                    writev( STDOUT_FILENO, vec, ivec );
+                    return EXIT_SUCCESS;
                 }
 
                 curr->len = end - buf;
@@ -99,5 +100,6 @@ int main(int argc, char *argv[]) {
         }
     }
     assert( NULL == "unreachable" );
-    return(EXIT_FAILURE);
+    return EXIT_FAILURE;
 }
+
