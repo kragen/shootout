@@ -14,33 +14,33 @@
 
 <p>Correct output for this 100KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=input">input file</a> (generated with the fasta program N = 10000), is</p>
 <pre>
-A 30.28
-T 29.80
-C 20.31
-G 19.61
+A 30.284
+T 29.796
+C 20.312
+G 19.608
 
-AA 9.21
-AT 8.95
-TT 8.95
-TA 8.94
-CA 6.17
-CT 6.10
-AC 6.09
-TC 6.04
-AG 6.04
-GA 5.97
-TG 5.87
-GT 5.80
-CC 4.14
-GC 4.04
-CG 3.91
-GG 3.80
+AA 9.212
+AT 8.950
+TT 8.948
+TA 8.936
+CA 6.166
+CT 6.100
+AC 6.086
+TC 6.042
+AG 6.036
+GA 5.968
+TG 5.868
+GT 5.798
+CC 4.140
+GC 4.044
+CG 3.906
+GG 3.798
 
-562	GGT
-152	GGTA
-15	GGTATT
-0	GGTATTTTAATT
-0	GGTATTTTAATTTATAGT
+562     GGT
+152     GGTA
+15      GGTATT
+0       GGTATTTTAATT
+0       GGTATTTTAATTTATAGT
 </pre>
 <br />
 

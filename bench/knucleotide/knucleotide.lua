@@ -39,7 +39,7 @@ local function frequency(s,k)
    
    for _,record in ipairs(sorted) do 
       local percent = (record.count/sum)*100
-      io.write( string.format("%s %0.2f",record.key,percent), "\n") 
+      io.write( string.format("%s %0.3f",record.key,percent), "\n") 
    end
    io.write("\n") 
 end

@@ -24,7 +24,7 @@ proc frequency {s k} {
     }
     foreach item [lsort -integer -index 1 -decreasing $sortheap] {
 	set percent [expr {double([lindex $item 1]) / $sum * 100}]
-	puts [format "%s %0.2f" [lindex $item 0] $percent]
+	puts [format "%s %0.3f" [lindex $item 0] $percent]
     }
     puts ""
 }

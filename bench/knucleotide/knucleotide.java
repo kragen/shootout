@@ -68,8 +68,8 @@ public class knucleotide {
       });
 
     NumberFormat nf = NumberFormat.getInstance();
-    nf.setMaximumFractionDigits(2);
-    nf.setMinimumFractionDigits(2);
+    nf.setMaximumFractionDigits(3);
+    nf.setMinimumFractionDigits(3);
 
     for (int i=0; i<list.size(); i++) {
       knucleotide fragment = (knucleotide)list.get(i);

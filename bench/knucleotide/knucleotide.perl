@@ -36,7 +36,7 @@ for my $n (1,2,3,4,6,12,18) {
 for my $k (@keys[1,2]) {
     my $sum = List::Util::sum values %$k;
 
-    printf "%s %4.2f\n",$_,round_even(10000 * $k->{$_} / $sum)/100
+    printf "%s %4.3f\n",$_,round_even(10000 * $k->{$_} / $sum)/100
       for sort { $k->{$b} <=> $k->{$a} or $a cmp $b }
         keys %$k;
    print "\n";
