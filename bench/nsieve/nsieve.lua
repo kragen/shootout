@@ -26,10 +26,12 @@ if n < 2 then n = 2 end
 flags = {}
 
 m = (2^n)*10000 
-print( string.format("Primes up to %8d%8d", m, nsieve(m,flags)) )
+print( string.format("Primes up to %8d %8d", m, nsieve(m,flags)) )
 
 m = (2^(n-1))*10000
-print( string.format("Primes up to %8d%8d", m, nsieve(m,flags)) )
+print( string.format("Primes up to %8d %8d", m, nsieve(m,flags)) )
 
 m = (2^(n-2))*10000 
-print( string.format("Primes up to %8d%8d", m, nsieve(m,flags)) )
+print( string.format("Primes up to %8d %8d", m, nsieve(m,flags)) )
+
+-- vim: ts=4 ft=lua

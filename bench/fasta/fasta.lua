@@ -92,3 +92,5 @@ mkFastaFragment('TestTwo','test fragment',dna1,n*2)
 mkFastaFragment('TestThree','test fragment',dna2,n*3)
 mkFastaFragment('TestFour','test fragment',dna1,n*4)
 mkFastaFragment('TestFive','test fragment',dna2,n*5)
+
+-- vim: ts=4 ft=lua

@@ -82,3 +82,5 @@ class EndLink extends Link {
       while (count < finalcount);       
    }
 }
+
+// vim: set ts=4 ft=java

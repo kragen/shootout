@@ -1,1 +1,13 @@
--- $Id: takfp.lua,v 1.3 2004-12-07 19:52:26 igouy-guest Exp $-- http://shootout.alioth.debian.org/-- implemented by: Isaac Gouyfunction Tak(x,y,z)   if y>=x then return z end   return Tak( Tak(x-1.0,y,z), Tak(y-1.0,z,x), Tak(z-1.0,x,y) )endn = tonumber(arg and arg[1]) or 1io.write( string.format("%.1f\n", Tak(n*3.0,n*2.0,n*1.0)) )
+-- $Id: takfp.lua,v 1.4 2004-12-10 08:09:21 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
+-- implemented by: Isaac Gouy
+
+function Tak(x,y,z)
+	if y>=x then return z end
+	return Tak( Tak(x-1.0,y,z), Tak(y-1.0,z,x), Tak(z-1.0,x,y) )
+end
+	
+n = tonumber(arg and arg[1]) or 1
+io.write( string.format("%.1f\n", Tak(n*3.0,n*2.0,n*1.0)) )
+
+-- vim: ts=4 ft=lua

@@ -52,3 +52,7 @@ m := (2 raisedTo: (n - 2)) * 10000.
 Transcript 
    show: 'Primes up to '; show: (m asPaddedString: 8); 
    show: ((m nsieve: flags) asPaddedString: 8); nl. !
+
+"
+  vim: ts=4 ft=st
+"

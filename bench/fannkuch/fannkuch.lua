@@ -1,3 +1,7 @@
+-- $Id: fannkuch.lua,v 1.2 2004-12-10 08:09:20 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
+-- implemented by: Isaac Gouy
+
 function fannkuch(n)
    local perm, perm1, count, maxPerm = {}, {}, {}, {}
    local maxFlipsCount, m, r = 0, n-1, n
@@ -40,3 +44,5 @@ end
  
 n = tonumber(arg and arg[1]) or 1
 io.write("Pfannkuchen(", n, ") = ", fannkuch(n), "\n")
+
+-- vim: ts=4 ft=lua

@@ -23,4 +23,6 @@ n := Smalltalk arguments first asInteger.
 
 (((n * 3.0) takfp: (n * 2.0) z: (n * 1.0)) asScaledDecimal: 1) displayNl !
 
-
+"
+  vim: ts=4 ft=st
+"
