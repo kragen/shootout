@@ -17,10 +17,10 @@ algorithms, languages, compare, cpu, memory" -->
     <div id="bodycol">
       <div id="apphead"><h2>Speeding Up Your Programs</h2></div>
       <div class="app">
-      <p>The point of this page is mostly to document tips I've been made
-      aware of for speeding up programs in various languages.  I've moved
-      the language specific hints to the <a href="lang/">language summary
-      pages</a>.  This page now just contains the general hints.</p>
+      <p>The point of this page is mostly to document tips we've been made
+      aware of for speeding up programs in various languages.  The language
+      specific hints have been moved to the <a href="lang/">language summary
+      pages</a>, so this page now just contains the general hints.</p>
       <h3>General Hints for better performance</h3>
       <ul>
         <li>If you play really loud music, your programs will run faster and

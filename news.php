@@ -1,10 +1,12 @@
 <?php require("html/header.php");
       require("nav.html");
       require("html/toptabs.php");
+
       $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
       $current = $parts[count($parts) - 1];
 
-      toptabs($current) ?>
+      toptabs($current);
+?>
 
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
@@ -27,6 +29,8 @@
 	  <p>This page contains notices of major changes to the Shootout.
 	    Note that you can also view the <a href="recent.php">
 	    Activity Log</a> to see which files have changed recently.</p>
+
+<?php require("http://alioth.debian.org/export/projnews.php?group_id=10039&limit=20&flat=0&show_summaries=1"); ?>
 
 <b>2004-05-27</b>
 <ul>

@@ -11,7 +11,6 @@
     <table width="100%">
       <tr>
         <td><h2>The Great Computer Language Shootout</h2></td>
-        <td align="right"><a href="index.php">Back to the Language Shootout</a><br></td>
       </tr>
     </table>
   </div>

@@ -5,12 +5,10 @@ function toptabs($current)
 	$tablist = array(
 		"/index.php" => "Introduction",
 		"/langs.php" => "Languages",
-		"/method.php" => "Methodology",
+		"/docs.php" => "Documentation",
 		"/news.php" => "News",
 		"/lang/bash" => "Implementations",
-		"/faq.php" => "FAQ",
 		"/craps.php" => "Scorecard",
-		"/todo.php" => "TODO List",
 		"http://alioth.debian.org/projects/shootout" => "Alioth");
 
 	echo "<div class=\"tabs\" id=\"toptabs\">\n";
