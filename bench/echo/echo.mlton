@@ -1,5 +1,5 @@
 (* -*- mode: sml -*-
- * $Id: echo.mlton,v 1.1 2004-05-19 18:09:36 bfulgham Exp $
+ * $Id: echo.mlton,v 1.2 2004-05-21 06:27:07 bfulgham Exp $
  * http://www.bagley.org/~doug/shootout/
  * from Tom 7
  *)
@@ -22,17 +22,25 @@ fun server () =
     let val (_, _, ins, outs) = accept listener
         fun s b = 
             case TextIO.inputLine ins of
-                "" => let in
-                          Posix.Process.wait ();
-                          print (concat ["server processed ",
-					 Int.toString b,
+	        NONE => let in
+		          Posix.Process.wait ();
+			  print (concat ["server processed ",
+			                 Int.toString b,
 					 " bytes\n"])
-                      end
-              | i =>  let in 
-                          TextIO.output(outs, i);
-			  TextIO.flushOut outs;
-                          s (b + 19)
-                      end
+			end
+	      | SOME(instr) =>
+	              case instr of
+		          "" => let in
+			          Posix.Process.wait ();
+                                  print (concat ["server processed ",
+				    	         Int.toString b,
+					         " bytes\n"])
+                                end
+                         | i =>  let in 
+                                   TextIO.output(outs, i);
+			           TextIO.flushOut outs;
+                                   s (b + 19)
+                                 end
     in s 0
     end
 
@@ -46,10 +54,13 @@ fun client () =
           | c n = let in
                       TextIO.output(outs, data);
 		      TextIO.flushOut outs;
-                      TextIO.inputLine ins = data
-                          orelse raise Error "Didn't receive the same data";
-                      c (n - 1)
-                  end
+                      case TextIO.inputLine ins of
+		          NONE => raise Error "Didn't receive the same data"
+			| SOME(instr) =>
+			      case instr of
+			          data => c (n - 1)
+				| _    => raise Error "Didn't receive the same data"
+		   end
     in
         c num
     end
