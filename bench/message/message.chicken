@@ -1,0 +1,109 @@
+;;; -*- mode: scheme -*-
+;;; $Id: message.chicken,v 1.1 2005-03-14 05:28:49 bfulgham Exp $
+;;; http://shootout.alioth.debian.org/
+;;;
+;;; thread-flow benchmark
+;;;
+;;; Provided by Dale Jordan
+
+;     * create a chain of 3000 threads such that:
+;           o each thread
+;                 + can receive an integer message
+;                 + can store the received message
+;                 + knows the next thread in the chain
+;                 + can send the integer message + 1 to the next thread
+;           o the last thread in the chain is different, it:
+;                 + can receive an integer message
+;                 + can store the sum of received messages
+;                 + there is no next thread
+;     * N times: send the integer message 0 to the first thread
+;     * print the sum of messages received by the last thread
+
+; Correct output N = 200 is:
+
+; 600000
+
+(require-extension srfi-18)
+
+;;; The interthread communications channel
+
+(define (make-channel)                  ; => channel
+  (let ((write-mutex (make-mutex))
+        (read-mutex (make-mutex))
+        (val #f))
+    (define (read)
+      (mutex-lock! read-mutex #f #f)
+      (let ((t val))
+        (mutex-unlock! write-mutex)
+        t))
+    (define (write new-val)
+      (mutex-lock! write-mutex #f #f)
+      (set! val new-val)
+      (mutex-unlock! read-mutex))
+    (mutex-lock! read-mutex #f #f)      ; make reader initially block
+    (lambda (which)
+      (case which
+        ((read) read)
+        ((write) write)))))
+
+;;; make thread chain connected by channels
+
+(define (build-chain n chan0)           ; => channel-n
+  (define (setup-thread in out)
+    (thread-start!
+     (make-thread
+      (lambda ()
+        (let ((read (in 'read))
+              (write (out 'write)))
+          (let loop ()
+            (write (+ 1 (read)))
+            (loop)))))))
+  (let loop ((i n) (in chan0) (out (make-channel)))
+    (if (zero? i)
+        in
+        (begin
+          (setup-thread in out)
+          (loop (- i 1) out (make-channel))))))
+
+;;; the last thread which accumulates the sum
+
+(define (last-thread iterations in out)
+  (thread-start!
+   (make-thread
+    (lambda ()
+      (let ((read (in 'read))
+            (write (out 'write)))
+        (let loop ((i 1) (n 0) (j (read)))
+          (let ((n- (+ n j)))
+            (if (= i iterations)
+                (write n-)
+                (loop (+ 1 i) n- (read))))))))))
+
+;;; driver
+
+(define (doit threads iterations)
+  (let* ((chan-0 (make-channel))
+         (chan-n-1 (build-chain threads chan-0))
+         (chan-n (make-channel)))
+    (last-thread iterations chan-n-1 chan-n)
+    (let ((write (chan-0 'write))
+          (read (chan-n 'read)))
+      (let loop ((i 0))
+        (if (= i iterations)
+            (begin
+              (display (read))
+              (newline))
+            (begin
+              (write 0)
+              (loop (+ 1 i))))))))
+
+(define (main args)
+  (case (length args)
+    ((0) (doit 3000 200))
+    ((1) (doit 3000 (string->number (car args))))
+    ((2) (doit (string->number (cadr args)) (string->number (car args))))
+    (else
+     (display "Usage: [iterations [threads]]"))))
+
+(main (command-line-arguments))
+
