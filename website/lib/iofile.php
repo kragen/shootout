@@ -45,7 +45,7 @@ $Body->set('Title', $Title);
 $Body->set('Text', HtmlFragment( DATA_PATH.$T.SEPARATOR.$F.'.txt' ));
 
 $Page->set('PageBody', $Body->fetch('pre.tpl.php'));
-
+$Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
 echo $Page->fetch('page.tpl.php');
 
 ?>
