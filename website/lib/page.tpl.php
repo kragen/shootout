@@ -34,12 +34,8 @@
 <?=$PageBody;?>
 
 <form action=""><p><input type="hidden" name="sort" value="<?=$Sort;?>"/></p></form>
-<div class="center">
 
-<!-- 
-| <strong>Send</strong>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">suggestions&nbsp;and&nbsp;comments</a>
--->
-
+<p class="center">
 <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
@@ -51,7 +47,6 @@
 <a href="http://validator.w3.org/check?uri=referer">
    <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
 </a>
-
-</div>
+</p>
 </body>
 </html>
