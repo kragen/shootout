@@ -20,6 +20,7 @@
 	  <div><a href="http://shootout.alioth.debian.org/bench/report.txt">What solutions have not been implemented yet?</a></div>
 	  <div><a href="http://alioth.debian.org/tarballs.php/?group_id=10039">Where can I get a copy of the shootout?</a></div>
 	  <div><a href="http://shootout.alioth.debian.org/rules_for_writers.php">What do I need to know if I want to write a new benchmark?</a></div>
+	  <div><a href="http://shootout.alioth.debian.org/perf_tips.php">How can I improve performance?</a></div>
 	</div>
       </div>
       <div id="admfun" class="toolgroup">

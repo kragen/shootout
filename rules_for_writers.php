@@ -82,5 +82,8 @@ algorithms, languages, compare, cpu, memory" -->
 	  a general conclusion even if you run dozens of tests.  If you just
 	  run a handful of tests, it is impossible.</li></p>
       </ol>
+    </td>
+  </tr>
+</table>
 
 <?php require("html/footer.php"); ?>
