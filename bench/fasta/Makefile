@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2005-03-30 07:30:52 bfulgham Exp $
+# $Id: Makefile,v 1.6 2005-04-03 13:57:56 chris00-guest Exp $
 include ../../Make.header
 
 TEST    := fasta
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
+OCAMLOPTS  := -inline 3
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
