@@ -94,6 +94,17 @@
 	   return($ver);
        },
      },
+
+     'csharp' =>
+     { Lang => 'C#',
+       Home => 'http://www.go-mono.com/',
+       Down => 'http://www.go-mono.com/',
+       Type => 'bytecomped/interpreted',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{MONOC} --version`);
+	   return($ver);
+       },
+     },
      
      clean =>
      { Lang => 'Clean',
@@ -153,6 +164,18 @@
        },
      },
 
+     elastic =>
+     { Lang => 'ElastiC',
+       Home => 'http://www.elasticword.com/',
+       Down => 'http://www.elasticword.com/',
+       Type => 'bytecomped/interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{ELASTICC} -V 2>&1`;
+	   $ver =~ s/ecc version.*$//;
+	   return($ver);
+       },
+     },
+
      erlang =>
      { Lang => 'Erlang',
        Home => 'http://www.erlang.org/',
@@ -169,7 +192,7 @@
      { Lang => 'Erlang',
        Home => 'http://www.erlang.org/',
        Down => 'http://www.erlang.org/download.html',
-       Type => 'bytecomped/interpreted',
+       Type => 'native compiled',
        Verfun => sub {
 	   my $ver = `$ENV{ERLANG} -version 2>&1`;
 	   $ver =~ s/\r?\n$//;
@@ -445,7 +468,7 @@
        Type => 'interpreted',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SLANG} --version`);
-	   $ver =~ s/S-Lang.*//s;
+	   $ver =~ s/slsh.*//;	# Dump the slsh version -- who cares!
 	   return($ver);
        },
      },

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-19 06:14:49 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-19 08:44:14 bfulgham Exp $
 
 include Make.header
 
@@ -53,4 +53,9 @@ links:
 	# MzScheme and Mzc are the same
 	for j in `find bench -name '*.mzscheme'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.mzscheme'`.mzc; \
+	done
+
+	# CMUCL and SBCL are the same
+	for j in `find bench -name '*.cmucl'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.sbcl; \
 	done

@@ -48,7 +48,14 @@ $LANGS= array(
 	 'Home' => 'http://gcc.gnu.org/',
 	 'Down' => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
 	 'Type' => 'native compiled'
-     ),
+      ),
+
+     'csharp' => array(
+         'Lang' => 'C#',
+	 'Home' => 'http://www.go-mono.com/',
+	 'Down' => 'http://www.go-mono.com/',
+	 'Type' => 'bytecomped/interpreted'
+      ),
      
      'clean' => array(
          'Lang' => 'Clean',
@@ -86,6 +93,13 @@ $LANGS= array(
 	 'Type' => 'native compiled'
      ),
 
+     'elastic' => Array(
+         'Lang' => 'ElastiC',
+	 'Home' => 'http://www.elasticword.com/',
+	 'Down' => 'http://www.elasticword.com/',
+	 'Type' => 'bytecomped/interpreted'
+     ),
+
      'erlang' => array(
          'Lang' => 'Erlang',
 	 'Home' => 'http://www.erlang.org/',
@@ -121,6 +135,20 @@ $LANGS= array(
 	 'Type' => 'interpreted'
      ),
 
+     'kaffe' => array(
+         'Lang' => 'Java',
+	 'Home' => 'http://kaffe.org',
+	 'Down' => 'http://www.kaffe.org/ftp/pub/kaffe/',
+	 'Type' => 'interpreted'
+     ),
+
+     'gcj' => array(
+         'Lang' => 'Java',
+	 'Home' => 'http://gcc.gnu.org/java/',
+	 'Down' => 'ftp://ftp.gnu.org/pub/gnu/gcc',
+	 'Type' => 'native compiled'
+     ),
+
      'java' => array(
          'Lang' => 'Java',
 	 'Home' => 'http://gcc.gnu.org/java/',
@@ -142,6 +170,14 @@ $LANGS= array(
 	 'Type' => 'interpreted'
      ),
 
+     'nice' => array(
+         'Lang' => 'Nice',
+	 'Home' => 'http://nice.sourceforge.net/',
+	 'Down' => 'http://nice.sourceforge.net/install.html',
+	 'Type' => 'native compiled'
+     ),
+
+     'ocaml'=> array(
      'ocaml'=> array(
          'Lang' => 'Ocaml',
 	 'Home' => 'http://www.ocaml.org/',
