@@ -8,7 +8,8 @@ function toptabs($current)
 		"method.php" => "Methodology",
 		"news.php" => "News",
 		"lang/bash" => "Implementations",
-		"faq.php" => "FAQ");
+		"faq.php" => "FAQ",
+		"craps.php" => "Scorecard");
 
 	echo "<div class=\"tabs\" id=\"toptabs\">\n";
 	echo "  <table border=\"0\" cellspacing=\"0\" cellpadding=\"4\" id=\"main\">\n";
