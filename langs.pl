@@ -413,6 +413,19 @@
        },
      },
 
+     ciao =>
+     { Lang => 'Ciao Prolog',
+       Home => 'http://www.clip.dia.fi.upm.es',
+       Down => 'http://www.clip.dia.fi.upm.es/Software/Ciao/index.html#ciao/',
+       Type => 'bytecomped/interpreted',
+       Ext  => 'pro',
+       Verfun => sub {
+           my $ver = `$ENV{CIAOC} 2>&1`;
+	   $ver =~ /(Ciao-Prolog.*)/;
+	   return ($1);
+       },
+     },
+
      gprolog =>
      { Lang => 'Prolog',
        Home => 'http://prolog.inria.fr',
@@ -615,6 +628,7 @@
      'C'           => 'c',
      'C++'         => 'c',
      'C#'          => 'c',
+     'Ciao Prolog' => 'prolog',
      'Clean'       => 'c',
      'Common Lisp' => 'lisp',
      'Eiffel'      => 'dash',

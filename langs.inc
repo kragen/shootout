@@ -15,7 +15,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
       'Type'    => 'native compiled',
-      'Version' => 'GNAT 3.3.4 (Debian) Copyright 1996-2002 Free Software Foundation, Inc.'
+      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-2) Copyright 1996-2002 Free Software Foundation, Inc.'
     ),
 
     'mawk' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-2)
 '
     ),
 
@@ -64,8 +64,16 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-2)
 '
+    ),
+
+    'ciao' => array(
+      'Lang'    => 'Ciao Prolog',
+      'Home'    => 'http://www.clip.dia.fi.upm.es',
+      'Down'    => 'http://www.clip.dia.fi.upm.es/Software/Ciao/index.html#ciao/',
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => 'Ciao-Prolog 1.9 #351: Sun Jun 27 19:50:42 PDT 2004'
     ),
 
     'clean' => array(
@@ -131,8 +139,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => '/usr/bin/erl: line 10: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: No such file or directory
-/usr/bin/erl: line 10: exec: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: cannot execute: No such file or directory'
+      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.3'
     ),
 
     'erlang' => array(
@@ -140,8 +147,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => '/usr/bin/erl: line 10: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: No such file or directory
-/usr/bin/erl: line 10: exec: /home/brent/projects/erlang/erlang/erlang-9.2.2/debian/erlang/usr/lib/erlang/erts-5.3.6.3/bin/erlexec: cannot execute: No such file or directory'
+      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.3'
     ),
 
     'gforth' => array(
@@ -173,7 +179,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java/',
       'Down'    => 'http://gcc.gnu.org/install/binaries.html',
       'Type'    => 'interpreted',
-      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian)'
+      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian 1:3.3.4-2)'
     ),
 
     'gcj' => array(
@@ -181,7 +187,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcj (GCC) 3.3.4 (Debian)
+      'Version' => 'gcj (GCC) 3.3.4 (Debian 1:3.3.4-2)
 '
     ),
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-06-24 07:38:15 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-06-30 07:29:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -23,7 +23,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,4,7,10 \
-	  --ignore spellcheck.clean \
 	  --ignore spellcheck.csharp \
 	  --ignore spellcheck.erlang \
 	  --ignore spellcheck.hipe \

@@ -1,85 +1,48 @@
--- $Id: echo.ghc,v 1.2 2004-05-21 02:59:37 bfulgham Exp $
+-- $Id: echo.ghc,v 1.3 2004-06-30 07:28:57 bfulgham Exp $
 -- http://www.bagley.org/~doug/shootout/
 -- Haskell echo/client server
 -- written by Brian Gregor
+-- simplified / updated by JP Bernardy
 -- compile with:
---      ghc -O -o echo -package net -package concurrent -package lang echo.hs
+--      ghc -O2 -o echo echo.hs
 
-module Main where
-
-import Concurrent
-import GHC.IOBase
-import Exception(finally)
-import IO
-import MVar
-import Network.Socket
+import Control.Concurrent
+import Control.Monad(when)
+import Network 
 import System (getArgs,exitFailure)
-import System.IO.Error
+import System.IO
 
-server_sock = do
-    s <- socket AF_INET Stream 6
-    setSocketOption s ReuseAddr 1
-    bindSocket s (SockAddrInet portnum iNADDR_ANY)
-    listen s 2
-    return s
+message	    = "Hello there sailor"
+portnum     = 7001
 
-echo_server s = do
-    (s', clientAddr) <- accept s
-    proc <- read_data s' 0
-    putStrLn ("server processed "++(show proc)++" bytes")
-    sClose s'
-    where
-       read_data sock totalbytes = do
-	     str <- catch (recv sock 19) (\e -> if isEOFError e then return "" else ioError e)
-	     if ((length str) >= 19)
-	        then (do
-	          writ <- send sock str
-		  read_data sock (totalbytes+(length str)))
-	        else (return totalbytes)
+echo_server = do sock <- listenOn (PortNumber portnum)
+		 (s, _, _) <- accept sock
+		 hSetBuffering s LineBuffering
+		 proc <- read_data s 0
+		 putStrLn ("server processed " ++ show proc ++ " bytes")
+		 hClose s
 
-local	    = "127.0.0.1"		
-message	    = "Hello there sailor\n"
-portnum :: PortNumber  = 7001
+read_data sock totalbytes = 
+    do eof <- hIsEOF sock
+       if eof then return totalbytes 
+	      else do str <- hGetLine sock
+	              hPutStrLn sock str
+	              read_data sock (totalbytes + length str + 1)
 
-client_sock = do
-    s <- socket AF_INET Stream 6
-    ia <- inet_addr local
-    connect s (SockAddrInet portnum ia)
-    return s
+echo_client n = do s <- connectTo "127.0.0.1" (PortNumber portnum)
+		   hSetBuffering s LineBuffering
+		   mapM_ (server_echo s) [1..n]
+		   hClose s
 
-echo_client n = do
-    s <- client_sock
-    drop <- server_echo s n
-    sClose s
-    where
-      server_echo sock n 
-          | n > 0 =(do 
-                       send sock message
-		       str <- catch (recv sock 19) (\e -> if isEOFError e then return "" else ioError e)
-                       if (str /= message) then (do exitFailure)
- 	                  else server_echo sock (n-1))
-          | otherwise = (return [])
+server_echo sock n = do hPutStrLn sock message
+	                str <- hGetLine sock 
+		        when (str /= message) exitFailure
 
-main = do 
-	 ~[n] <- getArgs
-	 -- server & client semaphores
-         --get the server socket
-         ssock <- server_sock 
-	 -- fork off the server
-	 s <- myForkIO (echo_server ssock)
-	 -- fork off the client
-	 c <- myForkIO (echo_client (read n::Int))
-	 -- let 'em run until they've signaled they're done
-         join s ; join c
-	 hFlush stdout
+main = withSocketsDo $ do [n] <- getArgs
+			  forkIO (echo_client (read n::Int))
+			  echo_server
 
--- these are used to make the main thread wait until
--- the child threads have exited
-myForkIO :: IO () -> IO (MVar ())
-myForkIO io = do
-  mvar <- newEmptyMVar
-  forkIO (io `finally` putMVar mvar ())
-  return mvar
 
-join :: MVar () -> IO ()
-join mvar = readMVar mvar
+
+
+

@@ -1,8 +1,15 @@
 #!/usr/bin/perl
-# $Id: ackermann.perl,v 1.1 2004-05-19 18:09:09 bfulgham Exp $
+# $Id: ackermann.perl,v 1.2 2004-06-30 07:28:56 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
+# With help from Ernesto Hernandez-Novich
 use integer;
+
+# Note:  If memoization were allowed in this program, we could
+# do so by adding:
+# use Memoization;
+# memoize("Ack");
+#
 
 # It's prettier but slower to do this
 #sub Ack {

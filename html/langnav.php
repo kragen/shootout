@@ -11,6 +11,7 @@
         <div><a href="../../lang/gcc/"><b><i>gcc</i></b></a></div>
         <div><a href="../../lang/csharp/">csharp</a></div>
         <div><a href="../../lang/g++/"><b><i>g++</i></b></a></div>
+        <div><a href="../../lang/ciao/">ciao</a></div>
         <div><a href="../../lang/clean/"><b><i>clean</i></b></a></div>
         <div><a href="../../lang/cmucl/"><b><i>cmucl</i></b></a></div>
         <div><a href="../../lang/sbcl/"><b><i>sbcl</i></b></a></div>
