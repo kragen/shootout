@@ -37,5 +37,13 @@
 | <strong>Send</strong>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">suggestions&nbsp;and&nbsp;comments</a>
 -->
 
+<a href="http://validator.w3.org/check?uri=referer">
+   <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
+</a>
+
+<a href="http://jigsaw.w3.org/css-validator/">
+   <img src="<?=IMAGE_PATH;?>vcss.png" alt="Valid CSS!" height="31" width="88" />
+</a>
+
 </p></div></body>
 </html>

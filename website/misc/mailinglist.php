@@ -38,7 +38,7 @@
 
    <tr>
       <td colspan="2">Your&nbsp;email&nbsp;address:</td>
-      <td><p><input type="text" name="email" size="30"></p></td>
+      <td><p><input type="text" name="email" size="30" /></p></td>
    </tr>
    <tr>
       <td colspan="3"><br/>
@@ -56,7 +56,7 @@
    <tr>
       <td colspan="2"><br/>Would you like to receive list mail batched in a daily digest?</td>
       <td><br /><p>
-         <input type="radio" name="digest" value="0" checked /> No 
+         <input type="radio" name="digest" value="0" checked="checked" /> No 
          <input type="radio" name="digest" value="1" /> Yes
       </p></td>
    </tr>

@@ -30,10 +30,10 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <!-- // SELECTED FULLCPU CHART //////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td width="160">
+<tr><td>
 
 <img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
-   width="160" height="240" />
+   width="160" height="240" alt="CPU Time comparison chart" />
 </td>
 
 
@@ -77,9 +77,9 @@ foreach($Selected as $row){
 <!-- // SELECTED MEMORY CHART //////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td width="160">
+<tr><td>
 <img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
-   width="160" height="240" />
+   width="160" height="240" alt="Memory use comparison chart" />
 </td>
 
 
