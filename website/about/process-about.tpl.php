@@ -33,4 +33,4 @@
 
 
 <p>With a large number of threads this becomes <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Death by Concurrency</a>.</p>
-<p>(The threads benchmark is essentially the <a href="benchmark.php?test=message&amp;lang=all&amp;sort=<?=$Sort;?>">messages benchmark</a> with a single message send.)</p>
+<p>(The threads benchmark is essentially the <a href="benchmark.php?test=message&amp;lang=all&amp;sort=<?=$Sort;?>">threads-flow benchmark</a> with a single message send.)</p>
