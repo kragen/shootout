@@ -1,15 +1,11 @@
-<?php require("html/header.php"); ?>
-<?php require("nav.html"); ?>
+<?php require("html/header.php");
+      require("nav.html");
+      require("html/toptabs.php");
+      $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
+      $current = $parts[count($parts) - 1];
 
-<div class="tabs" id="toptabs">
-  <table border="0" cellspacing="0" cellpadding="4" id="main">
-    <tr>
-      <td><a href="index.php">Introduction</a></td>
-      <td><a href="langs.php">Languages</a></td>
-      <th><a href="method.php">Methodology</a></th>
-    </tr>
-  </table>
-</div>
+      toptabs($current) ?>
+
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
     <td id="leftcol" width="20%">

@@ -1,15 +1,10 @@
-<?php require("html/header.php"); ?>
-<?php require("nav.html"); ?>
+<?php require("html/header.php");
+      require("nav.html");
+      require("html/toptabs.php");
+      $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
+      $current = $parts[count($parts) - 1];
 
-<div class="tabs" id="toptabs">
-  <table border="0" cellspacing="0" cellpadding="4" id="main">
-    <tr>
-      <th><a href="index.php">Introduction</a></th>
-      <td><a href="langs.php">Languages</a></td>
-      <td><a href="method.php">Methodology</a></td>
-    </tr>
-  </table>
-</div>
+      toptabs($current) ?>
 
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
@@ -135,7 +130,7 @@ href="mailto:(Doug Bagley) doug+(hairyrfc822)nospam.shootout@bagley(not .com).or
 	      compressed tarball</a>.  The current distribution is about 1.5MB
 	      and it is approximately alpha quality (it is probably suitable
 	      only for the adventurous).  The tarball is updated nightly.  I
-	      will try to keep the <a href="news.phtml">News</a> up-to-date to
+	      will try to keep the <a href="news.php">News</a> up-to-date to
 	      explain the new stuff.</p>
 	  </div>
 	  <div class="h3" id="links">

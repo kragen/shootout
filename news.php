@@ -1,16 +1,40 @@
-<?php require("html/header.shtml"); ?>
-<?php require("html/nav.phtml"); ?>
+<?php require("html/header.php");
+      require("nav.html");
+      require("html/toptabs.php");
+      $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
+      $current = $parts[count($parts) - 1];
 
-<br><p>
-  This page contains notices of major changes to the Shootout.  Note
-  that you can also view the <a href="recent.phtml">Activity Log</a>
-  to see which files have changed recently.
+      toptabs($current) ?>
 
-<center><h3>News</h3></center>
+<table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
+  <tr valign="top">
+    <td id="leftcol" width="20%">
+      <div id="navcolumn">
+        <div id="methodology" class="toolgroup">
+	  <div class="label">
+            <strong>Methodology</strong>
+          </div>
+	  <div class="body">
+	    <div><a href="#news">News</a></div>
+	  </div>
+	</div>
+      <div class="strut">&nbsp;</div>
+    </td>
+    <td>
+      <div id="bodycol">
+        <div id="apphead"><h2>News</h2></div>
+	<div class="app" id="news">
+	  <p>This page contains notices of major changes to the Shootout.
+	    Note that you can also view the <a href="recent.phtml">
+	    Activity Log</a> to see which files have changed recently.</p>
 
 <b>2004-05-27</b>
 <ul>
-<li><b>The shootout is revived as a Debian Alioth project!</b>
+  <li><b>The shootout is revived as a Debian Alioth project!</b></li>
+  <li>All interpreters and compilers updated to Debian unstable revisions.
+    Anything unavailable as a Debian package omitted from project.  At this
+    point that means <a href="lang/bigforth">bigforth</a> and
+    <a href="lang/mercury">mercury</a> are not included.</li>
 </ul>
 
 <b>2001-12-12</b>
