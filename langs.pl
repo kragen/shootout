@@ -630,6 +630,7 @@
      'Ocaml'       => 'ml',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',
+     'PHP'         => 'php',
      'Pike'        => 'c',
      'Prolog'      => 'prolog',
      'Python'      => 'shell',
