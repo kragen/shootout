@@ -1081,7 +1081,7 @@
      'Nice'        => 'c',
      'Oberon-2'    => 'pascal',
      'Objective C' => 'c',
-     'Ocaml'       => 'ml',
+     'OCaml'       => 'ml',
      'Poplog'      => 'c',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-12-13 04:27:15 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-12-16 08:16:15 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -12,6 +12,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
+OCAMLOPTS := num.cmxa
+OCAMLBOPTS := num.cma
 
 ERLFLAGS := -noinput
 GPLCOPTS := --fast-math

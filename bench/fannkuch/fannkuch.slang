@@ -4,7 +4,7 @@
 %
 static define fannkuch (n)
 {
-	variable m = n-1;
+	variable i, m = n-1;
 	variable perm1 = [0:m];
 	variable r = n;
 	variable count = Int_Type[n];
@@ -12,8 +12,12 @@ static define fannkuch (n)
 	variable maxperm;
 	forever
 	{
-		count[[1:r-1]] = [2:r];
-		r = 1;
+		while (r != 1)
+		{
+			count[r-1] = r;
+			r--;
+		}
+
 		!if ((perm1[0] == 0) or (perm1[m] == m))
 		{
 			variable perm = @perm1;
@@ -23,7 +27,11 @@ static define fannkuch (n)
 				variable k = perm[0];
 				!if (k)
 					break;
-				perm[[0:k]] = perm[[k:0:-1]];
+				_for (0, (k+1)/2 - 1, 1)
+				{
+					i=();
+					(perm[i], perm[k-i]) = (perm[k-i], perm[i]);
+				}
 				flipcounts++;
 			}
 			if (flipcounts > max_flipcounts)
@@ -37,7 +45,12 @@ static define fannkuch (n)
 			if (r == n)
 				return max_flipcounts;
 			variable perm0 = perm1[0];
-			perm1[[0:r-1]] = perm1[[1:r]];
+			_for (0,r-1,1)
+			{
+				i = ();
+				perm1[i] = perm1[i+1];
+			}
+			
 			perm1[r] = perm0;
 			variable cr = count[r]; cr--; count[r] = cr;
 			if (cr > 0)
