@@ -10,355 +10,350 @@ $LANGS = array(
     #  'Type' => native compiled/interpreted bytecode
     #},
 
-    'gnat' =>
-    { 'Lang'    => 'Ada',
+    'gnat' => array(
+      'Lang'    => 'Ada',
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
-      'Type'    => 'native compiled'
-      'Version' => 'GNAT 3.3.4 (Debian) Copyright 1996-2002 Free Software Foundation, Inc.'
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'mawk' =>
-    { 'Lang'    => 'Awk',
+    'mawk' => array(
+      'Lang'    => 'Awk',
       'Home'    => 'http://www.math.fu-berlin.de/~leitner/mawk/',
       'Down'    => 'ftp://ftp.fu-berlin.de/pub/unix/languages/mawk/',
-      'Type'    => 'interpreted'
+      'Type'    => 'interpreted',
       'Version' => 'mawk 1.3.3 Nov 1996, Copyright (C) Michael D. Brennan'
-    },
+    ),
 
-    'gawk' =>
-    { 'Lang'    => 'Awk',
+    'gawk' => array(
+      'Lang'    => 'Awk',
       'Home'    => 'http://www.gnu.org/software/gawk/gawk.html',
       'Down'    => 'ftp://ftp.gnu.org/gnu/gawk/',
-      'Type'    => 'interpreted'
-      'Version' => 'GNU Awk 3.1.3'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'bash' =>
-    { 'Lang'    => 'Bash',
+    'bash' => array(
+      'Lang'    => 'Bash',
       'Home'    => 'http://www.gnu.org/software/bash/bash.html',
       'Down'    => 'ftp://ftp.gnu.org/gnu/bash/',
-      'Type'    => 'interpreted'
+      'Type'    => 'interpreted',
       'Version' => 'GNU bash, version 2.05b.0(1)'
-    },
+    ),
 
-    'gcc' =>
-    { 'Lang'    => 'C',
+    'gcc' => array(
+      'Lang'    => 'C',
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
-      'Type'    => 'native compiled'
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian)
+      'Type'    => 'native compiled',
+      'Version' => 'gcc (GCC) 3.3.4 (Debian)
 '
-    },
+    ),
 
-    'csharp' =>
-    { 'Lang'    => 'C#',
+    'csharp' => array(
+      'Lang'    => 'C#',
       'Home'    => 'http://www.go-mono.com/',
       'Down'    => 'http://www.go-mono.com/',
-      'Type'    => 'bytecomped/interpreted'
-      'Version' => 'Mono C# compiler version 0.96.0.0'
-    },
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => ''
+    ),
 
-    'g++' =>
-    { 'Lang'    => 'C++',
+    'g++' => array(
+      'Lang'    => 'C++',
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
-      'Type'    => 'native compiled'
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian)
+      'Type'    => 'native compiled',
+      'Version' => 'g++ (GCC) 3.3.4 (Debian)
 '
-    },
+    ),
 
-    'clean' =>
-    { 'Lang'    => 'Clean',
+    'clean' => array(
+      'Lang'    => 'Clean',
       'Home'    => 'http://www.cs.kun.nl/~clean/index.html',
       'Down'    => 'http://www.cs.kun.nl/~clean/Download/main/main.htm',
-      'Type'    => 'native compiled'
+      'Type'    => 'native compiled',
       'Version' => 'Clean 2.1'
-    },
+    ),
 
-    'cmucl' =>
-    { 'Lang'    => 'Common Lisp',
+    'cmucl' => array(
+      'Lang'    => 'Common Lisp',
       'Home'    => 'http://www.cons.org/cmucl/',
       'Down'    => 'http://www.cons.org/cmucl/',
-      'Type'    => 'native compiled'
-      'Version' => 'CMU Common Lisp CVS release-18e-branch + minimal debian patches'
-    },
+      'Type'    => 'native compiled',
+      'Version' => 'CMU Common Lisp '
+    ),
 
-    'sbcl' =>
-    { 'Lang'    => 'Common Lisp',
+    'sbcl' => array(
+      'Lang'    => 'Common Lisp',
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
-      'Type'    => 'native compiled'
-      'Version' => 'SBCL 0.8.10.48'
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'gwydion' =>
-    { 'Lang'    => 'Dylan',
+    'gwydion' => array(
+      'Lang'    => 'Dylan',
       'Home'    => 'http://www.gwydiondylan.org',
       'Down'    => 'http://www.gwydiondylan.org/download.html',
-      'Type'    => 'native compiled'
-      'Version' => 'd2c (Gwydion Dylan) 2.3.12pre3'
-    },
+      'Type'    => 'native compiled',
+      'Version' => 'd2c (Gwydion Dylan) 2.3.8pre1'
+    ),
 
-    'se' =>
-    { 'Lang'    => 'Eiffel',
+    'se' => array(
+      'Lang'    => 'Eiffel',
       'Home'    => 'http://smarteiffel.loria.fr/',
       'Down'    => 'ftp://ftp.loria.fr/pub/loria/SmartEiffel/',
-      'Type'    => 'native compiled'
+      'Type'    => 'native compiled',
       'Version' => 'Release 1.1 Release (Monday June 16th 2003)'
-    },
+    ),
 
-    'elastic' =>
-    { 'Lang'    => 'ElastiC',
+    'elastic' => array(
+      'Lang'    => 'ElastiC',
       'Home'    => 'http://www.elasticword.com/',
       'Down'    => 'http://www.elasticword.com/',
-      'Type'    => 'bytecomped/interpreted'
-      'Version' => 'ecc version: 0.03
-elastiC version: 0.0.36 (dec: 36)
-'
-    },
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => ''
+    ),
 
-    'xemacs' =>
-    { 'Lang'    => 'Emacs Lisp',
+    'xemacs' => array(
+      'Lang'    => 'Emacs Lisp',
       'Home'    => 'http://www.xemacs.org/',
       'Down'    => 'http://www.xemacs.org/Download/',
-      'Type'    => 'bytecomped/interpreted'
-      'Version' => 'XEmacs 21.4 (patch 15) "Security Through Obscurity" [Lucid] (i386-debian-linux)'
-    },
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => ''
+    ),
 
-    'hipe' =>
-    { 'Lang'    => 'Erlang',
+    'hipe' => array(
+      'Lang'    => 'Erlang',
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
-      'Type'    => 'native compiled'
-      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.2'
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'erlang' =>
-    { 'Lang'    => 'Erlang',
+    'erlang' => array(
+      'Lang'    => 'Erlang',
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
-      'Type'    => 'bytecomped/interpreted'
-      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.2'
-    },
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => ''
+    ),
 
-    'gforth' =>
-    { 'Lang'    => 'Forth',
+    'gforth' => array(
+      'Lang'    => 'Forth',
       'Home'    => 'http://www.jwdt.com/~paysan/gforth.html',
       'Down'    => 'http://www.complang.tuwien.ac.at/forth/gforth/',
-      'Type'    => 'interpreted'
-      'Version' => 'gforth 0.6.2'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'ghc' =>
-    { 'Lang'    => 'Haskell',
+    'ghc' => array(
+      'Lang'    => 'Haskell',
       'Home'    => 'http://www.haskell.org/',
       'Down'    => 'http://www.haskell.org/ghc/',
-      'Type'    => 'native compiled'
-      'Version' => 'The Glorious Glasgow Haskell Compilation System, version 6.2.1'
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'icon' =>
-    { 'Lang'    => 'Icon',
+    'icon' => array(
+      'Lang'    => 'Icon',
       'Home'    => 'http://www.cs.arizona.edu/icon/',
       'Down'    => 'http://www.cs.arizona.edu/icon/v93.htm',
-      'Type'    => 'interpreted'
-      'Version' => 'Icon Version 9.4.2, April 24, 2003'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'gcj' =>
-    { 'Lang'    => 'Java',
+    'gcj' => array(
+      'Lang'    => 'Java',
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
-      'Type'    => 'native compiled'
+      'Type'    => 'native compiled',
       'Version' => 'gcj-3.3 (GCC) 3.3.4 (Debian)
 '
-    },
+    ),
 
-    'kaffe' =>
-    { 'Lang'    => 'Java',
+    'kaffe' => array(
+      'Lang'    => 'Java',
       'Home'    => 'http://kaffe.org',
       'Down'    => 'http://www.kaffe.org/ftp/pub/kaffe/',
-      'Type'    => 'interpreted'
+      'Type'    => 'interpreted',
       'Version' => 'Version: 1.1.x-cvs  '
-    },
+    ),
 
-    'java' =>
-    { 'Lang'    => 'Java',
+    'java' => array(
+      'Lang'    => 'Java',
       'Home'    => 'http://gcc.gnu.org/java/',
       'Down'    => 'http://gcc.gnu.org/install/binaries.html',
-      'Type'    => 'interpreted'
+      'Type'    => 'interpreted',
       'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian)'
-    },
+    ),
 
-    'sablevm' =>
-    { 'Lang'    => 'Java',
+    'sablevm' => array(
+      'Lang'    => 'Java',
       'Home'    => 'http://sablevm.org/',
       'Down'    => 'http://sablevm.sourceforge.net/download.html',
-      'Type'    => 'interpreted'
-      'Version' => 'SableVM version 1.1.5'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'rep' =>
-    { 'Lang'    => 'Lisp',
+    'rep' => array(
+      'Lang'    => 'Lisp',
       'Home'    => 'http://librep.sourceforge.net/',
       'Down'    => 'ftp://librep.sourceforge.net/pub/librep/',
-      'Type'    => 'bytecomped/interpreted'
-      'Version' => 'rep version 0.17'
-    },
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => ''
+    ),
 
-    'lua' =>
-    { 'Lang'    => 'Lua',
+    'lua' => array(
+      'Lang'    => 'Lua',
       'Home'    => 'http://www.lua.org/',
       'Down'    => 'http://www.lua.org/download.html',
-      'Type'    => 'interpreted'
-      'Version' => 'Lua 5.0.2 '
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'oz' =>
-    { 'Lang'    => 'Mozart/Oz',
+    'oz' => array(
+      'Lang'    => 'Mozart/Oz',
       'Home'    => 'http://www.mozart-oz.org',
       'Down'    => 'http://www.mozart-oz.org/download',
-      'Type'    => 'interpreted'
-      'Version' => 'Mozart Compiler 1.2.5 (20040201) playing Oz 3'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'nice' =>
-    { 'Lang'    => 'Nice',
+    'nice' => array(
+      'Lang'    => 'Nice',
       'Home'    => 'http://nice.sourceforge.net/',
       'Down'    => 'http://nice.sourceforge.net/install.html',
-      'Type'    => 'native compiled'
+      'Type'    => 'native compiled',
+      'Version' => 'Nice compiler version 0.9.6 (build 2004.03.05, 14:17:55 UTC)'
+    ),
+
+    'ocaml' => array(
+      'Lang'    => 'Ocaml',
+      'Home'    => 'http://www.ocaml.org/',
+      'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
+      'Type'    => 'native compiled',
       'Version' => ''
-    },
+    ),
 
-    'ocaml' =>
-    { 'Lang'    => 'Ocaml',
+    'ocamlb' => array(
+      'Lang'    => 'Ocaml',
       'Home'    => 'http://www.ocaml.org/',
       'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
-      'Type'    => 'native compiled'
-      'Version' => 'The Objective Caml native-code compiler, version 3.07+2'
-    },
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => ' (Byte Code)'
+    ),
 
-    'ocamlb' =>
-    { 'Lang'    => 'Ocaml',
-      'Home'    => 'http://www.ocaml.org/',
-      'Down'    => 'http://caml.inria.fr/ocaml/distrib.html',
-      'Type'    => 'bytecomped/interpreted'
-      'Version' => 'The Objective Caml compiler, version 3.07+2 (Byte Code)'
-    },
-
-    'php' =>
-    { 'Lang'    => 'PHP',
+    'php' => array(
+      'Lang'    => 'PHP',
       'Home'    => 'http://www.php.net/',
       'Down'    => 'http://www.php.net/downloads.php',
-      'Type'    => 'interpreted'
-      'Version' => 'PHP 4.3.4 (cli) (built: Mar 27 2004 08:04:22)
-'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'perl' =>
-    { 'Lang'    => 'Perl',
+    'perl' => array(
+      'Lang'    => 'Perl',
       'Home'    => 'http://www.perl.org/',
       'Down'    => 'http://www.cpan.org/src/5.0/',
-      'Type'    => 'bytecomped/interpreted'
+      'Type'    => 'bytecomped/interpreted',
       'Version' => 'This is perl, v5.8.4 built for i386-linux-thread-multi'
-    },
+    ),
 
-    'pike' =>
-    { 'Lang'    => 'Pike',
+    'pike' => array(
+      'Lang'    => 'Pike',
       'Home'    => 'http://pike.roxen.com/',
       'Down'    => 'http://pike.roxen.com/download/',
-      'Type'    => 'interpreted'
-      'Version' => 'Pike v7.6 release 9 '
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'python' =>
-    { 'Lang'    => 'Python',
+    'python' => array(
+      'Lang'    => 'Python',
       'Home'    => 'http://www.python.org/',
       'Down'    => 'http://www.python.org/download/',
-      'Type'    => 'bytecomped/interpreted'
+      'Type'    => 'bytecomped/interpreted',
       'Version' => 'Python 2.3.4'
-    },
+    ),
 
-    'ruby' =>
-    { 'Lang'    => 'Ruby',
+    'ruby' => array(
+      'Lang'    => 'Ruby',
       'Home'    => 'http://www.ruby-lang.org/',
       'Down'    => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
-      'Type'    => 'interpreted'
+      'Type'    => 'interpreted',
       'Version' => 'ruby 1.8.1 (2004-02-03) [i386-linux]'
-    },
+    ),
 
-    'slang' =>
-    { 'Lang'    => 'S-Lang',
+    'slang' => array(
+      'Lang'    => 'S-Lang',
       'Home'    => 'http://www.s-lang.org/',
       'Down'    => 'http://www-s-lang.org/download.html',
-      'Type'    => 'interpreted'
-      'Version' => '
-S-Lang Library Version: 1.4.9'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'smlnj' =>
-    { 'Lang'    => 'SML',
+    'smlnj' => array(
+      'Lang'    => 'SML',
       'Home'    => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
       'Down'    => 'http://cm.bell-labs.com/cm/cs/what/smlnj/software.html',
-      'Type'    => 'native compiled'
-      'Version' => 'Standard ML of New Jersey v110.44
-- '
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'mlton' =>
-    { 'Lang'    => 'SML',
+    'mlton' => array(
+      'Lang'    => 'SML',
       'Home'    => 'http://www.mlton.org/',
       'Down'    => 'http://www.mlton.org/download/',
-      'Type'    => 'native compiled'
-      'Version' => 'MLton 20040227 '
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'bigloo' =>
-    { 'Lang'    => 'Scheme',
+    'bigloo' => array(
+      'Lang'    => 'Scheme',
       'Home'    => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/',
       'Down'    => 'http://www-sop.inria.fr/mimosa/fp/Bigloo/bigloo-1.html',
-      'Type'    => 'native compiled'
-      'Version' => 'Bigloo (2.6e)'
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'stalin' =>
-    { 'Lang'    => 'Scheme',
+    'stalin' => array(
+      'Lang'    => 'Scheme',
       'Home'    => 'http://www.ece.purdue.edu/~qobi/software.html',
       'Down'    => 'http://www.ece.purdue.edu/~qobi/software.html',
-      'Type'    => 'native compiled'
+      'Type'    => 'native compiled',
       'Version' => '0.9'
-    },
+    ),
 
-    'guile' =>
-    { 'Lang'    => 'Scheme',
+    'guile' => array(
+      'Lang'    => 'Scheme',
       'Home'    => 'http://www.gnu.org/software/guile/guile.html',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/guile/',
-      'Type'    => 'interpreted'
-      'Version' => 'Guile 1.6.4'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'mzscheme' =>
-    { 'Lang'    => 'Scheme',
+    'mzscheme' => array(
+      'Lang'    => 'Scheme',
       'Home'    => 'http://www.plt-scheme.org',
       'Down'    => 'http://download.plt-scheme.org/drscheme/',
-      'Type'    => 'interpreted'
-      'Version' => ' MzScheme version 207'
-    },
+      'Type'    => 'interpreted',
+      'Version' => ''
+    ),
 
-    'mzc' =>
-    { 'Lang'    => 'Scheme',
+    'mzc' => array(
+      'Lang'    => 'Scheme',
       'Home'    => 'http://www.plt-scheme.org',
       'Down'    => 'http://download.plt-scheme.org/drscheme/',
-      'Type'    => 'native compiled'
-      'Version' => 'MzScheme compiler (mzc) version 207, '
-    },
+      'Type'    => 'native compiled',
+      'Version' => ''
+    ),
 
-    'tcl' =>
-    { 'Lang'    => 'Tcl',
+    'tcl' => array(
+      'Lang'    => 'Tcl',
       'Home'    => 'http://dev.scriptics.com/',
       'Down'    => 'http://dev.scriptics.com/software/tcltk/downloadnow83.tml',
-      'Type'    => 'bytecomped/interpreted'
+      'Type'    => 'bytecomped/interpreted',
       'Version' => 'Tcl 8.4.6'
-    }
+    )
 );
