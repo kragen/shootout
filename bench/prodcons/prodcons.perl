@@ -1,5 +1,5 @@
-#!/usr/test/bin/perl
-# $Id: prodcons.perl,v 1.1 2004-05-19 18:11:10 bfulgham Exp $
+#!/usr/bin/perl
+# $Id: prodcons.perl,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
 # http://www.bagley.org/~doug/shootout/
 
 use strict;

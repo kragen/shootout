@@ -113,7 +113,7 @@ href="mailto:(Brent Fulgham) bfulgham@users.alioth.debian(not .com).org">email</
 	    <ul>
 	      <!-- busted link
 	  <li><a href="http://wwwipd.ira.uka.de/~prechelt/Biblio/jccpprt_computer2000.ps.gz">An empirical comparison of C, C++, Java, Perl, Python, Rexx, and Tcl for a search/string-processing program</a> by Lutz Prechelt (gzipped Postscript).</li> -->
-	      <p class="infomark"><a href="http://huzhe.topcities.com/LanguageStudy.htm">A Comparison of Programming Languages for Scientific Processing</a> by D. McClain</p>
+	      <p class="infomark">A Comparison of Programming Languages for Scientific Processing by D. McClain <small>Unfortunately, this reference is no longer available.</small></p>
 	      <p class="infomark"><a href="http://phaseit.net/claird/comp.lang.misc/language_comparisons.html"> Cameron Laird's personal notes on language comparisons</a></p>
 	      <p class="infomark"><a href="http://directory.google.com/Top/Computers/Programming/Languages/">Computers > Programming > Language</a> at Google Web directory.</p>
 	      <p class="infomark"><a href="http://www.tunes.org/Review/Languages.html">Review of existing Languages</a> at Tunes.org</p>

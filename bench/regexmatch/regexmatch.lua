@@ -1,27 +1,28 @@
--- $Id: regexmatch.lua,v 1.1 2004-05-19 18:11:23 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
--- implemented by: Roberto Ierusalimschy
+-- $Id: regexmatch.lua,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
+-- http://shootout.alioth.debian.org
+-- contributed by Roberto Ierusalimschy
 
-text = read("*a")
+local text = io.read("*a")
 
--- I added the following line and slightly modified the pattern 
--- match below so that the program will reject the case:
--- 1(111) 111-1111 (due to preceeding digit)
--- (Doug)
-text = gsub(gsub(text, "^", "   "), "\n", "\n   ")
+-- make sure text does not start with a number
+text = "\n" .. text
 
-N = tonumber((arg and arg[1])) or 1
-count = 0
-while N > 0 do
-  gsub(text,"%D(%D)(%d%d%d)(%)?) (%d%d%d)[- ](%d+)",
-    function (A,area,B,exch,digits)
-      if (A == '(') == (B == ')') and strlen(digits) == 4 then
+-- pattern is: not a digit, optional (, 3 digits, optional ),
+-- space, 3 digits, space or hyphen, 4 digits, not a digit
+local pattern = "%D(%(?)(%d%d%d)(%)?) (%d%d%d)[- ](%d%d%d%d)%f[%D]"
+
+local N = tonumber((arg and arg[1])) or 1
+local count = 0
+for i=N,1,-1 do
+  for open,area,close,exch,digits in string.gfind(text, pattern) do
+      if (open == '(') == (close == ')') then
         local tel = "("..area..") "..exch.."-"..digits
-        if N == 1 then
+        if i == 1 then
           count = count+1
           io.write(count, ": ", tel, "\n")
         end
       end
-    end)
-  N = N-1
+    end
 end
+
+

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-24 02:23:25 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-12 16:19:43 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -18,6 +18,7 @@ MB_GHCRTS  := +RTS -K2046000
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,50,100,150 \
 	  --inputfile Input --geninput \
+	  --ignore moments.stalin \
 	  --ignore moments.gawk,moments.mawk \
 	  --title "$(TITLE)" $(TEST).*
 

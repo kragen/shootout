@@ -1,7 +1,7 @@
-#!/usr/local/bin/php -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: sumcol.php,v 1.1 2004-05-29 08:48:06 bfulgham Exp $
+ $Id: sumcol.php,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
  http://www.bagley.org/~doug/shootout/
 */
 $fd = fopen("php://stdin", "r");

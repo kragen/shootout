@@ -1,7 +1,7 @@
-#!/usr/local/bin/php -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: wc.php,v 1.1 2004-05-29 08:48:06 bfulgham Exp $
+ $Id: wc.php,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
  http://www.bagley.org/~doug/shootout/
  
  TBD - this program should not assume lines are less than 10000 characters long

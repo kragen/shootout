@@ -1,6 +1,6 @@
--- $Id: strcat.lua,v 1.1 2004-05-19 18:13:34 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
--- from Roberto Ierusalimschy
+-- $Id: strcat.lua,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
+-- http://shootout.alioth.debian.org
+-- contributed by Roberto Ierusalimschy
 
 -- this version uses a custom string buffer
 
@@ -8,29 +8,28 @@
 -- Buffer library
 ------------------------------------------------------------------
 
-Buffer = {n=0}
+Buffer = {""}
 
 function Buffer:new ()
   local new = {}
-  for k,v in self do new[k] = v end
+  self.__index = self
+  setmetatable(new, self)
   return new
 end
 
 function Buffer:add (s)
-  tinsert(self, s)
-  local i = self.n
-  for i=self.n-1, 1, -1 do
-    if strlen(self[i]) > strlen(self[i+1]) then break end
-    local top = tremove(self)
-    self[i] = self[i]..top
+  table.insert(self, s)    -- push 's' into the the stack
+  for i=table.getn(self)-1, 1, -1 do
+    if string.len(self[i]) > string.len(self[i+1]) then
+      break
+    end
+    self[i] = self[i] .. table.remove(self)
   end
 end
 
 function Buffer:close ()
-  for i=self.n-1, 1, -1 do
-    local top = tremove(self)
-    self[i] = self[i]..top
-  end
+  self[1] = table.concat(self)
+  table.setn(self, 1)   -- now there is only one element
   return self[1]
 end
 
@@ -44,4 +43,6 @@ local buff = Buffer:new()
 for i=1,n do
   buff:add("hello\n")
 end
-io.write(strlen(buff:close()), "\n")
+io.write(string.len(buff:close()), "\n")
+
+

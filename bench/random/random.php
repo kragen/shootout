@@ -1,7 +1,7 @@
-#!/usr/local/bin/php -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: random.php,v 1.1 2004-05-28 20:45:24 bfulgham Exp $
+ $Id: random.php,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
  http://www.bagley.org/~doug/shootout/
 */
 define("IM", 139968);

@@ -1,20 +1,21 @@
 #!/usr/bin/lua
--- $Id: heapsort.lua,v 1.1 2004-05-19 18:10:10 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
+-- $Id: heapsort.lua,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
+-- http://shootout.alioth.debian.org
+-- contributed by Roberto Ierusalimschy
 
 local IM = 139968
 local IA =   3877
 local IC =  29573
 
-LAST = 42
+local LAST = 42
 function gen_random(max)
-    LAST = mod((LAST * %IA + %IC), %IM)
-    return( (max * LAST) / %IM )
+    LAST = math.mod((LAST * IA + IC), IM)
+    return( (max * LAST) / IM )
 end
 
 function heapsort(n, ra)
     local j, i, rra
-    local l = floor(n/2) + 1
+    local l = math.floor(n/2) + 1
     local ir = n;
     while 1 do
 	if l > 1 then
@@ -56,4 +57,4 @@ end
 
 heapsort(N, ary)
 
-io.write(format("%0.10f\n", ary[N]))
+io.write(string.format("%0.10f\n", ary[N]))

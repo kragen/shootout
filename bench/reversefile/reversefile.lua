@@ -1,17 +1,15 @@
 #!/usr/bin/lua
--- $Id: reversefile.lua,v 1.1 2004-05-19 18:12:18 bfulgham Exp $
+-- $Id: reversefile.lua,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
 -- http://www.bagley.org/~doug/shootout/
 
 local lines = {}
-local w = io.write
-nl = 0
+local nl = 0
 
-gsub(read("*a"), "([^\n]+\n)", function (l)
-    %lines[nl] = l
+for l in io.lines() do
     nl = nl + 1
-end)
+    lines[nl] = l
+end
 
-nl = nl - 1
-for i=nl,0,-1 do
-    w(lines[i])
+for i=nl,1,-1 do
+    io.write(lines[i], "\n")
 end

@@ -1,10 +1,11 @@
--- $Id: sumcol.lua,v 1.1 2004-05-19 18:13:43 bfulgham Exp $
+-- $Id: sumcol.lua,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
 -- http://www.bagley.org/~doug/shootout/
 
 local sum = 0
-local line = read()
+local line = io.read()
+
 while line ~= nil do
     sum = sum + line
-    line = read()
+    line = io.read()
 end
 io.write(sum, "\n")

@@ -1,38 +1,49 @@
 #!/usr/bin/mzscheme -r
 
-(require (lib "pregexp.ss")
-         (lib "string.ss")
-         (lib "list.ss"))
+;
+;  wordfreq.mzscheme by Grzegorz Chrupaa
+;
 
-(define my-hash (make-hash-table 'equal))
+(require (lib "list.ss")
+         (lib "string.ss"))
 
-(define (print-sorted-hash)
-   (let ((kv-lst '())
-         (display-elts (lambda (lst) (map (lambda (elt) 
-             (printf "~a~a~a~n" (cdr elt) #\tab (car elt))) lst))))
+(define port-for-each
+  (lambda (processor reader)
+    (let loop ((next (reader)))
+      (unless (eof-object? next)
+        (processor next)
+        (loop (reader))))))
 
-      ; Build a list from the hash table
-      (hash-table-for-each my-hash
-         (lambda (key val) (set! kv-lst (cons (cons key val) kv-lst))))
-      ; Sort the list
-      (display-elts (quicksort kv-lst
-                       (lambda (a b) (string<? (car a) (car b)))))))
+(define (hash-table->alist table)
+  (let ((alist '()))
+    (hash-table-for-each
+     table
+     (lambda (key value) (set! alist (cons (cons key value) alist))))
+    alist))
+                         
 
-(define (load-hash vals)
-   (letrec
-     ((do-entry-get (lambda (key)
-             (hash-table-get my-hash key
-               (lambda () (hash-table-put! my-hash key 0) 0))))
-      (do-entry-inc (lambda (key)
-             (hash-table-put! my-hash key (+ (do-entry-get key) 1)))))
-   (map do-entry-inc vals)))
+(define (main . _)
+  (define table (make-hash-table 'equal))
+  (port-for-each (lambda (line) (parse-line line table)) read-line)
+  (hash-table-remove! table "")
+  (for-each (lambda (pair)
+              (let ((word (car pair))
+                    (count (cdr pair)))
+                (printf "~a~a~a~n" count #\tab word)))
+            (quicksort (hash-table->alist table)
+                  (lambda (pair1 pair2)
+                    (or (> (cdr pair1) (cdr pair2))
+                        (and (= (cdr pair1) (cdr pair2))
+                             (string<? (car pair2) (car pair1))))))))
 
-(define (main args)
-  (do ((line (read-line) (read-line)))
-      ((eof-object? line) (print-sorted-hash))
-      (string-lowercase! line)
-      (load-hash (pregexp-split " +"
-          (list->string (map (lambda (x)
-            (if (char-alphabetic? x) x #\space)) (string->list line)))))))
+(define rx (regexp "[^a-zA-Z]+"))
 
-(main (current-command-line-arguments))
+(define (parse-line line table)
+  (string-lowercase! line)
+  (for-each
+   (lambda (word)
+     (let ((count (hash-table-get table word (lambda () 0))))
+       (hash-table-put! table word (+ count 1))))
+   (regexp-split rx line)))
+
+(main)
