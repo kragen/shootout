@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.14 2004-11-08 02:08:02 bfulgham Exp $
+# $Id: minibench,v 1.15 2004-11-18 06:18:17 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -33,7 +33,7 @@ use BSD::Resource qw(times);
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.14 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.15 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -449,10 +449,11 @@ sub tabulate {
 	    warn("Error, can't open $file for input ($!)\n");
 	    next;
 	}
+	my ($num, $cuser, $csys, $mem);
 	while (<DF>) {
 	    # read through any initial comment/blank lines
 	    next if (/^$/ or /^\#/);
-	    my($num, $cuser, $csys, $mem) = split;
+	    ($num, $cuser, $csys, $mem) = split;
 	    if (($cuser eq -1) || ($cuser eq -2)){
 	        $cpu{$num}->{$name} = $cuser;
 		$mem{$num}->{$name} = $cuser;
@@ -667,7 +668,9 @@ sub _write_summary_tables {
 	} (keys(%{$cpuref->{$arg}}));
 	print DF "# Test CPU Mem\n";
 	foreach my $name (@names) {
-	    print DF "$name $cpuref->{$arg}->{$name} $memref->{$arg}->{$name}\n";
+	    my $hiarg;
+	    for ($hiarg = $arg + 1; $cpuref->{$hiarg - 1}->{$name} < 0; $hiarg--) {}
+	    print DF "$name $cpuref->{$arg}->{$name} $memref->{$arg}->{$name} $hiarg\n";
 	}
 	close(DF);
 	if ($OPT->{html}) {
@@ -1098,17 +1101,20 @@ sub run {
 	    my $run = 0;
 	    foreach my $res (@results) {
 	        $run = shift(@{$res});
-		next if ($run > 0);
-		my @ar = @{$res};
-		$max = $ar[0];
+                my $marg = shift(@{$res});
+                my $mcuser = shift(@{$res});
+                my $mcsys = shift(@{$res});
+                my $mavgmem = shift(@{$res});
+		if ($marg >= $arg) {
+		    next;
+		}
+		$self->push_results([$run, $marg, $mcuser, $mcsys, $mavgmem]);
             }
 
             foreach my $locarg (@RANGE) {
-#	        warn "Trying $locarg vs $max\n";
-	        next if $locarg < $max;
-#		warn "Will push for $run, since $locarg > $max\n";
+	        next if $locarg < $arg;
 		my $failed = -2;
-		$self->push_results([$run, $locarg, $failed, $failed, $failed]);
+		$self->push_results([0, $locarg, $failed, $failed, $failed]);
 	    }
 	    last;
 	}
@@ -1186,11 +1192,13 @@ sub write_results {
     rename_as_backup_file($datafile);
     open(DAT, ">$datafile") || abort(qq{Can\'t open datafile: "$datafile" ($!)});
     my @results = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } @$resultsref;
-    my $lastrun = -1;
+    my $lastrun = -100;
     foreach my $res (@results) {
 	my $run = shift(@{$res});
-        print DAT "# run #", 1+$run, "\n";
-        $lastrun = $run;
+	unless ($run == $lastrun) {
+            print DAT "# run #", 1+$run, "\n";
+            $lastrun = $run;
+	}
         print DAT "@{$res}\n";
     }
     close(DAT) if ($datafile);
