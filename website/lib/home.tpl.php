@@ -8,9 +8,8 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // TAG /////////////////////////////////////////////////// -->
 
 <table class="div" >
-<tr><td colspan="2">
-<?=$Intro;?>
-</td></tr>
+<tr><td colspan="2"><?=$NavBar;?></td></tr>
+<tr><td colspan="2"><?=$Intro;?></td></tr>
 
 <tr><td><h4 class="rev">&nbsp;Benchmarking programming languages</h4></td></tr>
 <tr><td><p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort? <i>Caveat emptor!</i></p></td></tr>

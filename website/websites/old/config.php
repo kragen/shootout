@@ -35,8 +35,8 @@ define('HOMEPAGE_ROWS',20);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'old');
-define('SITE_TITLE','The Old Great Computer Language Shootout');
-define('BANNER_TITLE','The&nbsp;Old&nbsp;Great&nbsp;Computer&nbsp; <br/>Language&nbsp;Shootout');
+define('SITE_TITLE','The Doug Bagley Computer Language Shootout');
+define('BANNER_TITLE','The&nbsp;Doug&nbsp;Bagley&nbsp;Computer&nbsp; <br/>Language&nbsp;Shootout');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
