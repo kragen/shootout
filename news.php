@@ -391,7 +391,7 @@ contribution from Alexander Klimov.
   rebuild of all benchmark results takes just about 6 hours on minami.
   The rebuild on minami has shown that a few languages have switched
   positions on individual tests, but the overall <a
-  href="craps.shtml">CRAPS ratings</a> stayed the same.
+  href="craps.php">CRAPS ratings</a> stayed the same.
 </ul>
 
 <b>2001-01-16</b>
@@ -402,7 +402,7 @@ contribution from Alexander Klimov.
 <b>2001-01-15</b>
 <ul>
 <li>
-  Even more CRAPS.  Now the <a href="craps.shtml">Scorecard</a> can
+  Even more CRAPS.  Now the <a href="craps.php">Scorecard</a> can
   include Memory in the Score.
 <li>
   I've added in all the missing C++ programs (by copying the C
@@ -413,7 +413,7 @@ contribution from Alexander Klimov.
 <b>2001-01-09</b>
 <ul>
 <li>
-  The <a href="craps.shtml">Scorecard</a> page is now CGI, and you can
+  The <a href="craps.php">Scorecard</a> page is now CGI, and you can
   adjust the test weights to your preference.
 </ul>
 
@@ -430,7 +430,7 @@ contribution from Alexander Klimov.
   Per Hedbor pointed out I had a bad bug in some of my <a
   href="bench/echo/">echo client/server</a> programs (a missing
   wait()).  Now the timings should be much more accurate.
-<li>Added a <a href="craps.shtml">scorecard</a>! Now see which
+<li>Added a <a href="craps.php">scorecard</a>! Now see which
 language is best!  Proven empirically!  Forever and all time! ;-)
 <li>Added CMU Common Lisp.
 <li>

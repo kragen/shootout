@@ -123,7 +123,7 @@ href="mailto:(Brent Fulgham) bfulgham@users.alioth.debian(not .com).org">email</
     </tr>
   </table>
 
-<?php require("html/footer.php") ?>
+<?php require("html/footer.php"); ?>
 
 <!-- nobody really reads the mail sent to these addresses ... can ya dig it? -->
 <a href="mailto:charlescosgroveclean007@net-sieve.com">&nbsp;</a>
