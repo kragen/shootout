@@ -6,7 +6,7 @@
 <table class="div">
 <tr><td><h3 class="rev">&nbsp;What can I learn here?</h3></td></tr>
 <tr><td>
-<p>The <em>Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
+<p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
 <p>We are only trying to show the performance of various programming language implementations, on a limited number of micro-benchmarks.</p>
 
@@ -116,7 +116,7 @@ And then, maybe, we just-might consider it.</p>
 </td></tr>
 
 <tr class="b"><td>Where can I download the <strong>data</strong> from?</td></tr>
-<tr><td><p>You can <strong>download</strong> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="">csv file of timings and memory use ~350KB</a>.</p></td></tr>
+<tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv';?>" title="Download CSV spreadsheet">CSV spreadsheet</a> ~350KB.</p></td></tr>
 
 <tr class="b"><td>Where can I see what other people think about the Language Shootout?</td></tr>
 <tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/" title="shootout-list archives">mailing-list archives.</a></p></td></tr>
@@ -126,10 +126,11 @@ And then, maybe, we just-might consider it.</p>
 </td></tr>
 
 <tr class="b"><td>Where can I find out more?</td></tr>
-<tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
-</p></td></tr>
 
 <tr><td><p>You could learn something more about <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
+</p></td></tr>
+
+<tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
 </p></td></tr>
 </table>
 
