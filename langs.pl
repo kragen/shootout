@@ -368,6 +368,16 @@
        },
      },
 
+     stalin =>
+     { Lang => 'Scheme',
+       Home => 'http://www.neci.nec.com/homepages/qobi/software.html',
+       Down => 'http://www.neci.nec.com/homepages/qobi/software.html',
+       Type => 'native compiled',
+       Verfun => sub {
+           return('0.9');
+       },
+     },
+
      'smlnj' =>
      { Lang => 'SML',
        Home => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',

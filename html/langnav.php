@@ -33,6 +33,7 @@
         <div><a href="../../lang/smlnj/"><b><i>smlnj</i></b></a></div>
         <div><a href="../../lang/mlton/"><b><i>mlton</i></b></a></div>
         <div><a href="../../lang/bigloo/"><b><i>bigloo</i></b></a></div>
+        <div><a href="../../lang/stalin/"><b><i>stalin</i></b></a></div>
         <div><a href="../../lang/guile/">guile</a></div>
         <div><a href="../../lang/mzscheme/">mzscheme</a></div>
         <div><a href="../../lang/mzc/"><b><i>mzc</i></b></a></div>
