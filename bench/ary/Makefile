@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-10-05 02:29:08 bfulgham Exp $
+# $Id: Makefile,v 1.18 2004-10-08 06:04:01 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ary
@@ -9,6 +9,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 MLTONDEPS := ../../Include/mlton-src/basic.sml
 ERLFLAGS := -noinput
+MB_NHCRTS := +RTS -H40M
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 JREOPTS := -hotspot -da

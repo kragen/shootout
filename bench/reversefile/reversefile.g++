@@ -1,28 +1,108 @@
 // -*- mode: c++ -*-
-// $Id: reversefile.g++,v 1.3 2004-05-25 07:37:29 bfulgham Exp $
-// http://www.bagley.org/~doug/shootout/
-// with help from Allan Stokes
+// $Id: reversefile.g++,v 1.4 2004-10-08 06:04:06 bfulgham Exp $
+// http://shootout.alioth.debian.org/
+// 
+// Based on the C version by Alan Post <apost@recalcitrant.org>
+// C++-ified by Mark Fitzgerald
 
+#include <assert.h>
+#include <sys/uio.h>
 #include <iostream>
-#include <deque>
-#include <string>
-#include <algorithm>
 
 using namespace std;
 
-int main() {
-    typedef deque<string> LINES;
-    LINES l;
-    char line[256];
-    char buff[4096];
-    cin.rdbuf()->pubsetbuf(buff, 4096); // enable buffering
-    cout.rdbuf()->pubsetbuf(buff, 4096); // enable buffering
+//
+// Note that malloc(3) seems happier with chunks of 4096
+//
+const int MAXREAD = (4096 - sizeof( size_t ) - sizeof( void* ));
 
-    while (cin.getline(line, 256)) {
-        l.push_front(line);
+struct buf_t
+{
+    char d[MAXREAD];
+    size_t len;
+    buf_t *next;
+};
+
+static buf_t* read_lines( buf_t* tail )
+{
+    buf_t* curr = tail;
+    tail->next = NULL;
+
+    while ( true )
+    {
+        cin.read(curr->d, MAXREAD );
+	int nread = cin.gcount();
+	curr->len = nread;
+        if ( nread < MAXREAD ) { return curr; }
+        buf_t* head = new buf_t;
+        head->next = curr;
+        curr = head;
     }
-    for (LINES::iterator j = l.begin(); j != l.end(); j++) {
-        cout << (*j) << endl;
-    }
-    //copy (l.begin(), l.end(), ostreambuf_iterator<string>(cout,"\n"));
 }
+
+#define WRITEOUT( p_, l_ ) \
+        do { \
+            vec[ ivec ].iov_base = (char*) (p_); \
+            vec[ ivec ].iov_len = (int) (l_); \
+            ivec++; \
+            if ( ivec == IOV_MAX ) \
+            { \
+                writev( STDOUT_FILENO, vec, ivec ); \
+                ivec = 0; \
+            } \
+        } while (0)
+
+#define LINEOUT \
+        do { \
+            WRITEOUT( pos, end - pos); \
+            for (; loh != NULL; loh = loh->next ) \
+                WRITEOUT( loh->d, loh->len ); \
+        } while (0)
+
+int main(int argc, char* argv[])
+{
+    buf_t tail;
+    buf_t* head = read_lines( &tail );
+
+    buf_t* loh = NULL;
+    buf_t* curr = head;
+
+    struct iovec vec[ IOV_MAX ];
+    size_t ivec = 0;
+
+    while ( true )
+    {
+        char* buf = curr->d;
+        char* end = buf + curr->len;
+        char* pos = end;
+        for (;; pos--)
+        {
+            if ( pos <= buf )
+            {
+                buf_t* new_curr = curr->next;
+
+                if ( new_curr == NULL )
+                {
+                    LINEOUT;
+                    writev( STDOUT_FILENO, vec, ivec );
+                    return EXIT_SUCCESS;
+                }
+
+                curr->len = end - buf;
+                curr->next = loh;
+                loh = curr;
+                
+                curr = new_curr;
+                break;
+            }
+            if ( *(pos-1) == '\n' )
+            {
+                LINEOUT;
+                end = pos;
+            }
+        }
+    }
+    assert( NULL == "unreachable" );
+    return EXIT_FAILURE;
+}
+

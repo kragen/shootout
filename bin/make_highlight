@@ -13,6 +13,34 @@ BEGIN {
     require "langs.pl";
 }
 
+sub genfile ($$$) {
+    my ($benchdir, $benchmark, $impl) = @_;
+    my $source = "bench/$benchdir/$benchmark.$impl";
+
+    return unless -s $source;
+    
+    my $dest = "lang/$impl/" . basename($source) . ".html";
+    my $lang = $::LANG{$impl}->{Lang};
+    my $ext = $::LANG{$impl}->{Ext};
+
+    # Check that file needs to be generated
+    my ($sdev, $sino, $smode, $snlink, $suid, $sgid, $srdev, $ssize,
+    	$satime, $smtime, $sctime, $sblksize, $sblocks)
+	= stat $source;
+    my ($ddev, $dino, $dmode, $dnlink, $duid, $dgid, $drdev, $dsize,
+    	$datime, $dmtime, $dctime, $dblksize, $dblocks)
+	= stat $dest;
+
+    return 0 if ($dmtime >= $smtime);
+
+    my $command = "highlight -i $source -o $dest -S $ext -s typical -c /css/highlight.css";
+    #print "Trying $command\n";
+    unlink($dest);
+    system($command) == 0
+    	or print "$command failed: $1";
+    return 1;
+}
+
 sub main {
 
     print "Starting to generate HTML...\n";
@@ -36,39 +64,39 @@ sub main {
 	my $header = "Processing $impl...\nbench: ";
 	my $count = 0;
 	foreach my $benchmark (@allfiles) {
-	    next unless -d "bench/$benchmark";
-	    next if ($benchmark =~ /\.\./);
-	    next if ($benchmark =~ /\./);
-	    next if ($benchmark =~ /Include/);
-	    next if ($benchmark =~ /CVS/);
 
-	    my $source = "bench/$benchmark/$benchmark.$impl";
-	    next unless -s $source;
-	    my $dest = "lang/$impl/" . basename($source) . ".html";
-	    my $lang = $::LANG{$impl}->{Lang};
-	    my $ext = $::LANG{$impl}->{Ext};
+	    my $benchdir = $benchmark;
 
-	    # Check that file needs to be generated
-	    my ($sdev, $sino, $smode, $snlink, $suid, $sgid, $srdev, $ssize,
-	    	$satime, $smtime, $sctime, $sblksize, $sblocks)
-		= stat $source;
-	    my ($ddev, $dino, $dmode, $dnlink, $duid, $dgid, $drdev, $dsize,
-	    	$datime, $dmtime, $dctime, $dblksize, $dblocks)
-		= stat $dest;
+	    next unless -d "bench/$benchdir";
+	    
+	    next if ($benchdir =~ /\.\./);
+	    next if ($benchdir =~ /\./);
+	    next if ($benchdir =~ /Include/);
+	    next if ($benchdir =~ /CVS/);
 
-            next if ($dmtime >= $smtime);
 	    if ($count == 0) {
-	        print $header;
-		$implcount++;
-	    }
-	    $count++;
-	    print "$benchmark ";
+                print $header;
+            }
+            $count++;
 
-	    my $command = "highlight -i $source -o $dest -S $ext -s typical -c /css/highlight.css";
-	    #print "Trying $command\n";
-	    unlink($dest);
-	    system($command) == 0
-	    	or print "$command failed: $1";
+            if ( genfile($benchdir, $benchmark, $impl) ) {
+                print "$benchmark ";
+		$implcount++;
+            }
+
+	    if ($benchdir eq "plugin") {
+	        my @ends = ( "_2", "_3" );
+		foreach $end (@ends) {
+		    my $bmk = $benchmark . $end;
+		    my $file = "bench/$benchdir/$bmk" . ".$impl";
+		    next unless -s $file;
+		    if ( genfile($benchdir, $bmk, $impl) ) {
+                        print "$bmk ";
+                        $implcount++;
+                    }
+		}
+            }
+
 	}
 	print "\n" if ($count > 0);
     }
