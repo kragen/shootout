@@ -97,7 +97,7 @@
 	      <p class="warningmark"><strong>Disclaimer No. 1:</strong> I'm just a beginner in many
 	        of these languages, so if you can help me improve any of the
 		solutions, please drop me an <a
-href="mailto:(Doug Bagley) doug+(hairyrfc822)nospam.shootout@bagley(not .com).org">email</a>.  Thanks.</p>
+href="mailto:(Brent Fulgham) bfulgham@users.alioth.debian(not .com).org">email</a>.  Thanks.</p>
               <p class="warningmark"><strong>Disclaimer No. 2:</strong> These pages are provided for
 	        novelty purposes only.  Any other use voids the manufacturer's
 		warranty.  Do not mix with alchohol.  Some contents may consist
