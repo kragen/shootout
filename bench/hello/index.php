@@ -1,30 +1,8 @@
 <!--#set var="TITLE" value="Hello World" -->
 <!--#set var="KEYWORDS" value="performance, benchmark,
 computer, language, compare, cpu, memory" -->
-<!--#include virtual="../../html/header.shtml" -->
-<!--#include virtual="../../html/nav.shtml" -->
 
-<table width="70%"><tr>
-<td>
-  <!--#if expr="$QUERY_STRING = mem" -->
-    <!--#include virtual="data/all_mem.html" -->
-  <!--#elif expr="$QUERY_STRING = loc" -->
-    <!--#include virtual="data/all_loc.html" -->
-  <!--#elif expr="$QUERY_STRING = cpu-s" -->
-    <!--#include virtual="data/all_cpu-s.html" -->
-  <!--#else -->
-    <!--#include virtual="data/all.html" -->
-  <!--#endif -->
-</td>
-<td>
-  <img src="data/max.png">
-  <!--#include virtual="../../html/graph_note.shtml" -->
-  <p><small>[Results last updated: <!--#include virtual=".up_date" --> CDT]</small>
-</td>
-</tr></table>
-<p>
-
-<hr noshade size="5">
+<?php require("../../html/testtop.php"); ?>
 
 <h4>About this test</h4>
 <p>

@@ -1,6 +1,8 @@
 <?php require("html/header.php");
       require("nav.html");
       require("html/toptabs.php");
+      require("html/testnav.php");
+
       $parts = Explode('/', $_SERVER["SCRIPT_NAME"]);
       $current = $parts[count($parts) - 1];
 
@@ -8,40 +10,7 @@
 
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
-    <td id="leftcol" width="20%">
-      <div id="navcolumn">
-        <div id="projecttools" class="toolgroup">
-	  <div class="label">
-	    <strong>The Benchmark Tests</strong>
-	  </div>
-	  <div class="body">
-	  <div><a href="bench/ackermann/">Ackermann's Function</a></div>
-	  <div><a href="bench/ary/">Array Access</a></div>
-	  <div><a href="bench/wc/">Count Lines/Words/Chars</a></div>
-	  <div><a href="bench/echo/">Echo Client/Server</a></div>
-	  <div><a href="bench/except/">Exception Mechanisms</a></div>
-	  <div><a href="bench/fibo/">Fibonacci Numbers</a></div>
-	  <div><a href="bench/hash/">Hash (Associative Array) Access</a></div>
-	  <div><a href="bench/hash2/">Hashes, Part II</a></div>
-	  <div><a href="bench/heapsort/">Heapsort</a></div>
-	  <div><a href="bench/hello/">Hello World</a></div>
-	  <div><a href="bench/lists/">List Operations</a></div>
-	  <div><a href="bench/matrix/">Matrix Multiplication</a></div>
-	  <div><a href="bench/methcall/">Method Calls</a></div>
-	  <div><a href="bench/nestedloop/">Nested Loops</a></div>
-	  <div><a href="bench/objinst/">Object Instantiation</a></div>
-	  <div><a href="bench/prodcons/">Producer/Consumer Threads</a></div>
-	  <div><a href="bench/random/">Random Number Generator</a></div>
-	  <div><a href="bench/regexmatch/">Regular Expression Matching</a></div>
-	  <div><a href="bench/reversefile/">Reverse a File</a></div>
-	  <div><a href="bench/sieve/">Sieve of Eratosthenes</a></div>
-	  <div><a href="bench/spellcheck/">Spell Checker</a></div>
-	  <div><a href="bench/moments/">Statistical Moments</a></div>
-	  <div><a href="bench/strcat/">String Concatenation</a></div>
-	  <div><a href="bench/sumcol/">Sum a Column of Integers</a></div>
-	  <div><a href="bench/wordfreq/">Word Frequency Count</a></div>
-	</div>
-      </div>
+<?php benchlist(true, "."); ?>
       <div id="helptext" class="toolgroup">
         <div class="label">
 	  <strong>Notes:</strong>
@@ -60,8 +29,7 @@
 	  <div><a href="compare/binext/">Creating Binary Extensions</a></div>
 	</div>
       </div>
-      <div class="strut">&nbsp;</div>
-    </td>
+<?php nav_list_end(); ?>
     <td>
       <div id="bodycol">
         <div id="apphead">
