@@ -1,72 +1,118 @@
 (* -*- mode: sml -*-
- * $Id: echo.mlton,v 1.3 2004-05-21 07:58:16 bfulgham Exp $
+ * $Id: echo.mlton,v 1.4 2004-07-07 01:23:23 sweeks Exp $
  * http://www.bagley.org/~doug/shootout/
- * from Tom 7
+ * based on Daniel Wang's version for SML/NJ.
+ * Heavily modified by Stephen Weeks.
  *)
+structure Test : sig
+		    val main : (string * string list) -> OS.Process.status
+		 end = 	
+struct		
 
 exception Error of string
-
-open MLton.Socket
     
 val data = "Hello there sailor\n"
-    
-val num = case CommandLine.arguments() of
-    nil => 1
-  | n::_ => valOf (Int.fromString n)
+val dataSize = String.size data
 
-val (port, listener) = listen ()
-    handle _ => 
-        raise Error ("Can't listen...\n")
+fun mkSocks () =
+   let
+      val server = INetSock.TCP.socket ()
+      val client = INetSock.TCP.socket ()
+      val _ = Socket.bind (server, INetSock.any 0)
+      val saddr = INetSock.fromAddr (Socket.Ctl.getSockName server)
+      val _ = Socket.listen (server, 2)
+      val _ = Socket.connect (client, INetSock.toAddr saddr)
+      val _ = INetSock.TCP.setNODELAY (server, true)
+      val _ = INetSock.TCP.setNODELAY (client, true)
+   in
+      {client = client,
+       server = server}
+   end
 
-fun server () =
-    let val (_, _, ins, outs) = accept listener
-        fun s b = 
-            case TextIO.inputLine ins of
-	        NONE => let in
-		          Posix.Process.wait ();
-			  print (concat ["server processed ",
-			                 Int.toString b,
-					 " bytes\n"])
-			end
-	      | SOME(instr) =>
-	              case instr of
-		          "" => let in
-			          Posix.Process.wait ();
-                                  print (concat ["server processed ",
-				    	         Int.toString b,
-					         " bytes\n"])
-                                end
-                         | i =>  let in 
-                                   TextIO.output(outs, i);
-			           TextIO.flushOut outs;
-                                   s (b + 19)
-                                 end
-    in s 0
-    end
+fun recvBytes (sock, buf: Word8Array.array, bytesToRecv: int): int =
+   let
+      fun loop offset =
+	 let
+	    val r =
+	       Socket.recvArr (sock, Word8ArraySlice.slice (buf, offset, NONE))
+	 in
+	    if 0 = r
+	       then offset
+	    else
+	       let
+		  val offset = r + offset
+	       in
+		  if offset = bytesToRecv
+		     then offset
+		  else loop offset
+	       end
+	 end
+   in
+      loop 0
+   end
 
-fun client () =
-    let
-        val (ins, outs) = connect ("127.0.0.1", port)
-        fun c 0 = let in
-                      TextIO.closeOut outs;
-                      TextIO.closeIn ins
-                  end
-          | c n = let in
-                      TextIO.output(outs, data);
-		      TextIO.flushOut outs;
-                      case TextIO.inputLine ins of
-		          NONE => raise Error "Didn't receive the same data"
-			| SOME(instr) =>
-			      (case instr of
-			          data => let in
-				            c (n - 1)
-					  end
-			          | _  => raise Error "Didn't receive the same data")
-		   end
-    in
-        c num
-    end
+fun closeSock s =
+   (Socket.shutdown (s, Socket.NO_RECVS_OR_SENDS)
+    ; Socket.close s)
 
-val _ = case Posix.Process.fork () of
-    SOME pid => server ()
-  | NONE => client ()
+fun main (_, args) =
+   let
+      val num =
+	 case args of
+	    nil => 1
+	  | n::_ => valOf (Int.fromString n)
+      val {client = client_sock, server = server_sock} = mkSocks ()
+      fun server () =
+	 let
+	    val (sock, _) = Socket.accept server_sock
+	    val bufSize = dataSize
+	    val buf = Word8Array.array (bufSize, 0w0)
+	    fun loop numBytes =
+	       let
+		  val n = recvBytes (sock, buf, bufSize)
+	       in
+		  if n = 0
+		     then
+			(Posix.Process.wait ()
+			 ; TextIO.output (TextIO.stdOut,
+					  concat ["server processed ",
+						  Int.toString numBytes,
+						  " bytes\n"]))
+		  else
+		     (Socket.sendArr (sock, Word8ArraySlice.full buf)
+		      ; loop (numBytes + n))
+	       end
+	 in
+	    loop 0
+	 end
+      fun client () =
+	 let
+	    val dataSlice = Word8VectorSlice.full (Byte.stringToBytes data)
+	    val bufSize = dataSize
+	    val buf = Word8Array.array (bufSize, 0w0)
+	    fun loop n =
+	       if 0 = n
+		  then closeSock client_sock
+	       else
+		  let
+		     val _ = Socket.sendVec (client_sock, dataSlice)
+		     val reply = recvBytes (client_sock, buf, bufSize)
+		  in
+		     if data = Byte.unpackString (Word8ArraySlice.full buf)
+			then loop (n - 1)
+		     else raise Error "Didn't receive the same data"
+		  end
+	 in
+	    loop num
+	 end
+      val () =
+	 case Posix.Process.fork () of
+	    NONE => client ()
+	  | SOME pid => server ()
+   in
+      OS.Process.success
+   end
+
+end
+
+val _ = Test.main (CommandLine.name (), CommandLine.arguments ())
