@@ -1,0 +1,62 @@
+#!/bin/bash
+# -*- mode: lisp -*-
+PROG=${0%.jl}
+[ \! -f $PROG.jlc -o $0 -nt $PROG.jlc ] &&
+    rep --batch --no-rc -l compiler -f compile-batch $0
+exec rep "$PROG.jlc" "$@"
+!#
+
+;;; $Id: heapsort.rep,v 1.1 2004-05-28 06:57:37 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(define-structure main ()
+  (open rep rep.system)
+
+  (define IM     139968)
+  (define IA       3877)
+  (define IC      29573)
+
+  (define LAST 42)
+  (define (gen_random max)
+    (/ (* max (setq LAST (modulo (+ (* LAST IA) IC) IM))) IM))
+
+  (define (heapsort n ra)
+    (let ((ir n)
+	  (l (+ (lsh n -1) 1))
+	  (i 0) 
+	  (j 0)
+	  (rra 0.0))
+      (catch 'return
+	(while #t
+	  (cond ((> l 1)
+		 (setq rra (aref ra (setq l (- l 1)))))
+		(t
+		 (setq rra (aref ra ir))
+		 (aset ra ir (aref ra 1))
+		 (setq ir (- ir 1))
+		 (cond ((= ir 1)
+			(aset ra 1 rra)
+			(throw 'return)))))
+	  (setq i l)
+	  (setq j (lsh l 1))
+	  (while (<= j ir)
+	    (cond ((and (< j ir) (< (aref ra j) (aref ra (+ j 1))))
+		   (setq j (+ j 1))))
+	    (cond ((< rra (aref ra j))
+		   (aset ra i (aref ra j))
+		   (setq j (+ j (setq i j))))
+		  (t
+		   (setq j (+ ir 1)))))
+	  (aset ra i rra)))))
+
+  (let* ((arg (get-command-line-option "--num" t))
+	 (n (if arg (read-from-string arg) 1))
+	 (last (+ n 1))
+	 (ary (make-vector last 0)))
+    (do ((i 1 (+ i 1)))
+	((= i last))
+      (aset ary i (gen_random 1.0)))
+    (heapsort n ary)
+    (let ((result (aref ary n)))
+      (setq result (/ (round (* result 10000000000)) 10000000000))
+      (format standard-output "%12d\n" result))))

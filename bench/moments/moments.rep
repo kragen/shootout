@@ -1,0 +1,84 @@
+#!/bin/bash
+# -*- mode: lisp -*-
+PROG=${0%.jl}
+[ \! -f $PROG.jlc -o $0 -nt $PROG.jlc ] &&
+    rep --batch --no-rc -l compiler -f compile-batch $0
+exec rep "$PROG.jlc" "$@"
+!#
+
+;;; TBD: figure out how to format results better
+
+;;; $Id: moments.rep,v 1.1 2004-05-28 07:00:24 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(define-structure main ()
+  (open rep rep.system rep.regexp)
+
+  ;; I can't think of an easier way to format a floating point number
+  ;; and be able to specify number of digits following decimal point.
+  (define (fltfmt decpts number)
+    (let* ((x (expt 10 decpts))
+	   (pad (format #f "%d" x))
+	   (numlist (string-split "\\." (format #f "%d" (/ (round (* number x)) x))))
+	   (zeros (substring pad (- (length pad) (- decpts (length (cadr numlist))))))
+	   (numstr (concat (car numlist) "." (cadr numlist) zeros)))
+      numstr))
+
+  ;; eat the unused command line arg
+  (get-command-line-option "--num" t)
+
+  (let* ((sum 0.0)
+	 (numlist (let loop ((line (read-line))
+			     (numlist '()))
+		       (if (not line)
+			   numlist
+			 (let ((num (read-from-string line)))
+			   (setq sum (+ num sum))
+			   (loop (read-line) (cons num numlist)))))))
+    (let ((n (length numlist)))
+      (let ((mean (/ sum n))
+	    (average_deviation 0.0)
+	    (standard_deviation 0.0)
+	    (variance 0.0)
+	    (skew 0.0)
+	    (kurtosis 0.0)
+	    (median 0.0)
+	    (deviation 0.0))
+	(let loop ((nums numlist))
+	     (if (not (null nums))
+		 (progn
+		   (setq deviation (- (car nums) mean))
+		   (setq average_deviation (+ average_deviation (abs deviation)))
+		   (setq variance (+ variance (expt deviation 2.0)))
+		   (setq skew (+ skew (expt deviation 3.0)))
+		   (setq kurtosis (+ kurtosis (expt deviation 4)))
+		   (loop (cdr nums)))))
+
+	(setq average_deviation (/ average_deviation n))
+	(setq variance (/ variance (1- n)))
+	(setq standard_deviation (sqrt variance))
+
+	(cond ((> variance 0.0)
+	       (setq skew (/ skew (* n variance standard_deviation)))
+	       (setq kurtosis (- (/ kurtosis (* n variance variance))
+				 3.0))))
+
+	(setq numlist (sort numlist))
+	(let ((mid (/ n 2)))
+	  (if (zerop (mod n 2))
+	      (setq median (/ (+ (elt numlist mid)
+				 (elt numlist (1- mid)))
+			      2.0))
+	    (setq median (elt numlist mid))))
+      
+	
+	(setq standard_deviation (/ (round (* standard_deviation 1000000)) 1000000))
+
+	(format standard-output "n:                  %d\n" n)
+	(format standard-output "median:             %s\n" (fltfmt 6 median))
+	(format standard-output "mean:               %s\n" (fltfmt 6 mean))
+	(format standard-output "average_deviation:  %s\n" (fltfmt 6 average_deviation))
+	(format standard-output "standard_deviation: %s\n" (fltfmt 6 standard_deviation))
+	(format standard-output "variance:           %s\n" (fltfmt 6 variance))
+	(format standard-output "skew:               %s\n" (fltfmt 6 skew))
+	(format standard-output "kurtosis:           %s\n" (fltfmt 6 kurtosis))))))
