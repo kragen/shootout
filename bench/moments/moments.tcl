@@ -1,27 +1,24 @@
 #!/usr/bin/tclsh
-# $Id: moments.tcl,v 1.3 2005-03-22 05:34:10 bfulgham Exp $
+# $Id: moments.tcl,v 1.4 2005-03-31 14:51:07 sgeard-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 
 proc main {} {
-    set sum 0.0
-    set nums [lsort -real [read stdin]]
-    foreach num $nums {
-	set sum [expr {$sum + $num}]
-    }
+    foreach {sum average_deviation variance skew kurtosis} {0 0 0 0 0} break
+
+    set nums [read stdin]
+    foreach num $nums { incr sum $num }
     set n [llength $nums]
-    set mean [expr {$sum / $n}]
-    set average_deviation 0.0
-    set standard_deviation 0.0
-    set variance 0.0
-    set skew 0.0
-    set kurtosis 0.0
+    set mean [expr {double($sum) / $n}]
 
     foreach num $nums {
-        set deviation [expr {$num - $mean}]
-        set average_deviation [expr {$average_deviation + abs($deviation)}]
-        set variance [expr {$variance + pow($deviation, 2)}]
-        set skew [expr {$skew + pow($deviation, 3)}]
-        set kurtosis [expr {$kurtosis + pow($deviation, 4)}]
+	set deviation [expr {$num - $mean}]
+	set dev2 [expr {$deviation * $deviation}]
+	set dev3 [expr {$dev2 * $deviation}]
+	set dev4 [expr {$dev3 * $deviation}]
+	set average_deviation [expr {$average_deviation + abs($deviation)}]
+	set variance [expr {$variance + $dev2}]
+	set skew [expr {$skew + $dev3}]
+	set kurtosis [expr {$kurtosis + $dev4}]
     }
 
     set average_deviation [expr {$average_deviation / $n}]
@@ -29,17 +26,18 @@ proc main {} {
     set standard_deviation [expr {sqrt($variance)}]
 
     if {$variance} {
-        set skew [expr {$skew / ($n * $variance * $standard_deviation)}]
-        set kurtosis [expr {($kurtosis / ($n * $variance * $variance)) - 3.0}]
+	set skew [expr {$skew / ($n * $variance * $standard_deviation)}]
+	set kurtosis [expr {$kurtosis / ($n * $variance * $variance) - 3}]
     }
 
+    set nums [lsort -integer $nums]
     set mid [expr {int($n / 2)}]
     if [expr {$n % 2}] {
-        set median [lindex $nums $mid]
+	set median [lindex $nums $mid]
     } else {
-        set a [lindex $nums $mid]
-        set b [lindex $nums [expr {$mid - 1}]]
-        set median [expr {($a + $b) / 2.0}]
+	set a [lindex $nums $mid]
+	set b [lindex $nums [incr mid -1]]
+	set median [expr {double($a + $b) / 2}]
     }
 
     puts [format "n:                  %d" $n]
