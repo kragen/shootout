@@ -1,4 +1,3 @@
-#!/cygdrive/c/Perl/bin/perl -w
 #/usr/bin/perl
 
 # The Great Computer Language Shootout
