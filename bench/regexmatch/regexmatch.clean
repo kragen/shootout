@@ -1,0 +1,267 @@
+module regexmatch
+
+import StdEnv,ArgEnv
+argi = if (size cl == 2) (toInt (cl.[1])) 1
+where
+	cl = getCommandLine
+
+Start world
+	# (console, world)	= stdio world
+	# (phones,console)	= readInput [] console
+	# tb			= 0
+	# (errptr,tb)		= malloc 1024 tb
+	# (errhdl,tb)		= malloc 4 tb
+	# tb			= store errhdl errptr tb
+	# (erroffset,tb)	= malloc 4 tb
+	# tb			= store erroffset 0 tb
+//	# (re,tb)		= pcre_compile pattern 0 errhdl erroffset NULL tb
+	# (re,tb)		= pcre_compile pattern` 0 errhdl erroffset NULL tb
+	| re == 0		= abort "pcre_compile failed\n"
+	# (study,tb)		= pcre_study re 0 errhdl tb
+	# (errres,tb)		= load errhdl tb
+	| study == 0 && errres <> 0
+		= abort "pcre_study failed\n"
+	# (nmptr,tb)		= malloc 4 tb
+	# tb			= store nmptr 0 tb
+	# (cnt,tb)		= pcre_fullinfo re NULL PCRE_INFO_CAPTURECOUNT nmptr tb
+	| cnt <> 0		= abort "pcre_fullinfo failed\n"
+	# (nm,tb)		= load nmptr tb
+	# nm			= nm + 1
+	# tb			= store nmptr nm tb
+	# ovecsize		= 4 * nm * 3
+	# (ovec,tb)		= malloc ovecsize tb
+	
+	
+	# (out,tb)		= oloop argi console phones nm ovec ovecsize re study tb
+	# (ok,world)		= fclose out world
+	= world
+
+oloop cnt out phones nm ovec ovecsize re study tb
+	# count		= 1
+//	# num		= createArray 256 '@'
+	# num		= "(@@@) @@@-@@@@"
+	# nb		= nm*2*4
+	# ovecs` 	= createArray nb 0
+	# (count,num,ovecs`,out,tb) = seq [iloop (n==cnt) ovec ovecsize nm nb re study phones \\ n <- [1..cnt]] (count,num,ovecs`,out,tb)
+	= (out,tb)
+
+iloop :: !.Bool !.Int !.Int !.Int !.Int !.Int !.Int ![String] !*(!.Int,!*String,!{#Int},!*File,!*Toolbox) -> (!Int,!*String,!{#Int},!*File,!*Toolbox)
+iloop print ovec ovecsize nm nb  re study [] (count,num,ovecs`,out,tb)
+	= (count,num,ovecs`,out,tb)
+iloop print ovec ovecsize nm nb re study [phones_i:phones] (count,num,ovecs`,out,tb)
+	# (count,num,ovecs`,out,tb) = match print ovec ovecsize nm nb re study phones_i (count,num,ovecs`,out,tb)
+	= iloop print ovec ovecsize nm nb re study phones (count,num,ovecs`,out,tb)
+
+match :: !.Bool !.Int !.Int !.Int !.Int !.Int !.Int !String !*(!.Int,!*String,!{#Int},!*File,!*Toolbox) -> (!Int,!*String,!{#Int},!*File,!*Toolbox)
+match print ovec ovecsize nm nb re study phones_i (count,num,ovecs`,out,tb)
+	# (n,tb)	= pcre_exec re study phones_i (size phones_i) 0 0 ovec ovecsize tb
+	| n <> nm
+		= (count,num,ovecs`,out,tb)
+	# (ovecs`,tb)	= LoadOvec ovecs` ovec nb tb
+	# ss1		= ss phones_i ovecs` 1
+	# ss2		= ss phones_i ovecs` 2
+	# ss3		= ss phones_i ovecs` 3
+	# ss4		= ss phones_i ovecs` 4
+//	# ss5		= ss phones_i ovecs` 5
+//	# ss6		= ss phones_i ovecs` 6
+	# ss0		= ss phones_i ovecs` 0
+//	# area		= if (size ss3 == 0) ss4 ss3
+//	# exch		= ss5
+//	# exts		= ss6
+	# area		= ss2
+	# exch		= ss3
+	# exts		= ss4
+//	# num		= "("+++area+++") "+++exch+++"-"+++exts
+	# num		= ss` phones_i ovecs` 2 num 1
+	# num		= ss` phones_i ovecs` 3 num 6
+	# num		= ss` phones_i ovecs` 4 num 10
+	| not print
+		= (count,num,ovecs`,out,tb)
+	#! out = out <<< count <<< ": " <<< num <<< "\n"
+	= (count+1,num,ovecs`,out,tb)
+
+//
+ss :: !String !{#Int} !.Int -> String
+ss string ovecs i
+	# j		= i * 2
+	# b		= ovecs.[j]
+	# e		= ovecs.[j+1]
+	= string%(b,e-1)
+
+ss` :: !String !{#Int} !.Int !*String !Int -> *String
+ss` string ovecs i res k
+	# j		= i * 2
+	# b		= ovecs.[j]
+	# e		= ovecs.[j+1]
+	# res	= ssloop string k b e res
+	= res
+where
+	ssloop :: !String !Int !Int !.Int !*{#Char} -> *{#Char}
+	ssloop string x y s res
+		| y >= s
+			= res
+		= ssloop string (x+1) (y+1) s {res & [x] = string.[y]}
+
+LoadOvec :: !{#Int} !Int !Int !*Toolbox -> (!{#Int},!*Toolbox)
+LoadOvec a ptr nb tb
+	# tb	= mmove a ptr nb tb
+	= (a,tb)
+	
+readInput acc input
+	# (l,input)	= freadline input
+	| size l == 0
+		= (reverse acc,input)
+	= readInput [l:acc] input
+
+	
+NULL				:== 0
+PCRE_INFO_CAPTURECOUNT		:== 2
+pattern = 
+   "(^|[^0-9\\(]+)" +++				// $1
+   "(" +++					// $2
+   "\\(([0-9][0-9][0-9])\\)" +++		// $3
+   "|" +++
+   "([0-9][0-9][0-9])" +++			// $4
+   ")" +++
+   " " +++
+   "([0-9][0-9][0-9])" +++			// $5
+   "[ -]"  +++
+   "([0-9][0-9][0-9][0-9])" +++			// $6
+   "[^0-9]" +++
+   "\0"
+
+pattern` = 
+   "(?:^|[^\\d\\(])"	+++	/* must be preceeded by non-digit */
+   "(\\()?"		+++	/* match 1: possible initial left paren */
+   "(\\d\\d\\d)"	+++	/* match 2: area code is 3 digits */
+   "(?(1)\\))"		+++	/* if match1 then match right paren */
+   "[ ]"		+++	/* area code followed by one space */
+   "(\\d\\d\\d)"	+++	/* match 3: prefix of 3 digits */
+   "[ -]"		+++	/* separator is either space or dash */
+   "(\\d\\d\\d\\d)"	+++	/* match 4: last 4 digits */
+   "\\D"			/* must be followed by a non-digit */
+
+
+:: MyPtr a	:== Int
+:: PCRE		:== Int
+:: PCREE	:== Int
+pcre_compile :: !String !Int !(MyPtr String) !(MyPtr Int) !Int !*Toolbox -> (!PCRE,!*Toolbox)
+pcre_compile _ _ _ _ _ _ = code {
+	ccall pcre_compile "sIIII:I:I"
+	}
+pcre_study :: !PCRE !Int !(MyPtr String) !*Toolbox -> (!PCREE,!*Toolbox)
+pcre_study _ _ _ _ = code {
+	ccall pcre_study "III:I:I"
+	}
+pcre_fullinfo :: !PCRE !PCREE !Int !Int !*Toolbox -> (!Int,!*Toolbox)
+pcre_fullinfo _ _ _ _ _ = code {
+	ccall pcre_fullinfo "IIII:I:I"
+	}
+pcre_exec :: !PCRE !PCREE !String !Int !Int !Int !(MyPtr Int) !Int !*Toolbox -> (!Int,!*Toolbox)
+pcre_exec _ _ _ _ _ _ _ _ _ = code {
+	ccall pcre_exec "IIsIIIII:I:I"
+	}
+
+// memory access
+:: Ptr		:== Int
+:: Toolbox	:== Int
+// win32
+/*
+import code from library "pcre_library"
+malloc :: !Int !*Toolbox -> (!Ptr,!*Toolbox)
+malloc n tb = (GlobalAlloc GPTR n,tb)
+where
+	GPTR	= 0x0040
+	
+	GlobalAlloc :: !Int !Int -> Ptr
+	GlobalAlloc uFlags dwBytes = code {
+		ccall GlobalAlloc@8 "PII:I"
+		}
+load :: !Ptr !*Toolbox -> (!Int,!*Toolbox)
+load ptr tb = (read4 ptr,tb)
+where
+	read4 :: !Ptr -> Int
+	read4 p = code {
+		instruction 139
+		instruction 0 | mov   eax,dword ptr [eax]
+		}
+store :: !Ptr !Int !*Toolbox -> *Toolbox
+store ptr val tb
+	= write4 ptr val tb
+where
+	write4 :: !Ptr !Int !.env -> .env
+	write4 address value env = code {
+			instruction 137		| movl %eax, (%ebx)
+			instruction 3
+			pop_b	2
+		}
+mmove :: !.{#Int} !Int !Int !*Toolbox -> *Toolbox
+mmove dst src len tb = code {
+	ccall RtlMoveMemory@12 "PAII:V:I"
+	}
+*/
+
+// linux386
+malloc :: !Int !*Toolbox -> (!Ptr,!*Toolbox)
+malloc n tb
+	# (ptr,tb)	= malloc_ n tb
+	| ptr == 0	= abort "malloc failed\n"
+	= (ptr,tb)
+where
+	malloc_ :: !Int !*Toolbox -> (!MyPtr a,!*Toolbox)
+	malloc_ _ _ = code {
+		ccall malloc "I:I:I"
+		}
+load :: !Ptr !*Toolbox -> (!Int,!*Toolbox)
+load ptr tb = (read4 ptr,tb)
+where
+	read4 :: !Ptr -> Int
+	read4 p = code {
+		instruction 139
+		instruction 0 | mov   eax,dword ptr [eax]
+		}
+store :: !Ptr !Int !*Toolbox -> *Toolbox
+store ptr val tb
+	= write4 ptr val tb
+where
+	write4 :: !Ptr !Int !.env -> .env
+	write4 address value env = code {
+			instruction 137		| movl %eax, (%ebx)
+			instruction 3
+			pop_b	2
+		}
+
+mmove :: !.{#Int} !Int !Int !*Toolbox -> *Toolbox
+mmove dst src len tb = code {
+	ccall memmove "AII:V:I"
+	}
+// mosx
+/*
+malloc :: !Int !*Toolbox -> (!Ptr,!*Toolbox)
+malloc n tb
+	# (ptr,tb)	= malloc_ n tb
+	| ptr == 0	= abort "malloc failed\n"
+	= (ptr,tb)
+where
+	malloc_ :: !Int !*Toolbox -> (!MyPtr a,!*Toolbox)
+	malloc_ _ _ = code {
+		ccall malloc "I:I:I"
+		}
+load :: !Ptr !*Toolbox -> (!Int,!*Toolbox)
+load ptr tb
+	= (LoadLong1 ptr, tb)
+where
+	LoadLong1 :: !Ptr -> Int
+	LoadLong1 p = code (p=U)(r=A0){
+		instruction 0x83180000	|	lwz	r24,0(r24)
+		}
+store :: !Ptr !Int !*Toolbox -> *Toolbox
+store ptr val tb
+	= StoreLong1 ptr val
+where
+	StoreLong1 :: !Ptr !Int -> *Ptr
+	StoreLong1 p v = code (p=U,v=U)(q=A0){
+		instruction	0x93190000	|	stw	r24,0(r25)
+		instruction	0x7F38CB78	|	mr	r24,r25
+		}
+*/
