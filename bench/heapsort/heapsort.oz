@@ -1,8 +1,9 @@
-%%% $Id: heapsort.oz,v 1.1 2004-05-23 06:37:41 bfulgham Exp $
+%%% $Id: heapsort.oz,v 1.2 2005-03-07 05:25:20 bfulgham Exp $
 %%% http://dada.perl.it/shootout/
 %%%
 %%% contributed by Isaac Gouy
-
+%%% Using string conversion routines suggested by Juergen Stuber
+%%%   and Jorge Marques Pelizzoni
 
 %%  Transliterated from the Mercury solution
 %%
@@ -85,13 +86,68 @@ define
       R = {IntToFloat S} / {IntToFloat IM}
    end
 
+   fun {FloatAbs X}
+      if X >= 0.0 then X else ~X end
+   end
+
+   fun {FloatSquare X}
+      X * X
+   end
+
+   fun {FloatPower X E}
+      if E==0 then 1.0
+      elseif E<0 then raise negativeExponent(E) end
+      else
+	 if E mod 2 == 1 then X else 1.0 end
+	 * {FloatSquare {FloatPower X E div 2}}
+      end
+   end
+
+   fun {MakePadding Ch L}
+      if L > 0 then
+	 Padding = {MakeList L}
+      in
+	 for V in Padding do V = Ch end
+	 Padding
+      else
+	 nil
+      end
+   end
+
+   fun {PadLeft Ch String L}
+      PL = L - {List.length String}
+   in
+      {MakePadding Ch PL} # String
+   end
+
+   fun {FloatToVS F Prec}
+      fun {FractionToString Frac Prec}
+	 if Prec =< 0 then ""
+	 elseif Prec > 9 then raise excessivePrecision(Prec) end
+	 else
+	    Shifted = {FloatPower 10.0 Prec} * Frac
+	    Digits = {FloatToInt {Round Shifted}}
+	 in
+	    {PadLeft &0 {IntToString Digits} Prec}
+	 end
+      end
+
+      I = {FloatToInt {if F >= 0.0 then Floor else Ceil end F}}
+      Frac = {FloatAbs F - {IntToFloat I}}
+   in
+      {IntToString I} # "." # {FractionToString Frac Prec}
+   end
+
+   fun {FloatToString F Prec}
+      {VirtualString.toString {FloatToVS F Prec}}
+   end   
 in
    local Args N RandomHeap SortedHeap in
       [Args] = {Application.getArgs plain}
       N = {String.toInt Args}
       RandomHeap = {Random_heap {NewArray 0 N-1 0.0} 0 Seed}
       SortedHeap = {Heapsort RandomHeap N-1}
-      {System.showInfo {Get SortedHeap N-1}}
+      {System.showInfo {FloatToString {Get SortedHeap N-1} 9}}
    end
    {Application.exit 0}
 end

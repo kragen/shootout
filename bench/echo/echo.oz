@@ -1,4 +1,4 @@
-%%% $Id: echo.oz,v 1.1 2004-05-23 06:04:30 bfulgham Exp $
+%%% $Id: echo.oz,v 1.2 2005-03-07 05:25:19 bfulgham Exp $
 %%% http://dada.perl.it/shootout/
 %%%
 %%% contributed by Isaac Gouy
@@ -88,7 +88,7 @@ in
          %%    pass the number of times the client should send the data
 
          ArgList = ["/C" "echo.oz" "client" {IntToString SPort} A3]
-         Pid = {New Open.pipe init(cmd: "cmd.exe" args: ArgList)}
+         Pid = {New Open.pipe init(cmd: "/bin/sh" args: ArgList)}
 
          %% Synchronize with server thread completion and indirectly with
          %% the client process. Wait here until the dataflow variable Bytes 
