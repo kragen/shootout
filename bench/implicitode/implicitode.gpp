@@ -1,0 +1,101 @@
+#include <math.h>
+#include <iostream>
+#include <complex>
+using namespace std;
+#define op operator
+
+template <class F> F sqr(const F &x) { return x*x; }
+template <class F> F pow(const F &x, int i)
+{ if(i<=0) return F(1); if(i&1) return x*pow(x,i-1); return sqr(pow(x,i/2)); }
+
+template <class F>
+struct ad
+{
+  F x,dx;
+  ad() : x(0), dx(0) {}
+  ad(int y) : x(y), dx(0) {}
+  ad(const F &y, F dy=F(0)) : x(y), dx(dy) {}
+  ad op +(const ad &y) const { return ad(x+y.x,dx+y.dx); }
+  ad op -(const ad &y) const { return ad(x-y.x,dx-y.dx); }
+  ad op *(const ad &y) const { return ad(x*y.x,dx*y.x+x*y.dx); }
+  ad op / (const ad &y) const { return ad(x/y.x,(dx*y.x-x*y.dx)/(y.x*y.x)); }
+};
+
+template <class F> F rat(const F &x)
+{ return (x*F(2)+pow(x,2)*F(3)+pow(x,6)*F(7)+pow(x,11)*F(5)+F(1))/
+    (x*F(5)-pow(x,3)*F(6)-pow(x,7)*F(3)+F(2)); }
+
+template <class F, class fun>
+F newton(F x0, int n, fun &g)
+{
+  ad<F> val; int i;
+  for(i=0;i<n;i++) { val=g(ad<F>(x0,F(1))); x0=x0-val.x/val.dx; }
+  return x0;
+}
+
+template <class F> struct sqrfinder
+{ ad<F> op () (const ad<F> &z) { return sqr(z)-ad<F>(2); } };
+template <class F> struct ratfinder
+{ ad<F> op () (const ad<F> &z) { return rat(z); } };
+
+template <class F, class fun>
+struct trapezoid_method_rooter
+{
+  fun g;
+  ad<F> g0;
+  F y0,t0,t1;
+  trapezoid_method_rooter(fun &G, const F &Y0, const F &T0, const F &T1) :
+    g(G),y0(Y0),t0(T0),t1(T1),g0(G(T0,Y0)) {}
+  ad<F> op () (const ad<F> &y1)
+  { return (g(ad<F>(t1),y1)+g0)*((t1-t0)/F(2))+ad<F>(y0)-y1; }
+};
+
+template <class F, class fun>
+F trapezoid_method(F t0, const F &dt, F y0, fun &g, int numsteps)
+{
+  int i;
+  for(i=0;i<numsteps;i++)
+    {
+      trapezoid_method_rooter<F,fun> solver(g,y0,t0,t0+dt);
+      y0=newton(y0,10,solver); t0=t0+dt;
+    }
+  return y0;
+}
+
+string pr(float x) { char s[100]; sprintf(s,"%.30e",x); return string(s); }
+string pr(double x) { char s[100]; sprintf(s,"%.30e",x); return string(s); }
+string pr(long double x) { char s[100]; sprintf(s,"%.30Le",x); return string(s); }
+template <class F>
+string pr(const complex<F> &x) { return pr(real(x))+" "+pr(imag(x)); }
+template <class F>
+ostream & op <<(ostream &o, const ad<F> &x) { return o<<pr(x.x)<<" "<<pr(x.dx); }
+
+template <class F>
+struct sqrintegrand { F op () (const F &t, const F &y) { return sqr(y); } };
+template <class F>
+struct ratintegrand { F op () (const F &t, const F &y) { return rat(y); } };
+
+template <class F>
+void integrate_functions(F x0, int n)
+{
+  sqrintegrand<ad<F> > i1;
+  ratintegrand<ad<F> > i2;
+  cout<<"i1 "<<pr(trapezoid_method(F(1),F(1)/F(n),x0,i1,n))
+    <<"\ni2 "<<pr(trapezoid_method(F(1),F(1)/F(n),x0,i2,n))<<"\n";
+}
+
+int main(void)
+{
+  sqrfinder<long double> mysqrt; ratfinder<long double> myratt;
+  double x(newton(-1.0l,6,myratt));
+  cout<<"rational_taylor_series: "<<rat(ad<double>(0.25,1.0))<<endl;
+  cout<<"newton-sqrt_2: "<<pr(newton(1.0l,10,mysqrt))<<endl;
+  cout<<"newton-rat: "<<pr(x)<<" "<<pr(rat(x))<<endl;
+  integrate_functions((float)0.01,200);
+  integrate_functions((double)0.02,200);
+  integrate_functions((long double)0.03L,200);
+  integrate_functions(complex<float>(0.01,0.01),50);
+  integrate_functions(complex<double>(0.02,0.02),50);
+  integrate_functions(complex<long double>(0.03L,0.03L),50);
+  return 0;
+}
