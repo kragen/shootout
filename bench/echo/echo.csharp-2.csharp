@@ -1,0 +1,117 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org
+
+   contributed by Isaac Gouy */
+
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Diagnostics;
+
+class Echo
+{
+   static void Main(string[] args)
+   {
+      int n = 1;
+      if (args.Length > 0){
+         n = Int32.Parse(args[0]);
+
+         Process p = new Process();
+         ProcessStartInfo i = p.StartInfo;
+         i.FileName = "mono";
+         i.Arguments = "echo.csharp_run";
+         i.UseShellExecute = false;
+         p.Start();
+
+         EchoClient.Start(n);
+      }
+      else {
+         EchoListener.Start();
+      }
+   }
+}
+
+
+public class EchoListener 
+{
+   public static void Start() 
+   {
+      IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+      IPAddress ipAddress = ipHostInfo.AddressList[0];
+      IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+
+      Socket listener = new Socket(AddressFamily.InterNetwork,
+         SocketType.Stream, ProtocolType.Tcp );
+
+      try {
+         listener.Bind(localEndPoint);
+         listener.Listen(10);
+         Socket handler = listener.Accept();
+
+         byte[] buffer = new byte[32];
+         int count = 0;
+
+         int bytesRec;
+         while (true) {
+            bytesRec = handler.Receive(buffer);
+            if (bytesRec > 0) {
+               handler.Send(buffer, 0, bytesRec, SocketFlags.None);
+               count += bytesRec;
+            }
+            else break; 
+         }
+         Console.WriteLine("server processed {0} bytes", count);
+
+         handler.Shutdown(SocketShutdown.Both);
+         handler.Close();
+      } 
+      catch (Exception e){
+         Console.WriteLine(e.ToString());
+      }
+   }
+}
+
+
+public class EchoClient 
+{
+   private const string data = "Hello there sailor\n";
+
+   public static void Start(int n) 
+   {
+      byte[] bytes = new byte[32];
+
+      try {
+         IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+         IPAddress ipAddress = ipHostInfo.AddressList[0];
+         IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+
+         Socket sender = new Socket(AddressFamily.InterNetwork, 
+         SocketType.Stream, ProtocolType.Tcp );
+         sender.Connect(remoteEP);
+
+         byte[] msg = Encoding.ASCII.GetBytes(data);
+         int bytesSent, bytesRec;
+         bool responseOK;
+         while (n-- > 0){
+            bytesSent = sender.Send(msg);
+
+            bytesRec = sender.Receive(bytes);
+            responseOK = msg.Length == bytesRec;
+            if (responseOK)
+               for (int i=0; i < bytesRec; i++)
+                  if ( !(responseOK = msg[i] == bytes[i]) )
+                     break;
+            if (!responseOK) Console.WriteLine("Response doesn't match message.");
+         }
+
+         sender.Shutdown(SocketShutdown.Both);
+         sender.Close();
+
+      } 
+      catch (Exception e){
+         Console.WriteLine( e.ToString());
+      }
+   }
+}
