@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:08:56 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-06-18 09:01:05 dbr-guest Exp $
 
 include Make.header
 
-all: versions
+all: versions links
 	(cd bench ; make $@)
 	(cd bench ; make --no-print-directory report> report.txt)
 	make recent craps codelinks
@@ -32,3 +32,8 @@ craps:
 
 recent:
 	@bin/make_recent > recent.html
+
+links:
+	for j in `find bench -name '*.java'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
+	done

@@ -222,6 +222,18 @@
        },
      },
 
+     kaffe =>
+     { Lang => 'Java',
+       Home => 'http://kaffe.org',
+       Down => 'http://www.kaffe.org/ftp/pub/kaffe/',
+       Type => 'interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{KAFFE} -version 2>&1`;
+	   $ver =~ /(Version.*) Java version.*\n/;
+	   return($1);
+       },
+     },
+
      lua =>
      { Lang => 'Lua',
        Home => 'http://www.lua.org/',
