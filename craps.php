@@ -76,7 +76,7 @@
 	  <p>The <b>CRAPS!</b> point system works as follows:</p>
 	  <ul>
 	    <li>For each test, the "best score" is determined by locating the
-	      lowest non-zero score.  (Thi is done for CPU, Memory, and LOC scores.)</li>
+	      lowest non-zero score.  (This is done for CPU, Memory, and LOC scores.)</li>
 	    <li>For each language, compute its score in logarithmic space:<br>
 	    <blockquote>
 	         <strong>score</strong>(<em>x</em>) = 1 / (1 + <strong>log2</strong>(<em>x</em> / <em>b</em>))<br>
