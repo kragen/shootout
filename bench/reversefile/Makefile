@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-18 08:08:22 dbr-guest Exp $
+# $Id: Makefile,v 1.6 2004-06-24 07:38:15 bfulgham Exp $
 include ../../Make.header
 
 TEST    := reversefile
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 RUNTESTS :=  $(MINIBENCH) --conf ../../Minibench.conf --range 5,10,15,20 \
 	  --inputfile Input --geninput \
 	  --ignore reversefile.clean \
+	  --ignore reversefile.csharp \
 	  --ignore reversefile.stalin
 
 include ../../Make.footer

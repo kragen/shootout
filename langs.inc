@@ -56,7 +56,7 @@ $LANGS = array(
       'Home'    => 'http://www.go-mono.com/',
       'Down'    => 'http://www.go-mono.com/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Mono C# compiler version 0.96.0.0'
+      'Version' => '0.96'
     ),
 
     'g++' => array(
@@ -276,8 +276,24 @@ elastiC version: 0.0.36 (dec: 36)
       'Lang'    => 'Pike',
       'Home'    => 'http://pike.roxen.com/',
       'Down'    => 'http://pike.roxen.com/download/',
-      'Type'    => 'interpreted',
+      'Type'    => 'bytecomped/interpreted',
       'Version' => 'Pike v7.6 release 9 '
+    ),
+
+    'gprolog' => array(
+      'Lang'    => 'Prolog',
+      'Home'    => 'http://prolog.inria.fr',
+      'Down'    => 'ftp://ftp.inria.fr/INRIA/Projects/contraintes/gprolog',
+      'Type'    => 'native compiled',
+      'Version' => 'GNU Prolog) 1.2.18'
+    ),
+
+    'psyco' => array(
+      'Lang'    => 'Python',
+      'Home'    => 'http://psyco.sourceforge.net/',
+      'Down'    => 'http://psyco.sourceforge.net/download.html',
+      'Type'    => 'native compiled',
+      'Version' => '0.9'
     ),
 
     'python' => array(
@@ -293,7 +309,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ruby-lang.org/',
       'Down'    => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
       'Type'    => 'interpreted',
-      'Version' => 'ruby 1.8.1 (2004-02-03) [i386-linux]'
+      'Version' => 'ruby 1.8.2 (2004-06-19) [i386-linux]'
     ),
 
     'slang' => array(

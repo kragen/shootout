@@ -34,6 +34,10 @@ fibonacci numbers" -->
   The Fibonacci sequence.  There are many many web pages and books
   about the Fibonacci sequence and how it relates to many topics
   natural and mathematical.</p>
+  
+<p class="infomark"><a href="http://cubbi.org/serious/fibonacci/bench.html">
+   Fibonacci Benchmarks</a>:  This is a page devoted to the Fibonacci
+   algorithm, and its implementation in various languages.</p>
 
 <h4>Observations</h4>
 <p>The following programs exceed the time limit (300 CPU seconds) and

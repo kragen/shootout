@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-18 08:08:23 dbr-guest Exp $
+# $Id: Makefile,v 1.6 2004-06-24 07:38:08 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -14,6 +14,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10,50,100,150 \
-	  --ignore hash2.bash,hash2.se
+	  --ignore hash2.bash \
+	  --ignore hash2.csharp \
+	  --ignore hash2.se
 
 include ../../Make.footer

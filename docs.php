@@ -100,6 +100,9 @@
 	<p>If you enjoy benchmarks, the following links might be of interest
 	to you:</p>
 	<ul>
+	  <p class="infomark"><a href="http://cubbi.org/serious/fibonacci/bench.html">
+	    Fibonacci Benchmarks</a>:  This is a page devoted to the Fibonacci
+	    algorithm, and its implementation in various languages.</p>
 	  <p class="infomark"><a href="http://www.dadgum.com/james/shootout.html">
 	    Erlang and the Great Computer Language Shootout</a>:  Here
 	    the author makes some valid comments about the Shootout

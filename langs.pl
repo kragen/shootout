@@ -101,7 +101,8 @@
        Down => 'http://www.go-mono.com/',
        Type => 'bytecomped/interpreted',
        Verfun => sub {
-	   chomp(my $ver = `$ENV{MONOC} --version`);
+	   #chomp(my $ver = `$ENV{MONOC} --version`);
+	   $ver = '0.96';
 	   return($ver);
        },
      },
@@ -371,11 +372,33 @@
      { Lang => 'Pike',
        Home => 'http://pike.roxen.com/',
        Down => 'http://pike.roxen.com/download/',
-       Type => 'interpreted',
+       Type => 'bytecomped/interpreted',
        Verfun => sub {
 	   my $ver = `$ENV{PIKE} --version 2>&1`;
 	   $ver =~ /(Pike v.*?)Copy/;
 	   return($1);
+       },
+     },
+
+     gprolog =>
+     { Lang => 'Prolog',
+       Home => 'http://prolog.inria.fr',
+       Down => 'ftp://ftp.inria.fr/INRIA/Projects/contraintes/gprolog',
+       Type => 'native compiled',
+       Verfun => sub {
+           my $ver = `$ENV{GPLC} --version 2>&1`;
+	   $ver =~ /(GNU Prolog.*)/;
+	   return ($1);
+       },
+     },
+
+     psyco =>
+     { Lang => 'Python',
+       Home => 'http://psyco.sourceforge.net/',
+       Down => 'http://psyco.sourceforge.net/download.html',
+       Type => 'native compiled',
+       Verfun => sub {
+           return('0.9');
        },
      },
 
@@ -559,6 +582,7 @@
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',
      'Pike'        => 'c',
+     'Prolog'      => 'prolog',
      'Python'      => 'shell',
      'Lisp'        => 'lisp',
      'Ruby'        => 'shell',

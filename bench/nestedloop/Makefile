@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-18 08:08:23 dbr-guest Exp $
+# $Id: Makefile,v 1.5 2004-06-24 07:38:13 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nestedloop
@@ -9,6 +9,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore nestedloop.bash \
+	  --ignore nestedloop.csharp \
 	  --range 4,8,12,16
 
 include ../../Make.footer
