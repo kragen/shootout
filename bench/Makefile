@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2005-02-19 07:43:37 igouy-guest Exp $
+# $Id: Makefile,v 1.16 2005-02-28 01:26:27 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -52,9 +52,6 @@ all plot test loc show clean clobber: oberon-includes
 
 report: $(filter-out %.ocamlb,$(foreach dir,$(TESTS),$(wildcard $(dir)/$(dir).*)))
 	@../bin/make_report $^
-
-codelinks: $(TESTS)
-	@../bin/make_codelinks $^
 
 craps: $(TESTS)
 	@../bin/make_craps $^
