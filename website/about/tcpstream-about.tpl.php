@@ -5,7 +5,7 @@
 <li>open a TCP/IP socket</li>
 <li>fork a client process that connects back to the socket
 <ul>
-<li>N-times the client process should
+<li>M*N times the client process should
 <ul>
 <li>write a request to the socket</li>
 <li>read a reply from the socket</li>
@@ -13,15 +13,13 @@
 </ul>
 <li>close the socket</li>
 <li>print the count and sum</li>
-</li></ul></li>
-<li>the server process should
+</li></ul></li><li>the server process should
 <ul>
 <li>read a request from the socket</li>
 <li>write a reply to the socket</li>
 </ul>
 </li>
-</ul></p>
-<p>Correct output N = 10 is:
+</ul></p><p>Correct output N = 10 is:
 <pre>
 replies: 10     bytes: 4096000
 </pre>
