@@ -39,6 +39,6 @@ while [ $k -le 999  ] ; do
 	k=$(( $k + 1));
 done
 
-echo ${Y[0]} : ${Y[$last]};
+echo "${Y[0]} ${Y[$last]}"
 
 

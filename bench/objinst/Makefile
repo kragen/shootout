@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-08-10 15:16:15 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-08-12 16:27:15 bfulgham Exp $
 include ../../Make.header
 
 TEST    := objinst
@@ -12,8 +12,6 @@ OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100000,400000,700000,1000000 \
-	  --ignore objinst.nice \
-	  --ignore objinst.gcj,objinst.gij \
 	  --ignore objinst.xemacs
 
 include ../../Make.footer
