@@ -6,8 +6,6 @@
 use strict;
 use File::Basename;
 
-my $use_flags;
-
 BEGIN {
     # Load our hash of languages
     foreach my $d qw(. .. ../.. ../../..) {
@@ -24,8 +22,6 @@ BEGIN {
 #
 sub print_datafile($$$%) {
     my ($benchmark, $dest, $mdref, %startup_cost) = @_;
-    my $ref = $main::use_flags{$benchmark};
-    my %use_flags = %$ref;
     my %masterdata = %$mdref;
     my $locsource = "bench/$benchmark/data/loc.tab";
     my (%loc);
@@ -67,7 +63,7 @@ sub print_datafile($$$%) {
                  $id = " ";
              }
 
-             print DEST "$use_flags{$lang},$benchmark,$lang,$id,$run,";
+             print DEST "$benchmark,$lang,$id,$run,";
 	     print DEST $cpu - $startup_cost{$lang};
 	     print DEST ",$cpu,$mem,";
              print DEST $loc{$impl};
@@ -76,57 +72,6 @@ sub print_datafile($$$%) {
     }
     close DEST;
 
-    return;
-}
-
-#
-#   Read in existing use flag from data file.
-#
-sub read_use_flags ($@) {
-    my ($source, @allfiles) = @_;
-
-    print "    Saving prior run settings from $source\n";
-    
-    # Build a default map, assuming 'true' for all combinations.
-    foreach my $bench (@allfiles) {
-        next unless -d "bench/$bench";	    
-        next if ($bench =~ /\.\./);
-        next if ($bench =~ /\./);
-        next if ($bench =~ /Include/);
-        next if ($bench =~ /CVS/);
-
-        my %bench_use_flags;
-        foreach my $lang (keys %::LANG) {
-	    $bench_use_flags{$lang} = "+";
-	}
-	$main::use_flags{$bench} = \%bench_use_flags;
-    }
-
-    unless ( open (SOURCE, "<$source") ) {
-        print "    Using default settings...\n";
-	return;
-    }
-
-    # Otherwise, read file and update map appropriately
-    my $cubmrk = "ackermann";
-    my $use_flag_ref;
-    while (<SOURCE>) {
-        chomp;
-	next if /#/;
-	next if /use/;
-	my($flag, $bmrk, $impl, @rest) = split /,/;
-
-	if ($bmrk ne $cubmrk) {
-	    $main::use_flags{$cubmrk} = $use_flag_ref;
-	    $cubmrk = $bmrk;
-	    $use_flag_ref = $main::use_flags{$bmrk};
-        }
-
-	
-	$use_flag_ref->{$impl} = $flag;
-    }
-
-    print "    Finished reading data.\n";
     return;
 }
 
@@ -284,22 +229,19 @@ sub main {
     shift @allfiles;	# Drop the .. directory
     closedir BENCHDIR;
 
-    # Read the existing 'use' flags, if available
-    my %use_flags = read_use_flags($dest, @allfiles);
-
     print "    Read list of benchmarks...\n";
     if (-s $dest) {
         unlink $dest or die "Couldn't delete old $dest file: $!\n";
     }
     open(DEST, ">$dest") or die "Couldn't create new $dest file: $!\n";
-    print DEST "use,test,lang,id,iter,secs-startup,secs,kb,lines,date\n";
+    print DEST "test,lang,id,iter,secs-startup,secs,kb,lines,date\n";
     close DEST;
     
     if (-s $ndest) {
         unlink $ndest or die "Couldn't delete old $ndest file: $!\n";
     }
     open(NDEST, ">$ndest") or die "Couldn't create new $ndest file: $!\n";
-    print NDEST "use,test,lang,id,iter,secs-startup,secs,kb,lines,date\n";
+    print NDEST "test,lang,id,iter,secs-startup,secs,kb,lines,date\n";
     close NDEST;
     print "\n\n";
 
@@ -322,9 +264,9 @@ sub main {
 
 	print "  [$benchdir]\n";
 
-	gen_ndata_files($benchdir, $ndest, %startup_cost, $use_flags{$benchdir});
+	gen_ndata_files($benchdir, $ndest, %startup_cost);
 
-	gen_master_file($benchdir, $dest, %startup_cost, $use_flags{$benchdir});
+	gen_master_file($benchdir, $dest, %startup_cost);
     }
     
     print "Finished.\n";
