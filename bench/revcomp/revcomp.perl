@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/perl
 # The Great Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
@@ -18,7 +18,7 @@ sub print_revcomp {
 }
 
 my ($desc, $seq) = ('', '');
-while (<>) {
+while (<STDIN>) {
    chomp;
    if (/^>/) {
       if ($desc) {

@@ -1,65 +1,93 @@
-<span class="slc">-- $Id: wc-gnat.code,v 1.8 2005-03-19 07:50:34 bfulgham Exp $
-</span><span class="slc">-- http://dada.perl.it/shootout/
-</span><span class="slc">-- Ada 95 code by C.C.
+<span class="slc">-- $Id: wc-gnat.code,v 1.9 2005-03-25 07:59:32 bfulgham Exp $
+</span><span class="slc">-- The Great Computer Language Shootout
+</span><span class="slc">-- http://shootout.alioth.debian.org/
+</span><span class="slc">--
+</span><span class="slc">-- contributed by Marius Amado Alves
+</span><span class="slc">--
+</span><span class="slc">-- gnatmake -O3 count_words.adb
 </span>
-<span class="slc">-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
-</span>
-<span class="kwa">with</span> Interfaces.C<span class="sym">,</span> System<span class="sym">,</span> Ada.Strings.Fixed<span class="sym">,</span> Ada.Text_IO<span class="sym">;
+<span class="kwa">with</span> Ada.Characters.Handling<span class="sym">;
+</span><span class="kwa">with</span> Ada.Characters.Latin_1<span class="sym">;
+</span><span class="kwa">with</span> Ada.Command_Line<span class="sym">;
+</span><span class="kwa">with</span> Ada.Streams<span class="sym">;
+</span><span class="kwa">with</span> Ada.Streams.Stream_IO<span class="sym">;
+</span><span class="kwa">with</span> Ada.Strings.Fixed<span class="sym">;
+</span><span class="kwa">with</span> Ada.Text_IO<span class="sym">;
+</span><span class="kwa">with</span> Ada.Text_IO.Text_Streams<span class="sym">;
 
-</span><span class="kwa">procedure</span> Wc <span class="kwa">is
-   package</span> IC <span class="kwa">renames</span> Interfaces.C<span class="sym">;
-</span>   <span class="kwa">function</span> L_Trim <span class="sym">(</span>Source <span class="sym">:</span> <span class="kwb">String</span><span class="sym">;</span> Side <span class="sym">:</span> Ada.Strings.Trim_End <span class="sym">:=
-</span>               Ada.Strings.Left<span class="sym">)</span> <span class="kwa">return</span> <span class="kwb">String</span> <span class="kwa">renames</span> Ada.Strings.Fixed.Trim<span class="sym">;
+</span><span class="kwa">procedure</span> wc <span class="kwa">is
 
-</span>   <span class="kwa">package</span> Io <span class="kwa">is
-      type</span> File_Descriptor <span class="kwa">is new</span> IC.int<span class="sym">;</span>       <span class="slc">--  STDIN=0, STDOUT=1, STDERR=2
-</span>      <span class="kwa">type</span> Setmode_Flag <span class="kwa">is new</span> IC.int<span class="sym">;
-</span>      STDIN       <span class="sym">:</span> <span class="kwa">constant</span> File_Descriptor <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
-</span>      O_BINARY    <span class="sym">:</span> <span class="kwa">constant</span> Setmode_Flag <span class="sym">:=</span> <span class="num">16</span>#<span class="num">8000</span>#<span class="sym">;
+   use</span> Ada.Characters.Handling<span class="sym">;
+</span>   <span class="kwa">use</span> Ada.Characters.Latin_1<span class="sym">;
+</span>   <span class="kwa">use</span> Ada.Command_Line<span class="sym">;
+</span>   <span class="kwa">use</span> Ada.Streams<span class="sym">;
+</span>   <span class="kwa">use</span> Ada.Streams.Stream_IO<span class="sym">;
+</span>   <span class="kwa">use</span> Ada.Text_IO<span class="sym">;
+</span>   <span class="kwa">use</span> Ada.Text_IO.Text_Streams<span class="sym">;
 
-</span>      <span class="kwa">function</span> C_Setmode <span class="sym">(
-</span>               FD       <span class="sym">:</span> File_Descriptor<span class="sym">;
-</span>               Mode     <span class="sym">:</span> Setmode_Flag<span class="sym">)
-</span>            <span class="kwa">return</span> IC.int<span class="sym">;
+</span>   Buffer <span class="sym">:</span> Stream_Element_Array <span class="sym">(</span><span class="num">1</span> .. <span class="num">4096</span><span class="sym">);
+</span>   Input_Stream <span class="sym">:</span> Ada.Text_IO.Text_Streams.Stream_Access
+     <span class="sym">:=</span> Ada.Text_IO.Text_Streams.Stream <span class="sym">(</span>Current_Input<span class="sym">);
+</span>   EOL_Character_Pos <span class="sym">:</span> Stream_Element <span class="sym">:=</span> <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">(</span>LF<span class="sym">);
+</span>   Lines <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span>   Words <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span>   Total <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span>   In_Word <span class="sym">:</span> <span class="kwb">Boolean</span> <span class="sym">:=</span> False<span class="sym">;
+</span>   N <span class="sym">:</span> Stream_Element_Offset<span class="sym">;
+</span>   Is_Separator <span class="sym">:</span> <span class="kwa">array</span> <span class="sym">(</span>Stream_Element<span class="sym">)</span> <span class="kwa">of</span> <span class="kwb">Boolean</span> <span class="sym">:=
+     (</span><span class="num">0</span> .. <span class="num">32</span> <span class="sym">|</span> <span class="num">127</span> .. <span class="num">159</span> <span class="sym">=&gt;</span> True<span class="sym">,</span> <span class="kwa">others</span> <span class="sym">=&gt;</span> False<span class="sym">);
 
-</span>      <span class="kwa">function</span> C_Sysread <span class="sym">(
-</span>               FD       <span class="sym">:</span> File_Descriptor<span class="sym">;
-</span>               Buf      <span class="sym">:</span> System.Address<span class="sym">;
-</span>               NByte    <span class="sym">:</span> IC.int<span class="sym">)
-</span>            <span class="kwa">return</span> IC.int<span class="sym">;
-</span><span class="slc">--   private
-</span><span class="slc">--      pragma Import (C, C_Setmode, &quot;_setmode&quot;);          --  Microsoft Windows
-</span><span class="slc">--      pragma Import (C, C_Sysread, &quot;_read&quot;);
-</span>   <span class="kwa">end</span> Io<span class="sym">;
+</span>   <span class="kwa">procedure</span> Begin_Word <span class="kwa">is
+   begin
+</span>      Words <span class="sym">:=</span> Words <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>      In_Word <span class="sym">:=</span> True<span class="sym">;
+</span>   <span class="kwa">end</span><span class="sym">;
 
-</span>   Buffer      <span class="sym">:</span> <span class="kwb">String</span> <span class="sym">(</span><span class="num">1</span> .. <span class="num">4</span> <span class="sym">*</span> <span class="num">1024</span><span class="sym">);
-</span>   NL<span class="sym">,</span> NW<span class="sym">,</span> NC  <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
-</span>   Inside_Word <span class="sym">:</span> <span class="kwb">Boolean</span> <span class="sym">:=</span> False<span class="sym">;
-</span>   C           <span class="sym">:</span> <span class="kwb">Character</span><span class="sym">;
-</span>   Last<span class="sym">,</span> R     <span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">;
-</span><span class="kwa">begin
-</span>   R <span class="sym">:=</span> <span class="kwb">Integer</span> <span class="sym">(</span>Io.C_Setmode <span class="sym">(</span>Io.STDIN<span class="sym">,</span> Io.O_BINARY<span class="sym">));</span>  <span class="slc">--  Read CR,LF right
-</span>   <span class="kwa">loop
-</span>      Last <span class="sym">:=</span> <span class="kwb">Integer</span> <span class="sym">(</span>Io.C_Sysread <span class="sym">(</span>FD <span class="sym">=&gt;</span> Io.STDIN<span class="sym">,
-</span>                  Buf <span class="sym">=&gt;</span> Buffer <span class="sym">(</span><span class="num">1</span><span class="sym">)'</span>Address<span class="sym">,</span> NByte <span class="sym">=&gt;</span> Buffer<span class="sym">'</span>Length<span class="sym">));
-</span>      <span class="kwa">exit when</span> Last <span class="sym">&lt;=</span> <span class="num">0</span><span class="sym">;
-</span>      NC <span class="sym">:=</span> NC <span class="sym">+</span> Last<span class="sym">;
-</span>      <span class="kwa">for</span> K <span class="kwa">in</span> Buffer<span class="sym">'</span>First .. Last <span class="kwa">loop
-</span>         C <span class="sym">:=</span> Buffer <span class="sym">(</span>K<span class="sym">);
-</span>         <span class="kwa">if</span> C <span class="sym">=</span> ASCII.LF <span class="kwa">then
-</span>            NL <span class="sym">:=</span> NL <span class="sym">+</span> <span class="num">1</span><span class="sym">;
-</span>         <span class="kwa">end if</span><span class="sym">;
-</span>         <span class="kwa">if</span> C <span class="sym">= ' '</span> <span class="kwa">or</span> C <span class="sym">=</span> ASCII.CR <span class="kwa">or</span> C <span class="sym">=</span> ASCII.LF <span class="kwa">or</span> C <span class="sym">=</span> ASCII.HT <span class="kwa">then
-</span>            Inside_Word <span class="sym">:=</span> False<span class="sym">;
-</span>         <span class="kwa">elsif not</span> Inside_Word <span class="kwa">then
-</span>            Inside_Word <span class="sym">:=</span> True<span class="sym">;
-</span>            NW <span class="sym">:=</span> NW <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>   <span class="kwa">procedure</span> End_Word <span class="kwa">is
+   begin
+</span>      In_Word <span class="sym">:=</span> False<span class="sym">;
+</span>   <span class="kwa">end</span><span class="sym">;
+
+</span>   <span class="kwa">procedure</span> End_Line <span class="kwa">is
+   begin
+</span>      Lines <span class="sym">:=</span> Lines <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>      End_Word<span class="sym">;
+</span>   <span class="kwa">end</span><span class="sym">;
+
+</span>   <span class="kwa">procedure</span> Count_Words <span class="sym">(</span>S <span class="sym">:</span> <span class="kwa">in</span> Stream_Element_Array<span class="sym">)</span> <span class="kwa">is
+   begin
+</span>      Total <span class="sym">:=</span> Total <span class="sym">+</span> S<span class="sym">'</span>Length<span class="sym">;
+</span>      <span class="kwa">for</span> I <span class="kwa">in</span> S<span class="sym">'</span><span class="kwa">Range loop
+         if</span> S <span class="sym">(</span>I<span class="sym">) =</span> EOL_Character_Pos <span class="kwa">then
+</span>            End_Line<span class="sym">;
+</span>         <span class="kwa">else
+            if</span> Is_Separator <span class="sym">(</span>S <span class="sym">(</span>I<span class="sym">))</span> <span class="kwa">then
+               if</span> In_Word <span class="kwa">then</span> End_Word<span class="sym">;</span> <span class="kwa">end if</span><span class="sym">;
+</span>            <span class="kwa">else
+               if not</span> In_Word <span class="kwa">then</span> Begin_Word<span class="sym">;</span> <span class="kwa">end if</span><span class="sym">;
+</span>            <span class="kwa">end if</span><span class="sym">;
 </span>         <span class="kwa">end if</span><span class="sym">;
 </span>      <span class="kwa">end loop</span><span class="sym">;
+</span>   <span class="kwa">end</span><span class="sym">;
+
+</span>   <span class="kwa">pragma</span> Inline <span class="sym">(</span>Begin_Word<span class="sym">,</span> End_Word<span class="sym">,</span> End_Line<span class="sym">,</span> Count_Words<span class="sym">);
+
+</span><span class="kwa">begin
+   begin
+</span>      EOL_Character_Pos <span class="sym">:=</span> Stream_Element<span class="sym">'</span>Value <span class="sym">(</span>Argument <span class="sym">(</span><span class="num">1</span><span class="sym">));
+</span>   <span class="kwa">exception
+      when</span> Constraint_Error <span class="sym">=&gt;</span> <span class="kwa">null</span><span class="sym">;
+</span>   <span class="kwa">end</span><span class="sym">;
+
+</span>   <span class="kwa">loop
+</span>      Read <span class="sym">(</span>Root_Stream_Type<span class="sym">'</span>Class <span class="sym">(</span>Input_Stream.<span class="kwa">all</span><span class="sym">),</span> Buffer<span class="sym">,</span> N<span class="sym">);
+</span>      Count_Words <span class="sym">(</span>Buffer <span class="sym">(</span><span class="num">1</span> .. N<span class="sym">));
+</span>      <span class="kwa">exit when</span> N <span class="sym">&lt;</span> Buffer<span class="sym">'</span>Length<span class="sym">;
 </span>   <span class="kwa">end loop</span><span class="sym">;
-</span>   Ada.Text_IO.Put_Line <span class="sym">(</span>L_Trim <span class="sym">(</span><span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>NL<span class="sym">)) &amp;</span> <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>NW<span class="sym">) &amp;
-</span>            <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>NC<span class="sym">));
-</span><span class="kwa">end</span> Wc<span class="sym">;
-</span>   <span class="slc">--  The &quot;Ada.Streams.Stream_IO.Read (File, Item, Last)&quot; procedure can't
-</span>   <span class="slc">--  read from STDIN: can't associate Standard Input with File parameter.
-</span>   <span class="slc">--  GNAT's Interfaces.C_Streams.fread function isn't from ISO/IEC 8652:1995.</span>
+
+</span>   Ada.Text_IO.Put_Line
+     <span class="sym">(</span><span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>Lines<span class="sym">) &amp;
+</span>      <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>Words<span class="sym">) &amp;
+</span>      <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>Total<span class="sym">));
+</span><span class="kwa">end</span><span class="sym">;
+</span>

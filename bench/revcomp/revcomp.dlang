@@ -6,70 +6,73 @@
    compile: dmd -O -inline -release knucleotide.d
 */
 
-import std.outbuffer, std.stream, std.string;
+import std.ctype, std.outbuffer, std.stdio, std.stream, std.string;
 
 void main()
 {
     char[4096]      bufr;
     BufferedStream  bsi = new BufferedStream(std.stream.stdin,bufr.length);
-    OutBuffer       ob = new OutBuffer();
+    BufferedStream  bso = new BufferedStream(std.stream.stdout);
+    int             offset;
+    char[]          desc,line,data,rc = new char[char.max];
 
-    char[] line,desc;
+    for(char c = 0; c < char.max; c++) rc[c] = revComp(c);
+
+    data.length = bsi.size;
     while(!bsi.eof())
     {
         line = bsi.readLine(bufr);
         if(line.length)
         {
-            char c = line[0];
-            if(c == '>')
+            if(line[0] == '>')
             {
-                writeRC(desc,ob,line);
+                writeRC(desc,data[0..offset],line,rc,bso);
+                offset = 0;
             }
-            else if(c != ';')
+            else
             {
-                ob.write(toupper(line));
+                int end = offset + line.length;
+                data[offset..end] = line;
+                offset += line.length;
             }
         }
     }
-    writeRC(desc,ob,line);
+    writeRC(desc,data[0..offset],line,rc,bso);
+    bso.close();
 }
 
-void writeRC(inout char[] desc,inout OutBuffer ob,char[] line)
+void writeRC(inout char[] desc,char[] data,char[] line,char[] rc,BufferedStream bso)
 {
     if(desc.length)
     {
-        char[] bufr = ob.toString.reverse;
         const int lineLen = 60;
-        int start = 0;
+        char[lineLen+1] lineOut;
+        int j,k;
 
-        std.stdio.writefln(desc);
-        foreach(int i, inout char c; bufr)
+        bso.writefln(desc);
+        lineOut[lineLen] = '\n';
+        foreach(int i, inout char c; data.reverse)
         {
-            revComp(c);
-            if((i && !(i % lineLen)) || i == (bufr.length-1))
+            lineOut[k] = c = rc[c];
+
+            k++;
+            if(k == lineLen)
             {
-                char[] lineOut;
-                if(i == (bufr.length-1))
-                {
-                    lineOut = bufr[start..bufr.length];
-                }
-                else
-                {
-                    lineOut = bufr[start..i];
-                    start = i;
-                }
-                std.stdio.writefln(lineOut);
+                bso.write(cast(ubyte[])lineOut);
+                j = i + 1;
+                k = 0;
             }
         }
-
-        ob = new OutBuffer();
+        if(k > 0) bso.writefln(data[j..data.length]);
     }
 
     desc = line.dup;
 }
 
-void revComp(inout char c)
+char revComp(char c)
 {
+    c = std.ctype.toupper(c);
+
     switch(c)
     {
     case 'A': c = 'T'; break;
@@ -84,6 +87,8 @@ void revComp(inout char c)
     case 'T': c = 'A'; break;
     case 'V': c = 'B'; break;
     case 'Y': c = 'R'; break;
-    default : break;
+    default :          break;
     }
+
+    return c;
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-02-19 17:05:38 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-03-25 07:59:06 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fasta
@@ -13,7 +13,7 @@ BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2005-03-14 01:25:00 bfulgham Exp $
+# $Id: Makefile,v 1.13 2005-03-25 07:59:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hello
@@ -12,7 +12,7 @@ tmp/repeat: repeat
 
 setup: tmp tmp/repeat
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 RUNTESTS := $(MINIBENCH) --conf Minibench.conf \

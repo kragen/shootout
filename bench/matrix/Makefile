@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.19 2005-03-15 04:27:45 bfulgham Exp $
+# $Id: Makefile,v 1.20 2005-03-25 07:59:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := matrix
 TITLE   := Matrix Multiplication
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 OO2COPTS := -A --no-rtc

@@ -1136,8 +1136,8 @@
      'mzc'         => 'scheme',
      'MzScheme'    => 'scheme',
      'MZC'         => 'scheme',
-     'newlisp'     => 'scheme',
-     'Newlisp'     => 'scheme',
+     'newlisp'     => 'lisp',
+     'Newlisp'     => 'lisp',
      'Nice'        => 'c',
      'Oberon-2'    => 'pascal',
      'Objective C' => 'c',
@@ -1159,8 +1159,8 @@
      'Tcl'         => 'shell',
      'Emacs Lisp'  => 'elisp',
      'Scheme'      => 'scheme',
-     'XEmacs'      => 'elisp',
-     'xemacs'      => 'elisp',
+     'XEmacs'      => 'lisp',
+     'xemacs'      => 'lisp',
 
      # Overrides for specific languages, which seem to belong to a different
      # family that their languages hints at

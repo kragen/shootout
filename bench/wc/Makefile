@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2005-03-17 22:06:45 ekarttun-guest Exp $
+# $Id: Makefile,v 1.21 2005-03-25 07:59:09 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -6,6 +6,7 @@ TITLE   := Count Lines/Words/Chars
 
 #XLABEL  := N (number of copies of input data)
 
+ERLFLAGS := -noshell
 GHCOPTS := -package lang
 #MB_GHCRTS  := +RTS -M200m -K10m
 MB_GHCRTS  := +RTS -G1
@@ -17,7 +18,6 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1000,1500,2000,2500 \
-	  --ignore wc.gnat \
 	  --ignore wc.poly \
 	  --inputfile Input --geninput
 

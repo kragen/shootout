@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-03-17 22:06:45 ekarttun-guest Exp $
+# $Id: Makefile,v 1.4 2005-03-25 07:59:09 bfulgham Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -13,7 +13,7 @@ BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 GHCOPTS := -fexcess-precision
 

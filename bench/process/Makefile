@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-12-20 07:22:32 bfulgham Exp $
+# $Id: Makefile,v 1.2 2005-03-25 07:59:08 bfulgham Exp $
 include ../../Make.header
 
 TEST    := process
@@ -13,7 +13,7 @@ BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

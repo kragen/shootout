@@ -1,65 +1,93 @@
--- $Id: wc.gnat,v 1.2 2004-05-26 00:47:05 bfulgham Exp $
--- http://dada.perl.it/shootout/
--- Ada 95 code by C.C.
+-- $Id: wc.gnat,v 1.3 2005-03-25 07:59:09 bfulgham Exp $
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Marius Amado Alves
+--
+-- gnatmake -O3 count_words.adb
 
--- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+with Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
+with Ada.Command_Line;
+with Ada.Streams;
+with Ada.Streams.Stream_IO;
+with Ada.Strings.Fixed;
+with Ada.Text_IO;
+with Ada.Text_IO.Text_Streams;
 
-with Interfaces.C, System, Ada.Strings.Fixed, Ada.Text_IO;
+procedure wc is
 
-procedure Wc is
-   package IC renames Interfaces.C;
-   function L_Trim (Source : String; Side : Ada.Strings.Trim_End :=
-               Ada.Strings.Left) return String renames Ada.Strings.Fixed.Trim;
+   use Ada.Characters.Handling;
+   use Ada.Characters.Latin_1;
+   use Ada.Command_Line;
+   use Ada.Streams;
+   use Ada.Streams.Stream_IO;
+   use Ada.Text_IO;
+   use Ada.Text_IO.Text_Streams;
 
-   package Io is
-      type File_Descriptor is new IC.int;       --  STDIN=0, STDOUT=1, STDERR=2
-      type Setmode_Flag is new IC.int;
-      STDIN       : constant File_Descriptor := 0;
-      O_BINARY    : constant Setmode_Flag := 16#8000#;
+   Buffer : Stream_Element_Array (1 .. 4096);
+   Input_Stream : Ada.Text_IO.Text_Streams.Stream_Access
+     := Ada.Text_IO.Text_Streams.Stream (Current_Input);
+   EOL_Character_Pos : Stream_Element := Character'Pos (LF);
+   Lines : Natural := 0;
+   Words : Natural := 0;
+   Total : Natural := 0;
+   In_Word : Boolean := False;
+   N : Stream_Element_Offset;
+   Is_Separator : array (Stream_Element) of Boolean :=
+     (0 .. 32 | 127 .. 159 => True, others => False);
 
-      function C_Setmode (
-               FD       : File_Descriptor;
-               Mode     : Setmode_Flag)
-            return IC.int;
+   procedure Begin_Word is
+   begin
+      Words := Words + 1;
+      In_Word := True;
+   end;
 
-      function C_Sysread (
-               FD       : File_Descriptor;
-               Buf      : System.Address;
-               NByte    : IC.int)
-            return IC.int;
---   private
---      pragma Import (C, C_Setmode, "_setmode");          --  Microsoft Windows
---      pragma Import (C, C_Sysread, "_read");
-   end Io;
+   procedure End_Word is
+   begin
+      In_Word := False;
+   end;
 
-   Buffer      : String (1 .. 4 * 1024);
-   NL, NW, NC  : Natural := 0;
-   Inside_Word : Boolean := False;
-   C           : Character;
-   Last, R     : Integer;
-begin
-   R := Integer (Io.C_Setmode (Io.STDIN, Io.O_BINARY));  --  Read CR,LF right
-   loop
-      Last := Integer (Io.C_Sysread (FD => Io.STDIN,
-                  Buf => Buffer (1)'Address, NByte => Buffer'Length));
-      exit when Last <= 0;
-      NC := NC + Last;
-      for K in Buffer'First .. Last loop
-         C := Buffer (K);
-         if C = ASCII.LF then
-            NL := NL + 1;
-         end if;
-         if C = ' ' or C = ASCII.CR or C = ASCII.LF or C = ASCII.HT then
-            Inside_Word := False;
-         elsif not Inside_Word then
-            Inside_Word := True;
-            NW := NW + 1;
+   procedure End_Line is
+   begin
+      Lines := Lines + 1;
+      End_Word;
+   end;
+
+   procedure Count_Words (S : in Stream_Element_Array) is
+   begin
+      Total := Total + S'Length;
+      for I in S'Range loop
+         if S (I) = EOL_Character_Pos then
+            End_Line;
+         else
+            if Is_Separator (S (I)) then
+               if In_Word then End_Word; end if;
+            else
+               if not In_Word then Begin_Word; end if;
+            end if;
          end if;
       end loop;
+   end;
+
+   pragma Inline (Begin_Word, End_Word, End_Line, Count_Words);
+
+begin
+   begin
+      EOL_Character_Pos := Stream_Element'Value (Argument (1));
+   exception
+      when Constraint_Error => null;
+   end;
+
+   loop
+      Read (Root_Stream_Type'Class (Input_Stream.all), Buffer, N);
+      Count_Words (Buffer (1 .. N));
+      exit when N < Buffer'Length;
    end loop;
-   Ada.Text_IO.Put_Line (L_Trim (Natural'Image (NL)) & Natural'Image (NW) &
-            Natural'Image (NC));
-end Wc;
-   --  The "Ada.Streams.Stream_IO.Read (File, Item, Last)" procedure can't
-   --  read from STDIN: can't associate Standard Input with File parameter.
-   --  GNAT's Interfaces.C_Streams.fread function isn't from ISO/IEC 8652:1995.
+
+   Ada.Text_IO.Put_Line
+     (Natural'Image (Lines) &
+      Natural'Image (Words) &
+      Natural'Image (Total));
+end;
+

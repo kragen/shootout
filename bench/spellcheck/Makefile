@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-03-06 05:21:25 bfulgham Exp $
+# $Id: Makefile,v 1.27 2005-03-25 07:59:09 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -7,6 +7,7 @@ GHCOPTS := -package data
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
 MB_NHCRTS := +RTS -H40M
 NHC98OPTS := -package base
+ERLFLAGS := -noshell
 
 #XLABEL  := N (number of copies of input data)
 

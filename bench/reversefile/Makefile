@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2005-03-06 05:21:25 bfulgham Exp $
+# $Id: Makefile,v 1.24 2005-03-25 07:59:09 bfulgham Exp $
 include ../../Make.header
 
 TEST    := reversefile
@@ -6,7 +6,7 @@ TITLE   := Reverse a File
 
 #XLABEL  := N (number of copies of input data)
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 CLEANOPTS := -nr -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 MB_CLRTS := -h 20000000

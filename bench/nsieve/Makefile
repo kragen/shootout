@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-03-18 07:32:18 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-03-25 07:59:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -15,7 +15,7 @@ MB_CLRTS := -nr -h 10000000
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell -h 200000000
 GPLCOPTS := --fast-math
 OCAMLOPTS := bigarray.cmxa
 OCAMLBOPTS := bigarray.cma

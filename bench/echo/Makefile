@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2005-02-19 17:05:38 bfulgham Exp $
+# $Id: Makefile,v 1.24 2005-03-25 07:59:06 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
@@ -8,7 +8,7 @@ OCAMLBOPTS := unix.cma
 
 GHCOPTS  := -fglasgow-exts -package net -package concurrent -package lang
 MB_GHCRTS  := +RTS -M200m -K20m
-ERLFLAGS := -noinput
+ERLFLAGS := -noinput -noshell
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 

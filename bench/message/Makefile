@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-12-20 07:22:32 bfulgham Exp $
+# $Id: Makefile,v 1.2 2005-03-25 07:59:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := message
@@ -15,7 +15,7 @@ POLYOPTS := -q
 OCAMLOPTS := unix.cmxa -I +threads threads.cmxa
 OCAMLBOPTS := unix.cma -I +threads threads.cma
 
-ERLFLAGS := -noinput -run
+ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
