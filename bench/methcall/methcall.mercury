@@ -1,0 +1,118 @@
+%% $Id: methcall.mercury,v 1.1 2004-07-11 07:52:31 bfulgham Exp $
+%% http://www.bagley.org/~doug/shootout/
+%% from Fergus Henderson
+
+% "This test uses a base class Toggle, which implements a simple boolean
+% flip-flop device and a derived class NthToggle, which only flips every
+% Nth time it is activated."
+
+:- module mytest.
+:- interface.
+:- import_module io.
+
+:- pred main(io__state::di, io__state::uo) is det.
+
+:- implementation.
+:- import_module bool, int, string, list.
+
+% "The base Toggle class should define a boolean
+% (or integer) field to hold a true/false value. It should define methods
+% to access the value, and to activate the toggle (flip it's value)."
+
+:- type toggle ---> toggle(toggle_value::bool).
+
+:- typeclass toggle(T) where [
+	func value(T) = bool,
+	func 'value :='(T, bool) = T,
+	func activate(T) = T
+].
+
+:- instance toggle(toggle) where [
+	func(value/1) is toggle_value,
+	func('value :='/2) is 'toggle_value :=',
+	activate(toggle(yes)) = toggle(no),
+	activate(toggle(no)) = toggle(yes)
+].
+
+% "The derived NthToggle class should inherit the boolean field, and add a
+% counter and limit field. It should override the activate method so that
+% the boolean state is flipped after the activate method is called count
+% times. The constructor for NthToggle should use the constructor for
+% Toggle to inherit the boolean field and value() method."
+
+% Mercury doesn't have any direct support for inheritence of fields,
+% so we need to use composition instead.
+
+:- type nth_toggle ---> nth_toggle(base::toggle, counter::int, limit::int).
+
+:- func make_nth_toggle(bool, int) = nth_toggle.
+make_nth_toggle(Val, Max) = nth_toggle(toggle(Val), 0, Max).
+
+% If the nth_toggle class added its own methods, then we'd want to
+% create a derived typeclass like this:
+%
+% :- typeclass nth_toggle(T) <= toggle(T) where [ ... ].
+% :- instance nth_toggle(nth_toggle) where [ ... ].
+%
+% But nth_toggle doesn't add any new methods, so we don't need that.
+% We just need to make it an instance of the base class,
+% delegating the field accessors.
+
+:- instance toggle(nth_toggle) where [
+	value(T) = T^base^value,
+	'value :='(T, V) = T^base^value := V,
+	(activate(T) = NewT :-
+		C = T^counter + 1,
+		(if C >= T^limit then
+			NewT = (T^counter := 0)^base := activate(T^base)
+		else
+			NewT = T^counter := C
+		))
+].
+
+main -->
+	io__command_line_arguments(Args),
+	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
+
+	{ loop(N, yes, toggle(yes),
+		(pred(_V0::in, T0::in, V::out, T::out) is det :-
+			T = T0^activate, V = T^value),
+		Value1, _Toggle1) },
+	write_string(if Value1 = yes then "true" else "false"), nl,
+
+	{ loop(N, yes, make_nth_toggle(yes, 3),
+		(pred(_V0::in, T0::in, V::out, T::out) is det :-
+			T = T0^activate, V = T^value),
+		Value2, _Toggle2) },
+	write_string(if Value2 = yes then "true" else "false"), nl.
+
+:- pred loop(int, T1, T2, pred(T1, T2, T1, T2), T1, T2).
+:- mode loop(in, in, in, pred(in, in, out, out) is det, out, out) is det.
+loop(N, V0, T0, P, V, T) :-
+	(if N = 0 then
+		V = V0, T = T0
+	else
+		P(V0, T0, V1, T1),
+		loop(N - 1, V1, T1, P, V, T)
+	).
+
+% Alternatively, it can be written a little more elegantly as
+%
+% main -->
+% 	io__command_line_arguments(Args),
+% 	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
+% 
+% 	{ {Value1, _Toggle1} = repeat_n(N, {yes, toggle(yes)},
+% 		(func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
+% 	write_string(if Value1 = yes then "true" else "false"), nl,
+% 
+% 	{ {Value2, _Toggle2} = repeat_n(N, {yes, make_nth_toggle(yes, 3)},
+% 		(func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
+% 	write_string(if Value2 = yes then "true" else "false"), nl.
+% 
+% :- func repeat_n(int, T, func(T) = T) = T.
+% repeat_n(N, X, F) =
+% 	(if N = 0 then X
+% 	else repeat_n(N - 1, F(X), F)).
+%
+% but the earlier code above is a little more efficient.

@@ -31,6 +31,7 @@
         <div><a href="../../lang/sablevm/">sablevm</a></div>
         <div><a href="../../lang/rep/">rep</a></div>
         <div><a href="../../lang/lua/">lua</a></div>
+        <div><a href="../../lang/mercury/"><b><i>mercury</i></b></a></div>
         <div><a href="../../lang/oz/">oz</a></div>
         <div><a href="../../lang/nice/"><b><i>nice</i></b></a></div>
         <div><a href="../../lang/oberon2/"><b><i>oberon2</i></b></a></div>

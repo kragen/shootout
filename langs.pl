@@ -308,6 +308,18 @@
        },
      },
 
+     rep =>
+     { Lang => 'Lisp',
+       Home => 'http://librep.sourceforge.net/',
+       Down => 'ftp://librep.sourceforge.net/pub/librep/',
+       Type => 'bytecomped/interpreted',
+       Ext  => 'lisp',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{REP} --version`);
+	   return($ver);
+       },
+     },
+
      'lua' =>
      { Lang => 'Lua',
        Home => 'http://www.lua.org/',
@@ -317,6 +329,19 @@
        Verfun => sub {
 	   my $ver = `$ENV{LUA} -v 2>&1`;
 	   $ver =~ /(Lua.*) Copyright.*/;
+	   return($1);
+       },
+     },
+
+     mercury =>
+     { Lang => 'Mercury',
+       Home => 'http://www.cs.mu.oz.au/mercury/',
+       Down => 'http://www.cs.mu.oz.au/mercury/',
+       Type => 'native compiled',
+       Ext  => 'pro',
+       Verfun => sub {
+           my $ver = `$ENV{MMC} --version 2>&1`;
+	   $ver =~ /(Mercury Compiler.*)\n/;
 	   return($1);
        },
      },
@@ -339,7 +364,7 @@
        Home => 'http://oo2c.sourceforge.net/',
        Down => 'http://oo2c.sourceforge.net/files',
        Type => 'native compiled',
-       Ext  => 'pas',
+       Ext  => 'oberon',
        Verfun => sub {
 	   my $ver = `$ENV{OO2C} --version 2>&1`;
 	   return($ver);
@@ -470,18 +495,6 @@
        Ext  => 'py',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{PYTHON} -c 'import sys; print "Python %d.%d.%d" % sys.version_info[0:3]'`);
-	   return($ver);
-       },
-     },
-
-     rep =>
-     { Lang => 'Lisp',
-       Home => 'http://librep.sourceforge.net/',
-       Down => 'ftp://librep.sourceforge.net/pub/librep/',
-       Type => 'bytecomped/interpreted',
-       Ext  => 'lisp',
-       Verfun => sub {
-	   chomp(my $ver = `$ENV{REP} --version`);
 	   return($ver);
        },
      },
@@ -652,6 +665,7 @@
      'Dylan'       => 'c',
      'Icon'        => 'shell',
      'Lua'         => 'dash',
+     'Mercury'     => 'prolog',
      'Nice'        => 'c',
      'Oberon-2'    => 'pascal',
      'Ocaml'       => 'ml',

@@ -1,0 +1,74 @@
+%% $Id: moments.mercury,v 1.1 2004-07-11 07:52:31 bfulgham Exp $
+%% http://www.bagley.org/~doug/shootout/
+%% from Fergus Henderson
+
+:- module mytest.
+:- interface.
+:- import_module io.
+
+:- pred main(io__state, io__state).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module array, string, float, math, int, list, require.
+
+main -->
+	io__read_file_as_string(_Res, Contents),
+	{ Lines = string__words((pred('\n'::in) is semidet), Contents) },
+	{ Count = length(Lines) },
+	{ array__init(Count, 0.0, Array0) },
+	{ count_and_sum(Lines, 0, 0.0, Array0, _Count2, Sum, Array) },
+	{ Mean = Sum / float(Count) },
+	process(0, Count, Mean, 0.0, 0.0, 0.0, 0.0, Array).
+
+:- pred count_and_sum(list(string), int, float, array(float),
+		int, float, array(float)).
+:- mode count_and_sum(in, in, in, array_di, out, out, array_uo) is det.
+count_and_sum([], Count, Sum, Array, Count, Sum, Array).
+count_and_sum([L|Ls], Count0, Sum0, Array0, Count, Sum, Array) :-
+	(if string__to_float(L, V) then Val = V else error("float conversion")),
+	count_and_sum(Ls, Count0 + 1, Sum0 + Val, Array0^elem(Count0) := Val,
+		Count, Sum, Array).
+
+:- pred process(int, int, float, float, float, float, float, array(float),
+		io__state, io__state).
+:- mode process(in, in, in, in, in, in, in, array_di, di, uo) is det.
+process(I, Count, Mean,
+		SumAbsDeviations, SumVariance, SumSkew, SumKurtosis, Array0) -->
+	(if { I < Count } then
+		{ Val = Array0 ^ elem(I) },
+		{ Dev = Val - Mean },
+		{ Dev2 = Dev * Dev },
+		{ Dev3 = Dev2 * Dev },
+		{ Dev4 = Dev2 * Dev2 },
+		process(I + 1, Count, Mean, SumAbsDeviations + abs(Dev),
+			SumVariance + Dev2, SumSkew + Dev3,
+			SumKurtosis + Dev4, Array0)
+	else
+		{
+		AverageDeviation = SumAbsDeviations / float(Count),
+		Variance = SumVariance / float(Count - 1),
+		StandardDeviation = sqrt(Variance),
+		(if Variance \= 0.0 then
+			Skew = SumSkew / (float(Count) * Variance *
+				StandardDeviation),
+			Kurtosis = (SumKurtosis / (float(Count) *
+				Variance * Variance)) - 3.0
+		else
+			Skew = 0.0,
+			Kurtosis = 0.0
+		),
+		Array = sort(Array0),
+		Mid = (Count//2),
+		Median = (if Count rem 2 = 1 then Array^elem(Mid)
+			else (Array^elem(Mid) + Array^elem(Mid - 1)) / 2.0)
+		},
+		format("n:                  %d\n", [i(Count)]),
+		format("median:             %f\n", [f(Median)]),
+		format("mean:               %f\n", [f(Mean)]),
+		format("average_deviation:  %f\n", [f(AverageDeviation)]),
+		format("standard_deviation: %f\n", [f(StandardDeviation)]),
+		format("variance:           %f\n", [f(Variance)]),
+		format("skew:               %f\n", [f(Skew)]),
+		format("kurtosis:           %f\n", [f(Kurtosis)])
+	).

@@ -1,0 +1,79 @@
+%% $Id: objinst.mercury,v 1.1 2004-07-11 07:52:32 bfulgham Exp $
+%% http://www.bagley.org/~doug/shootout/
+%% from Fergus Henderson
+
+:- module mytest.
+:- interface.
+:- import_module io.
+
+:- pred main(io__state::di, io__state::uo) is det.
+
+:- implementation.
+:- import_module bool, int, string, list.
+
+:- type toggle ---> toggle(toggle_value::bool).
+
+:- typeclass toggle(T) where [
+	func value(T) = bool,
+	func 'value :='(T, bool) = T,
+	func activate(T) = T
+].
+
+:- instance toggle(toggle) where [
+	func(value/1) is toggle_value,
+	func('value :='/2) is 'toggle_value :=',
+	activate(toggle(yes)) = toggle(no),
+	activate(toggle(no)) = toggle(yes)
+].
+
+:- type nth_toggle ---> nth_toggle(base::toggle, counter::int, limit::int).
+
+:- func make_nth_toggle(bool, int) = nth_toggle.
+make_nth_toggle(Val, Max) = nth_toggle(toggle(Val), 0, Max).
+
+:- instance toggle(nth_toggle) where [
+	value(T) = T^base^value,
+	'value :='(T, V) = T^base^value := V,
+	(activate(T) = NewT :-
+		C = T^counter + 1,
+		(if C >= T^limit then
+			NewT = (T^counter := 0)^base := activate(T^base)
+		else
+			NewT = T^counter := C
+		))
+].
+
+main -->
+	io__command_line_arguments(Args),
+	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
+	{ Toggle1 = toggle(yes) },
+	loop(5, (pred(T0::in, T::out, di, uo) is det -->
+			{ T = T0^activate },
+			write_string(if T^value = yes then "true" else "false"),
+			nl),
+		Toggle1, Toggle2),
+	loop(N, (pred(_T0::in, T::out, di, uo) is det -->
+			{ T = toggle(yes) }),
+		Toggle2, _Toggle3),
+	nl,
+
+	{ Toggle4 = make_nth_toggle(yes, 3) },
+	loop(8, (pred(T0::in, T::out, di, uo) is det -->
+			{ T = T0^activate },
+			write_string(if T^value = yes then "true" else "false"),
+			nl),
+		Toggle4, Toggle5),
+	loop(N, (pred(_T0::in, T::out, di, uo) is det -->
+			{ T = make_nth_toggle(yes, 3) }),
+		Toggle5, _Toggle6).
+
+:- pred loop(int, pred(T1, T1, T2, T2), T1, T1, T2, T2).
+:- mode loop(in, pred(in, out, di, uo) is det, in, out, di, uo) is det.
+loop(N, P, X0, X) -->
+	(if { N = 0 } then
+		{ X = X0 }
+	else
+		P(X0, X1),
+		loop(N - 1, P, X1, X)
+	).
+

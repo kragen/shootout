@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2004-07-01 05:24:00 bfulgham Exp $
+# $Id: Makefile,v 1.13 2004-07-11 07:52:31 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -25,6 +25,8 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore moments.erlang \
 	  --ignore moments.hipe \
 	  --ignore moments.stalin \
-	  --ignore moments.gawk,moments.mawk
+	  --ignore moments.gawk,moments.mawk \
+	  --ignore moments.mercury \
+	  --ignore moments.nice
 
 include ../../Make.footer

@@ -73,7 +73,7 @@ $LANGS = array(
       'Home'    => 'http://www.clip.dia.fi.upm.es',
       'Down'    => 'http://www.clip.dia.fi.upm.es/Software/Ciao/index.html#ciao/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Ciao-Prolog 1.9 #351: Sat Jul 3 15:30:34 PDT 2004'
+      'Version' => 'Ciao-Prolog 1.9 #351: Thu Jul 8 22:55:03 PDT 2004'
     ),
 
     'clean' => array(
@@ -229,6 +229,14 @@ elastiC version: 0.0.36 (dec: 36)
       'Down'    => 'http://www.lua.org/download.html',
       'Type'    => 'interpreted',
       'Version' => 'Lua 5.0.2 '
+    ),
+
+    'mercury' => array(
+      'Lang'    => 'Mercury',
+      'Home'    => 'http://www.cs.mu.oz.au/mercury/',
+      'Down'    => 'http://www.cs.mu.oz.au/mercury/',
+      'Type'    => 'native compiled',
+      'Version' => 'Mercury Compiler, version rotd-2004-05-11, configured for i686-pc-linux-gnu'
     ),
 
     'oz' => array(
