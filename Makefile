@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2004-10-05 02:29:06 bfulgham Exp $
+# $Id: Makefile,v 1.12 2004-12-06 04:55:37 bfulgham Exp $
 
 include Make.header
 
@@ -64,15 +64,24 @@ links-stamp:
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.mzscheme'`.mzc; \
 	done
 
-	# CMUCL and SBCL are the same
+	# CMUCL, SBCL, and GCL are the same
 	for j in `find bench -name '*.cmucl'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.sbcl; \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.gcl; \
 	done
 
 	# GHC, nhc98, and HUGS are the same
 	for j in `find bench -name '*.ghc'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ghc'`.nhc98; \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ghc'`.hugs; \
+	done
+
+	# G++ and Intel C++ (ipp) are the same
+	for j in `find bench -name '*.gcc'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.gcc'`.icc; \
+	done
+	for j in `find bench -name '*.gpp'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.gpp'`.icpp; \
 	done
 
 	touch links-stamp

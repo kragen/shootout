@@ -110,6 +110,36 @@
        },
      },
 
+     'icc' =>
+     { Lang => 'C',
+       Name => 'Intel',
+       Status => '+',
+       Home => 'http://www.intel.com/software/products/compilers/linux',
+       Down => 'http://www.intel.com/software/products/compilers/clin/',
+       Type => 'native compiled',
+       Note => 'C plus objects plus generics',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{ICPP} --version`);
+	   return("Intel C++ Compiler Version $ver");
+       },
+     },
+
+     'icpp' =>
+     { Lang => 'C++',
+       Name => 'Intel',
+       Status => '+',
+       Home => 'http://www.intel.com/software/products/compilers/linux',
+       Down => 'http://www.intel.com/software/products/compilers/clin/',
+       Type => 'native compiled',
+       Note => 'C plus objects plus generics',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{ICPP} --version`);
+	   return("Intel C++ Compiler Version $ver");
+       },
+     },
+
      'gpp' =>
      { Lang => 'C++',
        Name => 'g++',
@@ -314,6 +344,23 @@
 	   return("Felix $ver");
        },
      },
+
+     gcl =>
+     { Lang => 'Lisp',
+       Name => 'GNU Common Lisp',
+       Status => '+',
+       Home => 'http://www.gnu.org/software/gcl/gcl.html',
+       Down => 'ftp://ftp.gnu.org/pub/gnu/gcl/',
+       Type => 'native compiled',
+       Note => 'Basis for Maxima, ACL2, and Axiom',
+       Ext  => 'lisp',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{GCL} -eval '(quit)'`);
+	   $ver =~ /(GCL.*)\n/;
+	   return($1);
+       },
+     },
+
 
      gforth =>
      { Lang => 'Forth',
@@ -579,7 +626,7 @@
      { Lang => 'OCaml',
        Name => 'OCaml',
        Status => '+',
-       Home => 'http://www.ocaml.org/',
+       Home => 'http://caml.inria.fr/',
        Down => 'http://caml.inria.fr/ocaml/distrib.html',
        Type => 'native compiled',
        Note => 'OO integreated with ML',
@@ -593,7 +640,7 @@
 
      ocamlb =>
      { Lang => 'OCaml',
-       Name => 'OCaml (bytecode)',
+       Name => '(bytecode)',
        Status => 'X',
        Home => 'http://www.ocaml.org/',
        Down => 'http://caml.inria.fr/ocaml/distrib.html',
@@ -990,7 +1037,7 @@
 
      xemacs =>
      { Lang => 'Emacs Lisp',
-       Name => 'Xemacs Lisp',
+       Name => 'Xemacs',
        Status => '+',
        Home => 'http://www.xemacs.org/',
        Down => 'http://www.xemacs.org/Download/',
