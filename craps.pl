@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: craps.pl,v 1.1 2004-05-19 18:08:57 bfulgham Exp $
+# $Id: craps.pl,v 1.2 2004-05-28 02:19:38 bfulgham Exp $
 
 use strict;
 use CGI qw(-oldstyle_urls);
@@ -80,7 +80,7 @@ sub main {
     my $xcpu = defined($q->param('xcpu')) ? $q->param('xcpu') : 1.0;
 
     my $scriptname = $ENV{SCRIPT_NAME};
-    $scriptname =~ s/\.cgi$/.shtml/;
+    $scriptname =~ s/\.cgi$/.phtml/;
     print <<EOF;
 <form METHOD="GET">
 <table border="0">
