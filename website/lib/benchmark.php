@@ -50,6 +50,12 @@ if ($T=='all'){
       $TemplateName = 'scorecard.tpl.php';
       $AboutTemplateName = 'scorecard-about.tpl.php'; 
 
+      $Weights = $HTTP_GET_VARS;
+      unset($Weights['test'],$Weights['lang'],$Weights['id'],$Weights['sort']);
+      $Body->set('W', $Weights);  
+
+      $Body->set('Data', ScoreData(DATA_PATH.'data.csv', $Tests, $Langs)); 
+
    } else {           // Ranking 
    
       $LangName = $Langs[$L][LANG_FULL];    

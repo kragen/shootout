@@ -8,8 +8,6 @@
 </div>
 
 
-
-
 <!-- // TAG /////////////////////////////////////////////////// -->
 
 <table class="div">
@@ -19,53 +17,6 @@
 <tr><td colspan="2">
 <p>What fun! Can you manipulate the multipliers and weights to put your favourite language on top?</p>
 </td></tr> 
-
-
-
-<?  // SET WEIGHTS /////////////////////////////////////
-
-if (sizeof($W)==0){ // populate weights
-
-   // should define these in config or somewhere
-//   $W['xcpu'] = 0; 
-   $W['xfullcpu'] = 1;
-   $W['xmem'] = 0;
-   $W['xloc'] = 0;
-
-   foreach($Tests as $t){
-      $W[ $t[TEST_LINK] ] = $t[TEST_WEIGHT];
-   }
-}
-
-
-$minWeight = 0;    // normalize weights
-$maxWeight = 5;
-
-foreach($W as $k => $v){
-   if ($v > $maxWeight){ $W[$k] = $maxWeight; }
-   elseif ($v < $minWeight){ $W[$k] = $minWeight; }
-}
-
-    // CALCULATE WEIGHTED SCORES /////////////////////////////////////
-
-foreach($Data as $k => $test){
-   $s = 0.0;
-   foreach($test as $t => $v){
-      $s += $v[DATA_FULLCPU] * $W[$t] * $W['xfullcpu'];
-      $s += $v[DATA_MEMORY] * $W[$t] * $W['xmem'];      
-      $s += $v[DATA_LINES] * $W[$t] * $W['xloc'];
-   }
-   $score[$k] = array($s,sizeof($Tests) - sizeof($test));
-}
-unset($Data);
-
-function CompareScore($a, $b){
-   if ($a[0] == $b[0]) return 0;
-   return  ($a[0] > $b[0]) ? -1 : 1;
-}
-uasort($score, 'CompareScore');
-
-?>
 
 
 
@@ -83,19 +34,18 @@ uasort($score, 'CompareScore');
 </tr>
 
 <?  
-
 $RowClass = 'c';
-foreach($score as $k => $v){   
-  
-   $Name = $Langs[$k][LANG_FULL];
-   $HtmlName = $Langs[$k][LANG_HTML];
+foreach($Langs as $v){
+   $Link = $v[LANG_LINK];
+   $Name = $v[LANG_FULL];
+   $HtmlName = $v[LANG_HTML];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
 
    printf('<td><a href="benchmark.php?test=all&lang=%s&sort=%s" title="Check all the rankings for %s">%s</a></td>', 
-      $k,$Sort,$Name,$HtmlName); echo "\n";
+      $Link,$Sort,$Name,$HtmlName); echo "\n";
 
-   printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";
+   printf('<td class="r">%0.2f</td><td class="r">%d</td>', 0.0, 0); echo "\n";
 
    echo "</tr>\n";
 
@@ -109,12 +59,12 @@ foreach($score as $k => $v){
 
 <!-- // SCORECARD FORM /////////////////////////////////////////// -->
 
+
 <td>
 <form method="GET" action="benchmark.php">
 <input type="hidden" name="test" value="all" />
 <input type="hidden" name="lang" value="all" />
 <input type="hidden" name="sort" value="<?=$Sort;?>" />
-
 
 
 <table>
@@ -125,28 +75,24 @@ foreach($score as $k => $v){
 </tr>
 
 <tr><th class="b" colspan="2">multipliers</th></tr>
-
-<!--
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#cpu">CPU Time</a></td>
-<td><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>"></td>
+<td><input type="text" size="2" name="xcpu" value="1"></td>
 </tr>
--->
-
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#fullcpu">Full CPU Time</a></td>
-<td><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>"></td>
+<td><input type="text" size="2" name="xfullcpu" value="0"></td>
 </tr>
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#memory">Memory Use</a></td>
-<td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>"></td>
+<td><input type="text" size="2" name="xmem" value="0"></td>
 </tr>
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#codelines">Code Lines</a></td>
-<td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>"></td>
+<td><input type="text" size="2" name="xloc" value="0"></td>
 </tr>
 
-<!-- THIS IS JUST FOR SPACING! SHOULD USE CSS! -->
+<!-- THIS IS JUST FOR SPACING! SHOULD USE CSS -->
 <tr class="c"><td>&nbsp;</td><td>&nbsp;</td></tr>
 
 <tr><th>benchmark</th><th>weight</th></tr>
@@ -154,16 +100,15 @@ foreach($score as $k => $v){
 
 <?  
 $RowClass = 'c';
-foreach($Tests as $t){
-   $Link = $t[TEST_LINK];
-   $Name = $t[TEST_NAME];
-   $weight = $W[ $t[TEST_LINK] ];
+foreach($Tests as $v){
+   $Link = $v[TEST_LINK];
+   $Name = $v[TEST_NAME];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
 
    printf('<td><a href="benchmark.php?test=%s&lang=all&sort=%s" title="Compare performance on the %s benchmark">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
 
-   printf('<td><input type="text" size="2" name="%s" value="%d"></td>', $Link, $weight); echo "\n";
+   printf('<td><input type="text" size="2" name="%s" value="1"></td>', $Link); echo "\n";
 
    echo "</tr>\n";
 
