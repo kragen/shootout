@@ -69,21 +69,21 @@ function ReadIncludeExclude(){
       if (!is_array($row)){ continue; }
       if (isset($row[INCL_LINK]{0})){ $incl[ $row[INCL_LINK] ] = 0; }                   
    }
-   @fclose($f);
-   
+   @fclose($f);   
    $excl = array();
    $f = @fopen(DESC_PATH.'/exclude.csv','r') or die('Cannot open '.DESC_PATH.'/exclude.csv');
    $row = @fgetcsv($f,1024,','); // heading row
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
-      if (isset($row[EXCL_TEST]{0})){ $excl[] = $row; }                    
+      if (isset($row[EXCL_TEST]{0})){           
+         if (!isset($row[EXCL_ID])){ $row[EXCL_ID] = 1; }
+         $excl[] = $row;               
+      }                                
    }
-   @fclose($f);   
-         
+   @fclose($f);          
    return array($incl,$excl);
 }
-
 
 function ReadUniqueArrays($FileName,$Incl,$HasHeading=TRUE){
    if (file_exists('./'.$FileName)){
@@ -91,9 +91,7 @@ function ReadUniqueArrays($FileName,$Incl,$HasHeading=TRUE){
    } else {
       $f = @fopen(DESC_PATH.$FileName,'r') or die('Cannot open '.$FileName);
    }
-
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
@@ -208,14 +206,14 @@ function ExcludeData(&$d,&$langs,&$Excl){
    foreach($Excl as $x){   
 
       if ( ($d[DATA_TEST]==$x[EXCL_TEST]) && 
-              ($d[DATA_LANG]==$x[EXCL_LANG]) && ($d[DATA_ID]==$x[EXCL_ID]) ){         
+              ($d[DATA_LANG]==$x[EXCL_LANG]) &&                  ($d[DATA_ID]==$x[EXCL_ID]) ){         
+                  
          if ($x[EXCL_USE]==EXCLUDED){         
             return PROGRAM_EXCLUDED; 
          } else {  
             return PROGRAM_SPECIAL; }
       }     
    }    
-     
    if( $d[DATA_FULLCPU] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
    if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }  
    return 0;
@@ -226,17 +224,14 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
    $Accepted = array();
    $Rejected = array();   
    $Special = array();  
- 
    // $data is an associative array keyed by language
    // Each value is itself an array of one or more data records
-   
    foreach($data as $ar){   
       foreach($ar as $d){  
          $x = ExcludeData($d,$langs,$Excl);         
          if ($x==PROGRAM_SPECIAL){ 
             $Special[] = $d;
-         } elseif ($x==PROGRAM_EXCLUDED) { 
-                     
+         } elseif ($x==PROGRAM_EXCLUDED) {                    
          } elseif ($x) {         
             $Rejected[] = $d;
          } else {
@@ -244,7 +239,6 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
          }
       }         
    }
-
    if ($sort=='cpu'){    
       usort($Accepted, 'CompareCpuTime');
    } elseif ($sort=='fullcpu'){ 
@@ -254,7 +248,6 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
    } elseif ($sort=='lines'){ 
       usort($Accepted, 'CompareCodeLines'); 
    } 
-
    return array($Accepted,$Rejected,$Special);
 }
 
@@ -341,23 +334,17 @@ function LogScore($x, $b){
 function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
    $data = array();   
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      
+      if (!is_array($row)){ continue; }     
       $test = $row[DATA_TEST];
-      $lang = $row[DATA_LANG];
-      
+      $lang = $row[DATA_LANG];     
       if (isset($Incl[$test]) && isset($Incl[$lang]) 
-            && !ExcludeData($row,$Langs,$Excl)){
-                                                                       
-         settype($row[DATA_ID],'integer');         
-               
+            && !ExcludeData($row,$Langs,$Excl)){                                                                      
+         settype($row[DATA_ID],'integer');                        
          if (isset( $data[$lang][$test])){         
             // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
-
             if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
                   ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])){                                 
                $data[$lang][$test] = $row;  
@@ -365,11 +352,8 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          }
          else {            
             $data[$lang][$test] = $row;                    
-         }
-         
-         
-         if (!isset($range[$test])){ $range[$test] = array(); }
-         
+         }                  
+         if (!isset($range[$test])){ $range[$test] = array(); }         
          $cpu = $row[DATA_FULLCPU];                        
          if ($cpu > 0){       
             if (!isset($range[$test][CPU_MIN])){ 
@@ -380,8 +364,7 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
                if ($cpu<$range[$test][CPU_MIN]){ $range[$test][CPU_MIN] = $cpu; }   
                if ($cpu>$range[$test][CPU_MAX]){ $range[$test][CPU_MAX] = $cpu; }   
             }   
-         }                  
-         
+         }                           
          $mem = $row[DATA_MEMORY];                        
          if ($mem > 0){       
             if (!isset($range[$test][MEM_MIN])){ 
@@ -392,8 +375,7 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
                if ($mem<$range[$test][MEM_MIN]){ $range[$test][MEM_MIN] = $mem; }   
                if ($mem>$range[$test][MEM_MAX]){ $range[$test][MEM_MAX] = $mem; }   
             }   
-         } 
-         
+         }          
          $loc = $row[DATA_LINES];                         
          if ($loc > 0){       
             if (!isset($range[$test][LOC_MIN])){ 
@@ -407,19 +389,15 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          }                                     
       }      
    }
-   @fclose($f);                
-   
+   @fclose($f);                   
    foreach($data as $k => $test){
       foreach($test as $t => $v){
-
          if (isset($range[$t][CPU_MIN])){$r = $range[$t][CPU_MIN]; } else { $r = 0; }
          $cpuScore = LogScore($v[DATA_FULLCPU], $r);
-         $data[$k][$t][DATA_FULLCPU] = $cpuScore;    
-                       
+         $data[$k][$t][DATA_FULLCPU] = $cpuScore;                           
          if (isset($range[$t][MEM_MIN])){$r = $range[$t][MEM_MIN]; } else { $r = 0; }                       
          $memScore = LogScore($v[DATA_MEMORY], $r);
-         $data[$k][$t][DATA_MEMORY] = $memScore; 
-                  
+         $data[$k][$t][DATA_MEMORY] = $memScore;                   
          if (isset($range[$t][LOC_MIN])){$r = $range[$t][LOC_MIN]; } else { $r = 0; }                  
          $locScore = LogScore($v[DATA_LINES], $r);
          $data[$k][$t][DATA_LINES] = $locScore;             
@@ -428,32 +406,24 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    return $data;
 }
 
-
-
 function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
    // collect records for selected language together, keyed by test
    // collect records for other languages together, keyed by test
-
    $tests = array();
    $data = array();
-
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-                 
+      if (!is_array($row)){ continue; }                 
       $test = $row[DATA_TEST];                    
       if (isset($Incl[$test]) && isset($Incl[$L])){      
-         settype($row[DATA_ID],'integer');
+         settype($row[DATA_ID],'integer');         
          $exclude = ExcludeData($row,$Langs,$Excl);          
- 
          if (($row[DATA_LANG]==$L)&&($exclude > PROGRAM_SPECIAL)){                       
-            if (isset( $tests[$test] )){
-            
-               // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU
-               
+            if (isset( $tests[$test] )){            
+               // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
+                           
                if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
                      ($row[DATA_FULLCPU] < $tests[$test][DATA_FULLCPU])){          
                   $tests[$test] = $row;  
@@ -474,7 +444,6 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
       }      
    }
    @fclose($f);
-
    // COPY ARRAY AND ZERO RANK COUNTS
    $ranks = array();   
    while (list($k,$d) = each($tests)){ 
@@ -486,7 +455,6 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
       if ($exclude){ $r[DATA_LINES] = $exclude; } else { $r[DATA_LINES] = 1; }    
       $ranks[$k] = $r;
    }
-
    foreach($tests as $t){ 
       $r = &$ranks[ $t[DATA_TEST] ];  
       if (($r[DATA_LINES] > 0) && isset($data[$t[DATA_TEST]])){                                   
@@ -498,11 +466,8 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
          }  
       }      
    }
-   
    return $ranks;
 }
-
-
 
 // CONTENT ///////////////////////////////////////////////////
 
