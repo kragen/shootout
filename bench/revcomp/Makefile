@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-03-10 03:51:15 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-03-30 07:30:52 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -8,7 +8,8 @@ TITLE   := Reverse Complement DNA sequence
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
-
+MB_CLRTS := -nr
+ 
 BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q

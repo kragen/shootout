@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-03-25 07:59:07 bfulgham Exp $
+# $Id: Makefile,v 1.5 2005-03-30 07:30:52 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -11,7 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 BIGLOOOPTS := -farithmetic
 GFORTH_FLAGS := -m 8M
-MB_CLRTS := -nr -h 10000000
+MB_CLRTS := -nr -h 80000000
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 

@@ -38,7 +38,7 @@ sub nseive_test($)
 
 	my $ncount= nseive $m ;
 
-	printf "Primes up to %8u %8u \n", $m, $ncount;
+	printf "Primes up to %8u %8u\n", $m, $ncount;
 }
 ####################################################################################
 #main

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-12-22 06:22:07 bfulgham Exp $
+# $Id: Makefile,v 1.2 2005-03-30 07:30:52 bfulgham Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -8,6 +8,7 @@ TITLE   := Mandelbrot Sets
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
