@@ -1,0 +1,171 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">(* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org
+
+   contributed by Isaac Gouy (Oberon-2 novice)
+*)</FONT></I>
+
+
+<B><FONT COLOR="#228B22">MODULE</FONT></B> Moments;
+<B><FONT COLOR="#5F9EA0">IMPORT</FONT></B> IO, IO:StdChannels, S<B><FONT COLOR="#5F9EA0">:=</FONT></B>SYSTEM, RealConv, Out, LRealMath;
+
+<B><FONT COLOR="#5F9EA0">CONST</FONT></B>
+   readSize <B><FONT COLOR="#5F9EA0">=</FONT></B> 4096;
+
+<B><FONT COLOR="#A020F0">TYPE</FONT></B>
+   FixedBuffer <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">ARRAY</FONT></B> readSize <B><FONT COLOR="#A020F0">OF</FONT></B> <B><FONT COLOR="#228B22">CHAR</FONT></B>;
+   FixedBufferProc <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">PROCEDURE</FONT></B> (<B><FONT COLOR="#A020F0">VAR</FONT></B> b: FixedBuffer; <B><FONT COLOR="#A020F0">VAR</FONT></B> pos: <B><FONT COLOR="#228B22">LONGINT</FONT></B>);   
+   Reals <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">POINTER</FONT></B> <B><FONT COLOR="#A020F0">TO</FONT></B> <B><FONT COLOR="#228B22">ARRAY</FONT></B> <B><FONT COLOR="#A020F0">OF</FONT></B> <B><FONT COLOR="#228B22">REAL</FONT></B>;
+
+<B><FONT COLOR="#A020F0">VAR</FONT></B>
+   buffer: FixedBuffer;
+   x: Reals;
+   i, n, mid: <B><FONT COLOR="#228B22">LONGINT</FONT></B>;
+   sum, mean, dev, adev, dev2, var, skew, kurt, sdev, median: <B><FONT COLOR="#228B22">LONGREAL</FONT></B>;
+
+
+<I><FONT COLOR="#B22222">(* Separate special processing in procedure Process so we can use
+   FillAndProcess in other Shootout tests *)</FONT></I>
+<B><FONT COLOR="#A020F0">PROCEDURE </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">FillAndProcess</FONT></I></B></FONT></B> (<B><FONT COLOR="#A020F0">VAR</FONT></B> buffer: FixedBuffer; Process: FixedBufferProc);
+<B><FONT COLOR="#A020F0">VAR</FONT></B>
+   channel: IO.ByteChannel;
+   partialFill: <B><FONT COLOR="#228B22">BOOLEAN</FONT></B>;
+   size, pos, count: <B><FONT COLOR="#228B22">LONGINT</FONT></B>;
+<B><FONT COLOR="#A020F0">BEGIN</FONT></B>
+   channel <B><FONT COLOR="#5F9EA0">:=</FONT></B> StdChannels.stdin;
+   pos <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0;
+   size <B><FONT COLOR="#5F9EA0">:=</FONT></B> readSize;
+   <B><FONT COLOR="#A020F0">LOOP</FONT></B>
+      TRY
+         count <B><FONT COLOR="#5F9EA0">:=</FONT></B> channel.Read(buffer, pos, size <B><FONT COLOR="#5F9EA0">*</FONT></B> <B><FONT COLOR="#A020F0">SIZE</FONT></B>(<B><FONT COLOR="#228B22">CHAR</FONT></B>)); 
+         partialFill <B><FONT COLOR="#5F9EA0">:=</FONT></B> count &lt; size; 
+         <B><FONT COLOR="#A020F0">IF</FONT></B> partialFill <B><FONT COLOR="#A020F0">THEN</FONT></B> size <B><FONT COLOR="#5F9EA0">:=</FONT></B> pos <B><FONT COLOR="#5F9EA0">+</FONT></B> count; <B><FONT COLOR="#A020F0">ELSE</FONT></B> size <B><FONT COLOR="#5F9EA0">:=</FONT></B> readSize; <B><FONT COLOR="#A020F0">END</FONT></B>;               
+         pos <B><FONT COLOR="#5F9EA0">:=</FONT></B> size;	
+
+         Process(buffer,pos);
+
+         <B><FONT COLOR="#A020F0">IF</FONT></B> partialFill <B><FONT COLOR="#A020F0">THEN</FONT></B> <B><FONT COLOR="#A020F0">EXIT</FONT></B>; <B><FONT COLOR="#A020F0">END</FONT></B>;  
+         
+         <B><FONT COLOR="#A020F0">IF</FONT></B> pos <B><FONT COLOR="#5F9EA0">=</FONT></B> size <B><FONT COLOR="#A020F0">THEN</FONT></B> 
+            pos <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0;
+            size <B><FONT COLOR="#5F9EA0">:=</FONT></B> readSize;
+         <B><FONT COLOR="#A020F0">ELSE</FONT></B>
+            S.MOVE(S.ADR(buffer[pos]), S.ADR(buffer[0]), (size<B><FONT COLOR="#5F9EA0">-</FONT></B>pos)<B><FONT COLOR="#5F9EA0">*</FONT></B><B><FONT COLOR="#A020F0">SIZE</FONT></B>(<B><FONT COLOR="#228B22">CHAR</FONT></B>));
+            pos <B><FONT COLOR="#5F9EA0">:=</FONT></B> size <B><FONT COLOR="#5F9EA0">-</FONT></B> pos;
+            size <B><FONT COLOR="#5F9EA0">:=</FONT></B> readSize <B><FONT COLOR="#5F9EA0">-</FONT></B> pos;
+         <B><FONT COLOR="#A020F0">END</FONT></B>;   
+                      
+      CATCH IO.Error:
+         <B><FONT COLOR="#A020F0">EXIT</FONT></B>;
+      <B><FONT COLOR="#A020F0">END</FONT></B>;               
+   <B><FONT COLOR="#A020F0">END</FONT></B>;
+<B><FONT COLOR="#A020F0">END </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">FillAndProcess</FONT></I></B></FONT></B>;
+
+
+<B><FONT COLOR="#A020F0">PROCEDURE </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">ReadReals</FONT></I></B></FONT></B>(<B><FONT COLOR="#A020F0">VAR</FONT></B> buffer: FixedBuffer; <B><FONT COLOR="#A020F0">VAR</FONT></B> pos: <B><FONT COLOR="#228B22">LONGINT</FONT></B>);
+<B><FONT COLOR="#A020F0">TYPE</FONT></B>
+   Chars <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">POINTER</FONT></B> <B><FONT COLOR="#A020F0">TO</FONT></B> <B><FONT COLOR="#228B22">ARRAY</FONT></B> 32 <B><FONT COLOR="#A020F0">OF</FONT></B> <B><FONT COLOR="#228B22">CHAR</FONT></B>;
+<B><FONT COLOR="#A020F0">VAR</FONT></B>
+   i, j: <B><FONT COLOR="#228B22">LONGINT</FONT></B>;
+   chars: Chars;
+   tmp: Reals;
+<B><FONT COLOR="#A020F0">BEGIN</FONT></B>
+   i <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0; j <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0; 
+   <B><FONT COLOR="#A020F0">WHILE</FONT></B> j &lt; pos <B><FONT COLOR="#A020F0">DO</FONT></B>	
+      <B><FONT COLOR="#A020F0">IF</FONT></B> buffer[j] <B><FONT COLOR="#5F9EA0">=</FONT></B> 0AX <B><FONT COLOR="#A020F0">THEN</FONT></B>
+            
+         <B><FONT COLOR="#A020F0">IF</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">LEN</FONT></B>(x<B><FONT COLOR="#5F9EA0">^</FONT></B>) <B><FONT COLOR="#A020F0">THEN</FONT></B> <I><FONT COLOR="#B22222">(* increase array size *)</FONT></I>
+            <B><FONT COLOR="#A020F0">NEW</FONT></B>(tmp, <B><FONT COLOR="#A020F0">ASH</FONT></B>(<B><FONT COLOR="#A020F0">LEN</FONT></B>(x<B><FONT COLOR="#5F9EA0">^</FONT></B>),1));
+            S.MOVE(S.ADR(x[0]), S.ADR(tmp[0]), n<B><FONT COLOR="#5F9EA0">*</FONT></B><B><FONT COLOR="#A020F0">SIZE</FONT></B>(<B><FONT COLOR="#228B22">REAL</FONT></B>));            
+            x <B><FONT COLOR="#5F9EA0">:=</FONT></B> tmp; tmp <B><FONT COLOR="#5F9EA0">:=</FONT></B> <B><FONT COLOR="#228B22">NIL</FONT></B>;
+         <B><FONT COLOR="#A020F0">END</FONT></B>;            
+            
+         buffer[j] <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0X;	       
+         chars <B><FONT COLOR="#5F9EA0">:=</FONT></B> S.VAL(Chars, S.ADR(buffer[i]));           
+         x[n] <B><FONT COLOR="#5F9EA0">:=</FONT></B> RealConv.ValueReal(chars<B><FONT COLOR="#5F9EA0">^</FONT></B>);                          
+         sum <B><FONT COLOR="#5F9EA0">:=</FONT></B> sum <B><FONT COLOR="#5F9EA0">+</FONT></B> x[n]; <B><FONT COLOR="#A020F0">INC</FONT></B>(n);         
+         
+         <B><FONT COLOR="#A020F0">INC</FONT></B>(j); i <B><FONT COLOR="#5F9EA0">:=</FONT></B> j;	
+      <B><FONT COLOR="#A020F0">ELSE</FONT></B>
+         <B><FONT COLOR="#A020F0">INC</FONT></B>(j);
+      <B><FONT COLOR="#A020F0">END</FONT></B>;                  
+   <B><FONT COLOR="#A020F0">END</FONT></B>;         
+      
+   <B><FONT COLOR="#A020F0">IF</FONT></B> j <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> i <B><FONT COLOR="#A020F0">THEN</FONT></B> pos <B><FONT COLOR="#5F9EA0">:=</FONT></B> i; <B><FONT COLOR="#A020F0">END</FONT></B>; <I><FONT COLOR="#B22222">(* indicate buffer position *)</FONT></I>
+<B><FONT COLOR="#A020F0">END </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">ReadReals</FONT></I></B></FONT></B>; 
+
+
+<B><FONT COLOR="#A020F0">PROCEDURE </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">QuickSelect</FONT></I></B></FONT></B>(n: <B><FONT COLOR="#228B22">LONGINT</FONT></B>; <B><FONT COLOR="#A020F0">VAR</FONT></B> a: <B><FONT COLOR="#228B22">ARRAY</FONT></B> <B><FONT COLOR="#A020F0">OF</FONT></B> <B><FONT COLOR="#228B22">REAL</FONT></B>): <B><FONT COLOR="#228B22">REAL</FONT></B>; 
+<B><FONT COLOR="#A020F0">VAR</FONT></B>
+   lo, hi, median, mid, l, h: <B><FONT COLOR="#228B22">LONGINT</FONT></B>;
+   t: <B><FONT COLOR="#228B22">REAL</FONT></B>;
+   
+<B><FONT COLOR="#A020F0">PROCEDURE </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">Swap</FONT></I></B></FONT></B>(i,j: <B><FONT COLOR="#228B22">LONGINT</FONT></B>); <B><FONT COLOR="#A020F0">BEGIN</FONT></B> t <B><FONT COLOR="#5F9EA0">:=</FONT></B> a[i]; a[i] <B><FONT COLOR="#5F9EA0">:=</FONT></B> a[j]; a[j] <B><FONT COLOR="#5F9EA0">:=</FONT></B> t;<B><FONT COLOR="#A020F0"> END </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">Swap</FONT></I></B></FONT></B>;  
+   
+<B><FONT COLOR="#A020F0">BEGIN</FONT></B>
+   lo <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0; hi <B><FONT COLOR="#5F9EA0">:=</FONT></B> n<B><FONT COLOR="#5F9EA0">-</FONT></B>1; median <B><FONT COLOR="#5F9EA0">:=</FONT></B> (lo <B><FONT COLOR="#5F9EA0">+</FONT></B> hi) <B><FONT COLOR="#A020F0">DIV</FONT></B> 2;
+   <B><FONT COLOR="#A020F0">LOOP</FONT></B>
+      <B><FONT COLOR="#A020F0">IF</FONT></B> hi <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> lo <B><FONT COLOR="#A020F0">THEN</FONT></B> <B><FONT COLOR="#A020F0">RETURN</FONT></B> a[median]; <B><FONT COLOR="#A020F0">END</FONT></B>;
+      <B><FONT COLOR="#A020F0">IF</FONT></B> hi <B><FONT COLOR="#5F9EA0">=</FONT></B> lo <B><FONT COLOR="#5F9EA0">+</FONT></B> 1 <B><FONT COLOR="#A020F0">THEN</FONT></B> 
+         <B><FONT COLOR="#A020F0">IF</FONT></B> a[lo] <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> a[hi] <B><FONT COLOR="#A020F0">THEN</FONT></B> Swap(lo,hi); <B><FONT COLOR="#A020F0">END</FONT></B>;
+         <B><FONT COLOR="#A020F0">RETURN</FONT></B> a[median];
+      <B><FONT COLOR="#A020F0">END</FONT></B>;      
+   
+      mid <B><FONT COLOR="#5F9EA0">:=</FONT></B> (lo <B><FONT COLOR="#5F9EA0">+</FONT></B> hi) <B><FONT COLOR="#A020F0">DIV</FONT></B> 2;
+      <B><FONT COLOR="#A020F0">IF</FONT></B> a[mid] <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> a[hi] <B><FONT COLOR="#A020F0">THEN</FONT></B> Swap(mid,hi); <B><FONT COLOR="#A020F0">END</FONT></B>;
+      <B><FONT COLOR="#A020F0">IF</FONT></B> a[lo] <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> a[hi] <B><FONT COLOR="#A020F0">THEN</FONT></B> Swap(lo,hi); <B><FONT COLOR="#A020F0">END</FONT></B>;  
+      <B><FONT COLOR="#A020F0">IF</FONT></B> a[mid] <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> a[lo] <B><FONT COLOR="#A020F0">THEN</FONT></B> Swap(mid,lo); <B><FONT COLOR="#A020F0">END</FONT></B>;
+      
+      Swap(mid,lo<B><FONT COLOR="#5F9EA0">+</FONT></B>1);       
+      
+      l <B><FONT COLOR="#5F9EA0">:=</FONT></B> lo <B><FONT COLOR="#5F9EA0">+</FONT></B> 1; h <B><FONT COLOR="#5F9EA0">:=</FONT></B> hi;     
+      <B><FONT COLOR="#A020F0">LOOP</FONT></B>  
+         <B><FONT COLOR="#A020F0">REPEAT</FONT></B> <B><FONT COLOR="#A020F0">INC</FONT></B>(l); <B><FONT COLOR="#A020F0">UNTIL</FONT></B> a[lo] <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> a[l];
+         <B><FONT COLOR="#A020F0">REPEAT</FONT></B> <B><FONT COLOR="#A020F0">DEC</FONT></B>(h); <B><FONT COLOR="#A020F0">UNTIL</FONT></B> a[h] <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> a[lo]; 
+         <B><FONT COLOR="#A020F0">IF</FONT></B> h &lt; l <B><FONT COLOR="#A020F0">THEN</FONT></B> <B><FONT COLOR="#A020F0">EXIT</FONT></B>; <B><FONT COLOR="#A020F0">END</FONT></B>; 
+         Swap(l,h);         
+      <B><FONT COLOR="#A020F0">END</FONT></B>;       
+      
+      Swap(lo,h);
+      <B><FONT COLOR="#A020F0">IF</FONT></B> h <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> median <B><FONT COLOR="#A020F0">THEN</FONT></B> lo <B><FONT COLOR="#5F9EA0">:=</FONT></B> l; <B><FONT COLOR="#A020F0">END</FONT></B>;
+      <B><FONT COLOR="#A020F0">IF</FONT></B> h <B><FONT COLOR="#5F9EA0">&gt;=</FONT></B> median <B><FONT COLOR="#A020F0">THEN</FONT></B> hi <B><FONT COLOR="#5F9EA0">:=</FONT></B> h <B><FONT COLOR="#5F9EA0">-</FONT></B> 1; <B><FONT COLOR="#A020F0">END</FONT></B>; 
+   <B><FONT COLOR="#A020F0">END</FONT></B>;     
+<B><FONT COLOR="#A020F0">END </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">QuickSelect</FONT></I></B></FONT></B>; 
+
+
+<B><FONT COLOR="#A020F0">BEGIN</FONT></B>
+   n <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0; sum <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0.0; <B><FONT COLOR="#A020F0">NEW</FONT></B>(x,4096);
+   FillAndProcess(buffer, ReadReals);  
+   
+   mean <B><FONT COLOR="#5F9EA0">:=</FONT></B> sum <B><FONT COLOR="#5F9EA0">/</FONT></B> n;
+   <B><FONT COLOR="#A020F0">FOR</FONT></B> i <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0 <B><FONT COLOR="#A020F0">TO</FONT></B> n<B><FONT COLOR="#5F9EA0">-</FONT></B>1 <B><FONT COLOR="#A020F0">DO</FONT></B>
+      dev <B><FONT COLOR="#5F9EA0">:=</FONT></B> x[i] <B><FONT COLOR="#5F9EA0">-</FONT></B> mean;
+      adev <B><FONT COLOR="#5F9EA0">:=</FONT></B> adev <B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#A020F0">ABS</FONT></B>(dev);
+      dev2 <B><FONT COLOR="#5F9EA0">:=</FONT></B> dev <B><FONT COLOR="#5F9EA0">*</FONT></B> dev;
+      var <B><FONT COLOR="#5F9EA0">:=</FONT></B> var <B><FONT COLOR="#5F9EA0">+</FONT></B> dev2;
+      skew <B><FONT COLOR="#5F9EA0">:=</FONT></B> skew <B><FONT COLOR="#5F9EA0">+</FONT></B> dev2 <B><FONT COLOR="#5F9EA0">*</FONT></B> dev;
+      kurt <B><FONT COLOR="#5F9EA0">:=</FONT></B> kurt <B><FONT COLOR="#5F9EA0">+</FONT></B> dev2 <B><FONT COLOR="#5F9EA0">*</FONT></B> dev2;
+   <B><FONT COLOR="#A020F0">END</FONT></B>;
+   adev <B><FONT COLOR="#5F9EA0">:=</FONT></B> adev <B><FONT COLOR="#5F9EA0">/</FONT></B> n;
+   var <B><FONT COLOR="#5F9EA0">:=</FONT></B> var <B><FONT COLOR="#5F9EA0">/</FONT></B> (n <B><FONT COLOR="#5F9EA0">-</FONT></B> 1);
+   sdev <B><FONT COLOR="#5F9EA0">:=</FONT></B> LRealMath.sqrt(var);
+   <B><FONT COLOR="#A020F0">IF</FONT></B> var <B><FONT COLOR="#5F9EA0">#</FONT></B> 0.0 <B><FONT COLOR="#A020F0">THEN</FONT></B>
+      skew <B><FONT COLOR="#5F9EA0">:=</FONT></B> skew <B><FONT COLOR="#5F9EA0">/</FONT></B> (n <B><FONT COLOR="#5F9EA0">*</FONT></B> var <B><FONT COLOR="#5F9EA0">*</FONT></B> sdev);
+      kurt <B><FONT COLOR="#5F9EA0">:=</FONT></B> kurt <B><FONT COLOR="#5F9EA0">/</FONT></B> (n <B><FONT COLOR="#5F9EA0">*</FONT></B> var <B><FONT COLOR="#5F9EA0">*</FONT></B> var) <B><FONT COLOR="#5F9EA0">-</FONT></B> 3.0;
+   <B><FONT COLOR="#A020F0">END</FONT></B>;
+
+   median <B><FONT COLOR="#5F9EA0">:=</FONT></B> QuickSelect(n, x<B><FONT COLOR="#5F9EA0">^</FONT></B>);   
+   mid <B><FONT COLOR="#5F9EA0">:=</FONT></B> (n <B><FONT COLOR="#A020F0">DIV</FONT></B> 2) <B><FONT COLOR="#5F9EA0">-</FONT></B> 1;
+   <B><FONT COLOR="#A020F0">IF</FONT></B> <B><FONT COLOR="#A020F0">ODD</FONT></B>(mid) <B><FONT COLOR="#A020F0">THEN</FONT></B> median <B><FONT COLOR="#5F9EA0">:=</FONT></B> (x[mid] <B><FONT COLOR="#5F9EA0">+</FONT></B> x[mid<B><FONT COLOR="#5F9EA0">+</FONT></B>1]) <B><FONT COLOR="#5F9EA0">/</FONT></B> 2; <B><FONT COLOR="#A020F0">END</FONT></B>;    
+               
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;n:                  &quot;</FONT></B>); Out.Int(n,0); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;median:             &quot;</FONT></B>); Out.LongRealFix(median,0,6); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;mean:               &quot;</FONT></B>); Out.LongRealFix(mean,0,6); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;average_deviation:  &quot;</FONT></B>); Out.LongRealFix(adev,0,6); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;standard_deviation: &quot;</FONT></B>); Out.LongRealFix(sdev,0,6); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;variance:           &quot;</FONT></B>); Out.LongRealFix(var,0,6); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;skew:               &quot;</FONT></B>); Out.LongRealFix(skew,0,6); Out.Ln;
+   Out.String(<B><FONT COLOR="#BC8F8F">&quot;kurtosis:           &quot;</FONT></B>); Out.LongRealFix(kurt,0,6); Out.Ln; 
+<B><FONT COLOR="#A020F0">END </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">Moments</FONT></I></B></FONT></B>.
+
+</pre></td></tr></table>

@@ -1,0 +1,87 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+
+<I><FONT COLOR="#B22222">-- Implementation of 'wordfreq' benchmark optimised for time and memory
+</FONT></I><I><FONT COLOR="#B22222">-- $Id: wordfreq-ghc.code,v 1.1 2004-11-02 08:53:33 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">-- http://shootout.alioth.debian.org/
+</FONT></I><I><FONT COLOR="#B22222">-- Author: Tomasz Zielonka &lt;t.zielonka@students.mimuw.edu.pl&gt;
+</FONT></I><I><FONT COLOR="#B22222">-- compile with: ghc -O2 -o wordfreq wordfreq.hs
+</FONT></I>
+<B><FONT COLOR="#A020F0">import</FONT></B> System.IO
+<B><FONT COLOR="#A020F0">import</FONT></B> Data.Array.IO
+<B><FONT COLOR="#A020F0">import</FONT></B> Data.Array.Base
+<B><FONT COLOR="#A020F0">import</FONT></B> Data.Word
+<B><FONT COLOR="#A020F0">import</FONT></B> Data.Int
+<B><FONT COLOR="#A020F0">import</FONT></B> Data.HashTable as HashTable
+<B><FONT COLOR="#A020F0">import</FONT></B> Data.IORef
+<B><FONT COLOR="#A020F0">import</FONT></B> List
+<B><FONT COLOR="#A020F0">import</FONT></B> Char
+
+myHashString <B><FONT COLOR="#228B22">:: String -&gt; Int32
+</FONT></B>myHashString = fromIntegral . foldr f 0
+  <B><FONT COLOR="#A020F0">where</FONT></B> f c m = ord c + (m * 67)
+
+main <B><FONT COLOR="#228B22">:: IO ()
+</FONT></B>main = do
+    ht &lt;- HashTable.new (==) myHashString
+
+    <B><FONT COLOR="#A020F0">let</FONT></B> handleReversedWord rw = do
+            l1 &lt;- HashTable.lookup ht rw
+            <B><FONT COLOR="#A020F0">case</FONT></B> l1 <B><FONT COLOR="#A020F0">of</FONT></B>
+                Just ref -&gt; incr ref
+                Nothing -&gt; do
+                    ref &lt;- newIORef (1 <B><FONT COLOR="#228B22">:: Int)
+</FONT></B>                    HashTable.insert ht rw ref
+    
+    iterateOnReversedWords stdin handleReversedWord
+
+    l &lt;- HashTable.toList ht
+    l &lt;- mapM (\(rw, ref) -&gt; do n &lt;- readIORef ref; return (n, reverse rw)) l
+
+    mapM_ (putStrLn . pretty) (sortBy (flip compare) l)
+
+  <B><FONT COLOR="#A020F0">where</FONT></B>
+    pretty (n,w) = pad 7 (show n) ++ <B><FONT COLOR="#BC8F8F">&quot; &quot;</FONT></B> ++ w
+    pad n s = replicate (n - length s) <B><FONT COLOR="#BC8F8F">' '</FONT></B> ++ s
+    incr ref = do
+        x &lt;- readIORef ref
+        writeIORef ref $! (x + 1)
+
+<I><FONT COLOR="#B22222">------------------------------------------------------------------
+</FONT></I>
+iterateOnReversedWords <B><FONT COLOR="#228B22">:: Handle -&gt; (String -&gt; IO ()) -&gt; IO ()
+</FONT></B>iterateOnReversedWords h f = do
+    cs &lt;- fileIterate h <B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B> aux
+    aux cs <B><FONT COLOR="#BC8F8F">' '</FONT></B>
+    return ()
+  <B><FONT COLOR="#A020F0">where</FONT></B>
+    aux cs c
+        | isAlpha c = do 
+            <B><FONT COLOR="#A020F0">let</FONT></B> c' = toLower c
+            return (c' : cs)
+        | not (null cs) = do
+            f cs
+            return []
+        | otherwise = return []
+
+<I><FONT COLOR="#B22222">{-# INLINE fileIterate #-}</FONT></I>
+
+fileIterate <B><FONT COLOR="#228B22">:: Handle -&gt; a -&gt; (a -&gt; Char -&gt; IO a) -&gt; IO a
+</FONT></B>fileIterate h a0 f = do
+    buf &lt;- newArray_ (0, bufSize - 1) <B><FONT COLOR="#228B22">:: IO (IOUArray Int Word8)
+</FONT></B>    <B><FONT COLOR="#A020F0">let</FONT></B> loop i n a
+            | i == n =
+                do  n' &lt;- hGetArray h buf bufSize
+                    <B><FONT COLOR="#A020F0">if</FONT></B> n' == 0
+                        <B><FONT COLOR="#A020F0">then</FONT></B> return a
+                        <B><FONT COLOR="#A020F0">else</FONT></B> loop 0 n' a
+            | otherwise =
+                do  c &lt;- fmap (toEnum . fromEnum) (readArray buf i)
+
+                    a' &lt;- f a c
+
+                    loop (i + 1) n a'
+    loop 0 0 a0
+  <B><FONT COLOR="#A020F0">where</FONT></B>
+    bufSize <B><FONT COLOR="#228B22">:: Int
+</FONT></B>    bufSize = 4096
+</pre></td></tr></table>

@@ -1,0 +1,131 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">\ -*- mode: forth -*-
+</FONT></I><I><FONT COLOR="#B22222">\ $Id: regexmatch-gforth.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">\ http://www.bagley.org/~doug/shootout/
+</FONT></I>
+<I><FONT COLOR="#B22222">\ from Anton Ertl:
+</FONT></I><I><FONT COLOR="#B22222">\ this uses the Gray parser generator, which is probably too big a
+</FONT></I><I><FONT COLOR="#B22222">\ cannon for this problem (it also needs a lot of setup code).
+</FONT></I><I><FONT COLOR="#B22222">\ Writing a recursive descent parser by hand is probably both smaller
+</FONT></I><I><FONT COLOR="#B22222">\ and faster in this case.
+</FONT></I>
+
+0. argc @ 1<B><FONT COLOR="#5F9EA0">-</FONT></B> arg <B><FONT COLOR="#5F9EA0">&gt;</FONT></B>number <B><FONT COLOR="#5F9EA0">2drop</FONT></B> <B><FONT COLOR="#5F9EA0">drop</FONT></B> <B><FONT COLOR="#A020F0">constant</FONT></B> NUM
+
+warnings off <I><FONT COLOR="#B22222">\ Gray is a little wordy
+</FONT></I>
+require gray.fs
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">slurp-fid</FONT></I></B></FONT></B> { fid <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> addr u }
+    0 0 <B><FONT COLOR="#A020F0">begin</FONT></B> ( awhole uwhole )
+	<B><FONT COLOR="#5F9EA0">dup</FONT></B> 1024 <B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#5F9EA0">dup</FONT></B> <B><FONT COLOR="#5F9EA0">&gt;</FONT></B>r extend<B><FONT COLOR="#5F9EA0">-</FONT></B>mem ( anew awhole uwhole R: unew )
+	<B><FONT COLOR="#5F9EA0">rot</FONT></B> r@ fid read<B><FONT COLOR="#5F9EA0">-</FONT></B>file <B><FONT COLOR="#5F9EA0">throw</FONT></B> ( awhole uwhole uread R: unew )
+	r<B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#5F9EA0">2dup</FONT></B> =
+    <B><FONT COLOR="#A020F0">while</FONT></B> ( awhole uwhole uread unew )
+	<B><FONT COLOR="#5F9EA0">2drop</FONT></B>
+    <B><FONT COLOR="#A020F0">repeat</FONT></B>
+    <B><FONT COLOR="#5F9EA0">-</FONT></B> <B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#5F9EA0">dup</FONT></B> <B><FONT COLOR="#5F9EA0">&gt;</FONT></B>r resize <B><FONT COLOR="#5F9EA0">throw</FONT></B> r<B><FONT COLOR="#5F9EA0">&gt;</FONT></B> ;
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">bit-equiv</FONT></I></B></FONT></B> ( w1 w2 <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> w3 )
+    <I><FONT COLOR="#B22222">\ w3=~w1^w2
+</FONT></I>    <B><FONT COLOR="#A020F0">invert</FONT></B> <B><FONT COLOR="#A020F0">xor</FONT></B> ;
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">set-complement</FONT></I></B></FONT></B> ( set1 <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> set2 )
+    empty ['] bit<B><FONT COLOR="#5F9EA0">-</FONT></B>equiv binary<B><FONT COLOR="#5F9EA0">-</FONT></B>set<B><FONT COLOR="#5F9EA0">-</FONT></B>operation ;
+
+<B><FONT COLOR="#A020F0">variable</FONT></B> input <I><FONT COLOR="#B22222">\ pointer to next character to be scanned
+</FONT></I><B><FONT COLOR="#A020F0">variable</FONT></B> <B><FONT COLOR="#A020F0">end</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>input <I><FONT COLOR="#B22222">\ pointer to end of input
+</FONT></I><B><FONT COLOR="#5F9EA0">-</FONT></B>1 <B><FONT COLOR="#A020F0">constant</FONT></B> eof<B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#228B22">char</FONT></B>
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">start</FONT></I></B></FONT></B> ( <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> addr )
+    input @ ;
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">end</FONT></I></B></FONT></B> ( addr <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> addr u )
+    input @ <B><FONT COLOR="#5F9EA0">over</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B> ;
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">get-input</FONT></I></B></FONT></B> ( <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> c )
+    start <B><FONT COLOR="#A020F0">end</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>input @ = <B><FONT COLOR="#A020F0">if</FONT></B>
+	eof<B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#228B22">char</FONT></B>
+    <B><FONT COLOR="#A020F0">else</FONT></B>
+	start c@
+    <B><FONT COLOR="#A020F0">endif</FONT></B> ;
+
+256 <B><FONT COLOR="#A020F0">max</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>member
+s<B><FONT COLOR="#BC8F8F">&quot; scan failed&quot;</FONT></B> exception <B><FONT COLOR="#A020F0">constant</FONT></B> scanfail
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">?nextchar</FONT></I></B></FONT></B> ( f <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> )
+    0= scanfail <B><FONT COLOR="#A020F0">and</FONT></B> <B><FONT COLOR="#5F9EA0">throw</FONT></B>
+    1 chars input <B><FONT COLOR="#5F9EA0">+</FONT></B><B><FONT COLOR="#5F9EA0">!</FONT></B> ;
+    
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">testchar?</FONT></I></B></FONT></B> ( set <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> f )
+    get<B><FONT COLOR="#5F9EA0">-</FONT></B>input member? ;
+' testchar? test<B><FONT COLOR="#5F9EA0">-</FONT></B>vector <B><FONT COLOR="#5F9EA0">!</FONT></B>
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">..</FONT></I></B></FONT></B> ( c1 c2 <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> set )
+ ( creates a set that includes the characters c, c1<B><FONT COLOR="#5F9EA0">&lt;=</FONT></B>c<B><FONT COLOR="#5F9EA0">&lt;=</FONT></B>c2 )
+ empty copy<B><FONT COLOR="#5F9EA0">-</FONT></B>set
+ <B><FONT COLOR="#5F9EA0">swap</FONT></B> 1<B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#5F9EA0">rot</FONT></B> <B><FONT COLOR="#A020F0">do</FONT></B>
+  i <B><FONT COLOR="#5F9EA0">over</FONT></B> add<B><FONT COLOR="#5F9EA0">-</FONT></B>member
+ <B><FONT COLOR="#A020F0">loop</FONT></B> ;
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">`</FONT></I></B></FONT></B> ( <B><FONT COLOR="#BC8F8F">&quot;c&quot;</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> terminal )
+    <I><FONT COLOR="#B22222">\ creates anonymous terminal for the character c )
+</FONT></I>    <B><FONT COLOR="#228B22">char</FONT></B> singleton ['] ?nextchar make<B><FONT COLOR="#5F9EA0">-</FONT></B>terminal ;
+
+<B><FONT COLOR="#228B22">char</FONT></B> 0 <B><FONT COLOR="#228B22">char</FONT></B> 9 .. <B><FONT COLOR="#5F9EA0">dup</FONT></B>  ' ?nextchar  terminal digit
+set<B><FONT COLOR="#5F9EA0">-</FONT></B>complement        ' ?nextchar  terminal nondigit
+bl singleton          ' ?nextchar  terminal lspace
+
+2variable areacode
+2variable exchange
+2variable last4
+
+(( {{ start }} digit digit digit {{ <B><FONT COLOR="#A020F0">end</FONT></B> areacode 2<B><FONT COLOR="#5F9EA0">!</FONT></B> }} ))
+&lt;<B><FONT COLOR="#5F9EA0">-</FONT></B> area<B><FONT COLOR="#5F9EA0">-</FONT></B>code
+
+(( (( ` ( area<B><FONT COLOR="#5F9EA0">-</FONT></B>code ` ) <B><FONT COLOR="#5F9EA0">|</FONT></B><B><FONT COLOR="#5F9EA0">|</FONT></B> area<B><FONT COLOR="#5F9EA0">-</FONT></B>code ))
+   lspace {{ start }} digit digit digit {{ <B><FONT COLOR="#A020F0">end</FONT></B> exchange 2<B><FONT COLOR="#5F9EA0">!</FONT></B> }}
+   (( lspace <B><FONT COLOR="#5F9EA0">|</FONT></B><B><FONT COLOR="#5F9EA0">|</FONT></B> ` <B><FONT COLOR="#5F9EA0">-</FONT></B> ))
+   {{ start }} digit digit digit digit {{ <B><FONT COLOR="#A020F0">end</FONT></B> last4 2<B><FONT COLOR="#5F9EA0">!</FONT></B> }}
+   nondigit
+)) &lt;<B><FONT COLOR="#5F9EA0">-</FONT></B> telnum ( <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> )
+
+telnum parser scan<B><FONT COLOR="#5F9EA0">-</FONT></B>telnum ( <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> )
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">scan-for-nondigit</FONT></I></B></FONT></B> ( addr1 <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> addr2 )
+    <B><FONT COLOR="#A020F0">begin</FONT></B>
+	count ( c@<B><FONT COLOR="#5F9EA0">+</FONT></B> ) <B><FONT COLOR="#5F9EA0">&gt;</FONT></B>r
+	r@ '0 &lt; r@ '9 <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#A020F0">or</FONT></B>  r<B><FONT COLOR="#5F9EA0">&gt;</FONT></B> '( <B><FONT COLOR="#5F9EA0">&lt;&gt;</FONT></B>  <B><FONT COLOR="#A020F0">and</FONT></B>
+	<B><FONT COLOR="#5F9EA0">over</FONT></B> <B><FONT COLOR="#A020F0">end</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>input @ u<B><FONT COLOR="#5F9EA0">&gt;=</FONT></B> <B><FONT COLOR="#A020F0">or</FONT></B>
+    <B><FONT COLOR="#A020F0">until</FONT></B> ;
+
+<B><FONT COLOR="#A020F0">variable</FONT></B> count  0 count <B><FONT COLOR="#5F9EA0">!</FONT></B>
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">scanfile</FONT></I></B></FONT></B> ( addr u <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> )
+    <B><FONT COLOR="#5F9EA0">over</FONT></B> <B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#A020F0">end</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>input <B><FONT COLOR="#5F9EA0">!</FONT></B>
+    <B><FONT COLOR="#A020F0">begin</FONT></B> ( addr1 )
+	<B><FONT COLOR="#5F9EA0">dup</FONT></B> input <B><FONT COLOR="#5F9EA0">!</FONT></B>
+	['] scan<B><FONT COLOR="#5F9EA0">-</FONT></B>telnum <B><FONT COLOR="#5F9EA0">catch</FONT></B>
+	<B><FONT COLOR="#5F9EA0">dup</FONT></B> <B><FONT COLOR="#5F9EA0">dup</FONT></B> scanfail <B><FONT COLOR="#5F9EA0">&lt;&gt;</FONT></B> <B><FONT COLOR="#A020F0">and</FONT></B> <B><FONT COLOR="#5F9EA0">throw</FONT></B>
+	<B><FONT COLOR="#A020F0">if</FONT></B> ( addr1 )
+	    scan<B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#A020F0">for</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>nondigit
+	<B><FONT COLOR="#A020F0">else</FONT></B>
+	    1 count <B><FONT COLOR="#5F9EA0">+</FONT></B><B><FONT COLOR="#5F9EA0">!</FONT></B> count @ 1 u.r .<B><FONT COLOR="#BC8F8F">&quot; : &quot;</FONT></B>
+	    .<B><FONT COLOR="#BC8F8F">&quot; (&quot;</FONT></B> areacode 2@ type .<B><FONT COLOR="#BC8F8F">&quot; ) &quot;</FONT></B> exchange 2@ type .<B><FONT COLOR="#BC8F8F">&quot; -&quot;</FONT></B> last4 2@ type
+	    cr
+	    <B><FONT COLOR="#A020F0">end</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>input @ <B><FONT COLOR="#5F9EA0">over</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B> #lf scan <B><FONT COLOR="#5F9EA0">drop</FONT></B> <I><FONT COLOR="#B22222">\ skip rest of line
+</FONT></I>	<B><FONT COLOR="#A020F0">endif</FONT></B>
+	<B><FONT COLOR="#5F9EA0">dup</FONT></B> <B><FONT COLOR="#A020F0">end</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B>input @ u<B><FONT COLOR="#5F9EA0">&gt;=</FONT></B>
+    <B><FONT COLOR="#A020F0">until</FONT></B>
+    <B><FONT COLOR="#5F9EA0">drop</FONT></B> ;
+
+<B><FONT COLOR="#A020F0">: </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">mainloop</FONT></I></B></FONT></B> ( addr u <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">-</FONT></B> )
+    ['] <B><FONT COLOR="#5F9EA0">2drop</FONT></B> [is] type
+    NUM 1 <B><FONT COLOR="#5F9EA0">+</FONT></B><B><FONT COLOR="#A020F0">do</FONT></B>
+	<B><FONT COLOR="#5F9EA0">2dup</FONT></B> scanfile
+    <B><FONT COLOR="#A020F0">loop</FONT></B>
+    ['] (type) [is] type
+    scanfile ;
+    
+stdin slurp<B><FONT COLOR="#5F9EA0">-</FONT></B>fid mainloop <B><FONT COLOR="#5F9EA0">bye</FONT></B>
+</pre></td></tr></table>

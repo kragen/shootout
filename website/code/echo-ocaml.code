@@ -1,0 +1,67 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">(*
+ * $Id: echo-ocaml.code,v 1.1 2004-11-02 08:52:30 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * with help from Markus Mottl
+ *)</FONT></I>
+
+<B><FONT COLOR="#A020F0">open</FONT></B> Unix
+
+<B><FONT COLOR="#A020F0">let</FONT></B> data <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;Hello there sailor\n&quot;</FONT></B>
+
+<B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">rec</FONT></B> sock_write sock buf offset <B><FONT COLOR="#5F9EA0">=</FONT></B> function
+  <B><FONT COLOR="#5F9EA0">|</FONT></B> 0 <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> ()
+  <B><FONT COLOR="#5F9EA0">|</FONT></B> len <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+      <B><FONT COLOR="#A020F0">let</FONT></B> nwritten <B><FONT COLOR="#5F9EA0">=</FONT></B> write sock buf offset len <B><FONT COLOR="#A020F0">in</FONT></B>
+      sock_write sock buf (offset <B><FONT COLOR="#5F9EA0">+</FONT></B> nwritten) (len <B><FONT COLOR="#5F9EA0">-</FONT></B> nwritten)
+
+<B><FONT COLOR="#A020F0">let</FONT></B> sock_readline buf sock <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">let</FONT></B> offset <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> (read sock buf 0 64) <B><FONT COLOR="#A020F0">in</FONT></B>
+  <B><FONT COLOR="#A020F0">while</FONT></B> buf.[<B><FONT COLOR="#5F9EA0">!</FONT></B>offset <B><FONT COLOR="#5F9EA0">-</FONT></B> 1] <B><FONT COLOR="#5F9EA0">&lt;&gt;</FONT></B> <B><FONT COLOR="#BC8F8F">'\n'</FONT></B> <B><FONT COLOR="#A020F0">do</FONT></B>
+    offset <B><FONT COLOR="#5F9EA0">:=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>offset <B><FONT COLOR="#5F9EA0">+</FONT></B> read sock buf <B><FONT COLOR="#5F9EA0">!</FONT></B>offset 64
+  done;
+  <B><FONT COLOR="#5F9EA0">!</FONT></B>offset
+
+<B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">rec</FONT></B> buf_ok buf n <B><FONT COLOR="#5F9EA0">=</FONT></B> n <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> 0 <B><FONT COLOR="#5F9EA0">|</FONT></B><B><FONT COLOR="#5F9EA0">|</FONT></B> buf.[n] <B><FONT COLOR="#5F9EA0">=</FONT></B> data.[n] &amp;&amp; buf_ok buf (n <B><FONT COLOR="#5F9EA0">-</FONT></B> 1)
+
+<B><FONT COLOR="#A020F0">let</FONT></B> echo_client n port <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">let</FONT></B> sock <B><FONT COLOR="#5F9EA0">=</FONT></B> socket PF_INET SOCK_STREAM 0 <B><FONT COLOR="#A020F0">in</FONT></B>
+  connect sock (ADDR_INET (inet_addr_of_string <B><FONT COLOR="#BC8F8F">&quot;127.0.0.1&quot;</FONT></B>, port));
+  <B><FONT COLOR="#A020F0">let</FONT></B> len <B><FONT COLOR="#5F9EA0">=</FONT></B> String.length data <B><FONT COLOR="#A020F0">and</FONT></B> buf <B><FONT COLOR="#5F9EA0">=</FONT></B> String.create 64 <B><FONT COLOR="#A020F0">in</FONT></B>
+  for i <B><FONT COLOR="#5F9EA0">=</FONT></B> 1 to n <B><FONT COLOR="#A020F0">do</FONT></B>
+    sock_write sock data 0 len;
+    <B><FONT COLOR="#A020F0">let</FONT></B> ans_len <B><FONT COLOR="#5F9EA0">=</FONT></B> sock_readline buf sock <B><FONT COLOR="#A020F0">in</FONT></B>
+    <B><FONT COLOR="#A020F0">if</FONT></B> ans_len <B><FONT COLOR="#5F9EA0">&lt;&gt;</FONT></B> len <B><FONT COLOR="#5F9EA0">|</FONT></B><B><FONT COLOR="#5F9EA0">|</FONT></B> not (buf_ok buf (len <B><FONT COLOR="#5F9EA0">-</FONT></B> 1)) <B><FONT COLOR="#A020F0">then</FONT></B>
+      failwith (<B><FONT COLOR="#BC8F8F">&quot;client got bad data: &quot;</FONT></B> <B><FONT COLOR="#5F9EA0">^</FONT></B> String.sub buf 0 ans_len)
+  done;
+  close sock
+
+<B><FONT COLOR="#A020F0">let</FONT></B> ssock <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">let</FONT></B> ssock <B><FONT COLOR="#5F9EA0">=</FONT></B> socket PF_INET SOCK_STREAM 0
+  <B><FONT COLOR="#A020F0">and</FONT></B> addr <B><FONT COLOR="#5F9EA0">=</FONT></B> inet_addr_of_string <B><FONT COLOR="#BC8F8F">&quot;127.0.0.1&quot;</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
+  bind ssock (ADDR_INET (addr, 0));
+  setsockopt ssock SO_REUSEADDR true;
+  listen ssock 2;
+  ssock
+
+<B><FONT COLOR="#A020F0">let</FONT></B> get_port sock <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  match getsockname sock <B><FONT COLOR="#A020F0">with</FONT></B>
+  <B><FONT COLOR="#5F9EA0">|</FONT></B> ADDR_INET (_, port) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> port
+  <B><FONT COLOR="#5F9EA0">|</FONT></B> ADDR_UNIX _ <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> failwith <B><FONT COLOR="#BC8F8F">&quot;getsockname&quot;</FONT></B>
+
+<B><FONT COLOR="#A020F0">let</FONT></B> echo_server n <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">let</FONT></B> port <B><FONT COLOR="#5F9EA0">=</FONT></B> get_port ssock <B><FONT COLOR="#A020F0">and</FONT></B> pid <B><FONT COLOR="#5F9EA0">=</FONT></B> fork() <B><FONT COLOR="#A020F0">in</FONT></B>
+  <B><FONT COLOR="#A020F0">if</FONT></B> pid <B><FONT COLOR="#5F9EA0">&lt;&gt;</FONT></B> 0 <B><FONT COLOR="#A020F0">then</FONT></B> begin
+    <B><FONT COLOR="#A020F0">let</FONT></B> csock, addr <B><FONT COLOR="#5F9EA0">=</FONT></B> accept ssock
+    <B><FONT COLOR="#A020F0">and</FONT></B> buf <B><FONT COLOR="#5F9EA0">=</FONT></B> String.create 64 <B><FONT COLOR="#A020F0">and</FONT></B> len <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0 <B><FONT COLOR="#A020F0">and</FONT></B> nread <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 1 <B><FONT COLOR="#A020F0">in</FONT></B>
+    <B><FONT COLOR="#A020F0">while</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>nread <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 0 <B><FONT COLOR="#A020F0">do</FONT></B>
+      nread <B><FONT COLOR="#5F9EA0">:=</FONT></B> read csock buf 0 64;
+      sock_write csock buf 0 <B><FONT COLOR="#5F9EA0">!</FONT></B>nread;
+      len <B><FONT COLOR="#5F9EA0">:=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>len <B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>nread
+    done;
+    ignore (wait ());
+    Printf.printf <B><FONT COLOR="#BC8F8F">&quot;server processed %d bytes\n&quot;</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>len <B><FONT COLOR="#A020F0">end</FONT></B>
+  <B><FONT COLOR="#A020F0">else</FONT></B> echo_client n port
+
+<B><FONT COLOR="#A020F0">let</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B> Array.length Sys.argv <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 1 <B><FONT COLOR="#A020F0">then</FONT></B> int_of_string Sys.argv.(1) <B><FONT COLOR="#A020F0">else</FONT></B> 1;;
+echo_server n</pre></td></tr></table>

@@ -1,0 +1,66 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">; prodcons.scm
+</FONT></I><I><FONT COLOR="#B22222">; Producer/consumer benchmark for http://www.bagley.org/~doug/shootout/
+</FONT></I><I><FONT COLOR="#B22222">; Scheme implementation using SRFI 18, needs only the following subset:
+</FONT></I><I><FONT COLOR="#B22222">; make-thread, thread-start!, thread-join!
+</FONT></I><I><FONT COLOR="#B22222">; make-mutex, mutex-lock!, mutex-unlock!
+</FONT></I><I><FONT COLOR="#B22222">; make-condition-variable, condition-variable-signal!
+</FONT></I>
+<I><FONT COLOR="#B22222">; (by Sven Hartrumpf)
+</FONT></I>
+(declare (fixnum) (uses srfi-18))
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*num</FONT></B> 1)
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*mutex</FONT></B> (make-mutex))
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*nonzero-condition</FONT></B> (make-condition-variable))
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*zero-condition</FONT></B> (make-condition-variable))
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*buffer</FONT></B> #f)
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*count</FONT></B> 0)
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*produced</FONT></B> 0)
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">*consumed</FONT></B> 0)
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">producer</FONT></B>
+  (make-thread
+   (<B><FONT COLOR="#A020F0">lambda</FONT></B> ()
+     (<B><FONT COLOR="#A020F0">do</FONT></B> ((i 1))
+	 ((&gt; i *num))
+       (mutex-lock! *mutex)
+       (<B><FONT COLOR="#A020F0">cond</FONT></B> ((= *count 0)
+	      (<B><FONT COLOR="#A020F0">set!</FONT></B> *buffer i)
+	      (<B><FONT COLOR="#A020F0">set!</FONT></B> *count (+ *count 1))
+	      (condition-variable-signal! *nonzero-condition)
+	      (mutex-unlock! *mutex *zero-condition)
+	      (<B><FONT COLOR="#A020F0">set!</FONT></B> i (+ i 1))
+	      (<B><FONT COLOR="#A020F0">set!</FONT></B> *produced (+ *produced 1))
+	      )
+	     (<B><FONT COLOR="#A020F0">else</FONT></B>
+	      (mutex-unlock! *mutex *zero-condition))) )
+     (condition-variable-signal! *nonzero-condition) ) ) ) <I><FONT COLOR="#B22222">; to run consumer once more...
+</FONT></I>
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">consumer</FONT></B> (make-thread (<B><FONT COLOR="#A020F0">lambda</FONT></B> ()
+  (<B><FONT COLOR="#A020F0">do</FONT></B> ((i 0))
+    ((&gt;= i *num))
+    (mutex-lock! *mutex)
+    (<B><FONT COLOR="#A020F0">cond</FONT></B> ((&gt; *count 0)
+           (<B><FONT COLOR="#A020F0">set!</FONT></B> i *buffer)
+           (<B><FONT COLOR="#A020F0">set!</FONT></B> *buffer #f)
+           (<B><FONT COLOR="#A020F0">set!</FONT></B> *count (- *count 1))
+           (condition-variable-signal! *zero-condition)
+           (mutex-unlock! *mutex *nonzero-condition)
+           (<B><FONT COLOR="#A020F0">set!</FONT></B> *consumed (+ *consumed 1))
+           )
+          (<B><FONT COLOR="#A020F0">else</FONT></B>
+            (mutex-unlock! *mutex *nonzero-condition)))
+    ))))
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> (<B><FONT COLOR="#0000FF">main</FONT></B> #!optional (n <B><FONT COLOR="#BC8F8F">&quot;1&quot;</FONT></B>))
+  (<B><FONT COLOR="#A020F0">set!</FONT></B> *num (string-&gt;number n))
+  (thread-start! producer)
+  (thread-start! consumer)
+  (thread-join! producer)
+  (thread-join! consumer)
+  (print *produced <B><FONT COLOR="#BC8F8F">&quot; &quot;</FONT></B> *consumed))
+
+
+(apply main (command-line-arguments))
+</pre></td></tr></table>

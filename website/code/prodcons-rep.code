@@ -1,0 +1,58 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+#!/bin/bash
+# -*- mode: lisp -*-
+PROG=${0%.jl}
+[ \! -f $PROG.jlc -o $0 -nt $PROG.jlc ] &amp;&amp;
+    rep --batch --no-rc -l compiler -f compile-batch $0
+exec rep <B><FONT COLOR="#BC8F8F">&quot;$PROG.jlc&quot;</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;$@&quot;</FONT></B>
+!#
+
+<I><FONT COLOR="#B22222">;;; $Id: prodcons-rep.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">;;; http://www.bagley.org/~doug/shootout/
+</FONT></I>
+(define-structure main ()
+  (open	rep
+	rep.system
+	rep.threads
+	rep.threads.mutex
+	rep.threads.condition-variable)
+
+  (declare (unsafe-for-call/cc))
+
+  (<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">mutex</FONT></B> (make-mutex))
+  (<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">access</FONT></B> (make-condition-variable))
+  (<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">count</FONT></B> 0)
+  (<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">data</FONT></B> -1)
+  (<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">produced</FONT></B> 0)
+  (<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">consumed</FONT></B> 0)
+
+  (<B><FONT COLOR="#A020F0">define</FONT></B> (<B><FONT COLOR="#0000FF">consumer</FONT></B> n)
+    (<B><FONT COLOR="#A020F0">let</FONT></B> ((i 0))
+      (while (/= i n)
+	(obtain-mutex mutex)
+	(while (= count 0)
+	  (condition-variable-wait access mutex))
+	(setq i data)
+	(setq count 0)
+	(setq consumed (1+ consumed))
+	(condition-variable-signal access)
+	(release-mutex mutex))))
+
+  (<B><FONT COLOR="#A020F0">define</FONT></B> (<B><FONT COLOR="#0000FF">producer</FONT></B> n)
+    (<B><FONT COLOR="#A020F0">do</FONT></B> ((i 1 (+ i 1)))
+	((&gt; i n))
+      (obtain-mutex mutex)
+      (while (= count 1)
+	(condition-variable-wait access mutex))
+      (setq data i)
+      (setq count 1)
+      (setq produced (1+ produced))
+      (condition-variable-signal access)
+      (release-mutex mutex)))
+
+  (<B><FONT COLOR="#A020F0">let*</FONT></B> ((arg (get-command-line-option <B><FONT COLOR="#BC8F8F">&quot;--num&quot;</FONT></B> t))
+	 (n (<B><FONT COLOR="#A020F0">if</FONT></B> arg (string-&gt;number arg) 1))
+	 (c (make-thread (<B><FONT COLOR="#A020F0">lambda</FONT></B> () (consumer n)))))
+    (producer n)
+    (thread-join c)
+    (format standard-output <B><FONT COLOR="#BC8F8F">&quot;%d %d\n&quot;</FONT></B> produced consumed)))</pre></td></tr></table>

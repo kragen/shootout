@@ -1,0 +1,402 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">(* -*- mode: sml -*-
+ * $Id: wordfreq-poly.code,v 1.1 2004-11-02 08:53:35 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ *)</FONT></I>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">for</FONT></I></B></FONT></B> (start, stop, f) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> stop
+	    <B><FONT COLOR="#A020F0">then</FONT></B> ()
+	 <B><FONT COLOR="#A020F0">else</FONT></B> (f i; loop (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1))
+   <B><FONT COLOR="#A020F0">in</FONT></B>
+      loop start
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">incr</FONT></I></B></FONT></B> r <B><FONT COLOR="#5F9EA0">=</FONT></B> r <B><FONT COLOR="#5F9EA0">:=</FONT></B> 1 <B><FONT COLOR="#5F9EA0">+</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>r
+<B><FONT COLOR="#A020F0">val</FONT></B> sub <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.sub
+<B><FONT COLOR="#A020F0">val</FONT></B> update <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.update
+   
+<B><FONT COLOR="#5F9EA0">signature</FONT></B> HASH_SET <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+      <B><FONT COLOR="#A020F0">type</FONT></B> 'a t
+
+      <B><FONT COLOR="#A020F0">val</FONT></B> foreach: 'a t <B><FONT COLOR="#5F9EA0">*</FONT></B> ('a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+      <I><FONT COLOR="#B22222">(* lookupOrInsert (s, h, p, f)  looks in the set s for an entry with hash h
+       * satisfying predicate p.  If the entry is there, it is returned.
+       * Otherwise, the function f is called to create a new entry, which is
+       * inserted and returned.
+       *)</FONT></I>
+      <B><FONT COLOR="#A020F0">val</FONT></B> lookupOrInsert: 'a t <B><FONT COLOR="#5F9EA0">*</FONT></B> <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> ('a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>) <B><FONT COLOR="#5F9EA0">*</FONT></B> (<B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 'a) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 'a
+      <B><FONT COLOR="#A020F0">val</FONT></B> new: {hash: 'a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">word</FONT></B>} <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 'a t
+      <B><FONT COLOR="#A020F0">val</FONT></B> size: 'a t <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">int</FONT></B>
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> HashSet: HASH_SET <B><FONT COLOR="#5F9EA0">=</FONT></B>
+<B><FONT COLOR="#5F9EA0">struct</FONT></B>
+
+<B><FONT COLOR="#A020F0">datatype</FONT></B> 'a t <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   T <B><FONT COLOR="#A020F0">of</FONT></B> {buckets: 'a <B><FONT COLOR="#228B22">list</FONT></B> <B><FONT COLOR="#228B22">array</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>,
+	 hash: 'a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">word</FONT></B>,
+	 mask: <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>,
+	 numItems: <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>}
+
+<B><FONT COLOR="#A020F0">val</FONT></B> initialSize: <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> 65536
+<B><FONT COLOR="#A020F0">val</FONT></B> initialMask: <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> Word.fromInt initialSize <B><FONT COLOR="#5F9EA0">-</FONT></B> 0w1
+
+<B><FONT COLOR="#A020F0">fun</FONT></B> 'a new {hash}: 'a t <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   T {buckets <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> (Array.<B><FONT COLOR="#228B22">array</FONT></B> (initialSize, [])),
+      hash <B><FONT COLOR="#5F9EA0">=</FONT></B> hash,
+      numItems <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0,
+      mask <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> initialMask}
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">size</FONT></I></B></FONT></B> (T {numItems, ...}) <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>numItems
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">numBuckets</FONT></I></B></FONT></B> (T {buckets, ...}) <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.length (<B><FONT COLOR="#5F9EA0">!</FONT></B>buckets)
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">index</FONT></I></B></FONT></B> (w: <B><FONT COLOR="#228B22">word</FONT></B>, mask: <B><FONT COLOR="#228B22">word</FONT></B>): <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   Word.toInt (Word.andb (w, mask))
+   
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">resize</FONT></I></B></FONT></B> (T {buckets, hash, mask, ...}, size: <B><FONT COLOR="#228B22">int</FONT></B>, newMask: <B><FONT COLOR="#228B22">word</FONT></B>): <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> newBuckets <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.<B><FONT COLOR="#228B22">array</FONT></B> (size, [])
+   <B><FONT COLOR="#A020F0">in</FONT></B> Array.app (<B><FONT COLOR="#A020F0">fn</FONT></B> r <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+		 List.app (<B><FONT COLOR="#A020F0">fn</FONT></B> a <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			       <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">val</FONT></B> j <B><FONT COLOR="#5F9EA0">=</FONT></B> index (hash a, newMask)
+			       <B><FONT COLOR="#A020F0">in</FONT></B> Array.update
+				  (newBuckets, j,
+				   a <B><FONT COLOR="#5F9EA0">::</FONT></B> Array.sub (newBuckets, j))
+			       <B><FONT COLOR="#A020F0">end</FONT></B>) r) (<B><FONT COLOR="#5F9EA0">!</FONT></B>buckets)
+      ; buckets <B><FONT COLOR="#5F9EA0">:=</FONT></B> newBuckets
+      ; mask <B><FONT COLOR="#5F9EA0">:=</FONT></B> newMask
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+   	       
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">maybeGrow</FONT></I></B></FONT></B> (s <B><FONT COLOR="#A020F0">as</FONT></B> T {buckets, mask, numItems, ...}): <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.length (<B><FONT COLOR="#5F9EA0">!</FONT></B>buckets)
+   <B><FONT COLOR="#A020F0">in</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>numItems <B><FONT COLOR="#5F9EA0">*</FONT></B> 4 <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> n
+	 <B><FONT COLOR="#A020F0">then</FONT></B> resize (s,
+		      n <B><FONT COLOR="#5F9EA0">*</FONT></B> 2,
+		      <I><FONT COLOR="#B22222">(* The new mask depends on growFactor being 2. *)</FONT></I>
+		      Word.orb (0w1, Word.&lt;&lt; (<B><FONT COLOR="#5F9EA0">!</FONT></B>mask, 0w1)))
+      <B><FONT COLOR="#A020F0">else</FONT></B> ()
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">peekGen</FONT></I></B></FONT></B> (T {buckets <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> buckets, mask, ...}, w, p, no, yes) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> j <B><FONT COLOR="#5F9EA0">=</FONT></B> index (w, <B><FONT COLOR="#5F9EA0">!</FONT></B>mask)
+      <B><FONT COLOR="#A020F0">val</FONT></B> b <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.sub (buckets, j)
+   <B><FONT COLOR="#A020F0">in</FONT></B> <B><FONT COLOR="#A020F0">case</FONT></B> List.find p b <B><FONT COLOR="#A020F0">of</FONT></B>
+      <B><FONT COLOR="#5F9EA0">NONE</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> no (j, b)
+    <B><FONT COLOR="#5F9EA0">|</FONT></B> <B><FONT COLOR="#5F9EA0">SOME</FONT></B> a <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> yes a
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">lookupOrInsert</FONT></I></B></FONT></B> (table <B><FONT COLOR="#A020F0">as</FONT></B> T {buckets, numItems, ...}, w, p, f) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">no</FONT></I></B></FONT></B> (j, b) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">val</FONT></B> a <B><FONT COLOR="#5F9EA0">=</FONT></B> f ()
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> incr numItems
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.update (<B><FONT COLOR="#5F9EA0">!</FONT></B>buckets, j, a <B><FONT COLOR="#5F9EA0">::</FONT></B> b)
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> maybeGrow table
+	 <B><FONT COLOR="#A020F0">in</FONT></B> a
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+   <B><FONT COLOR="#A020F0">in</FONT></B> peekGen (table, w, p, no, <B><FONT COLOR="#A020F0">fn</FONT></B> x <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> x)
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">foreach</FONT></I></B></FONT></B> (T {buckets, ...}, f) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   Array.app (<B><FONT COLOR="#A020F0">fn</FONT></B> r <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> List.app f r) (<B><FONT COLOR="#5F9EA0">!</FONT></B>buckets)
+
+<B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> Buffer:
+   <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+      <B><FONT COLOR="#A020F0">type</FONT></B> t
+
+      <B><FONT COLOR="#A020F0">val</FONT></B> add: t <B><FONT COLOR="#5F9EA0">*</FONT></B> Word8.<B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> clear: t <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> contents: t <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">string</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> new: <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> t
+   <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+      <B><FONT COLOR="#A020F0">datatype</FONT></B> t <B><FONT COLOR="#5F9EA0">=</FONT></B> T <B><FONT COLOR="#A020F0">of</FONT></B> {elts: Word8Array.<B><FONT COLOR="#228B22">array</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>,
+			 size: <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>}
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">contents</FONT></I></B></FONT></B> (T {elts, size, ...}) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 Byte.bytesToString (Word8Array.extract (<B><FONT COLOR="#5F9EA0">!</FONT></B>elts, 0, <B><FONT COLOR="#5F9EA0">SOME</FONT></B> (<B><FONT COLOR="#5F9EA0">!</FONT></B>size)))
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">clear</FONT></I></B></FONT></B> (T {size, ...}) <B><FONT COLOR="#5F9EA0">=</FONT></B> size <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">new</FONT></I></B></FONT></B> (bufSize) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 T {elts <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> (Word8Array.<B><FONT COLOR="#228B22">array</FONT></B> (bufSize, 0w0)),
+	    size <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0}
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">add</FONT></I></B></FONT></B> (T {elts, size}, x) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B>
+	    <B><FONT COLOR="#A020F0">val</FONT></B> s <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>size
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> size <B><FONT COLOR="#5F9EA0">:=</FONT></B> s <B><FONT COLOR="#5F9EA0">+</FONT></B> 1
+	    <B><FONT COLOR="#A020F0">val</FONT></B> a <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>elts
+	    <B><FONT COLOR="#A020F0">val</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> Word8Array.length a
+	 <B><FONT COLOR="#A020F0">in</FONT></B>
+	    <B><FONT COLOR="#A020F0">if</FONT></B> s <B><FONT COLOR="#5F9EA0">=</FONT></B> n
+	       <B><FONT COLOR="#A020F0">then</FONT></B>
+		  <B><FONT COLOR="#A020F0">let</FONT></B>
+		     <B><FONT COLOR="#A020F0">val</FONT></B> a' <B><FONT COLOR="#5F9EA0">=</FONT></B>
+			Word8Array.tabulate
+			(2 <B><FONT COLOR="#5F9EA0">*</FONT></B> n, <B><FONT COLOR="#A020F0">fn</FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			 <B><FONT COLOR="#A020F0">if</FONT></B> i &lt; n <B><FONT COLOR="#A020F0">then</FONT></B> Word8Array.sub (a, i) <B><FONT COLOR="#A020F0">else</FONT></B> 0w0)
+		     <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> elts <B><FONT COLOR="#5F9EA0">:=</FONT></B> a'
+		     <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Word8Array.update (a', s, x)
+		  <B><FONT COLOR="#A020F0">in</FONT></B> ()
+		  <B><FONT COLOR="#A020F0">end</FONT></B>
+	    <B><FONT COLOR="#A020F0">else</FONT></B> Word8Array.update (a, s, x)
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> Quicksort:
+   <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> quicksort: 'a <B><FONT COLOR="#228B22">array</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> ('a <B><FONT COLOR="#5F9EA0">*</FONT></B> 'a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+   <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">assert</FONT></I></B></FONT></B> (s, f: <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">if</FONT></B> true <B><FONT COLOR="#A020F0">orelse</FONT></B> f ()
+	    <B><FONT COLOR="#A020F0">then</FONT></B> ()
+	 <B><FONT COLOR="#A020F0">else</FONT></B> <B><FONT COLOR="#A020F0">raise</FONT></B> Fail (<B><FONT COLOR="#A020F0">concat</FONT></B> [<B><FONT COLOR="#BC8F8F">&quot;assert: &quot;</FONT></B>, s])
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">forall</FONT></I></B></FONT></B> (low, high, f) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> i <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> high <B><FONT COLOR="#A020F0">orelse</FONT></B> (f i <B><FONT COLOR="#A020F0">andalso</FONT></B> loop (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1))
+	 <B><FONT COLOR="#A020F0">in</FONT></B>
+	    loop low
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">fold</FONT></I></B></FONT></B> (l, u, state, f) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> (i, state) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	       <B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> u
+		  <B><FONT COLOR="#A020F0">then</FONT></B> state
+	       <B><FONT COLOR="#A020F0">else</FONT></B> loop (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, f (i, state))
+	 <B><FONT COLOR="#A020F0">in</FONT></B>
+	    loop (l, state)
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+
+      <I><FONT COLOR="#B22222">(* Check if entries in a[lo ... hi] are sorted. *)</FONT></I>
+      <B><FONT COLOR="#A020F0">fun</FONT></B> 'a isSorted (a: 'a <B><FONT COLOR="#228B22">array</FONT></B>,
+		       lo: <B><FONT COLOR="#228B22">int</FONT></B>,
+		       hi: <B><FONT COLOR="#228B22">int</FONT></B>,
+		       <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> : 'a <B><FONT COLOR="#5F9EA0">*</FONT></B> 'a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> (i, x) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	       i <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> hi
+	       <B><FONT COLOR="#A020F0">orelse</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+			 <B><FONT COLOR="#A020F0">val</FONT></B> y <B><FONT COLOR="#5F9EA0">=</FONT></B> sub (a, i)
+		      <B><FONT COLOR="#A020F0">in</FONT></B>
+			 x <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> y <B><FONT COLOR="#A020F0">andalso</FONT></B> loop (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, y)
+		      <B><FONT COLOR="#A020F0">end</FONT></B>
+	 <B><FONT COLOR="#A020F0">in</FONT></B>
+	    lo <B><FONT COLOR="#5F9EA0">&gt;=</FONT></B> hi <B><FONT COLOR="#A020F0">orelse</FONT></B> loop (lo <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, sub (a, lo))
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+
+      <I><FONT COLOR="#B22222">(* From page 284 of Numerical Recipes in C. *)</FONT></I>
+      <B><FONT COLOR="#A020F0">local</FONT></B>
+	 <B><FONT COLOR="#A020F0">open</FONT></B> Word
+	 <B><FONT COLOR="#A020F0">val</FONT></B> seed <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0w13
+      <B><FONT COLOR="#A020F0">in</FONT></B>
+<B><FONT COLOR="#A020F0">	 fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">rand</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    <B><FONT COLOR="#A020F0">let</FONT></B>
+	       <B><FONT COLOR="#A020F0">val</FONT></B> res <B><FONT COLOR="#5F9EA0">=</FONT></B> 0w1664525 <B><FONT COLOR="#5F9EA0">*</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>seed <B><FONT COLOR="#5F9EA0">+</FONT></B> 0w1013904223
+	       <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> seed <B><FONT COLOR="#5F9EA0">:=</FONT></B> res
+	    <B><FONT COLOR="#A020F0">in</FONT></B>
+	       toIntX res
+	    <B><FONT COLOR="#A020F0">end</FONT></B>
+      <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">randInt</FONT></I></B></FONT></B> (lo, hi) <B><FONT COLOR="#5F9EA0">=</FONT></B> lo <B><FONT COLOR="#5F9EA0">+</FONT></B> Int.<B><FONT COLOR="#5F9EA0">mod</FONT></B> (rand(), hi <B><FONT COLOR="#5F9EA0">-</FONT></B> lo <B><FONT COLOR="#5F9EA0">+</FONT></B> 1)
+
+      <I><FONT COLOR="#B22222">(* insertion sort based on page 108 of Programming Pearls, by Bentley. *)</FONT></I>
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">insertionSort</FONT></I></B></FONT></B> (a: 'a <B><FONT COLOR="#228B22">array</FONT></B>, <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> : 'a <B><FONT COLOR="#5F9EA0">*</FONT></B> 'a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>): <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">x</FONT></I></B></FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> sub (a, i)
+	 <B><FONT COLOR="#A020F0">in</FONT></B>
+	    for (1, Array.length a <B><FONT COLOR="#5F9EA0">-</FONT></B> 1, <B><FONT COLOR="#A020F0">fn</FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+		 <B><FONT COLOR="#A020F0">let</FONT></B>
+		    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B>
+		       assert (<B><FONT COLOR="#BC8F8F">&quot;insertionSort1&quot;</FONT></B>, <B><FONT COLOR="#A020F0">fn</FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			       isSorted (a, 0, i <B><FONT COLOR="#5F9EA0">-</FONT></B> 1, <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B>))
+		    <B><FONT COLOR="#A020F0">val</FONT></B> t <B><FONT COLOR="#5F9EA0">=</FONT></B> x i
+<B><FONT COLOR="#A020F0">		    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">sift</FONT></I></B></FONT></B> (j: <B><FONT COLOR="#228B22">int</FONT></B>) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+		       (assert (<B><FONT COLOR="#BC8F8F">&quot;insertionSort2&quot;</FONT></B>, <B><FONT COLOR="#A020F0">fn</FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+				isSorted (a, 0, j <B><FONT COLOR="#5F9EA0">-</FONT></B> 1, <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B>)
+				<B><FONT COLOR="#A020F0">andalso</FONT></B> isSorted (a, j <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, i, <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B>)
+				<B><FONT COLOR="#A020F0">andalso</FONT></B> forall (j <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, i, <B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> t <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> x k))
+			; <B><FONT COLOR="#A020F0">if</FONT></B> j <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 0
+			     <B><FONT COLOR="#A020F0">then</FONT></B>
+				<B><FONT COLOR="#A020F0">let</FONT></B>
+				   <B><FONT COLOR="#A020F0">val</FONT></B> j' <B><FONT COLOR="#5F9EA0">=</FONT></B> j <B><FONT COLOR="#5F9EA0">-</FONT></B> 1
+				   <B><FONT COLOR="#A020F0">val</FONT></B> z <B><FONT COLOR="#5F9EA0">=</FONT></B> x j'
+				<B><FONT COLOR="#A020F0">in</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B> t <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> z
+				      <B><FONT COLOR="#A020F0">then</FONT></B> (update (a, j, z);
+					    sift j')
+				   <B><FONT COLOR="#A020F0">else</FONT></B> j
+				<B><FONT COLOR="#A020F0">end</FONT></B>
+			  <B><FONT COLOR="#A020F0">else</FONT></B> j)
+		    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> update (a, sift i, t)
+		 <B><FONT COLOR="#A020F0">in</FONT></B> ()
+		 <B><FONT COLOR="#A020F0">end</FONT></B>)
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+
+      <I><FONT COLOR="#B22222">(* quicksort based on page 112 of Programming Pearls, by Bentley. *)</FONT></I>
+      <B><FONT COLOR="#A020F0">fun</FONT></B> 'a quicksort (a: 'a <B><FONT COLOR="#228B22">array</FONT></B>, <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> : 'a <B><FONT COLOR="#5F9EA0">*</FONT></B> 'a <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>): <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">x</FONT></I></B></FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.sub (a, i)
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">swap</FONT></I></B></FONT></B> (i, j) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	       <B><FONT COLOR="#A020F0">let</FONT></B>
+		  <B><FONT COLOR="#A020F0">val</FONT></B> t <B><FONT COLOR="#5F9EA0">=</FONT></B> x i
+		  <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> update (a, i, x j)
+		  <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> update (a, j, t)
+	       <B><FONT COLOR="#A020F0">in</FONT></B> ()
+	       <B><FONT COLOR="#A020F0">end</FONT></B>
+	    <B><FONT COLOR="#A020F0">val</FONT></B> cutoff <B><FONT COLOR="#5F9EA0">=</FONT></B> 20
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">qsort</FONT></I></B></FONT></B> (l: <B><FONT COLOR="#228B22">int</FONT></B>, u: <B><FONT COLOR="#228B22">int</FONT></B>): <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	       <B><FONT COLOR="#A020F0">if</FONT></B> u <B><FONT COLOR="#5F9EA0">-</FONT></B> l <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> cutoff
+		  <B><FONT COLOR="#A020F0">then</FONT></B>
+		     <B><FONT COLOR="#A020F0">let</FONT></B>
+			<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> swap (l, randInt (l, u))
+			<B><FONT COLOR="#A020F0">val</FONT></B> t <B><FONT COLOR="#5F9EA0">=</FONT></B> x l
+			<B><FONT COLOR="#A020F0">val</FONT></B> m <B><FONT COLOR="#5F9EA0">=</FONT></B>
+			   fold
+			   (l <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, u, l, <B><FONT COLOR="#A020F0">fn</FONT></B> (i, m) <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			    (assert
+			     (<B><FONT COLOR="#BC8F8F">&quot;qsort&quot;</FONT></B>, <B><FONT COLOR="#A020F0">fn</FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			      forall (l <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, m, <B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> x k <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> t)
+			      <B><FONT COLOR="#A020F0">andalso</FONT></B> forall (m <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, i <B><FONT COLOR="#5F9EA0">-</FONT></B> 1, <B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> not (x k <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> t)))
+			     ; <B><FONT COLOR="#A020F0">if</FONT></B> x i <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> t
+				  <B><FONT COLOR="#A020F0">then</FONT></B> (swap (m <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, i)
+					; m <B><FONT COLOR="#5F9EA0">+</FONT></B> 1)
+			       <B><FONT COLOR="#A020F0">else</FONT></B> m))
+			<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> swap (l, m)
+			<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> qsort (l, m <B><FONT COLOR="#5F9EA0">-</FONT></B> 1)
+			<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> qsort (m <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, u)
+		     <B><FONT COLOR="#A020F0">in</FONT></B> ()
+		     <B><FONT COLOR="#A020F0">end</FONT></B>
+	       <B><FONT COLOR="#A020F0">else</FONT></B> ()
+	    <B><FONT COLOR="#A020F0">val</FONT></B> max <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.length a <B><FONT COLOR="#5F9EA0">-</FONT></B> 1
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> qsort (0, max)
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> insertionSort (a, <B><FONT COLOR="#A020F0">op</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B>)  
+	 <B><FONT COLOR="#A020F0">in</FONT></B>
+	    ()
+	 <B><FONT COLOR="#A020F0">end</FONT></B>
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> Test : <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> main : (<B><FONT COLOR="#228B22">string</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> <B><FONT COLOR="#228B22">string</FONT></B> <B><FONT COLOR="#228B22">list</FONT></B>) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> {}
+<B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+
+<I><FONT COLOR="#B22222">(* This hash function is taken from pages 56-57 of
+ * The Practice of Programming by Kernighan and Pike.
+ *)</FONT></I>
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">hash</FONT></I></B></FONT></B> (s: <B><FONT COLOR="#228B22">string</FONT></B>): <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> String.size s
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> (i, w) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> n
+	    <B><FONT COLOR="#A020F0">then</FONT></B> w
+	 <B><FONT COLOR="#A020F0">else</FONT></B> Word.fromInt (Char.ord (String.sub (s, i))) <B><FONT COLOR="#5F9EA0">+</FONT></B> Word.<B><FONT COLOR="#5F9EA0">*</FONT></B> (w, 0w31)
+   <B><FONT COLOR="#A020F0">in</FONT></B>
+      loop (0, 0w0)
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">hash</FONT></I></B></FONT></B> (s: <B><FONT COLOR="#228B22">string</FONT></B>): <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> String.size s
+<B><FONT COLOR="#A020F0">      fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> (i, w) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	 <B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> n
+	    <B><FONT COLOR="#A020F0">then</FONT></B> w
+	 <B><FONT COLOR="#A020F0">else</FONT></B> loop (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1,
+		    Word.fromInt (Char.ord (String.sub (s, i)))
+		       <B><FONT COLOR="#5F9EA0">+</FONT></B> Word.<B><FONT COLOR="#5F9EA0">*</FONT></B> (w, 0w31))
+   <B><FONT COLOR="#A020F0">in</FONT></B>
+      loop (0, 0w0)
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<I><FONT COLOR="#B22222">(* Based on wordfreq.ocaml. *)</FONT></I>
+
+<B><FONT COLOR="#A020F0">val</FONT></B> max <B><FONT COLOR="#5F9EA0">=</FONT></B> 4096
+<B><FONT COLOR="#A020F0">val</FONT></B> buf <B><FONT COLOR="#5F9EA0">=</FONT></B> Word8Array.<B><FONT COLOR="#228B22">array</FONT></B> (max, 0w0)
+<B><FONT COLOR="#A020F0">val</FONT></B> count: {hash: <B><FONT COLOR="#228B22">word</FONT></B>,
+	    <B><FONT COLOR="#228B22">word</FONT></B>: <B><FONT COLOR="#228B22">string</FONT></B>,
+	    count: <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>} HashSet.t <B><FONT COLOR="#5F9EA0">=</FONT></B> HashSet.new {hash <B><FONT COLOR="#5F9EA0">=</FONT></B> #hash}
+<B><FONT COLOR="#A020F0">val</FONT></B> wbuf <B><FONT COLOR="#5F9EA0">=</FONT></B> Buffer.new 64
+
+<B><FONT COLOR="#A020F0">val</FONT></B> c2b <B><FONT COLOR="#5F9EA0">=</FONT></B> Byte.charToByte
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">scan_words</FONT></I></B></FONT></B> (i, n, inword) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">if</FONT></B> i &lt; n
+     <B><FONT COLOR="#A020F0">then</FONT></B>
+	<B><FONT COLOR="#A020F0">let</FONT></B>
+	   <B><FONT COLOR="#A020F0">val</FONT></B> c <B><FONT COLOR="#5F9EA0">=</FONT></B> Word8Array.sub (buf, i)
+	<B><FONT COLOR="#A020F0">in</FONT></B>
+	   <B><FONT COLOR="#A020F0">if</FONT></B> c2b #<B><FONT COLOR="#BC8F8F">&quot;a&quot;</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> c <B><FONT COLOR="#A020F0">andalso</FONT></B> c <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> c2b #<B><FONT COLOR="#BC8F8F">&quot;z&quot;</FONT></B>
+	      <B><FONT COLOR="#A020F0">then</FONT></B> (Buffer.add (wbuf, c);
+		    scan_words (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, n, true))
+	   <B><FONT COLOR="#A020F0">else</FONT></B>
+	      <B><FONT COLOR="#A020F0">if</FONT></B> c2b #<B><FONT COLOR="#BC8F8F">&quot;A&quot;</FONT></B> <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> c <B><FONT COLOR="#A020F0">andalso</FONT></B> c <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> c2b #<B><FONT COLOR="#BC8F8F">&quot;Z&quot;</FONT></B>
+		 <B><FONT COLOR="#A020F0">then</FONT></B>
+		    (Buffer.add (wbuf, c <B><FONT COLOR="#5F9EA0">+</FONT></B> 0w32);
+		     scan_words (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, n, true))
+	      <B><FONT COLOR="#A020F0">else</FONT></B>
+		 <B><FONT COLOR="#A020F0">if</FONT></B> inword
+		    <B><FONT COLOR="#A020F0">then</FONT></B> 
+		       <B><FONT COLOR="#A020F0">let</FONT></B>
+			  <B><FONT COLOR="#A020F0">val</FONT></B> w <B><FONT COLOR="#5F9EA0">=</FONT></B> Buffer.contents wbuf
+			  <B><FONT COLOR="#A020F0">val</FONT></B> h <B><FONT COLOR="#5F9EA0">=</FONT></B> hash w
+		       <B><FONT COLOR="#A020F0">in</FONT></B>
+			  incr (#count
+				(HashSet.lookupOrInsert
+				 (count, h,
+				  <B><FONT COLOR="#A020F0">fn</FONT></B> {hash, <B><FONT COLOR="#228B22">word</FONT></B>, ...} <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+				  hash <B><FONT COLOR="#5F9EA0">=</FONT></B> h <B><FONT COLOR="#A020F0">andalso</FONT></B> <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> w,
+				  <B><FONT COLOR="#A020F0">fn</FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> {hash <B><FONT COLOR="#5F9EA0">=</FONT></B> h, <B><FONT COLOR="#228B22">word</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> w, count <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0})));
+			  Buffer.clear wbuf;
+			  scan_words (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, n, false)
+		       <B><FONT COLOR="#A020F0">end</FONT></B>
+		 <B><FONT COLOR="#A020F0">else</FONT></B> scan_words (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, n, false)
+	<B><FONT COLOR="#A020F0">end</FONT></B>
+  <B><FONT COLOR="#A020F0">else</FONT></B>
+     <B><FONT COLOR="#A020F0">let</FONT></B>
+	<B><FONT COLOR="#A020F0">val</FONT></B> nread <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	   Posix.IO.readArr (Posix.FileSys.stdin,
+			     {buf <B><FONT COLOR="#5F9EA0">=</FONT></B> buf, i <B><FONT COLOR="#5F9EA0">=</FONT></B>  0, sz <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">NONE</FONT></B>})
+     <B><FONT COLOR="#A020F0">in</FONT></B>
+	<B><FONT COLOR="#A020F0">if</FONT></B> nread <B><FONT COLOR="#5F9EA0">=</FONT></B> 0
+	   <B><FONT COLOR="#A020F0">then</FONT></B> ()
+	<B><FONT COLOR="#A020F0">else</FONT></B> scan_words (0, nread, inword)
+     <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">printl</FONT></I></B></FONT></B> [] <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">print</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;\n&quot;</FONT></B> <B><FONT COLOR="#5F9EA0">|</FONT></B> printl(h<B><FONT COLOR="#5F9EA0">::</FONT></B>t) <B><FONT COLOR="#5F9EA0">=</FONT></B> ( <B><FONT COLOR="#A020F0">print</FONT></B> h ; printl t )
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">rightJustify</FONT></I></B></FONT></B> (s: <B><FONT COLOR="#228B22">string</FONT></B>, width: <B><FONT COLOR="#228B22">int</FONT></B>) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+      <B><FONT COLOR="#A020F0">val</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> String.size s
+   <B><FONT COLOR="#A020F0">in</FONT></B> <B><FONT COLOR="#A020F0">concat</FONT></B> [CharVector.tabulate (width <B><FONT COLOR="#5F9EA0">-</FONT></B> n, <B><FONT COLOR="#A020F0">fn</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> #<B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B>), s]
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">main</FONT></I></B></FONT></B> (name, args) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+   <B><FONT COLOR="#A020F0">let</FONT></B>
+	<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> scan_words (0, 0, false)
+	<B><FONT COLOR="#A020F0">val</FONT></B> a <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.<B><FONT COLOR="#228B22">array</FONT></B> (HashSet.size count, (0, <B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B>))
+	<B><FONT COLOR="#A020F0">val</FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0
+	<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> HashSet.foreach (count, <B><FONT COLOR="#A020F0">fn</FONT></B> {<B><FONT COLOR="#228B22">word</FONT></B>, count, ...} <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			 (Array.update (a, <B><FONT COLOR="#5F9EA0">!</FONT></B>i, (<B><FONT COLOR="#5F9EA0">!</FONT></B>count, <B><FONT COLOR="#228B22">word</FONT></B>)); incr i))
+	<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Quicksort.quicksort (a, <B><FONT COLOR="#A020F0">fn</FONT></B> ((c, w), (c', w')) <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			     c <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> c' <B><FONT COLOR="#A020F0">orelse</FONT></B> c <B><FONT COLOR="#5F9EA0">=</FONT></B> c' <B><FONT COLOR="#A020F0">andalso</FONT></B> w <B><FONT COLOR="#5F9EA0">&gt;=</FONT></B> w')
+	<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Array.app (<B><FONT COLOR="#A020F0">fn</FONT></B> (c, w) <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+		   printl [rightJustify (Int.toString c, 7), <B><FONT COLOR="#BC8F8F">&quot; &quot;</FONT></B>, w]) a
+   <B><FONT COLOR="#A020F0">in</FONT></B>
+      PolyML.quit()
+   <B><FONT COLOR="#A020F0">end</FONT></B>
+<B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> PolyML.print_depth 0;
+<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> PolyML.error_depth 0;
+<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> PolyML.onEntry(<B><FONT COLOR="#A020F0">fn</FONT></B>() <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> Test.main(<B><FONT COLOR="#BC8F8F">&quot;wordfreq&quot;</FONT></B>, CommandLine.arguments()));
+<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> PolyML.commit();
+</pre></td></tr></table>

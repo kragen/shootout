@@ -1,0 +1,69 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">%%% -*- mode: erlang -*-
+</FONT></I><I><FONT COLOR="#B22222">%%% $Id: wordfreq-erlang.code,v 1.1 2004-11-02 08:53:33 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">%%% http://shootout.alioth.debian.org/
+</FONT></I><I><FONT COLOR="#B22222">%%%
+</FONT></I><I><FONT COLOR="#B22222">%%% Contributed by Bengt Kleberg (Erlang Guru!)
+</FONT></I><I><FONT COLOR="#B22222">%%% Updated by Alexey Shchepin &lt;alexey@sevcom.net&gt;
+</FONT></I>
+<B><FONT COLOR="#5F9EA0">-module</FONT></B>(wordfreq).
+<B><FONT COLOR="#5F9EA0">-export</FONT></B>([main/0, main/1]).
+
+<B><FONT COLOR="#5F9EA0">-define</FONT></B>(<B><FONT COLOR="#DA70D6">BUFSIZE</FONT></B>, 4096).
+
+<I><FONT COLOR="#B22222">%% ignore program argument
+</FONT></I><B><FONT COLOR="#0000FF">main</FONT></B>() -&gt; main([<B><FONT COLOR="#BC8F8F">'1'</FONT></B>]).
+<B><FONT COLOR="#0000FF">main</FONT></B>(<FONT COLOR="#B8860B">_Args</FONT>) -&gt;
+    ets:new(freqtab, [set, named_table]),
+    ok = io:setopts([<B><FONT COLOR="#DA70D6">binary</FONT></B>]),
+    insert_input(io:get_chars(<B><FONT COLOR="#BC8F8F">''</FONT></B>, ?<B><FONT COLOR="#DA70D6">BUFSIZE</FONT></B>), <B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B>),
+    <FONT COLOR="#B8860B">List</FONT> = sort(),
+    print(<FONT COLOR="#B8860B">List</FONT>),
+    <B><FONT COLOR="#A020F0">halt</FONT></B>().
+
+
+<B><FONT COLOR="#0000FF">insert_input</FONT></B>(eof, <FONT COLOR="#B8860B">_Prev</FONT>) -&gt; ok;
+<B><FONT COLOR="#0000FF">insert_input</FONT></B>(<FONT COLOR="#B8860B">Buf</FONT>, <FONT COLOR="#B8860B">Prev</FONT>) -&gt;
+    <FONT COLOR="#B8860B">Suffix</FONT> = words1(<FONT COLOR="#B8860B">Prev</FONT> ++ <B><FONT COLOR="#A020F0">binary_to_list</FONT></B>(<FONT COLOR="#B8860B">Buf</FONT>)),
+    insert_input(io:get_chars(<B><FONT COLOR="#BC8F8F">''</FONT></B>, ?<B><FONT COLOR="#DA70D6">BUFSIZE</FONT></B>), <FONT COLOR="#B8860B">Suffix</FONT>).
+
+
+<B><FONT COLOR="#0000FF">words1</FONT></B>([<FONT COLOR="#B8860B">C</FONT> | <FONT COLOR="#B8860B">S</FONT>]) -&gt;
+    <B><FONT COLOR="#A020F0">if</FONT></B>
+	(<FONT COLOR="#B8860B">C</FONT> &gt;= <B><FONT COLOR="#BC8F8F">$a</FONT></B>) and (<FONT COLOR="#B8860B">C</FONT> =&lt; <B><FONT COLOR="#BC8F8F">$z</FONT></B>) -&gt; words2(<FONT COLOR="#B8860B">S</FONT>, [<FONT COLOR="#B8860B">C</FONT>]);
+	(<FONT COLOR="#B8860B">C</FONT> &gt;= <B><FONT COLOR="#BC8F8F">$A</FONT></B>) and (<FONT COLOR="#B8860B">C</FONT> =&lt; <B><FONT COLOR="#BC8F8F">$Z</FONT></B>) -&gt; words2(<FONT COLOR="#B8860B">S</FONT>, [<FONT COLOR="#B8860B">C</FONT> + 32]);
+	true -&gt; words1(<FONT COLOR="#B8860B">S</FONT>)
+    <B><FONT COLOR="#A020F0">end</FONT></B>;
+<B><FONT COLOR="#0000FF">words1</FONT></B>([]) -&gt;
+    <B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B>.
+
+<B><FONT COLOR="#0000FF">words2</FONT></B>([<FONT COLOR="#B8860B">C</FONT> | <FONT COLOR="#B8860B">S</FONT>], <FONT COLOR="#B8860B">Cs</FONT>) -&gt;
+    <B><FONT COLOR="#A020F0">if</FONT></B>
+	(<FONT COLOR="#B8860B">C</FONT> &gt;= <B><FONT COLOR="#BC8F8F">$a</FONT></B>) and (<FONT COLOR="#B8860B">C</FONT> =&lt; <B><FONT COLOR="#BC8F8F">$z</FONT></B>) -&gt; words2(<FONT COLOR="#B8860B">S</FONT>, [<FONT COLOR="#B8860B">C</FONT> | <FONT COLOR="#B8860B">Cs</FONT>]);
+	(<FONT COLOR="#B8860B">C</FONT> &gt;= <B><FONT COLOR="#BC8F8F">$A</FONT></B>) and (<FONT COLOR="#B8860B">C</FONT> =&lt; <B><FONT COLOR="#BC8F8F">$Z</FONT></B>) -&gt; words2(<FONT COLOR="#B8860B">S</FONT>, [<FONT COLOR="#B8860B">C</FONT> + 32 | <FONT COLOR="#B8860B">Cs</FONT>]);
+	true -&gt;
+	    update_count(<FONT COLOR="#B8860B">Cs</FONT>),
+	    words1(<FONT COLOR="#B8860B">S</FONT>)
+    <B><FONT COLOR="#A020F0">end</FONT></B>;
+<B><FONT COLOR="#0000FF">words2</FONT></B>([], <FONT COLOR="#B8860B">Cs</FONT>) -&gt;
+    lists:reverse(<FONT COLOR="#B8860B">Cs</FONT>).
+
+
+<B><FONT COLOR="#0000FF">update_count</FONT></B>(<FONT COLOR="#B8860B">Word</FONT>) -&gt;
+    <B><FONT COLOR="#A020F0">case</FONT></B> (<B><FONT COLOR="#A020F0">catch</FONT></B> ets:update_counter(freqtab, <FONT COLOR="#B8860B">Word</FONT>, 1)) <B><FONT COLOR="#A020F0">of</FONT></B>
+        {<B><FONT COLOR="#BC8F8F">'EXIT'</FONT></B>, {badarg, <FONT COLOR="#B8860B">_</FONT>}} -&gt;
+	    true = ets:insert(freqtab, {<FONT COLOR="#B8860B">Word</FONT>, 1});
+	<FONT COLOR="#B8860B">_Integer</FONT> -&gt;
+	    ok
+    <B><FONT COLOR="#A020F0">end</FONT></B>.
+
+<B><FONT COLOR="#0000FF">sort</FONT></B>() -&gt;
+    <FONT COLOR="#B8860B">Rev</FONT> = [{<FONT COLOR="#B8860B">C</FONT>, lists:reverse(<FONT COLOR="#B8860B">W</FONT>)} || {<FONT COLOR="#B8860B">W</FONT>, <FONT COLOR="#B8860B">C</FONT>} &lt;- ets:tab2list(freqtab)],
+    lists:reverse(lists:sort(<FONT COLOR="#B8860B">Rev</FONT>)).
+
+<B><FONT COLOR="#0000FF">print</FONT></B>(<FONT COLOR="#B8860B">List</FONT>) -&gt;
+    <FONT COLOR="#B8860B">Fun</FONT> = <B><FONT COLOR="#A020F0">fun</FONT></B>({<FONT COLOR="#B8860B">Count</FONT>, <FONT COLOR="#B8860B">Word</FONT>}) -&gt;
+		  io:format(<B><FONT COLOR="#BC8F8F">&quot;~7w ~s~n&quot;</FONT></B>, [<FONT COLOR="#B8860B">Count</FONT>, <FONT COLOR="#B8860B">Word</FONT>])
+	  <B><FONT COLOR="#A020F0">end</FONT></B>,
+    lists:foreach(<FONT COLOR="#B8860B">Fun</FONT>, <FONT COLOR="#B8860B">List</FONT>).
+</pre></td></tr></table>

@@ -1,0 +1,75 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+%% $Id: moments-mercury.code,v 1.1 2004-11-02 08:52:37 bfulgham Exp $
+%% http:<I><FONT COLOR="#B22222">//www.bagley.org/~doug/shootout/
+</FONT></I>%% from Fergus Henderson
+
+:- module mytest.
+:- <B><FONT COLOR="#A020F0">interface</FONT></B>.
+:- import_module io.
+
+:- pred main(io__state, io__state).
+:- mode main(di, uo) <B><FONT COLOR="#A020F0">is</FONT></B> det.
+
+:- <B><FONT COLOR="#A020F0">implementation</FONT></B>.
+:- import_module <B><FONT COLOR="#A020F0">array</FONT></B>, <B><FONT COLOR="#A020F0">string</FONT></B>, float, math, int, list, require.
+
+main --&gt;
+	io__read_file_as_string(_Res, Contents),
+	<I><FONT COLOR="#B22222">{ Lines = string__words((pred('\n'::in) is semidet), Contents) }</FONT></I>,
+	<I><FONT COLOR="#B22222">{ Count = length(Lines) }</FONT></I>,
+	<I><FONT COLOR="#B22222">{ array__init(Count, 0.0, Array0) }</FONT></I>,
+	<I><FONT COLOR="#B22222">{ count_and_sum(Lines, 0, 0.0, Array0, _Count2, Sum, Array) }</FONT></I>,
+	<I><FONT COLOR="#B22222">{ Mean = Sum / float(Count) }</FONT></I>,
+	process(0, Count, Mean, 0.0, 0.0, 0.0, 0.0, <B><FONT COLOR="#A020F0">Array</FONT></B>).
+
+:- pred count_and_sum(list(<B><FONT COLOR="#A020F0">string</FONT></B>), int, float, <B><FONT COLOR="#A020F0">array</FONT></B>(float),
+		int, float, <B><FONT COLOR="#A020F0">array</FONT></B>(float)).
+:- mode count_and_sum(<B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, array_di, out, out, array_uo) <B><FONT COLOR="#A020F0">is</FONT></B> det.
+count_and_sum([], Count, Sum, <B><FONT COLOR="#A020F0">Array</FONT></B>, Count, Sum, <B><FONT COLOR="#A020F0">Array</FONT></B>).
+count_and_sum([L|Ls], Count0, Sum0, Array0, Count, Sum, <B><FONT COLOR="#A020F0">Array</FONT></B>) :-
+	(<B><FONT COLOR="#A020F0">if</FONT></B> string__to_float(L, V) <B><FONT COLOR="#A020F0">then</FONT></B> Val = V <B><FONT COLOR="#A020F0">else</FONT></B> error(&quot;float conversion&quot;)),
+	count_and_sum(Ls, Count0 + 1, Sum0 + Val, Array0^elem(Count0) := Val,
+		Count, Sum, <B><FONT COLOR="#A020F0">Array</FONT></B>).
+
+:- pred process(int, int, float, float, float, float, float, <B><FONT COLOR="#A020F0">array</FONT></B>(float),
+		io__state, io__state).
+:- mode process(<B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, <B><FONT COLOR="#A020F0">in</FONT></B>, array_di, di, uo) <B><FONT COLOR="#A020F0">is</FONT></B> det.
+process(I, Count, Mean,
+		SumAbsDeviations, SumVariance, SumSkew, SumKurtosis, Array0) --&gt;
+	(<B><FONT COLOR="#A020F0">if</FONT></B> <I><FONT COLOR="#B22222">{ I &lt; Count }</FONT></I> <B><FONT COLOR="#A020F0">then</FONT></B>
+		<I><FONT COLOR="#B22222">{ Val = Array0 ^ elem(I) }</FONT></I>,
+		<I><FONT COLOR="#B22222">{ Dev = Val - Mean }</FONT></I>,
+		<I><FONT COLOR="#B22222">{ Dev2 = Dev * Dev }</FONT></I>,
+		<I><FONT COLOR="#B22222">{ Dev3 = Dev2 * Dev }</FONT></I>,
+		<I><FONT COLOR="#B22222">{ Dev4 = Dev2 * Dev2 }</FONT></I>,
+		process(I + 1, Count, Mean, SumAbsDeviations + abs(Dev),
+			SumVariance + Dev2, SumSkew + Dev3,
+			SumKurtosis + Dev4, Array0)
+	<B><FONT COLOR="#A020F0">else</FONT></B>
+		<I><FONT COLOR="#B22222">{
+		AverageDeviation = SumAbsDeviations / float(Count),
+		Variance = SumVariance / float(Count - 1),
+		StandardDeviation = sqrt(Variance),
+		(if Variance \= 0.0 then
+			Skew = SumSkew / (float(Count) * Variance *
+				StandardDeviation),
+			Kurtosis = (SumKurtosis / (float(Count) *
+				Variance * Variance)) - 3.0
+		else
+			Skew = 0.0,
+			Kurtosis = 0.0
+		),
+		Array = sort(Array0),
+		Mid = (Count//2),
+		Median = (if Count rem 2 = 1 then Array^elem(Mid)
+			else (Array^elem(Mid) + Array^elem(Mid - 1)) / 2.0)
+		}</FONT></I>,
+		format(&quot;n:                  %d\n&quot;, [i(Count)]),
+		format(&quot;median:             %f\n&quot;, [f(Median)]),
+		format(&quot;mean:               %f\n&quot;, [f(Mean)]),
+		format(&quot;average_deviation:  %f\n&quot;, [f(AverageDeviation)]),
+		format(&quot;standard_deviation: %f\n&quot;, [f(StandardDeviation)]),
+		format(&quot;variance:           %f\n&quot;, [f(Variance)]),
+		format(&quot;skew:               %f\n&quot;, [f(Skew)]),
+		format(&quot;kurtosis:           %f\n&quot;, [f(Kurtosis)])
+	).</pre></td></tr></table>

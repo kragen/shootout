@@ -1,0 +1,145 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">/* -*- mode: c -*-
+ * $Id: echo-gcc.code,v 1.1 2004-11-02 08:52:30 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ */</FONT></I>
+
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdio.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdlib.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;string.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;unistd.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;signal.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;errno.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/types.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/socket.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/wait.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;netinet/in.h&gt;</FONT></B>
+
+
+<B><FONT COLOR="#228B22">typedef</FONT></B> <B><FONT COLOR="#0000FF">int</FONT></B> (*SOCKACTION_P)(<B><FONT COLOR="#228B22">int</FONT></B>,<B><FONT COLOR="#228B22">struct</FONT></B> sockaddr *,socklen_t);
+#<B><FONT COLOR="#5F9EA0">define</FONT></B> <FONT COLOR="#B8860B">DATA</FONT> <B><FONT COLOR="#BC8F8F">&quot;Hello there sailor\n&quot;</FONT></B>
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">myabort</FONT></B> (<B><FONT COLOR="#228B22">char</FONT></B> *m) { fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;%s\n&quot;</FONT></B>, m); exit(1); }
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">sysabort</FONT></B> (<B><FONT COLOR="#228B22">char</FONT></B> *m) { perror(m); exit(1); }
+
+<B><FONT COLOR="#228B22">int</FONT></B> sigchld = 0;
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">reaper</FONT></B> (<B><FONT COLOR="#228B22">int</FONT></B> sig) { sigchld = 1; }
+
+<B><FONT COLOR="#228B22">int</FONT></B> 
+<B><FONT COLOR="#0000FF">genericSock</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> port,SOCKACTION_P action,<B><FONT COLOR="#228B22">char</FONT></B> *actionExceptionText) {
+    <B><FONT COLOR="#228B22">int</FONT></B> ss, optval = 1;
+    <B><FONT COLOR="#228B22">struct</FONT></B> sockaddr_in sin;
+    <B><FONT COLOR="#A020F0">if</FONT></B> ((ss = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+	sysabort(<B><FONT COLOR="#BC8F8F">&quot;socket&quot;</FONT></B>);
+    <B><FONT COLOR="#A020F0">if</FONT></B> (setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, &amp;optval, <B><FONT COLOR="#A020F0">sizeof</FONT></B>(optval)) == -1)
+	sysabort(<B><FONT COLOR="#BC8F8F">&quot;setsockopt&quot;</FONT></B>);
+    memset(&amp;sin,0,<B><FONT COLOR="#A020F0">sizeof</FONT></B>(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    sin.sin_port = port; 
+    <B><FONT COLOR="#A020F0">if</FONT></B> (action(ss, (<B><FONT COLOR="#228B22">struct</FONT></B> sockaddr *)&amp;sin,(socklen_t)<B><FONT COLOR="#A020F0">sizeof</FONT></B>(sin)) == -1)
+	sysabort(actionExceptionText);
+
+    <B><FONT COLOR="#A020F0">return</FONT></B>(ss);
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B>
+<B><FONT COLOR="#0000FF">server_sock</FONT></B> () {
+    <B><FONT COLOR="#228B22">int</FONT></B> ss = genericSock(0,(SOCKACTION_P)bind,<B><FONT COLOR="#BC8F8F">&quot;server/bind&quot;</FONT></B>);
+    <B><FONT COLOR="#A020F0">return</FONT></B>(listen(ss,2),ss);
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B>
+<B><FONT COLOR="#0000FF">client_sock</FONT></B> (<B><FONT COLOR="#228B22">int</FONT></B> port) {
+    <B><FONT COLOR="#A020F0">return</FONT></B>(genericSock(port,(SOCKACTION_P)connect,<B><FONT COLOR="#BC8F8F">&quot;client/connect&quot;</FONT></B>));
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B>
+<B><FONT COLOR="#0000FF">get_port</FONT></B> (<B><FONT COLOR="#228B22">int</FONT></B> sock) {
+    <B><FONT COLOR="#228B22">struct</FONT></B> sockaddr_in sin;
+    socklen_t slen = <B><FONT COLOR="#A020F0">sizeof</FONT></B>(sin);
+    <B><FONT COLOR="#A020F0">if</FONT></B> (getsockname(sock, (<B><FONT COLOR="#228B22">struct</FONT></B> sockaddr *)&amp;sin, &amp;slen) == -1)
+	sysabort(<B><FONT COLOR="#BC8F8F">&quot;server/getsockname&quot;</FONT></B>);
+    <B><FONT COLOR="#A020F0">return</FONT></B>(sin.sin_port);
+}    
+
+<B><FONT COLOR="#228B22">void</FONT></B>
+<B><FONT COLOR="#0000FF">echo_client</FONT></B> (<B><FONT COLOR="#228B22">int</FONT></B> n, <B><FONT COLOR="#228B22">int</FONT></B> port) {
+    <B><FONT COLOR="#228B22">int</FONT></B> i, sock, olen, len, nwritten, nread;
+    <B><FONT COLOR="#228B22">char</FONT></B> *offset, obuf[64], ibuf[64];
+    <B><FONT COLOR="#228B22">char</FONT></B> *end = ibuf + <B><FONT COLOR="#A020F0">sizeof</FONT></B>(ibuf);
+
+    sock = client_sock(port);
+    strcpy(obuf, DATA);
+    olen = strlen(obuf);
+    <B><FONT COLOR="#A020F0">for</FONT></B> (i=0; i&lt;n; i++) {
+	len = olen;
+	offset = obuf;
+	<B><FONT COLOR="#A020F0">while</FONT></B> (len &gt; 0) {
+	    <B><FONT COLOR="#A020F0">if</FONT></B> ((nwritten = write(sock, offset, len)) == -1)
+		sysabort(<B><FONT COLOR="#BC8F8F">&quot;client/write&quot;</FONT></B>);
+	    offset += nwritten;
+	    len -= nwritten;
+	}
+	offset = ibuf;
+	<B><FONT COLOR="#A020F0">while</FONT></B> ((nread = read(sock, offset, (end - offset))) &gt; 0) {
+	    offset += nread;
+	    <B><FONT COLOR="#A020F0">if</FONT></B> (*(offset-1) == <B><FONT COLOR="#BC8F8F">'\n'</FONT></B>) <B><FONT COLOR="#A020F0">break</FONT></B>;
+	}
+	<B><FONT COLOR="#A020F0">if</FONT></B> (nread == -1)
+	    sysabort(<B><FONT COLOR="#BC8F8F">&quot;client/read&quot;</FONT></B>);
+	*offset = 0;
+	<B><FONT COLOR="#A020F0">if</FONT></B> ((strcmp(obuf, ibuf)) != 0) {
+	    <B><FONT COLOR="#228B22">char</FONT></B> mbuf[128];
+	    sprintf(mbuf, <B><FONT COLOR="#BC8F8F">&quot;client: \&quot;%s\&quot; ne \&quot;%s\&quot;&quot;</FONT></B>, obuf, ibuf);
+	    myabort(mbuf);
+	}
+    }
+    close(sock);
+}
+
+<B><FONT COLOR="#228B22">void</FONT></B>
+<B><FONT COLOR="#0000FF">echo_server</FONT></B> (<B><FONT COLOR="#228B22">int</FONT></B> n) {
+    <B><FONT COLOR="#228B22">int</FONT></B> ssock, csock, len, nwritten, total_bytes;
+    pid_t pid;
+    <B><FONT COLOR="#228B22">char</FONT></B> buf[64], *offset;
+    <B><FONT COLOR="#228B22">struct</FONT></B> sockaddr_in sin;
+    socklen_t slen = <B><FONT COLOR="#A020F0">sizeof</FONT></B>(sin);
+    <B><FONT COLOR="#228B22">int</FONT></B> status;
+
+    ssock = server_sock();
+    signal(SIGCHLD, reaper);
+    <B><FONT COLOR="#A020F0">if</FONT></B> ((pid = fork()) == -1)
+	sysabort(<B><FONT COLOR="#BC8F8F">&quot;server/fork&quot;</FONT></B>);
+    <B><FONT COLOR="#A020F0">if</FONT></B> (pid) {
+	<I><FONT COLOR="#B22222">/* parent is server */</FONT></I>
+	<B><FONT COLOR="#A020F0">if</FONT></B> ((csock = accept(ssock, (<B><FONT COLOR="#228B22">struct</FONT></B> sockaddr *)&amp;sin, &amp;slen)) == -1)
+	    sysabort(<B><FONT COLOR="#BC8F8F">&quot;server/accept&quot;</FONT></B>);
+	total_bytes = 0;
+	<B><FONT COLOR="#A020F0">while</FONT></B> ((len = read(csock, buf, <B><FONT COLOR="#A020F0">sizeof</FONT></B>(buf))) &gt; 0) {
+	    <B><FONT COLOR="#A020F0">if</FONT></B> (sigchld) myabort(<B><FONT COLOR="#BC8F8F">&quot;server/sigchld&quot;</FONT></B>);
+	    offset = buf;
+	    total_bytes += len;
+	    <B><FONT COLOR="#A020F0">while</FONT></B> (len &gt; 0) {
+		<B><FONT COLOR="#A020F0">if</FONT></B> ((nwritten = write(csock, offset, len)) == -1)
+		    sysabort(<B><FONT COLOR="#BC8F8F">&quot;server/write&quot;</FONT></B>);
+		offset += nwritten;
+		len -= nwritten;
+	    }
+	}
+	<B><FONT COLOR="#A020F0">if</FONT></B> (len == -1)
+	    sysabort(<B><FONT COLOR="#BC8F8F">&quot;server/read&quot;</FONT></B>);
+	close(csock);
+	fprintf(stdout, <B><FONT COLOR="#BC8F8F">&quot;server processed %d bytes\n&quot;</FONT></B>, total_bytes);
+    } <B><FONT COLOR="#A020F0">else</FONT></B> {
+	<I><FONT COLOR="#B22222">/* child is client */</FONT></I>
+	echo_client(n, get_port(ssock));
+    }
+    wait(&amp;status);
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B>
+<B><FONT COLOR="#0000FF">main</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> argc, <B><FONT COLOR="#228B22">char</FONT></B> *argv[]) {
+    echo_server((argc == 2) ? atoi(argv[1]) : 1);
+    <B><FONT COLOR="#A020F0">return</FONT></B>(0);
+}</pre></td></tr></table>

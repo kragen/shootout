@@ -1,0 +1,87 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">/* -*- mode: c -*-
+ * $Id: prodcons-gcc.code,v 1.1 2004-11-02 08:52:39 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ */</FONT></I>
+
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdio.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdlib.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;string.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;unistd.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;signal.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;errno.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/types.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;pthread.h&gt;</FONT></B>
+
+pthread_mutex_t mutex;
+pthread_cond_t control;
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">producer</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> *arg);
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">consumer</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> *arg);
+<B><FONT COLOR="#228B22">int</FONT></B> count, data, consumed, produced;
+
+
+<B><FONT COLOR="#228B22">int</FONT></B>
+<B><FONT COLOR="#0000FF">main</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> argc, <B><FONT COLOR="#228B22">char</FONT></B> *argv[]) {
+    <B><FONT COLOR="#228B22">int</FONT></B> n = ((argc == 2) ? atoi(argv[1]) : 1);
+    pthread_t t1, t2;
+    
+    count = data = consumed = produced = 0;
+
+    <B><FONT COLOR="#A020F0">if</FONT></B> (pthread_mutex_init(&amp;mutex, NULL)) {
+	perror(<B><FONT COLOR="#BC8F8F">&quot;pthread_mutex_init&quot;</FONT></B>);
+	exit(1);
+    }
+    <B><FONT COLOR="#A020F0">if</FONT></B> (pthread_cond_init(&amp;control, NULL)) {
+	perror(<B><FONT COLOR="#BC8F8F">&quot;pthread_cond_init&quot;</FONT></B>);
+	exit(1);
+    }
+    <B><FONT COLOR="#A020F0">if</FONT></B> (pthread_create(&amp;t1, (pthread_attr_t *)NULL,
+		       (<B><FONT COLOR="#228B22">void</FONT></B> * (*)(<B><FONT COLOR="#228B22">void</FONT></B> *))producer, (<B><FONT COLOR="#228B22">void</FONT></B> *)&amp;n)) {
+	perror(<B><FONT COLOR="#BC8F8F">&quot;pthread_create&quot;</FONT></B>);
+	exit(1);
+    }
+    <B><FONT COLOR="#A020F0">if</FONT></B> (pthread_create(&amp;t2, (pthread_attr_t *)NULL,
+		       (<B><FONT COLOR="#228B22">void</FONT></B> * (*)(<B><FONT COLOR="#228B22">void</FONT></B> *))consumer, (<B><FONT COLOR="#228B22">void</FONT></B> *)&amp;n)) {
+	perror(<B><FONT COLOR="#BC8F8F">&quot;pthread_create&quot;</FONT></B>);
+	exit(1);
+    }
+  
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    fprintf(stdout, <B><FONT COLOR="#BC8F8F">&quot;%d %d\n&quot;</FONT></B>, produced, consumed);
+    <B><FONT COLOR="#A020F0">return</FONT></B>(0);
+}
+
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">producer</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> *arg) {
+    <B><FONT COLOR="#228B22">int</FONT></B> i, n = *arg;
+    <B><FONT COLOR="#A020F0">for</FONT></B> (i=1; i&lt;=n; i++) {
+	pthread_mutex_lock(&amp;mutex);
+	<B><FONT COLOR="#A020F0">while</FONT></B> (count == 1) {
+	    pthread_cond_wait(&amp;control, &amp;mutex);
+	}
+	data = i;
+	count = 1;
+	pthread_cond_signal(&amp;control);
+	pthread_mutex_unlock(&amp;mutex);
+	produced++;
+    }
+}
+ 
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">consumer</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> *arg) {
+    <B><FONT COLOR="#228B22">int</FONT></B> i = 0, n = *arg;
+    <B><FONT COLOR="#A020F0">while</FONT></B> (1) {
+	pthread_mutex_lock(&amp;mutex);
+	<B><FONT COLOR="#A020F0">while</FONT></B> (count == 0) {
+	    pthread_cond_wait(&amp;control, &amp;mutex);
+	}
+	i = data;
+	count = 0;
+	pthread_cond_signal(&amp;control);
+	pthread_mutex_unlock(&amp;mutex);
+	consumed++;
+	<B><FONT COLOR="#A020F0">if</FONT></B> (i == n) <B><FONT COLOR="#A020F0">return</FONT></B>;
+    }
+}
+</pre></td></tr></table>

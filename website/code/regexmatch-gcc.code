@@ -1,0 +1,137 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">/* -*- mode: c -*-
+ * $Id: regexmatch-gcc.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ */</FONT></I>
+
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/types.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;sys/stat.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;fcntl.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdio.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;pcre.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;string.h&gt;</FONT></B>
+
+#<B><FONT COLOR="#5F9EA0">define</FONT></B> <FONT COLOR="#B8860B">MAXLINES</FONT>   100
+#<B><FONT COLOR="#5F9EA0">define</FONT></B> <FONT COLOR="#B8860B">MAXLINELEN</FONT> 132
+
+<B><FONT COLOR="#228B22">char</FONT></B> *pattern = 
+<B><FONT COLOR="#BC8F8F">&quot;(?:^|[^\\d\\(])&quot;</FONT></B>		<I><FONT COLOR="#B22222">/* must be preceeded by non-digit */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;(\\()?&quot;</FONT></B>			<I><FONT COLOR="#B22222">/* match 1: possible initial left paren */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;(\\d\\d\\d)&quot;</FONT></B>			<I><FONT COLOR="#B22222">/* match 2: area code is 3 digits */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;(?(1)\\))&quot;</FONT></B>			<I><FONT COLOR="#B22222">/* if match1 then match right paren */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;[ ]&quot;</FONT></B>				<I><FONT COLOR="#B22222">/* area code followed by one space */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;(\\d\\d\\d)&quot;</FONT></B>			<I><FONT COLOR="#B22222">/* match 3: prefix of 3 digits */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;[ -]&quot;</FONT></B>				<I><FONT COLOR="#B22222">/* separator is either space or dash */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;(\\d\\d\\d\\d)&quot;</FONT></B>		<I><FONT COLOR="#B22222">/* match 4: last 4 digits */</FONT></I>
+<B><FONT COLOR="#BC8F8F">&quot;\\D&quot;</FONT></B>				<I><FONT COLOR="#B22222">/* must be followed by a non-digit */</FONT></I>
+;
+
+
+<B><FONT COLOR="#228B22">int</FONT></B>
+<B><FONT COLOR="#0000FF">main</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> argc, <B><FONT COLOR="#228B22">char</FONT></B> *argv[]) {
+    <B><FONT COLOR="#228B22">int</FONT></B> NUM = ((argc == 2) ? atoi(argv[1]) : 1);
+    <B><FONT COLOR="#228B22">int</FONT></B> count;
+    <B><FONT COLOR="#228B22">char</FONT></B> *cptr = <B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B>;
+    <B><FONT COLOR="#228B22">char</FONT></B> **phones;
+    pcre *re;
+    <B><FONT COLOR="#228B22">int</FONT></B> erroffset;
+    <B><FONT COLOR="#228B22">const</FONT></B> <B><FONT COLOR="#228B22">char</FONT></B> *errptr;
+    <B><FONT COLOR="#228B22">int</FONT></B> n, lines = 0;
+    <B><FONT COLOR="#228B22">char</FONT></B> num[256];
+    <B><FONT COLOR="#228B22">int</FONT></B> i, j, k, matchlen;
+    <B><FONT COLOR="#228B22">char</FONT></B> *matchoffset;
+    <B><FONT COLOR="#228B22">int</FONT></B> nmatches;
+    <B><FONT COLOR="#228B22">int</FONT></B> *ovec, ovecsize;
+    pcre_extra *study;
+
+    phones = (<B><FONT COLOR="#228B22">char</FONT></B> **)malloc(MAXLINES * <B><FONT COLOR="#A020F0">sizeof</FONT></B>(<B><FONT COLOR="#228B22">char</FONT></B> *));
+    <B><FONT COLOR="#A020F0">if</FONT></B> (!phones) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;malloc for phones array failed\n&quot;</FONT></B>);
+	exit(1);
+    }
+    lines = 0;
+    <B><FONT COLOR="#A020F0">while</FONT></B> (cptr) {
+	phones[lines] = (<B><FONT COLOR="#228B22">char</FONT></B> *)malloc(MAXLINELEN);
+	<B><FONT COLOR="#A020F0">if</FONT></B> (!phones[lines]) {
+	    fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;malloc to hold line #%d failed\n&quot;</FONT></B>, lines);
+	    exit(1);
+	}
+	cptr = fgets(phones[lines], MAXLINELEN, stdin);
+	lines++;
+	<B><FONT COLOR="#A020F0">if</FONT></B> (lines &gt; MAXLINES) {
+	    fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;MAXLINES is too small\n&quot;</FONT></B>);
+	    exit(1);
+	}
+    }
+
+    re = pcre_compile(pattern, 0, &amp;errptr, &amp;erroffset, NULL);
+    <B><FONT COLOR="#A020F0">if</FONT></B> (!re) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;can't open compile regexp\n&quot;</FONT></B>);
+	exit(1);
+    }
+
+    study = pcre_study(re, 0, &amp;errptr);
+
+    <B><FONT COLOR="#A020F0">if</FONT></B> (pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, &amp;nmatches) != 0) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;pcre_fullinfo failed\n&quot;</FONT></B>);
+	exit(1);
+    }
+    nmatches++;			<I><FONT COLOR="#B22222">/* add match of entire pattern */</FONT></I>
+
+    ovecsize = <B><FONT COLOR="#A020F0">sizeof</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B>) * nmatches * 3;
+    ovec = (<B><FONT COLOR="#228B22">int</FONT></B> *)malloc(ovecsize);
+    <B><FONT COLOR="#A020F0">if</FONT></B> (!ovec) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;malloc for ovec array failed\n&quot;</FONT></B>);
+	exit(1);
+    }
+
+    count = 0;
+    <B><FONT COLOR="#A020F0">while</FONT></B> (NUM--) {
+	<B><FONT COLOR="#A020F0">for</FONT></B> (i=0; i&lt;lines; i++) {
+	    n = pcre_exec(re, study,
+			  phones[i], strlen(phones[i]), 0,
+			  0, ovec, ovecsize);
+	    <B><FONT COLOR="#A020F0">if</FONT></B> (n == nmatches) {
+		<I><FONT COLOR="#B22222">/* stuff the match into the buffer &quot;num&quot; */</FONT></I>
+		k = 2*2;	<I><FONT COLOR="#B22222">/* initial offset into ovec */</FONT></I>
+		<I><FONT COLOR="#B22222">/* areacode */</FONT></I>
+		j = 0;
+		num[j++] = <B><FONT COLOR="#BC8F8F">'('</FONT></B>;
+		matchoffset = phones[i] + ovec[k];
+		matchlen = ovec[k+1] - ovec[k];
+		strncpy(num+j, matchoffset, matchlen);
+		j += matchlen; k += 2;
+		num[j++] = <B><FONT COLOR="#BC8F8F">')'</FONT></B>;
+		<I><FONT COLOR="#B22222">/* space separator */</FONT></I>
+		num[j++] = <B><FONT COLOR="#BC8F8F">' '</FONT></B>;
+		<I><FONT COLOR="#B22222">/* exchange */</FONT></I>
+		matchoffset = phones[i] + ovec[k];
+		matchlen = ovec[k+1] - ovec[k];
+		strncpy(num+j, matchoffset, matchlen);
+		j += matchlen; k += 2;
+		<I><FONT COLOR="#B22222">/* dash */</FONT></I>
+		num[j++] = <B><FONT COLOR="#BC8F8F">'-'</FONT></B>;
+		<I><FONT COLOR="#B22222">/* last 4 digits */</FONT></I>
+		matchoffset = phones[i] + ovec[k];
+		matchlen = ovec[k+1] - ovec[k];
+		strncpy(num+j, matchoffset, matchlen);
+		j += matchlen; k += 2;
+		<I><FONT COLOR="#B22222">/* with a cherry on top */</FONT></I>
+		num[j] = 0;
+		<B><FONT COLOR="#A020F0">if</FONT></B> (0 == NUM) {
+		    count++;
+		    printf(<B><FONT COLOR="#BC8F8F">&quot;%d: %s\n&quot;</FONT></B>, count, num);
+		}
+	    }
+	}
+    }
+
+    <B><FONT COLOR="#A020F0">for</FONT></B> (i=0; i&lt;MAXLINES; i++) {
+	free(phones[i]);
+    }
+    free(phones);
+    free(ovec);
+
+    <B><FONT COLOR="#A020F0">return</FONT></B>(0);
+}
+</pre></td></tr></table>

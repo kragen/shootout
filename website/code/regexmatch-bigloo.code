@@ -1,0 +1,82 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">;;; -*- mode: scheme -*-
+</FONT></I><I><FONT COLOR="#B22222">;;; $Id: regexmatch-bigloo.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">;;; http://www.bagley.org/~doug/shootout/
+</FONT></I>
+(module regexmatch
+	(main main))
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">match-phone</FONT></B>
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((last-char-is-non-digit #t)
+	(found #f)
+	(parts '()))
+    (regular-grammar ((non-digit (out (<B><FONT COLOR="#BC8F8F">&quot;09&quot;</FONT></B>) #\( ))
+		      (area-code (= 3 digit))
+		      (exchange (= 3 digit))
+		      (separator (in (<B><FONT COLOR="#BC8F8F">&quot; -&quot;</FONT></B>)))
+		      (number (= 4 digit))
+
+		      <I><FONT COLOR="#B22222">;; parts of phone number begins with a 3-digit area code
+</FONT></I>		      (phone-parts (: (<B><FONT COLOR="#A020F0">or</FONT></B> (: <B><FONT COLOR="#BC8F8F">&quot;(&quot;</FONT></B> (submatch area-code) <B><FONT COLOR="#BC8F8F">&quot;)&quot;</FONT></B>)
+					  (submatch area-code))
+				      <I><FONT COLOR="#B22222">;; the area code is followed by one space
+</FONT></I>				      space
+				      <I><FONT COLOR="#B22222">;; which is followed by the 3 digits of the exchange
+</FONT></I>				      (submatch exchange)
+				      <I><FONT COLOR="#B22222">;; the exchange is followed by a space or hyphen [ -] 
+</FONT></I>				      separator
+				      <I><FONT COLOR="#B22222">;; which is followed by the last 4 digits: DDDD 
+</FONT></I>				      (submatch number))))
+
+		     <I><FONT COLOR="#B22222">;; a telephone number must be preceeded by a non-digit (or bol).
+</FONT></I>		     <I><FONT COLOR="#B22222">;; and followed by a non-digit (or eol).
+</FONT></I>
+		     <I><FONT COLOR="#B22222">;; scanned a non-digit char
+</FONT></I>		     ((: non-digit)
+		      (<B><FONT COLOR="#A020F0">set!</FONT></B> last-char-is-non-digit #t)
+		      (<B><FONT COLOR="#A020F0">if</FONT></B> found (<B><FONT COLOR="#A020F0">begin</FONT></B> (<B><FONT COLOR="#A020F0">set!</FONT></B> found #f) parts) (ignore)))
+		     <I><FONT COLOR="#B22222">;; scanned a digit char
+</FONT></I>		     ((: digit)
+		      (<B><FONT COLOR="#A020F0">set!</FONT></B> last-char-is-non-digit #f)
+		      (<B><FONT COLOR="#A020F0">if</FONT></B> found (<B><FONT COLOR="#A020F0">begin</FONT></B> (<B><FONT COLOR="#A020F0">set!</FONT></B> found #f) '()) (ignore)))
+		     ((when last-char-is-non-digit (: phone-parts))
+		      (<B><FONT COLOR="#A020F0">set!</FONT></B> found #t)
+		      (<B><FONT COLOR="#A020F0">set!</FONT></B> parts (list (the-submatch 1)
+					(the-submatch 2)
+					(the-submatch 3)
+					(the-submatch 4)))
+		      (ignore))
+		     (<B><FONT COLOR="#A020F0">else</FONT></B>
+		      <I><FONT COLOR="#B22222">;; possibly get here on eol
+</FONT></I>		      (<B><FONT COLOR="#A020F0">if</FONT></B> found (<B><FONT COLOR="#A020F0">begin</FONT></B> (<B><FONT COLOR="#A020F0">set!</FONT></B> found #f) parts) '())))))
+
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> (<B><FONT COLOR="#0000FF">main</FONT></B> args)
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((n (<B><FONT COLOR="#A020F0">or</FONT></B> (<B><FONT COLOR="#A020F0">and</FONT></B> (= (length args) 2) (string-&gt;number (cadr args))) 1))
+	(phonelines '())
+	(count 0))
+    (<B><FONT COLOR="#A020F0">let</FONT></B> loop ((line (read-line)))
+      (<B><FONT COLOR="#A020F0">cond</FONT></B> ((eof-object? line) #f)
+	    (<B><FONT COLOR="#A020F0">else</FONT></B>
+	     (<B><FONT COLOR="#A020F0">set!</FONT></B> phonelines (append phonelines (list line)))
+	     (loop (read-line)))))
+
+    (<B><FONT COLOR="#A020F0">do</FONT></B> ((i N (- i 1)))
+	((= i 0))
+      (<B><FONT COLOR="#A020F0">let</FONT></B> ((count 0))
+	(for-each (<B><FONT COLOR="#A020F0">lambda</FONT></B> (phone)
+		    (<B><FONT COLOR="#A020F0">let*</FONT></B> ((port (open-input-string phone))
+			   (match-parts (read/rp match-phone port)))
+		      (<B><FONT COLOR="#A020F0">if</FONT></B> (<B><FONT COLOR="#A020F0">and</FONT></B> (not (null? match-parts))
+			       (= 1 i))
+			  (<B><FONT COLOR="#A020F0">begin</FONT></B>
+			    (<B><FONT COLOR="#A020F0">let*</FONT></B> ((area 
+				    (<B><FONT COLOR="#A020F0">if</FONT></B> (string=? (car match-parts) <B><FONT COLOR="#BC8F8F">&quot;&quot;</FONT></B>)
+					(cadr match-parts)
+					(car match-parts)))
+				   (exch (caddr match-parts))
+				   (numb (cadddr match-parts))
+				   (num (string-append <B><FONT COLOR="#BC8F8F">&quot;(&quot;</FONT></B> area <B><FONT COLOR="#BC8F8F">&quot;) &quot;</FONT></B> exch <B><FONT COLOR="#BC8F8F">&quot;-&quot;</FONT></B> numb)))
+			      (<B><FONT COLOR="#A020F0">set!</FONT></B> count (+ count 1))
+			      (print count <B><FONT COLOR="#BC8F8F">&quot;: &quot;</FONT></B> num))))))
+		  phonelines)))))</pre></td></tr></table>

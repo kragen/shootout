@@ -1,0 +1,87 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">(* -*- mode: sml -*-
+ * $Id: reversefile-smlnj.code,v 1.1 2004-11-02 08:53:20 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Tom 7
+ *)</FONT></I>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> Test : <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> main : (<B><FONT COLOR="#228B22">string</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> <B><FONT COLOR="#228B22">string</FONT></B> <B><FONT COLOR="#228B22">list</FONT></B>) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> OS.Process.status
+<B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+
+<B><FONT COLOR="#A020F0">val</FONT></B> bufsize <B><FONT COLOR="#5F9EA0">=</FONT></B> 4096
+<B><FONT COLOR="#A020F0">val</FONT></B> rdbufsize <B><FONT COLOR="#5F9EA0">=</FONT></B> 4096
+
+<B><FONT COLOR="#A020F0">val</FONT></B> stdout <B><FONT COLOR="#5F9EA0">=</FONT></B> Posix.FileSys.wordToFD 0w1
+<B><FONT COLOR="#A020F0">val</FONT></B> stdin <B><FONT COLOR="#5F9EA0">=</FONT></B> Posix.FileSys.wordToFD 0w0
+
+<B><FONT COLOR="#A020F0">datatype</FONT></B> block <B><FONT COLOR="#5F9EA0">=</FONT></B> END
+               <B><FONT COLOR="#5F9EA0">|</FONT></B> MORE <B><FONT COLOR="#A020F0">of</FONT></B> <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> Word8Array.<B><FONT COLOR="#228B22">array</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> block
+
+<B><FONT COLOR="#A020F0">val</FONT></B> buff <B><FONT COLOR="#5F9EA0">=</FONT></B> Unsafe.Word8Array.create rdbufsize
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">out</FONT></I></B></FONT></B> END <B><FONT COLOR="#5F9EA0">=</FONT></B> ()
+  <B><FONT COLOR="#5F9EA0">|</FONT></B> out (MORE (ir <B><FONT COLOR="#A020F0">as</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> i, a, next)) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
+    Posix.IO.writeArr (stdout, Word8ArraySlice.slice(a, i, <B><FONT COLOR="#5F9EA0">NONE</FONT></B>));
+    out next
+  <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">rd</FONT></I></B></FONT></B> (start, len, count, b) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">if</FONT></B> (start <B><FONT COLOR="#5F9EA0">+</FONT></B> len) <B><FONT COLOR="#5F9EA0">&gt;=</FONT></B> count <B><FONT COLOR="#A020F0">then</FONT></B> 
+    <I><FONT COLOR="#B22222">(* done with this block. 
+       Copy from start to the end of the array into
+       buff, then return the starting index into buff. *)</FONT></I>
+    <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
+      Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, start, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(len)),
+                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>buff, di<B><FONT COLOR="#5F9EA0">=</FONT></B>0};
+      (b, len)
+    <B><FONT COLOR="#A020F0">end</FONT></B>
+  <B><FONT COLOR="#A020F0">else</FONT></B>
+    <B><FONT COLOR="#A020F0">if</FONT></B> Unsafe.Word8Array.sub(buff, start <B><FONT COLOR="#5F9EA0">+</FONT></B> len) <B><FONT COLOR="#5F9EA0">=</FONT></B> 0w10 <B><FONT COLOR="#A020F0">then</FONT></B>
+      <I><FONT COLOR="#B22222">(* found newline *)</FONT></I>
+      <B><FONT COLOR="#A020F0">case</FONT></B> b <B><FONT COLOR="#A020F0">of</FONT></B> MORE(ir <B><FONT COLOR="#A020F0">as</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> i, a, _) <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+        <B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">&gt;</FONT></B> len <B><FONT COLOR="#A020F0">then</FONT></B>
+            <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">in</FONT></B>
+              <I><FONT COLOR="#B22222">(* enough room *)</FONT></I>
+              Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, start, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(len<B><FONT COLOR="#5F9EA0">+</FONT></B>1)),
+	                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>a, di<B><FONT COLOR="#5F9EA0">=</FONT></B>(i <B><FONT COLOR="#5F9EA0">-</FONT></B> len <B><FONT COLOR="#5F9EA0">-</FONT></B> 1)};
+              ir <B><FONT COLOR="#5F9EA0">:=</FONT></B> i <B><FONT COLOR="#5F9EA0">-</FONT></B> (len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1);
+              
+              rd(start <B><FONT COLOR="#5F9EA0">+</FONT></B> len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, 0, count, b)
+            <B><FONT COLOR="#A020F0">end</FONT></B>
+          <B><FONT COLOR="#A020F0">else</FONT></B> <I><FONT COLOR="#B22222">(* not enough room *)</FONT></I>
+            <B><FONT COLOR="#A020F0">let</FONT></B>
+              <I><FONT COLOR="#B22222">(* going to need a new buffer *)</FONT></I>
+              <B><FONT COLOR="#A020F0">val</FONT></B> na <B><FONT COLOR="#5F9EA0">=</FONT></B> Unsafe.Word8Array.create bufsize
+              <B><FONT COLOR="#A020F0">val</FONT></B> l <B><FONT COLOR="#5F9EA0">=</FONT></B> (len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1) <B><FONT COLOR="#5F9EA0">-</FONT></B> i
+            <B><FONT COLOR="#A020F0">in</FONT></B>
+              <I><FONT COLOR="#B22222">(* put the tail in whatever room is left *)</FONT></I>
+              Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, (start <B><FONT COLOR="#5F9EA0">+</FONT></B> len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1) <B><FONT COLOR="#5F9EA0">-</FONT></B> i, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(i)),
+	                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>a, di<B><FONT COLOR="#5F9EA0">=</FONT></B>0 };
+              
+              <I><FONT COLOR="#B22222">(* put the head in a new buffer *)</FONT></I>
+              Word8ArraySlice.copy {src<B><FONT COLOR="#5F9EA0">=</FONT></B>Word8ArraySlice.slice(buff, start, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(l)),
+	                            dst<B><FONT COLOR="#5F9EA0">=</FONT></B>na, di<B><FONT COLOR="#5F9EA0">=</FONT></B>bufsize <B><FONT COLOR="#5F9EA0">-</FONT></B> l };
+              ir <B><FONT COLOR="#5F9EA0">:=</FONT></B> 0;
+              rd(start <B><FONT COLOR="#5F9EA0">+</FONT></B> len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, 0, count, MORE(<B><FONT COLOR="#A020F0">ref</FONT></B> (bufsize <B><FONT COLOR="#5F9EA0">-</FONT></B> l), na, b))
+            <B><FONT COLOR="#A020F0">end</FONT></B>
+	<B><FONT COLOR="#A020F0">else</FONT></B> rd (start, len <B><FONT COLOR="#5F9EA0">+</FONT></B> 1, count, b)
+	
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> (b, s) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+  <B><FONT COLOR="#A020F0">let</FONT></B> 
+    <B><FONT COLOR="#A020F0">val</FONT></B> count <B><FONT COLOR="#5F9EA0">=</FONT></B> Posix.IO.readArr (stdin, Word8ArraySlice.slice(buff, s, <B><FONT COLOR="#5F9EA0">SOME</FONT></B>(rdbufsize<B><FONT COLOR="#5F9EA0">-</FONT></B>s))) 
+    <B><FONT COLOR="#A020F0">val</FONT></B> (bb, bs) <B><FONT COLOR="#5F9EA0">=</FONT></B> rd (0, s, count <B><FONT COLOR="#5F9EA0">+</FONT></B> s, b)
+  <B><FONT COLOR="#A020F0">in</FONT></B>
+    <B><FONT COLOR="#A020F0">case</FONT></B> count <B><FONT COLOR="#A020F0">of</FONT></B>
+      0 <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> out bb
+    <B><FONT COLOR="#5F9EA0">|</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> loop (bb, bs)
+  <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">main</FONT></I></B></FONT></B>(name, args) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+    ( loop (MORE(<B><FONT COLOR="#A020F0">ref</FONT></B> bufsize, Unsafe.Word8Array.create bufsize, END), 0);
+      OS.Process.success);
+
+<B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> SMLofNJ.exportFn(<B><FONT COLOR="#BC8F8F">&quot;reversefile&quot;</FONT></B>, Test.main);</pre></td></tr></table>

@@ -1,0 +1,52 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">;;; -*- mode: lisp -*-
+</FONT></I><I><FONT COLOR="#B22222">;;; $Id: prodcons-sbcl.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">;;; http://shootout.alioth.debian.org/
+</FONT></I><I><FONT COLOR="#B22222">;;; From Jochen Schmidt
+</FONT></I><I><FONT COLOR="#B22222">;;; Multi-lisp modifications by Brent Fulgham
+</FONT></I>
+(defparameter *counter* 0)
+(defparameter *produced* 0)
+(defparameter *consumed* 0)
+(defparameter *data* 0)
+(defparameter *mutex* (mp:make-lock <B><FONT COLOR="#BC8F8F">&quot;Big Lock&quot;</FONT></B>))
+
+(defun main ()
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((n (parse-integer (<B><FONT COLOR="#A020F0">or</FONT></B> (car (last #+sbcl sb-ext:*posix-argv*
+                                         #+cmu  extensions:*command-line-strings*)) <B><FONT COLOR="#BC8F8F">&quot;1&quot;</FONT></B>))))
+    (declare (optimize (speed 3) (safety 0))
+	     (fixnum n))
+    (setf *counter* 0
+	  *produced* 0
+	  *consumed* 0
+	  *data* 0)
+    (<B><FONT COLOR="#A020F0">let</FONT></B> ((producer (mp:make-process #'(<B><FONT COLOR="#A020F0">lambda</FONT></B> () (funcall #'producer n)) <B><FONT COLOR="#5F9EA0">:name</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;Producer&quot;</FONT></B>))
+	  (consumer (mp:make-process #'(<B><FONT COLOR="#A020F0">lambda</FONT></B> () (funcall #'consumer n)) <B><FONT COLOR="#5F9EA0">:name</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;Consumer&quot;</FONT></B>)))
+      (mp:process-wait <B><FONT COLOR="#BC8F8F">&quot;Wait on Producer&quot;</FONT></B> #'(<B><FONT COLOR="#A020F0">lambda</FONT></B> () (eq (mp:process-state producer) <B><FONT COLOR="#5F9EA0">:killed</FONT></B>)))
+      (mp:process-wait <B><FONT COLOR="#BC8F8F">&quot;Wait on Consumer&quot;</FONT></B> #'(<B><FONT COLOR="#A020F0">lambda</FONT></B> () (eq (mp:process-state consumer) <B><FONT COLOR="#5F9EA0">:killed</FONT></B>)))
+      (format t <B><FONT COLOR="#BC8F8F">&quot;~A ~A~%&quot;</FONT></B> *produced* *consumed*))))
+
+(defun producer (n)
+  (declare (optimize (speed 3) (safety 0))
+           (fixnum n))
+  (loop <B><FONT COLOR="#5F9EA0">:for</FONT></B> i <B><FONT COLOR="#5F9EA0">:of-type</FONT></B> fixnum <B><FONT COLOR="#5F9EA0">:from</FONT></B> 1 <B><FONT COLOR="#5F9EA0">:to</FONT></B> n
+        <B><FONT COLOR="#5F9EA0">:do</FONT></B> 
+        (mp:process-wait <B><FONT COLOR="#BC8F8F">&quot;Producer is waiting on Consumer&quot;</FONT></B> #'(<B><FONT COLOR="#A020F0">lambda</FONT></B> () (= *counter* 0)))
+        (mp:with-lock-held (*mutex*)
+          (setf *data* i
+                    *counter* 1))
+        (incf *produced*)))
+
+(defun consumer (n)
+  (declare (optimize (speed 3) (safety 0))
+           (fixnum n))
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((i 0))
+    (declare (fixnum i))
+    (loop
+     (mp:process-wait <B><FONT COLOR="#BC8F8F">&quot;Consumer is waiting on Producer&quot;</FONT></B> #'(<B><FONT COLOR="#A020F0">lambda</FONT></B> () (= *counter* 1)))
+     (mp:with-lock-held (*mutex*)
+       (setf i *data*
+             *counter* 0))
+     (incf *consumed*)
+     (when (= i n)
+       (return)))))</pre></td></tr></table>

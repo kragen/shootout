@@ -1,0 +1,175 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">;;; -*- mode: lisp -*-
+</FONT></I><I><FONT COLOR="#B22222">;;; $Id: moments-poplisp.code,v 1.1 2004-11-02 08:52:37 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">;;; http://shootout.alioth.debian.org/
+</FONT></I>
+(declaim (optimize (speed 3) (debug 0) (safety 0) (space 0) (compilation-speed 0)))
+
+(defun quicksort (vec lo hi) <I><FONT COLOR="#B22222">;; modified from from Roger Corman's posting in cll
+</FONT></I>  (declare (fixnum hi lo) (type (simple-array double-float) vec))
+    (<B><FONT COLOR="#A020F0">if</FONT></B> (&gt; hi lo)
+        (<B><FONT COLOR="#A020F0">let*</FONT></B> ((mid (round (+ lo hi) 2))
+               (i lo)
+               (j (+ hi 1))
+               (p (aref vec mid)))
+	  (declare (fixnum i j) (double-float p))
+            (rotatef (aref vec mid) (aref vec lo)) <I><FONT COLOR="#B22222">;; swap mid element to first
+</FONT></I>            (loop
+                (loop <B><FONT COLOR="#A020F0">do</FONT></B> (incf i)
+                    until (<B><FONT COLOR="#A020F0">or</FONT></B> (&gt; i hi) (&gt; p (aref vec i))))
+                (loop <B><FONT COLOR="#A020F0">do</FONT></B> (decf j)
+                    until (<B><FONT COLOR="#A020F0">or</FONT></B> (&lt;= j lo) (&gt; (aref vec j) p)))
+		(<B><FONT COLOR="#A020F0">if</FONT></B> (&lt; j i) (return))
+                (rotatef (aref vec i)(aref vec j)))
+  (rotatef (aref vec lo) (aref vec j)) <I><FONT COLOR="#B22222">;;put partition element in place 
+</FONT></I>  (quicksort vec lo (- j 1))  (quicksort vec i hi))) vec)
+
+(defun do-moments (data n mean)
+  (declare (fixnum n) (double-float mean) (type (simple-array double-float) data))
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((average_deviation 0.0d0)
+	(standard_deviation 0.0d0)
+	(variance 0.0d0)
+	(skew 0.0d0)
+	(kurtosis 0.0d0)
+	(median 0.0d0))
+    (declare (double-float mean average_deviation standard_deviation
+			   variance skew kurtosis median))
+    (declare (inline quicksort))
+    (loop for i fixnum from 0 below n <B><FONT COLOR="#A020F0">do</FONT></B>
+      (<B><FONT COLOR="#A020F0">let*</FONT></B> ((deviation (- (the double-float (aref data i)) mean))
+	     (deviation2 (* deviation deviation))
+	     (deviation3 (* deviation deviation2))
+	     (deviation4 (* deviation deviation3)))
+	(incf average_deviation (abs deviation))
+	(incf variance deviation2)
+	(incf skew deviation3)
+	(incf kurtosis deviation4)))
+    
+    (setq average_deviation (/ average_deviation n))
+    (setq variance (/ variance (1- n)))
+    (setq standard_deviation (sqrt variance))
+    
+    (<B><FONT COLOR="#A020F0">cond</FONT></B> ((&gt; variance 0.0d0)
+	   (setq skew (/ skew (* n variance standard_deviation)))
+	   (setq kurtosis (- (/ kurtosis (* (coerce n 'double-float)
+					    variance variance))
+			     3.0d0))))
+    (setf data (quicksort data 0 (1- n)))
+    (<B><FONT COLOR="#A020F0">let</FONT></B> ((mid (/ n 2)))
+      (fixnum mid)
+      (<B><FONT COLOR="#A020F0">if</FONT></B> (zerop (mod n 2))
+	  (setq median (/ (+ (the double-float (aref data mid))
+			     (the double-float (aref data (1- mid))))
+			  2.0d0))
+	(setq median (aref data mid))))
+    (format t <B><FONT COLOR="#BC8F8F">&quot;n:                  ~A~%&quot;</FONT></B> n)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;median:             ~,6K~%&quot;</FONT></B> median)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;mean:               ~,6K~%&quot;</FONT></B> mean)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;average_deviation:  ~,6K~%&quot;</FONT></B> average_deviation)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;standard_deviation: ~,6K~%&quot;</FONT></B> standard_deviation)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;variance:           ~,6K~%&quot;</FONT></B> variance)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;skew:               ~,6K~%&quot;</FONT></B> skew)
+    (format t <B><FONT COLOR="#BC8F8F">&quot;kurtosis:           ~,6K~%&quot;</FONT></B> kurtosis)))
+
+
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((buffer (make-string 4096))
+	(start 0)
+	(end 0)
+	(result 0.0d0)
+	(char #\X)
+	(stream *standard-input*)
+	(eof-p nil))
+    (declare (fixnum start end) (double-float result))
+    (labels ((get-char ()
+		       (when (= start end)
+			 (setf start 0)
+			 (setf end (read-sequence buffer stream))
+			 (when (zerop end)
+			   (setf eof-p t)
+			   (setf char #\Z) <I><FONT COLOR="#B22222">;any non-digit will do
+</FONT></I>			   (return-from get-char nil)))
+		       (setf char (schar buffer start))
+		       (incf start))
+	     (get-dfloat ()<I><FONT COLOR="#B22222">;; parse double float hack someone should rewrite this
+</FONT></I>			 (<B><FONT COLOR="#A020F0">let</FONT></B> ((minusp nil)
+			       (expminusp nil)
+			       (before-dp 0)
+			       (after-dp 0)
+			       (dec-digits 0)
+			       (exponent 0))
+			   (declare (fixnum before-dp after-dp exponent dec-digits)
+				    (inline digit-char-p char=))
+			   (loop while (<B><FONT COLOR="#A020F0">and</FONT></B>
+					(not
+					 (<B><FONT COLOR="#A020F0">or</FONT></B> (<B><FONT COLOR="#A020F0">and</FONT></B> (char= #\- char)
+						  (setq minusp t))
+					     (digit-char-p char 10)))
+					(get-char)))
+			   (loop 
+			     <B><FONT COLOR="#A020F0">do</FONT></B> (<B><FONT COLOR="#A020F0">let</FONT></B> ((weight (digit-char-p char 10)))
+				  (declare (type (<B><FONT COLOR="#A020F0">or</FONT></B> null fixnum) weight))
+				  (<B><FONT COLOR="#A020F0">if</FONT></B> weight
+				      (setq before-dp (+ weight (the fixnum (* before-dp 10))))
+				    (return)))
+			     until (not (get-char)))
+			   (<B><FONT COLOR="#A020F0">if</FONT></B> minusp (setf before-dp (- before-dp)))
+			   (when (char= #\. char)
+			     (loop while (get-char)
+			       <B><FONT COLOR="#A020F0">do</FONT></B> (<B><FONT COLOR="#A020F0">let</FONT></B> ((weight (digit-char-p char 10)))
+				    (declare (type (<B><FONT COLOR="#A020F0">or</FONT></B> null (signed-byte 32)) weight))
+				    (<B><FONT COLOR="#A020F0">if</FONT></B> weight
+					(setq after-dp (+ weight (the fixnum (* after-dp 10)))
+					      dec-digits (the fixnum (1+ dec-digits)))
+				      (return)))))
+			   (when (<B><FONT COLOR="#A020F0">or</FONT></B> (char= #\e char) (char= #\E char))
+			     (get-char)
+			     (when (char= #\- char)
+			       (setq expminusp t)
+			       (get-char))
+			     (loop 
+			       <B><FONT COLOR="#A020F0">do</FONT></B> (<B><FONT COLOR="#A020F0">let</FONT></B> ((weight (digit-char-p char 10)))
+				    (declare (type (<B><FONT COLOR="#A020F0">or</FONT></B> null fixnum) weight))
+				    (<B><FONT COLOR="#A020F0">if</FONT></B> weight
+					(setq exponent (+ weight (the fixnum (* exponent 10))))
+				      (return)))
+			       until (not (get-char)))
+			     (<B><FONT COLOR="#A020F0">if</FONT></B> expminusp (setf exponent (- exponent))))
+			   (setq result
+				 (float (*
+					 (+ (float before-dp 1.0d0)
+					    (<B><FONT COLOR="#A020F0">if</FONT></B> (zerop after-dp) 0.0d0
+					      (* (float after-dp 1.0d0)
+						 (<B><FONT COLOR="#A020F0">if</FONT></B> (zerop dec-digits) 1.0d0
+						   (expt 10.0d0 (float (- dec-digits) 1.0d0))))))
+					 (<B><FONT COLOR="#A020F0">if</FONT></B> (zerop exponent) 1.0d0
+					   (expt 10.0d0 (float exponent 1.0d0)))) 1.0d0)))))
+
+      (<B><FONT COLOR="#A020F0">let</FONT></B> ((sum 0.0d0)
+	    nums )
+	(declare (double-float sum) (inline vector-push-extend))
+	(<B><FONT COLOR="#A020F0">let*</FONT></B> ((array-size 10000)
+	       (numbuffer (make-array array-size <B><FONT COLOR="#5F9EA0">:element-type</FONT></B> 'double-float))
+	       (buflist (list numbuffer)) <I><FONT COLOR="#B22222">;; Doug's idea put these together later
+</FONT></I>	       (fill-pointer 0))
+	  (loop
+	    (get-dfloat)
+	    (<B><FONT COLOR="#A020F0">if</FONT></B> (not eof-p)
+		(progn 
+		  (incf sum result)
+		  (setf (aref numbuffer fill-pointer) result)
+		  (incf fill-pointer)
+		  (when (= fill-pointer array-size)
+		    (push
+		     (setf numbuffer (make-array array-size <B><FONT COLOR="#5F9EA0">:element-type</FONT></B> 'double-float))
+		     buflist)
+		    (setf fill-pointer 0)))
+	      (return)))
+	  (<B><FONT COLOR="#A020F0">let*</FONT></B> ((num-arrays (length buflist))
+		 (num-elem (+ (* (1- num-arrays) array-size) fill-pointer)))
+	    (setf nums (make-array  num-elem <B><FONT COLOR="#5F9EA0">:element-type</FONT></B> 'double-float))
+	    (locally (declare (type (simple-array double-float) nums))
+		     (loop for i fixnum from 0 to (1- num-arrays) <B><FONT COLOR="#A020F0">do</FONT></B>
+		       (setf (subseq nums (* i array-size))
+			     (the (simple-array double-float)
+			       (elt buflist (- (1- num-arrays) i))))) <I><FONT COLOR="#B22222">;;buflist is rev'd
+</FONT></I>		     (do-moments nums num-elem (/ sum num-elem))))))))</pre></td></tr></table>

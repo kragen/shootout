@@ -1,0 +1,66 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">#!/usr/bin/python
+</FONT></I><I><FONT COLOR="#B22222"># $Id: echo-psyco.code,v 1.1 2004-11-02 08:52:30 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222"># http://www.bagley.org/~doug/shootout/
+</FONT></I><I><FONT COLOR="#B22222"># with help from Brad Knotwell
+</FONT></I>
+<B><FONT COLOR="#A020F0">import</FONT></B> sys, os, psyco
+<B><FONT COLOR="#A020F0">from</FONT></B> socket <B><FONT COLOR="#A020F0">import</FONT></B> *
+psyco.full()
+
+DATA = <B><FONT COLOR="#BC8F8F">&quot;Hello there sailor\n&quot;</FONT></B>
+bufferSize = len(DATA)
+
+<B><FONT COLOR="#A020F0">def</FONT></B> <B><FONT COLOR="#0000FF">server_sock</FONT></B>():
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    sock.bind((<B><FONT COLOR="#BC8F8F">'127.0.0.1'</FONT></B>, 0));
+    sock.listen(2)
+    <B><FONT COLOR="#A020F0">return</FONT></B>(sock)
+
+<B><FONT COLOR="#A020F0">def</FONT></B> <B><FONT COLOR="#0000FF">get_port</FONT></B>(sock):
+    host, port = sock.getsockname()
+    <B><FONT COLOR="#A020F0">return</FONT></B>(port)
+
+<B><FONT COLOR="#A020F0">def</FONT></B> <B><FONT COLOR="#0000FF">client_sock</FONT></B>(port):
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect((<B><FONT COLOR="#BC8F8F">'127.0.0.1'</FONT></B>, port))
+    <B><FONT COLOR="#A020F0">return</FONT></B>(sock)
+
+<B><FONT COLOR="#A020F0">def</FONT></B> <B><FONT COLOR="#0000FF">echo_client</FONT></B>(n, port):
+    sock = client_sock(port)
+    sender,receiver = sock.send,sock.recv
+    <B><FONT COLOR="#A020F0">for</FONT></B> i <B><FONT COLOR="#A020F0">in</FONT></B> range(0,n):
+        sender(DATA)
+        ans = receiver(bufferSize)
+        <B><FONT COLOR="#A020F0">while</FONT></B> ans[-1] != <B><FONT COLOR="#BC8F8F">&quot;\n&quot;</FONT></B>:
+            ans += receiver(bufferSize - len(ans))
+        <B><FONT COLOR="#A020F0">if</FONT></B> ans &lt;&gt; DATA:
+            <B><FONT COLOR="#A020F0">raise</FONT></B>(<B><FONT COLOR="#BC8F8F">&quot;client: \&quot;%s\&quot; ne \&quot;%s\&quot;&quot;</FONT></B> % (DATA, ans))
+    sock.close()
+
+<B><FONT COLOR="#A020F0">def</FONT></B> <B><FONT COLOR="#0000FF">echo_server</FONT></B>(n):
+    ssock = server_sock()
+    <B><FONT COLOR="#A020F0">if</FONT></B> os.fork() &gt; 0:
+        <I><FONT COLOR="#B22222"># parent is server
+</FONT></I>        csock, addr = ssock.accept()
+        n = 0
+        sender,receiver = csock.send,csock.recv
+        <B><FONT COLOR="#A020F0">while</FONT></B> 1:
+            dat = receiver(bufferSize)
+            <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#A020F0">not</FONT></B> dat: <B><FONT COLOR="#A020F0">break</FONT></B>
+            sender(dat)
+            n += len(dat)
+        <B><FONT COLOR="#A020F0">print</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server processed %d bytes&quot;</FONT></B> % n
+        os.wait()
+    <B><FONT COLOR="#A020F0">else</FONT></B>:
+        <I><FONT COLOR="#B22222"># child is client
+</FONT></I>        echo_client(n, get_port(ssock))
+
+<B><FONT COLOR="#A020F0">def</FONT></B> <B><FONT COLOR="#0000FF">main</FONT></B>():
+    n = int(sys.argv[1])
+    <B><FONT COLOR="#A020F0">if</FONT></B> n &lt; 1:
+        n = 1
+    echo_server(n)
+
+main()</pre></td></tr></table>

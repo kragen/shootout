@@ -1,0 +1,67 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">-- $Id: wc-gnat.code,v 1.1 2004-11-02 08:53:31 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">-- http://dada.perl.it/shootout/
+</FONT></I><I><FONT COLOR="#B22222">-- Ada 95 code by C.C.
+</FONT></I>
+<I><FONT COLOR="#B22222">-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+</FONT></I>
+<B><FONT COLOR="#A020F0">with</FONT></B> Interfaces.C, System, Ada.Strings.Fixed, Ada.Text_IO;
+
+<B><FONT COLOR="#A020F0">procedure</FONT></B> Wc <B><FONT COLOR="#A020F0">is</FONT></B>
+   <B><FONT COLOR="#A020F0">package</FONT></B> IC <B><FONT COLOR="#A020F0">renames</FONT></B> Interfaces.C;
+   <B><FONT COLOR="#A020F0">function</FONT></B> L_Trim (Source : String; Side : Ada.Strings.Trim_End :=
+               Ada.Strings.Left) <B><FONT COLOR="#A020F0">return</FONT></B> String <B><FONT COLOR="#A020F0">renames</FONT></B> Ada.Strings.Fixed.Trim;
+
+   <B><FONT COLOR="#A020F0">package</FONT></B> Io <B><FONT COLOR="#A020F0">is</FONT></B>
+      <B><FONT COLOR="#A020F0">type</FONT></B> File_Descriptor <B><FONT COLOR="#A020F0">is</FONT></B> <B><FONT COLOR="#A020F0">new</FONT></B> IC.int;       <I><FONT COLOR="#B22222">--  STDIN=0, STDOUT=1, STDERR=2
+</FONT></I>      <B><FONT COLOR="#A020F0">type</FONT></B> Setmode_Flag <B><FONT COLOR="#A020F0">is</FONT></B> <B><FONT COLOR="#A020F0">new</FONT></B> IC.int;
+      STDIN       : <B><FONT COLOR="#A020F0">constant</FONT></B> File_Descriptor := 0;
+      O_BINARY    : <B><FONT COLOR="#A020F0">constant</FONT></B> Setmode_Flag := 16#8000#;
+
+      <B><FONT COLOR="#A020F0">function</FONT></B> C_Setmode (
+               FD       : File_Descriptor;
+               Mode     : Setmode_Flag)
+            <B><FONT COLOR="#A020F0">return</FONT></B> IC.int;
+
+      <B><FONT COLOR="#A020F0">function</FONT></B> C_Sysread (
+               FD       : File_Descriptor;
+               Buf      : System.Address;
+               NByte    : IC.int)
+            <B><FONT COLOR="#A020F0">return</FONT></B> IC.int;
+<I><FONT COLOR="#B22222">--   private
+</FONT></I><I><FONT COLOR="#B22222">--      pragma Import (C, C_Setmode, &quot;_setmode&quot;);          --  Microsoft Windows
+</FONT></I><I><FONT COLOR="#B22222">--      pragma Import (C, C_Sysread, &quot;_read&quot;);
+</FONT></I>   <B><FONT COLOR="#A020F0">end</FONT></B> Io;
+
+   Buffer      : String (1 .. 4 * 1024);
+   NL, NW, NC  : Natural := 0;
+   Inside_Word : Boolean := False;
+   C           : Character;
+   Last, R     : Integer;
+<B><FONT COLOR="#A020F0">begin</FONT></B>
+   R := Integer (Io.C_Setmode (Io.STDIN, Io.O_BINARY));  <I><FONT COLOR="#B22222">--  Read CR,LF right
+</FONT></I>   <B><FONT COLOR="#A020F0">loop</FONT></B>
+      Last := Integer (Io.C_Sysread (FD =&gt; Io.STDIN,
+                  Buf =&gt; Buffer (1)'Address, NByte =&gt; Buffer'Length));
+      <B><FONT COLOR="#A020F0">exit</FONT></B> <B><FONT COLOR="#A020F0">when</FONT></B> Last &lt;= 0;
+      NC := NC + Last;
+      <B><FONT COLOR="#A020F0">for</FONT></B> K <B><FONT COLOR="#A020F0">in</FONT></B> Buffer'First .. Last <B><FONT COLOR="#A020F0">loop</FONT></B>
+         C := Buffer (K);
+         <B><FONT COLOR="#A020F0">if</FONT></B> C = ASCII.LF <B><FONT COLOR="#A020F0">then</FONT></B>
+            NL := NL + 1;
+         <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B>;
+         <B><FONT COLOR="#A020F0">if</FONT></B> C = <B><FONT COLOR="#BC8F8F">' '</FONT></B> <B><FONT COLOR="#A020F0">or</FONT></B> C = ASCII.CR <B><FONT COLOR="#A020F0">or</FONT></B> C = ASCII.LF <B><FONT COLOR="#A020F0">or</FONT></B> C = ASCII.HT <B><FONT COLOR="#A020F0">then</FONT></B>
+            Inside_Word := False;
+         <B><FONT COLOR="#A020F0">elsif</FONT></B> <B><FONT COLOR="#A020F0">not</FONT></B> Inside_Word <B><FONT COLOR="#A020F0">then</FONT></B>
+            Inside_Word := True;
+            NW := NW + 1;
+         <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B>;
+      <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">loop</FONT></B>;
+   <B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#A020F0">loop</FONT></B>;
+   Ada.Text_IO.Put_Line (L_Trim (Natural'Image (NL)) &amp; Natural'Image (NW) &amp;
+            Natural'Image (NC));
+<B><FONT COLOR="#A020F0">end</FONT></B> Wc;
+   <I><FONT COLOR="#B22222">--  The &quot;Ada.Streams.Stream_IO.Read (File, Item, Last)&quot; procedure can't
+</FONT></I>   <I><FONT COLOR="#B22222">--  read from STDIN: can't associate Standard Input with File parameter.
+</FONT></I>   <I><FONT COLOR="#B22222">--  GNAT's Interfaces.C_Streams.fread function isn't from ISO/IEC 8652:1995.
+</FONT></I></pre></td></tr></table>

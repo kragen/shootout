@@ -1,0 +1,227 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">/* -*- mode: c -*-
+ * $Id: lists-gcc.code,v 1.1 2004-11-02 08:52:33 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ */</FONT></I>
+
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdio.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;stdlib.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;string.h&gt;</FONT></B>
+#<B><FONT COLOR="#5F9EA0">include</FONT></B> <B><FONT COLOR="#BC8F8F">&lt;unistd.h&gt;</FONT></B>
+
+#<B><FONT COLOR="#5F9EA0">define</FONT></B> <FONT COLOR="#B8860B">SIZE</FONT> 10000
+
+<I><FONT COLOR="#B22222">// a simple Double Linked List
+</FONT></I><I><FONT COLOR="#B22222">// the head node is special, it's val is length of list
+</FONT></I><B><FONT COLOR="#228B22">typedef</FONT></B> <B><FONT COLOR="#228B22">struct</FONT></B> DLL {
+    <B><FONT COLOR="#228B22">int</FONT></B> val;
+    <B><FONT COLOR="#228B22">struct</FONT></B> DLL *next;	<I><FONT COLOR="#B22222">/* points to next or head (if at tail) */</FONT></I>
+    <B><FONT COLOR="#228B22">struct</FONT></B> DLL *prev;	<I><FONT COLOR="#B22222">/* points to prev or tail (if at head) */</FONT></I>
+} DLL;
+
+inline <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#0000FF">list_length</FONT></B>(DLL *head) { <B><FONT COLOR="#A020F0">return</FONT></B>(head-&gt;val); }
+inline <B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#0000FF">list_empty</FONT></B>(DLL *head) { <B><FONT COLOR="#A020F0">return</FONT></B>(list_length(head) == 0); }
+inline DLL *<B><FONT COLOR="#0000FF">list_first</FONT></B>(DLL *head) { <B><FONT COLOR="#A020F0">return</FONT></B>(head-&gt;next); }
+inline DLL *<B><FONT COLOR="#0000FF">list_last</FONT></B>(DLL *head) { <B><FONT COLOR="#A020F0">return</FONT></B>(head-&gt;prev); }
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">list_push_tail</FONT></B>(DLL *head, DLL *item) {
+    DLL *tail = head-&gt;prev;
+    tail-&gt;next = item;
+    item-&gt;next = head;
+    head-&gt;prev = item;
+    item-&gt;prev = tail;
+    head-&gt;val++;
+}
+
+DLL *<B><FONT COLOR="#0000FF">list_pop_tail</FONT></B>(DLL *head) {
+    DLL *prev, *tail;
+    <B><FONT COLOR="#A020F0">if</FONT></B> (list_empty(head)) <B><FONT COLOR="#A020F0">return</FONT></B>(NULL);
+    tail = head-&gt;prev;
+    prev = tail-&gt;prev;
+    prev-&gt;next = head;
+    head-&gt;prev = prev;
+    head-&gt;val--;
+    <B><FONT COLOR="#A020F0">return</FONT></B>(tail);
+}
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">list_push_head</FONT></B>(DLL *head, DLL *item) {
+    DLL *next = head-&gt;next;
+    head-&gt;next = item;
+    next-&gt;prev = item;
+    item-&gt;next = next;
+    item-&gt;prev = head;
+    head-&gt;val++;
+}
+
+DLL *<B><FONT COLOR="#0000FF">list_pop_head</FONT></B>(DLL *head) {
+    DLL *next;
+    <B><FONT COLOR="#A020F0">if</FONT></B> (list_empty(head)) <B><FONT COLOR="#A020F0">return</FONT></B>(NULL);
+    next = head-&gt;next;
+    head-&gt;next = next-&gt;next;
+    next-&gt;next-&gt;prev = head;
+    head-&gt;val--;
+    <B><FONT COLOR="#A020F0">return</FONT></B>(next);
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#0000FF">list_equal</FONT></B>(DLL *x, DLL *y) {
+    DLL *xp, *yp;
+    <I><FONT COLOR="#B22222">// first val's checked will be list lengths
+</FONT></I>    <B><FONT COLOR="#A020F0">for</FONT></B> (xp=x, yp=y; xp-&gt;next != x; xp=xp-&gt;next, yp=yp-&gt;next) {
+	<B><FONT COLOR="#A020F0">if</FONT></B> (xp-&gt;val != yp-&gt;val) <B><FONT COLOR="#A020F0">return</FONT></B>(0);
+    }
+    <B><FONT COLOR="#A020F0">if</FONT></B> (xp-&gt;val != yp-&gt;val) <B><FONT COLOR="#A020F0">return</FONT></B>(0);
+    <B><FONT COLOR="#A020F0">return</FONT></B>(yp-&gt;next == y);
+}
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">list_print</FONT></B>(<B><FONT COLOR="#228B22">char</FONT></B> *msg, DLL *x) {
+    DLL *xp, *first = x-&gt;next;
+    <B><FONT COLOR="#228B22">int</FONT></B> i = 0;
+    fputs(msg, stdout);
+    printf(<B><FONT COLOR="#BC8F8F">&quot;length: %d\n&quot;</FONT></B>, list_length(x));
+    <B><FONT COLOR="#A020F0">for</FONT></B> (xp=x-&gt;next; xp-&gt;next != first; xp=xp-&gt;next) {
+	printf(<B><FONT COLOR="#BC8F8F">&quot;i:%3d  v:%3d  n:%3d  p:%3d\n&quot;</FONT></B>, ++i,
+	       xp-&gt;val, xp-&gt;next-&gt;val, xp-&gt;prev-&gt;val);
+    }
+    printf(<B><FONT COLOR="#BC8F8F">&quot;[last entry points to list head]\n&quot;</FONT></B>);
+    printf(<B><FONT COLOR="#BC8F8F">&quot;[val of next of tail is:  %d]\n&quot;</FONT></B>, xp-&gt;next-&gt;val);
+}
+
+DLL *<B><FONT COLOR="#0000FF">list_new</FONT></B>() {
+    DLL *l = (DLL *)malloc(<B><FONT COLOR="#A020F0">sizeof</FONT></B>(DLL));
+    l-&gt;next = l;
+    l-&gt;prev = l;
+    l-&gt;val = 0;
+    <B><FONT COLOR="#A020F0">return</FONT></B>(l);
+}
+
+<I><FONT COLOR="#B22222">/* inclusive sequence 'from' &lt;-&gt; 'to' */</FONT></I>
+DLL *<B><FONT COLOR="#0000FF">list_sequence</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> from, <B><FONT COLOR="#228B22">int</FONT></B> to) {
+    <B><FONT COLOR="#228B22">int</FONT></B> size, tmp, i, j;
+    DLL *l;
+    <B><FONT COLOR="#A020F0">if</FONT></B> (from &gt; to) {
+	tmp = from; from = to; to = tmp;
+    }
+    size = to - from + 1;
+    l = (DLL *)malloc((size+1) * <B><FONT COLOR="#A020F0">sizeof</FONT></B>(DLL));
+    from--;
+    <B><FONT COLOR="#A020F0">for</FONT></B> (i=0, j=1; i&lt;size; ++i, ++j) {
+	l[i].next = &amp;l[i+1];
+	l[j].prev = &amp;l[j-1];
+	l[i].val = from++;
+    }
+    l[0].prev = &amp;l[size];
+    l[size].next = &amp;l[0];
+    l[size].prev = &amp;l[size-1];
+    l[size].val = from;
+    l[0].val = size;
+    <B><FONT COLOR="#A020F0">return</FONT></B>(l);
+}
+
+DLL *<B><FONT COLOR="#0000FF">list_copy</FONT></B>(DLL *x) {
+    <B><FONT COLOR="#228B22">int</FONT></B> i, j, size = list_length(x);
+    DLL *xp, *l = (DLL *)malloc((size+1) * <B><FONT COLOR="#A020F0">sizeof</FONT></B>(DLL));
+    <B><FONT COLOR="#A020F0">for</FONT></B> (i=0, j=1, xp=x; i&lt;size; i++, j++, xp=xp-&gt;next) {
+	l[i].next = &amp;l[j];
+	l[j].prev = &amp;l[i];
+	l[i].val = xp-&gt;val;
+    }
+    l[0].prev = &amp;l[size];
+    l[size].next = &amp;l[0];
+    l[size].val = list_last(x)-&gt;val;
+    <B><FONT COLOR="#A020F0">return</FONT></B>(l);
+}
+
+<B><FONT COLOR="#228B22">void</FONT></B> <B><FONT COLOR="#0000FF">list_reverse</FONT></B> (DLL *head) {
+    DLL *tmp, *p = head;
+    <B><FONT COLOR="#A020F0">do</FONT></B> {
+	tmp = p-&gt;next;
+	p-&gt;next = p-&gt;prev;
+	p-&gt;prev = tmp;
+	p = tmp;
+    } <B><FONT COLOR="#A020F0">while</FONT></B> (p != head);
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#0000FF">test_lists</FONT></B>() {
+    <B><FONT COLOR="#228B22">int</FONT></B> len = 0;
+    <I><FONT COLOR="#B22222">// create a list of integers (li1) from 1 to SIZE
+</FONT></I>    DLL *li1 = list_sequence(1, SIZE);
+    <I><FONT COLOR="#B22222">// copy the list to li2
+</FONT></I>    DLL *li2 = list_copy(li1);
+    <I><FONT COLOR="#B22222">// remove each individual item from left side of li2 and
+</FONT></I>    <I><FONT COLOR="#B22222">// append to right side of li3 (preserving order)
+</FONT></I>    DLL *li3 = list_new();
+    <I><FONT COLOR="#B22222">// compare li2 and li1 for equality
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (!list_equal(li2, li1)) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li2 and li1 are not equal\n&quot;</FONT></B>);
+	exit(1);
+    }
+    <B><FONT COLOR="#A020F0">while</FONT></B> (!list_empty(li2)) {
+	list_push_tail(li3, list_pop_head(li2));
+    }
+    <I><FONT COLOR="#B22222">// li2 must now be empty
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (!list_empty(li2)) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li2 should be empty now\n&quot;</FONT></B>);
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// remove each individual item from right side of li3 and
+</FONT></I>    <I><FONT COLOR="#B22222">// append to right side of li2 (reversing list)
+</FONT></I>    <B><FONT COLOR="#A020F0">while</FONT></B> (!list_empty(li3)) {
+	list_push_tail(li2, list_pop_tail(li3));
+    }
+    <I><FONT COLOR="#B22222">// li3 must now be empty
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (!list_empty(li3)) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li3 should be empty now\n&quot;</FONT></B>);
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// reverse li1 in place
+</FONT></I>    list_reverse(li1);
+    <I><FONT COLOR="#B22222">// check that li1's first item is now SIZE
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (list_first(li1)-&gt;val != SIZE) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li1 first value wrong, wanted %d, got %d\n&quot;</FONT></B>,
+		SIZE, list_first(li1)-&gt;val);
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// check that li1's last item is now 1
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (list_last(li1)-&gt;val != 1) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;last value wrong, wanted %d, got %d\n&quot;</FONT></B>,
+		SIZE, list_last(li1)-&gt;val);
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// check that li2's first item is now SIZE
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (list_first(li2)-&gt;val != SIZE) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li2 first value wrong, wanted %d, got %d\n&quot;</FONT></B>,
+		SIZE, list_first(li2)-&gt;val);
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// check that li2's last item is now 1
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (list_last(li2)-&gt;val != 1) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;last value wrong, wanted %d, got %d\n&quot;</FONT></B>,
+		SIZE, list_last(li2)-&gt;val);
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// check that li1's length is still SIZE
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (list_length(li1) != SIZE) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li1 size wrong, wanted %d, got %d\n&quot;</FONT></B>,
+		SIZE, list_length(li1));
+	exit(1);
+    }
+    <I><FONT COLOR="#B22222">// compare li1 and li2 for equality
+</FONT></I>    <B><FONT COLOR="#A020F0">if</FONT></B> (!list_equal(li1, li2)) {
+	fprintf(stderr, <B><FONT COLOR="#BC8F8F">&quot;li1 and li2 are not equal\n&quot;</FONT></B>);
+	exit(1);
+    }
+    len = list_length(li1);
+    free(li1);
+    free(li2);
+    free(li3);
+    <I><FONT COLOR="#B22222">// return the length of the list
+</FONT></I>    <B><FONT COLOR="#A020F0">return</FONT></B>(len);
+}
+
+<B><FONT COLOR="#228B22">int</FONT></B> <B><FONT COLOR="#0000FF">main</FONT></B>(<B><FONT COLOR="#228B22">int</FONT></B> argc, <B><FONT COLOR="#228B22">char</FONT></B> *argv[]) {
+    <B><FONT COLOR="#228B22">int</FONT></B> n = ((argc == 2) ? atoi(argv[1]) : 1);
+    <B><FONT COLOR="#228B22">int</FONT></B> result = 0;
+    <B><FONT COLOR="#A020F0">while</FONT></B>(n--) result = test_lists();
+    printf(<B><FONT COLOR="#BC8F8F">&quot;%d\n&quot;</FONT></B>, result);
+    <B><FONT COLOR="#A020F0">return</FONT></B> 0;
+}</pre></td></tr></table>

@@ -1,0 +1,44 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+#!/usr/bin/guile -s
+!#
+
+<I><FONT COLOR="#B22222">;;; $Id: echo-guile.code,v 1.1 2004-11-02 08:52:30 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">;;; http://www.bagley.org/~doug/shootout/
+</FONT></I><I><FONT COLOR="#B22222">;;; from Brad Knotwell
+</FONT></I>
+(use-modules (ice-9 format))
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">DATA</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;Hello there sailor\n&quot;</FONT></B>)
+(<B><FONT COLOR="#A020F0">define</FONT></B> <B><FONT COLOR="#0000FF">bufferSize</FONT></B> (string-length DATA))
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> (<B><FONT COLOR="#0000FF">echo-client</FONT></B> n port-number)
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((new-sock (socket AF_INET SOCK_STREAM 0))
+	(buf (make-string bufferSize)))
+    (<B><FONT COLOR="#A020F0">begin</FONT></B> (connect new-sock 
+		    AF_INET 
+		    INADDR_LOOPBACK
+		    port-number)
+	   (<B><FONT COLOR="#A020F0">do</FONT></B> ((i 0 (1+ i)))
+	       ((= i n) (close new-sock))
+	     (<B><FONT COLOR="#A020F0">begin</FONT></B> 
+                 (send new-sock DATA)
+		 (recv! new-sock buf)
+                 (<B><FONT COLOR="#A020F0">if</FONT></B> (not (string=? buf DATA)) (throw 'badData)))))))
+
+(<B><FONT COLOR="#A020F0">define</FONT></B> (<B><FONT COLOR="#0000FF">echo-server</FONT></B> n)
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((sock (socket AF_INET SOCK_STREAM 0)))
+    (<B><FONT COLOR="#A020F0">begin</FONT></B> (setsockopt sock SOL_SOCKET SO_REUSEADDR 1)
+	   (bind sock AF_INET INADDR_LOOPBACK 0)
+	   (listen sock 2)
+	   (<B><FONT COLOR="#A020F0">let</FONT></B> ((pid (primitive-fork)))
+	     (<B><FONT COLOR="#A020F0">if</FONT></B> (= pid 0)
+		 (echo-client n (array-ref (getsockname sock) 2)) 
+		 (<B><FONT COLOR="#A020F0">let</FONT></B> ((new-sock (car (accept sock)))
+		       (buf (make-string bufferSize))
+		       (num-read 0))
+		   (<B><FONT COLOR="#A020F0">do</FONT></B> ((i (recv! new-sock buf) (recv! new-sock buf)))
+		       ((= 0 i) (<B><FONT COLOR="#A020F0">begin</FONT></B> (waitpid pid WNOHANG)
+				       (display (format <B><FONT COLOR="#BC8F8F">&quot;server processed ~D bytes\n&quot;</FONT></B> num-read))))
+		     (send new-sock buf) (<B><FONT COLOR="#A020F0">set!</FONT></B> num-read (+ num-read i)))))))))
+  
+(echo-server (<B><FONT COLOR="#A020F0">or</FONT></B> (<B><FONT COLOR="#A020F0">and</FONT></B> (= (length args) 2) (string-&gt;number (cadr args))) 1))
+</pre></td></tr></table>

@@ -1,0 +1,120 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+%% $Id: methcall-mercury.code,v 1.1 2004-11-02 08:52:36 bfulgham Exp $
+%% http:<I><FONT COLOR="#B22222">//www.bagley.org/~doug/shootout/
+</FONT></I>%% from Fergus Henderson
+
+% &quot;This test <B><FONT COLOR="#A020F0">uses</FONT></B> a base <B><FONT COLOR="#A020F0">class</FONT></B> Toggle, which implements a simple boolean
+% flip-flop device <B><FONT COLOR="#A020F0">and</FONT></B> a derived <B><FONT COLOR="#A020F0">class</FONT></B> NthToggle, which only flips every
+% Nth time it <B><FONT COLOR="#A020F0">is</FONT></B> activated.&quot;
+
+:- module mytest.
+:- <B><FONT COLOR="#A020F0">interface</FONT></B>.
+:- import_module io.
+
+:- pred main(io__state::di, io__state::uo) <B><FONT COLOR="#A020F0">is</FONT></B> det.
+
+:- <B><FONT COLOR="#A020F0">implementation</FONT></B>.
+:- import_module bool, int, <B><FONT COLOR="#A020F0">string</FONT></B>, list.
+
+% &quot;The base Toggle <B><FONT COLOR="#A020F0">class</FONT></B> should define a boolean
+% (<B><FONT COLOR="#A020F0">or</FONT></B> integer) field <B><FONT COLOR="#A020F0">to</FONT></B> hold a true/false value. It should define methods
+% <B><FONT COLOR="#A020F0">to</FONT></B> access the value, <B><FONT COLOR="#A020F0">and</FONT></B> <B><FONT COLOR="#A020F0">to</FONT></B> activate the toggle (flip it<B><FONT COLOR="#BC8F8F">'s value).&quot;
+
+:- type toggle ---&gt; toggle(toggle_value::bool).
+
+:- typeclass toggle(T) where [
+	func value(T) = bool,
+	func '</FONT></B>value :=<B><FONT COLOR="#BC8F8F">'(T, bool) = T,
+	func activate(T) = T
+].
+
+:- instance toggle(toggle) where [
+	func(value/1) is toggle_value,
+	func('</FONT></B>value :=<B><FONT COLOR="#BC8F8F">'/2) is '</FONT></B>toggle_value :=<B><FONT COLOR="#BC8F8F">',
+	activate(toggle(yes)) = toggle(no),
+	activate(toggle(no)) = toggle(yes)
+].
+
+% &quot;The derived NthToggle class should inherit the boolean field, and add a
+% counter and limit field. It should override the activate method so that
+% the boolean state is flipped after the activate method is called count
+% times. The constructor for NthToggle should use the constructor for
+% Toggle to inherit the boolean field and value() method.&quot;
+
+% Mercury doesn'</FONT></B>t have any direct support <B><FONT COLOR="#A020F0">for</FONT></B> inheritence <B><FONT COLOR="#A020F0">of</FONT></B> fields,
+% so we need <B><FONT COLOR="#A020F0">to</FONT></B> use composition instead.
+
+:- <B><FONT COLOR="#A020F0">type</FONT></B> nth_toggle ---&gt; nth_toggle(base::toggle, counter::int, limit::int).
+
+:- func make_nth_toggle(bool, int) = nth_toggle.
+make_nth_toggle(Val, Max) = nth_toggle(toggle(Val), 0, Max).
+
+% <B><FONT COLOR="#A020F0">If</FONT></B> the nth_toggle <B><FONT COLOR="#A020F0">class</FONT></B> added its own methods, <B><FONT COLOR="#A020F0">then</FONT></B> we<B><FONT COLOR="#BC8F8F">'d want to
+% create a derived typeclass like this:
+%
+% :- typeclass nth_toggle(T) &lt;= toggle(T) where [ ... ].
+% :- instance nth_toggle(nth_toggle) where [ ... ].
+%
+% But nth_toggle doesn'</FONT></B>t add any new methods, so we don<B><FONT COLOR="#BC8F8F">'t need that.
+% We just need to make it an instance of the base class,
+% delegating the field accessors.
+
+:- instance toggle(nth_toggle) where [
+	value(T) = T^base^value,
+	'</FONT></B>value :=<B><FONT COLOR="#BC8F8F">'(T, V) = T^base^value := V,
+	(activate(T) = NewT :-
+		C = T^counter + 1,
+		(if C &gt;= T^limit then
+			NewT = (T^counter := 0)^base := activate(T^base)
+		else
+			NewT = T^counter := C
+		))
+].
+
+main --&gt;
+	io__command_line_arguments(Args),
+	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
+
+	{ loop(N, yes, toggle(yes),
+		(pred(_V0::in, T0::in, V::out, T::out) is det :-
+			T = T0^activate, V = T^value),
+		Value1, _Toggle1) },
+	write_string(if Value1 = yes then &quot;true&quot; else &quot;false&quot;), nl,
+
+	{ loop(N, yes, make_nth_toggle(yes, 3),
+		(pred(_V0::in, T0::in, V::out, T::out) is det :-
+			T = T0^activate, V = T^value),
+		Value2, _Toggle2) },
+	write_string(if Value2 = yes then &quot;true&quot; else &quot;false&quot;), nl.
+
+:- pred loop(int, T1, T2, pred(T1, T2, T1, T2), T1, T2).
+:- mode loop(in, in, in, pred(in, in, out, out) is det, out, out) is det.
+loop(N, V0, T0, P, V, T) :-
+	(if N = 0 then
+		V = V0, T = T0
+	else
+		P(V0, T0, V1, T1),
+		loop(N - 1, V1, T1, P, V, T)
+	).
+
+% Alternatively, it can be written a little more elegantly as
+%
+% main --&gt;
+% 	io__command_line_arguments(Args),
+% 	{ N = (if Args = [Arg], to_int(Arg, N0) then N0 else 1) },
+% 
+% 	{ {Value1, _Toggle1} = repeat_n(N, {yes, toggle(yes)},
+% 		(func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
+% 	write_string(if Value1 = yes then &quot;true&quot; else &quot;false&quot;), nl,
+% 
+% 	{ {Value2, _Toggle2} = repeat_n(N, {yes, make_nth_toggle(yes, 3)},
+% 		(func({_V0, T0}) = {V, T} :- T = T0^activate, V = T^value)) },
+% 	write_string(if Value2 = yes then &quot;true&quot; else &quot;false&quot;), nl.
+% 
+% :- func repeat_n(int, T, func(T) = T) = T.
+% repeat_n(N, X, F) =
+% 	(if N = 0 then X
+% 	else repeat_n(N - 1, F(X), F)).
+%
+% but the earlier code above is a little more efficient.
+</FONT></B></pre></td></tr></table>

@@ -1,0 +1,54 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">%%% -*- mode: erlang -*-
+</FONT></I><I><FONT COLOR="#B22222">%%% $Id: sieve-hipe.code,v 1.1 2004-11-02 08:53:25 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">%%% http://www.bagley.org/~doug/shootout/
+</FONT></I><I><FONT COLOR="#B22222">%%% Based on code by Maurice Castro (see bottom of file).
+</FONT></I><I><FONT COLOR="#B22222">%%% Originally tweaked by Doug Bagley.
+</FONT></I><I><FONT COLOR="#B22222">%%% Further tweaked and shrunk by James Hague.
+</FONT></I>
+<B><FONT COLOR="#5F9EA0">-module</FONT></B>(sieve).
+<B><FONT COLOR="#5F9EA0">-export</FONT></B>([main/0, main/1, test/2]).
+
+<I><FONT COLOR="#B22222">% The sieve loop is spawned into its own process with a heap size of
+</FONT></I><I><FONT COLOR="#B22222">% 50,000 words.  With all of the list creation done by this benchmark,
+</FONT></I><I><FONT COLOR="#B22222">% much time is spent resizing the initially tiny heap.  Starting with
+</FONT></I><I><FONT COLOR="#B22222">% a larger heap improves execution time by ~20%.
+</FONT></I>
+<B><FONT COLOR="#0000FF">main</FONT></B>() -&gt; main([<B><FONT COLOR="#BC8F8F">'1'</FONT></B>]).
+<B><FONT COLOR="#0000FF">main</FONT></B>([<FONT COLOR="#B8860B">Arg</FONT>]) -&gt;
+    <FONT COLOR="#B8860B">Num</FONT> = <B><FONT COLOR="#A020F0">list_to_integer</FONT></B>(<B><FONT COLOR="#A020F0">atom_to_list</FONT></B>(<FONT COLOR="#B8860B">Arg</FONT>)),
+    spawn_opt(sieve, test, [<B><FONT COLOR="#A020F0">self</FONT></B>(), <FONT COLOR="#B8860B">Num</FONT>], [{min_heap_size, 50000}]),
+    <B><FONT COLOR="#A020F0">receive</FONT></B> <FONT COLOR="#B8860B">Num_primes</FONT> -&gt; io:fwrite(<B><FONT COLOR="#BC8F8F">&quot;Count: ~w\n&quot;</FONT></B>, [<FONT COLOR="#B8860B">Num_primes</FONT>]) <B><FONT COLOR="#A020F0">end</FONT></B>,
+    <B><FONT COLOR="#A020F0">halt</FONT></B>().
+
+<B><FONT COLOR="#0000FF">test</FONT></B>(<FONT COLOR="#B8860B">From</FONT>, <FONT COLOR="#B8860B">N</FONT>) -&gt; test(<FONT COLOR="#B8860B">From</FONT>, <FONT COLOR="#B8860B">N</FONT>, math:sqrt(8192), lists:seq(2, 8192)).
+
+<B><FONT COLOR="#0000FF">test</FONT></B>(<FONT COLOR="#B8860B">From</FONT>, <FONT COLOR="#B8860B">N</FONT>, <FONT COLOR="#B8860B">Max</FONT>, <FONT COLOR="#B8860B">Seq</FONT>) -&gt;
+    <FONT COLOR="#B8860B">Num_primes</FONT> = <B><FONT COLOR="#A020F0">length</FONT></B>(era(<FONT COLOR="#B8860B">Max</FONT>, <FONT COLOR="#B8860B">Seq</FONT>)),
+    <B><FONT COLOR="#A020F0">if</FONT></B>
+        <FONT COLOR="#B8860B">N</FONT> &gt; 1 -&gt; test(<FONT COLOR="#B8860B">From</FONT>, <FONT COLOR="#B8860B">N</FONT>-1, <FONT COLOR="#B8860B">Max</FONT>, <FONT COLOR="#B8860B">Seq</FONT>);
+        true  -&gt; <FONT COLOR="#B8860B">From</FONT> ! <FONT COLOR="#B8860B">Num_primes</FONT>
+    <B><FONT COLOR="#A020F0">end</FONT></B>.
+
+<B><FONT COLOR="#0000FF">era</FONT></B>(<FONT COLOR="#B8860B">Max</FONT>, [<FONT COLOR="#B8860B">H</FONT>|<FONT COLOR="#B8860B">T</FONT>]) <B><FONT COLOR="#A020F0">when</FONT></B> <FONT COLOR="#B8860B">H</FONT> =&lt; <FONT COLOR="#B8860B">Max</FONT> -&gt;
+    [<FONT COLOR="#B8860B">H</FONT> | era(<FONT COLOR="#B8860B">Max</FONT>, [<FONT COLOR="#B8860B">X</FONT> || <FONT COLOR="#B8860B">X</FONT> &lt;- <FONT COLOR="#B8860B">T</FONT>, <FONT COLOR="#B8860B">X</FONT> rem <FONT COLOR="#B8860B">H</FONT> =/= 0])];
+<B><FONT COLOR="#0000FF">era</FONT></B>(<FONT COLOR="#B8860B">Max</FONT>, <FONT COLOR="#B8860B">L</FONT>) -&gt;  <FONT COLOR="#B8860B">L</FONT>.
+
+
+<I><FONT COLOR="#B22222">%%% Eratosthenes algorithm from Maurice Castro, with permission, 
+</FONT></I><I><FONT COLOR="#B22222">%%% from his book, _Erlang in Real Time_, ISBN: 0864447434
+</FONT></I><I><FONT COLOR="#B22222">%%% http://www.serc.rmit.edu.au/~maurice/erlbk/eg/choice/erasto.erl
+</FONT></I><I><FONT COLOR="#B22222">%
+</FONT></I><I><FONT COLOR="#B22222">%era(Max, L) when hd(L) =&lt; Max -&gt;
+</FONT></I><I><FONT COLOR="#B22222">%    Prime = hd(L),
+</FONT></I><I><FONT COLOR="#B22222">%    [Prime | era(Max, sieve(Prime, L))];
+</FONT></I><I><FONT COLOR="#B22222">%era(Max, L) -&gt; 
+</FONT></I><I><FONT COLOR="#B22222">%    L.
+</FONT></I><I><FONT COLOR="#B22222">%
+</FONT></I><I><FONT COLOR="#B22222">%sieve(N, []) -&gt;
+</FONT></I><I><FONT COLOR="#B22222">%    [];
+</FONT></I><I><FONT COLOR="#B22222">%sieve(N, [H|T]) when H rem N == 0 -&gt;
+</FONT></I><I><FONT COLOR="#B22222">%    sieve(N, T);
+</FONT></I><I><FONT COLOR="#B22222">%sieve(N, [H|T]) -&gt;
+</FONT></I><I><FONT COLOR="#B22222">%    [H | sieve(N, T)].
+</FONT></I></pre></td></tr></table>

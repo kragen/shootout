@@ -1,0 +1,243 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">(* -*- mode: sml -*-
+ * $Id: prodcons-smlnj.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Matthias Blume
+ *)</FONT></I>
+
+<I><FONT COLOR="#B22222">(* producer-consumer threads in SML/NJ
+ * (concurrency primitives re-implemented &quot;by hand&quot; on top of call/cc
+ * using the code in John Reppy's book &quot;Concurrent Programming in ML&quot;)
+ *
+ * (C) 2001 Lucent Technologies, Bell Labs
+ * written by Matthias Blume
+ *)</FONT></I>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> Queue :<B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+    <B><FONT COLOR="#A020F0">exception</FONT></B> Empty
+    <B><FONT COLOR="#A020F0">type</FONT></B> tt <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B> SMLofNJ.Cont.cont
+    <B><FONT COLOR="#A020F0">type</FONT></B> q
+    <B><FONT COLOR="#A020F0">val</FONT></B> new : <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> q
+    <B><FONT COLOR="#A020F0">val</FONT></B> enqueue : q <B><FONT COLOR="#5F9EA0">*</FONT></B> tt <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> dequeue : q <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> tt
+    <B><FONT COLOR="#A020F0">val</FONT></B> empty : q <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">bool</FONT></B>
+<B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+
+    <B><FONT COLOR="#A020F0">exception</FONT></B> Empty
+
+    <B><FONT COLOR="#A020F0">type</FONT></B> tt <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B> SMLofNJ.Cont.cont
+    <B><FONT COLOR="#A020F0">type</FONT></B> q <B><FONT COLOR="#5F9EA0">=</FONT></B> tt <B><FONT COLOR="#228B22">list</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> tt <B><FONT COLOR="#228B22">list</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>
+
+<B><FONT COLOR="#A020F0">    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">new</FONT></I></B></FONT></B> () : q <B><FONT COLOR="#5F9EA0">=</FONT></B> (<B><FONT COLOR="#A020F0">ref</FONT></B> [], <B><FONT COLOR="#A020F0">ref</FONT></B> [])
+
+<B><FONT COLOR="#A020F0">    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">enqueue</FONT></I></B></FONT></B> ((f <B><FONT COLOR="#A020F0">as</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> [], <B><FONT COLOR="#A020F0">ref</FONT></B> []) : q, x) <B><FONT COLOR="#5F9EA0">=</FONT></B> f <B><FONT COLOR="#5F9EA0">:=</FONT></B> [x]
+      <B><FONT COLOR="#5F9EA0">|</FONT></B> enqueue ((_, b <B><FONT COLOR="#A020F0">as</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> xs), x) <B><FONT COLOR="#5F9EA0">=</FONT></B> b <B><FONT COLOR="#5F9EA0">:=</FONT></B> x <B><FONT COLOR="#5F9EA0">::</FONT></B> xs
+
+<B><FONT COLOR="#A020F0">    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">dequeue</FONT></I></B></FONT></B> ((f, b) : q) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	<B><FONT COLOR="#A020F0">case</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>f <B><FONT COLOR="#A020F0">of</FONT></B>
+	    [] <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (<B><FONT COLOR="#A020F0">case</FONT></B> rev (<B><FONT COLOR="#5F9EA0">!</FONT></B>b) <B><FONT COLOR="#A020F0">of</FONT></B>
+		       x <B><FONT COLOR="#5F9EA0">::</FONT></B> xs <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (f <B><FONT COLOR="#5F9EA0">:=</FONT></B> xs; b <B><FONT COLOR="#5F9EA0">:=</FONT></B> []; x)
+		     <B><FONT COLOR="#5F9EA0">|</FONT></B> [] <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#A020F0">raise</FONT></B> Empty)
+	  <B><FONT COLOR="#5F9EA0">|</FONT></B> x <B><FONT COLOR="#5F9EA0">::</FONT></B> xs <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (f <B><FONT COLOR="#5F9EA0">:=</FONT></B> xs; x)
+
+<B><FONT COLOR="#A020F0">    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">empty</FONT></I></B></FONT></B> ((<B><FONT COLOR="#A020F0">ref</FONT></B> [], <B><FONT COLOR="#A020F0">ref</FONT></B> []) : q) <B><FONT COLOR="#5F9EA0">=</FONT></B> true
+      <B><FONT COLOR="#5F9EA0">|</FONT></B> empty _ <B><FONT COLOR="#5F9EA0">=</FONT></B> false
+
+<B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> Mutex :<B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+
+    <B><FONT COLOR="#A020F0">val</FONT></B> yield : <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> fork : (<B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>) <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> exit : <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 'a
+
+    <B><FONT COLOR="#A020F0">type</FONT></B> mutex
+    <B><FONT COLOR="#A020F0">type</FONT></B> condition
+
+    <B><FONT COLOR="#A020F0">val</FONT></B> mutex : <B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> mutex
+    <B><FONT COLOR="#A020F0">val</FONT></B> lock : mutex <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> unlock : mutex <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+
+    <B><FONT COLOR="#A020F0">val</FONT></B> condition : mutex <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> condition
+    <B><FONT COLOR="#A020F0">val</FONT></B> wait : condition <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> signal : condition <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+
+    <B><FONT COLOR="#A020F0">val</FONT></B> run : (<B><FONT COLOR="#228B22">unit</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>) <B><FONT COLOR="#5F9EA0">*</FONT></B> Time.time <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B>
+
+<B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+
+    <B><FONT COLOR="#A020F0">local</FONT></B>
+	<B><FONT COLOR="#5F9EA0">structure</FONT></B> C <B><FONT COLOR="#5F9EA0">=</FONT></B> SMLofNJ.Cont
+	<B><FONT COLOR="#5F9EA0">structure</FONT></B> Q <B><FONT COLOR="#5F9EA0">=</FONT></B> Queue
+	<B><FONT COLOR="#A020F0">type</FONT></B> tt <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#228B22">unit</FONT></B> C.cont
+
+	<I><FONT COLOR="#B22222">(* We take the easy way out: Simply drop signals that
+	 * arrive during an atomic section on the floor.  This is
+	 * enough for our purpose and simplifies the coding... *)</FONT></I>
+	<B><FONT COLOR="#A020F0">val</FONT></B> atomicState <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> false
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">atomicBegin</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> atomicState <B><FONT COLOR="#5F9EA0">:=</FONT></B> true
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">atomicEnd</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> atomicState <B><FONT COLOR="#5F9EA0">:=</FONT></B> false
+	<B><FONT COLOR="#A020F0">val</FONT></B> readyQ : Q.q <B><FONT COLOR="#5F9EA0">=</FONT></B> Q.new ()
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">dispatch</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> C.throw (Q.dequeue readyQ) ()
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">sigH</FONT></I></B></FONT></B> (_: Signals.signal, _: <B><FONT COLOR="#228B22">int</FONT></B>, k: tt) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>atomicState <B><FONT COLOR="#A020F0">then</FONT></B> k
+	    <B><FONT COLOR="#A020F0">else</FONT></B> (Q.enqueue (readyQ, k); Q.dequeue readyQ)
+    <B><FONT COLOR="#A020F0">in</FONT></B>
+        <I><FONT COLOR="#B22222">(* coroutines *)</FONT></I>
+<B><FONT COLOR="#A020F0">        fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">yield</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    (atomicBegin ();
+	     C.callcc (<B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (Q.enqueue (readyQ, k); dispatch ()));
+	     atomicEnd ())
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">exit</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> (atomicBegin (); dispatch ())
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">fork</FONT></I></B></FONT></B> f <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+	    <B><FONT COLOR="#A020F0">val</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B> C.isolate (<B><FONT COLOR="#A020F0">fn</FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (atomicEnd ();
+					 f () <B><FONT COLOR="#A020F0">handle</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> ();
+					 exit ()))
+	<B><FONT COLOR="#A020F0">in</FONT></B>
+	    atomicBegin ();
+	    Q.enqueue (readyQ, k);
+	    atomicEnd ()
+	<B><FONT COLOR="#A020F0">end</FONT></B>
+
+	<I><FONT COLOR="#B22222">(* mutex locks *)</FONT></I>
+        <B><FONT COLOR="#A020F0">datatype</FONT></B> mutex <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex <B><FONT COLOR="#A020F0">of</FONT></B> { locked : <B><FONT COLOR="#228B22">bool</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B>, blocked : Q.q }
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">mutex</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex { locked <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> false, blocked <B><FONT COLOR="#5F9EA0">=</FONT></B> Q.new () }
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">lock</FONT></I></B></FONT></B> (Mutex { locked, blocked }) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    (atomicBegin ();
+	     <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>locked <B><FONT COLOR="#A020F0">then</FONT></B>
+		 C.callcc (<B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (Q.enqueue (blocked, k);
+				    dispatch ()))
+	     <B><FONT COLOR="#A020F0">else</FONT></B> locked <B><FONT COLOR="#5F9EA0">:=</FONT></B> true;
+	     atomicEnd ())
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">unlock</FONT></I></B></FONT></B> (Mutex { locked, blocked }) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    (atomicBegin ();
+	     <B><FONT COLOR="#A020F0">if</FONT></B> Q.empty blocked <B><FONT COLOR="#A020F0">then</FONT></B> locked <B><FONT COLOR="#5F9EA0">:=</FONT></B> false
+	     <B><FONT COLOR="#A020F0">else</FONT></B> C.callcc (<B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (Q.enqueue (readyQ, k);
+				     C.throw (Q.dequeue blocked) ()));
+	     atomicEnd ())
+
+
+        <I><FONT COLOR="#B22222">(* conditions *)</FONT></I>
+	<B><FONT COLOR="#A020F0">datatype</FONT></B> condition <B><FONT COLOR="#5F9EA0">=</FONT></B> Cond <B><FONT COLOR="#A020F0">of</FONT></B> { mutex : mutex, waiting : Q.q }
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">condition</FONT></I></B></FONT></B> m <B><FONT COLOR="#5F9EA0">=</FONT></B> Cond { mutex <B><FONT COLOR="#5F9EA0">=</FONT></B> m, waiting <B><FONT COLOR="#5F9EA0">=</FONT></B> Q.new () }
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">wait</FONT></I></B></FONT></B> (Cond { mutex <B><FONT COLOR="#5F9EA0">=</FONT></B> m <B><FONT COLOR="#A020F0">as</FONT></B> Mutex { locked, blocked }, waiting }) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    (atomicBegin ();
+	     C.callcc (<B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B>
+			  (Q.enqueue (waiting, k);
+			   <B><FONT COLOR="#A020F0">if</FONT></B> Q.empty blocked <B><FONT COLOR="#A020F0">then</FONT></B> (locked <B><FONT COLOR="#5F9EA0">:=</FONT></B> false;
+						    dispatch ())
+			   <B><FONT COLOR="#A020F0">else</FONT></B> C.throw (Q.dequeue blocked) ()));
+	     <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>locked <B><FONT COLOR="#A020F0">then</FONT></B>
+		 C.callcc (<B><FONT COLOR="#A020F0">fn</FONT></B> k <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (Q.enqueue (blocked, k);
+				    dispatch ()))
+	     <B><FONT COLOR="#A020F0">else</FONT></B> locked <B><FONT COLOR="#5F9EA0">:=</FONT></B> true;
+	     atomicEnd ())
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">signal</FONT></I></B></FONT></B> (Cond { waiting, ... }) <B><FONT COLOR="#5F9EA0">=</FONT></B>
+	    (atomicBegin ();
+	     <B><FONT COLOR="#A020F0">if</FONT></B> Q.empty waiting <B><FONT COLOR="#A020F0">then</FONT></B> ()
+	     <B><FONT COLOR="#A020F0">else</FONT></B> Q.enqueue (readyQ, Q.dequeue waiting);
+	     atomicEnd ())
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">run</FONT></I></B></FONT></B> (f, t) <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+	    <B><FONT COLOR="#A020F0">val</FONT></B> oh <B><FONT COLOR="#5F9EA0">=</FONT></B> Signals.setHandler (Signals.sigALRM,
+					 Signals.HANDLER sigH)
+	    <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> SMLofNJ.IntervalTimer.setIntTimer (<B><FONT COLOR="#5F9EA0">SOME</FONT></B> t)
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">reset</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B>
+		(ignore (Signals.setHandler (Signals.sigALRM, oh));
+		 SMLofNJ.IntervalTimer.setIntTimer <B><FONT COLOR="#5F9EA0">NONE</FONT></B>)
+			 
+	<B><FONT COLOR="#A020F0">in</FONT></B>
+	    (f () <B><FONT COLOR="#A020F0">handle</FONT></B> e <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> (reset (); <B><FONT COLOR="#A020F0">raise</FONT></B> e))
+	    <B><FONT COLOR="#A020F0">before</FONT></B> reset ()
+	<B><FONT COLOR="#A020F0">end</FONT></B>
+    <B><FONT COLOR="#A020F0">end</FONT></B>
+<B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#5F9EA0">structure</FONT></B> ProdCons : <B><FONT COLOR="#5F9EA0">sig</FONT></B>
+    <B><FONT COLOR="#A020F0">val</FONT></B> main : <B><FONT COLOR="#228B22">string</FONT></B> <B><FONT COLOR="#5F9EA0">*</FONT></B> <B><FONT COLOR="#228B22">string</FONT></B> <B><FONT COLOR="#228B22">list</FONT></B> <B><FONT COLOR="#5F9EA0">-</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> OS.Process.status
+<B><FONT COLOR="#A020F0">end</FONT></B> <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">struct</FONT></B>
+
+<B><FONT COLOR="#A020F0">    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">doit</FONT></I></B></FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+
+	<B><FONT COLOR="#A020F0">val</FONT></B> c_running <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.mutex ()
+	<B><FONT COLOR="#A020F0">val</FONT></B> p_running <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.mutex ()
+
+	<B><FONT COLOR="#A020F0">val</FONT></B> consumer's_turn <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> false
+	<B><FONT COLOR="#A020F0">val</FONT></B> data <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0
+	<B><FONT COLOR="#A020F0">val</FONT></B> produced <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0
+	<B><FONT COLOR="#A020F0">val</FONT></B> consumed <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">ref</FONT></B> 0
+	<B><FONT COLOR="#A020F0">val</FONT></B> m <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.mutex ()
+	<B><FONT COLOR="#A020F0">val</FONT></B> c <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.condition m
+
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">producer</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">wait</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>consumer's_turn <B><FONT COLOR="#A020F0">then</FONT></B> wait (Mutex.wait c) <B><FONT COLOR="#A020F0">else</FONT></B> ()
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B>
+		<B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">&lt;=</FONT></B> n <B><FONT COLOR="#A020F0">then</FONT></B>
+		    <B><FONT COLOR="#A020F0">let</FONT></B> <B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.lock m
+			<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> wait ()
+		    <B><FONT COLOR="#A020F0">in</FONT></B>
+			data <B><FONT COLOR="#5F9EA0">:=</FONT></B> i;
+			consumer's_turn <B><FONT COLOR="#5F9EA0">:=</FONT></B> true;
+			produced <B><FONT COLOR="#5F9EA0">:=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>produced <B><FONT COLOR="#5F9EA0">+</FONT></B> 1;
+			Mutex.signal c;
+			Mutex.unlock m;
+			loop (i <B><FONT COLOR="#5F9EA0">+</FONT></B> 1)
+		    <B><FONT COLOR="#A020F0">end</FONT></B>
+		<B><FONT COLOR="#A020F0">else</FONT></B> ()
+	<B><FONT COLOR="#A020F0">in</FONT></B>
+	    loop 1 <B><FONT COLOR="#A020F0">before</FONT></B> Mutex.unlock p_running
+	<B><FONT COLOR="#A020F0">end</FONT></B>
+	     
+<B><FONT COLOR="#A020F0">	fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">consumer</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">wait</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">if</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>consumer's_turn <B><FONT COLOR="#A020F0">then</FONT></B> () <B><FONT COLOR="#A020F0">else</FONT></B> wait (Mutex.wait c)
+<B><FONT COLOR="#A020F0">	    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">loop</FONT></I></B></FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+		<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.lock m
+		<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> wait ()
+		<B><FONT COLOR="#A020F0">val</FONT></B> i <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>data
+	    <B><FONT COLOR="#A020F0">in</FONT></B>
+		consumer's_turn <B><FONT COLOR="#5F9EA0">:=</FONT></B> false;
+		consumed <B><FONT COLOR="#5F9EA0">:=</FONT></B> <B><FONT COLOR="#5F9EA0">!</FONT></B>consumed <B><FONT COLOR="#5F9EA0">+</FONT></B> 1;
+		Mutex.signal c;
+		Mutex.unlock m;
+		<B><FONT COLOR="#A020F0">if</FONT></B> i <B><FONT COLOR="#5F9EA0">&lt;&gt;</FONT></B> n <B><FONT COLOR="#A020F0">then</FONT></B> loop () <B><FONT COLOR="#A020F0">else</FONT></B> ()
+	    <B><FONT COLOR="#A020F0">end</FONT></B>
+	<B><FONT COLOR="#A020F0">in</FONT></B>
+	    loop () <B><FONT COLOR="#A020F0">before</FONT></B> Mutex.unlock c_running
+	<B><FONT COLOR="#A020F0">end</FONT></B>
+
+	<I><FONT COLOR="#B22222">(* hack to simulate &quot;join&quot; *)</FONT></I>
+	<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.lock p_running
+	<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.lock c_running
+
+	<B><FONT COLOR="#A020F0">val</FONT></B> p <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.fork producer
+	<B><FONT COLOR="#A020F0">val</FONT></B> c <B><FONT COLOR="#5F9EA0">=</FONT></B> Mutex.fork consumer
+    <B><FONT COLOR="#A020F0">in</FONT></B>
+	<I><FONT COLOR="#B22222">(* &quot;join&quot; *)</FONT></I>
+	Mutex.lock p_running;
+	Mutex.lock c_running;
+
+	TextIO.output (TextIO.stdOut,
+		       <B><FONT COLOR="#A020F0">concat</FONT></B> [Int.toString (<B><FONT COLOR="#5F9EA0">!</FONT></B>produced), <B><FONT COLOR="#BC8F8F">&quot; &quot;</FONT></B>,
+			       Int.toString (<B><FONT COLOR="#5F9EA0">!</FONT></B>consumed), <B><FONT COLOR="#BC8F8F">&quot;\n&quot;</FONT></B>])
+    <B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">    fun </FONT></B><B><FONT COLOR="#0000FF"><B><I><FONT COLOR="#000000">main</FONT></I></B></FONT></B> (_, args) <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">let</FONT></B>
+	<B><FONT COLOR="#A020F0">val</FONT></B> n <B><FONT COLOR="#5F9EA0">=</FONT></B> <B><FONT COLOR="#A020F0">case</FONT></B> args <B><FONT COLOR="#A020F0">of</FONT></B> [] <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> 1
+			   <B><FONT COLOR="#5F9EA0">|</FONT></B> (x <B><FONT COLOR="#5F9EA0">::</FONT></B> _) <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> getOpt (Int.fromString x, 1)
+    <B><FONT COLOR="#A020F0">in</FONT></B>
+	Mutex.run (<B><FONT COLOR="#A020F0">fn</FONT></B> () <B><FONT COLOR="#5F9EA0">=</FONT></B><B><FONT COLOR="#5F9EA0">&gt;</FONT></B> doit n, Time.fromMilliseconds 1);
+	OS.Process.success
+    <B><FONT COLOR="#A020F0">end</FONT></B>
+<B><FONT COLOR="#A020F0">end</FONT></B>
+
+<B><FONT COLOR="#A020F0">val</FONT></B> _ <B><FONT COLOR="#5F9EA0">=</FONT></B> SMLofNJ.exportFn(<B><FONT COLOR="#BC8F8F">&quot;prodcons&quot;</FONT></B>, ProdCons.main);</pre></td></tr></table>

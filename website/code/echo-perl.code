@@ -1,0 +1,82 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">#!/usr/bin/perl
+</FONT></I><I><FONT COLOR="#B22222"># $Id: echo-perl.code,v 1.1 2004-11-02 08:52:30 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222"># http://www.bagley.org/~doug/shootout/
+</FONT></I>
+<B><FONT COLOR="#A020F0">use</FONT></B> Socket;
+
+<B><FONT COLOR="#A020F0">my</FONT></B> $DATA = <B><FONT COLOR="#BC8F8F">&quot;Hello there sailor\n&quot;</FONT></B>;
+
+<B><FONT COLOR="#A020F0">sub</FONT></B> server_sock {
+    <B><FONT COLOR="#A020F0">local</FONT></B> *SS;
+    <B><FONT COLOR="#A020F0">socket</FONT></B>(SS, PF_INET, SOCK_STREAM, 0) <B><FONT COLOR="#A020F0">or</FONT></B>
+	<B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server/socket ($!)&quot;</FONT></B>;
+    <B><FONT COLOR="#A020F0">setsockopt</FONT></B>(SS, SOL_SOCKET, SO_REUSEADDR, <B><FONT COLOR="#A020F0">pack</FONT></B>(<B><FONT COLOR="#BC8F8F">&quot;l&quot;</FONT></B>, 1)) <B><FONT COLOR="#A020F0">or</FONT></B>
+	<B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server/setsockopt ($!)&quot;</FONT></B>;
+    <B><FONT COLOR="#A020F0">bind</FONT></B>(SS, sockaddr_in(0, INADDR_LOOPBACK)) <B><FONT COLOR="#A020F0">or</FONT></B>
+	<B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server/bind ($!)&quot;</FONT></B>;
+    <B><FONT COLOR="#A020F0">listen</FONT></B>(SS, 2);
+    <B><FONT COLOR="#A020F0">return</FONT></B>(*SS);
+}
+
+<B><FONT COLOR="#A020F0">sub</FONT></B> get_port {
+    <B><FONT COLOR="#A020F0">local</FONT></B> *SK = <B><FONT COLOR="#A020F0">shift</FONT></B>;
+    (sockaddr_in(<B><FONT COLOR="#A020F0">getsockname</FONT></B>(SK)))[0];
+}
+
+<B><FONT COLOR="#A020F0">sub</FONT></B> client_sock {
+    <B><FONT COLOR="#A020F0">my</FONT></B> $port = <B><FONT COLOR="#A020F0">shift</FONT></B>;
+    <B><FONT COLOR="#A020F0">local</FONT></B> *CS;
+    <B><FONT COLOR="#A020F0">socket</FONT></B>(CS, PF_INET, SOCK_STREAM, <B><FONT COLOR="#A020F0">getprotobyname</FONT></B>(<B><FONT COLOR="#BC8F8F">'tcp'</FONT></B>)) <B><FONT COLOR="#A020F0">or</FONT></B>
+	<B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;client/socket ($!)&quot;</FONT></B>;
+    <B><FONT COLOR="#A020F0">connect</FONT></B>(CS, sockaddr_in($port, INADDR_LOOPBACK)) <B><FONT COLOR="#A020F0">or</FONT></B>
+	<B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;client/connect ($!)&quot;</FONT></B>;
+    <B><FONT COLOR="#A020F0">return</FONT></B>(*CS);
+}
+
+<B><FONT COLOR="#A020F0">sub</FONT></B> echo_client {
+    <B><FONT COLOR="#A020F0">my</FONT></B>($N, $port) = @_;
+    <B><FONT COLOR="#A020F0">local</FONT></B> *SOCK = client_sock($port);
+    <B><FONT COLOR="#A020F0">select</FONT></B>(SOCK);
+    $| = 1;
+    <B><FONT COLOR="#A020F0">for</FONT></B> <B><FONT COLOR="#A020F0">my</FONT></B> $i (0..($N-1)) {
+	<B><FONT COLOR="#A020F0">print</FONT></B> $DATA;
+	<B><FONT COLOR="#A020F0">my</FONT></B> $ans = &lt;SOCK&gt;;
+	($ans <B><FONT COLOR="#A020F0">eq</FONT></B> $DATA) <B><FONT COLOR="#A020F0">or</FONT></B> <B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#A020F0">qq</FONT></B>{client: <B><FONT COLOR="#BC8F8F">&quot;$DATA&quot;</FONT></B> <B><FONT COLOR="#A020F0">ne</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;$ans&quot;</FONT></B>};
+    }
+    <B><FONT COLOR="#A020F0">close</FONT></B> SOCK;
+}
+
+<B><FONT COLOR="#A020F0">sub</FONT></B> echo_server {
+    <B><FONT COLOR="#A020F0">my</FONT></B>($N) = @_;
+    <B><FONT COLOR="#A020F0">local</FONT></B> *SSOCK = server_sock();
+    <B><FONT COLOR="#A020F0">my</FONT></B> $port = get_port(*SSOCK);
+    <B><FONT COLOR="#A020F0">my</FONT></B> $pid = <B><FONT COLOR="#A020F0">fork</FONT></B>;
+    <B><FONT COLOR="#A020F0">defined</FONT></B> $pid <B><FONT COLOR="#A020F0">or</FONT></B> <B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server/fork ($!)&quot;</FONT></B>;
+    <B><FONT COLOR="#A020F0">if</FONT></B> ($pid) {
+	<I><FONT COLOR="#B22222"># parent is server
+</FONT></I>	<B><FONT COLOR="#A020F0">local</FONT></B> *CSOCK;
+	<B><FONT COLOR="#A020F0">accept</FONT></B>(CSOCK, SSOCK) <B><FONT COLOR="#A020F0">or</FONT></B> <B><FONT COLOR="#A020F0">die</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server/accept ($!)&quot;</FONT></B>;
+	<B><FONT COLOR="#A020F0">select</FONT></B>(CSOCK);
+	$| = 1;
+	<B><FONT COLOR="#A020F0">my</FONT></B> $n = 0;
+	<B><FONT COLOR="#A020F0">while</FONT></B> (&lt;CSOCK&gt;) {
+	    <B><FONT COLOR="#A020F0">print</FONT></B> $_;
+	    $n += <B><FONT COLOR="#A020F0">length</FONT></B>($_);
+	}
+	<B><FONT COLOR="#A020F0">select</FONT></B>(STDOUT);
+	<B><FONT COLOR="#A020F0">print</FONT></B> <B><FONT COLOR="#BC8F8F">&quot;server processed $n bytes\n&quot;</FONT></B>;
+    } <B><FONT COLOR="#A020F0">else</FONT></B> {
+	<I><FONT COLOR="#B22222"># child is client
+</FONT></I>	echo_client($N, $port);
+    }
+    <B><FONT COLOR="#A020F0">wait</FONT></B>();
+}
+
+<B><FONT COLOR="#A020F0">sub</FONT></B> main {
+    <B><FONT COLOR="#A020F0">my</FONT></B> $N = $ARGV[0] || 1;
+    echo_server($N);
+    <B><FONT COLOR="#A020F0">exit</FONT></B>(0);
+}
+
+main();</pre></td></tr></table>

@@ -1,0 +1,55 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">;;; -*- mode: lisp -*-
+</FONT></I><I><FONT COLOR="#B22222">;;; $Id: regexmatch-poplisp.code,v 1.1 2004-11-02 08:52:40 bfulgham Exp $
+</FONT></I><I><FONT COLOR="#B22222">;;; http://shootout.alioth.debian.org/
+</FONT></I><I><FONT COLOR="#B22222">;;; from Jochen Schmidt
+</FONT></I>
+(proclaim '(optimize (speed 3)(safety 0)(space 0)(debug 0)(compilation-speed 0)))
+(setf ext:*bytes-consed-between-gcs* 5000000)
+(use-package <B><FONT COLOR="#5F9EA0">:meta</FONT></B>)
+(eval-when (compile load eval)
+(meta:enable-meta-syntax)
+(deftype digit () '(member #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
+(deftype non-digit () '(not (member #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\( #\) ))))
+
+(defun parse-tel (input)
+  (meta:with-string-meta (buffer input)
+    (<B><FONT COLOR="#A020F0">let</FONT></B> (last-result)
+      (declare (type (<B><FONT COLOR="#A020F0">or</FONT></B> null simple-base-string) last-result))
+      (labels ((skip-non-digits (&amp;aux d)
+                     (meta:match $[@(non-digit d)]))
+               (digit-triplet (&amp;aux (old-index index) d (result (make-array 3 <B><FONT COLOR="#5F9EA0">:element-type</FONT></B> 'base-char)))
+                     (declare (type simple-base-string result))
+                     (<B><FONT COLOR="#A020F0">or</FONT></B> (meta:match [@(digit d) !(setf (schar result 0) d)
+                                      @(digit d) !(setf (schar result 1) d)
+                                      @(digit d) !(setf (schar result 2) d)
+                                      !(setf last-result result)])
+                         (progn (setf index old-index) nil)))
+               (digit-4tupel (&amp;aux (old-index index) d (result (make-array 4 <B><FONT COLOR="#5F9EA0">:element-type</FONT></B> 'base-char)))
+                     (declare (type simple-base-string result))
+                     (<B><FONT COLOR="#A020F0">or</FONT></B> (meta:match [@(digit d) !(setf (schar result 0) d)
+                                      @(digit d) !(setf (schar result 1) d)
+                                      @(digit d) !(setf (schar result 2) d)
+                                      @(digit d) !(setf (schar result 3) d)
+                                      !(setf last-result result)])
+                         (progn (setf index old-index) nil)))
+              (telephone-nr (&amp;aux area-code exchange d)
+                    (declare (type (<B><FONT COLOR="#A020F0">or</FONT></B> null simple-base-string) area-code exchange))
+                    (<B><FONT COLOR="#A020F0">and</FONT></B> (meta:match [!(skip-non-digits)
+                                        {[#\( !(digit-triplet) #\)] !(digit-triplet)} !(setf area-code last-result)
+                                        #\space !(digit-triplet) !(setf exchange last-result)
+                                        {#\space #\-} !(digit-4tupel) {@(non-digit d) !(= index end)}])
+                                      (values area-code exchange last-result))))
+            (telephone-nr)))))
+
+  (<B><FONT COLOR="#A020F0">let</FONT></B> ((n (parse-integer (<B><FONT COLOR="#A020F0">or</FONT></B> (car pop11::poparglist) <B><FONT COLOR="#BC8F8F">&quot;1&quot;</FONT></B>)))
+        (input (loop for line = (read-line *standard-input* nil 'eof)
+                     until (eq line 'eof) collect line)))
+    (loop for i of-type fixnum from 1 below n <B><FONT COLOR="#A020F0">do</FONT></B>
+      (loop for line of-type simple-base-string in input
+        <B><FONT COLOR="#A020F0">do</FONT></B> (parse-tel line)))
+    (loop with i of-type fixnum = 0
+          for line of-type string in input
+          <B><FONT COLOR="#A020F0">do</FONT></B> (multiple-value-bind (area-code exchange rest) (parse-tel line)
+               (when area-code
+                 (format t <B><FONT COLOR="#BC8F8F">&quot;~A: (~A) ~A-~A~%&quot;</FONT></B> (incf i) area-code exchange rest)))))</pre></td></tr></table>

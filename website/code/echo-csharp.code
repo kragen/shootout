@@ -1,0 +1,149 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">/* The Great Computer Language Shootout 
+   Based on the Synchronous Socket Examples in MSDN library.
+   contributed by Isaac Gouy */</FONT></I>
+
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Diagnostics;
+
+class Echo
+{
+   <B><FONT COLOR="#228B22">static</FONT></B> <B><FONT COLOR="#228B22">void</FONT></B> Main(string[] args)
+   {
+      <B><FONT COLOR="#228B22">int</FONT></B> n = 1;
+      <B><FONT COLOR="#A020F0">if</FONT></B> (args.Length &gt; 1){
+         <I><FONT COLOR="#B22222">// we are the client process
+</FONT></I>         n = Int32.Parse(args[1]);
+         EchoClient.Start(n);
+      }
+      <B><FONT COLOR="#A020F0">else</FONT></B> {
+         <I><FONT COLOR="#B22222">// we are the listener process
+</FONT></I>         <B><FONT COLOR="#A020F0">if</FONT></B> (args.Length &gt; 0) n = Int32.Parse(args[0]);
+         <I><FONT COLOR="#B22222">// start the listener
+</FONT></I>         Thread serverThread = new Thread(new ThreadStart( EchoListener.Start ));
+         serverThread.Start();
+         <I><FONT COLOR="#B22222">// create a client process
+</FONT></I>         Process p = new Process();
+         ProcessStartInfo i = p.StartInfo;
+         i.FileName = <B><FONT COLOR="#BC8F8F">&quot;echo.exe&quot;</FONT></B>;
+         i.Arguments = <B><FONT COLOR="#BC8F8F">&quot;echoclient &quot;</FONT></B> + n;
+         i.UseShellExecute = false;
+         p.Start();
+      }
+   }
+}
+
+
+public class EchoListener 
+{
+   public <B><FONT COLOR="#228B22">static</FONT></B> <B><FONT COLOR="#228B22">void</FONT></B> Start() 
+   {
+      <I><FONT COLOR="#B22222">// Establish the local endpoint for the  socket.
+</FONT></I>      IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+      IPAddress ipAddress = ipHostInfo.AddressList[0];
+      IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+
+      <I><FONT COLOR="#B22222">// Create a TCP/IP socket.
+</FONT></I>      Socket listener = new Socket(AddressFamily.InterNetwork,
+         SocketType.Stream, ProtocolType.Tcp );
+
+      <I><FONT COLOR="#B22222">// Bind the socket to the local endpoint and 
+</FONT></I>      <I><FONT COLOR="#B22222">// listen for incoming connections.
+</FONT></I>      try 
+      {
+         listener.Bind(localEndPoint);
+         listener.Listen(10);
+
+         <I><FONT COLOR="#B22222">// Program is suspended while waiting for an incoming connection.
+</FONT></I>         Socket handler = listener.Accept();
+
+         byte[] buffer = new byte[32];
+         <B><FONT COLOR="#228B22">int</FONT></B> count = 0;
+         <I><FONT COLOR="#B22222">// An incoming connection needs to be processed.
+</FONT></I>         <B><FONT COLOR="#228B22">int</FONT></B> bytesRec;
+         <B><FONT COLOR="#A020F0">while</FONT></B> (true) {
+            bytesRec = handler.Receive(buffer);
+            <B><FONT COLOR="#A020F0">if</FONT></B> (bytesRec &gt; 0) {
+               handler.Send(buffer, 0, bytesRec, SocketFlags.None);
+               count += bytesRec;
+            }
+            <B><FONT COLOR="#A020F0">else</FONT></B> <B><FONT COLOR="#A020F0">break</FONT></B>; <I><FONT COLOR="#B22222">// client released socket
+</FONT></I>         }
+         Console.WriteLine(<B><FONT COLOR="#BC8F8F">&quot;server processed {0} bytes&quot;</FONT></B>, count);
+
+         handler.Shutdown(SocketShutdown.Both);
+         handler.Close();
+      } 
+      catch (Exception e){
+         Console.WriteLine(e.ToString());
+      }
+   }
+}
+
+
+public class EchoClient 
+{
+   private <B><FONT COLOR="#228B22">const</FONT></B> string data = <B><FONT COLOR="#BC8F8F">&quot;Hello there sailor\n&quot;</FONT></B>;
+
+   public <B><FONT COLOR="#228B22">static</FONT></B> <B><FONT COLOR="#228B22">void</FONT></B> Start(<B><FONT COLOR="#228B22">int</FONT></B> n) 
+   {
+      <I><FONT COLOR="#B22222">// Data buffer for incoming data.
+</FONT></I>      byte[] bytes = new byte[32];
+
+      <I><FONT COLOR="#B22222">// Connect to localhost.
+</FONT></I>      try 
+      {
+         IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+         IPAddress ipAddress = ipHostInfo.AddressList[0];
+         IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+
+         <I><FONT COLOR="#B22222">// Create a TCP/IP  socket.
+</FONT></I>         Socket sender = new Socket(AddressFamily.InterNetwork, 
+            SocketType.Stream, ProtocolType.Tcp );
+
+         <I><FONT COLOR="#B22222">// Connect the socket to the remote endpoint. Catch any errors.
+</FONT></I>         try 
+         {
+            sender.Connect(remoteEP);
+            <I><FONT COLOR="#B22222">// Encode the data string into a byte array.
+</FONT></I>            byte[] msg = Encoding.ASCII.GetBytes(data);
+            <B><FONT COLOR="#228B22">int</FONT></B> bytesSent, bytesRec;
+            bool responseOK;
+            <B><FONT COLOR="#A020F0">while</FONT></B> (n-- &gt; 0){
+               <I><FONT COLOR="#B22222">// Send the data through the  socket.
+</FONT></I>               bytesSent = sender.Send(msg);
+
+               <I><FONT COLOR="#B22222">// Receive the response
+</FONT></I>               bytesRec = sender.Receive(bytes);
+
+               <I><FONT COLOR="#B22222">// Check the response
+</FONT></I>               responseOK = msg.Length == bytesRec;
+               <B><FONT COLOR="#A020F0">if</FONT></B> (responseOK)
+                  <B><FONT COLOR="#A020F0">for</FONT></B> (<B><FONT COLOR="#228B22">int</FONT></B> i=0; i &lt; bytesRec; i++)
+                     <B><FONT COLOR="#A020F0">if</FONT></B> ( !(responseOK = msg[i] == bytes[i]) )
+                        <B><FONT COLOR="#A020F0">break</FONT></B>;
+               <B><FONT COLOR="#A020F0">if</FONT></B> (!responseOK) Console.WriteLine(<B><FONT COLOR="#BC8F8F">&quot;Response doesn't match message.&quot;</FONT></B>);
+            }
+            <I><FONT COLOR="#B22222">// Release the socket.
+</FONT></I>            sender.Shutdown(SocketShutdown.Both);
+            sender.Close();
+         } 
+         catch (ArgumentNullException ane){
+            Console.WriteLine(<B><FONT COLOR="#BC8F8F">&quot;ArgumentNullException : {0}&quot;</FONT></B>,ane.ToString());
+         } 
+         catch (SocketException se){
+            Console.WriteLine(<B><FONT COLOR="#BC8F8F">&quot;SocketException : {0}&quot;</FONT></B>,se.ToString());
+         } 
+         catch (Exception e){
+            Console.WriteLine(<B><FONT COLOR="#BC8F8F">&quot;Unexpected exception : {0}&quot;</FONT></B>, e.ToString());
+         }
+      } 
+      catch (Exception e){
+         Console.WriteLine( e.ToString());
+      }
+   }
+}</pre></td></tr></table>

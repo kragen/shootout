@@ -1,0 +1,101 @@
+<table width="100%" border="0" cellpadding="5" cellspacing="0"><tr><td bgcolor="#FFFFFF"><pre>
+<I><FONT COLOR="#B22222">{-
+ - ringmsg.hs  
+ - http://shootout.alioth.debian.org/bench/ringmsg/
+ - Contributed by Aaron Denney
+ - 
+ - There is no generalized message sending between Haskell threads, each
+ - bit of data has to have someplace to go.  This is implemented by
+ - giving each processes a rendezvous point (MVar a), telling
+ - each where to send, and where to receive.  In this light, the &quot;check
+ - sender&quot; is a bit silly, as the sender can only be the process that
+ - also has a reference.
+ -
+ - A closer match to what Erlang does would be to only have one channel,
+ - but stick a priority queue type thing (plus filtered access &amp; removal)
+ - on it.
+ -
+ - The Erlang implementation only checks for the low priority messages
+ - every 10 high priority messages, it looks like the &quot;after 0&quot; clause
+ - means it doesn't block for it.  We do.  This may change the behaviour.
+ -
+ - ghc ringmsg.hs -O2
+ -}</FONT></I>
+<B><FONT COLOR="#A020F0">module</FONT></B> Main(main) <B><FONT COLOR="#A020F0">where</FONT></B>
+<B><FONT COLOR="#A020F0">import</FONT></B> Control.Concurrent
+<B><FONT COLOR="#A020F0">import</FONT></B> System(getArgs)
+
+<I><FONT COLOR="#B22222">-- Constants
+</FONT></I>hiloratio = 10        <I><FONT COLOR="#B22222">-- how many high priority messages to send per low priority.
+</FONT></I>processes = 8192      <I><FONT COLOR="#B22222">-- how many processes to put in a ring.
+</FONT></I>message = <B><FONT COLOR="#BC8F8F">&quot;the_ring&quot;</FONT></B>  <I><FONT COLOR="#B22222">-- The high priority message to send around the ring
+</FONT></I>low_priority = <B><FONT COLOR="#BC8F8F">&quot;low&quot;</FONT></B>  <I><FONT COLOR="#B22222">-- Just a fake message to be the 'low priority' guy
+</FONT></I>fork = forkIO         <I><FONT COLOR="#B22222">-- forkOS would be the other choice.
+</FONT></I>
+<I><FONT COLOR="#B22222">-- Channels or MVars
+</FONT></I>receive = takeMVar     <I><FONT COLOR="#B22222">-- or readChan
+</FONT></I>write   = putMVar      <I><FONT COLOR="#B22222">-- or writeChan
+</FONT></I>newLink = newEmptyMVar <I><FONT COLOR="#B22222">-- or newChan
+</FONT></I>
+forever <B><FONT COLOR="#228B22">:: IO () -&gt; IO ()
+</FONT></B>forever x = sequence_ $ repeat x
+
+for <B><FONT COLOR="#228B22">:: Int -&gt; IO () -&gt; IO ()
+</FONT></B>for count x = sequence_ [x | i &lt;- [1 .. count]]
+
+<B><FONT COLOR="#A020F0">type</FONT></B> ID = Int
+<B><FONT COLOR="#A020F0">data</FONT></B> Message a = M ID a
+
+assert <B><FONT COLOR="#228B22">:: Bool -&gt; IO ()
+</FONT></B>assert False = error <B><FONT COLOR="#BC8F8F">&quot;assert failed&quot;</FONT></B>
+assert True  = return ()
+
+<I><FONT COLOR="#B22222">-- Each slave repeats the basic step of reading and writing forever.
+</FONT></I>slaveproc a b = forever $ relay a b
+
+<I><FONT COLOR="#B22222">-- Read hiloratio highs, relay them, then handle the low.
+</FONT></I>relay (sendid, loin, hiin) (myid, loout, hiout) = do
+        for hiloratio $ sendhis sendid myid hiin hiout
+        sendlos sendid myid loin loout
+
+<I><FONT COLOR="#B22222">-- The master process (the beginning and end):
+</FONT></I><I><FONT COLOR="#B22222">-- start one high, one lowpriority message, and wait for the low
+</FONT></I><I><FONT COLOR="#B22222">-- to travel around runs times.
+</FONT></I>masterproc runs a@(lastid, loin, hiin) b@(myid, loout, hiout) = do
+        startmsgs myid hiout loout
+	<B><FONT COLOR="#A020F0">let</FONT></B> runsB = runs - 1 <B><FONT COLOR="#A020F0">in</FONT></B>
+		for runsB $ relay a b
+        lastrcv a &gt;&gt;= return
+
+<I><FONT COLOR="#B22222">-- Sending a message involves waiting to get the message from the
+</FONT></I><I><FONT COLOR="#B22222">-- upstream slave, verifying it's who you expect it should be from,
+</FONT></I><I><FONT COLOR="#B22222">-- then passing the message on to the next one.
+</FONT></I>sendhis sendid myid hiin hiout = do 
+        M s d &lt;- receive hiin
+        assert $ sendid == s 
+        write hiout (M myid d)
+
+sendlos = sendhis
+
+startmsgs myid hiout loout = do 
+        write hiout (M myid message)
+	write loout (M myid low_priority)
+
+lastrcv (sendid, loin, hiin)  = do
+	M s d &lt;- receive hiin
+        assert $ sendid == s 
+	return d
+
+main = do ~[runs] &lt;- getArgs
+          doit $ read runs
+
+doit <B><FONT COLOR="#228B22">:: Int -&gt; IO ()
+</FONT></B>doit runs = do
+        <B><FONT COLOR="#A020F0">let</FONT></B> ids = [1..processes]
+        hichans &lt;- sequence $ replicate processes newLink
+        lochans &lt;- sequence $ replicate processes newLink
+        <B><FONT COLOR="#A020F0">let</FONT></B> args = zip3 ids hichans lochans
+        <B><FONT COLOR="#A020F0">let</FONT></B> slaveprocs = zipWith slaveproc args (tail args)
+        mapM fork slaveprocs
+        last_msg &lt;- masterproc runs (last args) (head args)
+	putStrLn last_msg</pre></td></tr></table>
