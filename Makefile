@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2004-06-25 07:57:48 bfulgham Exp $
+# $Id: Makefile,v 1.11 2004-10-05 02:29:06 bfulgham Exp $
 
 include Make.header
 
@@ -67,6 +67,12 @@ links-stamp:
 	# CMUCL and SBCL are the same
 	for j in `find bench -name '*.cmucl'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.sbcl; \
+	done
+
+	# GHC, nhc98, and HUGS are the same
+	for j in `find bench -name '*.ghc'`; do \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ghc'`.nhc98; \
+		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ghc'`.hugs; \
 	done
 
 	touch links-stamp

@@ -97,7 +97,7 @@ $LANGS = array(
       'Home'    => 'http://sbcl.sourceforge.net/',
       'Down'    => 'http://sbcl.sourceforge.net/',
       'Type'    => 'native compiled',
-      'Version' => 'SBCL 0.8.14.28'
+      'Version' => 'SBCL 0.8.15.6'
     ),
 
     'gwydion' => array(
@@ -167,12 +167,28 @@ elastiC version: 0.0.36 (dec: 36)
       'Version' => 'gforth 0.6.2'
     ),
 
+    'nhc98' => array(
+      'Lang'    => 'Haskell',
+      'Home'    => 'http://www.haskell.org/',
+      'Down'    => 'http://www.haskell.org/nhc98/',
+      'Type'    => 'interpreted',
+      'Version' => 'v1.17 (CVS version)'
+    ),
+
     'ghc' => array(
       'Lang'    => 'Haskell',
       'Home'    => 'http://www.haskell.org/',
       'Down'    => 'http://www.haskell.org/ghc/',
       'Type'    => 'native compiled',
       'Version' => 'The Glorious Glasgow Haskell Compilation System, version 6.2.1'
+    ),
+
+    'hugs' => array(
+      'Lang'    => 'Haskell',
+      'Home'    => 'http://www.haskell.org/',
+      'Down'    => 'http://www.haskell.org/hugs/',
+      'Type'    => 'interpreted',
+      'Version' => ''
     ),
 
     'curry' => array(
@@ -394,6 +410,14 @@ S-Lang Library Version: 1.4.9'
       'Down'    => 'http://www.mlton.org/download/',
       'Type'    => 'native compiled',
       'Version' => 'MLton 20040227 '
+    ),
+
+    'poly' => array(
+      'Lang'    => 'SML',
+      'Home'    => 'http://www.polyml.org/',
+      'Down'    => 'http://www.polyml.org/download/',
+      'Type'    => 'native compiled',
+      'Version' => 'version I386-4.1.3 (17:04:24 Oct  3 2004)'
     ),
 
     'bigloo' => array(

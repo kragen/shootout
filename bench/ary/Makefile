@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-09-13 01:23:33 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-10-05 02:29:08 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ary
@@ -10,6 +10,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 MLTONDEPS := ../../Include/mlton-src/basic.sml
 ERLFLAGS := -noinput
 OO2COPTS := -A --no-rtc
+POLYOPTS := -q
 JREOPTS := -hotspot -da
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

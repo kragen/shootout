@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2004-09-28 04:01:59 bfulgham Exp $
+# $Id: Makefile,v 1.19 2004-10-05 02:29:35 bfulgham Exp $
 include ../../Make.header
 
 TEST    := reversefile
@@ -10,7 +10,9 @@ ERLFLAGS := -noinput
 CLEANOPTS := -nr -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 MB_CLRTS := -h 20000000
+MB_NHCRTS := +RTS -H40M
 OO2COPTS := -A --no-rtc
+POLYOPTS := -q
 
 RUNTESTS :=  $(MINIBENCH) --conf ../../Minibench.conf --range 10,15,20,25 \
 	  --inputfile Input --geninput \

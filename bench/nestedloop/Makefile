@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-09-13 01:24:02 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-10-05 02:29:30 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nestedloop
@@ -9,7 +9,9 @@ GHCOPTS := -fglasgow-exts
 ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+MB_NHCRTS := +RTS -H80M
 OO2COPTS := -A --no-rtc
+POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore nestedloop.bash \

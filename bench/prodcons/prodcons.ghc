@@ -1,26 +1,21 @@
--- $Id: prodcons.ghc,v 1.4 2004-10-03 00:44:36 bfulgham Exp $
+-- $Id: prodcons.ghc,v 1.5 2004-10-05 02:29:33 bfulgham Exp $
 -- http://shootout.alioth.debian.org/
 -- by JP Bernardy, optimized by Einar Karttunen
 
 import Control.Concurrent
-import Control.Monad
 import System
 
--- write integers 1 to n in the given mvar.
--- putMVar will block until the mvar is empty and
--- only then write the value.
-producer n mv = mapM_ (putMVar mv) [1..n]
+producer n m mv | n == m = return m
+		| True   = putMVar mv n >> producer (n+1) m mv
 
--- read n integers from the given mvar, return the last of them
--- replicateM_ is just a loop, verified to be linear to N.
--- takeMVar waits until the mvar is filled with a value and
--- then takes the value, leaving the mvar empty.
-consumer n mv = do replicateM_ (n-1) (takeMVar mv)
-		   takeMVar mv
+consumer 0 m mv = return m
+consumer n m mv = takeMVar mv >> consumer (n-1) m mv
 
-main = do [a] <- getArgs   
+main = do [a] <- getArgs
           let n = read a :: Int
-          mvar <- newEmptyMVar        -- create an empty mvar
-          forkIO (producer n mvar)    -- spawn the producing thread...
-	  m <- consumer n mvar        -- and read what it writes.
-          putStrLn (show n ++ " " ++ show m) 
+          mvar <- newEmptyMVar 
+	  ret  <- newEmptyMVar
+          forkIO (producer 0 n mvar >>= putMVar ret)
+	  m <- consumer n n mvar 
+	  r <- takeMVar ret
+	  putStrLn (show r ++ " " ++ show m)

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-09-22 08:24:13 bfulgham Exp $
+# $Id: Makefile,v 1.18 2004-10-05 02:29:35 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -15,6 +15,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-l /usr/lib/libpcre.a
 MB_CLRTS := -nr
+POLYOPTS := -q
 
 CMUCL_SRCS := ../../Include/meta.lisp
 SBCL_SRCS := ../../Include/meta.lisp

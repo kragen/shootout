@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-09-15 13:43:43 bfulgham Exp $
+# $Id: Makefile,v 1.18 2004-10-05 02:29:09 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
@@ -10,6 +10,7 @@ GHCOPTS  := -fglasgow-exts -package net -package concurrent -package lang
 MB_GHCRTS  := +RTS -M200m -K20m
 ERLFLAGS := -noinput
 OO2COPTS := -A --no-rtc
+POLYOPTS := -q
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean

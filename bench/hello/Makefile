@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-08-12 16:26:53 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-10-05 02:29:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hello
@@ -19,6 +19,7 @@ post: data/startup.tab
 
 ERLFLAGS := -noinput
 OO2COPTS := -A --no-rtc
+POLYOPTS := -q
 RUNTESTS := $(MINIBENCH) --conf Minibench.conf \
 	--range 1,50,100,150,200 
 

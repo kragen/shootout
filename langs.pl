@@ -279,6 +279,32 @@
        },
      },
 
+     hugs =>
+     { Lang => 'Haskell',
+       Home => 'http://www.haskell.org/',
+       Down => 'http://www.haskell.org/hugs/',
+       Type => 'interpreted',
+       Ext  => 'haskell',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{HUGS} -h 2>&1`);
+	   $ver =~ /(Version:.*\d\d\d\d)\n/;
+	   return($1);
+       },
+     },
+
+     nhc98 =>
+     { Lang => 'Haskell',
+       Home => 'http://www.haskell.org/',
+       Down => 'http://www.haskell.org/nhc98/',
+       Type => 'interpreted',
+       Ext  => 'haskell',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{NHC98} --version 2>&1`);
+	   $ver =~ /(v.*)\n/;
+	   return($1);
+       },
+     },
+
      icon =>
      { Lang => 'Icon',
        Home => 'http://www.cs.arizona.edu/icon/',
@@ -677,6 +703,19 @@
 	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} 2>&1`));
 	   $ver =~ s/\(built.*//;
 	   return($ver);
+       },
+     },
+
+     poly =>
+     { Lang => 'SML',
+       Home => 'http://www.polyml.org/',
+       Down => 'http://www.polyml.org/download/',
+       Type => 'native compiled',
+       Ext  => 'sml',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{POLY} -v`);
+	   $ver =~ /(version.*)\n/;
+	   return($1);
        },
      },
 

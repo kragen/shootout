@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-09-15 13:43:49 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-10-05 02:29:33 bfulgham Exp $
 include ../../Make.header
 
 TEST    := prodcons
@@ -12,6 +12,7 @@ GHCOPTS    := -package concurrent
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 OO2COPTS := -A --no-rtc
+POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore prodcons.csharp \
