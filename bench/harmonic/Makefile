@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-03-18 05:31:06 bfulgham Exp $
+# $Id: Makefile,v 1.5 2005-03-19 10:13:05 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := harmonic
@@ -16,7 +16,7 @@ POLYOPTS := -q
 
 ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
-GHCOPTS := -fexcess-precision -fasm
+GHCOPTS := -fexcess-precision 
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 6000000,8000000,10000000
