@@ -92,4 +92,5 @@ consequently, CMUCL) out.</li>
   <li>Paul Foley has contributed a few new version of the Common Lisp programs.</li>
   <li>Bengt Kleberg has helped with the Scheme programs.</li>
   <li>Vasco Costa made some helpful comments about the C code.</li>
+  <li>Isto Aho provided recommendations to shorten many of the Haskell implementations.</li>
 </ul>
