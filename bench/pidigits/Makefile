@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2005-03-04 07:34:37 bfulgham Exp $
+# $Id: Makefile,v 1.6 2005-03-18 07:32:18 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 BIGLOOOPTS := -farithmetic
 DLANGOPTS := -L-lgmp -I../../Include/dlang/gmp4d ../../Include/dlang/gmp4d/gmp.d ../../Include/dlang/gmp4d/gmppool.d ../../Include/dlang/gmp4d/mpz.d 
+MB_CLRTS := -nr
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 OCAMLOPTS := nums.cmxa

@@ -1,0 +1,81 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   Contributed by Dave Fladebo
+
+   compile: dmd -O -inline -release tcpecho.d
+*/
+
+import std.stdio, std.string, std.socket, std.socketstream, std.thread;
+
+const int MULTIPLIER    = 6400;
+const int REPLY_SIZE    = 64;
+const int REQUEST_SIZE  = 64;
+const int BUFFER_SIZE   = 1024;
+const int PORT          = 11000;
+
+char[REQUEST_SIZE]  REQUEST;
+char[REPLY_SIZE]    REPLY;
+
+void main(char[][] args)
+{
+    int n = (args.length > 1 ? atoi(args[1]) : 1) * MULTIPLIER;
+
+    Thread server = new Thread(&Server,null);
+    Thread client = new Thread(&Client,cast(void*)n);
+
+    server.start();
+    client.start();
+
+    server.wait();
+    client.wait();
+}
+
+int Server(void* arg)
+{
+    SocketStream ss = new SocketStream(serverSocket.accept);
+
+    char[BUFFER_SIZE] buffer;
+    while(ss.readBlock(buffer,REQUEST_SIZE) > 0)
+    {
+        ss.writeBlock(REPLY,REPLY_SIZE);
+    }
+
+    ss.close();
+
+    return(0);
+}
+
+int Client(void* arg)
+{
+    int n = cast(int)arg, bytes, replies;
+
+    TcpSocket ts = new TcpSocket(new InternetAddress("127.0.0.1",PORT));
+
+    char[BUFFER_SIZE] buffer;
+    while(n--)
+    {
+        int recvd;
+        ts.send(REQUEST);
+        while(recvd < REPLY_SIZE)
+        {
+            recvd += ts.receive(buffer);
+        }
+        bytes += recvd;
+        replies++;
+    }
+
+    ts.close();
+
+    writefln("replies: ",replies,"\tbytes: ",bytes);
+
+    return(0);
+}
+
+TcpSocket serverSocket()
+{
+    TcpSocket ts = new TcpSocket();
+    ts.bind(new InternetAddress(PORT));
+    ts.listen(0);
+    return(ts);
+}
