@@ -1,26 +1,9 @@
-/* The Great Computer Language Shootout 
-
-   http://shootout.alioth.debian.org/
-
-   contributed by Isaac Gouy (Clean novice)
-
-To compile:	
-   cleanIDE.exe --batch-force-build "e:\shoot\contrib\clean\heapsort.prj"
-
-To run:
-   heapsort.exe -con 80000
-*/
+// The Great Computer Language Shootout 
+// contributed by Isaac Gouy (Clean novice)
 
 
-module heapsort
-import StdEnv, StdArrayExtensions, ArgEnv, LanguageShootout
-
-Start = (toStringWith 10 sortedValues.[n-1]) +++ "\n"
-   where
-      argv = getCommandLine
-      n = toInt (argv.[1])
-      randomValues = nran (n-1) 1.0 42 (createUnboxedRealArr n 0.0)
-      sortedValues = heapsort randomValues
+implementation module Heapsort
+import StdEnv, StdArrayExtensions
 
 
 // Heapsort implementation adapted from:
@@ -31,10 +14,7 @@ Start = (toStringWith 10 sortedValues.[n-1]) +++ "\n"
 // pages 105--124. Springer-Verlag, 1997
 // http://www.cs.kun.nl/~clean/publications.html#1997
 
-:: SortElement :== Real
-:: SortArray :== {#SortElement}
-
-heapsort :: !*SortArray -> .SortArray
+heapsort :: !*{#Real} -> .{#Real}
 heapsort a0
    | n<2 = a
    = sort_heap (n-1) (mkheap (n>>1) (n-1) a)
@@ -71,22 +51,4 @@ heapsort a0
             {a & [i]=ai}
       = if (ai<aj)
          (add_to_heap j ((j<<1)+1) m ai {a & [i]=aj})
-         {a & [i]=ai}   
-         
-         
-// Random number generator         
-im :== 139968
-ia :== 3877
-ic :== 29573
-imd :== toReal im
-
-nran :: !Int !Real !Int !*{#u:Real} -> {#v:Real}, [u <= v]
-nran i max seed numbers
-   | i<0   = numbers
-   = nran (i-1) max newseed {numbers & [i] = newran}
-   where
-      newseed = (seed * ia + ic) rem im
-      newran =  max * toReal newseed / imd   
-         
-         
-         
+         {a & [i]=ai}

@@ -1,7 +1,7 @@
-#!/usr/local/bin/php -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: hash2.php,v 1.1 2004-05-28 06:50:22 bfulgham Exp $
+ $Id: hash2.php,v 1.2 2004-06-15 05:45:40 bfulgham Exp $
  http://www.bagley.org/~doug/shootout/
 */
 $n = ($argc == 2) ? $argv[1] : 1;

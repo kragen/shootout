@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-13 00:16:50 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-15 05:45:40 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -11,7 +11,7 @@ LOCDEPS := --dep=se:../Include/randomnumber.e
 STALINOPTS := -s
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include -I ../../Include
+		-I ../Include/clean -I ../../Include/clean
 
 #	  --ignore random.bigforth,random.icon,random.rep,random.njs \
 

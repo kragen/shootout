@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-14 07:07:09 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-15 05:45:40 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -15,12 +15,11 @@ GHCOPTS := -package data -O2
 MB_GHCRTS  := +RTS -K10000000
 
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include -I ../../Include
+		-I ../Include/clean -I ../../Include/clean
 MB_CLRTS := -h 10000000
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 20000,40000,60000,80000 \
-	  --ignore hash.erlang \
 	  --ignore hash.hipe \
 	  --title "$(TITLE)" $(TEST).*
 
