@@ -1,0 +1,63 @@
+(*
+ * $Id: wordfreq.ocaml6.ocaml,v 1.1 2004-05-19 18:14:24 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ *)
+
+let max = 4096
+let buf = String.create max
+let count = Hashtbl.create 75000
+let wbuf = Buffer.create 64
+let cnt = ref 0
+
+let readblock scanfun =
+  let nread = input stdin buf 0 max in
+  if nread = 0 then () else scanfun 0 nread
+
+
+let rec scan_out_word i n =
+  if i < n then
+    let c = buf.[i] in
+    if 'a' <= c && c <= 'z' then begin
+      Buffer.add_char wbuf c;
+      scan_in_word (i+1) n
+    end
+    else if 'A' <= c && c <= 'Z' then begin
+      Buffer.add_char wbuf (Char.unsafe_chr(Char.code c + 32));
+      scan_in_word (i+1) n
+    end
+    else
+      scan_out_word (i+1) n
+  else
+    readblock scan_out_word
+
+and scan_in_word i n =
+  if i < n then
+    let c = buf.[i] in
+    if 'a' <= c && c <= 'z' then begin
+      Buffer.add_char wbuf c;
+      scan_in_word (i+1) n
+    end
+    else if 'A' <= c && c <= 'Z' then begin
+      Buffer.add_char wbuf (Char.unsafe_chr(Char.code c + 32));
+      scan_in_word (i+1) n
+    end
+    else begin
+      let word = Buffer.contents wbuf in
+      begin try incr (Hashtbl.find count word)
+      with Not_found -> incr cnt; Hashtbl.add count word (ref 1) end;
+      Buffer.clear wbuf;
+      scan_out_word (i+1) n
+    end
+  else
+    readblock scan_in_word
+
+let _ =
+  scan_out_word 0 0;
+  let outputlines = Array.make !cnt "" in
+  let i = ref 0 in
+  let stringify a w c =
+    a.(!i) <- Printf.sprintf "%7d\t%s\n" !c w;
+    incr i in
+  Hashtbl.iter (stringify outputlines) count;
+  Array.stable_sort (fun a b -> compare b a) outputlines;
+  Array.iter print_string outputlines

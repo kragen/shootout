@@ -1,0 +1,135 @@
+#!/usr/bin/perl
+# $Id: make_report,v 1.1 2004-05-19 18:14:27 bfulgham Exp $
+
+use strict;
+use Getopt::Long;
+
+my @OPTIONS = ('html!');
+my %OPT = ();
+
+sub main {
+    Getopt::Long::config("no_ignore_case");
+    if (not GetOptions(\%OPT, @OPTIONS)) {
+	warn qq{Unknown option\n};
+	exit(1);
+    }
+    my %progs = ();
+    my %langs = ();
+    foreach my $source (@ARGV) {
+	next if ($source =~ /~$/);
+	$source =~ s/ocamlb$/ocaml/;
+	$source =~ s!.*/!!;
+	my($test, @rest) = split(/\./, $source);
+	my $lang = $rest[-1];
+	$langs{$lang}++;
+	$progs{$test}->{$lang}++;
+    }
+    my $total = 0;
+    my $done = 0;
+    my $want = 0;
+    my $nlangs = scalar(keys(%langs));
+    my $ntests = scalar(keys(%progs));
+    my %done_by_test = ();
+    my %want_by_test = ();
+    my %done_by_lang = ();
+    my %want_by_lang = ();
+    foreach my $test (sort keys %progs) {
+	foreach my $lang (sort keys %langs) {
+	    $total++;
+	    if ($progs{$test}->{$lang}) {
+		push(@{$done_by_test{$test}}, $lang);
+		push(@{$done_by_lang{$lang}}, $test);
+		$done++;
+	    } else {
+		push(@{$want_by_test{$test}}, $lang);
+		push(@{$want_by_lang{$lang}}, $test);
+		$want++;
+	    }
+	}
+    }
+    # print a header
+    if ($OPT{html}) {
+	print qq{
+<table align="center" width="90%">
+<tr><td align="left" valign="top">
+<table border="1" cellspacing="2" cellpadding="4" bgcolor="#c0e0e0" width="100%">
+<tr><th bgcolor="black"><font color="white">Status</font></th></tr>
+</td></tr>
+<tr><td>Possible number of programs:</td><td>$total</td></tr>
+<tr><td>Total Written:</td><td>$done</td></tr>
+<tr><td>Total Needed:</td><td>$want</td></tr>
+</table>
+</td></tr>
+</table>
+};
+
+    } else {
+	print "\n", "#" x 70, "\n";
+	print "Total number of languages:   $nlangs\n";
+	print "Total number of tests:       $ntests\n";
+	print "Possible number of programs: $total\n";
+	print "Programs Written:            $done\n";
+	print "Programs Needed:             $want\n";
+    }
+    # print tables
+    report_by_test(\%progs, \%done_by_test, \%want_by_test);
+    report_by_lang(\%langs, \%done_by_lang, \%want_by_lang);
+
+    my $langs = scalar keys %langs;
+    my $tests = scalar keys %progs;
+    print_to_file("done.txt", <<EOF);
+$langs Language Implementations, 
+$tests Benchmark Tests, 
+$total Total Possible Programs, 
+$done Written
+EOF
+}
+
+sub print_to_file {
+    my($file, $str) = @_;
+    local *F;
+    if (open(F, ">$file")) {
+	print F $str;
+	close(F);
+    }
+}
+
+sub report_by_test {
+    my($tref, $dref, $wref) = @_;
+    if ($OPT{html}) {
+    } else {
+	print "#" x 70, "\n";
+	print "\nPROGRAMS WRITTEN BY TEST\n";
+    }
+    foreach my $test (sort keys %$tref) {
+	my @done = @{$dref->{$test}||[]};
+	my @want = @{$wref->{$test}||[]};
+	if ($OPT{html}) {
+	} else {
+	    print "\n$test:\n";
+	    print " DONE(@{[scalar(@done)]}): @done\n";
+	    print " WANT(@{[scalar(@want)]}): @want\n";
+	}
+    }
+}
+
+sub report_by_lang {
+    my($lref, $dref, $wref) = @_;
+    if ($OPT{html}) {
+    } else {
+	print "#" x 70, "\n";
+	print "\nPROGRAMS WRITTEN BY LANGUAGE\n";
+    }
+    foreach my $lang (sort keys %$lref) {
+	my @done = @{$dref->{$lang}||[]};
+	my @want = @{$wref->{$lang}||[]};
+	if ($OPT{html}) {
+	} else {
+	    print "\n$lang:\n";
+	    print " DONE(@{[scalar(@done)]}): @done\n";
+	    print " WANT(@{[scalar(@want)]}): @want\n";
+	}
+    }
+}
+
+&main();

@@ -1,0 +1,230 @@
+#!/usr/bin/perl
+# $Id: make_codelinks,v 1.1 2004-05-19 18:14:26 bfulgham Exp $
+
+# run in bench/ subdir
+
+use strict;
+use HTML::Entities;
+
+BEGIN {
+    foreach my $d qw(. .. ../.. ../../..) {
+	my $file = "$d/langs.pl";
+	if (-f $file) {
+	    require $file;
+	    last;
+	}
+    }
+}
+
+my $LANGDIR = 'lang';
+
+sub listfiles ($$) {
+    my($dir, $pat) = @_;
+    my @files = ();
+    my $re = qr{$pat};
+    if (opendir(DH, $dir)) {
+	@files = grep(/$re/, readdir(DH));
+	closedir(DH);
+    }
+    return(@files);
+}
+
+sub title {
+    my $test = shift;
+    local *S;
+    my $makefile = "$test/Makefile";
+    open(S, "<$makefile") ||
+	die "Error opening $makefile for input ($!)";
+    my $title = '';
+    while (<S>) {
+	if (/TITLE\s*:?=\s*(.*)/) {
+	    $title = $1;
+	    last;
+	}
+    }
+    close(S);
+    return($title);
+}
+
+sub scores {
+    my $test = shift;
+
+    my $maxtab = "$test/data/max.mbtab";
+    my %cpu = ();
+    my %mem = ();
+    open(DAT, "<$maxtab") or die "Can't open $maxtab for input!";
+    while (<DAT>) {
+	next if (/^\#/);
+	my($lang, $cpu, $mem) = split;
+	$cpu{$lang} = $cpu;
+	$mem{$lang} = $mem;
+    }
+    close(DAT);
+
+    my $loctab = "$test/data/loc.tab";
+    my %loc = ();
+    open(DAT, "<$loctab") or die "Can't open $loctab for input!";
+    while (<DAT>) {
+	next if (/^\#/);
+	my($lang, $loc) = split;
+	$loc{$lang} = $loc;
+    }
+    close(DAT);
+
+    return(\%cpu, \%mem, \%loc);
+}
+
+sub score_o_matic {
+    my($rank, $metric, $scores, $langs) = @_;
+    my ($min, $max);
+    foreach my $score (map {$scores->{$_}} keys %$langs) {
+	$min = $score if ((not defined $min) or ($score < $min));
+	$max = $score if ((not defined $max) or ($score > $max));
+    }
+    foreach my $lang (sort { $scores->{$a} <=> $scores->{$b} } keys %$langs) {
+	my $score = $scores->{$lang};
+	if (not defined $score) {
+	    $rank->{$lang}->{$metric} = '*';
+	    next;
+	}
+	my $top = $max + $min;
+	$rank->{$lang}->{$metric} =
+	    sprintf("%.2f", 10.0 * ($top - $score)/$top);
+    }
+}
+
+sub rank_o_matic {
+    my($rank, $metric, $scores, $langs) = @_;
+    my $rnk = 1;
+    my $last = 0;
+    my $r = 0;
+    foreach my $lang (sort { $scores->{$a} <=> $scores->{$b} } keys %$langs) {
+	my $score = $scores->{$lang};
+	if (not defined $score) {
+	    $rank->{$lang}->{$metric} = '*';
+	    next;
+	}
+	$r++;
+	$rnk = $r if ($score > $last);
+	$last = $score;
+	$rank->{$lang}->{$metric} = $rnk;
+    }
+}
+
+sub ranks {
+    my($test, $langs, $cpu, $mem, $loc) = @_;
+    my %rank = ();
+    rank_o_matic(\%rank, 'cpu', $cpu, $langs);
+    rank_o_matic(\%rank, 'mem', $mem, $langs);
+    rank_o_matic(\%rank, 'loc', $loc, $langs);
+    return(\%rank);
+}
+
+sub main {
+    my %title = ();
+    my %code = ();
+    my %ranks = ();
+    foreach my $test (sort @ARGV) {
+	$title{$test} = title($test);
+	my %langs = ();
+	foreach my $source (listfiles($test, '^'.$test."\\.[^.]+[^~]\$")) {
+	    my($testname, $lang) = split(/\./, $source);
+	    die "null lang($lang) for test $testname($test)" if $lang =~ /^$/;
+	    $code{$lang}->{$testname} = 1;
+	    $langs{$lang}++;
+	}
+	my($cpu, $mem, $loc) = scores($test);
+	$ranks{$test} = ranks($test, \%langs, $cpu, $mem, $loc);
+    }
+    my %missing = ();
+    foreach my $lang (keys %code) {
+	foreach my $test (keys %title) {
+	    $missing{$lang}->{$test} = 1 unless ($code{$lang}->{$test});
+	}
+    }
+
+    foreach my $lang (keys %code) {
+	my $outfile = "../$LANGDIR/$lang/codelinks.shtml";
+	next unless (open(F, ">$outfile"));
+
+	# avg really should be based on score not rank because
+	# it loses meaning if not all tests have same range of ranks
+	my $avgcpu = 0;
+	my $avgmem = 0;
+	my $avgloc = 0;
+	my $n = 0;
+	foreach my $test (keys %{$code{$lang}}) {
+	    $n++;
+	    $avgcpu += $ranks{$test}->{$lang}->{cpu};
+	    $avgmem += $ranks{$test}->{$lang}->{mem};
+	    $avgloc += $ranks{$test}->{$lang}->{loc};
+	}
+	$avgcpu = int(0.5 + ($avgcpu / $n));
+	$avgmem = int(0.5 + ($avgmem / $n));
+	$avgloc = int(0.5 + ($avgloc / $n));
+
+	print F qq{<table border="1">\n};
+
+	my $ros = 'Rank';
+
+	print F qq{<tr><td colspan="5"><small>(${ros}s in <font color="red">Red</font> in the
+table below are those which fall below the average ${ros} for this language
+over all tests.<br>The corresponding programs could possibly benefit from further
+optimization.)</small></td></tr>\n};
+	print F qq{<tr><th>Test</th><th>Source Code</th><th>CPU ${ros}<br>Avg: $avgcpu</th><th>Mem ${ros}<br>Avg: $avgmem</th><th>LOC ${ros}<br>Avg: $avgloc</th></tr>\n};
+	my $err = 0;
+	foreach my $test (sort { $title{$a} cmp $title{$b} } keys %{$code{$lang}}) {
+	    print F qq{<tr><td><a href="../../bench/$test/">$title{$test}</a></td>\n};
+	    print F qq{<td><a href="../../bench/$test/$test.$lang">$test.$lang</a></td>\n};
+	    $err ||= ($ranks{$test}->{$lang}->{cpu} eq '*');
+	    my($cpu, $mem, $loc);
+	    # TBD change compare op if we change ros
+	    if (($cpu = $ranks{$test}->{$lang}->{cpu}) > $avgcpu) {
+		$cpu = qq{<font color="red">$cpu</font>};
+	    }
+	    if (($mem = $ranks{$test}->{$lang}->{mem}) > $avgmem) {
+		$mem = qq{<font color="red">$mem</font>};
+	    }
+	    if (($loc = $ranks{$test}->{$lang}->{loc}) > $avgloc) {
+		$loc = qq{<font color="red">$loc</font>};
+	    }
+	    print F qq{<td align="right">$cpu</td>\n};
+	    print F qq{<td align="right">$mem</td>\n};
+	    print F qq{<td align="right">$loc</td>\n};
+	    print F qq{</tr>\n};
+	}
+	print F qq{<tr><td colspan="5">*Test Implemented but not measured (timeout or error).</td></tr>\n} if ($err);
+	# possibly print row of list of test not implemented yet.
+	if (my @unimplemented = keys %{$missing{$lang}}) {
+	    my $un = join(", ", map { qq{<a href="../../bench/$_/">$title{$_}</a>} } sort { $title{$a} cmp $title{$b} } @unimplemented);
+	    print F qq{<tr><td colspan="5">Tests Not Implemented For This Language:<br>$un</td></tr>\n};
+	}
+	print F qq{</table>\n};
+	close(F);
+
+	my $outfile = "../$LANGDIR/$lang/allsrc_table.shtml";
+	unless (open(F, ">$outfile")) {
+ 	    warn("Can't open $outfile for output ($!)\n");
+	    next;
+	}
+	print F qq{<table border="1">\n};
+	print F qq{<tr><th>All Source For $lang</th></tr>\n};
+	my $err = 0;
+	foreach my $test (sort { $title{$a} cmp $title{$b} } keys %{$code{$lang}}) {
+	    print F qq{<tr><td><a href="../../bench/$test/">$title{$test}</a></td></tr>\n};
+	    print F qq{<tr><td><pre><code>\n};
+	    my $srcfile = "../bench/$test/$test.$lang";
+	    if (open(SRC, "<$srcfile")) {
+		print F HTML::Entities::encode(join('', <SRC>));
+		close(SRC);
+	    } else {
+		print "$srcfile not found.\n";
+	    }
+	    print F qq{</code></pre></td></tr>\n};
+	}
+	print F qq{</table>\n};
+	close(F);
+    }
+}
+
+main();

@@ -1,0 +1,84 @@
+(* -*- mode: sml -*-
+ * $Id: moments.mlton,v 1.1 2004-05-19 18:10:47 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ * Modified by Dan Wang to be more functional and use SML/NJ library
+ * sorting function.
+ *)
+
+val ins = TextIO.stdIn
+fun loop (nums,sum) =
+   case TextIO.inputLine ins of
+      "" => (nums,sum)
+    | l => (case Real.fromString l of
+	      NONE => raise Fail "invalid input"
+	    | SOME num => loop(num::nums,sum+num))
+
+fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
+
+fun r2s (x: real): string =
+   if Real.== (x, 0.0) then "0.000000"
+   else String.translate
+     (fn #"~" => "-" | c => str c)
+     (Real.fmt (StringCvt.FIX (SOME 6)) x)
+      
+fun main(name, args) =  let
+  
+    val (nums,sum) = loop ([],0.0) 
+    val nums = Array.fromList nums 
+    val n = Array.length nums
+    val n_float = real n
+    val mean = sum / n_float
+      
+    fun moments (x,{average_deviation,variance,skew,kurtosis}) = let
+      val deviation = x - mean
+      val average_deviation =
+	average_deviation + abs(deviation)
+      val dev2 = deviation * deviation
+      val variance = variance + dev2
+      val dev3 = dev2 * deviation
+      val skew = skew + dev3
+	val dev4 = dev3 * deviation
+	val kurtosis = kurtosis + dev4
+    in {average_deviation=average_deviation,
+	variance=variance,
+	skew=skew,
+	kurtosis=kurtosis}
+    end
+    val init = {average_deviation=0.0,
+		variance=0.0,
+		skew=0.0,
+		kurtosis=0.0}
+
+    val {average_deviation,variance,skew,kurtosis} =
+      Array.foldl moments init nums
+      
+    val average_deviation = average_deviation / n_float
+    val variance = variance /  real (n - 1);
+    val standard_deviation = Real.Math.sqrt (variance)
+    val {skew,kurtosis} =
+      if variance > 0.0
+	then {skew=skew / n_float / variance / standard_deviation,
+	      kurtosis=kurtosis / n_float / variance / variance - 3.0}
+      else {skew=skew,kurtosis=kurtosis}
+	
+    val _ = ArrayQSort.sort Real.compare nums
+    val mid = Int.quot (n, 2)
+    val median =
+      if Int.rem (n, 2) = 1
+	then Array.sub (nums, mid)
+      else (Array.sub (nums, mid) + 
+	    Array.sub (nums, mid - 1)) / 2.0
+in
+  printl ["n:                  ", Int.toString n, "\n",
+	  "median:             ", r2s median, "\n",
+	  "mean:               ", r2s mean, "\n",
+	  "average_deviation:  ", r2s average_deviation, "\n",
+	  "standard_deviation: ", r2s standard_deviation, "\n",
+	  "variance:           ", r2s variance, "\n",
+	  "skew:               ", r2s skew, "\n",
+	  "kurtosis:           ", r2s kurtosis];
+  OS.Process.success
+end
+
+val _ = main( CommandLine.name(), CommandLine.arguments() );

@@ -1,0 +1,88 @@
+;;; -*- mode: lisp -*-
+;;; $Id: wordfreq.cmucl,v 1.1 2004-05-19 18:14:15 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; From Bulent Murtezaoglu, based on code from Andrew McDowell
+
+;;; The Block/Buffering I/O code is adapted from material posted to comp.lang.lisp
+;;; by Thomas Kirk <tk@research.att.com>.
+;;; Archived here: http://www.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/lisp/code/io/fast_io/fast_io.txt
+;;;
+
+(declaim (optimize (speed 3) (debug 0) (safety 0) (space 0) (compilation-speed 0)))
+
+
+(defun main ()
+  (let* ((start 0)
+	 (current 0)
+	 (end 0)
+	 (eof nil)
+	 (inputbuffer (make-array 4096 :element-type '(unsigned-byte 8))))
+    (declare (type (simple-array (unsigned-byte 8)) inputbuffer)
+	     (fixnum start end)
+	     (inline code-char)
+	     (type (unsigned-byte 8) current))
+    (labels 
+	((get-char () ;;don't do this at home works through side effect unless eof
+		   (when (= start end)
+		     (setf start 0)
+		     (setf end (read-sequence inputbuffer *standard-input*))
+		     (when (zerop end)
+		       (setf eof t)
+		       (return-from get-char nil)))
+		   (setf current (aref inputbuffer start))
+		   (incf start))
+	
+ 	 (word-constituent-p () ;; side effects current rets t if word-constituent
+			     (or (and (>= current 97) (<= current 122)) 
+				   (and (>= current 65) (<= current 90) 
+					(incf current 32))))
+	 (reader (buffer)
+		 (declare (type simple-base-string buffer))
+		 (let* ((size (length buffer))
+			(fill-ptr 0))
+		   (declare (type (integer 0 1000)  size fill-ptr))
+		   (loop while (and (or (get-char) (return-from reader buffer))
+				    (not (word-constituent-p))))
+		   (loop
+		     (when (= fill-ptr size)
+		       (let ((new-buffer
+			      (make-string (the fixnum 
+					     (setf size (the fixnum (+ fill-ptr 5)))))))
+			 (setf (subseq (the simple-base-string new-buffer) 0 fill-ptr)
+			       buffer)
+			 (setf buffer new-buffer)))
+		     (setf (schar buffer fill-ptr) (code-char current))
+		     (incf fill-ptr)
+		     (if (get-char)
+			 (if (not (word-constituent-p))
+			     (return))
+		       (return)))
+		   (lisp::shrink-vector buffer fill-ptr))))
+
+      (let* ((h (make-hash-table :test 'equal :size 3380 :rehash-threshold 1.0))
+	     (buffer (make-string 10)))
+	(declare (inline gethash maphash))
+	(declare (type simple-base-string buffer))
+	(loop
+	  (setf buffer (reader buffer))
+	  (if (not eof)
+	      (if (= 1 (the fixnum (incf (the fixnum (gethash buffer h 0)))))
+		  (setf buffer (make-string 10)));; only cons if used
+	    (return)))
+	;; hast table => list
+	(let ((l '()))
+	  (maphash #'(lambda (key val)
+		       (push (cons key val) l))
+		   h)
+	  ;; sort the list
+	  (setf l (sort l #'(lambda (v1 v2)
+			      (if (> (the fixnum (cdr v1)) (the fixnum (cdr v2)))
+				  t
+				(if (= (the fixnum (cdr v1)) (the fixnum (cdr v2)))
+				    (string-lessp (car v2) (car v1))
+				  nil)))))
+	  
+	  ;; output the list of pairs 
+	  (mapcar #'(lambda (p)
+		      (format t "~7D	~A~&" (cdr p) (car p))) 
+		  l))))))

@@ -1,0 +1,51 @@
+-- By Ray Racine (Haskell newbie)
+-- Usage for 10 iterations:: regexp 10 < Input.txt
+
+import IO
+import System (getArgs)
+import RegexString (matchRegex, mkRegex)
+
+phoneMatch = matchRegex $ mkRegex regex
+	     where regex = 
+		       "(^|[^0-9\\(]+)" ++
+		       "(" ++ 
+	               "\\(([0-9][0-9][0-9])\\)" ++
+	               "|" ++
+	               "([0-9][0-9][0-9])" ++
+	               ")" ++
+	               " " ++
+	               "([0-9][0-9][0-9])" ++
+	               "[ -]"  ++
+	               "([0-9][0-9][0-9][0-9])" ++
+	               "[^0-9]"
+
+
+loadFile ls  = do
+	       eof <- hIsEOF stdin
+	       if (not eof)
+		  then do
+		         inStr <- hGetLine stdin
+			 loadFile ((inStr ++ "\n") : ls)
+		  else 
+		        return $ reverse ls
+
+canonicalPhone matchGrps = "(" ++ areacode ++ ") " ++ phnum
+                           where areacode = let (_,b) = splitAt 2 matchGrps in
+					    (head b) ++ (head . tail $ b)
+				 phnum = let (_,b) = splitAt 4 matchGrps in
+					 (head b) ++ "-" ++ (head . tail) b	
+	  
+findPhoneNums [] = []
+findPhoneNums (l:ls) = case matchInLine l of
+		       [] -> findPhoneNums ls
+		       x  -> [x] ++ findPhoneNums ls
+                       where matchInLine = maybe [] canonicalPhone . phoneMatch
+		     
+main = do
+       args <- getArgs
+       lines <- loadFile []
+       let n = read . head $ args in 
+	       sequence_ $ map displayLn $ zip [1..] $ doIterations n lines
+       return ()
+       where displayLn (n,l) = do putStrLn $ show n ++ ": " ++ l
+	     doIterations n lines = last $ take n (repeat (findPhoneNums lines))

@@ -1,0 +1,55 @@
+#!/usr/bin/guile \
+-e main -s
+!#
+
+;;; $Id: regexmatch.guile,v 1.1 2004-05-19 18:11:23 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(use-modules (ice-9 format))
+(use-modules (ice-9 regex))
+
+(define regexp
+  (string-append
+   "(^|[^0-9\\(])"			; (1) preceeding non-digit or bol
+   "("					; (2) area code
+   "\\(([0-9][0-9][0-9])\\)"		; (3) is either 3 digits in parens
+   "|"					; or
+   "([0-9][0-9][0-9])"			; (4) just 3 digits
+   ")"					; end of area code
+   " "					; area code is followed by one space
+   "([0-9][0-9][0-9])"			; (5) exchange is 3 digits
+   "[ -]"				; separator is either space or dash
+   "([0-9][0-9][0-9][0-9])"		; (6) last 4 digits
+   "([^0-9]|$)"				; must be followed by a non-digit
+   ))
+
+
+(define (main args)
+  (let ((n (or (and (= (length args) 2) (string->number (cadr args))) 1))
+	(phonelines '())
+	(rx (make-regexp regexp))
+	(count 0))
+    (let loop ((line (read-line)))
+      (cond ((eof-object? line) #f)
+	    (else
+	     (set! phonelines (append phonelines (list line)))
+	     (loop (read-line)))))
+    (while (> n 0)
+	   (set! n (- n 1))
+	   (let loop ((phones phonelines)
+		      (count 0))
+	     (if (null? phones)
+		 count
+		 (let ((match (regexp-exec rx (car phones))))
+		   (if match
+		       (let* ((area (if (match:start match 3)
+					(match:substring match 3)
+					(match:substring match 4)))
+			      (exch (match:substring match 5))
+			      (numb (match:substring match 6))
+			      (num (string-append "(" area ") " exch "-" numb)))
+			 (set! count (+ count 1))
+			 (if (= 0 n)
+			      (display (format "~D: ~a\n" count num)))))
+		   (loop (cdr phones) count)))))))
+

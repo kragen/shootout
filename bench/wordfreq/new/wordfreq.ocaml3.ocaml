@@ -1,0 +1,62 @@
+(*
+ * $Id: wordfreq.ocaml3.ocaml,v 1.1 2004-05-19 18:14:24 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ *)
+
+let max = 4096
+let buf = String.create max
+let wc = Hashtbl.create 75000
+let wbuf = Buffer.create 64
+
+type state = Inside | Outside
+
+let read_block () = 
+  let nread = input stdin buf 0 max in
+  if nread = 0 then raise End_of_file
+  else nread
+
+
+let rec scan_words i n w =
+  if i < n then
+    let c = buf.[i] in
+    match c with
+      'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'|'l'|'m'|'n'|'o'|'p'|'q'|'r'|'s'|'t'|'u'|'v'|'w'|'x'|'y'|'z' ->
+	begin
+	  Buffer.add_char wbuf c;
+	  scan_words (i+1) n Inside
+	end
+	  
+      'A'|'B'|'C'|'D'|'E'|'F'|'G'|'H'|'I'|'J'|'K'|'L'|'M'|'N'|'O'|'P'|'Q'|'R'|'S'|'T'|'U'|'V'|'W'|'X'|'Y'|'Z' ->
+	begin
+	  Buffer.add_char wbuf (Char.unsafe_chr(Char.code c + 32));
+	  scan_words (i+1) n Inside
+	end
+
+	  _ ->
+	begin
+	  if w = Inside then
+	    begin
+	      let word = Buffer.contents wbuf in
+	      begin try incr (Hashtbl.find wc word)
+	      with Not_found -> Hashtbl.add wc word (ref 1) end;
+	      Buffer.clear wbuf
+	    end
+	      scan_words (i+1) n Outside
+	end
+  else
+    scan_words 0 (read_block ()) w
+
+let cmp_pairs (c1, w1) (c2, w2) =
+  let cmp_c = compare c2 c1 in
+  if cmp_c = 0 then compare w2 w1
+  else cmp_c
+
+let print (c, w) = Printf.printf "%7d\t%s\n" c w
+let to_assoc wcpairs w c = wcpairs := (!c, w) :: !wcpairs
+
+let _ =
+  begin try scan_non_word 0 0
+  with End_of_file -> () end;
+  let wcpairs = ref [] in
+  Hashtbl.iter (to_assoc wcpairs) wc;
+  List.iter print (List.sort cmp_pairs !wcpairs)

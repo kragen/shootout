@@ -1,0 +1,68 @@
+;;; -*- mode: lisp -*-
+;;; $Id: echo.cmucl,v 1.1 2004-05-19 18:09:36 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; from Bulent Murtezaogl
+
+(in-package "UNIX")
+(defun unix-wait ()
+  "Wait for a child to die. We don't care about the status"
+  (int-syscall ("wait" (* int)) nil)) ;;  is lisp nil == C NULL ?? Dunno.
+(in-package "USER")
+
+
+(define-condition sigpipe)
+
+(defun ih-sigpipe (signal code scp)
+  (declare (ignore signal code scp))
+  (signal 'sigpipe))
+
+(defun main ()
+  (let ((lsock (ext:create-inet-listener 0))
+	(n (parse-integer (or (car (last extensions:*command-line-strings*)) "1"))))
+    (multiple-value-bind (host port) (get-socket-host-and-port lsock)
+      (declare (ignore host))
+      (let ((fork-res (unix:unix-fork)))
+	(if fork-res
+	    (if (zerop fork-res)
+		(echo-client port n)
+	      (let ((stream (sys:make-fd-stream
+			     (ext:accept-tcp-connection lsock)
+			     :output t :input t :buffering :line))
+		    (buffer (make-string 64))
+		    (insize 0)
+		    (sum 0))
+		(declare (fixnum insize sum))
+		(sys:enable-interrupt UNIX:sigpipe #'ih-sigpipe)
+		(handler-case
+		    (progn
+		      (loop ;; loop seems to chew up my declarations!?
+			while (not (zerop (setf (the fixnum insize)
+						(the fixnum (sys:read-n-bytes stream buffer 0 64 nil)))))
+			do (write-sequence buffer stream :start 0 :end insize)
+			(incf sum insize))
+		      (unix::unix-wait)
+		      (format t "server processed ~D bytes~%" sum))
+		  (sigpipe (foo) (declare (ignore foo)) (error-return "Kid died prematurely")) ;; as good as catching sigchild for this app 
+		  (end-of-file (foo) (declare (ignore foo))(error-return "EOF signalled.  Huh???"))))))))))
+
+(defun error-return (str)
+  (format *standard-output* "Error: ~s ~%" str)
+  (quit))
+
+(defun echo-client (port iter)
+  (declare (fixnum iter))
+  (let* ((stream (sys:make-fd-stream
+		  (ext:connect-to-inet-socket "127.0.0.1" port)
+		  :output t :input t :buffering :line))
+	 (estr "Hello there sailor
+")
+	   (len (length estr))
+	   (buffer (make-string len)))
+    (dotimes (i iter)
+      (declare (fixnum i len) (simple-base-string buffer)
+	       (inline write-sequence sys:read-n-bytes string=))
+      (write-sequence estr stream :start 0 :end len )
+      (sys:read-n-bytes stream buffer 0 len nil)
+      (unless (string= estr buffer) 
+	(format t "client did not receive what it sent ~%")))))
+

@@ -1,0 +1,495 @@
+#!/usr/bin/perl
+# -*- mode: perl -*-
+######################################################################
+# $Id: plot,v 1.1 2004-05-19 18:14:32 bfulgham Exp $
+######################################################################
+
+######################################################################
+# Compile Time Initialization and Included Modules
+######################################################################
+BEGIN {
+    # since perl will optimize out conditional branches that are never
+    # reached, we define the following constants so that we only compile 
+    # debug/help code into the program when it it actually needed.
+    use constant HELP => grep(/^(?:-?-help|-h)$/, @ARGV);
+    use constant DBG => grep(/^(?:-?-debug|-d)$/, @ARGV);
+}
+use Getopt::Long;
+use strict;
+
+######################################################################
+# Globals
+######################################################################
+my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
+my $VERSION = (split(/ /, q$Revision: 1.1 $ ))[1];
+# holds command line options
+my @OPTIONS =
+    (
+     # plot options
+     'debug|d!',
+     'displaycommand=s',
+     'height=i',
+     'help|h!',
+     'imagefile=s',
+     'license!',
+     'select=s',
+     'ticklabels!',
+     'type=s',
+     'version!',
+     'width=i',
+     #'xnormalize=i', # hard
+     'ynormalize=i',
+     'dsnames!',		# readdatasetnames
+     'scale=i',
+     );
+
+my @CHART_SIMPLE_OPTS =
+    (
+     'brush_size=i',
+     'cutoff=i',
+     'gif_border=i',
+     'graph_border=i',
+     'grey_background=s',
+     'grid_lines=s', # ?
+     'imagemap=s',
+     'legend=s',
+     'max_val1=i',
+     'max_val2=i',
+     'max_val=i',
+     'min_val1=i',
+     'min_val2=i',
+     'min_val=i',
+     'nocutoff=s',
+     'nosort=s',
+     'pt_size=i',
+     'same_y_axes=s',
+     'skip_x_ticks=i',
+     'spaced_bars=s',
+     'sub_title=s',
+     'text_space=i',
+     'tick_len=i',
+     'title=s',
+     'transparent=s',
+     'x_label=s',
+     'x_ticks=s',
+     'y_label2=s',
+     'y_label=s',
+     'y_ticks1=i',
+     'y_ticks2=i',
+     'y_ticks=i',
+     'ylabel2=s',
+     'no_cache=s',
+    );
+
+my @CHART_COMPLEX_OPTS =
+    (
+     'colors=s',		# ref to hash of lists
+     'composite_info=s',	# ref to list of lists
+     'custom_x_ticks=s',	# ref to list
+     'legend_labels=s',		# ref to list
+     'sort=s',			# scalar or ref to array of 3 items
+    );
+
+push(@OPTIONS, @CHART_SIMPLE_OPTS, @CHART_COMPLEX_OPTS);
+my @CHART_SIMPLE_OPT_NAMES = (grep(s/\W.*//, @CHART_SIMPLE_OPTS));
+my @CHART_COMPLEX_OPT_NAMES = (grep(s/\W.*//, @CHART_COMPLEX_OPTS));
+
+# initial values are defaults for command line options
+my %OPT =
+    ('imagefile' => 'plot.gif',
+     'width' => 640,
+     'height' => 480,
+     'type' => 'Lines',		# default graph type
+    );
+
+# graph types
+my @TYPES = qw(Lines Bars Points StackedBars LinesPoints Composite Mountain);
+
+my @RANGE = ();			# used when normalizing
+
+######################################################################
+# pre-declared functions
+######################################################################
+sub err (@) { print STDERR @_,"\n" }
+
+
+######################################################################
+# main program
+######################################################################
+sub main {
+    # load the Chart modules
+    my @types = ();
+    foreach my $type (@TYPES) {
+	eval "use Chart::$type;";
+	push(@types, $type) if (not $@);
+    }
+    @TYPES = @types;
+    if (not @TYPES) {
+	print STDERR "It looks like the perl Chart module isn't installed on your system
+You should be able to get it from: http://www.cpan.org/\n";
+	exit(1);
+    }
+    my $g;
+    my $type = lc $OPT{type};
+    $type = (grep(/$type/i, @TYPES))[0];
+    eval "\$g = Chart::$type->new(\$OPT{width}, \$OPT{height});";
+    if (not $g) {
+	print STDERR "It looks like $type is an invalid Chart type, try one of these:\n@TYPES\n";
+	exit(1);
+    }
+    my $data = &getdata();
+    if ($OPT{'ynormalize'}) {
+	# TBD this label muckage really ought to be optional
+	$OPT{'x_label'} .= "[Original ranges: " . join(', ', @RANGE) . ']';
+    }
+    # make sure we have colors for all datasets.
+    # Chart only provides colors for the first 16 datasets
+    my $d = 16;
+    for my $color (qw (red green blue purple peach orange mauve olive pink light_purple light_blue plum yellow turquoise light_green brown red green blue purple peach orange mauve olive pink light_purple light_blue plum yellow turquoise light_green brown)) {
+	$g->{'colors_default_spec'}->{'dataset' . $d++} = $color;
+    }
+    my @options = ();
+    # preprocess complex chart opts
+    foreach my $optname (@CHART_COMPLEX_OPT_NAMES) {
+	# turn the command line parameter into a complex data structure
+	eval "push(\@options, \$optname => $OPT{$optname});" if ($OPT{$optname});
+    }
+    foreach my $optname (@CHART_SIMPLE_OPT_NAMES) {
+	push(@options, $optname => $OPT{$optname}) if ($OPT{$optname});
+    }
+    $g->set(@options);
+    eval { $g->gif($OPT{imagefile}, $data); };
+    if ($@) {
+	$OPT{imagefile} =~ s/\.gif$/.png/;
+	$g->png($OPT{imagefile}, $data);
+    }
+    system("$OPT{displaycommand} $OPT{imagefile} &") if ($OPT{displaycommand});
+}
+
+
+######################################################################
+# Subroutines
+######################################################################
+sub getdata {
+    my @data = ();
+    my $i = 1;
+    my @selects = ($OPT{select}) ? (split(/\D+/,$OPT{select})) : ();
+    if ($OPT{dsnames}) {
+	# read first line of file which contains the dataset names
+	my $labels = <>;
+	# TBD - apply @selects to these lables? hmmm.
+	# or should user prune legend labels if specifying selects?
+	$labels =~ s/^\#\s+//;
+	$OPT{legend_labels} = "[qw($labels)]";
+    }
+    if (@selects and $OPT{ticklabels}) {
+	unshift(@selects, 0);
+    }
+    while (<>) {
+	s/\#.*//;		# remove comments from data
+	s/^\s+//;		# remove initial spaces
+	next if (not /\S/);	# skip blank lines
+	my @vals = split(/\s+/, $_);
+	@vals = @vals[@selects] if (@selects);
+	my $dataset = 0;
+	unless ($OPT{ticklabels}) {
+	    # create integral x ticks
+	    push(@{$data[$dataset++]}, $i++);
+	}
+	foreach my $val (@vals) {
+	    push(@{$data[$dataset++]}, $val);
+	}
+    }
+    if ($OPT{ynormalize}) {
+	foreach (my $ds=1; defined($data[$ds]); $ds++) {
+	    my $max = $data[$ds]->[0];
+	    my $min = $max;
+	    foreach my $val (@{$data[$ds]}) {
+		$max = $val if ($val > $max);
+		$min = $val if ($val < $min);
+	    }
+	    my $name = $ds;
+	    if ($OPT{'legend_labels'}) {
+		my $nm_aref = eval "$OPT{'legend_labels'};";
+		$name = $nm_aref->[$ds-1];
+	    }
+	    $RANGE[$ds-1] = "$name:$min-$max";
+	    if ($min < 0) {
+		my $dif = -$min;
+		$min = 0;
+		$max += $dif;
+	    }
+	    my $factor = ($max != 0) ? $OPT{ynormalize}/$max : 0;
+	    my $i = 0;
+	    while (defined($data[$ds]->[$i])) {
+		$data[$ds]->[$i] *= $factor;
+		$i++;
+	    }
+	}
+    }
+    if (defined $OPT{scale}) {
+	my $min = $data[1]->[0];
+	my $max = $min;
+	foreach (my $ds=1; defined($data[$ds]); $ds++) {
+	    foreach my $val (@{$data[$ds]}) {
+		$max = $val if ($val > $max);
+		$min = $val if ($val < $min);
+	    }
+	}
+	my $range = $max - $min;
+	$OPT{max_val} = ($max > 10) ? int($max + 1) : $max;
+	if ($max) {
+	    $OPT{min_val} = (($max - $min)/$max < 0.1) ? 0 : int($min);
+	} else {
+	    $OPT{min_val} = 0;
+	}
+    }
+    return(\@data);
+}
+
+sub process_command_line {
+    if (@ARGV) {
+	# config Getopt::Long so it doesn't ignore case of command options.
+	Getopt::Long::config("no_ignore_case");
+        if (not GetOptions(\%OPT, @OPTIONS)) {
+	    warn qq{Unknown option, try "$PROGNAME --help"\n};
+	    exit(1);
+	}
+    }
+    &Help()    if ($OPT{help});
+    &Version() if ($OPT{version});
+    &License() if ($OPT{license});
+}
+
+sub readconf {
+    my $file = "$ENV{HOME}/.$PROGNAME";
+    if (open(F, "<$file")) {
+	while(<F>) {
+	    s/#.*//;
+	    if (/^(\S+) ?(.*)$/) {
+		$OPT{lc $1} = $2;
+	    }
+	}
+	close(F);
+    }
+}
+
+
+######################################################################
+# the main process starts here.
+######################################################################
+&readconf();
+&process_command_line();
+&main();
+
+
+######################################################################
+# only documentation follows
+######################################################################
+sub print_version {
+    print qq{  This is $PROGNAME, version $VERSION Copyright @{[(localtime())[5] + 1900]} by Doug Bagley\n};
+}
+
+sub Version {
+    &print_version();
+    exit(0);
+}
+
+sub License {
+    &print_version();
+    print <<EOF;
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You can review the GNU General Public License by writing to the Free
+  Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+  02111-1307 USA, (or here: http://www.gnu.org/copyleft/gpl.txt).
+
+EOF
+    exit(0);
+}
+
+sub Help {
+    if (HELP) {
+	print <<EOF;
+NAME
+
+  $PROGNAME - creates chart images from input data
+
+SYNOPSIS
+
+  $PROGNAME [options] [file ...]
+
+  Options:
+  --debug|-d       turn on debugging
+  --displaycommand specify a command to display the chart
+  --height         height of chart image
+  --help|-h        documentation
+  --imagefile      output filename for chart image
+  --license        print nice free software license
+  --select         select columns from input
+  --ticklabels     tick labels are included in input
+  --type           chose chart type
+  --version|-v     program version
+  --width          width of chart image
+  [Options can be abbreviated, as long as the abbreviation is unique.]
+
+  Input file(s) can be specified on command line otherwise data is
+  read from stdin.
+
+DESCRIPTION
+
+  $PROGNAME will plot input data and produce an image of a graph
+  using the perl Chart module.  Depending on which version of Chart
+  is installed the image file will be a gif (older versions) or png
+  (newer versions).
+
+OPTIONS
+
+  --debug
+
+    Turns on debugging output.
+
+  --displaycommand commandname
+
+    Specifies the name of a program to display the resulting image file
+    on your screen (like 'xv', or 'ee').
+
+  --height integer
+
+    The height of the chart image in pixels.
+
+  --help
+
+    Prints the documentation for this program.
+
+  --imagefile name
+
+    Specifies name of chart image file.
+
+  --license
+
+    Prints the license for this program.
+
+  --select X,Y,Z,...
+
+    Specifies a comma delimited list of integers which identify which
+    columns in the input are to be used in the chart.  The first
+    column in the input data is 0.
+
+  --ticklabels
+
+    This means that the labels for the ticks on the X-axis are included
+    in the input data.  If not specified, then integers are used for
+    the tick labels (starting with 1).
+
+  --type TYPE
+
+    Specify which Chart type you want, one of the following (some of
+    these types may not be implemented in older versions of Chart):
+    @TYPES
+
+  --version
+
+    Prints the version of this program.
+
+  --width integer
+
+    The width of the chart image in pixels.
+
+  See "man Chart" (the documentation for the perl Chart module) for
+  documentation of all the other possible parameters that allow you to
+  specify how the chart is plotted, labeled, colored, etc.
+
+
+INPUT DATA
+
+  The input data has the following format:
+
+  A1 B1 C1
+  A2 B2 C2
+  A3 B3 C3
+  A4 B4 C4
+  .  .  .
+  .  .  .
+  .  .  .
+
+  In this case, there are 3 datasets, A, B and C.  You can have as
+  many as you want.  Each row represents a list of y-values, one for
+  each dataset.
+
+  If you specify the --ticklabels option, then the first column are
+  taken as strings for labeling the ticks on the X-axis.  Think of it
+  like this:
+
+  Label1 A1 B1 C1
+  Label2 A2 B2 C2
+  Label3 A3 B3 C3
+  Label4 A4 B4 C4
+    .    .  .  .
+    .    .  .  .
+    .    .  .  .
+
+  You can use the --select option to graph selected datasets if you
+  don\'t want them all.
+
+
+CONFIGURATION FILE
+
+  You can put any command line option in the configuration file:
+
+    ~/.$PROGNAME
+
+  You can put comments in this file (preceeded by #).
+  To define an option just put the option, a space, and its value
+  (The value can have space in it):
+
+    option value
+
+  To undefine an option, just put the option name, with no value:
+
+    option
+
+  To define a boolean option just give it a value of 1:
+
+    booleanoption 1
+
+EXAMPLES
+
+  Take the data from file "dat", plot a Line chart (the default type)
+  using X-axis tick labels from the input stream, with specified
+  dataset names in the legend, and then display the output chart
+  image with the "ee" command:
+
+    plot --disp ee --tickl --legend_labels '["red", "green", "blue"]' dat
+
+BUGS
+
+SEE ALSO
+
+AUTHOR
+
+(Doug Bagley) http://www.bagley.org/~doug/contact.shtml
+
+VERSION
+
+  $PROGNAME $VERSION
+
+KEYWORDS
+
+COPYRIGHT
+
+  Copyright (c) @{[(localtime())[5] + 1900]} by Doug Bagley
+  This is free software.  See "$PROGNAME --license".
+EOF
+	exit(0);
+    }
+}

@@ -1,0 +1,98 @@
+/* Rick Hohensee 2001
+
+Rick Hohensee writes:
+The Ackermann function in GNU gas with cpp macros for "asmacs"
+verbosifications and "osimpa" "callee-passes" subroutine parameter passing
+
+Parts of asmacs, osimpa.cpp and local renamings included in this file for
+clarity.  
+
+This implements caller-hikes, callee-saves. Postponed passing. For all
+I know though the advantage over Gcc -O3 -fomit-frame-pointer is entirely
+in the self-hiking RET's, where the frame fixup is free. Gcc should do
+that and doesn't. 
+
+This does Ack(3,8) in about 0.300 on this box, versus 0.450 best case for
+Gcc. There's no libosimpa yet, so I just reworked the C version to just
+return %eax so I know the same computation is happening. Both return 253
+for Ack(3,8) and 19 for Ack(2,7) or 2,8.
+
+This beats C by about 50% WITHOUT optimizing out the tail-recursions,
+which Gcc -O3 does do. That means osimpa calls are CHEAP. I
+haven't even tried the optimization yet.
+
+*/
+
+
+#define cell    4
+#define cells   *4
+#define sM       4 (%esp)
+#define sN       8 (%esp)
+                                        /* some of the parent's locals */
+#define pM      ((def_hike +2)  cells) (%esp)
+#define pN      ((def_hike +3)  cells) (%esp)
+
+
+#define def(routine,HIKE)                       \
+        def_hike    =       HIKE    ;       \
+        .globl routine                  ;       \
+        routine:
+
+#define fed             ret $(def_hike cells)
+
+#define child(callee)   child_hike = callee ## _hike
+
+#define hike(by)        subl $(by cells) , %esp
+
+#define do(callee)              \
+        hike(def_hike)   ;\
+        call callee
+                                /* Asmacs exerpts as pertains */
+#define testsubtract    cmpl
+#define ifzero          jz
+#define decrement       decl
+#define increment       incl
+#define to              ,
+#define with            ,
+#define copy            movl
+#define A               %eax
+
+def(Ack,2)
+testsubtract $0 with pM
+ifzero                                          alpha
+        testsubtract $0 with pN
+        ifzero                          beta
+#                               return( Ack(M - 1, Ack(M, (N - 1))) );
+                copy pN to A
+                decrement A
+                copy A to sN
+                copy pM to A
+                copy A to sM
+                        do(Ack)
+                copy A to sN
+                decrement sM
+                        do(Ack)
+                                fed
+#                                        return( N + 1 );
+alpha:  copy pN to A                                    # M=0
+        increment A
+                        fed
+#                                       return( Ack(M - 1, 1) );
+beta:   copy $1 to sN                                   # N=0
+        copy  pM to A
+        decrement A
+        copy A to sM
+                do(Ack)
+                        fed
+
+
+#___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___ ___
+
+def(main,2)                                     # known OK
+        copy $3 to sM
+        copy $8 to sN
+        do(Ack)
+                        fed
+
+
+

@@ -1,0 +1,48 @@
+-- $Id: prodcons.ghc,v 1.1 2004-05-19 18:11:09 bfulgham Exp $
+-- http://www.bagley.org/~doug/shootout/
+-- from Josef Svenningsson
+ 
+module Main where
+
+import CVar
+import MVar
+import Concurrent
+import Exception
+import IOExts
+import System
+
+producer :: Int -> IORef Int -> CVar Int -> IO ()
+producer n p ch = sequence_ (map send [1..n])
+  where send i = do writeCVar ch i
+                    prod <- readIORef p
+                    writeIORef p (prod+1)
+
+consumer :: Int -> IORef Int -> CVar Int -> IO ()
+consumer n c ch = cons 1
+  where cons i | n <= i = return ()
+        cons i
+            = do i <- readCVar ch
+                 con <- readIORef c
+                 writeIORef c (con+1)
+                 cons i
+
+myForkIO :: IO () -> IO (MVar ())
+myForkIO io = do
+   mvar <- newEmptyMVar
+   forkIO (io `finally` putMVar mvar ())
+   return mvar
+
+join :: MVar () -> IO ()
+join mvar = readMVar mvar
+
+main = do (a:_) <- getArgs
+          let n = read a
+          produced <- newIORef 0
+          consumed <- newIORef 0
+          channel <- newCVar
+          p <- myForkIO (producer n produced channel)
+          c <- myForkIO (consumer n consumed channel)
+          join p; join c
+          prod <- readIORef produced
+          cons <- readIORef consumed
+          putStrLn (show prod ++ " " ++ show cons)

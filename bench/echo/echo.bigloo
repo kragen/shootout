@@ -1,0 +1,50 @@
+;;; -*- mode: scheme -*-
+;;; $Id: echo.bigloo,v 1.1 2004-05-19 18:09:34 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(module echo
+	;(option (set! *genericity* #f))
+	(extern (macro fork::int () "fork"))
+	(extern (macro wait::int () "wait"))
+	(main main))
+
+;; we'll use bigloo functions that automatically add/remove newline
+(define DATA "Hello there sailor")
+
+(define (echo-client n port)
+  (let* ((sock (make-client-socket "localhost" port))
+	 (sk-out (socket-output sock))
+	 (sk-in (socket-input sock)))
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (fprint sk-out DATA)
+      (flush-output-port sk-out)
+      (let ((ans (read-line sk-in)))
+	(if (not (string=? DATA ans))
+	    (error "echo-client" "BAD reply" ans))))))
+
+(define (echo-server n)
+  (let* ((ssock (make-server-socket)) 
+	 (port (socket-port-number ssock))
+	 (pid (fork)))
+    (cond ((> pid 0)			;parent
+	   (socket-accept-connection ssock)
+	   (let ((sk-in (socket-input ssock))
+		 (sk-out (socket-output ssock))
+		 (bytes 0))
+	     (let loop ((line (read-line sk-in)))
+	       (if (not (eof-object? line))
+		   (begin
+		     (fprint sk-out line)
+		     (flush-output-port sk-out)
+		     (set! bytes (+ bytes (string-length line) 1))
+		     (loop (read-line sk-in)))))
+	     (print "server processed " bytes " bytes"))
+	   (wait))
+	  (else				;child
+	   (echo-client n port)))))
+
+
+(define (main args)
+  (let ((n (or (and (= (length args) 2) (string->number (cadr args))) 1)))
+    (echo-server n)))

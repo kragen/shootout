@@ -1,0 +1,176 @@
+;;; -*- mode: lisp -*-
+;;; $Id: moments.cmucl,v 1.1 2004-05-19 18:10:46 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; From Bulent Murtezaoglu
+
+(declaim (optimize (speed 3) (debug 0) (safety 0) (space 0) (compilation-speed 0)))
+
+(defun quicksort (vec lo hi) ;; modified from from Roger Corman's posting in cll
+  (declare (fixnum hi lo) (type (simple-array double-float) vec))
+    (if (> hi lo)
+        (let* ((mid (round (+ lo hi) 2))
+               (i lo)
+               (j (+ hi 1))
+               (p (aref vec mid)))
+	  (declare (fixnum i j) (double-float p))
+            (rotatef (aref vec mid) (aref vec lo)) ;; swap mid element to first
+            (loop
+                (loop do (incf i)
+                    until (or (> i hi) (> p (aref vec i))))
+                (loop do (decf j)
+                    until (or (<= j lo) (> (aref vec j) p)))
+		(if (< j i) (return))
+                (rotatef (aref vec i)(aref vec j)))
+  (rotatef (aref vec lo) (aref vec j)) ;;put partition element in place 
+  (quicksort vec lo (- j 1))  (quicksort vec i hi))) vec)
+
+(defun do-moments (data n mean)
+  (declare (fixnum n) (double-float mean) (type (simple-array double-float) data))
+  (let ((average_deviation 0.0d0)
+	(standard_deviation 0.0d0)
+	(variance 0.0d0)
+	(skew 0.0d0)
+	(kurtosis 0.0d0)
+	(median 0.0d0))
+    (declare (double-float mean average_deviation standard_deviation
+			   variance skew kurtosis median))
+    (declare (inline quicksort))
+    (loop for i fixnum from 0 below n do
+      (let* ((deviation (- (the double-float (aref data i)) mean))
+	     (deviation2 (* deviation deviation))
+	     (deviation3 (* deviation deviation2))
+	     (deviation4 (* deviation deviation3)))
+	(incf average_deviation (abs deviation))
+	(incf variance deviation2)
+	(incf skew deviation3)
+	(incf kurtosis deviation4)))
+    
+    (setq average_deviation (/ average_deviation n))
+    (setq variance (/ variance (1- n)))
+    (setq standard_deviation (sqrt variance))
+    
+    (cond ((> variance 0.0d0)
+	   (setq skew (/ skew (* n variance standard_deviation)))
+	   (setq kurtosis (- (/ kurtosis (* (coerce n 'double-float)
+					    variance variance))
+			     3.0d0))))
+    (setf data (quicksort data 0 (1- n)))
+    (let ((mid (/ n 2)))
+      (fixnum mid)
+      (if (zerop (mod n 2))
+	  (setq median (/ (+ (the double-float (aref data mid))
+			     (the double-float (aref data (1- mid))))
+			  2.0d0))
+	(setq median (aref data mid))))
+    (format t "n:                  ~A~%" n)
+    (format t "median:             ~,6F~%" median)
+    (format t "mean:               ~,6F~%" mean)
+    (format t "average_deviation:  ~,6F~%" average_deviation)
+    (format t "standard_deviation: ~,6F~%" standard_deviation)
+    (format t "variance:           ~,6F~%" variance)
+    (format t "skew:               ~,6F~%" skew)
+    (format t "kurtosis:           ~,6F~%" kurtosis)))
+
+
+(defun main ()
+  (let ((buffer (make-string 4096))
+	(start 0)
+	(end 0)
+	(result 0.0d0)
+	(char #\X)
+	(stream *standard-input*)
+	(eof-p nil))
+    (declare (fixnum start end) (double-float result))
+    (labels ((get-char ()
+		       (when (= start end)
+			 (setf start 0)
+			 (setf end (read-sequence buffer stream))
+			 (when (zerop end)
+			   (setf eof-p t)
+			   (setf char #\Z) ;any non-digit will do
+			   (return-from get-char nil)))
+		       (setf char (schar buffer start))
+		       (incf start))
+	     (get-dfloat ();; parse double float hack someone should rewrite this
+			 (let ((minusp nil)
+			       (expminusp nil)
+			       (before-dp 0)
+			       (after-dp 0)
+			       (dec-digits 0)
+			       (exponent 0))
+			   (declare (fixnum before-dp after-dp exponent dec-digits)
+				    (inline digit-char-p char=))
+			   (loop while (and
+					(not
+					 (or (and (char= #\- char)
+						  (setq minusp t))
+					     (digit-char-p char 10)))
+					(get-char)))
+			   (loop 
+			     do (let ((weight (digit-char-p char 10)))
+				  (declare (type (or null fixnum) weight))
+				  (if weight
+				      (setq before-dp (+ weight (the fixnum (* before-dp 10))))
+				    (return)))
+			     until (not (get-char)))
+			   (if minusp (setf before-dp (- before-dp)))
+			   (when (char= #\. char)
+			     (loop while (get-char)
+			       do (let ((weight (digit-char-p char 10)))
+				    (declare (type (or null (signed-byte 32)) weight))
+				    (if weight
+					(setq after-dp (+ weight (the fixnum (* after-dp 10)))
+					      dec-digits (the fixnum (1+ dec-digits)))
+				      (return)))))
+			   (when (or (char= #\e char) (char= #\E char))
+			     (get-char)
+			     (when (char= #\- char)
+			       (setq expminusp t)
+			       (get-char))
+			     (loop 
+			       do (let ((weight (digit-char-p char 10)))
+				    (declare (type (or null fixnum) weight))
+				    (if weight
+					(setq exponent (+ weight (the fixnum (* exponent 10))))
+				      (return)))
+			       until (not (get-char)))
+			     (if expminusp (setf exponent (- exponent))))
+			   (setq result
+				 (float (*
+					 (+ (float before-dp 1.0d0)
+					    (if (zerop after-dp) 0.0d0
+					      (* (float after-dp 1.0d0)
+						 (if (zerop dec-digits) 1.0d0
+						   (expt 10.0d0 (float (- dec-digits) 1.0d0))))))
+					 (if (zerop exponent) 1.0d0
+					   (expt 10.0d0 (float exponent 1.0d0)))) 1.0d0)))))
+
+      (let ((sum 0.0d0)
+	    nums )
+	(declare (double-float sum) (inline vector-push-extend))
+	(let* ((array-size 10000)
+	       (numbuffer (make-array array-size :element-type 'double-float))
+	       (buflist (list numbuffer)) ;; Doug's idea put these together later
+	       (fill-pointer 0))
+	  (loop
+	    (get-dfloat)
+	    (if (not eof-p)
+		(progn 
+		  (incf sum result)
+		  (setf (aref numbuffer fill-pointer) result)
+		  (incf fill-pointer)
+		  (when (= fill-pointer array-size)
+		    (push
+		     (setf numbuffer (make-array array-size :element-type 'double-float))
+		     buflist)
+		    (setf fill-pointer 0)))
+	      (return)))
+	  (let* ((num-arrays (length buflist))
+		 (num-elem (+ (* (1- num-arrays) array-size) fill-pointer)))
+	    (setf nums (make-array  num-elem :element-type 'double-float))
+	    (locally (declare (type (simple-array double-float) nums))
+		     (loop for i fixnum from 0 to (1- num-arrays) do
+		       (setf (subseq nums (* i array-size))
+			     (the (simple-array double-float)
+			       (elt buflist (- (1- num-arrays) i))))) ;;buflist is rev'd
+		     (do-moments nums num-elem (/ sum num-elem)))))))))

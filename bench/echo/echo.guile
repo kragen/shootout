@@ -1,0 +1,43 @@
+#!/usr/bin/guile -s
+!#
+
+;;; $Id: echo.guile,v 1.1 2004-05-19 18:09:36 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; from Brad Knotwell
+
+(use-modules (ice-9 format))
+(define DATA "Hello there sailor\n")
+(define bufferSize (string-length DATA))
+
+(define (echo-client n port-number)
+  (let ((new-sock (socket AF_INET SOCK_STREAM 0))
+	(buf (make-string bufferSize)))
+    (begin (connect new-sock 
+		    AF_INET 
+		    INADDR_LOOPBACK
+		    port-number)
+	   (do ((i 0 (1+ i)))
+	       ((= i n) (close new-sock))
+	     (begin 
+                 (send new-sock DATA)
+		 (recv! new-sock buf)
+                 (if (not (string=? buf DATA)) (throw 'badData)))))))
+
+(define (echo-server n)
+  (let ((sock (socket AF_INET SOCK_STREAM 0)))
+    (begin (setsockopt sock SOL_SOCKET SO_REUSEADDR 1)
+	   (bind sock AF_INET INADDR_LOOPBACK 0)
+	   (listen sock 2)
+	   (let ((pid (primitive-fork)))
+	     (if (= pid 0)
+		 (echo-client n (array-ref (getsockname sock) 2)) 
+		 (let ((new-sock (car (accept sock)))
+		       (buf (make-string bufferSize))
+		       (num-read 0))
+		   (do ((i (recv! new-sock buf) (recv! new-sock buf)))
+		       ((= 0 i) (begin (waitpid pid WNOHANG)
+				       (display (format "server processed ~D bytes\n" num-read))))
+		     (send new-sock buf) (set! num-read (+ num-read i)))))))))
+  
+(echo-server (or (and (= (length args) 2) (string->number (cadr args))) 1))
+

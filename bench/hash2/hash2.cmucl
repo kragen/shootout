@@ -1,0 +1,37 @@
+;;; -*- mode: lisp -*-
+;;; $Id: hash2.cmucl,v 1.1 2004-05-19 18:10:01 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; from Paul Foley
+
+(declaim (optimize (speed 3) (space 0) (safety 0) (debug 0) (compilation-speed 0)))
+(defun command-line-argument ()
+  (parse-integer (or (car (last ext:*command-line-strings*)) "1")))
+
+(defconstant +digit+ "0123456789")
+
+(defconstant +digits-needed+
+  '(10 100 1000 10000 100000 10000000 100000000 536870911))
+
+(defun fixnum-to-foo-string (n)
+  (declare (fixnum n))
+  (let* ((size (+ 4 (position-if (lambda (x) (> (the fixnum x) n))
+                                 +digits-needed+)))
+	 (result (make-string (1+ size))))
+    (replace result "foo_")
+    (loop for i fixnum from size downto 4 with q fixnum = n and r fixnum = 0
+      do (multiple-value-setq (q r) (floor q 10))
+         (setf (schar result i) (aref +digit+ r)))
+    result))
+
+(defun main (&optional (n (command-line-argument)))
+  (let ((hash1 (make-hash-table :test 'equal :size n))
+        (hash2 (make-hash-table :test 'equal :size n)))
+    (macrolet ((hash1 (i) `(gethash (fixnum-to-foo-string ,i) hash1))
+               (hash2 (i) `(gethash (fixnum-to-foo-string ,i) hash2)))
+      (loop for i fixnum below 10000 do (setf (hash1 i) i))
+      (loop for i fixnum below n do
+        (maphash (lambda (k v)
+                   (declare (fixnum v))
+                   (incf (the fixnum (gethash k hash2 0)) v))
+                 hash1))
+      (format t "~D ~D ~D ~D~%" (hash1 1) (hash1 9999) (hash2 1) (hash2 9999)))))

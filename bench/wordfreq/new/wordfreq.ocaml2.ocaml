@@ -1,0 +1,67 @@
+(*
+ * $Id: wordfreq.ocaml2.ocaml,v 1.1 2004-05-19 18:14:24 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ *)
+
+let max = 4096
+let buf = String.create max
+let wc = Hashtbl.create 75000
+let wbuf = Buffer.create 64
+
+
+let read_block () = 
+  let nread = input stdin buf 0 max in
+  if nread = 0 then raise End_of_file
+  else nread
+
+
+let is_alpha i =
+  let c = buf.[i] in
+  if 'a' <= c && c <= 'z' then begin
+    Buffer.add_char wbuf c;
+    true
+  end
+  else
+    if 'A' <= c && c <= 'Z' then begin
+      Buffer.add_char wbuf (Char.unsafe_chr(Char.code c + 32));
+      true
+    end
+    else
+      false
+
+
+let rec scan_word i n =
+  if i < n then
+    if is_alpha i then scan_word (i+1) n
+    else begin
+      let word = Buffer.contents wbuf in
+      begin try incr (Hashtbl.find wc word)
+      with Not_found -> Hashtbl.add wc word (ref 1) end;
+      Buffer.clear wbuf;
+      scan_non_word (i+1) n
+    end
+  else
+    scan_word 0 (read_block ())
+
+and scan_non_word i n =
+  if i < n then
+    if is_alpha i then scan_word (i+1) n
+    else scan_non_word (i+1) n
+  else
+    scan_non_word 0 (read_block ())
+
+
+let cmp_pairs (c1, w1) (c2, w2) =
+  let cmp_c = compare c2 c1 in
+  if cmp_c = 0 then compare w2 w1
+  else cmp_c
+
+let print (c, w) = Printf.printf "%7d\t%s\n" c w
+let to_assoc wcpairs w c = wcpairs := (!c, w) :: !wcpairs
+
+let _ =
+  begin try scan_non_word 0 0
+  with End_of_file -> () end;
+  let wcpairs = ref [] in
+  Hashtbl.iter (to_assoc wcpairs) wc;
+  List.iter print (List.sort cmp_pairs !wcpairs)

@@ -1,0 +1,236 @@
+(* -*- mode: sml -*-
+ * $Id: prodcons.mlton2.mlton,v 1.1 2004-05-19 18:11:10 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ * this version uses non-preemptive threads
+ *)
+(* Translated from prodcons.ocaml. *)
+
+functor Z (S: sig
+		 structure Primitive:
+		    sig
+		       structure Thread:
+			  sig
+			     val atomicBegin: unit -> unit
+			     val atomicEnd: unit -> unit
+			  end
+		    end
+		 structure MLton:
+		    sig
+		       structure Thread:
+			  sig
+			     type 'a t
+			     val new: ('a -> unit) -> 'a t
+			     val switch: ('a t -> 'b t * 'b) -> 'a
+			  end
+		    end
+	      end) =
+struct
+
+open S
+
+fun for (start, stop, f) =
+   let
+      fun loop i =
+	 if i > stop
+	    then ()
+	 else (f i; loop (i + 1))
+   in
+      loop start
+   end
+
+structure Queue:
+   sig
+      type 'a t
+
+      val new: unit -> 'a t
+      val enque: 'a t * 'a -> unit
+      val deque: 'a t -> 'a option
+   end =
+   struct
+      datatype 'a t = T of {front: 'a list ref, back: 'a list ref}
+
+      fun new () = T {front = ref [], back = ref []}
+
+      fun enque (T {back, ...}, x) = back := x :: !back
+
+      fun deque (T {front, back}) =
+	 case !front of
+	    [] => (case !back of
+		      [] => NONE
+		    | l => let val l = rev l
+			   in case l of
+			      [] => raise Fail "deque"
+			    | x :: l => (back := []; front := l; SOME x)
+			   end)
+	  | x :: l => (front := l; SOME x) 
+   end
+
+structure Thread:
+   sig
+      val exit: unit -> 'a
+      val run: unit -> unit
+      val spawn: (unit -> unit) -> unit
+      val yield: unit -> unit
+      structure Mutex:
+	 sig
+	    type t
+
+	    val new: unit -> t
+	    val lock: t -> unit
+	    val unlock: t -> unit
+	 end
+      structure Condition:
+      	 sig
+	    type t
+	       
+	    val new: unit -> t
+	    val signal: t -> unit
+	    val wait: t * Mutex.t -> unit
+	 end
+   end =
+   struct
+      open MLton
+      open Thread
+
+      val topLevel: unit Thread.t option ref = ref NONE
+
+      local
+	 val threads: unit Thread.t Queue.t = Queue.new()
+      in
+	 fun ready t = Queue.enque(threads, t)
+	 fun next() =
+	    case Queue.deque threads of
+	       NONE => valOf(!topLevel)
+	     | SOME t => t
+      end
+   
+      fun 'a exit(): 'a = switch(fn _ => (next(), ()))
+      
+      fun new(f: unit -> unit): unit Thread.t =
+	 Thread.new(fn () => ((f() handle _ => exit())
+			      ; exit()))
+	 
+      fun schedule t = (ready t; next())
+
+      fun yield(): unit = switch(fn t => (schedule t, ()))
+
+      val spawn = ready o new
+
+      fun run(): unit =
+	 (switch(fn t =>
+		 (topLevel := SOME t
+		  ; (next(), ())))
+	  ; topLevel := NONE)
+	 
+      structure Mutex =
+	 struct
+	    datatype t = T of {locked: bool ref,
+			       waiting: unit Thread.t Queue.t}
+	       
+	    fun new () =
+	       T {locked = ref false,
+		  waiting = Queue.new ()}
+
+	    fun lock (T {locked, waiting, ...}) =
+	       let
+		  fun loop () =
+		     (Primitive.Thread.atomicBegin ()
+		      ; if !locked
+			   then (Primitive.Thread.atomicEnd()
+				 ; switch (fn t =>
+					   (Queue.enque (waiting, t)
+					    ; (next (), ())))
+				 ; loop ())
+			else (locked := true
+			      ; Primitive.Thread.atomicEnd()))
+	       in loop ()
+	       end
+	    
+	    fun safeUnlock (T {locked, waiting, ...}) =
+	       (locked := false
+		; (case Queue.deque waiting of
+		      NONE => ()
+		    | SOME t => ready t))
+
+	    fun unlock (m: t) =
+	       (Primitive.Thread.atomicBegin ()
+		; safeUnlock m
+		; Primitive.Thread.atomicEnd ())
+	 end
+
+      structure Condition =
+	 struct
+	    datatype t = T of {waiting: unit Thread.t Queue.t}
+
+	    fun new () = T {waiting = Queue.new ()}
+
+	    fun wait (T {waiting, ...}, m) =
+	       switch (fn t =>
+		       (Mutex.safeUnlock m
+			; Queue.enque (waiting, t)
+			; (next (), ())))
+
+	    fun signal (T {waiting, ...}) =
+	       case Queue.deque waiting of
+		  NONE => ()
+		| SOME t => ready t
+	 end
+
+   end
+
+structure Mutex = Thread.Mutex
+structure Condition = Thread.Condition
+
+val count = ref 0
+val data = ref 0
+val produced = ref 0
+val consumed = ref 0
+val m = Mutex.new ()
+val c = Condition.new ()
+
+fun producer n =
+   for (1, n, fn i =>
+	(Mutex.lock m
+	 ; while !count = 1 do Condition.wait (c, m)
+	 ; data := i
+	 ; count := 1
+	 ; Condition.signal c
+	 ; Mutex.unlock m
+	 ; produced := !produced + 1))
+
+fun consumer n =
+   let val i = ref 0
+   in
+      while !i <> n do
+	 (Mutex.lock m
+	  ; while !count = 0 do Condition.wait (c, m)
+	  ; i := !data
+	  ; count := 0
+	  ; Condition.signal c
+	  ; Mutex.unlock m
+	  ; consumed := !consumed + 1)
+   end
+
+fun atoi s = case Int.fromString s of SOME num => num | NONE => 0
+fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
+
+fun main (name, args) =
+   let
+      val n = atoi (hd (args @ ["1"]))
+      val p = Thread.spawn (fn () => producer n)
+      val c = Thread.spawn (fn () => consumer n)
+      val _ = Thread.run ()
+      val _ = printl [Int.toString (!produced),
+		      " ",  
+		      Int.toString (!consumed)]
+   in
+      ()
+   end
+
+end
+
+structure Z = Z (structure MLton = MLton
+		 structure Primitive = Primitive)
+
+val _ = Z.main( CommandLine.name(), CommandLine.arguments() )

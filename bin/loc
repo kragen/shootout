@@ -1,0 +1,391 @@
+#!/usr/bin/perl
+# -*- mode: perl -*-
+######################################################################
+# $Id: loc,v 1.1 2004-05-19 18:14:25 bfulgham Exp $
+######################################################################
+
+# TBD - ignore braces and other block delimiters
+
+######################################################################
+# Compile Time Initialization and Included Modules
+######################################################################
+BEGIN {
+    # since perl will optimize out conditional branches that are never
+    # reached, we define the following constants so that we only compile 
+    # debug/help code into the program when it it actually needed.
+    use constant HELP => grep(/^(?:-?-help)$/, @ARGV);# add -h| to allow "-h"
+    use constant DBG => grep(/^(?:-?-debug)$/, @ARGV);# add -d| to allow "-d"
+}
+use Getopt::Long;
+use strict;
+
+
+######################################################################
+# Globals
+######################################################################
+my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
+my $VERSION = (split(/ /, q$Revision: 1.1 $ ))[1];
+# holds command line options
+my @GET_OPTIONS =
+    (
+     'dep=s',
+     'debug!', # add |d to allow "-d" (and see BEGIN)
+     'help!',  # add |h to allow "-h" (and see BEGIN)
+     'license!',
+     'version!', # add |v to allow "-v"
+    );
+# initialize multi-valued options here
+my %GET_OPT =
+    (dep => []);
+# initial values are defaults for command line options
+my %DEF_OPT = ();
+
+my %STYLE =
+    (
+     'dash'   => { eol => qr'-- ',  begin => undef,    end => undef },
+     'forth'  => { eol => qr'\\ ',  begin => '\(',     end => '\)' },
+     'gcc'    => { eol => qr'//',   begin => qr'/\*',  end => qr'\*/' },
+     'lisp'   => { eol => qr';',    begin => undef,    end => undef },
+     'ml'     => { eol => undef,    begin => qr'\(\*', end => qr'\*\)' },
+     'php'    => { eol => undef,    begin => qr'/\*',  end => qr'\*/' },
+     'prolog' => { eol => qr'%',    begin => undef,    end => undef },
+     'scheme' => { eol => qr';',    begin => qr'#!',   end => qr'!#' },
+     'shell'  => { eol => qr'#',    begin => undef,    end => undef },
+    );
+
+my %DAT =
+    (
+     'bash'    => $STYLE{shell},
+     'bigforth' => $STYLE{forth},
+     'bigloo'  => $STYLE{lisp},
+     'cmucl'   => $STYLE{lisp},
+     'eiffel'  => $STYLE{dash},
+     'erlang'  => $STYLE{prolog},
+     'g++'     => $STYLE{gcc},
+     'gawk'    => $STYLE{shell},
+     'gcc'     => $STYLE{gcc},
+     'gforth'  => $STYLE{forth},
+     'ghc'     => $STYLE{dash},
+     'guile'   => $STYLE{scheme},
+     'icon'    => $STYLE{shell},
+     'java'    => $STYLE{gcc},
+     'lua'     => $STYLE{dash},
+     'mawk'    => $STYLE{shell},
+     'mercury' => $STYLE{prolog},
+     'mlton'   => $STYLE{ml},
+     'mzscheme'   => $STYLE{lisp},
+     'njs'     => $STYLE{gcc},
+     'ocaml'   => $STYLE{ml},
+     'ocamlb'  => $STYLE{ml},
+     'perl'    => $STYLE{shell},
+     'php'     => $STYLE{php},
+     'pike'    => $STYLE{gcc},
+     'python'  => $STYLE{shell},
+     'rep'     => $STYLE{scheme},
+     'ruby'    => $STYLE{shell},
+     'se'      => $STYLE{dash},
+     'smlnj'   => $STYLE{ml},
+     'stalin'  => $STYLE{lisp},
+     'tcl'     => $STYLE{shell},
+     'xemacs'  => $STYLE{lisp},
+    );
+
+######################################################################
+# pre-declared functions
+######################################################################
+sub err (@) { print STDERR @_,"\n" }
+
+
+######################################################################
+# main program
+######################################################################
+sub main {
+    # stuff goes here
+    my %loc = ();
+    foreach my $src (@ARGV) {
+	my($one, $name, $lang) = split(/\./, $src);
+	$lang = $name if (not $lang);
+	my $re = quotemeta($name);
+	my @deps = ();
+	foreach (grep(/^$re:/, @{$GET_OPT{dep}})) {
+	    s/^$re://;
+	    push(@deps, split(/,/));
+	}
+	err "DEPS($name) == @deps" if (DBG);
+	foreach my $file ($src, @deps) {
+	    $loc{$name} += loc($lang, $file);
+	}
+    }
+    foreach my $name (sort keys %loc) {
+	print "$name $loc{$name}\n";
+    }
+}
+
+
+######################################################################
+# Subroutines
+######################################################################
+sub loc {
+    my($lang, $src) = @_;
+    my $loc = 0;
+    unless ($lang) {
+	err "What is lang for $src?";
+	return(0);
+    }
+    unless (open(IN, "<$src")) {
+	err "Can't open $src for input";
+	return(0);
+    }
+    unless ($DAT{$lang}) {
+	err "***********************************************";
+	err "* do I know language: $lang?";
+	err "***********************************************";
+	return(0);
+    }
+    print STDERR "\n\n\nSTUDYING: $src\n" if (DBG);
+    my $eol_comment   = $DAT{$lang}->{eol};
+    my $begin_comment = $DAT{$lang}->{begin};
+    my $end_comment   = $DAT{$lang}->{end};
+    my $block_comments = (defined($begin_comment) && defined($end_comment));
+    if (DBG) {
+	if ($block_comments) {
+	    err "$lang implements Block Comments";
+	} else {
+	    err "$lang DOES NOT implement Block Comments";
+	}
+    }
+    my $in_comment = 0;
+    my $first = 1;
+    my $loc_on = 1;
+    while (<IN>) {
+	if (DBG) {
+	    chomp; print STDERR "\n", $_, " ";
+	}
+	$loc_on = 0 if (/<LOC-OFF>/);
+	$loc_on = 1 if (/<LOC-ON>/);
+	next unless ($loc_on);
+	if ($block_comments and $in_comment) {
+	    if (/$end_comment/) {
+		print STDERR " END" if (DBG);
+		s/^.*?$end_comment//;
+		$in_comment = 0;
+	    }
+	    if ($in_comment) {
+		print STDERR " SKIPBLOCK" if (DBG);
+		next;
+	    }
+	}
+	s/$eol_comment.*$// if (defined $eol_comment);
+	if ($block_comments) {
+	    s/$begin_comment.*?$end_comment//;
+	    if (/$begin_comment/) {
+		print STDERR " BEGIN" if (DBG);
+		s/$begin_comment.*$//;
+		$in_comment = 1;
+	    }
+	}
+	next if (/^\s*$/);	# do not count blank lines
+	if ($first) {
+	    # skip first line if it just specifies an interpreter
+	    $first = 0;
+	    next if (/^\#!/);
+	}
+	$loc++;
+	print STDERR "COUNTING LOC: (($_))" if (DBG);
+    }
+    close(IN);
+    return($loc);
+}
+
+sub process_options {
+    # read options from command line
+    if (@ARGV) {
+	# config Getopt::Long so it doesn't ignore case of executable options.
+	Getopt::Long::config("no_ignore_case");
+        if (not GetOptions(\%GET_OPT, @GET_OPTIONS)) {
+	    warn qq{Unknown option, try "$PROGNAME --help"\n};
+	    exit(1);
+	}
+    }
+    # read options from config file
+    my %conf = ();
+    if (my $file = ($GET_OPT{config} || "$ENV{HOME}/.$PROGNAME")) {
+	local *F;
+	if (open(F, "<$file")) {
+	    while(<F>) {
+		next if (/^\s*\#/); # skip comment lines
+		if (/^(\S+)\s+(.*)$/) {
+		    my $key = lc $1;
+		    my $val = $2;
+		    if (ref($GET_OPT{$key}) eq 'ARRAY') {
+			push(@{$conf{$key}}, $val);
+		    } else {
+			$conf{$key} = $val;
+		    }
+		}
+	    }
+	    close(F);
+	} elsif ($GET_OPT{config}) {
+	    err "Error, could not open $file ($!)";
+	    exit(1);
+	}
+    }
+    # combine options from defaults + configfile + command line
+    # multi-valued options (ARRAY) are not cumulative.
+    foreach my $key (keys(%DEF_OPT), keys(%conf)) {
+	# options from config file override defaults.
+	# options on command line override options from config file.
+	if (exists($GET_OPT{$key})) {
+	    if (ref($GET_OPT{$key}) eq 'ARRAY') {
+		next if (scalar(@{$GET_OPT{$key}}));
+	    } else {
+		# ref is scalar
+		next;
+	    }
+	}
+	if (exists $conf{$key}) {
+	    $GET_OPT{$key} = $conf{$key};
+	} elsif (exists $DEF_OPT{$key}) {
+	    $GET_OPT{$key} = $DEF_OPT{$key};
+	}
+    }
+    Help()    if ($GET_OPT{help});
+    Version() if ($GET_OPT{version});
+    License() if ($GET_OPT{license});
+}
+
+######################################################################
+# the main process starts here.
+######################################################################
+&process_options();
+&main();
+
+
+######################################################################
+# only documentation follows
+######################################################################
+sub print_version {
+    print qq{  This is $PROGNAME, version $VERSION Copyright @{[(localtime())[5] + 1900]} by Doug Bagley\n};
+}
+
+sub Version {
+    &print_version();
+    exit(0);
+}
+
+sub License {
+    &print_version();
+    print <<EOF;
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You can review the GNU General Public License by writing to the Free
+  Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+  02111-1307 USA, (or here: http://www.gnu.org/copyleft/gpl.txt).
+
+EOF
+    exit(0);
+}
+
+sub Help {
+    if (HELP) {
+	print <<EOF;
+NAME
+
+  $PROGNAME - this script does blah, blah, blah.
+
+SYNOPSIS
+
+  $PROGNAME [options] [file ...]
+
+  Options:
+  --debug|-d       turn on debugging
+  --help|-h        documentation
+  --license        print nice free software license
+  --version|-v     program version
+  [Options can be abbreviated, as long as the abbreviation is unique.]
+
+  file ....
+
+DESCRIPTION
+
+  $PROGNAME will ...
+
+OPTIONS
+
+  --debug
+
+    Turns on debugging output.
+
+  --help
+
+    Prints the documentation for this program.
+
+  --license
+
+    Prints the license for this program.
+
+  --version
+
+    Prints the version of this program.
+
+  file ...
+
+    Input file(s).
+
+CONFIGURATION FILE
+
+  You can put any command line option in the configuration file:
+
+    ~/.$PROGNAME
+
+  (If ~/.$PROGNAME is a directory, the config file will be named:
+  ~/.$PROGNAME/config)
+
+  The configuration file can contain comments (preceeded by #).
+
+  To define an option just put the option name, a space, and its value
+  (The value can spaces in it), like this:
+
+    option value
+
+  To undefine an option, just put the option name, with no value:
+
+    option
+
+  To define a boolean option just give it a value of 1:
+
+    booleanoption 1
+
+EXAMPLES
+
+BUGS
+
+SEE ALSO
+
+AUTHOR
+
+(Doug Bagley) http://www.bagley.org/~doug/contact.shtml
+
+VERSION
+
+  $PROGNAME $VERSION
+
+KEYWORDS
+
+COPYRIGHT
+
+  Copyright (c) @{[(localtime())[5] + 1900]} by Doug Bagley
+  This is free software.  See "$PROGNAME --license".
+EOF
+	exit(0);
+    }
+}

@@ -1,0 +1,250 @@
+(* -*- mode: sml -*-
+ * $Id: lists.smlnj,v 1.1 2004-05-19 18:10:25 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ *)
+(* Translated from lists.ocaml. *)
+ 
+structure Test : sig
+    val main : (string * string list) -> OS.Process.status
+end = struct
+
+val sub = Array.sub
+val update = Array.update
+fun for (start, stop, f) =
+   let
+      fun loop i =
+	 if i > stop
+	    then ()
+	 else (f i; loop (i + 1))
+   in
+      loop start
+   end
+fun failwith s = raise Fail s
+
+structure Deque:
+  sig
+    type 'a t
+    exception Empty
+
+    val make: int * 'a -> 'a t
+    val iota: int -> int t
+
+    val is_empty: 'a t -> bool
+    val equal: ''a t * ''a t -> bool
+    val length: 'a t -> int
+    val nth: 'a t * int -> 'a
+
+    val push_front: 'a * 'a t -> unit
+    val push_back: 'a t * 'a -> unit
+
+    val take_front: 'a t -> 'a
+    val take_back: 'a t -> 'a
+
+    val copy: 'a t -> 'a t
+    val reverse: 'a t -> 'a t
+  end =
+  struct
+     type 'a t = {size: int ref,
+		  first: int ref,
+		  last: int ref,
+		  field: 'a array ref,
+		  fill: 'a}
+
+     local
+	fun make sel (d: 'a t) = sel d
+     in
+	fun fill z = make #fill z
+     end
+
+     local
+	fun make sel (d: 'a t) = !(sel d)
+     in
+	fun field z = make #field z
+	fun first z = make #first z
+	fun last z = make #last z
+	fun size z = make #size z
+     end
+
+     exception Empty
+
+     fun make (n, dummy) =
+	let
+	   val n = Int.max (n, 0)
+	   val nplus = Int.max (1, n)
+	in
+	   {size = ref nplus,
+	    first = ref (Int.quot (nplus, 2)),
+	    last = ref (Int.quot (nplus, 2) - 1),
+	    field = ref (Array.array (nplus, dummy)),
+	    fill = dummy}
+	end
+
+     fun iota i =
+	let
+	   val i = Int.max (0, i)
+	   val iplus = Int.max (1, i)
+	in
+	   {size = ref iplus,
+	    first = ref 0,
+	    last = ref (i - 1),
+	    field = ref (Array.tabulate (iplus, fn n => n + 1)),
+	    fill = i}
+	end
+
+     fun length buf = last buf - first buf + 1
+
+     fun is_empty buf = last buf < first buf
+
+     fun array_eq (arr1, off1, arr2, off2, i) =
+	let
+	   fun loop (off1, off2, i) =
+	      case i of
+		 0 => true
+	       | n =>
+		    sub (arr1, off1) = sub (arr2, off2)
+		    andalso loop (off1 + 1, off2 + 1, n - 1)
+	in loop (off1, off2, i)
+	end
+
+     fun equal (buf1, buf2) =
+	let
+	   val len = length buf1
+	in
+	   len = length buf2
+	   andalso array_eq (field buf1, first buf1,
+			     field buf2, first buf2,
+			     len)
+	end
+
+     fun nth (buf, n) =
+	if n < 0 orelse n >= length buf
+	   then failwith "nth"
+	else sub (field buf, first buf + n)
+
+     fun double_shift buf = 
+	let
+	   val new_size = size buf * 2
+	   val len = length buf
+	   val new_first = Int.quot (new_size - len, 2)
+	   val new_field = Array.array (new_size, fill buf)
+	   val _ = Array.copy {src = field buf,
+			       si = first buf,
+			       dst = new_field,
+			       di = new_first,
+			       len = SOME len}
+	in
+	   #size buf := new_size;
+	   #field buf := new_field;
+	   #first buf := new_first;
+	   #last buf := new_first + len - 1
+	end
+
+     fun push_front (elem, buf) =
+	let
+	   val _ = if first buf = 0 then double_shift buf else ()
+	   val new_first = first buf - 1
+	in
+	   update (field buf, new_first, elem);
+	   #first buf := new_first
+	end
+
+     fun push_back (buf, elem) =
+	let
+	   val _ = if last buf = size buf - 1 then double_shift buf else ()
+	   val new_last = last buf + 1
+	in
+	   update (field buf, new_last, elem);
+	   #last buf := new_last
+	end
+
+     fun take_front buf =
+	if is_empty buf
+	   then raise Empty
+	else
+	   let
+	      val old_first = first buf
+	   in
+	      #first buf := old_first + 1;
+	      sub (field buf, old_first)
+	   end
+
+     fun take_back buf =
+	if is_empty buf
+	   then raise Empty
+	else
+	   let
+	      val old_last = last buf
+	   in
+	      #last buf := old_last - 1;
+	      sub (field buf, old_last)
+	   end
+
+     fun copy buf =
+	let
+	   val len = length buf
+	   val new_buf = make (len, fill buf)
+	   val _ = Array.copy {src = field buf,
+			       si = first buf,
+			       dst = field new_buf,
+			       di = 0,
+			       len = SOME len}
+	in
+	   #first new_buf := 0;
+	   #last new_buf := len - 1;
+	   new_buf
+	end
+
+     fun reverse buf =
+	let
+	   val len = length buf 
+	   val fst = first buf
+	   val fld = field buf
+	   val new_buf = make (len, fill buf)
+	   val new_fld = field new_buf
+	   val _ = 
+	      for (0, len - 1, fn i =>
+		   update (new_fld, len - i - 1, sub (fld, fst + i)))
+	in
+	   #first new_buf := 0;
+	   #last new_buf := len - 1;
+	   new_buf
+	end
+end
+
+open Deque
+
+fun empty () = iota 0
+
+val size = 10000
+
+fun test_lists () =
+  let
+     val d1 = iota size
+     val d2 = copy d1
+     val d3 = empty ()
+     val _ = for (1, length d2, fn _ => push_back (d3, take_front d2))
+     val _ = for (1, length d3, fn _ => push_back (d2, take_back d3))
+     val d1 = reverse d1
+     val _ = if size <> nth (d1, 0) then failwith "First test failed" else ()
+     val _ = if length d1 <> length d2 then failwith "Second test failed" else ()
+     val _ = if not (equal (d1, d2)) then failwith "Third test failed" else ()
+  in
+     length d1
+  end
+
+fun main (name, args) =
+  let
+     val n =
+	case Int.fromString (hd (args @ ["1"])) of
+	   NONE => 1
+	 | SOME n => n
+     val result = ref 0
+     val _ = for (1, n, fn _ => result := test_lists ())
+  in
+     print (concat [Int.toString (!result), "\n"]);
+     OS.Process.success
+  end
+end
+
+val _ = SMLofNJ.exportFn("lists", Test.main);

@@ -1,0 +1,80 @@
+(* -*- mode: sml -*-
+ * $Id: prodcons.smlnj2.smlnj,v 1.1 2004-05-19 18:11:15 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Matthias Blume
+ *)
+
+(* producer/consumer threads in SML/NJ, using CML library
+ *
+ * (C) 2001 Lucent Technologies, Bell Labs
+ * written by Matthias Blume
+ *
+ * This is a "native" CML version of the program which does not require
+ * explicit mutexes or condition variables.  Instead, it models the
+ * mutex using a separate CML thread that takes turns receiving from
+ * one channel and sending the received value on to another channel.
+ * Locking and signalling conditions is done implicitly by CML.
+ * This greatly simplifies the code that the programmer has to write
+ * and is also much more efficient.
+ *)
+
+structure ProdCons : sig
+    val main : string * string list -> OS.Process.status
+end = struct
+
+    fun doit n = let
+
+	val p : int CML.chan = CML.channel ()
+	val c : int CML.chan = CML.channel ()
+
+	fun mutex_loop () = (CML.send (c, CML.recv p); mutex_loop ())
+
+	fun get () = CML.recv c
+	fun put x = CML.send (p, x)
+
+	val produced = ref 0
+	val consumed = ref 0
+
+	fun producer () = let
+	    fun loop i =
+		if i <= n then
+		    (produced := !produced + 1;
+		     put i;
+		     loop (i + 1))
+		else ()
+	in
+	    loop 1
+	end
+
+	fun consumer () = let
+	    fun loop () = let
+		val i = get ()
+	    in
+		consumed := !consumed + 1;
+		if i <> n then loop () else ()
+	    end
+	in
+	    loop ()
+	end
+
+	val prod = CML.spawn producer
+	val cons = CML.spawn consumer
+    in
+	ignore (CML.spawn mutex_loop);
+	CML.sync (CML.joinEvt prod);
+	CML.sync (CML.joinEvt cons);
+	TextIO.output (TextIO.stdOut,
+		       concat [Int.toString (!produced), " ",
+			       Int.toString (!consumed), "\n"]);
+	RunCML.shutdown OS.Process.success
+    end
+
+    fun main (_, args) = let
+	val n = case args of [] => 1
+			   | (x :: _) => getOpt (Int.fromString x, 1)
+    in
+	RunCML.doit (fn () => doit n, NONE)
+    end
+end
+
+val _ = SMLofNJ.exportFn("prodcons.smlnj2", Test.main);

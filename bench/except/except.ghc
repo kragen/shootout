@@ -1,0 +1,38 @@
+-- $Id: except.ghc,v 1.1 2004-05-19 18:09:42 bfulgham Exp $
+-- http://www.bagley.org/~doug/shootout/
+-- from Simon Marlow
+
+import System
+import Exception
+import IOExts
+
+blowup n | even n    = throw (ErrorCall "H")
+	 | otherwise = throw (ErrorCall "L")
+
+lo_function lo n = 
+  Exception.catchAllIO (blowup n) 
+    (\ex -> case ex of
+		ErrorCall "L" -> do nlo <- readIORef lo
+				    writeIORef lo (nlo + 1)
+		_ -> throw ex
+    )
+
+hi_function hi lo n = 
+  Exception.catchAllIO (lo_function lo n) 
+    (\ex -> case ex of
+		ErrorCall "H" -> do nhi <- readIORef hi
+				    writeIORef hi (nhi + 1)
+		_ -> throw ex
+    )
+
+some_function hi lo n = hi_function hi lo n
+
+main = do
+  [arg] <- getArgs
+  let n = read arg :: Int
+  hi <- newIORef (0 :: Int)
+  lo <- newIORef (0 :: Int)
+  mapM (some_function hi lo) [n,n-1..1]
+  nhi <- readIORef hi
+  nlo <- readIORef lo
+  putStrLn ("Exceptions: HI=" ++ show nhi ++ " / LO=" ++ show nlo)

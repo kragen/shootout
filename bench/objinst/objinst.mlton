@@ -1,0 +1,104 @@
+(* -*- mode: sml -*-
+ * $Id: objinst.mlton,v 1.1 2004-05-19 18:11:03 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ *)
+(* Based on objinst.gcc. *)
+
+fun for (start, stop, f) =
+   let
+      fun loop i =
+	 if i > stop
+	    then ()
+	 else (f i; loop (i + 1))
+   in
+      loop start
+   end
+
+structure Toggle =
+   struct
+      datatype 'a t = T of {
+			    state: 'a ref,
+			    value: 'a t -> 'a,
+			    activate: 'a t -> 'a t
+			    }
+
+      fun new state =
+	 T {state = ref state,
+	    value = fn T {state, ...} => !state,
+	    activate = fn this as T {state, ...} => (state := not(!state); this)}
+
+      fun activate (this as T {activate, ...}) = activate this
+      fun value (this as T {value, ...}) = value this
+   end
+
+structure Ntoggle =
+   struct
+      datatype 'a t = T of {
+			    state: 'a ref,
+			    value: 'a t -> 'a,
+			    activate: 'a t -> 'a t,
+			    countMax: int,
+			    counter: int ref
+			    }
+
+      fun new (state, countMax) =
+	 T {
+	    state = ref state,
+	    value = fn T {state, ...} => !state,
+	    activate = (fn this as T {state, counter, countMax, ...} =>
+			let
+			   val newCounter = 1 + !counter
+			   val _ = counter := newCounter
+			   val _ = 
+			      if !counter >= countMax
+				 then (state := not(!state);
+				       counter := 0)
+			      else ()
+			in
+			   this
+			end),
+	    countMax = countMax,
+	    counter = ref 0
+	    }
+
+      fun activate (this as T {activate, ...}) = activate this
+      fun value (this as T {value, ...}) = value this
+   end
+
+fun atoi s = case Int.fromString s of SOME num => num | NONE => 0
+fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
+   
+fun main (name, args) =
+   let
+      val n = atoi (hd (args @ ["1"]))
+      val v = ref true
+      val tog = Toggle.new true
+      val _ = for (0, 4, fn _ =>
+		   print (if Toggle.value (Toggle.activate tog)
+			     then "true\n"
+			  else "false\n"))
+
+	      
+      val r = ref (Toggle.new false)
+      val _ = for (0, n - 1, fn _ => r := Toggle.new true)
+      val _ = Toggle.activate (!r)
+
+
+      val _ = print "\n"
+      val ntog = Ntoggle.new (true, 3)
+      val _ = for (0, 7, fn _ =>
+		   print (if Ntoggle.value (Ntoggle.activate ntog)
+			     then "true\n"
+			  else "false\n"))
+
+
+      val r2 = ref (Ntoggle.new (true, 3))
+      val _ = for (0, n - 1, fn _ => r2 := Ntoggle.new (true, 3))
+      val _ = Ntoggle.activate (!r2)
+
+   in
+      OS.Process.success
+   end
+
+val _ = main( CommandLine.name(), CommandLine.arguments() )

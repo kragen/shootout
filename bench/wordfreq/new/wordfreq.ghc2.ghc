@@ -1,0 +1,89 @@
+-- $Id: wordfreq.ghc2.ghc,v 1.1 2004-05-19 18:14:24 bfulgham Exp $
+-- http://www.bagley.org/~doug/shootout/
+-- from Julian Assange
+--   Trie data structure added by Robin Garner
+
+-- compile with:
+-- ghc -O -package data wordfreq.hs -o wordfreq
+
+module Main where
+import Char(toLower,isLower)
+import Array(Array,array,(!),(//),assocs)
+
+type Pair = (Int,String)
+
+main = interact $ unlines . pretty . mSort . flattenTrie . makemap . cwords . lower
+ where
+       pretty = map pretty'
+       pretty' (n,w)  = pad 7 (show n) ++ "\t" ++ w
+                   where pad n s = replicate (n - length s) ' ' ++ s
+
+       makemap = insertListTrie emptyTrie
+
+       cwords s  = case dropWhile (not . isLower) s of
+		        "" -> []
+                        s' -> w : (cwords s'')
+                              where (w, s'') = span isLower s'
+
+       lower     = map toLower
+
+
+data Trie = Leaf | Node Int (Array Char Trie)
+type TrieArray = Array Char Trie
+
+emptyTrie :: Trie
+emptyTrie = Node 0 (array ('a','z') [(c,Leaf) | c <- ['a'..'z']])
+
+insertListTrie t [] = t
+insertListTrie t (s:ss) = insertListTrie t' ss
+	where t' = insertTrie s t
+
+insertTrie ::  String -> Trie ->Trie
+insertTrie s Leaf = insertTrie s emptyTrie
+insertTrie [] (Node c subs) = Node (c+1) subs
+insertTrie (s:ss) (Node c subs) = Node c (subs//[(s,insertTrie ss t)])
+	where t = subs!s
+
+flattenTrie :: Trie -> [Pair]
+flattenTrie = flattenTrie' ""
+    where
+	flattenTrie' :: String -> Trie -> [Pair]
+	flattenTrie' prefix (Node c subs) =
+		if c > 0 then (c,prefix) : tail else tail
+	    where
+		tail = flattenSubs prefix $ filter nonLeaf $ assocs subs
+
+	flattenSubs p [] = []
+	flattenSubs p (s:ss) = flattenSub p s ++ flattenSubs p ss
+
+	flattenSub :: String -> (Char,Trie) -> [Pair]
+	flattenSub prefix (c,t) = flattenTrie' (prefix ++ [c]) t
+
+	nonLeaf (ch,Leaf) = False
+	nonLeaf _ = True
+
+-- Sorting: the various languages use various algorithms
+-- here's  an optimized mergesort from
+-- "Algorithms - a Functional Approach" by
+-- Fethi Rabhe & Guy Lapalme
+split :: (Ord a) => [a] -> [[a]]
+split [] = []
+split (x:xs) = [x]:split xs
+
+merge :: (Ord a) => [a] -> [a] -> [a]
+merge [] b  = b
+merge a [] = a
+merge a@(x:xs) b@(y:ys)
+    | (x>=y) = x : (merge xs b)
+    | otherwise = y : (merge a ys)
+
+mergepairs :: (Ord a) => [[a]] -> [[a]]
+mergepairs [] = []
+mergepairs x@[l] = x
+mergepairs (l1:l2:rest) = (merge l1 l2) : (mergepairs $! rest)
+
+-- The actual sort
+mSort :: (Ord a) => [a] -> [a]
+mSort l = ms (split l)
+    where  ms [r] = r
+           ms l   = ms (mergepairs l)

@@ -1,0 +1,57 @@
+#!/usr/bin/guile \
+-e main -s
+!#
+
+;;; $Id: moments.guile,v 1.1 2004-05-19 18:10:47 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; from Brad Knotwell
+
+(use-modules (ice-9 format))
+
+(define sum 0)
+(define nums '())
+(define (compute-all mean n continuation)
+  (let ((average-deviation 0) (standard-deviation 0) (variance 0) (skew 0) 
+        (kurtosis 0) (mid 0) (median 0) (deviation 0) (tmp-lst nums))
+    (do ((num (car tmp-lst) (if (eq? tmp-lst '()) '() (car tmp-lst))))
+	((eq? num '()) (begin (set! variance (/ variance (1- n)))
+			      (set! standard-deviation (sqrt variance))
+			      (if (> variance 0.0)
+				  (begin (set! skew (/ skew (* n variance standard-deviation)))
+					 (set! kurtosis (- (/ kurtosis (* n variance variance)) 3))))
+			      (set! nums (sort-list nums >))
+			      (set! mid (/ n 2))
+			      (set! median (if (= (remainder n 2) 0) 
+					       (/ (+ (list-ref nums mid)
+						     (list-ref nums (1- mid)))
+						  2)
+					       (list-ref nums mid)))
+			      (continuation n median mean 
+					    (/ average-deviation n)
+					    standard-deviation variance
+					    skew kurtosis)))
+      (let ((deviation (- num mean)))
+	(begin (set! tmp-lst (cdr tmp-lst))
+	       (set! average-deviation (+ average-deviation (abs deviation)))
+	       (set! variance (+ variance (expt deviation 2)))
+	       (set! skew (+ skew (expt deviation 3)))
+	       (set! kurtosis (+ kurtosis (expt deviation 4))))))))
+	
+(define output-format
+"n:                  ~D
+median:             ~,6F
+mean:               ~,6F
+average_deviation:  ~,6F
+standard_deviation: ~,6F
+variance:           ~,6F
+skew:               ~,6F
+kurtosis:           ~,6F
+")
+
+(define (main args)
+  (do ((line (read-line) (read-line)))
+      ((eof-object? line)
+       (compute-all (/ sum (length nums)) (length nums)
+		    (lambda (x . y) (display (apply format (cons output-format (cons x y)))))))
+    (let ((num (string->number line)))
+      (begin (set! nums (cons num nums)) (set! sum (+ sum num))))))

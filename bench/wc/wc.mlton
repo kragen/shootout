@@ -1,0 +1,71 @@
+(* -*- mode: sml -*-
+ * $Id: wc.mlton,v 1.1 2004-05-19 18:13:52 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ *)
+(* Translated from wc.ocaml. *)
+
+fun incr r = r := !r + 1
+   
+val nl = ref 0
+val nw = ref 0
+val nc = ref 0
+val max = 4096
+val buf = Word8Array.array (max, 0w0)
+val sub = Word8Array.sub
+
+fun readblock scanfun =
+   let
+      val nread = Posix.IO.readArr (Posix.FileSys.stdin,
+				    Word8ArraySlice.slice(buf, 0, NONE))
+   in
+      if nread = 0
+	 then ()
+      else (nc := !nc + nread;
+	    scanfun (0, nread))
+   end
+
+val c2b = Byte.charToByte
+val newline = c2b #"\n"
+val space = c2b #" "
+val tab = c2b #"\t"
+
+fun scan_out_of_word (i, n) =
+   if i < n
+      then
+	 let
+	    val c = sub (buf, i)
+	 in
+	    if c = newline
+	       then (incr nl; scan_out_of_word (i + 1, n))
+	    else if c = space orelse c = tab
+		    then scan_out_of_word (i + 1, n)
+		 else (incr nw; scan_in_word (i + 1, n))
+	 end
+   else readblock scan_out_of_word
+
+and scan_in_word (i, n) =
+  if i < n then
+     let
+	val c = sub (buf, i)
+     in
+	if c = newline
+	   then (incr nl; scan_out_of_word (i + 1, n))
+	else if c = space orelse c = tab
+		then scan_out_of_word (i + 1, n)
+	     else scan_in_word (i + 1, n)
+     end
+  else readblock scan_in_word
+
+fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
+   
+fun main (name, args) =
+  let
+    val _ =
+        (scan_out_of_word (0, 0);
+	printl [Int.toString (!nl), " ", Int.toString (!nw), " ", Int.toString (!nc)])
+  in
+    OS.Process.success
+  end
+
+val _ = main( CommandLine.name(), CommandLine.arguments() )

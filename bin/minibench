@@ -1,0 +1,1704 @@
+#!/usr/bin/perl
+# -*- mode: perl -*-
+######################################################################
+# $Id: minibench,v 1.1 2004-05-19 18:14:31 bfulgham Exp $
+######################################################################
+
+# TBD - finish the documentation
+# TBD - check to make sure we return proper error exit codes
+# TBD - implement "groups"
+# TBD - output gnuplot driver scripts/do gnuplot graphs
+# TBD - split into classes:
+#       Minibench::Tool, Minibench::Test, Minibench::Util,
+#       Minibench::Report::Text, Minibench::Report::HTML, ...
+
+######################################################################
+# Compile Time Initialization and Included Modules
+######################################################################
+BEGIN {
+    # since perl will optimize out conditional branches that are never
+    # reached, we define the following constants so that we only compile 
+    # debug/help code into the program when it it actually needed.
+    use constant HELP => grep(/^(?:-?-help|-h)$/, @ARGV);
+    use constant DBG => grep(/^(?:-?-debug|-d)$/, @ARGV);
+}
+
+require 5.6.0;
+use Getopt::Long;
+use strict;
+
+######################################################################
+# Globals
+######################################################################
+
+my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
+my $VERSION = (split(/ /, q$Revision: 1.1 $ ))[1];
+# holds command line options
+my @GET_OPTIONS =
+    (
+     'automake=s',		# CSV, multi-valued
+     'bsd!',
+     'commandline|cmdline=s',
+     'comparefile=s',
+     'compareoutput!',
+     'config|conf|cfg=s',
+     'datasetnamer=s',
+     'datdir|dat=s',
+     'debug|d!',
+     'dir=s',
+     'force!',
+     'geninput!',
+     'gnuplot!',
+     'graph!',
+     'help|h!',
+     'html!',
+     'ignore=s',		# CSV, multi-valued
+     'inputfile=s',
+     'license!',
+     'makefile=s',
+     'makedirs!',
+     'maxrepthreshold=i',
+     'maxsummary!',
+     'maxswap=i',
+     'maxtime=i',
+     'minsummary!',
+     'name=s',			# CSV, multi-valued
+     'plotrange=s',
+     'plotsummary=s',
+     'quiet!',
+     'range=s',			# CSV (not-multivalued)
+     'repeat=i',
+     'rundir=s',
+     'runlog=s',
+     'sampledelay=f',
+     'summary=s',		# CSV, multi-valued
+     'swapok!',
+     'tabdir=s',
+     'testfirst!',
+     'text!',
+     'title=s',
+     'update_file=s',
+     'verbose!',
+     'version!',
+    );
+# pre-declare those command-line options that are multi-valued.
+my %GET_OPT =
+    (
+     'automake' => [],
+     'commandline' => [],	# Not CSV
+     'ignore' => [],
+     'name' => [],
+     'summary' => [],
+    );
+# initial values are defaults for command line options
+my %DEF_OPT =
+    (
+     'datasetnamer' => 'sub { $_=$_[0]; s!^[^.]*\.!!; s!\.[^.]*$!!; $_ }',
+     'maxswap' => 750,		# KB
+     'maxtime' => 90,		# seconds
+     'maxrepthreshold' => 30,	# seconds
+     'range' => '1',
+     'repeat' => 1,		# default run test once
+     'html' => 1,
+     'text' => 1,
+     'sampledelay' => 0.2,	# seconds
+     'plotrange' => 'plot --scale 1 --dsnames --width 600 --height 600 --type Lines --x_label "N" --ticklabels --graph_border 0 --gif_border 0 --brush_size 4 --title %T --imagefile %I %D',
+     # we really only want to add --x_ticks vertical if number of datasets > 10 (or so)
+     'plotsummary' => 'plot --x_ticks vertical --legend bottom --legend_labels "[qw(cpu mem)]" --y_label "CPU and Memory" --ynorm 10 --min_val 0 --max_val 11 --y_ticks 12 --width 600 --height 400 --type Bars --ticklabels --graph_border 0 --gif_border 0 --title %T --imagefile %I %D',
+
+     'graphsummary' => qq{graph --x_labels_vertical --legend_placement RC --set_legend 'qw(cpu mem)' --y_label "CPU and Memory" --ynorm 10 --width 700 --height 500 --type bars --ticklabels --title 'Ackermanns Function' max.mbtab},
+    );
+
+######################################################################
+# Class Minibench::Util
+######################################################################
+
+######################################################################
+# Minibench::Util is a collection of standalone utility functions
+# used by the other Minibench classes.
+######################################################################
+package Minibench::Util;
+use strict;
+use GTop;
+
+BEGIN {
+    our $VERSION = 0.01;
+    my @export_subs =
+	qw(abort err swapusage memsize childpids total_child_size
+	   files_equal newer min max listfiles quote_title catfile
+	   rename_as_backup_file
+	  );
+    sub Minibench::Util::import {
+	my $pkg = scalar(caller);
+	no strict 'refs';
+	foreach (@export_subs) {
+	    *{"${pkg}::$_"} = \&$_;
+	}
+    }
+}
+
+##################################################
+# prototyped utility functions
+##################################################
+
+sub err (@) { print STDERR @_,"\n" }
+
+sub abort (@) {
+    err(@_);
+    $SIG{TERM} = 'IGNORE';
+    my @children = childpids($$);
+    kill 'TERM', @children;
+    exit(1);
+}
+
+sub catfile ($) {
+    my $file = shift;
+    local *FH;
+    open(FH, "<$file") or abort("Error opening $file for input ($!)");
+    while (<FH>) { print STDOUT $_ };
+    close(FH);
+}
+
+sub quote_title ($) {
+    my $title = shift;
+    $title =~ s!\"!\'!g;
+    return('"' . $title . '"');
+}
+
+sub listfiles ($$) {
+    my($dir, $pat) = @_;
+    my @files = ();
+    my $re = qr{$pat};
+    if (opendir(DH, $dir)) {
+	@files = grep(/$re/, readdir(DH));
+	closedir(DH);
+    }
+    return(@files);
+}
+
+sub max (@) {
+    @_ = grep(defined($_), @_);
+    my $max = shift;
+    foreach (@_) { $max = $_ if ($_ > $max); }
+    return($max);
+}
+
+sub min (@) {
+    @_ = grep(defined($_), @_);
+    my $min = shift;
+    foreach (@_) { $min = $_ if ($_ < $min); }
+    return($min);
+}
+
+# if file is a symlink, return file it points to
+# otherwise just return the file.
+sub resolvelink ($) {
+    my $f = shift;
+    if (-l $f) {
+	my $lnk = readlink($f);
+	if ($lnk =~ m!^/!) {
+	    return(resolvelink($lnk));
+	} else {
+	    $f =~ s!/[^/]+$!!;
+	    return(resolvelink("$f/$lnk"));
+	}
+    } else {
+	return($f);
+    }
+}
+
+sub newer ($$) { return(-M resolvelink($_[0]) < -M resolvelink($_[1])); }
+
+sub files_equal ($$) {
+    my($file1, $file2) = @_;
+    my $size1 = (stat($file1))[7];
+    my $size2 = (stat($file2))[7];
+    return(0) if ($size1 != $size2);
+    local *F1, *F2;
+    open(F1, "<$file1") or
+	abort(qq{Error, files_equal() can\'t open "$file1" for input: ($!)});
+    open(F2, "<$file2") or
+	abort(qq{Error, files_equal() can\'t open "$file2" for input: ($!)});
+    my $equal = 1;
+    while ((my $L1 = <F1>) and (my $L2 = <F2>)) {
+	if ($L1 ne $L2) {
+	    close(F1); close(F2);
+	    $equal = 0;
+	    last;
+	}
+    }
+    $equal = 0 if ($equal and (scalar(<F1>) or (scalar(<F2>))));
+    close(F1); close(F2);
+    return($equal);
+}
+
+sub total_child_size {
+    my(@childpids) = @_;
+    my $memsize = 0;
+    foreach my $pid (@childpids) { $memsize += memsize($pid); }
+    return($memsize);
+}
+
+sub rename_as_backup_file {
+    my($file) = @_;
+    if (-f $file) {
+	rename($file, "${file}~") or
+	    warn qq(Error, couldn't rename "$file" to "${file}~"\n);
+    }
+}
+
+
+##################################################
+#      BEGIN wrappers for GTop functions
+##################################################
+
+# return current total swap usage in KB
+sub swapusage () {
+    return((GTop->new->swap->used)/1024);
+}
+
+# return current resident memory size for given pid in KB
+sub memsize ($) {
+    my $pid = shift;
+    return((GTop->new->proc_mem($pid)->resident)/1024);
+}
+
+# keep a cache of pids that are MAIN pids (not child threads)
+my %PID_CACHE = ();
+sub Minibench::flush_pid_cache { %PID_CACHE = (); }
+# return 1 if pid is a "main thread"
+# return 0 if pid is a not "main thread"
+sub is_main_pid {
+    my $pid = shift;
+    return $PID_CACHE{$pid} if defined $PID_CACHE{$pid};
+    local(*F);
+    if (open(F, "</proc/$pid/stat")) {
+	$_ = <F>;
+	my $xit_sig = (split)[-2];
+	#warn "DBG: xit_sig($pid) = $xit_sig\n";
+	close(F);
+	return($PID_CACHE{$pid} = ($xit_sig == 17));
+    } else {
+	#warn "DBG: WARNING no /proc/pid/stat for pid=$pid\n";
+	return(1);
+    }
+}
+
+# return a list of all descendants for given pid
+sub childpids ($) {
+    my $pid = shift;
+    my %children = ();
+    my $gtop = GTop->new;
+    my $allpids = ($gtop->proclist)[1];
+    foreach my $cp (@{$allpids}) {
+	my $ppid = $gtop->proc_uid($cp)->ppid;
+	# keep list of children for each parent
+	push(@{$children{$ppid}}, $cp) if (is_main_pid($cp));
+    }
+    my $count = 0;
+    return() if not ($children{$pid});
+    my @childpids = @{$children{$pid}};
+    delete $children{$pid};
+    while (scalar(@childpids) != $count) {
+	foreach my $p (@childpids) {
+	    if ($children{$p}) {
+		push(@childpids, @{$children{$p}});
+		delete $children{$p};
+	    }
+	}
+	$count = scalar(@childpids);
+    }
+    return(@childpids);
+}
+##################################################
+#      END wrappers for GTop functions
+##################################################
+
+######################################################################
+# End of Class Minibench::Util
+######################################################################
+
+
+######################################################################
+# Class Minibench
+######################################################################
+
+######################################################################
+# Minibench objects collect source/executable/commandline/datasetname
+# into a single place.  they also know how to build exe from source
+# if needed.  The Class object understands a set of test objects.
+######################################################################
+package Minibench;
+use Cwd;
+use POSIX ":sys_wait_h";
+#use Minibench::Util;
+BEGIN { Minibench::Util::import() };
+use strict;
+
+BEGIN { use constant DBG => main::DBG; }
+
+##################################################
+# class attributes
+##################################################
+
+# TBD - put in Class attributes hash????
+my $OPT = undef;
+my $CWD = undef;
+my @RANGE = ();
+my %DATASET_NAME = ();
+
+sub html_table_header ($@) {
+    my($title, @headings) = @_;
+    my $ncols = scalar(@headings) + 1;
+    print qq{<table border="0" cellspacing="1" cellpadding="2" bgcolor="#e0e0c0">\n};
+    print qq{<tr><th colspan="$ncols" bgcolor="black"><font color="white">$title</font></th>\n};
+    print qq{<tr><th bgcolor="black">&nbsp;</th><th colspan="@{[$ncols-1]}" bgcolor="black"><font color="white">N</font></th>\n};
+    print qq{<tr><th bgcolor="black"><font color="white">Test Source</font></th>\n};
+    # DAB - changed @RANGE to @headings!!!
+    foreach my $num (@headings) {
+	print qq{<th bgcolor="black"><font color="white">$num</font></th>\n};
+    }
+}
+
+##################################################
+# public class methods
+##################################################
+
+sub main {
+    my($class, $optref) = @_;
+    _init($optref);
+    # from now on our cwd is "rundir"
+    my $testarg = ($OPT->{testfirst}) ? $RANGE[0] : undef;
+    my @tests = ();
+    my $update = 0;
+    foreach my $executable (@ARGV) {
+	next if (grep($executable eq $_, @{$OPT->{_ignore}}));
+	next if ($executable =~ m!~$!);
+	my $test = Minibench->new($executable);
+	push(@tests, $test);
+	next if ($test->up_to_date);
+	err "# Benchmarking: $executable";
+	if ($testarg) {
+	    err("running test phase for arg $testarg") if (DBG);
+	    # run a single iteration to cache stuff
+	    $test->run($testarg, 1);
+	}
+	# from now on we can throw away test output
+	#$test->set_output_file('/dev/null');
+	# run test over args in specified range
+	foreach my $arg (@RANGE) {
+	    $test->run($arg, $OPT->{repeat});
+	}
+	$test->write_results;
+	$update++;
+    }
+    touch_update_file($update);
+    Minibench->tabulate(@tests) if ($OPT->{tabulate});
+}
+
+sub tabulate {
+    my($class, @tests) = @_;
+    # TBD only tabulate if mbdat files are newer?
+    my %cpu = ();
+    my %mem = ();
+    my %progmap = ();
+    # the extra \n below is intentional:
+    err "# Creating tables\n" unless ($OPT->{quiet});
+    foreach my $test (@tests) {
+	my $executable = $test->executable;
+	my $source = $test->source;
+	my $name = $test->dataset_name;
+	my $file = $test->data_file;
+	err "tabulate: processing $source" if (DBG);
+	$progmap{$name} = $source;
+	local *DF;
+	open(DF, "<$file") ||
+	    abort("Error, can't open $file for input ($!)\n");
+	while (<DF>) {
+	    # read through any initial comment/blank lines
+	    next if (/^$/ or /^\#/);
+	    my($num, $cuser, $csys, $mem) = split;
+	    my $cpu = $cuser + $csys;
+	    $cpu{$num}->{$name} = sprintf("%.2f", min($cpu, $cpu{$num}->{$name}));
+	    $mem{$num}->{$name} = sprintf("%.0f", max($mem, $mem{$num}->{$name}));
+	}
+	close(DF);
+    }
+    if ($OPT->{tabdir}) {
+	chdir($OPT->{tabdir}) or abort(qq{Unable to cd to "$OPT->{tabdir}"});
+	err "DBG: Generating tables in dir: $OPT->{tabdir}" if (DBG);
+    }
+    if (scalar(@RANGE) > 1) {
+	_write_range_tables('cpu', 'CPU', \%cpu, \%progmap);
+	_write_range_tables('mem', 'Memory', \%mem, \%progmap);
+    }
+    _write_summary_tables(\%cpu, \%mem, \%progmap);
+}
+
+sub touch_update_file {
+    my $update = shift;
+    if ($update and $OPT->{update_file}) {
+	local *F;
+	open(F, ">$OPT->{update_file}") ||
+	    abort("Error, can't open $OPT->{update_file} for output ($!)");
+	print F scalar(localtime),"\n";
+	close(F);
+    }
+}
+
+##################################################
+# private class methods
+##################################################
+sub _init {
+    $OPT = shift;
+    #setpgrp();
+    # catch signals so we can kill children gracefully
+    $SIG{INT} = $SIG{TERM} = $SIG{HUP} = sub { abort("Caught signal SIG$_[0]") };
+    $CWD = cwd();
+    $OPT->{dir}    = _resolve_path($CWD, $OPT->{dir})    || $CWD;
+    $OPT->{rundir} = _resolve_path($CWD, $OPT->{rundir}) || $OPT->{dir};
+    $OPT->{tabdir} = _resolve_path($CWD, $OPT->{tabdir}) || $OPT->{dir};
+    $OPT->{datdir} = _resolve_path($CWD, $OPT->{datdir}) || $OPT->{dir};
+    if ($OPT->{makedirs}) {
+	foreach ($OPT->{rundir}, $OPT->{tabdir}, $OPT->{datdir}) {
+	    system("mkdir -p $_") == 0 or
+		abort(qq{"mkdir $_" Failed: ($?)});
+	}
+    }
+    # now set our default directory to rundir for rest of time
+    chdir($OPT->{rundir}) or abort(qq{Unable to cd to "$OPT->{rundir}"});
+    err "DBG: Running in Directory: $OPT->{rundir}" if (DBG);
+    if ($OPT->{inputfile}) {
+	$OPT->{inputfile} = _resolve_path($CWD, $OPT->{inputfile});
+	if (not -r $OPT->{inputfile}) {
+	    abort("inputfile ($OPT->{inputfile}) is not readable");
+	}
+    }
+    if ($OPT->{comparefile}) {
+	$OPT->{comparefile} = _resolve_path($CWD, $OPT->{comparefile});
+	(-r $OPT->{comparefile}) or
+	    abort("comparefile ($OPT->{comparefile}) is not readable");
+	(-s _ > 0) or
+	    abort(qq{$OPT->{comparefile} is zero length});
+	# when we do a compare we assume testfirst.
+	#$OPT->{testfirst} = 1;
+    }
+    # CSV params
+    @{$OPT->{_ignore}} = (split(/,/, join(',', @{$OPT->{ignore}})));
+    @{$OPT->{_automake}} = (split(/,/, join(',', @{$OPT->{automake}})));
+    @RANGE = split(/,/, $OPT->{range});
+    my %tmpsum = ();
+    if ($OPT->{summary}) {
+	$tmpsum{$_}++ foreach (split(/,/, join(',', @{$OPT->{summary}})))
+    }
+    if ($OPT->{minsummary}) {
+	$tmpsum{"$RANGE[0]:min"}++;
+    }
+    if ($OPT->{maxsummary}) {
+	$tmpsum{"$RANGE[-1]:max"}++;
+    }
+    @{$OPT->{_summary}} = sort keys %tmpsum;
+    if (my $sub = $OPT->{datasetnamer}) {
+	if ($sub =~ /^sub\s*\{/) {
+	    eval qq{ \$OPT->{_datasetnamer} = $sub; };
+	    abort("not a code ref: $OPT->{datasetnamer}")
+		if (ref($OPT->{_datasetnamer}) ne 'CODE');
+	} else {
+	    abort("--datasetnamer ($sub) should be an anonymouse perl sub definition");
+	}
+    }
+    foreach my $string (@{$OPT->{commandline}}) {
+	my($ext, $line) = split(/:/, $string, 2);
+	$OPT->{_cmdline}->{$ext} = $line;
+    }
+    foreach my $string (split(/,/, join(',', @{$OPT->{name}}))) {
+	my($src, $name) = split(/:/, $string, 2);
+	$DATASET_NAME{$src} = $name;
+    }
+    $OPT->{verbose} = 1 if (DBG);
+} # _init()
+
+sub _write_range_tables {
+    my($which, $Which, $dataref, $pmref) = @_;
+    my $last = $RANGE[-1];
+    # write the datatable
+    my $datafile = "$which.mbtab";
+    local *DF;
+    rename_as_backup_file($datafile);
+    open(DF, ">$datafile") ||
+	abort("Error, can't open $datafile for output ($!)");
+    # sort by last arg in range
+    my @names = sort {
+	$dataref->{$last}->{$b} <=> $dataref->{$last}->{$a}
+    } (keys(%{$dataref->{$last}}));
+    print DF "# @names\n";
+    foreach my $num (sort {$a <=> $b} keys(%{$dataref})) {
+	print DF join(" ", $num, map { $dataref->{$num}->{$_} } @names), "\n";
+    }
+    close(DF);
+    if ($OPT->{html}) {
+	# now write the html version
+	local *DF;
+	open(DF, ">$which.html") ||
+	    abort("Error, can't open $which.html for output ($!)");
+	select(DF);
+	my @headings = @RANGE;
+	html_table_header("Measurement of $Which as N varies", @headings);
+	foreach my $name (reverse @names) {
+	    print qq{<tr><td><a href="$pmref->{$name}">$name</a></td>};
+	    foreach my $num (@RANGE) {
+		print qq{<td align="right">$dataref->{$num}->{$name}</td>};
+	    }
+	    print qq{</tr>\n};
+	}
+	print qq{</table>\n};
+	close(DF);
+	select(STDOUT);
+    }
+    if ($OPT->{text}) {
+	my $file = "$which.txt";
+	local *DF;
+	rename_as_backup_file($file);
+	open(DF, ">$file") ||
+	    abort("Error, can't open $file for output ($!)");
+	select(DF);
+	my @headings = @RANGE;
+	my $fmt = ($which eq 'cpu') ? "%7.2f" : "%7.f";
+	print "$OPT->{title}\n" if $OPT->{title};
+	print "Measurement of $Which as N varies\n";
+	print " " x 13, (map { sprintf("%8d", $_) } @headings), "\n";
+	foreach my $name (reverse @names) {
+	    printf "%-14s", $name;
+	    print join(" ", map { sprintf($fmt, $dataref->{$_}->{$name}) } @RANGE);
+	    print "\n";
+	}
+	print "\n";
+	close(DF);
+	select(STDOUT);
+	if ($OPT->{verbose}) {
+	    catfile($file);
+	}
+    }
+    if ($OPT->{graph} && $OPT->{plotrange}) {
+	my $cmd = $OPT->{plotrange};
+	my $title = ($OPT->{title}) ? "$OPT->{title} - $Which Usage" : "$Which Usage";
+	$title = quote_title($title);
+	# substitue graph title into plot command
+	$cmd =~ s!%T!$title!g;
+	# substitue imagefile name into plot command
+	$cmd =~ s!%I!${which}.png!g;
+	# substitue data filename into plot command
+	$cmd =~ s!%D!$datafile!g;
+	system($cmd) == 0 or abort(qq{"$cmd" Failed: ($?)});
+    }
+}
+
+sub _write_summary_tables {
+    my($cpuref, $memref, $pmref) = @_;
+    # summary table (for a single arg in range)
+    foreach my $arg (@{$OPT->{_summary}}) {
+	my $argname = $arg;
+	if ($arg =~ /^(\d+):(.+)$/) {
+	    $arg = $1;
+	    $argname = $2;
+	}
+	my $datafile = "$argname.mbtab";
+	local *DF;
+	rename_as_backup_file($datafile);
+	open(DF, ">$datafile") ||
+	    abort("Error, can't open $datafile for output ($!)");
+	# sort by cpu
+	my @names = sort {
+	    $cpuref->{$arg}->{$a} <=> $cpuref->{$arg}->{$b}
+	} (keys(%{$cpuref->{$arg}}));
+	print DF "# Test CPU Mem\n";
+	foreach my $name (@names) {
+	    print DF "$name $cpuref->{$arg}->{$name} $memref->{$arg}->{$name}\n";
+	}
+	close(DF);
+	if ($OPT->{html}) {
+	    # now write the html version
+	    local *DF;
+	    open(DF, ">$argname.html") ||
+		abort("Error, can't open $argname.html for output ($!)");
+	    select(DF);
+	    my $head_log = ($OPT->{runlog}) ?
+		'<th bgcolor="black"><font color="white">Log</font></th>':
+		    '';
+	    print qq{<table border="0" cellspacing="1" cellpadding="2" bgcolor="#e0e0c0">
+<tr>
+<th bgcolor="black"><font color="white">Source Code</font></th>
+<th bgcolor="black"><font color="white">CPU (sec)</font></th>
+<th bgcolor="black"><font color="white">Mem (KB)</font></th>
+$head_log</tr>
+\n};
+	    foreach my $name (@names) {
+		print qq{<tr><td><a href="$pmref->{$name}">$name</a></td>};
+		print qq{<td align="right">$cpuref->{$arg}->{$name}</td>};
+		print qq{<td align="right">$memref->{$arg}->{$name}</td>};
+		if ($OPT->{runlog}) {
+		    my $logpath = "$OPT->{runlog}/${name}_runlog";
+		    print qq{<td align="right"><a href="$logpath">log</a></td>};
+		}
+		print qq{</tr>\n};
+	    }
+	    print qq{</table>\n};
+	    close(DF);
+	}
+	if ($OPT->{text}) {
+	    my $file = "$argname.txt";
+	    local *DF;
+	    rename_as_backup_file($file);
+	    open(DF, ">$file") ||
+		abort("Error, can't open $file for output ($!)");
+	    select(DF);
+	    print "$OPT->{title}\n" if $OPT->{title};
+	    print qq{Summary [N = $arg ($argname)]\n};
+	    print qq{Program   CPU seconds Memory KB\n};
+	    foreach my $name (@names) {
+		printf("%-14s%7.2f %8.0f\n", $name, $cpuref->{$arg}->{$name},
+		       $memref->{$arg}->{$name});
+	    }
+	    print "\n";
+	    close(DF);
+	    select(STDOUT);
+	    if ($OPT->{verbose}) {
+		catfile($file);
+	    }
+	}
+	if ($OPT->{graph} && $OPT->{plotsummary}) {
+	    my $cmd = $OPT->{plotsummary};
+	    my $title = ($OPT->{title}) ? "$OPT->{title} (N = $arg)" : "(N = $arg)";
+	    $title = quote_title($title);
+	    # substitue graph title into plot command
+	    $cmd =~ s!%T!$title!g;
+	    # substitue imagefile name into plot command
+	    $cmd =~ s!%I!${argname}.png!g;
+	    # substitue data filename into plot command
+	    $cmd =~ s!%D!$datafile!g;
+	    system($cmd) == 0 or abort(qq{"$cmd" Failed: ($?)});
+	}
+    }
+}
+
+my $MAKEFILE_PATH = undef;
+sub _find_makefile () {
+    return($MAKEFILE_PATH) if ($MAKEFILE_PATH);
+    return($MAKEFILE_PATH = $OPT->{makefile}) if ($OPT->{makefile});
+    foreach my $dir ($OPT->{rundir}, $CWD) {
+	foreach my $name (qw(makefile.mb Makefile.mb makefile Makefile)) {
+	    my $path = "$dir/$name";
+	    return($MAKEFILE_PATH = $path) if -r $path;
+	}
+    }
+}
+
+sub abort_if_swapping {
+    return if ($OPT->{swapok});
+    if (swapusage() > $OPT->{maxswap}) {
+	abort(<<EOF);
+************************************************************
+      *     TEST ABORTED DUE TO SWAPPING!
+************************************************************
+* Your machine currently reports some swap space is being used.
+* We normally don\'t run benchmarks when swapping is going on.
+* Either unswap (as root: "swapoff -a ; swapon -a") or use
+* the --swapok flag
+************************************************************
+EOF
+    }
+}
+
+sub check_abort_conditions {
+    my($start_time) = @_;
+    abort_if_swapping();
+    if ($OPT->{maxtime} and
+	((time - $start_time) > $OPT->{maxtime})) {
+	abort(<<EOF);
+************************************************************
+*   TEST KILLED BECAUSE IT EXCEEDED --maxtime $OPT->{maxtime}
+************************************************************
+EOF
+    }
+}    
+
+sub _abort_if_test_failed {
+    if ($?) {
+	my $exit_value  = $? >> 8;
+	my $msg = "Child processed exited with error code ($exit_value)";
+	my $signal_num  = $? & 127;
+	$msg .= ", killed by signal $signal_num" if $signal_num;
+	my $dumped_core = $? & 128;
+	$msg .= ", (core dumped)" if $dumped_core;
+	err $msg;
+	#abort($msg);
+    }
+}    
+
+sub _resolve_path {
+    my($dir, $file) = @_;
+    return($file) if ($file =~ m!^/!);
+    # file was relative
+    return("$dir/$file") if ($dir =~ m!^/!);
+    # dir was relative
+    return("$CWD/$dir/$file");
+}
+
+sub create_input {
+    my $arg = shift;
+    my $inputfile = $OPT->{inputfile};
+    if ($inputfile && $OPT->{geninput}) {
+	# create a file of length:  $arg * length(inputfile)
+	my $newfile = "$inputfile.$arg";
+	# take basename, newfile will be created in rundir
+	$newfile =~ s!^.*/!!;
+	my $create = 0;
+	if (not -r $newfile) {
+	    err "DBG: need to generate new input file: $newfile\n" if (DBG);
+	    $create = 1;
+	}
+	if ((stat($inputfile))[9] > (stat($newfile))[9]) {
+	    err "DBG: need to re-generate out-of-date input file: $newfile\n" if (DBG);
+	    $create = 1;
+	}
+	if ($create) {
+	    local *F2;
+	    open(F2, ">$newfile") or abort("Error, can't create $newfile: ($!)");
+	    for (1 .. $arg) {
+		local *F1;
+		open(F1, "<$inputfile");
+		while(<F1>) { print F2 $_; }
+		close(F1);
+	    }
+	    close(F2);
+	}
+	$inputfile = $newfile;
+    }
+    return($inputfile);
+}
+
+##################################################
+# ctor for test object
+##################################################
+
+# attributes for test object
+#  bsd ???
+#  datadir - where to put output data for a run
+#  datasetnamer - move this functionality into Tool object
+#  automake - pass in as a constructor parameter
+#  custom_cmdline - for the given executable
+#  verbose, quiet - hmm
+#  sampledelay - pass in to ctor
+#  comparefile - pass in to ctor
+#  force - pass in to ctor
+#  $CWD - remove ... we should be in CWD maybe pass in srcdir
+
+sub new {
+    my($class, $executable) = @_;
+    abort("$class::new() Minibench::_init() not called") unless ($CWD);
+    abort("$class::new() expects executable name") unless ($executable);
+    my $obj = {
+	       'executable' => $executable,
+	       'dataset_name' => _dataset_name($executable),
+	       'data_file' => _resolve_path($OPT->{datdir}, "${executable}.mbdat"),
+	       'output_file' => "${executable}_out",
+	      };
+    abort("$class::new() dataset_name is null") if not $obj->{dataset_name};
+    $obj->{runlog_file} = $obj->{dataset_name} . "_runlog";
+    ($obj->{source}, $obj->{cmdline}) = _automake($executable, $obj->{runlog_file});
+    return(bless $obj, $class);
+}
+
+sub _dataset_name {
+    my($executable) = @_;
+    abort("usage: _dataset_name(executable)") if (DBG && (scalar(@_) == 0));
+    return($DATASET_NAME{$executable}) if ($DATASET_NAME{$executable});
+    if ($OPT->{_datasetnamer}) {
+	my $dsn = $OPT->{_datasetnamer}->($executable);
+	if ($dsn) {
+	    return($DATASET_NAME{$executable} = $dsn);
+	} else {
+	    abort("datasetnamer returned a null string for $executable");
+	}
+    }
+    return($DATASET_NAME{$executable} = $executable);
+}
+
+sub _automake {
+    my($executable, $runlog_file) = @_;
+    my($base, $ext) = ($executable =~ /^(.*?)\.([^.]+)$/);
+    my $source = '';
+    if ($executable =~ m!^(.*?)_run$!) {
+	$source = $1;
+    } elsif (grep(/^\Q$ext\E$/, @{$OPT->{_automake}})) {
+	$source = $executable;
+	$executable .= '_run';
+    } else {
+	$source = $executable;
+    }
+    if ($source ne $executable) {
+	my $makefile = _find_makefile();
+	$ENV{MB_SRCDIR} = $CWD;	# TBD move this out of this class
+	my $mkcmd = "make --no-print-directory -f $makefile $executable";
+	if ($OPT->{runlog}) {
+	    $mkcmd = qq{(echo "BUILD COMMANDS FOR: $source" ; echo ; date ; echo ; $mkcmd) > ${runlog_file}.make.tmp 2>&1};
+	}
+	err "DBG: Calling $mkcmd" if (DBG);
+	err "DBG: MB_SRCDIR is $CWD" if (DBG);
+	if (system($mkcmd) != 0) {
+	    catfile("${runlog_file}.make.tmp");
+	    abort(qq{"$mkcmd" Failed});
+	}
+	if ($OPT->{runlog}) {
+	    system("grep -q 'is up to date' ${runlog_file}.make.tmp || mv -f ${runlog_file}.make.tmp ${runlog_file}.make");
+	}
+    }
+    my $cmdline = ($OPT->{_cmdline}->{$ext}) ?
+	$OPT->{_cmdline}->{$ext} : "$executable %A";
+    my $testname = $base;
+    $testname =~ s/\..*$//;
+    my $cname = $base;
+    $cname =~ s/^[^.]\.//;
+    # tokens subst in cmdline:
+    # %A = test arg (only subst in ->run())
+    # %B = test program basename (minus extension)
+    # %C = test program canonical name (basename minus possible prefix)
+    # %N = test program source extension 
+    # %R = rundir
+    # %S = source directory
+    # %T = test program test name (possibly prefix of %B)
+    # %X = test program name
+    my($srcext) = ($source =~ /\.([^.]+)$/);
+    $cmdline =~ s/%X/$executable/g;
+    $cmdline =~ s/%B/$base/g;
+    $cmdline =~ s/%C/$cname/g;
+    $cmdline =~ s/%T/$testname/g;
+    $cmdline =~ s/%N/$srcext/g;
+    $cmdline =~ s/%S/$CWD/g;
+    # TBD - remove this subst ... we should be in rundir already
+    $cmdline =~ s/%R/$OPT->{rundir}/g;
+    # substitute any environment variables
+    $cmdline =~ s/\$(\w+)/$ENV{$1}?$ENV{$1}:"\$".$1/ge;
+    if ($OPT->{runlog}) {
+	local *RL;
+	if (open(RL, ">$runlog_file.cmd")) {
+	    print RL "\n";
+	    print RL "=" x 65;
+	    print RL "\nCOMMAND LINE (%A is single numeric argument):\n\n$cmdline\n";
+	}
+	close(RL);
+	system("cat $runlog_file.make $runlog_file.cmd > $runlog_file 2>/dev/null");
+	(-f "$runlog_file.make") and system("cat $runlog_file.make");
+    }
+    # substitute any environment variables mentioned in command line?
+    return($source, $cmdline);
+}
+
+##################################################
+# accessor methods
+##################################################
+
+sub cmdline { $_[0]->{cmdline} }
+sub data_file { $_[0]->{data_file} }
+sub dataset_name { $_[0]->{dataset_name} }
+sub executable { $_[0]->{executable} }
+sub output_file { $_[0]->{output_file} }
+sub source { $_[0]->{source} }
+
+sub set_output_file { $_[0]->{output_file} = $_[1] }
+sub push_results { push(@{$_[0]->{_results}}, $_[1]); }
+sub pop_results {
+    my $ref = $_[0]->{_results};
+    $_[0]->{_results} = undef;
+    return($ref);
+}
+
+##################################################
+# object methods
+##################################################
+
+sub run {
+    my($self, $arg, $repeat) = @_;
+    my $executable = $self->executable;
+    my $cmdline = $self->cmdline;
+    $cmdline =~ s/%A/$arg/g;
+    my $mincpu;
+    my $maxcpu;
+    abort_if_swapping();
+    for (my $i=0; $i<$repeat; $i++) {
+	my $inputfile = create_input($arg);
+	#err("# Running: $cmdline") if ($OPT->{verbose});
+	my($cu0, $cs0) = (times)[2,3];
+	my $start_time = time;
+	# TBD - turn on process accounting
+	if ($OPT->{bsd}) {
+	    #
+	    # this method of measuring cpu/memory depends on
+	    # companion program "actime", which has to be installed setuid root
+	    # and which itself depends on Linux BSD process accounting being
+	    # enabled in the kernel.
+	    #
+	    # fork the test
+	    my $outfile = $self->output_file;
+	    my($cuser, $csys, $totcpu, $avgmem) = (0, 0, 0, 0);
+	    my $command = "actime -O";
+	    $command .= " -i $inputfile" if ($inputfile);
+	    $command .= " -o $outfile -- $cmdline";
+	    if (open(TM, "$command|")) {
+		while (<TM>) {
+		    if (/^actime: .*? u:(\S+) s:(\S+) m:(\S+)/) {
+			$cuser += $1;
+			$csys += $2;
+			$avgmem += $3;
+		    }
+		}
+		close(TM);
+	    } else {
+		err "Error running actime helper command";
+		exit(1);
+	    }
+
+	    $self->push_results([$i, $arg, $cuser, $csys, $avgmem]);
+	    my $totcpu = $cuser + $csys;
+	    $mincpu = min($totcpu, $mincpu);
+	    $maxcpu = max($totcpu, $maxcpu);
+	} else {
+	    #
+	    # this method of measurement is very tricky.  There is a very
+	    # nasty race condition here.  We want to start measuring the 
+	    # child process as soon as it starts, and take a few samples
+	    # while it is running.  Unfortunately, many benchmarks of compiled
+	    # programs complete so quickly, we either don't catch any sub-
+	    # processes they start, or else incorrectly measure the memory.
+	    # if the process runs for at least 1 second, then there shouldn't
+	    # be too much of a mis-measurement.
+	    #
+	    
+	    # fork the test
+	    my $pid = $self->start_test($cmdline, $inputfile);
+	    my $maxmem = 0;
+	    # try to wait until child starts, so first memory sampling
+	    # will not accidentally measure process of parent (minibench).
+	    # this is an ugly hack around a nasty race condition.
+	    select(undef, undef, undef, 0.01);
+	    flush_pid_cache();	# must be done before calling childpids first time
+	    # parent continues, waiting in loop for child to finish, testing memory size
+	    while (waitpid($pid, WNOHANG()) != -1) {
+		$maxmem = max($maxmem, total_child_size(childpids($$)));
+		select(undef, undef, undef, $OPT->{sampledelay});
+		check_abort_conditions($start_time);
+	    }
+	    #_abort_if_test_failed($?);
+	    my($cuser, $csys) = (times)[2,3];
+	    $cuser -= $cu0;
+	    $csys -= $cs0;
+	    $self->push_results([$i, $arg, $cuser, $csys, $maxmem]);
+	    my $totcpu = $cuser + $csys;
+	    $mincpu = min($totcpu, $mincpu);
+	    $maxcpu = max($totcpu, $maxcpu);
+	}
+	$self->compare_output($arg);
+	if ($mincpu > $OPT->{maxrepthreshold}) {
+	    $repeat = 1;
+	    last;
+	}
+    }
+    unless ($OPT->{quiet}) {
+	if ($repeat > 1) {
+	    err sprintf("# %-20s reps:%d, CPU min:%.2f max:%.2f diff:%.2f",
+			"[$cmdline]", $repeat, $mincpu, $maxcpu, $maxcpu - $mincpu);
+	} else {
+	    err sprintf("# [$cmdline] CPU: %.2f", $mincpu);
+	}
+    }
+}
+
+sub compare_output {
+    my($self, $n) = @_;
+    # check for success by comparing output to known good output
+    my $cmpfile = $OPT->{comparefile};
+    if ($OPT->{compareoutput}) {
+	$cmpfile = "Output.$n";
+    }
+    my $outfile = $self->output_file;
+    warn("DBG: compare_output($n) cmpfile = $cmpfile  outfile = $outfile") if (DBG);
+    if (-f $cmpfile) {
+	my $exe = $self->executable;
+	if (files_equal($outfile, $cmpfile)) {
+	    unless($OPT->{quiet}) {
+		my $cmp = $cmpfile;
+		$cmp =~ s!^.*/!.../!;
+		err "#  Output is correct.  ($outfile equals $cmp)" if (DBG);
+	    }
+	} else {
+	    system("ls -l $outfile $cmpfile");
+	    warn(qq{($exe) FAILED: $outfile differs from $cmpfile});
+	}
+    } else {
+	if (-f $outfile) {
+	    system("/bin/cp $outfile $cmpfile");
+	    warn("DBG: COPYING /bin/cp $outfile $cmpfile") if (DBG);
+	    if (! -f $cmpfile) {
+		warn "Error! did not create output for for comparison: $cmpfile";
+	    }
+	}
+    }
+}
+
+# write the raw data for all test runs over N for this test program.
+sub write_results {
+    my($self) = @_;
+    my $datafile = $self->data_file;
+    my $resultsref = $self->pop_results;
+    local *DAT;
+    rename_as_backup_file($datafile);
+    open(DAT, ">$datafile") || abort(qq{Can\'t open datafile: "$datafile" ($!)});
+    my @results = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } @$resultsref;
+    my $lastrun = -1;
+    foreach my $res (@results) {
+	my $run = shift(@{$res});
+	if ($run != $lastrun) {
+	    print DAT "# run #", 1+$run, "\n";
+	    $lastrun = $run;
+	}
+	print DAT "@{$res}\n";
+    }
+    close(DAT) if ($datafile);
+}
+
+sub start_test {
+    my($self, $cmdline, $inputfile, $errorfile) = @_;
+    # fork the benchmark test.
+    my $outfile = $self->output_file;
+    my $pid = fork;
+    if (not defined $pid) {
+	abort(qq{FAILED to fork ($!)});
+    } elsif (not $pid) {	# child
+	# if an input file is specified, open it as stdin
+	if ($inputfile) {
+	    # parent (minibench) has already checked for inputfile's
+	    # existence.
+	    open(STDIN, "<$inputfile");
+	}
+	# if an errorfile is specified, open it as stderr
+#	if ($errorfile) {
+#	    unless (open(STDERR, ">$errorfile")) {
+#		err "Error, couldn't open errorfile: $errorfile";
+#	    }
+#	}
+	# "redirect" the benchmark test's STDOUT to the output file
+	# this allows us to avoid using shell metacharacters, so perl
+	# won't spawn a subshell to handle the executable, it will just
+	# exec it right away.  wheee.
+	open(STDOUT, ">$outfile");
+	# rundir may not be original dir (CWD), but that's where
+	# the test programs probably live.
+	$ENV{PATH} = "$CWD:$CWD/tmp:$ENV{PATH}";
+	exec($cmdline) or do {
+	    err "Error, could not exec $cmdline ($!)";
+	    exit(1);
+	};
+    }
+    # parent continues
+    return($pid);
+}
+
+sub up_to_date {
+    my($self) = @_;
+    return(0) if $OPT->{force};
+    my $datafile = $self->data_file;
+    my $source = "$CWD/" . $self->source;
+    if (not -r $datafile) {
+	err "up_to_date: datafile ($datafile) does not exist" if (DBG);
+	return(0);
+    }
+    if (newer($datafile, $source)) {
+	# we are up_to_date if
+	err "$datafile newer than $source " if (DBG);
+	return(1);
+    } else {
+	err "$source newer than $datafile " if (DBG);
+	return(0);
+    }
+}    
+
+# end of package Minibench
+
+package main;
+######################################################################
+# pre-declared functions
+######################################################################
+sub err (@) { print STDERR @_,"\n" }
+
+######################################################################
+# main program
+######################################################################
+sub main {
+    Minibench->main(\%GET_OPT);
+    exit(0);
+}
+
+
+######################################################################
+# Subroutines
+######################################################################
+
+sub process_options {
+    # read options from command line
+    if (@ARGV) {
+	# config Getopt::Long so it doesn't ignore case of executable options.
+	Getopt::Long::config("no_ignore_case");
+        if (not GetOptions(\%GET_OPT, @GET_OPTIONS)) {
+	    warn qq{Unknown option, try "$PROGNAME --help"\n};
+	    exit(1);
+	}
+    }
+    # read options from config file
+    my %conf = ();
+    if (my $file = ($GET_OPT{config} || "$ENV{HOME}/.$PROGNAME")) {
+	local *F;
+	if (open(F, "<$file")) {
+	    while(<F>) {
+		next if (/^\s*\#/); # skip comment lines
+		if (/^(\S+)\s+(.*)$/) {
+		    my $key = lc $1;
+		    my $val = $2;
+		    if (ref($GET_OPT{$key}) eq 'ARRAY') {
+			push(@{$conf{$key}}, $val);
+		    } else {
+			$conf{$key} = $val;
+		    }
+		}
+	    }
+	    close(F);
+# TBD: it's not an error to not have a config file
+#	} else {
+#	    err "Error, could not open $file ($!)";
+#	    exit(1);
+	}
+    }
+    # combine options from defaults + configfile + command line
+    # multi-valued options (ARRAY) are not cumulative.
+    foreach my $key (keys(%DEF_OPT), keys(%conf)) {
+	# options from config file override defaults.
+	# options on command line override options from config file.
+	if (exists($GET_OPT{$key})) {
+	    if (ref($GET_OPT{$key}) eq 'ARRAY') {
+		next if (scalar(@{$GET_OPT{$key}}));
+	    } else {
+		# ref is scalar
+		next;
+	    }
+	}
+	if (exists $conf{$key}) {
+	    $GET_OPT{$key} = $conf{$key};
+	} elsif (exists $DEF_OPT{$key}) {
+	    $GET_OPT{$key} = $DEF_OPT{$key};
+	}
+    }
+    Help()    if ($GET_OPT{help});
+    Version() if ($GET_OPT{version});
+    License() if ($GET_OPT{license});
+}
+
+######################################################################
+# the main process starts here.
+######################################################################
+process_options();
+main();
+
+
+######################################################################
+# only documentation follows
+######################################################################
+sub print_version {
+    print qq{  This is $PROGNAME, version $VERSION Copyright @{[(localtime())[5] + 1900]} by Doug Bagley\n};
+}
+
+sub Version {
+    print_version();
+    exit(0);
+}
+
+sub License {
+    print_version();
+    print <<EOF;
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You can review the GNU General Public License by writing to the Free
+  Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+  02111-1307 USA, (or here: http://www.gnu.org/copyleft/gpl.txt).
+
+EOF
+    exit(0);
+}
+
+sub Help {
+    if (HELP) {
+	print <<EOF;
+
+NAME
+
+  $PROGNAME - benchmark CPU and Memory usage of test program(s)
+
+SYNOPSIS
+
+  $PROGNAME [--debug] [--help] [--config filename]
+      [--range X,Y,Z,...] [--repeat N] [--geninput] [--inputfile file] 
+      [--name 'progN:datasetnameN'] [--datasetnamer 'perl code ref']
+      [--dir dir] [--rundir dir] [--datdir dir] [--tabdir dir] [--makedirs]
+      [--automake ext1,ext2,...] [--makefile filename] [--force] [--text]
+      [--tabulate] [--html] [--summary X,Y,Z] [--minsummary] [--maxsummary]
+      [--graph] [--plotrange 'command'] [--plotsummary 'command'] 
+      [--verbose] [--quiet] [--testfirst] [--comparefile file]
+      [--swapok] [--maxswap kb] [--maxtime sec] [--sampledelay sec]
+      [--commandline 'ext1:command line']
+      [--ignore prog1,prog2,...]
+      prog1 prog2 ....
+
+  Options:
+  --automake       list of file extensions that need compiling
+  --commandline    specifies how to run a particular test program
+  --comparefile    compare output of test to known sample file
+  --config         specify config file containing options
+  --datasetnamer   anonymous perl sub code to calculate dataset name
+  --datdir         data for each test program go in this directory
+  --debug          turn on debugging
+  --dir            all activity occurs in this directory
+  --force          rerun each test even if data file is up-to-date
+  --geninput       create inputs of different sizes from inputfile
+  --graph          create graphs
+  --help           documentation
+  --html           create html versions of aggregate tables
+  --ignore         list of test progs on command line to ignore
+  --inputfile      test will read from this file as stdin
+  --license        print nice free software license
+  --makedirs       make datdir/rundir/tabdir if needed
+  --makefile       name of makefile to use for automake
+  --maxsummary     create summary table/graph for largest arg in range
+  --maxswap        specify max allowed swap usage (KB)
+  --maxtime        specify max run-time allowed (seconds)
+  --minsummary     create summary table/graph for smallest arg in range
+  --name           explicitly name dataset for a test program
+  --plotrange      command line for producing a plot of data over range
+  --plotsummary    command line for producing a plot of one arg in range
+  --quiet          be quiet about warnings
+  --range          specify a range of input parameters
+  --repeat         how many times to repeate each test
+  --rundir         chdir to this directory before running tests
+  --sampledelay    sleep this long between taking memory samples
+  --summary        create summary tables/graphs for this list of range args
+  --swapok         do not check for swap usage
+  --tabdir         output all tables and graphs here
+  --tabulate       create aggregate tables
+  --testfirst      run a test for first arg and throw away results
+  --text           print tables as human readable text
+  --verbose        verbose debugging
+  --version|-v     program version
+
+  prog1 prog2 ...  a list of programs to benchmark
+
+  [Options can be abbreviated, as long as the abbreviation is unique.]
+  [Boolean options can negated on the command line by prefixing with
+  "no", i.e. --noquiet.]
+
+DESCRIPTION
+
+  $PROGNAME runs a test program in a controlled benchmark environment.
+  You can control maximum time used, whether to kill the test if it causes
+  swapping, and compare command output to a file of expected results.
+
+  In the $PROGNAME world we talk of a test-run and a test-range.  A
+  B<test-run> is when we run the same test program with the same
+  input.  A B<test-range>, is when we run the same test program over
+  a range of input.
+
+  Although $PROGNAME has a lot of options, it is meant to be fairly
+  easy to use.  You can start off by just calling $PROGNAME with a few
+  programs to run, and then add more options to customize the output.
+
+  It\'s easy to run each test program over range of inputs with the
+  --range option.  This is so you can get an idea of which programs
+  perform better with smaller or larger input.
+
+  Sometimes instead of running each test over a range of "numbers of
+  iterations", it is preferable to run each test with differing size
+  of "input files".  $PROGNAME feeds input on STDIN (to avoid having
+  to implement file open/close).
+
+  Since some languages may not have generalized command line parameter
+  processing, we allow "customized command line format".
+
+  $PROGNAME offers a simple "automake" capability so that if user
+  wants to compare "test.c" to "test.pl", it will compile test.c to
+  test.c_run and run that.  Of course, you have to supply some of the
+  makefile rules to do this.
+
+OPTIONS
+
+  --automake extensions
+
+    This is a comma-separated list of test program name extensions
+    that need to be built from source.  For instance you may want to
+    compare a C++ program to a C program, so you could type:
+
+      $PROGNAME --automake c,cc foo.c foo.cc
+
+    See the AUTOMAKE section below.
+
+  --commandline 'ext:formatstring'
+    (this option can be specified multiple times)
+
+    This specifies how to run the test program built from a source file
+    with extension B<ext>.  It can be a command line complete with
+    arguments or it can simply be the name of a single executable.
+    There are a number of special variables that can be used in the
+    formatstring:
+
+      %A - the value of the current arg taken from --range
+      %B - basename of the test executable
+      %N - test program source extension 
+      %R - path of run directory
+      %S - path of source directory
+      %T - test program test name (possibly prefix of %B)
+      %X - filename of the test executable 
+
+    Environment variables will be substituted in the command line in
+    the canonical manner.  Example:
+
+       --commandline  lua:\$LUA \$LUA_FLAGS -e NUM=%A %S/%X
+
+    For source files ending in .lua, the command line will consiste
+    of: environment variables \$LUA and \$LUA_FLAGS, followed by the
+    flag "-e NUM=%A", where %A will contain a single element from
+    the specified --range.  Finally, the last argument will be the
+    complete path name of the lua program as it lives in the source
+    directory.  (The source directory is the directory in which
+    $PROGNAME is invoked).
+
+  --comparefile file
+
+    This specifies a file whose contents are compared to the output of
+    the test program.  If they aren\'t an exact match, the test is
+    aborted with an error.
+
+  --config file
+
+    This allows you to specify additional (or all) $PROGNAME options
+    in a separate file.  See the section on CONFIGURATION below.
+
+  --datasetnamer 'anonymous perl sub'
+
+    This allows you to change the name of the datasets.  (See the
+    section on DATASETS below).  The default value of this is
+    probably good enough, but you can change it if you like.
+    Here\'s an example of how the default works:
+
+     source name    dataset name
+          foo.pl => pl
+      foo.bar.pl => bar
+
+    This makes it easy to compare xxx.tcl, xxx.py, xxx.c, and have the
+    datasets named after the file extensions, but also allow you to
+    customize that with a "middle-name".
+
+  --datdir directory
+
+    This option allows you to specify where the raw output data for
+    each test program goes.  These files are named based on the test
+    file name: foo.pl => foo.pl.mbdat.
+
+  --debug
+
+    Turns on debugging output.
+
+  --dir directory
+
+    This option allows you to specify a default directory for --datdir,
+    --rundir, --tabdir.  (so you don\'t have to specify them all if
+    they are the same directory).
+
+  --force
+
+    This will re-run all the tests to re-create all the .mbdat files,
+    even if they are up-to-date.
+
+  --geninput
+
+    When this option is specified, it tells $PROGNAME to make copies
+    of the --inputfile, which allows you to easily vary the size of
+    input.  For example, if you have
+
+       --range 1,2,3 --inputfile foo --geninput
+
+    then the following files will be created in the rundir: foo.1,
+    foo.2, foo.3, where foo.2 is 2 copies of foo, and foo.3 contains 3
+    copies of foo.
+
+  --graph
+
+    Create graphs using the commandlines specified in --plotrange and
+    --plotsummary.
+
+  --help
+
+    Prints the documentation for this program.
+
+  --html
+
+    Produce tables in HTML format.
+
+  --ignore prog1,prog2,...
+
+    This is a comma-separated list of source file names to ignore.
+    This makes it easy to specify a test like this:
+
+       $PROGNAME --ignore foo.tcl foo.*
+
+    So all the files starting with foo. will be tested, except foo.tcl.
+
+  --inputfile file
+
+    If specified, STDIN for the test program is closed, and this file
+    is opened as STDIN for the child test process.
+
+  --license
+
+    Prints the license for this program.
+
+  --makedirs
+
+    Tells $PROGNAME to create --datdir, --rundir or --tabdir if it
+    doesn\'t exist.
+
+  --makefile filename
+
+    This tells $PROGNAME to explicitly use this particular makefile
+    while building a test from source (see AUTOMAKE).  If this
+    parameter isn\'t provided, $PROGNAME looks for files named:
+    makefile.mb Makefile.mb makefile Makefile (in that order), first
+    in the run directory (--rundir), then in the source directory
+    (directory where $PROGNAME was started).
+
+  --maxsummary
+
+    This is a convenience option which just tells $PROGNAME to add the
+    last element in --range to the --summary option.
+
+  --maxswap kilobytes
+
+    Before the test starts, we check to see that at most, this amount
+    of swap (in KB) is in current use.  During the test we check to
+    make sure that this amount is not exceeded.  If it is, the test
+    program is killed.  Default is ($DEF_OPT{maxswap} KB).
+
+  --maxtime seconds
+
+    If the test program takes longer than this number of seconds to
+    execute, it is killed.  Default is ($DEF_OPT{maxtime} seconds).  (Hey,
+    you think I want to wait around all day???)
+
+  --minsummary
+
+    This is a convenience option which just tells $PROGNAME to add the
+    first element in --range to the --summary option.
+
+  --name src:name    (this option can be specified multiple times)
+
+    If you have a test program named "uglyname.barf", and you want the
+    dataset for this test program called "nicename", you can use this
+    option:
+
+       --name uglyname.barf:nicename
+
+  --plotrange 'command line'
+
+    This specifies the command line to plot the {cpu,mem}.mbdat data
+    files.  The default uses the "plot" command.
+
+  --plotsummary 'command line'
+
+    This specifies the command line to plot the summary data files.
+    (Remember summaries are for a single N in --range).  The default
+    uses the "plot" command.
+
+  --quiet
+
+    This will reduce the amount of output.  Currently it will shut up
+    warning of un-implemented OS-specific funtions.
+
+  --range X,Y,Z,...
+
+    This specifies a range of input numbers over which to run the test
+    programs.  Typically, each test program is run with one of these
+    numbers as its only argument.  (e.g. if the test is "foo.pl", it is
+    run as "foo.pl X", then "foo.pl Y" ...  This allows us to collect
+    data over a set of inputs.
+
+    X,Y,Z... are a list of integers, and can either be used internally
+    in each test program to specify a number of iterations to perform,
+    or if --geninput and --inputfile are specified, then $PROGNAME
+    will create different sizes of input files from the original, and
+    feed each one to the test program on STDIN.
+
+  --repeat N
+
+    This allows you tell $PROGNAME to run each test run multiple
+    times.  This allows $PROGNAME to account for variability in
+    run-times between one invocation and the next.  The current
+    method is to take the smallest CPU usage, and the largest Memory
+    usage over the test run.
+
+  --rundir directory
+
+    This specified the directory that the test program is to run in.
+    If not specified, the test program is run in the current directory.
+
+  --sampledelay N
+
+    This is how long $PROGNAME sleeps between taking memory samples of
+    the test program.  The default is: $DEF_OPT{sampledelay}.
+
+  --summary X,Y,Z
+
+    This allows you to specify for which values of --range you wish to
+    have summary data tables and graphs created.  Typically, you would
+    want the first and last value from --range, so you can see the
+    effects of startup costs when using the smallest value, and see
+    those effects amortized away when using the largest value.  For
+    example, if you have --range 1,10,100,1000, and --summary 1,1000,
+    then summaries will be created for the test runs for when the
+    argument to the test programs is set to 1 and 1000.  (This would
+    be the same as specifying --minsummary and --maxsummary, which is
+    usually easier).
+
+  --swapok
+
+    This flag tells $PROGNAME not to check if test your systems is
+    swapping.
+
+  --tabdir directory
+
+    This specifies the directory where the output data tables and
+    graphs are put.
+
+  --tabulate
+
+    If you don't specify this option, then $PROGNAME simply creates
+    the raw data files for each test program and exits.  If you don't
+    like the way I organize the data tables and graphs, feel free to
+    take it from there :-)
+
+  --testfirst
+
+    This option tells $PROGNAME to run the test program with first arg
+    from --range, then throw away the results and then start over from
+    the beginning.  This is provided to avoid "caching" effects.
+
+  --text
+
+    If this option is selected, then the tables are also output as
+    human readable text.  If --verbose is also selected, those files
+    are also printed to STDOUT.
+
+  --verbose
+
+    This currently only modifies the --debug flag so that you get to
+    see more crap than you ever wanted to see.
+
+  --version
+
+    Prints the version of this program.
+
+AUTOMAKE
+
+  For your convenience $PROGNAME offers the ability to call make with
+  your custom Makefile to build a program from source.  We show a complete
+  example below:
+
+OUTPUT FORMAT
+
+
+EXAMPLES
+
+  run test.c, test.pl, test.tcl, test.lua over test range of input
+  1,3,5,7,9:
+
+  $PROGNAME --range 1,3,5,7,9 --repeat 3 \
+	    --html --summary 9 \
+            --automake c \
+            test.c test.pl test.tcl test.lua
+
+
+CONFIGURATION FILE
+
+  You can put any command line option in the configuration file:
+
+    ~/.$PROGNAME
+
+  The configuration file can contain comments (preceeded by #).
+
+  To define an option just put the option name, a space, and its value
+  (The value can spaces in it), like this:
+
+    option value
+
+  To undefine an option, just put the option name with no value:
+
+    option
+
+  To define a boolean option just give it a value of 1 (or 0):
+
+    booleanoption 1
+
+BUGS
+
+  There may be some.  Such is life.
+
+  One thing to consider is that on some OSs (Linux), it\'s possible
+  for the memory management/buffer cache to drastically affect
+  performance.  I\'ve heard one technique of dealing with this is
+  to sbrk() all available memory, then free it right before running
+  the test program.
+
+  I need to find out if there is any more accurate way to get child
+  process size under Linux.  The current method is "ballpark", and can
+  accidentally measure the process size of minibench (the parent)
+  instead of the child.  This inaccuracy is worse with programs that
+  execute very quickly.  It is not too bad with programs that run for
+  more than a second.
+
+SEE ALSO
+
+  I have an example of minibench in use at:
+  http://www.bagley.org/~doug/shootout/
+
+AUTHOR
+
+(Doug Bagley) http://www.bagley.org/~doug/contact.shtml
+
+VERSION
+
+  $PROGNAME $VERSION
+
+KEYWORDS
+
+  performance, benchmark
+
+COPYRIGHT
+
+  Copyright (c) @{[(localtime())[5] + 1900]} by Doug Bagley
+  This is free software.  See "$PROGNAME --license".
+EOF
+	exit(0);
+    }
+}

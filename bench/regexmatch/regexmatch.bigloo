@@ -1,0 +1,81 @@
+;;; -*- mode: scheme -*-
+;;; $Id: regexmatch.bigloo,v 1.1 2004-05-19 18:11:22 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(module regexmatch
+	(main main))
+
+(define match-phone
+  (let ((last-char-is-non-digit #t)
+	(found #f)
+	(parts '()))
+    (regular-grammar ((non-digit (out ("09") #\( ))
+		      (area-code (= 3 digit))
+		      (exchange (= 3 digit))
+		      (separator (in (" -")))
+		      (number (= 4 digit))
+
+		      ;; parts of phone number begins with a 3-digit area code
+		      (phone-parts (: (or (: "(" (submatch area-code) ")")
+					  (submatch area-code))
+				      ;; the area code is followed by one space
+				      space
+				      ;; which is followed by the 3 digits of the exchange
+				      (submatch exchange)
+				      ;; the exchange is followed by a space or hyphen [ -] 
+				      separator
+				      ;; which is followed by the last 4 digits: DDDD 
+				      (submatch number))))
+
+		     ;; a telephone number must be preceeded by a non-digit (or bol).
+		     ;; and followed by a non-digit (or eol).
+
+		     ;; scanned a non-digit char
+		     ((: non-digit)
+		      (set! last-char-is-non-digit #t)
+		      (if found (begin (set! found #f) parts) (ignore)))
+		     ;; scanned a digit char
+		     ((: digit)
+		      (set! last-char-is-non-digit #f)
+		      (if found (begin (set! found #f) '()) (ignore)))
+		     ((when last-char-is-non-digit (: phone-parts))
+		      (set! found #t)
+		      (set! parts (list (the-submatch 1)
+					(the-submatch 2)
+					(the-submatch 3)
+					(the-submatch 4)))
+		      (ignore))
+		     (else
+		      ;; possibly get here on eol
+		      (if found (begin (set! found #f) parts) '())))))
+
+
+(define (main args)
+  (let ((n (or (and (= (length args) 2) (string->number (cadr args))) 1))
+	(phonelines '())
+	(count 0))
+    (let loop ((line (read-line)))
+      (cond ((eof-object? line) #f)
+	    (else
+	     (set! phonelines (append phonelines (list line)))
+	     (loop (read-line)))))
+
+    (do ((i N (- i 1)))
+	((= i 0))
+      (let ((count 0))
+	(for-each (lambda (phone)
+		    (let* ((port (open-input-string phone))
+			   (match-parts (read/rp match-phone port)))
+		      (if (and (not (null? match-parts))
+			       (= 1 i))
+			  (begin
+			    (let* ((area 
+				    (if (string=? (car match-parts) "")
+					(cadr match-parts)
+					(car match-parts)))
+				   (exch (caddr match-parts))
+				   (numb (cadddr match-parts))
+				   (num (string-append "(" area ") " exch "-" numb)))
+			      (set! count (+ count 1))
+			      (print count ": " num))))))
+		  phonelines)))))

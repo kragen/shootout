@@ -1,0 +1,47 @@
+(*
+ * $Id: wordfreq.ocaml5.ocaml,v 1.1 2004-05-19 18:14:24 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ *)
+
+let max = 4096
+let buf = String.create max
+let count = Hashtbl.create 75000
+let wbuf = Buffer.create 64
+
+type state = Inside | Outside
+
+let rec scan_words i n w =
+  if i < n then
+    let c = buf.[i] in
+    if 'a' <= c && c <= 'z' then begin
+      Buffer.add_char wbuf c;
+      scan_words (i+1) n Inside
+    end
+    else if 'A' <= c && c <= 'Z' then begin
+      Buffer.add_char wbuf (Char.unsafe_chr(Char.code c + 32));
+      scan_words (i+1) n Inside
+    end
+    else if w = Inside then begin
+      let word = Buffer.contents wbuf in
+      begin try incr (Hashtbl.find count word)
+      with Not_found -> Hashtbl.add count word (ref 1) end;
+      Buffer.clear wbuf;
+      scan_words (i+1) n Outside
+    end else
+      scan_words (i+1) n Outside
+  else
+    match input stdin buf 0 max with
+      0     -> raise End_of_file
+    | nread -> scan_words 0 nread w
+
+let to_list l w c =
+  l := (Printf.sprintf "%7d\t%s" !c w) :: !l
+
+let _ =
+  begin try scan_words 0 0 Outside
+  with End_of_file -> () end;
+  let outputlist = ref [] in
+  Hashtbl.iter (to_list outputlist) count;
+  List.iter print_endline (List.sort
+			    (fun a b -> compare b a)
+			    !outputlist)

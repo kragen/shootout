@@ -1,0 +1,348 @@
+<!--#set var="TITLE" value="Computer Language Shootout Methodology" -->
+<!--#set var="KEYWORDS" value="performance, benchmark, computer,
+algorithms, languages, compare, cpu, memory" --> 
+<!--#include virtual="html/header.shtml" -->
+<!--#include virtual="nav.html" -->
+
+<p>
+<h4>Testing Methodology</h4>
+<p>
+  The intention of this page is to try to give some insight into how I
+  handle some of the pitfalls of doing language benchmarks.
+
+<p>
+<p>
+<a href="#cpu">Measuring CPU</a><br>
+<a href="#mem">Measuring Memory</a><br>
+<a href="#loc">Measuring Lines of Code</a><br>
+<a href="#running">How Test Programs Are Built And Run</a><br>
+<a href="#graphing">How Tests Are Graphed</a><br>
+<a href="#guidelines">Test Program Guidelines</a><br>
+<a href="#types">Types of Tests</a><br>
+<a href="#sameway">Tests That Call For Implementations To Be Written The <i>Same Way</i></a><br>
+<a href="#samething">Tests That Call For Implementations To Do The <i>Same Thing</i></a><br>
+<a href="#platform">Testing Platform</a><br>
+<a href="#flaws">Flaws in the Shootout</a><br>
+
+<a name="cpu">
+<h4>Measuring CPU</h4>
+<p>
+  I've written a simple <i>benchmark framework</i> of scripts and
+  Makefiles so it is easy to plug in new benchmark tests and programs
+  and re-generate the data and plots.  Each test is executed as a
+  sub-process of a <a href="bin/minibench">Perl script</a> that
+  measures the total child CPU (user + system) time.
+<p>
+  Since I wanted my measurement method to require zero special code
+  in the test programs, I made it work so that the measurement is
+  done entirely externally to the test program.  This means that the
+  startup costs of each test program will be included in the CPU
+  time measurement, but we don't really want to include this startup
+  cost.  So I try to avoid startup costs by doing 2 things: running
+  a pre-test, where the program is loaded and run for a small input,
+  and also by running the test long enough so that the startup costs
+  are amortized over a long enough run-time so they become less
+  significant.  Currently, some tests may not run really long enough
+  to fully minimize startup costs fairly for all contestants.  I'll
+  continue to work on this.
+<p>
+  This is also the reason we run each test program over a set of
+  different input sizes.  It allows us to see at what point startup
+  costs have less of an effect.
+<p>
+  <i>Please note that startup times can now be factored out of the
+  displayed results on each test index page by clicking on the link
+  <b>[cpu minus startup time]</b></i>.  This is done by calculating
+  the startup time of a single invocation of the test process from the
+  results of the null-program (<a href="bench/hello/">Hello World</a>)
+  test and subtracting it from the results on the given test.
+<p>
+  The measured run-times of each test program do vary somewhat from
+  run-to-run, but this was largely fixed by moving to a host dedicated
+  to running only the shootout test programs.  We try to reduce caching
+  effects by running one pre-test.  We try to make up for run-to-run
+  variation by running each test program 3 times, and taking the minimum
+  CPU time and the maximum Memory Usage out of the 3 runs.
+
+
+<a name="mem">
+<h4>Measuring Memory</h4>
+<p>
+  While the test is running as a sub-process, the parent samples its
+  resident memory size (VmRSS) multiple times a second.  If the test
+  requires more than one process, their memory sizes are summed.  Note
+  that in Linux, programs that use kernel threads show up with
+  multiple entries in the process table, one for each thread.  To
+  avoid overcounting memory of threaded processes (which I used to
+  do), I now only count memory of the main thread (the only thread, if
+  an unthreaded process).  I determine the main thread by checking for
+  SIGCHLD being registered as the exit_signal in the second to last
+  field of /proc/{pid}/stat.  Voodoo, huh?  (The memory measurement
+  should only be considered &quot;ballpark&quot;, as it is an
+  &quot;experimental&quot; feature.)  If the program causes
+  significant swapping it is killed.
+<p>
+  Unfortunately, this sampling method has proven unreliable, and in
+  spite of my efforts, has an unresolvable race condition that I can
+  only minimize, and not fix completely.  Keep this in mind when
+  looking at the memory measurement results.  They should be viewed
+  as <i>experimental</i> and possibly wildly inaccurate.  However,
+  in practice, the innacuracies only seem to occur when the test
+  program completes very quickly.  For instance if a test completes
+  in 0.01 seconds, and my sampling granularity is 0.02 seconds, then
+  there's a good chance the memory size reported will be pretty
+  inaccurate.  I try to run tests long enough so that this isn't a
+  problem, but it's not that easy to do when trying to include both
+  compiled (fast) languages, and interpreted (slow) languages on the
+  same graph.
+<p>
+  I investigated using Linux's BSD process accounting for measuring
+  memory size, and it appears to be unsuitable.  The size recorded by
+  this feature is the vmsize, not the resident set size, and I'm not
+  really interested in the total vmsize, which has little bearing on
+  system performance.
+
+<a name="loc">
+<h4>Measuring Lines of Code</h4>
+<p>
+  I've added an experimental <i>lines of code</i> metric.  For each
+  test language, I use a <a href="bin/loc">script</a> to remove blank
+  lines and comments (both to end-of-line, and block styles), and then
+  count the number of code lines left.  Of course, this is a very
+  naive method of estimating code complexity.  You should realize that
+  many solutions could be shorter, but there is some extra complexity
+  added in order to provide a faster solution.  So I'm not sure what
+  to make of these results, but a number of people asked for this
+  metric :-)
+<p>
+  My lines of code counter is not currently smart enough to recognize
+  internal program documentation formats (e.g. Perl POD, Lisp/Python
+  function definitions, Eiffel and Erlang module meta-information,
+  etc).  A proper lines of code counter would not count these types of
+  things.
+<p>
+  Offering a Lines of Code metric is problematic, it could lead to
+  obfuscated submissions (watch it, you Perl-mongers! :-).  I reserve
+  the right to format the code entries as <b>I</b> see fit, whatever
+  the Lines of Code count may be.  Code entries <i>should</i> be
+  written as if the lines of code were not being measured.  That being
+  said, I am willing to take friendly suggestions on proper code
+  formatting, and if that leads to more compact code, so be it.
+
+<a name="running">
+<h4>How Test Programs Are Built And Run</h4>
+<p>
+  Some people have asked how each test is compiled and or invoked, and
+  this information is now available from the <b>log</b> link in the
+  results tables for each test.  This log captures the commands used
+  to build the program (if any), the output of those commands, and the
+  format of the command used to invoke the test program.
+<p>
+  Each benchmark program is written to take a single numeric command
+  line parameter, which can be used as the number of test iterations
+  or as an input parameter.  If the parameter is null, then it is
+  assumed to be 1.  If the test produces any output, it is captured
+  in an output file and automatically compared to a sample output
+  file.  So every time a benchmark test is run it is also tested for
+  correctness.  This command line parameter is ignored on those tests
+  that simply take their input from stdin.
+
+<a name="graphing">
+<h4>How Tests Are Graphed</h4>
+<p>
+  For plotting, I wrote a <a href="/~doug/plot/">Perl script</a> that
+  wraps the Perl <i>Chart</i> class.
+
+
+<a name="guidelines">
+<h4>Test Program Guidelines</h4>
+<p>
+  The general guidelines for test programs are that they should first
+  be written to be as fast as possible within the specific guidelines
+  as specified on the test page.  Second, they should be as memory
+  conservative as possible.  For instance, in the <a
+  href="bench/sumcol/">Sum a column of Numbers</a> test, the program
+  should run in constant space.  So in general, programs should not
+  try to be faster by reading all the input at once, just for the sake
+  of speed, unless the specific guidelines on the test page allow that
+  (as in the <a href="bench/reversefile/">Reverse a File</a> test).
+
+<a name="types">
+<h4>Types of Tests</h4>
+<ul>
+<li><h4>Latency vs. Throughput Tests</h4>
+<p>
+  In the world of benchmarking sometimes benchmarks will test how long
+  it takes to perform a task (sometimes called Latency tests), other
+  benchmarks test how many operations can be performed in a given amount
+  of time (sometimes called Throughput tests).  Currently all of the
+  tests in this project are Latency tests.  I am interested in working
+  out a method for doing Throughput tests, but it is problematic when
+  designing a test over multiple languages how to measure the number
+  of completed work units.
+
+<p>
+<li><h4>Micro vs. Macro Tests</h4>
+<p>
+  Some tests I might refer to as <i>micro</i> benchmarks, in that they
+  measure the speed of just a line or two of source code (e.g. the <a
+  href="bench/strcat/">String Concatenation</a> test).  Other tests that
+  measure more than just a few statements are <i>macro</i> benchmarks,
+  and are intended to measure a more realistic (larger) mixture of code.
+  An example of this would be the <a href="bench/sieve/">Sieve</a>
+  test.  None of the tests is currently very large, though.  Most of
+  them fit easily within one page of code.
+</ul>
+
+<a name="sameway">
+<h4>Tests That Call For Implementations To Be Written The <i>Same Way</i></h4>
+<p>
+  For some tests, I will specify that they be written using the same
+  logic and data structures.  The goal of this kind of test is to
+  try to measure languages doing the same operations, as closely as
+  possible.  (Since functional languages have such a different mode
+  of expression, I allow them more leeway).  
+<p>
+  I find this kind of test useful when I am considering questions like
+  &quot;Is array subscripting faster in Perl or Python?&quot;, or
+  &quot;Are hash table insert/lookup operations faster in Tcl or
+  Ruby?&quot;.  An example of this kind is the <a
+  href="bench/sieve/">Sieve of Eratosthenes</a> test.
+<p>
+  Since the purpose of the <b>same way</b> tests is to try to compare,
+  side by side, the same kind of operation in one language as in another,
+  they often use code that is naive and unidiomatic by design.
+
+<a name="samething">
+<h4>Tests That Call For Implementations To Do The <i>Same Thing</i></h4>
+<p>
+  These other tests have a specific goal, but how they achieve the
+  results is fairly open.  I may add constraints like it has to
+  solve the problem in constant space, or cannot read in the input
+  file all at once, but at most in 4K chunks.  How it does this is
+  entirely up to the implementor.  These kinds of tests are free to
+  use the most appropriate, idiomatic code for a solution.  
+<p>
+  I find this kind of test useful when I am considering questions like
+  &quot;Is it faster to write a word frequency counter in Perl or
+  Shell?&quot;.  The <a href="bench/wordfreq/">Word Frequency</a> test
+  is a <b>same thing</b> test.
+
+<h4>Testing Platform</h4>
+<p>
+  I'm currently running the tests on a dual 450Mhz Pentium-II server
+  with 1GB of RAM and 4x9GB SCSI disks.
+
+<a name="flaws">
+<h4>Flaws in the Shootout</h4>
+<p>
+  Coming up with a benchmark that is meaningful and which does not
+  mislead in various ways is hard, as almost everyone has observed.
+  I might as well trot out the canonical quotation: &quot;There are
+  lies, damn lies, and benchmarks&quot;.  
+<p>
+  This shootout has many flaws, like any other language benchmark.
+  Just to be obvious about it, I'll try to document them here.  I am
+  planning to address some of these flaws when I can, but some I won't
+  be able to solve in this lifetime.
+
+<ul>
+<p><li>
+  A number of tests are biased towards scripting languages.  
+<p><li>
+  A number of tests are biased towards compiled languages.
+<p><li>
+  A number of tests are biased towards imperative (vs. functional)
+  languages.
+<p><li>
+  As I mention above, my CPU measurements <i>include</i> startup time.
+  For those languages with significant startup costs (like <a
+  href="lang/java">Java</a>), this may seriously affect the measured
+  CPU time.  While I try to minimize the effect of startup costs by
+  running the tests for a longer time, a number of tests could
+  probably be run longer still to be truly fair.  You should be able
+  to see the effect of startup time by comparing Java and other
+  languages on the test detail page (<a
+  href="http://www.bagley.org/~doug/shootout/bench/sieve/detail.shtml?bigloo=on&gcc=on&java=on&ocaml=on">example</a>).
+<p>
+  As I mention above, a fairly new feature allows you to subtract
+  startup times by clicking on a link on each test page.  I still have
+  to validate the technique used, though, so consider it experimental.
+<p><li>
+  Also as I mention above, my current method for measuring Memory
+  usage is flawed.  It is problematic to reliably measure the memory
+  usage of a subprocess under Linux at the moment.  So bear in mind
+  that reported memory numbers may be unreliable, especially for
+  programs that run very quickly.
+<p><li>
+  Some languages are not tested on their strengths, but mostly on
+  their weaknesses.  Case in point: <a href="lang/php/">PHP</a>.  PHP
+  is a fine web scripting language that provides a <i>multitude</i>
+  of built-in convenience functions to simplify writing code for 
+  common CGI tasks.  Since this shootout is a basic language test,
+  and I don't have or plan to have any CGI scripting tests, the fact
+  that PHP is somewhat slower <i>in my tests</i> than other scripting
+  languages is hardly an argument against its use as a web scripting
+  language.
+<p><li>
+  In some cases I'm not really measuring the speed of a language, but
+  how good of a programmer I am in that given language.  This has been
+  somewhat ameliorated by helpful contributions by kindly netizens.
+  It's possible that many solutions could still be rewritten to be
+  faster.  
+<p><li>
+  How good of a programmer I am in some languages is largely dependent on
+  the on-line documentation for that language.  Is it comprehensive and
+  well-done, including tutorials and examples?  If so, the language stands
+  a much better chance of a fair treatment in my clumsy hands.  If the
+  documentation is somewhat lacking or if people are expected to buy a
+  book in order to become a good programmer in the given language, then
+  the chances of my being able to quickly learn enough to do justice to
+  that language are virtually nil.  Of course, if you want to send <a
+  href="/~doug/contact.shtml">me</a> a book to improve my skills
+  in any given language, please feel free to do so :-)
+<p><li>
+  I continue to occasionally revisit older solutions to see if I can do
+  anything more to speed them up, and I'm still occasionally surprised
+  that I can, even after I (and others) have already worked it over a
+  few times.  This really is a work in progress, and solutions may
+  continue to evolve.
+<p><li>
+  All artificial language performance benchmarks, mine included, <i>do
+  not measure real-world performance</i>.  One should not choose a
+  language based only on its benchmark ranking, even if you believe
+  the benchmark to be fair.  In an ideal world, we would choose the
+  language that makes us most productive, <b>and</b> which can be
+  optimized fairly easily, when that optimization is needed.  That
+  means a good language will include a profiler tool to allow you to
+  measure which parts of your application are slow, so you can rewrite
+  those parts to be faster.  Many scripting languages allow you to
+  rewrite the slow parts in C, which should be just about all you need
+  for speed.  Of course, a badly designed application may be difficult
+  to profile and speed up.  But that's the fault of the programmer,
+  not the language.
+<p><li>
+  You should keep in mind that you may get significantly different
+  results on a different platform.  For instance, I understand some
+  language compilers for Windows are better optimized than compilers
+  that run under Linux.  You may also see significantly different
+  results on different CPUs, due to instruction sets and cache sizes.
+  Ideally a comparison of languages would include a few different
+  platforms and CPUs, but I just don't have the resources to do that.
+<p><li>
+  Like most benchmarks, the tests in this shootout are written so
+  that they do the thing we want to measure over and over in a
+  loop.  Of course, we are including the overhead of performing the
+  loop in our measurement.  You many want to take a look at the <a
+  href="bench/nestedloop/">nestedloop</a> test, and consider that
+  for some languages all their tests will be slowed down by the
+  overhead of doing loops.
+<p><li>
+  I have made some mistakes in the past which have lead to misleading
+  measurements, and it's possible that the benchmark framework still
+  contains bugs.  For instance, when I minimized the race condition in
+  the memory sampling code, a number of the memory measurements came
+  out very differently.
+</ul>
+
+<!--#include virtual="html/footer.shtml" -->

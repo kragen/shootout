@@ -1,0 +1,149 @@
+(* -*- mode: sml -*-
+ * $Id: prodcons.smlnj,v 1.1 2004-05-19 18:11:15 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Matthias Blume
+ *)
+
+(* producer/consumer threads in SML/NJ, using CML library
+ *
+ * (C) 2001 Lucent Technologies, Bell Labs
+ * written by Matthias Blume
+ *
+ * This is the "clumsy" version that actually implements mutexes and
+ * condition variables on top of CML.  This creates needless overhead
+ * since CML's synchronous model provides all this already internally
+ * but presents it in a rather different API.  The backwardness of
+ * the code below leads to approximately 100% overhead (slowdown by
+ * factor of 2).
+ *)
+
+open cml;
+
+structure Concur :> sig
+
+    type mutex
+    type condition
+    type thread
+
+    val fork : (unit -> unit) -> thread
+    val join : thread -> unit
+
+    val mutex : unit -> mutex
+    val lock : mutex -> unit
+    val unlock : mutex -> unit
+
+    val condition : unit -> condition
+
+    val wait : condition * mutex -> unit
+    val signal : condition -> unit
+
+end = struct
+
+    type thread = CML.thread_id
+
+    type condition = unit CML.chan list ref
+
+    type mutex = unit CML.chan * unit CML.chan
+
+    fun mutex () = let
+	val l = CML.channel ()
+	val u = CML.channel ()
+	fun unlocked () = (CML.recv l; locked ())
+	and locked () = (CML.recv u; unlocked ())
+    in
+	ignore (CML.spawn unlocked);
+	(l, u)
+    end
+
+    fun lock (m: mutex) = CML.send (#1 m, ())
+
+    fun unlock (m: mutex) = CML.send (#2 m, ())
+
+    fun condition () : condition = ref []
+
+    fun wait (c, m) = let
+	val ch = CML.channel ()
+    in
+	c := ch :: !c;
+	unlock m;
+	CML.recv ch;
+	lock m
+    end
+
+    fun signal (c as ref wl) = (c := []; app (fn ch => CML.send (ch, ())) wl)
+
+    val fork = CML.spawn
+    val join = CML.sync o CML.joinEvt
+end
+
+structure ProdCons : sig
+    val main : string * string list -> OS.Process.status
+end = struct
+
+    fun doit n = let
+
+	val consumer's_turn = ref false
+	val data = ref 0
+	val produced = ref 0
+	val consumed = ref 0
+	val m = Concur.mutex ()
+	val c = Concur.condition ()
+
+	fun producer () = let
+	    fun wait () =
+		if !consumer's_turn then wait (Concur.wait (c, m)) else ()
+	    fun loop i =
+		if i <= n then
+		    let val _ = Concur.lock m
+			val _ = wait ()
+		    in
+			data := i;
+			consumer's_turn := true;
+			produced := !produced + 1;
+			Concur.signal c;
+			Concur.unlock m;
+			loop (i + 1)
+		    end
+		else ()
+	in
+	    loop 1
+	end
+	     
+	fun consumer () = let
+	    fun wait () =
+		if !consumer's_turn then () else wait (Concur.wait (c, m))
+	    fun loop () = let
+		val _ = Concur.lock m
+		val _ = wait ()
+		val i = !data
+	    in
+		consumer's_turn := false;
+		consumed := !consumed + 1;
+		Concur.signal c;
+		Concur.unlock m;
+		if i <> n then loop () else ()
+	    end
+	in
+	    loop ()
+	end
+
+	val p = Concur.fork producer
+	val c = Concur.fork consumer
+    in
+	Concur.join p;
+	Concur.join c;
+	TextIO.output (TextIO.stdOut,
+		       concat [Int.toString (!produced), " ",
+			       Int.toString (!consumed), "\n"]);
+	RunCML.shutdown OS.Process.success
+    end
+
+    fun main (_, args) = let
+	val n = case args of [] => 1
+			   | (x :: _) => getOpt (Int.fromString x, 1)
+    in
+	RunCML.doit (fn () => doit n, NONE)
+    end
+end
+
+val _ = SMLofNJ.exportFn("prodcons", ProdCons.main);

@@ -1,0 +1,163 @@
+#!/usr/bin/perl
+
+# combine the max.mbtab and loc.tab into all.html
+
+use strict;
+
+BEGIN {
+    foreach my $d qw(. .. ../.. ../../..) {
+	my $file = "$d/langs.pl";
+	if (-f $file) {
+	    require $file;
+	    last;
+	}
+    }
+}
+
+sub listfiles {
+    my($dir) = @_;
+    my(@files) = ();
+    if (opendir(DIR, $dir)) {
+	@files = sort(grep(!/^\.+$/, readdir(DIR))); # ignore . and ..
+	closedir(DIR);
+    }
+    return(@files);
+}
+
+sub map_name_to_prog {
+    my @prognames = @_;
+    my %pmmap = ();
+    foreach my $file (listfiles('.')) {
+	my $name = (split(/\./, $file))[1];
+	$pmmap{$name} = $file;
+    }
+    foreach my $name (@prognames) {
+	unless ($pmmap{$name}) {
+	    warn "Error!  no match for name: $name\n";
+	}
+    }
+    return(\%pmmap);
+}
+
+sub write_table {
+    my($which, $pmref, $cpuref, $memref, $locref, $cpu_s_ref) = @_;
+
+    my @names = ();
+    my $c_link = '<a href="?cpu">[sort]</a>';
+    my $s_link = '<a href="?cpu-s">[cpu minus startup time]</a>';
+    my $m_link = '<a href="?mem">[sort]</a>';
+    my $l_link = '<a href="?loc">[sort]</a>';
+    if ($which eq 'cpu') { # sort by cpu
+	@names = sort {
+	    $cpuref->{$a} <=> $cpuref->{$b}
+	} (keys(%{$cpuref}));
+	$c_link = '&nbsp;';
+	open(T, ">data/all.html") or die "Error can't open all.html for output\n";
+    } elsif ($which eq 'cpu-s') { # sort by cpu minus startup time
+	$cpuref = $cpu_s_ref;
+	@names = sort {
+	    $cpuref->{$a} <=> $cpuref->{$b}
+	} (keys(%{$cpuref}));
+	$s_link = '(showing CPU minus startup)';
+	open(T, ">data/all_cpu-s.html") or die "Error can't open all_cpu-s.html for output\n";
+    } elsif ($which eq 'mem') { # sort by mem
+	@names = sort {
+	    $memref->{$a} <=> $memref->{$b}
+	} (keys(%{$cpuref}));
+	$m_link = '&nbsp;';
+	open(T, ">data/all_mem.html") or die "Error can't open all_mem.html for output\n";
+    } elsif ($which eq 'loc') { # sort by loc
+	@names = sort {
+	    $locref->{$a} <=> $locref->{$b}
+	} (keys(%{$cpuref}));
+	$l_link = '&nbsp;';
+	open(T, ">data/all_loc.html") or die "Error can't open all_loc.html for output\n";
+    } else {
+	die "Error, write_table() doesn't recognize which=$which\n";
+    }
+
+    # now write the html version
+    my $head_log = '<th bgcolor="black"><font color="white">Log</font></th>';
+    print T qq{<table border="0" cellspacing="1" cellpadding="2" bgcolor="#e0e0c0">
+<tr><th colspan="5" bgcolor="white">$s_link</th></tr>
+<tr>
+<th bgcolor="white">&nbsp;</th>
+<th bgcolor="white">$c_link</th>
+<th bgcolor="white">$m_link</th>
+<th bgcolor="white">$l_link</th>
+<th bgcolor="white">&nbsp;</th></tr>
+<tr>
+<th bgcolor="black"><font color="white">Source Code</font></th>
+<th bgcolor="black"><font color="white">CPU (sec)</font></th>
+<th bgcolor="black"><font color="white">Mem (KB)</font></th>
+<th bgcolor="black"><font color="white">Lines Code</font></th>
+$head_log</tr>
+\n};
+    foreach my $name (@names) {
+	my $progname = $pmref->{$name};
+	my $ext = $progname;
+	$ext =~ s/^.+\.//;
+	my $lang_type = ($::LANG{$ext}->{Type} =~ /native compiled/) ?
+	    qq{<b><i>$name</i></b>} : qq{$name};
+	print T qq{<tr><td><a href="$progname">$lang_type</a></td>};
+	print T qq{<td align="right">$cpuref->{$name}</td>};
+	print T qq{<td align="right">$memref->{$name}</td>};
+	print T qq{<td align="right">$locref->{$name}</td>};
+	my $logpath = "tmp/${name}_runlog";
+	print T qq{<td align="right"><a href="$logpath">log</a></td>};
+	print T qq{</tr>\n};
+    }
+    print T qq{<tr><td colspan="5"><small>Languages that compile to native code are in <i><b>Bold Italics</b></i></small>.</td></tr>};
+    print T qq{</table>\n};
+    close(T);
+}
+
+sub main {
+    my $maxtab = 'data/max.mbtab';
+    my %cpu = ();
+    my %mem = ();
+    open(DAT, "<$maxtab") or die "Can't open $maxtab for input!";
+    while (<DAT>) {
+	next if (/^\#/);
+	my($name, $cpu, $mem) = split;
+	$cpu{$name} = $cpu;
+	$mem{$name} = $mem;
+    }
+    close(DAT);
+
+    my $tab = "../hello/data/startup.tab";
+    my %cpu_s = ();
+    open(DAT, "<$tab") or die "Can't open $tab for input!";
+    while (<DAT>) {
+	my($lang, $startup) = split;
+	if (defined $cpu{$lang}) {
+	    $cpu_s{$lang} = sprintf("%.2f", $cpu{$lang} - $startup);
+	    if ($cpu_s{$lang} < 0) {
+		warn "make_all_html: lang=$lang cpu=$cpu{$lang} adjusted=$cpu_s{$lang}\n";
+		$cpu_s{$lang} = 0;
+	    }
+	}
+    }
+    close(DAT);
+    
+    #foreach (sort keys %cpu_s) { warn "$_: $cpu{$_}  -->  $cpu_s{$_}\n"; }
+
+    my $loctab = 'data/loc.tab';
+    my %loc = ();
+    open(DAT, "<$loctab") or die "Can't open $loctab for input!";
+    while (<DAT>) {
+	next if (/^\#/);
+	my($name, $loc) = split;
+	$loc{$name} = $loc;
+    }
+    close(DAT);
+
+    my $pmref = map_name_to_prog(keys %cpu);
+
+    write_table('cpu', $pmref, \%cpu, \%mem, \%loc);
+    write_table('cpu-s', $pmref, \%cpu, \%mem, \%loc, \%cpu_s);
+    write_table('mem', $pmref, \%cpu, \%mem, \%loc);
+    write_table('loc', $pmref, \%cpu, \%mem, \%loc);
+}
+
+&main();

@@ -1,0 +1,190 @@
+// -*- mode: c++ -*-
+// $Id: wordfreq.g++2.g++,v 1.1 2004-05-19 18:14:23 bfulgham Exp $
+// http://www.bagley.org/~doug/shootout/
+// STL word frequency counter from Bill Lear
+
+using namespace std;
+
+#include <ctype.h>
+#include <fstream>
+#include <hash_map.h>
+#include <vector>
+#include <algorithm>
+#include <iomanip>
+#include <string.h>
+#include <cstring>
+
+//***
+//**
+//*
+// histogram
+//*
+//**
+//***
+
+typedef pair<const char*, const char*> span;
+typedef pair<span, int> bucket;
+
+namespace std {
+    template <> struct hash<span>;
+    template <> struct equal_to<span>;
+}
+
+inline int cmp(const bucket& b1, const bucket& b2) {
+    if (b1.second != b2.second) {
+        return b1.second > b2.second;
+    }
+    register size_t n1 = b1.first.second - b1.first.first;
+    register size_t n2 = b2.first.second - b2.first.first;
+    int cmp = strncmp(b1.first.first, b2.first.first, min(n1, n2));
+    return cmp == 0 ? n1 > n2 : cmp > 0;
+}
+
+namespace std {
+    inline ostream& operator<<(ostream& o, const bucket& b) {
+	o << setw(7) << b.second << '\t';
+	copy(b.first.first, b.first.second, ostream_iterator<char>(o));
+	o << '\n';
+	return o;
+    }
+}
+
+template<> struct hash<span> {
+    inline size_t operator()(const span& s) const {
+        register size_t h = 0;
+        register const char* end = s.second;
+        for (register const char* begin = s.first; begin != end; ++begin) {
+            h = 5 * h + tolower(*begin);
+        }
+        return h;
+    }
+};
+
+struct equal_to_lower: public binary_function<char, char, bool> {
+    bool operator()(char a, char b) const { return tolower(a) == tolower(b); }
+};
+
+template<> struct equal_to<span> {
+    inline bool operator()(const span& s1, const span& s2) const {
+        static equal_to_lower eq;
+        return (s1.second-s1.first) == (s2.second-s2.first) &&
+            equal(s1.first, s1.second, s2.first, eq);
+    }
+};
+
+typedef hash_map<span, int> counter;
+
+//***
+//**
+//*
+// tokenizer
+//*
+//**
+//***
+template <class Pattern, class Parser>
+class tokenize {
+public:
+    tokenize(istream& _in, Parser& _parser)
+        : in(_in), parser(_parser) {}
+
+    void operator()() {
+        char line[512];
+        while (this->in.getline(line, 512)) {
+            register const char* begin = line;
+            register const char* end = line + in.gcount() - 1;
+            while (begin != end) {
+                const char* begin_token = find_if(begin, end, pattern);
+                if (begin_token == end) {
+                    break;
+                }
+                const char* end_token = find_if(begin_token, end,
+                                                not1(pattern));
+                parser(begin_token, end_token);
+                begin = end_token;
+            }
+        }
+    }
+private:
+    istream& in;
+    Pattern pattern;
+    Parser& parser;
+};
+
+//***
+//**
+//*
+// parser
+//*
+//**
+//***
+class token_counter {
+public:
+    token_counter() : dirty(true) {}
+
+    void operator()(const char* begin_token, const char* end_token) {
+        counter::iterator i = hist.find(span(begin_token, end_token));
+
+        if (i == hist.end()) {
+            const size_t len = end_token - begin_token;
+            char* word = new char[len];
+            transform(begin_token, end_token, word, ::tolower);
+            ++hist[span(word, word + len)];
+        } else {
+            ++i->second;
+        }
+    }
+
+    ~token_counter() {
+        if (this->dirty) {
+            vector<bucket> v(hist.size());
+            copy(hist.begin(), hist.end(), v.begin());
+            for (vector<bucket>::iterator i = v.begin(); i != v.end(); ++i) {
+                delete[] i->first.first;
+            }
+        }
+    }
+
+    void dump() {
+        vector<bucket> v(hist.size());
+        copy(hist.begin(), hist.end(), v.begin());
+        sort(v.begin(), v.end(), cmp);
+        copy(v.begin(), v.end(), ostream_iterator<bucket>(cout));
+
+        for (vector<bucket>::iterator i = v.begin(); i != v.end(); ++i) {
+            delete[] i->first.first;
+        }
+        this->dirty = false;
+    }
+
+private:
+    counter hist;
+    bool dirty;
+};
+
+//***
+//**
+//*
+// token predicate
+//*
+//**
+//***
+class is_alpha : public unary_function<char, bool> {
+public:
+    inline bool operator()(const char c) const { return isalpha(c); }
+};
+
+void wf() {
+    token_counter word_counter;
+    tokenize<is_alpha, token_counter> parse(cin, word_counter);
+    parse();
+    word_counter.dump();
+}
+
+int
+main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    wf();
+    return 0;
+}

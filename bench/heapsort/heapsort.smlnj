@@ -1,0 +1,81 @@
+(* -*- mode: sml -*-
+ * $Id: heapsort.smlnj,v 1.1 2004-05-19 18:10:11 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * Based on cdoe from Stephen Weeks, improved by Henry Cejtin.
+*)
+
+structure Test : sig
+    val main : (string * string list) -> OS.Process.status
+end = struct
+
+val sub = Array.sub
+val update = Array.update
+   
+local
+   val im = 139968
+   val ia =   3877
+   val ic =  29573
+   val last = ref 42
+   val scale = 1.0 / Real.fromInt im
+in
+   fun gen_random max =
+	  let val last' = (! last * ia + ic) mod im
+	  in last := last';
+	     max * scale * Real.fromInt last'
+	  end
+end
+
+fun heapSort (n, ra: real array) =
+       let fun inner (l, ir, rra) =
+                  let fun loop (i, j) =
+                             if j <= ir
+                                then let val j =
+                                                if j < ir
+                                                andalso sub (ra, j) < sub (ra, j + 1)
+                                                   then j + 1
+                                                   else j
+                                         val (i, j) =
+                                                if rra < sub (ra, j)
+                                                   then (update (ra, i, sub (ra, j));
+                                                         (j, j + j))
+                                                   else (i, ir + 1)
+                                     in loop (i, j)
+                                     end
+                                else update (ra, i, rra)
+                  in loop (l, l + l)
+                  end
+           fun outer1 l =
+                  let val l' = l - 1
+                  in if l' > 0
+                        then (inner (l', n, sub (ra, l'));
+                              outer1 l')
+                        else ()
+                  end
+           fun outer2 ir =
+                  let val rra = sub (ra, ir)
+                      val _ = update (ra, ir, sub (ra, 1))
+                      val ir = ir - 1
+                  in if ir = 1
+                        then update (ra, 1, rra)
+                        else (inner (1, ir, rra);
+                              outer2 ir)
+                  end
+       in outer1 (n div 2 + 1);
+          outer2 n
+       end
+
+fun atoi s = case Int.fromString s of SOME num => num | NONE => 0;
+fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t );
+
+fun main (name, args) =
+    let val n = atoi (hd (args @ ["1"]))
+	val ary = Array.tabulate (n + 1, fn _ => gen_random 1.0)
+    in
+	heapSort (n, ary);
+	print (concat [Real.fmt (StringCvt.FIX (SOME 10)) (sub (ary, n)),
+		       "\n"]);
+	OS.Process.success
+    end
+end
+
+val _ = SMLofNJ.exportFn("heapsort", Test.main);

@@ -1,0 +1,225 @@
+# $Id: Makefile.mb,v 1.1 2004-05-19 18:09:05 bfulgham Exp $
+include ../../../Make.header
+
+############################################################
+# common definitions go here
+############################################################
+
+# Eiffel needs a little work to get it going ...
+SmallEiffel := /usr/lib/smarteiffel
+SE := $(SmallEiffel)/bin/compile
+CLEAN_SE := $(SmallEiffel)/bin/clean
+SE_OPTS :=  -boost -no_split -O3 $(SE_OPTS)
+
+GCCOPTS := -pipe -Wall -O3 -fomit-frame-pointer $(GCCOPTS)
+GXXOPTS := -pipe -Wall -O2 -fomit-frame-pointer $(GXXOPTS)
+GXXLDOPTS := -L/usr/local/lib $(GXXLDOPTS)
+OCAMLOPTS := -noassert -unsafe -I /usr/local/lib/ocaml/contrib -ccopt -O3 $(OCAMLOPTS)
+OCAMLBOPTS := -noassert -unsafe -I /usr/local/lib/ocaml/contrib $(OCAMLBOPTS)
+BIGLOOOPTS := -fsharing -Obench -unsafe $(BIGLOOOPTS)
+GHCOPTS  := -O $(GHCOPTS)
+
+.EXPORT_ALL_VARIABLES:
+
+##################################################
+# common rules go here
+##################################################
+
+# some definitions used by the rules
+.PHONY: plot show clean clobber test
+
+############################################################
+# Targets normally called by user
+############################################################
+show: plot
+	@ee data/max.png &
+	@ee data/cpu.png &
+	@ee data/mem.png &
+	@ee data/min.png &
+
+clobber: clean
+	@echo "Clobbering data/*"
+	@rm -rf data
+
+clean:
+	@echo "Cleaning tmp/*"
+	@rm -rf tmp
+
+############################################################
+# for source files that need to be built/compiled
+############################################################
+
+########################################
+# gcc
+########################################
+%.c: $(MB_SRCDIR)/%.gcc $(GCC)
+	@cp $< $@
+
+%.gcc_run: %.c $(GCC)
+	$(GCC) $(GCCOPTS) $< -o $@
+
+
+########################################
+# g++
+########################################
+%.c++: $(MB_SRCDIR)/%.g++ $(GXX)
+	@cp $< $@
+
+%.g++_run: %.c++
+	$(GXX) -c $(GXXOPTS) $< -o $<.o &&  \
+        $(GXX) $<.o -o $@ $(GXXLDOPTS) 
+
+
+########################################
+# SmartEiffel
+########################################
+%.e: $(MB_SRCDIR)/%.se $(SE)
+	@echo "copying $< to $(TEST).e"
+	cp $< $(TEST).e
+
+%.se_run: %.e
+	rm -f $@
+	(echo . ; echo ../ ; echo ../../Include/) > loadpath.se
+	$(SE) $(SE_OPTS) -o $@ $(TEST) ; $(CLEAN_SE) $(TEST)
+
+
+########################################
+# Erlang
+########################################
+%.erlang_run: $(MB_SRCDIR)/%.erlang $(ERLANG)
+	cp $< $(TEST).erl
+	$(ERLANG) -compile $(TEST)
+	touch $@
+
+
+########################################
+# lua
+########################################
+%.lua_run: $(MB_SRCDIR)/%.lua $(LUA)
+	cp $< $@
+	@echo "lua -e NUM=%ARG $@"
+
+
+########################################
+# ocaml native code compiler
+########################################
+%.ml: $(MB_SRCDIR)/%.ocaml $(OCAML)
+	cp $< $@
+
+%.ocaml_run: %.ml
+	$(OCAML) $(OCAMLOPTS) $< -o $@
+
+
+########################################
+# ocaml bytecode compiler
+########################################
+%.ml: $(MB_SRCDIR)/%.ocamlb $(OCAMLB)
+	cp $< $@
+
+%.ocamlb_run: %.ml
+	$(OCAMLB) $(OCAMLBOPTS) $< -o $@
+
+
+########################################
+# mlton
+########################################
+%.sml: $(MB_SRCDIR)/%.mlton $(MLTON)
+	cat $(MLTONDEPS) $< > $@
+
+%.mlton_run: %.sml
+	$(MLTON) $^ && mv $(basename $(<F)) $(basename $(<F)).mlton_run
+
+########################################
+# bigloo
+########################################
+%.scm: $(MB_SRCDIR)/%.bigloo $(BIGLOO)
+	cp $< $@
+
+.PRECIOUS: %.scm
+
+%.bigloo_run: %.scm
+	$(BIGLOO) $(BIGLOOOPTS) $(<F) -o $(@F)
+
+########################################
+# sml/nj
+########################################
+%.x86-linux: $(MB_SRCDIR)/%.smlnj $(SMLNJ)
+	@rm -f $@
+	cat $< | $(SMLNJ)
+
+.PRECIOUS: %.x86-linux
+
+%.smlnj_run: %.x86-linux
+	@:
+
+########################################
+# ghc (glasgow haskell compiler)
+########################################
+%.hs: $(MB_SRCDIR)/%.ghc $(GHC)
+	cp $< $@
+
+%.ghc_run: %.hs
+	$(GHC) $(GHCOPTS) $< -o $@
+
+########################################
+# XEmacs :-)
+########################################
+%.el: $(MB_SRCDIR)/%.xemacs $(XEMACS)
+	cp $< $@
+
+.PRECIOUS: %.elc
+
+%.elc: %.el
+	$(XEMACS) -vanilla -batch -f batch-byte-compile $<
+
+%.xemacs_run: %.elc
+	@:
+
+########################################
+# CMUCL (Common Lisp)
+########################################
+# (Note: arg to compile-file for trace: ':trace-file t')
+CMUCL_TRACE :=
+#CMUCL_TRACE := :trace-file t
+%.cmucl_run: $(MB_SRCDIR)/%.cmucl $(CMUCL_SRCS) $(CMUCL)
+	@rm -f $@ ; \
+	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $@ ; \
+	echo "(setq *gc-verbose* nil)" >> $@ ; \
+	COMPILE=$@; COMPILE=$${COMPILE%_run}_compile ; \
+	FILES="" ; \
+	for f in $(CMUCL_SRCS) ; do cp $$f . ; FILES="$$FILES $${f##*/}" ; done ; \
+	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $$COMPILE ; \
+	for src in $$FILES ; do \
+	    echo "(compile-file \"$$src\" :block-compile t $(CMUCL_TRACE)) (load \"$$src\" :verbose nil :print nil)" >> $$COMPILE ; \
+	    base=$${src%.*} ; \
+	    echo "(load \"$$base.x86f\" :verbose nil :print nil)" >> $@ ; \
+	done ; \
+	cp $< . ; MAIN=$< ; MAIN=$${MAIN##*/} ; \
+	(echo "(compile-file \"$$MAIN\" :block-compile t $(CMUCL_TRACE) :entry-points '(main))"; echo "(quit)") >> $$COMPILE ; \
+	MAIN=$${MAIN%.*} ; MAIN="$${MAIN}.x86f" ; echo "(load \"$$MAIN\" :verbose nil :print nil)" >> $@ ; \
+	echo "CMUCL built with: $(CMUCL) -noinit -batch -eval '(load \"$$COMPILE\")'" ; \
+	echo "### START $$COMPILE" ; cat $$COMPILE ; echo "### END $$COMPILE" ; echo ; \
+	$(CMUCL) -noinit -batch -eval "(load \"$$COMPILE\")" ; \
+	echo "(main) (quit)" >> $@
+	@echo "### START $@" ; cat $@ ; echo "### END $@" ; echo
+
+########################################
+# Python
+########################################
+%.py: $(MB_SRCDIR)/%.python $(PYTHON)
+	cp $< $@
+
+.PRECIOUS: %.pyo
+
+%.pyo: %.py
+	$(PYTHON) -OO -c "from py_compile import compile; compile('$<')"
+
+%.python_run: %.pyo
+	@:
+
+########################################
+# MzScheme
+########################################
+%.ss: $(MB_SRCDIR)/%.mzscheme $(MZSCHEME)
+	cp $< $@
+

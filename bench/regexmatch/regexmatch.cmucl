@@ -1,0 +1,55 @@
+;;; -*- mode: lisp -*-
+;;; $Id: regexmatch.cmucl,v 1.1 2004-05-19 18:11:22 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+;;; from Jochen Schmidt
+
+(proclaim '(optimize (speed 3)(safety 0)(space 0)(debug 0)(compilation-speed 0)))
+(setf ext:*bytes-consed-between-gcs* 5000000)
+(use-package :meta)
+(eval-when (compile load eval)
+(meta:enable-meta-syntax)
+(deftype digit () '(member #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
+(deftype non-digit () '(not (member #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\( #\) ))))
+
+(defun parse-tel (input)
+  (meta:with-string-meta (buffer input)
+    (let (last-result)
+      (declare (type (or null simple-base-string) last-result))
+      (labels ((skip-non-digits (&aux d)
+                     (meta:match $[@(non-digit d)]))
+               (digit-triplet (&aux (old-index index) d (result (make-array 3 :element-type 'base-char)))
+                     (declare (type simple-base-string result))
+                     (or (meta:match [@(digit d) !(setf (schar result 0) d)
+                                      @(digit d) !(setf (schar result 1) d)
+                                      @(digit d) !(setf (schar result 2) d)
+                                      !(setf last-result result)])
+                         (progn (setf index old-index) nil)))
+               (digit-4tupel (&aux (old-index index) d (result (make-array 4 :element-type 'base-char)))
+                     (declare (type simple-base-string result))
+                     (or (meta:match [@(digit d) !(setf (schar result 0) d)
+                                      @(digit d) !(setf (schar result 1) d)
+                                      @(digit d) !(setf (schar result 2) d)
+                                      @(digit d) !(setf (schar result 3) d)
+                                      !(setf last-result result)])
+                         (progn (setf index old-index) nil)))
+              (telephone-nr (&aux area-code exchange d)
+                    (declare (type (or null simple-base-string) area-code exchange))
+                    (and (meta:match [!(skip-non-digits)
+                                        {[#\( !(digit-triplet) #\)] !(digit-triplet)} !(setf area-code last-result)
+                                        #\space !(digit-triplet) !(setf exchange last-result)
+                                        {#\space #\-} !(digit-4tupel) {@(non-digit d) !(= index end)}])
+                                      (values area-code exchange last-result))))
+            (telephone-nr)))))
+
+(defun main ()
+  (let ((n (parse-integer (or (car (last extensions:*command-line-strings*)) "1")))
+        (input (loop for line = (read-line *standard-input* nil 'eof)
+                     until (eq line 'eof) collect line)))
+    (loop for i of-type fixnum from 1 below n do
+      (loop for line of-type simple-base-string in input
+        do (parse-tel line)))
+    (loop with i of-type fixnum = 0
+          for line of-type string in input
+          do (multiple-value-bind (area-code exchange rest) (parse-tel line)
+               (when area-code
+                 (format t "~A: (~A) ~A-~A~%" (incf i) area-code exchange rest))))))

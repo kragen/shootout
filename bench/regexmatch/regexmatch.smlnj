@@ -1,0 +1,918 @@
+(* -*- mode: sml -*-
+ * $Id: regexmatch.smlnj,v 1.1 2004-05-19 18:11:28 bfulgham Exp $
+ * http://www.bagley.org/~doug/shootout/
+ * from Stephen Weeks
+ * "ported" to SML/NJ
+ * with help from Daniel Wang
+ *)
+
+structure Test : sig
+    val main : (string * string list) -> OS.Process.status
+end = struct
+
+
+fun ++ (r: int ref): int =
+   let
+      val n = 1 + !r
+      val _ = r := n
+   in n
+   end
+
+structure Int =
+   struct
+      open Int
+
+      type t = int
+	 
+      fun exists (start: t, stop: t, f: t -> bool): bool =
+	 let
+	    fun loop i = i < stop andalso (f i orelse loop (i + 1))
+	 in
+	    loop start
+	 end
+
+      fun forall (start, stop, f) = not (exists (start, stop, not o f))
+
+      fun fold (start: t, stop: t, a: 'a, f: t * 'a -> 'a): 'a =
+	 let
+	    fun loop (i: t, a: 'a) =
+	       if i >= stop
+		  then a
+	       else loop (i + 1, f (i, a))
+	 in loop (start, a)
+	 end
+	       
+      fun for (start: t, stop: t, f: t -> unit): unit =
+	 let
+	    fun loop i =
+	       if i >= stop
+		  then ()
+	       else (f i; loop (i + 1))
+	 in
+	    loop start
+	 end
+   end
+
+structure Array2 =
+   struct
+      open Array2
+
+      type 'a t = 'a array
+
+      val new = array
+
+      fun tabulate (r, c, f) = Array2.tabulate RowMajor (r, c, f)
+
+      fun foreachi (a, f) =
+	 appi RowMajor f {base = a, row = 0, col = 0,
+			  nrows = NONE, ncols = NONE}
+   end
+
+structure Vector =
+   struct
+      open Vector
+
+      fun exists (v, f) =
+	 Int.exists (0, length v, fn i => f (sub (v, i)))
+      fun foreach (v, f) = app f v
+      fun foreachi (v, f) = appi f (v, 0, NONE)
+      fun new (n, x) = tabulate (n, fn _ => x)
+      fun new1 x = new (1, x)
+   end
+
+structure List =
+   struct
+      open List
+
+      fun foreach (l, f) = app f l
+
+      fun fold (l, b, f) = foldl f b l
+
+      fun appendRev (l1, l2) = fold (l1, l2, op ::)
+
+      fun push (r, x) = r := x :: !r
+
+      fun keepAll (l, f) = filter f l
+
+      fun peek (l, f) = find f l
+
+      fun insert (l, x, op <=) =
+	 let
+	    fun loop (l, ac) =
+	       case l of
+		  [] => appendRev (ac, [x])
+		| x' :: l' =>
+		     if x <= x'
+			then appendRev (ac, x :: l)
+		     else loop (l', x' :: ac)
+	 in loop (l, [])
+	 end
+   end
+
+structure Array =
+   struct
+      open Array
+
+      val new = array
+
+      fun modify (a, f) = Array.modify f a
+
+      fun foreachi (a, f) = appi f (a, 0, NONE)
+	 
+      fun indices (a: bool array): int vector =
+	 let
+	    val n = Array.length a
+	    val numTrue =
+	       let
+		  fun loop (i, count) =
+		     if i = n
+			then count
+		     else loop (i + 1,
+				if Array.sub (a, i)
+				   then count + 1
+				else count)
+	       in loop (0, 0)
+	       end
+	    val next = ref 0
+	    fun loop i =
+	       if Array.sub (a, i)
+		  then (next := i + 1; i)
+	       else loop (i + 1)
+	 in Vector.tabulate (numTrue, fn _ => loop (!next))
+	 end
+   end
+
+structure Char =
+   struct
+      open Char
+	 
+      val fromInt = chr
+      val toInt = ord
+   end
+
+structure String =
+   struct
+      open String
+
+      type t = string
+	 
+      fun contains (s: t, c: char): bool =
+	 Int.exists (0, size s, fn i => c = sub (s, i))
+   end
+
+val numChars: int = 128
+
+structure Regexp =
+   struct
+      datatype t =
+	 AnchorStart
+       | CharSet of char -> bool
+       | Or of t list
+       | Seq of t list
+       | Star of t
+   end
+
+structure Stack:
+   sig
+      type 'a t
+
+      val clear: 'a t -> unit
+      val exists: 'a t * ('a -> bool) -> bool
+      val foreach: 'a t * ('a -> unit) -> unit
+      val new: int * 'a -> 'a t
+      val push: 'a t * 'a -> unit
+   end =
+   struct
+      datatype 'a t = T of {elts: 'a array,
+			    size: int ref}
+
+      fun new (size: int, dummy: 'a): 'a t =
+	 T {elts = Array.new (size, dummy),
+	    size = ref 0}
+
+      fun push (T {elts, size}, x) =
+	 let
+	    val n = !size
+	    val _ = Array.update (elts, n, x)
+	    val _ = size := n + 1
+	 in ()
+	 end
+
+      fun exists (T {elts, size, ...}, f) =
+	 Int.exists (0, !size, fn i => f (Array.sub (elts, i)))
+	 
+      fun foreach (T {elts, size}, f) =
+	 Int.for (0, !size, fn i => f (Array.sub (elts, i)))
+
+      fun clear (T {size, ...}) = size := 0
+   end
+
+(* Non-deterministic Finite Automaton. *)
+structure NFA:
+   sig
+      (* The states in an NFA are indexed from 0 to n-1, where n is the number
+       * of states.
+       *)
+      type state = int
+
+      (* State i is final iff Array.sub (final, i).
+       * The outgoing states from state i on input char c are given by
+       * Array2.sub (next, i, Char.ord c).
+       * anchorStarts is sorted in increasing order of state index.
+       *)
+      datatype t = T of {anchorStarts: state list,
+			 final: bool array,
+			 seen: bool array, (* used for matching. *)
+			 stack1: int Stack.t, (* used for matching. *)
+			 stack2: int Stack.t, (* used for matching. *)
+			 start: state,
+			 next: state vector Array2.t}
+	 
+      val fromRegexp: Regexp.t -> t
+      val match: {nfa: t,
+		  string: string,
+		  startPos: int,
+		  anchorStart: bool} -> int option
+      val numStates: t -> int
+   end =
+   struct
+      type state = int
+      datatype t = T of {anchorStarts: state list,
+			 final: bool array,
+			 seen: bool array,
+			 stack1: int Stack.t,
+			 stack2: int Stack.t,
+			 start: state,
+			 next: state vector Array2.t}
+
+      fun numStates (T {next, ...}) = Array2.nRows next
+
+
+      (* Simulating an NFA with two stacks and a bit vector, as in Algorithm 3.4
+       * (page 126) of Compilers: Principles, Techniques, and Tools by Aho,
+       * Sethi, and Ullman.
+       *)
+      fun match {anchorStart: bool,
+		 nfa as T {anchorStarts, final, seen, stack1, stack2, start,
+			   next},
+		 startPos,
+		 string = s}: int option =
+	 let
+	    val numStates = numStates nfa
+	    val n = String.size s
+	    val _ = Array.modify (seen, fn _ => false)
+	    fun loop (current: state Stack.t,
+		      nextStates: state Stack.t,
+		      i: int,
+		      last: int option): int option =
+	       let
+		  val last = 
+		     if Stack.exists (current, fn s => Array.sub (final, s))
+			then SOME i
+		     else last
+	       in
+		  if numStates = 0 orelse i = n
+		     then (Stack.clear stack1
+			   ; Stack.clear stack2
+			   ; last)
+		  else
+		     let
+			val _ = Array.modify (seen, fn _ => false)
+			val c = Char.toInt (String.sub (s, i))
+			val _ =
+			   Stack.foreach (current, fn s =>
+					  Vector.foreach
+					  (Array2.sub (next, s, c),
+					   fn s' =>
+					   if Array.sub (seen, s')
+					      then ()
+					   else (Array.update (seen, s', true)
+						 ; Stack.push (nextStates, s'))))
+			val _ = Stack.clear current
+		     in loop (nextStates, current, i + 1, last)
+		     end
+	       end
+	    val _ = Stack.push (stack1, start)
+	    val _ =
+	       if anchorStart
+		  then List.foreach (anchorStarts, fn s =>
+				     Stack.push (stack1, s))
+	       else ()
+	 in
+	    loop (stack1, stack2, startPos, NONE)
+	 end
+
+      (* This conversion from a regular expression to an NFA is based on
+       * Section 3.9 (pages 134 -- 140) of Compilers: Principles, Techniques,
+       * and Tools by Aho, Sethi, and Ullman.
+       *
+       * It creates one NFA state for each CharSet (called a "position") that is
+       * in the regexp.  There is also one extra state for the start state.
+       * It adds edges as in rules 1 and 2 (page 138) for the followpos function.
+       *)
+      fun fromRegexp (r: Regexp.t): t =
+	 let
+	    fun loop (r, ac) =
+	       let open Regexp
+	       in case r of
+		  AnchorStart => ac + 1
+		| CharSet _ => ac + 1
+		| Or rs => List.fold (rs, ac, loop)
+		| Seq rs => List.fold (rs, ac, loop)
+		| Star r => loop (r, ac)
+	       end
+	    val numPos = loop (r, 0)
+	    val numStates = numPos + 1
+	    val start = numPos
+	    val posCounter = ref ~1
+	    val follow = Array2.new (numStates, numStates, false)
+	    val posChars = Array2.tabulate (numPos, numChars, fn _ => false)
+	    local
+	       datatype t = T of bool vector (* of length numPos *)
+	    in
+	       fun contains (T v, s) = Vector.sub (v, s)
+	       val empty: t = T (Vector.new (numPos, false))
+	       fun union (T v, T v'): t =
+		  T (Vector.tabulate (numPos, fn i =>
+				      Vector.sub (v, i)
+				      orelse Vector.sub (v', i)))
+	       fun singleton (i: int): t =
+		  T (Vector.tabulate (numPos, fn j => i = j))
+	       fun foreach (T v, f) =
+		  Vector.foreachi (v, fn (i, b) => if b then f i else ())
+	    end
+	    val anchorStarts = ref []
+	    (* The following loop fills in follow and posChars. *)
+	    fun loop r =
+	       case r of
+		  Regexp.AnchorStart =>
+		     let
+			val i = ++ posCounter
+			val _ = List.push (anchorStarts, i)
+			val first = singleton i
+		     in
+			{first = first,
+			 last = first,
+			 nullable = false}
+		     end
+		| Regexp.CharSet f =>
+		     let
+			val i = ++ posCounter
+			val _ =
+			   Int.for (0, numChars, fn c =>
+				    if f (Char.chr c)
+				       then Array2.update (posChars, i, c, true)
+				    else ())
+			val first = singleton i
+		     in {first = first,
+			 last = first,
+			 nullable = false}
+		     end
+		| Regexp.Or rs =>
+		     List.fold
+		     (rs, {first = empty,
+			   last = empty,
+			   nullable = false},
+		      fn (r, {first = f, last = l, nullable = n}) =>
+		      let
+			 val {first = f', last = l', nullable = n'} =
+			    loop r
+		      in
+			 {first = union (f, f'),
+			  last = union (l, l'),
+			  nullable = n orelse n'}
+		      end)
+		| Regexp.Seq rs =>
+		     List.fold
+		     (rs, {first = empty,
+			   last = empty,
+			   nullable = true},
+		      fn (r, {first = f, last = l, nullable = n}) =>
+		      let
+			 val {first = f', last = l', nullable = n'} =
+			    loop r
+			 val _ =
+			    foreach
+			    (l, fn s =>
+			     foreach
+			     (f', fn s' => Array2.update (follow, s, s', true)))
+		      in
+			 {first = if n then union (f, f') else f,
+			  last = if n' then union (l, l') else l',
+			  nullable = n andalso n'}
+		      end)
+		| Regexp.Star r =>
+		     let
+			val {first = f, last = l, nullable = n} = loop r
+			val _ =
+			   foreach
+			   (l, fn s =>
+			    foreach
+			    (f, fn s' => Array2.update (follow, s, s', true)))
+		     in
+			{first = f, last = l, nullable = true}
+		     end
+	    val {first, last, nullable} = loop r
+	    (* Any anchor starts in first should be anchor starts.
+	     * This also reverses anchorStarts so they are in order.
+	     *)
+	    val anchorStarts =
+	       List.fold (!anchorStarts, [], fn (s, ac) =>
+			  if contains (first, s) then s :: ac else ac)
+	    (* The positions in first are all reachable from the start state. *)
+	    val _ = foreach (first, fn i =>
+			     Array2.update (follow, start, i, true))
+	    (* The positions in last are all final states. *)
+	    val final = Array.array (numStates, false)
+	    val _ = foreach (last, fn i => Array.update (final, i, true))
+	    (* The start state is final if the whole regexp is nullable. *)
+	    val _ = if nullable then Array.update (final, start, true) else ()
+	    (* Now c1ompute the transition table. *)
+	    val a = Array.new (numStates, false)
+	    val next =
+	       Array2.tabulate
+	       (numStates, numChars, fn (i, c) =>
+		let
+		   val _ =
+		      Int.for (0, numStates, fn j => Array.update (a, j, false))
+		   val _ =
+		      Int.for
+		      (0, numPos, fn j =>
+		       if Array2.sub (follow, i, j)
+			  andalso Array2.sub (posChars, j, c)
+			  then Array.update (a, j, true)
+		       else ())
+		in Array.indices a
+		end)
+	 in
+	    T {anchorStarts = anchorStarts,
+	       final = final,
+	       next = next,
+	       seen = Array.new (numStates, false),
+	       stack1 = Stack.new (numStates, ~1),
+	       stack2 = Stack.new (numStates, ~1),
+	       start = start}
+	 end
+      
+   end
+
+structure DFA:
+   sig
+      type t
+
+      val fromNFA: NFA.t -> t
+      val match: {dfa: t,
+		  string: string,
+		  startPos: int,
+		  anchorStart: bool} -> int option
+      val minimize: t -> t
+   end =
+   struct
+      (* The states in a DFA are indexed from 0 to n-1, where n is the number
+       * of states.
+       *)
+      type state = int
+	 
+      (* State i is final iff Array.sub (final, i).
+       * The outgoing state from state i on input char c is
+       * Array2.sub (next, i, Char.ord c).
+       *)
+      datatype t = T of {anchorStart: state,
+			 dead: bool array,
+			 final: bool array,
+			 next: state Array2.t,
+			 start: state}
+
+      fun numStates (T {next, ...}): int = Array2.nRows next
+
+
+      fun match {dfa as T {anchorStart = ancSt, dead, final, start, next},
+		 string as s,
+		 startPos: int,
+		 anchorStart: bool}: int option =
+	 let
+	    val n = String.size s
+	    fun loop (i: int, state: int, last: int option): int option =
+	       let
+		  val last =
+		     if Array.sub (final, state)
+			then SOME i
+		     else last
+	       in
+		  if Array.sub (dead, state) orelse i = n
+		     then last
+		  else loop (i + 1,
+			     Array2.sub (next, state,
+					 Char.toInt (String.sub (s, i))),
+			     last)
+	       end
+	 in loop (startPos,
+		  if anchorStart then ancSt else start,
+		     NONE)
+	 end
+
+      fun dead (numStates, final, next) =
+	 Array.tabulate
+	 (numStates, fn i =>
+	  not (Array.sub (final, i))
+	  andalso Int.forall (0, numChars, fn c =>
+			      i = Array2.sub (next, i, c)))
+	 
+      (* This DFA minimization algorithm is based on algorithm 3.6 (page 142)
+       * of Compilers: Principles, Techniques, and Tools by Aho, Sethi, and
+       * Ullman. 
+       *
+       * It maintains an array, r, that stores for each state s the
+       * representative of the class to which s belongs.
+       * It repeatedly refines an equivalence relation, represented by a list
+       * of classes, where each class is a list of states (i.e. ints).
+       *)
+      fun minimize (dfa as T {anchorStart, final, start, next, ...}): t =
+	 let
+	    val numStates = numStates dfa
+	    type class = int list
+	    type classes = class list
+	    val repCounter = ref ~1
+	    val change = ref false
+	    fun newRep () = (change := true; ++ repCounter)
+	    val finRep = newRep ()
+	    val nonfinRep = newRep ()
+	    val r = Array.tabulate (numStates, fn i =>
+				    if Array.sub (final, i)
+				       then finRep
+				    else nonfinRep)
+	    fun rep s = Array.sub (r, s)
+	    fun trans (s, c) = rep (Array2.sub (next, s, c))
+	    fun refine (class: class, ac: classes): classes =
+	       let
+		  val r =
+		     List.fold
+		     (class, [], fn (state, classes) =>
+		      let
+			 fun loop (classes, ac) =
+			    case classes of
+			       [] =>
+				  (case ac of
+				      [] => [{class = [state],
+					      old = state}]
+				    | _ => 
+					 let
+					    val s = newRep ()
+					    val _ = Array.update (r, state, s)
+					 in {class = [state],
+					     old = state} :: ac
+					 end)
+			     | (z as {class, old}) :: classes =>
+				  if Int.forall
+				     (0, numChars, fn c =>
+				      trans (old, c) = trans (state, c))
+				     then
+					(Array.update (r, state, rep old)
+					 ; {class = state :: class,
+					    old = old} :: (List.appendRev
+							   (classes, ac)))
+				  else loop (classes, z :: ac)
+		      in loop (classes, [])
+		      end)
+	       in List.fold (r, ac, fn ({class, ...}, ac) =>
+			     case class of
+				[_] => ac
+			      | _ => class :: ac)
+	       end
+	    fun refineAll (classes: classes): unit =
+	       case classes of
+		  [] => ()
+		| _ =>
+		     let
+			val _ = change := false
+			val classes =
+			   List.fold (classes, [], fn (class, ac) =>
+				      case class of
+					 [_] => ac
+				       | _ => refine (class, ac))
+		     in if !change
+			   then refineAll classes
+			else ()
+		     end
+	    val (fin, nonfin) =
+	       Int.fold (0, numStates, ([], []), fn (i, (f, n)) =>
+			 if Array.sub (final, i)
+			    then (i :: f, n)
+			 else (f, i :: n))
+	    val _ = refineAll [fin, nonfin]
+	    val numStates' = 1 + !repCounter
+	    (* Compute reachable states. *)
+	    val reached = Array.new (numStates', false)
+	    fun visit (s: int (* an old state *)): unit =
+	       let
+		  val s' = rep s
+	       in
+		  if Array.sub (reached, s')
+		     then ()
+		  else (Array.update (reached, s', true)
+			; Int.for (0, numChars, fn c =>
+				   visit (Array2.sub (next, s, c))))
+	       end
+	    val _ = visit start
+	    val _ = visit anchorStart
+	    (* Compute new representatives. *)
+	    val c = ref ~1
+	    val newR = Array.tabulate (numStates', fn s =>
+				       if Array.sub (reached, s)
+					  then ++ c
+				       else ~1)
+	    val numStates' = 1 + !c
+	    val _ = Array.modify (r, fn s => Array.sub (newR, s))
+	    val next' = Array2.new (numStates', numChars, ~1)
+	    val _ =
+	       Array2.foreachi
+	       (next, fn (s, c, s') =>
+		Array2.update (next', rep s, c, rep s'))
+	    val final' = Array.array (numStates', false)
+	    val _ =
+	       Array.foreachi
+	       (final, fn (i, b) =>
+		if b then Array.update (final', rep i, true) else ())
+	 in T {anchorStart = rep anchorStart,
+	       dead = dead (numStates', final', next'),
+	       final = final',
+	       start = rep start,
+	       next = next'}
+	 end
+
+      (* This is the usual "subset construction", as in algorithm 3.2 (page 118)
+       * of Compilers: Principles, Techniques, and Tools by Aho, Sethi, and
+       * Ullman.
+       *
+       * It associates each (reachable) set of states in the nfa with a single
+       * state in the DFA.
+       *)
+      fun fromNFA (nfa as NFA.T {anchorStarts, final, start, next, ...}) =
+	 let
+	    (* Sets of states are represented as sorted vectors. *)
+	    type states = state vector
+	    val counter = ref ~1
+	    type work = {states: states,
+			 state: int,
+			 out: int vector option ref}
+	    val cache: work list ref = ref []
+	    val todo: work list ref = ref []
+	    fun statesToState (ss: states): int =
+	       case List.peek (!cache, fn {states, ...} => ss = states) of
+		  NONE =>
+		     let
+			val state = ++ counter
+			val work = {out = ref NONE,
+				    state = state,
+				    states = ss}
+			val _ = List.push (cache, work)
+			val _ = List.push (todo, work)
+		     in
+			state
+		     end
+		| SOME {state, ...} => state
+	    local
+	       val seen = Array.array (NFA.numStates nfa, false)
+	    in
+	       fun loop () =
+		  case !todo of
+		     [] => ()
+		   | {states, out, ...} :: rest =>
+			(todo := rest
+			 ; out := (SOME
+				   (Vector.tabulate
+				    (numChars, fn c =>
+				     let
+					val _ =
+					   Array.modify (seen, fn _ => false)
+					val _ = 
+					   Vector.foreach
+					   (states, fn s =>
+					    Vector.foreach
+					    (Array2.sub (next, s, c), fn s' =>
+					     Array.update (seen, s', true)))
+				     in statesToState (Array.indices seen)
+				     end)))
+			 ; loop ())
+	    end
+	    (* This call to statesToState initializes the worklist. *)
+	    val start' = statesToState (Vector.new1 start)
+	    val anchorStart' =
+	       statesToState
+	       (Vector.fromList (List.insert (anchorStarts, start, op <=)))
+	    val _ = loop ()
+	    val numStates = 1 + !counter
+	    val next' = Array2.new (numStates, numChars, ~1)
+	    val final' = Array.new (numStates, false)
+	    val _ =
+	       List.foreach
+	       (!cache, fn {states, state = i, out, ...}: work =>
+		let
+		   val _ =
+		      Vector.foreachi
+		      (valOf (! out), fn (c, j) =>
+		       Array2.update (next', i, c, j))
+		   val _ =
+		      if Vector.exists (states, fn s => Array.sub (final, s))
+			 then Array.update (final', i, true)
+		      else ()
+		in ()
+		end)
+	    val dead' = dead (numStates, final', next')
+	 in T {anchorStart = anchorStart',
+	       dead = dead',
+	       final = final',
+	       start = start',
+	       next = next'}
+	 end
+
+   end
+
+structure Regexp:
+   sig
+      structure Compiled:
+	 sig
+	    type t
+
+	    (* find returns the longest of the leftmost matches. *)
+	    val find: t * string -> {start: int, length: int} option
+	 end
+
+      type t
+
+      val anchorStart: t
+      val any: t
+      val char: char -> t
+      val compileDFA: t -> Compiled.t
+      val compileNFA: t -> Compiled.t
+      val digit: t
+      val nonDigit: t
+      val notOneOf: string -> t
+      val oneOf: string -> t
+      val or: t list -> t
+      val seq: t list -> t
+      val star: t -> t
+   end =
+   struct
+      open Regexp
+
+      val anchorStart = AnchorStart
+      val isChar = CharSet
+      fun isNotChar f = isChar (not o f)
+      fun char c = isChar (fn c' => c = c')
+      val or = Or
+      val seq = Seq
+      val star = Star
+
+      val any = isChar (fn _ => true)
+
+      fun oneOf s = isChar (fn c => String.contains (s, c))
+      fun notOneOf s = isNotChar (fn c => String.contains (s, c))
+      val digs = "0123456789"
+      val digit = oneOf digs
+      val nonDigit = notOneOf digs
+
+      val empty = Or [] (* Empty Language. *)
+      val emptyString = Seq [] (* Language containing the empty string only. *)
+
+	 
+      structure Compiled =
+	 struct
+	    datatype t =
+	       DFA of DFA.t
+	     | NFA of NFA.t
+
+	    fun find (c: t, s: string) =
+	       let
+		  val n = String.size s
+		  fun loop (i: int, anchorStart: bool) =
+		     if i = n
+			then NONE
+		     else
+			let
+			   val res =
+			      case c of
+				 DFA dfa =>
+				    DFA.match {dfa = dfa,
+					       string = s,
+					       startPos = i,
+					       anchorStart = anchorStart}
+			       | NFA nfa =>
+				    NFA.match {nfa = nfa,
+					       string = s,
+					       startPos = i,
+					       anchorStart = anchorStart}
+			in
+			   case res of
+			      NONE => loop (i + 1, false)
+			    | SOME finish => SOME {start = i,
+						   length = finish - i}
+			end
+	       in loop (0, true)
+	       end
+	 end
+
+      fun compileDFA r =
+	 Compiled.DFA (DFA.minimize (DFA.fromNFA (NFA.fromRegexp r)))
+      fun compileNFA r =
+	 Compiled.NFA (NFA.fromRegexp r)
+   end
+
+local
+   open Regexp
+in
+   val d = digit
+   val eol = char #"#"
+   val space = oneOf " \t"
+   val r =
+      seq [or [anchorStart, notOneOf "0123456789("],
+	   or [seq [char #"(", d, d, d, char #")"],
+	       seq [d, d, d]],
+	   char #" ",
+	   d, d, d,
+	   oneOf " -",
+	   d, d, d, d,
+	   or [eol, nonDigit]]
+(*   val comp = Regexp.compileNFA r *)
+   val comp = Regexp.compileDFA r
+end
+
+fun incr (r: int ref) = r := !r + 1
+
+val ins = TextIO.stdIn
+
+
+
+fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
+
+(* Based on regexmatch.ocaml. *)
+   
+local
+   val form = "(...) ...-...."
+   val a = CharArray.tabulate (String.size form, fn i =>
+			       String.sub (form, i))
+in
+   fun checkPhone (mustPrint: bool, cnt: int ref, line: string) =
+      case Regexp.Compiled.find (comp, line) of
+	 NONE => ()
+       | SOME {start = pos, ...} =>
+	    let
+	       fun blit (src, dst, length) =
+		  let
+		     val stop = src + length
+		     fun loop (src, dst) =
+			if src = stop
+			   then ()
+			else (CharArray.update (a, dst,
+						String.sub (line, src))
+			      ; loop (src + 1, dst + 1))
+		  in
+		     loop (src, dst)
+		  end
+	       val (o1, o2, o3) =
+		  if #"(" = String.sub (line, pos)
+		     then (1, 6, 10)
+		  else if #"(" = String.sub (line, pos + 1)
+			  then (2, 7, 11)
+		       else if Char.isDigit (String.sub (line, pos))
+			       then (0, 4, 8)
+			    else (1, 5, 9)
+	       val _ = blit (pos + o1, 1, 3)
+	       val _ = blit (pos + o2, 6, 3)
+	       val _ = blit (pos + o3, 10, 4)
+	       val _ =
+		  if mustPrint
+		     then printl [Int.toString (!cnt), ": ",
+				  CharArray.extract (a, 0, NONE)]
+		  else ()
+	       val _ = incr cnt
+	    in
+	       ()
+	    end
+end
+
+fun doit (phones,mustPrint: bool): unit =
+   let val cnt = ref 1
+   in List.foreach (phones, fn line => checkPhone (mustPrint, cnt, line))
+   end
+
+fun atoi s = case Int.fromString s of SOME num => num | NONE => 0
+   
+fun main (name, args) =
+   let
+      val n = atoi (hd (args @ ["1"]))
+      val phones = 
+	let
+	  fun loop lines =
+	    case TextIO.inputLine ins of
+	      "" => rev lines
+	    | line => loop (line :: lines)
+	in loop []
+	end
+      val _ = Int.for (1, n, fn _ => doit (phones,false))
+      val _ = doit (phones,true)
+   in OS.Process.success
+   end
+end
+val _ = SMLofNJ.exportFn("regexmatch", Test.main);
+

@@ -1,0 +1,48 @@
+#!/usr/bin/guile \
+-e main -s
+!#
+
+;;; $Id: prodcons.guile,v 1.1 2004-05-19 18:11:09 bfulgham Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(use-modules (ice-9 threads))
+
+(define mutex (make-mutex))
+(define access (make-condition-variable))
+(define count 0)
+(define data 0)
+(define produced 0)
+(define consumed 0)
+
+;; the consumer thread definition seems wrong
+;; how does it ever stop/get joined?
+(define (consumer n)
+  (let ((i 0))
+    (while #t
+	 (lock-mutex mutex)
+	 (while (= count 0)
+		(wait-condition-variable access mutex))
+	 (set! i data)
+	 (set! count 0)
+	 (signal-condition-variable access)
+	 (unlock-mutex mutex)
+	 (set! consumed (+ consumed 1)))))
+
+(define (producer n)
+  (do ((i 1 (+ i 1)))
+      ((> i n))
+    (lock-mutex mutex)
+    (while (= count 1)
+      (wait-condition-variable access mutex))
+    (set! data i)
+    (set! count 1)
+    (signal-condition-variable access)
+    (unlock-mutex mutex)
+    (set! produced (+ produced 1))))
+
+(define (main args)
+  (let ((n (or (and (= (length args) 2) (string->number (cadr args))) 1)))
+    (let ((c (make-thread (lambda () (consumer n)))))
+      (producer n)
+      (join-thread c)
+      (display produced) (display " ") (display consumed) (newline))))
