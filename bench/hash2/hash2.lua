@@ -1,4 +1,4 @@
--- $Id: hash2.lua,v 1.1 2004-05-19 18:10:02 bfulgham Exp $
+-- $Id: hash2.lua,v 1.2 2004-05-20 02:39:49 bfulgham Exp $
 -- http://www.bagley.org/~doug/shootout/
 -- with help from Roberto Ierusalimschy
 
@@ -15,5 +15,5 @@ for i=1,n do
     end
 end
 
-io.write(format("%d %d %d %d\n", hash1["foo_1"], hash1["foo_9999"],
+io.write(string.format("%d %d %d %d\n", hash1["foo_1"], hash1["foo_9999"],
 	     hash2["foo_1"], hash2["foo_9999"]))
