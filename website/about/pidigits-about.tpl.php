@@ -14,5 +14,5 @@
 <a href="iofile.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=<?=$Sort;?>&file=output">output file</a>.</p>
 
 
-<p>Eric W. Weisstein. "Pi Digits." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/PiDigits.html">http://mathworld.wolfram.com/PiDigits.html</a></p>
+<p>For more information see Eric W. Weisstein, "Pi Digits." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/PiDigits.html">http://mathworld.wolfram.com/PiDigits.html</a></p>
 
