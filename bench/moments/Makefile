@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004-06-14 07:07:10 bfulgham Exp $
+# $Id: Makefile,v 1.6 2004-06-14 08:02:17 sweeks Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -10,8 +10,9 @@ GCCOPTS := -lm
 
 #MLTONDEPS := /usr/local/smlnj/src/smlnj-lib/Util/array-sort-sig.sml \
 #             /usr/local/smlnj/src/smlnj-lib/Util/array-qsort.sml
-MLTONDEPS := ../../Include/sml-src/array-sort-sig.sml \
-	     ../../Include/sml-src/array-qsort.sml
+MLTONDEPS := ../../Include/mlton-src/basic.sml \
+	     ../../Include/mlton-src/insertion-sort.sml \
+	     ../../Include/mlton-src/quick-sort.sml
 
 MB_GHCRTS  := +RTS -K2046000
 
