@@ -33,7 +33,7 @@
 
 <?=$PageBody;?>
 
-<form><input type="hidden" name="sort" value="<?=$Sort;?>"/></form>
+<form action=""><input type="hidden" name="sort" value="<?=$Sort;?>"/></form>
 <div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license">revised&nbsp;BSD&nbsp;license</a> 
 
 <!-- 

@@ -74,10 +74,10 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="div" >
 <tr><th class="a"><strong>3&nbsp;Find&nbsp;your </strong>Fast Faster Fastest programming languages</th></tr>
 
-<tr class="a"><td class="center"><p>
+<tr class="a"><td class="center">
 <? MkScorecardMenuForm($Sort); ?>
-</p></td></tr>
-
+</td></tr>
+<tr><td>&nbsp;</td></tr>
 </table>
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->

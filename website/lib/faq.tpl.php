@@ -44,7 +44,7 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 <tr><td>
 <p>Before contributing programs
 <ul>
-<li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a>. All contributed programs are published under this revised BSD license.</li>
+<li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
 <li>read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></li>
 </ul>
 </p>
