@@ -127,6 +127,6 @@ local n = tonumber(arg and arg[1]) or 1000
 local bodies = { Sun, Jupiter, Saturn, Uranus, Neptune }
 offsetMomentum(bodies)
 
-io.write( string.format("%0.15f",energy(bodies)), "\n")
+io.write( string.format("%0.9f",energy(bodies)), "\n")
 for i = 1,n do advance(bodies,0.01) end
-io.write( string.format("%0.15f",energy(bodies)), "\n")
+io.write( string.format("%0.9f",energy(bodies)), "\n")
