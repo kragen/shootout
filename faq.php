@@ -229,10 +229,10 @@
 	naive and unidiomatic?</h3></div>
 	<p>There are two <i>kinds</i> of tests in the shootout, tests where
 	solutions are supposed to do things in the <a href=
-	"method.shtml#sameway"><b>same way</b></a> and tests where the
-	solutions are supposed to do the <a href="method.shtml#samething">
+	"method.php#sameway"><b>same way</b></a> and tests where the
+	solutions are supposed to do the <a href="method.php#samething">
 	<b>same thing</b></a>.  Please refer to the <a href=
-	"method.shtml#sameway">page about methodology</a> for a discussion of
+	"method.php#sameway">page about methodology</a> for a discussion of
 	why the <b>same way</b> tests often show naive or unidiomatic code.
 	It is intentional.</p>
 	<hr>

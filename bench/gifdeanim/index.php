@@ -10,5 +10,6 @@ GIF deanimation" -->
 
 <h4>Observations</h4>
 
-<!--#include virtual="../../html/nav.shtml" -->
-<!--#include virtual="../../html/footer.shtml" -->
+  </tr>
+</table>
+<?php require("../../html/footer.php"); ?>

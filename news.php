@@ -167,7 +167,7 @@ It isn't complete, just abandoned (for now).
 <li>
   Now each detail page allows you to limit choose only languages you
   wish to compare, <a
-  href="http://www.bagley.org/~doug/shootout/bench/echo/detail.shtml?g%2B%2B=on&gcc=on&java=on&ocaml=on">for
+  href="http://shootout.alioth.debian.org/bench/echo/detail.php?g%2B%2B=on&gcc=on&java=on&ocaml=on">for
   example</a>.  The detail graphs were getting rather cluttered, and I
   thought this would be one nice way to unclutter them.
 </ul>
@@ -236,8 +236,8 @@ complete, and the threaded Rep program fails to start.
   language does worse than its average ranking.  This may be useful
   to hint which programs could possibly be better optimized.
 <li>
-  I have expanded the page on <a href="method.shtml">Methodology</a>, and
-  now include an explicit list of <a href="method.shtml#flaws">recognized
+  I have expanded the page on <a href="method.php">Methodology</a>, and
+  now include an explicit list of <a href="method.php#flaws">recognized
   flaws</a> in this shootout.
 </ul>
 
@@ -298,7 +298,7 @@ different metrics (cpu, mem, lines of code).
 <li>
   I investigated Linux's BSD process accounting feature as a means of
   fixing the memory measurement inaccuracies, but it won't work.  Read
-  about it on the <a href="method.shtml">Methodology</a> page.  Memory
+  about it on the <a href="method.php">Methodology</a> page.  Memory
   numbers have improved in accuracy, but should still be treated with
   caution.
 </ul>
@@ -495,7 +495,7 @@ language is best!  Proven empirically!  Forever and all time! ;-)
 <li>
   Added <a href="bench/strcat/">string concatenation</a> test.
 <li>
-  Added a page about <a href="method.shtml">methodology</a>.
+  Added a page about <a href="method.php">methodology</a>.
 </ul>
 
 <b>2000-12-09</b>
@@ -595,4 +595,4 @@ will be good for portability (at least to other Unices).
   serve to make sure input data is cached.
 </ul>
 
-<!--#include virtual="html/footer.shtml" -->
+<?php require("html/footer.php"); ?>

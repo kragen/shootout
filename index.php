@@ -54,7 +54,7 @@
 	      get different results on a different OS, on different hardware,
 	      with newer releases of the languages, or even from run to run of
 	      the same test.  You might even find that horrible bugs still lurk
-	      in the testing <a href="method.shtml">method</a>.</p>
+	      in the testing <a href="method.php">method</a>.</p>
             <p><u>This is very much a work in progress!</u>  As it evolves we
 	      may add, change, or remove languages, tests, or solutions.  Some
 	      solutions as currently presented are unoptimized, and may be
@@ -73,7 +73,7 @@ href="mailto:(Brent Fulgham) bfulgham@users.alioth.debian(not .com).org">email</
 		settling of volume may occur.</p>
               <p class="warningmark"><strong>Disclaimer No. 3:</strong> <a href="http://www.lib.uchicago.edu/keith/crisis/disclaimer.html">ditto</a>.</p>
               <p class="warningmark"><strong>Disclaimer No. 4:</strong> Please read the pages on
-	        <a href="method.shtml">Methodology</a>, the <a href="faq.php">
+	        <a href="method.php">Methodology</a>, the <a href="faq.php">
 		FAQ</a>, and <a href="conclusion.shtml">Conclusions</a> before
 		you flame.</p>
             </ul>

@@ -241,7 +241,7 @@
 	      a number of tests could probably be run longer still to be truly
 	      fair.  You should be able to see the effect of startup time by
 	      comparing Java and other languages on the test detail page (<a
-	      href="bench/sieve/detail.shtml?bigloo=on&gcc=on&java=on&ocaml=on">
+	      href="bench/sieve/detail.php?bigloo=on&gcc=on&java=on&ocaml=on">
 	      example</a>).</p>
 	      <p>As mention above, a feature exists to allow you to subtract
 	      startup times by clicking on a link on each test page.</p></li>

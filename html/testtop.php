@@ -8,7 +8,7 @@
 
       require("../../html/testnav.php");
 
-function testtop($title)
+function testtop_nav($title)
 {
     echo "<table border=\"0\" cellspacing=\"0\" cellpadding=\"4\" id=\"main\" width=\"100%\">\n";
     echo "  <tr valign=\"top\">\n";
@@ -20,6 +20,12 @@ function testtop($title)
     echo "      <div id=\"bodycol\">\n";
     echo "        <div class=\"app\" id=\"test\">\n";
     echo "	  <div class=\"h3\"><h3>$title</h3><div>\n";
+}
+
+function testtop($title)
+{
+    testtop_nav($title);
+
     echo "	  <table width=\"70%\">\n";
     echo "            <tr>\n";
     echo "              <td>\n";
@@ -32,9 +38,9 @@ function testtop($title)
 
     require("../../html/graph_note.php");
 
-    $date = require(".up_date");
+    $date = file(".up_date");
 
-    echo "                <p><small>[Results last updated: $date CDT]</small></p>\n";
+    echo "                <p><small>[Results last updated: $date[0] CDT]</small></p>\n";
     echo "              </td>\n";
     echo "            </tr>\n";
     echo "          </table>\n";

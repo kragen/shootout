@@ -4,4 +4,4 @@
   of 0-10 for aesthetic reasons.  Original value ranges are included on the
   X-axis.]</small>
 </p>
-<p>Click <a href="detail.shtml">here</a> for more detailed data and graphs.</p>
+<p>Click <a href="detail.php">here</a> for more detailed data and graphs.</p>

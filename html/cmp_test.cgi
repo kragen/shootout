@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: cmp_test.cgi,v 1.1 2004-05-19 18:15:14 bfulgham Exp $
+# $Id: cmp_test.cgi,v 1.2 2004-05-31 08:06:42 bfulgham Exp $
 
 use strict;
 use CGI qw(-oldstyle_urls);
@@ -38,7 +38,7 @@ sub lang_tab {
     print qq{<form method="GET">};
     print qq{<p><table border="0" cellspacing="1" cellpadding="2" bgcolor="#e0e0c0">\n};
     my $ncols = 12;
-    my $self = "detail.shtml";
+    my $self = "detail.php";
     print qq{<tr><th colspan="$ncols" bgcolor="black"><font color="white">Choose which languages to compare: <input type="submit" value="Plot!"> &nbsp; <a href="$self">Reset</a></font></th></tr>\n};
     while (@langs) {
 	print qq{<tr>};
