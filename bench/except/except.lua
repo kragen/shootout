@@ -1,18 +1,17 @@
--- $Id: except.lua,v 1.1 2004-05-19 18:09:42 bfulgham Exp $
+-- $Id: except.lua,v 1.2 2004-05-23 04:36:29 bfulgham Exp $
 -- http://www.bagley.org/~doug/shootout/
 -- from Roberto Ierusalimschy
 
 -- uses `call' to catch errors; return the error message
 -- (or nil if there are no errors)
 
-function try (f, ...)
-  call(f, arg, "x", function (msg) %arg.msg = msg end)
-  return arg.msg
+function try (f, arg)
+  local status, err = pcall(f, arg)
+  if not status then return err end
 end
 
-
-HI = 0
-LO = 0
+local HI = 0
+local LO = 0
 
 function some_function (n)
   local res = try(hi_function, n)
@@ -23,7 +22,7 @@ end
 function hi_function (n)
   local res = try(lo_function, n)
   if res == "Hi_Exception" then HI = HI+1 
-  elseif res then error(res)  -- rethrow
+  elseif res then error(res, 0)  -- rethrow
   end
 end
 
@@ -31,14 +30,14 @@ end
 function lo_function (n)
   local res = try(blowup, n)
   if res == "Lo_Exception" then LO = LO+1 
-  elseif res then error(res)  -- rethrow
+  elseif res then error(res, 0)  -- rethrow
   end
 end
 
 
 function blowup (n)
-  if mod(n,2) ~= 0 then error "Lo_Exception"
-  else error "Hi_Exception"
+  if math.mod(n,2) ~= 0 then error("Lo_Exception", 0)
+  else error("Hi_Exception",0)
   end
 end
 
@@ -48,4 +47,4 @@ for i=1,N do
   some_function(i)
 end
 
-print(format("Exceptions: HI=%d / LO=%d", HI, LO))
+print(string.format("Exceptions: HI=%d / LO=%d", HI, LO))
