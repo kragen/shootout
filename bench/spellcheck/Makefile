@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2004-07-01 05:24:01 bfulgham Exp $
+# $Id: Makefile,v 1.11 2004-07-02 15:11:03 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -20,6 +20,7 @@ GCCOPTS := -I ../../Include
 
 CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+MB_CLRTS := -h 10000000
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,4,7,10 \
