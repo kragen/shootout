@@ -511,8 +511,8 @@
 
      tcl =>
      { Lang => 'Tcl',
-       Home => 'http://dev.scriptics.com/',
-       Down => 'http://dev.scriptics.com/software/tcltk/downloadnow83.tml',
+       Home => 'http://tcl.tk/',
+       Down => 'http://www.tcl.tk/software/tcltk/downloadnow84.tml',
        Type => 'bytecomped/interpreted',
        Verfun => sub {
 	   chomp(my $ver = `echo 'puts [info patchlevel]'|$ENV{TCL}`);

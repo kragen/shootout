@@ -364,8 +364,8 @@ S-Lang Library Version: 1.4.9'
 
     'tcl' => array(
       'Lang'    => 'Tcl',
-      'Home'    => 'http://dev.scriptics.com/',
-      'Down'    => 'http://dev.scriptics.com/software/tcltk/downloadnow83.tml',
+      'Home'    => 'http://tcl.tk/',
+      'Down'    => 'http://www.tcl.tk/software/tcltk/downloadnow84.tml',
       'Type'    => 'bytecomped/interpreted',
       'Version' => 'Tcl 8.4.6'
     )
