@@ -1,4 +1,4 @@
-%%% $Id: hash.oz,v 1.1 2004-05-23 06:14:45 bfulgham Exp $
+%%% $Id: hash.oz,v 1.2 2004-07-04 07:09:25 bfulgham Exp $
 %%% http://dada.perl.it/shootout/
 %%% 
 %%% contributed by Isaac Gouy
@@ -27,7 +27,7 @@ define
    end
 
    proc {InsertHexKeys H N}
-      for I in 0..N-1 do 
+      for I in 0..N do 
     {Dictionary.put H {String.toAtom {IntToHexString I nil}} I}
       end
    end
@@ -49,7 +49,7 @@ in
 
       {NewDictionary H}
       {InsertHexKeys H N}
-      {CountLookups H N 0 Count}
+      {CountLookups H N+1 0 Count}
 
       {System.showInfo Count}
    end

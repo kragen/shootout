@@ -1,7 +1,7 @@
-%%% $Id: random.oz,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+%%% $Id: random.oz,v 1.2 2004-07-04 07:09:26 bfulgham Exp $
 %%% http://dada.perl.it/shootout/
 functor
-import System Application
+import System Application Property
 define
 fun {RandLoop N SEED R MAX}
     case N 
@@ -21,6 +21,7 @@ in
     local A NUM I in
         [A] = {Application.getArgs plain}
         NUM = {String.toInt A}
+	{Property.put 'print.width' 12}
         {System.printInfo {RandLoop NUM 42 0 100.0}}
     end
     {Application.exit 0}

@@ -182,8 +182,8 @@
 
      elastic =>
      { Lang => 'ElastiC',
-       Home => 'http://www.elasticword.com/',
-       Down => 'http://www.elasticword.com/',
+       Home => 'http://www.elasticworld.com/',
+       Down => 'http://www.elasticworld.com/',
        Type => 'bytecomped/interpreted',
        Ext  => 'c',
        Verfun => sub {

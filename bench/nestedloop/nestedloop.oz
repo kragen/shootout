@@ -1,4 +1,4 @@
-%%% $Id: nestedloop.oz,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+%%% $Id: nestedloop.oz,v 1.2 2004-07-04 07:09:26 bfulgham Exp $
 %%% http://dada.perl.it/shootout/
 %%% 
 %%% Isaac Gouy suggested the use of a cell
@@ -24,7 +24,7 @@ define
                 end
             end
         end
-        {System.printInfo {Access X}}
+        {System.show {Access X}}
     end
     {Application.exit 0}
 end
