@@ -30,26 +30,34 @@ sub pipeThru($) {
     return $out;
 }
 
-sub genfile ($$$) {
-    my ($benchdir, $benchmark, $impl) = @_;
-    my $source = "bench/$benchdir/$benchmark.$impl";
-    my $logsource = "bench/$benchdir/tmp/$impl" . "_runlog";
-    my $outsource = "bench/$benchdir/tmp/$benchmark." . "$impl" . "_out";
-
+sub genfile ($$$$) {
+    my ($benchdir, $benchmark, $impl, $tag) = @_;
+    my $source = "bench/$benchdir/$benchmark.$tag" . "$impl";
+    my $outsource = "bench/$benchdir/tmp/$benchmark.$tag" . "$impl" . "_out";
     return unless -s $source;
-    
-    my $dest = "website/code/$benchmark-$impl" . ".code";
-    my $logdest = "website/code/$benchmark-$impl" . ".log";
+
+    my $impname = $tag;
+    $impname =~ s/\.//;
+
+    if ($impname eq "") {
+        $impname = $impl;
+    }
+
+    my $logsource = "bench/$benchdir/tmp/$impname" . "_runlog";
+
+    my $dest = "website/code/$benchmark-$impname.code";
+    my $logdest = "website/code/$benchmark-$impname.log";
+
     my $lang = $::LANG{$impl}->{Lang};
     my $ext = $::LANG{$impl}->{Ext};
 
     # Check that file needs to be generated
     my ($sdev, $sino, $smode, $snlink, $suid, $sgid, $srdev, $ssize,
-    	$satime, $smtime, $sctime, $sblksize, $sblocks)
-	= stat $source;
+        $satime, $smtime, $sctime, $sblksize, $sblocks)
+        = stat $source;
     my ($ddev, $dino, $dmode, $dnlink, $duid, $dgid, $drdev, $dsize,
-    	$datime, $dmtime, $dctime, $dblksize, $dblocks)
-	= stat $dest;
+        $datime, $dmtime, $dctime, $dblksize, $dblocks)
+        = stat $dest;
 
     return 0 if ($dmtime >= $smtime);
 
@@ -60,19 +68,19 @@ sub genfile ($$$) {
 
     if ($hltext =~ s/.*\<PRE\>\n(.*?)\n?\<\/PRE\>.*/$1/os) {
         if ($main::numbering) {
-	    my $line = 1;
-	    $hltext =~ s/(^.*)/sprintf("<b><font color=\"#000000\">%5d<\/font><\/b>\t%s", $line++, $1)/mgeo;
-	}
+            my $line = 1;
+            $hltext =~ s/(^.*)/sprintf("<b><font color=\"#000000\">%5d<\/font><\/b>\t%s", $line++, $1)/mgeo;
+        }
 
-	unlink($dest);
-        open DEST, ">$dest";
+        unlink($dest);
+            open DEST, ">$dest";
 
-	print DEST "<table width=\"100%\" border=\"0\" cellpadding=\"5\" cellspacing=\"0\">";
-	print DEST "<tr><td bgcolor=\"#FFFFFF\"><pre>\n";
-	print DEST $hltext;
-	print DEST "<\/pre><\/td><\/tr><\/table>\n";
+        print DEST "<table width=\"100%\" border=\"0\" cellpadding=\"5\" cellspacing=\"0\">";
+        print DEST "<tr><td bgcolor=\"#FFFFFF\"><pre>\n";
+        print DEST $hltext;
+        print DEST "<\/pre><\/td><\/tr><\/table>\n";
 
-	close DEST;
+        close DEST;
     }
 
     # Copy over the runlog as well.  We don't really care if it fails
@@ -82,13 +90,23 @@ sub genfile ($$$) {
     # Concatenate the output as well
     if (open DEST, ">>$logdest") {
         if (open SRC, "<$outsource") {
-	    print DEST "\n\nPROGRAM OUTPUT\n==============\n\n";
-	    while (<SRC>) {
-	        print DEST $_;
+            print DEST "\n\nPROGRAM OUTPUT\n";
+            print DEST "==============\n";
+       
+            my $iter = 0;
+            while (<SRC>) {
+                print DEST $_;
+                $iter++;
+                if ($iter >= 50) {
+                    print DEST "===================================\n";
+                    print DEST "!!! Note: Truncated to 50 lines !!!\n";
+                    print DEST "===================================\n";
+                    last;
+                }
             }
-	    close SRC;
-	}
-	close DEST;
+            close SRC;
+        }
+        close DEST;
     }
 
     return 1;
@@ -99,59 +117,61 @@ sub main {
     print "Starting to generate HTML...\n";
     opendir BENCHDIR, "bench" or die "Couldn't open benchmark directory: $!\n";
     @allfiles = readdir BENCHDIR;
-    shift @allfiles;	# Drop the . directory
-    shift @allfiles;	# Drop the .. directory
+    shift @allfiles;    # Drop the . directory
+    shift @allfiles;    # Drop the .. directory
     closedir BENCHDIR;
+    
     my $implcount = 0;
     foreach my $impl (keys %LANG) {
+        my $header = "Processing $impl...\nbench: ";
+        my $count = 0;
+        my @choices = ("", "$impl-2.", "$impl-3.", "$impl-4.");
+        foreach my $tag (@choices) {
 
-	unless (-d "lang/$impl") {
-	    mkdir("lang/$impl");
-	}
+            #
+            #  For each directory in the bench directory, generate
+            #  HTML-ized source code and place in the appropriate lang
+            #  directory.
+            #
+            foreach my $benchmark (@allfiles) {
 
-	#
-	#  For each directory in the bench directory, generate
-	#  HTML-ized source code and place in the appropriate lang
-	#  directory.
-	#
-	my $header = "Processing $impl...\nbench: ";
-	my $count = 0;
-	foreach my $benchmark (@allfiles) {
+                my $benchdir = $benchmark;
 
-	    my $benchdir = $benchmark;
+                next unless -d "bench/$benchdir";
+        
+                next if ($benchdir =~ /\.\./);
+                next if ($benchdir =~ /\./);
+                next if ($benchdir =~ /Include/);
+                next if ($benchdir =~ /CVS/);
 
-	    next unless -d "bench/$benchdir";
-	    
-	    next if ($benchdir =~ /\.\./);
-	    next if ($benchdir =~ /\./);
-	    next if ($benchdir =~ /Include/);
-	    next if ($benchdir =~ /CVS/);
+                my $file = "bench/$benchdir/$benchmark.$tag" . "$impl";
+                next unless -s $file;
 
-	    if ($count == 0) {
-                print $header;
-            }
-            $count++;
+                if ($count == 0) {
+                    print $header;
+                }
+                $count++;
 
-            if ( genfile($benchdir, $benchmark, $impl) ) {
-                print "$benchmark ";
-		$implcount++;
-            }
+                if ( genfile($benchdir, $benchmark, $impl, $tag) ) {
+                    print "$benchmark ";
+                    $implcount++;
+                }
 
-	    if ($benchdir eq "plugin") {
-	        my @ends = ( "_2", "_3" );
-		foreach $end (@ends) {
-		    my $bmk = $benchmark . $end;
-		    my $file = "bench/$benchdir/$bmk" . ".$impl";
-		    next unless -s $file;
-		    if ( genfile($benchdir, $bmk, $impl) ) {
-                        print "$bmk ";
-                        $implcount++;
+                if ($benchdir eq "plugin") {
+                    my @ends = ( "_2", "_3" );
+                    foreach $end (@ends) {
+                        my $bmk = $benchmark . $end;
+                        my $file = "bench/$benchdir/$bmk.$tag.$impl";
+                        next unless -s $file;
+                        if ( genfile($benchdir, $bmk, $impl, $tag) ) {
+                            print "$bmk ";
+                            $implcount++;
+                        }
                     }
-		}
+                }
             }
-
-	}
-	print "\n" if ($count > 0);
+        }
+        print "\n" if ($count > 0);
     }
     print "No updates needed.\n" if ($implcount == 0);
     print "Finished.\n";
