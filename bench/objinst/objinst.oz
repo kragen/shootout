@@ -1,4 +1,4 @@
-%%% $Id: objinst.oz,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+%%% $Id: objinst.oz,v 1.2 2004-06-26 10:07:47 ekarttun-guest Exp $
 %%% http://dada.perl.it/shootout/
 %%% 
 %%% contributed by Isaac Gouy
@@ -68,7 +68,7 @@ in
       for I in 1..8 do
          local V in {T2 activate}{T2 state(V)}{ShowBool V} end
       end
-      {System.showInfo ""}
+   
       for I in 1..N do
          local T in T = {New NthToggle init(true 3)} end
       end
