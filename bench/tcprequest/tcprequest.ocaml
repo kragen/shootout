@@ -1,0 +1,57 @@
+(* tcp-request-reply.ml / tcp-echo.ml / tcp-stream.ml
+ *
+ * The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Troestler Christophe
+ *)
+
+let m = 100 and reply_size = 4096 (* tcp-request-reply *)
+
+let request_size = 64
+let buffer_size  = 4096
+let port	 = 11000
+
+let reply   = String.create reply_size
+let request = String.create request_size
+
+(* Monomorphic version for speed *)
+let min i j = if (i:int) < j then i else j
+
+(* Return [false] if EOF is reached *)
+let rec read sock buf n =
+  n <= 0 || (let r = Unix.read sock buf 0 (min n buffer_size) in
+	     r > 0 && read sock buf (n - r))
+
+let server sock =
+  let b = String.create buffer_size in
+  let (s, _) = Unix.accept sock in
+  while read s b request_size do ignore(Unix.write s reply 0 reply_size) done;
+  Unix.close s;
+  Unix.close sock
+
+let client n =
+  let b = String.create buffer_size
+  and replies = ref 0 and bytes = ref 0 in (* useless but mandated by spec *)
+  let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+  Unix.connect sock (Unix.ADDR_INET(Unix.inet_addr_loopback, port));
+  for i = 1 to n do
+    ignore(Unix.write sock request 0 request_size);
+    ignore(read sock b reply_size);
+    bytes := !bytes + reply_size;
+    incr replies
+  done;
+  Unix.close sock;
+  Printf.printf "replies: %i\tbytes: %i\n" !replies !bytes; flush stdout
+
+
+let () =
+  let n = m * (try int_of_string Sys.argv.(1) with _ -> 10) in
+  let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+  Unix.setsockopt sock Unix.SO_REUSEADDR true;
+  Unix.bind sock (Unix.ADDR_INET(Unix.inet_addr_any, port));
+  Unix.listen sock 1;
+  match Unix.fork() with
+  | 0 ->   server sock
+  | pid -> client n; ignore(Unix.wait())
+
