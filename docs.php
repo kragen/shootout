@@ -24,6 +24,7 @@
 	    <div><a href="#editorial">Editorial</a></div>
 	    <div><a href="#conclusions">Conclusions</a></div>
 	    <div><a href="#todo">Todo List</a></div>
+	    <div><a href="#links">Interesting Links</a></div>
 	</div>
       </div>
       <div class="strut">&nbsp;</div>
@@ -92,7 +93,21 @@
 	<a href="/todo.php">more to do</a>.</p>
 	</div>
 
-      </div></div>
+	<div id="links">
+	<h3>Interesting Links</h3>
+	<p>If you enjoy benchmarks, the following links might be of interest
+	to you:</p>
+	<ul>
+	  <li><a href="http://www.dadgum.com/james/shootout.html">
+	    Erlang and the Great Computer Language Shootout</a>:  Here
+	    the author makes some valid comments about the Shootout
+	    benchmarks, and provides some better-performing implementations.
+	    Most of his comments have been incorporated into the shootout.</li>
+	  <li><a href="http://www.lissett.com/ben/bench1.htm">OO Richards
+	    Bench</a>:  Object-oriented version of the Richards benchmark.</li>
+	</ul>
+      </div>
+      </div>
     </td>
   </tr>
 </table>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2004-06-12 16:19:43 bfulgham Exp $
+# $Id: Makefile,v 1.5 2004-06-14 07:07:10 bfulgham Exp $
 include ../../Make.header
 
 TEST    := prodcons
@@ -10,6 +10,8 @@ OCAMLOPTS  := $(OCAMLOPTS) -thread unix.cmxa threads.cmxa
 GHCOPTS    := -package concurrent
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
+	  --ignore prodcons.erlang \
+	  --ignore prodcons.hipe \
 	  --ignore prodcons.mlton2.mlton \
 	  --ignore prodcons.perl \
 	  --ignore prodcons.rep \

@@ -1,0 +1,45 @@
+%% The Great Computer Language Shootout
+%% contributed by Isaac Gouy (Erlang novice)
+%%
+%% http://shootout.alioth.debian.org/
+%%
+%% Erlang by-design uses soft-real-time lightweight threads.
+%% Message send/receive gives synchronization & data access.
+%%
+%% Usage: start from command line with
+%%     erlc prodcons.erl
+%%     erl -noinput -s prodcons main 100000
+
+-module(prodcons). 
+-export([main/1, producer/3, consumer/4]). 
+
+
+producer(0, NP, Main) -> Main ! {self(), NP};
+producer(N, NP, Main) -> 
+    receive                                           %% receive buffer empty
+        {From, next} -> 
+            From ! {data, NP},                        %% signal buffer full
+            producer(N-1, NP+1, Main)
+    end.
+
+
+consumer(0, NC, _, Main) -> Main ! {self(), NC};
+consumer(N, NC, P, Main) ->
+    P ! {self(), next},                               %% signal buffer empty
+    receive                                           %% receive buffer full
+        {data, Value} -> consumer(N-1, NC+1, P, Main) %% empty buffer
+    end.
+
+
+main([Arg]) ->
+    N = list_to_integer(atom_to_list(Arg)),
+    P = spawn(prodcon, producer, [N, 0, self()]),     %% spawn producer thread
+    C = spawn(prodcon, consumer, [N, 0, P, self()]),  %% spawn consumer thread
+    receive {P, NP} -> ok end,                        %% wait on producer thread
+    receive {C, NC} -> ok end,                        %% wait on consumer thread
+    io:format("~s ~w ~s ~w~n", ["Produced:", NP, "Consumed:", NC]),
+    halt(0).
+
+
+
+

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-13 00:16:39 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-06-14 07:07:09 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -20,6 +20,8 @@ MB_CLRTS := -h 10000000
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 20000,40000,60000,80000 \
+	  --ignore hash.erlang \
+	  --ignore hash.hipe \
 	  --title "$(TITLE)" $(TEST).*
 
 include ../../Make.footer
