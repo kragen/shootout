@@ -1,86 +1,81 @@
-(* -*- mode: sml -*-
- * $Id: reversefile.smlnj,v 1.2 2004-05-25 07:37:29 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Tom 7
+(* reversefile.sml
+ *
+ *   Output lines in reverse order.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
-
 structure Test : sig
     val main : (string * string list) -> OS.Process.status
 end = struct
 
-val bufsize = 4096
-val rdbufsize = 4096
+    structure AS = Word8ArraySlice
+    structure IO = Posix.IO
 
-val stdout = Posix.FileSys.wordToFD 0w1
-val stdin = Posix.FileSys.wordToFD 0w0
+    fun x + y = Word.toIntX (Word.+ (Word.fromInt x, Word.fromInt y))
+    fun x - y = Word.toIntX (Word.- (Word.fromInt x, Word.fromInt y))
 
-datatype block = END
-               | MORE of int ref * Word8Array.array * block
+    val sz = 4096
 
-val buff = Unsafe.Word8Array.create rdbufsize
+    fun newarr () = Unsafe.Word8Array.create sz
+    val sub = Byte.byteToChar o Unsafe.Word8Array.sub
 
-fun out END = ()
-  | out (MORE (ir as ref i, a, next)) =
-  let in
-    Posix.IO.writeArr (stdout, Word8ArraySlice.slice(a, i, NONE));
-    out next
-  end
+    val (buf, top) = (newarr (), ref 0)
+    fun write (a, i, len) =
+	ignore (IO.writeArr (Posix.FileSys.stdout, AS.slice (a, i, SOME len)))
+    fun out (a, i, len) =
+	let val cur = !top
+	    val new = cur + len
+	in if new > sz then (write (buf, 0, cur);
+			     AS.copy { dst = buf, di = 0,
+				       src = AS.slice (a, i, SOME len) };
+			     top := len)
+	   else (AS.copy { dst = buf, di = cur,
+			   src = AS.slice (a, i, SOME len) };
+		 if new = sz then (write (buf, 0, sz); top := 0)
+		 else top := new)
+	end
+    fun flush () = case !top of 0 => () | c => write (buf, 0, c)
 
-fun rd (start, len, count, b) =
-  if (start + len) >= count then 
-    (* done with this block. 
-       Copy from start to the end of the array into
-       buff, then return the starting index into buff. *)
-    let in
-      Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(len)),
-                            dst=buff, di=0};
-      (b, len)
-    end
-  else
-    if Unsafe.Word8Array.sub(buff, start + len) = 0w10 then
-      (* found newline *)
-      case b of MORE(ir as ref i, a, _) =>
-        if i > len then
-            let in
-              (* enough room *)
-              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(len+1)),
-	                            dst=a, di=(i - len - 1)};
-              ir := i - (len + 1);
-              
-              rd(start + len + 1, 0, count, b)
-            end
-          else (* not enough room *)
-            let
-              (* going to need a new buffer *)
-              val na = Unsafe.Word8Array.create bufsize
-              val l = (len + 1) - i
-            in
-              (* put the tail in whatever room is left *)
-              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, (start + len + 1) - i, SOME(i)),
-	                            dst=a, di=0 };
-              
-              (* put the head in a new buffer *)
-              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(l)),
-	                            dst=na, di=bufsize - l };
-              ir := 0;
-              rd(start + len + 1, 0, count, MORE(ref (bufsize - l), na, b))
-            end
-	else rd (start, len + 1, count, b)
-	
-fun loop (b, s) =
-  let 
-    val count = Posix.IO.readArr (stdin, Word8ArraySlice.slice(buff, s, SOME(rdbufsize-s))) 
-    val (bb, bs) = rd (0, s, count + s, b)
-  in
-    case count of
-      0 => out bb
-    | _ => loop (bb, bs)
-  end
+    fun gobble (a, i, stack) =
+	if i < sz then
+	    let val n = IO.readArr (Posix.FileSys.stdin, AS.slice (a, i, NONE))
+	    in if n = 0 then (a, i, stack) else gobble (a, i + n, stack)
+	    end
+	else gobble (newarr (), 0, a :: stack)
 
-fun main(name, args) =
-    ( loop (MORE(ref bufsize, Unsafe.Word8Array.create bufsize, END), 0);
-      OS.Process.success);
+    fun dopend (l, (p, pi)) = (app (fn a => out (a, 0, sz)) l; out (p, 0, pi))
 
+    fun nostraddle (_, 0, []) = ()
+      | nostraddle (_, 0, a :: more) = nostraddle (a, sz, more)
+      | nostraddle (a, i, stack) =
+	let fun look j =
+		let val j' = j - 1
+		in if j' < 0 then
+		       case stack of b :: bs => straddle (b, bs, [], (a, i))
+				   | [] => out (a, 0, i)
+		   else if sub (a, j') = #"\n" then
+		       (out (a, j, i - j); nostraddle (a, j, stack))
+		   else look j'
+		end
+	in look (i - 1)
+	end
+
+    and straddle (a, stack, pl, last) =
+	let fun look j =
+		let val j' = j - 1
+		in if j' < 0 then
+		       case stack of b :: bs => straddle (b, bs, a :: pl, last)
+				   | [] => dopend (a :: pl, last)
+		   else if sub (a, j') = #"\n" then (out (a, j, sz - j);
+						     dopend (pl, last);
+						     nostraddle (a, j, stack))
+		   else look j'
+		end
+	in look sz
+	end
+
+    fun main _ =
+	(nostraddle (gobble (newarr (), 0, [])); flush (); OS.Process.success)
 end
-
-val _ = SMLofNJ.exportFn("reversefile", Test.main);

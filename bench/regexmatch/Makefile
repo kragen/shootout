@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.20 2004-11-10 06:56:53 bfulgham Exp $
+# $Id: Makefile,v 1.21 2004-11-23 08:08:44 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
 TITLE   := Regular Expression Matching
 GXXOPTS   := $(GXXOPTS) -I/usr/local/include
-GXXLDOPTS := $(GXXLDOPTS) -lzregx -lpcre
+GXXLDOPTS := $(GXXLDOPTS) -lregexx -lpcre
 GCCOPTS   := $(GCCOPTS) -lpcre
 OCAMLOPTS := str.cmxa pcre.cmxa -I +pcre
 OCAMLBOPTS := str.cma pcre.cma -I +pcre
@@ -25,12 +25,13 @@ SBCL_SRCS := ../../Include/meta.lisp
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
           --range 100,6000,9000,12000 \
+	  --ignore regexmatch.java \
 	  --ignore regexmatch.gcj \
 	  --ignore regexmatch.gij \
-	  --ignore regexmatch.gpp \
 	  --ignore regexmatch.kaffe \
 	  --ignore regexmatch.ocaml \
 	  --ignore regexmatch.ocamlb \
+	  --ignore regexmatch.sablevm \
 	  --inputfile Input
 
 include ../../Make.footer

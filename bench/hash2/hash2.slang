@@ -1,3 +1,10 @@
+% -*- mode: slang -*-
+% $Id: hash2.slang,v 1.2 2004-11-23 08:08:43 bfulgham Exp $
+% http://shootout.alioth.debian.org/
+%
+% Provided by John E. Davis
+%
+
 define main ()
 {
    variable n = 1;
@@ -16,8 +23,6 @@ define main ()
 	  {
 	     variable k, v;
 	     (k,v) = ();
-	     !if (assoc_key_exists (hash2, k))
-	       continue;
 	     hash2[k] += v;
 	  }
      }

@@ -1,9 +1,9 @@
 #!/usr/bin/pike
 // -*- mode: pike -*-
-// $Id: lists.pike,v 1.1 2004-05-19 18:10:24 bfulgham Exp $
-// http://www.bagley.org/~doug/shootout/
+// $Id: lists.pike,v 1.2 2004-11-23 08:08:43 bfulgham Exp $
+// http://shootout.alioth.debian.org/
 // from: Per Hedbor
-
+// Optimized by Marcus Agehall
 
 #define SIZE 10000
 
@@ -14,13 +14,13 @@ int test_lists()
 {
     mixed Li1, Li2, Li3;
     // create a list of integers from 1 to SIZE.
-    Li1 = (string)indices(allocate(SIZE+1))[1..];
+    Li1 = indices(allocate(SIZE+1))[1..];
     // copy the list to Li2.
     Li2 = copy_value( Li1 );
     // remove each element from left side of Li2 and append to
     // the right side of Li3 (preserving order)
   
-    Li3 = "";
+    Li3 = ({});
 
     while( sizeof( Li2 ) )
     {

@@ -1,76 +1,52 @@
-(* -*- mode: sml -*-
- * $Id: wc.smlnj,v 1.2 2004-05-26 00:47:05 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Stephen Weeks
+(* wc.sml
+ *
+ *   Word count. (Optimized for machine with few registers.)
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
-(* Translated from wc.ocaml. *)
-
 structure Test : sig
     val main : (string * string list) -> OS.Process.status
 end = struct
 
-fun incr r = r := !r + 1
-   
-val nl = ref 0
-val nw = ref 0
-val nc = ref 0
-val max = 4096
-val buf = Word8Array.array (max, 0w0)
-val sub = Word8Array.sub
+    structure A = Word8Array
+    structure AS = Word8ArraySlice
+    structure VS = Word8VectorSlice
+    structure IO = Posix.IO
+    structure FS = Posix.FileSys
 
-fun readblock scanfun =
-   let
-      val nread = Posix.IO.readArr (Posix.FileSys.stdin,
-                                    Word8ArraySlice.slice(buf, 0, NONE))
-   in
-      if nread = 0
-	 then ()
-      else (nc := !nc + nread;
-	    scanfun (0, nread))
-   end
+    val max = 4096
+    val buf = A.array (max, 0w0)
+    val sub = Byte.byteToChar o Unsafe.Word8Array.sub
+    infix ++
+    fun x ++ y = Word.toIntX (Word.fromInt x + Word.fromInt y)
 
-val c2b = Byte.charToByte
-val newline = c2b #"\n"
-val space = c2b #" "
-val tab = c2b #"\t"
+    val c = ref 0
+    val l = ref 0
 
-fun scan_out_of_word (i, n) =
-   if i < n
-      then
-	 let
-	    val c = sub (buf, i)
-	 in
-	    if c = newline
-	       then (incr nl; scan_out_of_word (i + 1, n))
-	    else if c = space orelse c = tab
-		    then scan_out_of_word (i + 1, n)
-		 else (incr nw; scan_in_word (i + 1, n))
-	 end
-   else readblock scan_out_of_word
+    fun newblock (w, ow) =
+	let val n = IO.readArr (FS.stdin, AS.full buf)
+	in if n = 0 then w
+	   else (c := (n ++ !c); scan (0, n, w, ow))
+	end
 
-and scan_in_word (i, n) =
-  if i < n then
-     let
-	val c = sub (buf, i)
-     in
-	if c = newline
-	   then (incr nl; scan_out_of_word (i + 1, n))
-	else if c = space orelse c = tab
-		then scan_out_of_word (i + 1, n)
-	     else scan_in_word (i + 1, n)
-     end
-  else readblock scan_in_word
+    and scan (i, n, w, ow) =
+	if i >= n then newblock (w, ow)
+	else let val i' = i ++ 1
+	     in case sub (buf, i) of
+		    #"\n" => (l := (1 ++ !l); scan (i', n, w, 1))
+		  | (#" " | #"\t" | #"\r") => scan (i', n, w, 1)
+		  | _ => scan (i', n, w ++ ow, 0)
+	     end
 
-fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
-   
-fun main (name, args) =
-  let
-    val _ =
-        (scan_out_of_word (0, 0);
-	printl [Int.toString (!nl), " ", Int.toString (!nw), " ", Int.toString (!nc)])
-  in
-    OS.Process.success
-  end
+    fun main _ = let
+	val i2s = Int.toString
+	fun p s = ignore (Posix.IO.writeVec (Posix.FileSys.stdout,
+					     VS.full (Byte.stringToBytes s)))
+	val w = newblock (0, 1)
+    in
+	app p [i2s (!l), " ", i2s w, " ", i2s (!c), "\n"];
+	OS.Process.success
+    end
 end
-
-val _ = SMLofNJ.exportFn("wc", Test.main);

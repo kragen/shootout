@@ -1,6 +1,10 @@
 <p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.
 </p>
 
+<p>The origin of the message benchmark can be found in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.sics.se/~joe/ericsson/du98024.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a></p>
+
+<p>(In some languages the same program (with different command-line arguments)  might be used for both the <a href="benchmark.php?test=message&lang=all&sort=<?=$Sort;?>">process benchmark</a> and this message benchmark.)</p>
+
 
 <ul>
 <li>take 2 command line args L N </li>

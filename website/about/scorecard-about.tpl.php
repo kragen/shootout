@@ -1,4 +1,4 @@
-<p>The <b>Completely Random and Arbitrary Point System!&#153;</b> works as follows:</p>
+<p>The <a href="http://en.wikipedia.org/wiki/Craps" title="Craps definition"><b>Completely Random and Arbitrary Point System!&#153;</b></a> works as follows:</p>
 <ul>
 <li>For each benchmark, the "best score" is determined by locating the lowest non-zero score.  (This is done for CPU, Memory, and LOC scores.)</li>
 
@@ -18,5 +18,5 @@
 score for that benchmark.  If a language does not have an entry for a test its score is zero.  (Again we do the same for Memory and LOC).</p></li>
 <li>Then the CPU/Memory/LOC scores are multiplied by their respective Mulipliers and the resulting scores are added together to the get final score.</li>
 <li>Add up all the scores for each language for each benchmark, and put them on this nice web page.</li>
-<li>And the result is <b>CRAPS!&#153;</b></li>
+<li>And the result is <a href="http://en.wikipedia.org/wiki/Craps" title="Craps definition"><b>CRAPS!&#153;</b></a></li>
 </ul>

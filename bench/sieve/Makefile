@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-11-10 06:48:59 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-11-23 08:08:45 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sieve
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
-RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 300,600,900,1200
+RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 300,600,900,1200 \
+			--ignore sieve.poly
 
 include ../../Make.footer

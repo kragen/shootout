@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-11-10 06:44:58 bfulgham Exp $
+# $Id: Makefile,v 1.17 2004-11-23 08:08:46 bfulgham Exp $
 include ../../Make.header
 
 TEST    := strcat
@@ -16,6 +16,7 @@ ERLFLAGS := -noinput
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10000,20000,30000,40000 \
-	  --sampledelay 0.1
+	  --sampledelay 0.1 \
+	  --ignore strcat.poly
 
 include ../../Make.footer
