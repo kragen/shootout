@@ -43,14 +43,13 @@
 	  </div>
 	  <p><b>Please bear in mind that this is a work in progress, if you
 	    come back tomorrow, everything may be different.</b></p>
-	  <p>Some people have suggested that I summarize the results, or
-	    declare a winner.  In order to satisfy this request, I have come
-	    up with a unique and subtle quantification system to score
-	    languages on their overall performance, which I call the
-	    <i><b>Completely Random and Arbitrary Point System!</i></b>, or
-	    <i><b>CRAPS!<sup><small>[TM]</small></sup></b></i>, for short.
-	    (See bottom of page for a brief description of this analytical
-	    marvel).</p>
+	  <p>Some people have suggested that the results be summarized, or
+	    that a winner be declared.  In order to satisfy this request, we
+	    have come up with a unique and subtle quantification system to score
+	    languages on their overall performance, termed the <i><b>Completely
+	    Random and Arbitrary Point System!</i></b>, or <i><b>CRAPS!<sup>
+	    <small>[TM]</small></sup></b></i>, for short.  (See bottom of page
+	    for a brief description of this analytical marvel).</p>
 	  <p>The scores in the Scores table can reflect CPU, Memory and/or
 	    Lines of Code (LOC).  The lower a language's measured CPU, Memory,
 	    or LOC is for a test, the more points it gets.  But the language
@@ -74,13 +73,22 @@
           <?php require("html/craps_funcs.php");
                 do_craps($_SERVER['QUERY_STRING']); ?>
           <br>
-	  <p>The <b>CRAPS!</b> point system works thusly:</p>
+	  <p>The <b>CRAPS!</b> point system works as follows:</p>
 	  <ul>
-	    <li>For each test, add the max and min CPU, this is the base
-	      score.  (We do the same for Memory and LOC scores).</li>
-	    <li>For each language, subtract its CPU from the base score,
-	      normalize to between 0 and 10 then multiply by the weight of
-	      the test (a number between 0 and 5), this is the language's
+	    <li>For each test, the "best score" is determined by locating the
+	      lowest non-zero score.  (Thi is done for CPU, Memory, and LOC scores.)</li>
+	    <li>For each language, compute its score in logarithmic space:<br>
+	    <blockquote>
+	         score(x) = 1 / (1 + log2(x / b))
+
+		 where:
+		 	x = Current test's score
+			b = Best score for this test
+	    </blockquote>
+	      This yields a non-zero value from 0 to 1, which 1 being the
+	      "best score".<br>
+	      Each such score is then multiplied by the weight of
+	      the test (a number between 0 and 5), yielding the language's
 	      score for that test.  If a language does not have an entry for
 	      a test its score is zero.  (Again we do the same for Memory
 	      and LOC).</li>
