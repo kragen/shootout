@@ -32,4 +32,4 @@ for j = 1,n do
    _,message = coroutine.resume(chain)
    count = count + message
 end
-io.write(count)
+io.write(count, "\n")

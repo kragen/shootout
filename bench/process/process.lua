@@ -20,4 +20,4 @@ local message = 0
 local chain = coroutine.create(link)
 
 _,message = coroutine.resume(chain,n)
-io.write(message)
+io.write(message, "\n")
