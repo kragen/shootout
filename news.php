@@ -314,7 +314,7 @@ different metrics (cpu, mem, lines of code).
 
 <b>2001-04-30</b>
 <ul>
-<li>Added a couple new pages: <a href="editorial.shtml">Editorial</a>
+<li>Added a couple new pages: <a href="editorial.php">Editorial</a>
 and <a href="conclusion.shtml">Conclusion</a>.
 <li>Upgraded Perl to 5.6.1.
 </ul>
