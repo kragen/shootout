@@ -1,0 +1,81 @@
+-- $Id: regexmatch.gnat-2.gnat,v 1.1 2005-04-01 13:42:47 obry-guest Exp $
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Pascal Obry on 2005/04/01
+
+with Ada.Command_Line;    use Ada.Command_Line;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+with Ada.Text_IO;         use Ada.Text_IO;
+with GNAT.Regpat;         use GNAT.Regpat;
+
+procedure Regexmatch is
+
+   N        : constant Positive := Positive'Value (Argument (1));
+
+   Max_Line : constant := 100;
+
+   Pattern : constant String :=
+               "(^|^\D*[^\(\d])"         -- start conditions
+             & "((\(\d\d\d\))|(\d\d\d))" -- area code
+             & "[ ]"                     -- area code followed by one space
+             & "(\d\d\d)"                -- match 3: prefix of 3 digits
+             & "[ -]"                    -- separator is either space or dash
+             & "(\d\d\d\d)"              -- match 4: last 4 digits
+             & "(\D|$)";                 -- must be followed by a non-digit
+
+   type String_Access is access String;
+
+   Lines : array (1 .. Max_Line) of String_Access;
+   L     : Natural := 0;
+
+   Buffer : String (1 .. 1_024);
+   Last   : Natural;
+
+   Matcher : Pattern_Matcher := Compile (Pattern);
+   Matches : Match_Array (1 .. 10);
+
+   Result  : String := ": (...) ...-....";
+   Count   : Natural := 0;
+
+   subtype Area_Code is Positive range 4 .. 6;
+   subtype Prefix is Positive range 9 .. 11;
+   subtype Number is Positive range 13 .. 16;
+
+begin
+   begin
+      loop
+         Get_Line (Buffer, Last);
+         L := L + 1;
+         Lines (L) := new String'(Buffer (1 .. Last));
+      end loop;
+   exception
+      when others => null;
+   end;
+
+   for Iter in 1 .. N loop
+      for K in 1 .. L loop
+         Match (Matcher, Lines (K).all, Matches);
+
+         if Iter = N then
+            if Matches (1) /= No_Match then
+               if Lines (K) (Matches (2).First) = '(' then
+                  Result (Area_Code) :=
+                    Lines (K) (Matches (2).First + 1 .. Matches (2).Last - 1);
+               else
+                  Result (Area_Code) :=
+                    Lines (K) (Matches (2).First .. Matches (2).Last);
+               end if;
+
+               Result (Prefix) :=
+                 Lines (K) (Matches (5).First .. Matches (5).Last);
+               Result (Number) :=
+                 Lines (K) (Matches (6).First .. Matches (6).Last);
+
+               Count := Count + 1;
+               Put (Count, Width => 0);
+               Put_Line (Result);
+            end if;
+         end if;
+      end loop;
+   end loop;
+end Regexmatch;
