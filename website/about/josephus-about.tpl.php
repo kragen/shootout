@@ -11,19 +11,19 @@
 <li>remove the Mth item</li>
 </ul>
 </li>
-<li>print the remaining M-1 list items, tab-separated</li>
+<li>print the remaining M-1 list items, tab-separated, in ascending-order</li>
 </ul>
 
 <p>Correct output N = 41 is:
 <pre>
    19
    16   31
-   37   11   15
+   11   15   37
    12   21   22   34
    13   21   27   34   39
    5    20   22   27   31   36
-   41   6    9    14   21   22   30
-   28   30   31   1    2    5    11   12
+   6    9    14   21   22   30   41
+   1    2    5    11   12   28   30   31
    4    13   15   19   22   23   31   35   36
 </pre></p><br/>
 
