@@ -86,7 +86,7 @@ Contact us!</p>
 <li>Define a new benchmark and give some background information</li>
 <li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
 </ul>
-And then, maybe, we just-might consider it.</p>
+And then, <em>maybe</em>, we just-might consider it.</p>
 <p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
 </td></tr>
 
@@ -135,41 +135,26 @@ And then, maybe, we just-might consider it.</p>
 </table>
 
 
-
-
-<!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
-<table class="div">
-<tr><td><h3 class="rev">&nbsp;What does &#133; mean?</h3></td></tr>
-
-<tr class="b"><td>What does Interesting Alternative Program mean?</td></tr>
-<tr><td>
-<p>"Interesting Alternative Program" means that the program doesn't implement the benchmark, but we couldn't resist showing the program.</p>
-</td></tr>
-
-<tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
-<tr><td>
-<p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
-
-<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
-<p>(Flaw #1 - normally we'd time a specific block of code within a program, and exclude startup time.)</p>
-
-</td></tr>
-
-
-
-<tr class="b"><td><a name="cpu">What does CPU Time mean?</a></td></tr>
-<tr><td><p>The CPU Time is the measured CPU time minus the average program startup time for the language.</p></td></tr>
-</table>
-
-
 <!-- HOW SHOULD I IMPLEMENT ...? /////////////////////////////////////// -->
 
 <table class="div">
 
 <tr><td><h3 class="rev"><a name="implement">&nbsp;How should I implement&#133;?</a></h3></td></tr>
 
+<tr class="b"><td>How should I implement programs for the Shootout?</td></tr>
+<tr><td><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
+</td></tr>
+
+<tr class="b"><td>How much effort should I put into getting the program correct?</td></tr>
+<tr><td>
+<p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine. (Don't make-unnecessary-work for the volunteer committers.)</p>
+<p>Check the <strong>output format</strong> matches the example output format - the program will fail if the format is different. (Complain if the benchmark page doesn't show example output.)</p> 
+<p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to the Computer Language Shootout.</p> 
+</td></tr>
+
 <tr class="b"><td>How should I implement loops?</td></tr>
-<tr><td><p>Don't manually unroll the loops! We prefer plain vanilla programs - after all we're trying to compare language implementations not programmer effort and skill.</p> 
+<tr><td><p>Don't manually unroll loops! </p> 
 </td></tr>
 
 <tr class="b"><td>How should I grab bragging rights?</td></tr>
@@ -207,43 +192,45 @@ And then, maybe, we just-might consider it.</p>
 specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or ...
 
 </p><p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?".
-
 For example the <a href="benchmark.php?test=wordfreq&lang=all&sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
-
 <p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.       
-
 </td></tr>
-
-
-
-
 
 
 
 <tr class="b"><td><a name="samething">How should I implement&#133;?</a></td></tr>
 
-
-
 <tr><td><p>
-
 <ol>
-
 <li>Keep to the spirit-of-the-specification not just the wording.</li><li>Write the program to be as-fast-as possible.</li><li>Write the program to conserve memory as-much-as possible.</li>
-
 <li>Write the program as-if lines of code were not being measured.</li>
-
 </ol>     
-
 </p></td></tr>
-
-
-
-
 
 </table>
 
 
 
+<!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
+<table class="div">
+<tr><td><h3 class="rev">&nbsp;What does &#133; mean?</h3></td></tr>
+
+<tr class="b"><td><a name="alternative">What does Interesting Alternative Program mean?</a></td></tr>
+<tr><td>
+<p>"Interesting Alternative Program" means that the program doesn't implement the benchmark, but <strong>we couldn't resist</strong> showing the program.</p>
+</td></tr>
+
+<tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
+<tr><td>
+<p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
+
+<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&lang=all&sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
+<p>(Flaw #1 - normally we'd time a specific block of code within a program, and exclude startup time.)</p>
+</td></tr>
+
+<tr class="b"><td><a name="cpu">What does CPU Time mean?</a></td></tr>
+<tr><td><p>The CPU Time is the measured CPU time minus the average program startup time for the language.</p></td></tr>
+</table>
 
 
 
