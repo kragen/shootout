@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-12-05 01:59:48 bfulgham Exp $
+# $Id: Makefile,v 1.9 2004-12-05 08:28:57 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -23,7 +23,6 @@ TESTS = \
     nsieve \
     objinst \
     plugin \
-    primesieve \
     process \
     procinst \
     prodcons \
