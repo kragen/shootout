@@ -23,10 +23,11 @@ define('OLD_SITE', './');
 
 // CONSTANTS ///////////////////////////////////////////////////
 
-define('REV_COLOR', 'black');     // background color for banner etc
+define('REV_COLOR', 'gray');     // background color for banner etc
 define('REV_COLOR_CORE', 'navy');         
 define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900'); 
+define('REV_COLOR_OLD', 'gray');  
 
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',20);         // show N rows of languages on the homepage
