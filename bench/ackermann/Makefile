@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2004-10-07 07:17:42 bfulgham Exp $
+# $Id: Makefile,v 1.22 2004-11-07 22:41:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -21,11 +21,9 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 6,7,8,9,10 \
 	--ignore ackermann.gforth \
 	--ignore ackermann.gij \
 	--ignore ackermann.gprolog \
-	--ignore ackermann.gst \
 	--ignore ackermann.hugs \
 	--ignore ackermann.icon \
 	--ignore ackermann.kaffe \
-	--ignore ackermann.lua \
 	--ignore ackermann.perl \
 	--ignore ackermann.psyco \
 	--ignore ackermann.python \
