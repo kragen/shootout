@@ -1,17 +1,30 @@
+-- $Id: ary.nhc98,v 1.2 2005-04-01 11:12:05 loisel-guest Exp $
+-- http://shootout.alioth.debian.org
+-- By Simon Marlow, modified by Einar Karttunen
+
 import System
-import Array
-import NHC.IOExtras
+import Control.Monad.ST
+import Data.Array.Base
+import Data.Array.ST
 
-main = do n <- getArgs >>= return . (\a-> case a of [num] -> read num; _->1)
-          let x   = listArray (0,n-1) [1..n]
-          y <- newIOArray (0,n-1) 0
-          mapM_ (\_-> sequence_ [ updateIOArray y i (x!i) | i <- [n-1,n-2..0] ])
-                [1..1000]
-          y0 <- readIOArray y 0
-          yn <- readIOArray y (n-1)
-          putStrLn $ show y0 ++ " " ++ show yn
+add_array :: Int -> STUArray s Int Int -> STUArray s Int Int -> ST s ()
+add_array len a b = sequence_ [ add i | i <- [0..len] ]
+  where add i = do ai <- unsafeRead a i
+		   bi <- unsafeRead b i
+	  	   unsafeWrite b i (ai+bi)
 
-updateIOArray a i val = do x <- readIOArray a i 
-                           writeIOArray a i (x+val)
+ary :: Int -> ST s (Int,Int)
+ary len = do 
+  a <- newListArray (0,len) [1..len+1]
+  b <- newArray (0,len) 0
+  sequence_ (take 1000 (repeat (add_array len a b)))
+  y1 <- unsafeRead b 0
+  yn <- unsafeRead b len
+  return (y1,yn)
+
+main = do
+  ~[n] <- getArgs 
+  let (y1,yn) = runST (ary ((read n)-1))
+  putStr (show y1); putStr " " ; putStrLn (show yn)
 
 

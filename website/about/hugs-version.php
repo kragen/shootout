@@ -1,1 +1,1 @@
-<p>HUGS Version: 20050308</p>
+<p>HUGS </p>

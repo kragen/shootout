@@ -1,29 +1,37 @@
+-- $Id: methcall.nhc98,v 1.2 2005-04-01 11:12:13 loisel-guest Exp $
+-- http://shootout.alioth.debian.org/
+-- Author: Einar Karttunen
+
+import Control.Monad
+import Data.IORef
 import System
 
 class Toggle a where
-    activate :: a -> a
-    value    :: a -> Bool
+    activate :: a -> IO ()
+    value :: a -> IO Bool
 
-newtype Simple = Simple Bool
-instance Toggle Simple where
-    activate (Simple b) = Simple (not b)
-    value (Simple b)    = b
+newtype ToggleC    = ToggleC (IORef Bool)
+newtype NthToggleC = NthToggleC (IORef (Bool, Int, Int))
 
-data Nth = Nth Simple Int Int
-instance Toggle Nth where
-    activate (Nth t count lim) | count==lim = Nth (activate t) 1 lim
-                               | otherwise  = Nth t (count+1) lim
-    value (Nth t count lim)    = value t
+modr r x = do { v <- readIORef r; writeIORef r $! x v }
 
-newSimple = Simple True
-newNth n  = Nth newSimple 1 n
+newToggle s = newIORef s >>= return . ToggleC
+newNthToggle s m = newIORef (s,0,m) >>= return . NthToggleC
 
-showBool b = if b then "true" else "false"
+instance Toggle ToggleC where 
+    activate (ToggleC t) = modr t not
+    value (ToggleC t)    = readIORef t
 
-main = do
-    n <- getArgs >>= return . (\a -> case a of [num]-> read num; _->1)
-    putStrLn $ showBool $ value $ foldl' (\t _-> activate t) newSimple [1..n]
-    putStrLn $ showBool $ value $ foldl' (\t _-> activate t) (newNth 3) [1..n]
+instance Toggle NthToggleC where
+    activate (NthToggleC t) = modr t (\x@(s,v,m) -> x `seq` if v+1 == m then (not s,0,m) else (s,v+1,m))
+    value    (NthToggleC t) = do { ~(s,_,_) <- readIORef t; s `seq` return s }
 
-foldl' f a []     = a
-foldl' f a (x:xs) = let a' = f a x in a' `seq` foldl' f a' xs
+out b = putStrLn (if b then "true" else "false")
+
+main = do [num] <- getArgs
+	  toggle<- newToggle True
+	  replicateM_ (read num) (activate toggle >> value toggle)
+	  value toggle>>= out
+	  ntoggle<- newNthToggle True 3
+	  replicateM_ (read num) (activate ntoggle >> value ntoggle)
+	  value ntoggle>>= out
