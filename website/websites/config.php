@@ -25,8 +25,8 @@ define('DEV',FALSE);                 // show excluded languages, tests, programs
 define('HOMEPAGE_ROWS',35);          // show 26 rows of languages on the homepage
 
 define('SITE_NAME', 'core');
-define('SITE_TITLE','The Select Computer Language Shootout Benchmarks');
-define('BANNER_TITLE','The&nbsp;Select&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
+define('SITE_TITLE','The Computer Language Shootout Benchmarks');
+define('BANNER_TITLE','The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
