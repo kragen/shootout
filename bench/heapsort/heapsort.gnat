@@ -1,54 +1,46 @@
--- $Id: heapsort.gnat,v 1.1 2004-05-23 06:37:41 bfulgham Exp $
+-- $Id: heapsort.gnat,v 1.2 2005-03-30 21:06:00 obry-guest Exp $
 -- http://dada.perl.it/shootout/
 -- Ada 95 code by C.C.
+-- Modified by Pascal Obry on 2005/03/30
 
--- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+package Random_Long_Float is
+   function Gen_Random (Supr : Long_Float) return Long_Float;
+   pragma Inline (Gen_Random);
+end Random_Long_Float;
 
-with System, Ada.Command_Line, Text_IO;
+package body Random_Long_Float is
+   IM          : constant Positive := 139968;
+   IA          : constant Integer  := 3877;
+   IC          : constant Integer  := 29573;
+   Last        : Integer := 42;
 
-procedure Heapsort is
-   type Real is digits Positive'Max (15, System.Max_Digits);
-   package Rio is new Text_IO.Float_IO (Num => Real);
+   function Gen_Random (Supr : Long_Float) return Long_Float is
+   begin
+      Last := (Last * IA + IC) mod IM;
+      return Supr * Long_Float (Last) / Long_Float (IM);
+   end Gen_Random;
+end Random_Long_Float;
 
-   package Random_Real is
-      function Gen_Random (Supr : Real) return Real;
-      pragma Inline (Gen_Random);
-   end Random_Real;
+package Heapsort_Pck is
 
-   package body Random_Real is
-      IM          : constant Positive := 139968;
-      IA          : constant Integer := 3877;
-      IC          : constant Integer := 29573;
-      Last        : Integer := 42;
+   type Long_Float_Array is array (Positive range <>) of Long_Float;
+   type Long_Float_Array_Ptr is access Long_Float_Array;
 
-      function Gen_Random (Supr : Real) return Real is
-         pragma Suppress (Overflow_Check);
-         pragma Suppress (Range_Check);
-      begin
-         Last := (Last * IA + IC) mod IM;
-         return Supr * Real (Last) / Real (IM);
-      end Gen_Random;
-   end Random_Real;
+   procedure Heapsort (A : in out Long_Float_Array);
+end Heapsort_Pck;
 
-   type Range_Int is new Integer;
-   subtype Offset_Int is Range_Int;
+package body Heapsort_Pck is
 
-   type Real_Array is array (Range_Int range <>) of Real;
-   type Real_Array_Ptr is access Real_Array;
-
-   procedure Heapsort (A : in out Real_Array) is
-      pragma Suppress (Overflow_Check);
-      pragma Suppress (Index_Check);
-      pragma Suppress (Range_Check);
-      subtype Range_Positive is Range_Int;
-      First          : constant Range_Int := A'First;    --  might be <= -1
-      IR             : Range_Positive;
-      One            : constant Offset_Int := 1;
-      Minus_One      : constant Offset_Int := -1;
-      First_Minus_1  : constant Range_Int := First + Minus_One;
-      First_Plus_1   : constant Range_Int := First + One;
-      RRA            : Real;
-      L              : Offset_Int := One + (A'Length / 2);
+   procedure Heapsort (A : in out Long_Float_Array) is
+      First         : constant Positive := A'First;
+      IR            : Integer;
+      One           : constant Integer := 1;
+      Minus_One     : constant Integer := -1;
+      First_Minus_1 : constant Integer := First + Minus_One;
+      First_Plus_1  : constant Integer := First + One;
+      RRA           : Long_Float;
+      L             : Integer := One + (A'Length / 2);
+      K1, K2        : Integer;
    begin
       if A'Length <= 0 then
          return;
@@ -68,54 +60,45 @@ procedure Heapsort is
                IR := IR + Minus_One;
             end if;
          end if;
-         declare
-            K1    : Range_Positive := First_Minus_1 + L;
-            K2    : Range_Positive := K1 + L;
-         begin
-            while K2 <= IR loop
-               if K2 < IR then
-                  if A (K2) < A (K2 + One) then
-                     K2 := K2 + One;
-                  end if;
+         K1 := First_Minus_1 + L;
+         K2 := K1 + L;
+         while K2 <= IR loop
+            if K2 < IR then
+               if A (K2) < A (K2 + One) then
+                  K2 := K2 + One;
                end if;
-               if RRA < A (K2) then
-                  A (K1) := A (K2);
-                  K1 := K2;
-                  K2 := K1 + (K1 - First_Minus_1);
-               else
-                  K2 := IR + One;
-               end if;
-            end loop;
-            A (K1) := RRA;
-         end;
+            end if;
+            if RRA < A (K2) then
+               A (K1) := A (K2);
+               K1 := K2;
+               K2 := K1 + (K1 - First_Minus_1);
+            else
+               K2 := IR + One;
+            end if;
+         end loop;
+         A (K1) := RRA;
       end loop;
    end Heapsort;
 
-   N           : Range_Int;
-   No_Verify   : constant Boolean := True;
-   Chk         : Real := 0.0;
-   X           : Real_Array_Ptr;
+end Heapsort_Pck;
+
+with Ada.Command_Line, Text_IO;
+with Heapsort_Pck; use Heapsort_Pck;
+with Random_Long_Float;
+
+procedure Heapsort is
+   package Rio is new Text_IO.Float_IO (Num => Long_Float);
+
+   N : Positive;
+   X : Long_Float_Array_Ptr;
 begin
-   begin
-      N := Range_Int'Max (1, Range_Int'Value (Ada.Command_Line.Argument (1)));
-   exception
-      when Constraint_Error => N := 1;
-   end;
-   X := new Real_Array (0 .. N - 1);   --  3% slower than 'declare' (stack)
+   N := Positive'Value (Ada.Command_Line.Argument (1));
+   X := new Long_Float_Array (1 .. N);
    for Iter in X'Range loop
-      X (Iter) := Random_Real.Gen_Random (Supr => 1.0);
+      X (Iter) := Random_Long_Float.Gen_Random (Supr => 1.0);
    end loop;
-   if No_Verify then
-      Heapsort (A => X.all);
-      Rio.Put (X (X'Last), Fore => 0, Aft => 10, Exp => 0);
-      Text_IO.New_Line;
-   else
-      for Iter in X'Range loop Chk := Chk + X (Iter); end loop;
-      Heapsort (A => X.all);
-      for K in X'Range loop
-         pragma Assert (K + 1 = X'Last or else X (K) <= X (K + 1));
-         Chk := Chk - X (K);
-      end loop;
-      pragma Assert (abs Chk < 50.0 * Real (N) * Real'Model_Epsilon);
-   end if;
+
+   Heapsort (A => X.all);
+   Rio.Put (X (X'Last), Fore => 0, Aft => 10, Exp => 0);
+   Text_IO.New_Line;
 end Heapsort;
