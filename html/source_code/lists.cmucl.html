@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>C:\Fulgham\Projects\shootout\bench\lists\lists.cmucl</title>
+	<link rel="stylesheet" type="text/css" href="highlight.css">
+</head>
+<body>
+<pre><span class="line">    1 </span><span class="com">;;; -*- mode: lisp -*-
+</span><span class="line">    2 </span><span class="com"></span><span class="com">;;; $Id: lists.cmucl.html,v 1.1 2004-06-14 23:09:27 bfulgham Exp $
+</span><span class="line">    3 </span><span class="com"></span><span class="com">;;; http://www.bagley.org/~doug/shootout/
+</span><span class="line">    4 </span><span class="com"></span><span class="com">;;; from Paul Foley
+</span><span class="line">    5 </span><span class="com"></span>
+<span class="line">    6 </span>(defparameter *SIZE* <span class="num">10000</span>)
+<span class="line">    7 </span>
+<span class="line">    8 </span>(declaim (fixnum *SIZE*) (inline xcons push-queue))
+<span class="line">    9 </span>
+<span class="line">   10 </span>(defvar *free-conses*)
+<span class="line">   11 </span>
+<span class="line">   12 </span>(<span class="key">defun </span>xcons (A B)
+<span class="line">   13 </span>  (let ((x *free-conses*))
+<span class="line">   14 </span>    (<span class="key">if </span>x (<span class="key">progn </span>(setf *free-conses* (<span class="key">cdr </span>x) (<span class="key">car </span>x) A (<span class="key">cdr </span>x) B) x) (<span class="key">cons
+</span><span class="line">   15 </span><span class="key">     </span>A B))))
+<span class="line">   16 </span>
+<span class="line">   17 </span>(defmacro xpop (X)
+<span class="line">   18 </span>  `(prog1 (<span class="key">car </span>,x) (psetf ,x (<span class="key">cdr </span>,x) (<span class="key">cdr </span>,x) *free-conses* *free-conses*
+<span class="line">   19 </span>    ,x)))
+<span class="line">   20 </span>
+<span class="line">   21 </span>(<span class="key">defun </span>push-queue (item queue &amp;aux (new (xcons item nil)))
+<span class="line">   22 </span>  (<span class="key">if </span>(<span class="key">cdr </span>queue) (setf (<span class="key">cddr </span>queue) new) (setf (<span class="key">car </span>queue) new))
+<span class="line">   23 </span>  (setf (<span class="key">cdr </span>queue) new)
+<span class="line">   24 </span>  (<span class="key">car </span>queue))
+<span class="line">   25 </span>
+<span class="line">   26 </span>(defmacro with-collector ((name) &amp;body body)
+<span class="line">   27 </span>  (let ((collector (gensym)))
+<span class="line">   28 </span>    `(let ((,collector (xcons nil nil)))
+<span class="line">   29 </span>       (flet ((,name (value) (push-queue value ,collector)))
+<span class="line">   30 </span>         ,&#64;body
+<span class="line">   31 </span>         (<span class="key">car </span>,collector)))))
+<span class="line">   32 </span>
+<span class="line">   33 </span>(<span class="key">defun </span>test-list ()
+<span class="line">   34 </span>  (let* ((L1 (with-collector (conc) (loop for x fixnum from <span class="num">1 </span>to *SIZE* do
+<span class="line">   35 </span>   (conc x))))
+<span class="line">   36 </span>         (L2 (with-collector (conc) (loop for x in L1 do (conc x))))
+<span class="line">   37 </span>         (L3 nil))
+<span class="line">   38 </span>    <span class="com">;; Move items from left of L2 to right of L3 (preserve order)
+</span><span class="line">   39 </span><span class="com"></span>    (setf L3 (with-collector (conc) (loop <span class="key">while </span>L2 do (conc (xpop L2)))))
+<span class="line">   40 </span>    <span class="com">;; Move from tail of L3 to tail of L2 (reversing list)
+</span><span class="line">   41 </span><span class="com"></span>    <span class="com">;; start by reversing L3 so we can pop from the front
+</span><span class="line">   42 </span><span class="com"></span>    (setf L3 (nreverse L3))
+<span class="line">   43 </span>    (setf L2 (with-collector (conc) (loop <span class="key">while </span>L3 do (conc (xpop L3)))))
+<span class="line">   44 </span>    <span class="com">;; Reverse L1 in place
+</span><span class="line">   45 </span><span class="com"></span>    (setf L1 (nreverse L1))
+<span class="line">   46 </span>    <span class="com">;; Check that (first L1) == *SIZE*
+</span><span class="line">   47 </span><span class="com"></span>    (assert (= (the fixnum (first L1)) *SIZE*))
+<span class="line">   48 </span>    <span class="com">;; Compare L1 and L2 for equality
+</span><span class="line">   49 </span><span class="com"></span>    (assert (<span class="key">equal </span>L1 L2))
+<span class="line">   50 </span>    <span class="com">;; Return the length -- and return the conses to the free list
+</span><span class="line">   51 </span><span class="com"></span>    (prog1 (<span class="key">length </span>(the <span class="key">list </span>L1))
+<span class="line">   52 </span>      (setf *free-conses* (nconc *free-conses* L3 L2 L1)))))
+<span class="line">   53 </span>
+<span class="line">   54 </span>(<span class="key">defun </span>main ()
+<span class="line">   55 </span>  (let ((n (parse-integer (<span class="key">or </span>(<span class="key">car </span>(<span class="key">last </span>ext:*command-line-strings*)) <span class="str">&quot;1&quot;</span>))
+<span class="line">   56 </span>   )
+<span class="line">   57 </span>        (num <span class="num">0</span>) (*free-conses* nil))
+<span class="line">   58 </span>    (loop <span class="key">repeat </span>n fixnum do (setf num (test-list)))
+<span class="line">   59 </span>  (format t <span class="str">&quot;~D~%&quot;</span> num)))
+</pre>
+</body>
+</html>
+<!--HTML generated by highlight 2.0-24, http://www.andre-simon.de/-->

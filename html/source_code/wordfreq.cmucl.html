@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>C:\Fulgham\Projects\shootout\bench\wordfreq\wordfreq.cmucl</title>
+	<link rel="stylesheet" type="text/css" href="highlight.css">
+</head>
+<body>
+<pre><span class="line">    1 </span><span class="com">;;; -*- mode: lisp -*-
+</span><span class="line">    2 </span><span class="com"></span><span class="com">;;; $Id: wordfreq.cmucl.html,v 1.1 2004-06-14 23:09:29 bfulgham Exp $
+</span><span class="line">    3 </span><span class="com"></span><span class="com">;;; http://www.bagley.org/~doug/shootout/
+</span><span class="line">    4 </span><span class="com"></span><span class="com">;;; From Bulent Murtezaoglu, based on code from Andrew McDowell
+</span><span class="line">    5 </span><span class="com"></span>
+<span class="line">    6 </span><span class="com">;;; The Block/Buffering I/O code is adapted from material posted to comp.
+</span><span class="line">    7 </span><span class="com"></span>lang.lisp
+<span class="line">    8 </span><span class="com">;;; by Thomas Kirk &lt;tk&#64;research.att.com&gt;.
+</span><span class="line">    9 </span><span class="com"></span><span class="com">;;; Archived here: http://www.cs.cmu.edu/afs/cs/project/ai-
+</span><span class="line">   10 </span><span class="com"></span>repository/ai/lang/lisp/code/io/fast_io/fast_io.txt
+<span class="line">   11 </span><span class="com">;;;
+</span><span class="line">   12 </span><span class="com"></span>
+<span class="line">   13 </span>(declaim (optimize (speed <span class="num">3</span>) (debug <span class="num">0</span>) (safety <span class="num">0</span>) (space <span class="num">0</span>) (compilation-
+<span class="line">   14 </span> speed <span class="num">0</span>)))
+<span class="line">   15 </span>
+<span class="line">   16 </span>
+<span class="line">   17 </span>(<span class="key">defun </span>main ()
+<span class="line">   18 </span>  (let* ((start <span class="num">0</span>)
+<span class="line">   19 </span>     (current <span class="num">0</span>)
+<span class="line">   20 </span>     (end <span class="num">0</span>)
+<span class="line">   21 </span>     (eof nil)
+<span class="line">   22 </span>     (inputbuffer (make-array <span class="num">4096 </span>:element-type <span class="str">'(unsigned-byte 8))))
+</span><span class="line">   23 </span><span class="str">    (declare (type (simple-array (unsigned-byte 8)) inputbuffer)
+</span><span class="line">   24 </span><span class="str">         (fixnum start end)
+</span><span class="line">   25 </span><span class="str">         (inline code-char)
+</span><span class="line">   26 </span><span class="str">         (type (unsigned-byte 8) current))
+</span><span class="line">   27 </span><span class="str">    (labels
+</span><span class="line">   28 </span><span class="str">    ((get-char () ;;don'</span>t do this at home works through side effect unless
+<span class="line">   29 </span>  eof
+<span class="line">   30 </span>           (when (= start end)
+<span class="line">   31 </span>             (setf start <span class="num">0</span>)
+<span class="line">   32 </span>             (setf end (read-sequence inputbuffer *standard-input*))
+<span class="line">   33 </span>             (when (<span class="key">zerop </span>end)
+<span class="line">   34 </span>               (setf eof t)
+<span class="line">   35 </span>               (return-from get-char nil)))
+<span class="line">   36 </span>           (setf current (aref inputbuffer start))
+<span class="line">   37 </span>           (incf start))
+<span class="line">   38 </span>
+<span class="line">   39 </span>      (word-constituent-p () <span class="com">;; side effects current rets t if word-
+</span><span class="line">   40 </span><span class="com"></span>    constituent
+<span class="line">   41 </span>                 (<span class="key">or </span>(<span class="key">and </span>(&gt;= current <span class="num">97</span>) (&lt;= current <span class="num">122</span>))
+<span class="line">   42 </span>                   (<span class="key">and </span>(&gt;= current <span class="num">65</span>) (&lt;= current <span class="num">90</span>)
+<span class="line">   43 </span>                    (incf current <span class="num">32</span>))))
+<span class="line">   44 </span>     (reader (buffer)
+<span class="line">   45 </span>         (declare (<span class="key">type </span>simple-base-string buffer))
+<span class="line">   46 </span>         (let* ((size (<span class="key">length </span>buffer))
+<span class="line">   47 </span>            (fill-ptr <span class="num">0</span>))
+<span class="line">   48 </span>           (declare (<span class="key">type </span>(integer <span class="num">0 1000</span>)  size fill-ptr))
+<span class="line">   49 </span>           (loop <span class="key">while </span>(<span class="key">and </span>(<span class="key">or </span>(get-char) (return-from reader buffer))
+<span class="line">   50 </span>                    (<span class="key">not </span>(word-constituent-p))))
+<span class="line">   51 </span>           (loop
+<span class="line">   52 </span>             (when (= fill-ptr size)
+<span class="line">   53 </span>               (let ((new-buffer
+<span class="line">   54 </span>                  (make-string (the fixnum
+<span class="line">   55 </span>                         (setf size (the fixnum (+ fill-ptr <span class="num">5</span>)))))))
+<span class="line">   56 </span>             (setf (subseq (the simple-base-string new-buffer) <span class="num">0 </span>fill-ptr)
+<span class="line">   57 </span>                   buffer)
+<span class="line">   58 </span>             (setf buffer new-buffer)))
+<span class="line">   59 </span>             (setf (schar buffer fill-ptr) (code-char current))
+<span class="line">   60 </span>             (incf fill-ptr)
+<span class="line">   61 </span>             (<span class="key">if </span>(get-char)
+<span class="line">   62 </span>             (<span class="key">if </span>(<span class="key">not </span>(word-constituent-p))
+<span class="line">   63 </span>                 (return))
+<span class="line">   64 </span>               (return)))
+<span class="line">   65 </span>           (lisp::shrink-vector buffer fill-ptr))))
+<span class="line">   66 </span>
+<span class="line">   67 </span>      (let* ((h (make-hash-table :test <span class="str">'equal :size 3380 :rehash-threshold
+</span><span class="line">   68 </span><span class="str">       1.0))
+</span><span class="line">   69 </span><span class="str">         (buffer (make-string 10)))
+</span><span class="line">   70 </span><span class="str">    (declare (inline gethash maphash))
+</span><span class="line">   71 </span><span class="str">    (declare (type simple-base-string buffer))
+</span><span class="line">   72 </span><span class="str">    (loop
+</span><span class="line">   73 </span><span class="str">      (setf buffer (reader buffer))
+</span><span class="line">   74 </span><span class="str">      (if (not eof)
+</span><span class="line">   75 </span><span class="str">          (if (= 1 (the fixnum (incf (the fixnum (gethash buffer h 0)))))
+</span><span class="line">   76 </span><span class="str">          (setf buffer (make-string 10)));; only cons if used
+</span><span class="line">   77 </span><span class="str">        (return)))
+</span><span class="line">   78 </span><span class="str">    ;; hast table =&gt; list
+</span><span class="line">   79 </span><span class="str">    (let ((l '</span>()))
+<span class="line">   80 </span>      (maphash #<span class="str">'(lambda (key val)
+</span><span class="line">   81 </span><span class="str">               (push (cons key val) l))
+</span><span class="line">   82 </span><span class="str">           h)
+</span><span class="line">   83 </span><span class="str">      ;; sort the list
+</span><span class="line">   84 </span><span class="str">      (setf l (sort l #'</span>(<span class="key">lambda </span>(v1 v2)
+<span class="line">   85 </span>                  (<span class="key">if </span>(&gt; (the fixnum (<span class="key">cdr </span>v1)) (the fixnum (<span class="key">cdr </span>v2)))
+<span class="line">   86 </span>                  t
+<span class="line">   87 </span>                (<span class="key">if </span>(= (the fixnum (<span class="key">cdr </span>v1)) (the fixnum (<span class="key">cdr </span>v2)))
+<span class="line">   88 </span>                    (string-lessp (<span class="key">car </span>v2) (<span class="key">car </span>v1))
+<span class="line">   89 </span>                  nil)))))
+<span class="line">   90 </span>
+<span class="line">   91 </span>      <span class="com">;; output the list of pairs
+</span><span class="line">   92 </span><span class="com"></span>      (<span class="key">mapcar </span>#<span class="str">'(lambda (p)
+</span><span class="line">   93 </span><span class="str">              (format t &quot;~7D    ~A~&amp;&quot; (cdr p) (car p)))
+</span><span class="line">   94 </span><span class="str">          l))))))</span>
+</pre>
+</body>
+</html>
+<!--HTML generated by highlight 2.0-24, http://www.andre-simon.de/-->

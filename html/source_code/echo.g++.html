@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>C:\Fulgham\Projects\shootout\bench\echo\echo.g++</title>
+	<link rel="stylesheet" type="text/css" href="highlight.css">
+</head>
+<body>
+<pre><span class="line">    1 </span><span class="com">// -*- mode: c++ -*-
+</span><span class="line">    2 </span><span class="com"></span><span class="com">// $Id: echo.g++.html,v 1.1 2004-06-14 23:09:26 bfulgham Exp $
+</span><span class="line">    3 </span><span class="com"></span><span class="com">// http://www.bagley.org/~doug/shootout/
+</span><span class="line">    4 </span><span class="com"></span>
+<span class="line">    5 </span><span class="dir">#include &lt;stdio.h&gt;
+</span><span class="line">    6 </span><span class="dir"></span><span class="dir">#include &lt;stdlib.h&gt;
+</span><span class="line">    7 </span><span class="dir"></span><span class="dir">#include &lt;string.h&gt;
+</span><span class="line">    8 </span><span class="dir"></span><span class="dir">#include &lt;unistd.h&gt;
+</span><span class="line">    9 </span><span class="dir"></span><span class="dir">#include &lt;signal.h&gt;
+</span><span class="line">   10 </span><span class="dir"></span><span class="dir">#include &lt;errno.h&gt;
+</span><span class="line">   11 </span><span class="dir"></span><span class="dir">#include &lt;sys/types.h&gt;
+</span><span class="line">   12 </span><span class="dir"></span><span class="dir">#include &lt;sys/socket.h&gt;
+</span><span class="line">   13 </span><span class="dir"></span><span class="dir">#include &lt;sys/wait.h&gt;
+</span><span class="line">   14 </span><span class="dir"></span><span class="dir">#include &lt;netinet/in.h&gt;
+</span><span class="line">   15 </span><span class="dir"></span>
+<span class="line">   16 </span><span class="key">using namespace </span>std;
+<span class="line">   17 </span>
+<span class="line">   18 </span><span class="dir">#define DATA </span><span class="dstr">&quot;Hello there sailor</span><span class="esc">\n</span><span class="dstr">&quot;</span><span class="dir">
+</span><span class="line">   19 </span><span class="dir"></span>
+<span class="line">   20 </span><span class="typ">void </span>myabort <span class="sym">(</span><span class="typ">char </span>*m<span class="sym">) { </span>fprintf(stderr, <span class="str">&quot;%s</span><span class="esc">\n</span><span class="str">&quot;</span>, m<span class="sym">)</span>; exit(1<span class="sym">)</span>; <span class="sym">}
+</span><span class="line">   21 </span><span class="sym"></span><span class="typ">void </span>sysabort <span class="sym">(</span><span class="typ">char </span>*m<span class="sym">) { </span>perror(m<span class="sym">)</span>; exit(1<span class="sym">)</span>; <span class="sym">}
+</span><span class="line">   22 </span><span class="sym">
+</span><span class="line">   23 </span><span class="sym"></span><span class="typ">int </span>sigchld = <span class="num">0</span>;
+<span class="line">   24 </span><span class="typ">void </span>reaper <span class="sym">(</span><span class="typ">int </span>sig<span class="sym">) { </span>sigchld = <span class="num">1</span>; <span class="sym">}
+</span><span class="line">   25 </span><span class="sym">
+</span><span class="line">   26 </span><span class="sym"></span><span class="typ">int
+</span><span class="line">   27 </span><span class="typ"></span>server_sock <span class="sym">() {
+</span><span class="line">   28 </span><span class="sym">    </span><span class="typ">int </span>ss, optval = <span class="num">1</span>;
+<span class="line">   29 </span>    <span class="typ">struct </span>sockaddr_in sin;
+<span class="line">   30 </span>    <span class="key">if </span><span class="sym">((</span>ss = socket(PF_INET, SOCK_STREAM, <span class="num">0</span><span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   31 </span><span class="sym">    </span>sysabort(<span class="str">&quot;server/socket&quot;</span><span class="sym">)</span>;
+<span class="line">   32 </span>    <span class="key">if </span><span class="sym">(</span>setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, &amp;optval, sizeof(optval<span class="sym">))
+</span><span class="line">   33 </span><span class="sym">        </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   34 </span><span class="sym">    </span>sysabort(<span class="str">&quot;server/setsockopt&quot;</span><span class="sym">)</span>;
+<span class="line">   35 </span>    memset(&amp;sin,<span class="num">0</span>,sizeof(sin<span class="sym">))</span>;
+<span class="line">   36 </span>    sin.sin_family = AF_INET;
+<span class="line">   37 </span>    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK<span class="sym">)</span>;
+<span class="line">   38 </span>    sin.sin_port = <span class="num">0</span>;
+<span class="line">   39 </span>    <span class="key">if </span><span class="sym">(</span>bind(ss, <span class="sym">(</span>sockaddr *<span class="sym">)</span>&amp;sin, sizeof(sin<span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   40 </span><span class="sym">    </span>sysabort(<span class="str">&quot;server/bind&quot;</span><span class="sym">)</span>;
+<span class="line">   41 </span>    listen(ss, <span class="num">2</span><span class="sym">)</span>;
+<span class="line">   42 </span>    return(ss<span class="sym">)</span>;
+<span class="line">   43 </span><span class="sym">}
+</span><span class="line">   44 </span><span class="sym">
+</span><span class="line">   45 </span><span class="sym">
+</span><span class="line">   46 </span><span class="sym"></span><span class="typ">int
+</span><span class="line">   47 </span><span class="typ"></span>get_port <span class="sym">(</span><span class="typ">int </span>sock<span class="sym">) {
+</span><span class="line">   48 </span><span class="sym">    </span><span class="typ">struct </span>sockaddr_in sin;
+<span class="line">   49 </span>    socklen_t slen = sizeof(sin<span class="sym">)</span>;
+<span class="line">   50 </span>    <span class="key">if </span><span class="sym">(</span>getsockname(sock, <span class="sym">(</span>sockaddr *<span class="sym">)</span>&amp;sin, &amp;slen<span class="sym">) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   51 </span><span class="sym">    </span>sysabort(<span class="str">&quot;server/getsockname&quot;</span><span class="sym">)</span>;
+<span class="line">   52 </span>    return(sin.sin_port<span class="sym">)</span>;
+<span class="line">   53 </span><span class="sym">}
+</span><span class="line">   54 </span><span class="sym">
+</span><span class="line">   55 </span><span class="sym">
+</span><span class="line">   56 </span><span class="sym"></span><span class="typ">int
+</span><span class="line">   57 </span><span class="typ"></span>client_sock <span class="sym">(</span><span class="typ">int </span>port<span class="sym">) {
+</span><span class="line">   58 </span><span class="sym">    </span><span class="typ">struct </span>sockaddr_in sin;
+<span class="line">   59 </span>    <span class="typ">int </span>sock;
+<span class="line">   60 </span>    <span class="key">if </span><span class="sym">((</span>sock = socket(PF_INET, SOCK_STREAM, <span class="num">0</span><span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   61 </span><span class="sym">    </span>sysabort(<span class="str">&quot;client/socket&quot;</span><span class="sym">)</span>;
+<span class="line">   62 </span>    sin.sin_family = AF_INET;
+<span class="line">   63 </span>    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK<span class="sym">)</span>;
+<span class="line">   64 </span>    sin.sin_port = port;
+<span class="line">   65 </span>    <span class="key">if </span><span class="sym">(</span>connect(sock, <span class="sym">(</span>sockaddr *<span class="sym">)</span>&amp;sin, sizeof(sin<span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   66 </span><span class="sym">    </span>sysabort(<span class="str">&quot;client/connect&quot;</span><span class="sym">)</span>;
+<span class="line">   67 </span>    return(sock<span class="sym">)</span>;
+<span class="line">   68 </span><span class="sym">}
+</span><span class="line">   69 </span><span class="sym">
+</span><span class="line">   70 </span><span class="sym">
+</span><span class="line">   71 </span><span class="sym"></span><span class="typ">void
+</span><span class="line">   72 </span><span class="typ"></span>echo_client <span class="sym">(</span><span class="typ">int </span>n, <span class="typ">int </span>port<span class="sym">) {
+</span><span class="line">   73 </span><span class="sym">    </span><span class="typ">int </span>i, sock, olen, len, nwritten, nread;
+<span class="line">   74 </span>    <span class="typ">char </span>*offset, obuf[64], ibuf[64];
+<span class="line">   75 </span>    <span class="typ">char </span>*end = ibuf + sizeof(ibuf<span class="sym">)</span>;
+<span class="line">   76 </span>
+<span class="line">   77 </span>    sock = client_sock(port<span class="sym">)</span>;
+<span class="line">   78 </span>    strcpy(obuf, DATA<span class="sym">)</span>;
+<span class="line">   79 </span>    olen = strlen(obuf<span class="sym">)</span>;
+<span class="line">   80 </span>    <span class="key">for </span><span class="sym">(</span>i=<span class="num">0</span>; i&lt;n; i++<span class="sym">) {
+</span><span class="line">   81 </span><span class="sym">    </span>len = olen;
+<span class="line">   82 </span>    offset = obuf;
+<span class="line">   83 </span>    <span class="key">while </span><span class="sym">(</span>len &gt; <span class="num">0</span><span class="sym">) {
+</span><span class="line">   84 </span><span class="sym">        </span><span class="key">if </span><span class="sym">((</span>nwritten = write(sock, offset, len<span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">   85 </span><span class="sym">        </span>sysabort(<span class="str">&quot;client/write&quot;</span><span class="sym">)</span>;
+<span class="line">   86 </span>        offset += nwritten;
+<span class="line">   87 </span>        len -= nwritten;
+<span class="line">   88 </span>    <span class="sym">}
+</span><span class="line">   89 </span><span class="sym">    </span>offset = ibuf;
+<span class="line">   90 </span>    <span class="key">while </span><span class="sym">((</span>nread = read(sock, offset, <span class="sym">(</span>end - offset<span class="sym">))) </span>&gt; <span class="num">0</span><span class="sym">) {
+</span><span class="line">   91 </span><span class="sym">        </span>offset += nread;
+<span class="line">   92 </span>        <span class="key">if </span><span class="sym">(</span>*<span class="sym">(</span>offset-1<span class="sym">) </span>== <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">) </span><span class="key">break</span>;
+<span class="line">   93 </span>    <span class="sym">}
+</span><span class="line">   94 </span><span class="sym">    </span><span class="key">if </span><span class="sym">(</span>nread == <span class="num">-1</span><span class="sym">)
+</span><span class="line">   95 </span><span class="sym">        </span>sysabort(<span class="str">&quot;client/read&quot;</span><span class="sym">)</span>;
+<span class="line">   96 </span>    *offset = <span class="num">0</span>;
+<span class="line">   97 </span>    <span class="key">if </span><span class="sym">((</span>strcmp(obuf, ibuf<span class="sym">)) </span>!= <span class="num">0</span><span class="sym">) {
+</span><span class="line">   98 </span><span class="sym">        </span><span class="typ">char </span>mbuf[128];
+<span class="line">   99 </span>        sprintf(mbuf, <span class="str">&quot;client: </span><span class="esc">\&quot;</span><span class="str">%s</span><span class="esc">\&quot;  </span><span class="str">ne </span><span class="esc">\&quot;</span><span class="str">%s</span><span class="esc">\&quot;</span><span class="str">&quot;</span>, obuf, ibuf<span class="sym">)</span>;
+<span class="line">  100 </span>        myabort(mbuf<span class="sym">)</span>;
+<span class="line">  101 </span>    <span class="sym">}
+</span><span class="line">  102 </span><span class="sym">    }
+</span><span class="line">  103 </span><span class="sym">    </span>close(sock<span class="sym">)</span>;
+<span class="line">  104 </span><span class="sym">}
+</span><span class="line">  105 </span><span class="sym">
+</span><span class="line">  106 </span><span class="sym">
+</span><span class="line">  107 </span><span class="sym"></span><span class="typ">void
+</span><span class="line">  108 </span><span class="typ"></span>echo_server <span class="sym">(</span><span class="typ">int </span>n<span class="sym">) {
+</span><span class="line">  109 </span><span class="sym">    </span><span class="typ">int </span>ssock, csock, len, nwritten, total_bytes;
+<span class="line">  110 </span>    pid_t pid;
+<span class="line">  111 </span>    <span class="typ">char </span>buf[64], *offset;
+<span class="line">  112 </span>    <span class="typ">struct </span>sockaddr_in sin;
+<span class="line">  113 </span>    socklen_t slen = sizeof(sin<span class="sym">)</span>;
+<span class="line">  114 </span>    <span class="typ">int </span>status;
+<span class="line">  115 </span>
+<span class="line">  116 </span>    ssock = server_sock(<span class="sym">)</span>;
+<span class="line">  117 </span>    signal(SIGCHLD, reaper<span class="sym">)</span>;
+<span class="line">  118 </span>    <span class="key">if </span><span class="sym">((</span>pid = fork(<span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">  119 </span><span class="sym">    </span>sysabort(<span class="str">&quot;server/fork&quot;</span><span class="sym">)</span>;
+<span class="line">  120 </span>    <span class="key">if </span><span class="sym">(</span>pid<span class="sym">) {
+</span><span class="line">  121 </span><span class="sym">    </span><span class="com">/* parent is server */</span>
+<span class="line">  122 </span>    <span class="key">if </span><span class="sym">((</span>csock = accept(ssock, <span class="sym">(</span>sockaddr *<span class="sym">)</span>&amp;sin, &amp;slen<span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">  123 </span><span class="sym">        </span>sysabort(<span class="str">&quot;server/accept&quot;</span><span class="sym">)</span>;
+<span class="line">  124 </span>    total_bytes = <span class="num">0</span>;
+<span class="line">  125 </span>    <span class="key">while </span><span class="sym">((</span>len = read(csock, buf, sizeof(buf<span class="sym">))) </span>&gt; <span class="num">0</span><span class="sym">) {
+</span><span class="line">  126 </span><span class="sym">        </span><span class="key">if </span><span class="sym">(</span>sigchld<span class="sym">) </span>myabort(<span class="str">&quot;server/sigchld&quot;</span><span class="sym">)</span>;
+<span class="line">  127 </span>        offset = buf;
+<span class="line">  128 </span>        total_bytes += len;
+<span class="line">  129 </span>        <span class="key">while </span><span class="sym">(</span>len &gt; <span class="num">0</span><span class="sym">) {
+</span><span class="line">  130 </span><span class="sym">        </span><span class="key">if </span><span class="sym">((</span>nwritten = write(csock, offset, len<span class="sym">)) </span>== <span class="num">-1</span><span class="sym">)
+</span><span class="line">  131 </span><span class="sym">            </span>sysabort(<span class="str">&quot;server/write&quot;</span><span class="sym">)</span>;
+<span class="line">  132 </span>        offset += nwritten;
+<span class="line">  133 </span>        len -= nwritten;
+<span class="line">  134 </span>        <span class="sym">}
+</span><span class="line">  135 </span><span class="sym">    }
+</span><span class="line">  136 </span><span class="sym">    </span><span class="key">if </span><span class="sym">(</span>len == <span class="num">-1</span><span class="sym">)
+</span><span class="line">  137 </span><span class="sym">        </span>sysabort(<span class="str">&quot;server/read&quot;</span><span class="sym">)</span>;
+<span class="line">  138 </span>    close(csock<span class="sym">)</span>;
+<span class="line">  139 </span>    fprintf(stdout, <span class="str">&quot;server processed %d bytes</span><span class="esc">\n</span><span class="str">&quot;</span>, total_bytes<span class="sym">)</span>;
+<span class="line">  140 </span>    <span class="sym">} </span><span class="key">else </span><span class="sym">{
+</span><span class="line">  141 </span><span class="sym">    </span><span class="com">/* child is client */</span>
+<span class="line">  142 </span>    echo_client(n, get_port(ssock<span class="sym">))</span>;
+<span class="line">  143 </span>    <span class="sym">}
+</span><span class="line">  144 </span><span class="sym">    </span>wait(&amp;status<span class="sym">)</span>;
+<span class="line">  145 </span><span class="sym">}
+</span><span class="line">  146 </span><span class="sym">
+</span><span class="line">  147 </span><span class="sym">
+</span><span class="line">  148 </span><span class="sym"></span><span class="typ">int
+</span><span class="line">  149 </span><span class="typ"></span>main(int argc, <span class="typ">char </span>*argv[]<span class="sym">) {
+</span><span class="line">  150 </span><span class="sym">    </span><span class="typ">int </span>n = <span class="sym">((</span>argc == <span class="num">2</span><span class="sym">) </span>? atoi(argv[1]<span class="sym">) </span>: <span class="num">1</span><span class="sym">)</span>;
+<span class="line">  151 </span>    echo_server(n<span class="sym">)</span>;
+<span class="line">  152 </span>    return(0<span class="sym">)</span>;
+<span class="line">  153 </span><span class="sym">}</span>
+</pre>
+</body>
+</html>
+<!--HTML generated by highlight 2.0-24, http://www.andre-simon.de/-->

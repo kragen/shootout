@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>C:\Fulgham\Projects\shootout\bench\reversefile\reversefile.mlton</title>
+	<link rel="stylesheet" type="text/css" href="highlight.css">
+</head>
+<body>
+<pre><span class="line">    1 </span><span class="com">(* -*- mode: sml -*-
+</span><span class="line">    2 </span><span class="com"> * $Id: reversefile.mlton.html,v 1.1 2004-06-14 23:09:28 bfulgham Exp $
+</span><span class="line">    3 </span><span class="com"> * http://www.bagley.org/~doug/shootout/
+</span><span class="line">    4 </span><span class="com"> * from Tom 7
+</span><span class="line">    5 </span><span class="com"> *)</span>
+<span class="line">    6 </span>
+<span class="line">    7 </span><span class="key">val </span>bufsize = <span class="num">4096
+</span><span class="line">    8 </span><span class="num"></span><span class="key">val </span>rdbufsize = <span class="num">4096
+</span><span class="line">    9 </span><span class="num">
+</span><span class="line">   10 </span><span class="num"></span><span class="key">val </span>stdout = Posix.FileSys.wordToFD <span class="num">0w1
+</span><span class="line">   11 </span><span class="num"></span><span class="key">val </span>stdin = Posix.FileSys.wordToFD <span class="num">0w0
+</span><span class="line">   12 </span><span class="num">
+</span><span class="line">   13 </span><span class="num"></span><span class="key">datatype </span>block = END
+<span class="line">   14 </span>               | MORE <span class="key">of </span><span class="typ">int </span>ref * Word8Array.array * block
+<span class="line">   15 </span>
+<span class="line">   16 </span><span class="key">val </span>buff = Unsafe.Word8Array.create rdbufsize
+<span class="line">   17 </span>
+<span class="line">   18 </span><span class="key">fun </span>out END = ()
+<span class="line">   19 </span>  | out (MORE (ir <span class="key">as </span>ref i, a, next)) =
+<span class="line">   20 </span>  <span class="key">let in
+</span><span class="line">   21 </span><span class="key">    </span>Posix.IO.writeArr (stdout, Word8ArraySlice.slice(a, i, NONE));
+<span class="line">   22 </span>    out next
+<span class="line">   23 </span>  <span class="key">end
+</span><span class="line">   24 </span><span class="key">
+</span><span class="line">   25 </span><span class="key">fun </span>rd (start, len, count, b) =
+<span class="line">   26 </span>  <span class="key">if </span>(start + len) &gt;= count <span class="key">then
+</span><span class="line">   27 </span><span class="key">    </span><span class="com">(* done with this block.
+</span><span class="line">   28 </span><span class="com">       Copy from start to the end of the array into
+</span><span class="line">   29 </span><span class="com">       buff, then return the starting index into buff. *)</span>
+<span class="line">   30 </span>    <span class="key">let in
+</span><span class="line">   31 </span><span class="key">      </span>Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start, SOME(
+<span class="line">   32 </span>                            len)),
+<span class="line">   33 </span>                            dst=buff, di=<span class="num">0</span>};
+<span class="line">   34 </span>      (b, len)
+<span class="line">   35 </span>    <span class="key">end
+</span><span class="line">   36 </span><span class="key">  else
+</span><span class="line">   37 </span><span class="key">    if </span>Unsafe.Word8Array.sub(buff, start + len) = <span class="num">0w10 </span><span class="key">then
+</span><span class="line">   38 </span><span class="key">      </span><span class="com">(* found newline *)</span>
+<span class="line">   39 </span>      <span class="key">case </span>b <span class="key">of </span>MORE(ir <span class="key">as </span>ref i, a, _) =&gt;
+<span class="line">   40 </span>        <span class="key">if </span>i &gt; len <span class="key">then
+</span><span class="line">   41 </span><span class="key">            let in
+</span><span class="line">   42 </span><span class="key">              </span><span class="com">(* enough room *)</span>
+<span class="line">   43 </span>              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start,
+<span class="line">   44 </span>                                    SOME(len + <span class="num">1</span>)),
+<span class="line">   45 </span>                                dst=a, di=(i - len <span class="num">- 1</span>)};
+<span class="line">   46 </span>              ir := i - (len + <span class="num">1</span>);
+<span class="line">   47 </span>
+<span class="line">   48 </span>              rd(start + len + <span class="num">1</span>, <span class="num">0</span>, count, b)
+<span class="line">   49 </span>            <span class="key">end
+</span><span class="line">   50 </span><span class="key">          else </span><span class="com">(* not enough room *)</span>
+<span class="line">   51 </span>            <span class="key">let
+</span><span class="line">   52 </span><span class="key">              </span><span class="com">(* going to need a new buffer *)</span>
+<span class="line">   53 </span>              <span class="key">val </span>na = Unsafe.Word8Array.create bufsize
+<span class="line">   54 </span>              <span class="key">val </span>l = (len + <span class="num">1</span>) - i
+<span class="line">   55 </span>            <span class="key">in
+</span><span class="line">   56 </span><span class="key">              </span><span class="com">(* put the tail in whatever room is left *)</span>
+<span class="line">   57 </span>          Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, (start + len +
+<span class="line">   58 </span>                             <span class="num">1</span>) -i, SOME(i)),
+<span class="line">   59 </span>                                dst=a, di= <span class="num">0 </span>};
+<span class="line">   60 </span>              <span class="com">(* put the head in a new buffer *)</span>
+<span class="line">   61 </span>              Word8ArraySlice.copy {src=Word8ArraySlice.slice(buff, start,
+<span class="line">   62 </span>                                    SOME(l)),
+<span class="line">   63 </span>                                dst=na, di=bufsize - l };
+<span class="line">   64 </span>              ir := <span class="num">0</span>;
+<span class="line">   65 </span>              rd(start + len + <span class="num">1</span>, <span class="num">0</span>, count, MORE(ref (bufsize - l), na, b))
+<span class="line">   66 </span>            <span class="key">end
+</span><span class="line">   67 </span><span class="key">    else </span>rd (start, len + <span class="num">1</span>, count, b)
+<span class="line">   68 </span>
+<span class="line">   69 </span><span class="key">fun </span>loop (b, s) =
+<span class="line">   70 </span>  <span class="key">let
+</span><span class="line">   71 </span><span class="key">    val </span>count = Posix.IO.readArr (stdin, Word8ArraySlice.slice(buff, s,
+<span class="line">   72 </span>                SOME(rdbufsize-s)))
+<span class="line">   73 </span>    <span class="key">val </span>(bb, bs) = rd (<span class="num">0</span>, s, count + s, b)
+<span class="line">   74 </span>  <span class="key">in
+</span><span class="line">   75 </span><span class="key">    case </span>count <span class="key">of
+</span><span class="line">   76 </span><span class="key">      </span><span class="num">0 </span>=&gt; out bb
+<span class="line">   77 </span>    | _ =&gt; loop (bb, bs)
+<span class="line">   78 </span>  <span class="key">end
+</span><span class="line">   79 </span><span class="key">
+</span><span class="line">   80 </span><span class="key">fun </span>main(name, args) =
+<span class="line">   81 </span>    ( loop (MORE(ref bufsize, Unsafe.Word8Array.create bufsize, END), <span class="num">0</span>);
+<span class="line">   82 </span>      OS.Process.success);
+<span class="line">   83 </span>
+<span class="line">   84 </span><span class="key">val </span>_ = main( CommandLine.name(), CommandLine.arguments() );
+<span class="line">   85 </span>
+</pre>
+</body>
+</html>
+<!--HTML generated by highlight 2.0-24, http://www.andre-simon.de/-->
