@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-08-19 07:27:30 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-09-13 01:23:43 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -15,7 +15,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 10,50,100,150 \
+	  --range 50,100,150,200 \
+	  --ignore hash2.csharp \
 	  --ignore hash2.bash \
 	  --ignore hash2.oz
 

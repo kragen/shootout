@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2004-08-16 08:00:08 bfulgham Exp $
+# $Id: Makefile,v 1.16 2004-09-13 01:23:33 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ary
@@ -14,6 +14,7 @@ JREOPTS := -hotspot -da
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore ary.bash \
-	  --range 1000,3000,5000,7000
+	  --ignore ary.csharp \
+	  --range 3000,5000,7000,9000
 
 include ../../Make.footer

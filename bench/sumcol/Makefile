@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2004-08-18 06:00:31 bfulgham Exp $
+# $Id: Makefile,v 1.12 2004-09-13 01:24:25 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -12,8 +12,9 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 100,400,700,1000 \
+	  --range 400,700,1000,8000 \
 	  --inputfile Input --geninput \
+	  --ignore sumcol.csharp \
 	  --ignore sumcol.stalin 
 
 include ../../Make.footer

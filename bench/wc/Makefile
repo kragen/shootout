@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-08-19 07:27:38 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-09-13 01:24:27 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -14,7 +14,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 500,1000,1500,2000 \
+	  --range 1000,1500,2000,2500 \
+	  --ignore wc.csharp \
 	  --ignore wc.gnat \
 	  --ignore wc.rep \
 	  --inputfile Input --geninput

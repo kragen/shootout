@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2004-08-12 16:26:45 bfulgham Exp $
+# $Id: Makefile,v 1.16 2004-09-13 01:23:34 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
@@ -15,8 +15,9 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 RUNTESTS := $(MINIBENCH) --conf ./Minibench.conf \
 	  --ignore echo.guile \
+	  --ignore echo.csharp \
 	  --ignore echo.gcl \
 	  --ignore echo.oz \
-	  --range 10000,40000,70000,100000
+	  --range 40000,70000,100000,150000
 
 include ../../Make.footer
