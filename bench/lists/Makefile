@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2004-10-06 07:26:51 bfulgham Exp $
+# $Id: Makefile,v 1.24 2004-10-07 07:17:56 bfulgham Exp $
 include ../../Make.header
 
 TEST    := lists
@@ -16,6 +16,7 @@ POLYOPTS := -q
 RUNTESTS := $(MINIBENCH) --conf ./Minibench.conf \
 	  --range 4,8,12,16,18 \
 	  --ignore lists.csharp \
-	  --ignore lists.guile
+	  --ignore lists.guile \
+	  --ignore lists.hugs
 
 include ../../Make.footer

@@ -1,27 +1,83 @@
--- $Id: lists.nhc98,v 1.2 2004-10-06 07:26:51 bfulgham Exp $
+-- $Id: lists.nhc98,v 1.3 2004-10-07 07:17:56 bfulgham Exp $
 -- http://shootout.alioth.debian.org/
-
-module Main(main) where
-
+-- Contributed by Malcolm Wallace
 import System(getArgs)
 import Prelude
 
+main  = getArgs >>= print . for . read . head
+for n = foldr (\_ p -> if test p == p then p else 0) size [1..n]
 size = 10000
 
--- `seq`s below force evaluation of isok1 and isok2
-test = isok1 `seq` length l3
-  where single x = [x]
-        l1 = [1..size] 
-        l2 = l1
-        l3 = foldl (++) [] (map single l2)
-        l2' = foldr (++) [] (map single l3)
-        l1' = reverse l1
-        isok1 = head l1' == size
+test :: Int -> Int
+test size | isok1 && isok2  = dlength l1'
+          | otherwise       = error "broken"
+  where
+        l1    = deque [1..size]
+        l2    = l1 	-- exactly the builtin copy operation!
+        l3    = dfoldl snoc empty l2
+        l2'   = dfoldr (flip snoc) empty l3
+        l1'   = dreverse l1
+        isok1 = dhead l1' == size
         isok2 = l1' == l2'
 
-testMe :: Int -> Int
-testMe 1 = test
-testMe n = test `seq` testMe (n - 1)
 
-main = do ~[s] <- getArgs
-          putStrLn . show . testMe . read $ s
+-- data type for reasonably efficient double-ended queues
+data Deque a = [a] :# [a] deriving Show
+infix 4 :# -- like ==, weaker than (:) and (++)
+
+empty = ([] :# [])
+
+deque :: [a] -> Deque a
+deque xs = take_half xs :# reverse (drop_half xs)
+
+drop_half xs = dh xs xs
+    where dh xs     []       = xs
+	  dh xs     [_]      = xs
+	  dh (x:xs) (_:_:fs) = dh xs fs
+take_half xs = th xs xs
+    where th xs     []       = []
+	  th xs     [_]      = []
+	  th (x:xs) (_:_:fs) = x : th xs fs
+
+cons x (xs :# []) = [x] :# xs  
+cons x (xs :# ys) = x:xs :# ys
+
+snoc ([] :# ys) y = ys :# [y]
+snoc (xs :# ys) y = xs :# y:ys
+
+nil ([] :# []) = True
+nil _          = False
+
+dlength (xs :# ys) = length xs + length ys
+
+dhead (x:xs :# ys ) = x
+dhead ([]   :# [y]) = y
+
+dtail ([]   :# [y]) = [] :# []
+dtail ([x]  :# ys ) = reverse (drop_half ys) :# take_half ys
+dtail (x:xs :# ys ) = xs :# ys
+
+dlast (xs  :# y:ys) = y
+dlast ([x] :# []  ) = x
+
+dinit ([x] :# []  ) = [] :# []
+dinit (xs  :# [y] ) = take_half xs :# reverse (drop_half xs)
+dinit (xs  :# y:ys) = xs :# ys  
+
+dreverse (xs :# ys) = (ys :# xs)
+
+([] :# []) +++ deq = deq
+deq +++ ([] :# []) = deq
+(xs :# ys) +++ (bs :# cs) = (xs++reverse ys) :# (cs++reverse bs)
+
+dfoldr (*) e seq = f seq
+	where f seq | nil seq  = e
+		    | otherwise = dhead seq * f (dtail seq)
+
+dfoldl (*) e seq = f seq
+	where f seq | nil seq  = e
+		    | otherwise = f (dinit seq) * dlast seq
+
+instance Eq a => Eq (Deque a) where
+    (xs :# ys) == (as :# bs)  =  xs++reverse ys  ==  as++reverse bs
+

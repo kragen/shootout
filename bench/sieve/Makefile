@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2004-10-05 02:29:40 bfulgham Exp $
+# $Id: Makefile,v 1.15 2004-10-07 07:18:19 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sieve
@@ -13,6 +13,8 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 300,600,900,1200 \
 	  --ignore sieve.bash \
-	  --ignore sieve.csharp
+	  --ignore sieve.csharp \
+	  --ignore sieve.hugs \
+	  --ignore sieve.nhc98
 
 include ../../Make.footer

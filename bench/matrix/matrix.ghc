@@ -1,46 +1,41 @@
--- $Id: matrix.ghc,v 1.1 2004-05-19 18:10:33 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
--- from Julian Assange
-
--- TBD: try rewrite with STUArray or IOUArray?
+-- $Id: matrix.ghc,v 1.2 2004-10-07 07:17:58 bfulgham Exp $
+-- http://shootout.alioth.debian.org/
+-- originally from Julian Assange, but
+-- rewritten by Malcolm Wallace
 
 module Main(main) where
 import System(getArgs, exitWith, ExitCode(..))
 import Numeric(readDec)
 import List(transpose)
+
 main = do
        arg <- getArgs
-       case arg of
-            [number] -> putStrLn (disp m 0 0 ++ " " ++
-				  disp m 2 3 ++ " " ++
-				  disp m 3 2 ++ " " ++
-				  disp m 4 4)
-		          where
-			  disp m row col  = show (m!!row!!col)
-			  m = powmat (fst (head (readDec number)))
-            _        -> exitWith (ExitFailure 1)
+       let n = case arg of [n] -> (fst.head.readDec) n; _ -> 1
+           m1 = mkmat size
+           m2 = m1
+           mm = strictlast (zipWith mmult (replicate n m1) (replicate n m2))
+       putStrLn (disp mm 0 0 ++ " " ++
+		  disp mm 3 2 ++ " " ++
+		  disp mm 2 3 ++ " " ++
+		  disp mm 4 4)
+    where
+	  disp m row col  = show (m!!row!!col)
+
+strictlast [x] = x
+strictlast (x:xs) | force x = strictlast xs
+force [] = True
+force (x:xs) | inner x = force xs
+inner [] = True
+inner (x:xs) = x `seq` inner xs
 
 size = 30
-
--- ghc is able to optimize out enough invariants so that the
--- traditional form this test runs in O(1)
---
--- this would have ghc trounce all other entrants, so to get
--- closer to the general meaning of the test, we cascade
--- matrix multiplications. this means the results are, by necessity,
--- different, but involve just as many mmults. i.e for n=1 the results
--- are identical.
-
-powmat n = power n (mmult . transpose $ mkmat size) (mkmat size)
-    where
-    power n f | n > 0     = f . (power (n-1) f)
-              | otherwise = id
-    mkmat x    = [[(y-1)*x+1..y*x]| y <- [1..x]]
-    mmult a b  = [[dot row col 0 | col <- a]| row <- b]
-	       where
+mkmat x    = [[(y-1)*x+1..y*x]| y <- [1..x]]
+mmult a b  = [[dot row col 0 | col <- a]| row <- transpose b]
+       where
 	       dot :: [Int] -> [Int] -> Int -> Int
 	       dot (x:xs) (y:ys) z = dot xs ys (z + x*y)
-	       dot  _      _     z = z 
+	       dot  _      _     z = z
 
 -- slightly slower transposing mmult in one line:
 --  mmult a b  = [[sum$zipWith (*) row col 0 | col <- transpose a]| row <-b]
+
