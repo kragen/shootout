@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
 <?
-printf('<div><p><span class="s">(Save Target As&#133; Save Link As&#133;)</span> <a href="%s" title="Save %s As&#133;">%s</a></p></div>', $Download,$Title,$Title);   
+printf('<div><p><span class="s">(Save Target As&#8230; Save Link As&#8230;)</span> <a href="%s" title="Save %s As&#8230;">%s</a></p></div>', $Download,$Title,$Title);   
 ?>
 
 <div> 
