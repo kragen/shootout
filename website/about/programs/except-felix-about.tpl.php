@@ -1,0 +1,1 @@
+<p><b>NOT ACCEPTED:</b> Program should use exception handling.</p>
