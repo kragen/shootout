@@ -68,7 +68,7 @@ local function makeRepeatFasta(id,desc,s,n)
 end
 
 
--- Main -- define alphabets, make 5 fragments
+-- Main -- define alphabets, make 3 fragments
 
 local homosapiens = { 
     { c = "a", p = 0.3029549426680 }
@@ -113,12 +113,8 @@ local alu =
 
 local n = tonumber(arg and arg[1]) or 1000
 
-makeRepeatFasta('ONE','Homo sapiens alu',alu,n*1)
+makeRepeatFasta('ONE','Homo sapiens alu',alu,n*2)
 
-makeRandomFasta('TWO','IUB ambiguity codes',iub,n*2)
+makeRandomFasta('TWO','IUB ambiguity codes',iub,n*3)
 
-makeRandomFasta('THREE','Homo sapiens frequency',homosapiens,n*3)
-
-makeRandomFasta('FOUR','IUB ambiguity codes',iub,n*4)
-
-makeRandomFasta('FIVE','Homo sapiens frequency',homosapiens,n*5)
+makeRandomFasta('THREE','Homo sapiens frequency',homosapiens,n*5)

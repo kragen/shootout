@@ -52,7 +52,7 @@ end
 
 -- Read FASTA, extract selected fragments, write reverse complement
 
-local sequence = { ONE = 1, FOUR = 1, FIVE = 1 }
+local sequence = { ONE = 1, TWO = 1, THREE = 1 }
 
 local fragment, id, desc, found = "", "", "", false
 
