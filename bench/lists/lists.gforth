@@ -1,0 +1,95 @@
+\ -*- mode: forth -*-
+\ $Id: lists.gforth,v 1.1 2004-05-25 03:22:00 bfulgham Exp $
+\ http://www.bagley.org/~doug/shootout/
+\ from Anton Ertl
+
+0. argc @ 1- arg >number 2drop drop constant NUM
+
+10000 constant SIZE
+
+struct
+    cell% field list-next
+    cell% field list-val
+end-struct list%
+
+: make-list ( -- list )
+    0 0 SIZE -do ( tail )
+	list% %alloc
+	i over list-val !
+	tuck list-next !
+	1 -loop
+;
+
+: copy-list ( list1 -- list2 )
+    0 { w^ list2 }
+    list2 begin ( list1' list2p' )
+	over
+    while
+	list% %alloc dup >r swap ! ( list1' R: list2' )
+	dup list-val @ r@ list-val !
+	list-next @ r> list-next ( list1'' list2p'' )
+    repeat
+    off drop list2 @ ;
+
+: move-head-to-tail ( list1 -- list2 )
+    \ somehow this is an expensive noop
+    0 { w^ list2 }
+    list2 begin ( list1' list2p' )
+	over
+    while
+	\ move one element
+	over list-next dup @ 2>r ( list1' list2p' R: list2p'' list1'' )
+	over list-next off
+	! r> r>
+    repeat
+    off drop list2 @ ;
+
+: nreverse ( list1 -- list2 )
+    \ destructive reverse
+    0 swap begin ( list2' list1' )
+	dup
+    while
+	dup list-next @ >r ( list2' list1' R: list1'' )
+	tuck list-next ! r> ( list1' list1'' )
+    repeat
+    drop ;
+
+: move-tail-to-tail ( list1 -- list2 )
+    \ use head-to-tail instead of head-to-head nreverse
+    nreverse move-head-to-tail ;
+
+: list-equals ( list1 list2 -- f )
+    begin ( l1' l2' )
+	dup
+    while
+	over
+    while
+	over list-val @ over list-val @ <> if
+	    2drop false exit
+	endif
+	list-next @ swap list-next @ ( symmetric )
+    repeat then
+    = ;
+
+: list-length ( list -- n )
+    0 begin ( l' n' )
+	over
+    while
+	1+ swap list-next @ swap
+    repeat
+    nip ;
+
+s" wrong result" exception constant wrong-result
+
+: main ( -- n )
+    0 NUM 0 ?do
+	drop
+	make-list dup copy-list ( list1 list2 )
+	move-head-to-tail move-tail-to-tail swap nreverse ( list2 list1 )
+	dup list-val @ SIZE <> wrong-result and throw
+	tuck list-equals 0= wrong-result and throw
+	list-length
+    loop ;
+
+main 0 .r cr bye
+
