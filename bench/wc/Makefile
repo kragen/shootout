@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2004-11-23 08:08:47 bfulgham Exp $
+# $Id: Makefile,v 1.20 2005-03-17 22:06:45 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -6,7 +6,7 @@ TITLE   := Count Lines/Words/Chars
 
 #XLABEL  := N (number of copies of input data)
 
-GHCOPTS := -O2 -package lang
+GHCOPTS := -package lang
 #MB_GHCRTS  := +RTS -M200m -K10m
 MB_GHCRTS  := +RTS -G1
 STALINOPTS := -q

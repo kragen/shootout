@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2005-03-06 17:38:27 ekarttun-guest Exp $
+# $Id: Makefile,v 1.22 2005-03-17 22:06:44 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -12,7 +12,7 @@ MONOOPTS := --unsafe
 OO2COPTS := -A 
 POLYOPTS := -q
 MB_NHCRTS := +RTS -H40M
-GHCOPTS := -O2 -fexcess-precision
+GHCOPTS := -fexcess-precision
 
 ERLFLAGS := -noinput
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

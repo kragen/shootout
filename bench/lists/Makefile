@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2004-11-10 06:43:53 bfulgham Exp $
+# $Id: Makefile,v 1.26 2005-03-17 22:06:45 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := lists
@@ -11,7 +11,7 @@ ERLFLAGS := -noinput
 NHC98OPTS := -package base
 MB_NHCRTS := +RTS -H10M -RTS
 OO2COPTS := -A --no-rtc
-GHCOPTS  := -O2 -package data
+GHCOPTS  := -package data
 POLYOPTS := -q
 RUNTESTS := $(MINIBENCH) --conf ./Minibench.conf \
 	  --range 4,8,12,16,18

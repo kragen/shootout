@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2004-11-23 08:08:43 bfulgham Exp $
+# $Id: Makefile,v 1.27 2005-03-17 22:06:44 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -9,7 +9,7 @@ LOCDEPS := --dep=gcc:../Include/simple_hash.h
 MLTONDEPS := ../../Include/mlton-src/basic.sml \
 		../../Include/mlton-src/hash-table.sml
 
-GHCOPTS := -package data -O2
+GHCOPTS := -package data
 MB_GHCRTS  := +RTS -K10000000
 NHC98OPTS := -package base
 MB_NHCRTS := +RTS -H40M
