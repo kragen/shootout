@@ -17,11 +17,12 @@ module FL64 : SCALAR = struct
   let (//) x y = x /. y
   let mk = float
   let mf x = x
-  let pr = Printf.sprintf "%.14e"
+  let pr = Printf.sprintf "%.12e"
 end;;
 
 module FL : SCALAR = struct
   type f = float
+  let pr = Printf.sprintf "%.2e"
   let mf x =
     if x=0.0 then 0.0 else
     let k = truncate (log (abs_float x)) in
@@ -32,7 +33,6 @@ module FL : SCALAR = struct
   let (--) x y = mf (x -. y)
   let ( ** ) x y = mf (x *. y)
   let (//) x y = mf (x /. y)
-  let pr = Printf.sprintf "%.14e"
 end;;
 
 module C =
@@ -52,6 +52,8 @@ module C =
 	y=F.(//) (F.(--) (F.( ** ) a.y b.x) (F.( ** ) a.x b.y)) mag }
     let pr a = (F.pr a.x) ^ " " ^ (F.pr a.y)
 end;;
+
+let count = ref 0
 
 module Functions =
   functor (F : SCALAR) -> struct
@@ -85,19 +87,26 @@ module Functions =
 	  let v=g (vr !x (F.mk 1)) in
 	  x:=F.(--) !x (F.(//) v.x v.dx)
 	done; !x
-      let trapezoid_method_rooter g y0 t0 t1 =
+      let trapezoid_method_rooter gad gf y0 t0 t1 =
 	let z0=F.mk 0 in
 	let vt0=vr t0 z0 and
 	    vt1=vr t1 z0 and
-	    vy0=vr y0 z0 in
-	let g0 = g vt0 vy0 in
-	let foo y1 = ((g vt1 y1)++g0)**(vt1--vt0)//(mk 2)++vy0--y1 in
+	    dt2=vr (F.(//) (F.(--) t1 t0) (F.mk 2)) z0 and
+	    vy0=vr y0 z0 and
+	    g0 = gf t0 y0 in
+	let vg0=vr g0 z0 in
+	let foo y1 = 
+	  let ret = ((gad vt1 y1)++vg0)**dt2++vy0--y1 in
+(*	  print_string ("t0 " ^ (F.pr t0) ^ " t1 " ^ (F.pr t1) ^ " y0 " ^
+			(F.pr y0) ^ " g0 " ^ (F.pr g0) ^ " y1 " ^ (pr y1) ^ " ret " ^ 
+			(pr ret) ^ " raz " ^ (pr raz) ^ "\n") ; *)
+	  ret in
 	foo
-      let trapezoid_method t0 dt y0 g numsteps =
+      let trapezoid_method t0 dt y0 gad gf numsteps =
 	let y = ref y0 and
 	    t = ref t0 in
 	for i = 1 to numsteps do
-	  y:=newton !y 10 (trapezoid_method_rooter g !y !t (F.(++) !t dt));
+	  y:=newton !y 10 (trapezoid_method_rooter gad gf !y !t (F.(++) !t dt));
 	  t:=F.(++) !t dt;
 	done; !y
     end;;
@@ -109,12 +118,16 @@ module Integrate_functions =
     module AD = Funs.AD
     module ADFuns = Functions(AD)
     open F
-    let sqrintegrand t y = ADFuns.sqr y
-    let ratintegrand t y = AD.(--) (ADFuns.rat y) t
+    let sqrintegrandad t y = ADFuns.sqr y
+    let sqrintegrandf t y = Funs.sqr y
+    let ratintegrandad t y = AD.(--) (ADFuns.rat y) t
+    let ratintegrandf t y = F.(--) (Funs.rat y) t
     let integrate_functions x0 n =
       let dt = (mk 1) // (mk n) in
-      print_string ("i1 "^(pr (AD.trapezoid_method (mk 1) dt x0 sqrintegrand n))^"\n");
-      print_string ("i2 "^(pr (AD.trapezoid_method (mk 1) dt x0 ratintegrand n))^"\n")
+      print_string ("i1 "^(pr 
+	 (AD.trapezoid_method (mk 1) dt x0 sqrintegrandad sqrintegrandf n))^"\n");
+      print_string ("i2 "^(pr
+	 (AD.trapezoid_method (mk 1) dt x0 ratintegrandad ratintegrandf n))^"\n")
   end;;
 
 module Funs = Functions(FL64);;
@@ -131,13 +144,14 @@ let _ = print_string ("newton-rat: "^
 
 let pfl64 = FL64.mf 0.02;;
 let pfl = FL.mf 0.02;;
+let n = int_of_string(Sys.argv.(1))
 module I1 = Integrate_functions(FL64);;
-let _ = I1.integrate_functions pfl64 200;;
+let _ = I1.integrate_functions pfl64 (n*4);;
 module I2 = Integrate_functions(FL);;
-let _ = I2.integrate_functions pfl 50;;
+let _ = I2.integrate_functions pfl n;;
 module CFL64=C(FL64);;
 module CFL=C(FL);;
 module I3 = Integrate_functions(CFL64);;
-let _ = I3.integrate_functions (CFL64.mc pfl64 pfl64) 50;;
+let _ = I3.integrate_functions (CFL64.mc pfl64 pfl64) n;;
 module I4 = Integrate_functions(CFL);;
-let _ = I4.integrate_functions (CFL.mc pfl pfl) 50;;
+let _ = I4.integrate_functions (CFL.mc pfl pfl) n;;
