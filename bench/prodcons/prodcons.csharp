@@ -1,76 +1,88 @@
-// $Id: prodcons.csharp,v 1.2 2004-06-20 08:39:46 bfulgham Exp $
-// http://shootout.alioth.debian.org/
-
-// based on a sample from the Microsoft .NET SDK Documentation
+/*
+   The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy
+*/
 
 using System;
 using System.Threading;
-using System.Collections;
 
-class _prodcons {
+class ProdCons
+{
+   private class Buffer 
+   {
+      private int m_contents = -1;
+      private bool m_available = false;
 
-    private int   m_produced = 0;
-    private int   m_consumed = 0;
-    private int   m_count = 0;
-    private Queue m_smplQueue;
-    
-    public _prodcons(int count) {
-        m_count = count;
-        m_smplQueue = new Queue(); 
-    }
+      public int Get(){
+         lock(this)
+         {
+            if (!m_available) Monitor.Wait(this);
+            m_available = false;
+            Monitor.Pulse(this);
+         }
+         return m_contents;
+      }
 
-    public void Producer() {
-        lock(m_smplQueue) {
-            while(m_produced < m_count) {
-               //Wait, if the queue is busy.
-               Monitor.Wait(m_smplQueue);
-               //Push one element.
-               m_smplQueue.Enqueue(m_produced);
-               //Release the waiting thread.
-               Monitor.Pulse(m_smplQueue);   
-               m_produced++;
-            }
-        }
-    }
+      public void Put(int value){
+         lock(this)
+         {
+            if (m_available) Monitor.Wait(this);
+            m_contents = value;
+            m_available = true;
+            Monitor.Pulse(this);
+         }
+      }
+   }
 
-    public void Consumer() {
 
-        while(m_consumed < m_count) {
-            lock(m_smplQueue) {
-                Monitor.Pulse(m_smplQueue);
-                while(Monitor.Wait(m_smplQueue,1000)) {
-                    //Pop the first element.
-                    m_smplQueue.Dequeue();
-                    //Release the waiting thread.
-                    Monitor.Pulse(m_smplQueue);
-                    m_consumed++;
-                }
-            }
-        }
-    }
-   
-    public void run() {         
-         //Create the first thread.
-         Thread tProducer = new Thread(new ThreadStart(this.Producer));
-         //Create the second thread.
-         Thread tConsumer = new Thread(new ThreadStart(this.Consumer));
-         //Start threads.
-         tProducer.Start();
-         tConsumer.Start();
-         //wait to the end of the two threads
-         tProducer.Join();
-         tConsumer.Join();         
-         //Print the number of the queue elements.
-         Console.WriteLine(this.m_produced.ToString() + " " + this.m_consumed.ToString());     
-    }
-}
+   // Could create separate Producer and Consumer classes
+   // Instead add the members and methods to ProdCons class
+   private Buffer b;
+   private int n = 0;
+   private static int produced = 0, consumed = 0;
 
-class prodcons {
-    public static int Main(String[] args) {
-        int n;
-        n = System.Convert.ToInt32(args[0]);
-        if(n < 1) n = 1;
-        new _prodcons(n).run();
-        return 0;
-    }
+   private ProdCons(Buffer sharedBuffer, int nTimes) {
+      b = sharedBuffer;
+      n = nTimes;
+   }
+
+   private void Produce() {
+      for (int i = 0; i < n; i++){
+         b.Put(i);
+         ++produced;
+      }
+   }
+
+   private void Consume() {
+      for (int i = 0; i < n; i++){
+         b.Get();
+         ++consumed;
+      }
+   }
+
+
+   static void Main(string[] args)
+   {
+      // Get the number of iterations
+      int n = 1;
+      if (args.Length > 0) n = Int32.Parse(args[0]); 
+
+      Buffer sharedBuffer = new Buffer();
+      //create producer and consumer
+      ProdCons producer = new ProdCons(sharedBuffer, n);
+      ProdCons consumer = new ProdCons(sharedBuffer, n);
+
+      //start producer and consumer threads
+      Thread tProducer = new Thread(new ThreadStart( producer.Produce ));
+      Thread tConsumer = new Thread(new ThreadStart( consumer.Consume ));
+      tProducer.Start();
+      tConsumer.Start();
+
+      // wait on both threads
+      tProducer.Join();
+      tConsumer.Join();
+
+        Console.WriteLine("{0} {1}", ProdCons.produced, ProdCons.consumed);
+   }
 }

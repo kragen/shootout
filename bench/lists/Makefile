@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-06-18 08:08:23 dbr-guest Exp $
+# $Id: Makefile,v 1.9 2004-06-21 07:24:00 bfulgham Exp $
 include ../../Make.header
 
 TEST    := lists
@@ -10,7 +10,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,4,8,12,16 \
-	  --ignore lists.cmucl \
 	  --ignore lists.ghc \
 	  --ignore lists.guile \
 	  --ignore lists.mercury

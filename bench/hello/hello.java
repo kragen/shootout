@@ -1,5 +1,5 @@
-// $Id: hello.java,v 1.1 2004-05-23 07:03:09 bfulgham Exp $
-// http://www.bagley.org/~doug/shootout/
+// $Id: hello.java,v 1.2 2004-06-21 07:24:00 bfulgham Exp $
+// http://shootout.alioth.debian.org/
 
 public class hello {
     public static void main(String args[]) {
