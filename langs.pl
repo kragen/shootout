@@ -84,7 +84,7 @@
        Down => 'http://www.cs.kun.nl/~clean/Download/main/main.htm',
        Type => 'native compiled',
        Verfun => sub {
-	   my $ver = "2.1";
+	   my $ver = "Clean 2.1";
 	   return($ver);
        },
      },
@@ -243,6 +243,17 @@
        },
      },
 
+     php =>
+     { Lang => 'PHP',
+       Home => 'http://www.php.net/',
+       Down => 'http://www.php.net/downloads.php',
+       Type => 'interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{PHP} -v`;
+	   return("PHP $ver");
+       },
+     },
+
      perl =>
      { Lang => 'Perl',
        Home => 'http://www.perl.org/',
@@ -275,6 +286,17 @@
        Type => 'bytecomped/interpreted',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{PYTHON} -c 'import sys; print "Python %d.%d.%d" % sys.version_info[0:3]'`);
+	   return($ver);
+       },
+     },
+
+     rep =>
+     { Lang => 'Lisp',
+       Home => 'http://librep.sourceforge.net/',
+       Down => 'ftp://librep.sourceforge.net/pub/librep/',
+       Type => 'bytecomped/interpreted',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{REP} --version`);
 	   return($ver);
        },
      },
