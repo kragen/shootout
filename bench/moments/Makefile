@@ -1,13 +1,17 @@
-# $Id: Makefile,v 1.1 2004-05-19 18:10:50 bfulgham Exp $
+# $Id: Makefile,v 1.2 2004-05-24 02:23:25 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
 TITLE   := Statistical Moments
 
+GCCOPTS := -lm
+
 #XLABEL  := N (number of copies of input data)
 
-MLTONDEPS := /usr/local/smlnj/src/smlnj-lib/Util/array-sort-sig.sml \
-             /usr/local/smlnj/src/smlnj-lib/Util/array-qsort.sml
+#MLTONDEPS := /usr/local/smlnj/src/smlnj-lib/Util/array-sort-sig.sml \
+#             /usr/local/smlnj/src/smlnj-lib/Util/array-qsort.sml
+MLTONDEPS := ../../Include/sml-src/array-sort-sig.sml \
+	     ../../Include/sml-src/array-qsort.sml
 
 MB_GHCRTS  := +RTS -K2046000
 
