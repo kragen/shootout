@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2004-10-05 02:29:34 bfulgham Exp $
+# $Id: Makefile,v 1.16 2004-10-06 07:26:58 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -19,7 +19,7 @@ POLYOPTS := -q
 #	  --ignore random.bigforth,random.icon,random.rep,random.njs \
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --ignore random.bash,random.bigforth,random.njs,random.csharp,random.nhc98 \
+	  --ignore random.bash,random.bigforth,random.njs,random.csharp \
 	  --range 9000,300000,600000,900000
 
 include ../../Make.footer
