@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: wc.tcl,v 1.1 2004-05-19 18:13:52 bfulgham Exp $
+# $Id: wc.tcl,v 1.2 2005-03-30 22:22:23 sgeard-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 
 # this program is modified from:
@@ -11,20 +11,23 @@
 # Modified by Miguel Sofer
 
 proc main {} {
-    set nl 0
-    set nc 0
-    set nw 0
+    foreach {nl nc nw inword} {0 0 0 0} break
 
-    while {1} {
-	set data [read stdin 4096]
-	if {![string length $data]} {break}
-	if {[gets stdin extra] >= 0} {
-	    append data $extra
-	    incr nc
-	}
+    while {[set data [read stdin 4096]] != {}} {
 	incr nc [string length $data]
-	incr nw [regexp -all {(?:^|\s)\S} $data]
-	incr nl [regexp -all -line {^} $data]
+	set T1 [split $data "\n\r\t "]
+	set T2 [lsearch -all -inline -exact -not $T1 {}]
+	if {$inword && ([lindex $T1 0] == {})} {incr nw}
+	set inword 0
+	if {[llength $T2]} {
+	    incr nw [llength $T2]
+	    if {[lindex $T1 end] != {}} {
+		incr nw -1
+		set inword 1
+	    }
+	}
+	incr nl [llength [split $data "\n\r"]]
+	incr nl -1
     }
     puts "$nl $nw $nc"
 }
