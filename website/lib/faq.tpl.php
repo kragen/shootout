@@ -87,6 +87,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 <li>update the status of removed <em>Closed items</em> to <em>Deleted</em></li>
 </ol>
 </p>
+<p>And other chores listed in the <a href="miscfile.php?sort=<?=$Sort;?>&file=committerfaq&title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
 <p>Do you have the necessary programming language knowledge?<br/>
 Do you want to help with the chores?<br/>
 Contact us!</p>

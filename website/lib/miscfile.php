@@ -16,10 +16,10 @@ $Page->set('PageTitle', $T.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('PageBody', BLANK);
-$Page->set('Sort', $S);
+$Page->set('Sort', $S);$Misc = & new Template(LIB_PATH);$Misc->set('ROOT', CORE_SITE);
 $Body = & new Template(LIB_PATH); 
 $Body->set('Title', $T);
-$Body->set('MiscFile', MISC_PATH.$F.'.php');
+$Body->set('MiscBody', $Misc->fetch(MISC_PATH.$F.'.php'));
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
 $Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
 echo $Page->fetch('page.tpl.php');
