@@ -243,6 +243,18 @@
        },
      },
 
+     felix =>
+     { Lang => 'Felix',
+       Home => 'http://felix.sourceforge.net/',
+       Down => 'http://felix.sourceforge.net/download.html',
+       Type => 'native compiled',
+       Ext  => 'c',
+       Verfun => sub {
+	   my $ver = `$ENV{FELIX} --version 2>&1`;
+	   return($ver);
+       },
+     },
+
      gforth =>
      { Lang => 'Forth',
        Home => 'http://www.jwdt.com/~paysan/gforth.html',
@@ -726,6 +738,7 @@
      'Forth'       => 'forth',
      'Haskell'     => 'dash',
      'Dylan'       => 'c',
+     'Felix'       => 'c',
      'Icon'        => 'shell',
      'Lua'         => 'dash',
      'Mercury'     => 'prolog',

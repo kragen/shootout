@@ -1,0 +1,87 @@
+#line 107 "lpsrc/flx_bagley.ipk"
+include "std";
+
+//
+//  Contributed by John Skaller
+//
+var n = atoi(System::argv 1);
+//print "phone_numbers "; print n; endl;
+
+open Lexer;
+
+regexp digit = ["0123456789"];
+regexp digits3 = digit digit digit;
+regexp digits4 =  digits3 digit;
+
+regexp area_code = digits3 | "(" digits3 ")";
+regexp exchange = digits3;
+
+regexp phone = area_code " " exchange (" " | "-") digits4;
+
+// Felix, like Python, provides no literals of char type
+zero := ord("0".[0]);
+nine := ord("9".[0]);
+
+// Felix regular matching currently only supports
+// actual regular sets of strings -- it does not support
+// lookback or lookahead because they're not regular
+//
+// So we have to hand code the context check.
+//
+fun check_context(start: iterator, finish: iterator): string =
+{
+  prior :=  ord(deref(start-1));
+  next := ord(deref(finish));
+  return
+    if zero <= prior &<= nine
+    or zero <= next &<= nine
+    then ""
+    else string_between(start, finish)
+    endif
+  ;
+}
+
+// this is the actual lexer function
+fun lexit (start:iterator, finish:iterator): iterator * string =>
+  reglex start to finish with
+  | phone => check_context (lexeme_start, lexeme_end)
+  | _ => ""
+  endmatch
+;
+
+// hack so context_check won't crash (pre- and append space)
+val data = " " + Text_file::load("bagley/data/phone_numbers.data")+" ";
+first := Lexer::start_iterator data;
+finish := Lexer::end_iterator data;
+
+
+while {n>1} {
+  var current = first;
+  while {current != finish} {
+    def current, val s = lexit(current, finish);
+  };
+  --n;
+};
+
+proc print_phone(x:string, j:int) {
+  n := len x;
+  var s = "";
+  var i = 0;
+  while {i<n} {
+    if zero <= ord(x.[i]) &<= nine
+    then { s = s + ord(x.[i]); }
+    else {}
+    endif;
+    ++i;
+  };
+  print j; print ": ";
+  print ("("+s.[0 to 3]+") "+s.[3 to 6]+" "+s.[6 to 10]); endl;
+}
+
+var current = first;
+var j = 0;
+while {current != finish} {
+ def current, val s = lexit(current, finish);
+ if s != "" then { ++j; print_phone (s,j); } else {} endif;
+};
+

@@ -21,6 +21,7 @@
         <div><a href="../../lang/xemacs/">xemacs</a></div>
         <div><a href="../../lang/hipe/"><b><i>hipe</i></b></a></div>
         <div><a href="../../lang/erlang/">erlang</a></div>
+        <div><a href="../../lang/felix/"><b><i>felix</i></b></a></div>
         <div><a href="../../lang/gforth/">gforth</a></div>
         <div><a href="../../lang/ghc/"><b><i>ghc</i></b></a></div>
         <div><a href="../../lang/curry/"><b><i>curry</i></b></a></div>

@@ -150,6 +150,15 @@ elastiC version: 0.0.36 (dec: 36)
       'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.3'
     ),
 
+    'felix' => array(
+      'Lang'    => 'Felix',
+      'Home'    => 'http://felix.sourceforge.net/',
+      'Down'    => 'http://felix.sourceforge.net/download.html',
+      'Type'    => 'native compiled',
+      'Version' => '1.0.9
+'
+    ),
+
     'gforth' => array(
       'Lang'    => 'Forth',
       'Home'    => 'http://www.jwdt.com/~paysan/gforth.html',
