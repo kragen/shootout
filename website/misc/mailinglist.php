@@ -6,19 +6,14 @@
          <p>shootout-list is a mailing list for all aspects of the "The Great Computer Language Shootout":  
             suggestions, problems, new languages, unfair programs,&#133;
          </p>
+         <p>Email from subscribers will be posted to the shootout-list; email from non-subscribers will not reach the shootout-list. 
+         </p>         
          <p>
             <b>Read the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">shootout-list archives</a></b>.
          </p>
       </td>
    </tr>
-   <tr><td colspan="3"><h4 class="rev">&nbsp;Post&nbsp;a&nbsp;message</h4></td></tr>
-   <tr>
-      <td colspan="3">
-         <p>Post a message to all the list members, by sending email to 
-            <a href="mailto:shootout-list@lists.alioth.debian.org">shootout-list@lists.alioth.debian.org</a>
-         </p>
-      </td>
-   </tr>
+
    <tr><td colspan="3"><h4 class="rev">&nbsp;Subscribe&nbsp;to&nbsp;shootout-list</h4></td></tr>
    <tr>
       <td colspan="3">         
@@ -30,6 +25,7 @@
          </p>         
       </td>
    </tr>
+
    <tr>
       <td colspan="2">Your&nbsp;email&nbsp;address:</td>
       <td><input type="text" name="email" size="30"></td>
@@ -59,8 +55,19 @@
       <td><input type="submit" name="email-button" value="Subscribe"></td>
    </tr>
    <tr><td colspan="3">&nbsp;</td></tr> 
+   
+   <tr><td colspan="3"><h4 class="rev">&nbsp;Post&nbsp;a&nbsp;message</h4></td></tr>
+   <tr>
+      <td colspan="3">
+         <p>Subscribers can post a message to all the list members, by sending email to 
+            <a href="mailto:shootout-list@lists.alioth.debian.org">shootout-list@lists.alioth.debian.org</a>
+         </p>
+      </td>
+   </tr>   
+      
 </table>
 </form>      
+
       
 <form method="post" action="http://lists.alioth.debian.org/mailman/subscribe/shootout-list">      
 <table width="100%">     
@@ -79,6 +86,7 @@
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>
 </form>          
+
 
 <form method="post" action="http://lists.alioth.debian.org/mailman/roster/shootout-list">      
 <table width="100%">     
@@ -102,7 +110,9 @@
    </tr>      
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>
-</form>
+</form>
+
+
 <table width="100%">     
    <tr><td colspan="3"><h4 class="rev">&nbsp;about&nbsp;shootout-list</h4></td></tr> 
    <tr>
