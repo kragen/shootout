@@ -2,3 +2,4 @@
 
 <p>For more information see Eric W. Weisstein, "Mandelbrot Set." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/MandelbrotSet.html">http://mathworld.wolfram.com/MandelbrotSet.html</a></p>
 
+<p>Thanks to Greg Buchholz for this benchmark.</p>
