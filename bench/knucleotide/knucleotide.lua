@@ -18,7 +18,7 @@ local function kFrequency(s,freq,k,frame)
 end
 
 
-local function frequency(id,desc,s,k)
+local function frequency(s,k)
    local freq = {}
    for i = 1,k do kFrequency(s,freq,k,i) end
 
@@ -66,8 +66,8 @@ end
 local sequence = string.upper(table.concat(allLines))
 
 
-frequency(id,desc,sequence,1) 
-frequency(id,desc,sequence,2) 
+frequency(sequence,1) 
+frequency(sequence,2) 
 
 count(sequence,"GGT")
 count(sequence,"GGTA")

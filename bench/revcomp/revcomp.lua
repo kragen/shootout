@@ -23,8 +23,8 @@ local iubComplement = {
    }
   
 
-local function writeFasta(id,desc,a)
-   io.write(">",id," ",desc,"\n")
+local function writeFasta(desc,a)
+   io.write(desc,"\n")
     
    local n, m, length, i = string.len(a), 0, 60, 1
    while i <= n do
@@ -50,37 +50,25 @@ local function reverseComplement(a)
 end
 
 
--- Read FASTA, extract selected fragments, write reverse complement
+-- Read FASTA, extract fragment, write reverse complement
 
-local sequence = { ONE = 1, TWO = 1, THREE = 1 }
-
-local fragment, id, desc, found = "", "", "", false
-
+local desc = ""
+local fragment = {""}
 for line in io.lines() do
    local c = string.sub(line,1,1)
 
    if c == ">" then 
-      if string.len(fragment) > 0 then 
-         writeFasta(id,desc, reverseComplement(fragment))
-      end
-      fragment = ""
+      if string.len(desc) > 0 then 
+         writeFasta(desc, reverseComplement( table.concat(fragment) ))
+         fragment = {""}
+      end   
+      desc = line   
 
-      local i = string.find(line," ",2)
-      if i then 
-         id = string.sub(line,2, i-1); 
-         desc = string.sub(line,i+1, string.len(line)); 
-      else
-         id = string.sub(line,2, string.len(line)); 
-         desc = ""
-      end
-
-      found = sequence[id]
-
-   elseif c ~= ";" and found then 
-      fragment = fragment .. line
+   elseif c ~= ";" then 
+      table.insert(fragment,line)   
    end
 end
 
-if string.len(fragment) > 0 then 
-   writeFasta(id,desc, reverseComplement(fragment))
+if string.len(desc) > 0 then 
+   writeFasta(desc, reverseComplement( table.concat(fragment) ))
 end

@@ -8,8 +8,8 @@
 
   <li>define a procedure/function to update a <b>hashtable</b> of k-nucleotide keys and count values, for a particular reading-frame &#8212; even though we'll combine k-nucleotide counts for all reading-frames</li>
 
-  <li>write the code and percentage frequency, for 1-nucleotide and 2-nucleotide, sorted by descending frequency</li>
-  <li>write the count and code, for specific 3- 4- 6- 12- and 18-nucleotide sequences</li>
+  <li>write the code and percentage frequency, for all the 1-nucleotide and 2-nucleotide sequences, sorted by descending frequency</li>
+  <li>count all the 3- 4- 6- 12- and 18-nucleotide sequences, and write the count and code for specific sequences</li>
 </ul>
 </p>
 

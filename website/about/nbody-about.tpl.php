@@ -7,3 +7,6 @@
 </p>
 
 
+<p>For background information see <a href="http://en.wikipedia.org/wiki/N-body_problem">N-body problem</a>.
+</p>
+
