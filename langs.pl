@@ -351,9 +351,15 @@
        Type => 'interpreted',
        Ext  => 'java',
        Verfun => sub {
-	   my $ver = `$ENV{KAFFE} -version 2>&1`;
-	   $ver =~ /(Version.*) Java Version.*/;
-	   return($1);
+	   my $out = `$ENV{KAFFE} -fullversion 2>&1`;
+	   $out =~ /Version: *([^ ]*) +Java Version.*/;
+	   my $ver = $1;
+	   if ($out =~ /ChangeLog head   : ([^ ]+)/) {
+	       my $date = $1;
+	       return("$ver ($date)");
+	   } else {
+	       return($ver);
+	   }
        },
      },
 
