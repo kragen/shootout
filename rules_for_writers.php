@@ -12,7 +12,7 @@ algorithms, languages, compare, cpu, memory" -->
 <table border="0" cellspacing="0" cellpadding="4" id="main" width="100%">
   <tr valign="top">
 <?php benchlist(".");
-  php nav_list_end(); ?>
+      nav_list_end(); ?>
   <td>
     <div id="bodycol">
       <div id="apphead"><h2>Rules for Benchmark Writers</h2></div>
