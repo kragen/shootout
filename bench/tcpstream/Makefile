@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-03-17 22:06:45 ekarttun-guest Exp $
+# $Id: Makefile,v 1.5 2005-04-01 00:32:33 bfulgham Exp $
 include ../../Make.header
 
 TEST    := tcpstream
@@ -10,6 +10,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 
 BIGLOOOPTS := -farithmetic
+OCAMLOPTS := unix.cmxa
+OCAMLBOPTS := unix.cma
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
 
