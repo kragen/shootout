@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2005-03-14 01:24:55 bfulgham Exp $
+# $Id: Makefile,v 1.20 2005-04-01 11:08:27 loisel-guest Exp $
 
 include Make.header
 
@@ -53,7 +53,7 @@ links-stamp:
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.erlang'`.hipe; \
 	done
 
-	 Ocaml and Ocamlb are the same
+	# Ocaml and Ocamlb are the same
 	for j in `find bench -name '*.ocaml'`; do \
 		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ocaml'`.ocamlb; \
 	done
