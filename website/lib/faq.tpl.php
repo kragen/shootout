@@ -53,14 +53,29 @@ Work-up from the bottom of Contribute Programs
 <li>Group: select the benchmark</li>
 <li>click the Submit button</li>
 </ol>
-Now, in a New Window, complete the <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"><strong>Contribute Programs form</strong></a>.
+Now, in a New Window, complete the <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New"><strong>Contribute Programs form</strong></a>.
 </p>
 </td></tr>
 
 <tr class="b"><td>How can I help with <strong>the chores</strong>?</td></tr>
 <tr><td>
-<p>
+<p>We need volunteers to
+<ul>
+<li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs tracker"><strong>browse Contribute Programs</strong></a> for <em>Open items</em></li>
+<li>check the <em>Open item</em> programs do what's required</li>
+<li>add acceptable <em>Open item</em> programs to CVS</li>
+<li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
+</ul>
 </p>
+<p>And we need them to
+<ul>
+<li>remove slower less-elegant programs from CVS</li>
+<li>update the status of removed <em>Closed items</em> to <em>Deleted</em></li>
+</ul>
+</p>
+<p>Do you have the necessary programming language knowledge?<br/>
+Do you want to help with the chores?<br/>
+Contact us!</p>
 </td></tr>
 
 <tr class="b"><td>How can I contribute a new benchmark?</td></tr>
@@ -72,7 +87,7 @@ Now, in a New Window, complete the <a href="https://alioth.debian.org/tracker/?f
 <li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
 </ul>
 And then, maybe, we just-might consider it.</p>
-<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html">mailing-list discussion</a>)</p>
+<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
 </td></tr>
 
 </table>
@@ -104,7 +119,7 @@ And then, maybe, we just-might consider it.</p>
 <tr><td><p>You can <strong>download</strong> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="">csv file of timings and memory use ~350KB</a>.</p></td></tr>
 
 <tr class="b"><td>Where can I see what other people think about the Language Shootout?</td></tr>
-<tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">mailing-list archives.</a></p></td></tr>
+<tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/" title="shootout-list archives">mailing-list archives.</a></p></td></tr>
 
 <tr class="b"><td>Where can I download the program sources and build scripts?</td></tr>
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.
