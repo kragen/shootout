@@ -33,6 +33,7 @@
         <div><a href="../../lang/lua/">lua</a></div>
         <div><a href="../../lang/oz/">oz</a></div>
         <div><a href="../../lang/nice/"><b><i>nice</i></b></a></div>
+        <div><a href="../../lang/oberon2/"><b><i>oberon2</i></b></a></div>
         <div><a href="../../lang/ocaml/"><b><i>ocaml</i></b></a></div>
         <div><a href="../../lang/ocamlb/">ocamlb</a></div>
         <div><a href="../../lang/php/">php</a></div>

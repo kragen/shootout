@@ -73,7 +73,7 @@ $LANGS = array(
       'Home'    => 'http://www.clip.dia.fi.upm.es',
       'Down'    => 'http://www.clip.dia.fi.upm.es/Software/Ciao/index.html#ciao/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Ciao-Prolog 1.9 #351: Sun Jun 27 19:50:42 PDT 2004'
+      'Version' => 'Ciao-Prolog 1.9 #351: Sat Jul 3 15:30:34 PDT 2004'
     ),
 
     'clean' => array(
@@ -118,8 +118,8 @@ $LANGS = array(
 
     'elastic' => array(
       'Lang'    => 'ElastiC',
-      'Home'    => 'http://www.elasticword.com/',
-      'Down'    => 'http://www.elasticword.com/',
+      'Home'    => 'http://www.elasticworld.com/',
+      'Down'    => 'http://www.elasticworld.com/',
       'Type'    => 'bytecomped/interpreted',
       'Version' => 'ecc version: 0.03
 elastiC version: 0.0.36 (dec: 36)
@@ -245,6 +245,15 @@ elastiC version: 0.0.36 (dec: 36)
       'Down'    => 'http://nice.sourceforge.net/install.html',
       'Type'    => 'native compiled',
       'Version' => 'Nice compiler version 0.9.6 (build 2004.03.05, 14:17:55 UTC)'
+    ),
+
+    'oberon2' => array(
+      'Lang'    => 'Oberon-2',
+      'Home'    => 'http://oo2c.sourceforge.net/',
+      'Down'    => 'http://oo2c.sourceforge.net/files',
+      'Type'    => 'native compiled',
+      'Version' => 'oo2c/gcc 2.1.3
+'
     ),
 
     'ocaml' => array(

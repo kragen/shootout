@@ -334,6 +334,18 @@
        },
      },
 
+     oberon2 =>
+     { Lang => 'Oberon-2',
+       Home => 'http://oo2c.sourceforge.net/',
+       Down => 'http://oo2c.sourceforge.net/files',
+       Type => 'native compiled',
+       Ext  => 'pas',
+       Verfun => sub {
+	   my $ver = `$ENV{OO2C} --version 2>&1`;
+	   return($ver);
+       },
+     },
+
      ocaml =>
      { Lang => 'Ocaml',
        Home => 'http://www.ocaml.org/',
@@ -641,6 +653,7 @@
      'Icon'        => 'shell',
      'Lua'         => 'dash',
      'Nice'        => 'c',
+     'Oberon-2'    => 'pascal',
      'Ocaml'       => 'ml',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',
