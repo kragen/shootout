@@ -1,0 +1,54 @@
+;;; The Great Computer Language Shootout
+;;;   http://shootout.alioth.debian.org/
+
+;;;   contributed by Yannick Gingras <ygingras@ygingras.net>
+
+;;;   for a colorful web zoomer for the Mandelbrot Set by the same
+;;;   author see http://fract.ygingras.net/
+
+
+(declaim (optimize speed (debug 0) (safety 0)))
+  
+(defun render (size &optional (stream *standard-output*))
+  (declare (type fixnum size)
+           (type stream stream))
+  (let* ((inc (/ 2.0 size))
+         (code 0)
+         (mask 128))
+    (declare (type (unsigned-byte 8) code)
+             (type (unsigned-byte 8) mask))
+    (format stream "P4~%~d ~d~%" size size)
+    (dotimes (y size)
+      (declare (type fixnum y))
+      (let ((base-imag (+ (* inc y) -1.0)))
+        (declare (type single-float base-imag))
+        (dotimes (x size)
+          (declare (type fixnum x))
+          (let* ((z #c(0.0 0.0))
+                 (c (complex (+ (* inc x) -1.5) base-imag))
+                 (imag 0.0)
+                 (real 0.0))
+            (declare (type (complex single-float) z)
+                     (type (complex single-float) c))
+            (when (not (dotimes (n 50)
+                         (when (< 4.0 (+ (* imag imag) (* real real)))
+                           (return t))
+                         (setf z (+ (* z z) c))
+                         (setf imag (imagpart z))
+                         (setf real (realpart z))))
+              (setf code (logior mask code)))
+            (setf mask (ash mask -1))
+            (when (zerop mask)
+              (setf mask 128)
+              (write-char (code-char code) stream)
+              (setf code 0))))))))
+
+(defun main ()
+  (let* ((args #+sbcl sb-ext:*posix-argv*
+               #+cmu extensions:*command-line-strings*
+               #+gcl si::*command-args*)
+         (n (parse-integer (car (last args)))))
+    (render n)))
+
+
+
