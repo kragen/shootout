@@ -22,7 +22,7 @@ title="Check the <?=$LangName;?> rankings" >
 <?=$LangName;?> rankings</a>
 <?=BAR;?>
 <a href="sidebyside.php?test=<?=$SelectedTest;?>&p1=<?=$P;?>&p2=<?=$P;?>&p3=<?=$P;?>&p4=<?=$P;?>&sort=<?=$Sort;?>"  
-title="Choose programs for side-by-side comparison" >Side-by-side</a>
+title="Choose programs for side-by-side comparison" >side-by-side&nbsp;comparison</a>
 </div>
 
 <!-- // TAG /////////////////////////////////////////////////// -->

@@ -260,6 +260,8 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
       usort($Accepted, 'CompareFullCpuTime');  
    } elseif ($sort=='kb'){ 
       usort($Accepted, 'CompareMemoryUse'); 
+   } elseif ($sort=='lines'){ 
+      usort($Accepted, 'CompareCodeLines'); 
    } 
 
    return array($Accepted,$Rejected,$Special);

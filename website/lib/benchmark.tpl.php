@@ -50,6 +50,7 @@ title="Choose programs for side-by-side comparison">side-by-side comparison</a>.
 $C1 = 'class="r"'; 
 $C2 = 'class="r"'; 
 $C3 = 'class="r"';
+$C4 = 'class="r"';
  
 if ($Sort=='cpu'){ 
    $C1 = 'class="rb"';    
@@ -57,6 +58,8 @@ if ($Sort=='cpu'){
    $C2 = 'class="rb"';    
 } elseif ($Sort=='kb'){ 
    $C3 = 'class="rb"';
+} elseif ($Sort=='lines'){ 
+   $C4 = 'class="rb"';
 } 
 ?>
 
@@ -103,7 +106,10 @@ if ($Sort=='cpu'){
    }
 ?>
 </th>
-<th class="c">&nbsp;</th>
+<th>
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&lang=<?=$SelectedLang;?>&sort=lines" 
+   title="Sort by Code Lines">sort</a>
+</th>
 </tr>
 
 <tr>
@@ -135,11 +141,11 @@ foreach($Accepted as $d){
       $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
 
    if ($SelectedTest==STARTUP){
-      printf('<td %s>%0.2f</td><td %s>%s</td><td>&nbsp;</td><td class="r">%d</td>',
-         $C2, $fullcpu, $C3, $kb, $lines); echo "\n";
+      printf('<td %s>%0.2f</td><td %s>%s</td><td>&nbsp;</td><td %s>%d</td>',
+         $C2, $fullcpu, $C3, $kb, $C4, $lines); echo "\n";
    } else {
-      printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%0.2f</td><td class="r">%d</td>',
-         $C2, $fullcpu, $C3, $kb, $C1, $cpu, $lines); echo "\n";
+      printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%0.2f</td><td %s>%d</td>',
+         $C2, $fullcpu, $C3, $kb, $C1, $cpu, $C4, $lines); echo "\n";
    }
    echo "</tr>\n";
 

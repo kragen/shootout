@@ -116,7 +116,7 @@ ImageString($im, 2, $w-26, $h3-14, CHART_V3.'x', $white);
 
 // LEGEND - SHOW SORT ORDER BY PUTTING SORT CRITERIA AT TOP OF LEGEND
 
-if ($S=='kb'){ $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('cpu'); } 
+if (($S=='kb')||($S=='lines')){ $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('cpu'); } 
 else { $kbTop = $h-135; $cpuTop = $h-148; $sortname = SortName($S); }  
 
 ImageFilledRectangle($im, 2, $cpuTop, $wsec+105, $cpuTop+13, $bgray);
