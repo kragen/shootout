@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.12 2004-09-20 04:24:17 bfulgham Exp $
+# $Id: minibench,v 1.13 2004-11-07 02:45:19 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -33,7 +33,7 @@ use BSD::Resource qw(times);
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.12 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.13 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -422,9 +422,8 @@ sub main {
 	    	last;
 	    }
 	}
-	if ($rc == 0) {
-	    $test->write_results;
-	}
+	warn "Writing results!\n";
+	$test->write_results;
 	$update++;
     }
     touch_update_file($update);
@@ -455,9 +454,14 @@ sub tabulate {
 	    # read through any initial comment/blank lines
 	    next if (/^$/ or /^\#/);
 	    my($num, $cuser, $csys, $mem) = split;
-	    my $cpu = $cuser + $csys;
-	    $cpu{$num}->{$name} = sprintf("%.4f", min($cpu, $cpu{$num}->{$name}));
-	    $mem{$num}->{$name} = sprintf("%.0f", max($mem, $mem{$num}->{$name}));
+	    if (($cuser eq -1) || ($cuser eq -2)){
+	        $cpu{$num}->{$name} = $cuser;
+		$mem{$num}->{$name} = $cuser;
+	    } else {
+	        my $cpu = $cuser + $csys;
+	        $cpu{$num}->{$name} = sprintf("%.4f", min($cpu, $cpu{$num}->{$name}));
+	        $mem{$num}->{$name} = sprintf("%.0f", max($mem, $mem{$num}->{$name}));
+	    }
 	}
 	close(DF);
     }
@@ -570,6 +574,8 @@ sub _write_range_tables {
 	$dataref->{$last}->{$b} <=> $dataref->{$last}->{$a}
     } (keys(%{$dataref->{$last}}));
     print DF "# @names\n";
+    warn "Printing to $datafile:\n";
+    warn "printing @names\n";
     foreach my $num (sort {$a <=> $b} keys(%{$dataref})) {
 	print DF join(" ", $num, map { $dataref->{$num}->{$_} } @names), "\n";
     }
@@ -610,7 +616,14 @@ sub _write_range_tables {
 	print " " x 13, (map { sprintf("%8d", $_) } @headings), "\n";
 	foreach my $name (reverse @names) {
 	    printf "%-14s", $name;
-	    print join(" ", map { sprintf($fmt, $dataref->{$_}->{$name}) } @RANGE);
+	    foreach my $rr (@RANGE) {
+	        my $tmp = $dataref->{$rr}->{$name};
+		if (($tmp eq -1) || ($tmp eq -2)){
+		    print " $tmp";
+		} else {
+	            print " ", sprintf($fmt, $dataref->{$rr}->{$name});
+		}
+	    }
 	    print "\n";
 	}
 	print "\n";
@@ -621,6 +634,7 @@ sub _write_range_tables {
 	}
     }
     if ($OPT->{graph} && $OPT->{plotrange}) {
+        err "About to plot...\n";
 	my $cmd = $OPT->{plotrange};
 	my $title = ($OPT->{title}) ? "$OPT->{title} - $Which Usage" : "$Which Usage";
 	$title = quote_title($title);
@@ -1053,6 +1067,12 @@ sub run {
 		select(undef, undef, undef, $OPT->{sampledelay});
 		$rc = check_abort_conditions($start_time,$self->{runlog_file});
 		if ($rc < 0) {
+		    # Timeout failure
+		    foreach my $locarg (@RANGE) {
+		        next if $locarg < $arg;
+			my $badtime = -1; #$OPT->{maxtime} + 1;
+			$self->push_results([$i, $locarg, $badtime, $badtime, $badtime]);
+		    }
 		    return $rc;
 		}
 	    }
@@ -1072,6 +1092,25 @@ sub run {
 	    last;
 	}
 	if ($rc < 0) {
+	    # Incorrect output
+	    my $resultsref = $self->pop_results;
+	    my @results = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } @$resultsref;
+	    my $max = 0;
+	    my $run = 0;
+	    foreach my $res (@results) {
+	        $run = shift(@{$res});
+		next if ($run > 0);
+		my @ar = @{$res};
+		$max = $ar[0];
+            }
+
+            foreach my $locarg (@RANGE) {
+	        warn "Trying $locarg vs $max\n";
+	        next if $locarg < $max;
+		warn "Will push for $run, since $locarg > $max\n";
+		my $failed = -2;
+		$self->push_results([$run, $locarg, $failed, $failed, $failed]);
+	    }
 	    last;
 	}
     }
@@ -1125,7 +1164,7 @@ sub compare_output {
 EOF
 	    close(FH);
 	    system("ls -l $outfile $cmpfile >> $runlog");
-	    $rc = -1;
+	    $rc = -2;
 	}
     } else {
 	if (-f $outfile) {
@@ -1151,11 +1190,9 @@ sub write_results {
     my $lastrun = -1;
     foreach my $res (@results) {
 	my $run = shift(@{$res});
-	if ($run != $lastrun) {
-	    print DAT "# run #", 1+$run, "\n";
-	    $lastrun = $run;
-	}
-	print DAT "@{$res}\n";
+        print DAT "# run #", 1+$run, "\n";
+        $lastrun = $run;
+        print DAT "@{$res}\n";
     }
     close(DAT) if ($datafile);
 }

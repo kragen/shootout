@@ -4,22 +4,42 @@
 # Generates beautiful, highlighted source code for viewing
 # via Web Browsers
 #
-# Note:  Requires the Highlight program by André Simon <andre.simon1@gmx.de>
-# See http://www.andre-simon.de/
+# Note:  Requires the GNU Enscript program by Markku Rossi
+# http://www.iki.fi/~mtr/genscript
 #
 use File::Basename;
+use File::Copy;
+use IPC::Open2;
 
 BEGIN {
     require "langs.pl";
 }
 
+# Taken from Twiki SyntaxHighlightingPlugin
+# by Nicolas Tisserand
+sub pipeThru($) {
+    my ($executable) = @_;
+    $pid = open2( \*READER, \*WRITER, $executable);
+
+    my ($out);
+    while (<READER>) {
+        $out .= $_;
+    }
+    close (READER);
+
+    return $out;
+}
+
 sub genfile ($$$) {
     my ($benchdir, $benchmark, $impl) = @_;
     my $source = "bench/$benchdir/$benchmark.$impl";
+    my $logsource = "bench/$benchdir/tmp/$impl" . "_runlog";
+    my $outsource = "bench/$benchdir/tmp/$benchmark." . "$impl" . "_out";
 
     return unless -s $source;
     
-    my $dest = "lang/$impl/" . basename($source) . ".html";
+    my $dest = "website/code/$benchmark-$impl" . ".code";
+    my $logdest = "website/code/$benchmark-$impl" . ".log";
     my $lang = $::LANG{$impl}->{Lang};
     my $ext = $::LANG{$impl}->{Ext};
 
@@ -33,11 +53,44 @@ sub genfile ($$$) {
 
     return 0 if ($dmtime >= $smtime);
 
-    my $command = "highlight -i $source -o $dest -S $ext -s typical -c /css/highlight.css";
-    #print "Trying $command\n";
-    unlink($dest);
-    system($command) == 0
-    	or print "$command failed: $1";
+    # Highlighting code based on SyntaxHighlighting plugin for Twiki
+    # by Nicolas Tisserand
+    my $hltext = pipeThru("enscript --color --language=html --style=emacs_verbose --highlight=$ext -o - -q $source");
+    #system("enscript --color --language=html --style=emacs_verbose --highlight=$ext -o $dest -q $source");
+
+    if ($hltext =~ s/.*\<PRE\>\n(.*?)\n?\<\/PRE\>.*/$1/os) {
+        if ($main::numbering) {
+	    my $line = 1;
+	    $hltext =~ s/(^.*)/sprintf("<b><font color=\"#000000\">%5d<\/font><\/b>\t%s", $line++, $1)/mgeo;
+	}
+
+	unlink($dest);
+        open DEST, ">$dest";
+
+	print DEST "<table width=\"100%\" border=\"0\" cellpadding=\"5\" cellspacing=\"0\">";
+	print DEST "<tr><td bgcolor=\"#FFFFFF\"><pre>\n";
+	print DEST $hltext;
+	print DEST "<\/pre><\/td><\/tr><\/table>\n";
+
+	close DEST;
+    }
+
+    # Copy over the runlog as well.  We don't really care if it fails
+    copy ($logsource, $logdest)
+        or print "\nCould not copy $logsource to $logdest\n";
+
+    # Concatenate the output as well
+    if (open DEST, ">>$logdest") {
+        if (open SRC, "<$outsource") {
+	    print DEST "\n\nPROGRAM OUTPUT\n==============\n\n";
+	    while (<SRC>) {
+	        print DEST $_;
+            }
+	    close SRC;
+	}
+	close DEST;
+    }
+
     return 1;
 }
 

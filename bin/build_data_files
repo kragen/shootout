@@ -20,6 +20,66 @@ BEGIN {
 }
 
 #
+#  Print an output [n]data file
+#
+sub print_datafile($$$%) {
+    my ($benchmark, $dest, $mdref, %startup_cost) = @_;
+    my $ref = $main::use_flags{$benchmark};
+    my %use_flags = %$ref;
+    my %masterdata = %$mdref;
+    my $locsource = "bench/$benchmark/data/loc.tab";
+    my (%loc);
+
+    # Process LOC data
+    unless ( open(LOC, "<$locsource") ) {
+        print "Can't open $locsource for input!: $!\n";
+	return;
+    }
+    while(<LOC>) {
+        chomp;
+        my($impl, $lines) = split;
+	$loc{$impl} = $lines;
+    }
+    close LOC;
+    print "    Read $locsource input data...\n";
+
+    # Process each language in turn...
+    open(DEST, ">>$dest") or die "Can't open $dest for output!";
+    foreach my $impl (sort keys %masterdata) {
+         my %data = %{$masterdata{$impl}};
+
+	 foreach my $run (sort keys %data) {
+	     my $ref = $data{$run};
+	     my %rundata = %$ref;
+
+	     my $cpu = $rundata{'cpu'};
+	     my $mem = $rundata{'mem'};
+
+	     $impl =~ /(.*)\-(\d*)/;
+	     my $lang = $1;
+	     my $id = $2;
+
+	     unless (defined($lang)) {
+	         $lang = $impl;
+             }
+
+             unless (defined($id)) {
+                 $id = " ";
+             }
+
+             print DEST "$use_flags{$lang},$benchmark,$lang,$id,$run,";
+	     print DEST $cpu - $startup_cost{$lang};
+	     print DEST ",$cpu,$mem,";
+             print DEST $loc{$impl};
+	     print DEST ", 09/30/2004\n";
+         }
+    }
+    close DEST;
+
+    return;
+}
+
+#
 #   Read in existing use flag from data file.
 #
 sub read_use_flags ($@) {
@@ -76,10 +136,7 @@ sub read_use_flags ($@) {
 sub gen_master_file ($$%) {
     my ($benchmark, $dest, %startup_cost) = @_;
     my $source = "bench/$benchmark/data/max.mbtab";
-    my $locsource = "bench/$benchmark/data/loc.tab";
-    my $ref = $main::use_flags{$benchmark};
-    my %use_flags = %$ref;
-    my (%data, %loc);
+    my (%data);
 
     return unless -s $source;
 
@@ -88,40 +145,18 @@ sub gen_master_file ($$%) {
         chomp;
 	next if /#/;
         my($lang, $cpu, $mem) = split;
-	$data{$lang} = [$cpu, $mem];
+
+	# This extra indirection is to allow us to use the same printing
+	# function for both types of files
+	my %rundata;
+	$rundata{' '} ={ cpu => $cpu, mem => $mem};
+	$data{$lang} = \%rundata;
     }
     close SOURCE;
     print "    Read $source input data...\n";
+    print "    Generating summary data.csv...\n";
 
-    open(LOC, "<$locsource") or die "Can't open $locsource for input!: $!\n";
-    while(<LOC>) {
-        chomp;
-        my($lang, $lines) = split;
-	$loc{$lang} = $lines;
-    }
-    close LOC;
-    print "    Read $locsource input data...\n";
-    print "    Processed individual data files.  Generating summary data.csv...\n";
-
-    open(DEST, ">>$dest") or die "Can't open $dest for output!";
-    foreach my $impl (sort keys %data) {
-         my $ref = $data{$impl};
-
-	 my @data = @$ref;
-	 my $cpu = shift @data;
-	 my $mem = shift @data;
-	 
-         print DEST "$use_flags{$impl},$benchmark,$impl, ,0,";
-	 print DEST sprintf("%0.4f", $cpu - $startup_cost{$impl});
-	 print DEST ",";
-	 print DEST sprintf("%0.4f", $cpu);
-	 print DEST ",";
-	 print DEST sprintf("%.0f", $mem);
-	 print DEST ",";
-	 print DEST $loc{$impl};
-	 print DEST ", 09/30/2004\n";
-    }
-    close DEST;
+    print_datafile($benchmark, $dest, \%data, %startup_cost);
 
     return;
 }
@@ -131,116 +166,94 @@ sub gen_master_file ($$%) {
 #
 sub gen_ndata_files ($$%) {
     my ($benchmark, $dest, %startup_cost) = @_;
-    my $locsource = "bench/$benchmark/data/loc.tab";
-    my $ref = $main::use_flags{$benchmark};
-    my %use_flags = %$ref;
-    my (%masterdata, %loc);
+    my (%masterdata);
 
-    # Process LOC data
-    unless ( open(LOC, "<$locsource") ) {
-        print "Can't open $locsource for input!: $!\n";
-	return;
-    }
-    while(<LOC>) {
-        chomp;
-        my($lang, $lines) = split;
-	$loc{$lang} = $lines;
-    }
-    close LOC;
-    print "    Read $locsource input data...\n";
-
-    # Process each language in turn...
     print "    >>> Reading individual run data <<<\n";
     print "        ";
     my $langcount = 0;
     foreach my $lang (keys %::LANG) {
-        my $source = "bench/$benchmark/tmp/$benchmark.$lang.mbdat";
-	my (%filedata);
 
-	next unless -s $source;
+	# Note:  Each language may provide a few implementations.  These
+	# are stored as, e.g., "ackermann.perl", "ackermann.perl2.perl",
+	# "ackermann.perl3.perl", etc.
+	my @choices = ("", "$lang-2.", "$lang-3.", "$lang-4.");
+	foreach my $try (@choices) {
+            my $source = "bench/$benchmark/tmp/$benchmark." . $try . "$lang.mbdat";
+            my (%filedata);
 
-        open(SOURCE, "<$source") or die "Can't open $source for input!: $!\n";
-        while(<SOURCE>) {
-            chomp;
-	    next if /#/;
-            my($run, $user, $sys, $mem) = split;
+            next unless -s $source;
 
-	    if (($user eq -1) || ($user eq -2)) {
-                $filedata{$run} = [ 1, $user, $user];
-		next;
-	    }
-	    my $cpu = $user;
+            open(SOURCE, "<$source") or die "Can't open $source for input!: $!\n";
+            while(<SOURCE>) {
+                chomp;
+                next if /#/;
+                my($run, $user, $sys, $mem) = split;
 
-	    my $ref = $filedata{$run};
-	    my @data;
-	    if (defined $ref) {
-	        @data = @$ref;
-	    } else {
-	        @data = (0, 0, 0);
-	    }
+                if (($user eq -1) || ($user eq -2)) {
+                    $filedata{$run} = [ 1, $user, $user];
+                    next;
+                }
+		
+                my $cpu = $user;
 
-	    $filedata{$run} = [ $data[0] + 1, $data[1] + $cpu, $data[2] + $mem];
-        }
-        close SOURCE;
-        print "$lang ";
-	$langcount++;
-	if ($langcount % 10 eq 0) {
-	    print "\n        ";
-	}
+                my $ref = $filedata{$run};
+                my @data;
+                if (defined $ref) {
+                    @data = @$ref;
+                } else {
+                    @data = (0, 0, 0);
+                }
 
-	# Now get averages and add to the master hash
-	my %rundata;
-	foreach my $iter (keys %filedata) {
-	    my $ref = $filedata{$iter};
-	    my @tempdata;
-	    if (defined $ref) {
-	        @tempdata = @$ref;
-	    } else {
-	        @tempdata = (0, 0, 0);
-	    }
-            my $count = shift @tempdata;
-	    my $agcpu = shift @tempdata;
-	    my $agmem = shift @tempdata;
-
-	    if (($agcpu eq -1) || ($agcpu eq -2)) {
-	        $rundata{$iter} = { cpu => $agcpu, mem => $agcpu };
-	    } else {
-                my $avgcpu = sprintf("%0.4f", $agcpu/$count);
-	        my $avgmem = sprintf("%.0f", $agmem/$count);
-
-	        $rundata{$iter} = { cpu => $avgcpu, mem => $avgmem };
+                $filedata{$run} = [ $data[0] + 1, $data[1] + $cpu, $data[2] + $mem];
             }
-	}
-	$masterdata{$lang} = \%rundata;
+            close SOURCE;
+
+            # Now get averages and add to the master hash
+            my %rundata;
+            foreach my $iter (keys %filedata) {
+                my $ref = $filedata{$iter};
+                my @tempdata;
+                if (defined $ref) {
+	            @tempdata = @$ref;
+                } else {
+	            @tempdata = (0, 0, 0);
+                }
+                my $count = shift @tempdata;
+                my $agcpu = shift @tempdata;
+                my $agmem = shift @tempdata;
+
+                if (($agcpu eq -1) || ($agcpu eq -2)) {
+                    $rundata{$iter} = { cpu => $agcpu, mem => $agcpu };
+                } else {
+                    my $avgcpu = sprintf("%0.4f", $agcpu/$count);
+                    my $avgmem = sprintf("%.0f", $agmem/$count);
+
+                   $rundata{$iter} = { cpu => $avgcpu, mem => $avgmem };
+                }
+            }
+
+	    if ($try eq "") {
+                $masterdata{$lang} = \%rundata;
+            } else {
+	        my $slot = $try;
+		$slot =~ s/\.//;
+                $masterdata{$slot} = \%rundata;
+            }
+        }
+        print "$lang ";
+        $langcount++;
+        if ($langcount % 10 eq 0) {
+            print "\n        ";
+        }
     }
     print "\n";
     print "    Processed individual data files.  Generating master ndata.csv...\n";
 
-    open(DEST, ">>$dest") or die "Can't open $dest for output!";
-    foreach my $impl (sort keys %masterdata) {
-         my %data = %{$masterdata{$impl}};
-
-	 foreach my $run (sort keys %data) {
-	     my $ref = $data{$run};
-
-	     my %rundata = %$ref;
-
-	     my $cpu = $rundata{'cpu'};
-	     my $mem = $rundata{'mem'};
-	 
-             print DEST "$use_flags{$impl},$benchmark,$impl, ,$run,";
-	     print DEST $cpu - $startup_cost{$impl};
-	     print DEST ",";
-             print DEST $cpu;
-             print DEST ",$mem,";
-             print DEST $loc{$impl};
-	     print DEST ", 09/30/2004\n";
-         }
-    }
-    close DEST;
+    print_datafile($benchmark, $dest, \%masterdata, %startup_cost);
 
     return;
 }
+
 
 #
 #  Main
