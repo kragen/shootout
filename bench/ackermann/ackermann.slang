@@ -13,7 +13,7 @@ define main()
 {
    variable NUM = 1;
    if (__argc > 1) NUM = integer (__argv[1]);
-   fprintf (stdout "Ack(3,%d): %d\n", (NUM, ack(3, NUM)));
+   fprintf (stdout, "Ack(3,%d): %d\n", (NUM, ack(3, NUM)));
 }
 
 main()

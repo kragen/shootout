@@ -19,7 +19,7 @@ define main()
    loop (N-1)
      () = gen_random (100.0);
 
-   fprintf (stdount, "%.9f\n", gen_random(100.0));
+   fprintf (stdout, "%.9f\n", gen_random(100.0));
 }
 
 main();

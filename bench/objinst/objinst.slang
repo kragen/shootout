@@ -73,7 +73,7 @@ define main ()
 	if (val)
 	  fprintf (stdout, "true\n");
 	else
-	  fprintf (stdount, "false\n");
+	  fprintf (stdout, "false\n");
      }
    
    loop (n)
@@ -86,9 +86,9 @@ define main ()
      {
 	val = @((@ntog.activate)(ntog).value)(ntog);
 	if (val)
-	  vmessage ("true");
+	  fprintf (stdout, "true\n");
 	else
-	  vmessage ("false");
+	  fprintf (stdout, "false\n");
      }
    loop (n)
      ntog = new_NthToggle(1, 3);

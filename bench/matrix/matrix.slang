@@ -17,7 +17,7 @@ define main()
    loop (iter)
      variable mm = m1 # m2;
 
-   fprintf (stdou, "%.10g %.10g %.10g %.10g\n", mm[0,0], mm[2,3], mm[3,2], mm[4,4]);
+   fprintf (stdout, "%.10g %.10g %.10g %.10g\n", mm[0,0], mm[2,3], mm[3,2], mm[4,4]);
 }
 
 main ();

@@ -28,12 +28,12 @@ define main ()
      median = (nums[mid] + nums[mid-1])/2;
 
    fprintf (stdout, "n:                  %d\n", n);
-   fprintf (stdout, "median:             %f\n median);
-   fprintf (stdout, "mean:               %f\n mean);
-   fprintf (stdout, "average_deviation:  %f\n average_deviation);
-   fprintf (stdout, "standard_deviation: %f\n standard_deviation);
-   fprintf (stdout, "variance:           %f\n variance);
-   fprintf (stdout, "skew:               %f\n skew);
-   fprintf (stdout, "kurtosis:           %f\n kurtosis);
+   fprintf (stdout, "median:             %f\n", median);
+   fprintf (stdout, "mean:               %f\n", mean);
+   fprintf (stdout, "average_deviation:  %f\n", average_deviation);
+   fprintf (stdout, "standard_deviation: %f\n", standard_deviation);
+   fprintf (stdout, "variance:           %f\n", variance);
+   fprintf (stdout, "skew:               %f\n", skew);
+   fprintf (stdout, "kurtosis:           %f\n", kurtosis);
 }
 main ();
