@@ -79,11 +79,13 @@
 	      lowest non-zero score.  (Thi is done for CPU, Memory, and LOC scores.)</li>
 	    <li>For each language, compute its score in logarithmic space:<br>
 	    <blockquote>
-	         score(x) = 1 / (1 + log2(x / b))
-
-		 where:
-		 	x = Current test's score
-			b = Best score for this test
+	         <strong>score</strong>(<em>x</em>) = 1 / (1 + <strong>log2</strong>(<em>x</em> / <em>b</em>))<br>
+<br>
+		 where:<br>
+		 <blockquote>
+		 	<em>x</em> = Current test's score<br>
+			<em>b</em> = Best score for this test<br>
+		 </blockquote>
 	    </blockquote>
 	      This yields a non-zero value from 0 to 1, which 1 being the
 	      "best score".<br>
