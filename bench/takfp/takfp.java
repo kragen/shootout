@@ -13,6 +13,6 @@ public class takfp {
 
   public static float Tak (float x, float y, float z) {
     if (y >= x) return z;
-    else return Tak(Tak(x-1.0f,y,z), Tak(y-1.0f,z,x), Tak(z-1.0f,x,y)); 
+    return Tak(Tak(x-1.0f,y,z), Tak(y-1.0f,z,x), Tak(z-1.0f,x,y)); 
   }
 }
