@@ -1,23 +1,15 @@
 <?php
-
-#!/usr/bin/perl
-# $Id: cmp_test.php,v 1.1 2004-06-01 02:04:31 bfulgham Exp $
-#
-#use strict;
-#use CGI qw(-oldstyle_urls);
-#
-#our $q = new CGI;
-#
+# $Id: cmp_test.php,v 1.2 2004-06-02 03:31:16 bfulgham Exp $
 #
 
 function read_dat($test, $which) {
     $filedat = file("data/$which.mbtab");
-    $langs = split("[ 	]", $filedat[0]);
+    $langs = split("[ 	]", rtrim($filedat[0]));
     $count = count($filedat);
     
     for ($i = 1; $i < count($filedat); $i++)
     {
-        $values = split("[ 	]", $filedat[$i]);
+        $values = split("[ 	]", rtrim($filedat[$i]));
 	$ord = $values[0];
 	for ($j = 1; $j < count($values); $j++)
 	{
@@ -76,86 +68,144 @@ function map_name_to_prog($test, $prognames)
 
 function lang_tab($test, $selected, $langs)
 {
-    #echo "<form method=\"GET\>";
     echo "<div class=\"axial\">\n";
-    echo "  <div class=\"h3\"><h3>Compare languages</h3></div>\n";
-    echo "  <table border=\"0\" cellspacing=\"2\" cellpadding=\"3\">\n";
+    echo "  <div class=\"h3\"><h3>Compare languages</h3>\n";
+    echo "    <form method=\"get\" action=\"detail.php\">\n";
+    echo "      <div class=\"axial\">\n";
+    echo "        <table border=\"0\" cellspacing=\"2\" cellpadding=\"3\">\n";
     $ncols = 10;
     $self = "detail.php";
-    
-    echo "    <tr><th colspan=\"$ncols\">Choose which languages to compare: <input type=\"submit\" value=\"Plot!\"> &nbsp; <a href=\"$self\">Reset</a></th></tr>\n";
+
+    echo "         <tr><th colspan=\"$ncols\">Choose which languages to compare: <input type=\"submit\" value=\"Plot!\"> &nbsp; <a href=\"$self\">Reset</a></th></tr>\n";
     for ($j = 0; $j < count($langs); $j = $j)
     {
-	echo "    <tr>\n";
+	echo "          <tr>\n";
 	for ($i=0; $i < $ncols; $i++) {
 	    if (isset($langs[$j])) {
 	        $name = $langs[$j];
 	        $pad_name = str_pad($name,10);
 		$checked = ($selected[$name]) ? " checked": "";
-		echo "      <td><input type=\"checkbox\" name=\"$name\"$checked> $pad_name</td>\n";
+		echo "          <td><input type=\"checkbox\" name=\"$name\"$checked> $pad_name</td>\n";
 	    }else {
-		echo "      <td>&nbsp;</td>\n";
+		echo "          <td>&nbsp;</td>\n";
 	    }
 	    $j++;
 	}
-        echo "</tr>\n";
+        echo "          </tr>\n";
     }
-    echo "  </table>\n";
-    echo "</form>\n";
+    echo "      </table>\n";
+    echo "    </form>\n";
+    echo "  </div>\n";
 }
 
 function plot_tab($dat_time, $langs, $dat, $test, $which, $title)
 {
-    $TMPDIR = '/var/tmp/.shootout';
-    $PLOTCMD = 'bin/plot --scale 1 --dsnames --width 600 --height 480 --type Lines --x_label "N" --ticklabels --graph_border 0 --gif_border 0 --brush_size 4 --title %T --imagefile %I';
+    $TMPDIR = getcwd() . '/../../tmp/.shootout';
+    $PLOTCMD = '../../bin/plot --scale 1 --dsnames --width 550 --height 600 --type Lines --x_label "N" --ticklabels --graph_border 0 --gif_border 0 --brush_size 4 --title %T --imagefile %I';
 
     $all = array_keys($dat);
     sort($all);
-
     sort($langs);
+
     $dir = "$TMPDIR/$test";
     if (! is_dir($dir)) {
 	if( ! mkdir($dir) ) {
-		echo "cmp_test.cgi: mkdir($dir) -> $!\n";
+		echo "cmp_test.php: mkdir($dir) -> $!\n";
 	}
     }
     
     $imagename = ($langs == $all) ? "ALL" : join('-', $langs);
     $imagefile = "$dir/$imagename-$which.png";
-    if ($dat_time > filemtime($imagefile)) {
+    if (file_exists($imagefile))
+    {
+    	$test_time = filemtime($imagefile);
+    }
+    else
+    {
+    	$test_time = 0;
+    }
+
+    if ($dat_time > $test_time) {
 	#warn "DBG: running $PLOTCMD\n";
 	$cmd = preg_replace("/%I/", $imagefile, $PLOTCMD);
 	$cmd = preg_replace("/%T/", $title, $cmd);
+
 	$descriptorspec = array(
 		 0 => array("pipe", "r"),
 		 1 => array("pipe", "w"),
 		 2 => array("file", "/tmp/error-output.txt", "a"));
 
-	$range = keys %{$dat->{$$langs[0]}};
-	$range = sort { $a <=> $b } keys %{$dat->{$$langs[0]}};
-#	my $last = $range[-1];
-#	my @names = sort { $dat->{$b}->{$last} <=> $dat->{$a}->{$last} } @$langs;
+	# Just want the list of ordinals
+	$temp = array_shift($dat);
+	$range = array_keys($temp);
+	array_unshift($dat, $temp);
+	
+	sort($range);
+	$last = $range[count($range) - 1];
+
+	foreach ($langs as $name)
+	{
+		$names .= rtrim($name);
+		$names .= " ";
+	}
 
 	$process = proc_open("$cmd", $descriptorspec, $pipes);
 	if (is_resource($process))
 	{
-	    fwrite($pipes[0], "# @names\n");
-#	    print P "# @names\n";
-#	    foreach (my $num (@range) {
-#		print P $num;
-#		foreach my $name (@names) {
-#		    print P " ", $dat->{$name}->{$num};
-#		}
-#		print P "\n";
-#	    }
+	    fwrite($pipes[0], "# $names\n");
+	    foreach ($range as $num) {
+	        fwrite($pipes[0], $num);
+		foreach ($langs as $name) {
+		    $temp = $dat[$name];
+		    fwrite($pipes[0], " $temp[$num]");
+		}
+		fwrite($pipes[0], "\n");
+	    }
 	    fclose($pipes[0]);
 	    fclose($pipes[1]);
 	} else {
 	    echo "cmp_test.php: Error opening $cmd for output\n";
 	}
     }
-#    $imagefile =~ s!^.*/!/tmp/shootout/$test/!;
-    return($imagefile);
+    $imagefile_parts = Explode('/', $imagefile);
+    return($imagefile_parts[count($imagefile_parts) - 1]);
+}
+
+function html_table_header($title, $headings)
+{
+    $ncols = count($headings) + 1;
+    $ncols_m1 = $ncols - 1;
+    echo "    <p><table border=\"1\" cellspacing=\"2\" cellpadding=\"3\">\n";
+    echo "      <tr><th colspan=\"$ncols\">$title</th>\n";
+    echo "      <tr><th>&nbsp;</th><th colspan=\"$ncols_m1\">N</th>\n";
+    echo "      <tr><th>Test Source</th>\n";
+    foreach ($headings as $num) {
+	echo "        <th>$num</th>\n";
+    }
+    echo "      </tr>\n";
+}
+
+function print_tab($langs, $dat, $pmref, $which)
+{
+    $temp = array_shift($dat);
+    $range = array_keys($temp);
+    array_unshift($dat, $temp);
+    html_table_header("Measurement of $which as N varies", $range);
+    $last = $range[count($range) - 1];
+    $names = $langs;
+    sort($names);
+    $count = 0;
+    foreach ($names as $name) {
+        $ab = ($count % 2) ? "a" : "b";
+	echo "      <tr class=\"$ab\"><td><a href=\"$pmref[$name]\">$name</a></td>";
+	$subrow = $dat[$name];
+	foreach($range as $num) {
+	    print "<td align=\"right\">$subrow[$num]</td>";
+	}
+	echo "          </tr>\n";
+	$count++;
+    }
+    echo "</table>\n";
 }
 
 function cmp_test($test, $query_string)
@@ -168,7 +218,10 @@ function cmp_test($test, $query_string)
 
     if ($query_string !== "")
     {
-        $langs = sort($query_string);
+	# Get rid of the "=on" part
+	$temp_query = preg_replace("/=on/", "", $query_string);
+        $langs = Explode('&', $temp_query);
+        sort($langs);
     } else {
         $langs = $keys;
     }
@@ -189,47 +242,11 @@ function cmp_test($test, $query_string)
     $pmref = map_name_to_prog($test, $langs);
     $cpu_img = plot_tab($cpu_date, $langs, $cpu, $test, 'cpu', 'CPU');
     $mem_img = plot_tab($mem_date, $langs, $mem, $test, 'mem', 'Memory');
-    echo "<table><tr><td><img src=\"$cpu_img\"></td><td>\n";
-#    print_tab(\@langs, $cpu, $pmref, 'CPU');
-    echo "</td></tr><tr><td><img src=\"$mem_img\"></td><td>\n";
-#    print_tab(\@langs, $mem, $pmref, 'Memory');
+    echo "<table><tr><td><img src=\"/tmp/.shootout/$test/$cpu_img\"></td><td>\n";
+    print_tab($langs, $cpu, $pmref, 'CPU');
+    echo "</td></tr><tr><td><img src=\"/tmp/.shootout/$test/$mem_img\"></td><td>\n";
+    print_tab($langs, $mem, $pmref, 'Memory');
     echo "</td></tr></table>\n";
 }
-
-
-
-#sub print_tab {
-#    my($langs, $dat, $pmref, $which) = @_;
-#    my @range = sort { $a <=> $b } keys %{$dat->{$$langs[0]}};
-#    html_table_header("Measurement of $which as N varies", @range);
-#    my $last = $range[-1];
- #   my @names = sort {
-#	$dat->{$a}->{$last} <=> $dat->{$b}->{$last}
-#    } (@$langs);
-#    foreach my $name (@names) {
-#	print qq{<tr><td><a href="$pmref->{$name}">$name</a></td>};
-#	foreach my $num (@range) {
-#	    print qq{<td align="right">$dat->{$name}->{$num}</td>};
-#	}
-#	print qq{</tr>\n};
-#    }
-#    print qq{</table>\n};
-#}
-
-
-
-
-#sub html_table_header ($@) {
-#    my($title, @headings) = @_;
-#    my $ncols = scalar(@headings) + 1;
-#    print qq{<p><table border="0" cellspacing="1" cellpadding="2" bgcolor="#e0e0c0">\n};
-#    print qq{<tr><th colspan="$ncols" bgcolor="black"><font color="white">$title</font></th>\n};
-#    print qq{<tr><th bgcolor="black">&nbsp;</th><th colspan="@{[$ncols-1]}" bgcolor="black"><font color="white">N</font></th>\n};
-#    print qq{<tr><th bgcolor="black"><font color="white">Test Source</font></th>\n};
-#    foreach my $num (@headings) {
-#	print qq{<th bgcolor="black"><font color="white">$num</font></th>\n};
-#    }
-#}
-
 
 ?>

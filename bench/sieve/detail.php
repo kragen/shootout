@@ -5,6 +5,7 @@ awk, guile, java, perl, python, tcl, computer, language, compare, cpu,
 memory" -->
 
 <?php require("../../html/testtop.php");
+      require("../../html/cmp_test.php");
       testtop_nav("Sieve of Eratosthenes Benchmark"); ?>
       
 <div class="h4"><h4>Measurements while N varies</h4></div>

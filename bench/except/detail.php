@@ -1,6 +1,7 @@
 <!--#set var="TITLE" value="Exceptions" -->
 <!--#set var="KEYWORDS" value="performance, benchmark, exceptions" -->
 <?php require("../../html/testtop.php");
+      require("../../html/cmp_test.php");
       testtop_nav("Exception Handling"); ?>
 
 <div class="h4"><h4>Measurements while N varies</h4></div>

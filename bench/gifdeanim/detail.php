@@ -2,6 +2,7 @@
 <!--#set var="KEYWORDS" value="performance, benchmark, 
 computer, language, compare, cpu, memory" -->
 <?php require("../../html/testtop.php");
+      require("../../html/cmp_test.php");
       testtop_nav("Ackermann's Function"); ?>
       
 <div class="h4"><h4>Measurements while N varies</h4></div>

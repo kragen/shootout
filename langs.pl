@@ -63,6 +63,8 @@
        Type => 'native compiled',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GCC} --version`);
+	   $ver =~ s/Copyright.*//s;
+	   $ver =~ s/This is free.*//s;
 	   return($ver);
        },
      },
@@ -74,6 +76,8 @@
        Type => 'native compiled',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GXX} --version`);
+	   $ver =~ s/Copyright.*//s;
+	   $ver =~ s/This is free.*//s;
 	   return($ver);
        },
      },
@@ -250,7 +254,9 @@
        Type => 'interpreted',
        Verfun => sub {
 	   my $ver = `$ENV{PHP} -v`;
-	   return("PHP $ver");
+	   $ver =~ s/Copyright.*//s;
+	   $ver =~ s/Zend.*//s;
+	   return($ver);
        },
      },
 
@@ -268,7 +274,6 @@
 
      pike =>
      { Lang => 'Pike',
-       Note => '(configured: --with-double-precision).',
        Home => 'http://pike.roxen.com/',
        Down => 'http://pike.roxen.com/download/',
        Type => 'interpreted',
@@ -343,6 +348,8 @@
        Verfun => sub {
 	   my $ver = `$ENV{MZSCHEME} --version`;
 	   $ver =~ s/\n.*//s;
+	   $ver =~ s/Welcome to//s;
+	   $ver =~ s/, Copyright.*//s;
 	   return($ver);
        },
      },

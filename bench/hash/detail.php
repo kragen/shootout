@@ -3,6 +3,7 @@
 computer, language, compare, cpu, memory" -->
 
 <?php require("../../html/testtop.php");
+      require("../../html/cmp_test.php");
       testtop_nav("Hash (Associative Array) Access"); ?>
       
 

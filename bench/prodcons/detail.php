@@ -3,6 +3,7 @@
 computer, language, compare, cpu, memory" -->
 
 <?php require("../../html/testtop.php");
+      require("../../html/cmp_test.php");
       testtop_nav("Producer/Consumer Threads"); ?>
 
 <p>N is the number of items produced/consumed.</p>
