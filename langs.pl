@@ -7,6 +7,18 @@
      #  Verfun => sub { }, # function to return version number
      #},
 
+     gnat =>
+     { Lang => 'Ada',
+       Home => 'http://www.gnat.com',
+       Down => 'ftp://gcc.gnu.org/pub/gcc/releases',
+       Type => 'native compiled',
+       Verfun => sub {
+	   my $ver = `$ENV{GNAT}`;
+	   $ver =~ /(GNAT\s.*)/;
+	   return($1);
+       },
+     },
+
      gawk =>
      { Lang => 'Awk',
        Home => 'http://www.gnu.org/software/gawk/gawk.html',
@@ -65,10 +77,44 @@
 	   return($ver);
        },
      },
+     
+     clean =>
+     { Lang => 'Clean',
+       Home => 'http://www.cs.kun.nl/~clean/index.html',
+       Down => 'http://www.cs.kun.nl/~clean/Download/main/main.htm',
+       Type => 'native compiled',
+       Verfun => sub {
+	   my $ver = `2.1`;
+	   return($ver);
+       },
+     },
+
+     cmucl =>
+     { Lang => 'Common Lisp',
+       Home => 'http://www.cons.org/cmucl/',
+       Down => 'http://www.cons.org/cmucl/',
+       Type => 'native compiled',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{CMUCL} -batch -eval '(progn (princ COMMON-LISP::*LISP-IMPLEMENTATION-VERSION*) (quit))'`);
+	   $ver = "CMU Common Lisp $ver";
+	   return($ver);
+       },
+     },
+
+     gwydion =>
+     { Lang => 'Dylan',
+       Home => 'http://www.gwydiondylan.org',
+       Down => 'http://www.gwydiondylan.org/download.html',
+       Type => 'native compiled',
+       Verfun => sub {
+	   my $ver = `$ENV{GWYDION} --version`;
+	   $ver =~ /(d2c\s.*)/;
+	   return($1);
+       },
+     },
 
      se =>
      { Lang => 'Eiffel',
-       #Note => '(patched to fix string append bug).',
        Home => 'http://smalleiffel.loria.fr/',
        Down => 'ftp://ftp.loria.fr/pub/loria/genielog/SmallEiffel/',
        Type => 'native compiled',
@@ -102,30 +148,6 @@
        },
      },
 
-     bigforth =>
-     { Lang => 'Forth',
-       Home => 'http://www.jwdt.com/~paysan/bigforth.html',
-       Down => 'http://www.jwdt.com/~paysan/bigforth.html',
-       Type => 'native compiled',
-       Verfun => sub {
-	   chomp(my $ver = `strings -a /usr/bin/bigforth| fgrep 'ANS bigFORTH'`);
-	   $ver =~ s/.*ANS//;
-	   return($ver);
-       },
-     },
-
-     guile =>
-     { Lang => 'Scheme',
-       Home => 'http://www.gnu.org/software/guile/guile.html',
-       Down => 'ftp://ftp.gnu.org/pub/gnu/guile/',
-       Type => 'interpreted',
-       Verfun => sub {
-	   my $ver = `$ENV{GUILE} --version`;
-	   $ver =~ s/\n.*//s;
-	   return($ver);
-       },
-     },
-
      ghc =>
      { Lang => 'Haskell',
        Home => 'http://www.haskell.org/',
@@ -151,37 +173,25 @@
 
      java =>
      { Lang => 'Java',
-       Home => 'http://java.sun.com/',
-       Down => 'http://java.sun.com/j2se/1.3/',
-       Type => 'JIT native compiled',
-       Verfun => sub {
-	   my $ver = `$ENV{JAVA} -version 2>&1`;
-	   $ver =~ /(Java.*Runtime Environment.*)\n/;
-	   return($1);
-       },
-     },
-
-     njs =>
-     { Lang => 'Javascript',
-       Home => 'http://www.bbassett.net/njs/',
-       Down => 'http://www.bbassett.net/njs/download.html',
+       Home => 'http://gcc.gnu.org/java/',
+       Down => 'http://gcc.gnu.org/install/binaries.html',
        Type => 'interpreted',
        Verfun => sub {
-	   my $ver = `$ENV{NJS} --version 2>&1`;
-	   $ver =~ /(\d+\.\d+\.\d+)/;
+	   my $ver = `$ENV{JAVA} -version 2>&1`;
+	   $ver =~ /(gij.*)\n/;
 	   return($1);
        },
      },
 
-     mercury =>
-     { Lang => 'Mercury',
-       Home => 'http://www.cs.mu.oz.au/research/mercury/',
-       Down => 'http://www.cs.mu.oz.au/research/mercury/download/release.html',
-       Type => 'native compiled',
+     sablevm =>
+     { Lang => 'Java',
+       Home => 'http://sablevm.org/',
+       Down => 'http://sablevm.sourceforge.net/download.html',
+       Type => 'interpreted',
        Verfun => sub {
-	   my $ver = `grep MR_VERSION $ENV{MERCURYDIR}/lib/mercury/inc/mercury_conf.h`;
-	   $ver =~ /MR_VERSION\D+(\d+\.\d+\.\d+)/;
-	   return('Mercury ' . $1);
+	   my $ver = `$ENV{SABLEVM} --version 2>&1`;
+	   $ver =~ /(SableVM version.*)\n/;
+	   return($1);
        },
      },
 
@@ -221,6 +231,18 @@
        },
      },
 
+     oz =>
+     { Lang => 'Mozart/Oz',
+       Home => 'http://www.mozart-oz.org',
+       Down => 'http://www.mozart-oz.org/download',
+       Type => 'interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{OZ} -e d`;
+	   $ver =~ /(Mozart Compiler\s.*)/;
+	   return($1);
+       },
+     },
+
      perl =>
      { Lang => 'Perl',
        Home => 'http://www.perl.org/',
@@ -230,17 +252,6 @@
 	   my $ver = `$ENV{PERL} -v`;
 	   $ver =~ /(This is perl.*)\n/;
 	   return($1);
-       },
-     },
-
-     php =>
-     { Lang => 'PHP',
-       Home => 'http://www.php.net/',
-       Down => 'http://www.php.net/downloads.php',
-       Type => 'interpreted',
-       Verfun => sub {
-	   my $ver = `$ENV{PHP} -v`;
-	   return("PHP $ver");
        },
      },
 
@@ -268,17 +279,6 @@
        },
      },
 
-     rep =>
-     { Lang => 'Lisp',
-       Home => 'http://librep.sourceforge.net/',
-       Down => 'ftp://librep.sourceforge.net/pub/librep/',
-       Type => 'bytecomped/interpreted',
-       Verfun => sub {
-	   chomp(my $ver = `$ENV{REP} --version`);
-	   return($ver);
-       },
-     },
-
      ruby =>
      { Lang => 'Ruby',
        Home => 'http://www.ruby-lang.org/',
@@ -301,6 +301,30 @@
        },
      },
 
+     guile =>
+     { Lang => 'Scheme',
+       Home => 'http://www.gnu.org/software/guile/guile.html',
+       Down => 'ftp://ftp.gnu.org/pub/gnu/guile/',
+       Type => 'interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{GUILE} --version`;
+	   $ver =~ s/\n.*//s;
+	   return($ver);
+       },
+     },
+
+     mzscheme =>
+     { Lang => 'Scheme',
+       Home => 'http://www.plt-scheme.org',
+       Down => 'http://download.plt-scheme.org/drscheme/',
+       Type => 'interpreted',
+       Verfun => sub {
+	   my $ver = `$ENV{MZSCHEME} --version`;
+	   $ver =~ s/\n.*//s;
+	   return($ver);
+       },
+     },
+
      'smlnj' =>
      { Lang => 'SML',
        Home => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
@@ -309,6 +333,18 @@
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SMLNJ} </dev/null`);
 	   $ver =~ s/\s*\[.*//;
+	   return($ver);
+       },
+     },
+
+     mlton =>
+     { Lang => 'SML',
+       Home => 'http://www.sourcelight.com/MLton/',
+       Down => 'http://www.sourcelight.com/MLton/',
+       Type => 'native compiled',
+       Verfun => sub {
+	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} -v 2>&1`));
+	   $ver =~ s/\(built.*//;
 	   return($ver);
        },
      },
@@ -335,40 +371,4 @@
 	   return($ver);
        },
      },
-
-     cmucl =>
-     { Lang => 'Common Lisp',
-       Home => 'http://www.cons.org/cmucl/',
-       Down => 'http://www.cons.org/cmucl/',
-       Type => 'native compiled',
-       Verfun => sub {
-	   chomp(my $ver = `$ENV{CMUCL} -batch -eval '(progn (princ COMMON-LISP::*LISP-IMPLEMENTATION-VERSION*) (quit))'`);
-	   $ver = "CMU Common Lisp $ver";
-	   return($ver);
-       },
-     },
-
-     mlton =>
-     { Lang => 'SML',
-       Home => 'http://www.sourcelight.com/MLton/',
-       Down => 'http://www.sourcelight.com/MLton/',
-       Type => 'native compiled',
-       Verfun => sub {
-	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} -v 2>&1`));
-	   $ver =~ s/\(built.*//;
-	   return($ver);
-       },
-     },
-
-     stalin =>
-     { Lang => 'Scheme',
-       Home => 'http://www.neci.nec.com/homepages/qobi/software.html',
-       Down => 'http://www.neci.nec.com/homepages/qobi/software.html',
-       Type => 'native compiled',
-       Verfun => sub {
-  	   #chomp(my $ver = `$ENV{STALIN} -version`);
-  	   return('0.9');
-       },
-     },
-
     );
