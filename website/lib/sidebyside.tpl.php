@@ -53,7 +53,7 @@ usort($Selected,'CompareMaxCpu');
 $RowClass = 'c';
 foreach($Selected as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td>%s</a></td>', $row[N_NAME]); echo "\n";
+   printf('<td>%s</td>', $row[N_NAME]); echo "\n";
    foreach($row[N_FULLCPU] as $v){ 
       printf('<td class="r">%0.2f</td>', $v); echo "\n"; 
    }   
@@ -98,7 +98,7 @@ usort($Selected,'CompareMaxMemory');
 $RowClass = 'c';
 foreach($Selected as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td>%s</a></td>', $row[N_NAME]); echo "\n";
+   printf('<td>%s</td>', $row[N_NAME]); echo "\n";
    foreach($row[N_MEMORY] as $v){ 
       if ($v==0){ $kb = '?'; } else { $kb = number_format((double)$v); }
       printf('<td class="r">%s</td>', $kb); echo "\n"; 

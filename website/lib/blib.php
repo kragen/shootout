@@ -751,7 +751,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       }
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
-   echo '</select><br/><br/>', "\n";        
+   echo '</select><br /><br />', "\n";        
 
      
 // NASTY HACK      

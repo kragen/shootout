@@ -24,10 +24,12 @@
 </head>
 
 <body>
-<table class="hf"><tr><td>
-<h2><a class="arev" href="index.php?sort=<?=$Sort;?>" ><?=$BannerTitle;?></a>
-<h2></td><td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" ><?=$FaqTitle;?> </a>
-</td></tr></table>
+<table class="hf"><tr>
+<td>
+<h2><a class="arev" href="index.php?sort=<?=$Sort;?>" ><?=$BannerTitle;?></a></h2></td>
+<td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" ><?=$FaqTitle;?> </a>
+</td>
+</tr></table>
 
 <?=$PageBody;?>
 

@@ -1,4 +1,4 @@
-<p>Each program should calculate the Ackermann function using the same na&#239ve recursive-algorithm
+<p>Each program should calculate the Ackermann function using the same na&#239;ve recursive-algorithm
 <pre>
 A(x,y)
   x = 0     = y+1

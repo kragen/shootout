@@ -85,6 +85,7 @@ if (isset($Data[$SelectedLang])){
 
 <table class="div">
 <tr><td><pre><?=$Code;?></pre></td></tr> 
+</table>
 
 <!-- // BUILD ///////////////////////////////////////////////// -->
 
