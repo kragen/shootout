@@ -1,0 +1,121 @@
+-- $Id: heapsort.gnat,v 1.1 2004-05-23 06:37:41 bfulgham Exp $
+-- http://dada.perl.it/shootout/
+-- Ada 95 code by C.C.
+
+-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+
+with System, Ada.Command_Line, Text_IO;
+
+procedure Heapsort is
+   type Real is digits Positive'Max (15, System.Max_Digits);
+   package Rio is new Text_IO.Float_IO (Num => Real);
+
+   package Random_Real is
+      function Gen_Random (Supr : Real) return Real;
+      pragma Inline (Gen_Random);
+   end Random_Real;
+
+   package body Random_Real is
+      IM          : constant Positive := 139968;
+      IA          : constant Integer := 3877;
+      IC          : constant Integer := 29573;
+      Last        : Integer := 42;
+
+      function Gen_Random (Supr : Real) return Real is
+         pragma Suppress (Overflow_Check);
+         pragma Suppress (Range_Check);
+      begin
+         Last := (Last * IA + IC) mod IM;
+         return Supr * Real (Last) / Real (IM);
+      end Gen_Random;
+   end Random_Real;
+
+   type Range_Int is new Integer;
+   subtype Offset_Int is Range_Int;
+
+   type Real_Array is array (Range_Int range <>) of Real;
+   type Real_Array_Ptr is access Real_Array;
+
+   procedure Heapsort (A : in out Real_Array) is
+      pragma Suppress (Overflow_Check);
+      pragma Suppress (Index_Check);
+      pragma Suppress (Range_Check);
+      subtype Range_Positive is Range_Int;
+      First          : constant Range_Int := A'First;    --  might be <= -1
+      IR             : Range_Positive;
+      One            : constant Offset_Int := 1;
+      Minus_One      : constant Offset_Int := -1;
+      First_Minus_1  : constant Range_Int := First + Minus_One;
+      First_Plus_1   : constant Range_Int := First + One;
+      RRA            : Real;
+      L              : Offset_Int := One + (A'Length / 2);
+   begin
+      if A'Length <= 0 then
+         return;
+      end if;
+      IR := A'Last;
+      loop
+         if L > One then
+            L := L - One;
+            RRA := A (First_Minus_1 + L);
+         else
+            RRA := A (IR);
+            A (IR) := A (First);
+            if IR <= First_Plus_1 then
+               A (First) := RRA;
+               exit;
+            else
+               IR := IR + Minus_One;
+            end if;
+         end if;
+         declare
+            K1    : Range_Positive := First_Minus_1 + L;
+            K2    : Range_Positive := K1 + L;
+         begin
+            while K2 <= IR loop
+               if K2 < IR then
+                  if A (K2) < A (K2 + One) then
+                     K2 := K2 + One;
+                  end if;
+               end if;
+               if RRA < A (K2) then
+                  A (K1) := A (K2);
+                  K1 := K2;
+                  K2 := K1 + (K1 - First_Minus_1);
+               else
+                  K2 := IR + One;
+               end if;
+            end loop;
+            A (K1) := RRA;
+         end;
+      end loop;
+   end Heapsort;
+
+   N           : Range_Int;
+   No_Verify   : constant Boolean := True;
+   Chk         : Real := 0.0;
+   X           : Real_Array_Ptr;
+begin
+   begin
+      N := Range_Int'Max (1, Range_Int'Value (Ada.Command_Line.Argument (1)));
+   exception
+      when Constraint_Error => N := 1;
+   end;
+   X := new Real_Array (0 .. N - 1);   --  3% slower than 'declare' (stack)
+   for Iter in X'Range loop
+      X (Iter) := Random_Real.Gen_Random (Supr => 1.0);
+   end loop;
+   if No_Verify then
+      Heapsort (A => X.all);
+      Rio.Put (X (X'Last), Fore => 0, Aft => 10, Exp => 0);
+      Text_IO.New_Line;
+   else
+      for Iter in X'Range loop Chk := Chk + X (Iter); end loop;
+      Heapsort (A => X.all);
+      for K in X'Range loop
+         pragma Assert (K + 1 = X'Last or else X (K) <= X (K + 1));
+         Chk := Chk - X (K);
+      end loop;
+      pragma Assert (abs Chk < 50.0 * Real (N) * Real'Model_Epsilon);
+   end if;
+end Heapsort;

@@ -1,0 +1,97 @@
+%%% $Id: heapsort.oz,v 1.1 2004-05-23 06:37:41 bfulgham Exp $
+%%% http://dada.perl.it/shootout/
+%%%
+%%% contributed by Isaac Gouy
+
+
+%%  Transliterated from the Mercury solution
+%%
+%%  Usage: start from command line with
+%%     ozc -x heapsort.oz -o heapsort.oz.exe
+%%     heapsort.oz.exe 1000
+
+functor
+import System Application
+
+define
+   IM = 139968
+   IA = 3877
+   IC = 29573
+   Seed = 42
+   
+   fun {Random_heap H I S0}
+      local R S in
+     if I =< {Array.high H} then
+        {Gen_random R S0 S}
+        {Random_heap {Up_heap H I R} I+1 S}
+     else
+        H
+     end
+      end
+   end
+
+   fun {Up_heap H N Y}
+      local HalfN X in
+     HalfN = N div 2
+     X = {Get H HalfN}
+     if 0 < N andthen X < Y then
+        {Put H N X}
+        {Up_heap H HalfN Y}
+     else
+        {Put H N Y}
+        H
+     end
+      end
+   end
+
+   fun {Heapsort H N}
+      if N == 0 then H
+      else {Heapsort {Remove_greatest H N} N-1} end
+   end
+
+   fun {Remove_greatest H N}
+      local X Y in
+     X = {Get H 0}
+     Y = {Get H N}
+     {Put H N X}
+     {Down_heap H 0 N-1 Y}
+      end
+   end
+
+   fun {Down_heap H I N X}
+      local L R J Y in
+     L = I + I + 1
+     R = L + 1
+     if N < L then
+        {Put H I X}
+        H
+     else
+        J = if R < N andthen {Get H R} > {Get H L}
+        then  R else L end
+        Y = {Get H J}
+        if X > Y then
+           {Put H I X}
+           H
+        else
+           {Put H I Y}
+           {Down_heap H J N X}
+        end
+     end
+      end
+   end
+
+   proc {Gen_random R S0 S}
+      S = (S0 * IA + IC) mod IM
+      R = {IntToFloat S} / {IntToFloat IM}
+   end
+
+in
+   local Args N RandomHeap SortedHeap in
+      [Args] = {Application.getArgs plain}
+      N = {String.toInt Args}
+      RandomHeap = {Random_heap {NewArray 0 N-1 0.0} 0 Seed}
+      SortedHeap = {Heapsort RandomHeap N-1}
+      {System.showInfo {Get SortedHeap N-1}}
+   end
+   {Application.exit 0}
+end
