@@ -1,0 +1,143 @@
+! Statistics access function implementation
+! Simon Geard, 1/12/04
+!
+! Building info.
+! ==============
+!
+! Linux  - using the Intel Fortran90 compiler:
+!
+!          ifort statistics.f90 -O3 -static-libcxa -o statistics
+!
+! WinXP  - Compaq Visual Fortran 6.6c
+!
+!          f90 statistics.f90 /link /libpath:"d:\Program Files\Microsoft Visual Studio\df98\lib"
+!
+! Cygwin - g95 compiler
+!
+!          g95 statistics.f90 -O3 -o statistics.exe
+!
+!!$n:                  500
+!!$median:             250.500000
+!!$mean:               250.500000
+!!$average_deviation:  125.000000
+!!$standard_deviation: 144.481833
+!!$variance:           20875.000000
+!!$skew:               0.000000
+!!$kurtosis:           -1.207202
+
+
+program statistics
+  implicit none
+  integer n, i, nrepeats, k
+  real*8 adev, sdev, var, sk, kur, mean, med, s1, s2, s3, s4
+  character(len=8) argv
+  integer, dimension(:), allocatable :: data, buff
+  integer, parameter :: blocksize = 512
+
+  call getarg(1,argv)
+  read(argv,*) nrepeats
+  nrepeats = max(1,nrepeats)
+
+  ! Read the data on standard input
+  allocate(data(blocksize))
+  n = 0
+  do
+     n = n + 1
+     if (n > size(data)) then
+        allocate(buff(size(data)))
+        buff = data
+        deallocate(data)
+        allocate(data(2*size(buff)))
+        data = buff
+        deallocate(buff)
+     end if
+     read(*,*, end=10) data(n)
+  end do
+10 continue
+  n = n - 1
+  allocate(buff(size(data)))
+  buff = data
+  deallocate(data)
+  allocate(data(n))
+  data = buff
+  deallocate(buff)
+
+  ! Process data nrepeats times
+  do k=1, nrepeats
+     mean =  real(sum(data))/n
+     s1 = 0.0
+     s2 = 0.0
+     s3 = 0.0
+     s4 = 0.0
+     do i=1,n
+        s1 = s1 + abs(data(i) - mean)
+        s2 = s2 + (data(i)-mean)**2
+        s3 = s3 + (data(i)-mean)**3
+        s4 = s4 + (data(i)-mean)**4
+     end do
+     adev = s1/n
+     var = s2/(n-1)
+     sdev = sqrt(var)
+     sk = s3*n/((n-1)*(n-2))
+     kur = s4/(n*var**2) - 3
+     med = median(data)
+  end do
+
+  ! Output the results
+  write(*,'(a,i0)') 'n:                  ',n
+  write(*,101) 'median:             ', med
+  write(*,101) 'mean:               ', mean
+  write(*,101) 'average_deviation:  ', adev
+  write(*,101) 'standard_deviation: ', sdev
+  write(*,'(a,f12.6)') 'variance:           ', var
+  write(*,'(a,f8.6)') 'skew:               ', sk
+  write(*,'(a,f9.6)') 'kurtosis:           ', kur
+101 format(a,f10.6)
+
+contains
+
+  real*8 function median(data)
+    integer, dimension(:), intent(in) :: data
+    integer, dimension(size(data))    :: work
+    logical, dimension(size(data))    :: mask
+    integer, dimension(size(data))    :: mnl
+    integer i, n
+    intrinsic minloc
+
+    n = size(data)
+    mask = (/ (.true.,i=1,n) /)
+    work = (/ (-1,i=1,n) /)
+    median = 0.0
+    ! Sort data - only need to do the first half + 1
+    do i=1,n/2+1
+       mnl = minloc(data,mask)
+       work(i) = data(mnl(1))
+       mask(mnl(1)) = .false.
+    end do
+    if (mod(n,2) == 0) then
+       median = 0.5*(work(n/2)+work((n/2)+1))
+    else
+       median = real(work((n+1)/2))
+    end if
+  end function median
+
+
+  integer function mode(data)
+    integer, dimension(:), intent(in) :: data
+    integer, dimension(:), allocatable :: work
+    integer mind, maxd, i
+    
+    maxd = maxval(data)
+    mind = minval(data)
+    allocate(work(mind:maxd))
+    do i=mind, maxd
+       work(i) = 0
+    end do
+    do i=1,size(data)
+       work(data(i)) = work(data(i)) + 1
+    end do
+    mode = maxval(work)
+    deallocate(work)
+  end function mode
+
+end program statistics

@@ -1,83 +1,61 @@
-// $Id: wordfreq.java,v 1.2 2004-07-03 05:36:11 bfulgham Exp $
-// http://shootout.alioth.debian.org/
-// Collection class code is from my friend Phil Chu, Thanks Phil!
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   contributed by James McIlree
+*/
 
 import java.io.*;
 import java.util.*;
-import java.text.*;
-
-class Counter {
-    int count = 1; 
-}
+import java.util.regex.*;
 
 public class wordfreq {
+  static class Counter {
+    int count = 1;
+  }
 
-    public static void main(String[] args) {
-	wf();
-    }
+  public static void main(String[] args) 
+    throws IOException
+  {
+    HashMap map = new HashMap();
+    Pattern charsOnly = Pattern.compile("\\p{Lower}+");
 
-    public static String padleft(String s,int n,char c) {
-        int len = s.length();
-        if( len>=n ) return s;
-        char[] buf = new char[n];
-        for( int i=0;i<n-len;i++ ) buf[i]=c;
-        s.getChars(0,len,buf,n-len);
-        return new String(buf);
+    BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
+    String line;
+    while ((line = r.readLine()) != null) {
+      Matcher matcher = charsOnly.matcher(line.toLowerCase());
+      while (matcher.find()) {
+        String token = matcher.group();
+        Counter c = (Counter)map.get(token);
+        if (c != null)
+          c.count++;
+        else
+          map.put(token, new Counter());
+      }
     }
-  
-    public static void wf() {
-        HashMap map = new HashMap();
-        try {
-            Reader r = new BufferedReader(new InputStreamReader(System.in));
-            StreamTokenizer st = new StreamTokenizer(r);
-            st.lowerCaseMode(true);
-            st.whitespaceChars( 0, 64 );
-            st.wordChars(65, 90);
-            st.whitespaceChars( 91, 96 );
-            st.wordChars(97, 122);
-            st.whitespaceChars( 123, 255 );
-            int tt = st.nextToken();
-            while (tt != StreamTokenizer.TT_EOF) {
-                if (tt == StreamTokenizer.TT_WORD) {
-                    if (map.containsKey(st.sval)) {
-                        ((Counter)map.get(st.sval)).count++;
-                    } else {
-                        map.put(st.sval, new Counter());
-                    }
-                }
-                tt = st.nextToken();
-            }
-        } catch (IOException e) {
-            System.err.println(e);
-            return;
+    
+    ArrayList list = new ArrayList(map.entrySet());
+    Collections.sort(list, new Comparator() {
+        public int compare(Object o1, Object o2) {
+          int c = ((Counter)((Map.Entry)o2).getValue()).count - ((Counter)((Map.Entry)o1).getValue()).count;
+          if (c == 0) {
+            c = ((String)((Map.Entry)o2).getKey()).compareTo((String)((Map.Entry)o1).getKey());
+          }
+          return c;
         }
-
-        Collection entries = map.entrySet();
-	// flatten the entries set into a vector for sorting
-	Vector rev_wf = new Vector(entries); 
-
-        // Sort the vector according to its value
-        Collections.sort(rev_wf, new Comparator() {
-		public int compare(Object o1, Object o2) {
-		    // First sort by frequency
-		    int c = ((Counter)((Map.Entry)o2).getValue()).count - ((Counter)((Map.Entry)o1).getValue()).count;
-		    if (c == 0) { // Second sort by lexicographical order
-			c = ((String)((Map.Entry)o2).getKey()).compareTo((String)((Map.Entry)o1).getKey());
-		    }
-		    return c;
-		}
-	    }
-			 );
-
-        Iterator it = rev_wf.iterator();
-	Map.Entry ent;
-	String word;
-	int count;
-        while(it.hasNext()) {
-            ent = (Map.Entry)it.next();
-	    word = ((String)ent.getKey());
-	    count = ((Counter)ent.getValue()).count;
-	    System.out.println(padleft(Integer.toString(count),7,' ') + " " + word);
-        }
+      });
+    
+    String[] padding = { "error!", " ", "  ", "   ", "    ", "     ", "      ", "error!" };
+    StringBuffer output = new StringBuffer();
+    Iterator it = list.iterator();
+    while(it.hasNext()) {
+      Map.Entry entry = (Map.Entry)it.next();
+      String word = (String)entry.getKey();
+      String count = String.valueOf(((Counter)entry.getValue()).count);
+      if (count.length() < 7)
+        System.out.println(padding[7 - count.length()] + count + " " +word);
+      else
+        System.out.println(count + " " +word);
     }
+  }
 }
+
