@@ -1,43 +1,43 @@
-# $Id: Makefile,v 1.12 2004-12-06 04:55:37 bfulgham Exp $
+# $Id: Makefile,v 1.13 2005-02-19 17:05:38 bfulgham Exp $
 
 include Make.header
 
 all: init versions
-	(cd bench ; make $@)
-	(cd bench ; make --no-print-directory report> report.txt)
-	make recent craps codelinks
+	-(cd bench ; make $@)
+	-(cd bench ; make --no-print-directory report> report.txt)
+	-make recent craps codelinks
 
 test plot show loc:
-	(cd bench ; make $@)
+	-(cd bench ; make $@)
 
 clean:
-	(cd bench ; make $@)
+	-(cd bench ; make $@)
 
 .PHONY: dist report recent versions craps codelinks
 
 versions: versions.html
 
 versions.html: bin/make_versions langs.pl
-	bin/make_versions > versions.html.tmp && \
-	mv -f versions.html.tmp versions.html
+	-bin/make_versions > versions.html.tmp && \
+	-mv -f versions.html.tmp versions.html
 
 dist:
-	bin/make_dist
+	-bin/make_dist
 
 report codelinks:
-	@bin/make_highlight
-	@(cd bench ; make --no-print-directory $@)
+	-@bin/make_highlight
+	-@(cd bench ; make --no-print-directory $@)
 
 craps:
-	@(cd bench ; make --no-print-directory $@) > .craps.table
+	-@(cd bench ; make --no-print-directory $@) > .craps.table
 
 recent:
-	@bin/make_recent > recent.html
+	-@bin/make_recent > recent.html
 
 init: init-stamp
 init-stamp: links-stamp
-	bin/make_dirs
-	touch init-stamp
+	-bin/make_dirs
+	-touch init-stamp
 
 links:  links-stamp
 links-stamp:
