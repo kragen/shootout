@@ -282,14 +282,9 @@ fixes, you will soon understand this requirement.</li>
 <!-- WHEN? /////////////////////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td><h3 class="rev">&nbsp;When&#133;?</h3></td></tr>
-
+<tr><td><h3 class="rev">&nbsp;When&#133;?</h3></td></tr><tr class="b"><td>When will you include my contribution?</td></tr><tr><td><p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p><p>Maybe you'd like to help us?</p>
 <tr class="b"><td>When will the Language Shootout be finished?</td></tr>
-
-<tr><td><p>There will always be new languages, new implementations of old languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#133;</p>
-
-<p>The Computer Language Shootout will never be finished - the project team will change over time, and the measurements and presentation will change with them.</p>
-
+<tr><td><p>Never. There will always be new languages, new versions of languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#133; And the project team will change over time, and the measurements and presentation will change with them.</p>
 </td></tr>
 
 
