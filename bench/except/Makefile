@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2004-08-10 15:16:14 bfulgham Exp $
+# $Id: Makefile,v 1.10 2004-08-11 15:08:57 bfulgham Exp $
 include ../../Make.header
 
 TEST    := except
@@ -14,6 +14,7 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore except.java \
 	  --ignore except.gij \
 	  --ignore except.gcj \
+	  --ignore except.nice \
 	  --ignore except.kaffe \
 	  --ignore except.sablevm \
           --range 50000,100000,150000,200000

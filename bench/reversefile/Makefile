@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-08-10 15:16:16 bfulgham Exp $
+# $Id: Makefile,v 1.14 2004-08-11 15:09:04 bfulgham Exp $
 include ../../Make.header
 
 TEST    := reversefile
@@ -14,6 +14,7 @@ OO2COPTS := -A --no-rtc
 
 RUNTESTS :=  $(MINIBENCH) --conf ../../Minibench.conf --range 5,10,15,20 \
 	  --inputfile Input --geninput \
+	  --ignore reversefile.gcj \
 	  --ignore reversefile.nice \
 	  --ignore reversefile.stalin
 
