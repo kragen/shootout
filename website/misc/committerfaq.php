@@ -54,14 +54,14 @@
 
 <tr class="b"><td>How do I know the program does what's required?</td></tr>
 <tr><td>
-<p>Download the source-code attachment and review the code. Use your <strong>judgement</strong>.</p>
+<p>Download the source-code attachment and review the code. <strong>Use your judgement</strong>.</p>
 </td></tr>
 
 <tr class="b"><td>The program is fine - what next?</td></tr>
 <tr><td>
 <p>Make sure the source-code file uses <strong>Unix LF</strong> line-endings.</p>
 <p>Make sure the source-code file has the <strong>standard header</strong> comment.</p>
-<p>Make sure the there are no promos or adverts in the comment text.</p>
+<p>Make sure the there are <strong>no promos or adverts</strong> in the comment text.</p>
 <p>If you changed the source-code file name then maybe you need to <strong>change class names or module names</strong> in the source-code to match the new file name.</p>
 
 <p>The build-scripts expect the <strong>file-extension</strong> to indicate the programming language. Mostly the file-extensions are just be the programming language or implementation name - look at the file-extensions used for the fibonacci programs. However there are some exceptions:
@@ -105,6 +105,13 @@ If there's already a <em>nsieve.ruby</em> then rename the new source-code file a
 <p>If the slower program is particularly interesting or elegant, then maybe we'll keep showing it - <strong>use your judgement</strong>. When in doubt, remove the program.</p>
 </td></tr>
 
+<tr class="b"><td>How do I temporarily remove a program?</td></tr>
+<tr><td>
+<p>Maybe we just want to take a program off the website for a while, until we can decide what to do about it.</p>
+<p>Follow the same steps that you would take to mark an <em>Interesting Alternative Program</em>; and put X in the first column.
+<br/>for example <strong>X,nsieve,ruby,2</strong></p>
+</td></tr>
+
 
 <tr><td><h3 class="rev">&nbsp;Interesting Alternative Programs</h3></td></tr>
 
@@ -119,6 +126,18 @@ If there's already a <em>nsieve.ruby</em> then rename the new source-code file a
 <tr><td>
 <p>Add a row to the spreadsheet csv file <em>/shootout/website/desc/exclude.csv</em></p>
 <p>To show nsieve.ruby-2.ruby as an <em>Interesting Alternative Program</em> add a row <strong>,nsieve,ruby,2</strong> to <em>/shootout/website/desc/exclude.csv</em></p>
+</td></tr>
+
+<tr class="b"><td>Where do I explain what's interesting about the program?</td></tr>
+<tr><td>
+<p>When a program is so special that (against our better judgement) we've included it as an <em>Interesting Alternative Program</em> then we should explain what's special.</p>
+<p>We use <strong>about-files</strong> that contain snippets of XHTML (&#60;p&#62;&#60;/p&#62;). 
+<ul>
+<li>Create a new file in <em>/shootout/website/about/programs/</em></li>
+<li>The about-filename should match the source-code filename, for example: the about-filename for <em>fannkuch.ocaml-2.ocaml</em> would be <em>fannkuch-ocaml-2-about.tpl.php</em>
+</li>
+</ul>
+</p>
 </td></tr>
 
 </table>
