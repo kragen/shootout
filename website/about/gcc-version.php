@@ -1,2 +1,2 @@
-<p>gcc (GCC) 3.3.5 (Debian 1:3.3.5-12)
+<p>gcc-3.4 (GCC) 3.4.4 20050314 (prerelease) (Debian 3.4.3-12)
 </p>

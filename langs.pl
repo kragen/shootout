@@ -22,9 +22,9 @@
        Note => 'Large-scale, safety-critical software',
        Ext  => 'ada',
        Verfun => sub {
-	   my $ver = `gnat -v`;
-	   $ver =~ /(GNAT\s.*)/;
-	   return($1);
+	   my $ver = `gnatls -v`;
+	   $ver =~ /GNATLS\s(.*)\n.*/;
+	   return("GNAT $1");
        },
      },
 
