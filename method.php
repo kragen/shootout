@@ -319,4 +319,4 @@
 	      condition in the memory sampling code was minimized, a number of
 	      the memory measurements came out very differently.</p></li>
 	  </ul>
-<?php require("html/footer.shtml"); ?>
+<?php require("html/footer.php"); ?>
