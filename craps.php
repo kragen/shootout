@@ -72,7 +72,7 @@ algorithms, languages, compare, cpu, memory, lines of code" -->
 	    <a href="method.php#flaws">flawed</a>, and playing with this silly
 	    CGI is just a waste of time.</p>
 	  <br>
-          <?php require("craps_func.php");
+          <?php require("html/craps_funcs.php");
                 do_craps($_SERVER['QUERY_STRING']); ?>
           <br>
 	  <p>The <b>CRAPS!</b> point system works thusly:</p>

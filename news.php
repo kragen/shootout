@@ -139,7 +139,7 @@ It isn't complete, just abandoned (for now).
   build each language, so you can see how they are built.  This is
   to support my intention for total documentation of this project.
 <li>
-  Added a <a href="todo.shtml">Todo List</a>.  It seems to keep getting
+  Added a <a href="todo.php">Todo List</a>.  It seems to keep getting
   longer and longer.
 </ul>
 

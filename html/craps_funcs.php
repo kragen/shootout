@@ -1,5 +1,5 @@
 <?php
-# $Id: craps_func.php,v 1.2 2004-06-06 01:01:38 bfulgham Exp $
+# $Id: craps_funcs.php,v 1.1 2004-06-07 21:23:07 bfulgham Exp $
 
 require 'langs.inc';
 
