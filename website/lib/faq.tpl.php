@@ -2,14 +2,86 @@
 
 <div>This FAQ is short. You can read it really quickly.</div>
 
+<!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
+<table class="div">
+<tr><td><h3 class="rev">&nbsp;What can I learn here?</h3></td></tr>
+<tr><td>
+<p>The <em>Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
+
+<p>We are only trying to show the performance of various programming language implementations, on a limited number of micro-benchmarks.</p>
+
+<p>We <strong>are not</strong> trying to
+<ul>
+<li>provide a library of best-in-class algorithms</li>
+<li>showcase the capabilities of different languages</li>
+<li>compare programming language productivity </li>
+<li><em>etc etc</em></li>
+</ul>
+We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><strong>micro-benchmarks</strong></a>.
+</p>
+</td></tr>
+
+<tr class="b"><td>What should I do?</td></tr>
+<tr><td>
+<p>Read the source-code: Do you understand the programs?</p>
+<p>Read the source-code: Are the programs really comparable?</p>
+<p>Read the source-code: Can you write faster or more elegant code?</p>
+</td></tr>
+</table>
+
+
+<table class="div">
+<tr><td><h3 class="rev">&nbsp;How can I help?</h3></td></tr>
+
+<tr class="b"><td>Where can I send <strong>comments</strong> and suggestions?</td></tr>
+<tr><td><p>You can send comments and suggestions without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <strong>message form</strong></a>.</p>
+<p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
+<a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p></td></tr>
+
+<tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
+<tr><td>
+<p>Read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></p>
+<p>
+Work-up from the bottom of Contribute Programs
+<ol>
+<li>Check to Upload & Attach File: program source-code</li>
+<li>Browse to the program source-code file</li>
+<li>Description: what's different about this program</li>
+<li>Summary: language benchmark your-name 24-hour-time<br/>
+<em>java nsieve isaac gouy 1422</em></li>
+<li>Category: select the language implementation</li>
+<li>Group: select the benchmark</li>
+<li>click the Submit button</li>
+</ol>
+Now, in a New Window, complete the <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"><strong>Contribute Programs form</strong></a>.
+</p>
+</td></tr>
+
+<tr class="b"><td>How can I help with <strong>the chores</strong>?</td></tr>
+<tr><td>
+<p>
+</p>
+</td></tr>
+
+<tr class="b"><td>How can I contribute a new benchmark?</td></tr>
+<tr><td>
+<p>Do all the work!
+<ul>
+<li>Identify what's missing or wrong with the current benchmarks</li>
+<li>Define a new benchmark and give some background information</li>
+<li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
+</ul>
+And then, maybe, we just-might consider it.</p>
+<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html">mailing-list discussion</a>)</p>
+</td></tr>
+
+</table>
+
+
 
 <!-- WHERE CAN I? ////////////////////////////////////////////////// -->
 <table class="div">
 <tr><td><h3 class="rev">&nbsp;Where can I&#133;?</h3></td></tr>
-
-<tr class="b"><td>Where can I send <strong>suggestions</strong> and comments and programs?</td></tr>
-<tr><td><p>You can send suggestions and comments without subscribing to the mailing list - <a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">use the <strong>message form</strong></a>.
- You can contribute faster more-elegant programs - send them, and your suggestions, to the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p></td></tr>
 
 <tr class="b"><td>Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</td></tr>
 <tr><td>
@@ -29,32 +101,21 @@
 </td></tr>
 
 <tr class="b"><td>Where can I download the <strong>data</strong> from?</td></tr>
-
-<tr><td><p>You can <strong>download</strong> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="Not yet available">zip file of timings and memory use ~100KB</a>.</p></td></tr>
+<tr><td><p>You can <strong>download</strong> a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download data" title="">csv file of timings and memory use ~350KB</a>.</p></td></tr>
 
 <tr class="b"><td>Where can I see what other people think about the Language Shootout?</td></tr>
-
-<tr><td><p>You can start by reading the <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription">mailing list archives.</a></p></td></tr>
+<tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/">mailing-list archives.</a></p></td></tr>
 
 <tr class="b"><td>Where can I download the program sources and build scripts?</td></tr>
-
-<tr><td><p>You can browse the CVS tree on <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
+<tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.
 </td></tr>
-
-
-<tr><td><p>You can <strong>download</strong> all the program sources and builds scripts as a <a href="miscfile.php?sort=<?=$Sort;?>&file=download&title=Download Tarball" title="Not yet available">
-compressed tarball ~1.5MB</a>. The current distribution is only suitable for the adventurous.
-</p></td></tr>
-
 
 <tr class="b"><td>Where can I find out more?</td></tr>
 <tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
 </p></td></tr>
 
-<tr><td><p>You could learn about <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
+<tr><td><p>You could learn something more about <a href="miscfile.php?sort=<?=$Sort;?>&file=benchmarking&title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
 </p></td></tr>
-
-
 </table>
 
 
@@ -63,6 +124,11 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 <!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
 <table class="div">
 <tr><td><h3 class="rev">&nbsp;What does &#133; mean?</h3></td></tr>
+
+<tr class="b"><td>What does Interesting Alternative Program mean?</td></tr>
+<tr><td>
+<p>"Interesting Alternative Program" means that the program doesn't implement the benchmark, but we couldn't resist showing the program.</p>
+</td></tr>
 
 <tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
 <tr><td>
@@ -84,13 +150,13 @@ compressed tarball ~1.5MB</a>. The current distribution is only suitable for the
 
 <table class="div">
 
-<tr><td><h3 class="rev">&nbsp;How should I implement&#133;?</h3></td></tr>
+<tr><td><h3 class="rev"><a name="implement">&nbsp;How should I implement&#133;?</a></h3></td></tr>
 
-<tr class="b"><td><a name="sameway">How should I implement loops?</a></td></tr>
+<tr class="b"><td>How should I implement loops?</td></tr>
 <tr><td><p>Don't manually unroll the loops! We prefer plain vanilla programs - after all we're trying to compare language implementations not programmer effort and skill.</p> 
 </td></tr>
 
-<tr class="b"><td><a name="sameway">How should I grab bragging rights?</a></td></tr>
+<tr class="b"><td>How should I grab bragging rights?</td></tr>
 <tr><td><p>Include a header comment in the program like this:
 <pre>
 /* The Great Computer Language Shootout
