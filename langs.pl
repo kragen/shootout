@@ -557,14 +557,14 @@
        },
      },
 
-     poplog =>
-     { Lang => 'Poplog',
+     pop11 =>
+     { Lang => 'Pop11',
        Home => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
        Down => 'http://www.cs.bham.ac.uk/research/poplog/new/',
        Type => 'bytecomped/interpreted',
        Ext  => 'c',
        Verfun => sub {
-           my $val = `$ENV{POPLOG} ":popversion=>" 2>&1`;
+           my $val = `$ENV{POP11} ":popversion=>" 2>&1`;
 	   $val =~ /.*\s\((Version\s\d\d\.\d\d).*/;
 	   return ($1);
        },
@@ -849,5 +849,5 @@
      'rep'         => 'scheme',
      'mzc'         => 'lisp',
      'mzscheme'    => 'lisp',
-     'poplog'      => 'c',
+     'Pop11'       => 'c',
  );

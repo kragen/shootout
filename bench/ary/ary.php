@@ -1,7 +1,6 @@
-#!/usr/bin/php -f
-<?php
+<?
 /* The Great Computer Language Shootout
-   http://shootout.alioth.debian.org/ 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy 
 
    php -q ary.php 9000

@@ -252,7 +252,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
       'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Version 15.53-Lisp 2.0'
+      'Version' => '-Lisp '
     ),
 
     'newlisp' => array(
@@ -362,8 +362,8 @@ elastiC version: 0.0.36 (dec: 36)
       'Version' => 'Pike v7.6 release 13 '
     ),
 
-    'poplog' => array(
-      'Lang'    => 'Poplog',
+    'pop11' => array(
+      'Lang'    => 'Pop11',
       'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
       'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
       'Type'    => 'bytecomped/interpreted',
@@ -416,7 +416,7 @@ S-Lang Library Version: 1.4.9'
       'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
       'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Version 15.53'
+      'Version' => ''
     ),
 
     'smlnj' => array(

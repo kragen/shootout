@@ -1,10 +1,7 @@
-#!/usr/bin/php -f
-<?
-/* The Great Computer Language Shootout
-   http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy 
+<? /* The Great Computer Language Shootout
+      contributed by Isaac Gouy 
 
-   php -q wc.php < in.txt 
+      php -q wc.php < in.txt 
 */ 
 
 
