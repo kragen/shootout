@@ -40,6 +40,13 @@ matrix multiplication" -->
  distribution.  It is also very illustrative of how binary extension
  modules can give interpreted languages all the speed you need.</p>
 
+<p>Åsmund Ødegård contributed the now-official version for Python, which
+ uses the <a href="http://www.pfdubois.com/numpy">NumPy</a> extension.  I
+ am much more lenient about extensions like these than Doug was, especially
+ extensions that are heavily used by the language community -- this is a
+ true "real world" example of how you would use Python to solve this
+ problem.</p>
+
 <h4><a href="alt/">Alternates</a></h4>
 <p><i>This section is for displaying alternate solutions that are either
   slower than ones above or perhaps don't quite meet my criteria for
@@ -47,6 +54,8 @@ matrix multiplication" -->
 <ul>
   <li>Here's my original <a href="alt/matrix.pike2.pike">Pike program</a>,
   that does not use Pike's Matrix Math class.</li>
+  <li>Here's the original <a href="alt/matrix.python2.python">Python program
+  </a>, that does not use the NumPy extension.</li>
   <li>Brian Gregor contributed the original <a href="alt/matrix.ghc2.ghc">
   Haskell program</a>.</li>
   <li>Paul Foley submitted a <a href="alt/matrix.cmucl2.cmucl">CMUCL

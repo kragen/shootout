@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.11 2004-08-26 08:15:14 bfulgham Exp $
+# $Id: minibench,v 1.12 2004-09-20 04:24:17 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -33,7 +33,7 @@ use BSD::Resource qw(times);
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.11 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.12 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -213,8 +213,8 @@ sub resolvelink ($) {
 
 sub newer ($$) { return(-M resolvelink($_[0]) < -M resolvelink($_[1])); }
 
-sub files_equal ($$) {
-    my($file1, $file2) = @_;
+sub files_equal ($$$) {
+    my($file1, $file2, $runlog) = @_;
     my $size1 = (stat($file1))[7];
     my $size2 = (stat($file2))[7];
     return(0) if ($size1 != $size2);
@@ -229,6 +229,24 @@ sub files_equal ($$) {
 	    err "L1: $L1\nL2: $L2\n";
 	    close(F1); close(F2);
 	    $equal = 0;
+
+	    #
+	    #  Also want to use this message as the "runlog" data so
+	    #  implementors know why the program failed.
+	    #
+	    if (open(FH, ">>$runlog")) {
+	    } else {
+	         err("Error opening $runlog for input ($!)");
+	    }
+	    print FH <<EOF;
+************************************************************
+*   FILE COMPARISON ERROR
+************************************************************
+L1: $L1
+L2: $L2
+EOF
+	    close(FH);
+
 	    last;
 	}
     }
@@ -736,7 +754,7 @@ EOF
 }
 
 sub check_abort_conditions {
-    my($start_time) = @_;
+    my($start_time,$runlog) = @_;
     abort_if_swapping();
     if ($OPT->{maxtime} and
 	((time - $start_time) > $OPT->{maxtime})) {
@@ -745,6 +763,20 @@ sub check_abort_conditions {
 *   TEST KILLED BECAUSE IT EXCEEDED --maxtime $OPT->{maxtime}
 ************************************************************
 EOF
+	#
+	#  Also want to use this message as the "runlog" data so
+	#  implementors know why the program failed.
+	#
+	unless (open(FH, ">>$runlog")) {
+    	    err("Error opening $runlog for input ($!)");
+	    return -1;
+	}
+	print FH <<EOF;
+************************************************************
+*   TEST KILLED BECAUSE IT EXCEEDED --maxtime $OPT->{maxtime} SECS
+************************************************************
+EOF
+	close(FH);
 	return -1;
     }
     return 0;
@@ -1019,7 +1051,7 @@ sub run {
 	        
 		$maxmem = max($maxmem, total_child_size(childpids($$)));
 		select(undef, undef, undef, $OPT->{sampledelay});
-		$rc = check_abort_conditions($start_time);
+		$rc = check_abort_conditions($start_time,$self->{runlog_file});
 		if ($rc < 0) {
 		    return $rc;
 		}
@@ -1066,7 +1098,8 @@ sub compare_output {
     warn("DBG: compare_output($n) cmpfile = $cmpfile  outfile = $outfile") if (DBG);
     if (-f $cmpfile) {
 	my $exe = $self->executable;
-	if (files_equal($outfile, $cmpfile)) {
+	my $runlog = $self->{runlog_file};
+	if (files_equal($outfile, $cmpfile, $runlog)) {
 	    unless($OPT->{quiet}) {
 		my $cmp = $cmpfile;
 		$cmp =~ s!^.*/!.../!;
@@ -1076,6 +1109,22 @@ sub compare_output {
 	    system("ls -l $outfile $cmpfile");
 	    #abort(qq{($exe) FAILED: $outfile differs from $cmpfile});
 	    warn(qq{($exe) FAILED: $outfile differs from $cmpfile});
+
+	    #
+	    #  Also want to use this message as the "runlog" data so
+	    #  implementors know why the program failed.
+	    #
+	    if (open(FH, ">>$runlog")) {
+	    } else {
+	         err("Error opening $runlog for input ($!)");
+	    }
+	    print FH <<EOF;
+************************************************************
+*   TEST ($exe) FAILED:  $outfile differs from $cmpfile
+************************************************************
+EOF
+	    close(FH);
+	    system("ls -l $outfile $cmpfile >> $runlog");
 	    $rc = -1;
 	}
     } else {

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2004-09-19 00:13:34 bfulgham Exp $
+# $Id: Makefile,v 1.16 2004-09-20 04:23:42 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -15,10 +15,11 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 6,7,8,9,10 \
 	--ignore ackermann.ciao \
 	--ignore ackermann.csharp \
 	--ignore ackermann.elastic \
+	--ignore ackermann.gawk \
 	--ignore ackermann.gst \
-	--ignore ackermann.perl \
-	--ignore ackermann.objc \
-	--ignore ackermann.ruby \
-	--ignore ackermann.tcl
+	--ignore ackermann.perli
+#	\
+#	--ignore ackermann.ruby \
+#	--ignore ackermann.tcl
 
 include ../../Make.footer
