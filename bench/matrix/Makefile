@@ -1,11 +1,8 @@
-# $Id: Makefile,v 1.18 2005-02-26 07:07:18 bfulgham Exp $
+# $Id: Makefile,v 1.19 2005-03-15 04:27:45 bfulgham Exp $
 include ../../Make.header
 
 TEST    := matrix
 TITLE   := Matrix Multiplication
-
-GCCOPTS := -funroll-loops
-GXXOPTS := -funroll-loops
 
 ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
