@@ -1,7 +1,7 @@
-#!/usr/bin/php4 -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: ackermann.php,v 1.1 2004-05-28 06:27:09 bfulgham Exp $
+ $Id: ackermann.php,v 1.2 2004-10-11 04:47:17 bfulgham Exp $
  http://www.bagley.org/~doug/shootout/
  from Alexander Klimov
 */

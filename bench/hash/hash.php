@@ -1,15 +1,21 @@
-#!/usr/bin/php4 -f
-<?php
-/*
- $Id: hash.php,v 1.1 2004-05-28 06:49:27 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
-*/
+#!/usr/bin/php -f
+<?
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy 
+
+   php -q hash.php 100000
+*/ 
+
+
 $n = ($argc == 2) ? $argv[1] : 1;
-for ($i = 1; $i <= $n; $i++) {
-    $X[dechex($i)] = $i;
-}
-for ($i = $n; $i > 0; $i--) {
-    if ($X[$i]) { $c++; }
-}
-print "$c\n";
+
+$i = 0; while ($i++ < $n) $x[dechex($i)] = $i; 
+
+$count = 0;
+while ($n--) 
+    if (isset($x[$n])) $count++; 
+
+print "$count\n";
+
 ?>

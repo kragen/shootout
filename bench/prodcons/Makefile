@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2004-10-05 02:29:33 bfulgham Exp $
+# $Id: Makefile,v 1.18 2004-10-11 04:47:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := prodcons
@@ -18,6 +18,7 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore prodcons.csharp \
 	  --ignore prodcons.nice \
 	  --ignore prodcons.perl \
+	  --ignore prodcons.poplisp \
 	  --ignore prodcons.rep \
 	  --range 30000,70000,100000,150000
 

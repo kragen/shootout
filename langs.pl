@@ -540,6 +540,49 @@
        },
      },
 
+     poplisp =>
+     { Lang => 'Lisp',
+       Home => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
+       Down => 'http://www.cs.bham.ac.uk/research/poplog/new/',
+       Type => 'bytecomped/interpreted',
+       Ext  => 'lisp',
+       Verfun => sub {
+           my $tmp = `$ENV{POPLOG} ":popversion=>" 2>&1`;
+	   $tmp =~ /.*\s\((Version\s\d\d\.\d\d).*/;
+	   my $val = "$1-Lisp ";
+           $tmp = `$ENV{POPLISP} ":(lisp-implementation-version)" 2>&1`;
+	   $tmp =~ /(\d+\.\d+)/;
+	   $val .= "$1";
+	   return ($val);
+       },
+     },
+
+     poplog =>
+     { Lang => 'Poplog',
+       Home => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
+       Down => 'http://www.cs.bham.ac.uk/research/poplog/new/',
+       Type => 'bytecomped/interpreted',
+       Ext  => 'c',
+       Verfun => sub {
+           my $val = `$ENV{POPLOG} ":popversion=>" 2>&1`;
+	   $val =~ /.*\s\((Version\s\d\d\.\d\d).*/;
+	   return ($1);
+       },
+     },
+
+     popsml =>
+     { Lang => 'SML',
+       Home => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
+       Down => 'http://www.cs.bham.ac.uk/research/poplog/new/',
+       Type => 'bytecomped/interpreted',
+       Ext  => 'sml',
+       Verfun => sub {
+           my $val = `$ENV{POPLOG} ":popversion=>" 2>&1`;
+	   $val =~ /.*\s\((Version\s\d\d\.\d\d).*/;
+	   return ($1);
+       },
+     },
+
      ciao =>
      { Lang => 'Ciao Prolog',
        Home => 'http://www.clip.dia.fi.upm.es',

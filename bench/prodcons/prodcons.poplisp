@@ -1,0 +1,48 @@
+;;; -*- mode: lisp -*-
+;;; $Id: prodcons.poplisp,v 1.1 2004-10-11 04:47:51 bfulgham Exp $
+;;; http://shootout.alioth.debian.org/
+;;; From Jochen Schmidt
+
+(defparameter *counter* 0)
+(defparameter *produced* 0)
+(defparameter *consumed* 0)
+(defparameter *data* 0)
+(defparameter *mutex* (mp:make-lock "Big Lock"))
+
+(defun producer (n)
+  (declare (optimize (speed 3) (safety 0))
+           (fixnum n))
+  (loop :for i :of-type fixnum :from 1 :to n
+        :do 
+        (mp:process-wait "Producer is waiting on Consumer" #'(lambda () (= *counter* 0)))
+        (mp:with-lock-held (*mutex*)
+          (setf *data* i
+                    *counter* 1))
+        (incf *produced*)))
+
+(defun consumer (n)
+  (declare (optimize (speed 3) (safety 0))
+           (fixnum n))
+  (let ((i 0))
+    (declare (fixnum i))
+    (loop
+     (mp:process-wait "Consumer is waiting on Producer" #'(lambda () (= *counter* 1)))
+     (mp:with-lock-held (*mutex*)
+       (setf i *data*
+             *counter* 0))
+     (incf *consumed*)
+     (when (= i n)
+       (return)))))
+
+  (let ((n (parse-integer (or (car pop11::poparglist) "1"))))
+    (declare (optimize (speed 3) (safety 0))
+	     (fixnum n))
+    (setf *counter* 0
+	  *produced* 0
+	  *consumed* 0
+	  *data* 0)
+    (let ((producer (mp:make-process #'(lambda () (funcall #'producer n)) :name "Producer"))
+	  (consumer (mp:make-process #'(lambda () (funcall #'consumer n)) :name "Consumer")))
+      (mp:process-wait "Wait on Producer" #'(lambda () (eq (mp:process-state producer) :killed)))
+      (mp:process-wait "Wait on Consumer" #'(lambda () (eq (mp:process-state consumer) :killed)))
+      (format t "~A ~A~%" *produced* *consumed*))

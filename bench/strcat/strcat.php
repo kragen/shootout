@@ -1,8 +1,8 @@
-#!/usr/local/bin/php -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: strcat.php,v 1.1 2004-05-29 00:00:44 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
+ $Id: strcat.php,v 1.2 2004-10-11 04:48:01 bfulgham Exp $
+ http://shootout.alioth.debian.org/
 */
 $n = ($argc == 2) ? $argv[1] : 1;
 $str = "";

@@ -1,8 +1,8 @@
 #!/usr/bin/php -f
 <?php
 /*
- $Id: hash2.php,v 1.2 2004-06-15 05:45:40 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
+ $Id: hash2.php,v 1.3 2004-10-11 04:47:31 bfulgham Exp $
+ http://shootout.alioth.debian.org/
 */
 $n = ($argc == 2) ? $argv[1] : 1;
 for ($i = 0; $i < 10000; $i++) {

@@ -1,17 +1,24 @@
-#!/usr/bin/php4 -f
-<?php
-/*
- $Id: nestedloop.php,v 1.1 2004-05-28 20:48:22 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
-*/
+#!/usr/bin/php -f
+<?
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy 
+
+   php -q nestedloop.php 18
+*/ 
+
+
 $n = ($argc == 2) ? $argv[1] : 1;
+
 $x = 0;
-for ($a=0; $a<$n; $a++)
-    for ($b=0; $b<$n; $b++)
-	for ($c=0; $c<$n; $c++)
-	    for ($d=0; $d<$n; $d++)
-		for ($e=0; $e<$n; $e++)
-		    for ($f=0; $f<$n; $f++)
-			$x++;
+$a = $n; while ($a--){
+   $b = $n; while ($b--){
+      $c = $n; while ($c--){
+         $d = $n; while ($d--){
+            $e = $n; while ($e--){
+               $f = $n; while ($f--) 
+                  $x++; }}}}}
+ 
 print "$x\n";
+
 ?>

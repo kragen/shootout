@@ -1,18 +1,23 @@
-#!/usr/bin/php4 -f
+#!/usr/bin/php -f
 <?php
-/*
- $Id: ary.php,v 1.1 2004-05-28 06:39:25 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
-*/
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/ 
+   contributed by Isaac Gouy 
+
+   php -q ary.php 9000
+*/ 
+
+
 $n = ($argc == 2) ? $argv[1] : 1;
-for ($i=0; $i<$n; $i++) {
-    $X[$i] = $i + 1;
+
+for ($i=0; $i<$n; $i++) $x[$i] = $i + 1;
+    
+$y = array_pad(array(),$n,0);
+for ($k=0; $k<1000; $k++){
+   $j = $n;
+   while ($j--) $y[$j] += $x[$j];
 }
-for ($k=0; $k<1000; $k++) {
-    for ($i=$n-1; $i>=0; $i--) {
-	$Y[$i] += $X[$i];
-    }
-}
-$last = $n-1;
-print "$Y[0] $Y[$last]\n";
+
+printf("%d %d\n", $y[0], $y[$n-1]);
+
 ?>

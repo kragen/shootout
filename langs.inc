@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-13)
+      'Version' => 'gcc.real (GCC) 3.3.5 (Debian 1:3.3.5-1)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-13)
+      'Version' => 'g++.real (GCC) 3.3.5 (Debian 1:3.3.5-1)
 '
     ),
 
@@ -139,7 +139,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'native compiled',
-      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.3'
+      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.4'
     ),
 
     'erlang' => array(
@@ -147,7 +147,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.erlang.org/',
       'Down'    => 'http://www.erlang.org/download.html',
       'Type'    => 'bytecomped/interpreted',
-      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.3.6.3'
+      'Version' => 'Erlang (THREADS,HIPE) (BEAM) emulator version 5.4'
     ),
 
     'felix' => array(
@@ -247,6 +247,14 @@ elastiC version: 0.0.36 (dec: 36)
       'Version' => 'SableVM version 1.1.6'
     ),
 
+    'poplisp' => array(
+      'Lang'    => 'Lisp',
+      'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
+      'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => 'Version 15.53-Lisp 2.0'
+    ),
+
     'newlisp' => array(
       'Lang'    => 'Lisp',
       'Home'    => 'http://newlisp.org/',
@@ -309,7 +317,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-13)
+      'Version' => 'gcc.real (GCC) 3.3.5 (Debian 1:3.3.5-1)
 '
     ),
 
@@ -334,7 +342,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.php.net/',
       'Down'    => 'http://www.php.net/downloads.php',
       'Type'    => 'interpreted',
-      'Version' => 'PHP 4.3.8-12 (cli) (built: Sep  6 2004 05:46:13)
+      'Version' => 'PHP 4.3.9-1 (cli) (built: Oct  5 2004 08:45:32)
 '
     ),
 
@@ -352,6 +360,14 @@ elastiC version: 0.0.36 (dec: 36)
       'Down'    => 'http://pike.roxen.com/download/',
       'Type'    => 'bytecomped/interpreted',
       'Version' => 'Pike v7.6 release 13 '
+    ),
+
+    'poplog' => array(
+      'Lang'    => 'Poplog',
+      'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
+      'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => 'Version 15.53'
     ),
 
     'gprolog' => array(
@@ -393,6 +409,14 @@ elastiC version: 0.0.36 (dec: 36)
       'Type'    => 'interpreted',
       'Version' => '
 S-Lang Library Version: 1.4.9'
+    ),
+
+    'popsml' => array(
+      'Lang'    => 'SML',
+      'Home'    => 'http://www.cs.bham.ac.uk/research/poplog/freepoplog.html/',
+      'Down'    => 'http://www.cs.bham.ac.uk/research/poplog/new/',
+      'Type'    => 'bytecomped/interpreted',
+      'Version' => 'Version 15.53'
     ),
 
     'smlnj' => array(

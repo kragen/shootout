@@ -1,8 +1,8 @@
-#!/usr/bin/php4 -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: fibo.php,v 1.1 2004-05-28 20:25:42 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
+ $Id: fibo.php,v 1.2 2004-10-11 04:47:29 bfulgham Exp $
+ http://shootout.alioth.debian.org/
 */
 function fibo($n){
     return(($n < 2) ? 1 : fibo($n - 2) + fibo($n - 1));

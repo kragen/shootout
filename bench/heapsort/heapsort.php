@@ -1,8 +1,8 @@
-#!/usr/bin/php4 -f
+#!/usr/bin/php -f
 <?php
 /*
- $Id: heapsort.php,v 1.1 2004-05-28 20:27:50 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
+ $Id: heapsort.php,v 1.2 2004-10-11 04:47:32 bfulgham Exp $
+ http://shootout.alioth.debian.org/
 */
 define("IM", 139968);
 define("IA", 3877);

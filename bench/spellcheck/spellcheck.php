@@ -1,20 +1,24 @@
 #!/usr/bin/php -f
-<?php
-/*
- $Id: spellcheck.php,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
-*/
-$dict = array();
-$fd = fopen("Usr.Dict.Words", "r");
-while (!feof ($fd)) { $dict[chop(fgets($fd, 1024))] = 1; }
-fclose($fd);
+<?
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy 
 
-$fd = fopen("php://stdin", "r");
-while (!feof ($fd)) {
-    $word = chop(fgets($fd, 1024));
-    if (! $dict[$word]) {
-	print "$word\n";
-    }
+   php -q spellcheck.php < input.txt
+*/ 
+
+
+$fp = fopen("Usr.Dict.Words", "r");
+while ($line = fgets($fp, 128)) { $dict[chop($line)] = 1; }
+fclose($fp);
+
+
+$fp = fopen("php://stdin", "r");
+while ($line = fgets($fp, 128)) {
+    $line = chop($line);
+
+    if (!isset($dict[$line])) print "$line\n";
 }
-fclose($fd);
+fclose($fp);
+
 ?>

@@ -1,8 +1,8 @@
 #!/usr/bin/php -f
 <?php
 /*
- $Id: random.php,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
+ $Id: random.php,v 1.3 2004-10-11 04:47:51 bfulgham Exp $
+ http://shootout.alioth.debian.org/
 */
 define("IM", 139968);
 define("IA", 3877);

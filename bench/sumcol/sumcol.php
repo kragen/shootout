@@ -1,12 +1,19 @@
 #!/usr/bin/php -f
-<?php
-/*
- $Id: sumcol.php,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
- http://www.bagley.org/~doug/shootout/
-*/
-$fd = fopen("php://stdin", "r");
+<?
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy 
+
+   php -q sumcol.php < in.txt
+*/ 
+
+
 $sum = 0;
-while (!feof ($fd)) { $sum += fgets($fd, 1024); }
-fclose($fd);
-print "$sum\n";
+
+$fp = fopen("php://stdin", "r");
+while ($line = fgets($fp, 128)) $sum += intval($line); 
+fclose($fp);
+
+print "$sum\n"; 
+
 ?>

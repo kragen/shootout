@@ -1,23 +1,29 @@
-#!/usr/bin/php4 -f
-<?php
-/*
- $Id: sieve.php,v 1.2 2004-06-11 15:18:09 bfulgham Exp $
-  http://www.bagley.org/~doug/shootout/
- */
+#!/usr/bin/php -f
+<?
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy 
+
+   php -q sieve.php 9000
+*/ 
+
 
 $n = ($argc == 2) ? $argv[1] : 1;
+
+$stop = 8192;
 $count = 0;
+
 while ($n-- > 0) {
-    $count = 0;
-    $flags = range (0,8192);
-    for ($i=2; $i<8193; $i++) {
-         if ($flags[$i] > 0) {
-             for ($k=$i+$i; $k <= 8192; $k+=$i) {
-	          $flags[$k] = 0;
-             }
-	 $count++;
-         }
-    }
-}
+   $count = 0;
+   $i = $stop; while ($i--) $isPrime[$i] = 1;
+
+   $i = 2; while ($i++ < $stop){
+      if ($isPrime[$i]){
+         for ($k=$i+$i; $k<=$stop; $k+=$i) $isPrime[$k] = 0;
+         $count++;
+      }
+   }
+} 
 print "Count: $count\n";
+
 ?>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2004-10-06 07:26:52 bfulgham Exp $
+# $Id: Makefile,v 1.16 2004-10-11 04:47:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nestedloop
@@ -16,6 +16,7 @@ POLYOPTS := -q
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore nestedloop.bash \
 	  --ignore nestedloop.csharp \
+	  --ignore nestedloop.nhc98 \
 	  --ignore nestedloop.nice \
 	  --range 8,12,16,18
 

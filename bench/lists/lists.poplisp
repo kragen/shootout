@@ -1,0 +1,53 @@
+;;; -*- mode: lisp -*-
+;;; $Id: lists.poplisp,v 1.1 2004-10-11 04:47:40 bfulgham Exp $
+;;; http://shootout.alioth.debian.org/
+
+(defparameter *SIZE* 10000)
+
+(declaim (fixnum *SIZE*) (inline xcons push-queue))
+
+(defvar *free-conses*)
+
+(defun xcons (A B)
+  (let ((x *free-conses*))
+    (if x (progn (setf *free-conses* (cdr x) (car x) A (cdr x) B) x) (cons A B))))
+
+(defmacro xpop (X)
+  `(prog1 (car ,x) (psetf ,x (cdr ,x) (cdr ,x) *free-conses* *free-conses* ,x)))
+
+(defun push-queue (item queue &aux (new (xcons item nil)))
+  (if (cdr queue) (setf (cddr queue) new) (setf (car queue) new))
+  (setf (cdr queue) new)
+  (car queue))
+
+(defmacro with-collector ((name) &body body)
+  (let ((collector (gensym)))
+    `(let ((,collector (xcons nil nil)))
+       (flet ((,name (value) (push-queue value ,collector)))
+         ,@body
+         (car ,collector)))))
+
+(defun test-list ()
+  (let* ((L1 (with-collector (conc) (loop for x fixnum from 1 to *SIZE* do (conc x))))
+         (L2 (with-collector (conc) (loop for x in L1 do (conc x))))
+         (L3 nil))
+    ;; Move items from left of L2 to right of L3 (preserve order)
+    (setf L3 (with-collector (conc) (loop while L2 do (conc (xpop L2)))))
+    ;; Move from tail of L3 to tail of L2 (reversing list)
+    ;; start by reversing L3 so we can pop from the front
+    (setf L3 (nreverse L3))
+    (setf L2 (with-collector (conc) (loop while L3 do (conc (xpop L3)))))
+    ;; Reverse L1 in place
+    (setf L1 (nreverse L1))
+    ;; Check that (first L1) == *SIZE*
+    (assert (= (the fixnum (first L1)) *SIZE*))
+    ;; Compare L1 and L2 for equality
+    (assert (equal L1 L2))
+    ;; Return the length -- and return the conses to the free list
+    (prog1 (length (the list L1))
+      (setf *free-conses* (nconc *free-conses* L3 L2 L1)))))
+
+(let ((n (parse-integer (or (car pop11::poparglist) "1")))
+	(num 0) (*free-conses* nil))
+(loop repeat n fixnum do (setf num (test-list)))
+(format t "~D~%" num))

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2004-10-05 02:29:09 bfulgham Exp $
+# $Id: Makefile,v 1.19 2004-10-11 04:47:25 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
@@ -20,6 +20,7 @@ RUNTESTS := $(MINIBENCH) --conf ./Minibench.conf \
 	  --ignore echo.gcl \
 	  --ignore echo.nice \
 	  --ignore echo.oz \
+	  --ignore echo.poplisp \
 	  --range 40000,70000,100000,150000
 
 include ../../Make.footer
