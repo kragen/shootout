@@ -92,7 +92,7 @@ computer, language, compare, cpu, memory, string concatenation" -->
 <ul>
   <li>You can produce repeated strings in Perl via the <b>x</b> operator,
   but this <a href="alt/strcat.perl2.perl">program</a> does not really
-  follow the test guideline that the program should to N individual
+  follow the test guideline that the program should do N individual
   string concatenations in a loop.  Here's a similar program in <a
   href="alt/strcat.python2.python">Python</a> from Hans Nowak.  And
   one in <a href="alt/strcat.pike3.pike">Pike</a> from Per Hedbor.</li>

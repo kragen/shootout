@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-22 04:58:45 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-13 00:16:39 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -13,6 +13,10 @@ MLTONDEPS := ../../Include/sml-src/hash-string.sml \
 
 GHCOPTS := -package data -O2
 MB_GHCRTS  := +RTS -K10000000
+
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include -I ../../Include
+MB_CLRTS := -h 10000000
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 20000,40000,60000,80000 \

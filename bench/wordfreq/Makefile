@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-06-12 16:19:44 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-13 00:16:55 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
@@ -12,7 +12,6 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --inputfile Input --geninput \
 	  --ignore wordfreq.bash \
 	  --ignore wordfreq.mawk \
-	  --ignore wordfreq.lua \
 	  --ignore wordfreq.erlang \
 	  --ignore wordfreq.hipe \
 	  --title "$(TITLE)" $(TEST).*

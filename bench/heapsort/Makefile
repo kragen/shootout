@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-13 00:16:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -6,6 +6,9 @@ TITLE   := Heapsort
 
 SE_OPTS := -case_insensitive
 LOCDEPS := --dep=se:../Include/randomnumber.e
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include -I ../../Include
+
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore heapsort.bigforth \

@@ -1,0 +1,119 @@
+/* The Great Computer Language Shootout 
+   contributed by Isaac Gouy (Clean novice)
+
+   http://shootout.alioth.debian.org/
+
+To compile:	
+   cleanIDE.exe --batch-force-build "e:\shoot\contrib\clean\hash.prj"
+
+To run:
+   hash.exe -con 80000
+*/
+
+module hash
+import StdEnv, ArgEnv, LanguageShootout 
+      
+Start = toString( hashOps n ) +++ "\n"
+   where
+       argv = getCommandLine
+       n = toInt (argv.[1])
+
+hashOps n
+   # hashtable = htNew n
+   # hashtable = addHexKeys n newHexConverter hashtable
+   =  countDecimalKeys n hashtable 0 
+   
+   where
+   addHexKeys i hc ht
+      | i==0 = ht
+      # hc = append i hc
+      #! s = toHexString hc
+      = addHexKeys (i-1) hc (htAdd s i ht) 
+            
+   countDecimalKeys i ht count 
+      | i == 0    = count   
+      = if (htHasKey (toString i) ht) 
+         (countDecimalKeys (i-1) ht (count+1)) 
+         (countDecimalKeys (i-1) ht count)
+   
+   
+   
+:: HexConverter = Hc Int Int !.String   
+   
+newHexConverter :: *HexConverter   
+newHexConverter = Hc 31 32 {' ' \\ i<-[1..32]}
+
+append n hc=:(Hc _ last _)
+   = append_ n last hc
+   where
+   append_ n i (Hc first last s) 
+      | n==0 = (Hc i last s)
+      # i = i-1
+      # s = update s i hexchars.[n bitand 15]      
+      = append_ (n>>4) i (Hc i last s)
+
+   hexchars = "0123456789abcdef"
+   
+toHexString (Hc first last s) = s%(first,last)   
+   
+   
+
+// SimpleHash implementation would normally be imported
+   
+primes =: [
+   53,         97,         193,       389,       769,
+   1543,       3079,       6151,      12289,     24593,
+   49157,      98317,      196613,    93241,     786433,
+   1572869,    3145739,    6291469,   12582917,  25165843,
+   50331653,   100663319,  201326611, 402653189, 805306457
+   ]
+
+:: Item a = { key::!String
+            , val::a 
+            }
+
+:: HashTable a = { nBuckets::Int 
+                 , table::!.{[Item a]}
+                 , nItems::Int 
+                 }
+
+
+hash :: !{#.Char} !(HashTable .a) -> Int
+hash key ht=:{nBuckets} 
+   = (abs (loop key (size key - 1) 0)) rem nBuckets   
+   where
+   loop k n h
+      | n>(-1) = loop k (n-1) (5*h + toInt k.[n])         
+      = h
+
+
+htNew n = { nBuckets = nprime
+        , table = {[] \\ i <- [1..nprime]}
+        , nItems = 0
+        }
+   where    
+   nprime = hd (dropWhile (\x = x < n) primes)         
+      
+      
+htHasKey :: !{#.Char} !.(HashTable a) -> .Bool               
+htHasKey k ht=:{table}= findIn k table.[hash k ht]    
+
+
+htAdd k v ht=:{table,nItems} 
+   #! i = hash k ht
+   #! (b,table) = uselect table i
+   = if (findIn k b) 
+      {ht & table = update ht.table i (addItem k v b [])}
+      {ht & table = update ht.table i [{key=k,val=v}:b], nItems = nItems+1}
+         
+      
+findIn k [] = False
+findIn k [item:ls] 
+   | item.key == k   = True
+   = findIn k ls   
+   
+   
+addItem k v [] ls` = ls`
+addItem k v [item:ls] ls`
+   | item.key == k    = [{item & val=v}:ls] ++ ls`
+   = addItem k v ls [item:ls`]   

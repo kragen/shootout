@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-25 02:26:33 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-06-13 00:16:52 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -20,10 +20,14 @@ MLTONDEPS := ../../Include/sml-src/hash-string.sml \
 
 GCCOPTS := -I ../../Include
 
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include -I ../../Include
+
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,4,7,10 \
 	  --ignore spellcheck.se \
 	  --ignore spellcheck.erlang \
+	  --ignore spellcheck.clean \
 	  --inputfile Input --geninput \
 	  --title "$(TITLE)" $(TEST).*
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-12 16:19:43 bfulgham Exp $
+# $Id: Makefile,v 1.4 2004-06-13 00:16:44 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -14,6 +14,10 @@ MLTONDEPS := ../../Include/sml-src/array-sort-sig.sml \
 	     ../../Include/sml-src/array-qsort.sml
 
 MB_GHCRTS  := +RTS -K2046000
+
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include -I ../../Include
+MB_CLRTS := -h 10000000
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 1,50,100,150 \
