@@ -27,7 +27,7 @@ computer, language, compare, cpu, memory" -->
 <p>The programs can assume that the file ends in a newline, and they
   should be able to handle arbitrarily long lines.</p>
 
-<p><a href="/data/shootout/wc/Input">Input</a> file (it
+<p><a href="Input">Input</a> file (it
   is repeated N times).<br></p>
 <p>The correct output (for N = 500, i.e. a 500 copies of the input)
   looks like this:
