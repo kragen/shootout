@@ -1,114 +1,114 @@
-<span class="line">    1 </span><span class="com">(* The Great Computer Language Shootout
-</span><span class="line">    2 </span><span class="com">    http://shootout.alioth.debian.org
-</span><span class="line">    3 </span><span class="com"> 
-</span><span class="line">    4 </span><span class="com">    contributed by Isaac Gouy (Oberon-2 novice)
-</span><span class="line">    5 </span><span class="com"> *)</span>
-<span class="line">    6 </span>
-<span class="line">    7 </span>  <span class="kwa">MODULE</span> Spellcheck<span class="sym">;
-</span><span class="line">    8 </span><span class="sym"> </span><span class="kwa">IMPORT</span> IO<span class="sym">,</span> IO<span class="sym">:</span>StdChannels<span class="sym">,</span> S<span class="sym">:=</span>SYSTEM<span class="sym">,</span> SimpleHash<span class="sym">,</span> In<span class="sym">,</span> Out<span class="sym">,</span> Files<span class="sym">,</span> TextRider<span class="sym">;
-</span><span class="line">    9 </span><span class="sym"> 
-</span><span class="line">   10 </span><span class="sym"> </span><span class="kwa">CONST
-</span><span class="line">   11 </span><span class="kwa"> </span>   maxWordSize <span class="sym">=</span> <span class="num">32</span><span class="sym">;
-</span><span class="line">   12 </span><span class="sym"> </span>   readSize <span class="sym">=</span> <span class="num">4096</span><span class="sym">;
-</span><span class="line">   13 </span><span class="sym">    
-</span><span class="line">   14 </span><span class="sym">    </span><span class="kwa">TYPE
-</span><span class="line">   15 </span><span class="kwa"> </span>   FixedBuffer <span class="sym">=</span> <span class="kwa">ARRAY</span> readSize <span class="kwa">OF</span> <span class="kwb">CHAR</span><span class="sym">;
-</span><span class="line">   16 </span><span class="sym"> </span>   FixedBufferProc <span class="sym">=</span> <span class="kwa">PROCEDURE</span> <span class="sym">(</span><span class="kwa">VAR</span> b<span class="sym">:</span> FixedBuffer<span class="sym">;</span> <span class="kwa">VAR</span> pos<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">);
-</span><span class="line">   17 </span><span class="sym">  </span>   WordString <span class="sym">=</span> <span class="kwa">ARRAY</span> maxWordSize <span class="kwa">OF</span> <span class="kwb">CHAR</span><span class="sym">;
-</span><span class="line">   18 </span><span class="sym">    
-</span><span class="line">   19 </span><span class="sym"> </span><span class="kwa">VAR
-</span><span class="line">   20 </span><span class="kwa"> </span>   buffer<span class="sym">:</span> FixedBuffer<span class="sym">;
-</span><span class="line">   21 </span><span class="sym"> </span>   word<span class="sym">:</span> WordString<span class="sym">;
-</span><span class="line">   22 </span><span class="sym"> </span>   result<span class="sym">:</span> Files<span class="sym">.</span>Result<span class="sym">;
-</span><span class="line">   23 </span><span class="sym"> </span>   f<span class="sym">:</span> Files<span class="sym">.</span>File<span class="sym">;
-</span><span class="line">   24 </span><span class="sym"> </span>   dictionary<span class="sym">:</span> SimpleHash<span class="sym">.</span>Hashtable<span class="sym">;
-</span><span class="line">   25 </span><span class="sym"> </span>   key<span class="sym">:</span> SimpleHash<span class="sym">.</span>ItemKey<span class="sym">;
-</span><span class="line">   26 </span><span class="sym"> </span>   item<span class="sym">:</span> SimpleHash<span class="sym">.</span>Item<span class="sym">;
-</span><span class="line">   27 </span><span class="sym"> 
-</span><span class="line">   28 </span><span class="sym"> 
-</span><span class="line">   29 </span><span class="sym"> </span><span class="com">(* Separate special processing in procedure Process so we can use
-</span><span class="line">   30 </span><span class="com">    FillAndProcess in other Shootout tests *)</span>
-<span class="line">   31 </span> <span class="kwa">PROCEDURE</span> FillAndProcess <span class="sym">(</span><span class="kwa">VAR</span> buffer<span class="sym">:</span> FixedBuffer<span class="sym">;</span> Process<span class="sym">:</span> FixedBufferProc<span class="sym">);
-</span><span class="line">   32 </span><span class="sym"> </span><span class="kwa">VAR
-</span><span class="line">   33 </span><span class="kwa"> </span>   channel<span class="sym">:</span> IO<span class="sym">.</span>ByteChannel<span class="sym">;
-</span><span class="line">   34 </span><span class="sym"> </span>   partialFill<span class="sym">:</span> <span class="kwb">BOOLEAN</span><span class="sym">;
-</span><span class="line">   35 </span><span class="sym"> </span>   size<span class="sym">,</span> pos<span class="sym">,</span> count<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
-</span><span class="line">   36 </span><span class="sym"> </span><span class="kwa">BEGIN
-</span><span class="line">   37 </span><span class="kwa"> </span>   channel <span class="sym">:=</span> StdChannels<span class="sym">.</span>stdin<span class="sym">;
-</span><span class="line">   38 </span><span class="sym"> </span>   pos <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
-</span><span class="line">   39 </span><span class="sym"> </span>   size <span class="sym">:=</span> readSize<span class="sym">;
-</span><span class="line">   40 </span><span class="sym"> </span>   <span class="kwa">LOOP
-</span><span class="line">   41 </span><span class="kwa"> </span>      TRY
-<span class="line">   42 </span>          count <span class="sym">:=</span> channel<span class="sym">.</span>Read<span class="sym">(</span>buffer<span class="sym">,</span> pos<span class="sym">,</span> size <span class="sym">*</span> <span class="kwa">SIZE</span><span class="sym">(</span><span class="kwb">CHAR</span><span class="sym">));
-</span><span class="line">   43 </span><span class="sym">  </span>         partialFill <span class="sym">:=</span> count <span class="sym">&lt;</span> size<span class="sym">;
-</span><span class="line">   44 </span><span class="sym">  </span>         <span class="kwa">IF</span> partialFill <span class="kwa">THEN</span> size <span class="sym">:=</span> pos <span class="sym">+</span> count<span class="sym">;</span> <span class="kwa">ELSE</span> size <span class="sym">:=</span> readSize<span class="sym">;</span> <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   45 </span><span class="sym">                </span>         pos <span class="sym">:=</span> size<span class="sym">;
-</span><span class="line">   46 </span><span class="sym">         
-</span><span class="line">   47 </span><span class="sym"> </span>         Process<span class="sym">(</span>buffer<span class="sym">,</span>pos<span class="sym">);
-</span><span class="line">   48 </span><span class="sym"> 
-</span><span class="line">   49 </span><span class="sym"> </span>         <span class="kwa">IF</span> partialFill <span class="kwa">THEN EXIT</span><span class="sym">;</span> <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   50 </span><span class="sym">   
-</span><span class="line">   51 </span><span class="sym">          </span>         <span class="kwa">IF</span> pos <span class="sym">=</span> size <span class="kwa">THEN
-</span><span class="line">   52 </span><span class="kwa">  </span>            pos <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
-</span><span class="line">   53 </span><span class="sym"> </span>            size <span class="sym">:=</span> readSize<span class="sym">;
-</span><span class="line">   54 </span><span class="sym"> </span>         <span class="kwa">ELSE
-</span><span class="line">   55 </span><span class="kwa"> </span>            S<span class="sym">.</span><span class="kwa">MOVE</span><span class="sym">(</span>S<span class="sym">.</span><span class="kwa">ADR</span><span class="sym">(</span>buffer<span class="sym">[</span>pos<span class="sym">]),</span> S<span class="sym">.</span><span class="kwa">ADR</span><span class="sym">(</span>buffer<span class="sym">[</span><span class="num">0</span><span class="sym">]), (</span>size<span class="sym">-</span>pos<span class="sym">)*</span><span class="kwa">SIZE</span><span class="sym">(</span><span class="kwb">CHAR</span><span class="sym">));
-</span><span class="line">   56 </span><span class="sym"> </span>            pos <span class="sym">:=</span> size <span class="sym">-</span> pos<span class="sym">;
-</span><span class="line">   57 </span><span class="sym"> </span>            size <span class="sym">:=</span> readSize <span class="sym">-</span> pos<span class="sym">;
-</span><span class="line">   58 </span><span class="sym"> </span>         <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   59 </span><span class="sym">    
-</span><span class="line">   60 </span><span class="sym">                       </span>      CATCH IO<span class="sym">.</span>Error<span class="sym">:
-</span><span class="line">   61 </span><span class="sym"> </span>         <span class="kwa">EXIT</span><span class="sym">;
-</span><span class="line">   62 </span><span class="sym"> </span>      <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   63 </span><span class="sym">                </span>   <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   64 </span><span class="sym"> </span><span class="kwa">END</span> FillAndProcess<span class="sym">;
-</span><span class="line">   65 </span><span class="sym"> 
-</span><span class="line">   66 </span><span class="sym"> 
-</span><span class="line">   67 </span><span class="sym"> </span><span class="kwa">PROCEDURE</span> CheckWords<span class="sym">(</span><span class="kwa">VAR</span> buffer<span class="sym">:</span> FixedBuffer<span class="sym">;</span> <span class="kwa">VAR</span> pos<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">);
-</span><span class="line">   68 </span><span class="sym"> </span><span class="kwa">TYPE
-</span><span class="line">   69 </span><span class="kwa"> </span>   WordStringPtr <span class="sym">=</span> <span class="kwb">POINTER</span> <span class="kwa">TO</span> WordString<span class="sym">;
-</span><span class="line">   70 </span><span class="sym"> </span><span class="kwa">VAR
-</span><span class="line">   71 </span><span class="kwa"> </span>   i<span class="sym">,</span> j<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
-</span><span class="line">   72 </span><span class="sym"> </span>   bufferWord<span class="sym">:</span> WordStringPtr<span class="sym">;
-</span><span class="line">   73 </span><span class="sym"> </span><span class="kwa">BEGIN
-</span><span class="line">   74 </span><span class="kwa"> </span>   i <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span> j <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span> <span class="kwa">NEW</span><span class="sym">(</span>key<span class="sym">,</span> maxWordSize<span class="sym">);
-</span><span class="line">   75 </span><span class="sym"> </span>   <span class="kwa">WHILE</span> j <span class="sym">&lt;</span> pos <span class="kwa">DO
-</span><span class="line">   76 </span><span class="kwa">               IF</span> buffer<span class="sym">[</span>j<span class="sym">] =</span> <span class="num">0A</span>X <span class="kwa">THEN
-</span><span class="line">   77 </span><span class="kwa"> </span>         buffer<span class="sym">[</span>j<span class="sym">] :=</span> <span class="num">0X</span><span class="sym">;
-</span><span class="line">   78 </span><span class="sym">         </span>         bufferWord <span class="sym">:=</span> S<span class="sym">.</span><span class="kwa">VAL</span><span class="sym">(</span>WordStringPtr<span class="sym">,</span> S<span class="sym">.</span><span class="kwa">ADR</span><span class="sym">(</span>buffer<span class="sym">[</span>i<span class="sym">]));
-</span><span class="line">   79 </span><span class="sym">                                              </span>         <span class="kwa">COPY</span><span class="sym">(</span>bufferWord^<span class="sym">,</span> key^<span class="sym">);
-</span><span class="line">   80 </span><span class="sym"> 
-</span><span class="line">   81 </span><span class="sym">         </span>         <span class="kwa">IF</span> SimpleHash<span class="sym">.</span>Find<span class="sym">(</span>dictionary<span class="sym">,</span> key<span class="sym">) =</span> <span class="kwa">NIL THEN
-</span><span class="line">   82 </span><span class="kwa"> </span>            Out<span class="sym">.</span>String<span class="sym">(</span>key^<span class="sym">);</span> Out<span class="sym">.</span>Ln<span class="sym">;
-</span><span class="line">   83 </span><span class="sym"> </span>         <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   84 </span><span class="sym">         
-</span><span class="line">   85 </span><span class="sym">                  </span>         <span class="kwa">INC</span><span class="sym">(</span>j<span class="sym">);</span> i <span class="sym">:=</span> j<span class="sym">;
-</span><span class="line">   86 </span><span class="sym">         </span>      <span class="kwa">ELSE
-</span><span class="line">   87 </span><span class="kwa">          INC</span><span class="sym">(</span>j<span class="sym">);
-</span><span class="line">   88 </span><span class="sym"> </span>      <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   89 </span><span class="sym"> </span>   <span class="kwa">END</span><span class="sym">;
-</span><span class="line">   90 </span><span class="sym"> 
-</span><span class="line">   91 </span><span class="sym">       </span>   <span class="kwa">IF</span> j <span class="sym">&gt;</span> i <span class="kwa">THEN</span> pos <span class="sym">:=</span> i<span class="sym">;</span> <span class="kwa">END</span><span class="sym">;</span> <span class="com">(* indicate buffer position *)</span>
-<span class="line">   92 </span> <span class="kwa">END</span> CheckWords<span class="sym">;
-</span><span class="line">   93 </span><span class="sym"> 
-</span><span class="line">   94 </span><span class="sym"> 
-</span><span class="line">   95 </span><span class="sym"> </span><span class="kwa">BEGIN
-</span><span class="line">   96 </span><span class="kwa"> </span>   f <span class="sym">:=</span> Files<span class="sym">.</span>Old<span class="sym">(</span><span class="str">&quot;Usr.Dict.Words&quot;</span><span class="sym">, {</span>Files<span class="sym">.</span>read<span class="sym">},</span> result<span class="sym">);
-</span><span class="line">   97 </span><span class="sym"> </span>   <span class="kwa">IF</span> result # Files<span class="sym">.</span>done <span class="kwa">THEN
-</span><span class="line">   98 </span><span class="kwa"> </span>      Out<span class="sym">.</span>String<span class="sym">(</span><span class="str">&quot;Usr.Dict.Words not opened&quot;</span><span class="sym">);</span> Out<span class="sym">.</span>Ln<span class="sym">;</span> <span class="kwa">HALT</span><span class="sym">(</span><span class="num">1</span><span class="sym">);
-</span><span class="line">   99 </span><span class="sym"> </span>   <span class="kwa">END</span><span class="sym">;
-</span><span class="line">  100 </span><span class="sym">    
-</span><span class="line">  101 </span><span class="sym"> </span>   dictionary <span class="sym">:=</span> SimpleHash<span class="sym">.</span>New<span class="sym">(</span><span class="num">40000</span><span class="sym">);
-</span><span class="line">  102 </span><span class="sym">         </span>   In<span class="sym">.</span>SetReader<span class="sym">(</span> TextRider<span class="sym">.</span>ConnectReader<span class="sym">(</span>f<span class="sym">) );
-</span><span class="line">  103 </span><span class="sym"> </span>   <span class="kwa">LOOP
-</span><span class="line">  104 </span><span class="kwa">         </span>      In<span class="sym">.</span>Line<span class="sym">(</span>word<span class="sym">);
-</span><span class="line">  105 </span><span class="sym"> </span>      <span class="kwa">IF</span> ~In<span class="sym">.</span>Done<span class="sym">()</span> <span class="kwa">THEN EXIT</span><span class="sym">;</span> <span class="kwa">END</span><span class="sym">;
-</span><span class="line">  106 </span><span class="sym"> 
-</span><span class="line">  107 </span><span class="sym">       </span>      <span class="kwa">NEW</span><span class="sym">(</span>key<span class="sym">,</span> maxWordSize<span class="sym">);
-</span><span class="line">  108 </span><span class="sym"> </span>      <span class="kwa">COPY</span><span class="sym">(</span>word<span class="sym">,</span>key^<span class="sym">);
-</span><span class="line">  109 </span><span class="sym">          </span>      item <span class="sym">:=</span> SimpleHash<span class="sym">.</span>AddKey<span class="sym">(</span>dictionary<span class="sym">,</span> key<span class="sym">);
-</span><span class="line">  110 </span><span class="sym">         </span>   <span class="kwa">END</span><span class="sym">;
-</span><span class="line">  111 </span><span class="sym">      </span>   f<span class="sym">.</span>Close<span class="sym">();
-</span><span class="line">  112 </span><span class="sym"> 
-</span><span class="line">  113 </span><span class="sym"> </span>   FillAndProcess<span class="sym">(</span>buffer<span class="sym">,</span> CheckWords<span class="sym">);
-</span><span class="line">  114 </span><span class="sym">       </span><span class="kwa">END</span> Spellcheck<span class="sym">.</span>
+<span class="com">(* The Great Computer Language Shootout
+    http://shootout.alioth.debian.org
+ 
+    contributed by Isaac Gouy (Oberon-2 novice)
+ *)</span>
+
+  <span class="kwa">MODULE</span> Spellcheck<span class="sym">;
+ </span><span class="kwa">IMPORT</span> IO<span class="sym">,</span> IO<span class="sym">:</span>StdChannels<span class="sym">,</span> S<span class="sym">:=</span>SYSTEM<span class="sym">,</span> SimpleHash<span class="sym">,</span> In<span class="sym">,</span> Out<span class="sym">,</span> Files<span class="sym">,</span> TextRider<span class="sym">;
+ 
+ </span><span class="kwa">CONST
+ </span>   maxWordSize <span class="sym">=</span> <span class="num">32</span><span class="sym">;
+ </span>   readSize <span class="sym">=</span> <span class="num">4096</span><span class="sym">;
+    
+    </span><span class="kwa">TYPE
+ </span>   FixedBuffer <span class="sym">=</span> <span class="kwa">ARRAY</span> readSize <span class="kwa">OF</span> <span class="kwb">CHAR</span><span class="sym">;
+ </span>   FixedBufferProc <span class="sym">=</span> <span class="kwa">PROCEDURE</span> <span class="sym">(</span><span class="kwa">VAR</span> b<span class="sym">:</span> FixedBuffer<span class="sym">;</span> <span class="kwa">VAR</span> pos<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">);
+  </span>   WordString <span class="sym">=</span> <span class="kwa">ARRAY</span> maxWordSize <span class="kwa">OF</span> <span class="kwb">CHAR</span><span class="sym">;
+    
+ </span><span class="kwa">VAR
+ </span>   buffer<span class="sym">:</span> FixedBuffer<span class="sym">;
+ </span>   word<span class="sym">:</span> WordString<span class="sym">;
+ </span>   result<span class="sym">:</span> Files<span class="sym">.</span>Result<span class="sym">;
+ </span>   f<span class="sym">:</span> Files<span class="sym">.</span>File<span class="sym">;
+ </span>   dictionary<span class="sym">:</span> SimpleHash<span class="sym">.</span>Hashtable<span class="sym">;
+ </span>   key<span class="sym">:</span> SimpleHash<span class="sym">.</span>ItemKey<span class="sym">;
+ </span>   item<span class="sym">:</span> SimpleHash<span class="sym">.</span>Item<span class="sym">;
+ 
+ 
+ </span><span class="com">(* Separate special processing in procedure Process so we can use
+    FillAndProcess in other Shootout tests *)</span>
+ <span class="kwa">PROCEDURE</span> FillAndProcess <span class="sym">(</span><span class="kwa">VAR</span> buffer<span class="sym">:</span> FixedBuffer<span class="sym">;</span> Process<span class="sym">:</span> FixedBufferProc<span class="sym">);
+ </span><span class="kwa">VAR
+ </span>   channel<span class="sym">:</span> IO<span class="sym">.</span>ByteChannel<span class="sym">;
+ </span>   partialFill<span class="sym">:</span> <span class="kwb">BOOLEAN</span><span class="sym">;
+ </span>   size<span class="sym">,</span> pos<span class="sym">,</span> count<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
+ </span><span class="kwa">BEGIN
+ </span>   channel <span class="sym">:=</span> StdChannels<span class="sym">.</span>stdin<span class="sym">;
+ </span>   pos <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+ </span>   size <span class="sym">:=</span> readSize<span class="sym">;
+ </span>   <span class="kwa">LOOP
+ </span>      TRY
+          count <span class="sym">:=</span> channel<span class="sym">.</span>Read<span class="sym">(</span>buffer<span class="sym">,</span> pos<span class="sym">,</span> size <span class="sym">*</span> <span class="kwa">SIZE</span><span class="sym">(</span><span class="kwb">CHAR</span><span class="sym">));
+  </span>         partialFill <span class="sym">:=</span> count <span class="sym">&lt;</span> size<span class="sym">;
+  </span>         <span class="kwa">IF</span> partialFill <span class="kwa">THEN</span> size <span class="sym">:=</span> pos <span class="sym">+</span> count<span class="sym">;</span> <span class="kwa">ELSE</span> size <span class="sym">:=</span> readSize<span class="sym">;</span> <span class="kwa">END</span><span class="sym">;
+                </span>         pos <span class="sym">:=</span> size<span class="sym">;
+	 
+ </span>         Process<span class="sym">(</span>buffer<span class="sym">,</span>pos<span class="sym">);
+ 
+ </span>         <span class="kwa">IF</span> partialFill <span class="kwa">THEN EXIT</span><span class="sym">;</span> <span class="kwa">END</span><span class="sym">;
+   
+          </span>         <span class="kwa">IF</span> pos <span class="sym">=</span> size <span class="kwa">THEN
+  </span>            pos <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+ </span>            size <span class="sym">:=</span> readSize<span class="sym">;
+ </span>         <span class="kwa">ELSE
+ </span>            S<span class="sym">.</span><span class="kwa">MOVE</span><span class="sym">(</span>S<span class="sym">.</span><span class="kwa">ADR</span><span class="sym">(</span>buffer<span class="sym">[</span>pos<span class="sym">]),</span> S<span class="sym">.</span><span class="kwa">ADR</span><span class="sym">(</span>buffer<span class="sym">[</span><span class="num">0</span><span class="sym">]), (</span>size<span class="sym">-</span>pos<span class="sym">)*</span><span class="kwa">SIZE</span><span class="sym">(</span><span class="kwb">CHAR</span><span class="sym">));
+ </span>            pos <span class="sym">:=</span> size <span class="sym">-</span> pos<span class="sym">;
+ </span>            size <span class="sym">:=</span> readSize <span class="sym">-</span> pos<span class="sym">;
+ </span>         <span class="kwa">END</span><span class="sym">;
+    
+                       </span>      CATCH IO<span class="sym">.</span>Error<span class="sym">:
+ </span>         <span class="kwa">EXIT</span><span class="sym">;
+ </span>      <span class="kwa">END</span><span class="sym">;
+                </span>   <span class="kwa">END</span><span class="sym">;
+ </span><span class="kwa">END</span> FillAndProcess<span class="sym">;
+ 
+ 
+ </span><span class="kwa">PROCEDURE</span> CheckWords<span class="sym">(</span><span class="kwa">VAR</span> buffer<span class="sym">:</span> FixedBuffer<span class="sym">;</span> <span class="kwa">VAR</span> pos<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">);
+ </span><span class="kwa">TYPE
+ </span>   WordStringPtr <span class="sym">=</span> <span class="kwb">POINTER</span> <span class="kwa">TO</span> WordString<span class="sym">;
+ </span><span class="kwa">VAR
+ </span>   i<span class="sym">,</span> j<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
+ </span>   bufferWord<span class="sym">:</span> WordStringPtr<span class="sym">;
+ </span><span class="kwa">BEGIN
+ </span>   i <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span> j <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span> <span class="kwa">NEW</span><span class="sym">(</span>key<span class="sym">,</span> maxWordSize<span class="sym">);
+ </span>   <span class="kwa">WHILE</span> j <span class="sym">&lt;</span> pos <span class="kwa">DO
+	       IF</span> buffer<span class="sym">[</span>j<span class="sym">] =</span> <span class="num">0A</span>X <span class="kwa">THEN
+ </span>         buffer<span class="sym">[</span>j<span class="sym">] :=</span> <span class="num">0X</span><span class="sym">;
+	 </span>         bufferWord <span class="sym">:=</span> S<span class="sym">.</span><span class="kwa">VAL</span><span class="sym">(</span>WordStringPtr<span class="sym">,</span> S<span class="sym">.</span><span class="kwa">ADR</span><span class="sym">(</span>buffer<span class="sym">[</span>i<span class="sym">]));
+	         	    		 </span>         <span class="kwa">COPY</span><span class="sym">(</span>bufferWord^<span class="sym">,</span> key^<span class="sym">);
+ 
+	 </span>         <span class="kwa">IF</span> SimpleHash<span class="sym">.</span>Find<span class="sym">(</span>dictionary<span class="sym">,</span> key<span class="sym">) =</span> <span class="kwa">NIL THEN
+ </span>            Out<span class="sym">.</span>String<span class="sym">(</span>key^<span class="sym">);</span> Out<span class="sym">.</span>Ln<span class="sym">;
+ </span>         <span class="kwa">END</span><span class="sym">;
+	 
+	 	 </span>         <span class="kwa">INC</span><span class="sym">(</span>j<span class="sym">);</span> i <span class="sym">:=</span> j<span class="sym">;
+	 </span>      <span class="kwa">ELSE
+          INC</span><span class="sym">(</span>j<span class="sym">);
+ </span>      <span class="kwa">END</span><span class="sym">;
+ </span>   <span class="kwa">END</span><span class="sym">;
+ 
+       </span>   <span class="kwa">IF</span> j <span class="sym">&gt;</span> i <span class="kwa">THEN</span> pos <span class="sym">:=</span> i<span class="sym">;</span> <span class="kwa">END</span><span class="sym">;</span> <span class="com">(* indicate buffer position *)</span>
+ <span class="kwa">END</span> CheckWords<span class="sym">;
+ 
+ 
+ </span><span class="kwa">BEGIN
+ </span>   f <span class="sym">:=</span> Files<span class="sym">.</span>Old<span class="sym">(</span><span class="str">&quot;Usr.Dict.Words&quot;</span><span class="sym">, {</span>Files<span class="sym">.</span>read<span class="sym">},</span> result<span class="sym">);
+ </span>   <span class="kwa">IF</span> result # Files<span class="sym">.</span>done <span class="kwa">THEN
+ </span>      Out<span class="sym">.</span>String<span class="sym">(</span><span class="str">&quot;Usr.Dict.Words not opened&quot;</span><span class="sym">);</span> Out<span class="sym">.</span>Ln<span class="sym">;</span> <span class="kwa">HALT</span><span class="sym">(</span><span class="num">1</span><span class="sym">);
+ </span>   <span class="kwa">END</span><span class="sym">;
+    
+ </span>   dictionary <span class="sym">:=</span> SimpleHash<span class="sym">.</span>New<span class="sym">(</span><span class="num">40000</span><span class="sym">);
+	 </span>   In<span class="sym">.</span>SetReader<span class="sym">(</span> TextRider<span class="sym">.</span>ConnectReader<span class="sym">(</span>f<span class="sym">) );
+ </span>   <span class="kwa">LOOP
+	 </span>      In<span class="sym">.</span>Line<span class="sym">(</span>word<span class="sym">);
+ </span>      <span class="kwa">IF</span> ~In<span class="sym">.</span>Done<span class="sym">()</span> <span class="kwa">THEN EXIT</span><span class="sym">;</span> <span class="kwa">END</span><span class="sym">;
+ 
+       </span>      <span class="kwa">NEW</span><span class="sym">(</span>key<span class="sym">,</span> maxWordSize<span class="sym">);
+ </span>      <span class="kwa">COPY</span><span class="sym">(</span>word<span class="sym">,</span>key^<span class="sym">);
+          </span>      item <span class="sym">:=</span> SimpleHash<span class="sym">.</span>AddKey<span class="sym">(</span>dictionary<span class="sym">,</span> key<span class="sym">);
+	 </span>   <span class="kwa">END</span><span class="sym">;
+      </span>   f<span class="sym">.</span>Close<span class="sym">();
+ 
+ </span>   FillAndProcess<span class="sym">(</span>buffer<span class="sym">,</span> CheckWords<span class="sym">);
+       </span><span class="kwa">END</span> Spellcheck<span class="sym">.</span>

@@ -7,8 +7,11 @@
 <ul>  
   <li>Malcolm Wallace (a core Haskell researcher and implementor of the 
 nhc98 interpreter) provided several enhanced Haskell implementations.</li>
-  <li>Isaac Gouy provided a slew of new PHP implementations.</li>
+  <li>Matthias Blume (a core SML/NJ researcher and implementor) provided many of the SML/NJ implementations.</li>
+  <li>Stephen Weeks contributed a number of SML solutions for MLton, and continues to provide valued input to the shootout.</li>
+  <li>Isaac Gouy provided a slew of PHP, Clean, Erlang, Oberon 2, and many other implementations.</li>
   <li>John Goerzen and Tomasz Zielonka and Greg Buchholz and Einar Karttunen and Aaron Denney all worked on improving the GHC Haskell programs.</li>
+  <li>Felix Winkelmann (the creator of the excellent Chicken Scheme implementation) provided a great many Chicken test implementations.<li>
   <li>John Skaller added programs in his FELIX language.</li>
   <li>Lutz Mueller added newLISP implementations.</li>
   <li>Raymond Racine spotted a couple of problems with the MLton code.</li>
@@ -42,6 +45,12 @@ consequently, CMUCL) out.</li>
   <li>Chris Dutton reworked heapsort in Ruby.</li>
   <li>Paul Sanchez improved the Ruby primes sieve program.</li>
   <li>Einar Karttunen made improvements to several Erlang programs</li>
+  <li>Paul Foley has contributed a few new version of the Common Lisp programs.</li>
+  <li>Bengt Kleberg has helped with the Scheme programs.</li>
+  <li>Vasco Costa made some helpful comments about the C code.</li>
+  <li>Soren Morton provided some helpful Perl improvements.</li>
+  <li>Kat-Zygfryd provided several ADA 95 corrections and additions.</li>
+  <li>Ian Osgood provided some Forth corrections and implementations.</li>
 </ul>
 
 <h4 class="rev">&nbsp;Aldo Calpini's Win32 project</h4>
@@ -89,7 +98,4 @@ consequently, CMUCL) out.</li>
   <li>Bulent Murtezaoglu has helped provide faster Common
   Lisp programs.</li>
   <li>Jeff Siskind has helped porting some Scheme programs to his Stalin compiler.</li>
-  <li>Paul Foley has contributed a few new version of the Common Lisp programs.</li>
-  <li>Bengt Kleberg has helped with the Scheme programs.</li>
-  <li>Vasco Costa made some helpful comments about the C code.</li>
 </ul>
