@@ -1,24 +1,16 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy
+   contributed by Isaac Gouy (with improvements by Paolo Bonzini)
 
-   To run: gst -Q hash2.st -a 150
+   To run: gst -QI /usr/local/share/smalltalk/gst.im hash2.st -a 150
 "
 
-| n table1 table2 buffer |
-n := (Smalltalk arguments at: 1) asInteger.
+| n table1 table2 |
+n := Smalltalk arguments first asInteger.
 
 table1 := Dictionary new: 12000. 
 table2 := Dictionary new: n + (n // 5).
 
-buffer := WriteStream on: (String new: 10).
-0 to: 9999 do: [:i| | foo |
-   buffer nextPutAll: 'foo_'.
-   i printOn: buffer.
-   foo := buffer contents.
-   buffer reset.
-   table1 at: foo put: i.
-]. 
-
+0 to: 9999 do: [:each| table1 at: 'foo_', each printString put: each].
 
 n timesRepeat: [ 
    table1 keysAndValuesDo: [ :key :value |  | assoc |

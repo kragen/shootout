@@ -1,8 +1,38 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy
+   contributed by Paolo Bonzini
 
-   To run: gst -Q reversefile.st < input.txt > out.txt
+   To run: gst -QI /usr/local/share/smalltalk/gst.im reversefile < input.txt 
 "
 
+"
 ((FileStream stdin bufferSize: 4096) splitAt: Character nl)
-   reverseDo: [:each| Transcript nextPutAll: each; cr] !
+   reverseDo: [ :each | stdout nextPutAll: each; nl ]!
+"
+
+
+| s last out ptr |
+s := (FileStream stdin bufferSize: 4096) contents.
+last := s size.
+out := String new: s size.
+ptr := 1.
+
+s size - 1 to: 1 by: -1 do: [ :i |
+   (s at: i) == ##(Character nl) ifTrue: [
+   out
+      replaceFrom: ptr
+      to: ptr + (last - i - 1)
+      with: s
+      startingAt: i + 1.
+
+   ptr := ptr + last - i.
+   last := i.
+   ]
+].
+
+out
+   replaceFrom: ptr
+   to: out size
+   with: s
+   startingAt: 1.
+
+stdout nextPutAll: out !

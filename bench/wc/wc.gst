@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q wc.st < input.txt
+   To run: gst -QI /usr/local/share/smalltalk/gst.im wc.st < input.txt
 "
 
 | newline space tab nl nw nc insideWord stream ch |
@@ -29,4 +29,4 @@ stream := FileStream stdin bufferSize: 4096.
 Transcript 
    show: nl displayString; space;
    show: nw displayString; space;
-   show: nc displayString; cr !
+   show: nc displayString; nl !

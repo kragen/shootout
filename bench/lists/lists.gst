@@ -1,12 +1,12 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q lists.st -a 16
+   To run: gst -QI /usr/local/share/smalltalk/gst.im lists.st -a 16
 "
 
 | size n list1 list2 list3 count |
 size := 10000.
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 
 n timesRepeat: [
    list1 := OrderedCollection new: size.
@@ -14,8 +14,8 @@ n timesRepeat: [
    list2 := list1 copy.
 
    list3 := OrderedCollection new: size.
-   [list2 notEmpty] whileTrue: [list3 addLast: (list2 removeFirst)]. 
-   [list3 notEmpty] whileTrue: [list2 addLast: (list3 removeLast)].
+   [list2 notEmpty] whileTrue: [list3 addLast: list2 removeFirst]. 
+   [list3 notEmpty] whileTrue: [list2 addLast: list3 removeLast].
 
    list1 := list1 reverse. 
    count := (list1 first = size and: [list1 = list2]) 

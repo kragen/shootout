@@ -5,57 +5,68 @@
 *)
 
 MODULE Hash;
-IMPORT LangShootout, SimpleHash, Out;
+IMPORT LangShootout, SimpleHash, Strings, IntStr, Out, S:=SYSTEM;
 
 CONST
-   BufferSize = 16;
+   maxLength = 11; 
 
 VAR
-   buffer: ARRAY BufferSize OF CHAR;
+   buffer: ARRAY maxLength OF CHAR;
    n, i, count: LONGINT;
    table: SimpleHash.Hashtable;
    item: SimpleHash.Item;
    key: SimpleHash.ItemKey;
-   Digits: ARRAY 16 OF CHAR; 
 
-
-PROCEDURE IntToString(x, r: LONGINT): SimpleHash.ItemKey;
+PROCEDURE HexToItemKey(n: LONGINT): SimpleHash.ItemKey;
 VAR
-   s: SimpleHash.ItemKey;
-   i, j: LONGINT;
+   i, m, digits: LONGINT;
+   key: SimpleHash.ItemKey;
 BEGIN
-   i := 0;
-   REPEAT buffer[i] := Digits[x MOD r]; x := x DIV r; INC(i); UNTIL x = 0;
-   NEW(s, i);
-   j := 0;
-   REPEAT DEC(i); s[j] := buffer[i]; INC(j); UNTIL i = 0;
-   RETURN s;
-END IntToString;
+   i := maxLength - 1;
+   WHILE n > 0 DO
+      m := S.VAL(LONGINT, S.VAL(SET, n) * {0..3}); 
+      CASE m OF
+         | 0..9 : buffer[i] := CHR(ORD("0") + m);
+      ELSE
+                  buffer[i] := CHR(ORD("A") - 10 + m);   
+      END;      
+      n := ASH(n,-4); DEC(i);                  
+   END;
+   
+   INC(i); digits := maxLength - i; 
+   NEW(key, digits);
+   S.MOVE(S.ADR(buffer[i]), S.VAL(LONGINT,key), digits);
+   RETURN key;
+END HexToItemKey;
 
-PROCEDURE InitDigits();
+
+PROCEDURE IntToItemKey(n: LONGINT): SimpleHash.ItemKey;
+VAR
+   digits: LONGINT;
+   key: SimpleHash.ItemKey;
 BEGIN
-   Digits[0] := "0"; Digits[1] := "1"; Digits[2] := "2"; Digits[3] := "3";
-   Digits[4] := "4"; Digits[5] := "5"; Digits[6] := "6"; Digits[7] := "7";
-   Digits[8] := "8"; Digits[9] := "9"; Digits[10] := "a"; Digits[11] := "b";      
-   Digits[12] := "c"; Digits[13] := "d"; Digits[14] := "e"; Digits[15] := "f"; 
-END InitDigits;
+   IntStr.IntToStr(n,buffer);
+   digits := Strings.Length(buffer);
+   NEW(key, digits);
+   S.MOVE(S.ADR(buffer[0]), S.VAL(LONGINT,key), digits); 
+   RETURN key;
+END IntToItemKey;
 
 
 BEGIN
-   InitDigits(); 
    n := LangShootout.Argi();
    table := SimpleHash.New(n);
 
    FOR i := 1 TO n DO
-      key := IntToString(i,16);
+      key := HexToItemKey(i);
       item := SimpleHash.AddKey(table, key);
       item.value := i; 	
    END;
 
    count := 0;
    FOR i := n TO 1 BY -1 DO
-      key := IntToString(i,10);
+      key := IntToItemKey(i);
       IF SimpleHash.Find(table, key) # NIL THEN INC(count); END;
    END;
-   Out.Int(count, 1); Out.Ln;
+   Out.Int(count, 1); Out.Ln; 
 END Hash.

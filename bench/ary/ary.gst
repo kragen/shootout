@@ -1,17 +1,16 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy
+   contributed by Paolo Bonzini
 
-   To run: gst -Q ary.st -a 7000
+   To run: gst -QI /usr/local/share/smalltalk/gst.im ary3.st -a 7000
 "
 
 | n x y |
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 
-x := WordArray new: n.
-y := WordArray new: n withAll: 0.
-1 to: n do: [:i| x at: i put: i ].
+x := (1 to: n) asArray.
+y := Array new: n withAll: 0.
 
-1 to: 1000 do: [:k| 
+1000 timesRepeat: [ 
    n to: 1 by: -1 do: [:i| y at: i put: (y at: i) + (x at: i)] ].
 
 (y at: 1) display. ' ' display. (y at: n) displayNl !

@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q methcall.st -a 1000000
+   To run: gst -QI /usr/local/share/smalltalk/gst.im methcall.st -a 1000000
 "
 
 Object subclass: #Toggle
@@ -55,20 +55,19 @@ withTrigger: anInteger
 
 activate
    "Toggle and answer the receiver"
-   count := count + 1.
-   count >= trigger ifTrue: [
+   (count := count + 1) >= trigger ifTrue: [
       state := state not. 
       count := 0
    ] ! !
 
 
-| n toggle ntoggle |
-n := (Smalltalk arguments at: 1) asInteger.
+| n toggle ntoggle value |
+n := Smalltalk arguments first asInteger.
 
 toggle := Toggle new: true.
-n timesRepeat: [toggle activate state]. 
-toggle state displayNl.
+n timesRepeat: [value := toggle activate state]. 
+value displayNl.
 
 ntoggle := NToggle new: true withTrigger: 3.
-n timesRepeat: [ntoggle activate state].
-ntoggle state displayNl !
+n timesRepeat: [value := ntoggle activate state].
+value displayNl !

@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q nestedloop.st -a 16
+   To run: gst -QI /usr/local/share/smalltalk/gst.im nestedloop.st -a 16 
 "
 
 | n count |

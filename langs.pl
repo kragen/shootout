@@ -83,9 +83,8 @@
        Type => 'native compiled',
        Ext  => 'java',
        Verfun => sub {
-	   chomp(my $ver = `$ENV{GCJ} --version`);
-	   $ver =~ s/Copyright.*//s;
-	   $ver =~ s/This is free.*//s;
+	   chomp(my $ver = `$ENV{GCJ} -h | grep Usage`);
+	   $ver =~ s/Usage: (gcj\-\d+\.\d+) .*/\1/;
 	   return($ver);
        },
      },
@@ -379,6 +378,7 @@
        Ext  => 'oberon',
        Verfun => sub {
 	   my $ver = `$ENV{OO2C} --version 2>&1`;
+	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c \2 (using \1)/;
 	   return($ver);
        },
      },

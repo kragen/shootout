@@ -15,7 +15,7 @@ $LANGS = array(
       'Home'    => 'http://www.gnat.com',
       'Down'    => 'ftp://gcc.gnu.org/pub/gcc/releases',
       'Type'    => 'native compiled',
-      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-3) Copyright 1996-2002 Free Software Foundation, Inc.'
+      'Version' => 'GNAT 3.3.4 (Debian 1:3.3.4-4) Copyright 1996-2002 Free Software Foundation, Inc.'
     ),
 
     'mawk' => array(
@@ -47,7 +47,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-3)
+      'Version' => 'gcc.real (GCC) 3.3.4 (Debian 1:3.3.4-4)
 '
     ),
 
@@ -64,7 +64,7 @@ $LANGS = array(
       'Home'    => 'http://gcc.gnu.org/',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-3)
+      'Version' => 'g++.real (GCC) 3.3.4 (Debian 1:3.3.4-4)
 '
     ),
 
@@ -187,7 +187,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java/',
       'Down'    => 'http://gcc.gnu.org/install/binaries.html',
       'Type'    => 'interpreted',
-      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian 1:3.3.4-3)'
+      'Version' => 'gij (GNU libgcj) version 3.3.4 (Debian 1:3.3.4-4)'
     ),
 
     'gcj' => array(
@@ -195,8 +195,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://gcc.gnu.org/java',
       'Down'    => 'ftp://ftp.gnu.org/pub/gnu/gcc/',
       'Type'    => 'native compiled',
-      'Version' => 'gcj (GCC) 3.3.4 (Debian 1:3.3.4-3)
-'
+      'Version' => 'gcj-3.3'
     ),
 
     'kaffe' => array(
@@ -260,7 +259,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://nice.sourceforge.net/',
       'Down'    => 'http://nice.sourceforge.net/install.html',
       'Type'    => 'native compiled',
-      'Version' => 'Nice compiler version 0.9.6 (build 2004.03.05, 14:17:55 UTC)'
+      'Version' => 'Nice compiler version 0.9.8 (build 2004.06.30, 11:23:09 UTC)'
     ),
 
     'oberon2' => array(
@@ -268,7 +267,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://oo2c.sourceforge.net/',
       'Down'    => 'http://oo2c.sourceforge.net/files',
       'Type'    => 'native compiled',
-      'Version' => 'oo2c/gcc 2.1.3
+      'Version' => 'oo2c 2.1.3 (using gcc)
 '
     ),
 
@@ -293,7 +292,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.php.net/',
       'Down'    => 'http://www.php.net/downloads.php',
       'Type'    => 'interpreted',
-      'Version' => 'PHP 4.3.4 (cli) (built: Mar 27 2004 08:04:22)
+      'Version' => 'PHP 4.3.8 (cli) (built: Jul 26 2004 02:40:52)
 '
     ),
 
@@ -342,7 +341,7 @@ elastiC version: 0.0.36 (dec: 36)
       'Home'    => 'http://www.ruby-lang.org/',
       'Down'    => 'ftp://ftp.netlab.co.jp/pub/lang/ruby/',
       'Type'    => 'interpreted',
-      'Version' => 'ruby 1.8.2 (2004-06-19) [i386-linux]'
+      'Version' => 'ruby 1.8.2 (2004-07-16) [i386-linux]'
     ),
 
     'slang' => array(

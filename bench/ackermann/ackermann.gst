@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q ackermann.st -a 8
+   To run: gst -QI /usr/local/share/smalltalk/gst.im ackermann.st -a 8
 "
 
 !Integer methodsFor: 'shootout'!
@@ -16,8 +16,7 @@ ackermann: anInteger
 
 
 | n |
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 
-Transcript 
-   show: 'Ack(3,'; show: n displayString; show: '): ';
-   show: (3 ackermann: n) displayString; cr !
+Transcript show: 'Ack(3,'; show: n printString; show: '): '; 
+           show: (3 ackermann: n) printString; nl!

@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q moments.st < input.txt 
+   To run: gst -QI /usr/local/share/smalltalk/gst.im moments.st < input.txt 
 "
 
 | stream numbers sum n mean dev adev dev2 
@@ -41,25 +41,25 @@ median := (n \\ 2) ~= 0
 
 Transcript
    nextPutAll: 'n:                  '; 
-   nextPutAll: n displayString; cr;     
+   nextPutAll: n displayString; nl;     
 
    nextPutAll: 'median:             '; 
-   nextPutAll: (median asScaledDecimal: 6) displayString; cr;  
+   nextPutAll: (median asScaledDecimal: 6) displayString; nl;  
        
    nextPutAll: 'mean:               ';  
-   nextPutAll: (mean asScaledDecimal: 6) displayString; cr; 
+   nextPutAll: (mean asScaledDecimal: 6) displayString; nl; 
       
    nextPutAll: 'average_deviation:  ';  
-   nextPutAll: (adev asScaledDecimal: 6) displayString; cr; 
+   nextPutAll: (adev asScaledDecimal: 6) displayString; nl; 
            
    nextPutAll: 'standard_deviation: ';  
-   nextPutAll: (sdev asScaledDecimal: 6) displayString; cr;   
+   nextPutAll: (sdev asScaledDecimal: 6) displayString; nl;   
     
    nextPutAll: 'variance:           ';   
-   nextPutAll: (variance asScaledDecimal: 6) displayString; cr; 
+   nextPutAll: (variance asScaledDecimal: 6) displayString; nl; 
       
    nextPutAll: 'skew:               ';       
-   nextPutAll: (skew asScaledDecimal: 6) displayString; cr; 
+   nextPutAll: (skew asScaledDecimal: 6) displayString; nl; 
  
    nextPutAll: 'kurtosis:           '; 
-   nextPutAll: (kurtosis asScaledDecimal: 6) displayString; cr ! 
+   nextPutAll: (kurtosis asScaledDecimal: 6) displayString; nl ! 

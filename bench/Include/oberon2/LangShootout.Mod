@@ -32,4 +32,33 @@ BEGIN
   RETURN n;
 END Argi;
 
+PROCEDURE Quicksort* (n: LONGINT; VAR a: ARRAY OF REAL);
+
+PROCEDURE Swap(i, j: LONGINT);
+VAR t: REAL;
+BEGIN
+  t := a[i]; a[i] := a[j]; a[j] := t;
+END Swap;
+
+PROCEDURE Sort(l, r: LONGINT);
+VAR
+  i, j: LONGINT;
+  pivot: REAL;
+BEGIN
+  i := l;
+  j := r;
+  pivot := a[(l+r) DIV 2];
+  REPEAT
+     WHILE a[i] < pivot DO INC(i); END;
+     WHILE a[j] > pivot DO DEC(j); END;
+     IF i <= j THEN Swap(i, j); INC(i); DEC(j); END;
+  UNTIL i > j;
+  IF l < j THEN Sort(l, j); END;
+  IF r > i THEN Sort(i, r); END;
+END Sort;
+
+BEGIN
+  Sort(0, n-1);
+END Quicksort;
+
 END LangShootout.

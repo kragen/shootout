@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q fibo.st -a 32
+   To run: gst -QI /usr/local/share/smalltalk/gst.im fibo.st -a 32
 "
 
 !Integer methodsFor: 'shootout'!
@@ -11,7 +11,4 @@ fibonacci
       ifTrue: [1] 
       ifFalse: [(self - 2) fibonacci + (self - 1) fibonacci] ! !
 
-
-| n |
-n := (Smalltalk arguments at: 1) asInteger.
-Transcript show: n fibonacci displayString; cr !
+Transcript show: Smalltalk arguments first asInteger fibonacci printString; nl !

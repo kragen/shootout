@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q random.st -a 900000
+   To run: gst -QI /usr/local/share/smalltalk/gst.im random.st -a 900000
 "
 
 Object subclass: #RandomNumber
@@ -30,7 +30,7 @@ to: anInteger
 
 next
    seed := seed * Multiplier + Increment \\ Modulus.
-     ^(seed * scale) asFloat / FModulus ! !
+     ^(seed * scale) asFloatD / FModulus ! !
 
 !RandomNumber methodsFor: 'private'!
 
@@ -40,7 +40,7 @@ to: anInteger
 
 
 | n random x |
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 
 random := RandomNumber initialize; to: 100.
 n timesRepeat: [x := random next].

@@ -1,13 +1,13 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q strcat.st -a 40000
+   To run: gst -QI /usr/local/share/smalltalk/gst.im strcat.st -a 40000
 "
 
 | n stream hello |
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 
-stream := WriteStream on: (String new: 32).
+stream := WriteStream on: String new.
 hello := 'hello', Character nl asString. 
 n timesRepeat: [stream nextPutAll: hello].
 stream position displayNl !

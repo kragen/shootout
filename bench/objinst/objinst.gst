@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q objinst.st -a 1000000
+   To run: gst -QI /usr/local/share/smalltalk/gst.im objinst.st -a 1000000 
 "
 
 Object subclass: #Toggle
@@ -25,11 +25,9 @@ initialize: aBoolean
 !Toggle methodsFor: 'accessing'!
 
 activate
-   "Toggle and answer the receiver"
    state := state not !
 
 state
-   "Answer a Boolean"
    ^state ! !
 
 
@@ -57,21 +55,20 @@ withTrigger: anInteger
 
 activate
    "Toggle and answer the receiver"
-   count := count + 1.
-   count >= trigger ifTrue: [
+   (count := count + 1) >= trigger ifTrue: [
       state := state not. 
       count := 0
    ] ! !
 
 
 | n toggle ntoggle |
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 
 toggle := Toggle new: true.
 5 timesRepeat: [toggle activate state displayNl].
-n timesRepeat: [Toggle new: true].
-Transcript cr.
+n timesRepeat: [toggle := Toggle new: true].
+Transcript nl.
 
 ntoggle := NToggle new: true withTrigger: 3.
 8 timesRepeat: [ntoggle activate state displayNl]. 
-n timesRepeat: [NToggle new: true withTrigger: 3] !
+n timesRepeat: [ntoggle := NToggle new: true withTrigger: 3] ! 

@@ -1,43 +1,34 @@
 "  The Great Computer Language Shootout
-   contributed by Isaac Gouy
+   contributed by Paolo Bonzini
 
-   To run: gst -Q wordfreq.st < input.txt > out.txt
+   To run: gst -QI /usr/local/share/smalltalk/gst.im wordfreq.st < input.txt
 "
 
+| freq sort |
+freq := Bag new.
+[ stdin atEnd ] whileFalse: [
+   "It is faster to do all the processing on the line we read, that to
+   get the substrings, filter out unwanted punctuation, and turn the
+   words to lowercase."
+	 
+   (stdin nextLine collect: [ :each |
+      each isLetter ifTrue: [ each asLowercase ] ifFalse: [ $ ]])
+         substrings do: [ :word |
+            freq add: word withOccurrences: 1 ]].
 
-!Bag methodsFor: 'extracting items'!
-sortedByCountAndKey
-   | counts |
-   counts := (SortedCollection new: contents size) sortBlock: [:a :b| 
-      a value = b value ifTrue: [a key > b key] ifFalse: [a value > b value] ].
+"Use -1 to work around a bug (the word is left in the table with frequency zero
+ if we use #negated: this is not visible with #do:, but it is with #sortedByCount"
+ 
+freq add: '' withOccurrences: -1 - (freq occurrencesOf: '').
 
-   contents keysAndValuesDo: [:key :count| counts add: key -> count].
-   ^counts ! !
+"Bag has the #sortedByCount method, but it leaves the values unordered so
+ we cannot rely on it.  The string below has seven spaces and a tab."
 
-
-| stream wordBuffer wordCounts char space |
-stream := FileStream stdin bufferSize: 4096.
-wordBuffer := ReadWriteStream on: (String new: 32).
-wordCounts := Bag new: 75000.
-
-[(char := stream next) notNil] whileTrue: [ | word |
-   char isLetter
-      ifTrue: [wordBuffer nextPut: char asLowercase]
-      ifFalse: 
-        [wordBuffer position > 0
-            ifTrue: 
-              [word := wordBuffer contents.
-               wordBuffer reset.
-               wordCounts add: word.
-              ].
-        ].
+sort := SortedCollection new.
+freq asSet do: [ :each || out freqString |
+   out := '       	', each.
+   freqString := (freq occurrencesOf: each) printString.
+   out replaceFrom: 8 - freqString size to: 7 with: freqString startingAt: 1.
+   sort add: out.
 ].
-
-wordBuffer position > 0
-   ifTrue: [wordCounts add: wordBuffer contents].
-
-space := Character space.
-wordCounts sortedByCountAndKey do: [:each| | number |
-   number := each value printString.
-   (7 - number size) timesRepeat: [Transcript nextPut: space].
-   Transcript nextPutAll: number; nextPut: space; nextPutAll: each key; cr] !
+sort size timesRepeat: [ sort removeLast displayNl ] !

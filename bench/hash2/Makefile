@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2004-06-24 07:38:08 bfulgham Exp $
+# $Id: Makefile,v 1.7 2004-07-28 07:31:53 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -16,6 +16,7 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 10,50,100,150 \
 	  --ignore hash2.bash \
 	  --ignore hash2.csharp \
+	  --ignore hash2.nice \
 	  --ignore hash2.se
 
 include ../../Make.footer

@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
 
-   To run: gst -Q heapsort.st -a 80000
+   To run: gst -QI /usr/local/share/smalltalk/gst.im heapsort.st -a 80000
 "
 
 
@@ -63,7 +63,7 @@ to: anInteger
 
 next
    seed := seed * Multiplier + Increment \\ Modulus.
-     ^(seed * scale) asFloat / FModulus ! !
+     ^(seed * scale) asFloatD / FModulus ! !
 
 !RandomNumber methodsFor: 'private'!
 
@@ -72,16 +72,16 @@ to: anInteger
    scale := anInteger ! !
 
 
+
 | n data randomNumber |
-n := (Smalltalk arguments at: 1) asInteger.
+n := Smalltalk arguments first asInteger.
 data := Array new: n.
-randomNumber := RandomNumber initialize; to: 1.0d.
+randomNumber := RandomNumber initialize; to: 1.
 
 1 to: n do: [:i| data at: i put: randomNumber next]. 
+
 data heapsort.
 
 (((data at: n) roundTo: 0.0000000001) asScaledDecimal: 10) displayNl !
-
-
 
 
