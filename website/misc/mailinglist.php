@@ -47,22 +47,22 @@
    </tr>
    <tr>
       <td colspan="2">Pick&nbsp;a&nbsp;password:</td>
-      <td><p><input type="password" name="pw" size="15"></p></td>
+      <td><p><input type="password" name="pw" size="15" /></p></td>
    </tr>
    <tr>
       <td colspan="2">Reenter&nbsp;password to confirm:</td>
-      <td><p><input type="password" name="pw-conf" size="15"></p></td>
+      <td><p><input type="password" name="pw-conf" size="15" /></p></td>
    </tr>
    <tr>
       <td colspan="2"><br/>Would you like to receive list mail batched in a daily digest?</td>
-      <td><br/><p>
-         <input type="radio" name="digest" value="0" checked> No 
-         <input type="radio" name="digest" value="1"> Yes
+      <td><br /><p>
+         <input type="radio" name="digest" value="0" checked /> No 
+         <input type="radio" name="digest" value="1" /> Yes
       </p></td>
    </tr>
    <tr>
       <td colspan="2">&nbsp;</td>
-      <td><p><input type="submit" name="email-button" value="Subscribe"></p></td>
+      <td><p><input type="submit" name="email-button" value="Subscribe" /></p></td>
    </tr>
    <tr><td colspan="3">&nbsp;</td></tr>   
       
@@ -78,11 +78,11 @@
    </tr>  
    <tr>
       <td colspan="2">Email&nbsp;address:</td>                
-      <td><p><input name="info" type="text" value="" size="30"></p></td>
+      <td><p><input name="info" type="text" value="" size="30" /></p></td>
    </tr>  
    <tr>
       <td colspan="2">&nbsp;</td>             
-      <td><p><input name="UserOptions" type="submit" value="Edit Options"></p></td>        
+      <td><p><input name="UserOptions" type="submit" value="Edit Options" /></p></td>        
    </tr>      
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>
@@ -99,15 +99,15 @@
    </tr> 
    <tr>
       <td colspan="2">Email&nbsp;address:</td>                
-      <td><p><input type="text" name="roster-email" size="30"</p></td>
+      <td><p><input type="text" name="roster-email" size="30" /></p></td>
    </tr>     
    <tr>
       <td colspan="2">Password:</td>                
-      <td><p><input type="Password" name="roster-pw" size="15"></p></td>
+      <td><p><input type="password" name="roster-pw" size="15" /></p></td>
    </tr>  
    <tr>
       <td colspan="2">&nbsp;</td>             
-      <td><p><input name="SubscriberRoster" type="submit" value="Subscriber List"></p></td>        
+      <td><p><input name="SubscriberRoster" type="submit" value="Subscriber List" /></p></td>        
    </tr>      
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>

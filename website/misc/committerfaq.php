@@ -131,13 +131,11 @@ If there's already a <em>nsieve.ruby</em> then rename the new source-code file a
 <tr class="b"><td>Where do I explain what's interesting about the program?</td></tr>
 <tr><td>
 <p>When a program is so special that (against our better judgement) we've included it as an <em>Interesting Alternative Program</em> then we should explain what's special.</p>
-<p>We use <strong>about-files</strong> that contain snippets of XHTML (&#60;p&#62;&#60;/p&#62;). 
+<p>We use <strong>about-files</strong> that contain snippets of XHTML (&#60;p&#62;&#60;/p&#62;).</p> 
 <ul>
 <li>Create a new file in <em>/shootout/website/about/programs/</em></li>
-<li>The about-filename should match the source-code filename, for example: the about-filename for <em>fannkuch.ocaml-2.ocaml</em> would be <em>fannkuch-ocaml-2-about.tpl.php</em>
-</li>
+<li>The about-filename should match the source-code filename, for example: the about-filename for <em>fannkuch.ocaml-2.ocaml</em> would be <em>fannkuch-ocaml-2-about.tpl.php</em></li>
 </ul>
-</p>
 </td></tr>
 
 </table>

@@ -116,21 +116,21 @@ foreach($score as $k => $v){
 <!--
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#cpu">CPU Time</a></td>
-<td><p><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>"></p></td>
+<td><p><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>" /></p></td>
 </tr>
 -->
 
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#fullcpu">Full CPU Time</a></td>
-<td><p><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>"></p></td>
+<td><p><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></p></td>
 </tr>
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#memory">Memory Use</a></td>
-<td><p><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>"></p></td>
+<td><p><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></p></td>
 </tr>
 <tr class="a">
 <td><a href="faq.php?sort=<?=$Sort;?>#codelines">Code Lines</a></td>
-<td><p><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>"></p></td>
+<td><p><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></p></td>
 </tr>
 
 <!-- THIS IS JUST FOR SPACING! SHOULD USE CSS! -->
@@ -146,7 +146,7 @@ foreach($Tests as $t){
 
    printf('<tr class="%s">',$RowClass); echo "\n";
    printf('<td><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s" title="%s performance measurements">%s</a></td>', $Link,$Sort,$Name,$Name); echo "\n";
-   printf('<td><p><input type="text" size="2" name="%s" value="%d"></p></td>', $Link, $weight); echo "\n";
+   printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }

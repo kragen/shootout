@@ -59,11 +59,11 @@ Benchmarking PHP with no BS</a></p></li>
 <ul>  
   <li><p><a href="http://www.freewebs.com/godaves/javabench_revisited/">'The Java Faster than C++' Benchmark Revisited</a></p></li>
 
-  <li><p><a href="http://www-fp.dcs.st-and.ac.uk/~kh/papers/pseudoknot/pseudoknot.html">Benchmarking Implementations of Functional Languages with ‘Pseudoknot', a Float-Intensive Benchmark </a></p></li>
+  <li><p><a href="http://www-fp.dcs.st-and.ac.uk/~kh/papers/pseudoknot/pseudoknot.html">Benchmarking Implementations of Functional Languages with 'Pseudoknot', a Float-Intensive Benchmark </a></p></li>
 
   <li><p><a href="http://www.lissett.com/ben/">Martin Richards' Bench</a></p></li>
 
-  <li><p><a href="http://www2.hursley.ibm.com/decimal/telco.html">The ‘telco' benchmark</a></p></li>
+  <li><p><a href="http://www2.hursley.ibm.com/decimal/telco.html">The 'telco' benchmark</a></p></li>
 
   <li><p><a href="http://page.mi.fu-berlin.de/~prechelt/Biblio/jccpprtTR.pdf">An empirical comparison of C, C++, Java, Perl, Python, Rexx, and Tcl for a search/string-processing program</a> (160KB pdf)</p></li>
 
