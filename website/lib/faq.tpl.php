@@ -36,6 +36,7 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 <tr class="b"><td>Where can I send <strong>comments</strong> and suggestions?</td></tr>
 <tr><td><p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
 <a href="miscfile.php?sort=<?=$Sort;?>&file=mailinglist&title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
+<p>Use Tracker to report <a href="https://alioth.debian.org/tracker/?atid=411002&group_id=30402&func=browse"><strong>Bugs</strong></a> or document <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&atid=411005"><strong>Feature Requests<strong></a>.</p>
 </td></tr>
 
 <tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
@@ -44,8 +45,8 @@ We are only trying to show performance on a limited number of <a href="miscfile.
 
 <p>Read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement…?</strong></a></p>
 
-<p>And then <strong>follow these instructions!</strong> <br/>
-Start from the bottom of the
+<p>And then follow these instructions!</p>
+<p><strong>Start from the bottom</strong> of the
    <a href="https://alioth.debian.org/tracker/?func=add&group_id=30402&atid=411646"  title="Contribute Programs - Submit New">
    <strong>Contribute Programs Submit-New</strong></a> form and work your way up as follows:
 <ol>
@@ -62,7 +63,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 </ol>
 </p>
 
-<p>Track status with <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a>
+<p>Track status with Browse <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a>
 <ul>
 <li><em>Open items</em> are new contributions</li>
 <li><em>Pending items</em> have been added to CVS</li>
@@ -76,7 +77,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 <tr><td>
 <p>We need volunteers to
 <ol>
-<li><a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a> for <em>Open items</em></li>
+<li>Browse <a href="https://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a> for <em>Open items</em></li>
 <li>check the <em>Open item</em> programs do what's required</li>
 <li>add acceptable <em>Open item</em> programs to CVS</li>
 <li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
@@ -101,9 +102,13 @@ Contact us!</p>
 <li>Identify what's missing or wrong with the current benchmarks</li>
 <li>Define a new benchmark and give some background information</li>
 <li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
+(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)
 </ul>
 And then, <em>maybe</em>, we just-might consider it.</p>
-<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
+</td></tr>
+
+<tr><td>
+<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Benchmark</strong> to see if it's already been suggested.</p>
 </td></tr>
 
 </table>
@@ -360,166 +365,67 @@ We reserve the right to format the code entries as we see fit, whatever the line
 
 
 <table class="div">
-
 <tr><td><h3 class="rev">&nbsp;Why don't you include&#133;?</h3></td></tr>
-
-
-
-
-
-
-
-<tr class="b"><td>Why don't you include REBOL&#153;?</td></tr>
-
-
-
-<tr><td><p>REBOL&#153; is a commercial product.<p></td></tr>
-
-
-
-
-
-
-
-<tr class="b"><td>Why don't you include my favourite language?</td></tr>
-
-
-
-<tr><td><p>Maybe we will when you write 15 of the benchmark programs in your favourite language, and contribute them to "The Great Computer Language Shootout" :-)</p></td></tr>
-
-
-
-
-
-
 
 <tr class="b"><td>What kind of programming languages will you accept?</td></tr>
 
-
-
 <tr><td><p>Programming languages that can be used to write most of our benchmark programs!</p><p> 
-
 <ol><strong>Must have</strong>
 
 <li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
-
 </br>Or build and install with <code>./configure && make && make install</code> and a default target of <code>/usr/local.</code></li>
-
 <li>Documentation.</li>
-
 <li>Command-line argument handling.</li>
-
 <li>32-bit Integers.</li>
-
 <li>Double precision floating point numbers.</li>
-
 <li>Dynamic hash tables and sequences (arrays or lists).</li>
-
 <li>Line-oriented read & write from stdin & stdout.</li>
-
 </ol>
 
 <ol><strong>Should have</strong>
-
 <li>Buffered stdio.</li>
-
 <li>Exception handling.</li>
-
 <li>Regular Expressions (preferably Perl compatible).</li>
-
 <li>Concurrency (threads, coroutines, &#133;)</li>
-
 <li>TCP/IP Sockets.</li>
-
 <li>Object-oriented programming features.</li>
-
 </ol>
-
 </p></td></tr>
 
 
-
-
-
-</table>
-
-
-
-
-
-
-
-
-
-<!-- PLEASE WILL YOU INCLUDE...? /////////////////////////////////////////////// -->
-
-
-
-<table class="div">
-
-<tr><td><h3 class="rev">&nbsp;Please will you include&#133;?</h3></td></tr>
-
-
-
-
-
-
+<tr class="b"><td>Why don't you include language X?</td></tr>
+<tr><td><p>Is the language &#133;<ol>
+<li><strong>Free?</strong> The hope is that people who come across the shootout
+will be motivated to learn a new language, and since the barriers
+to learning a new language are far lower for a free implementation,
+those are the prefered languages for display.  While commercial
+languages are not officially disqualified, there do not
+seem to be many compelling reasons to include them.</li>
+<li><strong>Open source?</strong>  Programming languages should
+be open source.  As language users, when we find a problem but do
+not have access to the source code it is very frustrating.  If
+you have ever had to maintain production software for a compiler
+that is no longer available from a vendor, with no available bug
+fixes, you will soon understand this requirement.</li>
+<li><strong>Used?</strong> There are way too many dead languages and unused project languages.</li>
+<li><strong>Interesting?</strong> Is there something significant and interesting about the language that will be obvious from these benchmark programs?</li>
+</ol></p>
+<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion :-)</p>
+</td></tr>
 
 <tr class="b"><td>Please will you include my favourite language?</td></tr>
 
-
-
-<tr><td><p>Is the language &#133;<ol>
-
-<li><strong>Free?</strong> The hope is that people who come across the shootout
-
-will be motivated to learn a new language, and since the barriers
-
-to learning a new language are far lower for a free implementation,
-
-those are the prefered languages for display.  While commercial
-
-languages are not officially disqualified, there do not
-
-seem to be many compelling reasons to include them.</li>
-
-<li><strong>Open source?</strong>  Programming languages should
-
-be open source.  As language users, when we find a problem but do
-
-not have access to the source code it is very frustrating.  If
-
-you have ever had to maintain production software for a compiler
-
-that is no longer available from a vendor, with no available bug
-
-fixes, you will soon understand this requirement.</li>
-
-<li><strong>Used?</strong> There are way too many dead languages and unused project languages.</li>
-
-<li><strong>Interesting?</strong> Is there something significant and interesting about the language that will be obvious from these benchmark programs?</li>
-
-</ol></p>
-
-<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion :-)</p>
-
+<tr><td><p>Maybe we will when you write 15 of the benchmark programs in your favourite language, and contribute them to "The Great Computer Language Shootout" :-)</p>
 </td></tr>
 
-
-
-
+<tr><td>
+<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.</p>
+</td></tr>
 
 </table>
 
 
-
-
-
-
-
 <!-- WHEN? /////////////////////////////////////////////////////////////////// -->
-
-
 
 <table class="div">
 
