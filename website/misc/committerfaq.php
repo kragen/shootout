@@ -61,6 +61,7 @@
 <tr><td>
 <p>Make sure the source-code file uses <strong>Unix LF</strong> line-endings.</p>
 <p>Make sure the source-code file has the <strong>standard header</strong> comment.</p>
+<p>Make sure the there are no promos or adverts in the comment text.</p>
 <p>If you changed the source-code file name then maybe you need to <strong>change class names or module names</strong> in the source-code to match the new file name.</p>
 
 <p>The build-scripts expect the <strong>file-extension</strong> to indicate the programming language. Mostly the file-extensions are just be the programming language or implementation name - look at the file-extensions used for the fibonacci programs. However there are some exceptions:
