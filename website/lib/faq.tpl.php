@@ -15,9 +15,10 @@
 <li>provide a library of best-in-class algorithms</li>
 <li>showcase the capabilities of different languages</li>
 <li>compare programming language productivity </li>
+<li>provide an <em>ultimate</em> benchmark for some domain</li>
 <li><em>etc etc</em></li>
 </ul>
-We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>micro-benchmarks</strong></a>.
+We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>micro-benchmarks</strong></a> across a wide range of programming language implementations.
 </p>
 </td></tr>
 
@@ -103,6 +104,7 @@ Contact us!</p>
 <tr><td>
 <p>Do all the work!
 <ul>
+<li>Understand that benchmarks must be reasonable across a wide range of programming languages</li>
 <li>Identify what's missing or wrong with the current benchmarks</li>
 <li>Define a new benchmark and give some background information</li>
 <li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
