@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2005-02-23 06:40:31 bfulgham Exp $
+# $Id: Makefile,v 1.16 2005-02-28 02:16:16 bfulgham Exp $
 
 include Make.header
 
@@ -28,7 +28,6 @@ dist:
 
 report codelinks:
 	-@bin/make_highlight
-	-@(cd bench ; make --no-print-directory $@)
 
 recent:
 	-@bin/make_recent > recent.html

@@ -35,54 +35,71 @@ sub genfile ($$$$) {
     my $lang = $::LANG{$impl}->{Lang};
     my $ext = $::LANG{$impl}->{Ext};
 
-    # Check that file needs to be generated
+    # Check that source file needs to be generated
     my ($sdev, $sino, $smode, $snlink, $suid, $sgid, $srdev, $ssize,
         $satime, $smtime, $sctime, $sblksize, $sblocks)
         = stat $source;
     my ($ddev, $dino, $dmode, $dnlink, $duid, $dgid, $drdev, $dsize,
         $datime, $dmtime, $dctime, $dblksize, $dblocks)
         = stat $dest;
+    # ... or that the log file needs to be updated
+    my ($lsdev, $lsino, $lsmode, $lsnlink, $lsuid, $lsgid, $lsrdev, $lssize,
+        $lsatime, $lsmtime, $lsctime, $lsblksize, $lsblocks)
+        = stat $logsource;
+    my ($lddev, $ldino, $ldmode, $ldnlink, $lduid, $ldgid, $ldrdev, $ldsize,
+        $ldatime, $ldmtime, $ldctime, $ldblksize, $ldblocks)
+        = stat $logdest;
 
-    return 0 if ($dmtime >= $smtime);
+    my $retval = 0;
 
-    my $command = "highlight -f -i $source --output=$benchmark-$impname.code --syntax=$ext --style=typical --css-outfile=website/websites/css/highlight.css";
-    print "Trying $command\n";
+    if ($smtime > $dmtime)
+    {
+        my $command = "highlight -f -i $source --output=$benchmark-$impname.code --syntax=$ext --style=typical --css-outfile=website/websites/css/highlight.css";
+        print "Trying $command\n";
 
-    unlink($dest);
-    system($command) == 0
-      or print "$command failed: $!";
+        unlink($dest);
+        system($command) == 0
+          or print "$command failed: $!";
 
-    copy("$benchmark-$impname.code", $dest)
-        or print "\nCould not copy $benchmark-$impname.code to $dest\n";
-    unlink("$benchmark-$impname.code");
-
-    # Copy over the runlog as well.  We don't really care if it fails
-    copy ($logsource, $logdest)
-        or print "\nCould not copy $logsource to $logdest\n";
-
-    # Concatenate the output as well
-    if (open DEST, ">>$logdest") {
-        if (open SRC, "<$outsource") {
-            print DEST "\n\nPROGRAM OUTPUT\n";
-            print DEST "==============\n";
-       
-            my $iter = 0;
-            while (<SRC>) {
-                print DEST $_;
-                $iter++;
-                if ($iter >= 50) {
-                    print DEST "===================================\n";
-                    print DEST "!!! Note: Truncated to 50 lines !!!\n";
-                    print DEST "===================================\n";
-                    last;
-                }
-            }
-            close SRC;
-        }
-        close DEST;
+        copy("$benchmark-$impname.code", $dest)
+          or print "\nCould not copy $benchmark-$impname.code to $dest\n";
+        unlink("$benchmark-$impname.code");
+	$retval = 1;
     }
 
-    return 1;
+    if ($lsmtime > $ldmtime)
+    {
+        print "Copying $logsource...\n";
+
+        # Copy over the runlog as well.  We don't really care if it fails
+        copy ($logsource, $logdest)
+            or print "\nCould not copy $logsource to $logdest\n";
+
+        # Concatenate the output as well
+        if (open DEST, ">>$logdest") {
+            if (open SRC, "<$outsource") {
+                print DEST "\n\nPROGRAM OUTPUT\n";
+                print DEST "==============\n";
+       
+                my $iter = 0;
+                while (<SRC>) {
+                    print DEST $_;
+                    $iter++;
+                    if ($iter >= 50) {
+                        print DEST "===================================\n";
+                        print DEST "!!! Note: Truncated to 50 lines !!!\n";
+                        print DEST "===================================\n";
+                        last;
+                    }
+                }
+                close SRC;
+            }
+            close DEST;
+        }
+	$retval = 1;
+    }
+
+    return $retval;
 }
 
 sub main {
