@@ -1,41 +1,47 @@
 %%% -*- mode: erlang -*-
-%%% $Id: wc.erlang,v 1.4 2004-08-26 08:15:11 bfulgham Exp $
-%%% http://shootout.alioth.debian.org/
+%%% $Id: wc.erlang,v 1.5 2004-09-28 04:02:04 bfulgham Exp $
+%%% http://www.bagley.org/~doug/shootout/
 %%%
 %%% Super-fast implementation by Mark Scandariato
+%%% Mega-improvement by Alexey Shchepin <alexey@sevcom.net>
 
 -module(wc).
 -export([main/0, main/1]).
 
+-define(BUFSIZE, 8192).
+
 main() -> main(['1']).
 main(_Args) ->
-   %io:fwrite("~p~n", [now()]),
-   ok = io:setopts([binary]),
-   s(next({0, <<>>}), 0, 0).
-
-next({C, <<Char:8, Rest/binary>>}) ->
-   {Char, {C+1, Rest}};
-
-next({C, <<>>}) ->
-   case io:get_chars('', 4096) of
-      eof -> {eof, C};
-      Bin -> next({C, Bin})
-   end.
+    ok = io:setopts([binary]),
+    s([], 0, 0, 0).
 
 done(L, W, C) ->
-   io:fwrite("~p ~p ~p~n", [L, W, C]),
-   %io:fwrite("~p~n", [now()]),
-   erlang:halt(0).
+    io:fwrite("~p ~p ~p~n", [L, W, C]),
+    erlang:halt(0).
 
-s({eof, C}, L, W) -> done(L, W, C);
-s({$\s, S}, L, W) -> s(next(S), L, W);
-s({$\t, S}, L, W) -> s(next(S), L, W);
-s({$\n, S}, L, W) -> s(next(S), L+1, W);
-s({_, S}, L, W)   -> w(next(S), L, W+1).
+s([], C, L, W) ->
+    case io:get_chars('', ?BUFSIZE) of
+	eof -> done(L, W, C);
+	Bin -> s(binary_to_list(Bin), C, L, W)
+    end;
+s([Char | Rest], C, L, W) ->
+    case Char of
+	$\s -> s(Rest, C+1, L,   W);
+	$\t -> s(Rest, C+1, L,   W);
+	$\n -> s(Rest, C+1, L+1, W);
+	_ ->   w(Rest, C+1, L,   W+1)
+    end.
 
-w({eof, C}, L, W) -> done(L, W, C);
-w({$\s, S}, L, W) -> s(next(S), L, W);
-w({$\t, S}, L, W) -> s(next(S), L, W);
-w({$\n, S}, L, W) -> s(next(S), L+1, W);
-w({_, S}, L, W)   -> w(next(S), L, W).
+w([], C, L, W) ->
+    case io:get_chars('', ?BUFSIZE) of
+	eof -> done(L, W, C);
+	Bin -> w(binary_to_list(Bin), C, L, W)
+    end;
+w([Char | Rest], C, L, W) ->
+    case Char of
+	$\s -> s(Rest, C+1, L,   W);
+	$\t -> s(Rest, C+1, L,   W);
+	$\n -> s(Rest, C+1, L+1, W);
+	_ ->   w(Rest, C+1, L,   W)
+    end.
 

@@ -25,7 +25,7 @@ function benchlist($level)
 		"regexmatch" => "Regular Expression Matching",
 		"regsub" => "Regular Expression Substitution",
 		"reversefile" => "Reverse A File",
-		"ringmsg" => "Message-Send Ring",
+		"ringmsg" => "Ring of Messages",
 		"sieve" => "Sieve of Eratosthenes",
 		"spellcheck" => "Spell Checker",
 		"strcat" => "String Concatenation",
