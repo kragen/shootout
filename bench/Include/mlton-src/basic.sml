@@ -13,6 +13,20 @@ structure Int =
 	 in
 	    loop start
 	 end
+      
+      fun forDown (lo, hi, f) =
+	 let
+	    fun loop i =
+	       let
+		  val i = i - 1
+	       in
+		  if i < lo
+		     then ()
+		  else (f i; loop i)
+	       end
+	 in
+	    loop hi
+	 end
 
       fun dec r = r := !r - 1
       fun inc r = r := !r + 1
