@@ -1,11 +1,51 @@
--- $Id: moments.gnat,v 1.7 2005-03-25 07:59:07 bfulgham Exp $
+-- $Id: moments.gnat,v 1.8 2005-03-30 20:31:48 obry-guest Exp $
 -- http://shootout.alioth.debian.org
 -- Contributed by Pascal Obry on 2005/03/22
 -- Revised by Vasiliy Fofanov 2005/03/23
+-- Modified by Pascal Obry on 2005/03/30
+
+generic
+   type Item_Type is private;
+   with function "<=" (X, Y : Item_Type) return Boolean;
+   type Sequence is array (Integer range <>) of Item_Type;
+procedure Quick_Sort (S : in out Sequence; Lwb, Upb : in Integer);
+
+procedure Quick_Sort (S : in out Sequence; Lwb, Upb : in Integer) is
+   Pivot : Item_Type := S (Upb);
+   Front : Integer := Lwb;
+   Back  : Integer := Upb;
+   Temp  : Item_Type;
+begin
+   if Lwb < Upb then
+      while  (Front <= Back)  loop
+         while not  (Pivot <= S (Front)) loop
+            Front := Front + 1;
+         end loop;
+         while not  (S (Back) <= Pivot) loop
+            Back := Back - 1;
+         end loop;
+         if Front <= Back then
+            Temp := S (Front);
+            S (Front) := S (Back);
+            S (Back) := Temp;
+            Front := Front + 1;
+            Back  := Back - 1;
+         end if;
+      end loop;
+      Quick_Sort (S, Lwb, Back);
+      Quick_Sort (S, Front, Upb);
+   end if;
+end Quick_Sort;
+
+-- $Id: moments.gnat,v 1.8 2005-03-30 20:31:48 obry-guest Exp $
+-- http://shootout.alioth.debian.org
+-- Contributed by Pascal Obry on 2005/03/22
+-- Revised by Vasiliy Fofanov 2005/03/23
+-- Modified by Pascal Obry on 2005/03/30
 
 with System, Ada.Numerics.Generic_Elementary_Functions;
 with Ada.Text_IO; use Ada.Text_IO;
-
+with Quick_Sort;
 with GNAT.Dynamic_Tables;
 
 procedure Moments is
@@ -21,50 +61,9 @@ procedure Moments is
       Exp  : Field := 0) renames RIO.Put;
 
    package Real_Table is
-      new GNAT.Dynamic_Tables (Real, Integer, 1, 4096, 200);
+      new GNAT.Dynamic_Tables (Real, Integer, 1, 4_096, 200);
 
-   generic
-       type Item_Type is private;
-       with function "<=" (X, Y : Item_Type) return Boolean;
-       type Sequence is array (Integer range <>) of Item_Type;
-   package Sort_Pkg is
-      procedure Quick_Sort (S : in out Sequence);
-   end Sort_Pkg;  --  Copied from Southampton Ada MPICH supercomputer bindings
-
-   package body Sort_Pkg is
-      procedure Quick_Sort (S : in out Sequence) is
-         procedure Sort_Recursive (Lwb, Upb : Integer) is
-            Pivot    : Item_Type := S (Upb);
-            Front    : Integer := Lwb;
-            Back     : Integer := Upb;
-            Temp     : Item_Type;
-         begin
-            if Lwb < Upb then
-               while  (Front <= Back)  loop
-                  while not  (Pivot <= S (Front)) loop
-                     Front := Front + 1;
-                  end loop;
-                  while not  (S (Back) <= Pivot) loop
-                     Back := Back - 1;
-                  end loop;
-                  if Front <= Back then
-                     Temp := S (Front);
-                     S (Front) := S (Back);
-                     S (Back) := Temp;
-                     Front := Front + 1;
-                     Back  := Back - 1;
-                  end if;
-               end loop;
-               Sort_Recursive (Lwb, Back);
-               Sort_Recursive (Front, Upb);
-            end if;
-         end Sort_Recursive;
-      begin
-         Sort_Recursive (S'First, S'Last);
-      end Quick_Sort;
-   end Sort_Pkg;
-
-   package Sort is new Sort_Pkg (Real, "<=", Real_Table.Table_Type);
+   procedure Sort is new Quick_Sort (Real, "<=", Real_Table.Table_Type);
 
    Table                    : Real_Table.Instance;
 
@@ -78,23 +77,15 @@ procedure Moments is
 begin
    Real_Table.Init (Table);
 
-   declare
-      Buffer : String (1 .. 1_024);
-      Last   : Natural;
    begin
-      while not End_Of_File loop
-         M := M + 1;
+      loop
          RIO.Get (Item => Value);
+         M := M + 1;
          Real_Table.Append (Table, Value);
          Sum := Sum + Value;
       end loop;
    exception
-      when Data_Error =>
-         Put_Line ("Error on line " & M'Img);
-         Get_Line (Buffer, Last);
-         Put_Line ("   > " & Last'Img);
-         Put_Line ("   > " & Character'Pos (Buffer (1))'Img);
-         Put_Line ("   > " & Buffer (1 .. Last));
+      when others => null;
    end;
 
    Mean := Sum / Real (M);
@@ -119,7 +110,7 @@ begin
       Kurtosis := -3.0 + Kurtosis / (Real (M) * Variance * Variance);
    end if;
 
-   Sort.Quick_Sort (Table.Table (1 .. M));
+   Sort (Table.Table.all, 1, M);
 
    if 1 = (M mod 2) then
       Median := Table.Table ((M + 1) / 2);
