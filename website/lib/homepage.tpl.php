@@ -31,19 +31,23 @@
 <?=$PageBody;?>
 
 <form action=""><p><input type="hidden" name="sort" value="<?=$Sort;?>" /></p></form>
-<div class="center"><p><a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license">revised&nbsp;BSD&nbsp;license</a> 
+<div class="center">
 
 <!-- 
 | <strong>Send</strong>&nbsp;<a href="http://alioth.debian.org/sendmessage.php?touser=1230" title="Send your suggestion or comment without subscribing to the mailing list">suggestions&nbsp;and&nbsp;comments</a>
 -->
 
+<a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
+   <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
+</a>
+
+<a href="http://jigsaw.w3.org/css-validator/">
+   <img style="border:0;width:88px;height:31px" src="<?=IMAGE_PATH;?>vcss.png" alt="Valid CSS!" />
+</a>
+
 <a href="http://validator.w3.org/check?uri=referer">
    <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
 </a>
 
-<a href="http://jigsaw.w3.org/css-validator/">
-   <img src="<?=IMAGE_PATH;?>vcss.png" alt="Valid CSS!" height="31" width="88" />
-</a>
-
-</p></div></body>
+</div></body>
 </html>
