@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-12-22 06:22:06 bfulgham Exp $
+# $Id: Makefile,v 1.14 2005-02-09 06:26:25 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -20,7 +20,7 @@ TESTS = \
     message \
     methcall \
     moments \
-    nobdy \
+    nbody \
     nestedloop \
     nsieve \
     nsievebits \
