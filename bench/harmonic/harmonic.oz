@@ -1,12 +1,14 @@
-%%% $Id: harmonic.oz,v 1.1 2005-03-03 01:01:53 bfulgham Exp $
+%%% $Id: harmonic.oz,v 1.2 2005-03-04 07:34:32 bfulgham Exp $
+%%%
 %%% http://shootout.alioth.debian.org/
+%%% Contributed by Brent Fulgham
 functor
 import System Application
 define
    fun {Sum_Harmonic M}
       local PartialSum in
 	 PartialSum = {NewCell 0.}
-	 for I in 1..M;1 do
+	 for I in 1..(M+1);1 do
 	    local Old New in
 	       {Exchange PartialSum Old New}
 	       New = Old + 1.0 / {Int.toFloat I}

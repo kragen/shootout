@@ -205,6 +205,22 @@
        },
      },
 
+     dlang =>
+     { Lang => 'D',
+       Name => 'Digitalmars D',
+       Status => '+',
+       Home => 'http://digitalmars.com/d/dcompiler.html',
+       Down => 'http://digitalmars.com/d/dcompiler.html#linux',
+       Type => 'native compiled',
+       Note => 'A reimagined, reinvigorated C++ (with batteries)',
+       Ext => 'd',
+       Verfun => sub {
+          chomp(my $ver = `$ENV{DLANG} -v`);
+	  $ver =~ /(Digital.*)\n/;
+	  return ($1);
+       },
+     },
+
      cmucl =>
      { Lang => 'Lisp',
        Name => 'CMUCL',
@@ -1085,6 +1101,7 @@
      'Ciao Prolog' => 'prolog',
      'Clean'       => 'c',
      'Common Lisp' => 'scheme',
+     'D'           => 'c',
      'Eiffel'      => 'dash',
      'ElastiC'     => 'c',
      'Erlang'      => 'prolog',
@@ -1121,6 +1138,7 @@
 
      # Overrides for specific languages, which seem to belong to a different
      # family that their languages hints at
+     'dlang'       => 'c',
      'ifc'         => 'c',
      'rep'         => 'scheme',
      'mzc'         => 'scheme',

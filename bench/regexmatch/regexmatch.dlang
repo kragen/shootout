@@ -1,0 +1,65 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   http://www.bagley.org/~doug/shootout/
+
+   converted to D by Dave Fladebo
+   compile: dmd -O -inline -release regexmatch.d
+*/
+
+import std.regexp, std.stream, std.string;
+
+char[] pattern =
+r"(^| )((\d\d\d|\(\d\d\d\)) \d\d\d[-| ]\d\d\d\d)( |$)"
+;
+
+void main(char[][] args)
+{
+    int n = args.length > 1 ? std.string.atoi(args[1]) : 1;
+
+    char[][]    lines = splitlines(stdin.toString());
+    RegExp      re = new RegExp(pattern,"gi");
+    int         match;
+    char[32]    ph;
+
+    while(n--)
+    {
+        foreach(char[] line; lines)
+        {
+            int idx = re.find(line);
+            if(idx >= 0)
+            {
+                ph[0] = '(';
+                int jdx = 1;
+                while(idx < line.length)
+                {
+                    char c = line[idx];
+                    if(std.ctype.isdigit(c))
+                    {
+                        ph[jdx++] = c;
+                        if(jdx == 4)
+                        {
+                            ph[jdx++] = ')';
+                            ph[jdx++] = ' ';
+                        }
+                        else if(jdx == 9)
+                        {
+                            ph[jdx++] = '-';
+                        }
+                        else if(jdx == 14)
+                        {
+                            ph[jdx] = '\0';
+                            break;
+                        }
+                    }
+                    idx++;
+                }
+                if(!n)
+                {
+                    match++;
+                    printf("%d: %.*s\n",match,ph);
+                }
+            }
+        }
+    }
+}

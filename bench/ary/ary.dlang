@@ -1,0 +1,37 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   this program is modified from:
+     http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html
+   Timing Trials, or, the Trials of Timing: Experiments with Scripting
+   and User-Interface Languages</a> by Brian W. Kernighan and
+   Christopher J. Van Wyk.
+
+   converted to D by Dave Fladebo
+   compile: dmd -O -inline -release ary.d
+*/
+
+import std.stdio, std.string;
+
+void main(char[][] args)
+{
+    int n = args.length > 1 ? atoi(args[1]) : 1;
+
+    int[] x, y;
+    x.length = y.length = n;
+
+    foreach(int i, inout int xi; x)
+    {
+        xi = i + 1;
+    }
+    
+    for(int k = 0; k < 1000; k++)
+    {
+        for(int i = n - 1; i >= 0; i--)
+        {
+            y[i] += x[i];
+        }
+    }
+
+    writefln(y[0]," ",y[y.length - 1]);
+}
