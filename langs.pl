@@ -167,9 +167,8 @@
        Note => 'GNOME project EMCA C#',
        Ext  => 'c',
        Verfun => sub {
-	   chomp(my $ver = `/usr/bin/mono --version`);
-	   $ver =~ /(Mono JIT.*Contributors\.).*/;
-	   return($1);
+	   chomp(my $ver = `$ENV{MONOC} --version 2>&1`);
+	   return($ver);
        },
      },
      
@@ -344,6 +343,22 @@
 	   return("Felix $ver");
        },
      },
+
+     ifc =>
+     { Lang => 'Fortran',
+       Name => 'Intel',
+       Status => '+',
+       Home => 'http://www.intel.com/software/products/compilers/linux',
+       Down => 'http://www.intel.com/software/products/compilers/flin/',
+       Type => 'native compiled',
+       Note => 'C plus objects plus generics',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{IFC} -V 2>&1`);
+	   return("Intel Fortran Compiler Version $ver");
+       },
+     },
+
 
      gcl =>
      { Lang => 'Lisp',
@@ -1072,6 +1087,7 @@
      'Erlang'      => 'prolog',
      'Java'        => 'c',
      'Forth'       => 'forth',
+     'Fortran'     => 'fortran',
      'Haskell'     => 'dash',
      'Dylan'       => 'c',
      'Felix'       => 'c',

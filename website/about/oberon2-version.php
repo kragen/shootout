@@ -1,2 +1,2 @@
-<p>oo2c 2.1.5 (using gcc)
+<p>oo2c 2.1.6 (using gcc)
 </p>

@@ -24,6 +24,11 @@ PATH=/opt/intel_cc_80/bin:$PATH
 LD_LIBRARY_PATH=/opt/intel_cc_80/lib:$LD_LIBRARY_PATH
 MANPATH=/opt/intel_cc_80/man:$MANPATH
 
+# support Intel Fortran
+PATH=/opt/intel_fc_80/bin:$PATH
+LD_LIBRARY_PATH=/opt/intel_fc_80/lib:$LD_LIBRARY_PATH
+MANPATH=/opt/intel_fc_80/man:$MANPATH
+
 # support GCL
 GCL_ANSI=1
 

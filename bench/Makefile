@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2004-12-13 04:27:15 bfulgham Exp $
+# $Id: Makefile,v 1.12 2004-12-20 07:22:31 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -13,23 +13,25 @@ TESTS = \
     hash2 \
     heapsort \
     josephus \
+    knucleotide \
     lists \
     matrix \
     message \
     methcall \
     moments \
+    nobdy \
     nestedloop \
     nsieve \
     nsievebits \
     objinst \
+    pidigits \
     plugin \
     process \
-    procinst \
     prodcons \
     random \
     regexmatch \
+    revcomp \
     reversefile \
-    ringmsg \
     sieve \
     spellcheck \
     strcat \
