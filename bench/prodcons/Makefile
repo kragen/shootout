@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2004-10-11 04:47:51 bfulgham Exp $
+# $Id: Makefile,v 1.19 2004-10-21 13:04:14 dbr-guest Exp $
 include ../../Make.header
 
 TEST    := prodcons
@@ -16,7 +16,6 @@ POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --ignore prodcons.csharp \
-	  --ignore prodcons.nice \
 	  --ignore prodcons.perl \
 	  --ignore prodcons.poplisp \
 	  --ignore prodcons.rep \

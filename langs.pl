@@ -431,7 +431,7 @@
      { Lang => 'Nice',
        Home => 'http://nice.sourceforge.net/',
        Down => 'http://nice.sourceforge.net/install.html',
-       Type => 'native compiled',
+       Type => 'interpreted',
        Ext  => 'nice',
        Verfun => sub {
 	   my $ver = `$ENV{NICEC} --version 2>&1`;
