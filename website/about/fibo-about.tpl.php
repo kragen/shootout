@@ -1,7 +1,4 @@
-<p>Each program should be implemented in the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=fibo&lang=clean&sort=<?=$Sort;?>">Clean program</a>.</p>
-
-<p>Each program calculates a recursive, integer, Fibonacci function:
+<p>Each program should calculate the Fibonacci function using the same na&#239ve recursive-algorithm
 <pre>
 F(x)
   x = 0     = 1

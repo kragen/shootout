@@ -1,6 +1,4 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=ackermann&lang=clean&sort=<?=$Sort;?>">Clean program</a>.</p>
-
-<p>Each program calculates a recursive, integer, Ackermann function:
+<p>Each program should calculate the Ackermann function using the same na&#239ve recursive-algorithm
 <pre>
 A(x,y)
   x = 0     = y+1

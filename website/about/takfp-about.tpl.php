@@ -1,6 +1,4 @@
-<p>Each program should implement the same recursive algorithm as this <a href="benchmark.php?test=takfp&lang=java&sort=<?=$Sort;?>">Java program</a>.</p>
-
-<p>Each program calculates a recursive, floating-point, TAK function:
+<p>Each program should calculate this TAK function using the same na&#239ve floating-point recursive-algorithm
 <pre>
 TAK(x,y,z)
   y < x   = TAK(TAK(x-1.0,y,z),TAK(y-1.0,z,x),TAK(z-1.0,x,y))
