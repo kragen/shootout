@@ -1,4 +1,4 @@
-<form method="post" action="../subscribe/shootout-list">
+<form method="post" action="http://lists.alioth.debian.org/mailman/subscribe/shootout-list">
 <table width="100%">
    <tr><td colspan="3"><h4 class="rev">&nbsp;shootout-list - mailing&nbsp;list</h4></td></tr>
    <tr>
@@ -62,7 +62,7 @@
 </table>
 </form>      
       
-<form method="post" action="../subscribe/shootout-list">      
+<form method="post" action="http://lists.alioth.debian.org/mailman/subscribe/shootout-list">      
 <table width="100%">     
    <tr><td colspan="3"><h4 class="rev">&nbsp;Change&nbsp;subscription</h4></td></tr> 
    <tr>
@@ -80,7 +80,7 @@
 </table>
 </form>          
 
-<form method="post" action="../roster/shootout-list">      
+<form method="post" action="http://lists.alioth.debian.org/mailman/roster/shootout-list">      
 <table width="100%">     
    <tr><td colspan="3"><h4 class="rev">&nbsp;Subscriber&nbsp;list</h4></td></tr> 
    <tr>
@@ -102,8 +102,7 @@
    </tr>      
    <tr><td colspan="3">&nbsp;</td></tr>    
 </table>
-</form>
-
+</form>
 <table width="100%">     
    <tr><td colspan="3"><h4 class="rev">&nbsp;about&nbsp;shootout-list</h4></td></tr> 
    <tr>
