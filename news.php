@@ -25,7 +25,7 @@
         <div id="apphead"><h2>News</h2></div>
 	<div class="app" id="news">
 	  <p>This page contains notices of major changes to the Shootout.
-	    Note that you can also view the <a href="recent.phtml">
+	    Note that you can also view the <a href="recent.php">
 	    Activity Log</a> to see which files have changed recently.</p>
 
 <b>2004-05-27</b>
@@ -522,7 +522,7 @@ language is best!  Proven empirically!  Forever and all time! ;-)
 <b>2000-12-03</b>
 <ul>
 <li>Replaced <a href="ChangeLog">ChangeLog</a> with automated <a
-href="recent.phtml">Activity Log</a>.
+href="recent.php">Activity Log</a>.
 <li>Fredrik Noring and various others from Roxen contributed a bunch
 of Pike test programs.
 </ul>
