@@ -1,93 +1,104 @@
-(* -*- mode: sml -*-
- * $Id: moments.smlnj,v 1.3 2004-06-12 16:19:43 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
- * from Stephen Weeks
- * Modified by Dan Wang to be more functional and use SML/NJ library
- * sorting function.
+(* moments.sml
+ *
+ *   Calculate some statistics for univariate data samples.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
+structure Test:sig val main:string*string list->OS.Process.status end = struct
 
-structure Test : sig
-    val main : (string * string list) -> OS.Process.status
-end = struct
+    infix 8 $  val op $ = Unsafe.Array.sub
+    infix 3 <- fun (a, i) <- x = Unsafe.Array.update (a, i, x)
 
-val ins = TextIO.stdIn
+    (* min array size in sample: *)
+    val SZ = 4096
+    (* empty sample: *)
+    val empty = (Array.array (SZ, 0.0), SZ, 0, 0.0, 0.0, 0.0, 0.0)
 
-fun loop (nums,sum) =
-   case TextIO.inputLine ins of
-      NONE => (nums,sum)
-    | SOME(instr) =>
-        (case instr of
-              "" => (nums,sum)
-	    | l => (case Real.fromString l of
-	          NONE => raise Fail "invalid input"
-	        | SOME num => loop(num::nums,sum+num)))
+    (* add a point to the sample:
+     *   a sample is a tuple of:
+     *      - the array of points
+     *      - currently allocated size of the array
+     *      - current number of points
+     *      - sum of points^4
+     *      - sum of points^3
+     *      - sum of points^2
+     *      - sum of points *)
+    fun point (x:real, (a, sz, n, sx4, sx3, sx2, sx1)) =
+	let val x2 = x*x val (x3, x4) = (x2*x, x2*x2)
+	    val (a, sz) =
+		if n<sz then (a, sz)
+		else let val sz=sz+sz
+			 val b=Array.tabulate(sz,fn i=>if i<n then a$i else 0.0)
+		     in (b, sz) end
+	in (a,n) <- x; (a, sz, n+1, sx4+x4, sx3+x3, sx2+x2, sx1+x) end
 
-fun printl [] = print "\n" | printl(h::t) = ( print h ; printl t )
+    (* calculate moments etc. of the sample *)
+    fun moments (a, sz, ni, sx4, sx3, sx2, sx1) =
+	let val n = real ni         val n' = n - 1.0
+	    val m = sx1/n           val m2 = m*m         val m3 = m2*m
+	    val sd2 = (sx2 + m*(n*m-2.0*sx1))/n'
+	    val sd = Math.sqrt sd2  val (sd3, sd4) = (sd*sd2, sd2*sd2)
+	    val sk = (sx3-m*(3.0*(sx2-sx1*m)+n*m2))/(n*sd3)
+	    val k = ((sx4+m*(6.0*sx2*m-4.0*(sx3+sx1*m2)+n*m3))/(n*sd4))-3.0
+	in (a, sz, ni, n, m, sd2, sd, sk, k) end
 
-fun r2s (x: real): string =
-   if Real.== (x, 0.0) then "0.000000"
-   else String.translate
-     (fn #"~" => "-" | c => str c)
-     (Real.fmt (StringCvt.FIX (SOME 6)) x)
-      
-fun main(name, args) =  let
-  
-    val (nums,sum) = loop ([],0.0) 
-    val nums = Array.fromList nums 
-    val n = Array.length nums
-    val n_float = real n
-    val mean = sum / n_float
-      
-    fun moments (x,{average_deviation,variance,skew,kurtosis}) = let
-      val deviation = x - mean
-      val average_deviation =
-	average_deviation + abs(deviation)
-      val dev2 = deviation * deviation
-      val variance = variance + dev2
-      val dev3 = dev2 * deviation
-      val skew = skew + dev3
-	val dev4 = dev3 * deviation
-	val kurtosis = kurtosis + dev4
-    in {average_deviation=average_deviation,
-	variance=variance,
-	skew=skew,
-	kurtosis=kurtosis}
-    end
-    val init = {average_deviation=0.0,
-		variance=0.0,
-		skew=0.0,
-		kurtosis=0.0}
+    (* initialize random number generator *)
+    val rand = Random.rand (123, 73256)
 
-    val {average_deviation,variance,skew,kurtosis} =
-      Array.foldl moments init nums
-      
-    val average_deviation = average_deviation / n_float
-    val variance = variance /  real (n - 1);
-    val standard_deviation = Real.Math.sqrt (variance)
-    val {skew,kurtosis} =
-      if variance > 0.0
-	then {skew=skew / n_float / variance / standard_deviation,
-	      kurtosis=kurtosis / n_float / variance / variance - 3.0}
-      else {skew=skew,kurtosis=kurtosis}
-	
-    val _ = ArrayQSort.sort Real.compare nums
-    val mid = Int.quot (n, 2)
-    val median =
-      if Int.rem (n, 2) = 1
-	then Array.sub (nums, mid)
-      else (Array.sub (nums, mid) + 
-	    Array.sub (nums, mid - 1)) / 2.0
-in
-  printl ["n:                  ", Int.toString n, "\n",
-	  "median:             ", r2s median, "\n",
-	  "mean:               ", r2s mean, "\n",
-	  "average_deviation:  ", r2s average_deviation, "\n",
-	  "standard_deviation: ", r2s standard_deviation, "\n",
-	  "variance:           ", r2s variance, "\n",
-	  "skew:               ", r2s skew, "\n",
-	  "kurtosis:           ", r2s kurtosis];
-  OS.Process.success
+    (* select i-th order statistic from unsorted array: *)
+    fun select (a: real array, n, i) =
+	let fun x + y = Word.toIntX (Word.+ (Word.fromInt x, Word.fromInt y))
+	    fun x - y = Word.toIntX (Word.- (Word.fromInt x, Word.fromInt y))
+	    (* random partition: *)
+	    fun rp (p, r) =
+		let fun sw(i,j) = let val t=a$i in (a,i)<-a$j; (a,j)<-t end
+		    val q = Random.randRange (p, r) rand
+		    val qv = a$q
+		    val _ = if q<>p then ((a,q)<-a$p; (a,p)<-qv) else ()
+		    fun up i = if i>r orelse a$i>=qv then i else up(i+1)
+		    fun dn i = if i<p orelse a$i<=qv then i else dn(i-1)
+		    fun lp (i, j) =
+			let val (i, j) = (up i, dn j)
+			in if i>j then let val q' = i-1 in sw(p,q'); (q',qv) end
+			   else (sw(i,j); lp (i+1, j-1))
+			end
+		in lp (p+1, r) end
+	    (* random select: *)
+	    fun rs (p, r) =
+		if p=r then a$r
+		else let val (q, qv) = rp (p, r)
+		     in if i=q then qv else if i<q then rs(p,q-1) else rs(q+1,r)
+		     end
+	in rs (0, n-1) end
+
+    (* select maximum element with index < n *)
+    fun getmax (a, n) =
+	let fun l (i, m) = if i >= n then m else l (i+1, Real.max (m, a$i))
+	in l (1, a$0) end
+
+    fun main _ =
+	let fun gather data =
+		case TextIO.inputLine TextIO.stdIn of
+		    NONE => data
+		  | SOME l => (case Real.fromString l of
+				   SOME x => gather (point (x, data))
+				 | NONE => gather data)
+
+	    val (a, sz, n, nr, m, sd2, sd, sk, k) = moments (gather empty)
+	    fun ad (i, ds) = if i>n then ds/nr else ad (i+1, ds + abs(a$i-m))
+
+	    val mid = n div 2 val m0 = select (a, n, mid)
+	    val med = if n mod 2 <> 0 then m0 else (m0 + getmax (a, mid)) / 2.0
+
+	    open Format
+	in formatf "n:                  %d\nmedian:             %f\n\
+		   \mean:               %f\naverage_deviation:  %f\n\
+		   \standard_deviation: %f\nvariance:           %f\n\
+		   \skew:               %f\nkurtosis:           %f\n"
+           print [INT n,   REAL med, REAL m,  REAL (ad (0, 0.0)),
+		  REAL sd, REAL sd2, REAL sk, REAL k];
+	   OS.Process.success
+	end
 end
-end
-
-val _ = SMLofNJ.exportFn("moments", Test.main);

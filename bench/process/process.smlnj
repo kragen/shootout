@@ -1,0 +1,31 @@
+(* process.sml
+ *
+ *   Build chain of N threads that relay an int value.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
+ *)
+structure Test:sig val main:string*string list->OS.Process.status end = struct
+
+    (* build the chain *)
+    fun build (0, c) = c
+      | build (n, s) = let val p = CML.channel ()
+			   fun sp () = (CML.send (s, CML.recv p + 1); sp ())
+		       in ignore (CML.spawn sp); build (n-1, p) end
+
+    (* Last thread, this is really the N+1st thread -- contrary to
+     * the prose of the problem description, but in accordance with the
+     * supposedly correct output: *)
+    fun mklast () =
+	let fun out s = TextIO.output (TextIO.stdOut, s)
+	    val p = CML.channel ()
+	    fun sp () = (out (Int.toString (CML.recv p) ^ "\n"); sp ())
+	in ignore (CML.spawn sp); p end
+
+    (* the driver *)
+    fun doit n () = CML.send (build (n, mklast ()), 0)
+    fun main' n = (RunCML.doit (doit n, NONE); OS.Process.success)
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
+end

@@ -1,37 +1,27 @@
-(* -*- mode: sml -*-
- * $Id: random.smlnj,v 1.1 2004-05-19 18:11:16 bfulgham Exp $
- * http://www.bagley.org/~doug/shootout/
+(* random.sml
+ *
+ *   Floating-point random number generator + test loop.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *
+ * Author: Matthias Blume (blume@tti-c.org)
  *)
+structure Test: sig val main:string*string list->OS.Process.status end = struct
 
-structure Test : sig
-    val main : (string * string list) -> OS.Process.status
-end = struct
+    (* the constants *)
+    val (M, A, C) = (0w139968, 0w3877, 0w29573)
 
-val im : int = 139968;
-val ia : int = 3877;
-val ic : int = 29573;
+    (* floating format, word->real conversion *)
+    val (f9, wreal) = (Real.fmt (StringCvt.FIX (SOME 9)), real o Word.toIntX)
 
-fun randloop 0 seed rand max = rand
-  | randloop n seed rand max = 
-    let
-	val newseed : int = (seed * ia + ic) mod im;
-	val newrand : real = max * (Real.fromInt newseed) / (Real.fromInt im);
-    in
-        randloop (n-1) newseed newrand max
-    end;
+    (* the loop *)
+    fun rl (n, s, m) = let fun l (0w0, s) = m * wreal s / wreal M
+			     | l (n, s) = l (n - 0w1, (s * A + C) mod M)
+		       in l (n, s) end
 
-
-fun atoi s = case Int.fromString s of SOME num => num | NONE => 0;
-
-fun main(name, args) = 
-  let
-    val arg = hd(args @ ["1"]);
-    val num = atoi arg;
-    val result = randloop num 42 0.0 100.0;
-  in
-      print (Real.fmt (StringCvt.FIX (SOME 9)) result); print "\n";
-      OS.Process.success
-  end
+    (* the driver *)
+    fun main' n = (print (f9 (rl (Word.fromInt n, 0w42, 100.0)) ^ "\n");
+		   OS.Process.success)
+    fun main (_, []) = main' 1
+      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
 end
-
-val _ = SMLofNJ.exportFn("random", Test.main);

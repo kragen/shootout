@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2004-12-10 06:22:25 bfulgham Exp $
+# $Id: Makefile,v 1.11 2004-12-13 04:27:15 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -20,6 +20,7 @@ TESTS = \
     moments \
     nestedloop \
     nsieve \
+    nsievebits \
     objinst \
     plugin \
     process \
