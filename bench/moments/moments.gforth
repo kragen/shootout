@@ -1,0 +1,99 @@
+\ -*- mode: forth -*-
+\ $Id: moments.gforth,v 1.1 2004-05-25 03:24:39 bfulgham Exp $
+\ http://www.bagley.org/~doug/shootout/
+\ from Anton Ertl
+
+1024 constant max-line
+create line max-line 2 + allot
+
+: input-floats ( fid -- rsum )
+    >r 0e begin
+	line max-line r@ read-line throw
+    while
+	line swap >float 0= abort" float expected"
+	fdup f, f+
+    repeat
+    rdrop drop ;
+
+: compute-loop ( a u sum -- kurtosis skew variance standard-dev avg-dev mean )
+    dup 0 d>f fdup { f: n } f/ { f: mean }
+    0e fdup fdup fdup
+    floats bounds do {  f: avg-deviation f: variance f: skew f: kurtosis }
+	i f@ mean f- { f: deviation }
+	deviation fabs avg-deviation f+ ( avg-deviation )
+	deviation fdup f* fdup variance f+ ( avg-deviation dev^2 variance )
+	fswap deviation f* fdup skew f+ ( avg-deviation variance dev^2 skew )
+	fswap deviation f* kurtosis f+ ( avg-deviation variance skew kurtosis )
+	float +loop
+    frot n 1e f- f/ to variance
+    frot to avg-deviation ( skew kurtosis )
+    variance fsqrt { f: standard-deviation }
+    variance f0<> if
+	n variance fdup f* f* f/ 3e f-
+	fswap n variance f*  standard-deviation f* f/ fswap
+    endif
+    fswap variance standard-deviation avg-deviation n f/ mean ;
+
+(field) float- -1 floats ,
+
+: partition { first last -- last-smaller first-larger }
+    \ partition array addr1 u1 into all elements less than pivot and all
+    \ others, addr1 u2 and addr3 u3 are the two partitions.
+    \ lessthan-xt ( elemptr1 elemptr2 -- f ) compares the two elements
+    first last + 1 rshift faligned f@ { f: pivot }
+    first last begin ( i j )
+	begin
+	    pivot dup f@ f< over first u> and
+	while
+	    float-
+	repeat
+	swap begin ( j i )
+	    dup last u< over f@ pivot f< and
+	while
+	    float+
+	repeat
+	2dup u>=
+    while ( j i )
+	dup f@ over f@ dup f! over f!
+	float+ swap float-
+    repeat ;
+
+: quantile ( first last quant-low quant-high -- ) recursive
+    \ sorts the array [first,last] such that the contained part of
+    \ [quant-low,quant-high] is the same as in the fully sorted array.
+    { quant-low quant-high }
+    begin { first last }
+	first quant-high u< quant-low last u< and
+    while
+	first last partition ( last-smaller first-larger )
+	last quant-low quant-high quantile
+	first swap
+    repeat ;
+
+: median { addr u -- rmedian }
+    addr u 1- 2/ floats + addr u 2/ floats + ( quant-low quant-high )
+    addr addr u 1- floats + 2over quantile
+    f@ f@ f+ f2/ ;
+
+( based on "f." word from gforth )
+: ff.  ( r -- )
+  f$ dup >r 0<
+  IF '0 emit ELSE scratch r@ min type r@ precision - zeros ENDIF
+  '. emit
+  r@ negate zeros
+  scratch r> 0 max /string 0 max type ;
+
+create nums \ s" moments.input" r/o open-file throw input-floats
+stdin input-floats
+nums here over - float /
+." n:                  " dup 0 .r cr
+compute-loop
+nums here over - float / median  9 set-precision
+." median:             " ff. cr
+." mean:               " ff. cr
+." average_deviation:  " ff. cr
+." standard_deviation: " ff. cr 11 set-precision
+." variance:           " ff. cr  7 set-precision
+." skew:               " ff. cr
+." kurtosis:           " ff. cr
+bye
