@@ -34,6 +34,7 @@
 	    <div><a href="#naive">Why do many of your solutions seem naive and unidiomatic?</a></div>
 	    <div><a href="#time_to_code">Why don't you also measure the time it took to write the code?</a></div>
 	    <div><a href="#maintain">Why don't you also measure engineering quality?</a></div>
+	    <div><a href="#imps">Will you include as many implementations as people contribute?</a></div>
 	    <div><a href="#accordion">Do you like accordian music</a></div>
 	</div>
       </div>
@@ -259,10 +260,28 @@
 	resources to do it myself.</p>
 	<hr>
 	
+        <div class="h3" id="imps"><h3>Q: Will you include as many
+	implementations as people contribute?  Or will only one implementation
+	per language be included?</h3></div>
+	<p>We try to maintain a balance between completeness and visual clarity.
+	To include 12 different implementations of the Sieve of Eratosthenes for
+	a particular language doesn't show much of interest.  If there is a
+	clear winning algorithm that meets the objectives (i.e., "same way" or
+	"same thing"), we will use it.  Otherwise, there will only be one
+	implementation per compiler/interpreter in the competition.</p>
+	<p>One exception is when compilers can produce various types of output.
+	For example, Objective Caml can run in a bytecode interpreter mode, or
+	as a native compiled executable.  Similar cases exist for MzScheme,
+	Erlang, etc.  In those cases we provide an implementation for both
+	types of executable.</p>
+	<p>When selecting between algorithms we use the subjective and
+	relatively unscientific "elegance" rule.  Clarity is valued over
+	terseness, and obviously efficiency is a key criterion.  Also, the
+	fewer special-case libraries needed the better.</p>
+<!--
         <div class="h3" id="accordion"><h3>Q: Do you like <a href="http://www.brave.com/bo/">accordian music</a>?</h3></div>
 	<p>Yes!</p>
 
-<!--
         <div class="h3" id="why"><h3>Q: Why are you doing this?</h3></div>
 	<p>
 	<hr>
