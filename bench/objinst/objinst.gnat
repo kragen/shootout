@@ -1,0 +1,83 @@
+-- $Id: objinst.gnat,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+-- http://dada.perl.it/shootout/
+-- Ada 95 code by C.C.
+
+-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+
+with Ada.Command_Line, Ada.Characters.Handling, Text_IO, Ada.Tags;
+
+procedure ObjInst is    --  3.451
+   pragma Suppress (Discriminant_Check);
+   pragma Suppress (Access_Check);
+   package CH renames Ada.Characters.Handling;
+   use type Ada.Tags.Tag;
+
+   package Toggles is
+      type A_Rec is
+         tagged record                 --  'tagged' allows fields to be added
+            Value       : Boolean := True;
+         end record;
+
+      type B_Rec is new A_Rec with
+         record
+            Flip_Period : Positive := 1;
+            Count       : Natural := 0;
+         end record;
+
+      type A_Recs_Family_Ptr is access all A_Rec'Class;
+
+      function Activate (X : A_Recs_Family_Ptr) return A_Recs_Family_Ptr;
+      pragma Inline (Activate);
+   end Toggles;
+
+   package body Toggles is
+      function Activate (X : A_Recs_Family_Ptr) return A_Recs_Family_Ptr is
+         pragma Suppress (Range_Check);
+         pragma Suppress (Tag_Check);
+      begin                   --  X is a ptr: no "in out" parms in a function
+         if X.all'Tag = A_Rec'Tag then                         --  A_Rec case
+            X.all.Value := not X.all.Value;
+         else
+            declare                       --  Make visible the 2 B_Rec fields
+               pragma Suppress (Tag_Check);
+               B        : B_Rec renames B_Rec (X.all);
+            begin
+               B.Count := B.Count + 1;
+               if B.Count = B.Flip_Period then
+                  B.Count := 0;
+                  B.Value := not B.Value;
+               end if;
+            end;
+         end if;
+         return X;
+      end Activate;
+   end Toggles;
+
+   A        : aliased Toggles.A_Rec;      --  "aliased", since X'Access is used
+   B        : aliased Toggles.B_Rec;      --  "access all" above for aliased
+   N        : Positive := 1;
+   Res      : Boolean;
+begin
+   begin
+      N := Positive'Value (Ada.Command_Line.Argument (1));
+   exception
+      when Constraint_Error => null;
+   end;
+   A := Toggles.A_Rec'(Value => True);
+   for K in 1 .. 5 loop
+      Res := Toggles.Activate (A'Access).Value;
+      Text_IO.Put_Line (CH.To_Lower (Boolean'Image (Res)));
+   end loop;
+   for Iter in 1 .. N loop
+      A := Toggles.A_Rec'(Value => True);
+   end loop;
+   Text_IO.New_Line;
+   B := Toggles.B_Rec'(Value => True, Flip_Period => 3, Count => 0);
+   for K in 1 .. 8 loop
+      Res := Toggles.Activate (B'Access).Value;
+      Text_IO.Put_Line (CH.To_Lower (Boolean'Image (Res)));
+   end loop;
+   for Iter in 1 .. N loop
+      B := Toggles.B_Rec'(Value => True, Flip_Period => 3, Count => 0);
+   end loop;
+end ObjInst;

@@ -1,0 +1,120 @@
+-- $Id: moments.gnat,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+-- http://dada.perl.it/shootout/
+-- Ada 95 code by C.C.
+
+-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+
+with System, Ada.Numerics.Generic_Elementary_Functions;
+with Ada.Unchecked_Deallocation, Ada.Text_IO;
+
+procedure Moments is
+   type Real is digits Positive'Max (15, System.Max_Digits);
+   package AF is new
+         Ada.Numerics.Generic_Elementary_Functions (Float_Type => Real);
+   package Io renames Ada.Text_IO;
+   package Rio is new Ada.Text_IO.Float_IO (Num => Real);
+   procedure Put (Item : Real; Fore : Io.Field := 0; Aft : Io.Field := 6;
+                  Exp : Io.Field := 0) renames Rio.Put;
+
+   generic
+       type Item_Type is private;      --  Component type of array to be sorted
+       with function "<=" (X, Y : Item_Type) return Boolean;
+       type Sequence is array (Integer range <>) of Item_Type;
+   package Sort_Pkg is
+      procedure Quick_Sort (S : in out Sequence);
+   end Sort_Pkg;  --  Copied from Southampton Ada MPICH supercomputer bindings
+
+   package body Sort_Pkg is
+      procedure Quick_Sort (S : in out Sequence) is
+         procedure Sort_Recursive (Lwb, Upb : Integer) is
+            Pivot    : Item_Type := S (Upb);
+            Front    : Integer := Lwb;
+            Back     : Integer := Upb;
+            Temp     : Item_Type;
+         begin
+            if Lwb < Upb then
+               while  (Front <= Back)  loop
+                  while not  (Pivot <= S (Front)) loop
+                     Front := Front + 1;
+                  end loop;
+                  while not  (S (Back) <= Pivot) loop
+                     Back := Back - 1;
+                  end loop;
+                  if Front <= Back then
+                     Temp := S (Front);
+                     S (Front) := S (Back);
+                     S (Back) := Temp;
+                     Front := Front + 1;
+                     Back  := Back - 1;
+                  end if;
+               end loop;
+               Sort_Recursive (Lwb, Back);
+               Sort_Recursive (Front, Upb);
+            end if;
+         end Sort_Recursive;
+      begin
+         Sort_Recursive (S'First, S'Last);
+      end Quick_Sort;
+   end Sort_Pkg;
+
+   type Real_Array is array (Integer range <>) of Real;
+   type Real_Array_Ptr is access Real_Array;
+   procedure Deallocate_Real_Array is new Ada.Unchecked_Deallocation (
+
+                  Object => Real_Array, Name => Real_Array_Ptr);
+   package Sort is new Sort_Pkg (Real, "<=" => "<=", Sequence => Real_Array);
+
+   Data           : Real_Array_Ptr := new Real_Array (1 .. 0);
+   Temp_Array     : Real_Array_Ptr;
+   Dev, D_2, Mean, Median     : Real;
+   Standard_Deviation         : Real;
+   Sum, Avg_Abs_Deviation     : Real := 0.0;
+   Variance, Skew, Kurtosis   : Real := 0.0;
+   M              : Natural := 0;
+begin
+   while not Io.End_Of_File loop
+      M := M + 1;
+      if M > Data'Last then                  --  Lengthen array of strings
+         Temp_Array := new Real_Array (
+                        1 .. 4 + Positive (Real'Ceiling (1.70 * Real (M))));
+         Temp_Array (Data'Range) := Data.all;
+         Deallocate_Real_Array (Data);
+         Data := Temp_Array;     --  Replace the old array with the new one
+      end if;
+      Rio.Get (Item => Data (M));      -- Read  numbers between whitespace
+      Sum := Sum + Data (M);
+   end loop;
+   Mean := Sum / Real (M);
+   for K in 1 .. M loop
+      Dev := Data (K) - Mean;
+      Avg_Abs_Deviation := Avg_Abs_Deviation + abs Dev;
+      D_2 := Dev * Dev;
+      Variance := Variance + D_2;
+      Skew := Skew + (D_2 * Dev);
+      Kurtosis := Kurtosis + (D_2 * D_2);
+   end loop;
+   Avg_Abs_Deviation := Avg_Abs_Deviation / Real (M);
+   Variance := Variance / Real (M - 1);
+   Standard_Deviation := AF.Sqrt (Variance);
+   if Variance < 10.0 * Real'Model_Epsilon then
+      Io.Put_Line ("> Reduced accuracy results: 0 = ((Variance/10 + 1) - 1)");
+   else
+      Skew := Skew / (Real (M) * Variance * Standard_Deviation);
+      Kurtosis := -3.0 + Kurtosis / (Real (M) * Variance * Variance);
+   end if;
+   Sort.Quick_Sort (S => Data (1 .. M));
+   if 1 = (M mod 2) then
+      Median := Data ((M + 1) / 2);
+   else
+      Median := (Data (M / 2) + Data (1 + M / 2)) / 2.0;
+   end if;
+   Io.Put_Line ("n:                 " & Integer'Image (M));
+   Io.Put ("median:             "); Put (Median);              Io.New_Line;
+   Io.Put ("mean:               "); Put (Mean);                Io.New_Line;
+   Io.Put ("average_deviation:  "); Put (Avg_Abs_Deviation);   Io.New_Line;
+   Io.Put ("standard_deviation: "); Put (Standard_Deviation);  Io.New_Line;
+   Io.Put ("variance:           "); Put (Variance);            Io.New_Line;
+   Io.Put ("skew:               "); Put (Skew);                Io.New_Line;
+   Io.Put ("kurtosis:           "); Put (Kurtosis);            Io.New_Line;
+end Moments;
+

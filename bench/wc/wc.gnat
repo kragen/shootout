@@ -1,0 +1,65 @@
+-- $Id: wc.gnat,v 1.1 2004-05-23 07:14:28 bfulgham Exp $
+-- http://dada.perl.it/shootout/
+-- Ada 95 code by C.C.
+
+-- Annotated Ada Reference Manual ISO/IEC 8652:1995: http://www.ada-auth.org/
+
+with Interfaces.C, System, Ada.Strings.Fixed, Ada.Text_IO;
+
+procedure Wc is
+   package IC renames Interfaces.C;
+   function L_Trim (Source : String; Side : Ada.Strings.Trim_End :=
+               Ada.Strings.Left) return String renames Ada.Strings.Fixed.Trim;
+
+   package Io is
+      type File_Descriptor is new IC.int;       --  STDIN=0, STDOUT=1, STDERR=2
+      type Setmode_Flag is new IC.int;
+      STDIN       : constant File_Descriptor := 0;
+      O_BINARY    : constant Setmode_Flag := 16#8000#;
+
+      function C_Setmode (
+               FD       : File_Descriptor;
+               Mode     : Setmode_Flag)
+            return IC.int;
+
+      function C_Sysread (
+               FD       : File_Descriptor;
+               Buf      : System.Address;
+               NByte    : IC.int)
+            return IC.int;
+   private
+      pragma Import (C, C_Setmode, "_setmode");          --  Microsoft Windows
+      pragma Import (C, C_Sysread, "_read");
+   end Io;
+
+   Buffer      : String (1 .. 4 * 1024);
+   NL, NW, NC  : Natural := 0;
+   Inside_Word : Boolean := False;
+   C           : Character;
+   Last, R     : Integer;
+begin
+   R := Integer (Io.C_Setmode (Io.STDIN, Io.O_BINARY));  --  Read CR,LF right
+   loop
+      Last := Integer (Io.C_Sysread (FD => Io.STDIN,
+                  Buf => Buffer (1)'Address, NByte => Buffer'Length));
+      exit when Last <= 0;
+      NC := NC + Last;
+      for K in Buffer'First .. Last loop
+         C := Buffer (K);
+         if C = ASCII.LF then
+            NL := NL + 1;
+         end if;
+         if C = ' ' or C = ASCII.CR or C = ASCII.LF or C = ASCII.HT then
+            Inside_Word := False;
+         elsif not Inside_Word then
+            Inside_Word := True;
+            NW := NW + 1;
+         end if;
+      end loop;
+   end loop;
+   Ada.Text_IO.Put_Line (L_Trim (Natural'Image (NL)) & Natural'Image (NW) &
+            Natural'Image (NC));
+end Wc;
+   --  The "Ada.Streams.Stream_IO.Read (File, Item, Last)" procedure can't
+   --  read from STDIN: can't associate Standard Input with File parameter.
+   --  GNAT's Interfaces.C_Streams.fread function isn't from ISO/IEC 8652:1995.
