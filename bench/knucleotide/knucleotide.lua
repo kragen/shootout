@@ -1,6 +1,6 @@
 -- The Great Computer Language Shootout
 -- http://shootout.alioth.debian.org/
--- 
+--
 -- contributed by Isaac Gouy
 
 
@@ -17,6 +17,13 @@ local function kFrequency(s,freq,k,frame)
    end
 end
 
+local function SortByFrequencyAndCode(a,b) 
+   if a.count == b.count then
+      return a.key < b.key
+   else
+      return a.count > b.count 
+   end
+end         
 
 local function frequency(s,k)
    local freq = {}
@@ -28,11 +35,11 @@ local function frequency(s,k)
       sum = sum + record.count
    end
 
-   table.sort(sorted, function(a,b) return a.count > b.count end)
+   table.sort(sorted, SortByFrequencyAndCode)
    
    for _,record in ipairs(sorted) do 
       local percent = (record.count/sum)*100
-      io.write( string.format("%s %0.2f",record.key,percent), "\n") 
+      io.write( string.format("%s %0.9f",record.key,percent), "\n") 
    end
    io.write("\n") 
 end
