@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2004-05-25 03:50:52 bfulgham Exp $
+# $Id: Makefile,v 1.3 2004-05-25 07:41:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -6,8 +6,8 @@ TITLE   := Regular Expression Matching
 GXXOPTS   := $(GXXOPTS) -I/usr/local/include
 GXXLDOPTS := $(GXXLDOPTS) -lzregx -lpcre
 GCCOPTS   := $(GCCOPTS) -lpcre
-OCAMLOPTS := str.cmxa pcre.cmxa
-OCAMLBOPTS := str.cma pcre.cma
+OCAMLOPTS := str.cmxa pcre.cmxa -I +pcre
+OCAMLBOPTS := str.cma pcre.cma -I +pcre
 GHCOPTS := -package text
 
 CMUCL_SRCS := ../../Include/meta.lisp
@@ -19,6 +19,9 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
           --range 1,3000,6000,9000 \
 	  --ignore regexmatch.bigloo \
 	  --ignore regexmatch.g++ \
+	  --ignore regexmatch.ocaml \
+	  --ignore regexmatch.ocamlb \
+	  --ignore regexmatch.sablevm \
 	  --inputfile Input \
 	  --title "$(TITLE)" $(TEST).*
 
