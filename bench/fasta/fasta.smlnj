@@ -17,6 +17,9 @@ structure Test:sig val main:string*string list->OS.Process.status end = struct
 
     fun out s = TextIO.output (TextIO.stdOut, s)
     fun out1 c = TextIO.output1 (TextIO.stdOut, c)
+    fun ssl(s,i,j) =
+	(TextIO.outputSubstr(TextIO.stdOut,Substring.substring(s,i,j));
+	 out1 #"\n")
 
     (* word->real conversion *)
     val wreal = real o Word.toIntX
@@ -28,6 +31,8 @@ structure Test:sig val main:string*string list->OS.Process.status end = struct
 		 in fn m=>let val c = (!l*A+C) mod M in l:=c; m*M'*wreal c end
 		 end
 
+    fun stretch s = if size s < len then stretch (s^s) else (s^s, size s)
+
     (* calculate cumulative probabilities *)
     fun mkCumul l =
 	let val (cl, pl) = ListPair.unzip l
@@ -35,21 +40,23 @@ structure Test:sig val main:string*string list->OS.Process.status end = struct
 	    fun upd (i, p, s) = let val s = s+p in (a,i)<-s; s end
 	in ignore (Array.foldli upd 0.0 a); (s, a, Array.length a - 1) end
 
+    (* fixed sequence to be repeated *)
+    val alu = stretch "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\
+		      \GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\
+		      \CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\
+		      \ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA\
+		      \GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG\
+		      \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\
+		      \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+
     (* the bases with their probabilities *)
-    val dna1 = [(#"a", 0.3029549426680), (#"c", 0.1979883004921),
-		(#"g", 0.1975473066391), (#"t", 0.3015094502008)]
+    val homosapiens = mkCumul [(#"a", 0.3029549426680), (#"c", 0.1979883004921),
+			       (#"g", 0.1975473066391), (#"t", 0.3015094502008)]
 
-    val dna2 = [(#"a", 0.250), (#"c", 0.125), (#"g", 0.125), (#"t", 0.250),
-		(#"U", 0.019230769231), (#"R", 0.019230769231),
-		(#"Y", 0.019230769231), (#"K", 0.019230769231),
-		(#"M", 0.019230769231), (#"S", 0.019230769231),
-		(#"W", 0.019230769231), (#"B", 0.019230769231),
-		(#"D", 0.019230769231), (#"H", 0.019230769231),
-		(#"V", 0.019230769231), (#"N", 0.019230769231),
-		(#"-", 0.019230769231)]
-
-    (* do the conversion *)
-    val (sa1, sa2) = (mkCumul dna1, mkCumul dna2)
+    val iub = mkCumul [(#"a",0.270), (#"c",0.125), (#"g",0.125), (#"t",0.270),
+		       (#"B",0.02), (#"D",0.02), (#"H",0.02), (#"K",0.02),
+		       (#"M",0.02), (#"N",0.02), (#"R",0.02), (#"S",0.02),
+		       (#"V",0.02), (#"W",0.02), (#"Y",0.02)]
 
     (* select a random base *)
 (*  (* using binary search *)
@@ -69,19 +76,27 @@ structure Test:sig val main:string*string list->OS.Process.status end = struct
 	    fun l i = if i >= n' orelse a$i > r then s%i else l (succ i)
 	in l 0 end
 
-    (* make fasta fragment *)
-    fun mff (id, desc, sa, n) =
+    (* make a sequence by repeating a template *)
+    fun rptff (id, desc, (s, l), n) =
+	let fun lp (0, _) = ()
+	      | lp (n, k) =
+		  if n<len then ssl(s,k,n)
+		  else let val k' = k+len
+		       in ssl(s,k,len); lp(n-len, if k'>=l then k'-l else k')
+		       end
+	in app out [">", id, " ", desc, "\n"]; lp (n, 0) end
+
+    (* make random fasta fragment *)
+    fun rndff (id, desc, sa, n) =
 	let fun loop n = let val m = Int.min(n,len) in loop' (n-m,m) end
 	    and loop' (n, 0) = (out1 #"\n"; if n>0 then loop n else ())
 	      | loop' (n, m) = (out1 (selRandom sa); loop' (n,m-1))
 	in app out [">", id, " ", desc, "\n"]; loop n end
 
     (* test harness *)
-    fun make' n = (mff ("TestOne",   "test fragment", sa2, n*1);
-		   mff ("TestTwo",   "test fragment", sa1, n*2);
-		   mff ("TestThree", "test fragment", sa2, n*3);
-		   mff ("TestFour",  "test fragment", sa1, n*4);
-		   mff ("TestFive",  "test fragment", sa2, n*5);
+    fun make' n = (rptff("ONE", "Homo sapiens alu", alu, n*2);
+		   rndff("TWO", "IUB ambiguity codes", iub, n*3);
+		   rndff("THREE", "Homo sapiens frequency", homosapiens, n*5);
 		   OS.Process.success)
 
     (* driver *)
