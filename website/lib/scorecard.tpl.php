@@ -14,7 +14,7 @@
 <h4 class="rev">&nbsp;Fast Faster Fastest programming languages</h4>
 </td></tr>
 <tr><td colspan="2">
-<p>What <em>fun</em>! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
+<p>What fun! <a href="http://en.wikipedia.org/wiki/April_Fool's_Day" title="April Fool's Day defined on Wikipedia"><strong>April Fool's Day</strong></a> all year long! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
 
 <p>And remember, languages that implement more benchmarks will move to the top of the list, and those with <strong>many missing benchmarks</strong> will stay at the bottom!</p>
 

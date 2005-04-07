@@ -1,7 +1,11 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: heapsort.ruby,v 1.2 2004-06-17 05:37:50 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: heapsort.ruby,v 1.3 2005-04-07 18:45:25 igouy-guest Exp $
+#
+# The Great Computer Language Shootout
+# http://shootout.alioth.debian.org/
+#
+# modified by Jabari Zakiya
 
 IM = 139968
 IA =   3877
@@ -13,7 +17,7 @@ def gen_random (max) (max * ($last = ($last * IA + IC) % IM)) / IM end
 def heapsort(n, ra)
     j = i = rra = 0
     l = (n >> 1) + 1
-    ir = n
+    ir = n - 1
 
     while (1) do
 	if (l > 1) then

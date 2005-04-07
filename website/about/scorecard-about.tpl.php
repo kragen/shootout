@@ -16,7 +16,7 @@ score for that benchmark.  If a language does not have an entry for a test its s
 
 <li>Then the CPU/Memory/LOC scores are multiplied by their respective Mulipliers and the resulting scores are added together to the get final score.</li>
 <li>Add up all the scores for each language for each benchmark, and put them on this nice web page.</li>
-<li>And the result is <a href="http://en.wikipedia.org/wiki/Craps" title="Craps definition"><b>CRAPS!&#8482;</b></a></li>
+<li>And the result is <a href="http://en.wikipedia.org/wiki/Craps" title="Craps defined on Wikipedia"><b>CRAPS!&#8482;</b></a></li>
 </ul>
 
 
