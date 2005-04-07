@@ -1,7 +1,7 @@
 <table>
 <tr><td><h3 class="rev">&nbsp;Flawed Benchmarks</h3></td></tr>
 
-<tr class="b"><td>Are your programs even like these benchmarks?</td></tr>
+<tr class="b"><td>Are <strong>your programs</strong> even like these benchmarks?</td></tr>
 <tr><td>
 <ul>  
   <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
