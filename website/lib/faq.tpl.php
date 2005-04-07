@@ -142,7 +142,7 @@ Contact us!</p>
 <tr class="b"><td>How should I implement data-input?</td></tr>
 <tr><td>
 <p>Programs are measured across a range of input-values; programs are expected to either take a <strong>single command-line parameter</strong> or read text from <strong>stdin</strong>.</p> 
-<p>(Look what the other programs do.)</p>
+<p>(Look at what the other programs do.)</p>
 </td></tr>
 
 <tr class="b"><td>How should I implement loops?</td></tr>
