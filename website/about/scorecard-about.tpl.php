@@ -1,4 +1,4 @@
-<p>The <a href="http://en.wikipedia.org/wiki/Craps" title="Craps definition"><b>Completely Random and Arbitrary Point System!&#8482;</b></a> works as follows:</p>
+<p>The <a href="http://en.wikipedia.org/wiki/Craps" title="Craps defined on Wikipedia"><b>Completely Random and Arbitrary Point System!&#8482;</b></a> works as follows:</p>
 <ul>
 <li>For each benchmark, the "best score" is determined by locating the lowest non-zero score.  (This is done for CPU, Memory, and LOC scores.)</li>
 
