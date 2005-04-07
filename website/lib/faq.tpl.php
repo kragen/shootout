@@ -8,7 +8,7 @@
 <tr><td>
 <p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
-<p>We are only trying to show the performance of various programming language implementations, on a limited number of micro-benchmarks.</p>
+<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flawed benchmarks</strong></a>.</p>
 
 <p>We <strong>are not</strong> trying to</p>
 <ul>
@@ -18,13 +18,13 @@
 <li>provide an <em>ultimate</em> benchmark for some domain</li>
 <li><em>etc etc</em></li>
 </ul>
-<p>We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>micro-benchmarks</strong></a> across a wide range of programming language implementations.
+<p>We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flawed benchmarks</strong></a> across a wide range of programming language implementations.
 </p>
 </td></tr>
 
 <tr class="b"><td>What should I do?</td></tr>
 <tr><td>
-<p>Read the source-code: Do you understand the programs?</p>
+<p>Read about benchmarking: Do you understand the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flaws</strong></a>?</p>
 <p>Read the source-code: Are the programs really comparable?</p>
 <p>Read the source-code: Can you write faster or more elegant code?</p>
 </td></tr>
@@ -119,6 +119,85 @@ Contact us!</p>
 </table>
 
 
+<!-- HOW SHOULD I IMPLEMENT ...? /////////////////////////////////////// -->
+
+<table class="div">
+
+<tr><td><h3 class="rev"><a name="implement">&nbsp;How should I implement&#8230;?</a></h3></td></tr>
+
+<tr class="b"><td>How should I implement programs for the Shootout?</td></tr>
+<tr><td>
+<p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
+</td></tr>
+
+<tr class="b"><td>How much effort should I put into getting the program correct?</td></tr>
+<tr><td>
+<p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine. (Don't make-unnecessary-work for the volunteer committers.)</p>
+<p>Check the <strong>output format</strong> matches the example output format - the program will fail if the format is different. (Complain if the benchmark page doesn't show example output.)</p> 
+<p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to the Computer Language Shootout.</p> 
+</td></tr>
+
+
+<tr class="b"><td>How should I implement data-input?</td></tr>
+<tr><td>
+<p>Programs are measured across a range of input-values; programs are expected to either take a <strong>single command-line parameter</strong> or read text from <strong>stdin</strong>.</p> 
+<p>(Look what the other programs do.)</p>
+</td></tr>
+
+<tr class="b"><td>How should I implement loops?</td></tr>
+<tr><td><p>Don't manually unroll loops!</p> 
+</td></tr>
+
+<tr class="b"><td>How should I advertise my company, services, website&#8230;?</td></tr>
+<tr><td><p><strong>We'll remove any promos</strong> that you add as comment text, so please don't waste our time.</p> 
+</td></tr>
+
+<tr class="b"><td>How should I grab bragging rights?</td></tr>
+<tr><td><p>Include a header comment in the program like this:</p>
+<pre>
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by &#8230;
+   modified by &#8230;
+
+*/
+</pre>
+</td></tr>
+
+
+<tr class="b"><td><a name="sameway">How should I implement a same way program?</a></td></tr>
+<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
+<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+<p>The same way programs often seem naive and unidiomatic.</p> 
+</td></tr>
+
+
+
+
+<tr class="b"><td><a name="samething">How should I implement a same thing program?</a></td></tr>
+
+<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
+<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
+</td></tr>
+
+
+
+<tr class="b"><td><a name="samething">How should I implement&#8230;?</a></td></tr>
+<tr><td>
+<ol>
+<li>Keep to the spirit-of-the-specification not just the wording.</li><li>Write the program to be as-fast-as possible.</li><li>Write the program to conserve memory as-much-as possible.</li>
+<li>Write the program as-if lines of code were not being measured.</li>
+</ol>     
+</td></tr>
+
+</table>
+
+
+
 
 <!-- WHERE CAN I? ////////////////////////////////////////////////// -->
 <table class="div">
@@ -161,78 +240,6 @@ Contact us!</p>
 </table>
 
 
-<!-- HOW SHOULD I IMPLEMENT ...? /////////////////////////////////////// -->
-
-<table class="div">
-
-<tr><td><h3 class="rev"><a name="implement">&nbsp;How should I implement&#8230;?</a></h3></td></tr>
-
-<tr class="b"><td>How should I implement programs for the Shootout?</td></tr>
-<tr><td><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
-<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
-</td></tr>
-
-<tr class="b"><td>How much effort should I put into getting the program correct?</td></tr>
-<tr><td>
-<p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine. (Don't make-unnecessary-work for the volunteer committers.)</p>
-<p>Check the <strong>output format</strong> matches the example output format - the program will fail if the format is different. (Complain if the benchmark page doesn't show example output.)</p> 
-<p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to the Computer Language Shootout.</p> 
-</td></tr>
-
-<tr class="b"><td>How should I implement loops?</td></tr>
-<tr><td><p>Don't manually unroll loops! </p> 
-</td></tr>
-
-<tr class="b"><td>How should I advertise my company, services, website&#8230;?</td></tr>
-<tr><td><p><strong>We'll remove any promos</strong> that you add as comment text, so please don't waste our time.</p> 
-</td></tr>
-
-<tr class="b"><td>How should I grab bragging rights?</td></tr>
-<tr><td><p>Include a header comment in the program like this:</p>
-<pre>
-/* The Great Computer Language Shootout
-   http://shootout.alioth.debian.org/
-
-   contributed by &#8230;
-   modified by &#8230;
-
-*/
-</pre>
-</td></tr>
-
-
-<tr class="b"><td><a name="sameway">How should I implement a same way program?</a></td></tr>
-<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
-<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
-<p>The same way programs often seem naive and unidiomatic.</p> 
-
-<p>(Flaw #2 - we'd like to compare apples &amp; apples, but normally we'd solve problems using different approaches depending on the language.)</p>      
-</td></tr>
-
-
-
-
-<tr class="b"><td><a name="samething">How should I implement a same thing program?</a></td></tr>
-
-<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
-<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
-<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
-</td></tr>
-
-
-
-<tr class="b"><td><a name="samething">How should I implement&#8230;?</a></td></tr>
-<tr><td>
-<ol>
-<li>Keep to the spirit-of-the-specification not just the wording.</li><li>Write the program to be as-fast-as possible.</li><li>Write the program to conserve memory as-much-as possible.</li>
-<li>Write the program as-if lines of code were not being measured.</li>
-</ol>     
-</td></tr>
-
-</table>
-
-
 
 <!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
 <table class="div">
@@ -248,7 +255,6 @@ Contact us!</p>
 <p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
 
 <p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
-<p>(Flaw #1 - normally we'd time a specific block of code within a program, and exclude startup time.)</p>
 </td></tr>
 
 <tr class="b"><td><a name="cpu">What does CPU Time mean?</a></td></tr>
