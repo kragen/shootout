@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2005-04-04 14:56:34 bfulgham Exp $
+# $Id: Makefile,v 1.19 2005-04-08 17:20:01 loisel-guest Exp $
 
 TESTS = \
     hello \
@@ -13,6 +13,7 @@ TESTS = \
     hash \
     hash2 \
     heapsort \
+    implicitode \
     josephus \
     knucleotide \
     lists \
