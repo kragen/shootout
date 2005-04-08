@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.27 2005-04-06 14:49:53 bfulgham Exp $
+# $Id: minibench,v 1.28 2005-04-08 20:27:12 chris00-guest Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -33,7 +33,7 @@ use BSD::Resource qw(times);
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.27 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.28 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -256,6 +256,62 @@ EOF
     return($equal);
 }
 
+
+# Adapted from a script by Greg Buchholz
+sub pbm_equal ($$$) {
+    my($file1, $file2, $runlog) = @_;
+    my $size1 = (stat($file1))[7];
+    my $size2 = (stat($file2))[7];
+    return(0) if ($size1 != $size2);
+    local *F1, *F2;
+    open(F1, "<$file1") or
+	abort(qq{Error, files_equal() can\'t open "$file1" for input: ($!)});
+    open(F2, "<$file2") or
+	abort(qq{Error, files_equal() can\'t open "$file2" for input: ($!)});
+
+    my ($header1,$body1) = ($F1 =~ /(P4\s+\d+\s+\d+\s)(.*)/s);
+    my ($header2,$body2) = ($F2 =~ /(P4\s+\d+\s+\d+\s)(.*)/s);
+    my $equal = 1;
+    unless (open(FH, ">>$runlog")) {
+	err("Error opening $runlog for input ($!)");
+    }
+    if($header1 ne $header2) {
+	err "Headers don't match: \"$header1\" versus \"$header2\"\n";
+	$equal = 0;
+	print FH "Headers don't match: \"$header1\" versus \"$header2\"\n";
+    }
+    if(length($body1) != length($body2)) {
+	err "Different body lengths!\n";
+	$equal = 0;
+	print FH "Different body lengths!\n";
+    }
+    # Compare the two files byte by byte
+    my @b1 = split(//, $body1);
+    my @b2 = split(//, $body2);
+    my @diff;
+    for my $i (0..(length($body1)-1)) {
+	my $o1=ord($b1[$i]); my $o2=ord($b2[$i]);
+	my $exor = $o1 ^ $o2;
+
+	if($b1[$i] ne $b2[$i]) {
+	    for (0..7) {
+		$equal = 0;
+		print FH "Different at pixel #",$i*8+(7-$_),"\n"
+		    if ($exor % 2);
+		$exor = int($exor/2);
+	    }
+	}
+	push @diff, chr($o1 ^ $o2);
+    }
+    $dbody = join("", @diff);
+    print FH $header1.$dbody;
+
+    close(F1); close(F2);
+    return($equal);
+}
+
+
+
 sub total_child_size {
     my(@childpids) = @_;
     my $memsize = 0;
@@ -267,7 +323,7 @@ sub rename_as_backup_file {
     my($file) = @_;
     if (-f $file) {
 	rename($file, "${file}~") or
-	    warn qq(Error, couldn't rename "$file" to "${file}~"\n);
+	    warn qq(Error, couldn't rename "$file" to "${file}~"\n); #'
     }
 }
 
