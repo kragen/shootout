@@ -13,7 +13,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <tr><td><h4 class="rev">&nbsp;Benchmarking programming languages</h4></td></tr>
 <tr><td>
-<p class="rs"><strong>Last measured: </strong><? print( date("l, M d, Y g:i a", $LastMeasured)) ?></p>
+<p class="rs"><strong>Most recent measurement: </strong><? print( date("l, M d, Y g:i a", $Measured)) ?></p>
 <p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort?</p>
 </td></tr>
 </table>
