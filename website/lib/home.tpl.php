@@ -12,7 +12,10 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr><td colspan="2"><?=$Intro;?></td></tr>
 
 <tr><td><h4 class="rev">&nbsp;Benchmarking programming languages</h4></td></tr>
-<tr><td><p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort? <em>Caveat emptor!</em></p></td></tr>
+<tr><td>
+<p class="rs"><strong>Last measured: </strong><? print( date("l, M d, Y g:i a", $LastMeasured)) ?></p>
+<p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort?</p>
+</td></tr>
 </table>
 
 <!-- // TABLE ////////////////////////////////////////////// -->
