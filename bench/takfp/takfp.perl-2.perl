@@ -5,7 +5,7 @@
 # by Greg Buchholz
 
 $n=shift;
-print tak(3*$n, 2*$n, $n)."\n";
+printf "%.1f\n", tak(3*$n, 2*$n, $n);
 
 sub tak
 {   

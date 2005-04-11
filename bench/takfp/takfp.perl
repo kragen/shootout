@@ -1,15 +1,23 @@
 #!/usr/bin/perl -w 
-# The Computer Language Shootout
-# http://shootout.alioth.debian.org/
-# Perl version of floating point Tak function
+# http://shootout.alioth.debian.org
+# 
+# Perl dies from lack of memory while computing the recursive
+# tak function.  So here's a version that can compute the benchmark
+# in constant time.
+#
 # by Greg Buchholz
 
+
 $n=shift;
-print tak(3*$n, 2*$n, $n)."\n";
+printf "%.1f\n", tak($n);
 
 sub tak
 {   
-    my $x=shift; my $y=shift; my $z=shift;
-    
-    ($y >= $x) ? $z : tak(tak($x-1,$y,$z),tak($y-1,$z,$x),tak($z-1,$x,$y))
+    my $z=shift;
+
+    return $z   if($z<0);
+    return 2*$z if(int($z)==$z && $z%2);
+    return $z+1 if(int($z)==$z && !($z%2));
+    return 2*$z if(!(int($z)%2));
+    return int($z)+2*($z-int($z));
 }
