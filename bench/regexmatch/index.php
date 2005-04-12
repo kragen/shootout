@@ -48,8 +48,6 @@ language, compare, cpu, memory, recursion" -->
   Compatible Regular Expressions</a> (PCRE) library.</p>
 <p>The C++ program uses Bill Lear's <a href=
   "http://sourceforge.net/projects/regx/">PCRE library for C++</a>.</p>
-<p>Markus Mottl helped me use his <a href="http://pcre-ocaml.sourceforge.net/">
-  PCRE library for Ocaml</a>.</p>
 <p>The Java program uses a 3rd party, mostly-Perl5-compatible regexp
   library, called ORO.  Apparently this package, once available from
   oroinc.com (defunct), is now maintained by the <a href=
