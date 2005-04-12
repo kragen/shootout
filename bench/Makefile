@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2005-04-12 15:04:48 bfulgham Exp $
+# $Id: Makefile,v 1.21 2005-04-12 15:28:32 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -36,6 +36,7 @@ TESTS = \
     revcomp \
     reversefile \
     sieve \
+    spectralnorm \    
     spellcheck \
     strcat \
     sumcol \
