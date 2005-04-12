@@ -36,25 +36,18 @@ proc frequency {s k} {
 }
 
 proc count {s fragment} {
-   array unset ::freq
-   set count 0
+    array unset ::freq
+    set count 0
 
-   set k [string length $fragment]
-   for {set i 0} {$i < $k} {} {kFrequency $s $k [incr i]}
-   if {[info exists ::freq($fragment)]} {set count $::freq($fragment)}
-   puts $count\t$fragment
+    set k [string length $fragment]
+    for {set i 0} {$i < $k} {} {kFrequency $s $k [incr i]}
+    if {[info exists ::freq($fragment)]} {set count $::freq($fragment)}
+    puts $count\t$fragment
 }
 
 proc main {} {
     while {[gets stdin line] != -1} {if {[string match ">THREE*" $line]} break}
-    while {[gets stdin line] != -1} {
-        set first_char [string index $line 0]
-	if {$first_char eq ">"} {
-	    break
-        } elseif {$first_char ne ";"} {
-            append sequence $line
-        }
-    }
+    while {[gets stdin line] != -1} {append sequence $line}
     set sequence [string toupper $sequence]
 
     frequency $sequence 1
