@@ -46,18 +46,25 @@ proc count {s fragment} {
 }
 
 proc main {} {
-   while {[gets stdin line] != -1} {if {[string match ">THREE*" $line]} break}
-   while {[gets stdin line] != -1} {append sequence $line}
-   set sequence [string toupper $sequence]
+    while {[gets stdin line] != -1} {if {[string match ">THREE*" $line]} break}
+    while {[gets stdin line] != -1} {
+        set first_char [string index $line 0]
+	if {$first_char eq ">"} {
+	    break
+        } elseif {$first_char ne ";"} {
+            append sequence $line
+        }
+    }
+    set sequence [string toupper $sequence]
 
-   frequency $sequence 1
-   frequency $sequence 2
+    frequency $sequence 1
+    frequency $sequence 2
 
-   count $sequence "GGT"
-   count $sequence "GGTA"
-   count $sequence "GGTATT"
-   count $sequence "GGTATTTTAATT"
-   count $sequence "GGTATTTTAATTTATAGT"
+    count $sequence "GGT"
+    count $sequence "GGTA"
+    count $sequence "GGTATT"
+    count $sequence "GGTATTTTAATT"
+    count $sequence "GGTATTTTAATTTATAGT"
 }
 
 main
