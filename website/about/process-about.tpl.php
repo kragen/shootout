@@ -1,33 +1,20 @@
-<p>Each program counts the number of created threads, by incrementing an integer message sent between the threads. Programs may use kernel threads, lightweight threads, cooperative threads&#8230;</p>
+<p>Each program should <em>create</em>, <em>keep alive</em>, and send integer messages between N explicitly-linked threads. Programs may use kernel threads, lightweight threads, cooperative threads&#8230;</p>
 
 <p>Each program should</p>
 <ul>
-   <li>create a chain of N threads such that:
+   <li>create N threads - each thread should:
       <ul>
-      <li>each thread
-         <ul>
-         <li>can receive an integer message</li>
-         <li>can store the received message</li>
-         <li>knows the next thread in the chain</li>
-         <li>can send the integer message + 1 to the next thread</li>
-         </ul>
-      </li>    
-      <li>the last thread... in the chain is different, it:
-         <ul>
-         <li>can receive an integer message</li>
-         <li>can store the received message</li>
-         <li>there is no next thread</li>
-         </ul>
-      </li>
+      <li>hold and use a reference to the next thread</li>      
+      <li>take, and increment, an integer message</li>
+      <li>put the incremented message on the next thread</li>
       </ul>
-   </li>      
-
-   <li>send the integer message 0 to the first thread</li>
-   <li>print the message received by the last thread</li>
+   </li>                   
+   <li>put the integer message 0 on the first thread</li>
+   <li>print the message taken and incremented by the last thread - a count of takes, and indirectly a count of threads</li>
 </ul>
 
-<p>Correct output N = 3000 is:</p>
-<pre>3000
+<p>Correct output N = 10 is:</p>
+<pre>10
 </pre>
 <br />
 
