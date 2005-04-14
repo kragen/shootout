@@ -1,12 +1,11 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: heapsort.ruby,v 1.4 2005-04-12 15:04:51 bfulgham Exp $
+# $Id: heapsort.ruby,v 1.5 2005-04-14 15:59:37 igouy-guest Exp $
 #
 # The Great Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
 # modified by Jabari Zakiya
->>>>>>> 1.3
 
 IM = 139968
 IA =   3877
