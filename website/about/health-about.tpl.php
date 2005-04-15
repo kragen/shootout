@@ -4,7 +4,7 @@
 <ul>
 <li>has a reference to one local hospital</li>
 <li>has 4 subregions</li>
-<li>accepts patient transfers from the 4 subregions</li>
+<li>gathers transfer patients from the 4 subregions</li>
 </ul>
 
 <p>Each hospital</p>
@@ -16,7 +16,7 @@
 
 <p>Each patient</p>
 <ul>
-<li>arriving at the main regional hospital will be treated</li>
+<li>arriving at the highest-level regional hospital will be treated</li>
 <li>arriving at a district hospital has 0.9 probability of being treated without transfer from that hospital</li>
 </ul>
 
