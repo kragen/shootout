@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-04-07 20:10:47 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-04-15 06:02:55 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
