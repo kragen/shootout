@@ -31,7 +31,7 @@ title="Choose programs for side-by-side comparison" >side-by-side&nbsp;compariso
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$Title;?></h4>
+<h4 class="rev"><a class="arev" href="#program" name="program">&nbsp;<?=$Title;?></a></h4>
 </td></tr>
 
 <!-- // SUMMARY TABLE //////////////////////////////////////// -->
@@ -91,7 +91,7 @@ if (isset($Data[$SelectedLang])){
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;build &amp; benchmark results</h4>
+<h4 class="rev"><a class="arev" href="#log" name="log">&nbsp;build &amp; benchmark results</a></h4>
 </td></tr>
 </table>
 
@@ -102,6 +102,6 @@ if (isset($Data[$SelectedLang])){
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td><h4 class="rev">&nbsp;about the program</h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the program</a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 </table>

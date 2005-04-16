@@ -15,7 +15,7 @@ $LangTag = $Row[LANG_TAG];
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$LangName;?> benchmark rankings </h4>
+<h4 class="rev"><a class="arev" href="#rank" name="rank">&nbsp;<?=$LangName;?> benchmark rankings </a></h4>
 <p><?=$LangTag;?></p>
 </td></tr>
 
@@ -84,7 +84,7 @@ foreach($Tests as $Row){
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
-<tr><td><h4 class="rev">&nbsp;about the <?=$LangName;?> language</h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$LangName;?> language</a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 
 </table>

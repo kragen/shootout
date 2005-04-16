@@ -11,7 +11,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr><td colspan="2"><?=$NavBar;?></td></tr>
 <tr><td colspan="2"><?=$Intro;?></td></tr>
 
-<tr><td><h4 class="rev">&nbsp;Benchmarking programming languages</h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;Benchmarking programming languages</a></h4></td></tr>
 <tr><td>
 <p class="rs"><strong>Most recent measurement: </strong><? print( date("l, M d, Y g:i a", $Measured)) ?></p>
 <p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort?</p>
@@ -86,7 +86,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td><h4 class="rev">&nbsp;about <?=$AboutName;?></h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about <?=$AboutName;?></a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 
 </table>

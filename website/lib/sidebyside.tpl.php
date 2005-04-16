@@ -22,7 +22,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$TestName;?> side-by-side - Full CPU Time</h4>
+<h4 class="rev"><a class="arev" href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> side-by-side - Full CPU Time</a></h4>
 </td></tr>
 </table>
 
@@ -69,7 +69,7 @@ foreach($Selected as $row){
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$TestName;?> side-by-side - Memory use</h4>
+<h4 class="rev"><a class="arev" href="#memchart" name="memchart">&nbsp;<?=$TestName;?> side-by-side - Memory use</a></h4>
 </td></tr>
 </table>
 
@@ -115,7 +115,7 @@ foreach($Selected as $row){
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$TestName;?> benchmark - Full CPU Time</h4>
+<h4 class="rev"><a class="arev" href="#cputable" name="cputable">&nbsp;<?=$TestName;?> benchmark - Full CPU Time</a></h4>
 </td></tr>
 </table>
 
@@ -150,7 +150,7 @@ foreach($NData as $row){
 
 <table class="div">
 <tr><td>
-<h4 class="rev">&nbsp;<?=$TestName;?> benchmark - Memory use</h4>
+<h4 class="rev"><a class="arev" href="#memtable" name="memtable">&nbsp;<?=$TestName;?> benchmark - Memory use</a></h4>
 </td></tr>
 </table>
 
@@ -186,7 +186,7 @@ foreach($NData as $row){
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td><h4 class="rev">&nbsp;about side-by-side comparison</h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about side-by-side comparison</a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 
 </table>

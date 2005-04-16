@@ -4,7 +4,7 @@
 
 <!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
 <table class="div">
-<tr><td><h3 class="rev">&nbsp;What can I learn here?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#learn" name="learn">&nbsp;What can I learn here?</a></h3></td></tr>
 <tr><td>
 <p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
@@ -22,7 +22,7 @@
 </p>
 </td></tr>
 
-<tr class="b"><td>What should I do?</td></tr>
+<tr class="b"><td><a class="ab" href="#shouldi" name="shouldi">What should I do?</a></td></tr>
 <tr><td>
 <p>Read about benchmarking: Do you understand the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flaws</strong></a>?</p>
 <p>Read the source-code: Are the programs really comparable?</p>
@@ -32,15 +32,15 @@
 
 
 <table class="div">
-<tr><td><h3 class="rev">&nbsp;How can I help?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#help" name="help">&nbsp;How can I help?</a></h3></td></tr>
 
-<tr class="b"><td>Where can I send <strong>comments</strong> and suggestions?</td></tr>
+<tr class="b"><td><a class="ab" href="#comment" name="comment">Where can I send <strong>comments</strong> and suggestions?</a></td></tr>
 <tr><td><p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
 <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
 <p>Use Tracker to report <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a> or document <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a>.</p>
 </td></tr>
 
-<tr class="b"><td><a name="contribute">How can I contribute a program?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program?</a></td></tr>
 <tr><td>
 <p>Before contributing programs</p>
 <ul>
@@ -78,7 +78,7 @@ This convention ensures that each item will have a unique Summary text. (Alioth 
 
 </td></tr>
 
-<tr class="b"><td>How can I help with <strong>the chores</strong>?</td></tr>
+<tr class="b"><td><a class="ab" href="#chores" name="chores">How can I help with <strong>the chores</strong>?</a></td></tr>
 <tr><td>
 <p>We need volunteers to</p>
 <ol>
@@ -99,7 +99,7 @@ Do you want to help with the chores?<br/>
 Contact us!</p>
 </td></tr>
 
-<tr class="b"><td>How can I contribute a new benchmark?</td></tr>
+<tr class="b"><td><a class="ab" href="#newbench" name="newbench">How can I contribute a new benchmark?</a></td></tr>
 <tr><td>
 <p>Do all the work!</p>
 <ul>
@@ -123,15 +123,15 @@ Contact us!</p>
 
 <table class="div">
 
-<tr><td><h3 class="rev"><a name="implement">&nbsp;How should I implement&#8230;?</a></h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#implement" name="implement">&nbsp;How should I implement&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td>How should I implement programs for the Shootout?</td></tr>
+<tr class="b"><td><a class="ab" href="#implementp" name="implementp">How should I implement programs for the Shootout?</a></td></tr>
 <tr><td>
 <p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
 <p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
 </td></tr>
 
-<tr class="b"><td>How much effort should I put into getting the program correct?</td></tr>
+<tr class="b"><td><a class="ab" href="#correct" name="correct">How much effort should I put into getting the program correct?</a></td></tr>
 <tr><td>
 <p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine. (Don't make-unnecessary-work for the volunteer committers.)</p>
 <p>Check the <strong>output format</strong> matches the example output format - the program will fail if the format is different. (Complain if the benchmark page doesn't show example output.)</p> 
@@ -139,21 +139,21 @@ Contact us!</p>
 </td></tr>
 
 
-<tr class="b"><td>How should I implement data-input?</td></tr>
+<tr class="b"><td><a class="ab" href="#datainput" name="datainput">How should I implement data-input?</a></td></tr>
 <tr><td>
 <p>Programs are measured across a range of input-values; programs are expected to either take a <strong>single command-line parameter</strong> or read text from <strong>stdin</strong>.</p> 
 <p>(Look at what the other programs do.)</p>
 </td></tr>
 
-<tr class="b"><td>How should I implement loops?</td></tr>
+<tr class="b"><td><a class="ab" href="#unroll" name="unroll">How should I implement loops?</a></td></tr>
 <tr><td><p>Don't manually unroll loops!</p> 
 </td></tr>
 
-<tr class="b"><td>How should I advertise my company, services, website&#8230;?</td></tr>
+<tr class="b"><td><a class="ab" href="#promo" name="promo">How should I advertise my company, services, website&#8230;?</a></td></tr>
 <tr><td><p><strong>We'll remove any promos</strong> that you add as comment text, so please don't waste our time.</p> 
 </td></tr>
 
-<tr class="b"><td>How should I grab bragging rights?</td></tr>
+<tr class="b"><td><a class="ab" href="#brag" name="brag">How should I grab bragging rights?</a></td></tr>
 <tr><td><p>Include a header comment in the program like this:</p>
 <pre>
 /* The Great Computer Language Shootout
@@ -167,7 +167,7 @@ Contact us!</p>
 </td></tr>
 
 
-<tr class="b"><td><a name="sameway">How should I implement a same way program?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#sameway" name="sameway">How should I implement a same way program?</a></td></tr>
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
 <p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
 "Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
@@ -177,7 +177,7 @@ Contact us!</p>
 
 
 
-<tr class="b"><td><a name="samething">How should I implement a same thing program?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#samething" name="samething">How should I implement a same thing program?</a></td></tr>
 
 <tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
 <p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
@@ -186,10 +186,12 @@ Contact us!</p>
 
 
 
-<tr class="b"><td><a name="samething">How should I implement&#8230;?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#implementlist" name="implementlist">How should I implement&#8230;?</a></td></tr>
 <tr><td>
 <ol>
-<li>Keep to the spirit-of-the-specification not just the wording.</li><li>Write the program to be as-fast-as possible.</li><li>Write the program to conserve memory as-much-as possible.</li>
+<li>Keep to the spirit-of-the-specification not just the wording.</li>
+<li>Write the program to be as-fast-as possible.</li>
+<li>Write the program to conserve memory as-much-as possible.</li>
 <li>Write the program as-if lines of code were not being measured.</li>
 </ol>     
 </td></tr>
@@ -201,36 +203,36 @@ Contact us!</p>
 
 <!-- WHERE CAN I? ////////////////////////////////////////////////// -->
 <table class="div">
-<tr><td><h3 class="rev">&nbsp;Where can I&#8230;?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#where" name="where">&nbsp;Where can I&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td>Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</td></tr>
+<tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
 <tr><td>
 <p>Sometimes a program may produce the correct results, within the timeout, for smaller workloads - so check the complete data-table on the <strong>side-by-side comparison</strong> page.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </td></tr>
 
 
-<tr class="b"><td>Where can I see which language version was used?</td></tr>
+<tr class="b"><td><a class="ab" href="#version" name="version">Where can I see which language version was used?</a></td></tr>
 <tr><td>
 <p>You can see information about the language implementation, including the version number, at the bottom of each <strong>rankings page</strong>.</p>
 </td></tr>
 
-<tr class="b"><td>Where can I see which compiler and runtime options were used?</td></tr>
+<tr class="b"><td><a class="ab" href="#options" name="options">Where can I see which compiler and runtime options were used?</a></td></tr>
 <tr><td>
 <p>You can see the build commands and runtime commands in the <strong>build &amp; benchmark results</strong> section, on each program page.</p>
 </td></tr>
 
-<tr class="b"><td>Where can I download the <strong>data</strong> from?</td></tr>
+<tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
 <tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv';?>" title="Download CSV spreadsheet">CSV spreadsheet</a> ~350KB.</p></td></tr>
 
-<tr class="b"><td>Where can I see what other people think about the Language Shootout?</td></tr>
+<tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
 <tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/" title="shootout-list archives">mailing-list archives.</a></p></td></tr>
 
-<tr class="b"><td>Where can I download the program sources and build scripts?</td></tr>
+<tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
 </td></tr>
 
-<tr class="b"><td>Where can I find out more?</td></tr>
+<tr class="b"><td><a class="ab" href="#findmore" name="findmore">Where can I find out more?</a></td></tr>
 
 <tr><td><p>You could learn something more about <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
 </p></td></tr>
@@ -243,21 +245,26 @@ Contact us!</p>
 
 <!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
 <table class="div">
-<tr><td><h3 class="rev">&nbsp;What does &#8230; mean?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#means" name="means">&nbsp;What does &#8230; mean?</a></h3></td></tr>
 
-<tr class="b"><td><a name="alternative">What does Interesting Alternative Program mean?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></td></tr>
 <tr><td>
 <p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </td></tr>
 
-<tr class="b"><td><a name="fullcpu">What does Full CPU Time mean?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#id" name="id">What does #2 #3 mean?</a></td></tr>
+<tr><td>
+<p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></td></tr>
 <tr><td>
 <p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
 
 <p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
 </td></tr>
 
-<tr class="b"><td><a name="cpu">What does CPU Time mean?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#cpu" name="cpu">What does CPU Time mean?</a></td></tr>
 <tr><td><p>The CPU Time is the measured CPU time minus the average program startup time for the language.</p></td></tr>
 </table>
 
@@ -272,13 +279,13 @@ Contact us!</p>
 
 <table class="div">
 
-<tr><td><h3 class="rev">&nbsp;How did you measure&#8230;?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#measure" name="measure">&nbsp;How did you measure&#8230;?</a></h3></td></tr>
 
 
 
 
 
-<tr class="b"><td>How did you measure <strong>CPU time?</strong></td></tr>
+<tr class="b"><td><a class="ab" href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></td></tr>
 
 
 
@@ -298,14 +305,14 @@ Each program was run once pre-test to reduce cache effects. Each program was the
 
 
 
-<tr class="b"><td><a name="memory">How did you measure <strong>memory usage?</strong></a></td></tr>
+<tr class="b"><td><a class="ab" href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></td></tr>
 
 <tr><td><p>In a very approximate and unreliable way. We sampled the child-process resident memory size (VmRSS) multiple times a second. We identified the main thread by checking for SIGCHLD being registered as the exit_signal in the second to last field of /proc/{pid}/stat.</p>
 <p>There's a race condition. When the program completes quickly, this sampling technique will fail.</p>       
 </td></tr>
 
 
-<tr class="b"><td><a name="codelines">How did you measure <strong>lines-of-code?</strong></a></td></tr>
+<tr class="b"><td><a class="ab" href="#codelines" name="codelines">How did you measure <strong>lines-of-code?</strong></a></td></tr>
 
 <tr><td>
 <p>In a haphazard and approximate way - blank lines and comments were removed, and then we counted the lines that remain.</p>
@@ -313,11 +320,11 @@ Each program was run once pre-test to reduce cache effects. Each program was the
 </td></tr>
 
 
-<tr class="b"><td>What machine are you running the programs on?</td></tr>
+<tr class="b"><td><a class="ab" href="#machine" name="machine">What machine are you running the programs on?</a></td></tr>
 <tr><td>
 <p>The current <strong>test machine</strong> is a single-processor 1.1 Ghz AMD Athlon machine with 256 MB of RAM and a 20GB IDE disk drive.</p></td></tr>
 
-<tr class="b"><td>What OS are you using on the test machine?</td></tr>
+<tr class="b"><td><a class="ab" href="#os" name="os">What OS are you using on the test machine?</a></td></tr>
 
 <tr><td><p>Debian 'unstable', Kernel 2.6.8-1-k7</p></td></tr>
 
@@ -332,9 +339,9 @@ Each program was run once pre-test to reduce cache effects. Each program was the
 
 
 <table class="div">
-<tr><td><h3 class="rev">&nbsp;Why don't you include&#8230;?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#include" name="include">&nbsp;Why don't you include&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td>What kind of programming languages will you accept?</td></tr>
+<tr class="b"><td><a class="ab" href="#acceptable" name="acceptable">What kind of programming languages will you accept?</a></td></tr>
 
 <tr><td>
 <p>Programming languages that can be used to write most of our benchmark programs!</p> 
@@ -362,7 +369,7 @@ Each program was run once pre-test to reduce cache effects. Each program was the
 </td></tr>
 
 
-<tr class="b"><td>Why don't you include language X?</td></tr>
+<tr class="b"><td><a class="ab" href="#whydont" name="whydont">Why don't you include language X?</a></td></tr>
 <tr><td><p>Is the language &#8230;</p>
 
 <ol>
@@ -384,7 +391,7 @@ fixes, you will soon understand this requirement.</li>
 <p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion :-)</p>
 </td></tr>
 
-<tr class="b"><td>Please will you include my favourite language?</td></tr>
+<tr class="b"><td><a class="ab" href="#please" name="please">Please will you include my favourite language?</a></td></tr>
 
 <tr><td>
 <p>Maybe we will when you write 15 of the benchmark programs in your favourite language, and contribute them to "The Great Computer Language Shootout" :-)</p>
@@ -401,16 +408,16 @@ fixes, you will soon understand this requirement.</li>
 
 <table class="div">
 
-<tr><td><h3 class="rev">&nbsp;When&#8230;?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#when" name="when">&nbsp;When&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td>When will you include my contribution?</td></tr>
+<tr class="b"><td><a class="ab" href="#mycontribution" name="mycontribution">When will you include my contribution?</a></td></tr>
 
 <tr><td>
 <p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
 <p>Maybe you'd like to help us?</p>
 </td></tr>
 
-<tr class="b"><td>When will the Language Shootout be finished?</td></tr>
+<tr class="b"><td><a class="ab" href="#finish" name="finish">When will the Language Shootout be finished?</a></td></tr>
 
 <tr><td>
 <p>Never. There will always be new languages, new versions of languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#8230; And the project team will change over time, and the measurements and presentation will change with them.</p>
@@ -424,16 +431,16 @@ fixes, you will soon understand this requirement.</li>
 
 <table class="div">
 
-<tr><td><h3 class="rev">&nbsp;Who&#8230;?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#who" name="who">&nbsp;Who&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td>Who started "The Great Computer Language Shootout"?</td></tr>
+<tr class="b"><td><a class="ab" href="#start" name="start">Who started "The Great Computer Language Shootout"?</a></td></tr>
 <tr><td><p>Doug Bagley created "The Great Computer Language Shootout", and it was active until 2001.</p><p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 
 <p>In mid-2004 Brent Fulgham revived "The Great Computer Language Shootout" here on Alioth&nbsp;Debian.org</p>
 <p>In the following months, things started to change. First, the website was redesigned. Then benchmarks were deprecated. Then new benchmarks were added. Who knows where it will end?</p>
 </td></tr>
 
-<tr class="b"><td>Who has contributed?</td></tr>
+<tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>
 
 <tr><td><p>So many people that we have an <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
 </table>
@@ -443,9 +450,9 @@ fixes, you will soon understand this requirement.</li>
 
 <table class="div">
 
-<tr><td><h3 class="rev">&nbsp;Why&#8230;?</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#why" name="why">&nbsp;Why&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td>Why are you doing this?</td></tr>
+<tr class="b"><td><a class="ab" href="#whydo" name="whydo">Why are you doing this?</a></td></tr>
 <tr><td><p>To learn and to <strong>have fun</strong>.</p><p>We will continue as long as the fun holds out.</p></td></tr>
 
 </table>

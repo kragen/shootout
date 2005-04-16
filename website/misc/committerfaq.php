@@ -1,7 +1,7 @@
 <table>
-<tr><td><h3 class="rev">&nbsp;Committer&nbsp;FAQ</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#committer" name="committer">&nbsp;Committer&nbsp;FAQ</a></h3></td></tr>
 
-<tr class="b"><td>Basic Workflow</td></tr>
+<tr class="b"><td><a class="ab" href="#basic" name="basic">Basic Workflow</a></td></tr>
 <tr><td>
 <ol>
 <li><strong>Move <em>Open item</em> source-code into CVS</strong></li>
@@ -14,16 +14,16 @@
 </td></tr>
 
 
-<tr><td><h3 class="rev">&nbsp;Move&nbsp;<em>Open&nbsp;item</em>&nbsp;source-code&nbsp;into&nbsp;CVS</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#move" name="move">&nbsp;Move&nbsp;<em>Open&nbsp;item</em>&nbsp;source-code&nbsp;into&nbsp;CVS</a></h3></td></tr>
 
-<tr class="b"><td>Browse Contribute Programs for <em>Open items</em></td></tr>
+<tr class="b"><td><a class="ab" href="#browse" name="browse">Browse Contribute Programs for <em>Open items</em></a></td></tr>
 <tr><td>
 <p>On the <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Browse Contribute Programs</strong></a> form, select <em>Open</em> state and maybe a particular language, and browse for new items.</p>
 </td></tr>
 
 
 
-<tr class="b"><td>Where is that benchmark in CVS?</td></tr>
+<tr class="b"><td><a class="ab" href="#cvs" name="cvs">Where is that benchmark in CVS?</a></td></tr>
 <tr><td>
 <p>Some of the names we use for benchmarks and programs in CVS are different from the names shown on the website!</p>
 <p>Program contributors are likely to use the names shown on the website. Change the file-name to the name used in CVS.</p>
@@ -52,12 +52,12 @@
 </td></tr>
 
 
-<tr class="b"><td>How do I know the program does what's required?</td></tr>
+<tr class="b"><td><a class="ab" href="#required" name="required">How do I know the program does what's required?</a></td></tr>
 <tr><td>
 <p>Download the source-code attachment and review the code. <strong>Use your judgement</strong>.</p>
 </td></tr>
 
-<tr class="b"><td>The program is fine - what next?</td></tr>
+<tr class="b"><td><a class="ab" href="#next" name="next">The program is fine - what next?</a></td></tr>
 <tr><td>
 <p>Make sure the source-code file uses <strong>Unix LF</strong> line-endings.</p>
 <p>Make sure the source-code file has the <strong>standard header</strong> comment.</p>
@@ -79,7 +79,7 @@
 <p>Change the source-code file-extension to the extension used in CVS.</p>
 </td></tr>
 
-<tr class="b"><td>Is there already a program for that benchmark in CVS?</td></tr>
+<tr class="b"><td><a class="ab" href="#dup" name="dup">Is there already a program for that benchmark in CVS?</a></td></tr>
 <tr><td>
 <p>There's a directory for each benchmark, in the /shootout/bench/ directory in CVS.</p>
 <ul>
@@ -97,26 +97,26 @@ If there's already a <em>nsieve.ruby</em> then rename the new source-code file a
 <p>Mark the <em>Resolution</em> of the Contribute Programs item as Accepted.</p>
 </td></tr>
 
-<tr class="b"><td>Is there a problem with the contributed program?</td></tr>
+<tr class="b"><td><a class="ab" href="#problem" name="problem">Is there a problem with the contributed program?</a></td></tr>
 <tr><td>
 <p>Mark the <em>Resolution</em> of the Contribute Programs item as Invalid or Rejected or Duplicate. Mark the status Deleted. Explain why in the comment field.</p>
 </td></tr>
 
-<tr class="b"><td>&nbsp;Did the program run OK?</td></tr>
+<tr class="b"><td><a class="ab" href="#ok" name="ok">&nbsp;Did the program run OK?</a></td></tr>
 <tr><td>
 <p><strong>Update the status</strong> of the corresponding Contribute Programs item from <em>Pending</em> to <em>Closed</em>.</p>
 </td></tr>
 
 
-<tr><td><h3 class="rev">&nbsp;Remove slower programs</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#remove" name="remove">&nbsp;Remove slower programs</a></h3></td></tr>
 
-<tr class="b"><td>How do I know when to remove programs?</td></tr>
+<tr class="b"><td><a class="ab" href="#whenremove" name="whenremove">How do I know when to remove programs?</a></td></tr>
 <tr><td>
 <p>Once we can see that there's a faster program, we normally <strong>remove the slower programs</strong> from CVS and then update the corresponding Contribute Programs items from <em>Closed</em> to <em>Deleted</em>.</p>
 <p>If the slower program is particularly interesting or elegant, then maybe we'll keep showing it - <strong>use your judgement</strong>. When in doubt, remove the program.</p>
 </td></tr>
 
-<tr class="b"><td>How do I temporarily remove a program?</td></tr>
+<tr class="b"><td><a class="ab" href="#temp" name="temp">How do I temporarily remove a program?</a></td></tr>
 <tr><td>
 <p>Maybe we just want to take a program off the website for a while, until we can decide what to do about it.</p>
 <p>Follow the same steps that you would take to mark an <em>Interesting Alternative Program</em>; and put X in the first column.
@@ -124,22 +124,22 @@ If there's already a <em>nsieve.ruby</em> then rename the new source-code file a
 </td></tr>
 
 
-<tr><td><h3 class="rev">&nbsp;Interesting Alternative Programs</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#alt" name="alt">&nbsp;Interesting Alternative Programs</a></h3></td></tr>
 
-<tr class="b"><td>What is an Interesting Alternative Programs?</td></tr>
+<tr class="b"><td><a class="ab" href="#altprog" name="altprog">What is an Interesting Alternative Programs?</a></td></tr>
 <tr><td>
 <p>Obviously <em>interesting</em> is a personal judgement!</p>
 <p>Having 2 or 3 or 4 or more programs that implement the same <em>interesting</em> algorithm isn't interesting! One example is enough.</p>
 <p><em>Interesting Alternative Programs</em> should be the exception not the rule.</p>
 </td></tr>
 
-<tr class="b"><td>How do I show an Interesting Alternative Programs?</td></tr>
+<tr class="b"><td><a class="ab" href="#showalt" name="showalt">How do I show an Interesting Alternative Programs?</a></td></tr>
 <tr><td>
 <p>Add a row to the spreadsheet csv file <em>/shootout/website/desc/exclude.csv</em></p>
 <p>To show nsieve.ruby-2.ruby as an <em>Interesting Alternative Program</em> add a row <strong>,nsieve,ruby,2</strong> to <em>/shootout/website/desc/exclude.csv</em></p>
 </td></tr>
 
-<tr class="b"><td>Where do I explain what's interesting about the program?</td></tr>
+<tr class="b"><td><a class="ab" href="#explainalt" name="explainalt">Where do I explain what's interesting about the program?</a></td></tr>
 <tr><td>
 <p>When a program is so special that (against our better judgement) we've included it as an <em>Interesting Alternative Program</em> then we should explain what's special.</p>
 <p>We use <strong>about-files</strong> that contain snippets of XHTML (&#60;p&#62;&#60;/p&#62;).</p> 

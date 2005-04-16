@@ -1,7 +1,7 @@
 <table>
-<tr><td><h3 class="rev">&nbsp;Flawed Benchmarks</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#flawed" name="flawed">&nbsp;Flawed Benchmarks</a></h3></td></tr>
 
-<tr class="b"><td>Are <strong>your programs</strong> even like these benchmarks?</td></tr>
+<tr class="b"><td><a class="ab" href="#your" name="your">Are <strong>your programs</strong> even like these benchmarks?</a></td></tr>
 <tr><td>
 <ul>  
   <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
@@ -13,7 +13,7 @@
 </td></tr>
 
 
-<tr class="b"><td><strong>"benchmarking without analysis is bogus"</strong></td></tr>
+<tr class="b"><td><a class="ab" href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></td></tr>
 <tr><td>
 <p>We can learn <em>something</em> about a particular language implementation from benchmarking - if we already know a great deal about the implementation and carefully analyze the results:</p>
 <ul>  
@@ -22,11 +22,13 @@
   <li><p><a href="http://www.dreamsongs.com/NewFiles/Timrep.pdf">Performance and Evaluation of Lisp Systems</a>, Richard P. Gabriel, 1985 (1.1MB pdf)</p></li>
   <li><p><a href="http://www.research.att.com/~orost/bench_plus_plus/paper.html">The Bench++ Benchmark Suite</a></p></li>
   <li><p><a href="http://h21007.www2.hp.com/dspp/tech/tech_TechDocumentDetailPage_IDX/1,1701,2155,00.html">Writing micro-benchmarks for Java™ HotSpot JVM</a></p></li>
+  <li><p><a href="http://ali-www.cs.umass.edu/DaCapo/gcbm.html">The DaCapo Benchmark Suite</a></p></li>
+
 </ul>
 </td></tr>
 
 
-<tr class="b"><td><strong>"your application is the ultimate benchmark"</strong></td></tr>
+<tr class="b"><td><a class="ab" href="#app" name="app"><strong>"your application is the ultimate benchmark"</strong></a></td></tr>
 <tr><td>
 <blockquote>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric, 
 the origin of which is unknown to me but that may very well be Wirth's own invention. He used <strong>the 
@@ -39,12 +41,17 @@ that the intrinsic cost of the new code addition was fully compensated." <a href
 </td></tr>
 
 
-<tr><td><h3 class="rev">&nbsp;Flawed Comparisons</h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#comparison" name="comparison">&nbsp;Flawed Comparisons</a></h3></td></tr>
 
-<tr class="b"><td>Compilers versus Interpreters</td></tr>
+<tr class="b"><td><a class="ab" href="#interpreters" name="interpreters">Compilers versus Interpreters</a></td></tr>
 <tr><td>
 <p>On some benchmarks compiled programs are 10,000 times faster - in practice, 
 we'd just call compiled library-code from the interpreted language.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#goals" name="goals">Design Goals</a></td></tr>
+<tr><td>
+<p></p>
 </td></tr>
 
 </table>

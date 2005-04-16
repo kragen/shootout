@@ -11,7 +11,7 @@
 
 <table class="div">
 <tr><td colspan="2">
-<h4 class="rev">&nbsp;Fast Faster Fastest programming languages</h4>
+<h4 class="rev"><a class="arev" href="#faster" name="faster">&nbsp;Fast Faster Fastest programming languages</a></h4>
 </td></tr>
 <tr><td colspan="2">
 <p>What fun! <a href="http://en.wikipedia.org/wiki/April_Fool's_Day" title="April Fool's Day defined on Wikipedia"><strong>April Fool's Day</strong></a> all year long! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
@@ -169,6 +169,6 @@ foreach($Tests as $t){
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
-<tr><td colspan="2"><h4 class="rev">&nbsp;about CRAPS!&#8482;</h4></td></tr>
+<tr><td colspan="2"><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about CRAPS!&#8482;</a></h4></td></tr>
 <tr><td colspan="2"><?=$About;?></td></tr>  
 </table>

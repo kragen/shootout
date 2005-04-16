@@ -1,6 +1,6 @@
 <form method="post" action="http://lists.alioth.debian.org/mailman/subscribe/shootout-list">
 <table width="100%">
-   <tr><td colspan="3"><h4 class="rev">&nbsp;shootout-list - mailing&nbsp;list</h4></td></tr>
+   <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#list" name="list">&nbsp;shootout-list - mailing&nbsp;list</a></h4></td></tr>
    <tr>
       <td colspan="3">
          <p>shootout-list is a mailing list for all aspects of the "The Great Computer Language Shootout":  
@@ -12,7 +12,7 @@
       </td>
    </tr>
 
-   <tr><td colspan="3"><h4 class="rev">&nbsp;Post&nbsp;a&nbsp;message</h4></td></tr>
+   <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#post" name="post">&nbsp;Post&nbsp;a&nbsp;message</a></h4></td></tr>
    <tr>
       <td colspan="3">
          <p><strong>Only subscribers</strong> can post a message to shootout-list. Post by sending email to 
@@ -24,7 +24,7 @@
       </td>
    </tr>   
 
-   <tr><td colspan="3"><h4 class="rev">&nbsp;Subscribe&nbsp;to&nbsp;shootout-list</h4></td></tr>
+   <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#sub" name="sub">&nbsp;Subscribe&nbsp;to&nbsp;shootout-list</a></h4></td></tr>
    <tr>
       <td colspan="3">         
          <p>
@@ -72,7 +72,7 @@
       
 <form method="post" action="http://lists.alioth.debian.org/mailman/subscribe/shootout-list">      
 <table width="100%">     
-   <tr><td colspan="3"><h4 class="rev">&nbsp;Change&nbsp;subscription&nbsp;options</h4></td></tr> 
+   <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#change" name="change">&nbsp;Change&nbsp;subscription&nbsp;options</a></h4></td></tr> 
    <tr>
       <td colspan="3"><p>To change your subscription (set options like digest and delivery modes, get a reminder of your password, or unsubscribe from Shootout-list), enter your subscription email address:</p></td>
    </tr>  
@@ -91,7 +91,7 @@
 
 <form method="post" action="http://lists.alioth.debian.org/mailman/roster/shootout-list">      
 <table width="100%">     
-   <tr><td colspan="3"><h4 class="rev">&nbsp;Subscriber&nbsp;list</h4></td></tr> 
+   <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#sublist" name="sublist">&nbsp;Subscriber&nbsp;list</a></h4></td></tr> 
    <tr>
       <td colspan="3"><p><em>The subscriber list is only available to the list members.</em></p>
          <p>Enter your address and password to see the subscriber list:</p>
@@ -115,7 +115,7 @@
 
 
 <table width="100%">     
-   <tr><td colspan="3"><h4 class="rev">&nbsp;about&nbsp;shootout-list</h4></td></tr> 
+   <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about&nbsp;shootout-list</a></h4></td></tr> 
    <tr>
       <td colspan="3">
       <p>shootout-list is administered by <a href="mailto:bfulgham@debian.org">bfulgham@debian.org</a><br /><a href="http://lists.alioth.debian.org/mailman/admin/shootout-list">Shootout-list administrative interface</a> (requires authorization).</p>
