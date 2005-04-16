@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 #### The Great Computer Language Shootout
-####  http://shootout.alioth.debian.org/
-#### tcp-stream benchmark
+#### http://shootout.alioth.debian.org/
+#### 
 #### Contributed by Robbert Haarman
 
 require 'socket'
 
-N = 10
+N = ARGV[0] || 10
 M = 1
 REPLY_SIZE = 409600
 REQUEST_SIZE = 1
