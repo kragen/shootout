@@ -21,6 +21,6 @@
 <p>Correct output N = 10 is:</p> 
 <pre>30000</pre><br />
 
-<p>Similar benchmarks are described in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.sics.se/~joe/ericsson/du98024.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a></p>
+<p>Similar benchmarks are described in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.cl.cam.ac.uk/users/mr/Cobench.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a></p>
 
 <p>(The <a href="benchmark.php?test=process&amp;lang=all&amp;sort=<?=$Sort;?>">threads benchmark</a> is essentially this thread-flows benchmark with a single message send.)</p>
