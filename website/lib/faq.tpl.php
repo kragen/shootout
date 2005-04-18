@@ -80,12 +80,11 @@ language, benchmark, your-name, date, (version)<br />
 <li>click the Submit button</li>
 </ol>
 
-
 <p>Now <strong>start from the bottom</strong> of the
    <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Contribute Programs - Submit New">
    <strong>Contribute Programs Submit-New</strong></a> form and work your way up.
 </p>
-
+</td></tr>
 
 <tr class="b"><td><a class="ab" href="#newbench" name="newbench">How can I contribute a new benchmark?</a></td></tr>
 <tr><td>
