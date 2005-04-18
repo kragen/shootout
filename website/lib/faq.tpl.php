@@ -1,6 +1,6 @@
 <?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
-<div>This FAQ is short. You can read it really quickly.</div>
+<div>This FAQ is short. You <em>can</em> read it really quickly.</div>
 
 <!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
 <table class="div">
@@ -18,7 +18,7 @@
 <li>provide an <em>ultimate</em> benchmark for some domain</li>
 <li><em>etc etc</em></li>
 </ul>
-<p>We are only trying to show performance on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flawed benchmarks</strong></a> across a wide range of programming language implementations.
+<p>We are only trying to show performance on a limited number of flawed benchmarks across a wide range of programming language implementations.
 </p>
 </td></tr>
 
@@ -34,46 +34,53 @@
 <table class="div">
 <tr><td><h3 class="rev"><a class="arev" href="#help" name="help">&nbsp;How can I help?</a></h3></td></tr>
 
-<tr class="b"><td><a class="ab" href="#comment" name="comment">Where can I send <strong>comments</strong> and suggestions?</a></td></tr>
-<tr><td><p>Let us know about mistakes and inconsistencies. Share your comments by subscribing to the 
-<a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
-<p>Use Tracker to report <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a> or document <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a>.</p>
+<tr><td>
+<p><strong>Contribute</strong> missing benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a program</a>.</p> 
+<p><strong>Fix</strong> broken benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a fixed program</a>.</p> 
+<p><strong>Share</strong> your opinions and questions by subscribing to the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
+<p><strong>Report</strong> content mistakes, inconsistencies, bad installs <em>etc</em> - add a new item to <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a>.</p> 
+<p><strong>Suggest</strong> new features, new languages, new benchmarks <em>etc</em> - add a new item&nbsp;to&nbsp;<a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a>.</p> 
+<p><strong>Work</strong> behind the scenes - read <a href="#chores">How can I help with the chores?</a>.</p> 
 </td></tr>
 
-<tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program or a fixed-program?</a></td></tr>
 <tr><td>
-<p>Before contributing programs</p>
-<ul>
+<p><strong>Before</strong> contributing programs</p>
+<ol>
 <li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
 <li>read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement&#8230;?</strong></a></li>
-</ul>
+</ol>
 
-
-<p>And then follow these instructions!</p>
-<p><strong>Start from the bottom</strong> of the
-   <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Contribute Programs - Submit New">
-   <strong>Contribute Programs Submit-New</strong></a> form and work your way up as follows:
-</p>
-<ol>
-<li>Check to Upload &amp; Attach File: program source-code</li>
-<li>Browse to the program source-code file</li>
-<li>Description: what's different about this program</li>
-<li>Summary: language, benchmark, your-name, date, (version)<br/>
-<em>Ruby nsieve Glenn Parker 2005-03-28</em><br/>
-This convention ensures that each item will have a unique Summary text. (Alioth Tracker insists that each Summary text be unique!)
+<br />
+<p><strong>Follow these instructions step-by-step</strong> - for <em>our</em> convenience.</p>
+<ol class="s">
+<li>Start from the bottom. Upload &amp; <strong>Attach</strong> the program source-code file - do this first because it's easy to forget.</li>
+<li>Say in the <strong>Description</strong> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
+<li>Each <strong>Summary</strong> text <strong>must</strong> be unique! Follow this convention:<br />  
+language, benchmark, your-name, date, (version)<br />
+<em>Ruby nsieve Glenn Parker 2005-03-28</em><br />
 </li>
-<li>Category: select the language implementation</li>
-<li>Group: select the benchmark</li>
+<li><strong>Category</strong>: select the language implementation</li>
+<li><strong>Group</strong>: select the benchmark</li>
 <li>click the Submit button</li>
 </ol>
 
 
-<p>Track status with Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a></p>
+<p>Now <strong>start from the bottom</strong> of the
+   <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Contribute Programs - Submit New">
+   <strong>Contribute Programs Submit-New</strong></a> form and work your way up.
+</p>
+
+<tr class="b"><td><a class="ab" href="#status" name="status">How can I track what happens to the program I contributed?</a></td></tr>
+<tr><td>
+<p>Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a></p>
+
+<p>Check the <strong>Resolution</strong> field, and check the <strong>State</strong> field</p>
 <ul>
 <li><em>Open items</em> are new contributions</li>
 <li><em>Pending items</em> have been added to CVS</li>
 <li><em>Closed items</em> are being shown on the website</li>
-<li><em>Deleted items</em> have been removed from the website</li>
+<li><em>Deleted items</em> have been rejected</li>
 </ul>
 
 </td></tr>
@@ -125,12 +132,6 @@ Contact us!</p>
 
 <tr><td><h3 class="rev"><a class="arev" href="#implement" name="implement">&nbsp;How should I implement&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td><a class="ab" href="#implementp" name="implementp">How should I implement programs for the Shootout?</a></td></tr>
-<tr><td>
-<p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
-<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
-</td></tr>
-
 <tr class="b"><td><a class="ab" href="#correct" name="correct">How much effort should I put into getting the program correct?</a></td></tr>
 <tr><td>
 <p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine. (Don't make-unnecessary-work for the volunteer committers.)</p>
@@ -138,6 +139,11 @@ Contact us!</p>
 <p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to the Computer Language Shootout.</p> 
 </td></tr>
 
+<tr class="b"><td><a class="ab" href="#implementp" name="implementp">How should I implement programs for the Shootout?</a></td></tr>
+<tr><td>
+<p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
+</td></tr>
 
 <tr class="b"><td><a class="ab" href="#datainput" name="datainput">How should I implement data-input?</a></td></tr>
 <tr><td>
@@ -161,29 +167,9 @@ Contact us!</p>
 
    contributed by &#8230;
    modified by &#8230;
-
 */
 </pre>
 </td></tr>
-
-
-<tr class="b"><td><a class="ab" href="#sameway" name="sameway">How should I implement a same way program?</a></td></tr>
-<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
-<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
-<p>The same way programs often seem naive and unidiomatic.</p> 
-</td></tr>
-
-
-
-
-<tr class="b"><td><a class="ab" href="#samething" name="samething">How should I implement a same thing program?</a></td></tr>
-
-<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
-<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
-<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
-</td></tr>
-
 
 
 <tr class="b"><td><a class="ab" href="#implementlist" name="implementlist">How should I implement&#8230;?</a></td></tr>
@@ -194,7 +180,25 @@ Contact us!</p>
 <li>Write the program to conserve memory as-much-as possible.</li>
 <li>Write the program as-if lines of code were not being measured.</li>
 </ol>     
+<br />
 </td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#sameway" name="sameway"><em>The Doug Bagley</em>: How should I implement a same way program?</a></td></tr>
+<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
+<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+<p>The same way programs often seem naive and unidiomatic.</p> 
+</td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#samething" name="samething"><em>The Doug Bagley</em>: How should I implement a same thing program?</a></td></tr>
+
+<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
+<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
+</td></tr>
+
 
 </table>
 
