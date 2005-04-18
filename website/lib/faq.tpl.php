@@ -1,6 +1,6 @@
 <?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
-<div>This FAQ is short. You <em>can</em> read it really quickly.</div>
+<div>This FAQ is short. You can read it really quickly.</div>
 
 <!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
 <table class="div">
@@ -28,6 +28,21 @@
 <p>Read the source-code: Are the programs really comparable?</p>
 <p>Read the source-code: Can you write faster or more elegant code?</p>
 </td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#contents" name="contents">What else is on this page?</a></td></tr>
+<tr><td>
+<p><a href="#help"><strong>How can I help?</strong></a></p>
+<p><a href="#implement"><strong>How should I implement&#8230;?</strong></a></p>
+<p><a href="#where"><strong>Where can I&#8230;?</strong></a></p>
+<p><a href="#means"><strong>What does &#8230; mean?</strong></a></p>
+<p><a href="#measure"><strong>How did you measure&#8230;?</strong></a></p>
+<p><a href="#include"><strong>Why don't you include&#8230;?</strong></a></p>
+<p><a href="#when"><strong>When&#8230;?</strong></a></p>
+<p><a href="#who"><strong>Who&#8230;?</strong></a></p>
+<p><a href="#why"><strong>Why&#8230;?</strong></a></p>
+</td></tr>
+
 </table>
 
 
@@ -40,7 +55,7 @@
 <p><strong>Share</strong> your opinions and questions by subscribing to the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
 <p><strong>Report</strong> content mistakes, inconsistencies, bad installs <em>etc</em> - add a new item to <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a>.</p> 
 <p><strong>Suggest</strong> new features, new languages, new benchmarks <em>etc</em> - add a new item&nbsp;to&nbsp;<a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a>.</p> 
-<p><strong>Work</strong> behind the scenes - read <a href="#chores">How can I help with the chores?</a>.</p> 
+<p><strong>Work</strong> behind the scenes - read <a href="#chores">How can I help with the chores?</a></p> 
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program or a fixed-program?</a></td></tr>
