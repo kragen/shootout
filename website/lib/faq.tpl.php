@@ -71,6 +71,26 @@ language, benchmark, your-name, date, (version)<br />
    <strong>Contribute Programs Submit-New</strong></a> form and work your way up.
 </p>
 
+
+<tr class="b"><td><a class="ab" href="#newbench" name="newbench">How can I contribute a new benchmark?</a></td></tr>
+<tr><td>
+<p>Do all the work!</p>
+<ul>
+<li>Understand that benchmarks must be reasonable across a wide range of programming languages</li>
+<li>Identify what's missing or wrong with the current benchmarks</li>
+<li>Define a new benchmark and give some background information</li>
+<li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
+</ul>
+<p>And then, <em>maybe</em>, we just-might consider it.</p>
+<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
+</td></tr>
+
+<tr><td>
+<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Benchmark</strong> to see if it's already been suggested.</p>
+</td></tr>
+
+
+
 <tr class="b"><td><a class="ab" href="#status" name="status">How can I track what happens to the program I contributed?</a></td></tr>
 <tr><td>
 <p>Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a></p>
@@ -84,6 +104,8 @@ language, benchmark, your-name, date, (version)<br />
 </ul>
 
 </td></tr>
+
+
 
 <tr class="b"><td><a class="ab" href="#chores" name="chores">How can I help with <strong>the chores</strong>?</a></td></tr>
 <tr><td>
@@ -104,23 +126,6 @@ language, benchmark, your-name, date, (version)<br />
 <p>Do you have the necessary programming language knowledge?<br/>
 Do you want to help with the chores?<br/>
 Contact us!</p>
-</td></tr>
-
-<tr class="b"><td><a class="ab" href="#newbench" name="newbench">How can I contribute a new benchmark?</a></td></tr>
-<tr><td>
-<p>Do all the work!</p>
-<ul>
-<li>Understand that benchmarks must be reasonable across a wide range of programming languages</li>
-<li>Identify what's missing or wrong with the current benchmarks</li>
-<li>Define a new benchmark and give some background information</li>
-<li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
-</ul>
-<p>And then, <em>maybe</em>, we just-might consider it.</p>
-<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
-</td></tr>
-
-<tr><td>
-<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Benchmark</strong> to see if it's already been suggested.</p>
 </td></tr>
 
 </table>
