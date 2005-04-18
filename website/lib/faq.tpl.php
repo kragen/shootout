@@ -68,7 +68,7 @@
 
 <br />
 <p><strong>Follow these instructions step-by-step</strong> - for <em>our</em> convenience.</p>
-<ol class="s">
+<ol>
 <li>Start from the bottom. Upload &amp; <strong>Attach</strong> the program source-code file - do this first because it's easy to forget.</li>
 <li>Say in the <strong>Description</strong> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
 <li>Each <strong>Summary</strong> text <strong>must</strong> be unique! Follow this convention:<br />  
