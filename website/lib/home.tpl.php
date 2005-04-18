@@ -23,12 +23,12 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="div" >
 <tr>
 <th class="a">
-<strong>1&nbsp;Compare</strong>
+<a class="ab" href="#compare" name="compare"><strong>1&nbsp;Compare</strong></a>
 <p class="thp">time, memory, lines</p>
 </th>
 
 <th class="c" colspan="2">
-<strong>2&nbsp;Check the rankings</strong>
+<a class="ab" href="#check" name="check"><strong>2&nbsp;Check the rankings</strong></a>
 <p class="thp">rankings and language information</p>
 </th>
 </tr>
@@ -75,7 +75,9 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // SCORECARD /////////////////////////////////////////////////// -->
 
 <table class="div" >
-<tr><th class="a"><strong>3&nbsp;Find&nbsp;your </strong>Fast Faster Fastest programming languages</th></tr>
+<tr><th class="a">
+<a class="ab" href="#faster" name="faster"><strong>3&nbsp;Find&nbsp;your </strong>Fast Faster Fastest programming languages</a>
+</th></tr>
 
 <tr class="a"><td class="center">
 <? MkScorecardMenuForm($Sort); ?>
