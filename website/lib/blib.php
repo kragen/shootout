@@ -45,52 +45,27 @@ define('PROGRAM_SPECIAL','-3');
 define('PROGRAM_EXCLUDED',-4);
 define('LANGUAGE_EXCLUDED',-5);
 
-
-
-
-
 define('N_LANG',0);
-
 define('N_ID',1);
-
 define('N_NAME',2);
-
 define('N_FULL',3);
-
 define('N_HTML',4);
-
 define('N_FULLCPU',5);
-
 define('N_MEMORY',6);
-
 define('N_CPU_MAX',7);
-
 define('N_MEMORY_MAX',8);
-
 define('N_COLOR',9);
 
-
-
 define('CPU_MIN',0);
-
 define('CPU_MAX',1);
-
 define('MEM_MIN',2);
-
 define('MEM_MAX',3);
-
 define('LOC_MIN',4);
-
 define('LOC_MAX',5);
 
 
 
-
-
 // FUNCTIONS ///////////////////////////////////////////////////
-
-
-
 
 
 function ReadIncludeExclude(){
@@ -535,8 +510,10 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          if (isset( $data[$lang][$test])){         
             // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
 
-            if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
-                  ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])){                                 
+            if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) && (
+                  ($data[$lang][$test][DATA_FULLCPU] <= PROGRAM_TIMEOUT) ||                             
+                  ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU]))){ 
+                                                 
                $data[$lang][$test] = $row;  
             }
          }
@@ -628,13 +605,14 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
             if (isset( $tests[$test] )){
             
                // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
-                           
-               if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) &&
-                     ($row[DATA_FULLCPU] < $tests[$test][DATA_FULLCPU])){          
+
+               if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) && (
+                     ($tests[$test][DATA_FULLCPU] <= PROGRAM_TIMEOUT) ||                             
+                     ($row[DATA_FULLCPU] < $tests[$test][DATA_FULLCPU]))){          
                   $tests[$test] = $row;  
                }
             }
-            else {            
+            else {                                             
                $tests[$test] = $row;                    
             }
          }
