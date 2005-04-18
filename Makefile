@@ -1,8 +1,9 @@
-# $Id: Makefile,v 1.22 2005-04-05 14:33:42 bfulgham Exp $
+# $Id: Makefile,v 1.23 2005-04-18 23:59:09 bfulgham Exp $
 
 include Make.header
 
 all: init versions
+	-bin/preen.pl
 	-(cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
@@ -39,7 +40,6 @@ recent:
 
 init: init-stamp
 init-stamp: links-stamp
-	-bin/make_dirs
 	-touch init-stamp
 
 links:  links-stamp
