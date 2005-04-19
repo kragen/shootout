@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: nsievebits.tcl-2.tcl,v 1.1 2005-04-18 15:43:54 greg-guest Exp $
+# $Id: nsievebits.tcl-2.tcl,v 1.2 2005-04-19 16:42:48 igouy-guest Exp $
 # http://shootout.alioth.debian.org/
 #
 # Contributed by Hemang Lavana
@@ -32,7 +32,7 @@ proc main {n} {
     foreach value [list $n [incr n -1] [incr n -1]] {
         set m [expr {(1 << $value) * 10000}]
         set count [nsieve $m]
-        puts [format "Primes up to %8u%8u" $m $count]
+        puts [format "Primes up to %8u %8u" $m $count]
     }
 }
 main $argv

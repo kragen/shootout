@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: nsievebits.tcl,v 1.1 2005-04-07 15:59:10 greg-guest Exp $
+# $Id: nsievebits.tcl,v 1.2 2005-04-19 16:42:48 igouy-guest Exp $
 # http://shootout.alioth.debian.org/
 #
 # Contributed by Hemang Lavana
@@ -33,7 +33,7 @@ proc nsieve {m} {
 proc test {n} {
     set m [expr {(1 << $n) * 10000}]
     set count [nsieve $m]
-    puts [format "Primes up to %8u%8u" $m $count]
+    puts [format "Primes up to %8u %8u" $m $count]
 }
 
 proc usage {} {

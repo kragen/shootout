@@ -25,7 +25,7 @@ sub nsieve {
 sub test {
    my $n = shift;
    my $mx = 10000 * (2**$n);
-   printf "Primes up to %8d %7d\n",$mx,nsieve($mx);
+   printf "Primes up to %8d %8d\n",$mx,nsieve($mx);
 }
 
 for (0,1,2) {
