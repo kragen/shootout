@@ -5,10 +5,8 @@
 <tr><td>
 <ul>  
   <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
-  <li><p>Are your programs as-tiny-as these benchmarks?</p></li>
-  <li><p>Do your programs avoid library re-use like these benchmarks?</p></li>
-  <li><p>Is this how you would code the benchmark program?</p></li>
-  <li><p>Would you time the program or time a block of code inside the program?</p></li>
+  <li><p>Are your programs tiny, like these benchmarks?</p></li>
+  <li><p>Do your programs avoid library re-use, like these benchmarks?</p></li>
 </ul> 
 </td></tr>
 
@@ -20,10 +18,12 @@
   <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">"Performing Lisp Analysis of the FANNKUCH Benchmark"</a> (55KB postscript)</p></li>
   <li><p><a href="http://www-128.ibm.com/developerworks/java/library/j-jtp02225.html?ca=drs-j0805#4.0">Java theory and practice: Anatomy of a flawed microbenchmark. Is there any other kind?</a></p></li>
   <li><p><a href="http://www.dreamsongs.com/NewFiles/Timrep.pdf">Performance and Evaluation of Lisp Systems</a>, Richard P. Gabriel, 1985 (1.1MB pdf)</p></li>
-  <li><p><a href="http://www.research.att.com/~orost/bench_plus_plus/paper.html">The Bench++ Benchmark Suite</a></p></li>
   <li><p><a href="http://h21007.www2.hp.com/dspp/tech/tech_TechDocumentDetailPage_IDX/1,1701,2155,00.html">Writing micro-benchmarks for Java™ HotSpot JVM</a></p></li>
+</ul>
+<p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>
+<ul>  
+  <li><p><a href="http://www.research.att.com/~orost/bench_plus_plus/paper.html">The Bench++ Benchmark Suite</a></p></li>
   <li><p><a href="http://ali-www.cs.umass.edu/DaCapo/gcbm.html">The DaCapo Benchmark Suite</a></p></li>
-
 </ul>
 </td></tr>
 
@@ -43,15 +43,11 @@ that the intrinsic cost of the new code addition was fully compensated." <a href
 
 <tr><td><h3 class="rev"><a class="arev" href="#comparison" name="comparison">&nbsp;Flawed Comparisons</a></h3></td></tr>
 
-<tr class="b"><td><a class="ab" href="#interpreters" name="interpreters">Compilers versus Interpreters</a></td></tr>
+<tr class="b"><td><a class="ab" href="#glue" name="glue">Systems languages versus "Glue" languages</a></td></tr>
 <tr><td>
-<p>On some benchmarks compiled programs are 10,000 times faster - in practice, 
-we'd just call compiled library-code from the interpreted language.</p>
-</td></tr>
-
-<tr class="b"><td><a class="ab" href="#goals" name="goals">Design Goals</a></td></tr>
-<tr><td>
-<p></p>
+<p>On some benchmarks compiled programs are 10,000 times faster than interpreted scripts!</p>
+<p>And, of course, one <em>rationale</em> for script languages is that it's simpler to "glue" together programs written in systems languages with scripts than write the program in a systems language.</p>
+<p>In practice, we'd just call compiled library-code from the "glue" language.</p>
 </td></tr>
 
 </table>
