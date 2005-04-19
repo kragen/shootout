@@ -1,6 +1,9 @@
 <?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
-<div>This FAQ is short. You can read it really quickly.</div>
+<div>
+<p class="rs"><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Changed)) ?></p>
+<p>This FAQ is short. You can read it really quickly.</p>
+</div>
 
 <!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
 <table class="div">
@@ -18,17 +21,7 @@
 <li>provide an <em>ultimate</em> benchmark for some domain</li>
 <li><em>etc etc</em></li>
 </ul>
-<p>We are only trying to show performance on a limited number of flawed benchmarks across a wide range of programming language implementations.
-</p>
 </td></tr>
-
-<tr class="b"><td><a class="ab" href="#shouldi" name="shouldi">What should I do?</a></td></tr>
-<tr><td>
-<p>Read about benchmarking: Do you understand the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flaws</strong></a>?</p>
-<p>Read the source-code: Are the programs really comparable?</p>
-<p>Read the source-code: Can you write faster or more elegant code?</p>
-</td></tr>
-
 
 <tr class="b"><td><a class="ab" href="#contents" name="contents">What else is on this page?</a></td></tr>
 <tr><td>
@@ -64,6 +57,7 @@
 <ol>
 <li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
 <li>read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement&#8230;?</strong></a></li>
+<li>login with an Alioth id <em>is not required</em> but login allows you to make updates after contributing a program - <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a>.</li>
 </ol>
 
 <br />
