@@ -1,1 +1,1 @@
-<p>This is perl, v5.6.1 built for i386-linux</p>
+<p>This is perl, v5.8.4 built for i386-linux-thread-multi</p>
