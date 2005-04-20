@@ -11,7 +11,7 @@
 <tr><td>
 <p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
-<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Learn a little about benchmarking"><strong>flawed benchmarks</strong></a>.</p>
+<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="'benchmarking without analysis is bogus'"><strong>flawed benchmarks</strong></a>.</p>
 
 <p>We <strong>are not</strong> trying to</p>
 <ul>
@@ -23,7 +23,7 @@
 </ul>
 </td></tr>
 
-<tr class="b"><td><a class="ab" href="#contents" name="contents">What else is on this page?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#contents" name="contents">What else?</a></td></tr>
 <tr><td>
 <p><a href="#help"><strong>How can I help?</strong></a></p>
 <p><a href="#implement"><strong>How should I implement&#8230;?</strong></a></p>
@@ -45,10 +45,11 @@
 <tr><td>
 <p><strong>Contribute</strong> missing benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a program</a>.</p> 
 <p><strong>Fix</strong> broken benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a fixed program</a>.</p> 
-<p><strong>Share</strong> your opinions and questions by subscribing to the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing list</strong></a>.</p>
 <p><strong>Report</strong> content mistakes, inconsistencies, bad installs <em>etc</em> - add a new item to <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a>.</p> 
 <p><strong>Suggest</strong> new features, new languages, new benchmarks <em>etc</em> - add a new item&nbsp;to&nbsp;<a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a>.</p> 
 <p><strong>Work</strong> behind the scenes - read <a href="#chores">How can I help with the chores?</a></p> 
+<p><strong>Share</strong> your opinions and questions by subscribing to the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing&nbsp;list</strong></a>.</p>
+<p><strong>Change</strong> the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program or a fixed-program?</a></td></tr>
@@ -65,7 +66,7 @@
 <ol>
 <li>Start from the bottom. Upload &amp; <strong>Attach</strong> the program source-code file - do this first because it's easy to forget.</li>
 <li>Say in the <strong>Description</strong> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
-<li>Each <strong>Summary</strong> text <strong>must</strong> be unique! Follow this convention:<br />  
+<li>Each <strong>Summary</strong> text <em><strong>must</strong></em> be unique! Follow this convention:<br />  
 language, benchmark, your-name, date, (version)<br />
 <em>Ruby nsieve Glenn Parker 2005-03-28</em><br />
 </li>
@@ -269,7 +270,7 @@ Contact us!</p>
 <p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </td></tr>
 
-<tr class="b"><td><a class="ab" href="#id" name="id">What does #2 #3 mean?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#id" name="id">What do #2 #3 mean?</a></td></tr>
 <tr><td>
 <p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
 </td></tr>
@@ -431,7 +432,7 @@ fixes, you will soon understand this requirement.</li>
 
 <tr><td>
 <p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
-<p>Maybe you'd like to help us?</p>
+<p>Maybe you'd like to <a href="#chores">help us with the chores</a>?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#finish" name="finish">When will the Language Shootout be finished?</a></td></tr>
