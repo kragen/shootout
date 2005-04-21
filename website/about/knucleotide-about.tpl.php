@@ -44,5 +44,5 @@ GG 3.798
 </pre>
 <br />
 
-<p>In practice, less brute-force would be used to calculate k-nucleotide frequencies, for example <a href="http://cbrg.inf.ethz.ch:8080/bio-recipes/VirusClassification/code.html">Virus Classification using k-nucleotide Frequencies</a> and <a href="http://www.hicomb.org/HiCOMB2002/papers/HICOMB2003-03.pdf">A Fast Algorithm for the Exhaustive Analysis of 12-Nucleotide-Long DNA Sequences. Applications to Human Genomics</a> (105KB pdf).</p>
+<p>In practice, less brute-force would be used to calculate k-nucleotide frequencies, for example <a href="http://www.biorecipes.com/VirusClassification/code.html">Virus Classification using k-nucleotide Frequencies</a> and <a href="http://www.hicomb.org/HiCOMB2002/papers/HICOMB2003-03.pdf">A Fast Algorithm for the Exhaustive Analysis of 12-Nucleotide-Long DNA Sequences. Applications to Human Genomics</a> (105KB pdf).</p>
 
