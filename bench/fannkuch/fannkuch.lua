@@ -1,4 +1,4 @@
--- $Id: fannkuch.lua,v 1.2 2004-12-10 08:09:20 bfulgham Exp $
+-- $Id: fannkuch.lua,v 1.3 2005-04-21 19:44:46 igouy-guest Exp $
 -- http://shootout.alioth.debian.org/
 -- implemented by: Isaac Gouy
 
@@ -25,6 +25,7 @@ function fannkuch(n)
          end
       end
 
+      -- Use incremental change to generate another permutation
       while true do
          if r == n then return maxFlipsCount end
          local perm0, i, j = perm1[0], 0       
