@@ -1,6 +1,3 @@
-<p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=fannkuch&amp;lang=oberon2&amp;sort=<?=$Sort;?>">Oberon-2</a>. There are better algorithms; we're interested in this particular algorithm.</p>
-
 <p>Each program should</p> 
 <ul>
 <li>"Take a permutation of {1,...,n}, for example: {4,2,1,5,3}.</li>
