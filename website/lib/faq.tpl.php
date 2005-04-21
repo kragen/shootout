@@ -132,9 +132,10 @@ language, benchmark, your-name, date, (version)<br />
 </ol>
 
 <p>And other chores listed in the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=committerfaq&amp;title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
-<p>Do you have the necessary programming language knowledge?<br/>
-Do you want to help with the chores?<br/>
-Contact us!</p>
+<p>Do you have the necessary programming language knowledge?<br />
+Do you want to help with the chores?</p>
+<p>Contact us! Contact one of the <strong>Project Admins</strong> - listed on the GForge project page under <a href="http://alioth.debian.org/projects/shootout/"  title="Contact one of the Project Admins"><strong>Developer Info</strong></a>.</p>
+
 </td></tr>
 
 </table>
@@ -201,7 +202,7 @@ Contact us!</p>
 <tr class="b"><td><a class="ab" href="#sameway" name="sameway"><em>The Doug Bagley</em>: How should I implement a same way program?</a></td></tr>
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
 <p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
 <p>The same way programs often seem naive and unidiomatic.</p> 
 </td></tr>
 
@@ -209,7 +210,7 @@ Contact us!</p>
 <tr class="b"><td><a class="ab" href="#samething" name="samething"><em>The Doug Bagley</em>: How should I implement a same thing program?</a></td></tr>
 
 <tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
-<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
 <p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
 </td></tr>
 
@@ -225,19 +226,19 @@ Contact us!</p>
 
 <tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
 <tr><td>
-<p>Sometimes a program may produce the correct results, within the timeout, for smaller workloads - so check the complete data-table on the <strong>side-by-side comparison</strong> page.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the complete data-table on the <a href="sidebyside.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="side-by-side comparison"><strong>side-by-side comparison</strong></a> page.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </td></tr>
 
 
 <tr class="b"><td><a class="ab" href="#version" name="version">Where can I see which language version was used?</a></td></tr>
 <tr><td>
-<p>You can see information about the language implementation, including the version number, at the bottom of each <strong>rankings page</strong>.</p>
+<p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;sort=<?=$Sort;?>#about" title="about the language implementation"><strong>rankings page</strong></a>.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#options" name="options">Where can I see which compiler and runtime options were used?</a></td></tr>
 <tr><td>
-<p>You can see the build commands and runtime commands in the <strong>build &amp; benchmark results</strong> section, on each program page.</p>
+<p>You can see the build commands and runtime commands on each program page in the <a href="benchmark.php?test=ackermann&amp;lang=gcc&amp;sort=<?=$Sort;?>#log" title="build & benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
@@ -252,10 +253,7 @@ Contact us!</p>
 
 <tr class="b"><td><a class="ab" href="#findmore" name="findmore">Where can I find out more?</a></td></tr>
 
-<tr><td><p>You could learn something more about <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=benchmarking" title="Benchmarking suites and language comparison links"><strong>benchmarking</strong></a>.
-</p></td></tr>
-
-<tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth at Debian.org">Alioth&nbsp;Debian.org</a>.
+<tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge Debian.org</a>.
 </p></td></tr>
 </table>
 
@@ -306,20 +304,13 @@ Contact us!</p>
 <tr class="b"><td><a class="ab" href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></td></tr>
 
 
-
 <tr><td><p>Each program was run as a child-process of a Perl script. The script waits for the child-process to exit and takes usr+sys times with (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3].</p>
 
 <p>The Full CPU time includes program <strong>startup time</strong>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
 
 Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
 
-
-
 </td></tr>
-
-
-
-
 
 
 
