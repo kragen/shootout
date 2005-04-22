@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2005-04-17 22:01:08 igouy-guest Exp $
+# $Id: Makefile,v 1.25 2005-04-22 14:45:27 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -60,5 +60,5 @@ craps: $(TESTS)
 	@../bin/make_craps $^
 
 oberon-includes: $(OO2C)
-	@(cd Include/oberon2; for t in `ls *.Mod`; do oo2c -M $$t; done)
+	-@(cd Include/oberon2; for t in `ls *.Mod`; do oo2c -M $$t; done)
 	touch oberon-includes

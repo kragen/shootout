@@ -37,6 +37,6 @@ n.step(n - 2, -1) do |exponent|
   break if exponent < 0
   m = 2 ** exponent * 10_000
   count = sieve(m)
-  printf "Primes up to %8d %8d\n", m, count
+  printf "Primes up to %8d%8d\n", m, count
 end
 

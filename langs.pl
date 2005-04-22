@@ -107,7 +107,7 @@
        Ext  => 'java',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GCJ} --version | grep Debian`);
-	   $ver =~ s/(gcj\-\d+\.\d+ \(GCC\) \d+\.\d+\.\d+) .*/\1/;
+	   $ver =~ s/(gcj\-\d+\.\d+ \(GCC\) \d+\.\d+\.\d+) .*/$1/;
 	   return($ver);
        },
      },
@@ -648,7 +648,7 @@
        Ext  => 'oberon',
        Verfun => sub {
 	   my $ver = `$ENV{OO2C} --version 2>&1`;
-	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c \2 (using \1)/;
+	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c $2 (using $1)/;
 	   return($ver);
        },
      },

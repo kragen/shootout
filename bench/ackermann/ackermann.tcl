@@ -1,5 +1,5 @@
 #!/usr/bin/tclsh
-# $Id: ackermann.tcl,v 1.5 2005-03-30 22:24:54 sgeard-guest Exp $
+# $Id: ackermann.tcl,v 1.6 2005-04-22 14:45:28 bfulgham Exp $
 # http://shootout.alioth.debian.org/
 #
 # Updated based on ideas from Stefan Finzel
@@ -23,7 +23,7 @@ proc ack {n m} {
     }
 }
 
-interp recursionlimit {} 10000
+interp recursionlimit {} 20000
 set N [lindex $argv 0]
 if {$N < 1} {set N 1}
 puts "Ack(3,$N): [ack $N 3]"

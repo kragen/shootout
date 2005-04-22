@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.30 2005-04-14 20:42:21 chris00-guest Exp $
+# $Id: minibench,v 1.31 2005-04-22 14:45:32 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -27,13 +27,14 @@ require 5.6.0;
 use Getopt::Long;
 use strict;
 use BSD::Resource qw(times);
+use POSIX ":sys_wait_h";
 
 ######################################################################
 # Globals
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.30 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.31 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -879,14 +880,17 @@ EOF
 }    
 
 sub _abort_if_test_failed {
-    if ($?) {
-	my $exit_value  = $? >> 8;
+    my($rc) = @_;
+    warn "Got $rc from @_\n";
+    if ($rc) {
+	my $exit_value  = $rc >> 8;
+	warn "exit value = $exit_value\n";
 	my $msg = "Child processed exited with error code ($exit_value)";
-	my $signal_num  = $? & 127;
+	my $signal_num  = $rc & 127;
 	$msg .= ", killed by signal $signal_num" if $signal_num;
-	my $dumped_core = $? & 128;
+	my $dumped_core = $rc & 128;
 	$msg .= ", (core dumped)" if $dumped_core;
-	err $msg;
+	warn $msg;
 	#abort($msg);
     }
 }    
@@ -1183,7 +1187,7 @@ sub run {
 	    select(undef, undef, undef, 0.01);
 	    flush_pid_cache();	# must be done before calling childpids first time
 	    # parent continues, waiting in loop for child to finish, testing memory size
-	    while (waitpid($pid, WNOHANG()) != -1) {
+	    while ( waitpid($pid, WNOHANG) != -1) {
 
 	    	my @crap = childpids($$);
 		#warn "I think I'm measuring @crap\n";
