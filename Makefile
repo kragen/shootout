@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2005-04-18 23:59:09 bfulgham Exp $
+# $Id: Makefile,v 1.24 2005-04-25 05:17:58 bfulgham Exp $
 
 include Make.header
 
@@ -21,7 +21,7 @@ test plot show loc:
 clean:
 	-(cd bench ; make $@)
 
-.PHONY: dist report recent versions codelinks
+.PHONY: dist report recent versions codelinks website
 
 versions: versions.html
 
