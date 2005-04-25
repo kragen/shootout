@@ -1,0 +1,78 @@
+(module spectral-norm
+   (main main))
+
+(define-syntax contract
+   (syntax-rules ()
+      ((contract (i n) t1 t2)
+       (do ((i 0 (+fx i 1))
+	    (sum 0.0 (+fl sum (*fl t1 t2))))
+	   ((=fx i n) sum)))))
+
+;;; (indexed-expression->vector ((i 4) (j 4)) (g i j)) =>
+;;; #( #(g00 g01 g02 g03) #(g10 g11 g12 g13) ... )
+(define-syntax indexed-expression->vector
+   (syntax-rules ()
+      ((indexed-expression->vector ((i n)) body ...)
+       (let ((result (make-vector n (let ((i 0)) body ...))))
+	  (do ((i 1 (+fx i 1)))
+	      ((=fx i n) result)
+	      (vector-set! result i (begin body ...)))))
+      ((indexed-expression->vector ((i n) (j m) ...) body ...)
+       (indexed-expression->vector ((i n))
+				   (indexed-expression->vector
+				    ((j m) ...) body ...)))))
+
+;;; Like indexed-expression->vector, but without creating a new
+;;; vector.
+(define-syntax indexed-expression-into-vector
+   (syntax-rules ()
+      ((indexed-expression-into-vector v ((i n)) body ...)
+       (do ((i 0 (+fx i 1)))
+	   ((=fx i n) v)
+	   (vector-set! v i (begin body ...))))
+      ((indexed-expression-into-vector v ((i n) (j m) ...) body ...)
+       (do ((i 0 (+fx i 1)))
+	   ((=fx i n) v)
+	   (indexed-expression-into-vector (vector-ref v i)
+					   ((j m) ...) body ...)))))
+
+;;; If v is a two-indexed vector (i.e. a vector of vectors), then 
+;;; (% v i j) => (vector-ref (vector-ref v i) j)
+(define-syntax %
+   (syntax-rules ()
+      ((index-vector v i)
+       (vector-ref v i))
+      ((index-vector v i j ...)
+       (index-vector (vector-ref v i) j ...))))
+
+(define (int->double::double i::int)
+   (free-pragma::double "((double) ($1))" i))
+
+(define (A::double i::int j::int)
+   (/fl 1.0 (int->double
+	     (+fx i (+fx 1 (/fx (*fx (+ i j)
+				     (+ i j 1))
+				2))))))
+
+
+
+(define (produce-u19-and-u20 n::int)
+   (let loop ((i 0) (v1 (make-vector n 1.0))
+		    (v2 (make-vector n 0.0)))
+      (if (=fx i 20)
+	  (values v2 v1)
+	  (begin
+	     (let ((storage (indexed-expression->vector
+			     ((j n)) (contract (k n) (A j k) (% v1 k)))))
+		(indexed-expression-into-vector
+		 v2 ((j n))
+		 (contract (k n) (A k j) (% storage k))))
+	     (loop (+fx i 1) v2 v1)))))
+
+(define (main argv)
+   (let ((n::int (string->number (cadr argv))))
+      (multiple-value-bind
+	    (u19 u20) (produce-u19-and-u20 n)
+	    (display (sqrt (/fl (contract (i n) (% u20 i) (% u19 i))
+				(contract (i n) (% u19 i) (% u19 i)))))
+	    (newline))))
