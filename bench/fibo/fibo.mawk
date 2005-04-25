@@ -1,8 +1,8 @@
-# $Id: fibo.mawk,v 1.2 2005-03-19 00:32:56 igouy-guest Exp $
+# $Id: fibo.mawk,v 1.3 2005-04-25 19:01:38 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
 
 function fib(n) {
-    if (n < 2) return(n);
+    if (n < 2) return(1);
     return(fib(n-2) + fib(n-1));
 }
 
