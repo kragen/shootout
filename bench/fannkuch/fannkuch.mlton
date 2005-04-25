@@ -1,54 +1,87 @@
-(* fannkuch.sml
+(* fannkuch.ml
  *
- *   The "Pfannkuchen flipping" benchmark.
+ * The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
  *
- * Copyright (c) 2004 by The Fellowship of SML/NJ
- *
- * Author: Matthias Blume (blume@tti-c.org)
- * Modified by sweeks@sweeks.com to run with MLton.
+ * Contributed by Troestler Christophe
+ * Translated to SML by sweeks@sweeks.com.
  *)
 
-structure Test:sig val main:string*string list->OS.Process.status end = struct
+val sub = Array.sub
+val update = Array.update
 
-    infix 8 $  val op $ = Unsafe.Array.sub
-    infix 3 <- fun (a, i) <- x = Unsafe.Array.update (a, i, x)
+fun for (start, stop, f) =
+   let
+      fun loop i = if i = stop then () else (f i; loop (i + 1))
+   in
+      loop start
+   end
 
-    fun main' N =
-	let val (a, b) = (Array.tabulate (N, fn i => i), Array.array (N, 0))
-	    val maxc = ref 0
-	    fun pk () =
-		let fun fl (i,j) =
-			 let val t = b$i val (k,l) = (i+1,j-1)
-			 in (b,i)<-b$j;(b,j)<-t; if k>=l then () else fl(k,l)
-			 end
-		    fun try c =
-			let val k = b$0
-			in if k=0 then c else (fl(0,k);try(c+1)) end
-		in Array.copy { src=a, dst=b, di=0 };
-		   maxc := Int.max (try 0, !maxc)
-		end
-	    fun sw (i,j) = let val t = a$i in (a,i)<-a$j; (a,j)<-t end
-	    fun go 0 = pk ()	(* odd case *)
-	      | go 1 = (pk (); sw(0,1); pk ()) (* shortcut *)
-	      | go n =
-		let val m = n-1
-		    fun l c = if c>n then () else (ge m; sw(0,n); l(c+1))
-		in l 0 end
-	    and ge 0 = pk ()	(* even case *)
-	      | ge 1 = (pk (); sw(0,1); pk ()) (* shortcut *)
-	      | ge n =
-		let val m = n-1
-		    fun l c = if c>n then () else (go m; sw(c,n); l(c+1))
-		in l 0 end
-	in if N mod 2 = 0 then ge (N-1) else go (N-1);
-	   print (concat ["Pfannkuchen(", Int.toString N, ") = ",
-			  Int.toString (!maxc), "\n"]);
-	   OS.Process.success
-	end
+fun countFlips perm =
+   let
+      fun loop c =
+	 let
+	    val k = sub (perm, 0)
+	 in
+	    if k = 0
+	       then c
+	    else
+	       let
+		  val () = 
+		     for (0, k div 2 + 1, fn i =>
+			  let
+			     val k_i = k - i
+			     val perm_i = sub (perm, i)
+			  in
+			     update (perm, i, sub (perm, k_i))
+			     ; update (perm, k_i, perm_i)
+			  end)
+	       in
+		  loop (c + 1)
+	       end
+	 end
+   in
+      loop 0
+   end
 
-    fun main (_, []) = main' 1
-      | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
-end
+fun pfannkuchen n =
+  let
+     val perm = Array.tabulate (n, fn i => i)
+     val perm' = Array.array (n, 0)
+     val count = Array.tabulate (n, fn i => i + 1)
+     val m = n - 1
+     fun loop (maxflips, r) =
+	if r = n
+	   then maxflips
+	else
+	   let
+	      (* Rotate perm.(0 .. r-1) *)
+	      val perm0 = sub (perm, 0) 
+	      val () =
+		 for (0, r, fn i => update (perm, i, sub (perm, i + 1)))
+	      val () = update (perm, r, perm0)
+	      val () = update (count, r, sub (count, r) - 1)
+	   in
+	      if sub (count, r) > 0
+		 then 
+		    let
+		       val () = for (1, r, fn i => update (count, i, i + 1))
+		    in
+		       if sub (perm, 0) <> 0 andalso sub (perm, m) <> m
+			  then
+			     (for (0, m + 1, fn i =>
+				   update (perm', i, sub (perm, i)))
+			      ; loop (Int.max (countFlips perm', maxflips),
+				      1))
+		       else loop (maxflips, 1)
+		    end
+	      else loop (maxflips, r + 1)
+	   end
+  in
+     loop (0, 1)
+  end
 
-val () =
-   OS.Process.exit (Test.main (CommandLine.name(), CommandLine.arguments()))
+val n = valOf (Int.fromString (hd (CommandLine.arguments ()))) handle _ => 1
+
+val () = print (concat ["Pfannkuchen(", Int.toString n, ") = ",
+			Int.toString (pfannkuchen n), "\n"])
