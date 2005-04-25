@@ -1,0 +1,88 @@
+(* tcprequest.sml 
+ *
+ * The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Troestler Christophe
+ * Translated to SML by sweeks@sweeks.com
+ *)
+
+val m = 1
+
+val bufferSize = 4096
+val port = 11000
+
+fun buf size = Word8ArraySlice.full (Word8Array.array (size, 0w0))
+val replySize = 409600
+val reply = buf replySize
+val request = buf 64
+
+fun for (start, stop, f) =
+   let
+      fun loop i = if i = stop then () else (f i; loop (i + 1))
+   in
+      loop start
+   end
+
+(* Return [false] if EOF is reached *)
+fun read (sock, buf, n) =
+   let
+      fun loop n =
+	 n <= 0 orelse
+	 let
+	    val r = Socket.recvArr (sock,
+				    Word8ArraySlice.slice
+				    (buf, 0, SOME (Int.min (n, bufferSize))))
+	 in
+	    r > 0 andalso loop (n - r)
+	 end
+   in
+      loop n
+   end
+
+fun server sock =
+  let
+     val b = Word8Array.array (bufferSize, 0w0)
+     val (s, _) = Socket.accept sock
+     val () =
+	while Socket.recvArr (s, Word8ArraySlice.full b) > 0
+	   do ignore (Socket.sendArr (s, reply))
+     val () = Socket.close s
+     val () = Socket.close sock
+  in
+     ()
+  end
+
+fun client n =
+  let
+     val b = Word8Array.array (bufferSize, 0w0)
+     val replies = ref 0
+     val bytes = ref 0 (* useless but mandated by spec *)
+     val sock = INetSock.TCP.socket ()
+     val () =
+	Socket.connect
+	(sock, INetSock.toAddr (NetHostDB.addr
+				(valOf (NetHostDB.getByName "127.0.0.1")),
+				port))
+     val () =
+	for (0, n, fn _ =>
+	     (ignore (Socket.sendArr (sock, request))
+	      ; ignore (read (sock, b, replySize))
+	      ; bytes := !bytes + replySize
+	      ; replies := 1 + !replies))
+     val () = Socket.close sock
+  in
+     print (concat ["replies: ", Int.toString (!replies),
+		    "\tbytes: ", Int.toString (!bytes), "\n"])
+  end
+
+val n = m * (valOf (Int.fromString (hd (CommandLine.arguments ())))
+	     handle _ => 10)
+val sock = INetSock.TCP.socket ()
+val () = Socket.Ctl.setREUSEADDR (sock, true)
+val () = Socket.bind (sock, INetSock.any port)
+val () = Socket.listen (sock, 1)
+val () =
+   case Posix.Process.fork () of
+      NONE => server sock
+    | SOME pid => (client n; ignore (Posix.Process.wait ()))
