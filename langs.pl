@@ -1026,10 +1026,10 @@
      { Lang => 'SML',
        Name => 'MLton',
        Status => '+',
-       Home => 'http://www.mlton.org/',
-       Down => 'http://www.mlton.org/download/',
+       Home => 'http://mlton.org/',
+       Down => 'http://mlton.org/download/',
        Type => 'native compiled',
-       Note => 'Whole program optimizing ML compiler',
+       Note => 'Whole-program optimizing ML compiler',
        Ext  => 'sml',
        Verfun => sub {
 	   chomp(my($ver) = grep(/^mlton/i,`$ENV{MLTON} 2>&1`));
