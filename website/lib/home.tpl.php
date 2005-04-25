@@ -8,8 +8,10 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // TAG /////////////////////////////////////////////////// -->
 
 <table class="div" >
-<tr><td colspan="2"><?=$NavBar;?></td></tr>
 <tr><td colspan="2"><?=$Intro;?></td></tr>
+<tr><td colspan="2"><?=$NavBar;?></td></tr>
+
+<!--  <? if (!$slim){ printf('<tr><td colspan="2">%s</td></tr>', $NavBar); } ?>  -->
 
 <tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;Benchmarking programming languages</a></h4></td></tr>
 <tr><td>

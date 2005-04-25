@@ -39,7 +39,11 @@ $Body->set('Measured', filemtime(DATA_PATH.'data.csv'));
 
 $NavBar = & new Template(ABOUT_PATH);
 $NavBar->set('Sort', $S);
-$Body->set('NavBar', $NavBar->fetch('navbar.about'));
+if (SITE_NAME == 'core' || SITE_NAME == 'great'){
+   $Body->set('NavBar', $NavBar->fetch('navbar.about'));
+} else {
+   $Body->set('NavBar', $NavBar->fetch('navbar-slim.about'));
+}
 
 $Feature = & new Template(ABOUT_PATH);
 $Feature->set('Sort', $S);
