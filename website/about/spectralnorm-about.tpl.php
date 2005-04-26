@@ -5,8 +5,8 @@ a<sub>13</sub>=1/4, a<sub>22</sub>=1/5, a<sub>31</sub>=1/6, <em>etc</em></p>
 <p>Each program <strong>must</strong> implement 4 separate functions / procedures / methods like the <a href="benchmark.php?test=spectralnorm&amp;lang=csharp&amp;sort=<?=$Sort;?>">C# program</a>.</p>
 
 
-<p>Correct output N = 2,000 is:</p> 
-<pre>1.274224152
+<p>Correct output N = 100 is:</p> 
+<pre>1.274219991
 </pre>
 <br />
 
