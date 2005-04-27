@@ -1167,7 +1167,9 @@
      # family that their languages hints at
      'd'           => 'c',
      'dlang'       => 'c',
-     'ifc'         => 'c',
+     'f90'         => 'fortran',
+     'g95'         => 'fortran',
+     'ifc'         => 'fortran',
      'rep'         => 'scheme',
      'Pop11'       => 'c',
      'fpascal'     => 'pascal',
