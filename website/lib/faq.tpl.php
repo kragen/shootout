@@ -90,7 +90,7 @@ language, benchmark, your-name, date, (version)<br />
 <li>Define a new benchmark and give some background information</li>
 <li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
 </ul>
-<p>And then, <em>maybe</em>, we just-might consider it.</p>
+<p>And then, <em>maybe</em>, we just-might consider it. We will accept <strong>and reject</strong> benchmarks in a capricious, unfair, biased fashion.</p>
 <p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
 </td></tr>
 
@@ -397,7 +397,7 @@ fixes, you will soon understand this requirement.</li>
 <li><strong>Used?</strong> There are way too many dead languages and unused project languages.</li>
 <li><strong>Interesting?</strong> Is there something significant and interesting about the language that will be obvious from these benchmark programs?</li>
 </ol>
-<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion :-)</p>
+<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#please" name="please">Please will you include my favourite language?</a></td></tr>
