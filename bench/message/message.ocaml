@@ -1,56 +1,28 @@
-(*
- * message.ocaml
- *
- * Contributed by William Douglas Neumann
- *)
-type thCtx =
-	{	mutable message : int;
-		mutable busy : bool;
-		lock : Mutex.t;
-		cond : Condition.t };;
+(* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
 
-let makeThread () =
-	{ message = ~-1; busy = false; lock = Mutex.create (); cond = Condition.create () };;
+   Contributed by David Teller (D.O.Teller@sussex.ac.uk)
+*)
 
-let put th msg =
-	Mutex.lock th.lock;
-	while th.busy do Condition.wait th.cond th.lock done;
-	th.busy <- true; th.message <- msg;
-	Condition.signal th.cond;
-	while th.message <> ~-1 do Condition.wait th.cond th.lock done;
-	th.busy <- false;
-	Condition.signal th.cond;
-	Mutex.unlock th.lock;;
+let adder_thread (incoming, outgoing) =
+  while true do
+    Event.sync(Event.send outgoing (Event.sync(Event.receive incoming) + 1))
+  done
 
-let take th =
-	while th.message = ~-1 do Condition.wait th.cond th.lock done;
-	let m = th.message in
-		th.message <- ~-1;
-		Condition.signal th.cond;
-		(succ m);;
+let rec make_chain n cur =
+  if n = 0 then cur else
+    let next = Event.new_channel() in
+    let _ = Thread.create adder_thread (cur, next) in
+    make_chain (n-1) next
 
-let link th next =
-	while true do put next (take th) done;;
+let rec sum chan0 chan1 total n =
+  if n = 0 then total else (
+    Event.sync(Event.send chan0 0);
+    sum chan0 chan1 (total + Event.sync(Event.receive chan1)) (n-1)
+  )
 
-let rec endLink th count final =
-	let cnt = count + (take th) in
-	if cnt < final then endLink th cnt final
-	else (print_int cnt; print_newline ());;
-
-let rec loop th n =
-	if n > 0 then (put th 0; loop th (pred n));;
-
-let _ =
-	let length = 3000 and n = int_of_string Sys.argv.(1) in
-	let thEnd = makeThread () in
-	let chainEnd = Thread.create (endLink thEnd 0) (n*length) in
-	let rec mkLinks n next =
-		if n < 1 then next
-		else
-			let cur = makeThread () in
-				(ignore (Thread.create (link cur) next); mkLinks (pred n) cur) in
-	let firstLink = mkLinks (pred length) thEnd in
-	ignore (Thread.create (loop firstLink ) n);
-	Thread.join chainEnd;;
-
-(* vim: ts=4, ft=ocaml *)
+let () =
+  let n = int_of_string(Array.get Sys.argv 1)
+  and first_channel = Event.new_channel() in
+  let last_channel  = make_chain 3000 first_channel in
+  print_int(sum first_channel last_channel 0 n)
