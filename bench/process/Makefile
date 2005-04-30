@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-04-04 14:56:36 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-04-30 12:08:46 chris00-guest Exp $
 include ../../Make.header
 
 TEST    := process
@@ -12,6 +12,9 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 BIGLOOOPTS := -farithmetic
 OO2CFLAGS := --no-rtc -A
 POLYOPTS := -q
+
+OCAMLOPTS  := -thread   unix.cmxa threads.cmxa
+OCAMLBOPTS := -vmthread unix.cma threads.cma
 
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
