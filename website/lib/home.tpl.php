@@ -16,7 +16,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;Benchmarking programming languages</a></h4></td></tr>
 <tr><td>
 <p class="rs"><strong>Most recent measurement: </strong><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Measured)) ?></p>
-<p>What are we really comparing &#8212; language implementations or program algorithms, programming ability or programmer effort?</p>
+<p>Do due diligence - <em>check the program source-code</em>.</p>
 </td></tr>
 </table>
 
@@ -26,7 +26,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr>
 <th class="a">
 <a class="ab" href="#compare" name="compare"><strong>1&nbsp;Compare</strong></a>
-<p class="thp">time, memory, lines</p>
+<p class="thp">source-code, CPU time</p>
 </th>
 
 <th class="c" colspan="2">
