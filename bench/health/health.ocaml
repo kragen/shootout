@@ -4,6 +4,7 @@
  * http://shootout.alioth.debian.org/
  *
  * Contributed by Troestler Christophe
+ * This is a first implementation to be refined for speed.
  *)
 
 type patient = {
@@ -17,50 +18,6 @@ let add_patient (n, t, v) p =
   (n + 1, t + p.hospital_time, v + p.hospital_visits)
 
 let ( ++ ) (n0, t0, v0) (n1, t1, v1) = (n0 + n1, t0 + t1, v0 + v1)
-
-(* Mutable doubly linked lists.  This is not included in the standard
-   OCaml library but is available through third party libraries. *)
-(* module type Msig =
-sig
-  type 'a t
-  val empty : unit -> 'a t
-  val add : 'a -> 'a t -> unit
-  val remove : 'a t -> unit
-  val fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
-end *)
-(* module M =
-struct
-  type 'a t = 'a list ref
-  and 'a list = 'a node option
-  and 'a node = { mutable prev : 'a list; mutable next : 'a list; data : 'a }
-
-  let empty() = ref None
-
-  let add e l = match !l with
-    | None -> l := Some { prev = None; next = None; data = e }
-    | Some n0 as l0 -> match n0.next with
-      | None -> n0.next <- Some { prev = l0; next = None; data = e }
-      | Some n1 as l1 ->
-	  let n' = Some { prev = l0; next = l1; data = e } in
-	  n0.next <- n'; n1.prev <- n'
-
-  (* Remove the current element.  It is possible to remove the current
-     element during [iter] and [fold]. *)
-  let remove l = match !l with
-    | None -> ()
-    | Some n ->
-	match n.prev, n.next with
-	| None, None -> l := None
-	| Some n0, None -> n0.next <- None
-	| None, Some n1 -> n1.prev <- None
-	| (Some n0 as l0), (Some n1 as l1) -> n0.next <- l1; n1.prev <- l0
-
-  let rec fold_right f acc = function None -> acc
-    | Some n -> fold_right f (f acc n.data) n.next
-  let rec fold_left f acc = function None -> acc
-    | Some n -> fold_left f (f acc n.data) n.prev
-  let fold f acc l = fold_left f (fold_right f acc !l) !l
-end *)
 
 
 module Hospital =
@@ -128,7 +85,7 @@ struct
 	  p.hospital_time <- p.hospital_time + 10;
 	)
 	else (
-	  (* Transfer *)
+	  (* Transfer to regional hospital *)
 	  h.available_staff <- h.available_staff + 1;
 	  h.transfers <- p :: h.transfers;
 	);
@@ -176,6 +133,7 @@ let rec transfer_patients (Region(h, districts)) =
     List.iter (fun p -> Hospital.new_arrival h p) (transfer_patients d) in
   Array.iter transfer districts;
   Hospital.triage_examination_treatment h;
+  (* Return the transfer queue -- leaving the one of [h] empty. *)
   let patients_to_transfer = h.Hospital.transfers in
   h.Hospital.transfers <- [];
   patients_to_transfer
@@ -189,4 +147,4 @@ let () =
   let hc = create_health_care levels 0 42 in
   for i = 1 to n do ignore(transfer_patients hc) done;
   let (patients, time, visits) = accumulate_totals hc in
-  Printf.printf "Patients: %i\nTime:    %i\nVisits:  %i\n" patients time visits
+  Printf.printf "Patients: %i\nTime:     %i\nVisits:   %i\n" patients time visits
