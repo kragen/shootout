@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-04-05 18:27:57 obry-guest Exp $
+# $Id: Makefile,v 1.4 2005-05-01 12:04:34 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -11,7 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 MB_CLRTS := -nr
  
 BIGLOOOPTS := -farithmetic
-OO2CFLAGS := --no-rtc -A
+OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
 GNATOPTS := -fno-unroll-loops
 

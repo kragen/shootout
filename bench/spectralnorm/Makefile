@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-04-27 06:15:50 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-05-01 12:04:35 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -16,7 +16,7 @@ BIGLOOOPTS := -farithmetic
 MB_CLRTS := -nr
 OCAMLOPTS  := -inline 10
 #OCAMLBOPTS := 
-OO2CFLAGS := --no-rtc -A
+OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
 
 ERLFLAGS := -noinput

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-04-05 02:31:41 sweeks Exp $
+# $Id: Makefile,v 1.4 2005-05-01 12:04:33 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -11,7 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
-OO2CFLAGS := --no-rtc -A
+OO2COPTS := -A --no-rtc
 MLTONOPTS := -ieee-fp true
 POLYOPTS := -q
 

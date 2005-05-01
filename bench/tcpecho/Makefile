@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-04-01 00:32:33 bfulgham Exp $
+# $Id: Makefile,v 1.4 2005-05-01 12:04:35 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := tcpecho
@@ -13,7 +13,7 @@ GHCOPTS := -fexcess-precision
 GPLCOPTS := --fast-math
 OCAMLOPTS := unix.cmxa
 OCAMLBOPTS := unix.cma
-OO2CFLAGS := --no-rtc -A
+OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 ERLFLAGS := -noinput

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-04-03 15:01:52 loisel-guest Exp $
+# $Id: Makefile,v 1.2 2005-05-01 12:04:33 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := implicitode
@@ -16,7 +16,7 @@ BIGLOOOPTS := -farithmetic
 MB_CLRTS := -nr
 OCAMLOPTS  := -inline 10
 #OCAMLBOPTS := 
-OO2CFLAGS := --no-rtc -A
+OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
 
 ERLFLAGS := -noinput
