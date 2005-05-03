@@ -25,13 +25,13 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="div" >
 <tr>
 <th class="a">
-<a class="ab" href="#compare" name="compare"><strong>1&nbsp;Compare</strong></a>
-<p class="thp">source-code, CPU time</p>
+<a class="ab" href="#benchmarks" name="benchmarks"><strong>1&nbsp;Benchmarks</strong></a>
+<p class="thp">CPU times, source-code</p>
 </th>
 
 <th class="c" colspan="2">
-<a class="ab" href="#check" name="check"><strong>2&nbsp;Check the rankings</strong></a>
-<p class="thp">rankings and language information</p>
+<a class="ab" href="#comparisons" name="comparisons"><strong>2&nbsp;Comparisons</strong></a>
+<p class="thp">head-to-head language comparisons</p>
 </th>
 </tr>
 
@@ -64,7 +64,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       
       if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   
-      printf('<p class="c"><a title="%s benchmark rankings and information"', $LangName);
+      printf('<p><a title="%s benchmark comparisons and information"', $LangName);
       printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
    }
@@ -78,7 +78,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <table class="div" >
 <tr><th class="a">
-<a class="ab" href="#faster" name="faster"><strong>3&nbsp;Find&nbsp;your </strong>Fast Faster Fastest programming languages</a>
+<a class="ab" href="#scores" name="scores"><strong>3&nbsp;Overall Weighted Scores</strong></a>
 </th></tr>
 
 <tr class="a"><td class="center">

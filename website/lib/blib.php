@@ -44,17 +44,24 @@ define('PROGRAM_ERROR',-2);
 define('PROGRAM_SPECIAL','-3');
 define('PROGRAM_EXCLUDED',-4);
 define('LANGUAGE_EXCLUDED',-5);
+define('NO_COMPARISON',-6);
 
-define('N_LANG',0);
-define('N_ID',1);
-define('N_NAME',2);
-define('N_FULL',3);
-define('N_HTML',4);
-define('N_FULLCPU',5);
-define('N_MEMORY',6);
-define('N_CPU_MAX',7);
-define('N_MEMORY_MAX',8);
-define('N_COLOR',9);
+define('N_TEST',0);
+define('N_LANG',1);
+define('N_ID',2);
+define('N_NAME',3);
+define('N_FULL',4);
+define('N_HTML',5);
+define('N_FULLCPU',6);
+define('N_MEMORY',7);
+define('N_CPU_MAX',8);
+define('N_MEMORY_MAX',9);
+define('N_COLOR',10);
+
+define('N_N',3);
+define('N_LINES',8);
+define('N_CPU',9);
+
 
 define('CPU_MIN',0);
 define('CPU_MAX',1);
@@ -112,210 +119,112 @@ function ReadUniqueArrays($FileName,$Incl,$HasHeading=TRUE){
       if (!is_array($row)){ continue; }
 
       
-
 //######## Hardcoded assumption that $row[0] is a link name
 
       if (isset( $Incl[$row[0]] )){ $rows[ $row[0] ] = $row; }      
-
    }
-
    @fclose($f);
-
    return $rows;
-
 }
-
-
-
-
-
 
 
 function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
-
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
-
-
    $rows = array();
-
    while (!@feof ($f)){
-
       $row = @fgetcsv($f,1024,',');
-
       if (!is_array($row)){ continue; }
-
       if ( isset($row[DATA_LANG]) && ($row[DATA_TEST]==$Value) ){                  
-
          settype($row[DATA_ID],'integer');
-
-
-
          if (isset($rows[$row[DATA_LANG]])){
-
             array_push( $rows[$row[DATA_LANG]], $row);
-
          } else {
-
             $rows[$row[DATA_LANG]] = array($row);
-
          }
-
       }
-
    }
-
    @fclose($f); 
-
    return $rows;
-
 }
-
-
-
-
-
 
 
 function CompareCpuTime($a, $b){
-
    if ($a[DATA_CPU] == $b[DATA_CPU]) return 0;
-
    return  ($a[DATA_CPU] < $b[DATA_CPU]) ? -1 : 1;
-
 }
-
-
 
 function CompareFullCpuTime($a, $b){
-
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]) return 0;
-
    return  ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1;
-
 }
-
-
 
 function CompareMemoryUse($a, $b){
-
    if ($a[DATA_MEMORY] == $b[DATA_MEMORY]) return 0;
-
    return  ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1;
-
 }
-
-
 
 function CompareCodeLines($a, $b){
-
    if ($a[DATA_LINES] == $b[DATA_LINES]) return 0;
-
    return  ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1;
-
 }
-
-
 
 function CompareLangName($a, $b){
-
    return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
-
 }
-
-
 
 function CompareTestName($a, $b){
-
    return strcasecmp($a[TEST_NAME],$b[TEST_NAME]);
-
 }
-
-
 
 function CompareTestValue($a, $b){
-
    if ($a[DATA_LANG] == $b[DATA_LANG]){
-
       if ($a[DATA_ID] == $b[DATA_ID]){
-
          if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
-
          return ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
-
       }
-
       else {
-
          return ($a[DATA_ID] < $b[DATA_ID]) ? -1 : 1;      
-
       }
-
    }
-
    else {
-
       return ($a[DATA_LANG] < $b[DATA_LANG]) ? -1 : 1;      
-
    }   
-
 }
 
-
+function CompareTestValue2($a, $b){
+   if ($a[DATA_TEST] == $b[DATA_TEST]){
+         if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
+         return ($a[DATA_TESTVALUE] > $b[DATA_TESTVALUE]) ? -1 : 1;
+   }
+   else {
+      return ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;      
+   }   
+}
 
 function CompareNName($a, $b){
-
    return strcasecmp($a[N_FULL],$b[N_FULL]);
-
 }
-
-
 
 function CompareMaxCpu($a, $b){
-
    if ($a[N_CPU_MAX] == $b[N_CPU_MAX]) return 0;
-
    return  ($a[N_CPU_MAX] > $b[N_CPU_MAX]) ? -1 : 1;
-
 }
-
-
 
 function CompareMaxMemory($a, $b){
-
    if ($a[N_MEMORY_MAX] == $b[N_MEMORY_MAX]) return 0;
-
    return  ($a[N_MEMORY_MAX] > $b[N_MEMORY_MAX]) ? -1 : 1;
-
 }
-
-
-
-
 
 function SortName($sort){
-
    if ($sort=='cpu'){ return 'CPU Time'; }
-
    elseif ($sort=='fullcpu'){ return 'Full CPU Time'; }
-
    else { return 'Memory use'; }
-
 }
-
-
-
-
 
 function IdName($id){
-
    if ($id>0){ return ' #'.$id; } else { return ''; }
-
 }
-
-
 
 
 
@@ -341,9 +250,6 @@ function ExcludeData(&$d,&$langs,&$Excl){
    if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }  
    return 0;
 }
-
-
-
 
 
 function FilterAndSortData($langs,$data,$sort,&$Excl){
@@ -406,7 +312,8 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
          $id = $d[DATA_ID]; 
 
          $NData[] = array(
-              $lang
+              ''
+            , $lang
             , $id
             , ''
             , $langs[$lang][LANG_FULL].IdName($id)
@@ -474,21 +381,11 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
 }
 
 
-
-
-
 function LogScore($x, $b){   
-
    if(($x==0)||($b==0)){ return 0.0; }
-
    $scale = 1.0;
-
    return 1 / (1 + $scale * log($x/$b)/log(2));
-
 }
-
-
-
 
 
 function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
@@ -657,6 +554,171 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
 
 
 
+
+function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
+   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
+   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+   $rows = array();
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }
+                            
+      if (isset($Incl[$row[DATA_TEST]]) && isset($Incl[$L1]) && isset($Incl[$L2])){              
+         $exclude = ExcludeData($row,$Langs,$Excl);                     
+      
+      //if ( isset($row[DATA_LANG]) && ($row[DATA_LANG]==$L1||$row[DATA_LANG]==$L2) ){  
+       
+         if (($exclude > PROGRAM_SPECIAL) && ($row[DATA_LANG]==$L1 || $row[DATA_LANG]==$L2)){                      
+            settype($row[DATA_ID],'integer');        
+            if (isset($rows[$row[DATA_LANG]])){
+               array_push( $rows[$row[DATA_LANG]], $row);
+            } else {
+               $rows[$row[DATA_LANG]] = array($row);
+            }
+         }
+      }
+   }
+   @fclose($f); 
+   
+   $Data = array();   
+   foreach($rows as $ar){   
+      foreach($ar as $d){  
+         $Data[] = $d; 
+      }         
+   }            
+  
+// SELECTION DEPENDS ON THIS SORT ORDER
+   usort($Data,'CompareTestValue2');   
+
+// TRANSFORM SELECTED DATA
+
+   $lang = ""; $id = ""; $test = ""; $n = 0;
+   $NData = array(); 
+   $comparable = array(); 
+   $errorRowL1 = NULL;
+   
+
+   $i=0; $j=0;
+   while ($i<sizeof($Data)){
+    
+      $n = $Data[$i][DATA_TESTVALUE];
+      $test = $Data[$i][DATA_TEST];                
+            
+      do {
+         $dj = $Data[$j];
+                              
+         if ($dj[DATA_FULLCPU] > PROGRAM_TIMEOUT){
+            if (isset($comparable[$dj[DATA_LANG]])){ 
+                if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){          
+                  $comparable[$dj[DATA_LANG]] = $Data[$j];                                 
+                }
+            } else {             
+               $comparable[$dj[DATA_LANG]] = $Data[$j];              
+            }
+         }
+         elseif ($dj[DATA_LANG]==$L1){
+            $errorRowL1 = $Data[$j];
+         }
+                    
+         $isComparable = isset($comparable[$L1]) && isset($comparable[$L2]) 
+            && ($comparable[$L1][DATA_TESTVALUE]==$comparable[$L2][DATA_TESTVALUE]);  
+                               
+         $j++;                                 
+         $hasMore = $j<sizeof($Data);                                    
+         $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);
+      } while (!$isComparable && $isSameTest);
+             
+      if (isset($comparable[$L1])){
+         $r1 = $comparable[$L1];
+      
+         if (isset($comparable[$L2])){           
+            $r2 = $comparable[$L2];            
+            $full = 1;
+            $mem = 1;
+            $lines = 1;
+            $cpu = 1;                     
+            
+            if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; } 
+            if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; } 
+            if ($r2[DATA_LINES]>0){ $lines = $r1[DATA_LINES] / $r2[DATA_LINES]; } 
+            if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }                                     
+                                 
+            $NData[$r1[DATA_TEST]] = array(
+                 $r1[DATA_TEST]         
+               , $r1[DATA_LANG]
+               , $r1[DATA_ID]
+               , $r1[DATA_TESTVALUE]
+               , $Langs[$r1[DATA_LANG]][LANG_FULL].IdName($r1[DATA_ID])
+               , $Langs[$r1[DATA_LANG]][LANG_HTML].IdName($r1[DATA_ID])
+               , $full
+               , $mem
+               , $lines
+               , $cpu
+               , 0
+               );                           
+                                                    
+            while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }  
+         }      
+         else {
+         
+            $NData[$r1[DATA_TEST]] = array(
+                 $r1[DATA_TEST]         
+               , $L2
+               , $r1[DATA_ID]
+               , $r1[DATA_TESTVALUE]
+               , $Langs[$r1[DATA_LANG]][LANG_FULL].IdName($r1[DATA_ID])
+               , $Langs[$r1[DATA_LANG]][LANG_HTML].IdName($r1[DATA_ID])
+               , 0
+               , 0
+               , NO_COMPARISON
+               , 0
+               , 0
+               );          
+         
+            while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }          
+         }                                             
+      }          
+      elseif (!$isSameTest && isset($errorRowL1)){
+         $e = $errorRowL1;    
+         $exclude = ExcludeData($e,$Langs,$Excl);        
+         
+         $NData[$e[DATA_TEST]] = array(
+              $e[DATA_TEST]         
+            , $e[DATA_LANG]
+            , $e[DATA_ID]
+            , $e[DATA_TESTVALUE]
+            , $Langs[$e[DATA_LANG]][LANG_FULL].IdName($e[DATA_ID])
+            , $Langs[$e[DATA_LANG]][LANG_HTML].IdName($e[DATA_ID])
+            , 0
+            , 0
+            , $exclude
+            , 0
+            , 0
+            );          
+              
+      }
+      
+      unset($comparable[$L1]); 
+      unset($comparable[$L2]);
+      unset($errorRowL1);
+      $i = $j;               
+   }
+   
+   return $NData;     
+}
+
+
+// Pretty format for headtohead table
+function PF($d){
+   if ($d>14.99){ return '<span class="b">'.number_format($d).'</span>'; } 
+   elseif ($d>9.999){ return number_format($d); }   
+   elseif (($d>0.999) && ($d<1.001)){ return '&nbsp;'; }    
+   elseif ($d>0.0667){ return number_format($d,2); }     
+   else { return '<span class="b">'.number_format($d,4).'</span>'; }
+}
+
+
+
 // CONTENT ///////////////////////////////////////////////////
 
 
@@ -700,6 +762,62 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 }
 
 
+function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort){
+   echo '<form method="get" action="benchmark.php">', "\n";
+   echo '<p><select name="test">', "\n";
+   echo '<option value="all">all ', TESTS_PHRASE, '</option>', "\n";
+
+   foreach($Tests as $Row){
+      $Link = $Row[TEST_LINK];
+      $Name = $Row[TEST_NAME];
+      if ($Link==$SelectedTest){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";
+
+
+   echo '<select name="lang">', "\n";
+   echo '<option value="all">all ', LANGS_PHRASE, '</option>', "\n";
+   foreach($Langs as $Row){
+      $Link = $Row[LANG_LINK];
+      $Name = $Row[LANG_FULL];
+      if ($Link==$SelectedLang){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select></p>', "\n";
+   
+   
+   echo '<p><strong>Compare</strong> to: <select name="lang2">', "\n";
+   foreach($Langs as $Row){
+      $Link = $Row[LANG_LINK];
+      $Name = $Row[LANG_FULL];
+      if ($Link==$SelectedLang2){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";   
+   
+   
+   
+   echo '<input type="submit" value="Show" />', "\n";
+   printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";
+   echo '</p></form>', "\n";
+}
+
+
+
+
 function MkScorecardMenuForm($Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
@@ -709,7 +827,7 @@ function MkScorecardMenuForm($Sort){
    echo '<select name="lang">', "\n";
    echo '<option value="all">all ', LANGS_PHRASE, '</option>', "\n";
    echo '</select>', "\n";
-   echo '<input type="submit" value="Show" title="Show your Fast, Faster, Fastest languages"/>', "\n";
+   echo '<input type="submit" value="Show" title="Show Overall Weighted Scores"/>', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";   
    echo '</p></form>', "\n";
 }

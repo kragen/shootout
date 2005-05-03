@@ -233,7 +233,7 @@ Do you want to help with the chores?</p>
 
 <tr class="b"><td><a class="ab" href="#version" name="version">Where can I see which language version was used?</a></td></tr>
 <tr><td>
-<p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;sort=<?=$Sort;?>#about" title="about the language implementation"><strong>rankings page</strong></a>.</p>
+<p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;sort=<?=$Sort;?>#about" title="about the language implementation"><strong>language page</strong></a>.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#options" name="options">Where can I see which compiler and runtime options were used?</a></td></tr>

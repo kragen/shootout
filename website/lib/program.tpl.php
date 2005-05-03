@@ -18,8 +18,8 @@ $P = $SelectedLang.'-'.$Id;
 title="Compare performance on the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
 <?=BAR;?>
 <a href="benchmark.php?test=all&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"  
-title="Check the <?=$LangName;?> rankings" >
-<?=$LangName;?> rankings</a>
+title="Choose <?=$LangName;?> comparisons" >
+<?=$LangName;?> comparisons</a>
 <?=BAR;?>
 
 <a href="sidebyside.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P;?>&amp;p2=<?=$P;?>&amp;p3=<?=$P;?>&amp;p4=<?=$P;?>&amp;sort=<?=$Sort;?>"  
