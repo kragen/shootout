@@ -1,0 +1,34 @@
+(declare (uses posix))
+
+(define (wc file)
+  (call-with-input-file
+    file
+    (lambda (port)
+      (let ((fd (port->fileno port))
+            (num-lines 0)
+            (num-words 0)
+            (num-characters 0)
+            (in-word? #f)
+            (buffer (make-string 4096)))
+        (let iter ((n (cadr (file-read fd 4096 buffer))))
+          (cond ((> n 0)
+                 (set! num-characters (+ num-characters n))
+                 (do ((i 0 (+ i 1)))
+                   ((>= i n))
+                    (case (string-ref buffer i)
+                      ((#\space #\tab)
+                       (cond (in-word?
+                               (set! num-words (+ num-words 1))
+                               (set! in-word? #f))))
+                      ((#\newline)
+                       (set! num-lines (+ num-lines 1))
+                       (cond (in-word? ; cond copied from case above
+                               (set! num-words (+ num-words 1))
+                               (set! in-word? #f))))
+                      (else
+                        (cond ((not in-word?)
+                               (set! in-word? #t))))))
+                 (iter (cadr (file-read fd 4096 buffer))))))
+        (write num-lines) (write-char #\space) (write num-words) (write-char #\space) (write num-characters) (newline)))))
+
+(wc (car (command-line-arguments)))
