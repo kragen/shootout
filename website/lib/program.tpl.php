@@ -15,15 +15,14 @@ $P = $SelectedLang.'-'.$Id;
 
 <div>
 <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=all&amp;sort=<?=$Sort;?>"
-title="Compare performance on the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
+title="Check CPU times and source-code for the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
 <?=BAR;?>
 <a href="benchmark.php?test=all&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"  
-title="Choose <?=$LangName;?> comparisons" >
-<?=$LangName;?> comparisons</a>
+title="Compare <?=$LangName;?> with another language on all benchmarks" >
+<?=$LangName;?></a>
 <?=BAR;?>
-
-<a href="sidebyside.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P;?>&amp;p2=<?=$P;?>&amp;p3=<?=$P;?>&amp;p4=<?=$P;?>&amp;sort=<?=$Sort;?>"  
-title="Choose programs for side-by-side comparison" >side-by-side&nbsp;comparison</a>
+<a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P;?>&amp;p2=<?=$P;?>&amp;p3=<?=$P;?>&amp;p4=<?=$P;?>&amp;sort=<?=$Sort;?>"  
+title="Check all the data for the <?=$TestName;?> benchmark" ><?=$TestName;?> full data</a>
 </div>
 
 

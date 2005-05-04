@@ -31,7 +31,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <th class="c" colspan="2">
 <a class="ab" href="#compare" name="compare"><strong>2&nbsp;Compare</strong></a>
-<p class="thp">side-by-side language comparisons</p>
+<p class="thp">side-by-side, on all benchmarks</p>
 </th>
 </tr>
 
@@ -42,7 +42,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       $TestName = $Row[TEST_NAME];
       $TestTag = $Row[TEST_TAG];
 
-      printf('<p class="a"><a title="%s performance measurements"', $TestName);
+      printf('<p class="a"><a title="Check CPU times and source-code for the %s benchmark"', $TestName);
       printf('href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
       echo "\n";
    }
@@ -64,7 +64,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       
       if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   
-      printf('<p><a title="%s benchmark comparisons and information"', $LangName);
+      printf('<p><a title="Compare %s with another language on all benchmarks"', $LangName);
       printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
    }

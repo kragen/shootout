@@ -834,7 +834,7 @@ function MkScorecardMenuForm($Sort){
 
 
 function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,$Sort){
-   echo '<form method="get" action="sidebyside.php">', "\n";
+   echo '<form method="get" action="fulldata.php">', "\n";
    echo '<p><select name="test">', "\n";
 
    foreach($Tests as $Row){
