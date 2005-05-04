@@ -19,9 +19,23 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
 <p><?=$LangTag;?></p>
 </td></tr>
+</table>
+
+<!-- // CHART //////////////////////////////////////////////////// -->
+
+<table class="div">
+<tr><td>
+
+<img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>&amp;sort=<?=$Sort;?>"
+   width="300" height="350"
+ />
+</td></tr>
+</table>
 
 
 <!-- // TABLE ////////////////////////////////////////////// -->
+
+<table class="div">
 <tr><td><table>
 <tr>
 <th>Program &amp; Logs</th>

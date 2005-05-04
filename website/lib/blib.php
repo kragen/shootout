@@ -711,7 +711,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
 // Pretty format for headtohead table
 function PF($d){
    if ($d>14.99){ return '<span class="b">'.number_format($d).'</span>'; } 
-   elseif ($d>9.999){ return number_format($d); }   
+   elseif ($d>9.999){ return number_format($d,2); }   
    elseif (($d>0.999) && ($d<1.001)){ return '&nbsp;'; }    
    elseif ($d>0.0667){ return number_format($d,2); }     
    else { return '<span class="b">'.number_format($d,4).'</span>'; }
