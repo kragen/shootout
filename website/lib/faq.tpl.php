@@ -226,7 +226,7 @@ Do you want to help with the chores?</p>
 
 <tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
 <tr><td>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the complete data-table on the <a href="sidebyside.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="side-by-side comparison"><strong>side-by-side comparison</strong></a> page.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="sidebyside.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="full data"><strong>full data page</strong></a>.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </td></tr>
 

@@ -847,8 +847,8 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       }
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
-   echo '</select><br /><br />', "\n";        
-
+   echo '</select></p>', "\n";    
+   
      
 // NASTY HACK      
 // ADD DUMMY VALUES TO PRESERVE SELECTION IN DROP-DOWN MENUS       
@@ -863,8 +863,10 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
    $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);     
 
    list($a, $b) = explode('-', $p4); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);          
-
+   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);     
+        
+        
+   echo '<p class="h"><strong>Choose</strong> programs for side-by-side comparison: <br />', "\n";    
    echo '<select name="p1">', "\n";
 
    $first = 1;

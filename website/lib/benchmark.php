@@ -45,7 +45,7 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard
   
-      $Title = 'Overall Weighted Scores';
+      $Title = 'Overall Scores';
       $TemplateName = 'scorecard.tpl.php';
 
       $About = & new Template(ABOUT_PATH);

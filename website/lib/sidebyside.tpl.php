@@ -14,7 +14,6 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <!-- // MENU /////////////////////////////////////////////////// -->
 <div>
-<p><strong>Choose</strong> programs for side-by-side comparison. </p>
 <? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,$Sort); ?>
 </div>
 
@@ -22,7 +21,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> side-by-side - Full CPU Time</a></h4>
+<h4 class="rev"><a class="arev" href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h4>
 </td></tr>
 </table>
 
@@ -69,7 +68,7 @@ foreach($Selected as $row){
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#memchart" name="memchart">&nbsp;<?=$TestName;?> side-by-side - Memory use</a></h4>
+<h4 class="rev"><a class="arev" href="#memchart" name="memchart">&nbsp;<?=$TestName;?> full data - Memory use</a></h4>
 </td></tr>
 </table>
 
@@ -115,7 +114,7 @@ foreach($Selected as $row){
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#cputable" name="cputable">&nbsp;<?=$TestName;?> benchmark - Full CPU Time</a></h4>
+<h4 class="rev"><a class="arev" href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h4>
 </td></tr>
 </table>
 
@@ -150,7 +149,7 @@ foreach($NData as $row){
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#memtable" name="memtable">&nbsp;<?=$TestName;?> benchmark - Memory use</a></h4>
+<h4 class="rev"><a class="arev" href="#memtable" name="memtable">&nbsp;<?=$TestName;?> full data - Memory use</a></h4>
 </td></tr>
 </table>
 
@@ -186,7 +185,7 @@ foreach($NData as $row){
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
 <table class="div">
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about side-by-side comparison</a></h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about full data comparison</a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 
 </table>
