@@ -30,10 +30,13 @@ $AboutTemplateName = 'blank-about.tpl.php';
 list($d,$n,$t) = ReadCsv(DATA_PATH.'ndata.csv');
 $Body->set('NData', $d);
 $Body->set('NDataN', $n);
-$Body->set('NDataTimeL', $t);
+$Body->set('NDataTime', $t);
 
 list($d,$n,$t) = ReadCsv(DATA_PATH.'data.csv');
 $Body->set('Data', $d);
+
+$l = ReadLogFiles(LOG_PATH);
+$Body->set('Logs', $l);
 
 
 // TEMPLATE VARS //////////////////////////////////////////////// 

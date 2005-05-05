@@ -45,6 +45,7 @@ define('PROGRAM_SPECIAL','-3');
 define('PROGRAM_EXCLUDED',-4);
 define('LANGUAGE_EXCLUDED',-5);
 define('NO_COMPARISON',-6);
+define('NO_PROGRAM_OUTPUT',-7);
 
 define('N_TEST',0);
 define('N_LANG',1);
@@ -181,6 +182,57 @@ function ReadCsv($FileName,$HasHeading=TRUE){
    return array($dset,$count,$t1-$t0);
 }
 
+
+
+function ReadLogFiles($dirPath){
+   $prefix = 30; // PROGRAM OUTPUTLF==============LF
+   
+   $logs = array();   
+   $dh = opendir($dirPath);
+   while($fn = readdir($dh)){
+      $ext = strpos($fn,'.log');
+      $tag = substr($fn,0,$ext);   
+      if ($tag){ 
+         if ( sizeof(explode('-',$tag)) < 3 ){ $tag .= '-0'; }    
+         
+         $byteSize = filesize(LOG_PATH.$fn);
+         
+         $code = 0;         
+         if ($byteSize > 0){                  
+            $f = fopen(LOG_PATH.$fn,'r');
+            $s = fread($f,$byteSize);
+            fclose($f);
+         
+            if (strpos($s,'KILLED')){ $code = PROGRAM_TIMEOUT; }
+            elseif (strpos($s,'FAILED')){ $code = PROGRAM_ERROR; }
+            else {
+               if ($i = strpos($s,'PROGRAM OUTPUT')){               
+                  if ($i+$prefix == strlen($s)){ $code = NO_PROGRAM_OUTPUT; }
+               }
+               else { $code = NO_PROGRAM_OUTPUT; }
+            }   
+         }      
+         else { $code = NO_PROGRAM_OUTPUT; }                    
+                            
+         $logs[$tag] = array($code,$byteSize);                            
+      }
+   }
+   closedir($dh);   
+   return $logs;
+}
+
+
+function PrettyTag($k){
+   $a = explode('-',$k);
+   $s = $a[0]." ".$a[1];
+   if ($a[2]>0){ $s .= " #".$a[2]; }
+   return $s;
+}
+
+function CompareLogFileSize($a, $b){
+   if ($a[1] == $b[1]) return 0;
+   return  ($a[1] > $b[1]) ? -1 : 1;
+}
 
 function CompareCpuTime($a, $b){
    if ($a[DATA_CPU] == $b[DATA_CPU]) return 0;
