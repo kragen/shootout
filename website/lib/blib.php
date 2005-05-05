@@ -74,6 +74,10 @@ define('LOC_MAX',5);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
+function GetMicroTime(){
+   $t = explode(" ", microtime());
+   return doubleval($t[1]) + doubleval($t[0]);
+}
 
 function ReadIncludeExclude(){
    $incl = array();
@@ -144,7 +148,7 @@ function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
          }
       }
    }
-   @fclose($f); 
+   @fclose($f);      
    return $rows;
 }
 
@@ -290,10 +294,6 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
 
 
 
-
-
-
-
 function ComparisonData($langs,$data,$sort,$p,&$Excl){
    list($Accepted) = FilterAndSortData($langs,$data,$sort,&$Excl);
 
@@ -330,7 +330,7 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
       $NData[$i][N_FULLCPU][] = $d[DATA_FULLCPU];
       $NData[$i][N_MEMORY][] = $d[DATA_MEMORY];    
       $TestValues[ $d[DATA_TESTVALUE] ] = $d[DATA_TESTVALUE];
-   }
+   }  
 
 // SUB-SELECT DATA FOR SPECIFIC PROGRAMS
 
@@ -376,7 +376,7 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
    }
    uasort($NData,'CompareNName');
    sort($TestValues);
-
+   
    return array(&$NData,&$Selected,$TestValues);
 }
 
@@ -388,7 +388,7 @@ function LogScore($x, $b){
 }
 
 
-function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){ 
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
@@ -457,7 +457,7 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          }                                     
       }      
    }
-   @fclose($f);                
+   @fclose($f);                 
    
    foreach($data as $k => $test){
       foreach($test as $t => $v){
@@ -474,7 +474,7 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          $data[$k][$t][DATA_LINES] = $locScore;             
       }
    }
-   return $data;
+   return $data;  
 }
 
 
@@ -553,38 +553,32 @@ function RankData($FileName,&$Langs,$L,&$Incl,&$Excl,$HasHeading=TRUE){
 }
 
 
-
-
 function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
+   // Simple filter on file rows
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
    $rows = array();
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
-                            
-      if (isset($Incl[$row[DATA_TEST]]) && isset($Incl[$L1]) && isset($Incl[$L2])){
-         settype($row[DATA_ID],'integer');  
-         settype($row[DATA_ID],'integer');                            
-         $exclude = ExcludeData($row,$Langs,$Excl);                        
-       
-         if (($exclude > PROGRAM_SPECIAL) && ($row[DATA_LANG]==$L1 || $row[DATA_LANG]==$L2)){                                                               
-            if (isset($rows[$row[DATA_LANG]])){
-               array_push( $rows[$row[DATA_LANG]], $row);
-            } else {
-               $rows[$row[DATA_LANG]] = array($row);
-            }
-         }
-      }
+      
+      $lang = $row[DATA_LANG];                                  
+      if ($lang==$L1 || $lang==$L2){  $rows[] = $row;}
    }
-   @fclose($f);   
-   
+   @fclose($f);     
+      
+   // Filter again in memory      
    $Data = array();   
-   foreach($rows as $ar){   
-      foreach($ar as $d){  
-         $Data[] = $d; 
-      }         
+   foreach($rows as $row){ 
+      if (isset($Incl[$row[DATA_TEST]])){   
+         settype($row[DATA_ID],'integer');                              
+           
+         if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){  
+            $Data[] = $row;                                                                      
+         } 
+      }      
    }            
+   unset($rows);     
   
 // SELECTION DEPENDS ON THIS SORT ORDER
    usort($Data,'CompareTestValue2');   
@@ -635,10 +629,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
          $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);
          
       } while ($isSameTest);
-
-             
-             
-//if ($test=="revcomp"){ print_r($comparable); }            
+                                    
              
       if (isset($comparable[$L1])){
          $r1 = $comparable[$L1];
@@ -715,7 +706,6 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       unset($errorRowL1);
       $i = $j;               
    }
-   
    return $NData;     
 }
 
