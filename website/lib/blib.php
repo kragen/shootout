@@ -244,7 +244,7 @@ function ExcludeData(&$d,&$langs,&$Excl){
          } else {  
             return PROGRAM_SPECIAL; }
       }     
-   }    
+   }         
 
    if( $d[DATA_FULLCPU] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
    if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }  
@@ -563,13 +563,12 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
                             
-      if (isset($Incl[$row[DATA_TEST]]) && isset($Incl[$L1]) && isset($Incl[$L2])){              
-         $exclude = ExcludeData($row,$Langs,$Excl);                     
-      
-      //if ( isset($row[DATA_LANG]) && ($row[DATA_LANG]==$L1||$row[DATA_LANG]==$L2) ){  
+      if (isset($Incl[$row[DATA_TEST]]) && isset($Incl[$L1]) && isset($Incl[$L2])){
+         settype($row[DATA_ID],'integer');  
+         settype($row[DATA_ID],'integer');                            
+         $exclude = ExcludeData($row,$Langs,$Excl);                        
        
-         if (($exclude > PROGRAM_SPECIAL) && ($row[DATA_LANG]==$L1 || $row[DATA_LANG]==$L2)){                      
-            settype($row[DATA_ID],'integer');        
+         if (($exclude > PROGRAM_SPECIAL) && ($row[DATA_LANG]==$L1 || $row[DATA_LANG]==$L2)){                                                               
             if (isset($rows[$row[DATA_LANG]])){
                array_push( $rows[$row[DATA_LANG]], $row);
             } else {
@@ -578,7 +577,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
          }
       }
    }
-   @fclose($f); 
+   @fclose($f);   
    
    $Data = array();   
    foreach($rows as $ar){   
@@ -609,9 +608,17 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                               
          if ($dj[DATA_FULLCPU] > PROGRAM_TIMEOUT){
             if (isset($comparable[$dj[DATA_LANG]])){ 
-                if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){          
-                  $comparable[$dj[DATA_LANG]] = $Data[$j];                                 
-                }
+               if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){  
+                  if ($isComparable){
+                     if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){                  
+                        $comparable[$dj[DATA_LANG]] = $Data[$j];   
+                     }                
+                  }
+                  else {
+                     $comparable[$dj[DATA_LANG]] = $Data[$j];                   
+                  }                                        
+                                
+               }
             } else {             
                $comparable[$dj[DATA_LANG]] = $Data[$j];              
             }
@@ -622,11 +629,16 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                     
          $isComparable = isset($comparable[$L1]) && isset($comparable[$L2]) 
             && ($comparable[$L1][DATA_TESTVALUE]==$comparable[$L2][DATA_TESTVALUE]);  
-                               
+                                                       
          $j++;                                 
          $hasMore = $j<sizeof($Data);                                    
          $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);
-      } while (!$isComparable && $isSameTest);
+         
+      } while ($isSameTest);
+
+             
+             
+//if ($test=="revcomp"){ print_r($comparable); }            
              
       if (isset($comparable[$L1])){
          $r1 = $comparable[$L1];
