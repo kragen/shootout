@@ -153,6 +153,35 @@ function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
 }
 
 
+function ReadCsv($FileName,$HasHeading=TRUE){
+      $t0 = GetMicroTime();
+   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
+   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+   
+   $count = 0;
+   $dset = array();
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }  
+            
+      settype($row[DATA_ID],'integer');      
+      $tag = $row[DATA_TEST]."-".$row[DATA_LANG]."-".$row[DATA_ID]; 
+      $value = $row[DATA_FULLCPU];    
+      
+      if (isset($dset[$tag])){      
+         if ($value < 0){ $dset[$tag] = $value; }            
+      }
+      else {
+         $dset[$tag] = $value;      
+      }
+      $count++;          
+   }
+   @fclose($f);       
+      $t1 = GetMicroTime();          
+   return array($dset,$count,$t1-$t0);
+}
+
+
 function CompareCpuTime($a, $b){
    if ($a[DATA_CPU] == $b[DATA_CPU]) return 0;
    return  ($a[DATA_CPU] < $b[DATA_CPU]) ? -1 : 1;
