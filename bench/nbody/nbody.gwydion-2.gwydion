@@ -1,0 +1,139 @@
+module: n-body
+use-libraries: common-dylan, io, transcendental
+use-modules: common-dylan, format-out, transcendental
+
+define sealed class <planet> (<object>)
+  slot x :: <double-float>, required-init-keyword: x:;
+  slot y :: <double-float>, required-init-keyword: y:;
+  slot z :: <double-float>, required-init-keyword: z:;
+  slot vx :: <double-float>, required-init-keyword: vx:;
+  slot vy :: <double-float>, required-init-keyword: vy:;
+  slot vz :: <double-float>, required-init-keyword: vz:;
+  constant slot mass :: <double-float>, required-init-keyword: mass:;
+end class <planet>;
+
+define sealed inline method make(class == <planet>, #rest all-keys, #key)
+ => (object)
+  next-method();
+end method make;
+
+define constant <planet-vector> = <list>;
+define constant $pi = $double-pi;
+define constant $solar-mass = 4 * $pi * $pi;
+define constant $days-per-year = 365.24;
+
+define constant $bodies :: <planet-vector> = make(<planet-vector>, size: 5);
+$bodies[0] := make (<planet>,
+                    x: 0.0d0, y: 0.0d0, z: 0.0d0,
+                    vx: 0.0d0, vy: 0.0d0, vz: 0.0d0,
+                    mass: $solar-mass);
+$bodies[1] := make (<planet>,
+                    x: 4.84143144246472090e+00,
+                    y: -1.16032004402742839e+00,
+                    z: -1.03622044471123109e-01,
+                    vx: 1.66007664274403694e-03 * $days-per-year,
+                    vy: 7.69901118419740425e-03 * $days-per-year,
+                    vz: -6.90460016972063023e-05 * $days-per-year,
+                    mass: 9.54791938424326609e-04 * $solar-mass);
+$bodies[2] := make (<planet>,
+                    x: 8.34336671824457987e+00,
+                    y: 4.12479856412430479e+00,
+                    z: -4.03523417114321381e-01,
+                    vx: -2.76742510726862411e-03 * $days-per-year,
+                    vy: 4.99852801234917238e-03 * $days-per-year,
+                    vz: 2.30417297573763929e-05 * $days-per-year,
+                    mass: 2.85885980666130812e-04 * $solar-mass);
+$bodies[3] := make (<planet>,
+                    x: 1.28943695621391310e+01,
+                    y: -1.51111514016986312e+01,
+                    z: -2.23307578892655734e-01,
+                    vx: 2.96460137564761618e-03 * $days-per-year,
+                    vy: 2.37847173959480950e-03 * $days-per-year,
+                    vz: -2.96589568540237556e-05 * $days-per-year,
+                    mass: 4.36624404335156298e-05 * $solar-mass);
+$bodies[4] := make (<planet>,
+                    x: 1.53796971148509165e+01,
+                    y: -2.59193146099879641e+01,
+                    z: 1.79258772950371181e-01,
+                    vx: 2.68067772490389322e-03 * $days-per-year,
+                    vy: 1.62824170038242295e-03 * $days-per-year,
+                    vz: -9.51592254519715870e-05 * $days-per-year,
+                    mass: 5.15138902046611451e-05 * $solar-mass);
+
+define function advance(planets :: <planet-vector>, dt :: <double-float>)
+  local method advance-recursive
+            (planets :: <planet-vector>, dt :: <double-float>)
+          let b :: <planet> = head(planets);
+          let rest :: <list> = tail(planets);
+          for (b2 :: <planet> in rest)
+            let dx = b.x - b2.x;
+            let dy = b.y - b2.y;
+            let dz = b.z - b2.z;
+            let distance = sqrt(dx * dx + dy * dy + dz * dz);
+            let mag = dt / (distance * distance * distance);
+            
+            let tmp :: <double-float> = b2.mass * mag;
+            b.vx := b.vx - dx * tmp;
+            b.vy := b.vy - dy * tmp;
+            b.vz := b.vz - dz * tmp;
+            
+            tmp := b.mass * mag;
+            b2.vx := b2.vx + dx * tmp;
+            b2.vy := b2.vy + dy * tmp;
+            b2.vz := b2.vz + dz * tmp;
+          end for;
+          if (rest ~= #())
+            advance-recursive(rest,dt);
+          end if;
+        end method advance-recursive;
+  advance-recursive(planets,dt);
+  for (b :: <planet> in planets)
+    b.x := b.x + dt * b.vx;
+    b.y := b.y + dt * b.vy;
+    b.z := b.z + dt * b.vz;
+  end for;
+end function advance;
+
+define function energy(planets :: <planet-vector>, e :: <double-float>)
+ => (result :: <double-float>)
+  let b :: <planet> = head(planets);
+  let rest = tail(planets);
+  e := e + 0.5 * b.mass * (b.vx * b.vx + b.vy * b.vy + b.vz * b.vz);
+  for(b2 :: <planet> in rest)
+    let dx = b.x - b2.x;
+    let dy = b.y - b2.y;
+    let dz = b.z - b2.z;
+    let distance = sqrt(dx * dx + dy * dy + dz * dz);
+    e := e - (b.mass * b2.mass) / distance;
+  end for;
+  if(rest ~= #())
+    e := energy(rest,e);
+  end if;
+  e;
+end function energy;
+
+define function offset-momentum(planets :: <planet-vector>)
+  let px = 0.0d0;
+  let py = 0.0d0;
+  let pz = 0.0d0;
+  for (b :: <planet> in planets)
+    px := px + b.vx * b.mass;
+    py := py + b.vy * b.mass;
+    pz := pz + b.vz * b.mass;
+  end for;
+  let b = planets[0];
+  b.vx := -px / $solar-mass;
+  b.vy := -py / $solar-mass;
+  b.vz := -pz / $solar-mass;
+end function offset-momentum;
+
+begin
+  let n = application-arguments()[0].string-to-integer;
+  
+  offset-momentum($bodies);
+  format-out("%.9f\n", energy($bodies,0.0));
+  for (i from 1 to n)
+    advance($bodies,0.01d0);
+  end for;
+  format-out("%.9f\n", energy($bodies,0.0));
+end;
