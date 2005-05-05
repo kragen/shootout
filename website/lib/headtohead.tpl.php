@@ -27,6 +27,8 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <tr><td>
 
 <img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>&amp;sort=<?=$Sort;?>"
+   alt="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
+   title="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
    width="300" height="350"
  />
 </td></tr>
