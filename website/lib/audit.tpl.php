@@ -19,6 +19,16 @@
 </td></tr>
 
 
+<tr class="b"><td><a class="ab" href="#denied" name="denied"><strong>bad file permission</strong></a><br />'Permission Denied' in log file</td></tr>
+<tr><td>
+<? 
+   foreach($Logs as $k => $v){ 
+      if ($Logs[$k][0]==PROGRAM_EXCLUDED){ printf('<p>%s</p>',PrettyTag($k)); echo "\n"; }     
+   }     
+?>
+</td></tr>
+
+
 <tr class="b"><td><a class="ab" href="#missinglogs" name="missinglogs"><strong>missing log files</strong></a><br />row in ndata.csv but no log file</td></tr>
 <tr><td>
 <?

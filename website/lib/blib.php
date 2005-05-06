@@ -203,9 +203,10 @@ function ReadLogFiles($dirPath){
             $f = fopen(LOG_PATH.$fn,'r');
             $s = fread($f,$byteSize);
             fclose($f);
-         
-            if (strpos($s,'KILLED')){ $code = PROGRAM_TIMEOUT; }
-            elseif (strpos($s,'FAILED')){ $code = PROGRAM_ERROR; }
+                        
+            if (strpos($s,'Permission Denied')){ $code = PROGRAM_EXCLUDED; }         
+            elseif (strpos($s,'KILLED')){ $code = PROGRAM_TIMEOUT; }
+            elseif (strpos($s,'FAILED')){ $code = PROGRAM_ERROR; }            
             else {
                if ($i = strpos($s,'PROGRAM OUTPUT')){               
                   if ($i+$prefix == strlen($s)){ $code = NO_PROGRAM_OUTPUT; }
