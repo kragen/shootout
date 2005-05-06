@@ -19,7 +19,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#denied" name="denied"><strong>bad file permission</strong></a><br />'Permission Denied' in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#denied" name="denied"><strong>bad file permission</strong></a><br />'Permission denied' in log file</td></tr>
 <tr><td>
 <? 
    foreach($Logs as $k => $v){ 
