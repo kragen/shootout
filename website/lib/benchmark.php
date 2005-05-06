@@ -23,7 +23,8 @@ if (isset($HTTP_GET_VARS['lang'])){ $L = $HTTP_GET_VARS['lang']; }
 else { $L = 'all'; }
 
 if (isset($HTTP_GET_VARS['lang2'])){ $L2 = $HTTP_GET_VARS['lang2']; } 
-else { $L2 = $L; }
+elseif ($L=='all'){ $L2 = $L; }
+else { $L2 = $Langs[$L][LANG_COMPARE]; }
 
 if (isset($HTTP_GET_VARS['id'])){ $I = $HTTP_GET_VARS['id']; } 
 else { $I = 0; }

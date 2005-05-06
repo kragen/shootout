@@ -15,7 +15,8 @@ define('LANG_NAME',2);
 define('LANG_FULL',3);
 define('LANG_HTML',4);
 define('LANG_TAG',5);
-define('LANG_DATE',6);         
+define('LANG_DATE',6);   
+define('LANG_COMPARE',7);      
 
 define('DATA_TEST',0);
 define('DATA_LANG',1);
