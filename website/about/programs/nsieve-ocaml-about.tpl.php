@@ -1,0 +1,1 @@
+<p><strong>NOT ACCEPTED:</strong> Program should use a sequence of booleans.</p>
