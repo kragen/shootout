@@ -38,6 +38,8 @@ $Body->set('Data', $d);
 $l = ReadLogFiles(LOG_PATH);
 $Body->set('Logs', $l);
 
+$Body->set('Now', time());
+
 
 // TEMPLATE VARS //////////////////////////////////////////////// 
 

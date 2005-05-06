@@ -1,5 +1,9 @@
 <?   // Copyright (c) Isaac Gouy 2005 ?>
 
+<div>
+<p class="rs"><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
+</div>
+
 <table class="div" >
 <tr><td>&nbsp;</td></tr>
 
@@ -35,7 +39,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#bad1" name="bad1"><strong>bad log files 1</strong></a><br />error in ndata.csv but no error in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#bad1" name="bad1"><strong>bad log files 1</strong></a><br />error in ndata.csv but no 'FAILED' in log file</td></tr>
 <tr><td>
 <?
    foreach($NData as $k => $v){ 
@@ -47,7 +51,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#bad2" name="bad2"><strong>bad log files 2</strong></a><br />no error in ndata.csv but error in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#bad2" name="bad2"><strong>bad log files 2</strong></a><br />no error in ndata.csv but 'FAILED' in log file</td></tr>
 <tr><td>
 <?
    foreach($Logs as $k => $v){ 
@@ -59,7 +63,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#bad3" name="bad3"><strong>bad log files 3</strong></a><br />no program output in log file but no error</td></tr>
+<tr class="b"><td><a class="ab" href="#bad3" name="bad3"><strong>bad log files 3</strong></a><br />no 'PROGRAM OUTPUT' in log file but no error</td></tr>
 <tr><td>
 <?
    foreach($Logs as $k => $v){ 
@@ -69,7 +73,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#time1" name="time1"><strong>bad log files 4</strong></a><br />timeout in ndata.csv but no timeout in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#time1" name="time1"><strong>bad log files 4</strong></a><br />timeout in ndata.csv but no 'KILLED' in log file</td></tr>
 <tr><td>
 <?
    foreach($NData as $k => $v){ 
@@ -81,7 +85,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#time2" name="time2"><strong>bad log files 5</strong></a><br />no timeout in ndata.csv but timeout in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#time2" name="time2"><strong>bad log files 5</strong></a><br />no timeout in ndata.csv but 'KILLED' in log file</td></tr>
 <tr><td>
 <?
    foreach($Logs as $k => $v){ 
