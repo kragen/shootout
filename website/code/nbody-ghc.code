@@ -1,0 +1,94 @@
+<span class="slc">-- n-body in Haskell
+</span><span class="slc">-- The Great Computer Language Shootout
+</span><span class="slc">-- http://shootout.alioth.debian.org/
+</span><span class="slc">-- Contributed by Greg Buchholz with help from Josef Svenningsson
+</span><span class="slc">-- compile : ghc -O2 -o nbody nbody.hs
+</span><span class="slc">-- run : nbody 1000 +RTS -H300M -K100M
+</span><span class="slc">-- has a space leak that needs fixing
+</span>
+<span class="kwa">import</span> System<span class="sym">(</span>getArgs<span class="sym">)
+</span><span class="kwa">import</span> Numeric
+
+<span class="kwa">data</span> Vec <span class="sym">=</span> V <span class="sym">!</span><span class="kwb">Double</span> <span class="sym">!</span><span class="kwb">Double</span> <span class="sym">!</span><span class="kwb">Double</span> <span class="kwa">deriving</span> Show
+<span class="kwa">instance</span> Num Vec <span class="kwa">where
+</span>    <span class="sym">(</span>V a b c<span class="sym">) + (</span>V x y z<span class="sym">) = (</span>V <span class="sym">(</span>a<span class="sym">+</span>x<span class="sym">) (</span>b<span class="sym">+</span>y<span class="sym">) (</span>c<span class="sym">+</span>z<span class="sym">))
+    (</span>V a b c<span class="sym">) - (</span>V x y z<span class="sym">) = (</span>V <span class="sym">(</span>a<span class="sym">-</span>x<span class="sym">) (</span>b<span class="sym">-</span>y<span class="sym">) (</span>c<span class="sym">-</span>z<span class="sym">))
+</span>    fromInteger <span class="num">0</span> <span class="sym">=</span> V <span class="num">0.0 0.0 0.0</span> <span class="slc">-- for sum function
+</span><span class="kwa">instance</span> Eq Vec <span class="kwa">where</span> <span class="sym">(</span>V a b c<span class="sym">) == (</span>V x y z<span class="sym">) = (</span>a<span class="sym">==</span>x<span class="sym">) &amp;&amp; (</span>b<span class="sym">==</span>y<span class="sym">) &amp;&amp; (</span>c<span class="sym">==</span>z<span class="sym">)
+
+</span>dot <span class="sym">(</span>V a b c<span class="sym">) (</span>V x y z<span class="sym">) =</span> a<span class="sym">*</span>x <span class="sym">+</span> b<span class="sym">*</span>y <span class="sym">+</span> c<span class="sym">*</span>z
+scale <span class="sym">(</span>V a b c<span class="sym">)</span> n <span class="sym">=</span> V <span class="sym">(</span>n<span class="sym">*</span>a<span class="sym">) (</span>n<span class="sym">*</span>b<span class="sym">) (</span>n<span class="sym">*</span>c<span class="sym">)
+</span>mag <span class="sym">(</span>V x y z<span class="sym">) =</span>  sqrt <span class="sym">(</span>x<span class="sym">*</span>x <span class="sym">+</span> y<span class="sym">*</span>y <span class="sym">+</span> z<span class="sym">*</span>z<span class="sym">)
+
+</span><span class="kwa">data</span> Planet <span class="sym">=</span> Planet Vec Vec <span class="kwb">Double</span> <span class="kwa">deriving</span> Show <span class="slc">--Position Velocity Mass
+</span>dist <span class="sym">(</span>Planet p1 _ _<span class="sym">) (</span>Planet p2 _ _<span class="sym">) =</span> mag $ p1 <span class="sym">-</span> p2
+mass <span class="sym">(</span>Planet _ _ m<span class="sym">) =</span> m
+vel  <span class="sym">(</span>Planet _ v _<span class="sym">) =</span> v
+pos  <span class="sym">(</span>Planet p _ _<span class="sym">) =</span> p
+
+main <span class="sym">=</span> <span class="kwa">do
+</span>        <span class="sym">[</span>arg<span class="sym">] &lt;-</span> getArgs
+        <span class="kwa">let</span> iter <span class="sym">=</span> read arg
+        <span class="kwa">let</span> n <span class="sym">=</span> <span class="num">5</span><span class="sym">::</span><span class="kwb">Int
+</span>        <span class="kwa">let</span> bodies <span class="sym">=</span> offset_momentum n <span class="sym">[</span>sun<span class="sym">,</span> jupiter<span class="sym">,</span> saturn<span class="sym">,</span> neptune<span class="sym">,</span> uranus<span class="sym">]
+</span>        <span class="kwa">let</span> begin <span class="sym">=</span> energy n bodies
+        putStrLn $ showFFloat <span class="sym">(</span>Just <span class="num">9</span><span class="sym">)</span> begin <span class="str">&quot;&quot;</span>
+        <span class="kwa">let</span> final <span class="sym">= (</span>iterate <span class="sym">(</span>advance <span class="num">0.01</span><span class="sym">)</span> bodies<span class="sym">)
+</span>        <span class="kwa">let</span> end <span class="sym">=</span> energy n <span class="sym">(</span>final <span class="sym">!!</span> iter<span class="sym">)
+</span>        putStrLn $ showFFloat <span class="sym">(</span>Just <span class="num">9</span><span class="sym">)</span> end <span class="str">&quot;&quot;</span>
+
+days_per_year <span class="sym">=</span> <span class="num">365.24
+</span>solar_mass <span class="sym">=</span> <span class="num">4.0</span> <span class="sym">*</span> pi <span class="sym">*</span> pi
+
+update <span class="sym">:: (</span>a <span class="sym">-&gt; [</span>a<span class="sym">] -&gt;</span> a<span class="sym">) -&gt; ([</span>a<span class="sym">] -&gt; [</span>a<span class="sym">]) -&gt; [</span>a<span class="sym">] -&gt; [</span>a<span class="sym">]
+</span>update f newlist <span class="sym">[]     = []
+</span>update f newlist <span class="sym">(</span>a<span class="sym">:</span><span class="kwa">as</span><span class="sym">) =</span> a<span class="str">' : update f (newlist . (a'</span><span class="sym">:))</span> <span class="kwa">as
+  where</span> a<span class="str">' = f a (newlist as)
+
+advance dt ps = update newplanet id ps
+  where newplanet p ps = Planet (pos p + delta_x) new_v (mass p)
+          where delta_v = sum (map (\q -&gt;
+                  (pos p - pos q) `scale` ((mass q)*dt/(dist p q)^3)) ps)
+                new_v   = (vel p) - delta_v
+                delta_x = new_v `scale` dt
+
+energy:: Int -&gt; [Planet] -&gt; Double
+energy n ps = kinetic - potential
+  where
+    kinetic   = 0.5 * (sum (map (\q-&gt;(mass q)*((vel q) `dot` (vel q))) ps))
+    potential = sum [(mass (ps!!i))*(mass (ps!!j))/(dist (ps!!i) (ps!!j))
+                      | i&lt;-[0..n-1], j&lt;-[i+1..n-1]]
+
+offset_momentum n ((Planet p v m):ps) = (Planet p new_v m):ps
+  where new_v = (sum (map (\n-&gt;(vel n) `scale` (mass n)) ps))
+                `scale` ((-1.0)/solar_mass)
+
+jupiter = (Planet
+ (V 4.84143144246472090e+00 (-1.16032004402742839e+00) (-1.03622044471123109e-01))
+ (V ( 1.66007664274403694e-03 * days_per_year)
+    ( 7.69901118419740425e-03 * days_per_year)
+    ((-6.90460016972063023e-05) * days_per_year))
+ (9.54791938424326609e-04 * solar_mass))
+
+saturn = (Planet
+ (V 8.34336671824457987e+00 4.12479856412430479e+00 (-4.03523417114321381e-01))
+ (V (-2.76742510726862411e-03 * days_per_year)
+    (4.99852801234917238e-03 * days_per_year)
+    (2.30417297573763929e-05 * days_per_year))
+ (2.85885980666130812e-04 * solar_mass))
+
+uranus = (Planet
+ (V 1.28943695621391310e+01 (-1.51111514016986312e+01) (-2.23307578892655734e-01))
+ (V (2.96460137564761618e-03 * days_per_year)
+    (2.37847173959480950e-03 * days_per_year)
+    (-2.96589568540237556e-05 * days_per_year))
+ (4.36624404335156298e-05 * solar_mass))
+
+neptune = (Planet
+ (V 1.53796971148509165e+01 (-2.59193146099879641e+01) 1.79258772950371181e-01)
+ (V (2.68067772490389322e-03 * days_per_year)
+    (1.62824170038242295e-03 * days_per_year)
+    (-9.51592254519715870e-05 * days_per_year))
+ (5.15138902046611451e-05 * solar_mass))
+
+sun = (Planet (V 0.0 0.0 0.0) (V 0.0 0.0 0.0) solar_mass)</span>
