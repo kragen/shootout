@@ -1,9 +1,9 @@
 -- n-body in Haskell
 -- The Great Computer Language Shootout
 -- http://shootout.alioth.debian.org/
--- Contributed by Greg Buchholz
+-- Contributed by Greg Buchholz with help from Josef Svenningsson
 -- compile : ghc -O2 -o nbody nbody.hs
--- run : nbody 1000 +RTS -H100M -K100M
+-- run : nbody 1000 +RTS -H300M -K100M
 -- has a space leak that needs fixing
 
 import System(getArgs)
@@ -26,27 +26,31 @@ mass (Planet _ _ m) = m
 vel  (Planet _ v _) = v
 pos  (Planet p _ _) = p
 
-main = do [arg] <- getArgs
-          let iter = read arg
-          let n = 5::Int
-          let bodies = offset_momentum n [sun, jupiter, saturn, neptune, uranus]
-          let begin = energy n bodies
-          putStrLn $ showFFloat (Just 9) begin ""
-          let final = (iterate (advance n 0.01) bodies)
-          let end = energy n (final !! iter)
-          putStrLn $ showFFloat (Just 9) end ""
+main = do 
+        [arg] <- getArgs
+        let iter = read arg
+        let n = 5::Int
+        let bodies = offset_momentum n [sun, jupiter, saturn, neptune, uranus]
+        let begin = energy n bodies
+        putStrLn $ showFFloat (Just 9) begin ""
+        let final = (iterate (advance 0.01) bodies)
+        let end = energy n (final !! iter)
+        putStrLn $ showFFloat (Just 9) end ""
 
 days_per_year = 365.24 
 solar_mass = 4.0 * pi * pi
 
-advance :: Int -> Double -> [Planet] -> [Planet]
-advance n dt (p:ps) = take n ((Planet (pos p + delta_x)
-                              (new_v) (mass p) ) : advance n dt (ps++[p]))
- where
-   delta_v = sum (map (\q -> 
+update :: (a -> [a] -> a) -> ([a] -> [a]) -> [a] -> [a]
+update f newlist []     = []
+update f newlist (a:as) = a' : update f (newlist . (a':)) as
+  where a' = f a (newlist as)
+
+advance dt ps = update newplanet id ps
+  where newplanet p ps = Planet (pos p + delta_x) new_v (mass p)
+          where delta_v = sum (map (\q ->
                   (pos p - pos q) `scale` ((mass q)*dt/(dist p q)^3)) ps)
-   new_v   = (vel p) - delta_v
-   delta_x = new_v `scale` dt 
+                new_v   = (vel p) - delta_v
+                delta_x = new_v `scale` dt
 
 energy:: Int -> [Planet] -> Double
 energy n ps = kinetic - potential
