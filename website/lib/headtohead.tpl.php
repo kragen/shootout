@@ -44,18 +44,18 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <table class="div">
 <tr><td><table>
 <tr>
-<th>Program &amp; Logs</th>
+<th class="c">&nbsp;</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
 <th>CPU Time</th>
 <th>Code Lines</th>
-<th>&nbsp;N&nbsp;</th>
+<th class="c">&nbsp;</th>
 </tr>
 
 <tr>
-<th>&nbsp;</th>
+<th>Program &amp; Logs</th>
 <th colspan="4"><?=$LangName;?>&nbsp;/ <?=$LangName2;?></th>
-<th>&nbsp;</th>
+<th>&nbsp;N&nbsp;</th>
 </tr>
 
 <? 
