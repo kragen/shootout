@@ -78,7 +78,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <table class="div" >
 <tr><th class="a">
-<a class="ab" href="#play" name="play"><strong>3&nbsp;Play</strong></a> <span class="s">imaginatively-weighted overall scores</span>
+<a class="ab" href="#play" name="play"><strong>3&nbsp;Have fun!</strong></a> <span class="s">imaginatively-weighted overall scores</span>
 </th></tr>
 
 <tr class="a"><td class="center">
