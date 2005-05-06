@@ -21,6 +21,10 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 </td></tr>
 </table>
 
+
+
+
+
 <!-- // CHART //////////////////////////////////////////////////// -->
 
 <table class="div">
@@ -103,11 +107,72 @@ foreach($Tests as $Row){
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
+?>   
+   
+
+   
+
+
+<!-- // SUMMARY /////////////////////////////////////////////////// -->   
+
+<tr><td colspan="6">&nbsp;</td></tr> 
+    
+<tr class="a">
+<th class="c">&nbsp;</th>
+<th>&nbsp;Full&nbsp;CPU Time&nbsp;</th>
+<th>&nbsp;Memory Use&nbsp;</th>
+<th>&nbsp;CPU Time&nbsp;</th>
+<th>&nbsp;Code Lines&nbsp;</th>
+<th class="c">&nbsp;</th>
+</tr>   
+<tr>
+<th class="c">&nbsp;</th>
+<th colspan="4"><?=$LangName;?> better - <?=$LangName2;?> better</th>
+<th class="c">&nbsp;</th>
+</tr>  
+
+
+<? // this should be in a function
+
+$fullb = 0; $fullw = 0; $memb = 0; $memw = 0; 
+$cpub = 0; $cpuw = 0; $linesb = 0; $linesw = 0;
+
+foreach($Tests as $Row){
+   $Link = $Row[TEST_LINK];
+   if (isset($Data[$Link])){
+      $v = $Data[$Link];    
+      
+      if ($v[N_LINES] > 0){           
+      
+         if ($v[N_FULLCPU] <= 0.999){ $fullb++; } 
+         elseif ($v[N_FULLCPU] >= 1.001){ $fullw++; } 
+         
+         if ($v[N_MEMORY] <= 0.999){ $memb++; } 
+         elseif ($v[N_MEMORY] >= 1.001){ $memw++; }   
+         
+         if ($v[N_CPU] <= 0.999){ $cpub++; } 
+         elseif ($v[N_CPU] >= 1.001){ $cpuw++; }   
+         
+         if ($v[N_LINES] <= 0.999){ $linesb++; } 
+         elseif ($v[N_LINES] >= 1.001){ $linesw++; }                                                                    
+      }      
+   }
+}
 ?>
-</table></td></tr>
 
+<tr class="a">
+<td class="c">&nbsp;</td>
+<td class="r"><?=$fullb;?>-<?=$fullw;?></td>
+<td class="r"><?=$memb;?>-<?=$memw;?></td>
+<td class="r"><?=$cpub;?>-<?=$cpuw;?></td>
+<td class="r"><?=$linesb;?>-<?=$linesw;?></td>
+<td class="c">&nbsp;</td>
+</tr>
+<tr><td colspan="6">&nbsp;</td></tr>  
 
-<!-- // ABOUT /////////////////////////////////////////////////// -->
+</table>
+</td></tr>
+
 
 <tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$LangName;?> language</a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
