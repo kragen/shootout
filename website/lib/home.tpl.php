@@ -31,7 +31,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <th class="c" colspan="2">
 <a class="ab" href="#compare" name="compare"><strong>2&nbsp;Compare</strong></a>
-<p class="thp">side-by-side, on all benchmarks</p>
+<p class="thp">relative performance on all benchmarks</p>
 </th>
 </tr>
 

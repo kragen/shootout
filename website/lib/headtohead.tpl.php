@@ -17,7 +17,7 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
-<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?></a>) relative performance - how much <em>more</em> Memory, how much <em>more</em> CPU Time, did each language use?
+<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?>)</a> relative performance - how much <em>more</em> Memory, how much <em>more</em> CPU Time, did each language use?
 </p>
 </td></tr>
 
