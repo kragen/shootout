@@ -17,7 +17,7 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
-<p><?=$LangTag;?></p>
+<p><a href="#about" title="Read about <?=$LangName;?>"><?=$LangTag;?></a></p>
 </td></tr>
 
 
