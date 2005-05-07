@@ -180,7 +180,7 @@ foreach($Langs as $k => $v){
 <?
 if (sizeof($Special)>0){
    echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";   // BAD using rows for spacing 
-   echo '<tr><th colspan="5">interesting alternative programs</th></tr>', "\n";
+   echo '<tr><th colspan="5"><a class="ab" href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
 
    $RowClass = 'c';
    foreach($Special as $d){
@@ -225,7 +225,7 @@ if (sizeof($Special)>0){
 
 if (sizeof($No_Program_Langs)>0){
    echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacing
-   echo '<tr><th colspan="5">missing programs</th></tr>', "\n";
+   echo '<tr><th colspan="5"><a class="ab" href="#missing" name="missing">missing programs</a></th></tr>', "\n";
       
    foreach($Langs as $k => $v){
       $no_program = isset($No_Program_Langs[$k]);        
