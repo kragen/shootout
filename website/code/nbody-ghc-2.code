@@ -2,10 +2,9 @@
 </span><span class="slc">-- The Great Computer Language Shootout
 </span><span class="slc">-- http://shootout.alioth.debian.org/
 </span><span class="slc">-- Contributed by Greg Buchholz with help from
-</span><span class="slc">-- Josef Svenningsson and Daniel Fischer
+</span><span class="slc">-- Josef Svenningsson, Daniel Fischer and Malcolm Wallace
 </span><span class="slc">-- compile : ghc -O2 -o nbody nbody.hs
-</span><span class="slc">-- run : nbody 1000 +RTS -H300M -K100M
-</span><span class="slc">-- has a space leak that needs fixing
+</span><span class="slc">-- run : nbody 1000000
 </span>
 <span class="kwa">import</span> System<span class="sym">(</span>getArgs<span class="sym">)
 </span><span class="kwa">import</span> Numeric
@@ -21,48 +20,65 @@
 scale <span class="sym">(</span>V a b c<span class="sym">)</span> n <span class="sym">=</span> V <span class="sym">(</span>n<span class="sym">*</span>a<span class="sym">) (</span>n<span class="sym">*</span>b<span class="sym">) (</span>n<span class="sym">*</span>c<span class="sym">)
 </span>mag <span class="sym">(</span>V x y z<span class="sym">) =</span>  sqrt <span class="sym">(</span>x<span class="sym">*</span>x <span class="sym">+</span> y<span class="sym">*</span>y <span class="sym">+</span> z<span class="sym">*</span>z<span class="sym">)
 
-</span><span class="kwa">data</span> Planet <span class="sym">=</span> Planet Vec Vec <span class="kwb">Double</span> <span class="kwa">deriving</span> Show <span class="slc">--Position Velocity Mass
+</span><span class="kwa">data</span> Planet <span class="sym">=</span> Planet <span class="sym">!</span>Vec <span class="sym">!</span>Vec <span class="sym">!</span><span class="kwb">Double</span> <span class="kwa">deriving</span> Show <span class="slc">--Position Velocity Mass
 </span>dist <span class="sym">(</span>Planet p1 _ _<span class="sym">) (</span>Planet p2 _ _<span class="sym">) =</span> mag $ p1 <span class="sym">-</span> p2
 mass <span class="sym">(</span>Planet _ _ m<span class="sym">) =</span> m
 vel  <span class="sym">(</span>Planet _ v _<span class="sym">) =</span> v
 pos  <span class="sym">(</span>Planet p _ _<span class="sym">) =</span> p
 
+<span class="kwa">data</span> StrictList a <span class="sym">=</span> Cons <span class="sym">!</span>a <span class="sym">!(</span>StrictList a<span class="sym">) |</span> Nil
+
+slToList <span class="sym">(</span>Cons a sl<span class="sym">) =</span> a <span class="sym">:</span> slToList sl
+slToList Nil <span class="sym">= []
+
+</span>listToSl <span class="sym">(</span>a<span class="sym">:</span><span class="kwa">as</span><span class="sym">) =</span> Cons a <span class="sym">(</span>listToSl <span class="kwa">as</span><span class="sym">)
+</span>listToSl <span class="sym">[] =</span> Nil
+
+mapSL f <span class="sym">(</span>Cons a sl<span class="sym">) =</span> Cons <span class="sym">(</span>f a<span class="sym">) (</span>mapSL f sl<span class="sym">)
+</span>mapSL f Nil <span class="sym">=</span> Nil
+
 main <span class="sym">=</span> <span class="kwa">do
 </span>        <span class="sym">[</span>arg<span class="sym">] &lt;-</span> getArgs
         <span class="kwa">let</span> iter <span class="sym">=</span> read arg
         <span class="kwa">let</span> n <span class="sym">=</span> <span class="num">5</span><span class="sym">::</span><span class="kwb">Int
-</span>        <span class="kwa">let</span> bodies <span class="sym">=</span> offset_momentum n <span class="sym">[</span>sun<span class="sym">,</span> jupiter<span class="sym">,</span> saturn<span class="sym">,</span> neptune<span class="sym">,</span> uranus<span class="sym">]
+</span>        <span class="kwa">let</span> bodies <span class="sym">=</span> offset_momentum <span class="sym">[</span>sun<span class="sym">,</span> jupiter<span class="sym">,</span> saturn<span class="sym">,</span> neptune<span class="sym">,</span> uranus<span class="sym">]
 </span>        <span class="kwa">let</span> begin <span class="sym">=</span> energy n bodies
         putStrLn $ showFFloat <span class="sym">(</span>Just <span class="num">9</span><span class="sym">)</span> begin <span class="str">&quot;&quot;</span>
-        <span class="kwa">let</span> final <span class="sym">= (</span>iterate <span class="sym">(</span>advance <span class="num">0.01</span><span class="sym">)</span> bodies<span class="sym">)
-</span>        <span class="kwa">let</span> end <span class="sym">=</span> energy n <span class="sym">(</span>final <span class="sym">!!</span> iter<span class="sym">)
-</span>        putStrLn $ showFFloat <span class="sym">(</span>Just <span class="num">9</span><span class="sym">)</span> end <span class="str">&quot;&quot;</span>
+        <span class="kwa">let</span> final <span class="sym">=</span> iterN iter <span class="sym">(</span>advance <span class="num">0.01</span><span class="sym">)</span> bodies
+        <span class="kwa">let</span> end <span class="sym">=</span> energy n final
+        putStrLn $ showFFloat <span class="sym">(</span>Just <span class="num">9</span><span class="sym">)</span> end <span class="str">&quot;&quot;</span>
 
-days_per_year <span class="sym">=</span> <span class="num">365.24
+iterN <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt; (</span>a <span class="sym">-&gt;</span> a<span class="sym">) -&gt;</span> a <span class="sym">-&gt;</span> a
+iterN <span class="num">0</span> _ x <span class="sym">=</span> x
+iterN n f x <span class="sym">=</span> n `seq` x `seq` iterN <span class="sym">(</span>n<span class="num">-1</span><span class="sym">)</span> f <span class="sym">(</span>f x<span class="sym">)
+
+</span>days_per_year <span class="sym">=</span> <span class="num">365.24
 </span>solar_mass <span class="sym">=</span> <span class="num">4.0</span> <span class="sym">*</span> pi <span class="sym">*</span> pi
 
-update <span class="sym">:: (</span>a <span class="sym">-&gt; [</span>a<span class="sym">] -&gt;</span> a<span class="sym">) -&gt; ([</span>a<span class="sym">] -&gt; [</span>a<span class="sym">]) -&gt; [</span>a<span class="sym">] -&gt; [</span>a<span class="sym">]
-</span>update f newlist <span class="sym">[]     = []
-</span>update f newlist <span class="sym">(</span>a<span class="sym">:</span><span class="kwa">as</span><span class="sym">) =</span> a<span class="str">' : update f (newlist . (a:)) as
-  where a'</span> <span class="sym">=</span> f a <span class="sym">(</span>newlist <span class="kwa">as</span><span class="sym">)
+partitionSL <span class="sym">::</span> StrictList a <span class="sym">-&gt;</span> StrictList <span class="sym">(</span>a<span class="sym">,</span>StrictList a<span class="sym">)
+</span>partitionSL sl <span class="sym">=</span> go id sl
+  <span class="kwa">where</span> go prev Nil <span class="sym">=</span> Nil
+        go prev <span class="sym">(</span>Cons a sl<span class="sym">) =</span> Cons <span class="sym">(</span>a<span class="sym">,</span>prev sl<span class="sym">) (</span>go <span class="sym">(</span>prev . <span class="sym">(</span>Cons a<span class="sym">))</span> sl<span class="sym">)
 
-</span>advance dt ps <span class="sym">=</span> update newplanet id ps
-  <span class="kwa">where</span> newplanet p ps <span class="sym">=</span> Planet <span class="sym">(</span>pos p <span class="sym">+</span> delta_x<span class="sym">)</span> new_v <span class="sym">(</span>mass p<span class="sym">)
-</span>          <span class="kwa">where</span> delta_v <span class="sym">=</span> sum <span class="sym">(</span>map <span class="sym">(</span>\q <span class="sym">-&gt;
-                  (</span>pos p <span class="sym">-</span> pos q<span class="sym">)</span> `scale` <span class="sym">((</span>mass q<span class="sym">)*</span>dt<span class="sym">/(</span>dist p q<span class="sym">)</span>^<span class="num">3</span><span class="sym">))</span> ps<span class="sym">)
-</span>                new_v   <span class="sym">= (</span>vel p<span class="sym">) -</span> delta_v
-                delta_x <span class="sym">=</span> new_v `scale` dt
+</span>advance dt sl <span class="sym">=</span> mapSL newplanet <span class="sym">(</span>partitionSL sl<span class="sym">)
+</span>  <span class="kwa">where</span> newplanet <span class="sym">(</span>p<span class="sym">,</span>sl<span class="sym">) =</span> Planet <span class="sym">(</span>pos p <span class="sym">+</span> delta_x<span class="sym">)</span> new_v <span class="sym">(</span>mass p<span class="sym">)
+</span>          <span class="kwa">where</span> ps <span class="sym">=</span> slToList sl
+                delta_v     <span class="sym">=</span> sum <span class="sym">(</span>map <span class="sym">(</span>\q <span class="sym">-&gt;
+                 (</span>pos p <span class="sym">-</span> pos q<span class="sym">)</span> `scale` <span class="sym">((</span>mass q<span class="sym">)*</span>dt<span class="sym">/(</span>dist p q<span class="sym">)</span>^<span class="num">3</span><span class="sym">))</span> ps<span class="sym">)
+</span>                new_v       <span class="sym">= (</span>vel p<span class="sym">) -</span> delta_v
+                delta_x     <span class="sym">=</span> new_v `scale` dt
 
-energy<span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt; [</span>Planet<span class="sym">] -&gt;</span> <span class="kwb">Double
-</span>energy n ps <span class="sym">=</span> kinetic <span class="sym">-</span> potential
+offset_momentum <span class="sym">((</span>Planet p v m<span class="sym">):</span>ps<span class="sym">) =</span> Cons <span class="sym">(</span>Planet p new_v m<span class="sym">) (</span>listToSl ps<span class="sym">)
+</span>  <span class="kwa">where</span> new_v <span class="sym">= (</span>sum <span class="sym">(</span>map <span class="sym">(</span>\p<span class="sym">-&gt;(</span>vel p<span class="sym">)</span> `scale` <span class="sym">(</span>mass p<span class="sym">))</span> ps<span class="sym">))
+</span>                `scale` <span class="sym">((-</span><span class="num">1.0</span><span class="sym">)/</span>solar_mass<span class="sym">)
+
+</span>energy<span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> StrictList Planet <span class="sym">-&gt;</span> <span class="kwb">Double
+</span>energy n ls <span class="sym">=</span> kinetic <span class="sym">-</span> potential
   <span class="kwa">where
-</span>    kinetic   <span class="sym">=</span> <span class="num">0.5</span> <span class="sym">* (</span>sum <span class="sym">(</span>map <span class="sym">(</span>\q<span class="sym">-&gt;(</span>mass q<span class="sym">)*((</span>vel q<span class="sym">)</span> `dot` <span class="sym">(</span>vel q<span class="sym">)))</span> ps<span class="sym">))
+</span>    ps <span class="sym">=</span> slToList ls
+    kinetic   <span class="sym">=</span> <span class="num">0.5</span> <span class="sym">* (</span>sum $ map <span class="sym">(</span>\q<span class="sym">-&gt; (</span>mass q<span class="sym">)*((</span>vel q<span class="sym">)</span>`dot`<span class="sym">(</span>vel q<span class="sym">)))</span> ps<span class="sym">)
 </span>    potential <span class="sym">=</span> sum <span class="sym">[(</span>mass <span class="sym">(</span>ps<span class="sym">!!</span>i<span class="sym">))*(</span>mass <span class="sym">(</span>ps<span class="sym">!!</span>j<span class="sym">))/(</span>dist <span class="sym">(</span>ps<span class="sym">!!</span>i<span class="sym">) (</span>ps<span class="sym">!!</span>j<span class="sym">))
                       |</span> i<span class="sym">&lt;-[</span><span class="num">0</span>..n<span class="num">-1</span><span class="sym">],</span> j<span class="sym">&lt;-[</span>i<span class="sym">+</span><span class="num">1</span>..n<span class="num">-1</span><span class="sym">]]
-
-</span>offset_momentum n <span class="sym">((</span>Planet p v m<span class="sym">):</span>ps<span class="sym">) = (</span>Planet p new_v m<span class="sym">):</span>ps
-  <span class="kwa">where</span> new_v <span class="sym">= (</span>sum <span class="sym">(</span>map <span class="sym">(</span>\n<span class="sym">-&gt;(</span>vel n<span class="sym">)</span> `scale` <span class="sym">(</span>mass n<span class="sym">))</span> ps<span class="sym">))
-</span>                `scale` <span class="sym">((-</span><span class="num">1.0</span><span class="sym">)/</span>solar_mass<span class="sym">)
 
 </span>jupiter <span class="sym">= (</span>Planet
  <span class="sym">(</span>V <span class="num">4.84143144246472090e</span><span class="sym">+</span><span class="num">00</span> <span class="sym">(-</span><span class="num">1.16032004402742839e</span><span class="sym">+</span><span class="num">00</span><span class="sym">) (-</span><span class="num">1.03622044471123109e</span><span class="sym">-</span><span class="num">01</span><span class="sym">))
