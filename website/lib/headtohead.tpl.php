@@ -17,7 +17,8 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
-<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangTag;?></a></p>
+<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?></a>) relative performance - how much <em>more</em> Memory, how much <em>more</em> CPU Time, did each language use?
+</p>
 </td></tr>
 
 
@@ -41,6 +42,8 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 
 <tr><td>
 <h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;<?=$LangName;?> / <?=$LangName2;?></a></h4>
+<p>Relative performance: values > 1 mean the <?=$LangName;?> program used <em>more</em> than the <?=$LangName2;?> 
+program; values < 1 mean the <?=$LangName;?> program used <em>less</em> than the <?=$LangName2;?> program.</p>
 </td></tr>
 
 
