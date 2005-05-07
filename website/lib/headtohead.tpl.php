@@ -19,16 +19,12 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
 <p><?=$LangTag;?></p>
 </td></tr>
-</table>
-
-
 
 
 
 <!-- // CHART //////////////////////////////////////////////////// -->
 
-<table class="div">
-<tr><td>
+<tr><td class="center">
 
 <img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>&amp;sort=<?=$Sort;?>"
    alt="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
@@ -36,12 +32,18 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
    width="300" height="350"
  />
 </td></tr>
-</table>
+
+<tr><td>&nbsp;</td></tr>
 
 
 <!-- // TABLE ////////////////////////////////////////////// -->
 
-<table class="div">
+
+<tr><td>
+<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;<?=$LangName;?> / <?=$LangName2;?></a></h4>
+</td></tr>
+
+
 <tr><td><table>
 <tr>
 <th class="c">&nbsp;</th>
@@ -108,15 +110,19 @@ foreach($Tests as $Row){
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>   
-   
 
+   
+<tr><td colspan="6">&nbsp;</td></tr>
    
 
 
 <!-- // SUMMARY /////////////////////////////////////////////////// -->   
 
-<tr><td colspan="6">&nbsp;</td></tr> 
+<tr class="b"><td colspan="6">
+<a class="ab" href="#summary" name="summary">&nbsp;summary</a>
+</td></tr>
     
+<tr><td>
 <tr class="a">
 <th class="c">&nbsp;</th>
 <th>&nbsp;Full&nbsp;CPU Time&nbsp;</th>
