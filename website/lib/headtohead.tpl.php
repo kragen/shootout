@@ -125,10 +125,10 @@ foreach($Tests as $Row){
 <tr><td>
 <tr class="a">
 <th class="c">&nbsp;</th>
-<th>&nbsp;Full&nbsp;CPU Time&nbsp;</th>
-<th>&nbsp;Memory Use&nbsp;</th>
-<th>&nbsp;CPU Time&nbsp;</th>
-<th>&nbsp;Code Lines&nbsp;</th>
+<th>Full&nbsp;CPU Time</th>
+<th>Memory Use</th>
+<th>CPU Time</th>
+<th>Code Lines</th>
 <th class="c">&nbsp;</th>
 </tr>   
 <tr>
