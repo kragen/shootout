@@ -31,7 +31,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <th class="c" colspan="2">
 <a class="ab" href="#compare" name="compare"><strong>2&nbsp;Compare</strong></a>
-<p class="thp">relative performance on all benchmarks</p>
+<p class="thp">Relative performance on all benchmarks</p>
 </th>
 </tr>
 
@@ -78,7 +78,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <table class="div" >
 <tr><th class="a">
-<a class="ab" href="#play" name="play"><strong>3&nbsp;Have fun!</strong></a> <span class="s">imaginatively-weighted overall scores</span>
+<a class="ab" href="#play" name="play"><strong>3&nbsp;Have fun!</strong></a> <span class="s">Create your own overall scores</span>
 </th></tr>
 
 <tr class="a"><td class="center">

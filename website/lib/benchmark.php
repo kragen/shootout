@@ -46,7 +46,7 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard
   
-      $Title = 'Overall Scores';
+      $Title = 'Create your own Overall Scores';
       $TemplateName = 'scorecard.tpl.php';
 
       $About = & new Template(ABOUT_PATH);

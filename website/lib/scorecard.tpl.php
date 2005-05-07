@@ -11,7 +11,7 @@
 
 <table class="div">
 <tr><td colspan="2">
-<h4 class="rev"><a class="arev" href="#faster" name="faster">&nbsp;Imaginatively-Weighted Overall Scores</a></h4>
+<h4 class="rev"><a class="arev" href="#faster" name="faster">&nbsp;Create your own Overall Scores</a></h4>
 </td></tr>
 <tr><td colspan="2">
 <p>What fun! <a href="http://en.wikipedia.org/wiki/April_Fool's_Day" title="April Fool's Day defined on Wikipedia"><strong>April Fool's Day</strong></a> all year long! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
