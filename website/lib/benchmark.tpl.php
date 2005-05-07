@@ -35,7 +35,7 @@ foreach($Accepted as $d){
 <tr><td>
 <h4 class="rev"><a class="arev" href="#bench" name="bench"><?=$TestName;?> benchmark <?=DASH.SortName($Sort);?></a></h4>
 <p><a href="#about" title="Read about the <?=$TestName;?> benchmark"><?=$TestTag;?></a> <?=$NString;?>&nbsp;(Measurements for other values of N are shown on <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
-title="Check all the data for the <?=$TestName;?> benchmark"><?=$TestName;?> full data</a>.)
+title="Check all the data for the <?=$TestName;?> benchmark"><?=$TestName;?> full data</a>).
 </p>
 </td></tr>
 </table>

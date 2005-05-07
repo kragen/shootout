@@ -36,13 +36,19 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
    $w = 300;
    $w2 = 150;
    $o = 150;   
-   $h = 350;
+   $h = 380;
    $hsec = 5;
    $hmem = 1;
    $vscale = CHART_VSCALE;
    $hscale = 15;   
-   $ysec = 7;
-   $ymem = 6;
+   
+   $ts = 2;
+   $t = $ts+12;   
+   $v1 = $w2/$hscale;
+   $b = $h-50;   
+   
+   $ysec = $t+7;
+   $ymem = $t+7 -1;
    $height = 9;
 
 
@@ -54,22 +60,30 @@ $black = ImageColorAllocate($im,0,0,0);
 $bgray = ImageColorAllocate($im,204,204,204);
 
 
-// GRIDLINES
+// TOP GRIDLINES & GRIDLINE LABELS
 
 $gray = ImageColorAllocate($im,221,221,221);
-$v1 = $w2/$hscale;
-$b = $h-50;
-ImageLine($im, $o, $ysec, $o, $b, $white);
 
-ImageLine($im, $o-$v1*4, $ysec, $o-$v1*4, $b, $gray);
-ImageLine($im, $o-$v1*9, $ysec, $o-$v1*9, $b, $gray);
-ImageLine($im, $o-$v1*14, $ysec, $o-$v1*14, $b, $white);
+ImageString($im, 2, $o -2, $ts, '1', $white);
+ImageString($im, 2, $o-$v1*4 -6, $ts, '5x', $white);
+ImageString($im, 2, $o-$v1*9 -8, $ts, '10x', $white);
+ImageString($im, 2, $o-$v1*14 -8, $ts, '15x', $white);
+ImageString($im, 2, $o+$v1*4 -6, $ts, '5x', $white);
+ImageString($im, 2, $o+$v1*9 -8, $ts, '10x', $white);
+ImageString($im, 2, $o+$v1*14 -8, $ts, '15x', $white);
 
-ImageLine($im, $o+$v1*4, $ysec, $o+$v1*4, $b, $gray);
-ImageLine($im, $o+$v1*9, $ysec, $o+$v1*9, $b, $gray);
-ImageLine($im, $o+$v1*14, $ysec, $o+$v1*14, $b, $white);
-
+ImageLine($im, $o-$v1*14, $t+5, $o+$v1*14, $t+5, $white);
 ImageLine($im, $o-$v1*14, $b-5, $o+$v1*14, $b-5, $white);
+
+ImageLine($im, $o, $t, $o, $b, $white);
+ImageLine($im, $o-$v1*4, $t, $o-$v1*4, $b, $gray);
+ImageLine($im, $o-$v1*9, $t, $o-$v1*9, $b, $gray);
+ImageLine($im, $o-$v1*14, $t, $o-$v1*14, $b, $white);
+ImageLine($im, $o+$v1*4, $t, $o+$v1*4, $b, $gray);
+ImageLine($im, $o+$v1*9, $t, $o+$v1*9, $b, $gray);
+ImageLine($im, $o+$v1*14, $t, $o+$v1*14, $b, $white);
+
+
 
 
 // CHART BARS
@@ -109,13 +123,12 @@ foreach($Tests as $Row){
 }
 
 
-// GRIDLINES & GRIDLINE LABELS
-ImageString($im, 2, $o -2, $b, '1', $white);
+// BOTTOM GRIDLINE LABELS
 
+ImageString($im, 2, $o -2, $b, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $b, '5x', $white);
 ImageString($im, 2, $o-$v1*9 -8, $b, '10x', $white);
 ImageString($im, 2, $o-$v1*14 -8, $b, '15x', $white);
-
 ImageString($im, 2, $o+$v1*4 -6, $b, '5x', $white);
 ImageString($im, 2, $o+$v1*9 -8, $b, '10x', $white);
 ImageString($im, 2, $o+$v1*14 -8, $b, '15x', $white);

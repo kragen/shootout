@@ -17,7 +17,7 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
-<p><a href="#about" title="Read about <?=$LangName;?>"><?=$LangTag;?></a></p>
+<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangTag;?></a></p>
 </td></tr>
 
 
@@ -29,7 +29,7 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 <img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>&amp;sort=<?=$Sort;?>"
    alt="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
    title="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
-   width="300" height="350"
+   width="300" height="380"
  />
 </td></tr>
 
@@ -118,7 +118,7 @@ foreach($Tests as $Row){
 
 <!-- // SUMMARY /////////////////////////////////////////////////// -->   
 
-<tr class="b"><td colspan="6">
+<tr class="b"><td colspan="6" >
 <a class="ab" href="#summary" name="summary">&nbsp;summary</a>
 </td></tr>
     
