@@ -22,15 +22,15 @@ BEGIN
       rd := TextRider.ConnectReader(ProgramArgs.args);
       rd.ReadLine(line);
       LOOP
-        rd.ReadLine(line);
-	IF rd.res # TextRider.done THEN
-	  RETURN n;
-	END;
-	IntStr.StrToInt(line, n, res);
+         rd.ReadLine(line);
+         IF rd.res # TextRider.done THEN RETURN n; END;
+         IntStr.StrToInt(line, n, res);
       END;
   END;
   RETURN n;
 END Argi;
+
+
 
 PROCEDURE Quicksort* (n: LONGINT; VAR a: ARRAY OF REAL);
 
