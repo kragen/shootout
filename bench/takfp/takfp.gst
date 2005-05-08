@@ -3,7 +3,7 @@
 
    contributed by Isaac Gouy
 
-   To run: gst -QI /usr/local/share/smalltalk/gst.im takfp.st -a 7
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im takfp.st -a 7
 "
 
 !Float methodsFor: 'shootout'!
@@ -22,6 +22,9 @@ takfp: aFloatY z: aFloatZ
 n := Smalltalk arguments first asInteger.
 
 (((n * 3.0) takfp: (n * 2.0) z: (n * 1.0)) asScaledDecimal: 1) displayNl !
+
+
+
 
 "
   vim: ts=4 ft=st

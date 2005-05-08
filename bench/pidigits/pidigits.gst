@@ -2,8 +2,8 @@
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im pidigits.st -a 100 
+ 
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im pidigits.st -a 100 
 "
 
 Object subclass: #Transformation
