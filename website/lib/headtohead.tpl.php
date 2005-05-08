@@ -42,8 +42,8 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 
 <tr><td>
 <h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;<?=$LangName;?> / <?=$LangName2;?></a></h4>
-<p>Relative performance: values > 1 mean the <?=$LangName;?> program used <em>more</em> than the <?=$LangName2;?> 
-program; values < 1 mean the <?=$LangName;?> program used <em>less</em> than the <?=$LangName2;?> program.</p>
+<p>Relative performance: values &#62; 1 mean the <?=$LangName;?> program used <em>more</em> than the <?=$LangName2;?> 
+program; values &#60; 1 mean the <?=$LangName;?> program used <em>less</em> than the <?=$LangName2;?> program.</p>
 </td></tr>
 
 
@@ -125,7 +125,6 @@ foreach($Tests as $Row){
 <a class="ab" href="#summary" name="summary">&nbsp;summary</a>
 </td></tr>
     
-<tr><td>
 <tr class="a">
 <th class="c">&nbsp;</th>
 <th>Full&nbsp;CPU Time</th>
@@ -134,6 +133,7 @@ foreach($Tests as $Row){
 <th>Code Lines</th>
 <th class="c">&nbsp;</th>
 </tr>   
+
 <tr>
 <th class="c">&nbsp;</th>
 <th colspan="4"><?=$LangName;?> better - <?=$LangName2;?> better</th>

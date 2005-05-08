@@ -238,7 +238,7 @@ Do you want to help with the chores?</p>
 
 <tr class="b"><td><a class="ab" href="#options" name="options">Where can I see which compiler and runtime options were used?</a></td></tr>
 <tr><td>
-<p>You can see the build commands and runtime commands on each program page in the <a href="benchmark.php?test=ackermann&amp;lang=gcc&amp;sort=<?=$Sort;?>#log" title="build & benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<p>You can see the build commands and runtime commands on each program page in the <a href="benchmark.php?test=ackermann&amp;lang=gcc&amp;sort=<?=$Sort;?>#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
