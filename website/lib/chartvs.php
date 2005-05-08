@@ -43,7 +43,7 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
    $hscale = 15;   
    
    $ts = 2;
-   $t = $ts+12;   
+   $t = $ts+13;   
    $v1 = $w2/$hscale;
    $b = $h-50;   
    
