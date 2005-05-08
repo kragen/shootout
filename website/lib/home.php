@@ -58,7 +58,7 @@ $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 if (SITE_NAME=='sandbox'){
    $metaRobots = '<meta name="robots" content="noindex,nofollow" />';
 } else {
-   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="5 days" />';
+   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="1 days" />';
 }
 
 $Page->set('Robots', $metaRobots);
