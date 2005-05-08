@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2005-04-04 14:56:36 bfulgham Exp $
+# $Id: Makefile,v 1.30 2005-05-08 20:41:19 sweeks Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -7,10 +7,6 @@ TITLE   := Statistical Moments
 GCCOPTS := -lm
 
 #XLABEL  := N (number of copies of input data)
-
-MLTONDEPS := ../../Include/mlton-src/basic.sml \
-	     ../../Include/mlton-src/insertion-sort.sml \
-	     ../../Include/mlton-src/quick-sort.sml
 
 MB_GHCRTS  := +RTS -K2M -H45M
 MB_NHCRTS  := +RTS -H40M

@@ -1,13 +1,10 @@
-# $Id: Makefile,v 1.28 2005-04-04 14:56:36 bfulgham Exp $
+# $Id: Makefile,v 1.29 2005-05-08 20:41:19 sweeks Exp $
 include ../../Make.header
 
 TEST    := hash
 TITLE   := Hash (Associative Array) Access
 
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
-
-MLTONDEPS := ../../Include/mlton-src/basic.sml \
-		../../Include/mlton-src/hash-table.sml
 
 GHCOPTS := -package data
 MB_GHCRTS  := +RTS -K10000000

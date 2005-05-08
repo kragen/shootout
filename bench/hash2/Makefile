@@ -1,13 +1,10 @@
-# $Id: Makefile,v 1.18 2004-11-10 06:36:29 bfulgham Exp $
+# $Id: Makefile,v 1.19 2005-05-08 20:41:19 sweeks Exp $
 include ../../Make.header
 
 TEST    := hash2
 TITLE   := Hashes Part II
 
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
-
-MLTONDEPS := ../../Include/mlton-src/basic.sml \
-		../../Include/mlton-src/hash-table.sml
 
 ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
