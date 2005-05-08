@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.33 2005-05-08 05:22:49 bfulgham Exp $
+# $Id: minibench,v 1.34 2005-05-08 06:23:15 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -34,7 +34,7 @@ use POSIX ":sys_wait_h";
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.33 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.34 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -1128,11 +1128,12 @@ sub run {
     } else {
         $cmdline =~ s/%A/$arg/g;
     }
-    my $mincpu;
-    my $maxcpu;
+    my ($mincpu, $maxcpu, $aborted);
     my $rc = 0;
     abort_if_swapping();
+    
     for (my $i=0; $i<$repeat; $i++) {
+        $aborted = 0;
 	my $inputfile = create_input($arg);
 	err("# Running: $cmdline") if ($OPT->{verbose});
 	my($cu0, $cs0) = (BSD::Resource::times)[2,3];
@@ -1217,6 +1218,9 @@ sub run {
             chomp $exit;
             #warn "exit code from $cpid: $exit";
 	    _report_if_test_failed($exit,$runlog);
+	    if ($exit) {
+		$aborted = 1;
+            }
 	    my($cuser, $csys) = (BSD::Resource::times)[2,3];
 	    #warn "cuser=$cuser, cu0=$cu0, csys=$csys, cs0=$cs0\n";
 	    $cuser -= $cu0;
@@ -1226,13 +1230,21 @@ sub run {
 	    $mincpu = min($totcpu, $mincpu);
 	    $maxcpu = max($totcpu, $maxcpu);
 	}
-	$rc = $self->compare_output($arg);
-	if ($mincpu > $OPT->{maxrepthreshold}) {
-	    $repeat = 1;
-	    last;
+
+	if ($aborted) {
+            $rc = -1;
+            $repeat = 1;
+        } else {
+            $rc = $self->compare_output($arg);
+
+            if ($mincpu > $OPT->{maxrepthreshold}) {
+                $repeat = 1;
+	        last;
+            }
 	}
 	if ($rc < 0) {
 	    # Incorrect output
+	    warn "Got incorrect output $rc\n";
 	    my $resultsref = $self->pop_results;
 	    my @results = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } @$resultsref;
 	    my $max = 0;
