@@ -1,19 +1,9 @@
 (* -*- mode: sml -*-
- * $Id: prodcons.mlton,v 1.2 2004-05-24 07:16:19 bfulgham Exp $
+ * $Id: prodcons.mlton,v 1.3 2005-05-08 21:36:25 sweeks Exp $
  * http://www.bagley.org/~doug/shootout/
  * from Stephen Weeks
  *)
 (* Translated from prodcons.ocaml. *)
-
-fun for (start, stop, f) =
-   let
-      fun loop i =
-	 if i > stop
-	    then ()
-	 else (f i; loop (i + 1))
-   in
-      loop start
-   end
 
 fun print s = () (* Primitive.Stdio.print s *)
 
@@ -72,10 +62,12 @@ structure Thread:
       open MLton.Signal
       open MLton.Thread
 
-      val topLevel: unit MLton.Thread.t option ref = ref NONE
+      structure Thread = MLton.Thread
+
+      val topLevel: Thread.Runnable.t option ref = ref NONE
 
       local
-	 val threads: unit MLton.Thread.t Queue.t = Queue.new ()
+	 val threads: Thread.Runnable.t Queue.t = Queue.new ()
       in
 	 fun ready (t): unit = Queue.enque (threads, t)
 	 fun next () =
@@ -84,19 +76,21 @@ structure Thread:
 			; valOf (!topLevel))
 	     | SOME t => t
       end
-   
-      fun 'a exit (): 'a = switch (fn _ => (next (), ()))
+
+      fun 'a exit (): 'a = switch (fn _ => next ())
       
-      fun new (f: unit -> unit): unit MLton.Thread.t =
-	 MLton.Thread.new (fn () => ((f () handle _ => exit ())
-			      ; exit ()))
+      fun new (f: unit -> unit): Thread.Runnable.t =
+	 Thread.prepare (Thread.new (fn () => ((f () handle _ => exit ())
+					       ; exit ())),
+			 ())
 	 
-      fun schedule t =
+      fun schedule (t: Thread.Runnable.t): Thread.Runnable.t =
 	 (print "scheduling\n"
 	  ; ready t
 	  ; next ())
 
-      fun yield (): unit = switch (fn t => (schedule t, ()))
+      fun yield (): unit =
+	 switch (fn t => schedule (prepare (t, ())))
 
       val spawn = ready o new
 
@@ -111,10 +105,11 @@ structure Thread:
 	    val signal = MLton.Itimer.signal which;
 	 in
 	 (switch (fn t =>
-		  (topLevel := SOME t
-		   ; (new (fn () => (MLton.Signal.setHandler (signal, Handler.handler (fn t => schedule t))
-				     ; setItimer (Time.fromMilliseconds 20))),
-		      ())))
+		  (topLevel := SOME (prepare (t, ()))
+		   ; new (fn () =>
+			  (MLton.Signal.setHandler
+			   (signal, Handler.handler schedule)
+			   ; setItimer (Time.fromMilliseconds 20)))))
 	  ; setItimer Time.zeroTime
 	  ; MLton.Signal.setHandler (signal, MLton.Signal.Handler.ignore)
 	  ; topLevel := NONE)
@@ -123,7 +118,7 @@ structure Thread:
       structure Mutex =
 	 struct
 	    datatype t = T of {locked: bool ref,
-			       waiting: unit MLton.Thread.t Queue.t}
+			       waiting: Thread.Runnable.t Queue.t}
 	       
 	    fun new () =
 	       T {locked = ref false,
@@ -133,17 +128,18 @@ structure Thread:
 	       let
 		  fun loop () =
 		     (print (concat [name, " lock looping\n"])
-		      ; MLton.Thread.atomicBegin ()
+		      ; Thread.atomicBegin ()
 		      ; if !locked
 			   then (print "mutex is locked\n"
 				 ; switch (fn t =>
-					   (MLton.Thread.atomicEnd ()
-					    ; Queue.enque (waiting, t)
-					    ; (next (), ())))
+					   (Thread.atomicEnd ()
+					    ; Queue.enque (waiting,
+							   prepare (t, ()))
+					    ; next ()))
 				 ; loop ())
 			else (print "mutex is not locked\n"
 			      ; locked := true
-			      ; MLton.Thread.atomicEnd ()))
+			      ; Thread.atomicEnd ()))
 	       in loop ()
 	       end
 	    
@@ -156,14 +152,14 @@ structure Thread:
 
 	    fun unlock (m: t) =
 	       (print "unlock atomicBegin\n"
-		; MLton.Thread.atomicBegin ()
+		; Thread.atomicBegin ()
 		; safeUnlock m
-		; MLton.Thread.atomicEnd ())
+		; Thread.atomicEnd ())
 	 end
 
       structure Condition =
 	 struct
-	    datatype t = T of {waiting: unit MLton.Thread.t Queue.t}
+	    datatype t = T of {waiting: Thread.Runnable.t Queue.t}
 
 	    fun new () = T {waiting = Queue.new ()}
 
@@ -171,8 +167,8 @@ structure Thread:
 	       (switch (fn t =>
 			(Mutex.safeUnlock m
 			 ; print "wait unlocked mutex\n"
-			 ; Queue.enque (waiting, t)
-			 ; (next (), ())))
+			 ; Queue.enque (waiting, prepare (t, ()))
+			 ; next ()))
 		; Mutex.lock (m, "wait"))
 
 	    fun signal (T {waiting, ...}) =
@@ -194,7 +190,7 @@ val m = Mutex.new ()
 val c = Condition.new ()
 
 fun producer n =
-   for (1, n, fn i =>
+   for (0, n, fn i =>
 	(print (concat ["producer acquiring lock ", Int.toString i, "\n"])
 	 ; Mutex.lock (m, "producer")
 	 ; print "producer acquired lock\n"
