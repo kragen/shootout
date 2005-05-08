@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.32 2005-05-08 03:43:34 bfulgham Exp $
+# $Id: minibench,v 1.33 2005-05-08 05:22:49 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -34,7 +34,7 @@ use POSIX ":sys_wait_h";
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.32 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.33 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -879,8 +879,8 @@ EOF
     return 0;
 }    
 
-sub _abort_if_test_failed {
-    my($rc) = @_;
+sub _report_if_test_failed {
+    my($rc,$runlog) = @_;
     #warn "Got $rc from @_\n";
     if ($rc) {
 	my $exit_value  = $rc >> 8;
@@ -890,8 +890,11 @@ sub _abort_if_test_failed {
 	$msg .= ", killed by signal $signal_num" if $signal_num;
 	my $dumped_core = $rc & 128;
 	$msg .= ", (core dumped)" if $dumped_core;
-	#warn $msg;
-	abort($msg);
+	warn $msg;
+        unless (open(FH, ">>$runlog")) {
+            err("Error opening $runlog for input ($!)");
+        }
+        print FH "$msg\n";
     }
 }    
 
@@ -1191,13 +1194,13 @@ sub run {
 	    flush_pid_cache();	# must be done before calling childpids first time
 	    # parent continues, waiting in loop for child to finish, testing memory size
 
+            my $runlog = $self->{runlog_file};
 	    while ( waitpid($pid, WNOHANG) != -1) {
 	    	my @crap = grep {$_ != $pid} childpids($$);
 		#warn "I think I'm measuring @crap\n";
 	        
 		$maxmem = max($maxmem, total_child_size(@crap));
 		select(undef, undef, undef, $OPT->{sampledelay});
-		my $runlog = $self->{runlog_file};
 		$rc = check_abort_conditions($start_time,$runlog);
 		if ($rc < 0) {
 		    # Timeout failure
@@ -1213,7 +1216,7 @@ sub run {
             my $exit = <$pipe>;
             chomp $exit;
             #warn "exit code from $cpid: $exit";
-	    _abort_if_test_failed($exit);
+	    _report_if_test_failed($exit,$runlog);
 	    my($cuser, $csys) = (BSD::Resource::times)[2,3];
 	    #warn "cuser=$cuser, cu0=$cu0, csys=$csys, cs0=$cs0\n";
 	    $cuser -= $cu0;
