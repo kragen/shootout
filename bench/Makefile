@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2005-04-22 14:45:27 bfulgham Exp $
+# $Id: Makefile,v 1.26 2005-05-08 13:49:57 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -50,7 +50,7 @@ TESTS = \
 
 .PHONY: all plot test show clean clobber report
 
-all plot test loc show clean clobber: oberon-includes
+all plot test loc show clean clobber
 	-@for t in $(TESTS) ; do (cd $$t && make $@) ; done
 
 report: $(filter-out %.ocamlb,$(foreach dir,$(TESTS),$(wildcard $(dir)/$(dir).*)))
@@ -58,7 +58,4 @@ report: $(filter-out %.ocamlb,$(foreach dir,$(TESTS),$(wildcard $(dir)/$(dir).*)
 
 craps: $(TESTS)
 	@../bin/make_craps $^
-
-oberon-includes: $(OO2C)
-	-@(cd Include/oberon2; for t in `ls *.Mod`; do oo2c -M $$t; done)
-	touch oberon-includes
+	
