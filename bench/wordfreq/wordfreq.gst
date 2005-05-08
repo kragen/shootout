@@ -1,6 +1,6 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy & Paolo Bonzini
-   
+    
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im wordfreq.st < input.txt
 "
 
