@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.31 2005-04-22 14:45:32 bfulgham Exp $
+# $Id: minibench,v 1.32 2005-05-08 03:43:34 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -34,7 +34,7 @@ use POSIX ":sys_wait_h";
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.31 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.32 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -881,17 +881,17 @@ EOF
 
 sub _abort_if_test_failed {
     my($rc) = @_;
-    warn "Got $rc from @_\n";
+    #warn "Got $rc from @_\n";
     if ($rc) {
 	my $exit_value  = $rc >> 8;
-	warn "exit value = $exit_value\n";
+	#warn "exit value = $exit_value\n";
 	my $msg = "Child processed exited with error code ($exit_value)";
 	my $signal_num  = $rc & 127;
 	$msg .= ", killed by signal $signal_num" if $signal_num;
 	my $dumped_core = $rc & 128;
 	$msg .= ", (core dumped)" if $dumped_core;
-	warn $msg;
-	#abort($msg);
+	#warn $msg;
+	abort($msg);
     }
 }    
 
@@ -1179,7 +1179,10 @@ sub run {
 	    # be too much of a mis-measurement.
 	    #
 	    # fork the test
-	    my $pid = $self->start_test($cmdline, $inputfile, $self->{runlog_file});
+
+	    my ($pid, $pipe) = $self->start_test($cmdline, $inputfile, $self->{runlog_file});
+            chomp(my $cpid = <$pipe>);
+
 	    my $maxmem = 0;
 	    # try to wait until child starts, so first memory sampling
 	    # will not accidentally measure process of parent (minibench).
@@ -1187,12 +1190,12 @@ sub run {
 	    select(undef, undef, undef, 0.01);
 	    flush_pid_cache();	# must be done before calling childpids first time
 	    # parent continues, waiting in loop for child to finish, testing memory size
-	    while ( waitpid($pid, WNOHANG) != -1) {
 
-	    	my @crap = childpids($$);
+	    while ( waitpid($pid, WNOHANG) != -1) {
+	    	my @crap = grep {$_ != $pid} childpids($$);
 		#warn "I think I'm measuring @crap\n";
 	        
-		$maxmem = max($maxmem, total_child_size(childpids($$)));
+		$maxmem = max($maxmem, total_child_size(@crap));
 		select(undef, undef, undef, $OPT->{sampledelay});
 		my $runlog = $self->{runlog_file};
 		$rc = check_abort_conditions($start_time,$runlog);
@@ -1206,7 +1209,11 @@ sub run {
 		    return $rc;
 		}
 	    }
-	    #_abort_if_test_failed($?);
+
+            my $exit = <$pipe>;
+            chomp $exit;
+            #warn "exit code from $cpid: $exit";
+	    _abort_if_test_failed($exit);
 	    my($cuser, $csys) = (BSD::Resource::times)[2,3];
 	    #warn "cuser=$cuser, cu0=$cu0, csys=$csys, cs0=$cs0\n";
 	    $cuser -= $cu0;
@@ -1336,11 +1343,35 @@ sub start_test {
     my($self, $cmdline, $inputfile, $errorfile) = @_;
     # fork the benchmark test.
     my $outfile = $self->output_file;
+    use IO::Pipe;
+
+    my $pipe = IO::Pipe->new();
+
     my $pid = fork;
     if (not defined $pid) {
 	abort(qq{FAILED to fork ($!)});
     } elsif (not $pid) {	# child
-	# if an input file is specified, open it as stdin
+        $pipe->writer();
+        $pipe->autoflush(1);
+        my $cpid = fork();
+	abort(qq{FAILED to fork ($!)}) unless defined $cpid;
+
+        if ($cpid) {
+            print $pipe $cpid,"\n";
+
+            if (waitpid($cpid,0) > 0) {
+
+                print $pipe $?,"\n";
+
+            } else {
+
+                print $pipe -1,"\n";
+
+            } ;
+            close $pipe;
+        } else {
+            close $pipe;
+	    # if an input file is specified, open it as stdin
 	if ($inputfile) {
 	    # parent (minibench) has already checked for inputfile's
 	    # existence.
@@ -1361,15 +1392,26 @@ sub start_test {
 	# this allows us to avoid using shell metacharacters, so perl
 	# won't spawn a subshell to handle the executable, it will just
 	# exec it right away.  wheee.
+ open my $file,">","/tmp/test";
+ print $file "Execing $cmdline with $inputfile on STDIN";
+ close $file;
+
 	open(STDOUT, ">$outfile");
 	exec($cmdline) or do {
 	    err "Error, could not exec $cmdline ($!)";
 	    err "PATH=$ENV{PATH}";
 	    exit(1);
 	};
-    }
+
+     }
+        exit;
+     } else {
+        $pipe->reader();
+        $pipe->autoflush(1);
+     }
+
     # parent continues
-    return($pid);
+    return($pid,$pipe);
 }
 
 sub up_to_date {
