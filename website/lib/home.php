@@ -34,8 +34,11 @@ $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Sort', $S);
 $Body->set('AboutName', 'The Language Shootout Benchmarks');
-$Body->set('Intro', HtmlFragment( ABOUT_PATH.SITE_NAME.SEPARATOR.'intro.about' ));
 $Body->set('Measured', filemtime(DATA_PATH.'data.csv'));
+
+$Intro = & new Template(ABOUT_PATH);
+$Intro->set('Sort', $S);
+$Body->set('Intro', $Intro->fetch(SITE_NAME.SEPARATOR.'intro.about'));
 
 $NavBar = & new Template(ABOUT_PATH);
 $NavBar->set('Sort', $S);
