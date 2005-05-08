@@ -1,29 +1,26 @@
 (* The Great Computer Language Shootout
    http://shootout.alioth.debian.org
-
+   
    Oberon2 version of simple-hash.h
-
+   
    contributed by Isaac Gouy (Oberon-2 novice)
 *)
-
 
 MODULE SimpleHash;
 
 CONST
    Nil = CHR(0);
-
+   
 TYPE
    ItemKey* = POINTER TO ARRAY OF CHAR;
-
    Item* = POINTER TO ItemDesc;
    ItemDesc = RECORD
       key*: ItemKey;
       value*: LONGINT;
       next: Item;
     END;
-
+    
    Table* = POINTER TO ARRAY OF Item;
-
    Hashtable* = POINTER TO HashtableDesc;
    HashtableDesc = RECORD
       size: LONGINT;
@@ -32,11 +29,10 @@ TYPE
       iterNext: Item;
       items: LONGINT;
     END;
-
+    
 VAR
    Primes: ARRAY 25 OF LONGINT;
-
-
+   
 PROCEDURE Hash* (ht: Hashtable; key: ItemKey): LONGINT;
 VAR i, val: LONGINT;
 BEGIN
@@ -44,10 +40,10 @@ BEGIN
    WHILE (i < LEN(key^)) & (key[i] # Nil) DO 
       val := 5 * val + ORD(key[i]); INC(i);
    END; 
-   (* FOR i := 0 TO LEN(key^) - 1 DO val := 5 * val + ORD(key[i]); END; *)
+   
+   (* FOR i := 0 TO LEN(key^) - 1 DO val := 5 * val + ORD(key[i]); END; *)   
    RETURN val MOD ht.size;
 END Hash;
-
 
 PROCEDURE NewItem (aKey: ItemKey): Item;
 VAR item: Item;
@@ -58,7 +54,6 @@ BEGIN
    item.next := NIL;
    RETURN item;
 END NewItem;
-
 
 PROCEDURE New* (size: LONGINT): Hashtable;
 VAR i: LONGINT;
@@ -76,7 +71,6 @@ BEGIN
    RETURN ht;
 END New;
 
-
 PROCEDURE Find* (ht: Hashtable; key: ItemKey): Item;
 VAR hashcode: LONGINT;
     item: Item;
@@ -91,7 +85,6 @@ BEGIN
    END;
    RETURN NIL;
 END Find;
-
 
 PROCEDURE AddKey* (ht: Hashtable; key: ItemKey): Item;
 VAR hashcode: LONGINT;
@@ -117,7 +110,6 @@ BEGIN
    RETURN newitem;
 END AddKey;
 
-
 PROCEDURE Next* (ht: Hashtable): Item;
 VAR index: LONGINT;
     item: Item;
@@ -128,7 +120,7 @@ BEGIN
       RETURN item;
    ELSE
       WHILE ht.iterIndex < ht.size DO
-	 index := ht.iterIndex;
+         index := ht.iterIndex;
          INC(ht.iterIndex);	 	
          IF ht.tbl[index] # NIL THEN
             ht.iterNext := ht.tbl[index].next;	
@@ -139,14 +131,13 @@ BEGIN
    RETURN NIL;
 END Next;
 
-
 PROCEDURE First* (ht: Hashtable): Item;
 BEGIN
    ht.iterIndex := 0;
    ht.iterNext := NIL;
+
    RETURN Next(ht);
 END First;
-
 
 PROCEDURE Count* (ht: Hashtable): LONGINT;
 BEGIN

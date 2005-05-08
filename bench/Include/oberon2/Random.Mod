@@ -1,6 +1,6 @@
 (* The Great Computer Language Shootout
    http://shootout.alioth.debian.org
-
+   
    contributed by Isaac Gouy (Oberon-2 novice)
 *)
 
@@ -10,10 +10,10 @@ CONST
    IM = 139968;
    IA = 3877;
    IC = 29573;
-
+   
 VAR
    last: LONGINT;
-
+   
 PROCEDURE Next* (max: LONGREAL): LONGREAL;
 BEGIN
    last := (last*IA + IC) MOD IM;
