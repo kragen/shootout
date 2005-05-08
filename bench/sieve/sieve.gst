@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im sieve.st -a 900
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im sieve.st -a 900
 "
 
 | n start stop isPrime count |

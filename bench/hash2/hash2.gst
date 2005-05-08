@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy (with improvements by Paolo Bonzini)
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im hash2.st -a 150
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im hash2.st -a 150
 "
 
 | n table1 table2 |

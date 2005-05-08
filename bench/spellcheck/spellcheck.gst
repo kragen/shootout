@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im spellcheck.st < input.txt
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im spellcheck.st < input.txt
 "
 
 | dict stream newWord |

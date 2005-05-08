@@ -1,14 +1,8 @@
 "  The Great Computer Language Shootout
    contributed by Paolo Bonzini
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im reversefile < input.txt 
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im reversefile < input.txt 
 "
-
-"
-((FileStream stdin bufferSize: 4096) splitAt: Character nl)
-   reverseDo: [ :each | stdout nextPutAll: each; nl ]!
-"
-
 
 | s last out ptr |
 s := (FileStream stdin bufferSize: 4096) contents.
@@ -18,14 +12,14 @@ ptr := 1.
 
 s size - 1 to: 1 by: -1 do: [ :i |
    (s at: i) == ##(Character nl) ifTrue: [
-   out
-      replaceFrom: ptr
-      to: ptr + (last - i - 1)
-      with: s
-      startingAt: i + 1.
+      out
+         replaceFrom: ptr
+         to: ptr + (last - i - 1)
+         with: s
+         startingAt: i + 1.
 
-   ptr := ptr + last - i.
-   last := i.
+      ptr := ptr + last - i.
+      last := i.
    ]
 ].
 
@@ -34,5 +28,5 @@ out
    to: out size
    with: s
    startingAt: 1.
-
+   
 stdout nextPutAll: out !

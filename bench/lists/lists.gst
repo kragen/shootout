@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im lists.st -a 16
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im lists.st -a 16
 "
 
 | size n list1 list2 list3 count |
@@ -21,5 +21,5 @@ n timesRepeat: [
    count := (list1 first = size and: [list1 = list2]) 
       ifTrue: [list1 size] ifFalse: [-1].
    ].
-
+   
 count displayNl !

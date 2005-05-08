@@ -1,14 +1,14 @@
 "  The Great Computer Language Shootout
    contributed by Paolo Bonzini
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im prodcons.st -a 100000 
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im prodcons.st -a 100000 
 "
 
 | mutex empty full data consumed produced n join |
 n := Smalltalk arguments isEmpty
    ifTrue: [ 10000 ]
    ifFalse: [ 1 max: Smalltalk arguments first asInteger ].
-
+   
 mutex := Semaphore forMutualExclusion.
 empty := Semaphore new.
 full := Semaphore new.
@@ -29,11 +29,10 @@ empty signal.
       empty signal.
       consumed := consumed + 1.
       i = n
-    ] whileFalse.
+   ] whileFalse.
 
-    join signal.
+   join signal.
 ] fork.
-
 
 [
    1 to: n do: [ :i |

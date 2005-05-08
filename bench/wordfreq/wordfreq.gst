@@ -1,20 +1,20 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy & Paolo Bonzini
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im wordfreq.st < input.txt
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im wordfreq.st < input.txt
 "
 
-
 !Bag methodsFor: 'extracting items'!
+
 sortedByValueAndKey
    | assocs |
    assocs := (SortedCollection new: contents size) sortBlock: [:a :b| 
-      a value = b value ifTrue: [a key > b key] ifFalse: [a value > b value] ].
+   a value = b value ifTrue: [a key > b key] ifFalse: [a value > b value] ].
 
    contents keysAndValuesDo: [:key :value| assocs add: key -> value].
    ^assocs ! !
-
-
+   
+   
 | stream wordCounts |
 stream := FileStream stdin bufferSize: 4096.
 wordCounts := Bag new.
