@@ -1,7 +1,7 @@
 "  The Great Computer Language Shootout
    contributed by Isaac Gouy
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im ackermann.st -a 8
+   
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im ackermann.st -a 8
 "
 
 !Integer methodsFor: 'shootout'!
@@ -13,7 +13,6 @@ ackermann: anInteger
          anInteger = 0
             ifTrue: [self - 1 ackermann:  1]
             ifFalse: [self - 1 ackermann: (self ackermann: anInteger - 1)] ] ! !
-
 
 | n |
 n := Smalltalk arguments first asInteger.
