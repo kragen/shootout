@@ -2,6 +2,7 @@
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
+   modified by Ian Osgood   
 
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im nsieve.st -a 7
 "
@@ -9,11 +10,11 @@
 
 !Integer methodsFor: 'shootout'!
 
-nsieve: isPrime
-   | count |
+nsieve 
+   | count isPrime |
    count := 0.
-
-   2 to: self do: [:i| isPrime at: i put: true].
+   isPrime := Array new: self.
+   isPrime atAllPut: true.
 
    2 to: self do: [:i|
       (isPrime at: i) ifTrue: [
@@ -22,40 +23,27 @@ nsieve: isPrime
          ].
       ].
 
-   ^count ! 
+   ^count !
 
 
-asPaddedString: anInteger
+asPaddedString: width
    | s |
    s := self printString.
-   ^(String new: (anInteger - s size) withAll: $ ), s ! !
+   ^(String new: (width - s size) withAll: $ ), s !
 
 
+primes
+   | m |
+   m := (2 raisedTo: self) * 10000.
+   Transcript
+      show: 'Primes up to '; show: (m asPaddedString: 8);
+      show: ((m nsieve) asPaddedString: 9); nl ! !
 
-| n flags m |
+| n |
 n := Smalltalk arguments first asInteger.
 (n < 2) ifTrue: [n := 2].
 
-m := (2 raisedTo: n) * 10000.
-flags := Array new: m.
+ n      primes.
+(n - 1) primes.
+(n - 2) primes !
 
-Transcript 
-   show: 'Primes up to '; show: (m asPaddedString: 8); 
-   show: ((m nsieve: flags) asPaddedString: 8); nl.
-
-m := (2 raisedTo: (n - 1)) * 10000.
-Transcript 
-   show: 'Primes up to '; show: (m asPaddedString: 8); 
-   show: ((m nsieve: flags) asPaddedString: 8); nl.
-
-m := (2 raisedTo: (n - 2)) * 10000.
-Transcript 
-   show: 'Primes up to '; show: (m asPaddedString: 8); 
-   show: ((m nsieve: flags) asPaddedString: 8); nl. !
-
-
-
-
-"
-  vim: ts=4 ft=st
-"
