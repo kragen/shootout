@@ -23,21 +23,7 @@
 
 
 <?  // SET WEIGHTS /////////////////////////////////////
-
-if (sizeof($W)==0){ // populate weights
-
-// should define these in config or somewhere
-//   $W['xcpu'] = 0; 
-   $W['xfullcpu'] = 1;
-   $W['xmem'] = 0;
-   $W['xloc'] = 0;
-
-   foreach($Tests as $t){
-      $W[ $t[TEST_LINK] ] = $t[TEST_WEIGHT];
-   }
-}
-
-
+ 
 $minWeight = 0;    // normalize weights
 $maxWeight = 5;
 
@@ -110,8 +96,8 @@ foreach($score as $k => $v){
 
 <table>
 <tr class="c">
-<td><p><input type="submit" value="Calculate" /></p></td>
-<td><p><input type="reset" value="Reset" /></p></td>
+<td><p><input type="submit" name="calc" value="Calculate" /></p></td>
+<td><p><input type="submit" name="calc" value="Reset" /></p></td>
 </tr>
 
 <tr><th class="b" colspan="2">multipliers</th></tr>
@@ -156,8 +142,8 @@ foreach($Tests as $t){
 ?>
 
 <tr class="c">
-<td><p><input type="submit" value="Calculate" /></p></td>
-<td><p><input type="reset" value="Reset" /></p></td>
+<td><p><input type="submit" name="calc" value="Calculate" /></p></td>
+<td><p><input type="submit" name="calc" value="Reset" /></p></td>
 </tr>
 
 </table>

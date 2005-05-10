@@ -81,6 +81,25 @@ function GetMicroTime(){
    return doubleval($t[1]) + doubleval($t[0]);
 }
 
+function PackCSV($a){
+   $s = "";
+   foreach($a as $k => $v){ $s .= $k.','.$v.','; }
+   return substr($s,0,-1);
+}
+
+function UnpackCSV($s){
+   $a = explode(',',$s);
+   $aa = array();
+   $i = 0;
+   while ($i<sizeof($a)-1){
+      $k = $a[$i]; $v = $a[$i+1];
+      if (is_string($k) && is_numeric($v)){ $aa[$k] = $v; }
+      $i += 2;    
+   }
+   return $aa;
+}
+
+
 function ReadIncludeExclude(){
    $incl = array();
    $f = @fopen('./include.csv','r') or die('Cannot open ./include.csv');
