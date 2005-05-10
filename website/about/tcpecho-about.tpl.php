@@ -24,6 +24,8 @@
    </li>
 </ul>
 
+<p>Each program should leave the sockets available for immediate reuse.</p>
+
 <p>Correct output N = 10 is:</p>
 <pre>
 replies: 64000  bytes: 4096000
