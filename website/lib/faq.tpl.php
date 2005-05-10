@@ -50,6 +50,8 @@
 <p><strong>Work</strong> behind the scenes - read <a href="#chores">How can I help with the chores?</a></p> 
 <p><strong>Share</strong> your opinions and questions by subscribing to the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=mailinglist&amp;title=mailing list" title="Mailing list archives, posting and subscription"><strong>mailing&nbsp;list</strong></a>.</p>
 <p><strong>Change</strong> the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
+<p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll decide not to add the new benchmark. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
+<p>Take responsibility and <a href="http://greasemonkey.mozdev.org/" title="Greasemonkey Firefox extension"><strong>make your own <em>improvements</em></strong></a> to the webpages. Take responsibility and create your own analysis from the <a href="#downdata">CVS spreadsheet <strong>download</strong></a>.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program or a fixed-program?</a></td></tr>
