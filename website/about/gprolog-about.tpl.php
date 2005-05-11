@@ -1,3 +1,3 @@
 <?=$Version;?>
-<p>Home Page: <a href="http://prolog.inria.fr">http://prolog.inria.fr</a></p>
-<p>Download: <a href="ftp://ftp.inria.fr/INRIA/Projects/contraintes/gprolog">ftp://ftp.inria.fr/INRIA/Projects/contraintes/gprolog</a></p>
+<p>Home Page: <a href="http://pauillac.inria.fr/~diaz/gnu-prolog/">http://pauillac.inria.fr/~diaz/gnu-prolog/</a></p>
+<p>Download: <a href="http://pauillac.inria.fr/~diaz/gnu-prolog/#download">http://pauillac.inria.fr/~diaz/gnu-prolog/#download</a></p>
