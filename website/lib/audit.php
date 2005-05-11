@@ -6,6 +6,7 @@
 
 require_once(BLIB); 
 require_once(LIB); 
+require_once(LIB_PATH.'lib_audit.php'); 
 
 // DATA ///////////////////////////////////////////
 

@@ -47,6 +47,7 @@ if ($T=='all'){
    if ($L=='all'){    // Scorecard 
    
       // should be tidied up into blib.php
+      require_once(LIB_PATH.'lib_scorecard.php');       
    
       if (isset($HTTP_GET_VARS['calc'])){ $C = $HTTP_GET_VARS['calc']; } 
       else { $C = 'Calculate'; }   
@@ -89,6 +90,8 @@ if ($T=='all'){
       $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
 
       } else {           // Head to Head 
+      
+      require_once(LIB_PATH.'lib_headtohead.php');       
   
       $LangName = $Langs[$L][LANG_FULL];    
       $Title = $LangName.' benchmarks'; 
@@ -102,25 +105,7 @@ if ($T=='all'){
       $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';         
    }
 
-
-/*
-   } else {           // Ranking 
-  
-      $LangName = $Langs[$L][LANG_FULL];    
-      $Title = $LangName.' benchmark rankings'; 
-
-      $TemplateName = 'ranking.tpl.php';
-      $About = & new Template(ABOUT_PATH);
-      $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
-      if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-      $About->set('Version', HtmlFragment(ABOUT_PATH.$L.SEPARATOR.'version.php'));
-      $Body->set('Rank', RankData(DATA_PATH.'data.csv', $Langs, $L, $Incl, $Excl));  
-      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';        
-   }
-*/   
-   
-
-} elseif ($L=='all'){ // Benchmark 
+} elseif ($L=='all'){ // Benchmark  
 
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 

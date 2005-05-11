@@ -1,27 +1,39 @@
 <?php
 // Copyright (c) Isaac Gouy 2004, 2005
 // FILE PATHS ///////////////////////////////////////////////////
+
 define('LIB_PATH', '../../lib/');
 define('LIB', '../../lib/lib.php');
-define('BLIB', '../../lib/blib.php');
-define('DATA_PATH', '../../data/');define('DESC_PATH', '../../desc/');
+define('BLIB', '../../lib/lib_common.php');
+
+define('DATA_PATH', '../../data/');
+define('DESC_PATH', '../../desc/');
 define('ABOUT_PATH', '../../about/');
 define('ABOUT_PROGRAMS_PATH', '../../about/programs/');
 define('CODE_PATH', '../../code/');
 define('LOG_PATH', '../../code/');
-define('MISC_PATH', '../../misc/');define('DOWNLOAD_PATH', '../download/');define('IMAGE_PATH', '../');
+define('MISC_PATH', '../../misc/');
+define('DOWNLOAD_PATH', '../download/');
+define('IMAGE_PATH', '../');
+
 define('CORE_SITE', '../');
 define('SANDBOX_SITE', '../sandbox/');
 define('GREAT_SITE', './');
 define('OLD_SITE', '../old/');
 
+
 // CONSTANTS ///////////////////////////////////////////////////
+
 define('REV_COLOR', '#991900');      // background color for banner etc
 define('REV_COLOR_CORE', 'navy');           
 define('REV_COLOR_GREAT', '#991900');         
-define('REV_COLOR_SANDBOX', '#cc9900');define('REV_COLOR_OLD', 'gray');     
+define('REV_COLOR_SANDBOX', '#cc9900');
+define('REV_COLOR_OLD', 'gray');     
+
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
-define('HOMEPAGE_ROWS',30);          // show 26 rows of languages on the homepage
+define('HOMEPAGE_ROWS',30);          // show 26 rows of languages on the homepage
+
+
 define('SITE_NAME', 'great');
 define('SITE_TITLE','The Great Computer Language Shootout Benchmarks');
 define('BANNER_TITLE','The&nbsp;Great&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
@@ -31,6 +43,7 @@ define('DASH',' - ');
 define('BLANK','');
 define('STARTUP','hello');    
 define('SEPARATOR','-');             // Separator in file names
+
 define('CHART_VSCALE',240);          
 define('CHART_HSCALE',1);
 define('CHART_V1',10);
