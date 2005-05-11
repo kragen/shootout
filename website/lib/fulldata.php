@@ -4,7 +4,7 @@
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(BLIB); 
+require_once(LIB_PATH.'lib_common.php'); 
 require_once(LIB); 
 require_once(LIB_PATH.'lib_fulldata.php');
 

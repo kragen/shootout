@@ -3,7 +3,7 @@
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(BLIB); 
+require_once(LIB_PATH.'lib_common.php'); 
 require_once(LIB); 
 
 // DATA ///////////////////////////////////////////
@@ -46,11 +46,10 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard 
    
-      // should be tidied up into blib.php
       require_once(LIB_PATH.'lib_scorecard.php');       
    
-      if (isset($HTTP_GET_VARS['calc'])){ $C = $HTTP_GET_VARS['calc']; } 
-      else { $C = 'Calculate'; }   
+      if (isset($HTTP_GET_VARS['calc'])){ $Action = $HTTP_GET_VARS['calc']; } 
+      else { $Action = 'Calculate'; }   
   
       $Title = 'Create your own Overall Scores';
       $TemplateName = 'scorecard.tpl.php';
@@ -58,36 +57,13 @@ if ($T=='all'){
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = 'scorecard-about.tpl.php'; 
 
-      $cookie = array();    
-      if (isset($_COOKIE['weights'])){ $cookie = UnpackCSV( $_COOKIE['weights'] ); }                        
-
-      $W = array(); $WD = array();
-      foreach($Tests as $t){
-         $link = $t[TEST_LINK];    
-         if (isset($HTTP_GET_VARS[$link])){ $x = $HTTP_GET_VARS[$link]; }              
-         elseif (isset($cookie[$link])){ $x = $cookie[$link]; }          
-         else { $x = $t[TEST_WEIGHT]; } 
-                  
-         if (is_numeric($x)){ $W[$link] = $x; }
-         $WD[$link] = $t[TEST_WEIGHT];                               
-      }           
-      
-      $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);       
-      foreach($Metrics as $k => $v){  
-         if (isset($HTTP_GET_VARS[$k])){ $x = $HTTP_GET_VARS[$k]; }                   
-         elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
-         else { $x = $v; }          
-          
-         if (is_numeric($x)){ $W[$k] = $x; }
-         $WD[$k] = $v;                                
-      }         
-      
-      if ($C=='Reset'){ $W = $WD; }
+      $W = Weights($Tests, $Action, $HTTP_GET_VARS, $_COOKIE);
+      setcookie('weights', PackCSV($W), time()+(60*60*24*180), '/', 'shootout.alioth.debian.org');      
       $Body->set('W', $W);                                               
-      setcookie('weights', PackCSV($W), time()+(60*60*24*180), '/', 'shootout.alioth.debian.org');
 
       $Body->set('Data', ScoreData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl)); 
       $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
+
 
       } else {           // Head to Head 
       

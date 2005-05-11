@@ -5,7 +5,7 @@ header("Content-type: image/png");
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(BLIB); 
+require_once(LIB_PATH.'lib_common.php'); 
 require_once(LIB_PATH.'lib_headtohead.php'); 
       
 

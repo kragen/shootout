@@ -116,4 +116,36 @@ function LogScore($x, $b){
    return 1 / (1 + $scale * log($x/$b)/log(2));
 }
 
+
+function Weights($Tests, $Action, $Vars, $CVars){
+   $cookie = array();    
+   if (isset($CVars['weights'])){ $cookie = UnpackCSV( $CVars['weights'] );}                        
+
+   $w = array(); $wd = array();
+   foreach($Tests as $t){
+      $link = $t[TEST_LINK];  
+      if (isset($Vars[$link])){ $x = $Vars[$link]; }              
+      elseif (isset($cookie[$link])){ $x = $cookie[$link]; }          
+      else { $x = $t[TEST_WEIGHT]; } 
+               
+      if (is_numeric($x)){ $w[$link] = $x; }
+      $wd[$link] = $t[TEST_WEIGHT];                               
+   }           
+   
+   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);       
+   foreach($Metrics as $k => $v){  
+      if (isset($Vars[$k])){ $x = $Vars[$k]; }                   
+      elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
+      else { $x = $v; }          
+         
+      if (is_numeric($x)){ $w[$k] = $x; }
+      $wd[$k] = $v;                                
+   }         
+   
+   if ($Action=='Reset'){ $w = $wd; }
+   return $w;
+}
+
+
+
 ?>
