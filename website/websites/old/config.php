@@ -6,7 +6,6 @@
 
 define('LIB_PATH', '../../lib/');
 define('LIB', '../../lib/lib.php'); 
-define('BLIB', '../../lib/lib_common.php');
 
 define('DESC_PATH', './desc/');
 define('DATA_PATH', '../../data/');
