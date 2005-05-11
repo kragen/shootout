@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh
-# $Id: ackermann.tcl,v 1.6 2005-04-22 14:45:28 bfulgham Exp $
-# http://shootout.alioth.debian.org/
+# $Id: ackermann.tcl,v 1.7 2005-05-11 16:29:47 igouy-guest Exp $
+# http://shootout.alioth.debian.org/ 
 #
 # Updated based on ideas from Stefan Finzel
 #

@@ -1,7 +1,7 @@
-%%% $Id: heapsort.oz,v 1.2 2005-03-07 05:25:20 bfulgham Exp $
+%%% $Id: heapsort.oz,v 1.3 2005-05-11 16:29:48 igouy-guest Exp $
 %%% http://dada.perl.it/shootout/
 %%%
-%%% contributed by Isaac Gouy
+%%% contributed by Isaac Gouy 
 %%% Using string conversion routines suggested by Juergen Stuber
 %%%   and Jorge Marques Pelizzoni
 
