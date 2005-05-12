@@ -24,7 +24,13 @@
 <p>Correct output N = 100 is:</p> 
 <pre>Patients: 10151
 Time:     363815
-Visits:   10526</pre><br />
+Visits:   10526
+
+Treatment Queue - Remaining Treatment Time
+1       anonymous patient
+3       anonymous patient
+9       anonymous patient
+10      anonymous patient</pre><br />
 
 <p>This is a <em>simplified version</em> of the health benchmark in the
 <a href="http://www.cs.princeton.edu/~mcc/olden.html">Olden Benchmark Suite</a>
