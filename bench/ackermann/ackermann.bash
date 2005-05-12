@@ -1,7 +1,7 @@
 #!/bin/bash
-# $Id: ackermann.bash,v 1.2 2005-05-12 06:47:35 igouy-guest Exp $
+# $Id: ackermann.bash,v 1.3 2005-05-12 15:08:19 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
-# from Steve Fink 
+# from Steve Fink
 
 function Ack () {
     if [ $1 -eq 0 ]; then
