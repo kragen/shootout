@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-05-01 12:04:35 igouy-guest Exp $
+# $Id: Makefile,v 1.5 2005-05-12 09:53:25 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -21,6 +21,7 @@ POLYOPTS := -q
 
 ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
+GHCOPTS := -fexcess-precision
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100,300,500
