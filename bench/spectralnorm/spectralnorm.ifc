@@ -5,97 +5,82 @@
 
 !   contributed by Simon Geard (converted from the C# version)
 
-! $Id: spectralnorm.ifc,v 1.1 2005-04-30 16:26:18 sgeard-guest Exp $ ; $name: $
+! $Id: spectralnorm.ifc,v 1.2 2005-05-12 21:51:38 sgeard-guest Exp $ ; $name: $
 
 program spnorm
 
   real*8  :: sn
-  integer :: n
+  integer :: i, n
   character(len=6) argv
+  real*8, allocatable, dimension(:) :: u, v
+  intrinsic dot_product
 
   call getarg(1,argv)
   read(argv,*) n
 
-  sn = approximate(n)
+  allocate(u(n))
+  u = (/ (1.0d0,i=1,n) /)
 
+  allocate(v(n))
+  v = (/ (0.0d0,i=1,n) /)
+  do i=1,10
+     call MultiplyAtAv(u,v)
+     u = (/ (0.0d0,i=1,n) /)
+     call MultiplyAtAv(v,u)
+  end do
+  
+  sn = sqrt(dot_product(u,v)/dot_product(v,v))
+  deallocate(u)
+  deallocate(v)
+  
   write(*,'(f0.9)') sn
 
   stop
 
 contains
 
-  real*8 function approximate(n)
-    integer, intent(in) :: n
+  ! return element i,j of infinite matrix A 
+  pure real*8 function A(i, j)
+    integer, intent(in) :: i,j
+    A = 1.0d0/((i+j)*(i+j+1)/2 +i+1)
+  end function A
+  
+  ! multiply vector v by matrix A
+  subroutine MultiplyAv(v, Av)
+    real*8, dimension(0:), intent(in) :: v
+    real*8, dimension(0:), intent(inout) :: Av ! Zero on entry
+    integer :: i, j
+    forall (i=0:n-1)
+       forall (j = 0:n-1)
+          Av(i) = Av(i) + A(i,j)*v(j)
+       end forall
+    end forall
+  end subroutine MultiplyAv
 
-    integer :: i
-    real*8, allocatable, dimension(:) :: u, v
-    intrinsic dot_product
+  ! multiply vector v by matrix A transposed
+  subroutine MultiplyAtv(v, Atv)
+    real*8, dimension(0:), intent(in) :: v
+    real*8, dimension(0:), intent(inout) :: Atv ! Zero on entry
+    integer :: i, j
+    forall (i=0:n-1)
+       forall (j=0:n-1)
+          Atv(i) = Atv(i) + A(j,i)*v(j)
+       end forall
+    end forall
+  end subroutine MultiplyAtv
 
-    allocate(u(n))
-    u = (/ (1.0d0,i=1,n) /)
+  ! multiply vector v by matrix A and then by matrix A transposed
+  subroutine MultiplyAtAv(v, AtAv)
+    real*8, dimension(:), intent(in) :: v
+    real*8, dimension(:), intent(inout) :: AtAv
 
-    allocate(v(n))
-    v = (/ (0.0d0,i=1,n) /)
-
-    do i=1,10
-       call MultiplyAtAv(n,u,v)
-       call MultiplyAtAv(n,v,u)
-    end do
-
-    approximate = sqrt(dot_product(u,v)/dot_product(v,v))
-    deallocate(u)
-    deallocate(v)
-
-  end function approximate
-
-   ! return element i,j of infinite matrix A 
-   real*8 function A(i, j)
-     integer, intent(in) :: i,j
-      A = 1.0d0/((i+j)*(i+j+1)/2 +i+1)
-    end function A
-
-   ! multiply vector v by matrix A
-   subroutine MultiplyAv(n, v, Av)
-     integer, intent(in) :: n
-     real*8, dimension(0:), intent(in) :: v
-     real*8, dimension(0:), intent(out) :: Av
-     integer :: i, j
-     do i=0,n-1
-         Av(i) = 0
-         do j=0,n-1
-            Av(i) = Av(i) + A(i,j)*v(j)
-         end do
-      end do
-    end subroutine MultiplyAv
-
-    ! multiply vector v by matrix A transposed
-    subroutine MultiplyAtv(n, v, Atv)
-      integer, intent(in) :: n
-      real*8, dimension(0:), intent(in) :: v
-      real*8, dimension(0:), intent(out) :: Atv
-     
-     integer :: i, j
-
-     do i=0,n-1
-         Atv(i) = 0
-         do j=0,n-1
-            Atv(i) = Atv(i) + A(j,i)*v(j)
-         end do
-      end do
-    end subroutine MultiplyAtv
-
-    ! multiply vector v by matrix A and then by matrix A transposed
-    subroutine MultiplyAtAv(n, v, AtAv)
-      integer, intent(in) :: n
-      real*8, dimension(:), intent(in) :: v
-      real*8, dimension(:), intent(out) :: AtAv
-      
-      real*8, dimension(:), allocatable :: u
-
-      allocate(u(n))      
-      call MultiplyAv(n,v,u)
-      call MultiplyAtv(n,u,AtAv)
-      deallocate(u)
-    end subroutine MultiplyAtAv
+    real*8, save, allocatable :: u(:)
+    if (.not. allocated(u)) then ! Only allocate once
+       allocate(u(n))
+    end if
+    u = (/ (0.0d0,i=1,n) /)
+    call MultiplyAv(v,u)
+    call MultiplyAtv(u,AtAv)
+  end subroutine MultiplyAtAv
 
 end program spnorm

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2005-05-12 09:53:25 ekarttun-guest Exp $
+# $Id: Makefile,v 1.6 2005-05-12 21:51:38 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 GCCOPTS := -lm
 
+IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 MB_CLRTS := -nr
 OCAMLOPTS  := -inline 10
