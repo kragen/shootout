@@ -1,7 +1,7 @@
 -- The Great Computer Language Shootout
 -- http://shootout.alioth.debian.org/
 --
--- contributed by Isaac Gouy
+-- contributed by Isaac Gouy 
 
 local width = tonumber(arg and arg[1]) or 100
 local height = width
