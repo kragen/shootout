@@ -1,11 +1,11 @@
-%%% $Id: echo.oz,v 1.2 2005-03-07 05:25:19 bfulgham Exp $
+%%% $Id: echo.oz,v 1.3 2005-05-12 15:23:13 igouy-guest Exp $
 %%% http://dada.perl.it/shootout/
 %%%
 %%% contributed by Isaac Gouy
 
 %%  Usage: start from command line with
 %%     ozc -x echo.oz -o echo.oz.exe
-%%     echo.oz.exe 100000
+%%     echo.oz.exe 100000 
 
 functor
 import

@@ -8,7 +8,7 @@
 # Christopher J. Van Wyk.
 
 # this version creates a $cnt vairable for the for loop
-# Bash version (samething) by David Pyke JUL-20
+# Bash version (samething) by David Pyke JUL-20 
 
 n=${1:-1}
 
