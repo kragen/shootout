@@ -1,0 +1,147 @@
+#!/usr/bin/guile \
+-e main -s
+!#
+;;; The Great Computer Language Shootout
+;;; http://shootout.alioth.debian.org/
+;;  by Greg Buchholz
+
+;; vector math stuff
+(define (dot a b) (+ (* (vector-ref a 0) (vector-ref b 0))
+                     (* (vector-ref a 1) (vector-ref b 1))
+                     (* (vector-ref a 2) (vector-ref b 2))))
+
+(define (v+ a b) (vector (+ (vector-ref a 0) (vector-ref b 0))
+                         (+ (vector-ref a 1) (vector-ref b 1))
+                         (+ (vector-ref a 2) (vector-ref b 2))))
+
+(define (v- a b) (vector (- (vector-ref a 0) (vector-ref b 0))
+                         (- (vector-ref a 1) (vector-ref b 1))
+                         (- (vector-ref a 2) (vector-ref b 2))))
+
+(define (mag v) (sqrt (dot v v)))
+(define (scale a n) (vector (* (vector-ref a 0) n)
+                            (* (vector-ref a 1) n)
+                            (* (vector-ref a 2) n)))
+;; list munging
+(define (sumv xs) (foldl v+ '#(0 0 0) xs))
+(define (sum  xs) (foldl + 0 xs))
+(define (concat xs) (foldl append '() xs))
+(define (foldl f init xs)
+    (if (null? xs)
+        init
+        (foldl f (f init (car xs)) (cdr xs))))
+
+;; misc constants
+(define PI 3.141592653589793)
+(define SOLAR_MASS (* 4 PI PI))
+(define DAYS_PER_YEAR 365.24)
+
+;; define our planets
+(define make-planet vector)
+
+(define Jupiter 
+  (make-planet
+   '#(4.84143144246472090e+00 -1.16032004402742839e+00 -1.03622044471123109e-01)
+   (vector (*  1.66007664274403694e-03 DAYS_PER_YEAR)
+           (*  7.69901118419740425e-03 DAYS_PER_YEAR)
+           (* -6.90460016972063023e-05 DAYS_PER_YEAR))
+   (* 9.54791938424326609e-04 SOLAR_MASS) ) )
+
+(define Saturn 
+  (make-planet
+   '#(8.34336671824457987e+00 4.12479856412430479e+00 -4.03523417114321381e-01)
+   (vector (* -2.76742510726862411e-03 DAYS_PER_YEAR)
+           (*  4.99852801234917238e-03 DAYS_PER_YEAR)
+           (*  2.30417297573763929e-05 DAYS_PER_YEAR))
+   (* 2.85885980666130812e-04 SOLAR_MASS) ) )
+
+(define Uranus
+  (make-planet
+   '#(1.28943695621391310e+01 -1.51111514016986312e+01 -2.23307578892655734e-01)
+   (vector (*  2.96460137564761618e-03 DAYS_PER_YEAR)
+           (*  2.37847173959480950e-03 DAYS_PER_YEAR)
+           (* -2.96589568540237556e-05 DAYS_PER_YEAR))
+   (* 4.36624404335156298e-05 SOLAR_MASS) ) )
+
+(define Neptune
+  (make-planet
+   '#(1.53796971148509165e+01 -2.59193146099879641e+01 1.79258772950371181e-01)
+   (vector (*  2.68067772490389322e-03 DAYS_PER_YEAR)
+           (*  1.62824170038242295e-03 DAYS_PER_YEAR)
+           (* -9.51592254519715870e-05 DAYS_PER_YEAR))
+   (* 5.15138902046611451e-05 SOLAR_MASS) ) )
+
+(define Sun (make-planet '#(0 0 0) '#(0 0 0) SOLAR_MASS))
+
+;; helper functions
+(define (mass a) (vector-ref a 2))
+(define (vel a)  (vector-ref a 1))
+(define (pos a)  (vector-ref a 0))
+(define (dist a b) (mag (v- (pos a) (pos b))))
+
+(define (rotations n xs)
+  (if (= n 0)
+        '()
+        (let ((flipped (append (cdr xs) (list (car xs)))))
+             (cons flipped (rotations (- n 1) flipped)))))
+ 
+;;; Here's the real bread and butter integration functions
+(define (advance n dt pss)
+    (map (lambda (q) (adv dt q)) (rotations n pss)))
+
+(define (adv dt pss)
+  (let* ((p  (car pss))
+         (ps (cdr pss))
+         (delta_v (sumv (map 
+                      (lambda (q) (scale (v- (pos p) (pos q))
+                                         (/ (* (mass q) dt) 
+                                            (expt (dist p q) 3)))) ps)))
+         (new_v (v- (vel p) delta_v))
+         (delta_x (scale new_v dt)))
+        (make-planet (v+ (pos p) delta_x) new_v (mass p))))
+
+(define (energy bodies)
+ (let* ((n (length bodies))
+        (kinetic 
+          (* 0.5 (sum (map 
+                       (lambda (q) (* (mass q) (dot (vel q) (vel q)))) 
+                          bodies))))
+        (potential (* 0.5 (sum (concat
+            (map (lambda (iss) 
+                    (let ((i  (car iss))
+                          (is (cdr iss)))
+                         (map (lambda (j) (/ (* (mass i) (mass j))
+                                             (dist i j))) is)) 
+                          ) (rotations n bodies)))))))
+       (- kinetic potential)))
+
+(define (offset-momentum! bodies)
+  (let* ((p  (car bodies))
+         (ps (cdr bodies))
+         (new_v (scale (sumv (map 
+                         (lambda (q) (scale (vel q) (mass q))) ps))
+                  (/ -1 SOLAR_MASS))))
+         (cons (make-planet (pos p) new_v (mass p)) ps)))
+
+(define (iterate n f x)
+    (if (= n 0)
+        x
+        (iterate (- n 1) f (f x))))
+
+(define bodies (list Sun Jupiter Saturn Uranus Neptune))
+
+(define (round9 n)
+    (let ((bil (expt 10 9)))
+        (/ (round (* n bil)) bil)))
+
+(define (main args)
+  (let ((n (string->number (cadr args))))
+       (begin
+           (set! bodies (offset-momentum! bodies))
+           (display (round9 (energy bodies)))
+           (newline)
+           (let* ((bods (length bodies))
+                  (final (iterate n (lambda (ps) (advance bods 0.01 ps)) bodies)))
+                 (display (round9 (energy final)))
+                 (newline)))))
+
