@@ -9,14 +9,21 @@ function PackCSV($a){
    return substr($s,0,-1);
 }
 
-function UnpackCSV($s){
-   $a = explode(',',$s);
+function UnpackCSV($csv){
    $aa = array();
-   $i = 0;
-   while ($i<sizeof($a)-1){
-      $k = $a[$i]; $v = $a[$i+1];
-      if (is_string($k) && is_numeric($v)){ $aa[$k] = $v; }
-      $i += 2;    
+   if (is_string($csv)){   
+      $s = substr($csv,0,1024); // be defensive, limit acceptable length
+
+      $a = explode(',',$s);
+      $i = 0;
+      while ($i<sizeof($a)-1){
+         $k = $a[$i]; $v = $a[$i+1];                 
+         if (is_string($k) && is_numeric($v)){ 
+            $k = substr($k,0,64); // be defensive, limit acceptable length
+            $aa[$k] = $v; 
+         }
+         $i += 2;    
+      }
    }
    return $aa;
 }
