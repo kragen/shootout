@@ -1,10 +1,10 @@
 #!/usr/bin/tclsh
-# $Id: ackermann.tcl,v 1.7 2005-05-11 16:29:47 igouy-guest Exp $
+# $Id: ackermann.tcl,v 1.8 2005-05-13 06:04:09 igouy-guest Exp $
 # http://shootout.alioth.debian.org/ 
 #
 # Updated based on ideas from Stefan Finzel
 #
-# Further optimized by Mark Butler.
+# Further optimized by Mark Butler. 
 #
 # vim: set filetype=tcl:
 
