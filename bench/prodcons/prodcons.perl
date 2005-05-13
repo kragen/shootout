@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# $Id: prodcons.perl,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: prodcons.perl,v 1.3 2005-05-13 16:24:18 igouy-guest Exp $
+# http://www.bagley.org/~doug/shootout/ 
 
 use strict;
 use Thread qw(cond_wait cond_signal);

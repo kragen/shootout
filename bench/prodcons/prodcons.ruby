@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: prodcons.ruby,v 1.1 2004-05-19 18:11:10 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: prodcons.ruby,v 1.2 2005-05-13 16:24:18 igouy-guest Exp $
+# http://www.bagley.org/~doug/shootout/ 
 
 require 'thread'
 

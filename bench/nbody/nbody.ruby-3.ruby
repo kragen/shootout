@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 # The Great Computer Language Shootout
-# http://shootout.alioth.debian.org
+# http://shootout.alioth.debian.org 
 # 
 # Ported by Michael Neumann from the C gcc version, which was written by
 # Christoph Bauer.

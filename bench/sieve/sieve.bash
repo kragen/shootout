@@ -1,7 +1,7 @@
 #!/bin/bash
-# $Id: sieve.bash,v 1.1 2004-05-19 18:12:27 bfulgham Exp $
+# $Id: sieve.bash,v 1.2 2005-05-13 16:24:19 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
-# from Steve Fink
+# from Steve Fink 
 
 NUM=${1:-1}
 

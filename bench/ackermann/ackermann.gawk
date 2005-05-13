@@ -1,5 +1,5 @@
-# $Id: ackermann.gawk,v 1.1 2004-05-19 18:09:09 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: ackermann.gawk,v 1.2 2005-05-13 16:24:17 igouy-guest Exp $
+# http://www.bagley.org/~doug/shootout/ 
 
 function ack(m, n) {
     if (m == 0) return( n + 1 );

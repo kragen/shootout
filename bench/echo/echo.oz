@@ -1,6 +1,6 @@
-%%% $Id: echo.oz,v 1.3 2005-05-12 15:23:13 igouy-guest Exp $
+%%% $Id: echo.oz,v 1.4 2005-05-13 16:24:17 igouy-guest Exp $
 %%% http://dada.perl.it/shootout/
-%%%
+%%% 
 %%% contributed by Isaac Gouy
 
 %%  Usage: start from command line with

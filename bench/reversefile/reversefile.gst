@@ -1,5 +1,5 @@
 "  The Great Computer Language Shootout
-   contributed by Paolo Bonzini
+   contributed by Paolo Bonzini 
    
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im reversefile < input.txt 
 "

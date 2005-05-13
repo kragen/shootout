@@ -1,5 +1,5 @@
-#!/bin/bash
-# $Id: nestedloop.bash,v 1.2 2004-08-04 07:39:54 bfulgham Exp $
+#!/bin/bash 
+# $Id: nestedloop.bash,v 1.3 2005-05-13 16:24:18 igouy-guest Exp $
 # http://shootout.alioth.debian.org/
 #
 # Contributed by David Pyke

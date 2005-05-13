@@ -1,6 +1,6 @@
 #!/bin/bash
-# $Id: hash2.bash,v 1.1 2004-05-19 18:10:01 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: hash2.bash,v 1.2 2005-05-13 16:24:17 igouy-guest Exp $
+# http://www.bagley.org/~doug/shootout/ 
 # from Steve Fink
 
 n=${1:-1}

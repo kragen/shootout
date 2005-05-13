@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/ruby 
 # The Computer Language Benchmark Shootout
 # http://shootout.alioth.debian.org
 #

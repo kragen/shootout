@@ -1,6 +1,6 @@
 #!/usr/bin/pike
-// -*- mode: pike -*-
-// $Id: prodcons.pike,v 1.1 2004-05-19 18:11:10 bfulgham Exp $
+// -*- mode: pike -*- 
+// $Id: prodcons.pike,v 1.2 2005-05-13 16:24:18 igouy-guest Exp $
 // http://www.bagley.org/~doug/shootout/
 
 inherit Thread.Condition: access;
