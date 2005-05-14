@@ -53,7 +53,7 @@ function ReadLogFiles($dirPath){
             fclose($f);
                         
             if (strpos($s,'Permission denied')){ $code = PROGRAM_EXCLUDED; }         
-            elseif (strpos($s,'KILLED')){ $code = PROGRAM_TIMEOUT; }
+            elseif (strpos($s,'TIMEOUT')){ $code = PROGRAM_TIMEOUT; }
             elseif (strpos($s,'FAILED')){ $code = PROGRAM_ERROR; }            
             else {
                if ($i = strpos($s,'PROGRAM OUTPUT')){               

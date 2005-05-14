@@ -5,7 +5,11 @@
 </div>
 
 <table class="div" >
-<tr><td>&nbsp;</td></tr>
+
+<tr><td>
+<p>PHP Version: <?=PHP_VERSION;?></p>
+</td></tr>
+
 
 <tr><td><h4 class="rev"><a class="arev" href="#audit" name="audit">&nbsp;audit</a></h4></td></tr>
 
@@ -83,7 +87,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#time1" name="time1"><strong>bad log files 4</strong></a><br />timeout in ndata.csv but no 'KILLED' in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#time1" name="time1"><strong>bad log files 4</strong></a><br />timeout in ndata.csv but no 'TIMEOUT' in log file</td></tr>
 <tr><td>
 <?
    foreach($NData as $k => $v){ 
@@ -95,7 +99,7 @@
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#time2" name="time2"><strong>bad log files 5</strong></a><br />no timeout in ndata.csv but 'KILLED' in log file</td></tr>
+<tr class="b"><td><a class="ab" href="#time2" name="time2"><strong>bad log files 5</strong></a><br />no timeout in ndata.csv but 'TIMEOUT' in log file</td></tr>
 <tr><td>
 <?
    foreach($Logs as $k => $v){ 
@@ -126,6 +130,29 @@
 <tr class="b"><td><a class="ab" href="#read" name="read"><strong>ndata.csv read & filter</strong></a></td></tr>
 <tr><td>
 <p>rows: <?=number_format($NDataN);?> @fgetcsv: <?=number_format($NDataTime,3);?>s</p>
+</td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#timeout" name="timeout"><strong>All log files with 'TIMEOUT'</strong></a></td></tr>
+<tr><td>
+<?
+   foreach($Logs as $k => $v){ 
+      if ($v[0]==PROGRAM_TIMEOUT && isset($NData[$k])){
+         printf('<p>%s</p>',PrettyTag($k)); echo "\n";    
+      }      
+   }      
+?>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#failed" name="failed"><strong>All log files with 'FAILED'</strong></a></td></tr>
+<tr><td>
+<?
+   foreach($Logs as $k => $v){ 
+      if ($v[0]==PROGRAM_ERROR && isset($NData[$k])){
+         printf('<p>%s</p>',PrettyTag($k)); echo "\n";    
+      }      
+   }      
+?>
 </td></tr>
 
 </table>
