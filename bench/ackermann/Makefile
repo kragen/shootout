@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2005-04-04 14:56:35 bfulgham Exp $
+# $Id: Makefile,v 1.30 2005-05-14 19:25:26 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -12,6 +12,7 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 NLOPTS   := -s 100000
 GHCOPTS  := -fasm
+IFCOPTS := -ip
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 6,7,8,9,10
 
