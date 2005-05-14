@@ -1,4 +1,4 @@
-#!/usr/local/bin/pike 
+#!/usr/bin/pike
 
 /* The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
