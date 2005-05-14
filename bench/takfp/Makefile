@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2005-05-01 12:04:35 igouy-guest Exp $
+# $Id: Makefile,v 1.7 2005-05-14 16:36:30 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -9,6 +9,7 @@ TITLE   := TAK Function
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 
+IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 # gcc -O3 is detrimental for this test!
 GCCOPTS := -O1

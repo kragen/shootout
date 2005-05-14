@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2005-05-04 05:23:35 bfulgham Exp $
+# $Id: Makefile,v 1.25 2005-05-14 16:32:53 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := random
@@ -8,6 +8,7 @@ SE_OPTS := -case_insensitive
 MB_GHCRTS  := +RTS -K16000000
 LOCDEPS := --dep=se:../Include/randomnumber.e
 
+IFCOPTS := -ip
 STALINOPTS := -s
 ERLFLAGS := -noinput
 

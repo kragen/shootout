@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-05-01 12:04:33 igouy-guest Exp $
+# $Id: Makefile,v 1.5 2005-05-14 16:29:48 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -9,6 +9,7 @@ TITLE   := Fannkuch Function
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 
+IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 ICCOPTS := -tpp6
 OO2COPTS := -A --no-rtc
