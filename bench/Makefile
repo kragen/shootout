@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2005-05-09 01:22:41 bfulgham Exp $
+# $Id: Makefile,v 1.28 2005-05-14 17:31:27 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -33,6 +33,7 @@ TESTS = \
     process \
     prodcons \
     random \
+    raytracer \    
     regexmatch \
     revcomp \
     reversefile \
