@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-05-01 12:04:34 igouy-guest Exp $
+# $Id: Makefile,v 1.5 2005-05-15 06:34:27 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -19,7 +19,7 @@ ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 10000,20000,30000 \
+	  --range 25000,250000,2500000 \
 	  --inputfile ../../website/desc/revcomp-input.txt \
 	  --uniqueinput
 

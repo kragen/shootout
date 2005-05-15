@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-05-01 12:04:33 igouy-guest Exp $
+# $Id: Makefile,v 1.8 2005-05-15 06:34:26 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fasta
@@ -19,6 +19,6 @@ ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 50000,100000,200000
+	  --range 25000,250000,2500000
 
 include ../../Make.footer
