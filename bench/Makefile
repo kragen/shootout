@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2005-05-15 06:17:33 bfulgham Exp $
+# $Id: Makefile,v 1.30 2005-05-15 06:19:19 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -33,7 +33,7 @@ TESTS = \
     process \
     prodcons \
     random \
-    raytracer \    
+    raytracer \
     regexmatch \
     revcomp \
     reversefile \
@@ -51,7 +51,7 @@ TESTS = \
 
 .PHONY: all plot test show clean clobber report
 
-all: plot test loc show clean clobber:
+all plot test loc show clean clobber:
 	-@for t in $(TESTS) ; do (cd $$t && make $@) ; done
 
 report: $(filter-out %.ocamlb,$(foreach dir,$(TESTS),$(wildcard $(dir)/$(dir).*)))
