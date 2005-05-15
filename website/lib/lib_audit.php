@@ -67,7 +67,9 @@ function ReadLogFiles($dirPath){
          $logs[$tag] = array($code,$byteSize);                            
       }
    }
-   closedir($dh);   
+   closedir($dh);  
+   
+   ksort($logs);    
    return $logs;
 }
 
