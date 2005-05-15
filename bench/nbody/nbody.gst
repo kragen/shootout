@@ -63,88 +63,88 @@ category: nil !
 !Body class methodsFor: 'constants'!   
    
 daysPerYear
-	^365.24d !
+   ^365.24d !
 	
 pi
-	^3.141592653589793d !
+   ^3.141592653589793d !
 	
 solarMass
-	^4.0d * self pi * self pi !	
+   ^4.0d * self pi * self pi !	
 	
 sun
-	^self new
-		x: 0.0d0
-		y: 0.0d0
-		z: 0.0d0
-		vx: 0.0d0
-		vy: 0.0d0
-		vz: 0.0d0
-		mass: self solarMass !	
+   ^self new
+      x: 0.0d0
+      y: 0.0d0
+      z: 0.0d0
+      vx: 0.0d0
+      vy: 0.0d0
+      vz: 0.0d0
+      mass: self solarMass !	
 		
 	
 jupiter
-	^self new
-		x: 4.84143144246472090d0
-		y: -1.16032004402742839d0
-		z: -1.03622044471123109d-1
-		vx: 1.66007664274403694d-3 * self daysPerYear
-		vy: 7.69901118419740425d-3 * self daysPerYear
-		vz: -6.90460016972063023d-5 * self daysPerYear
-		mass: 9.54791938424326609d-4 * self solarMass !	   
+   ^self new
+      x: 4.84143144246472090d0
+      y: -1.16032004402742839d0
+      z: -1.03622044471123109d-1
+      vx: 1.66007664274403694d-3 * self daysPerYear
+      vy: 7.69901118419740425d-3 * self daysPerYear
+      vz: -6.90460016972063023d-5 * self daysPerYear
+      mass: 9.54791938424326609d-4 * self solarMass !	   
    
 saturn
-	^self new
-		x: 8.34336671824457987d0
-		y: 4.12479856412430479d0
-		z: -4.03523417114321381d-1
-		vx: -2.76742510726862411d-3 * self daysPerYear
-		vy: 4.99852801234917238d-3 * self daysPerYear
-		vz: 2.30417297573763929d-5 * self daysPerYear
-		mass: 2.85885980666130812d-4 * self solarMass !
+   ^self new
+      x: 8.34336671824457987d0
+      y: 4.12479856412430479d0
+      z: -4.03523417114321381d-1
+      vx: -2.76742510726862411d-3 * self daysPerYear
+      vy: 4.99852801234917238d-3 * self daysPerYear
+      vz: 2.30417297573763929d-5 * self daysPerYear
+      mass: 2.85885980666130812d-4 * self solarMass !
 
 uranus
-	^self new
-		x: 1.28943695621391310d1
-		y: -1.51111514016986312d1
-		z: -2.23307578892655734d-1
-		vx: 2.96460137564761618d-3 * self daysPerYear
-		vy: 2.37847173959480950d-3 * self daysPerYear
-		vz: -2.96589568540237556d-5 * self daysPerYear
-		mass: 4.36624404335156298d-5 * self solarMass !
+   ^self new
+      x: 1.28943695621391310d1
+      y: -1.51111514016986312d1
+      z: -2.23307578892655734d-1
+      vx: 2.96460137564761618d-3 * self daysPerYear
+      vy: 2.37847173959480950d-3 * self daysPerYear
+      vz: -2.96589568540237556d-5 * self daysPerYear
+      mass: 4.36624404335156298d-5 * self solarMass !
 				
 neptune
-	^self new
-		x: 1.53796971148509165d1
-		y: -2.59193146099879641d1
-		z: 1.79258772950371181d-1
-		vx: 2.68067772490389322d-3 * self daysPerYear
-		vy: 1.62824170038242295d-3 * self daysPerYear
-		vz: -9.51592254519715870d-5 * self daysPerYear
-		mass: 5.15138902046611451d-5 * self solarMass !	!
+   ^self new
+      x: 1.53796971148509165d1
+      y: -2.59193146099879641d1
+      z: 1.79258772950371181d-1
+      vx: 2.68067772490389322d-3 * self daysPerYear
+      vy: 1.62824170038242295d-3 * self daysPerYear
+      vz: -9.51592254519715870d-5 * self daysPerYear
+      mass: 5.15138902046611451d-5 * self solarMass !	!
 		
 		
 !Body methodsFor: 'accessing'!	
 
 mass
-	^mass !
+   ^mass !
 
 vx
-	^vx !				
+   ^vx !				
 	
 vy
-	^vy !
+   ^vy !
 	
 vz
-	^vz !
+   ^vz !
 	
 x
-	^x !
+   ^x !
 	
 y
-	^y !
+   ^y !
 	
 z
-	^z !
+   ^z !
 	
 x: d1 y: d2 z: d3 vx: d4 vy: d5 vz: d6 mass:	d7
    x := d1.
