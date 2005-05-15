@@ -1,65 +1,130 @@
 <span class="slc">; prodcons.scm
-</span><span class="slc">; Producer/consumer benchmark for http://www.bagley.org/~doug/shootout/
-</span><span class="slc">; Scheme implementation using SRFI 18, needs only the following subset:
-</span><span class="slc">; make-thread, thread-start!, thread-join!
-</span><span class="slc">; make-mutex, mutex-lock!, mutex-unlock!
-</span><span class="slc">; make-condition-variable, condition-variable-signal!
 </span>
-<span class="slc">; (by Sven Hartrumpf)
+<span class="slc">; Producer/consumer benchmark for http://www.bagley.org/~doug/shootout/
 </span>
-<span class="sym">(</span>declare <span class="sym">(</span>fixnum<span class="sym">) (</span>uses srfi<span class="num">-18</span><span class="sym">))
-
-(</span>define <span class="sym">*</span>num <span class="num">1</span><span class="sym">)
-(</span>define <span class="sym">*</span>mutex <span class="sym">(</span>make<span class="sym">-</span>mutex<span class="sym">))
-(</span>define <span class="sym">*</span>nonzero<span class="sym">-</span>condition <span class="sym">(</span>make<span class="sym">-</span>condition<span class="sym">-</span>variable<span class="sym">))
-(</span>define <span class="sym">*</span>zero<span class="sym">-</span>condition <span class="sym">(</span>make<span class="sym">-</span>condition<span class="sym">-</span>variable<span class="sym">))
-(</span>define <span class="sym">*</span>buffer #f<span class="sym">)
-(</span>define <span class="sym">*</span>count <span class="num">0</span><span class="sym">)
-(</span>define <span class="sym">*</span>produced <span class="num">0</span><span class="sym">)
-(</span>define <span class="sym">*</span>consumed <span class="num">0</span><span class="sym">)
-
-(</span>define producer
-  <span class="sym">(</span>make<span class="sym">-</span>thread
-   <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">()
-     (</span>do <span class="sym">((</span>i <span class="num">1</span><span class="sym">))
-	 ((&gt;</span> i <span class="sym">*</span>num<span class="sym">))
-       (</span>mutex<span class="sym">-</span>lock<span class="sym">! *</span>mutex<span class="sym">)
-       (</span><span class="kwa">cond</span> <span class="sym">((= *</span>count <span class="num">0</span><span class="sym">)
-	      (</span><span class="kwa">set</span><span class="sym">! *</span>buffer i<span class="sym">)
-	      (</span><span class="kwa">set</span><span class="sym">! *</span>count <span class="sym">(+ *</span>count <span class="num">1</span><span class="sym">))
-	      (</span>condition<span class="sym">-</span>variable<span class="sym">-</span>signal<span class="sym">! *</span>nonzero<span class="sym">-</span>condition<span class="sym">)
-	      (</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>zero<span class="sym">-</span>condition<span class="sym">)
-	      (</span><span class="kwa">set</span><span class="sym">!</span> i <span class="sym">(+</span> i <span class="num">1</span><span class="sym">))
-	      (</span><span class="kwa">set</span><span class="sym">! *</span>produced <span class="sym">(+ *</span>produced <span class="num">1</span><span class="sym">))
-	      )
-	     (</span>else
-	      <span class="sym">(</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>zero<span class="sym">-</span>condition<span class="sym">))) )
-     (</span>condition<span class="sym">-</span>variable<span class="sym">-</span>signal<span class="sym">! *</span>nonzero<span class="sym">-</span>condition<span class="sym">) ) ) )</span> <span class="slc">; to run consumer once more...
+<span class="slc">; Scheme implementation using SRFI 18, needs only the following subset:
 </span>
-<span class="sym">(</span>define consumer <span class="sym">(</span>make<span class="sym">-</span>thread <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">()
-  (</span>do <span class="sym">((</span>i <span class="num">0</span><span class="sym">))
-    ((&gt;=</span> i <span class="sym">*</span>num<span class="sym">))
-    (</span>mutex<span class="sym">-</span>lock<span class="sym">! *</span>mutex<span class="sym">)
-    (</span><span class="kwa">cond</span> <span class="sym">((&gt; *</span>count <span class="num">0</span><span class="sym">)
-           (</span><span class="kwa">set</span><span class="sym">!</span> i <span class="sym">*</span>buffer<span class="sym">)
-           (</span><span class="kwa">set</span><span class="sym">! *</span>buffer #f<span class="sym">)
-           (</span><span class="kwa">set</span><span class="sym">! *</span>count <span class="sym">(- *</span>count <span class="num">1</span><span class="sym">))
-           (</span>condition<span class="sym">-</span>variable<span class="sym">-</span>signal<span class="sym">! *</span>zero<span class="sym">-</span>condition<span class="sym">)
-           (</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>nonzero<span class="sym">-</span>condition<span class="sym">)
-           (</span><span class="kwa">set</span><span class="sym">! *</span>consumed <span class="sym">(+ *</span>consumed <span class="num">1</span><span class="sym">))
-           )
-          (</span>else
-            <span class="sym">(</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>nonzero<span class="sym">-</span>condition<span class="sym">)))
-    ))))
-
-(</span>define <span class="sym">(</span>main #<span class="sym">!</span>optional <span class="sym">(</span>n <span class="str">&quot;1&quot;</span><span class="sym">))
-  (</span><span class="kwa">set</span><span class="sym">! *</span>num <span class="sym">(</span>string<span class="sym">-&gt;</span>number n<span class="sym">))
-  (</span>thread<span class="sym">-</span>start<span class="sym">!</span> producer<span class="sym">)
-  (</span>thread<span class="sym">-</span>start<span class="sym">!</span> consumer<span class="sym">)
-  (</span>thread<span class="sym">-</span>join<span class="sym">!</span> producer<span class="sym">)
-  (</span>thread<span class="sym">-</span>join<span class="sym">!</span> consumer<span class="sym">)
-  (</span><span class="kwa">print</span> <span class="sym">*</span>produced <span class="str">&quot; &quot;</span> <span class="sym">*</span>consumed<span class="sym">))
+<span class="slc">; make-thread, thread-start!, thread-join!
+</span>
+<span class="slc">; make-mutex, mutex-lock!, mutex-unlock!
+</span>
+<span class="slc">; make-condition-variable, condition-variable-signal!
+</span>
 
 
-(</span><span class="kwa">apply</span> main <span class="sym">(</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>arguments<span class="sym">))
-</span>
+<span class="slc">; (by Sven Hartrumpf)
+</span>
+
+
+<span class="sym">(</span>declare <span class="sym">(</span>fixnum<span class="sym">) (</span>uses srfi<span class="num">-18</span><span class="sym">))
+
+
+
+(</span>define <span class="sym">*</span>num <span class="num">1</span><span class="sym">)
+
+(</span>define <span class="sym">*</span>mutex <span class="sym">(</span>make<span class="sym">-</span>mutex<span class="sym">))
+
+(</span>define <span class="sym">*</span>nonzero<span class="sym">-</span>condition <span class="sym">(</span>make<span class="sym">-</span>condition<span class="sym">-</span>variable<span class="sym">))
+
+(</span>define <span class="sym">*</span>zero<span class="sym">-</span>condition <span class="sym">(</span>make<span class="sym">-</span>condition<span class="sym">-</span>variable<span class="sym">))
+
+(</span>define <span class="sym">*</span>buffer #f<span class="sym">)
+
+(</span>define <span class="sym">*</span>count <span class="num">0</span><span class="sym">)
+
+(</span>define <span class="sym">*</span>produced <span class="num">0</span><span class="sym">)
+
+(</span>define <span class="sym">*</span>consumed <span class="num">0</span><span class="sym">)
+
+
+
+(</span>define producer
+
+  <span class="sym">(</span>make<span class="sym">-</span>thread
+
+   <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">()
+
+     (</span>do <span class="sym">((</span>i <span class="num">1</span><span class="sym">))
+
+	 ((&gt;</span> i <span class="sym">*</span>num<span class="sym">))
+
+       (</span>mutex<span class="sym">-</span>lock<span class="sym">! *</span>mutex<span class="sym">)
+
+       (</span><span class="kwa">cond</span> <span class="sym">((= *</span>count <span class="num">0</span><span class="sym">)
+
+	      (</span><span class="kwa">set</span><span class="sym">! *</span>buffer i<span class="sym">)
+
+	      (</span><span class="kwa">set</span><span class="sym">! *</span>count <span class="sym">(+ *</span>count <span class="num">1</span><span class="sym">))
+
+	      (</span>condition<span class="sym">-</span>variable<span class="sym">-</span>signal<span class="sym">! *</span>nonzero<span class="sym">-</span>condition<span class="sym">)
+
+	      (</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>zero<span class="sym">-</span>condition<span class="sym">)
+
+	      (</span><span class="kwa">set</span><span class="sym">!</span> i <span class="sym">(+</span> i <span class="num">1</span><span class="sym">))
+
+	      (</span><span class="kwa">set</span><span class="sym">! *</span>produced <span class="sym">(+ *</span>produced <span class="num">1</span><span class="sym">))
+
+	      )
+
+	     (</span>else
+
+	      <span class="sym">(</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>zero<span class="sym">-</span>condition<span class="sym">))) )
+
+     (</span>condition<span class="sym">-</span>variable<span class="sym">-</span>signal<span class="sym">! *</span>nonzero<span class="sym">-</span>condition<span class="sym">) ) ) )</span> <span class="slc">; to run consumer once more...
+</span>
+
+
+<span class="sym">(</span>define consumer <span class="sym">(</span>make<span class="sym">-</span>thread <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">()
+
+  (</span>do <span class="sym">((</span>i <span class="num">0</span><span class="sym">))
+
+    ((&gt;=</span> i <span class="sym">*</span>num<span class="sym">))
+
+    (</span>mutex<span class="sym">-</span>lock<span class="sym">! *</span>mutex<span class="sym">)
+
+    (</span><span class="kwa">cond</span> <span class="sym">((&gt; *</span>count <span class="num">0</span><span class="sym">)
+
+           (</span><span class="kwa">set</span><span class="sym">!</span> i <span class="sym">*</span>buffer<span class="sym">)
+
+           (</span><span class="kwa">set</span><span class="sym">! *</span>buffer #f<span class="sym">)
+
+           (</span><span class="kwa">set</span><span class="sym">! *</span>count <span class="sym">(- *</span>count <span class="num">1</span><span class="sym">))
+
+           (</span>condition<span class="sym">-</span>variable<span class="sym">-</span>signal<span class="sym">! *</span>zero<span class="sym">-</span>condition<span class="sym">)
+
+           (</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>nonzero<span class="sym">-</span>condition<span class="sym">)
+
+           (</span><span class="kwa">set</span><span class="sym">! *</span>consumed <span class="sym">(+ *</span>consumed <span class="num">1</span><span class="sym">))
+
+           )
+
+          (</span>else
+
+            <span class="sym">(</span>mutex<span class="sym">-</span>unlock<span class="sym">! *</span>mutex <span class="sym">*</span>nonzero<span class="sym">-</span>condition<span class="sym">)))
+
+    ))))
+
+
+
+(</span>define <span class="sym">(</span>main #<span class="sym">!</span>optional <span class="sym">(</span>n <span class="str">&quot;1&quot;</span><span class="sym">))
+
+  (</span><span class="kwa">set</span><span class="sym">! *</span>num <span class="sym">(</span>string<span class="sym">-&gt;</span>number n<span class="sym">))
+
+  (</span>thread<span class="sym">-</span>start<span class="sym">!</span> producer<span class="sym">)
+
+  (</span>thread<span class="sym">-</span>start<span class="sym">!</span> consumer<span class="sym">)
+
+  (</span>thread<span class="sym">-</span>join<span class="sym">!</span> producer<span class="sym">)
+
+  (</span>thread<span class="sym">-</span>join<span class="sym">!</span> consumer<span class="sym">)
+
+  (</span><span class="kwa">print</span> <span class="sym">*</span>produced <span class="str">&quot; &quot;</span> <span class="sym">*</span>consumed<span class="sym">))
+
+
+
+
+
+(</span><span class="kwa">apply</span> main <span class="sym">(</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>arguments<span class="sym">))
+
+
+</span>
