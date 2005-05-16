@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-04-12 17:08:04 chris00-guest Exp $
+# $Id: Makefile,v 1.27 2005-05-16 15:28:25 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -9,7 +9,7 @@ GCCOPTS   := $(GCCOPTS) -lpcre
 OCAMLOPTS := str.cmxa
 OCAMLBOPTS := str.cma
 OO2COPTS := -A --no-rtc
-GHCOPTS := -package text
+GHCOPTS := -package text -fno-full-laziness
 ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
@@ -28,3 +28,4 @@ RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --inputfile ../../website/desc/regexmatch-input.txt
 
 include ../../Make.footer
+
