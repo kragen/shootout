@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2005-05-10 22:28:20 igouy-guest Exp $
+# $Id: Makefile,v 1.26 2005-05-16 01:09:21 bfulgham Exp $
 
 include Make.header
 
@@ -7,7 +7,7 @@ all: init versions
 	-(cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
-	-make recent codelinks
+	-make codelinks
 
 website: 
 	-bin/build_data_files
