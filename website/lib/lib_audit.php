@@ -47,7 +47,7 @@ function ReadLogFiles($dirPath){
          $byteSize = filesize(LOG_PATH.$fn);
          
          $code = 0;         
-         if ($byteSize > 0){                  
+         if (($byteSize > 0) && ($byteSize <= 20480)){                  
             $f = fopen(LOG_PATH.$fn,'r');
             $s = fread($f,$byteSize);
             fclose($f);
