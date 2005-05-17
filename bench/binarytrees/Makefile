@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.1 2005-05-17 07:42:04 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-05-17 21:10:51 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := binarytrees
-TITLE   := Make and free many binary trees
+TITLE   := Allocate, walk, and free many binary trees
 
 #XLABEL  := N (number of iterations)
 
@@ -21,6 +21,6 @@ GPLCOPTS := --fast-math
 GHCOPTS := -fexcess-precision
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 14,16,18
+	  --range 12,14,16
 
 include ../../Make.footer
