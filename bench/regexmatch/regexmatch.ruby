@@ -1,7 +1,8 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: regexmatch.ruby,v 1.1 2004-05-19 18:11:27 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: regexmatch.ruby,v 1.2 2005-05-17 05:20:31 bfulgham Exp $
+# http://shootout.alioth.debian.org/
+# modified by: Jon-Carlos Rivera
 
 re = Regexp.new(
     '(?:^|[^\d\(])' +			# must be preceeded by non-digit
@@ -13,19 +14,20 @@ re = Regexp.new(
     '\D'				# must be followed by a non-digit
 )
 
-NUM = Integer(ARGV[0] || 1)
+num = Integer(ARGV[0] || 1)
 
 phones = STDIN.readlines
 
-count = m = line = iter = 0
-for iter in 1..NUM
-    for line in phones
-	if m = re.match(line)
-	    num = '(' + (m[1] || m[2]) + ') ' + m[3] + '-' + m[4];
-	    if iter == NUM
-		count += 1
-		puts "#{count}: #{num}"
+phonenum, count = "", 0
+
+(1..num).each do |iter|
+  phones.each do |line|
+	  if line =~ re 
+	    phonenum = "(#{($1 || $2)}) #{$3}-#{$4}";
+	    if iter == num
+		    count += 1
+		    puts "#{count}: #{phonenum}"
 	    end
-	end
-    end
+	  end
+  end
 end

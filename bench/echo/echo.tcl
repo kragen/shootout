@@ -7,42 +7,40 @@
 # with help from Miguel Sofer
 # modified by Daniel South
 
-proc newClient {sock addr port} {
-   fconfigure $sock -buffering line -encoding unicode
-   set r [gets $sock]
-   set rLength 0
-   while {![eof $sock]} {
-      # Extra increase because [gets] doesn't return \n
-      incr rLength [string length $r]
-      incr rLength
-      puts $sock $r
-      set r [gets $sock]
-   }
-   puts "server processed $rLength bytes"
-   exit
+proc Server {channel clientaddr clientport} {
+    fconfigure $channel -buffering line -encoding unicode
+    set rLength 0
+    while {![eof $channel]} {
+	if {[gets $channel r] > 0} {
+	    puts $channel $r
+	    # Extra increase because [gets] doesn't return \n
+	    incr rLength [string length $r]
+	    incr rLength
+	}
+    }
+    puts "server processed $rLength bytes"
+    exit
 }
 
+proc doChild {num} {
+    set fd [socket localhost 9900]
+    fconfigure $fd -buffering line -encoding unicode
+    set msg "Hello there sailor"
 
-proc runClient {n addr port} {
-   set sock [socket $addr $port]
-   fconfigure $sock -buffering line -encoding unicode
-   set msg "Hello there sailor"
-
-   incr n
-   while {[incr n -1]} {
-      puts $sock $msg
-      if {[set r [gets $sock]] != $msg} {
-	      error "Received different message: $r."
-      }
-   }
+    while {[incr num -1] >= 0} {
+	puts $fd $msg
+	while {![gets $fd r]} {}
+	if {$r ne $msg} {error "Received different message: $r."; exit}
+    }
+    close $fd
 }
 
 set n [lindex $argv 0]
 
-if {[llength $argv] < 2} {
-   socket -server newClient -myaddr localhost 10000
-   exec [info nameofexecutable] [info script] $n client &
-   vwait forever
+if {[llength $argv] == 2} {
+    doChild $n
 } else {
-   runClient $n localhost 10000
+    socket -server Server 9900
+    exec [info nameofexecutable] [info script] $n & &
+    vwait forever
 }
