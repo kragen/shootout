@@ -1,9 +1,10 @@
-# $Id: Makefile,v 1.30 2005-05-15 06:19:19 bfulgham Exp $
+# $Id: Makefile,v 1.31 2005-05-17 07:42:04 igouy-guest Exp $
 
 TESTS = \
     hello \
     ackermann \
     ary \
+    binarytrees \
     echo \
     except \
     fannkuch \
