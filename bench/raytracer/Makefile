@@ -1,7 +1,7 @@
-# $Id: Makefile,v 1.1 2005-05-14 17:31:27 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-05-18 23:07:28 igouy-guest Exp $
 include ../../Make.header
 
-TEST    := ray tracer
+TEST    := raytracer
 TITLE   := Ray Tracer
 
 #XLABEL  := N (number of iterations)
