@@ -72,12 +72,20 @@ if ($T=='all'){
       $LangName = $Langs[$L][LANG_FULL];    
       $Title = $LangName.' benchmarks'; 
 
-      $TemplateName = 'headtohead.tpl.php';
+      if ($L!=$L2){ 
+         $TemplateName = 'headtohead.tpl.php'; 
+         $Title = 'Compare '.$LangName.' to '.$Langs[$L2][LANG_FULL];       
+         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));              
+      } else { 
+         $TemplateName = 'language.tpl.php'; 
+         $Title = $LangName.' benchmarks';  
+         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                   
+      }
+      
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $About->set('Version', HtmlFragment(ABOUT_PATH.$L.SEPARATOR.'version.php'));
-      $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));  
       $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';         
    }
 

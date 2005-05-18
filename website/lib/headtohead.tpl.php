@@ -9,6 +9,12 @@ $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
+$Link = $Row[LANG_LINK];
+
+printf('<p>Show <strong><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s&amp;sort=%s" 
+   title="Show %s benchmarks summary">%s benchmarks</strong></a> summary.</p>', 
+   $Link, $Link, $Sort, $LangName, $LangName);
+
 ?>
 </div>
 
@@ -16,7 +22,7 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks <em>vs</em> <?=$LangName2;?></a></h4>
+<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Compare <?=$LangName;?> to <?=$LangName2;?></a></h4>
 <p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?>)</a> relative performance - how much <em>more</em> Memory, how much <em>more</em> CPU Time, did each language use?
 </p>
 </td></tr>
@@ -114,7 +120,6 @@ foreach($Tests as $Row){
 }
 ?>   
 
-   
 <tr><td colspan="6">&nbsp;</td></tr>
    
 

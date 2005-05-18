@@ -223,4 +223,88 @@ function PF($d){
    else { return '<span class="b">'.number_format($d,4).'</span>'; }
 }
 
+
+function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
+   // Simple filter on file rows
+   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
+   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+   $rows = array();
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }
+      
+      $lang = $row[DATA_LANG];                                  
+      if ($lang==$L1){  $rows[] = $row;}
+   }
+   @fclose($f);     
+      
+   // Filter again in memory      
+   $Data = array();   
+   foreach($rows as $row){ 
+      if (isset($Incl[$row[DATA_TEST]])){   
+         settype($row[DATA_ID],'integer');                              
+           
+         if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){  
+            $Data[] = $row;                                                                      
+         } 
+      }      
+   }            
+   unset($rows);     
+  
+// SELECTION DEPENDS ON THIS SORT ORDER
+   usort($Data,'CompareTestValue2');   
+
+// TRANSFORM SELECTED DATA
+
+   $lang = ""; $id = ""; $test = ""; $n = 0;
+   $NData = array(); 
+   unset($row);    
+   
+   $i=0; $j=0;
+   while ($i<sizeof($Data)){
+    
+      $n = $Data[$i][DATA_TESTVALUE];
+      $test = $Data[$i][DATA_TEST];                
+            
+      do {
+         $dj = $Data[$j];
+                              
+         if (isset($row)){ 
+            if ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]){         
+               $row = $Data[$j]; 
+            }         
+         }
+         else {         
+            $row = $Data[$j];                  
+         }        
+                    
+         $j++;                                 
+         $hasMore = $j<sizeof($Data);                                    
+         $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);         
+      } while ($isSameTest);
+                                                 
+      if (isset($row)){                                                    
+         $NData[$row[DATA_TEST]] = array(
+               $row[DATA_TEST]         
+            , $row[DATA_LANG]
+            , $row[DATA_ID]
+            , $row[DATA_TESTVALUE]
+            , $Langs[$row[DATA_LANG]][LANG_FULL].IdName($row[DATA_ID])
+            , $Langs[$row[DATA_LANG]][LANG_HTML].IdName($row[DATA_ID])
+            , $row[DATA_FULLCPU]
+            , $row[DATA_MEMORY]
+            , $row[DATA_LINES]
+            , $row[DATA_CPU]
+            , ExcludeData($row,$Langs,$Excl)
+            );                           
+      }    
+                                                   
+      while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }                                                   
+                
+      unset($row); 
+      $i = $j;               
+   }
+   return $NData;     
+}
+
 ?>

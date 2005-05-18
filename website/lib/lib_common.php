@@ -63,6 +63,7 @@ define('N_COLOR',10);
 define('N_N',3);
 define('N_LINES',8);
 define('N_CPU',9);
+define('N_EXCLUDE',10);
 
 
 define('CPU_MIN',0);
