@@ -27,3 +27,5 @@ long lived tree of depth 10      check: -2047
 
 <p>The binary-trees benchmark is adapted from <a href="http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_bench/applet/GCBench.java">Hans Boehm's GCBench</a>,
 which in turn was adapted from a benchmark by John Ellis and Pete Kovac.</p>
+
+<p>Thanks to Christophe Troestler for help with this benchmark.</p>
