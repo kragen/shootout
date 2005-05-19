@@ -1,6 +1,6 @@
 <p>Each program should</p>
 <ul>
-   <li>define a tree node class and methods, or a tree node record and functions</li>
+   <li>define a tree node class and methods, a tree node record and procedures, or an algebraic data type and functions, or &#8230;</li>
    <li>allocate a binary tree to 'stretch' memory, check it exists, and deallocate it</li>
    <li>allocate a long-lived binary tree which will live-on while other trees are allocated and deallocated</li>   
    <li>allocate, walk, and deallocate many bottom-up binary trees
