@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-05-14 16:36:30 sgeard-guest Exp $
+# $Id: Makefile,v 1.8 2005-05-19 08:45:24 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -18,7 +18,7 @@ POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
-GHCOPTS := -fexcess-precision
+GHCOPTS := -O2 -fexcess-precision -optc-ffast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 8,9,10
