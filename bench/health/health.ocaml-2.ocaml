@@ -1,0 +1,212 @@
+(* health.ml
+ *
+ * The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Troestler Christophe
+ *)
+
+(* Adjust GC behavior *)
+let () = Gc.set { (Gc.get()) with Gc.minor_heap_size = 1024 * 1024 }
+
+(* Mutable single linked lists.  Useful interface only. *)
+(* module type Lsig =
+sig
+  type 'a t
+  val make : unit -> 'a t
+  val add : 'a -> 'a t -> unit
+  val iter : ('a -> unit) -> 'a t -> unit
+  val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
+  val filter : ('a -> bool) -> 'a t -> unit  (** filter in place *)
+  val export : 'a t -> 'a t
+   (** [export l] clears [l] and return a copy of it. *)
+end *)
+module L (* : Lsig *) =
+struct
+  type 'a t = { mutable first : 'a list;  mutable last : 'a list }
+  and 'a list = { mutable data : 'a;  mutable next : 'a list }
+
+  let make () =
+    let rec node = { data = Obj.magic 0;  next = node } in
+    { first = node;  last = node }
+
+  (* The element [e] must be added to the end of [l]. *)
+  let add e l =
+    l.last.data <- e;
+    let rec node = { data = Obj.magic 0;  next = node } in
+    l.last.next <- node;
+    l.last <- node
+
+
+  let rec iter_node f node last =
+    if node != last then (f node.data; iter_node f node.next last)
+  let iter f l = iter_node f l.first l.last
+
+  let rec fold_node f a node last =
+    if node == last then a else fold_node f (f a node.data) node.next last
+  let fold_left f a l = fold_node f a l.first l.last
+
+  let rec keep_node f node0 node last =
+    if node == last then node0.next <- last (* close the modified list *)
+    else if f node.data then keep_node f node node.next last (* keep node *)
+    else (node0.next <- node.next; keep_node f node0 node.next last)
+
+  let rec filter_1st f l node =
+    if node == l.last then l.first <- l.last (* none selected, empty list *)
+    else if f node.data then (l.first <- node; (* possibly remove 1st nodes *)
+			      keep_node f node node.next l.last)
+    else filter_1st f l node.next (* skip node *)
+
+  let filter f l = filter_1st f l l.first
+
+  let export l =
+    let node0 = l.first and node1 = l.last in
+    let rec node = { data = Obj.magic 0;  next = node } in
+    l.first <- node; l.last <- node;
+    { first = node0;  last = node1 }
+end
+
+
+type patient = {
+  mutable remaining_time : int;
+  mutable hospital_time : int;
+  mutable hospital_visits : int;
+}
+
+
+let patient_stay p s =
+  p.remaining_time <- s;  p.hospital_time <- p.hospital_time + s
+
+type totals = int * int * int (* patients, hospital time, hospital visits *)
+
+let add_patient (n, t, v) p =
+  (n + 1, t + p.hospital_time, v + p.hospital_visits)
+
+let ( ++ ) (n0, t0, v0) (n1, t1, v1) = (n0 + n1, t0 + t1, v0 + v1)
+
+
+module Hospital =
+struct
+  (* Hospital.t is mutable *)
+  type t = {
+    triage : patient L.t;
+    examination : patient L.t;
+    treatement : patient L.t;
+    mutable discharged : totals;
+
+    mutable available_staff : int;
+    mutable seed : int;
+    has_no_regional_hospital : bool; (* i.e. "top" one *)
+    transfers : patient L.t;
+  }
+
+  (* Shootout random generator, but with hospital seed *)
+  let im = 139968 and ia = 3877 and ic = 29573
+  let inv_im = 1. /. float im
+
+  let random h max =
+    h.seed <- (h.seed * ia + ic) mod im;
+    max *. float h.seed *. inv_im
+
+  let make has_no_regional_hospital level seed =
+    { triage = L.make();  examination = L.make();  treatement = L.make();
+      discharged = (0,0,0);  available_staff = 1 lsl (level - 1);
+      seed = seed;  has_no_regional_hospital = has_no_regional_hospital;
+      transfers = L.make(); }
+
+  let totals h =
+    let tot = L.fold_left add_patient (0,0,0) h.triage in
+    let tot = L.fold_left add_patient tot h.examination in
+    let tot = L.fold_left add_patient tot h.treatement in
+    tot ++ h.discharged
+
+  let new_arrival h p =
+    p.hospital_visits <- p.hospital_visits + 1;
+    if h.available_staff > 0 then (
+      h.available_staff <- h.available_staff - 1;
+      L.add p h.examination;
+      patient_stay p 3
+    )
+    else L.add p h.triage
+
+  let discharge_patients h =
+    let treat p =
+      p.remaining_time <- p.remaining_time - 1;
+      if p.remaining_time > 0 then true else (
+	h.available_staff <- h.available_staff + 1;
+	h.discharged <- add_patient h.discharged p;
+	false
+      ) in
+    L.filter treat h.treatement
+
+  let treat_or_transfer_patients h =
+    let examine p =
+      p.remaining_time <- p.remaining_time - 1;
+      if p.remaining_time > 0 then true else (
+	if random h 1.0 > 0.1 || h.has_no_regional_hospital then (
+	  (* Treat patient -- no transfer *)
+	  L.add p h.treatement;
+	  patient_stay p 10;
+	)
+	else (
+	  (* Transfer to regional hospital *)
+	  h.available_staff <- h.available_staff + 1;
+	  L.add p h.transfers;
+	);
+	false
+      ) in
+    L.filter examine h.examination
+
+  let triage_patients h =
+    let triage p =
+      if h.available_staff > 0 then (
+	h.available_staff <- h.available_staff - 1;
+	L.add p h.examination;
+	patient_stay p 3;
+	false
+      )
+      else (p.hospital_time <- p.hospital_time + 1;  true) in
+    L.filter triage h.triage
+
+  let triage_examination_treatment h =
+    discharge_patients h;
+    treat_or_transfer_patients h;
+    triage_patients h;
+    if random h 1.0 > 0.7 then new_arrival h {
+      remaining_time = 0; hospital_time = 0; hospital_visits = 0 }
+end
+
+
+(* Hierarchical health care: a region consisting of a hospital and
+   (possibly) some districts. *)
+type health_care = Region of Hospital.t * (health_care array)
+
+let levels = 5
+let districts = 4
+
+let rec create_health_care level seed1 seed2 =
+  let create i = create_health_care (level - 1) (4 * seed1 + i + 1) seed2 in
+  Region(Hospital.make (level = levels) level (seed1 * seed2),
+	 Array.init (if level <= 1 then 0 else districts) create)
+
+let rec transfer_patients (Region(h, districts)) =
+  let transfer d =
+    L.iter (fun p -> Hospital.new_arrival h p) (transfer_patients d) in
+  Array.iter transfer districts;
+  Hospital.triage_examination_treatment h;
+  (* Return the transfer queue -- leaving the one of [h] empty. *)
+  L.export h.Hospital.transfers
+
+let rec accumulate_totals (Region(h, districts)) =
+  Array.fold_left (fun tot d -> tot ++ accumulate_totals d) (0,0,0) districts
+  ++ Hospital.totals h
+
+let () =
+  let n = try int_of_string(Array.get Sys.argv 1) with _ -> 100 in
+  let Region(lh,_) as hc = create_health_care levels 0 42 in
+  for i = 1 to n do ignore(transfer_patients hc) done;
+  let (pat, time, visits) = accumulate_totals hc in
+  Printf.printf "Patients: %i\nTime:     %i\nVisits:   %i\n" pat time visits;
+  Printf.printf "\nTreatment Queue - Remaining Treatment Time\n";
+  L.iter (fun p -> Printf.printf "%i\tanonymous patient\n" p.remaining_time)
+    lh.Hospital.treatement
