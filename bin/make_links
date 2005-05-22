@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+# to be run in top directory
+
+use File::Basename;
+use File::Copy;
+
+%::DUPS =
+   (
+   #root_lang =>
+   #{ @SAME_LANG = ( 'lang1', 'lang2', ... ) }
+
+   cmucl =>    [ 'sbcl', 'gcl' ],
+   erlang =>   [ 'hipe' ],
+   ghc =>      [ 'nhc98', 'hugs' ],
+   gcc =>      [ 'icc' ],
+   gpp =>      [ 'icpp' ],
+   ifc =>      [ 'g95' ],
+   java =>     [ 'kaffe', 'gcj', 'gij', 'sablevm' ],
+   mzscheme => [ 'mzc' ],
+   ocaml =>    [ 'ocamlb' ],
+   );
+
+sub main {
+
+    print "Starting to generate links...\n";
+    opendir BENCHDIR, "bench" or die "Couldn't open benchmark directory: $!\n";
+    @allfiles = readdir BENCHDIR;
+    shift @allfiles;    # Drop the . directory
+    shift @allfiles;    # Drop the .. directory
+    closedir BENCHDIR;
+    
+    my $implcount = 0;
+    foreach my $impl (keys %DUPS) {
+        my $header = "Processing $impl...\nbench: ";
+        my $count = 0;
+        my @choices = ("", "-2.", "-3.", "-4.");
+        foreach my $tag (@choices) {
+
+            #
+            #  For each directory in the bench directory, generate
+            #  HTML-ized source code and place in the appropriate lang
+            #  directory.
+            #
+            foreach my $benchmark (@allfiles) {
+
+                my $benchdir = $benchmark;
+
+                next unless -d "bench/$benchdir";
+        
+                next if ($benchdir =~ /\.\./);
+                next if ($benchdir =~ /\./);
+                next if ($benchdir =~ /Include/);
+                next if ($benchdir =~ /CVS/);
+
+                my $file = $benchmark;
+		if ($tag =~ /-\d/) {
+		    $file .= ".$impl" . $tag . $impl;
+		} else {
+		    $file .= ".$impl";
+		}
+
+                next unless -s "bench/$benchdir/$file";
+
+                if ($count == 0) {
+                    print $header;
+                }
+                $count++;
+
+		# Check for link
+		my $dupref = $DUPS{$impl};
+		foreach my $alt ( @$dupref )  {
+		    my $target = "bench/$benchdir/$benchmark";
+		    if ($tag =~ /-\d/) {
+		        $target .= ".$alt" . $tag . $alt;
+		    } else {
+		        $target .= ".$alt";
+		    }
+
+		    next if -s $target;
+
+		    #printf "Trying to symlink $file -> $target\n";
+		    printf "$benchdir ";
+		    symlink $file, $target or printf "Couldn't symlink $file -> $target: $!\n";
+		}
+
+            }
+        }
+        print "\n" if ($count > 0);
+    }
+    print "No updates needed.\n" if ($implcount == 0);
+    print "Finished.\n";
+}
+
+main();

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-05-16 01:09:21 bfulgham Exp $
+# $Id: Makefile,v 1.27 2005-05-22 23:50:20 bfulgham Exp $
 
 include Make.header
 
@@ -45,52 +45,5 @@ init-stamp: links-stamp
 
 links:  links-stamp
 links-stamp:
-	# All Java's use the same source
-	for j in `find bench -name '*.java'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.kaffe; \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.gcj; \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.gij; \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.java'`.sablevm; \
-	done
-
-	# Hipe and Erlang are the same
-	for j in `find bench -name '*.erlang'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.erlang'`.hipe; \
-	done
-
-	# Ocaml and Ocamlb are the same
-	for j in `find bench -name '*.ocaml'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ocaml'`.ocamlb; \
-	done
-
-	# MzScheme and Mzc are the same
-	for j in `find bench -name '*.mzscheme'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.mzscheme'`.mzc; \
-	done
-
-	# CMUCL, SBCL, and GCL are the same
-	for j in `find bench -name '*.cmucl'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.sbcl; \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.cmucl'`.gcl; \
-	done
-
-	# GHC, nhc98, and HUGS are the same
-	for j in `find bench -name '*.ghc'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ghc'`.nhc98; \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ghc'`.hugs; \
-	done
-
-	# G++ and Intel C++ (ipp) are the same
-	for j in `find bench -name '*.gcc'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.gcc'`.icc; \
-	done
-	for j in `find bench -name '*.gpp'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.gpp'`.icpp; \
-	done
-
-	# G95 and Intel Fortran are the same
-	for j in `find bench -name '*.ifc'`; do \
-		ln -sf `basename $$j` `expr $$j : '\(.*\)\.ifc'`.g95; \
-	done
-
+	-@bin/make_links
 	touch links-stamp
