@@ -6,10 +6,22 @@
  * Contributed by Troestler Christophe
  *)
 
-open Printf
-module H = Hashtbl
+module S = struct
+  type t = string
 
-(* [counts k dna] updates and return the hashtable [count] of
+  let equal (s1:string) s2 = (s1 = s2)
+
+  let hash s =
+    let h = ref 0 in
+    for i = 0 to String.length s - 1 do
+      h := !h * 17 + Char.code s.[i]
+    done;
+    !h
+end
+
+module H = Hashtbl.Make(S)
+
+(* [counts k dna] fills and return the hashtable [count] of
    k-nucleotide keys and count values for a particular reading-frame
    of length [k] of the string [dna]. *)
 let count = H.create (1 lsl 18)
@@ -17,7 +29,7 @@ let counts k dna =
   H.clear count;
   for i = 0 to String.length dna - k do
     let key = String.sub dna i k in
-    try let c = H.find count key in H.replace count key (c+1)
+    try  H.replace count key (H.find count key + 1)
     with Not_found -> H.add count key 1
   done;
   count
@@ -31,14 +43,14 @@ let compare_freq ((k1:string),(f1:float)) (k2, f2) =
 let write_frequencies k dna =
   let cnt = counts k dna in
   let tot = float(H.fold (fun _ n t -> n + t) cnt 0) in
-  let frq = H.fold (fun k n l -> (k, (100. *.(float n)/. tot)) :: l) cnt [] in
+  let frq = H.fold (fun k n l -> (k, 100. *. float n /. tot) :: l) cnt [] in
   let frq = List.sort compare_freq frq in
-  List.iter (fun (k,f) -> printf "%s %.3f\n" k f) frq;
+  List.iter (fun (k,f) -> Printf.printf "%s %.3f\n" k f) frq;
   print_string "\n"
 
 let write_count seq dna =
   let cnt = counts (String.length seq) dna in
-  printf "%d\t%s\n" (try H.find cnt seq with Not_found -> 0) seq
+  Printf.printf "%d\t%s\n" (try H.find cnt seq with Not_found -> 0) seq
 
 (* Extract DNA sequence "THREE" from stdin *)
 let dna_three =
@@ -59,8 +71,7 @@ let dna_three =
    done with End_of_file -> ());
   Buffer.contents buf
 
-let () = Gc.set { (Gc.get()) with Gc.minor_heap_size = 1024 * 1024 * 4;
-		    space_overhead = 90;  max_overhead = 1000 }
+let () = Gc.set { (Gc.get()) with Gc.minor_heap_size = 1024 * 4224 }
 
 let () =
   write_frequencies 1 dna_three;
