@@ -5,7 +5,6 @@
  *
  * contributed by Troestler Christophe
  * translated by sweeks@sweeks.com for MLton/SML from the OCaml version
- *
  *)
 
 val complement =
@@ -61,35 +60,58 @@ fun printFasta (dna: char array): unit =
      grab 0
   end
 
-fun one lines =
+structure Buffer:
+   sig
+      type t
+
+      val addLine: t * string -> t
+      val contents: t -> char array
+      val empty: t
+   end =
+   struct
+      datatype t = T of string list
+
+      val empty: t = T []
+
+      fun addLine (T xs, x) = T (x :: xs)
+
+      fun contents (T lines) =
+	 let
+	    val n = foldl (fn (s, n) => n + size s - 1) 0 lines
+	    val a = Array.array (n, #"\000")
+	    val _ =
+	       foldl (fn (s, i) =>
+		      let
+			 fun loop (i, j)  =
+			    if j < 0
+			       then i
+			    else (Array.update (a, i, String.sub (s, j))
+				  ; loop (i - 1, j - 1))
+		      in
+			 loop (i, String.size s - 2)
+		      end)
+	       (n - 1) lines
+	 in
+	    a
+	 end
+   end
+
+fun one (b: Buffer.t): unit =
    let
-      val n = foldl (fn (s, n) => n + size s - 1) 0 lines
-      val a = Array.array (n, #"\000")
-      val _ =
-	 foldl (fn (s, i) =>
-		let
-		   fun loop (i, j)  =
-		      if j < 0
-			 then i
-		      else (Array.update (a, i, String.sub (s, j))
-			    ; loop (i - 1, j - 1))
-		in
-		   loop (i, String.size s - 2)
-		end)
-	 (n - 1) lines
+      val a = Buffer.contents b
       val () = reverse a
    in
       printFasta a
    end
    
-fun loop lines =
+fun loop (b: Buffer.t) =
    case TextIO.inputLine TextIO.stdIn of
-      NONE => one lines
+      NONE => one b
     | SOME line => 
 	 if size line > 0 andalso String.sub (line, 0) = #">"
-	    then (one lines; print line; loop [])
-	 else loop (line :: lines)
+	    then (one b; print line; loop Buffer.empty)
+	 else loop (Buffer.addLine (b, line))
 
-val () = loop []
+val () = loop Buffer.empty
 
 
