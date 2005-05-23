@@ -23,47 +23,59 @@ sig
 end *)
 module L (* : Lsig *) =
 struct
-  type 'a t = { mutable first : 'a list;  mutable last : 'a list }
-  and 'a list = 'a node option (* None = empty list *)
-  and 'a node = { data : 'a; mutable next : 'a list }
+  (* The standard solution is to define a special termination "symbol"
+     for the list, e.g. [None] as in
 
-  let make () = {first = None;  last = None}
+     type 'a list = 'a node option
+     and 'a node = { data : 'a; mutable next : 'a list }
+
+     but that introduce an additional indirection, so here we use
+     a "last node" and physical equality to avoid it. *)
+  type 'a t = { mutable first : 'a list;  mutable last : 'a list }
+  and 'a list = { mutable data : 'a;  mutable next : 'a list }
+
+  let make () =
+    let rec node = { data = Obj.magic 0;  next = node } in
+    { first = node;  last = node }
 
   (* The element [e] must be added to the end of [l]. *)
   let add e l =
-    let new_node = Some { data = e; next = None } in
-    match l.last with
-    | None ->      l.first <- new_node;   l.last <- new_node
-    | Some node -> node.next <- new_node; l.last <- new_node
+    l.last.data <- e;
+    let rec node = { data = Obj.magic 0;  next = node } in
+    l.last.next <- node;
+    l.last <- node
 
-  let rec iter_node f = function
-    | None -> ()
-    | Some node -> let () = f node.data in iter_node f node.next
-  let iter f l = iter_node f l.first
 
-  let rec fold_node f a = function
-    | None -> a
-    | Some node -> fold_node f (f a node.data) node.next
-  let fold_left f a l = fold_node f a l.first
+  let rec iter_node f node last =
+    if node != last then (f node.data; iter_node f node.next last)
+  let iter f l = iter_node f l.first l.last
 
-  let rec keep_node f node0 = function
-    | None -> Some node0 (* last node kept *)
-    | Some node ->
-	if f node.data then keep_node f node node.next (* Keep the node *)
-	else (node0.next <- node.next; keep_node f node0 node.next)
+  let rec fold_node f a node last =
+    if node == last then a else fold_node f (f a node.data) node.next last
+  let fold_left f a l = fold_node f a l.first l.last
 
-  let rec filter_1st f l = function
-    | None -> l.first <- None; l.last <- None (* nothing selected *)
-    | Some node as l0 ->
-	if f node.data then (l.first <- l0; (* remove 1st nodes *)
-			     l.last <- keep_node f node node.next)
-        else filter_1st f l node.next (* skip node *)
+
+  let rec keep_node f node0 last =
+    let node = node0.next in
+    if node != last (* otherwise: nothing to do *) then
+      if f node.data then keep_node f node last (* keep node *)
+      else skip_node f node0 node.next last
+  and skip_node f node0 node last =
+    if node == last then node0.next <- last (* close the modified list *)
+    else if f node.data then (node0.next <- node; keep_node f node last)
+    else skip_node f node0 node.next last
+
+  let rec filter_1st f l node =
+    if node == l.last then l.first <- l.last (* none selected, empty list *)
+    else if f node.data then (l.first <- node; keep_node f node l.last)
+    else filter_1st f l node.next (* skip node *)
 
   let filter f l = filter_1st f l l.first
 
   let export l =
     let node0 = l.first and node1 = l.last in
-    l.first <- None; l.last <- None;
+    let rec node = { data = Obj.magic 0;  next = node } in
+    l.first <- node; l.last <- node;
     { first = node0;  last = node1 }
 end
 
