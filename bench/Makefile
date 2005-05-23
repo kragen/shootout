@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2005-05-17 07:42:04 igouy-guest Exp $
+# $Id: Makefile,v 1.32 2005-05-23 15:37:05 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -10,6 +10,7 @@ TESTS = \
     fannkuch \
     fasta \
     fibo \
+    flyweightstate \
     harmonic \
     hash \
     hash2 \

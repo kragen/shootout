@@ -1,0 +1,163 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   unoptimised reference implementation
+   
+   contributed by Isaac Gouy 
+*/
+
+using System;
+using System.Collections;
+
+class Bottles
+{
+
+   public static void Main(String[] args) 
+   {        
+      int n = 0;
+      if (args.Length > 0) n = Int32.Parse(args[0]);
+
+      Bottle 
+         b1 = new Bottle(1), b2 = new Bottle(2), 
+         b3 = new Bottle(3), b4 = new Bottle(4), 
+         b5 = new Bottle(5), b6 = new Bottle(6),
+         b7 = new Bottle(7), b8 = new Bottle(8), 
+         b9 = new Bottle(9), b0 = new Bottle(0);
+
+      PressurizedBottle 
+         p1 = new PressurizedBottle(1), p2 = new PressurizedBottle(2), 
+         p3 = new PressurizedBottle(3), p4 = new PressurizedBottle(4), 
+         p5 = new PressurizedBottle(5), p6 = new PressurizedBottle(6),
+         p7 = new PressurizedBottle(7), p8 = new PressurizedBottle(8),
+         p9 = new PressurizedBottle(9), p0 = new PressurizedBottle(0);
+
+      int check = 0;
+      for (int i=1; i<=n; i++){
+         check += bottleCheck(b1,b2,b3,b4,b5,i);
+         check += bottleCheck(b6,b7,b8,b9,b0,i);
+
+         check += bottleCheck(p1,p2,p3,p4,p5,i);
+         check -= bottleCheck(p6,p7,p8,p9,p0,i);
+      }
+      Console.WriteLine("check: {0}", check);
+   }
+
+
+   public static int bottleCheck(Bottle a1, Bottle a2, Bottle a3, Bottle a4, Bottle a5, int i){ 
+      a1.cycle(); a2.cycle(); a3.cycle(); a4.cycle(); a5.cycle();
+
+      int c = 0;
+      Math.DivRem(i, 2, out c);
+      return a1.check(c) + a2.check(c) + a3.check(c) + a4.check(c) + a5.check(c); 
+   }
+
+
+   internal interface IBottle 
+   {
+      void state(BottleState s);
+   }
+
+   internal abstract class BottleState 
+   {
+      internal static EmptyState Empty = new EmptyState();
+      internal static FullState Full = new FullState();
+      internal static SealedState Sealed = new SealedState();
+
+      abstract internal void next(IBottle b);  
+      abstract internal int tag(); 
+      internal static BottleState initialState(){ return Empty; }    
+
+      internal class EmptyState : BottleState {
+         override internal void next(IBottle b){ b.state(Full); }  
+         override internal int tag(){ return 1; }  
+      }
+
+      internal class FullState : BottleState {
+         override internal void next(IBottle b){ b.state(Sealed); }
+         override internal int tag(){ return 2; }    
+      }
+
+      internal class SealedState : BottleState {
+         override internal void next(IBottle b){ b.state(Empty); }  
+         override internal int tag(){ return 3; }  
+      }
+   }
+
+
+   abstract internal class PressurizedBottleState : BottleState 
+   {
+      internal static UnpressurizedEmptyState UnpressurizedEmpty = new UnpressurizedEmptyState();
+      internal static UnpressurizedFullState UnpressurizedFull = new UnpressurizedFullState();
+      internal static PressurizedUnsealedState PressurizedUnsealed = new PressurizedUnsealedState();
+      internal static PressurizedSealedState PressurizedSealed = new PressurizedSealedState();
+
+      new internal static BottleState initialState(){ 
+         return UnpressurizedEmpty; 
+      }      
+
+      internal class UnpressurizedEmptyState : PressurizedBottleState {
+         override internal void next(IBottle b){ b.state(UnpressurizedFull); } 
+         override internal int tag(){ return 4; }  
+      }
+
+      internal class UnpressurizedFullState : PressurizedBottleState {
+         override internal void next(IBottle b){ b.state(PressurizedUnsealed); } 
+         override internal int tag(){ return 5; }  
+      }
+
+      internal class PressurizedUnsealedState : PressurizedBottleState { 
+         override internal void next(IBottle b){ b.state(Sealed); } 
+         override internal int tag(){ return 6; }  
+      }
+
+      internal class PressurizedSealedState : PressurizedBottleState { 
+         override internal void next(IBottle b){ b.state(UnpressurizedEmpty); } 
+         override internal int tag(){ return 7; }  
+      }
+   }
+
+
+
+   internal class Bottle : IBottle
+   {
+      protected BottleState s;
+      protected int id;
+
+      public Bottle(int id){
+         this.id = id;
+         s = initialState();
+      }
+
+      public void state(BottleState s){ this.s = s; }
+
+      internal virtual void cycle(){
+         fill(); seal(); empty();
+      }
+
+      internal static BottleState initialState(){ 
+         return BottleState.initialState(); 
+      }
+
+      protected void empty(){ s.next(this); }
+      protected void fill(){ s.next(this); }
+      protected void seal(){ s.next(this); }
+
+      internal int check(int c){ return s.tag() + id + c; }
+   }
+
+
+   class PressurizedBottle : Bottle
+   {
+      public PressurizedBottle(int id) : base(id){}
+
+      new internal static BottleState initialState(){ 
+         return PressurizedBottleState.initialState(); 
+      }
+
+      void pressurize(){ s.next(this); } 
+
+      internal override void cycle(){
+         fill(); pressurize(); seal(); empty();
+      }
+   }
+}
