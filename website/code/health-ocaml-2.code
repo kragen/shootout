@@ -9,188 +9,209 @@
 <span class="com">(* Adjust GC behavior *)</span>
 <span class="kwa">let</span> <span class="sym">() =</span> Gc.set <span class="sym">{ (</span>Gc.get<span class="sym">())</span> <span class="kwa">with</span> Gc.minor_heap_size <span class="sym">=</span> <span class="num">1024</span> <span class="sym">*</span> <span class="num">1024</span> <span class="sym">}
 
-
-</span><span class="com">(* Mutable data structure for bags (aka multisets) of patients.
-   Useful interface only. *)</span>
+</span><span class="com">(* Mutable single linked lists.  Useful interface only. *)</span>
 <span class="com">(* module type Lsig =
 sig
   type 'a t
   val make : unit -&gt; 'a t
   val add : 'a -&gt; 'a t -&gt; unit
   val iter : ('a -&gt; unit) -&gt; 'a t -&gt; unit
-  val fold : ('a -&gt; 'b -&gt; 'a) -&gt; 'a -&gt; 'b t -&gt; 'a
-  val keep : ('a -&gt; bool) -&gt; 'a t -&gt; unit
+  val fold_left : ('a -&gt; 'b -&gt; 'a) -&gt; 'a -&gt; 'b t -&gt; 'a
+  val filter : ('a -&gt; bool) -&gt; 'a t -&gt; unit  (** filter in place *)
   val export : 'a t -&gt; 'a t
+   (** [export l] clears [l] and return a copy of it. *)
 end *)</span>
-<span class="kwa">module</span> L <span class="sym">=
+<span class="kwa">module</span> L <span class="com">(* : Lsig *)</span> <span class="sym">=
 </span><span class="kwa">struct
-  type</span> <span class="str">'a t = '</span>a list ref
-  <span class="kwa">and</span> <span class="str">'a list = '</span>a node option
-  <span class="kwa">and</span> <span class="str">'a node = { data : '</span>a<span class="sym">;</span> <span class="kwa">mutable</span> next <span class="sym">:</span> <span class="str">'a list }
+  type</span> <span class="str">'a t = { mutable first : '</span>a list<span class="sym">;</span>  <span class="kwa">mutable</span> last <span class="sym">:</span> <span class="str">'a list }
+  and '</span>a list <span class="sym">= {</span> <span class="kwa">mutable</span> data <span class="sym">:</span> <span class="str">'a;  mutable next : '</span>a list <span class="sym">}
 
-  let make () = ref None
+</span>  <span class="kwa">let</span> make <span class="sym">() =
+</span>    <span class="kwa">let rec</span> node <span class="sym">= {</span> data <span class="sym">=</span> Obj.magic <span class="num">0</span><span class="sym">;</span>  next <span class="sym">=</span> node <span class="sym">}</span> <span class="kwa">in
+</span>    <span class="sym">{</span> first <span class="sym">=</span> node<span class="sym">;</span>  last <span class="sym">=</span> node <span class="sym">}
 
-  let add e l = l := Some { data = e; next = !l }
-
-  let rec iter_node f = function
-    | None -&gt; () | Some node -&gt; let () = f node.data in iter_node f node.next
-  let iter f l = iter_node f !l
-
-  let rec fold_node f a = function
-    | None -&gt; a | Some node -&gt; fold_node f (f a node.data) node.next
-  let fold f a l = fold_node f a !l
-
-  let rec keep_node f node0 = function
-    | None -&gt; ()
-    | Some node -&gt;
-	if f node.data then keep_node f node node.next (* Keep the node *)
-	else (node0.next &lt;- node.next; keep_node f node0 node.next)
-
-  let rec keep f l = match !l with
-    | None -&gt; ()
-    | Some node -&gt; if f node.data then keep_node f node node.next
-                   else (l := node.next; keep f l) (* Remove 1st node *)
-
-  let export l = let node = !l in l := None; ref node
-end
+</span>  <span class="com">(* The element [e] must be added to the end of [l]. *)</span>
+  <span class="kwa">let</span> add e l <span class="sym">=
+</span>    l.last.data <span class="sym">&lt;-</span> e<span class="sym">;
+</span>    <span class="kwa">let rec</span> node <span class="sym">= {</span> data <span class="sym">=</span> Obj.magic <span class="num">0</span><span class="sym">;</span>  next <span class="sym">=</span> node <span class="sym">}</span> <span class="kwa">in
+</span>    l.last.next <span class="sym">&lt;-</span> node<span class="sym">;
+</span>    l.last <span class="sym">&lt;-</span> node
 
 
+  <span class="kwa">let rec</span> iter_node f node last <span class="sym">=
+</span>    <span class="kwa">if</span> node <span class="sym">!=</span> last <span class="kwa">then</span> <span class="sym">(</span>f node.data<span class="sym">;</span> iter_node f node.next last<span class="sym">)
+</span>  <span class="kwa">let</span> iter f l <span class="sym">=</span> iter_node f l.first l.last
 
-type patient = {
-  mutable remaining_time : int;
-  mutable hospital_time : int;
-  mutable hospital_visits : int;
+  <span class="kwa">let rec</span> fold_node f a node last <span class="sym">=
+</span>    <span class="kwa">if</span> node <span class="sym">==</span> last <span class="kwa">then</span> a <span class="kwa">else</span> fold_node f <span class="sym">(</span>f a node.data<span class="sym">)</span> node.next last
+  <span class="kwa">let</span> fold_left f a l <span class="sym">=</span> fold_node f a l.first l.last
+
+
+  <span class="kwa">let rec</span> keep_node f node0 last <span class="sym">=
+</span>    <span class="kwa">let</span> node <span class="sym">=</span> node0.next <span class="kwa">in
+    if</span> node <span class="sym">!=</span> last <span class="com">(* otherwise: nothing to do *)</span> <span class="kwa">then
+      if</span> f node.data <span class="kwa">then</span> keep_node f node last <span class="com">(* keep node *)</span>
+      <span class="kwa">else</span> skip_node f node0 node.next last
+  <span class="kwa">and</span> skip_node f node0 node last <span class="sym">=
+</span>    <span class="kwa">if</span> node <span class="sym">==</span> last <span class="kwa">then</span> node0.next <span class="sym">&lt;-</span> last <span class="com">(* close the modified list *)</span>
+    <span class="kwa">else if</span> f node.data <span class="kwa">then</span> <span class="sym">(</span>node0.next <span class="sym">&lt;-</span> node<span class="sym">;</span> keep_node f node last<span class="sym">)
+</span>    <span class="kwa">else</span> skip_node f node0 node.next last
+
+  <span class="kwa">let rec</span> filter_1st f l node <span class="sym">=
+</span>    <span class="kwa">if</span> node <span class="sym">==</span> l.last <span class="kwa">then</span> l.first <span class="sym">&lt;-</span> l.last <span class="com">(* none selected, empty list *)</span>
+    <span class="kwa">else if</span> f node.data <span class="kwa">then</span> <span class="sym">(</span>l.first <span class="sym">&lt;-</span> node<span class="sym">;</span> keep_node f node l.last<span class="sym">)
+</span>    <span class="kwa">else</span> filter_1st f l node.next <span class="com">(* skip node *)</span>
+
+  <span class="kwa">let</span> filter f l <span class="sym">=</span> filter_1st f l l.first
+
+  <span class="kwa">let</span> export l <span class="sym">=
+</span>    <span class="kwa">let</span> node0 <span class="sym">=</span> l.first <span class="kwa">and</span> node1 <span class="sym">=</span> l.last <span class="kwa">in
+    let rec</span> node <span class="sym">= {</span> data <span class="sym">=</span> Obj.magic <span class="num">0</span><span class="sym">;</span>  next <span class="sym">=</span> node <span class="sym">}</span> <span class="kwa">in
+</span>    l.first <span class="sym">&lt;-</span> node<span class="sym">;</span> l.last <span class="sym">&lt;-</span> node<span class="sym">;
+    {</span> first <span class="sym">=</span> node0<span class="sym">;</span>  last <span class="sym">=</span> node1 <span class="sym">}
+</span><span class="kwa">end
+
+
+type</span> patient <span class="sym">= {
+</span>  <span class="kwa">mutable</span> remaining_time <span class="sym">:</span> <span class="kwb">int</span><span class="sym">;
+</span>  <span class="kwa">mutable</span> hospital_time <span class="sym">:</span> <span class="kwb">int</span><span class="sym">;
+</span>  <span class="kwa">mutable</span> hospital_visits <span class="sym">:</span> <span class="kwb">int</span><span class="sym">;
 }
 
-let patient_stay p s =
-  p.remaining_time &lt;- s;  p.hospital_time &lt;- p.hospital_time + s
 
-type totals = int * int * int (* patients, hospital time, hospital visits *)
+</span><span class="kwa">let</span> patient_stay p s <span class="sym">=
+</span>  p.remaining_time <span class="sym">&lt;-</span> s<span class="sym">;</span>  p.hospital_time <span class="sym">&lt;-</span> p.hospital_time <span class="sym">+</span> s
 
-let add_patient (n, t, v) p =
-  (n + 1, t + p.hospital_time, v + p.hospital_visits)
+<span class="kwa">type</span> totals <span class="sym">=</span> <span class="kwb">int</span> <span class="sym">*</span> <span class="kwb">int</span> <span class="sym">*</span> <span class="kwb">int</span> <span class="com">(* patients, hospital time, hospital visits *)</span>
 
-let ( ++ ) (n0, t0, v0) (n1, t1, v1) = (n0 + n1, t0 + t1, v0 + v1)
+<span class="kwa">let</span> add_patient <span class="sym">(</span>n<span class="sym">,</span> t<span class="sym">,</span> v<span class="sym">)</span> p <span class="sym">=
+  (</span>n <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> t <span class="sym">+</span> p.hospital_time<span class="sym">,</span> v <span class="sym">+</span> p.hospital_visits<span class="sym">)
+
+</span><span class="kwa">let</span> <span class="sym">( ++ ) (</span>n0<span class="sym">,</span> t0<span class="sym">,</span> v0<span class="sym">) (</span>n1<span class="sym">,</span> t1<span class="sym">,</span> v1<span class="sym">) = (</span>n0 <span class="sym">+</span> n1<span class="sym">,</span> t0 <span class="sym">+</span> t1<span class="sym">,</span> v0 <span class="sym">+</span> v1<span class="sym">)
 
 
-module Hospital =
-struct
-  type t = {
-    triage : patient L.t;
-    examination : patient L.t;
-    treatement : patient L.t;
-    mutable discharged : totals;
+</span><span class="kwa">module</span> Hospital <span class="sym">=
+</span><span class="kwa">struct
+</span>  <span class="com">(* Hospital.t is mutable *)</span>
+  <span class="kwa">type</span> t <span class="sym">= {
+</span>    triage <span class="sym">:</span> patient L.t<span class="sym">;
+</span>    examination <span class="sym">:</span> patient L.t<span class="sym">;
+</span>    treatement <span class="sym">:</span> patient L.t<span class="sym">;
+</span>    <span class="kwa">mutable</span> discharged <span class="sym">:</span> totals<span class="sym">;
 
-    mutable available_staff : int;
-    mutable seed : int;
-    has_no_regional_hospital : bool; (* i.e. &quot;top&quot; one *)
-    transfers : patient L.t;
+</span>    <span class="kwa">mutable</span> available_staff <span class="sym">:</span> <span class="kwb">int</span><span class="sym">;
+</span>    <span class="kwa">mutable</span> seed <span class="sym">:</span> <span class="kwb">int</span><span class="sym">;
+</span>    has_no_regional_hospital <span class="sym">:</span> <span class="kwb">bool</span><span class="sym">;</span> <span class="com">(* i.e. &quot;top&quot; one *)</span>
+    transfers <span class="sym">:</span> patient L.t<span class="sym">;
   }
 
-  (* Shootout random generator, but with hospital seed *)
-  let im = 139968 and ia = 3877 and ic = 29573
-  let inv_im = 1. /. float im
+</span>  <span class="com">(* Shootout random generator, but with hospital seed *)</span>
+  <span class="kwa">let</span> im <span class="sym">=</span> <span class="num">139968</span> <span class="kwa">and</span> ia <span class="sym">=</span> <span class="num">3877</span> <span class="kwa">and</span> ic <span class="sym">=</span> <span class="num">29573
+</span>  <span class="kwa">let</span> inv_im <span class="sym">=</span> <span class="num">1</span>. <span class="sym">/</span>. <span class="kwb">float</span> im
 
-  let random h max =
-    h.seed &lt;- (h.seed * ia + ic) mod im;
-    max *. float h.seed *. inv_im
+  <span class="kwa">let</span> random h max <span class="sym">=
+</span>    h.seed <span class="sym">&lt;- (</span>h.seed <span class="sym">*</span> ia <span class="sym">+</span> ic<span class="sym">)</span> <span class="kwa">mod</span> im<span class="sym">;
+</span>    max <span class="sym">*</span>. <span class="kwb">float</span> h.seed <span class="sym">*</span>. inv_im
 
-  let make has_no_regional_hospital level seed =
-    { triage = L.make();  examination = L.make();  treatement = L.make();
-      discharged = (0,0,0);  available_staff = 1 lsl (level - 1);
-      seed = seed;  has_no_regional_hospital = has_no_regional_hospital;
-      transfers = L.make(); }
+  <span class="kwa">let</span> make has_no_regional_hospital level seed <span class="sym">=
+    {</span> triage <span class="sym">=</span> L.make<span class="sym">();</span>  examination <span class="sym">=</span> L.make<span class="sym">();</span>  treatement <span class="sym">=</span> L.make<span class="sym">();
+</span>      discharged <span class="sym">= (</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>  available_staff <span class="sym">=</span> <span class="num">1</span> <span class="kwa">lsl</span> <span class="sym">(</span>level <span class="num">- 1</span><span class="sym">);
+</span>      seed <span class="sym">=</span> seed<span class="sym">;</span>  has_no_regional_hospital <span class="sym">=</span> has_no_regional_hospital<span class="sym">;
+</span>      transfers <span class="sym">=</span> L.make<span class="sym">(); }
 
-  let totals h =
-    let tot = L.fold add_patient (0,0,0) h.triage in
-    let tot = L.fold add_patient tot h.examination in
-    let tot = L.fold add_patient tot h.treatement in
-    tot ++ h.discharged
+</span>  <span class="kwa">let</span> totals h <span class="sym">=
+</span>    <span class="kwa">let</span> tot <span class="sym">=</span> L.fold_left add_patient <span class="sym">(</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">)</span> h.triage <span class="kwa">in
+    let</span> tot <span class="sym">=</span> L.fold_left add_patient tot h.examination <span class="kwa">in
+    let</span> tot <span class="sym">=</span> L.fold_left add_patient tot h.treatement <span class="kwa">in
+</span>    tot <span class="sym">++</span> h.discharged
 
-  let new_arrival h p =
-    p.hospital_visits &lt;- p.hospital_visits + 1;
-    if h.available_staff &gt; 0 then (
-      h.available_staff &lt;- h.available_staff - 1;
-      L.add p h.examination;
-      patient_stay p 3
-    )
-    else L.add p h.triage
+  <span class="kwa">let</span> new_arrival h p <span class="sym">=
+</span>    p.hospital_visits <span class="sym">&lt;-</span> p.hospital_visits <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>    <span class="kwa">if</span> h.available_staff <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span> <span class="sym">(
+</span>      h.available_staff <span class="sym">&lt;-</span> h.available_staff <span class="num">- 1</span><span class="sym">;
+</span>      L.add p h.examination<span class="sym">;
+</span>      patient_stay p <span class="num">3
+</span>    <span class="sym">)
+</span>    <span class="kwa">else</span> L.add p h.triage
 
-  let discharge_patients h =
-    let treat p =
-      p.remaining_time &lt;- p.remaining_time - 1;
-      if p.remaining_time &gt; 0 then true else (
-	h.available_staff &lt;- h.available_staff + 1;
-	h.discharged &lt;- add_patient h.discharged p;
-	false
-      ) in
-    L.keep treat h.treatement
+  <span class="kwa">let</span> discharge_patients h <span class="sym">=
+</span>    <span class="kwa">let</span> treat p <span class="sym">=
+</span>      p.remaining_time <span class="sym">&lt;-</span> p.remaining_time <span class="num">- 1</span><span class="sym">;
+</span>      <span class="kwa">if</span> p.remaining_time <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then true else</span> <span class="sym">(
+</span>	h.available_staff <span class="sym">&lt;-</span> h.available_staff <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>	h.discharged <span class="sym">&lt;-</span> add_patient h.discharged p<span class="sym">;
+</span>	<span class="kwa">false
+</span>      <span class="sym">)</span> <span class="kwa">in
+</span>    L.filter treat h.treatement
 
-  let treat_or_transfer_patients h =
-    let examine p =
-      p.remaining_time &lt;- p.remaining_time - 1;
-      if p.remaining_time &gt; 0 then true else (
-	if random h 1.0 &gt; 0.1 || h.has_no_regional_hospital then (
-	  (* Treat patient -- no transfer *)
-	  L.add p h.treatement;
-	  patient_stay p 10;
+  <span class="kwa">let</span> treat_or_transfer_patients h <span class="sym">=
+</span>    <span class="kwa">let</span> examine p <span class="sym">=
+</span>      p.remaining_time <span class="sym">&lt;-</span> p.remaining_time <span class="num">- 1</span><span class="sym">;
+</span>      <span class="kwa">if</span> p.remaining_time <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then true else</span> <span class="sym">(
+</span>	<span class="kwa">if</span> random h <span class="num">1.0</span> <span class="sym">&gt;</span> <span class="num">0.1</span> <span class="sym">||</span> h.has_no_regional_hospital <span class="kwa">then</span> <span class="sym">(
+</span>	  <span class="com">(* Treat patient -- no transfer *)</span>
+	  L.add p h.treatement<span class="sym">;
+</span>	  patient_stay p <span class="num">10</span><span class="sym">;
 	)
-	else (
-	  (* Transfer to regional hospital *)
-	  h.available_staff &lt;- h.available_staff + 1;
-	  L.add p h.transfers;
+</span>	<span class="kwa">else</span> <span class="sym">(
+</span>	  <span class="com">(* Transfer to regional hospital *)</span>
+	  h.available_staff <span class="sym">&lt;-</span> h.available_staff <span class="sym">+</span> <span class="num">1</span><span class="sym">;
+</span>	  L.add p h.transfers<span class="sym">;
 	);
-	false
-      ) in
-    L.keep examine h.examination
+</span>	<span class="kwa">false
+</span>      <span class="sym">)</span> <span class="kwa">in
+</span>    L.filter examine h.examination
 
-  let triage_patients h =
-    let triage p =
-      if h.available_staff &gt; 0 then (
-	h.available_staff &lt;- h.available_staff - 1;
-	L.add p h.examination;
-	patient_stay p 3;
-	false
-      )
-      else (p.hospital_time &lt;- p.hospital_time + 1;  true) in
-    L.keep triage h.triage
+  <span class="kwa">let</span> triage_patients h <span class="sym">=
+</span>    <span class="kwa">let</span> triage p <span class="sym">=
+</span>      <span class="kwa">if</span> h.available_staff <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span> <span class="sym">(
+</span>	h.available_staff <span class="sym">&lt;-</span> h.available_staff <span class="num">- 1</span><span class="sym">;
+</span>	L.add p h.examination<span class="sym">;
+</span>	patient_stay p <span class="num">3</span><span class="sym">;
+</span>	<span class="kwa">false
+</span>      <span class="sym">)
+</span>      <span class="kwa">else</span> <span class="sym">(</span>p.hospital_time <span class="sym">&lt;-</span> p.hospital_time <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>  <span class="kwa">true</span><span class="sym">)</span> <span class="kwa">in
+</span>    L.filter triage h.triage
 
-  let triage_examination_treatment h =
-    discharge_patients h;
-    treat_or_transfer_patients h;
-    triage_patients h;
-    if random h 1.0 &gt; 0.7 then new_arrival h {
-      remaining_time = 0; hospital_time = 0; hospital_visits = 0 }
-end
+  <span class="kwa">let</span> triage_examination_treatment h <span class="sym">=
+</span>    discharge_patients h<span class="sym">;
+</span>    treat_or_transfer_patients h<span class="sym">;
+</span>    triage_patients h<span class="sym">;
+</span>    <span class="kwa">if</span> random h <span class="num">1.0</span> <span class="sym">&gt;</span> <span class="num">0.7</span> <span class="kwa">then</span> new_arrival h <span class="sym">{
+</span>      remaining_time <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> hospital_time <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> hospital_visits <span class="sym">=</span> <span class="num">0</span> <span class="sym">}
+</span><span class="kwa">end
 
 
-(* Hierarchical health care: a region consisting of a hospital and
-   (possibly) some districts. *)
-type health_care = Region of Hospital.t * (health_care array)
+</span><span class="com">(* Hierarchical health care: a region consisting of a hospital and
+   (possibly) some districts. *)</span>
+<span class="kwa">type</span> health_care <span class="sym">=</span> Region <span class="kwa">of</span> Hospital.t <span class="sym">* (</span>health_care array<span class="sym">)
 
-let levels = 5
-let districts = 4
+</span><span class="kwa">let</span> levels <span class="sym">=</span> <span class="num">5
+</span><span class="kwa">let</span> districts <span class="sym">=</span> <span class="num">4
 
-let rec create_health_care level seed1 seed2 =
-  let create i = create_health_care (level - 1) (4 * seed1 + i + 1) seed2 in
-  Region(Hospital.make (level = levels) level (seed1 * seed2),
-	 Array.init (if level &lt;= 1 then 0 else districts) create)
+</span><span class="kwa">let rec</span> create_health_care level seed1 seed2 <span class="sym">=
+</span>  <span class="kwa">let</span> create i <span class="sym">=</span> create_health_care <span class="sym">(</span>level <span class="num">- 1</span><span class="sym">) (</span><span class="num">4</span> <span class="sym">*</span> seed1 <span class="sym">+</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span> seed2 <span class="kwa">in
+</span>  Region<span class="sym">(</span>Hospital.make <span class="sym">(</span>level <span class="sym">=</span> levels<span class="sym">)</span> level <span class="sym">(</span>seed1 <span class="sym">*</span> seed2<span class="sym">),
+</span>	 Array.init <span class="sym">(</span><span class="kwa">if</span> level <span class="sym">&lt;=</span> <span class="num">1</span> <span class="kwa">then</span> <span class="num">0</span> <span class="kwa">else</span> districts<span class="sym">)</span> create<span class="sym">)
 
-let rec transfer_patients (Region(h, districts)) =
-  let transfer d =
-    L.iter (fun p -&gt; Hospital.new_arrival h p) (transfer_patients d) in
-  Array.iter transfer districts;
-  Hospital.triage_examination_treatment h;
-  (* Return the transfer queue -- leaving the one of [h] empty. *)
+</span><span class="kwa">let rec</span> transfer_patients <span class="sym">(</span>Region<span class="sym">(</span>h<span class="sym">,</span> districts<span class="sym">)) =
+</span>  <span class="kwa">let</span> transfer d <span class="sym">=
+</span>    L.iter <span class="sym">(</span><span class="kwa">fun</span> p <span class="sym">-&gt;</span> Hospital.new_arrival h p<span class="sym">) (</span>transfer_patients d<span class="sym">)</span> <span class="kwa">in
+</span>  Array.iter transfer districts<span class="sym">;
+</span>  Hospital.triage_examination_treatment h<span class="sym">;
+</span>  <span class="com">(* Return the transfer queue -- leaving the one of [h] empty. *)</span>
   L.export h.Hospital.transfers
 
-let rec accumulate_totals (Region(h, districts)) =
-  Array.fold_left (fun tot d -&gt; tot ++ accumulate_totals d) (0,0,0) districts
-  ++ Hospital.totals h
+<span class="kwa">let rec</span> accumulate_totals <span class="sym">(</span>Region<span class="sym">(</span>h<span class="sym">,</span> districts<span class="sym">)) =
+</span>  Array.fold_left <span class="sym">(</span><span class="kwa">fun</span> tot d <span class="sym">-&gt;</span> tot <span class="sym">++</span> accumulate_totals d<span class="sym">) (</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">)</span> districts
+  <span class="sym">++</span> Hospital.totals h
 
-let () =
-  let n = try int_of_string(Array.get Sys.argv 1) with _ -&gt; 100 in
-  let hc = create_health_care levels 0 42 in
-  for i = 1 to n do ignore(transfer_patients hc) done;
-  let (pat, time, visits) = accumulate_totals hc in
-  Printf.printf &quot;Patients: %i</span><span class="esc">\n</span><span class="str">Time:     %i</span><span class="esc">\n</span><span class="str">Visits:   %i</span><span class="esc">\n</span><span class="str">&quot; pat time visits</span>
+<span class="kwa">let</span> <span class="sym">() =
+</span>  <span class="kwa">let</span> n <span class="sym">=</span> <span class="kwa">try</span> int_of_string<span class="sym">(</span>Array.get Sys.argv <span class="num">1</span><span class="sym">)</span> <span class="kwa">with</span> _ <span class="sym">-&gt;</span> <span class="num">100</span> <span class="kwa">in
+  let</span> Region<span class="sym">(</span>lh<span class="sym">,</span>_<span class="sym">)</span> <span class="kwa">as</span> hc <span class="sym">=</span> create_health_care levels <span class="num">0 42</span> <span class="kwa">in
+  for</span> i <span class="sym">=</span> <span class="num">1</span> <span class="kwa">to</span> n <span class="kwa">do</span> ignore<span class="sym">(</span>transfer_patients hc<span class="sym">)</span> <span class="kwa">done</span><span class="sym">;
+</span>  <span class="kwa">let</span> <span class="sym">(</span>pat<span class="sym">,</span> time<span class="sym">,</span> visits<span class="sym">) =</span> accumulate_totals hc <span class="kwa">in
+</span>  Printf.printf <span class="str">&quot;Patients: %i</span><span class="esc">\n</span><span class="str">Time:     %i</span><span class="esc">\n</span><span class="str">Visits:   %i</span><span class="esc">\n</span><span class="str">&quot;</span> pat time visits<span class="sym">;
+</span>  Printf.printf <span class="str">&quot;</span><span class="esc">\n</span><span class="str">Treatment Queue - Remaining Treatment Time</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">;
+</span>  L.iter <span class="sym">(</span><span class="kwa">fun</span> p <span class="sym">-&gt;</span> Printf.printf <span class="str">&quot;%i</span><span class="esc">\t</span><span class="str">anonymous patient</span><span class="esc">\n</span><span class="str">&quot;</span> p.remaining_time<span class="sym">)
+</span>    lh.Hospital.treatement

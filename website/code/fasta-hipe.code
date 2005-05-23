@@ -1,0 +1,111 @@
+<span class="slc">%  The Great Computer Language Shootout
+</span><span class="slc">%   http://shootout.alioth.debian.org/
+</span><span class="slc">%
+</span><span class="slc">%   contributed by Brent Fulgham
+</span><span class="slc">%
+</span><span class="slc">%   erl -noshell -noinput -run fasta main 500000
+</span>
+<span class="sym">-</span>module<span class="sym">(</span>fasta<span class="sym">)</span>.
+<span class="sym">-</span>export<span class="sym">([</span>main<span class="sym">/</span><span class="num">1</span><span class="sym">])</span>.
+
+<span class="slc">% The usual pseudo-random number generator
+</span><span class="sym">-</span>define<span class="sym">(</span>IM<span class="sym">,</span> <span class="num">139968</span><span class="sym">)</span>.
+<span class="sym">-</span>define<span class="sym">(</span>IA<span class="sym">,</span> <span class="num">3877</span><span class="sym">)</span>.
+<span class="sym">-</span>define<span class="sym">(</span>IC<span class="sym">,</span> <span class="num">29573</span><span class="sym">)</span>.
+
+rand<span class="sym">(</span><span class="num">0</span><span class="sym">,</span> NewSeed<span class="sym">,</span> Rand<span class="sym">,</span> _<span class="sym">) -&gt; {</span>NewSeed<span class="sym">,</span> Rand<span class="sym">};
+</span>rand<span class="sym">(</span>N<span class="sym">,</span> Seed<span class="sym">,</span> Rand<span class="sym">,</span> Max<span class="sym">) -&gt;
+</span>    NewSeed <span class="sym">= (</span>Seed <span class="sym">*</span> ?IA <span class="sym">+</span> ?IC<span class="sym">)</span> rem ?IM<span class="sym">,
+</span>    NewRand <span class="sym">=</span> Max <span class="sym">*</span> NewSeed <span class="sym">/</span> ?IM<span class="sym">,
+</span>    rand<span class="sym">(</span>N<span class="num">-1</span><span class="sym">,</span> NewSeed<span class="sym">,</span> NewRand<span class="sym">,</span> Max<span class="sym">)</span>.
+
+<span class="slc">%%% Weighted selection from alphabet
+</span>make_cumulative<span class="sym">(</span>Atom<span class="sym">,</span> AlphaPairs<span class="sym">) -&gt;
+</span>    Dict <span class="sym">=</span> ets<span class="sym">:</span>new<span class="sym">(</span>Atom<span class="sym">, [</span>set<span class="sym">]),
+</span>	Fun <span class="sym">=</span> <span class="kwa">fun</span><span class="sym">(</span> Pair<span class="sym">,</span> Acc <span class="sym">) -&gt;
+		{</span>Letter<span class="sym">,</span> Weight<span class="sym">} =</span> Pair<span class="sym">,
+</span>		CumWeight <span class="sym">=</span> Weight <span class="sym">+</span> Acc<span class="sym">,
+</span>		lists<span class="sym">:</span>keyreplace<span class="sym">(</span> Letter<span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> AlphaPairs<span class="sym">),
+</span>		CumWeight
+	<span class="kwa">end</span><span class="sym">,
+</span>	Accum <span class="sym">=</span> lists<span class="sym">:</span>foldl<span class="sym">(</span> Fun<span class="sym">,</span> <span class="num">0.0</span><span class="sym">,</span> AlphaPairs <span class="sym">),
+</span>	Dict.
+
+sel_random<span class="sym">([],</span> R<span class="sym">) -&gt;</span> true<span class="sym">;
+</span>sel_random<span class="sym">([</span>H<span class="sym">|</span>Tail<span class="sym">],</span> R<span class="sym">) -&gt;
+	{</span>Letter<span class="sym">,</span> Weight<span class="sym">} =</span> H<span class="sym">,
+</span>    <span class="kwa">case</span> Weight <span class="kwa">of
+</span>		X <span class="kwa">when</span> R <span class="sym">&lt;</span> X <span class="sym">-&gt;</span> Letter<span class="sym">;
+</span>		_ <span class="sym">-&gt;</span> sel_random<span class="sym">(</span>Tail<span class="sym">,</span> R<span class="sym">)
+</span>	<span class="kwa">end</span>.
+select_random<span class="sym">(</span>Seed<span class="sym">,</span> Alphabet<span class="sym">) -&gt;
+	{</span>NewSeed<span class="sym">,</span> Rand<span class="sym">} =</span> rand<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> Seed<span class="sym">,</span> <span class="num">0.0</span><span class="sym">,</span> <span class="num">1.0</span><span class="sym">),
+</span>	Char <span class="sym">=</span> sel_random<span class="sym">(</span>Alphabet<span class="sym">,</span> Rand<span class="sym">),
+	{</span>NewSeed<span class="sym">,</span> Char<span class="sym">}</span>.
+
+loop<span class="sym">(</span><span class="num">0</span><span class="sym">,</span> Seed<span class="sym">,</span> Alphabet<span class="sym">) -&gt;</span> Seed<span class="sym">;
+</span>loop<span class="sym">(</span>M<span class="sym">,</span> Seed<span class="sym">,</span> Alphabet<span class="sym">) -&gt;
+	{</span>NewSeed<span class="sym">,</span> Char<span class="sym">} =</span> select_random<span class="sym">(</span>Seed<span class="sym">,</span> Alphabet<span class="sym">),
+</span>	io<span class="sym">:</span>fwrite<span class="sym">(</span><span class="str">&quot;~s&quot;</span><span class="sym">, [</span>Char<span class="sym">]),
+</span>	loop<span class="sym">(</span>M <span class="num">- 1</span><span class="sym">,</span> NewSeed<span class="sym">,</span> Alphabet<span class="sym">)</span>.
+
+<span class="slc">%%% Generate and write FASTA format
+</span><span class="sym">-</span>define<span class="sym">(</span>LEN<span class="sym">,</span> <span class="num">60</span><span class="sym">)</span>.
+make_fasta_fragment<span class="sym">(</span>Seed<span class="sym">,</span> Alphabet<span class="sym">,</span> Num<span class="sym">,</span> <span class="num">0</span><span class="sym">) -&gt;</span> Seed<span class="sym">;
+</span>make_fasta_fragment<span class="sym">(</span>Seed<span class="sym">,</span> Alphabet<span class="sym">,</span> Num<span class="sym">,</span> Todo<span class="sym">) -&gt;
+</span>	M <span class="sym">=</span> <span class="kwa">case</span> Todo <span class="kwa">of
+</span>		X <span class="kwa">when</span> X <span class="sym">&lt;</span> ?LEN <span class="sym">-&gt;</span> Todo<span class="sym">;
+</span>		_ <span class="sym">-&gt;</span> ?LEN
+	<span class="kwa">end</span><span class="sym">,
+</span>	NewSeed <span class="sym">=</span> loop<span class="sym">(</span>M<span class="sym">,</span> Seed<span class="sym">,</span> Alphabet<span class="sym">),
+</span>	make_fasta_fragment<span class="sym">(</span>NewSeed<span class="sym">,</span> Alphabet<span class="sym">,</span> Num<span class="sym">,</span> Todo <span class="sym">-</span> M<span class="sym">)</span>.
+
+make_fasta_fragment<span class="sym">(</span>Id<span class="sym">,</span> Description<span class="sym">,</span> Seed<span class="sym">,</span> Alphabet<span class="sym">,</span> Num<span class="sym">) -&gt;
+</span>	io<span class="sym">:</span>format<span class="sym">(</span><span class="str">&quot;&gt;~s ~s</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">, [</span>Id<span class="sym">,</span> Description<span class="sym">]),
+</span>	make_fasta_fragment<span class="sym">(</span>Seed<span class="sym">,</span> Alphabet<span class="sym">,</span> Num<span class="sym">,</span> Num<span class="sym">)</span>.
+
+<span class="slc">%%% Define alphabets
+</span>create_dna1<span class="sym">() -&gt;
+	    [ {</span> <span class="str">&quot;a&quot;</span><span class="sym">,</span> <span class="num">0.3029549426680</span><span class="sym">},
+		  {</span> <span class="str">&quot;c&quot;</span><span class="sym">,</span> <span class="num">0.1979883004921</span><span class="sym">},
+		  {</span> <span class="str">&quot;g&quot;</span><span class="sym">,</span> <span class="num">0.1975473066391</span><span class="sym">},
+		  {</span> <span class="str">&quot;t&quot;</span><span class="sym">,</span> <span class="num">0.3015094502008</span><span class="sym">} ]</span>.
+
+create_dna2<span class="sym">() -&gt;
+		[ {</span> <span class="str">&quot;a&quot;</span><span class="sym">,</span> <span class="num">0.250</span><span class="sym">},
+		  {</span> <span class="str">&quot;c&quot;</span><span class="sym">,</span> <span class="num">0.125</span><span class="sym">},
+		  {</span> <span class="str">&quot;g&quot;</span><span class="sym">,</span> <span class="num">0.125</span><span class="sym">},
+		  {</span> <span class="str">&quot;t&quot;</span><span class="sym">,</span> <span class="num">0.250</span><span class="sym">},
+		  {</span> <span class="str">&quot;U&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;R&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;Y&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;K&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;M&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;S&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;W&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;B&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;D&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;H&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;V&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;N&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">},
+		  {</span> <span class="str">&quot;-&quot;</span><span class="sym">,</span> <span class="num">0.019230769231</span><span class="sym">}]</span>.
+
+main<span class="sym">() -&gt;</span> main<span class="sym">([</span><span class="str">'1'</span><span class="sym">])</span>.
+main<span class="sym">([</span>Arg<span class="sym">]) -&gt;
+</span>	N <span class="sym">=</span> <span class="kwb">list_to_integer</span><span class="sym">(</span><span class="kwb">atom_to_list</span><span class="sym">(</span>Arg<span class="sym">)),
+</span>	Fun <span class="sym">=</span> <span class="kwa">fun</span><span class="sym">(</span> Pair1<span class="sym">,</span> Pair2 <span class="sym">) -&gt;
+		{</span>Letter1<span class="sym">,</span> Weight1<span class="sym">} =</span> Pair1<span class="sym">,
+		{</span>Letter2<span class="sym">,</span> Weight2<span class="sym">} =</span> Pair2<span class="sym">,
+</span>		Letter1 <span class="sym">=&lt;</span> Letter2
+	<span class="kwa">end</span><span class="sym">,
+</span>	DNA1 <span class="sym">=</span> lists<span class="sym">:</span>sort<span class="sym">(</span>Fun<span class="sym">,</span> ets<span class="sym">:</span>tab2list<span class="sym">(</span>make_cumulative<span class="sym">(</span>dna1<span class="sym">,</span> create_dna1<span class="sym">()))),
+</span>	DNA2 <span class="sym">=</span> lists<span class="sym">:</span>sort<span class="sym">(</span>Fun<span class="sym">,</span> ets<span class="sym">:</span>tab2list<span class="sym">(</span>make_cumulative<span class="sym">(</span>dna2<span class="sym">,</span> create_dna2<span class="sym">()))),
+</span>	io<span class="sym">:</span>fwrite<span class="sym">(</span><span class="str">&quot;~p</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">, [</span>DNA2<span class="sym">]),
+</span>	<span class="kwb">halt</span><span class="sym">(),
+</span>	Seed1 <span class="sym">=</span> make_fasta_fragment<span class="sym">(</span><span class="str">&quot;TestOne&quot;</span><span class="sym">,</span> <span class="str">&quot;test fragment&quot;</span><span class="sym">,</span> <span class="num">42</span><span class="sym">,</span> DNA2<span class="sym">,</span> N <span class="sym">*</span> <span class="num">1</span><span class="sym">),
+</span>	Seed2 <span class="sym">=</span> make_fasta_fragment<span class="sym">(</span><span class="str">&quot;TestTwo&quot;</span><span class="sym">,</span> <span class="str">&quot;test fragment&quot;</span><span class="sym">,</span> Seed1<span class="sym">,</span> DNA1<span class="sym">,</span> N <span class="sym">*</span> <span class="num">2</span><span class="sym">),
+</span>	Seed3 <span class="sym">=</span> make_fasta_fragment<span class="sym">(</span><span class="str">&quot;TestThree&quot;</span><span class="sym">,</span> <span class="str">&quot;test fragment&quot;</span><span class="sym">,</span> Seed2<span class="sym">,</span> DNA2<span class="sym">,</span> N <span class="sym">*</span> <span class="num">3</span><span class="sym">),
+</span>	Seed4 <span class="sym">=</span> make_fasta_fragment<span class="sym">(</span><span class="str">&quot;TestFour&quot;</span><span class="sym">,</span> <span class="str">&quot;test fragment&quot;</span><span class="sym">,</span> Seed3<span class="sym">,</span> DNA1<span class="sym">,</span> N <span class="sym">*</span> <span class="num">4</span><span class="sym">),
+</span>	make_fasta_fragment<span class="sym">(</span><span class="str">&quot;TestFive&quot;</span><span class="sym">,</span> <span class="str">&quot;test fragment&quot;</span><span class="sym">,</span> Seed4<span class="sym">,</span> DNA2<span class="sym">,</span> N <span class="sym">*</span> <span class="num">5</span><span class="sym">)</span>.
+
+<span class="slc">% vim: ts=4 ft=erlang</span>
