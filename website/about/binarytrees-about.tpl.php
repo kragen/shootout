@@ -13,6 +13,8 @@
    <li>check that the long-lived binary tree still exists</li>   
 </ul>
 
+<p>(Note: the left subtrees are heads of the right subtrees, keeping a depth counter in the accessors to avoid duplication is cheating!)</p>
+
 <p>There are reference implementations in OCaml, C#, and PHP.</p>
 <br />
 
