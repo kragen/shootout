@@ -1,10 +1,16 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   contributed by Mehmet Soyturk
+*/
+
 import java.io.*;
 
 public class revcomp {
-    
     static final char getComp(char ch) {
         if(ch >= 'a' && ch <= 'z')
             ch += 'A' - 'a';
+            
         switch(ch) {
             case 'T': return 'A';
             case 'A': return 'T';
@@ -25,10 +31,10 @@ public class revcomp {
         return ch;
     }
 
-    public static void main(String[] args) throws IOException {
-        
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
+    public static void main(String[] args) throws IOException {
+     
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String header = in.readLine ();
         while (header != null) {
             StringBuffer sb = new StringBuffer(5*1024);
@@ -39,11 +45,11 @@ public class revcomp {
                 sb.append (line).append ('\n');
                 line = in.readLine ();
             }
-            
+           
             // reverse StringBuffer + find complements, don't touch '\n'
             int from = 0, to = sb.length ()-1;
             while(from<=to) {
-                
+               
                 char fromCh = sb.charAt (from);
                 if(fromCh == '\n') {
                     from++;
@@ -66,7 +72,6 @@ public class revcomp {
             System.out.print(sb);
 
             header = line;
-
         }
     }
 }
