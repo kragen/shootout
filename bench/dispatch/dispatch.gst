@@ -1,9 +1,9 @@
-"  The Great Computer Language Shootout 
+"  The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
 
-   To run: gst -QI /usr/share/gnu-smalltalk/gst.im flyweightstate.gst -a 1000 
+   To run: gst -QI /usr/share/gnu-smalltalk/gst.im dispatch.gst -a 1000 
 "
 
 Object subclass: #BottleState
@@ -260,5 +260,5 @@ check := 0.
    check := check - (p6 checkWith: p7 with: p8 with: p9 with: p0 with: i).         
 ].
 
-('check: ', check printString) displayNl!
+check printString displayNl!
 
