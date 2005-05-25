@@ -1,16 +1,16 @@
-# $Id: Makefile,v 1.32 2005-05-23 15:37:05 igouy-guest Exp $
+# $Id: Makefile,v 1.33 2005-05-25 15:24:45 igouy-guest Exp $
 
 TESTS = \
     hello \
     ackermann \
     ary \
     binarytrees \
+    dispatch \
     echo \
     except \
     fannkuch \
     fasta \
     fibo \
-    flyweightstate \
     harmonic \
     hash \
     hash2 \
