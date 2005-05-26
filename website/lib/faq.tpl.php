@@ -244,7 +244,7 @@ Do you want to help with the chores?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
-<tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv';?>" title="Download CSV spreadsheet">CSV spreadsheet</a> ~350KB.</p></td></tr>
+<tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv';?>" title="Download CSV spreadsheet">CSV spreadsheet</a> ~350KB, <a href="<?=$Download.'ndata.csv.bz2';?>" title="Download compressed CSV spreadsheet">bzip2</a></p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
 <tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/" title="shootout-list archives">mailing-list archives.</a></p></td></tr>
