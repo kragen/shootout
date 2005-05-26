@@ -8,6 +8,7 @@
 
   <li>Isaac Gouy imagined a simpler more-coherent website, produced many prototypes and finally persuaded Brent Fulgham that it would be "a good thing". The design changed and improved over many months.</li>
   <li>As part of the redesign, Isaac Gouy rewrote much of the website content, and created new benchmark tests; Brent Fulgham worked and re-worked the original scripts to meet the needs of the new website.</li>
+  <li>The project team expanded and took on everday maintenance chores: Christophe Troestler, Dave Fladebo, Einar Karttunen, Greg Buchholz, Joel Hoffman, Sebastien Loisel, Pascal Obry, Simon Geard, Stephen Weeks.</li>
 
 </ul>
 
