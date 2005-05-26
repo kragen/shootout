@@ -1,0 +1,77 @@
+#!/usr/bin/python -OO
+# The Computer Language Shootout Benchmarks
+# http://shootout.alioth.debian.org/ 
+#
+# contributed by Kevin Carson
+
+from threading import Thread
+from Queue import Queue
+from sys import argv
+
+import psyco
+
+psyco.full()
+
+
+class link(Thread) :
+    def __init__(self, next, ticker) :
+        Thread.__init__(self)
+        self.next = next
+        self.store = 0
+        self.inq = Queue(1)
+        self.ticker = ticker
+
+    def run(self) :
+        pull = self.inq.get
+        push = self.next.inq.put
+        store = self.store
+        countdown = self.ticker
+
+        while countdown > 0 :
+            store = pull()
+            push(store + 1)
+            countdown -= 1
+
+
+class terminus(Thread) :
+    def __init__(self, ticker) :
+        Thread.__init__(self)
+        self.sum = 0
+        self.inq = Queue(1)
+        self.ticker = ticker
+
+    def run(self) :
+        pull = self.inq.get
+        sum = self.sum
+        countdown = self.ticker
+
+        while countdown > 0 :
+            sum += pull()
+            countdown -= 1
+
+        print "%d" % sum
+
+N = int(argv[1])
+terminus_idx = 3000
+
+chain_length = terminus_idx + 1
+
+# Create the chain of threads then fire them up
+tasks = [None] * chain_length
+tasks[terminus_idx] = terminus(N)
+tasks[terminus_idx - 1] = link(tasks[terminus_idx], N)
+
+for i in xrange(terminus_idx - 2, -1, -1) :
+    tasks[i] = link(tasks[i + 1], N)
+
+for i in xrange(chain_length) :
+    tasks[i].start()
+
+# Feed the chain with integer messages
+feed_chain = tasks[0].inq.put
+
+for i in xrange(N) :
+    feed_chain(0)
+
+# Wait upon the terminus process
+tasks[terminus_idx].join()

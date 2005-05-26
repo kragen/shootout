@@ -1,0 +1,104 @@
+#!/usr/bin/python 
+#  The Great Computer Language Shootout
+#  http://shootout.alioth.debian.org
+# Contributed by Jim Jewett
+
+##from time import time as clock
+##start=clock()
+
+from itertools import repeat, tee
+from sys import argv as cmdline, setrecursionlimit
+
+##num_msgs = cmdline[1:] and int(cmdline[1]) or 150
+##num_threads = (cmdline[2:] and int(cmdline[2]) or 3000)
+num_msgs, num_threads = (cmdline[1:] and int(cmdline[1]) or 150), 3000
+
+# The feeder just passes 0 to the first thread
+channel = repeat(0, num_msgs)
+thread_list = [0]*num_threads
+
+for thr in range (0, num_threads):
+    thread_list[thr], channel = tee((i+1 for i in channel))
+
+# Scheduler -- optional, but see Notes below.
+for thr in thread_list:
+    for result in thr: pass
+
+##setrecursionlimit(num_threads+25)
+print sum(channel)
+
+##print clock()-start
+
+# Notes:
+
+# The standard Python module threading relies on the underlying platform
+# libraries to create OS threads.  Many platforms (including the Debian
+# build used for these benchmarks) sensibly limit the number of
+# simultaneously active threads to less than 3000.
+
+# Recompiling python violates the spirit of the benchmark, and recycling
+# thread handles violates the letter.  On the other hand, it does say
+# that we can use any sort of thread, including cooperative.  In other
+# words, this test was intended to test massive concurrency, rather than
+# OS-level threads in particular.
+
+# For microthreads, Python recommends using generators.  Instead of
+# "return"ing, a generator "yield"s a value and control.  On later calls,
+# the generator starts up mid-function, right where it left off.
+
+# Warning:  Individual generators are not reentrant; treat them as locked
+# from the time you request another value until the time they return one.
+# Of course, this isn't a problem if (as recommended) you treat them as
+# though they were each an individual thread.
+
+# Python 2.4 has added generator comprehensions, which make this problem
+# even easier.  Generator Comprehensions provide a quick way to create
+# generators that filter or transform the elements of another sequence.
+# For example, (i+1 for i in channel) is a generator comprehension that,
+# each time it is called, gets the next value from sequence (channel) and
+# yields (that value + 1).
+
+# The (library object) tee makes multiple copies of its input -- one for
+# the official output of the thread, and one which gets used as input to
+# the next thread.  In theory, the threads can run in any order.  In
+# practice, the scheduler does affect performance, particularly for the
+# following reasons:
+
+#    The given scheduler forces a feed-forward order of execution (as the
+#    problem nominally requests).  Without it, the results are "pulled"
+#    from the end, and none of the threads are ever called directly by the
+#    scheduler -- which means that at program end, a copy of every single
+#    message (num_threads * num_msgs = 450,000) is still cached, just in case.
+#    The extra memory management added up to 50% to the execution time.
+
+#    Python does not perform tail-call optimization, and frames are heavy
+#    enough to be noticed; deep function call stacks are therefore atypical.
+#    The interpreter assumes that if the call stack goes over 1000, either 
+#    it is a special case that you should have marked explicitly with
+#    sys.setrecursionlimit(N), or it is a bug.  But if thread 3000 is the
+#    first thread called, it will require a 3000-deep stack.  The commented
+#    setrecursionlimit() line will defend against worst-case schedulers, but
+#    is not needed by the scheduler actually used.
+
+# If you would like to try alternate schedulers, just add explicit thread
+# calls ahead of (or in place of) the for loops.  Examples:
+
+##print thread_list[5].next()
+##print thread_list[10].next()
+##print thread_list[2].next()
+##print thread_list[5].next()
+
+##for th in thread_list:
+##    for dummy in xrange(115):
+##        th.next()
+
+# passes one message along the entire chain before feeding the next.
+##try:
+##    while True:
+##        for thr in thread_list:  thr.next()
+##except StopIteration:
+##    for thr in thread_list:
+##        try:
+##             thr.next()
+##        except StopIteration:
+##            pass

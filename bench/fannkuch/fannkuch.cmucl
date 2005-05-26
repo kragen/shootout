@@ -1,6 +1,7 @@
 ;;; The Great Computer Language Shootout
 ;;; http://shootout.alioth.debian.org/
 ;;; contributed by Dima Dorfman, 2005
+;;; modified by Jim Jewett
 
 (defun swap! (a i j)
   (let ((temp (aref a i)))
@@ -8,45 +9,48 @@
     (setf (aref a j) temp)))
 
 (defun reverse-slice! (a i j)
-  (declare
-   (type (simple-array (unsigned-byte 8)) a)
-   (type fixnum i j))
+    (declare
+        (type (simple-array (unsigned-byte 8)) a) 
+        (type fixnum i j))
   (when (< i j)
     (swap! a i (1- j))
     (reverse-slice! a (1+ i) (1- j))))
 
 (defun count-flips (p)
-  (let ((p (copy-seq p)))
-    (loop until (= (aref p 0) 1)
-	  do (reverse-slice! p 0 (aref p 0))
-	  count t)))
+    (let ((p (copy-seq p)))
+        (loop until (= (aref p 0) 1)
+              do (reverse-slice! p 0 (aref p 0))
+              count t)))
 
-(defun folding-flips (z p)
-  (declare (type fixnum z))
-  (max (count-flips p) z))
-
-(defun fold-permutations (f z n)
-  (declare (type (unsigned-byte 8) n))
-  (let ((p (make-array (list n) :element-type '(unsigned-byte 8)
-		       :initial-contents (loop for i from 1 to n collect i))))
-    (labels ((another (z)
-	       (let ((i (loop for i from (- n 2) downto 0
-			      when (> (aref p (1+ i)) (aref p i)) return i)))
-		 (if (null i)
-		     z
-		   (let ((j (loop for j from (1- n) downto 0
-				  when (> (aref p j) (aref p i)) return j)))
-		     (swap! p i j)
-		     (reverse-slice! p (1+ i) n)
-		     (another (funcall f z p)))))))
-      (another z))))
+(defun reorder-next (p n low high)
+    (swap! p low high)
+    (reverse-slice! p (1+ low) n))
+    
+(defun next-permutation (p n)
+    (let ((low nil) (high nil))
+        (loop for i below (1- n)
+              when (< (aref p i) (aref p (1+ i))) 
+                do (setq low i)
+              when (and low (< (aref p low) (aref p (1+ i))))
+                do (setq high (1+ i)))
+        (if low (reorder-next p n low high))
+        low))
 
 (defun fannkuch (n)
-  (fold-permutations #'folding-flips 0 n))
-
+    (declare (type fixnum n))
+    (let ((seq (make-array (list n) :element-type '(unsigned-byte 8)
+                           :initial-contents (loop for i from 1 to n collect i))))
+        (loop maximizing (count-flips seq)
+              while (next-permutation seq n))))
+            
 (defun main ()
   (let* ((args #+sbcl sb-ext:*posix-argv*
-	       #+cmu extensions:*command-line-strings*
-	       #+gcl si::*command-args*)
-	 (n (parse-integer (car (last args)))))
+       #+cmu extensions:*command-line-strings*
+       #+gcl si::*command-args*)
+ (n (parse-integer (car (last args)))))
     (format t "Pfannkuchen(~d) = ~d~%" n (fannkuch n))))
+
+;(defun mymain (n)
+;   (format t "Pfannkuchen(~d) = ~d~%" n (fannkuch n)))
+
+
