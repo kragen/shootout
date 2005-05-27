@@ -395,9 +395,9 @@ be open source.  As language users, when we find a problem but do
 not have access to the source code it is very frustrating.  If
 you have ever had to maintain production software for a compiler
 that is no longer available from a vendor, with no available bug
-fixes, you will soon understand this requirement.</li>
-<li><strong>Used?</strong> There are way too many dead languages and unused project languages.</li>
-<li><strong>Interesting?</strong> Is there something significant and interesting about the language that will be obvious from these benchmark programs?</li>
+fixes, you'll understand this preference.</li>
+<li><strong>Used?</strong> There are way too many dead languages and unused new languages.</li>
+<li><strong>Interesting?</strong> Is there something significant and interesting about the language that will be revealed by these simple benchmark programs?</li>
 </ol>
 <p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion.</p>
 </td></tr>
