@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2005-05-25 07:02:18 bfulgham Exp $
+# $Id: Makefile,v 1.29 2005-05-27 06:21:19 bfulgham Exp $
 
 include Make.header
 
@@ -7,7 +7,7 @@ all: init versions
 	-(cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
-	-bin/build_summary_file < website/data/ndata.csv > website/data/data.csv
+	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-make codelinks
 
 website: 
