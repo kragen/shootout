@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2005-05-27 06:21:19 bfulgham Exp $
+# $Id: Makefile,v 1.30 2005-05-27 06:30:37 bfulgham Exp $
 
 include Make.header
 
@@ -12,6 +12,7 @@ all: init versions
 
 website: 
 	-bin/build_data_files
+	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-bin/compress_ndata	
 	-bin/make_highlight
 	-(cd website/code; ../../bin/add_strays)
