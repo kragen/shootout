@@ -191,10 +191,10 @@ check: anInteger
 checkWith: aBottle2 with: aBottle3 with: aBottle4 with: aBottle5 with: anInteger
    | c |
    self cycle.
-   "aBottle2 cycle.
+   aBottle2 cycle.
    aBottle3 cycle.
    aBottle4 cycle.
-   aBottle5 cycle."
+   aBottle5 cycle.
 
    c := anInteger rem: 2. 
    ^(self check: c) + (aBottle2 check: c) + (aBottle3 check: c) + 
