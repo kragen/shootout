@@ -3,10 +3,11 @@
 #### http://shootout.alioth.debian.org/
 #### 
 #### Contributed by Robbert Haarman
+#### Modified by Ian Osgood
 
 require 'socket'
 
-N = ARGV[0] || 10
+N = Integer(ARGV[0] || 10)
 M = 1
 REPLY_SIZE = 409600
 REQUEST_SIZE = 1
