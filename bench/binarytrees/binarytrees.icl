@@ -1,8 +1,14 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by Isaac Gouy (Clean novice)
+*/
+
 module binarytrees
-import StdEnv
+import StdEnv, LanguageShootout
 
 Start world
-	# max`          = max (min`+2) 20
+	# max`          = max (min`+2) argi
 	# stretch`      = max` + 1
 	# (io,world)    = stdio world
 	#! io           = showItemCheck stretch` (bottomup 0 stretch`) "stretch tree of depth " io
