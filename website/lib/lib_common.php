@@ -155,22 +155,46 @@ function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
 
 
 function CompareCpuTime($a, $b){
-   if ($a[DATA_CPU] == $b[DATA_CPU]) return 0;
+   if ($a[DATA_CPU] == $b[DATA_CPU]){
+      if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
+         if ($a[DATA_LINES] == $b[DATA_LINES]){ return 0; }
+         else { return ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1; }            
+      }
+      else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
+   }
    return  ($a[DATA_CPU] < $b[DATA_CPU]) ? -1 : 1;
 }
 
 function CompareFullCpuTime($a, $b){
-   if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]) return 0;
+   if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
+      if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
+         if ($a[DATA_LINES] == $b[DATA_LINES]){ return 0; }
+         else { return ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1; }            
+      }
+      else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
+   }
    return  ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1;
 }
 
 function CompareMemoryUse($a, $b){
-   if ($a[DATA_MEMORY] == $b[DATA_MEMORY]) return 0;
+   if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
+      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
+         if ($a[DATA_LINES] == $b[DATA_LINES]){ return 0; }
+         else { return ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1; }            
+      }
+      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
+   }
    return  ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1;
 }
 
 function CompareCodeLines($a, $b){
-   if ($a[DATA_LINES] == $b[DATA_LINES]) return 0;
+   if ($a[DATA_LINES] == $b[DATA_LINES]){
+      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
+         if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ return 0; }
+         else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }            
+      }
+      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
+   }
    return  ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1;
 }
 
