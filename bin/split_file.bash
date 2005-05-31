@@ -23,9 +23,16 @@ then
 
       for each in $(ls ${PWD}/tmp*)
       do
-         line=$(sed -n '/SPLITFILE/p' $each)
-         suffix=${line##*SPLITFILE=}
+         line=$(sed -n '/SPLITFILE/p' $each)                           
+         suffix=${line##*SPLITFILE=}                  
          name=${suffix%% *}
+         
+         # if the name is a path ensure the directory exists
+         dir=${name%/*}
+         if [ $dir != $name ]; then         
+            mkdir -p $dir
+         fi
+         
          echo "splitfile " $name
          mv -f $each ${PWD}/$name
       done
