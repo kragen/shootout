@@ -30,7 +30,7 @@ then
          # if the name is a path ensure the directory exists
          dir=${name%/*}
          if [ $dir != $name ]; then         
-            mkdir -p $dir
+            mkdir -p ${PWD}/$dir
          fi
          
          echo "splitfile " $name
