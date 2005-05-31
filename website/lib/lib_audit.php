@@ -47,7 +47,7 @@ function ReadLogFiles($dirPath){
          $byteSize = filesize(LOG_PATH.$fn);
          
          $code = 0;         
-         if (($byteSize > 0) && ($byteSize <= 20480)){                  
+         if (($byteSize > 0) && ($byteSize <= 40960)){                  
             $f = fopen(LOG_PATH.$fn,'r');
             $s = fread($f,$byteSize);
             fclose($f);
@@ -62,8 +62,8 @@ function ReadLogFiles($dirPath){
                else { $code = NO_PROGRAM_OUTPUT; }
             }   
          }      
-         else { $code = NO_PROGRAM_OUTPUT; }                    
-                            
+         else { $code = NO_PROGRAM_OUTPUT; }          
+                                          
          $logs[$tag] = array($code,$byteSize);                            
       }
    }

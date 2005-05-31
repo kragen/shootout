@@ -58,7 +58,7 @@
 <?
    foreach($NData as $k => $v){ 
       if ($v==PROGRAM_ERROR && isset($Logs[$k])){
-         if ($Logs[$k][0]!=PROGRAM_ERROR){ printf('<p>%s</p>',PrettyTag($k)); echo "\n"; }     
+         if (($Logs[$k][0]!=PROGRAM_EXCLUDED)&&($Logs[$k][0]!=PROGRAM_ERROR)){ printf('<p>%s</p>',PrettyTag($k)); echo "\n"; }     
       }      
    }     
 ?>
@@ -69,7 +69,7 @@
 <tr><td>
 <?
    foreach($Logs as $k => $v){ 
-      if ($v[0]==PROGRAM_ERROR && isset($NData[$k])){
+      if (($v[0]==PROGRAM_ERROR||$v[0]==PROGRAM_EXCLUDED) && isset($NData[$k])){
          if ($NData[$k]!=PROGRAM_ERROR){ printf('<p>%s</p>',PrettyTag($k)); echo "\n"; }     
       }      
    }      
