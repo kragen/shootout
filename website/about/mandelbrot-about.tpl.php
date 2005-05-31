@@ -2,5 +2,7 @@
 
 <p>Correct output N = 200 is in this 5KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=output">output file</a>.</p>
 
+<img src="<?=IMAGE_PATH;?>mandelbrot200.png" alt="Mandlebrot output N=200,converted to PNG" height="200" width="200" />
+
 <p>For more information see Eric W. Weisstein, "Mandelbrot Set." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/MandelbrotSet.html">http://mathworld.wolfram.com/MandelbrotSet.html</a></p>
 <p>Thanks to Greg Buchholz for this benchmark.</p>
