@@ -10,23 +10,33 @@
 # Isaac Gouy 30 May 2005
 
 
-csplit &>/dev/null -f tmp $1 '%SPLITFILE%' '{1}' '/SPLITFILE/' '{*}'
 
-if [ -f ${PWD}/tmp00 ]; then
-   # $1 was split
+if egrep -q 'SPLITFILE' $1 
+then
+   csplit &>/dev/null -f tmp $1 '/SPLITFILE/' '{*}'
 
-   for each in $(ls ${PWD}/tmp*)
-   do
-      line=$(sed -n '/SPLITFILE/p' $each)
-      suffix=${line##*SPLITFILE=}
-      name=${suffix%% *}
-      echo "splitfile " $name
-      mv -f $each ${PWD}/$name
-   done
-   exit 0
+   if [ -f ${PWD}/tmp01 ]; then
+      # $1 was split
+
+      # we only care about stuff after SPLITFILE marker
+      rm -f ${PWD}/tmp00
+
+      for each in $(ls ${PWD}/tmp*)
+      do
+         line=$(sed -n '/SPLITFILE/p' $each)
+         suffix=${line##*SPLITFILE=}
+         name=${suffix%% *}
+         echo "splitfile " $name
+         mv -f $each ${PWD}/$name
+      done
+      exit 0
+   else
+      rm -f ${PWD}/tmp00
+      exit 1
+   fi
 
 else
-   # $1 was not split
+   # $1 didn't contain SPLITFILE
 
    exit 1
 fi
