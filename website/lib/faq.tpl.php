@@ -251,6 +251,7 @@ Do you want to help with the chores?</p>
 
 <tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
+<p>Build dependencies include - <a href="http://packages.debian.org/stable/admin/gtop">libgtop</a>, <a href="http://search.cpan.org/~stas/GTop/">GTop</a>, libXau, and <a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl">BSD::Resource</a> </p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#findmore" name="findmore">Where can I find out more?</a></td></tr>
