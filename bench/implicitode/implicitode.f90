@@ -4,6 +4,8 @@
 !
 ! Contributed by Sebastien Loisel
 !
+! Fortran version by Simon Geard and Arjen Markus
+!
 ! OVERVIEW: In this test, we solve an ordinary differential equation
 !    u'=f(t,u)
 ! using the Trapezoid numerical method, which can be written as
@@ -153,6 +155,22 @@ contains
     end do
   end function newton
 
+  real*8 function newton_trapez(func, params, y0)
+    
+    f0 = func(y0,params)
+    do i = 1,nsteps
+       val = trap_impl(func,params,y1,y0,f0)
+       y1 = y1 - val%x/val%dx
+    enddo
+    
+    newton = y1
+    
+  end function newton_trapez
+
+  type(ad) function trap_impl(func, params, y1, y0, f0)
+    trap_impl = y1 - (func(y1,params)+f0)*hdelta - y0
+  end function trap_impl
+  
 end program implicitode
 
 type(ad) function rat(x, params)
@@ -171,7 +189,7 @@ type(ad) function mysqrt(x, params)
 
   type(ad), intent(in)    :: x
   type(fdata), intent(in), optional :: params
-  mysqrt = x**2 - params%a
+  mysqrt = x*x - params%a
 end function mysqrt
 
 type(ad) function simple(x, params)

@@ -47,15 +47,16 @@ program implicitode
   else
      read(argv,*) n
   end if
-
-  write(*,'(2(a,es20.14e2))') 'rational_taylor_series: ',rat(0.25d0),' ',D(rat,0.25d0)
+  x = rat(0.25d0)
+  res = D(rat,0.25d0)
+  write(*,'(2(a,es27.20e2))') 'rational_taylor_series: ',x,' ',res
 
   gparams%a = 2.0d0
   x = newton(mysqrt,gparams,1.0d0,10)
-  write(*,'(2(a,es21.14e2))') 'newton-sqrt_2:',x
+  write(*,'(2(a,es27.20e2))') 'newton-sqrt_2:',x
   x = newton(rat,gparams,-1.0d0,6)
   res = rat(x)
-  write(*,'(a,es21.14e2)') 'newton-rat: ',x
+  write(*,'(a,es27.20e2)') 'newton-rat: ',x
   !
   ! Simple case that enables easy verification of the trapezoidal implementation:
   !
@@ -70,12 +71,14 @@ program implicitode
   t1 = 6.0d0            ! Final (target) value of parameter t
   dt = (t1 - t0)/n      ! Parameter step size
   call trapezoidal(simple,gparams,t0,dt,u_t0,n,r)
-  write(*,'(a,es17.10e2)') 'u(6) = ',r
+  write(*,'(a,es27.20e2)') 'u(6) = ',r
+  call rk4(simple,gparams,t0,dt,u_t0,n,r)
+  write(*,'(a,es27.20e2)') 'u(6) = ',r
 
   x = 1.0d0
   dt = 0.02d0
   y0 = 1.0d0/(4*n)
-  call integrate_functions(x,dt,y0,4*n)
+!  call integrate_functions(x,dt,y0,4*n)
 
 contains
   
@@ -85,26 +88,25 @@ contains
     real*8, intent(in)  :: y0
     integer, intent(in) :: n
     call trapezoidal(mysqrt,gparams,x,dt,y0,n,r)
-    print *, 'i1: ',r
+    print *, 'trap 1: ',r
+    call rk4(mysqrt,gparams,x,dt,y0,n,r)
+    print *, 'rk4 1: ',r
     call trapezoidal(rat,gparams,x,dt,y0,n,r)
     print *, 'i2: ',r
   end subroutine integrate_functions
 
   subroutine trapezoidal(g,gparams,t0,dt,y0,numsteps,r)
     real*8, external      :: g
-    type(fdata), intent(in) :: gparams
-    real*8, intent(in)      :: t0
-    real*8, intent(in)      :: dt
-    real*8, intent(in)      :: y0
-    integer, intent(in)     :: numsteps
-    real*8, intent(inout)   :: r
+    type(fdata), intent(in)         :: gparams
+    real*8, intent(in)    :: t0
+    real*8, intent(in)    :: dt
+    real*8, intent(in)    :: y0
+    integer, intent(in)             :: numsteps
+    real*8, intent(inout) :: r
 
-    real*8                  :: t, y
-    real*8, external        :: trapezoid_method
-    type(fdata)             :: params
-    real*8                  :: val, y1
-    integer                 :: i, j
-    real*8                  :: t1
+    real*8                :: y, y1
+    integer                         :: i, j
+    real*8                :: t1
     !    (u[k+1]-u[k])=(f(t[k],u[k])+f(t[k]+dt,u[k+1]))*dt/2,
     y = y0
     do i=1,numsteps
@@ -117,6 +119,81 @@ contains
     end do
     r = y
   end subroutine trapezoidal
+
+  subroutine rk4(g,gparams,t0,dt,y0,numsteps,r)
+    real*8, external      :: g
+    type(fdata), intent(in)         :: gparams
+    real*8, intent(in)    :: t0
+    real*8, intent(in)    :: dt
+    real*8, intent(in)    :: y0
+    integer, intent(in)             :: numsteps
+    real*8, intent(inout) :: r
+
+    real*8                :: y, y1
+    integer                         :: i, j
+    real*8                :: t1
+    real*8                :: k1, k2, k3, k4
+    !
+    ! u[k+1] = u[k] + k1/6 + k2/3 + k3/3 + k4/6
+    !
+    ! k1 = h*f(t[n]    ,u[k])
+    !
+    ! k2 = h*f(t[n]+h/2,u[n]+k1/2)
+    !
+    ! k3 = h*f(t[n]+h/2,u[n]+k2/2)
+    !
+    ! k4 = h*f(t[n]+h  ,u[n]+k3)
+    !
+    y = y0
+    do i=1,numsteps
+       t1 = t0 + i*dt
+       k1 = dt*g(y,gparams)
+       k2 = dt*g(y+0.5d0*k1,gparams)
+       k3 = dt*g(y+0.5d0*k2,gparams)
+       k4 = dt*g(y,k3,gparams)
+       y1 = y + (k1 + 2*k2 + 2*k3 + k4)/6
+       y = y1
+    end do
+    r = y
+
+  end subroutine rk4
+
+  subroutine irk4(g,gparams,t0,dt,y0,numsteps,r)
+    ! Hammer-Hollingsworth
+    real*8, external        :: g
+    type(fdata), intent(in) :: gparams
+    real*8, intent(in)      :: t0
+    real*8, intent(in)      :: dt
+    real*8, intent(in)      :: y0
+    integer, intent(in)     :: numsteps
+    real*8, intent(inout)   :: r
+
+    real*8                  :: y, y1
+    integer                 :: i, j
+    real*8                  :: t1
+    real*8                  :: k1, k2, k3, k4, c1, c2, b1, b2
+    real*8, dimension(2,2)  :: A
+    real*8, dimension(2)    :: b, c, k, ks
+    !
+    ! u[k+1] = u[k] + h * _b_ . _k_
+    !
+    ! k[i] = f(t0+c[i]*h, y0 + A[i]*_k_)
+    !
+    c = (/ (3-sqrt(3.0d0))/6 , (3+sqrt(3.0d0))/6 /)
+    b = (/0.5d0 , 0.5d0/)
+    A = reshape((/0.25d0,0.25d0-sqrt(3.0d0)/6,0.25d0+sqrt(3.0d0)/6,0.25d0/),(/2,2/))
+    y = y0
+    do i=1,numsteps
+       t1 = t0 + i*dt
+       do j=1,10
+
+       end do
+       y1 = y + dt*dot_product(b,k)
+       y = y1
+    end do
+    r = y
+
+  end subroutine irk4
 
   real*8 function newton(g,params,x,n)
     real*8, external                  :: g
@@ -161,6 +238,7 @@ real*8 function rat(x, params)
   type(fdata), intent(in), optional :: params
 
   rat = (1 + 2*x + 3*x**2 + 7*x**6 + 5*x**11) / (2 + 5*x - 6*x**3 - 3*x**7)
+
 end function rat
 
 real*8 function mysqrt(x, params)
@@ -168,7 +246,7 @@ real*8 function mysqrt(x, params)
 
   real*8, intent(in)    :: x
   type(fdata), intent(in), optional :: params
-  mysqrt = x**2 - params%a
+  mysqrt = x*x - params%a
 end function mysqrt
 
 real*8 function simple(x, params)
