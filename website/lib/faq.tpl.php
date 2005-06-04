@@ -308,26 +308,30 @@ Do you want to help with the chores?</p>
 
 
 <tr><td><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
-<p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times(), for example measuring the same program:</p>
-<pre>Perl times()
-16.640
+<p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
+<pre>Perl times() builtin function
 16.650
 16.660
+16.640
 
 BSD::Resource::times
 16.659
-16.654
-16.653
+16.656
+16.655
 
 GNU time version 1.7
-16.61
-16.63
 16.62
+16.61
+16.60
+
+Bash time builtin command
+16.624
+16.628
+16.638
 
 </pre>
 
-
-<p>So we use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
+<p>We use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
 <br />
 
 
