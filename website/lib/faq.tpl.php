@@ -310,14 +310,19 @@ Do you want to help with the chores?</p>
 <tr><td><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
 <p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times(), for example measuring the same program:</p>
 <pre>Perl times()
-0.940s
-0.960s
-0.940s
+16.640
+16.650
+16.660
 
 BSD::Resource::times
-0.953s
-0.954s
-0.953s
+16.659
+16.654
+16.653
+
+GNU time version 1.7
+16.61
+16.63
+16.62
 
 </pre>
 
