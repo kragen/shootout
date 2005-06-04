@@ -307,7 +307,24 @@ Do you want to help with the chores?</p>
 <tr class="b"><td><a class="ab" href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></td></tr>
 
 
-<tr><td><p>Each program was run as a child-process of a Perl script. The script waits for the child-process to exit and takes usr+sys times with (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3].</p>
+<tr><td><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
+<p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times(), for example measuring the same program:</p>
+<pre>Perl times()
+0.940s
+0.960s
+0.940s
+
+BSD::Resource::times
+0.953s
+0.954s
+0.953s
+
+</pre>
+
+
+<p>So we use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
+<br />
+
 
 <p>The Full CPU time includes program <strong>startup time</strong>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
 
