@@ -335,7 +335,7 @@ Bash time builtin command
 <br />
 
 
-<p>The Full CPU time includes program <strong>startup time</strong>. You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p><p>
+<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a>.</p><p>
 
 Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
 
