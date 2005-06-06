@@ -300,12 +300,13 @@ Do you want to help with the chores?</p>
 
 <tr><td><h3 class="rev"><a class="arev" href="#measure" name="measure">&nbsp;How did you measure&#8230;?</a></h3></td></tr>
 
-
-
-
+<tr class="b"><td><a class="ab" href="#pretest" name="pretest">How did you measure?</a></td></tr>
+<tr><td>
+<p>Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
+<p>Program output is redirected.</p>
+</td></tr>
 
 <tr class="b"><td><a class="ab" href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></td></tr>
-
 
 <tr><td><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
 <p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
@@ -332,13 +333,8 @@ Bash time builtin command
 </pre>
 
 <p>We use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
-<br />
 
-
-<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a>.</p><p>
-
-Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
-
+<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
 </td></tr>
 
 
