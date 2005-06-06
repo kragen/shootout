@@ -44,7 +44,7 @@
 
 <tr><td>
 <p><strong>Contribute</strong> missing benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a program</a>.</p> 
-<p><strong>Fix</strong> broken benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a fixed program</a>.</p> 
+<p><strong>Fix</strong> slow broken benchmark programs - read <a href="#implement">How should I implement&#8230;?</a> and then <a href="#contribute">contribute a fixed program</a>.</p> 
 <p><strong>Report</strong> content mistakes, inconsistencies, bad installs <em>etc</em> (Read <a href="http://www.chiark.greenend.org.uk/~sgtatham/bugs.html">How to Report Bugs Effectively</a>) - add a new item to <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Bugs</strong></a>.</p> 
 <p><strong>Suggest</strong> new features, new languages, new benchmarks <em>etc</em> - add a new item&nbsp;to&nbsp;<a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a>.</p> 
 <p><strong>Work</strong> behind the scenes - read <a href="#chores">How can I help with the chores?</a></p> 
