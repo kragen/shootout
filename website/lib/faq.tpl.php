@@ -284,7 +284,7 @@ Do you want to help with the chores?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#cpu" name="cpu">What does CPU Time mean?</a></td></tr>
-<tr><td><p>The CPU Time is the measured CPU time minus the average program startup time for the language.</p></td></tr>
+<tr><td><p>The CPU Time is the measured CPU time minus the average time of the startup benchmark for the language.</p></td></tr>
 </table>
 
 
