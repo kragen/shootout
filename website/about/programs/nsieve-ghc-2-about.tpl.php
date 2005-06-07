@@ -1,0 +1,1 @@
+<p><strong>NOT ACCEPTED:</strong> Nice, fast, optimized, but not the same naive algorithm.</p>
