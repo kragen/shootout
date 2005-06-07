@@ -1029,7 +1029,7 @@
        Home => 'http://cm.bell-labs.com/cm/cs/what/smlnj/',
        Down => 'http://cm.bell-labs.com/cm/cs/what/smlnj/software.html',
        Type => 'native compiled',
-       Note => 'Functional programming with side-effects',
+       Note => 'Elegance of FP combined with effectiveness of imperative programming',
        Ext  => 'sml',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{SMLNJ} </dev/null`);
