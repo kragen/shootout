@@ -1,7 +1,7 @@
 <? /* The Great Computer Language Shootout 
    http://shootout.alioth.debian.org/
    
-   contributed by Isaac Gouy (PHP novice)
+   contributed by Isaac Gouy (PHP novice) 
    
    php -q binarytrees.php 12
 */
