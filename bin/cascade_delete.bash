@@ -20,7 +20,7 @@ declare -a key
 alias[0]=sbcl
 key[0]=cmucl
 
-alias[1]=glc
+alias[1]=gcl
 key[1]=cmucl
 
 alias[2]=hipe
@@ -105,14 +105,24 @@ do
          if [ ! -f $ds$test/$source2 ]; then
 
             # remove .log file
-            rm $each
+            #rm $each
+	    #cvs rm $each
             echo "cascade delete "$each
 
             # remove .code file
             if [ -f ${prefix}.code ]; then 
-               rm ${prefix}.code
+               #rm ${prefix}.code
+	       #cvs rm ${prefix}.code
                echo "cascade delete "${prefix}.code
             fi
+
+	    # remove tmp files
+	    rm -rf $ds$test/tmp/\*${lang2}-${id}\*
+	    echo "cascade delete $ds$test/tmp/*${lang2}-${id}*"
+
+	    # remove data directory files
+	    rm -rf $ds$test/data/\*${lang2}-${id}\*
+	    echo "cascade delete $ds$test/data/*${lang2}-${id}*"
          fi         
       fi
    fi

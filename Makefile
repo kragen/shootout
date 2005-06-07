@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2005-05-27 06:30:37 bfulgham Exp $
+# $Id: Makefile,v 1.31 2005-06-07 06:19:03 bfulgham Exp $
 
 include Make.header
 
@@ -16,6 +16,7 @@ website:
 	-bin/compress_ndata	
 	-bin/make_highlight
 	-(cd website/code; ../../bin/add_strays)
+	-bin/cascade_delete.bash
 	-cvs commit -m "Rerun of benchmarks."
 
 test plot show loc:
