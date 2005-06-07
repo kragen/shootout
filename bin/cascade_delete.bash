@@ -1,12 +1,13 @@
 #!/bin/bash
-
 # Isaac Gouy 29 May 2005
-
 # directory locations relative to /shootout
+
+echo "##########################"
+echo "STARTING CASCADING DELETE"
+echo "##########################"
 
 d=website/code/
 ds=bench/
-
 
 # Some implementations share source code
 # Intel C uses the same source file as gcc, etc
@@ -105,14 +106,14 @@ do
          if [ ! -f $ds$test/$source2 ]; then
 
             # remove .log file
-            #rm $each
-	    #cvs rm $each
+            rm $each
+	    cvs rm $each
             echo "cascade delete "$each
 
             # remove .code file
             if [ -f ${prefix}.code ]; then 
-               #rm ${prefix}.code
-	       #cvs rm ${prefix}.code
+               rm ${prefix}.code
+	       cvs rm ${prefix}.code
                echo "cascade delete "${prefix}.code
             fi
 
