@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005-06-07 19:54:54 igouy-guest Exp $
+# $Id: Makefile,v 1.4 2005-06-07 20:41:45 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := binarytrees
@@ -16,6 +16,7 @@ BIGLOOOPTS := -farithmetic
 GCCOPTS := -O1
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
+PHPOPTS := -d memory_limit=64M
 
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
