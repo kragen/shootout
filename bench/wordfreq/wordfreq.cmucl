@@ -1,44 +1,26 @@
-;;; -*- mode: lisp -*-
-;;; http://shootout.alioth.debian.org/
-;;; by Patrick Frankenberger
+; The Great Computer Language Shootout
+; http://shootout.alioth.debian.org
+; Word Frequency - counts how many times each word appeared in a text
 
-(defparameter *buffer* (make-array 4096 :element-type 'base-char))
-(defparameter *word* (make-array 0 :element-type 'base-char :adjustable t :fill-pointer t))
-(defparameter *ht* (make-hash-table :size 60000 :test 'equal))
-
-(defun add-word ()
-  (declare (type (array base-char) *word*))
-  (when (/= (length *word*) 0)
-    (let ((key (string-downcase *word*)))
-      (setf (gethash key *ht*) (1+ (the fixnum (gethash key *ht* 0))))
-      (setf (fill-pointer *word*) 0))))
-
-(defun readit ()
-  (declare (type (simple-array base-char) *buffer*)
-	   (type (array base-char) *word*))
-  (do ((num-read (read-sequence *buffer* *standard-input*)
-		(read-sequence *buffer* *standard-input*)))
-      (nil)
-    (loop for i fixnum below num-read do
-	  (if (alpha-char-p (aref *buffer* i)) 
-	      (vector-push-extend (aref *buffer* i) *word*)
-	      (add-word)))
-    (when (/= num-read 4096) (return))))
-
-(defun order (l r)
-  (declare (type (cons simple-base-string fixnum) l r))
-  (if (/= (cdr l) (cdr r))
-      (> (cdr l) (cdr r))
-      (string> (car l) (car r))))
-
-(defun printit ()
-  (let ((res (make-array (hash-table-count *ht*) :element-type '(cons simple-base-string fixnum) :fill-pointer t)))
-    (setf (fill-pointer res) 0)
-    (maphash #'(lambda (k v) (vector-push (cons k v) res)) *ht*)
-    (setf res (sort res #'order))
-    (loop for a across res do
-	  (format t "~7d ~A~%" (cdr a) (car a)))))
+; written by Nicolas Neuss
+; bug-fixes by Eric Lavigne
 
 (defun main ()
-  (readit)
-  (printit))
+  (let ((table (make-hash-table :test 'eq)) (*print-pretty* nil))
+    (let ((*readtable* (copy-readtable)))
+      ;; tweak readtable
+      (loop for char across "\".;,#:()[]{}'1234567890-*?" do
+	  (set-syntax-from-char char #\Space))
+      ;; count
+      (loop for word = (read *standard-input* nil #\.) until (eq word #\.)
+	  do (incf (gethash word table 0))))
+    ;; output
+    (loop for (word . count) in
+	(sort (loop for a being the hash-keys of table using (hash-value b)
+		    collect (cons a b))
+	      #'(lambda (a b)
+		  (or (> (cdr a) (cdr b))
+		      (and (= (cdr a) (cdr b))
+			   (string>= (car a) (car b))))))
+	do (format t "~7d ~A~%" count (string-downcase word)))))
+
