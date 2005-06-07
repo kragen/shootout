@@ -302,8 +302,8 @@ Do you want to help with the chores?</p>
 
 <tr class="b"><td><a class="ab" href="#pretest" name="pretest">How did you measure?</a></td></tr>
 <tr><td>
-<p>Each program was run once pre-test to reduce cache effects. Each program was then run 3 times. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
-<p>Program output is redirected.</p>
+<p>Each program was run once pre-test to reduce cache effects. Program output is redirected to a log-file and compared to the expected output.</p>
+<p> Each program was then run 3 times with program output redirected to /dev/null. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></td></tr>
