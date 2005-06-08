@@ -710,7 +710,7 @@
        Down => 'http://oo2c.sourceforge.net/files',
        Type => 'native compiled',
        Note => 'Lean component development: modules & OO',
-       Ext  => 'ooc',
+       Ext  => 'oberon',
        Verfun => sub {
 	   my $ver = `$ENV{OO2C} --version 2>&1`;
 	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c $2 (using $1)/;
