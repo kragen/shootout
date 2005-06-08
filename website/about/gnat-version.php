@@ -1,1 +1,1 @@
-<p>GNAT 3.4.4 20050314 (prerelease) (Debian 3.4.3-13) Copyright 1997-2004 Free Software Foundation, Inc.</p>
+<p>GNAT 4.0.1 20050522 (prerelease) (Debian 4.0.0-9)</p>
