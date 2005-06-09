@@ -79,7 +79,7 @@ END ShowItemCheck;
 
 
 BEGIN
-   n := LangShootout.Argi();
+   n := Shootout.Argi();
 
    IF minDepth+2 > n THEN maxDepth := minDepth+2; ELSE maxDepth := n; END;
    stretchDepth := maxDepth + 1;

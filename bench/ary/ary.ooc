@@ -4,7 +4,7 @@
    contributed by Isaac Gouy (Oberon-2 novice)
 *) 
 
-MODULE Ary;
+MODULE ary;
 IMPORT Shootout, Out;
 
 VAR n, m, i, j: LONGINT;
@@ -28,4 +28,4 @@ BEGIN
    END;
    
    Out.Int(y[0],1); Out.String(" "); Out.Int(y[m],1); Out.Ln;
-END Ary.
+END ary.

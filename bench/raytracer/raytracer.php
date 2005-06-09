@@ -96,14 +96,14 @@ class Scene {
          
    function traceRay($ray,$light){   
       $p = $this->intersect($ray,
-         new IntersectionPoint(INFINITY, new Vector(0.0, 0.0, 0.0)) );                                                                                              
-      if ($p->distance==INFINITY){ return 0.0; }
+         new IntersectionPoint(INFINITY, new Vector(0.0, 0.0, 0.0)) );              
+      if (is_infinite($p->distance)){ return 0.0; }
                         
-      $greyscale = -1.0 * ($p->normal->dot($light));                  
+      $greyscale = -1.0 * ($p->normal->dot($light));
       if ($greyscale <= 0.0){ return 0.0; }   
       
       $rayOrigin = $ray->origin;
-      $scaledDirection = $ray->direction->scaledBy($p->distance);      
+      $scaledDirection = $ray->direction->scaledBy($p->distance);
       $scaledNormal = $p->normal->scaledBy(EPSILON);
       $o = $rayOrigin->plus($scaledDirection);
       $o = $o->plus($scaledNormal);          
@@ -113,7 +113,7 @@ class Scene {
       $shadowp = $this->intersect(
          $shadowRay, new IntersectionPoint(INFINITY, $p->normal) );      
           
-      if ($shadowp->distance==INFINITY){ return $greyscale; }  
+      if (is_infinite($shadowp->distance)){ return $greyscale; }  
       else { return 0.0; }         
    }                                                           
 }

@@ -2,8 +2,7 @@
    http://shootout.alioth.debian.org
 
    contributed by Isaac Gouy (Oberon-2 novice)
-*)
-
+*) 
 
 MODULE heapsort;
 IMPORT Shootout, Random, Out;
@@ -12,7 +11,8 @@ VAR
    n, i: LONGINT;
    x:  POINTER TO ARRAY OF LONGREAL;
 
-PROCEDURE Heapsort(VAR ra: ARRAY OF LONGREAL);
+
+PROCEDURE Heapsort(n: LONGINT; VAR ra: ARRAY OF LONGREAL);
 VAR i, j, k, ir: LONGINT;
     rra: LONGREAL;
 BEGIN
@@ -31,9 +31,10 @@ BEGIN
             EXIT;
          END;
       END;
-
+      
       i := k;
       j := ASH(k,1);
+
       WHILE j<=ir DO
          IF (j < ir) & (ra[j] < ra[j+1]) THEN INC(j); END;
          IF rra < ra[j] THEN
@@ -51,12 +52,10 @@ END Heapsort;
 
 BEGIN
    n := Shootout.Argi();
-
+   
    NEW(x, n+1);
    x[0] := 0.0;
-   FOR i := 1 TO n DO x[i] := Random.Next(1.0); END;  	
-
+   FOR i := 1 TO n DO x[i] := Random.Next(1.0); END;
    Heapsort(n, x^);
-
    Out.LongRealFix(x[n],0,10); Out.Ln;
 END heapsort.
