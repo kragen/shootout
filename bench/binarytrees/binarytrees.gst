@@ -53,7 +53,7 @@ stretchDepth := maxDepth + 1.
 check := (TreeNode bottomUpTree: 0 depth: stretchDepth) itemCheck.
 Transcript 
    show: 'stretch tree of depth '; show: stretchDepth printString; tab;
-   show: '  check: '; showCr: check printString.
+   show: ' check: '; showCr: check printString.
 
 longLivedTree := TreeNode bottomUpTree: 0 depth: maxDepth.
 minDepth to: maxDepth by: 2 do: [:depth|
@@ -67,10 +67,10 @@ minDepth to: maxDepth by: 2 do: [:depth|
    Transcript
       show: (2*iterations) printString; tab; 
       show: ' trees of depth '; show: depth printString; tab;
-      show: '  check: '; showCr: check printString.
+      show: ' check: '; showCr: check printString.
 ].
 
 Transcript
    show: 'long lived tree of depth '; show: maxDepth printString; tab; 
-   show: '  check: '; showCr: longLivedTree itemCheck  printString !
+   show: ' check: '; showCr: longLivedTree itemCheck  printString !
 
