@@ -6,7 +6,7 @@
 
 
 MODULE fasta;
-IMPORT LangShootout, Random, Strings, Out;
+IMPORT Shootout, Random, Strings, Out;
 
 CONST
    LineLength = 60;
@@ -141,7 +141,7 @@ BEGIN
    MakeIUB(iub);
    MakeHomoSapiens(homosapiens);
 
-   n := LangShootout.Argi();
+   n := Shootout.Argi();
    MakeRepeatFasta('ONE', 'Homo sapiens alu', alu, n*2);
    MakeRandomFasta('TWO', 'IUB ambiguity codes', iub, n*3);
    MakeRandomFasta('THREE', 'Homo sapiens frequency', homosapiens, n*5);

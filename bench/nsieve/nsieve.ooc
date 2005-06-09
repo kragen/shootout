@@ -41,11 +41,11 @@ BEGIN
     
    m := 10000 * ASH(1,n);
    NEW(flags, m+1);
-   Out.String("Primes up to "); Out.Int(m,8); Out.Int(NSieve(m,flags^),8); Out.Ln;
+   Out.String("Primes up to "); Out.Int(m,8); Out.String(" "); Out.Int(NSieve(m,flags^),8); Out.Ln;
     
    m := 10000 * ASH(1,n-1);
-   Out.String("Primes up to "); Out.Int(m,8); Out.Int(NSieve(m,flags^),8); Out.Ln;
+   Out.String("Primes up to "); Out.Int(m,8); Out.String(" "); Out.Int(NSieve(m,flags^),8); Out.Ln;
     
    m := 10000 * ASH(1,n-2);
-   Out.String("Primes up to "); Out.Int(m,8); Out.Int(NSieve(m,flags^),8); Out.Ln;         
+   Out.String("Primes up to "); Out.Int(m,8); Out.String(" "); Out.Int(NSieve(m,flags^),8); Out.Ln;         
 END nsieve.
