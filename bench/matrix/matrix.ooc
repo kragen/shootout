@@ -62,6 +62,5 @@ BEGIN
    END;
 
    Out.Int(mm[0,0],0); Out.Char(20X); Out.Int(mm[2,3],0); Out.Char(20X);
-   Out.Int(mm[3,2],0); Out.Char(20X); Out.Int(mm[4,4],0); Out.Char(20X);
-   Out.Ln;
+   Out.Int(mm[3,2],0); Out.Char(20X); Out.Int(mm[4,4],0); Out.Ln;
 END matrix.
