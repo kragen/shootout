@@ -76,7 +76,7 @@ class fasta {
         return a[len - 1].c;
     }
 
-    static int BUFFER_SIZE = 30000;
+    static int BUFFER_SIZE = 1024;
     static int index = 0;
     static byte[] bbuffer = new byte[BUFFER_SIZE];
     static final void makeRandomFasta(String id, String desc,frequency[] a, int n, OutputStream writer) throws IOException
