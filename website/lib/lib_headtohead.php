@@ -236,7 +236,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
       $lang = $row[DATA_LANG];                                  
       if ($lang==$L1){  $rows[] = $row;}
    }
-   @fclose($f);     
+   @fclose($f);         
       
    // Filter again in memory      
    $Data = array();   
@@ -252,7 +252,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    unset($rows);     
   
 // SELECTION DEPENDS ON THIS SORT ORDER
-   usort($Data,'CompareTestValue2');   
+   usort($Data,'CompareTestValue2');         
 
 // TRANSFORM SELECTED DATA
 
@@ -266,16 +266,18 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
       $n = $Data[$i][DATA_TESTVALUE];
       $test = $Data[$i][DATA_TEST];                
             
-      do {
-         $dj = $Data[$j];
-                              
-         if (isset($row)){ 
-            if ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]){         
-               $row = $Data[$j]; 
+      do {                                
+         if (isset($row)){           
+            if ( ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]) 
+               || (($Data[$j][DATA_TESTVALUE] == $row[DATA_TESTVALUE])
+                && ((ExcludeData($row,$Langs,$Excl)<=PROGRAM_TIMEOUT)
+                 || ($Data[$j][DATA_FULLCPU]<$row[DATA_FULLCPU]))) ){
+                                                   
+                  $row = $Data[$j];              
             }         
          }
          else {         
-            $row = $Data[$j];                  
+            $row = $Data[$j];                           
          }        
                     
          $j++;                                 
@@ -285,7 +287,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
                                                  
       if (isset($row)){                                                    
          $NData[$row[DATA_TEST]] = array(
-               $row[DATA_TEST]         
+              $row[DATA_TEST]         
             , $row[DATA_LANG]
             , $row[DATA_ID]
             , $row[DATA_TESTVALUE]
