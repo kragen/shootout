@@ -4,7 +4,7 @@
 # http://shootout.alioth.debian.org/
 #
 # nsieve benchmark in Ruby.
-# Contributed by Glenn Parker, March 2005 
+# Contributed by Glenn Parker, March 2005
 
 def sieve(m)
   flags = "\x1" * m

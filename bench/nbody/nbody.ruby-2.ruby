@@ -1,6 +1,6 @@
 #!/usr/bin/ruby 
 # The Computer Language Benchmark Shootout
-# http://shootout.alioth.debian.org
+# http://shootout.alioth.debian.org 
 #
 # original code by Martin DeMello
 # modified by Jabari Zakiya 3/20/05

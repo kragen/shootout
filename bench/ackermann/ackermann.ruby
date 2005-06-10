@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: ackermann.ruby,v 1.1 2004-05-19 18:09:09 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: ackermann.ruby,v 1.2 2005-06-10 00:57:22 igouy-guest Exp $
+# http://www.bagley.org/~doug/shootout/ 
 
 def ack(m, n)
     if m == 0 then

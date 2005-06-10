@@ -2,7 +2,7 @@
 #  The Great Computer Language Shootout
 #  http://shootout.alioth.debian.org/
 #
-#  contributed by Gabriele Renzi
+#  contributed by Gabriele Renzi 
 
 def takfp x, y, z
   return z unless y < x

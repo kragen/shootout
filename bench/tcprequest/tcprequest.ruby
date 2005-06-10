@@ -2,7 +2,7 @@
 #### The Great Computer Language Shootout
 #### http://shootout.alioth.debian.org/
 #### 
-#### Contributed by Robbert Haarman
+#### Contributed by Robbert Haarman 
 #### Modified by Ian Osgood
 
 require 'socket'

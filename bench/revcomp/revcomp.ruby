@@ -2,7 +2,7 @@
 # The Great Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
-# Contributed by Peter Bjarke Olsen
+# Contributed by Peter Bjarke Olsen 
 revseq=""
 seq=""
 

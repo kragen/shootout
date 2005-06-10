@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 # -*- mode: ruby -*-
-# $Id: moments.ruby,v 1.1 2004-05-19 18:10:48 bfulgham Exp $
-# http://www.bagley.org/~doug/shootout/
+# $Id: moments.ruby,v 1.2 2005-06-10 00:57:22 igouy-guest Exp $
+# http://www.bagley.org/~doug/shootout/ 
 
 # throw away unused parameter sent by benchmark framework
 ARGV.shift()
