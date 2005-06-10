@@ -271,7 +271,8 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
             if ( ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]) 
                || (($Data[$j][DATA_TESTVALUE] == $row[DATA_TESTVALUE])
                 && ((ExcludeData($row,$Langs,$Excl)<=PROGRAM_TIMEOUT)
-                 || ($Data[$j][DATA_FULLCPU]<$row[DATA_FULLCPU]))) ){
+                 || ((ExcludeData($Data[$j],$Langs,$Excl)>PROGRAM_TIMEOUT)
+                  && ($Data[$j][DATA_FULLCPU]<$row[DATA_FULLCPU])))) ){
                                                    
                   $row = $Data[$j];              
             }         
