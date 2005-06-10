@@ -637,22 +637,6 @@
        },
      },
 
-     oberon2 =>
-     { Lang => 'Oberon-2',
-       Name => 'OO2C',
-       Status => '+',
-       Home => 'http://oo2c.sourceforge.net/',
-       Down => 'http://oo2c.sourceforge.net/files',
-       Type => 'native compiled',
-       Note => 'Lean component development: modules & OO',
-       Ext  => 'oberon',
-       Verfun => sub {
-	   my $ver = `$ENV{OO2C} --version 2>&1`;
-	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c $2 (using $1)/;
-	   return($ver);
-       },
-     },
-
      objc =>
      { Lang => 'Objective C',
        Name => 'GNU',
