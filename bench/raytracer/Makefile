@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-06-10 00:02:01 igouy-guest Exp $
+# $Id: Makefile,v 1.5 2005-06-10 14:10:35 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := raytracer
@@ -23,6 +23,6 @@ ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 50,100,150
+	  --range 20,40,80,160
 
 include ../../Make.footer
