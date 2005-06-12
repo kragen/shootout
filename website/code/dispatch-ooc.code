@@ -1,0 +1,292 @@
+<span class="com">(* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org
+
+   contributed by Isaac Gouy (Oberon-2 novice)
+
+   Unoptimised ***procedural*** implementation
+
+   Note: Oberon-2 does provide type-extension and
+   type-bound procedures (virtual methods).
+
+   We might package the multiple implementations of
+   corresponding procedures in separate named modules.
+   For example:
+      EmptyState.Next() and FullState.Next()
+
+   Here the procedures are just prefixed so we can keep
+   everything in a single source file.
+   So, for example:
+      ES_Next() and FS_Next()
+*)</span>
+
+
+<span class="kwa">MODULE</span> dispatch<span class="sym">;
+</span><span class="kwa">IMPORT</span> Shootout<span class="sym">,</span> Out<span class="sym">;
+
+</span><span class="kwa">CONST
+</span>   ES_Tag <span class="sym">=</span> <span class="num">1</span><span class="sym">;
+</span>   FS_Tag <span class="sym">=</span> <span class="num">2</span><span class="sym">;
+</span>   SS_Tag <span class="sym">=</span> <span class="num">3</span><span class="sym">;
+
+</span>   UE_Tag <span class="sym">=</span> <span class="num">4</span><span class="sym">;
+</span>   UF_Tag <span class="sym">=</span> <span class="num">5</span><span class="sym">;
+</span>   PU_Tag <span class="sym">=</span> <span class="num">6</span><span class="sym">;
+</span>   PS_Tag <span class="sym">=</span> <span class="num">7</span><span class="sym">;
+
+</span><span class="kwa">TYPE
+</span>   IB_State <span class="sym">=</span> <span class="kwb">POINTER</span> <span class="kwa">TO</span> IB_StateDesc<span class="sym">;
+</span>   IB_StateDesc <span class="sym">=</span> <span class="kwa">RECORD
+</span>      tag <span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">;
+</span>   <span class="kwa">END</span><span class="sym">;
+
+</span>   IB_Bottle <span class="sym">=</span> <span class="kwb">POINTER</span> <span class="kwa">TO</span> IB_BottleDesc<span class="sym">;
+</span>   IB_BottleDesc <span class="sym">=</span> <span class="kwa">RECORD
+</span>      state <span class="sym">:</span> IB_State<span class="sym">;
+</span>      id <span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">;
+</span>   <span class="kwa">END</span><span class="sym">;
+
+</span><span class="kwa">VAR
+</span>   IB_Empty <span class="sym">,</span>IB_Full <span class="sym">,</span>IB_Sealed <span class="sym">:</span> IB_State<span class="sym">;
+
+</span>   IB_UnpressurizedEmpty <span class="sym">,</span>IB_UnpressurizedFull
+      <span class="sym">,</span>IB_PressurizedUnsealed <span class="sym">,</span>IB_PressurizedSealed <span class="sym">:</span> IB_State<span class="sym">;
+
+</span>   b1<span class="sym">,</span> b2<span class="sym">,</span> b3<span class="sym">,</span> b4<span class="sym">,</span> b5<span class="sym">,</span> b6<span class="sym">,</span> b7<span class="sym">,</span> b8<span class="sym">,</span> b9<span class="sym">,</span> b0 <span class="sym">:</span> IB_Bottle<span class="sym">;
+</span>   p1<span class="sym">,</span> p2<span class="sym">,</span> p3<span class="sym">,</span> p4<span class="sym">,</span> p5<span class="sym">,</span> p6<span class="sym">,</span> p7<span class="sym">,</span> p8<span class="sym">,</span> p9<span class="sym">,</span> p0 <span class="sym">:</span> IB_Bottle<span class="sym">;
+
+</span>   n<span class="sym">,</span> i<span class="sym">,</span> check <span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
+
+
+
+</span><span class="com">(* IBottle Module *)</span>
+
+<span class="kwa">PROCEDURE</span> IB_SetState <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">;</span> s<span class="sym">:</span> IB_State<span class="sym">);
+</span><span class="kwa">BEGIN</span> b<span class="sym">.</span>state <span class="sym">:=</span> s<span class="sym">;</span> <span class="kwa">END</span> IB_SetState<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> IB_NewBottle <span class="sym">(</span>id<span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">):</span> IB_Bottle<span class="sym">;
+</span><span class="kwa">VAR
+</span>   b <span class="sym">:</span> IB_Bottle<span class="sym">;
+</span><span class="kwa">BEGIN
+   NEW</span><span class="sym">(</span>b<span class="sym">);</span> b<span class="sym">.</span>id <span class="sym">:=</span> id<span class="sym">;</span> b<span class="sym">.</span>state <span class="sym">:=</span> IB_Empty<span class="sym">;
+</span>   <span class="kwa">RETURN</span> b<span class="sym">;
+</span><span class="kwa">END</span> IB_NewBottle<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> IB_NewPressurizedBottle <span class="sym">(</span>id<span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">):</span> IB_Bottle<span class="sym">;
+</span><span class="kwa">VAR
+</span>   b <span class="sym">:</span> IB_Bottle<span class="sym">;
+</span><span class="kwa">BEGIN
+   NEW</span><span class="sym">(</span>b<span class="sym">);</span> b<span class="sym">.</span>id <span class="sym">:=</span> id<span class="sym">;</span> b<span class="sym">.</span>state <span class="sym">:=</span> IB_UnpressurizedEmpty<span class="sym">;
+</span>   <span class="kwa">RETURN</span> b<span class="sym">;
+</span><span class="kwa">END</span> IB_NewPressurizedBottle<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> IB_NewState <span class="sym">(</span><span class="kwa">VAR</span> s<span class="sym">:</span> IB_State<span class="sym">;</span> tag<span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">);
+</span><span class="kwa">BEGIN NEW</span><span class="sym">(</span>s<span class="sym">);</span> s<span class="sym">.</span>tag <span class="sym">:=</span> tag<span class="sym">;</span> <span class="kwa">END</span> IB_NewState<span class="sym">;
+
+
+
+</span><span class="com">(* EmptyState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> ES_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_Full<span class="sym">);
+</span><span class="kwa">END</span> ES_Next<span class="sym">;
+
+
+
+</span><span class="com">(* FullState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> FS_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_Sealed<span class="sym">);
+</span><span class="kwa">END</span> FS_Next<span class="sym">;
+
+
+
+</span><span class="com">(* SealedState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> SS_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_Empty<span class="sym">);
+</span><span class="kwa">END</span> SS_Next<span class="sym">;
+
+
+
+</span><span class="com">(* Bottle Module *)</span>
+
+<span class="kwa">PROCEDURE</span> B_DispatchNext <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+   CASE</span> b<span class="sym">.</span>state<span class="sym">.</span>tag <span class="kwa">OF
+</span>        ES_Tag <span class="sym">:</span> ES_Next<span class="sym">(</span>b<span class="sym">);
+      |</span> FS_Tag <span class="sym">:</span> FS_Next<span class="sym">(</span>b<span class="sym">);
+      |</span> SS_Tag <span class="sym">:</span> SS_Next<span class="sym">(</span>b<span class="sym">);
+</span>   <span class="kwa">END</span><span class="sym">;
+</span><span class="kwa">END</span> B_DispatchNext<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_Empty <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> B_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> B_Empty<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_Fill <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> B_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> B_Fill<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_Seal <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> B_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> B_Seal<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_Cycle <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> B_Fill<span class="sym">(</span>b<span class="sym">);</span> B_Seal<span class="sym">(</span>b<span class="sym">);</span> B_Empty<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> B_Cycle<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_Check0 <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">;</span> c<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">):</span> <span class="kwb">LONGINT</span><span class="sym">;
+</span><span class="kwa">BEGIN RETURN</span> b<span class="sym">.</span>state<span class="sym">.</span>tag <span class="sym">+</span> b<span class="sym">.</span>id <span class="sym">+</span> c<span class="sym">;</span> <span class="kwa">END</span> B_Check0<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_New <span class="sym">(</span>id<span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">):</span> IB_Bottle<span class="sym">;
+</span><span class="kwa">BEGIN RETURN</span> IB_NewBottle<span class="sym">(</span>id<span class="sym">);</span> <span class="kwa">END</span> B_New<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> B_Check <span class="sym">(</span>a1<span class="sym">,</span>a2<span class="sym">,</span>a3<span class="sym">,</span>a4<span class="sym">,</span>a5<span class="sym">:</span> IB_Bottle<span class="sym">;</span> i<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">):</span> <span class="kwb">LONGINT</span><span class="sym">;
+</span><span class="kwa">VAR
+</span>   c <span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
+</span><span class="kwa">BEGIN
+</span>   B_Cycle<span class="sym">(</span>a1<span class="sym">);</span> B_Cycle<span class="sym">(</span>a2<span class="sym">);</span> B_Cycle<span class="sym">(</span>a3<span class="sym">);</span> B_Cycle<span class="sym">(</span>a4<span class="sym">);</span> B_Cycle<span class="sym">(</span>a5<span class="sym">);
+
+</span>   c <span class="sym">:=</span> i <span class="kwa">MOD</span> <span class="num">2</span><span class="sym">;
+
+</span>   <span class="kwa">RETURN</span> B_Check0<span class="sym">(</span>a1<span class="sym">,</span>c<span class="sym">) +</span> B_Check0<span class="sym">(</span>a2<span class="sym">,</span>c<span class="sym">)
+      +</span> B_Check0<span class="sym">(</span>a3<span class="sym">,</span>c<span class="sym">) +</span> B_Check0<span class="sym">(</span>a4<span class="sym">,</span>c<span class="sym">) +</span> B_Check0<span class="sym">(</span>a5<span class="sym">,</span>c<span class="sym">);
+</span><span class="kwa">END</span> B_Check<span class="sym">;
+
+
+
+</span><span class="com">(* UnpressurizedEmptyState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> UE_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_UnpressurizedFull<span class="sym">);
+</span><span class="kwa">END</span> UE_Next<span class="sym">;
+
+
+
+</span><span class="com">(* UnpressurizedFullState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> UF_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_PressurizedUnsealed<span class="sym">);
+</span><span class="kwa">END</span> UF_Next<span class="sym">;
+
+
+
+</span><span class="com">(* PressurizedUnsealedState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> PU_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_PressurizedSealed<span class="sym">);
+</span><span class="kwa">END</span> PU_Next<span class="sym">;
+
+
+
+</span><span class="com">(* PressurizedSealedState Module *)</span>
+
+<span class="kwa">PROCEDURE</span> PS_Next <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+</span>   IB_SetState<span class="sym">(</span>b<span class="sym">,</span> IB_UnpressurizedEmpty<span class="sym">);
+</span><span class="kwa">END</span> PS_Next<span class="sym">;
+
+
+
+</span><span class="com">(* PressurizedBottle Module *)</span>
+
+<span class="kwa">PROCEDURE</span> PB_DispatchNext <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN
+   CASE</span> b<span class="sym">.</span>state<span class="sym">.</span>tag <span class="kwa">OF
+</span>        UE_Tag <span class="sym">:</span> UE_Next<span class="sym">(</span>b<span class="sym">);
+      |</span> UF_Tag <span class="sym">:</span> UF_Next<span class="sym">(</span>b<span class="sym">);
+      |</span> PU_Tag <span class="sym">:</span> PU_Next<span class="sym">(</span>b<span class="sym">);
+      |</span> PS_Tag <span class="sym">:</span> PS_Next<span class="sym">(</span>b<span class="sym">);
+</span>   <span class="kwa">END</span><span class="sym">;
+</span><span class="kwa">END</span> PB_DispatchNext<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_Empty <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> PB_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> PB_Empty<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_Fill <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> PB_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> PB_Fill<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_Seal <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> PB_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> PB_Seal<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_Pressurize <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> PB_DispatchNext<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> PB_Pressurize<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_Cycle <span class="sym">(</span>b<span class="sym">:</span> IB_Bottle<span class="sym">);
+</span><span class="kwa">BEGIN</span> PB_Fill<span class="sym">(</span>b<span class="sym">);</span> PB_Pressurize<span class="sym">(</span>b<span class="sym">);</span> PB_Seal<span class="sym">(</span>b<span class="sym">);</span> PB_Empty<span class="sym">(</span>b<span class="sym">);</span> <span class="kwa">END</span> PB_Cycle<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_New <span class="sym">(</span>id<span class="sym">:</span> <span class="kwb">INTEGER</span><span class="sym">):</span> IB_Bottle<span class="sym">;
+</span><span class="kwa">BEGIN RETURN</span> IB_NewPressurizedBottle<span class="sym">(</span>id<span class="sym">);</span> <span class="kwa">END</span> PB_New<span class="sym">;
+
+
+</span><span class="kwa">PROCEDURE</span> PB_Check <span class="sym">(</span>a1<span class="sym">,</span>a2<span class="sym">,</span>a3<span class="sym">,</span>a4<span class="sym">,</span>a5<span class="sym">:</span> IB_Bottle<span class="sym">;</span> i<span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">):</span> <span class="kwb">LONGINT</span><span class="sym">;
+</span><span class="kwa">VAR
+</span>   c <span class="sym">:</span> <span class="kwb">LONGINT</span><span class="sym">;
+</span><span class="kwa">BEGIN
+</span>   PB_Cycle<span class="sym">(</span>a1<span class="sym">);</span> PB_Cycle<span class="sym">(</span>a2<span class="sym">);</span> PB_Cycle<span class="sym">(</span>a3<span class="sym">);</span> PB_Cycle<span class="sym">(</span>a4<span class="sym">);</span> PB_Cycle<span class="sym">(</span>a5<span class="sym">);
+
+</span>   c <span class="sym">:=</span> i <span class="kwa">MOD</span> <span class="num">2</span><span class="sym">;
+
+</span>   <span class="kwa">RETURN</span> B_Check0<span class="sym">(</span>a1<span class="sym">,</span>c<span class="sym">) +</span> B_Check0<span class="sym">(</span>a2<span class="sym">,</span>c<span class="sym">)
+      +</span> B_Check0<span class="sym">(</span>a3<span class="sym">,</span>c<span class="sym">) +</span> B_Check0<span class="sym">(</span>a4<span class="sym">,</span>c<span class="sym">) +</span> B_Check0<span class="sym">(</span>a5<span class="sym">,</span>c<span class="sym">);
+</span><span class="kwa">END</span> PB_Check<span class="sym">;
+
+
+
+
+</span><span class="com">(* FlyweightState Module *)</span>
+
+<span class="kwa">BEGIN
+</span>   IB_NewState<span class="sym">(</span>IB_Empty<span class="sym">,</span> ES_Tag<span class="sym">);
+</span>   IB_NewState<span class="sym">(</span>IB_Full<span class="sym">,</span> FS_Tag<span class="sym">);
+</span>   IB_NewState<span class="sym">(</span>IB_Sealed<span class="sym">,</span> SS_Tag<span class="sym">);
+
+</span>   IB_NewState<span class="sym">(</span>IB_UnpressurizedEmpty<span class="sym">,</span> UE_Tag<span class="sym">);
+</span>   IB_NewState<span class="sym">(</span>IB_UnpressurizedFull<span class="sym">,</span> UF_Tag<span class="sym">);
+</span>   IB_NewState<span class="sym">(</span>IB_PressurizedUnsealed<span class="sym">,</span> PU_Tag<span class="sym">);
+</span>   IB_NewState<span class="sym">(</span>IB_PressurizedSealed<span class="sym">,</span> PS_Tag<span class="sym">);
+
+
+</span>   n <span class="sym">:=</span> Shootout<span class="sym">.</span>Argi<span class="sym">();
+
+</span>   b1 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">1</span><span class="sym">);</span> b2 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">2</span><span class="sym">);
+</span>   b3 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">3</span><span class="sym">);</span> b4 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">4</span><span class="sym">);
+</span>   b5 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">5</span><span class="sym">);</span> b6 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">6</span><span class="sym">);
+</span>   b7 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">7</span><span class="sym">);</span> b8 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">8</span><span class="sym">);
+</span>   b9 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">9</span><span class="sym">);</span> b0 <span class="sym">:=</span> B_New<span class="sym">(</span><span class="num">0</span><span class="sym">);
+
+</span>   p1 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">1</span><span class="sym">);</span> p2 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">2</span><span class="sym">);
+</span>   p3 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">3</span><span class="sym">);</span> p4 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">4</span><span class="sym">);
+</span>   p5 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">5</span><span class="sym">);</span> p6 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">6</span><span class="sym">);
+</span>   p7 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">7</span><span class="sym">);</span> p8 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">8</span><span class="sym">);
+</span>   p9 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">9</span><span class="sym">);</span> p0 <span class="sym">:=</span> PB_New<span class="sym">(</span><span class="num">0</span><span class="sym">);
+
+</span>   check <span class="sym">:=</span> <span class="num">0</span><span class="sym">;
+</span>   FOR i <span class="sym">:=</span> <span class="num">1</span> <span class="kwa">TO</span> n <span class="kwa">DO
+      INC</span><span class="sym">(</span>check<span class="sym">,</span> B_Check<span class="sym">(</span>b1<span class="sym">,</span>b2<span class="sym">,</span>b3<span class="sym">,</span>b4<span class="sym">,</span>b5<span class="sym">,</span>i<span class="sym">));
+</span>      <span class="kwa">INC</span><span class="sym">(</span>check<span class="sym">,</span> B_Check<span class="sym">(</span>b6<span class="sym">,</span>b7<span class="sym">,</span>b8<span class="sym">,</span>b9<span class="sym">,</span>b0<span class="sym">,</span>i<span class="sym">));
+
+</span>      <span class="kwa">INC</span><span class="sym">(</span>check<span class="sym">,</span> PB_Check<span class="sym">(</span>p1<span class="sym">,</span>p2<span class="sym">,</span>p3<span class="sym">,</span>p4<span class="sym">,</span>p5<span class="sym">,</span>i<span class="sym">));
+</span>      <span class="kwa">DEC</span><span class="sym">(</span>check<span class="sym">,</span> PB_Check<span class="sym">(</span>p6<span class="sym">,</span>p7<span class="sym">,</span>p8<span class="sym">,</span>p9<span class="sym">,</span>p0<span class="sym">,</span>i<span class="sym">));
+</span>   <span class="kwa">END</span><span class="sym">;
+
+</span>   Out<span class="sym">.</span>Int<span class="sym">(</span>check<span class="sym">,</span><span class="num">1</span><span class="sym">);</span> Out<span class="sym">.</span>Ln<span class="sym">;
+</span><span class="kwa">END</span> dispatch<span class="sym">.</span>
