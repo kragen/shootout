@@ -12,7 +12,7 @@ class TreeNode {
    
    function TreeNode($item){ $this->_item = (integer)$item; }
                                                
-   function newTree($left, $right, $item){ 
+   function newTree(&$left, &$right, $item){ 
       $t = new TreeNode($item);
       $t->_left = $left; 
       $t->_right = $right;    

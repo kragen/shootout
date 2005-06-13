@@ -7,11 +7,11 @@
 */
 
 
-function newTreeNode($left, $right, $item){ 
+function newTreeNode(&$left, &$right, $item){ 
    return array($left,$right,$item);      
 }    
 
-function itemCheck($treeNode){ 
+function itemCheck(&$treeNode){ 
    if (!isset($treeNode[0])){ return $treeNode[2]; }
    else {return 
       $treeNode[2] + 
