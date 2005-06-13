@@ -1,5 +1,5 @@
 #!/bin/bash
-# Isaac Gouy 29 May 2005
+# Isaac Gouy 29 May 2005, 13 June 2005
 # directory locations relative to /shootout
 
 echo "##########################"
@@ -61,6 +61,7 @@ alias[13]=ocamlb
 key[13]=ocaml
 
 
+### remove .log and .code with no source file    
 
 for each in $(ls $d*log)
 do
@@ -74,8 +75,12 @@ do
 
    if [ $prog != $id ]; then
       source=$test.$prog.$lang
+      p1=$prog
+      p2=$prog.$lang
    else
       source=$test.$lang
+      p1=$prog
+      p2=$prog
    fi
 
 
@@ -84,6 +89,8 @@ do
       # check for an alias 
 
       source2=""
+      lang2=$lang   
+         
       let i=0
       let n=${#alias[*]}
       while [ $i -lt $n ]; do
@@ -95,36 +102,39 @@ do
                source2=$test.$lang2-$id.$lang2
             else
                source2=$test.$lang2
-            fi
+            fi            
          fi
          let i=i+1
       done        
 
-      # remove .log and .code with no source file    
+      if [ -z "$source2" ] || [ ! -f $ds$test/$source2 ]; then      
+         # remove .log file
+         rm $each
+         cvs rm $each
+         echo "cascade delete "$each
 
-      if [ -n "$source2" ]; then
-         if [ ! -f $ds$test/$source2 ]; then
+         # remove .code file
+         if [ -f ${prefix}.code ]; then 
+            rm ${prefix}.code
+            cvs rm ${prefix}.code
+            echo "cascade delete "${prefix}.code
+         fi
+         
 
-            # remove .log file
-            rm $each
-	    cvs rm $each
-            echo "cascade delete "$each
+         # remove tmp files
+         rm -f $ds$test/tmp/${p1}_*
+         echo "cascade delete $ds$test/tmp/${p1}_*"
 
-            # remove .code file
-            if [ -f ${prefix}.code ]; then 
-               rm ${prefix}.code
-	       cvs rm ${prefix}.code
-               echo "cascade delete "${prefix}.code
-            fi
+         rm -f $ds$test/tmp/$test.${p2}_*
+         echo "cascade delete $ds$test/tmp/$test.${p2}_*"
 
-	    # remove tmp files
-	    rm -rf $ds$test/tmp/\*${lang2}-${id}\*
-	    echo "cascade delete $ds$test/tmp/*${lang2}-${id}*"
+         rm -f $ds$test/tmp/$test.${p2}.*
+         echo "cascade delete $ds$test/tmp/$test.${p2}.*"
 
-	    # remove data directory files
-	    rm -rf $ds$test/data/\*${lang2}-${id}\*
-	    echo "cascade delete $ds$test/data/*${lang2}-${id}*"
-         fi         
+
+         # remove data directory files
+         rm -f $ds$test/data/*${lang2}-${id}*
+         echo "cascade delete $ds$test/data/*${lang2}-${id}*"        
       fi
    fi
 done
