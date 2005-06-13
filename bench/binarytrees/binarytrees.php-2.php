@@ -28,7 +28,8 @@ function bottomUpTree($item,$depth){
          );
       }
    else {
-      return newTreeNode(NULL, NULL, $item);
+      $treeNode = NULL;
+      return newTreeNode($treeNode, $treeNode, $item);
    }
 }  
 
