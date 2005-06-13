@@ -1,6 +1,6 @@
 <? /* The Great Computer Language Shootout 
    http://shootout.alioth.debian.org/
-  
+   
    contributed by Isaac Gouy (PHP novice)
    
    php -q raytracer.php 32
@@ -20,17 +20,17 @@ class Vector {
       $this->x = $x; $this->y = $y; $this->z = $z;            
    }
    
-   function plus($b){
+   function plus(&$b){
       return new Vector(
          $this->x + $b->x, $this->y + $b->y, $this->z + $b->z );      
    }   
    
-   function minus($b){
+   function minus(&$b){
       return new Vector(
          $this->x - $b->x, $this->y - $b->y, $this->z - $b->z );        
    }   
    
-   function dot($b){
+   function dot(&$b){
       return ($this->x * $b->x) + 
          ($this->y * $b->y) + ($this->z * $b->z);      
    }   
@@ -49,7 +49,7 @@ class Vector {
 class Ray {
    var $origin, $direction; 
    
-   function Ray($origin,$direction){
+   function Ray(&$origin,&$direction){
       $this->origin = $origin;
       $this->direction = $direction;                 
    }                           
@@ -59,7 +59,7 @@ class Ray {
 class IntersectionPoint {
    var $distance, $normal; 
    
-   function IntersectionPoint($distance,$normal){
+   function IntersectionPoint($distance,&$normal){
       $this->distance = $distance;
       $this->normal = $normal;         
    }                            
@@ -68,7 +68,7 @@ class IntersectionPoint {
 
 class Scene {
 
-   function sphereScene($level,$center,$radius){
+   function sphereScene($level,&$center,$radius){
       $sphere = new Sphere($center,$radius);
       if ($level==1){
          return $sphere;
@@ -94,11 +94,11 @@ class Scene {
       }     
    } 
          
-   function traceRay($ray,$light){   
+   function traceRay(&$ray,&$light){   
       $p = $this->intersect($ray,
-         new IntersectionPoint(INFINITY, new Vector(0.0, 0.0, 0.0)) );              
+         new IntersectionPoint(INFINITY, new Vector(0.0, 0.0, 0.0)) );                            
       if (is_infinite($p->distance)){ return 0.0; }
-                        
+                             
       $greyscale = -1.0 * ($p->normal->dot($light));
       if ($greyscale <= 0.0){ return 0.0; }   
       
@@ -123,12 +123,12 @@ class Scene {
 class Sphere extends Scene {
    var $center, $radius; 
    
-   function Sphere($center,$radius){   
+   function Sphere(&$center,$radius){   
       $this->center = $center;
       $this->radius = $radius;               
    }     
    
-   function distance($ray){
+   function distance(&$ray){
       $v = $this->center -> minus($ray->origin);                      
       $b = $v->dot($ray->direction);                      
       $disc = $b*$b - $v->dot($v) + $this->radius*$this->radius;       
@@ -142,10 +142,9 @@ class Sphere extends Scene {
       if ($t2 > 0.0){ return $t2; } else { return $t1; }                     
    }   
       
-   function intersect($ray,$p){      
-      $d = $this->distance($ray);      
-      if ($d < $p->distance){ 
-                                
+   function intersect(&$ray,&$p){      
+      $d = $this->distance($ray);              
+      if ($d < $p->distance){                                     
          $rayOrigin = $ray->origin;
          $rayDirection = $ray->direction;
          $scaledDirection = $rayDirection->scaledBy($d);  
@@ -162,12 +161,12 @@ class Sphere extends Scene {
 class Group extends Scene {
    var $bound, $scenes;        
        
-   function Group($bound){
+   function Group(&$bound){
       $this->bound = $bound;  
       $this->scenes = array();      
    }           
    
-   function intersect($ray,$p){     
+   function intersect(&$ray,&$p){     
       if (($this->bound -> distance($ray)) < $p->distance){                         
          foreach ($this->scenes as $each){
             $p = $each->intersect($ray,$p);                  
@@ -176,11 +175,10 @@ class Group extends Scene {
       return $p; 
    }    
       
-   function add($s){  
+   function add(&$s){  
       array_unshift($this->scenes, $s);   
    }                      
 }
-
 
 ////////////////////////////////////////////////////////////////////
 
@@ -201,14 +199,14 @@ for ($y=$n-1; $y>=0; --$y){
                  $x + ($dx/(double)SS) - ($n/2.0)
                , $y + ($dy/(double)SS) - ($n/2.0)
                , $n );                                                       
-               
+                             
             $ray = new Ray(new Vector(0.0, 0.0, -4.0), $v->normalized());  
-                                              
+                                           
             $u = new Vector(-1.0, -3.0, 2.0);                          
             $greyscale += $scene->traceRay($ray, $u->normalized());                                    
          }
-      }               
+      }                     
       echo chr( 0.5 + 255.0*$greyscale/(double)(SS*SS) );                                          
    }
-}             
+}           
 ?>
