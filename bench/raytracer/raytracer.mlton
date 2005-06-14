@@ -1,0 +1,176 @@
+(* The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ * contributed by Jon Harrop, 2005
+ * substantially stylistically modified by sweeks@sweeks.com, with no
+ *   major speed change, only a slight speedup, probably due to using a vector
+ *   instead of a list for "group" scenes.
+ *)
+
+fun real n = Real.fromInt n
+fun for (s, e, f) = if s=e then () else (f (real s); for (s+1, e, f))
+
+val delta = 0.00000001
+val infinity = Real.posInf
+
+structure Vec =
+   struct
+      datatype t = T of real * real * real
+
+      val origin = T (0.0, 0.0, 0.0)
+
+      fun scale (T (x, y, z), s) = T (s * x, s * y, s * z)
+
+      fun dot (T (x1, y1, z1), T (x2, y2, z2)) = x1 * x2 + y1 * y2 + z1 * z2
+
+      fun unitise v = scale (v, 1.0 / Real.Math.sqrt (dot (v, v)))
+
+      local
+	 fun make f (T (x1, y1, z1), T (x2, y2, z2)) =
+	    T (f (x1, x2), f (y1, y2), f (z1, z2))
+      in
+	 val op + = make (op +)
+	 val op - = make (op -)
+      end
+   end
+
+structure Ray =
+   struct
+      datatype t = T of {dir: Vec.t, orig: Vec.t}
+
+      fun hitSphere (T {dir, orig}, center, radius) =
+	 let
+	    val v = Vec.- (center, orig)
+	    val b = Vec.dot (v, dir)
+	    val disc = b * b - Vec.dot (v, v) + radius * radius
+	 in
+	    if disc < 0.0 then infinity
+	    else
+	       let
+		  val disc = Real.Math.sqrt disc
+	       in
+		  let
+		     val t2 = b + disc
+		  in
+		     if t2 < 0.0 then infinity
+		     else
+			let
+			   val t1 = b - disc
+			in
+			   if t1 > 0.0 then t1 else t2
+			end
+		  end
+	       end
+	 end
+   end
+
+structure Scene =
+   struct
+      datatype t =
+	 Group of {center: Vec.t,
+		   radius: real,
+		   scenes: t vector}
+       | Sphere of {center: Vec.t,
+		    radius: real}
+
+      val intersect: t * Ray.t -> real * Vec.t =
+	 fn (scene, r as Ray.T {orig, dir}) =>
+	 let
+	    fun ofScene (scene, (l, n)) =
+	       case scene of
+		  Group {center, radius, scenes} =>
+		     let
+			val l' = Ray.hitSphere (r, center, radius)
+		     in
+			if l' >= l then (l, n)
+			else Vector.foldl ofScene (l, n) scenes
+		     end
+		| Sphere {center, radius} =>
+		     let
+			val l' = Ray.hitSphere (r, center, radius)
+			open Vec
+		     in
+			if l' >= l then (l, n)
+			else (l', unitise (orig + scale (dir, l') - center))
+		     end
+	 in
+	    ofScene (scene, (infinity, Vec.origin))
+	 end
+
+      fun rayTrace (scene, light, ray as Ray.T {dir, orig}) =
+	 let
+	    val (lambda, n) = intersect (scene, ray)
+	 in
+	    if lambda >= infinity then 0.0
+	    else
+	       let
+		  val g = 0.0 - Vec.dot (n, light)
+	       in
+		  if g <= 0.0 then 0.0
+		  else
+		     let
+			open Vec
+			val (l, _) =
+			   intersect
+			   (scene, Ray.T {dir = origin - light,
+					  orig = (orig + scale (dir, lambda)
+						  + scale (n, delta))})
+		     in
+			if l >= infinity then g else 0.0
+		     end
+	       end
+	 end
+
+      fun create (level, r, v as Vec.T (x, y, z)): t =
+	 let
+	    val obj = Sphere {center = v, radius = r}
+	 in
+	    if level = 1 then obj
+	    else
+	       let
+		  val r' = 3.0 * r / Real.Math.sqrt 12.0
+		  fun aux (x', z') =
+		     create (level - 1, 0.5 * r, Vec.+ (v, Vec.T (~x', r', z')))
+	       in
+		  Group {center = v,
+			 radius = 3.0 * r,
+			 scenes = (Vector.fromList
+				   [aux (~r', ~r'), aux (r', ~r'),
+				    aux (~r', r'), aux (r', r'), obj])}
+	       end
+	 end
+   end
+
+val () =
+   let
+      val level = 6
+      val ss = 4
+      val n = (valOf (Int.fromString (hd (CommandLine.arguments ())))
+	       handle _ => 256)
+      val scene = Scene.create (level, 1.0, Vec.T (0.0, ~1.0, 0.0))
+      val s = Int.toString n;
+      val () = print (concat ["P5\n", s, " ", s, "\n255\n"])
+   in
+      for
+      (0, n, fn y =>
+       for (0, n, fn x =>
+	    let
+	       val g = ref 0.0
+	       val () =
+		  for (0, ss, fn dx =>
+		       for (0, ss, fn dy =>
+			    let
+			       val n = real n
+			       val x = x + dx / real ss - n / 2.0
+			       val y = n - 1.0 - y + dy / real ss - n / 2.0
+			       val eye = Vec.unitise (Vec.T (~1.0, ~3.0, 2.0))
+			       val ray =
+				  Ray.T {dir = Vec.unitise (Vec.T (x, y, n)),
+					 orig = Vec.T (0.0, 0.0, ~4.0)}
+			    in
+			       g := !g + Scene.rayTrace (scene, eye, ray)
+			    end))
+	       val g = 0.5 + 255.0 * !g / real (ss*ss)
+	    in
+	       print (str (chr (Real.trunc g)))
+	    end))
+   end
