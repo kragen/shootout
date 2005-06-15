@@ -1,4 +1,4 @@
-define ack ();
+define ack (); 
 define ack (M, N)
 {
    !if (M)

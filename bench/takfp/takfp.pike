@@ -3,7 +3,7 @@
 /* The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
 
-   contributed by Adam Montague
+   contributed by Adam Montague 
 */
 
 float takfp(float x, float y, float z)
