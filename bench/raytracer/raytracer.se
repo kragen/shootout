@@ -1,0 +1,623 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+-- contributed by Jose
+-- Compiling with g++: compile -boost -no_split -clean -o ray ray -O3 -ffast-math -fomit-frame-pointer
+
+
+-- SPLITFILE=ray_tracer.e
+
+class RAY_TRACER
+
+creation {ANY}
+	make
+
+feature {ANY}
+	default_size: INTEGER is 160
+
+	fractal_level: INTEGER is 6
+
+	subdivision: INTEGER is 4
+
+	initial_radius: REAL_64 is 1.0
+
+	initial_center: VECTOR is
+		once
+			create Result.make(0.0, -1.0, 0.0)
+		end
+
+	light: VECTOR is
+		once
+			create Result.make(-1, -3, 2)
+			Result.normalize
+		end
+
+	color_factor: REAL_64 is
+		once
+			Result := 255.0 / (subdivision * subdivision)
+		end
+
+	vue_point: VECTOR is
+		once
+			create Result.make(0.0, 0.0, -4.0)
+		end
+
+	tracer: TRACER is
+		once
+			create Result.make
+		end
+
+	make is
+		local
+			n, x, y, dx, dy: INTEGER; direction: VECTOR
+		do
+			-- get the size of the image (number of pixel)
+			if argument_count >= 1 and then argument(1).is_integer then
+				n := argument(1).to_integer
+				if n <= 0 then
+					n := default_size
+				end
+			else
+				n := default_size
+			end
+			-- create the scene
+			tracer.put_origin(vue_point)
+			tracer.put_light(light)
+			tracer.put_scene(create_scene(fractal_level, initial_radius, initial_center))
+			create direction.zero
+			tracer.put_direction(direction)
+			-- compute the scene
+			io.put_string(once "P5")
+			io.put_new_line
+			io.put_integer(n)
+			io.put_character(' ')
+			io.put_integer(n)
+			io.put_new_line
+			io.put_string(once "255")
+			io.put_new_line
+			from
+				y := n
+			until
+				y = 0
+			loop
+				y := y - 1
+				from
+					x := 0
+				until
+					x >= n
+				loop
+					tracer.reset_material
+					from
+						dx := 0
+					until
+						dx = subdivision
+					loop
+						from
+							dy := 0
+						until
+							dy = subdivision
+						loop
+							direction.make(x + dx / subdivision - n / 2, y + dy / subdivision - n / 2, n)
+							direction.normalize
+							tracer.compute
+							dy := dy + 1
+						end
+						dx := dx + 1
+					end
+					io.put_character((0.5 + tracer.material * color_factor).force_to_integer_32.to_character)
+					x := x + 1
+				end
+			end
+		end
+
+	radius_factor: REAL_64 is
+		once
+			Result := 3.0 / (12.0).sqrt
+		end
+
+	create_scene (level: INTEGER; r: REAL_64; v: VECTOR): TRACEABLE is
+		local
+			rn: REAL_64; w: VECTOR; dz, dx: INTEGER; group: GROUP
+		do
+			if level = 1 then
+				Result := create {SPHERE}.make(v, r)
+			else
+				group := create {GROUP}.make(v, 3.0 * r)
+				group.add(create {SPHERE}.make(v, r))
+				rn := r * radius_factor
+				from
+					dz := -1
+				until
+					dz > 1
+				loop
+					from
+						dx := -1
+					until
+						dx > 1
+					loop
+						create w.make(v.x - dx * rn, v.y + rn, v.z - dz * rn)
+						group.add(create_scene(level - 1, 0.5 * r, w))
+						dx := dx + 2
+					end
+					dz := dz + 2
+				end
+				Result := group
+			end
+		end
+
+end -- class RAY
+
+
+-- SPLITFILE=tracer.e
+
+class TRACER
+
+insert
+	CONSTANTS
+
+creation {ANY}
+	make
+
+feature {ANY}
+	scene: TRACEABLE
+
+	direct_ray: TRACESTATE
+
+	reflected_ray: SHADOWSTATE
+--	reflected_ray: TRACESTATE
+
+	light: VECTOR
+
+	material: REAL_64
+
+	make is
+		do
+			create direct_ray
+			create reflected_ray
+		end
+
+	is_ready: BOOLEAN is
+		do
+			Result := direct_ray.is_ready and then light /= Void and then scene /= Void
+		end
+
+	put_origin (value: VECTOR) is
+		do
+			direct_ray.put_origin(value)
+		end
+
+	origin: VECTOR is
+		do
+			Result := direct_ray.origin
+		end
+
+	put_direction (value: VECTOR) is
+		do
+			direct_ray.put_direction(value)
+		end
+
+	direction: VECTOR is
+		do
+			Result := direct_ray.direction
+		end
+
+	put_light (value: VECTOR) is
+		do
+			light := - value
+			reflected_ray.put_direction(light)
+		end
+
+	put_scene (value: TRACEABLE) is
+		do
+			scene := value
+		end
+
+	reset_material is
+		do
+			material := 0
+		end
+
+	compute is
+		require
+			is_ready
+		local
+			normal: VECTOR; mat: REAL_64
+		do
+			direct_ray.reset
+			direct_ray.compute_distance(scene)
+			if direct_ray.intersected then
+				normal := direct_ray.normal
+				mat := (normal | light)
+				if mat > 0 then
+					reflected_ray.put_origin(direct_ray.intersection + normal * delta)
+					reflected_ray.reset
+					reflected_ray.compute_distance(scene)
+					if not reflected_ray.intersected then
+						material := material + mat
+					end
+				end
+			end
+		end
+
+end -- class TRACER
+
+
+-- SPLITFILE=tracestate.e
+
+class TRACESTATE
+
+insert
+	CONSTANTS
+
+feature {ANY}
+	origin: VECTOR
+
+	direction: VECTOR
+
+	item: NORMALIZABLE
+
+	distance: REAL_64
+
+	put_origin (org: VECTOR) is
+		do
+			origin := org
+		end
+
+	put_direction (dir: VECTOR) is
+		do
+			direction := dir
+		end
+
+	intersect (dist: REAL_64; obj: NORMALIZABLE) is
+		require
+			obj /= Void
+			dist >= 0
+		do
+			if distance > dist then
+				distance := dist
+				item := obj
+			end
+		ensure
+			intersected or else dist = infinity
+		end
+
+	reset is
+		do
+			item := Void
+			distance := infinity
+		ensure
+			not intersected
+		end
+
+	intersected: BOOLEAN is
+		do
+			Result := item /= Void
+		ensure
+			Result = (distance /= infinity)
+		end
+
+	intersection: VECTOR is
+		require
+			intersected
+		do
+			Result := origin + direction * distance
+		end
+
+	compute_distance (scene: TRACEABLE) is
+		require
+			is_ready
+		do
+			scene.compute_distance(Current)
+		end
+
+	normal: VECTOR is
+		require
+			intersected
+		do
+			Result := item.compute_normal(Current)
+		ensure
+			Result.is_normalized
+		end
+
+	is_ready: BOOLEAN is
+		do
+			Result := origin /= Void and then direction /= Void
+		end
+
+invariant
+	distance >= 0
+
+end -- class TRACESTATE
+
+
+-- SPLITFILE=shadowstate.e
+
+class SHADOWSTATE
+
+inherit 
+	TRACESTATE
+		redefine compute_distance end
+
+feature {ANY}
+	compute_distance (scene: TRACEABLE) is
+		do
+			if not intersected then
+				scene.compute_distance(Current)
+			end
+		end
+
+end
+
+-- SPLITFILE=traceable.e
+
+deferred class TRACEABLE
+
+feature {ANY}
+	compute_distance (state: TRACESTATE) is
+		deferred
+		end
+
+end -- class TRACEABLE
+
+
+-- SPLITFILE=normalizable.e
+
+deferred class NORMALIZABLE
+
+feature {ANY}
+	compute_normal (state: TRACESTATE): VECTOR is
+		require
+			state.item = Current
+		deferred
+		ensure
+			Result.is_normalized
+		end
+
+end -- class NORMALIZABLE
+
+
+-- SPLITFILE=group.e
+
+class GROUP
+
+inherit
+	TRACEABLE
+
+creation {ANY}
+	make
+
+feature {ANY}
+	bound: SPHERE
+
+	group: LINKED_LIST[TRACEABLE]
+
+	iterator: ITERATOR[TRACEABLE]
+
+	make (c: VECTOR; r: REAL_64) is
+		do
+			create bound.make(c, r)
+			create group.make
+			iterator := group.get_new_iterator
+		end
+
+	add (some: TRACEABLE) is
+		do
+			group.add_last(some)
+		end
+
+	compute_distance (state: TRACESTATE) is
+		do
+			if bound.distance(state) < state.distance then
+				from
+					iterator.start
+				until
+					iterator.is_off
+				loop
+					state.compute_distance(iterator.item)
+					iterator.next
+				end
+			end
+		end
+
+end -- class GROUP
+
+
+-- SPLITFILE=sphere.e
+
+class SPHERE
+
+inherit
+	TRACEABLE
+	NORMALIZABLE
+
+insert
+	CONSTANTS
+
+creation {ANY}
+	make
+
+feature {ANY}
+	center: VECTOR
+
+	square_radius: REAL_64
+
+	radius: REAL_64
+
+	make (c: VECTOR; r: REAL_64) is
+		do
+			center := c
+			square_radius := r * r
+			radius := r
+		end
+
+	distance (state: TRACESTATE): REAL_64 is
+		local
+			v: VECTOR; b, disc, d: REAL_64
+		do
+			Result := infinity
+			v := center - state.origin
+			b := (v | state.direction)
+			disc := b * b - v.square_length + square_radius
+			if disc >= 0.0 then
+				disc := disc.sqrt
+				d := b - disc
+				if d >= 0.0 then
+					Result := d
+				elseif b+disc > 0 then
+					Result := 0
+				end
+			end
+		end
+
+--	compute_distance (state: TRACESTATE) is
+--		do
+--			state.intersect(distance(state), Current)
+--		end
+
+	compute_distance (state: TRACESTATE) is
+		local
+			v: VECTOR; b, disc, d: REAL_64
+		do
+			v := center - state.origin
+			b := (v | state.direction)
+			disc := b * b - v.square_length + square_radius
+			if disc >= 0.0 then
+				disc := disc.sqrt
+				d := b - disc
+				if d >= 0.0 then
+					state.intersect(d,Current)
+				end
+			end
+		end
+
+	compute_normal (state: TRACESTATE): VECTOR is
+		do
+			Result := state.intersection - center
+			Result.normalize
+		end
+
+end -- class SPHERE
+
+
+-- SPLITFILE=vector.e
+
+class VECTOR
+
+insert
+	CONSTANTS
+
+creation {ANY}
+	zero, make
+
+feature {ANY}
+	x, y, z: REAL_64
+
+	zero is
+		do
+			make(0.0, 0.0, 0.0)
+		end
+
+	make (a, b, c: REAL_64) is
+		do
+			x := a
+			y := b
+			z := c
+		end
+
+	infix "*" (c: REAL_64): VECTOR is
+		do
+			create Result.make(c * x, c * y, c * z)
+		end
+
+	infix "+" (v: VECTOR): VECTOR is
+		do
+			create Result.make(x + v.x, y + v.y, z + v.z)
+		end
+
+	infix "-" (v: VECTOR): VECTOR is
+		do
+			create Result.make(x - v.x, y - v.y, z - v.z)
+		end
+
+	prefix "-": VECTOR is
+		do
+			create Result.make(- x, - y, - z)
+		end
+
+	infix "|" (v: VECTOR): REAL_64 is
+		do
+			Result := x * v.x + y * v.y + z * v.z
+		end
+
+	square_length: REAL_64 is
+		do
+			Result := x * x + y * y + z * z
+		end
+
+	length: REAL_64 is
+		do
+			Result := square_length.sqrt
+		end
+
+	normalize is
+		require
+			not is_zero_length
+		local
+			l: REAL_64
+		do
+			l := 1.0 / length
+			x := x * l
+			y := y * l
+			z := z * l
+		ensure
+			is_normalized
+		end
+
+	normed: VECTOR is
+		require
+			not is_zero_length
+		do
+			Result := Current * (1.0 / length)
+		ensure
+			Result.is_normalized
+		end
+
+	is_zero_length: BOOLEAN is
+		do
+			Result := square_length = 0
+		end
+
+	is_zero: BOOLEAN is
+		do
+			Result := x = 0 and then y = 0 and then z = 0
+		end
+
+	is_normalized: BOOLEAN is
+		do
+			Result := (square_length - 1.0).abs < compare_delta
+		end
+
+end -- class VECTOR
+
+
+-- SPLITFILE=constants.e
+
+class CONSTANTS
+
+feature {ANY}
+	epsilon: REAL_64 is 2.2204460492503131e-16
+
+	delta: REAL_64 is
+		once
+			Result := epsilon.sqrt
+		end
+
+	compare_delta: REAL_64 is 1e-9
+
+	infinity: REAL_64 is
+		once
+			Result := Maximum_real_64
+--			Result := 99999
+		end
+
+end -- class CONSTANTS
+
