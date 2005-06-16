@@ -100,7 +100,7 @@ END OffsetMomentum;
 
 
 BEGIN
-   n := LangShootout.Argi();
+   n := Shootout.Argi();
 
    (* define planetary masses, initial positions, velocities *)
 
