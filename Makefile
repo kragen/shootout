@@ -1,8 +1,9 @@
-# $Id: Makefile,v 1.32 2005-06-07 06:26:09 bfulgham Exp $
+# $Id: Makefile,v 1.33 2005-06-16 05:11:13 bfulgham Exp $
 
 include Make.header
 
 all: init versions
+	-bin/cascade_delete.bash
 	-bin/preen.pl
 	-(cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
@@ -15,7 +16,6 @@ website:
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-bin/compress_ndata	
 	-bin/make_highlight
-	-bin/cascade_delete.bash
 	-(cd website/code; ../../bin/add_strays)
 	-cvs commit -m "Rerun of benchmarks."
 
