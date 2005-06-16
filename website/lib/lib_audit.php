@@ -81,9 +81,77 @@ function PrettyTag($k){
    return $s;
 }
 
+function PrintPrettyTag($k){
+   echo '<p>', PrettyTag($k), '</p>', "\n";
+}
+
 function CompareLogFileSize($a, $b){
    if ($a[1] == $b[1]) return 0;
    return  ($a[1] > $b[1]) ? -1 : 1;
+}
+
+
+function &AuditResults(&$NData, &$Logs, &$Data){
+   $missingRows = array();
+   foreach($NData as $k => $v){ if (!isset($Data[$k])){ $missingRows[] = $k; } }
+
+   $badPermissions = array();
+   foreach($Logs as $k => $v){ if ($Logs[$k][0]==PROGRAM_EXCLUDED){ $badPermissions[] = $k; } } 
+
+   $missingLogs = array();
+   foreach($NData as $k => $v){ if (!isset($Logs[$k])){ $missingLogs[] = $k; } }
+
+   $orphanLogs = array();
+   foreach($Logs as $k => $v){ if (!isset($NData[$k])){ $orphanLogs[] = $k; } }
+
+   $badLogs1 = array();
+   foreach($NData as $k => $v){ 
+      if ($v==PROGRAM_ERROR && isset($Logs[$k])){ 
+         if (($Logs[$k][0]!=PROGRAM_EXCLUDED)&&($Logs[$k][0]!=PROGRAM_ERROR)){
+            $badLogs1[] = $k; } } }
+
+   $badLogs2 = array();
+   foreach($Logs as $k => $v){ 
+      if (($v[0]==PROGRAM_ERROR||$v[0]==PROGRAM_EXCLUDED) && isset($NData[$k])){ 
+         if ($NData[$k]!=PROGRAM_ERROR){
+            $badLogs2[] = $k; } } }
+            
+   $badLogs3 = array();
+   foreach($Logs as $k => $v){ 
+      if ($v[0]==NO_PROGRAM_OUTPUT){ $badLogs3[] = $k; } }     
+    
+   $badLogs4 = array();
+   foreach($NData as $k => $v){ 
+      if ($v==PROGRAM_TIMEOUT && isset($Logs[$k])){ 
+         if ($Logs[$k][0]!=PROGRAM_TIMEOUT){ $badLogs4[] = $k; } } }    
+    
+   $badLogs5 = array();
+   foreach($Logs as $k => $v){ 
+      if ($v[0]==PROGRAM_TIMEOUT && isset($NData[$k])){ 
+         if ($NData[$k]!=PROGRAM_TIMEOUT){ $badLogs5[] = $k; } } }    
+     
+   $bigLogs = array();
+   foreach($Logs as $k => $v){ 
+      if ($v[1]>20480){ $bigLogs[$k] = $v; } 
+   }       
+   
+   $timeoutCount = 0;
+   foreach($Logs as $k => $v){ 
+      if ($v[0]==PROGRAM_TIMEOUT && isset($NData[$k])){ $timeoutCount++; }     
+   }      
+   
+   $failedCount = 0;   
+   foreach($Logs as $k => $v){ 
+      if ($v[0]==PROGRAM_ERROR && isset($NData[$k])){ $failedCount++; }     
+   }      
+   
+            
+   return array(
+      $missingRows, $badPermissions, $missingLogs, 
+      $orphanLogs, $badLogs1, $badLogs2, $badLogs3,
+      $badLogs4, $badLogs5, $bigLogs, $timeoutCount,
+      $failedCount      
+   );            
 }
 
 ?>
