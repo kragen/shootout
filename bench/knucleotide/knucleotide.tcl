@@ -3,7 +3,7 @@
 # The Great Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
-# contributed by Daniel South
+# contributed by Daniel South 
 
 
 proc kFrequency {s k framesize} {
