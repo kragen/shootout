@@ -4,7 +4,8 @@
 
 import java.util.*;
 public final class ray {
-    double delta=Math.sqrt(Math.ulp(1.0)), infinity=Float.POSITIVE_INFINITY;
+    // Use "double delta=Math.sqrt(Math.ulp(1.0))" with Java 1.5 or better
+    double delta=Math.sqrt(2.22044604925031e-16), infinity=Float.POSITIVE_INFINITY;
     class Vec {
 	public double x, y, z;
 	public Vec(double x2, double y2, double z2) { x=x2; y=y2; z=z2; }
