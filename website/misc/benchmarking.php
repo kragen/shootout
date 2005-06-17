@@ -1,4 +1,12 @@
 <table>
+
+<tr><td><h3 class="rev"><a class="arev" href="#conclusions" name="conclusions">&nbsp;Flawed Conclusions</a></h3></td></tr>
+<tr><td>
+<p>Remember, what matters is the performance of your whole application, not of highly tuned benchmark code.</p>
+<p>Remember, quality of profiling tools, ease of programming, and the amount of time you have available for tuning, can be far more important for application performance than the language implementation.</p>
+<p>Remember, highly tuned benchmark code provides a very limited indication of likely application performance.</p>
+</td></tr>
+
 <tr><td><h3 class="rev"><a class="arev" href="#flawed" name="flawed">&nbsp;Flawed Benchmarks</a></h3></td></tr>
 
 <tr class="b"><td><a class="ab" href="#your" name="your">Are <strong>your programs</strong> even like these benchmarks?</a></td></tr>
@@ -89,9 +97,5 @@ reasonably in the presence of software and hardware errors.'
 </p></blockquote>
 </td></tr>
 
-
-<tr><td><h3 class="rev"><a class="arev" href="#comparison" name="comparison">&nbsp;Flawed Conclusions</a></h3></td></tr>
-<tr><td><p>
-</p></td></tr>
 
 </table>
