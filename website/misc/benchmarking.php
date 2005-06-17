@@ -55,7 +55,7 @@ that the intrinsic cost of the new code addition was fully compensated." <a href
  the designers intended them to be used for the exact same purpose - that just isn't so.
 </p></td></tr>
 
-<tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - scope</strong></a></td></tr>
+<tr class="b"><td><a class="ab" href="#scope" name="scope"><strong>Different design intentions - scope</strong></a></td></tr>
 <tr><td>
 <blockquote><p>"Lua is a tiny and simple language, partly because it does not try to do what C is already 
 good for, such as sheer performance, low-level operations, or interface with third-party 
@@ -68,7 +68,7 @@ software. Lua relies on C for those tasks."<br />
 </p></blockquote>
 </td></tr>
 
-<tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - scale</strong></a></td></tr>
+<tr class="b"><td><a class="ab" href="#scale" name="scale"><strong>Different design intentions - scale</strong></a></td></tr>
 <tr><td>
 <blockquote><p>"Lua is not intended for building huge programs, where many programmers are involved 
 for long periods. Quite the opposite, Lua aims at small to medium programs, usually part
@@ -86,7 +86,7 @@ components continues to be a central idea in the design."<br />
 </p></blockquote>
 </td></tr>
 
-<tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - domain</strong></a></td></tr>
+<tr class="b"><td><a class="ab" href="#domain" name="domain"><strong>Different design intentions - domain</strong></a></td></tr>
 <tr><td>
 <blockquote><p>'Our system [Erlang] was originally designed for building telecoms switching systems.
 Telecoms switching systems have demanding requirements in terms
