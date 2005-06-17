@@ -1,0 +1,91 @@
+(* The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ * contributed by Jon Harrop, 2005
+ * Compile: mlton raytracer.sml
+ *)
+
+val delta = Math.sqrt (Real.nextAfter(1.0, 2.0) - 1.0)
+val infinity = Real.posInf
+type vec = real * real * real
+infix 7 *| fun s *| (x, y, z) : vec = (s*x, s*y, s*z)
+infix 6 +| fun (x1, y1, z1) +| (x2, y2, z2) : vec = (x1+x2, y1+y2, z1+z2)
+infix 6 -| fun (x1, y1, z1) -| (x2, y2, z2) : vec = (x1-x2, y1-y2, z1-z2)
+fun dot (x1, y1, z1) (x2, y2, z2) : real = x1*x2 + y1*y2 + z1*z2
+fun unitise r = (1.0 / Real.Math.sqrt (dot r r)) *| r
+datatype scene = Sphere of vec * real | Group of vec * real * scene list
+fun length r = Math.sqrt(dot r r)
+fun ray_sphere orig dir center radius =
+    let val v = center -| orig val b = dot v dir
+	val disc = b * b - dot v v + radius * radius in
+	if disc < 0.0 then infinity else
+	let val disc = Real.Math.sqrt disc
+	    val t2 = b + disc in
+	    if t2 < 0.0 then infinity else
+	    let val t1 = b - disc in if t1 > 0.0 then t1 else t2 end
+	end
+    end
+fun sray_sphere orig dir center radius =
+    let val v = center -| orig val b = dot v dir
+        val disc = b * b - dot v v + radius * radius in
+	if disc < 0.0 then false else b + Math.sqrt disc >= 0.0
+    end
+fun intersect orig dir scene =
+    let fun aux (Sphere (center, radius), (l, n)) =
+	    let val l' = ray_sphere orig dir center radius in
+		if l' >= l then (l, n) else
+		(l', unitise (orig +| l' *| dir -| center))
+	    end
+	  | aux (Group (center, radius, scenes), (l, n)) =
+	    if ray_sphere orig dir center radius >= l then (l, n)
+	    else foldl aux (l, n) scenes in
+	aux (scene, (infinity, (0.0, 0.0, 0.0))) end
+fun sintersect orig dir scene =
+    let fun aux (Sphere (center, radius)) =
+	    sray_sphere orig dir center radius
+	  | aux (Group (center, radius, scenes)) =
+	    sray_sphere orig dir center radius andalso List.exists aux scenes
+    in aux scene end
+val neg_light = unitise (1.0, 3.0, ~2.0)
+fun ray_trace orig dir scene =
+    let val (lambda, n) = intersect orig dir scene in
+	if lambda >= infinity then 0.0 else
+	let val g = dot n neg_light in
+	    if g <= 0.0 then 0.0 else
+	    let val orig = orig +| lambda *| dir +| delta *| n in
+		if sintersect orig neg_light scene then 0.0 else g
+	    end
+	end
+    end
+fun bound (Sphere (c', r'), (c, r)) = (c, Real.max(r, (length (c -| c') + r')))
+  | bound (Group (_, _, l), (c, r)) = foldl bound (c, r) l
+fun create level r (x, y, z) =
+    let val obj = Sphere ((x, y, z), r) in
+	if level = 1 then obj else
+	let val r' = 3.0 * r / Real.Math.sqrt 12.0
+	    fun aux x' z' = create (level-1) (0.5 * r) (x-x', y+r', z+z')
+	    val objs = [obj, aux (~r') (~r'), aux r' (~r'),
+			aux (~r') r', aux r' r']
+	    val (c, r) = foldl bound ((x, y+r, z), 0.0) objs in
+	    Group (c, r, objs)
+	end
+    end
+fun loop f accu (x, y, n) =
+    if y=n then accu else
+    if x=n then loop f accu (0, y+1, n) else
+    loop f (f accu (real x) (real y)) (x+1, y, n)
+fun eye_ray scene n ss x y g dx dy =
+    let val dir = unitise (x + dx/ss, y + dy/ss, n) in
+	g + ray_trace (0.0, 0.0, ~4.0) dir scene
+    end
+fun pixel scene n ss () x y =
+    let val (x, y) = (x - n / 2.0, (n - 2.0) / 2.0 - y)
+	val g = loop (eye_ray scene n (real ss) x y) 0.0 (0, 0, ss) in
+	print (String.str(Char.chr(Real.round (255.0 * g / real (ss*ss)))))
+    end
+val () =
+    let val level = 6
+	val n = getOpt(Int.fromString (List.hd (CommandLine.arguments ())), 256)
+	val ss = 4 and scene = create 6 1.0 (0.0, ~1.0, 0.0) in
+	(fn s => print ("P5\n"^s^" "^s^"\n255\n")) (Int.toString n);
+	loop (pixel scene (real n) ss) () (0, 0, n)
+    end
