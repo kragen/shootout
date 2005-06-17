@@ -43,12 +43,55 @@ that the intrinsic cost of the new code addition was fully compensated." <a href
 
 
 <tr><td><h3 class="rev"><a class="arev" href="#comparison" name="comparison">&nbsp;Flawed Comparisons</a></h3></td></tr>
+<tr><td><p>Programming language implementations are compared against each other as though
+ the designers intended them to be used for the exact same purpose - that just isn't so.
+</p></td></tr>
 
-<tr class="b"><td><a class="ab" href="#glue" name="glue">Systems languages versus "Glue" languages</a></td></tr>
+<tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - scope</strong></a></td></tr>
 <tr><td>
-<p>On some benchmarks compiled programs are 10,000 times faster than interpreted scripts!</p>
-<p>And, of course, one <em>rationale</em> for script languages is that it's simpler to "glue" together programs written in systems languages with scripts than write the program in a systems language.</p>
-<p>In practice, we'd just call compiled library-code from the "glue" language.</p>
+<blockquote><p>"Lua is a tiny and simple language, partly because it does not try to do what C is already 
+good for, such as sheer performance, low-level operations, or interface with third-party 
+software. Lua relies on C for those tasks."<br />
+<a href="http://www.inf.puc-rio.br/~roberto/book/">Programming in Lua</a>, preface
+</p></blockquote>
+
+<blockquote><p>" Most (all?) large systems developed using Erlang make heavy use of C for low-level code, leaving Erlang to manage the parts which tend to be complex in other languages, like controlling systems spread across several machines and implementing complex protocol logic."<br />
+<a href="http://www.erlang.org/faq/t1.html#AEN43">Frequently Asked Questions about Erlang</a>
+</p></blockquote>
 </td></tr>
+
+<tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - scale</strong></a></td></tr>
+<tr><td>
+<blockquote><p>"Lua is not intended for building huge programs, where many programmers are involved 
+for long periods. Quite the opposite, Lua aims at small to medium programs, usually part
+ of a larger system, typically developed by one or a few programmers, or even by non 
+ programmers. Therefore, Lua avoids too much redundancy and artificial restrictions."<br />
+ <a href="http://www.inf.puc-rio.br/~roberto/book/">Programming in Lua</a>, page 142
+</p></blockquote>
+
+<blockquote><p>"Ada was originally designed with three overriding concerns: program reliability and maintenance,
+programming as a human activity, and efficiency &#8230; emphasis was placed on program readability over ease of writing &#8230; Like many other human activities, 
+the development of programs is becoming ever more decentralized and
+distributed. Consequently, the ability to assemble a program from independently produced software
+components continues to be a central idea in the design."<br />
+ <a href="http://www.adapower.com/rm95/RM-0-3.html">Ada Reference Manual</a>, Introduction, Design Goals
+</p></blockquote>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - domain</strong></a></td></tr>
+<tr><td>
+<blockquote><p>'Our system [Erlang <em>sic</em>] was originally designed for building telecoms switching systems.
+Telecoms switching systems have demanding requirements in terms
+of reliability, fault-tolerance etc. Telecoms systems are expected to operate
+“forever,” they should exhibit soft real-time behaviour, and they should behave
+reasonably in the presence of software and hardware errors.' 
+<br /><a href="http://www.sics.se/~joe/thesis/armstrong_thesis_2003.pdf">Making reliable distributed systems in the presence of software errors</a>, page 13. (840KB pdf)
+</p></blockquote>
+</td></tr>
+
+
+<tr><td><h3 class="rev"><a class="arev" href="#comparison" name="comparison">&nbsp;Flawed Conclusions</a></h3></td></tr>
+<tr><td><p>
+</p></td></tr>
 
 </table>
