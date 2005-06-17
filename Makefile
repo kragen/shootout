@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.33 2005-06-16 05:11:13 bfulgham Exp $
+# $Id: Makefile,v 1.34 2005-06-17 06:17:02 bfulgham Exp $
 
 include Make.header
 
@@ -12,6 +12,7 @@ all: init versions
 	-make codelinks
 
 website: 
+	-bin/cascade_delete.bash
 	-bin/build_data_files
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-bin/compress_ndata	
