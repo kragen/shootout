@@ -7,8 +7,6 @@
  *)
 
 fun real n = Real.fromInt n
-fun for (s, e, f) = if s=e then () else (f (real s); for (s+1, e, f))
-
 val delta = 0.00000001
 val infinity = Real.posInf
 
@@ -22,7 +20,9 @@ structure Vec =
 
       fun dot (T (x1, y1, z1), T (x2, y2, z2)) = x1 * x2 + y1 * y2 + z1 * z2
 
-      fun unitise v = scale (v, 1.0 / Real.Math.sqrt (dot (v, v)))
+      fun length v = Math.sqrt (dot (v, v))
+
+      fun unitise v = scale (v, 1.0 / length v)
 
       local
 	 fun make f (T (x1, y1, z1), T (x2, y2, z2)) =
@@ -33,144 +33,189 @@ structure Vec =
       end
    end
 
+structure Sphere =
+   struct
+      datatype t = T of {center: Vec.t, radius: real}
+   end
+
 structure Ray =
    struct
       datatype t = T of {dir: Vec.t, orig: Vec.t}
 
-      fun hitSphere (T {dir, orig}, center, radius) =
-	 let
-	    val v = Vec.- (center, orig)
-	    val b = Vec.dot (v, dir)
-	    val disc = b * b - Vec.dot (v, v) + radius * radius
-	 in
-	    if disc < 0.0 then infinity
-	    else
-	       let
-		  val disc = Real.Math.sqrt disc
-	       in
-		  let
-		     val t2 = b + disc
-		  in
-		     if t2 < 0.0 then infinity
-		     else
-			let
-			   val t1 = b - disc
-			in
-			   if t1 > 0.0 then t1 else t2
-			end
-		  end
-	       end
-	 end
+      local
+	 fun disc (T {dir, orig}, Sphere.T {center, radius}) =
+	    let
+	       val v = Vec.- (center, orig)
+	       val b = Vec.dot (v, dir)
+	    in
+	       (b, b * b - Vec.dot (v, v) + radius * radius)
+	    end
+      in
+	 fun doesHitSphere (r, s): bool =
+	    let
+	       val (b, disc) = disc (r, s)
+	    in
+	       disc >= 0.0 andalso b + Math.sqrt disc >= 0.0
+	    end
+	 fun hitSphere (r, s): real =
+	    let
+	       val (b, disc) = disc (r, s)
+	    in
+	       if disc < 0.0 then infinity
+	       else let
+		       val disc = Math.sqrt disc
+		    in
+		       let
+			  val t2 = b + disc
+		       in
+			  if t2 < 0.0 then infinity
+			  else
+			     let
+				val t1 = b - disc
+			     in
+				if t1 > 0.0 then t1 else t2
+			     end
+		       end
+		    end
+	    end
+      end
    end
 
 structure Scene =
    struct
       datatype t =
-	 Group of {center: Vec.t,
-		   radius: real,
+	 Group of {bound: Sphere.t,
 		   scenes: t vector}
-       | Sphere of {center: Vec.t,
-		    radius: real}
+       | Sphere of Sphere.t
 
+      fun doesIntersect (s: t, r: Ray.t): bool =
+	 let
+	    val rec loop: t -> bool =
+	       fn Group {bound, scenes} =>
+	             Ray.doesHitSphere (r, bound)
+		     andalso Vector.exists loop scenes
+		|  Sphere s => Ray.doesHitSphere (r, s)
+	 in
+	    loop s
+	 end
+	 
       val intersect: t * Ray.t -> real * Vec.t =
 	 fn (scene, r as Ray.T {orig, dir}) =>
 	 let
-	    fun ofScene (scene, (l, n)) =
+	    fun loop (scene, (l, n)) =
 	       case scene of
-		  Group {center, radius, scenes} =>
+		  Group {bound, scenes} =>
+		     if l <= Ray.hitSphere (r, bound)
+			then (l, n)
+		     else Vector.foldl loop (l, n) scenes
+		| Sphere (sphere as Sphere.T {center, ...}) =>
 		     let
-			val l' = Ray.hitSphere (r, center, radius)
-		     in
-			if l' >= l then (l, n)
-			else Vector.foldl ofScene (l, n) scenes
-		     end
-		| Sphere {center, radius} =>
-		     let
-			val l' = Ray.hitSphere (r, center, radius)
+			val l' = Ray.hitSphere (r, sphere)
 			open Vec
 		     in
 			if l' >= l then (l, n)
 			else (l', unitise (orig + scale (dir, l') - center))
 		     end
 	 in
-	    ofScene (scene, (infinity, Vec.origin))
+	    loop (scene, (infinity, Vec.origin))
 	 end
 
-      fun rayTrace (scene, light, ray as Ray.T {dir, orig}) =
+      val negLight = Vec.unitise (Vec.T (1.0, 3.0, ~2.0))
+
+      val rayTrace: t * Ray.t -> real =
+	 fn (scene, ray as Ray.T {dir, orig}) =>
 	 let
 	    val (lambda, n) = intersect (scene, ray)
 	 in
 	    if lambda >= infinity then 0.0
 	    else
 	       let
-		  val g = 0.0 - Vec.dot (n, light)
+		  val g = Vec.dot (n, negLight)
 	       in
 		  if g <= 0.0 then 0.0
 		  else
 		     let
 			open Vec
-			val (l, _) =
-			   intersect
-			   (scene, Ray.T {dir = origin - light,
-					  orig = (orig + scale (dir, lambda)
-						  + scale (n, delta))})
+			val orig = orig + scale (dir, lambda) + scale (n, delta)
 		     in
-			if l >= infinity then g else 0.0
+			if doesIntersect (scene,
+					  Ray.T {dir = negLight, orig = orig})
+			   then 0.0
+			else g
 		     end
 	       end
 	 end
 
-      fun create (level, r, v as Vec.T (x, y, z)): t =
+      fun bound (s: t, sphere as Sphere.T {center = c, radius = r}): Sphere.t =
+	 case s of
+	    Group {scenes, ...} => Vector.foldl bound sphere scenes
+	  | Sphere (Sphere.T {center = c', radius = r'}) =>
+	       Sphere.T {center = c,
+			 radius = Real.max (r, Vec.length (Vec.- (c, c')) + r')}
+
+      fun create (level, r, v: Vec.t): t =
 	 let
-	    val obj = Sphere {center = v, radius = r}
+	    val obj = Sphere (Sphere.T {center = v, radius = r})
 	 in
 	    if level = 1 then obj
 	    else
 	       let
-		  val r' = 3.0 * r / Real.Math.sqrt 12.0
+		  val r' = 3.0 * r / Math.sqrt 12.0
 		  fun aux (x', z') =
 		     create (level - 1, 0.5 * r, Vec.+ (v, Vec.T (~x', r', z')))
+		  val scenes =
+(*		     Vector.fromList [aux (r', r'), aux (~r', r'),
+ *				      aux (r', ~r'), aux (~r', ~r'), obj]
+ *)
+		     Vector.fromList [obj, aux (~r', ~r'), aux (r', ~r'),
+				      aux (~r', r'), aux (r', r')]
+		  val bound =
+		     Vector.foldl bound
+		     (Sphere.T {center = Vec.+ (v, Vec.T (0.0, r, 0.0)),
+				radius = 0.0})
+		     scenes
 	       in
-		  Group {center = v,
-			 radius = 3.0 * r,
-			 scenes = (Vector.fromList
-				   [aux (r', r'), aux (~r', r'),
-				    aux (r', ~r'), aux (~r', ~r'), obj])}
+		  Group {bound = bound, scenes = scenes}
 	       end
 	 end
    end
 
+fun fold2 (n, ac, f) =
+   Int.fold (0, n, ac, fn (y, ac) =>
+	     let
+		val y = real y
+	     in
+		Int.fold (0, n, ac, fn (x, ac) => f (real x, y, ac))
+	     end)
+
+fun for2 (n, f) = fold2 (n, (), fn (x, y, ()) => f (x, y))
+
+fun eyeRay (scene, n, ss, x, y, g, dx, dy) =
+   let
+      val dir = Vec.unitise (Vec.T (x + dx / ss, y + dy / ss, n))
+   in
+      g + Scene.rayTrace (scene, Ray.T {dir = dir,
+					orig = Vec.T (0.0, 0.0, ~4.0)})
+   end
+
+fun pixel (scene, n, ss, x, y) =
+    let
+       val (x, y) = (x - n / 2.0, (n - 2.0) / 2.0 - y)
+       val g = fold2 (ss, 0.0, fn (dx, dy, g) =>
+		      eyeRay (scene, n, real ss, x, y, g, dx, dy))
+    in
+       print (str (chr (Real.round (255.0 * g / real (ss * ss)))))
+    end
+
 val () =
    let
       val level = 6
+      val n = getOpt (Int.fromString (List.hd (CommandLine.arguments ())), 256)
       val ss = 4
-      val n = (valOf (Int.fromString (hd (CommandLine.arguments ())))
-	       handle _ => 256)
       val scene = Scene.create (level, 1.0, Vec.T (0.0, ~1.0, 0.0))
-      val s = Int.toString n;
+      val s = Int.toString n
       val () = print (concat ["P5\n", s, " ", s, "\n255\n"])
+      val n' = real n
    in
-      for
-      (0, n, fn y =>
-       for (0, n, fn x =>
-	    let
-	       val g = ref 0.0
-	       val () =
-		  for (0, ss, fn dx =>
-		       for (0, ss, fn dy =>
-			    let
-			       val n = real n
-			       val x = x + dx / real ss - n / 2.0
-			       val y = n - 1.0 - y + dy / real ss - n / 2.0
-			       val eye = Vec.unitise (Vec.T (~1.0, ~3.0, 2.0))
-			       val ray =
-				  Ray.T {dir = Vec.unitise (Vec.T (x, y, n)),
-					 orig = Vec.T (0.0, 0.0, ~4.0)}
-			    in
-			       g := !g + Scene.rayTrace (scene, eye, ray)
-			    end))
-	       val g = 0.5 + 255.0 * !g / real (ss*ss)
-	    in
-	       print (str (chr (Real.trunc g)))
-	    end))
+      for2 (n, fn (x, y) => pixel (scene, n', ss, x, y))
    end
