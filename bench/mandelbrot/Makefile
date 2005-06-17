@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-05-01 12:04:33 igouy-guest Exp $
+# $Id: Makefile,v 1.5 2005-06-17 13:54:29 sweeks Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -12,7 +12,6 @@ MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 OO2COPTS := -A --no-rtc
-MLTONOPTS := -ieee-fp true
 POLYOPTS := -q
 
 ERLFLAGS := -noinput
