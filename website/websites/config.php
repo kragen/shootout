@@ -30,7 +30,7 @@ define('REV_COLOR_CORE', 'navy');
 define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900');      
 define('REV_COLOR_OLD', 'gray');  
-define('REV_COLOR_CONTESTS', '#009966');    
+define('REV_COLOR_CONTESTS', '#990099');   
 
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',35);          // show 26 rows of languages on the homepage
