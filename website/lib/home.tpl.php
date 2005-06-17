@@ -11,7 +11,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr><td colspan="2"><?=$Intro;?></td></tr>
 <tr><td colspan="2"><?=$NavBar;?></td></tr>
 
-<tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;Benchmarking programming languages</a></h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;<?=$Headline;?></a></h4></td></tr>
 <tr><td>
 <p class="rs"><strong>Most recent measurement: </strong><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Measured)) ?></p>
 <p>Due diligence - <em>check the program source-code</em>.</p>

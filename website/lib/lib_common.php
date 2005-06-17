@@ -314,7 +314,7 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
 function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
-   echo '<option value="all">all ', TESTS_PHRASE, '</option>', "\n";
+   echo '<option value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
 
    foreach($Tests as $Row){
       $Link = $Row[TEST_LINK];
@@ -329,7 +329,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
    echo '</select>', "\n";
 
    echo '<select name="lang">', "\n";
-   echo '<option value="all">all ', LANGS_PHRASE, '</option>', "\n";
+   echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
    foreach($Langs as $Row){
       $Link = $Row[LANG_LINK];
       $Name = $Row[LANG_FULL];
@@ -350,11 +350,11 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 function MkScorecardMenuForm($Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
-   echo '<option selected="selected" value="all">all ', TESTS_PHRASE, '</option>', "\n";
+   echo '<option selected="selected" value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
    echo '</select>', "\n";
 
    echo '<select name="lang">', "\n";
-   echo '<option value="all">all ', LANGS_PHRASE, '</option>', "\n";
+   echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
    echo '</select>', "\n";
    echo '<input type="submit" value="Show" title="Create your own Overall Scores"/>', "\n";
    printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";   

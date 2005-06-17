@@ -15,14 +15,14 @@ $P = $SelectedLang.'-'.$Id;
 
 <div>
 <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=all&amp;sort=<?=$Sort;?>"
-title="Check CPU times and source-code for the <?=$TestName;?> benchmark" ><?=$TestName;?> benchmark</a> 
+title="Check CPU times and source-code for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestName;?> <?=TESTS_PHRASE;?></a> 
 <?=BAR;?>
 <a href="benchmark.php?test=all&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"  
-title="Show <?=$LangName;?> benchmarks summary" >
+title="Show <?=$LangName;?> <?=TESTS_PHRASE;?> summary" >
 <?=$LangName;?></a>
 <?=BAR;?>
 <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P;?>&amp;p2=<?=$P;?>&amp;p3=<?=$P;?>&amp;p4=<?=$P;?>&amp;sort=<?=$Sort;?>"  
-title="Check all the data for the <?=$TestName;?> benchmark" ><?=$TestName;?> full data</a>
+title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestName;?> full data</a>
 </div>
 
 

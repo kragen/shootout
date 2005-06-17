@@ -33,7 +33,13 @@ $Body = & new Template(LIB_PATH);
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Sort', $S);
-$Body->set('AboutName', 'The Language Shootout Benchmarks');
+if (SITE_NAME == 'contests'){
+   $Body->set('AboutName', 'The Language Shootout Contests');
+   $Body->set('Headline', 'Programmer and language contests');   
+} else {
+   $Body->set('AboutName', 'The Language Shootout Benchmarks');
+   $Body->set('Headline', 'Benchmarking programming languages');   
+}
 $Body->set('Measured', filemtime(DATA_PATH.'data.csv'));
 
 $Intro = & new Template(ABOUT_PATH);

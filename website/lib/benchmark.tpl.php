@@ -33,9 +33,9 @@ foreach($Accepted as $d){
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#bench" name="bench"><?=$TestName;?> benchmark <?=DASH.SortName($Sort);?></a></h4>
-<p><a href="#about" title="Read about the <?=$TestName;?> benchmark"><?=$TestTag;?></a> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
-title="Check all the data for the <?=$TestName;?> benchmark"><?=$TestName;?> full data</a>).
+<h4 class="rev"><a class="arev" href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?> <?=DASH.SortName($Sort);?></a></h4>
+<p><a href="#about" title="Read about the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestTag;?></a> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
+title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
 </p>
 </td></tr>
 </table>
@@ -253,7 +253,7 @@ echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacin
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$TestName;?> benchmark</a></h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$TestName;?> <?=TESTS_PHRASE;?></a></h4></td></tr>
 <tr><td>
 <?=$About;?>
 </td></tr>

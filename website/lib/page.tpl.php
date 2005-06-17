@@ -20,6 +20,7 @@
    .arevGreat { background-color: <?=REV_COLOR_GREAT;?>; }
    .arevSandbox { background-color: <?=REV_COLOR_SANDBOX;?>; }  
    .arevOld { background-color: <?=REV_COLOR_OLD;?>; }
+   .arevContests { background-color: <?=REV_COLOR_CONTESTS;?>; }   
 </style>
 </head>
 

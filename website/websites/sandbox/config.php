@@ -21,6 +21,7 @@ define('CORE_SITE', '../');
 define('SANDBOX_SITE', './');
 define('GREAT_SITE', '../great/');
 define('OLD_SITE', '../old/');
+define('CONTESTS_SITE', '../contests/');
 
 
 // CONSTANTS ///////////////////////////////////////////////////
@@ -30,6 +31,7 @@ define('REV_COLOR_CORE', 'navy');
 define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900'); 
 define('REV_COLOR_OLD', 'gray');  
+define('REV_COLOR_CONTESTS', '#009966');
 
 define('DEV',TRUE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',35);         // show N rows of languages on the homepage
@@ -52,7 +54,7 @@ define('CHART_V1',10);
 define('CHART_V2',100);
 define('CHART_V3',200);
   
-define('TESTS_PHRASE', 'Benchmarks');            
-define('LANGS_PHRASE','Languages');  
+define('TESTS_PHRASE', 'benchmark');              
+define('LANGS_PHRASE','language');   
            
 ?>
