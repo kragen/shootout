@@ -1,10 +1,10 @@
 <table>
 
-<tr><td><h3 class="rev"><a class="arev" href="#conclusions" name="conclusions">&nbsp;Flawed Conclusions</a></h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#conclusions" name="conclusions">&nbsp;Beware Flawed Conclusions</a></h3></td></tr>
 <tr><td>
-<p>Remember, what matters is the performance of your whole application, not of highly tuned benchmark code.</p>
-<p>Remember, quality of profiling tools, ease of programming, and the amount of time you have available for tuning, can be far more important for application performance than the language implementation.</p>
-<p>Remember, highly tuned benchmark code provides a very limited indication of likely application performance.</p>
+<p>The performance of your whole application matters; the performance of highly tuned benchmark code doesn't matter.</p>
+<p>Quality of profiling tools, ease of programming, and the amount of time you have available for tuning, can be far more important for application performance than the language implementation.</p>
+<p>Highly tuned benchmark code provides a very limited indication of likely application performance.</p>
 </td></tr>
 
 <tr><td><h3 class="rev"><a class="arev" href="#flawed" name="flawed">&nbsp;Flawed Benchmarks</a></h3></td></tr>
