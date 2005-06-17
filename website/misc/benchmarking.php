@@ -80,7 +80,7 @@ components continues to be a central idea in the design."<br />
 
 <tr class="b"><td><a class="ab" href="#intent" name="intent"><strong>Different design intentions - domain</strong></a></td></tr>
 <tr><td>
-<blockquote><p>'Our system [Erlang <em>sic</em>] was originally designed for building telecoms switching systems.
+<blockquote><p>'Our system [Erlang] was originally designed for building telecoms switching systems.
 Telecoms switching systems have demanding requirements in terms
 of reliability, fault-tolerance etc. Telecoms systems are expected to operate
 “forever,” they should exhibit soft real-time behaviour, and they should behave
