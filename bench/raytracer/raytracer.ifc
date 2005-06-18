@@ -1,6 +1,6 @@
 ! -*- mode: f90 -*-
 !
-! $Id: raytracer.ifc,v 1.7 2005-06-17 12:59:12 sgeard-guest Exp $ ; $Name:  $
+! $Id: raytracer.ifc,v 1.8 2005-06-18 22:53:12 sgeard-guest Exp $ ; $Name:  $
 !
 ! The Great Computer Language Shootout
 ! http://shootout.alioth.debian.org/
@@ -29,7 +29,20 @@ module scene
      integer             :: num_children = 0
   end type Tree
 
+  interface assignment(=)
+     module procedure equals_t_t ! Tree = Tree
+  end interface
+
 contains
+
+  ! Assignment
+  recursive subroutine equals_t_t(t2, t1)
+    type(Tree), intent(out) :: t2
+    type(Tree), intent(in)  :: t1
+    t2%data = t1%data
+    t2%num_children = t1%num_children
+    t2%children => t1%children
+  end subroutine equals_t_t
 
   ! Add a child to the tree
   subroutine addChild(t, c)
@@ -69,7 +82,7 @@ end module scene
 ! The program itself
 program ray_tracer
   use scene
-  implicit none
+
   integer, parameter   :: ss = 4
 
   real*8, dimension(3) :: d, e
@@ -92,7 +105,7 @@ program ray_tracer
   
   delta = sqrt(epsilon(1.0d0))
   light = light/sqrt(dot_product(light,light))
-  call create(level, Sphere((/0.0d0, -1.0d0, 0.0d0/),1.0d0), t_scene) ! Build the scene
+  t_scene = create(level, Sphere((/0.0d0, -1.0d0, 0.0d0/),1.0d0)) ! Build the scene
   do y=n-1,0,-1; do x=0,n-1
      g = 0.0d0
      do dx=0,ss-1; do dy=0,ss-1
@@ -109,7 +122,7 @@ contains
     type(Ray), intent(in)  :: r
     type(Tree), intent(in) :: t
     
-    real*8               :: b, disc, d, t1, t2, v(3)
+    real*8                 :: b, disc, d, v(3)
     
     v = t%data%centre - r%orig
     b = dot_product(v, r%dir)
@@ -117,12 +130,8 @@ contains
     if (disc < 0.0d0) then
        ray_sphere = infinity; return
     end if
-    d = sqrt(disc); t2 = b + d
-    if (t2 < 0.0d0) then
-       ray_sphere = infinity; return
-    end if
-    t1 = b - d
-    ray_sphere = merge(t1,t2,t1 > 0.0d0)
+    d = sqrt(disc)
+    ray_sphere = merge(infinity, merge(b-d, b+d, b > d), b < -d)
   end function ray_sphere
 
   recursive subroutine intersect(lambda, normal, r, t)
@@ -154,21 +163,20 @@ contains
     type(Tree), intent(in)           :: t
 
     real*8                           :: lambda, g, l 
-    real*8, dimension(3)             :: normal, o
+    real*8, dimension(3)             :: normal
 
     ray_trace = 0.0d0
     lambda = infinity
     call intersect(lambda, normal, r, t)
     if (lambda == infinity) return
-    o = r%orig + lambda * r%dir + delta * normal;
     g = -dot_product(normal, light); l = infinity
     if (g <  0.0d0) return
-    call intersect(l, normal, Ray(o, -light), t)
+    call intersect(l, normal, Ray(r%orig + lambda * r%dir + delta * normal, -light), t)
     if (l == infinity) ray_trace = g
   end function ray_trace
 
-  recursive subroutine create(level, s, t)
-    type(Tree), intent(inout)  :: t
+  recursive function create(level, s) result(t)
+    type(Tree)                 :: t
     integer, intent(in)        :: level
     type(Sphere), intent(in)   :: s
     real*8     :: rn,d,c(3)
@@ -187,9 +195,7 @@ contains
     d = 0.5d0*s%radius
     c = s%centre
     do i=1,7,2
-       tn = Tree(s, null(), 0)
-       call create(level-1,Sphere(c + rn*(/cen(i),1.0d0,cen(i+1)/),d), tn)
-       call addChild(t,tn)
+       call addChild(t,create(level-1,Sphere(c + rn*(/cen(i),1.0d0,cen(i+1)/),d)))
     end do
-  end subroutine create
+  end function create
 end program ray_tracer
