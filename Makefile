@@ -1,4 +1,6 @@
-# $Id: Makefile,v 1.34 2005-06-17 06:17:02 bfulgham Exp $
+# $Id: Makefile,v 1.35 2005-06-18 14:03:27 igouy-guest Exp $
+
+BIN := $(PWD)/bin/
 
 include Make.header
 
