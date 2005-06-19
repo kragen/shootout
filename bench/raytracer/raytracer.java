@@ -3,7 +3,7 @@
 // Fastest version under 100 LOC. Contributed by Jon Harrop, 2005
 
 import java.util.*;
-public final class ray {
+public final class raytracer {
     // Use "double delta=Math.sqrt(Math.ulp(1.0))" with Java 1.5 or better
     double delta=Math.sqrt(2.22044604925031e-16), infinity=Float.POSITIVE_INFINITY;
     class Vec {
