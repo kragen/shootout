@@ -155,7 +155,7 @@ BEGIN
    NEW(PressurizedUnsealed); PressurizedUnsealed.Tag(6);
    NEW(PressurizedSealed); PressurizedSealed.Tag(7);
 
-   n := LangShootout.Argi();
+   n := Shootout.Argi();
 
    NEW(b1); b1.Id(1); NEW(b2); b2.Id(2); NEW(b3); b3.Id(3); NEW(b4); b4.Id(4);
    NEW(b5); b5.Id(5); NEW(b6); b6.Id(6); NEW(b7); b7.Id(7); NEW(b8); b8.Id(8);
