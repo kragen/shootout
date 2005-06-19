@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-06-17 03:52:25 jdh30-guest Exp $
+# $Id: Makefile,v 1.8 2005-06-19 14:54:33 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := raytracer
@@ -13,6 +13,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 GCCOPTS := -std=c99 -ffast-math -lm
 
 BIGLOOOPTS := -farithmetic
+IFCOPTS := -what
 MB_CLRTS := -nr
 OCAMLOPTS := -ffast-math -inline 100
 #OCAMLBOPTS := 
