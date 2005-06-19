@@ -107,6 +107,6 @@ public final class raytracer {
 	    }
     }
     public static void main(String[] args) {
-	(new ray()).run(Integer.parseInt(args[0]), 6, 4);
+	(new raytracer()).run(Integer.parseInt(args[0]), 6, 4);
     }
 }
