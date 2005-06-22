@@ -226,6 +226,11 @@ Do you want to help with the chores?</p>
 <table class="div">
 <tr><td><h3 class="rev"><a class="arev" href="#where" name="where">&nbsp;Where can I&#8230;?</a></h3></td></tr>
 
+<tr class="b"><td><a class="ab" href="#wherehelp" name="wherehelp">Where can I <strong>report a bug</strong>, contribute a program&#8230;?</a></td></tr>
+<tr><td>
+<p>You should report possible bugs, request feature changes and contribute programs on the appropriate issue tracker - see <a href="#help"><strong>How can I help?</strong></a></p>
+</td></tr>
+
 <tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
 <tr><td>
 <p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="full data"><strong>full data page</strong></a>.</p>

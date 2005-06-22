@@ -165,7 +165,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
 function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
-   echo '<option value="all">all ', TESTS_PHRASE, '</option>', "\n";
+   echo '<option value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
 
    foreach($Tests as $Row){
       $Link = $Row[TEST_LINK];
@@ -181,7 +181,7 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 
    echo '<select name="lang">', "\n";
-   echo '<option value="all">all ', LANGS_PHRASE, '</option>', "\n";
+   echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
    foreach($Langs as $Row){
       $Link = $Row[LANG_LINK];
       $Name = $Row[LANG_FULL];
