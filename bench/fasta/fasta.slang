@@ -1,8 +1,8 @@
-#!/usr/bin/env slsh
-# The Great Computer Language Shootout
-# http://shootout.alioth.debian.org/
-#
-# contributed by John E Davis
+%!/usr/bin/env slsh
+% The Great Computer Language Shootout
+% http://shootout.alioth.debian.org/
+%
+% contributed by John E Davis
 
 static variable IM = 139968;
 static variable IA = 3877;
