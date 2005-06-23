@@ -1,4 +1,4 @@
-%!/usr/bin/env slsh
+#!/usr/bin/env slsh
 % The Great Computer Language Shootout
 % http://shootout.alioth.debian.org/
 %
