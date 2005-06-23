@@ -27,6 +27,7 @@
 <p><a href="#bad3">bad log files 3:</a> <?=sizeof($bad3);?></p>
 <p><a href="#bad4">bad log files 4:</a> <?=sizeof($bad4);?></p>
 <p><a href="#bad5">bad log files 5:</a> <?=sizeof($bad5);?></p>
+<p><a href="#bad6">bad log files 6:</a> <?=sizeof($bad6);?></p>
 <p><a href="#big">log files >20KB:</a> <?=sizeof($big);?></p>
 <p><a href="#denied">bad file permissions:</a> <?=sizeof($badPermissions);?></p>
 
@@ -59,6 +60,9 @@
 
 <tr class="b"><td><a class="ab" href="#bad5" name="bad5"><strong>bad log files 5</strong></a><br />no timeout in ndata.csv but 'TIMEOUT' in log file</td></tr>
 <tr><td><? array_walk($bad5,'PrintPrettyTag'); ?></td></tr>
+
+<tr class="b"><td><a class="ab" href="#bad6" name="bad6"><strong>bad log files 6</strong></a><br />code/*.log file older than code/*.code file</td></tr>
+<tr><td><? array_walk($bad6,'PrintPrettyTag'); ?></td></tr>
 
 <tr class="b"><td><a class="ab" href="#big" name="big"><strong>big log files</strong></a><br />log files bigger than 20KB</td></tr>
 <tr><td>

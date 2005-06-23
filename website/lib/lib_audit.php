@@ -37,15 +37,22 @@ function ReadLogFiles($dirPath){
    $prefix = 30; // PROGRAM OUTPUTLF==============LF
    
    $logs = array();   
+   $oldlogs = array();
    $dh = opendir($dirPath);
    while($fn = readdir($dh)){
       $ext = strpos($fn,'.log');
-      $tag = substr($fn,0,$ext);   
+      $tag = substr($fn,0,$ext);                                   
       if ($tag){ 
-         if ( sizeof(explode('-',$tag)) < 3 ){ $tag .= '-0'; }    
+         $oldtag = $tag;                     
+         $byteSize = filesize(LOG_PATH.$fn);                  
+         if ( sizeof(explode('-',$tag)) < 3 ){ $tag .= '-0'; }  
          
-         $byteSize = filesize(LOG_PATH.$fn);
-         
+         if (file_exists(LOG_PATH.$oldtag.'.code')){
+            $logtime = filemtime(LOG_PATH.$fn);       
+            $codetime = filemtime(LOG_PATH.$oldtag.'.code');  
+            if ($codetime > $logtime){ $oldlogs[$tag] = $tag; }
+         }          
+                                             
          $code = 0;         
          if (($byteSize > 0) && ($byteSize <= 40960)){                  
             $f = fopen(LOG_PATH.$fn,'r');
@@ -64,13 +71,13 @@ function ReadLogFiles($dirPath){
          }      
          else { $code = NO_PROGRAM_OUTPUT; }          
                                           
-         $logs[$tag] = array($code,$byteSize);                            
+         $logs[$tag] = array($code,$byteSize);                                                                   
       }
    }
-   closedir($dh);  
-   
-   ksort($logs);    
-   return $logs;
+   closedir($dh);    
+   ksort($logs); 
+   ksort($oldlogs);         
+   return array($logs,$oldlogs);
 }
 
 

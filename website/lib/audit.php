@@ -36,8 +36,9 @@ $Body->set('NDataTime', $t);
 list($d,$n,$t) = ReadCsv(DATA_PATH.'data.csv');
 $Body->set('Data', $d);
 
-$l = ReadLogFiles(LOG_PATH);
+list($l,$o) = ReadLogFiles(LOG_PATH);
 $Body->set('Logs', $l);
+$Body->set('bad6', $o);
 
 $Body->set('Now', time());
 
