@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-06-19 14:54:33 sgeard-guest Exp $
+# $Id: Makefile,v 1.8 2005-06-23 20:30:37 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := binarytrees
@@ -12,8 +12,8 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 
 IFCOPTS := -ip -what
 BIGLOOOPTS := -farithmetic
-# gcc -O3 is detrimental for this test!
-GCCOPTS := -O1
+
+GCCOPTS := -lm
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 PHPOPTS := -d memory_limit=64M
