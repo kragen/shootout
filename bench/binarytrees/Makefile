@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2005-06-23 20:30:37 igouy-guest Exp $
+# $Id: Makefile,v 1.9 2005-06-24 13:55:49 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := binarytrees
@@ -10,7 +10,7 @@ MB_CLRTS := -nr
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 
-IFCOPTS := -ip -what
+IFCOPTS := -u
 BIGLOOOPTS := -farithmetic
 
 GCCOPTS := -lm
