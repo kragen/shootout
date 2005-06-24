@@ -26,12 +26,12 @@ define('CONTESTS_SITE', './');
 
 // CONSTANTS ///////////////////////////////////////////////////
 
-define('REV_COLOR', '#990099');     // background color for banner etc
+define('REV_COLOR', '#ff0000');     // background color for banner etc
 define('REV_COLOR_CORE', 'navy');         
 define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900'); 
 define('REV_COLOR_OLD', 'gray');  
-define('REV_COLOR_CONTESTS', '#990099'); 
+define('REV_COLOR_CONTESTS', '#ff0000'); 
 
 define('DEV',TRUE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',35);         // show N rows of languages on the homepage
