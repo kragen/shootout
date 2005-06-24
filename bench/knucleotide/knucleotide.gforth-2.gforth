@@ -1,0 +1,91 @@
+\ The Great Computer Language Shootout
+\ http://shootout.alioth.debian.org/
+\
+\ contributed by  Ian Osgood
+\ requires enlarging the dictionary with "-m 8M"
+
+wordlist constant word-counts
+variable data
+variable dataEnd
+create word-pointers 100 cells allot
+variable endwp
+
+: count,   1 , ;
+: count-name,
+  endwp @ here over ! cell+ endwp !
+  1 , last @ name>string
+  2dup bounds do i c@ toupper i c! loop 2, ;
+
+defer data,
+
+: count-word ( addr u -- )
+    2dup word-counts search-wordlist if
+        1 swap >body +! 2drop
+    else
+        nextname create data,
+    endif ;
+
+: scanit ( end data n -- total )
+  word-pointers endwp !
+  rot 1+ over - rot 2dup - >r  ( n end-n addr R: total )
+  get-current >r word-counts set-current
+  do i over count-word loop
+  6 swap - set-precision r> set-current r> ;
+
+: comp? ( a1 a2 -- a1 a2 ? )
+  over @ over @ = if
+    over cell+ 2@ drop over cell+ 2@ tuck compare 0< 
+  else over @ over @ > then ;
+: sort
+  word-pointers endwp @ over cell+ do
+    dup i do
+      i @ i cell - @  comp? if
+      i ! i cell - !  else 2drop leave then
+    cell -loop
+  cell +loop drop ;
+
+: ff.  f$ scratch drop over type '. emit scratch rot /string type ;
+: sortit ( end data n -- )  ['] count-name, [is] data,
+  scanit sort  ( total )
+  endwp @ word-pointers do
+    i @ cell+ 2@ type space
+    i @ @ 100 * s>d d>f  dup s>d d>f  f/ ff. cr
+  cell +loop drop ;
+
+: findit ( end data str len -- ) ['] count, [is] data,
+  s" clean marker clean" evaluate
+  tuck 2>r scanit drop
+  2r@ word-counts search-wordlist if
+    >body @ 1 u.r
+  else '0 emit then  #tab emit 2r> type ;
+ 
+: grow ( end -- newEnd )
+  data @ - ( size )
+  data @ dataEnd @ over - 2* tuck resize throw dup data ! + dataEnd !
+  data @ + ;
+
+: slurp ( -- end ) data @
+  begin dup 80 stdin read-line throw
+  while over c@ '> <>
+  while over c@ '; = if drop else + then
+        dataEnd @ over - 80 < if grow then
+  repeat then drop ;
+
+: report ( end -- ) data @
+  2dup 1 sortit cr
+  2dup 2 sortit cr
+  2dup s" GGT" findit cr
+  2dup s" GGTA" findit cr
+  2dup s" GGTATT" findit cr
+  2dup s" GGTATTTTAATT" findit cr
+  s" GGTATTTTAATTTATAGT" findit cr ;
+
+: main
+  4096 dup allocate throw dup data ! + dataEnd !
+  begin pad 80 stdin read-line throw nip
+  while s" >THREE" pad over compare 0= if slurp report then
+  repeat data @ free throw ;
+
+marker clean
+
+main bye \ done!
