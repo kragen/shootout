@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2005-06-23 20:52:54 igouy-guest Exp $
+# $Id: Makefile,v 1.10 2005-06-24 19:53:35 sgeard-guest Exp $
 include ../../Make.header
 
 TEST    := raytracer
@@ -14,6 +14,7 @@ GCCOPTS := -std=c99 -ffast-math -lm
 
 BIGLOOOPTS := -farithmetic
 
+IFCOPTS	:= -u -what
 MB_CLRTS := -nr
 OCAMLOPTS := -ffast-math -inline 100
 #OCAMLBOPTS := 
