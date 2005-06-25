@@ -2,8 +2,8 @@
 
 my @scripts = ( "gawk", "mawk", "bash", "rep", "lua", "newlisp",
 	     "php", "perl", "python", "psyco", "pike", "ruby",
-	     "guile", "mzscheme", "slang", "tcl", "xemacs" );
- 
+	     "guile", "mzscheme", "slang", "tcl", "xemacs", "javascript" );
+
 my @files;
 
 foreach $lang (@scripts)
@@ -23,4 +23,6 @@ foreach $i (@files)
 		system ("touch -f $i") == 0 or die "Could not touch $file: $!!\n";
 	}
 }
+
 print "... done.\n";
+
