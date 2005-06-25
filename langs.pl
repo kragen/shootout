@@ -557,7 +557,23 @@
 	   return($1);
        },
      },
-
+     
+     'javascript' =>
+     { Lang => 'JavaScript',
+       Name => 'SpiderMonkey',
+       Status => '+',
+       Home => 'http://www.mozilla.org/js/language/',
+       Down => 'http://www.mozilla.org/js/spidermonkey/',
+       Type => 'interpreted',
+       Note => '',
+       Ext  => 'javascript',
+       Verfun => sub {
+	   my $ver = `$ENV{JAVASCRIPT} -v 2>&1`;
+	   $ver =~ /(JavaScript-C.*)\n/;
+	   return($1);
+       },
+     },     
+     
      rep =>
      { Lang => 'Lisp',
        Name => 'librep',
@@ -1122,6 +1138,7 @@
      'ElastiC'     => 'c',
      'Erlang'      => 'prolog',
      'Java'        => 'c',
+     'JavaScript'  => 'c',     
      'Forth'       => 'forth',
      'Fortran'     => 'fortran',
      'Haskell'     => 'dash',
