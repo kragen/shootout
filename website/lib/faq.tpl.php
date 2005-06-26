@@ -19,6 +19,8 @@
 <li>showcase the capabilities of different languages</li>
 <li>compare programming language productivity </li>
 <li>provide an <em>ultimate</em> benchmark for some domain</li>
+<li>tell you what to think - do due diligence - think for yourself</li>
+<li>provide a contest where expert programmers demonstrate sneaky tricks</li>
 <li><em>etc etc</em></li>
 </ul>
 </td></tr>
@@ -165,6 +167,12 @@ Do you want to help with the chores?</p>
 <tr class="b"><td><a class="ab" href="#datainput" name="datainput">How should I implement data-input?</a></td></tr>
 <tr><td>
 <p>Programs are measured across a range of input-values; programs are expected to either take a <strong>single command-line parameter</strong> or read text from <strong>stdin</strong>.</p> 
+<p>(Look at what the other programs do.)</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#dataoutput" name="dataoutput">How should I implement data-output?</a></td></tr>
+<tr><td>
+<p>Programs should write to <strong>stdout</strong>. Program output is redirected to a log-file and compared to the expected output.</p> 
 <p>(Look at what the other programs do.)</p>
 </td></tr>
 
@@ -437,7 +445,8 @@ fixes, you'll understand this preference.</li>
 </td></tr>
 
 <tr><td>
-<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.</p>
+<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.
+You'll see that several languages have been <em>suggested</em> but no one has contributed programs.</p>
 </td></tr>
 
 </table>
