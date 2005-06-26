@@ -252,7 +252,7 @@ Do you want to help with the chores?</p>
 <tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv.bz2';?>" title="Download compressed CSV spreadsheet">compressed CSV spreadsheet</a> ~60KB bz2</p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
-<tr><td><p>You can start by reading the <a href="http://lists.alioth.debian.org/pipermail/shootout-list/" title="shootout-list archives">mailing-list archives.</a></p></td></tr>
+<tr><td><p>Google! Computer Language Shootout <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>criticism</strong></a>.</p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
