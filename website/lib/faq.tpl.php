@@ -17,10 +17,10 @@
 <ul>
 <li>provide a library of best-in-class algorithms</li>
 <li>showcase the capabilities of different languages</li>
-<li>compare programming language productivity </li>
+<li>compare programming language productivity</li>
 <li>provide an <em>ultimate</em> benchmark for some domain</li>
-<li>tell you what to think - do due diligence - think for yourself</li>
-<li>provide a contest where expert programmers demonstrate sneaky tricks</li>
+<li>have a contest of programmer effort and sneaky tricks</li>
+<li>compare different algorithms</li>
 <li><em>etc etc</em></li>
 </ul>
 </td></tr>
@@ -32,7 +32,7 @@
 <p><a href="#where"><strong>Where can I&#8230;?</strong></a></p>
 <p><a href="#means"><strong>What does &#8230; mean?</strong></a></p>
 <p><a href="#measure"><strong>How did you measure&#8230;?</strong></a></p>
-<p><a href="#include"><strong>Why don't you include&#8230;?</strong></a></p>
+<p><a href="#whydont"><strong>Why don't you &#8230;?</strong></a></p>
 <p><a href="#when"><strong>When&#8230;?</strong></a></p>
 <p><a href="#who"><strong>Who&#8230;?</strong></a></p>
 <p><a href="#why"><strong>Why&#8230;?</strong></a></p>
@@ -257,7 +257,9 @@ Do you want to help with the chores?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
-<tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv.bz2';?>" title="Download compressed CSV spreadsheet">compressed CSV spreadsheet</a> ~60KB bz2</p></td></tr>
+<tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv.bz2';?>" title="Download compressed CSV spreadsheet">compressed CSV spreadsheet</a> ~60KB bz2</p>
+<p>The spreadsheet includes both The Sandbox and The Doug Bagley data. Negative values indicate problems: Timeout -1, Error -2.</p>
+</td></tr>
 
 <tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
 <tr><td><p>Google! Computer Language Shootout <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>criticism</strong></a>.</p></td></tr>
@@ -386,9 +388,9 @@ Bash time builtin command
 
 
 <table class="div">
-<tr><td><h3 class="rev"><a class="arev" href="#include" name="include">&nbsp;Why don't you include&#8230;?</a></h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#whydont" name="whydont">&nbsp;Why don't you&#8230;?</a></h3></td></tr>
 
-<tr class="b"><td><a class="ab" href="#acceptable" name="acceptable">What kind of programming languages will you accept?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#acceptable" name="acceptable">Why don't you include language X?</a></td></tr>
 
 <tr><td>
 <p>Programming languages that can be used to write most of our benchmark programs!</p> 
@@ -416,7 +418,7 @@ Bash time builtin command
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#whydont" name="whydont">Why don't you include language X?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#include" name="include">Why don't you include language X?</a></td></tr>
 <tr><td><p>Is the language &#8230;</p>
 
 <ol>
