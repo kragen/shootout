@@ -40,25 +40,6 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 </td></tr>
 </table>
 
-<?  
-// FILTER & SORT DATA ////////////////////////////////////////
-// Sort according to current sort criteria, bold the sort-column
-$C1 = 'class="r"'; 
-$C2 = 'class="r"'; 
-$C3 = 'class="r"';
-$C4 = 'class="r"';
-
-if ($Sort=='cpu'){ 
-   $C1 = 'class="rb"';    
-} elseif ($Sort=='fullcpu'){ 
-   $C2 = 'class="rb"';    
-} elseif ($Sort=='kb'){ 
-   $C3 = 'class="rb"';
-} elseif ($Sort=='lines'){ 
-   $C4 = 'class="rb"';
-} 
-?>
-
 
 <!-- // CHART //////////////////////////////////////////////////// -->
 
@@ -116,8 +97,29 @@ if ($Sort=='cpu'){
 foreach($Langs as $k => $v){ $No_Program_Langs[$k] = TRUE; }
 
 $RowClass = 'c';
+$better = array();
 foreach($Accepted as $d){
-   $k = $d[DATA_LANG];      
+   $k = $d[DATA_LANG]; 
+   
+   $C1 = 'class="r"'; 
+   $C2 = 'class="r"'; 
+   $C3 = 'class="r"';
+   $C4 = 'class="r"';   
+   
+   if (!isset($better[$k])){  
+      $better[$k] = TRUE;
+      // Sort according to current sort criteria, bold the sort-column
+      if ($Sort=='cpu'){ 
+         $C1 = 'class="rb"';    
+      } elseif ($Sort=='fullcpu'){ 
+         $C2 = 'class="rb"';    
+      } elseif ($Sort=='kb'){ 
+         $C3 = 'class="rb"';
+      } elseif ($Sort=='lines'){ 
+         $C4 = 'class="rb"';
+      }    
+   }      
+        
    unset($No_Program_Langs[$k]);    
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);  
@@ -143,6 +145,7 @@ foreach($Accepted as $d){
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
+unset($better);
 ?>
 
 
