@@ -566,7 +566,7 @@
        Down => 'http://www.mozilla.org/js/spidermonkey/',
        Type => 'interpreted',
        Note => '',
-       Ext  => 'javascript',
+       Ext  => 'js',
        Verfun => sub {
 	   my $ver = `$ENV{JAVASCRIPT} -v 2>&1`;
 	   $ver =~ /(JavaScript-C.*)\n/;
