@@ -10,134 +10,116 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct tn {
-	struct tn *left, *right;
+struct node {
+	struct node *left, *right;
 	signed long item;
 	};
 
-struct tr {
-	struct tn *root, *nodes;
-	int num_nodes;
-	};
+int allocate_nodes(struct node **root, unsigned int node_depth) {
 
-struct tr_clamp {
-	struct tn *pos, *end;
-	};
+	if (root==NULL) return -1;
 
-int allocate_tree(struct tr *t, int node_depth) {
+	*root = (struct node*) malloc(sizeof(struct node) * ((2 << node_depth) - 1) );
 
-	if (t==NULL || node_depth <= 0) return -1;
-
-	t->num_nodes = (2 << node_depth) - 1;
-
-	t->nodes = (struct tn*) malloc(sizeof(struct tn) * t->num_nodes);
-	if (t->nodes==NULL) return -1;
-
-	return 0;
+	return (*root==NULL) * -1;
 
 	}
 
-int free_tree(struct tr *t) {
+int tree_assign_items(struct node **alloc_in, struct node **node_out, signed long item, int depth) {
 
-	if (t==NULL) return -1;
+	struct node *c;
+	
+	if (alloc_in==NULL || node_out==NULL) return -1;
 
-	free(t->nodes);
-	free(t);
-
-	return 0;
-
-	}
-
-int init_clamp(struct tr *t, struct tr_clamp *x) {
-
-	if (t==NULL || x==NULL) return -1;
-
-	x->pos = t->nodes;
-	x->end = x->pos + t->num_nodes;
-
-	return 0;
-
-	}
-
-int tree_assign_pointers(struct tr_clamp *x, struct tn **n, signed long item, int depth) {
-
-	struct tn *c;
-
-	if (x==NULL || n==NULL) return -1;
-
-	if (x->pos >= x->end) return -1;
-
-	c = x->pos++;
+	c = (*alloc_in)++;
 
 	if (depth==0) { c->left = c->right = NULL; c->item = 0; }
 		else {
-		tree_assign_pointers(x, & (c->left), 2*item-1, depth-1);
-		tree_assign_pointers(x, & (c->right), 2*item, depth-1);
+		tree_assign_items(alloc_in, & (c->left), 2*item-1, depth-1);
+		tree_assign_items(alloc_in, & (c->right), 2*item, depth-1);
 		c->item = item;
 		}
 
-	*n = c;
+	*node_out = c;
 
 	return 0;
 	
 	}
 
-signed long item_check(struct tn *n) {
+signed long item_check(struct node *n) {
 
 	return n->item + (n->left==NULL ? 0 : item_check(n->left) - item_check(n->right));
 
 	}
 
-int main(int argc, char *argv[]) {
+int alloc_assign_chk(struct node **root, signed long *chk_result, int count, unsigned int depth) {
 
-	struct tr long_lived, a, b, c;
-	struct tr_clamp clamp;
+	if (root==NULL) return -1;
 
-	unsigned int min = 4, max = argc > 1 ? strtol(argv[1], 0, 10) : 10;
+	if (allocate_nodes(root, depth) == -1) return -1;
 
-	unsigned int depth, stretch_depth = max + 1;
+		else {
+			struct node *x = *root;
+			if (tree_assign_items(&x, root, count, depth) == -1) return -1;
+		}
 
-	unsigned long iterations = (1<<max);
+	if (chk_result!=NULL) *chk_result += item_check(*root);
 
-	signed long chk;
+	return 0;
 
-	int count;
+	}
 
-	if (allocate_tree(&c, stretch_depth) == -1) return -1;
-	if (init_clamp(&c, &clamp) == -1) return -1;
-	if (tree_assign_pointers(&clamp, &c.root, 0, stretch_depth) == -1) return -1;
-	chk = item_check(c.root);
+int stretch_process(struct node **root, int stretch_depth) {
+
+	signed long chk = 0;
+
+	if (alloc_assign_chk(root, &chk, 0, stretch_depth) == -1) return -1;
+	if (chk != -1) return -1;
+
+	free(*root);
 
 	printf("stretch tree of depth %u\t  check: %li\n", stretch_depth, chk);
 
-	if (allocate_tree(&long_lived, max) == -1) return -1;
-	if (init_clamp(&long_lived, &clamp) == -1) return -1;
-	if (tree_assign_pointers(&clamp, &long_lived.root, 0, max) == -1) return- 1;
+	return 0;
 
-	for (depth = min; depth <= max; depth+=2, iterations>>=2) {
+	}
 
-		for (count=1, chk=0; count <= iterations; count++) {
+int iterative_process(struct node **root, int min, int max) {
 
-			if (allocate_tree(&a, depth) == -1) return -1;
-			if (allocate_tree(&b, depth) == -1) return -1;
+	signed long base_item, chk, iterations = (1<<max);
 
-			init_clamp(&a, &clamp);
-			tree_assign_pointers(&clamp, &a.root, count, depth);
-			
-			init_clamp(&b, &clamp);
-			tree_assign_pointers(&clamp, &b.root, -count, depth);
+	for ( ; min <= max; min+=2, iterations>>=2) {
 
-			chk += item_check(a.root); chk += item_check(b.root);
-			free_tree(&a); free_tree(&b);
+		for (base_item=1, chk=0; base_item <= iterations; ) {
+
+			if (alloc_assign_chk(root, &chk, base_item, min) == -1) return -1;
+			free(*root);
+
+			base_item *= -1; base_item += base_item > 0;
 
 			}		
 		
-		printf("%lu\t trees of depth %d\t  check: %li\n", iterations*2, depth, chk);
+		printf("%lu\t trees of depth %d\t  check: %li\n", iterations*2, min, chk);
 
 		}
 
-	chk = item_check(long_lived.nodes);
-	printf("long lived tree of depth %d\t  check: %li\n", max, chk);
+	return 0;
+	
+	}
+
+int main(int argc, char *argv[]) {
+
+	struct node *long_lived, *t;
+
+	unsigned int max = argc > 1 ? strtol(argv[1], 0, 10) : 10;
+
+	if (stretch_process(&t, max + 1) == -1) return -1;
+
+	if (alloc_assign_chk(&long_lived, NULL, 0, max) == -1) return -1;
+
+	if (iterative_process(&t, 4, max) == -1) return -1;
+
+	printf("long lived tree of depth %d\t  check: %li\n", max, item_check(long_lived));
 	
 	return 0;
 
