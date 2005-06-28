@@ -1,4 +1,10 @@
+<p>The <a href="http://c2.com/cgi/wiki?StatePattern">State pattern</a>, <a href="http://c2.com/cgi/wiki?FlyweightPattern">Flyweight pattern</a>, and <a href="http://c2.com/cgi/wiki?SingletonPattern">Singleton pattern</a> are one way to represent state machines in object-oriented programming languages - and are the basis for this very contrived measurement of virtual method dispatch.</p> 
+
+<p>(Procedural implementations should switch on the tag value of BottleState records - see <a href="benchmark.php?test=dispatch&amp;lang=ooc&amp;sort=<?=$Sort;?>#program">B_DispatchNext and PB_DispatchNext</a>.)</p>
+<br />
+
 <p>Bottle objects cycle between 3 states - Empty, Full, Sealed - which are represented by flyweight (or singleton) instances of EmptyState or FullState or SealedState (subclasses of the abstract class BottleState) which specify their successor state:</p>
+
 
 <ul>
    <li><em>BottleState</em>
@@ -48,7 +54,6 @@
    <li>print the check value</li>
 </ul>
 
-<p>Procedural implementations should switch on the tag value of BottleState records - see <a href="benchmark.php?test=dispatch&amp;lang=oberon2&amp;sort=<?=$Sort;?>">B_DispatchNext and PB_DispatchNext</a>.</p>
 <br />
 
 <p>Correct output N = 10 is:</p>
@@ -61,5 +66,3 @@
 <pre>45000
 </pre><br />
 
-
-<p>The <a href="http://c2.com/cgi/wiki?StatePattern">State pattern</a>, <a href="http://c2.com/cgi/wiki?FlyweightPattern">Flyweight pattern</a>, and <a href="http://c2.com/cgi/wiki?SingletonPattern">Singleton pattern</a> are one way to represent state machines in object-oriented programming languages - and are the basis for this very contrived measurement of virtual method dispatch.</p> 
