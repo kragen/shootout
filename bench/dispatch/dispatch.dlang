@@ -1,0 +1,195 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   C# reference implementation contributed by Isaac Gouy
+
+   converted to D by Dave Fladebo
+   compile: dmd -O -inline -release dispatch.d
+*/
+
+import std.stdio, std.string;
+
+void main(char[][] args)
+{
+    int n = args.length > 1 ? atoi(args[1]) : 1;
+
+    Bottle[] ba = new Bottle[10];
+    foreach(int i, inout Bottle b; ba) b = new Bottle(i);
+
+    PressurizedBottle[] pa = new PressurizedBottle[10];
+    foreach(int i, inout PressurizedBottle p; pa) p = new PressurizedBottle(i);
+
+    int check = 0;
+    for(int i = 1; i <= n; i++)
+    {
+        check += bottleCheck(ba[1],ba[2],ba[3],ba[4],ba[5],i);
+        check += bottleCheck(ba[6],ba[7],ba[8],ba[9],ba[0],i);
+
+        check += bottleCheck(pa[1],pa[2],pa[3],pa[4],pa[5],i);
+        check -= bottleCheck(pa[6],pa[7],pa[8],pa[9],pa[0],i);
+    }
+    writefln(check);
+}
+
+int bottleCheck(Bottle a1, Bottle a2, Bottle a3, Bottle a4, Bottle a5, int i)
+{
+    a1.cycle(); a2.cycle(); a3.cycle(); a4.cycle(); a5.cycle();
+
+    int c = i % 2;
+    return a1.check(c) + a2.check(c) + a3.check(c) + a4.check(c) + a5.check(c);
+}
+
+interface IBottle
+{
+    void state(BottleState s);
+}
+
+class BottleState
+{
+private:
+    static EmptyState Empty;
+    static FullState Full;
+    static SealedState Sealed;
+    static this()
+    {
+        Empty = new EmptyState();
+        Full = new FullState();
+        Sealed = new SealedState();
+    }
+
+protected:
+    abstract void next(IBottle b);
+    abstract int tag();
+
+public:
+    static BottleState initialState()
+    {
+        return Empty;
+    }
+
+    static class EmptyState : BottleState
+    {
+    public:
+        void next(IBottle b) { b.state(Full); }
+        int tag() { return 1; }
+    }
+
+    static class FullState : BottleState
+    {
+    public:
+        void next(IBottle b) { b.state(Sealed); }
+        int tag() { return 2; }
+    }
+
+    static class SealedState : BottleState
+    {
+    public:
+        void next(IBottle b) { b.state(Empty); }
+        int tag() { return 3; }
+    }
+}
+
+class PressurizedBottleState : BottleState
+{
+private:
+    static UnpressurizedEmptyState UnpressurizedEmpty;
+    static UnpressurizedFullState UnpressurizedFull;
+    static PressurizedUnsealedState PressurizedUnsealed;
+    static PressurizedSealedState PressurizedSealed;
+    static this()
+    {
+        UnpressurizedEmpty = new UnpressurizedEmptyState();
+        UnpressurizedFull = new UnpressurizedFullState();
+        PressurizedUnsealed = new PressurizedUnsealedState();
+        PressurizedSealed = new PressurizedSealedState();
+    }
+
+public:
+    static BottleState initialState()
+    {
+         return UnpressurizedEmpty;
+    }
+
+    static class UnpressurizedEmptyState : PressurizedBottleState
+    {
+    public:
+        void next(IBottle b) { b.state(UnpressurizedFull); }
+        int tag() { return 4; }
+    }
+
+    static class UnpressurizedFullState : PressurizedBottleState
+    {
+    public:
+        void next(IBottle b) { b.state(PressurizedUnsealed); }
+        int tag() { return 5; }
+    }
+
+    static class PressurizedUnsealedState : PressurizedBottleState
+    {
+    public:
+        void next(IBottle b) { b.state(Sealed); }
+        int tag() { return 6; }
+    }
+
+    static class PressurizedSealedState : PressurizedBottleState
+    {
+    public:
+        void next(IBottle b) { b.state(UnpressurizedEmpty); }
+        int tag() { return 7; }
+    }
+}
+
+class Bottle : IBottle
+{
+private:
+    int id;
+
+package:
+    BottleState s;
+    void empty() { s.next(this); }
+    void fill()  { s.next(this); }
+    void seal()  { s.next(this); }
+
+public:
+    this(int id)
+    {
+        this.id = id;
+        s = initialState();
+    }
+
+    int check(int c) { return s.tag() + id + c; }
+
+    void state(BottleState s)
+    {
+        this.s = s;
+    }
+
+    static BottleState initialState()
+    {
+        return BottleState.initialState();
+    }
+
+    void cycle()
+    {
+        fill(); seal(); empty();
+    }
+}
+
+class PressurizedBottle : Bottle
+{
+private:
+    void pressurize() { s.next(this); }
+
+public:
+    this(int id) { super(id); }
+
+    override static BottleState initialState()
+    {
+        return PressurizedBottleState.initialState();
+    }
+
+    void cycle()
+    {
+        fill(); pressurize(); seal(); empty();
+    }
+}
