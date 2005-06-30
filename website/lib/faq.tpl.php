@@ -484,11 +484,11 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <tr><td><h3 class="rev"><a class="arev" href="#who" name="who">&nbsp;Who&#8230;?</a></h3></td></tr>
 
 <tr class="b"><td><a class="ab" href="#start" name="start">Who started "The Great Computer Language Shootout"?</a></td></tr>
-<tr><td><p>Doug Bagley created <a href="http://web.archive.org/web/20040401204425/www.bagley.org/~doug/shootout/index2.shtml">"The Great Computer Language Shootout"</a>, and it was active until 2001.</p>
+<tr><td><p>Doug Bagley created <a href="http://web.archive.org/web/20040401204425/www.bagley.org/~doug/shootout/index2.shtml" title="Doug Bagley's website from the Internet Archive">"The Great Computer Language Shootout"</a>, and it was active until 2001.</p>
 <p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 
-<p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
-<p>In the following months, things started to change. First, the <a href="http://igouy.port5.com/">website was redesigned</a>. Then benchmarks were deprecated. Then new benchmarks were added. Who knows where it will end?</p>
+<p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
+<p>In the following months, things started to change. First, the <a href="http://igouy.port5.com/" title="Isaac Gouy's design sketch">website was redesigned</a>. Then benchmarks were deprecated. Then new benchmarks were added. Who knows where it will end?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>
