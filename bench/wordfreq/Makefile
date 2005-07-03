@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2005-04-04 14:56:37 bfulgham Exp $
+# $Id: Makefile,v 1.31 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
@@ -9,8 +9,9 @@ GNATOPTS := -fno-unroll-loops
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
 MB_NHCRTS := +RTS -H40M
 NHC98OPTS := -package base
-CLEANOPTS := -nr -ou -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -nr -ou -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean \
+		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -nr
 ERLFLAGS := -noinput -noshell
 OO2COPTS := -A --no-rtc

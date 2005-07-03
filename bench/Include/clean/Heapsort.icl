@@ -3,7 +3,7 @@
 
 
 implementation module Heapsort
-import StdEnv, StdArrayExtensions
+import StdEnv //, StdArrayExtensions
 
 
 // Heapsort implementation adapted from:

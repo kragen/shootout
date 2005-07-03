@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2005-06-24 15:45:02 igouy-guest Exp $
+# $Id: Makefile,v 1.7 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -6,8 +6,9 @@ TITLE   := Reverse Complement DNA sequence
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean \
+		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -nr
  
 BIGLOOOPTS := -farithmetic

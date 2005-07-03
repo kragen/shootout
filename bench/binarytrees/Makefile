@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2005-06-30 07:56:05 sgeard-guest Exp $
+# $Id: Makefile,v 1.11 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := binarytrees
@@ -7,8 +7,8 @@ TITLE   := Allocate, walk, and free many binary trees
 #XLABEL  := N (number of iterations)
 
 MB_CLRTS := -nr	
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean -I /usr/lib/clean/lib/ArgEnv
 
 IFCOPTS := -u -what
 BIGLOOOPTS := -farithmetic

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2005-05-19 08:45:24 ekarttun-guest Exp $
+# $Id: Makefile,v 1.9 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -6,8 +6,9 @@ TITLE   := TAK Function
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean \
+		-I /usr/lib/clean/lib/ArgEnv
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2005-06-08 07:55:38 bfulgham Exp $
+# $Id: Makefile,v 1.9 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := harmonic
@@ -6,8 +6,9 @@ TITLE   := Partial sum of Harmonic series
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean \
+		-I /usr/lib/clean/lib/ArgEnv
 
 BIGLOOOPTS := -farithmetic
 OCAMLOPTS := -inline 100

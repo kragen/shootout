@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2005-05-14 16:32:53 sgeard-guest Exp $
+# $Id: Makefile,v 1.26 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -12,8 +12,9 @@ IFCOPTS := -ip
 STALINOPTS := -s
 ERLFLAGS := -noinput
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean \
+		-I /usr/lib/clean/lib/ArgEnv
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 

@@ -1,12 +1,13 @@
-# $Id: Makefile,v 1.23 2005-05-08 20:41:19 sweeks Exp $
+# $Id: Makefile,v 1.24 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ary
 TITLE   := Array Access
 
 GHCOPTS := -package lang -fglasgow-exts
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean -I /usr/lib/clean/lib/ArgEnv \
+		-I /usr/lib/clean/lib/stdenv
 ERLFLAGS := -noinput
 MB_NHCRTS := +RTS -H40M
 OO2COPTS := -A --no-rtc

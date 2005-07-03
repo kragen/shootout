@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2005-05-16 15:28:25 ekarttun-guest Exp $
+# $Id: Makefile,v 1.28 2005-07-03 22:53:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -11,8 +11,9 @@ OCAMLBOPTS := str.cma
 OO2COPTS := -A --no-rtc
 GHCOPTS := -package text -fno-full-laziness
 ERLFLAGS := -noinput
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
+		-I /usr/lib/clean/lib/ArgEnv \
 		-l /usr/lib/libpcre.a
 MB_CLRTS := -nr
 POLYOPTS := -q
