@@ -1,0 +1,72 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org
+-- tcp-stream benchmark
+-- contributed by: Kurt Hutchinson
+
+import Foreign
+import Foreign.C
+import Network
+import System.Environment
+import System.IO
+import System.Posix.Process
+
+m = 1
+replySize = 409600
+
+hostname = "localhost"
+port = PortNumber 12345
+
+main :: IO ()
+main = withSocketsDo $ do
+    args <- getArgs
+    let n = if null args
+                then 10
+                else read $ head args
+
+    sock <- listenOn port
+    forkProcess $ client n
+    server sock
+
+
+-- Server
+server :: Socket -> IO ()
+server sock = do
+    (hdl,_,_) <- accept sock
+    hSetBuffering hdl NoBuffering
+    withCStringLen (replicate replySize 'x') $ \reply -> do
+        replyLoop hdl reply
+
+replyLoop :: Handle -> CStringLen -> IO ()
+replyLoop hdl reply@(str,len) = do
+    eof <- hIsEOF hdl
+    if eof
+        then return ()
+        else do
+            hGetChar hdl
+            hPutBuf hdl str len
+            replyLoop hdl reply
+
+
+-- Client
+client :: Int -> IO ()
+client n = do
+
+    hdl <- connectTo hostname port
+    hSetBuffering hdl NoBuffering
+    
+    let iterations = m * n
+    (Accum remaining bytes) <- requestLoop hdl (Accum iterations 0)
+
+    let replies = iterations - remaining
+    putStrLn ("replies: " ++ show replies ++ "\tbytes: " ++ show bytes)
+
+
+-- Strict data type to keep memory use low
+data Accum = Accum !Int !Int
+
+requestLoop :: Handle -> Accum -> IO Accum
+requestLoop _   (Accum 0 bytes) = return $ Accum 0 bytes
+requestLoop hdl (Accum n bytes) = do
+    hPutChar hdl 'x'
+    newbytes <- allocaBytes replySize $ \buf -> hGetBuf hdl buf replySize
+    requestLoop hdl $ Accum (n - 1) (bytes + newbytes)
