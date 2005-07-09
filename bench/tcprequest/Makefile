@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2005-05-01 12:04:35 igouy-guest Exp $
+# $Id: Makefile,v 1.7 2005-07-09 09:29:43 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := tcprequest
@@ -17,7 +17,7 @@ POLYOPTS := -q
 
 ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
-GHCOPTS := -fexcess-precision
+GHCOPTS := -package network -package unix
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 120,160,200
