@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-05-01 12:04:35 igouy-guest Exp $
+# $Id: Makefile,v 1.5 2005-07-09 09:35:41 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := tcpecho
@@ -9,7 +9,7 @@ TITLE   := 64 byte reply to TCP/IP request
 BIGLOOOPTS := -farithmetic
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
-GHCOPTS := -fexcess-precision
+GHCOPTS := -package network -package unix
 GPLCOPTS := --fast-math
 OCAMLOPTS := unix.cmxa
 OCAMLBOPTS := unix.cma
