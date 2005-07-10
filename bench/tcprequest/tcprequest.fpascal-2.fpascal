@@ -1,0 +1,94 @@
+{ The Great Computer Language Shootout
+  http://shootout.alioth.debian.org
+
+  contributed by Ales Katona
+  modified by Marc Weustink
+}
+
+program tcprequest;
+
+{$mode objfpc}{$H-}{$I-}
+
+uses
+  Sockets, BaseUnix;
+
+const
+  M            = 100;
+  REPLY_SIZE   = 4096;
+
+  REQUEST_SIZE = 64;
+  PORT         = 6747;
+  
+var
+  Reply   : array[0..REPLY_SIZE   - 1] of Byte;
+  Request : array[0..REQUEST_SIZE - 1] of Byte;
+  Server  : Longint;
+
+procedure DoServer;
+var
+  Client : Longint;
+  Addr   : TSockAddr;
+  len    : Cardinal = SizeOf(Addr);
+begin
+  Client:=fpAccept(Server, @addr, @len);
+
+  while fpRecv(Client, @Request[0], REQUEST_SIZE, 0) > 0 do
+    fpSend(Client, @Reply[0], REPLY_SIZE, 0);
+
+  CloseSocket(Client);
+end;
+
+procedure DoClient(const msg_count, msg_mult: Integer);
+var
+  n, cnt, Client: Integer;
+  Addr          : TSockAddr;
+  Replies       : Cardinal = 0;
+  Bytes         : Cardinal = 0;
+begin
+  Addr.sin_addr.s_addr := 0;
+  Addr.sin_addr.s_bytes[1] := 127;
+  Addr.sin_addr.s_bytes[4] := 1;
+  Addr.sin_port:=htons(PORT);
+  Addr.sin_family:=AF_INET;
+
+  Client:=fpSocket(AF_INET, SOCK_STREAM, 0);
+  fpConnect(Client, @Addr, SizeOf(Addr));
+
+  for n := msg_count * msg_mult - 1 downto 0 do begin
+    fpSend(Client, @Request[0], REQUEST_SIZE, 0);
+    cnt := 0;
+    repeat
+      Inc(cnt, fpRecv(Client, @Reply[0], REPLY_SIZE, 0));
+    until cnt >= REPLY_SIZE;  
+    Inc(Bytes, cnt);
+    Inc(Replies);
+  end;
+
+  CloseSocket(Client);
+  Writeln('replies: ', Replies, #9'bytes: ', Bytes);
+end;
+
+var
+  N: Integer = 10;
+  e: Integer = 0;
+  PID: TPid;
+  Addr   : TSockAddr;
+begin
+  if ParamCount > 0 then Val(ParamStr(1), N, e);
+
+  Addr.sin_addr.s_addr:=0;
+  Addr.sin_port:=htons(PORT);
+  Addr.sin_family:=AF_INET;
+
+  Server:=fpSocket(AF_INET, SOCK_STREAM, 0);
+  SetSocketOptions(Server, SOL_SOCKET, SO_REUSEADDR, True, SizeOF(True));
+  fpBind(Server, @addr, SizeOf(Addr));
+  fpListen(Server, 1);
+
+  PID:=fpFork;
+  if PID <> 0 then begin
+    DoServer;
+    CloseSocket(Server);
+    FpWait(PID);
+  end else DoClient(M, N);
+end.
