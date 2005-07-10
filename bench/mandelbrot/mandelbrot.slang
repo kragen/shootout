@@ -1,7 +1,7 @@
 #!/usr/bin/env slsh
 % The Computer Language Shootout Benchmarks
 % http://shootout.alioth.debian.org/
-%
+% 
 % contributed by John E. Davis
 
 define slsh_main ()
