@@ -176,6 +176,20 @@ Do you want to help with the chores?</p>
 <p>(Look at what the other programs do.)</p>
 </td></tr>
 
+<tr class="b"><td><a class="ab" href="#split" name="split">How should I implement multiple source code files?</a></td></tr>
+<tr><td>
+<p>We use a simple script to <strong>split a single source file</strong> into multiple target source files.</p>
+<p>One of the target source files <em>must</em> have the same filename as the original single source file, and is expected to be the 'main' program.</p>
+<p>For example, the <a href="benchmark.php?test=nbody&amp;lang=se&amp;sort=<?=$Sort;?>">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
+each new target source file will start from the <strong>comment line</strong> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
+ SPLITFILE=<em>target-filename</em> directive or end-of-file.</p>
+<p>So, the new target source file <em>body.e</em> will start with the line
+<pre>-- SPLITFILE=body.e</pre>
+and end with the empty line following
+<pre>end -- class BODY</pre>
+</p>
+</td></tr>
+
 <tr class="b"><td><a class="ab" href="#unroll" name="unroll">How should I implement loops?</a></td></tr>
 <tr><td><p>Don't manually unroll loops!</p> 
 </td></tr>
@@ -184,7 +198,7 @@ Do you want to help with the chores?</p>
 <tr><td><p><strong>We'll remove any promos</strong> that you add as comment text, so please don't waste our time.</p> 
 </td></tr>
 
-<tr class="b"><td><a class="ab" href="#brag" name="brag">How should I grab bragging rights?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#brag" name="brag">How should I identify my program?</a></td></tr>
 <tr><td><p>Include a header comment in the program like this:</p>
 <pre>
 /* The Great Computer Language Shootout
@@ -262,7 +276,7 @@ Do you want to help with the chores?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
-<tr><td><p>Google! Computer Language Shootout <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>criticism</strong></a>.</p></td></tr>
+<tr><td><p>Google! Here's some <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>sensible criticism</strong></a> of the original Shootout.</p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
