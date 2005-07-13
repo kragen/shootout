@@ -223,22 +223,6 @@ and end with the empty line following
 </td></tr>
 
 
-<tr class="b"><td><a class="ab" href="#sameway" name="sameway"><em>The Doug Bagley</em>: How should I implement a same way program?</a></td></tr>
-<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
-<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
-<p>The same way programs often seem naive and unidiomatic.</p> 
-</td></tr>
-
-
-<tr class="b"><td><a class="ab" href="#samething" name="samething"><em>The Doug Bagley</em>: How should I implement a same thing program?</a></td></tr>
-
-<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
-<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
-<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
-</td></tr>
-
-
 </table>
 
 
@@ -314,6 +298,24 @@ and end with the empty line following
 
 <tr class="b"><td><a class="ab" href="#cpu" name="cpu">What does CPU Time mean?</a></td></tr>
 <tr><td><p>The CPU Time is the measured CPU time minus the average time of the startup benchmark for the language.</p></td></tr>
+
+
+
+<tr class="b"><td><a class="ab" href="#sameway" name="sameway"><em>The Doug Bagley</em>: What does same way mean?</a></td></tr>
+<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
+<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+<p>The same way programs often seem naive and unidiomatic.</p> 
+</td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#samething" name="samething"><em>The Doug Bagley</em>: What does same thing mean?</a></td></tr>
+
+<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
+<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
+</td></tr>
+
 </table>
 
 
@@ -403,6 +405,19 @@ Bash time builtin command
 
 <table class="div">
 <tr><td><h3 class="rev"><a class="arev" href="#whydont" name="whydont">&nbsp;Why don't you&#8230;?</a></h3></td></tr>
+
+<tr class="b"><td><a class="ab" href="#contest" name="contest">Why don't you accept every program that gives the correct result?</a></td></tr>
+<tr><td>
+<p>We are trying to show the performance of various programming language implementations - so we ask that contributed programs not only give the 
+correct result, but also <strong>use the same algorithm</strong> to calculate that result.</p>
+<p>Doug Bagley used both <em>same way</em> (same algorithm) and <em>same thing</em> (same result) benchmarks - so in many cases the performance
+ differences were simply better algorithms.</p>
+<p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
+ we should think of <em>same thing</em> (same result) tests as <strong>contests</strong>.</p>
+<p>At present, we are only trying to show benchmarks.</p>
+</td></tr>
+
+
 
 <tr class="b"><td><a class="ab" href="#acceptable" name="acceptable">Why don't you include language X?</a></td></tr>
 
