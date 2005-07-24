@@ -494,6 +494,8 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <tr><td>
 <p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
 <p>Maybe you'd like to <a href="#chores">help us with the chores</a>?</p>
+<p>Normally, contributed programs will be measured and included on the website once or twice each week. 
+For the last few weeks the test machine has been temporarily offline.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#finish" name="finish">When will the Language Shootout be finished?</a></td></tr>
