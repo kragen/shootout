@@ -24,20 +24,21 @@ define('CONTESTS_SITE', '../contests/');
 
 // CONSTANTS ///////////////////////////////////////////////////
 
-define('REV_COLOR', '#991900');      // background color for banner etc
+define('REV_COLOR', 'navy');      // background color for banner etc
 define('REV_COLOR_CORE', 'navy');           
-define('REV_COLOR_GREAT', '#991900');         
+define('REV_COLOR_GREAT', 'navy'); 
+//define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900');
 define('REV_COLOR_OLD', 'gray');   
 define('REV_COLOR_CONTESTS', '#ff0000');    
 
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
-define('HOMEPAGE_ROWS',30);          // show 26 rows of languages on the homepage
+define('HOMEPAGE_ROWS',27);          // show 26 rows of languages on the homepage
 
 
 define('SITE_NAME', 'great');
-define('SITE_TITLE','The Great Computer Language Shootout Benchmarks');
-define('BANNER_TITLE','The&nbsp;Great&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
+define('SITE_TITLE','The Computer Language Shootout Benchmarks');
+define('BANNER_TITLE','The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
