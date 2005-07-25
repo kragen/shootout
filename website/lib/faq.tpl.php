@@ -262,6 +262,18 @@ and end with the empty line following
 <tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
 <tr><td><p>Google! Here's some <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>sensible criticism</strong></a> of the original Shootout.</p></td></tr>
 
+
+<tr class="b"><td><a class="ab" href="#bagley" name="bagley">Where can I see <strong>the original benchmarks</strong>?</a></td></tr>
+<tr><td><p>
+We still show the original benchmarks on <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.
+</p></td></tr>
+
+<tr class="b"><td><a class="ab" href="#sandbox" name="sandbox">Where can I see more languages?</a></td></tr>
+<tr><td><p>
+We show some <strong>more languages</strong> and experimental benchmarks on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
+</p></td></tr>
+
+
 <tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
 <p>Build dependencies include - <a href="http://packages.debian.org/stable/admin/gtop">libgtop</a>, <a href="http://search.cpan.org/~stas/GTop/">GTop</a>, libXau, and <a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl">BSD::Resource</a> </p>
@@ -519,7 +531,9 @@ For the last few weeks the test machine has been temporarily offline.</p>
 <p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 
 <p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
-<p>In the following months, things started to change. First, the <a href="http://igouy.port5.com/" title="Isaac Gouy's design sketch">website was redesigned</a>. Then benchmarks were deprecated. Then new benchmarks were added. Who knows where it will end?</p>
+<p>In the following months, things started to change. First, the <a href="http://igouy.port5.com/" title="Isaac Gouy's design sketch">website was redesigned</a> showing the original benchmarks in a new way, see <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.</p>
+<p>Then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
+ website. Who knows where it will end?</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>
