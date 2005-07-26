@@ -488,6 +488,7 @@ fixes, you'll understand this preference.</li>
 </td></tr>
 
 <tr><td>
+<p>Browse <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website to see if your favourite language is already shown.</p>
 <p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.
 You'll see that several languages have been <em>suggested</em> but no one has contributed programs.</p>
 </td></tr>
