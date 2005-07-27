@@ -8,8 +8,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <?=$Robots;?>
 
-<meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
-<meta name="description" content="Benchmarking programming languages on more than 25 benchmark programs." />
+<meta name="keywords" content="benchmarking programming language benchmark performance benchmarks shootout program" />
+<meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title><?=$PageTitle;?></title>
 <style type="text/css" media="all">
