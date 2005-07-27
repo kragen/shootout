@@ -9,7 +9,7 @@
 
 <!-- Benchmarking programming languages -->
 <meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
-<meta name="description" content="Benchmarking programming languages on few dozen flawed benchmark programs." />
+<meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=CORE_SITE;?>benchmark.css" />
