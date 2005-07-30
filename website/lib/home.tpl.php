@@ -53,12 +53,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
    foreach($Langs as $Row){
       $LangLink = $Row[LANG_LINK];
       $LangName = $Row[LANG_FULL];
-      $LangTag = $Row[LANG_TAG];
-      
-      if (SITE_NAME == 'core' && $showFeature && $count == 0){
-         echo $Feature;
-         $showFeature = false;
-      }            
+      $LangTag = $Row[LANG_TAG];           
       
       if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   

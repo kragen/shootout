@@ -64,10 +64,12 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
-if (SITE_NAME=='sandbox'){
-   $metaRobots = '<meta name="robots" content="noindex,nofollow" />';
+if (SITE_NAME=='core'){
+   $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
+} elseif (SITE_NAME=='great') {
+   $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
 } else {
-   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="1 days" />';
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
 
 $Page->set('Robots', $metaRobots);

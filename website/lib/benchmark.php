@@ -62,7 +62,7 @@ if ($T=='all'){
       $Body->set('W', $W);                                               
 
       $Body->set('Data', ScoreData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl)); 
-      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
+      $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 
 
       } else {           // Head to Head 
@@ -75,18 +75,20 @@ if ($T=='all'){
       if ($L!=$L2){ 
          $TemplateName = 'headtohead.tpl.php'; 
          $Title = 'Compare '.$LangName.' to '.$Langs[$L2][LANG_FULL];       
-         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));              
+         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
+         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';                   
       } else { 
          $TemplateName = 'language.tpl.php'; 
          $Title = $LangName.' benchmarks';  
-         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                   
+         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
+         $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';                        
       }
       
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $About->set('Version', HtmlFragment(ABOUT_PATH.$L.SEPARATOR.'version.php'));
-      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';         
+        
    }
 
 } elseif ($L=='all'){ // Benchmark  
@@ -99,7 +101,7 @@ if ($T=='all'){
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php'; 
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );
-      $metaRobots = '<meta name="robots" content="nofollow" /><meta name="robots" content="noarchive" />';
+      $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 
 } else {              // Program
 
@@ -122,7 +124,7 @@ if ($T=='all'){
       $Body->set('Log', HtmlFragment( LOG_PATH.$T.SEPARATOR.$L.$Id.'.log' ));
       $Body->set('Id', $I);
       $Body->set('Title', $Title);
-      $metaRobots = '<meta name="robots" content="noindex,nofollow" />';
+      $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 
 }
 

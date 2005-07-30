@@ -37,8 +37,7 @@ define('HOMEPAGE_ROWS',27);          // show 26 rows of languages on the homepag
 
 
 
-//define('SITE_NAME', 'core');
-define('SITE_NAME', 'great');
+define('SITE_NAME', 'core');
 define('SITE_TITLE','The Computer Language Shootout Benchmarks');
 define('BANNER_TITLE','The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
 define('FAQ_TITLE','Frequently Asked Questions');
