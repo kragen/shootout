@@ -32,6 +32,8 @@ else { $I = 0; }
 if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
 else { $S = 'fullcpu'; }
 
+$MetaKeywords = '';
+
 
 // PAGES ///////////////////////////////////////////////////
 // There are 4 kinds of test/lang combination
@@ -81,7 +83,9 @@ if ($T=='all'){
          $TemplateName = 'language.tpl.php'; 
          $Title = $LangName.' benchmarks';  
          $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
-         $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';                        
+         $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';    
+         $MetaKeywords = '<meta name="keywords" content="'.$Title.
+            ' programming language performance benchmark" /><meta name="description" content="'.$Title.'." />';                    
       }
       
       $About = & new Template(ABOUT_PATH);
@@ -152,6 +156,8 @@ $Body->set('About', $About->fetch($AboutTemplateName));
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
+$Page->set('MetaKeywords', $MetaKeywords);
+
 echo $Page->fetch('page.tpl.php');
 ?>
 

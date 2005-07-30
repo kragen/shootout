@@ -34,6 +34,7 @@ $Body->set('Changed', filemtime(MISC_PATH.$F.'.php'));
 
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
 $Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
+$Page->set('MetaKeywords', '');
 
 echo $Page->fetch('page.tpl.php');
 ?>

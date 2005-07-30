@@ -52,7 +52,8 @@ $Page->set('FaqTitle', FAQ_TITLE);
 $About = & new Template(ABOUT_PATH);
 $Body->set('About', $About->fetch($AboutTemplateName));
 $Page->set('PageBody', $Body->fetch($TemplateName));
-$Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
+$Page->set('Robots', '<meta name="robots" content="noindex,nofollow,noarchive" />');
+$Page->set('MetaKeywords', '');
 
 echo $Page->fetch('page.tpl.php');
 ?>

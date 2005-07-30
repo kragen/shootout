@@ -27,6 +27,7 @@ $Body->set('Changed', filemtime(LIB_PATH.'faq.tpl.php'));
 
 $Page->set('PageBody', $Body->fetch('faq.tpl.php'));
 $Page->set('Robots', '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />');
+$Page->set('MetaKeywords', '');
 
 echo $Page->fetch('page.tpl.php');
 ?>
