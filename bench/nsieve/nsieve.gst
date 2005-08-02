@@ -13,8 +13,7 @@
 nsieve 
    | count isPrime |
    count := 0.
-   isPrime := Array new: self.
-   isPrime atAllPut: true.
+   isPrime := Array new: self withAll: true.
 
    2 to: self do: [:i|
       (isPrime at: i) ifTrue: [
