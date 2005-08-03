@@ -24,7 +24,7 @@ after: dt
    
    
 energy
-   | dx dy dz distance e |
+   | e |
    e := 0.0d.
    1 to: bodies size do: [:i|       
       e := e + (0.5d * (bodies at: i) momo).
