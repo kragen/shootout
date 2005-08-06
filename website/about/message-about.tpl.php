@@ -2,7 +2,7 @@
 
 <p>Each program should</p>
 <ul>
-   <li>create 3,000 threads - each thread should
+   <li>create 500 threads - each thread should
       <ul>
       <li>hold and use a reference to the next thread</li>      
       <li>take, and increment, an integer message</li>
@@ -19,8 +19,7 @@
 </ul>
 
 <p>Correct output N = 10 is:</p> 
-<pre>30000</pre><br />
+<pre>5000</pre><br />
 
-<p>Similar benchmarks are described in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.cl.cam.ac.uk/users/mr/Cobench.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a></p>
-
-<p>(The <a href="benchmark.php?test=process&amp;lang=all&amp;sort=<?=$Sort;?>">threads benchmark</a> is essentially this thread-flows benchmark with a single message send.)</p>
+<p>Similar benchmarks are described in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.cl.cam.ac.uk/users/mr/Cobench.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a> 
+For some language implementations increasing the number of threads quickly results in <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Death by Concurrency</a>.</p>

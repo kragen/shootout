@@ -8,7 +8,7 @@
 import java.util.*;
 
 public class message {
-   public static final int numberOfThreads = 3000;
+   public static final int numberOfThreads = 500;
    public static int numberOfMessagesToSend;
 
    public static void main(String args[]) {

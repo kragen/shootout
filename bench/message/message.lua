@@ -27,7 +27,7 @@ local n = tonumber(arg[1]) or 10
 local count, message = 0, 0
 local chain = coroutine.create(link)
 
-coroutine.resume(chain,3000)
+coroutine.resume(chain,500)
 for j = 1,n do
    _,message = coroutine.resume(chain)
    count = count + message

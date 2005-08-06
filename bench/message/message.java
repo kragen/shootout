@@ -9,7 +9,7 @@ public class message {
 
    public static void main(String args[]) {
       int n = Integer.parseInt(args[0]);
-      int length = 3000;
+      int length = 500;
 
       EndLink chainEnd = new EndLink(null, n * length);
       chainEnd.start();

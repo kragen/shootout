@@ -55,10 +55,10 @@ runUntil: anInteger then: aSemaphore
 
 | n finalSum join last p |
 n := Smalltalk arguments first asInteger.
-finalSum := 3000 * n.
+finalSum := 500 * n.
 join := Semaphore new.
 
-3000 timesRepeat: [
+500 timesRepeat: [
    p := LinkedProcess with: p.
    last isNil ifTrue: [last := p].
    [p runUntil: finalSum then: join] fork.
