@@ -3,22 +3,36 @@
 
    contributed by Diederik van Arkel
 */
-module nbody
 
+module nbody
 import StdEnv, LanguageShootout
 
 Start world
 	# n				= argi
 	# nbodies		= size ini_bodies
-	# bodies		= offset_momentum nbodies ini_bodies
+	   # bodies		= offset_momentum nbodies ini_bodies
 	# (io,world)	= stdio world
 	# (e,bodies)	= energy nbodies bodies
-	# io			= io <<< toStringWith 9 e <<< "\n"
-	# bodies		= advance n nbodies 0.01 bodies
+	   # io			= io <<< toStringWith 9 e <<< "\n"
+	   # bodies		= advance n nbodies 0.01 bodies
 	# (e,bodies)	= energy nbodies bodies
-	# io			= io <<< toStringWith 9 e <<< "\n"
-	# (err,world)	= fclose io world
+	   # io			= io <<< toStringWith 9 e <<< "\n"
+   # (err,world)	= fclose io world
 	= world
+
+// if (x==y) 1 0
+cmp :: !Int !Int -> Int
+cmp x y
+	= code inline {
+			eqI
+			pushI 1
+			and%
+}
+
+// if (x==y) 0 1
+ncmp x y :==
+	let t	= (x bitxor (bitnot y)) + 1
+	in t / t
 
 :: Planet = !
 	{ x		:: !Real
@@ -41,9 +55,9 @@ dummy =
 	, mass	= 0.0
 	}
 
-pi				:== 3.141592653589793
-solar_mass		=: 4.0 * pi * pi
-days_per_year	:== 365.24
+pi             :== 3.141592653589793
+solar_mass     =: 4.0 * pi * pi
+days_per_year  :== 365.24
 
 advance :: !Int !Int !Real !*{!*Planet} -> *{!*Planet}
 advance n nbodies dt bodies
@@ -72,39 +86,32 @@ where
 		   dz			= z1 - z2
 		   distance2	= dx * dx + dy * dy + dz * dz
 		   distance		= sqrt distance2
-		   mag			= dt / (distance2 * distance)
+		   mag			= dt / (distance * distance2)
 		   
-		   mm1			= mass1 * mag
 		   mm2			= mass2 * mag
-		   
-		   vx1`			= vx1 - dx * mm2
-		   vy1`			= vy1 - dy * mm2
 		   vz1`			= vz1 - dz * mm2
-		   vx2`			= vx2 + dx * mm1
-		   vy2`			= vy2 + dy * mm1
-		   vz2`			= vz2 + dz * mm1
-		   
-		   b1			= {b1 & vx = vx1`, vy = vy1`, vz = vz1`}
-		   b2			= {b2 & vx = vx2`, vy = vy2`, vz = vz2`}
-		   
+		   vy1`        = vy1 - dy * mm2
+		   vx1`        = vx1 - dx * mm2
+		   b1          = {b1 & vx = vx1`, vy = vy1`, vz = vz1`}
 		   (dummy1,bodies)	= replace bodies i b1
+
+		   mm1			= mass1 * mag
+		   vz2`			= vz2 + dz * mm1
+		   vy2`			= vy2 + dy * mm1
+		   vx2`			= vx2 + dx * mm1
+		   b2 			= {b2 & vx = vx2`, vy = vy2`, vz = vz2`}
 		   (dummy2,bodies)	= replace bodies j b2
 
 		#! j			= j + 1
-		| j == nbodies
-			#! i		= i + 1
-			   j		= i + 1
-			| i == nbodies
-				= (dummy1,dummy2,bodies)
-			| j == nbodies
-				= (dummy1,dummy2,bodies)
-			#! (b1,bodies)	= replace bodies i dummy1
-			#! (b2,bodies)	= replace bodies j dummy2
-			= advance1_ i j dt bodies b1 b2 nbodies
-		#! (b1,bodies)	= replace bodies i dummy1
-		#! (b2,bodies)	= replace bodies j dummy2
-		= advance1_ i j dt bodies b1 b2 nbodies
-	
+		   c			= cmp j nbodies
+		   i`			= i + c
+		   j`			= c * (i` + c) - ((c-1) * j)
+		| cmp i` nbodies + cmp j` nbodies <> 0
+			= (dummy1,dummy2,bodies)
+		#! (b1,bodies)	= replace bodies i` dummy1
+		#! (b2,bodies)	= replace bodies j` dummy2
+		= advance1_ i` j` dt bodies b1 b2 nbodies
+
 	advance2 :: !Int !Real !*{!*Planet} !*Planet !Int -> (!*Planet,!*{!*Planet})
 	advance2 i dt bodies dummy nbodies
 		# (b,bodies)		= replace bodies i dummy
@@ -128,20 +135,30 @@ energy nbodies bodies
 where
 	energy1 :: !Int !(!Real,!*{!*Planet}) -> (!Real,!*{!*Planet})
 	energy1 i (e,bodies)
-		#!	(b1,bodies)		= bodies![i]
-		 	e				= e + 0.5 * b1.mass * (b1.vx * b1.vx + b1.vy*b1.vy + b1.vz*b1.vz)
-		 	(e,bodies)		= seq [energy2 i j \\ j <- [i+1..nbodies-1]] (e,bodies)
+		#!	mass			= bodies.[i].mass
+		#!	vx				= bodies.[i].vx
+		#!	vy				= bodies.[i].vy
+		#!	vz				= bodies.[i].vz
+		 	e				= e + 0.5 * mass * (vx * vx + vy * vy + vz * vz)
+		#!	(e,bodies)		= seq [energy2 i j \\ j <- [i+1..nbodies-1]] (e,bodies)
 		= (e,bodies)
+		
 	energy2 :: !Int !Int !(!Real,!*{!*Planet}) -> (!Real,!*{!*Planet})
 	energy2 i j (e,bodies)
-		#!	(b1,bodies)		= bodies![i]
-			(b2,bodies)		= bodies![j]
-			dx				= b1.x - b2.x
-			dy				= b1.y - b2.y
-			dz				= b1.z - b2.z
+		#!	b1mass			= bodies.[i].mass
+		#!	b1x				= bodies.[i].x
+		#!	b1y				= bodies.[i].y
+		#!	b1z				= bodies.[i].z
+		#!	b2mass			= bodies.[j].mass
+		#!	b2x				= bodies.[j].x
+		#!	b2y				= bodies.[j].y
+		#!	b2z				= bodies.[j].z
+			dx				= b1x - b2x
+			dy				= b1y - b2y
+			dz				= b1z - b2z
 		 	distance2		= dx * dx + dy * dy + dz * dz
 		 	distance		= sqrt distance2
-			e				= e - (b1.mass * b2.mass) / distance
+			e				= e - (b1mass * b2mass) / distance
 		= (e,bodies)
 
 offset_momentum :: !Int !*{!*Planet} -> *{!*Planet}
@@ -149,12 +166,11 @@ offset_momentum nbodies bodies
 	#!	px			= sum [body.vx * body.mass \\ body <-: bodies]
 		py			= sum [body.vy * body.mass \\ body <-: bodies]
 		pz			= sum [body.vz * body.mass \\ body <-: bodies]
-		(b0,bodies)	= bodies![0]
-		b0			= {b0 & vx =  ~ px / solar_mass
-					, vy = ~ py / solar_mass
-					, vz = ~ pz / solar_mass
-					}
-		bodies		= {bodies & [0] = b0}
+		bodies		= {bodies
+						& [0].vx	= ~ px / solar_mass
+						, [0].vy	= ~ py / solar_mass
+						, [0].vz	= ~ pz / solar_mass
+						}
 	= bodies
 
 ini_bodies :: *{!*Planet}
