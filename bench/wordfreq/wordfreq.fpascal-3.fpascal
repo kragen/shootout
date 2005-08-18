@@ -1,0 +1,114 @@
+{  The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by Micha Nelissen
+}
+
+program wordfreq;
+
+{$mode objfpc}{$H+}
+
+uses
+  simple_hash, strings;
+
+procedure readwords(dict: ht_pht);
+var
+  i: integer;
+  wordbuf: array of char;
+  wordbuflen: integer;
+begin
+  i := 0;
+  wordbuflen := 128;
+  setlength(wordbuf, wordbuflen);
+  while not eof do
+  begin
+    read(wordbuf[i]);
+    if wordbuf[i] in ['a'..'z', 'A'..'Z'] then
+    begin
+      wordbuf[i] := lowercase(wordbuf[i]);
+      inc(i);
+      if i = wordbuflen then
+      begin
+        wordbuflen *= 2;
+        setlength(wordbuf, wordbuflen);
+      end;
+    end else begin
+      if i <> 0 then
+      begin
+        wordbuf[i] := #0;
+        inc(ht_find_new(dict, @wordbuf[0])^.val);
+        i := 0;
+      end;
+    end;
+  end;
+end;
+
+function compare(a, b: ht_pnode): longint; inline;
+begin
+  result := ht_val(b) - ht_val(a);
+  if result <> 0 then
+    exit;
+  result := byte(ht_key(b)^) - byte(ht_key(a)^);
+  if result <> 0 then
+    exit;
+  result := strcomp(ht_key(b), ht_key(a));
+end;
+
+procedure quicksort(var list: array of ht_pnode; l, r : longint);
+var
+  i, j : longint;
+  p, q : ht_pnode;
+begin
+ repeat
+   i := l;
+   j := r;
+   p := list[ (l + r) div 2 ];
+   repeat
+     while compare(p, list[i]) > 0 do
+       i := i + 1;
+     while compare(p, list[j]) < 0 do
+       j := j - 1;
+     If i <= j then
+     begin
+       q := list[i];
+       list[i] := list[j];
+       list[j] := q;
+       i := i + 1;
+       j := j - 1;
+     end;
+   until i > j;
+   if l < j then
+     quicksort(list, l, j);
+   l := i;
+ until i >= r;
+end;
+
+procedure printwords(dict: ht_pht);
+var
+  sortarr: array of ht_pnode;
+  node: ht_pnode;
+  i: integer;
+begin
+  setlength(sortarr, ht_count(dict));
+  node := ht_first(dict);
+  i := 0;
+  while node <> nil do
+  begin
+    sortarr[i] := node;
+    inc(i);
+    node := ht_next(dict);
+  end;
+  quicksort(sortarr, 0, ht_count(dict)-1);
+
+  for i := 0 to ht_count(dict)-1 do
+    writeln(ht_val(sortarr[i]):7, ' ', ht_key(sortarr[i]));
+end;
+
+var
+  dict: ht_pht;
+begin
+  dict := ht_create(2048);
+  readwords(dict);
+  printwords(dict);
+  ht_destroy(dict);
+end.
