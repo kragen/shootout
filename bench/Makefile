@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.35 2005-07-02 05:17:13 bfulgham Exp $
+# $Id: Makefile,v 1.36 2005-08-19 06:41:44 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -47,6 +47,7 @@ TESTS = \
     takfp \
     tcpecho \
     tcprequest \
+    tcpsocket \    
     tcpstream \
     wc \
     wordfreq

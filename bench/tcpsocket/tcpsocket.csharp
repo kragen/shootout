@@ -1,0 +1,92 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org
+
+   contributed by Isaac Gouy */
+
+using System;
+using System.Net.Sockets;
+
+class tcpsocket
+{
+   const string HOST = "127.0.0.1";
+   const int PORT = 11000, REQUEST_SIZE = 64, BUFFER_SIZE = 1024;
+
+   static Reply[] replyTypes = 
+      { new Reply(2,64)
+      , new Reply(7,4096)
+      , new Reply(1,409600) 
+      }; 
+
+
+   static void Main(string[] args){
+      int n = Int32.Parse(args[0]);
+      if (n > 0)
+         MakeRequests(n);
+      else 
+         ReplyToRequests(n);
+   }
+
+
+   static void MakeRequests(int n) {
+      byte[] requestContents = new byte[REQUEST_SIZE]; // use the same contents for every request
+      byte[] replyBuffer = new byte[BUFFER_SIZE];
+      int replies = 0, bytes = 0;
+
+      using (TcpClient client = new TcpClient()){     
+         int byteCount = 0;
+
+         client.Connect(HOST,PORT); 
+         NetworkStream s = client.GetStream();       
+
+         foreach (Reply reply in replyTypes){
+            int requests = n * reply.multiplier;
+            while (requests-- > 0){
+               s.Write(requestContents, 0, requestContents.Length);
+               while ((byteCount += s.Read(replyBuffer, 0, replyBuffer.Length)) < reply.size){}
+
+               bytes += byteCount;
+               byteCount = 0;
+               replies++;
+            }
+            s.Write(requestContents, 0, requestContents.Length); // stop listener
+         }
+         client.Close();
+
+         Console.WriteLine("replies: {0}\tbytes: {1}", replies, bytes);
+      } 
+   }
+
+
+   static void ReplyToRequests(int n) {
+      byte[] requestBuffer = new byte[BUFFER_SIZE];
+
+      TcpListener listener = new TcpListener(PORT);
+      listener.Start();
+
+      using (TcpClient client = listener.AcceptTcpClient()){ 
+         NetworkStream s = client.GetStream();
+
+         foreach (Reply reply in replyTypes)
+         {
+            reply.contents = new byte[reply.size];
+            int requests = n * reply.multiplier;
+
+            while ((s.Read(requestBuffer, 0, REQUEST_SIZE) > 0)&&(requests++ < 0))
+               s.Write(reply.contents, 0, reply.size);
+         }
+      } 
+
+      listener.Stop();
+   }
+
+
+   class Reply { 
+      internal int multiplier, size;
+      internal byte[] contents;
+   
+      internal Reply(int multiplier, int size){
+         this.multiplier = multiplier;
+         this.size = size;
+      }
+   }
+}
