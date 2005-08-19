@@ -97,5 +97,16 @@ reasonably in the presence of software and hardware errors.'
 </p></blockquote>
 </td></tr>
 
+<tr><td>
+<blockquote><p>"In return for learning a new language, the user is rewarded by the
+ability to write short, clear programs that are guaranteed to work well on thousands of machines
+in parallel. Ironically – but vitally – the user need know nothing about parallel programming; the
+language and the underlying system take care of all the details.<br />
+It may seem paradoxical to use an interpreted language in a high-throughput environment, but
+we have found that the CPU time is rarely the limiting factor; the expressibility of the language
+means that most programs are small and spend most of their time in I/O and native run-time code." 
+<br /><a href="http://labs.google.com/papers/sawzall.html">Interpreting the Data: Parallel Analysis with Sawzall</a>, page 27.
+</p></blockquote>
+</td></tr>
 
 </table>
