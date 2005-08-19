@@ -1,0 +1,144 @@
+/* The Great Computer Language Shootout 
+ * http://shootout.alioth.debian.org
+ *
+ * C++ 'wc' reimplentation, using a more similar algorithm to the current C
+ * implementation.
+ * 
+ * Also supports memory mapped IO, if available (e.g. if executed with a file
+ * redirected to stdin).
+ *
+ * Contributor: Julian Hall <jh-misc@dsf.org.uk>
+ */
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <stdint.h>
+
+#include <iostream>
+
+/* functions for scanning 64 bits and 32 bits at a time to see if there are any
+ * bytes in the group that we need to examine individually */
+inline bool need_to_check (uint64_t w) { return (~w & 0xD0D0D0D0D0D0D0D0ULL) != 0; }
+inline bool need_to_check (uint32_t w) { return (~w & 0xD0D0D0D0L) != 0; }
+
+/* statically initialise tables */
+#define B    0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+#define M    0x10001
+#define P    M, M, M, M, M, M, M, M,  M, M, M, M, M, M, M, M,
+uint32_t data[] = {
+    0, 0, 0, 0, 0, 0, 0, 0,  0, 1, M, 0, 0, 0, 0, 0, B
+    1, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
+    B  B B B B  B B B B  B B B B };
+uint32_t mask[] = {
+    M, M, M, M, M, M, M, M,  M, M-1, M-1, M, M, M, M, M, P
+    M-1, M, M, M, M, M, M, M,  M, M, M, M, M, M, M, M,
+    P  P P P P  P P P P  P P P P };
+
+typedef unsigned char uchar;
+
+class wordcounter
+{
+    unsigned int words, lines, bytecount;
+    uchar last_char;
+public:
+    wordcounter () { words = lines = bytecount = 0; last_char = ' '; }
+
+    static const size_t maxscan = 128*1024 - 4;
+
+    void scan_block (const uchar * start, const uchar * end)
+    {
+	bytecount += end - start;
+	uint32_t block_total = 0;
+	while (start < end - 7) {
+	    if (need_to_check (* (uint64_t *) start))
+	    {
+		if (need_to_check (* (uint32_t *) start))
+		{
+		    block_total += (data[start[0]] & mask[last_char])
+			+ (data[start[1]] & mask[start[0]])
+			+ (data[start[2]] & mask[start[1]])
+			+ (data[start[3]] & mask[start[2]]);
+		    last_char = start[3];
+		}
+		if (need_to_check (* (uint32_t *) (start + 4)))
+		{
+		    block_total += (data[start[4]] & mask[last_char])
+			+ (data[start[5]] & mask[start[1]])
+			+ (data[start[6]] & mask[start[2]])
+			+ (data[start[7]] & mask[start[3]]);
+		    last_char = start[7];
+		}
+	    }
+	    start += 8;
+	}
+	while (start < end)
+	{
+	    block_total += data[*(start)] & mask[last_char];
+	    last_char = *(start++);
+	}
+	words += block_total & 0xFFFF;
+	lines += block_total >> 16;
+    }
+    void printresults () { std::cout << lines << " " << words << " " << bytecount << "\n"; }
+};
+
+class mapping_failed
+{
+public:
+    mapping_failed() { /* std::cout << "Mapping failed: " << errno << "\n"; */ }
+};
+
+template<class T>
+class memory_mapping
+{
+private:
+    size_t len;
+    T * data;
+public:
+    memory_mapping (int fd)
+    {
+	struct stat st;
+	data = NULL;
+	if (fstat (fd, &st)) throw mapping_failed();
+	len = st.st_size;
+	if (len == 0) throw mapping_failed(); // probably a pipe
+	// std::cout << "File is " << len << " bytes long\n";
+	data = (T *) mmap (NULL, len, PROT_READ, MAP_SHARED, fd, 0);
+	if (!data) throw mapping_failed();
+	// std::cout << "Memory mapping succeeded!\n";
+    }
+    ~memory_mapping ()
+    {
+	if (data)
+	    munmap (data, len);
+    }
+    size_t getlength () { return len; }
+    T * getdata () { return data; }
+};
+
+int main(void)
+{
+    wordcounter wc;
+    try
+    {
+	memory_mapping<uchar> map(0);
+	size_t s = map.getlength ();
+	uchar * d = map.getdata ();
+	while (s > wc.maxscan)
+	{
+	    wc.scan_block (d, d + wc.maxscan);
+	    s -= wc.maxscan;
+	    d += wc.maxscan;
+	}
+	wc.scan_block (d, d + s);
+    }
+    catch (mapping_failed f)
+    {
+	size_t s;
+	uchar buf[32768];
+	while ((s = read(0, buf, 32768)))
+	{
+	    wc.scan_block(buf, buf + s);
+	}
+    }
+    wc.printresults();
+}
