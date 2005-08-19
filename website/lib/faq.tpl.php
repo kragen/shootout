@@ -7,11 +7,11 @@
 
 <!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
 <table class="div">
-<tr><td><h3 class="rev"><a class="arev" href="#learn" name="learn">&nbsp;What can I learn here?</a></h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#learn" name="learn">&nbsp;What can I learn from the FAQ?</a></h3></td></tr>
 <tr><td>
 <p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
-<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="'benchmarking without analysis is bogus'"><strong>flawed benchmarks</strong></a>.</p>
+<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a>.</p>
 
 <p>We <strong>are not</strong> trying to</p>
 <ul>

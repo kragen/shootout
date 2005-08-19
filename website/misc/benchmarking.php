@@ -1,12 +1,9 @@
 <table>
 
-<tr><td><h3 class="rev"><a class="arev" href="#conclusions" name="conclusions">&nbsp;Beware Flawed Conclusions</a></h3></td></tr>
 <tr><td>
-<p>The performance of your whole application matters; the performance of highly tuned benchmark code doesn't matter.</p>
-<p>Quality of profiling tools, ease of programming, and the amount of time you have available for tuning, can be far more important for application performance than the language implementation.</p>
-<p>Highly tuned benchmark code provides a very limited indication of likely application performance.</p>
-</td>
-</tr>
+<blockquote><p>"we have found that the <strong>CPU time is rarely the limiting factor</strong>; the expressibility of the language
+means that most programs are small and spend most of their time in I/O and native run-time code."</p>
+</blockquote></td></tr>
 
 <tr><td><h3 class="rev"><a class="arev" href="#flawed" name="flawed">&nbsp;Flawed Benchmarks</a></h3></td></tr>
 
@@ -64,7 +61,7 @@ software. Lua relies on C for those tasks."<br />
 <a href="http://www.inf.puc-rio.br/~roberto/book/">Programming in Lua</a>, preface
 </p></blockquote>
 
-<blockquote><p>" Most (all?) large systems developed using Erlang make heavy use of C for low-level code, leaving Erlang to manage the parts which tend to be complex in other languages, like controlling systems spread across several machines and implementing complex protocol logic."<br />
+<blockquote><p>"Most (all?) large systems developed using Erlang make heavy use of C for low-level code, leaving Erlang to manage the parts which tend to be complex in other languages, like controlling systems spread across several machines and implementing complex protocol logic."<br />
 <a href="http://www.erlang.org/faq/t1.html#AEN43">Frequently Asked Questions about Erlang</a>
 </p></blockquote>
 </td></tr>
@@ -102,7 +99,7 @@ reasonably in the presence of software and hardware errors.'
 <blockquote><p>"In return for learning a new language, the user is rewarded by the
 ability to write short, clear programs that are guaranteed to work well on thousands of machines
 in parallel. Ironically – but vitally – the user need know nothing about parallel programming; the
-language and the underlying system take care of all the details.<br />
+language and the underlying system take care of all the details.<br/><br/>
 It may seem paradoxical to use an interpreted language in a high-throughput environment, but
 we have found that the CPU time is rarely the limiting factor; the expressibility of the language
 means that most programs are small and spend most of their time in I/O and native run-time code." 
