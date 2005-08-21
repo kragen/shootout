@@ -54,6 +54,10 @@ if (SITE_NAME == 'core' || SITE_NAME == 'great'){
    $Body->set('NavBar', $NavBar->fetch('navbar-slim.about'));
 }
 
+$Furthermore = & new Template(ABOUT_PATH);
+$Furthermore->set('Sort', $S);
+$Body->set('Furthermore', $Furthermore->fetch(SITE_NAME.SEPARATOR.'further.about'));
+
 $Feature = & new Template(ABOUT_PATH);
 $Feature->set('Sort', $S);
 $Body->set('Feature', $Feature->fetch('feature.about'));
