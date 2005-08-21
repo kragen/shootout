@@ -38,7 +38,7 @@ if (SITE_NAME == 'contests'){
    $Body->set('Headline', 'Programmer and language contests');   
 } else {
    $Body->set('AboutName', 'The Language Shootout Benchmarks');
-   $Body->set('Headline', 'Benchmarking programming languages');   
+   $Body->set('Headline', 'Benchmarking programming languages?');   
 }
 $Body->set('Measured', filemtime(DATA_PATH.'data.csv'));
 

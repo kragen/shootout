@@ -7,7 +7,7 @@
 
 <!-- WHAT CAN I LEARN HERE? /////////////////////////////////////////////// -->
 <table class="div">
-<tr><td><h3 class="rev"><a class="arev" href="#learn" name="learn">&nbsp;What can I learn from the FAQ?</a></h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#learn" name="learn">&nbsp;What can I learn from this FAQ?</a></h3></td></tr>
 <tr><td>
 <p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
@@ -346,7 +346,11 @@ We show some <strong>more languages</strong> and experimental benchmarks on <spa
 <tr class="b"><td><a class="ab" href="#pretest" name="pretest">How did you measure?</a></td></tr>
 <tr><td>
 <p>Each program was run once pre-test to reduce cache effects. Program output is redirected to a log-file and compared to the expected output.</p>
-<p> Each program was then run 3 times with program output redirected to /dev/null. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
+<p>Each program was then run 3 times with program output redirected to /dev/null. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
+<p>The variation between cpu times is different for different languages and for different benchmarks. 
+<em>The coefficient of variation</em> for 100 measurements of nbody ranged from 0.029% (Lua) to 0.074% (Oberon2) to 0.092% (C#); 
+and for 100 measurements of fasta ranged from 0.009% (Lua) to 0.088% (C#) to 0.655% (Oberon2).</p>
+<p>Don't sweat the small stuff - differences in cpu time of a few % are illusory.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></td></tr>

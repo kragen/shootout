@@ -1,9 +1,10 @@
 <table>
 
 <tr><td>
-<blockquote><p>"we have found that the <strong>CPU time is rarely the limiting factor</strong>; the expressibility of the language
-means that most programs are small and spend most of their time in I/O and native run-time code."</p>
-</blockquote></td></tr>
+<p>"we have found that the <strong>CPU time is rarely the limiting factor</strong>; the expressibility of the language
+means that most programs are small and spend most of their time in I/O and native run-time code."
+</p>
+</td></tr>
 
 <tr><td><h3 class="rev"><a class="arev" href="#flawed" name="flawed">&nbsp;Flawed Benchmarks</a></h3></td></tr>
 
