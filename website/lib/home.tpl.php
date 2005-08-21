@@ -49,13 +49,17 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <td>
 <?
-   $count = 0; $showFeature = true;
+   $count = 0; $showFeature = true; 
+   
+   if (HOMEPAGE_ROWS>0){ $maxRows = HOMEPAGE_ROWS; }
+   else { $maxRows = sizeof($Tests)+2; }   
+   
    foreach($Langs as $Row){
       $LangLink = $Row[LANG_LINK];
       $LangName = $Row[LANG_FULL];
       $LangTag = $Row[LANG_TAG];           
-      
-      if ($count < HOMEPAGE_ROWS){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
+            
+      if ($count < $maxRows){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   
       printf('<p><a title="Compare %s with another language on all benchmarks"', $LangName);
       printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 

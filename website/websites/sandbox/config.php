@@ -34,7 +34,7 @@ define('REV_COLOR_OLD', 'gray');
 define('REV_COLOR_CONTESTS', '#ff0000'); 
 
 define('DEV',TRUE);                 // show excluded languages, tests, programs, when TRUE
-define('HOMEPAGE_ROWS',33);         // show N rows of languages on the homepage
+define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'sandbox');
