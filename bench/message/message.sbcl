@@ -1,0 +1,191 @@
+;;   The Great Computer Language Shootout
+;;   http://shootout.alioth.debian.org/
+;;
+;;   Threads-flow.
+;;  
+;;   Contributed by Christopher Neufeld
+;;
+
+
+;; set this to 't' to print copious debugging.
+;; (defconstant +debug-print+ nil)
+;; (defparameter print-mutex nil)
+
+;; (defmacro debug-output (format-string &rest args)
+;;   (if +debug-print+
+;;       `(progn
+;;         (lock-mutex print-mutex)
+;;         (format t ,format-string ,@args)
+;;         (release-mutex print-mutex))))
+
+
+
+
+;; There seems to be a nasty bug in the version of SBCL I have.  If you run:
+;;    (spawn-thread #'(lambda () (work-fcn worker)))
+;; then immediately change the value of the variable "worker", the
+;; thread is spawned with the changed value.  In fact, in my tight
+;; loop, I would wind up missing the first 9 values of "worker"
+;; entirely, then spawning a handful of threads all with the 10th
+;; worker, then skipping another huge chunk, and so on.  That's
+;; really, really bad.  So, if +sbcl-broken-spawn+ is set, we work
+;; around this bug with a condition variable.
+;;
+;; NOTE: SURPRISINGLY, this condition variable really speeds things
+;; along.  The whole thing sets up much faster with it in place.
+(defconstant +sbcl-broken-spawn+ t)
+(defparameter *broken-spawn-mutex* nil)
+(defparameter *broken-spawn-cond* nil)
+(defparameter *broken-spawn-flag* nil)
+
+
+;; Note that sbcl seems to be limited to 512 calls to make-thread.
+(defparameter *n-threads* 500)
+
+
+#+clisp (error "Presently, clisp does not support condition objects")
+#+gcl (error "Presently, gcl does not support multi-threading")
+
+
+(defmacro forever (&body body)
+  `(do () (nil) ,@body))
+  
+
+(defun create-cond ()
+  #+sbcl (sb-thread:make-waitqueue)
+  #-(or sbcl) (error "We need an implementation of cond creation for this platform"))
+
+(defun create-mutex ()
+  #+sbcl (sb-thread:make-mutex :value nil)
+  #-(or sbcl) (error "We need an implementation of mutex creation for this platform"))
+
+
+(defun lock-mutex (mutex)
+  #+sbcl (sb-thread:get-mutex mutex)
+  #-(or sbcl) (error "We need an implementation of mutex-locking for this platform"))
+
+(defun release-mutex (mutex)
+  #+sbcl (sb-thread:release-mutex mutex)
+  #-(or sbcl) (error "We need an implementation of mutex-unlocking for this platform"))
+  
+(defun wait-on-cond (cond locked-mutex)
+  #+sbcl (sb-thread:condition-wait cond locked-mutex)
+  #-(or sbcl) (error "We need an implementation of condition waits for this platform"))
+
+;; I was using condition-broadcast, but that just froze up the system.
+;; Possibly a bug in the implementation on sbcl?
+(defun awaken-cond-waiter (cond)
+  #+sbcl (sb-thread:condition-broadcast cond)
+  #-(or sbcl) (error "We need an implementation of condition awaken for this platform"))
+
+(defun spawn-thread (fcn)
+  #+sbcl (sb-thread:make-thread fcn)
+  #-(or sbcl) (error "We need an implementation of thread starting for this platform"))
+  
+
+
+(defclass worker ()
+  ((mutex	:initform	(create-mutex)
+                :reader		get-mutex)
+   (cond	:initform	(create-cond)
+                :reader		get-cond)
+   (message	:initform	nil
+                :accessor	get-message)
+   (client	:initform	nil
+                :accessor	get-client)))
+   
+
+(defgeneric work-fcn (obj))
+(defgeneric main-reaper (obj))
+
+
+(defun wait-for-msg (cond mutex get-msg-form)
+  (let ((msg nil))
+    (do ()
+        (msg msg)
+      (or (setf msg (funcall get-msg-form))
+          (wait-on-cond cond mutex)))))
+
+
+(defmethod work-fcn ((obj worker))
+  (when +sbcl-broken-spawn+
+    (lock-mutex *broken-spawn-mutex*)
+    (setf *broken-spawn-flag* t)
+    (awaken-cond-waiter *broken-spawn-cond*)
+    (release-mutex *broken-spawn-mutex*))
+
+  (forever
+   (lock-mutex (get-mutex obj))
+   (let ((msg (wait-for-msg (get-cond obj) (get-mutex obj) #'(lambda () (get-message obj)))))
+     
+     (setf (get-message obj) nil)
+     (release-mutex (get-mutex obj))
+
+     (lock-mutex (get-mutex (get-client obj)))
+     (setf (get-message (get-client obj)) (1+ msg))
+     (awaken-cond-waiter (get-cond (get-client obj)))
+     (release-mutex (get-mutex (get-client obj))))))
+
+
+(defmethod main-reaper ((mainthread worker))
+  (lock-mutex (get-mutex mainthread))
+  (prog1
+      (wait-for-msg (get-cond mainthread) (get-mutex mainthread) #'(lambda () (get-message mainthread)))
+    (release-mutex (get-mutex mainthread))))
+
+
+(defun main (&optional n-supplied)
+  (let ((n (or n-supplied
+               (parse-integer (or (car (last #+sbcl sb-ext:*posix-argv*
+                                             #+clisp ext:*args*
+                                             #+gcl  si::*command-args*)) 
+                                  "10")))))
+
+    (let* ((mainthread (make-instance 'worker))
+           (last-obj mainthread)
+           worker
+           (accumulator 0))
+
+      (dotimes (i *n-threads*)
+        (setf worker (make-instance 'worker))
+        (setf (get-client worker) last-obj)
+        (setf last-obj worker)
+
+        (when +sbcl-broken-spawn+
+          (setf *broken-spawn-flag* nil))
+
+        (spawn-thread #'(lambda () (work-fcn worker)))
+
+        (when +sbcl-broken-spawn+
+          (lock-mutex *broken-spawn-mutex*)
+          (do ()
+              (*broken-spawn-flag*)
+            (or *broken-spawn-flag*
+                (wait-on-cond *broken-spawn-cond* *broken-spawn-mutex*)))
+          (release-mutex *broken-spawn-mutex*)))
+
+      (dotimes (i n)
+
+        (lock-mutex (get-mutex worker))
+        (setf (get-message worker) 0)
+        (awaken-cond-waiter (get-cond worker))
+        (release-mutex (get-mutex worker))
+
+        (incf accumulator (main-reaper mainthread)))
+
+      (format t "~D~%" accumulator))))
+
+
+
+;;;  Note: this cleanup function is not much use in my sbcl
+;;;  (post-0.9.3 CVS checkout), as there seems to be a hard limit of
+;;;  512 threads spawned in the lifetime of the sbcl job, after which
+;;;  time we fail out with an mmap error whenever trying to make a new
+;;;  thread.
+;; #+sbcl (defun cleanup ()
+;;          (dolist (thread (rest (nreverse (sb-thread:list-all-threads)))) 
+;;            (sb-thread:terminate-thread thread)))
+
+
+(if +sbcl-broken-spawn+
+    (setf *broken-spawn-mutex* (create-mutex) *broken-spawn-cond* (create-cond)))

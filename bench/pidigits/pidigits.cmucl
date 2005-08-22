@@ -1,0 +1,131 @@
+;;    The Great Computer Language Shootout
+;;    http://shootout.alioth.debian.org/
+
+;;    contributed by Christopher Neufeld  <shootout0000@cneufeld.ca>
+
+;;; A streaming pidigits implementation in ANSI Lisp for the debian
+;;; shootout.  Aimed at sbcl, but tested on clisp and gcl as well.
+
+
+(defparameter *digits-per-line* 10)
+(defparameter *stop-digits* 300)
+
+
+(defun compute-pi (next safe prod consume z next-state)
+  (do ((digits-out 0))
+      ((>= digits-out *stop-digits*))
+
+    (let ((y (funcall next z)))
+      (if (funcall safe z y)
+          (progn 
+            (format t "~D" y)
+            (incf digits-out)
+            (if (zerop (mod digits-out *digits-per-line*))
+                (format t "    :~D~%" digits-out))
+            (setf z (funcall prod z y)))
+          (let ((state (funcall next-state)))
+            (setf z (funcall consume z state)))))))
+        
+
+
+(defun comp (a1 a2)
+  (let ((retval (make-array 4)))
+    (setf (aref retval 0) (+ (* (aref a1 0) (aref a2 0))
+                             (* (aref a1 1) (aref a2 2))))
+    (setf (aref retval 1) (+ (* (aref a1 0) (aref a2 1))
+                             (* (aref a1 1) (aref a2 3))))
+    (setf (aref retval 2) (+ (* (aref a1 2) (aref a2 0))
+                             (* (aref a1 3) (aref a2 2))))
+    (setf (aref retval 3) (+ (* (aref a1 2) (aref a2 1))
+                             (* (aref a1 3) (aref a2 3))))
+    retval))
+
+(defun extr (state x)
+  (declare (type (array integer 1) state))
+  (declare (type integer x))
+  (declare (optimize (speed 3) (safety 0) (space 0)))
+  (/ (+ (* (aref state 0) x) (aref state 1))
+     (+ (* (aref state 2) x) (aref state 3))))
+
+(defparameter init (make-array 4 :element-type 'integer :initial-contents #(1 0 0 1)))
+(defparameter *curstate* (make-array 4 :element-type 'integer :initial-contents #(0 2 0 1)))
+
+
+(defun next-state ()
+  (incf (aref *curstate* 0))
+  (incf (aref *curstate* 1) 4)
+  (incf (aref *curstate* 3) 2)
+  *curstate*)
+
+(defun safe (z n)
+  (= n (floor (extr z 4))))
+
+(defun next (z)
+  (floor (extr z 3)))
+
+(defun prod (z n)
+  (let ((v1 (make-array 4)))
+    (setf (aref v1 0) 10)
+    (setf (aref v1 1) (* n -10))
+    (setf (aref v1 2) 0)
+    (setf (aref v1 3) 1)
+    (comp v1 z)))
+
+(defun consume (z z-prime)
+  (comp z z-prime))
+
+
+(defun main ()
+  (let ((n (parse-integer (or (car (last #+sbcl sb-ext:*posix-argv*
+                                         #+clisp ext:*args*
+					 #+cmu extensions:*command-line-strings*
+					 #+gcl  si::*command-args*)) "300"))))
+
+    (if n
+        (setf *stop-digits* n)))
+  (compute-pi #'next #'safe #'prod #'consume init #'next-state))
+
+
+;; #+sbcl (progn
+;;          (sb-profile:profile compute-pi)
+;;          (sb-profile:profile comp)
+;;          (sb-profile:profile extr)
+;;          (sb-profile:profile next-state)
+;;          (sb-profile:profile safe)
+;;          (sb-profile:profile next)
+;;          (sb-profile:profile prod)
+;;          (sb-profile:profile consume))
+
+;; Here's the profiling run for sbcl from a recent (post-0.9.3) CVS
+;; checkout.  The results show that we're basically using all our time
+;; in the bignum arithmetic in "extr".  I can't optimize this program
+;; any further, further improvements have to come from the SBCL
+;; implementation of bignums.
+
+;; measuring PROFILE overhead..done
+
+;;   seconds  |   consed   | calls |  sec/call  |  name
+;; --------------------------------------------------------
+;;      5.235 | 36,546,776 | 2,580 |   0.002029 | EXTR
+;;      0.068 |  6,957,232 | 1,290 |   0.000053 | COMP
+;;      0.063 |  2,084,384 | 1,290 |   0.000049 | NEXT
+;;      0.035 |    701,960 |     1 |   0.035188 | COMPUTE-PI
+;;      0.030 |  2,246,800 | 1,290 |   0.000023 | SAFE
+;;      0.007 |          0 |   990 |   0.000007 | NEXT-STATE
+;;      0.001 |          0 |   300 |   0.000004 | PROD
+;;      0.001 |     35,360 |   990 |   0.000001 | CONSUME
+;; --------------------------------------------------------
+;;      5.440 | 48,572,512 | 8,731 |            | Total
+
+;; estimated total profiling overhead: 0.02 seconds
+;; overhead estimation parameters:
+;;   2.8e-8s/call, 2.35e-6s total profiling, 7.68e-7s internal profiling
+
+
+;; For compiled code on my home machine:
+;; - sbcl runs 300 digits in 5.4 seconds of user time
+;; - clisp runs 300 digits in 1.6 seconds of user time
+;; - gcl runs 300 digits in 19.2 seconds of user time
+;;
+;; So, it looks to me like sbcl and gcl could learn a thing or two
+;; from clisp's bignum implementation
