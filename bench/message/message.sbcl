@@ -21,22 +21,13 @@
 
 
 
-;; There seems to be a nasty bug in the version of SBCL I have.  If you run:
-;;    (spawn-thread #'(lambda () (work-fcn worker)))
-;; then immediately change the value of the variable "worker", the
-;; thread is spawned with the changed value.  In fact, in my tight
-;; loop, I would wind up missing the first 9 values of "worker"
-;; entirely, then spawning a handful of threads all with the 10th
-;; worker, then skipping another huge chunk, and so on.  That's
-;; really, really bad.  So, if +sbcl-broken-spawn+ is set, we work
-;; around this bug with a condition variable.
-;;
-;; NOTE: SURPRISINGLY, this condition variable really speeds things
-;; along.  The whole thing sets up much faster with it in place.
-(defconstant +sbcl-broken-spawn+ t)
-(defparameter *broken-spawn-mutex* nil)
-(defparameter *broken-spawn-cond* nil)
-(defparameter *broken-spawn-flag* nil)
+;; If we serialize the creation of threads, things go much more
+;; quickly, at least for my combination of sbcl and kernel
+;; version/configuration.
+(defconstant +serialize-threads+ t)
+(defparameter *serialize-threads-mutex* nil)
+(defparameter *serialize-threads-cond* nil)
+(defparameter *serialize-threads-flag* nil)
 
 
 ;; Note that sbcl seems to be limited to 512 calls to make-thread.
@@ -108,11 +99,11 @@
 
 
 (defmethod work-fcn ((obj worker))
-  (when +sbcl-broken-spawn+
-    (lock-mutex *broken-spawn-mutex*)
-    (setf *broken-spawn-flag* t)
-    (awaken-cond-waiter *broken-spawn-cond*)
-    (release-mutex *broken-spawn-mutex*))
+  (when +serialize-threads+
+    (lock-mutex *serialize-threads-mutex*)
+    (setf *serialize-threads-flag* t)
+    (awaken-cond-waiter *serialize-threads-cond*)
+    (release-mutex *serialize-threads-mutex*))
 
   (forever
    (lock-mutex (get-mutex obj))
@@ -151,18 +142,18 @@
         (setf (get-client worker) last-obj)
         (setf last-obj worker)
 
-        (when +sbcl-broken-spawn+
-          (setf *broken-spawn-flag* nil))
+        (when +serialize-threads+
+          (setf *serialize-threads-flag* nil))
 
         (spawn-thread #'(lambda () (work-fcn worker)))
 
-        (when +sbcl-broken-spawn+
-          (lock-mutex *broken-spawn-mutex*)
+        (when +serialize-threads+
+          (lock-mutex *serialize-threads-mutex*)
           (do ()
-              (*broken-spawn-flag*)
-            (or *broken-spawn-flag*
-                (wait-on-cond *broken-spawn-cond* *broken-spawn-mutex*)))
-          (release-mutex *broken-spawn-mutex*)))
+              (*serialize-threads-flag*)
+            (or *serialize-threads-flag*
+                (wait-on-cond *serialize-threads-cond* *serialize-threads-mutex*)))
+          (release-mutex *serialize-threads-mutex*)))
 
       (dotimes (i n)
 
@@ -187,5 +178,5 @@
 ;;            (sb-thread:terminate-thread thread)))
 
 
-(if +sbcl-broken-spawn+
-    (setf *broken-spawn-mutex* (create-mutex) *broken-spawn-cond* (create-cond)))
+(if +serialize-threads+
+    (setf *serialize-threads-mutex* (create-mutex) *serialize-threads-cond* (create-cond)))
