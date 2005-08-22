@@ -52,7 +52,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
    $count = 0; $showFeature = true; 
    
    if (HOMEPAGE_ROWS>0){ $maxRows = HOMEPAGE_ROWS; }
-   else { $maxRows = sizeof($Tests)+2; }   
+   else { $maxRows = sizeof($Tests)-2; }   
    
    foreach($Langs as $Row){
       $LangLink = $Row[LANG_LINK];
