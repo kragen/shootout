@@ -16,7 +16,7 @@ else { $S = 'fullcpu'; }
 
 list($Incl,$Excl) = ReadIncludeExclude();
 $Tests = ReadUniqueArrays('test.csv',$Incl);
-uasort($Tests, 'CompareTestName');
+if (SITE_NAME != 'core'){ uasort($Tests, 'CompareTestName'); }
 
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
