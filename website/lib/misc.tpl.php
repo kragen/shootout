@@ -3,7 +3,7 @@
 <!-- // PLAIN HTML //////////////////////////////////////// -->
 
 <div>
-<p class="rs"><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Changed)) ?></p>
+<p class="rs"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 </div>
 
 <div>

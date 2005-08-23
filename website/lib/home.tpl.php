@@ -14,7 +14,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;<?=$Headline;?></a></h4></td></tr>
 <tr><td>
 <p class="rs">Most recent measurement: 
-<strong><? printf('%s', gmdate("l, M d, Y", $Measured)) ?></strong>
+<strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
 <? printf(' %s GMT', gmdate("g:i a", $Measured)) ?>
 </p>
 <?=$Furthermore;?>
