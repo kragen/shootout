@@ -1,3 +1,4 @@
+<p><a href="http://user.it.uu.se/~kostis/Papers/hipe-sttt.pdf">The development of the HiPE system: design and experience report</a></p>
 <?=$Version;?>
 <p>Home Page: <a href="http://www.erlang.org/">http://www.erlang.org/</a></p>
 <p>Download: <a href="http://www.erlang.org/download.html">http://www.erlang.org/download.html</a></p>
