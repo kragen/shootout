@@ -58,7 +58,8 @@
 
 <tr class="b"><td><a class="ab" href="#contribute" name="contribute">How can I contribute a program or a fixed-program?</a></td></tr>
 <tr><td>
-<p><strong>Before</strong> contributing programs</p>
+<p>There are many contributors and few committers - a little more time spent by contributors saves committers a great deal more time.</p>
+<p>Before contributing programs</p>
 <ol>
 <li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
 <li>read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement&#8230;?</strong></a></li>
@@ -66,7 +67,7 @@
 </ol>
 
 <br />
-<p><strong>Follow these instructions step-by-step</strong> - for <em>our</em> convenience.</p>
+<p>Follow these instructions <strong>step-by-step</strong></p>
 <ol>
 <li>Start from the bottom. Upload &amp; <strong>Attach</strong> the program source-code file - do this first because it's easy to forget.</li>
 <li>Say in the <strong>Description</strong> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
