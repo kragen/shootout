@@ -1,10 +1,11 @@
-# $Id: Makefile,v 1.36 2005-08-19 06:41:44 igouy-guest Exp $
+# $Id: Makefile,v 1.37 2005-08-24 04:06:10 igouy-guest Exp $
 
 TESTS = \
     hello \
     ackermann \
     ary \
     binarytrees \
+    discovery \
     dispatch \
     echo \
     except \
@@ -47,7 +48,7 @@ TESTS = \
     takfp \
     tcpecho \
     tcprequest \
-    tcpsocket \    
+    tcpsocket \
     tcpstream \
     wc \
     wordfreq
