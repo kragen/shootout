@@ -2,7 +2,7 @@
 <ul>
   <li>read all of a redirected <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a> file from stdin</li>
   <li>define a collection of simple regex patterns,
-   representing a 8-mer and it's reverse complement (with a wildcard in one position), 
+   representing DNA 8-mers and their reverse complement (with a wildcard in one position), 
    and count matches in the redirected file
   </li>
   <li>write the regex pattern and count</li>
