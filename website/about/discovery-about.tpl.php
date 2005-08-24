@@ -13,7 +13,7 @@
 
 <p>Correct output for this 100KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=input">input file</a> (generated with the fasta program N = 10000), is</p>
 <pre>
-agggtaaa|(tttaccct) 0
+agggtaaa|tttaccct 0
 [cgt]gggtaaa|tttaccc[acg] 3
 a[act]ggtaaa|tttacc[agt]t 8
 ag[act]gtaaa|tttac[agt]ct 8
