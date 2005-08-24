@@ -1,4 +1,4 @@
-<p>Each program will be started first with argument N negated (reply to requests), and then once more with argument N and a lower priority (make requests).</p>
+<p>Each program will be started first with argument N negated (reply to requests), and then once more with argument N at a lower priority (make requests).</p>
 <ul>
    <li>N&#60;=0, start a TCP server that will reply to requests
       <ul>
