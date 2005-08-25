@@ -1,0 +1,129 @@
+/* The Computer Language Shootout Benchmarks
+   http://shootout.alioth.debian.org/
+
+   contributed by Dave Fladebo
+   compile: dmd -O -inline -release binarytrees.d
+*/
+
+import std.c.stdlib, std.stdio;
+
+void main(char[][] args)
+{
+    TreeNode*   stretchTree, longLivedTree, tempTree;
+    int         depth, minDepth, maxDepth, stretchDepth, N = args.length > 1 ? atoi(args[1]) : 1;
+
+    minDepth = 4;
+    maxDepth = (minDepth + 2) > N ? minDepth + 2 : N;
+    stretchDepth = maxDepth + 1;
+
+    stretchTree = TreeNode.BottomUpTree(0, stretchDepth);
+    writefln("stretch tree of depth ",stretchDepth,"\t check: ",stretchTree.ItemCheck);
+    TreeNode.DeleteTree(stretchTree);
+
+    longLivedTree = TreeNode.BottomUpTree(0, maxDepth);
+
+    for(depth = minDepth; depth <= maxDepth; depth += 2)
+    {
+        int check, iterations = 1 << (maxDepth - depth + minDepth);
+
+        for(int i = 0; i < iterations; i++)
+        {
+            tempTree = TreeNode.BottomUpTree(i, depth);
+            check += tempTree.ItemCheck;
+            TreeNode.DeleteTree(tempTree);
+
+            tempTree = TreeNode.BottomUpTree(-i, depth);
+            check += tempTree.ItemCheck;
+            TreeNode.DeleteTree(tempTree);
+        }
+
+        writefln(iterations * 2,"\t trees of depth ",depth,"\t check: ",check);
+    }
+
+    writefln("long lived tree of depth ",maxDepth,"\t check: ",longLivedTree.ItemCheck);
+}
+
+struct TreeNode
+{
+public:
+    static TreeNode* BottomUpTree(int item, int depth)
+    {
+        if (depth > 0)
+            return TreeNode(BottomUpTree(2 * item - 1, depth - 1)
+                           ,BottomUpTree(2 * item, depth - 1)
+                           ,item);
+        else
+        {
+            return TreeNode(item);
+        }
+    }
+
+    int ItemCheck()
+    {
+        if(!left)
+            return item;
+        else
+            return item + left.ItemCheck() - right.ItemCheck();
+    }
+
+    static void DeleteTree(TreeNode* tree)
+    {
+        if(tree.left)
+        {
+            DeleteTree(tree.left);
+            DeleteTree(tree.right);
+        }
+
+        delete tree;
+    }
+
+private:
+    TreeNode*           left, right;
+    int                 item;
+
+    static TreeNode* opCall(int item)
+    {
+        TreeNode* t = new TreeNode;
+        t.item = item;
+        return t;
+    }
+
+    static TreeNode* opCall(TreeNode* left, TreeNode* right, int item)
+    {
+        TreeNode* t = new TreeNode;
+        t.left = left;
+        t.right = right;
+        t.item = item;
+        return t;
+    }
+
+    static TreeNode*    list;
+    TreeNode*           next;
+
+    new(uint sz)
+    {
+        TreeNode* tn;
+        if(list)
+        {
+            tn = list;
+            list = tn.next;
+            tn.left = tn.right = typeof(left).init;
+            tn.item = typeof(item).init;
+        }
+        else
+        {
+            tn = cast(TreeNode*)new void[sz];
+        }
+        return tn;
+    }
+
+    delete(void* p)
+    {
+        if(p)
+        {
+            TreeNode* tn = cast(TreeNode*)p;
+            tn.next = list;
+            list = tn;
+        }
+    }
+}
