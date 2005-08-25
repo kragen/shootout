@@ -79,9 +79,8 @@ foreach($Tests as $Row){
    if (isset($Data[$Link])){
       $v = $Data[$Link];     
 
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" 
-         title="%s program and logs for the %s performance benchmark">%s</a></td>', 
-         $Link, $SelectedLang, $v[N_ID], $Sort, $LangName, $Name, $Name);
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
+         $Link, $SelectedLang, $v[N_ID], $Sort, $Name);
                 
       if ($v[N_LINES] > 0){ 
       
@@ -109,9 +108,8 @@ foreach($Tests as $Row){
       }
 
    } else {
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s" 
-         title="No %s program has been written for the %s performance benchmark">%s</a></td>', 
-         $Link, $SelectedLang, $Sort, $LangName, $Name, $Name); echo "\n";
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
+         $Link, $SelectedLang, $Sort, $Name); echo "\n";
       $message = 'No&nbsp;program';
       printf('<td class="r">%s</td><td></td><td></td><td></td><td></td>', $message); 
    }

@@ -131,8 +131,8 @@ foreach($Accepted as $d){
    $lines = $d[DATA_LINES];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="%s program and logs for the %s performance benchmark">%s</a></td>', 
-      $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
+      $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
 
    if ($SelectedTest==STARTUP){
       printf('<td %s>%0.2f</td><td %s>%s</td><td>&nbsp;</td><td %s>%d</td>',
@@ -163,8 +163,8 @@ foreach($Langs as $k => $v){
          $fullcpu = $d[DATA_FULLCPU];
          $lines = $d[DATA_LINES];     
                     
-         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="%s program and logs for the %s performance benchmark">%s</a></td>', 
-            $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
+            $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
@@ -199,8 +199,8 @@ if (sizeof($Special)>0){
       $lines = $d[DATA_LINES];
 
       printf('<tr class="%s">',$RowClass); echo "\n";
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="Alternative %s implementation for the %s benchmark">%s</a></td>', 
-         $SelectedTest,$k,$id,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s"">%s</a></td>', 
+         $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
 
       if ($fullcpu > PROGRAM_TIMEOUT){
          if ($SelectedTest==STARTUP){
@@ -237,8 +237,8 @@ if (sizeof($No_Program_Langs)>0){
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];            
 
-         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s" title="No %s program has been written for the %s performance benchmark">%s</a></td>', 
-            $SelectedTest,$k,$Sort,$Name,$TestName,$HtmlName); echo "\n";
+         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
+            $SelectedTest,$k,$Sort,$HtmlName); echo "\n";
 
          echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';       
          echo "</tr>\n";

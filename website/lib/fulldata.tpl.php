@@ -132,8 +132,8 @@ foreach($Selected as $row){
 $RowClass = 'c';
 foreach($NData as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
-      $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_FULL],$TestName,$row[N_HTML]); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
+      $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_HTML]); echo "\n";
 
    foreach($row[N_FULLCPU] as $v){ 
       printf('<td class="r">%0.2f</td>', $v); echo "\n"; 
@@ -167,8 +167,8 @@ foreach($NData as $row){
 $RowClass = 'c';
 foreach($NData as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s" title="%s program and logs for the %s benchmark">%s</a></td>', 
-      $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_FULL],$TestName,$row[N_HTML]); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
+      $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_HTML]); echo "\n";
 
    foreach($row[N_MEMORY] as $v){ 
       if ($v==0){ $kb = '?'; } else { $kb = number_format((double)$v); }

@@ -43,7 +43,8 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       $TestName = $Row[TEST_NAME];
       $TestTag = $Row[TEST_TAG];
 
-      printf('<p class="a"><a title="Check CPU times and source-code for the %s benchmark"', $TestName);
+      //printf('<p class="a"><a title="Check CPU times and source-code for the %s benchmark"', $TestName);
+      printf('<p class="a"><a ');      
       printf('href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
       echo "\n";
    }
@@ -64,7 +65,8 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             
       if ($count < $maxRows){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   
-      printf('<p><a title="Compare %s with another language on all benchmarks"', $LangName);
+      //printf('<p><a title="Compare %s with another language on all benchmarks"', $LangName);
+      printf('<p><a ', $LangName);      
       printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
    }
