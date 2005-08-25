@@ -30,7 +30,15 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <p class="thp">Source-code, CPU times</p>
 </th>
 
-<th class="c" colspan="2">
+<?   
+   if (HOMEPAGE_ROWS>0){ $maxRows = HOMEPAGE_ROWS; }
+   else { $maxRows = sizeof($Tests)-2; } 
+   $maxLangs = sizeof($Langs);
+   if ($maxLangs%$maxRows > 0){ $span = $maxLangs/$maxRows + 1; }
+   else { $span = $maxLangs/$maxRows; }
+?>
+
+<th class="c" colspan="<?=$span;?>">
 <a class="ab" href="#compare" name="compare"><strong>2&nbsp;Compare</strong></a>
 <p class="thp">Relative performance on all benchmarks</p>
 </th>
@@ -43,7 +51,6 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
       $TestName = $Row[TEST_NAME];
       $TestTag = $Row[TEST_TAG];
 
-      //printf('<p class="a"><a title="Check CPU times and source-code for the %s benchmark"', $TestName);
       printf('<p class="a"><a ');      
       printf('href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
       echo "\n";
@@ -53,11 +60,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <td>
 <?
-   $count = 0; $showFeature = true; 
-   
-   if (HOMEPAGE_ROWS>0){ $maxRows = HOMEPAGE_ROWS; }
-   else { $maxRows = sizeof($Tests)-2; }   
-   
+   $count = 0; $showFeature = true;    
    foreach($Langs as $Row){
       $LangLink = $Row[LANG_LINK];
       $LangName = $Row[LANG_FULL];
@@ -65,7 +68,6 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             
       if ($count < $maxRows){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
                   
-      //printf('<p><a title="Compare %s with another language on all benchmarks"', $LangName);
       printf('<p><a ', $LangName);      
       printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
       echo "\n";
