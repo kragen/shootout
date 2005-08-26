@@ -36,7 +36,7 @@ printf('<p>Show <strong><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s
 <img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>&amp;sort=<?=$Sort;?>"
    alt="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
    title="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
-   width="300" height="380"
+   width="300" height="300"
  />
 </td></tr>
 

@@ -34,10 +34,15 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
 
 // CHART /////////////////////////////////////////////////////
 
+// This is a mess! The chart should adjust vertically to show 
+// however many tests there are (with some minimum height)
+// and the scale and margins should be constants in config.php
+// so that the headtohead.php page can adjust the image size.
+
    $w = 300;
    $w2 = 150;
    $o = 150;   
-   $h = 380;
+   $h = 300;
    $hsec = 5;
    $hmem = 1;
    $vscale = CHART_VSCALE;
