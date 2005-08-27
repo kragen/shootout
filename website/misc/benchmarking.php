@@ -24,7 +24,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 <ul>  
   <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">"Performing Lisp Analysis of the FANNKUCH Benchmark"</a> (55KB postscript)</p></li>
   <li><p><a href="http://www-128.ibm.com/developerworks/java/library/j-jtp02225.html?ca=drs-j0805#4.0">Java theory and practice: Anatomy of a flawed microbenchmark. Is there any other kind?</a></p></li>
-  <li><p><a href="http://www.dreamsongs.com/NewFiles/Timrep.pdf">Performance and Evaluation of Lisp Systems</a>, Richard P. Gabriel, 1985 (1.1MB pdf)</p></li>
+  <li><p><a href="http://www.brics.dk/~hosc/vol04/02-fateman.html">FRPOLY: A Benchmark Revisited</a></p></li>
   <li><p><a href="http://h21007.www2.hp.com/dspp/tech/tech_TechDocumentDetailPage_IDX/1,1701,2155,00.html">Writing micro-benchmarks for Java&#x2122; HotSpot JVM</a></p></li>
 </ul>
 <p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>

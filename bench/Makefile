@@ -1,10 +1,11 @@
-# $Id: Makefile,v 1.37 2005-08-24 04:06:10 igouy-guest Exp $
+# $Id: Makefile,v 1.38 2005-08-27 19:43:54 igouy-guest Exp $
 
 TESTS = \
     hello \
     ackermann \
     ary \
     binarytrees \
+    chameneos \
     discovery \
     dispatch \
     echo \
