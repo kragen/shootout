@@ -18,6 +18,8 @@ investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="
 <p>For more information about the <?=$Family;?> implementation we measured see
 <a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.
 </p>
+<p>For more information about a Timeout or Error click the program name and scroll-down to the 'build &amp; benchmark results'.</p>
+
 </div>
 
 
