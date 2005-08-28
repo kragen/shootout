@@ -12,7 +12,7 @@ $Family = $Row[LANG_FAMILY];
 
 <p>Check for benchmarks without a <strong><?=$LangName;?></strong> program 
 and for benchmarks where the <?=$Family;?> program gives a Timeout or Error;
-investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant <?=$Family;?> programs</a>.
+investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant programs</a>.
 </p>
 
 <p>For more information about the <?=$Family;?> implementation we measured see
