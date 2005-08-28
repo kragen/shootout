@@ -83,9 +83,12 @@ if ($T=='all'){
          $TemplateName = 'language.tpl.php'; 
          $Title = $LangName.' benchmarks';  
          $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
-         $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';    
-         $MetaKeywords = '<meta name="keywords" content="'.$Title.
-            ' programming language performance benchmark" /><meta name="description" content="'.$Title.'." />';                    
+         $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />'; 
+         $Family = $Langs[$L][LANG_FAMILY];
+         $MetaKeywords = '<meta name="keywords" content="'.
+            $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.  
+            '<meta name="description" content="'.
+            'Summary of '.$LangName.' performance on benchmark programs." />';                    
       }
       
       $About = & new Template(ABOUT_PATH);
