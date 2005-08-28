@@ -1,0 +1,125 @@
+-----------------------------------------------------------------------
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Jim Rogers
+-----------------------------------------------------------------------
+with Ada.Text_Io; use Ada.Text_Io;
+with Ada.Integer_Text_Io; use Ada.Integer_Text_Io;
+with Ada.Command_Line; use Ada.Command_Line;
+
+procedure Chameneos is
+   type Colour is (Blue, Red, Yellow, Faded);
+   protected type Meeting_Place(N : Natural) is
+      entry Other_Creatures_Colour(Me : in Colour; Other : out Colour);
+      entry Wait_Others(Me : in Colour; Other : out Colour);
+   private
+      First_Call : Boolean := True;
+      Must_Wait : Boolean := True;
+      Second_Done : Boolean := False;
+      First_Colour : Colour;
+      Second_Colour : Colour;
+      Count : Natural := N;
+   end Meeting_Place;
+   protected body Meeting_Place is
+      entry Other_Creatures_Colour(Me : in Colour; Other : out Colour) 
+         when Must_Wait is
+      begin
+         if First_Call then
+            if Count > 0 then
+               Count := Count - 1;
+               First_Call := False;
+               First_Colour := Me;
+               requeue Wait_Others;
+            else
+               Other := Faded;
+               Second_Done := True;
+            end if;
+         else
+            Second_Colour := Me;
+            Other := First_Colour;
+            First_Call := True;
+            Second_Done := True;
+         end if;
+      end Other_Creatures_Colour;
+      entry Wait_Others(Me : in Colour; Other : out Colour) when Second_Done is
+      begin
+         Other := Second_Colour;
+         Second_Done := False;
+      end Wait_Others;
+   end Meeting_Place;
+   type Meeting_ref is access Meeting_Place;
+   task type Creature(My_Colour : Colour; Place : Meeting_Ref) is
+      entry Report(Count : out Natural);
+   end Creature;
+   task body Creature is
+      Meeting_Count : Natural := 0;
+      Me : Colour := My_Colour;
+      function Complement(Other : Colour) return Colour is
+         Result : Colour;
+      begin
+         case Me is
+            when Blue =>
+               if Other = Red then
+                  Result := Yellow;
+               else
+                  Result := Red;
+               end if;
+            when Red =>
+               if Other = Blue then
+                  Result := Yellow;
+               else
+                  Result := Blue;
+               end if;
+            when Yellow =>
+               if Other = Blue then
+                  Result := Red;
+               else 
+                  Result := Blue;
+               end if;
+            when others =>
+               Result := Me;
+         end case;
+         return Result;
+      end Complement;
+      
+      procedure Meet_Other_Creature is
+         Other : Colour;
+      begin
+         Place.Other_Creatures_Colour(Me, Other);
+         if Other = Faded then
+            Me := Other;
+         else
+            Meeting_Count := Meeting_Count + 1;
+            Me := Complement(Other);
+         end if;
+      end Meet_Other_Creature;
+      
+   begin
+      delay 0.0;
+      while Me /= Faded loop
+         Meet_Other_Creature;
+         delay 0.0;
+      end loop;
+      accept Report(Count : out Natural) do
+         Count := Meeting_Count;
+      end Report;
+   end Creature;
+   type Creature_Ref is access creature;
+   Creatures : array(Colour range Blue..Yellow) of Creature_Ref;
+   M : Meeting_Ref;
+   Meetings : Natural;
+   Total : Natural := 0;
+begin
+   M := new Meeting_Place(Natural'Value(Argument(1)));
+   for I in Creatures'range loop
+      Creatures(I) := new Creature(I, M);
+   end loop;
+   for I in Creatures'range loop
+      Creatures(I).Report(Meetings);
+      Total := Total + Meetings;
+   end loop;
+   Put(Item => Total, Width => 1);
+   New_Line;
+
+end Chameneos;

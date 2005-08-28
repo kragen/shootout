@@ -185,7 +185,7 @@ foreach($Tests as $Row){
 </td></tr>
 
 
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$LangName;?> language</a></h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about <?=$LangName;?></a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 
 </table>
