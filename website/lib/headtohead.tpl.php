@@ -11,8 +11,7 @@ $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $Link = $Row[LANG_LINK];
 
-printf('<p>Show <strong><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s&amp;sort=%s" 
-   title="Show %s benchmarks summary">%s benchmarks</strong></a> summary.</p>', 
+printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s&amp;sort=%s" title="Show %s benchmarks summary">benchmarks with no %s program</a>, or Timeout/Error.</p>', 
    $Link, $Link, $Sort, $LangName, $LangName);
 
 ?>
