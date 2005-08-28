@@ -1,16 +1,28 @@
 <?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
-<!-- // MENU /////////////////////////////////////////////////// -->
-
 <div>
 <? 
-MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort); 
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $Link = $Row[LANG_LINK];
 ?>
+
+<p>Check for benchmarks without a <strong><?=$LangName;?></strong> program 
+and for benchmarks where the <?=$LangName;?> program gives a Timeout or Error;
+investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant <?=$LangName;?> programs</a>.
+</p>
+
+<p>For more information about the <?=$LangName;?> implementation we measured see
+<a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.
+</p>
+</div>
+
+
+<!-- // MENU /////////////////////////////////////////////////// -->
+<div>
+<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort); ?>
 </div>
 
 <!-- // TAG /////////////////////////////////////////////////// -->
@@ -18,7 +30,6 @@ $Link = $Row[LANG_LINK];
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks</a></h4>
-<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?>)</a></p>
 </td></tr>
 
 
@@ -28,17 +39,11 @@ $Link = $Row[LANG_LINK];
 
 <tr><td><table>
 <tr>
-<th class="c">&nbsp;</th>
+<th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
 <th>CPU Time</th>
 <th>Code Lines</th>
-<th class="c">&nbsp;</th>
-</tr>
-
-<tr>
-<th>Program &amp; Logs</th>
-<th colspan="4">&nbsp;</th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
@@ -94,7 +99,7 @@ foreach($Tests as $Row){
 </td></tr>
 
 
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$LangName;?> language</a></h4></td></tr>
+<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about <?=$LangName;?></a></h4></td></tr>
 <tr><td><?=$About;?></td></tr>  
 
 </table>
