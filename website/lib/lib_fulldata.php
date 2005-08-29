@@ -112,16 +112,16 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
 // ADD DUMMY VALUES TO PRESERVE SELECTION IN DROP-DOWN MENUS       
 
    list($a, $b) = explode('-', $p1); $c = $Langs[$a]; $d = IdName($b);    
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);    
+   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);    
 
    list($a, $b) = explode('-', $p2); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);   
+   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);   
 
    list($a, $b) = explode('-', $p3); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);     
+   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);     
 
    list($a, $b) = explode('-', $p4); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_HTML].$d);     
+   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);     
         
         
    echo '<p class="h"><strong>Choose</strong> programs for side-by-side comparison: <br />', "\n";    

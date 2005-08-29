@@ -90,7 +90,7 @@ components continues to be a central idea in the design."<br />
 <blockquote><p>'Our system [Erlang] was originally designed for building telecoms switching systems.
 Telecoms switching systems have demanding requirements in terms
 of reliability, fault-tolerance etc. Telecoms systems are expected to operate
-“forever,” they should exhibit soft real-time behaviour, and they should behave
+"forever", they should exhibit soft real-time behaviour, and they should behave
 reasonably in the presence of software and hardware errors.' 
 <br /><a href="http://www.sics.se/~joe/thesis/armstrong_thesis_2003.pdf">Making reliable distributed systems in the presence of software errors</a>, page 13. (840KB pdf)
 </p></blockquote>
@@ -99,7 +99,7 @@ reasonably in the presence of software and hardware errors.'
 <tr><td>
 <blockquote><p>"In return for learning a new language, the user is rewarded by the
 ability to write short, clear programs that are guaranteed to work well on thousands of machines
-in parallel. Ironically – but vitally – the user need know nothing about parallel programming; the
+in parallel. Ironically - but vitally - the user need know nothing about parallel programming; the
 language and the underlying system take care of all the details.<br/><br/>
 It may seem paradoxical to use an interpreted language in a high-throughput environment, but
 we have found that the CPU time is rarely the limiting factor; the expressibility of the language

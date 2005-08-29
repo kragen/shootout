@@ -185,10 +185,10 @@ Do you want to help with the chores?</p>
 each new target source file will start from the <strong>comment line</strong> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
  SPLITFILE=<em>target-filename</em> directive or end-of-file.</p>
 <p>So, the new target source file <em>body.e</em> will start with the line
-<pre>-- SPLITFILE=body.e</pre>
-and end with the empty line following
+<pre>-- SPLITFILE=body.e</pre><br/>
+<p>and end with the empty line following</p>
 <pre>end -- class BODY</pre>
-</p>
+
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#unroll" name="unroll">How should I implement loops?</a></td></tr>
