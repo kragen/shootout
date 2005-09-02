@@ -1,0 +1,59 @@
+;;; -*- mode: lisp -*-
+;;; http://shootout.alioth.debian.org/
+;;; written by Patrick Frankenberger
+;;; modified by Ralph Richard Cook
+;;; slight optimization by Risto Laakso
+
+(defparameter *line* nil)
+
+(defparameter +trans-table+ 
+  (let ((arr (make-array 256 :element-type 'base-char :initial-element #\space :adjustable nil :fill-pointer nil)))
+    (loop for ch across "ACGTUMRYKVHDB" for tr-ch across "TGCAAKYRMBDHV" 
+	  do (setf (aref arr (char-code ch)) tr-ch
+		   (aref arr (char-code (char-downcase ch))) tr-ch))
+    (coerce arr 'string)))
+(declaim (type (simple-array base-char *) +trans-table+))
+	  
+(defmacro complem (code)
+  `(aref +trans-table+ (char-code ,code)))
+
+(defun write-fix-lines (data)
+  (declare (type (simple-array base-char *) data))
+  (do ((from 0)
+       (to (1- (length data))))
+      ((> from to) nil)
+      (declare (fixnum from to))
+    (let ((fromchar (aref data from))
+          (tochar (aref data to)))
+      (declare (base-char fromchar tochar))
+      (cond ((char= fromchar #\Newline) (incf from))
+            ((char= tochar #\Newline) (decf to))
+            (t (progn
+                 (setf (aref data from) (complem tochar))
+                 (setf (aref data to) (complem fromchar))
+                 (incf from)
+                 (decf to))))))
+  (write-string data))
+
+(defun write-reverse-complement (title data)
+  (write-line title)
+  (write-fix-lines data))
+
+(defun read-pop (stream eof-errorp eof-value)
+  (if *line* (pop *line*)
+      (read-line stream eof-errorp eof-value)))
+
+(defun get-body ()
+  (with-output-to-string (s)
+      (let ((line ""))
+        (loop 
+          (setf line (read-pop *standard-input* nil nil))
+          (cond ((null line) (return))
+                ((char= (aref line 0) #\>) (progn (push line *line*) (return)))
+                (t (progn (write-string line s) (write-char #\Newline s))))))))
+
+(defun main ()
+  (do ((title (read-pop *standard-input* nil nil)
+              (read-pop *standard-input* nil nil)))
+      ((null title) nil)
+    (write-reverse-complement title (get-body))))
