@@ -1,14 +1,17 @@
--- $Id: random.lua,v 1.2 2004-06-12 16:19:43 bfulgham Exp $
--- http://www.bagley.org/~doug/shootout/
--- implemented by: Roberto Ierusalimschy
+--- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by: Roberto Ierusalimschy
+-- modified by Mike Pall
 
 local IM = 139968
 local IA = 3877
 local IC = 29573
 
 local LAST = 42
-function gen_random(max)
-    LAST = math.mod((LAST * IA + IC), IM)
+local mod = math.mod
+local function gen_random(max)
+    LAST = mod((LAST * IA + IC), IM)
     return( (max * LAST) / IM )
 end
 

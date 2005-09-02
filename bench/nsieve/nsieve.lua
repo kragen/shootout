@@ -1,13 +1,15 @@
--- The Great Computer Language Shootout
+--- The Great Computer Language Shootout
 -- http://shootout.alioth.debian.org/
+--
 -- contributed by Isaac Gouy
+-- modified by Mike Pall
 
 
 function nsieve(m,isPrime)
    for i=2,m do
       isPrime[i] = true
    end
-   count = 0
+   local count = 0
 
    for i=2,m do
       if isPrime[i] then
