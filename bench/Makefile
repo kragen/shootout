@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2005-08-27 19:43:54 igouy-guest Exp $
+# $Id: Makefile,v 1.39 2005-09-05 05:19:33 igouy-guest Exp $
 
 TESTS = \
     hello \
@@ -6,7 +6,6 @@ TESTS = \
     ary \
     binarytrees \
     chameneos \
-    discovery \
     dispatch \
     echo \
     except \
@@ -38,6 +37,7 @@ TESTS = \
     prodcons \
     random \
     raytracer \
+    regexdna \
     regexmatch \
     revcomp \
     reversefile \

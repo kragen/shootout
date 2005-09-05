@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.1 2005-08-24 04:06:10 igouy-guest Exp $
+# $Id: Makefile,v 1.1 2005-09-05 05:19:38 igouy-guest Exp $
 include ../../Make.header
 
-TEST    := discovery
-TITLE   := Count DNA 8-mers with one wildcard in the regex 
+TEST    := regexdna
+TITLE   := Match DNA 8-mers and substitute expanded IUB codes
 
 #XLABEL  := N (number of iterations)
 
