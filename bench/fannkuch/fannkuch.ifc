@@ -1,108 +1,82 @@
 ! -*- mode: f90 -*-
 !
-! $Id: fannkuch.ifc,v 1.3 2005-06-06 20:06:03 sgeard-guest Exp $ ; $Name:  $
+! $Id: fannkuch.ifc,v 1.4 2005-09-07 21:59:22 sgeard-guest Exp $ ; $Name:  $
 !
-! Fannkuch access function implementation
-! Simon Geard, 1/12/04
+! The Great Computer Language Shootout
+! http://shootout.alioth.debian.org/
+
+! contributed by Steve Decker
+! based on the D version by Dave Fladebo
+! compilation:
+!    gfortran -O3 -fomit-frame-pointer fannkuch.f90
 !
-! Building info.
-! ==============
-!
-! Linux  - using the Intel Fortran90 compiler:
-!
-!          ifort fannkuch.f90 -O3 -static-libcxa -o fannkuch
-!
+! Tested with:
+!              ifort --version  -> ifort (IFORT) 9.0  20050430
+!              g95 --version    -> G95 (GCC 4.0.1 (g95!) Aug 27 2005)
+!              gfortran
 
 program fannkuch
   implicit none
-  integer count, i, num
-  character(len=8) argv
-  integer, dimension(:), allocatable :: data
-  intrinsic max
 
-  call getarg(1,argv)
-  read(argv,*) num
-  allocate(data(num))
-
-  count = 0
-  data = (/ (i,i=1,num) /) ! Must start with the smallest number
-  do i=1,factorial(num)
-     count = max(count,countFlips(data))
-     call getNextPerm(data)
-  end do
+  integer :: n, i, r, flips, temp, j, k, maxFlipsCount = 0
+  character(len=2) :: argv
+  integer, dimension(:), allocatable :: perm, perm1, cnt
   
-  deallocate(data)
-  
-  write(*,'(2(a,i0))') 'Pfannkuchen(',num,') = ',count
+  call get_command_argument(1, argv)
+  read (argv, *) n
 
-contains
+  allocate(perm(n), perm1(n), cnt(n))
 
-  recursive integer function factorial(n) result(if)
-    integer, intent(in) :: n
-    if (n == 1) then
-       if = 1
-    else
-       if = n*factorial(n-1)
-    end if
-  end function factorial
+  ! Initialize permutation
+  perm1 = (/ (i, i = 1, n) /)
 
-  ! Reverse an array
-  subroutine reverse(data)
-    integer, dimension(:), intent(inout) :: data
-    integer, dimension(size(data)) :: work
-    integer i
-   ! print *,'reversing ',data
-    forall (i=1:size(data))
-       work(i) = data(size(data)-i+1)
-    end forall
-    data = work
-  end subroutine reverse
+  r = n + 1
+  outer: do  ! For all n! permutations
+     do while (r > 2)
+        cnt(r-1) = r
+        r = r - 1
+     end do
+     if (perm1(1) > 1 .and. perm1(n) < n) then
+        perm = perm1
 
-  ! Count the number of flips in a permutation
-  integer function countFlips(data)
-    integer, dimension(:), intent(in) :: data
-    integer, dimension(size(data)) :: work
-    work = data
-    countFlips = 0
-    do
-       if (work(1) <= 1) exit
-       call reverse(work(1:work(1)))
-       countFlips = countFlips + 1
-    end do
-  end function countFlips
+        i = perm(1)
+        flips = 0
+        do while (i > 1)  ! Perform flips until first element is 1
+           temp = perm(i)
+           perm(i) = i
+           i = temp
+           j = 2; k = i - 1
+           do while (j < k) 
+              temp = perm(j)
+              perm(j) = perm(k)
+              perm(k) = temp
+              j = j + 1; k = k - 1
+           end do
+           flips = flips + 1  ! Count number of flips
+        end do
+        
+        if (flips > maxFlipsCount) maxFlipsCount = flips
+     end if
+     do  ! Produce next permutation
+        if (r == n+1) then
+           write(*,"(2(a,i0))") "Pfannkuchen(", n, ") = ", maxFlipsCount
+           exit outer
+        end if
 
-  ! Get next permutation
-  subroutine getNextPerm(data)
-    integer, dimension(:), intent(inout) :: data
-    integer :: i, kx, e, ci, ce, tmp, N
+        temp = perm1(1)
+        i = 1
+        do while (i < r)
+           j = i + 1
+           perm1(i) = perm1(j)
+           i = j
+        end do
+        perm1(r) = temp
+        ! perm1(1:r) = cshift(perm1(1:r),1) could replace the previous 8 lines,
+        ! but this is much slower on the GNU compilers.
 
-    ! Find largest k s.t. data(k) < data(k+1)
-    N = size(data)
-    kx = 0
-    do i=1,N-1
-       if (data(i) < data(i+1)) then
-          kx = i
-       end if
-    end do
-
-    ! Find smallest data(k+j) > data(k)
-    e = data(kx)
-    ci = kx
-    do i=kx+1,N
-       if (data(i) > e .and. (ci == kx .or. data(i) < ce)) then
-          ci = i
-          ce = data(i)
-       end if
-    end do
-
-    ! Swap data(k) and data(k+j)
-    tmp = data(kx)
-    data(kx) = data(ci)
-    data(ci) = tmp
-
-    ! Reverse data(k+1) ... data(N)
-    call reverse(data(kx+1:N))
-    
-  end subroutine getNextPerm
-
+        cnt(r) = cnt(r) - 1
+        if (cnt(r) > 1) exit
+        r = r + 1
+     end do
+  end do outer
 end program fannkuch
