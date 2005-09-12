@@ -22,7 +22,7 @@ printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Compare <?=$LangName;?> to <?=$LangName2;?> programs</a></h4>
-<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?>)</a> relative performance - how much <em>more</em> Memory, how much <em>more</em> CPU Time, did each program use?
+<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?>)</a> relative performance - how much <em>more</em> Memory, <strong>how much <em>more</em></strong> CPU Time, did each program use?
 </p>
 </td></tr>
 
