@@ -19,7 +19,7 @@ end
 
 local N = tonumber(arg and arg[1]) or 10
 local cofunc = wrap(link)
-cofunc(3000)
+cofunc(500)
 local count = 0
 for i = 1,N do count = count + cofunc() end
 io.write(count, "\n")
