@@ -1,1 +1,1 @@
-<p>Bigloo (2.6f)</p>
+<p>Bigloo (2.7a)</p>

@@ -38,10 +38,8 @@
        Note => 'GNU AWK',
        Ext  => 'awk',
        Verfun => sub {
-       	   print "WHOO: $ENV{GAWK}\n";
 	   my $ver = `$ENV{GAWK} --version`;
 	   $ver =~ /(GNU\s.*)/;
-	   print "WHEE!:  $1\n\n\n";
 	   return($1);
        },
      },
