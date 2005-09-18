@@ -36,7 +36,7 @@ GCL_ANSI=1
 CHICKEN_REPOSITORY=/usr/share/chicken
 
 # support XDS (C)
-PATH=/opt/xds_c/bin:$PATH
-XDSDIR=/opt/xds_c
+PATH=/opt/xds_x86/bin:$PATH
+XDSDIR=/opt/xds_x86
 
 export PATH LD_LIBRARY_PATH MANPATH GCL_ANSI CHICKEN_REPOSITORY XDSDIR

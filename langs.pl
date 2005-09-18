@@ -386,7 +386,7 @@
        Ext  => 'f90',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{G95} --version 2>&1`);
-	   $ver =~ /(G95.*)\n.*/;
+	   $ver =~ /(GNU Fortran 95.*)\n.*/;
 	   return($1);
        },
      },
@@ -710,9 +710,25 @@
        Note => 'Lean component development: modules & OO',
        Ext  => 'oberon',
        Verfun => sub {
-	   my $ver = `$ENV{OO2C} --version 2>&1`;
+	   my $ver = `$ENV{OOC} --version 2>&1`;
 	   $ver =~ s/oo2c\/(\w+) (\d+\.\d+\.\d+)/oo2c $2 (using $1)/;
 	   return($ver);
+       },
+     },               
+
+     xds =>
+     { Lang => 'Oberon-2',
+       Name => 'XDS',
+       Status => '+',
+       Home => 'http://www.excelsior-usa.com/xdsdl.html',
+       Down => 'http://www.excelsior-usa.com/xdsdl.html?h=4B4D4538345F3034544C45452E524547',
+       Type => 'native compiled',
+       Note => 'Proprietary Oberon-2, with native code generator',
+       Ext  => 'oberon',
+       Verfun => sub {
+	   my $ver = `$ENV{XDS} =help 2>&1`;
+	   $ver =~ /^(.*)\n/;
+	   return("$1");
        },
      },               
 
@@ -1079,6 +1095,21 @@
        Verfun => sub {
            chomp(my($ver) = grep(/^GNU.*/i,`$ENV{GST} --version 2>&1`));
 	   return ($ver);
+       },
+     },
+
+     tcc =>
+     { Lang => 'C',
+       Name => 'Tiny C',
+       Status => '+',
+       Home => 'http://fabrice.bellard.free.fr/tcc/',
+       Type => 'native compiled',
+       Note => 'Compile and execute C code everywhere',
+       Ext => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{TCC} -v`);
+	   $ver =~ s/tcc version//s;
+	   return($ver);
        },
      },
 

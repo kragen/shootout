@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2005-09-05 05:19:33 igouy-guest Exp $
+# $Id: Makefile,v 1.40 2005-09-18 05:44:18 bfulgham Exp $
 
 TESTS = \
     hello \
@@ -57,7 +57,7 @@ TESTS = \
 .PHONY: all plot test show clean clobber report
 
 all plot test loc show clean clobber:
-	-@for t in $(TESTS) ; do (cd $$t && $(BIN)/reset.bash &&  make $@) ; done
+	-@for t in $(TESTS) ; do (cd $$t && $(BIN)/reset.bash &&  make -i $@) ; done
 
 report: $(filter-out %.ocamlb,$(foreach dir,$(TESTS),$(wildcard $(dir)/$(dir).*)))
 	@../bin/make_report $^
