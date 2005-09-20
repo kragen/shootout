@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2005-09-05 05:19:38 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2005-09-20 16:04:35 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := regexdna
@@ -22,7 +22,7 @@ GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100000,300000,500000 \
-	  --inputfile ../../website/desc/discovery-input.txt \
+	  --inputfile ../../website/desc/regexdna-input.txt \
 	  --uniqueinput
 
 include ../../Make.footer
