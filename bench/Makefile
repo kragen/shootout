@@ -1,5 +1,4 @@
-# $Id: Makefile,v 1.40 2005-09-18 05:44:18 bfulgham Exp $
-
+# $Id: Makefile,v 1.41 2005-09-20 04:14:19 bfulgham Exp $
 TESTS = \
     hello \
     ackermann \
@@ -22,7 +21,6 @@ TESTS = \
     lists \
     mandelbrot \
     matrix \
-    matrixnorm \
     message \
     methcall \
     moments \
@@ -32,7 +30,6 @@ TESTS = \
     nsievebits \
     objinst \
     pidigits \
-    plugin \
     process \
     prodcons \
     random \
@@ -53,6 +50,7 @@ TESTS = \
     tcpstream \
     wc \
     wordfreq
+BIN=/opt/shootout/shootout/bin
 
 .PHONY: all plot test show clean clobber report
 
