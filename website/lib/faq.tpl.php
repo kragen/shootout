@@ -96,7 +96,6 @@ language, benchmark, your-name, date, (version)<br />
 <li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
 </ul>
 <p>And then, <em>maybe</em>, we just-might consider it. We will accept <strong>and reject</strong> benchmarks in a capricious, unfair, biased fashion.</p>
-<p>(See this <a href="http://lists.alioth.debian.org/pipermail/shootout-list/2005-March/001272.html" >mailing-list discussion</a>)</p>
 </td></tr>
 
 <tr><td>
