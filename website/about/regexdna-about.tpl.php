@@ -1,11 +1,11 @@
 <p>Each program should</p>
 <ul>
-  <li>read all of a redirected <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a> file from stdin</li>
-  <li>define a collection of simple regex patterns,
-   representing DNA 8-mers and their reverse complement (with a wildcard in one position), 
-   and count matches in the redirected file
-  </li>
+  <li>read all of a redirected <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a> file from stdin, and record the sequence length</li>
+  <li>use regex substitution to remove all linefeed characters, and record the sequence length</li>
+   <li>define a collection of simple regex patterns, representing DNA 8-mers and their reverse complement (with a wildcard in one position), and count matches in the redirected file</li>
   <li>write the regex pattern and count</li>
+  <li>use regex substitution to make IUB code alternatives explicit, and record the sequence length</li>
+<li>write the 3 recorded sequence lengths</li>
 </ul>
 
 
@@ -15,14 +15,17 @@
 <pre>
 agggtaaa|tttaccct 0
 [cgt]gggtaaa|tttaccc[acg] 3
-a[act]ggtaaa|tttacc[agt]t 8
+a[act]ggtaaa|tttacc[agt]t 9
 ag[act]gtaaa|tttac[agt]ct 8
-agg[act]taaa|ttta[agt]cct 7
+agg[act]taaa|ttta[agt]cct 10
 aggg[acg]aaa|ttt[cgt]ccct 3
 agggt[cgt]aa|tt[acg]accct 4
 agggta[cgt]a|t[acg]taccct 3
 agggtaa[cgt]|[acg]ttaccct 5
-</pre>
+
+101745
+100000
+133640</pre>
 <br />
 
 <p></p>
