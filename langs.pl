@@ -407,7 +407,6 @@
        },
      },
 
-
      gforth =>
      { Lang => 'Forth',
        Name => 'GForth',
@@ -419,6 +418,21 @@
        Ext  => 'c',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{GFORTH} --version 2>&1`);
+	   return($ver);
+       },
+     },
+
+     groovy =>
+     { Lang => 'Groovy',
+       Name => 'Groovy',
+       Status => '+',
+       Home => 'http://groovy.codehaus.org/',
+       Down => 'http://groovy.codehaus.org/Download',
+       Type => 'interpreted',
+       Note => 'Agile dynamic language for the JVM',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{GROOVY} --version 2>&1`);
 	   return($ver);
        },
      },

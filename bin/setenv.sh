@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Groovy support
+JAVA_HOME=/usr/lib/j2sdk1.4.2_05
+export JAVA_HOME
+
 # Poplog support
 poplogroot=/usr/lib/poplog
 usepop=$poplogroot/current-poplog
