@@ -1180,6 +1180,8 @@
      'Eiffel'      => 'dash',
      'ElastiC'     => 'c',
      'Erlang'      => 'prolog',
+     'groovy'      => 'c',
+     'Groovy'	   => 'c',
      'Java'        => 'c',
      'JavaScript'  => 'c',     
      'Forth'       => 'forth',

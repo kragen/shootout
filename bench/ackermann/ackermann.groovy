@@ -1,6 +1,6 @@
-#!/bin/env groovy
+#!/usr/bin/env groovy
 /*
-	$Id: ackermann.groovy,v 1.1 2005-09-18 05:01:24 igouy-guest Exp $
+	$Id: ackermann.groovy,v 1.2 2005-09-21 05:40:33 bfulgham Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
