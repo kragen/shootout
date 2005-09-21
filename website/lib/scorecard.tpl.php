@@ -16,9 +16,9 @@
 <tr><td colspan="2">
 <p>What fun! <a href="http://en.wikipedia.org/wiki/April_Fool's_Day" title="April Fool's Day defined on Wikipedia"><strong>April Fool's Day</strong></a> all year long! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
 
-<p>And remember, languages that implement more benchmarks will move to the top of the list, and those with <strong>many missing benchmarks</strong> will stay at the bottom!</p>
+<p>And remember, languages that implement more benchmarks will move to the top of the list, and those with many missing benchmarks will stay at the bottom!</p>
 
-<p>And remember, "For every complex problem, there is a solution that is simple, neat, <strong>and wrong</strong>."</p>
+<p>And remember, "<strong>For every complex problem, there is a solution that is simple, neat, and wrong</strong>."</p>
 </td></tr> 
 
 
