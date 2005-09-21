@@ -1,0 +1,125 @@
+// The Great Computer Language Shootout
+// http://shootout.alioth.debian.org/
+//
+// contributed by Diederik van Arkel
+
+module revcomp
+
+import StdEnv, LanguageShootout
+
+Start world
+	# (io,world)	= stdio world
+	# io			= process io
+	# (err,world)	= fclose io world
+	= world
+
+process :: !*File -> *File
+process io
+	#! (line, io) = freadline io
+	| size line == 0
+		= io
+	| line.[0] == '>'
+		# io		= io <<< line
+		= extract io []
+	= process io
+
+extract :: !*File ![*String] -> *File
+extract io ls
+	#! (line, io) = freadline io
+	| size line > 0
+		| line.[0] == '>'
+			# io		= write (revcomp ls) io
+			# io		= io <<< line
+			= extract io []
+		| line.[0] == ';'
+			= extract io ls
+		= extract io [line:ls]
+	= write (revcomp ls) io
+
+revcomp l
+	# l = reverse l
+	# s	= concat_strip l
+	= build s
+
+concat_strip :: ![String] -> .String
+concat_strip l
+	# s = sizelist l
+	# a = createArray s ' '
+	= copylist l a 0
+where
+	sizelist [] = 0
+	sizelist [h:t] = size h - 1 + sizelist t
+	
+	copylist :: ![String] !*String !Int -> .String
+	copylist [] a i = a
+	copylist [h:t] a i
+		# (i,a) = scopy (size h - 1) i 0 a h
+		= copylist t a i
+
+scopy ::
+	!Int		// end of copy source index
+	!Int		// current target index
+	!Int		// current source index
+	!*{#Char}	// target string
+	!{#Char}	// source string
+	-> (!Int,!.{#Char})
+scopy n i j s h
+	| j >= n = (i,s)
+	#! s = {s & [i] = h.[j]}
+	= scopy n (i+1) (j+1) s h
+
+
+build :: !*String -> .String
+build iub
+	#! e	= size iub - 1
+	= build iub 0 e
+where
+	build :: !*String !Int !Int -> .String
+	build iub b e
+		| b >= e
+			= iub
+		#! cb	= iub.[b]
+		   ce	= iub.[e]
+		   iub	= {iub & [b] = complement ce}
+		   iub	= {iub & [e] = complement cb}
+		= build iub (b+1) (e-1)
+
+complement :: !Char -> Char
+complement c
+	= complementArray.[toInt c]
+
+complementArray =: buildComplement
+where
+	buildComplement :: String
+	buildComplement
+//		# a	= {c \\ c <- ['\x0'..'\xFF']}
+		# a = {toChar i \\ i <- [0..255]}
+		= build pairs a
+	build [] a = a
+	build [(f,t):ps] a
+		# a = { a & [toInt f] = t
+				  , [toInt t] = f
+				  , [toInt (toLower f)] = t
+				  , [toInt (toLower t)] = f
+			  }
+		= build ps a
+	pairs = [('A','T')
+			,('C','G')
+			,('B','V')
+			,('D','H')
+			,('K','M')
+			,('R','Y')
+			]
+
+write s io
+	= write s 0 io
+where
+	e	= size s
+
+	write :: !String !Int !*File -> *File
+	write s b io
+		| b >= e
+			= io
+		#! io	= io <<< (s%(b,b+59)) <<< '\n'
+//		#! io	= (fwritesubstring b (min (e-b) 60) s io) <<< '\n'
+		= write s (b+60) io
