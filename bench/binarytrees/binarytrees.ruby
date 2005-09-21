@@ -41,7 +41,7 @@ max_depth = min_depth + 2 if min_depth + 2 > max_depth
 stretch_depth = max_depth + 1
 stretch_tree = BottomUpTree(0, stretch_depth)
 
-puts "stretch tree of depth #{stretch_depth}\t  check: #{stretch_tree.ItemCheck}"
+puts "stretch tree of depth #{stretch_depth}\t check: #{stretch_tree.ItemCheck}"
 stretch_tree = nil
 GC.start # slightly faster
 
@@ -59,8 +59,8 @@ min_depth.step(max_depth + 1, 2) do |depth|
   check += temp_tree.ItemCheck
  end 
 
- puts "#{iterations * 2}\t  trees of depth #{depth}\t  check: #{check}"
+ puts "#{iterations * 2}\t trees of depth #{depth}\t check: #{check}"
 end
 
-puts "long lived tree of depth #{max_depth}\t  check: #{long_lived_tree.ItemCheck}"
+puts "long lived tree of depth #{max_depth}\t check: #{long_lived_tree.ItemCheck}"
 

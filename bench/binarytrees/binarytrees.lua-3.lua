@@ -41,7 +41,7 @@ local maxDepth = math.max(n, minDepth + 2)
 local stretchDepth = maxDepth + 1
 
 local check = (TreeNode.bottomUpTree(0, stretchDepth)):itemCheck()
-io.write( string.format("stretch tree of depth %d\t  check: %d", stretchDepth, check), "\n")
+io.write( string.format("stretch tree of depth %d\t check: %d", stretchDepth, check), "\n")
 
 local longLivedTree = TreeNode.bottomUpTree(0, maxDepth)
 
@@ -52,6 +52,6 @@ for depth = minDepth,maxDepth,2 do
       check = check + (TreeNode.bottomUpTree(i,depth)):itemCheck()
       check = check + (TreeNode.bottomUpTree(-i,depth)):itemCheck()
    end
-   io.write( string.format("%d\t  trees of depth %d\t  check: %d", iterations*2, depth, check), "\n")
+   io.write( string.format("%d\t trees of depth %d\t check: %d", iterations*2, depth, check), "\n")
 end
-io.write( string.format("long lived tree of depth %d\t  check: %d", maxDepth, longLivedTree:itemCheck()), "\n")
+io.write( string.format("long lived tree of depth %d\t check: %d", maxDepth, longLivedTree:itemCheck()), "\n")

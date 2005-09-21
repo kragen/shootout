@@ -48,7 +48,7 @@ class binarytrees
 	 * the StringBuffer is used here in a naive attempt to improve
 	 * preformance. I haven't verified that it does so */
 	StringBuffer buff = new StringBuffer( "stretch tree of depth ");
-	buff.append( stretchDepth).append( "\t  check: ").append( check);
+	buff.append( stretchDepth).append( "\t check: ").append( check);
 	System.out.println( buff.toString());
 
 	TreeNode longLivedTree = new TreeNode(0,maxDepth);
@@ -65,12 +65,12 @@ class binarytrees
 		    }
 
 		buff = new StringBuffer( iterations*2);
-		buff.append( "\t  trees of depth ").append(depth).append( "\t  check: ").append( check);
+		buff.append( "\t trees of depth ").append(depth).append( "\t check: ").append( check);
 		System.out.println( buff.toString());
 	    }
 	
 	buff = new StringBuffer( "long lived tree of depth ");
-	buff.append( maxDepth).append( "\t  check: ").append( longLivedTree.itemCheck());
+	buff.append( maxDepth).append( "\t check: ").append( longLivedTree.itemCheck());
 	System.out.println( buff.toString());
     }
 

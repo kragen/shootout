@@ -38,7 +38,7 @@ if ( ($min_depth + 2) > $n) {
 $stretch_depth = $max_depth + 1;
 
 $stretch_tree = bottom_up_tree(0, $stretch_depth);
-print "stretch tree of depth $stretch_depth\t  check: ", item_check($stretch_tree), "\n";
+print "stretch tree of depth $stretch_depth\t check: ", item_check($stretch_tree), "\n";
 $stretch_tree = undef;
 
 $long_lived_tree = bottom_up_tree(0, $max_depth);
@@ -59,8 +59,8 @@ while( $depth <= $max_depth ) {
         $temp_tree = undef;
     }
 
-    print $iterations * 2, "\t  trees of depth $depth\t  check: ", $check, "\n";
+    print $iterations * 2, "\t trees of depth $depth\t check: ", $check, "\n";
     $depth += 2;
 }
 
-print "long lived tree of depth $max_depth\t  check: ", item_check($long_lived_tree);
+print "long lived tree of depth $max_depth\t check: ", item_check($long_lived_tree);
