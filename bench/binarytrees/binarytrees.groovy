@@ -1,44 +1,13 @@
 #!/bin/env groovy
 /*
-	$Id: binarytrees.groovy,v 1.1 2005-09-18 05:01:24 igouy-guest Exp $
+	$Id: binarytrees.groovy,v 1.2 2005-09-23 15:11:34 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-    Each program should
-    
-        * define a tree node class and methods, a tree node record and procedures, or an algebraic data type and functions, or?
-        * allocate a binary tree to 'stretch' memory, check it exists, and deallocate it
-        * allocate a long-lived binary tree which will live-on while other trees are allocated and deallocated
-        * allocate, walk, and deallocate many bottom-up binary trees
-            o allocate a tree
-            o walk the tree nodes, checksum node items (and maybe deallocate the node)
-            o deallocate the tree
-        * check that the long-lived binary tree still exists
-    
-    (Note: the left subtrees are heads of the right subtrees, keeping a depth counter in the accessors to avoid duplication is cheating!)
-    
-    There are reference implementations in OCaml, C#, and PHP.
-    
-    Correct output N = 10 is:
-    
-    stretch tree of depth 11         check: -1
-    2048     trees of depth 4        check: -2048
-    512      trees of depth 6        check: -512
-    128      trees of depth 8        check: -128
-    32       trees of depth 10       check: -32
-    long lived tree of depth 10      check: -1
-    
-    
-    The binary-trees benchmark is a simplistic adaptation of Hans Boehm's GCBench, which in turn was adapted from a benchmark by John Ellis and Pete Kovac.
-    
-    Thanks to Christophe Troestler and Einar Karttunen for help with this benchmark.
-
-	Iterations can also be computed using 2**(maxDepth - depth + minDepth)
 */
+
 class TreeNode {
       private left, right
       private item

@@ -1,33 +1,11 @@
 #!/bin/env groovy
 /*
-	$Id: pidigits.groovy,v 1.1 2005-09-18 05:01:25 igouy-guest Exp $
+	$Id: pidigits.groovy,v 1.2 2005-09-23 15:11:35 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-    Each program should use the same step-by-step spigot algorithm to calculate digits of Pi.
-    
-    Each program should
-    
-        * calculate the first N digits of Pi
-        * print the digits 10-to-a-line, with the running total of digits calculated
-    
-    Programs should adapt the step-by-step algorithm given on pages 4,6 & 7 of Unbounded Spigot Algorithms for the Digits of Pi (156KB pdf). (Not the deliberately obscure version given on page 2.)
-    
-    Correct output N = 27 is:
-    
-    3141592653	:10
-    5897932384	:20
-    6264338   	:27
-    
-    
-    Correct output N = 1000 is in this 2KB output file.
-    
-    For more information see Eric W. Weisstein, "Pi Digits." From MathWorld--A Wolfram Web Resource.
-    http://mathworld.wolfram.com/PiDigits.html
 
 	Trailing 'G' stands for BigInteger (unrestricted size) in groovy
 */

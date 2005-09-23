@@ -1,38 +1,11 @@
 #!/bin/env groovy
 /*
-	$Id: random.groovy,v 1.1 2005-09-18 05:01:25 igouy-guest Exp $
+	$Id: random.groovy,v 1.2 2005-09-23 15:11:35 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-	random
-
-	Implement a function that generates a random double-precision floating point number using a linear congruential generator
-	as described in Numerical Recipes in C by Press, Flannery, Teukolsky, Vetterling, section 7.1.
-
-	S[j] = (A * S[j-1] + C) modulo M
-	R = N * S[j] / M
-
-	A (multiplier)
-	C (increment)
-	M (modulus)
-	are appropriately chosen integral constants.
-
-	S[j] (seed) is calculated from S[j-1]
-	R (random number) is normalized to the interval [N,0].
-
-
-	Correct output N = 1000 is
-
-	8.163294467
-
-
-	Each program should use symbolic constants (or whatever is closest) to define the A, C, and M constants in the algorithm,
-	not literal constants. 
-
 */
 
 def IM = 139968

@@ -1,25 +1,11 @@
 #!/bin/env groovy
 /*
-	$Id: fasta.groovy,v 1.1 2005-09-18 05:01:24 igouy-guest Exp $
+	$Id: fasta.groovy,v 1.2 2005-09-23 15:11:34 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-    Each program should
-    
-        * encode the expected cumulative probabilities for 2 alphabets
-        * generate DNA sequences, by weighted random selection from the alphabets (using the pseudo-random number generator from the random benchmark)
-        * generate DNA sequences, by copying from a given sequence
-        * write 3 sequences line-by-line in FASTA format
-    
-    Correct output N = 1000 is in this 10KB output file.
-    
-    We'll use the generated FASTA file as input for other benchmarks (reverse-complement, k-nucleotide).
-    
-    Random DNA sequences can be based on a variety of Random Models (554KB pdf). You can use Markov chains or independently distributed nucleotides to generate random DNA sequences online.
 */
 
 public class frequency {

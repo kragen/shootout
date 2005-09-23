@@ -1,30 +1,11 @@
-#!/bin/env groovy
+﻿#!/bin/env groovy
 /*
-	$Id: wordfreq.groovy,v 1.1 2005-09-18 05:01:25 igouy-guest Exp $
+	$Id: wordfreq.groovy,v 1.2 2005-09-23 15:11:35 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-    Each program should do the same thing.
-    
-    Each program should:
-    
-        * read a text file from stdin
-        * extract all the words
-        * convert the words to lowercase
-        * calculate the frequency of each word in the text file
-        * print each word and word frequency, in descending order by frequency and descending alphabetic order by word
-    
-    Correct output for this 170KB input file is in this 50KB output file.
-    
-    Programs should use constant space over a range of input sizes. Programs may read the input file line-by-line, or with 4096 byte (or smaller) block reads.
-    
-    The input file to the tests is the text file The Prince, by Nicoló Machiavelli.
-    
-    (The bash program is really a pipeline using tr, grep, sort and uniq. This is the UNIX way of combining tools in the shell to get things done.)
 */
 
 // def dict = [:]

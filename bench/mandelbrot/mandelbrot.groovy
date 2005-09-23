@@ -1,64 +1,58 @@
 #!/bin/env groovy
 /*
-	$Id: mandelbrot.groovy,v 1.1 2005-09-18 05:01:24 igouy-guest Exp $
+	$Id: mandelbrot.groovy,v 1.2 2005-09-23 15:11:35 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-	Each program should plot the Mandelbrot set [-1.5-i,0.5+i] on an N-by-N
-	bitmap. Write output byte-by-byte in portable bitmap format.
-
-	Correct output N = 200 is in this 5KB output file.
-
-	For more information see Eric W. Weisstein, "Mandelbrot Set." From
-	MathWorld--A Wolfram Web Resource.
-	http://mathworld.wolfram.com/MandelbrotSet.html
-
-	Thanks to Greg Buchholz for this benchmark.
 */
 
-int bit_num = byte_acc = 0
-int iter = 50
-double limit = 2.0
+double Cr, Ci, Tr, Ti, Zr=0, Zi=0, limit_sq = 4.0
+int res, i=0, x=0, y=0, pos=0, acc=1, iter = 50
+res = (args.length >= 1) ? Integer.parseInt(args[0], 10) : 200
+int max = (res * res) >>> 3
+def pbm_data = new byte[ max ]
+String pbm_header = new String("P4" + ((char) 012) + res + " " + res + ((char) 012))
 
-int h = w = (args.length == 0) ? 200 : args[0].toInteger()
-println "P4\n${w} ${h}"
-for (y in 0..<h) {
-    for (x in 0..<w) {
-        double Zr = Zi = 0.0
-        double Cr = (2.0*x/w - 1.5)
-        double Ci=(2.0*y/h - 1.0)
+System.out.write(pbm_header.getBytes(), 0, pbm_header.length())
 
-		def escape = false
-		for (i in 1..iter) {
-        	double Tr = Zr*Zr - Zi*Zi + Cr
-            double Ti = 2.0*Zr*Zi + Ci
-            Zr = Tr
-			Zi = Ti
-            if (Zr*Zr+Zi*Zi > limit*limit) {
-				escape = true
-				break
-			}
-        }
+// for ( ; pos < max; x%=res, Zr=Zi=i=0) {
+while (pos < max) {
+	Cr = (2*((double)x++)/res - 1.5);
+	Ci=(2*((double)y)/res - 1)
 
-        byte_acc = (byte_acc << 1) | (escape ? 0x00 : 0x01)
-        bit_num++
+	// for(acc<<=1; (acc&1)==0 && i++ < iter; acc |= Zr*Zr+Zi*Zi > limit_sq ? 1 : 0) {
+	acc<<=1
+	while (((acc&1)==0) && (i++ < iter)) {
+		Tr = Zr*Zr - Zi*Zi + Cr
+		Ti = 2*Zr*Zi + Ci
+		Zr = Tr
+		Zi = Ti
 
-        if (bit_num == 8) {
-            print((char) byte_acc)
-            byte_acc = 0
-            bit_num = 0
-        } else if (x == w-1) {
-            byte_acc = byte_acc << (8-w%8)
-            print((char) byte_acc)
-            byte_acc = 0
-            bit_num = 0
-        }
-    }
+		// println "Zr^2 + Zi^2 = ${Zr*Zr+Zi*Zi}"
+		acc |= (Zr*Zr+Zi*Zi > limit_sq) ? 1 : 0
+		// println "acc = ${acc}"
+	}
+			
+	if (x==res) {
+		y++
+		if (acc<256) acc <<= (8-res%8)
+	}
+	if (acc>255) { 
+		pbm_data [ pos++ ] = (byte) (acc^=255)
+		acc = 1
+	}
+
+	x%=res
+	Zr=Zi=i=0
+
+	// println "acc = ${acc}"
+	// println "pos = ${pos}"
+	// println "--------------------------------------"
 }
+
+System.out.write( pbm_data, 0, pos);
 
 // EOF
 

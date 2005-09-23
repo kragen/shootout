@@ -1,37 +1,11 @@
 #!/bin/env groovy
 /*
-	$Id: tcpecho.groovy,v 1.1 2005-09-18 05:01:25 igouy-guest Exp $
+	$Id: tcpecho.groovy,v 1.2 2005-09-23 15:11:35 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-	Note: we're thinking about a better way to start client & server within our measurement framework.
-
-	Each program (M = 6400, REPLY_SIZE = 64) should
-
-    * open a TCP/IP socket
-    * fork a client process that connects back to the socket
-          o M*N times the client process should
-                + write a request to the socket
-                + read a reply from the socket
-                + count the replies, and sum the bytes in the replies
-          o close the socket
-          o print the count and sum
-    * the server process should
-          o read a request from the socket
-          o write a reply to the socket
-
-	Each program should leave the sockets available for immediate reuse.
-
-	Correct output N = 10 is:
-
-	replies: 64000  bytes: 4096000
-
-
-	The only difference between the tcp-echo, tcp-request-reply, and tcp-stream programs, should be the values for M and REPLY_SIZE.
 */
 
 class Server implements Runnable {

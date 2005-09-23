@@ -1,36 +1,13 @@
 #!/bin/env groovy
 /*
-	$Id: spectralnorm.groovy,v 1.1 2005-09-18 05:01:25 igouy-guest Exp $
+	$Id: spectralnorm.groovy,v 1.2 2005-09-23 15:11:35 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
-	modified by 
-
-	Each program should calculate the spectral norm of an infinite matrix A, with entries a11=1, a12=1/2, a21=1/3, a13=1/4, a22=1/5, a31=1/6, etc
-
-	Each program must implement 4 separate functions / procedures / methods like the C# program.
-
-	Correct output N = 100 is:
-
-	1.274219991
-
-
-	For more information see challenge #3 in Eric W. Weisstein, "Hundred-Dollar, Hundred-Digit Challenge Problems" and "Spectral Norm"
-
-	From MathWorld--A Wolfram Web Resource.
-	http://mathworld.wolfram.com/Hundred-DollarHundred-DigitChallengeProblems.html
-	http://mathworld.wolfram.com/SpectralNorm.html
-
-	Thanks to Sebastien Loisel for this benchmark.
-
-	as double:		28s
-	as Double:		28s
-	.0D:			24s
-	as double[]:	25s
-
 */
+
 def approximate(n) {
     // create unit vector
 	def u = [1.0D] * n
