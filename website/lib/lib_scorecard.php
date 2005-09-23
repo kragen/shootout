@@ -32,6 +32,7 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
+
    $data = array();   
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
@@ -39,11 +40,11 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
      
       $test = $row[DATA_TEST];
       $lang = $row[DATA_LANG];
+      settype($row[DATA_ID],'integer'); 
      
-      if (isset($Incl[$test]) && isset($Incl[$lang]) 
-            && !ExcludeData($row,$Langs,$Excl)){
-                                                                      
-         settype($row[DATA_ID],'integer');                        
+      if ((isset($Incl[$test]) && isset($Incl[$lang])) 
+            && !ExcludeData($row,$Langs,$Excl)){                                 
+                                                      
          if (isset( $data[$lang][$test])){         
             // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
 
@@ -97,7 +98,8 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          }                                     
       }      
    }
-   @fclose($f);                 
+   @fclose($f);   
+           
    
    foreach($data as $k => $test){
       foreach($test as $t => $v){
