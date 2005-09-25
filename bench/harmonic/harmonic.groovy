@@ -1,10 +1,10 @@
 ﻿#!/bin/env groovy
 /*
-	$Id: harmonic.groovy,v 1.2 2005-09-23 15:11:34 igouy-guest Exp $
+	$Id: harmonic.groovy,v 1.3 2005-09-25 21:31:04 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
-
+ 
 	contributed by Jochen Hinrichsen
 */
 
