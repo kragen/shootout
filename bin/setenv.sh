@@ -24,9 +24,9 @@ fi
 export poplib
 
 # support Intel C++
-PATH=/opt/intel_cc_80/bin:$PATH
-LD_LIBRARY_PATH=/opt/intel_cc_80/lib:$LD_LIBRARY_PATH
-MANPATH=/opt/intel_cc_80/man:$MANPATH
+PATH=/opt/intel/cc/9.0/bin:$PATH
+LD_LIBRARY_PATH=/opt/intel/cc/9.0/lib:$LD_LIBRARY_PATH
+MANPATH=/opt/intel/cc/9.0/man:$MANPATH
 
 # support Intel Fortran
 PATH=/opt/intel/fc/9.0/bin:$PATH
