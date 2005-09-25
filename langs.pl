@@ -953,6 +953,21 @@
        },
      },
 
+     regina =>
+     { Lang => 'rexx',
+       Name => 'regina',
+       Status => '+',
+       Home => 'http://regina-rexx.sourceforge.net/',
+       Down => 'http://prdownloads.sourceforge.net/regina-rexx',
+       Type => 'interpreted',
+       Note => 'Extensively ported macro language interpreter',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{REGINA} -v 2>&1`);
+	   return($ver);
+       },
+     },
+
      'bigloo' =>
      { Lang => 'Scheme',
        Name => 'Bigloo',
@@ -1235,4 +1250,5 @@
      'rep'         => 'scheme',
      'Pop11'       => 'c',
      'fpascal'     => 'pascal',
+     'regina'	   => 'c',
  );
