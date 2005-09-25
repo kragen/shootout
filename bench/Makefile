@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.41 2005-09-20 04:14:19 bfulgham Exp $
+# $Id: Makefile,v 1.42 2005-09-25 04:46:13 bfulgham Exp $
 TESTS = \
     hello \
     ackermann \
@@ -50,7 +50,8 @@ TESTS = \
     tcpstream \
     wc \
     wordfreq
-BIN=/opt/shootout/shootout/bin
+
+BIN:=/opt/shootout/shootout/bin
 
 .PHONY: all plot test show clean clobber report
 
