@@ -2,36 +2,38 @@
 // http://shootout.alioth.debian.org/
 //
 // contributed by David Hedbor
-// modified by Isaac Gouy
+// modified by Sjoerd Visscher
+
 
 function Toggle(start_state) {
-  this.bool = start_state;
-  function value () {
-    return this.bool;
-  }
-  
-  function activate () {
-    this.bool = !this.bool;
-    return this;
-  }
+   this.state = start_state;
+}
+
+Toggle.prototype.value = function() {
+   return this.state;
+}
+
+Toggle.prototype.activate = function() {
+   this.state = !this.state;
+   return this;
 }
 
 
 function NthToggle (start_state, max_counter) {
-  this.base = Toggle;
-  this.base(start_state);
-  this.count_max = max_counter;
-  this.count = 0;
-
-  function activate () {
-    if (++this.count >= this.count_max) {
-      this.bool = !this.bool;
-      this.count = 0;
-    }
-    return this;
-  }
+   Toggle.call(this, start_state);
+   this.count_max = max_counter;
+   this.count = 0;
 }
+
 NthToggle.prototype = new Toggle;
+
+NthToggle.prototype.activate = function() {
+   if (++this.count >= this.count_max) {
+     this.state = !this.state;
+     this.count = 0;
+   }
+   return this;
+}
 
 var n = arguments[0];
 var i;

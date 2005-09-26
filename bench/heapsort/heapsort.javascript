@@ -54,4 +54,4 @@ for (i=1; i<=n; i++) {
   ary[i] = gen_random(1.0);
 }
 heapsort(n, ary);
-print(ary[n].valueOf().toFixed(9));
+print(ary[n].toFixed(10));
