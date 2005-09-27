@@ -6,8 +6,6 @@
 # converted into Perl by Márton Papp
 #
 
-use stone;
-stone a;
 $pi = 3.141592653589793;
 $solar_mass =(4 * $pi * $pi);
 $days_per_year =365.24;
@@ -136,7 +134,7 @@ $NBODIES= 5;
     advance($NBODIES, \@bodies, 0.01);
   }
   printf ("%.9f\n", energy($NBODIES, \@bodies));
-  stone b;
+
   exit 0;
 
 
