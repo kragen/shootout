@@ -70,6 +70,7 @@
 <p>Follow these instructions <strong>step-by-step</strong></p>
 <ol>
 <li>Start from the bottom. Upload &amp; <strong>Attach</strong> the program source-code file - do this first because it's easy to forget.</li>
+<li>Be sure to click the Upload &amp; Attach <strong>check box</strong> - it's easy to forget.</li>
 <li>Say in the <strong>Description</strong> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
 <li>Each <strong>Summary</strong> text <em><strong>must</strong></em> be unique! Follow this convention:<br />  
 language, benchmark, your-name, date, (version)<br />
