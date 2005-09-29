@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh
 
-# Fasta benchmark
+# Fasta benchmark 
 #
 # Contributed by Michael Schlenker
 

@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh
 
-# The Great Computer Language Shootout
+#  The Great Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
 # contributed by Daniel South 

@@ -1,7 +1,7 @@
 #!/usr/bin/tclsh
-# $Id: sumcol.tcl,v 1.2 2005-03-31 15:43:13 sgeard-guest Exp $
+# $Id: sumcol.tcl,v 1.3 2005-09-29 17:36:19 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
-# from: Miguel Sofer
+# from: Miguel Sofer 
 
 proc main {} {
     set sum 0

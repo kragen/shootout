@@ -1,7 +1,7 @@
 #!/usr/bin/tclsh
-# $Id: random.tcl,v 1.3 2005-03-31 15:14:36 sgeard-guest Exp $
+# $Id: random.tcl,v 1.4 2005-09-29 17:36:19 igouy-guest Exp $
 # http://www.bagley.org/~doug/shootout/
-# from Miguel Sofer
+# from Miguel Sofer 
 
 foreach {IM IA IC last} {139968 3877 29573 42} break
 

@@ -1,8 +1,8 @@
 #!/usr/bin/tclsh
-# $Id: revcomp.tcl,v 1.2 2005-03-31 15:33:45 sgeard-guest Exp $
+# $Id: revcomp.tcl,v 1.3 2005-09-29 17:36:19 igouy-guest Exp $
 # http://shootout.alioth.debian.org/
 #
-# reverse-complement benchmark for shootout.alioth.debian.org
+# reverse-complement benchmark for shootout.alioth.debian.org 
 #
 # contributed by Michael Schlenker <mic42@users.sourceforge.net>
 #
