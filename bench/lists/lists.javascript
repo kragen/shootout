@@ -2,7 +2,7 @@
 // http://shootout.alioth.debian.org/
 //
 // contributed by David Hedbor
-// modified by Isaac Gouy
+// modified by  Isaac Gouy
 
 var SIZE = 10000;
 

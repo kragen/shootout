@@ -1,8 +1,8 @@
 #/usr/bin/tclsh
-# $Id: harmonic.tcl,v 1.2 2005-09-29 17:36:19 igouy-guest Exp $
+# $Id: harmonic.tcl,v 1.3 2005-09-30 16:05:42 igouy-guest Exp $
 # http://shootout.alioth.debian.org/ 
 #
-# Contributed by Robert Seeger
+# Contributed by Robert Seeger 
 proc main {inputs} {
     set n [lindex $inputs 0]
     for {set i 1 ; set result 0.0} {$i <= $n} {incr i} {
