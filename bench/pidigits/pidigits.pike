@@ -36,8 +36,8 @@ int main(int argc, array(string) argv)
 {
   int i, n = (int)argv[1];
   for(i=10; i <= n; i+=10)
-    write("%@d\t :%d\n", pi_digits(10), i);
+    write("%@d\t:%d\n", pi_digits(10), i);
   if((i-=10) < n)
-    write("%-10{%d%}\t :%d\n", pi_digits(n-i)/1, n);
+    write("%-10{%d%}\t:%d\n", pi_digits(n-i)/1, n);
   return 0;
 }
