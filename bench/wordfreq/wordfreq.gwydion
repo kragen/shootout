@@ -3,10 +3,11 @@ use-libraries: common-dylan, io, table-extensions
 use-modules: common-dylan, standard-io, streams, format-out, table-extensions
 
 begin
-  let words = make(<case-insensitive-string-table>);
+  let words = make(<string-table>);
   while(~stream-at-end?(*standard-input*))
     do(method(x)
            unless(x = "")
+	     x := as-lowercase(x);
              let count = element(words, x, default: 0);
              words[x] := count + 1;
            end unless;

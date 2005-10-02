@@ -6,10 +6,12 @@ copyright:  public domain
 
 define constant <vector-of-integers> = limited(<simple-vector>, of: <integer>);
 
+define constant $empty-vector-of-integers = make(<vector-of-integers>);
+
 define class <matrix> (<object>)
-  slot rows :: <integer>, required-init-keyword: rows:;
-  slot columns :: <integer>, required-init-keyword: columns:;
-  slot elements :: <vector-of-integers>;
+  constant slot rows :: <integer>, required-init-keyword: rows:;
+  constant slot columns :: <integer>, required-init-keyword: columns:;
+  slot elements :: <vector-of-integers>, init-value: $empty-vector-of-integers;
 end class;
 
 define sealed domain make (singleton(<matrix>));

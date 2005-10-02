@@ -26,7 +26,7 @@ define function some-function (num :: <integer>) => ()
     hi-function(num);
   exception (err :: <error>)
     error("We shouldn't have got here.");
-  end block;
+  end;
 end function;
 
 
@@ -35,7 +35,7 @@ define function hi-function (num :: <integer>) => ()
     lo-function(num);
   exception (err :: <hi-exception>)
     hi := hi + 1;
-  end block;
+  end;
 end function;
 
 
@@ -44,15 +44,15 @@ define function lo-function (num :: <integer>) => ()
     blowup(num);
   exception (err :: <lo-exception>)
     lo := lo + 1;
-  end block;
+  end;
 end function;
 
 
 define function blowup (num :: <integer>) => ()
   if (odd?(num))
-    error(make(<lo-exception>, number: num));
+    signal(make(<lo-exception>, number: num));
   else
-    error(make(<hi-exception>, number: num));
+    signal(make(<hi-exception>, number: num));
   end;
 end function;
 
