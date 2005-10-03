@@ -81,7 +81,7 @@ foreach($Tests as $Row){
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Sort, $Name);
                 
-      if ($v[N_LINES] > 0){ 
+      if ($v[N_LINES] >= 0){ 
       
          if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }                         
                   
@@ -100,7 +100,7 @@ foreach($Tests as $Row){
          if ($v[N_LINES] == PROGRAM_ERROR){ $message = 'Error'; } 
          elseif ($v[N_LINES] == PROGRAM_TIMEOUT){ $message = 'Timout'; } 
          elseif ($r = $v[N_LINES] == NO_COMPARISON){ $message = '<span class="s">No '.$Langs[$v[N_LANG]][LANG_NAME].'</span>'; } 
-         else { $message = 'X'; } 
+         else {$message = 'X'; } 
          
          if ($r) { printf('<td></td><td></td><td></td><td colspan="2" class="r">%s</td>', $message); }
          else { printf('<td class="r">%s</td><td></td><td></td><td></td><td></td>', $message); }

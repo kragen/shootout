@@ -98,7 +98,7 @@ foreach($Tests as $Row){
    if (isset($Data[$Row[TEST_LINK]])){
       $v = $Data[$Row[TEST_LINK]];             
 
-      if ($v[N_LINES] > 0){
+      if ($v[N_LINES] >= 0){
          if ($S=='cpu'){ $wsec = $v[N_CPU]; }
          else { $wsec = $v[N_FULLCPU]; }  
          if ($wsec < 1){ 
