@@ -65,4 +65,4 @@ print "\n",
       $codeLength, "\n", 
       length($contents), "\n";
 
-1;
+exit(0);
