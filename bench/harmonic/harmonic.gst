@@ -2,7 +2,7 @@
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
-
+ 
    To run: gst -QI /usr/local/share/smalltalk/gst.im harmonic.st -a 10000000
 "
 
