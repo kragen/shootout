@@ -43,7 +43,7 @@ define slsh_main ()
 
    variable stretch_depth = max_depth + 1;
    variable stretch_tree = bottomup_tree(0, stretch_depth);
-   () = fprintf (stdout, "stretch tree of depth %u\t  check: %ld\n",
+   () = fprintf (stdout, "stretch tree of depth %u\t check: %ld\n",
 		 stretch_depth, item_check (stretch_tree));
    stretch_tree = NULL;
 
@@ -66,10 +66,10 @@ define slsh_main ()
 	    tmp = NULL;
         }
 
-       () = fprintf (stdout, "%d\t  trees of depth %u\t  check: %d\n",
+       () = fprintf (stdout, "%d\t trees of depth %u\t check: %d\n",
 		     iterations * 2, depth, check);
     }
 
-   () = fprintf (stdout, "long lived tree of depth %u\t  check: %d\n",
+   () = fprintf (stdout, "long lived tree of depth %u\t check: %d\n",
 		 max_depth, item_check (longlived_tree));
 }
