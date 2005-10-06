@@ -18,14 +18,8 @@
 <p>There are reference implementations in OCaml, C#, and PHP.</p>
 <br />
 
-<p>Correct output N = 10 is:</p>
-<pre>stretch tree of depth 11         check: -1
-2048     trees of depth 4        check: -2048
-512      trees of depth 6        check: -512
-128      trees of depth 8        check: -128
-32       trees of depth 10       check: -32
-long lived tree of depth 10      check: -1
-</pre>
+<p>Correct output N = 10 is in this 1KB 
+<a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=output">output file</a> so you can check the spacing and tabs.</p>
 <br/>
 
 <p>The binary-trees benchmark is a simplistic adaptation of <a href="http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_bench/applet/GCBench.java">Hans Boehm's GCBench</a>,
