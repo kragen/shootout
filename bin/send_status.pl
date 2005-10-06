@@ -23,6 +23,11 @@ sub send_a_mail($) {
 
     my ($sec,$min,$hour,$mday,$month,$centm) = gmtime();
 
+    print "Reading log\n";
+    my $log = `cat /home/brent/shootout.run`;
+
+    print $log;
+
     my $year = $centm + 1900;
 
     my $date = "$month-$mday-$year at $hour:$min:$sec GMT";
@@ -42,7 +47,9 @@ sub send_a_mail($) {
     "A build of the benchmark was successfully completed on $date\n" .
     "\n\n" .
     "Sincerely,\n\n" .
-    "The Shootout Autobuilder";
+    "The Shootout Autobuilder\n\n" .
+
+    "$log\n";
 
     if (sendmail %mail) {
         print "Mail send to $recipient SUCCEEDED.\n";
