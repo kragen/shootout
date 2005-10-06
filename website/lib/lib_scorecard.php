@@ -141,7 +141,7 @@ function Weights($Tests, $Action, $Vars, $CVars){
       $wd[$link] = $t[TEST_WEIGHT];                               
    }           
    
-   $Metrics = array('xcpu' => 0, 'xfullcpu' => 0, 'xmem' => 0, 'xloc' => 1);       
+   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 1, 'xloc' => 1);       
    foreach($Metrics as $k => $v){  
       if (isset($Vars[$k])){ $x = $Vars[$k]; }                   
       elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
