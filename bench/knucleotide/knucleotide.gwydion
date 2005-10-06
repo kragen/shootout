@@ -76,27 +76,24 @@ define function count (sequence :: <byte-string>, fragment :: <byte-string>)
 end function count;
 
 define function main ()
-  let line :: false-or(<byte-string>) =
-    read-line(*standard-input*, on-end-of-stream: #f);
-  let needed-part :: <boolean> = #f;
-  let still-reading :: <boolean> = #t;
-  let sequence :: <byte-string> = "";
-  while(line & still-reading)
-    if (copy-sequence(line,start: 0, end: 6) = ">THREE")
-      needed-part := #t;
-      line := read-line(*standard-input*, on-end-of-stream: #f);
-    end if;
-    if (needed-part & line)
-      if (line[0] = '>')
-        still-reading := #f;
-      elseif (line[0] ~= ';')
-        sequence := concatenate(sequence, line);
-      end if;
-    end if;
-    line := read-line(*standard-input*, on-end-of-stream: #f);
-  end while;
+  let chars = make(<stretchy-object-vector>);
 
-  sequence := as-uppercase(sequence);
+  block ()
+    for (line :: <byte-string> = read-line(*standard-input*),
+         until: line[0] == '>' & copy-sequence(line,start: 0, end: 6) = ">THREE")
+    end;
+    for (line :: <byte-string> = read-line(*standard-input*),
+         until: line[0] == '>')
+      if (line[0] ~= ';')
+        for (ch in line)
+          chars := add!(chars, as-uppercase(ch));
+        end;
+      end if;
+    end for;
+  exception (e :: <condition>)
+  end;
+
+  let sequence = as(<byte-string>, chars);
   
   frequency(sequence, 1);
   frequency(sequence, 2);
