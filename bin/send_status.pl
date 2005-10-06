@@ -23,10 +23,7 @@ sub send_a_mail($) {
 
     my ($sec,$min,$hour,$mday,$month,$centm) = gmtime();
 
-    print "Reading log\n";
     my $log = `cat /home/brent/shootout.run`;
-
-    print $log;
 
     my $year = $centm + 1900;
 
