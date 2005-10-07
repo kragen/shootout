@@ -1,96 +1,80 @@
 module: knucleotide
-use-libraries: common-dylan, io
-use-modules: common-dylan, standard-io, streams, format-out
+use-libraries: common-dylan, io, table-extensions
+use-modules: common-dylan, standard-io, streams, format-out, table-extensions
 
 define sealed class <key-value-pair> (<object>)
-    constant slot key :: <byte-string>, required-init-keyword: key:;
-    slot val :: <integer>, required-init-keyword: value:;
+  constant slot key :: <byte-string>, required-init-keyword: key:;
+  slot val :: <integer>, required-init-keyword: value:;
 end class <key-value-pair>;
 
-define sealed inline method make (class == <key-value-pair>,
-                                  #rest all-keys, #key)
- => (res)
-    next-method();
-end method make;
+define sealed domain make(singleton(<key-value-pair>));
+define sealed domain initialize(<key-value-pair>);
+
 
 define function kfrequency
     (sequence :: <byte-string>,
-     freq :: <string-table>,
+     freq :: <byte-string-table>,
      k :: <integer>,
-     frame :: <integer>)
-  let n :: <integer> = size(sequence) - k + 1;
-  for (i :: <integer> from frame below n by k)
-    let sub :: <byte-string> = copy-sequence(sequence, start: i, end: i + k);
-    let record :: false-or(<key-value-pair>) = element(freq, sub, default: #f);
+     frame :: <integer>) => ();
+  for (i from frame below sequence.size - k + 1 by k)
+    let sub = make(<byte-string>, size: k);
+    for (offset from 0 below k) sub[offset] := sequence[i + offset] end;
+    let record = element(freq, sub, default: #f);
     if (record)
-      let tmp :: <key-value-pair> = record;
-      tmp.val := tmp.val + 1;
+      record.val := record.val + 1;
     else
       freq[sub] := make(<key-value-pair>, key: sub, value: 1);
     end if;
   end for;
 end function kfrequency;
 
-/// Yuck! limited(<vector>) broken in d2c, and needed for performance!
-//define constant <kv-vector> = limited(<vector>, of: <key-value-pair>);
-define constant <kv-vector> = <simple-object-vector>;
-define constant $null-kv = make(<key-value-pair>, key: "", value: 0);
 
 define function frequency(sequence :: <byte-string>, k :: <integer>)
-  let freq :: <string-table> = make(<string-table>);
+  let freq = make(<byte-string-table>);
   for (i from 0 below k)
     kfrequency(sequence, freq, k, i);
   end for;
-  let sorted :: <kv-vector> = 
-    make(<kv-vector>, size: size(freq), fill: $null-kv);
-  let sum :: <double-float> = 0.0d0;
-  for (tmp :: <key-value-pair> in freq,
-       i from 0 below size(freq))
-    sorted[i] := tmp;
-    sum := sum + as(<double-float>, tmp.val);
-  end for;
-  sorted := sort(sorted,
-                 test: method (a :: <key-value-pair>,
-                               b :: <key-value-pair>) b.val < a.val end);
-  for (i :: <key-value-pair> in sorted)
-    let percent :: <double-float> = as(<double-float>, i.val) * 100.0d0 / sum;
-    format-out("%s %.3f\n", i.key, percent);
+
+  let sorted = sort(as(<vector>, freq),
+                    test: method (a :: <key-value-pair>,
+                                  b :: <key-value-pair>) b.val < a.val end);
+  let sum = reduce(\+, 0, map(val, sorted));
+
+  for (kvp in sorted)
+    format-out("%s %.3f\n", kvp.key, kvp.val * 100.0d0 / sum);
   end for;
   format-out("\n");
 end function frequency;
 
+
 define function count (sequence :: <byte-string>, fragment :: <byte-string>)
-  let freq :: <string-table> = make(<string-table>);
-  let k = size(fragment);
-  for (i from 0 below k)
-    kfrequency(sequence, freq, k, i);
+  let freq = make(<byte-string-table>);
+  for (i from 0 below fragment.size)
+    kfrequency(sequence, freq, fragment.size, i);
   end for;
-  let record :: false-or(<key-value-pair>) =
-    element(freq, fragment, default: #f);
-  if (record)
-    let tmp :: <key-value-pair> = record;
-    format-out("%d\t%s\n", tmp.val, fragment);
-  else
-    format-out("0\t%s\n", fragment);
-  end if;
+  let record = element(freq, fragment, default: #f);
+  format-out("%d\t%s\n", record & record.val | 0, fragment);
 end function count;
 
-define function main ()
+
+begin
   let chars = make(<stretchy-object-vector>);
 
   block ()
     for (line :: <byte-string> = read-line(*standard-input*),
-         until: line[0] == '>' & copy-sequence(line,start: 0, end: 6) = ">THREE")
+         until: line[0] == '>' & copy-sequence(line,start: 1, end: 6) = "THREE")
     end;
     for (line :: <byte-string> = read-line(*standard-input*),
          until: line[0] == '>')
-      if (line[0] ~= ';')
-        for (ch in line)
-          chars := add!(chars, as-uppercase(ch));
+      if (line[0] ~== ';')
+        let old-size = chars.size;
+        chars.size := old-size + line.size;
+        for (ch in line, i from old-size)
+          chars[i] := as-uppercase(ch);
         end;
       end if;
     end for;
-  exception (e :: <condition>)
+  exception (e :: <end-of-stream-error>)
   end;
 
   let sequence = as(<byte-string>, chars);
@@ -103,8 +87,4 @@ define function main ()
   count(sequence, "GGTATT");
   count(sequence, "GGTATTTTAATT");
   count(sequence, "GGTATTTTAATTTATAGT");
-end function main;
-
-begin
-  main();
 end;
