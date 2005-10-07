@@ -1,143 +1,108 @@
 ! -*- mode: f90 -*-
 !
-! $Id: binarytrees.ifc,v 1.10 2005-09-08 20:06:07 sgeard-guest Exp $ ; $Name:  $
+! $Id: binarytrees.ifc,v 1.11 2005-10-07 22:41:56 sgeard-guest Exp $ ; $Name:  $
 !
-! The Great Computer Language Shootout
-! http://shootout.alioth.debian.org/ 
-!
-! contributed by Simon Geard, 2005; translated from binarytrees.python by Kevin Carson
-!
-! Tested and working with the following compilers (28/08/2005):
-!
-! /opt/intel/fc/9.0/bin/ifort -O3 -what -o binarytrees binarytrees.f90 -Wl,-rpath,/opt/intel/fc/9.0/lib
-! => Intel Fortran 9.0-5238
-!
-! /opt/intel_fc_80/bin/ifort -O3 -what -o binarytrees binarytrees.f90 -Wl,-rpath,/opt/intel_fc_80/lib
-! => Intel Fortran 8.1-5079
-!
-! g95 -O3 -o binarytrees binarytrees.f90
-! => G95 (GCC 4.0.1 (g95!) Aug 27 2005)
-!
-! At these compiler revisions g95 is about 10x slower than the Intel compilers
-!
-! This program requires proper implementation of TR15581 which specifies support for allocatable
-! functions. Without this support the tree has to be returned through subroutine arguments.
-!
-module binaryTree
-  !
-  ! Tree data structure
-  type Tree
-     integer             :: data
-     type(Tree), pointer :: left  => null()
-     type(Tree), pointer :: right => null()
-  end type Tree
+! The Computer Language Shootout Benchmarks
+! http://shootout.alioth.debian.org/
 
-  interface assignment(=)
-     module procedure equals_t_t ! Tree = Tree
-  end interface
+! contributed by Steve Decker
+! based on the C version by Kevin Carson
+! compilation:
+!    gfortran -O3 -fomit-frame-pointer -funroll-loops binarytrees.f90
+!
+! This implementation does not need TR15581
+
+module b_tree
+  implicit none
+  save
+
+  integer, parameter :: short = selected_int_kind(1)
+
+  type treeNode
+     integer :: item
+     type(treeNode), pointer :: left
+     type(treeNode), pointer :: right
+  end type treeNode
+
 contains
-
-  ! Assignment
-  recursive subroutine equals_t_t(t2, t1)
-    type(Tree), intent(out) :: t2
-    type(Tree), intent(in)  :: t1
-    t2%data = t1%data
-    t2%left => t1%left
-    t2%right => t1%right
-  end subroutine equals_t_t
-
-  ! Initialize tree nodes
-  type(Tree) function init(item, left, right) result(t)
-    integer, intent(in)              :: item
-    type(Tree), intent(in), optional :: left, right
-    t%data = item
-    if (present(left)) then
-       allocate(t%left)
-       t%left = left
-    end if
-    if (present(right)) then
-       allocate(t%right)
-       t%right = right
-    end if
-  end function init
-
-  recursive function BottomUpTree(item, depth) result(bu)
-    type(Tree)          :: bu
+  
+  subroutine NewTreeNode(left, right, item, node)
+    type(treeNode), target, intent(in) :: left, right
     integer, intent(in) :: item
-    integer, intent(in) :: depth
-    integer :: item_item
-    if (depth > 0) then
-       item_item = 2*item
-       bu = init(item, BottomUpTree(item_item - 1, depth-1), BottomUpTree(item_item, depth-1))
-    else
-       bu = init(item)
-    end if
-  end function BottomUpTree
+    type(treeNode), pointer :: node
 
-  recursive function ItemCheck(t) result(ic)
-    integer ic
-    type(Tree) :: t
+    allocate(node)
+    node = treeNode(item, left, right)
+  end subroutine NewTreeNode
 
-    if (.not. associated(t%left)) then
-       ic = t%data
+  recursive function ItemCheck(tree) result (check)
+    type(treeNode), pointer :: tree
+    integer :: check
+
+    if (.not. associated(tree%left)) then
+       check = tree%item
     else
-       ic = t%data + ItemCheck(t%left) - ItemCheck(t%right)
-       deallocate(t%left)
-       deallocate(t%right)
+       check = tree%item + ItemCheck(tree%left) - ItemCheck(tree%right)
     end if
+    deallocate(tree)
   end function ItemCheck
 
-  ! Free all allocated memory
-  recursive subroutine tidy(t)
-    type(Tree), intent(inout) :: t
-    return
-    if (associated(t%left)) then
-       call tidy(t%left)
-       deallocate(t%left)
+  recursive subroutine BottomUpTree(item, depth, node)
+    integer, intent(in) :: item
+    integer(kind=short), intent(in) :: depth
+    type(treeNode), pointer :: node
+
+    type(treeNode), pointer :: left, right
+
+    nullify(left, right)
+
+    if (depth > 0) then
+       call BottomUpTree(2 * item - 1, depth - 1_short, left)
+       call BottomUpTree(2 * item, depth - 1_short, right)
     end if
-    if (associated(t%right)) then
-       call tidy(t%right)
-       deallocate(t%right)
-    end if
-  end subroutine tidy
+    call NewTreeNode(left, right, item, node)
+  end subroutine BottomUpTree
+end module b_tree
 
-end module binaryTree
+program binarytrees
+  use b_tree
+  implicit none
 
-! The program itself
-program bTrees
-  use binaryTree
+  integer(kind=short), parameter :: minDepth = 4_short
+  character(len=*), parameter :: fmt1 = "(a,i0,t34,a,i0)",  &
+                                 fmt2 = "(i0,t10," // fmt1(2:len(fmt1))
 
-  character(len=1), parameter :: tab = achar(9)
-  integer    :: N, minDepth, maxDepth, stretchDepth, depth, iterations, i, check
-  type(Tree) :: stretchTree, longLivedTree, tempTree
-  character(len=3) argv
+  integer :: i, iterations, check
+  integer(kind=short) :: N, depth, maxDepth, stretchDepth
+  character(len=2) :: argv
+  type(treeNode), pointer :: stretchTree => null(), longLivedTree => null(),  &
+                             tempTree => null()
 
-  call getarg(1,argv)
-  read(argv,*) N
+  call get_command_argument(1, argv)
+  read (argv, "(i2)") N
 
-  minDepth = 4
-  maxDepth = max(N,minDepth + 2)
+  maxDepth = max(minDepth + 2_short, N)
 
-  stretchDepth = maxDepth + 1
-  stretchTree = BottomUpTree(0, stretchDepth)
-  write(*,'(2(a,i0))') 'stretch tree of depth ',stretchDepth,tab//' check: ',ItemCheck(stretchTree)
-  call tidy(stretchTree)
-  longLivedTree = BottomUpTree(0, maxDepth)
+  stretchDepth = maxDepth + 1_short
+  call BottomUpTree(0, stretchDepth, stretchTree)
+  write (*,fmt1) "stretch tree of depth ", stretchDepth, "check: ",  &
+       ItemCheck(stretchTree)
 
-  do depth = minDepth, maxDepth + 1, 2
+  call BottomUpTree(0, maxDepth, longLivedTree)
+
+  do depth = minDepth, maxDepth, 2
      iterations = 2**(maxDepth - depth + minDepth)
      check = 0
-     do i=1, iterations
-        tempTree = BottomUpTree(i, depth)
+     do i = 1, iterations
+        call BottomUpTree(i, depth, tempTree)
         check = check + ItemCheck(tempTree)
-        call tidy(tempTree)
 
-        tempTree = BottomUpTree(-i, depth)
+        call BottomUpTree(-i, depth, tempTree)
         check = check + ItemCheck(tempTree)
-        call tidy(tempTree)
      end do
-     write(*,'(2(i0,a),i0)') iterations * 2,tab//' trees of depth ',depth,tab//' check: ',check
+     write(*,fmt2) iterations*2, "trees of depth ", depth, "check: ", check
   end do
-  write(*,'(2(a,i0))') 'long lived tree of depth ',maxDepth,tab//' check: ',ItemCheck(longLivedTree)
-  call tidy(longLivedTree)
-end program bTrees
+
+  write(*,fmt1) "long lived tree of depth ", maxDepth, "check: ",  &
+       ItemCheck(longLivedTree)
+end program binarytrees
