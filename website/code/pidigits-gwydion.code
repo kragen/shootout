@@ -1,56 +1,99 @@
-#<span class="sym">!/</span>usr<span class="sym">/</span>bin<span class="sym">/</span>mzscheme <span class="sym">-</span>r
-<span class="sym">;</span> $Id<span class="sym">:</span> pidigits.mzscheme<span class="sym">,</span>v <span class="num">1.1 2005</span><span class="sym">/</span><span class="num">04</span><span class="sym">/</span><span class="num">25 04</span><span class="sym">:</span><span class="num">23</span><span class="sym">:</span><span class="num">58</span> bfulgham Exp $
-<span class="sym">;</span> The Computer Language Shootout
-<span class="sym">;</span> http<span class="sym">:</span><span class="slc">//shootout.alioth.debian.org/
-</span><span class="sym">;
-;</span> Based on Sven Hartrumpf<span class="str">'s chicken program, which was (in turn) based
-; on an implementation for SCM by Aubrey Jaffer and Jerry D. Hedden.
-; Program implements the '</span>Spigot<span class="str">' algorithm origionally due to
-; Stanly Rabinowitz.
+<span class="kwb">module</span><span class="sym">:</span>  pidigits
+<span class="kwa">use</span><span class="sym">-</span>libraries<span class="sym">:</span> common<span class="sym">-</span>dylan<span class="sym">,</span> io
+<span class="kwa">use</span><span class="sym">-</span>modules<span class="sym">:</span> common<span class="sym">-</span>dylan<span class="sym">,</span> standard<span class="sym">-</span>io<span class="sym">,</span> streams<span class="sym">,</span> format<span class="sym">-</span>out
 
-(define (pi n d)
-  (let* ((r (do ((s 1 (* 10 s)) (i d (- i 1))) ((zero? i) s))) ; chicken: this line is faster
-         (p (+ (quotient n d) 1))
-         (m (quotient (* p d 3322) 1000))
-         (a (make-vector (+ m 1) 2))
-         (digits 0))
-    (vector-set! a m 4)
-    (do ((j 1 (+ j 1))
-         (q 0 0)
-         (b 2 (remainder q r)))
-      ((&gt; j p))
-      (do ((k m (- k 1)))
-        ((zero? k))
-        (set! q (+ q (* (vector-ref a k) r)))
-        (let ((t (+ (* k 2) 1))) ; maybe use something like bit-lsh
-          (let-values ([(qq rr) (quotient/remainder q t)])
-            (vector-set! a k rr)
-            (set! q (* k qq)))))
-      (let* ((s (number-&gt;string (+ b (quotient q r))))
-             (l (string-length s)))
-        (cond ((and (&gt; l 1) ; chicken: needs this cond because it uses floats for d&gt;5 (leads to appended . or .0), for version after 1.89 use 2, before 1.89 use 1 in this line and the following 2 lines
-                    (char=? (string-ref s (- l 1)) #</span><span class="esc">\.</span><span class="str">))
-               (set! l (- l 1))))
-        (cond ((&gt; j 1)
-               (do ((l l (+ l 1)))
-                 ((&gt;= l d))
-                 (cond ((&lt; digits n)
-                        (write-char #</span><span class="esc">\0</span><span class="str">)
-                        (set! digits (+ digits 1))
-                        (cond ((zero? (modulo digits 10))
-                               (display &quot;</span><span class="esc">\t</span><span class="str">:&quot;) (write digits) (newline))))))))
-        (do ((i 0 (+ i 1)))
-          ((= i l))
-          (cond ((&lt; digits n)
-                 (write-char (string-ref s i))
-                 (set! digits (+ digits 1))
-                 (cond ((zero? (modulo digits 10))
-                        (display &quot;</span><span class="esc">\t</span><span class="str">:&quot;) (write digits) (newline))))))))))
+<span class="com">/*
+ *  Based on Christopher Neufeld's  &lt;shootout0000&#64;cneufeld.ca&gt;
+ *  SBCL implementation.
+ */</span>
 
-(define (main args)
-  (let ((n (if (= (vector-length args) 0)
-               10
-               (string-&gt;number (vector-ref args 0)))))
-    (pi n 10)))
+<span class="kwa">define constant</span> $digits<span class="sym">-</span>per<span class="sym">-</span>line <span class="sym">=</span> <span class="num">10</span><span class="sym">;
+</span><span class="kwa">define constant</span> <span class="sym">*</span>stop<span class="sym">-</span>digits<span class="sym">* =</span> <span class="num">300</span><span class="sym">;
 
-(main (current-command-line-arguments))</span>
+</span><span class="kwa">define function</span> compute<span class="sym">-</span>pi <span class="sym">(</span>next<span class="sym">,</span> safe<span class="sym">,</span> prod<span class="sym">,</span> consume<span class="sym">,</span> z<span class="sym">,</span> next<span class="sym">-</span>state<span class="sym">)
+</span><span class="com">/*
+  (do ((digits-out 0))
+      ((&gt;= digits-out *stop-digits*))
+
+    (let ((y (funcall next z)))
+      (if (funcall safe z y)
+          (progn
+            (format t &quot;~D&quot; y)
+            (incf digits-out)
+            (if (zerop (mod digits-out *digits-per-line*))
+                (format t &quot;	 :~D~%&quot; digits-out))
+            (setf z (funcall prod z y)))
+          (let ((state (funcall next-state)))
+            (setf z (funcall consume z state))))))
+*/</span>
+<span class="kwa">end function</span> compute<span class="sym">-</span>pi<span class="sym">;
+
+</span><span class="kwa">define function</span> comp <span class="sym">(</span>a1<span class="sym">,</span> a2<span class="sym">)
+</span><span class="com">/*
+  (let ((retval (make-array 4)))
+    (setf (aref retval 0) (+ (* (aref a1 0) (aref a2 0))
+                             (* (aref a1 1) (aref a2 2))))
+    (setf (aref retval 1) (+ (* (aref a1 0) (aref a2 1))
+                             (* (aref a1 1) (aref a2 3))))
+    (setf (aref retval 2) (+ (* (aref a1 2) (aref a2 0))
+                             (* (aref a1 3) (aref a2 2))))
+    (setf (aref retval 3) (+ (* (aref a1 2) (aref a2 1))
+                             (* (aref a1 3) (aref a2 3))))
+    retval)
+*/</span>
+<span class="kwa">end function</span> comp<span class="sym">;
+
+</span><span class="kwa">define function</span> extr <span class="sym">(</span>state<span class="sym">,</span> x<span class="sym">)
+</span><span class="com">/*
+  (declare (type (array integer 1) state))
+  (declare (type integer x))
+  (declare (optimize (speed 3) (safety 0) (space 0)))
+  (/ (+ (* (aref state 0) x) (aref state 1))
+     (+ (* (aref state 2) x) (aref state 3)))
+*/</span>
+<span class="kwa">end function</span> extr<span class="sym">;
+
+</span><span class="kwa">define function</span> next<span class="sym">-</span>state <span class="sym">()
+</span><span class="com">/*
+  (incf (aref *curstate* 0))
+  (incf (aref *curstate* 1) 4)
+  (incf (aref *curstate* 3) 2)
+  *curstate*)
+*/</span>
+<span class="kwa">end function</span> next<span class="sym">-</span>state<span class="sym">;
+
+</span><span class="kwa">define function</span> safe? <span class="sym">(</span>z<span class="sym">,</span> n<span class="sym">)
+  (=</span> n <span class="sym">(</span>floor <span class="sym">(</span>extr z <span class="num">4</span><span class="sym">)))
+</span><span class="kwa">end function</span> safe?<span class="sym">;
+
+</span><span class="kwa">define function</span> next <span class="sym">(</span>z<span class="sym">)
+  (</span>floor <span class="sym">(</span>extr z <span class="num">3</span><span class="sym">)))
+</span><span class="kwa">end function</span> next<span class="sym">;
+
+</span><span class="kwa">define function</span> prod <span class="sym">(</span>z<span class="sym">,</span> n<span class="sym">)
+  (</span><span class="kwa">let</span> <span class="sym">((</span>v1 <span class="sym">(</span>make<span class="sym">-</span>array <span class="num">4</span><span class="sym">)))
+    (</span>setf <span class="sym">(</span>aref v1 <span class="num">0</span><span class="sym">)</span> <span class="num">10</span><span class="sym">)
+    (</span>setf <span class="sym">(</span>aref v1 <span class="num">1</span><span class="sym">) (*</span> n <span class="num">-10</span><span class="sym">))
+    (</span>setf <span class="sym">(</span>aref v1 <span class="num">2</span><span class="sym">)</span> <span class="num">0</span><span class="sym">)
+    (</span>setf <span class="sym">(</span>aref v1 <span class="num">3</span><span class="sym">)</span> <span class="num">1</span><span class="sym">)
+    (</span>comp v1 z<span class="sym">)))
+</span><span class="kwa">end function</span> prod<span class="sym">;
+
+</span><span class="kwa">define function</span> consume <span class="sym">(</span>z<span class="sym">,</span> z<span class="sym">-</span>prime<span class="sym">)
+</span>  comp<span class="sym">(</span>z<span class="sym">,</span> z<span class="sym">-</span>prime<span class="sym">);
+</span><span class="kwa">end function</span> consume<span class="sym">;
+
+</span><span class="kwa">begin
+  let</span> n <span class="sym">=</span> application<span class="sym">-</span>arguments<span class="sym">()[</span><span class="num">0</span><span class="sym">]</span>.string<span class="sym">-</span><span class="kwa">to</span><span class="sym">-</span>integer<span class="sym">;
+  *</span>stop<span class="sym">-</span>digits<span class="sym">* =</span> n<span class="sym">;
+
+</span>  <span class="kwa">let</span> $init <span class="sym">=</span> make<span class="sym">(</span><span class="kwa">&lt;vector&gt;</span><span class="sym">,</span> size<span class="sym">:</span> <span class="num">4</span><span class="sym">,</span> fill<span class="sym">:</span> <span class="num">0</span><span class="sym">);
+</span>  <span class="kwa">let</span> $curstate <span class="sym">=</span> make<span class="sym">(</span><span class="kwa">&lt;vector&gt;</span><span class="sym">,</span> size<span class="sym">:</span> <span class="num">4</span><span class="sym">,</span> fill<span class="sym">:</span> <span class="num">0</span><span class="sym">);
+</span>  $init<span class="sym">[</span><span class="num">0</span><span class="sym">] :=</span> <span class="num">1</span><span class="sym">;
+</span>  $init<span class="sym">[</span><span class="num">3</span><span class="sym">] :=</span> <span class="num">1</span><span class="sym">;
+</span>  $curstate<span class="sym">[</span><span class="num">1</span><span class="sym">] =</span> <span class="num">2</span><span class="sym">;
+</span>  $curstate<span class="sym">[</span><span class="num">3</span><span class="sym">] =</span> <span class="num">1</span><span class="sym">;
+
+</span>  compute<span class="sym">-</span>pi<span class="sym">(</span> #<span class="str">'next, #'</span>safe<span class="sym">,</span> #<span class="str">'prod, #'</span>consume<span class="sym">,</span> $init<span class="sym">,</span> #<span class="str">'next-state);
+end;
+</span>

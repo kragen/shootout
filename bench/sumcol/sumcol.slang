@@ -2,7 +2,7 @@ define  main()
 {
    variable count = 0;
    foreach (stdin) using ("line")
-     count += integer ();
+     count += atoi ();
    fprintf (stdout, "%d\n", count);
 }
 main();
