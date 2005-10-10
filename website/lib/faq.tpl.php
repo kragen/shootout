@@ -435,61 +435,44 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 </td></tr>
 
 
+<tr class="b"><td><a class="ab" href="#acceptable" name="acceptable">Why don't you include my favourite language?</a></td></tr>
+<tr><td><p>Is the language implementation</p>
+<ul>
+<li><strong>Used?</strong> There are way too many dead languages and unused new languages - see <a href="http://people.ku.edu/~nkinners/LangList/Extras/langlist.htm">The Language List</a> and <a href="http://www.levenez.com/lang/">Computer Languages History</a></li>
+<li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs?</li>
+</ul>
+<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion.</p>
+</td></tr>
 
-<tr class="b"><td><a class="ab" href="#acceptable" name="acceptable">Why don't you include language X?</a></td></tr>
 
+<tr class="b"><td><a class="ab" href="#acceptablemore" name="acceptablemore">Why don't you include my favourite language?</a></td></tr>
 <tr><td>
-<p>Programming languages that can be used to write most of our benchmark programs!</p> 
+<p>Can the language implementation be used to write most of our benchmark programs?</p> 
 <p><strong>Must have</strong></p>
 <ol>
 <li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
 <br />Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
-<li>Documentation.</li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
 <li>Double precision floating point numbers.</li>
-<li>Dynamic hash tables and sequences (arrays or lists).</li>
 <li>Line-oriented read &amp; write from stdin &amp; stdout.</li>
+<li>Documentation.</li>
 </ol>
 
 <p><strong>Should have</strong></p>
 <ol>
 <li>Buffered stdio.</li>
+<li>Dynamic hash tables and sequences (arrays or lists).</li>
 <li>Exception handling.</li>
 <li>Regular Expressions (preferably Perl compatible).</li>
 <li>Concurrency (threads, coroutines, &#8230;)</li>
 <li>TCP/IP Sockets.</li>
-<li>Object-oriented programming features.</li>
 </ol>
-</td></tr>
-
-
-<tr class="b"><td><a class="ab" href="#include" name="include">Why don't you include language X?</a></td></tr>
-<tr><td><p>Is the language &#8230;</p>
-
-<ol>
-<li><strong>Free?</strong> The hope is that people who come across the shootout
-will be motivated to learn a new language, and since the barriers
-to learning a new language are far lower for a free implementation,
-those are the prefered languages for display.  While commercial
-languages are not officially disqualified, there do not
-seem to be many compelling reasons to include them.</li>
-<li><strong>Open source?</strong>  Programming languages should
-be open source.  As language users, when we find a problem but do
-not have access to the source code it is very frustrating.  If
-you have ever had to maintain production software for a compiler
-that is no longer available from a vendor, with no available bug
-fixes, you'll understand this preference.</li>
-<li><strong>Used?</strong> There are way too many dead languages and unused new languages.</li>
-<li><strong>Interesting?</strong> Is there something significant and interesting about the language that will be revealed by these simple benchmark programs?</li>
-</ol>
-<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#please" name="please">Please will you include my favourite language?</a></td></tr>
-
 <tr><td>
-<p>Maybe we will when you write 15 of the benchmark programs in your favourite language, and contribute them to "The Great Computer Language Shootout" :-)</p>
+<p>Maybe we will when you write 15 of the benchmark programs in your favourite language, and contribute them to "The Computer Language Shootout" :-)</p>
 </td></tr>
 
 <tr><td>
