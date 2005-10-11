@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.5 2005-10-11 05:25:32 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := nsievebits
@@ -17,7 +17,6 @@ POLYOPTS := -q
 OCAMLOPTS := bigarray.cmxa
 OCAMLBOPTS := bigarray.cma
 
-ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
