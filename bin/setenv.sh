@@ -1,5 +1,7 @@
 #!/bin/sh
 
+ulimit -s unlimited
+
 # Groovy support
 JAVA_HOME=/usr/lib/j2sdk1.4.2_05
 export JAVA_HOME

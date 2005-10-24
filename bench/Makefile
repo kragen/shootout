@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2005-09-25 04:46:13 bfulgham Exp $
+# $Id: Makefile,v 1.43 2005-10-24 20:54:32 igouy-guest Exp $
 TESTS = \
     hello \
     ackermann \
@@ -51,7 +51,7 @@ TESTS = \
     wc \
     wordfreq
 
-BIN:=/opt/shootout/shootout/bin
+BIN:=/opt/shootout/shootout/bin # get rid of this hardcoded path
 
 .PHONY: all plot test show clean clobber report
 
