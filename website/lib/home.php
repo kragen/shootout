@@ -48,7 +48,7 @@ $Body->set('Intro', $Intro->fetch(SITE_NAME.SEPARATOR.'intro.about'));
 
 $NavBar = & new Template(ABOUT_PATH);
 $NavBar->set('Sort', $S);
-if (SITE_NAME == 'core' || SITE_NAME == 'great'){
+if (SITE_NAME == 'core' || SITE_NAME == 'gp4'){
    $Body->set('NavBar', $NavBar->fetch('navbar.about'));
 } else {
    $Body->set('NavBar', $NavBar->fetch('navbar-slim.about'));
