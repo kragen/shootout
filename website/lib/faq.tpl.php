@@ -521,7 +521,10 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
 <p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, see <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.</p>
 <p>Then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
- website. Who knows where it will end?</p>
+ website.</p>
+<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 
+        Computer Language Shootout&nbsp;</a></span> website. Who knows where it 
+        will end?</p>
 <p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews in late-2005.</p>
 </td></tr>
 

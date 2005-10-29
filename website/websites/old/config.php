@@ -22,6 +22,7 @@ define('SANDBOX_SITE', '../sandbox/');
 define('GREAT_SITE', '../great/');
 define('OLD_SITE', './');
 define('CONTESTS_SITE', '../contests/');
+define('GP4_SITE', '../gp4/');
 
 // CONSTANTS ///////////////////////////////////////////////////
 
@@ -30,7 +31,8 @@ define('REV_COLOR_CORE', 'navy');
 define('REV_COLOR_GREAT', '#991900');         
 define('REV_COLOR_SANDBOX', '#cc9900'); 
 define('REV_COLOR_OLD', 'gray');  
-define('REV_COLOR_CONTESTS', '#ff0000');  
+define('REV_COLOR_CONTESTS', '#ff0000');
+define('REV_COLOR_GP4', '#7b59de'); 
 
 define('DEV',FALSE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
