@@ -532,7 +532,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>Can the language implementation be used to write most of our benchmark programs?</p> 
 <p><strong>Must have</strong></p>
 <ol>
-        <li>A <a href="http://www.debian.org" title="The Debian.org website">Gentoo 
+        <li>A <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo 
           ebuild</a><br />
           Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Command-line argument handling.</li>
