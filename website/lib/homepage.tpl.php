@@ -19,6 +19,7 @@
    .arevGreat { background-color: <?=REV_COLOR_GREAT;?>; }
    .arevSandbox { background-color: <?=REV_COLOR_SANDBOX;?>; }
    .arevOld { background-color: <?=REV_COLOR_OLD;?>; }   
+   .arevGP4 { background-color: <?=REV_COLOR_GP4;?>; }
 </style>
 </head>
 

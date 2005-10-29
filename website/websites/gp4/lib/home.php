@@ -16,7 +16,7 @@ else { $S = 'fullcpu'; }
 
 list($Incl,$Excl) = ReadIncludeExclude();
 $Tests = ReadUniqueArrays('test.csv',$Incl);
-if (SITE_NAME != 'core'){ uasort($Tests, 'CompareTestName'); }
+if (SITE_NAME != 'core' && SITE_NAME != 'gp4'){ uasort($Tests, 'CompareTestName'); }
 
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
@@ -68,7 +68,7 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
-if (SITE_NAME=='core'){
+if (SITE_NAME=='core' || SITE_NAME == 'gp4'){
    $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
 } elseif (SITE_NAME=='great') {
    $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
