@@ -489,7 +489,7 @@ Bash time builtin command
 <tr class="b"><td><a class="ab" href="#os" name="os">What OS are you using on the test machine?</a></td></tr>
 
 <tr><td>
-      <p>Gentoo Linux 2005.1, Kernel 2.6.8-1-k7</p>
+      <p><strong>Gentoo Linux</strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, reiserfs</p>
     </td></tr>
 
 
