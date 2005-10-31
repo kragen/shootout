@@ -40,7 +40,6 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <th>&nbsp;N&nbsp;</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>
-<th>CPU Time&nbsp;s</th>
 <th>Code Lines</th>
 </tr>
 
@@ -68,12 +67,12 @@ if (isset($Data[$SelectedLang])){
          }
 
          if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }        
-         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td></tr>', 
-            $n,$fullcpu,$kb,$cpu,$d[DATA_LINES]); echo "\n";
+         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td></tr>', 
+            $n,$fullcpu,$kb,$d[DATA_LINES]); echo "\n";
       }
    }
 } else {
-   echo '<tr class="a"><td></td> <td></td> <td></td> <td></td></tr>'; echo "\n";
+   echo '<tr class="a"><td></td> <td></td> <td></td></tr>'; echo "\n";
 }        
 ?>
 
