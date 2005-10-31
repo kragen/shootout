@@ -30,51 +30,120 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <p class="thp">Source-code, CPU times</p>
 </th>
 
-<?   
-   if (HOMEPAGE_ROWS>0){ $maxRows = HOMEPAGE_ROWS; }
-   else { $maxRows = sizeof($Tests)-2; } 
-   $maxLangs = sizeof($Langs);
-   if ($maxLangs%$maxRows > 0){ $span = $maxLangs/$maxRows + 1; }
-   else { $span = $maxLangs/$maxRows; }
-?>
-
-<th class="c" colspan="<?=$span;?>">
+<th class="c" colspan="2">
 <a class="ab" href="#compare" name="compare"><strong>2&nbsp;Compare</strong></a>
 <p class="thp">Relative performance on all benchmarks</p>
 </th>
 </tr>
 
-<tr><td>
 <?
-   foreach($Tests as $Row){
-      $TestLink = $Row[TEST_LINK];
-      $TestName = $Row[TEST_NAME];
-      $TestTag = $Row[TEST_TAG];
+   $Tests = array_values($Tests);
+   $i = 0;
+   $testsSize = sizeof($Tests); 
 
-      printf('<p class="a"><a ');      
-      printf('href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $TestLink,$Sort,$TestName,$TestTag); 
-      echo "\n";
-   }
-?>
-</td>
+   $Langs = array_values($Langs);
+   $j = 0;
+   $langsSize = sizeof($Langs);
 
-<td>
-<?
-   $count = 0; $showFeature = true;    
-   foreach($Langs as $Row){
-      $LangLink = $Row[LANG_LINK];
-      $LangName = $Row[LANG_FULL];
-      $LangTag = $Row[LANG_TAG];           
+   while ($i<$testsSize||$j<$langsSize){
+      printf('<tr>'); 
+
+      if ($i<$testsSize){
+         if ($j==$langsSize){ $j++; }         
+         $t = $Tests[$i];
+         $TestLink = $t[TEST_LINK];
+         $TestName = $t[TEST_NAME];
+         $TestTag = $t[TEST_TAG];
+         printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $TestLink,$Sort,$TestName,$TestTag); 
+         $i++;  
+      }
+      else {
+         if ($j<$langsSize){
+
+            $l = $Langs[$j];
+            $LangLink = $l[LANG_LINK];
+            $LangName = $l[LANG_FULL];
+            $LangTag = $l[LANG_TAG];  
+
+            printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$Sort,$LangName,$LangTag); 
+            $j++;
+         }
+         else {
+            printf('<td class="a">&nbsp;</td>');
+         }
+      }
+
+
+      if ($j<$langsSize){
+
+         $l = $Langs[$j];
+         $LangLink = $l[LANG_LINK];
+         $LangName = $l[LANG_FULL];
+         $LangTag = $l[LANG_TAG];  
+
+         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$Sort,$LangName,$LangTag); 
+         $j++;
+      }
+      else {
+         if ($i<$testsSize){
             
-      if ($count < $maxRows){ $count++; } else { $count = 0; echo "</td><td>\n"; }      
-                  
-      printf('<p><a ', $LangName);      
-      printf('href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></p>', $LangLink,$Sort,$LangName,$LangTag); 
-      echo "\n";
-   }
-?>
-</td></tr>
+            $t = $Tests[$i];
+            $TestLink = $t[TEST_LINK];
+            $TestName = $t[TEST_NAME];
+            $TestTag = $t[TEST_TAG];
+            printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $TestLink,$Sort,$TestName,$TestTag); 
+            $i++; 
+         }
+         else {
+            if (2*$testsSize>$langsSize){
+               printf('<td class="a">&nbsp;</td>');
+            }
+            else {
+               printf('<td class="ab">&nbsp;</td>');
+            }
+         }
+      }
 
+
+      if ($j<$langsSize){
+         $l = $Langs[$j];
+         $LangLink = $l[LANG_LINK];
+         $LangName = $l[LANG_FULL];
+         $LangTag = $l[LANG_TAG];  
+
+         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$Sort,$LangName,$LangTag); 
+         $j++;
+      }
+      else {
+         if ($i<$testsSize){
+            if ($j==$langsSize){
+               printf('<td class="ab">&nbsp;</td>');
+               $j++;
+            }
+            else {
+               $t = $Tests[$i];
+               $TestLink = $t[TEST_LINK];
+               $TestName = $t[TEST_NAME];
+               $TestTag = $t[TEST_TAG];
+               printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $TestLink,$Sort,$TestName,$TestTag);  
+               $i++;  
+            } 
+         }
+         else {
+            if (2*$testsSize>$langsSize){
+               printf('<td class="a">&nbsp;</td>');
+            }
+            else {
+               printf('<td class="ab">&nbsp;</td>');
+            }
+         }
+      }
+
+
+      printf('</tr>');
+   }
+
+?>
 </table>
 
 
