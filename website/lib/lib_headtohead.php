@@ -223,7 +223,6 @@ function PF($d){
    else { return '<span class="b">'.number_format($d,4).'</span>'; }
 }
 
-
 function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    // Simple filter on file rows
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');

@@ -4,7 +4,7 @@
 
 // FILE PATHS ///////////////////////////////////////////////////
 
-define('LIB_PATH', './lib/');
+define('LIB_PATH', '../../lib/');
 define('LIB', '../../lib/lib.php');
 
 define('DESC_PATH', '../../desc/');

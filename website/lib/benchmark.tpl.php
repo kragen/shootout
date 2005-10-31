@@ -70,27 +70,18 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
    title="Sort by Memory Use">sort</a>
 </th>
 <th>
-<? // STARTUP TEST IS A SPECIAL CASE
-   if ($SelectedTest==STARTUP){
-      echo "&nbsp;\n"; 
-   } else {
-      printf('<a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=cpu" ', $SelectedTest,$SelectedLang); echo "\n"; 
-      printf('title="Sort by Full CPU Time minus Startup Time">sort</a>'); echo "\n"; 
-   }
-?>
-</th>
-<th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=lines" 
    title="Sort by Code Lines">sort</a>
 </th>
+<th>&nbsp;</th>
 </tr>
 
 <tr>
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>
-<th>CPU Time&nbsp;s</th>
 <th>Code Lines</th>
+<th>&nbsp;Ratio&nbsp;</th>
 </tr>
 
 <? 
@@ -98,6 +89,8 @@ foreach($Langs as $k => $v){ $No_Program_Langs[$k] = TRUE; }
 
 $RowClass = 'c';
 $better = array();
+if (sizeof($Accepted) > 0){ $first = $Accepted[0]; }
+
 foreach($Accepted as $d){
    $k = $d[DATA_LANG]; 
    
@@ -109,14 +102,15 @@ foreach($Accepted as $d){
    if (!isset($better[$k])){  
       $better[$k] = TRUE;
       // Sort according to current sort criteria, bold the sort-column
-      if ($Sort=='cpu'){ 
-         $C1 = 'class="rb"';    
-      } elseif ($Sort=='fullcpu'){ 
+      if ($Sort=='fullcpu'){ 
          $C2 = 'class="rb"';    
+         $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU];
       } elseif ($Sort=='kb'){ 
          $C3 = 'class="rb"';
+         $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY];
       } elseif ($Sort=='lines'){ 
          $C4 = 'class="rb"';
+         $ratio = $d[DATA_LINES]/$first[DATA_LINES];
       }    
    }      
         
@@ -125,7 +119,6 @@ foreach($Accepted as $d){
    $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);  
 
    $id = $d[DATA_ID];   
-   $cpu = $d[DATA_CPU];
    $fullcpu = $d[DATA_FULLCPU];
    if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    $lines = $d[DATA_LINES];
@@ -134,13 +127,8 @@ foreach($Accepted as $d){
    printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
       $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
 
-   if ($SelectedTest==STARTUP){
-      printf('<td %s>%0.2f</td><td %s>%s</td><td>&nbsp;</td><td %s>%d</td>',
-         $C2, $fullcpu, $C3, $kb, $C4, $lines); echo "\n";
-   } else {
-      printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%0.2f</td><td %s>%d</td>',
-         $C2, $fullcpu, $C3, $kb, $C1, $cpu, $C4, $lines); echo "\n";
-   }
+   printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%d</td><td %s>%s</td>',
+         $C2, $fullcpu, $C3, $kb, $C4, $lines, $C1, PFx($ratio) ); echo "\n";
 
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
@@ -168,7 +156,7 @@ foreach($Langs as $k => $v){
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td class="r">%s</td><td></td><td></td><td class="r">%d</td>', $message, $lines);   
+         printf('<td class="r">%s</td><td></td><td class="r">%d</td><td></td>', $message, $lines);   
        
          echo "</tr>\n";
          if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }    
@@ -191,6 +179,14 @@ if (sizeof($Special)>0){
       $Name = $Langs[$k][LANG_FULL];
       $HtmlName = $Langs[$k][LANG_HTML];
       if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }   
+
+      if ($Sort=='fullcpu'){ 
+         $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU];
+      } elseif ($Sort=='kb'){ 
+         $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY];
+      } elseif ($Sort=='lines'){ 
+         $ratio = $d[DATA_LINES]/$first[DATA_LINES];
+      } 
      
       $id = $d[DATA_ID];   
       $cpu = $d[DATA_CPU];
@@ -203,19 +199,13 @@ if (sizeof($Special)>0){
          $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
 
       if ($fullcpu > PROGRAM_TIMEOUT){
-         if ($SelectedTest==STARTUP){
-            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">&nbsp;</td><td class="r">%d</td>',
-               $fullcpu, $kb, $lines); echo "\n";
-
-         } else {
-            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%0.2f</td><td class="r">%d</td>',
-               $fullcpu, $kb, $cpu, $lines); echo "\n";
-         }
+            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td>',
+               $fullcpu, $kb, $lines, PFx($ratio) ); echo "\n";
       }
       else {
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td class="r">%s</td><td></td><td></td><td class="r">%d</td>', $message, $lines);         
+         printf('<td class="r">%s</td><td></td><td class="r">%d</td><td></td>', $message, $lines);         
       }
       echo "</tr>\n";
       if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
