@@ -404,7 +404,7 @@ Bash time builtin command
 
 <tr class="b"><td><a class="ab" href="#machine" name="machine">What machine are you running the programs on?</a></td></tr>
 <tr><td>
-<p>The current <strong>test machine</strong> is a single-processor 1.1 Ghz AMD Athlon machine with 256 MB of RAM and a 20GB IDE disk drive.</p></td></tr>
+<p>The current <strong>test machine</strong> is a single-processor 2.2 Ghz AMD Sempron machine with 512 MB of RAM and a 40GB IDE disk drive.</p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#os" name="os">What OS are you using on the test machine?</a></td></tr>
 
