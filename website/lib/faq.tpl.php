@@ -272,10 +272,11 @@ We still show the original benchmarks on Debian <span><a class="arevOld" title="
 <tr class="b"><td><a class="ab" href="#sandbox" name="sandbox">Where can I see more languages?</a></td></tr>
 <tr><td>
 <p>
-We show some <strong>more languages</strong> on the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website</p>
+We show <strong>more languages</strong> and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
+</p>
 <p>
-We show <strong>even more</strong> languages and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
-</p></td></tr>
+The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >GP4 Computer Language Shootout&nbsp;</a></span> website has somewhat different language implementations (and different versions of the same language implementation) than the <span><a class="arevCore" title="Debian Linux on AMD Sempron" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Computer Language Shootout&nbsp;</a></span> website.</p>
+</td></tr>
 
 
 <tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
@@ -311,9 +312,6 @@ We show <strong>even more</strong> languages and <strong>experimental benchmarks
 
 <p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
 </td></tr>
-
-<tr class="b"><td><a class="ab" href="#cpu" name="cpu">What does CPU Time mean?</a></td></tr>
-<tr><td><p>The CPU Time is the measured CPU time minus the average time of the startup benchmark for the language.</p></td></tr>
 
 
 
@@ -407,15 +405,15 @@ Bash time builtin command
 
 <tr class="b"><td><a class="ab" href="#machine" name="machine">What machine are you running the programs on?</a></td></tr>
 <tr><td>
-<p>The <strong>DS test machine</strong> is a single-processor 2.2Ghz AMD Sempron<sup>TM</sup> machine with 512 MB of RAM and a 40GB IDE disk drive.</p>
+<p><strong>"The"</strong> test machine is a single-processor 2.2Ghz AMD Sempron<sup>TM</sup> machine with 512 MB of RAM and a 40GB IDE disk drive.</p>
 <p>The <strong>GP4 test machine</strong> is a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and an 80GB IDE disk drive. </p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#os" name="os">What OS are you using on the test machine?</a></td></tr>
 
 <tr><td>
-<p>DS <strong>Debian Linux<sup>TM</sup></strong> 'unstable', Kernel 2.6.8-1-k7</p>
-<p>GP4 <strong>Gentoo Linux<sup>TM</sup></strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, reiserfs</p>
+<p><strong>"The"</strong> test machine uses <strong>Debian Linux<sup>TM</sup></strong> 'unstable', Kernel 2.6.8-1-k7</p>
+<p>The <strong>GP4 test machine</strong> uses <strong>Gentoo Linux<sup>TM</sup></strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, Reiserfs</p>
 </td></tr>
 
 
@@ -458,10 +456,8 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>Can the language implementation be used to write most of our benchmark programs?</p> 
 <p><strong>Must have</strong></p>
 <ol>
-<li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
-or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo 
-          ebuild</a><br />
-<br />or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
+<li>A <a href="http://packages.debian.org/unstable/" title="Debian packages">Debian package</a> (either from Debian itself, or the primary authors of the language)
+or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo ebuild</a> or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
 <li>Double precision floating point numbers.</li>
