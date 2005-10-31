@@ -11,6 +11,7 @@ define('DESC_PATH', '../../desc/');
 define('DATA_PATH', './data/');
 define('ABOUT_PATH', '../../about/');
 define('ABOUT_PROGRAMS_PATH', '../../about/programs/');
+define('VERSION_PATH', './version/');
 define('CODE_PATH', './code/');
 define('LOG_PATH', './code/');
 define('MISC_PATH', '../../misc/');
