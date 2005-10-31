@@ -231,190 +231,115 @@ each new target source file will start from the <strong>comment line</strong> wh
 
 <!-- WHERE CAN I? ////////////////////////////////////////////////// -->
 <table class="div">
-  <tr> 
-    <td> 
-      <h3 class="rev"><a class="arev" href="#where" name="where">&nbsp;Where can 
-        I&#8230;?</a></h3>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#wherehelp" name="wherehelp">Where can I <strong>report 
-      a bug</strong>, contribute a program&#8230;?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>You should report possible bugs, request feature changes and contribute 
-        programs on the appropriate issue tracker - see <a href="#help"><strong>How 
-        can I help?</strong></a></p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#seemore" name="seemore">Where can I see more about 
-      a <strong>Timeout</strong> or <strong>Error</strong>?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>Sometimes a program may produce correct results, within the timeout, 
-        for smaller workloads - so check the data on the <a href="fulldata.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="full data"><strong>full 
-        data page</strong></a>.</p>
-      <p>You may find information about an Error in the 'build &amp; benchmark 
-        results' section of the program page.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#version" name="version">Where can I see which language 
-      version was used?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>You can see information about the language implementation, including 
-        the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;sort=<?=$Sort;?>#about" title="about the C gcc language"><strong>language 
-        comparison page</strong></a>.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#options" name="options">Where can I see which compiler 
-      and runtime options were used?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>You can see the build commands and runtime commands on each program page 
-        in the <a href="benchmark.php?test=ackermann&amp;lang=gcc&amp;sort=<?=$Sort;?>#log" title="build &amp; benchmark results"><strong>build 
-        &amp; benchmark results</strong></a> section.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#downdata" name="downdata">Where can I download the 
-      <strong>data</strong> from?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv.bz2';?>" title="Download compressed CSV spreadsheet">compressed 
-        CSV spreadsheet</a> ~60KB bz2</p>
-      <p>The spreadsheet includes both The Sandbox and The Doug Bagley data. Negative 
-        values indicate problems: Timeout -1, Error -2.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#arch" name="arch">Where can I see what other people 
-      think about the Language Shootout?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>Google! Here's some <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>sensible 
-        criticism</strong></a> of the original Shootout.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#bagley" name="bagley">Where can I see <strong>the 
-      original benchmarks</strong>?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p> We still show the original benchmarks for Debian on <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> 
-        website. </p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#sandbox" name="sandbox">Where can I see more languages?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p> We show some <strong>more languages</strong> for Debian on <span><a class="arevCore title="The Computer Language Shootout Benchmarks" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Computer 
-        Language Shootout Benchmarks &nbsp;</a></span> website. </p>
-	  <p> We show even <strong>more languages and experimental benchmarks</strong> 
-        for Debian on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> 
-        website. </p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#downsource" name="downsource">Where can I download 
-      the program sources and build scripts?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse 
-        the CVS tree</a>.</p>
-      <p>Build dependencies include - <a href="http://packages.debian.org/stable/admin/gtop">libgtop</a>, 
-        <a href="http://search.cpan.org/~stas/GTop/">GTop</a>, libXau, and <a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl">BSD::Resource</a> 
-      </p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#findmore" name="findmore">Where can I find out more?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge 
-        Debian.org</a>. </p>
-    </td>
-  </tr>
+<tr><td><h3 class="rev"><a class="arev" href="#where" name="where">&nbsp;Where can I&#8230;?</a></h3></td></tr>
+
+<tr class="b"><td><a class="ab" href="#wherehelp" name="wherehelp">Where can I <strong>report a bug</strong>, contribute a program&#8230;?</a></td></tr>
+<tr><td>
+<p>You should report possible bugs, request feature changes and contribute programs on the appropriate issue tracker - see <a href="#help"><strong>How can I help?</strong></a></p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
+<tr><td>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="full data"><strong>full data page</strong></a>.</p>
+<p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
+</td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#version" name="version">Where can I see which language version was used?</a></td></tr>
+<tr><td>
+<p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;sort=<?=$Sort;?>#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#options" name="options">Where can I see which compiler and runtime options were used?</a></td></tr>
+<tr><td>
+<p>You can see the build commands and runtime commands on each program page in the <a href="benchmark.php?test=ackermann&amp;lang=gcc&amp;sort=<?=$Sort;?>#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
+<tr><td><p>You can <strong>download</strong> a <a href="<?=$Download.'ndata.csv.bz2';?>" title="Download compressed CSV spreadsheet">compressed CSV spreadsheet</a> ~60KB bz2</p>
+<p>The spreadsheet includes both The Sandbox and The Doug Bagley data. Negative values indicate problems: Timeout -1, Error -2.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></td></tr>
+<tr><td><p>Google! Here's some <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>sensible criticism</strong></a> of the original Shootout.</p></td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#bagley" name="bagley">Where can I see <strong>the original benchmarks</strong>?</a></td></tr>
+<tr><td><p>
+We still show the original benchmarks on Debian <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.
+</p></td></tr>
+
+<tr class="b"><td><a class="ab" href="#sandbox" name="sandbox">Where can I see more languages?</a></td></tr>
+<tr><td>
+<p>
+We show some <strong>more languages</strong> on the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website</p>
+<p>
+We show <strong>even more</strong> languages and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
+</p></td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#downsource" name="downsource">Where can I download the program sources and build scripts?</a></td></tr>
+<tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
+<p>Build dependencies include - <a href="http://packages.debian.org/stable/admin/gtop">libgtop</a>, <a href="http://search.cpan.org/~stas/GTop/">GTop</a>, libXau, and <a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl">BSD::Resource</a> </p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#findmore" name="findmore">Where can I find out more?</a></td></tr>
+
+<tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge Debian.org</a>.
+</p></td></tr>
 </table>
 
 
 
 <!-- WHAT DOES ... MEAN? /////////////////////////////////////////////// -->
 <table class="div">
-  <tr> 
-    <td> 
-      <h3 class="rev"><a class="arev" href="#means" name="means">&nbsp;What does 
-        &#8230; mean?</a></h3>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#alternative" name="alternative">What does Interesting 
-      Alternative Program mean?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>"Interesting Alternative Program" means that the program doesn't implement 
-        the benchmark according to the arbitrary and idiosyncratic rules of the 
-        Computer Language Shootout - but <strong>we simply couldn't resist</strong> 
-        showing the program.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#id" name="id">What do #2 #3 mean?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>Full CPU Time means <strong>program run-time</strong> including program 
-        <strong>startup time</strong>. So for Java that includes the time to startup 
-        a JVM.</p>
-      <p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup 
-        benchmark</a> programs.</p>
-    </td>
-  </tr>
+<tr><td><h3 class="rev"><a class="arev" href="#means" name="means">&nbsp;What does &#8230; mean?</a></h3></td></tr>
 
-  <tr class="b">
-    <td><a class="ab" href="#cpu" name="cpu">What does CPU Time mean?</a></td>
-  </tr>
-  <tr>
-    <td>
-      <p>The CPU Time is the measured CPU time minus the average time of the startup
-        benchmark for the language.</p>
-    </td>
-  </tr>
-  <tr class="b"> 
-    <td><a class="ab" href="#gp4" name="gp4">What does GP4 mean?</a></td>
-  </tr>
-  <tr> 
-    <td> 
-      <p>Gentoo Linux<sup>TM</sup> on Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4</p>
-    </td>
-  </tr>
+<tr class="b"><td><a class="ab" href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></td></tr>
+<tr><td>
+<p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#id" name="id">What do #2 #3 mean?</a></td></tr>
+<tr><td>
+<p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></td></tr>
+<tr><td>
+<p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
+
+<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#cpu" name="cpu">What does CPU Time mean?</a></td></tr>
+<tr><td><p>The CPU Time is the measured CPU time minus the average time of the startup benchmark for the language.</p></td></tr>
+
+
+
+<tr class="b"><td><a class="ab" href="#sameway" name="sameway"><em>The Doug Bagley</em>: What does same way mean?</a></td></tr>
+<tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
+<p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+<p>The same way programs often seem naive and unidiomatic.</p> 
+</td></tr>
+
+
+<tr class="b"><td><a class="ab" href="#samething" name="samething"><em>The Doug Bagley</em>: What does same thing mean?</a></td></tr>
+
+<tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
+<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+<p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
+</td></tr>
+
 </table>
 
 
 
+
+
+
+<!-- HOW DID YOU MEASURE...? /////////////////////////////////////////////// -->
 
 
 
@@ -482,15 +407,16 @@ Bash time builtin command
 
 <tr class="b"><td><a class="ab" href="#machine" name="machine">What machine are you running the programs on?</a></td></tr>
 <tr><td>
-      <p>This <strong>test machine</strong> is a single-processor 2Ghz Intel Pentium 
-        4 machine with 512MB of RAM and an 80GB IDE disk drive. </p>
-    </td></tr>
+<p>The <strong>DS test machine</strong> is a single-processor 2.2Ghz AMD Sempron<sup>TM</sup> machine with 512 MB of RAM and a 40GB IDE disk drive.</p>
+<p>The <strong>GP4 test machine</strong> is a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and an 80GB IDE disk drive. </p>
+</td></tr>
 
 <tr class="b"><td><a class="ab" href="#os" name="os">What OS are you using on the test machine?</a></td></tr>
 
 <tr><td>
-      <p><strong>Gentoo Linux</strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, reiserfs</p>
-    </td></tr>
+<p>DS <strong>Debian Linux<sup>TM</sup></strong> 'unstable', Kernel 2.6.8-1-k7</p>
+<p>GP4 <strong>Gentoo Linux<sup>TM</sup></strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, reiserfs</p>
+</td></tr>
 
 
 </table>
@@ -532,9 +458,10 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>Can the language implementation be used to write most of our benchmark programs?</p> 
 <p><strong>Must have</strong></p>
 <ol>
-        <li>A <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo 
+<li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
+or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo 
           ebuild</a><br />
-          Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
+<br />or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
 <li>Double precision floating point numbers.</li>
@@ -603,13 +530,12 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 
 <p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
 <p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, see <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.</p>
-      <p>Then benchmarks were deprecated and new benchmarks were added. We continue 
-        to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> 
-        website.</p>
-      <p>In late-2005 Isaac Gouy started to experiment with this <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 
+<p>Then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
+ website.</p>
+<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 
         Computer Language Shootout&nbsp;</a></span> website. Who knows where it 
         will end?</p>
-      <p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews in late-2005.</p>
+<p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews in late-2005.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>

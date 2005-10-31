@@ -266,12 +266,15 @@ each new target source file will start from the <strong>comment line</strong> wh
 
 <tr class="b"><td><a class="ab" href="#bagley" name="bagley">Where can I see <strong>the original benchmarks</strong>?</a></td></tr>
 <tr><td><p>
-We still show the original benchmarks on <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.
+We still show the original benchmarks on Debian <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.
 </p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#sandbox" name="sandbox">Where can I see more languages?</a></td></tr>
-<tr><td><p>
-We show some <strong>more languages</strong> and experimental benchmarks on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
+<tr><td>
+<p>
+We show some <strong>more languages</strong> on the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website</p>
+<p>
+We show <strong>even more</strong> languages and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
 </p></td></tr>
 
 
@@ -404,11 +407,16 @@ Bash time builtin command
 
 <tr class="b"><td><a class="ab" href="#machine" name="machine">What machine are you running the programs on?</a></td></tr>
 <tr><td>
-<p>The current <strong>test machine</strong> is a single-processor 2.2 Ghz AMD Sempron machine with 512 MB of RAM and a 40GB IDE disk drive.</p></td></tr>
+<p>The <strong>DS test machine</strong> is a single-processor 2.2Ghz AMD Sempron<sup>TM</sup> machine with 512 MB of RAM and a 40GB IDE disk drive.</p>
+<p>The <strong>GP4 test machine</strong> is a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and an 80GB IDE disk drive. </p>
+</td></tr>
 
 <tr class="b"><td><a class="ab" href="#os" name="os">What OS are you using on the test machine?</a></td></tr>
 
-<tr><td><p>Debian 'unstable', Kernel 2.6.8-1-k7</p></td></tr>
+<tr><td>
+<p>DS <strong>Debian Linux<sup>TM</sup></strong> 'unstable', Kernel 2.6.8-1-k7</p>
+<p>GP4 <strong>Gentoo Linux<sup>TM</sup></strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, reiserfs</p>
+</td></tr>
 
 
 </table>
@@ -451,7 +459,9 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p><strong>Must have</strong></p>
 <ol>
 <li>A <a href="http://www.debian.org" title="The Debian.org website">Debian package</a> (either from Debian itself, or the primary authors of the language.)
-<br />Or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
+or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo 
+          ebuild</a><br />
+<br />or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
 <li>Double precision floating point numbers.</li>
