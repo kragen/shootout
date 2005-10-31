@@ -57,14 +57,13 @@ program; values &#60; 1 mean the <?=$LangName;?> program used <em>less</em> than
 <th class="c">&nbsp;</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
-<th>CPU Time</th>
 <th>Code Lines</th>
 <th class="c">&nbsp;</th>
 </tr>
 
 <tr>
 <th>Program &amp; Logs</th>
-<th colspan="4"><?=$LangName;?>&nbsp;/ <?=$LangName2;?></th>
+<th colspan="3"><?=$LangName;?>&nbsp;/ <?=$LangName2;?></th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
@@ -86,13 +85,13 @@ foreach($Tests as $Row){
          if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }                         
                   
          if ($Link==STARTUP){
-            printf('<td class="r">%s</td><td class="r">%s</td><td class="r">%s</td>
+            printf('<td class="r">%s</td><td class="r">%s</td>
                   <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
-               PF($v[N_FULLCPU]), PF($v[N_MEMORY]), '&nbsp;', PF($v[N_LINES]), $n); 
+               PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_LINES]), $n); 
          } else {
-            printf('<td class="r">%s</td><td class="r">%s</td><td class="r">%s</td>
+            printf('<td class="r">%s</td><td class="r">%s</td>
                   <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
-               PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_CPU]), PF($v[N_LINES]), $n);                   
+               PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_LINES]), $n);                   
          }
 
       } else {      
@@ -102,22 +101,22 @@ foreach($Tests as $Row){
          elseif ($r = $v[N_LINES] == NO_COMPARISON){ $message = '<span class="s">No '.$Langs[$v[N_LANG]][LANG_NAME].'</span>'; } 
          else {$message = 'X'; } 
          
-         if ($r) { printf('<td></td><td></td><td></td><td colspan="2" class="r">%s</td>', $message); }
-         else { printf('<td class="r">%s</td><td></td><td></td><td></td><td></td>', $message); }
+         if ($r) { printf('<td></td><td></td><td colspan="2" class="r">%s</td>', $message); }
+         else { printf('<td class="r">%s</td><td></td><td></td><td></td>', $message); }
       }
 
    } else {
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
          $Link, $SelectedLang, $Sort, $Name); echo "\n";
       $message = 'No&nbsp;program';
-      printf('<td class="r">%s</td><td></td><td></td><td></td><td></td>', $message); 
+      printf('<td class="r">%s</td><td></td><td></td><td></td>', $message); 
    }
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>   
 
-<tr><td colspan="6">&nbsp;</td></tr>
+<tr><td colspan="5">&nbsp;</td></tr>
    
 
 
@@ -131,14 +130,14 @@ foreach($Tests as $Row){
 <th class="c">&nbsp;</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
-<th>CPU Time</th>
 <th>Code Lines</th>
+<th class="c">&nbsp;</th>
 <th class="c">&nbsp;</th>
 </tr>   
 
 <tr>
 <th class="c">&nbsp;</th>
-<th colspan="4"><?=$LangName;?> better - <?=$LangName2;?> better</th>
+<th colspan="5"><?=$LangName;?> better - <?=$LangName2;?> better</th>
 <th class="c">&nbsp;</th>
 </tr>  
 
@@ -175,8 +174,8 @@ foreach($Tests as $Row){
 <td class="c">&nbsp;</td>
 <td class="r"><?=$fullb;?>-<?=$fullw;?></td>
 <td class="r"><?=$memb;?>-<?=$memw;?></td>
-<td class="r"><?=$cpub;?>-<?=$cpuw;?></td>
 <td class="r"><?=$linesb;?>-<?=$linesw;?></td>
+<td class="c">&nbsp;</td>
 <td class="c">&nbsp;</td>
 </tr>
 <tr><td colspan="6">&nbsp;</td></tr>  

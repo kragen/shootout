@@ -45,7 +45,6 @@ investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
-<th>CPU Time</th>
 <th>Code Lines</th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
@@ -67,13 +66,13 @@ foreach($Tests as $Row){
                 
       if ($v[N_EXCLUDE] >= 0){                                                  
          if ($Link==STARTUP){
-            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%0.2f</td>
+            printf('<td class="r">%0.2f</td><td class="r">%s</td>
                   <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), '&nbsp;', $v[N_LINES], $n); 
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n); 
          } else {
-            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%0.2f</td>
+            printf('<td class="r">%0.2f</td><td class="r">%s</td>
                   <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_CPU], $v[N_LINES], $n);                   
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n);                   
          }
 
       } else {      
@@ -81,7 +80,7 @@ foreach($Tests as $Row){
          elseif ($v[N_EXCLUDE] == PROGRAM_TIMEOUT){ $message = 'Timout'; } 
          else { $message = 'X'; } 
          
-         printf('<td class="rb">%s</td><td></td><td></td><td class="r">%s</td>
+         printf('<td class="rb">%s</td><td></td><td class="r">%s</td>
             <td class="r"><span class="s">%s</span></td>', $message, $v[N_LINES], $n);
       }
 
@@ -89,14 +88,14 @@ foreach($Tests as $Row){
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
          $Link, $SelectedLang, $Sort, $Name); echo "\n";
       $message = 'No&nbsp;program';
-      printf('<td class="r">%s</td><td></td><td></td><td></td><td></td>', $message); 
+      printf('<td class="r">%s</td><td></td><td></td><td></td>', $message); 
    }
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?> 
 
-<tr><td colspan="6">&nbsp;</td></tr>
+<tr><td colspan="5">&nbsp;</td></tr>
 
 </table>
 </td></tr>
