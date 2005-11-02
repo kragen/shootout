@@ -1,0 +1,57 @@
+<span class="slc">;;; -*- mode: lisp -*-</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; From: Manuel Giraud</span>
+<span class="slc">;;; Nicer rewrite: Nicolas Neuss</span>
+<span class="slc">;;; Modified by Juho Snellman 2005-10-26</span>
+<span class="slc">;;;  * Change the node representation from a struct to an improper list</span>
+<span class="slc">;;;    (saves 8 bytes for each node on SBCL/CMUCL)</span>
+<span class="slc">;;;  * Use NIL for leaf nodes, as in the Haskell solution</span>
+<span class="slc">;;;  * Add command-line parsing for non-CMUCL implementations</span>
+
+<span class="slc">;;; Node is either NIL (for leaf nodes) or an improper list (DATA LEFT . RIGHT)</span>
+<span class="sym">(</span><span class="kwa">defun</span> build<span class="sym">-</span>btree <span class="sym">(</span>item depth<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>fixnum item depth<span class="sym">))</span>
+  <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">zerop</span> depth<span class="sym">)</span>
+      nil
+      <span class="sym">(</span>let <span class="sym">((</span>item2 <span class="sym">(*</span> <span class="num">2</span> item<span class="sym">))</span>
+            <span class="sym">(</span>depth<span class="sym">-</span><span class="num">1</span> <span class="sym">(</span><span class="num">1</span><span class="sym">-</span> depth<span class="sym">)))</span>
+        <span class="sym">(</span>declare <span class="sym">(</span>fixnum item2 depth<span class="sym">-</span><span class="num">1</span><span class="sym">))</span>
+        <span class="sym">(</span><span class="kwa">cons</span> item
+              <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span>build<span class="sym">-</span>btree <span class="sym">(</span>the fixnum <span class="sym">(</span><span class="num">1</span><span class="sym">-</span> item2<span class="sym">))</span> depth<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+                    <span class="sym">(</span>build<span class="sym">-</span>btree item2 depth<span class="sym">-</span><span class="num">1</span><span class="sym">))))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> check<span class="sym">-</span>node <span class="sym">(</span>node<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>values fixnum<span class="sym">))</span>
+  <span class="sym">(</span><span class="kwa">if</span> node
+      <span class="sym">(</span>let <span class="sym">((</span>data <span class="sym">(</span><span class="kwa">car</span> node<span class="sym">))</span>
+            <span class="sym">(</span>kids <span class="sym">(</span><span class="kwa">cdr</span> node<span class="sym">)))</span>
+        <span class="sym">(</span>declare <span class="sym">(</span>fixnum data<span class="sym">))</span>
+        <span class="sym">(- (+</span> data <span class="sym">(</span>check<span class="sym">-</span>node <span class="sym">(</span><span class="kwa">car</span> kids<span class="sym">)))</span>
+           <span class="sym">(</span>check<span class="sym">-</span>node <span class="sym">(</span><span class="kwa">cdr</span> kids<span class="sym">))))</span>
+      <span class="num">0</span><span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> loop<span class="sym">-</span>depths <span class="sym">(</span><span class="kwa">max</span><span class="sym">-</span>depth <span class="sym">&amp;</span>key <span class="sym">(</span><span class="kwa">min</span><span class="sym">-</span>depth <span class="num">4</span><span class="sym">))</span>
+  <span class="sym">(</span>loop for d from <span class="kwa">min</span><span class="sym">-</span>depth by <span class="num">2</span> upto <span class="kwa">max</span><span class="sym">-</span>depth do
+        <span class="sym">(</span>let <span class="sym">((</span>iterations <span class="sym">(</span>ash <span class="num">1</span> <span class="sym">(+</span> <span class="kwa">max</span><span class="sym">-</span>depth <span class="kwa">min</span><span class="sym">-</span>depth <span class="sym">(-</span> d<span class="sym">)))))</span>
+          <span class="sym">(</span>format t <span class="str">&quot;~D~C trees of depth ~D~C check: ~D~%&quot;</span>
+                  <span class="sym">(*</span> iterations <span class="num">2</span><span class="sym">)</span> #\tab d #\tab
+                  <span class="sym">(</span>loop for i from <span class="num">1</span> upto iterations
+                        sum <span class="sym">(</span>check<span class="sym">-</span>node <span class="sym">(</span>build<span class="sym">-</span>btree i d<span class="sym">))</span>
+                        sum <span class="sym">(</span>check<span class="sym">-</span>node <span class="sym">(</span>build<span class="sym">-</span>btree <span class="sym">(-</span> i<span class="sym">)</span> d<span class="sym">)))))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">(&amp;</span>optional <span class="sym">(</span>n <span class="sym">(</span>parse<span class="sym">-</span>integer
+                           <span class="sym">(</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">car</span> <span class="sym">(</span><span class="kwa">last</span> #<span class="sym">+</span>sbcl sb<span class="sym">-</span>ext<span class="sym">:*</span>posix<span class="sym">-</span>argv<span class="sym">*</span>
+                                          #<span class="sym">+</span>cmu  extensions<span class="sym">:*</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>strings<span class="sym">*</span>
+                                          #<span class="sym">+</span>gcl  si<span class="sym">::*</span><span class="kwa">command</span><span class="sym">-</span>args<span class="sym">*))</span>
+                               <span class="str">&quot;1&quot;</span><span class="sym">))))</span>
+  <span class="sym">(</span>format t <span class="str">&quot;stretch tree of depth ~D~C check: ~D~%&quot;</span> <span class="sym">(</span><span class="num">1</span><span class="sym">+</span> n<span class="sym">)</span> #\tab
+          <span class="sym">(</span>check<span class="sym">-</span>node <span class="sym">(</span>build<span class="sym">-</span>btree <span class="num">0</span> <span class="sym">(</span><span class="num">1</span><span class="sym">+</span> n<span class="sym">))))</span>
+  <span class="sym">(</span>let <span class="sym">((*</span><span class="kwa">print</span><span class="sym">-</span>pretty<span class="sym">*</span> nil<span class="sym">) (</span>long<span class="sym">-</span>lived<span class="sym">-</span>tree <span class="sym">(</span>build<span class="sym">-</span>btree <span class="num">0</span> n<span class="sym">)))</span>
+    <span class="sym">(</span>loop<span class="sym">-</span>depths n<span class="sym">)</span>
+    <span class="sym">(</span>format t <span class="str">&quot;long lived tree of depth ~D~C check: ~D~%&quot;</span>
+            n #\tab <span class="sym">(</span>check<span class="sym">-</span>node long<span class="sym">-</span>lived<span class="sym">-</span>tree<span class="sym">))))</span>
+
+<span class="slc">;;(main)</span>
+
