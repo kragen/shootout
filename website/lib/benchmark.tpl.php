@@ -104,13 +104,16 @@ foreach($Accepted as $d){
       // Sort according to current sort criteria, bold the sort-column
       if ($Sort=='fullcpu'){ 
          $C2 = 'class="rb"';    
-         $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU];
+         if ($first[DATA_FULLCPU]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU]; }
       } elseif ($Sort=='kb'){ 
          $C3 = 'class="rb"';
-         $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY];
+         if ($first[DATA_MEMORY]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
       } elseif ($Sort=='lines'){ 
          $C4 = 'class="rb"';
-         $ratio = $d[DATA_LINES]/$first[DATA_LINES];
+         if ($first[DATA_LINES]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_LINES]/$first[DATA_LINES]; }
       }    
    }      
         
