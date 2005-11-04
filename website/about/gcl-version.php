@@ -1,1 +1,1 @@
-<p>GCL (GNU Common Lisp)  2.7.0 ANSI    Sep 10 2005 12:05:30</p>
+<p>GCL (GNU Common Lisp)  2.7.0 ANSI    Oct 15 2005 06:58:55</p>
