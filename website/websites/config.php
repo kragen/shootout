@@ -15,6 +15,7 @@ define('LOG_PATH', '../code/');
 define('MISC_PATH', '../misc/');
 define('DOWNLOAD_PATH', './download/');
 define('IMAGE_PATH', './');
+define('VERSION_PATH', '../about/');
 
 define('CORE_SITE', './');
 define('SANDBOX_SITE', './sandbox/');
