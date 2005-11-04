@@ -1,13 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac random.scala
-
-To run:
-   scala random 900000
 */
-
 
 object random {
    def main(args: Array[String]) = {
@@ -16,9 +10,8 @@ object random {
 
       while (n>0) { result=generate(100.0); n=n-1; }
 
-      Console.println( result );
+      Console.printf("%.9f\n", result);
    }
-
 
    private val IM = 139968;
    private val IA = 3877;
@@ -30,7 +23,6 @@ object random {
       max * seed / IM;
    }
 
-
    private def toPositiveInt(s: Array[String]) = {
       val i = 
          try { Integer.parseInt(s(0)); } 
@@ -38,6 +30,3 @@ object random {
       if (i>0) i; else 1;
    }
 }
-
-
-
