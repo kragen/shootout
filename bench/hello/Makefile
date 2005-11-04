@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2005-04-04 14:56:36 bfulgham Exp $
+# $Id: Makefile,v 1.15 2005-11-04 07:00:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hello
@@ -11,6 +11,11 @@ tmp/repeat: repeat
 	cp $< $@
 
 setup: tmp tmp/repeat
+
+data/startup.tab: data/cpu.mbtab
+	$(BIN)/make_startup_tab
+
+post: data/startup.tab
 
 ERLFLAGS := -noinput -noshell
 OO2COPTS := -A --no-rtc
