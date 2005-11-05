@@ -1,13 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac sieve.scala
-
-To run:
-   scala sieve 900
 */
-
 
 object sieve {
    def main(args: Array[String]) = {

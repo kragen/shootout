@@ -10,7 +10,7 @@ object random {
 
       while (n>0) { result=generate(100.0); n=n-1; }
 
-      Console.printf("%.9f\n", result);
+      Console.printf("{0,number,#.000000000}\n")(result);
    }
 
    private val IM = 139968;

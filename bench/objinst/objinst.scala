@@ -1,13 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac objinst.scala
-
-To run:
-   scala objinst 1000000
 */
-
 
 object objinst {
    def main(args: Array[String]) = {

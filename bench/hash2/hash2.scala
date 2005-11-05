@@ -1,15 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-   Use the Scala class HashMap instead of the Java HashMap.
-
-To compile:	
-   scalac hash2.scala
-
-To run:
-   scala hash2 150
 */
-
 
 import scala.collection.mutable.HashMap;
 

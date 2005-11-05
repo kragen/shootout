@@ -1,16 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-   Use the Java class StringBuffer 
-   instead of a Scala collection class.
-
-To compile:	
-   scalac strcat.scala
-
-To run:
-   scala strcat 40000
 */
-
 
 object strcat {
    def main(args: Array[String]) = {

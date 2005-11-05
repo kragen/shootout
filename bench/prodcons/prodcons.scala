@@ -1,13 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac prodcons.scala
-
-To run:
-   scala prodcons 100000
 */
-
 
 import concurrent.SyncVar;
 import concurrent.ops._;

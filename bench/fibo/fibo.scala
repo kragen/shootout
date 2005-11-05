@@ -1,13 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac fibo.scala
-
-To run:
-   scala fibo 32
 */
-
 
 object fibo {
    def main(args: Array[String]) = 

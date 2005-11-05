@@ -1,11 +1,6 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac except.scala
-
-To run:
-   scala except 20000
 */
 
 object except {

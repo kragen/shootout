@@ -1,13 +1,7 @@
-/* The Great Computer Language Shootout 
+/* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/
    contributed by Isaac Gouy (Scala novice)
-
-To compile:	
-   scalac heapsort.scala
-
-To run:
-   scala heapsort 80000
 */
-
 
 object heapsort {
    def main(args: Array[String]) = {
@@ -19,7 +13,7 @@ object heapsort {
 
       heapsort(n, numbers);
 
-      Console println( numbers(n) );    
+      Console.printf("{0,number,#.000000000}\n")(numbers(n));   
    }
 
 
