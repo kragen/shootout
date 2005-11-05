@@ -1,6 +1,6 @@
 #/usr/bin/tclsh
-# $Id: harmonic.tcl,v 1.3 2005-09-30 16:05:42 igouy-guest Exp $
-# http://shootout.alioth.debian.org/ 
+# $Id: harmonic.tcl,v 1.4 2005-11-05 21:30:15 igouy-guest Exp $
+# http://shootout.alioth.debian.org/
 #
 # Contributed by Robert Seeger 
 proc main {inputs} {

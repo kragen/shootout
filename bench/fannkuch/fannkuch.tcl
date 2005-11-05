@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh
-# $Id: fannkuch.tcl,v 1.3 2005-03-30 22:25:36 sgeard-guest Exp $
-# http://shootout.alioth.debian.org/
+# $Id: fannkuch.tcl,v 1.4 2005-11-05 21:30:15 igouy-guest Exp $
+# http://shootout.alioth.debian.org/ 
 
 # Contributed by Robert Seeger
 
