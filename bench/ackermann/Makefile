@@ -1,11 +1,9 @@
-# $Id: Makefile,v 1.32 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.33 2005-11-06 01:23:45 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := ackermann
 TITLE   := Ackermann's Function
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean -I /usr/lib/clean/lib/ArgEnv
 ERLFLAGS := -noinput -noshell
 GFORTH_FLAGS := -d 2M -r 2M
 OO2COPTS := -A --no-rtc
