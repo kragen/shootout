@@ -7,7 +7,7 @@ A(x,y)
 </pre>
 <br/>
 <p>Calculate A(3,N). Correct output N = 4 is:</p>
-<pre>A(3,4): 125
+<pre>Ack(3,4): 125
 </pre>
 <br/>
 
