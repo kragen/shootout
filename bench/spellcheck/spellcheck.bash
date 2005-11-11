@@ -6,15 +6,12 @@
 # Contributed by Anthony Borla
 # ----------------------------------------------------------------------
 
-readonly PADDING=1
+DICT="Usr.Dict.Words"
 
-function words() { echo -n "$#" ; }
+while read WORD ; do
+  eval ${WORD}=1
+done < $DICT
 
-IFS= ; LINES=0 ; WORDS=0 ; CHARS=0
-
-while read NEXTLINE ; do
-  let LINES+=1 ; let WORDS+=`IFS=' ' ; words $NEXTLINE`
-  let CHARS=CHARS+${#NEXTLINE}+PADDING
+while read WORD ; do
+  eval _WORD=\$$WORD ; if [ -z "${_WORD}" ] ; then echo ${WORD} ; fi
 done
-
-echo "${LINES} ${WORDS} ${CHARS}"
