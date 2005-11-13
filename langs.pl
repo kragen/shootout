@@ -219,6 +219,21 @@
        },
      },
 
+     io =>
+     { Lang => 'Io',
+       Name => 'Io',
+       Status => '+',
+       Home => 'http://www.iolanguage.com/about/',
+       Down => 'http://www.iolanguage.com/downloads/',
+       Type => 'bytecomped/interpreted',
+       Note => 'Small simple prototype based OO programming',
+       Ext => 'io',
+       Verfun => sub {
+          chomp(my $ver = `$ENV{IO} --version`);
+	  return ($ver);
+       },
+     },
+
      cmucl =>
      { Lang => 'Lisp',
        Name => 'CMUCL',
