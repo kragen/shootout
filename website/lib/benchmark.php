@@ -93,8 +93,7 @@ if ($T=='all'){
       if ($L!=$L2){ 
          $TemplateName = 'headtohead.tpl.php'; 
          //$Title = 'Compare '.$LangName.' to '.$Langs[$L2][LANG_FULL];       
-         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
-         $Body->set('Data2', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L));                  
+         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                      
       } else { 
          $TemplateName = 'language.tpl.php'; 
          //$Title = $LangName.' benchmarks';  
