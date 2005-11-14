@@ -3,7 +3,7 @@
 my @scripts = ( "gawk", "mawk", "bash", "rep", "lua", "newlisp",
 	     "php", "perl", "python", "psyco", "pike", "ruby",
 	     "guile", "mzscheme", "slang", "tcl", "xemacs", "javascript", 
-	     "regina", "groovy");
+	     "regina", "groovy", "swiprolog");
 
 my @files;
 

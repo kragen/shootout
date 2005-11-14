@@ -924,6 +924,21 @@
        },
      },
 
+     swiprolog =>
+     { Lang => 'Prolog',
+       Name => 'SWI',
+       Status => 'X',
+       Home => 'http://www.swi-prolog.org',
+       Down => 'http://www.swi-prolog.org/download.html',
+       Type => 'bytecomped/interpreted',
+       Note => 'Comprehensive, portable Prolog compiler',
+       Ext  => 'pro',
+       Verfun => sub {
+           my $ver = `$ENV{SWIPROLOG} -v 2>&1`;
+	   return ($ver);
+       },
+     },
+
      psyco =>
      { Lang => 'Python',
        Name => 'Psyco',
