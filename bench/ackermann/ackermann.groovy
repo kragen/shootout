@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 /*
-	$Id: ackermann.groovy,v 1.4 2005-11-13 17:47:55 igouy-guest Exp $
+	$Id: ackermann.groovy,v 1.5 2005-11-14 16:19:28 igouy-guest Exp $
 
 	The Great Computer Language Shootout
 	http://shootout.alioth.debian.org/
@@ -17,5 +17,5 @@ def A(x, y) {
 
 def n = this.args[0].toInteger()
 def result = A(3, n)
-println("A(3,${n}): ${result}")
+println("Ack(3,${n}): ${result}")
 
