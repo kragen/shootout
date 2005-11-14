@@ -77,21 +77,28 @@ if ($T=='all'){
       $LangName = $Langs[$L][LANG_FULL];    
       $Title = $LangName.' benchmarks'; 
 
-      if ($L!=$L2){ 
-         $TemplateName = 'headtohead.tpl.php'; 
-         $Title = 'Compare '.$LangName.' to '.$Langs[$L2][LANG_FULL];       
-         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
-         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';                   
-      } else { 
-         $TemplateName = 'language.tpl.php'; 
-         $Title = $LangName.' benchmarks';  
-         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
-         $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />'; 
+      if (isset($metaRobots)){ // Assume it's one of our special pages which should be indexed
+         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />'; 
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content="'.
             $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.  
             '<meta name="description" content="'.
-            'Summary of '.$LangName.' performance on benchmark programs." />';                    
+            'Summary of '.$LangName.' performance on benchmark programs." />';  
+      } else {
+         $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; 
+      }
+
+      $Title = $LangName.' benchmarks';
+
+      if ($L!=$L2){ 
+         $TemplateName = 'headtohead.tpl.php'; 
+         //$Title = 'Compare '.$LangName.' to '.$Langs[$L2][LANG_FULL];       
+         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));     
+         $Body->set('Data2', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L));                  
+      } else { 
+         $TemplateName = 'language.tpl.php'; 
+         //$Title = $LangName.' benchmarks';  
+         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                        
       }
       
       $About = & new Template(ABOUT_PATH);
