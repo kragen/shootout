@@ -17,14 +17,17 @@ $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
 if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
-else { $T = 'ackermann'; }
+elseif (!isset($T)){ $T = 'ackermann'; }
 
-if (isset($HTTP_GET_VARS['lang'])){ $L = $HTTP_GET_VARS['lang']; } 
-else { $L = 'all'; }
+if (isset($HTTP_GET_VARS['lang'])){ $L = $HTTP_GET_VARS['lang']; }
+elseif (!isset($L)){ $L = 'all'; } 
 
-if (isset($HTTP_GET_VARS['lang2'])){ $L2 = $HTTP_GET_VARS['lang2']; } 
-elseif ($L=='all'){ $L2 = $L; }
-else { $L2 = $Langs[$L][LANG_COMPARE]; }
+if (isset($HTTP_GET_VARS['lang2'])){ $L2 = $HTTP_GET_VARS['lang2']; }
+elseif (!isset($L2)){  
+   if ($L=='all'){ $L2 = $L; }
+   else { $L2 = $Langs[$L][LANG_COMPARE]; }
+}
+
 
 if (isset($HTTP_GET_VARS['id'])){ $I = $HTTP_GET_VARS['id']; } 
 else { $I = 0; }

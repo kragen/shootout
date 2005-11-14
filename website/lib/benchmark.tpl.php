@@ -34,7 +34,7 @@ foreach($Accepted as $d){
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?> <?=DASH.SortName($Sort);?></a></h4>
-<p><a href="#about" title="Read about the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestTag;?></a> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
+<p><a href="#about" title="Read about the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestTag;?></a> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
 </p>
 </td></tr>
@@ -127,8 +127,8 @@ foreach($Accepted as $d){
    $lines = $d[DATA_LINES];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
-      $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+      $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
    printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%d</td><td %s>%s</td>',
          $C2, $fullcpu, $C3, $kb, $C4, $lines, $C1, PFx($ratio) ); echo "\n";
@@ -154,8 +154,8 @@ foreach($Langs as $k => $v){
          $fullcpu = $d[DATA_FULLCPU];
          $lines = $d[DATA_LINES];     
                     
-         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
-            $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
+         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+            $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
@@ -198,8 +198,8 @@ if (sizeof($Special)>0){
       $lines = $d[DATA_LINES];
 
       printf('<tr class="%s">',$RowClass); echo "\n";
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s"">%s</a></td>', 
-         $SelectedTest,$k,$id,$Sort,$HtmlName); echo "\n";
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+         $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
       if ($fullcpu > PROGRAM_TIMEOUT){
             printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td>',
@@ -230,8 +230,8 @@ if (sizeof($No_Program_Langs)>0){
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];            
 
-         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
-            $SelectedTest,$k,$Sort,$HtmlName); echo "\n";
+         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
+            $SelectedTest,$k,$HtmlName); echo "\n";
 
          echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';       
          echo "</tr>\n";

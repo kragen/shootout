@@ -3,7 +3,7 @@
 <!-- // MENU /////////////////////////////////////////////////// -->
 
 <div>
-<? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); ?>
+<? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
 </div>
 
 
@@ -73,8 +73,8 @@ foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s&amp;sort=%s">%s</a></td>', 
-      $k,$k,$Sort,$HtmlName); echo "\n";
+   printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
+      $k,$k,$HtmlName); echo "\n";
    printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
@@ -92,7 +92,6 @@ foreach($score as $k => $v){
 <div>
 <input type="hidden" name="test" value="all" />
 <input type="hidden" name="lang" value="all" />
-<input type="hidden" name="sort" value="<?=$Sort;?>" />
 
 <table>
 <tr class="c">
@@ -104,21 +103,21 @@ foreach($score as $k => $v){
 
 <!--
 <tr class="a">
-<td><a href="faq.php?sort=<?=$Sort;?>#cpu">CPU Time</a></td>
+<td><a href="faq.php#cpu">CPU Time</a></td>
 <td><p><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>" /></p></td>
 </tr>
 -->
 
 <tr class="a">
-<td><a href="faq.php?sort=<?=$Sort;?>#fullcpu">Full CPU Time</a></td>
+<td><a href="faq.php#fullcpu">Full CPU Time</a></td>
 <td><p><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></p></td>
 </tr>
 <tr class="a">
-<td><a href="faq.php?sort=<?=$Sort;?>#memory">Memory Use</a></td>
+<td><a href="faq.php#memory">Memory Use</a></td>
 <td><p><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></p></td>
 </tr>
 <tr class="a">
-<td><a href="faq.php?sort=<?=$Sort;?>#codelines">Code Lines</a></td>
+<td><a href="faq.php#codelines">Code Lines</a></td>
 <td><p><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></p></td>
 </tr>
 
@@ -134,7 +133,7 @@ foreach($Tests as $t){
    $weight = $W[ $t[TEST_LINK] ];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a></td>', $Link,$Sort,$Name); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=all">%s</a></td>', $Link,$Name); echo "\n";
    printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 

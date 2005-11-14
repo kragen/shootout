@@ -11,7 +11,7 @@
 <tr><td>
 <p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
 
-<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a>.</p>
+<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a>.</p>
 
 <p>We <strong>are not</strong> trying to</p>
 <ul>
@@ -61,8 +61,8 @@
 <p>There are many contributors and few committers - a little more time spent by contributors saves committers a great deal more time.</p>
 <p>Before contributing programs</p>
 <ol>
-<li>read the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
-<li>read <a href="faq.php?sort=<?=$Sort;?>#implement"><strong>How should I implement&#8230;?</strong></a></li>
+<li>read the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
+<li>read <a href="faq.php#implement"><strong>How should I implement&#8230;?</strong></a></li>
 <li>login with an Alioth id <em>is not required</em> but login allows you to make updates after contributing a program - <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a>.</li>
 </ol>
 
@@ -136,7 +136,7 @@ language, benchmark, your-name, date, (version)<br />
 <li>update the status of removed <em>Closed items</em> to <em>Deleted</em></li>
 </ol>
 
-<p>And other chores listed in the <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=committerfaq&amp;title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
+<p>And other chores listed in the <a href="miscfile.php?file=committerfaq&amp;title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
 <p>Do you have the necessary programming language knowledge?<br />
 Do you want to help with the chores?</p>
 <p>Contact us! Contact one of the <strong>Project Admins</strong> - listed on the GForge project page under <a href="http://alioth.debian.org/projects/shootout/"  title="Contact one of the Project Admins"><strong>Developer Info</strong></a>.</p>
@@ -162,7 +162,7 @@ Do you want to help with the chores?</p>
 <tr class="b"><td><a class="ab" href="#implementp" name="implementp">How should I implement programs for the Shootout?</a></td></tr>
 <tr><td>
 <p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
-<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php?sort=<?=$Sort;?>#alternative">'Interesting Alternative Programs'</a> section.</p> 
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">'Interesting Alternative Programs'</a> section.</p> 
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#datainput" name="datainput">How should I implement data-input?</a></td></tr>
@@ -181,7 +181,7 @@ Do you want to help with the chores?</p>
 <tr><td>
 <p>We use a simple script to <strong>split a single source file</strong> into multiple target source files.</p>
 <p>One of the target source files <em>must</em> have the same filename as the original single source file, and is expected to be the 'main' program.</p>
-<p>For example, the <a href="benchmark.php?test=nbody&amp;lang=se&amp;sort=<?=$Sort;?>">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
+<p>For example, the <a href="benchmark.php?test=nbody&amp;lang=se">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
 each new target source file will start from the <strong>comment line</strong> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
  SPLITFILE=<em>target-filename</em> directive or end-of-file.</p>
 <p>So, the new target source file <em>body.e</em> will start with the line
@@ -240,19 +240,19 @@ each new target source file will start from the <strong>comment line</strong> wh
 
 <tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
 <tr><td>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0&amp;sort=<?=$Sort;?>#cputable" title="full data"><strong>full data page</strong></a>.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0#cputable" title="full data"><strong>full data page</strong></a>.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </td></tr>
 
 
 <tr class="b"><td><a class="ab" href="#version" name="version">Where can I see which language version was used?</a></td></tr>
 <tr><td>
-<p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;sort=<?=$Sort;?>#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
+<p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#options" name="options">Where can I see which compiler and runtime options were used?</a></td></tr>
 <tr><td>
-<p>You can see the build commands and runtime commands on each program page in the <a href="benchmark.php?test=ackermann&amp;lang=gcc&amp;sort=<?=$Sort;?>#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<p>You can see the build commands and runtime commands on each program page in the <a href="benchmark.php?test=ackermann&amp;lang=gcc#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#downdata" name="downdata">Where can I download the <strong>data</strong> from?</a></td></tr>
@@ -266,16 +266,16 @@ each new target source file will start from the <strong>comment line</strong> wh
 
 <tr class="b"><td><a class="ab" href="#bagley" name="bagley">Where can I see <strong>the original benchmarks</strong>?</a></td></tr>
 <tr><td><p>
-We still show the original benchmarks on Debian <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.
+We still show the original benchmarks on Debian <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.
 </p></td></tr>
 
 <tr class="b"><td><a class="ab" href="#sandbox" name="sandbox">Where can I see more languages?</a></td></tr>
 <tr><td>
 <p>
-We show <strong>more languages</strong> and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
+We show <strong>more languages</strong> and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
 </p>
 <p>
-The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website has somewhat different language implementations (and different versions of the same language implementation) than the <span><a class="arevCore" title="Debian Linux on AMD Sempron" href="<?=CORE_SITE;?>index.php?sort=<?=$Sort;?>" >The Computer Language Shootout&nbsp;</a></span> website.</p>
+The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website has somewhat different language implementations (and different versions of the same language implementation) than the <span><a class="arevCore" title="Debian Linux on AMD Sempron" href="<?=CORE_SITE;?>index.php" >The Computer Language Shootout&nbsp;</a></span> website.</p>
 </td></tr>
 
 
@@ -310,7 +310,7 @@ The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP
 <tr><td>
 <p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM.</p>
 
-<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
+<p>You can see how startup time varies between languages from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a> programs.</p>
 </td></tr>
 
 
@@ -318,7 +318,7 @@ The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP
 <tr class="b"><td><a class="ab" href="#sameway" name="sameway"><em>The Doug Bagley</em>: What does same way mean?</a></td></tr>
 <tr><td><p>Use the same algorithm and data structures. As-far-as possible the languages should be doing the same operations.</p>
 <p>The <strong>same way</strong> programs aim to answer questions like "Is array subscripting faster in Perl or Python?" and 
-"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=sieve&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the primes benchmark">primes</a> programs.</p>
+"Are hash table update operations faster in Tcl or Ruby?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=sieve&amp;lang=all" title="Compare performance on the primes benchmark">primes</a> programs.</p>
 <p>The same way programs often seem naive and unidiomatic.</p> 
 </td></tr>
 
@@ -326,7 +326,7 @@ The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP
 <tr class="b"><td><a class="ab" href="#samething" name="samething"><em>The Doug Bagley</em>: What does same thing mean?</a></td></tr>
 
 <tr><td><p>Use whatever algorithm and data structure you like, within the stated constraints. We may specify that the problem has to be solved in constant space, or that reads can be no larger than 4K, or &#8230;</p>
-<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=wordfreq&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
+<p>The <strong>same thing</strong> programs aim to answer questions like "Is it faster to write a word frequency counter in Perl or Bash?". For example the <a href="<?=OLD_SITE;?>benchmark.php?test=wordfreq&amp;lang=all" title="Compare performance on the word-frequency benchmark">word-frequency</a> programs.</p>
 <p>The same thing programs are free to use the most appropriate, idiomatic code for a solution.</p>       
 </td></tr>
 
@@ -383,7 +383,7 @@ Bash time builtin command
 
 <p>We use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
 
-<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all&amp;sort=<?=$Sort;?>" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
+<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
 </td></tr>
 
 
@@ -482,7 +482,7 @@ or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gen
 </td></tr>
 
 <tr><td>
-<p>Browse <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website to see if your favourite language is already shown.</p>
+<p>Browse <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website to see if your favourite language is already shown.</p>
 <p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.
 You'll see that several languages have been <em>suggested</em> but no one has contributed programs.</p>
 </td></tr>
@@ -525,10 +525,10 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 
 <p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
-<p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, see <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.</p>
-<p>Then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
+<p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, see <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.</p>
+<p>Then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
  website.</p>
-<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php?sort=<?=$Sort;?>" >&nbsp;GP4 
+<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php" >&nbsp;GP4 
         Computer Language Shootout&nbsp;</a></span> website. Who knows where it 
         will end?</p>
 <p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews in late-2005.</p>
@@ -536,7 +536,7 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 
 <tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>
 
-<tr><td><p>So many people that we have an <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
+<tr><td><p>So many people that we have an <a href="miscfile.php?file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
 </table>
 
 

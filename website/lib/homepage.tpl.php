@@ -26,15 +26,13 @@
 <body>
 <table class="hf"><tr>
 <td><h2><?=$BannerTitle;?></h2></td>
-<td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" ><?=$FaqTitle;?></a></td>
+<td class="hftag"><a class="arev" href="faq.php" ><?=$FaqTitle;?></a></td>
 </tr></table>
 
 <?=$PageBody;?>
 
-<form action=""><p><input type="hidden" name="sort" value="<?=$Sort;?>" /></p></form>
-
 <p class="center">
-<a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
+<a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 

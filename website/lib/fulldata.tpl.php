@@ -5,7 +5,7 @@
 // FILTER & SORT DATA ////////////////////////////////////////
 
 $p = array($P1,$P2,$P3,$P4);
-list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,$Sort,$p,$Excl);
+list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,"fullcpu",$p,$Excl);
 
 $cols = sizeof($TestValues) + 1;
 $TestName = $Tests[$SelectedTest][TEST_NAME];
@@ -14,7 +14,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <!-- // MENU /////////////////////////////////////////////////// -->
 <div>
-<? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,$Sort); ?>
+<? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,"fullcpu"); ?>
 </div>
 
 <!-- // SELECTED FULLCPU TAG /////////////////////////////////////////////////// -->
@@ -31,7 +31,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <table class="div">
 <tr><td>
 
-<img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
+<img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
    width="160" height="240" alt="CPU Time comparison chart" />
 </td>
 
@@ -77,7 +77,7 @@ foreach($Selected as $row){
 
 <table class="div">
 <tr><td>
-<img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>&amp;sort=<?=$Sort;?>" 
+<img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
    width="160" height="240" alt="Memory use comparison chart" />
 </td>
 
@@ -132,8 +132,8 @@ foreach($Selected as $row){
 $RowClass = 'c';
 foreach($NData as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
-      $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_HTML]); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+      $SelectedTest,$row[N_LANG],$row[N_ID],$row[N_HTML]); echo "\n";
 
    foreach($row[N_FULLCPU] as $v){ 
       printf('<td class="r">%0.2f</td>', $v); echo "\n"; 
@@ -167,8 +167,8 @@ foreach($NData as $row){
 $RowClass = 'c';
 foreach($NData as $row){
    printf('<tr class="%s">', $RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
-      $SelectedTest,$row[N_LANG],$row[N_ID],$Sort,$row[N_HTML]); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+      $SelectedTest,$row[N_LANG],$row[N_ID],$row[N_HTML]); echo "\n";
 
    foreach($row[N_MEMORY] as $v){ 
       if ($v==0){ $kb = '?'; } else { $kb = number_format((double)$v); }

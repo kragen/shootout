@@ -4,15 +4,15 @@
 
 <div>
 <? 
-MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort); 
+MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); 
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $Link = $Row[LANG_LINK];
 
-printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s&amp;sort=%s" title="Show %s benchmarks summary">benchmarks with no %s program</a>, or Timeout/Error.</p>', 
-   $Link, $Link, $Sort, $LangName, $LangName);
+printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s" title="Show %s benchmarks summary">benchmarks with no %s program</a>, or Timeout/Error.</p>', 
+   $Link, $Link, $LangName, $LangName);
 
 ?>
 </div>
@@ -32,7 +32,7 @@ printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%
 
 <tr><td class="center">
 
-<img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>&amp;sort=<?=$Sort;?>"
+<img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>"
    alt="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
    title="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
    width="300" height="300"
@@ -77,8 +77,8 @@ foreach($Tests as $Row){
    if (isset($Data[$Link])){
       $v = $Data[$Link];     
 
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
-         $Link, $SelectedLang, $v[N_ID], $Sort, $Name);
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+         $Link, $SelectedLang, $v[N_ID], $Name);
                 
       if ($v[N_LINES] >= 0){ 
       
@@ -106,8 +106,8 @@ foreach($Tests as $Row){
       }
 
    } else {
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
-         $Link, $SelectedLang, $Sort, $Name); echo "\n";
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
+         $Link, $SelectedLang, $Name); echo "\n";
       $message = 'No&nbsp;program';
       printf('<td class="r">%s</td><td></td><td></td><td></td>', $message); 
    }

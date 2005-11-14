@@ -54,7 +54,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
          $TestLink = $t[TEST_LINK];
          $TestName = $t[TEST_NAME];
          $TestTag = $t[TEST_TAG];
-         printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $TestLink,$Sort,$TestName,$TestTag); 
+         printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all">%s</a><br/><span class="s">%s</span></td>', $TestLink,$TestName,$TestTag); 
          $i++;  
       }
       else {
@@ -65,7 +65,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             $LangName = $l[LANG_FULL];
             $LangTag = $l[LANG_TAG];  
 
-            printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$Sort,$LangName,$LangTag); 
+            printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
             $j++;
          }
          else {
@@ -81,7 +81,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
          $LangName = $l[LANG_FULL];
          $LangTag = $l[LANG_TAG];  
 
-         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$Sort,$LangName,$LangTag); 
+         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
          $j++;
       }
       else {
@@ -91,7 +91,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             $TestLink = $t[TEST_LINK];
             $TestName = $t[TEST_NAME];
             $TestTag = $t[TEST_TAG];
-            printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $TestLink,$Sort,$TestName,$TestTag); 
+            printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all">%s</a><br/><span class="s">%s</span></td>', $TestLink,$TestName,$TestTag); 
             $i++; 
          }
          else {
@@ -111,7 +111,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
          $LangName = $l[LANG_FULL];
          $LangTag = $l[LANG_TAG];  
 
-         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$Sort,$LangName,$LangTag); 
+         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
          $j++;
       }
       else {
@@ -125,7 +125,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
                $TestLink = $t[TEST_LINK];
                $TestName = $t[TEST_NAME];
                $TestTag = $t[TEST_TAG];
-               printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all&amp;sort=%s">%s</a><br/><span class="s">%s</span></td>', $TestLink,$Sort,$TestName,$TestTag);  
+               printf('<td class="a"><a href="benchmark.php?test=%s&amp;lang=all">%s</a><br/><span class="s">%s</span></td>', $TestLink,$TestName,$TestTag);  
                $i++;  
             } 
          }
@@ -155,7 +155,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 </th></tr>
 
 <tr class="a"><td class="center">
-<? MkScorecardMenuForm($Sort); ?>
+<? MkScorecardMenuForm("fullcpu"); ?>
 </td></tr>
 <tr><td>&nbsp;</td></tr>
 </table>

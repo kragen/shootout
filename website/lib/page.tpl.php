@@ -26,14 +26,12 @@
 <body>
 <table class="hf"><tr>
 <td>
-<h2><a class="arev" href="index.php?sort=<?=$Sort;?>" ><?=$BannerTitle;?></a></h2></td>
-<td class="hftag"><a class="arev" href="faq.php?sort=<?=$Sort;?>" ><?=$FaqTitle;?> </a>
+<h2><a class="arev" href="index.php" ><?=$BannerTitle;?></a></h2></td>
+<td class="hftag"><a class="arev" href="faq.php" ><?=$FaqTitle;?> </a>
 </td>
 </tr></table>
 
 <?=$PageBody;?>
-
-<form action=""><p><input type="hidden" name="sort" value="<?=$Sort;?>"/></p></form>
 
 <p class="center">
 <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >

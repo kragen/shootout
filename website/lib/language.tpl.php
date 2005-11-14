@@ -12,7 +12,7 @@ $Family = $Row[LANG_FAMILY];
 
 <p>Check for benchmarks without a <strong><?=$LangName;?></strong> program 
 and for benchmarks where the <?=$Family;?> program gives a Timeout or Error;
-investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant programs</a>.
+investigate the problems and <a href="faq.php&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant programs</a>.
 </p>
 
 <p>For more information about the <?=$Family;?> implementation we measured see
@@ -25,7 +25,7 @@ investigate the problems and <a href="faq.php?sort=<?=$Sort;?>&#35;help" title="
 
 <!-- // MENU /////////////////////////////////////////////////// -->
 <div>
-<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort); ?>
+<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 </div>
 
 <!-- // TAG /////////////////////////////////////////////////// -->
@@ -59,8 +59,8 @@ foreach($Tests as $Row){
    if (isset($Data[$Link])){
       $v = $Data[$Link];     
 
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d&amp;sort=%s">%s</a></td>', 
-         $Link, $SelectedLang, $v[N_ID], $Sort, $Name);
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+         $Link, $SelectedLang, $v[N_ID], $Name);
                 
       if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }                
                 
@@ -85,8 +85,8 @@ foreach($Tests as $Row){
       }
 
    } else {
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;sort=%s">%s</a></td>', 
-         $Link, $SelectedLang, $Sort, $Name); echo "\n";
+      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
+         $Link, $SelectedLang, $Name); echo "\n";
       $message = 'No&nbsp;program';
       printf('<td class="r">%s</td><td></td><td></td><td></td>', $message); 
    }
