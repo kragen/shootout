@@ -1,4 +1,4 @@
-The Great Win32 Language Shootout http://dada.perl.it/shootout/
+The Computer Language Shootout http://shootout.alioth.debian.org/
 
 Reads the whole file at once, should only do 4k
 
