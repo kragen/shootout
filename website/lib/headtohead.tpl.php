@@ -14,7 +14,7 @@ $ShortName = $Row[LANG_NAME];
 <p>Compare the <strong><?=$LangName;?></strong> programs to other programs, or look at the <a href="benchmark.php?test=all&amp;lang=<?=$Link;?>&amp;lang2=<?=$Link;?>" title="Show <?=$LangName;?> measurements">CPU time and Memory use measurements</a>.</p>
 
 <p>For more information about the <?=$Family;?> implementation we measured see
-<a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.
+<a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.</p>
 </div>
 
 <!-- // MENU /////////////////////////////////////////////////// -->

@@ -14,10 +14,6 @@ $Family = $Row[LANG_FAMILY];
 and for benchmarks where the <?=$Family;?> program gives a Timeout or Error;
 investigate the problems and <a href="faq.php&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant programs</a>.
 </p>
-
-<p>For more information about the <?=$Family;?> implementation we measured see
-<a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.
-</p>
 <p>For more information about a Timeout or Error click the program name and scroll-down to the 'build &amp; benchmark results'.</p>
 
 </div>
@@ -32,7 +28,7 @@ investigate the problems and <a href="faq.php&#35;help" title="contribute faster
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> benchmarks</a></h4>
+<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;<?=$LangName;?> measurements</a></h4>
 </td></tr>
 
 
