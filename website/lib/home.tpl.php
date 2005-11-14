@@ -65,7 +65,11 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             $LangName = $l[LANG_FULL];
             $LangTag = $l[LANG_TAG];  
 
-            printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
+            if (isset($l[LANG_SPECIALURL]) && !empty($l[LANG_SPECIALURL])){
+               printf('<td class="ab"><a href="%s.php">%s</a><br/><span class="s">%s</span></td>', $l[LANG_SPECIALURL],$LangName,$LangTag); 
+            } else {
+               printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
+            }
             $j++;
          }
          else {
@@ -81,7 +85,11 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
          $LangName = $l[LANG_FULL];
          $LangTag = $l[LANG_TAG];  
 
-         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
+         if (isset($l[LANG_SPECIALURL]) && !empty($l[LANG_SPECIALURL])){
+            printf('<td class="ab"><a href="%s.php">%s</a><br/><span class="s">%s</span></td>', $l[LANG_SPECIALURL],$LangName,$LangTag); 
+         } else {
+            printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
+         }
          $j++;
       }
       else {
@@ -109,9 +117,13 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
          $l = $Langs[$j];
          $LangLink = $l[LANG_LINK];
          $LangName = $l[LANG_FULL];
-         $LangTag = $l[LANG_TAG];  
+         $LangTag = $l[LANG_TAG]; 
 
-         printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
+         if (isset($l[LANG_SPECIALURL]) && !empty($l[LANG_SPECIALURL])){
+            printf('<td class="ab"><a href="%s.php">%s</a><br/><span class="s">%s</span></td>', $l[LANG_SPECIALURL],$LangName,$LangTag); 
+         } else { 
+            printf('<td class="ab"><a href="benchmark.php?test=all&amp;lang=%s">%s</a><br/><span class="s">%s</span></td>', $LangLink,$LangName,$LangTag); 
+         }
          $j++;
       }
       else {
