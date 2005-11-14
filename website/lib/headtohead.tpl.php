@@ -21,9 +21,8 @@ printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Compare <?=$LangName;?> to <?=$LangName2;?> programs</a></h4>
-<p><a href="#about" title="Read about the <?=$LangName;?> language implementation"><?=$LangName;?> (<?=$LangTag;?>)</a> relative performance - how much <em>more</em> Memory, <strong>how much <em>more</em></strong> CPU Time, did each program use?
-</p>
+<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Were <?=$LangName;?> programs faster?</a></h4>
+<p>How many times <strong>faster</strong> or <strong>slower</strong> were the <a href="#about" title="Read about the <?=$LangName;?> language implementation"><strong><?=$LangName;?></strong> programs</a> than the <strong><?=$LangName2;?></strong> programs?</p>
 </td></tr>
 
 
@@ -33,8 +32,8 @@ printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%
 <tr><td class="center">
 
 <img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>"
-   alt="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
-   title="Side by side comparison between <?=$LangName;?> and <?=$LangName2;?> on all performance benchmarks"
+   alt="How many times faster (or slower) were <?=$LangName;?> programs than <?=$LangName2;?> programs?"
+   title="How many times (or slower) were <?=$LangName;?> programs than <?=$LangName2;?> programs?"
    width="300" height="300"
  />
 </td></tr>
@@ -46,24 +45,23 @@ printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%
 
 
 <tr><td>
-<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;<?=$LangName;?> / <?=$LangName2;?></a></h4>
-<p>Relative performance: values &#62; 1 mean the <?=$LangName;?> program used <em>more</em> than the <?=$LangName2;?> 
-program; values &#60; 1 mean the <?=$LangName;?> program used <em>less</em> than the <?=$LangName2;?> program.</p>
+<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;How many times faster?</a></h4>
+<p>How many times faster (and how many times smaller) were the <strong><?=$LangName;?></strong> programs compared to the <strong><?=$LangName2;?></strong> programs.</p>
 </td></tr>
 
 
 <tr><td><table>
 <tr>
 <th class="c">&nbsp;</th>
-<th>Full&nbsp;CPU Time</th>
-<th>Memory Use</th>
-<th>Code Lines</th>
+<th>Faster</th>
+<th>Smaller Memory</th>
+<th>Smaller Code&nbsp;Lines</th>
 <th class="c">&nbsp;</th>
 </tr>
 
 <tr>
 <th>Program &amp; Logs</th>
-<th colspan="3"><?=$LangName;?>&nbsp;/ <?=$LangName2;?></th>
+<th colspan="3"><em>x times</em> better</th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
@@ -84,15 +82,16 @@ foreach($Tests as $Row){
       
          if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }                         
                   
-         if ($Link==STARTUP){
-            printf('<td class="r">%s</td><td class="r">%s</td>
-                  <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
-               PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_LINES]), $n); 
-         } else {
-            printf('<td class="r">%s</td><td class="r">%s</td>
-                  <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
-               PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_LINES]), $n);                   
-         }
+         $cpuValue = $v[N_FULLCPU];
+         if ($cpuValue<1 && $cpuValue!=0){ $cpuValue = -1/$cpuValue; }
+         $memValue = $v[N_MEMORY];
+         if ($memValue<1 && $memValue!=0){ $memValue = -1/$memValue; }
+         $locValue = $v[N_LINES];
+         if ($locValue<1 && $locValue!=0){ $locValue = -1/$locValue; }
+
+         printf('<td class="r">%s</td><td class="r">%s</td>
+               <td class="r">%s</td><td class="r"><span class="s">%s</span></td>', 
+            PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_LINES]), $n);                   
 
       } else {      
          $r = FALSE;
@@ -154,17 +153,17 @@ foreach($Tests as $Row){
       
       if ($v[N_LINES] > 0){           
       
-         if ($v[N_FULLCPU] <= 0.999){ $fullb++; } 
-         elseif ($v[N_FULLCPU] >= 1.001){ $fullw++; } 
+         if ($v[N_FULLCPU] <= 0.999){ $fullw++; } 
+         elseif ($v[N_FULLCPU] >= 1.001){ $fullb++; } 
          
-         if ($v[N_MEMORY] <= 0.999){ $memb++; } 
-         elseif ($v[N_MEMORY] >= 1.001){ $memw++; }   
+         if ($v[N_MEMORY] <= 0.999){ $memw++; } 
+         elseif ($v[N_MEMORY] >= 1.001){ $memb++; }   
          
-         if ($v[N_CPU] <= 0.999){ $cpub++; } 
-         elseif ($v[N_CPU] >= 1.001){ $cpuw++; }   
+         if ($v[N_CPU] <= 0.999){ $cpuw++; } 
+         elseif ($v[N_CPU] >= 1.001){ $cpub++; }   
          
-         if ($v[N_LINES] <= 0.999){ $linesb++; } 
-         elseif ($v[N_LINES] >= 1.001){ $linesw++; }                                                                    
+         if ($v[N_LINES] <= 0.999){ $linesw++; } 
+         elseif ($v[N_LINES] >= 1.001){ $linesb++; }                                                                    
       }      
    }
 }

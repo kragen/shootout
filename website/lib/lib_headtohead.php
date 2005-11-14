@@ -93,10 +93,16 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $lines = 1;
             $cpu = 1;                     
             
-            if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; } 
-            if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; } 
-            if ($r2[DATA_LINES]>0){ $lines = $r1[DATA_LINES] / $r2[DATA_LINES]; } 
-            if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }                                     
+            //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; } 
+            //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; } 
+            //if ($r2[DATA_LINES]>0){ $lines = $r1[DATA_LINES] / $r2[DATA_LINES]; } 
+            //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }  
+
+            if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; } 
+            if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; } 
+            if ($r1[DATA_LINES]>0){ $lines = $r2[DATA_LINES] / $r1[DATA_LINES]; } 
+            if ($r1[DATA_CPU]>0){ $cpu = $r2[DATA_CPU] / $r1[DATA_CPU]; } 
+                                   
                                  
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]         
@@ -217,10 +223,12 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 function PF($d){
    if ($d>14.99){ return '<span class="b">'.number_format($d).'</span>'; } 
-   elseif ($d>9.999){ return number_format($d,2); }   
-   elseif (($d>0.999) && ($d<1.001)){ return '&nbsp;'; }    
-   elseif ($d>0.0667){ return number_format($d,2); }     
-   else { return '<span class="b">'.number_format($d,4).'</span>'; }
+   elseif ($d>1.001){ return number_format($d,2); } 
+   else { return '&nbsp;'; }
+
+   //elseif (($d>0.999) && ($d<1.001)){ return '&nbsp;'; }    
+   //elseif ($d>0.0667){ return number_format($d,2); }     
+   //else { return '<span class="b">'.number_format($d,4).'</span>'; } 
 }
 
 function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){

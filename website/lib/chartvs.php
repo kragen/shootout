@@ -140,16 +140,18 @@ ImageString($im, 2, $o+$v1*9 -8, $b, '10x', $white);
 ImageString($im, 2, $o+$v1*14 -8, $b, '15x', $white);
 
 // LEGEND 
-if (($S=='kb')||($S=='lines')){ $sortname = SortName('cpu'); } 
-else { $sortname = SortName($S); }  
-ImageFilledRectangle($im, $o-$v1*9, $b+20, $o-$v1*9+8, $b+20+$hmem, $black);
-ImageString($im, 2, $o-$v1*9+8+5, $b+13, SortName('kb'), $white);
-ImageFilledRectangle($im, $o-$v1*9+80, $b+18, $o-$v1*9+80+8, $b+18+$hsec, $white);
-ImageString($im, 2, $o-$v1*9+88+5, $b+13, $sortname, $white);
 
+ImageFilledRectangle($im, $o-$v1*9-20, $b+21, $o-$v1*9+8-20, $b+21+$hsec, $white);
+ImageString($im, 3, $o-$v1*9+8+5-20, $b+17, 'Faster(CPU)', $white);
 
-ImageString($im, 3, $o-$v1*9, $b+32, $Langs[$L][LANG_NAME], $black);
-ImageString($im, 3, $o+$v1*4, $b+32, $Langs[$L2][LANG_NAME], $black);
+ImageFilledRectangle($im, $o-$v1*9+120, $b+21, $o-$v1*9+8+120, $b+21+$hsec, $white);
+ImageString($im, 3, $o-$v1*9+8+5+120, $b+17, 'Slower(CPU)', $white);
+
+ImageFilledRectangle($im, $o-$v1*9-20, $b+39, $o-$v1*9+8-20, $b+39+$hmem, $black);
+ImageString($im, 2, $o-$v1*9+8+5-20, $b+32, 'Smaller(KB)', $black);
+
+ImageFilledRectangle($im, $o-$v1*9+120, $b+39, $o-$v1*9+8+120, $b+39+$hmem, $black);
+ImageString($im, 2, $o-$v1*9+8+5+120, $b+32, 'Bigger(KB)', $black);
 
 
 ImageInterlace($im,1);
