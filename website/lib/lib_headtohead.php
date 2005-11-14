@@ -223,11 +223,11 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 function PF($d){
    if ($d>14.99){ return '<span class="b">'.number_format($d).'</span>'; } 
-   elseif ($d>1.001){ return number_format($d,2); } 
+   elseif ($d>1.001){ return number_format($d,1); } 
    else { return '&nbsp;'; }
 
    //elseif (($d>0.999) && ($d<1.001)){ return '&nbsp;'; }    
-   //elseif ($d>0.0667){ return number_format($d,2); }     
+   //elseif ($d>0.0667){ return number_format($d,1); }     
    //else { return '<span class="b">'.number_format($d,4).'</span>'; } 
 }
 

@@ -1,28 +1,34 @@
 <?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
 
-<!-- // MENU /////////////////////////////////////////////////// -->
-
 <div>
 <? 
-MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); 
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $Link = $Row[LANG_LINK];
-
-printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s&amp;sort=%s" title="Show %s benchmarks summary">benchmarks with no %s program</a>, or Timeout/Error.</p>', 
-   $Link, $Link, $Sort, $LangName, $LangName);
-
+$Family = $Row[LANG_FAMILY];
+$ShortName = $Row[LANG_NAME];
 ?>
+
+<p>Compare the <strong><?=$LangName;?></strong> programs to other programs, or look at the <a href="benchmark.php?test=all&amp;lang=<?=$Link;?>&amp;lang2=<?=$Link;?>" title="Show <?=$LangName;?> measurements">CPU time and Memory use measurements</a>.</p>
+
+<p>For more information about the <?=$Family;?> implementation we measured see
+<a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.
+</div>
+
+<!-- // MENU /////////////////////////////////////////////////// -->
+
+<div>
+<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 </div>
 
 <!-- // TAG /////////////////////////////////////////////////// -->
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Were <?=$LangName;?> programs faster?</a></h4>
-<p>How many times <strong>faster</strong> or <strong>slower</strong> were the <a href="#about" title="Read about the <?=$LangName;?> language implementation"><strong><?=$LangName;?></strong> programs</a> than the <strong><?=$LangName2;?></strong> programs?</p>
+<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Are the <?=$ShortName;?> programs faster?</a></h4>
+<p>How many times <strong>faster</strong> or <strong>slower</strong> are the <strong><?=$LangName;?></strong> programs than the <?=$LangName2;?> programs?</p>
 </td></tr>
 
 
@@ -45,8 +51,8 @@ printf('<p><strong>Check</strong> for <a href="benchmark.php?test=all&amp;lang=%
 
 
 <tr><td>
-<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;How many times faster?</a></h4>
-<p>How many times faster (and how many times smaller) were the <strong><?=$LangName;?></strong> programs compared to the <strong><?=$LangName2;?></strong> programs.</p>
+<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;Which <?=$ShortName;?> programs are better?</a></h4>
+<p>Which <strong><?=$LangName;?></strong> programs are better than the corresponding <?=$LangName2;?> programs? (How many times faster or smaller?)</p>
 </td></tr>
 
 

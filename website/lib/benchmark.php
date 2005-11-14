@@ -83,7 +83,7 @@ if ($T=='all'){
          $MetaKeywords = '<meta name="keywords" content="'.
             $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.  
             '<meta name="description" content="'.
-            'Summary of '.$LangName.' performance on benchmark programs." />';  
+            'Compare '.$LangName.' performance on benchmark programs." />';  
       } else {
          $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; 
       }
