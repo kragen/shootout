@@ -6,6 +6,10 @@ ulimit -s unlimited
 JAVA_HOME=/usr/lib/j2sdk1.4.2_05
 export JAVA_HOME
 
+# Eiffel Support
+SmartEiffel=../loadpath.se
+export SmartEiffel
+
 # Poplog support
 poplogroot=/usr/lib/poplog
 usepop=$poplogroot/current-poplog
