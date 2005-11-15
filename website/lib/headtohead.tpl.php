@@ -9,9 +9,10 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $Link = $Row[LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 $ShortName = $Row[LANG_NAME];
+$ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 ?>
 
-<p>Compare the <strong><?=$LangName;?></strong> programs to other programs, or look at the <a href="benchmark.php?test=all&amp;lang=<?=$Link;?>&amp;lang2=<?=$Link;?>" title="Show <?=$LangName;?> measurements">CPU time and Memory use measurements</a>.</p>
+<p>Compare the performance of <strong><?=$LangName;?></strong> programs against some other language implementation, or check the <?=$Family;?> <a href="benchmark.php?test=all&amp;lang=<?=$Link;?>&amp;lang2=<?=$Link;?>" title="Show <?=$LangName;?> measurements">CPU time and Memory use measurements</a>.</p>
 
 <p>For more information about the <?=$Family;?> implementation we measured see
 <a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.</p>
@@ -27,8 +28,7 @@ $ShortName = $Row[LANG_NAME];
 
 <table class="div">
 <tr><td>
-<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Are the <?=$ShortName;?> programs faster?</a></h4>
-<p>How many times <strong>faster</strong> or <strong>slower</strong> are the <strong><?=$LangName;?></strong> programs than the <?=$LangName2;?> programs?</p>
+<h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Are the <?=$ShortName;?> programs better?</a></h4>
 </td></tr>
 
 
@@ -36,10 +36,9 @@ $ShortName = $Row[LANG_NAME];
 <!-- // CHART //////////////////////////////////////////////////// -->
 
 <tr><td class="center">
-
 <img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>"
-   alt="How many times faster (or slower) were <?=$LangName;?> programs than <?=$LangName2;?> programs?"
-   title="How many times (or slower) were <?=$LangName;?> programs than <?=$LangName2;?> programs?"
+   alt="Are the <?=$LangName;?> programs better or are the the <?=$LangName2;?> programs better?"
+   title="Are the <?=$LangName;?> programs better or are the the <?=$LangName2;?> programs better?"
    width="300" height="300"
  />
 </td></tr>
@@ -51,23 +50,24 @@ $ShortName = $Row[LANG_NAME];
 
 
 <tr><td>
-<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;Which <?=$ShortName;?> programs are better?</a></h4>
-<p>Which <strong><?=$LangName;?></strong> programs are better than the corresponding <?=$LangName2;?> programs? (How many times faster or smaller?)</p>
+<h4 class="rev"><a class="arev" href="#ratio" name="ratio">&nbsp;How many times better?</a></h4>
+<p>How many times <em>faster or smaller</em> are the <strong><?=$LangName;?></strong> programs than the corresponding <?=$LangName2;?> programs?</p>
+
 </td></tr>
 
 
 <tr><td><table>
 <tr>
 <th class="c">&nbsp;</th>
-<th>Faster</th>
-<th>Smaller Memory</th>
-<th>Smaller Code&nbsp;Lines</th>
+<th>&nbsp;Faster&nbsp;</th>
+<th>Smaller &nbsp;Memory&nbsp;Use&nbsp;</th>
+<th>Smaller &nbsp;Code&nbsp;Lines&nbsp;</th>
 <th class="c">&nbsp;</th>
 </tr>
 
 <tr>
 <th>Program &amp; Logs</th>
-<th colspan="3"><em>x times</em> better</th>
+<th colspan="3"><?=$ShortName;?> <em>x&nbsp;times</em>&nbsp;better <span class="i"><br/><?=$ShortName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
@@ -130,6 +130,10 @@ foreach($Tests as $Row){
 <tr class="b"><td colspan="6" >
 <a class="ab" href="#summary" name="summary">&nbsp;summary</a>
 </td></tr>
+
+<tr>
+<th colspan="6"><?=$ShortName;?> better : <?=$ShortName2;?> better</th>
+</tr>  
     
 <tr class="a">
 <th class="c">&nbsp;</th>
@@ -140,11 +144,7 @@ foreach($Tests as $Row){
 <th class="c">&nbsp;</th>
 </tr>   
 
-<tr>
-<th class="c">&nbsp;</th>
-<th colspan="5"><?=$LangName;?> better - <?=$LangName2;?> better</th>
-<th class="c">&nbsp;</th>
-</tr>  
+
 
 
 <? // this should be in a function
@@ -177,9 +177,9 @@ foreach($Tests as $Row){
 
 <tr class="a">
 <td class="c">&nbsp;</td>
-<td class="r"><?=$fullb;?>-<?=$fullw;?></td>
-<td class="r"><?=$memb;?>-<?=$memw;?></td>
-<td class="r"><?=$linesb;?>-<?=$linesw;?></td>
+<td class="r"><?=$fullb;?>:<?=$fullw;?></td>
+<td class="r"><?=$memb;?>:<?=$memw;?></td>
+<td class="r"><?=$linesb;?>:<?=$linesw;?></td>
 <td class="c">&nbsp;</td>
 <td class="c">&nbsp;</td>
 </tr>

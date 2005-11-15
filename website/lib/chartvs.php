@@ -25,7 +25,8 @@ else { $L2 = $L; }
 if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
 else { $S = 'cpu'; }
 
-
+$ShortName = $Langs[$L][LANG_NAME];
+$ShortName2 = $Langs[$L2][LANG_NAME];
 
 
 // FILTER & SORT DATA ////////////////////////////////////////
@@ -141,17 +142,14 @@ ImageString($im, 2, $o+$v1*14 -8, $b, '15x', $white);
 
 // LEGEND 
 
-ImageFilledRectangle($im, $o-$v1*9-20, $b+21, $o-$v1*9+8-20, $b+21+$hsec, $white);
-ImageString($im, 3, $o-$v1*9+8+5-20, $b+17, 'Faster(CPU)', $white);
+ImageString($im, 3, $o-$v1*9+8+5-55, $b+17, $ShortName.' better', $black);
+ImageString($im, 3, $o-$v1*9+8+5+90, $b+17, $ShortName2.' better', $black);
 
-ImageFilledRectangle($im, $o-$v1*9+120, $b+21, $o-$v1*9+8+120, $b+21+$hsec, $white);
-ImageString($im, 3, $o-$v1*9+8+5+120, $b+17, 'Slower(CPU)', $white);
+ImageFilledRectangle($im, $o-$v1*9+10, $b+36, $o-$v1*9+8+10, $b+36+$hsec, $white);
+ImageString($im, 3, $o-$v1*9+8+5+10, $b+32, 'CPU Time', $white);
 
-ImageFilledRectangle($im, $o-$v1*9-20, $b+39, $o-$v1*9+8-20, $b+39+$hmem, $black);
-ImageString($im, 2, $o-$v1*9+8+5-20, $b+32, 'Smaller(KB)', $black);
-
-ImageFilledRectangle($im, $o-$v1*9+120, $b+39, $o-$v1*9+8+120, $b+39+$hmem, $black);
-ImageString($im, 2, $o-$v1*9+8+5+120, $b+32, 'Bigger(KB)', $black);
+ImageFilledRectangle($im, $o-$v1*9+110, $b+39, $o-$v1*9+8+110, $b+39+$hmem, $black);
+ImageString($im, 2, $o-$v1*9+8+5+110, $b+32, 'Memory Use', $black);
 
 
 ImageInterlace($im,1);

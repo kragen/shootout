@@ -10,10 +10,6 @@ $Link = $Row[LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 ?>
 
-<p>Check for benchmarks without a <strong><?=$LangName;?></strong> program 
-and for benchmarks where the <?=$Family;?> program gives a Timeout or Error;
-investigate the problems and <a href="faq.php&#35;help" title="contribute faster programs, or contribute more elegant programs, or faster more-elegant programs">contribute faster more-elegant programs</a>.
-</p>
 <p>For more information about a Timeout or Error click the program name and scroll-down to the 'build &amp; benchmark results'.</p>
 
 </div>

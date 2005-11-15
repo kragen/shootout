@@ -224,11 +224,15 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 function PF($d){
    if ($d>14.99){ return '<span class="b">'.number_format($d).'</span>'; } 
    elseif ($d>1.001){ return number_format($d,1); } 
-   else { return '&nbsp;'; }
-
-   //elseif (($d>0.999) && ($d<1.001)){ return '&nbsp;'; }    
-   //elseif ($d>0.0667){ return number_format($d,1); }     
-   //else { return '<span class="b">'.number_format($d,4).'</span>'; } 
+   elseif ($d>0.999){ return '&nbsp;'; }
+   else {
+      if ($d>0){
+         $i = 1.0 / $d;
+            if ($i>14.99){ return '<span class="bi">'.number_format($i).'</span>'; } 
+            elseif ($i>1.001){ return '<span class="i">'.number_format($i,1).'</span>'; }          
+            else { return '&nbsp;'; }
+      } else { return '&nbsp;'; }
+   }
 }
 
 function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
