@@ -1,8 +1,5 @@
-#!/bin/env groovy
 /*
-	$Id: chameneos.groovy,v 1.1 2005-09-23 15:18:28 igouy-guest Exp $
-
-	The Great Computer Language Shootout
+	The Computer Language Shootout
 	http://shootout.alioth.debian.org/
 
 	contributed by Jochen Hinrichsen
