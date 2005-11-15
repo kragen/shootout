@@ -29,6 +29,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table class="div">
 <tr><td>
 <h4 class="rev"><a class="arev" href="#title" name="title">&nbsp;Are the <?=$ShortName;?> programs better?</a></h4>
+<p>For each of one our benchmarks, a white chart bar shows which language implementation had the faster program, and a black chart bar shows which used the least memory.</p>
 </td></tr>
 
 
