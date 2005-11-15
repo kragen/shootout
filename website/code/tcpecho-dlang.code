@@ -1,83 +1,83 @@
-<span class="com">/* The Great Computer Language Shootout
-   http://shootout.alioth.debian.org/
+<span class="com">/* The Great Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   Contributed by Dave Fladebo</span>
+<span class="com"></span>
+<span class="com">   compile: dmd -O -inline -release tcpecho.d</span>
+<span class="com">*/</span>
 
-   Contributed by Dave Fladebo
+import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span class="sym">.</span>string<span class="sym">,</span> std<span class="sym">.</span>socket<span class="sym">,</span> std<span class="sym">.</span>socketstream<span class="sym">,</span> std<span class="sym">.</span>thread<span class="sym">;</span>
 
-   compile: dmd -O -inline -release tcpecho.d
-*/</span>
+<span class="kwb">const int</span> MULTIPLIER    <span class="sym">=</span> <span class="num">6400</span><span class="sym">;</span>
+<span class="kwb">const int</span> REPLY_SIZE    <span class="sym">=</span> <span class="num">64</span><span class="sym">;</span>
+<span class="kwb">const int</span> REQUEST_SIZE  <span class="sym">=</span> <span class="num">64</span><span class="sym">;</span>
+<span class="kwb">const int</span> BUFFER_SIZE   <span class="sym">=</span> <span class="num">1024</span><span class="sym">;</span>
+<span class="kwb">const int</span> PORT          <span class="sym">=</span> <span class="num">11000</span><span class="sym">;</span>
 
-import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span class="sym">.</span>string<span class="sym">,</span> std<span class="sym">.</span>socket<span class="sym">,</span> std<span class="sym">.</span>socketstream<span class="sym">,</span> std<span class="sym">.</span>thread<span class="sym">;
+<span class="kwb">char</span><span class="sym">[</span>REQUEST_SIZE<span class="sym">]</span>  REQUEST<span class="sym">;</span>
+<span class="kwb">char</span><span class="sym">[</span>REPLY_SIZE<span class="sym">]</span>    REPLY<span class="sym">;</span>
 
-</span><span class="kwb">const int</span> MULTIPLIER    <span class="sym">=</span> <span class="num">6400</span><span class="sym">;
-</span><span class="kwb">const int</span> REPLY_SIZE    <span class="sym">=</span> <span class="num">64</span><span class="sym">;
-</span><span class="kwb">const int</span> REQUEST_SIZE  <span class="sym">=</span> <span class="num">64</span><span class="sym">;
-</span><span class="kwb">const int</span> BUFFER_SIZE   <span class="sym">=</span> <span class="num">1024</span><span class="sym">;
-</span><span class="kwb">const int</span> PORT          <span class="sym">=</span> <span class="num">11000</span><span class="sym">;
+<span class="kwb">int</span> main<span class="sym">(</span><span class="kwb">char</span><span class="sym">[][]</span> args<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwb">int</span> n <span class="sym">= (</span>args<span class="sym">.</span>length <span class="sym">&gt;</span> <span class="num">1</span> ? atoi<span class="sym">(</span>args<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">1</span><span class="sym">) *</span> MULTIPLIER<span class="sym">;</span>
 
-</span><span class="kwb">char</span><span class="sym">[</span>REQUEST_SIZE<span class="sym">]</span>  REQUEST<span class="sym">;
-</span><span class="kwb">char</span><span class="sym">[</span>REPLY_SIZE<span class="sym">]</span>    REPLY<span class="sym">;
+    Thread server <span class="sym">=</span> <span class="kwa">new</span> Thread<span class="sym">(&amp;</span>Server<span class="sym">,</span>null<span class="sym">);</span>
+    Thread client <span class="sym">=</span> <span class="kwa">new</span> Thread<span class="sym">(&amp;</span>Client<span class="sym">,</span>cast<span class="sym">(</span><span class="kwb">void</span><span class="sym">*)</span>n<span class="sym">);</span>
 
-</span><span class="kwb">int</span> main<span class="sym">(</span><span class="kwb">char</span><span class="sym">[][]</span> args<span class="sym">)
-{
-</span>    <span class="kwb">int</span> n <span class="sym">= (</span>args<span class="sym">.</span>length <span class="sym">&gt;</span> <span class="num">1</span> ? atoi<span class="sym">(</span>args<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">1</span><span class="sym">) *</span> MULTIPLIER<span class="sym">;
+    server<span class="sym">.</span>start<span class="sym">();</span>
+    client<span class="sym">.</span>start<span class="sym">();</span>
 
-</span>    Thread server <span class="sym">=</span> <span class="kwa">new</span> Thread<span class="sym">(&amp;</span>Server<span class="sym">,</span>null<span class="sym">);
-</span>    Thread client <span class="sym">=</span> <span class="kwa">new</span> Thread<span class="sym">(&amp;</span>Client<span class="sym">,</span>cast<span class="sym">(</span><span class="kwb">void</span><span class="sym">*)</span>n<span class="sym">);
+    server<span class="sym">.</span>wait<span class="sym">();</span>
+    client<span class="sym">.</span>wait<span class="sym">();</span>
 
-</span>    server<span class="sym">.</span>start<span class="sym">();
-</span>    client<span class="sym">.</span>start<span class="sym">();
+    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
 
-</span>    server<span class="sym">.</span>wait<span class="sym">();
-</span>    client<span class="sym">.</span>wait<span class="sym">();
+<span class="kwb">int</span> Server<span class="sym">(</span><span class="kwb">void</span><span class="sym">*</span> arg<span class="sym">)</span>
+<span class="sym">{</span>
+    SocketStream ss <span class="sym">=</span> <span class="kwa">new</span> SocketStream<span class="sym">(</span>serverSocket<span class="sym">.</span>accept<span class="sym">);</span>
 
-</span>    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;
-}
+    <span class="kwb">char</span><span class="sym">[</span>BUFFER_SIZE<span class="sym">]</span> buffer<span class="sym">;</span>
+    <span class="kwa">while</span><span class="sym">(</span>ss<span class="sym">.</span>readBlock<span class="sym">(</span>buffer<span class="sym">,</span>REQUEST_SIZE<span class="sym">) &gt;</span> <span class="num">0</span><span class="sym">)</span>
+    <span class="sym">{</span>
+        ss<span class="sym">.</span>writeBlock<span class="sym">(</span>REPLY<span class="sym">,</span>REPLY_SIZE<span class="sym">);</span>
+    <span class="sym">}</span>
 
-</span><span class="kwb">int</span> Server<span class="sym">(</span><span class="kwb">void</span><span class="sym">*</span> arg<span class="sym">)
-{
-</span>    SocketStream ss <span class="sym">=</span> <span class="kwa">new</span> SocketStream<span class="sym">(</span>serverSocket<span class="sym">.</span>accept<span class="sym">);
+    ss<span class="sym">.</span>close<span class="sym">();</span>
 
-</span>    <span class="kwb">char</span><span class="sym">[</span>BUFFER_SIZE<span class="sym">]</span> buffer<span class="sym">;
-</span>    <span class="kwa">while</span><span class="sym">(</span>ss<span class="sym">.</span>readBlock<span class="sym">(</span>buffer<span class="sym">,</span>REQUEST_SIZE<span class="sym">) &gt;</span> <span class="num">0</span><span class="sym">)
-    {
-</span>        ss<span class="sym">.</span>writeBlock<span class="sym">(</span>REPLY<span class="sym">,</span>REPLY_SIZE<span class="sym">);
-    }
+    <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
 
-</span>    ss<span class="sym">.</span>close<span class="sym">();
+<span class="kwb">int</span> Client<span class="sym">(</span><span class="kwb">void</span><span class="sym">*</span> arg<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwb">int</span> n <span class="sym">=</span> cast<span class="sym">(</span><span class="kwb">int</span><span class="sym">)</span>arg<span class="sym">,</span> bytes<span class="sym">,</span> replies<span class="sym">;</span>
 
-</span>    <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);
-}
+    TcpSocket ts <span class="sym">=</span> <span class="kwa">new</span> TcpSocket<span class="sym">(</span><span class="kwa">new</span> InternetAddress<span class="sym">(</span><span class="str">&quot;127.0.0.1&quot;</span><span class="sym">,</span>PORT<span class="sym">));</span>
 
-</span><span class="kwb">int</span> Client<span class="sym">(</span><span class="kwb">void</span><span class="sym">*</span> arg<span class="sym">)
-{
-</span>    <span class="kwb">int</span> n <span class="sym">=</span> cast<span class="sym">(</span><span class="kwb">int</span><span class="sym">)</span>arg<span class="sym">,</span> bytes<span class="sym">,</span> replies<span class="sym">;
+    <span class="kwb">char</span><span class="sym">[</span>BUFFER_SIZE<span class="sym">]</span> buffer<span class="sym">;</span>
+    <span class="kwa">while</span><span class="sym">(</span>n<span class="sym">--)</span>
+    <span class="sym">{</span>
+        <span class="kwb">int</span> recvd<span class="sym">;</span>
+        ts<span class="sym">.</span>send<span class="sym">(</span>REQUEST<span class="sym">);</span>
+        <span class="kwa">while</span><span class="sym">(</span>recvd <span class="sym">&lt;</span> REPLY_SIZE<span class="sym">)</span>
+        <span class="sym">{</span>
+            recvd <span class="sym">+=</span> ts<span class="sym">.</span>receive<span class="sym">(</span>buffer<span class="sym">);</span>
+        <span class="sym">}</span>
+        bytes <span class="sym">+=</span> recvd<span class="sym">;</span>
+        replies<span class="sym">++;</span>
+    <span class="sym">}</span>
 
-</span>    TcpSocket ts <span class="sym">=</span> <span class="kwa">new</span> TcpSocket<span class="sym">(</span><span class="kwa">new</span> InternetAddress<span class="sym">(</span><span class="str">&quot;127.0.0.1&quot;</span><span class="sym">,</span>PORT<span class="sym">));
+    ts<span class="sym">.</span>close<span class="sym">();</span>
 
-</span>    <span class="kwb">char</span><span class="sym">[</span>BUFFER_SIZE<span class="sym">]</span> buffer<span class="sym">;
-</span>    <span class="kwa">while</span><span class="sym">(</span>n<span class="sym">--)
-    {
-</span>        <span class="kwb">int</span> recvd<span class="sym">;
-</span>        ts<span class="sym">.</span>send<span class="sym">(</span>REQUEST<span class="sym">);
-</span>        <span class="kwa">while</span><span class="sym">(</span>recvd <span class="sym">&lt;</span> REPLY_SIZE<span class="sym">)
-        {
-</span>            recvd <span class="sym">+=</span> ts<span class="sym">.</span>receive<span class="sym">(</span>buffer<span class="sym">);
-        }
-</span>        bytes <span class="sym">+=</span> recvd<span class="sym">;
-</span>        replies<span class="sym">++;
-    }
+    writefln<span class="sym">(</span><span class="str">&quot;replies: &quot;</span><span class="sym">,</span>replies<span class="sym">,</span><span class="str">&quot;</span><span class="esc">\t</span><span class="str">bytes: &quot;</span><span class="sym">,</span>bytes<span class="sym">);</span>
 
-</span>    ts<span class="sym">.</span>close<span class="sym">();
+    <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
 
-</span>    writefln<span class="sym">(</span><span class="str">&quot;replies: &quot;</span><span class="sym">,</span>replies<span class="sym">,</span><span class="str">&quot;</span><span class="esc">\t</span><span class="str">bytes: &quot;</span><span class="sym">,</span>bytes<span class="sym">);
-
-</span>    <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);
-}
-
-</span>TcpSocket serverSocket<span class="sym">()
-{
-</span>    TcpSocket ts <span class="sym">=</span> <span class="kwa">new</span> TcpSocket<span class="sym">();
-</span>    ts<span class="sym">.</span>bind<span class="sym">(</span><span class="kwa">new</span> InternetAddress<span class="sym">(</span>PORT<span class="sym">));
-</span>    ts<span class="sym">.</span>listen<span class="sym">(</span><span class="num">0</span><span class="sym">);
-</span>    <span class="kwa">return</span><span class="sym">(</span>ts<span class="sym">);
-}</span>
+TcpSocket serverSocket<span class="sym">()</span>
+<span class="sym">{</span>
+    TcpSocket ts <span class="sym">=</span> <span class="kwa">new</span> TcpSocket<span class="sym">();</span>
+    ts<span class="sym">.</span>bind<span class="sym">(</span><span class="kwa">new</span> InternetAddress<span class="sym">(</span>PORT<span class="sym">));</span>
+    ts<span class="sym">.</span>listen<span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+    <span class="kwa">return</span><span class="sym">(</span>ts<span class="sym">);</span>
+<span class="sym">}</span>
