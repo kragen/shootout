@@ -1,4 +1,4 @@
-/* The Computer Language Shootout
+/* The Great Computer Language Shootout
    http://shootout.alioth.debian.org
 
    contributed by Ian Osgood */
@@ -14,11 +14,7 @@ sieve := Object clone do(
         for (i, 2, n-1,
             if (flags at(i) == 1,
                 primes = primes + 1
-                j := i + i
-                while (j < n,
-                    flags atPut(j, 0)
-                    j = j + i
-                )
+                if (i+i < n, for (j, i+i, n-1, i, flags atPut(j, 0) ) )
             )
         )
         writeln("Primes up to", n asString pad(9), primes asString pad(9))  
