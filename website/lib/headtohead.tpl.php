@@ -61,8 +61,8 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <tr>
 <th class="c">&nbsp;</th>
 <th>&nbsp;Faster&nbsp;</th>
-<th>Smaller &nbsp;Memory&nbsp;Use&nbsp;</th>
-<th>Smaller &nbsp;Code&nbsp;Lines&nbsp;</th>
+<th>Smaller: Memory Use</th>
+<th>Smaller: Code Lines</th>
 <th class="c">&nbsp;</th>
 </tr>
 
