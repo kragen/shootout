@@ -413,7 +413,7 @@ Bash time builtin command
 
 <tr><td>
 <p><strong>"The"</strong> test machine uses <strong>Debian Linux<sup>TM</sup></strong> 'unstable', Kernel 2.6.8-1-k7</p>
-<p>The <strong>GP4 test machine</strong> uses <strong>Gentoo Linux<sup>TM</sup></strong> 2005.1 stage 3, gentoo-sources-2.6.13-r3, Reiserfs</p>
+<p>The <strong>GP4 test machine</strong> uses <strong>Gentoo Linux<sup>TM</sup></strong> 2005.1 stage 3, gentoo-sources-2.6.13-r5, Reiserfs</p>
 </td></tr>
 
 
