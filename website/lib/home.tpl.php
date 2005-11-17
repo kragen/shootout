@@ -16,6 +16,8 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <p class="rs">Most recent measurement: 
 <strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
 <? printf(' %s GMT', gmdate("g:i a", $Measured)) ?>
+&nbsp;
+<a href="<?=CORE_SITE;?>rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="XML/RSS feed" title="XML/RSS feed" /></a>
 </p>
 <?=$Furthermore;?>
 </td></tr>
