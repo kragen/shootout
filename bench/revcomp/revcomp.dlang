@@ -6,51 +6,53 @@
    compile: dmd -O -inline -release revcomp.d
 */
 
-import std.ctype, std.outbuffer, std.stdio, std.string;
+import std.ctype, std.outbuffer, std.stdio, std.cstream, std.string;
 
 int main()
 {
     char[4096]      bufr;
+    BufferedStream  bsi = new BufferedStream(new CFile(std.stdio.stdin,FileMode.In,true),bufr.length);
+    BufferedStream  bso = new BufferedStream(dout);
     int             offset;
     char[]          desc,line,data,rc = new char[char.max];
 
     for(char c = 0; c < char.max; c++) rc[c] = revComp(c);
 
-    while(fgets(bufr,bufr.length,stdin))
+    data.length = bsi.size;
+    while(!bsi.eof())
     {
-        line = toString(bufr);
+        line = bsi.readLine(bufr);
         if(line.length)
         {
-            line = line[0..length-1];
             if(line[0] == '>')
             {
-                writeRC(desc,data[0..offset],line,rc);
+                writeRC(desc,data[0..offset],line,rc,bso);
                 offset = 0;
             }
             else
             {
                 int end = offset + line.length;
-                if(data.length < end) data.length = end * 2;
                 data[offset..end] = line;
                 offset += line.length;
             }
         }
     }
-    writeRC(desc,data[0..offset],line,rc);
+    writeRC(desc,data[0..offset],line,rc,bso);
+    bso.close();
 
     return 0;
 }
 
-void writeRC(inout char[] desc,char[] data,char[] line,char[] rc)
+void writeRC(inout char[] desc,char[] data,char[] line,char[] rc,BufferedStream bso)
 {
     if(desc.length)
     {
         const int lineLen = 60;
-        char[lineLen + 1] lineOut;
+        char[lineLen+1] lineOut;
         int j,k;
 
-        writefln(desc);
-        lineOut[lineLen] = 0;
+        bso.writefln(desc);
+        lineOut[lineLen] = '\n';
         foreach(int i, inout char c; data.reverse)
         {
             lineOut[k] = c = rc[c];
@@ -58,12 +60,12 @@ void writeRC(inout char[] desc,char[] data,char[] line,char[] rc)
             k++;
             if(k == lineLen)
             {
-                puts(cast(char*)lineOut);
+                bso.write(cast(ubyte[])lineOut);
                 j = i + 1;
                 k = 0;
             }
         }
-        if(k > 0) writefln(data[j..data.length]);
+        if(k > 0) bso.writefln(data[j..data.length]);
     }
 
     desc = line.dup;

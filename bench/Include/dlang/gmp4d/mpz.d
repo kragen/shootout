@@ -850,7 +850,8 @@ static TGmpPool!(mpz) mpzpool;
  * \param val the value to assign to x
  */
 void assign(inout mpz x, mpz val) {
-  if (x !== null && x.recycle != Recycle.Never)
+  //if (x !== null && x.recycle != Recycle.Never)
+  if (x !is null && x.recycle != Recycle.Never)
     mpzpool.recycle(x);
   val.recycle |= Recycle.Temp;
   x = val;
