@@ -30,7 +30,7 @@
 </tr></table>
 
 <?=$PageBody;?>
-
+<br/>
 <p class="center">
 <a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
@@ -44,9 +44,8 @@
    <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
 </a>
 
-<a href="<?=CORE_SITE;?>rss.xml">
-   RSS
-</a>
+<a href="http://feedvalidator.org/">
+   <img src="<?=IMAGE_PATH;?>valid-rss.png" alt="Valid RSS" title="Valid RSS" /></a>
 </p>
 
 </body>
