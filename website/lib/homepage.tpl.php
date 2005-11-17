@@ -43,6 +43,10 @@
 <a href="http://validator.w3.org/check?uri=referer">
    <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
 </a>
+
+<a href="<?=CORE_SITE;?>rss.xml">
+   RSS
+</a>
 </p>
 
 </body>
