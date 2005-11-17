@@ -202,7 +202,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 <tr class="b"><td><a class="ab" href="#brag" name="brag">How should I identify my program?</a></td></tr>
 <tr><td><p>Include a header comment in the program like this:</p>
 <pre>
-/* The Great Computer Language Shootout
+/* The Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by &#8230;
