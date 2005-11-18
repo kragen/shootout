@@ -17,7 +17,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
 <? printf(' %s GMT', gmdate("g:i a", $Measured)) ?>
 &nbsp;
-<a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="XML/RSS feed" title="XML/RSS feed" /></a>
+<a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a>
 </p>
 <?=$Furthermore;?>
 </td></tr>
