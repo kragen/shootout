@@ -97,7 +97,8 @@ if (isset($langNames)){
 
 
    $oldFeed = file(FEEDS_PATH.'rss.xml');
-   $itemCount = min(sizeof($oldFeed) - 3, 25); // 1 header, 1 title, 1 footer line
+   $itemCount = sizeof($oldFeed) - 3; // 1 header, 1 title, 1 footer line
+   if ($itemCount < 25){ $itemCount++; } 
 
    $f = fopen(FEEDS_PATH.'rss.xml', "w+");
 
