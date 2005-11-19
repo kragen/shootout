@@ -1,15 +1,24 @@
 #!/usr/bin/php 
 <?
 // Copyright (c) Isaac Gouy 2005
+// Run from shootout directory
 
 // Used PHP because I know it somewhat - should rewrite in Perl
 
+// Assumes rigid RSS file structure of one item per line
+// - xml, rss, channel: one line
+// - channel title: one line
+// - items: one per line
+// - /channel /rss: one line
+
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once('../website/lib/lib_common.php'); 
+require_once('website/lib/lib_common.php'); 
 
-define('DESC_PATH', '../website/desc/');
-define('CODE_PATH', '../website/code/');
+define('BIN_PATH', 'bin/');
+define('DESC_PATH', 'website/desc/');
+define('CODE_PATH', 'website/code/');
+define('FEEDS_PATH', 'website/websites/feeds/');
 
 
 // FUNCTIONS ///////////////////////////////////////////
@@ -38,11 +47,10 @@ function ReadUnique($FileName,$HasHeading=TRUE){
 // MAIN //////////////////////////////////////////////// 
 
 // are we measuring on Gentoo or Debian?
-if (preg_match("/gp4/i",`pwd`)){ $url = "http://shootout.alioth.debian.org/gp4/"; } 
-else { $url = "http://shootout.alioth.debian.org/"; }
+$isGentoo = preg_match("/gp4/i",`pwd`);
 
 $dirName = CODE_PATH;
-$cutoff = filemtime('timestamp');
+$cutoff = filemtime(BIN_PATH.'timestamp');
 
 $Tests = ReadUnique('test.csv');
 $Langs = ReadUnique('lang.csv');
@@ -54,14 +62,64 @@ while ($file = readdir($dh)){
       && filemtime($dirName.$file) > $cutoff){
 
       $lang = $matches[2];
+      if (!isset($langNames[$lang])) $langNames[$lang] = $Langs[$lang][LANG_FULL];
+
       $test = $matches[1];
-      if (!isset($testNames[$lang])) $testNames[$lang] = array();
-      $testNames[$lang][$test] = $Tests[$test][TEST_NAME];
+      if (!isset($testNames[$test])) $testNames[$test] = $Tests[$test][TEST_NAME];
    }
 }
 closedir($dh);
 
-// use pretty test and lang names to make RSS items
+
+if (isset($langNames)){
+   asort($langNames);
+   foreach($langNames as $k => $v){
+      if (isset($desc1)){ $desc1 = $desc1.', '.$v; } else { $desc1 = $v; }
+   }
+
+   asort($testNames);
+   foreach($testNames as $k => $v){
+      if (isset($desc2)){ $desc2 = $desc2.', '.$v; } else { $desc2 = $v; }
+   }
+
+   $day = date("jS M");
+   if ($isGentoo){ 
+      $os = "Gentoo";
+      $url = "http://shootout.alioth.debian.org/gp4/"; 
+   } else { 
+      $os = "Debian";
+      $url = "http://shootout.alioth.debian.org/"; 
+   }
+
+   $newItem = "<item><title>".$day.", ".$os." computer language benchmarks measured<title>";
+   $newItem .= "<description>".$desc1." :: ".$desc2."</description>";
+   $newItem .= "<link>".$url."</link></item>\n";
+
+
+   $oldFeed = file(FEEDS_PATH.'rss.xml');
+   $itemCount = min(sizeof($oldFeed) - 3, 25); // 1 header, 1 title, 1 footer line
+
+   $f = fopen(FEEDS_PATH.'rss.xml', "w+");
+
+   // write old header and channel definition
+   fwrite($f,$oldFeed[0]);
+   fwrite($f,$oldFeed[1]);
+
+   // write new item
+   fwrite($f,$newItem);
+
+   // write old items
+   $i = 2;
+   while ($i <= $itemCount){ fwrite($f,$oldFeed[$i]); $i++; }
+
+   // write footer
+   fwrite($f,$oldFeed[sizeof($oldFeed)-1]);
+   fclose($f);
+}
+
+
+/* maybe useful for individual language implementation feeds
+
 foreach($testNames as $lang => $ar){   
    asort($ar);
    foreach($ar as $k => $v){ 
@@ -76,11 +134,11 @@ foreach($testNames as $lang => $ar){
       $link = $url."benchmark.php?test=all&amp;lang=".$lang;
    }
 
-   printf("<item><title>%s measurements</title>",$langName);
+   printf("<item><title>New %s measurements</title>",$langName);
    printf("<description>%s</description>",$desc);
    printf("<link>%s</link></item>\n",$link);
 
    unset($desc);
 }
-
+*/
 ?>

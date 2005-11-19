@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2005-11-19 04:56:05 bfulgham Exp $
+# $Id: Makefile,v 1.43 2005-11-19 07:52:37 igouy-guest Exp $
 
 BIN := $(PWD)/bin/
 
@@ -15,6 +15,7 @@ all: init versions
 	-bin/build_data_files
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-make codelinks
+        -bin/make_feed
 
 website:
 	-bin/cascade_delete.bash
