@@ -49,6 +49,8 @@ function ReadUnique($FileName,$HasHeading=TRUE){
 // are we measuring on Gentoo or Debian?
 $isGentoo = preg_match("/gp4/i",`pwd`);
 
+printf("Gentoo=$isGentoo\n");
+
 $dirName = CODE_PATH;
 $cutoff = filemtime(BIN_PATH.'timestamp');
 
@@ -62,6 +64,7 @@ while ($file = readdir($dh)){
       && filemtime($dirName.$file) > $cutoff){
 
       $lang = $matches[2];
+      printf("Lang=$lang\n");
       if (!isset($langNames[$lang])) $langNames[$lang] = $Langs[$lang][LANG_FULL];
 
       $test = $matches[1];
@@ -84,10 +87,12 @@ if (isset($langNames)){
 
    $day = date("jS M");
    if ($isGentoo){ 
+      printf("Gentoo\n");
       $os = "Gentoo";
       $url = "http://shootout.alioth.debian.org/gp4/"; 
    } else { 
       $os = "Debian";
+      printf("Not Gentoo\n");
       $url = "http://shootout.alioth.debian.org/"; 
    }
 
