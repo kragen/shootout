@@ -76,7 +76,7 @@ foreach($testNames as $lang => $ar){
       $link = $url."benchmark.php?test=all&amp;lang=".$lang;
    }
 
-   printf("<item><title>New %s measurements</title>",$langName);
+   printf("<item><title>%s measurements</title>",$langName);
    printf("<description>%s</description>",$desc);
    printf("<link>%s</link></item>\n",$link);
 

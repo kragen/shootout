@@ -1,10 +1,11 @@
-# $Id: Makefile,v 1.40 2005-11-05 06:33:27 bfulgham Exp $
+# $Id: Makefile,v 1.41 2005-11-19 00:52:21 igouy-guest Exp $
 
 BIN := $(PWD)/bin/
 
 include Make.header
 
 all: init versions
+        -bin/make_timestamp
 	-bin/cascade_delete.bash
 	-bin/preen.pl
 	-bin/find_badlinks
@@ -15,7 +16,7 @@ all: init versions
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-make codelinks
 
-website: 
+website:
 	-bin/cascade_delete.bash
 	-bin/build_data_files
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
