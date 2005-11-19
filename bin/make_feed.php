@@ -91,7 +91,7 @@ if (isset($langNames)){
       $url = "http://shootout.alioth.debian.org/"; 
    }
 
-   $newItem = "<item><title>".$day.", ".$os." computer language benchmarks measured<title>";
+   $newItem = "<item><title>".$day.", ".$os." computer language benchmarks measured</title>";
    $newItem .= "<description>".$desc1." :: ".$desc2."</description>";
    $newItem .= "<link>".$url."</link></item>\n";
 
