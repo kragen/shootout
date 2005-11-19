@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.41 2005-11-19 00:52:21 igouy-guest Exp $
+# $Id: Makefile,v 1.42 2005-11-19 04:56:05 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
 include Make.header
 
 all: init versions
-        -bin/make_timestamp
+	-bin/make_timestamp
 	-bin/cascade_delete.bash
 	-bin/preen.pl
 	-bin/find_badlinks
