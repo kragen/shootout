@@ -44,7 +44,10 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <tr>
 <th>N</th>
-<? foreach($TestValues as $v){ printf('<th>%s</th>',$v); echo "\n"; } ?>
+<? foreach($TestValues as $v){ 
+      if ($v>0){ $fv = number_format((double)$v); } else { $fv = '?'; }
+      printf('<th>%s</th>',$fv); echo "\n"; 
+   } ?>
 </tr>
 
 <? 
@@ -89,7 +92,11 @@ foreach($Selected as $row){
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
 <th>N</th>
-<? foreach($TestValues as $v){ printf('<th>%s</th>',$v); echo "\n"; } ?>
+<? foreach($TestValues as $v){ 
+      if ($v>0){ $fv = number_format((double)$v); } else { $fv = '?'; }
+      printf('<th>%s</th>',$fv); echo "\n"; 
+   } 
+?>
 </tr>
 
 <? 
@@ -125,7 +132,11 @@ foreach($Selected as $row){
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
-<? foreach($TestValues as $v){ printf('<th>%s</th>',$v); echo "\n"; } ?>
+<? foreach($TestValues as $v){ 
+      if ($v>0){ $fv = number_format((double)$v); } else { $fv = '?'; }
+      printf('<th>%s</th>',$fv); echo "\n"; 
+   } 
+?>
 </tr>
 
 <? 
@@ -160,7 +171,11 @@ foreach($NData as $row){
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
-<? foreach($TestValues as $v){ printf('<th>%s</th>',$v); echo "\n"; } ?>
+<? foreach($TestValues as $v){ 
+      if ($v>0){ $fv = number_format((double)$v); } else { $fv = '?'; }
+      printf('<th>%s</th>',$fv); echo "\n"; 
+   } 
+?>
 </tr>
 
 <? 
