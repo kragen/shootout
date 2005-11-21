@@ -524,7 +524,7 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <tr><td><p>Doug Bagley created <a href="http://web.archive.org/web/20040401204425/www.bagley.org/~doug/shootout/index2.shtml" title="Doug Bagley's website from the Internet Archive">"The Great Computer Language Shootout"</a>, and it was active until 2001.</p>
 <p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 
-<p>In mid-2004 Brent Fulgham revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
+<p>In mid-2004 <a href="http://www.debian.org/~bfulgham">Brent Fulgham<a/> revived <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
 <p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, see <span><a class="arevOld" title="Doug Bagley's original benchmarks" href="<?=OLD_SITE;?>index.php" >&nbsp;The&nbsp;Doug&nbsp;Bagley&nbsp;</a></span> website.</p>
 <p>Then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
  website.</p>
