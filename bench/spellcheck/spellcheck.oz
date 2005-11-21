@@ -28,20 +28,19 @@ define
     case {FILE getS($)} of false then
       skip
     elseof WORD then
-      if {Dictionary.member DICTIONARY {String.toAtom WORD}} \= true then
-        {System.printInfo WORD}
-        {System.printInfo "\n"}
+      if {Not {Dictionary.member DICTIONARY {String.toAtom WORD}}} then
+        {System.printInfo WORD#"\n"}
       end
       {CheckAgainstDictionary FILE DICTIONARY}
     end
   end
 
+  DICTIONARY
+
 in
-  local DICTIONARY in
-    {NewDictionary DICTIONARY}
-    {LoadDictionary {New TextFile init(name:'Usr.Dict.Words')} DICTIONARY}
-    {CheckAgainstDictionary {New TextFile init(name:stdin)} DICTIONARY}
-  end
+  {NewDictionary DICTIONARY}
+  {LoadDictionary {New TextFile init(name:'Usr.Dict.Words')} DICTIONARY}
+  {CheckAgainstDictionary {New TextFile init(name:stdin)} DICTIONARY}
 
   {Application.exit 0}
 end

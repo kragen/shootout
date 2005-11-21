@@ -1,0 +1,199 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- health for SmartEiffel by jose
+
+--SPLITFILE=health.e
+
+class HEALTH inherit ARGUMENTS creation make feature
+	make is local i,n:INTEGER region:HEALTH_REGION t:TOTALS do
+		if argument_count=1 and then argument(1).is_integer then
+			n:=argument(1).to_integer end
+		n:=n.max(10)
+		create region.make_main
+		from until i=n loop region.next_time i:=i+1 end
+		t:=region.accumulate_totals
+		print("Patients: "+t.patients.out+"%N")
+		print("Time:     "+t.time.out+"%N")
+		print("Visits:   "+t.visits.out+"%N")
+		print("%NTreatment Queue - Remaining Treatment Time%N")
+		region.hospital.treatment.do_all(agent end_print(?))
+		end
+	end_print(p:PATIENT) is do
+		print(p.remaining_time.out+"%Tanonymous patient%N")
+		end
+end
+
+--SPLITFILE=health_region.e
+
+class HEALTH_REGION creation make_region, make_main feature
+	districts: FAST_ARRAY[HEALTH_REGION]
+	hospital: HOSPITAL
+	Levels: INTEGER is 5
+	Districts: INTEGER is 4
+	make_main is do
+		make_region(Levels,0,42)
+		end
+	make_region(level, seed1, seed2:INTEGER) is 
+		local staff:INTEGER hr:HEALTH_REGION i:INTEGER do
+		staff:={INTEGER 1} |<< (level-1).to_integer_8
+		if level=1 then
+			make(staff,seed1*seed2,False)
+		else
+			make(staff,seed1*seed2,level=Levels)
+			from until i=Districts loop
+				create hr.make_region(level-1,4*seed1+i+1,seed2)
+				districts.add_last(hr)
+				i:=i+1 end
+			end
+		end
+	make(staff,seed:INTEGER;is_main:BOOLEAN) is do
+		create hospital.make(staff,seed,is_main)
+		create districts.with_capacity(Districts)
+		end
+	next_time is do
+		districts.do_all(agent {HEALTH_REGION}.next_time_and_transfer_to(hospital))
+		hospital.triage_examination
+		end
+	next_time_and_transfer_to(destination:HOSPITAL) is do
+		next_time
+		hospital.transfers.do_all(agent destination.new_arrival(?))
+		end
+	accumulate_totals: TOTALS is local i:INTEGER do
+		from Result:=hospital.accumulate_totals until i>districts.upper loop
+			Result:=Result+districts.item(i).accumulate_totals
+			i:=i+1 end
+		end
+end
+
+--SPLITFILE=hospital.e
+
+class HOSPITAL creation make feature
+	alea: RANDOM
+	discharged: TOTALS
+	is_main: BOOLEAN
+	staff: INTEGER
+	triage, examination, treatment, transfers: PATIENT_LIST
+	make(staf,seed:INTEGER;main:BOOLEAN) is do
+		alea.set_seed(seed) staff:=staf is_main:=main
+		end
+	triage_examination is do
+		transfers.clear
+		treatment.do_all(agent discharge_one_patient(?))
+		examination.do_all(agent treat_or_transfert_one_patient(?))
+		triage.do_all(agent triage_one_patient(?))
+		if alea.test(0.7) then new_arrival(create{PATIENT}) end
+		end
+	new_arrival(p:PATIENT) is do
+		p.enter_hospital
+		if staff<=0 then triage.add(p)
+			else staff:=staff-1 examination.add(p) p.wait(3) end
+		end
+	discharge_one_patient(p:PATIENT) is do
+		p.next_time
+		if p.finished then
+			staff:=staff+1 treatment.remove(p)
+			discharged.add(p) end
+		end
+	treat_or_transfert_one_patient(p:PATIENT) is do
+                p.next_time
+		if p.finished then
+			examination.remove(p)
+			if alea.test(0.1) or else is_main then
+				treatment.add(p) p.wait(10)
+			else
+				staff:=staff+1 transfers.add(p) end
+			end
+		end
+	triage_one_patient(p:PATIENT) is do
+		if staff<=0 then
+			p.incr_hospital_time
+		else
+			staff:=staff-1 triage.remove(p)
+			examination.add(p) p.wait(3) end
+		end
+	accumulate_totals: TOTALS is do
+		Result:=discharged+triage.accumulate_totals+
+			examination.accumulate_totals+
+			treatment.accumulate_totals
+		end
+end
+
+--SPLITFILE=random.e
+
+expanded class RANDOM feature
+	im: INTEGER is 139968
+	ia: INTEGER is 3877
+	ic: INTEGER is 29573
+	inv_im: REAL is once Result:=1.0/im end
+	last_integer: INTEGER
+	next is do last_integer := (last_integer #* ia + ic) #\\ im end
+	last_real: REAL is do Result := inv_im * last_integer end
+	test(chance: REAL): BOOLEAN is do next Result:=last_real>chance end
+	set_seed(seed:INTEGER) is do last_integer:=seed end
+end
+
+--SPLITFILE=patient.e
+
+class PATIENT feature
+	remaining_time, hospital_time, hospital_visits: INTEGER
+	wait(t:INTEGER) is do  remaining_time:=t  hospital_time:=hospital_time+t  end
+	enter_hospital is do hospital_visits:=hospital_visits+1 end
+	next_time is do remaining_time:=remaining_time-1 end
+	finished: BOOLEAN is do Result:=remaining_time=0 end
+	incr_hospital_time is do hospital_time:=hospital_time+1 end
+end
+
+--SPLITFILE=totals.e
+
+expanded class TOTALS feature
+	patients, time, visits: INTEGER
+	make(p,t,v:INTEGER) is do patients:=p time:=t visits:=v end
+	infix "+"(o:TOTALS):TOTALS is do
+		Result.make(patients+o.patients,time+o.time,visits+o.visits)
+		end
+	add(p:PATIENT) is do
+		patients:=patients+1
+		time:=time+p.hospital_time
+		visits:=visits+p.hospital_visits
+		end
+end
+
+--SPLITFILE=patient_list_node.e
+
+class PATIENT_LIST_NODE creation set_patient feature
+	patient: PATIENT
+	next: like Current
+	set_patient(p:PATIENT) is do patient:=p end
+	set_next(n: like Current) is do next:=n end
+end
+
+--SPLITFILE=patient_list.e
+
+expanded class PATIENT_LIST feature
+	head, tail: PATIENT_LIST_NODE
+	clear is do head:=Void tail:=Void end
+	add(p:PATIENT) is local node:PATIENT_LIST_NODE do
+		create node.set_patient(p)
+		if tail=Void then head:=node else tail.set_next(node) end
+		tail:=node end
+	remove(p:PATIENT) is local node,previous:PATIENT_LIST_NODE do
+		from node:=head until node=Void or else node.patient=p loop
+			previous:=node node:=node.next end
+		if node/=Void then
+			if previous/=Void then previous.set_next(node.next)
+				else head:=node.next end
+			if tail=node then tail:=previous end
+			end
+		end
+	do_all(proc: ROUTINE[ANY,TUPLE[PATIENT]]) is local node:PATIENT_LIST_NODE do
+		from node:=head until node=Void loop
+			proc.call([node.patient])
+			node:=node.next end
+		end
+	accumulate_totals: TOTALS is local node:PATIENT_LIST_NODE do
+		from node:=head until node=Void loop
+			Result.add(node.patient)
+			node:=node.next end
+		end
+end
