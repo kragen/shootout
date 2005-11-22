@@ -238,6 +238,11 @@ each new target source file will start from the <strong>comment line</strong> wh
 <p>You should report possible bugs, request feature changes and contribute programs on the appropriate issue tracker - see <a href="#help"><strong>How can I help?</strong></a></p>
 </td></tr>
 
+<tr class="b"><td><a class="ab" href="#whereask" name="whereask">Where can I <strong>ask for help</strong>; where can I give feedback?</a></td></tr>
+<tr><td>
+<p>Find help on the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help"><strong>Help Forum</strong></a>; and say what you think about The Computer Language Shootout on the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Share Opinions"><strong>Opinion Forum</strong></a>.</p>
+</td></tr>
+
 <tr class="b"><td><a class="ab" href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></td></tr>
 <tr><td>
 <p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=ackermann&amp;p1=gcc-0&amp;p2=gcc-0&amp;p3=gcc-0&amp;p4=gcc-0#cputable" title="full data"><strong>full data page</strong></a>.</p>
