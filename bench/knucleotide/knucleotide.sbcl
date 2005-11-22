@@ -1,6 +1,11 @@
 ;; The Great Computer Language Shootout
-;;   http://shootout.alioth.debian.org/ 
+;;   http://shootout.alioth.debian.org/
 ;;   contributed by James McIlree
+;;   Modified by Juho Snellman 2005-11-19
+;;     * About 50% speedup on both SBCL and CMUCL
+;;     * Use SIMPLE-BASE-STRINGs instead of (SIMPLE-ARRAY CHARACTER) for
+;;       lower memory use on Unicode SBCL
+;;     * Declare the type of SEQUENCE in ACCUMULATE-FREQUENCIES
 
 (defun read-data (stream)
   (let ((data (make-array 0 :element-type 'base-char :adjustable t :fill-pointer 0)))
@@ -10,22 +15,21 @@
         ((or (eq line 'eof) (char= (schar line 0) #\>)))
       (if (not (char= (schar line 0) #\;))
           (dotimes (char-index (length line))
-             (vector-push-extend (char-upcase (the base-char (schar line char-index))) data))))
-    (concatenate 'string data)))
+            (vector-push-extend (char-upcase (the base-char (schar line char-index))) data))))
+    (coerce data 'simple-base-string)))
 
 (defun accumulate-frequencies (hashmap sequence offset fragment-length)
   (declare (type (integer 0 18) fragment-length)
            (fixnum offset)
-           (type (simple-array * *) sequence))
+           (type (simple-base-string) sequence))
   (let ((last-sequence-index (- (length sequence) fragment-length)))
     (do ((start offset (+ start fragment-length)))
         ((> start last-sequence-index))
       (let ((fragment (subseq sequence start (+ start fragment-length))))
         (setf (gethash fragment hashmap) (1+ (the (integer 0 999999) (gethash fragment hashmap 0))))))))
-              
+
 (defun calculate-frequencies (sequence fragment-length)
-  (declare (type (integer 0 18) fragment-length)
-           (type (simple-array * *) sequence))
+  (declare (type (integer 0 18) fragment-length))
   (let ((hashmap (make-hash-table :test #'equal)))
     (dotimes (offset fragment-length)
       (accumulate-frequencies hashmap sequence offset fragment-length))
@@ -38,7 +42,7 @@
     (maphash #'(lambda (k v)
                  (setf sum (+ sum (the fixnum v)))
                  (setf sorted-frequencies (cons (cons k v) sorted-frequencies))) (calculate-frequencies sequence length))
-    (setf sorted-frequencies (sort sorted-frequencies #'(lambda (v1 v2) 
+    (setf sorted-frequencies (sort sorted-frequencies #'(lambda (v1 v2)
                                                           (cond ((> (the (integer 0 999999) (cdr v1)) (the (integer 0 999999) (cdr v2))) t)
                                                                 ((< (the (integer 0 999999) (cdr v1)) (the (integer 0 999999) (cdr v2))) nil)
                                                                 (t (string< (car v1) (car v2)))))))
@@ -63,6 +67,6 @@
     (dolist (entry '(1 2)) (write-frequencies sequence entry))
     (dolist (entry '("GGT" "GGTA" "GGTATT" "GGTATTTTAATT" "GGTATTTTAATTTATAGT"))
       (declare (type (simple-array * *) entry))
-      (format t "~A~C~A~%" (gethash entry (calculate-frequencies sequence (length entry)) 0) #\Tab entry))))
-
-  
+      (format t "~A~C~A~%"
+              (gethash entry (calculate-frequencies sequence (length entry)) 0)
+              #\Tab entry))))
