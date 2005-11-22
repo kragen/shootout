@@ -13,6 +13,7 @@ public class fannkuch {
     }
     
     public static int fannkuch(int n) {
+        int check = 0;
         int[] perm = new int[n];
         int[] perm1 = new int[n];
         int[] count = new int[n];
@@ -24,6 +25,13 @@ public class fannkuch {
         int r = n;
 
         while (true) {
+            // write-out the first 30 permutations
+            if (check < 30){
+              for(int i=0; i<n; i++) System.out.print(perm1[i]+1);
+              System.out.print("\n");
+              check++;
+            }
+
             while (r != 1) { count[r - 1] = r; r--; }
             if (!(perm1[0] == 0 || perm1[m] == m)) {
                 for (int i = 0; i < n; i++) perm[i] = perm1[i];
