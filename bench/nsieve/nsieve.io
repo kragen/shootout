@@ -6,18 +6,18 @@
 Sequence pad := method(w, s:=self; while (s size < w, s=" ".. s) )
 
 sieve := Object clone do(
-    flags := Sequence clone
+    flags := List clone
     show := method(n,
-        flags setSize(n)
-        for (i, 2, n-1, flags atPut(i, 1))  # true
+        flags empty preallocateToSize(n)
+        n repeatTimes(flags append(Object))  # true
         primes := 0
         for (i, 2, n-1,
-            if (flags at(i) == 1,
+            if (flags at(i),
                 primes = primes + 1
-                if (i+i < n, for (j, i+i, n-1, i, flags atPut(j, 0) ) )
+                if (i+i < n, for (j, i+i, n-1, i, flags atPut(j, Nil) ) )
             )
         )
-        writeln("Primes up to", n asString pad(9), primes asString pad(9))  
+        writeln("Primes up to", n asString pad(9), primes asString pad(9))
     )
 )
 
@@ -25,3 +25,4 @@ n := args at(0) asNumber
 sieve show(10000 shiftLeft(n))
 sieve show(10000 shiftLeft(n-1))
 sieve show(10000 shiftLeft(n-2))
+
