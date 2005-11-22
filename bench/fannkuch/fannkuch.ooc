@@ -16,16 +16,24 @@ VAR n: LONGINT;
 PROCEDURE F(n: LONGINT): LONGINT;
 VAR
    perm, perm1, count, maxPerm: POINTER TO ARRAY OF LONGINT;
-   m, r, i, k, temp, maxFlipsCount, flipsCount, perm0: LONGINT;
+   check, m, r, i, k, temp, maxFlipsCount, flipsCount, perm0: LONGINT;
 BEGIN
    NEW(perm, n); NEW(perm1, n); NEW(count, n); NEW(maxPerm, n);
 
+   check := 0;
    maxFlipsCount := 0;
    m := n - 1;
    FOR i := 0 TO m DO perm1[i] := i; END;
 
    r := n;
    LOOP
+      (* write-out the first 30 permutations *)
+      IF (check < 30) THEN
+         FOR i := 0 TO m DO Out.Int( perm1[i], 1); END;
+         Out.Ln;
+         INC(check);
+      END;
+
       WHILE r # 1 DO count[r-1] := r; DEC(r); END;
       IF ~((perm1[0]=0) OR (perm1[m]=m)) THEN
          FOR i := 0 TO m DO perm[i] := perm1[i]; END;

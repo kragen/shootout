@@ -8,6 +8,7 @@
 
 
 function Fannkuch($n){
+   $check = 0;
    $perm = array();
    $perm1 = array();
    $count = array();
@@ -19,6 +20,13 @@ function Fannkuch($n){
    $r = $n;
 
    while (TRUE) {
+      // write-out the first 30 permutations 
+      if ($check < 30){
+        for($i=0; $i<$n; $i++) echo $perm1[$i]+1; 
+        echo "\n";
+        $check++;
+      }
+
       while ($r != 1){ $count[$r-1] = $r; $r--; } 
       if (! ($perm1[0]==0 || $perm1[$m] == $m)){       
          for($i=0; $i<$n; $i++) $perm[$i] = $perm1[$i]; 
