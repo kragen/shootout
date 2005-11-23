@@ -43,7 +43,7 @@ initialize
       t: s * aTransformation r + (t * aTransformation t) !
 
 extract: anInteger
-   ^(q * anInteger + r) / (s * anInteger + t) !
+   ^(q * anInteger + r) // (s * anInteger + t) !
 
 next
    k := k +1.
