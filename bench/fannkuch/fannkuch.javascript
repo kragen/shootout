@@ -3,6 +3,7 @@
    contributed by Isaac Gouy */
 
 function fannkuch(n) {
+   var check = 0;
    var perm = Array(n);
    var perm1 = Array(n);
    var count = Array(n);
@@ -14,6 +15,14 @@ function fannkuch(n) {
    var r = n;
 
    while (true) {
+      // write-out the first 30 permutations
+      if (check < 30){
+         var s = "";
+         for(var i=0; i<n; i++) s += (perm1[i]+1).toString();
+         print(s);
+         check++;
+      }
+
       while (r != 1) { count[r - 1] = r; r--; }
       if (!(perm1[0] == 0 || perm1[m] == m)) {
          for (var i = 0; i < n; i++) perm[i] = perm1[i];

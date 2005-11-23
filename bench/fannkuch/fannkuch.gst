@@ -10,7 +10,8 @@
 
 fannkuch
    "adjust for 1-indexed-arrays"
-   | perm perm1 count maxPerm maxFlipsCount m n r  |
+   | perm perm1 count maxPerm maxFlipsCount check m n r  |
+   check := 0.
    perm := Array new: self withAll: 1.
    perm1 := (1 to: self) asArray.
    count := Array new: self withAll: 1.
@@ -21,6 +22,13 @@ fannkuch
    r := n. 
 
    [	| flipsCount k k2  |
+
+      "write-out the first 30 permutations"
+      (check < 30) ifTrue: [
+         1 to: self do: [:i| Transcript show: (perm1 at: i) printString].
+         Transcript nl.
+         check := check + 1
+      ].     
 
       [r ~=2] whileTrue: [ 
          count at: r - 1 put: r. 
@@ -49,7 +57,10 @@ fannkuch
       ].
 
       [	|  perm0 i break | 
-         (r = n) ifTrue: [^maxFlipsCount].
+         (r = n) ifTrue: [
+            ^'Pfannkuchen(', m printString, ') = ', maxFlipsCount printString
+         ].
+
          perm0 := perm1 at: 1.
          i := 1.
          [i < r] whileTrue: [ | j | 
