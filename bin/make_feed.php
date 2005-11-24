@@ -15,7 +15,6 @@
 
 require_once('website/lib/lib_common.php'); 
 
-define('BIN_PATH', 'bin/');
 define('DESC_PATH', 'website/desc/');
 define('CODE_PATH', 'website/code/');
 define('FEEDS_PATH', 'website/websites/feeds/');
@@ -48,12 +47,8 @@ function ReadUnique($FileName,$HasHeading=TRUE){
 
 // are we measuring on Gentoo or Debian?
 $isGentoo = preg_match("/gp4/i",`pwd`);
-
-printf("Gentoo=$isGentoo\n");
-
 $dirName = CODE_PATH;
-$cutoff = filemtime(BIN_PATH.'timestamp');
-
+$cutoff = filemtime('timestamp');
 $Tests = ReadUnique('test.csv');
 $Langs = ReadUnique('lang.csv');
 
@@ -61,10 +56,9 @@ $Langs = ReadUnique('lang.csv');
 $dh = opendir($dirName);
 while ($file = readdir($dh)){
    if (preg_match("/([a-z]*)-([a-z]*)(\S*)\.log$/i",$file,$matches) 
-      && filemtime($dirName.$file) > $cutoff){
+      && (filemtime($dirName.$file) > $cutoff)){
 
       $lang = $matches[2];
-      printf("Lang=$lang\n");
       if (!isset($langNames[$lang])) $langNames[$lang] = $Langs[$lang][LANG_FULL];
 
       $test = $matches[1];
@@ -95,7 +89,6 @@ if (isset($langNames)){
       printf("Not Gentoo\n");
       $url = "http://shootout.alioth.debian.org/"; 
    }
-
    $newItem = "<item><title>".$day.", ".$os." computer language benchmarks measured</title>";
    $newItem .= "<description>".$desc1." :: ".$desc2."</description>";
    $newItem .= "<link>".$url."</link></item>\n";
