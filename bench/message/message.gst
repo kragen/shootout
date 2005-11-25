@@ -1,69 +1,73 @@
-"  The Great Computer Language Shootout
+"  The Computer Language Shootout
    http://shootout.alioth.debian.org/
 
-   contributed by Isaac Gouy
-
-   To run: gst -QI /usr/local/share/smalltalk/gst.im process.st -a 10
+   contributed by Paolo Bonzini
 "
 
+Object subclass: #Consumer
+	instanceVariableNames: 'semaphore msg'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'shootout'!
 
-Object subclass: #LinkedProcess
-instanceVariableNames: 'message next sum'
-classVariableNames: ''
-poolDictionaries: ''
-category: nil !
+!Consumer class methodsFor: 'process'!
 
-!LinkedProcess class methodsFor: 'instance creation'!
-
-with: aLinkedProcess
-   ^self new initializeWith: aLinkedProcess ! !
+new
+    | var |
+    var := self basicNew.
+    var semaphore: Semaphore new.
+    ^var! !
    
-   
-!LinkedProcess methodsFor: 'initialize-release'!   
-   
-initializeWith: aLinkedProcess
-   next := aLinkedProcess.
-   message := SharedQueue new.
-   sum := 0 ! !
-   
-!LinkedProcess methodsFor: 'accessing'!        
+!Consumer methodsFor: 'process'!
 
-put: aValue
-   message nextPut: aValue !
+semaphore: aSemaphore
+    semaphore := aSemaphore!
 
-take
-   ^message next + 1 !
+msg
+    semaphore wait.
+    ^msg!
 
-sum
-   ^sum ! !
-   
-!LinkedProcess methodsFor: 'run'!    
+msg: data
+    msg := data.
+    semaphore signal! !
 
-runUntil: anInteger then: aSemaphore
-   [ 
-      next==nil "the last process checks if we're finished"
-         ifTrue: [
-            sum := sum + self take.
-            (sum < anInteger) ifFalse: [aSemaphore signal] ] 
+Consumer subclass: #ProducerConsumer
+	instanceVariableNames: 'consumer'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'shootout'!
 
-         ifFalse: [
-            next put: self take]. 
+!ProducerConsumer class methodsFor: 'process'!
 
-      Processor yield "give other processes a chance to run"
-   ] repeat ! !
+fork: consumer
+    | proc |
+    proc := self new.
+    proc consumer: consumer.
+    proc fork.
+    ^proc! !
+
+!ProducerConsumer methodsFor: 'process'!
+
+run
+    [ consumer msg: self msg + 1 ] repeat!
+
+fork
+    [ self run ] fork!
+
+consumer: aProcess
+    consumer := aProcess! !
 
 
-| n finalSum join last p |
-n := Smalltalk arguments first asInteger.
-finalSum := 500 * n.
-join := Semaphore new.
+| arg tail head sum |
+arg := Smalltalk arguments first asInteger.
 
+head := tail := Consumer new.
 500 timesRepeat: [
-   p := LinkedProcess with: p.
-   last isNil ifTrue: [last := p].
-   [p runUntil: finalSum then: join] fork.
-].
-n timesRepeat: [p put: 0].
+    head := ProducerConsumer fork: head ].
 
-join wait.
-last sum displayNl!
+sum := 0.
+arg timesRepeat: [
+    head msg: 0.
+    sum := sum + tail msg ].
+
+sum printNl!
