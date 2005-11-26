@@ -23,11 +23,11 @@ function gen_seed()
 
 function gen_random()
 {
-  local S=${1} M=${2} P=${3}
+  local S=${1} M=${2} PC=$((${3}+1)) PO='%0.'${3}'f\n'
 
-  local R=`echo -e "${S} ${M} \x2A ${P} k ${IM} / p q" | dc`
+  local R=`echo -e "${S} ${M} \x2A ${PC} k ${IM} / p q" | dc`
 
-  echo ${R}
+  printf ${PO} ${R}
 }
 
 # ------------------------------- #
