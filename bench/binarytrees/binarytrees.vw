@@ -14,7 +14,7 @@ binarytrees: argvString
    check := (TreeNode bottomUpTree: 0 depth: stretchDepth) itemCheck.
    OS.Stdout 
       nextPutAll: 'stretch tree of depth '; nextPutAll: stretchDepth printString; nextPut: Character tab;
-      nextPutAll: '  check: '; nextPutAll: check printString; cr.
+      nextPutAll: ' check: '; nextPutAll: check printString; cr.
 
    longLivedTree := TreeNode bottomUpTree: 0 depth: maxDepth.
    minDepth to: maxDepth by: 2 do: [:depth|
@@ -28,12 +28,12 @@ binarytrees: argvString
       OS.Stdout
          nextPutAll:  (2*iterations) printString; nextPut: Character tab; 
          nextPutAll: ' trees of depth '; nextPutAll: depth printString; nextPut: Character tab;
-         nextPutAll: '  check: '; nextPutAll: check printString; cr.
+         nextPutAll: ' check: '; nextPutAll: check printString; cr.
    ].
 
    OS.Stdout
       nextPutAll: 'long lived tree of depth '; nextPutAll: maxDepth printString; nextPut: Character tab;
-      nextPutAll: '  check: '; nextPutAll: longLivedTree itemCheck printString; cr.! !
+      nextPutAll: ' check: '; nextPutAll: longLivedTree itemCheck printString; cr.! !
 
 
 Smalltalk.ComputerLanguageShootout defineClass: #TreeNode

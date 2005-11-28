@@ -189,3 +189,27 @@ eFactorWith: aBody
    | dx dy dz distance |
    dx := x - aBody x.
    dy := y - aBody y.
+   dz := z - aBody z.
+
+   distance := ((dx*dx) + (dy*dy) + (dz*dz)) sqrt.
+   ^mass * aBody mass / distance!
+
+increaseVelocity: dx y: dy z: dz m: m
+   vx := vx + (dx * m).
+   vy := vy + (dy * m).
+   vz := vz + (dz * m)!
+
+momo
+   ^mass * ((vx * vx) + (vy * vy) + (vz * vz))!
+
+offsetMomentum: px y: py z: pz
+   | m |
+   m := self class solarMass.
+   vx := px negated / m.
+   vy := py negated / m.
+   vz := pz negated / m!
+
+positionAfter: dt
+   x := x + (dt * vx).
+   y := y + (dt * vy).
+   z := z + (dt * vz)! !
