@@ -6,7 +6,7 @@ rebol[
 	            http://shootout.alioth.debian.org/
 	         }
 	summary: [rebol k-nucleotide tom conlin 2005-11-27]
-    version: 1.16
+    version: 1.17
 ]
 ;;; format utility 
 decimal-pad: func[d[number!] p[integer!] /local r s t][
@@ -62,7 +62,7 @@ forall fasta[ kay: head kay
 ;;; sorted by descending frequency and then ascending k-nucleotide key
 repeat i 2 [sort/skip mers/:i 2 sort/skip head reverse mers/:i 2
         foreach [n c] head reverse mers/:i[
-            print[uppercase n decimal-pad c / len 3]
+            print[uppercase n decimal-pad 100 * c / len 3]
         ]print ""
 ]
 
