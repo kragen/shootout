@@ -2,38 +2,32 @@ rebol[
 	Title:  "k-nucleotide"
 	Author: "Tom Conlin"
 	Date:    2005-11-14
-	purpose: {	The Computer Language Shootout
+	purpose: {	The Great Computer Language Shootout
 	            http://shootout.alioth.debian.org/
 	         }
-    version: 1.15
+	summary: [rebol k-nucleotide tom conlin 2005-11-27]
+    version: 1.16
 ]
-
-decimal-pad: func [d[number!] p[integer!] /local r t u z][
+;;; format utility 
+decimal-pad: func[d[number!] p[integer!] /local r s t][
 	d: to string! d
-	z:  negate to integer! #"0" - 1
-	either u: find/tail d "."
-		[   either p >= length? u [insert/dup tail u "0" p - length? u]
-			[	t: skip u p
-				if #"5" <=  first t [
-					t: back t
-					r: z + first t 
+	either s: find/tail d "."
+		[   either p >= length? s
+			[insert/dup tail s "0" p - length? s]
+			[	t: skip s p
+				r: either #"5" > first t[0][10]
+				while[not zero? r: to integer! r / 10][
+					t: back t if #"." == first t[t: back t]
+					r: -47 + first t
 					change t r // 10
-					r: to integer! r / 10
-					while [not zero? r][
-						t: back t
-						if #"." == first t [t: back t]
-						r: z +  first t
-						change t r // 10
-						r: to integer! r / 10
-						if all[not zero? r any[head? t #"-" == first t]][
-							insert s "0" u: next u
-						]
+					if all[9 < r any[head? t #"-" == first t]][
+						insert d "0" s: next s
 					]
 				]
-				clear skip u p
+				clear skip s p
 			]
 		]
-		[insert tail d "." insert/dup tail s "0" p]
+		[insert tail d "." insert/dup tail d "0" p]
 	d
 ]
 
@@ -68,7 +62,7 @@ forall fasta[ kay: head kay
 ;;; sorted by descending frequency and then ascending k-nucleotide key
 repeat i 2 [sort/skip mers/:i 2 sort/skip head reverse mers/:i 2
         foreach [n c] head reverse mers/:i[
-            print[uppercase n c / len tab decimal-pad c / len 3]
+            print[uppercase n decimal-pad c / len 3]
         ]print ""
 ]
 
