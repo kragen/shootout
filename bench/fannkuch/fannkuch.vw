@@ -1,79 +1,103 @@
 "  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy"!
+   contributed by Paolo Bonzini"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+Smalltalk.ComputerLanguageShootout defineClass: #PermGenerator
+	superclass: #{Core.Object}
+	indexedType: #none
+	private: false
+	instanceVariableNames: 'timesRotated perm atEnd '
+	classInstanceVariableNames: ''
+	imports: ''
+	category: 'ComputerLanguageShootout'!
 
-fannkuch: argvString
-   OS.Stdout nextPutAll: argvString asNumber fannkuch; cr! !
+
+!ComputerLanguageShootout.PermGenerator class methodsFor: 'instance creation'!
+
+new: size
+    ^self new
+	initialize: size;
+	yourself! !
+
+
+!ComputerLanguageShootout.PermGenerator methodsFor: 'initialize-release'!
+
+initialize: size
+    perm := (1 to: size) asArray.
+    timesRotated := Array new: size withAll: 0.
+    atEnd := false!
+
+makeNext
+    | temp remainder |
+    "Generate the next permutation."
+    2 to: perm size do: [ :r |
+	"Rotate the first r items to the left."
+        temp := perm at: 1.
+        1 to: r - 1 do: [ :i | perm at: i put: (perm at: i + 1) ].
+        perm at: r put: temp.
+
+        remainder := timesRotated at: r put: ((timesRotated at: r) + 1) \\ r.
+        remainder = 0 ifFalse: [ ^self ].
+
+	"After r rotations, the first r items are in their original positions.
+	 Go on rotating the first r+1 items."
+    ].
+
+    "We are past the final permutation."
+    atEnd := true! !
+
+!ComputerLanguageShootout.PermGenerator methodsFor: 'accessing'!
+
+atEnd
+    ^atEnd!
+
+next
+    | result |
+    result := perm copy.
+    self makeNext.
+    ^result! !
+
+
+!Core.Array methodsFor: 'computer language shootout'!
+
+pfannkuchen
+    | first complement a b k |
+    k := 0.
+    [ (first := self at: 1) == 1 ] whileFalse: [
+	k := k + 1.
+	complement := first + 1.
+	1 to: first // 2 do: [ :i |
+	    a := self at: i.
+	    b := self at: complement - i.
+	    self at: i put: b.
+	    self at: complement - i put: a.
+	]
+    ].
+    ^k! !
 
 
 !Core.Integer methodsFor: 'computer language shootout'!
 
-fannkuch
-   "adjust for 1-indexed-arrays"
-   | perm perm1 count maxPerm maxFlipsCount check m n r  |
-   check := 0.
-   perm := Array new: self withAll: 1.
-   perm1 := (1 to: self) asArray.
-   count := Array new: self withAll: 1.
-   maxPerm := Array new: self withAll: 1.
-   maxFlipsCount := 0. 
-   m := self.
-   n := self + 1.
-   r := n. 
+maxPfannkuchen
+    | max gen perm check |
+    max := 0.
+    check := 0.
+    gen := ComputerLanguageShootout.PermGenerator new: self.
+    [ gen atEnd ] whileFalse: [
+	perm := gen next.
+        check < 30 ifTrue: [
+	    perm do: [ :each | OS.Stdout nextPutAll: each printString ]. 
+	    OS.Stdout cr.
+	    check := check + 1 ].
+	max := max max: perm pfannkuchen
+    ].
+    ^max! !
 
-   [	| flipsCount k k2  |
 
-      "write-out the first 30 permutations"
-      (check < 30) ifTrue: [
-         1 to: self do: [:i| OS.Stdout nextPutAll: (perm1 at: i) printString].
-         OS.Stdout cr.
-         check := check + 1
-      ].     
+!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
 
-      [r ~=2] whileTrue: [ 
-         count at: r - 1 put: r. 
-         r := r - 1
-      ].
-
-      ((perm1 at: 1) = 1 or: [(perm1 at: m) = m]) ifFalse: [
-         1 to: self do: [:i| perm at: i put: (perm1 at: i)].
-         flipsCount := 0.
-
-         [(k := perm at: 1) = 1] whileFalse: [
-            k2 := k+1 bitShift: -1. 
-            1 to: k2 do: [:i| | temp ki | 
-               ki := k - i + 1.  "adjust for 1-indexed-arrays"
-               temp := perm at: i.  
-               perm at: i put: (perm at: ki). 
-               perm at: ki put: temp
-            ].
-            flipsCount := flipsCount + 1.
-         ].
-
-         (flipsCount > maxFlipsCount) ifTrue: [
-            maxFlipsCount := flipsCount.
-            1 to: self do: [:i| maxPerm at: i put: (perm1 at: i)].
-         ].
-      ].
-
-      [	|  perm0 i break | 
-         (r = n) ifTrue: [
-            ^'Pfannkuchen(', m printString, ') = ', maxFlipsCount printString
-         ].
-
-         perm0 := perm1 at: 1.
-         i := 1.
-         [i < r] whileTrue: [ | j | 
-            j := i + 1. 
-            perm1 at: i put: (perm1 at: j). 
-            i := j
-         ].
-         perm1 at: r put: perm0.
-
-         count at: r put: (count at: r) - 1.
-         (break := (count at: r) > 1) ifFalse: [r := r + 1]. 
-         break
-      ] whileFalse.
-   ] repeat! !
+fannkuch: argvString
+   | n pf |
+   n := argvString asNumber.
+   pf := n maxPfannkuchen printString.
+   OS.Stdout nextPutAll: 'Pfannkuchen('; nextPutAll: n printString; nextPutAll: ') = ', pf; cr! !
