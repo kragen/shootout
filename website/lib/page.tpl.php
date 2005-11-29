@@ -10,6 +10,7 @@
 <?=$MetaKeywords;?>
 
 <title><?=$PageTitle;?></title>
+<link rel="shortcut icon" href="./favicon.ico" />
 <style type="text/css" media="all">
    @import "<?=CORE_SITE;?>highlight.css";
    @import "<?=CORE_SITE;?>benchmark.css";

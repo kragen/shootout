@@ -14,6 +14,7 @@
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=CORE_SITE;?>benchmark.css" />
 <link href="<?=CORE_SITE;?>/feeds/rss.xml" rel="alternate" type="application/rss+xml" title="Computer Language Shootout" />
+<link rel="shortcut icon" href="./favicon.ico" />
 <style type="text/css" media="all">
    .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
    .arevCore { background-color: <?=REV_COLOR_CORE;?>; }
