@@ -10,8 +10,14 @@ private define fannkuch (n)
    variable r0, r1, r = n;
    variable count = Int_Type[n];
    variable max_flipcounts = 0;
+   variable check = 30;
    forever
      {
+	if (check)
+	  {
+	     message(strjoin (array_map(String_Type, &string, perm1+1),""));
+	     check--;
+	  }
 	loop (r-1) { r; r--; count[r] = (); }
 
 	!if ((perm1[0] == 0) or (perm1[m] == m))
