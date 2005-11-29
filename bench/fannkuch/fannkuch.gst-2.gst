@@ -2,10 +2,10 @@
    http://shootout.alioth.debian.org/
 
    contributed by Paolo Bonzini
-   would have never gotten the permutation right without Isaac Gouy's program "
+   would have never gotten the permutations right without Isaac Gouy's program"
 
 Object subclass: #PermGenerator
-	instanceVariableNames: 'count perm atEnd'
+	instanceVariableNames: 'timesRotated perm atEnd'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: nil!
@@ -23,34 +23,33 @@ atEnd
     ^atEnd!
 
 next
-    | result size temp i j r remainder |
+    | result |
     result := perm copy.
+    self makeNext.
+    ^result!
 
+makeNext
+    | temp i remainder |
     "Generate the next permutation."
-    size := perm size.
-    r := 2.
-    [
+    2 to: perm size do: [ :r |
+	"Rotate the first r items to the left."
         temp := perm at: 1.
-        1 to: r - 1 do: [ :i |
-            perm at: i put: (perm at: i + 1) ].
+        1 to: r - 1 do: [ :i | perm at: i put: (perm at: i + 1) ].
         perm at: r put: temp.
 
-        remainder := count at: r put: (count at: r) - 1.
-        remainder == 1 and: [ (r := r + 1) <= size ]
-    ] whileTrue.
-    atEnd := r > size.
+        remainder := timesRotated at: r put: ((timesRotated at: r) + 1) \\ r.
+        remainder = 0 ifFalse: [ ^self ].
 
-    "compiler bug in gst 2.2?"
-    "1 to: r - 1 do: [ :i |
-	count at: r put: r + 1 ]."
+	"After r rotations, the first r items are in their original positions.
+	 Go on rotating the first r+1 items."
+    ].
 
-    [ (r := r - 1) >= 1 ] whileTrue: [
-        count at: r put: r + 1 ].
-    ^result!
+    "We are past the final permutation."
+    atEnd := true!
 
 initialize: size
     perm := (1 to: size) asArray.
-    count := (2 to: size + 1) asArray.
+    timesRotated := Array new: size withAll: 0.
     atEnd := false! !
 
 !Array methodsFor: 'pfannkuchen'!
