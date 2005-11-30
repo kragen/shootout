@@ -78,7 +78,7 @@ if ($T=='all'){
       $Title = $LangName.' benchmarks'; 
 
       if (isset($metaRobots)){ // Assume it's one of our special pages which should be indexed
-         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />'; 
+         $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />'; 
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content="'.
             $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.  
