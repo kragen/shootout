@@ -42,7 +42,7 @@ my $stuffToRemove = qr/^>.*$|\n/m; # no comments, *nix-format test file...
 
 # read in file
 undef $/;
-my $contents = <>;
+my $contents = <STDIN>;
 my $initialLength = length($contents);
 
 # remove things
