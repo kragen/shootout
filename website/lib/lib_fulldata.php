@@ -186,7 +186,6 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
    }
    echo '</select>', "\n";
    echo '<input type="submit" value="Show" />', "\n";
-   printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";
    echo '</p></form>', "\n";
 }
 
