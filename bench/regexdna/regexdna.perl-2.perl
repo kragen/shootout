@@ -3,8 +3,7 @@
 # The Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
-# contributed by Anon
-
+# contributed by Kjetil Skotheim
 
 my @var    =qw/   agggtaaa|tttaccct
                   [cgt]gggtaaa|tttaccc[acg]
