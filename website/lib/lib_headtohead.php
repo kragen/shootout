@@ -216,7 +216,6 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
    
    
    echo '<input type="submit" value="Show" />', "\n";
-   printf('<input type="hidden" name="sort" value="%s" />', $Sort); echo "\n";
    echo '</p></form>', "\n";
 }
 

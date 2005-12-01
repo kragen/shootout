@@ -21,11 +21,9 @@ function itemCheck(&$treeNode){
 
 function bottomUpTree($item,$depth){ 
    if ($depth>0){
-      return newTreeNode(
-          bottomUpTree(2*$item-1,$depth-1)
-         ,bottomUpTree(2*$item,$depth-1)
-         ,$item
-         );
+      $left = bottomUpTree(2*$item-1,$depth-1);
+      $right = bottomUpTree(2*$item,$depth-1);
+      return newTreeNode($left,$right,$item);
       }
    else {
       $treeNode = NULL;
