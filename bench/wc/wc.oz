@@ -8,7 +8,7 @@
 functor
 
 import
-  System(printInfo) Application(exit) Open(text file)
+  System(showInfo) Application(exit) Open(text file)
 
 define
   class TextFile
@@ -24,8 +24,7 @@ define
   end
 
   fun {CountWords LINE}
-    SPACE = &\040 in
-    {Length {String.tokens {CompressWhiteSpace {LeftTrim LINE}} SPACE}}
+    {Length {String.tokens {CompressWhiteSpace {LeftTrim LINE}} &\040}}
   end
 
   fun {CountChars LINE PADDING}
@@ -37,31 +36,26 @@ define
   end
 
   fun {CompressWhiteSpace S}
-    {Compress S nil false Char.isSpace}
+    {Compress S false Char.isSpace}
   end
 
-  fun {Compress S A Flag P}
-    case S of nil then A
-    elseof H|T then
-      if {P H} then
-        if Flag then
-          {Compress T A true P}
-        else 
-          {Compress T {List.append A [H]} true P}
-        end
+  fun {Compress S Flag P}
+    case S of nil then nil
+    elseof H|T then Pt in
+      if (Pt = {P H}) andthen Flag then
+        {Compress T true P}
       else
-        {Compress T {List.append A [H]} false P}
+        H|{Compress T Pt P}
       end
     end
   end
 
   STDIN LINES WORDS CHARS
-
 in
   STDIN = {New TextFile init(name:stdin)}
 
   [LINES WORDS CHARS] = {CountLinesWordsChars STDIN 0 0 0}
-  {System.printInfo LINES#" "#WORDS#" "#CHARS#"\n"}
+  {System.showInfo LINES#" "#WORDS#" "#CHARS}
 
   {Application.exit 0}
 end
