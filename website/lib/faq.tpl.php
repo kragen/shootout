@@ -507,6 +507,8 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
 <p>Maybe you'd like to <a href="#chores">help us with the chores</a>?</p>
 <p>Normally, contributed programs will be measured and included on the website once or twice each week.</p>
+<p>The simplest way to find out when new measurements have been made is to subscribe to <a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a> - our <a href="<?=CORE_SITE;?>feeds/rss.xml">RSS feed</a>.</p>
+<p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" border="0" alt="Add to My Yahoo!"></a></p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#finish" name="finish">When will the Language Shootout be finished?</a></td></tr>
