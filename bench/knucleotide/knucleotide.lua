@@ -26,19 +26,14 @@ local function SortByFrequencyAndCode(a,b)
 end         
 
 local function frequency(s,k)
-   local freq = {}
+   local freq,sorted = {},{}
    for i = 1,k do kFrequency(s,freq,k,i) end
-
-   local sorted, sum = {}, 0
-   for _,record in pairs(freq) do 
-      table.insert(sorted,record) 
-      sum = sum + record.count
-   end
-
+   for _,record in pairs(freq) do table.insert(sorted,record) end
    table.sort(sorted, SortByFrequencyAndCode)
    
+   local length = string.len(s)
    for _,record in ipairs(sorted) do 
-      local percent = (record.count/sum)*100
+      local percent = (record.count/length)*100
       io.write( string.format("%s %0.3f",record.key,percent), "\n") 
    end
    io.write("\n") 

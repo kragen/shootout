@@ -25,12 +25,13 @@ end
 local function frequency(seq, k)
   local freq = setmetatable({}, { __index = freqdefault })
   for frame=1,k do kfrequency(seq, freq, k, frame) end
-  local sfreq, sn, sum = {}, 1, 0
-  for c,v in pairs(freq) do sfreq[sn] = c; sn = sn + 1; sum = sum + v end
+  local sfreq, sn = {}, 1
+  for c,v in pairs(freq) do sfreq[sn] = c; sn = sn + 1 end
   table.sort(sfreq, function(a, b)
     local fa, fb = freq[a], freq[b]
     return fa == fb and a > b or fa > fb
   end)
+  sum = string.len(seq)
   for _,c in ipairs(sfreq) do
     io.write(string.format("%s %0.3f\n", c, (freq[c]*100)/sum))
   end

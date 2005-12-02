@@ -50,11 +50,9 @@ public class knucleotide {
     ArrayList list = new ArrayList(frequencies.size());
     Iterator it = frequencies.entrySet().iterator();
 
-    int sum = 0;
     while (it.hasNext()) {
       knucleotide fragment = (knucleotide)((Map.Entry)it.next()).getValue();
       list.add(fragment);
-      sum += fragment.count;
     }
 
     Collections.sort(list, new Comparator() {
@@ -70,6 +68,8 @@ public class knucleotide {
     NumberFormat nf = NumberFormat.getInstance();
     nf.setMaximumFractionDigits(3);
     nf.setMinimumFractionDigits(3);
+
+    int sum = sequence.length();
 
     for (int i=0; i<list.size(); i++) {
       knucleotide fragment = (knucleotide)list.get(i);
