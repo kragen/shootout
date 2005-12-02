@@ -37,7 +37,7 @@ set-modes system/ports/input [lines: false binary: false]
 ;;; extract DNA sequence THREE
 here: find/tail find/tail copy system/ports/input "^/>THREE " "^/"
 fasta: replace/all  here "^/" ""
-len: length? fasta
+len: 1 + length? fasta
 
 k-nucl: func ["function to update a hash of k-nucleotide keys and count values"
     k [integer!] n[series!] hash [block!] /local l m ][
@@ -62,7 +62,7 @@ forall fasta[ kay: head kay
 ;;; sorted by descending frequency and then ascending k-nucleotide key
 repeat i 2 [sort/skip mers/:i 2 sort/skip head reverse mers/:i 2
         foreach [n c] head reverse mers/:i[
-            print[uppercase n decimal-pad 100 * c / len 3]
+            print[uppercase n decimal-pad 100 * c / (len - i) 3]
         ]print ""
 ]
 
