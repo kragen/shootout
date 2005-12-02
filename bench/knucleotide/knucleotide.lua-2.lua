@@ -31,7 +31,7 @@ local function frequency(seq, k)
     local fa, fb = freq[a], freq[b]
     return fa == fb and a > b or fa > fb
   end)
-  sum = string.len(seq)
+  sum = string.len(seq)-k+1
   for _,c in ipairs(sfreq) do
     io.write(string.format("%s %0.3f\n", c, (freq[c]*100)/sum))
   end

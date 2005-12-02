@@ -69,7 +69,7 @@ public class knucleotide {
     nf.setMaximumFractionDigits(3);
     nf.setMinimumFractionDigits(3);
 
-    int sum = sequence.length();
+    int sum = sequence.length() - nucleotideLength + 1;
 
     for (int i=0; i<list.size(); i++) {
       knucleotide fragment = (knucleotide)list.get(i);

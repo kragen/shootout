@@ -1,0 +1,55 @@
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+-- contributed by Josh Goldfoot
+
+module Main where
+
+import Text.Regex(mkRegexWithOpts, matchRegexAll)
+
+main = do
+   sequence <- getContents
+   putStrLn $ output sequence
+
+output :: String -> String
+output sequence =
+   unlines $ countMatches  ++ "":(map show [initialLength, codeLength, finalLength])
+   where
+      countMatches = [ variant ++ ' ':(show $ numHits variant seq2 ) | variant <- variants ] 
+      initialLength = length sequence
+      codeLength = length seq2
+      finalLength = length $ replaceIubs seq2
+      seq2 = globalReplace ">.*\n|\n" "" sequence
+      variants = [ "agggtaaa|tttaccct", "[cgt]gggtaaa|tttaccc[acg]",
+         "a[act]ggtaaa|tttacc[agt]t", "ag[act]gtaaa|tttac[agt]ct", 
+         "agg[act]taaa|ttta[agt]cct", "aggg[acg]aaa|ttt[cgt]ccct", 
+         "agggt[cgt]aa|tt[acg]accct", "agggta[cgt]a|t[acg]taccct", 
+         "agggtaa[cgt]|[acg]ttaccct" ]
+
+numHits :: String -> String -> Int
+numHits searchFor str =
+   numHits' (matchRegexAll (mkRegexWithOpts searchFor True True) str) searchFor
+numHits' :: Maybe (String, String, String, [String]) -> String -> Int
+numHits' (Nothing) _ =
+   0
+numHits' (Just (_, _, afterMatch, _)) searchFor =
+   1 + (numHits searchFor afterMatch)
+
+replaceIubs :: String -> String
+replaceIubs =
+   (foldl1 (.) [ (globalReplace searchFor replaceWith) | (searchFor, replaceWith) <- iubs ])
+   where
+      iubs = [ ("B", "(c|g|t)"), ("D", "(a|g|t)"), ("H", "(a|c|t)"), 
+               ("K", "(g|t)"), ("M", "(a|c)"), ("N", "(a|c|g|t)"), 
+               ("R", "(a|g)"), ("S", "(c|g)"), ("V", "(a|c|g)"), ("W", "(a|t)"), 
+               ("Y", "(c|t)") ]
+
+globalReplace :: String -> String -> String -> String
+globalReplace searchFor replaceWith str =
+   globalReplace' (matchRegexAll (mkRegexWithOpts searchFor True True) str) str searchFor replaceWith
+   
+globalReplace' :: Maybe (String, String, String, [String]) -> String -> String -> String -> String
+globalReplace' (Just (beforeMatch, _, afterMatch, _)) str searchFor replaceWith =
+   beforeMatch ++ replaceWith ++ (globalReplace searchFor replaceWith afterMatch)
+globalReplace' (Nothing) str _ _ =
+   str
+   

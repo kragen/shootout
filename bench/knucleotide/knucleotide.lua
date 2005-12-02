@@ -31,7 +31,7 @@ local function frequency(s,k)
    for _,record in pairs(freq) do table.insert(sorted,record) end
    table.sort(sorted, SortByFrequencyAndCode)
    
-   local length = string.len(s)
+   local length = string.len(s)-k+1
    for _,record in ipairs(sorted) do 
       local percent = (record.count/length)*100
       io.write( string.format("%s %0.3f",record.key,percent), "\n") 
