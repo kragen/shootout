@@ -47,14 +47,25 @@ function ReadUnique($FileName,$HasHeading=TRUE){
 
 // are we measuring on Gentoo or Debian?
 $isGentoo = preg_match("/gp4/i",`pwd`);
-$dirName = CODE_PATH;
 $cutoff = filemtime('timestamp');
+
+printf("Generating feed data for ");
+if ($isGentoo) {
+    printf("Gentoo");
+} else {
+    printf("Debian");
+}
+printf(" for timestamp: $cutoff\n");
+
+$dirName = CODE_PATH;
 $Tests = ReadUnique('test.csv');
 $Langs = ReadUnique('lang.csv');
 
 // get test and lang from most recently updated logfiles
 $dh = opendir($dirName);
 while ($file = readdir($dh)){
+   $newcut = filemtime($dirName.$file);
+   $file22 = $dirName.$file;
    if (preg_match("/([a-z]*)-([a-z]*)(\S*)\.log$/i",$file,$matches) 
       && (filemtime($dirName.$file) > $cutoff)){
 
@@ -85,8 +96,8 @@ if (isset($langNames)){
       $os = "Gentoo";
       $url = "http://shootout.alioth.debian.org/gp4/"; 
    } else { 
+      printf("Debian\n");
       $os = "Debian";
-      printf("Not Gentoo\n");
       $url = "http://shootout.alioth.debian.org/"; 
    }
    $newItem = "<item><title>".$day.", ".$os." computer language benchmarks measured</title>";
