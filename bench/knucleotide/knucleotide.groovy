@@ -50,7 +50,7 @@ def writeFrequency(sequence, f) {
             entry.getValue() == value
         }
     
-        println "${entry.key} ${formater.format(100.0*value/sequence.size())}"
+        println "${entry.key} ${formater.format(100.0*value/(sequence.size()-f+1))}"
     }
 
     println ""

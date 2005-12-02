@@ -11,7 +11,7 @@ use List::Util 'sum';
 my @n=qw<GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT>;
 
 $/ = ">"; # Input Separator
-/^THREE/i and $seq = uc(join "", grep !/^(?:;|THREE)/, split /\n+/) while <>;
+/^THREE/i and $seq = uc(join "", grep !/^(?:;|THREE)/, split /\n+/) while <STDIN>;
 
 for my $n (1, 2, map length,@n) {
   my %h;
