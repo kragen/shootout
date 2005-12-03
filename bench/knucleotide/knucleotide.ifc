@@ -1,3 +1,5 @@
+! -*- mode: f90 -*-
+!
 ! The Computer Language Shootout Benchmarks
 ! http://shootout.alioth.debian.org/
 !
@@ -29,7 +31,7 @@ module knuc_mod
   end type table
 
 contains
-  
+
   pure subroutine init_table(kNuc, nBits)
     type(table), intent(out) :: kNuc
     integer,     intent(in)  :: nBits
@@ -37,15 +39,15 @@ contains
     kNuc = table(nBits, 2**nBits, 0, null())
     allocate(kNuc%words(kNuc%maxWords))
   end subroutine init_table
-  
+
   subroutine read_frame(buf, n, length, kNuc)
     character, dimension(:), intent(in)    :: buf
     integer,                 intent(in)    :: n, length
     type(table),             intent(inout) :: kNuc
-    
+
     integer               :: i, j
     character(len=length) :: word
-    
+
     do i = 1, n
        do j = 1, length
           word(j:j) = buf(i+j-1)
@@ -57,7 +59,7 @@ contains
   subroutine add(kNuc, word)
     type(table),      intent(inout) :: kNuc
     character(len=*), intent(in)    :: word
- 
+
     integer :: m
 
     m = hash_value(word, kNuc%maxWords)
@@ -74,13 +76,13 @@ contains
        m = merge(1, m+1, m == kNuc%maxWords)
     end do
   end subroutine add
-  
+
   subroutine resize_table(kNuc)
     type(table), intent(inout) :: kNuc
 
     integer     :: i, m
     type(table) :: temp
-    
+
     temp = table(kNuc%hashBits + 1, 2 * kNuc%maxWords, kNuc%nWords, null())
     allocate(temp%words(temp%maxWords))
 
@@ -136,7 +138,7 @@ contains
   integer function hash_value(key, range)
     character(len=*), intent(in) :: key
     integer,          intent(in) :: range
-    
+
     integer :: len_key, a, b, c, k
 
     ! Hash the key into a code, using the algorithm
@@ -145,18 +147,18 @@ contains
     !
     ! Note that range should be a power of 2, and
     ! that the 32-bit algorithm is used
-    
+
     len_key = len(key)
-    
+
     a = -1640531527 ! 0x9E3779B9
     b = a
     c = 305419896   ! 0x12345678
-    
+
     k = 1
-    
+
     do
        if (len_key < 12) exit
-       
+
        ! Pack the key into 32 bits
        a = a + ichar(key(k:k)) + ishft(ichar(key(k+1:k+1)), 8) +  &
             ishft(ichar(key(k+2:k+2)), 16) + ishft(ichar(key(k+3:k+3)), 24)
@@ -164,15 +166,15 @@ contains
             ishft(ichar(key(k+6:k+6)), 16) + ishft(ichar(key(k+7:k+7)), 24)
        c = c + ichar(key(k+8:k+8)) + ishft(ichar(key(k+9:k+9)), 8) +  &
             ishft(ichar(key(k+10:k+10)), 16) + ishft(ichar(key(k+11:k+11)), 24)
-       
+
        ! Mix it up
        call hash_mix()
        k = k + 12
        len_key = len_key - 12
     end do
-    
+
     c = c + len_key
-    
+
     ! Process remaining bits
     select case(len_key)
     case(11)
@@ -225,21 +227,21 @@ contains
     end select
 
     call hash_mix()
-    
+
     hash_value = iand(c, range - 1) + 1
-    
+
   contains
-    
-    subroutine hash_mix    
+
+    subroutine hash_mix
       ! Mix a, b and c
       a = ieor(a - b - c, ishft(c, -13))
       b = ieor(b - c - a, ishft(a, 8))
       c = ieor(c - a - b, ishft(b, -13))
-      
+
       a = ieor(a - b - c, ishft(c, -12))
       b = ieor(b - c - a, ishft(a, 16))
       c = ieor(c - a - b, ishft(b, -5))
-      
+
       a = ieor(a - b - c, ishft(c, -3))
       b = ieor(b - c - a, ishft(a, 10))
       c = ieor(c - a - b, ishft(b, -15))
@@ -252,15 +254,19 @@ program knucleotide
   implicit none
 
   integer, parameter :: LineLen = 60, InitialTableSize = 1
-  
+
   integer :: bufferSize = 16384, stat, n = 0, i
   logical :: atThirdPart = .false.
   type(table) :: kn
   character(len=LineLen) :: line
   character, dimension(:), allocatable :: buffer, tempBuffer
 
+  character, dimension(65:116), parameter :: Codes = (/ "A", " ", "C",  &
+       (" ", i = 68, 70), "G", (" ", i = 72, 83), "T", (" ", i = 85, 96),  &
+       "A", " ", "C", (" ", i = 100, 102), "G", (" ", i = 104, 115), "T" /)
+
   allocate(buffer(bufferSize))
-  
+
   ! Read FASTA file line-by-line, extracting sequence three, and converting to
   ! uppercase.
   do
@@ -280,18 +286,7 @@ program knucleotide
            bufferSize = 2*bufferSize
         end if
         do i = 1, LineLen
-           select case (line(i:i))
-           case ("A", "a")
-              buffer(n+i) = "A"
-           case ("C", "c")
-              buffer(n+i) = "C"
-           case ("G", "g")
-              buffer(n+i) = "G"
-           case ("T", "t")
-              buffer(n+i) = "T"
-           case default
-              buffer(n+i) = line(i:i)
-           end select
+           buffer(n+i) = Codes(iachar(line(i:i)))
         end do
         n = n + LineLen
      end if
@@ -320,7 +315,7 @@ contains
     type(key) :: temp
 
     numNuc = n - length + 1
-    
+
     call read_frame(buffer, numNuc, length, kn)
 
     nucleotides = keys_of_given_len(kn, length)
@@ -341,7 +336,7 @@ contains
        write(*, "(a2,f6.3)") nucleotides(i)%word(1:2),  &
             100. * nucleotides(i)%count / real(numNuc)
     end do
-    print *
+    write(*, "(a)") ""
   end subroutine write_frequencies
 
   subroutine write_count(string)
@@ -349,7 +344,7 @@ contains
 
     character, parameter :: tab = achar(9)
     integer :: length, numNuc
-    
+
     length = len(string)
     numNuc = n - length + 1
 
