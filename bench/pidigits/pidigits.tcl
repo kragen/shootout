@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh
-# $Id: pidigits.tcl,v 1.2 2005-09-29 17:36:19 igouy-guest Exp $
-# http://shootout.alioth.debian.org/ 
+# $Id: pidigits.tcl,v 1.3 2005-12-03 18:17:59 igouy-guest Exp $
+# http://shootout.alioth.debian.org/
 #
 # Requires bignum package from tcllib module -- however this will be
 # very slow because bignum package is implemented in pure-tcl. Once
