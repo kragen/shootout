@@ -5,9 +5,9 @@
 ## Contributed by Heiner Marxen
 ##
 ## "binary-trees"	for Tcl
-## Call:	tclsh bintrees1.tcl 16
+## Call:	tclsh binarytrees.tcl 16
 ##
-## $Id: binarytrees.tcl,v 1.1 2005-12-03 16:58:59 sgeard-guest Exp $
+## $Id: binarytrees.tcl,v 1.2 2005-12-03 17:02:14 sgeard-guest Exp $
 
 ## A tree node is implemented as a [list] with 3 elements:
 ##	[0] left  subtree
