@@ -1,0 +1,44 @@
+(* The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Vesa Karvonen.
+ *)
+
+(* abbreviations *)
+structure A=Word8Array and B=Word8ArraySlice and N=INetSock and H=NetHostDB
+      and S=Socket and I=Int and F=IntInf and C=CommandLine
+val (i2s, s2i, f2s, i2f) = (I.toString, I.fromString, F.toString, F.fromInt)
+
+(* configuration *)
+val (host, port, reqSize, bufSize) = ("127.0.0.1", 11000, 64, 1024)
+val proto = [(2, 64), (7, 4096), (1, 409600)]
+
+(* completes a recvArr/sendArr operation *)
+fun `f a 0 s = ()
+  | `f a n s = `f a (n-f (s, B.slice (a, I.max (0, A.length a-n), NONE))) s
+
+(* completing send/recv operations; the recv buffer is also created here *)
+val (send, recv) = (`S.sendArr, `S.recvArr (A.array (bufSize, 0w0)))
+
+(* client *)
+fun msg (r, b) = app print ["replies: ", i2s r, "\tbytes: ", f2s b, "\n"]
+
+fun cli n =
+  let val (s, send) = (N.TCP.socket (), send (A.array (reqSize, 0w0)) reqSize)
+      fun lp (n, z, r, b) =
+          if 0=n then (r, b) else (send s; recv z s; lp (n-1, z, r+1, b+i2f z))
+  in S.connect (s, N.toAddr (H.addr (valOf (H.getByName host)), port))
+   ; msg (foldl (fn ((m, z), (r, b)) => lp (m*n, z, r, b)) (0, 0:F.int) proto)
+   ; S.close s end
+
+(* server *)
+fun ser n =
+  let val s = let val s = N.TCP.socket ()
+              in S.Ctl.setREUSEADDR (s, true) ; S.bind (s, N.any port)
+               ; S.listen (s, 1) ; #1 (S.accept s) before S.close s end
+      fun lp (n, z, rep) =
+          if 0=n then () else (recv reqSize s; send rep z s; lp (n+1, z, rep))
+  in app (fn (m, z) => lp (m*n, z, A.array (z, 0w0))) proto ; S.close s end
+
+(* dispatch client / server *)
+val _ = case valOf(s2i(hd(C.arguments()))) of n => (if 0<n then cli else ser) n

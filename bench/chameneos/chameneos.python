@@ -1,0 +1,103 @@
+# The Computer Language Shootout
+#  http://shootout.alioth.debian.org/
+#
+#  contributed by drigz
+
+import sys
+import threading
+
+RED = 1
+BLUE = 2
+YELLOW = 3
+FADED = 4
+
+def change_colour(me, other):
+    if me == other:
+        return me
+    return 6 - (me + other)
+
+class MeetingPlace:
+    def __init__(self, n):
+        self.n = n
+        
+        self.first = None
+        self.second = None
+        
+        self.empty = True
+        self.entrylock = threading.Lock() #this locks the entry code
+        self.meetnotify = threading.Condition()
+        
+    def meet(self, me):
+        self.entrylock.acquire()
+        
+        if self.empty: #noone's here
+            if self.n == 0: #check if we should meet or not
+                self.entrylock.release()
+                return FADED
+                
+            self.empty = False
+            self.n -= 1
+            self.first = me #register my presence
+          
+            #wait for the next person
+            self.meetnotify.acquire()
+            self.entrylock.release() #let the people enter so we can meet
+            self.meetnotify.wait()
+            self.meetnotify.release()
+            
+            other = self.second #we've met someone
+            
+            self.first = None #we both leave
+            self.second = None
+            self.empty = True
+            self.entrylock.release() #let others enter, our meeting is over
+        else: #we've met someone else
+            other = self.first #register our presence
+            self.second = me
+            self.meetnotify.acquire() #notify the person waiting
+            self.meetnotify.notify()
+            self.meetnotify.release()
+            
+        assert not (other is None)
+        return other
+    
+class Creature:
+    def __init__(self, colour, meetingplace):
+        self.colour = colour
+        self.mp = meetingplace
+        
+        self.met = 0
+        
+    def socialise(self):
+        while self.colour != FADED: #keep looking for creatures to meet
+            self.meet()
+            
+    def meet(self):
+        other = self.mp.meet(self.colour) #get the other's colour
+        if other == FADED:
+            self.colour = FADED
+        else:
+            self.met += 1
+            self.colour = change_colour(self.colour, other)
+            
+def main():
+    n = int(sys.argv[1])
+    #n = 100
+    
+    meetingplace = MeetingPlace(n)
+    
+    colours = [BLUE, RED, YELLOW, BLUE]
+    creatures = [Creature(c, meetingplace) for c in colours]
+    threads = [threading.Thread(target=c.socialise) for c in creatures]
+    
+    for t in threads:
+        t.start()
+        
+    for t in threads:
+        t.join()
+        
+    print sum([c.met for c in creatures])
+
+if __name__ == "__main__":
+    main()
+
