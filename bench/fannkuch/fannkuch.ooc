@@ -10,7 +10,7 @@
 MODULE fannkuch;
 IMPORT Shootout, Out;
 
-VAR n: LONGINT;
+VAR n, f: LONGINT;
 
 
 PROCEDURE F(n: LONGINT): LONGINT;
@@ -72,7 +72,8 @@ END F;
 
 BEGIN
    n := Shootout.Argi();
+   f := F(n);
    Out.String("Pfannkuchen("); Out.Int(n,1); Out.String(") = ");
-   Out.Int( F(n), 1); Out.Ln;
+   Out.Int( f, 1); Out.Ln;
 END fannkuch.
 
