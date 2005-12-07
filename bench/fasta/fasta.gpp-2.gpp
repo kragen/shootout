@@ -1,0 +1,178 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   converted to C++ from D by Rafal Rusin
+   compile: g++ -O2 -o fasta fasta.cpp
+*/
+
+#include <iostream>
+#include <string>
+#include <memory>
+#include <vector>
+using namespace std;
+
+class Random
+{
+private:
+    int last;
+    static const int IM;
+    static const int IA;
+    static const int IC;
+public:
+    Random(): last(42) {}
+    double genRandom(double max)
+    {
+        return(max * (last = (last * IA + IC) % IM) / IM);
+    }
+};
+
+const int Random::IM = 139968;
+const int Random::IA = 3877;
+const int Random::IC = 29573;
+
+class Fasta: public Random
+{
+private:
+    static const string alu;
+
+    class IUB
+    {
+        public:
+        char c;
+        double p;
+        
+        IUB(char c, double p): c(c), p(p) {}
+    };
+
+    vector<IUB> iub;
+    vector<IUB> homosapiens;
+
+    void makeCumulative(vector<IUB> &table)
+    {
+        double prob = 0.0;
+        for(vector<IUB>::iterator it = table.begin(); it != table.end(); ++it)
+        {
+            prob += it->p;
+            it->p = prob;
+        }
+    }
+
+public:
+    enum TableType
+    {
+        iubType,
+        homosapiensType
+    };
+
+    Fasta()
+    {
+        iub.push_back(IUB('a', 0.27));
+        iub.push_back(IUB('c', 0.12));
+        iub.push_back(IUB('g', 0.12));
+        iub.push_back(IUB('t', 0.27));
+
+        iub.push_back(IUB('B', 0.02));
+        iub.push_back(IUB('D', 0.02));
+        iub.push_back(IUB('H', 0.02));
+        iub.push_back(IUB('K', 0.02));
+        iub.push_back(IUB('M', 0.02));
+        iub.push_back(IUB('N', 0.02));
+        iub.push_back(IUB('R', 0.02));
+        iub.push_back(IUB('S', 0.02));
+        iub.push_back(IUB('V', 0.02));
+        iub.push_back(IUB('W', 0.02));
+        iub.push_back(IUB('Y', 0.02));
+
+        homosapiens.push_back(IUB('a', 0.3029549426680));
+        homosapiens.push_back(IUB('c', 0.1979883004921));
+        homosapiens.push_back(IUB('g', 0.1975473066391));
+        homosapiens.push_back(IUB('t', 0.3015094502008));
+    }
+
+    void makeRepeatFasta(string id, string desc, int n)
+    {
+        const int length = 60, kn = alu.size();
+        int k = 0;
+
+        cout << ">" << id << " " << desc << endl;
+        char * line = new char[length + 1];
+        while(n > 0)
+        {
+            int m;
+            if(n < length) m = n; else m = length;
+            for(int j = 0; j < m; j++, k++)
+            {
+                if(k >= kn) k = 0;
+                line[j] = alu[k];
+            }
+            line[m] = '\n';
+            cout.write(line, m + 1);
+            n -= length;
+        }
+        delete[] line;
+    }
+
+    void makeRandomFasta(string id, string desc, TableType tableType, int n)
+    {
+        const int length = 60;
+        vector<IUB> *table;
+
+        switch(tableType)
+        {
+            case iubType:
+                table = &iub;
+                break;
+            default:
+                table = &homosapiens;
+                break;
+        }
+
+        cout << ">" << id << " " << desc << endl;
+        makeCumulative(*table);
+        char * line = new char[length + 1];
+        while(n > 0)
+        {
+            int m;
+            if(n < length) m = n; else m = length;
+            for(int j = 0; j < m; j++)
+            {
+                double rval = genRandom(1);
+                for (vector<IUB>::iterator it = table->begin(); it != table->end(); ++it)
+                {
+                    if(rval < it->p)
+                    {
+                        line[j] = it->c;
+                        break;
+                    }
+                }
+            }
+            line[m] = '\n';
+            cout.write(line, m+1);
+            n -= length;
+        }
+        delete[] line;
+    }
+};
+
+const string Fasta::alu = 
+        "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG"
+        "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA"
+        "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT"
+        "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA"
+        "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG"
+        "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC"
+        "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
+
+int main(int argc, char *argv[])
+{
+    int n = argc > 1 ? atoi(argv[1]) : 1;
+
+    auto_ptr<Fasta> fasta(new Fasta());
+
+    fasta->makeRepeatFasta("ONE", "Homo sapiens alu", n*2);
+    fasta->makeRandomFasta("TWO", "IUB ambiguity codes", Fasta::iubType, n*3);
+    fasta->makeRandomFasta("THREE", "Homo sapiens frequency", Fasta::homosapiensType, n*5);
+
+    return 0;
+}
+
