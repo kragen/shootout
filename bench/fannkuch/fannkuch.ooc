@@ -29,7 +29,7 @@ BEGIN
    LOOP
       (* write-out the first 30 permutations *)
       IF (check < 30) THEN
-         FOR i := 0 TO m DO Out.Int( perm1[i], 1); END;
+         FOR i := 0 TO m DO Out.Int( perm1[i]+1, 1); END;
          Out.Ln;
          INC(check);
       END;
