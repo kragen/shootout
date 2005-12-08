@@ -1,7 +1,9 @@
 #!/usr/bin/perl
-
+# The Computer Language Shootout
+# http://shootout.alioth.debian.org/
 # Straightforward port of C version
 # Contributed by Steve Clark
+# Modified by Sokolov Yura
 
 sub fannkuch {
     my $n = shift;
@@ -10,15 +12,23 @@ sub fannkuch {
     my $tmp;
     my $maxflips = 0;
     my $flips;
-
+    my @count;
+    my $r = $n;
+    my $first = 0;
     for ($i=0; $i < $n; $i++) { $p[$i] = 1 + $i; }
 
   BRK: for (;;) {
 
-    	if ($p[0] != 1) {
+    	if ($first < 30){
+    	    print @p,"\n";
+    	    $first += 1;
+    	}
+
+        for (; $r != 1; $r--) { $count[$r-1] = $r; }
+
+    	if ($p[0] != 1 && $p[$n-1] != $n-1) {
 
     	    @q = @p;
-
     	    for ($flips = 0; ($k = $q[0]) != 1; $flips++) {
     	    	for ($k--,$i=0; $i < $k; $i++, $k--) {
     	    	    $tmp = $q[$i];
@@ -29,22 +39,12 @@ sub fannkuch {
     	    $maxflips = $flips if ($flips > $maxflips);
     	}
 
-    	$k = $j = 0;
-    	for ($i=1; $i < $n; $i++) {
-    	    $j = $i if ($p[$i-1] < $p[$i]);
-    	    $k = $i if ($j && $p[$i] > $p[$j-1]);
-    	}
-    	last BRK if (!$j);
-
-    	$tmp = $p[$j-1];
-    	$p[$j-1] = $p[$k];
-    	$p[$k] = $tmp;
-
-    	for ($i=$j,$j=$n-1; $i < $j; $i++, $j--) {
-    	    $tmp = $p[$j];
-    	    $p[$j] = $p[$i];
-    	    $p[$i] = $tmp;
-    	}
+        PERM: for(;;){
+            last BRK if ($r == $n);
+            @p = (@p[1..$r],$p[0],@p[$r+1..@p-1]);
+            last PERM if (($count[$r] -= 1)>0);
+            $r += 1;
+        }
     }
 
     return $maxflips;
