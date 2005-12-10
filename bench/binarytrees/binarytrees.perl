@@ -1,9 +1,9 @@
 #!/usr/bin/perl
-# The Great Computer Language Shootout 
+# The Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
 # Contributed by Doug King
-
+# Corrected by Heiner Marxen
 
 use integer;
 
@@ -20,8 +20,8 @@ sub bottom_up_tree {
 
     return [ undef, undef, $item ] if $depth <= 0;
     return [ bottom_up_tree(2 * $item - 1, $depth - 1),
-             bottom_up_tree(2 * $item,     $depth - 1),
-             $item ];
+	     bottom_up_tree(2 * $item,     $depth - 1),
+	     $item ];
 }
 
 
@@ -50,17 +50,17 @@ while( $depth <= $max_depth ) {
     $check = 0;
 
     for $i (1..$iterations) {
-        $temp_tree = bottom_up_tree($i, $depth);
-        $check += item_check($temp_tree);
-        $temp_tree = undef;
+	$temp_tree = bottom_up_tree($i, $depth);
+	$check += item_check($temp_tree);
+	$temp_tree = undef;
 
-        $temp_tree = bottom_up_tree(-$i, $depth);
-        $check += item_check($temp_tree);
-        $temp_tree = undef;
+	$temp_tree = bottom_up_tree(-$i, $depth);
+	$check += item_check($temp_tree);
+	$temp_tree = undef;
     }
 
     print $iterations * 2, "\t trees of depth $depth\t check: ", $check, "\n";
     $depth += 2;
 }
 
-print "long lived tree of depth $max_depth\t check: ", item_check($long_lived_tree);
+print "long lived tree of depth $max_depth\t check: ", item_check($long_lived_tree), "\n";
