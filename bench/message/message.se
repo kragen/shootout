@@ -1,0 +1,142 @@
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+-- contributed by  Cyril Adrian 
+
+-- SPLITFILE=linked_job.e
+class LINKED_JOB
+
+inherit
+   BACKGROUND_JOB
+      redefine
+         is_ready
+      end
+
+create {ANY}
+   link_to, make
+
+feature {ANY}
+   message (i: INTEGER) is
+      do
+         messages.add(i)
+      end
+
+feature {LOOP_ITEM}
+   continue is
+      do
+         if id /= 0 then
+            next.message(messages.first + 1)
+         else
+            if sum >= max then
+               stop.call([sum])
+            else
+               sum := sum + (messages.first+1)
+            end
+         end
+         messages.remove
+      end
+
+   is_ready (ready: READY_DESCRIPTION): BOOLEAN is
+      do
+         Result := not messages.is_empty
+         if id = 0 then
+            Result := Result or else sum >= max
+         end
+      end
+
+   done: BOOLEAN is
+      do
+         Result := False
+      end
+
+   restart is
+      do
+      end
+
+feature {}
+   id: INTEGER
+   next: like Current
+   messages: QUEUE[INTEGER]
+   sum: INTEGER
+   max: INTEGER
+   stop: PROCEDURE[TUPLE[INTEGER]]
+
+   link_to (a_id: like id; a_next: like next) is
+      require
+         a_id > 0
+         a_next /= Void
+      do
+         id := a_id
+         next := a_next
+         create messages.make
+      end
+
+   make (a_max: like max; a_stop: like stop) is
+      do
+         create messages.make
+         max := a_max
+         stop := a_stop
+      end
+
+end
+-- SPLITFILE=message.e
+class MESSAGE
+
+inherit
+   BACKGROUND_JOB
+
+insert
+   ARGUMENTS
+
+create {ANY}
+   make
+
+feature {}
+   Jobs_count: INTEGER is 500
+   messages_count, counter: INTEGER
+   job: LINKED_JOB
+   stack: LOOP_STACK
+
+   make is
+      local
+         i: INTEGER
+      do
+         create stack.make
+         stack.add_job(Current)
+         messages_count := argument(1).to_integer
+         from
+            create job.make(messages_count * Jobs_count, agent stop)
+            stack.add_job(job)
+            i := 1
+         until
+            i = Jobs_count
+         loop
+            create job.link_to(i, job)
+            stack.add_job(job)
+            i := i + 1
+         end
+         stack.run
+      end
+
+   stop (sum: INTEGER) is
+      do
+         print(sum.out + "%N")
+         stack.break
+      end
+
+feature {LOOP_ITEM}
+   continue is
+      do
+         job.message(0)
+         counter := counter + 1
+      end
+
+   done: BOOLEAN is
+      do
+         Result := counter = messages_count
+      end
+
+   restart is
+      do
+      end
+
+end
