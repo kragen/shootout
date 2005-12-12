@@ -808,6 +808,22 @@
        },
      },
 
+     parrot =>
+     { Lang => 'Parrot',
+       Name => 'Parrot VM',
+       Status => '+',
+       Home => 'http://www.parrotcode.org/',
+       Down => 'http://www.parrotcode.org/source.html',
+       Type => 'bytecomped/interpreted',
+       Note => 'prank-turned-real virtual machine',
+       Ext  => 'pir',
+       Verfun => sub {
+          my $ver = `$ENV{PARROT} -V`;
+	  $ver =~ /(PASM\/PIR compiler.*)\n/;
+	  return ($1);
+       },
+     },
+
      perl =>
      { Lang => 'Perl',
        Name => 'Perl',

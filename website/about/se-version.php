@@ -1,1 +1,1 @@
-<p>SmartEiffel Release 2.2 Beta 5 (Tuesday October 25th 2005)</p>
+<p>SmartEiffel Release 2.2 Release Candidate #1 (Friday November 25th 2005)</p>
