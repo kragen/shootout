@@ -815,8 +815,8 @@
        Home => 'http://www.parrotcode.org/',
        Down => 'http://www.parrotcode.org/source.html',
        Type => 'bytecomped/interpreted',
-       Note => 'prank-turned-real virtual machine',
-       Ext  => 'pir',
+       Note => 'April Fool prank turned scripting engine core',
+       Ext  => 'asm',
        Verfun => sub {
           my $ver = `$ENV{PARROT} -V`;
 	  $ver =~ /(PASM\/PIR compiler.*)\n/;
@@ -1007,7 +1007,7 @@
        Down => 'http://prdownloads.sourceforge.net/regina-rexx',
        Type => 'interpreted',
        Note => 'Extensively ported macro language interpreter',
-       Ext  => 'c',
+       Ext  => 'rexx',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{REGINA} -v 2>&1`);
 	   return($ver);
@@ -1266,6 +1266,7 @@
      'Objective C' => 'c',
      'OCaml'       => 'ml',
      'poplog'      => 'c',
+     'Parrot'      => 'perl',
      'Poplog'      => 'c',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',

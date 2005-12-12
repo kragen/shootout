@@ -1,3 +1,6 @@
+# Contributed by Shane Calimlim, Leopold Toetsch, and
+# others from the Perl-internals mailing list.
+#
 .sub main :main
     .param pmc argv
     .local int argc
@@ -23,7 +26,7 @@ go:
     push args, x
     push args, y
     push args, r
-    $S0 = sprintf "Ack(%d, %d) = %d\n", args
+    $S0 = sprintf "Ack(%d,%d): %d\n", args
     print $S0
 .end
 
@@ -36,7 +39,8 @@ go:
 a1:
     if y goto a2
 	$I1 = x - 1
-	.return ack($I1, 1)
+	$I0 = 1
+	.return ack($I1, $I0)
 a2:
     $I2 = y - 1
     $I3 = ack(x, $I2)
