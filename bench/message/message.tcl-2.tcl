@@ -1,33 +1,22 @@
-## The Computer Lannguage Shootout
+## The Computer Language Shootout
 ## http://shootout.alioth.debian.org/
-## Contributed by Donal Fellows
+##
+## Contributed by Mark Smithfield
+##
+## $Id: message.tcl-2.tcl,v 1.2 2005-12-13 23:48:41 sgeard-guest Exp $
 
-package require Thread
-
+proc bump { next_thread msg } {
+	if { $next_thread == 0  } { expr {$msg} } else {
+		$next_thread eval [list bump [expr {$msg+1}]]
+	}
+}
 set N [lindex $argv 0]
-set Nthreads 500
-
-# Set up the worker threads to chain to each other
-for {set i 0} {$i < $Nthreads} {incr i} {
-    set thread [thread::create {
-        proc doit x {thread::send -async $::next "doit [incr x]"}
-        thread::wait
-    }]
-    if {$i} {thread::send $last "set next $thread"} {set first $thread}
-    set last $thread
+interp recursionlimit {} 1024
+for {set i 0} {$i < 500} {incr i} {
+	interp create thread-$i
+	interp alias thread-$i bump {} bump thread-[expr {$i+1}]
 }
-# Reconfigure the last worker to act as a collector
-thread::send $last "set total [expr $N*$Nthreads]"
-thread::send $last {
-    set sum 0
-    proc doit x {
-        global sum total
-        if {[incr sum [incr x]] >= $total} {
-            puts $sum
-            exit
-        }
-    }
-}
-# Inject the messages and wait for the collector to finish things off
-for {set i 0} {$i < $N} {incr i} {thread::send -async $first "doit 0"}
-thread::wait
+interp alias thread-[expr {$i-1}] bump {} bump 0
+set cc 0
+for {set i 0} {$i < $N} {incr i} {incr cc [bump thread-0 0]}
+puts $cc
