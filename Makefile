@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2005-11-19 17:27:03 igouy-guest Exp $
+# $Id: Makefile,v 1.46 2005-12-14 06:39:15 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
@@ -7,7 +7,6 @@ include Make.header
 all: init versions
 	-bin/make_timestamp
 	-bin/cascade_delete.bash
-	-bin/preen.pl
 	-bin/find_badlinks
 	-bin/make_links
 	-(. bin/setenv.sh; cd bench ; make $@)
