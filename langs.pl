@@ -584,6 +584,38 @@
 	   return($1);
        },
      },
+
+     javaxint =>
+     { Lang => 'Java',
+       Name => 'Xint',
+       Status => '+',
+       Home => 'http://www.sun.com/',
+       Down => 'http://www.sun.com/',
+       Type => 'interpreted',
+       Note => 'Ubiquitous JIT Virtual Machine',
+       Ext  => 'java',
+       Verfun => sub {
+	   my $ver = `$ENV{JAVA} -version -server 2>&1`;
+	   $ver =~ /(Java HotSpot.*)/;
+	   return($1);
+       },
+     },
+     
+     javaclient =>
+     { Lang => 'Java',
+       Name => 'Java -client',
+       Status => '+',
+       Home => 'http://www.sun.com/',
+       Down => 'http://www.sun.com/',
+       Type => 'interpreted',
+       Note => 'Ubiquitous JIT Virtual Machine',
+       Ext  => 'java',
+       Verfun => sub {
+	   my $ver = `$ENV{JAVA} -version -client 2>&1`;
+	   $ver =~ /(Java HotSpot.*)/;
+	   return($1);
+       },
+     },
      
      'javascript' =>
      { Lang => 'JavaScript',
