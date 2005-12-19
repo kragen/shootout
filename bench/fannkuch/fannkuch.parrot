@@ -1,3 +1,4 @@
+#!/usr/bin/parrot -j
 # Contributed by Joshua Isom
 .sub fannkuch
 	.param int n

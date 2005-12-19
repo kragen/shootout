@@ -1,6 +1,6 @@
-#!./parrot -j
+#!/usr/bin/parrot -j
 #
-# nsieve-bits-2 N  (N = 9 for shootout)
+# nsievebits N  (N = 9 for shootout)
 # by Leopold Toetsch
 # reset bits
 

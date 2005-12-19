@@ -1,3 +1,4 @@
+#!/usr/bin/parrot -C
 # Contributed by Shane Calimlim, Leopold Toetsch, and
 # others from the Perl-internals mailing list.
 #
@@ -38,9 +39,9 @@ go:
 	.return ($I0)
 a1:
     if y goto a2
-	$I1 = x - 1
-	$I0 = 1
-	.return ack($I1, $I0)
+	$I0 = x - 1
+	$I1 = 1
+	.return ack($I0, $I1)
 a2:
     $I2 = y - 1
     $I3 = ack(x, $I2)

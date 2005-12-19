@@ -1,4 +1,7 @@
-# Contributed by Joshua Isom
+#!/usr/bin/parrot -C
+#
+# binarytrees.pir N         (N = 16 for shootout)
+# by Joshua Isom, modified by Leopold Toetsch
 .sub itemcheck
 	.param pmc node
 	$I0 = exists node[0]
@@ -119,4 +122,3 @@ beginfor_1:
 	print "\n"
 
 .end
-

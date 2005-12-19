@@ -1,30 +1,26 @@
-#!./parrot -j
+#!/usr/bin/parrot -j
 #
-# nsieve-bits-2 N  (N = 9 for shootout)
+# nsievebits N  (N = 9 for shootout)
 # by Leopold Toetsch
-# reset bits
+
+# set bits - this might be cheating see nsievebits for resetting bits
 
 .sub primes_in_range
     .param int M
     .local pmc flags
-    .local int i, count
+    .local int i, prim, count
     flags = new FixedBooleanArray
     flags = M
-    i = 2
-lp0:
-    flags[i] = 1
-    inc i
-    if i < M goto lp0
     i = 2
     count = 0
 lp1:
      $I0 = flags[i]
-     unless $I0 goto not_p
+     if $I0 goto not_p
      .local int j
      j = i + i
      if j >= M goto done
 lp2:
-     flags[j] = 0
+     flags[j] = 1
      j += i
      if j < M goto lp2
 done:

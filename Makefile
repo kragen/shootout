@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2005-12-14 06:39:15 bfulgham Exp $
+# $Id: Makefile,v 1.47 2005-12-19 03:11:53 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
@@ -14,6 +14,7 @@ all: init versions
 	-bin/build_data_files
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-make codelinks
+	cvs update website/websites/feeds/rss.xml
 	-bin/make_feed.php
 
 website:

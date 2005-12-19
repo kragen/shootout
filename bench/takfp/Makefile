@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.10 2005-12-19 03:11:55 bfulgham Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -15,6 +15,7 @@ BIGLOOOPTS := -farithmetic
 # gcc -O3 is detrimental for this test!
 GCCOPTS := -O1
 OO2COPTS := -A --no-rtc
+PARROTOPTS := -C
 POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell

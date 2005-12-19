@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2005-06-24 15:45:01 igouy-guest Exp $
+# $Id: Makefile,v 1.10 2005-12-19 03:11:54 bfulgham Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 BIGLOOOPTS := -farithmetic
 GFORTH_FLAGS := -m 8M
 OO2COPTS := -A --no-rtc
+PARROTOPTS := -j
 POLYOPTS := -q
 
 ERLFLAGS := -noinput

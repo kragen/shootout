@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2005-05-14 16:29:48 sgeard-guest Exp $
+# $Id: Makefile,v 1.6 2005-12-19 03:11:54 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -13,6 +13,7 @@ IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 ICCOPTS := -tpp6
 OO2COPTS := -A --no-rtc
+PARROTOPTS := -j
 POLYOPTS := -q
 GHCOPTS  := -fparr
 
