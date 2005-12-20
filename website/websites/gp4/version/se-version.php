@@ -1,1 +1,1 @@
-<p>SmartEiffel Release 2.1 (Tuesday February 8th 2005)</p>
+<p>Release 2.2 (Monday December 19th 2005) [Pomme de terre]</p>
