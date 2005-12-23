@@ -1,0 +1,198 @@
+/* ------------------------------------------------------------------ */
+/* The Great Computer Language Shootout                               */
+/* http://shootout.alioth.debian.org/                                 */
+/*                                                                    */
+/* Contributed by Anthony Borla                                       */
+/* ------------------------------------------------------------------ */
+
+numeric digits 6
+
+KNUCFRM1 = "A T C G"
+KNUCFRM2 = "AA AT TT TA CA CT AC TC AG GA TG GT CC GC CG GG"
+KNUCFRMX = "GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT"
+
+THRESHOLD = 32 ; NULL = "" ; SPACE = " " ; TAB = D2C(9) ; FSEP = ":"
+DESCENDING = "DSC"
+
+seq = NULL ; lineno = 0 ; knucfrm. = 0
+
+/* Skip irrelevant input data */
+do while LINES() > 0 & SUBSTR(LINEIN(), 1, 6) \= ">THREE"
+  nop
+end
+
+/* Assemble 'seq' string in <2K pieces for table loading */ 
+do while LINES() > 0
+  lineno = lineno + 1 ; line = TRANSLATE(LINEIN()) ; if line == NULL then ; leave
+  seq = seq || line
+
+  if lineno == THRESHOLD then do
+    call update_knucfrm_count (KNUCFRM1 KNUCFRM2 KNUCFRMX)
+    lineno = 0 ; seq = NULL
+  end
+end
+
+call update_knucfrm_count KNUCFRM1 KNUCFRM2 KNUCFRMX
+
+/* Generate correctly-formatted output strings */
+cbexpr = "FORMAT(ARG(1) * 100 / " || compute_knucfrm_total(KNUCFRM1) || ",,3)"
+frm1_freq = extract_knucfrm_data(KNUCFRM1, DESCENDING, "VK", "KV", cbexpr)
+
+cbexpr = "FORMAT(ARG(1) * 100 / " || compute_knucfrm_total(KNUCFRM2) || ",,3)"
+frm2_freq = extract_knucfrm_data(KNUCFRM2, DESCENDING, "VK", "KV", cbexpr)
+
+frmx_count = extract_knucfrm_data(KNUCFRMX,, "VK", "VK")
+
+/* Output data */
+call print_knucfrm_data frm1_freq, SPACE ; say NULL
+call print_knucfrm_data frm2_freq, SPACE ; say NULL
+call print_knucfrm_data frmx_count, TAB
+
+drop knucfrm. ; exit 0
+
+/* ----------------------------- */
+
+update_knucfrm_count : procedure expose seq knucfrm. NULL
+  knuctbl_ = ARG(1)
+
+  do while knuctbl_ <> NULL
+    parse var knuctbl_ knuc knuctbl_
+
+    /*
+       Use efficient 'COUNTSTR' BIF where possible, but use custom
+       [and much slower], 'COUNTSTRDUP', to count occurrences of
+       single-letter-only name [e.g. AA, GG] values
+    */
+
+    if knuc \= COPIES(SUBSTR(knuc, 1, 1), LENGTH(knuc)) then 
+      knucfrm.knuc = knucfrm.knuc + COUNTSTR(knuc, seq)
+    else
+      knucfrm.knuc = knucfrm.knuc + countstrdup(knuc, seq)
+  end
+
+  return
+
+/* ----------------------------- */
+
+compute_knucfrm_total : procedure expose knucfrm. NULL
+  knuctbl_ = ARG(1) ; total = 0
+
+  do while knuctbl_ <> NULL
+    parse var knuctbl_ knuc knuctbl_
+    total = total + knucfrm.knuc
+  end
+
+  return total
+
+/* ----------- */
+
+knucfrm_callback : procedure
+  interpret "value =" ARG(2) ; return value
+
+/* ----------- */
+
+extract_knucfrm_data : procedure expose knucfrm. NULL FSEP
+  knuctbl_ = ARG(1)
+
+  if ARG(2) == NULL then ; unordered = 1
+  else do
+    unordered = 0 ; ascending = (ARG(2) == "ASC")
+  end
+
+  kforder = (ARG(3) == "KV") ; kfout = (ARG(4) == "KV")
+
+  callback = (ARG(5) \= NULL) ; cbarg = ARG(5)
+
+  knucout = NULL
+
+  do while knuctbl_ <> NULL
+    parse var knuctbl_ knuc knuctbl_
+
+    if \callback then ; value = knucfrm.knuc
+    else ; value = knucfrm_callback(knucfrm.knuc, cbarg)
+
+    if kforder then
+      field = knuc || FSEP || value
+    else
+      field = value || FSEP || knuc
+
+    if unordered then ; knucout = knucout field
+    else ; knucout = insertWord(field, knucout, ascending)
+  end
+
+  if kforder & \kfout | \kforder & kfout then do
+    return swapfields(STRIP(knucout))
+  end
+
+  return STRIP(knucout)
+
+/* ----------- */
+
+swapfields : procedure expose NULL FSEP
+  datatbl_ = ARG(1) ; revtbl = NULL
+
+  do while datatbl_ <> NULL
+    parse var datatbl_ f1 (FSEP) f2 datatbl_
+    revtbl = revtbl f2 || FSEP || f1
+  end
+
+  return STRIP(revtbl)
+
+/* ----------------------------- */
+
+print_knucfrm_data : procedure expose NULL FSEP
+  datatbl_ = ARG(1) ; sep = ARG(2)
+
+  do while datatbl_ <> NULL
+    parse var datatbl_ f1 (FSEP) f2 datatbl_
+    say f1 || sep || f2
+  end
+
+  return
+
+/* ----------------------------- */
+
+countstrdup : procedure
+  needle = ARG(1) ; haystack = ARG(2)
+
+  nlen = LENGTH(needle) ; hlen = LENGTH(haystack) ; occurs = 0
+
+  do i = 1 for nlen
+    do j = i to hlen by nlen
+      if SUBSTR(haystack, j, nlen) == needle then ; occurs = occurs + 1
+    end
+  end
+
+  return occurs
+
+/* ----------------------------- */
+
+compare : procedure
+  if ARG(1) then ; return ARG(2) < ARG(3)
+  return ARG(2) > ARG(3)
+
+/* ----------- */
+
+insertWord : procedure
+  V = ARG(1) ; S = STRIP(ARG(2)) ; ascending = ARG(3)
+  R = WORDS(S) ; if R < 1 then ; return V
+
+  L = 1
+
+  do while L <= R
+    M = (L + R) % 2 ; W = WORD(S, M)
+    if V = W then ; return S
+    if compare(ascending, V, W) then ; R = M - 1 ; else L = M + 1
+  end
+
+  /* insert [after] item here */
+  select
+    when R < 1 then ; insertAfter = 0
+    when L > WORDS(S) then ; insertAfter = LENGTH(S) + 1
+    otherwise
+      if M = R then ; insertAfter = WORDINDEX(S, M + 1) - 1
+      else ; insertAfter = WORDINDEX(S, M) - 1
+  end
+
+  return INSERT(V, S, insertAfter, LENGTH(V) + 1)
+

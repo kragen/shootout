@@ -1,0 +1,86 @@
+/* ------------------------------------------------------------------ */
+/* The Great Computer Language Shootout                               */
+/* http://shootout.alioth.debian.org/                                 */
+/*                                                                    */
+/* Contributed by Anthony Borla                                       */
+/* ------------------------------------------------------------------ */
+
+INTBL = "wsatugcyrkmbdhvnATUGCYRKMBDHVN"
+OUTBL = "WSTAACGRYMKVHDBNTAACGRYMKVHDBN"
+
+THRESHOLD = 32 ; LINELENGTH = 60 ; NULL = "" ; HEAD = "head" ; DATA = "data"
+
+okToDump = 0
+
+call makeQueues
+
+do while LINES() > 0
+  line = LINEIN() ; if line == NULL then ; leave
+
+  if SUBSTR(line, 1, 1) == ">" then do
+
+    call queueHeader line
+    if \okToDump then do ; okToDump = 1 ; iterate ; end
+
+    call dumpSegment
+
+  end ; else do
+
+    call queueData line
+
+  end
+end
+
+call dumpSegment
+
+call dropQueues ; exit 0
+
+/* ----------------------------- */
+
+makeQueues : ; call RXQUEUE 'C', HEAD ; call RXQUEUE 'C', DATA ; return
+
+/* ----------- */
+
+dropQueues : ; call RXQUEUE 'D', HEAD ; call RXQUEUE 'D', DATA ; return
+
+/* ----------------------------- */
+
+queueHeader : ; call RXQUEUE 'S', HEAD ; queue ARG(1) ; call RXQUEUE 'S', DATA ; return
+
+/* ----------- */
+
+queueData : ; push REVERSE(TRANSLATE(ARG(1), OUTBL, INTBL)) ; return
+
+/* ----------------------------- */
+
+dumpSegment : procedure expose HEADER DATA THRESHOLD LINELENGTH NULL
+  FORCEOUTPUT = 1 ; output = NULL ; lineno = 0
+
+  call RXQUEUE 'S', HEAD ; parse pull header ; say header ; call RXQUEUE 'S', DATA
+
+  do while QUEUED() > 0
+    lineno = lineno + 1 ; parse pull line ; output = output || line
+
+    if lineno == THRESHOLD then do
+      output = dumpSegmentLines(output) ; lineno = 0
+    end
+  end
+
+  call dumpSegmentLines output, FORCEOUTPUT ; return
+ 
+/* ----------- */
+
+dumpSegmentLines : procedure expose LINELENGTH NULL
+  s = ARG(1) ; slen = LENGTH(s) ; stop = slen % LINELENGTH ; remaining = slen // LINELENGTH
+
+  do i = 0 while i < stop
+    start = LINELENGTH * i + 1 ; say SUBSTR(s, start, LINELENGTH)
+  end
+
+  r = NULL
+  
+  if remaining > 0 then do
+    r = SUBSTR(s, start + LINELENGTH, remaining) ; if \ARG(2, 'O') then ; say r
+  end
+
+  return r
