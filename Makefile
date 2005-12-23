@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.47 2005-12-19 03:11:53 bfulgham Exp $
+# $Id: Makefile,v 1.48 2005-12-23 06:48:21 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
@@ -15,7 +15,6 @@ all: init versions
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)
 	-make codelinks
 	cvs update website/websites/feeds/rss.xml
-	-bin/make_feed.php
 
 website:
 	-bin/cascade_delete.bash
@@ -24,6 +23,7 @@ website:
 	-bin/compress_ndata	
 	-bin/make_highlight
 	-(cd website/code; ../../bin/add_strays)
+	-bin/make_feed.php
 	-cvs commit -m "Rerun of benchmarks."
 
 test plot show loc:
