@@ -1,0 +1,82 @@
+% ----------------------------------------------------------------------
+% The Computer Language Shootout                              
+% http://shootout.alioth.debian.org/                                
+%                                                                   
+% Assumes execution using the following command-line usage:
+%
+%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%
+% Contributed by Anthony Borla
+% ----------------------------------------------------------------------
+
+main :-
+  cmdlNumArg(1, Height), Width = Height,
+  setvar(byteout, 0), setvar(bitnumber, 0), setvar(outflag, 0),
+
+  format('P4~N~d ~d~N',[Height, Width]),  
+  pointsY(Height, Width, 0, 0),
+
+  dropvar(byteout), dropvar(bitnumber), dropvar(outflag).
+
+% ------------------------------- %
+
+pointsY(Height, Width, Y, X) :-
+  Y1 is Y + 1, Height >= Y1, !, pointsX(Height, Width, Y, 0),
+  pointsY(Height, Width, Y1, X).
+
+pointsY(_, _, _, _) :- !.
+
+% ------------- %
+
+pointsX(Height, Width, Y, X) :-
+  X1 is X + 1, Width >= X1, !,
+
+  (mandel(Height, Width, Y, X, 50) -> LimitAdj = 0 ; LimitAdj = 1), 
+
+  getvar(bitnumber, BITN), BITN1 is BITN + 1, setvar(bitnumber, BITN1),
+  (BITN1 == 8 -> setvar(outflag, 1) ; true),
+
+  getvar(byteout, BYTEOUT), BYTEOUT1 is BYTEOUT * 2 + LimitAdj, setvar(byteout, BYTEOUT1),
+  ((Width == X1, BITN1 \== 8) -> (getvar(byteout, BYTEOUT2), BYTEOUT3 is BYTEOUT2 * 2 ** (8 - Width mod 8), setvar(byteout, BYTEOUT3), setvar(outflag, 1)) ; true),
+
+  output,
+
+  pointsX(Height, Width, Y, X1).
+
+pointsX(_, _, _, _) :- !.
+
+% ------------- %
+
+mandel(Height, Width, Y, X, Repetitions) :-
+  Cr is (2.0 * X / Width - 1.5), Ci is (2.0 * Y / Height - 1.0),
+  mandel_(Cr, Ci, 0.0, 0.0, Repetitions, 0).
+
+mandel_(_, _, Zr, Zi, Repetitions, Repetitions) :- !, Limit is Zr * Zr + Zi * Zi, Limit > 4.0.
+
+mandel_(Cr, Ci, Zr, Zi, Repetitions, N) :-
+  Zr1 is Zr * Zr - Zi * Zi + Cr, Zi1 is 2.0 * Zr * Zi + Ci, Limit is Zr1 * Zr1 + Zi1 * Zi1,
+  Limit =< 4.0, N1 is N + 1, !, mandel_(Cr, Ci, Zr1, Zi1, Repetitions, N1).
+
+mandel_(_, _, _, _, _, _) :- !.
+
+% ------------- %
+
+output :-
+  getvar(outflag, OUTFLAG), getvar(byteout, BYTEOUT),
+  (OUTFLAG == 1 -> (put_byte(BYTEOUT), setvar(bitnumber, 0), setvar(byteout, 0), setvar(outflag, 0)) ; true).
+
+% ------------------------------- %
+
+getvar(Id, Value) :- nb_getval(Id, Value).
+setvar(Id, Value) :- nb_setval(Id, Value).
+dropvar(Id) :- nb_delete(Id).
+
+% ------------------------------- %
+
+argument_value(N, Arg) :-
+  current_prolog_flag(argv, Cmdline), append(_, [--|UserArgs], Cmdline),
+  Nth is N - 1, nth0(Nth, UserArgs, Arg).
+
+cmdlNumArg(Nth, N) :-
+  argument_value(Nth, Arg), catch(atom_number(Arg, N), _, fail) ; halt(1).
+

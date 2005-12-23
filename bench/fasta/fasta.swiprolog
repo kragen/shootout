@@ -1,0 +1,134 @@
+% ----------------------------------------------------------------------
+% The Computer Language Shootout                              
+% http://shootout.alioth.debian.org/                                
+%                                                                   
+% Assumes execution using the following command-line usage:
+%
+%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%
+% Contributed by Anthony Borla
+% ----------------------------------------------------------------------
+
+main :-
+  cmdlNumArg(1, N),
+
+  init_fasta,
+
+  N1 is N * 2,
+  N2 is N * 3,
+  N3 is N * 5,
+
+  repeat_fasta('ONE', 'Homo sapiens alu', N1),
+
+  getvar(iub, IUB), make_cumulative(IUB, CVIUB),
+  random_fasta('TWO', 'IUB ambiguity codes', N2, CVIUB),
+
+  getvar(homosapiens, HOMOSAPIENS), make_cumulative(HOMOSAPIENS, CVHOMOSAPIENS),
+  random_fasta('THREE', 'Homo sapiens frequency', N3, CVHOMOSAPIENS),
+
+  drop_fasta.
+
+% ------------------------------- %
+
+init_fasta :-
+  setvar(linelength, 60),
+  nb_linkval(alu, 'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA'),
+  nb_linkval(iub, [a:0.27, c:0.12, g:0.12, t:0.27, 'B':0.02, 'D':0.02, 'H':0.02, 'K':0.02, 'M':0.02, 'N':0.02, 'R':0.02, 'S':0.02, 'V':0.02, 'W':0.02, 'Y':0.02]),
+  nb_linkval(homosapiens, [a:0.3029549426680, c:0.1979883004921, g:0.1975473066391, t:0.3015094502008]),
+  init_gen_random(42).
+
+% ------------- %
+
+drop_fasta :-
+  dropvar(linelength),
+  dropvar(alu), dropvar(iub), dropvar(homosapiens),
+  drop_gen_random.
+
+% ------------------------------- %
+
+repeat_fasta(Id, Desc, N) :-
+  getvar(linelength, LineLength), getvar(alu, ALU), atom_length(ALU, ALULength),
+  write('>'), write(Id), tab(1), write(Desc), nl,
+  repeat_fasta_(N, 0, LineLength, ALULength).
+
+% ------------- %
+
+repeat_fasta_(N, _, _, _) :- N =< 0, !.
+
+repeat_fasta_(N, Q, L, ALULength) :-
+  getvar(alu, ALU), (N < L -> L1 = N ; L1 = L),
+
+  (L1 + Q < ALULength ->
+    sub_atom(ALU, Q, L1, _, Lineout), Q1 is L1 + Q
+  ;
+    Rest is ALULength - Q, sub_atom(ALU, Q, Rest, _, Prefix),
+    atom_length(Prefix, PrefixLength), Q1 is L1 - PrefixLength, 
+    sub_atom(ALU, 0, Q1, _, Segment), atom_concat(Prefix, Segment, Lineout)),
+
+  write(Lineout), nl, N1 is N - L1, !, repeat_fasta_(N1, Q1, L1, ALULength).
+
+% ------------------------------- %
+
+random_fasta(Id, Desc, N, CumTbl) :-
+  getvar(linelength, LineLength),
+  write('>'), write(Id), tab(1), write(Desc), nl,
+  random_fasta_(N, LineLength, CumTbl).
+
+% ------------- %
+
+random_fasta_(N, _, _) :- N =< 0, !.
+
+random_fasta_(N, L, CumTbl) :-
+  (N < L -> L1 = N ; L1 = L),
+  gen_line(L1, CumTbl, Codesout),
+  string_to_list(Lineout, Codesout), write(Lineout), nl,
+  N1 is N - L1, !, random_fasta_(N1, L1, CumTbl).
+
+% ------------- %
+
+gen_line(0, _, []).
+gen_line(N, CumTbl, K) :-
+  select_random(CumTbl, C), char_code(C, C1), K = [C1|T1], N1 is N - 1, !,
+  gen_line(N1, CumTbl, T1).
+
+% ------------------------------- %
+
+make_cumulative(L, RL) :- make_cumulative_(L, RL, 0).
+
+make_cumulative_([], [], _) :- !.
+make_cumulative_([K:V|T], L, CV) :- CV1 is CV + V, L = [K:CV1|T1], !, make_cumulative_(T, T1, CV1).
+
+% ------------- %
+
+select_random(L, RK) :- R is gen_random(1.0), select_random_(L, R, RK).
+
+select_random_([], _, _) :- !.
+select_random_([K:V|T], R, RK) :- (R < V -> RK = K ; !, select_random_(T, R, RK)).
+
+% ------------------------------- %
+
+init_gen_random(Seed) :- setvar(gen_random_data, [3877, 29573, 139968, Seed]).
+drop_gen_random :- dropvar(gen_random_data).
+
+% ------------- %
+
+:- arithmetic_function(gen_random/1).
+
+gen_random(UB, R) :-
+  getvar(gen_random_data, [IA, IC, IM, LAST]), LAST1 is (LAST * IA + IC) mod IM,
+  setvar(gen_random_data, [IA, IC, IM, LAST1]), R is UB * LAST1 / IM.
+
+% ------------------------------- %
+
+getvar(Id, Value) :- nb_getval(Id, Value).
+setvar(Id, Value) :- nb_setval(Id, Value).
+dropvar(Id) :- nb_delete(Id).
+
+% ------------------------------- %
+
+argument_value(N, Arg) :-
+  current_prolog_flag(argv, Cmdline), append(_, [--|UserArgs], Cmdline),
+  Nth is N - 1, nth0(Nth, UserArgs, Arg).
+
+cmdlNumArg(Nth, N) :-
+  argument_value(Nth, Arg), catch(atom_number(Arg, N), _, fail) ; halt(1).
