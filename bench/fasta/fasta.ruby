@@ -64,10 +64,12 @@ def make_random_fasta(id, desc, table, n)
             table.find{|v| v[1]>rand}[0]
         }.join
     end
-    puts (1..(n%width)).collect{
+    if n%width != 0
+        puts (1..(n%width)).collect{
             rand = gen_random(1.0)
             table.find{|v| v[1]>rand}[0]
         }.join
+    end
 end
 
 
