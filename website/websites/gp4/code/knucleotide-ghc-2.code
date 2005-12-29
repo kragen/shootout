@@ -1,0 +1,83 @@
+<span class="com">{- The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com">   Contributed by Branimir Maksimovic</span>
+<span class="com"></span>
+<span class="com">   file parsing part from Haskell program,</span>
+<span class="com">   rest is alsmost completely D program</span>
+<span class="com">-}</span>
+
+<span class="kwa">module</span> Main <span class="kwa">where</span>
+<span class="kwa">import</span> Data.HashTable
+<span class="kwa">import</span> Data.Array.Unboxed
+<span class="kwa">import</span> Data.List
+<span class="kwa">import</span> Data.<span class="kwb">Char</span>
+<span class="kwa">import</span> Control.Monad
+<span class="kwa">import</span> Numeric
+
+main <span class="sym">=</span> <span class="kwa">do</span> st <span class="sym">&lt;-</span> getContents
+          ht <span class="sym">&lt;-</span> new <span class="sym">(==)</span> hashString
+          inp <span class="sym">&lt;-</span> process st
+          <span class="kwa">let</span> arr <span class="sym">=</span> listArray <span class="sym">(</span><span class="num">1</span><span class="sym">,</span>length inp<span class="sym">)</span> inp
+              kfreq <span class="sym">=</span> MakeKFreq ht arr
+          writeFrequences <span class="num">1</span> kfreq
+          writeFrequences <span class="num">2</span> kfreq
+          mapM_ <span class="sym">(</span>\t <span class="sym">-&gt;</span> writeCount t kfreq<span class="sym">)</span>
+                <span class="sym">[</span><span class="str">&quot;GGT&quot;</span><span class="sym">,</span> <span class="str">&quot;GGTA&quot;</span><span class="sym">,</span> <span class="str">&quot;GGTATT&quot;</span><span class="sym">,</span> <span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">,</span> <span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">]</span>
+  <span class="kwa">where</span> process <span class="sym">::</span> String <span class="sym">-&gt;</span> IO String
+        process ls  <span class="sym">=</span> return $ ul $ takeNorm $ tail $ dropComment $ dropOther $ lines ls
+        dropOther   <span class="sym">=</span> dropWhile <span class="sym">(</span>\str <span class="sym">-&gt;</span> not <span class="sym">(</span><span class="str">&quot;&gt;THREE&quot;</span> `isPrefixOf` str<span class="sym">))</span>
+        dropComment <span class="sym">=</span> dropWhile <span class="sym">(</span>\str <span class="sym">-&gt;</span> head str <span class="sym">==</span> <span class="str">';'</span><span class="sym">)</span>
+        takeNorm    <span class="sym">=</span> takeWhile <span class="sym">(</span>\str <span class="sym">-&gt;</span> head str <span class="sym">/=</span> <span class="str">'&gt;'</span><span class="sym">)</span>
+        ul str      <span class="sym">=</span> map toUpper $ concat str
+
+<span class="kwa">data</span> KFreq <span class="sym">=</span> MakeKFreq { ht <span class="sym">::</span> HashTable String <span class="kwb">Int</span><span class="sym">,</span> arr <span class="sym">::</span> UArray <span class="kwb">Int Char</span> }
+generateFreqs <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> KFreq <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+generateFreqs n kf <span class="sym">=</span> mapM_ <span class="sym">(</span>\i <span class="sym">-&gt;</span> updateFreqs i kf<span class="sym">) [</span><span class="num">1</span>..n<span class="sym">]</span>
+    <span class="kwa">where</span> k <span class="sym">=</span> n
+          updateFreqs rf kf <span class="sym">=</span> <span class="kwa">let</span> n <span class="sym">= (</span>snd $ bounds $ arr kf<span class="sym">) -</span> k <span class="sym">+</span> <span class="num">1</span>
+                              <span class="kwa">in</span> <span class="sym">(</span>for rf n k <span class="sym">(</span>\i <span class="sym">-&gt;</span> updateFreq kf <span class="sym">(</span>arrToStr <span class="sym">(</span>arr kf<span class="sym">) (</span>i<span class="sym">,</span>i<span class="sym">+</span>k<span class="sym">-</span><span class="num">1</span><span class="sym">)) ))</span>
+          updateFreq kf s <span class="sym">=</span> <span class="kwa">do</span> val <span class="sym">&lt;-</span> Data.HashTable.lookup <span class="sym">(</span>ht kf<span class="sym">)</span> s
+                               <span class="kwa">case</span> val <span class="kwa">of</span>
+                                Nothing <span class="sym">-&gt;</span> Data.HashTable.insert <span class="sym">(</span>ht kf<span class="sym">)</span> s <span class="num">1</span>
+                                Just v <span class="sym">-&gt;</span> <span class="kwa">do</span> update <span class="sym">(</span>ht kf<span class="sym">)</span> s <span class="sym">(</span>v<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+                                             return <span class="sym">()</span>
+
+writeFrequences n kf <span class="sym">=</span> <span class="kwa">do</span> generateFreqs n kf
+                          lst <span class="sym">&lt;-</span> toList $ ht kf
+                          <span class="kwa">let</span> sum<span class="str">' = foldr (\(k,f) s -&gt; if length k == n</span>
+<span class="str">                                                           then s+f</span>
+<span class="str">                                                           else s) 0 lst</span>
+<span class="str">                              lst'</span> <span class="sym">:: [(</span>String<span class="sym">,</span><span class="kwb">Int</span><span class="sym">)]</span>
+                              lst<span class="str">' = sortBy (\(_,x) (_,y) -&gt; compare y x) lst</span>
+<span class="str">                          foldM_ (\last'</span> kvsr<span class="str">' -&gt; printFreqs kvsr'</span> sum<span class="str">' lst'</span> last<span class="str">') 0 lst'</span>
+                          putStr <span class="str">&quot;\n&quot;</span>
+                          return <span class="sym">()</span>
+    <span class="kwa">where</span> printFreqs <span class="sym">(</span>k<span class="sym">,</span>vsr<span class="str">') sum'</span> lst<span class="str">' last'</span>
+            <span class="sym">=</span> if last<span class="str">' /= vsr'</span>
+                 <span class="kwa">then do</span> mapM_ <span class="sym">(</span>\<span class="sym">(</span>k<span class="sym">,</span>val<span class="sym">) -&gt;</span>
+                                <span class="kwa">do</span> if <span class="sym">(</span>length k<span class="sym">) ==</span> n <span class="sym">&amp;&amp;</span> val <span class="sym">==</span> vsr<span class="str">'</span>
+<span class="str">                                      then do let ratio :: Float</span>
+<span class="str">                                                  ratio = if sum'</span> <span class="sym">/=</span> <span class="num">0</span>
+                                                             <span class="kwa">then</span> <span class="sym">(</span>fromIntegral val<span class="sym">)/</span> fromIntegral sum<span class="str">'</span>
+<span class="str">                                                             else 0</span>
+<span class="str">                                              putStr (k++&quot; &quot;++showFFloat (Just 3) (ratio*100) &quot;\n&quot;)</span>
+<span class="str">                                      else return ()</span>
+<span class="str">                                               ) lst'</span>
+                         return vsr<span class="str">'</span>
+<span class="str">                 else return last'</span>
+
+
+writeCount s kf <span class="sym">=</span> <span class="kwa">do</span> generateFreqs <span class="sym">(</span>length s<span class="sym">)</span> kf
+                     val <span class="sym">&lt;-</span> Data.HashTable.lookup <span class="sym">(</span>ht kf<span class="sym">)</span> s
+                     <span class="kwa">let</span> cnt <span class="sym">=</span> <span class="kwa">case</span> val <span class="kwa">of</span>
+                               Nothing <span class="sym">-&gt;</span> <span class="num">0</span>
+                               Just v <span class="sym">-&gt;</span> v
+                     putStrLn <span class="sym">(</span>show cnt <span class="sym">++</span> <span class="str">&quot;\t&quot;</span> <span class="sym">++</span> s<span class="sym">)</span>
+
+for begin end increment f
+    <span class="sym">|</span> begin <span class="sym">&lt;=</span> end <span class="sym">=</span> <span class="kwa">do</span> { f begin<span class="sym">;</span> for <span class="sym">(</span>begin<span class="sym">+</span>increment<span class="sym">)</span> end increment f }
+    <span class="sym">|</span> otherwise <span class="sym">=</span> return <span class="sym">()</span>
+
+arrToStr <span class="sym">::</span> UArray <span class="kwb">Int Char</span><span class="sym">-&gt; (</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">) -&gt;</span> String
+arrToStr a <span class="sym">(</span>b<span class="sym">,</span>e<span class="sym">) |</span> b<span class="sym">&lt;=</span>e <span class="sym">=</span> a <span class="sym">!</span> b <span class="sym">:</span> arrToStr a <span class="sym">(</span>b<span class="sym">+</span><span class="num">1</span><span class="sym">,</span>e<span class="sym">)</span>
+                 <span class="sym">|</span> otherwise <span class="sym">= []</span>
