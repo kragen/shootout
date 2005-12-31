@@ -585,6 +585,22 @@
        },
      },
 
+     java15 =>
+     { Lang => 'Java',
+       Name => 'Java',
+       Status => '+',
+       Home => 'http://www.sun.com/',
+       Down => 'http://www.sun.com/',
+       Type => 'interpreted',
+       Note => 'Official SUN Java 1.5 with HotSpot',
+       Ext  => 'java',
+       Verfun => sub {
+	   my $ver = `$ENV{JAVA15} -version -server 2>&1`;
+	   $ver =~ /(Java HotSpot.*)/;
+	   return($1);
+       },
+     },
+
      javaxint =>
      { Lang => 'Java',
        Name => 'Xint',
@@ -1330,4 +1346,5 @@
      'Pop11'       => 'c',
      'fpascal'     => 'pascal',
      'regina'	   => 'c',
+     'rexx'        => 'c',
  );

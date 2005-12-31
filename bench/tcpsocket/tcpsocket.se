@@ -1,0 +1,198 @@
+-- tcpsockets for The Great Computer Shootout Program
+-- by Cyril Adrian <cyril.adrian@gmail.com>
+
+--SPLITFILE=tcpclient.e
+class TCPCLIENT
+
+create {TCPSOCKET}
+	make
+
+feature {}
+	number_of_requests: INTEGER
+
+	make (n: INTEGER; access: ACCESS) is
+		local
+			ios: SOCKET_INPUT_OUTPUT_STREAM
+			i, count, sum: INTEGER
+		do
+			number_of_requests := n
+			from
+				i := 1
+			until
+				i > 10 * n
+			loop
+				ios := access.stream
+				if ios.is_connected then
+					ios.put_string(request)
+					ios.read_line
+					count := count + 1
+					sum := sum + ios.last_string.count + 1 -- +1 because of '%N' not included
+					ios.disconnect
+				end
+				i := i + 1
+			end
+			print("replies: " + count.out + "%Tbytes: " + sum.out + "%N")
+		end
+
+	request: STRING is
+		once
+			create Result.make_filled('.', 64)
+			Result.put('%N', Result.upper)
+		end
+
+end
+
+--SPLITFILE=tcpconnection.e
+deferred class TCPCONNECTION
+
+inherit
+	CONNECTION
+
+feature {LOOP_ITEM}
+	continue is
+		local
+			s: STRING
+		do
+			ios.read_line
+			s := once ""
+			s.make_filled('.', reply_size)
+			s.put('%N', s.upper)
+			ios.put_string(s)
+			ios.disconnect
+			server.connection_closed
+		end
+
+feature {}
+	server: TCPSERVER
+
+	make (a_server: like server) is
+		do
+			server := a_server
+		end
+
+	reply_size: INTEGER is
+		deferred
+		end
+
+end
+
+--SPLITFILE=tcpconnection_big.e
+class TCPCONNECTION_BIG
+
+inherit
+	TCPCONNECTION
+
+create {TCPSERVER}
+	make
+
+feature {}
+	reply_size: INTEGER is 409600
+
+end
+
+--SPLITFILE=tcpconnection_medium.e
+class TCPCONNECTION_MEDIUM
+
+inherit
+	TCPCONNECTION
+
+create {TCPSERVER}
+	make
+
+feature {}
+	reply_size: INTEGER is 4096
+
+end
+
+--SPLITFILE=tcpconnection_small.e
+class TCPCONNECTION_SMALL
+
+inherit
+	TCPCONNECTION
+
+create {TCPSERVER}
+	make
+
+feature {}
+	reply_size: INTEGER is 64
+
+end
+
+--SPLITFILE=tcpserver.e
+class TCPSERVER
+
+insert
+	SERVER[TCPCONNECTION]
+		export {} start, start_in_stack
+		end
+
+create {TCPSOCKET}
+	make
+
+feature {}
+	handle_error (error_message: STRING) is
+			-- What to do when there was an error
+		do
+			std_error.put_string(error_message)
+			die_with_code(1)
+		end
+
+	new_connection: TCPCONNECTION is
+			-- Create a new connection
+		do
+			if count < 2 * number_of_requests then
+				create {TCPCONNECTION_SMALL} Result.make(Current)
+			elseif count < 9 * number_of_requests then
+				create {TCPCONNECTION_MEDIUM} Result.make(Current)
+			else
+				create {TCPCONNECTION_BIG} Result.make(Current)
+			end
+			count := count + 1
+		end
+
+feature {TCPCONNECTION}
+	connection_closed is
+		do
+			done := done + 1
+			if done = 10 * number_of_requests then
+				stack.break
+			end
+		end
+
+feature {}
+	count, done: INTEGER
+	number_of_requests: INTEGER
+
+	make (n: INTEGER; access: ACCESS) is
+		do
+			number_of_requests := n
+			start(access)
+		end
+
+end
+
+--SPLITFILE=tcpsocket.e
+class TCPSOCKET
+
+insert
+	ARGUMENTS
+
+create {ANY}
+	make
+
+feature {}
+	make is
+		local
+			n: INTEGER; access: TCP_ACCESS
+			server: TCPSERVER; client: TCPCLIENT
+		do
+			create access.make(create {HOST}.make("localhost"), 11000)
+			n := argument(1).to_integer
+			if n < 0 then
+				create server.make(-n, access)
+			else
+				create client.make(n, access)
+			end
+		end
+
+end

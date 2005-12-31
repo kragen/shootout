@@ -1,8 +1,9 @@
-#!./parrot -j
+#!./parrot -C
 #
 # fasta.pir N         (N = 2500000 for shootout)
 # by Joshua Isom
 
+# 48.2 sec on AMD@2000/512K cache
 
 .sub makeCumulative
 	.param pmc genelist
@@ -25,7 +26,7 @@ endfor:
 	.param pmc genelist
 	.param int count
 	.local float r
-	r = gen_random(1)
+	r = gen_random(1.0)
 	.local int i, lo, hi
 
 	$N0 = genelist[0;1]
@@ -146,16 +147,20 @@ endfor:
 .end
 
 .macro InitStruct (iub, i, char, num)
-	$P0 = new .Array
+	$P0 = new .FixedPMCArray
+	$P0 = 2
 	.iub[.i] = $P0
-	.iub[.i] = 2
 	.iub[.i;0] = .char
 	.iub[.i;1] = .num
 .endm
 
 .sub main :main
 	.param pmc argv
+	.local pmc stdout
 	.local int n
+	# stdout is linebuffered per default - make it block buffered
+	stdout = getstdout
+	stdout.'setbuf'(40960)
 	$I0 = argv
 	unless $I0 > 2 goto argsok
 	n = 1000
@@ -167,7 +172,7 @@ argsdone:
 	load_bytecode "random_lib.pir"
 
 	.local pmc iub
-	iub = new .Array
+	iub = new .FixedPMCArray
 	iub = 15
 	.InitStruct(iub, 0, "a", 0.27)
 	.InitStruct(iub, 1, "c", 0.12)
@@ -187,7 +192,7 @@ argsdone:
 	.InitStruct(iub, 14, "Y", 0.02)
 
 	.local pmc homosapiens
-	homosapiens = new .Array
+	homosapiens = new .FixedPMCArray
 	homosapiens = 4
 	.InitStruct(homosapiens, 0, "a", 0.3029549426680)
 	.InitStruct(homosapiens, 1, "c", 0.1979883004921)

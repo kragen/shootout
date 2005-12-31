@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.48 2005-12-23 06:48:21 bfulgham Exp $
+# $Id: Makefile,v 1.49 2005-12-31 16:45:25 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
@@ -9,7 +9,7 @@ all: init versions
 	-bin/cascade_delete.bash
 	-bin/find_badlinks
 	-bin/make_links
-	-(. bin/setenv.sh; cd bench ; make $@)
+	-(. bin/setenv.sh; ulimit -s unlimited; cd bench ; make $@)
 	-(cd bench ; make --no-print-directory report> report.txt)
 	-bin/build_data_files
 	-(bin/build_summary_file < ./website/data/ndata.csv > ./website/data/data.csv)

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.29 2005-12-31 16:45:30 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -9,6 +9,7 @@ TITLE   := Count Lines/Words/Chars
 ERLFLAGS := -noshell
 GHCOPTS := -package lang
 G95OPTS := -combine ../../Include/fortran/string.f90
+GFORTRANOPTS := -combine ../../Include/fortran/string.f90
 IFCOPTS := ../../Include/fortran/string.f90
 #MB_GHCRTS  := +RTS -M200m -K10m
 MB_GHCRTS  := +RTS -G1

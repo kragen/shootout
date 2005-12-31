@@ -1,0 +1,62 @@
+<span class="com">{-  The Great Computer Language Shootout</span>
+<span class="com">    http://shootout.alioth.debian.org/</span>
+<span class="com">    contributed by Josh Goldfoot</span>
+<span class="com">-}</span>
+
+<span class="kwa">import</span> Control.Concurrent
+<span class="kwa">import</span> System<span class="sym">(</span>getArgs<span class="sym">)</span>
+
+<span class="kwa">data</span> Color <span class="sym">=</span> Blue <span class="sym">|</span> Red <span class="sym">|</span> Yellow <span class="sym">|</span> Faded <span class="kwa">deriving</span> <span class="sym">(</span>Eq<span class="sym">,</span> Show<span class="sym">)</span>
+<span class="kwa">data</span> MeetingPlace <span class="sym">=</span> MeetingPlace { first <span class="sym">::</span> Maybe Color<span class="sym">,</span> second <span class="sym">::</span> Maybe <span class="sym">(</span>MVar Color<span class="sym">),</span> meetingsLeft <span class="sym">::</span> <span class="kwb">Int</span> }
+<span class="kwa">data</span> Creature <span class="sym">=</span> Creature {meetings <span class="sym">::</span> <span class="kwb">Int</span><span class="sym">,</span> color <span class="sym">::</span> Color<span class="sym">,</span> mp <span class="sym">::</span> MVar MeetingPlace}
+
+main <span class="sym">=</span> <span class="kwa">do</span>
+   <span class="sym">[</span>nstring<span class="sym">] &lt;-</span> getArgs
+   theMeetingPlace <span class="sym">&lt;-</span> newMVar MeetingPlace { first <span class="sym">=</span> Nothing<span class="sym">,</span> second <span class="sym">=</span> Nothing<span class="sym">,</span> meetingsLeft <span class="sym">= (</span>read nstring<span class="sym">)</span> }
+   result1 <span class="sym">&lt;-</span> newEmptyMVar  <span class="slc">-- Create MVars, through which the 4 creature threads will report their # of meetings</span>
+   result2 <span class="sym">&lt;-</span> newEmptyMVar
+   result3 <span class="sym">&lt;-</span> newEmptyMVar
+   result4 <span class="sym">&lt;-</span> newEmptyMVar
+   <span class="kwa">let</span> creatures <span class="sym">= [</span>runCreature Creature { meetings <span class="sym">=</span> <span class="num">0</span><span class="sym">,</span> color <span class="sym">=</span> col<span class="sym">,</span> mp <span class="sym">=</span> theMeetingPlace } res <span class="sym">| (</span>col<span class="sym">,</span> res<span class="sym">) &lt;-</span>
+                     <span class="sym">[ (</span>Blue<span class="sym">,</span> result1<span class="sym">), (</span>Red<span class="sym">,</span> result2<span class="sym">), (</span>Yellow<span class="sym">,</span> result3<span class="sym">), (</span>Blue<span class="sym">,</span> result4<span class="sym">)]]</span>
+   mapM forkIO creatures  <span class="slc">-- This one line starts the 4 &quot;creature&quot; threads</span>
+   d1 <span class="sym">&lt;-</span> takeMVar result1 <span class="slc">-- This waits until the 1st creature thread reports a result</span>
+   d2 <span class="sym">&lt;-</span> takeMVar result2
+   d3 <span class="sym">&lt;-</span> takeMVar result3
+   d4 <span class="sym">&lt;-</span> takeMVar result4
+   putStrLn $ show <span class="sym">(</span>sum <span class="sym">[</span>d1<span class="sym">,</span> d2<span class="sym">,</span> d3<span class="sym">,</span> d4<span class="sym">])</span> <span class="slc">-- We have all 4 results; sum them, and print.</span>
+
+runCreature creature resultVar
+   <span class="sym">| (</span>color creature<span class="sym">) ==</span> Faded <span class="sym">=</span> putMVar resultVar <span class="sym">((</span>meetings creature<span class="sym">) -</span> <span class="num">1</span><span class="sym">)</span>  <span class="slc">-- If we are faded, report &amp; die</span>
+   <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span>
+      mpdata <span class="sym">&lt;-</span> takeMVar <span class="sym">(</span>mp creature<span class="sym">)</span>  <span class="slc">-- Waits for there to be a meeting place variable to take</span>
+      if <span class="sym">(</span>first mpdata<span class="sym">) ==</span> Nothing
+         <span class="kwa">then do</span>  <span class="slc">-- The meeting place is empty.  Let the next guy know how to find us.</span>
+            secondCreatureColor <span class="sym">&lt;-</span> newEmptyMVar
+            putMVar <span class="sym">(</span>mp creature<span class="sym">)</span> MeetingPlace { first <span class="sym">=</span> Just <span class="sym">(</span>color creature<span class="sym">),</span> second <span class="sym">=</span> Just secondCreatureColor<span class="sym">,</span> meetingsLeft <span class="sym">= (</span>meetingsLeft mpdata<span class="sym">)</span> }
+            secondCreatureColorData <span class="sym">&lt;-</span> takeMVar secondCreatureColor
+            putMVar <span class="sym">(</span>mp creature<span class="sym">)</span> MeetingPlace { first <span class="sym">=</span> Nothing<span class="sym">,</span> second <span class="sym">=</span> Nothing<span class="sym">,</span> meetingsLeft <span class="sym">=</span> decrement <span class="sym">(</span>meetingsLeft mpdata<span class="sym">)</span> }
+            runCreature Creature { meetings <span class="sym">= (</span>meetings creature<span class="sym">) +</span> <span class="num">1</span><span class="sym">,</span>
+               color <span class="sym">=</span> newColor <span class="sym">(</span>meetingsLeft mpdata<span class="sym">) (</span>color creature<span class="sym">) (</span>Just secondCreatureColorData<span class="sym">),</span>
+               mp <span class="sym">= (</span>mp creature<span class="sym">)</span> } resultVar
+         <span class="kwa">else do</span> <span class="slc">-- We are the second creature here.  Let the first guy know we arrived.</span>
+            putMVar <span class="sym">(</span>unjust <span class="sym">(</span>second mpdata<span class="sym">)) (</span>color creature<span class="sym">)</span>
+            runCreature Creature { meetings <span class="sym">= (</span>meetings creature<span class="sym">) +</span> <span class="num">1</span><span class="sym">,</span>
+               color <span class="sym">=</span> newColor <span class="sym">(</span>meetingsLeft mpdata<span class="sym">) (</span>color creature<span class="sym">) (</span>first mpdata<span class="sym">),</span>
+               mp <span class="sym">= (</span>mp creature<span class="sym">)</span> } resultVar
+
+newColor <span class="num">0</span> _ _ <span class="sym">=</span> Faded
+newColor _ me <span class="sym">(</span>Just other<span class="sym">) =</span> complement me other
+
+unjust <span class="sym">(</span>Just x<span class="sym">) =</span> x
+
+complement me other
+   <span class="sym">|</span> other <span class="sym">==</span> Faded <span class="sym">=</span> Faded
+   <span class="sym">|</span> me <span class="sym">==</span> other <span class="sym">=</span> me
+   <span class="sym">|</span> me <span class="sym">==</span> Blue <span class="sym">=</span> if other <span class="sym">==</span> Red <span class="kwa">then</span> Yellow <span class="kwa">else</span> Red
+   <span class="sym">|</span> me <span class="sym">==</span> Red <span class="sym">=</span> if other <span class="sym">==</span> Blue <span class="kwa">then</span> Yellow <span class="kwa">else</span> Blue
+   <span class="sym">|</span> me <span class="sym">==</span> Yellow <span class="sym">=</span> if other <span class="sym">==</span> Blue <span class="kwa">then</span> Red <span class="kwa">else</span> Blue
+   <span class="sym">|</span> me <span class="sym">==</span> Faded <span class="sym">=</span> Faded
+
+decrement <span class="num">0</span> <span class="sym">=</span> <span class="num">0</span>
+decrement n <span class="sym">=</span> n <span class="sym">-</span> <span class="num">1</span>
