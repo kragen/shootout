@@ -40,8 +40,8 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'old');
-define('SITE_TITLE','The Doug Bagley Computer Language Shootout');
-define('BANNER_TITLE','The&nbsp;Doug&nbsp;Bagley&nbsp;Computer&nbsp; <br/>Language&nbsp;Shootout');
+define('SITE_TITLE','The old Doug Bagley Computer Language Shootout');
+define('BANNER_TITLE','The&nbsp;old&nbsp;Doug&nbsp;Bagley&nbsp;Computer&nbsp; <br/>Language&nbsp;Shootout');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
