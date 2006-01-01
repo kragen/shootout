@@ -392,7 +392,7 @@
 
      g95 =>
      { Lang => 'Fortran',
-       Name => 'GNU',
+       Name => 'G95',
        Status => '+',
        Home => 'http://www.g95.org',
        Down => 'http://sourceforge.net/projects/g95/',
@@ -401,6 +401,22 @@
        Ext  => 'f90',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{G95} --version 2>&1`);
+	   $ver =~ /(G95.*)\n.*/;
+	   return($1);
+       },
+     },
+
+     gfortran =>
+     { Lang => 'Fortran',
+       Name => 'GNU',
+       Status => '+',
+       Home => 'http://gcc.gnu.org/fortran/',
+       Down => 'http://gcc.gnu.org/install/binaries.html',
+       Type => 'native compiled',
+       Note => 'Free Legendary Number Cruncher',
+       Ext  => 'f90',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{GFORTRAN} --version 2>&1`);
 	   $ver =~ /(GNU Fortran 95.*)\n.*/;
 	   return($1);
        },
