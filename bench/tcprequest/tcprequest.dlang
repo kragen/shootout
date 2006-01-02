@@ -1,18 +1,14 @@
 /* The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
- 
-   Contributed by Dave Fladebo 
+
+   Contributed by Dave Fladebo
 
    compile: dmd -O -inline -release tcprequest.d
 */
 
-import std.stdio, std.string, std.socket, std.socketstream, std.thread;
+import std.stdio, std.string, std.socket, std.socketstream, std.c.linux.linux, std.c.time;
 
-const int MULTIPLIER    = 100;
-const int REPLY_SIZE    = 4096;
-const int REQUEST_SIZE  = 64;
-const int BUFFER_SIZE   = 1024;
-const int PORT          = 11000;
+const int MULTIPLIER = 100, REPLY_SIZE = 4096, REQUEST_SIZE = 64, BUFFER_SIZE = 1024, PORT = 11000;
 
 char[REQUEST_SIZE]  REQUEST;
 char[REPLY_SIZE]    REPLY;
@@ -21,19 +17,14 @@ int main(char[][] args)
 {
     int n = (args.length > 1 ? atoi(args[1]) : 1) * MULTIPLIER;
 
-    Thread server = new Thread(&Server,null);
-    Thread client = new Thread(&Client,cast(void*)n);
+    int pid = fork();
+    if(!pid) Client(n);
+    if(pid > 0) Server();
 
-    server.start();
-    client.start();
-
-    server.wait();
-    client.wait();
-
-    return 0;
+    return pid < 0 ? 1 : 0;
 }
 
-int Server(void* arg)
+void Server()
 {
     SocketStream ss = new SocketStream(serverSocket.accept);
 
@@ -44,13 +35,13 @@ int Server(void* arg)
     }
 
     ss.close();
-
-    return(0);
 }
 
-int Client(void* arg)
+void Client(int n)
 {
-    int n = cast(int)arg, bytes, replies;
+    int bytes, replies;
+
+    usleep(1);  // Let server start
 
     TcpSocket ts = new TcpSocket(new InternetAddress("127.0.0.1",PORT));
 
@@ -70,8 +61,6 @@ int Client(void* arg)
     ts.close();
 
     writefln("replies: ",replies,"\tbytes: ",bytes);
-
-    return(0);
 }
 
 TcpSocket serverSocket()
@@ -79,5 +68,5 @@ TcpSocket serverSocket()
     TcpSocket ts = new TcpSocket();
     ts.bind(new InternetAddress(PORT));
     ts.listen(0);
-    return(ts);
+    return ts;
 }
