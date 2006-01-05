@@ -1,16 +1,17 @@
 /* The Computer Language Shootout
  * http://shootout.alioth.debian.org/
  * Contributed by Branimir Maksimovic
- *
- *  I didn't perform error checking or created full blown classes
- *  in order to keep program as small as possible
  */
 
 #include <pthread.h>
+#include <errno.h>
 #include <cstdlib>
 #include <iostream>
 #include <ostream>
+#include <deque>
 using namespace std;
+
+#define STACK_SIZE 65536
 
 extern "C"
 {
@@ -77,7 +78,7 @@ Cond c;
 class Thread{
 public:
   Thread(Thread* t=0)
-  :next_(t),message(0),msg_arrived(false),stop_(false)
+  :next_(t),message(0),stop_(false)
   {
   }
 
@@ -85,7 +86,18 @@ public:
 
   void start()
   {
-    pthread_create(&tid,0,thread_run,this);
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
+    pthread_attr_setstacksize(&attrs,STACK_SIZE);
+    while(int err = pthread_create(&tid,&attrs,thread_run,this))
+    {
+      if(err == EAGAIN)
+      {
+        cout<<"pthread create EAGAIN...\n";
+        sleep(1);
+      }
+      else exit(EXIT_FAILURE);
+    }
   }
   void join()
   {
@@ -102,10 +114,8 @@ public:
   void push(int msg)
   {
     mutex.lock();
-    message = msg;
-    msg_arrived = true;
+    message.push_front(msg);
     monitor.signal();
-    while(msg_arrived)monitor.wait(mutex);
     mutex.unlock();
   }
 
@@ -114,27 +124,28 @@ public:
     while(true)
     {
       mutex.lock();
-      while(!msg_arrived && !stop_)monitor.wait(mutex);
-      if(stop_)break;
+      while(message.empty() && !stop_)monitor.wait(mutex);
+      if(stop_)
+      {
+        mutex.unlock();
+        break;
+      }  
       if(next_)
       {
         next_->mutex.lock();
-        next_->message=message+1;
-        next_->msg_arrived=true;
+        next_->message.push_front(message.back()+1);
         next_->monitor.signal();
-        while(next_->msg_arrived)next_->monitor.wait(next_->mutex);
         next_->mutex.unlock();
       }
       else
       {
         gs.m.lock();
-        gs.sum+=message+1;
+        gs.sum+=message.back()+1;
         gs.increments++;
         gs.c.signal();
         gs.m.unlock();
       }
-      msg_arrived=false;
-      monitor.signal();
+      message.pop_back();
       mutex.unlock();
     }
     return 0;
@@ -144,8 +155,7 @@ private:
   Cond monitor;
   Mutex mutex;
   Thread* next_;
-  int message;
-  bool msg_arrived;
+  deque<int> message;
   pthread_t tid;
   bool stop_;
 };
@@ -185,6 +195,7 @@ int main(int argc, char* argv[])
   gs.m.unlock();
 
   tmp = first;
+
   while(tmp)
   {
     tmp->stop();
