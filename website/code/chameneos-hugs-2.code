@@ -1,0 +1,65 @@
+<span class="com">{- The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   contributed by Chris Kuklewicz, 28 Dec 2005, 2 Jan 2005</span>
+<span class="com">   modified by Einar Karttunen, 31 Dec 2005</span>
+<span class="com"></span>
+<span class="com">   This entry uses a separate thread to manage the meetings.</span>
+<span class="com">-}</span>
+
+<span class="kwa">import</span> Control.Concurrent
+<span class="kwa">import</span> Control.Monad
+<span class="kwa">import</span> System <span class="sym">(</span>getArgs<span class="sym">)</span>
+
+<span class="kwa">data</span> Color <span class="sym">=</span> Red <span class="sym">|</span> Yellow <span class="sym">|</span> Blue <span class="sym">|</span> Faded <span class="kwa">deriving</span> <span class="sym">(</span>Eq<span class="sym">)</span>
+
+complement a      b <span class="sym">|</span> a<span class="sym">==</span>b <span class="sym">=</span> a
+complement Red    b        <span class="sym">=</span> if b<span class="sym">==</span>Yellow <span class="kwa">then</span> Blue   <span class="kwa">else</span> Yellow
+complement Yellow b        <span class="sym">=</span> if b<span class="sym">==</span>Blue   <span class="kwa">then</span> Red    <span class="kwa">else</span> Blue
+complement Blue   b        <span class="sym">=</span> if b<span class="sym">==</span>Red    <span class="kwa">then</span> Yellow <span class="kwa">else</span> Red
+
+<span class="com">{- Ch : fast unordered channel implementation -}</span>
+<span class="kwa">newtype</span> Ch a <span class="sym">=</span> Ch <span class="sym">(</span>MVar <span class="sym">[</span>a<span class="sym">],</span> MVar a<span class="sym">)</span>
+
+newCh <span class="sym">=</span> liftM2 <span class="sym">(,) (</span>newMVar <span class="sym">[])</span> newEmptyMVar <span class="sym">&gt;&gt;=</span> return.Ch
+
+readCh <span class="sym">(</span>Ch <span class="sym">(</span>w<span class="sym">,</span>r<span class="sym">)) =</span> takeMVar w <span class="sym">&gt;&gt;=</span> \lst <span class="sym">-&gt;</span>
+  <span class="kwa">case</span> lst <span class="kwa">of</span> <span class="sym">(</span>x<span class="sym">:</span>xs<span class="sym">) -&gt;</span> putMVar w xs <span class="sym">&gt;&gt;</span> return x
+              <span class="sym">[]     -&gt;</span> putMVar w <span class="sym">[] &gt;&gt;</span> takeMVar r
+
+writeCh <span class="sym">(</span>Ch <span class="sym">(</span>w<span class="sym">,</span>r<span class="sym">))</span> x <span class="sym">=</span> <span class="kwa">do</span>
+  ok <span class="sym">&lt;-</span> tryPutMVar r x <span class="slc">-- opportunistic, helps for this problem</span>
+  unless ok $ takeMVar w <span class="sym">&gt;&gt;=</span> \lst <span class="sym">-&gt;</span> <span class="kwa">do</span>
+    ok <span class="sym">&lt;-</span> tryPutMVar r x  <span class="slc">-- safe inside take/put</span>
+    putMVar w $ if ok <span class="kwa">then</span> lst <span class="kwa">else</span> <span class="sym">(</span>x<span class="sym">:</span>lst<span class="sym">)</span>
+
+main <span class="sym">=</span> <span class="kwa">do</span>
+  args <span class="sym">&lt;-</span> getArgs
+  goMeet <span class="sym">&lt;-</span> newCh
+  <span class="kwa">let</span> meetings <span class="sym">=</span> if null args <span class="kwa">then</span> <span class="sym">(</span><span class="num">1000000</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwa">else</span> <span class="sym">(</span>read . head<span class="sym">)</span> args
+
+      meetingPlace <span class="sym">=</span> replicateM_ meetings match <span class="sym">&gt;&gt;</span> fade
+        <span class="kwa">where</span> match <span class="sym">=</span> <span class="kwa">do</span> <span class="sym">(</span>color1<span class="sym">,</span>pobox1<span class="sym">) &lt;-</span> readCh goMeet
+                         <span class="sym">(</span>color2<span class="sym">,</span>pobox2<span class="sym">) &lt;-</span> readCh goMeet
+                         putMVar pobox1 color2
+                         putMVar pobox2 color1
+              fade <span class="sym">=</span> <span class="kwa">do</span> <span class="sym">(</span>_<span class="sym">,</span>pobox<span class="sym">) &lt;-</span> readCh goMeet
+                        putMVar pobox Faded
+                        fade
+
+      spawn startingColor <span class="sym">=</span> <span class="kwa">do</span>
+        metVar <span class="sym">&lt;-</span> newEmptyMVar
+        pobox  <span class="sym">&lt;-</span> newEmptyMVar
+        <span class="kwa">let</span> creature havemet color <span class="sym">=</span> <span class="kwa">do</span>
+              writeCh goMeet <span class="sym">(</span>color<span class="sym">,</span>pobox<span class="sym">)</span>
+              other <span class="sym">&lt;-</span> takeMVar pobox
+              <span class="kwa">case</span> other <span class="kwa">of</span>
+                Faded <span class="sym">-&gt;</span> <span class="kwa">let</span> color <span class="sym">=</span> Faded <span class="kwa">in</span> putMVar metVar havemet
+                _     <span class="sym">-&gt; (</span>creature  $<span class="sym">! (</span>havemet<span class="sym">+</span><span class="num">1</span><span class="sym">))</span> $<span class="sym">! (</span>complement color other<span class="sym">)</span>
+        forkIO $ creature <span class="num">0</span> startingColor
+        return metVar
+
+  forkIO meetingPlace
+  metVars <span class="sym">&lt;-</span> mapM spawn <span class="sym">[</span>Blue<span class="sym">,</span>Red<span class="sym">,</span>Yellow<span class="sym">,</span>Blue<span class="sym">]</span>
+  total <span class="sym">&lt;-</span> liftM sum $ mapM takeMVar metVars
+  print total
