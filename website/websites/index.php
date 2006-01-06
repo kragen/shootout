@@ -99,7 +99,7 @@ href="./sandbox/">&nbsp;The&nbsp;Sandbox&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#84
 <p>Look back at the old 2001 Doug Bagley Benchmarks</p>
 <h5>
 <a class="arevOld" 
-title="Look back at the Old 2001 Doug Bagley Benchmarks"
+title="Look back at the old 2001 Doug Bagley Benchmarks"
 href="./old/">&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
 </h5>
 </div>
