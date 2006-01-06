@@ -46,18 +46,6 @@ $Intro = & new Template(ABOUT_PATH);
 $Intro->set('Sort', $S);
 $Body->set('Intro', $Intro->fetch(SITE_NAME.SEPARATOR.'intro.about'));
 
-$NavBar = & new Template(ABOUT_PATH);
-$NavBar->set('Sort', $S);
-if (SITE_NAME == 'core' || SITE_NAME == 'gp4'){
-   $Body->set('NavBar', $NavBar->fetch('navbar.about'));
-} else {
-   $Body->set('NavBar', $NavBar->fetch('navbar-slim.about'));
-}
-
-$Furthermore = & new Template(ABOUT_PATH);
-$Furthermore->set('Sort', $S);
-$Body->set('Furthermore', $Furthermore->fetch(SITE_NAME.SEPARATOR.'further.about'));
-
 $Feature = & new Template(ABOUT_PATH);
 $Feature->set('Sort', $S);
 $Body->set('Feature', $Feature->fetch('feature.about'));
@@ -68,13 +56,7 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
-if (SITE_NAME=='core' || SITE_NAME == 'gp4'){
-   $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
-} elseif (SITE_NAME=='great') {
-   $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-} else {
-   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-}
+$metaRobots = '<meta name="robots" content="follow,noindex,noarchive" /><meta name="revisit" content="1 days" />';
 
 $Page->set('Robots', $metaRobots);
 echo $Page->fetch('homepage.tpl.php');

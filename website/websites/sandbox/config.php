@@ -19,6 +19,7 @@ define('IMAGE_PATH', '../');
 define('VERSION_PATH', '../../about/');
 
 define('CORE_SITE', '../');
+define('DEBIAN_SITE', '../debian/');
 define('SANDBOX_SITE', './');
 define('GREAT_SITE', '../great/');
 define('OLD_SITE', '../old/');
@@ -41,8 +42,8 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'sandbox');
-define('SITE_TITLE','The Computer Language Shootout Sandbox');
-define('BANNER_TITLE','The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Sandbox');
+define('SITE_TITLE','Debian AMD&#8482; Sempron&#8482; The Sandbox');
+define('BANNER_TITLE','Debian&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>The&nbsp;Sandbox');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');

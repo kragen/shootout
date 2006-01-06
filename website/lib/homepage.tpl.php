@@ -7,13 +7,9 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <?=$Robots;?>
 
-<!-- Benchmarking programming languages -->
-<meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
-<meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
-
 <title><?=$PageTitle;?></title>
-<link rel="stylesheet" type="text/css" href="<?=CORE_SITE;?>benchmark.css" />
-<link href="<?=CORE_SITE;?>/feeds/rss.xml" rel="alternate" type="application/rss+xml" title="Computer Language Shootout" />
+<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark.css" />
+<link href="<?=IMAGE_PATH;?>/feeds/rss.xml" rel="alternate" type="application/rss+xml" title="Computer Language Shootout" />
 <link rel="shortcut icon" href="./favicon.ico" />
 <style type="text/css" media="all">
    .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
@@ -37,17 +33,6 @@
 <a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
-
-<a href="http://jigsaw.w3.org/css-validator/">
-   <img src="<?=IMAGE_PATH;?>vcss.png" alt="Valid CSS!" height="31" width="88" />
-</a>
-
-<a href="http://validator.w3.org/check?uri=referer">
-   <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
-</a>
-
-<a href="http://feedvalidator.org/">
-   <img src="<?=IMAGE_PATH;?>valid-rss.png" alt="Valid RSS" title="Valid RSS" /></a>
 </p>
 
 </body>

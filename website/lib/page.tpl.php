@@ -12,8 +12,8 @@
 <title><?=$PageTitle;?></title>
 <link rel="shortcut icon" href="./favicon.ico" />
 <style type="text/css" media="all">
-   @import "<?=CORE_SITE;?>highlight.css";
-   @import "<?=CORE_SITE;?>benchmark.css";
+   @import "<?=IMAGE_PATH;?>highlight.css";
+   @import "<?=IMAGE_PATH;?>benchmark.css";
    .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
    .arevCore { background-color: <?=REV_COLOR_CORE;?>; }
    .arevGreat { background-color: <?=REV_COLOR_GREAT;?>; }
@@ -37,14 +37,6 @@
 <p class="center">
 <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
-</a>
-
-<a href="http://jigsaw.w3.org/css-validator/">
-   <img src="<?=IMAGE_PATH;?>vcss.png" alt="Valid CSS!" height="31" width="88" />
-</a>
-
-<a href="http://validator.w3.org/check?uri=referer">
-   <img src="<?=IMAGE_PATH;?>valid-xhtml10.png" alt="Valid XHTML 1.0!" height="31" width="88" />
 </a>
 </p>
 </body>

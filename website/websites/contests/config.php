@@ -19,6 +19,7 @@ define('IMAGE_PATH', '../');
 define('VERSION_PATH', '../../about/');
 
 define('CORE_SITE', '../');
+define('DEBIAN_SITE', '../debian/');
 define('SANDBOX_SITE', '../sandbox/');
 define('GREAT_SITE', '../great/');
 define('OLD_SITE', '../old/');

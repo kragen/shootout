@@ -280,7 +280,7 @@ We still show the original benchmarks on Debian <span><a class="arevOld" title="
 We show <strong>more languages</strong> and <strong>experimental benchmarks</strong> on Debian <span><a class="arevSandbox" title="Experimental benchmarks and obscure languages" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.
 </p>
 <p>
-The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website has somewhat different language implementations (and different versions of the same language implementation) than the <span><a class="arevCore" title="Debian Linux on AMD Sempron" href="<?=CORE_SITE;?>index.php" >The Computer Language Shootout&nbsp;</a></span> website.</p>
+The <span><a class="arevGP4" title="Gentoo Linux on Intel Pentium 4" href="<?=GP4_SITE;?>index.php" >&nbsp;GP4 Computer Language Shootout&nbsp;</a></span> website has somewhat different language implementations (and different versions of the same language implementation) than the <span><a class="arevCore" title="Debian Linux on AMD Sempron" href="<?=DEBIAN_SITE;?>index.php" >The Computer Language Shootout&nbsp;</a></span> website.</p>
 </td></tr>
 
 

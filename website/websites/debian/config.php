@@ -18,10 +18,11 @@ define('IMAGE_PATH', '../');
 define('VERSION_PATH', '../../about/');
 
 define('CORE_SITE', '../');
+define('DEBIAN_SITE', './');
 define('SANDBOX_SITE', '../sandbox/');
 define('GREAT_SITE', '../great/');
 define('OLD_SITE', '../old/');
-define('CONTESTS_SITE', './contests/');
+define('CONTESTS_SITE', '../contests/');
 define('GP4_SITE', '../gp4/');
 
 

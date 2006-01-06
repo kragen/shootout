@@ -8,19 +8,14 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <!-- // TAG /////////////////////////////////////////////////// -->
 
 <table class="div" >
-<tr><td colspan="2"><?=$Intro;?></td></tr>
-<tr><td colspan="2"><?=$NavBar;?></td></tr>
 
-<tr><td><h4 class="rev"><a class="arev" href="#bench" name="bench">&nbsp;<?=$Headline;?></a></h4></td></tr>
+<tr><td colspan="2"><?=$Intro;?></td></tr>
 <tr><td>
 <p class="rs">Most recent measurement: 
 <strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
-<? printf(' %s GMT', gmdate("g:i a", $Measured)) ?>
-&nbsp;
-<a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a>
-</p>
-<?=$Furthermore;?>
+<? printf(' %s GMT', gmdate("g:i a", $Measured)) ?></p>
 </td></tr>
+
 </table>
 
 <!-- // TABLE ////////////////////////////////////////////// -->
@@ -173,11 +168,5 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 </td></tr>
 <tr><td>&nbsp;</td></tr>
 </table>
-
-<!-- // ABOUT /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about <?=$AboutName;?></a></h4></td></tr>
-<tr><td><?=$About;?></td></tr>  
 
 </table>
