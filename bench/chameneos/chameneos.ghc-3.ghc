@@ -1,0 +1,74 @@
+{-# OPTIONS -O2 -funbox-strict-fields #-}
+{- The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by Chris Kuklewicz, 28 Dec 2005, 2 Jan 2006
+   modified by Einar Karttunen, 31 Dec 2005
+   further modified by Chris Kuklewicz to use Int# on 6 Jan 2006
+   further modified by Simon Marlow using -funbox-strict-fields, and
+   avoiding use of explicit unboxed Int#.
+
+   This entry uses a separate thread to manage the meetings.
+-}
+
+import Control.Concurrent
+import Control.Monad
+import System (getArgs)
+
+{- Ch : fast unordered channel implementation -}
+data Ch a = Ch !(MVar [a]) !(MVar a)
+
+newCh = do w <- newMVar []; r <- newEmptyMVar; return (Ch w r)
+
+readCh (Ch w r) = do 
+  lst <- takeMVar w
+  case lst of (x:xs) -> do putMVar w xs; return x
+              []     -> do putMVar w []; takeMVar r
+
+writeCh (Ch w r) x = do
+  ok <- tryPutMVar r x -- opportunistic, helps for this problem
+  unless ok $ do
+    lst <- takeMVar w
+    ok <- tryPutMVar r x  -- safe inside take/put
+    putMVar w $! if ok then lst else (x:lst)
+
+data Element = E !Int !(MVar Int)
+
+red = 0; yellow = 1; blue = 2; faded = 3
+
+complement :: Int -> Int -> Int
+complement a b | a == b    = a
+               | otherwise = 3 - a - b
+
+main = do 
+  args <- getArgs
+  goMeet <- newCh
+  let meetings = if null args then (1000000::Int) else (read . head) args
+
+      meetingPlace = replicateM_ meetings match >> fade
+        where match = do E color1 pobox1 <- readCh goMeet
+                         E color2 pobox2 <- readCh goMeet
+                         putMVar pobox1 color2
+                         putMVar pobox2 color1
+              fade = do E _ pobox <- readCh goMeet
+                        putMVar pobox faded
+                        fade
+
+      spawn :: Int -> IO (MVar Int)
+      spawn startingColor = do
+        metVar <- newEmptyMVar
+        pobox  <- newEmptyMVar
+        let creature havemet color = do
+                havemet `seq` color `seq` return ()
+                writeCh goMeet (E color pobox)
+                other <- takeMVar pobox
+                if other == faded
+                   then putMVar metVar havemet
+                   else creature (havemet+1) (complement color other)
+        forkIO $ creature 0 startingColor
+        return metVar
+
+  forkIO meetingPlace
+  metVars <- mapM spawn [blue,red,yellow,blue]
+  total <- liftM sum $ mapM takeMVar metVars
+  print total
