@@ -25,6 +25,7 @@
 
 <table class="hf"><tr>
 <td><h2>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks</h2></td>
+<td class="hftag"><a href="./feeds/rss.xml"><img src="./orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a></td>
 </tr></table>
 
 <div>
