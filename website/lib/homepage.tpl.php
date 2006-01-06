@@ -9,7 +9,6 @@
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark.css" />
-<link href="<?=IMAGE_PATH;?>/feeds/rss.xml" rel="alternate" type="application/rss+xml" title="Computer Language Shootout" />
 <link rel="shortcut icon" href="./favicon.ico" />
 <style type="text/css" media="all">
    .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
