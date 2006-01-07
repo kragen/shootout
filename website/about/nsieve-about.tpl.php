@@ -1,3 +1,6 @@
+<p><strong>diff</strong> program output N = 2 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+</p>
+
 <p>Each program should count the prime numbers from 2 to M, using the same na&#239;ve Sieve of Eratosthenes algorithm:</p>
 <ul>
   <li>create a sequence of M boolean flags</li>
@@ -13,13 +16,7 @@
    </li>
 </ul>
 
-<p>Calculate 3 prime counts, for M = 2<sup>N</sup> &#215; 10000, 2<sup>N-1</sup> &#215; 10000, and 2<sup>N-2</sup> &#215; 10000. Correct output N = 2 is:</p>
-<pre>
-Primes up to    40000    4203
-Primes up to    20000    2262
-Primes up to    10000    1229
-</pre>
-<br />
+<p>Calculate 3 prime counts, for M = 2<sup>N</sup> &#215; 10000, 2<sup>N-1</sup> &#215; 10000, and 2<sup>N-2</sup> &#215; 10000.</p>
 
 <p>The basic benchmark was described in "A High-Level Language Benchmark." BYTE, September 1981, p. 180, Jim Gilbreath.</p>
 <p>Of course, there are more efficient implmentations of the <em>Sieve of Eratosthenes</em>, and there are more efficient ways to sieve prime numbers, for example <a href="http://www.ams.org/journal-getitem?pii=S0025-5718-03-01501-1">"Prime sieves using binary quadratic forms"</em></a>.</p>

@@ -1,3 +1,6 @@
+<p><strong>diff</strong> program output N = 7 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+</p>
+
 <p>Each program should calculate this TAK function using the same na&#239ve floating-point recursive-algorithm</p>
 <pre>
 TAK(x,y,z)
@@ -5,18 +8,8 @@ TAK(x,y,z)
   y >= x  = z
 </pre>
 <br />
-<p>Calculate TAK(N&#215;3.0, N&#215;2.0, N&#215;1.0). Correct output N = 7 is: </p>
-<pre>14.0
-</pre><br />
-<p>Correct output N = 8 is:</p>
-<pre>9.0
-</pre><br />
-<p>Correct output N = 9 is:</p>
-<pre>18.0
-</pre><br />
-<p>Correct output N = 10 is:</p>
-<pre>11.0
-</pre><br />
+<p>Calculate TAK(N&#215;3.0, N&#215;2.0, N&#215;1.0).</p>
+
 
 <p>The tak benchmark is described in <a href="http://www.dreamsongs.com/NewFiles/Timrep.pdf">Performance and Evaluation of Lisp Systems</a>, Richard P. Gabriel, 1985, page 81. (1.1MB pdf)</p>
 

@@ -1,3 +1,6 @@
+<p><strong>diff</strong> program output N = 10 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+</p>
+
 <p>Each program will be started first with argument N negated (reply to requests), and then once more with argument N at a lower priority (make requests).</p>
 <ul>
    <li>N&#60;=0, start a TCP server that will reply to requests
@@ -41,9 +44,3 @@
 </ul>    
 <br/>
 <p>Each program should leave the sockets available for immediate reuse.</p>
-
-<p>Correct output N = 10 is:</p>
-<pre>
-replies: 100    bytes: 4384000
-</pre>
-<br/>

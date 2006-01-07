@@ -1,3 +1,6 @@
+<p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+</p>
+
 <p>Each program should be implemented the <a
   href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=random&amp;lang=gcc&amp;sort=<?=$Sort;?>">C program</a>.</p>
 
@@ -17,12 +20,6 @@ are appropriately chosen integral constants.
 
 S[j] (seed) is calculated from S[j-1]
 R (random number) is normalized to the interval [N,0].
-</pre>
-<br />
-
-<p>Correct output N = 1000 is</p>
-<pre>
-8.163294467
 </pre>
 <br />
 

@@ -1,3 +1,6 @@
+<p><strong>diff</strong> program output N = 10 with this 1KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+</p>
+
 <p>Each program should</p>
 <ul>
    <li>define a tree node class and methods, a tree node record and procedures, or an algebraic data type and functions, or&#8230;</li>
@@ -17,10 +20,6 @@
 
 <p>There are reference implementations in OCaml, C#, and PHP.</p>
 <br />
-
-<p>Correct output N = 10 is in this 1KB 
-<a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=output">output file</a> so you can check the spacing and tabs.</p>
-<br/>
 
 <p>The binary-trees benchmark is a simplistic adaptation of <a href="http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_bench/applet/GCBench.java">Hans Boehm's GCBench</a>,
 which in turn was adapted from a benchmark by John Ellis and Pete Kovac.</p>

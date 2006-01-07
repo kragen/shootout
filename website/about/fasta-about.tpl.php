@@ -1,3 +1,6 @@
+<p><strong>diff</strong> program output N = 1000 with this 10KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+</p>
+
 <p>Each program should</p>
 <ul>
   <li>encode the expected cumulative probabilities for 2 alphabets</li>
@@ -5,10 +8,6 @@
   <li>generate DNA sequences, by copying from a given sequence</li>
   <li>write 3 sequences line-by-line in <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a></li>
 </ul>
-
-
-<p>Correct output N = 1000 is in this 10KB 
-<a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>&amp;file=output">output file</a>.</p>
 
 <p>We'll use the generated FASTA file as input for other benchmarks (<a href="benchmark.php?test=revcomp&amp;lang=all&amp;sort=<?=$Sort;?>">reverse-complement</a>, <a href="benchmark.php?test=knucleotide&amp;lang=all&amp;sort=<?=$Sort;?>">k-nucleotide</a>).</p>
 
