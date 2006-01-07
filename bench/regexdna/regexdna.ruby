@@ -2,7 +2,6 @@
 # http://shootout.alioth.debian.org/
 #
 # contributed by jose fco. gonzalez
-
 seq = STDIN.readlines.join
 ilen = seq.size
 
@@ -16,7 +15,7 @@ clen = seq.length
   /ag[act]gtaaa|tttac[agt]ct/i,
   /agg[act]taaa|ttta[agt]cct/i,
   /aggg[acg]aaa|ttt[cgt]ccct/i,
-  /agggt[cgt]aa|tt[avg]accct/i,
+  /agggt[cgt]aa|tt[acg]accct/i,
   /agggta[cgt]a|t[acg]taccct/i,
   /agggtaa[cgt]|[acg]ttaccct/i
 ].each {|f| puts "#{f.source} #{seq.scan(f).size}" }
