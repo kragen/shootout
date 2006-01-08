@@ -19,5 +19,5 @@
 <p>Calculate 3 prime counts, for M = 2<sup>N</sup> &#215; 10000, 2<sup>N-1</sup> &#215; 10000, and 2<sup>N-2</sup> &#215; 10000.</p>
 
 <p>The basic benchmark was described in "A High-Level Language Benchmark." BYTE, September 1981, p. 180, Jim Gilbreath.</p>
-<p>Of course, there are more efficient implmentations of the <em>Sieve of Eratosthenes</em>, and there are more efficient ways to sieve prime numbers, for example <a href="http://www.ams.org/journal-getitem?pii=S0025-5718-03-01501-1">"Prime sieves using binary quadratic forms"</em></a>.</p>
+<p>Of course, there are more efficient implementations of the <em>Sieve of Eratosthenes</em>, and there are more efficient ways to sieve prime numbers, for example <a href="http://www.ams.org/journal-getitem?pii=S0025-5718-03-01501-1">"Prime sieves using binary quadratic forms"</em></a>.</p>
 <p>For more information see Eric W. Weisstein, "Sieve of Eratosthenes." From <a href="http://mathworld.wolfram.com"><em>MathWorld</em></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/SieveofEratosthenes.html">http://mathworld.wolfram.com/SieveofEratosthenes.html</a> <a href="http://mathworld.wolfram.com/PrimeCountingFunction.html">http://mathworld.wolfram.com/PrimeCountingFunction.html</a></p>
