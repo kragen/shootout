@@ -1,0 +1,301 @@
+/* The Great Computer Language Shootout 
+   http://shootout.alioth.debian.org/
+
+   C# reference implementation contributed by Isaac Gouy
+
+   converted to D by Dave Fladebo
+   compile: dmd -O -inline -release health2.d
+*/
+
+import std.stdio, std.c.stdlib;
+
+int main(char[][] args)
+{
+    int n = args.length > 1 ? atoi(args[1]) : 100;
+
+    HealthcareRegion healthcareSystem = HealthcareRegion.Create();
+
+    for(int i = 0; i < n; i++) 
+        healthcareSystem.TransferPatients();
+
+    Totals t = healthcareSystem.AccumulateTotals();
+
+    writefln("Patients: ", t.patients ); 
+    writefln("Time:     ", t.hospitalTime ); 
+    writefln("Visits:   ", t.hospitalVisits ); 
+
+    writefln("\nTreatment Queue - Remaining Treatment Time");
+    foreach(Patient p; healthcareSystem.TreatmentQueue())
+        writefln(p.remainingTime, "\tanonymous patient");
+
+    return 0;
+}
+
+class SimpleList(T)
+{
+private:
+    struct SimpleNode
+    {
+        T item;
+        SimpleNode* next;
+    }
+
+    SimpleNode* first, last;
+
+public:
+    void Add(T o)
+    {
+        SimpleNode* a = new SimpleNode;
+        a.item = o;
+        if(first is null) first = a;
+        else last.next = a;
+        last = a;
+    }
+
+    void Remove(T o)
+    {
+        if(first)
+        {
+            SimpleNode* t = first.next;
+            if(first.item is o)
+            {
+                delete first;
+                first = t;
+            }
+            else
+            {
+                SimpleNode* p = first;
+                while(t && !(t.item is o))
+                {
+                    p = t; t = t.next;
+                }
+                if (t && t.item is o)
+                {
+                    p.next = t.next;
+                    if(last is t) last = p;
+                    delete t;
+                }
+            }
+        }
+    }
+
+    void Clear() { delete first, last; }
+
+    int opApply(int delegate(inout T) dg)
+    {
+        int result = 0;
+
+        for(SimpleNode* n = first; n; n = n.next)
+        {
+            result = dg(n.item);
+            if (result) break;
+        }
+
+        return result;
+    }
+}
+
+struct Patient
+{
+    static Patient opCall() { Patient p; return p; }
+    int remainingTime, hospitalTime, hospitalVisits;
+}
+
+alias SimpleList!(Patient) PatientList;
+
+class HealthcareRegion 
+{
+private:
+    const int LEVELS = 5, DISTRICTS = 4;
+    HealthcareRegion[] districts;
+    Hospital localHospital;
+
+public:
+    static HealthcareRegion Create() { return HealthcareRegion.Create(LEVELS, 0, 42); }
+
+    static HealthcareRegion Create(int level, int seed1, int seed2)
+    {
+        HealthcareRegion r = null;
+        if(level > 0)
+        {
+            r = new HealthcareRegion(level, seed1*seed2);
+            for(int i = r.districts.length-1; i >= 0; i--)
+                r.districts[i] = Create(level-1, (seed1*4)+i+1, seed2);
+        }
+        return r;
+    }
+
+    this(int level, int s)
+    {
+        districts = new HealthcareRegion[DISTRICTS];
+        localHospital = new Hospital(level == LEVELS, level, s);
+    }
+
+    PatientList TransferPatients()
+    {
+        for(int i = districts.length-1; i >= 0; i--)
+            if(districts[i])
+                foreach(Patient p; districts[i].TransferPatients())
+                    localHospital.NewArrival(p);
+
+        localHospital.TriageExaminationTreatment(); 
+
+        return localHospital.RegionalTransferPatients();
+    }
+
+    Totals AccumulateTotals()
+    {
+        Totals t = new Totals();
+        for(int i = districts.length-1; i >= 0; i--)
+            if(districts[i])
+                t += districts[i].AccumulateTotals();
+
+        localHospital.AccumulateTotals(t);
+
+        return t;
+    }
+
+    PatientList TreatmentQueue() { return localHospital.TreatmentQueue(); }
+}
+
+class Hospital
+{
+public:
+    this(bool hasNoRegionalHospital, int level, int seed)
+    {
+        this.hasNoRegionalHospital = hasNoRegionalHospital;
+        availableStaff = 1 << (level - 1);
+        triage = new PatientList;
+        examination = new PatientList;
+        treatment = new PatientList;
+        transfers = new PatientList;
+        discharged = new Totals();
+        this.seed = seed;
+    }
+
+    void TriageExaminationTreatment()
+    {
+        DischargePatients();
+        TreatOrTransferPatients();
+        TriagePatients();
+
+        if(genRandom(1.0) > 0.7) NewArrival(Patient());
+    }
+
+    PatientList RegionalTransferPatients()
+    {
+        return transfers;
+    }
+
+    void AccumulateTotals(Totals t)
+    {
+        foreach(Patient p; triage) t += p;
+        foreach(Patient p; examination) t += p;
+        foreach(Patient p; treatment) t += p;
+        t += discharged;
+    }
+
+    void NewArrival(Patient p)
+    {
+        p.hospitalVisits++;
+        if(availableStaff > 0)
+        {
+            availableStaff--;
+            p.remainingTime = 3;
+            p.hospitalTime += 3;
+            examination.Add(p);
+        } else {
+            triage.Add(p);
+        }
+    }
+
+    PatientList TreatmentQueue() { return treatment; }
+
+private:
+    PatientList triage, examination, treatment, transfers;
+    Totals discharged;
+    int availableStaff;
+    bool hasNoRegionalHospital;
+
+    void DischargePatients()
+    {
+        foreach(inout Patient p; treatment)
+        {
+            p.remainingTime -= 1;
+            if(!p.remainingTime)
+            {
+                availableStaff++;
+                discharged += p;
+                treatment.Remove(p);
+            }
+        }
+    }
+
+    void TreatOrTransferPatients()
+    {
+        transfers.Clear();
+
+        foreach(inout Patient p; examination)
+        {
+            p.remainingTime -= 1;
+
+            if(!p.remainingTime)
+            {
+                // no transfer
+                if(genRandom(1.0) > 0.1 || hasNoRegionalHospital)
+                {
+                    p.remainingTime = 10;
+                    p.hospitalTime += 10;
+                    treatment.Add(p);
+                } else {
+                // transfer
+                    availableStaff++;
+                    transfers.Add(p);
+                }
+                examination.Remove(p);
+            }
+        }
+    }
+
+    void TriagePatients()
+    {
+        foreach(inout Patient p; triage)
+        {
+            if(availableStaff > 0)
+            {
+                availableStaff--;
+                p.remainingTime = 3;
+                p.hospitalTime += 3;
+                examination.Add(p);
+                triage.Remove(p);
+            } else {
+                p.hospitalTime++;
+            }
+        }
+    }
+
+    int seed;
+    const int IM = 139968, IA = 3877, IC = 29573;
+    double genRandom(double max) { return(max * (seed = (seed * IA + IC) % IM) / IM); }
+}
+
+class Totals 
+{
+    private long patients, hospitalTime, hospitalVisits;
+
+    public Totals opAddAssign(Totals b)
+    {
+        patients += b.patients;
+        hospitalTime += b.hospitalTime;
+        hospitalVisits += b.hospitalVisits;
+        return this;
+    }
+
+    public Totals opAddAssign(Patient p)
+    {
+        patients++;
+        hospitalTime += p.hospitalTime;
+        hospitalVisits += p.hospitalVisits;
+        return this;
+    }
+}
