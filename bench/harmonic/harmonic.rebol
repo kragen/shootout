@@ -21,6 +21,3 @@ harmonic: func [n /local sum] [
 N: either N: system/script/args [to-integer N][1]
 
 print round/to harmonic N 0.000000001
-
-quit/return 0
-

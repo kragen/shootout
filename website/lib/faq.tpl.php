@@ -47,7 +47,7 @@
 
 <p><strong>Before</strong> working on the benchmark programs, read these notes <a href="#implement"><strong>"How should I implement&#8230;?"</strong></a>
 and when ready follow these detailed instructions <a href="#contribute"><strong>"How can I contribute a program?"</strong></a></p>
-
+<p><strong>Be Respectful!</strong> Don't ridicule other people's programs - just contribute a better program yourself.</p>
 
 <p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>. We will consider fully-developed <a href="#newbench"><strong>ideas for new benchmarks</strong></a>.</p>
 <p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll decide not to add the new benchmark. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
