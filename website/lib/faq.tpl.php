@@ -41,14 +41,13 @@
 <tr><td><h3 class="rev"><a class="arev" href="#help" name="help">&nbsp;Where can I discuss&#8230; contribute&#8230;?</a></h3></td></tr>
 
 <tr><td>
+<p><strong>Before</strong> working on a benchmark program, read these notes <a href="#implement"><strong>"How should I implement&#8230;?"</strong></a>
+and then follow these detailed instructions <a href="#contribute"><strong>"How can I contribute a program?"</strong></a></p>
+<p>Be Respectful! Don't ridicule other people's programs - just contribute a better program yourself.</p>
+
 <p><strong>Discuss</strong> the benchmarks or <strong>ask for help</strong> in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
 <p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Report a Bug</strong></a>.</p> 
 <p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Request</strong></a>.</p> 
-
-<p><strong>Before</strong> working on the benchmark programs, read these notes <a href="#implement"><strong>"How should I implement&#8230;?"</strong></a>
-and when ready follow these detailed instructions <a href="#contribute"><strong>"How can I contribute a program?"</strong></a></p>
-<p><strong>Be Respectful!</strong> Don't ridicule other people's programs - just contribute a better program yourself.</p>
-
 <p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>. We will consider fully-developed <a href="#newbench"><strong>ideas for new benchmarks</strong></a>.</p>
 <p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll decide not to add the new benchmark. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
 </td></tr>

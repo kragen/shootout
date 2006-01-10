@@ -40,8 +40,8 @@ We can't - <strong>we measure particular programs</strong>.</p>
 <h4>Contribute:</h4>
 <p>these programming language comparisons are only as good as the programs contributed by the community</p>
 <ul>
-<li>you can <a href="faq.php?&#35;help" title="FAQ: How can I help?">contribute faster more-elegant programs</a></li>
-<li>you can <a href="faq.php?&#35;newbench" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a></li>
+<li>you can <a href="faq.php?&#35;help" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
+<li>you can <a href="faq.php?&#35;newbench" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
 </ul>
 </div>
 
@@ -55,34 +55,39 @@ We can't - <strong>we measure particular programs</strong>.</p>
 </ul>
 </div>
 
-<table class="div">
+<div>
+<h4>Start:</h4>
+<p>click Sempron&#8482; or Pentium&#174; to browse the current benchmarks, programs and languages</p>
+<table>
 <tr>
 <td>
 <h5>
 <a class="arevCore" 
-title="Use the Debian AMD&#8482; Sempron&#8482; Computer Language Shootout"
+title="Browse the Debian AMD&#8482; Sempron&#8482; Computer Language Shootout"
 href="./debian/">&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
 <p><span class="s">spectral-norm N=500</span></p>
 <a href="./debian/"><img src="spectralnorm_debian.png"
    alt=""
-   title="Use the Debian AMD&#8482; Sempron&#8482; Computer Language Shootout"
+   title="Browse the Debian AMD&#8482; Sempron&#8482; Computer Language Shootout"
    width="189" height="110"
  /></a>
 </td>
 <td>
 <h5>
 <a class="arevGP4" 
-title="Use the Gentoo Intel&#174; Pentium&#174; Computer Language Shootout"
+title="Browse the Gentoo Intel&#174; Pentium&#174; Computer Language Shootout"
 href="./gp4/">&nbsp;Gentoo&nbsp;on&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
 <p><span class="s">spectral-norm N=2,500</span></p>
 <a href="./gp4/"><img src="spectralnorm_gentoo.png"
    alt=""
-   title="Use the Gentoo Intel&#174; Pentium&#174; Computer Language Shootout"
+   title="Browse the Gentoo Intel&#174; Pentium&#174; Computer Language Shootout"
    width="189" height="110"
  /></a>
 </td>
 </tr>
 </table>
+</div>
+
 
 <div>
 <h4>Extra:</h4>
@@ -99,7 +104,7 @@ href="./sandbox/">&nbsp;The&nbsp;Sandbox&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#84
 <p>Look back at the old 2001 Doug Bagley Benchmarks</p>
 <h5>
 <a class="arevOld" 
-title="Look back at the old 2001 Doug Bagley Benchmarks"
+title="Look back at the Old 2001 Doug Bagley Benchmarks"
 href="./old/">&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
 </h5>
 </div>
