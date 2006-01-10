@@ -41,8 +41,8 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'old');
-define('SITE_TITLE','Debian AMD&#8482; Sempron&#8482; Old Doug Bagley Benchmarks');
-define('BANNER_TITLE','Debian&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>Old&nbsp;Doug&nbsp;Bagley&nbsp;Benchmarks');
+define('SITE_TITLE','Debian : AMD&#8482; Sempron&#8482; Old Doug Bagley Benchmarks');
+define('BANNER_TITLE','Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>Old&nbsp;Doug&nbsp;Bagley&nbsp;Benchmarks');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');

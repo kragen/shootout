@@ -64,7 +64,7 @@ We can't - <strong>we measure particular programs</strong>.</p>
 <h5>
 <a class="arevCore" 
 title="Browse the Debian AMD&#8482; Sempron&#8482; Computer Language Shootout"
-href="./debian/">&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
+href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
 <p><span class="s">spectral-norm N=500</span></p>
 <a href="./debian/"><img src="spectralnorm_debian.png"
    alt=""
@@ -76,7 +76,7 @@ href="./debian/">&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <h5>
 <a class="arevGP4" 
 title="Browse the Gentoo Intel&#174; Pentium&#174; Computer Language Shootout"
-href="./gp4/">&nbsp;Gentoo&nbsp;on&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
+href="./gp4/">&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
 <p><span class="s">spectral-norm N=2,500</span></p>
 <a href="./gp4/"><img src="spectralnorm_gentoo.png"
    alt=""
@@ -95,7 +95,7 @@ href="./gp4/">&nbsp;Gentoo&nbsp;on&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nb
 <h5>
 <a class="arevSandbox" 
 title="Alpha benchmarks and more language implementations"
-href="./sandbox/">&nbsp;The&nbsp;Sandbox&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
+href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-&nbsp;The&nbsp;Sandbox&nbsp</a>
 </h5>
 </div>
 
@@ -105,7 +105,7 @@ href="./sandbox/">&nbsp;The&nbsp;Sandbox&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#84
 <h5>
 <a class="arevOld" 
 title="Look back at the Old 2001 Doug Bagley Benchmarks"
-href="./old/">&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;-&nbsp;Debian&nbsp;on&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
+href="./old/">&nbspDebian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;Benchmarks&nbsp;</a>
 </h5>
 </div>
 
