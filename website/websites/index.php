@@ -57,7 +57,7 @@ We can't - <strong>we measure particular programs</strong>.</p>
 
 <div>
 <h4>Start:</h4>
-<p>click Sempron&#8482; or Pentium&#174; to browse the current benchmarks, programs and languages</p>
+<p>click Sempron&#8482; or Pentium&#174; to browse the current benchmarks, programs, languages and measurements</p>
 <table>
 <tr>
 <td>

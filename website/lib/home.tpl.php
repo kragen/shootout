@@ -29,7 +29,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <th class="c" colspan="2">
 <a class="ab" href="#compare" name="compare"><strong>&nbsp;Relative Performance</strong></a>
-<p class="thp">Relative performance on all benchmarks</p>
+<p class="thp">Compare two language implementations</p>
 </th>
 </tr>
 
