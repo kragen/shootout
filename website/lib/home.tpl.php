@@ -23,12 +23,12 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="div" >
 <tr>
 <th class="a">
-<a class="ab" href="#check" name="check"><strong>1&nbsp;Check</strong></a>
+<a class="ab" href="#check" name="check"><strong>&nbsp;Benchmarks</strong></a>
 <p class="thp">Source-code, CPU times</p>
 </th>
 
 <th class="c" colspan="2">
-<a class="ab" href="#compare" name="compare"><strong>2&nbsp;Compare</strong></a>
+<a class="ab" href="#compare" name="compare"><strong>&nbsp;Relative Performance</strong></a>
 <p class="thp">Relative performance on all benchmarks</p>
 </th>
 </tr>
@@ -160,7 +160,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <table class="div" >
 <tr><th class="a">
-<a class="ab" href="#play" name="play"><strong>3&nbsp;Have fun!</strong></a> <span class="s">Create your own overall scores</span>
+<a class="ab" href="#play" name="play"><strong>&nbsp;Fun and Nonsense!</strong></a> <span class="s">Create your own overall scores</span>
 </th></tr>
 
 <tr class="a"><td class="center">
