@@ -41,7 +41,7 @@ define('HOMEPAGE_ROWS',0);          // show 26 rows of languages on the homepage
 
 
 
-define('SITE_NAME', 'core');
+define('SITE_NAME', 'debian');
 define('SITE_TITLE','Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout');
 define('BANNER_TITLE','Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>Computer&nbsp;Language&nbsp;Shootout');
 define('FAQ_TITLE','Frequently Asked Questions');

@@ -26,7 +26,9 @@ $Body->set('Download', DOWNLOAD_PATH);
 $Body->set('Changed', filemtime(LIB_PATH.'faq.tpl.php'));
 
 $Page->set('PageBody', $Body->fetch('faq.tpl.php'));
-$Page->set('Robots', '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />');
+if (SITE_NAME == 'core'){ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; }
+else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
+$Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', '');
 
 echo $Page->fetch('page.tpl.php');
