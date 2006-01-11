@@ -40,15 +40,41 @@
 <table class="div">
 <tr><td><h3 class="rev"><a class="arev" href="#help" name="help">&nbsp;Where can I discuss&#8230; contribute&#8230;?</a></h3></td></tr>
 
-<tr><td>
-<p><strong>Before</strong> working on a benchmark program, read these notes <a href="#implement"><strong>"How should I implement&#8230;?"</strong></a>
-and then follow these detailed instructions <a href="#contribute"><strong>"How can I contribute a program?"</strong></a></p>
-<p>Be Respectful! Don't ridicule other people's programs - just contribute a better program yourself.</p>
+<tr class="b"><td><a class="ab" href="#talk" name="talk">Where can I discuss&#8230;?</a></td></tr>
+<tr><td><p>Discuss the benchmarks or ask for help in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p></td></tr>
 
-<p><strong>Discuss</strong> the benchmarks or <strong>ask for help</strong> in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
+<tr class="b"><td><a class="ab" href="#contributeprogram" name="contributeprogram">Where do I contribute a program?</a></td></tr>
+<tr><td>
+<p><strong>Before</strong> working on a benchmark program:</p>
+<ul>
+<li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
+<li>read the benchmark description</a></li>
+<li>read some of the programs</a></li>
+<li>read <a href="#implement"><strong>"How should I implement&#8230;?"</strong></a></li>
+</ul>
+<p>Then follow these detailed instructions <a href="#contribute"><strong>"How do I contribute a program?"</strong></a></p>
+<p>Be Respectful! Don't ridicule other people's programs - just contribute a better program yourself.</p>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#contributebenchmark" name="contributebenchmark">Where do I contribute a new benchmark?</a></td></tr>
+<tr><td>
+<p><strong>Before</strong> working on a new benchmark</p>
+<ul>
+<li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
+<li>read the benchmark descriptions</a></li>
+<li>read <a href="#newbench"><strong>"How can I contribute a new benchmark?"</strong></a></li>
+</ul>
+</td></tr>
+
+<tr class="b"><td><a class="ab" href="#report" name="report">Where can I report bugs&#8230; request features?</a></td></tr>
+<tr><td>
 <p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Report a Bug</strong></a>.</p> 
 <p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Request</strong></a>.</p> 
-<p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>. We will consider fully-developed <a href="#newbench"><strong>ideas for new benchmarks</strong></a>.</p>
+</td></tr>
+
+<tr class="b"><td>&nbsp;</td></tr>
+<tr><td>
+<p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
 <p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll decide not to add the new benchmark. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
 </td></tr>
 
@@ -134,7 +160,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 
 <table class="div">
 
-<tr><td><h3 class="rev"><a class="arev" href="#contribute" name="contribute">&nbsp;How can I contribute a program?</a></h3></td></tr>
+<tr><td><h3 class="rev"><a class="arev" href="#contribute" name="contribute">&nbsp;How do I contribute a program?</a></h3></td></tr>
 
 <tr><td>
 <p>There are many contributors and few committers - a little more time spent by contributors saves committers a great deal more time.</p>

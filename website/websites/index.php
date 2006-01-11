@@ -40,7 +40,7 @@ We can't - <strong>we measure particular programs</strong>.</p>
 <h4>Contribute:</h4>
 <p>these programming language comparisons are only as good as the programs contributed by the community</p>
 <ul>
-<li>you can <a href="faq.php?&#35;help" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
+<li>you can <a href="faq.php?&#35;work" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
 <li>you can <a href="faq.php?&#35;newbench" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
 </ul>
 </div>
@@ -105,7 +105,7 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-
 <h5>
 <a class="arevOld" 
 title="Look back at the Old 2001 Doug Bagley Benchmarks"
-href="./old/">&nbspDebian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;Benchmarks&nbsp;</a>
+href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;Benchmarks&nbsp;</a>
 </h5>
 </div>
 
