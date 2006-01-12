@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2005-12-31 16:45:30 bfulgham Exp $
+# $Id: Makefile,v 1.8 2006-01-12 08:22:44 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -26,6 +26,6 @@ GPLCOPTS := --fast-math
 GHCOPTS := -fexcess-precision
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 100,300,500
+	  --range 500,1500,2500 --ignore spectralnorm.io
 
 include ../../Make.footer

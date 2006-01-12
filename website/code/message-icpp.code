@@ -1,16 +1,17 @@
 <span class="com">/* The Computer Language Shootout</span>
 <span class="com"> * http://shootout.alioth.debian.org/</span>
 <span class="com"> * Contributed by Branimir Maksimovic</span>
-<span class="com"> *</span>
-<span class="com"> *  I didn't perform error checking or created full blown classes</span>
-<span class="com"> *  in order to keep program as small as possible</span>
 <span class="com"> */</span>
 
 <span class="dir">#include &lt;pthread.h&gt;</span>
+<span class="dir">#include &lt;errno.h&gt;</span>
 <span class="dir">#include &lt;cstdlib&gt;</span>
 <span class="dir">#include &lt;iostream&gt;</span>
 <span class="dir">#include &lt;ostream&gt;</span>
+<span class="dir">#include &lt;deque&gt;</span>
 <span class="kwa">using namespace</span> std<span class="sym">;</span>
+
+<span class="dir">#define STACK_SIZE 65536</span>
 
 <span class="kwc">extern</span> <span class="str">&quot;C&quot;</span>
 <span class="sym">{</span>
@@ -77,7 +78,7 @@ Cond c<span class="sym">;</span>
 <span class="kwc">class</span> Thread<span class="sym">{</span>
 <span class="kwc">public</span><span class="sym">:</span>
   <span class="kwd">Thread</span><span class="sym">(</span>Thread<span class="sym">*</span> t<span class="sym">=</span><span class="num">0</span><span class="sym">)</span>
-  <span class="sym">:</span><span class="kwd">next_</span><span class="sym">(</span>t<span class="sym">),</span><span class="kwd">message</span><span class="sym">(</span><span class="num">0</span><span class="sym">),</span><span class="kwd">msg_arrived</span><span class="sym">(</span><span class="kwa">false</span><span class="sym">),</span><span class="kwd">stop_</span><span class="sym">(</span><span class="kwa">false</span><span class="sym">)</span>
+  <span class="sym">:</span><span class="kwd">next_</span><span class="sym">(</span>t<span class="sym">),</span><span class="kwd">message</span><span class="sym">(</span><span class="num">0</span><span class="sym">),</span><span class="kwd">stop_</span><span class="sym">(</span><span class="kwa">false</span><span class="sym">)</span>
   <span class="sym">{</span>
   <span class="sym">}</span>
 
@@ -85,7 +86,18 @@ Cond c<span class="sym">;</span>
 
   <span class="kwb">void</span> <span class="kwd">start</span><span class="sym">()</span>
   <span class="sym">{</span>
-    <span class="kwd">pthread_create</span><span class="sym">(&amp;</span>tid<span class="sym">,</span><span class="num">0</span><span class="sym">,</span>thread_run<span class="sym">,</span><span class="kwa">this</span><span class="sym">);</span>
+    pthread_attr_t attrs<span class="sym">;</span>
+    <span class="kwd">pthread_attr_init</span><span class="sym">(&amp;</span>attrs<span class="sym">);</span>
+    <span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&amp;</span>attrs<span class="sym">,</span>STACK_SIZE<span class="sym">);</span>
+    <span class="kwa">while</span><span class="sym">(</span><span class="kwb">int</span> err <span class="sym">=</span> <span class="kwd">pthread_create</span><span class="sym">(&amp;</span>tid<span class="sym">,&amp;</span>attrs<span class="sym">,</span>thread_run<span class="sym">,</span><span class="kwa">this</span><span class="sym">))</span>
+    <span class="sym">{</span>
+      <span class="kwa">if</span><span class="sym">(</span>err <span class="sym">==</span> EAGAIN<span class="sym">)</span>
+      <span class="sym">{</span>
+        cout<span class="sym">&lt;&lt;</span><span class="str">&quot;pthread create EAGAIN...</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">;</span>
+        <span class="kwd">sleep</span><span class="sym">(</span><span class="num">1</span><span class="sym">);</span>
+      <span class="sym">}</span>
+      <span class="kwa">else</span> <span class="kwd">exit</span><span class="sym">(</span>EXIT_FAILURE<span class="sym">);</span>
+    <span class="sym">}</span>
   <span class="sym">}</span>
   <span class="kwb">void</span> <span class="kwd">join</span><span class="sym">()</span>
   <span class="sym">{</span>
@@ -102,10 +114,8 @@ Cond c<span class="sym">;</span>
   <span class="kwb">void</span> <span class="kwd">push</span><span class="sym">(</span><span class="kwb">int</span> msg<span class="sym">)</span>
   <span class="sym">{</span>
     mutex<span class="sym">.</span><span class="kwd">lock</span><span class="sym">();</span>
-    message <span class="sym">=</span> msg<span class="sym">;</span>
-    msg_arrived <span class="sym">=</span> <span class="kwa">true</span><span class="sym">;</span>
+    message<span class="sym">.</span><span class="kwd">push_front</span><span class="sym">(</span>msg<span class="sym">);</span>
     monitor<span class="sym">.</span><span class="kwd">signal</span><span class="sym">();</span>
-    <span class="kwa">while</span><span class="sym">(</span>msg_arrived<span class="sym">)</span>monitor<span class="sym">.</span><span class="kwd">wait</span><span class="sym">(</span>mutex<span class="sym">);</span>
     mutex<span class="sym">.</span><span class="kwd">unlock</span><span class="sym">();</span>
   <span class="sym">}</span>
 
@@ -114,27 +124,28 @@ Cond c<span class="sym">;</span>
     <span class="kwa">while</span><span class="sym">(</span><span class="kwa">true</span><span class="sym">)</span>
     <span class="sym">{</span>
       mutex<span class="sym">.</span><span class="kwd">lock</span><span class="sym">();</span>
-      <span class="kwa">while</span><span class="sym">(!</span>msg_arrived <span class="sym">&amp;&amp; !</span>stop_<span class="sym">)</span>monitor<span class="sym">.</span><span class="kwd">wait</span><span class="sym">(</span>mutex<span class="sym">);</span>
-      <span class="kwa">if</span><span class="sym">(</span>stop_<span class="sym">)</span><span class="kwa">break</span><span class="sym">;</span>
+      <span class="kwa">while</span><span class="sym">(</span>message<span class="sym">.</span><span class="kwd">empty</span><span class="sym">() &amp;&amp; !</span>stop_<span class="sym">)</span>monitor<span class="sym">.</span><span class="kwd">wait</span><span class="sym">(</span>mutex<span class="sym">);</span>
+      <span class="kwa">if</span><span class="sym">(</span>stop_<span class="sym">)</span>
+      <span class="sym">{</span>
+        mutex<span class="sym">.</span><span class="kwd">unlock</span><span class="sym">();</span>
+        <span class="kwa">break</span><span class="sym">;</span>
+      <span class="sym">}</span>
       <span class="kwa">if</span><span class="sym">(</span>next_<span class="sym">)</span>
       <span class="sym">{</span>
         next_<span class="sym">-&gt;</span>mutex<span class="sym">.</span><span class="kwd">lock</span><span class="sym">();</span>
-        next_<span class="sym">-&gt;</span>message<span class="sym">=</span>message<span class="sym">+</span><span class="num">1</span><span class="sym">;</span>
-        next_<span class="sym">-&gt;</span>msg_arrived<span class="sym">=</span><span class="kwa">true</span><span class="sym">;</span>
+        next_<span class="sym">-&gt;</span>message<span class="sym">.</span><span class="kwd">push_front</span><span class="sym">(</span>message<span class="sym">.</span><span class="kwd">back</span><span class="sym">()+</span><span class="num">1</span><span class="sym">);</span>
         next_<span class="sym">-&gt;</span>monitor<span class="sym">.</span><span class="kwd">signal</span><span class="sym">();</span>
-        <span class="kwa">while</span><span class="sym">(</span>next_<span class="sym">-&gt;</span>msg_arrived<span class="sym">)</span>next_<span class="sym">-&gt;</span>monitor<span class="sym">.</span><span class="kwd">wait</span><span class="sym">(</span>next_<span class="sym">-&gt;</span>mutex<span class="sym">);</span>
         next_<span class="sym">-&gt;</span>mutex<span class="sym">.</span><span class="kwd">unlock</span><span class="sym">();</span>
       <span class="sym">}</span>
       <span class="kwa">else</span>
       <span class="sym">{</span>
         gs<span class="sym">.</span>m<span class="sym">.</span><span class="kwd">lock</span><span class="sym">();</span>
-        gs<span class="sym">.</span>sum<span class="sym">+=</span>message<span class="sym">+</span><span class="num">1</span><span class="sym">;</span>
+        gs<span class="sym">.</span>sum<span class="sym">+=</span>message<span class="sym">.</span><span class="kwd">back</span><span class="sym">()+</span><span class="num">1</span><span class="sym">;</span>
         gs<span class="sym">.</span>increments<span class="sym">++;</span>
         gs<span class="sym">.</span>c<span class="sym">.</span><span class="kwd">signal</span><span class="sym">();</span>
         gs<span class="sym">.</span>m<span class="sym">.</span><span class="kwd">unlock</span><span class="sym">();</span>
       <span class="sym">}</span>
-      msg_arrived<span class="sym">=</span><span class="kwa">false</span><span class="sym">;</span>
-      monitor<span class="sym">.</span><span class="kwd">signal</span><span class="sym">();</span>
+      message<span class="sym">.</span><span class="kwd">pop_back</span><span class="sym">();</span>
       mutex<span class="sym">.</span><span class="kwd">unlock</span><span class="sym">();</span>
     <span class="sym">}</span>
     <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
@@ -144,8 +155,7 @@ Cond c<span class="sym">;</span>
   Cond monitor<span class="sym">;</span>
   Mutex mutex<span class="sym">;</span>
   Thread<span class="sym">*</span> next_<span class="sym">;</span>
-  <span class="kwb">int</span> message<span class="sym">;</span>
-  <span class="kwb">bool</span> msg_arrived<span class="sym">;</span>
+  deque<span class="sym">&lt;</span><span class="kwb">int</span><span class="sym">&gt;</span> message<span class="sym">;</span>
   pthread_t tid<span class="sym">;</span>
   <span class="kwb">bool</span> stop_<span class="sym">;</span>
 <span class="sym">};</span>
@@ -185,6 +195,7 @@ Cond c<span class="sym">;</span>
   gs<span class="sym">.</span>m<span class="sym">.</span><span class="kwd">unlock</span><span class="sym">();</span>
 
   tmp <span class="sym">=</span> first<span class="sym">;</span>
+
   <span class="kwa">while</span><span class="sym">(</span>tmp<span class="sym">)</span>
   <span class="sym">{</span>
     tmp<span class="sym">-&gt;</span><span class="kwd">stop</span><span class="sym">();</span>
