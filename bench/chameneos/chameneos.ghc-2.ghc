@@ -1,65 +1,60 @@
+{-# OPTIONS_GHC -O2 -funbox-strict-fields #-}
 {- The Computer Language Shootout
    http://shootout.alioth.debian.org/
+   
+   contributed by Aaron Denney
+   modified by Chris Kuklewicz, 11 Jan 2006
 
-   contributed by Chris Kuklewicz, 28 Dec 2005, 2 Jan 2005
-   modified by Einar Karttunen, 31 Dec 2005
+   compile with "ghc --make -O2 -funbox-strict-fields chameneos.hs -o chameneos.ghc_run"
+   run with "./chameneos.ghc_run %A" where %A is the number of meetings
 
-   This entry uses a separate thread to manage the meetings.
+   This is a symmetric solution that does not use a manager thread.
 -}
 
 import Control.Concurrent
 import Control.Monad
 import System (getArgs)
 
-data Color = Red | Yellow | Blue | Faded deriving (Eq)
+data Color = C !Int deriving (Eq)
+red = C 0; yellow = C 1; blue = C 2; faded = C 3
 
-complement a      b | a==b = a
-complement Red    b        = if b==Yellow then Blue   else Yellow
-complement Yellow b        = if b==Blue   then Red    else Blue
-complement Blue   b        = if b==Red    then Yellow else Red
+complement :: Color -> Color -> Color
+complement (C a) (C b) | a == b    = C a
+                       | otherwise = C (3 - a - b)
 
-{- Ch : fast unordered channel implementation -}
-newtype Ch a = Ch (MVar [a], MVar a)
+data Meeting = M !(MVar Int) !(MVar (Color, MVar Color))
 
-newCh = liftM2 (,) (newMVar []) newEmptyMVar >>= return.Ch
+new_meeting maxMeetings = liftM2 M (newMVar maxMeetings) newEmptyMVar
 
-readCh (Ch (w,r)) = takeMVar w >>= \lst ->
-  case lst of (x:xs) -> putMVar w xs >> return x
-              []     -> putMVar w [] >> takeMVar r
+wait_other (M meets waiting) color wake_up = do
+  remainingMeets <- takeMVar meets -- used as lock
+  let sleep_on = do putMVar waiting (color, wake_up)
+                    putMVar meets remainingMeets
+                    takeMVar wake_up
+      wake_waiter (other_c,other_wake_up) = do putMVar other_wake_up color
+                                               putMVar meets (remainingMeets - 1)
+                                               return other_c
+  case remainingMeets of
+    0 -> putMVar meets 0 >> return faded
+    _ -> tryTakeMVar waiting >>= maybe sleep_on wake_waiter
 
-writeCh (Ch (w,r)) x = do
-  ok <- tryPutMVar r x -- opportunistic, helps for this problem
-  unless ok $ takeMVar w >>= \lst -> do 
-    ok <- tryPutMVar r x  -- safe inside take/put
-    putMVar w $ if ok then lst else (x:lst)
+spawnCreature meeting_place startingColor = do
+  metVar <- newEmptyMVar
+  wake_up  <- newEmptyMVar
+  let creature = putMVar metVar =<< inner_creature startingColor (0::Int)
+        where inner_creature color have_met = do
+                color `seq` have_met `seq` return ()
+                other <- wait_other meeting_place color wake_up
+                if other == faded
+                  then return have_met
+                  else inner_creature (complement color other) (have_met + 1)
+  forkIO $ creature -- One thread per creature
+  return metVar
 
 main = do 
   args <- getArgs
-  goMeet <- newCh
   let meetings = if null args then (1000000::Int) else (read . head) args
-
-      meetingPlace = replicateM_ meetings match >> fade
-        where match = do (color1,pobox1) <- readCh goMeet
-                         (color2,pobox2) <- readCh goMeet
-                         putMVar pobox1 color2
-                         putMVar pobox2 color1
-              fade = do (_,pobox) <- readCh goMeet
-                        putMVar pobox Faded
-                        fade
-
-      spawn startingColor = do
-        metVar <- newEmptyMVar
-        pobox  <- newEmptyMVar
-        let creature havemet color = do 
-              writeCh goMeet (color,pobox)
-              other <- takeMVar pobox
-              case other of 
-                Faded -> let color = Faded in putMVar metVar havemet
-                _     -> (creature  $! (havemet+1)) $! (complement color other)
-        forkIO $ creature 0 startingColor
-        return metVar
-
-  forkIO meetingPlace
-  metVars <- mapM spawn [Blue,Red,Yellow,Blue]
-  total <- liftM sum $ mapM takeMVar metVars
-  print total
+  meeting_place <- new_meeting meetings
+  metVars <- mapM (spawnCreature meeting_place) [blue, red, yellow, blue]
+  vals <- mapM takeMVar metVars -- Main thread waits for completion
+  print $ sum vals
