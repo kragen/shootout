@@ -76,7 +76,7 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 <h5>
 <a class="arevGP4" 
 title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
-href="./gp4/">&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
+href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
 <p><span class="s">spectral-norm N=2,500</span></p>
 <a href="./gp4/"><img src="spectralnorm_gentoo.png"
    alt=""
