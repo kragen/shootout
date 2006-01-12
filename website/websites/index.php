@@ -57,7 +57,7 @@ We can't - <strong>we measure particular programs</strong>.</p>
 
 <div>
 <h4>Start:</h4>
-<p>click Sempron&#8482; or Pentium&#174; to browse the current benchmarks, programs, languages and measurements</p>
+<p>choose an OS : architecture, and click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
 <table>
 <tr>
 <td>
@@ -65,24 +65,12 @@ We can't - <strong>we measure particular programs</strong>.</p>
 <a class="arevCore" 
 title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
-<p><span class="s">spectral-norm N=500</span></p>
-<a href="./debian/"><img src="spectralnorm_debian.png"
-   alt=""
-   title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
-   width="189" height="110"
- /></a>
 </td>
 <td>
 <h5>
 <a class="arevGP4" 
 title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
-href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
-<p><span class="s">spectral-norm N=2,500</span></p>
-<a href="./gp4/"><img src="spectralnorm_gentoo.png"
-   alt=""
-   title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
-   width="189" height="110"
- /></a>
+href="./gp4/">&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
 </td>
 </tr>
 </table>
