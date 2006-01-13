@@ -1,0 +1,301 @@
+<span class="com">/* The Great Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   C# reference implementation contributed by Isaac Gouy</span>
+<span class="com"></span>
+<span class="com">   converted to D by Dave Fladebo</span>
+<span class="com">   compile: dmd -O -inline -release health2.d</span>
+<span class="com">*/</span>
+
+import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span class="sym">.</span>c<span class="sym">.</span>stdlib<span class="sym">;</span>
+
+<span class="kwb">int</span> main<span class="sym">(</span><span class="kwb">char</span><span class="sym">[][]</span> args<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwb">int</span> n <span class="sym">=</span> args<span class="sym">.</span>length <span class="sym">&gt;</span> <span class="num">1</span> ? atoi<span class="sym">(</span>args<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">100</span><span class="sym">;</span>
+
+    HealthcareRegion healthcareSystem <span class="sym">=</span> HealthcareRegion<span class="sym">.</span>Create<span class="sym">();</span>
+
+    <span class="kwa">for</span><span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> n<span class="sym">;</span> i<span class="sym">++)</span>
+        healthcareSystem<span class="sym">.</span>TransferPatients<span class="sym">();</span>
+
+    Totals t <span class="sym">=</span> healthcareSystem<span class="sym">.</span>AccumulateTotals<span class="sym">();</span>
+
+    writefln<span class="sym">(</span><span class="str">&quot;Patients: &quot;</span><span class="sym">,</span> t<span class="sym">.</span>patients <span class="sym">);</span>
+    writefln<span class="sym">(</span><span class="str">&quot;Time:     &quot;</span><span class="sym">,</span> t<span class="sym">.</span>hospitalTime <span class="sym">);</span>
+    writefln<span class="sym">(</span><span class="str">&quot;Visits:   &quot;</span><span class="sym">,</span> t<span class="sym">.</span>hospitalVisits <span class="sym">);</span>
+
+    writefln<span class="sym">(</span><span class="str">&quot;</span><span class="esc">\n</span><span class="str">Treatment Queue - Remaining Treatment Time&quot;</span><span class="sym">);</span>
+    foreach<span class="sym">(</span>Patient p<span class="sym">;</span> healthcareSystem<span class="sym">.</span>TreatmentQueue<span class="sym">())</span>
+        writefln<span class="sym">(</span>p<span class="sym">.</span>remainingTime<span class="sym">,</span> <span class="str">&quot;</span><span class="esc">\t</span><span class="str">anonymous patient&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwc">class</span> SimpleList<span class="sym">(</span>T<span class="sym">)</span>
+<span class="sym">{</span>
+<span class="kwc">private</span><span class="sym">:</span>
+    <span class="kwb">struct</span> SimpleNode
+    <span class="sym">{</span>
+        T item<span class="sym">;</span>
+        SimpleNode<span class="sym">*</span> next<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    SimpleNode<span class="sym">*</span> first<span class="sym">,</span> last<span class="sym">;</span>
+
+<span class="kwc">public</span><span class="sym">:</span>
+    <span class="kwb">void</span> Add<span class="sym">(</span>T o<span class="sym">)</span>
+    <span class="sym">{</span>
+        SimpleNode<span class="sym">*</span> a <span class="sym">=</span> <span class="kwa">new</span> SimpleNode<span class="sym">;</span>
+        a<span class="sym">.</span>item <span class="sym">=</span> o<span class="sym">;</span>
+        <span class="kwa">if</span><span class="sym">(</span>first is null<span class="sym">)</span> first <span class="sym">=</span> a<span class="sym">;</span>
+        <span class="kwa">else</span> last<span class="sym">.</span>next <span class="sym">=</span> a<span class="sym">;</span>
+        last <span class="sym">=</span> a<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> Remove<span class="sym">(</span>T o<span class="sym">)</span>
+    <span class="sym">{</span>
+        <span class="kwa">if</span><span class="sym">(</span>first<span class="sym">)</span>
+        <span class="sym">{</span>
+            SimpleNode<span class="sym">*</span> t <span class="sym">=</span> first<span class="sym">.</span>next<span class="sym">;</span>
+            <span class="kwa">if</span><span class="sym">(</span>first<span class="sym">.</span>item is o<span class="sym">)</span>
+            <span class="sym">{</span>
+                <span class="kwa">delete</span> first<span class="sym">;</span>
+                first <span class="sym">=</span> t<span class="sym">;</span>
+            <span class="sym">}</span>
+            <span class="kwa">else</span>
+            <span class="sym">{</span>
+                SimpleNode<span class="sym">*</span> p <span class="sym">=</span> first<span class="sym">;</span>
+                <span class="kwa">while</span><span class="sym">(</span>t <span class="sym">&amp;&amp; !(</span>t<span class="sym">.</span>item is o<span class="sym">))</span>
+                <span class="sym">{</span>
+                    p <span class="sym">=</span> t<span class="sym">;</span> t <span class="sym">=</span> t<span class="sym">.</span>next<span class="sym">;</span>
+                <span class="sym">}</span>
+                <span class="kwa">if</span> <span class="sym">(</span>t <span class="sym">&amp;&amp;</span> t<span class="sym">.</span>item is o<span class="sym">)</span>
+                <span class="sym">{</span>
+                    p<span class="sym">.</span>next <span class="sym">=</span> t<span class="sym">.</span>next<span class="sym">;</span>
+                    <span class="kwa">if</span><span class="sym">(</span>last is t<span class="sym">)</span> last <span class="sym">=</span> p<span class="sym">;</span>
+                    <span class="kwa">delete</span> t<span class="sym">;</span>
+                <span class="sym">}</span>
+            <span class="sym">}</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> Clear<span class="sym">() {</span> <span class="kwa">delete</span> first<span class="sym">,</span> last<span class="sym">; }</span>
+
+    <span class="kwb">int</span> opApply<span class="sym">(</span><span class="kwb">int</span> delegate<span class="sym">(</span>inout T<span class="sym">)</span> dg<span class="sym">)</span>
+    <span class="sym">{</span>
+        <span class="kwb">int</span> result <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+
+        <span class="kwa">for</span><span class="sym">(</span>SimpleNode<span class="sym">*</span> n <span class="sym">=</span> first<span class="sym">;</span> n<span class="sym">;</span> n <span class="sym">=</span> n<span class="sym">.</span>next<span class="sym">)</span>
+        <span class="sym">{</span>
+            result <span class="sym">=</span> dg<span class="sym">(</span>n<span class="sym">.</span>item<span class="sym">);</span>
+            <span class="kwa">if</span> <span class="sym">(</span>result<span class="sym">)</span> <span class="kwa">break</span><span class="sym">;</span>
+        <span class="sym">}</span>
+
+        <span class="kwa">return</span> result<span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">struct</span> Patient
+<span class="sym">{</span>
+    <span class="kwb">static</span> Patient opCall<span class="sym">() {</span> Patient p<span class="sym">;</span> <span class="kwa">return</span> p<span class="sym">; }</span>
+    <span class="kwb">int</span> remainingTime<span class="sym">,</span> hospitalTime<span class="sym">,</span> hospitalVisits<span class="sym">;</span>
+<span class="sym">}</span>
+
+alias SimpleList<span class="sym">!(</span>Patient<span class="sym">)</span> PatientList<span class="sym">;</span>
+
+<span class="kwc">class</span> HealthcareRegion
+<span class="sym">{</span>
+<span class="kwc">private</span><span class="sym">:</span>
+    <span class="kwb">const int</span> LEVELS <span class="sym">=</span> <span class="num">5</span><span class="sym">,</span> DISTRICTS <span class="sym">=</span> <span class="num">4</span><span class="sym">;</span>
+    HealthcareRegion<span class="sym">[]</span> districts<span class="sym">;</span>
+    Hospital localHospital<span class="sym">;</span>
+
+<span class="kwc">public</span><span class="sym">:</span>
+    <span class="kwb">static</span> HealthcareRegion Create<span class="sym">() {</span> <span class="kwa">return</span> HealthcareRegion<span class="sym">.</span>Create<span class="sym">(</span>LEVELS<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">42</span><span class="sym">); }</span>
+
+    <span class="kwb">static</span> HealthcareRegion Create<span class="sym">(</span><span class="kwb">int</span> level<span class="sym">,</span> <span class="kwb">int</span> seed1<span class="sym">,</span> <span class="kwb">int</span> seed2<span class="sym">)</span>
+    <span class="sym">{</span>
+        HealthcareRegion r <span class="sym">=</span> null<span class="sym">;</span>
+        <span class="kwa">if</span><span class="sym">(</span>level <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">)</span>
+        <span class="sym">{</span>
+            r <span class="sym">=</span> <span class="kwa">new</span> HealthcareRegion<span class="sym">(</span>level<span class="sym">,</span> seed1<span class="sym">*</span>seed2<span class="sym">);</span>
+            <span class="kwa">for</span><span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> r<span class="sym">.</span>districts<span class="sym">.</span>length<span class="sym">-</span><span class="num">1</span><span class="sym">;</span> i <span class="sym">&gt;=</span> <span class="num">0</span><span class="sym">;</span> i<span class="sym">--)</span>
+                r<span class="sym">.</span>districts<span class="sym">[</span>i<span class="sym">] =</span> Create<span class="sym">(</span>level<span class="sym">-</span><span class="num">1</span><span class="sym">, (</span>seed1<span class="sym">*</span><span class="num">4</span><span class="sym">)+</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> seed2<span class="sym">);</span>
+        <span class="sym">}</span>
+        <span class="kwa">return</span> r<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">this</span><span class="sym">(</span><span class="kwb">int</span> level<span class="sym">,</span> <span class="kwb">int</span> s<span class="sym">)</span>
+    <span class="sym">{</span>
+        districts <span class="sym">=</span> <span class="kwa">new</span> HealthcareRegion<span class="sym">[</span>DISTRICTS<span class="sym">];</span>
+        localHospital <span class="sym">=</span> <span class="kwa">new</span> Hospital<span class="sym">(</span>level <span class="sym">==</span> LEVELS<span class="sym">,</span> level<span class="sym">,</span> s<span class="sym">);</span>
+    <span class="sym">}</span>
+
+    PatientList TransferPatients<span class="sym">()</span>
+    <span class="sym">{</span>
+        <span class="kwa">for</span><span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> districts<span class="sym">.</span>length<span class="sym">-</span><span class="num">1</span><span class="sym">;</span> i <span class="sym">&gt;=</span> <span class="num">0</span><span class="sym">;</span> i<span class="sym">--)</span>
+            <span class="kwa">if</span><span class="sym">(</span>districts<span class="sym">[</span>i<span class="sym">])</span>
+                foreach<span class="sym">(</span>Patient p<span class="sym">;</span> districts<span class="sym">[</span>i<span class="sym">].</span>TransferPatients<span class="sym">())</span>
+                    localHospital<span class="sym">.</span>NewArrival<span class="sym">(</span>p<span class="sym">);</span>
+
+        localHospital<span class="sym">.</span>TriageExaminationTreatment<span class="sym">();</span>
+
+        <span class="kwa">return</span> localHospital<span class="sym">.</span>RegionalTransferPatients<span class="sym">();</span>
+    <span class="sym">}</span>
+
+    Totals AccumulateTotals<span class="sym">()</span>
+    <span class="sym">{</span>
+        Totals t <span class="sym">=</span> <span class="kwa">new</span> Totals<span class="sym">();</span>
+        <span class="kwa">for</span><span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> districts<span class="sym">.</span>length<span class="sym">-</span><span class="num">1</span><span class="sym">;</span> i <span class="sym">&gt;=</span> <span class="num">0</span><span class="sym">;</span> i<span class="sym">--)</span>
+            <span class="kwa">if</span><span class="sym">(</span>districts<span class="sym">[</span>i<span class="sym">])</span>
+                t <span class="sym">+=</span> districts<span class="sym">[</span>i<span class="sym">].</span>AccumulateTotals<span class="sym">();</span>
+
+        localHospital<span class="sym">.</span>AccumulateTotals<span class="sym">(</span>t<span class="sym">);</span>
+
+        <span class="kwa">return</span> t<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    PatientList TreatmentQueue<span class="sym">() {</span> <span class="kwa">return</span> localHospital<span class="sym">.</span>TreatmentQueue<span class="sym">(); }</span>
+<span class="sym">}</span>
+
+<span class="kwc">class</span> Hospital
+<span class="sym">{</span>
+<span class="kwc">public</span><span class="sym">:</span>
+    <span class="kwa">this</span><span class="sym">(</span><span class="kwb">bool</span> hasNoRegionalHospital<span class="sym">,</span> <span class="kwb">int</span> level<span class="sym">,</span> <span class="kwb">int</span> seed<span class="sym">)</span>
+    <span class="sym">{</span>
+        <span class="kwa">this</span><span class="sym">.</span>hasNoRegionalHospital <span class="sym">=</span> hasNoRegionalHospital<span class="sym">;</span>
+        availableStaff <span class="sym">=</span> <span class="num">1</span> <span class="sym">&lt;&lt; (</span>level <span class="sym">-</span> <span class="num">1</span><span class="sym">);</span>
+        triage <span class="sym">=</span> <span class="kwa">new</span> PatientList<span class="sym">;</span>
+        examination <span class="sym">=</span> <span class="kwa">new</span> PatientList<span class="sym">;</span>
+        treatment <span class="sym">=</span> <span class="kwa">new</span> PatientList<span class="sym">;</span>
+        transfers <span class="sym">=</span> <span class="kwa">new</span> PatientList<span class="sym">;</span>
+        discharged <span class="sym">=</span> <span class="kwa">new</span> Totals<span class="sym">();</span>
+        <span class="kwa">this</span><span class="sym">.</span>seed <span class="sym">=</span> seed<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> TriageExaminationTreatment<span class="sym">()</span>
+    <span class="sym">{</span>
+        DischargePatients<span class="sym">();</span>
+        TreatOrTransferPatients<span class="sym">();</span>
+        TriagePatients<span class="sym">();</span>
+
+        <span class="kwa">if</span><span class="sym">(</span>genRandom<span class="sym">(</span><span class="num">1.0</span><span class="sym">) &gt;</span> <span class="num">0.7</span><span class="sym">)</span> NewArrival<span class="sym">(</span>Patient<span class="sym">());</span>
+    <span class="sym">}</span>
+
+    PatientList RegionalTransferPatients<span class="sym">()</span>
+    <span class="sym">{</span>
+        <span class="kwa">return</span> transfers<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> AccumulateTotals<span class="sym">(</span>Totals t<span class="sym">)</span>
+    <span class="sym">{</span>
+        foreach<span class="sym">(</span>Patient p<span class="sym">;</span> triage<span class="sym">)</span> t <span class="sym">+=</span> p<span class="sym">;</span>
+        foreach<span class="sym">(</span>Patient p<span class="sym">;</span> examination<span class="sym">)</span> t <span class="sym">+=</span> p<span class="sym">;</span>
+        foreach<span class="sym">(</span>Patient p<span class="sym">;</span> treatment<span class="sym">)</span> t <span class="sym">+=</span> p<span class="sym">;</span>
+        t <span class="sym">+=</span> discharged<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> NewArrival<span class="sym">(</span>Patient p<span class="sym">)</span>
+    <span class="sym">{</span>
+        p<span class="sym">.</span>hospitalVisits<span class="sym">++;</span>
+        <span class="kwa">if</span><span class="sym">(</span>availableStaff <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">)</span>
+        <span class="sym">{</span>
+            availableStaff<span class="sym">--;</span>
+            p<span class="sym">.</span>remainingTime <span class="sym">=</span> <span class="num">3</span><span class="sym">;</span>
+            p<span class="sym">.</span>hospitalTime <span class="sym">+=</span> <span class="num">3</span><span class="sym">;</span>
+            examination<span class="sym">.</span>Add<span class="sym">(</span>p<span class="sym">);</span>
+        <span class="sym">}</span> <span class="kwa">else</span> <span class="sym">{</span>
+            triage<span class="sym">.</span>Add<span class="sym">(</span>p<span class="sym">);</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    PatientList TreatmentQueue<span class="sym">() {</span> <span class="kwa">return</span> treatment<span class="sym">; }</span>
+
+<span class="kwc">private</span><span class="sym">:</span>
+    PatientList triage<span class="sym">,</span> examination<span class="sym">,</span> treatment<span class="sym">,</span> transfers<span class="sym">;</span>
+    Totals discharged<span class="sym">;</span>
+    <span class="kwb">int</span> availableStaff<span class="sym">;</span>
+    <span class="kwb">bool</span> hasNoRegionalHospital<span class="sym">;</span>
+
+    <span class="kwb">void</span> DischargePatients<span class="sym">()</span>
+    <span class="sym">{</span>
+        foreach<span class="sym">(</span>inout Patient p<span class="sym">;</span> treatment<span class="sym">)</span>
+        <span class="sym">{</span>
+            p<span class="sym">.</span>remainingTime <span class="sym">-=</span> <span class="num">1</span><span class="sym">;</span>
+            <span class="kwa">if</span><span class="sym">(!</span>p<span class="sym">.</span>remainingTime<span class="sym">)</span>
+            <span class="sym">{</span>
+                availableStaff<span class="sym">++;</span>
+                discharged <span class="sym">+=</span> p<span class="sym">;</span>
+                treatment<span class="sym">.</span>Remove<span class="sym">(</span>p<span class="sym">);</span>
+            <span class="sym">}</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> TreatOrTransferPatients<span class="sym">()</span>
+    <span class="sym">{</span>
+        transfers<span class="sym">.</span>Clear<span class="sym">();</span>
+
+        foreach<span class="sym">(</span>inout Patient p<span class="sym">;</span> examination<span class="sym">)</span>
+        <span class="sym">{</span>
+            p<span class="sym">.</span>remainingTime <span class="sym">-=</span> <span class="num">1</span><span class="sym">;</span>
+
+            <span class="kwa">if</span><span class="sym">(!</span>p<span class="sym">.</span>remainingTime<span class="sym">)</span>
+            <span class="sym">{</span>
+                <span class="slc">// no transfer</span>
+                <span class="kwa">if</span><span class="sym">(</span>genRandom<span class="sym">(</span><span class="num">1.0</span><span class="sym">) &gt;</span> <span class="num">0.1</span> <span class="sym">||</span> hasNoRegionalHospital<span class="sym">)</span>
+                <span class="sym">{</span>
+                    p<span class="sym">.</span>remainingTime <span class="sym">=</span> <span class="num">10</span><span class="sym">;</span>
+                    p<span class="sym">.</span>hospitalTime <span class="sym">+=</span> <span class="num">10</span><span class="sym">;</span>
+                    treatment<span class="sym">.</span>Add<span class="sym">(</span>p<span class="sym">);</span>
+                <span class="sym">}</span> <span class="kwa">else</span> <span class="sym">{</span>
+                <span class="slc">// transfer</span>
+                    availableStaff<span class="sym">++;</span>
+                    transfers<span class="sym">.</span>Add<span class="sym">(</span>p<span class="sym">);</span>
+                <span class="sym">}</span>
+                examination<span class="sym">.</span>Remove<span class="sym">(</span>p<span class="sym">);</span>
+            <span class="sym">}</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">void</span> TriagePatients<span class="sym">()</span>
+    <span class="sym">{</span>
+        foreach<span class="sym">(</span>inout Patient p<span class="sym">;</span> triage<span class="sym">)</span>
+        <span class="sym">{</span>
+            <span class="kwa">if</span><span class="sym">(</span>availableStaff <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">)</span>
+            <span class="sym">{</span>
+                availableStaff<span class="sym">--;</span>
+                p<span class="sym">.</span>remainingTime <span class="sym">=</span> <span class="num">3</span><span class="sym">;</span>
+                p<span class="sym">.</span>hospitalTime <span class="sym">+=</span> <span class="num">3</span><span class="sym">;</span>
+                examination<span class="sym">.</span>Add<span class="sym">(</span>p<span class="sym">);</span>
+                triage<span class="sym">.</span>Remove<span class="sym">(</span>p<span class="sym">);</span>
+            <span class="sym">}</span> <span class="kwa">else</span> <span class="sym">{</span>
+                p<span class="sym">.</span>hospitalTime<span class="sym">++;</span>
+            <span class="sym">}</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    <span class="kwb">int</span> seed<span class="sym">;</span>
+    <span class="kwb">const int</span> IM <span class="sym">=</span> <span class="num">139968</span><span class="sym">,</span> IA <span class="sym">=</span> <span class="num">3877</span><span class="sym">,</span> IC <span class="sym">=</span> <span class="num">29573</span><span class="sym">;</span>
+    <span class="kwb">double</span> genRandom<span class="sym">(</span><span class="kwb">double</span> max<span class="sym">) {</span> <span class="kwa">return</span><span class="sym">(</span>max <span class="sym">* (</span>seed <span class="sym">= (</span>seed <span class="sym">*</span> IA <span class="sym">+</span> IC<span class="sym">) %</span> IM<span class="sym">) /</span> IM<span class="sym">); }</span>
+<span class="sym">}</span>
+
+<span class="kwc">class</span> Totals
+<span class="sym">{</span>
+    <span class="kwc">private</span> <span class="kwb">long</span> patients<span class="sym">,</span> hospitalTime<span class="sym">,</span> hospitalVisits<span class="sym">;</span>
+
+    <span class="kwc">public</span> Totals opAddAssign<span class="sym">(</span>Totals b<span class="sym">)</span>
+    <span class="sym">{</span>
+        patients <span class="sym">+=</span> b<span class="sym">.</span>patients<span class="sym">;</span>
+        hospitalTime <span class="sym">+=</span> b<span class="sym">.</span>hospitalTime<span class="sym">;</span>
+        hospitalVisits <span class="sym">+=</span> b<span class="sym">.</span>hospitalVisits<span class="sym">;</span>
+        <span class="kwa">return this</span><span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwc">public</span> Totals opAddAssign<span class="sym">(</span>Patient p<span class="sym">)</span>
+    <span class="sym">{</span>
+        patients<span class="sym">++;</span>
+        hospitalTime <span class="sym">+=</span> p<span class="sym">.</span>hospitalTime<span class="sym">;</span>
+        hospitalVisits <span class="sym">+=</span> p<span class="sym">.</span>hospitalVisits<span class="sym">;</span>
+        <span class="kwa">return this</span><span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
