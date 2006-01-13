@@ -1,0 +1,65 @@
+<span class="com">(*</span>
+<span class="com"> * The Computer Language Shootout</span>
+<span class="com"> * http://shootout.alioth.debian.org/</span>
+<span class="com"> *</span>
+<span class="com"> * Contributed by Matthieu Dubuget</span>
+<span class="com"> *)</span>
+
+
+<span class="com">(* compilation:</span>
+<span class="com">   ocamlopt -thread -noassert -unsafe -ccopt -O3 unix.cmxa threads.cmxa chameneos.ml</span>
+<span class="com"></span>
+<span class="com">   -thread unix.cmxa threads.cmxa</span>
+<span class="com">*)</span>
+
+<span class="com">(* color manipulation *)</span>
+<span class="kwa">type</span> color <span class="sym">=</span> Color <span class="kwa">of</span> <span class="kwb">int</span>
+<span class="kwa">let</span> red <span class="sym">=</span> Color <span class="num">0</span>
+<span class="kwa">and</span> yellow <span class="sym">=</span> Color <span class="num">1</span>
+<span class="kwa">and</span> blue <span class="sym">=</span> Color <span class="num">2</span>
+<span class="kwa">and</span> faded <span class="sym">=</span> Color <span class="num">3</span>
+
+<span class="com">(* val compl : color -&gt; color -&gt; color *)</span>
+<span class="kwa">let</span> <span class="kwd">compl</span> <span class="sym">(</span>Color c1<span class="sym">)  (</span>Color c2<span class="sym">) =</span>
+  <span class="kwa">if</span> <span class="sym">(</span>c1 <span class="sym">=</span> c2<span class="sym">)</span> <span class="kwa">then</span> Color c1
+  <span class="kwa">else</span> <span class="kwd">Color</span> <span class="sym">(</span><span class="num">3</span> <span class="sym">-</span> c1 <span class="sym">-</span> c2<span class="sym">)</span>
+
+<span class="com">(* val place : int -&gt; ('a option Event.channel * 'a) Event.channel *)</span>
+<span class="kwa">let</span> place n <span class="sym">=</span>
+  <span class="kwa">let</span> chan <span class="sym">=</span> Event.<span class="kwd">new_channel</span> <span class="sym">()</span> <span class="kwa">in</span>
+  <span class="kwa">let</span> ev <span class="sym">=</span> Event.receive chan <span class="kwa">in</span>
+  <span class="kwa">let rec</span> lp n <span class="sym">=</span>
+	<span class="kwa">let</span> ch1<span class="sym">,</span> c1 <span class="sym">=</span> Event.sync ev <span class="kwa">in</span>
+	  <span class="kwa">match</span> n <span class="kwa">with</span>
+	    <span class="sym">|</span> <span class="num">0</span> <span class="sym">-&gt;</span> Event.<span class="kwd">sync</span> <span class="sym">(</span>Event.send ch1 faded<span class="sym">);</span> lp <span class="num">0</span>
+	    <span class="sym">|</span> n <span class="sym">-&gt;</span> <span class="kwa">let</span> ch2<span class="sym">,</span> c2 <span class="sym">=</span> Event.sync ev <span class="kwa">in</span>
+		<span class="kwd">ignore</span> <span class="sym">(</span>Event.<span class="kwd">sync</span><span class="sym">(</span>Event.send ch1 c2<span class="sym">));</span>
+		<span class="kwd">ignore</span> <span class="sym">(</span>Event.<span class="kwd">sync</span><span class="sym">(</span>Event.send ch2 c1<span class="sym">));</span>
+		<span class="kwd">lp</span> <span class="sym">(</span>pred n<span class="sym">)</span> <span class="kwa">in</span>
+    <span class="kwd">ignore</span><span class="sym">(</span> Thread.create lp n <span class="sym">);</span>
+    chan
+
+<span class="com">(*  val animal :</span>
+<span class="com">    (color Event.channel * color) Event.channel -&gt;</span>
+<span class="com">    int Event.channel -&gt; color -&gt; unit *)</span>
+<span class="kwa">let</span> animal p m c <span class="sym">=</span>
+  <span class="kwa">let</span> a <span class="sym">=</span> Event.<span class="kwd">new_channel</span> <span class="sym">()</span> <span class="kwa">in</span>
+  <span class="kwa">let rec</span> lp n c <span class="sym">=</span>
+    Event.<span class="kwd">sync</span><span class="sym">(</span> Event.send <span class="kwd">p</span> <span class="sym">(</span>a<span class="sym">,</span> c<span class="sym">));</span>
+    <span class="kwa">let</span> oc <span class="sym">=</span> Event.<span class="kwd">sync</span> <span class="sym">(</span>Event.receive a<span class="sym">)</span> <span class="kwa">in</span>
+      <span class="kwa">if</span> oc <span class="sym">=</span> faded <span class="kwa">then</span>
+	<span class="kwd">ignore</span> <span class="sym">(</span>Event.<span class="kwd">sync</span> <span class="sym">(</span>Event.send m n<span class="sym">))</span>
+      <span class="kwa">else</span>
+	<span class="kwd">lp</span> <span class="sym">(</span>succ n<span class="sym">) (</span>compl c oc<span class="sym">)</span> <span class="kwa">in</span>
+    <span class="kwd">ignore</span><span class="sym">(</span>Thread.<span class="kwd">create</span> <span class="sym">(</span>lp <span class="num">0</span><span class="sym">)</span> c<span class="sym">)</span>
+
+<span class="com">(* val go : int -&gt; int *)</span>
+<span class="kwa">let</span> go n <span class="sym">=</span>
+  <span class="kwa">let</span> p <span class="sym">=</span> place n
+  <span class="kwa">and</span> m <span class="sym">=</span> Event.<span class="kwd">new_channel</span> <span class="sym">()</span>
+  <span class="kwa">and</span> colors <span class="sym">=  [</span>blue<span class="sym">;</span> red<span class="sym">;</span> yellow<span class="sym">;</span> blue<span class="sym">]</span> <span class="kwa">in</span>
+    List.<span class="kwd">iter</span> <span class="sym">(</span>animal p m<span class="sym">)</span> colors<span class="sym">;</span>
+    List.<span class="kwd">fold_left</span> <span class="sym">(</span><span class="kwa">fun</span> s c <span class="sym">-&gt;</span> s <span class="sym">+</span> Event.<span class="kwd">sync</span> <span class="sym">(</span>Event.receive m<span class="sym">))</span> <span class="num">0</span> colors
+
+<span class="kwa">let</span> _ <span class="sym">=</span> Printf.printf <span class="str">&quot;%d</span><span class="esc">\n</span><span class="str">&quot;</span> <span class="sym">(</span><span class="kwd">go</span> <span class="sym">(</span>int_of_string Sys.argv.<span class="sym">(</span><span class="num">1</span><span class="sym">)));;</span>
+
