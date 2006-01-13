@@ -1,0 +1,65 @@
+(* 
+ * The Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Matthieu Dubuget
+ *)
+
+
+(* compilation: 
+   ocamlopt -thread -noassert -unsafe -ccopt -O3 unix.cmxa threads.cmxa chameneos.ml 
+
+   -thread unix.cmxa threads.cmxa
+*)
+
+(* color manipulation *)
+type color = Color of int
+let red = Color 0
+and yellow = Color 1
+and blue = Color 2
+and faded = Color 3
+
+(* val compl : color -> color -> color *)
+let compl (Color c1)  (Color c2) =
+  if (c1 = c2) then Color c1
+  else Color (3 - c1 - c2)
+
+(* val place : int -> ('a option Event.channel * 'a) Event.channel *)
+let place n =
+  let chan = Event.new_channel () in
+  let ev = Event.receive chan in
+  let rec lp n =
+	let ch1, c1 = Event.sync ev in
+	  match n with
+	    | 0 -> Event.sync (Event.send ch1 faded); lp 0
+	    | n -> let ch2, c2 = Event.sync ev in
+		ignore (Event.sync(Event.send ch1 c2));
+		ignore (Event.sync(Event.send ch2 c1));
+		lp (pred n) in
+    ignore( Thread.create lp n );
+    chan
+
+(*  val animal :
+    (color Event.channel * color) Event.channel ->
+    int Event.channel -> color -> unit *)
+let animal p m c =
+  let a = Event.new_channel () in
+  let rec lp n c =
+    Event.sync( Event.send p (a, c));
+    let oc = Event.sync (Event.receive a) in 
+      if oc = faded then
+	ignore (Event.sync (Event.send m n))
+      else
+	lp (succ n) (compl c oc) in
+    ignore(Thread.create (lp 0) c)
+
+(* val go : int -> int *)
+let go n =
+  let p = place n
+  and m = Event.new_channel () 
+  and colors =  [blue; red; yellow; blue] in
+    List.iter (animal p m) colors;
+    List.fold_left (fun s c -> s + Event.sync (Event.receive m)) 0 colors
+
+let _ = Printf.printf "%d\n" (go (int_of_string Sys.argv.(1)));;
+

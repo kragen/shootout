@@ -164,6 +164,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 
 <tr><td>
 <p>There are many contributors and few committers - a little more time spent by contributors saves committers a great deal more time.</p>
+<p>Please don't contribute patch-files. Do attach full source-code from tested programs.</p>
 <p>Before contributing programs</p>
 <ol>
 <li>read the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
