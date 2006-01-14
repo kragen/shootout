@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.27 2006-01-14 03:53:18 ekarttun-guest Exp $
 include ../../Make.header
 
 TEST    := random
@@ -18,7 +18,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
-GHCOPTS := -fexcess-precision
+GHCOPTS := -fexcess-precision -fglasgow-exts
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 9000,300000,600000,900000 
