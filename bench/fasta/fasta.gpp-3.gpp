@@ -1,0 +1,174 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   converted to C++ from D by Rafal Rusin
+   modified by Vaclav Haisman
+   compile: g++ -O2 -o fasta fasta.cpp
+*/
+
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <memory>
+#include <vector>
+
+using namespace std;
+
+template <int IM = 139968, int IA = 3877, int IC = 29573>
+class Random
+{
+private:
+  int last;
+public:
+  Random(): last(42) {}
+  double genRandom(double max)
+  {
+    return(max * (last = (last * IA + IC) % IM) / IM);
+  }
+};
+
+class Fasta: public Random<>
+{
+private:
+  static const char alu[];
+
+  struct IUB
+  {
+    char c;
+    double p;
+
+    IUB(char c, double p): c(c), p(p) {}
+  };
+
+  vector<IUB> iub;
+  vector<IUB> homosapiens;
+
+  void makeCumulative(vector<IUB> &table)
+  {
+    double prob = 0.0;
+    for(vector<IUB>::iterator it = table.begin(); it != table.end(); ++it)
+      {
+        prob += it->p;
+        it->p = prob;
+      }
+  }
+
+public:
+  enum TableType
+    {
+      iubType,
+      homosapiensType
+    };
+
+  Fasta()
+  {
+    iub.push_back(IUB('a', 0.27));
+    iub.push_back(IUB('c', 0.12));
+    iub.push_back(IUB('g', 0.12));
+    iub.push_back(IUB('t', 0.27));
+
+    iub.push_back(IUB('B', 0.02));
+    iub.push_back(IUB('D', 0.02));
+    iub.push_back(IUB('H', 0.02));
+    iub.push_back(IUB('K', 0.02));
+    iub.push_back(IUB('M', 0.02));
+    iub.push_back(IUB('N', 0.02));
+    iub.push_back(IUB('R', 0.02));
+    iub.push_back(IUB('S', 0.02));
+    iub.push_back(IUB('V', 0.02));
+    iub.push_back(IUB('W', 0.02));
+    iub.push_back(IUB('Y', 0.02));
+
+    homosapiens.push_back(IUB('a', 0.3029549426680));
+    homosapiens.push_back(IUB('c', 0.1979883004921));
+    homosapiens.push_back(IUB('g', 0.1975473066391));
+    homosapiens.push_back(IUB('t', 0.3015094502008));
+  }
+
+  void makeRepeatFasta(char const * id, char const * desc, int n);
+  void makeRandomFasta(char const * id, char const * desc, TableType tableType, int n);
+};
+
+const char Fasta::alu[] =
+"GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG"
+"GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA"
+"CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT"
+"ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA"
+"GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG"
+"AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC"
+"AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
+
+void 
+Fasta::makeRepeatFasta(char const * id, char const * desc, int n)
+{
+  const int length = 60, kn = sizeof(alu) - 1;
+  int k = 0;
+    
+  cout << ">" << id << " " << desc << endl;
+  char line[length + 1];
+  while(n > 0) 
+    {
+      int const m = min (n, length);
+      for(int j = 0; j < m; ++j, ++k) {
+        if(k >= kn) k = 0;
+        line[j] = alu[k];
+      }
+      line[m] = '\n';
+      cout.write(line, m + 1);
+      n -= length;
+    }
+}
+
+void 
+Fasta::makeRandomFasta(char const * id, char const * desc, TableType tableType, int n)
+{
+  const int length = 60;
+  vector<IUB> *table;
+
+  switch(tableType)
+    {
+    case iubType:
+      table = &iub;
+      break;
+    default:
+      table = &homosapiens;
+      break;
+    }
+
+  cout << ">" << id << " " << desc << endl;
+  makeCumulative(*table);
+  char line[length + 1];
+  while(n > 0)
+    {
+      int const m = min (n, length);
+      for(int j = 0; j < m; ++j)
+        {
+          double const rval = genRandom(1);
+          for (vector<IUB>::const_iterator it = table->begin(); it != table->end(); ++it)
+            {
+              if(rval < it->p)
+                {
+                  line[j] = it->c;
+                  break;
+                }
+            }
+        }
+      line[m] = '\n';
+      cout.write(line, m+1);
+      n -= length;
+    }
+}
+
+int main(int argc, char *argv[])
+{
+  unsigned const n = argc > 1 ? atoi(argv[1]) : 1;
+
+  Fasta fasta;
+
+  fasta.makeRepeatFasta("ONE", "Homo sapiens alu", n*2);
+  fasta.makeRandomFasta("TWO", "IUB ambiguity codes", Fasta::iubType, n*3);
+  fasta.makeRandomFasta("THREE", "Homo sapiens frequency", Fasta::homosapiensType, n*5);
+
+  return 0;
+}
+
