@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.34 2006-01-13 12:57:01 ekarttun-guest Exp $
+# $Id: Makefile,v 1.35 2006-01-17 16:19:45 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -12,6 +12,6 @@ NLOPTS   := -s 100000
 GHCOPTS  := -fasm -fglasgow-exts
 IFCOPTS := -ip
 
-RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 7,8,9
+RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 9,10,11
 
 include ../../Make.footer

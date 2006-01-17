@@ -1,0 +1,81 @@
+<span class="com">/* The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   contributed by Sebastián E. Peyrott - 16/01/2006 - v1</span>
+<span class="com">   Compilation &amp; Linking: dmd -O -inline</span>
+<span class="com">*/</span>
+
+module regex_dna<span class="sym">;</span>
+
+import std<span class="sym">.</span>cstream<span class="sym">;</span> <span class="slc">//Includes standard C I/O functions.</span>
+import std<span class="sym">.</span>regexp<span class="sym">;</span>  <span class="slc">//Regexp objects.</span>
+
+<span class="kwb">int</span> main<span class="sym">()</span>
+<span class="sym">{</span>
+	<span class="slc">//We do static allocations once, to minimize GC cycles.</span>
+	<span class="kwb">char</span><span class="sym">[]</span> Buf_InputSequence <span class="sym">=</span> <span class="kwa">new</span> <span class="kwb">char</span><span class="sym">[</span><span class="num">100000</span><span class="sym">];</span>
+	uint Var_SeqLen_Original<span class="sym">,</span> Var_SeqLen_NoFASTAInfo<span class="sym">,</span> Var_SeqLen_IUB<span class="sym">;</span>
+	uint<span class="sym">[</span><span class="num">9</span><span class="sym">]</span> Var_VarMatches<span class="sym">;</span>
+	RegExp<span class="sym">[</span><span class="num">9</span><span class="sym">]</span> SeqVariants<span class="sym">;</span>
+	SeqVariants<span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">1</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">2</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">3</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">4</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">5</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">6</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">7</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	SeqVariants<span class="sym">[</span><span class="num">8</span><span class="sym">] =</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">,</span> null<span class="sym">);</span>
+	RegExp Regex_FASTAInfo <span class="sym">=</span> <span class="kwa">new</span> RegExp<span class="sym">(</span><span class="str">&quot;&gt;.*</span><span class="esc">\n</span><span class="str">|</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> <span class="str">&quot;gi&quot;</span><span class="sym">);</span>
+	<span class="kwb">char</span><span class="sym">[][</span><span class="kwb">char</span><span class="sym">[]]</span> IUB<span class="sym">;</span>
+	IUB<span class="sym">[</span><span class="str">&quot;B&quot;</span><span class="sym">] =</span> <span class="str">&quot;(c|g|t)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;D&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|g|t)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;H&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|c|t)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;K&quot;</span><span class="sym">] =</span> <span class="str">&quot;(g|t)&quot;</span><span class="sym">;</span>
+	IUB<span class="sym">[</span><span class="str">&quot;M&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|c)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;N&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;R&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|g)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;S&quot;</span><span class="sym">] =</span> <span class="str">&quot;(c|g)&quot;</span><span class="sym">;</span>
+	IUB<span class="sym">[</span><span class="str">&quot;V&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|c|g)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;W&quot;</span><span class="sym">] =</span> <span class="str">&quot;(a|t)&quot;</span><span class="sym">;</span> IUB<span class="sym">[</span><span class="str">&quot;Y&quot;</span><span class="sym">] =</span> <span class="str">&quot;(c|t)&quot;</span><span class="sym">;</span>
+
+	<span class="com">/* The buffer is allocated in chunks and then truncated to minimize the impact</span>
+<span class="com">	*  of dynamic allocations. It'd be useful to know the average size of FASTA Data.</span>
+<span class="com">	*/</span>
+	<span class="kwa">for</span><span class="sym">(</span>Var_SeqLen_Original <span class="sym">=</span> <span class="num">0</span><span class="sym">; !</span>din<span class="sym">.</span>eof<span class="sym">;</span> Var_SeqLen_Original<span class="sym">++)</span>
+	<span class="sym">{</span>
+		<span class="kwa">if</span> <span class="sym">(</span>Var_SeqLen_Original <span class="sym">==</span> Buf_InputSequence<span class="sym">.</span>length<span class="sym">)</span>
+			<span class="sym">{</span> Buf_InputSequence<span class="sym">.</span>length <span class="sym">=</span> Buf_InputSequence<span class="sym">.</span>length <span class="sym">*</span> <span class="num">2</span><span class="sym">; }</span>
+		Buf_InputSequence<span class="sym">[</span>Var_SeqLen_Original<span class="sym">] =</span> din<span class="sym">.</span>getc<span class="sym">();</span>
+	<span class="sym">}</span>
+
+	<span class="slc">//The last iteration should be ignored, as it doesn't write anything.</span>
+	Var_SeqLen_Original <span class="sym">-=</span> <span class="num">1</span><span class="sym">;</span>
+	Buf_InputSequence<span class="sym">.</span>length <span class="sym">=</span> Var_SeqLen_Original<span class="sym">;</span>
+
+	<span class="slc">//The new blank spaces generated by RegExp.replace are automatically removed.</span>
+	Buf_InputSequence <span class="sym">=</span> Regex_FASTAInfo<span class="sym">.</span>replace<span class="sym">(</span>Buf_InputSequence<span class="sym">,</span> null<span class="sym">);</span>
+	Var_SeqLen_NoFASTAInfo <span class="sym">=</span> Buf_InputSequence<span class="sym">.</span>length<span class="sym">;</span>
+
+	<span class="slc">//We look for each sequence in the data provided.</span>
+	foreach<span class="sym">(</span><span class="kwb">int</span> Index<span class="sym">,</span> inout RegExp Variant<span class="sym">;</span> SeqVariants<span class="sym">)</span>
+	<span class="sym">{</span>
+ 		Variant<span class="sym">.</span>test<span class="sym">(</span>Buf_InputSequence<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>		<span class="slc">//Awful, but necessary.</span>
+		<span class="kwa">if</span> <span class="sym">(</span>Variant<span class="sym">.</span>pmatch<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>rm_so <span class="sym">== -</span><span class="num">1</span><span class="sym">)</span>
+		<span class="sym">{</span>
+			printf<span class="sym">(</span><span class="str">&quot;%s %i</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">, (</span>Variant<span class="sym">.</span>pattern <span class="sym">~</span> <span class="str">&quot;</span><span class="esc">\0</span><span class="str">&quot;</span><span class="sym">).</span>ptr<span class="sym">,</span> Var_VarMatches<span class="sym">[</span>Index<span class="sym">]);</span>
+			<span class="kwa">continue</span><span class="sym">;</span>
+		<span class="sym">}</span>
+		Var_VarMatches<span class="sym">[</span>Index<span class="sym">]++;</span>
+		<span class="kwa">for</span><span class="sym">(;;)</span>
+		<span class="sym">{</span>
+			Variant<span class="sym">.</span>test<span class="sym">(</span>Buf_InputSequence<span class="sym">,</span> Variant<span class="sym">.</span>pmatch<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>rm_eo<span class="sym">);</span>
+			<span class="kwa">if</span> <span class="sym">(</span>Variant<span class="sym">.</span>pmatch<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>rm_so <span class="sym">== -</span><span class="num">1</span><span class="sym">) {</span> <span class="kwa">break</span><span class="sym">; }</span>
+			Var_VarMatches<span class="sym">[</span>Index<span class="sym">]++;</span>
+		<span class="sym">}</span>
+		printf<span class="sym">(</span><span class="str">&quot;%s %i</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">, (</span>Variant<span class="sym">.</span>pattern <span class="sym">~</span> <span class="str">&quot;</span><span class="esc">\0</span><span class="str">&quot;</span><span class="sym">).</span>ptr<span class="sym">,</span> Var_VarMatches<span class="sym">[</span>Index<span class="sym">]);</span>
+	<span class="sym">}</span>
+
+	<span class="slc">//IUB code replacement.</span>
+	foreach<span class="sym">(</span><span class="kwb">char</span><span class="sym">[]</span> Code<span class="sym">,</span> inout <span class="kwb">char</span><span class="sym">[]</span> Alternative<span class="sym">;</span> IUB<span class="sym">)</span>
+	<span class="sym">{</span>
+		Buf_InputSequence <span class="sym">= (</span><span class="kwa">new</span> RegExp<span class="sym">(</span>Code<span class="sym">,</span> <span class="str">&quot;g&quot;</span><span class="sym">)).</span>replace<span class="sym">(</span>Buf_InputSequence<span class="sym">,</span> Alternative<span class="sym">);</span>
+	<span class="sym">}</span>
+
+	<span class="slc">//Output the length of each sequence.</span>
+	printf<span class="sym">(</span><span class="str">&quot;</span><span class="esc">\n</span><span class="str">%i</span><span class="esc">\n</span><span class="str">%i</span><span class="esc">\n</span><span class="str">%i</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> Var_SeqLen_Original<span class="sym">,</span> Var_SeqLen_NoFASTAInfo<span class="sym">,</span> Buf_InputSequence<span class="sym">.</span>length<span class="sym">);</span>
+	<span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
