@@ -5,7 +5,7 @@
  * contributed by Andrei Formiga
  */
 
-object Fannkuch2
+object fannkuch
 {
   def main(args: Array[String]) = {
     val n = Integer.parseInt(args(0));

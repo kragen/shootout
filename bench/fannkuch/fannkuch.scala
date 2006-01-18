@@ -5,7 +5,7 @@
  * contributed by Andrei Formiga
  */
 
-object Fannkuch
+object fannkuch
 {
   var permN : int = 0;
   var maxFlips : int = 0;
