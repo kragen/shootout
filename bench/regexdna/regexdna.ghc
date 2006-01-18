@@ -1,0 +1,142 @@
+--
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- regex-dna
+-- Contributed by Don Stewart
+--
+-- This entry contains an alternative binding to regexec. The
+-- standard Haskell Text.Regex binding to C's regex.h converts between
+-- [Char] and C strings on each call, making it very inefficient. Here we
+-- rewrite the Haskell wrapper code to regexec, keeping all strings in
+-- packed Word8 form, avoiding unneccessary conversions. It must be
+-- emphasised that *no* new work is being done in C, it's all still
+-- Haskell. It is just the interface to regexec that is more efficient.
+--
+
+import Control.Monad 
+import Text.Printf
+import Text.Regex
+import qualified Data.Map as M
+import System.IO
+import Foreign
+import Foreign.C
+import GHC.Base
+import GHC.Ptr
+import GHC.IOBase
+
+main = do b1@(P _ sz1) <- hGet
+          b2@(P _ sz2) <- clean b1
+          countMatch b2
+          (P _ sz3)    <- subIub b2
+          printf "\n%d\n%d\n%d\n" sz1 sz2 sz3
+
+clean (P p i) = loop 0 i >>= return . P p
+    where loop n j | n >= j   = return j
+                   | otherwise = do
+                        m <- regexec r p n
+                        case m of
+                            Nothing    -> return j
+                            Just (a,b) -> do
+                                let (c,d) = (a+n, b+n) -- absolute offset
+                                copyBytes (p `plusPtr` c) (p `plusPtr` d) (j - d)
+                                loop c $ j - (b - a)
+          r = toRx $ mkRegexWithOpts "(^>.*)?\n" True True
+
+countMatch (P p i) = mapM_ draw patterns
+    where draw r = regexecAll (compile r) p >>= printf (r ++ " %d\n") . length
+
+patterns = 
+    ["agggtaaa|tttaccct","[cgt]gggtaaa|tttaccc[acg]","a[act]ggtaaa|tttacc[agt]t"
+    ,"ag[act]gtaaa|tttac[agt]ct","agg[act]taaa|ttta[agt]cct","aggg[acg]aaa|ttt[cgt]ccct"
+    ,"agggt[cgt]aa|tt[acg]accct","agggta[cgt]a|t[acg]taccct","agggtaa[cgt]|[acg]ttaccct"]
+
+--
+-- replace things that match pattern with pattern, return count
+--
+
+subIub p = replace p re >>= return . fst
+   where re = compile $ "["++ (map (chr.fromIntegral) (M.keys pairs)) ++"]"
+
+-- Still too slow. Do something smarter
+replace ptr@(P p _) r = regexecAll r p >>= foldM fn (ptr,0)
+
+  where fn ((P p i),off) (n,z) = do
+            let (m,m1) = (n + off, m+1)
+            c <- peek (p `plusPtr` m) :: IO Word8
+            let (l,s)     = getit c
+                (l1, il1) = (l-1, i + l1)
+            q <- reallocArray0 p il1
+            let qm = q `plusPtr` m
+            moveBytes (qm `plusPtr` l) (qm `plusPtr` 1) (i - m1)
+            copyBytes qm s l
+            return $! (P q il1, off+l1)
+
+        getit k = case M.lookup k pairs of Just s -> s ; Nothing -> error (show k)
+
+pairs = M.fromList $
+    [(c 'B',(7,Ptr"(c|g|t)"#)),(c 'D',(7,Ptr"(a|g|t)"#)),(c 'H',(7,Ptr"(a|c|t)"#))
+    ,(c 'K',(5,Ptr"(g|t)"#)),  (c 'M',(5,Ptr"(a|c)"#)),  (c 'N',(9,Ptr"(a|c|g|t)"#))
+    ,(c 'R',(5,Ptr"(a|g)"#)),  (c 'S',(5,Ptr"(c|g)"#)),  (c 'V',(7,Ptr"(a|c|g)"#))
+    ,(c 'W',(5,Ptr"(a|t)"#)),  (c 'Y',(5,Ptr"(c|t)"#))] 
+  where c = fromIntegral . ord
+
+--
+-- From the FastPackedString library
+--
+
+data P = P !(Ptr Word8) !Int
+
+lengthP (P _ i) = i
+
+hGet = do p <- mallocArray0 sz
+          i <- hGetBuf stdin p sz
+          if i < sz then reallocArray0 p i >>= return . flip P i else f p sz
+  where 
+    sz    = 0xfffff
+    f p s = do let s' = s + sz
+               p' <- reallocArray0 p s'
+               i  <- hGetBuf stdin (p' `plusPtr` s) s
+               if i < s then let i' = s + i in reallocArray0 p' i' >>= return . flip P i'
+                        else f p' s'
+
+--
+-- Word8 binding to the regexec
+--
+
+type CRegex    = ()
+type CRegMatch = ()
+newtype Rx     = Rx (ForeignPtr CRegex)
+
+compile s = toRx $ mkRegexWithOpts s True True
+
+toRx = unsafeCoerce#
+
+foreign import ccall unsafe "regex.h regexec"
+    cregexec :: Ptr CRegex -> Ptr Word8 -> CSize -> Ptr CRegMatch -> CInt -> IO CInt
+
+-- find indicies of all matches
+regexecAll (Rx fptr) (ptr :: Ptr Word8) = withForeignPtr fptr $ \regex -> do
+    nsub <- peekByteOff regex 24    -- no hsc2hs, so provide linux specific offset
+    let nsubi = fromIntegral (nsub :: CSize)
+    allocaBytes ((1 + nsubi) * 8) $ \p_match -> do -- and here
+        let loop i = do r <- cregexec regex (ptr `plusPtr` i) (1 + nsub) p_match 0
+                        if r /= 0 then return []
+                                  else do (n,m)  <- indexOfMatch p_match
+                                          iss    <- loop $! i + m
+                                          return $! (i+n,i+m) : iss
+        loop 0
+
+-- find index of next match
+regexec (Rx fptr) (ptr :: Ptr Word8) i = withForeignPtr fptr $ \regex_ptr -> do
+    nsub <- peekByteOff regex_ptr 24
+    let nsub_int = fromIntegral (nsub :: CSize)
+    allocaBytes ((1 + nsub_int) * 8) $ \p_match -> do
+        r <- cregexec regex_ptr (ptr `plusPtr` i) (1 + nsub) p_match 0
+        if r /= 0 then return Nothing else indexOfMatch p_match >>= return . Just
+
+indexOfMatch (Ptr addr :: Ptr CRegMatch) = IO $ \s ->
+    case readIntOffAddr# addr 0# s of { (# s, a #) ->  -- no hsc2hs
+    case readIntOffAddr# addr 1# s of { (# s, b #) -> (# s, (I# a, I# b) #) } }
+{-# INLINE indexOfMatch #-}
+
