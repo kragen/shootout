@@ -40,7 +40,7 @@ object fannkuch
 
   def main(args: Array[String]) = 
   {
-    val n = Console.readInt;
+    val n = Integer.parseInt(args(0));
 
     permutations(List.range(1, n + 1), n, 0);
     Console.println("Pfannkuchen(" + n + ") = " + maxFlips);
