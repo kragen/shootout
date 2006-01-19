@@ -1,74 +1,58 @@
-<span class="com">{-# OPTIONS -O2 -funbox-strict-fields #-}</span>
-<span class="com">{- The Computer Language Shootout</span>
-<span class="com">   http://shootout.alioth.debian.org/</span>
-<span class="com"></span>
-<span class="com">   contributed by Chris Kuklewicz, 28 Dec 2005, 2 Jan 2006</span>
-<span class="com">   modified by Einar Karttunen, 31 Dec 2005</span>
-<span class="com">   further modified by Chris Kuklewicz to use Int# on 6 Jan 2006</span>
-<span class="com">   further modified by Simon Marlow using -funbox-strict-fields, and</span>
-<span class="com">   avoiding use of explicit unboxed Int#.</span>
-<span class="com"></span>
-<span class="com">   This entry uses a separate thread to manage the meetings.</span>
-<span class="com">-}</span>
+<span class="com">{-# OPTIONS_GHC -O2 -optc-O3 -funbox-strict-fields #-}</span>
+<span class="slc">--</span>
+<span class="slc">-- The Computer Language Shootout</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">--</span>
+<span class="slc">-- contributed by Aaron Denney</span>
+<span class="slc">-- modified by Chris Kuklewicz and Don Stewart</span>
+<span class="slc">--</span>
+<span class="slc">-- compile with &quot;ghc --make -O2 -funbox-strict-fields chameneos.hs -o chameneos.ghc_run&quot;</span>
+<span class="slc">-- run with &quot;./chameneos.ghc_run %A&quot; where %A is the number of meetings</span>
+<span class="slc">--</span>
+<span class="slc">-- This is a symmetric solution that does not use a manager thread.</span>
+<span class="slc">--</span>
 
 <span class="kwa">import</span> Control.Concurrent
 <span class="kwa">import</span> Control.Monad
-<span class="kwa">import</span> System <span class="sym">(</span>getArgs<span class="sym">)</span>
+<span class="kwa">import</span> System
 
-<span class="com">{- Ch : fast unordered channel implementation -}</span>
-<span class="kwa">data</span> Ch a <span class="sym">=</span> Ch <span class="sym">!(</span>MVar <span class="sym">[</span>a<span class="sym">]) !(</span>MVar a<span class="sym">)</span>
+<span class="kwa">data</span> Color <span class="sym">=</span> C <span class="sym">!</span><span class="kwb">Int</span> <span class="kwa">deriving</span> Eq
+red <span class="sym">=</span> C <span class="num">0</span><span class="sym">;</span> yellow <span class="sym">=</span> C <span class="num">1</span><span class="sym">;</span> blue <span class="sym">=</span> C <span class="num">2</span><span class="sym">;</span> faded <span class="sym">=</span> C <span class="num">3</span>
 
-newCh <span class="sym">=</span> <span class="kwa">do</span> w <span class="sym">&lt;-</span> newMVar <span class="sym">[];</span> r <span class="sym">&lt;-</span> newEmptyMVar<span class="sym">;</span> return <span class="sym">(</span>Ch w r<span class="sym">)</span>
+complement <span class="sym">(</span>C a<span class="sym">) (</span>C b<span class="sym">) =</span> if a <span class="sym">==</span> b <span class="kwa">then</span> C a <span class="kwa">else</span> C <span class="sym">(</span><span class="num">3</span> <span class="sym">-</span> a <span class="sym">-</span> b<span class="sym">)</span>
 
-readCh <span class="sym">(</span>Ch w r<span class="sym">) =</span> <span class="kwa">do</span>
-  lst <span class="sym">&lt;-</span> takeMVar w
-  <span class="kwa">case</span> lst <span class="kwa">of</span> <span class="sym">(</span>x<span class="sym">:</span>xs<span class="sym">) -&gt;</span> <span class="kwa">do</span> putMVar w xs<span class="sym">;</span> return x
-              <span class="sym">[]     -&gt;</span> <span class="kwa">do</span> putMVar w <span class="sym">[];</span> takeMVar r
+<span class="kwa">data</span> Meeting <span class="sym">=</span> M <span class="sym">!(</span>MVar <span class="kwb">Int</span><span class="sym">) !(</span>MVar <span class="sym">(</span>Color<span class="sym">,</span> MVar Color<span class="sym">))</span>
 
-writeCh <span class="sym">(</span>Ch w r<span class="sym">)</span> x <span class="sym">=</span> <span class="kwa">do</span>
-  ok <span class="sym">&lt;-</span> tryPutMVar r x <span class="slc">-- opportunistic, helps for this problem</span>
-  unless ok $ <span class="kwa">do</span>
-    lst <span class="sym">&lt;-</span> takeMVar w
-    ok <span class="sym">&lt;-</span> tryPutMVar r x  <span class="slc">-- safe inside take/put</span>
-    putMVar w $<span class="sym">!</span> if ok <span class="kwa">then</span> lst <span class="kwa">else</span> <span class="sym">(</span>x<span class="sym">:</span>lst<span class="sym">)</span>
+new_meeting maxMeetings <span class="sym">=</span> liftM2 M <span class="sym">(</span>newMVar maxMeetings<span class="sym">)</span> newEmptyMVar
 
-<span class="kwa">data</span> Element <span class="sym">=</span> E <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!(</span>MVar <span class="kwb">Int</span><span class="sym">)</span>
+wait_other <span class="sym">(</span>M meets waiting<span class="sym">)</span> color wake_up <span class="sym">=</span> <span class="kwa">do</span>
+  remainingMeets <span class="sym">&lt;-</span> takeMVar meets <span class="slc">-- used as lock</span>
+  <span class="kwa">let</span> sleep_on <span class="sym">=</span> <span class="kwa">do</span> putMVar waiting <span class="sym">(</span>color<span class="sym">,</span> wake_up<span class="sym">)</span>
+                    putMVar meets remainingMeets
+                    takeMVar wake_up
+      wake_waiter <span class="sym">(</span>other_c<span class="sym">,</span>other_wake_up<span class="sym">) =</span> <span class="kwa">do</span> putMVar other_wake_up color
+                                               putMVar meets <span class="sym">(</span>remainingMeets <span class="sym">-</span> <span class="num">1</span><span class="sym">)</span>
+                                               return other_c
+  <span class="kwa">case</span> remainingMeets <span class="kwa">of</span>
+    <span class="num">0</span> <span class="sym">-&gt;</span> putMVar meets <span class="num">0</span> <span class="sym">&gt;&gt;</span> return faded
+    _ <span class="sym">-&gt;</span> tryTakeMVar waiting <span class="sym">&gt;&gt;=</span> maybe sleep_on wake_waiter
 
-red <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> yellow <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span> blue <span class="sym">=</span> <span class="num">2</span><span class="sym">;</span> faded <span class="sym">=</span> <span class="num">3</span>
-
-complement <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span>
-complement a b <span class="sym">|</span> a <span class="sym">==</span> b    <span class="sym">=</span> a
-               <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="num">3</span> <span class="sym">-</span> a <span class="sym">-</span> b
-
-main <span class="sym">=</span> <span class="kwa">do</span>
-  args <span class="sym">&lt;-</span> getArgs
-  goMeet <span class="sym">&lt;-</span> newCh
-  <span class="kwa">let</span> meetings <span class="sym">=</span> if null args <span class="kwa">then</span> <span class="sym">(</span><span class="num">1000000</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwa">else</span> <span class="sym">(</span>read . head<span class="sym">)</span> args
-
-      meetingPlace <span class="sym">=</span> replicateM_ meetings match <span class="sym">&gt;&gt;</span> fade
-        <span class="kwa">where</span> match <span class="sym">=</span> <span class="kwa">do</span> E color1 pobox1 <span class="sym">&lt;-</span> readCh goMeet
-                         E color2 pobox2 <span class="sym">&lt;-</span> readCh goMeet
-                         putMVar pobox1 color2
-                         putMVar pobox2 color1
-              fade <span class="sym">=</span> <span class="kwa">do</span> E _ pobox <span class="sym">&lt;-</span> readCh goMeet
-                        putMVar pobox faded
-                        fade
-
-      spawn <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO <span class="sym">(</span>MVar <span class="kwb">Int</span><span class="sym">)</span>
-      spawn startingColor <span class="sym">=</span> <span class="kwa">do</span>
-        metVar <span class="sym">&lt;-</span> newEmptyMVar
-        pobox  <span class="sym">&lt;-</span> newEmptyMVar
-        <span class="kwa">let</span> creature havemet color <span class="sym">=</span> <span class="kwa">do</span>
-                havemet `seq` color `seq` return <span class="sym">()</span>
-                writeCh goMeet <span class="sym">(</span>E color pobox<span class="sym">)</span>
-                other <span class="sym">&lt;-</span> takeMVar pobox
+spawnCreature meeting_place startingColor <span class="sym">=</span> <span class="kwa">do</span>
+  metVar <span class="sym">&lt;-</span> newEmptyMVar
+  wake_up  <span class="sym">&lt;-</span> newEmptyMVar
+  <span class="kwa">let</span> creature <span class="sym">=</span> putMVar metVar <span class="sym">=&lt;&lt;</span> inner_creature startingColor <span class="sym">(</span><span class="num">0</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">)</span>
+        <span class="kwa">where</span> inner_creature color have_met <span class="sym">=</span> <span class="kwa">do</span>
+                color `seq` have_met `seq` return <span class="sym">()</span>
+                other <span class="sym">&lt;-</span> wait_other meeting_place color wake_up
                 if other <span class="sym">==</span> faded
-                   <span class="kwa">then</span> putMVar metVar havemet
-                   <span class="kwa">else</span> creature <span class="sym">(</span>havemet<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>complement color other<span class="sym">)</span>
-        forkIO $ creature <span class="num">0</span> startingColor
-        return metVar
+                  <span class="kwa">then</span> return have_met
+                  <span class="kwa">else</span> inner_creature <span class="sym">(</span>complement color other<span class="sym">) (</span>have_met <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
+  forkIO $ creature <span class="slc">-- One thread per creature</span>
+  return metVar
 
-  forkIO meetingPlace
-  metVars <span class="sym">&lt;-</span> mapM spawn <span class="sym">[</span>blue<span class="sym">,</span>red<span class="sym">,</span>yellow<span class="sym">,</span>blue<span class="sym">]</span>
-  total <span class="sym">&lt;-</span> liftM sum $ mapM takeMVar metVars
-  print total
+main <span class="sym">=</span> <span class="kwa">do</span> args <span class="sym">&lt;-</span> getArgs
+          <span class="kwa">let</span> meetings <span class="sym">=</span> if null args <span class="kwa">then</span> <span class="sym">(</span><span class="num">1000000</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwa">else</span> <span class="sym">(</span>read . head<span class="sym">)</span> args
+          meeting_place <span class="sym">&lt;-</span> new_meeting meetings
+          metVars       <span class="sym">&lt;-</span> mapM <span class="sym">(</span>spawnCreature meeting_place<span class="sym">) [</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> blue<span class="sym">]</span>
+          mapM takeMVar metVars <span class="sym">&gt;&gt;=</span> print . sum <span class="slc">-- Main thread waits for completion</span>
+
