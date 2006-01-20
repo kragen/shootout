@@ -25,12 +25,12 @@ BEGIN
    ELSE RETURN z; END;	
 END Tak;
 
-PROCEDURE Fibf (n: REAL): REAL;
+PROCEDURE Fibf (n: LONGREAL): LONGREAL;
 BEGIN
    IF n<2 THEN RETURN 1; ELSE RETURN Fibf(n-2) + Fibf(n-1); END;
 END Fibf;
 
-PROCEDURE Takf (x,y,z: REAL) : REAL;
+PROCEDURE Takf (x,y,z: LONGREAL) : LONGREAL;
 BEGIN
    IF y<x THEN RETURN Takf(Takf(x-1,y,z), Takf(y-1,z,x), Takf(z-1,x,y)); 
    ELSE RETURN z; END;	
