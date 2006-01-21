@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2005-12-19 03:11:54 bfulgham Exp $
+# $Id: Makefile,v 1.7 2006-01-21 04:44:58 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -21,6 +21,6 @@ ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 7,8,9 
+	  --range 8,9,10 
 
 include ../../Make.footer
