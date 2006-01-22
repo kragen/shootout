@@ -1,3 +1,6 @@
+<p>"(alpha)" benchmarks are just experiments - we'll probably change them or decide not to use them at all.</p>
+<p><strong>Please don't waste your valuable time implementing alpha benchmarks</strong>.</p>
+
 <p><strong>diff</strong> program output N = 6 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
 
 <p>Each program should use the same na&#239;ve recursive-algorithms to calculate 3 simple numeric functions: 
