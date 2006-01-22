@@ -41,20 +41,19 @@ BEGIN
    Out.String("Ack(3," ); Out.Int(n,0); Out.String("): "); 
    Out.Int(Ack(3,n),0); Out.Ln;
 
-   m := n*4; 
+   m := n+15; 
    Out.String("Fib("); Out.Int(m,0); Out.String("): "); 
    Out.Int(Fib(m),0); Out.Ln;
 
-   m := n+2; 
+   m := n+25; 
+   Out.String("Fib("); Out.Int(m,0); Out.String("): "); 
+   Out.LongRealFix(Fibf(m*1.0),0,1); Out.Ln;
+
+   m := n-2; 
    Out.String("Tak("); Out.Int(m*3,0); Out.String(","); Out.Int(m*2,0);
    Out.String(","); Out.Int(m,0); Out.String("): "); 
    Out.Int(Tak(m*3,m*2,m),0); Out.Ln;
 
-   m := n*5; 
-   Out.String("Fib("); Out.Int(m,0); Out.String("): "); 
-   Out.LongRealFix(Fibf(m*1.0),0,1); Out.Ln;
-
-   m := n+2; 
    Out.String("Tak("); Out.Int(m*3,0); Out.String(","); Out.Int(m*2,0);
    Out.String(","); Out.Int(m,0); Out.String("): "); 
    Out.LongRealFix(Takf(m*3.0,m*2.0,m*1.0),0,1); Out.Ln;
