@@ -18,10 +18,13 @@ function tak($x,$y,$z){
 $n = $argv[1]; 
 echo "Ack(3,$n): ", ack(3,$n),"\n";
 
-$m = $n+15; echo "Fib($m): ", fib($m),"\n";
-$m = $n+25; printf("Fib(%d): %.1f\n", $m, fib($m*1.0));
+$m = $n+5; 
+echo "Fib($m): ", fib($m),"\n";
+$m = $n+28; 
+printf("Fib(%d): %.1f\n", $m, fib($m*1.0));
 
-$m = $n-2; 
+$m = $n-4; 
 printf("Tak(%d,%d,%d): %d\n", $m*3,$m*2,$m, tak($m*3,$m*2,$m));
+$m = $n-2;
 printf("Tak(%d,%d,%d): %.1f\n", $m*3,$m*2,$m, tak($m*3.0,$m*2.0,$m*1.0));
 ?>

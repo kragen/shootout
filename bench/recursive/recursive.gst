@@ -36,19 +36,20 @@ n := Smalltalk arguments first asInteger.
 Transcript show: 'Ack(3,'; show: n printString; show: '): '; 
    show: (3 ackermann: n) printString; nl.
 
-m := n+15. 
+m := n+5. 
 Transcript show: 'Fib('; show: m printString; show: '): '; 
    show: m fibonacci printString; nl.
 
-m := n+25.
+m := n+28.
 Transcript show: 'Fib('; show: m printString; show: '): '. 
 ((m*1.0d0) fibonacci asScaledDecimal: 1) displayNl.
 
-m := n-2. 
+m := n-4. 
 Transcript show: 'Tak('; show: (m*3) printString; show: ','; 
    show: (m*2) printString; show: ','; show: m printString; show: '): '; 
    show: ((m*3) tak: m*2 z: m) printString; nl.
 
+m := n-2. 
 Transcript show: 'Tak('; show: (m*3) printString; show: ','; 
    show: (m*2) printString; show: ','; show: m printString; show: '): '. 
 (((m*3.0d0) tak: m*2.0d0 z: m*1.0d0) asScaledDecimal: 1) displayNl !
