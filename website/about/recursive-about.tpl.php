@@ -1,10 +1,10 @@
 <p>"(alpha)" benchmarks are just experiments - we'll probably change them or decide not to use them at all.</p>
 <p><strong>Please don't waste your valuable time implementing alpha benchmarks</strong>.</p>
 
-<p><strong>diff</strong> program output N = 6 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
+<p><strong>diff</strong> program output N = 1 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
 
 <p>Each program should use the same na&#239;ve recursive-algorithms to calculate 3 simple numeric functions: 
-ackermann, fibonnaci and tak (and calculate fibonnaci and tak using both integer and double values).</p>
+ackermann, fibonnaci and tak. The fibonnaci and tak implementations should either provide separate functions - one for integer calculation and one for double calculation - or provide a function that uses integer calculation with integer parameters and double calculation with double parameters.</p>
 <pre>
 Ack(x,y)
   x = 0     = y+1
