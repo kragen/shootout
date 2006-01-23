@@ -38,23 +38,23 @@ END Takf;
 
 BEGIN
    n := Shootout.Argi();
-   Out.String("Ack(3," ); Out.Int(n,0); Out.String("): "); 
-   Out.Int(Ack(3,n),0); Out.Ln;
+   m := n+4;
+   Out.String("Ack(3," ); Out.Int(m,0); Out.String("): "); 
+   Out.Int(Ack(3,m),0); Out.Ln;
 
-   m := n+5; 
+   m := n+9; 
    Out.String("Fib("); Out.Int(m,0); Out.String("): "); 
    Out.Int(Fib(m),0); Out.Ln;
 
-   m := n+28; 
+   m := n+32; 
    Out.String("Fib("); Out.Int(m,0); Out.String("): "); 
    Out.LongRealFix(Fibf(m*1.0),0,1); Out.Ln;
 
-   m := n-4; 
-   Out.String("Tak("); Out.Int(m*3,0); Out.String(","); Out.Int(m*2,0);
-   Out.String(","); Out.Int(m,0); Out.String("): "); 
-   Out.Int(Tak(m*3,m*2,m),0); Out.Ln;
+   Out.String("Tak("); Out.Int(n*3,0); Out.String(","); Out.Int(n*2,0);
+   Out.String(","); Out.Int(n,0); Out.String("): "); 
+   Out.Int(Tak(n*3,n*2,n),0); Out.Ln;
 
-   m := n-2; 
+   m := n+2; 
    Out.String("Tak("); Out.Int(m*3,0); Out.String(","); Out.Int(m*2,0);
    Out.String(","); Out.Int(m,0); Out.String("): "); 
    Out.LongRealFix(Takf(m*3.0,m*2.0,m*1.0),0,1); Out.Ln;

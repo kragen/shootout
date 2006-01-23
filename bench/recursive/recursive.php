@@ -16,15 +16,15 @@ function tak($x,$y,$z){
 
 
 $n = $argv[1]; 
-echo "Ack(3,$n): ", ack(3,$n),"\n";
+$m = $n+4; 
+echo "Ack(3,$m): ", ack(3,$m),"\n";
 
-$m = $n+5; 
+$m = $n+9; 
 echo "Fib($m): ", fib($m),"\n";
-$m = $n+28; 
+$m = $n+32; 
 printf("Fib(%d): %.1f\n", $m, fib($m*1.0));
 
-$m = $n-4; 
-printf("Tak(%d,%d,%d): %d\n", $m*3,$m*2,$m, tak($m*3,$m*2,$m));
-$m = $n-2;
+printf("Tak(%d,%d,%d): %d\n", $n*3,$n*2,$n, tak($n*3,$n*2,$n));
+$m = $n+2;
 printf("Tak(%d,%d,%d): %.1f\n", $m*3,$m*2,$m, tak($m*3.0,$m*2.0,$m*1.0));
 ?>
