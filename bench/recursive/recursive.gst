@@ -2,18 +2,15 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy "
 
-!Integer methodsFor: 'shootout'!
-
-ackermann: anInteger
-   ^self = 0
-      ifTrue: [anInteger + 1]
-      ifFalse: [
-         anInteger = 0
-            ifTrue: [self - 1 ackermann:  1]
-            ifFalse: [self - 1 ackermann: (self ackermann: anInteger - 1)] ] ! !
-
-
 !Number methodsFor: 'shootout'!
+
+ackermann: aNumber
+   ^self = 0
+      ifTrue: [aNumber + 1]
+      ifFalse: [
+         aNumber = 0
+            ifTrue: [self - 1 ackermann:  1]
+            ifFalse: [self - 1 ackermann: (self ackermann: aNumber - 1)] ] !
 
 fibonacci
    ^self < 2 
@@ -30,28 +27,22 @@ tak: y z: z
       ifFalse: [z] ! !
 
 
-| n m | 
+| n | 
 n := Smalltalk arguments first asInteger.
 
-m := n+4. 
-Transcript show: 'Ack(3,'; show: m printString; show: '): '; 
-   show: (3 ackermann: m) printString; nl.
+Transcript show: 'Ack(3,'; show: n printString; show: '): '; 
+   show: (3 ackermann: n) printString; nl.
 
-m := n+9. 
-Transcript show: 'Fib('; show: m printString; show: '): '; 
-   show: m fibonacci printString; nl.
+Transcript show: 'Fib('. 
+((28.0+n) asScaledDecimal: 1) display. Transcript show: '): '. 
+((28.0+n) fibonacci asScaledDecimal: 1) displayNl.
 
-m := n+32.
-Transcript show: 'Fib('; show: m printString; show: '): '. 
-((m*1.0d0) fibonacci asScaledDecimal: 1) displayNl.
+n := n - 1.
+Transcript show: 'Tak('; show: (3*n) printString; show: ','; 
+   show: (2*n) printString; show: ','; show: n printString; show: '): '. 
+((3*n tak: 2*n z: n) asScaledDecimal: 1) displayNl.
 
-Transcript show: 'Tak('; show: (n*3) printString; show: ','; 
-   show: (n*2) printString; show: ','; show: n printString; show: '): '; 
-   show: ((n*3) tak: n*2 z: n) printString; nl.
+Transcript show: 'Fib(3): '; show: 3 fibonacci printString; nl.
 
-m := n+2. 
-Transcript show: 'Tak('; show: (m*3) printString; show: ','; 
-   show: (m*2) printString; show: ','; show: m printString; show: '): '. 
-(((m*3.0d0) tak: m*2.0d0 z: m*1.0d0) asScaledDecimal: 1) displayNl !
-
-
+Transcript show: 'Tak(3.0,2.0,1.0): '.
+((3.0 tak: 2.0 z: 1.0) asScaledDecimal: 1) displayNl !
