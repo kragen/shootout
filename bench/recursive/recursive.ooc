@@ -25,16 +25,18 @@ BEGIN
    ELSE RETURN z; END;	
 END Tak;
 
-PROCEDURE Fibf (n: LONGREAL): LONGREAL;
+PROCEDURE Fibr (n: LONGREAL): LONGREAL;
 BEGIN
-   IF n<2 THEN RETURN 1; ELSE RETURN Fibf(n-2) + Fibf(n-1); END;
-END Fibf;
+   IF n<2.0D+00 THEN RETURN 1.0D+00; 
+   ELSE RETURN Fibr(n-2.0D+00) + Fibr(n-1.0D+00); END;
+END Fibr;
 
-PROCEDURE Takf (x,y,z: LONGREAL) : LONGREAL;
+PROCEDURE Takr (x,y,z: LONGREAL) : LONGREAL;
 BEGIN
-   IF y<x THEN RETURN Takf(Takf(x-1,y,z), Takf(y-1,z,x), Takf(z-1,x,y)); 
+   IF y<x THEN RETURN 
+      Takr( Takr(x-1.0D+00,y,z), Takr(y-1.0D+00,z,x), Takr(z-1.0D+00,x,y) ); 
    ELSE RETURN z; END;	
-END Takf;
+END Takr;
 
 BEGIN
    n := Shootout.Argi();
@@ -43,12 +45,12 @@ BEGIN
    Out.Int(Ack(3,n),0); Out.Ln;
 
    Out.String("Fib("); Out.LongRealFix(28.0+n,0,1); Out.String("): "); 
-   Out.LongRealFix(Fibf(28.0+n),0,1); Out.Ln;
+   Out.LongRealFix(Fibr(28.0+n),0,1); Out.Ln;
 
    DEC(n); 
    Out.String("Tak("); Out.Int(n*3,0); Out.String(","); Out.Int(n*2,0);
    Out.String(","); Out.Int(n,0); Out.String("): "); Out.Int(Tak(n*3,n*2,n),0); Out.Ln;
 
    Out.String("Fib(3): "); Out.Int(Fib(3),0); Out.Ln;
-   Out.String("Tak(3.0,2.0,1.0): "); Out.LongRealFix(Takf(3.0,2.0,1.0),0,1); Out.Ln;
+   Out.String("Tak(3.0,2.0,1.0): "); Out.LongRealFix(Takr(3.0,2.0,1.0),0,1); Out.Ln;
 END recursive.
