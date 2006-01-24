@@ -13,7 +13,7 @@ while ($k++ < $n) $sum += pow($k,-0.5);
 printf("%.9f\tk^-0.5\n", $sum);
 
 $k = 0; $sum = 0.0;
-while ($k++ < $n) $sum += 1.0/($k*($k+1));
+while ($k++ < $n) $sum += 1.0/($k*($k+1.0));
 printf("%.9f\t1/k(k+1)\n", $sum);
 
 //  Flint Hills
@@ -34,7 +34,7 @@ printf("%.9f\tHarmonic\n", $sum);
 //  Riemann Zeta 2
 $k = 0; $sum = 0.0;
 while ($k++ < $n) $sum += 1.0/pow($k,2);
-printf("%.9f\tRiemann Zeta 2\n", $sum);
+printf("%.9f\tRiemann Zeta\n", $sum);
 
 $a = -1.0;
 

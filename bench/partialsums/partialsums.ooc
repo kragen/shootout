@@ -20,7 +20,7 @@ BEGIN
    Out.LongRealFix(sum,0,9); Out.Char(9X); Out.String("k^-0.5"); Out.Ln;
 
    k := 0; sum := 0;
-   WHILE k < n DO INC(k); sum := sum + 1.0D+00/(k*(k+1)); END;
+   WHILE k < n DO INC(k); sum := sum + 1.0D+00/(k*(k+1.0D+00)); END;
    Out.LongRealFix(sum,0,9); Out.Char(9X); Out.String("1/k(k+1)"); Out.Ln;
 
    k := 0; sum := 0;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.44 2005-10-31 01:24:51 bfulgham Exp $
+# $Id: Makefile,v 1.45 2006-01-24 04:16:26 igouy-guest Exp $
 TESTS = \
     hello \
     ackermann \
@@ -34,6 +34,7 @@ TESTS = \
     prodcons \
     random \
     raytracer \
+    recursive \
     regexdna \
     regexmatch \
     revcomp \
