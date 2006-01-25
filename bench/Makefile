@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2006-01-24 04:16:26 igouy-guest Exp $
+# $Id: Makefile,v 1.46 2006-01-25 06:58:07 igouy-guest Exp $
 TESTS = \
     hello \
     ackermann \
@@ -29,6 +29,7 @@ TESTS = \
     nsieve \
     nsievebits \
     objinst \
+    partialsums \
     pidigits \
     process \
     prodcons \
