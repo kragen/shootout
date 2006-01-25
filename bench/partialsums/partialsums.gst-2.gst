@@ -12,7 +12,7 @@ printStringRoundedTo: anInteger
 
 
 | n k sum a |
-n := Smalltalk arguments first asInteger asFloat.
+n := Smalltalk arguments first asInteger asFloat + 1.0.
 
 k := 0.0. sum := 0.0.
 [k < n] whileTrue: [ sum := sum + ((2.0/3.0) raisedTo: k). k := k + 1.0 ].

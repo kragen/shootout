@@ -14,40 +14,40 @@ printStringRoundedTo: anInteger
 | n k sum a |
 n := Smalltalk arguments first asInteger.
 
-k := 0. sum := 0.0.
-[k < n] whileTrue: [ sum := sum + ((2.0/3.0) raisedTo: k). k := k + 1 ].
+sum := 0.0.
+0 to: n-1 do: [:k| sum := sum + ((2.0/3.0) raisedTo: k)].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: '(2/3)^k'; cr. 
 
-k := 0. sum := 0.0.
-[k < n] whileTrue: [ k := k + 1. sum := sum + (k raisedTo: -0.5) ].
+sum := 0.0.
+1 to: n do: [:k| sum := sum + (k raisedTo: -0.5)].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'k^-0.5'; cr.
 
-k := 0. sum := 0.0.
-[k < n] whileTrue: [ k := k + 1. sum := sum + (1.0/(k*(k+1.0))) ].
+sum := 0.0.
+1 to: n do: [:k| sum := sum + (1.0/(k*(k+1.0)))].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: '1/k(k+1)'; cr.
 
-k := 0. sum := 0.0. 
-[k < n] whileTrue: [ | s | k := k + 1. s := k sin. sum := sum + (1.0/(k*k*k*s*s))].
+sum := 0.0. 
+1 to: n do: [:k| | s | s := k sin. sum := sum + (1.0/(k*k*k*s*s))].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Flint Hills'; cr.
 
-k := 0. sum := 0.0.
-[k < n] whileTrue: [ | c | k := k + 1. c := k cos. sum := sum + (1.0/(k*k*k*c*c))].
+sum := 0.0.
+1 to: n do: [:k| | c | c := k cos. sum := sum + (1.0/(k*k*k*c*c))].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Cookson Hills'; cr.
 
-k := 0. sum := 0.0.
-[k < n] whileTrue: [ k := k + 1. sum := sum + (1.0/k) ].
+sum := 0.0.
+1 to: n do: [:k| sum := sum + (1.0/k)].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Harmonic'; cr. 
 
-k := 0. sum := 0.0.
-[k < n] whileTrue: [ k := k + 1. sum := sum + (1.0/(k raisedTo: 2.0)) ].
+sum := 0.0.
+1 to: n do: [:k| sum := sum + (1.0/(k raisedTo: 2.0))].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Riemann Zeta'; cr. 
 
 a := -1.0.
 
 k := 0. sum := 0.0.
-[k < n] whileTrue: [ k := k + 1. a := a negated. sum := sum + (a/k) ].
+1 to: n do: [:k| a := a negated. sum := sum + (a/k)].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Alternating Harmonic'; cr.
 
 k := 0. sum := 0.0.
-[k < n] whileTrue: [ k := k + 1. a := a negated. sum := sum + (a/(2*k - 1)) ].
+1 to: n do: [:k| a := a negated. sum := sum + (a/(2*k - 1))].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Gregory'; cr !
