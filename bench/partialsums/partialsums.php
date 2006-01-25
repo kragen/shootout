@@ -2,7 +2,7 @@
    http://shootout.alioth.debian.org/  
    contributed by Isaac Gouy */
 
-$n = $argv[1] + 1;
+$n = $argv[1];
 
 $sum = 0.0;
 for ($k=0; $k<$n; $k++) $sum += pow(2.0/3.0,$k);

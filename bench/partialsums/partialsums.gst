@@ -11,11 +11,11 @@ printStringRoundedTo: anInteger
    ^s copyFrom: 1 to: (s indexOf: $.) + anInteger ! !
 
 
-| n k sum a |
+| n sum a |
 n := Smalltalk arguments first asInteger.
 
 sum := 0.0.
-0 to: n-1 do: [:k| sum := sum + ((2.0/3.0) raisedTo: k)].
+0 to: n - 1 do: [:k| sum := sum + ((2.0/3.0) raisedTo: k)].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: '(2/3)^k'; cr. 
 
 sum := 0.0.
@@ -44,10 +44,10 @@ sum := 0.0.
 
 a := -1.0.
 
-k := 0. sum := 0.0.
+sum := 0.0.
 1 to: n do: [:k| a := a negated. sum := sum + (a/k)].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Alternating Harmonic'; cr.
 
-k := 0. sum := 0.0.
+sum := 0.0.
 1 to: n do: [:k| a := a negated. sum := sum + (a/(2*k - 1))].
 (sum printStringRoundedTo: 9) display. Transcript tab; show: 'Gregory'; cr !
