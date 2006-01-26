@@ -5,7 +5,7 @@
 MODULE recursive;
 IMPORT Shootout, Out;
 
-VAR m,n: LONGINT;
+VAR n: LONGINT;
 
 PROCEDURE Ack (m, n: LONGINT): LONGINT;
 BEGIN
