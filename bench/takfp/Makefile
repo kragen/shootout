@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2005-12-19 03:11:55 bfulgham Exp $
+# $Id: Makefile,v 1.11 2006-01-26 23:51:55 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -12,8 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
-# gcc -O3 is detrimental for this test!
-GCCOPTS := -O1
+
 OO2COPTS := -A --no-rtc
 PARROTOPTS := -C
 POLYOPTS := -q

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2006-01-24 00:23:47 igouy-guest Exp $
+# $Id: Makefile,v 1.2 2006-01-26 23:51:55 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := recursive
@@ -8,8 +8,7 @@ TITLE   := naive recursive functions
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
-# gcc -O3 is detrimental for this test!
-GCCOPTS := -O1
+
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
