@@ -32,8 +32,8 @@ pretty: func [n] [
 ]
 
 m: to-integer (2 ** n) * 10000
-print ["Primes up to " pretty m pretty sieve m]
+print ["Primes up to" pretty m pretty sieve m]
 m: to-integer (2 ** (n - 1)) * 10000
-print ["Primes up to " pretty m pretty sieve m]
+print ["Primes up to" pretty m pretty sieve m]
 m: to-integer (2 ** (n - 2)) * 10000
-print ["Primes up to " pretty m pretty sieve m]
+print ["Primes up to" pretty m pretty sieve m]
