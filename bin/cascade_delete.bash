@@ -66,6 +66,9 @@ key[14]=mzscheme
 alias[15]=ocamlb
 key[15]=ocaml
 #
+alias[15]=petitnasm
+key[15]=petit
+#
 #
 ### remove .log and .code with no source file    
 #
