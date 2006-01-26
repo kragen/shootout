@@ -9,7 +9,7 @@ VAR
    k, n: LONGINT;
    sum, a: LONGREAL;
 
-PROCEDURE WriteLn(VAR sum: LONGREAL; VAR name: ARRAY OF CHAR);
+PROCEDURE WriteLn(VAR sum: LONGREAL; name: ARRAY OF CHAR);
 BEGIN Out.LongRealFix(sum,0,9); Out.Char(9X); Out.String(name); Out.Ln; END WriteLn;
 
 BEGIN

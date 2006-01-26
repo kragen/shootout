@@ -11,7 +11,7 @@ printStringRoundedTo: anInteger
    ^s copyFrom: 1 to: (s indexOf: $.) + anInteger !
 
 printWithName: aString
-   (sum printStringRoundedTo: 9) display. Transcript tab; show: aString; cr ! !
+   (self printStringRoundedTo: 9) display. Transcript tab; show: aString; cr ! !
 
 
 | n sum a |
