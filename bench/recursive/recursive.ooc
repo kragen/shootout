@@ -44,8 +44,8 @@ BEGIN
    Out.String("Ack(3,"); Out.Int(n,0); Out.String("): "); 
    Out.Int(Ack(3,n),0); Out.Ln;
 
-   Out.String("Fib("); Out.LongRealFix(28.0+n,0,1); Out.String("): "); 
-   Out.LongRealFix(Fibr(28.0+n),0,1); Out.Ln;
+   Out.String("Fib("); Out.LongRealFix(27.0+n,0,1); Out.String("): "); 
+   Out.LongRealFix(Fibr(27.0+n),0,1); Out.Ln;
 
    DEC(n); 
    Out.String("Tak("); Out.Int(n*3,0); Out.String(","); Out.Int(n*2,0);

@@ -19,12 +19,11 @@ function tak($x,$y,$z){
    else { return $z; }
 }
 
-$n = $argv[1];
+$n = $argv[1]; 
 echo "Ack(3,$n): ", ack(3,$n),"\n";
+printf("Fib(%.1f): %.1f\n", 27.0+$n, fib(27.0+$n));
+$n--; printf("Tak(%d,%d,%d): %d\n", 3*$n,2*$n,$n, tak(3*$n,2*$n,$n));
 
-$m = $n*4; echo "Fib($m): ", fib($m),"\n";
-$m = $n+2; printf("Tak(%d,%d,%d): %d\n", $m*3,$m*2,$m, tak($m*3,$m*2,$m));
-
-$m = $n*5; printf("Fib(%d): %.1f\n", $m, fib($m*1.0));
-$m = $n+2; printf("Tak(%d,%d,%d): %.1f\n", $m*3,$m*2,$m, tak($m*3.0,$m*2.0,$m*1.0));
+printf("Fib(3): %d\n", fib(3));
+printf("Tak(3.0,2.0,1.0): %.1f\n", tak(3.0,2.0,1.0));
 ?>

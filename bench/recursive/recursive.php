@@ -14,7 +14,7 @@ function tak($x,$y,$z){
 
 $n = $argv[1]; 
 echo "Ack(3,$n): ", ack(3,$n),"\n";
-printf("Fib(%.1f): %.1f\n", 28.0+$n, fib(28.0+$n));
+printf("Fib(%.1f): %.1f\n", 27.0+$n, fib(27.0+$n));
 $n--; printf("Tak(%d,%d,%d): %d\n", 3*$n,2*$n,$n, tak(3*$n,2*$n,$n));
 
 printf("Fib(3): %d\n", fib(3));

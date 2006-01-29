@@ -20,7 +20,7 @@ function tak(x,y,z) {
 
 var n = arguments[0];
 print("Ack(3," + n + "): " + ack(3,n));
-print("Fib(" + (28.0+n).toFixed(1) + "): " + fib(28.0+n).toFixed(1));
+print("Fib(" + (27.0+n).toFixed(1) + "): " + fib(27.0+n).toFixed(1));
 print("Tak(" + 3*n + "," + 2*n + "," + n + "): " + tak(3*n,2*n,n));
 print("Fib(3): " + fib(3));
 print("Tak(3.0,2.0,1.0): " + tak(3.0,2.0,1.0).toFixed(1));
