@@ -19,9 +19,8 @@ function tak(x,y,z) {
 }
 
 var n = arguments[0];
-var x = 27.0 + n;
 print("Ack(3," + n + "): " + ack(3,n));
-print("Fib(" + x.toFixed(1) + "): " + fib(x).toFixed(1));
+print("Fib(" + (n+27.0).toFixed(1) + "): " + fib(n+27.0).toFixed(1));
 print("Tak(" + 3*n + "," + 2*n + "," + n + "): " + tak(3*n,2*n,n));
 print("Fib(3): " + fib(3));
 print("Tak(3.0,2.0,1.0): " + tak(3.0,2.0,1.0).toFixed(1));
