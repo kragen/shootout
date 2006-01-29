@@ -34,8 +34,8 @@ Transcript show: 'Ack(3,'; show: n printString; show: '): ';
    show: (3 ackermann: n) printString; nl.
 
 Transcript show: 'Fib('. 
-((28.0+n) asScaledDecimal: 1) display. Transcript show: '): '. 
-((28.0+n) fibonacci asScaledDecimal: 1) displayNl.
+((27.0+n) asScaledDecimal: 1) display. Transcript show: '): '. 
+((27.0+n) fibonacci asScaledDecimal: 1) displayNl.
 
 n := n - 1.
 Transcript show: 'Tak('; show: (3*n) printString; show: ','; 
