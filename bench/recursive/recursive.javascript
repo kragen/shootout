@@ -14,13 +14,13 @@ function fib(n) {
 }
 
 function tak(x,y,z) {
-  if (y < x){ tak(tak(x-1,y,z), tak(y-1,z,x), tak(z-1,x,y)); }
-  return z;
+  if (y >= x) return z;
+  return tak(tak(x-1,y,z), tak(y-1,z,x), tak(z-1,x,y));
 }
 
-var n = arguments[0];
+var n = parseInt(arguments[0]);
 print("Ack(3," + n + "): " + ack(3,n));
-print("Fib(" + (n+27.0).toFixed(1) + "): " + fib(n+27.0).toFixed(1));
-print("Tak(" + 3*n + "," + 2*n + "," + n + "): " + tak(3*n,2*n,n));
+print("Fib(" + (27.0+n).toFixed(1) + "): " + fib(27.0+n).toFixed(1));
+n--; print("Tak(" + 3*n + "," + 2*n + "," + n + "): " + tak(3*n,2*n,n));
 print("Fib(3): " + fib(3));
 print("Tak(3.0,2.0,1.0): " + tak(3.0,2.0,1.0).toFixed(1));

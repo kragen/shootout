@@ -2,7 +2,7 @@
 // http://shootout.alioth.debian.org/
 // contributed by Isaac Gouy
 
-var n = arguments[0]; 
+var n = parseInt(arguments[0]);
 var a1 = a2 = a3 = a4 = a5 = a6 = a7 = a8 = a9 = 0.0;   
 var twothirds = 2.0/3.0;
 var alt = -1.0;
