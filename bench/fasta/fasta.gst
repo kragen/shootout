@@ -1,0 +1,142 @@
+"The Computer Language Shootout
+ http://shootout.alioth.debian.org/
+ contributed by Isaac Gouy"
+
+
+Object subclass: #RandomNumber
+instanceVariableNames: 'seed scale'
+classVariableNames: 'Increment Multiplier Modulus FModulus'
+poolDictionaries: '' category: nil !
+
+!RandomNumber class methodsFor: 'instance creation'!
+
+to: anInteger
+   Increment := 29573.
+   Multiplier := 3877.
+   Modulus := 139968.
+   FModulus := 139968.0d. 
+   ^self basicNew to: anInteger ! !
+   
+!RandomNumber methodsFor: 'accessing'!
+
+next
+   seed := seed * Multiplier + Increment \\ Modulus.
+   ^(seed * scale) asFloatD / FModulus ! !
+     
+!RandomNumber methodsFor: 'private'!
+
+to: anInteger
+   seed := 42.
+   scale := anInteger ! !
+
+
+Object subclass: #NucleotideStream
+instanceVariableNames: 'stream'
+classVariableNames: '' poolDictionaries: '' category: nil !
+
+!NucleotideStream methodsFor: 'private'!
+
+on: aString
+   stream := ReadStream on: aString asByteArray! !
+
+!NucleotideStream methodsFor: 'accessing'!
+
+next
+   "q&d - if we go past the stream end, trap the exception, and reset"
+   [^stream next] 
+      on: Exception do: [:exception| ^stream reset; next] ! !
+
+
+Object subclass: #RandomNucleotideStream
+instanceVariableNames: 'random frequencies'
+classVariableNames: '' poolDictionaries: '' category: nil !
+
+!RandomNucleotideStream methodsFor: 'initialize-release'!
+
+from: anOrderedCollection
+   | cp |
+   "random := RandomNumber to: 1.0."
+   cp := 0.0.
+   anOrderedCollection do: [:each | 
+      each key: each key asInteger.
+      each value: (cp := cp + each value).
+   ].
+   frequencies := anOrderedCollection ! !
+
+!RandomNucleotideStream methodsFor: 'accessing'!
+
+next
+   | r |
+   r := random next.
+   frequencies do: [:each |  (r < each value) ifTrue: [^each key]] ! 
+
+random: aRandomNumber
+"This wierdness is just so we can get the expected results.
+ Normally we'd initialize our own RandomNumber source instead
+ of sharing one"
+   random := aRandomNumber ! !
+
+
+! FileStream methodsFor: 'accessing'!
+
+writeFasta: anId description: aString size: anInteger sequence: aStream 
+   | lineLength n |
+   lineLength := 60. n := anInteger.
+   self nextPut: $>; nextPutAll: anId; nextPutAll: ' '; nextPutAll: aString; nl.
+
+   [n > 0] whileTrue: [
+         ((n < lineLength) ifTrue: [n] ifFalse: [lineLength]) 
+            timesRepeat: [self nextPutByte: aStream next].
+         self nl.
+         n := n - lineLength
+      ] ! !
+
+
+| n r s |
+n := Smalltalk arguments first asInteger.
+r := RandomNumber to: 1. "Shared random sequence"
+s := FileStream stdout bufferSize: 4096.
+
+s writeFasta: 'ONE' description: 'Homo sapiens alu' size: n*2 sequence: 
+   ( NucleotideStream new on: (
+      ( ReadWriteStream on: String new)
+         nextPutAll: 'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG';
+         nextPutAll: 'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA';
+         nextPutAll: 'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT';
+         nextPutAll: 'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA';
+         nextPutAll: 'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG';
+         nextPutAll: 'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC';
+         nextPutAll: 'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA'; 
+         yourself; contents )).
+
+s writeFasta: 'TWO' description: 'IUB ambiguity codes' size: n*3 sequence: 
+   ( RandomNucleotideStream new random: r; from: (
+      OrderedCollection new
+         add: (Association key: $a value: 0.27);
+         add: (Association key: $c value: 0.12);
+         add: (Association key: $g value: 0.12);
+         add: (Association key: $t value: 0.27);
+
+         add: (Association key: $B value: 0.02);
+         add: (Association key: $D value: 0.02);
+         add: (Association key: $H value: 0.02);
+         add: (Association key: $K value: 0.02);
+         add: (Association key: $M value: 0.02);
+         add: (Association key: $N value: 0.02);
+         add: (Association key: $R value: 0.02);
+         add: (Association key: $S value: 0.02);
+         add: (Association key: $V value: 0.02);
+         add: (Association key: $W value: 0.02);
+         add: (Association key: $Y value: 0.02);
+         yourself )).
+
+s writeFasta: 'THREE' description: 'Homo sapiens frequency' size: n*5 sequence: 
+   ( RandomNucleotideStream new random: r; from: (
+      OrderedCollection new
+         add: (Association key: $a value: 0.3029549426680);
+         add: (Association key: $c value: 0.1979883004921);
+         add: (Association key: $g value: 0.1975473066391);
+         add: (Association key: $t value: 0.3015094502008);
+         yourself )).
+
+s flush; close !
