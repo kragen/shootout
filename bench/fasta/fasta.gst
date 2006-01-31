@@ -34,8 +34,8 @@ from: anOrderedCollection
 
    cp := 0.0. i := 0. 
    anOrderedCollection do: [:each | 
-      percentages doubleAt: (i*8)+1 put: (cp := cp + each value).      
-      codes byteAt: (i//8)+1 put: each key asInteger.
+      percentages doubleAt: (i*8)+1 put: (cp := cp + each value). 
+      codes byteAt: (i := i + 1) put: each key asInteger.       
    ] ! !
 
 
