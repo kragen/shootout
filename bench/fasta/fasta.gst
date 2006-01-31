@@ -3,6 +3,73 @@
  contributed by Isaac Gouy"
 
 
+ReadStream subclass: #RepeatStream
+instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: nil !
+
+!RepeatStream methodsFor: 'accessing-reading'!
+
+next
+"Answer the next item of the receiver. When at end of stream go back to start."
+    | element |
+    (access bitAnd: 1) = 0
+    	ifTrue: [ ^self shouldNotImplement ].
+    ptr > endPtr ifTrue: [ self position: 0 ].
+    element := collection at: ptr.
+    ptr := ptr + 1.
+    ^element ! !
+
+
+Object subclass: #RandomNucleotideStream
+instanceVariableNames: 'random percentages codes size'
+classVariableNames: '' poolDictionaries: '' category: nil !
+
+!RandomNucleotideStream methodsFor: 'initialize-release'!
+
+from: anOrderedCollection
+   | cp i |
+   "random := RandomNumber to: 1.0."
+   codes := ByteArray new: anOrderedCollection size.
+   size := anOrderedCollection size * 8.
+   percentages := ByteArray new: size.
+
+   cp := 0.0. i := 0. 
+   anOrderedCollection do: [:each | 
+      percentages doubleAt: (i*8)+1 put: (cp := cp + each value).      
+      codes byteAt: (i//8)+1 put: each key asInteger.
+   ] ! !
+
+
+!RandomNucleotideStream methodsFor: 'accessing'!
+
+next
+   | r |
+   r := random next.
+   1 to: size by: 8 do: [:i| 
+      (r < (percentages doubleAt: i))
+         ifTrue: [^codes byteAt: (i//8)+1] ] !
+
+random: aRandomNumber
+"This wierdness is just so we can get the expected results.
+ Normally we'd initialize our own RandomNumber source instead
+ of sharing one"
+   random := aRandomNumber ! !
+
+
+! FileStream methodsFor: 'accessing'!
+
+writeFasta: anId description: aString size: anInteger sequence: aStream 
+   | lineLength n |
+   lineLength := 60. n := anInteger.
+   self nextPut: $>; nextPutAll: anId; nextPutAll: ' '; nextPutAll: aString; nl.
+
+   [n > 0] whileTrue: [
+         ((n < lineLength) ifTrue: [n] ifFalse: [lineLength]) 
+            timesRepeat: [self nextPutByte: aStream next].
+         self nl.
+         n := n - lineLength
+      ] ! !
+
+
 Object subclass: #RandomNumber
 instanceVariableNames: 'seed scale'
 classVariableNames: 'Increment Multiplier Modulus FModulus'
@@ -30,84 +97,20 @@ to: anInteger
    scale := anInteger ! !
 
 
-Object subclass: #NucleotideStream
-instanceVariableNames: 'stream'
-classVariableNames: '' poolDictionaries: '' category: nil !
-
-!NucleotideStream methodsFor: 'private'!
-
-on: aString
-   stream := ReadStream on: aString asByteArray! !
-
-!NucleotideStream methodsFor: 'accessing'!
-
-next
-   "q&d - if we go past the stream end, trap the exception, and reset"
-   [^stream next] 
-      on: Exception do: [:exception| ^stream reset; next] ! !
-
-
-Object subclass: #RandomNucleotideStream
-instanceVariableNames: 'random frequencies'
-classVariableNames: '' poolDictionaries: '' category: nil !
-
-!RandomNucleotideStream methodsFor: 'initialize-release'!
-
-from: anOrderedCollection
-   | cp |
-   "random := RandomNumber to: 1.0."
-   cp := 0.0.
-   anOrderedCollection do: [:each | 
-      each key: each key asInteger.
-      each value: (cp := cp + each value).
-   ].
-   frequencies := anOrderedCollection ! !
-
-!RandomNucleotideStream methodsFor: 'accessing'!
-
-next
-   | r |
-   r := random next.
-   frequencies do: [:each |  (r < each value) ifTrue: [^each key]] ! 
-
-random: aRandomNumber
-"This wierdness is just so we can get the expected results.
- Normally we'd initialize our own RandomNumber source instead
- of sharing one"
-   random := aRandomNumber ! !
-
-
-! FileStream methodsFor: 'accessing'!
-
-writeFasta: anId description: aString size: anInteger sequence: aStream 
-   | lineLength n |
-   lineLength := 60. n := anInteger.
-   self nextPut: $>; nextPutAll: anId; nextPutAll: ' '; nextPutAll: aString; nl.
-
-   [n > 0] whileTrue: [
-         ((n < lineLength) ifTrue: [n] ifFalse: [lineLength]) 
-            timesRepeat: [self nextPutByte: aStream next].
-         self nl.
-         n := n - lineLength
-      ] ! !
-
-
 | n r s |
 n := Smalltalk arguments first asInteger.
 r := RandomNumber to: 1. "Shared random sequence"
 s := FileStream stdout bufferSize: 4096.
 
 s writeFasta: 'ONE' description: 'Homo sapiens alu' size: n*2 sequence: 
-   ( NucleotideStream new on: (
-      ( ReadWriteStream on: String new)
-         nextPutAll: 'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG';
-         nextPutAll: 'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA';
-         nextPutAll: 'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT';
-         nextPutAll: 'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA';
-         nextPutAll: 'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG';
-         nextPutAll: 'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC';
-         nextPutAll: 'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA'; 
-         yourself; contents )).
+   ( RepeatStream on: 
+      'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
+      'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
+      'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT',
+      'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA',
+      'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG',
+      'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
+      'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' asByteArray).
 
 s writeFasta: 'TWO' description: 'IUB ambiguity codes' size: n*3 sequence: 
    ( RandomNucleotideStream new random: r; from: (
