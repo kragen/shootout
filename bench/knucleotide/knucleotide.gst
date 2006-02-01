@@ -34,7 +34,7 @@ substringFrequencies: aLength
    ^answer ! 
 
 inject: aDictionary intoSubstringFrequencies: aLength offset: anInteger
-   anInteger to: self size - aLength by: aLength do: [:i | 
+   anInteger to: self size - aLength + 1 by: aLength do: [:i | 
       | fragment assoc | 
       fragment := self copyFrom: i to: i + aLength - 1.
       (assoc := aDictionary associationAt: fragment ifAbsent: []) isNil 
