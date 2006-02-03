@@ -2,36 +2,141 @@
 <span class="slc">-- The Computer Language Shootout</span>
 <span class="slc">-- http://shootout.alioth.debian.org/</span>
 <span class="slc">--</span>
+<span class="slc">-- regex-dna</span>
 <span class="slc">-- Contributed by Don Stewart</span>
 <span class="slc">--</span>
-<span class="slc">-- Very inefficient until we use packed string regex</span>
+<span class="slc">-- This entry contains an alternative binding to regexec. The</span>
+<span class="slc">-- standard Haskell Text.Regex binding to C's regex.h converts between</span>
+<span class="slc">-- [Char] and C strings on each call, making it very inefficient. Here we</span>
+<span class="slc">-- rewrite the Haskell wrapper code to regexec, keeping all strings in</span>
+<span class="slc">-- packed Word8 form, avoiding unneccessary conversions. It must be</span>
+<span class="slc">-- emphasised that *no* new work is being done in C, it's all still</span>
+<span class="slc">-- Haskell. It is just the interface to regexec that is more efficient.</span>
 <span class="slc">--</span>
 
+<span class="kwa">import</span> Control.Monad
+<span class="kwa">import</span> Text.Printf
 <span class="kwa">import</span> Text.Regex
+<span class="kwa">import qualified</span> Data.Map <span class="kwa">as</span> M
+<span class="kwa">import</span> System.IO
+<span class="kwa">import</span> Foreign
+<span class="kwa">import</span> Foreign.C
+<span class="kwa">import</span> GHC.Base
+<span class="kwa">import</span> GHC.Ptr
+<span class="kwa">import</span> GHC.IOBase
 
-main <span class="sym">=</span> getContents <span class="sym">&gt;&gt;=</span> putStr . output
+main <span class="sym">=</span> <span class="kwa">do</span> b1&#64;<span class="sym">(</span>P _ sz1<span class="sym">) &lt;-</span> hGet
+          b2&#64;<span class="sym">(</span>P _ sz2<span class="sym">) &lt;-</span> clean b1
+          countMatch b2
+          <span class="sym">(</span>P _ sz3<span class="sym">)    &lt;-</span> subIub b2
+          printf <span class="str">&quot;\n%d\n%d\n%d\n&quot;</span> sz1 sz2 sz3
 
-output s <span class="sym">=</span> unlines $ countMatches <span class="sym">++ [[]] ++</span> map show <span class="sym">[</span>length s<span class="sym">,</span> length s<span class="str">', finalLen]</span>
-<span class="str">  where s'</span>           <span class="sym">=</span> replace <span class="str">&quot;&gt;.*\n|\n&quot;</span> <span class="str">&quot;&quot;</span> s
-        finalLen     <span class="sym">=</span> length $ replaceIubs s<span class="str">'</span>
-<span class="str">        countMatches = map (\v -&gt; v ++ '</span> <span class="str">': show (numHits v s'</span><span class="sym">))</span> variants
+clean <span class="sym">(</span>P p i<span class="sym">) =</span> loop <span class="num">0</span> i <span class="sym">&gt;&gt;=</span> return . P p
+    <span class="kwa">where</span> loop n j <span class="sym">|</span> n <span class="sym">&gt;=</span> j   <span class="sym">=</span> return j
+                   <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span>
+                        m <span class="sym">&lt;-</span> regexec r p n
+                        <span class="kwa">case</span> m <span class="kwa">of</span>
+                            Nothing    <span class="sym">-&gt;</span> return j
+                            Just <span class="sym">(</span>a<span class="sym">,</span>b<span class="sym">) -&gt;</span> <span class="kwa">do</span>
+                                <span class="kwa">let</span> <span class="sym">(</span>c<span class="sym">,</span>d<span class="sym">) = (</span>a<span class="sym">+</span>n<span class="sym">,</span> b<span class="sym">+</span>n<span class="sym">)</span> <span class="slc">-- absolute offset</span>
+                                copyBytes <span class="sym">(</span>p `plusPtr` c<span class="sym">) (</span>p `plusPtr` d<span class="sym">) (</span>j <span class="sym">-</span> d<span class="sym">)</span>
+                                loop c $ j <span class="sym">- (</span>b <span class="sym">-</span> a<span class="sym">)</span>
+          r <span class="sym">=</span> toRx $ mkRegexWithOpts <span class="str">&quot;(^&gt;.*)?\n&quot;</span> <span class="kwa">True True</span>
 
-replaceIubs <span class="sym">=</span> foldl1 <span class="sym">(</span>.<span class="sym">) (</span>map <span class="sym">(</span>uncurry replace<span class="sym">)</span> pairs<span class="sym">)</span>
+countMatch <span class="sym">(</span>P p i<span class="sym">) =</span> mapM_ draw patterns
+    <span class="kwa">where</span> draw r <span class="sym">=</span> regexecAll <span class="sym">(</span>compile r<span class="sym">)</span> p <span class="sym">&gt;&gt;=</span> printf <span class="sym">(</span>r <span class="sym">++</span> <span class="str">&quot; %d\n&quot;</span><span class="sym">)</span> . length
 
-numHits <span class="sym">=</span> gmatch $ \m _ loop <span class="sym">-&gt;</span> maybe <span class="num">0</span> <span class="sym">(</span>\<span class="sym">(</span>_<span class="sym">,</span>_<span class="sym">,</span>t<span class="sym">,</span>_<span class="sym">) -&gt;</span> <span class="num">1</span> <span class="sym">+</span> loop t<span class="sym">)</span> m
+patterns <span class="sym">=</span>
+    <span class="sym">[</span><span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span><span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span><span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
+    <span class="sym">,</span><span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span><span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span><span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
+    <span class="sym">,</span><span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span><span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span><span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">]</span>
 
-replace pat r <span class="sym">=</span> gmatch <span class="sym">(</span>\m s loop <span class="sym">-&gt;</span> maybe s <span class="sym">(</span>\<span class="sym">(</span>a<span class="sym">,</span>_<span class="sym">,</span>b<span class="sym">,</span>_<span class="sym">) -&gt;</span> a <span class="sym">++</span> r <span class="sym">++</span> loop b<span class="sym">)</span> m<span class="sym">)</span> pat
+<span class="slc">--</span>
+<span class="slc">-- replace things that match pattern with pattern, return count</span>
+<span class="slc">--</span>
 
-gmatch fn pat buf <span class="sym">=</span> loop buf
-  <span class="kwa">where</span> regex  <span class="sym">=</span> mkRegexWithOpts pat <span class="kwa">True True</span>
-        loop s <span class="sym">=</span> fn <span class="sym">(</span>matchRegexAll regex s<span class="sym">)</span> s loop
+subIub p <span class="sym">=</span> replace p re <span class="sym">&gt;&gt;=</span> return . fst
+   <span class="kwa">where</span> re <span class="sym">=</span> compile $ <span class="str">&quot;[&quot;</span><span class="sym">++ (</span>map <span class="sym">(</span>chr.fromIntegral<span class="sym">) (</span>M.keys pairs<span class="sym">)) ++</span><span class="str">&quot;]&quot;</span>
 
-variants <span class="sym">=</span>
-  <span class="sym">[</span><span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span><span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span><span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
-  <span class="sym">,</span><span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span><span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span><span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
-  <span class="sym">,</span><span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span><span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span><span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">]</span>
+<span class="slc">-- Still too slow. Do something smarter</span>
+replace ptr&#64;<span class="sym">(</span>P p _<span class="sym">)</span> r <span class="sym">=</span> regexecAll r p <span class="sym">&gt;&gt;=</span> foldM fn <span class="sym">(</span>ptr<span class="sym">,</span><span class="num">0</span><span class="sym">)</span>
 
-pairs <span class="sym">=</span>
-  <span class="sym">[(</span><span class="str">&quot;B&quot;</span><span class="sym">,</span><span class="str">&quot;(c|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;D&quot;</span><span class="sym">,</span><span class="str">&quot;(a|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;H&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;K&quot;</span><span class="sym">,</span><span class="str">&quot;(g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;M&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c)&quot;</span><span class="sym">)</span>
-  <span class="sym">,(</span><span class="str">&quot;N&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;R&quot;</span><span class="sym">,</span><span class="str">&quot;(a|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;S&quot;</span><span class="sym">,</span><span class="str">&quot;(c|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;V&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;W&quot;</span><span class="sym">,</span><span class="str">&quot;(a|t)&quot;</span><span class="sym">)</span>
-  <span class="sym">,(</span><span class="str">&quot;Y&quot;</span><span class="sym">,</span><span class="str">&quot;(c|t)&quot;</span><span class="sym">) ]</span>
+  <span class="kwa">where</span> fn <span class="sym">((</span>P p i<span class="sym">),</span>off<span class="sym">) (</span>n<span class="sym">,</span>z<span class="sym">) =</span> <span class="kwa">do</span>
+            <span class="kwa">let</span> <span class="sym">(</span>m<span class="sym">,</span>m1<span class="sym">) = (</span>n <span class="sym">+</span> off<span class="sym">,</span> m<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+            c <span class="sym">&lt;-</span> peek <span class="sym">(</span>p `plusPtr` m<span class="sym">) ::</span> IO Word8
+            <span class="kwa">let</span> <span class="sym">(</span>l<span class="sym">,</span>s<span class="sym">)     =</span> getit c
+                <span class="sym">(</span>l1<span class="sym">,</span> il1<span class="sym">) = (</span>l<span class="sym">-</span><span class="num">1</span><span class="sym">,</span> i <span class="sym">+</span> l1<span class="sym">)</span>
+            q <span class="sym">&lt;-</span> reallocArray0 p il1
+            <span class="kwa">let</span> qm <span class="sym">=</span> q `plusPtr` m
+            moveBytes <span class="sym">(</span>qm `plusPtr` l<span class="sym">) (</span>qm `plusPtr` <span class="num">1</span><span class="sym">) (</span>i <span class="sym">-</span> m1<span class="sym">)</span>
+            copyBytes qm s l
+            return $<span class="sym">! (</span>P q il1<span class="sym">,</span> off<span class="sym">+</span>l1<span class="sym">)</span>
+
+        getit k <span class="sym">=</span> <span class="kwa">case</span> M.lookup k pairs <span class="kwa">of</span> Just s <span class="sym">-&gt;</span> s <span class="sym">;</span> Nothing <span class="sym">-&gt;</span> error <span class="sym">(</span>show k<span class="sym">)</span>
+
+pairs <span class="sym">=</span> M.fromList $
+    <span class="sym">[(</span>c <span class="str">'B'</span><span class="sym">,(</span><span class="num">7</span><span class="sym">,</span>Ptr<span class="str">&quot;(c|g|t)&quot;</span>#<span class="sym">)),(</span>c <span class="str">'D'</span><span class="sym">,(</span><span class="num">7</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|g|t)&quot;</span>#<span class="sym">)),(</span>c <span class="str">'H'</span><span class="sym">,(</span><span class="num">7</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|c|t)&quot;</span>#<span class="sym">))</span>
+    <span class="sym">,(</span>c <span class="str">'K'</span><span class="sym">,(</span><span class="num">5</span><span class="sym">,</span>Ptr<span class="str">&quot;(g|t)&quot;</span>#<span class="sym">)),  (</span>c <span class="str">'M'</span><span class="sym">,(</span><span class="num">5</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|c)&quot;</span>#<span class="sym">)),  (</span>c <span class="str">'N'</span><span class="sym">,(</span><span class="num">9</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|c|g|t)&quot;</span>#<span class="sym">))</span>
+    <span class="sym">,(</span>c <span class="str">'R'</span><span class="sym">,(</span><span class="num">5</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|g)&quot;</span>#<span class="sym">)),  (</span>c <span class="str">'S'</span><span class="sym">,(</span><span class="num">5</span><span class="sym">,</span>Ptr<span class="str">&quot;(c|g)&quot;</span>#<span class="sym">)),  (</span>c <span class="str">'V'</span><span class="sym">,(</span><span class="num">7</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|c|g)&quot;</span>#<span class="sym">))</span>
+    <span class="sym">,(</span>c <span class="str">'W'</span><span class="sym">,(</span><span class="num">5</span><span class="sym">,</span>Ptr<span class="str">&quot;(a|t)&quot;</span>#<span class="sym">)),  (</span>c <span class="str">'Y'</span><span class="sym">,(</span><span class="num">5</span><span class="sym">,</span>Ptr<span class="str">&quot;(c|t)&quot;</span>#<span class="sym">))]</span>
+  <span class="kwa">where</span> c <span class="sym">=</span> fromIntegral . ord
+
+<span class="slc">--</span>
+<span class="slc">-- From the FastPackedString library</span>
+<span class="slc">--</span>
+
+<span class="kwa">data</span> P <span class="sym">=</span> P <span class="sym">!(</span>Ptr Word8<span class="sym">) !</span><span class="kwb">Int</span>
+
+lengthP <span class="sym">(</span>P _ i<span class="sym">) =</span> i
+
+hGet <span class="sym">=</span> <span class="kwa">do</span> p <span class="sym">&lt;-</span> mallocArray0 sz
+          i <span class="sym">&lt;-</span> hGetBuf stdin p sz
+          if i <span class="sym">&lt;</span> sz <span class="kwa">then</span> reallocArray0 p i <span class="sym">&gt;&gt;=</span> return . flip P i <span class="kwa">else</span> f p sz
+  <span class="kwa">where</span>
+    sz    <span class="sym">=</span> <span class="num">1048576</span>
+    f p s <span class="sym">=</span> <span class="kwa">do let</span> s<span class="str">' = s * 2</span>
+<span class="str">               p'</span> <span class="sym">&lt;-</span> reallocArray0 p s<span class="str">'</span>
+<span class="str">               i  &lt;- hGetBuf stdin (p'</span> `plusPtr` s<span class="sym">)</span> s
+               if i <span class="sym">&lt;</span> s <span class="kwa">then let</span> i<span class="str">' = s + i in reallocArray0 p'</span> i<span class="str">' &gt;&gt;= return . flip P i'</span>
+                        <span class="kwa">else</span> f p<span class="str">' s'</span>
+
+<span class="slc">--</span>
+<span class="slc">-- Word8 binding to the regexec</span>
+<span class="slc">--</span>
+
+<span class="kwa">type</span> CRegex    <span class="sym">= ()</span>
+<span class="kwa">type</span> CRegMatch <span class="sym">= ()</span>
+<span class="kwa">newtype</span> Rx     <span class="sym">=</span> Rx <span class="sym">(</span>ForeignPtr CRegex<span class="sym">)</span>
+
+compile s <span class="sym">=</span> toRx $ mkRegexWithOpts s <span class="kwa">True True</span>
+
+toRx <span class="sym">=</span> unsafeCoerce#
+
+foreign <span class="kwa">import</span> ccall unsafe <span class="str">&quot;regex.h regexec&quot;</span>
+    cregexec <span class="sym">::</span> Ptr CRegex <span class="sym">-&gt;</span> Ptr Word8 <span class="sym">-&gt;</span> CSize <span class="sym">-&gt;</span> Ptr CRegMatch <span class="sym">-&gt;</span> CInt <span class="sym">-&gt;</span> IO CInt
+
+<span class="slc">-- find indicies of all matches</span>
+regexecAll <span class="sym">(</span>Rx fptr<span class="sym">) (</span>ptr <span class="sym">::</span> Ptr Word8<span class="sym">) =</span> withForeignPtr fptr $ \regex <span class="sym">-&gt;</span> <span class="kwa">do</span>
+    nsub <span class="sym">&lt;-</span> peekByteOff regex <span class="num">24</span>    <span class="slc">-- no hsc2hs, so provide linux specific offset</span>
+    <span class="kwa">let</span> nsubi <span class="sym">=</span> fromIntegral <span class="sym">(</span>nsub <span class="sym">::</span> CSize<span class="sym">)</span>
+    allocaBytes <span class="sym">((</span><span class="num">1</span> <span class="sym">+</span> nsubi<span class="sym">) *</span> <span class="num">8</span><span class="sym">)</span> $ \p_match <span class="sym">-&gt;</span> <span class="kwa">do</span> <span class="slc">-- and here</span>
+        <span class="kwa">let</span> loop i <span class="sym">=</span> <span class="kwa">do</span> r <span class="sym">&lt;-</span> cregexec regex <span class="sym">(</span>ptr `plusPtr` i<span class="sym">) (</span><span class="num">1</span> <span class="sym">+</span> nsub<span class="sym">)</span> p_match <span class="num">0</span>
+                        if r <span class="sym">/=</span> <span class="num">0</span> <span class="kwa">then</span> return <span class="sym">[]</span>
+                                  <span class="kwa">else do</span> <span class="sym">(</span>n<span class="sym">,</span>m<span class="sym">)  &lt;-</span> indexOfMatch p_match
+                                          iss    <span class="sym">&lt;-</span> loop $<span class="sym">!</span> i <span class="sym">+</span> m
+                                          return $<span class="sym">! (</span>i<span class="sym">+</span>n<span class="sym">,</span>i<span class="sym">+</span>m<span class="sym">) :</span> iss
+        loop <span class="num">0</span>
+
+<span class="slc">-- find index of next match</span>
+regexec <span class="sym">(</span>Rx fptr<span class="sym">) (</span>ptr <span class="sym">::</span> Ptr Word8<span class="sym">)</span> i <span class="sym">=</span> withForeignPtr fptr $ \regex_ptr <span class="sym">-&gt;</span> <span class="kwa">do</span>
+    nsub <span class="sym">&lt;-</span> peekByteOff regex_ptr <span class="num">24</span>
+    <span class="kwa">let</span> nsub_int <span class="sym">=</span> fromIntegral <span class="sym">(</span>nsub <span class="sym">::</span> CSize<span class="sym">)</span>
+    allocaBytes <span class="sym">((</span><span class="num">1</span> <span class="sym">+</span> nsub_int<span class="sym">) *</span> <span class="num">8</span><span class="sym">)</span> $ \p_match <span class="sym">-&gt;</span> <span class="kwa">do</span>
+        r <span class="sym">&lt;-</span> cregexec regex_ptr <span class="sym">(</span>ptr `plusPtr` i<span class="sym">) (</span><span class="num">1</span> <span class="sym">+</span> nsub<span class="sym">)</span> p_match <span class="num">0</span>
+        if r <span class="sym">/=</span> <span class="num">0</span> <span class="kwa">then</span> return Nothing <span class="kwa">else</span> indexOfMatch p_match <span class="sym">&gt;&gt;=</span> return . Just
+
+indexOfMatch <span class="sym">(</span>Ptr addr <span class="sym">::</span> Ptr CRegMatch<span class="sym">) =</span> IO $ \s <span class="sym">-&gt;</span>
+    <span class="kwa">case</span> readIntOffAddr# addr <span class="num">0</span># s <span class="kwa">of</span> { <span class="sym">(</span># s<span class="sym">,</span> a #<span class="sym">) -&gt;</span>  <span class="slc">-- no hsc2hs</span>
+    <span class="kwa">case</span> readIntOffAddr# addr <span class="num">1</span># s <span class="kwa">of</span> { <span class="sym">(</span># s<span class="sym">,</span> b #<span class="sym">) -&gt; (</span># s<span class="sym">, (</span>I# a<span class="sym">,</span> I# b<span class="sym">)</span> #<span class="sym">)</span> } }
+<span class="com">{-# INLINE indexOfMatch #-}</span>
+
