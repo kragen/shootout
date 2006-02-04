@@ -2,72 +2,78 @@
  http://shootout.alioth.debian.org/
  contributed by Isaac Gouy"
 
+ReadStream subclass: #RepeatStream  instanceVariableNames: 'repeatPtr repeatLimit' classVariableNames: '' poolDictionaries: '' category: nil !
 
-ReadStream subclass: #RepeatStream
-instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: nil !
+!RepeatStream class methodsFor: 'instance creation '!
+
+to: anInteger on: aCollection
+   ^(super on: aCollection) to: anInteger ! !
+
+!RepeatStream methodsFor: 'initialize-release'!
+
+to: anInteger
+   repeatPtr := 0.
+   repeatLimit := anInteger ! !
 
 !RepeatStream methodsFor: 'accessing-reading'!
 
 next
-"Answer the next item of the receiver. When at end of stream go back to start."
     | element |
-    (access bitAnd: 1) = 0
-    	ifTrue: [ ^self shouldNotImplement ].
     ptr > endPtr ifTrue: [ self position: 0 ].
     element := collection at: ptr.
-    ptr := ptr + 1.
+    ptr := ptr + 1. repeatPtr := repeatPtr + 1.
     ^element ! !
 
+!RepeatStream methodsFor: 'testing'!
 
-Object subclass: #RandomNucleotideStream
-instanceVariableNames: 'random percentages codes size'
+atEnd
+   ^repeatPtr >= repeatLimit ! !
+
+
+RepeatStream subclass: #RandomStream instanceVariableNames: 'random percentages'
 classVariableNames: '' poolDictionaries: '' category: nil !
 
-!RandomNucleotideStream methodsFor: 'initialize-release'!
+!RandomStream methodsFor: 'private methods'!
 
-from: anOrderedCollection
-   | cp i |
-   "random := RandomNumber to: 1.0."
-   codes := ByteArray new: anOrderedCollection size.
-   size := anOrderedCollection size * 8.
-   percentages := ByteArray new: size.
-
-   cp := 0.0. i := 0. 
-   anOrderedCollection do: [:each | 
-      percentages doubleAt: (i*8)+1 put: (cp := cp + each value). 
-      codes byteAt: (i := i + 1) put: each key asInteger.       
+initCollection: aCollection
+   | cp |
+   repeatPtr := 0.
+   random := RandomNumber to: 1.0.
+   percentages := OrderedCollection new.
+   collection := OrderedCollection new.
+   cp := 0.0.
+   aCollection do: [:each |
+      collection add: each key.
+      percentages add: (cp := cp + each value)
    ] ! !
 
-
-!RandomNucleotideStream methodsFor: 'accessing'!
+!RandomStream methodsFor: 'accessing'!
 
 next
    | r |
    r := random next.
-   1 to: size by: 8 do: [:i| 
-      (r < (percentages doubleAt: i))
-         ifTrue: [^codes byteAt: (i//8)+1] ] !
+   repeatPtr := repeatPtr + 1.
+   1 to: percentages size do: [:i| 
+      (r < (percentages at: i)) ifTrue: [^collection at: i]] !
 
 random: aRandomNumber
-"This wierdness is just so we can get the expected results.
- Normally we'd initialize our own RandomNumber source instead
- of sharing one"
+"Share the random number generator so we can get the expected results."
    random := aRandomNumber ! !
 
 
 ! FileStream methodsFor: 'accessing'!
 
-writeFasta: anId description: aString size: anInteger sequence: aStream 
-   | lineLength n |
-   lineLength := 60. n := anInteger.
-   self nextPut: $>; nextPutAll: anId; nextPutAll: ' '; nextPutAll: aString; nl.
+writeFasta: aString sequence: aStream
+   | i |
+   self nextPut: $>; nextPutAll: aString; nl.
 
-   [n > 0] whileTrue: [
-         ((n < lineLength) ifTrue: [n] ifFalse: [lineLength]) 
-            timesRepeat: [self nextPutByte: aStream next].
-         self nl.
-         n := n - lineLength
-      ] ! !
+   i := 0.
+   [aStream atEnd] whileFalse: [
+      (i = 60) ifTrue: [self nl. i := 0].
+      self nextPutByte: aStream next.
+      i := i + 1.
+      ].
+   self nl ! !
 
 
 Object subclass: #RandomNumber
@@ -81,15 +87,15 @@ to: anInteger
    Increment := 29573.
    Multiplier := 3877.
    Modulus := 139968.
-   FModulus := 139968.0d. 
+   FModulus := 139968.0d.
    ^self basicNew to: anInteger ! !
-   
+
 !RandomNumber methodsFor: 'accessing'!
 
 next
    seed := seed * Multiplier + Increment \\ Modulus.
    ^(seed * scale) asFloatD / FModulus ! !
-     
+
 !RandomNumber methodsFor: 'private'!
 
 to: anInteger
@@ -97,13 +103,12 @@ to: anInteger
    scale := anInteger ! !
 
 
-| n r s |
+| n r s x |
 n := Smalltalk arguments first asInteger.
-r := RandomNumber to: 1. "Shared random sequence"
 s := FileStream stdout bufferSize: 4096.
 
-s writeFasta: 'ONE' description: 'Homo sapiens alu' size: n*2 sequence: 
-   ( RepeatStream on: 
+s writeFasta: 'ONE Homo sapiens alu' sequence:
+   ( RepeatStream to: n*2 on:
       'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
       'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
       'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT',
@@ -112,8 +117,10 @@ s writeFasta: 'ONE' description: 'Homo sapiens alu' size: n*2 sequence:
       'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
       'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' asByteArray).
 
-s writeFasta: 'TWO' description: 'IUB ambiguity codes' size: n*3 sequence: 
-   ( RandomNucleotideStream new random: r; from: (
+r := RandomNumber to: 1. "Shared random sequence"
+
+s writeFasta: 'TWO IUB ambiguity codes' sequence:
+   (( RandomStream to: n*3 on: (
       OrderedCollection new
          add: (Association key: $a value: 0.27);
          add: (Association key: $c value: 0.12);
@@ -131,15 +138,15 @@ s writeFasta: 'TWO' description: 'IUB ambiguity codes' size: n*3 sequence:
          add: (Association key: $V value: 0.02);
          add: (Association key: $W value: 0.02);
          add: (Association key: $Y value: 0.02);
-         yourself )).
+         yourself )) random: r).
 
-s writeFasta: 'THREE' description: 'Homo sapiens frequency' size: n*5 sequence: 
-   ( RandomNucleotideStream new random: r; from: (
+s writeFasta: 'THREE Homo sapiens frequency' sequence:
+   (( RandomStream to: n*5 on: (
       OrderedCollection new
          add: (Association key: $a value: 0.3029549426680);
          add: (Association key: $c value: 0.1979883004921);
          add: (Association key: $g value: 0.1975473066391);
          add: (Association key: $t value: 0.3015094502008);
-         yourself )).
+         yourself )) random: r).
 
 s flush; close !

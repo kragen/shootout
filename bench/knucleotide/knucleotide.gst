@@ -4,24 +4,26 @@
 
 ! FileStream methodsFor: 'accessing'!
 
-readFasta: anId
-   | idString newline buffer line char |
+readFasta: anId 
+   | idString newline buffer description line char |
    idString := '>',anId.
    newline := Character nl.
 
    [(self atEnd) or: [
          (self peek = $>) 
-            ifTrue: [self nextLine startsWith: '>THREE']
+            ifTrue: [(line := self nextLine) startsWith: idString]
             ifFalse: [self skipTo: newline. false]]
       ] whileFalse.
 
+   description := line.
    buffer := ByteStream on: String new.
+   [(self atEnd) or: [(char := self peek) = $>]] whileFalse: [
+      (char = $;) 
+         ifTrue: [self nextLine] 
+         ifFalse: [buffer nextPutAll: self nextLine]
+      ].
 
-   [(self atEnd) or: 
-      [(char := (line := self nextLine) first) = $>]] whileFalse: [
-         (char ~= $;) ifTrue: [buffer nextPutAll: line asUppercase]].
-
-   ^buffer contents ! !
+   ^Association key: description value: buffer contents ! !
 
 
 ! String methodsFor: 'analysis'!
@@ -39,7 +41,7 @@ inject: aDictionary intoSubstringFrequencies: aLength offset: anInteger
       fragment := self copyFrom: i to: i + aLength - 1.
       (assoc := aDictionary associationAt: fragment ifAbsent: []) isNil 
          ifTrue: [aDictionary at: fragment put: 1]
-         ifFalse: [assoc value: assoc value + 1] ] ! !
+         ifFalse: [assoc value: assoc value + 1] ] ! 
 
 
 !Float methodsFor: 'printing'!
@@ -52,7 +54,8 @@ printStringRoundedTo: anInteger
 
 
 | sequence writeFrequencies writeCount |
-sequence := (FileStream stdin bufferSize: 4096) readFasta: 'THREE'.
+sequence := ((FileStream stdin bufferSize: 4096) 
+   readFasta: 'THREE') value asUppercase.
 
 writeFrequencies := [:k | | frequencies count |
    frequencies := SortedCollection sortBlock: [:a :b| 
