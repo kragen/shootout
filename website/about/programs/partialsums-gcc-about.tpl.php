@@ -1,0 +1,1 @@
+<p><strong>NOT ACCEPTED:</strong> rogram should use power function rather than inlined code</p>

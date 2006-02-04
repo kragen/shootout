@@ -11,8 +11,8 @@
 <p>&#8721; &#185;&#8260;<sub>k&#179;(cos k)&#178;</sub></p>
 <p>&#8721; &#185;&#8260;<sub>k</sub></p>
 <p>&#8721; &#185;&#8260;<sub>k&#178;</sub></p>
-<p>&#8721; <sup>&#8722;1<sup>k+1</sup></sup>&#8260;<sub>k</sub> <em>use single loop</em></p>
-<p>&#8721; <sup>&#8722;1<sup>k+1</sup></sup>&#8260;<sub>2k &#8722;1</sub> <em>use single loop</em></p>
+<p>&#8721; <sup>&#8722;1<sup>k+1</sup></sup>&#8260;<sub>k</sub></p>
+<p>&#8721; <sup>&#8722;1<sup>k+1</sup></sup>&#8260;<sub>2k &#8722;1</sub></p>
 </div>
 
 <p>For more information see "General Series." From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br/><a href="http://mathworld.wolfram.com/topics/GeneralSeries.html">http://mathworld.wolfram.com/topics/GeneralSeries.html</a></p>
