@@ -10,14 +10,16 @@ readFasta: anId
    idString := '>',anId.
    newline := Character nl.
 
+   "find start of particular fasta sequence"
    [(self atEnd) or: [
          (self peek = $>) 
             ifTrue: [(line := self nextLine) startsWith: idString]
             ifFalse: [self skipTo: newline. false]]
       ] whileFalse.
 
+   "line-by-line read - it would be a lot faster to block read"
    description := line.
-   buffer := ByteStream on: ByteArray new.
+   buffer := ByteStream on: (String new: 1028).
    [(self atEnd) or: [(char := self peek) = $>]] whileFalse: [
       (char = $;) 
          ifTrue: [self nextLine] 
@@ -27,34 +29,34 @@ readFasta: anId
    ^Association key: description value: buffer contents !
 
 
-writeReverseComplementFasta: aString sequence: aByteArray
+writeReverseComplementFasta: aString sequence: aSequence
    | lineLength n iub |
    (aString isNil) ifTrue: [^self].
 
-   lineLength := 60. n := aByteArray size.
+   lineLength := 60. n := aSequence size.
 
-   iub := ByteArray new: 128 withAll: $* value.
-   iub at: $a value put: $T value. iub at: $A value put: $T value.
-   iub at: $b value put: $V value. iub at: $B value put: $V value.
-   iub at: $c value put: $G value. iub at: $C value put: $G value.
-   iub at: $d value put: $H value. iub at: $D value put: $H value.
-   iub at: $g value put: $C value. iub at: $G value put: $C value.
-   iub at: $h value put: $D value. iub at: $H value put: $D value.
-   iub at: $k value put: $M value. iub at: $K value put: $M value.
-   iub at: $m value put: $K value. iub at: $M value put: $K value.
-   iub at: $n value put: $N value. iub at: $N value put: $N value.
-   iub at: $r value put: $Y value. iub at: $R value put: $Y value.
-   iub at: $s value put: $S value. iub at: $S value put: $S value.
-   iub at: $t value put: $A value. iub at: $T value put: $A value.
-   iub at: $v value put: $B value. iub at: $V value put: $B value.
-   iub at: $w value put: $W value. iub at: $W value put: $W value.
-   iub at: $y value put: $R value. iub at: $Y value put: $R value.
+   iub := String new: 128 withAll: $*.
+   iub at: $a value put: $T. iub at: $A value put: $T.
+   iub at: $b value put: $V. iub at: $B value put: $V.
+   iub at: $c value put: $G. iub at: $C value put: $G.
+   iub at: $d value put: $H. iub at: $D value put: $H.
+   iub at: $g value put: $C. iub at: $G value put: $C.
+   iub at: $h value put: $D. iub at: $H value put: $D.
+   iub at: $k value put: $M. iub at: $K value put: $M.
+   iub at: $m value put: $K. iub at: $M value put: $K.
+   iub at: $n value put: $N. iub at: $N value put: $N.
+   iub at: $r value put: $Y. iub at: $R value put: $Y.
+   iub at: $s value put: $S. iub at: $S value put: $S.
+   iub at: $t value put: $A. iub at: $T value put: $A.
+   iub at: $v value put: $B. iub at: $V value put: $B.
+   iub at: $w value put: $W. iub at: $W value put: $W.
+   iub at: $y value put: $R. iub at: $Y value put: $R.
 
    self nextPutAll: aString; nl.
 
    [n > 0] whileTrue: [ 
          1 to: ((n < lineLength) ifTrue: [n] ifFalse: [lineLength]) do:
-            [:i | self nextPutByte: (iub at: (aByteArray at: n - i + 1))].
+            [:i | self nextPut: (iub at: (aSequence at: n - i + 1) value)].
          self nl.
          n := n - lineLength. 
       ] ! !

@@ -70,8 +70,8 @@ writeFasta: aString sequence: aStream
 
    i := 0.
    [aStream atEnd] whileFalse: [
-      (i = 60) ifTrue: [self nl. i := 0].
-      self nextPutByte: aStream next.
+      (i == 60) ifTrue: [self nl. i := 0].
+      self nextPut: aStream next.
       i := i + 1.
       ].
    self nl ! !
@@ -116,7 +116,7 @@ s writeFasta: 'ONE Homo sapiens alu' sequence:
       'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA',
       'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG',
       'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
-      'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' asByteArray).
+      'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' ).
 
 r := RandomNumber to: 1. "Shared random sequence"
 

@@ -4,10 +4,8 @@
 
 | in s size1 size2 |
 in := FileStream stdin bufferSize: 4096.
-
-s := ByteStream on: (String new: 4096).
-[in atEnd] whileFalse: [s nextPutAll: in nextHunk].
-size1 := (s := s contents) size.
+s := in contents.
+size1 := s size.
 
 "remove FASTA sequence descriptions and new-lines"
 s := s copyReplacingAllRegex: '>.*\n|\n' with: ''.
