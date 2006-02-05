@@ -1,1 +1,1 @@
-<p>GNAT 4.0.3 20060115 (prerelease) (Debian 4.0.2-7)</p>
+<p>GNAT 4.0.3 20060128 (prerelease) (Debian 4.0.2-8)</p>
