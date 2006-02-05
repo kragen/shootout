@@ -2,9 +2,8 @@
  http://shootout.alioth.debian.org/
  contributed by Isaac Gouy"
 
-| in s size1 size2 |
-in := FileStream stdin bufferSize: 4096.
-s := in contents.
+| s size1 size2 |
+s := (FileStream stdin bufferSize: 4096) contents.
 size1 := s size.
 
 "remove FASTA sequence descriptions and new-lines"
