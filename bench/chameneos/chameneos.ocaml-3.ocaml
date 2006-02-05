@@ -1,0 +1,55 @@
+(* chameneos.ml
+ *
+ * The Great Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Christophe TROESTLER
+ *)
+
+open Printf
+
+type color = B | R | Y | Faded
+
+let compl c1 c2 = match c1, c2 with
+  | Faded, _ | _, Faded -> Faded | B, B -> B | R, R -> R | Y, Y -> Y
+  | B, R | R, B -> Y   | B, Y | Y, B -> R   | R, Y | Y, R -> B
+
+
+let enter = Mutex.create() (* protect thr following vars *)
+let nmeetings = ref 0
+let is_first = ref true
+let color1 = ref B and color2 = ref B
+let second_done = Condition.create()
+
+let meet c =
+  Mutex.lock enter;
+  if !nmeetings > 0 then (
+    if !is_first then (
+      color1 := c;
+      is_first := false;
+      Condition.wait second_done enter;
+      let other_color = !color2 in
+      Mutex.unlock enter;
+      other_color
+    )
+    else (
+      is_first := true;
+      color2 := c;
+      decr nmeetings;
+      let other_color = !color1 in
+      Condition.signal second_done;  Mutex.unlock enter;
+      other_color
+    ))
+  else (Mutex.unlock enter;  Faded)
+
+
+let rec creature meetings = function
+  | Faded -> decr meetings
+  | c -> let c' = meet c in incr meetings; creature meetings (compl c c')
+
+let () =
+  nmeetings := (try int_of_string (Array.get Sys.argv 1) with _ -> 1);
+  let create c = let n = ref 0 in (Thread.create (creature n) c, n) in
+  let cr = List.map create [B; R; Y; B] in
+  printf "%i\n" (List.fold_left (fun s (t,i) -> Thread.join t; s + !i) 0 cr)
+
