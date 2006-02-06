@@ -27,10 +27,9 @@ energy
    | e |
    e := 0.0d.
    1 to: bodies size do: [:i|       
-      e := e + (0.5d * (bodies at: i) momo).
-
+      e := e + (bodies at: i) kineticEnergy.
       i+1 to: bodies size do: [:j| 
-         e := e - ((bodies at: i) eFactorWith: (bodies at: j))].
+         e := e - ((bodies at: i) potentialEnergy: (bodies at: j))].
    ].
    ^e ! !
    
@@ -38,20 +37,13 @@ energy
 !NBodySystem methodsFor: 'initialize-release'!
 
 initialize
-   | px py pz |
    bodies := OrderedCollection new 
       add: Body sun; add: Body jupiter; add: Body saturn;
       add: Body uranus; add: Body neptune; yourself.
 
-   px := 0.0d.
-   py := 0.0d.
-   pz := 0.0d.
-   bodies do: [:each| 
-      px := px + (each vx * each mass).
-      py := py + (each vy * each mass).		
-      pz := pz + (each vz * each mass).	
-   ].
-   bodies first offsetMomentum: px y: py z: pz ! !   
+   bodies first offsetMomentum: 
+      (bodies inject: (Array with: 0.0d with: 0.0d with: 0.0d) 
+         into: [:m :each | each addMomentumTo: m]) ! !
    
       
 Object subclass: #Body
@@ -127,15 +119,6 @@ neptune
 
 mass
    ^mass !
-
-vx
-   ^vx !				
-	
-vy
-   ^vy !
-	
-vz
-   ^vz !
 	
 x
    ^x !
@@ -146,7 +129,7 @@ y
 z
    ^z !
 	
-x: d1 y: d2 z: d3 vx: d4 vy: d5 vz: d6 mass:	d7
+x: d1 y: d2 z: d3 vx: d4 vy: d5 vz: d6 mass: d7
    x := d1.
    y := d2. 
    z := d3. 
@@ -185,24 +168,29 @@ positionAfter: dt
    y := y + (dt * vy).
    z := z + (dt * vz) !	
    
-momo
-   ^mass * ((vx * vx) + (vy * vy) + (vz * vz)) !
+kineticEnergy
+   ^0.5d * mass * ((vx * vx) + (vy * vy) + (vz * vz)) !
    
-eFactorWith: aBody
+potentialEnergy: aBody
    | dx dy dz distance |
    dx := x - aBody x.
    dy := y - aBody y.
    dz := z - aBody z.
-
    distance := ((dx*dx) + (dy*dy) + (dz*dz)) sqrt.
    ^mass * aBody mass / distance !   
+
+addMomentumTo: anArray "cleaner to use a 3d point"
+   anArray at: 1 put: (anArray at: 1) + (vx * mass).
+   anArray at: 2 put: (anArray at: 2) + (vy * mass).
+   anArray at: 3 put: (anArray at: 3) + (vz * mass).
+   ^anArray !
       	
-offsetMomentum: px y: py z: pz
-	| m |
-	m := self class solarMass.
-	vx := px negated / m.
-	vy := py negated / m.
-	vz := pz negated / m ! !
+offsetMomentum: anArray "cleaner to use a 3d point"
+   | m |
+   m := self class solarMass.
+   vx := (anArray at: 1) negated / m.
+   vy := (anArray at: 2) negated / m.
+   vz := (anArray at: 3) negated / m ! !
 	
 																									   
 !Float methodsFor: 'printing'!
@@ -212,7 +200,6 @@ printStringRoundedTo: anInteger
    n := 0.5d * (10 raisedToInteger: anInteger negated).
    s := ((self sign < 0) ifTrue: [self - n] ifFalse: [self + n]) printString.
    ^s copyFrom: 1 to: (s indexOf: $.) + anInteger ! !
-   
    
    
 | n bodies |
