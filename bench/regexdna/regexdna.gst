@@ -2,6 +2,33 @@
  http://shootout.alioth.debian.org/
  contributed by Isaac Gouy"
 
+!String methodsFor: 'regex'!
+
+copyFrom: from to: to replacingAllRegex: pattern with: str
+    "Replaces all occurances of pattern between boundaries with specified string"
+
+    | res idx regex beg end regs |
+    regex := pattern asRegex.
+    res := WriteStream on: (String new: to - from + 1).
+    idx := from.
+    [
+        regs := self searchRegex: regex from: idx to: to.
+	regs matched "BUG FIX"
+    ] whileTrue: [
+	beg := regs from.
+	end := regs to.
+	res next: beg - idx putAll: self startingAt: idx.
+	res nextPutAll: (str bindWithArguments: regs).
+	idx := end + 1.
+	beg > end ifTrue: [ res nextPut: (self at: idx). idx := idx + 1 ].
+	idx > self size ifTrue: [ ^res contents ].
+    ].
+    res next: to - idx + 1 putAll: self startingAt: idx.
+
+    ^res contents ! !
+
+
+
 | s size1 size2 |
 s := (FileStream stdin bufferSize: 4096) contents.
 size1 := s size.

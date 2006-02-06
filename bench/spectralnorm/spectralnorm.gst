@@ -54,7 +54,7 @@ n := Smalltalk arguments first asInteger.
 u := Array new: n withAll: 1.0d.
 v := Array new: n withAll: 0.0d.
 
-1 to: 10 do: [:i|
+10 timesRepeat: [
    v := u multiplyAtAv.
    u := v multiplyAtAv.
 ].
