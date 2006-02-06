@@ -1,0 +1,135 @@
+{-# OPTIONS -funbox-strict-fields #-}
+--
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Written by Joel Koerwer.
+-- Uses 7 STUArrays for the state.
+-- Edited for length by ChrisKuklewicz
+--
+-- -O3 -optc-O3 -fexcess-precision -funbox-strict-fields -optc-ffast-math
+--
+-- -funbox-strict-fields is critical
+--
+-- -optc-ffast-math doesn't speed things up for me.
+-- Well, neither does -optc-O3, but that may just be here.
+--
+import Control.Monad    (liftM2,liftM3,liftM4)
+import Control.Monad.ST (ST, runST)
+import Data.Array.ST    (STUArray, newListArray)
+import Data.Array.Base  (unsafeRead, unsafeWrite)
+import System           (getArgs)
+import Text.Printf      (printf)
+
+(!) = unsafeRead :: STUArray s Int Double -> Int -> ST s Double 
+writeArray = unsafeWrite :: STUArray s Int Double -> Int -> Double -> ST s () 
+size :: Int = 5
+dt :: Double = 0.01
+
+data PhaseSpace s = PS {ms,rxs,rys,rzs,vxs,vys,vzs :: !(STUArray s Int Double)}
+
+main :: IO ()
+main = do n <- getArgs >>= readIO . head
+          printf "%.9f\n" $ runST (do state <- initialState
+                                      offsetMomentum state
+                                      energy state)
+          printf "%.9f\n" $ runST (do state <- initialState
+                                      offsetMomentum state
+                                      energy state
+                                      advance n state
+                                      energy state)
+
+advance :: Int -> PhaseSpace s -> ST s ()
+advance 0 _   = return ()
+advance n sys = do kick sys
+                   drift sys
+                   advance (n-1) sys
+
+readAll (PS m x y z vx vy vz) i = do (x,y,z) <- liftM3 (,,) (x!i)  (y!i) (z!i)
+                                     (vx,vy,vz) <- liftM3 (,,) (vx!i) (vy!i) (vz!i)
+                                     return (x,y,z,vx,vy,vz)
+{-# INLINE readAll #-}
+
+kick ps@(PS m rx ry rz vx vy vz) = outer 0 where
+    outer i | i >= size = return ()
+            | otherwise = inner (i+1) >> outer (i+1) where
+                inner j | j >= size = return ()
+                        | otherwise = do
+                            (mi,mj) <- liftM2 (,) (m!i) (m!j)
+                            (rxi,ryi,rzi,vxi,vyi,vzi) <- readAll ps i
+                            (rxj,ryj,rzj,vxj,vyj,vzj) <- readAll ps j
+                            let (dx,dy,dz) = (rxi-rxj, ryi-ryj, rzi-rzj)
+                                dist2 = dx*dx + dy*dy + dz*dz
+                                mag = dt / (dist2 * sqrt dist2)
+                            writeArray vx i (vxi - dx*mj*mag)
+                            writeArray vy i (vyi - dy*mj*mag)
+                            writeArray vz i (vzi - dz*mj*mag)
+                            writeArray vx j (vxj + dx*mi*mag)
+                            writeArray vy j (vyj + dy*mi*mag)
+                            writeArray vz j (vzj + dz*mi*mag)
+                            inner (j+1)
+
+drift ps@(PS _ rxs rys rzs _ _ _) = loop 0 where
+    loop i | i >= size = return ()
+           | otherwise = do (x,y,z,vx,vy,vz) <- readAll ps i
+                            writeArray rxs i (x + dt*vx)
+                            writeArray rys i (y + dt*vy)
+                            writeArray rzs i (z + dt*vz)
+                            loop (i+1)
+
+energy sys = liftM2 (+) (kineticEnergy sys) (potentialEnergy sys)
+
+kineticEnergy (PS ms _ _ _ vxs vys vzs) = loop 0 0 where
+    loop i accum | i >= size = return (0.5 * accum)
+                 | otherwise = do
+                        (m,vx,vy,vz) <- liftM4 (,,,) (ms!i) (vxs!i) (vys!i) (vzs!i)
+                        let v2 = vx*vx + vy*vy + vz*vz
+                        loop (i+1) $! (accum + m*v2)
+
+potentialEnergy (PS ms rxs rys rzs _ _ _) = outer 0 0 where
+    outer i a | i >= size = return a
+              | otherwise = inner i (i+1) a >>= outer (i+1)
+    inner i j a | j >= size = return a
+                | otherwise = do
+                    (mi,xi,yi,zi) <- liftM4 (,,,) (ms!i) (rxs!i) (rys!i) (rzs!i)
+                    (mj,xj,yj,zj) <- liftM4 (,,,) (ms!j) (rxs!j) (rys!j) (rzs!j)
+                    let (dx,dy,dz) = (xi-xj, yi-yj, zi-zj)
+                        dist = sqrt (dx*dx + dy*dy + dz*dz)
+                    inner i (j+1) $! (a - mi*mj/dist)
+
+offsetMomentum (PS ms rxs rys rzs vxs vys vzs) = do
+    (px,py,pz) <- calcMomentum 0 (0,0,0)
+    (mSun,vSunx,vSuny,vSunz) <- liftM4 (,,,) (ms!0) (vxs!0) (vys!0) (vzs!0)
+    writeArray vxs 0 (vSunx - px/mSun)
+    writeArray vys 0 (vSuny - py/mSun)
+    writeArray vzs 0 (vSunz - pz/mSun)
+  where calcMomentum i (px,py,pz) | i >= size = return (px,py,pz)
+                                  | otherwise = do
+                                        (m,vx,vy,vz) <- liftM4 (,,,) (ms!i) (vxs!i) (vys!i) (vzs!i)
+                                        calcMomentum (i+1) $! (px+vx*m,py+vy*m,pz+vz*m)
+
+initialState = do m <- mkSTUArray masses
+                  x <- mkSTUArray positionXs
+                  y <- mkSTUArray positionYs
+                  z <- mkSTUArray positionZs
+                  vx <- mkSTUArray velocityXs
+                  vy <- mkSTUArray velocityYs
+                  vz <- mkSTUArray velocityZs
+                  return (PS m x y z vx vy vz)
+
+mkSTUArray = newListArray (0,size-1) :: [Double] -> ST s (STUArray s Int Double)
+
+masses = map (4*pi*pi*) [1, 9.54791938424326609e-04, 2.85885980666130812e-04, 4.36624404335156298e-05, 5.15138902046611451e-05]
+
+positionXs = [0, 4.84143144246472090e+00, 8.34336671824457987e+00, 1.28943695621391310e+01, 1.53796971148509165e+01]
+
+positionYs = [0, (-1.16032004402742839e+00), 4.12479856412430479e+00, (-1.51111514016986312e+01), (-2.59193146099879641e+01)]
+
+positionZs = [0, (-1.03622044471123109e-01), (-4.03523417114321381e-01), (-2.23307578892655734e-01), 1.79258772950371181e-01]
+
+velocityXs = map (365.24*) [0, 1.66007664274403694e-03, (-2.76742510726862411e-03), 2.96460137564761618e-03, 2.68067772490389322e-03]
+
+velocityYs = map (365.24*) [0, 7.69901118419740425e-03, 4.99852801234917238e-03, 2.37847173959480950e-03, 1.62824170038242295e-03]
+
+velocityZs = map (365.24*) [0, (-6.90460016972063023e-05), 2.30417297573763929e-05, (-2.96589568540237556e-05), (-9.51592254519715870e-05)]
+
