@@ -2,12 +2,11 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-sumcol: argvString
+sumcol
    | sum |
    sum := 0.
    [OS.Stdin atEnd] whileFalse: [
       sum := sum + (OS.Stdin through: Character cr) asNumber].
-
-   OS.Stdout nextPutAll: sum printString; cr! !
+   ^sum printString withNl ! !

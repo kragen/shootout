@@ -2,11 +2,11 @@
    http://shootout.alioth.debian.org/
    contributed by Paolo Bonzini"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-message: argvString
+message
    | n tail head sum |
-   n := argvString asNumber.
+   n := CEnvironment argv first asNumber.
 
    head := tail := Consumer new.
    500 timesRepeat: [
@@ -17,20 +17,20 @@ message: argvString
        head msg: 0.
        sum := sum + tail msg ].
 
-   OS.Stdout nextPutAll: sum printString; cr! !
+   ^sum printString withNl ! !
 
 
-Smalltalk.ComputerLanguageShootout defineClass: #Consumer
+Smalltalk.Shootout defineClass: #Consumer
 	superclass: #{Core.Object}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'semaphore msg '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
 
-!ComputerLanguageShootout.Consumer class methodsFor: 'process'!
+!Shootout.Consumer class methodsFor: 'process'!
 
 new
     | var |
@@ -39,7 +39,7 @@ new
     ^var! !
 
 
-!ComputerLanguageShootout.Consumer methodsFor: 'process'!
+!Shootout.Consumer methodsFor: 'process'!
 
 msg
     semaphore wait.
@@ -53,17 +53,17 @@ semaphore: aSemaphore
     semaphore := aSemaphore! !
 
 
-Smalltalk.ComputerLanguageShootout defineClass: #ProducerConsumer
-	superclass: #{ComputerLanguageShootout.Consumer}
+Smalltalk.Shootout defineClass: #ProducerConsumer
+	superclass: #{Shootout.Consumer}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'consumer '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
 
-!ComputerLanguageShootout.ProducerConsumer class methodsFor: 'process'!
+!Shootout.ProducerConsumer class methodsFor: 'process'!
 
 fork: consumer
     | proc |
@@ -72,7 +72,7 @@ fork: consumer
     proc fork.
     ^proc! !
 
-!ComputerLanguageShootout.ProducerConsumer methodsFor: 'process'!
+!Shootout.ProducerConsumer methodsFor: 'process'!
 
 consumer: aProcess
     consumer := aProcess!

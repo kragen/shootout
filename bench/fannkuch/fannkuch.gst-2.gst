@@ -69,7 +69,7 @@ pfannkuchen
     ].
     ^k! !
 
-!Integer methodsFor: 'pfannkuchen'!
+!SmallInteger methodsFor: 'pfannkuchen'!
 
 maxPfannkuchen
     | max gen perm check |

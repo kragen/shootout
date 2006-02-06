@@ -2,80 +2,74 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-nbody: argvString
+nbody
    | n bodies |
-   n := argvString asNumber.
+   n := CEnvironment argv first asNumber.
    bodies := NBodySystem new initialize.
 
-   OS.Stdout nextPutAll: ((bodies energy asFixedPoint: 9) printString copyWithout: $s); cr.
+   OS.Stdout nextPutAll: (bodies energy asStringWith: 9); cr.
    n timesRepeat: [bodies after: 0.01d].
-   OS.Stdout nextPutAll: ((bodies energy asFixedPoint: 9) printString copyWithout: $s); cr! !
+   OS.Stdout nextPutAll: (bodies energy asStringWith: 9); cr.
+   ^'' ! !
 
 
-Smalltalk.ComputerLanguageShootout defineClass: #NBodySystem
+Smalltalk.Shootout defineClass: #NBodySystem
 	superclass: #{Core.Object}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'bodies '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
-!ComputerLanguageShootout.NBodySystem methodsFor: 'nbody'!
+!Shootout.NBodySystem methodsFor: 'nbody'!
 
 after: dt
    1 to: bodies size do: [:i|
       i+1 to: bodies size do: [:j|                            
          (bodies at: i) and: (bodies at: j) velocityAfter: dt].
    ].   
-   bodies do: [:each| each positionAfter: dt]!
+   bodies do: [:each| each positionAfter: dt] !
 
 energy
    | e |
    e := 0.0d.
    1 to: bodies size do: [:i|       
-      e := e + (0.5d * (bodies at: i) momo).
+      e := e + (bodies at: i) kineticEnergy.
 
       i+1 to: bodies size do: [:j| 
-         e := e - ((bodies at: i) eFactorWith: (bodies at: j))].
+         e := e - ((bodies at: i) potentialEnergy: (bodies at: j))].
    ].
-   ^e! !
+   ^e ! !
 
-!ComputerLanguageShootout.NBodySystem methodsFor: 'initialize-release'!
+!Shootout.NBodySystem methodsFor: 'initialize-release'!
 
 initialize
-   | px py pz |
-   bodies := OrderedCollection new 
+   bodies := OrderedCollection new
       add: Body sun; add: Body jupiter; add: Body saturn;
       add: Body uranus; add: Body neptune; yourself.
 
-   px := 0.0d.
-   py := 0.0d.
-   pz := 0.0d.
-   bodies do: [:each| 
-      px := px + (each vx * each mass).
-      py := py + (each vy * each mass).		
-      pz := pz + (each vz * each mass).	
-   ].
-   bodies first offsetMomentum: px y: py z: pz! !
+   bodies first offsetMomentum:
+      (bodies inject: (Array with: 0.0d with: 0.0d with: 0.0d)
+         into: [:m :each | each addMomentumTo: m]) ! !
 
 
-Smalltalk.ComputerLanguageShootout defineClass: #Body
+Smalltalk.Shootout defineClass: #Body
 	superclass: #{Core.Object}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'x y z vx vy vz mass '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
 
-!ComputerLanguageShootout.Body class methodsFor: 'constants'!
+!Shootout.Body class methodsFor: 'constants'!
 
 daysPerYear
-   ^365.24d!
+   ^365.24d !
 
 jupiter
    ^self new
@@ -85,7 +79,7 @@ jupiter
       vx: 1.66007664274403694d-3 * self daysPerYear
       vy: 7.69901118419740425d-3 * self daysPerYear
       vz: -6.90460016972063023d-5 * self daysPerYear
-      mass: 9.54791938424326609d-4 * self solarMass!
+      mass: 9.54791938424326609d-4 * self solarMass !
 
 neptune
    ^self new
@@ -95,10 +89,10 @@ neptune
       vx: 2.68067772490389322d-3 * self daysPerYear
       vy: 1.62824170038242295d-3 * self daysPerYear
       vz: -9.51592254519715870d-5 * self daysPerYear
-      mass: 5.15138902046611451d-5 * self solarMass!
+      mass: 5.15138902046611451d-5 * self solarMass !
 
 pi
-   ^3.141592653589793d!
+   ^3.141592653589793d !
 
 saturn
    ^self new
@@ -108,10 +102,10 @@ saturn
       vx: -2.76742510726862411d-3 * self daysPerYear
       vy: 4.99852801234917238d-3 * self daysPerYear
       vz: 2.30417297573763929d-5 * self daysPerYear
-      mass: 2.85885980666130812d-4 * self solarMass!
+      mass: 2.85885980666130812d-4 * self solarMass !
 
 solarMass
-   ^4.0d * self pi * self pi!
+   ^4.0d * self pi * self pi !
 
 sun
    ^self new
@@ -121,7 +115,7 @@ sun
       vx: 0.0d0
       vy: 0.0d0
       vz: 0.0d0
-      mass: self solarMass!
+      mass: self solarMass !
 
 uranus
    ^self new
@@ -131,25 +125,16 @@ uranus
       vx: 2.96460137564761618d-3 * self daysPerYear
       vy: 2.37847173959480950d-3 * self daysPerYear
       vz: -2.96589568540237556d-5 * self daysPerYear
-      mass: 4.36624404335156298d-5 * self solarMass! !
+      mass: 4.36624404335156298d-5 * self solarMass ! !
 
 
-!ComputerLanguageShootout.Body methodsFor: 'accessing'!
+!Shootout.Body methodsFor: 'accessing'!
 
 mass
    ^mass!
 
-vx
-   ^vx!
-
-vy
-   ^vy!
-
-vz
-   ^vz!
-
 x
-   ^x!
+   ^x !
 
 x: d1 y: d2 z: d3 vx: d4 vy: d5 vz: d6 mass: d7
    x := d1.
@@ -158,15 +143,15 @@ x: d1 y: d2 z: d3 vx: d4 vy: d5 vz: d6 mass: d7
    vx := d4.
    vy := d5.
    vz := d6.
-   mass := d7!
+   mass := d7 !
 
 y
-   ^y!
+   ^y !
 
 z
-   ^z! !
+   ^z ! !
 
-!ComputerLanguageShootout.Body methodsFor: 'nbody'!
+!Shootout.Body methodsFor: 'nbody'!
 
 and: aBody velocityAfter: dt	     
    | dx dy dz distance mag |
@@ -178,38 +163,44 @@ and: aBody velocityAfter: dt
    mag := dt / (distance * distance * distance).
 
    self decreaseVelocity: dx y: dy z: dz m: aBody mass * mag.   
-   aBody increaseVelocity: dx y: dy z: dz m: mass * mag!
+   aBody increaseVelocity: dx y: dy z: dz m: mass * mag !
 
 decreaseVelocity: dx y: dy z: dz m: m
    vx := vx - (dx * m).
    vy := vy - (dy * m).
-   vz := vz - (dz * m)!
+   vz := vz - (dz * m) !
 
-eFactorWith: aBody
+potentialEnergy: aBody
    | dx dy dz distance |
    dx := x - aBody x.
    dy := y - aBody y.
    dz := z - aBody z.
 
    distance := ((dx*dx) + (dy*dy) + (dz*dz)) sqrt.
-   ^mass * aBody mass / distance!
+   ^mass * aBody mass / distance !
 
 increaseVelocity: dx y: dy z: dz m: m
    vx := vx + (dx * m).
    vy := vy + (dy * m).
-   vz := vz + (dz * m)!
+   vz := vz + (dz * m) !
 
-momo
-   ^mass * ((vx * vx) + (vy * vy) + (vz * vz))!
+kineticEnergy
+   ^0.5d * mass * ((vx * vx) + (vy * vy) + (vz * vz)) !
 
-offsetMomentum: px y: py z: pz
+addMomentumTo: anArray
+   anArray at: 1 put: (anArray at: 1) + (vx * mass).
+   anArray at: 2 put: (anArray at: 2) + (vy * mass).
+   anArray at: 3 put: (anArray at: 3) + (vz * mass).
+   ^anArray !
+
+offsetMomentum: anArray 
    | m |
    m := self class solarMass.
-   vx := px negated / m.
-   vy := py negated / m.
-   vz := pz negated / m!
+   vx := (anArray at: 1) negated / m.
+   vy := (anArray at: 2) negated / m.
+   vz := (anArray at: 3) negated / m !
 
 positionAfter: dt
    x := x + (dt * vx).
    y := y + (dt * vy).
-   z := z + (dt * vz)! !
+   z := z + (dt * vz) ! !

@@ -1,13 +1,13 @@
 "  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy"!
+   contributed by Isaac Gouy"
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-binarytrees: argvString
+binarytrees
    | minDepth n maxDepth stretchDepth check longLivedTree iterations | 
    minDepth := 4.
-   n := argvString asNumber.
+   n := CEnvironment argv first asNumber.
    maxDepth := minDepth + 2 max: n.
    stretchDepth := maxDepth + 1.
 
@@ -33,20 +33,22 @@ binarytrees: argvString
 
    OS.Stdout
       nextPutAll: 'long lived tree of depth '; nextPutAll: maxDepth printString; nextPut: Character tab;
-      nextPutAll: ' check: '; nextPutAll: longLivedTree itemCheck printString; cr.! !
+      nextPutAll: ' check: '; nextPutAll: longLivedTree itemCheck printString; cr.
+
+   ^'' ! !
 
 
-Smalltalk.ComputerLanguageShootout defineClass: #TreeNode
+Smalltalk.Shootout defineClass: #TreeNode
 	superclass: #{Core.Object}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'left right item '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
 
-!ComputerLanguageShootout.TreeNode class methodsFor: 'instance creation'!
+!Shootout.TreeNode class methodsFor: 'instance creation'!
 
 bottomUpTree: anItem depth: anInteger
    ^(anInteger > 0) 
@@ -59,18 +61,18 @@ bottomUpTree: anItem depth: anInteger
       ifFalse: [self left: nil right: nil item: anItem] !
 
 left: leftChild right: rightChild item: anItem      
-   ^(super new) left: leftChild right: rightChild item: anItem! !
+   ^(super new) left: leftChild right: rightChild item: anItem ! !
 
 
-!ComputerLanguageShootout.TreeNode methodsFor: 'initialize-release'!
+!Shootout.TreeNode methodsFor: 'initialize-release'!
 
 left: leftChild right: rightChild item: anItem
    left := leftChild.
    right := rightChild.
-   item := anItem! !
+   item := anItem ! !
 
-!ComputerLanguageShootout.TreeNode methodsFor: 'accessing'!
+!Shootout.TreeNode methodsFor: 'accessing'!
 
 itemCheck
    ^left isNil 
-      ifTrue: [item] ifFalse: [item + (left itemCheck - right itemCheck)]! !
+      ifTrue: [item] ifFalse: [item + (left itemCheck - right itemCheck)] ! !

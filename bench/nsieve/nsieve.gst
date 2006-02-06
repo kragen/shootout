@@ -1,14 +1,9 @@
 "  The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
-
    contributed by Isaac Gouy
-   modified by Ian Osgood   
+   modified by Ian Osgood "
 
-   To run: gst -QI /usr/share/gnu-smalltalk/gst.im nsieve.st -a 7
-"
-
-
-!Integer methodsFor: 'shootout'!
+!SmallInteger methodsFor: 'shootout'!
 
 nsieve 
    | count isPrime |
@@ -24,12 +19,10 @@ nsieve
 
    ^count !
 
-
 asPaddedString: width
    | s |
    s := self printString.
    ^(String new: (width - s size) withAll: $ ), s !
-
 
 primes
    | m |
@@ -37,6 +30,7 @@ primes
    Transcript
       show: 'Primes up to '; show: (m asPaddedString: 8);
       show: ((m nsieve) asPaddedString: 9); nl ! !
+
 
 | n |
 n := Smalltalk arguments first asInteger.

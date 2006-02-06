@@ -2,30 +2,30 @@
    http://shootout.alioth.debian.org/
    contributed by Paolo Bonzini"!
 
-Smalltalk.ComputerLanguageShootout defineClass: #PermGenerator
+Smalltalk.Shootout defineClass: #PermGenerator
 	superclass: #{Core.Object}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'timesRotated perm atEnd '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
 
-!ComputerLanguageShootout.PermGenerator class methodsFor: 'instance creation'!
+!Shootout.PermGenerator class methodsFor: 'instance creation'!
 
 new: size
     ^self new
 	initialize: size;
-	yourself! !
+	yourself ! !
 
 
-!ComputerLanguageShootout.PermGenerator methodsFor: 'initialize-release'!
+!Shootout.PermGenerator methodsFor: 'initialize-release'!
 
 initialize: size
     perm := (1 to: size) asArray.
     timesRotated := Array new: size withAll: 0.
-    atEnd := false!
+    atEnd := false !
 
 makeNext
     | temp remainder |
@@ -44,18 +44,18 @@ makeNext
     ].
 
     "We are past the final permutation."
-    atEnd := true! !
+    atEnd := true ! !
 
-!ComputerLanguageShootout.PermGenerator methodsFor: 'accessing'!
+!Shootout.PermGenerator methodsFor: 'accessing'!
 
 atEnd
-    ^atEnd!
+    ^atEnd !
 
 next
     | result |
     result := perm copy.
     self makeNext.
-    ^result! !
+    ^result ! !
 
 
 !Core.Array methodsFor: 'computer language shootout'!
@@ -73,10 +73,10 @@ pfannkuchen
 	    self at: complement - i put: a.
 	]
     ].
-    ^k! !
+    ^k ! !
 
 
-!Core.Integer methodsFor: 'computer language shootout'!
+!Core.SmallInteger methodsFor: 'computer language shootout'!
 
 maxPfannkuchen
     | max gen perm check |
@@ -91,13 +91,12 @@ maxPfannkuchen
 	    check := check + 1 ].
 	max := max max: perm pfannkuchen
     ].
-    ^max! !
+    ^max ! !
 
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-fannkuch: argvString
-   | n pf |
-   n := argvString asNumber.
-   pf := n maxPfannkuchen printString.
-   OS.Stdout nextPutAll: 'Pfannkuchen('; nextPutAll: n printString; nextPutAll: ') = ', pf; cr! !
+fannkuch
+   | n |
+   n := CEnvironment argv first asNumber.
+   ^'Pfannkuchen(', n printString, ') = ',  n maxPfannkuchen printString withNl ! !

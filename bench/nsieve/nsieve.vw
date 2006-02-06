@@ -2,18 +2,19 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-nsieve: argvString
+nsieve
    | n |
-   n := argvString asNumber.
+   n := CEnvironment argv first asNumber.
    (n < 2) ifTrue: [n := 2].
     n      primes.
    (n - 1) primes.
-   (n - 2) primes! !
+   (n - 2) primes.
+   ^'' ! !
 
 
-!Core.Integer methodsFor: 'computer language shootout'!
+!Core.SmallInteger methodsFor: 'computer language shootout'!
 
 nsieve 
    | count isPrime |
@@ -27,17 +28,17 @@ nsieve
          ].
       ].
 
-   ^count! !
+   ^count ! !
 
 
-!Core.Integer methodsFor: 'computer language shootout'!
+!Core.SmallInteger methodsFor: 'computer language shootout'!
 
 primes
    | m |
    m := (2 raisedTo: self) * 10000.
    OS.Stdout
       nextPutAll: 'Primes up to '; nextPutAll: (m asPaddedString: 8);
-      nextPutAll: ((m nsieve) asPaddedString: 9); cr! !
+      nextPutAll: ((m nsieve) asPaddedString: 9); cr ! !
 
 
 !Core.Integer methodsFor: 'computer language shootout'!
@@ -46,5 +47,4 @@ asPaddedString: aWidth
    | s |
    s := WriteStream on: (String new: 10).
    self printOn: s paddedWith: $  to: aWidth base: 10.
-   ^s contents
-! !
+   ^s contents ! !

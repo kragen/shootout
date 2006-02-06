@@ -2,11 +2,11 @@
    http://shootout.alioth.debian.org/
    contributed by Paolo Bonzini"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
-mandelbrot: argvString
+mandelbrot
    | width height limit2 isOverLimit m bits bitnum s |
-   width := argvString asNumber.
+   width := CEnvironment argv first asNumber.
    height := width.
    limit2 := 4.0.
    isOverLimit := False.
@@ -46,4 +46,5 @@ mandelbrot: argvString
             bits := 0. bitnum := 0.
             ].
          ].
-      ]! !
+      ].
+      ^'' ! !

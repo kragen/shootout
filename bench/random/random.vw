@@ -2,72 +2,72 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy"!
 
-!ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
+!Shootout.Tests class methodsFor: 'benchmarking'!
 
 random: argvString 
    | n random answer |
-   n := argvString asNumber.
+   n := CEnvironment argv first asNumber.
    random := RandomNumber to: 100.
    n timesRepeat: [answer := random next].
-   OS.Stdout nextPutAll: ((answer asFixedPoint: 9) printString copyWithout: $s); cr! !
+   ^(answer asStringWith: 9) withNl ! !
 
 
-Smalltalk.ComputerLanguageShootout defineClass: #RandomNumber
+Smalltalk.Shootout defineClass: #RandomNumber
 	superclass: #{Core.Object}
 	indexedType: #none
 	private: false
 	instanceVariableNames: 'seed scale '
 	classInstanceVariableNames: ''
 	imports: ''
-	category: 'ComputerLanguageShootout'!
+	category: 'Shootout'!
 
-ComputerLanguageShootout.RandomNumber defineSharedVariable: #Modulus
+Shootout.RandomNumber defineSharedVariable: #Modulus
 	private: false
 	constant: false
 	category: 'computer language shootout'
 	initializer: '139968'!
 
-#{ComputerLanguageShootout.RandomNumber.Modulus} initialize!
+#{Shootout.RandomNumber.Modulus} initialize!
 
-ComputerLanguageShootout.RandomNumber defineSharedVariable: #FModulus
+Shootout.RandomNumber defineSharedVariable: #FModulus
 	private: false
 	constant: false
 	category: 'computer language shootout'
 	initializer: '139968.0d'!
 
-#{ComputerLanguageShootout.RandomNumber.FModulus} initialize!
+#{Shootout.RandomNumber.FModulus} initialize!
 
-ComputerLanguageShootout.RandomNumber defineSharedVariable: #Multiplier
+Shootout.RandomNumber defineSharedVariable: #Multiplier
 	private: false
 	constant: false
 	category: 'computer language shootout'
 	initializer: '3877'!
 
-#{ComputerLanguageShootout.RandomNumber.Multiplier} initialize!
+#{Shootout.RandomNumber.Multiplier} initialize!
 
-ComputerLanguageShootout.RandomNumber defineSharedVariable: #Increment
+Shootout.RandomNumber defineSharedVariable: #Increment
 	private: false
 	constant: false
 	category: 'computer language shootout'
 	initializer: '29573'!
 
-#{ComputerLanguageShootout.RandomNumber.Increment} initialize!
+#{Shootout.RandomNumber.Increment} initialize!
 
 
-!ComputerLanguageShootout.RandomNumber class methodsFor: 'instance creation'!
+!Shootout.RandomNumber class methodsFor: 'instance creation'!
 
 to: anInteger
-   ^self basicNew to: anInteger! !
+   ^self basicNew to: anInteger ! !
 
 
-!ComputerLanguageShootout.RandomNumber methodsFor: 'accessing'!
+!Shootout.RandomNumber methodsFor: 'accessing'!
 
 next
 	seed := (seed * Multiplier + Increment) \\ Modulus.
-	^(seed * scale) asDouble / FModulus! !
+	^(seed * scale) asDouble / FModulus ! !
 
-!ComputerLanguageShootout.RandomNumber methodsFor: 'private'!
+!Shootout.RandomNumber methodsFor: 'private'!
 
 to: anInteger
    seed := 42.
-   scale := anInteger! !
+   scale := anInteger ! !
