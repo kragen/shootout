@@ -10,5 +10,5 @@ sumcol
       (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 0)).
    sum := 0.
    [stdin atEnd] whileFalse: [
-      sum := sum + (stdin through: Character cr) asNumber].
+      sum := sum + (stdin upTo: Character cr) asNumber].
    ^sum printString withNl ! !

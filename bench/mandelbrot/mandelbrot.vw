@@ -13,7 +13,8 @@ mandelbrot
    m := 50.
    bits := 0.
    bitnum := 0.
-   s := OS.Stdout.
+   s := ExternalWriteStream on: 
+      (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1)).
    s nextPutAll: 'P4'; cr; nextPutAll: width printString, ' ', height printString; cr.
 
    width := width asDouble. height := height  asDouble.
@@ -48,4 +49,5 @@ mandelbrot
             ].
          ].
       ].
+   s flush.
    ^'' ! !
