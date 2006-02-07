@@ -12,6 +12,7 @@ object partialsums
 
   def calculate(s1:double, s2:double, s3:double, s4:double, s5:double, s6:double,
 		s7:double, s8:double, s9:double, sign: double, kd: double): unit = {
+
     if (kd > n) {
       Console.printf("{0,number,0.000000000}\t(2/3)^k\n")(s1);
       Console.printf("{0,number,0.000000000}\tk^-0.5\n")(s2);
@@ -24,7 +25,7 @@ object partialsums
       Console.printf("{0,number,0.000000000}\tGregory\n")(s9);
     }
     else {
-      val k2 = kd * kd;
+      val k2 =  Math.pow(kd, 2.0);
       val k3 = k2 * kd;
       val sin = Math.sin(kd);
       val cos = Math.cos(kd);
@@ -37,6 +38,6 @@ object partialsums
 
   def main(args: Array[String]) = {
     n = Integer.parseInt(args(0)).toDouble;
-    calculate(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0);
+    calculate(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0)
   }
 }
