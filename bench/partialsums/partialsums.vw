@@ -5,7 +5,8 @@
 !LimitedPrecisionReal methodsFor: 'printing'!
 
 printWithName: aString
-   OS.Stdout nextPutAll: (self asStringWith: 9); tab; nextPutAll: aString; cr. ! !
+   OS.Stdout nextPutAll: (self asStringWith: 9); 
+      nextPut: Character tab; nextPutAll: aString; cr ! !
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
@@ -26,7 +27,7 @@ partialsums
       alt := alt negated.
 
       a1 := a1 + (twothirds raisedTo: k - 1.0d).
-      a2 := a2 + (k sqrt).
+      a2 := a2 + (k raisedTo: -0.5).
       a3 := a3 + (1.0d/(k*(k+1.0d))).
       a4 := a4 + (1.0d/(k3*sk*sk)).
       a5 := a5 + (1.0d/(k3*ck*ck)).

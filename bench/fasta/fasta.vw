@@ -83,7 +83,7 @@ next
 !Shootout.RepeatStream methodsFor: 'testing'!
 
 atEnd
-   ^position >= repeatLimit ! !
+   ^repeatPtr >= repeatLimit ! !
 
 
 Smalltalk.Shootout defineClass: #RandomStream
@@ -128,14 +128,14 @@ random: aRandomNumber
 
 writeFasta: aString sequence: aStream
    | i |
-   self nextPut: $>; nextPutAll: aString; nl.
+   self nextPut: $>; nextPutAll: aString; cr.
    i := 0.
    [aStream atEnd] whileFalse: [
-      (i == 60) ifTrue: [self nl. i := 0].
+      (i == 60) ifTrue: [self cr. i := 0].
       self nextPut: aStream next.
       i := i + 1.
       ].
-   self nl ! !
+   self cr ! !
 
 
 Smalltalk.Shootout defineClass: #RandomNumber
