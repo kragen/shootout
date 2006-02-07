@@ -1,0 +1,312 @@
+--
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- http://haskell.org/hawiki/ShootoutEntry
+--
+-- Contributed by Don Stewart
+-- A purely functional entry based on lazy regex combinators, described in the paper:
+--
+--  ``Lazy Lexing is Fast'', Manuel  M. T. Chakravarty, in A.
+--  Middeldorp and T. Sato, editors, Proceedings of Fourth Fuji
+--  International Symposium on Functional and Logic Programming,
+--  Springer-Verlag, LNCS 1722, 1999.
+--
+
+import Prelude hiding   (last)
+import List
+import Maybe
+import Data.Array            (Array, (!), assocs, accumArray)
+import qualified Data.Map    as M
+import qualified Data.IntMap as I
+
+main = interact $ \s0 ->
+    let l0 = length s0 in l0 `seq` 
+    let s1       = fst $ run clean (LS s0 I.empty)
+        l1       = length s1 in l1 `seq` 
+    let (LS _ m) = snd $ run count  (LS s1 I.empty)
+        (LS _ n) = snd $ run count' (LS s1 I.empty)
+        counts   = map (\(i,p) -> p++" "++show (I.findWithDefault 0 i m)) $ (init variants)
+        counts'  = (snd.last) variants++" "++show (I.findWithDefault 0 0 n)
+        l2       = length . concat . fst $ run replace  (LS s1 I.empty)
+    in unlines $ (counts++[counts']) ++ [[]] ++ map show [l0, l1, l2]
+
+dot      = alt   ['\32' .. '\122']
+anyButNL = alt $ ['\32' .. '\122'] \\ ['\n']
+
+-- remove "\n" and lines with ">"
+clean = (dot                                   `action` \[c] -> Just c)
+   >||< (char '\n'                             `action` const Nothing)
+   >||< (char '>' +> anyButNL `star` char '\n' `action` const Nothing)
+
+-- count all variants, accumulating count in state threaded through regex matcher
+count = (dot `action` const Nothing)
+   >||< (foldl1 (>||<) $ map match (zip pats [0..]))
+  where
+    pats = [(string "agggtaaa"                      >|<  string "tttaccct")
+           ,((cgt +> string "gggtaaa")              >|< (string "tttaccc" +> acg))
+           ,((a +> act +> string "ggtaaa")          >|< (string "tttacc" +> agt +> t))
+           ,((string "ag" +> act +> string "gtaaa") >|< (string "tttac" +> agt +> string "ct"))
+           ,((string "agg" +> act +> string "taaa") >|< (string "ttta" +> agt +> string "cct"))
+           ,((string "aggg" +> acg +> string "aaa") >|< (string "ttt" +> cgt +> string "ccct"))
+           ,((string "agggt" +> cgt +> string "aa") >|< (string "tt" +> acg +> string "accct"))
+           ,((string "agggta" +> cgt +> a)          >|< (t +> acg +> string "taccct"))]
+
+-- work around obscure problem with overlapping patterns(?)
+count' = match (((string "agggtaa" +> cgt) >|< (acg +> string "ttaccct")),0)
+
+cgt = alt "cgt"; act = alt "act"; acg = alt "acg"; agt = alt "agt"; a = char 'a'; t = char 't'
+
+-- each pattern keeps track of its own count, so we can perform a single pass
+match (p,i) = p `meta` \_ m -> R Nothing (I.insertWith (+) i 1 m) Nothing
+
+variants = zip [0..]
+  ["agggtaaa|tttaccct","[cgt]gggtaaa|tttaccc[acg]","a[act]ggtaaa|tttacc[agt]t"
+  ,"ag[act]gtaaa|tttac[agt]ct","agg[act]taaa|ttta[agt]cct","aggg[acg]aaa|ttt[cgt]ccct"
+  ,"agggt[cgt]aa|tt[acg]accct","agggta[cgt]a|t[acg]taccct","agggtaa[cgt]|[acg]ttaccct"]
+
+-- substitute certain chars for patterns
+replace = (alt (['a'..'z'] ++ ['A'..'Z']) `action` \c -> Just c)
+     >||< foldl1 (>||<) (map (\(c,p) -> char c `action` const (Just p)) pairs)
+
+pairs = [('B',"(c|g|t)"),('D',"(a|g|t)"),  ('H',"(a|c|t)"),('K',"(g|t)")
+        ,('M',"(a|c)"),  ('N',"(a|c|g|t)"),('R',"(a|g)"),  ('S',"(c|g)")
+        ,('V',"(a|c|g)"),('W',"(a|t)"),    ('Y',"(c|t)") ]
+
+------------------------------------------------------------------------
+-- And now the regex library
+
+--  Compiler Toolkit: Self-optimizing lexers
+--
+--  Author : Manuel M. T. Chakravarty
+--  Created: 24 February 95, 2 March 99
+--  Copyright (c) [1995..2000] Manuel M. T. Chakravarty
+--  Copyright (c) 2004-6 Don Stewart
+--
+--  Self-optimizing lexer combinators.
+--
+--  For detailed information, see ``Lazy Lexing is Fast'', Manuel
+--  M. T. Chakravarty, in A. Middeldorp and T. Sato, editors, Proceedings of
+--  Fourth Fuji International Symposium on Functional and Logic Programming,
+--  Springer-Verlag, LNCS 1722, 1999.  (See my Web page for details.)
+--
+--             http://www.cse.unsw.edu.au/~chak/papers/Cha99.html
+--
+--  Thanks to Simon L. Peyton Jones and Roman Leshchinskiy for their
+--  helpful suggestions that improved the design of this library.
+--
+
+infixr 4 `quest`, `star`, `plus`
+infixl 3 +>, `action`, `meta`
+infixl 2 >|<, >||<
+
+-- we use the dense representation if a table has at least the given number of 
+-- (non-error) elements
+denseMin :: Int
+denseMin  = 20
+
+-- represents the number of (non-error) elements and the bounds of a table
+data BoundsNum = B !Int !Char !Char
+
+-- combine two bounds
+addBoundsNum (B n lc hc) (B n' lc' hc')  = B (n + n') (min lc lc') (max hc hc')
+
+-- check whether a character is in the bounds
+inBounds c (B _ lc hc) = c >= lc && c <= hc
+
+-- Lexical actions take a lexeme with its position and may return a token; in
+-- a variant, an error can be returned
+--
+-- * if there is no token returned, the current lexeme is discarded lexing
+--   continues looking for a token
+type Action t = String -> Maybe t
+
+-- Meta actions transform the lexeme, and a user-defined state; they
+-- may return a lexer, which is then used for accepting the next token
+-- (this is important to implement non-regular behaviour like nested
+-- comments)
+type Meta t = String -> S -> Result t
+
+data Result t = R (Maybe t) !S (Maybe (Lexer t))
+
+-- threaded top-down during lexing (current input, meta state)
+data LexerState = LS !String !S
+
+type S = I.IntMap Int
+
+-- tree structure used to represent the lexer table
+--
+-- * each node in the tree corresponds to a state of the lexer; the associated 
+--   actions are those that apply when the corresponding state is reached
+data Lexer t = Lexer (LexAction t) (Cont t)
+
+-- represent the continuation of a lexer
+data Cont t = -- on top of the tree, where entries are dense, we use arrays
+                Dense BoundsNum (Array Char (Lexer t))
+                
+                -- further down, where the valid entries are sparse, we
+                -- use association lists, to save memory
+              | Sparse BoundsNum (M.Map Char (Lexer t))
+
+              | Done -- end of a automaton
+
+-- lexical action
+data LexAction t = Action !(Meta t) | NoAction
+
+-- a regular expression
+type Regexp t = Lexer t -> Lexer t
+
+-- Empty lexeme
+epsilon :: Regexp t
+epsilon = id
+
+-- One character regexp
+char :: Char -> Regexp t
+char c = \l -> Lexer NoAction (Sparse (B 1 c c) (M.singleton c l))
+
+-- Concatenation of regexps
+(+>) :: Regexp t -> Regexp t -> Regexp t
+(+>)  = (.)
+
+-- Close a regular expression with an action that converts the lexeme into a
+-- token
+--
+-- * Note: After the application of the action, the position is advanced
+--         according to the length of the lexeme.  This implies that normal
+--         actions should not be used in the case where a lexeme might contain 
+--         control characters that imply non-standard changes of the position, 
+--         such as newlines or tabs.
+--
+action re a  = re `meta` a' where a' lexeme s = R (a lexeme) s Nothing
+{-# INLINE action #-}
+
+-- Close a regular expression with a meta action
+--
+-- * Note: Meta actions have to advance the position in dependence of the
+--         lexeme by themselves.
+--
+meta re a  = re (Lexer (Action a) Done)
+{-# INLINE meta #-}
+
+-- disjunctive combination of two regexps
+re >|< re'  = \l -> re l >||< re' l
+
+-- disjunctive combination of two lexers
+(Lexer a c) >||< (Lexer a' c')  = Lexer (joinActions a a') (joinConts c c')
+
+-- combine two disjunctive continuations
+--
+joinConts :: Cont t -> Cont t -> Cont t
+joinConts Done c'   = c'
+joinConts c    Done = c
+joinConts c    c'   = let (bn , cls ) = listify c
+                          (bn', cls') = listify c'
+                      -- note: `addsBoundsNum' can, at this point, only
+                      --       approx. the number of *non-overlapping* cases;
+                      --       however, the bounds are correct 
+                      in aggregate (addBoundsNum bn bn') (cls ++ cls')
+  where listify (Dense  n arr) = (n, assocs arr)
+        listify (Sparse n cls) = (n, M.toList cls)
+
+-- combine two actions. Use the latter in case of overlap (!)
+joinActions NoAction a'       = a'
+joinActions a        NoAction = a
+joinActions _        a'       = a' -- error "Lexers.>||<: Overlapping actions!"
+
+-- Note: `n' is only an upper bound of the number of non-overlapping cases
+aggregate bn@(B n lc hc) cls
+  | n >= denseMin = Dense  bn (accumArray (>||<) (Lexer NoAction Done) (lc, hc) cls)
+  | otherwise     = Sparse bn (M.fromList (accum (>||<) cls))
+
+-- combine the elements in the association list that have the same key
+accum _ []           = []
+accum f ((c, el):ces) = let (ce, ces') = gather c el ces in ce : accum f ces'
+  where gather k e []                             = ((k, e), [])
+        gather k e (ke'@(k', e'):kes) | k == k'   = gather k (f e e') kes
+                                      | otherwise = let (ke'', kes') = gather k e kes
+                                                    in (ke'', ke':kes')
+
+-- x `star` y corresponds to the regular expression x*y
+--
+-- The definition used below can be obtained by equational reasoning from this
+-- one (which is much easier to understand): 
+--
+--   star re1 re2 = let self = (re1 +> self >|< epsilon) in self +> re2
+--
+-- However, in the above, `self' is of type `Regexp s t' (ie, a functional),
+-- whereas below it is of type `Lexer s t'.  Thus, below we have a graphical
+-- body (finite representation of an infinite structure), which doesn't grow
+-- with the size of the accepted lexeme - in contrast to the definition using
+-- the functional recursion.
+star re1 re2  = \l -> let self = re1 self >||< re2 l in self
+
+-- x `plus` y corresponds to the regular expression x+y
+plus re1 re2  = re1 +> (re1 `star` re2)
+
+-- x `quest` y corresponds to the regular expression x?y
+quest re1 re2  = (re1 +> re2) >|< re2
+
+-- accepts a non-empty set of alternative characters
+--  Equiv. to `(foldr1 (>|<) . map char) cs', but much faster
+alt cs  = \l -> let bnds = B (length cs) (minimum cs) (maximum cs)
+                in Lexer NoAction (aggregate bnds [(c, l) | c <- cs])
+
+-- accept a character sequence
+string cs = (foldr1 (+>) . map char) cs
+
+-- apply a lexer, yielding a token sequence and a list of errors
+--
+-- * Currently, all errors are fatal; thus, the result is undefined in case of 
+--   an error (this changes when error correction is added).
+-- * The final lexer state is returned.
+-- * The order of the error messages is undefined
+-- * the following is moderately tuned
+--
+run _ st@(LS [] _) = ([], st)
+run l st = case lexOne l st of
+    (Nothing , _ , st') -> run l st'
+    (Just t, l', st')   -> let (ts, final) = run l' st'; ts' = (t:ts)
+                           in ts' `seq` (ts',final)
+  where
+    -- accept a single lexeme
+    lexOne l0 st'@(LS cs s) = oneLexeme l0 st' id lexErr
+
+      where
+        lexErr = (Just undefined, l, (LS (tail cs) s))
+
+        -- we take an open list of characters down, where we accumulate the
+        -- lexeme; this function returns maybe a token, the next lexer to use
+        -- (can be altered by a meta action), the new lexer state, and a list
+        -- of errors
+        --
+        -- we implement the "principle of the longest match" by taking a
+        -- potential result quadruple down (in the last argument); the
+        -- potential result quadruple is updated whenever we pass by an action 
+        -- (different from `NoAction'); initially it is an error result
+        --
+        oneLexeme (Lexer a cont) state@(LS cs s) csDL last =
+            let last' = doaction a csDL state last
+            in case cs of
+                []      -> last'    -- at end, has to be this action
+                (c:cs') -> oneChar cont c (LS cs' s) csDL last'   -- keep looking
+
+        -- There are more chars. Look at the next one
+        -- Now, if the next tbl is Done, then there is no more
+        -- transition, so immediately execute our action
+        oneChar tbl c state csDL last = case peek tbl c of
+                Nothing              -> last
+                Just (Lexer a Done)  -> doaction a (\l -> csDL (c:l)) state last
+                Just l'              -> oneLexeme l' state (\l -> csDL (c:l)) last
+
+        -- Do the lookup.
+        peek (Dense bn arr)  c | c `inBounds` bn = Just $ arr ! c
+        peek (Sparse bn cls) c | c `inBounds` bn = M.lookup c cls
+        peek _ _    = Nothing
+
+        -- execute the action if present and finalise the current lexeme
+        doaction (Action f) csDL (LS cs s) _ = case f (($[]) csDL) s of
+                (R Nothing s' l') | not . null $ cs -> lexOne (fromMaybe l0 l') (LS cs s')
+                (R res     s' l')  -> (res, (fromMaybe l0 l'), (LS cs s'))
+
+        doaction NoAction _ _ last = last
+
