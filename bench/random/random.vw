@@ -4,7 +4,7 @@
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
-random: argvString 
+random
    | n random answer |
    n := CEnvironment argv first asNumber.
    random := RandomNumber to: 100.

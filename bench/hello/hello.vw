@@ -4,5 +4,5 @@
 
 !ComputerLanguageShootout.Benchmarks class methodsFor: 'benchmarking'!
 
-hello: argvString
-   OS.Stdout nextPutAll: 'hello world'; cr! !
+hello
+   ^'hello world' withNl ! !

@@ -7,4 +7,4 @@
 takfp
    | n |
    n := CEnvironment argv first asNumber.
-   ^(((n * 3.0) takfp: (n * 2.0) z: (n * 1.0)) asStringWith: 9) withNl ! !
+   ^(((n * 3.0) takfp: (n * 2.0) z: (n * 1.0)) asStringWith: 1) withNl ! !

@@ -8,7 +8,7 @@ mandelbrot
    | width height limit2 isOverLimit m bits bitnum s |
    width := CEnvironment argv first asNumber.
    height := width.
-   limit2 := 4.0.
+   limit2 := 4.0d.
    isOverLimit := False.
    m := 50.
    bits := 0.
@@ -18,9 +18,9 @@ mandelbrot
 
    0 to: height - 1 do: [:y|
       0 to: width - 1 do: [:x| | zr zi cr ci i |
-         zr := 0.0. zi := 0.0.
-         cr := 2.0 * x asFloat / width asFloat - 1.5.
-         ci := 2.0 * y asFloat / height asFloat - 1.0.
+         zr := 0.0d. zi := 0.0d.
+         cr := 2.0d * x asDouble / width asDouble - 1.5d.
+         ci := 2.0d * y asDouble / height asDouble - 1.0d.
 
          i := 0.
          [ | tr ti |
@@ -42,9 +42,9 @@ mandelbrot
             ].
 
          (bitnum = 8) ifTrue: [
-            s nextPut: (Character value: bits).
+            s nextPut: bits asCharacter.
             bits := 0. bitnum := 0.
             ].
          ].
       ].
-      ^'' ! !
+   ^'' ! !

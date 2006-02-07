@@ -5,7 +5,7 @@
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
-nsievebits: argvString
+nsievebits
    | n |
    n := CEnvironment argv first asNumber.
    (n < 2) ifTrue: [n := 2].
@@ -42,7 +42,7 @@ primesBits
       nextPutAll: ((m nsieveBits) asPaddedString: 9); cr ! !
 
 
-!Core.Integer methodsFor: 'computer language shootout'!
+!Core.SmallInteger methodsFor: 'computer language shootout'!
 
 asPaddedString: aWidth
    | s |

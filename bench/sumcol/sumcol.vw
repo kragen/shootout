@@ -8,5 +8,5 @@ sumcol
    | sum |
    sum := 0.
    [OS.Stdin atEnd] whileFalse: [
-      sum := sum + (OS.Stdin through: Character cr) asNumber].
+      sum := sum + (OS.Stdin through: Character lf) asNumber].
    ^sum printString withNl ! !
