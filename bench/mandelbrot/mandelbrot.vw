@@ -16,16 +16,17 @@ mandelbrot
    s := OS.Stdout.
    s nextPutAll: 'P4'; cr; nextPutAll: width printString, ' ', height printString; cr.
 
-   0 to: height - 1 do: [:y|
-      0 to: width - 1 do: [:x| | zr zi cr ci i |
+   width := width asDouble. height := height  asDouble.
+   0.0d to: height - 1.0d  do: [:y|
+      0.0d to: width - 1.0d do: [:x| | zr zi cr ci i |
          zr := 0.0d. zi := 0.0d.
-         cr := 2.0d * x asDouble / width asDouble - 1.5d.
-         ci := 2.0d * y asDouble / height asDouble - 1.0d.
+         cr := 2.0d * x / width - 1.5d.
+         ci := 2.0d * y / height - 1.0d.
 
          i := 0.
          [ | tr ti |
             tr := (zr*zr) - (zi*zi) + cr.
-            ti := 2.0 * zr * zi + ci.
+            ti := 2.0d * zr * zi + ci.
             zr := tr.
             zi := ti.
             isOverLimit := (zr*zr) + (zi*zi) > limit2.

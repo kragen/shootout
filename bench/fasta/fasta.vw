@@ -5,10 +5,12 @@
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
 fasta
-   | n r |
+   | n stdout r |
    n := CEnvironment argv first asNumber.
+   stdout := ExternalWriteStream on: 
+      (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1)).
 
-   OS.Stdout writeFasta: 'ONE Homo sapiens alu' sequence:
+   stdout writeFasta: 'ONE Homo sapiens alu' sequence:
    ( RepeatStream to: n*2 on:
       'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
       'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
@@ -20,7 +22,7 @@ fasta
 
    r := RandomNumber to: 1. "Shared random sequence"
 
-   OS.Stdout writeFasta: 'TWO IUB ambiguity codes' sequence:
+   stdout writeFasta: 'TWO IUB ambiguity codes' sequence:
    (( RandomStream to: n*3 on: (
       OrderedCollection new
          add: (Association key: $a value: 0.27d);
@@ -41,7 +43,7 @@ fasta
          add: (Association key: $Y value: 0.02d);
          yourself )) random: r).
 
-   OS.Stdout writeFasta: 'THREE Homo sapiens frequency' sequence:
+   stdout writeFasta: 'THREE Homo sapiens frequency' sequence:
    (( RandomStream to: n*5 on: (
       OrderedCollection new
          add: (Association key: $a value: 0.3029549426680d);
@@ -50,6 +52,7 @@ fasta
          add: (Association key: $t value: 0.3015094502008d);
          yourself )) random: r).
 
+   stdout flush.
    ^'' ! !
 
 
@@ -124,7 +127,7 @@ random: aRandomNumber
    random := aRandomNumber ! !
 
 
-! StandardIOStream methodsFor: 'accessing'!
+! ExternalWriteStream methodsFor: 'accessing'!
 
 writeFasta: aString sequence: aStream
    | i |

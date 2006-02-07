@@ -5,8 +5,10 @@
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
 sumcol
-   | sum |
+   | stdin sum |
+   stdin := ExternalReadStream on: 
+      (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 0)).
    sum := 0.
-   [OS.Stdin atEnd] whileFalse: [
-      sum := sum + (OS.Stdin through: Character cr) asNumber].
+   [stdin atEnd] whileFalse: [
+      sum := sum + (stdin through: Character cr) asNumber].
    ^sum printString withNl ! !
