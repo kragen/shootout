@@ -1,1 +1,1 @@
-<p>REBOL/Core 2.5.6.4.2</p>
+<p>REBOL/Core 2.6.2.4.2</p>
