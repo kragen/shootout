@@ -8,7 +8,6 @@ knucleotide
    | stdin sequence writeFrequencies writeCount |
    stdin := ExternalReadStream on: 
       (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 0)).
-
    sequence := (stdin readFasta: 'THREE') value asUppercase.
 
    writeFrequencies := [:k | | frequencies count |
@@ -28,7 +27,7 @@ knucleotide
 
    writeCount := [:nucleotideFragment | | frequencies count |
       frequencies := sequence substringFrequencies: nucleotideFragment size.
-      count := frequencies at: nucleotideFragment asSymbol ifAbsent: [0].
+      count := frequencies at: nucleotideFragment ifAbsent: [0].
       OS.Stdout nextPutAll: count printString; nextPut: Character tab; 
          nextPutAll: nucleotideFragment; cr
    ].
@@ -42,25 +41,6 @@ knucleotide
    writeCount value: 'GGTATTTTAATT'.
    writeCount value: 'GGTATTTTAATTTATAGT'.
    ^'' ! !
-
-
-!String methodsFor: 'computer language shootout'!
-
-substringFrequencies: aLength
-   | answer |
-   answer := IdentityDictionary new.
-   1 to: aLength do: [:i |
-      self inject: answer intoSubstringFrequencies: aLength offset: i].
-   ^answer !
-
-inject: aDictionary intoSubstringFrequencies: aLength offset: anInteger
-   anInteger to: self size - aLength + 1 by: aLength do: [:i |
-      | fragment value |
-      fragment := (self copyFrom: i to: i + aLength - 1) asSymbol.
-
-      value := aDictionary at: fragment ifAbsent: [ aDictionary at: fragment put: 0 ].
-      aDictionary at: fragment put: value + 1 
-   ] ! !
 
 
 !ExternalReadStream methodsFor: 'accessing'!
