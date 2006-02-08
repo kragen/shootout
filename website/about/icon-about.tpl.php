@@ -1,4 +1,4 @@
-<p>online book <a href="http://www.tools-of-computing.com/tc/CS/iconprog.pdf">"Icon Programming Language Handbook"</a> (pdf) by Thomas W Christopher</p>
+<p>online book <a href="http://www.cs.arizona.edu/icon/lb3.htm">"The Icon Programming Language"</a> by Ralph E. Griswold and Madge T. Griswold</p>
 <?=$Version;?>
 <p>Home Page: <a href="http://www.cs.arizona.edu/icon/">http://www.cs.arizona.edu/icon/</a></p>
 <p>Download: <a href="http://www.cs.arizona.edu/icon/v943/">http://www.cs.arizona.edu/icon/v943/</a></p>
