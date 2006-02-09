@@ -1,0 +1,88 @@
+(*
+ * Contributed by Alessandro Baretta
+ * Studio Baretta, http://studio.baretta.com/
+ *)
+
+(* ChriS note: This may be considered like cheating but I included it
+   to emphasize that the concept of what is a "thread" is left vague
+   in the specification which allows for this implementation to
+   fullfill it.  (The spec allows to compare apples with oranges;
+   system threads are vastly different from user-level ones.)  Once
+   this issue is resolved, a better place is probably in "interesting
+   alternative programs". *)
+
+(* Batched queue à la Okasaki to schedule chameneos meetings. *)
+(* module type Batched_queue =
+sig
+  type 'a queue
+  val empty : 'a queue
+  val is_empty : 'a queue -> bool
+  val make : 'a list -> 'a queue
+  val add : 'a -> 'a queue -> 'a queue
+  val top : 'a queue -> 'a
+  val pop : 'a queue -> 'a queue
+end *)
+module Q (* : Batched_queue *) = struct
+  type 'a queue = 'a list * 'a list
+
+  exception Is_empty
+
+  let empty = ([], [])
+
+  let is_empty (f, r) = f = []
+
+  let make l = (l, [])
+
+  let checkf = function
+    | ([] as front ,rear) -> (List.rev rear, front)
+    | q -> q
+
+  let add x (front, rear) = checkf (front, x :: rear)
+
+  let top = function
+    | hd :: tl, _ -> hd
+    | _ -> raise Is_empty
+
+  let pop = function
+    | hd :: tl, l2 -> checkf (tl, l2)
+    | _ -> raise Is_empty
+end
+
+type color =  B | R | Y
+type live_chameneos  = color * int
+type faded_chameneos = int
+
+let compl c1 c2 = match c1, c2 with
+  | B, B -> B | R, R -> R | Y, Y -> Y
+  | B, R | R, B -> Y   | B, Y | Y, B -> R   | R, Y | Y, R -> B
+
+
+let fade (_, meeting_count) : faded_chameneos = meeting_count
+
+let requested_meeting_count = int_of_string Sys.argv.(1)
+
+let (++) x f = f x
+
+let rec meeting_phase (queue : live_chameneos Q.queue) meeting_point meeting_count =
+  if meeting_count < requested_meeting_count then
+    match meeting_point with
+    | None -> meeting_phase (Q.pop queue) (Some (Q.top queue)) meeting_count
+    | Some (color1, count1) ->
+        let (color2, count2) = Q.top queue in
+        let color = compl color1 color2 in
+        let queue' = queue ++ Q.pop
+          ++ Q.add(color, count1 + 1) ++ Q.add(color, count2 + 1) in
+        meeting_phase queue' None (succ meeting_count)
+  else begin
+    assert(meeting_point = None);
+    fading_phase queue [] 0
+  end
+
+and fading_phase queue faded_chameneos reported_meetings =
+  if Q.is_empty queue then reported_meetings else
+    let (_, count) as ch = Q.top queue in
+    fading_phase (Q.pop queue) ((fade ch)::faded_chameneos) (reported_meetings + count)
+
+let res = meeting_phase (Q.make [(B,0); (R,0); (Y,0); (B,0)]) None 0
+
+let () = print_int res; print_newline ()
