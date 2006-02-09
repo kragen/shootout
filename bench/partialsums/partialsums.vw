@@ -24,7 +24,7 @@ partialsums
       k3 := k2*k.
       sk := k sin.
       ck := k cos.
-      alt := alt negated.
+      alt := -1.0d * alt.
 
       a1 := a1 + (twothirds raisedTo: k - 1.0d).
       a2 := a2 + (k raisedTo: -0.5).

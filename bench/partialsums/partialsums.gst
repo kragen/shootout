@@ -48,9 +48,9 @@ sum printWithName: 'Riemann Zeta'.
 a := -1.0.
 
 sum := 0.0.
-1.0 to: n do: [:k| a := a negated. sum := sum + (a/k)].
+1.0 to: n do: [:k| a := -1.0 * a. sum := sum + (a/k)].
 sum printWithName: 'Alternating Harmonic'.
 
 sum := 0.0.
-1.0 to: n do: [:k| a := a negated. sum := sum + (a/(2.0*k - 1.0))].
+1.0 to: n do: [:k| a := -1.0 * a. sum := sum + (a/(2.0*k - 1.0))].
 sum printWithName: 'Gregory' !

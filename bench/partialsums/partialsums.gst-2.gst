@@ -31,7 +31,7 @@ alt := -1.0.
    k3 := k2*k.
    sk := k sin.
    ck := k cos.
-   alt := alt negated.
+   alt := -1.0 * alt.
 
    a1 := a1 + ((2.0/3.0) raisedTo: k - 1.0).
    a2 := a2 + (k raisedTo: -0.5).
