@@ -43,6 +43,25 @@ knucleotide
    ^'' ! !
 
 
+!String methodsFor: 'computer language shootout'!
+
+substringFrequencies: aLength
+   | answer |
+   answer := Dictionary new.
+   1 to: aLength do: [:i |
+      self inject1: answer intoSubstringFrequencies: aLength offset: i].
+   ^answer !
+
+inject: aDictionary intoSubstringFrequencies: aLength offset: anInteger
+   anInteger to: self size - aLength + 1 by: aLength do: [:i |
+      | fragment assoc |
+      fragment := self copyFrom: i to: i + aLength - 1.
+
+      (assoc := aDictionary associationAt: fragment ifAbsent: []) isNil
+         ifTrue: [aDictionary at: fragment put: 1]
+         ifFalse: [assoc value: (assoc value + 1)] ] ! !
+
+
 !ExternalReadStream methodsFor: 'accessing'!
 
 readFasta: anId 
