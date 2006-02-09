@@ -47,9 +47,9 @@ energy
 !Shootout.NBodySystem methodsFor: 'initialize-release'!
 
 initialize
-   bodies := OrderedCollection new
+   bodies := (OrderedCollection new
       add: Body sun; add: Body jupiter; add: Body saturn;
-      add: Body uranus; add: Body neptune; yourself.
+      add: Body uranus; add: Body neptune; yourself) asArray.
 
    bodies first offsetMomentum:
       (bodies inject: (Array with: 0.0d with: 0.0d with: 0.0d)
