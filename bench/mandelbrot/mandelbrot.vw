@@ -1,6 +1,7 @@
 "  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Paolo Bonzini"!
+   contributed by Paolo Bonzini
+   modified by Isaac Gouy"!
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
@@ -17,6 +18,7 @@ mandelbrot
       (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1)).
    s nextPutAll: 'P4'; cr; nextPutAll: width printString, ' ', height printString; cr.
 
+   s lineEndTransparent.
    width := width asDouble. height := height  asDouble.
    0.0d to: height - 1.0d  do: [:y|
       0.0d to: width - 1.0d do: [:x| | zr zi cr ci i |
