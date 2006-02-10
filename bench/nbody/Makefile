@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2006-01-28 08:56:17 ekarttun-guest Exp $
+# $Id: Makefile,v 1.18 2006-02-10 17:21:49 chris00-guest Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -14,7 +14,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 GCCOPTS := -lm
 
 MB_CLRTS := -nr
-OCAMLOPTS := -ffast-math -inline 3
+OCAMLOPTS := -ffast-math -inline 10
 #OCAMLBOPTS := 
 OO2COPTS := -A --no-rtc
 PARROTOPTS := -C
