@@ -1,0 +1,88 @@
+<span class="com">(*</span>
+<span class="com"> * Contributed by Alessandro Baretta</span>
+<span class="com"> * Studio Baretta, http://studio.baretta.com/</span>
+<span class="com"> *)</span>
+
+<span class="com">(* ChriS note: This may be considered like cheating but I included it</span>
+<span class="com">   to emphasize that the concept of what is a &quot;thread&quot; is left vague</span>
+<span class="com">   in the specification which allows for this implementation to</span>
+<span class="com">   fullfill it.  (The spec allows to compare apples with oranges;</span>
+<span class="com">   system threads are vastly different from user-level ones.)  Once</span>
+<span class="com">   this issue is resolved, a better place is probably in &quot;interesting</span>
+<span class="com">   alternative programs&quot;. *)</span>
+
+<span class="com">(* Batched queue à la Okasaki to schedule chameneos meetings. *)</span>
+<span class="com">(* module type Batched_queue =</span>
+<span class="com">sig</span>
+<span class="com">  type 'a queue</span>
+<span class="com">  val empty : 'a queue</span>
+<span class="com">  val is_empty : 'a queue -&gt; bool</span>
+<span class="com">  val make : 'a list -&gt; 'a queue</span>
+<span class="com">  val add : 'a -&gt; 'a queue -&gt; 'a queue</span>
+<span class="com">  val top : 'a queue -&gt; 'a</span>
+<span class="com">  val pop : 'a queue -&gt; 'a queue</span>
+<span class="com">end *)</span>
+<span class="kwa">module</span> Q <span class="com">(* : Batched_queue *)</span> <span class="sym">=</span> <span class="kwa">struct</span>
+  <span class="kwa">type</span> <span class="str">'a queue = '</span>a list <span class="sym">*</span> <span class="str">'a list</span>
+<span class="str"></span>
+<span class="str">  exception Is_empty</span>
+<span class="str"></span>
+<span class="str">  let empty = ([], [])</span>
+<span class="str"></span>
+<span class="str">  let is_empty (f, r) = f = []</span>
+<span class="str"></span>
+<span class="str">  let make l = (l, [])</span>
+<span class="str"></span>
+<span class="str">  let checkf = function</span>
+<span class="str">    | ([] as front ,rear) -&gt; (List.rev rear, front)</span>
+<span class="str">    | q -&gt; q</span>
+<span class="str"></span>
+<span class="str">  let add x (front, rear) = checkf (front, x :: rear)</span>
+<span class="str"></span>
+<span class="str">  let top = function</span>
+<span class="str">    | hd :: tl, _ -&gt; hd</span>
+<span class="str">    | _ -&gt; raise Is_empty</span>
+<span class="str"></span>
+<span class="str">  let pop = function</span>
+<span class="str">    | hd :: tl, l2 -&gt; checkf (tl, l2)</span>
+<span class="str">    | _ -&gt; raise Is_empty</span>
+<span class="str">end</span>
+<span class="str"></span>
+<span class="str">type color =  B | R | Y</span>
+<span class="str">type live_chameneos  = color * int</span>
+<span class="str">type faded_chameneos = int</span>
+<span class="str"></span>
+<span class="str">let compl c1 c2 = match c1, c2 with</span>
+<span class="str">  | B, B -&gt; B | R, R -&gt; R | Y, Y -&gt; Y</span>
+<span class="str">  | B, R | R, B -&gt; Y   | B, Y | Y, B -&gt; R   | R, Y | Y, R -&gt; B</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str">let fade (_, meeting_count) : faded_chameneos = meeting_count</span>
+<span class="str"></span>
+<span class="str">let requested_meeting_count = int_of_string Sys.argv.(1)</span>
+<span class="str"></span>
+<span class="str">let (++) x f = f x</span>
+<span class="str"></span>
+<span class="str">let rec meeting_phase (queue : live_chameneos Q.queue) meeting_point meeting_count =</span>
+<span class="str">  if meeting_count &lt; requested_meeting_count then</span>
+<span class="str">    match meeting_point with</span>
+<span class="str">    | None -&gt; meeting_phase (Q.pop queue) (Some (Q.top queue)) meeting_count</span>
+<span class="str">    | Some (color1, count1) -&gt;</span>
+<span class="str">        let (color2, count2) = Q.top queue in</span>
+<span class="str">        let color = compl color1 color2 in</span>
+<span class="str">        let queue' = queue ++ Q.pop</span>
+<span class="str">          ++ Q.add(color, count1 + 1) ++ Q.add(color, count2 + 1) in</span>
+<span class="str">        meeting_phase queue' None (succ meeting_count)</span>
+<span class="str">  else begin</span>
+<span class="str">    assert(meeting_point = None);</span>
+<span class="str">    fading_phase queue [] 0</span>
+<span class="str">  end</span>
+<span class="str"></span>
+<span class="str">and fading_phase queue faded_chameneos reported_meetings =</span>
+<span class="str">  if Q.is_empty queue then reported_meetings else</span>
+<span class="str">    let (_, count) as ch = Q.top queue in</span>
+<span class="str">    fading_phase (Q.pop queue) ((fade ch)::faded_chameneos) (reported_meetings + count)</span>
+<span class="str"></span>
+<span class="str">let res = meeting_phase (Q.make [(B,0); (R,0); (Y,0); (B,0)]) None 0</span>
+<span class="str"></span>
+<span class="str">let () = print_int res; print_newline ()</span>
