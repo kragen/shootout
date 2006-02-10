@@ -17,8 +17,8 @@ mandelbrot
    s := ExternalWriteStream on: 
       (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1)).
    s nextPutAll: 'P4'; cr; nextPutAll: width printString, ' ', height printString; cr.
+   s binary.
 
-   s lineEndTransparent.
    width := width asDouble. height := height  asDouble.
    0.0d to: height - 1.0d  do: [:y|
       0.0d to: width - 1.0d do: [:x| | zr zi cr ci i |
@@ -46,7 +46,7 @@ mandelbrot
             ].
 
          (bitnum = 8) ifTrue: [
-            s nextPut: bits asCharacter.
+            s nextPut: bits.
             bits := 0. bitnum := 0.
             ].
          ].
