@@ -58,7 +58,7 @@ inject: aDictionary intoSubstringFrequencies: aLength offset: anInteger
       | fragment value |
       fragment := (self copyFrom: i to: i + aLength - 1) asSymbol.
 
-      value := aDictionary at: fragment ifAbsent: [ aDictionary at: fragment put: 0 ].
+      value := aDictionary at: fragment ifAbsent: [ 0 ].
       aDictionary at: fragment put: value + 1 
    ] ! !
 
