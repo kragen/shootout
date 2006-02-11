@@ -494,7 +494,8 @@ You'll see that several languages have been <em>suggested</em> but no one has co
  website.</p>
 <p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it 
         will end?</p>
-<p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews in late-2005.</p>
+<p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews; 
+and <a href="http://www.softwarescrutiny.net/ss/intro/" title="Adam Chlipala's Software Scrutiny">"Software Scrutiny"</a> developed by Adam Chlipala.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>
