@@ -494,16 +494,17 @@ You'll see that several languages have been <em>suggested</em> but no one has co
  website.</p>
 <p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it 
         will end?</p>
-<p>You might also be interested in <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a> developed by Jack Andrews; 
-and <a href="http://www.softwarescrutiny.net/ss/intro/" title="Adam Chlipala's Software Scrutiny">"Software Scrutiny"</a> developed by Adam Chlipala.</p>
 </td></tr>
 
 <tr class="b"><td><a class="ab" href="#ack" name="ack">Who has contributed?</a></td></tr>
-
 <tr><td><p>So many people that we have an <a href="miscfile.php?file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></td></tr>
 
-<tr class="b"><td><a class="ab" href="#finish" name="finish">When will the Language Shootout be finished?</a></td></tr>
+<tr class="b"><td><a class="ab" href="#similar" name="similar">Who's working on similar projects?</a></td></tr>
+<tr><td><p>Jack Andrews has started <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a>, 
+and Adam Chlipala has started <a href="http://www.softwarescrutiny.net/ss/intro/" title="Adam Chlipala's Software Scrutiny">"Software Scrutiny"</a>.</p></td></tr>
 
+
+<tr class="b"><td><a class="ab" href="#finish" name="finish">When will the Language Shootout be finished?</a></td></tr>
 <tr><td>
 <p>Never. There will always be new languages, new versions of languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#8230; And the project team will change over time, and the measurements and presentation will change with them.</p>
 </td></tr>
