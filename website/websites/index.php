@@ -70,7 +70,7 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 <h5>
 <a class="arevGP4" 
 title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
-href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
+href="./gp4/">&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
 </td>
 </tr>
 </table>
@@ -83,7 +83,7 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 <h5>
 <a class="arevSandbox" 
 title="Alpha benchmarks and more language implementations"
-href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-&nbsp;The&nbsp;Sandbox&nbsp</a>
+href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
 </h5>
 </div>
 
@@ -93,7 +93,7 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-
 <h5>
 <a class="arevOld" 
 title="Look back at the Old 2001 Doug Bagley Benchmarks"
-href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;-&nbsp;Old&nbsp;Doug&nbsp;Bagley&nbsp;Benchmarks&nbsp;</a>
+href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
 </h5>
 </div>
 
