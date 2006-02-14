@@ -293,7 +293,7 @@ Do you want to help with the chores?</p>
 <tr><td><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge Debian.org</a>.</p></td></tr>
 
 <tr><td><p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
-<p>Build dependencies include - <a href="http://packages.debian.org/stable/libs/libgtop1">libgtop</a>, <a href="http://search.cpan.org/~mjh/GTop-0.16/GTop.pod">GTop</a>, libXau, and <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl">BSD::Resource</a> </p>
+<p>Build dependencies include <a href="http://search.cpan.org/~mjh/GTop-0.16/GTop.pod">GTop</a> and <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl">BSD::Resource</a> </p>
 </td></tr>
 
 </table>
