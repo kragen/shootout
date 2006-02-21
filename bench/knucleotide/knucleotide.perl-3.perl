@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# $$Id: knucleotides.perl-3.perl,v 1.1 2006-01-18 19:20:31 igouy-guest Exp $
+# $$Id: knucleotide.perl-3.perl,v 1.1 2006-02-21 17:43:25 igouy-guest Exp $
 #  The Computer Language Shootout
 #  http://shootout.alioth.debian.org/
 #  contributed by Karl FORNER
