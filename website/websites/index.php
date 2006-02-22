@@ -70,7 +70,7 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 <h5>
 <a class="arevGP4" 
 title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
-href="./gp4/">&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
+href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
 </td>
 </tr>
 </table>
