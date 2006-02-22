@@ -76,15 +76,25 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 </table>
 </div>
 
-
 <div>
 <h4>Extra:</h4>
 <p>Alpha benchmarks and more language implementations</p>
+<table>
+<tr>
+<td>
 <h5>
 <a class="arevSandbox" 
-title="Alpha benchmarks and more language implementations"
-href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
-</h5>
+title="Browse the Debian : AMD&#8482; Sempron&#8482; alpha benchmarks and more language implementations"
+href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
+</td>
+<td>
+<h5>
+<a class="arevSandbox" 
+title="Browse the Gentoo : Intel&#174; Pentium&#174; alpha benchmarks and more language implementations"
+href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></h5>
+</td>
+</tr>
+</table>
 </div>
 
 <div>
