@@ -493,7 +493,7 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, look back at the 2001 <span><a class="arevOld" title="Look back at the Old 2001 Doug Bagley Benchmarks" href="<?=OLD_SITE;?>index.php" >&nbsp;Old Doug Bagley Benchmarks&nbsp;</a></span>.</p>
 <p>Benchmarks were deprecated, new benchmarks were added; and we continue to experiment on <span><a class="arevSandbox" title="Alpha benchmarks and more language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
  website.</p>
-<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it 
+<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it 
         will end?</p>
 </td></tr>
 
