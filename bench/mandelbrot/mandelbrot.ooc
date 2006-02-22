@@ -17,7 +17,7 @@ CONST
 VAR
    width, height, y, x, i, bits, bitnum: LONGINT;
    isOverLimit: BOOLEAN;
-   Zr, Zi, Cr, Ci, Tr, Ti: REAL;
+   Zr, Zi, Cr, Ci, Tr, Ti: LONGREAL;
 
 BEGIN
    width := Shootout.Argi();
