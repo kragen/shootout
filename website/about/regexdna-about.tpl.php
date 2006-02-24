@@ -6,10 +6,10 @@
 <p>Each program should</p>
 <ul>
   <li>read all of a redirected <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a> file from stdin, and record the sequence length</li>
-  <li>use regex substitution to remove FASTA sequence descriptions and all linefeed characters, and record the sequence length</li>
-   <li>define a collection of simple regex patterns, representing DNA 8-mers and their reverse complement (with a wildcard in one position), and count matches in the redirected file</li>
+  <li>use the same simple regex pattern match-replace to remove FASTA sequence descriptions and all linefeed characters, and record the sequence length</li>
+   <li>use the same simple regex patterns, representing DNA 8-mers and their reverse complement (with a wildcard in one position), and (one pattern at a time) count matches in the redirected file</li>
   <li>write the regex pattern and count</li>
-  <li>use regex substitution to make IUB code alternatives explicit, and record the sequence length</li>
+   <li>use the same simple regex patterns to make IUB code alternatives explicit, and (one pattern at a time) match-replace the pattern in the redirect file, and record the sequence length</li>
 <li>write the 3 recorded sequence lengths</li>
 </ul>
 
