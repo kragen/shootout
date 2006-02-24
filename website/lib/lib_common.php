@@ -296,12 +296,16 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
 
    if ($sort=='cpu'){    
       usort($Accepted, 'CompareCpuTime');
+      usort($Special, 'CompareCpuTime');
    } elseif ($sort=='fullcpu'){ 
-      usort($Accepted, 'CompareFullCpuTime');  
+      usort($Accepted, 'CompareFullCpuTime'); 
+      usort($Special, 'CompareFullCpuTime'); 
    } elseif ($sort=='kb'){ 
       usort($Accepted, 'CompareMemoryUse'); 
+      usort($Special, 'CompareMemoryUse'); 
    } elseif ($sort=='lines'){ 
       usort($Accepted, 'CompareCodeLines'); 
+      usort($Special, 'CompareCodeLines'); 
    } 
 
    return array($Accepted,$Rejected,$Special);

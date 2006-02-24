@@ -126,7 +126,7 @@ foreach($Tests as $Row){
    
 
 
-<!-- // SUMMARY /////////////////////////////////////////////////// -->   
+<!-- // SUMMARY ///////////////////////////////////////////////////  
 
 <tr class="b"><td colspan="6" >
 <a class="ab" href="#summary" name="summary">&nbsp;summary</a>
@@ -185,6 +185,8 @@ foreach($Tests as $Row){
 <td class="c">&nbsp;</td>
 </tr>
 <tr><td colspan="6">&nbsp;</td></tr>  
+
+-->  
 
 </table>
 </td></tr>
