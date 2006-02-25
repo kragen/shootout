@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.36 2006-01-21 20:51:51 bfulgham Exp $
+# $Id: Makefile,v 1.37 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -11,6 +11,7 @@ POLYOPTS := -q
 NLOPTS   := -s 100000
 GHCOPTS  := -fasm -fglasgow-exts
 IFCOPTS := -ip
+PARROTOPTS := -Oc -Cj
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf --range 9,10,11 --ignore ackermann.swiprolog
 

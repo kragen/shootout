@@ -1,4 +1,4 @@
-#!/usr/bin/parrot -C
+#!./parrot -C
 # Contributed by Shane Calimlim, Leopold Toetsch, and
 # others from the Perl-internals mailing list.
 #
@@ -16,18 +16,18 @@
     $S0 = argv[2]
     y = $S0
     goto go
-xdefault:    
+xdefault:
     y = $S0
 go:
     $P0 = getinterp
-    $P0.'recursion_limit'(10000)
+    $P0.'recursion_limit'(1000000)
     r = ack(x, y)
     .local pmc args
     args = new .ResizableIntegerArray
     push args, x
     push args, y
     push args, r
-    $S0 = sprintf "Ack(%d,%d): %d\n", args
+    $S0 = sprintf "Ack(%d, %d) = %d\n", args
     print $S0
 .end
 
@@ -42,9 +42,10 @@ a1:
 	$I0 = x - 1
 	$I1 = 1
 	.return ack($I0, $I1)
-a2:
+a2: 
     $I2 = y - 1
     $I3 = ack(x, $I2)
     $I4 = x - 1
     .return ack($I4, $I3)
 .end
+

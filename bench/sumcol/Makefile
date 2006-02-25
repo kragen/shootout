@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-12-19 03:11:55 bfulgham Exp $
+# $Id: Makefile,v 1.27 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -13,7 +13,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 MB_GHCRTS  := +RTS -H10M
 MB_NHCRTS := +RTS -H20M -RTS
 OO2COPTS := -A --no-rtc
-PARROTOPTS := -j
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

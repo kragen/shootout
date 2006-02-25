@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-01-26 23:51:55 igouy-guest Exp $
+# $Id: Makefile,v 1.12 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -14,7 +14,6 @@ IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 
 OO2COPTS := -A --no-rtc
-PARROTOPTS := -C
 POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell

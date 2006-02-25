@@ -1,3 +1,6 @@
+#!./parrot
+# by Joshua Isom
+
 .sub main :main
 	load_bytecode "PGE.pbc"
 	.local pmc p6rule_compile, rulesub, match, variants, variants_p5, iub, iter, matches, capt
@@ -41,19 +44,6 @@
 	iub['v'] = '(a|c|g)'
 	iub['w'] = '(a|t)'
 	iub['y'] = '(c|t)'
-# seems faster with the other method...
-# and this was the only regex I could get to work
-#	iub['[ <-[b]>*: (b) ]*'] = '(c|g|t)'
-#	iub['[ <-[d]>*: (d) ]*'] = '(a|g|t)'
-#	iub['[ <-[h]>*: (h) ]*'] = '(a|c|t)'
-#	iub['[ <-[k]>*: (k) ]*'] = '(g|t)'
-#	iub['[ <-[m]>*: (m) ]*'] = '(a|c)'
-#	iub['[ <-[n]>*: (n) ]*'] = '(a|c|g|t)'
-#	iub['[ <-[r]>*: (r) ]*'] = '(a|g)'
-#	iub['[ <-[s]>*: (s) ]*'] = '(c|g)'
-#	iub['[ <-[v]>*: (v) ]*'] = '(a|c|g)'
-#	iub['[ <-[w]>*: (w) ]*'] = '(a|t)'
-#	iub['[ <-[y]>*: (y) ]*'] = '(c|t)'
 	
 	############################################
 	# Read in the file
@@ -129,17 +119,6 @@ iter_loop:
 	# But it's what's wanted...
 	rulesub = p6rule_compile(key)
 	match = rulesub(seq)
-
-#	capt = match[0]
-#switchfind:
-#	unless capt goto endswitchfind
-#	$P0 = pop capt
-#	$I0 = $P0."from"()
-#	$I1 = $P0."to"()
-#	$I1 -= $I0
-#	substr seq, $I0, $I1, replacement
-#	goto switchfind
-#endswitchfind:
 
 ##########################################
 switch:

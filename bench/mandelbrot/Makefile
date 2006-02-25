@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2006-02-15 07:29:39 bfulgham Exp $
+# $Id: Makefile,v 1.14 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -14,7 +14,6 @@ OCAMLOPTS := -inline 40
 #OCAMLBOPTS := 
 
 OO2COPTS := -A --no-rtc
-PARROTOPTS := -j
 POLYOPTS := -q
 
 ERLFLAGS := -noinput

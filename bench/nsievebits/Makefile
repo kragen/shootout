@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2005-12-19 03:11:54 bfulgham Exp $
+# $Id: Makefile,v 1.7 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := nsievebits
@@ -13,7 +13,6 @@ MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 OO2COPTS := -A --no-rtc
-PARROTOPTS := -j
 POLYOPTS := -q
 OCAMLOPTS := bigarray.cmxa
 OCAMLBOPTS := bigarray.cma

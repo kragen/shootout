@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2006-01-27 02:33:58 igouy-guest Exp $
+# $Id: Makefile,v 1.4 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := recursive
@@ -15,6 +15,7 @@ POLYOPTS := -q
 GFORTH_FLAGS := -d 8M -r 8M
 GPLCOPTS := --fast-math
 GHCOPTS := -O2 -fexcess-precision -optc-ffast-math
+PARROTOPTS := -Oc -Cj
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 3,7,11

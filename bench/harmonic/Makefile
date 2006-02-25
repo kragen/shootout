@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2005-12-19 03:11:54 bfulgham Exp $
+# $Id: Makefile,v 1.12 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := harmonic
@@ -13,7 +13,6 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 BIGLOOOPTS := -farithmetic
 OCAMLOPTS := -inline 100
 OO2COPTS := -A --no-rtc
-PARROTOPTS := -j
 POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell

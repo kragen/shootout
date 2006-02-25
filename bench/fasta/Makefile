@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2005-12-19 03:11:54 bfulgham Exp $
+# $Id: Makefile,v 1.11 2006-02-25 20:31:14 jisom-guest Exp $
 include ../../Make.header
 
 TEST    := fasta
@@ -14,11 +14,11 @@ MB_CLRTS := -nr
 BIGLOOOPTS := -farithmetic
 OCAMLOPTS  := -inline 3
 OO2COPTS := -A --no-rtc
-PARROTOPTS := -C
 POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
+PARROTOPTS := -Cj
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 25000,250000,2500000
