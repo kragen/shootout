@@ -14,6 +14,17 @@
 </td></tr>
 
 
+<tr><td><h3 class="rev"><a class="arev" href="#use" name="use">&nbsp;Using&nbsp;CVS</a></h3></td></tr>
+<tr><td>
+<p>Online book: <a href="http://cvsbook.red-bean.com/">Open Source Development with CVS</a> and here are some useful commands:</p>
+<p>cvs -d:ext:<em>MyAliothId</em>@cvs.alioth.debian.org:/cvsroot/shootout update -dP</p>
+<p>cvs -d:ext:<em>MyAliothId</em>@cvs.alioth.debian.org:/cvsroot/shootout add <em>SomeFile</em></p>
+<p>cvs -d:ext:<em>MyAliothId</em>@cvs.alioth.debian.org:/cvsroot/shootout commit -m ""</p>
+</td></tr>
+
+
+
+
 <tr><td><h3 class="rev"><a class="arev" href="#move" name="move">&nbsp;Move&nbsp;<em>Open&nbsp;item</em>&nbsp;source-code&nbsp;into&nbsp;CVS</a></h3></td></tr>
 
 <tr class="b"><td><a class="ab" href="#browse" name="browse">Browse Contribute Programs for <em>Open items</em></a></td></tr>
