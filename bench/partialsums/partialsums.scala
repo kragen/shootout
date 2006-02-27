@@ -38,6 +38,6 @@ object partialsums
 
   def main(args: Array[String]) = {
     n = Integer.parseInt(args(0)).toDouble;
-    calculate(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0)
+    calculate(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0)
   }
 }

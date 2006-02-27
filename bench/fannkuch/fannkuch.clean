@@ -1,0 +1,101 @@
+/*
+	The Computer Language Shootout
+	http://shootout.alioth.debian.org/
+	contributed by John van Groningen
+*/
+
+module fannkuch
+
+import StdEnv,LanguageShootout
+
+count_flips :: !Int !*{#Int} !*{#Int} -> (!Int,!*{#Int},!*{#Int})
+count_flips n1 a a2
+	#! k=a.[0]
+	| k==0 || a.[n1]==n1
+		= (0,a,a2)
+		# (a,a2) = copy2 0 n1 a a2
+		  (n,a2) = count_flips2 k 0 a2
+		= (n,a,a2)
+
+//copy2 :: !Int !Int !*{#Int} !*{#Int} -> (!*{#Int},!*{#Int})
+copy2 i n1 a a2
+	| i<=n1
+		#! e=a.[i]
+		= copy2 (i+1) n1 a {a2 & [i] = e}
+		= (a,a2)
+
+xchg i j a :== let (ai,a1)=a![i]; (aj1,a2)=a1![j] in {a2 & [i]=aj1,[j]=ai}
+
+count_flips2 :: !Int !Int !*{#Int} -> (!Int,!*{#Int})
+count_flips2 k n_flips a
+	| k<>0
+		# (ak,a) = a![k]
+		  a = {a & [k]=k}
+		| k>2
+			= flip_p 4 k ak n_flips a
+			= count_flips2 ak (n_flips+1) a
+		= (n_flips,a)
+
+//flip_p :: !Int !Int !Int !Int !*{#Int} -> (!Int,!*{#Int})
+flip_p i j ak n_flips a
+	#! a=xchg (i-3) (j-1) a
+	| i<j	= flip_p (i+1) (j-1) ak n_flips a
+			= count_flips2 ak (n_flips+1) a
+
+rotate i n a
+	# (ai1,a)=a![i]
+	#! a={a & [i-1]=ai1}
+	| i<n	= rotate (i+1) n a
+			= a
+
+next_permutation :: !*{#Int} !*{#Int} !Int !Int -> (!*{#Int},!*{#Int},!Int)
+next_permutation perm count count_i n1
+	#! p0 = perm.[0]
+	# perm = rotate 1 count_i perm
+	# perm = {perm & [count_i]=p0}
+	# (counti,count) = count![count_i]
+	| counti>0
+		= (perm,{count & [count_i]=counti-1},count_i)
+	# count = {count & [count_i]=count_i}
+	# count_i = count_i+1
+	| count_i<=n1
+		= next_permutation perm count count_i n1
+		= (perm,count,count_i)
+
+copy :: !{#Int} -> *{#Int}
+copy a = {e \\ e<-:a}
+
+print_permutations :: !*{#Int} !*{#Int} !*{#Int} !Int !Int !Int !*File -> *File
+print_permutations perm count perm_copy n1 perm_n max_flips file
+	| perm_n<30
+		#! perm2 = copy perm
+		# file = foldl (<<<) file [e+1\\e<-:perm2] <<< '\n'
+		  (n_flips,perm,perm_copy) = count_flips n1 perm perm_copy
+		  max_flips = if (n_flips>max_flips) n_flips max_flips
+		  (perm,count,count_i) = next_permutation perm count 1 n1
+		| count_i<=n1
+			= print_permutations perm count perm_copy n1 (perm_n+1) max_flips file
+			= file <<< "Pfannkuchen(" <<< (n1+1) <<< ") = " <<< max_flips <<< '\n'
+		# max_flips=compute_max_flips perm count perm_copy n1 max_flips
+		= file <<< "Pfannkuchen(" <<< (n1+1) <<< ") = " <<< max_flips <<< '\n'
+
+compute_max_flips :: !*{#Int} !*{#Int} !*{#Int} !Int !Int -> Int
+compute_max_flips perm count perm_copy n1 max_flips
+	# (n_flips,perm,perm_copy) = count_flips n1 perm perm_copy
+	| n_flips<=max_flips
+		# (perm,count,count_i) = next_permutation perm count 1 n1
+		| count_i<=n1
+			= compute_max_flips perm count perm_copy n1 max_flips
+			= max_flips
+		# (perm,count,count_i) = next_permutation perm count 1 n1
+		| count_i<=n1
+			= compute_max_flips perm count perm_copy n1 n_flips
+			= n_flips
+
+Start world
+	# n=argi
+	  perm = {i\\i<-[0..n-1]}
+	  count = {i\\i<-[0..n-1]}
+	  (file,world) = stdio world
+	  file = print_permutations perm count (createArray n 0) (n-1) 0 0 file
+	= fclose file world
