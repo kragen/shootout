@@ -1,4 +1,9 @@
-<?php      echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      ?>
+<?php      
+echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
+$D = filemtime('../data/data.csv');
+$G = filemtime('./gp4/data/data.csv');
+?>
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" >
 <head>
@@ -61,12 +66,14 @@ We can't - <strong>we measure particular programs</strong>.</p>
 <table>
 <tr>
 <td>
+<p class="rs"><? printf('%s', gmdate("d M Y", $D)) ?></p>
 <h5>
 <a class="arevCore" 
 title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
 </td>
 <td>
+<p class="rs"><? printf('%s', gmdate("d M Y", $G)) ?></p>
 <h5>
 <a class="arevGP4" 
 title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
@@ -82,12 +89,14 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 <table>
 <tr>
 <td>
+<p class="rs"><? printf('%s', gmdate("d M Y", $D)) ?></p>
 <h5>
 <a class="arevSandbox" 
 title="Browse the Debian : AMD&#8482; Sempron&#8482; more language implementations and alpha benchmarks"
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></h5>
 </td>
 <td>
+<p class="rs"><? printf('%s', gmdate("d M Y", $G)) ?></p>
 <h5>
 <a class="arevSandbox" 
 title="Browse the Gentoo : Intel&#174; Pentium&#174; more language implementations and alpha benchmarks"
@@ -100,11 +109,18 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 <div>
 <h4>For auld lang syne:</h4>
 <p>Look back at the old 2001 Doug Bagley Benchmarks</p>
+<table>
+<tr>
+<td>
+<p class="rs"><? printf('%s', gmdate("d M Y", $D)) ?></p>
 <h5>
 <a class="arevOld" 
 title="Look back at the Old 2001 Doug Bagley Benchmarks"
 href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
 </h5>
+</td>
+</tr>
+</table>
 </div>
 
 <p class="center"><br/><br/>
