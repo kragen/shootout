@@ -5,8 +5,8 @@ REBOL [
   Home: {http://shootout.alioth.debian.org/}
   Author: {Anthony Borla}
   Date: 2006-02-27
-  Version: 1.0
-  Notes: Code based on / inspired by existing, relevant Shootout submissions
+  Version: 1.1
+  Notes: {Code based on / inspired by existing, relevant Shootout submissions}
 ]
 
 ; -------------
