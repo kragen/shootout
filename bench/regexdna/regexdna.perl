@@ -1,6 +1,7 @@
 # The Computer Language Shootout
 # http://shootout.alioth.debian.org/
 # contributed by Danny Sauer
+# debugged by Josh Goldfoot
 
 # regexp matches
 my @variants = map(
@@ -38,7 +39,7 @@ my $stuffToRemove = qr/^>.*$|\n/m; # no comments, *nix-format test file...
 
 # read in file
 undef $/;
-my $contents = <>;
+my $contents = <STDIN>;
 my $initialLength = length($contents);
 
 # remove things
@@ -56,9 +57,9 @@ foreach (keys(%IUB)){
     $contents =~ s/$_/$IUB{$_}/ig;
 }
 
-print "\n", 
-      $initialLength, "\n", 
-      $codeLength, "\n", 
+print "\n",
+      $initialLength, "\n",
+      $codeLength, "\n",
       length($contents), "\n";
 
 exit(0);
