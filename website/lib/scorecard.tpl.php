@@ -26,11 +26,15 @@
  
 $minWeight = 0;    // normalize weights
 $maxWeight = 5;
+$countWeight = 0;
 
 foreach($W as $k => $v){
    if ($v > $maxWeight){ $W[$k] = $maxWeight; }
    elseif ($v < $minWeight){ $W[$k] = $minWeight; }
+
+   if ($W[$k]>0.0 && ($k!="xfullcpu")&&($k!="xmem")&& $k!="xloc"){ $countWeight++; }
 }
+if ($countWeight==0){ $countWeight = 1; }
 
 // CALCULATE WEIGHTED SCORES /////////////////////////////////////
 
@@ -41,7 +45,7 @@ foreach($Data as $k => $test){
       $s += $v[DATA_MEMORY] * $W[$t] * $W['xmem'];      
       $s += $v[DATA_LINES] * $W[$t] * $W['xloc'];
    }
-   $score[$k] = array($s,sizeof($Tests) - sizeof($test));
+   $score[$k] = array($s/$countWeight,sizeof($Tests) - sizeof($test));
 }
 unset($Data);
 
@@ -154,6 +158,6 @@ foreach($Tests as $t){
 
 <!-- // ABOUT /////////////////////////////////////////////////// -->
 
-<tr><td colspan="2"><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about CRAPS!&#8482;</a></h4></td></tr>
+<tr><td colspan="2"><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the Overall Scores</a></h4></td></tr>
 <tr><td colspan="2"><?=$About;?></td></tr>  
 </table>

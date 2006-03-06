@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005
+// Copyright (c) Isaac Gouy 2005, 2006
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -104,15 +104,15 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    foreach($data as $k => $test){
       foreach($test as $t => $v){
          if (isset($range[$t][CPU_MIN])){$r = $range[$t][CPU_MIN]; } else { $r = 0; }
-         $cpuScore = LogScore($v[DATA_FULLCPU], $r);
+         $cpuScore = LinearScore($v[DATA_FULLCPU], $r);
          $data[$k][$t][DATA_FULLCPU] = $cpuScore;    
                        
          if (isset($range[$t][MEM_MIN])){$r = $range[$t][MEM_MIN]; } else { $r = 0; }                       
-         $memScore = LogScore($v[DATA_MEMORY], $r);
+         $memScore = LinearScore($v[DATA_MEMORY], $r);
          $data[$k][$t][DATA_MEMORY] = $memScore; 
                   
          if (isset($range[$t][LOC_MIN])){$r = $range[$t][LOC_MIN]; } else { $r = 0; }                  
-         $locScore = LogScore($v[DATA_LINES], $r);
+         $locScore = LinearScore($v[DATA_LINES], $r);
          $data[$k][$t][DATA_LINES] = $locScore;             
       }
    }
@@ -123,6 +123,12 @@ function LogScore($x, $b){
    if(($x==0)||($b==0)){ return 0.0; }
    $scale = 1.0;
    return 1 / (1 + $scale * log($x/$b)/log(2));
+}
+
+function LinearScore($x, $b){   
+   if(($x==0)||($b==0)){ return 0.0; }
+   $scale = 100.0;
+   return ($b/$x)*$scale;
 }
 
 
@@ -141,7 +147,7 @@ function Weights($Tests, $Action, $Vars, $CVars){
       $wd[$link] = $t[TEST_WEIGHT];                               
    }           
    
-   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 1, 'xloc' => 1);       
+   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);       
    foreach($Metrics as $k => $v){  
       if (isset($Vars[$k])){ $x = $Vars[$k]; }                   
       elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
