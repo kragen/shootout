@@ -26,15 +26,23 @@
  
 $minWeight = 0;    // normalize weights
 $maxWeight = 5;
-$countWeight = 0;
+$countWeight = 0.0;
 
 foreach($W as $k => $v){
    if ($v > $maxWeight){ $W[$k] = $maxWeight; }
    elseif ($v < $minWeight){ $W[$k] = $minWeight; }
-
-   if ($W[$k]>0.0 && ($k!="xfullcpu")&&($k!="xmem")&& $k!="xloc"){ $countWeight++; }
+   if ($W[$k]>0.0 && ($k!='xfullcpu')&&($k!='xmem')&& $k!='xloc'){ $countWeight++; }
 }
 if ($countWeight==0){ $countWeight = 1; }
+
+$possible = 0.0;
+foreach($W as $k => $v){
+   if ($W[$k]>0.0 && ($k!='xfullcpu')&&($k!='xmem')&& ($k!='xloc')){ 
+      $possible += $W[$k] * $W['xfullcpu'] * 100.0 / $countWeight;
+      $possible += $W[$k] * $W['xmem'] * 100.0 / $countWeight;
+      $possible += $W[$k] * $W['xloc'] * 100.0 / $countWeight;
+   }
+}
 
 // CALCULATE WEIGHTED SCORES /////////////////////////////////////
 
@@ -44,6 +52,7 @@ foreach($Data as $k => $test){
       $s += $v[DATA_FULLCPU] * $W[$t] * $W['xfullcpu'];
       $s += $v[DATA_MEMORY] * $W[$t] * $W['xmem'];      
       $s += $v[DATA_LINES] * $W[$t] * $W['xloc'];
+
    }
    $score[$k] = array($s/$countWeight,sizeof($Tests) - sizeof($test));
 }
@@ -71,6 +80,9 @@ uasort($score, 'CompareScore');
 </tr>
 
 <?  
+echo "<tr><th>best possible</th>\n";
+printf('<th class="r">%0.2f</th><th class="r">0</th>', $possible); echo "\n";
+echo "</tr>\n";
 
 $RowClass = 'c';
 foreach($score as $k => $v){   
