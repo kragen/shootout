@@ -4,7 +4,7 @@
 
 <p>The basic score can be adjusted by a measurement multiplier (make CPU time or memory use or lines-of-code more or less important) and a benchmark weight (make particular benchmarks more or less important).</p>
 
-<p>For each language implementation, the weighted scores for every benchmark are summed. The CPU tme score, memory use score, and lines-of-code score are summed to give a total score.</p>
+<p>For each language implementation, the weighted scores for every benchmark are summed. The CPU time score, memory use score, and lines-of-code score are summed to give a total score.</p>
 <p>The total score is divided by the number of non-zero weighted benchmarks to give the overall score.</p>
 
 
