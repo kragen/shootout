@@ -1,5 +1,5 @@
 <p>For each benchmark, the <em>best measurement</em> <strong>B</strong> is the lowest non-zero measurement.</p>
-<p>For each language implementation, the measurement <strong>L</strong> for the language implementation is converted to a basic score: <pre>basic score = B/L &#215; 100</pre></p>
+<p>For each language implementation, the measurement <strong>L</strong> for the language implementation is converted to a basic score:</p><pre>basic score = B/L &#215; 100</pre><br/>
 <p>The highest possible unweighted score is 100. Missing programs and programs which did not complete the benchmark score 0.</p><br/>
 
 <p>The basic score can be adjusted by a measurement multiplier (make CPU time or memory use or lines-of-code more or less important) and a benchmark weight (make particular benchmarks more or less important).</p>
