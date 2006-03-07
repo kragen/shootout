@@ -28,12 +28,12 @@ elseif (!isset($L2)){
    else { $L2 = $Langs[$L][LANG_COMPARE]; }
 }
 
+$S = '';
 
 if (isset($HTTP_GET_VARS['id'])){ $I = $HTTP_GET_VARS['id']; } 
 else { $I = 0; }
 
-if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'fullcpu'; }
+
 
 $MetaKeywords = '';
 
@@ -50,6 +50,9 @@ $Body = & new Template(LIB_PATH);
 
 if ($T=='all'){
    if ($L=='all'){    // Scorecard 
+
+      if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
+      else { $S = 'mean'; }
    
       require_once(LIB_PATH.'lib_scorecard.php');       
    
@@ -108,6 +111,9 @@ if ($T=='all'){
    }
 
 } elseif ($L=='all'){ // Benchmark  
+
+      if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
+      else { $S = 'fullcpu'; }
 
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 

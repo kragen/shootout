@@ -162,5 +162,32 @@ function Weights($Tests, $Action, $Vars, $CVars){
 }
 
 
+function MedianScores(&$Scores, &$Weights){
+   $arraysOfScores = array(); 
+   foreach($Scores as $lang => $test){
+      foreach($test as $t => $v){
+         $w = $Weights[$t]>0.0 ? 1.0 : 0.0;
+         $arraysOfScores[$lang]['xfullcpu'][] = $v[DATA_FULLCPU] * $w;
+         $arraysOfScores[$lang]['xmem'][] = $v[DATA_MEMORY] * $w;
+         $arraysOfScores[$lang]['xloc'][] = $v[DATA_LINES] * $w;
+      }
+   }
+
+   $medianScores = array(); 
+   foreach($arraysOfScores as $lang => $measure){
+      $medianSum = 0.0;
+      foreach($measure as $m => $a){
+         sort($a);
+         $n = sizeof($a);
+         $mid = $n/2;
+         $median = ($n%2!=0) ? $a[$mid] : ($a[$mid]+$a[$mid-1])/2.0;
+         $medianSum += $median * $Weights[$m];
+      }
+      $medianScores[$lang] = $medianSum;
+   }
+   unset($arraysOfScores);
+   return $medianScores;
+}
+
 
 ?>

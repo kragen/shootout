@@ -189,13 +189,17 @@ if (sizeof($Special)>0){
       $HtmlName = $Langs[$k][LANG_HTML];
       if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }   
 
-      if ($Sort=='fullcpu'){ 
-         $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU];
+      if ($Sort=='fullcpu'){   
+         if ($first[DATA_FULLCPU]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU]; }
       } elseif ($Sort=='kb'){ 
-         $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY];
+         if ($first[DATA_MEMORY]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
       } elseif ($Sort=='lines'){ 
-         $ratio = $d[DATA_LINES]/$first[DATA_LINES];
+         if ($first[DATA_LINES]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_LINES]/$first[DATA_LINES]; }
       } 
+
      
       $id = $d[DATA_ID];   
       $cpu = $d[DATA_CPU];

@@ -44,6 +44,13 @@ foreach($W as $k => $v){
    }
 }
 
+$possibleMedian = 100.0 *
+   (($W['xfullcpu']>0.0 ? 1.0 : 0.0) + 
+   ($W['xmem']>0.0 ? 1.0 : 0.0) + 
+   ($W['xloc']>0.0 ? 1.0 : 0.0));
+
+$medians = MedianScores($Data,$W);
+
 // CALCULATE WEIGHTED SCORES /////////////////////////////////////
 
 foreach($Data as $k => $test){
@@ -52,17 +59,41 @@ foreach($Data as $k => $test){
       $s += $v[DATA_FULLCPU] * $W[$t] * $W['xfullcpu'];
       $s += $v[DATA_MEMORY] * $W[$t] * $W['xmem'];      
       $s += $v[DATA_LINES] * $W[$t] * $W['xloc'];
-
    }
-   $score[$k] = array($s/$countWeight,sizeof($Tests) - sizeof($test));
+   $score[$k] = array($s/$countWeight,sizeof($Tests)-sizeof($test),$medians[$k]);
 }
+
 unset($Data);
 
-function CompareScore($a, $b){
+function CompareMean($a, $b){
    if ($a[0] == $b[0]) return 0;
    return  ($a[0] > $b[0]) ? -1 : 1;
 }
-uasort($score, 'CompareScore');
+
+function CompareMissing($a, $b){
+   if ($a[1] == $b[1]) return 0;
+   return  ($a[1] > $b[1]) ? -1 : 1;
+}
+
+function CompareMedian($a, $b){
+   if ($a[2] == $b[2]) return 0;
+   return  ($a[2] > $b[2]) ? -1 : 1;
+}
+
+$C0 = 'class="r"';
+$C1 = 'class="r"'; 
+$C2 = 'class="r"'; 
+if ($Sort=='mean'){ 
+   uasort($score, 'CompareMean');
+   $C0 = 'class="rb"';    
+} elseif ($Sort=='missing'){ 
+   uasort($score, 'CompareMissing');
+   $C1 = 'class="rb"';
+} elseif ($Sort=='median'){ 
+   uasort($score, 'CompareMedian');
+   $C2 = 'class="rb"';
+}  
+
 
 ?>
 
@@ -74,15 +105,32 @@ uasort($score, 'CompareScore');
 <table>
 
 <tr>
+<th class="c">&nbsp;</th>
+<th>
+   <a href="benchmark.php?test=all&amp;lang=all&amp;sort=median" 
+   title="Sort by Median Score">sort</a>
+</th>
+<th>
+   <a href="benchmark.php?test=all&amp;lang=all&amp;sort=mean" 
+   title="Sort by Weighted Mean Score">sort</a>
+</th>
+<th>
+   <a href="benchmark.php?test=all&amp;lang=all&amp;sort=missing" 
+   title="Sort by Missing Programs">sort</a>
+</th>
+</tr>
+
+<tr>
 <th>language</th>
-<th>score</th>
-<th>missing</th>
+<th <?=$C2;?>>&nbsp;median&nbsp;</th>
+<th <?=$C0;?>>&nbsp;mean&nbsp;</th>
+<th <?=$C1;?>>&nbsp;missing&nbsp;</th>
 </tr>
 
 <?  
 echo "<tr><th>best possible</th>\n";
-printf('<th class="r">%0.2f</th><th class="r">0</th>', $possible); echo "\n";
-echo "</tr>\n";
+printf('<th class="r">%0.1f</th><th class="r">%0.1f</th><th class="r">0</th>', $possibleMedian, $possible); 
+echo "\n</tr>\n";
 
 $RowClass = 'c';
 foreach($score as $k => $v){   
@@ -91,7 +139,8 @@ foreach($score as $k => $v){
    printf('<tr class="%s">',$RowClass); echo "\n";
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
       $k,$k,$HtmlName); echo "\n";
-   printf('<td class="r">%0.2f</td><td class="r">%d</td>', $v[0], $v[1]); echo "\n";
+   printf('<td %s>%0.1f</td><td %s>%0.1f</td><td %s>%d</td>',
+      $C2, $v[2], $C0, $v[0], $C1, $v[1]); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
@@ -108,6 +157,7 @@ foreach($score as $k => $v){
 <div>
 <input type="hidden" name="test" value="all" />
 <input type="hidden" name="lang" value="all" />
+<input type="hidden" name="sort" value=<?=$Sort;?> />
 
 <table>
 <tr class="c">
