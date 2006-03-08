@@ -44,13 +44,6 @@ foreach($W as $k => $v){
    }
 }
 
-$possibleMedian = 100.0 *
-   (($W['xfullcpu']>0.0 ? 1.0 : 0.0) + 
-   ($W['xmem']>0.0 ? 1.0 : 0.0) + 
-   ($W['xloc']>0.0 ? 1.0 : 0.0));
-
-$medians = MedianScores($Data,$W);
-
 // CALCULATE WEIGHTED SCORES /////////////////////////////////////
 
 foreach($Data as $k => $test){
@@ -60,7 +53,7 @@ foreach($Data as $k => $test){
       $s += $v[DATA_MEMORY] * $W[$t] * $W['xmem'];      
       $s += $v[DATA_LINES] * $W[$t] * $W['xloc'];
    }
-   $score[$k] = array($s/$countWeight,sizeof($Tests)-sizeof($test),$medians[$k]);
+   $score[$k] = array($s/$countWeight,sizeof($Tests)-sizeof($test));
 }
 
 unset($Data);
@@ -70,21 +63,9 @@ function CompareMean($a, $b){
    return  ($a[0] > $b[0]) ? -1 : 1;
 }
 
-function CompareMedian($a, $b){
-   if ($a[2] == $b[2]) return 0;
-   return  ($a[2] > $b[2]) ? -1 : 1;
-}
-
 $C0 = 'class="r"'; 
-$C2 = 'class="r"'; 
-if ($Sort=='mean'){ 
-   uasort($score, 'CompareMean');
-   $C0 = 'class="rb"';    
-} elseif ($Sort=='median'){ 
-   uasort($score, 'CompareMedian');
-   $C2 = 'class="rb"';
-}  
 
+uasort($score, 'CompareMean');
 ?>
 
 <tr>
@@ -93,55 +74,31 @@ if ($Sort=='mean'){
 
 <td>
 <table>
-
-<tr>
-<th class="c">&nbsp;</th>
-<th>
-   <a href="benchmark.php?test=all&amp;lang=all&amp;sort=median" 
-   title="Sort by Median Score">sort</a>
-</th>
-<th>
-   <a href="benchmark.php?test=all&amp;lang=all&amp;sort=mean" 
-   title="Sort by Weighted Mean Score">sort</a>
-</th>
-<th class="c">&nbsp;</th>
-</tr>
-
 <tr>
 <th>language</th>
-<th <?=$C2;?>>&nbsp;median&nbsp;</th>
-<th <?=$C0;?>>&nbsp;mean&nbsp;</th>
-<th>&nbsp;&nbsp;&nbsp;ratio&nbsp;</th>
-<th>&nbsp;missing&nbsp;</th>
+<th>&nbsp;mean&nbsp;</th>
+<th>&nbsp;ratio&nbsp;</th>
+<th>&nbsp;</th>
 </tr>
 
 <?  
 echo "<tr><th>best possible</th>\n";
-printf('<th class="r">%0.1f</th><th class="r">%0.1f</th>', $possibleMedian, $possible); 
-echo "<th>&nbsp;</th><th>&nbsp;</th>\n</tr>\n";
+printf('<th class="r">%0.1f</th><th class="r">1.0x</th><th class="r">0</th>', $possible); 
+echo "\n</tr>\n";
 
 $RowClass = 'c';
 foreach($score as $k => $v){   
    if (!isset($first)){ $first = $v; }
-
-   if ($Sort=='mean'){   
-      if ($v[0]==0){ $ratio = 0; }
-      else { $ratio = $first[0]/$v[0]; }
-   } elseif ($Sort=='missing'){ 
-      if ($v[1]==0){ $ratio = 0; }
-      else { $ratio = $first[1]/$v[1]; }
-   } elseif ($Sort=='median'){ 
-      if ($v[2]==0){ $ratio = 0; }
-      else { $ratio = $first[2]/$v[2]; }
-   } 
+   if ($v[0]==0){ $ratio = 0; }
+   else { $ratio = $first[0]/$v[0]; }
 
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr class="%s">',$RowClass); echo "\n";
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
       $k,$k,$HtmlName); echo "\n";
-   printf('<td %s>%0.1f</td><td %s>%0.1f</td><td class="r">%0.1fx</td><td class="r">%d</td>',
-      $C2, $v[2], $C0, $v[0], $ratio, $v[1]); echo "\n";
+   printf('<td class="r">%0.1f</td><td class="r">%0.1fx</td><td class="r">%d</td>',
+      $v[0], $ratio, $v[1]); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
@@ -158,7 +115,6 @@ foreach($score as $k => $v){
 <div>
 <input type="hidden" name="test" value="all" />
 <input type="hidden" name="lang" value="all" />
-<input type="hidden" name="sort" value=<?=$Sort;?> />
 
 <table>
 <tr class="c">
@@ -203,7 +159,6 @@ foreach($Tests as $t){
    printf('<td><a href="benchmark.php?test=%s&amp;lang=all">%s</a></td>', $Link,$Name); echo "\n";
    printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
-   //if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
 
