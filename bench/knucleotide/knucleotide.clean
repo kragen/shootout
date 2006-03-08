@@ -1,0 +1,133 @@
+/*
+	The Computer Language Shootout
+	http://shootout.alioth.debian.org/
+	the hash function is ported from "simple_hash.h", available from
+	http://cvs.alioth.debian.org/cgi-bin/cvsweb.cgi/shootout/bench/Include/?cvsroot=shootout
+	the hashtable functions are based on code written by Isaac Gouy
+	contributed by John van Groningen
+*/
+
+module knucleotide
+
+import StdEnv,StdOverloadedList,LanguageShootout
+
+Start world
+	# (file,world) = stdio world
+	  lines = read_lines (find_three file)
+	
+	  n_chars = foldl (\n s=n+size s-1) 0 lines
+	  dna = fill_sequence lines 0 (createArray n_chars '?')
+
+	= ( [([key+++" "+++toStringWith 3 (100.0*toReal val/toReal n_chars)+++"\n"
+			\\ {key,val} <- sort (htItems (frequencies l dna))],'\n') \\ l<-[1..2]],
+
+	 	[toString ((htFind s (frequencies (size s) dna)).val)+++"\t"+++s+++"\n"
+			\\ s <- [ "GGT","GGTA","GGTATT","GGTATTTTAATT","GGTATTTTAATTTATAGT"] ])
+
+find_three file
+	# (line,file) = freadline file
+	| line.[0]=='>' && line%(1,5)=="THREE"
+		= file
+		= find_three file
+
+read_lines file
+	# (line,file) = freadline file
+	| size line==0  = []
+	| line.[0]==';' = read_lines file
+	| line.[0]=='>' = []
+	| line.[size line-1]=='\n'
+		= [line : read_lines file]
+		= [line+++"\n" : read_lines file]
+
+fill_sequence [] i a = a
+fill_sequence [l:ls] i a
+	# n = size l-1
+	= fill_sequence ls (i+n) (copy (n-1) i a l) where
+
+	copy :: !Int !Int !*{#Char} !{#Char} -> *{#Char}
+	copy j i a l
+		| j>=0	= copy (j-1) i {a & [i+j]=toUpper l.[j]} l
+				= a
+
+instance < Item where (<) i1 i2 = if (i1.val<>i2.val) (i1.val>i2.val) (i1.key<i2.key)
+
+frequencies l s
+	# htSize1 = 25<<(l+l)
+	  htSize = if (l<=13 && htSize1<size s) htSize1 (size s)
+	= add_sub_strings 0 (l-1) (htNew htSize) where
+
+	add_sub_strings i l ht
+		# e=i+l
+		| e>=size s = ht
+		= add_sub_strings (i+1) l (htAddOrUpdate (s % (i,e)) 1 (\x->x+1) ht)
+
+// hash table
+
+//hash :: !{#Char} !Int -> Int
+hash key nBuckets
+	# h = loop key (size key-1) 0;
+	| h>=0
+		= if (h<nBuckets) h (h rem nBuckets)
+		= ~(h rem nBuckets) where
+
+	loop :: !{#Char} !Int !Int -> Int
+	loop k n h = if (n>=0) (loop k (n-1) (5*h + toInt k.[n])) h
+
+:: Item = { key :: !String, val :: !Int }
+
+:: HashTable = { table::!.{!Buckets} }
+
+:: Buckets = EmptyBucket | Bucket !Item | Buckets ![!Item!]
+
+htNew :: !Int -> *HashTable
+htNew n = { table = createArray nprime EmptyBucket } where
+
+   nprime = hd (dropWhile (\x -> x < n) primes)
+
+primes =: [ 53,       97,        193,       389,       769,
+            1543,     3079,      6151,      12289,     24593,
+            49157,    98317,     196613,    93241,     786433,
+            1572869,  3145739,   6291469,   12582917,  25165843,
+            50331653, 100663319, 201326611, 402653189, 805306457 ]
+
+//htFind :: !{#Char} !HashTable -> Item 
+htFind k {table} = (find k table.[hash k (size table)]) where
+
+	find k (Bucket item) = if (item.key==k) item {key=k,val=0}
+	find k (Buckets l) = find_l k l
+	find k EmptyBucket = {key=k,val=0}
+
+	find_l k [|item:ls] = if (item.key==k) item (find_l k ls)
+	find_l k [|] = {key=k,val=0}
+
+htAddOrUpdate k v f ht=:{table}
+	# (nBuckets,table) = usize table
+	  i = hash k nBuckets
+ 	  (b,table) = table![i]
+	:== {ht & table = {table & [i] = addOrUpdateItem b k}} where
+
+//	addOrUpdateItem :: !Buckets !{#Char} -> Buckets
+	addOrUpdateItem EmptyBucket k = Bucket {key=k,val=v}
+	addOrUpdateItem (Bucket item=:{key,val}) k
+	   | key==k	= Bucket {item & val=f val}
+	   			= Buckets [|item , {key=k,val=v}]
+	addOrUpdateItem (Buckets b) k = Buckets (addOrUpdateItemL b k)
+
+//	addOrUpdateItemL :: ![!Item!] !{#Char} -> [!Item!]
+	addOrUpdateItemL [|item=:{key,val}:ls] k
+	   | key==k	= [|{item & val=f val}:ls]
+	   			= [|item : addOrUpdateItemL ls k]
+	addOrUpdateItemL [|] k = [|{key=k,val=v}]
+
+//htItems :: !HashTable -> [Item]
+htItems ht=:{table} = ht_items 0 table where
+
+	ht_items i table | i>=size table = []
+					 = ht_items_bucket table.[i] (i+1) table
+
+	ht_items_bucket EmptyBucket i table = ht_items i table
+	ht_items_bucket (Bucket e)  i table = [e:ht_items i table]
+	ht_items_bucket (Buckets b) i table = ht_items_list b i table 
+
+	ht_items_list [|e:l] i table = [e:ht_items_list l i table]
+	ht_items_list [|]    i table = ht_items i table
