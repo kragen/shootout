@@ -1,0 +1,99 @@
+' The Computer Language Shootout
+' http://shootout.alioth.debian.org/
+' contributed by Simon Nash (yetifoot)
+' converted to FreeBASIC from the gcc c version by Mike Pall
+
+#include "crt.bi"
+#include "gmp.bi"
+
+Option Escape
+
+Type ctx_t
+  As mpz_t q, r, s, t    ' Transformation matrix components.
+  As mpz_t u, v, w       ' Temporary numbers.
+  As Integer d, i, n     ' Counters.
+  As ZString * 11 digits ' Accumulated digits for one line.
+End Type
+'
+' Compose matrix with numbers on the right.
+Sub compose_r(c As ctx_t ptr, bq As Integer, br As Integer, bs As Integer, bt As Integer)
+  mpz_mul_si(@c->u, @c->r, bs)
+  mpz_mul_si(@c->r, @c->r, bq)
+  mpz_mul_si(@c->v, @c->t, br)
+  mpz_add   (@c->r, @c->r, @c->v)
+  mpz_mul_si(@c->t, @c->t, bt)
+  mpz_add   (@c->t, @c->t, @c->u)
+  mpz_mul_si(@c->s, @c->s, bt)
+  mpz_mul_si(@c->u, @c->q, bs)
+  mpz_add   (@c->s, @c->s, @c->u)
+  mpz_mul_si(@c->q, @c->q, bq)
+End Sub
+
+' Compose matrix with numbers on the left.
+Sub compose_l(c As ctx_t ptr, bq As Integer, br As Integer, bs As Integer, bt As Integer)
+  mpz_mul_si(@c->r, @c->r, bt)
+  mpz_mul_si(@c->u, @c->q, br)
+  mpz_add   (@c->r, @c->r, @c->u)
+  mpz_mul_si(@c->u, @c->t, bs)
+  mpz_mul_si(@c->t, @c->t, bt)
+  mpz_mul_si(@c->v, @c->s, br)
+  mpz_add   (@c->t, @c->t, @c->v)
+  mpz_mul_si(@c->s, @c->s, bq)
+  mpz_add   (@c->s, @c->s, @c->u)
+  mpz_mul_si(@c->q, @c->q, bq)
+End Sub
+
+' Extract one digit.
+Function extract(c As ctx_t ptr, j As uInteger) As Integer
+  mpz_mul_ui(@c->u, @c->q, j)
+  mpz_add   (@c->u, @c->u, @c->r)
+  mpz_mul_ui(@c->v, @c->s, j)
+  mpz_add   (@c->v, @c->v, @c->t)
+  mpz_tdiv_q(@c->w, @c->u, @c->v)
+  Return mpz_get_ui(@c->w)
+End Function
+
+' Print one digit. Returns 1 for the last digit.
+Function prdigit(c As ctx_t ptr, y As Integer) As Integer
+  c->digits[c->d] = Asc("0") + y
+  c->d += 1
+  c->i += 1
+  If (c->i mod 10 = 0) OR (c->i = c->n) Then
+    c->digits[c->d] = 0
+    printf("%-10s\t:%d\n", c->digits, c->i)
+    c->d = 0
+  End If
+  return c->i = c->n
+End Function
+
+' Generate successive digits of PI.
+Sub pidigits(c As ctx_t ptr)
+  Dim As Integer k = 1
+  Dim As Integer y
+  c->d = 0
+  c->i = 0
+  mpz_init_set_ui(@c->q, 1)
+  mpz_init_set_ui(@c->r, 0)
+  mpz_init_set_ui(@c->s, 0)
+  mpz_init_set_ui(@c->t, 1)
+  mpz_init(@c->u)
+  mpz_init(@c->v)
+  mpz_init(@c->w)
+  Do
+    y = extract(c, 3)
+    If y = extract(c, 4) Then
+      If prdigit(c, y) Then Exit Sub
+      compose_r(c, 10, -10*y, 0, 1)
+    Else 
+      compose_l(c, k, 4*k+2, 0, 2*k+1)
+      k+=1
+    End If
+  Loop
+End Sub
+
+Dim As ctx_t c
+  c.n = CInt(Command$(1))
+  If c.n = 0 Then c.n = 27
+  pidigits(@c)
+  
+  
