@@ -1,0 +1,94 @@
+% ----------------------------------------------------------------------
+% The Great Computer Language Shootout                              
+% http://shootout.alioth.debian.org/                                
+%                                                                   
+% Assumes execution using the following command-line usage:
+%
+%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%
+% Contributed by Anthony Borla
+%
+% Note: Much scope exists for improvement / optimisation:
+%
+% * Use SWI 'string' type in place of lists where appropriate
+% * 'split_n' redesigned to avoid use of 'append'
+% * 'dump_segment' redesigned to perform all operations in a single
+%   traversal, thus avoiding the creation of multiple, possibly large,
+%   lists
+% * Associative [i.e. hash] lookup for 'complement' preferred to current
+%   indexed lookup
+% * Constants could be implemented via pseudo global variables; at
+%   present many constamt values are harcoded
+% ----------------------------------------------------------------------
+
+main :-
+  prompt(Old, ''),
+  revcomp(user_input),
+  prompt(_, Old).
+
+% ------------------------------- %
+
+revcomp(S) :- revcomp_(S, []).
+
+% ------------- %
+
+revcomp_(S, Seg) :- at_end_of_stream(S), !, dump_segment(Seg).
+
+revcomp_(S, Seg) :-
+  read_line_to_codes(S, L),
+  (is_segment_header(L) -> dump_segment(Seg), NewSeg = [], format('~s~N', [L]) ; add_to_segment(L, Seg, NewSeg)),
+  !, revcomp_(S, NewSeg).
+
+% ------------------------------- %
+
+%% 62 is ASCII code for character '>' 
+
+is_segment_header([62|_]).
+
+% ------------------------------- %
+
+%% 60 is output line length  
+
+dump_segment([]) :- !.
+
+dump_segment(Seg) :-
+  maplist(complement, Seg, CSeg),
+  reverse(CSeg, RSeg),
+  split_n(RSeg, 60, SegSubLists),
+  forall(member(E, SegSubLists), (format('~s~N', [E]))).
+
+% ------------------------------- %
+
+add_to_segment([], Seg, Seg) :- !.
+add_to_segment(L, [], L) :- !.
+add_to_segment(L, Seg, NewSeg) :- append(Seg, L, NewSeg).
+
+% ------------------------------- %
+
+%%      "wsatug cyrkmb dhvnAT UGCYRK MBDHVN"
+%%  to:
+%%      "WSTAAC GRYMKV HDBNTA ACGRYM KVHDBN"
+
+complement(Code, Complement) :-
+  (Code > 90 -> AdjCode is Code - 32 ; AdjCode = Code),
+  Idx is AdjCode - 65,
+  nth0(Idx, [84, 86, 71, 72, 0, 0, 67, 68, 0, 0, 77, 0, 75, 78, 0, 0, 0, 89, 83, 65, 65, 66, 87, 0, 82, 0], Complement).
+
+% ------------------------------- %
+
+split_n(L, Size, CL) :- split_n_(L, Size, 1, [], [], CL).
+
+% ------------- %
+
+split_n_([], _, _, [], AC, AC) :- !.
+split_n_([], _, _, A, AC, CL) :- !, append(AC, [A], CL).
+
+split_n_([H|T], Size, Nth, A, AC, CL) :-
+  append(A, [H], A1),
+  (Nth < Size ->
+    Nth1 is Nth + 1,
+    !, split_n_(T, Size, Nth1, A1, AC, CL)
+  ;
+    append(AC, [A1], AC1),
+    !, split_n_(T, Size, 1, [], AC1, CL)).
+
