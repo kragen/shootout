@@ -76,7 +76,7 @@ uasort($score, 'CompareMean');
 <table>
 <tr>
 <th>language</th>
-<th>&nbsp;mean&nbsp;</th>
+<th>&nbsp;score&nbsp;</th>
 <th>&nbsp;ratio&nbsp;</th>
 <th>&nbsp;</th>
 </tr>
