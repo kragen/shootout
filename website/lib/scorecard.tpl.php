@@ -70,30 +70,20 @@ function CompareMean($a, $b){
    return  ($a[0] > $b[0]) ? -1 : 1;
 }
 
-function CompareMissing($a, $b){
-   if ($a[1] == $b[1]) return 0;
-   return  ($a[1] > $b[1]) ? -1 : 1;
-}
-
 function CompareMedian($a, $b){
    if ($a[2] == $b[2]) return 0;
    return  ($a[2] > $b[2]) ? -1 : 1;
 }
 
-$C0 = 'class="r"';
-$C1 = 'class="r"'; 
+$C0 = 'class="r"'; 
 $C2 = 'class="r"'; 
 if ($Sort=='mean'){ 
    uasort($score, 'CompareMean');
    $C0 = 'class="rb"';    
-} elseif ($Sort=='missing'){ 
-   uasort($score, 'CompareMissing');
-   $C1 = 'class="rb"';
 } elseif ($Sort=='median'){ 
    uasort($score, 'CompareMedian');
    $C2 = 'class="rb"';
 }  
-
 
 ?>
 
@@ -114,33 +104,44 @@ if ($Sort=='mean'){
    <a href="benchmark.php?test=all&amp;lang=all&amp;sort=mean" 
    title="Sort by Weighted Mean Score">sort</a>
 </th>
-<th>
-   <a href="benchmark.php?test=all&amp;lang=all&amp;sort=missing" 
-   title="Sort by Missing Programs">sort</a>
-</th>
+<th class="c">&nbsp;</th>
 </tr>
 
 <tr>
 <th>language</th>
 <th <?=$C2;?>>&nbsp;median&nbsp;</th>
 <th <?=$C0;?>>&nbsp;mean&nbsp;</th>
-<th <?=$C1;?>>&nbsp;missing&nbsp;</th>
+<th>&nbsp;&nbsp;&nbsp;ratio&nbsp;</th>
+<th>&nbsp;missing&nbsp;</th>
 </tr>
 
 <?  
 echo "<tr><th>best possible</th>\n";
-printf('<th class="r">%0.1f</th><th class="r">%0.1f</th><th class="r">0</th>', $possibleMedian, $possible); 
-echo "\n</tr>\n";
+printf('<th class="r">%0.1f</th><th class="r">%0.1f</th>', $possibleMedian, $possible); 
+echo "<th>&nbsp;</th><th>&nbsp;</th>\n</tr>\n";
 
 $RowClass = 'c';
 foreach($score as $k => $v){   
+   if (!isset($first)){ $first = $v; }
+
+   if ($Sort=='mean'){   
+      if ($v[0]==0){ $ratio = 0; }
+      else { $ratio = $first[0]/$v[0]; }
+   } elseif ($Sort=='missing'){ 
+      if ($v[1]==0){ $ratio = 0; }
+      else { $ratio = $first[1]/$v[1]; }
+   } elseif ($Sort=='median'){ 
+      if ($v[2]==0){ $ratio = 0; }
+      else { $ratio = $first[2]/$v[2]; }
+   } 
+
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr class="%s">',$RowClass); echo "\n";
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
       $k,$k,$HtmlName); echo "\n";
-   printf('<td %s>%0.1f</td><td %s>%0.1f</td><td %s>%d</td>',
-      $C2, $v[2], $C0, $v[0], $C1, $v[1]); echo "\n";
+   printf('<td %s>%0.1f</td><td %s>%0.1f</td><td class="r">%0.1fx</td><td class="r">%d</td>',
+      $C2, $v[2], $C0, $v[0], $ratio, $v[1]); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
@@ -192,7 +193,7 @@ foreach($score as $k => $v){
 <tr><th>benchmark</th><th>weight</th></tr>
 
 <?  
-$RowClass = 'c';
+$RowClass = 'a';
 foreach($Tests as $t){
    $Link = $t[TEST_LINK];
    $Name = $t[TEST_NAME];
@@ -202,7 +203,7 @@ foreach($Tests as $t){
    printf('<td><a href="benchmark.php?test=%s&amp;lang=all">%s</a></td>', $Link,$Name); echo "\n";
    printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
+   //if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
 
