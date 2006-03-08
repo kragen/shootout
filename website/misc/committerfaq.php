@@ -78,13 +78,17 @@
 <p>The build-scripts expect the <strong>file-extension</strong> to indicate the programming language. Mostly the file-extensions are just be the programming language or implementation name - look at the file-extensions used for the fibonacci programs. However there are some exceptions:</p>
 <table>
 <tr><th>&nbsp;language&nbsp;</th><th>&nbsp;file&nbsp;extension&nbsp;</th></tr>
+<tr><td>Free BASIC</td><td>fbasic</td></tr>
 <tr><td>C#</td><td>csharp</td></tr>
 <tr><td>D</td><td>dlang</td></tr>
 <tr><td>GNU C++</td><td>gpp</td></tr>
 <tr><td>Intel Fortran</td><td>ifc</td></tr>
+<tr><td>Mozart/Oz</td><td>oz</td></tr>
 <tr><td>OO2C Oberon</td><td>oberon2</td></tr>
 <tr><td>GNU Objective-C</td><td>objc</td></tr>
-<tr><td>Mozart/Oz</td><td>oz</td></tr>
+<tr><td>Free Pascal</td><td>fpascal</td></tr>
+<tr><td>GNU Smalltalk</td><td>gst</td></tr>
+<tr><td>VisualWorks Smalltalk</td><td>vw</td></tr>
 </table>
 
 <p>Change the source-code file-extension to the extension used in CVS.</p>
