@@ -83,7 +83,7 @@ uasort($score, 'CompareMean');
 
 <?  
 echo "<tr><th>best possible</th>\n";
-printf('<th class="r">%0.1f</th><th class="r">1.0x</th><th class="r">0</th>', $possible); 
+printf('<th class="r">%0.1f</th><th class="r">1.0x</th><th class="r">&nbsp;0</th>', $possible); 
 echo "\n</tr>\n";
 
 $RowClass = 'c';
