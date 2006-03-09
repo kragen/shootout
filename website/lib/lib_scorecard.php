@@ -189,5 +189,9 @@ function MedianScores(&$Scores, &$Weights){
    return $medianScores;
 }
 
+function PBlank($d){
+   if ($d>0){ return number_format($d); }   
+   else { return "&nbsp;"; }
+}
 
 ?>

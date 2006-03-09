@@ -16,7 +16,7 @@
 <tr><td colspan="2">
 <p>What fun! <a href="http://en.wikipedia.org/wiki/April_Fool's_Day" title="April Fool's Day defined on Wikipedia"><strong>April Fool's Day</strong></a> all year long! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
 
-<p>And remember, languages that implement more benchmarks will move to the top of the list, and those with many missing benchmarks (No Program, Error, Timeout) will stay at the bottom!</p>
+<p>And remember, languages with more &#215; non-scoring benchmarks (No Program, Error, Timeout) will stay at the bottom of the table!</p>
 
 <p>And remember, "<strong>For every complex problem, there is a solution that is simple, neat, and wrong</strong>."</p>
 </td></tr> 
@@ -78,12 +78,12 @@ uasort($score, 'CompareMean');
 <th>ratio</th>
 <th>language</th>
 <th>score</th>
-<th>&nbsp;</th>
+<th>&#215;</th>
 </tr>
 
 <?  
 printf('<tr><th></th><th>best possible</th>');
-printf('<th class="r">%0.1f</th><th class="r">&nbsp;0</th>', $possible); 
+printf('<th class="r">%0.1f</th><th class="r">&nbsp;</th>', $possible); 
 echo "\n</tr>\n";
 
 $RowClass = 'c';
@@ -99,8 +99,8 @@ foreach($score as $k => $v){
 
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
       $k,$k,$HtmlName); echo "\n";
-   printf('<td class="r">%0.1f</td><td class="r">%d</td>',
-      $v[0], $v[1]); echo "\n";
+   printf('<td class="r">%0.1f</td><td class="r">%s</td>',
+      $v[0], PBlank($v[1])); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
