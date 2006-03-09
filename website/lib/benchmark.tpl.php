@@ -62,6 +62,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <tr><td><table>
 <tr>
 <th class="c">&nbsp;</th>
+<th class="c">&nbsp;</th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=fullcpu" 
    title="Sort by Full CPU Time, including Startup Time">sort</a>
@@ -74,15 +75,14 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=lines" 
    title="Sort by Code Lines">sort</a>
 </th>
-<th>&nbsp;</th>
 </tr>
 
 <tr>
+<th>&nbsp;Ratio&nbsp;</th>
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>
 <th>Code Lines</th>
-<th>&nbsp;Ratio&nbsp;</th>
 </tr>
 
 <? 
@@ -95,7 +95,6 @@ if (sizeof($Accepted) > 0){ $first = $Accepted[0]; }
 foreach($Accepted as $d){
    $k = $d[DATA_LANG]; 
    
-   $C1 = 'class="r"'; 
    $C2 = 'class="r"'; 
    $C3 = 'class="r"';
    $C4 = 'class="r"';   
@@ -133,11 +132,11 @@ foreach($Accepted as $d){
    $lines = $d[DATA_LINES];
 
    printf('<tr class="%s">',$RowClass); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
-      $SelectedTest,$k,$id,$HtmlName); echo "\n";
+   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+      PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%d</td><td %s>%s</td>',
-         $C2, $fullcpu, $C3, $kb, $C4, $lines, $C1, PFx($ratio) ); echo "\n";
+   printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%d</td>',
+         $C2, $fullcpu, $C3, $kb, $C4, $lines ); echo "\n";
 
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
@@ -160,12 +159,12 @@ foreach($Langs as $k => $v){
          $fullcpu = $d[DATA_FULLCPU];
          $lines = $d[DATA_LINES];     
                     
-         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+         printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
             $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td class="r">%s</td><td></td><td class="r">%d</td><td></td>', $message, $lines);   
+         printf('<td class="r">%s</td><td></td><td class="r">%d</td>', $message, $lines);   
        
          echo "</tr>\n";
          if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }    
@@ -208,17 +207,17 @@ if (sizeof($Special)>0){
       $lines = $d[DATA_LINES];
 
       printf('<tr class="%s">',$RowClass); echo "\n";
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
-         $SelectedTest,$k,$id,$HtmlName); echo "\n";
+      printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+         PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
       if ($fullcpu > PROGRAM_TIMEOUT){
-            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td>',
-               $fullcpu, $kb, $lines, PFx($ratio) ); echo "\n";
+            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
+               $fullcpu, $kb, $lines ); echo "\n";
       }
       else {
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td class="r">%s</td><td></td><td class="r">%d</td><td></td>', $message, $lines);         
+         printf('<td></td><td class="r">%s</td><td></td><td class="r">%d</td>', $message, $lines);         
       }
       echo "</tr>\n";
       if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
@@ -240,10 +239,10 @@ if (sizeof($No_Program_Langs)>0){
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];            
 
-         printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
+         printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
             $SelectedTest,$k,$HtmlName); echo "\n";
 
-         echo '<td class="r">No&nbsp;program</td><td></td><td></td><td></td>';       
+         echo '<td class="r">No&nbsp;program</td><td></td><td></td>';       
          echo "</tr>\n";
 
          if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }          

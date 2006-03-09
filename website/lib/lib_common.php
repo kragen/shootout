@@ -378,8 +378,9 @@ function HtmlFragment($FileName){
 
 
 function PFx($d){
-   if ($d>9.99){ return '&nbsp;'.number_format($d).'x'; }   
-   else { return '&nbsp;'.number_format($d,1).'x'; }
+   if ($d>9.99){ return number_format($d); }   
+   elseif ($d>0.0){ return number_format($d,1); }
+   else { return "&nbsp;"; }
 }
 
 ?>

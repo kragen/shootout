@@ -75,15 +75,15 @@ uasort($score, 'CompareMean');
 <td>
 <table>
 <tr>
+<th>ratio</th>
 <th>language</th>
 <th>&nbsp;score&nbsp;</th>
-<th>&nbsp;ratio&nbsp;</th>
 <th>&nbsp;</th>
 </tr>
 
 <?  
-echo "<tr><th>best possible</th>\n";
-printf('<th class="r">%0.1f</th><th class="r">1.0x</th><th class="r">&nbsp;0</th>', $possible); 
+printf('<tr><th>1.0</th><th>best possible</th>');
+printf('<th class="r">%0.1f</th><th class="r">&nbsp;0</th>', $possible); 
 echo "\n</tr>\n";
 
 $RowClass = 'c';
@@ -94,11 +94,13 @@ foreach($score as $k => $v){
 
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
-   printf('<tr class="%s">',$RowClass); echo "\n";
+   printf('<tr class="%s">',$RowClass); 
+   printf('<td>%s</td>', PFx($ratio)); 
+
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
       $k,$k,$HtmlName); echo "\n";
-   printf('<td class="r">%0.1f</td><td class="r">%0.1fx</td><td class="r">%d</td>',
-      $v[0], $ratio, $v[1]); echo "\n";
+   printf('<td class="r">%0.1f</td><td class="r">%d</td>',
+      $v[0], $v[1]); echo "\n";
    echo "</tr>\n";
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
