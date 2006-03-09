@@ -82,7 +82,7 @@ uasort($score, 'CompareMean');
 </tr>
 
 <?  
-printf('<tr><th>1.0</th><th>best possible</th>');
+printf('<tr><th></th><th>best possible</th>');
 printf('<th class="r">%0.1f</th><th class="r">&nbsp;0</th>', $possible); 
 echo "\n</tr>\n";
 
