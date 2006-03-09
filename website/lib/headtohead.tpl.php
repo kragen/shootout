@@ -15,7 +15,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <p>Compare the performance of <strong><?=$LangName;?></strong> programs against some other language implementation, or check the <?=$Family;?> <a href="benchmark.php?test=all&amp;lang=<?=$Link;?>&amp;lang2=<?=$Link;?>" title="Show <?=$LangName;?> measurements">CPU time and Memory use measurements</a>.</p>
 
 <p>For more information about the <?=$Family;?> implementation we measured see
-<a href="#about" title="Read about the <?=$LangName;?> language implementation">about <?=$LangName;?></a>.</p>
+<a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
 </div>
 
 <!-- // MENU /////////////////////////////////////////////////// -->

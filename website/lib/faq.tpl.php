@@ -26,12 +26,12 @@
 
 <tr class="b"><td><a class="ab" href="#contents" name="contents">What else?</a></td></tr>
 <tr><td>
-<p><a href="#help"><strong>Where can I discuss&#8230; contribute&#8230;?</strong></a></p>
-<p><a href="#where"><strong>Where can I see&#8230;?</strong></a></p>
-<p><a href="#means"><strong>What does &#8230; mean?</strong></a></p>
-<p><a href="#measure"><strong>How did you measure&#8230;?</strong></a></p>
-<p><a href="#whydont"><strong>Why don't you &#8230;?</strong></a></p>
-<p><a href="#when"><strong>Who&#8230;?</strong> <strong>When&#8230;?</strong> <strong>Why&#8230;?</strong></a></p>
+<p><a href="#help"><strong>&darr;&nbsp;Where can I discuss&#8230; contribute&#8230;?</strong></a></p>
+<p><a href="#where"><strong>&darr;&nbsp;Where can I see&#8230;?</strong></a></p>
+<p><a href="#means"><strong>&darr;&nbsp;What does &#8230; mean?</strong></a></p>
+<p><a href="#measure"><strong>&darr;&nbsp;How did you measure&#8230;?</strong></a></p>
+<p><a href="#whydont"><strong>&darr;&nbsp;Why don't you &#8230;?</strong></a></p>
+<p><a href="#when"><strong>&darr;&nbsp;Who&#8230;?</strong> <strong>When&#8230;?</strong> <strong>Why&#8230;?</strong></a></p>
 </td></tr>
 
 </table>
@@ -50,9 +50,9 @@
 <li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
 <li>read the benchmark description</a></li>
 <li>read some of the programs</a></li>
-<li>read <a href="#implement"><strong>"How should I implement&#8230;?"</strong></a></li>
+<li>read <a href="#implement"><strong>&darr;&nbsp;"How should I implement&#8230;?"</strong></a></li>
 </ul>
-<p>Then follow these detailed instructions <a href="#contribute"><strong>"How do I contribute a program?"</strong></a></p>
+<p>Then follow these detailed instructions <a href="#contribute"><strong>&darr;&nbsp;"How do I contribute a program?"</strong></a></p>
 <p>Be Respectful! Don't ridicule other people's programs - just contribute a better program yourself.</p>
 </td></tr>
 
@@ -62,7 +62,7 @@
 <ul>
 <li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
 <li>read the benchmark descriptions</a></li>
-<li>read <a href="#newbench"><strong>"How can I contribute a new benchmark?"</strong></a></li>
+<li>read <a href="#newbench">&darr; <strong>"How can I contribute a new benchmark?"</strong></a></li>
 </ul>
 </td></tr>
 
@@ -169,7 +169,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 <p>Before contributing programs</p>
 <ol>
 <li>read the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
-<li>read <a href="faq.php#implement"><strong>How should I implement&#8230;?</strong></a></li>
+<li>read <a href="faq.php#implement">&darr;&nbsp;<strong>How should I implement&#8230;?</strong></a></li>
 <li>login with an Alioth id <em>is not required</em> but login allows you to make updates after contributing a program - <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a>.</li>
 </ol>
 
@@ -212,7 +212,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <tr><td>
 <p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
-<p>Maybe you'd like to <a href="#chores">help us with the chores</a>?</p>
+<p>Maybe you'd like to <a href="#chores">&darr;&nbsp;help us with the chores</a>?</p>
 <p>Normally, contributed programs will be measured and included on the website once or twice each week.</p>
 <p>The simplest way to find out when new measurements have been made is to subscribe to <a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a> - our <a href="<?=CORE_SITE;?>feeds/rss.xml">RSS feed</a>.</p>
 <p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" border="0" alt="Add to My Yahoo!"></a></p>
@@ -493,7 +493,7 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, look back at the 2001 <span><a class="arevOld" title="Look back at the Old 2001 Doug Bagley Benchmarks" href="<?=OLD_SITE;?>index.php" >&nbsp;Old Doug Bagley Benchmarks&nbsp;</a></span>.</p>
 <p>Benchmarks were deprecated, new benchmarks were added; and we continue to experiment on <span><a class="arevSandbox" title="Alpha benchmarks and more language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span>
  website.</p>
-<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it 
+<p>In late-2005 Isaac Gouy started to experiment with the <span><a class="arevGP4" title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it 
         will end?</p>
 </td></tr>
 
