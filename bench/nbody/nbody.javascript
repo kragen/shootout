@@ -2,9 +2,9 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy */
 
-const PI = 3.141592653589793;
-const SOLAR_MASS = 4 * PI * PI;
-const DAYS_PER_YEAR = 365.24;
+var PI = 3.141592653589793;
+var SOLAR_MASS = 4 * PI * PI;
+var DAYS_PER_YEAR = 365.24;
 
 function Body(x,y,z,vx,vy,vz,mass){
    this.x = x;
