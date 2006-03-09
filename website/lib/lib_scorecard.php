@@ -139,7 +139,7 @@ function Weights($Tests, $Action, $Vars, $CVars){
    $w = array(); $wd = array();
    foreach($Tests as $t){
       $link = $t[TEST_LINK];  
-      if (isset($Vars[$link])){ $x = $Vars[$link]; }              
+      if (isset($Vars[$link]) && is_numeric($Vars[$link])){ $x = $Vars[$link]; }              
       elseif (isset($cookie[$link])){ $x = $cookie[$link]; }          
       else { $x = $t[TEST_WEIGHT]; } 
                
@@ -148,8 +148,8 @@ function Weights($Tests, $Action, $Vars, $CVars){
    }           
    
    $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);       
-   foreach($Metrics as $k => $v){  
-      if (isset($Vars[$k])){ $x = $Vars[$k]; }                   
+   foreach($Metrics as $k => $v){ 
+      if (isset($Vars[$k]) && is_numeric($Vars[$k])){ $x = $Vars[$k]; }                   
       elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
       else { $x = $v; }          
          
