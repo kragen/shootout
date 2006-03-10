@@ -47,12 +47,27 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
 <span class="kwc">private</span><span class="sym">:</span>
     pthread_t id<span class="sym">;</span>
     <span class="kwb">int</span> message <span class="sym">= -</span><span class="num">1</span><span class="sym">;</span>
+    sem_t semr<span class="sym">;</span>
     <span class="kwb">static</span> pthread_attr_t pa<span class="sym">;</span>
+    <span class="kwb">static</span> sem_t semw<span class="sym">;</span>
+    <span class="kwb">static</span> threads <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
 
     <span class="kwb">static</span> <span class="kwa">this</span><span class="sym">()</span>
     <span class="sym">{</span>
         <span class="kwd">pthread_attr_init</span><span class="sym">(&amp;</span>pa<span class="sym">);</span>
         <span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&amp;</span>pa<span class="sym">,</span>ushort<span class="sym">.</span>max<span class="sym">);</span>
+        <span class="kwd">sem_init</span><span class="sym">(&amp;</span>semw<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
+    <span class="sym">}</span>
+
+    <span class="kwc">private</span> <span class="kwb">int</span> <span class="kwd">take</span><span class="sym">()</span>
+    <span class="sym">{</span>
+        <span class="kwb">int</span> msg <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+        <span class="kwa">if</span><span class="sym">(</span>message <span class="sym">&gt; -</span><span class="num">1</span><span class="sym">)</span>
+        <span class="sym">{</span>
+            msg <span class="sym">=</span> message <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+            message <span class="sym">= -</span><span class="num">1</span><span class="sym">;</span>
+        <span class="sym">}</span>
+        <span class="kwa">return</span> msg<span class="sym">;</span>
     <span class="sym">}</span>
 
 <span class="kwc">public</span><span class="sym">:</span>
@@ -62,11 +77,13 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
     <span class="kwa">this</span><span class="sym">(</span>Link next<span class="sym">)</span>
     <span class="sym">{</span>
         <span class="kwa">this</span><span class="sym">.</span>next <span class="sym">=</span> next<span class="sym">;</span>
+        <span class="kwd">sem_init</span><span class="sym">(&amp;</span>semr<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
     <span class="sym">}</span>
 
     <span class="kwb">void</span> <span class="kwd">start</span><span class="sym">()</span>
     <span class="sym">{</span>
         <span class="kwd">pthread_create</span><span class="sym">(&amp;</span>id<span class="sym">,&amp;</span>pa<span class="sym">,&amp;</span>threadrun<span class="sym">,</span><span class="kwa">this</span><span class="sym">);</span>
+        threads<span class="sym">++;</span>
     <span class="sym">}</span>
 
     <span class="kwb">void</span> <span class="kwd">wait</span><span class="sym">()</span>
@@ -78,19 +95,20 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
     <span class="sym">{</span>
         <span class="kwa">if</span><span class="sym">(</span>next<span class="sym">)</span>
         <span class="sym">{</span>
-            <span class="kwa">while</span><span class="sym">(</span>sum <span class="sym">&lt;</span> total<span class="sym">)</span>
+            <span class="kwa">while</span><span class="sym">(</span>sum <span class="sym">&lt; (</span>total <span class="sym">-</span> threads<span class="sym">))</span>
             <span class="sym">{</span>
-                <span class="kwa">if</span><span class="sym">(</span>message <span class="sym">&gt; -</span><span class="num">1</span><span class="sym">)</span> next<span class="sym">.</span><span class="kwd">put</span><span class="sym">(</span>message <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span>
-                <span class="kwd">pthread_yield</span><span class="sym">();</span>
+                <span class="kwd">sem_wait</span><span class="sym">(&amp;</span>semr<span class="sym">);</span>
+                next<span class="sym">.</span>message <span class="sym">=</span> <span class="kwd">take</span><span class="sym">();</span>
+                <span class="kwd">sem_post</span><span class="sym">(&amp;</span>next<span class="sym">.</span>semr<span class="sym">);</span>
             <span class="sym">}</span>
         <span class="sym">}</span>
         <span class="kwa">else</span>
         <span class="sym">{</span>
             <span class="kwa">while</span><span class="sym">(</span>sum <span class="sym">&lt;</span> total<span class="sym">)</span>
             <span class="sym">{</span>
-                <span class="kwb">int</span> msg <span class="sym">=</span> message <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
-                sum <span class="sym">+=</span> msg<span class="sym">;</span>
-                <span class="kwd">pthread_yield</span><span class="sym">();</span>
+                <span class="kwd">sem_wait</span><span class="sym">(&amp;</span>semr<span class="sym">);</span>
+                sum <span class="sym">+=</span> <span class="kwd">take</span><span class="sym">();</span>
+                <span class="kwd">sem_post</span><span class="sym">(&amp;</span>semw<span class="sym">);</span>
             <span class="sym">}</span>
         <span class="sym">}</span>
     <span class="sym">}</span>
@@ -98,6 +116,8 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
     <span class="kwb">void</span> <span class="kwd">put</span><span class="sym">(</span><span class="kwb">int</span> msg<span class="sym">)</span>
     <span class="sym">{</span>
         message <span class="sym">=</span> msg<span class="sym">;</span>
+        <span class="kwd">sem_post</span><span class="sym">(&amp;</span>semr<span class="sym">);</span>
+        <span class="kwd">sem_wait</span><span class="sym">(&amp;</span>semw<span class="sym">);</span>
     <span class="sym">}</span>
 <span class="sym">}</span>
 
