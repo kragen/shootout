@@ -6,25 +6,26 @@
    compile: dmd -O -inline -release revcomp.d
 */
 
-import std.cstream, std.string;
+import std.cstream;
 
 int main()
 {
     char[4096]      bufr;
     BufferedStream  bsi = new BufferedStream(din,bufr.length);
+    BufferedStream  bso = new BufferedStream(dout);
     int             offset;
     char[]          desc,line,data,rc = new char[char.max];
 
     for(char c = 0; c < char.max; c++) rc[c] = revComp(c);
 
-    foreach(char[] ln; bsi)
+    while(!bsi.eof())
     {
-        line = ln;
+        line = bsi.readLine(bufr);
         if(line.length)
         {
             if(line[0] == '>')
             {
-                writeRC(desc,data[0..offset],line,rc);
+                writeRC(desc,data[0..offset],line,rc,bso);
                 offset = 0;
             }
             else
@@ -36,19 +37,20 @@ int main()
             }
         }
     }
-    writeRC(desc,data[0..offset],line,rc);
+    writeRC(desc,data[0..offset],line,rc,bso);
+    bso.close();
 
     return 0;
 }
 
-void writeRC(inout char[] desc,char[] data,char[] line,char[] rc)
+void writeRC(inout char[] desc,char[] data,char[] line,char[] rc,BufferedStream bso)
 {
     if(desc.length)
     {
         const int lineLen = 60;
-        char[lineLen] lineOut;
+        char[lineLen+1] lineOut;
 
-        dout.writefln(desc);
+        bso.writefln(desc);
         for(int i = data.length - 1, j = 0; i >= 0; i--)
         {
             lineOut[j] = data[i] = rc[data[i]];
@@ -56,7 +58,8 @@ void writeRC(inout char[] desc,char[] data,char[] line,char[] rc)
             j++;
             if(j == lineLen || i == 0)
             {
-                dout.writeLine(lineOut[0..j]);
+                lineOut[j] = '\n';
+                bso.write(cast(ubyte[])lineOut[0..j+1]);
                 j = 0;
             }
         }
