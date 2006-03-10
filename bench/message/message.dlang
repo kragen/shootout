@@ -18,7 +18,7 @@ int main(char[][] args)
     for(int i = 0; i < threads; i++)
     {
         Link next = new Link(chain);
-        chain = next; 
+        chain = next;
     }
 
     Link first = chain;
@@ -47,12 +47,27 @@ class Link
 private:
     pthread_t id;
     int message = -1;
+    sem_t semr;
     static pthread_attr_t pa;
+    static sem_t semw;
+    static threads = 0;
 
     static this()
     {
         pthread_attr_init(&pa);
         pthread_attr_setstacksize(&pa,ushort.max);
+        sem_init(&semw,0,0);
+    }
+
+    private int take()
+    {
+        int msg = 0;
+        if(message > -1)
+        {
+            msg = message + 1;
+            message = -1;
+        }
+        return msg;
     }
 
 public:
@@ -62,11 +77,13 @@ public:
     this(Link next)
     {
         this.next = next;
+        sem_init(&semr,0,0);
     }
 
     void start()
     {
         pthread_create(&id,&pa,&threadrun,this);
+        threads++;
     }
 
     void wait()
@@ -78,19 +95,20 @@ public:
     {
         if(next)
         {
-            while(sum < total)
+            while(sum < (total - threads))
             {
-                if(message > -1) next.put(message + 1);
-                pthread_yield();
+                sem_wait(&semr);
+                next.message = take();
+                sem_post(&next.semr);
             }
         }
         else
         {
             while(sum < total)
             {
-                int msg = message + 1;
-                sum += msg;
-                pthread_yield();
+                sem_wait(&semr);
+                sum += take();
+                sem_post(&semw);
             }
         }
     }
@@ -98,6 +116,8 @@ public:
     void put(int msg)
     {
         message = msg;
+        sem_post(&semr);
+        sem_wait(&semw);
     }
 }
 
