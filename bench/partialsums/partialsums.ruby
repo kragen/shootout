@@ -9,31 +9,31 @@
 
 n = (ARGV.shift || 1).to_i
 
-sum = Array.new(9, 0.0) ; alt = 1.0 ; d = 1.0
+alt = 1.0 ; s0 = s1 = s2 = s3 = s4 = s5 = s6 = s7 = s8 = 0.0
 
-n.times do
-  d2 = d * d ; d3 = d2 * d ; ds = Math.sin(d) ; dc = Math.cos(d)
+1.upto(n) do |d|
+  d = d.to_f ; d2 = d * d ; d3 = d2 * d ; ds = Math.sin(d) ; dc = Math.cos(d)
 
-  sum[0] += (2 / 3.0) ** (d - 1.0)
-  sum[1] += 1 / Math.sqrt(d)
-  sum[2] += 1 / (d * (d + 1))
-  sum[3] += 1 / (d3 * ds * ds)
-  sum[4] += 1 / (d3 * dc * dc)
-  sum[5] += 1 / d
-  sum[6] += 1 / (d2)
-  sum[7] += alt / d
-  sum[8] += alt / (2 * d - 1)
+  s0 += (2.0 / 3.0) ** (d - 1.0)
+  s1 += 1.0 / Math.sqrt(d)
+  s2 += 1.0 / (d * (d + 1.0))
+  s3 += 1.0 / (d3 * ds * ds)
+  s4 += 1.0 / (d3 * dc * dc)
+  s5 += 1.0 / d
+  s6 += 1.0 / d2
+  s7 += alt / d
+  s8 += alt / (2.0 * d - 1.0)
 
-  alt = -alt ; d += 1.0
+  alt = -alt
 end
 
-printf("%.9f\t(2/3)^k\n", sum[0])
-printf("%.9f\tk^-0.5\n", sum[1])
-printf("%.9f\t1/k(k+1)\n", sum[2])
-printf("%.9f\tFlint Hills\n", sum[3])
-printf("%.9f\tCookson Hills\n", sum[4])
-printf("%.9f\tHarmonic\n", sum[5])
-printf("%.9f\tRiemann Zeta\n", sum[6])
-printf("%.9f\tAlternating Harmonic\n", sum[7])
-printf("%.9f\tGregory\n", sum[8])
+printf("%.9f\t(2/3)^k\n", s0)
+printf("%.9f\tk^-0.5\n", s1)
+printf("%.9f\t1/k(k+1)\n", s2)
+printf("%.9f\tFlint Hills\n", s3)
+printf("%.9f\tCookson Hills\n", s4)
+printf("%.9f\tHarmonic\n", s5)
+printf("%.9f\tRiemann Zeta\n", s6)
+printf("%.9f\tAlternating Harmonic\n", s7)
+printf("%.9f\tGregory\n", s8)
 
