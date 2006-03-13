@@ -4,18 +4,6 @@
 //
 // Based on D language implementation by Dave Fladebo
 //
-// Unfortunately, this contribution will fail to match Shootout output
-// since both the built-in 'sqrt' and 'pow' functions exhibit different
-// rounding behaviour to the equivalent functions in other Shootout
-// languages [most of which, I believe, simply make use of the standard
-// C Library math routines]. The only remedy of which I'm aware is
-// writing a Pike module which specifically utilises the relevant C
-// Library math routines, and recompile / reinstall the Pike interpreter
-// to utilise this module. Not sure, however, how feasable this is.
-//
-// Sadly, this is a problem also shared by a few other Shootout
-// languages including Regina REXX, Mozart Oz, and REBOL.
-//
 // Contributed by Anthony Borla
 // ---------------------------------------------------------------------
 
