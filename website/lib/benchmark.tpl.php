@@ -1,7 +1,5 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 
-<!-- // MENU /////////////////////////////////////////////////// -->
-<div>
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); 
 $Row = $Tests[$SelectedTest];
@@ -27,39 +25,23 @@ foreach($Accepted as $d){
    if ($d[DATA_TESTVALUE]>0){ $NString = 'N='.number_format((double)$d[DATA_TESTVALUE]); break; }
 }
 ?>
-</div>
 
-<!-- // TAG /////////////////////////////////////////////////// -->
 
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?></a></h4>
+<h2><a href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
 <p>Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark description</strong></a>.
 <?=$TestTag;?> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
 </p>
-</td></tr>
-</table>
 
-
-<!-- // CHART //////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td colspan="5">
-
-<img src="chart.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"
+<p><img src="chart.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"
    alt="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
    title="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
    width="450" height="150"
- />
-</td></tr>
-</table>
+ /></p>
 
+<table>
+<colgroup span="2" class="txt"></colgroup>
 
-
-<!-- // BENCHMARK TABLE //////////////////////////////////////// -->
-<table class="div">
-<tr><td><table>
 <tr>
 <th class="c">&nbsp;</th>
 <th class="c">&nbsp;</th>
@@ -88,26 +70,24 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <? 
 foreach($Langs as $k => $v){ $No_Program_Langs[$k] = TRUE; }
 
-$RowClass = 'c';
 $better = array();
 if (sizeof($Accepted) > 0){ $first = $Accepted[0]; }
 
 foreach($Accepted as $d){
    $k = $d[DATA_LANG]; 
    
-   $C2 = 'class="r"'; 
-   $C3 = 'class="r"';
-   $C4 = 'class="r"';   
-   
+   $CPU = ''; 
+   $MEM = '';
+   $LOCS = '';      
    if (!isset($better[$k])){  
       $better[$k] = TRUE;
       // Sort according to current sort criteria, bold the sort-column
       if ($Sort=='fullcpu'){ 
-         $C2 = 'class="rb"';    
+         $CPU = ' class="sort"';    
       } elseif ($Sort=='kb'){ 
-         $C3 = 'class="rb"';
+         $MEM = ' class="sort"';
       } elseif ($Sort=='lines'){ 
-         $C4 = 'class="rb"';
+         $LOCS = ' class="sort"';
       }    
    }      
 
@@ -131,26 +111,24 @@ foreach($Accepted as $d){
    if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    $lines = $d[DATA_LINES];
 
-   printf('<tr class="%s">',$RowClass); echo "\n";
+   printf('<tr">'); echo "\n";
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%d</td>',
-         $C2, $fullcpu, $C3, $kb, $C4, $lines ); echo "\n";
+   printf('<td%s>%0.2f</td><td%s>%s</td><td%s>%d</td>',
+         $CPU, $fullcpu, $MEM, $kb, $LOCS, $lines ); echo "\n";
 
    echo "</tr>\n";
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 unset($better);
 ?>
 
-
-<? // FAILED PROGRAMS TABLE //////////////////////////
+<? 
 uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
    foreach($Rejected as $d){                   
       if ($d[DATA_LANG]==$k){         
-         printf('<tr class="%s">',$RowClass); echo "\n";             
+         printf('<tr>'); echo "\n";             
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];    
          if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }             
@@ -166,22 +144,17 @@ foreach($Langs as $k => $v){
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
          printf('<td class="r">%s</td><td></td><td class="r">%d</td>', $message, $lines);   
        
-         echo "</tr>\n";
-         if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }    
+         echo "</tr>\n";   
          unset($No_Program_Langs[$k]);         
       }  
    }    
 }
 ?>
 
-
-<!-- // SPECIAL PROGRAMS TABLE //////////////////////////////////////// -->
 <?
 if (sizeof($Special)>0){
-   echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";   // BAD using rows for spacing 
-   echo '<tr><th colspan="5"><a class="ab" href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
+   echo '<tr><th colspan="5"><a href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
 
-   $RowClass = 'c';
    foreach($Special as $d){
       $k = $d[DATA_LANG];         
       $Name = $Langs[$k][LANG_FULL];
@@ -206,7 +179,7 @@ if (sizeof($Special)>0){
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
       $lines = $d[DATA_LINES];
 
-      printf('<tr class="%s">',$RowClass); echo "\n";
+      printf('<tr>'); echo "\n";
       printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
@@ -220,7 +193,6 @@ if (sizeof($Special)>0){
          printf('<td></td><td class="r">%s</td><td></td><td class="r">%d</td>', $message, $lines);         
       }
       echo "</tr>\n";
-      if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
    }
 }
 ?>
@@ -229,13 +201,12 @@ if (sizeof($Special)>0){
 <? // MISSING PROGRAMS TABLE //////////////////////////
 
 if (sizeof($No_Program_Langs)>0){
-   echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacing
-   echo '<tr><th colspan="5"><a class="ab" href="#missing" name="missing">missing programs</a></th></tr>', "\n";
+   echo '<tr><th colspan="5"><a href="#missing" name="missing">missing programs</a></th></tr>', "\n";
       
    foreach($Langs as $k => $v){
       $no_program = isset($No_Program_Langs[$k]);        
       if ($no_program){  
-         printf('<tr class="%s">',$RowClass); echo "\n";             
+         printf('<tr>'); echo "\n";             
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];            
 
@@ -243,23 +214,12 @@ if (sizeof($No_Program_Langs)>0){
             $SelectedTest,$k,$HtmlName); echo "\n";
 
          echo '<td class="r">No&nbsp;program</td><td></td><td></td>';       
-         echo "</tr>\n";
-
-         if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; }          
+         echo "</tr>\n";     
       }                                                      
    }     
 }
-
-echo '<tr><td colspan="5">&nbsp;</td></tr>', "\n";  // BAD using rows for spacing
 ?>
-
-
-</table></td></tr>
-
-<!-- // ABOUT /////////////////////////////////////////////////// -->
-
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the <?=$TestName;?> <?=TESTS_PHRASE;?></a></h4></td></tr>
-<tr><td>
-<?=$About;?>
-</td></tr>
 </table>
+
+<h3><a href="#about" name="about">&nbsp;about the <?=$TestName;?> <?=TESTS_PHRASE;?></a></h3>
+<?=$About;?>

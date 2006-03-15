@@ -29,14 +29,6 @@ define('GP4_SITE', './');
 
 // CONSTANTS ///////////////////////////////////////////////////
 
-define('REV_COLOR', '#7b59de');     // background color for banner etc
-define('REV_COLOR_CORE', 'navy');         
-define('REV_COLOR_GREAT', '#991900');         
-define('REV_COLOR_SANDBOX', '#cc9900'); 
-define('REV_COLOR_OLD', 'gray');  
-define('REV_COLOR_CONTESTS', '#ff0000');   
-define('REV_COLOR_GP4', '#7b59de');
-
 define('DEV',TRUE);                 // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 

@@ -1,19 +1,13 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 
-
-<!-- // MENU /////////////////////////////////////////////////// -->
-
-<div>
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 $TestName = $Tests[$SelectedTest][TEST_NAME];
 $LangName = $Langs[$SelectedLang][LANG_FULL];
-
 $P = $SelectedLang.'-'.$Id;
 ?>
-</div>
 
-<div>
+<p>
 <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=all"
 title="Check CPU times and source-code for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestName;?> <?=TESTS_PHRASE;?></a> 
 <?=BAR;?>
@@ -23,26 +17,16 @@ title="Show <?=$LangName;?> <?=TESTS_PHRASE;?> summary" >
 <?=BAR;?>
 <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P;?>&amp;p2=<?=$P;?>&amp;p3=<?=$P;?>&amp;p4=<?=$P;?>"  
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestName;?> full data</a>
-</div>
+</p>
 
-
-<!-- // TAG /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#program" name="program">&nbsp;<?=$Title;?></a></h4>
-</td></tr>
-
-<!-- // SUMMARY TABLE //////////////////////////////////////// -->
-
-<tr><td><table>
+<h2><a href="#program" name="program">&nbsp;<?=$Title;?></a></h2>
+<table>
 <tr>
 <th>&nbsp;N&nbsp;</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>
 <th>Code Lines</th>
 </tr>
-
 <?
 if (isset($Data[$SelectedLang])){   
    foreach($Data[$SelectedLang] as $d){                 
@@ -75,31 +59,11 @@ if (isset($Data[$SelectedLang])){
    echo '<tr class="a"><td></td> <td></td> <td></td></tr>'; echo "\n";
 }        
 ?>
-
-</table></td></tr>
 </table>
+<pre><?=$Code;?></pre>
 
-<!-- // SOURCE CODE //////////////////////////////////////// -->
+<h3><a href="#log" name="log">&nbsp;build &amp; benchmark results</a></h3>
+<pre><?=$Log;?></pre>
 
-<table class="div">
-<tr><td><pre><?=$Code;?></pre></td></tr> 
-</table>
-
-<!-- // BUILD ///////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#log" name="log">&nbsp;build &amp; benchmark results</a></h4>
-</td></tr>
-</table>
-
-<table class="div">
-<tr><td><pre><?=$Log;?></pre></td></tr>
-</table> 
-
-<!-- // ABOUT /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the program</a></h4></td></tr>
-<tr><td><?=$About;?></td></tr>  
-</table>
+<h3><a href="#about" name="about">&nbsp;about the program</a></h3>
+<?=$About;?>

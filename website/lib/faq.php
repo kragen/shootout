@@ -30,6 +30,7 @@ if (SITE_NAME == 'core'){ $metaRobots = '<meta name="robots" content="all" /><me
 else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
 $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', '');
+$Page->set('PageId', 'faq');
 
 echo $Page->fetch('page.tpl.php');
 ?>

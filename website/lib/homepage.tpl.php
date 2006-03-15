@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 
 <?php      echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
@@ -10,29 +10,22 @@
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark.css" />
 <link rel="shortcut icon" href="./favicon.ico" />
-<style type="text/css" media="all">
-   .hf, .rev, .arev, .arev:visited { background-color: <?=REV_COLOR;?>; }
-   .arevCore { background-color: <?=REV_COLOR_CORE;?>; }
-   .arevGreat { background-color: <?=REV_COLOR_GREAT;?>; }
-   .arevSandbox { background-color: <?=REV_COLOR_SANDBOX;?>; }
-   .arevOld { background-color: <?=REV_COLOR_OLD;?>; }   
-   .arevGP4 { background-color: <?=REV_COLOR_GP4;?>; }
-</style>
 </head>
 
-<body>
-<table class="hf"><tr>
-<td><h2><?=$BannerTitle;?></h2></td>
-<td class="hftag"><a class="arev" href="faq.php" ><?=$FaqTitle;?></a></td>
+<body id="<?=SITE_NAME;?>">
+
+<table class="banner"><tr>
+<td><h1><a href="index.php"><?=$BannerTitle;?></a></h1></td>
+<td><h4><a href="faq.php"><?=$FaqTitle;?></a></h4></td>
 </tr></table>
 
+<div id="nav">
 <?=$PageBody;?>
-<br/>
-<p class="center">
-<a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
-   <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
-</a>
-</p>
 
+<p class="img">
+<a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
+   <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" /></a>
+</p>
+</div>
 </body>
 </html>

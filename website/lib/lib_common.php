@@ -352,7 +352,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 
 
 function MkScorecardMenuForm($Sort){
-   echo '<form method="get" action="benchmark.php">', "\n";
+   echo '<form class="score" method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
    echo '<option selected="selected" value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
    echo '</select>', "\n";

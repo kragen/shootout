@@ -59,6 +59,8 @@ $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 $metaRobots = '<meta name="robots" content="follow,noindex,noarchive" /><meta name="revisit" content="1 days" />';
 
 $Page->set('Robots', $metaRobots);
+$Page->set('PageId', 'nav');
+
 echo $Page->fetch('homepage.tpl.php');
 ?>
 

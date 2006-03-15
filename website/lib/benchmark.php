@@ -51,6 +51,8 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard 
 
+      $PageId = 'scorecard';
+
       if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
       else { $S = 'mean'; }
    
@@ -74,6 +76,8 @@ if ($T=='all'){
 
 
       } else {           // Head to Head 
+
+      $PageId = 'headtohead';
       
       require_once(LIB_PATH.'lib_headtohead.php');       
   
@@ -112,6 +116,8 @@ if ($T=='all'){
 
 } elseif ($L=='all'){ // Benchmark  
 
+      $PageId = 'benchmark';
+
       if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
       else { $S = 'fullcpu'; }
 
@@ -126,6 +132,8 @@ if ($T=='all'){
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 
 } else {              // Program
+
+      $PageId = 'program';
 
       $TestName = $Tests[$T][TEST_NAME];
       $LangName = $Langs[$L][LANG_FULL];       
@@ -175,6 +183,7 @@ $Body->set('About', $About->fetch($AboutTemplateName));
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', $MetaKeywords);
+$Page->set('PageId', $PageId);
 
 echo $Page->fetch('page.tpl.php');
 ?>

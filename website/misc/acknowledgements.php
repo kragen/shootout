@@ -1,20 +1,21 @@
-<h3 class="rev">&nbsp;acknowledgements</h3>
+<dl>
+<dt>&nbsp;acknowledgements</dt>
+<dd>
 <p>Over the years, many individuals have contributed programs, ideas, and critiques. Thank you all.</p>
 <p>We apologize to all those we've failed to mention, either here or in source code comments or on the mailing list.</p>
+</dd>
 
-
-<h4 class="rev">&nbsp;Isaac Gouy's simpler website project</h4>
+<dt>&nbsp;Isaac Gouy's simpler website project</dt>
+<dd>
 <ul>  
-
   <li>Isaac Gouy imagined a simpler more-coherent website, produced many prototypes and finally persuaded Brent Fulgham that it would be "a good thing". The design changed and improved over many months.</li>
   <li>As part of the redesign, Isaac Gouy rewrote much of the website content, and created new benchmark tests; Brent Fulgham worked and re-worked the original scripts to meet the needs of the new website.</li>
   <li>The project team expanded and took on everday maintenance chores: Christophe Troestler, Dave Fladebo, Einar Karttunen, Greg Buchholz, Joel Hoffman, Sebastien Loisel, Pascal Obry, Simon Geard, Stephen Weeks.</li>
-
 </ul>
+</dd>
 
-
-
-<h4 class="rev">&nbsp;Brent Fulgham's revival project</h4>
+<dt>&nbsp;Brent Fulgham's revival project</dt>
+<dd>
 <ul>  
   <li>Malcolm Wallace (a core Haskell researcher and implementor of the 
 nhc98 interpreter) provided several enhanced Haskell implementations.</li>
@@ -63,18 +64,20 @@ consequently, CMUCL) out.</li>
   <li>Kat-Zygfryd provided several ADA 95 corrections and additions.</li>
   <li>Ian Osgood provided some Forth corrections and implementations.</li>
 </ul>
+</dd>
 
-
-<h4 class="rev">&nbsp;Aldo Calpini's Win32 project</h4>
+<dt>&nbsp;Aldo Calpini's Win32 project</dt>
+<dd>
 <ul>
   <li>John E. Davis contributed S-Lang implementations.</li>
   <li>Isaac Gouy added Mozart/Oz, Nice, Modula-2; and some Erlang and C# programs.</li>
   <li>Erik Saltwell improved the C# implementations.</li>
   <li>Aldo Calpini provided programs in several new languages, including: Rexx, C# and Free Pascal, </li>
 </ul>
+</dd>
 
-
-<h4 class="rev">&nbsp;Doug Bagley's original project</h4>
+<dt>&nbsp;Doug Bagley's original project</dt>
+<dd>
 <ul>
   <li>Bill Lear, for most of the programs written in C++/STL.</li>
   <li>Phil Chu, helped with the Java Word Frequency test and has been helpful in discussion of the benchmark framework.</li>
@@ -112,3 +115,5 @@ consequently, CMUCL) out.</li>
   Lisp programs.</li>
   <li>Jeff Siskind has helped porting some Scheme programs to his Stalin compiler.</li>
 </ul>
+</dd>
+</dl>

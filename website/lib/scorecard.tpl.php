@@ -1,29 +1,12 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 
-<!-- // MENU /////////////////////////////////////////////////// -->
-
-<div>
 <? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
-</div>
-
-
-<!-- // TAG /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td colspan="2">
-<h4 class="rev"><a class="arev" href="#faster" name="faster">&nbsp;Create your own Overall Scores</a></h4>
-</td></tr>
-<tr><td colspan="2">
+<h2><a href="#faster" name="faster">&nbsp;Create your own Overall Scores</a></h2>
 <p>What fun! <a href="http://en.wikipedia.org/wiki/April_Fool's_Day" title="April Fool's Day defined on Wikipedia"><strong>April Fool's Day</strong></a> all year long! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p>
-
 <p>And remember, languages with more &#215; non-scoring benchmarks (No Program, Error, Timeout) will stay at the bottom of the table!</p>
-
 <p>And remember, "<strong>For every complex problem, there is a solution that is simple, neat, and wrong</strong>."</p>
-</td></tr> 
 
-
-<?  // SET WEIGHTS /////////////////////////////////////
- 
+<? 
 $minWeight = 0;    // normalize weights
 $maxWeight = 5;
 $countWeight = 0.0;
@@ -44,8 +27,6 @@ foreach($W as $k => $v){
    }
 }
 
-// CALCULATE WEIGHTED SCORES /////////////////////////////////////
-
 foreach($Data as $k => $test){
    $s = 0.0;
    foreach($test as $t => $v){
@@ -55,7 +36,6 @@ foreach($Data as $k => $test){
    }
    $score[$k] = array($s/$countWeight,sizeof($Tests)-sizeof($test));
 }
-
 unset($Data);
 
 function CompareMean($a, $b){
@@ -64,16 +44,13 @@ function CompareMean($a, $b){
 }
 
 $C0 = 'class="r"'; 
-
 uasort($score, 'CompareMean');
 ?>
 
-<tr>
+<table><tr><td>
 
-<!-- // SCORECARD LANGUAGE TABLE ///////////////////////////////////// -->
-
-<td>
 <table>
+<colgroup span="2" class="txt"></colgroup>
 <tr>
 <th>ratio</th>
 <th>language</th>
@@ -86,7 +63,6 @@ printf('<tr><th></th><th>best possible</th>');
 printf('<th class="r">%0.1f</th><th class="r">&nbsp;</th>', $possible); 
 echo "\n</tr>\n";
 
-$RowClass = 'c';
 foreach($score as $k => $v){   
    if (!isset($first)){ $first = $v; }
    if ($v[0]==0){ $ratio = 0; }
@@ -94,70 +70,52 @@ foreach($score as $k => $v){
 
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
-   printf('<tr class="%s">',$RowClass); 
+   printf('<tr>'); 
    printf('<td>%s</td>', PFx($ratio)); 
 
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>', 
       $k,$k,$HtmlName); echo "\n";
    printf('<td class="r">%0.1f</td><td class="r">%s</td>',
       $v[0], PBlank($v[1])); echo "\n";
-   echo "</tr>\n";
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
+   echo "</tr>\n"; 
 }
 ?>
-
 </table>
-</td>
 
+</td><td>
 
-<!-- // SCORECARD FORM /////////////////////////////////////////// -->
-
-<td>
-<form method="get" action="benchmark.php">
-<div>
+<form class="score" method="get" action="benchmark.php">
 <input type="hidden" name="test" value="all" />
 <input type="hidden" name="lang" value="all" />
 
 <table>
-<tr class="c">
+<tr>
 <td><p><input type="submit" name="calc" value="Calculate" /></p></td>
 <td><p><input type="submit" name="calc" value="Reset" /></p></td>
 </tr>
 
-<tr><th class="b" colspan="2">multipliers</th></tr>
-
-<!--
-<tr class="a">
-<td><a href="faq.php#cpu">CPU Time</a></td>
-<td><p><input type="text" size="2" name="xcpu" value="<?=$W['xcpu'];?>" /></p></td>
-</tr>
--->
-
-<tr class="a">
+<tr><th colspan="2">multipliers</th></tr>
+<tr>
 <td><a href="faq.php#fullcpu">Full CPU Time</a></td>
 <td><p><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></p></td>
 </tr>
-<tr class="a">
+<tr>
 <td><a href="faq.php#memory">Memory Use</a></td>
 <td><p><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></p></td>
 </tr>
-<tr class="a">
+<tr>
 <td><a href="faq.php#codelines">Code Lines</a></td>
 <td><p><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></p></td>
 </tr>
 
-<!-- THIS IS JUST FOR SPACING! SHOULD USE CSS! -->
-<tr class="c"><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><th>benchmark</th><th>weight</th></tr>
-
 <?  
-$RowClass = 'a';
 foreach($Tests as $t){
    $Link = $t[TEST_LINK];
    $Name = $t[TEST_NAME];
    $weight = $W[ $t[TEST_LINK] ];
 
-   printf('<tr class="%s">',$RowClass); echo "\n";
+   printf('<tr>'); echo "\n";
    printf('<td><a href="benchmark.php?test=%s&amp;lang=all">%s</a></td>', $Link,$Name); echo "\n";
    printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
@@ -168,16 +126,10 @@ foreach($Tests as $t){
 <td><p><input type="submit" name="calc" value="Calculate" /></p></td>
 <td><p><input type="submit" name="calc" value="Reset" /></p></td>
 </tr>
-
 </table>
-</div>
 </form>
-</td>
-</tr>
 
+</td></tr></table>
 
-<!-- // ABOUT /////////////////////////////////////////////////// -->
-
-<tr><td colspan="2"><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about the Overall Scores</a></h4></td></tr>
-<tr><td colspan="2"><?=$About;?></td></tr>  
-</table>
+<h3><a href="#about" name="about">&nbsp;about the Overall Scores</a></h3>
+<?=$About;?>

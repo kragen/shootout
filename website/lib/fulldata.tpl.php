@@ -1,9 +1,6 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 
 <?
-
-// FILTER & SORT DATA ////////////////////////////////////////
-
 $p = array($P1,$P2,$P3,$P4);
 list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,"fullcpu",$p,$Excl);
 
@@ -12,34 +9,18 @@ $TestName = $Tests[$SelectedTest][TEST_NAME];
 $TestTag = $Tests[$SelectedTest][TEST_TAG];
 ?>
 
-<!-- // MENU /////////////////////////////////////////////////// -->
-<div>
 <? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,"fullcpu"); ?>
-</div>
+<h2><a href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h2>
 
-<!-- // SELECTED FULLCPU TAG /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h4>
-</td></tr>
-</table>
-
-
-<!-- // SELECTED FULLCPU CHART //////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
+<table><tr><td>
 
 <img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
    width="160" height="240" alt="CPU Time comparison chart" />
-</td>
 
+</td><td>
 
-<!-- // SELECTED FULLCPU TABLE //////////////////////////////////////// -->
-
-<td>
 <table>
+<colgroup span="1" class="txt"></colgroup>
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
 
 <tr>
@@ -64,31 +45,20 @@ foreach($Selected as $row){
 }
 ?>
 </table>
+
 </td></tr></table>
 
+<h2><a href="#memchart" name="memchart">&nbsp;<?=$TestName;?> full data - Memory use</a></h2>
 
-<!-- // SELECTED MEMORY TAG /////////////////////////////////////////////////// -->
+<table><tr><td>
 
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#memchart" name="memchart">&nbsp;<?=$TestName;?> full data - Memory use</a></h4>
-</td></tr>
-</table>
-
-
-<!-- // SELECTED MEMORY CHART //////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
 <img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
    width="160" height="240" alt="Memory use comparison chart" />
-</td>
 
+</td><td>
 
-<!-- // SELECTED MEMORY TABLE //////////////////////////////////////// -->
-
-<td>
 <table>
+<colgroup span="1" class="txt"></colgroup>
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
 <th>N</th>
@@ -114,21 +84,12 @@ foreach($Selected as $row){
 }
 ?>
 </table>
+
 </td></tr></table>
 
-
-<!-- // FULLCPU TAG /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h4>
-</td></tr>
-</table>
-
-
-<!-- // FULLCPU TABLE //////////////////////////////////////// -->
-
-<table class="div">
+<h2><a href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h2>
+<table>
+<colgroup span="1" class="txt"></colgroup>
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
@@ -138,7 +99,6 @@ foreach($Selected as $row){
    } 
 ?>
 </tr>
-
 <? 
 $RowClass = 'c';
 foreach($NData as $row){
@@ -155,19 +115,9 @@ foreach($NData as $row){
 ?>
 </table>
 
-
-<!-- // MEMORY TAG /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td>
-<h4 class="rev"><a class="arev" href="#memtable" name="memtable">&nbsp;<?=$TestName;?> full data - Memory use</a></h4>
-</td></tr>
-</table>
-
-
-<!-- // MEMORY TABLE //////////////////////////////////////// -->
-
-<table class="div">
+<h2><a href="#memtable" name="memtable">&nbsp;<?=$TestName;?> full data - Memory use</a></h2>
+<table>
+<colgroup span="1" class="txt"></colgroup>
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
@@ -177,7 +127,6 @@ foreach($NData as $row){
    } 
 ?>
 </tr>
-
 <? 
 $RowClass = 'c';
 foreach($NData as $row){
@@ -193,17 +142,7 @@ foreach($NData as $row){
    if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
-
 </table>
 
-
-<!-- // ABOUT /////////////////////////////////////////////////// -->
-
-<table class="div">
-<tr><td><h4 class="rev"><a class="arev" href="#about" name="about">&nbsp;about full data comparison</a></h4></td></tr>
-<tr><td><?=$About;?></td></tr>  
-
-</table>
-
-
-
+<h3><a href="#about" name="about">&nbsp;about full data comparison</a></h3>
+<?=$About;?>

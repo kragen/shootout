@@ -221,16 +221,16 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 
 function PF($d){
-   if ($d>14.99){ return '<span class="b">'.number_format($d).'</span>'; } 
-   elseif ($d>1.001){ return number_format($d,1); } 
-   elseif ($d>0.999){ return '&nbsp;'; }
+   if ($d>14.99){ return '<td class="num5">'.number_format($d).'</td>'; } 
+   elseif ($d>1.001){ return '<td class="num4">'.number_format($d,1).'</td>'; } 
+   elseif ($d>0.999){ return '<td>&nbsp;</td>'; }
    else {
       if ($d>0){
          $i = 1.0 / $d;
-            if ($i>14.99){ return '<span class="bi">'.number_format($i).'</span>'; } 
-            elseif ($i>1.001){ return '<span class="i">'.number_format($i,1).'</span>'; }          
-            else { return '&nbsp;'; }
-      } else { return '&nbsp;'; }
+            if ($i>14.99){ return '<td class="num1">-'.number_format($i).'</td>'; } 
+            elseif ($i>1.001){ return '<td class="num2">-'.number_format($i,1).'</td>'; }          
+            else { return '<td>&nbsp;</td>'; }
+      } else { return '<td>&nbsp;</td>'; }
    }
 }
 

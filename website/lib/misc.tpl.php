@@ -1,11 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 
-<!-- // PLAIN HTML //////////////////////////////////////// -->
-
-<div>
-<p class="rs"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
-</div>
-
-<div>
+<p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 <? include($MiscFile); ?>
-</div>

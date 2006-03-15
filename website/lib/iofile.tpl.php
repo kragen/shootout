@@ -1,17 +1,7 @@
-<?   // Copyright (c) Isaac Gouy 2004, 2005 ?>
-
+<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
 <?
-printf('<div><p><span class="s">(Save Target As&#8230; Save Link As&#8230;)</span> <a href="%s" title="Save %s As&#8230;">%s</a></p></div>', $Download,$Title,$Title);   
+printf('<p><span class="s">(Save Target As&#8230; Save Link As&#8230;)</span> <a href="%s" title="Save %s As&#8230;">%s</a></p>', $Download,$Title,$Title);   
 ?>
+<h2><a href="#io" name="io">&nbsp;<?=$Title?></a></h2>
+<pre><?=$Text?></pre>
 
-<div> 
-<h4 class="rev">&nbsp;<?=$Title?></h4>
-</div>
-
-<!-- // PRE FORMATED TEXT //////////////////////////////////////// -->
-
-<div>
-<pre>
-<?=$Text?>
-</pre>
-</div>
