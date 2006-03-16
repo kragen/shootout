@@ -190,7 +190,7 @@ if (sizeof($Special)>0){
       else {
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td></td><td>%s</td><td></td><td>%d</td>', $message, $lines);         
+         printf('<td>%s</td><td>&nbsp;</td><td>%d</td>', $message, $lines);         
       }
       echo "</tr>\n";
    }

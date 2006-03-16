@@ -49,7 +49,7 @@ We can't - <strong>we measure particular programs</strong>.</p>
 
 <h5>Start:</h5>
 <p>choose an OS : architecture, and click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
-<table>
+<table class="layout">
 <tr>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
@@ -69,7 +69,7 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 
 <h5>Extra:</h5>
 <p>More language implementations and alpha benchmarks</p>
-<table>
+<table class="layout">
 <tr>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
@@ -89,7 +89,7 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 
 <h5>For auld lang syne:</h5>
 <p>Look back at the old 2001 Doug Bagley Benchmarks</p>
-<table>
+<table class="layout">
 <tr>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>

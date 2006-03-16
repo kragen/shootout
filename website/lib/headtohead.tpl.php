@@ -64,7 +64,7 @@ foreach($Tests as $Row){
                 
       if ($v[N_LINES] >= 0){ 
       
-         if ($v[N_N]==0){ $n = '<td>&nbsp;</td>'; } 
+         if ($v[N_N]==0){ $n = '<td></td>'; } 
          else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }                         
                   
          $cpuValue = $v[N_FULLCPU];
@@ -84,7 +84,7 @@ foreach($Tests as $Row){
          elseif ($r = $v[N_LINES] == NO_COMPARISON){ $message = 'No '.$Langs[$v[N_LANG]][LANG_NAME]; } 
          else {$message = 'X'; } 
          
-         if ($r) { printf('<td></td><td></td><td colspan="2"><span class="message">%s</span></td>', $message); }
+         if ($r) { printf('<td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td>', $message); }
          else { printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message); }
       }
 
