@@ -35,6 +35,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
+<colgroup span="4" class="num"></colgroup>
 <tr>
 <th>&nbsp;</th>
 <th>&nbsp;Faster&nbsp;</th>

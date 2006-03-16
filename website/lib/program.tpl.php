@@ -21,6 +21,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 
 <h2><a href="#program" name="program">&nbsp;<?=$Title;?></a></h2>
 <table>
+<colgroup span="4" class="num"></colgroup>
 <tr>
 <th>&nbsp;N&nbsp;</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>

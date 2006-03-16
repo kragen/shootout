@@ -21,6 +21,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
+<colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
 
 <tr>
@@ -33,15 +34,13 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 <? 
 usort($Selected,'CompareMaxCpu');
-$RowClass = 'c';
 foreach($Selected as $row){
-   printf('<tr class="%s">', $RowClass); echo "\n";
+   printf('<tr>'); echo "\n";
    printf('<td>%s</td>', $row[N_NAME]); echo "\n";
    foreach($row[N_FULLCPU] as $v){ 
       printf('<td class="r">%0.2f</td>', $v); echo "\n"; 
    }   
    echo "</tr>\n";                          
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
 </table>
@@ -59,6 +58,7 @@ foreach($Selected as $row){
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
+<colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
 <th>N</th>
@@ -71,16 +71,15 @@ foreach($Selected as $row){
 
 <? 
 usort($Selected,'CompareMaxMemory');
-$RowClass = 'c';
+
 foreach($Selected as $row){
-   printf('<tr class="%s">', $RowClass); echo "\n";
+   printf('<tr>'); echo "\n";
    printf('<td>%s</td>', $row[N_NAME]); echo "\n";
    foreach($row[N_MEMORY] as $v){ 
       if ($v==0){ $kb = '?'; } else { $kb = number_format((double)$v); }
       printf('<td class="r">%s</td>', $kb); echo "\n"; 
    }   
    echo "</tr>\n";                           
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
 </table>
@@ -90,6 +89,7 @@ foreach($Selected as $row){
 <h2><a href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h2>
 <table>
 <colgroup span="1" class="txt"></colgroup>
+<colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
@@ -100,17 +100,15 @@ foreach($Selected as $row){
 ?>
 </tr>
 <? 
-$RowClass = 'c';
 foreach($NData as $row){
-   printf('<tr class="%s">', $RowClass); echo "\n";
+   printf('<tr>'); echo "\n";
    printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
       $SelectedTest,$row[N_LANG],$row[N_ID],$row[N_HTML]); echo "\n";
 
    foreach($row[N_FULLCPU] as $v){ 
       printf('<td class="r">%0.2f</td>', $v); echo "\n"; 
    }   
-   echo "</tr>\n";                           
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
+   echo "</tr>\n";                            
 }
 ?>
 </table>
@@ -118,6 +116,7 @@ foreach($NData as $row){
 <h2><a href="#memtable" name="memtable">&nbsp;<?=$TestName;?> full data - Memory use</a></h2>
 <table>
 <colgroup span="1" class="txt"></colgroup>
+<colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
@@ -128,9 +127,8 @@ foreach($NData as $row){
 ?>
 </tr>
 <? 
-$RowClass = 'c';
 foreach($NData as $row){
-   printf('<tr class="%s">', $RowClass); echo "\n";
+   printf('<tr>'); echo "\n";
    printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
       $SelectedTest,$row[N_LANG],$row[N_ID],$row[N_HTML]); echo "\n";
 
@@ -139,7 +137,6 @@ foreach($NData as $row){
       printf('<td class="r">%s</td>', $kb); echo "\n"; 
    }   
    echo "</tr>\n";                          
-   if ($RowClass=='a'){ $RowClass='c'; } else { $RowClass='a'; } 
 }
 ?>
 </table>

@@ -15,6 +15,7 @@ $Family = $Row[LANG_FAMILY];
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
+<colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time</th>

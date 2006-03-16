@@ -51,6 +51,7 @@ uasort($score, 'CompareMean');
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
+<colgroup span="2" class="num"></colgroup>
 <tr>
 <th>ratio</th>
 <th>language</th>
@@ -89,6 +90,7 @@ foreach($score as $k => $v){
 <input type="hidden" name="lang" value="all" />
 
 <table>
+<colgroup span="2" class="txt"></colgroup>
 <tr>
 <td><p><input type="submit" name="calc" value="Calculate" /></p></td>
 <td><p><input type="submit" name="calc" value="Reset" /></p></td>

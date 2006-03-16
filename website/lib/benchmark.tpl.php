@@ -41,7 +41,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
-
+<colgroup span="3" class="num"></colgroup>
 <tr>
 <th class="c">&nbsp;</th>
 <th class="c">&nbsp;</th>
