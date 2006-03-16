@@ -19,7 +19,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 
 </td><td>
 
-<table>
+<table class="data">
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
@@ -56,7 +56,7 @@ foreach($Selected as $row){
 
 </td><td>
 
-<table>
+<table class="data">
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
@@ -87,7 +87,7 @@ foreach($Selected as $row){
 </td></tr></table>
 
 <h2><a href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h2>
-<table>
+<table class="data">
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Full CPU Time as N increases</th></tr>
@@ -114,7 +114,7 @@ foreach($NData as $row){
 </table>
 
 <h2><a href="#memtable" name="memtable">&nbsp;<?=$TestName;?> full data - Memory use</a></h2>
-<table>
+<table class="data">
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr><th colspan="<?=$cols;?>">Memory use as N increases</th></tr>
