@@ -12,7 +12,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,"fullcpu"); ?>
 <h2><a href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> full data - Full CPU Time</a></h2>
 
-<table><tr><td>
+<table class="layout"><tr><td>
 
 <img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
    width="160" height="240" alt="CPU Time comparison chart" />
@@ -49,7 +49,7 @@ foreach($Selected as $row){
 
 <h2><a href="#memchart" name="memchart">&nbsp;<?=$TestName;?> full data - Memory use</a></h2>
 
-<table><tr><td>
+<table class="layout"><tr><td>
 
 <img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
    width="160" height="240" alt="Memory use comparison chart" />

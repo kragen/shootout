@@ -102,14 +102,14 @@
 
 <dt><a href="#brag" name="brag">How should I identify my program?</a></dt>
 <dd><p>Include a header comment in the program like this:</p>
-<code>
+<pre>
 /* The Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by &#8230;
    modified by &#8230;
 */
-</code>
+</pre>
 </dd>
 
 <dt><a href="#implementlist" name="implementlist">How should I implement&#8230;?</a></dt>
@@ -305,7 +305,7 @@ and for 100 measurements of fasta ranged from 0.009% (Lua) to 0.088% (C#) to 0.6
 <dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></dt>
 <dd><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
 <p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
-<samp>Perl times() builtin function
+<pre>Perl times() builtin function
 16.650
 16.660
 16.640
@@ -324,7 +324,7 @@ Bash time builtin command
 16.624
 16.628
 16.638
-</samp>
+</pre>
 <p>We use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
 <p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
 </dd>
@@ -378,7 +378,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p><strong>Must have</strong></p>
 <ol>
 <li>A <a href="http://packages.debian.org/unstable/" title="Debian packages">Debian package</a> (either from Debian itself, or the primary authors of the language)
-or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo ebuild</a> or build and install with <code>./configure &amp;&amp; make &amp;&amp; make install</code> and a default target of <code>/usr/local.</code></li>
+or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo ebuild</a> or build and install with <tt>./configure &amp;&amp; make &amp;&amp; make install</tt> and a default target of <tt>/usr/local.</tt></li>
 <li>Command-line argument handling.</li>
 <li>32-bit Integers.</li>
 <li>Double precision floating point numbers.</li>

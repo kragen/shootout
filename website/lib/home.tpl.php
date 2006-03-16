@@ -9,7 +9,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <? printf(' %s GMT', gmdate("g:i a", $Measured)) ?></p>
 
 
-<table>
+<table class="layout">
 <tr>
 <th class="test"><dl>
 <dt><a href="#check" name="check"><strong>&nbsp;Benchmarks</strong></a></dt>
