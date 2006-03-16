@@ -435,6 +435,7 @@ and Adam Chlipala has started <a href="http://www.softwarescrutiny.net/ss/intro/
 <dd><p>To learn and to <strong>have fun</strong>.</p><p>We will continue as long as the fun holds out.</p></dd>
 </dl>
 </dd>
+</dl>
 
 
 
