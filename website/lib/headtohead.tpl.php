@@ -41,7 +41,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <th>&nbsp;Faster&nbsp;</th>
 <th>Smaller: Memory Use</th>
 <th>Smaller: Code Lines</th>
-<th>&nbsp;</th>
+<th>Test Value</th>
 </tr>
 
 <tr>
@@ -64,8 +64,8 @@ foreach($Tests as $Row){
                 
       if ($v[N_LINES] >= 0){ 
       
-         if ($v[N_N]==0){ $n = '<td>?</td>'; } 
-         else { $n = '<td class="numN">&nbsp;'.number_format($v[N_N]).'</td>'; }                         
+         if ($v[N_N]==0){ $n = '<td>&nbsp;</td>'; } 
+         else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }                         
                   
          $cpuValue = $v[N_FULLCPU];
          if ($cpuValue<1 && $cpuValue!=0){ $cpuValue = -1/$cpuValue; }
@@ -84,15 +84,15 @@ foreach($Tests as $Row){
          elseif ($r = $v[N_LINES] == NO_COMPARISON){ $message = 'No '.$Langs[$v[N_LANG]][LANG_NAME]; } 
          else {$message = 'X'; } 
          
-         if ($r) { printf('<td></td><td></td><td colspan="2">%s</td>', $message); }
-         else { printf('<td>%s</td><td></td><td></td><td></td>', $message); }
+         if ($r) { printf('<td></td><td></td><td colspan="2"><span class="message">%s</span></td>', $message); }
+         else { printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message); }
       }
 
    } else {
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
          $Link, $SelectedLang, $Name); echo "\n";
       $message = 'No&nbsp;program';
-      printf('<td>%s</td><td></td><td></td><td></td>', $message); 
+      printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message); 
    }
    echo "</tr>\n";
 }
