@@ -45,8 +45,8 @@
 <dd><p><strong>Before</strong> working on a benchmark program:</p>
 <ul>
 <li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
-<li>read the benchmark description</a></li>
-<li>read some of the programs</a></li>
+<li>read the benchmark description</li>
+<li>read some of the programs</li>
 <li>read <a href="#implement"><strong>&darr;&nbsp;"How should I implement&#8230;?"</strong></a></li>
 </ul>
 <p>Then follow these detailed instructions <a href="#contribute"><strong>&darr;&nbsp;"How do I contribute a program?"</strong></a></p>
@@ -57,7 +57,7 @@
 <dd><p><strong>Before</strong> working on a new benchmark</p>
 <ul>
 <li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
-<li>read the benchmark descriptions</a></li>
+<li>read the benchmark descriptions</li>
 <li>read <a href="#newbench">&darr; <strong>"How can I contribute a new benchmark?"</strong></a></li>
 </ul>
 </dd>
@@ -129,10 +129,10 @@
 <p>For example, the <a href="benchmark.php?test=nbody&amp;lang=se">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
 each new target source file will start from the <strong>comment line</strong> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
  SPLITFILE=<em>target-filename</em> directive or end-of-file.</p>
-<p>So, the new target source file <em>body.e</em> will start with the line
-<pre>-- SPLITFILE=body.e</pre>
+<p>So, the new target source file <em>body.e</em> will start with the line</p>
+<tt>-- SPLITFILE=body.e</tt>
 <p>and end with the empty line following</p>
-<pre>end -- class BODY</pre>
+<tt>end -- class BODY</tt>
 </dd>
 
 <dt><a href="#unroll" name="unroll">How should I implement loops?</a></dt>
@@ -196,7 +196,7 @@ language, benchmark, your-name, date, (version)<br />
 <p>Maybe you'd like to <a href="#chores">&darr;&nbsp;help us with the chores</a>?</p>
 <p>Normally, contributed programs will be measured and included on the website once or twice each week.</p>
 <p>The simplest way to find out when new measurements have been made is to subscribe to <a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a> - our <a href="<?=CORE_SITE;?>feeds/rss.xml">RSS feed</a>.</p>
-<p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" border="0" alt="Add to My Yahoo!"></a></p>
+<p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" alt="Add to My Yahoo!"/></a></p>
 </dd>
 
 <dt><a href="#newbench" name="newbench">How can I contribute a new benchmark?</a></dt>
@@ -411,13 +411,13 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <dt><a href="#when" name="when">&nbsp;Who&#8230;? When&#8230;? Why&#8230;?</a></dt>
 <dd>
 <dl>
-<dt><a href="#start" name="start">Who started "The Great Computer Language Shootout"?</a></dd>
+<dt><a href="#start" name="start">Who started "The Great Computer Language Shootout"?</a></dt>
 <dd><p>Doug Bagley created <a href="http://web.archive.org/web/20040401204425/www.bagley.org/~doug/shootout/index2.shtml" title="Doug Bagley's website from the Internet Archive">"The Great Computer Language Shootout"</a>, and it was active until 2001.</p>
 <p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 <p>In mid-2004 <strong>Brent Fulgham revived</strong> <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
 <p>In the following months, things started to change. First, the website was redesigned showing the original benchmarks in a new way, look back at the 2001 <span class="old"><a title="Look back at the Old 2001 Doug Bagley Benchmarks" href="<?=OLD_SITE;?>index.php" >&nbsp;Old Doug Bagley Benchmarks&nbsp;</a></span>.</p>
 <p>Benchmarks were deprecated, new benchmarks were added; and we continue to experiment on <span class="sandbox"><a title="Alpha benchmarks and more language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.</p>
-<p>In late-2005 Isaac Gouy started to experiment with the <span class="gp4"><a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it will end?</p>
+<p>In late-2005 Isaac Gouy started to experiment with the <span class="gp4"><a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it will end?</p>
 </dd>
 
 <dt><a href="#ack" name="ack">Who has contributed?</a></dt>

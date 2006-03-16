@@ -111,7 +111,7 @@ foreach($Accepted as $d){
    if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    $lines = $d[DATA_LINES];
 
-   printf('<tr">'); echo "\n";
+   printf('<tr>'); echo "\n";
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
@@ -142,7 +142,7 @@ foreach($Langs as $k => $v){
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td class="r">%s</td><td></td><td class="r">%d</td>', $message, $lines);   
+         printf('<td>%s</td><td></td><td>%d</td>', $message, $lines);   
        
          echo "</tr>\n";   
          unset($No_Program_Langs[$k]);         
@@ -184,13 +184,13 @@ if (sizeof($Special)>0){
          PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
       if ($fullcpu > PROGRAM_TIMEOUT){
-            printf('<td class="r">%0.2f</td><td class="r">%s</td><td class="r">%d</td>',
+            printf('<td>%0.2f</td><td>%s</td><td class="r">%d</td>',
                $fullcpu, $kb, $lines ); echo "\n";
       }
       else {
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td></td><td class="r">%s</td><td></td><td class="r">%d</td>', $message, $lines);         
+         printf('<td></td><td>%s</td><td></td><td>%d</td>', $message, $lines);         
       }
       echo "</tr>\n";
    }
@@ -213,7 +213,7 @@ if (sizeof($No_Program_Langs)>0){
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
             $SelectedTest,$k,$HtmlName); echo "\n";
 
-         echo '<td class="r">No&nbsp;program</td><td></td><td></td>';       
+         echo '<td>No&nbsp;program</td><td></td><td></td>';       
          echo "</tr>\n";     
       }                                                      
    }     
