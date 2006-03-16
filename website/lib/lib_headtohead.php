@@ -37,23 +37,21 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
 
 // TRANSFORM SELECTED DATA
 
-   $lang = ""; $id = ""; $test = ""; $n = 0;
+   $lang = ""; $id = ""; $test = ""; 
    $NData = array(); 
    $comparable = array(); 
    $errorRowL1 = NULL;
    
 
    $i=0; $j=0;
-   while ($i<sizeof($Data)){
-    
-      $n = $Data[$i][DATA_TESTVALUE];
+   while ($i<sizeof($Data)){          
       $test = $Data[$i][DATA_TEST];                
             
       do {
          $dj = $Data[$j];
                               
          if ($dj[DATA_FULLCPU] > PROGRAM_TIMEOUT){
-            if (isset($comparable[$dj[DATA_LANG]])){ 
+            if (isset($comparable[$dj[DATA_LANG]])){
                if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){  
                   if ($isComparable){
                      if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){                  
@@ -91,18 +89,12 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $full = 1;
             $mem = 1;
             $lines = 1;
-            $cpu = 1;                     
-            
-            //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; } 
-            //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; } 
-            //if ($r2[DATA_LINES]>0){ $lines = $r1[DATA_LINES] / $r2[DATA_LINES]; } 
-            //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }  
+            $cpu = 1;                                
 
             if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; } 
             if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; } 
             if ($r1[DATA_LINES]>0){ $lines = $r2[DATA_LINES] / $r1[DATA_LINES]; } 
-            if ($r1[DATA_CPU]>0){ $cpu = $r2[DATA_CPU] / $r1[DATA_CPU]; } 
-                                   
+            if ($r1[DATA_CPU]>0){ $cpu = $r2[DATA_CPU] / $r1[DATA_CPU]; }                            
                                  
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]         

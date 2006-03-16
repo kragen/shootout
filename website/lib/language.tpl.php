@@ -15,13 +15,12 @@ $Family = $Row[LANG_FAMILY];
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
-<colgroup span="4" class="num"></colgroup>
+<colgroup span="3" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
 <th>Code Lines</th>
-<th>&nbsp;N&nbsp;</th>
 </tr>
 
 <? 
@@ -40,11 +39,11 @@ foreach($Tests as $Row){
                 
       if ($v[N_EXCLUDE] >= 0){                                                  
          if ($Link==STARTUP){
-            printf('<td>%0.2f</td><td>%s</td><td>%s</td><td>%s</td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n); 
+            printf('<td>%0.2f</td><td>%s</td><td>%s</td>', 
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES]); 
          } else {
-            printf('<td>%0.2f</td><td>%s</td><td>%s</td><td>%s</td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n);                   
+            printf('<td>%0.2f</td><td>%s</td><td>%s</td>', 
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES]);                   
          }
 
       } else {      
@@ -52,7 +51,7 @@ foreach($Tests as $Row){
          elseif ($v[N_EXCLUDE] == PROGRAM_TIMEOUT){ $message = 'Timout'; } 
          else { $message = 'X'; } 
          
-         printf('<td>%s</td><td></td><td>%s</td><td>%s</td>', $message, $v[N_LINES], $n);
+         printf('<td>%s</td><td></td><td>%s</td>', $message, $v[N_LINES]);
       }
 
    } else {
