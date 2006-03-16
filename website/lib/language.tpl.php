@@ -15,12 +15,13 @@ $Family = $Row[LANG_FAMILY];
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
-<colgroup span="3" class="num"></colgroup>
+<colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
 <th>Code Lines</th>
+<th>&nbsp;N&nbsp;</th>
 </tr>
 
 <? 
@@ -39,11 +40,11 @@ foreach($Tests as $Row){
                 
       if ($v[N_EXCLUDE] >= 0){                                                  
          if ($Link==STARTUP){
-            printf('<td>%0.2f</td><td>%s</td><td>%s</td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES]); 
+            printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n); 
          } else {
-            printf('<td>%0.2f</td><td>%s</td><td>%s</td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES]);                   
+            printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n);                   
          }
 
       } else {      
@@ -51,14 +52,14 @@ foreach($Tests as $Row){
          elseif ($v[N_EXCLUDE] == PROGRAM_TIMEOUT){ $message = 'Timout'; } 
          else { $message = 'X'; } 
          
-         printf('<td>%s</td><td></td><td>%s</td>', $message, $v[N_LINES]);
+         printf('<td><span class="message">%s</span></td><td></td><td>%s</td><td><span class="numN">%s</span></td>', $message, $v[N_LINES], $n);
       }
 
    } else {
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
          $Link, $SelectedLang, $Name); echo "\n";
       $message = 'No&nbsp;program';
-      printf('<td>%s</td><td></td><td></td><td></td>', $message); 
+      printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message); 
    }
    echo "</tr>\n";
 }
