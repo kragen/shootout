@@ -4,7 +4,8 @@
 /*                                                                    */
 /* Based on D language implementation by Dave Fladebo                 */
 /*                                                                    */
-/* This is Scala 2-specific code                                      */
+/* Modified to compile under Scala 1.x though comments mention        */
+/* where Scala 2.0 features are more appropriate                      */
 /*                                                                    */
 /* Contributed by Anthony Borla                                       */
 /* ------------------------------------------------------------------ */
@@ -36,7 +37,12 @@ final class NBodySystem
 
     for (val i <- bodies)
     {
-      for (val j <- bodies.subArray(idx + 1, length))
+
+      // Scala 2.0 would use:
+      //
+      // for (val j <- bodies.subArray(idx + 1, length))
+      //
+      for (val j <- subArray(idx + 1, length, bodies))
       {
         dx = i.x - j.x;
         dy = i.y - j.y;
@@ -75,7 +81,11 @@ final class NBodySystem
     {
       e = e + 0.5 * i.mass * (i.vx * i.vx + i.vy * i.vy + i.vz * i.vz);
 
-      for (val j <- bodies.subArray(idx + 1, length))
+      // Scala 2.0 would use:
+      //
+      // for (val j <- bodies.subArray(idx + 1, length))
+      //
+      for (val j <- subArray(idx + 1, length, bodies))
       {
         dx = i.x - j.x; dy = i.y - j.y; dz = i.z - j.z;
         distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -88,9 +98,29 @@ final class NBodySystem
     return e;
   }
 
+  //
+  // Required for Scala 1.x only
+  // Method for slicing an array based on Scala 2.x implementation 
+  // of 'Array.subArray'
+  //
+  def subArray(_from: int, _end: int, arr: Array[Body]): Array[Body] =
+  {
+    val last: int = arr.length - 1;
+
+    var end: int = _end; if (_end > last) end = last;
+    var i: int = _from; if (_from < 0) i = 0;
+    var offset: int = 0 - i;
+
+    val newarr: Array[Body] = new Array[Body](arr.length + offset);
+
+    while (i <= end) { newarr(i + offset) = arr(i); i = i + 1; }
+
+    return newarr;
+  }
+
   // Data
 
-  private class Body(_x: double, _y: double, _z: double, _vx: double, _vy: double, _vz: double, _mass: double)
+  protected class Body(_x: double, _y: double, _z: double, _vx: double, _vy: double, _vz: double, _mass: double)
   {
     def offsetMomentum(_px: double, _py: double, _pz: double): unit =
     {
