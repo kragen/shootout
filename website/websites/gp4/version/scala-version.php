@@ -1,1 +1,1 @@
-<p>scalac 1.4.0.4</p>
+<p>Scala compiler version 2.0.0</p>
