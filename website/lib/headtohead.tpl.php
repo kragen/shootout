@@ -38,15 +38,15 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>&nbsp;</th>
-<th>&nbsp;Faster&nbsp;</th>
-<th>Smaller: Memory Use</th>
-<th>Smaller: Code Lines</th>
+<th colspan="3"><?=$ShortName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>- <?=$ShortName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th>
 <th>&nbsp;</th>
 </tr>
 
 <tr>
 <th>Program &amp; Logs</th>
-<th colspan="3"><?=$ShortName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>- <?=$ShortName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th>
+<th>&nbsp;Faster&nbsp;</th>
+<th>Smaller: Memory Use</th>
+<th>Smaller: Code Lines</th>
 <th>Reduced Test</th>
 </tr>
 
