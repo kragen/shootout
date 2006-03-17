@@ -1,1 +1,1 @@
-<p>Chicken 1.63 [linux-unix-gnu-x86]</p>
+<p>Chicken 2.2 [linux-unix-gnu-x86 - [ dload ]]</p>

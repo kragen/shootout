@@ -1,2 +1,2 @@
-<p>g++ (GCC) 4.0.3 20060212 (prerelease) (Debian 4.0.2-9)
+<p>g++ (GCC) 4.0.3 (Debian 4.0.3-1)
 </p>
