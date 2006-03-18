@@ -4,9 +4,6 @@
 /*                                                                    */
 /* Based on D language implementation by Dave Fladebo                 */
 /*                                                                    */
-/* Modified to compile under Scala 1.x though comments mention        */
-/* where Scala 2.0 features are more appropriate                      */
-/*                                                                    */
 /* Contributed by Anthony Borla                                       */
 /* ------------------------------------------------------------------ */
 
@@ -37,10 +34,11 @@ final class NBodySystem
 
     for (val i <- bodies)
     {
-
       // Scala 2.0 would use:
       //
-      // for (val j <- bodies.subArray(idx + 1, length))
+      //   for (val j <- bodies.subArray(idx + 1, length))
+      //
+      // but this doesn't seem to work
       //
       for (val j <- subArray(idx + 1, length, bodies))
       {
@@ -83,7 +81,9 @@ final class NBodySystem
 
       // Scala 2.0 would use:
       //
-      // for (val j <- bodies.subArray(idx + 1, length))
+      //   for (val j <- bodies.subArray(idx + 1, length))
+      //
+      // but this doesn't seem to work
       //
       for (val j <- subArray(idx + 1, length, bodies))
       {
@@ -99,9 +99,8 @@ final class NBodySystem
   }
 
   //
-  // Required for Scala 1.x only
   // Method for slicing an array based on Scala 2.x implementation 
-  // of 'Array.subArray'
+  // of 'Array.subArray'. Compiles ok under Scala 1.x
   //
   def subArray(_from: int, _end: int, arr: Array[Body]): Array[Body] =
   {
