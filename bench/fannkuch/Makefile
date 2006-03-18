@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.9 2006-03-18 21:30:05 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -6,8 +6,8 @@ TITLE   := Fannkuch Function
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := -I ../Include/clean -I ../../Include/clean
+MB_CLRTS := -nr
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.13 2006-03-18 21:30:05 bfulgham Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -6,8 +6,10 @@ TITLE   := K-Nucleotide sequence analysis
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
+
+MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 GFORTH_FLAGS := -m 8M
