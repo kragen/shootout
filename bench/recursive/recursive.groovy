@@ -16,7 +16,7 @@ def main()
 
   result = ack(3, n) ; println "Ack(3,${n}): ${result}" 
 
-  arg = fmt.format(7.0 + n) ; result = fmt.format(fib(7.0 + n))
+  arg = fmt.format(27.0 + n) ; result = fmt.format(fib(27.0 + n))
   println "Fib(${arg}): ${result}"
 
   n -= 1 ; arg1 = n * 3 ; arg2 = n * 2 ; result = tak(n * 3, n * 2, n)
