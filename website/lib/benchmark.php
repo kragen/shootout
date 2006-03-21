@@ -123,7 +123,11 @@ if ($T=='all'){
 
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 
-      $TemplateName = 'benchmark.tpl.php'; 
+
+      if (SITE_NAME == 'sandbox' && strstr(SITE_TITLE,'Gentoo')){ 
+         $TemplateName = 'benchmark.tpl.php'; }
+      else { 
+         $TemplateName = 'oldbenchmark.tpl.php'; }
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php'; 
