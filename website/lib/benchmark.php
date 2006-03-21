@@ -62,7 +62,11 @@ if ($T=='all'){
       else { $Action = 'Calculate'; }   
   
       $Title = 'Create your own Overall Scores';
-      $TemplateName = 'scorecard.tpl.php';
+
+      if (strstr(SITE_TITLE,'Gentoo')){ 
+         $TemplateName = 'scorecard.tpl.php'; }
+      else { 
+         $TemplateName = 'oldscorecard.tpl.php'; }
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = 'scorecard-about.tpl.php'; 
@@ -98,12 +102,17 @@ if ($T=='all'){
       $Title = $LangName.' benchmarks';
 
       if ($L!=$L2){ 
-         $TemplateName = 'headtohead.tpl.php'; 
-         //$Title = 'Compare '.$LangName.' to '.$Langs[$L2][LANG_FULL];       
+         if (strstr(SITE_TITLE,'Gentoo')){ 
+            $TemplateName = 'headtohead.tpl.php'; }
+         else { 
+            $TemplateName = 'oldheadtohead.tpl.php'; }      
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                      
+
       } else { 
-         $TemplateName = 'language.tpl.php'; 
-         //$Title = $LangName.' benchmarks';  
+         if (strstr(SITE_TITLE,'Gentoo')){ 
+            $TemplateName = 'language.tpl.php'; }
+         else { 
+            $TemplateName = 'oldlanguage.tpl.php'; }
          $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                        
       }
       
@@ -124,7 +133,7 @@ if ($T=='all'){
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 
 
-      if (SITE_NAME == 'sandbox' && strstr(SITE_TITLE,'Gentoo')){ 
+      if (strstr(SITE_TITLE,'Gentoo')){ 
          $TemplateName = 'benchmark.tpl.php'; }
       else { 
          $TemplateName = 'oldbenchmark.tpl.php'; }
@@ -141,7 +150,12 @@ if ($T=='all'){
 
       $TestName = $Tests[$T][TEST_NAME];
       $LangName = $Langs[$L][LANG_FULL];       
-      $TemplateName = 'program.tpl.php';
+
+      if (strstr(SITE_TITLE,'Gentoo')){ 
+         $TemplateName = 'program.tpl.php'; }
+      else { 
+         $TemplateName = 'oldprogram.tpl.php'; }
+
       $Title = $TestName.' '.$LangName.IdName($I).' program';
 
       // NOTE Sometimes there's an alternative program for the benchmark test and language

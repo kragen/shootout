@@ -42,7 +42,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <th>Program &amp; Logs</th>
 <th>&nbsp;Faster&nbsp;</th>
 <th>Smaller: Memory Use</th>
-<th>Smaller: GZip Bytes</th>
+<th>Smaller: Code Lines</th>
 <th>Reduced N</th>
 </tr>
 
@@ -71,7 +71,7 @@ foreach($Tests as $Row){
          if ($locValue<1 && $locValue!=0){ $locValue = -1/$locValue; }
 
          printf('%s%s%s%s', 
-            PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_GZ]), $n);                   
+            PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_LINES]), $n);                   
 
       } else {      
          $r = FALSE;

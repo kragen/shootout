@@ -32,7 +32,7 @@ foreach($Data as $k => $test){
    foreach($test as $t => $v){
       $s += $v[DATA_FULLCPU] * $W[$t] * $W['xfullcpu'];
       $s += $v[DATA_MEMORY] * $W[$t] * $W['xmem'];      
-      $s += $v[DATA_GZ] * $W[$t] * $W['xloc'];
+      $s += $v[DATA_LINES] * $W[$t] * $W['xloc'];
    }
    $score[$k] = array($s/$countWeight,sizeof($Tests)-sizeof($test));
 }
@@ -106,7 +106,7 @@ foreach($score as $k => $v){
 <td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></td>
 </tr>
 <tr>
-<td><a href="faq.php#codelines">GZip Bytes</a></td>
+<td><a href="faq.php#codelines">Code Lines</a></td>
 <td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></td>
 </tr>
 

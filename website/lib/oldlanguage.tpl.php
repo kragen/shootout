@@ -20,7 +20,7 @@ $Family = $Row[LANG_FAMILY];
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time</th>
 <th>Memory Use</th>
-<th>GZip Bytes</th>
+<th>Code Lines</th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
@@ -41,10 +41,10 @@ foreach($Tests as $Row){
       if ($v[N_EXCLUDE] >= 0){                                                  
          if ($Link==STARTUP){
             printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_GZ], $n); 
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n); 
          } else {
             printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
-               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_GZ], $n);                   
+               $v[N_FULLCPU], number_format($v[N_MEMORY]), $v[N_LINES], $n);                   
          }
 
       } else {      
