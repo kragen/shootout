@@ -73,6 +73,8 @@ define('MEM_MIN',2);
 define('MEM_MAX',3);
 define('LOC_MIN',4);
 define('LOC_MAX',5);
+define('GZ_MIN',6);
+define('GZ_MAX',7);
 
 
 

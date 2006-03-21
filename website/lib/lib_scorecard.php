@@ -95,6 +95,18 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
                if ($loc<$range[$test][LOC_MIN]){ $range[$test][LOC_MIN] = $loc; }   
                if ($loc>$range[$test][LOC_MAX]){ $range[$test][LOC_MAX] = $loc; }   
             }   
+         } 
+
+         $gz = $row[DATA_GZ];                         
+         if ($gz > 0){       
+            if (!isset($range[$test][GZ_MIN])){ 
+               $range[$test][GZ_MIN] = $gz; 
+               $range[$test][GZ_MAX] = $gz; 
+            }   
+            else {   
+               if ($gz<$range[$test][GZ_MIN]){ $range[$test][GZ_MIN] = $gz; }   
+               if ($gz>$range[$test][GZ_MAX]){ $range[$test][GZ_MAX] = $gz; }   
+            }   
          }                                     
       }      
    }
@@ -113,7 +125,11 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
                   
          if (isset($range[$t][LOC_MIN])){$r = $range[$t][LOC_MIN]; } else { $r = 0; }                  
          $locScore = LinearScore($v[DATA_LINES], $r);
-         $data[$k][$t][DATA_LINES] = $locScore;             
+         $data[$k][$t][DATA_LINES] = $locScore;         
+
+         if (isset($range[$t][GZ_MIN])){$r = $range[$t][GZ_MIN]; } else { $r = 0; }                  
+         $gzScore = LinearScore($v[DATA_GZ], $r);
+         $data[$k][$t][DATA_GZ] = $gzScore;       
       }
    }
    return $data;  
