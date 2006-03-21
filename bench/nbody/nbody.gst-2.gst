@@ -1,10 +1,10 @@
-"  The Great Computer Language Shootout
+"*  The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
 
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im nbody.gst -a 1000 
-"
+*"
 
 Object subclass: #NBodySystem
 instanceVariableNames: 'bodies'

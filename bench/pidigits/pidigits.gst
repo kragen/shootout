@@ -1,10 +1,10 @@
-"  The Great Computer Language Shootout
+"*  The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
  
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im pidigits.st -a 100 
-"
+*"
 
 Object subclass: #Transformation
 instanceVariableNames: 'q r s t k'

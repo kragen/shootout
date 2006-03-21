@@ -1,6 +1,6 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy"!
+   contributed by Isaac Gouy *"!
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
@@ -123,7 +123,7 @@ next
       (r < (percentages at: i)) ifTrue: [^collection at: i]] ! 
 
 random: aRandomNumber
-"Share the random number generator so we can get the expected results."
+"* Share the random number generator so we can get the expected results. *"
    random := aRandomNumber ! !
 
 

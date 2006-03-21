@@ -1,10 +1,9 @@
-"  The Great Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-
    contributed by Isaac Gouy
 
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im binarytrees.st -a 12
-"
+*"
 
 Object subclass: #TreeNode
 instanceVariableNames: 'left right item'

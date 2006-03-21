@@ -1,6 +1,6 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy"!
+   contributed by Isaac Gouy *"!
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
@@ -69,7 +69,7 @@ readFasta: anId
    idString := '>',anId.
    newline := Character cr.
 
-   "find start of particular fasta sequence"
+   "* find start of particular fasta sequence *"
    [(self atEnd) or: [
          (self peek = $>) 
             ifTrue: [((line := self upTo: newline) 
@@ -77,7 +77,7 @@ readFasta: anId
             ifFalse: [self skipThrough: newline. false]]
       ] whileFalse.
 
-   "line-by-line read - it would be a lot faster to block read"
+   "* line-by-line read - it would be a lot faster to block read *"
    description := line.
    buffer := ReadWriteStream on: (String new: 1028).
    [(self atEnd) or: [(char := self peek) = $>]] whileFalse: [

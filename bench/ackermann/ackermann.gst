@@ -1,8 +1,8 @@
-"  The Great Computer Language Shootout
+"*  The Computer Language Shootout
    contributed by Isaac Gouy
    
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im ackermann.st -a 8
-"
+*"
 
 !Integer methodsFor: 'shootout'!
 

@@ -1,6 +1,6 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy "
+   contributed by Isaac Gouy *"
 
 !Float methodsFor: 'printing'!
 
@@ -24,7 +24,7 @@ a6 := 0.0. a7 := 0.0. a8 := 0.0. a9 := 0.0.
 twothirds := 2.0/3.0.
 alt := -1.0.
 
-"a 'dirty' block - it uses variables captured from the environment"
+"* a 'dirty' block - it uses variables captured from the environment *"
 
 1.0 to: n do: [:k| | k2 k3 sk ck |
    k2 := k*k.

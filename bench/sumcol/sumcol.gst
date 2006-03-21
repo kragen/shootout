@@ -1,8 +1,8 @@
-"  The Great Computer Language Shootout
+"*  The Great Computer Language Shootout
    contributed by Isaac Gouy
    
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im sumcol.st < input.txt
-"
+*"
 
 | sum inStream |
 sum := 0.

@@ -1,6 +1,6 @@
-"The Computer Language Shootout
+"* The Computer Language Shootout
  http://shootout.alioth.debian.org/
- contributed by Isaac Gouy"
+ contributed by Isaac Gouy *"
 
 ! FileStream methodsFor: 'accessing'!
 

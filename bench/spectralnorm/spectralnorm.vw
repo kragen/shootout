@@ -1,6 +1,6 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy"!
+   contributed by Isaac Gouy *"!
 
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
@@ -28,7 +28,7 @@ spectralnorm
 !Core.SmallInteger methodsFor: 'computer language shootout'!
 
 matrixA: anInteger
-"fixup one-based indexing to zero-based indexing - cleanup later"
+"* fixup one-based indexing to zero-based indexing - cleanup later *"
    | i j |
    i := self - 1. 
    j := anInteger - 1.

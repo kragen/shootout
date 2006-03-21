@@ -1,8 +1,8 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by Paolo Bonzini
-"
+*"
 
 | width height m bits s zr zi cr ci i tr stepr stepi |
 width := Smalltalk arguments first asInteger.

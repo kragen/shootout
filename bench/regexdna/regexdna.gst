@@ -1,11 +1,11 @@
-"The Computer Language Shootout
+"* The Computer Language Shootout
  http://shootout.alioth.debian.org/
- contributed by Isaac Gouy"
+ contributed by Isaac Gouy *"
 
 !String methodsFor: 'regex'!
 
 copyFrom: from to: to replacingAllRegex: pattern with: str
-    "Replaces all occurances of pattern between boundaries with specified string"
+    "* Replaces all occurances of pattern between boundaries with specified string *"
 
     | res idx regex beg end regs |
     regex := pattern asRegex.
@@ -33,11 +33,11 @@ copyFrom: from to: to replacingAllRegex: pattern with: str
 s := (FileStream stdin bufferSize: 4096) contents.
 size1 := s size.
 
-"remove FASTA sequence descriptions and new-lines"
+"* remove FASTA sequence descriptions and new-lines *"
 s := s copyReplacingAllRegex: '>.*\n|\n' with: ''.
 size2 := s size.
 
-"regex match"
+"* regex match *"
 (OrderedCollection new
    add: 'agggtaaa|tttaccct';
    add: '[cgt]gggtaaa|tttaccc[acg]';
@@ -52,7 +52,7 @@ size2 := s size.
    do: [:each| (each, ' ', (s occurrencesOfRegex: each) printString) displayNl].
 
 
-"regex substitution" 
+"* regex substitution *" 
 (OrderedCollection new
    add: (Association key: 'B' value: '(c|g|t)');
    add: (Association key: 'D' value: '(a|g|t)');

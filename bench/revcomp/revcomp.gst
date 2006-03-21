@@ -1,6 +1,6 @@
-"The Computer Language Shootout
+"* The Computer Language Shootout
  http://shootout.alioth.debian.org/
- contributed by Isaac Gouy"
+ contributed by Isaac Gouy *"
 
 
 ! FileStream methodsFor: 'accessing'!
@@ -10,14 +10,14 @@ readFasta: anId
    idString := '>',anId.
    newline := Character nl.
 
-   "find start of particular fasta sequence"
+   "* find start of particular fasta sequence *"
    [(self atEnd) or: [
          (self peek = $>) 
             ifTrue: [(line := self nextLine) startsWith: idString]
             ifFalse: [self skipTo: newline. false]]
       ] whileFalse.
 
-   "line-by-line read - it would be a lot faster to block read"
+   "* line-by-line read - it would be a lot faster to block read *"
    description := line.
    buffer := ByteStream on: (String new: 1028).
    [(self atEnd) or: [(char := self peek) = $>]] whileFalse: [

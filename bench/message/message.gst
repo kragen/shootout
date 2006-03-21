@@ -1,8 +1,8 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
  
    contributed by Paolo Bonzini
-"
+*"
 
 Object subclass: #Consumer
 	instanceVariableNames: 'semaphore msg'

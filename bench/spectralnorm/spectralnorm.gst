@@ -1,15 +1,15 @@
-"  The Great Computer Language Shootout
+"*  The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by Isaac Gouy
 
    To run: gst -QI /usr/share/gnu-smalltalk/gst.im spectralnorm.st -a 100 
-"
+*"
 
 !Integer methodsFor: 'spectral-norm'!
 
 matrixA: anInteger
-"fixup one-based indexing to zero-based indexing - cleanup later"
+"* fixup one-based indexing to zero-based indexing - cleanup later *"
    | i j |
    i := self - 1. 
    j := anInteger - 1.

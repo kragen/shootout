@@ -1,8 +1,8 @@
-"  The Computer Language Shootout
+"*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
 
    contributed by Paolo Bonzini
-   would have never gotten the permutations right without Isaac Gouy's program"
+   would have never gotten the permutations right without Isaac Gouy's program *"
 
 Object subclass: #PermGenerator
 	instanceVariableNames: 'timesRotated perm atEnd'
@@ -30,9 +30,9 @@ next
 
 makeNext
     | temp i remainder |
-    "Generate the next permutation."
+    "* Generate the next permutation. *"
     2 to: perm size do: [ :r |
-	"Rotate the first r items to the left."
+	"* Rotate the first r items to the left. *"
         temp := perm at: 1.
         1 to: r - 1 do: [ :i | perm at: i put: (perm at: i + 1) ].
         perm at: r put: temp.
@@ -40,11 +40,11 @@ makeNext
         remainder := timesRotated at: r put: ((timesRotated at: r) + 1) \\ r.
         remainder = 0 ifFalse: [ ^self ].
 
-	"After r rotations, the first r items are in their original positions.
-	 Go on rotating the first r+1 items."
+	"* After r rotations, the first r items are in their original positions.
+	 Go on rotating the first r+1 items. *"
     ].
 
-    "We are past the final permutation."
+    "* We are past the final permutation. *"
     atEnd := true!
 
 initialize: size

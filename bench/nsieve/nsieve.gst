@@ -1,7 +1,7 @@
-"  The Great Computer Language Shootout
+"*  The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy
-   modified by Ian Osgood "
+   modified by Ian Osgood *"
 
 !SmallInteger methodsFor: 'shootout'!
 
