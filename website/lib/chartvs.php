@@ -100,8 +100,7 @@ foreach($Tests as $Row){
       $v = $Data[$Row[TEST_LINK]];             
 
       if ($v[N_LINES] >= 0){
-         if ($S=='cpu'){ $wsec = $v[N_CPU]; }
-         else { $wsec = $v[N_FULLCPU]; }  
+         $wsec = $v[N_FULLCPU];   
          if ($wsec < 1){ 
             if ($wsec==0){ $wsec = 0.0001; }      
             $wsec = min( (1/$wsec)*$v1, $w2) - $v1; 

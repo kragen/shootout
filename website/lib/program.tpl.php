@@ -38,17 +38,12 @@ if (isset($Data[$SelectedLang])){
             } else { 
                $kb = number_format((double)$d[DATA_MEMORY]); 
             }
-
-            if ($SelectedTest==STARTUP){ 
-               $cpu = '&nbsp;'; 
-            } else { 
-               $cpu = sprintf('%0.2f',$d[DATA_CPU]); 
-            }         
+        
             $fullcpu = sprintf('%0.2f',$d[DATA_FULLCPU]);
          } else {
             $kb = '&nbsp;'; $fullcpu = '&nbsp;';
-            if ($d[DATA_FULLCPU]==PROGRAM_TIMEOUT){ $cpu = 'Timout'; }
-            if ($d[DATA_FULLCPU]==PROGRAM_ERROR){ $cpu = 'Error'; }         
+            if ($d[DATA_FULLCPU]==PROGRAM_TIMEOUT){ $fullcpu = 'Timout'; }
+            if ($d[DATA_FULLCPU]==PROGRAM_ERROR){ $fullcpu = 'Error'; }         
          }
 
          if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }        

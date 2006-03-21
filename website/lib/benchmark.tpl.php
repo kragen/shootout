@@ -41,7 +41,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
-<colgroup span="3" class="num"></colgroup>
+<colgroup span="4" class="num"></colgroup>
 <tr>
 <th class="c">&nbsp;</th>
 <th class="c">&nbsp;</th>
@@ -57,6 +57,10 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=lines" 
    title="Sort by Code Lines">sort</a>
 </th>
+<th>
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" 
+   title="Sort by GZ bytes">sort</a>
+</th>
 </tr>
 
 <tr>
@@ -65,6 +69,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>
 <th>Code Lines</th>
+<th>GZ</th>
 </tr>
 
 <? 
@@ -78,7 +83,8 @@ foreach($Accepted as $d){
    
    $CPU = ''; 
    $MEM = '';
-   $LOCS = '';      
+   $LOCS = ''; 
+   $GZBYTES = '';      
    if (!isset($better[$k])){  
       $better[$k] = TRUE;
       // Sort according to current sort criteria, bold the sort-column
@@ -88,7 +94,9 @@ foreach($Accepted as $d){
          $MEM = ' class="sort"';
       } elseif ($Sort=='lines'){ 
          $LOCS = ' class="sort"';
-      }    
+      } elseif ($Sort=='gz'){ 
+         $GZBYTES = ' class="sort"';
+      }  
    }      
 
    if ($Sort=='fullcpu'){   
@@ -100,6 +108,9 @@ foreach($Accepted as $d){
    } elseif ($Sort=='lines'){ 
       if ($first[DATA_LINES]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_LINES]/$first[DATA_LINES]; }
+   } elseif ($Sort=='gz'){ 
+      if ($first[DATA_GZ]==0){ $ratio = 0; }
+      else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
    } 
         
    unset($No_Program_Langs[$k]);    
@@ -110,13 +121,14 @@ foreach($Accepted as $d){
    $fullcpu = $d[DATA_FULLCPU];
    if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    $lines = $d[DATA_LINES];
+   $gz = $d[DATA_GZ];
 
    printf('<tr>'); echo "\n";
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td%s>%0.2f</td><td%s>%s</td><td%s>%d</td>',
-         $CPU, $fullcpu, $MEM, $kb, $LOCS, $lines ); echo "\n";
+   printf('<td%s>%0.2f</td><td%s>%s</td><td%s>%d</td><td%s>%d</td>',
+         $CPU, $fullcpu, $MEM, $kb, $LOCS, $lines, $GZBYTES, $gz ); echo "\n";
 
    echo "</tr>\n";
 }
@@ -135,14 +147,15 @@ foreach($Langs as $k => $v){
                     
          $id = $d[DATA_ID];                      
          $fullcpu = $d[DATA_FULLCPU];
-         $lines = $d[DATA_LINES];     
+         $lines = $d[DATA_LINES]; 
+         $gz = $d[DATA_GZ];   
                     
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
             $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td>%s</td><td></td><td>%d</td>', $message, $lines);   
+         printf('<td>%s</td><td></td><td>%d</td><td>%d</td>', $message, $lines, $gz);   
        
          echo "</tr>\n";   
          unset($No_Program_Langs[$k]);         
@@ -174,7 +187,7 @@ if (sizeof($Special)>0){
 
      
       $id = $d[DATA_ID];   
-      $cpu = $d[DATA_CPU];
+      $gz = $d[DATA_GZ];
       $fullcpu = $d[DATA_FULLCPU];
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
       $lines = $d[DATA_LINES];
@@ -184,13 +197,13 @@ if (sizeof($Special)>0){
          PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
       if ($fullcpu > PROGRAM_TIMEOUT){
-            printf('<td>%0.2f</td><td>%s</td><td class="r">%d</td>',
-               $fullcpu, $kb, $lines ); echo "\n";
+            printf('<td>%0.2f</td><td>%s</td><td>%d</td><td>%d</td>',
+               $fullcpu, $kb, $lines, $gz ); echo "\n";
       }
       else {
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td>%s</td><td>&nbsp;</td><td>%d</td>', $message, $lines);         
+         printf('<td>%s</td><td>&nbsp;</td><td>%d</td><td>%d</td>', $message, $lines, $gz);         
       }
       echo "</tr>\n";
    }
@@ -213,7 +226,7 @@ if (sizeof($No_Program_Langs)>0){
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
             $SelectedTest,$k,$HtmlName); echo "\n";
 
-         echo '<td>No&nbsp;program</td><td></td><td></td>';       
+         echo '<td>No&nbsp;program</td><td></td><td></td><td></td>';       
          echo "</tr>\n";     
       }                                                      
    }     

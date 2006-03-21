@@ -44,16 +44,9 @@ list($Accepted) = FilterAndSortData($Langs,$Data,$S,$Excl);
 // VALUES WILL BE SCALED SO $hscale TIMES THE MINIMUM WILL FIT THE IMAGE HEIGHT
 
    foreach($Accepted as $v){   
-      if ($S=='fullcpu') {
-         if (($minsec == -1) && ($v[DATA_FULLCPU] > 0.0)){ $minsec = $v[DATA_FULLCPU]; }
-         elseif (($v[DATA_FULLCPU] > 0.0) && ($v[DATA_FULLCPU] < $minsec)){ $minsec = $v[DATA_FULLCPU]; }
-
-      } else { 
-         if (($minsec == -1) && ($v[DATA_CPU] > 0.0)){ $minsec = $v[DATA_CPU]; } 
-         elseif (($v[DATA_CPU] > 0.0) && ($v[DATA_CPU] < $minsec)){ $minsec = $v[DATA_CPU]; } 
-      }                  
-
-  
+      if (($minsec == -1) && ($v[DATA_FULLCPU] > 0.0)){ $minsec = $v[DATA_FULLCPU]; }
+      elseif (($v[DATA_FULLCPU] > 0.0) && ($v[DATA_FULLCPU] < $minsec)){ $minsec = $v[DATA_FULLCPU]; }
+             
       if (($minmem == -1) && ($v[DATA_MEMORY] > 0.0)){ $minmem = $v[DATA_MEMORY]; }
       elseif (($v[DATA_MEMORY] > 0.0) && ($v[DATA_MEMORY] < $minmem)){ $minmem = $v[DATA_MEMORY]; }
    }
@@ -83,11 +76,7 @@ ImageLine($im, 0, $h3, $w, $h3, $gray);
 // CHART BARS
 
    foreach($Accepted as $v){
-      if ($S=='cpu'){
-         $hsec = min( ($v[DATA_CPU]/$minsec)*($h/$vscale), $h);
-      } else {
-         $hsec = min( ($v[DATA_FULLCPU]/$minsec)*($h/$vscale), $h);
-      }
+      $hsec = min( ($v[DATA_FULLCPU]/$minsec)*($h/$vscale), $h);
       $hmem = min( ($v[DATA_MEMORY]/$minmem)*($h/$vscale), $h);
 
       ImageFilledRectangle($im, $xsec, $h-$hsec, $xsec+$wsec, $h, $white);
@@ -111,8 +100,10 @@ ImageString($im, 2, $w-26, $h3-14, CHART_V3.'x', $white);
 
 // LEGEND - SHOW SORT ORDER BY PUTTING SORT CRITERIA AT TOP OF LEGEND
 
-if (($S=='kb')||($S=='lines')){ $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('cpu'); } 
-else { $kbTop = $h-135; $cpuTop = $h-148; $sortname = SortName($S); }  
+if (($S=='kb')||($S=='lines')||($S=='gz')){ 
+   $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('fullcpu'); } 
+else { 
+   $kbTop = $h-135; $cpuTop = $h-148; $sortname = SortName('fullcpu'); }  
 
 ImageFilledRectangle($im, 2, $cpuTop, $wsec+105, $cpuTop+13, $bgray);
 ImageFilledRectangle($im, 6, $cpuTop+2, $wsec+6, $cpuTop+10, $white);

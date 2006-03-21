@@ -23,7 +23,7 @@ define('DATA_TEST',0);
 define('DATA_LANG',1);
 define('DATA_ID',2);
 define('DATA_TESTVALUE',3);
-define('DATA_CPU',4);
+define('DATA_GZ',4);
 define('DATA_FULLCPU',5);
 define('DATA_MEMORY',6);
 define('DATA_LINES',7);
@@ -63,7 +63,7 @@ define('N_COLOR',10);
 
 define('N_N',3);
 define('N_LINES',8);
-define('N_CPU',9);
+define('N_GZ',9);
 define('N_EXCLUDE',10);
 
 
@@ -155,17 +155,6 @@ function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
 }
 
 
-function CompareCpuTime($a, $b){
-   if ($a[DATA_CPU] == $b[DATA_CPU]){
-      if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
-         if ($a[DATA_LINES] == $b[DATA_LINES]){ return 0; }
-         else { return ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1; }            
-      }
-      else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
-   }
-   return  ($a[DATA_CPU] < $b[DATA_CPU]) ? -1 : 1;
-}
-
 function CompareFullCpuTime($a, $b){
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
       if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
@@ -197,6 +186,17 @@ function CompareCodeLines($a, $b){
       else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
    }
    return  ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1;
+}
+
+function CompareGz($a, $b){
+   if ($a[DATA_GZ] == $b[DATA_GZ]){
+      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
+         if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ return 0; }
+         else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }            
+      }
+      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
+   }
+   return  ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1;
 }
 
 function CompareLangName($a, $b){
@@ -237,8 +237,9 @@ function CompareNName($a, $b){
 }
 
 function SortName($sort){
-   if ($sort=='cpu'){ return 'CPU Time'; }
-   elseif ($sort=='fullcpu'){ return 'Full CPU Time'; }
+   if ($sort=='fullcpu'){ return 'Full CPU Time'; }
+   elseif ($sort=='gz'){ return 'GZ Compressed Source'; }
+   elseif ($sort=='lines'){ return 'Lines Of Code'; }
    else { return 'Memory use'; }
 }
 
@@ -294,10 +295,7 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
       }         
    }
 
-   if ($sort=='cpu'){    
-      usort($Accepted, 'CompareCpuTime');
-      usort($Special, 'CompareCpuTime');
-   } elseif ($sort=='fullcpu'){ 
+   if ($sort=='fullcpu'){ 
       usort($Accepted, 'CompareFullCpuTime'); 
       usort($Special, 'CompareFullCpuTime'); 
    } elseif ($sort=='kb'){ 
@@ -305,7 +303,10 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
       usort($Special, 'CompareMemoryUse'); 
    } elseif ($sort=='lines'){ 
       usort($Accepted, 'CompareCodeLines'); 
-      usort($Special, 'CompareCodeLines'); 
+      usort($Special, 'CompareCodeLines');
+   } elseif ($sort=='gz'){ 
+      usort($Accepted, 'CompareGz'); 
+      usort($Special, 'CompareGz'); 
    } 
 
    return array($Accepted,$Rejected,$Special);

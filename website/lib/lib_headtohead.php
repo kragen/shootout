@@ -103,7 +103,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; } 
             if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; } 
             if ($r1[DATA_LINES]>0){ $lines = $r2[DATA_LINES] / $r1[DATA_LINES]; } 
-            if ($r1[DATA_CPU]>0){ $cpu = $r2[DATA_CPU] / $r1[DATA_CPU]; }                                   
+            if ($r1[DATA_GZ]>0){ $gz = $r2[DATA_GZ] / $r1[DATA_GZ]; }                                   
                                  
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]         
@@ -115,7 +115,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                , $full
                , $mem
                , $lines
-               , $cpu
+               , $gz
                , 0
                );                           
                                                     
@@ -308,7 +308,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
             , $row[DATA_FULLCPU]
             , $row[DATA_MEMORY]
             , $row[DATA_LINES]
-            , $row[DATA_CPU]
+            , $row[DATA_GZ]
             , ExcludeData($row,$Langs,$Excl)
             );                           
       }    
