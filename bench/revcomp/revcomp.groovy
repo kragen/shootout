@@ -11,20 +11,17 @@
 // StringBuffer
 // ---------------------------------------------------------------------
 
-def complement = ['A':'T', 'C':'G', 'G':'C', 'T':'A', 'M':'K', 'R':'Y', 'W':'W', 'S':'S', 'Y':'R', 'K':'M', 'V':'B', 'H':'D', 'D':'H', 'B':'V', 'N':'N']
-
-// --------------
-
 def revcomp(sequence)
 {
-  def compseq = ""
+  def complement = ['A':'T', 'C':'G', 'G':'C', 'T':'A', 'M':'K', 'R':'Y', 'W':'W', 'S':'S', 'Y':'R', 'K':'M', 'V':'B', 'H':'D', 'D':'H', 'B':'V', 'N':'N']
+  def compseq = new StringBuffer()
 
   sequence.reverse().toUpperCase().each()
   {
-    compseq += complement[it]
+    compseq.insert(0, complement[it])
   }
 
-  compseq
+  compseq.toString()
 }
 
 // --------------
