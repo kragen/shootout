@@ -18,7 +18,7 @@ def revcomp(sequence)
 
   sequence.reverse().toUpperCase().each()
   {
-    compseq.insert(0, complement[it])
+    compseq += complement[it]
   }
 
   compseq.toString()
