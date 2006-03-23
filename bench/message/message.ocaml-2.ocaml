@@ -1,0 +1,32 @@
+(* message.ml
+
+   The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   Contributed by Troestler Christophe
+   Based on Scheme Chicken implementation
+*)
+
+(* Channel to communicate safely between threads (no buffering). *)
+type channel = { write: Mutex.t; mutable v: int; read: Mutex.t }
+
+let make () =
+  let r = Mutex.create() in Mutex.lock r; { write=Mutex.create(); v=0; read=r }
+
+let read ch = Mutex.lock ch.read; let v = ch.v in Mutex.unlock ch.write; v
+
+let write ch v = Mutex.lock ch.write; ch.v <- v; Mutex.unlock ch.read
+
+(* Looping utility *)
+let rec repeat n f x = if n <= 0 then x else repeat (n-1) f (f x)
+
+
+let make_node out_ch =
+  let in_ch = make() in
+  let node () = while true do write out_ch (1 + read in_ch) done in
+  ignore(Thread.create node ()); in_ch
+
+let () =
+  let n = try int_of_string Sys.argv.(1) with _ -> 10 in
+  let e = make() in let b = repeat 500 (* 380 ok *) make_node e in
+  Printf.printf "%i\n" (repeat n (fun i -> write b 0; i + read e) 0)
