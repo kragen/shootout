@@ -5,26 +5,28 @@
  contributed by tt@kyon.de
  modified by tt@kyon.de
  */
-public final class CheapConcurrency_Wait extends Thread {
+public final class message extends Thread {
 
 	private static final int THREADS = 500;
 	private static int msgCount;
-	private final CheapConcurrency_Wait nextThread;
+	private final message nextThread;
 	private int[] messages = new int[msgCount];
 	private int todo;
 	private boolean waiting;
 
 	public static void main(String args[]) {
 		msgCount = Integer.parseInt(args[0]);
-		CheapConcurrency_Wait thread = null;
+		message thread = null;
 		for (int i = THREADS; --i >= 0;) {
-			(thread = new CheapConcurrency_Wait(thread)).start();
+			(thread = new message(thread)).start();
 		}
-		for (int i = msgCount; --i >= 0;) {
-			thread.send(0);
+		synchronized (thread) {
+			for (int i = msgCount; --i >= 0;) {
+				thread.send(0);
+			}
 		}
 	}
-	private CheapConcurrency_Wait(CheapConcurrency_Wait next) {
+	private message(message next) {
 		nextThread = next;
 	}
 	public synchronized void run() {
@@ -39,16 +41,19 @@ public final class CheapConcurrency_Wait extends Thread {
 			} else {
 				add();
 			}
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
+			// will not be thrown under any normal circumstances
 			e.printStackTrace();
 		}
 	}
-	private synchronized void pass() throws Exception {
+	private synchronized void pass() throws InterruptedException {
 		int done = 0;
 		for (;;) {
-			do {
-				nextThread.send(messages[done++] + 1);
-			} while (done < todo);
+			synchronized (nextThread) {
+				do {
+					nextThread.send(messages[done++] + 1);
+				} while (done < todo);
+			}
 			while (done == todo) {
 				// no unsynchronized todos left
 				waiting = true;
@@ -57,7 +62,7 @@ public final class CheapConcurrency_Wait extends Thread {
 			}
 		}
 	}
-	private synchronized void add() throws Exception {
+	private synchronized void add() throws InterruptedException {
 		int sum = 0;
 		int done = 0;
 		for (;;) {
@@ -76,7 +81,7 @@ public final class CheapConcurrency_Wait extends Thread {
 			}
 		}
 	}
-	private synchronized void send(int message) {
+	private void send(int message) {
 		messages[todo++] = message;
 		if (waiting) {
 			notify();
