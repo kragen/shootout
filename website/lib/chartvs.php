@@ -42,7 +42,7 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
 
    $w = 300;
    $w2 = 150;
-   $o = 150;   
+   $o = 150;  
    $h = 300;
    $hsec = 5;
    $hmem = 1;
@@ -104,22 +104,22 @@ foreach($Tests as $Row){
          if ($wsec < 1){ 
             if ($wsec==0){ $wsec = 0.0001; }      
             $wsec = min( (1/$wsec)*$v1, $w2) - $v1; 
-            ImageFilledRectangle($im, $o, $ysec, $o+$wsec, $ysec+$hsec, $white);
+            ImageFilledRectangle($im, $o-$wsec, $ysec, $o, $ysec+$hsec, $white);
          }            
          else { 
             $wsec = min( $wsec*$v1, $w2) - $v1;
-            ImageFilledRectangle($im, $o-$wsec, $ysec, $o, $ysec+$hsec, $white);
+            ImageFilledRectangle($im, $o, $ysec, $o+$wsec, $ysec+$hsec, $white);
          }
 
          $wmem = $v[N_MEMORY];
          if ($wmem < 1){ 
             if ($wmem==0){ $wmem = 0.0001; }      
             $wmem = min( (1/$wmem)*$v1, $w2) - $v1; 
-            ImageFilledRectangle($im, $o, $ymem, $o+$wmem, $ymem+$hmem, $black);
+            ImageFilledRectangle($im, $o-$wmem, $ymem, $o, $ymem+$hmem, $black);
          }            
          else { 
             $wmem = min( $wmem*$v1, $w2) - $v1;
-            ImageFilledRectangle($im, $o-$wmem, $ymem, $o, $ymem+$hmem, $black);
+            ImageFilledRectangle($im, $o, $ymem, $o+$wmem, $ymem+$hmem, $black);
          }                             
       }
    }      
@@ -141,8 +141,8 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND 
 
-ImageString($im, 3, $o-$v1*9+8+5-55, $b+17, $ShortName.' better', $black);
-ImageString($im, 3, $o-$v1*9+8+5+90, $b+17, $ShortName2.' better', $black);
+ImageString($im, 3, $o-$v1*9+8+5-55, $b+17, $ShortName2.' better', $black);
+ImageString($im, 3, $o-$v1*9+8+5+90, $b+17, $ShortName.' better', $black);
 
 ImageFilledRectangle($im, $o-$v1*9+10, $b+36, $o-$v1*9+8+10, $b+36+$hsec, $white);
 ImageString($im, 3, $o-$v1*9+8+5+10, $b+32, 'CPU Time', $white);
