@@ -71,8 +71,7 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 
 
 <h5>Extra:</h5>
-<p>more language implementations and alpha benchmarks</p>
-<p>some language implementations are shown on one website but not the other, check both</p>
+<p>more language implementations and alpha benchmarks; some language implementations are shown on one website but not the other, check both</p>
 <table class="layout">
 <tr>
 <td>
