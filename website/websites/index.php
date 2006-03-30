@@ -48,6 +48,9 @@ We can't - <strong>we measure particular programs</strong>.</p>
 </ul>
 
 <h5>Start:</h5>
+<p>although both websites show the same benchmarks there are differences - 
+on Gentoo : Intel some benchmarks have a higher workload, and most language implementations have been built from source.</p>
+
 <p>choose an OS : architecture, and click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
 <table class="layout">
 <tr>
@@ -68,7 +71,8 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 
 
 <h5>Extra:</h5>
-<p>More language implementations and alpha benchmarks</p>
+<p>more language implementations and alpha benchmarks</p>
+<p>some language implementations are shown on one website but not the other, check both</p>
 <table class="layout">
 <tr>
 <td>
@@ -88,7 +92,7 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 
 
 <h5>For auld lang syne:</h5>
-<p>Look back at the old 2001 Doug Bagley Benchmarks</p>
+<p>look back at the old 2001 Doug Bagley Benchmarks</p>
 <table class="layout">
 <tr>
 <td>
