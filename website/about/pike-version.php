@@ -1,1 +1,1 @@
-<p>Pike v7.6 release 67 </p>
+<p>Pike v7.6 release 69 </p>

@@ -601,17 +601,17 @@
        },
      },
 
-     java15 =>
+     java14 =>
      { Lang => 'Java',
        Name => 'Java',
        Status => '+',
        Home => 'http://www.sun.com/',
        Down => 'http://www.sun.com/',
        Type => 'interpreted',
-       Note => 'Official SUN Java 1.5 with HotSpot',
+       Note => 'Official SUN Java 1.4 with HotSpot',
        Ext  => 'java',
        Verfun => sub {
-	   my $ver = `$ENV{JAVA15} -version -server 2>&1`;
+	   my $ver = `$ENV{JAVA14} -version -server 2>&1`;
 	   $ver =~ /(Java HotSpot.*)/;
 	   return($1);
        },
