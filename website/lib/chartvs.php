@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2006
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
    $vscale = CHART_VSCALE;
    $hscale = 15;   
    
-   $ts = 2;
+   $ts = 18;
    $t = $ts+13;   
    $v1 = $w2/$hscale;
    $b = $h-50;   
@@ -71,6 +71,8 @@ $bgray = ImageColorAllocate($im,204,204,204);
 
 $gray = ImageColorAllocate($im,221,221,221);
 
+ImageString($im, 3, $o-$v1*9+8+5+90, $ts-15 , $ShortName.' better', $black);
+
 ImageString($im, 2, $o -2, $ts, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $ts, '5x', $white);
 ImageString($im, 2, $o-$v1*9 -8, $ts, '10x', $white);
@@ -89,9 +91,6 @@ ImageLine($im, $o-$v1*14, $t, $o-$v1*14, $b, $white);
 ImageLine($im, $o+$v1*4, $t, $o+$v1*4, $b, $gray);
 ImageLine($im, $o+$v1*9, $t, $o+$v1*9, $b, $gray);
 ImageLine($im, $o+$v1*14, $t, $o+$v1*14, $b, $white);
-
-
-
 
 // CHART BARS
 
@@ -141,8 +140,7 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND 
 
-ImageString($im, 3, $o-$v1*9+8+5-55, $b+17, $ShortName2.' better', $black);
-ImageString($im, 3, $o-$v1*9+8+5+90, $b+17, $ShortName.' better', $black);
+ImageString($im, 3, $o-$v1*9+8+5-55, $b+15, $ShortName2.' better', $black);
 
 ImageFilledRectangle($im, $o-$v1*9+10, $b+36, $o-$v1*9+8+10, $b+36+$hsec, $white);
 ImageString($im, 3, $o-$v1*9+8+5+10, $b+32, 'CPU Time', $white);
