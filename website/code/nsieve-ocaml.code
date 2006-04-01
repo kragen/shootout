@@ -1,27 +1,40 @@
-<span class="com">(*</span>
-<span class="com">  Requires the Bigarray module for larger values of n</span>
-<span class="com">  (&gt;= 9 on 32 bit systems), so compile with something like:</span>
-<span class="com">    ocamlopt -noassert -unsafe -o nseive bigarray.cmxa nseive.ml</span>
-<span class="com">  i.e. include the bigarray.cmxa library... *)</span>
+<span class="com">(* nsieve.ml -- naïve Sieve of Eratosthenes</span>
+<span class="com"> *</span>
+<span class="com"> * The Great Computer Language Shootout</span>
+<span class="com"> * http://shootout.alioth.debian.org/</span>
+<span class="com"> *</span>
+<span class="com"> * Contributed by Christophe TROESTLER</span>
+<span class="com"> *)</span>
 
-<span class="kwa">open</span> Bigarray<span class="sym">;;</span>
+<span class="com">(* Make a new &quot;array&quot; of size [n] filled with [true].  Because OCaml</span>
+<span class="com">   can create arrays of size at most [Sys.max_array_length] (which is</span>
+<span class="com">   too small on 32 bits), a workaround is required.</span>
+<span class="com"></span>
+<span class="com">   &#64;return (get, set_false) accessors to that array. *)</span>
+<span class="kwa">let</span> array_make n <span class="sym">=</span>
+  <span class="kwa">if</span> n <span class="sym">&lt;=</span> Sys.max_array_length <span class="kwa">then</span>
+    <span class="kwa">let</span> a <span class="sym">=</span> Array.make n <span class="kwa">true in</span>
+    <span class="sym">(</span><span class="kwa">fun</span> i <span class="sym">-&gt;</span> a.<span class="sym">(</span>i<span class="sym">)), (</span><span class="kwa">fun</span> i <span class="sym">-&gt;</span> a.<span class="sym">(</span>i<span class="sym">) &lt;-</span> <span class="kwa">false</span><span class="sym">)</span>
+  <span class="kwa">else</span>
+    <span class="kwa">let</span> a <span class="sym">= [|</span> Array.make <span class="sym">((</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">)/</span><span class="num">2</span><span class="sym">)</span> <span class="kwa">true</span><span class="sym">;</span> Array.make <span class="sym">((</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">)/</span><span class="num">2</span><span class="sym">)</span> <span class="kwa">true</span><span class="sym">|]</span> <span class="kwa">in</span>
+    <span class="sym">( (</span><span class="kwa">fun</span> i <span class="sym">-&gt;</span> a.<span class="sym">(</span>i <span class="kwa">land</span> <span class="num">0x1</span><span class="sym">)</span>.<span class="sym">(</span>i <span class="kwa">lsr</span> <span class="num">1</span><span class="sym">)),</span>
+      <span class="sym">(</span><span class="kwa">fun</span> i <span class="sym">-&gt;</span> a.<span class="sym">(</span>i <span class="kwa">land</span> <span class="num">0x1</span><span class="sym">)</span>.<span class="sym">(</span>i <span class="kwa">lsr</span> <span class="num">1</span><span class="sym">) &lt;-</span> <span class="kwa">false</span><span class="sym">) )</span>
 
-<span class="kwa">let</span> big_nseive m <span class="sym">=</span>
-  <span class="kwa">let</span> s <span class="sym">=</span> Array1.create Bigarray.char c_layout <span class="sym">(</span>succ m<span class="sym">)</span> <span class="kwa">in</span>
-  Array1.fill s <span class="str">'t';</span>
-<span class="str">  let rec step i cnt =</span>
-<span class="str">    let rec whack j = if j &lt;= m then (Array1.set s j '</span>f'<span class="sym">;</span> whack <span class="sym">(</span>j <span class="sym">+</span> i<span class="sym">))</span> <span class="kwa">in</span>
-    <span class="kwa">if</span> i <span class="sym">&lt;=</span> m <span class="kwa">then</span>
-      <span class="sym">(</span><span class="kwa">if</span> Array1.get s i <span class="sym">=</span> <span class="str">'t' then</span>
-<span class="str">        (whack (i lsl 1); step (succ i) (succ cnt))</span>
-<span class="str">      else step (succ i) cnt)</span>
-<span class="str">    else cnt in</span>
-<span class="str">  Printf.printf &quot;Primes up to %8d %8d</span><span class="esc">\n</span><span class="str">&quot; m (step 2 0);;</span>
-<span class="str"></span>
-<span class="str">let _ =</span>
-<span class="str">  let n = (int_of_string Sys.argv.(1)) in</span>
-<span class="str">  big_nseive ((1 lsl n) * 10000);</span>
-<span class="str">  big_nseive ((1 lsl (n-1)) * 10000);</span>
-<span class="str">  big_nseive ((1 lsl (n-2)) * 10000);;</span>
-<span class="str"></span>
-<span class="str"></span>
+<span class="kwa">let</span> nsieve m <span class="sym">=</span>
+  <span class="kwa">let</span> get<span class="sym">,</span> set_false <span class="sym">=</span> array_make m <span class="kwa">in</span>
+  <span class="kwa">let</span> count <span class="sym">=</span> ref <span class="num">0</span> <span class="kwa">in</span>
+  <span class="kwa">for</span> i <span class="sym">=</span> <span class="num">2</span> <span class="kwa">to</span> m <span class="sym">-</span> <span class="num">1</span> <span class="kwa">do</span>
+    <span class="kwa">if</span> get i <span class="kwa">then</span> <span class="sym">(</span>
+      incr count<span class="sym">;</span>
+      <span class="kwa">let</span> j <span class="sym">=</span> ref<span class="sym">(</span>i <span class="kwa">lsl</span> <span class="num">1</span><span class="sym">)</span> <span class="kwa">in while</span> <span class="sym">!</span>j <span class="sym">&lt;</span> m <span class="kwa">do</span> set_false <span class="sym">!</span>j<span class="sym">;</span> j <span class="sym">:= !</span>j <span class="sym">+</span> i <span class="kwa">done</span><span class="sym">;</span>
+    <span class="sym">)</span>
+  <span class="kwa">done</span><span class="sym">;</span>
+  Printf.printf <span class="str">&quot;Primes up to %8u %8u</span><span class="esc">\n</span><span class="str">&quot;</span> m <span class="sym">!</span>count
+
+
+<span class="kwa">let</span> <span class="sym">() =</span>
+  <span class="com">(* Use [Array.get] so it raises an exception even if compiled with -unsafe *)</span>
+  <span class="kwa">let</span> n <span class="sym">=</span> <span class="kwa">try</span> int_of_string <span class="sym">(</span>Array.get Sys.argv <span class="num">1</span><span class="sym">)</span> <span class="kwa">with</span> _ <span class="sym">-&gt;</span> <span class="num">2</span> <span class="kwa">in</span>
+  nsieve <span class="sym">(</span><span class="num">10000</span> <span class="kwa">lsl</span> n<span class="sym">);</span>
+  nsieve <span class="sym">(</span><span class="num">10000</span> <span class="kwa">lsl</span> <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">));</span>
+  nsieve <span class="sym">(</span><span class="num">10000</span> <span class="kwa">lsl</span> <span class="sym">(</span>n<span class="sym">-</span><span class="num">2</span><span class="sym">))</span>
