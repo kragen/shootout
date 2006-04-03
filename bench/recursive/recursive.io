@@ -2,6 +2,24 @@
 /* The Great Computer Language Shootout                               */
 /* http://shootout.alioth.debian.org/                                 */
 /*                                                                    */
+/* Whilst this program was successfully tested at a load of:          */
+/*                                                                    */
+/*     n = 3                                                          */
+/*                                                                    */
+/* it fails at higher loads due to stack overflow. Having consulted   */
+/* the relevant documentation at:                                     */
+/*                                                                    */
+/*     http://www.iolanguage.com/darcs/Io/_docs/guide.html            */
+/*                                                                    */
+/* there doesn't appear to be a command-line option or environment    */
+/* variable that may be set to increase the in-built stack size, nor  */
+/* does the use of the shell setting, 'ulimit -s unlimited', appear to*/
+/* increase this limit.                                               */
+/*                                                                    */
+/* Note: Although this program knowingly fails at n > 3 loads, it was */
+/* submitted to replace the existing version which fails due to a     */
+/* command-line processing error.                                     */
+/*                                                                    */
 /* Contributed by Anthony Borla                                       */
 /* ------------------------------------------------------------------ */
 
@@ -27,7 +45,7 @@ tak := method(x, y, z,
 
 /* ----------------------------- */
 
-n := args at(1) asNumber
+n := args at(0) asNumber
 
 // Use interpolation for complex string expressions
 "Ack(3,#io{n}): #io{ack(3, n)}" interpolate println

@@ -6,35 +6,45 @@
 %
 %   erl -noshell -run MODULENAME ENTRYPOINT USERARG1 ... < in > out
 %
-% Based on SWI Prolog implementation by Anthony Borla
+% Loosely based on the SWI Prolog implementation by Anthony Borla
 % 
 % Contributed by Anthony Borla
 % ----------------------------------------------------------------------
 
 -module(revcomp).
--export([main/0]).
+-export([main/1]).
+
+-define(SEGDIV, $>).
+-define(LF, 10).
+-define(SPACE, 32).
+-define(LINE_LENGTH, 60).
 
 % ------------------------------- %
 
-main() ->
-  revcomp(get_line(), []),
+main([Args]) ->
+  revcomp(get_line()),
   halt().
 
 % ------------------------------- %
 
-revcomp(eof, Seg) -> dump_segment(Seg), io:nl();
+revcomp(Seq) ->
+  io:format('~s~n', [Seq]), revcomp_(get_line(), []).
 
-revcomp(Seq, Seg) -> 
+% ------------- %
+
+revcomp_(eof, Seg) -> dump_segment(Seg), io:nl();
+
+revcomp_(Seq, Seg) -> 
   case Seq of
-    [$>|_] -> dump_segment(Seg), io:format('~n~s~n', [Seq]), revcomp(get_line(), []);
-    _      -> revcomp(get_line(), lists:append(Seg, Seq))
+    [?SEGDIV|_] -> dump_segment(Seg), io:format('~n~s~n', [Seq]),
+                   revcomp_(get_line(), []);
+    _           -> revcomp_(get_line(), lists:append(Seg, Seq))
   end.
 
 % ------------------------------- %
 
-%% 60 is output line length  
-
-dump_segment(Seg) -> dump_segment_(lists:reverse(Seg), 1, 60).
+dump_segment(Seg) ->
+  dump_segment_(lists:reverse(Seg), 1, ?LINE_LENGTH).
 
 % ------------- %
 
@@ -50,14 +60,21 @@ dump_segment_([H|T], A, N) ->
 
 % ------------------------------- %
 
-%% Return line with trailing newline removed [Note: There probably
-%% exists a more efficient means of chopping the trailing newline]
+%%
+%% Return line with trailing newline removed. Code is *NIX-specific
+%% assuming newline is LF - ASCII 0x0A (10). Each of the three
+%% approaches for newline removal appear to work:
+%%
+%%    _   -> lists:delete(?LF, Line)
+%%    _   -> lists:subtract(Line, [?LF])
+%%    _   -> lists:reverse(lists:nthtail(1, lists:reverse(Line)))
+%%
 
 get_line() ->
   Line = io:get_line(''),
   case Line of
     eof -> eof;
-    _   -> lists:reverse(lists:nthtail(1, lists:reverse(Line)))
+    _   -> lists:subtract(Line, [?LF])
   end.
 
 % ------------------------------- %
@@ -82,7 +99,7 @@ complement(Code) ->
 
 to_upper(Code) ->
   if
-     Code > $Z -> Code - 32;
+     Code > $Z -> Code - ?SPACE;
      true      -> Code
   end.
 
