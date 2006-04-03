@@ -1,10 +1,10 @@
 # The Computer Language Shootout
 # http://shootout.alioth.debian.org/
-# recursive test, by Justin Ossevoort, Mar 27 2006
+# recursive test, by Justin Ossevoort, Apr 03 2006
 
 # This is the nice-"perlish" version
 
-### Don't use warnings because at N=3 the Ack() method will
+### Don't use warnings because at N=4 the Ack() method will
 ### start complaining about deep recursion (though it'll still
 ### function as expected)
 
@@ -39,11 +39,11 @@ sub Tak
 	return $z;
 }
 
-my $n = $ARGV[0] || 0;
-printf "Ack(3,%d): %d\nFib(%.1f): %.1f\nTak(%d,%d,%d): %d\nFib(3): %d\nTak(3.0,2.0,1.0): %.1f\n",
-	$n + 1, Ack(3, $n + 1),
-	28.0 + $n, Fib(28.0 + $n),
+my $n = ($ARGV[0] || 0);
+printf "Ack(%d,%d): %d\nFib(%.1f): %.1f\nTak(%d,%d,%d): %d\nFib(%d): %d\nTak(%.1f,%.1f,%.1f): %.1f\n",
+	3, $n, Ack(3, $n),
+	27.0 + $n, Fib(27.0 + $n--),
 	$n * 3, $n * 2, $n, Tak($n * 3, $n * 2, $n),
-	Fib(3),
-	Tak(3.0, 2.0, 1.0)
+	3, Fib(3),
+	3.0, 2.0, 1.0, Tak(3.0, 2.0, 1.0)
 	;

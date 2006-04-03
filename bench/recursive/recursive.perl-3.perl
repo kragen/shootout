@@ -57,11 +57,11 @@ sub Tak
 	}
 }
 
-my $n = $ARGV[0] || 0;
-printf "Ack(3,%d): %d\nFib(%.1f): %.1f\nTak(%d,%d,%d): %d\nFib(3): %d\nTak(3.0,2.0,1.0): %.1f\n",
-	$n + 1, Ack(3, $n+1),
+my $n = ($ARGV[0] || 0) - 1;
+printf "Ack(%d,%d): %d\nFib(%.1f): %.1f\nTak(%d,%d,%d): %d\nFib(%d): %d\nTak(%.1f,%.1f,%.1f): %.1f\n",
+	3, $n + 1, Ack(3, $n + 1),
 	28.0 + $n, Fib(28.0 + $n),
 	$n * 3, $n * 2, $n, Tak($n * 3, $n * 2, $n),
-	Fib(3),
-	Tak(3.0, 2.0, 1.0)
+	$n + 1, Fib($n + 1),
+	$n + 1, $n, $n - 1, Tak($n + 1, $n, $n -1)
 ;
