@@ -1,5 +1,4 @@
-#!/usr/bin/ruby
-# The Comptuer Language Shootout Benchmarks
+# The Computer Language Shootout Benchmarks
 # http://shootout.alioth.debian.org
 #
 # contributed by Jesse Millikan
