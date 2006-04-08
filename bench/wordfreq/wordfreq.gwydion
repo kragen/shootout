@@ -1,29 +1,53 @@
-module: wordfreq
-use-libraries: common-dylan, io, table-extensions
-use-modules: common-dylan, standard-io, streams, format-out, table-extensions
+module:    wordfreq
+author:    unknown
+           Anthony Borla [modified stream reading, regexp-based conversion, output format]
+synopsis:  "word frequency" benchmark
+           The Great Computer Language Shootout
+           http://shootout.alioth.debian.org/
+copyright: public domain
+use-libraries: dylan, io, format, table-extensions, string-extensions, regular-expressions
+use-modules: dylan, standard-io, streams, format, format-out, table-extensions, string-conversions, substring-search, regular-expressions
 
-begin
-  let words = make(<string-table>);
-  while(~stream-at-end?(*standard-input*))
-    do(method(x)
-           unless(x = "")
-	     x := as-lowercase(x);
-             let count = element(words, x, default: 0);
-             words[x] := count + 1;
-           end unless;
-       end method, split(read-line(*standard-input*), ' '));
+// --------------------------------
+
+define constant $exclude-chars = "\042!#$%&`'()*+,-./0123456789:;<=>?@[\\]^_{|}~";
+define constant $delimiter-pattern = "\\s";
+define constant $blank-char = " ";
+
+// --------------
+
+define function main() => ();
+  let words = make(<string-table>); let line = "";
+
+  local method add-to-tbl(word)
+    let count = element(words, word, default: 0);
+    words[word] := count + 1;
+  end method;
+
+  while ((line := read-line(*standard-input*, on-end-of-stream: #f)))
+    let (#rest words) = split($delimiter-pattern, as-lowercase(translate(line, $exclude-chars, $blank-char)));
+    do(add-to-tbl, words); 
   end while;
+
   let results = make(<stretchy-vector>);
+
   for(w keyed-by k in words)
     add!(results, pair(k, w));
   end for;
+
   do(method(x)
-         format-out("%s %=\n", x.head, x.tail)
-     end method, sort(results, test: method(x, y)
-                                         if(x.tail == y.tail)
-                                           x.head > y.head
-                                         else
-                                           x.tail > y.tail
-                                         end if; 
-                                     end method));
-end;
+       format-out("%7d %s\n", x.tail, x.head)
+     end method,
+     sort(results, test: method(x, y)
+                           if (x.tail == y.tail)
+                             x.head > y.head
+                           else
+                             x.tail > y.tail
+                           end if;
+                         end method));
+end function main;
+
+// --------------------------------
+
+main();
+
