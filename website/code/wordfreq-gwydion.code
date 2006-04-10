@@ -1,29 +1,53 @@
-<span class="kwb">module</span><span class="sym">:</span> wordfreq
-<span class="kwa">use</span><span class="sym">-</span>libraries<span class="sym">:</span> common<span class="sym">-</span>dylan<span class="sym">,</span> io<span class="sym">,</span> table<span class="sym">-</span>extensions
-<span class="kwa">use</span><span class="sym">-</span>modules<span class="sym">:</span> common<span class="sym">-</span>dylan<span class="sym">,</span> standard<span class="sym">-</span>io<span class="sym">,</span> streams<span class="sym">,</span> format<span class="sym">-</span>out<span class="sym">,</span> table<span class="sym">-</span>extensions
+<span class="kwb">module</span><span class="sym">:</span>    wordfreq
+<span class="kwb">author</span><span class="sym">:</span>    unknown
+           Anthony Borla <span class="sym">[</span>modified stream reading<span class="sym">,</span> regexp<span class="sym">-</span>based conversion<span class="sym">,</span> output format<span class="sym">]</span>
+<span class="kwb">synopsis</span><span class="sym">:</span>  <span class="str">&quot;word frequency&quot;</span> benchmark
+           The Great Computer Language Shootout
+           http<span class="sym">:</span><span class="slc">//shootout.alioth.debian.org/</span>
+<span class="kwb">copyright</span><span class="sym">:</span> public <span class="kwa">domain</span>
+<span class="kwa">use</span><span class="sym">-</span>libraries<span class="sym">:</span> dylan<span class="sym">,</span> io<span class="sym">,</span> format<span class="sym">,</span> table<span class="sym">-</span>extensions<span class="sym">,</span> string<span class="sym">-</span>extensions<span class="sym">,</span> regular<span class="sym">-</span>expressions
+<span class="kwa">use</span><span class="sym">-</span>modules<span class="sym">:</span> dylan<span class="sym">,</span> standard<span class="sym">-</span>io<span class="sym">,</span> streams<span class="sym">,</span> format<span class="sym">,</span> format<span class="sym">-</span>out<span class="sym">,</span> table<span class="sym">-</span>extensions<span class="sym">,</span> string<span class="sym">-</span>conversions<span class="sym">,</span> substring<span class="sym">-</span>search<span class="sym">,</span> regular<span class="sym">-</span>expressions
 
-<span class="kwa">begin
-  let</span> words <span class="sym">=</span> make<span class="sym">(</span><span class="kwa">&lt;string-table&gt;</span><span class="sym">);
-</span>  <span class="kwa">while</span><span class="sym">(</span>~stream<span class="sym">-</span>at<span class="sym">-</span><span class="kwa">end</span>?<span class="sym">(*</span>standard<span class="sym">-</span>input<span class="sym">*))
-</span>    do<span class="sym">(</span><span class="kwa">method</span><span class="sym">(</span>x<span class="sym">)
-</span>           <span class="kwa">unless</span><span class="sym">(</span>x <span class="sym">=</span> <span class="str">&quot;&quot;</span><span class="sym">)
-</span>	     x <span class="sym">:=</span> as<span class="sym">-</span>lowercase<span class="sym">(</span>x<span class="sym">);
-</span>             <span class="kwa">let</span> count <span class="sym">=</span> element<span class="sym">(</span>words<span class="sym">,</span> x<span class="sym">,</span> default<span class="sym">:</span> <span class="num">0</span><span class="sym">);
-</span>             words<span class="sym">[</span>x<span class="sym">] :=</span> count <span class="sym">+</span> <span class="num">1</span><span class="sym">;
-</span>           <span class="kwa">end unless</span><span class="sym">;
-</span>       <span class="kwa">end method</span><span class="sym">,</span> split<span class="sym">(</span>read<span class="sym">-</span>line<span class="sym">(*</span>standard<span class="sym">-</span>input<span class="sym">*),</span> <span class="str">' '</span><span class="sym">));
-</span>  <span class="kwa">end while</span><span class="sym">;
-</span>  <span class="kwa">let</span> results <span class="sym">=</span> make<span class="sym">(</span><span class="kwa">&lt;stretchy-vector&gt;</span><span class="sym">);
-</span>  <span class="kwa">for</span><span class="sym">(</span>w keyed<span class="sym">-</span><span class="kwa">by</span> k <span class="kwa">in</span> words<span class="sym">)
-</span>    add<span class="sym">!(</span>results<span class="sym">,</span> pair<span class="sym">(</span>k<span class="sym">,</span> w<span class="sym">));
-</span>  <span class="kwa">end for</span><span class="sym">;
-</span>  do<span class="sym">(</span><span class="kwa">method</span><span class="sym">(</span>x<span class="sym">)
-</span>         format<span class="sym">-</span>out<span class="sym">(</span><span class="str">&quot;%s %=</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> x.head<span class="sym">,</span> x.tail<span class="sym">)
-</span>     <span class="kwa">end method</span><span class="sym">,</span> sort<span class="sym">(</span>results<span class="sym">,</span> test<span class="sym">:</span> <span class="kwa">method</span><span class="sym">(</span>x<span class="sym">,</span> y<span class="sym">)
-</span>                                         <span class="kwa">if</span><span class="sym">(</span>x.tail <span class="sym">==</span> y.tail<span class="sym">)
-</span>                                           x.head &gt; y.head
-                                         <span class="kwa">else
-</span>                                           x.tail &gt; y.tail
-                                         <span class="kwa">end if</span><span class="sym">;
-</span>                                     <span class="kwa">end method</span><span class="sym">));
-</span><span class="kwa">end</span><span class="sym">;</span>
+<span class="slc">// --------------------------------</span>
+
+<span class="kwa">define constant</span> $<span class="kwa">exclude</span><span class="sym">-</span>chars <span class="sym">=</span> <span class="str">&quot;</span><span class="esc">\0</span><span class="str">42!#$%&amp;`'()*+,-./0123456789:;&lt;=&gt;?&#64;[</span><span class="esc">\\</span><span class="str">]^_{|}~&quot;</span><span class="sym">;</span>
+<span class="kwa">define constant</span> $delimiter<span class="sym">-</span>pattern <span class="sym">=</span> <span class="str">&quot;</span><span class="esc">\\</span><span class="str">s&quot;</span><span class="sym">;</span>
+<span class="kwa">define constant</span> $blank<span class="sym">-</span>char <span class="sym">=</span> <span class="str">&quot; &quot;</span><span class="sym">;</span>
+
+<span class="slc">// --------------</span>
+
+<span class="kwa">define function</span> <span class="kwd">main</span><span class="sym">() =</span>&gt; <span class="sym">();</span>
+  <span class="kwa">let</span> words <span class="sym">=</span> <span class="kwd">make</span><span class="sym">(</span><span class="kwa">&lt;string-table&gt;</span><span class="sym">);</span> <span class="kwa">let</span> line <span class="sym">=</span> <span class="str">&quot;&quot;</span><span class="sym">;</span>
+
+  <span class="kwa">local method</span> add<span class="sym">-</span><span class="kwa">to</span><span class="sym">-</span><span class="kwd">tbl</span><span class="sym">(</span>word<span class="sym">)</span>
+    <span class="kwa">let</span> count <span class="sym">=</span> <span class="kwd">element</span><span class="sym">(</span>words<span class="sym">,</span> word<span class="sym">,</span> default<span class="sym">:</span> <span class="num">0</span><span class="sym">);</span>
+    words<span class="sym">[</span>word<span class="sym">] :=</span> count <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+  <span class="kwa">end method</span><span class="sym">;</span>
+
+  <span class="kwa">while</span> <span class="sym">((</span>line <span class="sym">:=</span> read<span class="sym">-</span><span class="kwd">line</span><span class="sym">(*</span>standard<span class="sym">-</span>input<span class="sym">*,</span> on<span class="sym">-</span><span class="kwa">end</span><span class="sym">-</span>of<span class="sym">-</span>stream<span class="sym">:</span> #f<span class="sym">)))</span>
+    <span class="kwa">let</span> <span class="sym">(</span>#rest words<span class="sym">) =</span> <span class="kwd">split</span><span class="sym">(</span>$delimiter<span class="sym">-</span>pattern<span class="sym">,</span> as<span class="sym">-</span><span class="kwd">lowercase</span><span class="sym">(</span><span class="kwd">translate</span><span class="sym">(</span>line<span class="sym">,</span> $<span class="kwa">exclude</span><span class="sym">-</span>chars<span class="sym">,</span> $blank<span class="sym">-</span>char<span class="sym">)));</span>
+    <span class="kwd">do</span><span class="sym">(</span>add<span class="sym">-</span><span class="kwa">to</span><span class="sym">-</span>tbl<span class="sym">,</span> words<span class="sym">);</span>
+  <span class="kwa">end while</span><span class="sym">;</span>
+
+  <span class="kwa">let</span> results <span class="sym">=</span> <span class="kwd">make</span><span class="sym">(</span><span class="kwa">&lt;stretchy-vector&gt;</span><span class="sym">);</span>
+
+  <span class="kwa">for</span><span class="sym">(</span>w keyed<span class="sym">-</span><span class="kwa">by</span> k <span class="kwa">in</span> words<span class="sym">)</span>
+    add<span class="sym">!(</span>results<span class="sym">,</span> <span class="kwd">pair</span><span class="sym">(</span>k<span class="sym">,</span> w<span class="sym">));</span>
+  <span class="kwa">end for</span><span class="sym">;</span>
+
+  <span class="kwd">do</span><span class="sym">(</span><span class="kwa">method</span><span class="sym">(</span>x<span class="sym">)</span>
+       format<span class="sym">-</span><span class="kwd">out</span><span class="sym">(</span><span class="str">&quot;%7d %s</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> x.tail<span class="sym">,</span> x.head<span class="sym">)</span>
+     <span class="kwa">end method</span><span class="sym">,</span>
+     <span class="kwd">sort</span><span class="sym">(</span>results<span class="sym">,</span> test<span class="sym">:</span> <span class="kwa">method</span><span class="sym">(</span>x<span class="sym">,</span> y<span class="sym">)</span>
+                           <span class="kwa">if</span> <span class="sym">(</span>x.tail <span class="sym">==</span> y.tail<span class="sym">)</span>
+                             x.head &gt; y.head
+                           <span class="kwa">else</span>
+                             x.tail &gt; y.tail
+                           <span class="kwa">end if</span><span class="sym">;</span>
+                         <span class="kwa">end method</span><span class="sym">));</span>
+<span class="kwa">end function</span> main<span class="sym">;</span>
+
+<span class="slc">// --------------------------------</span>
+
+<span class="kwd">main</span><span class="sym">();</span>
+

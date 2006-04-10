@@ -1,9 +1,9 @@
 #!/bin/sh
 
-ulimit -s unlimited
+ulimit -s 160000
 
 # Groovy support
-JAVA_HOME=/usr/lib/j2sdk1.4.2_05
+JAVA_HOME=/usr/lib/jdk1.5.0_06
 export JAVA_HOME
 
 # Eiffel Support
