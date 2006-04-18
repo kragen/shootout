@@ -2,56 +2,82 @@
 % The Great Computer Language Shootout                              
 % http://shootout.alioth.debian.org/                                
 %                                                                   
+% Attempt at a faster implementation by:
+%
+% * Avoiding, where possible, the use of list append operations [lists
+%   are stored in a stack rather than being appended]
+% * Restricting the size of lists which are created, thus ensuring
+%   list operations like 'map' and 'reverse' don't 'choke' :)
+%
+% Use made of code from 'Concepts, Techniques and Models of Computer
+% Programming' [CTM] by P. van Roy, S. Haridi.
+% 
 % Contributed by Anthony Borla
 % ----------------------------------------------------------------------
 
 functor
 
 import
-  System(printInfo) Application(exit) Open(text file)
+  System(showInfo) Application(exit) Open(text file)
 
 define
   class TextFile_
     from Open.file Open.text
   end
 
+% ------------- %
+
   proc {ReverseComplement FILE Delimiter OutputLength}
-    {ReadSegments FILE Delimiter OutputLength nil}
-  end
 
-  proc {ReadSegments FILE Delimiter OutputLength Segment}
-    LINE = {FILE getS($)}
-  in
-    case LINE of false then
-      {DumpSegment Segment OutputLength}
-    elseof !Delimiter|_ then
-      {DumpSegment Segment OutputLength}
-      {PrintHeader LINE}
-      {ReadSegments FILE Delimiter OutputLength nil}
-    else
-      {ReadSegments FILE Delimiter OutputLength {AddToSegment LINE Segment}}
-    end
-  end
-
-  local
-    P = proc {$ X} {System.printInfo X # "\n"} end
-  in
-    proc {DumpSegment Segment OutputLength}
-      case Segment of nil then
-        skip
+    proc {ReadSegments Segment} LINE = {FILE getS($)} in
+      case LINE of false then
+        {DumpSegment Segment OutputLength}
+      elseof !Delimiter|_ then
+        {DumpSegment Segment OutputLength}
+        {PrintHeader LINE}
+        {ReadSegments Segment}
       else
-        {SplitAndApply {Map {Reverse Segment} Complement} OutputLength P}
+        {ReadSegments {AddToSegment LINE Segment}}
       end
     end
+  in
+    {ReadSegments {NewStack}}
   end
+
+% ------------- %
+
+  proc {DumpSegment Segment OutputLength}
+
+    proc {DumpSegment_}
+      if {Segment.isEmpty} then
+        if @Spill \= nil then {System.showInfo @Spill} Spill := nil end
+      else OutputLine in
+        Spill := {List.takeDrop {List.append @Spill {Segment.pop}} OutputLength OutputLine}
+        {System.showInfo OutputLine}
+        {DumpSegment_}
+      end
+    end
+
+    Spill = {NewCell nil}
+  in
+    if {Not {Segment.isEmpty}} then Spill := {List.append @Spill {Segment.pop}} end
+    {DumpSegment_}
+  end
+
+% ------------- %
 
   proc {PrintHeader Header}
-    {System.printInfo Header # "\n"}
+    {System.showInfo Header}
   end
 
-  fun {AddToSegment Item Segment}
-    {Append Segment Item}
+% ------------- %
+
+  fun {AddToSegment Sequence Segment}
+    {Segment.push {Map {Reverse Sequence} Complement}}
+    Segment
   end
+
+% ------------- %
 
   local
     CodeTbl = {ByteString.make [84 86 71 72 0 0 67 68 0 0 77 0 75 78 0 0 0 89 83 65 65 66 87 0 82 0]}
@@ -61,17 +87,33 @@ define
     end
   end
 
-  proc {SplitAndApply L N P}
-    X Xs
-  in
-    case L of nil then
-      skip
-    else
-      {List.takeDrop L N X Xs} {P X} {SplitAndApply Xs N P}
+% ------------- %
+
+  %% General Purpose Stateful Stack [CTM implementation]
+  fun {NewStack}
+    C = {NewCell nil}
+
+    proc {Push X} S in S = @C C := X|S end
+
+    fun {Pop} S1 in
+      S1 = @C
+      case S1 of X|S then
+        C := S
+        X
+      end
     end
+
+    fun {IsEmpty} S in S = @C S == nil end
+  in
+    ops(push:Push pop:Pop isEmpty:IsEmpty)
   end
+
+% ------------- %
+
+  Delimiter = &> LineLength = 60
+
 in
-  {ReverseComplement {New TextFile_ init(name:stdin)} &> 60}
+  {ReverseComplement {New TextFile_ init(name:stdin)} Delimiter LineLength}
   {Application.exit 0}
 end
 
