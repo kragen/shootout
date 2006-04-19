@@ -1,42 +1,33 @@
-<span class="com">(* message.sml</span>
+<span class="com">(*</span>
+<span class="com"> * The Computer Language Shootout</span>
+<span class="com"> * http://shootout.alioth.debian.org/</span>
+<span class="com"> * Contributed by Vesa Karvonen</span>
 <span class="com"> *</span>
-<span class="com"> *   Build chain of 3000 threads that relay an int value,</span>
-<span class="com"> *   send N messages up the chain.</span>
-<span class="com"> *</span>
-<span class="com"> * Copyright (c) 2004 by The Fellowship of SML/NJ</span>
-<span class="com"> *</span>
-<span class="com"> * Author: Matthias Blume (blume&#64;tti-c.org)</span>
+<span class="com"> * Cheap concurrency on top of MLton's user level threads.</span>
 <span class="com"> *)</span>
-<span class="kwa">structure</span> Test<span class="sym">:</span><span class="kwa">sig val</span> main<span class="sym">:</span><span class="kwb">string</span><span class="sym">*</span><span class="kwb">string</span> list<span class="sym">-&gt;</span>OS.Process.status <span class="kwa">end</span> <span class="sym">=</span> <span class="kwa">struct</span>
 
-    <span class="kwa">val</span> N <span class="sym">=</span> <span class="num">500</span>		<span class="com">(* default length of chain *)</span>
+<span class="kwa">open</span> MLton.Thread
 
-    <span class="com">(* build the chain *)</span>
-    <span class="kwa">fun</span> build <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> c<span class="sym">) =</span> c
-      <span class="sym">|</span> build <span class="sym">(</span>n<span class="sym">,</span> s<span class="sym">) =</span> <span class="kwa">let val</span> p <span class="sym">=</span> CML.channel <span class="sym">()</span>
-			   <span class="kwa">fun</span> sp <span class="sym">() = (</span>CML.send <span class="sym">(</span>s<span class="sym">,</span> CML.recv p <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span> sp <span class="sym">())</span>
-		       <span class="kwa">in</span> ignore <span class="sym">(</span>CML.spawn sp<span class="sym">);</span> build <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">,</span> p<span class="sym">)</span> <span class="kwa">end</span>
+<span class="com">(* these should be in a library *)</span>
+<span class="kwa">fun</span> pop l <span class="sym">=</span> <span class="kwa">case</span> <span class="sym">!</span>l <span class="kwa">of</span> v<span class="sym">::</span>s <span class="sym">=&gt;</span> v <span class="kwa">before</span> l <span class="sym">:=</span> s
+<span class="kwa">fun</span> push l v <span class="sym">=</span> l <span class="sym">:=</span> v <span class="sym">:: !</span>l
 
-    <span class="com">(* Last thread, this is really the N+1st thread -- contrary to</span>
-<span class="com">     * the prose of the problem description, but in accordance with the</span>
-<span class="com">     * supposedly correct output: *)</span>
-    <span class="kwa">fun</span> mklast r <span class="sym">=</span>
-	<span class="kwa">let val</span> p <span class="sym">=</span> CML.channel <span class="sym">()</span>
-	    <span class="kwa">fun</span> sp n <span class="sym">=</span> <span class="kwa">let val</span> n <span class="sym">=</span> n <span class="sym">+</span> CML.recv p <span class="kwa">in</span> CML.send <span class="sym">(</span>r<span class="sym">,</span> n<span class="sym">);</span> sp n <span class="kwa">end</span>
-	<span class="kwa">in</span> ignore <span class="sym">(</span>CML.spawn <span class="sym">(</span><span class="kwa">fn</span> <span class="sym">() =&gt;</span> sp <span class="num">0</span><span class="sym">));</span> p <span class="kwa">end</span>
+<span class="kwa">fun</span> repeat n f x <span class="sym">=</span> <span class="kwa">if</span> n<span class="sym">&lt;=</span><span class="num">0</span> <span class="kwa">then</span> x <span class="kwa">else</span> repeat <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> f <span class="sym">(</span>f x<span class="sym">)</span>
 
-    <span class="com">(* the driver *)</span>
-    <span class="kwa">fun</span> doit <span class="sym">(</span>n<span class="sym">,</span> N<span class="sym">) () =</span>
-	<span class="kwa">let val</span> r <span class="sym">=</span> CML.channel <span class="sym">()</span>
-	    <span class="kwa">val</span> c <span class="sym">=</span> build <span class="sym">(</span>N<span class="sym">,</span> mklast r<span class="sym">)</span>
-	    <span class="kwa">fun</span> l <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> k<span class="sym">) =</span> <span class="kwa">TextIO</span>.output <span class="sym">(</span><span class="kwa">TextIO</span>.stdOut<span class="sym">,</span> <span class="kwa">Int</span>.toString k ^ <span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">)</span>
-	      <span class="sym">|</span> l <span class="sym">(</span>n<span class="sym">,</span> _<span class="sym">) = (</span>CML.send <span class="sym">(</span>c<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span> l <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">,</span> CML.recv r<span class="sym">))</span>
-	<span class="kwa">in</span> l <span class="sym">(</span>n<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span> <span class="kwa">end</span>
-    <span class="kwa">fun</span> main' <span class="sym">(</span>n<span class="sym">,</span> N<span class="sym">) = (</span>RunCML.doit <span class="sym">(</span>doit <span class="sym">(</span>n<span class="sym">,</span> N<span class="sym">),</span> NONE<span class="sym">);</span> OS.Process.success<span class="sym">)</span>
-    <span class="kwa">fun</span> len <span class="sym">[] =</span> N <span class="sym">|</span> len <span class="sym">(</span>arg <span class="sym">::</span> _<span class="sym">) =</span> getOpt <span class="sym">(</span><span class="kwa">Int</span>.fromString arg<span class="sym">,</span> N<span class="sym">)</span>
-    <span class="kwa">fun</span> main <span class="sym">(</span>_<span class="sym">, []) =</span> main' <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> N<span class="sym">)</span>
-      <span class="sym">|</span> main <span class="sym">(</span>_<span class="sym">,</span> x <span class="sym">::</span> xs<span class="sym">) =</span> main' <span class="sym">(</span>getOpt <span class="sym">(</span><span class="kwa">Int</span>.fromString x<span class="sym">,</span> <span class="num">1</span><span class="sym">),</span> len xs<span class="sym">)</span>
-<span class="kwa">end</span>
+<span class="com">(* an implementation of cooperative asynchronous message passing *)</span>
+<span class="kwa">val</span> rdy <span class="sym">=</span> ref <span class="sym">([] :</span> Runnable.t list<span class="sym">)</span>
+<span class="kwa">fun</span> newC <span class="sym">() = (</span>ref <span class="sym">[],</span> ref <span class="sym">[])</span>
+<span class="kwa">fun</span> put <span class="sym">(</span>ms<span class="sym">,</span> gs<span class="sym">)</span> m <span class="sym">=</span>
+    <span class="kwa">case</span> <span class="sym">!</span>gs <span class="kwa">of</span> <span class="sym">[] =&gt;</span> push ms m
+              <span class="sym">|</span> g<span class="sym">::</span>s <span class="sym">=&gt;</span> switch <span class="sym">(</span><span class="kwa">fn</span> t <span class="sym">=&gt; (</span>push rdy <span class="sym">(</span>prepare <span class="sym">(</span>t<span class="sym">, ()))</span>
+                                       <span class="sym">;</span> prepare <span class="sym">(</span>g<span class="sym">,</span> m<span class="sym">)</span> <span class="kwa">before</span> gs <span class="sym">:=</span> s<span class="sym">))</span>
+<span class="kwa">fun</span> get <span class="sym">(</span>ms<span class="sym">,</span> gs<span class="sym">) =</span> <span class="kwa">case</span> <span class="sym">!</span>ms <span class="kwa">of</span> <span class="sym">[] =&gt;</span> switch <span class="sym">(</span><span class="kwa">fn</span> t <span class="sym">=&gt; (</span>push gs t <span class="sym">;</span> pop rdy<span class="sym">))</span>
+                             <span class="sym">|</span> m<span class="sym">::</span>s <span class="sym">=&gt;</span> m <span class="kwa">before</span> ms <span class="sym">:=</span> s
 
-<span class="kwa">val</span> <span class="sym">() =</span>
-   OS.Process.exit <span class="sym">(</span>Test.main <span class="sym">(</span>CommandLine.name <span class="sym">(),</span> CommandLine.arguments <span class="sym">()))</span>
+<span class="com">(* main program *)</span>
+<span class="kwa">fun</span> mkLink om <span class="sym">=</span> <span class="kwa">let val</span> im <span class="sym">=</span> newC <span class="sym">()</span> <span class="kwa">fun</span> lp <span class="sym">() = (</span>put om <span class="sym">(</span><span class="num">1</span> <span class="sym">+</span> get im<span class="sym">) ;</span> lp <span class="sym">())</span>
+                <span class="kwa">in</span> push rdy <span class="sym">(</span>prepare <span class="sym">(</span>new lp<span class="sym">, ())) ;</span> im <span class="kwa">end</span>
+<span class="kwa">val</span> e <span class="sym">=</span> newC <span class="sym">()</span>
+<span class="kwa">val</span> b <span class="sym">=</span> repeat <span class="num">500</span> mkLink e
+<span class="kwa">val</span> n <span class="sym">=</span> valOf <span class="sym">(</span><span class="kwa">Int</span>.fromString <span class="sym">(</span>hd <span class="sym">(</span>CommandLine.arguments <span class="sym">())))</span>
+<span class="kwa">val</span> <span class="sym">() =</span> print <span class="sym">(</span><span class="kwa">Int</span>.toString <span class="sym">(</span>repeat n <span class="sym">(</span><span class="kwa">fn</span> s <span class="sym">=&gt; (</span>put b <span class="num">0</span> <span class="sym">;</span> s<span class="sym">+</span>get e<span class="sym">))</span> <span class="num">0</span><span class="sym">)</span>^<span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">)</span>
