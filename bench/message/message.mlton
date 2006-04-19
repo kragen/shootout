@@ -1,0 +1,33 @@
+(*
+ * The Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ * Contributed by Vesa Karvonen
+ *
+ * Cheap concurrency on top of MLton's user level threads.
+ *)
+
+open MLton.Thread
+
+(* these should be in a library *)
+fun pop l = case !l of v::s => v before l := s
+fun push l v = l := v :: !l
+
+fun repeat n f x = if n<=0 then x else repeat (n-1) f (f x)
+
+(* an implementation of cooperative asynchronous message passing *)
+val rdy = ref ([] : Runnable.t list)
+fun newC () = (ref [], ref [])
+fun put (ms, gs) m =
+    case !gs of [] => push ms m
+              | g::s => switch (fn t => (push rdy (prepare (t, ()))
+                                       ; prepare (g, m) before gs := s))
+fun get (ms, gs) = case !ms of [] => switch (fn t => (push gs t ; pop rdy))
+                             | m::s => m before ms := s
+                                                        
+(* main program *)
+fun mkLink om = let val im = newC () fun lp () = (put om (1 + get im) ; lp ())
+                in push rdy (prepare (new lp, ())) ; im end
+val e = newC ()
+val b = repeat 500 mkLink e
+val n = valOf (Int.fromString (hd (CommandLine.arguments ())))
+val () = print (Int.toString (repeat n (fn s => (put b 0 ; s+get e)) 0)^"\n")
