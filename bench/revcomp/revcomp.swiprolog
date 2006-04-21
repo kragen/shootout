@@ -4,7 +4,24 @@
 %                                                                   
 % Assumes execution using the following command-line usage:
 %
-%   pl -L0 -T0 -G0 -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%
+% Improved version of previous submission [boxed figures show percentage
+% runtime improvement due solely to that change]. Changes include:
+%
+% * [~20%] 'complement' predicate now uses hash table lookups [via 'flag/3']
+%   in place of indexed list lookups
+% * [~25%] A combination of:
+%   - appending cumulative segment to current segment [hence avoiding
+%     the complete traversal of an ever-growing segment each iteration]
+%   - reversing current segment on each iteration rather than reversing
+%     the, quite large, accumulated segment in a single step
+%
+% Overall, with above changes in place, current version:
+%
+% * Should be - very roughly - about 50% faster
+% * Use considerably less memory, therefore default stack sizes should be
+%   more than adequate
 %
 % Contributed by Anthony Borla
 % ----------------------------------------------------------------------
@@ -16,7 +33,7 @@ main :-
 
 % ------------------------------- %
 
-revcomp(S) :- revcomp_(S, []).
+revcomp(S) :- setup_complement, revcomp_(S, []).
 
 % ------------- %
 
@@ -39,7 +56,7 @@ is_segment_header([62|_]).
 
 dump_segment([]) :- !.
 
-dump_segment(Seg) :- reverse(Seg, RSeg), dump_segment_(RSeg, 1, 60).
+dump_segment(Seg) :- dump_segment_(Seg, 1, 60).
 
 % ------------- %
 
@@ -52,8 +69,8 @@ dump_segment_([H|T], A, N) :-
 % ------------------------------- %
 
 add_to_segment([], Seg, Seg) :- !.
-add_to_segment(L, [], L) :- !.
-add_to_segment(L, Seg, NewSeg) :- append(Seg, L, NewSeg).
+add_to_segment(L, [], LR) :- !, reverse(L, LR).
+add_to_segment(L, Seg, NewSeg) :- reverse(L, LR), append(LR, Seg, NewSeg).
 
 % ------------------------------- %
 
@@ -61,8 +78,14 @@ add_to_segment(L, Seg, NewSeg) :- append(Seg, L, NewSeg).
 %%  to:
 %%      "WSTAAC GRYMKV HDBNTA ACGRYM KVHDBN"
 
+setup_complement :-
+  flag(65, _, 84), flag(67, _, 71), flag(71, _, 67), flag(84, _, 65), flag(77, _, 75),
+  flag(82, _, 89), flag(87, _, 87), flag(83, _, 83), flag(89, _, 82), flag(75, _, 77),
+  flag(86, _, 66), flag(72, _, 68), flag(68, _, 72), flag(66, _, 86), flag(78, _, 78). 
+
+% ------------- %
+
 complement(Code, Complement) :-
-  (Code > 90 -> AdjCode is Code - 32 ; AdjCode = Code),
-  Idx is AdjCode - 65,
-  nth0(Idx, [84, 86, 71, 72, 0, 0, 67, 68, 0, 0, 77, 0, 75, 78, 0, 0, 0, 89, 83, 65, 65, 66, 87, 0, 82, 0], Complement).
+  (Code > 90 -> CodeIdx is Code - 32 ; CodeIdx = Code),
+  flag(CodeIdx, Complement, Complement).
 
