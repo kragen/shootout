@@ -1048,6 +1048,21 @@
        },
      },
 
+     iron =>
+     { Lang => 'Python',
+       Name => 'IronPython',
+       Status => '+',
+       Home => 'http://www.gotdotnet.com/workspaces/workspace.aspx?id=ad7acff7-ab1e-4bcb-99c0-57ac5a3a9742',
+       Down => 'http://www.microsoft.com/downloads/details.aspx?FamilyID=e4058d5f-49ec-47cb-899e-c4f781e6648f&displaylang=en',
+       Type => 'bytecomped/interpreted',
+       Note => 'Interpreted, interactive, OO language on C# VM',
+       Ext  => 'py',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{IRNPTHN} -V`);
+	   return($ver);
+       },
+     },
+
      ruby =>
      { Lang => 'Ruby',
        Name => 'Ruby',
@@ -1339,6 +1354,7 @@
      'Pike'        => 'c',
      'Prolog'      => 'prolog',
      'Python'      => 'shell',
+     'IronPython'  => 'shell',
      'Lisp'        => 'scheme',
      'Ruby'        => 'shell',
      'S-Lang'      => 'c',
