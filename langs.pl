@@ -1058,7 +1058,7 @@
        Note => 'Interpreted, interactive, OO language on C# VM',
        Ext  => 'py',
        Verfun => sub {
-	   chomp(my $ver = `$ENV{IRNPTHN} -V`);
+	   chomp(my $ver = `$ENV{IRON} -V`);
 	   return($ver);
        },
      },

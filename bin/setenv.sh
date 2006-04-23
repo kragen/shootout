@@ -49,4 +49,7 @@ CHICKEN_REPOSITORY=/usr/share/chicken
 PATH=/opt/xds_x86/bin:$PATH
 XDSDIR=/opt/xds_x86
 
+# Support IronPython
+PATH=/opt/IronPython/bin:$PATH
+
 export PATH LD_LIBRARY_PATH MANPATH GCL_ANSI CHICKEN_REPOSITORY XDSDIR
