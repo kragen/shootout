@@ -1,6 +1,7 @@
-// The Computer Language Shootout
-// http://shootout.alioth.debian.org/
-// contributed by Adam Montague
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+  contributed by - Lance Dillon
+*/
 
 class KNucleotide {
   string sequence;
@@ -67,11 +68,12 @@ int main(int argc, array argv) {
   string line;
   String.Buffer buffer=String.Buffer();
 
-  while (line=r.gets()) {
+  while (line=r->gets()) {
     if (line[..5]==">THREE")
       break;
   }
-  while (line=r.gets()) {
+
+  while (line=r->gets()) {
     if (line[0]=='>')
       break;
     if (line[0]!=';')
