@@ -1,1 +1,1 @@
-<p>GNU Fortran 95 (GCC 4.0.3 (Debian 4.0.3-1))</p>
+<p>GNU Fortran 95 (GCC 4.0.4 20060422 (prerelease) (Debian 4.0.3-2))</p>
