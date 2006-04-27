@@ -165,7 +165,7 @@
        Down => 'http://www.go-mono.com/',
        Type => 'bytecomped/interpreted',
        Note => 'GNOME project EMCA C#',
-       Ext  => 'c',
+       Ext  => 'cs',
        Verfun => sub {
 	   chomp(my $ver = `$ENV{MONOC} --version 2>&1`);
 	   return($ver);
