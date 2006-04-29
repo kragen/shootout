@@ -107,6 +107,6 @@ bodies advance := method(dt,
 
 bodies energy asString(0,9) println
 
-args at(0) asNumber repeatTimes( bodies advance(0.01) )
+args at(1) asNumber repeatTimes( bodies advance(0.01) )
 
 bodies energy asString(0,9) println

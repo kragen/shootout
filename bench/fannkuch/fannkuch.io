@@ -41,6 +41,6 @@ fannkuch := method(n,
     )
 )
 
-n := args at(0) asNumber
+n := args at(1) asNumber
 f := fannkuch(n)
 writeln("Pfannkuchen(", n, ") = ", f)

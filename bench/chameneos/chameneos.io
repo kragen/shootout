@@ -3,7 +3,7 @@
 
    Contributed by Ian Osgood */
 
-n := args at(0) asNumber
+n := args at(1) asNumber
 meetings := 0
 first := second := Nil
 

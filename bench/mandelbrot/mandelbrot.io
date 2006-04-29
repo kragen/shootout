@@ -65,5 +65,5 @@ MandelbrotSet := Object clone do(
     )
 )
 
-MandelbrotSet dim := args at(0) asNumber
+MandelbrotSet dim := args at(1) asNumber
 MandelbrotSet do( calc; printSet )

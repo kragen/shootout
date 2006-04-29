@@ -45,7 +45,7 @@ tak := method(x, y, z,
 
 /* ----------------------------- */
 
-n := args at(0) asNumber
+n := args at(1) asNumber
 
 // Use interpolation for complex string expressions
 "Ack(3,#io{n}): #io{ack(3, n)}" interpolate println

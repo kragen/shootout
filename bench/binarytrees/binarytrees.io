@@ -18,7 +18,7 @@ TreeNode := Object clone do(
 )
 
 minDepth := 4
-maxDepth := args at(0) asNumber max(minDepth+2)
+maxDepth := args at(1) asNumber max(minDepth+2)
 
 check := TreeNode clone bottomUpTree(0, maxDepth+1) itemCheck
 writeln("stretch tree of depth ", maxDepth+1, "\t check: ", check)
