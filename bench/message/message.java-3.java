@@ -1,90 +1,97 @@
 /* 
  The Computer Language Shootout
  http://shootout.alioth.debian.org/
-
+ #303304
  contributed by tt@kyon.de
- modified by tt@kyon.de
  */
+
 public final class message extends Thread {
 
 	private static final int THREADS = 500;
 	private static int msgCount;
+	private static int max;
 	private final message nextThread;
-	private int[] messages = new int[msgCount];
+	private int[] messages = new int[1024]; // reasonably sized buffer
 	private int todo;
-	private boolean waiting;
 
 	public static void main(String args[]) {
 		msgCount = Integer.parseInt(args[0]);
+		max = msgCount * THREADS;
 		message thread = null;
 		for (int i = THREADS; --i >= 0;) {
 			(thread = new message(thread)).start();
 		}
-		synchronized (thread) {
-			for (int i = msgCount; --i >= 0;) {
-				thread.send(0);
-			}
+		for (int i = msgCount; --i >= 0;) {
+			thread.send(0);
 		}
 	}
 	private message(message next) {
 		nextThread = next;
 	}
-	public synchronized void run() {
+	public void run() {
 		try {
-			if (todo == 0) {
-				waiting = true;
-				wait();
-				waiting = false;
+			for (;;) {
+				synchronized (this) {
+					if (todo != 0) {
+						break;
+					}
+				}
+				yield();
 			}
 			if (nextThread != null) {
 				pass();
 			} else {
 				add();
 			}
-		} catch (InterruptedException e) {
-			// will not be thrown under any normal circumstances
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	private synchronized void pass() throws InterruptedException {
-		int done = 0;
+	private void pass() throws Exception {
 		for (;;) {
-			synchronized (nextThread) {
+			synchronized (this) {
+				int done = todo;
+				int[] m = messages;
 				do {
-					nextThread.send(messages[done++] + 1);
-				} while (done < todo);
+					nextThread.send(m[--done] + 1);
+				} while (done != 0);
+				todo = 0;
 			}
-			while (done == todo) {
+			while (todo == 0) {
 				// no unsynchronized todos left
-				waiting = true;
-				wait();
-				waiting = false;
+				yield();
 			}
 		}
 	}
-	private synchronized void add() throws InterruptedException {
+	private void add() throws Exception {
 		int sum = 0;
-		int done = 0;
 		for (;;) {
-			do {
-				sum += messages[done++] + 1;
-			} while (done < todo);
-			while (done == todo) {
+			synchronized (this) {
+				int done = todo;
+				int[] m = messages;
+				do {
+					sum += m[--done] + 1;
+				} while (done != 0);
+				todo = 0;
+			}
+			while (todo == 0) {
 				// no unsynchronized todos left
-				if (done == msgCount) {
+				if (sum == max) {
 					System.out.println(sum);
 					System.exit(0);
 				}
-				waiting = true;
-				wait();
-				waiting = false;
+				yield();
 			}
 		}
 	}
-	private void send(int message) {
-		messages[todo++] = message;
-		if (waiting) {
-			notify();
+	private synchronized void send(int message) {
+		int[] m = messages;
+		int l = m.length;
+		if(todo == l) {
+			int[] n = new int[l << 2];
+			System.arraycopy(m, 0, n, 0, l);
+			messages = m = n;
 		}
+		m[todo++] = message;
 	}
 }

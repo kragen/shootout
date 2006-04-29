@@ -1,29 +1,28 @@
 /* 
  The Computer Language Shootout
  http://shootout.alioth.debian.org/
-
+ #303302
  contributed by tt@kyon.de
- modified by tt@kyon.de
  */
 public final class message extends Thread {
 
 	private static final int THREADS = 500;
 	private static int msgCount;
+	private static int max;
 	private final message nextThread;
-	private int[] messages = new int[msgCount];
+	private int[] messages = new int[1024]; // reasonably sized buffer
 	private int todo;
-	private boolean waiting;
+	boolean waiting;
 
 	public static void main(String args[]) {
 		msgCount = Integer.parseInt(args[0]);
+		max = msgCount * THREADS;
 		message thread = null;
 		for (int i = THREADS; --i >= 0;) {
 			(thread = new message(thread)).start();
 		}
-		synchronized (thread) {
-			for (int i = msgCount; --i >= 0;) {
-				thread.send(0);
-			}
+		for (int i = msgCount; --i >= 0;) {
+			thread.send(0);
 		}
 	}
 	private message(message next) {
@@ -34,7 +33,6 @@ public final class message extends Thread {
 			if (todo == 0) {
 				waiting = true;
 				wait();
-				waiting = false;
 			}
 			if (nextThread != null) {
 				pass();
@@ -46,44 +44,53 @@ public final class message extends Thread {
 			e.printStackTrace();
 		}
 	}
-	private synchronized void pass() throws InterruptedException {
-		int done = 0;
+	private void pass() throws InterruptedException {
 		for (;;) {
-			synchronized (nextThread) {
-				do {
-					nextThread.send(messages[done++] + 1);
-				} while (done < todo);
-			}
-			while (done == todo) {
+			int done = todo;
+			int[] m = messages;
+			do {
+				nextThread.send(m[--done] + 1);
+			} while (done != 0);
+			todo = 0;
+			do {
 				// no unsynchronized todos left
 				waiting = true;
 				wait();
-				waiting = false;
-			}
+			} while (todo == 0);
 		}
 	}
-	private synchronized void add() throws InterruptedException {
+	private void add() throws InterruptedException {
 		int sum = 0;
-		int done = 0;
 		for (;;) {
+			int done = todo;
+			int[] m = messages;
 			do {
-				sum += messages[done++] + 1;
-			} while (done < todo);
-			while (done == todo) {
+				sum += m[--done] + 1;
+			} while (done != 0);
+			todo = 0;
+			do {
 				// no unsynchronized todos left
-				if (done == msgCount) {
+				if (sum == max) {
 					System.out.println(sum);
 					System.exit(0);
 				}
 				waiting = true;
 				wait();
-				waiting = false;
-			}
+			} while (todo == 0);
 		}
 	}
-	private void send(int message) {
-		messages[todo++] = message;
+	private synchronized void send(int message) {
+		int[] m = messages;
+		int l = m.length;
+		if (todo == l) {
+			int[] n = new int[l << 2];
+			System.arraycopy(m, 0, n, 0, l);
+			messages = m = n;
+		}
+		m[todo++] = message;
 		if (waiting) {
+			// otherwise already notified
+			waiting = false;
 			notify();
 		}
 	}
