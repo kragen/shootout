@@ -22,7 +22,7 @@ import gmp;
 
 //debug = MEM_DEBUG;
 
-private import std.string;
+private import std.c.string;
 
 enum Recycle {
   Self,    ///< recycle and recycle computed values
