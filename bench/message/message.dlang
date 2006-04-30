@@ -6,9 +6,9 @@
    compile: dmd -O -inline -release message.d
 */
 
-import std.stdio, std.string, std.thread;
+import std.stdio, std.string, std.thread, std.c.linux.linux;
 
-int main(char[][] args)
+void main(char[][] args)
 {
     const int threads = 500;
     int n = args.length > 1 ? atoi(args[1]) : 2;
@@ -24,7 +24,7 @@ int main(char[][] args)
     Link first = chain;
     while(chain)
     {
-        chain.start();
+        chain.start;
         chain = chain.next;
     }
 
@@ -33,30 +33,24 @@ int main(char[][] args)
 
     while(chain)
     {
-        chain.wait();
+        chain.wait;
         chain = chain.next;
     }
 
     writefln(Link.sum);
-
-    return 0;
 }
 
-class Link
+class Link : Thread
 {
 private:
-    pthread_t id;
     int message = -1;
     sem_t semr;
-    static pthread_attr_t pa;
     static sem_t semw;
     static threads = 0;
 
     static this()
     {
-        pthread_attr_init(&pa);
-        pthread_attr_setstacksize(&pa,ushort.max);
-        sem_init(&semw,0,0);
+	sem_init(&semw,0,0);
     }
 
     private int take()
@@ -76,22 +70,13 @@ public:
 
     this(Link next)
     {
+        super(1024 * 16);
         this.next = next;
-        sem_init(&semr,0,0);
-    }
-
-    void start()
-    {
-        pthread_create(&id,&pa,&threadrun,this);
+	sem_init(&semr,0,0);
         threads++;
     }
 
-    void wait()
-    {
-        pthread_join(id,null);
-    }
-
-    void run()
+    int run()
     {
         if(next)
         {
@@ -111,6 +96,7 @@ public:
                 sem_post(&semw);
             }
         }
+        return 0;
     }
 
     void put(int msg)
@@ -120,31 +106,3 @@ public:
         sem_wait(&semw);
     }
 }
-
-extern(C)
-{
-void *threadrun(void *p)
-{
-    Link t = cast(Link)p;
-    t.run();
-    return null;
-}
-int pthread_attr_init(pthread_attr_t*);
-int pthread_attr_setstacksize(pthread_attr_t*,size_t);
-int pthread_yield();
-struct pthread_attr_t
-{
-    int __detachstate;
-    int __schedpolicy;
-    struct __sched_param
-    {
-        int __sched_priority;
-    }
-    int __inheritsched;
-    int __scope;
-    size_t __guardsize;
-    int __stackaddr_set;
-    void* __stackaddr;
-    size_t __stacksize;
-}
-} // extern(C)
