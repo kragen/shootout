@@ -9,5 +9,5 @@ ack := block(i, j,
                 ack(i-1, ack(i, j-1)) ) )
 )
 
-n := args at(0) asNumber
+n := args at(1) asNumber
 writeln("Ack(3,", n, "): ", ack(3,n))
