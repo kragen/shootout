@@ -39,5 +39,5 @@ spectralNorm := block(n,
     (vBv / vv) sqrt
 )
 
-spectralNorm(args at(0) asNumber) asString(0,9) println
+spectralNorm(args at(1) asNumber) asString(0,9) println
 
