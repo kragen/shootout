@@ -6,9 +6,9 @@
 <span class="com">   compile: dmd -O -inline -release message.d</span>
 <span class="com">*/</span>
 
-import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span class="sym">.</span>string<span class="sym">,</span> std<span class="sym">.</span>thread<span class="sym">;</span>
+import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span class="sym">.</span>string<span class="sym">,</span> std<span class="sym">.</span>thread<span class="sym">,</span> std<span class="sym">.</span>c<span class="sym">.</span>linux<span class="sym">.</span>linux<span class="sym">;</span>
 
-<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">char</span><span class="sym">[][]</span> args<span class="sym">)</span>
+<span class="kwb">void</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">char</span><span class="sym">[][]</span> args<span class="sym">)</span>
 <span class="sym">{</span>
     <span class="kwb">const int</span> threads <span class="sym">=</span> <span class="num">500</span><span class="sym">;</span>
     <span class="kwb">int</span> n <span class="sym">=</span> args<span class="sym">.</span>length <span class="sym">&gt;</span> <span class="num">1</span> ? <span class="kwd">atoi</span><span class="sym">(</span>args<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">2</span><span class="sym">;</span>
@@ -24,7 +24,7 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
     Link first <span class="sym">=</span> chain<span class="sym">;</span>
     <span class="kwa">while</span><span class="sym">(</span>chain<span class="sym">)</span>
     <span class="sym">{</span>
-        chain<span class="sym">.</span><span class="kwd">start</span><span class="sym">();</span>
+        chain<span class="sym">.</span>start<span class="sym">;</span>
         chain <span class="sym">=</span> chain<span class="sym">.</span>next<span class="sym">;</span>
     <span class="sym">}</span>
 
@@ -33,30 +33,24 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
 
     <span class="kwa">while</span><span class="sym">(</span>chain<span class="sym">)</span>
     <span class="sym">{</span>
-        chain<span class="sym">.</span><span class="kwd">wait</span><span class="sym">();</span>
+        chain<span class="sym">.</span>wait<span class="sym">;</span>
         chain <span class="sym">=</span> chain<span class="sym">.</span>next<span class="sym">;</span>
     <span class="sym">}</span>
 
     <span class="kwd">writefln</span><span class="sym">(</span>Link<span class="sym">.</span>sum<span class="sym">);</span>
-
-    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
 <span class="sym">}</span>
 
-<span class="kwc">class</span> Link
+<span class="kwc">class</span> Link <span class="sym">:</span> Thread
 <span class="sym">{</span>
 <span class="kwc">private</span><span class="sym">:</span>
-    pthread_t id<span class="sym">;</span>
     <span class="kwb">int</span> message <span class="sym">= -</span><span class="num">1</span><span class="sym">;</span>
     sem_t semr<span class="sym">;</span>
-    <span class="kwb">static</span> pthread_attr_t pa<span class="sym">;</span>
     <span class="kwb">static</span> sem_t semw<span class="sym">;</span>
     <span class="kwb">static</span> threads <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
 
     <span class="kwb">static</span> <span class="kwa">this</span><span class="sym">()</span>
     <span class="sym">{</span>
-        <span class="kwd">pthread_attr_init</span><span class="sym">(&amp;</span>pa<span class="sym">);</span>
-        <span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&amp;</span>pa<span class="sym">,</span>ushort<span class="sym">.</span>max<span class="sym">);</span>
-        <span class="kwd">sem_init</span><span class="sym">(&amp;</span>semw<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
+	<span class="kwd">sem_init</span><span class="sym">(&amp;</span>semw<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
     <span class="sym">}</span>
 
     <span class="kwc">private</span> <span class="kwb">int</span> <span class="kwd">take</span><span class="sym">()</span>
@@ -76,22 +70,13 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
 
     <span class="kwa">this</span><span class="sym">(</span>Link next<span class="sym">)</span>
     <span class="sym">{</span>
+        <span class="kwd">super</span><span class="sym">(</span><span class="num">1024</span> <span class="sym">*</span> <span class="num">16</span><span class="sym">);</span>
         <span class="kwa">this</span><span class="sym">.</span>next <span class="sym">=</span> next<span class="sym">;</span>
-        <span class="kwd">sem_init</span><span class="sym">(&amp;</span>semr<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
-    <span class="sym">}</span>
-
-    <span class="kwb">void</span> <span class="kwd">start</span><span class="sym">()</span>
-    <span class="sym">{</span>
-        <span class="kwd">pthread_create</span><span class="sym">(&amp;</span>id<span class="sym">,&amp;</span>pa<span class="sym">,&amp;</span>threadrun<span class="sym">,</span><span class="kwa">this</span><span class="sym">);</span>
+	<span class="kwd">sem_init</span><span class="sym">(&amp;</span>semr<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
         threads<span class="sym">++;</span>
     <span class="sym">}</span>
 
-    <span class="kwb">void</span> <span class="kwd">wait</span><span class="sym">()</span>
-    <span class="sym">{</span>
-        <span class="kwd">pthread_join</span><span class="sym">(</span>id<span class="sym">,</span>null<span class="sym">);</span>
-    <span class="sym">}</span>
-
-    <span class="kwb">void</span> <span class="kwd">run</span><span class="sym">()</span>
+    <span class="kwb">int</span> <span class="kwd">run</span><span class="sym">()</span>
     <span class="sym">{</span>
         <span class="kwa">if</span><span class="sym">(</span>next<span class="sym">)</span>
         <span class="sym">{</span>
@@ -111,6 +96,7 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
                 <span class="kwd">sem_post</span><span class="sym">(&amp;</span>semw<span class="sym">);</span>
             <span class="sym">}</span>
         <span class="sym">}</span>
+        <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
     <span class="sym">}</span>
 
     <span class="kwb">void</span> <span class="kwd">put</span><span class="sym">(</span><span class="kwb">int</span> msg<span class="sym">)</span>
@@ -120,31 +106,3 @@ import std<span class="sym">.</span>stdio<span class="sym">,</span> std<span cla
         <span class="kwd">sem_wait</span><span class="sym">(&amp;</span>semw<span class="sym">);</span>
     <span class="sym">}</span>
 <span class="sym">}</span>
-
-<span class="kwc">extern</span><span class="sym">(</span>C<span class="sym">)</span>
-<span class="sym">{</span>
-<span class="kwb">void</span> <span class="sym">*</span><span class="kwd">threadrun</span><span class="sym">(</span><span class="kwb">void</span> <span class="sym">*</span>p<span class="sym">)</span>
-<span class="sym">{</span>
-    Link t <span class="sym">=</span> <span class="kwd">cast</span><span class="sym">(</span>Link<span class="sym">)</span>p<span class="sym">;</span>
-    t<span class="sym">.</span><span class="kwd">run</span><span class="sym">();</span>
-    <span class="kwa">return</span> null<span class="sym">;</span>
-<span class="sym">}</span>
-<span class="kwb">int</span> <span class="kwd">pthread_attr_init</span><span class="sym">(</span>pthread_attr_t<span class="sym">*);</span>
-<span class="kwb">int</span> <span class="kwd">pthread_attr_setstacksize</span><span class="sym">(</span>pthread_attr_t<span class="sym">*,</span><span class="kwb">size_t</span><span class="sym">);</span>
-<span class="kwb">int</span> <span class="kwd">pthread_yield</span><span class="sym">();</span>
-<span class="kwb">struct</span> pthread_attr_t
-<span class="sym">{</span>
-    <span class="kwb">int</span> __detachstate<span class="sym">;</span>
-    <span class="kwb">int</span> __schedpolicy<span class="sym">;</span>
-    <span class="kwb">struct</span> __sched_param
-    <span class="sym">{</span>
-        <span class="kwb">int</span> __sched_priority<span class="sym">;</span>
-    <span class="sym">}</span>
-    <span class="kwb">int</span> __inheritsched<span class="sym">;</span>
-    <span class="kwb">int</span> __scope<span class="sym">;</span>
-    <span class="kwb">size_t</span> __guardsize<span class="sym">;</span>
-    <span class="kwb">int</span> __stackaddr_set<span class="sym">;</span>
-    <span class="kwb">void</span><span class="sym">*</span> __stackaddr<span class="sym">;</span>
-    <span class="kwb">size_t</span> __stacksize<span class="sym">;</span>
-<span class="sym">}</span>
-<span class="sym">}</span> <span class="slc">// extern(C)</span>
