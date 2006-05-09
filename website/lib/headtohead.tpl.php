@@ -62,13 +62,6 @@ foreach($Tests as $Row){
       
          if ($v[N_N]==0){ $n = '<td></td>'; } 
          else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }                         
-                  
-         $cpuValue = $v[N_FULLCPU];
-         if ($cpuValue<1 && $cpuValue!=0){ $cpuValue = -1/$cpuValue; }
-         $memValue = $v[N_MEMORY];
-         if ($memValue<1 && $memValue!=0){ $memValue = -1/$memValue; }
-         $locValue = $v[N_LINES];
-         if ($locValue<1 && $locValue!=0){ $locValue = -1/$locValue; }
 
          printf('%s%s%s%s', 
             PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_GZ]), $n);                   
