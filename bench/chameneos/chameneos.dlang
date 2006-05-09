@@ -7,9 +7,9 @@
    compile: dmd -O -inline -release chameneos.d
 */
 
-import std.stdio, std.string, std.thread;
+import std.stdio, std.string, std.thread, std.c.linux.linux;
 
-int main(char[][] args) 
+void main(char[][] args)
 {
     int meetings, n = args.length > 1 ? atoi(args[1]) : 1;
     MeetingPlace m = new MeetingPlace(n);
@@ -26,8 +26,6 @@ int main(char[][] args)
         meetings += c.creaturesMet;
     }
     writefln(meetings);
-
-    return 0;
 }
 
 enum Colour { blue, red, yellow, faded }
@@ -35,42 +33,36 @@ Colour[] colours = [ Colour.blue, Colour.red, Colour.yellow, Colour.blue ];
 
 class MeetingPlace
 {
+    private static sem_t mustWait;
     private Colour first, second;
     private bool firstCall = true;
-    private bool mustWait = false;
     private int n;
 
     this(int maxMeetings)
     {
         n = maxMeetings;
+        sem_init(&mustWait,0,1);
     }
 
     private Colour OtherCreaturesColour(Colour me)
     {
-        while(mustWait)
-        {
-            Thread.yield();
-        }
-
         Colour other = Colour.faded;
+
+        sem_wait(&mustWait);
         if(firstCall)
         {
             if(n-- > 0)
             {
                 first = me;
                 firstCall = false;
-                while(!firstCall)
-                {
-                    Thread.yield();
-                }
-                mustWait = false;
+                sem_post(&mustWait);
                 other = second;
             }
+            sem_post(&mustWait);
         } else {
+            firstCall = true;
             second = me;
             other = first;
-            firstCall = true;
-            mustWait = true;
         }
 
         return other;
@@ -94,9 +86,10 @@ class Creature : Thread
         return 0;
     }
 
-    private synchronized void MeetOtherCreature()
+    private void MeetOtherCreature()
     {
-        Colour other = m.OtherCreaturesColour(me);
+        Colour other;
+        other = m.OtherCreaturesColour(me);
         if(other == Colour.faded)
         {
             me = other;
