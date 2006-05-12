@@ -2,15 +2,13 @@
 /* The Great Computer Language Shootout                               */
 /* http://shootout.alioth.debian.org/                                 */
 /*                                                                    */
-/* Originally reimplemented 'nsieve.scala' using the 'BitSet' type in */
-/* place of 'Array' type, but problems encountered i.e. 'BitSet' type */
-/* not recognised [this despite it appearing in the Scala doco, though*/
-/* I could well have misread this document]. So, have temporarily     */
-/* reused 'Array' type to mimic a bit set via bit manipulations, but  */
-/* have left old code in comments for easy reference.                 */
+/* Reimplementation of 'nsieve.scala' using 'BitSet' type in place of */
+/* 'Array' type.                                                      */
 /*                                                                    */
 /* Contributed by Anthony Borla                                       */
 /* ------------------------------------------------------------------ */
+
+import scala.collection.mutable.BitSet;
 
 object nsievebits
 {
@@ -30,30 +28,17 @@ object nsievebits
 
   def nsieve(m: int): int =
   {
-    //
-    // val sieve: BitSet = new BitSet(m); sieve.ensureCapacity(m);
-    //
-    val size: int = (m + 31) >> 5;
-    val sieve: Array[int] = new Array[int](size);
+    val sieve: BitSet = new BitSet(m); sieve.ensureCapacity(m);
     
-    //
-    // var i:int = 0; while (i < m) { sieve += i; i = i + 1; }
-    //
-    var i:int = 0; while (i < size) { sieve(i) = 0xffffffff; i = i + 1; }
+    var i:int = 0; while (i < m) { sieve += i; i = i + 1; }
 
     var count: int = 0; i = 2; 
 
     while (i < m)
     {
-      //
-      // if (sieve.contains(i))
-      //
-      if ((sieve(i >> 5) & 1 << (i & 31)) != 0)
+      if (sieve.contains(i))
       {
-        //
-        // var j: int = i + i; while (j < m) { sieve -= j; j = j + i; }
-        //
-        var j: int = i + i; while (j < m) { sieve(j >> 5) = sieve(j >> 5) & ~(1 << (j & 31)); j = j + i; }
+        var j: int = i + i; while (j < m) { sieve -= j; j = j + i; }
         count = count + 1;
       }
 
