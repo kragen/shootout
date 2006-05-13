@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.15 2006-05-13 04:53:22 bfulgham Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -20,7 +20,7 @@ ERLFLAGS := -noinput
 GHCOPTS  := -fexcess-precision
 GPLCOPTS := --fast-math
 
-GCCOPTS := -D_ISOC9X_SOURCE -mfpmath=sse -msse2 -lm
+GCCOPTS := -D_ISOC9X_SOURCE -mfpmath=sse -march=athlon-xp -lm
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 200,400,600

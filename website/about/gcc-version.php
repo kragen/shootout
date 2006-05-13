@@ -1,2 +1,2 @@
-<p>gcc-4.1 (GCC) 4.1.0 (Debian 4.1.0-1+b1)
+<p>gcc-4.1 (GCC) 4.1.1 20060507 (prerelease) (Debian 4.1.0-3)
 </p>
