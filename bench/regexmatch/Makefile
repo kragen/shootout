@@ -1,8 +1,9 @@
-# $Id: Makefile,v 1.28 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.29 2006-05-17 04:30:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
 TITLE   := Regular Expression Matching
+CYCOPTS  := -lpcre
 GXXOPTS   := $(GXXOPTS) -I/usr/local/include
 GXXLDOPTS := $(GXXLDOPTS) -lregexx -lpcre
 GCCOPTS   := $(GCCOPTS) -lpcre

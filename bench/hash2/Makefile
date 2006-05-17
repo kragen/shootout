@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.21 2006-05-17 04:30:40 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -6,6 +6,7 @@ TITLE   := Hashes Part II
 
 LOCDEPS := --dep=gcc:../Include/simple_hash.h
 
+CYCOPTS := -I../../Include/cyclone
 ERLFLAGS := -noinput
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \

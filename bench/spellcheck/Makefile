@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.30 2006-05-17 04:30:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -16,6 +16,7 @@ setup:
 	@[ -f tmp/Usr.Dict.Words ] || (cd tmp ; ln -s ../Usr.Dict.Words . )
 
 
+CYCOPTS := -I../../Include/cyclone
 GCCOPTS := -I ../../Include
 GXXOPTS := -I ../../Include
 ICCOPTS := -I ../../Include

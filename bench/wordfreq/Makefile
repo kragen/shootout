@@ -1,9 +1,10 @@
-# $Id: Makefile,v 1.31 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.32 2006-05-17 04:30:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
 TITLE   := Word Frequency
 SE_OPTS := -case_insensitive
+CYCOPTS := -I../../Include/cyclone
 GHCOPTS := -package data
 GNATOPTS := -fno-unroll-loops
 LOCDEPS := --dep=gcc:../Include/simple_hash.h

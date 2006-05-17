@@ -77,6 +77,21 @@
        },
      },
 
+     cyc =>
+     { Lang => 'Cyclone',
+       Name => 'cyclone',
+       Status => '+',
+       Home => 'http://cyclone.thelanguage.org/',
+       Down => 'http://cyclone.thelanguage.org/wiki/Download',
+       Type => 'native compiled',
+       Note => 'Concise, checked, safe dialect of C',
+       Ext  => 'cyc',
+       Verfun => sub {
+       	   $ver="1.0";
+	   return($ver);
+       },
+     },
+
      gcc =>
      { Lang => 'C',
        Name => 'gcc',
@@ -1369,6 +1384,7 @@
 
      # Overrides for specific languages, which seem to belong to a different
      # family that their languages hints at
+     'cyc'         => 'c',
      'd'           => 'c',
      'dlang'       => 'c',
      'f90'         => 'fortran',

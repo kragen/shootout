@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.32 2006-05-17 04:30:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
@@ -12,6 +12,7 @@ MB_GHCRTS  := +RTS -K2M -H45M
 MB_NHCRTS  := +RTS -H40M
 HUGS_FLAGS := -h10000000
 
+CYCOPTS := -lm
 ERLFLAGS := -noinput
 CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \

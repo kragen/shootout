@@ -1,0 +1,153 @@
+/* -*- mode: c -*-
+ * echo.gcc
+ * http://www.bagley.org/~doug/shootout/
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <netinet/in.h>
+
+//typedef int (@SOCKACTION_P)(int fd, const xtunion sockaddr addr);
+#define DATA "Hello there sailor\n"
+
+void myabort (const char ?`r m) { fprintf(stderr, "%s\n", m); exit(1); }
+void sysabort (string_t m) { perror(m); exit(1); }
+
+int sigchld = 0;
+void reaper (int sig) { sigchld = 1; }
+
+namespace Cfuns {
+#include <core.h>
+  extern "C" memset(`a::A @,char a,Core::sizeof_t<`a>);
+}
+
+int 
+genericSock(int port, int action<`r::R>(int, ... inject SA<`r>),
+            string_t actionExceptionText) {
+    int ss, optval = 1;
+    struct sockaddr_in sin;    
+    if ((ss = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+      sysabort("socket");
+    if (setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+	sysabort("setsockopt");
+    Cfuns::memset(&sin,0,sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    sin.sin_port = port; 
+    if (action(ss, &sin, sizeof(sin)) == -1)
+	sysabort(actionExceptionText);
+
+    return(ss);
+}
+
+int
+server_sock () {
+    int ss = genericSock(0,bind<>,"server/bind");
+    return(listen(ss,2),ss);
+}
+
+int
+client_sock (int port) {
+    return(genericSock(port,connect<>,"client/connect"));
+}
+
+int
+get_port (int sock) {
+    struct sockaddr_in sin;
+    socklen_t slen = sizeof(sin);
+    if (getsockname(sock, &sin, &slen) == -1)
+	sysabort("server/getsockname");
+    return(sin.sin_port);
+}    
+
+void
+echo_client (int n, int port) {
+    int i, sock, olen, len, nwritten, nread;
+    char ? @nozeroterm offset;
+    char obuf[64], ibuf[64];
+    char ? @nozeroterm end = ibuf + sizeof(ibuf);
+
+    sock = client_sock(port);
+    memcpy(obuf, DATA, strlen(DATA));
+    olen = strlen(obuf);
+    for (i=0; i<n; i++) {
+	len = olen;
+	offset = obuf;
+	while (len > 0) {
+	    if ((nwritten = write(sock, offset, len)) == -1)
+		sysabort("client/write");
+	    offset += nwritten;
+	    len -= nwritten;
+	}
+	offset = ibuf;
+	while ((nread = read(sock, offset, (end - offset))) > 0) {
+	    offset += nread;
+	    if (*(offset-1) == '\n') break;
+	}
+	if (nread == -1)
+	    sysabort("client/read");
+	*offset = 0;
+	if ((strcmp(obuf, ibuf)) != 0) {
+	    char mbuf[128];
+	    sprintf(mbuf, "client: \"%s\" ne \"%s\"", obuf, ibuf);
+	    myabort(strdup(mbuf));
+	}
+    }
+    close(sock);
+}
+
+pid_t pid;
+
+void
+echo_server (int n) {
+    int ssock, csock, len, nwritten, total_bytes;
+    char buf[64];
+    char ? @nozeroterm offset;
+    struct sockaddr_in sin;
+    socklen_t slen = sizeof(sin);
+    int status;
+
+    ssock = server_sock();
+    signal(SIGCHLD, reaper);
+    if ((pid = fork()) == -1)
+	sysabort("server/fork");
+    if (pid) {
+	/* parent is server */
+	if ((csock = accept(ssock, &sin, &slen)) == -1)
+	    sysabort("server/accept");
+	total_bytes = 0;
+	while ((len = read(csock, buf, sizeof(buf))) > 0) {
+	    if (sigchld) myabort("server/sigchld");
+	    offset = buf;
+	    total_bytes += len;
+	    while (len > 0) {
+		if ((nwritten = write(csock, offset, len)) == -1)
+		    sysabort("server/write");
+		offset += nwritten;
+		len -= nwritten;
+	    }
+	}
+	if (len == -1)
+	    sysabort("server/read");
+	close(csock);
+	fprintf(stdout, "server processed %d bytes\n", total_bytes);
+    } else {
+	/* child is client */
+	echo_client(n, get_port(ssock));
+    }
+    wait(&status);
+}
+
+int
+main(int argc, char ??argv) {
+    int arg = (argc == 2) ? atoi(argv[1]) : 1;
+    echo_server(arg);
+    return(0);
+}
