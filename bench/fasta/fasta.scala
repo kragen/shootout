@@ -67,7 +67,9 @@ final class Fasta
 {
   def repeatFasta(id: String, desc: String, _n: int, sequence: String, lineLength: int): unit =
   {
-    var n: int = _n;  var k: int = 0; Console.println(">" + id + " " + desc);
+    val seqlen: int = sequence.length; val lineout = new StringBuffer(); var n: int = _n;  var k: int = 0; 
+
+    Console.println(">" + id + " " + desc);
 
     while (n > 0)
     {
@@ -75,14 +77,14 @@ final class Fasta
 
       while (i < m)
       {
-        if (k == sequence.length) k = 0;
+        if (k == seqlen) k = 0;
 
-        Console.print(sequence(k));
+        lineout.append(sequence(k));
 
         k = k + 1; i = i + 1;
       }
 
-      Console.println; n = n - lineLength;
+      Console.println(lineout.toString()); lineout.setLength(0); n = n - lineLength;
     }
   }  
 
@@ -90,15 +92,17 @@ final class Fasta
 
   def randomFasta(id: String, desc: String, _n: int, cumulativeTable: Array[Frequency], lineLength: int): unit =
   {
-    var n: int = _n; Console.println(">" + id + " " + desc);
+    var n: int = _n; val lineout = new StringBuffer();
+
+    Console.println(">" + id + " " + desc);
 
     while (n > 0)
     {
       var i: int = 0; var m: int = if (n < lineLength) n else lineLength;
 
-      while (i < m) { Console.print(selectRandom(cumulativeTable)); i = i + 1; }
+      while (i < m) { lineout.append(selectRandom(cumulativeTable)); i = i + 1; }
 
-      Console.println; n = n - lineLength;
+      Console.println(lineout.toString()); lineout.setLength(0); n = n - lineLength;
     }
   }  
 

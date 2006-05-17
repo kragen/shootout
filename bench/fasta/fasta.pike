@@ -1,6 +1,7 @@
 /* The Computer Language Shootout
    http://shootout.alioth.debian.org/
    contributed by Lance Dillon
+   significant speedup [used 'String.Buffer' for I/O] by Anthony Borla
 */
 
 class Frequency {
@@ -75,6 +76,8 @@ int LineLength=60;
 
 void makeRandomFasta(string id, string desc, array(Frequency) a, int n) {
   int m=0;
+  String.Buffer lineout = String.Buffer(); 
+
   write(">"+id+" "+desc+"\n");
 
   while (n>0) {
@@ -82,10 +85,9 @@ void makeRandomFasta(string id, string desc, array(Frequency) a, int n) {
       m=n;
     else
       m=LineLength;
-    for (int i=0; i<m; i++)
-      write(selectRandom(a));
-    write("\n");
-    n-=LineLength;
+
+    for (int i=0; i<m; i++) lineout->add(selectRandom(a));
+    write("%s\n", lineout->get()); n-=LineLength;
   }
 }
 
@@ -93,6 +95,7 @@ void makeRepeatFasta(string id, string desc, string alu, int n) {
   int m=0;
   int k=0;
   int kn=sizeof(alu);
+  String.Buffer lineout = String.Buffer(); 
 
   write(">"+id+" "+desc+"\n");
 
@@ -104,11 +107,11 @@ void makeRepeatFasta(string id, string desc, string alu, int n) {
     for (int i=0; i<m; i++) {
       if (k==kn)
 	k=0;
-      write(sprintf("%c",alu[k]));
+      lineout->add(sprintf("%c", alu[k]));
       k++;
     }
-    write("\n");
-    n-=LineLength;
+
+    write("%s\n", lineout->get()); n-=LineLength;
   }
 }
 constant IM=139968;
@@ -120,3 +123,4 @@ float myrandom(float max) {
   seed=(seed*IA+IC)%IM;
   return (max*seed/IM);
 }
+
