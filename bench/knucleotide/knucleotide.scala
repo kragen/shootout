@@ -82,14 +82,21 @@ final class Knucleotide(_sequence: String)
 
     var i: int = 0; val last: int = sequence.length - length + 1;
 
-    while (i < last)
+    while (i < length)
     {
-      var key: String = sequence.substring(i, i + length);
+      var j: int = i;
 
-      if (countMap.contains(key))
-        countMap.update(key, countMap(key) + 1); 
-      else
-        countMap(key) = 1;
+      while (j < last)
+      {
+        var key: String = sequence.substring(j, j + length);
+
+        if (countMap.contains(key))
+          countMap.update(key, countMap(key) + 1); 
+        else
+          countMap(key) = 1;
+
+        j = j + length;
+      }
 
       i = i + 1;
     }
