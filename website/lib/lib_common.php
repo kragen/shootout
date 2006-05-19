@@ -369,12 +369,12 @@ function MkScorecardMenuForm($Sort){
 
 
 function HtmlFragment($FileName){
+   $html = '<p>&nbsp;</p>';
    if (is_readable($FileName)){
       $f = fopen($FileName,'r');
-      $html = fread($f,filesize($FileName));
+      $fs = filesize($FileName);
+      if ($fs > 0){ $html = fread($f,$fs); }
       fclose($f);
-   } else {
-      $html = '<p>&nbsp;</p>';
    }
    return $html;
 }
