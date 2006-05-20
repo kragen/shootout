@@ -1,0 +1,56 @@
+(*
+ * The Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Vladimir Silyaev
+ *)
+
+type color = B | R | Y | Faded
+    
+let compl c1 c2 = match c1,c2 with
+  B,R | R,B -> Y
+  | Y,R | R,Y -> B
+| B,Y | Y,B -> R
+| c,_ -> c
+
+let n = ref (try int_of_string (Array.get Sys.argv 1) with _ -> 10)
+
+let meet = 
+  let first = ref None in
+    fun creature cont ->
+      if !n <= 0 then (cont Faded)
+      else match !first with
+	  None -> 
+	    first := Some (creature, cont)
+	| Some (creature',cont') -> 
+	    decr n;
+	    first := None;
+	    cont creature';
+	    cont' creature
+	  
+let wait,step = 
+  let q = ref [] in
+  (fun cont -> q := cont :: !q),
+  (fun _ -> let q' = !q in q := [] ;
+     match q' with
+	 [] -> false
+       | _ -> List.iter (fun c -> c ()) q';true)
+    
+      
+let rec creature stop color =
+  let rec body n color = 
+    meet color 
+      (function Faded -> stop n
+	 | color' ->
+	     let color = compl color color' in      
+	       wait (fun _ -> body (succ n) color)
+      )
+  in
+    body 0 color
+
+let _ =     
+  let met = ref 0 in
+    List.iter (creature (fun n -> met := !met + n))  [B;R;Y;B;];
+    while step () do () done;
+    Printf.printf "%i\n" !met
+      
