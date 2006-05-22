@@ -1,0 +1,126 @@
+;; ---------------------------------------------------------------------
+;; The Great Computer Language Shootout
+;; http://shootout.alioth.debian.org/
+;;
+;; A buffered version of the 'revcomp' benchmark. Although this benchmark
+;; can more straightforwardly be implemented by replacing the procedures
+;; below with the following:
+;;
+;;  (define (add-to-segment segment sequence)
+;;    (string-upcase! sequence)
+;;    (string-reverse! sequence)
+;;    (string-replace segment (string-translate* sequence +codes+) 0 0))
+;;
+;;  ; -------------
+;;
+;;  (define (dump-segment segment line-size)
+;;    (if (not (string-null? segment))
+;;      (for-each
+;;        (lambda (line) (print line))
+;;        (string-chop segment line-size)))
+;;    (make-string 0))
+;;
+;; the buffered approach is needed to keep strings at an optimal size
+;; so as to maintain acceptable performance for all input ranges.
+;; Unfortunately it seems that a close eye has to be kept on the sizes
+;; of strings when using the native string implementation: let them grow
+;; too much, and performance quickly degrades. For example, using an
+;; input file size of approximately 1.5MB, the buffered version clocked
+;; in at just on 9 sec, whilst the unbuffered version clocked in at
+;; about 29 min; the relative performance difference is undeniably
+;; considerable.
+;;
+;; Of course, alternate string implementations could have been used, but
+;; it was thought appropriate to stick to using out-of-the-box
+;; facilities, in this case, SRFI-1 strings, so as to better gauge
+;; language performance.
+;;
+;; Contributed by Anthony Borla
+;; ---------------------------------------------------------------------
+
+(declare (inline end-of-segment?)
+         (fixnum) (disable-interrupts) (unsafe) (block) (lambda-lift)
+         (uses srfi-1 srfi-13))
+
+; -------------------------------
+
+(define-constant +segment-limit+ 120)
+(define-constant +line-size+ 60)
+
+(define-constant +codes+
+  (list
+    '("A" . "T") '("B" . "V") '("C" . "G") '("D" . "H") '("G" . "C")
+    '("H" . "D") '("K" . "M") '("M" . "K") '("N" . "N") '("R" . "Y")
+    '("S" . "S") '("T" . "A") '("V" . "B") '("W" . "W") '("Y" . "R")))
+
+; -------------------------------
+
+(define (add-to-segment segment sequence)
+  (let* ((segment-list (car segment))
+         (current-segment (cdr segment))
+         (segment-size (string-length current-segment))
+         (t-sequence (string-translate* (string-reverse (string-upcase sequence)) +codes+)))
+    (if (>= segment-size +segment-limit+)
+    (begin
+      (set! segment-list (append (list current-segment) segment-list))            
+      (set! current-segment (make-string 0))))
+    (cons segment-list (string-replace current-segment t-sequence 0 0))))
+
+; -------------
+
+(define (dump-segment segment line-size)
+  (if (not (segment-null? segment))
+    (let ((segment-list (car segment)) (seg-lines nil) (spill (make-string 0)))
+      (if (segment-has-list? segment)
+        (set-car! segment-list (string-replace (caar segment) (cdr segment) 0 0))
+      ; else
+        (set! segment-list (list (cdr segment))))
+      (for-each
+        (lambda (segment)
+          (set! seg-lines (string-chop (string-append spill segment) line-size))
+          (set! spill (last seg-lines))
+          (if (<= (string-length spill) line-size) (set! seg-lines (butlast seg-lines)))
+          (for-each
+            (lambda (line) (print line))
+            seg-lines))
+      segment-list)
+      (if (not (string-null? spill)) (print spill))))
+  (make-segment))
+
+; -------------
+
+(define (make-segment) (cons '() ""))
+
+; -------------
+
+(define (segment-null? segment)
+  (and (pair? segment) (and (null? (car segment)) (string-null? (cdr segment)))))
+
+; -------------
+
+(define (segment-has-list? segment) (and (pair? segment) (not (null? (car segment)))))
+
+; -------------
+
+(define (end-of-segment? sequence) (char=? (string-ref sequence 0) #\>))
+
+; -------------------------------
+
+(define (main)
+  (let ((segment (make-segment)))
+
+    (let loop ((sequence (read-line)))
+      (cond ((eof-object? sequence)
+        (set! segment (dump-segment segment +line-size+)))
+      (else
+        (cond ((end-of-segment? sequence)
+          (set! segment (dump-segment segment +line-size+))
+          (print sequence))
+        (else
+          (set! segment (add-to-segment segment sequence))))
+      (loop (read-line)))))))
+
+; -------------------------------
+
+(main)
+
