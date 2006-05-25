@@ -85,7 +85,7 @@
        Down => 'http://cyclone.thelanguage.org/wiki/Download',
        Type => 'native compiled',
        Note => 'Concise, checked, safe dialect of C',
-       Ext  => 'cyc',
+       Ext  => 'c',
        Verfun => sub {
        	   $ver="1.0";
 	   return($ver);
@@ -1330,6 +1330,8 @@
      'Ciao Prolog' => 'prolog',
      'Clean'       => 'c',
      'Common Lisp' => 'scheme',
+     'Cyclone'     => 'c',
+     'cyclone'     => 'c',
      'D'           => 'c',
      'Dylan'       => 'c',
      'Eiffel'      => 'dash',

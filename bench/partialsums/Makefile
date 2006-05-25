@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2006-01-27 02:33:58 igouy-guest Exp $
+# $Id: Makefile,v 1.3 2006-05-25 04:51:33 bfulgham Exp $
 include ../../Make.header
 
 TEST    := partialsums
@@ -6,6 +6,7 @@ TITLE   := naive summation of series
 
 #XLABEL  := N (number of iterations)
 
+CYCOPTS := -lm
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 OO2COPTS := -A --no-rtc
