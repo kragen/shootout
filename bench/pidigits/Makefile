@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2006-03-28 16:41:37 bfulgham Exp $
+# $Id: Makefile,v 1.16 2006-05-30 21:50:16 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -25,6 +25,8 @@ OCAMLBOPTS := nums.cma
 
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
+GCCOPTS := $(GCCOPTS) -lgmp
+ICCOPTS := $(ICCOPTS) -lgmp
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 600,800,1000
