@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2006-05-30 21:50:15 igouy-guest Exp $
+# $Id: Makefile,v 1.7 2006-05-31 12:46:21 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := chameneos
@@ -18,7 +18,7 @@ OCAMLBOPTS := -vmthread unix.cma threads.cma
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 GXXLDOPTS := $(GXXLDOPTS) -lpthread
-GCCOPTS :=  $(GCCOPTS) -lpthread
+GCCOPTS :=  $(GCCOPTS)-lpthread
 ICCOPTS := $(ICCOPTS) -lpthread
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
