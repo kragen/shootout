@@ -2,8 +2,6 @@
 % The Great Computer Language Shootout                              
 % http://shootout.alioth.debian.org/                                
 %                                                                   
-% Code based on Prolog language implementation by Anthony Borla
-%
 % Floating point conversion routines courtesy Juergen Stuber and Jorge
 % Marques Pelizzoni [previously used in other Mozart/Oz Shooutout
 % submissions].
@@ -14,53 +12,65 @@
 functor
 
 import
-  System Application
+  System(showInfo) Application(exit getArgs)
 
 define
-  N A1_ A2_ A3_ A4_ A5_ A6_ A7_ A8_ A9_
 
-  proc {ComputeSums N}
-    A1_ = {NewCell 0.0} A2_ = {NewCell 0.0} A3_ = {NewCell 0.0}
-    A4_ = {NewCell 0.0} A5_ = {NewCell 0.0} A6_ = {NewCell 0.0}
-    A7_ = {NewCell 0.0} A8_ = {NewCell 0.0} A9_ = {NewCell 0.0}
+% ------------- %
 
-    {ComputeSums_ 1.0 N 1.0}    
-  end
+  local
+    A1 = {NewCell 0.0} A2 = {NewCell 0.0} A3 = {NewCell 0.0}
+    A4 = {NewCell 0.0} A5 = {NewCell 0.0} A6 = {NewCell 0.0}
+    A7 = {NewCell 0.0} A8 = {NewCell 0.0} A9 = {NewCell 0.0}
 
-  proc {ComputeSums_ D N ALT}
-    if {FloatToInt D} > N then
-      skip
-    else
-      local D2 D3 DS DC in
-        D2 = D * D        D3 = D2 * D
+    TwoThirds = 2.0 / 3.0
+
+    % ------------- %
+
+    proc {ComputeSums_ D N ALT}
+      if {FloatToInt D} > N then
+        skip
+      else D2 D3 DS DC in
+        D2 = D * D   D3 = D2 * D
         DS = {Sin D} DC = {Cos D}
 
-        A1_ := @A1_ + {Pow (2.0 / 3.0) (D - 1.0)}
-        A2_ := @A2_ + 1.0 / {Sqrt D}
-        A3_ := @A3_ + 1.0 / (D * (D + 1.0))
-        A4_ := @A4_ + 1.0 / (D3 * DS * DS)
-        A5_ := @A5_ + 1.0 / (D3 * DC * DC)
-        A6_ := @A6_ + 1.0 / D
-        A7_ := @A7_ + 1.0 / (D2)
-        A8_ := @A8_ + ALT / D
-        A9_ := @A9_ + ALT / (2.0 * D - 1.0)
-      end 
+        A1 := @A1 + {Pow TwoThirds (D - 1.0)}
+        A2 := @A2 + 1.0 / {Sqrt D}
+        A3 := @A3 + 1.0 / (D * (D + 1.0))
+        A4 := @A4 + 1.0 / (D3 * DS * DS)
+        A5 := @A5 + 1.0 / (D3 * DC * DC)
+        A6 := @A6 + 1.0 / D
+        A7 := @A7 + 1.0 / (D2)
+        A8 := @A8 + ALT / D
+        A9 := @A9 + ALT / (2.0 * D - 1.0)
 
-      {ComputeSums_ (D + 1.0) N ~(ALT)}
+        {ComputeSums_ (D + 1.0) N ~(ALT)}
+      end
+    end
+
+  in
+    proc {ComputeSums N}
+      A1 := 0.0 A2 := 0.0 A3 := 0.0 A4 := 0.0 A5 := 0.0 A6 := 0.0
+      A7 := 0.0 A8 := 0.0 A9 := 0.0
+      {ComputeSums_ 1.0 N 1.0}    
+    end
+
+    % ------------- %
+
+    proc {ShowSums}
+      {System.showInfo {FloatToString @A1 9} # "\t(2/3)^k"}
+      {System.showInfo {FloatToString @A2 9} # "\tk^-0.5"}
+      {System.showInfo {FloatToString @A3 9} # "\t1/k(k+1)"}
+      {System.showInfo {FloatToString @A4 9} # "\tFlint Hills"}
+      {System.showInfo {FloatToString @A5 9} # "\tCookson Hills"}
+      {System.showInfo {FloatToString @A6 9} # "\tHarmonic"}
+      {System.showInfo {FloatToString @A7 9} # "\tRiemann Zeta"}
+      {System.showInfo {FloatToString @A8 9} # "\tAlternating Harmonic"}
+      {System.showInfo {FloatToString @A9 9} # "\tGregory"}
     end
   end
 
-  proc {ShowSums}
-    {System.showInfo {FloatToString @A1_ 9} # "\t(2/3)^k"}
-    {System.showInfo {FloatToString @A2_ 9} # "\tk^-0.5"}
-    {System.showInfo {FloatToString @A3_ 9} # "\t1/k(k+1)"}
-    {System.showInfo {FloatToString @A4_ 9} # "\tFlint Hills"}
-    {System.showInfo {FloatToString @A5_ 9} # "\tCookson Hills"}
-    {System.showInfo {FloatToString @A6_ 9} # "\tHarmonic"}
-    {System.showInfo {FloatToString @A7_ 9} # "\tRiemann Zeta"}
-    {System.showInfo {FloatToString @A8_ 9} # "\tAlternating Harmonic"}
-    {System.showInfo {FloatToString @A9_ 9} # "\tGregory"}
-  end
+% ------------- %
 
   fun {CmdlNArg Nth Default}
     N Nt in
@@ -73,7 +83,10 @@ define
     N
   end
 
+% ------------- %
+
   %% Floating Point Conversion Routines
+
   fun {FloatAbs X}
     if X >= 0.0 then X else ~X end
   end
@@ -111,7 +124,7 @@ define
   fun {FloatToVS F Prec}
     fun {FractionToString Frac Prec}
       if Prec =< 0 then ""
-      elseif Prec > 9 then raise excessivePrecision(Prec) end
+      elseif Prec > 10 then raise excessivePrecision(Prec) end
       else
         Shifted = {FloatPower 10.0 Prec} * Frac
         Digits = {FloatToInt {Round Shifted}}
@@ -126,10 +139,20 @@ define
   end
 
   fun {FloatToString F Prec}
+    Result = {NewCell {VirtualString.toString {FloatToVS F Prec}}}
     P = fun {$ C} if C == &~ then &- else C end end
-    in
-    {Map {VirtualString.toString {FloatToVS F Prec}} P}
+  in
+    if F < 0.0 andthen {Nth @Result 1} \= &~ then
+      Result := &~|@Result 
+    end
+    {Map @Result P}
   end
+
+% ------------- %
+
+  N
+
+% ------------- %
 
 in
   N = {CmdlNArg 1 1}

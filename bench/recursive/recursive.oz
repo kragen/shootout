@@ -14,9 +14,12 @@
 functor
 
 import
-  System Application
+  System(showInfo) Application(exit getArgs)
 
-define N NFlt NAdj
+define
+
+% ------------- %
+
   fun {Ack X Y}
     if X == 0 then Y + 1
     elseif Y == 0 then {Ack (X - 1) 1}
@@ -24,11 +27,15 @@ define N NFlt NAdj
     end
   end
 
+% ------------- %
+
   fun {Fib N}
     if N < 2 then 1
     else {Fib (N - 2)} + {Fib (N - 1)}
     end
   end
+
+% ------------- %
 
   fun {FibFlt N}
     if N < 2.0 then 1.0
@@ -36,17 +43,23 @@ define N NFlt NAdj
     end
   end
 
+% ------------- %
+
   fun {Tak X Y Z}
     if Y < X then {Tak {Tak (X - 1) Y Z} {Tak (Y - 1) Z X} {Tak (Z - 1) X Y}}
     else Z
     end
   end
 
+% ------------- %
+
   fun {TakFlt X Y Z}
     if Y < X then {TakFlt {TakFlt (X - 1.0) Y Z} {TakFlt (Y - 1.0) Z X} {TakFlt (Z - 1.0) X Y}}
     else Z
     end
   end
+
+% ------------- %
 
   fun {CmdlNArg Nth Default}
     N Nt in
@@ -59,7 +72,10 @@ define N NFlt NAdj
     N
   end
 
+% ------------- %
+
   %% Floating Point Conversion Routines
+
   fun {FloatAbs X}
     if X >= 0.0 then X else ~X end
   end
@@ -97,7 +113,7 @@ define N NFlt NAdj
   fun {FloatToVS F Prec}
     fun {FractionToString Frac Prec}
       if Prec =< 0 then ""
-      elseif Prec > 9 then raise excessivePrecision(Prec) end
+      elseif Prec > 10 then raise excessivePrecision(Prec) end
       else
         Shifted = {FloatPower 10.0 Prec} * Frac
         Digits = {FloatToInt {Round Shifted}}
@@ -112,10 +128,20 @@ define N NFlt NAdj
   end
 
   fun {FloatToString F Prec}
+    Result = {NewCell {VirtualString.toString {FloatToVS F Prec}}}
     P = fun {$ C} if C == &~ then &- else C end end
-    in
-    {Map {VirtualString.toString {FloatToVS F Prec}} P}
+  in
+    if F < 0.0 andthen {Nth @Result 1} \= &~ then
+      Result := &~|@Result 
+    end
+    {Map @Result P}
   end
+
+% ------------- %
+
+  N NFlt NAdj
+
+% ------------- %
 
 in
   N = {CmdlNArg 1 1} NFlt = {Int.toFloat N} NAdj = N - 1

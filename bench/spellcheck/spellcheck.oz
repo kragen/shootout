@@ -8,12 +8,17 @@
 functor
 
 import
-  System Application Open(text file)
+  System(showInfo) Application(exit) Open(text file)
 
 define
-  class TextFile
+
+% ------------- %
+
+  class TextFile_
     from Open.file Open.text
   end
+
+% ------------- %
 
   proc {LoadDictionary FILE DICTIONARY}
     case {FILE getS($)} of false then
@@ -24,23 +29,28 @@ define
     end
   end
 
+% ------------- %
+
   proc {CheckAgainstDictionary FILE DICTIONARY}
     case {FILE getS($)} of false then
       skip
     elseof WORD then
       if {Not {Dictionary.member DICTIONARY {String.toAtom WORD}}} then
-        {System.printInfo WORD#"\n"}
+        {System.showInfo WORD}
       end
       {CheckAgainstDictionary FILE DICTIONARY}
     end
   end
 
-  DICTIONARY
+% ------------- %
+
+  DICTIONARY = {NewDictionary}
+
+% ------------- %
 
 in
-  {NewDictionary DICTIONARY}
-  {LoadDictionary {New TextFile init(name:'Usr.Dict.Words')} DICTIONARY}
-  {CheckAgainstDictionary {New TextFile init(name:stdin)} DICTIONARY}
-
+  {LoadDictionary {New TextFile_ init(name:'Usr.Dict.Words')} DICTIONARY}
+  {CheckAgainstDictionary {New TextFile_ init(name:stdin)} DICTIONARY}
   {Application.exit 0}
 end
+

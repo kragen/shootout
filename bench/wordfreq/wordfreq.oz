@@ -14,7 +14,7 @@
 functor
 
 import
-  System(showInfo show) Application(exit) Open(file text)
+  System(showInfo) Application(exit) Open(file text)
 
   %
   %  Regex at 'x-oz://contrib/regex'
@@ -40,6 +40,8 @@ define
       end
     end
 
+    % ------------- %
+
     %
     % local
     %   CFT = {MakeCFT Char.isSpace nil Char.toLower}
@@ -60,6 +62,8 @@ define
         {String.tokens {CFT S false} SPACE}
       end
     end
+
+    % ------------- %
 
     proc {LoadTable}
       case {FILE getS($)} of false then
@@ -85,6 +89,8 @@ define
         {LoadTable}
       end
     end
+
+    % ------------- %
 
     Table = {NewDictionary}
   in
@@ -121,15 +127,18 @@ define
     CFT
   end
 
-  fun {PadLeft S Padlen C} {Append {MakePad S Padlen C} S} end
+  fun {PadLeft S Padlen C} {List.append {MakePad S Padlen C} S} end
 
-  fun {MakePad  S Padlen C} Reqlen = {Length S} - Padlen in
-    if Reqlen < 0 then L = {MakeList {Abs Reqlen}} in
+  fun {MakePad S Padlen C}
+    L Reqlen = {List.length S} - Padlen
+  in
+    if Reqlen < 0 then
+      L = {List.make {Number.abs Reqlen}}
       for I in L do I = C end
-      L      
     else
-      nil
+      L = nil
     end
+    L
   end
 
 % ------------- %

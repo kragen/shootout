@@ -15,11 +15,17 @@ import
   System(showInfo) Application(exit getArgs)
 
 define
+
+% ------------- %
+
   PI = 3.141592653589793
   SOLAR_MASS = 4.0 * PI * PI
   DAYS_PER_YEAR = 365.24
 
+% ------------- %
+
   %% Single-body routines
+
   fun {NewBody X Y Z VX VY VZ MASS}
     body(x:{NewCell X} y:{NewCell Y} z:{NewCell Z} vx:{NewCell VX} vy:{NewCell VY} vz:{NewCell VZ} mass:{NewCell MASS})
   end
@@ -33,7 +39,10 @@ define
     VZ := ~PZ / SOLAR_MASS
   end
 
+% ------------- %
+
   %% Collection of bodies [Sun Jupiter Saturn Uranus Neptune]
+
   Bodies = [
     {NewBody 0.0 0.0 0.0 0.0 0.0 0.0 SOLAR_MASS}
 
@@ -54,7 +63,10 @@ define
              (~9.51592254519715870e~05 * DAYS_PER_YEAR) (5.15138902046611451e~05 * SOLAR_MASS)}
   ]
 
+% ------------- %
+
   %% Multi-body routines
+
   proc {Setup Bodies}
     PX = {NewCell 0.0} PY = {NewCell 0.0} PZ = {NewCell 0.0}
   in
@@ -66,6 +78,8 @@ define
 
     {OffsetMomentum @PX @PY @PZ Bodies.1}
   end
+
+% ------------- %
 
   proc {Advance DT Bodies}
     DX = {NewCell 0.0} DY = {NewCell 0.0} DZ = {NewCell 0.0} DISTANCE = {NewCell 0.0}
@@ -100,6 +114,8 @@ define
     end
   end
 
+% ------------- %
+
   fun {Energy Bodies}
     DX = {NewCell 0.0} DY = {NewCell 0.0} DZ = {NewCell 0.0} DISTANCE = {NewCell 0.0}
     E = {NewCell 0.0} Idx = {NewCell 1}
@@ -123,8 +139,9 @@ define
 
     @E
   end
-  
-  %% General purpose routines
+
+% ------------- %
+
   fun {CmdlNArg Nth Default} N Nt in
     try
       Nt = {String.toInt {Application.getArgs plain}.Nth}
@@ -135,7 +152,10 @@ define
     N
   end
 
+% ------------- %
+
   %% Floating Point Conversion Routines
+
   fun {FloatAbs X}
     if X >= 0.0 then X else ~X end
   end
@@ -173,7 +193,7 @@ define
   fun {FloatToVS F Prec}
     fun {FractionToString Frac Prec}
       if Prec =< 0 then ""
-      elseif Prec > 9 then raise excessivePrecision(Prec) end
+      elseif Prec > 10 then raise excessivePrecision(Prec) end
       else
         Shifted = {FloatPower 10.0 Prec} * Frac
         Digits = {FloatToInt {Round Shifted}}
@@ -188,12 +208,21 @@ define
   end
 
   fun {FloatToString F Prec}
+    Result = {NewCell {VirtualString.toString {FloatToVS F Prec}}}
     P = fun {$ C} if C == &~ then &- else C end end
-    in
-    {Map {VirtualString.toString {FloatToVS F Prec}} P}
+  in
+    if F < 0.0 andthen {Nth @Result 1} \= &~ then
+      Result := &~|@Result 
+    end
+    {Map @Result P}
   end
 
+% ------------- %
+
   N
+
+% ------------- %
+
 in
   N = {CmdlNArg 1 1}
 

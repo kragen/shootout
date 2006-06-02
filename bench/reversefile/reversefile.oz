@@ -8,10 +8,13 @@
 functor
 
 import
-  System(printInfo) Application(exit) Open(text file)
+  System(showInfo) Application(exit) Open(text file)
 
 define
-  class TextFile
+
+% ------------- %
+
+  class TextFile_
     from Open.file Open.text
   end
 
@@ -20,12 +23,14 @@ define
       skip
     elseof LINE then
       {ReverseFile FILE}
-      {System.printInfo LINE}
-      {System.printInfo "\n"}
+      {System.showInfo LINE}
     end
   end
 
+% ------------- %
+
 in
-  {ReverseFile {New TextFile init(name:stdin)}}
+  {ReverseFile {New TextFile_ init(name:stdin)}}
   {Application.exit 0}
 end
+

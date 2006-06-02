@@ -8,68 +8,86 @@
 functor
 
 import
-  System Application
+  System(showInfo) Application(exit getArgs)
 
-define Start = 2 N
+define
+
+% ------------- %
+
+  SPACE = &\040
+
+% ------------- %
 
   proc {CalcAndShowSieve Start Stop}
-    local Bits Output SPACE = 32 in
+    Bits = {Sieve Start Stop}
+    Output =
+      "Primes up to" # {PadLeft {Int.toString Stop} 9 SPACE} #
+      {PadLeft {Int.toString {BitArray.card Bits}} 9 SPACE}
+  in
+    {System.showInfo Output}
+  end
 
-      Bits = {BitArray.new Start Stop}
-      {Init Start Stop Bits}
-      {Sieve 1 Start Start Stop Bits}
+% ------------- %
 
-      Output =
-        "Primes up to"#    
-        {JustifyRight {Int.toString Stop} SPACE 9}#
-        {JustifyRight {Int.toString {BitArray.card Bits}} SPACE 9}#
-        "\n"
-
-      {System.printInfo Output}
+  local
+    fun {Init I Stop Bits}
+      if I =< Stop then {BitArray.set Bits I} {Init (I + 1) Stop Bits} else Bits end
     end
-  end
 
-  proc {Init I Stop Bits}
-    if I =< Stop then {BitArray.set Bits I} {Init (I + 1) Stop Bits} end
-  end
-
-  proc {Sieve I J Start Stop Bits}
-    if I > N then
-      skip
-    else
-      if J > Stop then
-        {Sieve (I + 1) Start Start Stop Bits}
+    fun {Sieve_ I J Start Stop Bits}
+      if I > N then
+        Bits
       else
-        if {BitArray.test Bits J} then {ClearMultiples (J + J) J Stop Bits} end
-        {Sieve I (J + 1) Start Stop Bits}
+        if J > Stop then
+          {Sieve_ (I + 1) Start Start Stop Bits}
+        else
+          if {BitArray.test Bits J} then {ClearMultiples (J + J) J Stop Bits} end
+          {Sieve_ I (J + 1) Start Stop Bits}
+        end
       end
+    end
+
+    proc {ClearMultiples K J Stop Bits}
+      if K =< Stop then {BitArray.clear Bits K} {ClearMultiples (K + J) J Stop Bits} end
+    end
+
+  in
+    fun {Sieve Start Stop}
+      {Sieve_ 1 Start Start Stop {Init Start Stop {BitArray.new Start Stop}}}
     end
   end
 
-  proc {ClearMultiples K J Stop Bits}
-    if K =< Stop then {BitArray.clear Bits K} {ClearMultiples (K + J) J Stop Bits} end
-  end
+% ------------- %
 
-  fun {CmdlNArg Nth Default}
-    local Nt N in
-      try
-        Nt = {String.toInt {Application.getArgs plain}.Nth}
-        N = if Nt < Default then Default else Nt end
-      catch error(...) then
-        N = Default
-      end
-      N
+  fun {CmdlNArg Nth Default} N Nt in
+    try
+      Nt = {String.toInt {Application.getArgs plain}.Nth}
+      N = if Nt < Default then Default else Nt end
+    catch error(...) then
+      N = Default
     end
+    N
   end
 
-  fun {FillList S C}
-    for I in S do I = C end
-    S
+  fun {PadLeft S Padlen C} {List.append {MakePad S Padlen C} S} end
+
+  fun {MakePad S Padlen C}
+    L Reqlen = {List.length S} - Padlen
+  in
+    if Reqlen < 0 then
+      L = {List.make {Number.abs Reqlen}}
+      for I in L do I = C end
+    else
+      L = nil
+    end
+    L
   end
 
-  fun {JustifyRight S C N}
-    {Append {FillList {MakeList (N - {Length S})} C} S}
-  end
+% ------------- %
+
+  N Start = 2
+
+% ------------- %
 
 in
   N = {CmdlNArg 1 Start}
@@ -80,3 +98,4 @@ in
 
   {Application.exit 0}
 end
+

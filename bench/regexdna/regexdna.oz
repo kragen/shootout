@@ -8,13 +8,12 @@
 functor
 
 import
-  System(showInfo show) Application(exit getArgs) Open(file text)
+  System(showInfo) Application(exit) Open(file text)
   Regex at 'x-oz://contrib/regex'
 
 define
-  class TextFile_
-    from Open.file Open.text
-  end
+
+% ------------- %
 
   VARIANTS = [
     "agggtaaa|tttaccct" "[cgt]gggtaaa|tttaccc[acg]" 
@@ -27,9 +26,19 @@ define
               'M':"(a|c)" 'N':"(a|c|g|t)" 'R':"(a|g)" 'S':"(c|g)"
               'V':"(a|c|g)" 'W':"(a|t)" 'Y':"(c|t)")
 
-  NEWLINE = "\n"
+  LF = &\012
+
+% ------------- %
+
+  class TextFile_
+    from Open.file Open.text
+  end
+
+% ------------- %
 
   Initial_Length Code_Length SEQ = {NewCell nil}
+
+% ------------- %
 
 in
   % Load file as a list and record its length
@@ -55,7 +64,7 @@ in
   end
 
   % Print statistics
-  {System.showInfo NEWLINE # Initial_Length # NEWLINE # Code_Length # NEWLINE # {ByteString.length @SEQ}}
+  {System.showInfo LF # Initial_Length # LF # Code_Length # LF # {ByteString.length @SEQ}}
 
   {Application.exit 0}
 end

@@ -11,25 +11,46 @@ import
   System(showInfo) Application(exit) Open(text file)
 
 define
-  class TextFile
+
+% ------------- %
+
+  SPACE = &\040  NEWLINE_LENGTH = 1
+
+% ------------- %
+
+  class TextFile_
     from Open.file Open.text
   end
 
-  fun {CountLinesWordsChars FILE LINES WORDS CHARS}
-    case {FILE getS($)} of false then
-      [LINES WORDS CHARS]
-    elseof LINE then
-      {CountLinesWordsChars FILE (LINES + 1) (WORDS + {CountWords LINE}) (CHARS + {CountChars LINE 1})}
+% ------------- %
+
+  fun {CountLinesWordsChars FILE}
+
+    fun {CountLinesWordsChars_ LINES WORDS CHARS}
+      case {FILE getS($)} of false then
+        [LINES WORDS CHARS]
+      elseof LINE then
+        {CountLinesWordsChars_ (LINES + 1) (WORDS + {CountWords LINE}) (CHARS + {CountChars LINE NEWLINE_LENGTH})}
+      end
     end
+
+    % ------------- %
+
+    fun {CountWords LINE}
+      {Length {String.tokens {CompressWhiteSpace {LeftTrim LINE}} SPACE}}
+    end
+
+    % ------------- %
+
+    fun {CountChars LINE PADDING}
+      {Length LINE} + PADDING
+    end
+
+  in
+    {CountLinesWordsChars_ 0 0 0}
   end
 
-  fun {CountWords LINE}
-    {Length {String.tokens {CompressWhiteSpace {LeftTrim LINE}} &\040}}
-  end
-
-  fun {CountChars LINE PADDING}
-    {Length LINE} + PADDING
-  end
+% ------------- %
 
   fun {LeftTrim S}
     {List.dropWhile S Char.isSpace}
@@ -50,12 +71,15 @@ define
     end
   end
 
-  STDIN LINES WORDS CHARS
+% ------------- %
+
+  LINES WORDS CHARS
+
+% ------------- %
+
 in
-  STDIN = {New TextFile init(name:stdin)}
-
-  [LINES WORDS CHARS] = {CountLinesWordsChars STDIN 0 0 0}
-  {System.showInfo LINES#" "#WORDS#" "#CHARS}
-
+  [LINES WORDS CHARS] = {CountLinesWordsChars {New TextFile_ init(name:stdin)}}
+  {System.showInfo LINES # " " # WORDS # " " # CHARS}
   {Application.exit 0}
 end
+

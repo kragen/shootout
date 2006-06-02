@@ -21,6 +21,9 @@ import
   System(showInfo) Application(exit) Open(text file)
 
 define
+
+% ------------- %
+
   class TextFile_
     from Open.file Open.text
   end
@@ -87,9 +90,26 @@ define
     end
   end
 
+  %
+  % A conventional, dictionary-based [i.e. hash table] version; marginally slower performance
+  %  
+  % local
+  %   CodeTbl =
+  %     {Record.toDictionary
+  %       codes('A':&T 'B':&V 'C':&G 'D':&H 'G':&C
+  %             'H':&D 'K':&M 'M':&K 'N':&N 'R':&Y
+  %             'S':&S 'T':&A 'V':&B 'W':&W 'Y':&R)}
+  % in
+  %   fun {Complement Code}
+  %     {Dictionary.get CodeTbl {Char.toAtom {Char.toUpper Code}}}
+  %   end
+  % end
+  %
+
 % ------------- %
 
   %% General Purpose Stateful Stack [CTM implementation]
+
   fun {NewStack}
     C = {NewCell nil}
 
@@ -110,10 +130,12 @@ define
 
 % ------------- %
 
-  Delimiter = &> LineLength = 60
+  DELIMITER = &> LINESIZE = 60
+
+% ------------- %
 
 in
-  {ReverseComplement {New TextFile_ init(name:stdin)} Delimiter LineLength}
+  {ReverseComplement {New TextFile_ init(name:stdin)} DELIMITER LINESIZE}
   {Application.exit 0}
 end
 

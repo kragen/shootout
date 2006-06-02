@@ -21,6 +21,9 @@ import
   System(showInfo) Application(exit) Open(text file)
 
 define
+
+% ------------- %
+
   class TextFile_
     from Open.file Open.text
   end
@@ -28,6 +31,7 @@ define
 % ------------- %
 
   %% General Purpose Stateful Stack [CTM implementation]
+
   fun {NewStack}
     C = {NewCell nil}
 
@@ -49,7 +53,7 @@ define
 % ------------- %
 
   local
-    LF = 10 Lines = {NewStack} Spill = {NewCell nil}
+    LF = &\012 Lines = {NewStack} Spill = {NewCell nil}
   in
     proc {ProcessBuffer Buffer} Ys Yr in
       {String.token Buffer LF Ys Yr}
@@ -125,8 +129,12 @@ define
 
 % ------------- %
 
+  READSIZE = 4096
+
+% ------------- %
+
 in
-  {ReverseFile {New TextFile_ init(name:stdin flags:[read text])} 4096}
+  {ReverseFile {New TextFile_ init(name:stdin flags:[read text])} READSIZE}
   {Application.exit 0}
 end
 

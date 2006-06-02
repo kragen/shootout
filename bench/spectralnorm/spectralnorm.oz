@@ -12,9 +12,12 @@
 functor
 
 import
-  System(showInfo show) Application(exit getArgs)
+  System(showInfo) Application(exit getArgs)
 
 define
+
+% ------------- %
+
   fun {Approximate N}
     U = {NewArray 1 N 1.0} V = {NewArray 1 N 0.0} VBv = {NewCell 0.0} Vv = {NewCell 0.0}
   in
@@ -30,11 +33,15 @@ define
     {Float.sqrt (@VBv / @Vv)}
   end
 
+% ------------- %
+
   fun {A I J}
     If = {IntToFloat (I - 1)} Jf = {IntToFloat (J - 1)}
   in
     1.0 / ((If + Jf) *( If + Jf + 1.0) / 2.0 + If + 1.0)
   end
+
+% ------------- %
 
   proc {MulAv N V Av}
     for I in 1..N do
@@ -45,6 +52,8 @@ define
     end
   end
 
+% ------------- %
+
   proc {MulAtv N V Atv}
     for I in 1..N do
       {Array.put Atv I 0.0}
@@ -54,11 +63,15 @@ define
     end
   end
 
+% ------------- %
+
   proc {MulAtAv N V AtAv}
     U = {NewArray 1 N 0.0}
   in
     {MulAv N V U} {MulAtv N U AtAv}
   end
+
+% ------------- %
 
   fun {CmdlNArg Nth Default} N Nt in
     try
@@ -70,7 +83,10 @@ define
     N
   end
 
+% ------------- %
+
   %% Floating Point Conversion Routines
+
   fun {FloatAbs X}
     if X >= 0.0 then X else ~X end
   end
@@ -108,7 +124,7 @@ define
   fun {FloatToVS F Prec}
     fun {FractionToString Frac Prec}
       if Prec =< 0 then ""
-      elseif Prec > 9 then raise excessivePrecision(Prec) end
+      elseif Prec > 10 then raise excessivePrecision(Prec) end
       else
         Shifted = {FloatPower 10.0 Prec} * Frac
         Digits = {FloatToInt {Round Shifted}}
@@ -123,12 +139,20 @@ define
   end
 
   fun {FloatToString F Prec}
+    Result = {NewCell {VirtualString.toString {FloatToVS F Prec}}}
     P = fun {$ C} if C == &~ then &- else C end end
-    in
-    {Map {VirtualString.toString {FloatToVS F Prec}} P}
+  in
+    if F < 0.0 andthen {Nth @Result 1} \= &~ then
+      Result := &~|@Result 
+    end
+    {Map @Result P}
   end
 
+% ------------- %
+
   N 
+
+% ------------- %
 
 in
   N = {CmdlNArg 1 100}
