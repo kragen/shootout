@@ -1,0 +1,134 @@
+<span class="slc">% ----------------------------------------------------------------------</span>
+<span class="slc">% The Great Computer Language Shootout</span>
+<span class="slc">% http://shootout.alioth.debian.org/</span>
+<span class="slc">%</span>
+<span class="slc">% An attempt at a faster [approx. 50% better] implementation via:</span>
+<span class="slc">%</span>
+<span class="slc">% * Utilising 4K read buffer [rather than reading line-by-line]</span>
+<span class="slc">% * Computing results in a single traversal of the input data [rather</span>
+<span class="slc">%   than multiply traversing, or otherwise manipulating, input data]</span>
+<span class="slc">%</span>
+<span class="slc">% Contributed by Anthony Borla</span>
+<span class="slc">% ----------------------------------------------------------------------</span>
+
+<span class="kwa">functor</span>
+
+<span class="kwa">import</span>
+  System<span class="sym">(</span>showInfo<span class="sym">)</span> Application<span class="sym">(</span>exit<span class="sym">)</span> Open<span class="sym">(</span>text file<span class="sym">)</span>
+
+<span class="kwb">define</span>
+
+<span class="slc">% ------------- %</span>
+
+  LF <span class="sym">= &amp;</span>\012 READSIZE <span class="sym">=</span> <span class="num">4096</span>
+
+<span class="slc">% ------------- %</span>
+
+  <span class="kwa">class</span> TextFile_
+    <span class="kwb">from</span> Open.file Open.text
+  <span class="kwb">end</span>
+
+<span class="slc">% ------------- %</span>
+
+  <span class="kwb">fun</span> <span class="sym">{</span>CountLinesWordsChars FILE BufferSize<span class="sym">}</span>
+
+    Lines <span class="sym">= {</span>NewCell <span class="num">0</span><span class="sym">}</span> Words <span class="sym">= {</span>NewCell <span class="num">0</span><span class="sym">}</span> Chars <span class="sym">= {</span>NewCell <span class="num">0</span><span class="sym">}</span> RemainingBytes
+
+    <span class="slc">% ------------- %</span>
+
+    <span class="kwb">proc</span> <span class="sym">{</span>ReadBuffer RemainingBytes<span class="sym">}</span>
+      BytesRead Buffer ToRead
+    <span class="kwb">in</span>
+      <span class="kwb">if</span> RemainingBytes <span class="sym">&lt;</span> <span class="num">1</span> <span class="kwb">then</span>
+        skip
+      <span class="kwb">else</span>
+        ToRead <span class="sym">=</span> <span class="kwb">if</span> RemainingBytes <span class="sym">&lt;</span> BufferSize <span class="kwb">then</span> RemainingBytes <span class="kwb">else</span> BufferSize <span class="kwb">end</span>
+        <span class="sym">{</span>FILE read<span class="sym">(</span>list<span class="sym">:</span>Buffer size<span class="sym">:</span>ToRead len<span class="sym">:</span>BytesRead<span class="sym">)}</span>
+        <span class="sym">{</span>ProcessBuffer Buffer<span class="sym">}</span>
+        <span class="sym">{</span>ReadBuffer <span class="sym">(</span>RemainingBytes <span class="sym">-</span> BytesRead<span class="sym">)}</span>
+      <span class="kwb">end</span>
+    <span class="kwb">end</span>
+
+    <span class="slc">% ------------- %</span>
+
+    <span class="kwa">local</span>
+
+      CountingWordStatus <span class="sym">= {</span>NewCell false<span class="sym">}</span> FirstCall <span class="sym">= {</span>NewCell true<span class="sym">}</span>
+
+      <span class="slc">% ------------- %</span>
+
+      <span class="kwb">proc</span> <span class="sym">{</span>CheckBuffer_ X Xr CountingWord<span class="sym">}</span>
+        Chars <span class="sym">:=</span> &#64;Chars <span class="sym">+</span> <span class="num">1</span>
+        <span class="kwb">if</span> X <span class="sym">==</span> LF <span class="kwb">then</span> Lines <span class="sym">:=</span> &#64;Lines <span class="sym">+</span> <span class="num">1</span> <span class="kwb">end</span>
+
+        <span class="kwb">if</span> CountingWord <span class="kwb">then</span>
+          <span class="kwb">if</span> <span class="sym">{</span>Char.isSpace X<span class="sym">}</span> <span class="kwb">then</span>
+            <span class="sym">{</span>ProcessBuffer_ Xr false<span class="sym">}</span>
+          <span class="kwb">else</span>
+            <span class="sym">{</span>ProcessBuffer_ Xr CountingWord<span class="sym">}</span>
+          <span class="kwb">end</span>
+        <span class="kwb">else</span>
+          <span class="kwb">if</span> <span class="sym">{</span>Not <span class="sym">{</span>Char.isSpace X<span class="sym">}}</span> <span class="kwb">then</span>
+            Words <span class="sym">:=</span> &#64;Words <span class="sym">+</span> <span class="num">1</span>
+            <span class="sym">{</span>ProcessBuffer_ Xr true<span class="sym">}</span>
+          <span class="kwb">else</span>
+            <span class="sym">{</span>ProcessBuffer_ Xr CountingWord<span class="sym">}</span>
+          <span class="kwb">end</span>
+        <span class="kwb">end</span>
+      <span class="kwb">end</span>
+
+      <span class="slc">% ------------- %</span>
+
+      <span class="kwb">proc</span> <span class="sym">{</span>ProcessBuffer_ Buffer CountingWord<span class="sym">}</span>
+        <span class="kwb">case</span> Buffer <span class="kwb">of</span> <span class="kwa">nil</span> <span class="kwb">then</span>
+          CountingWordStatus <span class="sym">:=</span> CountingWord
+        <span class="kwb">elseof</span> X<span class="sym">|</span>Xr <span class="kwb">then</span>
+          <span class="sym">{</span>CheckBuffer_ X Xr CountingWord<span class="sym">}</span>
+        <span class="kwb">end</span>
+      <span class="kwb">end</span>
+
+      <span class="slc">% ------------- %</span>
+
+    <span class="kwb">in</span>
+
+      <span class="kwb">proc</span> <span class="sym">{</span>ProcessBuffer Buffer<span class="sym">}</span>
+        X<span class="sym">|</span>Xr <span class="sym">=</span> Buffer
+      <span class="kwb">in</span>
+        <span class="kwb">if</span> &#64;FirstCall <span class="kwb">then</span> CountingWord <span class="kwb">in</span>
+          FirstCall <span class="sym">:=</span> false
+          <span class="kwb">if</span> <span class="sym">(</span>CountingWord <span class="sym">= {</span>Not <span class="sym">{</span>Char.isSpace X<span class="sym">}})</span> <span class="kwb">then</span> Words <span class="sym">:=</span> &#64;Words <span class="sym">+</span> <span class="num">1</span> <span class="kwb">end</span>
+          <span class="sym">{</span>CheckBuffer_ X Xr CountingWord<span class="sym">}</span>
+        <span class="kwb">else</span>
+          <span class="sym">{</span>CheckBuffer_ X Xr &#64;CountingWordStatus<span class="sym">}</span>
+        <span class="kwb">end</span>
+      <span class="kwb">end</span>
+
+    <span class="kwb">end</span>
+
+    <span class="slc">% ------------- %</span>
+
+  <span class="kwb">in</span>
+    <span class="sym">{</span>FILE seek<span class="sym">(</span>whence<span class="sym">:</span><span class="str">'end'</span> offset<span class="sym">:</span><span class="num">0</span><span class="sym">)}</span>
+    <span class="sym">{</span>FILE tell<span class="sym">(</span>offset<span class="sym">:</span>RemainingBytes<span class="sym">)}</span>
+    <span class="sym">{</span>FILE seek<span class="sym">(</span>whence<span class="sym">:</span>set offset<span class="sym">:</span><span class="num">0</span><span class="sym">)}</span>
+    <span class="sym">{</span>ReadBuffer RemainingBytes<span class="sym">}</span>
+
+    <span class="sym">[</span>&#64;Lines &#64;Words &#64;Chars<span class="sym">]</span>
+  <span class="kwb">end</span>
+
+<span class="slc">% ------------- %</span>
+
+  LINES WORDS CHARS
+
+<span class="slc">% ------------- %</span>
+
+<span class="kwb">in</span>
+  <span class="sym">[</span>LINES WORDS CHARS<span class="sym">] =</span>
+    <span class="sym">{</span>CountLinesWordsChars
+      <span class="sym">{</span>New TextFile_ init<span class="sym">(</span>name<span class="sym">:</span>stdin flags<span class="sym">:[</span>read text<span class="sym">])}</span> READSIZE<span class="sym">}</span>
+
+  <span class="sym">{</span>System.showInfo LINES # <span class="str">&quot; &quot;</span> # WORDS # <span class="str">&quot; &quot;</span> # CHARS<span class="sym">}</span>
+
+  <span class="sym">{</span>Application.exit <span class="num">0</span><span class="sym">}</span>
+<span class="kwb">end</span>
+

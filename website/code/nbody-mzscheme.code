@@ -1,141 +1,205 @@
+#<span class="sym">!/</span>usr<span class="sym">/</span>bin<span class="sym">/</span>mzscheme <span class="sym">-</span>r
 <span class="slc">;;; The Great Computer Language Shootout</span>
 <span class="slc">;;; http://shootout.alioth.debian.org/</span>
-<span class="slc">;;  by Greg Buchholz</span>
+<span class="slc">;;</span>
+<span class="slc">;; Ported from Xavier Leroy's Ocaml implementation.</span>
+<span class="slc">;; by Felix Winkelmann, then converted for mzscheme</span>
+<span class="slc">;; by Matthew Flatt and Brent Fulgham</span>
 
-<span class="slc">;; vector math stuff</span>
-<span class="sym">(</span>define <span class="sym">(</span>dot a b<span class="sym">) (+ (* (</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">0</span><span class="sym">))</span>
-                     <span class="sym">(* (</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">1</span><span class="sym">))</span>
-                     <span class="sym">(* (</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">2</span><span class="sym">))))</span>
+#|
+Correct output N <span class="sym">=</span> <span class="num">1000</span> is
 
-<span class="sym">(</span>define <span class="sym">(</span>v<span class="sym">+</span> a b<span class="sym">) (</span>vector <span class="sym">(+ (</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">0</span><span class="sym">))</span>
-                         <span class="sym">(+ (</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">1</span><span class="sym">))</span>
-                         <span class="sym">(+ (</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">2</span><span class="sym">))))</span>
+<span class="sym">-</span><span class="num">0.169075164</span>
+<span class="sym">-</span><span class="num">0.169087605</span>
+|#
+<span class="sym">(</span>module nbody mzscheme
+   <span class="sym">(</span>provide main<span class="sym">)</span>
 
-<span class="sym">(</span>define <span class="sym">(</span>v<span class="sym">-</span> a b<span class="sym">) (</span>vector <span class="sym">(- (</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">0</span><span class="sym">))</span>
-                         <span class="sym">(- (</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">1</span><span class="sym">))</span>
-                         <span class="sym">(- (</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">2</span><span class="sym">))))</span>
+   <span class="slc">;(require (lib &quot;13.ss&quot; &quot;srfi&quot;))</span>
 
-<span class="sym">(</span>define <span class="sym">(</span>mag v<span class="sym">) (</span><span class="kwa">sqrt</span> <span class="sym">(</span>dot v v<span class="sym">)))</span>
-<span class="sym">(</span>define <span class="sym">(</span>scale a n<span class="sym">) (</span>vector <span class="sym">(* (</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">)</span> n<span class="sym">)</span>
-                            <span class="sym">(* (</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">)</span> n<span class="sym">)</span>
-                            <span class="sym">(* (</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">)</span> n<span class="sym">)))</span>
-<span class="slc">;; list munging</span>
-<span class="sym">(</span>define <span class="sym">(</span>sumv xs<span class="sym">) (</span>foldl v<span class="sym">+</span> <span class="str">'#(0 0 0) xs))</span>
-<span class="str">(define (sum  xs) (foldl + 0 xs))</span>
-<span class="str">(define (concat xs) (foldl append '</span><span class="sym">()</span> xs<span class="sym">))</span>
-<span class="sym">(</span>define <span class="sym">(</span>foldl f init xs<span class="sym">)</span>
-    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">null</span>? xs<span class="sym">)</span>
-        init
-        <span class="sym">(</span>foldl f <span class="sym">(</span>f init <span class="sym">(</span><span class="kwa">car</span> xs<span class="sym">)) (</span><span class="kwa">cdr</span> xs<span class="sym">))))</span>
+   <span class="slc">;;; Stupid boiler-plate for formatting floating point value</span>
+  <span class="slc">;(define (roundto digits num)</span>
+  <span class="slc">;  (let* ((numstr (number-&gt;string num))</span>
+  <span class="slc">;         (digidx (string-index numstr #\.))</span>
+  <span class="slc">;         (outstr (substring numstr 0 (+ digidx digits)))</span>
+  <span class="slc">;         (lastchar</span>
+  <span class="slc">;          (char-&gt;integer (string-ref numstr (+ digidx digits 1))))</span>
+  <span class="slc">;         (nxtlstchr</span>
+  <span class="slc">;          (char-&gt;integer (string-ref numstr (+ digidx digits)))))</span>
+  <span class="slc">;    (string-&gt;number</span>
+  <span class="slc">;     (string-append</span>
+  <span class="slc">;      outstr</span>
+  <span class="slc">;      (string</span>
+  <span class="slc">;       (integer-&gt;char</span>
+  <span class="slc">;        (if (&gt; lastchar 52);; 52 == ASCII '4'</span>
+  <span class="slc">;            (add1 nxtlstchr)</span>
+  <span class="slc">;            nxtlstchr)))))))</span>
 
-<span class="slc">;; misc constants</span>
+
+<span class="slc">;;; define planetary masses, initial positions &amp; velocity</span>
+
 <span class="sym">(</span>define PI <span class="num">3.141592653589793</span><span class="sym">)</span>
 <span class="sym">(</span>define SOLAR_MASS <span class="sym">(*</span> <span class="num">4</span> PI PI<span class="sym">))</span>
 <span class="sym">(</span>define DAYS_PER_YEAR <span class="num">365.24</span><span class="sym">)</span>
 
-<span class="slc">;; define our planets</span>
-<span class="sym">(</span>define make<span class="sym">-</span>planet vector<span class="sym">)</span>
+<span class="sym">(</span>define<span class="sym">-</span>syntax define<span class="sym">-</span>constant
+  <span class="sym">(</span>syntax<span class="sym">-</span>rules <span class="sym">()</span>
+    <span class="sym">[(</span>_ id v<span class="sym">) (</span>define id v<span class="sym">)]))</span>
 
-<span class="sym">(</span>define Jupiter
-  <span class="sym">(</span>make<span class="sym">-</span>planet
-   <span class="str">'#(4.84143144246472090e+00 -1.16032004402742839e+00 -1.03622044471123109e-01)</span>
-<span class="str">   (vector (*  1.66007664274403694e-03 DAYS_PER_YEAR)</span>
-<span class="str">           (*  7.69901118419740425e-03 DAYS_PER_YEAR)</span>
-<span class="str">           (* -6.90460016972063023e-05 DAYS_PER_YEAR))</span>
+<span class="sym">(</span>define<span class="sym">-</span>syntax define<span class="sym">-</span>record
+  <span class="sym">(</span>syntax<span class="sym">-</span>rules <span class="sym">()</span>
+    <span class="sym">[(</span>_ id field ...<span class="sym">)</span>
+     <span class="sym">(</span>begin
+       <span class="sym">(</span>define<span class="sym">-</span>struct id <span class="sym">(</span>field ...<span class="sym">))</span>
+       <span class="sym">(</span>define<span class="sym">-</span>assignment<span class="sym">-</span>alias id field<span class="sym">)</span> ...<span class="sym">)]))</span>
+
+<span class="sym">(</span>define<span class="sym">-</span>syntax <span class="sym">(</span>define<span class="sym">-</span>assignment<span class="sym">-</span>alias stx<span class="sym">)</span>
+  <span class="sym">(</span>syntax<span class="sym">-</span>case stx <span class="sym">()</span>
+    <span class="sym">[(</span>_ id field<span class="sym">)</span>
+     <span class="sym">(</span>with<span class="sym">-</span>syntax <span class="sym">([</span>orig <span class="sym">(</span>datum<span class="sym">-&gt;</span>syntax<span class="sym">-</span>object
+			  #<span class="str">'id</span>
+<span class="str">			  (string-&gt;symbol</span>
+<span class="str">			   (format &quot;set-~a-~a!&quot;</span>
+<span class="str">				   (syntax-e #'</span>id<span class="sym">)</span>
+				   <span class="sym">(</span>syntax<span class="sym">-</span>e #<span class="str">'field))))]</span>
+<span class="str">		   [new (datum-&gt;syntax-object</span>
+<span class="str">			  #'</span>id
+			  <span class="sym">(</span>string<span class="sym">-&gt;</span>symbol
+			   <span class="sym">(</span>format <span class="str">&quot;~a-~a-set!&quot;</span>
+				   <span class="sym">(</span>syntax<span class="sym">-</span>e #<span class="str">'id)</span>
+<span class="str">				   (syntax-e #'</span>field<span class="sym">))))])</span>
+       #<span class="str">'(define new orig))]))</span>
+<span class="str"></span>
+<span class="str">(define-record planet x y z vx vy vz mass)</span>
+<span class="str"></span>
+<span class="str">(define Jupiter</span>
+<span class="str">  (make-planet</span>
+<span class="str">   4.84143144246472090e+00</span>
+<span class="str">   -1.16032004402742839e+00</span>
+<span class="str">   -1.03622044471123109e-01</span>
+<span class="str">   (* 1.66007664274403694e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* 7.69901118419740425e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* -6.90460016972063023e-05 DAYS_PER_YEAR)</span>
 <span class="str">   (* 9.54791938424326609e-04 SOLAR_MASS) ) )</span>
 <span class="str"></span>
 <span class="str">(define Saturn</span>
 <span class="str">  (make-planet</span>
-<span class="str">   '</span>#<span class="sym">(</span><span class="num">8.34336671824457987e+00 4.12479856412430479e+00</span> <span class="sym">-</span><span class="num">4.03523417114321381e-01</span><span class="sym">)</span>
-   <span class="sym">(</span>vector <span class="sym">(* -</span><span class="num">2.76742510726862411e-03</span> DAYS_PER_YEAR<span class="sym">)</span>
-           <span class="sym">(*</span>  <span class="num">4.99852801234917238e-03</span> DAYS_PER_YEAR<span class="sym">)</span>
-           <span class="sym">(*</span>  <span class="num">2.30417297573763929e-05</span> DAYS_PER_YEAR<span class="sym">))</span>
-   <span class="sym">(*</span> <span class="num">2.85885980666130812e-04</span> SOLAR_MASS<span class="sym">) ) )</span>
-
-<span class="sym">(</span>define Uranus
-  <span class="sym">(</span>make<span class="sym">-</span>planet
-   <span class="str">'#(1.28943695621391310e+01 -1.51111514016986312e+01 -2.23307578892655734e-01)</span>
-<span class="str">   (vector (*  2.96460137564761618e-03 DAYS_PER_YEAR)</span>
-<span class="str">           (*  2.37847173959480950e-03 DAYS_PER_YEAR)</span>
-<span class="str">           (* -2.96589568540237556e-05 DAYS_PER_YEAR))</span>
-<span class="str">   (* 4.36624404335156298e-05 SOLAR_MASS) ) )</span>
+<span class="str">   8.34336671824457987e+00</span>
+<span class="str">   4.12479856412430479e+00</span>
+<span class="str">   -4.03523417114321381e-01</span>
+<span class="str">   (* -2.76742510726862411e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* 4.99852801234917238e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* 2.30417297573763929e-05 DAYS_PER_YEAR)</span>
+<span class="str">   (* 2.85885980666130812e-04 SOLAR_MASS) ) )</span>
+<span class="str"></span>
+<span class="str">(define Uranus</span>
+<span class="str">  (make-planet</span>
+<span class="str">   1.28943695621391310e+01</span>
+<span class="str">   -1.51111514016986312e+01</span>
+<span class="str">   -2.23307578892655734e-01</span>
+<span class="str">   (* 2.96460137564761618e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* 2.37847173959480950e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* -2.96589568540237556e-05 DAYS_PER_YEAR)</span>
+<span class="str">   (*  4.36624404335156298e-05 SOLAR_MASS) ) )</span>
 <span class="str"></span>
 <span class="str">(define Neptune</span>
 <span class="str">  (make-planet</span>
-<span class="str">   '</span>#<span class="sym">(</span><span class="num">1.53796971148509165e+01</span> <span class="sym">-</span><span class="num">2.59193146099879641e+01 1.79258772950371181e-01</span><span class="sym">)</span>
-   <span class="sym">(</span>vector <span class="sym">(*</span>  <span class="num">2.68067772490389322e-03</span> DAYS_PER_YEAR<span class="sym">)</span>
-           <span class="sym">(*</span>  <span class="num">1.62824170038242295e-03</span> DAYS_PER_YEAR<span class="sym">)</span>
-           <span class="sym">(* -</span><span class="num">9.51592254519715870e-05</span> DAYS_PER_YEAR<span class="sym">))</span>
-   <span class="sym">(*</span> <span class="num">5.15138902046611451e-05</span> SOLAR_MASS<span class="sym">) ) )</span>
-
-<span class="sym">(</span>define Sun <span class="sym">(</span>make<span class="sym">-</span>planet <span class="str">'#(0 0 0) '</span>#<span class="sym">(</span><span class="num">0 0 0</span><span class="sym">)</span> SOLAR_MASS<span class="sym">))</span>
-
-<span class="slc">;; helper functions</span>
-<span class="sym">(</span>define <span class="sym">(</span>mass a<span class="sym">) (</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">))</span>
-<span class="sym">(</span>define <span class="sym">(</span>vel a<span class="sym">)  (</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">))</span>
-<span class="sym">(</span>define <span class="sym">(</span>pos a<span class="sym">)  (</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">))</span>
-<span class="sym">(</span>define <span class="sym">(</span>dist a b<span class="sym">) (</span>mag <span class="sym">(</span>v<span class="sym">- (</span>pos a<span class="sym">) (</span>pos b<span class="sym">))))</span>
-
-<span class="sym">(</span>define <span class="sym">(</span>rotations n xs<span class="sym">)</span>
-  <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(=</span> n <span class="num">0</span><span class="sym">)</span>
-        <span class="str">'()</span>
-<span class="str">        (let ((flipped (append (cdr xs) (list (car xs)))))</span>
-<span class="str">             (cons flipped (rotations (- n 1) flipped)))))</span>
+<span class="str">   1.53796971148509165e+01</span>
+<span class="str">   -2.59193146099879641e+01</span>
+<span class="str">   1.79258772950371181e-01</span>
+<span class="str">   (* 2.68067772490389322e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* 1.62824170038242295e-03 DAYS_PER_YEAR)</span>
+<span class="str">   (* -9.51592254519715870e-05 DAYS_PER_YEAR)</span>
+<span class="str">   (* 5.15138902046611451e-05 SOLAR_MASS) ) )</span>
 <span class="str"></span>
-<span class="str">;;; Here'</span>s the real bread <span class="kwa">and</span> butter integration functions
-<span class="sym">(</span>define <span class="sym">(</span>advance n dt pss<span class="sym">)</span>
-    <span class="sym">(</span>map <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>q<span class="sym">) (</span>adv dt q<span class="sym">)) (</span>rotations n pss<span class="sym">)))</span>
-
-<span class="sym">(</span>define <span class="sym">(</span>adv dt pss<span class="sym">)</span>
-  <span class="sym">(</span>let<span class="sym">* ((</span>p  <span class="sym">(</span><span class="kwa">car</span> pss<span class="sym">))</span>
-         <span class="sym">(</span>ps <span class="sym">(</span><span class="kwa">cdr</span> pss<span class="sym">))</span>
-         <span class="sym">(</span>delta_v <span class="sym">(</span>sumv <span class="sym">(</span>map
-                      <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>q<span class="sym">) (</span>scale <span class="sym">(</span>v<span class="sym">- (</span>pos p<span class="sym">) (</span>pos q<span class="sym">))</span>
-                                         <span class="sym">(/ (* (</span>mass q<span class="sym">)</span> dt<span class="sym">)</span>
-                                            <span class="sym">(</span><span class="kwa">expt</span> <span class="sym">(</span>dist p q<span class="sym">)</span> <span class="num">3</span><span class="sym">))))</span> ps<span class="sym">)))</span>
-         <span class="sym">(</span>new_v <span class="sym">(</span>v<span class="sym">- (</span>vel p<span class="sym">)</span> delta_v<span class="sym">))</span>
-         <span class="sym">(</span>delta_x <span class="sym">(</span>scale new_v dt<span class="sym">)))</span>
-        <span class="sym">(</span>make<span class="sym">-</span>planet <span class="sym">(</span>v<span class="sym">+ (</span>pos p<span class="sym">)</span> delta_x<span class="sym">)</span> new_v <span class="sym">(</span>mass p<span class="sym">))))</span>
-
-<span class="sym">(</span>define <span class="sym">(</span>energy bodies<span class="sym">)</span>
- <span class="sym">(</span>let<span class="sym">* ([</span>n <span class="sym">(</span><span class="kwa">length</span> bodies<span class="sym">)]</span>
-        <span class="sym">[</span>kinetic
-          <span class="sym">(*</span> <span class="num">0.5</span> <span class="sym">(</span>sum <span class="sym">(</span>map
-                       <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>q<span class="sym">) (* (</span>mass q<span class="sym">) (</span>dot <span class="sym">(</span>vel q<span class="sym">) (</span>vel q<span class="sym">))))</span>
-                          bodies<span class="sym">)))]</span>
-        <span class="sym">[</span>potential <span class="sym">(*</span> <span class="num">0.5</span> <span class="sym">(</span>sum <span class="sym">(</span>concat
-            <span class="sym">(</span>map <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>iss<span class="sym">)</span>
-                    <span class="sym">(</span>let <span class="sym">([</span>i  <span class="sym">(</span><span class="kwa">car</span> iss<span class="sym">)]</span>
-                          <span class="sym">[</span>is <span class="sym">(</span><span class="kwa">cdr</span> iss<span class="sym">)])</span>
-                         <span class="sym">(</span>map <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>j<span class="sym">) (/ (* (</span>mass i<span class="sym">) (</span>mass j<span class="sym">))</span>
-                                             <span class="sym">(</span>dist i j<span class="sym">)))</span> is<span class="sym">))</span>
-                          <span class="sym">) (</span>rotations n bodies<span class="sym">)))))])</span>
-       <span class="sym">(-</span> kinetic potential<span class="sym">)))</span>
-
-<span class="sym">(</span>define <span class="sym">(</span>offset<span class="sym">-</span>momentum<span class="sym">!</span> bodies<span class="sym">)</span>
-  <span class="sym">(</span>let<span class="sym">* ([</span>p  <span class="sym">(</span><span class="kwa">car</span> bodies<span class="sym">)]</span>
-         <span class="sym">[</span>ps <span class="sym">(</span><span class="kwa">cdr</span> bodies<span class="sym">)]</span>
-         <span class="sym">[</span>new_v <span class="sym">(</span>scale <span class="sym">(</span>sumv <span class="sym">(</span>map
-                         <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>q<span class="sym">) (</span>scale <span class="sym">(</span>vel q<span class="sym">) (</span>mass q<span class="sym">)))</span> ps<span class="sym">))</span>
-                  <span class="sym">(/ -</span><span class="num">1</span> SOLAR_MASS<span class="sym">))])</span>
-         <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span>make<span class="sym">-</span>planet <span class="sym">(</span>pos p<span class="sym">)</span> new_v <span class="sym">(</span>mass p<span class="sym">))</span> ps<span class="sym">)))</span>
-
-<span class="sym">(</span>define <span class="sym">(</span>iterate n f x<span class="sym">)</span>
-    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(=</span> n <span class="num">0</span><span class="sym">)</span>
-        x
-        <span class="sym">(</span>iterate <span class="sym">(-</span> n <span class="num">1</span><span class="sym">)</span> f <span class="sym">(</span>f x<span class="sym">))))</span>
-
-<span class="sym">(</span>define bodies <span class="sym">(</span><span class="kwa">list</span> Sun Jupiter Saturn Uranus Neptune<span class="sym">))</span>
-<span class="sym">(</span>define n <span class="sym">(</span>string<span class="sym">-&gt;</span>number <span class="sym">(</span>vector<span class="sym">-</span>ref <span class="sym">(</span>current<span class="sym">-</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>arguments<span class="sym">)</span> <span class="num">0</span><span class="sym">)))</span>
-
-<span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> bodies <span class="sym">(</span>offset<span class="sym">-</span>momentum<span class="sym">!</span> bodies<span class="sym">))</span>
-
-<span class="slc">;; Get the ball rolling...</span>
-<span class="sym">(</span>display <span class="sym">(/ (</span>round <span class="sym">(* (</span>energy bodies<span class="sym">) (</span><span class="kwa">expt</span> <span class="num">10 9</span><span class="sym">))) (</span><span class="kwa">expt</span> <span class="num">10 9</span><span class="sym">)))</span>
-<span class="sym">(</span>newline<span class="sym">)</span>
-
-<span class="sym">(</span>let<span class="sym">* ((</span>bods <span class="sym">(</span><span class="kwa">length</span> bodies<span class="sym">))</span>
-       <span class="sym">(</span>final <span class="sym">(</span>iterate n <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>ps<span class="sym">) (</span>advance bods <span class="num">0.01</span> ps<span class="sym">))</span> bodies<span class="sym">)))</span>
-      <span class="sym">(</span>display <span class="sym">(/ (</span>round <span class="sym">(* (</span>energy final<span class="sym">) (</span><span class="kwa">expt</span> <span class="num">10 9</span><span class="sym">))) (</span><span class="kwa">expt</span> <span class="num">10 9</span><span class="sym">))))</span>
-<span class="sym">(</span>newline<span class="sym">)</span>
-
+<span class="str">(define Sun (make-planet 0 0 0 0 0 0 SOLAR_MASS))</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str">;; integrator</span>
+<span class="str"></span>
+<span class="str">(define (advance! bodies dt)</span>
+<span class="str">  (let ([n (vector-length bodies)])</span>
+<span class="str">    (do ([i 0 (+ i 1)])</span>
+<span class="str">	((&gt;= i n))</span>
+<span class="str">      (let ([b (vector-ref bodies i)])</span>
+<span class="str">	(do ([j (+ i 1) (+ j 1)])</span>
+<span class="str">	    ((&gt;= j n))</span>
+<span class="str">	  (let* ([b2 (vector-ref bodies j)]</span>
+<span class="str">		 [dx (- (planet-x b) (planet-x b2))]</span>
+<span class="str">		 [dy (- (planet-y b) (planet-y b2))]</span>
+<span class="str">		 [dz (- (planet-z b) (planet-z b2))]</span>
+<span class="str">		 [distance (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))]</span>
+<span class="str">		 [mag (/ dt (* distance distance distance))]</span>
+<span class="str">		 [mass (planet-mass b)]</span>
+<span class="str">		 [mass2 (planet-mass b2)] )</span>
+<span class="str">	    (planet-vx-set! b (- (planet-vx b) (* dx mass2 mag)))</span>
+<span class="str">	    (planet-vy-set! b (- (planet-vy b) (* dy mass2 mag)))</span>
+<span class="str">	    (planet-vz-set! b (- (planet-vz b) (* dz mass2 mag)))</span>
+<span class="str">	    (planet-vx-set! b2 (+ (planet-vx b2) (* dx mass mag)))</span>
+<span class="str">	    (planet-vy-set! b2 (+ (planet-vy b2) (* dy mass mag)))</span>
+<span class="str">	    (planet-vz-set! b2 (+ (planet-vz b2) (* dz mass mag))) ) ) ) )</span>
+<span class="str">    (do ([i 0 (+ i 1)])</span>
+<span class="str">	((&gt;= i n))</span>
+<span class="str">      (let ([b (vector-ref bodies i)])</span>
+<span class="str">	(planet-x-set! b (+ (planet-x b) (* dt (planet-vx b))))</span>
+<span class="str">	(planet-y-set! b (+ (planet-y b) (* dt (planet-vy b))))</span>
+<span class="str">	(planet-z-set! b (+ (planet-z b) (* dt (planet-vz b)))) ) ) ) )</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str">(define (energy bodies)</span>
+<span class="str">  (let ([e 0.0]</span>
+<span class="str">	[n (vector-length bodies)] )</span>
+<span class="str">    (do ([i 0 (+ i 1)])</span>
+<span class="str">	((&gt;= i n))</span>
+<span class="str">      (let ([b (vector-ref bodies i)])</span>
+<span class="str">	(set! e (+ e (* 0.5</span>
+<span class="str">			(planet-mass b)</span>
+<span class="str">			(+ (* (planet-vx b) (planet-vx b))</span>
+<span class="str">			   (* (planet-vy b) (planet-vy b))</span>
+<span class="str">			   (* (planet-vz b) (planet-vz b)) ) ) ) )</span>
+<span class="str">	(do ([j (+ i 1) (+ j 1)])</span>
+<span class="str">	    ((&gt;= j n))</span>
+<span class="str">	  (let* ([b2 (vector-ref bodies j)]</span>
+<span class="str">		 [dx (- (planet-x b) (planet-x b2))]</span>
+<span class="str">		 [dy (- (planet-y b) (planet-y b2))]</span>
+<span class="str">		 [dz (- (planet-z b) (planet-z b2))]</span>
+<span class="str">		 [distance (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))] )</span>
+<span class="str">	    (set! e (- e (/ (* (planet-mass b) (planet-mass b2)) distance))) ) ) ) )</span>
+<span class="str">    e) )</span>
+<span class="str"></span>
+<span class="str">(define (offset-momentum! bodies)</span>
+<span class="str">  (let ([px 0.0]</span>
+<span class="str">	[py 0.0]</span>
+<span class="str">	[pz 0.0]</span>
+<span class="str">	[n (vector-length bodies)] )</span>
+<span class="str">    (do ([i 0 (+ i 1)])</span>
+<span class="str">	((&gt;= i n))</span>
+<span class="str">      (let* ([b (vector-ref bodies i)]</span>
+<span class="str">	     [mass (planet-mass b)] )</span>
+<span class="str">	(set! px (+ px (* (planet-vx b) mass)))</span>
+<span class="str">	(set! py (+ py (* (planet-vy b) mass)))</span>
+<span class="str">	(set! pz (+ pz (* (planet-vz b) mass))) ) )</span>
+<span class="str">    (let ([b0 (vector-ref bodies 0)])</span>
+<span class="str">      (planet-vx-set! b0 (/ (- px) SOLAR_MASS))</span>
+<span class="str">      (planet-vy-set! b0 (/ (- py) SOLAR_MASS))</span>
+<span class="str">      (planet-vz-set! b0 (/ (- pz) SOLAR_MASS))) ) )</span>
+<span class="str"></span>
+<span class="str">(define bodies (vector Sun Jupiter Saturn Uranus Neptune))</span>
+<span class="str"></span>
+<span class="str">(define (main args)</span>
+<span class="str">  (let ((n (if (= (vector-length args) 0)</span>
+<span class="str">               1</span>
+<span class="str">	       (string-&gt;number (vector-ref args 0)))))</span>
+<span class="str">    (begin</span>
+<span class="str">      (offset-momentum! bodies)</span>
+<span class="str"></span>
+<span class="str">      (printf &quot;~a~%&quot; (energy bodies))</span>
+<span class="str"></span>
+<span class="str">      (do ([i 0 (+ i 1)])</span>
+<span class="str">          ((&gt;= i n))</span>
+<span class="str">        (advance! bodies 0.01) )</span>
+<span class="str"></span>
+<span class="str">      (printf &quot;~a~%&quot; (energy bodies))))))</span>
+<span class="str"></span>
+<span class="str">(require nbody)</span>
+<span class="str">(main (current-command-line-arguments))</span>
