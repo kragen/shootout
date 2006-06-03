@@ -12,9 +12,9 @@ object fannkuch
     var maxFlips = 0;
     var permN = 0;
     var k: int = 0;
-    var temp: int = _;
-    var first: int = _;
-    var flips: int = _;
+    var temp: int = 0;
+    var first: int = 0;
+    var flips: int = 0;
     var perm0: Array[int] = new Array[int](n);
     var perm: Array[int] = new Array[int](n);
     var rot: Array[int] = new Array[int](n);
@@ -46,7 +46,7 @@ object fannkuch
       }
 
       if (flips > maxFlips) maxFlips = flips;
-      
+
       temp = perm(0); perm(0) = perm(1); perm(1) = temp;
       rot(1) = rot(1) + 1;
       var j = 1;
@@ -55,8 +55,8 @@ object fannkuch
 	j = j + 1;
 
 	k = 0;
-  	while (k < j) { 
-	  temp = perm(k); perm(k) = perm(k + 1); perm(k + 1) = temp; 
+  	while (k < j) {
+	  temp = perm(k); perm(k) = perm(k + 1); perm(k + 1) = temp;
 	  k = k + 1;
 	}
 	rot(j) = rot(j) + 1;
@@ -66,3 +66,4 @@ object fannkuch
     Console.println("Pfannkuchen(" + n + ") = " + maxFlips);
   }
 }
+
