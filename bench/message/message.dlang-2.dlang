@@ -1,0 +1,84 @@
+/* The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by Dave Fladebo 
+
+   compile: dmd -O -inline -release message2.d
+*/
+
+import std.stdio, std.string, std.thread, std.c.linux.linux;
+
+void main(char[][] args)
+{
+    const int threads = 500;
+    int n = args.length > 1 ? atoi(args[1]) : 2;
+
+    Link chain = null;
+    Link.total = threads * n;
+    for(int i = 0; i < threads; i++)
+    {
+        Link next = new Link(chain);
+        chain = next;
+    }
+
+    Link first = chain;
+    while(chain)
+    {
+        chain.start;
+        chain = chain.next;
+    }
+
+    chain = first;
+    while(n--) chain.put(0);
+
+    while(chain)
+    {
+        chain.wait;
+        chain = chain.next;
+    }
+
+    writefln(Link.sum);
+}
+
+class Link : Thread
+{
+private:
+    int message = -1;
+    static threads = 0;
+
+public:
+    Link next;
+    static int sum = 0, total = 0;
+
+    this(Link next)
+    {
+        super(1024 * 16);
+        this.next = next;
+        threads++;
+    }
+
+    int run()
+    {
+        while(sum < total)
+        {
+            if(message > -1)
+            {
+                if(next)
+                {
+		    next.message = message + 1;
+                }
+                else
+                {
+                    sum += message + 1;
+                }
+            }
+            yield();
+        }
+        return 0;
+    }
+
+    void put(int msg)
+    {
+        message = msg;
+    }
+}
