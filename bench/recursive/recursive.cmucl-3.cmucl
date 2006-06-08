@@ -1,0 +1,73 @@
+;;; The Computer Language Shootout
+;;; http://shootout.alioth.debian.org/
+;;;
+;;; contributed by Greg Buchholz
+;;;
+;;; Modified by Shyamal Prasad to speed it up all around (June 2006)
+;;;   * fib and tak specialized for fixnum and double-float
+;;;   * type declarations all around
+;;;   * fib-d uses a local function to force sbcl and cmucl optimizers
+;;;     to unbox the return value (thanks to Kalle Olavi Niemitalo,
+;;;     Mark Wooding and other denizens of comp.lang.lisp :)
+
+(defun fib (n)
+  (declare (fixnum n))
+  (the fixnum
+    (if (< n 2)
+	1
+      (+ (fib (- n 1)) (fib (- n 2))))))
+
+(defun fib-d (n)
+  (labels
+      ((fib-nobox (n)
+		  (declare (double-float n))
+		  (the double-float
+		    (if (< n 2)
+			1.0d0
+		      (+ (fib-nobox (- n 1)) (fib-nobox (- n 2)))))))
+    ;; inline declaration causes SBCL and CMUCL to unbox return
+    ;; value for fib-nobox
+    (declare (inline fib-nobox))
+    (fib-nobox (coerce n 'double-float))))
+
+(defun ack (x y)
+  (declare (fixnum x y))
+  (the fixnum 
+    (if (zerop x)
+	(1+ y)
+      (if (zerop y)
+	  (ack (1- x) 1)
+	(ack (1- x) (ack x (1- y)))))))
+
+(defun tak (x y z)
+  (declare (fixnum x y z))
+  (the fixnum
+    (if (< y x)
+	(tak (tak (1- x) y z) 
+	     (tak (1- y) z x)
+	     (tak (1- z) x y))
+      z)))
+
+(defun tak-d (x y z)
+  (declare (double-float x y z))
+  (the double-float
+    (if (< y x)
+	(tak-d (tak-d (1- x) y z) 
+	       (tak-d (1- y) z x)
+	       (tak-d (1- z) x y))
+      z)))
+
+(defun main (&optional
+	     (n (parse-integer
+		 (car (last #+sbcl sb-ext:*posix-argv*
+			    #+cmu extensions:*command-line-strings*
+			    #+gcl si::*command-args*)))))
+  (declare (fixnum n))
+  (format t "Ack(3,~A): ~A~%" n (ack 3 n))
+  (decf n)
+  (format t "Fib(~,1F): ~,1F~%" (+ 28.0d0 n) (fib-d (+ 28.0d0 n)))
+  (format t "Tak(~A,~A,~A): ~A~%" (* 3 n) (* 2 n) n (tak (* 3 n)
+							 (* 2 n)
+							 n))
+  (format t "Fib(~A): ~A~%" 3 (fib 3))
+  (format t "Tak(3.0,2.0,1.0): ~,1F~%" (tak-d 3.0d0 2.0d0 1.0d0)))
