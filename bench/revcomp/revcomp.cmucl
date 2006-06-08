@@ -1,0 +1,70 @@
+;;; -*- mode: lisp -*-
+;;; The Computer Language Shootout
+;;; http://shootout.alioth.debian.org/
+;;; written by Patrick Frankenberger
+;;; modified by Ralph Richard Cook
+;;; modified by Nikodemus Siivola
+(declaim (optimize speed))
+
+(defun complem (code)
+  (let ((table 
+         #.(let* ((pairs '((#\A . #\T) (#\C . #\G) (#\G . #\C) (#\T . #\A) (#\U . #\A) 
+                           (#\M . #\K) (#\R . #\Y) (#\Y . #\R) (#\K . #\M) (#\V . #\B)
+                           (#\H . #\D) (#\D . #\H) (#\B . #\V) (#\N . #\N) (#\W . #\W)
+                           (#\S . #\S)))
+                  (table (make-string 
+                          (1+ (apply #'max (mapcar (lambda (char)
+                                                     (max (char-code char) 
+                                                          (char-code (char-downcase char))))
+                                                   (mapcar #'car pairs))))
+                          :element-type 'character)))
+             (mapc (lambda (pair)
+                     (let ((key (car pair)) (value (cdr pair)))
+                       (setf (char table (char-code key)) value
+                             (char table (char-code (char-downcase key))) value)))
+                   pairs)
+             table)))
+    (schar table (char-code code))))
+
+(defun write-reverse-complement (title data)
+  (declare ((simple-array character (*)) title data))  
+  (do ((from 0)
+       (to (1- (length data))))
+      ((>= from to))
+    (declare ((integer 0 (#.most-positive-fixnum)) from to))
+    (let ((fromchar (schar data from))
+          (tochar (schar data to)))
+      (cond ((eql fromchar #\Newline)
+             (incf from))            
+            ((eql tochar #\Newline)
+             (decf to))            
+            (t 
+             (setf (aref data from) (complem tochar)
+                   (aref data to) (complem fromchar))
+             (incf from)
+             (decf to)))))  
+  (write-line title *standard-output*)
+  (write-line data *standard-output*))
+
+(defvar *line* nil)
+
+(defun get-body ()
+  (with-output-to-string (s)
+    (tagbody :next
+       (let ((line (read-pop *standard-input* nil nil)))
+         (declare ((or null (simple-array character (*))) line))
+         (cond ((null line))
+               ((eql (schar line 0) #\>)
+                (push line *line*))                
+               (t 
+                (write-line line s)
+                (go :next)))))))
+
+(defun read-pop (stream eof-errorp eof-value)
+  (if *line* 
+      (pop *line*)      
+      (read-line stream eof-errorp eof-value)))
+
+(defun main ()
+  (loop for title = (read-pop *standard-input* nil nil)
+     while title do (write-reverse-complement title (get-body))))
