@@ -95,21 +95,16 @@ define
       fun {SelectRandom CumulativeTable}
         RValue = {Random.next 1.0}
       in
-        if RValue == 1.0 then
-          1.0
-        else
+        %
+        % for Key in {Arity CumulativeTable} return:RETURN do
+        %   if RValue =< CumulativeTable.Key then {RETURN Key} end
+        % end
+        %
 
-          %
-          % for Key in {Arity CumulativeTable} return:RETURN do
-          %   if RValue < CumulativeTable.Key then {RETURN Key} end
-          % end
-          %
-
-          for Key#Value in CumulativeTable return:RETURN do
-            if RValue < Value then {RETURN Key} end
-          end
-
+        for Key#Value in CumulativeTable return:RETURN do
+          if RValue =< Value then {RETURN Key} end
         end
+
       end
     end
 
