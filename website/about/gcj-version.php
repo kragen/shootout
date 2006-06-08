@@ -1,1 +1,1 @@
-<p>gcj (GCC) 4.0.4 20060422 (prerelease) (Debian 4.0.3-2)</p>
+<p>gcj (GCC) 4.1.2 20060604 (prerelease) (Debian 4.1.1-2)</p>

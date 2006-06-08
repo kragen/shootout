@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2006-05-30 21:50:15 igouy-guest Exp $
+# $Id: Makefile,v 1.8 2006-06-08 12:21:15 bfulgham Exp $
 include ../../Make.header
 
 TEST    := message
@@ -23,6 +23,6 @@ GCCOPTS :=  $(GCCOPTS) -lpthread
 ICCOPTS := $(ICCOPTS) -lpthread
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 1000,2000,3000
+	  --range 1000,2000,3000 --ignore message.gcc-2.gcc
 
 include ../../Make.footer
