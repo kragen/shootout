@@ -86,6 +86,10 @@ define
       if Loading then
         case {FILE getS($)} of false then
           {List.reverse Sequence_}
+        elseof &>|_ then
+          {List.reverse Sequence_}
+        elseof &;|_ then
+          {LoadSequence Loading Sequence_}
         elseof LINE then
           {LoadSequence Loading {List.append {List.reverse {List.map LINE Char.toUpper}} Sequence_}}
         end
