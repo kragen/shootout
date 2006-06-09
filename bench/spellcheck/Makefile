@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2006-05-17 04:30:41 bfulgham Exp $
+# $Id: Makefile,v 1.31 2006-06-09 23:27:21 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -26,6 +26,7 @@ CLEANOPTS := -ou -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -h 10000000
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 

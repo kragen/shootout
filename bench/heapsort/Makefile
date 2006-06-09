@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2005-12-31 16:45:26 bfulgham Exp $
+# $Id: Makefile,v 1.28 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := heapsort
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I /usr/lib/clean/lib/ArgEnv \
 		-I /usr/lib/clean/lib/StdLib
 MONOOPTS := --unsafe
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc 
 POLYOPTS := -q
 MB_NHCRTS := +RTS -H40M

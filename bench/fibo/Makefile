@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.26 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fibo
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 
 BIGLOOOPTS := -farithmetic
 ERLFLAGS := -noshell
+MZSCHEMEOPTS := -qu
 OO2COPTS := --no-rtc
 POLYOPTS := -q
 

@@ -1,10 +1,11 @@
-# $Id: Makefile,v 1.18 2004-11-10 06:26:50 bfulgham Exp $
+# $Id: Makefile,v 1.19 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := except
 TITLE   := Exceptions
 GHCOPTS := -package lang
 MB_GHCRTS  := +RTS -K2046000
+MZSCHEMEOPTS := -qu
 
 ERLFLAGS := -noinput
 OO2COPTS := -A --no-rtc

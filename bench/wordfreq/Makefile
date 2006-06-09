@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2006-05-17 04:30:41 bfulgham Exp $
+# $Id: Makefile,v 1.33 2006-06-09 23:27:21 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wordfreq
@@ -14,6 +14,7 @@ CLEANOPTS := -nr -ou -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -nr
+MZSCHEMEOPTS := -r
 ERLFLAGS := -noinput -noshell
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q

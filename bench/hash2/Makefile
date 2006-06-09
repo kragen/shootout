@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2006-05-17 04:30:40 bfulgham Exp $
+# $Id: Makefile,v 1.22 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash2
@@ -14,6 +14,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 OO2COPTS := -A --no-rtc
 NHC98OPTS := -package base
 MB_NHCRTS := +RTS -H40M
+MZSCHEMEOPTS := -qu
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

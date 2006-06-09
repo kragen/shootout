@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.27 2006-06-09 23:27:21 bfulgham Exp $
 include ../../Make.header
 
 TEST    := reversefile
@@ -12,6 +12,7 @@ CLEANOPTS := -nr -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -h 20000000
 MB_NHCRTS := +RTS -H40M
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 

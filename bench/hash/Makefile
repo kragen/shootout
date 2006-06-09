@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2006-05-17 04:30:40 bfulgham Exp $
+# $Id: Makefile,v 1.32 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hash
@@ -9,8 +9,9 @@ LOCDEPS := --dep=gcc:../Include/simple_hash.h
 CYCOPTS := -I../../Include/cyclone
 GHCOPTS := -package data
 MB_GHCRTS  := +RTS -K10000000
-NHC98OPTS := -package base
 MB_NHCRTS := +RTS -H40M
+MZSCHEMEOPTS := -qu
+NHC98OPTS := -package base
 HUGS_FLAGS := -h10000000
 
 ERLFLAGS := -noinput

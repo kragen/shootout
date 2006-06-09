@@ -1,52 +1,33 @@
 #!/usr/bin/mzscheme -r
-; $Id: wordfreq.mzscheme,v 1.5 2005-04-25 04:24:03 bfulgham Exp $
+; $Id: wordfreq.mzscheme,v 1.6 2006-06-09 23:27:21 bfulgham Exp $
 ;  http://shootout.alioth.debian.org/
 ;  wordfreq.mzscheme by Grzegorz Chrupaa
 ;  Updated and corrected by Brent Fulgham
+;  Re-written by Matthew Flatt with some inspriation from the Python example
 
-(require (lib "list.ss")
-         (lib "string.ss")
-         (lib "13.ss" "srfi"))
+(module wordfreq mzscheme
+  (require (lib "list.ss"))
 
-(define port-for-each
-  (lambda (processor reader)
-    (let loop ((next (reader)))
-      (unless (eof-object? next)
-        (processor next)
-        (loop (reader))))))
+  (define t (make-hash-table 'equal))
+  
+  (define (register-word! s)
+    (let ([s (string-downcase (bytes->string/utf-8 s))])
+      (hash-table-put! t s (add1 (hash-table-get t s (lambda () 0))))))
 
-(define (hash-table->alist table)
-  (let ((alist '()))
-    (hash-table-for-each
-     table
-     (lambda (key value) (set! alist (cons (cons key value) alist))))
-    alist))
-                         
+  (let ([in (current-input-port)])
+    (let loop ()
+      (let ([m (regexp-match #rx#"[a-zA-Z]+" in)])
+	(when m
+	  (register-word! (car m))
+	  (loop)))))
 
-(define (main . _)
-  (define table (make-hash-table 'equal))
-  (port-for-each (lambda (line) (parse-line line table)) read-line)
-  (hash-table-remove! table "")
-  (for-each (lambda (pair)
-              (let ((word (car pair))
-                    (count (cdr pair)))
-                (printf "~a ~a~%"
-                        (string-pad (number->string count) 7)
-                        word)))
-            (quicksort (hash-table->alist table)
-                  (lambda (pair1 pair2)
-                    (or (> (cdr pair1) (cdr pair2))
-                        (and (= (cdr pair1) (cdr pair2))
-                             (string<? (car pair2) (car pair1))))))))
-
-(define rx (regexp "[^a-zA-Z]+"))
-
-(define (parse-line line table)
-  (string-lowercase! line)
-  (for-each
-   (lambda (word)
-     (let ((count (hash-table-get table word (lambda () 0))))
-       (hash-table-put! table word (+ count 1))))
-   (regexp-split rx line)))
-
-(main)
+  (for-each display
+	    (sort (hash-table-map 
+		   t
+		   (lambda (word count)
+		     (let ((count (number->string count)))
+		       (format"~a~a ~a~%"
+			      (make-string (- 7 (string-length count)) #\space)
+			      count
+			      word))))
+		  string>?)))

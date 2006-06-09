@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.28 2006-06-09 23:27:21 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I /usr/lib/clean/lib/ArgEnv
 MB_GHCRTS  := +RTS -H10M
 MB_NHCRTS := +RTS -H20M -RTS
+MZSCHEMEOPTS := -rqxA
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 

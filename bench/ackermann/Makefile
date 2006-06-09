@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.38 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := ackermann
@@ -6,6 +6,7 @@ TITLE   := Ackermann's Function
 
 ERLFLAGS := -noinput -noshell
 GFORTH_FLAGS := -d 2M -r 2M
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 NLOPTS   := -s 100000

@@ -1,8 +1,9 @@
-# $Id: Makefile,v 1.25 2005-04-04 14:56:35 bfulgham Exp $
+# $Id: Makefile,v 1.26 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := echo
 TITLE   := Echo Client/Server
+MZSCHEMEOPTS := -qu
 OCAMLOPTS := unix.cmxa
 OCAMLBOPTS := unix.cma
 

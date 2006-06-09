@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.28 2006-06-09 23:27:20 bfulgham Exp $
 include ../../Make.header
 
 TEST    := lists
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 ERLFLAGS := -noinput
 NHC98OPTS := -package base
 MB_NHCRTS := +RTS -H10M -RTS
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 GHCOPTS  := -package data
 POLYOPTS := -q
