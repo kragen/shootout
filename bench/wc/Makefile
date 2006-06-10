@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2006-06-09 23:27:21 bfulgham Exp $
+# $Id: Makefile,v 1.31 2006-06-10 21:22:58 bfulgham Exp $
 include ../../Make.header
 
 TEST    := wc
@@ -13,7 +13,7 @@ GFORTRANOPTS := -combine ../../Include/fortran/string.f90
 IFCOPTS := ../../Include/fortran/string.f90
 #MB_GHCRTS  := +RTS -M200m -K10m
 MB_GHCRTS  := +RTS -G1
-MZSCHEMEOPTS := -r
+MZSCHEMEOPTS := -qu
 STALINOPTS := -q
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean -I /usr/lib/clean/lib/ArgEnv

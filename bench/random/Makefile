@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2006-06-09 23:27:21 bfulgham Exp $
+# $Id: Makefile,v 1.29 2006-06-10 21:22:58 bfulgham Exp $
 include ../../Make.header
 
 TEST    := random
@@ -16,7 +16,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
 OO2COPTS := -A --no-rtc
-MZSCHEMEOPTS := -r
+MZSCHEMEOPTS := -qu
 POLYOPTS := -q
 
 GHCOPTS := -fexcess-precision -fglasgow-exts
