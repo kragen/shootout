@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.8 2006-06-10 23:38:29 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsievebits
@@ -12,10 +12,11 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
-POLYOPTS := -q
 OCAMLOPTS := bigarray.cmxa
 OCAMLBOPTS := bigarray.cma
+POLYOPTS := -q
 
 GPLCOPTS := --fast-math
 

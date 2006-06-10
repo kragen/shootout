@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-05-30 21:50:15 igouy-guest Exp $
+# $Id: Makefile,v 1.12 2006-06-10 23:38:29 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -20,6 +20,7 @@ PHPOPTS := -d memory_limit=64M
 
 ERLFLAGS := -noinput -noshell -h 200000000
 GPLCOPTS := --fast-math
+MZSCHEMEOPTS := -qu
 OCAMLOPTS := bigarray.cmxa
 OCAMLBOPTS := bigarray.cma
 
