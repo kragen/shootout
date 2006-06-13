@@ -1,0 +1,134 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Josh Goldfoot
+*/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <regex.h>
+
+void regsub2 (char *buffer, char *searchFor, char *replaceWith,
+	 unsigned long buflen, char **returnBuf, unsigned long* newLen)
+{
+  regex_t preg;
+  regmatch_t pmatch;
+  int result, replaceLen;
+  *returnBuf = malloc (buflen * 14 / 10);
+  if (!*returnBuf)
+    return;
+  if (regcomp (&preg, searchFor, REG_EXTENDED | REG_NEWLINE) != 0)
+    return;
+  unsigned long start;
+  replaceLen = strlen (replaceWith);
+  result = 0;
+  start = 0;
+  *newLen = 0;
+  while (result == 0)
+    {
+      result = regexec (&preg, &(buffer[start]), 1, &pmatch, 0);
+      if (result == 0)
+	{
+	  if (pmatch.rm_so > 0) {
+	    memcpy(*returnBuf + *newLen, &(buffer[start]), pmatch.rm_so);
+	    *newLen = *newLen + pmatch.rm_so;
+	  }
+	  memcpy(*returnBuf + *newLen, replaceWith, replaceLen);
+	  *newLen = *newLen + replaceLen;
+	  start = start + pmatch.rm_eo;
+	}
+      else
+	{
+	  memcpy(*returnBuf + *newLen, &(buffer[start]), buflen-start);
+	  *newLen = *newLen + buflen - start;
+	}
+    }
+}
+
+void regsub(char** bufHandle, char* searchFor, char* replaceWith, unsigned long *buflen)
+{
+  char* tmp;
+  unsigned long newlen;
+
+  regsub2(*bufHandle, searchFor, replaceWith, *buflen, &tmp, &newlen);
+  free(*bufHandle);
+  *bufHandle = tmp;
+  *buflen = newlen;
+}
+
+unsigned long
+count_matches (char *buffer, char *searchFor, unsigned long buflen)
+{
+  regex_t preg;
+  regmatch_t pmatch;
+  int result;
+  unsigned long matches, start;
+
+  if (regcomp (&preg, searchFor, REG_EXTENDED) != 0)
+    return buflen;
+  memset (&pmatch, 0, sizeof (pmatch));
+  result = 0;
+  matches = 0;
+  start = 0;
+  while (result == 0)
+    {
+      result = regexec (&preg, &(buffer[start]), 1, &pmatch, 0);
+      if (result == 0)
+	{
+	  matches++;
+	  start = start + pmatch.rm_eo;
+	}
+    }
+  return matches;
+}
+
+
+int main ()
+{
+  char *buffer = NULL;
+  unsigned long buflen = (1 << 16), seqlen = 0, clen = 0, rlen = 0;
+  size_t readlen = 0;
+  int i = 0;
+
+  do {
+       char *tmpbuf = realloc(buffer,(buflen = (buflen << 1)));
+       if(tmpbuf == NULL) {
+          fprintf(stderr,"Failed allocating buffer space\n");
+          return(EXIT_FAILURE);
+       }
+       buffer = tmpbuf;
+       if((readlen = fread(buffer,1,buflen,stdin)) < buflen && ferror(stdin)) {
+          fprintf(stderr,"Read from stdin failed\n");
+          return(EXIT_FAILURE);
+       }
+       seqlen += readlen;
+  } while(!feof(stdin));
+  buffer[seqlen] = 0;
+  clen = seqlen;
+  regsub (&buffer, ">.*|\n", "", &clen);
+
+  char variants[9][27] = {
+     "agggtaaa|tttaccct", "[cgt]gggtaaa|tttaccc[acg]",
+     "a[act]ggtaaa|tttacc[agt]t", "ag[act]gtaaa|tttac[agt]ct",
+     "agg[act]taaa|ttta[agt]cct", "aggg[acg]aaa|ttt[cgt]ccct",
+     "agggt[cgt]aa|tt[acg]accct", "agggta[cgt]a|t[acg]taccct",
+     "agggtaa[cgt]|[acg]ttaccct"
+     };
+  for (i = 0; i < 9; i++)
+     printf ("%s %ld\n", variants[i], count_matches (buffer, variants[i], clen));
+  rlen = clen;
+  regsub (&buffer, "B", "(c|g|t)", &rlen);
+  regsub (&buffer, "D", "(a|g|t)", &rlen);
+  regsub (&buffer, "H", "(a|c|t)", &rlen);
+  regsub (&buffer, "K", "(g|t)", &rlen);
+  regsub (&buffer, "M", "(a|c)", &rlen);
+  regsub (&buffer, "N", "(a|c|g|t)", &rlen);
+  regsub (&buffer, "R", "(a|g)", &rlen);
+  regsub (&buffer, "S", "(c|g)", &rlen);
+  regsub (&buffer, "V", "(a|c|g)", &rlen);
+  regsub (&buffer, "W", "(a|t)", &rlen);
+  regsub (&buffer, "Y", "(c|t)", &rlen);
+  printf ("\n%ld\n%ld\n%ld\n", seqlen, clen, rlen);
+  free (buffer);
+  return 0;
+}
