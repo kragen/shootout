@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2006-05-13 04:53:22 bfulgham Exp $
+# $Id: Makefile,v 1.16 2006-06-13 03:47:48 bfulgham Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -10,6 +10,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -nr
+MZSCHEMEOPTS := -qu
 OCAMLOPTS := -inline 40
 #OCAMLBOPTS := 
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.6 2006-06-13 03:47:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexdna
@@ -11,10 +11,10 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I /usr/lib/clean/lib/ArgEnv
 MB_CLRTS := -nr
 
+BIGLOOOPTS := -farithmetic
+MZSCHEMEOPTS := -qu
 OCAMLOPTS  := str.cmxa
 OCAMLBOPTS := str.cma
-
-BIGLOOOPTS := -farithmetic
 OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
 GFORTH_FLAGS := -m 16M

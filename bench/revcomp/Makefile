@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.11 2006-06-13 03:47:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 MB_CLRTS := -nr -h 40m -s 1m
  
 BIGLOOOPTS := -farithmetic
+MZSCHEMEOPTS := -qu
 OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
 GFORTH_FLAGS := -m 16M

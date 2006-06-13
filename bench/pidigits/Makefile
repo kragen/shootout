@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2006-05-30 21:50:16 igouy-guest Exp $
+# $Id: Makefile,v 1.17 2006-06-13 03:47:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -18,6 +18,7 @@ BIGLOOOPTS := -farithmetic
 DLANGOPTS := -L-lgmp -I../../Include/dlang/gmp4d ../../Include/dlang/gmp4d/gmp.d ../../Include/dlang/gmp4d/gmppool.d ../../Include/dlang/gmp4d/mpz.d 
 MB_CLRTS := -nr
 MONOOPTS := -r:Mono.Security
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 OCAMLOPTS := nums.cmxa

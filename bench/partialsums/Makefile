@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2006-05-25 04:51:33 bfulgham Exp $
+# $Id: Makefile,v 1.4 2006-06-13 03:47:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := partialsums
@@ -9,6 +9,7 @@ TITLE   := naive summation of series
 CYCOPTS := -lm
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
