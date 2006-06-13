@@ -19,12 +19,16 @@ define
 % ------------- %
 
   fun {Flips L}
-    case L of 1|_ then
-      0
-    elseof N|_ then Lt Ld in
-      {List.takeDrop L N Lt Ld}
-      {Flips {List.append {List.reverse Lt} Ld}} + 1
+    fun {Flips_ L FlipAcc} 
+      case L of 1|_ then
+        FlipAcc
+      elseof N|_ then Lt Ld in
+        {List.takeDrop L N Lt Ld}
+        {Flips_ {List.append {List.reverse Lt} Ld} FlipAcc + 1}
+      end
     end
+  in
+    {Flips_ L 0}
   end
 
 % ------------- %
