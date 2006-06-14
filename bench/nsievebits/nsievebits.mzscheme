@@ -8,50 +8,34 @@
 
 (module nsievebits mzscheme
 
-  (define (make-bit-vector size . o)
-    (let* ((fill (if (and (pair? o) (car o)) #b11111111 0))
-           (len (quotient (+ size 7) 8))
-           (res (make-bytes len fill)))
-      (box
-       (if (zero? fill)
-	   res
-	   (let ((off (remainder size 8)))
-	     (if (not (zero? off))
-		 (bytes-set! res (- len 1) (- (arithmetic-shift 1 off) 1)))
-	     res)))))
+  (define (make-bit-vector size)
+    (let* ((len (quotient (+ size 7) 8))
+           (res (make-bytes len #b11111111)))
+      (let ((off (remainder size 8)))
+	(unless (zero? off)
+	  (bytes-set! res (- len 1) (- (arithmetic-shift 1 off) 1))))
+      res))
 
   (define (bit-vector-ref vec i)
-    (let ((vec (unbox vec))
-	  (byte (quotient i 8))
-          (off (remainder i 8)))
+    (let ((byte (arithmetic-shift i -3))
+          (off (bitwise-and i #x7)))
       (and (< byte (bytes-length vec))
            (not (zero? (bitwise-and (bytes-ref vec byte)
                                     (arithmetic-shift 1 off)))))))
 
-  (define (vector-grow vec n)
-    (let ([v (make-bytes (quotient (+ n 7) 8) 0)])
-      (bytes-copy! v (unbox vec))
-      (box v)))
-
   (define (bit-vector-set! vec i x)
-    (let ((byte (quotient i 8))
-          (off (remainder i 8))
-          (len (bytes-length (unbox vec))))
-      (cond
-        ((< byte len)
-	 (let ([vec (unbox vec)])
-	   (bytes-set! vec
-		       byte
-		       (if x
-			   (bitwise-ior (bytes-ref vec byte)
-					(arithmetic-shift 1 off))
-			   (bitwise-and (bytes-ref vec byte)
-					(bitwise-not (arithmetic-shift 1 off)))))))
-        ((not x) vec)
-        (else (bit-vector-set! (vector-grow vec i) i x)))))
+    (let ((byte (arithmetic-shift i -3))
+          (off (bitwise-and i #x7)))
+      (let ((val (bytes-ref vec byte))
+	    (mask (arithmetic-shift 1 off)))
+	(bytes-set! vec
+		    byte
+		    (if x
+			(bitwise-ior val mask)
+			(bitwise-and val (bitwise-not mask)))))))
 
   (define (nsievebits m)
-    (let ((a (make-bit-vector m #t)))
+    (let ((a (make-bit-vector m)))
       (define (clear i)
         (do ([j (+ i i) (+ j i)])
   	  ((>= j m))

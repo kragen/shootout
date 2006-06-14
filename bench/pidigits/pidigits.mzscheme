@@ -1,53 +1,46 @@
-#!/usr/bin/mzscheme -r
-; The Computer Language Shootout
-; http://shootout.alioth.debian.org/ 
-; Sven Hartrumpf 2005-04-12
-; Implements 'Spigot' algorithm origionally due to Stanly Rabinowitz.
-; This program is based on an implementation for SCM by Aubrey Jaffer and
-; Jerry D. Hedden.
+;; The Computer Language Shootout
+;; http://shootout.alioth.debian.org/
+;; Based on the MLton version of the benchmark
+;; contributed by Scott Cruzen
+
+;; Note: as of version 350, this benchmark spends most of
+;;  its time GCing; it runs 3 times as fast in mzscheme3m.
+
 (module pidigits mzscheme
-  (provide main)
 
+  (define (floor_ev q r s t x)
+    (quotient (+ (* q x) r) (+ (* s x) t)))
+  
+  (define (comp q r s t  q2 r2 s2 t2)
+    (values (+ (* q q2) (* r s2))
+	    (+ (* q r2) (* r t2))
+	    (+ (* s q2) (* t s2))
+	    (+ (* s r2) (* t t2))))
 
-  (define (pi n d)
-    (let* ((r (inexact->exact (floor (exp (* d (log 10)))))) ; 10^d
-           (p (+ (quotient n d) 1))
-           (m (quotient (* p d 3322) 1000))
-           (a (make-vector (+ m 1) 2))
-           (digits 0))
-      (vector-set! a m 4)
-      (do ((j 1 (+ j 1))
-           (q 0 0)
-           (b 2 (remainder q r)))
-        ((> j p))
-        (do ((k m (- k 1)))
-          ((zero? k))
-          (set! q (+ q (* (vector-ref a k) r)))
-          (let ((t (+ (* k 2) 1))) ; maybe use something like bit-lsh
-            (vector-set! a k (remainder q t)) ; quotient/remainder like in mzscheme would speedup this and the the next line
-            (set! q (* k (quotient q t)))))
-        (let* ((s (number->string (+ b (quotient q r))))
-               (l (string-length s)))
-          (cond ((> j 1)
-                 (do ((l l (+ l 1)))
-                   ((>= l d))
-                   (cond ((< digits n)
-                          (write-char #\0)
-                          (set! digits (+ digits 1))
-                          (cond ((zero? (modulo digits 10))
-                                 (display "\t:") (write digits) (newline))))))))
-          (do ((i 0 (+ i 1)))
-            ((= i l))
-            (cond ((< digits n)
-                   (write-char (string-ref s i))
-                   (set! digits (+ digits 1))
-                   (cond ((zero? (modulo digits 10))
-                          (display "\t:") (write digits) (newline))))))))))
+  (define (next q r s t) (floor_ev q r s t 3))
+  (define (safe? q r s t n) (= n (floor_ev q r s t 4)))
+  (define (prod q r s t n) (comp 10 (* -10 n) 0 1  q r s t))
+  (define (mk q r s t k) (comp q r s t k (* 2 (add1 (* 2 k))) 0 (add1 (* 2 k))))
 
-  (define (main args)
-    (let ((n (if (= (vector-length args) 0)
-                 1
-                 (string->number (vector-ref args 0)))))
-      (pi n 10)))
+  (define (digit k  q r s t  n row col)
+    (if (> n 0)
+	(let ([y (next q r s t)])
+	  (if (safe? q r s t y)
+	      (let-values ([(q r s t) (prod q r s t y)])
+		(if (= col 10)
+		    (let ([row (+ row 10)])
+		      (printf "\t:~a\n~a" row y)
+		      (digit k q r s t (sub1 n) row 1))
+		    (begin
+		      (printf "~a" y)
+		      (digit k q r s t(sub1 n) row (add1 col)))))
+	      (let-values ([(q r s t) (mk q r s t k)])
+		(digit (add1 k) q r s t n row col))))
+	(printf "~a\t:~a\n"
+		(make-string (- 10 col) #\space)
+		(+ row col))))
 
-   (main (current-command-line-arguments)))
+  (define (digits n)
+    (digit 1  1 0 0 1  n 0 0))
+
+  (digits (string->number (vector-ref (current-command-line-arguments) 0))))

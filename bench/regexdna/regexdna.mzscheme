@@ -32,7 +32,6 @@
   
   (define (ci-byte-regexp s)
     (byte-regexp (ci-pattern s)))
-
   (define (ci-pattern s)
     (let ([m (regexp-match #rx#"^(.*)\\[([^]]*)\\](.*)$" s)])
       (if m
@@ -43,8 +42,7 @@
 			(ci-pattern (cadddr m)))
 	  (regexp-replace* #rx#"[a-zA-Z]" s (lambda (s)
 					      (string->bytes/latin-1
-					       (format "[~a]" (both-cases s))))))))
-  
+					       (format "[~a]" (both-cases s))))))))  
   (define (both-cases s)
     (string->bytes/latin-1
      (format "~a~a" 
@@ -62,12 +60,15 @@
   ;; --------------
   
   (define (replace-all rx str new)
-    (let ([out (open-output-bytes)]
-	  [in (open-input-bytes str)])
-      (let loop ()
-	(when (regexp-match rx in 0 #f out)
-	  (display new out)
-	  (loop)))
+    (let ([out (open-output-bytes)])
+      (let loop ([pos 0])
+      	(let ([m (regexp-match-positions rx str pos)])
+	  (if m
+	      (begin
+		(write-bytes str out pos (caar m))
+		(write-bytes new out)
+		(loop (cdar m)))
+	      (write-bytes str out pos))))
       (get-output-bytes out)))
 
   ;; -------------------------------
@@ -81,7 +82,7 @@
   
   ;; Load sequence and record its length
   (let* ([orig (input->bytes)]
-	 [filtered (replace-all #rx#"(?:>.*?\n)|\n" orig #"")])
+	 [filtered (replace-all #rx#"(>.*?\n)|\n" orig #"")])
 
     ;; Perform regexp counts
     (for-each
@@ -95,7 +96,7 @@
 		      [IUBS IUBS])
 	     (if (null? IUBS)
 		 sequence
-		 (loop (replace-all (ci-byte-regexp (caar IUBS)) sequence (cadar IUBS))
+		 (loop (replace-all (byte-regexp (caar IUBS)) sequence (cadar IUBS))
 		       (cdr IUBS))))])
       ;; Print statistics
       (printf "~%~A~%~A~%~A~%" 

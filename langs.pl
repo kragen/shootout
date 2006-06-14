@@ -1139,24 +1139,6 @@
        },
      },
 
-     mzc =>
-     { Lang => 'Scheme',
-       Name => 'MZC',
-       status => 'X',
-       Home => 'http://www.plt-scheme.org',
-       Down => 'http://download.plt-scheme.org/drscheme/',
-       Type => 'native compiled',
-       Note => 'MzScheme, compiled for speed',
-       Ext  => 'lisp',
-       Verfun => sub {
-	   my $ver = `$ENV{MZC} -h`;
-	   $ver =~ s/\n.*//s;
-	   $ver =~ s/mzc \[ <flag>.*//s;
-	   $ver =~ s/Copyright.*//s;
-	   return($ver);
-       },
-     },
-
      mzscheme =>
      { Lang => 'Scheme',
        Name => 'MzScheme',
@@ -1354,7 +1336,6 @@
      'mzscheme'    => 'lisp',
      'mzc'         => 'lisp',
      'MzScheme'    => 'lisp',
-     'MZC'         => 'lisp',
      'newlisp'     => 'lisp',
      'Newlisp'     => 'lisp',
      'Nice'        => 'c',
