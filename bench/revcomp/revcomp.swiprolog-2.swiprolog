@@ -1,0 +1,135 @@
+% ----------------------------------------------------------------------
+% The Great Computer Language Shootout                              
+% http://shootout.alioth.debian.org/                                
+%                                                                   
+% Assumes execution using the following command-line usage:
+%
+%   pl -G0 -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%
+% Further improved version of previous submission; changes include:
+% 
+% * Activated buffering for both input and output
+% * Combined reversal and complement operations, thus avoided call to
+%   'reverse/2'
+% * Segment represented as a list of lists [sub-segments] rather than
+%   a single list, thus limiting the size of any individual list
+%
+% Overall, performance improvement is modest but discernable.
+%
+% Contributed by Anthony Borla
+% ----------------------------------------------------------------------
+
+main :-
+  set_stream(current_output, buffer(full)),
+  set_stream(current_input, buffer(full)),
+
+  prompt(Old, ''),
+  revcomp(current_input),
+  prompt(_, Old).
+
+% ------------------------------- %
+
+revcomp(S) :-
+  setup_complement,
+  repeat,
+    revseg(S, []),
+  at_end_of_stream(S).
+
+% ------------- %
+
+revseg(S, Seg) :-
+  read_line_to_codes(S, L),
+
+  (at_end_of_stream(S) ->
+    add_to_segment(L, Seg, LastSeg),
+    dump_segment(LastSeg),
+    nl
+  ;
+    (is_segment_header(L) ->
+      dump_segment(Seg),
+      format('~N~s~N', [L])
+    ;
+      add_to_segment(L, Seg, NewSeg),
+      !, revseg(S, NewSeg))).
+
+% ------------------------------- %
+
+%% 62 is ASCII code for character '>' 
+
+is_segment_header([62|_]).
+
+% ------------------------------- %
+
+%% 60 is output line length  
+
+dump_segment([]) :- !.
+
+dump_segment(Seg) :- setvar(last_char_count, 1), dump_segment_(Seg, 60).
+
+% ------------- %
+
+dump_segment_([], _) :- !.
+
+dump_segment_([H|T], N) :-
+  getvar(last_char_count, P),
+  dump_component_(H, P, N),
+  !, dump_segment_(T, N).
+
+% ------------- %
+
+dump_component_([], A, _) :- !, setvar(last_char_count, A).
+
+dump_component_([H|T], A, N) :-
+  put_code(H), (A >= N -> nl, A1 is 1 ; A1 is A + 1),
+  !, dump_component_(T, A1, N).
+
+% ------------------------------- %
+
+%% 1200 is maximum sub-segment length
+
+add_to_segment([], Seg, Seg) :- !.
+
+add_to_segment(L, [], [LR]) :- !, rev_comp_sequence(L, LR).
+
+add_to_segment(L, [H|T], ALN) :-
+  rev_comp_sequence(L, LR), length(H, Hlen),
+  (Hlen < 1200 ->
+    append(LR, H, HL), ALN = [HL|T]
+  ;
+    append([LR], [H|T], ALN)).
+
+% ------------------------------- %
+
+%%      "wsatug cyrkmb dhvnAT UGCYRK MBDHVN"
+%%  to:
+%%      "WSTAAC GRYMKV HDBNTA ACGRYM KVHDBN"
+
+setup_complement :-
+  flag(65, _, 84), flag(67, _, 71), flag(71, _, 67), flag(84, _, 65), flag(77, _, 75),
+  flag(82, _, 89), flag(87, _, 87), flag(83, _, 83), flag(89, _, 82), flag(75, _, 77),
+  flag(86, _, 66), flag(72, _, 68), flag(68, _, 72), flag(66, _, 86), flag(78, _, 78). 
+
+% ------------- %
+
+complement(Code, Complement) :-
+  (Code > 90 -> CodeIdx is Code - 32 ; CodeIdx = Code),
+  flag(CodeIdx, Complement, Complement).
+
+% ------------------------------- %
+
+rev_comp_sequence(S, CS) :- rev_comp_sequence_(S, [], CS).
+
+% ------------- %
+
+rev_comp_sequence_([], CSA, CSA) :- !.
+
+rev_comp_sequence_([H|T], CSA, CS) :-
+  complement(H, C),
+  !, rev_comp_sequence_(T, [C|CSA], CS).
+
+% ------------------------------- %
+
+getvar(Id, Value) :- nb_getval(Id, Value).
+setvar(Id, Value) :- nb_setval(Id, Value).
+dropvar(Id) :- nb_delete(Id).
+
