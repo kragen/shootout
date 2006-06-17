@@ -4,19 +4,17 @@
 %                                                                   
 % Assumes execution using the following command-line usage:
 %
-%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
+%   pl -G0 -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
 %
-% Further improved version of previous submission. Change consisted of
-% representing segment as a list of SWI-Prolog 'string' types, something
-% which:
+% Further improved version of previous submission; changes include:
+% 
+% * Activated buffering for both input and output
+% * Combined reversal and complement operations, thus avoided call to
+%   'reverse/2'
+% * Segment represented as a list of lists [sub-segments] rather than
+%   a single list, thus limiting the size of any individual list
 %
-% * Improves memory usage [less global stack used since fewer lists
-%   created]
-% * More efficient output performance since each output operation sees
-%   a string chunck output [rather than a single character as in previous
-%   submissions]
-%
-% Overall, a very dramatic performance improvement was achieved.
+% Overall, performance improvement is modest but discernable.
 %
 % Contributed by Anthony Borla
 % ----------------------------------------------------------------------
@@ -66,31 +64,24 @@ is_segment_header([62|_]).
 
 dump_segment([]) :- !.
 
-dump_segment(Seg) :- setvar(string_remaining, ''), dump_segment_(Seg, 60).
+dump_segment(Seg) :- setvar(last_char_count, 1), dump_segment_(Seg, 60).
 
 % ------------- %
 
-dump_segment_([], _) :-
-  getvar(string_remaining, R), string_length(R, RL),
-  (RL > 0 -> write(R), nl ; true), !.
+dump_segment_([], _) :- !.
 
 dump_segment_([H|T], N) :-
-  string_length(H, HL), getvar(string_remaining, R), string_length(R, RL),
-  (RL > 0 ->
-    string_concat(R, H, RH), RHL is RL + HL, dump_component_(RH, RHL, 0, N)
-  ;
-    dump_component_(H, HL, 0, N)),
+  getvar(last_char_count, P),
+  dump_component_(H, P, N),
   !, dump_segment_(T, N).
 
 % ------------- %
 
-dump_component_(S, L, P, N) :-
-  (L < N ->
-    !, sub_string(S, P, L, _, Remaining), setvar(string_remaining, Remaining)
-  ;
-    sub_string(S, P, N, Rest, Out), write(Out), nl,
-    P1 is P + N,
-    !, dump_component_(S, Rest, P1, N)).
+dump_component_([], A, _) :- !, setvar(last_char_count, A).
+
+dump_component_([H|T], A, N) :-
+  put_code(H), (A >= N -> nl, A1 is 1 ; A1 is A + 1),
+  !, dump_component_(T, A1, N).
 
 % ------------------------------- %
 
@@ -98,15 +89,14 @@ dump_component_(S, L, P, N) :-
 
 add_to_segment([], Seg, Seg) :- !.
 
-add_to_segment(L, [], [LRS]) :- !, rev_comp_sequence(L, LR), string_to_list(LRS, LR).
+add_to_segment(L, [], [LR]) :- !, rev_comp_sequence(L, LR).
 
 add_to_segment(L, [H|T], ALN) :-
-  rev_comp_sequence(L, LR),
-  string_to_list(LRS, LR), string_length(H, Hlen),
+  rev_comp_sequence(L, LR), length(H, Hlen),
   (Hlen < 1200 ->
-    string_concat(LRS, H, HLS), ALN = [HLS|T]
+    append(LR, H, HL), ALN = [HL|T]
   ;
-    append([LRS], [H|T], ALN)).
+    append([LR], [H|T], ALN)).
 
 % ------------------------------- %
 

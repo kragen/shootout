@@ -6,43 +6,53 @@
 %
 %   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... < in > out
 %
-% Improved version of previous submission [boxed figures show percentage
-% runtime improvement due solely to that change]. Changes include:
+% Further improved version of previous submission. Change consisted of
+% representing segment as a list of SWI-Prolog 'string' types, something
+% which:
 %
-% * [~20%] 'complement' predicate now uses hash table lookups [via 'flag/3']
-%   in place of indexed list lookups
-% * [~25%] A combination of:
-%   - appending cumulative segment to current segment [hence avoiding
-%     the complete traversal of an ever-growing segment each iteration]
-%   - reversing current segment on each iteration rather than reversing
-%     the, quite large, accumulated segment in a single step
+% * Improves memory usage [less global stack used since fewer lists
+%   created]
+% * More efficient output performance since each output operation sees
+%   a string chunck output [rather than a single character as in previous
+%   submissions]
 %
-% Overall, with above changes in place, current version:
-%
-% * Should be - very roughly - about 50% faster
-% * Use considerably less memory, therefore default stack sizes should be
-%   more than adequate
+% Overall, a very dramatic performance improvement was achieved.
 %
 % Contributed by Anthony Borla
 % ----------------------------------------------------------------------
 
 main :-
+  set_stream(current_output, buffer(full)),
+  set_stream(current_input, buffer(full)),
+
   prompt(Old, ''),
-  revcomp(user_input),
+  revcomp(current_input),
   prompt(_, Old).
 
 % ------------------------------- %
 
-revcomp(S) :- setup_complement, revcomp_(S, []).
+revcomp(S) :-
+  setup_complement,
+  repeat,
+    revseg(S, []),
+  at_end_of_stream(S).
 
 % ------------- %
 
-revcomp_(S, Seg) :- at_end_of_stream(S), !, dump_segment(Seg), nl.
-
-revcomp_(S, Seg) :-
+revseg(S, Seg) :-
   read_line_to_codes(S, L),
-  (is_segment_header(L) -> dump_segment(Seg), NewSeg = [], format('~N~s~N', [L]) ; add_to_segment(L, Seg, NewSeg)),
-  !, revcomp_(S, NewSeg).
+
+  (at_end_of_stream(S) ->
+    add_to_segment(L, Seg, LastSeg),
+    dump_segment(LastSeg),
+    nl
+  ;
+    (is_segment_header(L) ->
+      dump_segment(Seg),
+      format('~N~s~N', [L])
+    ;
+      add_to_segment(L, Seg, NewSeg),
+      !, revseg(S, NewSeg))).
 
 % ------------------------------- %
 
@@ -56,21 +66,47 @@ is_segment_header([62|_]).
 
 dump_segment([]) :- !.
 
-dump_segment(Seg) :- dump_segment_(Seg, 1, 60).
+dump_segment(Seg) :- setvar(string_remaining, ''), dump_segment_(Seg, 60).
 
 % ------------- %
 
-dump_segment_([], _, _) :- !.
+dump_segment_([], _) :-
+  getvar(string_remaining, R), string_length(R, RL),
+  (RL > 0 -> write(R), nl ; true), !.
 
-dump_segment_([H|T], A, N) :-
-  complement(H, C), put_code(C), (A =:= N -> nl, A1 is 1; A1 is A + 1),
-  !, dump_segment_(T, A1, N).
+dump_segment_([H|T], N) :-
+  string_length(H, HL), getvar(string_remaining, R), string_length(R, RL),
+  (RL > 0 ->
+    string_concat(R, H, RH), RHL is RL + HL, dump_component_(RH, RHL, 0, N)
+  ;
+    dump_component_(H, HL, 0, N)),
+  !, dump_segment_(T, N).
+
+% ------------- %
+
+dump_component_(S, L, P, N) :-
+  (L < N ->
+    !, sub_string(S, P, L, _, Remaining), setvar(string_remaining, Remaining)
+  ;
+    sub_string(S, P, N, Rest, Out), write(Out), nl,
+    P1 is P + N,
+    !, dump_component_(S, Rest, P1, N)).
 
 % ------------------------------- %
 
+%% 1200 is maximum sub-segment length
+
 add_to_segment([], Seg, Seg) :- !.
-add_to_segment(L, [], LR) :- !, reverse(L, LR).
-add_to_segment(L, Seg, NewSeg) :- reverse(L, LR), append(LR, Seg, NewSeg).
+
+add_to_segment(L, [], [LRS]) :- !, rev_comp_sequence(L, LR), string_to_list(LRS, LR).
+
+add_to_segment(L, [H|T], ALN) :-
+  rev_comp_sequence(L, LR),
+  string_to_list(LRS, LR), string_length(H, Hlen),
+  (Hlen < 1200 ->
+    string_concat(LRS, H, HLS), ALN = [HLS|T]
+  ;
+    append([LRS], [H|T], ALN)).
 
 % ------------------------------- %
 
@@ -88,4 +124,22 @@ setup_complement :-
 complement(Code, Complement) :-
   (Code > 90 -> CodeIdx is Code - 32 ; CodeIdx = Code),
   flag(CodeIdx, Complement, Complement).
+
+% ------------------------------- %
+
+rev_comp_sequence(S, CS) :- rev_comp_sequence_(S, [], CS).
+
+% ------------- %
+
+rev_comp_sequence_([], CSA, CSA) :- !.
+
+rev_comp_sequence_([H|T], CSA, CS) :-
+  complement(H, C),
+  !, rev_comp_sequence_(T, [C|CSA], CS).
+
+% ------------------------------- %
+
+getvar(Id, Value) :- nb_getval(Id, Value).
+setvar(Id, Value) :- nb_setval(Id, Value).
+dropvar(Id) :- nb_delete(Id).
 
