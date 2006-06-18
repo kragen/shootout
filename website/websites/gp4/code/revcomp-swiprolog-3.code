@@ -4,19 +4,17 @@
 <span class="slc">%</span>
 <span class="slc">% Assumes execution using the following command-line usage:</span>
 <span class="slc">%</span>
-<span class="slc">%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... &lt; in &gt; out</span>
+<span class="slc">%   pl -G0 -q -g main -t halt -s SOURCENAME -- USERARG1 ... &lt; in &gt; out</span>
 <span class="slc">%</span>
-<span class="slc">% Further improved version of previous submission. Change consisted of</span>
-<span class="slc">% representing segment as a list of SWI-Prolog 'string' types, something</span>
-<span class="slc">% which:</span>
+<span class="slc">% Further improved version of previous submission; changes include:</span>
 <span class="slc">%</span>
-<span class="slc">% * Improves memory usage [less global stack used since fewer lists</span>
-<span class="slc">%   created]</span>
-<span class="slc">% * More efficient output performance since each output operation sees</span>
-<span class="slc">%   a string chunck output [rather than a single character as in previous</span>
-<span class="slc">%   submissions]</span>
+<span class="slc">% * Activated buffering for both input and output</span>
+<span class="slc">% * Combined reversal and complement operations, thus avoided call to</span>
+<span class="slc">%   'reverse/2'</span>
+<span class="slc">% * Segment represented as a list of lists [sub-segments] rather than</span>
+<span class="slc">%   a single list, thus limiting the size of any individual list</span>
 <span class="slc">%</span>
-<span class="slc">% Overall, a very dramatic performance improvement was achieved.</span>
+<span class="slc">% Overall, performance improvement is modest but discernable.</span>
 <span class="slc">%</span>
 <span class="slc">% Contributed by Anthony Borla</span>
 <span class="slc">% ----------------------------------------------------------------------</span>
@@ -66,31 +64,24 @@ is_segment_header<span class="sym">([</span><span class="num">62</span><span cla
 
 dump_segment<span class="sym">([]) :- !</span>.
 
-dump_segment<span class="sym">(</span>Seg<span class="sym">) :-</span> setvar<span class="sym">(</span>string_remaining<span class="sym">,</span> <span class="str">''</span><span class="sym">),</span> dump_segment_<span class="sym">(</span>Seg<span class="sym">,</span> <span class="num">60</span><span class="sym">)</span>.
+dump_segment<span class="sym">(</span>Seg<span class="sym">) :-</span> setvar<span class="sym">(</span>last_char_count<span class="sym">,</span> <span class="num">1</span><span class="sym">),</span> dump_segment_<span class="sym">(</span>Seg<span class="sym">,</span> <span class="num">60</span><span class="sym">)</span>.
 
 <span class="slc">% ------------- %</span>
 
-dump_segment_<span class="sym">([],</span> _<span class="sym">) :-</span>
-  getvar<span class="sym">(</span>string_remaining<span class="sym">,</span> R<span class="sym">),</span> string_length<span class="sym">(</span>R<span class="sym">,</span> RL<span class="sym">),</span>
-  <span class="sym">(</span>RL <span class="sym">&gt;</span> <span class="num">0</span> <span class="sym">-&gt;</span> <span class="kwb">write</span><span class="sym">(</span>R<span class="sym">),</span> <span class="kwa">nl</span> <span class="sym">;</span> <span class="kwa">true</span><span class="sym">), !</span>.
+dump_segment_<span class="sym">([],</span> _<span class="sym">) :- !</span>.
 
 dump_segment_<span class="sym">([</span>H<span class="sym">|</span>T<span class="sym">],</span> N<span class="sym">) :-</span>
-  string_length<span class="sym">(</span>H<span class="sym">,</span> HL<span class="sym">),</span> getvar<span class="sym">(</span>string_remaining<span class="sym">,</span> R<span class="sym">),</span> string_length<span class="sym">(</span>R<span class="sym">,</span> RL<span class="sym">),</span>
-  <span class="sym">(</span>RL <span class="sym">&gt;</span> <span class="num">0</span> <span class="sym">-&gt;</span>
-    string_concat<span class="sym">(</span>R<span class="sym">,</span> H<span class="sym">,</span> RH<span class="sym">),</span> RHL <span class="kwa">is</span> RL <span class="sym">+</span> HL<span class="sym">,</span> dump_component_<span class="sym">(</span>RH<span class="sym">,</span> RHL<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> N<span class="sym">)</span>
-  <span class="sym">;</span>
-    dump_component_<span class="sym">(</span>H<span class="sym">,</span> HL<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> N<span class="sym">)),</span>
+  getvar<span class="sym">(</span>last_char_count<span class="sym">,</span> P<span class="sym">),</span>
+  dump_component_<span class="sym">(</span>H<span class="sym">,</span> P<span class="sym">,</span> N<span class="sym">),</span>
   <span class="sym">!,</span> dump_segment_<span class="sym">(</span>T<span class="sym">,</span> N<span class="sym">)</span>.
 
 <span class="slc">% ------------- %</span>
 
-dump_component_<span class="sym">(</span>S<span class="sym">,</span> L<span class="sym">,</span> P<span class="sym">,</span> N<span class="sym">) :-</span>
-  <span class="sym">(</span>L <span class="sym">&lt;</span> N <span class="sym">-&gt;</span>
-    <span class="sym">!,</span> sub_string<span class="sym">(</span>S<span class="sym">,</span> P<span class="sym">,</span> L<span class="sym">,</span> _<span class="sym">,</span> Remaining<span class="sym">),</span> setvar<span class="sym">(</span>string_remaining<span class="sym">,</span> Remaining<span class="sym">)</span>
-  <span class="sym">;</span>
-    sub_string<span class="sym">(</span>S<span class="sym">,</span> P<span class="sym">,</span> N<span class="sym">,</span> Rest<span class="sym">,</span> Out<span class="sym">),</span> <span class="kwb">write</span><span class="sym">(</span>Out<span class="sym">),</span> <span class="kwa">nl</span><span class="sym">,</span>
-    P1 <span class="kwa">is</span> P <span class="sym">+</span> N<span class="sym">,</span>
-    <span class="sym">!,</span> dump_component_<span class="sym">(</span>S<span class="sym">,</span> Rest<span class="sym">,</span> P1<span class="sym">,</span> N<span class="sym">))</span>.
+dump_component_<span class="sym">([],</span> A<span class="sym">,</span> _<span class="sym">) :- !,</span> setvar<span class="sym">(</span>last_char_count<span class="sym">,</span> A<span class="sym">)</span>.
+
+dump_component_<span class="sym">([</span>H<span class="sym">|</span>T<span class="sym">],</span> A<span class="sym">,</span> N<span class="sym">) :-</span>
+  <span class="kwb">put_code</span><span class="sym">(</span>H<span class="sym">), (</span>A <span class="sym">&gt;=</span> N <span class="sym">-&gt;</span> <span class="kwa">nl</span><span class="sym">,</span> A1 <span class="kwa">is</span> <span class="num">1</span> <span class="sym">;</span> A1 <span class="kwa">is</span> A <span class="sym">+</span> <span class="num">1</span><span class="sym">),</span>
+  <span class="sym">!,</span> dump_component_<span class="sym">(</span>T<span class="sym">,</span> A1<span class="sym">,</span> N<span class="sym">)</span>.
 
 <span class="slc">% ------------------------------- %</span>
 
@@ -98,15 +89,14 @@ dump_component_<span class="sym">(</span>S<span class="sym">,</span> L<span clas
 
 add_to_segment<span class="sym">([],</span> Seg<span class="sym">,</span> Seg<span class="sym">) :- !</span>.
 
-add_to_segment<span class="sym">(</span>L<span class="sym">, [], [</span>LRS<span class="sym">]) :- !,</span> rev_comp_sequence<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">),</span> string_to_list<span class="sym">(</span>LRS<span class="sym">,</span> LR<span class="sym">)</span>.
+add_to_segment<span class="sym">(</span>L<span class="sym">, [], [</span>LR<span class="sym">]) :- !,</span> rev_comp_sequence<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">)</span>.
 
 add_to_segment<span class="sym">(</span>L<span class="sym">, [</span>H<span class="sym">|</span>T<span class="sym">],</span> ALN<span class="sym">) :-</span>
-  rev_comp_sequence<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">),</span>
-  string_to_list<span class="sym">(</span>LRS<span class="sym">,</span> LR<span class="sym">),</span> string_length<span class="sym">(</span>H<span class="sym">,</span> Hlen<span class="sym">),</span>
+  rev_comp_sequence<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">),</span> length<span class="sym">(</span>H<span class="sym">,</span> Hlen<span class="sym">),</span>
   <span class="sym">(</span>Hlen <span class="sym">&lt;</span> <span class="num">1200</span> <span class="sym">-&gt;</span>
-    string_concat<span class="sym">(</span>LRS<span class="sym">,</span> H<span class="sym">,</span> HLS<span class="sym">),</span> ALN <span class="sym">= [</span>HLS<span class="sym">|</span>T<span class="sym">]</span>
+    append<span class="sym">(</span>LR<span class="sym">,</span> H<span class="sym">,</span> HL<span class="sym">),</span> ALN <span class="sym">= [</span>HL<span class="sym">|</span>T<span class="sym">]</span>
   <span class="sym">;</span>
-    append<span class="sym">([</span>LRS<span class="sym">], [</span>H<span class="sym">|</span>T<span class="sym">],</span> ALN<span class="sym">))</span>.
+    append<span class="sym">([</span>LR<span class="sym">], [</span>H<span class="sym">|</span>T<span class="sym">],</span> ALN<span class="sym">))</span>.
 
 <span class="slc">% ------------------------------- %</span>
 
