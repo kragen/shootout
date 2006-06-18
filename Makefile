@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2005-12-31 16:45:25 bfulgham Exp $
+# $Id: Makefile,v 1.50 2006-06-18 01:53:59 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
@@ -34,9 +34,7 @@ clean:
 
 .PHONY: dist report recent versions codelinks website
 
-versions: versions.html
-
-versions.html: bin/make_versions langs.pl
+versions: bin/make_versions langs.pl
 	-bin/make_versions > versions.html.tmp && \
 	mv -f versions.html.tmp versions.html
 

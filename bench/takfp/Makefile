@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2006-02-25 20:31:14 jisom-guest Exp $
+# $Id: Makefile,v 1.13 2006-06-18 01:54:00 bfulgham Exp $
 include ../../Make.header
 
 TEST    := takfp
@@ -12,7 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
-
+MZSCHEMEOPTS := -r
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
