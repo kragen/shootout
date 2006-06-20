@@ -8,6 +8,7 @@ dbin=./bin
 
 for each in $(ls $d*code)
 do
+   echo "testing $each"
    prefix=${each%.code}
    name=${prefix##$d} 
 # 

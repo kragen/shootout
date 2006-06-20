@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2006-06-15 05:27:22 igouy-guest Exp $
+# $Id: Makefile,v 1.22 2006-06-20 05:12:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -15,6 +15,7 @@ GCCOPTS := -lm
 
 MB_CLRTS := -nr
 MZSCHEMEOPTS := -qu
+OBJCOPTS := -std=gnu99
 OCAMLOPTS := -ffast-math -inline 10
 #OCAMLBOPTS := 
 OO2COPTS := -A --no-rtc
@@ -26,6 +27,6 @@ GHCOPTS := -fexcess-precision -fallow-overlapping-instances -package mtl -optc-f
 OBJCOPTS := -std=gnu99
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 10000,100000,1000000
+	  --range 200000,2000000,20000000
 
 include ../../Make.footer

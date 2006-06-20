@@ -6,43 +6,53 @@
 <span class="slc">%</span>
 <span class="slc">%   pl -q -g main -t halt -s SOURCENAME -- USERARG1 ... &lt; in &gt; out</span>
 <span class="slc">%</span>
-<span class="slc">% Improved version of previous submission [boxed figures show percentage</span>
-<span class="slc">% runtime improvement due solely to that change]. Changes include:</span>
+<span class="slc">% Further improved version of previous submission. Change consisted of</span>
+<span class="slc">% representing segment as a list of SWI-Prolog 'string' types, something</span>
+<span class="slc">% which:</span>
 <span class="slc">%</span>
-<span class="slc">% * [~20%] 'complement' predicate now uses hash table lookups [via 'flag/3']</span>
-<span class="slc">%   in place of indexed list lookups</span>
-<span class="slc">% * [~25%] A combination of:</span>
-<span class="slc">%   - appending cumulative segment to current segment [hence avoiding</span>
-<span class="slc">%     the complete traversal of an ever-growing segment each iteration]</span>
-<span class="slc">%   - reversing current segment on each iteration rather than reversing</span>
-<span class="slc">%     the, quite large, accumulated segment in a single step</span>
+<span class="slc">% * Improves memory usage [less global stack used since fewer lists</span>
+<span class="slc">%   created]</span>
+<span class="slc">% * More efficient output performance since each output operation sees</span>
+<span class="slc">%   a string chunck output [rather than a single character as in previous</span>
+<span class="slc">%   submissions]</span>
 <span class="slc">%</span>
-<span class="slc">% Overall, with above changes in place, current version:</span>
-<span class="slc">%</span>
-<span class="slc">% * Should be - very roughly - about 50% faster</span>
-<span class="slc">% * Use considerably less memory, therefore default stack sizes should be</span>
-<span class="slc">%   more than adequate</span>
+<span class="slc">% Overall, a very dramatic performance improvement was achieved.</span>
 <span class="slc">%</span>
 <span class="slc">% Contributed by Anthony Borla</span>
 <span class="slc">% ----------------------------------------------------------------------</span>
 
 main <span class="sym">:-</span>
+  set_stream<span class="sym">(</span><span class="kwb">current_output</span><span class="sym">,</span> buffer<span class="sym">(</span>full<span class="sym">)),</span>
+  set_stream<span class="sym">(</span><span class="kwb">current_input</span><span class="sym">,</span> buffer<span class="sym">(</span>full<span class="sym">)),</span>
+
   prompt<span class="sym">(</span>Old<span class="sym">,</span> <span class="str">''</span><span class="sym">),</span>
-  revcomp<span class="sym">(</span>user_input<span class="sym">),</span>
+  revcomp<span class="sym">(</span><span class="kwb">current_input</span><span class="sym">),</span>
   prompt<span class="sym">(</span>_<span class="sym">,</span> Old<span class="sym">)</span>.
 
 <span class="slc">% ------------------------------- %</span>
 
-revcomp<span class="sym">(</span>S<span class="sym">) :-</span> setup_complement<span class="sym">,</span> revcomp_<span class="sym">(</span>S<span class="sym">, [])</span>.
+revcomp<span class="sym">(</span>S<span class="sym">) :-</span>
+  setup_complement<span class="sym">,</span>
+  <span class="kwa">repeat</span><span class="sym">,</span>
+    revseg<span class="sym">(</span>S<span class="sym">, []),</span>
+  <span class="kwa">at_end_of_stream</span><span class="sym">(</span>S<span class="sym">)</span>.
 
 <span class="slc">% ------------- %</span>
 
-revcomp_<span class="sym">(</span>S<span class="sym">,</span> Seg<span class="sym">) :-</span> <span class="kwa">at_end_of_stream</span><span class="sym">(</span>S<span class="sym">), !,</span> dump_segment<span class="sym">(</span>Seg<span class="sym">),</span> <span class="kwa">nl</span>.
-
-revcomp_<span class="sym">(</span>S<span class="sym">,</span> Seg<span class="sym">) :-</span>
+revseg<span class="sym">(</span>S<span class="sym">,</span> Seg<span class="sym">) :-</span>
   read_line_to_codes<span class="sym">(</span>S<span class="sym">,</span> L<span class="sym">),</span>
-  <span class="sym">(</span>is_segment_header<span class="sym">(</span>L<span class="sym">) -&gt;</span> dump_segment<span class="sym">(</span>Seg<span class="sym">),</span> NewSeg <span class="sym">= [],</span> format<span class="sym">(</span><span class="str">'~N~s~N'</span><span class="sym">, [</span>L<span class="sym">]) ;</span> add_to_segment<span class="sym">(</span>L<span class="sym">,</span> Seg<span class="sym">,</span> NewSeg<span class="sym">)),</span>
-  <span class="sym">!,</span> revcomp_<span class="sym">(</span>S<span class="sym">,</span> NewSeg<span class="sym">)</span>.
+
+  <span class="sym">(</span><span class="kwa">at_end_of_stream</span><span class="sym">(</span>S<span class="sym">) -&gt;</span>
+    add_to_segment<span class="sym">(</span>L<span class="sym">,</span> Seg<span class="sym">,</span> LastSeg<span class="sym">),</span>
+    dump_segment<span class="sym">(</span>LastSeg<span class="sym">),</span>
+    <span class="kwa">nl</span>
+  <span class="sym">;</span>
+    <span class="sym">(</span>is_segment_header<span class="sym">(</span>L<span class="sym">) -&gt;</span>
+      dump_segment<span class="sym">(</span>Seg<span class="sym">),</span>
+      format<span class="sym">(</span><span class="str">'~N~s~N'</span><span class="sym">, [</span>L<span class="sym">])</span>
+    <span class="sym">;</span>
+      add_to_segment<span class="sym">(</span>L<span class="sym">,</span> Seg<span class="sym">,</span> NewSeg<span class="sym">),</span>
+      <span class="sym">!,</span> revseg<span class="sym">(</span>S<span class="sym">,</span> NewSeg<span class="sym">)))</span>.
 
 <span class="slc">% ------------------------------- %</span>
 
@@ -56,21 +66,47 @@ is_segment_header<span class="sym">([</span><span class="num">62</span><span cla
 
 dump_segment<span class="sym">([]) :- !</span>.
 
-dump_segment<span class="sym">(</span>Seg<span class="sym">) :-</span> dump_segment_<span class="sym">(</span>Seg<span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">60</span><span class="sym">)</span>.
+dump_segment<span class="sym">(</span>Seg<span class="sym">) :-</span> setvar<span class="sym">(</span>string_remaining<span class="sym">,</span> <span class="str">''</span><span class="sym">),</span> dump_segment_<span class="sym">(</span>Seg<span class="sym">,</span> <span class="num">60</span><span class="sym">)</span>.
 
 <span class="slc">% ------------- %</span>
 
-dump_segment_<span class="sym">([],</span> _<span class="sym">,</span> _<span class="sym">) :- !</span>.
+dump_segment_<span class="sym">([],</span> _<span class="sym">) :-</span>
+  getvar<span class="sym">(</span>string_remaining<span class="sym">,</span> R<span class="sym">),</span> string_length<span class="sym">(</span>R<span class="sym">,</span> RL<span class="sym">),</span>
+  <span class="sym">(</span>RL <span class="sym">&gt;</span> <span class="num">0</span> <span class="sym">-&gt;</span> <span class="kwb">write</span><span class="sym">(</span>R<span class="sym">),</span> <span class="kwa">nl</span> <span class="sym">;</span> <span class="kwa">true</span><span class="sym">), !</span>.
 
-dump_segment_<span class="sym">([</span>H<span class="sym">|</span>T<span class="sym">],</span> A<span class="sym">,</span> N<span class="sym">) :-</span>
-  complement<span class="sym">(</span>H<span class="sym">,</span> C<span class="sym">),</span> <span class="kwb">put_code</span><span class="sym">(</span>C<span class="sym">), (</span>A <span class="sym">=:=</span> N <span class="sym">-&gt;</span> <span class="kwa">nl</span><span class="sym">,</span> A1 <span class="kwa">is</span> <span class="num">1</span><span class="sym">;</span> A1 <span class="kwa">is</span> A <span class="sym">+</span> <span class="num">1</span><span class="sym">),</span>
-  <span class="sym">!,</span> dump_segment_<span class="sym">(</span>T<span class="sym">,</span> A1<span class="sym">,</span> N<span class="sym">)</span>.
+dump_segment_<span class="sym">([</span>H<span class="sym">|</span>T<span class="sym">],</span> N<span class="sym">) :-</span>
+  string_length<span class="sym">(</span>H<span class="sym">,</span> HL<span class="sym">),</span> getvar<span class="sym">(</span>string_remaining<span class="sym">,</span> R<span class="sym">),</span> string_length<span class="sym">(</span>R<span class="sym">,</span> RL<span class="sym">),</span>
+  <span class="sym">(</span>RL <span class="sym">&gt;</span> <span class="num">0</span> <span class="sym">-&gt;</span>
+    string_concat<span class="sym">(</span>R<span class="sym">,</span> H<span class="sym">,</span> RH<span class="sym">),</span> RHL <span class="kwa">is</span> RL <span class="sym">+</span> HL<span class="sym">,</span> dump_component_<span class="sym">(</span>RH<span class="sym">,</span> RHL<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> N<span class="sym">)</span>
+  <span class="sym">;</span>
+    dump_component_<span class="sym">(</span>H<span class="sym">,</span> HL<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> N<span class="sym">)),</span>
+  <span class="sym">!,</span> dump_segment_<span class="sym">(</span>T<span class="sym">,</span> N<span class="sym">)</span>.
+
+<span class="slc">% ------------- %</span>
+
+dump_component_<span class="sym">(</span>S<span class="sym">,</span> L<span class="sym">,</span> P<span class="sym">,</span> N<span class="sym">) :-</span>
+  <span class="sym">(</span>L <span class="sym">&lt;</span> N <span class="sym">-&gt;</span>
+    <span class="sym">!,</span> sub_string<span class="sym">(</span>S<span class="sym">,</span> P<span class="sym">,</span> L<span class="sym">,</span> _<span class="sym">,</span> Remaining<span class="sym">),</span> setvar<span class="sym">(</span>string_remaining<span class="sym">,</span> Remaining<span class="sym">)</span>
+  <span class="sym">;</span>
+    sub_string<span class="sym">(</span>S<span class="sym">,</span> P<span class="sym">,</span> N<span class="sym">,</span> Rest<span class="sym">,</span> Out<span class="sym">),</span> <span class="kwb">write</span><span class="sym">(</span>Out<span class="sym">),</span> <span class="kwa">nl</span><span class="sym">,</span>
+    P1 <span class="kwa">is</span> P <span class="sym">+</span> N<span class="sym">,</span>
+    <span class="sym">!,</span> dump_component_<span class="sym">(</span>S<span class="sym">,</span> Rest<span class="sym">,</span> P1<span class="sym">,</span> N<span class="sym">))</span>.
 
 <span class="slc">% ------------------------------- %</span>
 
+<span class="slc">%% 1200 is maximum sub-segment length</span>
+
 add_to_segment<span class="sym">([],</span> Seg<span class="sym">,</span> Seg<span class="sym">) :- !</span>.
-add_to_segment<span class="sym">(</span>L<span class="sym">, [],</span> LR<span class="sym">) :- !,</span> reverse<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">)</span>.
-add_to_segment<span class="sym">(</span>L<span class="sym">,</span> Seg<span class="sym">,</span> NewSeg<span class="sym">) :-</span> reverse<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">),</span> append<span class="sym">(</span>LR<span class="sym">,</span> Seg<span class="sym">,</span> NewSeg<span class="sym">)</span>.
+
+add_to_segment<span class="sym">(</span>L<span class="sym">, [], [</span>LRS<span class="sym">]) :- !,</span> rev_comp_sequence<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">),</span> string_to_list<span class="sym">(</span>LRS<span class="sym">,</span> LR<span class="sym">)</span>.
+
+add_to_segment<span class="sym">(</span>L<span class="sym">, [</span>H<span class="sym">|</span>T<span class="sym">],</span> ALN<span class="sym">) :-</span>
+  rev_comp_sequence<span class="sym">(</span>L<span class="sym">,</span> LR<span class="sym">),</span>
+  string_to_list<span class="sym">(</span>LRS<span class="sym">,</span> LR<span class="sym">),</span> string_length<span class="sym">(</span>H<span class="sym">,</span> Hlen<span class="sym">),</span>
+  <span class="sym">(</span>Hlen <span class="sym">&lt;</span> <span class="num">1200</span> <span class="sym">-&gt;</span>
+    string_concat<span class="sym">(</span>LRS<span class="sym">,</span> H<span class="sym">,</span> HLS<span class="sym">),</span> ALN <span class="sym">= [</span>HLS<span class="sym">|</span>T<span class="sym">]</span>
+  <span class="sym">;</span>
+    append<span class="sym">([</span>LRS<span class="sym">], [</span>H<span class="sym">|</span>T<span class="sym">],</span> ALN<span class="sym">))</span>.
 
 <span class="slc">% ------------------------------- %</span>
 
@@ -88,4 +124,22 @@ setup_complement <span class="sym">:-</span>
 complement<span class="sym">(</span>Code<span class="sym">,</span> Complement<span class="sym">) :-</span>
   <span class="sym">(</span>Code <span class="sym">&gt;</span> <span class="num">90</span> <span class="sym">-&gt;</span> CodeIdx <span class="kwa">is</span> Code <span class="sym">-</span> <span class="num">32</span> <span class="sym">;</span> CodeIdx <span class="sym">=</span> Code<span class="sym">),</span>
   flag<span class="sym">(</span>CodeIdx<span class="sym">,</span> Complement<span class="sym">,</span> Complement<span class="sym">)</span>.
+
+<span class="slc">% ------------------------------- %</span>
+
+rev_comp_sequence<span class="sym">(</span>S<span class="sym">,</span> CS<span class="sym">) :-</span> rev_comp_sequence_<span class="sym">(</span>S<span class="sym">, [],</span> CS<span class="sym">)</span>.
+
+<span class="slc">% ------------- %</span>
+
+rev_comp_sequence_<span class="sym">([],</span> CSA<span class="sym">,</span> CSA<span class="sym">) :- !</span>.
+
+rev_comp_sequence_<span class="sym">([</span>H<span class="sym">|</span>T<span class="sym">],</span> CSA<span class="sym">,</span> CS<span class="sym">) :-</span>
+  complement<span class="sym">(</span>H<span class="sym">,</span> C<span class="sym">),</span>
+  <span class="sym">!,</span> rev_comp_sequence_<span class="sym">(</span>T<span class="sym">, [</span>C<span class="sym">|</span>CSA<span class="sym">],</span> CS<span class="sym">)</span>.
+
+<span class="slc">% ------------------------------- %</span>
+
+getvar<span class="sym">(</span>Id<span class="sym">,</span> Value<span class="sym">) :-</span> nb_getval<span class="sym">(</span>Id<span class="sym">,</span> Value<span class="sym">)</span>.
+setvar<span class="sym">(</span>Id<span class="sym">,</span> Value<span class="sym">) :-</span> nb_setval<span class="sym">(</span>Id<span class="sym">,</span> Value<span class="sym">)</span>.
+dropvar<span class="sym">(</span>Id<span class="sym">) :-</span> nb_delete<span class="sym">(</span>Id<span class="sym">)</span>.
 
