@@ -26,3 +26,4 @@ Thread.new{N.times{next_q.push(0)}}
 t = 0
 N.times{t+=last_q.pop}
 puts t
+
