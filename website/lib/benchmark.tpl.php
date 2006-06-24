@@ -21,9 +21,15 @@ if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID
 else { $P4 = ''; }
 
 $NString = 'N=?';
+$testValue = 1;
 foreach($Accepted as $d){
-   if ($d[DATA_TESTVALUE]>0){ $NString = 'N='.number_format((double)$d[DATA_TESTVALUE]); break; }
+   if ($d[DATA_TESTVALUE]>0){ 
+      $testValue = (double)$d[DATA_TESTVALUE];
+      $NString = 'N='.number_format($testValue);
+      break; }
 }
+if ($TestName=='startup'){ $NString = ''; }
+
 ?>
 
 
@@ -74,9 +80,9 @@ $better = array();
 if (sizeof($Accepted) > 0){ $first = $Accepted[0]; }
 
 foreach($Accepted as $d){
-   $k = $d[DATA_LANG]; 
+   $k = $d[DATA_LANG];
    
-   $CPU = ''; 
+   $CPU = '';
    $MEM = '';
    $LOCS = ''; 
    $GZBYTES = '';      
@@ -108,12 +114,14 @@ foreach($Accepted as $d){
       else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
    } 
         
-   unset($No_Program_Langs[$k]);    
+   unset($No_Program_Langs[$k]);
    $Name = $Langs[$k][LANG_FULL];
-   $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);  
+   $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
 
-   $id = $d[DATA_ID];   
+   $id = $d[DATA_ID];
    $fullcpu = $d[DATA_FULLCPU];
+   if ($TestName=='startup'){ $fc = number_format($fullcpu/$testValue,4); }
+   else { $fc = number_format($fullcpu,2); }
    if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    $lines = $d[DATA_LINES];
    $gz = $d[DATA_GZ];
@@ -122,8 +130,8 @@ foreach($Accepted as $d){
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td%s>%0.2f</td><td%s>%s</td><td%s>%d</td>',
-         $CPU, $fullcpu, $MEM, $kb, $GZBYTES, $gz ); echo "\n";
+   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td>',
+         $CPU, $fc, $MEM, $kb, $GZBYTES, $gz ); echo "\n";
 
    echo "</tr>\n";
 }
@@ -140,7 +148,7 @@ foreach($Langs as $k => $v){
          $HtmlName = $v[LANG_HTML];    
          if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }             
                     
-         $id = $d[DATA_ID];                      
+         $id = $d[DATA_ID];
          $fullcpu = $d[DATA_FULLCPU];
          $lines = $d[DATA_LINES]; 
          $gz = $d[DATA_GZ];   

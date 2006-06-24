@@ -6,6 +6,5 @@
 
 <p>Each program should print &quot;hello world&quot; and exit.</p>
 
-<p>This benchmark measures startup costs. It is run differently than the others - each program is run N times in a loop by a shell script wrapper.</p>
-<p>The CPU Times measured in this test are used to adjust <a
-  href="faq.php?sort=<?=$Sort;?>#cpu"><strong>CPU Time</strong></a> for the other benchmarks.</p>
+<p>This benchmark measures startup costs. It is run differently than the others - each program is run N times in a loop by a shell script wrapper. We show the mean CPU time.</p>
+
