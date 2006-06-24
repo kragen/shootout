@@ -21,9 +21,14 @@ if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID
 else { $P4 = ''; }
 
 $NString = 'N=?';
+$testValue = 1;
 foreach($Accepted as $d){
-   if ($d[DATA_TESTVALUE]>0){ $NString = 'N='.number_format((double)$d[DATA_TESTVALUE]); break; }
+   if ($d[DATA_TESTVALUE]>0){ 
+      $testValue = (double)$d[DATA_TESTVALUE];
+      $NString = 'N='.number_format($testValue);
+      break; }
 }
+if ($TestName=='startup'){ $NString = ''; }
 ?>
 
 
@@ -108,15 +113,17 @@ foreach($Accepted as $d){
 
    $id = $d[DATA_ID];   
    $fullcpu = $d[DATA_FULLCPU];
+   if ($TestName=='startup'){ $fc = number_format($fullcpu/$testValue,4); }
+   else { $fc = number_format($fullcpu,2); }
    if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    $lines = $d[DATA_LINES];
 
    printf('<tr>'); echo "\n";
-   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td%s>%0.2f</td><td%s>%s</td><td%s>%d</td>',
-         $CPU, $fullcpu, $MEM, $kb, $LOCS, $lines ); echo "\n";
+   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td>',
+         $CPU, $fc, $MEM, $kb, $LOCS, $lines ); echo "\n";
 
    echo "</tr>\n";
 }
