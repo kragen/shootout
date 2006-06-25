@@ -1,0 +1,220 @@
+;; ---------------------------------------------------------------------
+;; The Great Computer Language Shootout
+;; http://shootout.alioth.debian.org/
+;;
+;; A preliminary version that utilises the GNU Multi Precision [GMP]
+;; library. Two major problems exist:
+;;
+;; * Interface to GMP functionality is presently 'clunky' and quite
+;;   inefficient [a more streamlined version using 'tinyCLOS' will
+;;   be attempted in the near future]
+;;
+;; * Too much GMP-related object creation occurring; hope to minimise
+;;   this, so significantly speeding the program up, in the next
+;;   revision
+;;
+;; Contributed by Anthony Borla
+;; ---------------------------------------------------------------------
+
+(require-extension gmp)
+
+(declare (fixnum) (disable-interrupts) (unsafe) (block) (lambda-lift))
+
+; -------------------------------
+
+(define *k* 0)
+(define *y* 0)
+(define *t* (make-mpz-vector 4))
+(define *z* (mpz-vector "1" "0" "0" "1"))
+
+; -------------------------------
+
+(define (make-mpz-object #!optional (value-as-string "0"))
+  (let ((mpz-object (make-mpz_t)))
+    (mpz_init_set_str mpz-object value-as-string 10)
+    (cons 'mpz mpz-object)))
+
+(define (mpz-object? object)
+  (and (pair? object) (eq? (car object) 'mpz)))
+
+(define (mpz-object-copy! mpz-source-object mpz-target-object)
+  (mpz-object-set! mpz-target-object (mpz-object-ref mpz-source-object))
+  mpz-target-object)
+
+(define (mpz-object-clone mpz-object)
+  (make-mpz-object (mpz-object-ref mpz-object)))
+
+(define (mpz-object-clone! mpz-object)
+  (let ((new-mpz-object (mpz-object-clone mpz-object)))
+    (free-mpz-object mpz-object)
+    new-mpz-object))
+
+(define (mpz-object-set! mpz-object value-as-string)
+  (mpz_set_str (cdr mpz-object) value-as-string 10))
+
+(define (mpz-object-ref mpz-object)
+  (mpz_get_str #f 10 (cdr mpz-object)))
+
+(define (object->mpz object)
+  (cond 
+    ((mpz-object? object) (mpz-object-clone object))
+    ((string? object) (make-mpz-object object))
+    ((number? object) (make-mpz-object (number->string object)))
+    (else (make-mpz-object))))
+
+(define (make-mpz-converter object)
+  (cond 
+    ((mpz-object? object) (lambda (x) x))
+    ((string? object) (lambda (x) (make-mpz-object x)))
+    ((number? object) (lambda (x) (make-mpz-object (number->string x))))
+    (else (lambda (x) x))))
+
+(define (mpz-object-arithmetic op left_ right_  #!optional (result (make-mpz-object)))
+  (let ((left (object->mpz left_)) (right (object->mpz right_)))
+    (cond
+      ((eq? op '+) (mpz_add (cdr result) (cdr left) (cdr right)))
+      ((eq? op '-) (mpz_sub (cdr result) (cdr left) (cdr right)))
+      ((eq? op '*) (mpz_mul (cdr result) (cdr left) (cdr right)))
+      ((eq? op '/) (mpz_tdiv_q (cdr result) (cdr left) (cdr right)))
+      ((eq? op '%) (mpz_tdiv_r (cdr result) (cdr left) (cdr right)))
+      (else (make-mpz-object)))
+    (free-mpz-object left)
+    (free-mpz-object right)
+    result))
+
+(define (mpz-object-cmp left_ right_)
+  (let* ((left (object->mpz left_)) (right (object->mpz right_))
+         (result (mpz_cmp (cdr left) (cdr right))))
+    (free-mpz-object left)
+    (free-mpz-object right)
+    (eq? result 0)))
+
+(define (free-mpz-object mpz-object)
+  (mpz_clear (cdr mpz-object)))
+
+; -------------------------------
+
+(define (mpz-vector #!rest list-of-values)
+  (let ((mpz-vector-object (make-vector (length list-of-values)))
+        (converter (make-mpz-converter (car list-of-values))))
+    (let loop ((lovas list-of-values) (i 0))
+      (if (null? lovas) mpz-vector-object
+      ; else
+      (begin
+        (vector-set! mpz-vector-object i (converter (car lovas)))
+        (loop (cdr lovas) (add1 i)) ))) ))
+
+(define (make-mpz-vector size #!optional (initial-value-as-string "0"))
+  (let ((mpz-vector-object (make-vector size)))
+    (do ((i 0 (add1 i)))
+        ((= size i))
+      (vector-set! mpz-vector-object i (make-mpz-object initial-value-as-string)))
+  mpz-vector-object))
+
+(define (mpz-vector-copy mpz-vector-source mpz-vector-target)
+  (let ((mpz-vector-source-length (vector-length mpz-vector-source)))
+    (do ((i 0 (add1 i)))
+        ((= mpz-vector-source-length i))
+      (mpz-vector-set! mpz-vector-target i (mpz-vector-ref mpz-vector-source i)))
+  mpz-vector-target))
+
+(define (mpz-vector-copy! mpz-vector-source mpz-vector-target)
+  (mpz-vector-copy mpz-vector-source mpz-vector-target)
+  (free-mpz-vector mpz-vector-source)
+  mpz-vector-target)
+
+(define (mpz-vector-set! mpz-vector-object i value-as-string)
+  (mpz-object-set! (vector-ref mpz-vector-object i) value-as-string))
+
+(define (mpz-vector-ref mpz-vector-object i)
+  (mpz-object-ref (vector-ref mpz-vector-object i)))
+
+(define (free-mpz-vector mpz-vector-object)
+  (let ((mpz-vector-object-length (vector-length mpz-vector-object)))
+    (do ((i 0 (add1 i)))
+        ((= mpz-vector-object-length i))
+      (free-mpz-object (vector-ref mpz-vector-object i)) )))
+
+; -------------------------------
+
+(define (compose a b #!optional (value-as-mpz-vector (make-mpz-vector 4)))
+  (let* ((l1 (mpz-object-arithmetic '* (mpz-vector-ref a 0) (mpz-vector-ref b 1)))
+         (r1 (mpz-object-arithmetic '* (mpz-vector-ref a 1) (mpz-vector-ref b 3)))
+         (l2 (mpz-object-arithmetic '* (mpz-vector-ref a 2) (mpz-vector-ref b 0)))
+         (r2 (mpz-object-arithmetic '* (mpz-vector-ref a 3) (mpz-vector-ref b 2)))
+         (l3 (mpz-object-arithmetic '* (mpz-vector-ref a 2) (mpz-vector-ref b 1)))
+         (r3 (mpz-object-arithmetic '* (mpz-vector-ref a 3) (mpz-vector-ref b 3))))
+    (mpz-vector-copy!
+      (mpz-vector
+        (mpz-object-arithmetic '* (mpz-vector-ref a 0) (mpz-vector-ref b 0))
+        (mpz-object-arithmetic '+ l1 r1)
+        (mpz-object-arithmetic '+ l2 r2)
+        (mpz-object-arithmetic '+ l3 r3))
+      value-as-mpz-vector)
+    (free-mpz-object l1)
+    (free-mpz-object r1)
+    (free-mpz-object l2)
+    (free-mpz-object r2)
+    (free-mpz-object l3)
+    (free-mpz-object r3)
+    value-as-mpz-vector))
+
+; -------------
+
+(define (extract a j)
+  (let* ((left (mpz-object-arithmetic '* (mpz-vector-ref a 0) j))
+         (right (mpz-object-arithmetic '* (mpz-vector-ref a 2) j))
+         (result (mpz-object-arithmetic '/
+           (mpz-object-arithmetic '+ left (mpz-vector-ref a 1) left)
+           (mpz-object-arithmetic '+ right (mpz-vector-ref a 3) right)))
+         (value-as-string (mpz-object-ref result)))
+    (free-mpz-object left)
+    (free-mpz-object right)
+    (free-mpz-object result)
+    value-as-string))
+
+; -------------
+
+(define (pidigits c)
+  (let loop-o ((i 0) (r (make-string 0)))
+    (cond
+      ((< i c)
+        (let loop-i ((y (extract *z* 3)))
+          (cond
+            ((string=? y (extract *z* 4))
+              (set! *y* (make-mpz-object (string-append "-" y)))
+              (mpz-object-arithmetic '* *y* 10 *y*)
+              (set! *t* (mpz-vector "10" (mpz-object-ref *y*) "0" "1"))
+              (set! *z* (compose *t* *z* *z*))
+              (set! r (string-append r y))
+              (free-mpz-vector *t*)
+              (free-mpz-object *y*))
+            (else 
+              (set! *k* (add1 *k*))
+              (set! *t* (mpz-vector *k* (+ (* 4 *k*) 2) 0 (+ 1 (* 2 *k*))))
+              (set! *z* (compose *z* *t* *z*))
+              (free-mpz-vector *t*)
+              (loop-i (extract *z* 3)))))
+        (loop-o (add1 i) r))
+      (else r))))
+
+; -------------------------------
+
+(define (main args)
+  (let ((n (if (null? args)
+               1
+               (string->number (car args)))) )
+
+    (let loop ((i 10))
+      (cond
+         ((<= i n)
+           (print (pidigits 10) "\t:" i)
+           (loop (+ i 10)))
+         (else
+           (let ((t (- i 10)))
+             (if (< t n) (print (pidigits (- n t)) "\t:" n)))))) ))
+
+; -------------------------------
+
+(main (command-line-arguments))
+
