@@ -1,0 +1,227 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   Contributed by Derek Ross
+*/
+
+#include <string>
+#include <vector>
+#include <map>
+#include <iostream>
+#include <cassert>
+#include <utility>
+
+using namespace std;
+
+// First key is index to possible alts.
+// Second key is position of list of chars in string.  
+typedef map< int, map < int, vector<char> > > reg_string_t;
+
+typedef map < int, vector<char> > sub_reg_string_t;
+
+void Print(reg_string_t& r)
+{
+	for(size_t alt = 0 ; alt < r.size() ; alt ++ )
+	{	
+		if(alt != 0)
+		{
+			cout << "|";
+		}		
+		
+		for(size_t pos = 0 ; pos < r[alt].size() ; pos ++ )
+		{
+			if(r[alt][pos].size() > 1)cout << "[";
+			
+			for(size_t i = 0 ; i < r[alt][pos].size() ; i ++ )
+			{
+				cout << r[alt][pos].at(i);
+			}
+			
+			if(r[alt][pos].size() > 1)cout << "]";
+		}	
+	}
+}
+
+reg_string_t CreateRegexObject(const string& s)
+{
+	reg_string_t reg;
+	bool in_brackets = false;
+	int alt_index = 0;
+	int char_position = 0;
+	for(size_t i = 0 ; i < s.size() ; i ++ )
+	{
+		char ch = s[i];
+		if(ch == '[')
+		{
+			in_brackets = true;
+		}
+		else if(ch == ']')
+		{
+			in_brackets = false;
+			char_position++;
+		}
+		else if(ch == '|')
+		{
+			alt_index ++ ;
+			in_brackets = false;
+			char_position = 0;
+		}
+		else
+		{
+			if(in_brackets)
+			{
+				reg[alt_index][char_position].push_back(ch);
+			}
+			else
+			{
+				reg[alt_index][char_position].push_back(ch);
+				char_position ++ ;
+			}	
+		}
+	}
+	//Print(reg);
+	return reg;
+}
+
+
+
+bool MatchSub(const string& s, size_t offset, sub_reg_string_t& reg)
+{
+	assert(reg.size());
+	assert(s.size());
+	if(reg.size() > s.size() - offset)
+	{
+		//cout << "false " << reg.size() << " " <<  s.size() << " " << offset << endl;
+		return false;
+	}	
+	
+	for(size_t pos = 0 ; pos < reg.size() ; pos ++ )
+	{
+		assert(reg[pos].size() != 0);
+		bool charmatched = false;
+		for(size_t i = 0 ; i < reg[pos].size() ; i ++ )
+		{
+			if(reg[pos].at(i) == s.at(pos + offset))
+			{
+				charmatched = true;
+				break;
+			}
+		}
+		if(!charmatched)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+bool MatchAlts(const string& s, size_t offset, reg_string_t& reg)
+{
+	for(size_t alt = 0 ; alt < reg.size() ; alt ++ )
+	{
+		if(MatchSub(s, offset,  reg[alt]))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Has(map<char, string>& sub_table, const char ch)
+{
+	return sub_table.find(ch) != sub_table.end();
+}
+
+void SubCharWithString(map<char, string>& sub_table, const string& s, string& result)
+{
+	result.erase();
+	for(size_t i = 0 ; i < s.size() ; i ++ )
+	{
+		char ch = s[i];
+		if(Has(sub_table, ch))
+		{
+			result += sub_table[ch];
+		}
+		else
+		{
+			result += ch;
+		}
+	}
+}
+
+
+
+int main()
+{
+	
+	vector<pair<reg_string_t, int> > variants;//first=regex, second=count
+	variants.push_back(make_pair(CreateRegexObject("agggtaaa|tttaccct"), 0));
+      	variants.push_back(make_pair(CreateRegexObject("[cgt]gggtaaa|tttaccc[acg]"), 0));
+      	variants.push_back(make_pair(CreateRegexObject("a[act]ggtaaa|tttacc[agt]t"), 0));
+      	variants.push_back(make_pair(CreateRegexObject("ag[act]gtaaa|tttac[agt]ct"), 0));
+     	variants.push_back(make_pair(CreateRegexObject("agg[act]taaa|ttta[agt]cct"), 0));
+      	variants.push_back(make_pair(CreateRegexObject("aggg[acg]aaa|ttt[cgt]ccct"), 0));
+     	variants.push_back(make_pair(CreateRegexObject("agggt[cgt]aa|tt[acg]accct"), 0));
+      	variants.push_back(make_pair(CreateRegexObject("agggta[cgt]a|t[acg]taccct"), 0));
+      	variants.push_back(make_pair(CreateRegexObject("agggtaa[cgt]|[acg]ttaccct"), 0));
+
+	map<int, int> variants_counts;
+	
+	map<char, string> subst;
+	subst['B'] = "(c|g|t)";
+	subst['D'] = "(a|g|t)";   
+	subst['H'] = "(a|c|t)"; 
+	subst['K'] = "(g|t)";
+      	subst['M'] = "(a|c)";   
+      	subst['N'] = "(a|c|g|t)"; 
+      	subst['R'] = "(a|g)";   
+      	subst['S'] = "(c|g)";
+      	subst['V'] = "(a|c|g)"; 
+      	subst['W'] = "(a|t)";     
+      	subst['Y'] = "(c|t)";
+	
+	string seq;
+	string line;
+	int ilen = 0;
+	while(getline(cin, line))
+	{
+		ilen += line.size() + 1; // 1 extra for newline char.
+		if(line.size())
+		{
+			if(line.at(0) != '>')
+			{
+				seq += line;
+			}
+		}
+	}
+		
+	for(size_t v = 0 ; v < variants.size() ; v ++ )
+	{
+		for(size_t offset = 0 ; offset < seq.size() ; offset ++ )
+		{			
+			if(MatchAlts(seq, offset, variants.at(v).first))
+			{				
+				variants.at(v).second++;
+			}
+		}
+	}
+	
+	for(size_t v = 0 ; v < variants.size() ; v ++ )
+	{
+		Print(variants.at(v).first);
+		cout << " " ;
+		cout << variants.at(v).second;
+		cout << endl;
+	}
+	
+	string new_seq;
+	
+	SubCharWithString(subst, seq, new_seq);
+	
+	cout << endl;
+	cout << ilen << endl;
+	cout << seq.size() << endl;
+	cout << new_seq.size() << endl;
+	
+	
+}
