@@ -6,9 +6,6 @@
 # fixed and cleaned up by Danny Sauer
 # optimized by Jesse Millikan
 
-# For decoration only
-use strict;
-
 use constant PI            => 3.141592653589793;
 use constant SOLAR_MASS    => (4 * PI * PI);
 use constant DAYS_PER_YEAR => 365.24;
@@ -103,7 +100,7 @@ printf ("%.9f\n", energy());
 my $n = $ARGV[0];
 
 # This does not, in fact, consume N*4 bytes of memory
-for (0..$n){
+for (1..$n){
   advance(0.01);
 }
 
