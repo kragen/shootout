@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2006-01-25 06:58:07 igouy-guest Exp $
+# $Id: Makefile,v 1.47 2006-06-29 06:17:28 bfulgham Exp $
 TESTS = \
     hello \
     ackermann \
@@ -19,6 +19,7 @@ TESTS = \
     implicitode \
     knucleotide \
     lists \
+    magicsquares \
     mandelbrot \
     matrix \
     message \

@@ -1,0 +1,144 @@
+{- The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   benchmark implementation
+   contributed by Josh Goldfoot -}
+
+{- An implementation using Data.Graph would be much faster.  This implementation
+  is designed to demonstrate the benchmark algorithm. -}
+
+import Data.Array as Array
+import Data.Set as Set
+import Data.List as List
+import Data.PackedString
+import System
+
+main = do
+    n <- getArgs >>= return . read . head
+    let mn = n * (1 + n * n) `div` 2 -- the magic number
+    let initialNode = makeSquare n mn $ Array.listArray ((1,1),(n,n)) (repeat 0)
+    let allSquares = bestFirst (successorNodes n mn) (initialNode:[])
+    putStrLn $ printMatrix n $ grid $ head allSquares
+    where
+        printMatrix n grid =
+            unpackPS $ joinPS newline [ joinPS space (rowlist grid n y) | 
+                                        y <- [1..n]]
+            where
+                space = packString " "
+                newline = packString "\n"
+                rowlist grid n y = [packString $ show $ grid ! (x,y) | 
+                                    x <- [1..n] ]
+                
+data Square = Square { grid :: Array (Int,Int) Int, 
+                       ffm :: ([Int], Int, Int, Int), 
+                       priority :: Int }
+
+{- bestFirst:  Given a queue with one initial node and a function, successors,
+    that takes a node and returns a list of nodes that are created by making
+    all possible moves in a single cell, implements the Best-First algorithm,
+    and returns a list of all nodes that end up with priority zero.  In this
+    implementation we only ever use the first node.
+-}
+bestFirst _ [] = []
+bestFirst successors (frontnode:priorityq) =
+    if (priority frontnode) == 0
+        then frontnode:(bestFirst successors priorityq)
+        else bestFirst successors priorityq'
+    where
+        priorityq' = addQList priorityq (successors frontnode)
+        addQList priorityq [] = priorityq
+        addQList priorityq (x:nodelist) =
+           addQList priorityq' nodelist
+           where
+                priorityq' = List.insertBy compSquare x priorityq
+                {- The priority queue is sorted first by
+                    the node's calculated priority; then, if the priorities
+                    are equal, by whichever node has the lowest numbers
+                    in the top-left of the array (or the next cell over,
+                    and so on). -}
+                compSquare a b = 
+                    if priorityCompare /= EQ
+                        then priorityCompare
+                        else compare (grid a) (grid b)
+                    where
+                        priorityCompare = compare (priority a) (priority b)
+
+{- successorNodes: Find the cell with the fewest
+    possible moves left, and then creates a new node for each possible move
+    in that cell.  
+-}
+successorNodes n mn squarenode =
+    List.map (makeSquare n mn) [ thegrid//[((x, y), i)] | i <- possibilities ] 
+    where
+        thegrid = grid squarenode
+        (possibilities, _, x, y) = ffm squarenode                
+
+{- makeSquare: Creates a node for the priority queue.  In the process, this
+    calculates the cell with the fewest possible moves, and also calculates
+    this node's priority.  The priority function is:
+        (number of zeros in the grid)
+           plus
+        (number of possible moves in the cell with the fewest possible moves)
+    the lower the priority, the sooner the node will be popped from the queue.
+-}
+makeSquare n mn thegrid =
+    Square { grid = thegrid, ffm = moveChoices, priority = calcPriority }
+    where
+        moveChoices = findFewestMoves n mn thegrid
+        (_, lenmovelist, _, _) = moveChoices
+        calcPriority = (count 0 (Array.elems thegrid)) + lenmovelist
+        
+{- findFewestMoves:  Go through the grid (starting at the top-left, and moving
+     right and down), checking all 0 cells to find the cell with the fewest
+     possible moves.  
+-}
+findFewestMoves n mn grid =
+    if openMap /= []
+        then (movelist, length movelist, mx, my)
+        else ([], 0, 0, 0)
+    where
+        openSquares = [ (x,y) | y <- [1..n], x <- [1..n], (grid ! (x,y)) == 0]
+        pm = possibleMoves n mn grid
+        openMap = List.map (\(x,y) -> (pm (x,y), (x,y))) openSquares
+        mycompare f g = compare ((length . fst) f) ((length . fst) g)
+        (movelist, (mx, my)) = List.minimumBy mycompare openMap
+
+{- possibleMoves: Return all moves that can go in the cell x,y for a given
+    grid.  A move is possible if the move (number) is not already
+     in the grid, and if, after making that move, it is still possible to
+     satisfy the magic square conditions (all rows, columns, diagonals adding
+     up to mn, the magic number)
+-}
+possibleMoves n mn grid (x,y)
+    | grid ! (x,y) /= 0 = []
+    | Set.size onePossible == 1 = 
+        if (onlyPossible `Set.member` usedNumbers) || (onlyPossible > n*n) 
+                                                   || (onlyPossible < 1)
+            then []
+            else [onlyPossible]
+    | Set.size onePossible > 1 = []
+    | otherwise = [i | i <- [1..highest], not (i `Set.member` usedNumbers) ]
+    where
+        cellGroups
+            | x + y == n + 1 && x == y = [diag1 grid n, diag2 grid n, 
+                                          theRow, theCol]
+            | x == y = [diag1 grid n, theRow, theCol]
+            | x + y == n + 1 = [diag2 grid n, theRow, theCol ]
+            | otherwise = [theRow, theCol]
+        theRow = gridRow grid n x y
+        theCol = gridCol grid n x y
+        usedNumbers = Set.fromList (Array.elems grid)
+        oneZeroGroups = List.filter (\x -> count 0 x == 1) cellGroups
+        onePossible = Set.fromList ( [mn - (sum g) | g <- oneZeroGroups ] )
+        onlyPossible = head (Set.toList onePossible)
+        highest = minimum ( (n*n):[mn - (sum g) | g <- cellGroups] )        
+
+{- Utility functions to extract a single row, column, or diagonal. -}
+gridRow grid n _ y = [grid ! (xx, y) | xx <- [1..n]]
+gridCol grid n x _ = [grid ! (x, yy) | yy <- [1..n]]
+diag1 grid n = [grid ! (i, i) | i <- [1..n]]
+diag2 grid n = [grid ! (i, n - i + 1) | i <- [1..n]]
+
+{- Returns the number of times n appears n list xs -}
+count n xs = length $ List.filter ((==) n) xs
+
