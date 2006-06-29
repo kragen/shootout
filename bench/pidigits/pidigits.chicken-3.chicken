@@ -1,0 +1,194 @@
+;; ---------------------------------------------------------------------
+;; The Great Computer Language Shootout
+;; http://shootout.alioth.debian.org/
+;;
+;; Another GMP-based implementation. This one, however, is considerably 
+;; faster than the previous submission:
+;;
+;; * Attempt to create a general-purpose, high-level interface to GMP
+;;   was scrapped, thus removing most of the interface overhead, and
+;;   making for a much simplified design. Note some of the routines
+;;   comprising this interface have been retained, in modified form,
+;;   as helper routines
+;;
+;; * Implemented as a closure [i.e. similar to an OOP-style object but
+;;   without the overhead]. This approach eliminated need to create/use/
+;;   free many GMP objects. Instead, a small number of GMP objects were
+;;   encapsulated within the closure, and reused as necessary [note:
+;;   presently these are hardcoded (to keep design simple); a larger
+;;   application would use some sort of object pooling strategy]
+;;
+;; * A possible [future] improvement would be to avoid use of strings
+;;   [via 'mpz_set_str'] to initialise/update GMP objects, instead
+;;   converting fixnums to C-types and using those values directly. This
+;;   is, obviously, only possible only for 'smaller', hardware-mappable
+;;   numeric values
+;;
+;; Contributed by Anthony Borla
+;; ---------------------------------------------------------------------
+
+(require-extension gmp)
+
+(declare (fixnum) (disable-interrupts) (unsafe) (block) (lambda-lift))
+
+; -------------------------------
+
+(define (make-mpz-object #!optional (value-as-string "0"))
+  (let ((mpz-object (make-mpz_t)))
+    (mpz_init_set_str mpz-object value-as-string 10)
+    mpz-object))
+
+(define (free-mpz-object mpz-object)
+  (mpz_clear mpz-object))
+
+(define (mpz-vector #!rest list-of-string-values)
+  (let ((mpz-vector-object (make-vector (length list-of-string-values))))
+    (let loop ((lovas list-of-string-values) (i 0))
+      (if (null? lovas) mpz-vector-object
+      ; else
+      (begin
+        (vector-set! mpz-vector-object i (make-mpz-object (car lovas)))
+        (loop (cdr lovas) (add1 i)) ))) ))
+
+(define (mpz-vector-update! mpz-vector-target #!rest list-of-string-values)
+  (let loop ((lovas list-of-string-values) (i 0))
+    (if (null? lovas) '()
+    ; else
+    (begin
+      (mpz_set_str (vector-ref mpz-vector-target i) (car lovas) 10) 
+      (loop (cdr lovas) (add1 i)) ))) )
+
+(define (mpz-vector-copy! mpz-vector-target mpz-vector-source)
+  (let ((mpz-vector-source-length (vector-length mpz-vector-source)))
+    (do ((i 0 (add1 i)))
+        ((= mpz-vector-source-length i))
+      (mpz_set (vector-ref mpz-vector-target i) (vector-ref mpz-vector-source i) )) ))
+
+(define (make-mpz-vector size #!optional (initial-value-as-string "0"))
+  (let ((mpz-vector-object (make-vector size)))
+    (do ((i 0 (add1 i)))
+        ((= size i))
+      (vector-set! mpz-vector-object i (make-mpz-object initial-value-as-string)))
+  mpz-vector-object))
+
+(define (free-mpz-vector mpz-vector-object)
+  (let ((mpz-vector-object-length (vector-length mpz-vector-object)))
+    (do ((i 0 (add1 i)))
+        ((= mpz-vector-object-length i))
+      (free-mpz-object (vector-ref mpz-vector-object i)) )))
+
+; -------------------------------
+
+(define (make-pidigits)
+  (let*
+
+    ; -------------
+
+    ((+ten+ (make-mpz-object "10")) (k_ 0) (y_ (make-mpz-object)) (j_ (make-mpz-object))
+     (target_ (make-mpz-vector 4)) (t_ (make-mpz-vector 4)) (z_ (mpz-vector "1" "0" "0" "1"))
+     (left_ (make-mpz-object)) (right_ (make-mpz-object)) (result_ (make-mpz-object))
+
+    ; -------------
+
+    (compose
+      (lambda (a b)
+        (mpz_mul (vector-ref target_ 0) (vector-ref a 0) (vector-ref b 0))
+        (mpz_mul left_ (vector-ref a 0) (vector-ref b 1))
+        (mpz_mul right_ (vector-ref a 1) (vector-ref b 3))
+        (mpz_add (vector-ref target_ 1) left_ right_)
+        (mpz_mul left_ (vector-ref a 2) (vector-ref b 0))
+        (mpz_mul right_ (vector-ref a 3) (vector-ref b 2))
+        (mpz_add (vector-ref target_ 2) left_ right_)
+        (mpz_mul left_ (vector-ref a 2) (vector-ref b 1))
+        (mpz_mul right_ (vector-ref a 3) (vector-ref b 3))
+        (mpz_add (vector-ref target_ 3) left_ right_)
+        target_))
+
+    ; -------------
+
+    (extract
+      (lambda (a j)
+        (mpz_set_str j_ (number->string j) 10) 
+        (mpz_mul left_ (vector-ref a 0) j_)
+        (mpz_mul right_ (vector-ref a 2) j_)
+        (mpz_add left_ (vector-ref a 1) left_)
+        (mpz_add right_ (vector-ref a 3) right_)
+        (mpz_tdiv_q result_ left_ right_)
+        (mpz_get_str #f 10 result_)))
+
+    ; -------------
+
+    (pi-clear
+      (lambda ()
+        (free-mpz-object j_) (free-mpz-object left_) (free-mpz-object right_)
+        (free-mpz-object result_)
+        (free-mpz-vector t_) (free-mpz-vector z_)
+        (set! k_ 0) (set! y_ 0)
+        (set! j_ (make-mpz-object)) (set! left_ (make-mpz-object)) (set! right_ (make-mpz-object))
+        (set! result_ (make-mpz-object))
+        (set! t_ (make-mpz-vector 4)) (set! z_ (mpz-vector "1" "0" "0" "1"))
+        #t))
+
+    ; -------------
+
+    (pi-run
+      (lambda (c)
+        (let loop-o ((i 0) (r (make-string 0)))
+          (cond
+            ((< i c)
+              (let loop-i ((ys (extract z_ 3)))
+                (cond
+                  ((string=? ys (extract z_ 4))
+                    (mpz_set_str y_ ys 10)
+                    (mpz_neg y_ y_)
+                    (mpz_mul y_ +ten+ y_)
+                    (mpz-vector-update! t_ "10" (mpz_get_str #f 10 y_) "0" "1")
+                    (mpz-vector-copy! z_ (compose t_ z_))
+                    (set! r (string-append r ys)) )
+                  (else
+                    (set! k_ (add1 k_))
+                    (mpz-vector-update! t_
+                      (number->string k_)
+                      (number->string (+ (* 4 k_) 2))
+                      (number->string 0)
+                      (number->string (+ 1 (* 2 k_))))
+                    (mpz-vector-copy! z_ (compose z_ t_))
+                    (loop-i (extract z_ 3)))))
+              (loop-o (add1 i) r))
+            (else r))))) )
+
+    ; -------------
+
+    (lambda (op)
+      (cond
+        ((eq? op 'clear) pi-clear)
+        ((eq? op 'run) pi-run)
+        (else (lambda () (display "*** make-pidigits:invalid operation ***\n"))))) ))
+
+; -------------------------------
+
+(define (pidigits pi-object c)
+  (apply (pi-object 'run) (list c)))
+
+; -------------------------------
+
+(define (main args)
+  (let ((n (if (null? args)
+               1
+               (string->number (car args))))
+
+    (pi-object (make-pidigits)))
+
+    (let loop ((i 10))
+      (cond
+         ((<= i n)
+           (print (pidigits pi-object 10) "\t:" i)
+           (loop (+ i 10)))
+         (else
+           (let ((t (- i 10)))
+             (if (< t n) (print (pidigits pi-object (- n t)) "\t:" n)))))) ))
+
+; -------------------------------
+
+(main (command-line-arguments))
+
