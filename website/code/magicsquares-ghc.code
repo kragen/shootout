@@ -1,144 +1,94 @@
-<span class="com">{- The Computer Language Shootout</span>
-<span class="com">   http://shootout.alioth.debian.org/</span>
-<span class="com"></span>
-<span class="com">   benchmark implementation</span>
-<span class="com">   contributed by Josh Goldfoot -}</span>
 
-<span class="com">{- An implementation using Data.Graph would be much faster.  This implementation</span>
-<span class="com">  is designed to demonstrate the benchmark algorithm. -}</span>
+<span class="kwa">import</span> Data.Array.Unboxed
+<span class="kwa">import</span> Data.List
+<span class="kwa">import</span> System.Environment <span class="sym">(</span>getArgs<span class="sym">)</span>
 
-<span class="kwa">import</span> Data.Array <span class="kwa">as</span> Array
-<span class="kwa">import</span> Data.Set <span class="kwa">as</span> Set
-<span class="kwa">import</span> Data.List <span class="kwa">as</span> List
-<span class="kwa">import</span> Data.PackedString
-<span class="kwa">import</span> System
+main <span class="sym">::</span> IO <span class="sym">()</span>
+main <span class="sym">=</span> getArgs <span class="sym">&gt;&gt;=</span> return . read . head <span class="sym">&gt;&gt;=</span> msquare
 
-main <span class="sym">=</span> <span class="kwa">do</span>
-    n <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> return . read . head
-    <span class="kwa">let</span> mn <span class="sym">=</span> n <span class="sym">* (</span><span class="num">1</span> <span class="sym">+</span> n <span class="sym">*</span> n<span class="sym">)</span> `div` <span class="num">2</span> <span class="slc">-- the magic number</span>
-    <span class="kwa">let</span> initialNode <span class="sym">=</span> makeSquare n mn $ Array.listArray <span class="sym">((</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">),(</span>n<span class="sym">,</span>n<span class="sym">)) (</span>repeat <span class="num">0</span><span class="sym">)</span>
-    <span class="kwa">let</span> allSquares <span class="sym">=</span> bestFirst <span class="sym">(</span>successorNodes n mn<span class="sym">) (</span>initialNode<span class="sym">:[])</span>
-    putStrLn $ printMatrix n $ grid $ head allSquares
-    <span class="kwa">where</span>
-        printMatrix n grid <span class="sym">=</span>
-            unpackPS $ joinPS newline <span class="sym">[</span> joinPS space <span class="sym">(</span>rowlist grid n y<span class="sym">) |</span>
-                                        y <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">]]</span>
-            <span class="kwa">where</span>
-                space <span class="sym">=</span> packString <span class="str">&quot; &quot;</span>
-                newline <span class="sym">=</span> packString <span class="str">&quot;\n&quot;</span>
-                rowlist grid n y <span class="sym">= [</span>packString $ show $ grid <span class="sym">! (</span>x<span class="sym">,</span>y<span class="sym">) |</span>
-                                    x <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">] ]</span>
+msquare <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+msquare n <span class="sym">=</span> <span class="kwa">let</span> mn <span class="sym">= (</span>n<span class="sym">*(</span>n<span class="sym">*</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">))</span> `quot` <span class="num">2</span>
+                grd <span class="sym">=</span> listArray <span class="sym">((</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">),(</span>n<span class="sym">,</span>n<span class="sym">)) (</span>repeat <span class="num">0</span><span class="sym">)</span>
+                unus <span class="sym">= [</span><span class="num">1</span> .. n<span class="sym">*</span>n<span class="sym">]</span>
+                ff  <span class="sym">=</span> findFewestMoves n mn grd unus
+                ini <span class="sym">=</span> Square grd unus ff <span class="sym">(</span><span class="num">2</span><span class="sym">*</span>n<span class="sym">*</span>n<span class="sym">)</span>
+                allSquares <span class="sym">=</span> bestFirst <span class="sym">(</span>successorNodes n mn<span class="sym">) [</span>ini<span class="sym">]</span>
+            <span class="kwa">in</span>  putStrLn $ showGrid n . grid $ head allSquares
 
-<span class="kwa">data</span> Square <span class="sym">=</span> Square { grid <span class="sym">::</span> Array <span class="sym">(</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwb">Int</span><span class="sym">,</span>
-                       ffm <span class="sym">:: ([</span><span class="kwb">Int</span><span class="sym">],</span> <span class="kwb">Int</span><span class="sym">,</span> <span class="kwb">Int</span><span class="sym">,</span> <span class="kwb">Int</span><span class="sym">),</span>
-                       priority <span class="sym">::</span> <span class="kwb">Int</span> }
+<span class="kwa">data</span> Square <span class="sym">=</span> Square { grid <span class="sym">::</span> UArray <span class="sym">(</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwb">Int</span>
+                     <span class="sym">,</span> unused <span class="sym">:: [</span><span class="kwb">Int</span><span class="sym">]</span>
+                     <span class="sym">,</span> ffm <span class="sym">:: ([</span><span class="kwb">Int</span><span class="sym">],</span> <span class="kwb">Int</span><span class="sym">,</span> <span class="kwb">Int</span><span class="sym">,</span> <span class="kwb">Int</span><span class="sym">)</span>
+                     <span class="sym">,</span> priority <span class="sym">:: !</span><span class="kwb">Int</span>
+                     } <span class="kwa">deriving</span> Eq
 
-<span class="com">{- bestFirst:  Given a queue with one initial node and a function, successors,</span>
-<span class="com">    that takes a node and returns a list of nodes that are created by making</span>
-<span class="com">    all possible moves in a single cell, implements the Best-First algorithm,</span>
-<span class="com">    and returns a list of all nodes that end up with priority zero.  In this</span>
-<span class="com">    implementation we only ever use the first node.</span>
-<span class="com">-}</span>
+<span class="kwa">instance</span> Ord Square <span class="kwa">where</span>
+    compare <span class="sym">(</span>Square g1 _ _ p1<span class="sym">) (</span>Square g2 _ _ p2<span class="sym">)</span>
+        <span class="sym">=</span> <span class="kwa">case</span> compare p1 p2 <span class="kwa">of</span>
+            EQ <span class="sym">-&gt;</span> compare g1 g2
+            ot <span class="sym">-&gt;</span> ot
+
+showMat <span class="sym">:: [[</span><span class="kwb">Int</span><span class="sym">]] -&gt;</span> ShowS
+showMat lns <span class="sym">=</span> foldr1 <span class="sym">((</span>.<span class="sym">)</span> . <span class="sym">(</span>. showChar <span class="str">'\n'</span><span class="sym">))</span> $ showLns
+              <span class="kwa">where</span> showLns <span class="sym">=</span> map <span class="sym">(</span>foldr1 <span class="sym">((</span>.<span class="sym">)</span> . <span class="sym">(</span>. showChar <span class="str">' '</span><span class="sym">))</span> . map shows<span class="sym">)</span>  lns
+
+showGrid <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> UArray <span class="sym">(</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> String
+showGrid n g <span class="sym">=</span> showMat <span class="sym">[[</span>g <span class="sym">! (</span>r<span class="sym">,</span>c<span class="sym">) |</span> c <span class="sym">&lt;- [</span><span class="num">1</span> .. n<span class="sym">]] |</span> r <span class="sym">&lt;- [</span><span class="num">1</span> .. n<span class="sym">]]</span> <span class="str">&quot;&quot;</span>
+
+bestFirst <span class="sym">:: (</span>Square <span class="sym">-&gt; [</span>Square<span class="sym">]) -&gt; [</span>Square<span class="sym">] -&gt; [</span>Square<span class="sym">]</span>
 bestFirst _ <span class="sym">[] = []</span>
-bestFirst successors <span class="sym">(</span>frontnode<span class="sym">:</span>priorityq<span class="sym">) =</span>
-    if <span class="sym">(</span>priority frontnode<span class="sym">) ==</span> <span class="num">0</span>
-        <span class="kwa">then</span> frontnode<span class="sym">:(</span>bestFirst successors priorityq<span class="sym">)</span>
-        <span class="kwa">else</span> bestFirst successors priorityq<span class="str">'</span>
-<span class="str">    where</span>
-<span class="str">        priorityq'</span> <span class="sym">=</span> addQList priorityq <span class="sym">(</span>successors frontnode<span class="sym">)</span>
-        addQList priorityq <span class="sym">[] =</span> priorityq
-        addQList priorityq <span class="sym">(</span>x<span class="sym">:</span>nodelist<span class="sym">) =</span>
-           addQList priorityq<span class="str">' nodelist</span>
-<span class="str">           where</span>
-<span class="str">                priorityq'</span> <span class="sym">=</span> List.insertBy compSquare x priorityq
-                <span class="com">{- The priority queue is sorted first by</span>
-<span class="com">                    the node's calculated priority; then, if the priorities</span>
-<span class="com">                    are equal, by whichever node has the lowest numbers</span>
-<span class="com">                    in the top-left of the array (or the next cell over,</span>
-<span class="com">                    and so on). -}</span>
-                compSquare a b <span class="sym">=</span>
-                    if priorityCompare <span class="sym">/=</span> EQ
-                        <span class="kwa">then</span> priorityCompare
-                        <span class="kwa">else</span> compare <span class="sym">(</span>grid a<span class="sym">) (</span>grid b<span class="sym">)</span>
-                    <span class="kwa">where</span>
-                        priorityCompare <span class="sym">=</span> compare <span class="sym">(</span>priority a<span class="sym">) (</span>priority b<span class="sym">)</span>
+bestFirst successors <span class="sym">(</span>front<span class="sym">:</span>queue<span class="sym">)</span>
+    <span class="sym">|</span> priority front <span class="sym">==</span> <span class="num">0</span> <span class="sym">=</span> front <span class="sym">:</span> bestFirst successors queue
+    <span class="sym">|</span> otherwise <span class="sym">=</span> bestFirst successors $ foldr insert queue <span class="sym">(</span>successors front<span class="sym">)</span>
 
-<span class="com">{- successorNodes: Find the cell with the fewest</span>
-<span class="com">    possible moves left, and then creates a new node for each possible move</span>
-<span class="com">    in that cell.</span>
-<span class="com">-}</span>
-successorNodes n mn squarenode <span class="sym">=</span>
-    List.map <span class="sym">(</span>makeSquare n mn<span class="sym">) [</span> thegrid<span class="sym">//[((</span>x<span class="sym">,</span> y<span class="sym">),</span> i<span class="sym">)] |</span> i <span class="sym">&lt;-</span> possibilities <span class="sym">]</span>
-    <span class="kwa">where</span>
-        thegrid <span class="sym">=</span> grid squarenode
-        <span class="sym">(</span>possibilities<span class="sym">,</span> _<span class="sym">,</span> x<span class="sym">,</span> y<span class="sym">) =</span> ffm squarenode
+successorNodes n mn sq
+    <span class="sym">=</span> map <span class="sym">(</span>place sq n mn <span class="sym">(</span>r<span class="sym">,</span>c<span class="sym">))</span> possibilities
+      <span class="kwa">where</span>
+        <span class="sym">(</span>possibilities<span class="sym">,</span>_<span class="sym">,</span>r<span class="sym">,</span>c<span class="sym">) =</span> ffm sq
 
-<span class="com">{- makeSquare: Creates a node for the priority queue.  In the process, this</span>
-<span class="com">    calculates the cell with the fewest possible moves, and also calculates</span>
-<span class="com">    this node's priority.  The priority function is:</span>
-<span class="com">        (number of zeros in the grid)</span>
-<span class="com">           plus</span>
-<span class="com">        (number of possible moves in the cell with the fewest possible moves)</span>
-<span class="com">    the lower the priority, the sooner the node will be popped from the queue.</span>
-<span class="com">-}</span>
-makeSquare n mn thegrid <span class="sym">=</span>
-    Square { grid <span class="sym">=</span> thegrid<span class="sym">,</span> ffm <span class="sym">=</span> moveChoices<span class="sym">,</span> priority <span class="sym">=</span> calcPriority }
-    <span class="kwa">where</span>
-        moveChoices <span class="sym">=</span> findFewestMoves n mn thegrid
-        <span class="sym">(</span>_<span class="sym">,</span> lenmovelist<span class="sym">,</span> _<span class="sym">,</span> _<span class="sym">) =</span> moveChoices
-        calcPriority <span class="sym">= (</span>count <span class="num">0</span> <span class="sym">(</span>Array.elems thegrid<span class="sym">)) +</span> lenmovelist
-
-<span class="com">{- findFewestMoves:  Go through the grid (starting at the top-left, and moving</span>
-<span class="com">     right and down), checking all 0 cells to find the cell with the fewest</span>
-<span class="com">     possible moves.</span>
-<span class="com">-}</span>
-findFewestMoves n mn grid <span class="sym">=</span>
-    if openMap <span class="sym">/= []</span>
-        <span class="kwa">then</span> <span class="sym">(</span>movelist<span class="sym">,</span> length movelist<span class="sym">,</span> mx<span class="sym">,</span> my<span class="sym">)</span>
-        <span class="kwa">else</span> <span class="sym">([],</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">)</span>
-    <span class="kwa">where</span>
-        openSquares <span class="sym">= [ (</span>x<span class="sym">,</span>y<span class="sym">) |</span> y <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">],</span> x <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">], (</span>grid <span class="sym">! (</span>x<span class="sym">,</span>y<span class="sym">)) ==</span> <span class="num">0</span><span class="sym">]</span>
-        pm <span class="sym">=</span> possibleMoves n mn grid
-        openMap <span class="sym">=</span> List.map <span class="sym">(</span>\<span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">) -&gt; (</span>pm <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">), (</span>x<span class="sym">,</span>y<span class="sym">)))</span> openSquares
-        mycompare f g <span class="sym">=</span> compare <span class="sym">((</span>length . fst<span class="sym">)</span> f<span class="sym">) ((</span>length . fst<span class="sym">)</span> g<span class="sym">)</span>
-        <span class="sym">(</span>movelist<span class="sym">, (</span>mx<span class="sym">,</span> my<span class="sym">)) =</span> List.minimumBy mycompare openMap
-
-<span class="com">{- possibleMoves: Return all moves that can go in the cell x,y for a given</span>
-<span class="com">    grid.  A move is possible if the move (number) is not already</span>
-<span class="com">     in the grid, and if, after making that move, it is still possible to</span>
-<span class="com">     satisfy the magic square conditions (all rows, columns, diagonals adding</span>
-<span class="com">     up to mn, the magic number)</span>
-<span class="com">-}</span>
-possibleMoves n mn grid <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span>
-    <span class="sym">|</span> grid <span class="sym">! (</span>x<span class="sym">,</span>y<span class="sym">) /=</span> <span class="num">0</span> <span class="sym">= []</span>
-    <span class="sym">|</span> Set.size onePossible <span class="sym">==</span> <span class="num">1</span> <span class="sym">=</span>
-        if <span class="sym">(</span>onlyPossible `Set.member` usedNumbers<span class="sym">) || (</span>onlyPossible <span class="sym">&gt;</span> n<span class="sym">*</span>n<span class="sym">)</span>
-                                                   <span class="sym">|| (</span>onlyPossible <span class="sym">&lt;</span> <span class="num">1</span><span class="sym">)</span>
-            <span class="kwa">then</span> <span class="sym">[]</span>
-            <span class="kwa">else</span> <span class="sym">[</span>onlyPossible<span class="sym">]</span>
-    <span class="sym">|</span> Set.size onePossible <span class="sym">&gt;</span> <span class="num">1</span> <span class="sym">= []</span>
-    <span class="sym">|</span> otherwise <span class="sym">= [</span>i <span class="sym">|</span> i <span class="sym">&lt;- [</span><span class="num">1</span>..highest<span class="sym">],</span> not <span class="sym">(</span>i `Set.member` usedNumbers<span class="sym">) ]</span>
-    <span class="kwa">where</span>
-        cellGroups
-            <span class="sym">|</span> x <span class="sym">+</span> y <span class="sym">==</span> n <span class="sym">+</span> <span class="num">1</span> <span class="sym">&amp;&amp;</span> x <span class="sym">==</span> y <span class="sym">= [</span>diag1 grid n<span class="sym">,</span> diag2 grid n<span class="sym">,</span>
-                                          theRow<span class="sym">,</span> theCol<span class="sym">]</span>
-            <span class="sym">|</span> x <span class="sym">==</span> y <span class="sym">= [</span>diag1 grid n<span class="sym">,</span> theRow<span class="sym">,</span> theCol<span class="sym">]</span>
-            <span class="sym">|</span> x <span class="sym">+</span> y <span class="sym">==</span> n <span class="sym">+</span> <span class="num">1</span> <span class="sym">= [</span>diag2 grid n<span class="sym">,</span> theRow<span class="sym">,</span> theCol <span class="sym">]</span>
-            <span class="sym">|</span> otherwise <span class="sym">= [</span>theRow<span class="sym">,</span> theCol<span class="sym">]</span>
-        theRow <span class="sym">=</span> gridRow grid n x y
-        theCol <span class="sym">=</span> gridCol grid n x y
-        usedNumbers <span class="sym">=</span> Set.fromList <span class="sym">(</span>Array.elems grid<span class="sym">)</span>
-        oneZeroGroups <span class="sym">=</span> List.filter <span class="sym">(</span>\x <span class="sym">-&gt;</span> count <span class="num">0</span> x <span class="sym">==</span> <span class="num">1</span><span class="sym">)</span> cellGroups
-        onePossible <span class="sym">=</span> Set.fromList <span class="sym">( [</span>mn <span class="sym">- (</span>sum g<span class="sym">) |</span> g <span class="sym">&lt;-</span> oneZeroGroups <span class="sym">] )</span>
-        onlyPossible <span class="sym">=</span> head <span class="sym">(</span>Set.toList onePossible<span class="sym">)</span>
-        highest <span class="sym">=</span> minimum <span class="sym">( (</span>n<span class="sym">*</span>n<span class="sym">):[</span>mn <span class="sym">- (</span>sum g<span class="sym">) |</span> g <span class="sym">&lt;-</span> cellGroups<span class="sym">] )</span>
-
-<span class="com">{- Utility functions to extract a single row, column, or diagonal. -}</span>
-gridRow grid n _ y <span class="sym">= [</span>grid <span class="sym">! (</span>xx<span class="sym">,</span> y<span class="sym">) |</span> xx <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">]]</span>
-gridCol grid n x _ <span class="sym">= [</span>grid <span class="sym">! (</span>x<span class="sym">,</span> yy<span class="sym">) |</span> yy <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">]]</span>
-diag1 grid n <span class="sym">= [</span>grid <span class="sym">! (</span>i<span class="sym">,</span> i<span class="sym">) |</span> i <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">]]</span>
-diag2 grid n <span class="sym">= [</span>grid <span class="sym">! (</span>i<span class="sym">,</span> n <span class="sym">-</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">) |</span> i <span class="sym">&lt;- [</span><span class="num">1</span>..n<span class="sym">]]</span>
-
-<span class="com">{- Returns the number of times n appears n list xs -}</span>
-count n xs <span class="sym">=</span> length $ List.filter <span class="sym">((==)</span> n<span class="sym">)</span> xs
-
+place <span class="sym">::</span> Square <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt; (</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">) -&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> Square
+place <span class="sym">(</span>Square grd unus _ _<span class="sym">)</span> n mn <span class="sym">(</span>r<span class="sym">,</span>c<span class="sym">)</span> k
+    <span class="sym">=</span> Square grd<span class="str">' uns moveChoices p</span>
+<span class="str">      where</span>
+<span class="str">        grd'</span> <span class="sym">=</span> grd<span class="sym">//[((</span>r<span class="sym">,</span>c<span class="sym">),</span>k<span class="sym">)]</span>
+        moveChoices&#64;<span class="sym">(</span>_<span class="sym">,</span>len<span class="sym">,</span>_<span class="sym">,</span>_<span class="sym">) =</span> findFewestMoves n mn grd<span class="str">' uns</span>
+<span class="str">        uns = delete k unus</span>
+<span class="str">        p = length uns + len</span>
+<span class="str"></span>
+<span class="str">findFewestMoves n mn grid unus</span>
+<span class="str">    | null unus = ([],0,0,0)</span>
+<span class="str">    | otherwise = (movelist, length movelist, mr, mc)</span>
+<span class="str">      where</span>
+<span class="str">        openSquares = [(r,c) | r &lt;- [1 .. n], c &lt;- [1 .. n], grid ! (r,c) == 0]</span>
+<span class="str">        pm = possibleMoves n mn grid unus</span>
+<span class="str">        openMap = map (\(x,y) -&gt; (pm x y,x,y)) openSquares</span>
+<span class="str">        mycompare (a,_,_) (b,_,_) = compare (length a) (length b)</span>
+<span class="str">        (movelist,mr,mc) = minimumBy mycompare openMap</span>
+<span class="str"></span>
+<span class="str">possibleMoves n mn grid unus r c</span>
+<span class="str">    | grid ! (r,c) /= 0 = []</span>
+<span class="str">    | otherwise = intersect [mi .. ma] unus -- this is the difference that</span>
+<span class="str">      -- does it: better bounds</span>
+<span class="str">      where</span>
+<span class="str">        cellGroups</span>
+<span class="str">            | r == c &amp;&amp; r + c == n + 1 = [d1, d2, theRow, theCol]</span>
+<span class="str">            | r == c = [d1, theRow, theCol]</span>
+<span class="str">            | r + c == n + 1 = [d2, theRow, theCol]</span>
+<span class="str">            | otherwise = [theRow, theCol]</span>
+<span class="str">        d1 = diag1 grid n</span>
+<span class="str">        d2 = diag2 grid n</span>
+<span class="str">        theRow = gridRow grid n r</span>
+<span class="str">        theCol = gridCol grid n c</span>
+<span class="str">        lows = scanl (+) 0 unus</span>
+<span class="str">        higs = scanl (+) 0 $ reverse unus</span>
+<span class="str">        rge cg = let k = count0s cg - 1</span>
+<span class="str">                     lft = mn - sum cg</span>
+<span class="str">                 in (lft - (higs!!k),lft - (lows!!k))</span>
+<span class="str">        (mi,ma) = foldr1 mima $ map rge cellGroups</span>
+<span class="str">        mima (a,b) (c,d) = (max a c, min b d)</span>
+<span class="str"></span>
+<span class="str">gridRow grid n r = [grid ! (r,i) | i &lt;- [1 .. n]]</span>
+<span class="str">gridCol grid n c = [grid ! (i,c) | i &lt;- [1 .. n]]</span>
+<span class="str">diag1 grid n     = [grid ! (i,i) | i &lt;- [1 .. n]]</span>
+<span class="str">diag2 grid n     = [grid ! (i,n+1-i) | i &lt;- [1 .. n]]</span>
+<span class="str">count0s = length . filter (== 0)</span>
+<span class="str"></span>
