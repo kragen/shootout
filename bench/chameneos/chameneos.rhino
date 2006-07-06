@@ -1,0 +1,77 @@
+/*     
+The Computer Language Shootout   
+http://shootout.alioth.debian.org/  
+Contributed by Jesse Millikan    
+*/
+
+importPackage(java.lang);
+importPackage(java.util.concurrent.locks);
+
+// map makes the voices go away 
+// return new array of f (method name or function) applied to each element
+// return the item if the value evaluates false
+Array.prototype.map = function(f){
+ var i = 0, m = [];
+
+ for(; i < this.length; i++) 
+  m.push(
+   (typeof f == 'function' ? f(this[i]) : this[i][f]()) || this[i])
+
+ return m;
+}
+
+var red = 0, blue = 1, yellow = 2, faded = 3;
+function complement(a,b){ return 3 - a - b }
+
+var meetings = parseInt(arguments[0]), 
+    meet_lock = new ReentrantLock(),
+    second_in = meet_lock.newCondition(),
+    first_color = faded, second_color;
+
+function meet(color){
+ var other_color = faded;
+
+ meet_lock.lock();
+
+ if(meetings > 0){
+  if(first_color == faded){
+   first_color = color;
+   second_in.await();
+   other_color = second_color;
+  }
+  else{
+   second_color = color;
+   other_color = first_color;
+   second_in.signal();
+   meetings--;
+   first_color = faded;
+  }
+ }
+
+ meet_lock.unlock();
+
+ return other_color;
+}
+
+var total = 0, t_lock = new ReentrantLock();
+
+// Create a basic 'live' thread for each color 
+[blue, red, yellow, blue].map(function(color){
+ return new Thread(function(){
+  var c, met = 0;
+
+  while(color != faded){
+   c = meet(color); 
+   if(c == faded) color = faded;
+   else{ 
+    if(c != color) color = complement(c, color);
+    met++;
+   }
+  } 
+
+  t_lock.lock(); total += met; t_lock.unlock()
+ })
+}).map('start').map('join');
+// Start all of the threads, and then join all of them
+
+print(total);
