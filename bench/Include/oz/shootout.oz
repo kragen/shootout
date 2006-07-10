@@ -14,7 +14,7 @@ define
 
    fun {NDigits X0 Z I S0 Exp}
       if X0<Z then
-         [S0 Exp]
+         S0 # Exp
       else  
          local X S in 
             X = (X0-I)*10.0
@@ -40,9 +40,9 @@ define
       local 
          Z = {Pow 10.0 ~{IntToFloat N}}
          X = 0.5*Z + {Abs F}
-         L = {NDigits X Z {Floor X} {NSign F} 0}
+         T = {NDigits X Z {Floor X} {NSign F} 0}
       in
-         {NZeros {Nth L 1} {Nth L 2} N true}              
+         {NZeros T.1 T.2 N true}              
       end
    end
 

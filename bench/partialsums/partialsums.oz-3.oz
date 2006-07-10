@@ -5,8 +5,7 @@
 functor
 import
    System Application
-   %S at '../../Include/oz/shootout.ozf'  
-   S at 'shootout.ozf'  
+   S at '../../Include/oz/shootout.ozf'  
 define
    TwoThirds = 2.0/3.0
    [Arg] = {Application.getArgs plain}
