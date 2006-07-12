@@ -1343,7 +1343,7 @@
      'Objective C' => 'c',
      'OCaml'       => 'ml',
      'poplog'      => 'c',
-     'Parrot'      => 'perl',
+     'Parrot'      => 'shell',
      'Poplog'      => 'c',
      'Mozart/Oz'   => 'prolog',
      'Perl'        => 'shell',
