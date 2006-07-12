@@ -37,10 +37,10 @@ define
 
    % multiply vector v by matrix A and then by matrix A transposed
    proc {MultiplyAtAv V ?AtAv}
-      local U = {NewArray 0 M 0.0} in 
-         {MultiplyAv V U}
-         {MultiplyAtv U AtAv}
-      end
+      U = {NewArray 0 M 0.0} 
+   in 
+      {MultiplyAv V U}
+      {MultiplyAtv U AtAv}
    end
 
    U = {NewArray 0 M 1.0}

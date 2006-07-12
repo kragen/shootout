@@ -6,6 +6,7 @@ functor
 import
    System Application
    S at '../../Include/oz/shootout.ozf'  
+
 define
    TwoThirds = 2.0/3.0
    [Arg] = {Application.getArgs plain}
@@ -13,26 +14,26 @@ define
 
    fun {Sums I A1 A2 A3 A4 A5 A6 A7 A8 A9 Alt}
       if I =< N then
-         local K K2 K3 SK CK in
-            K = {IntToFloat I}
-            K2 = K * K
-            K3 = K2 * K
-            SK = {Sin K}
-            CK = {Cos K}
+         K K2 K3 SK CK 
+      in
+         K = {IntToFloat I}
+         K2 = K * K
+         K3 = K2 * K
+         SK = {Sin K}
+         CK = {Cos K}
 
-            {Sums 
-               I+1 	 
-               A1 + {Pow TwoThirds K-1.0}
-               A2 + 1.0/{Sqrt K}
-               A3 + 1.0/(K*(K+1.0))
-               A4 + 1.0/(K3*(SK*SK))
-               A5 + 1.0/(K3*(CK*CK))	 
-               A6 + 1.0/K
-               A7 + 1.0/K2
-               A8 + Alt/K
-               A9 + Alt/(2.0*K - 1.0)
-               ~Alt }
-         end
+         {Sums 
+            I+1 	 
+            A1 + {Pow TwoThirds K-1.0}
+            A2 + 1.0/{Sqrt K}
+            A3 + 1.0/(K*(K+1.0))
+            A4 + 1.0/(K3*(SK*SK))
+            A5 + 1.0/(K3*(CK*CK))	 
+            A6 + 1.0/K
+            A7 + 1.0/K2
+            A8 + Alt/K
+            A9 + Alt/(2.0*K - 1.0)
+            ~Alt }
       else
          A1 # A2 # A3 # A4 # A5 # A6 # A7 # A8 # A9
       end
