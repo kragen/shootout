@@ -5,7 +5,7 @@
 functor
 import
    System Application 
-   S at '../../Include/oz/shootout.ozf'  
+   S at '../../Include/oz/shootout.ozf'   
 
 define
    Pi = 3.141592653589793
@@ -34,13 +34,12 @@ define
       meth kineticEnergy($) 0.5 * @mass * (@vx*@vx + @vy*@vy + @vz*@vz) end
 
       meth potentialEnergy(B $)
-         local Dx Dy Dz Distance in 
-            Dx = @x - {B x($)} 
-            Dy = @y - {B y($)} 
-            Dz = @z - {B z($)} 
-            Distance = {Sqrt (Dx*Dx + Dy*Dy + Dz*Dz)}
-            (@mass * {B mass($)}) / Distance
-         end
+         Dx = @x - {B x($)} 
+         Dy = @y - {B y($)} 
+         Dz = @z - {B z($)} 
+         Distance = {Sqrt (Dx*Dx + Dy*Dy + Dz*Dz)}
+      in 
+         (@mass * {B mass($)}) / Distance
       end     
 
       meth increaseVelocity(Dx Dy Dz M)  
@@ -74,19 +73,17 @@ define
       end
 
       meth updateVelocitiesAfter(Dt ?B)
-         local Dx Dy Dz Distance Magnitude in 
-            Dx = @x - {B x($)} 
-            Dy = @y - {B y($)} 
-            Dz = @z - {B z($)} 
-
-            Distance = {Sqrt (Dx*Dx + Dy*Dy + Dz*Dz)}
-            Magnitude = Dt / (Distance * Distance * Distance)
-
-            {self decreaseVelocity(Dx Dy Dz ({B mass($)} * Magnitude))}
-            {B increaseVelocity(Dx Dy Dz (@mass * Magnitude))}
-         end
+         Dx = @x - {B x($)} 
+         Dy = @y - {B y($)} 
+         Dz = @z - {B z($)} 
+         Distance = {Sqrt (Dx*Dx + Dy*Dy + Dz*Dz)}
+         Magnitude = Dt / (Distance * Distance * Distance)
+      in 
+         {self decreaseVelocity(Dx Dy Dz ({B mass($)} * Magnitude))}
+         {B increaseVelocity(Dx Dy Dz (@mass * Magnitude))}
       end
-   end
+
+   end   % Body
 
 
    Sun = {New Body init(0.0 0.0 0.0 0.0 0.0 0.0 SolarMass)}
@@ -136,42 +133,40 @@ define
       attr bodies
 
       meth init()
-         bodies := {Tuple.toArray Sun # Jupiter # Saturn # Uranus # Neptune}
-         local 
-            A = {Tuple.toArray 0.0 # 0.0 # 0.0} 
-            N = {Array.high @bodies} 
-         in
-            for I in 1..N do {@bodies.I addMomentumTo(A)} end
-            {@bodies.1 offsetMomentum(A)}
-         end         
+         bodies := {Tuple.toArray Sun # Jupiter # Saturn # Uranus # Neptune} 
+         A = {Tuple.toArray 0.0 # 0.0 # 0.0} 
+         N = {Array.high @bodies} 
+      in
+         for I in 1..N do {@bodies.I addMomentumTo(A)} end
+         {@bodies.1 offsetMomentum(A)}     
       end
 
       meth after(Dt)
-         local N = {Array.high @bodies} in 
-            for I in 1..N do 
-               for J in I+1..N do 
-                  {@bodies.I updateVelocitiesAfter(Dt @bodies.J)}
-               end
+         N = {Array.high @bodies} 
+      in 
+         for I in 1..N do 
+            for J in I+1..N do 
+               {@bodies.I updateVelocitiesAfter(Dt @bodies.J)}
             end
-            for I in 1..N do {@bodies.I updatePositionAfter(Dt)} end
          end
+         for I in 1..N do {@bodies.I updatePositionAfter(Dt)} end
       end
 
       meth energy($)
-         local 
-            E = {NewCell 0.0} 
-            N = {Array.high @bodies} 
-         in
-            for I in 1..N do
-               E := @E + {@bodies.I kineticEnergy($)}
-               for J in I+1..N do
-                  E := @E - {@bodies.I potentialEnergy(@bodies.J $)}
-               end
+         E = {NewCell 0.0} 
+         N = {Array.high @bodies} 
+      in
+         for I in 1..N do
+            E := @E + {@bodies.I kineticEnergy($)}
+            for J in I+1..N do
+               E := @E - {@bodies.I potentialEnergy(@bodies.J $)}
             end
-            @E
          end
+         @E
       end
-   end
+
+   end   % NBodySystem
+
 
    NBody = {New NBodySystem init}
 
