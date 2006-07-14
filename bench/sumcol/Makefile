@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.29 2006-06-10 21:22:58 bfulgham Exp $
+# $Id: Makefile,v 1.30 2006-07-14 02:20:55 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -14,6 +14,7 @@ MB_GHCRTS  := +RTS -H10M
 MB_NHCRTS := +RTS -H20M -RTS
 MZSCHEMEOPTS := -uqxA
 OO2COPTS := -A --no-rtc
+PARROTOPTS := -j
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
