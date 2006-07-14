@@ -5,8 +5,7 @@
 functor
 import 
    Application System Open
-   %S at '../../Include/oz/shootout.ozf'
-   S at 'shootout.ozf'
+   S at '../../Include/oz/shootout.ozf'
 
 define
    Sequence
