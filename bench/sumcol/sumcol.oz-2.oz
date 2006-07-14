@@ -7,14 +7,14 @@ import Application System Open
 
 define
    fun {Sum F S}
-      L = {F getS($)} 
-   in 
-      if L == false then S else {Sum F S+{String.toInt L}} end
+      case {F getS($)} 
+      of false then S
+      elseof Line then {Sum F S+{String.toInt Line}} end
    end
 
    class TextFile from Open.file Open.text end
    StdIn = {New TextFile init(name:stdin)}
- 
+    
 in    
    {System.showInfo {Sum StdIn 0} }
    {Application.exit 0}   
