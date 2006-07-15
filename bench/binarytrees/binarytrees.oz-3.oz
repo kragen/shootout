@@ -15,16 +15,10 @@ define
    LongLivedTree 
 
    fun {NewTree I D}
-      if D == 0 then nil 
+      if D == 0 then nil
       else 
          tree(I {NewTree 2*I-1 D-1} {NewTree 2*I D-1})
       end
-   end
-
-   fun {ItemCheck0 T}
-      case T
-      of nil then 0
-      [] tree(I L R) then I + {ItemCheck0 L} - {ItemCheck0 R} end
    end
 
    fun {ItemCheck T}

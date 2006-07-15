@@ -21,12 +21,6 @@ define
       end
    end
 
-   fun {ItemCheck0 T}
-      case T
-      of nil then 0
-      [] tree(I L R) then I + {ItemCheck0 L} - {ItemCheck0 R} end
-   end
-
    fun {ItemCheck T}
       if T == nil then 0 
       else tree(I L R) = T in I + {ItemCheck L} - {ItemCheck R} end
