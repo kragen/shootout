@@ -39,7 +39,7 @@ define
    A = 27.0 + {IntToFloat N}
 
    Prefix1 = "Fib(" # {S.floatToString A 1} # "): "
-   Prefix2 = "Tak(" # 3*M # "," # 2*M # "," # N # "): "
+   Prefix2 = "Tak(" # 3*M # "," # 2*M # "," # M # "): "
 in
    {System.showInfo "Ack(3," # N # "): " # {AckI 3 N}}
    {System.showInfo Prefix1 # {S.floatToString {FibF A} 1} }
