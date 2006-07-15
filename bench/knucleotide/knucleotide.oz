@@ -45,7 +45,8 @@ define
 
     proc {PrintCount Fragment} Key = {String.toAtom Fragment} Count in
       Count = {Dictionary.condGet {GenerateCounts {List.length Fragment}} Key 0}
-      {System.showInfo {PadRight SPACE {Int.toString Count} 8} # Fragment}
+      %{System.showInfo {PadRight SPACE {Int.toString Count} 8} # Fragment}
+      {System.showInfo {Int.toString Count} # "\t" # Fragment}
     end
 
     % ------------- %
