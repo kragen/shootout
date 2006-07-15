@@ -1,199 +1,147 @@
-% ----------------------------------------------------------------------
-% The Great Computer Language Shootout                              
-% http://shootout.alioth.debian.org/                                
-%                                                                   
-% IUB and HOMOSAPIEN data encoded as lists of tuples. This approach is
-% much slower than encoding data as records [alternate code shown within
-% comment markers] but is used because of the need to keep physical
-% order for the building of cumulative frequency tables.
-%
-% Contributed by Anthony Borla
-% ----------------------------------------------------------------------
+% The Computer Language Shootout
+% http://shootout.alioth.debian.org/    
+% contributed by Isaac Gouy
 
 functor
-
-import
-  System(showInfo) Application(exit getArgs) Open(file text)
+import Application Open
 
 define
+   % lists convenient for declaring data
 
-  class TextFile_
-    from Open.file Open.text
-  end
+   RawALU = 
+      "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" #
+      "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" #
+      "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" #
+      "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" #
+      "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" #
+      "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" #
+      "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
 
-% ------------- %
+   RawIUB = [
+      "a"#0.27 "c"#0.12 "g"#0.12 "t"#0.27
+      "B"#0.02 "D"#0.02 "H"#0.02 "K"#0.02
+      "M"#0.02 "N"#0.02 "R"#0.02 "S"#0.02
+      "V"#0.02 "W"#0.02 "Y"#0.02 ]
 
-  ALU = 
-    {ByteString.make
-      {VirtualString.toString
-        "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" #
-        "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" #
-        "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" #
-        "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" #
-        "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" #
-        "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" #
-        "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"}}
+   RawHomoSapiens = [
+      "a"# 0.3029549426680
+      "c"# 0.1979883004921
+      "g"# 0.1975473066391
+      "t"# 0.3015094502008 ]
 
-%
-%  IUB =
-%    freqs(&a:0.27 &c:0.12 &g:0.12 &t:0.27 &B:0.02
-%          &D:0.02 &H:0.02 &K:0.02 &M:0.02 &N:0.02
-%          &R:0.02 &S:0.02 &V:0.02 &W:0.02 &Y:0.02)
-%
-%
-%  HOMOSAPIEN =
-%    freqs(&a:0.3029549426680 &c:0.1979883004921
-%          &g:0.1975473066391 &t:0.3015094502008)
-%
 
-% ------------- %
+   % arrays faster for indexed selection
 
-%
-%  fun {MakeCumulativeTable FrequencyTable}
-%    CumulativeValue = {NewCell 0.0}
-%    CumulativeTable = {Record.clone FrequencyTable} 
-%  in
-%    for Key in {Arity FrequencyTable} do
-%      CumulativeValue := @CumulativeValue + FrequencyTable.Key
-%      CumulativeTable.Key = @CumulativeValue
-%    end
-%    CumulativeTable
-%  end
-%
+   fun {MakeStringArray L} 
+      A = {NewArray 1 {Length L} nil}
+   in
+     {List.forAllInd L 
+        proc{$ I C} A.I := [C] end}
+     A
+   end
 
-  IUB = [&a#0.27 &c#0.12 &g#0.12 &t#0.27 &B#0.02
-         &D#0.02 &H#0.02 &K#0.02 &M#0.02 &N#0.02
-         &R#0.02 &S#0.02 &V#0.02 &W#0.02 &Y#0.02]
+   fun {MakeCumulative L}
+      N = {Length L}
+      A = {NewArray 1 N 0}
+      Sum = {NewCell 0.0}
 
-  HOMOSAPIEN = [&a#0.3029549426680 &c#0.1979883004921
-                &g#0.1975473066391 &t#0.3015094502008]
+      proc {Acc I Code#Percent}
+         A.I := Code # (Percent + @Sum)
+         Sum := @Sum + Percent
+      end
+   in 
+      {List.forAllInd L Acc}
+      A
+   end
 
-% ------------- %
+   ALU = {MakeStringArray {VirtualString.toString RawALU} }
+   IUB = {MakeCumulative RawIUB}
+   HomoSapiens = {MakeCumulative RawHomoSapiens}
 
-  fun {MakeCumulativeTable FrequencyTable}
-    CumulativeValue = {NewCell 0.0}
-    CumulativeTable = {NewCell nil}
-  in
-    for Key#Value in FrequencyTable do
-      CumulativeValue := @CumulativeValue + Value
-      CumulativeTable := Key#@CumulativeValue|@CumulativeTable
-    end
-    {List.reverse @CumulativeTable}
-  end
 
-% ------------- %
+   % random selection
 
-  fun {NewFasta OUT}
+   fun {PseudoRandomFunction Max}
+      IM = 139968 IMF = 139968.0
+      IA = 3877
+      IC = 29573
+      Seed = {NewCell 42} 
+   in
+      fun {$} 
+         Seed := (@Seed * IA + IC) mod IM
+         Max * {IntToFloat @Seed} / IMF
+      end
+   end
 
-    SEGMARKER = ">"  LF = &\012
+   RandomNumber = {PseudoRandomFunction 1.0}
 
-    % ------------- %
 
-    local
-      Random = {NewRandom 42}
-    in
-      fun {SelectRandom CumulativeTable}
-        RValue = {Random.next 1.0}
+   fun {SelectRandom A}      
+      fun {Select R A I N}   % simple sequential search
+         Code#Percent = A.I
+      in 
+         if R =< Percent then Code else {Select R A I+1 N} end
+      end      
+   in 
+      {Select {RandomNumber} A {Array.low A} {Array.high A}}
+   end   
+
+
+   % based on Paul Hsieh's C program
+   proc {MakeRandomFasta Id Desc A N F}
+      fun {Line I L}
+         if I > 0 then {Line I-1 L#{SelectRandom A} } else L end
+      end
+   in
+      {F  write(vs: ">" # Id # " " # Desc # "\n")}
+
+      for I in N; I > 0; I-LineLength do
+         M = if I < LineLength then I else LineLength end
       in
-        %
-        % for Key in {Arity CumulativeTable} return:RETURN do
-        %   if RValue =< CumulativeTable.Key then {RETURN Key} end
-        % end
-        %
-
-        for Key#Value in CumulativeTable return:RETURN do
-          if RValue =< Value then {RETURN Key} end
-        end
-
+         {F  write(vs: {Line M ""} # "\n")}
       end
-    end
+   end
 
-    % ------------- %
 
-    proc {RepeatFasta Id Desc N_ Sequence LineLength}
-      K = {NewCell 0}  M = {NewCell 0}  SeqLen = {ByteString.length Sequence}
-    in
-      {OUT putS({VirtualString.toString SEGMARKER # Id # " " # Desc})}
+   % repeat selection
 
-      for N in N_;(N > 0);(N - LineLength) do
-        M := if N < LineLength then N else LineLength end
-        for I in 0;(I < @M);(I + 1) do
-          if @K == SeqLen then K := 0 end
-          {OUT putC({ByteString.get Sequence @K})}
-          K := @K + 1 
-        end
-        {OUT putC(LF)}
+   proc {MakeRepeatFasta Id Desc A N F}
+      Start = {NewCell 1}
+      Last = {Array.high A}
+
+      fun {Line I N L}
+         if I =< N then {Line I+1 N L#A.I } else L end
       end
-    end
+   in
+      {F write(vs: ">" # Id # " " # Desc # "\n")}
 
-    % ------------- %
-
-    proc {RandomFasta Id Desc N_ CumulativeTable LineLength}
-      M = {NewCell 0}
-    in
-      {OUT putS({VirtualString.toString SEGMARKER # Id # " " # Desc})}
-
-      for N in N_;(N > 0);(N - LineLength) do
-        M := if N < LineLength then N else LineLength end
-        for I in 0;(I < @M);(I + 1) do
-          {OUT putC({SelectRandom CumulativeTable})}
-        end
-        {OUT putC(LF)}
+      for I in N; I > 0; I-LineLength do
+         M = if I < LineLength then I else LineLength end
+         K = @Start + M - 1
+         Stop = if K > Last then K-Last else K end
+         L
+      in
+         if K > Last then
+            L = {Line @Start Last nil}
+            Start := 1
+         else
+            L = nil          
+         end
+         {F write(vs: {Line @Start Stop L} # "\n") }
+         Start := Stop + 1 
       end
-    end
+   end
 
-    % ------------- %
 
-  in
-    ops(randomFasta:RandomFasta repeatFasta:RepeatFasta)
-  end
+   LineLength = 60
 
-% ------------- %
+   [Arg] = {Application.getArgs plain}
+   N = {String.toInt Arg}
+   StdOut = {New Open.file init(name:stdout)}
 
-  fun {NewRandom Seed}
-    local
-      IA = 3877 IC = 29573 IM = 139968
-      Last = {NewCell Seed}
-    in
-      fun {Next Max}
-        Last := (@Last * IA + IC) mod IM
-        Max * {Int.toFloat @Last} / {Int.toFloat IM}
-      end
-    end
-  in
-    ops(next:Next)
-  end
-
-% ------------- %
-
-  fun {CmdlNArg Nth Default}
-    N Nt in
-    try
-      Nt = {String.toInt {Application.getArgs plain}.Nth}
-      N = if Nt < Default then Default else Nt end
-    catch error(...) then
-      N = Default
-    end
-    N
-  end
-
-% ------------- %
-
-  N Fasta = {NewFasta {New TextFile_ init(name:stdout)}}
-
-% ------------- %
-
-in
-  N = {CmdlNArg 1 1}
-
-  {Fasta.repeatFasta "ONE" "Homo sapiens alu" (N * 2) ALU 60}
-
-  {Fasta.randomFasta "TWO" "IUB ambiguity codes" (N * 3)
-    {MakeCumulativeTable IUB} 60}
-
-  {Fasta.randomFasta "THREE" "Homo sapiens frequency" (N * 5)
-    {MakeCumulativeTable HOMOSAPIEN} 60}
-
-  {Application.exit 0}
+in   
+   {MakeRepeatFasta "ONE" "Homo sapiens alu" ALU N*2 StdOut}
+   {MakeRandomFasta "TWO" "IUB ambiguity codes" IUB N*3 StdOut} 
+   {MakeRandomFasta "THREE" "Homo sapiens frequency" HomoSapiens N*5 StdOut} 
+   {Application.exit 0}   
 end
-

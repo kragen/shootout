@@ -1,97 +1,53 @@
-% ----------------------------------------------------------------------
-% The Great Computer Language Shootout                              
-% http://shootout.alioth.debian.org/                                
-%                                                                   
-% Contributed by Anthony Borla
-% ----------------------------------------------------------------------
+% The Computer Language Shootout
+% http://shootout.alioth.debian.org/    
+% contributed by Isaac Gouy
 
 functor
-
-import
-  System(showInfo show) Application(exit getArgs)
+import Application System
 
 define
+   [Arg] = {Application.getArgs plain}
+   N = {String.toInt Arg}
 
-% ------------- %
+   Min_ = 4
+   Max_ = {Max Min_+2 N}
+   StretchDepth = Max_ + 1
+   LongLivedTree 
 
-  fun {MakeTree Item Left Right}
-    tree(item:Item left:Left right:Right)
-  end
+   fun {NewTree I D}
+      if D == 0 then nil
+      else 
+         tree(I {NewTree 2*I-1 D-1} {NewTree 2*I D-1})
+      end
+   end
 
-% ------------- %
+   fun {ItemCheck T}
+      if T == nil then 0 
+      else tree(I L R) = T in I + {ItemCheck L} - {ItemCheck R} end
+   end
 
-  fun {BottomUpTree Item Depth}
-    if Depth > 0 then
-      {MakeTree Item
-        {BottomUpTree (2 * Item - 1) (Depth - 1)}
-        {BottomUpTree (2 * Item) (Depth - 1)}}
-    else
-      {MakeTree Item nil nil}
-    end
-  end
+   proc {ShowItemCheck S D T}
+      {System.showInfo S # D # "\t check: " # {ItemCheck T}}
+   end
 
-% ------------- %
+   proc {ShowCheck I D Check}
+      {System.showInfo 2*I # "\t trees of depth " # D # "\t check: " # Check}
+   end
 
-  fun {CheckTree Tree}
-    if Tree.left == nil then
-      Tree.item
-    else
-      Tree.item + {CheckTree Tree.left} - {CheckTree Tree.right}
-    end
-  end
+in      
+   {ShowItemCheck "stretch tree of depth " StretchDepth {NewTree 0 StretchDepth}}
+   LongLivedTree = {NewTree 0 Max_}
 
-% ------------- %
+   for D in Min_; D=<Max_; D+2 do 
+      N = {Pow 2 Max_-D+Min_}
+      Check = {NewCell 0}
+   in
+      for I in 1..N do
+         Check := @Check + {ItemCheck {NewTree I D}} + {ItemCheck {NewTree ~I D}}
+      end
+      {ShowCheck N D @Check}
+   end
 
-  fun {CmdlNArg Nth Default}
-    N Nt in
-    try
-      Nt = {String.toInt {Application.getArgs plain}.Nth}
-      N = if Nt < Default then Default else Nt end
-    catch error(...) then
-      N = Default
-    end
-    N
-  end
-
-% ------------- %
-
-  MIN_DEPTH = 4  MAX_DEPTH  STRETCH_DEPTH  LONG_LIVED_TREE  N
-
-  ITERATIONS = {NewCell 0}  CHECK = {NewCell 0}
-
-% ------------- %
-
-in
-  N = {CmdlNArg 1 10}
-
-  MAX_DEPTH = if MIN_DEPTH + 2 > N then MIN_DEPTH + 2 else N end
-  STRETCH_DEPTH = MAX_DEPTH + 1
-
-  {System.showInfo
-    "stretch tree of depth " # STRETCH_DEPTH #
-    "\t check: " # {CheckTree {BottomUpTree 0 STRETCH_DEPTH}}}
-
-  LONG_LIVED_TREE = {BottomUpTree 0 MAX_DEPTH}
-
-  for Depth in MIN_DEPTH;(Depth =< MAX_DEPTH);(Depth + 2) do
-    ITERATIONS := {Number.pow 2 (MAX_DEPTH - Depth + MIN_DEPTH)} 
-
-    CHECK := 0
-    for I in 1;(I =< @ITERATIONS);(I + 1) do
-      CHECK := @CHECK + {CheckTree {BottomUpTree I Depth}}
-      CHECK := @CHECK + {CheckTree {BottomUpTree ~I Depth}}
-    end
-
-    {System.showInfo 
-      (@ITERATIONS * 2) #
-      "\t trees of depth " # Depth #
-      "\t check: " # @CHECK}
-  end
-
-  {System.showInfo
-    "long lived tree of depth " # MAX_DEPTH #
-    "\t check: " # {CheckTree LONG_LIVED_TREE}}
-
-  {Application.exit 0}
+   {ShowItemCheck "long lived tree of depth " Max_ LongLivedTree}
+   {Application.exit 0}   
 end
-

@@ -1,89 +1,77 @@
-% ----------------------------------------------------------------------
-% The Great Computer Language Shootout                              
-% http://shootout.alioth.debian.org/                                
-%
-% Contributed by Anthony Borla
-% ----------------------------------------------------------------------
+% The Computer Language Shootout                              
+% http://shootout.alioth.debian.org/    
+% contributed by Isaac Gouy
 
 functor
-
-import
-  System(showInfo printInfo) Application(exit getArgs) Open(file text)
+import Application Open
 
 define
+   proc {Mandelbrot F Side}
+      IXMax = Side - 1
+      IYMax = IXMax
+      XMax = {IntToFloat Side}
+      YMax = XMax
+      M = 50
+      Limit2 = 4.0
 
-  class TextFile_
-    from Open.file Open.text
-  end
 
-% ------------- %
+      proc {XLoop IX Y B N}
+         X = {IntToFloat IX}
+         Cr = 2.0*X / XMax - 1.5
+         Ci = 2.0*Y / YMax - 1.0
+         Bits
+         Bitnum
+    
+         fun {Include J Zr Zi Tr Ti}
+            if J<M andthen Tr + Ti =< Limit2 then 
+               I = 2.0 * Zr * Zi + Ci
+               R = Tr - Ti + Cr
+            in
+               {Include J+1 R I R*R I*I}
+            else 
+               Tr + Ti =< Limit2
+            end
+         end
 
-  ITERATIONS = 50 LIMIT_SQR = 4.0
+      in
+         if IX =< IXMax then
+            Bits = if {Include 0 0.0 0.0 0.0 0.0} then B*2+1 else B*2 end
+            Bitnum = N+1 
 
-% ------------- %
-
-  fun {CmdlNArg Nth Default} N Nt in
-    try
-      Nt = {String.toInt {Application.getArgs plain}.Nth}
-      N = if Nt < Default then Default else Nt end
-    catch error(...) then
-      N = Default
-    end
-    N
-  end
-
-% ------------- %
-
-  STDOUT = {New TextFile_ init(name:stdout)}
-
-  N BitNum = {NewCell 0} ByteAcc = {NewCell 0}
-
-  ZR = {NewCell 0.0} ZI = {NewCell 0.0} TR = {NewCell 0.0}
-  TI = {NewCell 0.0} CR = {NewCell 0.0} CI = {NewCell 0.0}
-
-  LIMIT_ADJ = {NewCell 1} PRINT = {NewCell false}
-
-% ------------- %
-
-in
-  N = {CmdlNArg 1 1}
-
-  {STDOUT putS({VirtualString.toString "P4\n" # N # " " # N})}
-
-  for Y in 0..(N - 1) do
-    for X in 0..(N - 1) do
-      ZR := 0.0 ZI := 0.0 TR := 0.0 TI := 0.0
-
-      CR := (2.0 * {IntToFloat X} / {IntToFloat N}) - 1.5
-      CI := (2.0 * {IntToFloat Y} / {IntToFloat N}) - 1.0
-
-      LIMIT_ADJ := 1
-
-      for I in 0;(I < ITERATIONS andthen @LIMIT_ADJ \= 0);(I + 1) do
-        TR := @ZR * @ZR - @ZI * @ZI + @CR
-        TI := 2.0 * @ZR * @ZI + @CI ZR := @TR ZI := @TI
-
-        if @ZR * @ZR + @ZI * @ZI > LIMIT_SQR then LIMIT_ADJ := 0 end
+            if Bitnum == 8 then 
+               {F putC(Bits)}
+               {XLoop IX+1 Y 0 0}
+            elseif IX == IXMax then
+               {F putC( Bits * {Pow 2 (8 - (Side mod 8))} )}
+               {XLoop IX+1 Y 0 0}
+            else
+               {XLoop IX+1 Y Bits Bitnum}
+            end
+         end
       end
 
-      BitNum := @BitNum + 1
-      ByteAcc := @ByteAcc * 2 + @LIMIT_ADJ
 
-      if @BitNum == 8 then PRINT := true end
-
-      if X == (N - 1) andthen @BitNum \= 8 then
-        ByteAcc := @ByteAcc * {Number.pow 2 (8 - (N mod 8))}
-        PRINT := true
+      proc {YLoop IY}
+         if IY =< IYMax then
+            {XLoop 0 {IntToFloat IY} 0 0} 
+            {YLoop IY+1}
+         end
       end
 
-      if @PRINT then
-        {STDOUT putC(@ByteAcc)}
-        ByteAcc := 0 BitNum := 0 PRINT := false
-      end
+   in
+      {F putS("P4")}
+      {F putS({IntToString Side} # " " # {IntToString Side})}
+      {YLoop 0}
+   end
 
-    end
-  end
 
-  {Application.exit 0}
+   [Arg] = {Application.getArgs plain}
+   N = {String.toInt Arg}
+
+   class TextFile from Open.file Open.text end
+   StdOut = {New TextFile init(name:stdout)}
+
+in      
+   {Mandelbrot StdOut N}
+   {Application.exit 0}   
 end
-
