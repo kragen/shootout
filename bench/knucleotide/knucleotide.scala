@@ -47,7 +47,7 @@ object knucleotide
 
 // -------------------------------
 
-final class Knucleotide(_sequence: String)
+final class Knucleotide(sequence: String)
 {
   def printFrequencies(k: int): unit =
   {
@@ -72,7 +72,7 @@ final class Knucleotide(_sequence: String)
 
     if (countMap.contains(fragment)) count = countMap(fragment);
 
-    Console.println(padl(count, 8, ' ') + fragment);
+    Console.println(count + "\t" + fragment);
   }
 
   // -------------
@@ -104,26 +104,5 @@ final class Knucleotide(_sequence: String)
 
     return countMap;
   }
-
-  // -------------
-
-  private def padl(v: Any, padlen: int, padchar: char): String =
-  {
-    val s: String = "" + v; val reqlen: int = s.length() - padlen;
-    return if (reqlen < 0) s + makeString(Math.abs(reqlen), padchar) else s; 
-  }
-
-  // -------------
-
-  private def makeString(len: int, fillchar: char): String =
-  {
-    val sb: StringBuffer = new StringBuffer(); var i: int = 0;
-    while (i < len) { sb.append(fillchar); i = i + 1; }
-    return sb.toString();
-  }
-
-  // -------------
-
-  private val sequence: String = _sequence;
 }
 
