@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-06-13 03:47:49 bfulgham Exp $
+# $Id: Makefile,v 1.12 2006-07-16 15:37:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -18,7 +18,6 @@ POLYOPTS := -q
 GFORTH_FLAGS := -m 16M
 GNATOPTS := -fno-unroll-loops
 
-ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 PARROTOPTS := -Oc -Cj
 

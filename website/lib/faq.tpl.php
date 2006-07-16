@@ -348,7 +348,7 @@ Bash time builtin command
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <strong>Debian Linux&#8482;</strong> 'unstable', Kernel 2.6.8-1-k7 and <strong>Gentoo Linux&#8482;</strong> 2005.1 stage 3, gentoo-sources-2.6.13-r5, Reiserfs</p>
+<dd><p>We use <strong>Debian Linux&#8482;</strong> 'unstable', Kernel 2.6.17-1-k7 and <strong>Gentoo Linux&#8482;</strong> 2005.1 stage 3, gentoo-sources-2.6.13-r5, Reiserfs</p>
 </dd>
 </dl>
 </dd>

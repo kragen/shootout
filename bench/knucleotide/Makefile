@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2006-03-28 16:41:36 bfulgham Exp $
+# $Id: Makefile,v 1.15 2006-07-16 15:37:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -17,7 +17,6 @@ GFORTH_FLAGS := -m 8M
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
-ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
