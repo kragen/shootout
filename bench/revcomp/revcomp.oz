@@ -37,8 +37,7 @@ define
       IUB = {IubCodeComplements}
 
    in
-      proc {WriteReverseComplement FOut ReversedLines}
-         FirstLine|RemainingLines = ReversedLines
+      proc {WriteReverseComplement FOut FirstLine|RemainingLines}
          ShortestLength = {Length FirstLine}
 
          fun {ReverseComplement L C} IUB.C|L end
