@@ -9,16 +9,16 @@ define
    fun {NextHeader F}
       case {F getS($)} 
       of false then false
-      elseof &>|_ = Header then Header
+      [] &>|_ = Header then Header
       else {NextHeader F} end
    end
 
    fun {ReversedLines F L}
       case {F getS($)} 
       of false then L # false
-      elseof &>|_ = Header then L # Header
-      elseof &;|_ then {ReversedLines F L}
-      elseof Line then {ReversedLines F Line|L} end
+      [] &>|_ = Header then L # Header
+      [] &;|_ then {ReversedLines F L}
+      [] Line then {ReversedLines F Line|L} end
    end
 
 

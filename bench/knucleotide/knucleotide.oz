@@ -13,7 +13,7 @@ define
    proc {FindSequence F Id}
       case {F getS($)} 
       of false then skip
-      elseof &>|T then 
+      [] &>|T then 
          if {List.isPrefix Id T} then skip else {FindSequence F Id} end
       else {FindSequence F Id} end
    end
@@ -21,9 +21,9 @@ define
    fun {ReadSequence F S}
       case {F getS($)} 
       of false then S
-      elseof &>|_ then S 
-      elseof &;|_ then {ReadSequence F S}
-      elseof Line then {ReadSequence F S#{Map Line Char.toUpper}} end
+      [] &>|_ then S 
+      [] &;|_ then {ReadSequence F S}
+      [] Line then {ReadSequence F S#{Map Line Char.toUpper}} end
    end
 
    fun {GenerateFrequencies Length}

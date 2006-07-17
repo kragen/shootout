@@ -1,189 +1,106 @@
-<span class="slc">% ----------------------------------------------------------------------</span>
-<span class="slc">% The Great Computer Language Shootout</span>
+<span class="slc">% The Computer Language Shootout</span>
 <span class="slc">% http://shootout.alioth.debian.org/</span>
-<span class="slc">%</span>
-<span class="slc">% Another one of my Oz concurrency 'explorations', this implementation</span>
-<span class="slc">% [the first of several, all of which I hope will be improvements :)]</span>
-<span class="slc">% is based on the MzScheme version which uses 'synchronous channels' to</span>
-<span class="slc">% communicate between threads. Whilst this approach isn't particularly</span>
-<span class="slc">% fast I quite like it because it is a very simple design which is</span>
-<span class="slc">% readily comprehendable, and easily implemented with relatively</span>
-<span class="slc">% little code.</span>
-<span class="slc">%</span>
-<span class="slc">% The current version uses a combination of Oz 'ports' and dataflow</span>
-<span class="slc">% variables to mimic 'synchronous channels', and like the MzScheme</span>
-<span class="slc">% version, isn't particularly fast.</span>
-<span class="slc">%</span>
-<span class="slc">% Please forgive any idiomatic blunders or other language misuses. I</span>
-<span class="slc">% will need to reread CTM ['Concepts, Techniques and Models of Computer</span>
-<span class="slc">% Programming' by P. van Roy, S. Haridi] a few more times to really get</span>
-<span class="slc">% the hang of Oz-style concurrency :) !</span>
-<span class="slc">%</span>
-<span class="slc">% Contributed by Anthony Borla</span>
-<span class="slc">% ----------------------------------------------------------------------</span>
+<span class="slc">% contributed by Isaac Gouy</span>
 
 <span class="kwa">functor</span>
-
-<span class="kwa">import</span>
-  System<span class="sym">(</span>showInfo show<span class="sym">)</span> Application<span class="sym">(</span>exit getArgs<span class="sym">)</span>
+<span class="kwa">import</span> Application System
 
 <span class="kwa">define</span>
+   <span class="kwa">fun</span> <span class="sym">{</span>NewMeetingPlace<span class="sym">}</span>
+      ColourList
+      ColourPort <span class="sym">= {</span>Port<span class="sym">.</span>new ColourList<span class="sym">}</span>
+      OtherList
+      OtherPort <span class="sym">= {</span>Port<span class="sym">.</span>new OtherList<span class="sym">}</span>
+      CountDown <span class="sym">= {</span>NewCell N<span class="sym">}</span>
 
-<span class="slc">% ------------- %</span>
-
-  <span class="kwa">fun</span> <span class="sym">{</span>Complement This That<span class="sym">}</span>
-    <span class="kwa">case</span> This <span class="sym">#</span> That
-      <span class="kwa">of</span> blue <span class="sym">#</span> blue <span class="kwa">then</span> blue
-      <span class="sym">[]</span> blue <span class="sym">#</span> red <span class="kwa">then</span> yellow
-      <span class="sym">[]</span> blue <span class="sym">#</span> yellow <span class="kwa">then</span> red
-      <span class="sym">[]</span> red <span class="sym">#</span> blue <span class="kwa">then</span> yellow
-      <span class="sym">[]</span> red <span class="sym">#</span> red <span class="kwa">then</span> red
-      <span class="sym">[]</span> red <span class="sym">#</span> yellow <span class="kwa">then</span> blue
-      <span class="sym">[]</span> yellow <span class="sym">#</span> blue <span class="kwa">then</span> red
-      <span class="sym">[]</span> yellow <span class="sym">#</span> red <span class="kwa">then</span> blue
-      <span class="sym">[]</span> yellow <span class="sym">#</span> yellow <span class="kwa">then</span> yellow
-    <span class="kwa">end</span>
-  <span class="kwa">end</span>
-
-<span class="slc">% ------------- %</span>
-
-  <span class="kwa">proc</span> <span class="sym">{</span>Meeting MeetingQueue N Counter<span class="sym">}</span>
-    <span class="kwa">thread</span>
-      <span class="kwa">proc</span> <span class="sym">{</span>Meeting_ N<span class="sym">}</span>
-        <span class="kwa">if</span> N <span class="sym">==</span> <span class="num">0</span> <span class="kwa">then</span> LQ <span class="kwa">in</span>
-          meeting<span class="sym">(</span>LQ _<span class="sym">) = {</span>MeetingQueue<span class="sym">.</span>delete<span class="sym">}</span>
-          <span class="sym">{</span>LQ<span class="sym">.</span>insert nil<span class="sym">}</span>
-          <span class="sym">{</span>Meeting_ <span class="num">0</span><span class="sym">}</span>
-        <span class="kwa">else</span> LQ1 LQ2 C1 C2 <span class="kwa">in</span>
-          meeting<span class="sym">(</span>LQ1 C1<span class="sym">) = {</span>MeetingQueue<span class="sym">.</span>delete<span class="sym">}</span>
-          meeting<span class="sym">(</span>LQ2 C2<span class="sym">) = {</span>MeetingQueue<span class="sym">.</span>delete<span class="sym">}</span>
-          <span class="sym">{</span>LQ1<span class="sym">.</span>insert C2<span class="sym">}</span>
-          <span class="sym">{</span>LQ2<span class="sym">.</span>insert C1<span class="sym">}</span>
-          <span class="sym">{</span>Meeting_ <span class="sym">(</span>N <span class="sym">-</span> <span class="num">1</span><span class="sym">)}</span>
-        <span class="kwa">end</span>
+      <span class="kwa">proc</span> <span class="sym">{</span>Meetings C1<span class="sym">|</span>C2<span class="sym">|</span>C O1<span class="sym">|</span>O2<span class="sym">|</span>O<span class="sym">}</span>
+         <span class="kwa">if</span> <span class="sym">&#64;</span>CountDown <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+            O1 <span class="sym">=</span> C2
+            O2 <span class="sym">=</span> C1
+            CountDown <span class="sym">:= &#64;</span>CountDown <span class="sym">-</span> <span class="num">1</span>
+         <span class="kwa">else</span>
+            O1 <span class="sym">=</span> faded
+            O2 <span class="sym">=</span> faded
+         <span class="kwa">end</span>
+         <span class="sym">{</span>Meetings C O<span class="sym">}</span>
       <span class="kwa">end</span>
-    <span class="kwa">in</span>
-      <span class="sym">{</span>Counter<span class="sym">.</span>increment<span class="sym">}</span>
-      <span class="sym">{</span>Meeting_ N<span class="sym">}</span>
-      <span class="sym">{</span>Counter<span class="sym">.</span>decrement<span class="sym">}</span>
-    <span class="kwa">end</span>
-  <span class="kwa">end</span>
 
-<span class="slc">% ------------- %</span>
-
-  <span class="kwa">proc</span> <span class="sym">{</span>Chameneos Colour MeetingQueue ResultQueue Counter<span class="sym">}</span>
-    <span class="kwa">thread</span>
-      LQ <span class="sym">= {</span>NewSyncQueue<span class="sym">}</span>
-
-      <span class="kwa">proc</span> <span class="sym">{</span>Chameneos_ Colour OtherColour Meetings<span class="sym">}</span>
-        <span class="sym">{</span>MeetingQueue<span class="sym">.</span>insert meeting<span class="sym">(</span>LQ Colour<span class="sym">)}</span>
-        <span class="kwa">if</span> OtherColour <span class="sym">==</span> nil <span class="kwa">then</span>
-          <span class="sym">{</span>ResultQueue<span class="sym">.</span>insert Meetings<span class="sym">}</span>
-        <span class="kwa">else</span>
-          <span class="sym">{</span>Chameneos_ <span class="sym">{</span>Complement Colour OtherColour<span class="sym">} {</span>LQ<span class="sym">.</span>delete<span class="sym">} (</span>Meetings <span class="sym">+</span> <span class="num">1</span><span class="sym">)}</span>
-        <span class="kwa">end</span>
+      <span class="kwa">fun</span> <span class="sym">{</span>OtherColour Me<span class="sym">}</span>
+         Other
+      <span class="kwa">in</span>
+         <span class="sym">{</span>Port<span class="sym">.</span>send ColourPort Me<span class="sym">}</span>
+         <span class="sym">{</span>Port<span class="sym">.</span>send OtherPort Other<span class="sym">}</span>
+         Other
       <span class="kwa">end</span>
-    <span class="kwa">in</span>
-      <span class="sym">{</span>Counter<span class="sym">.</span>increment<span class="sym">}</span>
-      <span class="sym">{</span>Chameneos_ Colour Colour <span class="sym">~</span><span class="num">1</span><span class="sym">}</span>
-      <span class="sym">{</span>Counter<span class="sym">.</span>decrement<span class="sym">}</span>
-    <span class="kwa">end</span>
-  <span class="kwa">end</span>
 
-<span class="slc">% ------------- %</span>
+   <span class="kwa">in</span>
+      <span class="kwa">thread</span> <span class="sym">{</span>Meetings ColourList OtherList<span class="sym">}</span> <span class="kwa">end</span>
+      place<span class="sym">(</span>otherCreaturesColour<span class="sym">:</span> OtherColour<span class="sym">)</span>
+   <span class="kwa">end</span>
 
-  <span class="kwa">proc</span> <span class="sym">{</span>WaitForThreadExit Parent Counter<span class="sym">}</span>
-    <span class="kwa">fun</span> <span class="sym">{</span>Skip<span class="sym">}</span> nil <span class="kwa">end</span>
-  <span class="kwa">in</span>
-    <span class="kwa">for</span> _ <span class="kwa">in</span> <span class="sym">{</span>Skip<span class="sym">};({</span>Counter<span class="sym">.</span>current<span class="sym">} &gt;</span> <span class="num">0</span><span class="sym">);{</span>Skip<span class="sym">}</span> do
-      <span class="sym">{</span>Thread<span class="sym">.</span>preempt Parent<span class="sym">}</span>
-    <span class="kwa">end</span>
-  <span class="kwa">end</span>
+   MeetingPlace <span class="sym">= {</span>NewMeetingPlace<span class="sym">}</span>
 
-<span class="slc">% ------------- %</span>
 
-  <span class="kwa">fun</span> <span class="sym">{</span>NewCounter<span class="sym">}</span>
-    Count <span class="sym">= {</span>NewCell <span class="num">0</span><span class="sym">}</span>  Lock <span class="sym">= {</span>NewLock<span class="sym">}</span>
+   <span class="kwa">class</span> Creature
+      <span class="kwa">attr</span> creaturesMet<span class="sym">:</span><span class="num">0</span> colour
 
-    <span class="kwa">proc</span> <span class="sym">{</span>Increment<span class="sym">}</span> lock Lock <span class="kwa">then</span> Count <span class="sym">:= &#64;</span>Count <span class="sym">+</span> <span class="num">1</span> <span class="kwa">end end</span>
-    <span class="kwa">proc</span> <span class="sym">{</span>Decrement<span class="sym">}</span> lock Lock <span class="kwa">then</span> Count <span class="sym">:= &#64;</span>Count <span class="sym">-</span> <span class="num">1</span> <span class="kwa">end end</span>
-    <span class="kwa">fun</span> <span class="sym">{</span>Current<span class="sym">}</span> lock Lock <span class="kwa">then</span> <span class="sym">&#64;</span>Count <span class="kwa">end end</span>
+      <span class="kwa">meth</span> init<span class="sym">(</span>Colour<span class="sym">)</span> colour <span class="sym">:=</span> Colour <span class="kwa">end</span>
+      <span class="kwa">meth</span> creaturesMet<span class="sym">($) &#64;</span>creaturesMet <span class="kwa">end</span>
 
-  <span class="kwa">in</span>
-    ops<span class="sym">(</span>increment<span class="sym">:</span>Increment decrement<span class="sym">:</span>Decrement current<span class="sym">:</span>Current<span class="sym">)</span>
-  <span class="kwa">end</span>
+      <span class="kwa">meth</span> be<span class="sym">(</span>Done Marker<span class="sym">)</span>
+         <span class="kwa">thread</span> <span class="sym">{</span><span class="kwa">self</span> meet<span class="sym">}</span> Done<span class="sym">=</span>Marker <span class="kwa">end</span>
+      <span class="kwa">end</span>
 
-<span class="slc">% ------------- %</span>
+      <span class="kwa">meth</span> meet<span class="sym">()</span>
+         Other <span class="sym">= {</span>MeetingPlace<span class="sym">.</span>otherCreaturesColour <span class="sym">&#64;</span>colour<span class="sym">}</span>
+      <span class="kwa">in</span>
+         <span class="kwa">if</span> Other <span class="sym">\=</span> faded <span class="kwa">then</span>
+            creaturesMet <span class="sym">:= &#64;</span>creaturesMet <span class="sym">+</span> <span class="num">1</span>
+            colour <span class="sym">:= {</span><span class="kwa">self</span> complement<span class="sym">(</span>Other <span class="sym">$)}</span>
+            <span class="sym">{</span><span class="kwa">self</span> meet<span class="sym">}</span>
+         <span class="kwa">end</span>
+      <span class="kwa">end</span>
 
-  <span class="kwa">fun</span> <span class="sym">{</span>CmdlNArg Nth Default<span class="sym">}</span>
-    N Nt <span class="kwa">in</span>
-    <span class="kwa">try</span>
-      Nt <span class="sym">= {</span>String<span class="sym">.</span>toInt <span class="sym">{</span>Application<span class="sym">.</span>getArgs plain<span class="sym">}.</span>Nth<span class="sym">}</span>
-      N <span class="sym">=</span> <span class="kwa">if</span> Nt <span class="sym">&lt;</span> Default <span class="kwa">then</span> Default <span class="kwa">else</span> Nt <span class="kwa">end</span>
-    <span class="kwa">catch</span> error<span class="sym">(...)</span> <span class="kwa">then</span>
-      N <span class="sym">=</span> Default
-    <span class="kwa">end</span>
-    N
-  <span class="kwa">end</span>
+      <span class="kwa">meth</span> complement<span class="sym">(</span>Other <span class="sym">$)</span>
+         <span class="kwa">if</span> <span class="sym">&#64;</span>colour <span class="sym">==</span> Other <span class="kwa">then</span>
+            Other
+         <span class="kwa">else</span>
+            <span class="kwa">case</span> Other
+            <span class="kwa">of</span> blue <span class="kwa">then if</span> Other <span class="sym">==</span> red <span class="kwa">then</span> yellow <span class="kwa">else</span> red <span class="kwa">end</span>
+            elseof red <span class="kwa">then if</span> Other <span class="sym">==</span> blue <span class="kwa">then</span> yellow <span class="kwa">else</span> blue <span class="kwa">end</span>
+            elseof yellow <span class="kwa">then if</span> Other <span class="sym">==</span> blue <span class="kwa">then</span> red <span class="kwa">else</span> blue <span class="kwa">end</span>
+            <span class="kwa">end</span>
+         <span class="kwa">end</span>
+      <span class="kwa">end</span>
+   <span class="kwa">end</span>   <span class="slc">% Creature</span>
 
-<span class="slc">% ------------- %</span>
 
-  <span class="slc">%% Port-based Concurrent Queue [modified CTM implementation]</span>
+   <span class="sym">[</span>Arg<span class="sym">] = {</span>Application<span class="sym">.</span>getArgs plain<span class="sym">}</span>
+   N <span class="sym">= {</span>String<span class="sym">.</span>toInt Arg<span class="sym">}</span>
 
-  <span class="kwa">fun</span> <span class="sym">{</span>NewPortQueue<span class="sym">}</span>
-    Given GivePort <span class="sym">= {</span>NewPort Given<span class="sym">}</span>
-    Taken TakePort <span class="sym">= {</span>NewPort Taken<span class="sym">}</span>
-  <span class="kwa">in</span>
-    <span class="kwa">thread</span> Given <span class="sym">=</span> Taken <span class="kwa">end</span>
-    ops<span class="sym">(</span>insert<span class="sym">:</span><span class="kwa">proc</span> <span class="sym">{$</span> X<span class="sym">} {</span>Send GivePort X<span class="sym">}</span> <span class="kwa">end</span>
-        delete<span class="sym">:</span><span class="kwa">proc</span> <span class="sym">{$</span> X<span class="sym">} {</span>Send TakePort X<span class="sym">}</span> <span class="kwa">end</span><span class="sym">)</span>
-  <span class="kwa">end</span>
+   Colours <span class="sym">= [</span>blue red yellow blue<span class="sym">]</span>
+   Creatures <span class="sym">= {</span>Map Colours <span class="kwa">fun</span><span class="sym">{$</span> C<span class="sym">} {</span>New Creature init<span class="sym">(</span>C<span class="sym">)}</span> <span class="kwa">end</span><span class="sym">}</span>
 
-  <span class="slc">%% Synchronous Concurrent Queue [implemented as described in CTM text]</span>
+   <span class="kwa">proc</span> <span class="sym">{</span>WaitForMeetingsToEnd Creatures Marker<span class="sym">}</span>
+      <span class="kwa">if</span> Creatures <span class="sym">\=</span> nil <span class="kwa">then</span>
+         C<span class="sym">|</span>Cs <span class="sym">=</span> Creatures
+         Done
+      <span class="kwa">in</span>
+         <span class="sym">{</span>C be<span class="sym">(</span>Done Marker<span class="sym">)}</span>
+         <span class="sym">{</span>WaitForMeetingsToEnd Cs Done<span class="sym">}</span>
+      <span class="kwa">end</span>
+      <span class="sym">{</span>Wait Marker<span class="sym">}</span>
+   <span class="kwa">end</span>
 
-  <span class="kwa">fun</span> <span class="sym">{</span>NewSyncQueue<span class="sym">}</span>
-    C <span class="sym">= {</span>NewPortQueue<span class="sym">}</span>
-
-    <span class="kwa">proc</span> <span class="sym">{</span>Insert X<span class="sym">}</span>
-      <span class="sym">{</span>Wait X<span class="sym">}</span>
-      <span class="sym">{</span>C<span class="sym">.</span>insert X<span class="sym">}</span>
-    <span class="kwa">end</span>
-
-    <span class="kwa">fun</span> <span class="sym">{</span>Delete<span class="sym">}</span>
-      X
-    <span class="kwa">in</span>
-      <span class="sym">{</span>C<span class="sym">.</span>delete X<span class="sym">}</span>
-      <span class="sym">{</span>Wait X<span class="sym">}</span>
-      X
-    <span class="kwa">end</span>
-  <span class="kwa">in</span>
-    ops<span class="sym">(</span>insert<span class="sym">:</span>Insert delete<span class="sym">:</span>Delete<span class="sym">)</span>
-  <span class="kwa">end</span>
-
-<span class="slc">% ------------- %</span>
-
-  SetOfChameneos <span class="sym">= [</span>blue red yellow blue<span class="sym">]</span>
-
-  MeetingQueue <span class="sym">= {</span>NewSyncQueue<span class="sym">}</span>  ResultQueue <span class="sym">= {</span>NewSyncQueue<span class="sym">}</span>  Counter <span class="sym">= {</span>NewCounter<span class="sym">}</span>
-
-  N
-
-<span class="slc">% ------------- %</span>
 
 <span class="kwa">in</span>
-  N <span class="sym">= {</span>CmdlNArg <span class="num">1 1</span><span class="sym">}</span>
+   <span class="sym">{</span>WaitForMeetingsToEnd Creatures unit<span class="sym">}</span>
 
-  <span class="sym">{</span>Meeting MeetingQueue N Counter<span class="sym">}</span>
+   <span class="sym">{</span>System<span class="sym">.</span>show
+      <span class="sym">{</span>FoldL
+         Creatures
+         <span class="kwa">fun</span><span class="sym">{$</span> Count C<span class="sym">} {</span>C creaturesMet<span class="sym">($)} +</span> Count <span class="kwa">end</span>
+         <span class="num">0</span><span class="sym">} }</span>
 
-  <span class="kwa">for</span> I <span class="kwa">in</span> SetOfChameneos do
-    <span class="sym">{</span>Chameneos I MeetingQueue ResultQueue Counter<span class="sym">}</span>
-  <span class="kwa">end</span>
-
-  <span class="sym">{</span>WaitForThreadExit <span class="sym">{</span>Thread<span class="sym">.</span>this<span class="sym">}</span> Counter<span class="sym">}</span>
-
-  <span class="sym">{</span>System<span class="sym">.</span>showInfo
-    <span class="sym">{</span>List<span class="sym">.</span>foldL SetOfChameneos <span class="kwa">fun</span> <span class="sym">{$</span> A _<span class="sym">} (</span>A <span class="sym">+ {</span>ResultQueue<span class="sym">.</span>delete<span class="sym">})</span> <span class="kwa">end</span> <span class="num">0</span><span class="sym">}}</span>
-
-  <span class="sym">{</span>Application<span class="sym">.</span>exit <span class="num">0</span><span class="sym">}</span>
+   <span class="sym">{</span>Application<span class="sym">.</span>exit <span class="num">0</span><span class="sym">}</span>
 <span class="kwa">end</span>
-
