@@ -1,0 +1,61 @@
+;;; http://shootout.alioth.debian.org/gp4/benchmark.php?test=revcomp
+;;; Michael Weber <michaelw@foldr.org>
+;;; 2006-07-18
+
+(defconstant +buffer-size+ (expt 2 15))
+
+(defconstant +lut+
+  (let ((lut (make-array 256 :element-type '(unsigned-byte 8) :initial-element (char-code #\*))))
+    (loop for a across "wsatugcyrkmbdhvnWSATUGCYRKMBDHVN"
+          for b across "WSTAACGRYMKVHDBNWSTAACGRYMKVHDBN"
+          do (setf (aref lut (char-code a)) (char-code b)))
+    lut))
+
+(defun main ()
+  (declare (optimize (speed 3)))
+  (with-open-file (in "/dev/stdin" :element-type #1='(unsigned-byte 8))
+    (with-open-file (out "/dev/stdout" :element-type #1# :direction :output :if-exists :append)
+      (let ((i-buf (make-array +buffer-size+ :element-type #1#))
+            (o-buf (make-array +buffer-size+ :element-type #1#))
+            (chunks '()))
+        (flet ((flush-chunks ()
+                 (let ((j 0) (k 0))
+                   (declare (type (unsigned-byte 32) j k))
+                   ;; reverse, complement, filter out old newlines, put newlines back in after 60 chars,
+                   ;; buffer output, and write buffers.  all in one go :(
+                   (loop for chunk in chunks
+                         do (loop for i from (1- (length (the (simple-array (unsigned-byte 8)) chunk))) downto 0
+                                  for byte = (aref chunk i)
+                                  unless (= byte #.(char-code #\Newline))
+                                  do (setf (aref o-buf k) (aref +lut+ byte) j (1+ j) k (1+ k))
+                                  if (= j 60) do (setf (aref o-buf k) #.(char-code #\Newline) j 0 k (1+ k))
+                                  if (> k (- +buffer-size+ 2)) do (write-sequence o-buf out :end (shiftf k 0)))
+                         finally (when (plusp k)
+                                   (write-sequence o-buf out :end k)
+                                   (when (plusp j)
+                                     (write-byte #.(char-code #\Newline) out))))
+                   (setq chunks '()))))
+          (prog ((start 0) (end 0))
+           read-chunk
+             (setq end (read-sequence i-buf in))
+             (when (zerop end) (go end-of-input))
+           parse-chunk
+             (let ((bod (position #.(char-code #\>) i-buf :start start :end end)))
+               (cond ((numberp bod)
+                      (push (subseq i-buf start bod) chunks)
+                      (setf start bod)
+                      (flush-chunks)
+                      ;; parse description
+                      (let ((eod (position #.(char-code #\Newline) i-buf :start start :end end)))
+                        (loop until (numberp eod)
+                              do (write-sequence i-buf out :start start :end end)
+                              do (setf start 0 end (read-sequence i-buf in))
+                              when (zerop end) do (go end-of-input))
+                        (write-sequence i-buf out :start start :end (incf eod))
+                        (setf start eod)
+                        (go parse-chunk)))
+                     (t (push (subseq i-buf start end) chunks)
+                        (setf start 0)
+                        (go read-chunk))))
+           end-of-input
+             (flush-chunks)))))))
