@@ -1,88 +1,59 @@
 % The Computer Language Shootout                              
 % http://shootout.alioth.debian.org/    
 % contributed by Isaac Gouy
+% based on Andrei Formiga's functional Scala program
 
 functor
-import
-   System Application 
+import Application System
 
 define
-   fun {Fannkuch N} 
-      local
-         M = N-1 
-         R = {NewCell N}
-         Check = {NewCell 0}
-         Perm = {NewArray 0 M 0}
-         Perm1 = {NewArray 0 M 0}
-         Count = {NewArray 0 M 0}
-         MaxPerm = {NewArray 0 M 0}
-         FlipsCount = {NewCell 0}
-         MaxFlipsCount = {NewCell 0} 
-         Done = {NewCell false}
-      in
+   fun {Flips A}
+      Last = A.1
+   in
+      if Last == 1 then 0
+      else
+         for I in 1..Last div 2 do
+            From = Last + 1 - I
+            Swap = A.I       
+         in
+            A.I := A.From
+            A.From := Swap
+         end
 
-         for I in 0..M do Perm1.I := I end
+         {Flips A} + 1
+      end
+   end
 
-         for break:B do
-   
-            % show we're working with the same sequence of permutations
-            if @Check<30 then
-               for I in 0..M do {System.print Perm1.I + 1} end
-               {System.printInfo "\n"}
-               Check := @Check + 1
-            end
 
-            for while: @R \= 1 do 
-               Count.(@R-1) := @R 
-               R := @R - 1 
-            end
+   proc {ShowPermutation A}
+      for I in 1..{Array.high A} do {System.printInfo A.I} end
+      {System.showInfo ""}
+   end
 
-            if {Not Perm1.0 == 0 orelse Perm1.M == M} then
-               for I in 0..M do Perm.I := Perm1.I end
-               FlipsCount := 0
+   proc {FlipPermutation A}
+      Count = {Flips {Array.clone A}}
+   in       
+      if Count > @MaxFlipsCount then MaxFlipsCount := Count end
+      if @Check < 30 then {ShowPermutation A} Check := @Check + 1 end
+   end
 
-               for break:B do
-                  local K = Perm.0 in
-                     if K == 0 then {B} end   % break loop
 
-                     for I in 0..((K+1) div 2 - 1) do 
-                        local Swap = Perm.I in
-                           Perm.I := Perm.(K-I)
-                           Perm.(K-I) := Swap
-                        end
-                     end
-                     FlipsCount := @FlipsCount + 1
-                  end
-               end
-               if @FlipsCount > @MaxFlipsCount then
-                  MaxFlipsCount := @FlipsCount
-                  for I in 0..M do MaxPerm.I := Perm1.I end
-               end
-            end
+   proc {RotateLeft ?A N}
+      Swap = A.1
+   in
+      for I in 1..N-1 do A.I := A.(I+1) end
+      A.N := Swap
+   end
 
-            for break:B do
-               if @R == N then Done := true {B} end   % return from function
-               
-               local Perm0 = Perm1.0 I = {NewCell 0} K = {NewCell 0} in
-                  for while: @I < @R do 
-                     K := @I + 1
-                     Perm1.@I := Perm1.@K 
-                     I := @K 
-                  end
-                  Perm1.@R := Perm0
-               end
-               
-               Count.@R := Count.@R - 1
-               if Count.@R > 0 then {B} end   % break loop
-
-               R := @R + 1
-            end
-
-            if @Done then {B} end
-
-         end      
-         @MaxFlipsCount   
-
+   proc {Permutations A N J}
+      if J < N then 
+         if N == 1 then 
+            {FlipPermutation A} 
+         else
+            {Permutations A N-1 0}
+            {RotateLeft A N}
+            {Permutations A N J+1}
+         end
       end
    end
 
@@ -90,8 +61,18 @@ define
    [Arg] = {Application.getArgs plain}
    N = {String.toInt Arg}
 
-in   
-   {System.showInfo "Pfannkuchen(" # {IntToString N} # ") = " # 
-      {IntToString {Fannkuch N}} }
+   fun {Numbers N} 
+      A = {NewArray 1 N 0}
+   in
+      for I in 1..N do A.I := I end
+      A
+   end
+
+   MaxFlipsCount = {NewCell 0}
+   Check = {NewCell 0}
+
+in    
+   {Permutations {Numbers N} N 0}
+   {System.showInfo "Pfannkuchen(" # N # ") = " # @MaxFlipsCount}
    {Application.exit 0}   
 end
