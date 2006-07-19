@@ -19,11 +19,9 @@ means that most programs are small and spend most of their time in I/O and nativ
   <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">"Performing Lisp Analysis of the FANNKUCH Benchmark"</a> (55KB postscript)</p></li>
   <li><p><a href="http://www-128.ibm.com/developerworks/java/library/j-jtp02225.html?ca=drs-j0805#4.0">Java theory and practice: Anatomy of a flawed microbenchmark. Is there any other kind?</a></p></li>
   <li><p><a href="http://www.brics.dk/~hosc/vol04/02-fateman.html">FRPOLY: A Benchmark Revisited</a></p></li>
-  <li><p><a href="http://h21007.www2.hp.com/dspp/tech/tech_TechDocumentDetailPage_IDX/1,1701,2155,00.html">Writing micro-benchmarks for Java&#x2122; HotSpot JVM</a></p></li>
 </ul>
 <p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>
 <ul>  
-  <li><p><a href="http://www.research.att.com/~orost/bench_plus_plus/paper.html">The Bench++ Benchmark Suite</a></p></li>
   <li><p><a href="http://ali-www.cs.umass.edu/DaCapo/gcbm.html">The DaCapo Benchmark Suite</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
 
@@ -39,7 +37,7 @@ compilers were written in the languages they compiled, and that compilers are su
 pieces of software in their own right, this introduced a highly practical benchmark that directly
 contested a compiler's complexity against its performance. Under the self compilation speed benchmark,
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
-that the intrinsic cost of the new code addition was fully compensated." <a href="http://www.ics.uci.edu/~franz/pubs-pdf/BC03.pdf"><br/>Oberon: The Overlooked Jewel</a> page 4. (73KB pdf)
+that the intrinsic cost of the new code addition was fully compensated." <br/>"Oberon: The Overlooked Jewel" Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
 </dd>
 </dl>
