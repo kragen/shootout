@@ -1,4 +1,4 @@
-% The Computer Language Shootout                              
+% The Computer Language Shootout
 % http://shootout.alioth.debian.org/    
 % contributed by Isaac Gouy
 
@@ -28,9 +28,9 @@ define
          Comp = "TVGHCDMKNYSABWRTVGHCDMKNYSABWR"
          A = {NewArray 1 &z &*}
       in
-         {List.forAllInd 
-            {List.zip Code Comp fun{$ A B} A#B end}
-               proc{$ I K#V} A.K := V end}
+         {ForAll
+            {List.zip Code Comp fun{$ K V} K#V end}
+               proc{$ K#V} A.K := V end}
          A
       end
 
