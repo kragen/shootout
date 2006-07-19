@@ -1,0 +1,97 @@
+;;;
+;;; The Computer Language Shootout
+;;; http://shootout.alioth.debian.org/
+;;;
+;;; Contributed by: Shyamal Prasad
+;;;
+;;; The chameneos benchmark in common lisp for SBCL
+;;; This code uses SBCL specific extensions
+;;;
+
+
+(declaim (optimize (speed 3) (compilation-speed 0)
+		   (safety 0) (debug 0))
+	 (inline complement-color))
+
+(defun complement-color (x y)
+  "Given color x and color y return a complement for color x"
+  (cond
+   ((eq x 'blue)
+    (if (eq y 'red)
+	'yellow
+      'red))
+
+   ((eq x 'red)
+    (if (eq y 'blue)
+	'yellow
+      'blue))
+
+   ((eq x 'yellow)
+    (if (eq y 'blue)
+	'red
+      'blue))
+   (t
+    (error "oops"))))
+
+;; the mutex/cv used to get access to the room and find other chameneos
+(defvar *room-lock* (sb-thread:make-mutex))
+(defvar *wait-queue* (sb-thread:make-waitqueue))
+
+;; Variables in the room - get *room-lock* before touching these
+(declaim (fixnum *meetings-left*) (symbol *waiting-color* *incoming-color*))
+(defvar *meetings-left* 100)
+(defvar *waiting-color* nil)
+(defvar *incoming-color* nil)
+
+;; mutex/cv to used by main thread to learn that chameneos are done
+;; SBCL currently (seems) to have no way to join a thread
+(defvar *done-lock* (sb-thread:make-mutex))
+(defvar *done-queue* (sb-thread:make-waitqueue))
+(defvar *met-list* nil) ; chameneos results, updated with *done-lock* held
+
+;;Return a closure representing the chameneos creature with specified color.
+;;When run the creature will try to meet others in the room
+(defun make-chameneos (color)
+  (declare (symbol color))
+  (let ((meetings 0)
+	(other-color nil))
+    (declare (fixnum meetings) (symbol other-color))
+    #'(lambda ()
+	(loop
+	 (sb-thread:with-mutex (*room-lock*)
+	   (when (< *meetings-left* 1)
+	     (return))
+	   (cond
+	    (*waiting-color* ; there is some one in the room
+	     (setf *incoming-color* color)
+	     (setf other-color *waiting-color*)
+	     (decf *meetings-left*)
+	     (setf *waiting-color* nil) 
+	     (sb-thread:condition-notify *wait-queue*))
+	    
+	    (t ; there is no one in the room, wait for some one
+	     (setf *waiting-color* color)
+	     (sb-thread:condition-wait *wait-queue* *room-lock*)
+	     (setf other-color *incoming-color*))))
+	 
+	 (incf meetings)
+	 (setf color (complement-color color other-color)))
+	
+	;; Let the initial thread know we are done
+	(sb-thread:with-mutex (*done-lock*)
+          (push meetings *met-list*)
+	  (sb-thread:condition-notify *done-queue*)))))
+
+(defun main (&optional (n (parse-integer (last sb-ext:*posix-argv*))))
+  (setf *meetings-left* n)
+  (setf *met-list* nil)
+  (mapcar (lambda (x)
+	    (sb-thread:make-thread (make-chameneos x)))
+	  '(blue red yellow blue))
+  (loop
+    (sb-thread:with-mutex (*done-lock*)
+      (when (eq (list-length *met-list*) 4)
+	(return))
+      (sb-thread:condition-wait *done-queue* *done-lock*)))
+  (format t "~A~%" (reduce #'+ *met-list*)))
+
