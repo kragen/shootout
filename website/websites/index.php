@@ -1,4 +1,4 @@
-<?php      
+<?php
 echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
 $D = filemtime('../data/data.csv');
 $G = filemtime('./gp4/data/data.csv');
@@ -33,10 +33,10 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p>
 
 <h5>Contribute:</h5>
-<p>these programming language comparisons are only as good as the programs contributed by the community</p>
+<p>there's nothing sacred about the programs we currently show</p>
 <ul>
-<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
-<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
+<li>you should <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
+<li>you should <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
 </ul>
 
 <h5>Use:</h5>
@@ -91,13 +91,13 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 
 
 <h5>For auld lang syne:</h5>
-<p>look back at the old 2001 Doug Bagley Benchmarks</p>
+<p>look back at the obsolete 2001 Doug Bagley Benchmarks</p>
 <table class="layout">
 <tr>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
 <h3><span class="old">
-<a title="Look back at the Old 2001 Doug Bagley Benchmarks" href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
+<a title="Look back at the obsolete 2001 Doug Bagley Benchmarks" href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
 </span></h3>
 </td>
 </tr>
