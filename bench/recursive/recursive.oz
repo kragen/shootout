@@ -1,13 +1,6 @@
 % ----------------------------------------------------------------------
 % The Computer Language Shootout                              
-% http://shootout.alioth.debian.org/                                
-%                                                                   
-% Code based on / inspired by existing, relevant Shootout submissions
-%
-% Floating point conversion routines courtesy Juergen Stuber and Jorge
-% Marques Pelizzoni [previously used in other Mozart/Oz Shooutout
-% submissions].
-%
+% http://shootout.alioth.debian.org/
 % Contributed by Anthony Borla
 % modified by Isaac Gouy
 % ----------------------------------------------------------------------
