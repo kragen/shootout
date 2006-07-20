@@ -1,0 +1,97 @@
+<span class="slc">;;;</span>
+<span class="slc">;;; The Computer Language Shootout</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; Contributed by: Shyamal Prasad</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; The chameneos benchmark in common lisp for SBCL</span>
+<span class="slc">;;; This code uses SBCL specific extensions</span>
+<span class="slc">;;;</span>
+
+
+<span class="sym">(</span>declaim <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>compilation<span class="sym">-</span>speed <span class="num">0</span><span class="sym">)</span>
+		   <span class="sym">(</span>safety <span class="num">0</span><span class="sym">) (</span>debug <span class="num">0</span><span class="sym">))</span>
+	 <span class="sym">(</span>inline complement<span class="sym">-</span>color<span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> complement<span class="sym">-</span>color <span class="sym">(</span>x y<span class="sym">)</span>
+  <span class="str">&quot;Given color x and color y return a complement for color x&quot;</span>
+  <span class="sym">(</span><span class="kwa">cond</span>
+   <span class="sym">((</span><span class="kwa">eq</span> x <span class="sym">'</span>blue<span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">eq</span> y <span class="sym">'</span>red<span class="sym">)</span>
+	<span class="sym">'</span>yellow
+      <span class="sym">'</span>red<span class="sym">))</span>
+
+   <span class="sym">((</span><span class="kwa">eq</span> x <span class="sym">'</span>red<span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">eq</span> y <span class="sym">'</span>blue<span class="sym">)</span>
+	<span class="sym">'</span>yellow
+      <span class="sym">'</span>blue<span class="sym">))</span>
+
+   <span class="sym">((</span><span class="kwa">eq</span> x <span class="sym">'</span>yellow<span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">eq</span> y <span class="sym">'</span>blue<span class="sym">)</span>
+	<span class="sym">'</span>red
+      <span class="sym">'</span>blue<span class="sym">))</span>
+   <span class="sym">(</span>t
+    <span class="sym">(</span>error <span class="str">&quot;oops&quot;</span><span class="sym">))))</span>
+
+<span class="slc">;; the mutex/cv used to get access to the room and find other chameneos</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>room<span class="sym">-</span>lock<span class="sym">* (</span>sb<span class="sym">-</span>thread<span class="sym">:</span>make<span class="sym">-</span>mutex<span class="sym">))</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>wait<span class="sym">-</span>queue<span class="sym">* (</span>sb<span class="sym">-</span>thread<span class="sym">:</span>make<span class="sym">-</span>waitqueue<span class="sym">))</span>
+
+<span class="slc">;; Variables in the room - get *room-lock* before touching these</span>
+<span class="sym">(</span>declaim <span class="sym">(</span>fixnum <span class="sym">*</span>meetings<span class="sym">-</span>left<span class="sym">*) (</span>symbol <span class="sym">*</span>waiting<span class="sym">-</span>color<span class="sym">* *</span>incoming<span class="sym">-</span>color<span class="sym">*))</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>meetings<span class="sym">-</span>left<span class="sym">*</span> <span class="num">100</span><span class="sym">)</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>waiting<span class="sym">-</span>color<span class="sym">*</span> nil<span class="sym">)</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>incoming<span class="sym">-</span>color<span class="sym">*</span> nil<span class="sym">)</span>
+
+<span class="slc">;; mutex/cv to used by main thread to learn that chameneos are done</span>
+<span class="slc">;; SBCL currently (seems) to have no way to join a thread</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>done<span class="sym">-</span>lock<span class="sym">* (</span>sb<span class="sym">-</span>thread<span class="sym">:</span>make<span class="sym">-</span>mutex<span class="sym">))</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>done<span class="sym">-</span>queue<span class="sym">* (</span>sb<span class="sym">-</span>thread<span class="sym">:</span>make<span class="sym">-</span>waitqueue<span class="sym">))</span>
+<span class="sym">(</span>defvar <span class="sym">*</span>met<span class="sym">-</span><span class="kwa">list</span><span class="sym">*</span> nil<span class="sym">)</span> <span class="slc">; chameneos results, updated with *done-lock* held</span>
+
+<span class="slc">;;Return a closure representing the chameneos creature with specified color.</span>
+<span class="slc">;;When run the creature will try to meet others in the room</span>
+<span class="sym">(</span><span class="kwa">defun</span> make<span class="sym">-</span>chameneos <span class="sym">(</span>color<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>symbol color<span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>meetings <span class="num">0</span><span class="sym">)</span>
+	<span class="sym">(</span>other<span class="sym">-</span>color nil<span class="sym">))</span>
+    <span class="sym">(</span>declare <span class="sym">(</span>fixnum meetings<span class="sym">) (</span>symbol other<span class="sym">-</span>color<span class="sym">))</span>
+    #<span class="sym">'(</span><span class="kwa">lambda</span> <span class="sym">()</span>
+	<span class="sym">(</span>loop
+	 <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>with<span class="sym">-</span>mutex <span class="sym">(*</span>room<span class="sym">-</span>lock<span class="sym">*)</span>
+	   <span class="sym">(</span>when <span class="sym">(&lt; *</span>meetings<span class="sym">-</span>left<span class="sym">*</span> <span class="num">1</span><span class="sym">)</span>
+	     <span class="sym">(</span>return<span class="sym">))</span>
+	   <span class="sym">(</span><span class="kwa">cond</span>
+	    <span class="sym">(*</span>waiting<span class="sym">-</span>color<span class="sym">*</span> <span class="slc">; there is some one in the room</span>
+	     <span class="sym">(</span>setf <span class="sym">*</span>incoming<span class="sym">-</span>color<span class="sym">*</span> color<span class="sym">)</span>
+	     <span class="sym">(</span>setf other<span class="sym">-</span>color <span class="sym">*</span>waiting<span class="sym">-</span>color<span class="sym">*)</span>
+	     <span class="sym">(</span>decf <span class="sym">*</span>meetings<span class="sym">-</span>left<span class="sym">*)</span>
+	     <span class="sym">(</span>setf <span class="sym">*</span>waiting<span class="sym">-</span>color<span class="sym">*</span> nil<span class="sym">)</span>
+	     <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>condition<span class="sym">-</span>notify <span class="sym">*</span>wait<span class="sym">-</span>queue<span class="sym">*))</span>
+
+	    <span class="sym">(</span>t <span class="slc">; there is no one in the room, wait for some one</span>
+	     <span class="sym">(</span>setf <span class="sym">*</span>waiting<span class="sym">-</span>color<span class="sym">*</span> color<span class="sym">)</span>
+	     <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>condition<span class="sym">-</span>wait <span class="sym">*</span>wait<span class="sym">-</span>queue<span class="sym">* *</span>room<span class="sym">-</span>lock<span class="sym">*)</span>
+	     <span class="sym">(</span>setf other<span class="sym">-</span>color <span class="sym">*</span>incoming<span class="sym">-</span>color<span class="sym">*))))</span>
+
+	 <span class="sym">(</span>incf meetings<span class="sym">)</span>
+	 <span class="sym">(</span>setf color <span class="sym">(</span>complement<span class="sym">-</span>color color other<span class="sym">-</span>color<span class="sym">)))</span>
+
+	<span class="slc">;; Let the initial thread know we are done</span>
+	<span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>with<span class="sym">-</span>mutex <span class="sym">(*</span>done<span class="sym">-</span>lock<span class="sym">*)</span>
+          <span class="sym">(</span>push meetings <span class="sym">*</span>met<span class="sym">-</span><span class="kwa">list</span><span class="sym">*)</span>
+	  <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>condition<span class="sym">-</span>notify <span class="sym">*</span>done<span class="sym">-</span>queue<span class="sym">*)))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">(&amp;</span>optional <span class="sym">(</span>n <span class="sym">(</span>parse<span class="sym">-</span>integer <span class="sym">(</span><span class="kwa">last</span> sb<span class="sym">-</span>ext<span class="sym">:*</span>posix<span class="sym">-</span>argv<span class="sym">*))))</span>
+  <span class="sym">(</span>setf <span class="sym">*</span>meetings<span class="sym">-</span>left<span class="sym">*</span> n<span class="sym">)</span>
+  <span class="sym">(</span>setf <span class="sym">*</span>met<span class="sym">-</span><span class="kwa">list</span><span class="sym">*</span> nil<span class="sym">)</span>
+  <span class="sym">(</span><span class="kwa">mapcar</span> <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>x<span class="sym">)</span>
+	    <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>make<span class="sym">-</span>thread <span class="sym">(</span>make<span class="sym">-</span>chameneos x<span class="sym">)))</span>
+	  <span class="sym">'(</span>blue red yellow blue<span class="sym">))</span>
+  <span class="sym">(</span>loop
+    <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>with<span class="sym">-</span>mutex <span class="sym">(*</span>done<span class="sym">-</span>lock<span class="sym">*)</span>
+      <span class="sym">(</span>when <span class="sym">(</span><span class="kwa">eq</span> <span class="sym">(</span><span class="kwa">list</span><span class="sym">-</span><span class="kwa">length</span> <span class="sym">*</span>met<span class="sym">-</span><span class="kwa">list</span><span class="sym">*)</span> <span class="num">4</span><span class="sym">)</span>
+	<span class="sym">(</span>return<span class="sym">))</span>
+      <span class="sym">(</span>sb<span class="sym">-</span>thread<span class="sym">:</span>condition<span class="sym">-</span>wait <span class="sym">*</span>done<span class="sym">-</span>queue<span class="sym">* *</span>done<span class="sym">-</span>lock<span class="sym">*)))</span>
+  <span class="sym">(</span>format t <span class="str">&quot;~A~%&quot;</span> <span class="sym">(</span>reduce #<span class="sym">'+ *</span>met<span class="sym">-</span><span class="kwa">list</span><span class="sym">*)))</span>
+
