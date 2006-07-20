@@ -67,8 +67,8 @@ define
          else
             case Other
             of blue then if Other == red then yellow else red end
-            elseof red then if Other == blue then yellow else blue end
-            elseof yellow then if Other == blue then red else blue end
+            [] red then if Other == blue then yellow else blue end
+            [] yellow then if Other == blue then red else blue end
             end
          end
       end
