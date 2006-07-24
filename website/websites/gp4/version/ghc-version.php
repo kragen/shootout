@@ -1,1 +1,1 @@
-<p>Version 6.4.1</p>
+<p>Glasgow Haskell Compiler, Version 6.4.2</p>
