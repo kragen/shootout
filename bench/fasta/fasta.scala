@@ -79,7 +79,7 @@ final class Fasta
       {
         if (k == seqlen) k = 0;
 
-        lineout.append(sequence(k));
+        lineout.append(sequence.charAt(k));
 
         k = k + 1; i = i + 1;
       }

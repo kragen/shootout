@@ -35,9 +35,9 @@ object knucleotide
 
     line = Console.readLine;
 
-    while (line != null && line(0) != '>')
+    while (line != null && line.charAt(0) != '>')
     {
-      if (line(0) != ';') buffer.append(line.toUpperCase);
+      if (line.charAt(0) != ';') buffer.append(line.toUpperCase);
       line = Console.readLine;
     }
 
