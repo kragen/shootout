@@ -15,7 +15,8 @@ define
    LongLivedTree 
 
    fun {NewTree I D}
-      if D == 0 then nil
+      if D == 0 then
+         tree(I nil nil)
       else 
          tree(I {NewTree 2*I-1 D-1} {NewTree 2*I D-1})
       end
