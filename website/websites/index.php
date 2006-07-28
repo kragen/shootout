@@ -10,7 +10,7 @@ $G = filemtime('./gp4/data/data.csv');
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="benchmarking fast programming language benchmark performance benchmarks shootout program" />
+<meta name="keywords" content="benchmarking fast faster programming language benchmark performance benchmarks shootout program faster language compare comparison" />
 <meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Shootout Benchmarks</title>
@@ -33,10 +33,10 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p>
 
 <h5>Contribute:</h5>
-<p>there's nothing sacred about the programs we currently show</p>
+<p>you can make a difference</p>
 <ul>
-<li>you should <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
-<li>you should <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
+<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
+<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
 </ul>
 
 <h5>Use:</h5>
@@ -48,43 +48,40 @@ We can't - <strong>we measure particular programs</strong>.</p>
 </ul>
 
 <h5>Start:</h5>
-<p>although both websites show the same benchmarks there are differences - 
-on Gentoo : Intel some benchmarks have a higher workload, and most language implementations have been built from source.</p>
-
-<p>choose an OS : architecture, and click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
+<p>click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
 <table class="layout">
 <tr>
-<td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
-<h3><span class="debian">
-<a title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
-href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
-</td>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $G)) ?></p>
 <h3><span class="gp4">
 <a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
+<td>
+<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
+<h3><span class="debian">
+<a title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
+href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
+</td>
 </tr>
 </table>
 
 
 <h5>Extra:</h5>
-<p>more language implementations and alpha benchmarks; some language implementations are shown on one website but not the other, check both</p>
+<p>more language implementations and alpha benchmarks</p>
 <table class="layout">
 <tr>
-<td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
-<h3><span class="sandbox">
-<a title="Browse the Debian : AMD&#8482; Sempron&#8482; more language implementations and alpha benchmarks"
-href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
-</td>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $G)) ?></p>
 <h3><span class="sandbox">
 <a title="Browse the Gentoo : Intel&#174; Pentium&#174; more language implementations and alpha benchmarks"
 href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
+</td>
+<td>
+<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
+<h3><span class="sandbox">
+<a title="Browse the Debian : AMD&#8482; Sempron&#8482; more language implementations and alpha benchmarks"
+href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
