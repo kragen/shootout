@@ -30,25 +30,22 @@ $G = filemtime('./gp4/data/data.csv');
 <p>How can we benchmark a programming language?<br/>
 We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
-We can't - <strong>we measure particular programs</strong>.</p>
+We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5>Contribute:</h5>
-<p>you can make a difference</p>
+<p><strong>Contribute:</strong> you can make a difference</p>
 <ul>
 <li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
 <li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
-</ul>
+</ul><br/>
 
-<h5>Use:</h5>
-<p>these are particular truths, they are not general truths</p>
+<p><strong>Use:</strong> these are particular truths, they are not general truths</p>
 <ul>
 <li>read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a> and read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a></li>
 <li>learn about the languages - read the programs</li>
 <li>understand that <em>the faster program</em> may become <em>the slower program</em> when the workload changes</li>
-</ul>
+</ul><br/>
 
-<h5>Start:</h5>
-<p>click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
+<p><strong>Start:</strong> click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
 <table class="layout">
 <tr>
 <td>
@@ -64,11 +61,10 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table>
+</table><br/>
 
 
-<h5>Extra:</h5>
-<p>more language implementations and alpha benchmarks</p>
+<p><strong>Extra:</strong> more language implementations and alpha benchmarks</p>
 <table class="layout">
 <tr>
 <td>
@@ -84,11 +80,10 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table>
+</table><br/>
 
 
-<h5>For auld lang syne:</h5>
-<p>look back at the obsolete 2001 Doug Bagley Benchmarks</p>
+<p><strong>For auld lang syne:</strong> look back at the obsolete 2001 Doug Bagley Benchmarks</p>
 <table class="layout">
 <tr>
 <td>
