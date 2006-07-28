@@ -6,6 +6,7 @@
   - loop: explicit "while"
 
   Contributed by Kannan Goundan
+  De-optimized by Isaac Gouy
 */
 
 object binarytrees {
@@ -20,6 +21,7 @@ object binarytrees {
   }
 
   def make(i: Int, depth: Int) : Tree = depth match {
+/*  case 0 => Empty(); */
     case 0 => Node(i, Empty(), Empty());
     case _ => Node(i, make((2*i)-1, depth-1), make(2*i, depth-1));
   }

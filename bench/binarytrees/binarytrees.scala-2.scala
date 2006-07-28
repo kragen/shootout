@@ -6,6 +6,7 @@
   - loop: "for" loop over iterator range
 
   Contributed by Kannan Goundan
+  De-optimized by Isaac Gouy
 */
 
 object binarytrees {
@@ -22,6 +23,7 @@ object binarytrees {
   }
 
   def make(i: Int, depth: Int): Tree = {
+/*  if (depth == 0) null; */
     if (depth == 0) new Tree(i, null, null);
     else new Tree(i, make((2*i)-1, depth-1), make(2*i, depth-1));
   }
