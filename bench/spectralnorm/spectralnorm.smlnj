@@ -1,0 +1,95 @@
+(* 
+   The Great Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   Contributed by Anthony Borla
+*)
+
+structure Test : sig
+  val main : (string * string list) -> OS.Process.status
+end = struct
+
+  val sub = Unsafe.Array.sub
+  val upd = Unsafe.Array.update
+
+  fun a (i, j) =
+    1.0 / Real.fromInt ((i + j) * (i + j + 1) div 2 + i + 1)
+
+  fun mulAv (n, v, av) =
+    let
+      val m = n - 1
+
+      fun loopj (j, i) =
+        if j > m then ()
+        else (upd (av, i, (sub (av, i) + a (i, j) * sub (v, j))); loopj (j + 1, i))
+
+      fun loopi (i) =
+        if i > m then ()
+        else (upd (av, i, 0.0); loopj (0, i); loopi (i + 1))
+    in
+      loopi (0)
+    end
+
+  fun mulAtv (n, v, atv) =
+    let
+      val m = n - 1
+
+      fun loopj (j, i) =
+        if j > m then ()
+        else (upd (atv, i, (sub (atv, i) + a (j, i) * sub (v, j))); loopj (j + 1, i))
+
+      fun loopi (i) =
+        if i > m then ()
+        else (upd (atv, i, 0.0); loopj (0, i); loopi (i + 1))
+    in
+      loopi (0)
+    end
+
+  fun mulAtAv (n, v, atav) =
+    let
+      val u = Array.array (n, 0.0)
+    in
+      (mulAv (n, v, u); mulAtv (n, u, atav))
+    end
+
+  fun approximate (n) =
+    let
+      val m = n - 1
+
+      val u = Array.array (n, 1.0)
+      val v = Array.array (n, 0.0)
+
+      fun loop (i, j) =
+        if i > j then ()
+        else (mulAtAv (n, u, v); mulAtAv (n, v, u); loop (i + 1, j))
+
+      fun approximate' (i, vBv, vv) = 
+        if i > m then
+          (vBv, vv)
+        else
+          approximate'
+            (i + 1,
+             vBv + sub (u, i) * sub (v, i),
+             vv + sub (v, i) * sub (v, i))
+
+      val (vBv, vv) = (loop (1, 10); approximate' (0, 0.0, 0.0))
+    in
+      Math.sqrt (vBv / vv)
+    end
+
+  fun main' n =
+    let
+      val spectralnorm = approximate n
+
+      open Format
+    in
+      formatf "%.9f\n" print [REAL spectralnorm];
+
+      OS.Process.success
+    end
+
+  fun main (_, []) = main' 1
+    | main (_, arg :: _) = main' (getOpt (Int.fromString arg, 1))
+
+end
+
