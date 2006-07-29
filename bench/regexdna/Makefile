@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2006-06-29 06:17:28 bfulgham Exp $
+# $Id: Makefile,v 1.8 2006-07-29 05:03:34 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexdna
@@ -21,7 +21,7 @@ GFORTH_FLAGS := -m 16M
 GNATOPTS := -fno-unroll-loops
 GXXLDOPTS := -lboost_regex
 
-ERLFLAGS := -noinput
+#ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
