@@ -1,0 +1,269 @@
+;; ---------------------------------------------------------------------
+;; The Great Computer Language Shootout
+;; http://shootout.alioth.debian.org/
+;;
+;; Contributed by Anthony Borla
+;; ---------------------------------------------------------------------
+
+(require-extension format)
+
+(declare (disable-interrupts) (unsafe) (block) (lambda-lift)
+         (uses srfi-1 srfi-13))
+
+; -------------------------------
+
+(define (make-stringbuffer #!optional (blocksize #e512) (initial-capacity #e32))
+  (let*
+
+    ; -------------
+
+    ((capacity initial-capacity)
+
+    (buffer (make-vector capacity (make-string 0)))
+
+    (spill-buffer (make-string 0))
+
+    (next-entry #e0)
+
+    (grow-buffer
+      (lambda ()
+        (set! capacity (fx* #e2 capacity))
+        (set! buffer (vector-resize buffer capacity (make-string 0))) ))
+
+    ; -------------
+
+    (sb-free
+      (lambda ()
+        (let loop ((i (sub1 next-entry)))
+          (cond
+            ((zero? i) '())
+            (else
+              (vector-set! buffer i (make-string 0))
+              (loop (sub1 i)))))
+
+        (set! buffer (make-vector initial-capacity (make-string 0)))
+        (set! spill-buffer (make-string 0))
+        (set! next-entry #e0) ))
+
+    ; -------------
+
+    (sb-append!
+      (lambda (value)
+        (let* ((new-value (string-append spill-buffer value))
+               (new-value-length (string-length new-value)))
+          (set! spill-buffer (make-string 0))
+          (if (fx= next-entry capacity)
+            (grow-buffer))
+          (cond
+            ((fx< new-value-length blocksize) (set! spill-buffer new-value))
+            ((fx> new-value-length blocksize)
+              (if (fx>= (fx+ (fxmod new-value-length blocksize) next-entry) capacity)
+                (grow-buffer))
+              (for-each
+                (lambda (block)
+                  (vector-set! buffer next-entry block)
+                  (set! next-entry (add1 next-entry)))
+                (string-chop new-value blocksize))
+              (if (fx< (string-length (vector-ref buffer (sub1 next-entry))) blocksize)
+              (begin
+                (set! spill-buffer (vector-ref buffer (sub1 next-entry)))
+                (vector-set! buffer (sub1 next-entry) (make-string 0))
+                (set! next-entry (sub1 next-entry)))))
+            (else
+              (vector-set! buffer next-entry new-value)
+              (set! next-entry (add1 next-entry)))) )))
+
+    ; -------------
+
+    (sb-slice
+      (lambda (i length)
+        (let* ((start-block (fx/ i blocksize))
+               (start-offset (fxmod i blocksize))
+               (so+length (fx+ start-offset length)))
+          (cond
+            ((fx> start-block next-entry)
+              (make-string 0))
+            ((fx= start-block next-entry)
+              (let ((extract-length (fxmin length (string-length spill-buffer)))) 
+                (substring spill-buffer start-offset (fx+ start-offset extract-length))))
+            (else
+              (cond
+                ((fx<= so+length blocksize)
+                  (substring (vector-ref buffer start-block) start-offset (fx+ start-offset length)))
+                (else ;;; (fx> so+length blocksize)
+                  (let ((n (fx/ so+length blocksize))
+                        (last-block-length (fxmod so+length blocksize)))
+                    (let loop ((i (add1 start-block))
+                               (s (substring (vector-ref buffer start-block) start-offset)))
+                      (cond
+                        ((fx>= i n)
+                          (if (fx>= i next-entry)
+                            (let ((spill-length (string-length spill-buffer)))
+                              (cond
+                                ((zero? spill-length) s)
+                                ((fx< spill-length last-block-length) (string-append s spill-buffer))
+                                (else (string-append s (substring spill-buffer 0 last-block-length)) )))
+                          ; else
+                            (string-append s (substring (vector-ref buffer i) 0 last-block-length)) ))
+                        (else  
+                          (loop (add1 i) (string-append s (substring (vector-ref buffer i) 0 blocksize) ))) ))) )) )) )))
+
+    ; -------------
+
+    (sb-length
+      (lambda ()
+        (fx+ (fx* blocksize next-entry) (string-length spill-buffer)))) )
+
+    ; -------------
+
+    (lambda (op)
+      (cond
+        ((eq? op 'free) sb-free)
+        ((eq? op 'append!) sb-append!)
+        ((eq? op 'slice) sb-slice)
+        ((eq? op 'length) sb-length)
+        (else (lambda () (display "*** make-stringbuffer:invalid operation ***\n"))))) ))
+
+; -------------------------------
+
+(define (stringbuffer-append! sb value)
+  (apply (sb 'append!) (list value)))
+
+; -------------
+
+(define (stringbuffer-slice sb i length)
+  (apply (sb 'slice) (list i length)))
+
+; -------------
+
+(define (stringbuffer-length sb)
+  (apply (sb 'length) '()))
+
+; -------------------------------
+
+(define (make-knucleotide #!optional (blocksize #e4096))
+  (let*
+
+    ; -------------
+
+    ((load-sequence
+      (lambda ()
+        (let ((sb (make-stringbuffer blocksize)))
+          (let loop ((line (read-line)))
+            (cond
+              ((and
+                (char=? (string-ref line 0) #\>)
+                (string=? (substring line 0 6) ">THREE")) '())
+              (else
+                (loop (read-line)) )))
+          (let loop ((line (read-line)))
+            (cond
+              ((eof-object? line) '())
+              ((char=? (string-ref line 0) #\>) '())
+              ((char=? (string-ref line 0) #\;) (loop (read-line)))
+              (else
+                (string-upcase! line)
+                (stringbuffer-append! sb line)
+                (loop (read-line)) )))
+          sb)))
+
+    ; -------------
+
+    (sequence (load-sequence))
+
+    ; -------------
+
+    (generate-counts
+      (lambda (fragment-length)
+        (let ((count-table (make-hash-table))
+              (last-idx (add1 (fx- (stringbuffer-length sequence) fragment-length)) ))
+          (let loop-i ((i #e0))
+            (cond
+              ((fx>= i fragment-length) '())
+              (else
+                (let loop-j ((j i) (key (stringbuffer-slice sequence i fragment-length)))
+                  (cond
+                    ((fx>= j last-idx) '())
+                    (else
+                      (hash-table-set! count-table key
+                        (add1 (hash-table-ref/default count-table key #e0)))
+                      (loop-j (fx+ j fragment-length)
+                              (stringbuffer-slice
+                                sequence (fx+ j fragment-length) fragment-length)) )))
+                (loop-i (add1 i)))))
+          count-table)))
+
+    ; -------------
+
+    (print-frequencies
+      (lambda (fragment-length)
+        (let* ((count-table (generate-counts fragment-length))
+               (count-sum
+                 (exact->inexact
+                   (hash-table-fold
+                     count-table
+                       (lambda (key value accum) (fx+ accum value)) #e0)))
+               (freq-list
+                 (map
+                   (lambda (pair)
+                     (cons
+                       (car pair)
+                       (fp* #i100 (fp/ (exact->inexact (cdr pair)) count-sum))))
+                   (hash-table->alist count-table))) 
+               (sorted-freq-list 
+                 (sort 
+                   freq-list
+                   (lambda (x y)
+                     (if (fp= (cdr x) (cdr y))
+                       (string-ci>? (car x) (car y))
+                     ; else
+                       (> (cdr x) (cdr y)))) )))
+          (for-each
+            (lambda (pair) (format #t "~A ~,3F~%" (car pair) (cdr pair)))
+            sorted-freq-list)
+          (newline))))
+
+    ; -------------
+
+    (print-count
+      (lambda (fragment)
+        (let* ((count-table (generate-counts (string-length fragment)))
+               (fragment-count (hash-table-ref/default count-table fragment #e0) ))
+          (print fragment-count "\t" fragment) ))))
+
+    ; -------------
+
+    (lambda (op)
+      (cond
+        ((eq? op 'print-frequencies) print-frequencies)
+        ((eq? op 'print-count) print-count)
+        (else (lambda () (display "*** make-knucleotide:invalid operation ***\n"))))) ))
+
+; -------------------------------
+
+(define (print-frequencies knucleotide fragment-length)
+  (apply (knucleotide 'print-frequencies) (list fragment-length)))
+
+; -------------
+
+(define (print-count knucleotide fragment)
+  (apply (knucleotide 'print-count) (list fragment)))
+
+; -------------------------------
+
+(define (main)
+  (let ((knucleotide (make-knucleotide #e16384)))
+   
+    (print-frequencies knucleotide 1)
+    (print-frequencies knucleotide 2)
+
+    (print-count knucleotide "GGT")
+    (print-count knucleotide "GGTA")
+    (print-count knucleotide "GGTATT")
+    (print-count knucleotide "GGTATTTTAATT")
+    (print-count knucleotide "GGTATTTTAATTTATAGT")))
+
+; -------------------------------
+
+(main)
+
