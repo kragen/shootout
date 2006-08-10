@@ -4,7 +4,7 @@
 <p>Each program should</p>
 <ul>
   <li>encode the expected cumulative probabilities for 2 alphabets</li>
-  <li>generate DNA sequences, by weighted random selection from the alphabets (using the pseudo-random number generator from the <a href="benchmark.php?test=random&amp;lang=all&amp;sort=<?=$Sort;?>">random benchmark</a>)</li>
+  <li>generate DNA sequences, by weighted random selection from the alphabets (using the pseudo-random number generator from the <a href="http://shootout.alioth.debian.org/old/benchmark.php?test=random&amp;lang=all&amp;sort=<?=$Sort;?>">random benchmark</a>)</li>
   <li>generate DNA sequences, by copying from a given sequence</li>
   <li>write 3 sequences line-by-line in <a href="http://en.wikipedia.org/wiki/Fasta_format">FASTA format</a></li>
 </ul>
