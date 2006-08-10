@@ -1,0 +1,299 @@
+#include "crt.bi"
+option byval
+option explicit
+option escape
+'
+'
+type ht_node 
+  key as zstring ptr
+  _val as integer
+  _next as ht_node ptr
+end type
+'
+type ht_ht 
+  size as integer
+  tbl as ht_node ptr ptr
+  iter_index as integer
+  iter_next as ht_node ptr
+  items as integer
+  totals as integer
+end type 
+'
+type sorter
+  _string as zstring ptr
+  num as integer
+end type
+'
+'--------------------------------------------------
+function ht_hashcode(ht as ht_ht ptr, key as zstring ptr) 
+   dim as uinteger _val = 0
+   while * key
+     _val = 5 * _val + *key
+     key+=1
+   wend
+   return (_val mod ht->size)
+end function
+'
+'----------------------------------------------------
+function ht_node_create (key as zstring ptr) as ht_node ptr
+   dim newkey as zstring ptr
+   dim  node as ht_node ptr
+   node =  allocate(sizeof(ht_node))
+   if node=0 then ? "Error allocating node": end 1  
+   'no strdup in the crt lib !!!
+   newkey=allocate(strlen(key)+1)
+   if newkey=0 then ? "Can't allocate key":end 
+   memcpy (newkey,key, strlen(key)+1)
+   node->key = newkey
+   node->_val = 0
+   node->_next = NULL 
+   return node
+end function
+'
+'-----------------------------------------------------
+function ht_create(size) as ht_ht  ptr  '''
+    dim i = 0
+    #define  ht_num_primes 28 
+    dim as uinteger ht_prime_list(ht_num_primes) = {_
+    53ul,         97ul,         193ul,       389ul,       769ul,_
+    1543ul,       3079ul,       6151ul,      12289ul,     24593ul,_
+    49157ul,      98317ul,      196613ul,    393241ul,    786433ul,_
+    1572869ul,    3145739ul,    6291469ul,   12582917ul,  25165843ul,_
+    50331653ul,   100663319ul,  201326611ul, 402653189ul, 805306457ul,_ 
+    1610612741ul, 3221225473ul, 4294967291ul}
+ 
+    dim as  ht_ht ptr ht=allocate(sizeof(ht_ht))
+    
+    'print "size "; size 
+    while (ht_prime_list(i) < size): i+=1:wend
+    ht->size = ht_prime_list(i)
+    ht->tbl = callocate(ht->size * sizeof(ht_node ptr))
+    ht->iter_index = 0
+    ht->iter_next = 0
+    ht->items = 0
+    ht->totals=0 
+    return(ht)
+end function
+'
+'------------------------------------------------------
+sub ht_destroy(ht as ht_ht ptr)      '''
+    dim as ht_node  ptr cur,_next
+    dim i
+    for i=0 to ht->size-1
+	   _next = ht->tbl[i]
+	   while (_next) 
+	    cur = _next
+	    _next = _next->_next
+	    deallocate(cur->key)
+	    deallocate(cur)
+     wend	
+    next   
+    deallocate (ht->tbl)
+    deallocate(ht)
+end sub 
+'
+'---------------------------------------------------
+function ht_find_new(ht as ht_ht ptr, key as zstring ptr) as ht_node ptr
+    dim hash_code = ht_hashcode(ht, key)
+    dim as  ht_node ptr prev = 0,node = ht->tbl[hash_code]
+    'exists
+    while (node) 
+	    if strcmp(key, node->key)=0 then  return node
+	    prev = node
+	    node = node->_next
+    wend
+    'does not exist 
+    ht->items+=1
+    'not the first node 
+    if (prev) then
+      prev->_next = ht_node_create(key)
+      return prev->_next
+    'first node of string  
+    else 
+	    ht->tbl[hash_code] = ht_node_create(key)
+      return ht->tbl[hash_code] 
+    end if  
+end function
+'
+'  Hash Table iterator data/functions
+'-------------------------------------------------------
+function ht_next(ht as ht_ht ptr)as ht_node ptr   '''
+    dim index as uinteger
+    dim as ht_node ptr node = ht->iter_next
+    'first node found
+    if (node) then
+	   ht->iter_next = node->_next
+	   return(node)
+    else
+     'must search for first node  
+	   while ht->iter_index < ht->size 
+	    index = ht->iter_index
+      ht->iter_index+=1 
+	    if ht->tbl[index] then 
+		   ht->iter_next = ht->tbl[index]->_next
+		   return ht->tbl[index] 
+      end if
+	   wend 
+	  end if
+    return null
+end function
+'
+'-----------------------------------------------------
+function ht_first(ht as ht_ht ptr) as ht_node ptr   '''
+    ht->iter_index = 0
+    ht->iter_next = cast (ht_node ptr, NULL)
+    return ht_next(ht)
+end function
+'
+'-----------------------------------------------------
+function hash_table_size (fl, buflen)
+  dim  maxsize1, maxsize2
+  maxsize1 = buflen - fl
+  maxsize2 = 4
+  fl-=1
+  while (fl > 0 and maxsize2 < maxsize1)
+   maxsize2 = maxsize2 * 4
+   fl-=1
+  wend
+  if (maxsize1 < maxsize2) then return maxsize1
+  return maxsize2
+end function
+'
+'-----------------------------------------------------
+function generate_frequencies (fl, buffer as zstring ptr,buflen) as ht_ht ptr
+  dim  as ht_ht ptr  ht
+  dim reader as zstring ptr
+  dim i
+  dim as ubyte nulled
+
+  if (fl > buflen) then return NULL
+  ht = ht_create (hash_table_size (fl, buflen))
+
+   for i = 0 to  buflen -fl 
+    reader = @buffer[i]
+    nulled = reader[fl]
+    reader[fl] = 0
+    ht_find_new(ht, reader)->_val+=1
+    ht->totals+=1
+    reader[fl] = nulled
+  next
+  return ht
+end function
+'
+'----------------------------------------------------
+sub write_frequencies (fl, buffer as zstring ptr, buflen)
+
+  dim as  ht_ht ptr ht
+  dim total, i, j, size
+  dim as  ht_node ptr nd
+  dim as sorter ptr s
+  dim as sorter tmp
+
+  ht = generate_frequencies (fl, buffer, buflen)
+ 
+    total = 0
+    size = 0
+    nd = ht_first(ht)
+    While nd <> NULL
+      total = total + nd->_val
+      size += 1
+      nd = ht_next(ht)
+    Wend
+
+  s = callocate (size, sizeof (sorter))
+  i = 0
+   
+  'print ht->items,ht->size, ht->totals 
+  nd = ht_first (ht)
+
+  while nd <> NULL 
+    s[i]._string = nd->key
+    s[i].num = nd->_val
+    i+=1  
+    nd = ht_next (ht)
+  wend
+    
+  'bubble sort
+  for i = 0  to size - 2
+    for j = i + 1 to size-1
+      if s[i].num < s[j].num then 
+         swap s[i],s[j]
+  	  end if   
+	  next
+  next
+  
+  for i = 0  to size -1
+    printf ("%s %.3f\n", s[i]._string, 100 * s[i].num / ht->totals)
+  next
+  printf ("\n")
+  ht_destroy (ht)
+
+  deallocate (s)
+end sub
+'
+'----------------------------------------------------
+sub write_count (searchFor as zstring ptr, buffer as zstring ptr, buflen)
+  dim ht as ht_ht ptr
+  'print strlen(searchFor)
+  ht = generate_frequencies (strlen(searchFor), buffer, buflen)
+   
+  printf ("%d\t%s\n", ht_find_new(ht, searchFor)->_val, searchFor)
+  ht_destroy (ht)
+end sub
+'
+'----------------------------------------------------
+  dim c as ubyte
+  dim as zstring ptr _line,buffer,tmp,x
+  dim i, linelen, nothree
+  dim buflen, seqlen
+  const bufsize= 65536
+ 
+  'go to the third section
+  _line = allocate (256)
+  if _line=0 then  end -1
+  nothree = -1
+  do
+  do
+  do
+    if fgets(_line, 255, stdin)=0 then ?"Can't find section three":end
+  loop until _line[0] = asc(">") 
+  loop until _line[1] = asc("T") 
+  loop until _line[2] = asc("H")
+  'print timer-T!
+  deallocate (_line)
+  
+  'reading buffer 
+  
+  buffer = allocate (bufsize + 1)
+  if buffer =0 then   end (-1)
+    
+  x = buffer
+  seqlen = 0
+  while (fgets (x, 255, stdin)<>0) 
+     linelen=strlen(x)
+     if x[linelen-1]="\n" then linelen-=1
+     seqlen = seqlen + linelen
+	   if (seqlen + 512 >= buflen) then 
+		   buflen = buflen + bufsize
+		   tmp = reallocate (buffer, buflen + 1)
+		   if (tmp = NULL) then end(-1)
+		   buffer = tmp
+		   x = @buffer[seqlen]
+		 else
+		   x = @x[linelen]
+     end if
+	wend
+  x[0] = 0
+  
+  *buffer = ucase(*buffer)
+  write_frequencies (1, buffer, seqlen)
+  write_frequencies (2, buffer, seqlen)
+  write_count ("GGT", buffer, seqlen)
+  write_count ("GGTA", buffer, seqlen)
+  write_count ("GGTATT", buffer, seqlen)
+  write_count ("GGTATTTTAATT", buffer, seqlen)
+  write_count ("GGTATTTTAATTTATAGT", buffer, seqlen)
+  deallocate (buffer)
+end 0
+'
+'----------------------------------------------------

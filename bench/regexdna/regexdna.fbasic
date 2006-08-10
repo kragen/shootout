@@ -1,0 +1,135 @@
+' The Computer Language Shootout
+' http://shootout.alioth.debian.org/
+' contributed by Josh Goldfoot
+' converted to FreeBASIC by Simon Nash(yetifoot)
+
+Option Explicit
+Option Escape
+
+#include "crt.bi"
+#undef size_t
+#include "regex.bi"
+
+Sub regsub2 (ByVal buffer As ZString ptr, ByVal searchFor As ZString ptr, _
+             ByVal replaceWith As ZString ptr, ByVal buflen As uInteger, _
+             ByVal returnBuf As ZString ptr ptr, ByVal newLen As uInteger ptr)
+  Dim As regex_t preg
+  Dim As regmatch_t pmatch
+  Dim As Integer result, replaceLen
+    *returnBuf = malloc (buflen * 14 / 10)
+    If *returnBuf = 0 Then Exit Sub
+    If regcomp (@preg, searchFor, REG_EXTENDED OR REG_NEWLINE) <> 0 Then Exit Sub
+    Dim As uInteger start
+    replaceLen = strlen (replaceWith)
+    result = 0
+    start = 0
+    *newLen = 0
+    While result = 0
+      result = regexec (@preg, @buffer[start], 1, @pmatch, 0)
+      If result = 0 Then
+        If pmatch.rm_so > 0 Then
+          memcpy(*returnBuf + *newLen, @buffer[start], pmatch.rm_so)
+          *newLen = *newLen + pmatch.rm_so
+        End If
+        memcpy(*returnBuf + *newLen, replaceWith, replaceLen)
+        *newLen = *newLen + replaceLen
+        start = start + pmatch.rm_eo
+      Else
+        memcpy(*returnBuf + *newLen, @buffer[start], buflen-start)
+        *newLen = *newLen + buflen - start
+      End If
+    Wend
+End Sub
+
+Sub regsub (ByVal bufHandle As ZString ptr ptr, ByVal searchFor As ZString ptr, _
+            ByVal replaceWith As ZString ptr, ByVal buflen As uInteger ptr)
+  Dim As ZString ptr tmp
+  Dim As uInteger newlen
+    regsub2(*bufHandle, searchFor, replaceWith, *buflen, @tmp, @newlen)
+    free(*bufHandle)
+    *bufHandle = tmp
+    *buflen = newlen
+End Sub
+
+Function count_matches (ByVal buffer As ZString ptr, ByVal searchFor As ZString ptr, _
+                        ByVal buflen As uInteger) As uInteger
+  Dim As regex_t preg
+  Dim As regmatch_t pmatch
+  Dim As Integer result
+  Dim As uInteger matches, start
+    If regcomp (@preg, searchFor, REG_EXTENDED) <> 0 Then
+      Return buflen
+    End If
+    memset (@pmatch, 0, sizeof (pmatch))
+    result = 0
+    matches = 0
+    start = 0
+    While result = 0
+      result = regexec (@preg, @buffer[start], 1, @pmatch, 0)
+      If result = 0 Then
+        matches += 1
+        start = start + pmatch.rm_eo
+      End If
+    Wend
+    Return matches
+End Function
+
+  Dim As ZString ptr x, buffer, tmp
+  Dim As uInteger buflen, seqlen, clen, rlen
+  Dim As size_t readlen
+  Dim As Integer i
+
+  seqlen = 0
+  buflen = 206848
+  buffer = malloc (buflen + 1)
+  If buffer = 0 Then
+    End -1
+  End If
+  x = buffer
+  
+  Do
+    readlen = (fread (x, 1, buflen - seqlen - 1, stdin))
+    If readlen = 0 Then Exit Do
+    seqlen = seqlen + readlen
+    If feof (stdin) = 0 Then
+      buflen = buflen + 40960
+      tmp = realloc (buffer, buflen + 1)
+      If tmp = NULL Then
+        End -1
+      End If
+      buffer = tmp
+      x = @buffer[seqlen]
+    End If
+  Loop
+  buffer[seqlen] = 0
+  clen = seqlen
+  regsub (@buffer, ">.*|\n", "", @clen)
+
+  Dim variants(0 To 8) As ZString * 27 
+  variants(0) = "agggtaaa|tttaccct"
+  variants(1) = "[cgt]gggtaaa|tttaccc[acg]"
+  variants(2) = "a[act]ggtaaa|tttacc[agt]t"
+  variants(3) = "ag[act]gtaaa|tttac[agt]ct"
+  variants(4) = "agg[act]taaa|ttta[agt]cct"
+  variants(5) = "aggg[acg]aaa|ttt[cgt]ccct"
+  variants(6) = "agggt[cgt]aa|tt[acg]accct"
+  variants(7) = "agggta[cgt]a|t[acg]taccct"
+  variants(8) = "agggtaa[cgt]|[acg]ttaccct"
+  For i = 0 To 8
+    printf ("%s %ld\n", variants(i), count_matches (buffer, variants(i), clen))
+  Next i
+  rlen = clen
+  regsub (@buffer, "B", "(c|g|t)", @rlen)
+  regsub (@buffer, "D", "(a|g|t)", @rlen)
+  regsub (@buffer, "H", "(a|c|t)", @rlen)
+  regsub (@buffer, "K", "(g|t)", @rlen)
+  regsub (@buffer, "M", "(a|c)", @rlen)
+  regsub (@buffer, "N", "(a|c|g|t)", @rlen)
+  regsub (@buffer, "R", "(a|g)", @rlen)
+  regsub (@buffer, "S", "(c|g)", @rlen)
+  regsub (@buffer, "V", "(a|c|g)", @rlen)
+  regsub (@buffer, "W", "(a|t)", @rlen)
+  regsub (@buffer, "Y", "(c|t)", @rlen)
+  printf ("\n%ld\n%ld\n%ld\n", seqlen, clen, rlen)
+  free (buffer)
+  End 0
