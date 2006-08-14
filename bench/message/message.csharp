@@ -1,0 +1,112 @@
+/*
+ * The Computer Language Shootout
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by: Alexandre Alapetite http://alexandre.alapetite.net/
+ * Date: 2006-08-13
+ */
+
+#define NET_2_0
+
+using System;
+#if NET_2_0
+using System.Collections.Generic;
+#else
+using System.Collections;
+#endif
+using System.Threading;
+
+namespace cheap_concurrency
+{
+   public sealed class MyMessage
+   {
+      private const int numberOfThreads = 500;
+      internal static int numberOfMessagesToSend;
+
+      public static void Main(string[] args)
+      {
+         numberOfMessagesToSend = int.Parse(args[0]);
+
+         MessageThread chain = null;
+         for (int i = numberOfThreads; i > 0; i--)
+         {
+            chain = new MessageThread(chain);
+            new Thread(new ThreadStart(chain.run)).Start();
+         }
+
+         for (int i = 0; i < numberOfMessagesToSend; i++)
+            chain.Enqueue(0);
+      }
+   }
+
+   internal sealed class MessageThread
+   {
+      private MessageThread nextThread;
+      #if NET_2_0
+      private Queue<int> list = new Queue<int>();
+      #else
+      private Queue list = new Queue();
+      #endif
+      private int numberOfMessagesToSend;
+
+      internal MessageThread(MessageThread nextThread)
+      {
+         this.nextThread = nextThread;
+         this.numberOfMessagesToSend = MyMessage.numberOfMessagesToSend;
+      }
+
+      internal void run()
+      {
+         if (nextThread == null)
+         {
+            int sum = 0;
+            while (numberOfMessagesToSend > 0)
+            {
+               #if NET_2_0
+               lock (list)
+               #else
+               lock (list.SyncRoot)
+               #endif
+                  while (list.Count > 0)
+                  {
+                     #if NET_2_0
+                     sum += list.Dequeue();
+                     #else
+                     sum += (int)list.Dequeue();
+                     #endif
+                     numberOfMessagesToSend--;
+                  }
+               Thread.Sleep(0);
+            }
+            Console.WriteLine(sum);
+         }
+         else
+         {
+            while (numberOfMessagesToSend > 0)
+            {
+               #if NET_2_0
+               lock (list)
+               #else
+               lock (list.SyncRoot)
+               #endif
+                  while (list.Count > 0)
+                  {
+                     nextThread.Enqueue((int)list.Dequeue());
+                     numberOfMessagesToSend--;
+                  }
+               Thread.Sleep(0);
+            }
+         }
+      }
+
+      internal void Enqueue(int mess)
+      {
+         #if NET_2_0
+         lock (list)
+         #else
+         lock (list.SyncRoot)
+         #endif
+            list.Enqueue(mess + 1);
+      }
+   }
+}
