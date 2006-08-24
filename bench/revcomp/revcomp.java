@@ -5,11 +5,15 @@
  */
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class revcomp {
-	static final char[] comp = new char[128];
+	private static final byte[] comp = new byte[128];
+	private static final int LINE_LENGTH = 60;
+	private static final byte CR = '\n';
 	static {
-		for (int i = 0; i < comp.length; i++) comp[i] = (char) i;
+		for (int i = 0; i < comp.length; i++) comp[i] = (byte) i;
 		comp['t'] = comp['T'] = 'A';
 		comp['a'] = comp['A'] = 'T';
 		comp['g'] = comp['G'] = 'C';
@@ -25,23 +29,54 @@ public class revcomp {
 		comp['u'] = comp['U'] = 'A';
 	}
 
-	private static void reverseAndInsertCR(StringBuffer buf) {
-		buf.reverse();
-		for (int i = 60; i < buf.length(); i += 61) buf.insert(i, '\n');
-		if (buf.length() != 0) buf.append('\n');
-	}
+	private static int maxInputLineLength = 0;
 
+	// Will add CR then print the input data
+	private static void formatAndPrint(List<byte[]> lineBuffer) {
+		byte[] data = null;
+		int remainOnLine = 0;
+		int totalSize = 0;
+		int linePointer = 0;
+		byte[] printBuffer = new byte[((maxInputLineLength + 1) * lineBuffer.size())];
+
+		for (int i = lineBuffer.size() - 1; i >= 0 ; i--) {
+			data = lineBuffer.get(i);
+			if (data.length <= (remainOnLine = LINE_LENGTH - linePointer)) {
+				System.arraycopy(data, 0, printBuffer, totalSize, data.length);
+				linePointer += data.length;
+				totalSize += data.length;
+			} else {
+				linePointer = data.length - remainOnLine;
+				System.arraycopy(data, 0, printBuffer, totalSize, remainOnLine);
+				printBuffer[totalSize + remainOnLine] = CR;
+				System.arraycopy(data, remainOnLine, printBuffer, totalSize + remainOnLine + 1, linePointer);
+				totalSize += data.length + 1;
+			}
+		}
+		if (totalSize > 0) printBuffer[totalSize++] = CR;
+		System.out.write(printBuffer, 0, totalSize);
+		lineBuffer.clear();
+	}
+	
 	public static void main(String[] args) throws IOException {
+		byte[] revcompLine = null;
+		List<byte[]> revcompBuffer = new ArrayList<byte[]>();
+
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-		StringBuffer buf = new StringBuffer();
-		for (String line; (line = in.readLine()) != null;)
+		for (String line; (line = in.readLine()) != null;) {
 			if (line.startsWith(">")) {
-				reverseAndInsertCR(buf);
-				buf.append(line); buf.append('\n');
-				System.out.append(buf);
-				buf.delete(0, buf.length());
-			} else for (int i = 0; i < line.length(); i++) buf.append(comp[line.charAt(i)]);
-		reverseAndInsertCR(buf);
-		System.out.append(buf);
+				formatAndPrint(revcompBuffer);
+				System.out.println(line);
+			} else {
+				// Keep track of the maximum input line length. We will need that later to allocate a buffer that will not need to be resized.
+				if (line.length() > maxInputLineLength) maxInputLineLength = line.length();
+				revcompLine = new byte[line.length()];
+				int j = line.length() - 1;
+				// The line is reversed and complements are calculated here. 
+				for (int i = 0; i < line.length() ; i++) revcompLine[i] = comp[line.charAt(j--)];
+				revcompBuffer.add(revcompLine);
+			}
+		}
+		formatAndPrint(revcompBuffer);
 	}
 }
