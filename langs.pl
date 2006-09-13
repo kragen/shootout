@@ -327,22 +327,6 @@
        },
      },
 
-     elastic =>
-     { Lang => 'elastiC',
-       Name => 'elastiC',
-       Status => 'X',
-       Home => 'http://www.elasticworld.com/',
-       Down => 'http://www.elasticworld.com/',
-       Type => 'bytecomped/interpreted',
-       Note => 'Interpreted C-like language',
-       Ext  => 'c',
-       Verfun => sub {
-	   my $ver = `$ENV{ELASTICC} -V 2>&1`;
-	   $ver =~ s/ecc version.*$//;
-	   return($ver);
-       },
-     },
-
      erlang =>
      { Lang => 'Erlang',
        Name => 'Erlang',
