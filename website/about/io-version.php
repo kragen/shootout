@@ -1,1 +1,3 @@
-<p></p>
+<p>
+  Exception: unable to read file '--version'
+</p>

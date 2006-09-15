@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2006-06-09 23:27:20 bfulgham Exp $
+# $Id: Makefile,v 1.20 2006-09-15 14:53:55 bfulgham Exp $
 include ../../Make.header
 
 TEST    := except
@@ -13,6 +13,6 @@ POLYOPTS := -q
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	--range 100000,150000,200000,250000
+	--range 100000,150000,200000,250000 --ignore except.sbcl-2.sbcl
 
 include ../../Make.footer

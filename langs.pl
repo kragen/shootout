@@ -1314,6 +1314,7 @@
      'gawk'        => 'shell',
      'Gawk'        => 'shell',
      'Icon'        => 'shell',
+     'Io'          => 'shell',
      'Lua'         => 'dash',
      'Mercury'     => 'prolog',
      'mawk'        => 'shell',
