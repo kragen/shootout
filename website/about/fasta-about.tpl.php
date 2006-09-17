@@ -6,16 +6,15 @@
   <li>encode the expected cumulative probabilities for 2 alphabets</li>
   <li>generate DNA sequences, by weighted random selection from the alphabets, using this linear congruential generator
 <pre>
-S[j] = (A * S[j-1] + C) modulo M
-R = N * S[j] / M
 
-A (multiplier)
-C (increment)
-M (modulus)
-are appropriately chosen integral constants.
+IM = 139968
+IA = 3877
+IC = 29573
+Seed = 42
 
-S[j] (seed) is calculated from S[j-1]
-R (random number) is normalized to the interval [N,0].
+Random (Max)
+   Seed = (Seed * IA + IC) modulo IM
+   = Max * Seed / IM
 </pre>
 </li>
   <li>generate DNA sequences, by copying from a given sequence</li>
