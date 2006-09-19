@@ -1,58 +1,25 @@
-# $Id: Makefile,v 1.47 2006-06-29 06:17:28 bfulgham Exp $
+# $Id: Makefile,v 1.48 2006-09-19 16:35:12 igouy-guest Exp $
 TESTS = \
     hello \
-    ackermann \
-    ary \
     binarytrees \
     chameneos \
-    dispatch \
-    echo \
-    except \
     fannkuch \
     fasta \
-    fibo \
-    harmonic \
-    hash \
-    hash2 \
-    health \
-    heapsort \
-    implicitode \
     knucleotide \
-    lists \
     magicsquares \
     mandelbrot \
-    matrix \
     message \
-    methcall \
-    moments \
     nbody \
-    nestedloop \
     nsieve \
     nsievebits \
-    objinst \
     partialsums \
     pidigits \
-    process \
-    prodcons \
-    random \
-    raytracer \
     recursive \
     regexdna \
-    regexmatch \
     revcomp \
-    reversefile \
-    sieve \
     spectralnorm \
-    spellcheck \
-    strcat \
     sumcol \
-    takfp \
-    tcpecho \
-    tcprequest \
-    tcpsocket \
-    tcpstream \
-    wc \
-    wordfreq
+    takfp
 
 # get rid of this hardcoded path
 BIN:=/opt/shootout/shootout/bin
