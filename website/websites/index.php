@@ -83,19 +83,6 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </table><br/>
 
 
-<p><strong>For auld lang syne:</strong> look back at the obsolete 2001 Doug Bagley Benchmarks</p>
-<table class="layout">
-<tr>
-<td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
-<h3><span class="old">
-<a title="Look back at the obsolete 2001 Doug Bagley Benchmarks" href="./old/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a>
-</span></h3>
-</td>
-</tr>
-</table>
-
-
 <p class="img">
 <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
