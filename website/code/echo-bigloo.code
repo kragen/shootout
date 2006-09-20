@@ -1,0 +1,50 @@
+<span class="slc">;;; -*- mode: scheme -*-</span>
+<span class="slc">;;; $Id: echo-bigloo.code,v 1.7 2006-09-20 05:51:06 bfulgham Exp $</span>
+<span class="slc">;;; http://www.bagley.org/~doug/shootout/</span>
+
+<span class="sym">(</span>module echo
+	<span class="slc">;(option (set! *genericity* #f))</span>
+	<span class="sym">(</span>extern <span class="sym">(</span>macro fork<span class="sym">::</span>int <span class="sym">()</span> <span class="str">&quot;fork&quot;</span><span class="sym">))</span>
+	<span class="sym">(</span>extern <span class="sym">(</span>macro wait<span class="sym">::</span>int <span class="sym">()</span> <span class="str">&quot;wait&quot;</span><span class="sym">))</span>
+	<span class="sym">(</span>main main<span class="sym">))</span>
+
+<span class="slc">;; we'll use bigloo functions that automatically add/remove newline</span>
+<span class="sym">(</span>define DATA <span class="str">&quot;Hello there sailor&quot;</span><span class="sym">)</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>echo<span class="sym">-</span>client n port<span class="sym">)</span>
+  <span class="sym">(</span>let<span class="sym">* ((</span>sock <span class="sym">(</span>make<span class="sym">-</span>client<span class="sym">-</span>socket <span class="str">&quot;localhost&quot;</span> port<span class="sym">))</span>
+	 <span class="sym">(</span>sk<span class="sym">-</span>out <span class="sym">(</span>socket<span class="sym">-</span>output sock<span class="sym">))</span>
+	 <span class="sym">(</span>sk<span class="sym">-</span>in <span class="sym">(</span>socket<span class="sym">-</span>input sock<span class="sym">)))</span>
+    <span class="sym">(</span>do <span class="sym">((</span>i <span class="num">0</span> <span class="sym">(+</span> i <span class="num">1</span><span class="sym">)))</span>
+	<span class="sym">((=</span> i n<span class="sym">))</span>
+      <span class="sym">(</span>fprint sk<span class="sym">-</span>out DATA<span class="sym">)</span>
+      <span class="sym">(</span>flush<span class="sym">-</span>output<span class="sym">-</span>port sk<span class="sym">-</span>out<span class="sym">)</span>
+      <span class="sym">(</span>let <span class="sym">((</span>ans <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> sk<span class="sym">-</span>in<span class="sym">)))</span>
+	<span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">not</span> <span class="sym">(</span>string<span class="sym">=</span>? DATA ans<span class="sym">))</span>
+	    <span class="sym">(</span>error <span class="str">&quot;echo-client&quot;</span> <span class="str">&quot;BAD reply&quot;</span> ans<span class="sym">))))))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>echo<span class="sym">-</span>server n<span class="sym">)</span>
+  <span class="sym">(</span>let<span class="sym">* ((</span>ssock <span class="sym">(</span>make<span class="sym">-</span>server<span class="sym">-</span>socket<span class="sym">))</span>
+	 <span class="sym">(</span>port <span class="sym">(</span>socket<span class="sym">-</span>port<span class="sym">-</span>number ssock<span class="sym">))</span>
+	 <span class="sym">(</span>pid <span class="sym">(</span>fork<span class="sym">)))</span>
+    <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((&gt;</span> pid <span class="num">0</span><span class="sym">)</span>			<span class="slc">;parent</span>
+	   <span class="sym">(</span>socket<span class="sym">-</span>accept<span class="sym">-</span>connection ssock<span class="sym">)</span>
+	   <span class="sym">(</span>let <span class="sym">((</span>sk<span class="sym">-</span>in <span class="sym">(</span>socket<span class="sym">-</span>input ssock<span class="sym">))</span>
+		 <span class="sym">(</span>sk<span class="sym">-</span>out <span class="sym">(</span>socket<span class="sym">-</span>output ssock<span class="sym">))</span>
+		 <span class="sym">(</span>bytes <span class="num">0</span><span class="sym">))</span>
+	     <span class="sym">(</span>let loop <span class="sym">((</span><span class="kwa">line</span> <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> sk<span class="sym">-</span>in<span class="sym">)))</span>
+	       <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">not</span> <span class="sym">(</span>eof<span class="sym">-</span>object? <span class="kwa">line</span><span class="sym">))</span>
+		   <span class="sym">(</span>begin
+		     <span class="sym">(</span>fprint sk<span class="sym">-</span>out <span class="kwa">line</span><span class="sym">)</span>
+		     <span class="sym">(</span>flush<span class="sym">-</span>output<span class="sym">-</span>port sk<span class="sym">-</span>out<span class="sym">)</span>
+		     <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> bytes <span class="sym">(+</span> bytes <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">length line</span><span class="sym">)</span> <span class="num">1</span><span class="sym">))</span>
+		     <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> sk<span class="sym">-</span>in<span class="sym">)))))</span>
+	     <span class="sym">(</span><span class="kwa">print</span> <span class="str">&quot;server processed &quot;</span> bytes <span class="str">&quot; bytes&quot;</span><span class="sym">))</span>
+	   <span class="sym">(</span>wait<span class="sym">))</span>
+	  <span class="sym">(</span>else				<span class="slc">;child</span>
+	   <span class="sym">(</span>echo<span class="sym">-</span>client n port<span class="sym">)))))</span>
+
+
+<span class="sym">(</span>define <span class="sym">(</span>main args<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>n <span class="sym">(</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">and</span> <span class="sym">(= (</span><span class="kwa">length</span> args<span class="sym">)</span> <span class="num">2</span><span class="sym">) (</span>string<span class="sym">-&gt;</span>number <span class="sym">(</span><span class="kwa">cadr</span> args<span class="sym">)))</span> <span class="num">1</span><span class="sym">)))</span>
+    <span class="sym">(</span>echo<span class="sym">-</span>server n<span class="sym">)))</span>

@@ -1,0 +1,73 @@
+<span class="slc">;;; The Computer Language Shootout</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; contributed by Greg Buchholz</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; Modified by Shyamal Prasad to speed it up all around (June 2006)</span>
+<span class="slc">;;;   * fib and tak specialized for fixnum and double-float</span>
+<span class="slc">;;;   * type declarations all around</span>
+<span class="slc">;;;   * fib-d uses a local function to force sbcl and cmucl optimizers</span>
+<span class="slc">;;;     to unbox the return value (thanks to Kalle Olavi Niemitalo,</span>
+<span class="slc">;;;     Mark Wooding and other denizens of comp.lang.lisp :)</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> fib <span class="sym">(</span>n<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>fixnum n<span class="sym">))</span>
+  <span class="sym">(</span>the fixnum
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(&lt;</span> n <span class="num">2</span><span class="sym">)</span>
+	<span class="num">1</span>
+      <span class="sym">(+ (</span>fib <span class="sym">(-</span> n <span class="num">1</span><span class="sym">)) (</span>fib <span class="sym">(-</span> n <span class="num">2</span><span class="sym">))))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> fib<span class="sym">-</span>d <span class="sym">(</span>n<span class="sym">)</span>
+  <span class="sym">(</span>labels
+      <span class="sym">((</span>fib<span class="sym">-</span>nobox <span class="sym">(</span>n<span class="sym">)</span>
+		  <span class="sym">(</span>declare <span class="sym">(</span>double<span class="sym">-</span><span class="kwa">float</span> n<span class="sym">))</span>
+		  <span class="sym">(</span>the double<span class="sym">-</span><span class="kwa">float</span>
+		    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(&lt;</span> n <span class="num">2</span><span class="sym">)</span>
+			<span class="num">1.0</span>d0
+		      <span class="sym">(+ (</span>fib<span class="sym">-</span>nobox <span class="sym">(-</span> n <span class="num">1</span><span class="sym">)) (</span>fib<span class="sym">-</span>nobox <span class="sym">(-</span> n <span class="num">2</span><span class="sym">)))))))</span>
+    <span class="slc">;; inline declaration causes SBCL and CMUCL to unbox return</span>
+    <span class="slc">;; value for fib-nobox</span>
+    <span class="sym">(</span>declare <span class="sym">(</span>inline fib<span class="sym">-</span>nobox<span class="sym">))</span>
+    <span class="sym">(</span>fib<span class="sym">-</span>nobox <span class="sym">(</span>coerce n <span class="str">'double-float))))</span>
+<span class="str"></span>
+<span class="str">(defun ack (x y)</span>
+<span class="str">  (declare (fixnum x y))</span>
+<span class="str">  (the fixnum</span>
+<span class="str">    (if (zerop x)</span>
+<span class="str">	(1+ y)</span>
+<span class="str">      (if (zerop y)</span>
+<span class="str">	  (ack (1- x) 1)</span>
+<span class="str">	(ack (1- x) (ack x (1- y)))))))</span>
+<span class="str"></span>
+<span class="str">(defun tak (x y z)</span>
+<span class="str">  (declare (fixnum x y z))</span>
+<span class="str">  (the fixnum</span>
+<span class="str">    (if (&lt; y x)</span>
+<span class="str">	(tak (tak (1- x) y z)</span>
+<span class="str">	     (tak (1- y) z x)</span>
+<span class="str">	     (tak (1- z) x y))</span>
+<span class="str">      z)))</span>
+<span class="str"></span>
+<span class="str">(defun tak-d (x y z)</span>
+<span class="str">  (declare (double-float x y z))</span>
+<span class="str">  (the double-float</span>
+<span class="str">    (if (&lt; y x)</span>
+<span class="str">	(tak-d (tak-d (1- x) y z)</span>
+<span class="str">	       (tak-d (1- y) z x)</span>
+<span class="str">	       (tak-d (1- z) x y))</span>
+<span class="str">      z)))</span>
+<span class="str"></span>
+<span class="str">(defun main (&amp;optional</span>
+<span class="str">	     (n (parse-integer</span>
+<span class="str">		 (car (last #+sbcl sb-ext:*posix-argv*</span>
+<span class="str">			    #+cmu extensions:*command-line-strings*</span>
+<span class="str">			    #+gcl si::*command-args*)))))</span>
+<span class="str">  (declare (fixnum n))</span>
+<span class="str">  (format t &quot;Ack(3,~A): ~A~%&quot; n (ack 3 n))</span>
+<span class="str">  (decf n)</span>
+<span class="str">  (format t &quot;Fib(~,1F): ~,1F~%&quot; (+ 28.0d0 n) (fib-d (+ 28.0d0 n)))</span>
+<span class="str">  (format t &quot;Tak(~A,~A,~A): ~A~%&quot; (* 3 n) (* 2 n) n (tak (* 3 n)</span>
+<span class="str">							 (* 2 n)</span>
+<span class="str">							 n))</span>
+<span class="str">  (format t &quot;Fib(~A): ~A~%&quot; 3 (fib 3))</span>
+<span class="str">  (format t &quot;Tak(3.0,2.0,1.0): ~,1F~%&quot; (tak-d 3.0d0 2.0d0 1.0d0)))</span>

@@ -1,0 +1,86 @@
+#<span class="sym">!/</span>usr<span class="sym">/</span>bin<span class="sym">/</span>parrot <span class="sym">-</span>j
+# Reads from stdin a file <span class="kwa">in</span> the format made by fasta.pir
+# N <span class="sym">=</span> <span class="num">2500000</span> for fasta
+
+# <span class="num">2.2</span> s on AMD&#64;<span class="num">2000</span><span class="sym">/</span><span class="num">512</span>K cache
+
+# Original by Joshua Isom<span class="sym">,</span> heavily hacked by Leopold Toetsch
+
+# create tr table at compile<span class="sym">-</span>time
+# tr<span class="sym">{</span>wsatugcyrkmbdhvnATUGCYRKMBDHVN<span class="sym">}</span>
+#            <span class="sym">{</span>WSTAACGRYMKVHDBNTAACGRYMKVHDBN<span class="sym">}</span><span class="slc">;</span>
+
+.<span class="kwa">sub</span> tr_00_init <span class="sym">:</span>immediate
+    .<span class="kwa">local</span> pmc tr_array
+    tr_array <span class="sym">=</span> new .FixedIntegerArray   # Todo char array
+    tr_array <span class="sym">=</span> <span class="num">256</span>                      # Python compat <span class="slc">;)</span>
+    .<span class="kwa">local</span> string from<span class="sym">,</span> to
+    from <span class="sym">=</span> <span class="str">'wsatugcyrkmbdhvnATUGCYRKMBDHVN'</span>
+    to   <span class="sym">=</span> <span class="str">'WSTAACGRYMKVHDBNTAACGRYMKVHDBN'</span>
+    .<span class="kwa">local int</span> i<span class="sym">,</span> <span class="kwb">ch</span><span class="sym">,</span> r<span class="sym">,</span> len
+    len <span class="sym">=</span> <span class="kwa">length</span> from
+    null i
+<span class="kwa">loop</span><span class="sym">:</span>
+    <span class="kwb">ch</span> <span class="sym">=</span> ord from<span class="sym">,</span> i
+    r  <span class="sym">=</span> ord to<span class="sym">,</span>   i
+    tr_array<span class="sym">[</span><span class="kwb">ch</span><span class="sym">] =</span> r
+    <span class="kwa">inc</span> i
+    if i <span class="sym">&lt;</span> len goto <span class="kwa">loop</span>
+    .return<span class="sym">(</span>tr_array<span class="sym">)</span>
+.<span class="kwa">end</span>
+
+.<span class="kwa">sub</span> main <span class="sym">:</span>main
+	.<span class="kwa">local</span> pmc stdin<span class="sym">,</span> stdout
+	.<span class="kwa">local</span> string line<span class="sym">,</span> seq
+	stdin <span class="sym">=</span> getstdin
+	stdout <span class="sym">=</span> getstdout
+	# stdout is linebuffered per default <span class="sym">-</span> make it block buffered
+	stdout.<span class="str">'setbuf'</span><span class="sym">(</span><span class="num">8192</span><span class="sym">)</span>
+
+	seq <span class="sym">=</span> <span class="str">''</span>
+
+beginwhile<span class="sym">:</span>
+	line <span class="sym">=</span> readline stdin
+	unless line goto endwhile
+	$I0 <span class="sym">=</span> ord line
+	unless $I0 <span class="sym">==</span> <span class="num">62</span> goto else   # <span class="str">'&gt;'</span>
+		if seq <span class="sym">==</span> <span class="str">''</span> goto no_rev
+		print_revcomp<span class="sym">(</span>seq<span class="sym">)</span>
+		seq <span class="sym">=</span> <span class="str">''</span>
+	no_rev<span class="sym">:</span>
+		print line
+		goto endif
+	else<span class="sym">:</span>
+		chopn line<span class="sym">,</span> <span class="num">1</span>
+		seq .<span class="sym">=</span> line
+	endif<span class="sym">:</span>
+	goto beginwhile
+endwhile<span class="sym">:</span>
+	if seq <span class="sym">==</span> <span class="str">''</span> goto done
+	print_revcomp<span class="sym">(</span>seq<span class="sym">)</span>
+done<span class="sym">:</span>
+.<span class="kwa">end</span>
+
+.<span class="kwa">sub</span> print_revcomp
+	.param string line
+	.<span class="kwa">local int</span> i<span class="sym">,</span> linelen<span class="sym">,</span> <span class="kwb">ch</span>
+	linelen <span class="sym">=</span> <span class="kwa">length</span> line
+
+	reverse line
+
+	.const .<span class="kwa">Sub</span> tr_00 <span class="sym">=</span> <span class="str">'tr_00_init'</span>
+	trans line<span class="sym">,</span> tr_00
+
+	i <span class="sym">=</span> <span class="num">0</span>
+	$S0 <span class="sym">=</span> <span class="str">'x'</span>
+print_loop<span class="sym">:</span>
+	$S0 <span class="sym">=</span> substr_r line<span class="sym">,</span> i<span class="sym">,</span> <span class="num">60</span>
+	print $S0
+	print <span class="str">&quot;\n&quot;</span>
+	i <span class="sym">+=</span> <span class="num">60</span>
+	if i <span class="sym">&gt;=</span> linelen goto done
+	goto print_loop
+done<span class="sym">:</span>
+	$S0 <span class="sym">=</span> <span class="str">''</span>
+.<span class="kwa">end</span>
+

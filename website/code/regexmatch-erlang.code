@@ -1,0 +1,94 @@
+<span class="slc">%%% -*- mode: erlang -*-</span>
+<span class="slc">%%% $Id: regexmatch-erlang.code,v 1.18 2006-09-20 05:52:29 bfulgham Exp $</span>
+<span class="slc">%%% http://www.bagley.org/~doug/shootout/</span>
+
+<span class="sym">-</span><span class="kwd">module</span><span class="sym">(</span>regexmatch<span class="sym">)</span>.
+<span class="sym">-</span><span class="kwd">export</span><span class="sym">([</span>main<span class="sym">/</span><span class="num">1</span><span class="sym">])</span>.
+
+<span class="slc">%% get the program argument, which is how many test iterations to run</span>
+<span class="kwd">main</span><span class="sym">([</span>Arg<span class="sym">]) -&gt;</span>
+    Num <span class="sym">=</span> <span class="kwb">list_to_integer</span><span class="sym">(</span>Arg<span class="sym">),</span>
+    <span class="sym">{</span>ok<span class="sym">,</span> Re<span class="sym">} =</span> regexp<span class="sym">:</span><span class="kwd">parse</span><span class="sym">(</span>
+		 <span class="str">&quot;(^|[^0-9</span><span class="esc">\\</span><span class="str">(])&quot;</span>		<span class="slc">% preceeding non-digit or bol</span>
+		 <span class="str">&quot;(&quot;</span>				<span class="slc">% area code</span>
+		 <span class="str">&quot;</span><span class="esc">\\</span><span class="str">([0-9][0-9][0-9]</span><span class="esc">\\</span><span class="str">)&quot;</span>	<span class="slc">% is either 3 digits in parens</span>
+		 <span class="str">&quot;|&quot;</span>				<span class="slc">% or</span>
+		 <span class="str">&quot;[0-9][0-9][0-9]&quot;</span>		<span class="slc">% just 3 digits</span>
+		 <span class="str">&quot;)&quot;</span>				<span class="slc">% end of area code</span>
+		 <span class="str">&quot; &quot;</span>				<span class="slc">% area code is followed by one space</span>
+		 <span class="str">&quot;[0-9][0-9][0-9]&quot;</span>		<span class="slc">% exchange is 3 digits</span>
+		 <span class="str">&quot;[ -]&quot;</span>				<span class="slc">% separator is either space or dash</span>
+		 <span class="str">&quot;[0-9][0-9][0-9][0-9]&quot;</span>		<span class="slc">% last 4 digits</span>
+		 <span class="str">&quot;($|[^0-9])&quot;</span>			<span class="slc">% must be followed by a non-digit</span>
+		<span class="sym">),</span>
+    Plist <span class="sym">=</span> <span class="kwd">readlines</span><span class="sym">(),</span>
+    <span class="kwd">test</span><span class="sym">(</span>Num<span class="sym">,</span> Re<span class="sym">,</span> Plist<span class="sym">),</span>
+    <span class="kwb">halt</span><span class="sym">(</span><span class="num">0</span><span class="sym">)</span>.
+
+
+<span class="kwd">test</span><span class="sym">(</span><span class="num">1</span><span class="sym">,</span> Regexp<span class="sym">,</span> Plist<span class="sym">) -&gt;</span>
+    <span class="slc">% display output on last iteration</span>
+    Nums <span class="sym">=</span> <span class="kwd">match_phones</span><span class="sym">(</span>Regexp<span class="sym">,</span> Plist<span class="sym">),</span>
+    <span class="kwd">print_phones</span><span class="sym">(</span><span class="num">1</span><span class="sym">,</span> Nums<span class="sym">),</span>
+    true<span class="sym">;</span>
+<span class="kwd">test</span><span class="sym">(</span>N<span class="sym">,</span> Regexp<span class="sym">,</span> Plist<span class="sym">) -&gt;</span>
+    <span class="kwd">match_phones</span><span class="sym">(</span>Regexp<span class="sym">,</span> Plist<span class="sym">),</span>
+    <span class="kwd">test</span><span class="sym">(</span>N<span class="sym">-</span><span class="num">1</span><span class="sym">,</span> Regexp<span class="sym">,</span> Plist<span class="sym">)</span>.
+
+
+<span class="kwd">print_phones</span><span class="sym">(</span>Count<span class="sym">, [</span>H<span class="sym">|</span>T<span class="sym">]) -&gt;</span>
+    <span class="sym">[</span>A<span class="sym">,</span>E<span class="sym">,</span>N<span class="sym">] =</span> H<span class="sym">,</span>
+    <span class="slc">% A,E,N is a list of the matching sub-expressions, which are:</span>
+    <span class="slc">% Areacode (3 digits), Exchange (3 digits), Number (4 digits)</span>
+    io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~w: (~s) ~s-~s~n&quot;</span><span class="sym">, [</span>Count<span class="sym">,</span> A<span class="sym">,</span>E<span class="sym">,</span>N<span class="sym">]),</span>
+    <span class="kwd">print_phones</span><span class="sym">(</span>Count<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> T<span class="sym">);</span>
+<span class="kwd">print_phones</span><span class="sym">(</span>_<span class="sym">, []) -&gt;</span>
+    true.
+
+
+<span class="kwd">match_phones</span><span class="sym">(</span>Regexp<span class="sym">,</span> List<span class="sym">) -&gt;</span>
+    <span class="kwd">mapfilter</span><span class="sym">(</span>
+      <span class="kwa">fun</span><span class="sym">(</span>String<span class="sym">) -&gt;</span>
+	      <span class="kwa">case</span> regexp<span class="sym">:</span><span class="kwd">matches</span><span class="sym">(</span>String<span class="sym">,</span> Regexp<span class="sym">)</span> <span class="kwa">of</span>
+		  <span class="sym">{</span>match<span class="sym">, []}      -&gt;</span> false<span class="sym">;</span>
+		  <span class="sym">{</span>match<span class="sym">,</span> Matches<span class="sym">} -&gt;</span> <span class="kwd">parse_phone</span><span class="sym">(</span>String<span class="sym">,</span> Matches<span class="sym">);</span>
+		  _                <span class="sym">-&gt;</span> false
+	      <span class="kwa">end</span>
+      <span class="kwa">end</span><span class="sym">,</span>
+      List<span class="sym">)</span>.
+
+
+<span class="kwd">parse_phone</span><span class="sym">(</span>Str<span class="sym">, [</span>H<span class="sym">|</span>T<span class="sym">]) -&gt;</span>
+    <span class="sym">{</span>Start<span class="sym">,</span> Len<span class="sym">} =</span> H<span class="sym">,</span>
+    <span class="slc">% Numstr is something that looks like a complete phone #</span>
+    Numstr <span class="sym">=</span> string<span class="sym">:</span><span class="kwd">substr</span><span class="sym">(</span>Str<span class="sym">,</span> Start<span class="sym">,</span> Len<span class="sym">),</span>
+    <span class="kwa">case</span> regexp<span class="sym">:</span><span class="kwd">matches</span><span class="sym">(</span>Numstr<span class="sym">,</span> <span class="str">&quot;[0-9][0-9][0-9][0-9]*&quot;</span><span class="sym">)</span> <span class="kwa">of</span>
+	<span class="sym">{</span>match<span class="sym">, []}      -&gt;</span> false<span class="sym">;</span>
+	<span class="sym">{</span>match<span class="sym">,</span> Matches<span class="sym">} -&gt;</span>
+	    lists<span class="sym">:</span><span class="kwd">map</span><span class="sym">(</span><span class="kwa">fun</span><span class="sym">({</span>Offset<span class="sym">,</span> Length<span class="sym">}) -&gt;</span>
+			      string<span class="sym">:</span><span class="kwd">substr</span><span class="sym">(</span>Numstr<span class="sym">,</span> Offset<span class="sym">,</span> Length<span class="sym">)</span> <span class="kwa">end</span><span class="sym">,</span>
+		      Matches<span class="sym">);</span>
+	_                <span class="sym">-&gt;</span> false
+    <span class="kwa">end</span><span class="sym">;</span>
+<span class="kwd">parse_phone</span><span class="sym">(</span>Str<span class="sym">, []) -&gt; []</span>.
+
+
+<span class="kwd">mapfilter</span><span class="sym">(</span>Fun<span class="sym">, [</span>H<span class="sym">|</span>T<span class="sym">]) -&gt;</span>
+    <span class="kwa">case</span> <span class="kwd">Fun</span><span class="sym">(</span>H<span class="sym">)</span> <span class="kwa">of</span>
+	false <span class="sym">-&gt;</span> <span class="kwd">mapfilter</span><span class="sym">(</span>Fun<span class="sym">,</span> T<span class="sym">);</span>
+	New   <span class="sym">-&gt; [</span>New <span class="sym">|</span> <span class="kwd">mapfilter</span><span class="sym">(</span>Fun<span class="sym">,</span> T<span class="sym">)]</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+<span class="kwd">mapfilter</span><span class="sym">(</span>_<span class="sym">, []) -&gt; []</span>.
+
+
+<span class="kwd">readlines</span><span class="sym">() -&gt;</span>
+    Port <span class="sym">=</span> <span class="kwb">open_port</span><span class="sym">({</span>fd<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">}, [</span>eof<span class="sym">, {</span>line<span class="sym">,</span> <span class="num">512</span><span class="sym">}]),</span>
+    <span class="kwd">readlines_from_stream</span><span class="sym">([],</span> Port<span class="sym">)</span>.
+
+<span class="kwd">readlines_from_stream</span><span class="sym">(</span>Lines<span class="sym">,</span> Port<span class="sym">) -&gt;</span>
+    <span class="kwa">receive</span>
+	<span class="sym">{</span>Port<span class="sym">,</span> eof<span class="sym">} -&gt;</span>
+	    lists<span class="sym">:</span><span class="kwd">reverse</span><span class="sym">(</span>Lines<span class="sym">);</span>
+	<span class="sym">{</span>Port<span class="sym">, {</span>_<span class="sym">, {</span>_<span class="sym">,</span> Line<span class="sym">}}} -&gt;</span>
+	    <span class="kwd">readlines_from_stream</span><span class="sym">([</span>Line<span class="sym">|</span>Lines<span class="sym">],</span> Port<span class="sym">)</span>
+    <span class="kwa">end</span>.

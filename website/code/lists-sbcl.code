@@ -1,0 +1,58 @@
+<span class="slc">;;; -*- mode: lisp -*-</span>
+<span class="slc">;;; $Id: lists-sbcl.code,v 1.16 2006-09-20 05:51:47 bfulgham Exp $</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;; from Paul Foley</span>
+<span class="slc">;;; Multi-lisp changes by Brent Fulgham</span>
+
+<span class="sym">(</span>defparameter <span class="sym">*</span>SIZE<span class="sym">*</span> <span class="num">10000</span><span class="sym">)</span>
+
+<span class="sym">(</span>declaim <span class="sym">(</span>fixnum <span class="sym">*</span>SIZE<span class="sym">*) (</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">)</span> #<span class="sym">-</span>gcl <span class="sym">(</span>debug <span class="num">0</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">)) (</span>inline xcons push<span class="sym">-</span>queue<span class="sym">))</span>
+
+<span class="sym">(</span>defvar <span class="sym">*</span>free<span class="sym">-</span>conses<span class="sym">*)</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> xcons <span class="sym">(</span>A B<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>x <span class="sym">*</span>free<span class="sym">-</span>conses<span class="sym">*))</span>
+    <span class="sym">(</span><span class="kwa">if</span> x <span class="sym">(</span><span class="kwa">progn</span> <span class="sym">(</span>setf <span class="sym">*</span>free<span class="sym">-</span>conses<span class="sym">* (</span><span class="kwa">cdr</span> x<span class="sym">) (</span><span class="kwa">car</span> x<span class="sym">)</span> A <span class="sym">(</span><span class="kwa">cdr</span> x<span class="sym">)</span> B<span class="sym">)</span> x<span class="sym">) (</span><span class="kwa">cons</span> A B<span class="sym">))))</span>
+
+<span class="sym">(</span>defmacro xpop <span class="sym">(</span>X<span class="sym">)</span>
+  `<span class="sym">(</span>prog1 <span class="sym">(</span><span class="kwa">car</span> <span class="sym">,</span>x<span class="sym">) (</span>psetf <span class="sym">,</span>x <span class="sym">(</span><span class="kwa">cdr</span> <span class="sym">,</span>x<span class="sym">) (</span><span class="kwa">cdr</span> <span class="sym">,</span>x<span class="sym">) *</span>free<span class="sym">-</span>conses<span class="sym">* *</span>free<span class="sym">-</span>conses<span class="sym">* ,</span>x<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> push<span class="sym">-</span>queue <span class="sym">(</span>item queue <span class="sym">&amp;</span>aux <span class="sym">(</span>new <span class="sym">(</span>xcons item nil<span class="sym">)))</span>
+  <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">cdr</span> queue<span class="sym">) (</span>setf <span class="sym">(</span><span class="kwa">cddr</span> queue<span class="sym">)</span> new<span class="sym">) (</span>setf <span class="sym">(</span><span class="kwa">car</span> queue<span class="sym">)</span> new<span class="sym">))</span>
+  <span class="sym">(</span>setf <span class="sym">(</span><span class="kwa">cdr</span> queue<span class="sym">)</span> new<span class="sym">)</span>
+  <span class="sym">(</span><span class="kwa">car</span> queue<span class="sym">))</span>
+
+<span class="sym">(</span>defmacro with<span class="sym">-</span>collector <span class="sym">((</span>name<span class="sym">) &amp;</span>body body<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>collector <span class="sym">(</span>gensym<span class="sym">)))</span>
+    `<span class="sym">(</span>let <span class="sym">((,</span>collector <span class="sym">(</span>xcons nil nil<span class="sym">)))</span>
+       <span class="sym">(</span>flet <span class="sym">((,</span>name <span class="sym">(</span>value<span class="sym">) (</span>push<span class="sym">-</span>queue value <span class="sym">,</span>collector<span class="sym">)))</span>
+         <span class="sym">,</span>&#64;body
+         <span class="sym">(</span><span class="kwa">car</span> <span class="sym">,</span>collector<span class="sym">)))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> test<span class="sym">-</span><span class="kwa">list</span> <span class="sym">()</span>
+  <span class="sym">(</span>let<span class="sym">* ((</span>L1 <span class="sym">(</span>with<span class="sym">-</span>collector <span class="sym">(</span>conc<span class="sym">) (</span>loop for x fixnum from <span class="num">1</span> to <span class="sym">*</span>SIZE<span class="sym">*</span> do <span class="sym">(</span>conc x<span class="sym">))))</span>
+         <span class="sym">(</span>L2 <span class="sym">(</span>with<span class="sym">-</span>collector <span class="sym">(</span>conc<span class="sym">) (</span>loop for x in L1 do <span class="sym">(</span>conc x<span class="sym">))))</span>
+         <span class="sym">(</span>L3 nil<span class="sym">))</span>
+    <span class="slc">;; Move items from left of L2 to right of L3 (preserve order)</span>
+    <span class="sym">(</span>setf L3 <span class="sym">(</span>with<span class="sym">-</span>collector <span class="sym">(</span>conc<span class="sym">) (</span>loop <span class="kwa">while</span> L2 do <span class="sym">(</span>conc <span class="sym">(</span>xpop L2<span class="sym">)))))</span>
+    <span class="slc">;; Move from tail of L3 to tail of L2 (reversing list)</span>
+    <span class="slc">;; start by reversing L3 so we can pop from the front</span>
+    <span class="sym">(</span>setf L3 <span class="sym">(</span>nreverse L3<span class="sym">))</span>
+    <span class="sym">(</span>setf L2 <span class="sym">(</span>with<span class="sym">-</span>collector <span class="sym">(</span>conc<span class="sym">) (</span>loop <span class="kwa">while</span> L3 do <span class="sym">(</span>conc <span class="sym">(</span>xpop L3<span class="sym">)))))</span>
+    <span class="slc">;; Reverse L1 in place</span>
+    <span class="sym">(</span>setf L1 <span class="sym">(</span>nreverse L1<span class="sym">))</span>
+    <span class="slc">;; Check that (first L1) == *SIZE*</span>
+    <span class="sym">(</span>assert <span class="sym">(= (</span>the fixnum <span class="sym">(</span>first L1<span class="sym">)) *</span>SIZE<span class="sym">*))</span>
+    <span class="slc">;; Compare L1 and L2 for equality</span>
+    <span class="sym">(</span>assert <span class="sym">(</span><span class="kwa">equal</span> L1 L2<span class="sym">))</span>
+    <span class="slc">;; Return the length -- and return the conses to the free list</span>
+    <span class="sym">(</span>prog1 <span class="sym">(</span><span class="kwa">length</span> <span class="sym">(</span>the <span class="kwa">list</span> L1<span class="sym">))</span>
+      <span class="sym">(</span>setf <span class="sym">*</span>free<span class="sym">-</span>conses<span class="sym">* (</span>nconc <span class="sym">*</span>free<span class="sym">-</span>conses<span class="sym">*</span> L3 L2 L1<span class="sym">)))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">()</span>
+  <span class="sym">(</span>let <span class="sym">((</span>n <span class="sym">(</span>parse<span class="sym">-</span>integer <span class="sym">(</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">car</span> <span class="sym">(</span><span class="kwa">last</span> #<span class="sym">+</span>sbcl sb<span class="sym">-</span>ext<span class="sym">:*</span>posix<span class="sym">-</span>argv<span class="sym">*</span>
+                                         #<span class="sym">+</span>cmu  ext<span class="sym">:*</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>strings<span class="sym">*</span>
+					 #<span class="sym">+</span>gcl  si<span class="sym">::*</span><span class="kwa">command</span><span class="sym">-</span>args<span class="sym">*))</span> <span class="str">&quot;1&quot;</span><span class="sym">)))</span>
+        <span class="sym">(</span>num <span class="num">0</span><span class="sym">) (*</span>free<span class="sym">-</span>conses<span class="sym">*</span> nil<span class="sym">))</span>
+    <span class="sym">(</span>loop <span class="kwa">repeat</span> n do <span class="sym">(</span>setf num <span class="sym">(</span>test<span class="sym">-</span><span class="kwa">list</span><span class="sym">)))</span>
+  <span class="sym">(</span>format t <span class="str">&quot;~D~%&quot;</span> num<span class="sym">)))</span>

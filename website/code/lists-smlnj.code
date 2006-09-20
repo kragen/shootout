@@ -1,0 +1,252 @@
+<span class="com">(* -*- mode: sml -*-</span>
+<span class="com"> * $Id: lists-smlnj.code,v 1.7 2006-09-20 05:51:47 bfulgham Exp $</span>
+<span class="com"> * http://www.bagley.org/~doug/shootout/</span>
+<span class="com"> * from Stephen Weeks</span>
+<span class="com"> *)</span>
+<span class="com">(* Translated from lists.ocaml. *)</span>
+
+<span class="kwa">structure</span> Test <span class="sym">:</span> <span class="kwa">sig</span>
+    <span class="kwa">val</span> main <span class="sym">: (</span><span class="kwb">string</span> <span class="sym">*</span> <span class="kwb">string</span> list<span class="sym">) -&gt;</span> OS.Process.status
+<span class="kwa">end</span> <span class="sym">=</span> <span class="kwa">struct</span>
+
+<span class="kwa">val</span> sub <span class="sym">=</span> Array.sub
+<span class="kwa">val</span> update <span class="sym">=</span> Array.update
+<span class="kwa">fun</span> for <span class="sym">(</span>start<span class="sym">,</span> stop<span class="sym">,</span> f<span class="sym">) =</span>
+   <span class="kwa">let</span>
+      <span class="kwa">fun</span> loop i <span class="sym">=</span>
+	 <span class="kwa">if</span> i <span class="sym">&gt;</span> stop
+	    <span class="kwa">then</span> <span class="sym">()</span>
+	 <span class="kwa">else</span> <span class="sym">(</span>f i<span class="sym">;</span> loop <span class="sym">(</span>i <span class="sym">+</span> <span class="num">1</span><span class="sym">))</span>
+   <span class="kwa">in</span>
+      loop start
+   <span class="kwa">end</span>
+<span class="kwa">fun</span> failwith s <span class="sym">=</span> <span class="kwa">raise</span> Fail s
+
+<span class="kwa">structure</span> Deque<span class="sym">:</span>
+  <span class="kwa">sig</span>
+    <span class="kwa">type</span> 'a t
+    <span class="kwa">exception</span> Empty
+
+    <span class="kwa">val</span> make<span class="sym">:</span> <span class="kwb">int</span> <span class="sym">*</span> 'a <span class="sym">-&gt;</span> 'a t
+    <span class="kwa">val</span> iota<span class="sym">:</span> <span class="kwb">int</span> <span class="sym">-&gt;</span> <span class="kwb">int</span> t
+
+    <span class="kwa">val</span> is_empty<span class="sym">:</span> 'a t <span class="sym">-&gt;</span> <span class="kwb">bool</span>
+    <span class="kwa">val</span> equal<span class="sym">:</span> ''a t <span class="sym">*</span> ''a t <span class="sym">-&gt;</span> <span class="kwb">bool</span>
+    <span class="kwa">val</span> length<span class="sym">:</span> 'a t <span class="sym">-&gt;</span> <span class="kwb">int</span>
+    <span class="kwa">val</span> nth<span class="sym">:</span> 'a t <span class="sym">*</span> <span class="kwb">int</span> <span class="sym">-&gt;</span> 'a
+
+    <span class="kwa">val</span> push_front<span class="sym">:</span> 'a <span class="sym">*</span> 'a t <span class="sym">-&gt;</span> unit
+    <span class="kwa">val</span> push_back<span class="sym">:</span> 'a t <span class="sym">*</span> 'a <span class="sym">-&gt;</span> unit
+
+    <span class="kwa">val</span> take_front<span class="sym">:</span> 'a t <span class="sym">-&gt;</span> 'a
+    <span class="kwa">val</span> take_back<span class="sym">:</span> 'a t <span class="sym">-&gt;</span> 'a
+
+    <span class="kwa">val</span> copy<span class="sym">:</span> 'a t <span class="sym">-&gt;</span> 'a t
+    <span class="kwa">val</span> reverse<span class="sym">:</span> 'a t <span class="sym">-&gt;</span> 'a t
+  <span class="kwa">end</span> <span class="sym">=</span>
+  <span class="kwa">struct</span>
+     <span class="kwa">type</span> 'a t <span class="sym">= {</span>size<span class="sym">:</span> <span class="kwb">int</span> ref<span class="sym">,</span>
+		  first<span class="sym">:</span> <span class="kwb">int</span> ref<span class="sym">,</span>
+		  last<span class="sym">:</span> <span class="kwb">int</span> ref<span class="sym">,</span>
+		  field<span class="sym">:</span> 'a array ref<span class="sym">,</span>
+		  fill<span class="sym">:</span> 'a<span class="sym">}</span>
+
+     <span class="kwa">local</span>
+	<span class="kwa">fun</span> make sel <span class="sym">(</span>d<span class="sym">:</span> 'a t<span class="sym">) =</span> sel d
+     <span class="kwa">in</span>
+	<span class="kwa">fun</span> fill z <span class="sym">=</span> make #fill z
+     <span class="kwa">end</span>
+
+     <span class="kwa">local</span>
+	<span class="kwa">fun</span> make sel <span class="sym">(</span>d<span class="sym">:</span> 'a t<span class="sym">) = !(</span>sel d<span class="sym">)</span>
+     <span class="kwa">in</span>
+	<span class="kwa">fun</span> field z <span class="sym">=</span> make #field z
+	<span class="kwa">fun</span> first z <span class="sym">=</span> make #first z
+	<span class="kwa">fun</span> last z <span class="sym">=</span> make #last z
+	<span class="kwa">fun</span> size z <span class="sym">=</span> make #size z
+     <span class="kwa">end</span>
+
+     <span class="kwa">exception</span> Empty
+
+     <span class="kwa">fun</span> make <span class="sym">(</span>n<span class="sym">,</span> dummy<span class="sym">) =</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> n <span class="sym">=</span> <span class="kwa">Int</span>.max <span class="sym">(</span>n<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span>
+	   <span class="kwa">val</span> nplus <span class="sym">=</span> <span class="kwa">Int</span>.max <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> n<span class="sym">)</span>
+	<span class="kwa">in</span>
+	   <span class="sym">{</span>size <span class="sym">=</span> ref nplus<span class="sym">,</span>
+	    first <span class="sym">=</span> ref <span class="sym">(</span><span class="kwa">Int</span>.quot <span class="sym">(</span>nplus<span class="sym">,</span> <span class="num">2</span><span class="sym">)),</span>
+	    last <span class="sym">=</span> ref <span class="sym">(</span><span class="kwa">Int</span>.quot <span class="sym">(</span>nplus<span class="sym">,</span> <span class="num">2</span><span class="sym">) -</span> <span class="num">1</span><span class="sym">),</span>
+	    field <span class="sym">=</span> ref <span class="sym">(</span>Array.array <span class="sym">(</span>nplus<span class="sym">,</span> dummy<span class="sym">)),</span>
+	    fill <span class="sym">=</span> dummy<span class="sym">}</span>
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> iota i <span class="sym">=</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> i <span class="sym">=</span> <span class="kwa">Int</span>.max <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> i<span class="sym">)</span>
+	   <span class="kwa">val</span> iplus <span class="sym">=</span> <span class="kwa">Int</span>.max <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> i<span class="sym">)</span>
+	<span class="kwa">in</span>
+	   <span class="sym">{</span>size <span class="sym">=</span> ref iplus<span class="sym">,</span>
+	    first <span class="sym">=</span> ref <span class="num">0</span><span class="sym">,</span>
+	    last <span class="sym">=</span> ref <span class="sym">(</span>i <span class="sym">-</span> <span class="num">1</span><span class="sym">),</span>
+	    field <span class="sym">=</span> ref <span class="sym">(</span>Array.tabulate <span class="sym">(</span>iplus<span class="sym">,</span> <span class="kwa">fn</span> n <span class="sym">=&gt;</span> n <span class="sym">+</span> <span class="num">1</span><span class="sym">)),</span>
+	    fill <span class="sym">=</span> i<span class="sym">}</span>
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> length buf <span class="sym">=</span> last buf <span class="sym">-</span> first buf <span class="sym">+</span> <span class="num">1</span>
+
+     <span class="kwa">fun</span> is_empty buf <span class="sym">=</span> last buf <span class="sym">&lt;</span> first buf
+
+     <span class="kwa">fun</span> array_eq <span class="sym">(</span>arr1<span class="sym">,</span> off1<span class="sym">,</span> arr2<span class="sym">,</span> off2<span class="sym">,</span> i<span class="sym">) =</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">fun</span> loop <span class="sym">(</span>off1<span class="sym">,</span> off2<span class="sym">,</span> i<span class="sym">) =</span>
+	      <span class="kwa">case</span> i <span class="kwa">of</span>
+		 <span class="num">0</span> <span class="sym">=&gt;</span> <span class="kwa">true</span>
+	       <span class="sym">|</span> n <span class="sym">=&gt;</span>
+		    sub <span class="sym">(</span>arr1<span class="sym">,</span> off1<span class="sym">) =</span> sub <span class="sym">(</span>arr2<span class="sym">,</span> off2<span class="sym">)</span>
+		    <span class="kwa">andalso</span> loop <span class="sym">(</span>off1 <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> off2 <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> n <span class="sym">-</span> <span class="num">1</span><span class="sym">)</span>
+	<span class="kwa">in</span> loop <span class="sym">(</span>off1<span class="sym">,</span> off2<span class="sym">,</span> i<span class="sym">)</span>
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> equal <span class="sym">(</span>buf1<span class="sym">,</span> buf2<span class="sym">) =</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> len <span class="sym">=</span> length buf1
+	<span class="kwa">in</span>
+	   len <span class="sym">=</span> length buf2
+	   <span class="kwa">andalso</span> array_eq <span class="sym">(</span>field buf1<span class="sym">,</span> first buf1<span class="sym">,</span>
+			     field buf2<span class="sym">,</span> first buf2<span class="sym">,</span>
+			     len<span class="sym">)</span>
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> nth <span class="sym">(</span>buf<span class="sym">,</span> n<span class="sym">) =</span>
+	<span class="kwa">if</span> n <span class="sym">&lt;</span> <span class="num">0</span> <span class="kwa">orelse</span> n <span class="sym">&gt;=</span> length buf
+	   <span class="kwa">then</span> failwith <span class="str">&quot;nth&quot;</span>
+	<span class="kwa">else</span> sub <span class="sym">(</span>field buf<span class="sym">,</span> first buf <span class="sym">+</span> n<span class="sym">)</span>
+
+     <span class="kwa">fun</span> double_shift buf <span class="sym">=</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> new_size <span class="sym">=</span> size buf <span class="sym">*</span> <span class="num">2</span>
+	   <span class="kwa">val</span> len <span class="sym">=</span> length buf
+	   <span class="kwa">val</span> new_first <span class="sym">=</span> <span class="kwa">Int</span>.quot <span class="sym">(</span>new_size <span class="sym">-</span> len<span class="sym">,</span> <span class="num">2</span><span class="sym">)</span>
+	   <span class="kwa">val</span> new_field <span class="sym">=</span> Array.array <span class="sym">(</span>new_size<span class="sym">,</span> fill buf<span class="sym">)</span>
+	   <span class="kwa">val</span> _ <span class="sym">=</span>
+	      ArraySlice.copy <span class="sym">{</span>src <span class="sym">=</span> ArraySlice.slice <span class="sym">(</span>field buf<span class="sym">,</span>
+						       first buf<span class="sym">,</span>
+						       SOME len<span class="sym">),</span>
+			       dst <span class="sym">=</span> new_field<span class="sym">,</span>
+			       di <span class="sym">=</span> new_first<span class="sym">}</span>
+	<span class="kwa">in</span>
+	   #size buf <span class="sym">:=</span> new_size<span class="sym">;</span>
+	   #field buf <span class="sym">:=</span> new_field<span class="sym">;</span>
+	   #first buf <span class="sym">:=</span> new_first<span class="sym">;</span>
+	   #last buf <span class="sym">:=</span> new_first <span class="sym">+</span> len <span class="sym">-</span> <span class="num">1</span>
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> push_front <span class="sym">(</span>elem<span class="sym">,</span> buf<span class="sym">) =</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> _ <span class="sym">=</span> <span class="kwa">if</span> first buf <span class="sym">=</span> <span class="num">0</span> <span class="kwa">then</span> double_shift buf <span class="kwa">else</span> <span class="sym">()</span>
+	   <span class="kwa">val</span> new_first <span class="sym">=</span> first buf <span class="sym">-</span> <span class="num">1</span>
+	<span class="kwa">in</span>
+	   update <span class="sym">(</span>field buf<span class="sym">,</span> new_first<span class="sym">,</span> elem<span class="sym">);</span>
+	   #first buf <span class="sym">:=</span> new_first
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> push_back <span class="sym">(</span>buf<span class="sym">,</span> elem<span class="sym">) =</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> _ <span class="sym">=</span> <span class="kwa">if</span> last buf <span class="sym">=</span> size buf <span class="sym">-</span> <span class="num">1</span> <span class="kwa">then</span> double_shift buf <span class="kwa">else</span> <span class="sym">()</span>
+	   <span class="kwa">val</span> new_last <span class="sym">=</span> last buf <span class="sym">+</span> <span class="num">1</span>
+	<span class="kwa">in</span>
+	   update <span class="sym">(</span>field buf<span class="sym">,</span> new_last<span class="sym">,</span> elem<span class="sym">);</span>
+	   #last buf <span class="sym">:=</span> new_last
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> take_front buf <span class="sym">=</span>
+	<span class="kwa">if</span> is_empty buf
+	   <span class="kwa">then raise</span> Empty
+	<span class="kwa">else</span>
+	   <span class="kwa">let</span>
+	      <span class="kwa">val</span> old_first <span class="sym">=</span> first buf
+	   <span class="kwa">in</span>
+	      #first buf <span class="sym">:=</span> old_first <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+	      sub <span class="sym">(</span>field buf<span class="sym">,</span> old_first<span class="sym">)</span>
+	   <span class="kwa">end</span>
+
+     <span class="kwa">fun</span> take_back buf <span class="sym">=</span>
+	<span class="kwa">if</span> is_empty buf
+	   <span class="kwa">then raise</span> Empty
+	<span class="kwa">else</span>
+	   <span class="kwa">let</span>
+	      <span class="kwa">val</span> old_last <span class="sym">=</span> last buf
+	   <span class="kwa">in</span>
+	      #last buf <span class="sym">:=</span> old_last <span class="sym">-</span> <span class="num">1</span><span class="sym">;</span>
+	      sub <span class="sym">(</span>field buf<span class="sym">,</span> old_last<span class="sym">)</span>
+	   <span class="kwa">end</span>
+
+     <span class="kwa">fun</span> copy buf <span class="sym">=</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> len <span class="sym">=</span> length buf
+	   <span class="kwa">val</span> new_buf <span class="sym">=</span> make <span class="sym">(</span>len<span class="sym">,</span> fill buf<span class="sym">)</span>
+	   <span class="kwa">val</span> _ <span class="sym">=</span>
+	      ArraySlice.copy <span class="sym">{</span>src <span class="sym">=</span> ArraySlice.slice <span class="sym">(</span>field buf<span class="sym">,</span>
+						       first buf<span class="sym">,</span>
+						       SOME len<span class="sym">),</span>
+			       dst <span class="sym">=</span> field new_buf<span class="sym">,</span>
+			       di <span class="sym">=</span> <span class="num">0</span><span class="sym">}</span>
+	<span class="kwa">in</span>
+	   #first new_buf <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+	   #last new_buf <span class="sym">:=</span> len <span class="sym">-</span> <span class="num">1</span><span class="sym">;</span>
+	   new_buf
+	<span class="kwa">end</span>
+
+     <span class="kwa">fun</span> reverse buf <span class="sym">=</span>
+	<span class="kwa">let</span>
+	   <span class="kwa">val</span> len <span class="sym">=</span> length buf
+	   <span class="kwa">val</span> fst <span class="sym">=</span> first buf
+	   <span class="kwa">val</span> fld <span class="sym">=</span> field buf
+	   <span class="kwa">val</span> new_buf <span class="sym">=</span> make <span class="sym">(</span>len<span class="sym">,</span> fill buf<span class="sym">)</span>
+	   <span class="kwa">val</span> new_fld <span class="sym">=</span> field new_buf
+	   <span class="kwa">val</span> _ <span class="sym">=</span>
+	      for <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> len <span class="sym">-</span> <span class="num">1</span><span class="sym">,</span> <span class="kwa">fn</span> i <span class="sym">=&gt;</span>
+		   update <span class="sym">(</span>new_fld<span class="sym">,</span> len <span class="sym">-</span> i <span class="sym">-</span> <span class="num">1</span><span class="sym">,</span> sub <span class="sym">(</span>fld<span class="sym">,</span> fst <span class="sym">+</span> i<span class="sym">)))</span>
+	<span class="kwa">in</span>
+	   #first new_buf <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+	   #last new_buf <span class="sym">:=</span> len <span class="sym">-</span> <span class="num">1</span><span class="sym">;</span>
+	   new_buf
+	<span class="kwa">end</span>
+<span class="kwa">end</span>
+
+<span class="kwa">open</span> Deque
+
+<span class="kwa">fun</span> empty <span class="sym">() =</span> iota <span class="num">0</span>
+
+<span class="kwa">val</span> size <span class="sym">=</span> <span class="num">10000</span>
+
+<span class="kwa">fun</span> test_lists <span class="sym">() =</span>
+  <span class="kwa">let</span>
+     <span class="kwa">val</span> d1 <span class="sym">=</span> iota size
+     <span class="kwa">val</span> d2 <span class="sym">=</span> copy d1
+     <span class="kwa">val</span> d3 <span class="sym">=</span> empty <span class="sym">()</span>
+     <span class="kwa">val</span> _ <span class="sym">=</span> for <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> length d2<span class="sym">,</span> <span class="kwa">fn</span> _ <span class="sym">=&gt;</span> push_back <span class="sym">(</span>d3<span class="sym">,</span> take_front d2<span class="sym">))</span>
+     <span class="kwa">val</span> _ <span class="sym">=</span> for <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> length d3<span class="sym">,</span> <span class="kwa">fn</span> _ <span class="sym">=&gt;</span> push_back <span class="sym">(</span>d2<span class="sym">,</span> take_back d3<span class="sym">))</span>
+     <span class="kwa">val</span> d1 <span class="sym">=</span> reverse d1
+     <span class="kwa">val</span> _ <span class="sym">=</span> <span class="kwa">if</span> size <span class="sym">&lt;&gt;</span> nth <span class="sym">(</span>d1<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span> <span class="kwa">then</span> failwith <span class="str">&quot;First test failed&quot;</span> <span class="kwa">else</span> <span class="sym">()</span>
+     <span class="kwa">val</span> _ <span class="sym">=</span> <span class="kwa">if</span> length d1 <span class="sym">&lt;&gt;</span> length d2 <span class="kwa">then</span> failwith <span class="str">&quot;Second test failed&quot;</span> <span class="kwa">else</span> <span class="sym">()</span>
+     <span class="kwa">val</span> _ <span class="sym">=</span> <span class="kwa">if</span> not <span class="sym">(</span>equal <span class="sym">(</span>d1<span class="sym">,</span> d2<span class="sym">))</span> <span class="kwa">then</span> failwith <span class="str">&quot;Third test failed&quot;</span> <span class="kwa">else</span> <span class="sym">()</span>
+  <span class="kwa">in</span>
+     length d1
+  <span class="kwa">end</span>
+
+<span class="kwa">fun</span> main <span class="sym">(</span>name<span class="sym">,</span> args<span class="sym">) =</span>
+  <span class="kwa">let</span>
+     <span class="kwa">val</span> n <span class="sym">=</span>
+	<span class="kwa">case Int</span>.fromString <span class="sym">(</span>hd <span class="sym">(</span>args &#64; <span class="sym">[</span><span class="str">&quot;1&quot;</span><span class="sym">]))</span> <span class="kwa">of</span>
+	   NONE <span class="sym">=&gt;</span> <span class="num">1</span>
+	 <span class="sym">|</span> SOME n <span class="sym">=&gt;</span> n
+     <span class="kwa">val</span> result <span class="sym">=</span> ref <span class="num">0</span>
+     <span class="kwa">val</span> _ <span class="sym">=</span> for <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> n<span class="sym">,</span> <span class="kwa">fn</span> _ <span class="sym">=&gt;</span> result <span class="sym">:=</span> test_lists <span class="sym">())</span>
+  <span class="kwa">in</span>
+     print <span class="sym">(</span>concat <span class="sym">[</span><span class="kwa">Int</span>.toString <span class="sym">(!</span>result<span class="sym">),</span> <span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">]);</span>
+     OS.Process.success
+  <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+<span class="kwa">val</span> _ <span class="sym">=</span> SMLofNJ.exportFn<span class="sym">(</span><span class="str">&quot;lists&quot;</span><span class="sym">,</span> Test.main<span class="sym">);</span>

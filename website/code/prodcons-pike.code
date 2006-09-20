@@ -1,0 +1,42 @@
+<span class="dir">#!/usr/bin/pike</span>
+<span class="slc">// -*- mode: pike -*-</span>
+<span class="slc">// $Id: prodcons-pike.code,v 1.10 2006-09-20 05:52:21 bfulgham Exp $</span>
+<span class="slc">// http://www.bagley.org/~doug/shootout/</span>
+
+inherit Thread.Condition<span class="sym">:</span> access<span class="sym">;</span>
+inherit Thread.Mutex<span class="sym">:</span> mutex<span class="sym">;</span>
+<span class="kwb">int</span> data<span class="sym">,</span> consumed<span class="sym">,</span> produced<span class="sym">,</span> count<span class="sym">;</span>
+
+<span class="kwb">void</span> <span class="kwd">producer</span><span class="sym">(</span><span class="kwb">int</span> n<span class="sym">) {</span>
+    <span class="kwd">for</span> <span class="sym">(</span><span class="kwb">int</span> i<span class="sym">=</span><span class="num">1</span><span class="sym">;</span> i<span class="sym">&lt;=</span>n<span class="sym">;</span> i<span class="sym">++) {</span>
+	<span class="kwb">object</span> mtx <span class="sym">=</span> mutex<span class="sym">::</span><span class="kwd">lock</span><span class="sym">();</span>
+	<span class="kwd">while</span> <span class="sym">(</span>count <span class="sym">!=</span> <span class="num">0</span><span class="sym">)</span> access<span class="sym">::</span><span class="kwd">wait</span><span class="sym">(</span>mtx<span class="sym">);</span>
+	data <span class="sym">=</span> i<span class="sym">;</span>
+	count <span class="sym">+=</span> <span class="num">1</span><span class="sym">;</span>
+	<span class="kwa">destruct</span><span class="sym">(</span>mtx<span class="sym">);</span>
+	access<span class="sym">::</span><span class="kwa">signal</span><span class="sym">();</span>
+	produced <span class="sym">+=</span> <span class="num">1</span><span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> <span class="kwd">consumer</span><span class="sym">(</span><span class="kwb">int</span> n<span class="sym">) {</span>
+    <span class="kwd">while</span> <span class="sym">(</span><span class="num">1</span><span class="sym">) {</span>
+	<span class="kwb">object</span> mtx <span class="sym">=</span> mutex<span class="sym">::</span><span class="kwd">lock</span><span class="sym">();</span>
+	<span class="kwd">while</span> <span class="sym">(</span>count <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> access<span class="sym">::</span><span class="kwd">wait</span><span class="sym">(</span>mtx<span class="sym">);</span>
+	<span class="kwb">int</span> i <span class="sym">=</span> data<span class="sym">;</span>
+	count <span class="sym">-=</span> <span class="num">1</span><span class="sym">;</span>
+	access<span class="sym">::</span><span class="kwa">signal</span><span class="sym">();</span>
+	<span class="kwa">destruct</span><span class="sym">(</span>mtx<span class="sym">);</span>
+	consumed <span class="sym">+=</span> <span class="num">1</span><span class="sym">;</span>
+	<span class="kwd">if</span> <span class="sym">(</span>i <span class="sym">==</span> n<span class="sym">)</span> break<span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">array</span><span class="sym">(</span><span class="kwb">string</span><span class="sym">)</span> argv<span class="sym">) {</span>
+    <span class="kwb">int</span> n <span class="sym">= (</span><span class="kwb">int</span><span class="sym">)</span>argv<span class="sym">[-</span><span class="num">1</span><span class="sym">];</span>
+    <span class="kwd">if</span> <span class="sym">(</span>n <span class="sym">&lt;</span> <span class="num">1</span><span class="sym">)</span> n <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span>
+    data <span class="sym">=</span> consumed <span class="sym">=</span> produced <span class="sym">=</span> count <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwa">thread_create</span><span class="sym">(</span>producer<span class="sym">,</span> n<span class="sym">);</span>
+    <span class="kwd">consumer</span><span class="sym">(</span>n<span class="sym">);</span>
+    <span class="kwa">write</span><span class="sym">(</span><span class="str">&quot;%d %d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> produced<span class="sym">,</span> consumed<span class="sym">);</span>
+<span class="sym">}</span>

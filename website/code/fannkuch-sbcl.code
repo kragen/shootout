@@ -1,0 +1,84 @@
+<span class="slc">;;; The Computer Language Shootout</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;; Contributed by Robbert Haarman</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; fannkuch for Lisp (SBCL)</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; Compile: sbcl --load fannkuch.lisp --eval &quot;(save-lisp-and-die \&quot;fannkuch.core\&quot; :purify t :toplevel (lambda () (main) (quit)))&quot;</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; Run: sbcl --noinform --core fannkuch.core %A</span>
+
+<span class="sym">(</span>proclaim <span class="str">'(optimize (speed 3)</span>
+<span class="str">	(safety 0) (debug 0) (space 0) (compilation-speed 0)))</span>
+<span class="str"></span>
+<span class="str">(defparameter *print-perms* 30)</span>
+<span class="str">(proclaim '</span><span class="sym">(</span>fixnum <span class="sym">*</span><span class="kwa">print</span><span class="sym">-</span>perms<span class="sym">*))</span>
+
+<span class="sym">(</span><span class="kwa">defun print</span><span class="sym">-</span>permutation <span class="sym">(</span>permutation<span class="sym">)</span>
+	<span class="sym">(</span>format t <span class="str">&quot;~{~A~}~%&quot;</span> <span class="sym">(</span>coerce permutation <span class="str">'list)))</span>
+<span class="str"></span>
+<span class="str">(defun flip (permutation)</span>
+<span class="str">	(declare (type simple-vector permutation))</span>
+<span class="str">	(let ((n (aref permutation 0)))</span>
+<span class="str">		(declare (fixnum n))</span>
+<span class="str">		(let ((half (floor n 2)))</span>
+<span class="str">			(loop for i from 0 to (1- half)</span>
+<span class="str">				do (rotatef (aref permutation i)</span>
+<span class="str">						(aref permutation (+ i n -1)))</span>
+<span class="str">					(setf n (- n 2))))))</span>
+<span class="str"></span>
+<span class="str">(defun count-flips (permutation)</span>
+<span class="str">	(declare (type simple-vector permutation))</span>
+<span class="str">	(loop for flips fixnum = 0 then (incf flips)</span>
+<span class="str">		until (= (the fixnum (aref permutation 0)) 1)</span>
+<span class="str">		do (flip permutation)</span>
+<span class="str">		finally (return flips)))</span>
+<span class="str"></span>
+<span class="str">(defun make-permutation (n)</span>
+<span class="str">	(declare (fixnum n))</span>
+<span class="str">	(make-array (list n)</span>
+<span class="str">		:initial-contents (loop for i from 1 to n collecting i)))</span>
+<span class="str"></span>
+<span class="str">(defun rotate-first (permutation n)</span>
+<span class="str">	(declare (type simple-vector permutation)</span>
+<span class="str">		(fixnum n))</span>
+<span class="str">	(let ((x (aref permutation 0)))</span>
+<span class="str">		(dotimes (i (1- n))</span>
+<span class="str">			(setf (aref permutation i)</span>
+<span class="str">				(aref permutation (1+ i))))</span>
+<span class="str">		(setf (aref permutation (1- n)) x)))</span>
+<span class="str"></span>
+<span class="str">(defun call-with-permutations-rec (fun permutation len)</span>
+<span class="str">	(declare (function fun) (fixnum len))</span>
+<span class="str">	(let ((perm (copy-seq permutation)))</span>
+<span class="str">		(if (= len 1) (funcall fun perm)</span>
+<span class="str">			(progn</span>
+<span class="str">				(dotimes (i (1- len))</span>
+<span class="str">					(call-with-permutations-rec</span>
+<span class="str">						fun perm (1- len))</span>
+<span class="str">					(rotate-first perm len))</span>
+<span class="str">				(call-with-permutations-rec</span>
+<span class="str">					fun perm (1- len))))))</span>
+<span class="str"></span>
+<span class="str">(defun call-with-permutations (fun initial-permutation)</span>
+<span class="str">	(call-with-permutations-rec fun initial-permutation</span>
+<span class="str">		(array-dimension initial-permutation 0)))</span>
+<span class="str"></span>
+<span class="str">(defun fannkuch (n)</span>
+<span class="str">	(let ((printed 0) (max-flips 0))</span>
+<span class="str">		(declare (fixnum printed max-flips))</span>
+<span class="str">		(call-with-permutations</span>
+<span class="str">			(lambda (permutation)</span>
+<span class="str">				(when (&lt; printed *print-perms*)</span>
+<span class="str">					(print-permutation permutation)</span>
+<span class="str">					(incf printed))</span>
+<span class="str">				(let ((flips (count-flips permutation)))</span>
+<span class="str">					(declare (fixnum flips))</span>
+<span class="str">					(if (&gt; flips max-flips)</span>
+<span class="str">						(setf max-flips flips))))</span>
+<span class="str">			(make-permutation n))</span>
+<span class="str">		max-flips))</span>
+<span class="str"></span>
+<span class="str">(defun main ()</span>
+<span class="str">	(let ((kuchen (parse-integer (second *posix-argv*))))</span>
+<span class="str">		(format t &quot;Pfannkuchen(~A) = ~A~%&quot; kuchen (fannkuch kuchen))))</span>

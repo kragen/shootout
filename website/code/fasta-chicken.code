@@ -1,0 +1,97 @@
+<span class="slc">; The Great Computer Language Shootout</span>
+<span class="slc">; http://shootout.alioth.debian.org/</span>
+<span class="slc">;</span>
+<span class="slc">; fasta - benchmark</span>
+<span class="slc">;</span>
+<span class="slc">; Contributed by Brent Fulgham (based on Felix Winkelmann's</span>
+<span class="slc">;      Random implementation)</span>
+<span class="sym">(</span>require<span class="sym">-</span>extension format<span class="sym">)</span>
+
+<span class="sym">(</span>declare <span class="sym">(</span>disable<span class="sym">-</span>interrupts<span class="sym">) (</span>uses srfi<span class="sym">-</span><span class="num">1</span><span class="sym">))</span>
+
+<span class="slc">; The usual pseudo-random number generator</span>
+<span class="sym">(</span>define IM <span class="num">139968</span><span class="sym">)</span>
+<span class="sym">(</span>define IA <span class="num">3877</span><span class="sym">)</span>
+<span class="sym">(</span>define IC <span class="num">29573</span><span class="sym">)</span>
+<span class="sym">(</span>define LAST <span class="num">42</span><span class="sym">)</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>gen<span class="sym">-</span>random maximum<span class="sym">)</span>
+	<span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> LAST <span class="sym">(</span>modulo <span class="sym">(+ (*</span> LAST IA<span class="sym">)</span> IC<span class="sym">)</span> IM<span class="sym">))</span>
+	<span class="sym">(/ (*</span> maximum LAST<span class="sym">)</span> IM<span class="sym">))</span>
+
+<span class="slc">;;; Weighted selection from alphabet</span>
+<span class="sym">(</span>define <span class="sym">(</span>mkCumulativeInt orig total new<span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">null</span>? orig<span class="sym">) (</span><span class="kwa">reverse</span> new<span class="sym">)</span>
+        <span class="sym">(</span>let <span class="sym">((</span>val <span class="sym">(+</span> total <span class="sym">(</span>cadar orig<span class="sym">))))</span>
+	  <span class="sym">(</span>mkCumulativeInt <span class="sym">(</span><span class="kwa">cdr</span> orig<span class="sym">)</span> val
+	        <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span><span class="kwa">list</span> <span class="sym">(</span><span class="kwa">caar</span> orig<span class="sym">)</span> val<span class="sym">)</span> new<span class="sym">)))))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>mkCumulative aslst<span class="sym">)</span>
+    <span class="sym">(</span>mkCumulativeInt aslst <span class="num">0.0</span> <span class="str">'()))</span>
+<span class="str"></span>
+<span class="str">(define (selectRandomInternal lst r)</span>
+<span class="str">    ;(format #t &quot;lst: ~A r=~A~%&quot; lst r)</span>
+<span class="str">    (if (null? lst) &quot;error&quot;</span>
+<span class="str">        (let ((curr (car lst)))</span>
+<span class="str">	    (if (&lt; r (cadr curr))</span>
+<span class="str">                (car curr)</span>
+<span class="str">                (selectRandomInternal (cdr lst) r)))))</span>
+<span class="str"></span>
+<span class="str">(define (selectRandom alphabet)</span>
+<span class="str">    (selectRandomInternal alphabet (gen-random 1)))</span>
+<span class="str"></span>
+<span class="str">;;; Generate and write FASTA format</span>
+<span class="str">(define (writeFasta todo alphabet len)</span>
+<span class="str">   (let ((end (if (&lt; todo len) todo len)))</span>
+<span class="str">     (when (&gt; todo 0)</span>
+<span class="str">         (do ((x 0 (+ x 1))) ((= x end))</span>
+<span class="str">	   (format #t &quot;~A&quot; (selectRandom alphabet)))</span>
+<span class="str">         (newline)</span>
+<span class="str">         (writeFasta (- todo len) alphabet len))))</span>
+<span class="str"></span>
+<span class="str">(define (mkFastaFragment id description alphabet num)</span>
+<span class="str">    (let ((todo num)</span>
+<span class="str">          (len 60))</span>
+<span class="str">        (format #t &quot;&gt;~A ~A~%&quot; id description)</span>
+<span class="str">	(writeFasta todo alphabet len)))</span>
+<span class="str"></span>
+<span class="str">;;; Define alphabets</span>
+<span class="str">(define dna1</span>
+<span class="str">    '</span><span class="sym">((</span><span class="str">&quot;a&quot;</span> <span class="num">0.3029549426680</span><span class="sym">)</span>
+      <span class="sym">(</span><span class="str">&quot;c&quot;</span> <span class="num">0.1979883004921</span><span class="sym">)</span>
+      <span class="sym">(</span><span class="str">&quot;g&quot;</span> <span class="num">0.1975473066391</span><span class="sym">)</span>
+      <span class="sym">(</span><span class="str">&quot;t&quot;</span> <span class="num">0.3015094502008</span><span class="sym">)))</span>
+
+<span class="sym">(</span>define dna2
+    <span class="str">'((&quot;a&quot; 0.250)</span>
+<span class="str">      (&quot;c&quot; 0.125)</span>
+<span class="str">      (&quot;g&quot; 0.125)</span>
+<span class="str">      (&quot;t&quot; 0.250)</span>
+<span class="str"></span>
+<span class="str">      (&quot;U&quot; 0.019230769231)</span>
+<span class="str">      (&quot;R&quot; 0.019230769231)</span>
+<span class="str">      (&quot;Y&quot; 0.019230769231)</span>
+<span class="str">      (&quot;K&quot; 0.019230769231)</span>
+<span class="str">      (&quot;M&quot; 0.019230769231)</span>
+<span class="str">      (&quot;S&quot; 0.019230769231)</span>
+<span class="str">      (&quot;W&quot; 0.019230769231)</span>
+<span class="str">      (&quot;B&quot; 0.019230769231)</span>
+<span class="str">      (&quot;D&quot; 0.019230769231)</span>
+<span class="str">      (&quot;H&quot; 0.019230769231)</span>
+<span class="str">      (&quot;V&quot; 0.019230769231)</span>
+<span class="str">      (&quot;N&quot; 0.019230769231)</span>
+<span class="str">      (&quot;-&quot; 0.019230769231)))</span>
+<span class="str"></span>
+<span class="str">(define (main args)</span>
+<span class="str">    (let ((n (or (and (= (length args) 2) (string-&gt;number (cadr args))) 1))</span>
+<span class="str">          (ldna1 (mkCumulative dna1))</span>
+<span class="str">	  (ldna2 (mkCumulative dna2)))</span>
+<span class="str">      (mkFastaFragment &quot;TestOne&quot; &quot;test fragment&quot; ldna2 (* n 1))</span>
+<span class="str">      (mkFastaFragment &quot;TestTwo&quot; &quot;test fragment&quot; ldna1 (* n 2))</span>
+<span class="str">      (mkFastaFragment &quot;TestThree&quot; &quot;test fragment&quot; ldna2 (* n 3))</span>
+<span class="str">      (mkFastaFragment &quot;TestFour&quot; &quot;test fragment&quot; ldna1 (* n 4))</span>
+<span class="str">      (mkFastaFragment &quot;TestFive&quot; &quot;test fragment&quot; ldna2 (* n 5))))</span>
+<span class="str"></span>
+<span class="str">(main (argv))</span>
+<span class="str"></span>
+<span class="str">; vim: ts=4 ft=scheme</span>

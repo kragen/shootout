@@ -1,0 +1,66 @@
+<span class="slc">;;; -*- mode: lisp -*-</span>
+<span class="slc">;;; $Id: echo-poplisp.code,v 1.9 2006-09-20 05:51:10 bfulgham Exp $</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;; from Bulent Murtezaogl</span>
+
+<span class="slc">;(in-package &quot;UNIX&quot;)</span>
+<span class="sym">(</span><span class="kwa">defun</span> unix<span class="sym">-</span>wait <span class="sym">()</span>
+  <span class="str">&quot;Wait for a child to die. We don't care about the status&quot;</span>
+  <span class="sym">(</span>int<span class="sym">-</span>syscall <span class="sym">(</span><span class="str">&quot;wait&quot;</span> <span class="sym">(*</span> int<span class="sym">))</span> nil<span class="sym">))</span> <span class="slc">;;  is lisp nil == C NULL ?? Dunno.</span>
+<span class="sym">(</span>in<span class="sym">-</span>package <span class="str">&quot;USER&quot;</span><span class="sym">)</span>
+
+
+<span class="sym">(</span>define<span class="sym">-</span>condition sigpipe<span class="sym">)</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> ih<span class="sym">-</span>sigpipe <span class="sym">(</span>signal code scp<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>ignore signal code scp<span class="sym">))</span>
+  <span class="sym">(</span>signal <span class="str">'sigpipe))</span>
+<span class="str"></span>
+<span class="str">(defun error-return (str)</span>
+<span class="str">  (format *standard-output* &quot;Error: ~s ~%&quot; str)</span>
+<span class="str">  (quit))</span>
+<span class="str"></span>
+<span class="str">(defun echo-client (port iter)</span>
+<span class="str">  (declare (fixnum iter))</span>
+<span class="str">  (let* ((stream (sys:make-fd-stream</span>
+<span class="str">		  (ext:connect-to-inet-socket &quot;127.0.0.1&quot; port)</span>
+<span class="str">		  :output t :input t :buffering :line))</span>
+<span class="str">	 (estr &quot;Hello there sailor</span>
+<span class="str">&quot;)</span>
+<span class="str">	   (len (length estr))</span>
+<span class="str">	   (buffer (make-string len)))</span>
+<span class="str">    (dotimes (i iter)</span>
+<span class="str">      (declare (fixnum i len) (simple-base-string buffer)</span>
+<span class="str">	       (inline write-sequence sys:read-n-bytes string=))</span>
+<span class="str">      (write-sequence estr stream :start 0 :end len )</span>
+<span class="str">      (sys:read-n-bytes stream buffer 0 len nil)</span>
+<span class="str">      (unless (string= estr buffer)</span>
+<span class="str">	(format t &quot;client did not receive what it sent ~%&quot;)))))</span>
+<span class="str"></span>
+<span class="str">  (let ((lsock (ext:create-inet-listener 0))</span>
+<span class="str">	(n (parse-integer (or (car pop11::poparglist) &quot;1&quot;))))</span>
+<span class="str">    (multiple-value-bind (host port) (get-socket-host-and-port lsock)</span>
+<span class="str">      (declare (ignore host))</span>
+<span class="str">      (let ((fork-res (unix:unix-fork)))</span>
+<span class="str">	(if fork-res</span>
+<span class="str">	    (if (zerop fork-res)</span>
+<span class="str">		(echo-client port n)</span>
+<span class="str">	      (let ((stream (sys:make-fd-stream</span>
+<span class="str">			     (ext:accept-tcp-connection lsock)</span>
+<span class="str">			     :output t :input t :buffering :line))</span>
+<span class="str">		    (buffer (make-string 64))</span>
+<span class="str">		    (insize 0)</span>
+<span class="str">		    (sum 0))</span>
+<span class="str">		(declare (fixnum insize sum))</span>
+<span class="str">		(sys:enable-interrupt UNIX:sigpipe #'</span>ih<span class="sym">-</span>sigpipe<span class="sym">)</span>
+		<span class="sym">(</span>handler<span class="sym">-</span>case
+		    <span class="sym">(</span><span class="kwa">progn</span>
+		      <span class="sym">(</span>loop <span class="slc">;; loop seems to chew up my declarations!?</span>
+			<span class="kwa">while</span> <span class="sym">(</span><span class="kwa">not</span> <span class="sym">(</span><span class="kwa">zerop</span> <span class="sym">(</span>setf <span class="sym">(</span>the fixnum insize<span class="sym">)</span>
+						<span class="sym">(</span>the fixnum <span class="sym">(</span>sys<span class="sym">:</span><span class="kwa">read</span><span class="sym">-</span>n<span class="sym">-</span>bytes stream buffer <span class="num">0 64</span> nil<span class="sym">)))))</span>
+			do <span class="sym">(</span>write<span class="sym">-</span>sequence buffer stream <span class="sym">:</span>start <span class="num">0</span> <span class="sym">:</span>end insize<span class="sym">)</span>
+			<span class="sym">(</span>incf sum insize<span class="sym">))</span>
+		      <span class="sym">(</span>unix<span class="sym">::</span>unix<span class="sym">-</span>wait<span class="sym">)</span>
+		      <span class="sym">(</span>format t <span class="str">&quot;server processed ~D bytes~%&quot;</span> sum<span class="sym">))</span>
+		  <span class="sym">(</span>sigpipe <span class="sym">(</span>foo<span class="sym">) (</span>declare <span class="sym">(</span>ignore foo<span class="sym">)) (</span>error<span class="sym">-</span>return <span class="str">&quot;Kid died prematurely&quot;</span><span class="sym">))</span> <span class="slc">;; as good as catching sigchild for this app</span>
+		  <span class="sym">(</span>end<span class="sym">-</span>of<span class="sym">-</span>file <span class="sym">(</span>foo<span class="sym">) (</span>declare <span class="sym">(</span>ignore foo<span class="sym">))(</span>error<span class="sym">-</span>return <span class="str">&quot;EOF signalled.  Huh???&quot;</span><span class="sym">)))))))))</span>

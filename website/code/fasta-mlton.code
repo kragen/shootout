@@ -1,0 +1,97 @@
+<span class="com">(* fasta.sml</span>
+<span class="com"> *</span>
+<span class="com"> *   Generate and write random &quot;DNA&quot; sequences.</span>
+<span class="com"> *</span>
+<span class="com"> * Copyright (c) 2004 by The Fellowship of SML/NJ</span>
+<span class="com"> *</span>
+<span class="com"> * Author: Matthias Blume (blume&#64;tti-c.org)</span>
+<span class="com"> *</span>
+<span class="com"> *)</span>
+
+<span class="kwa">structure</span> Test<span class="sym">:</span><span class="kwa">sig val</span> main<span class="sym">:</span><span class="kwb">string</span><span class="sym">*</span><span class="kwb">string</span> list<span class="sym">-&gt;</span>OS.Process.status <span class="kwa">end</span> <span class="sym">=</span> <span class="kwa">struct</span>
+
+    <span class="kwa">val</span> len <span class="sym">=</span> <span class="num">60</span>
+
+    <span class="kwa">infix</span> <span class="num">8</span> $ <span class="sym">%</span> <span class="kwa">val</span> <span class="sym">(</span><span class="kwa">op</span> $<span class="sym">,</span> <span class="kwa">op</span> <span class="sym">%) = (</span>Unsafe.Array.sub<span class="sym">,</span> Unsafe.CharVector.sub<span class="sym">)</span>
+    <span class="kwa">infix</span> <span class="num">3</span> <span class="sym">&lt;-</span>  <span class="kwa">fun</span> <span class="sym">(</span>a<span class="sym">,</span> i<span class="sym">) &lt;-</span> x <span class="sym">=</span> Unsafe.Array.update <span class="sym">(</span>a<span class="sym">,</span> i<span class="sym">,</span> x<span class="sym">)</span>
+    <span class="kwa">fun</span> x <span class="sym">-</span> y <span class="sym">=</span> <span class="kwa">Word</span>.toIntX <span class="sym">(</span><span class="kwa">Word</span>.<span class="sym">- (</span><span class="kwa">Word</span>.fromInt x<span class="sym">,</span> <span class="kwa">Word</span>.fromInt y<span class="sym">))</span>
+    <span class="kwa">fun</span> succ x <span class="sym">=</span> <span class="kwa">Word</span>.toIntX <span class="sym">(</span><span class="kwa">Word</span>.fromInt x <span class="sym">+</span> <span class="num">0</span>w1<span class="sym">)</span>
+
+    <span class="kwa">fun</span> out s <span class="sym">=</span> <span class="kwa">TextIO</span>.output <span class="sym">(</span><span class="kwa">TextIO</span>.stdOut<span class="sym">,</span> s<span class="sym">)</span>
+    <span class="kwa">fun</span> out1 c <span class="sym">=</span> <span class="kwa">TextIO</span>.output1 <span class="sym">(</span><span class="kwa">TextIO</span>.stdOut<span class="sym">,</span> c<span class="sym">)</span>
+    <span class="kwa">fun</span> ssl<span class="sym">(</span>s<span class="sym">,</span>i<span class="sym">,</span>j<span class="sym">) =</span>
+	<span class="sym">(</span><span class="kwa">TextIO</span>.outputSubstr<span class="sym">(</span><span class="kwa">TextIO</span>.stdOut<span class="sym">,</span>Substring.substring<span class="sym">(</span>s<span class="sym">,</span>i<span class="sym">,</span>j<span class="sym">));</span>
+	 out1 #<span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">)</span>
+
+    <span class="com">(* word-&gt;real conversion *)</span>
+    <span class="kwa">val</span> wreal <span class="sym">=</span> <span class="kwb">real</span> <span class="kwa">o Word</span>.toIntX
+    <span class="com">(* the constants for the random number generator *)</span>
+    <span class="kwa">val</span> <span class="sym">(</span>M<span class="sym">,</span> A<span class="sym">,</span> C<span class="sym">) = (</span><span class="num">0</span>w139968<span class="sym">,</span> <span class="num">0</span>w3877<span class="sym">,</span> <span class="num">0</span>w29573<span class="sym">)</span>     <span class="kwa">val</span> M' <span class="sym">=</span> <span class="num">1.0</span> <span class="sym">/</span> wreal M
+
+    <span class="com">(* the random number generator *)</span>
+    <span class="kwa">val</span> random <span class="sym">=</span> <span class="kwa">let val</span> l <span class="sym">=</span> ref <span class="num">0</span>w42
+		 <span class="kwa">in fn</span> m<span class="sym">=&gt;</span><span class="kwa">let val</span> c <span class="sym">= (!</span>l<span class="sym">*</span>A<span class="sym">+</span>C<span class="sym">)</span> mod M <span class="kwa">in</span> l<span class="sym">:=</span>c<span class="sym">;</span> m<span class="sym">*</span>M'<span class="sym">*</span>wreal c <span class="kwa">end</span>
+		 <span class="kwa">end</span>
+
+    <span class="kwa">fun</span> stretch s <span class="sym">=</span> <span class="kwa">if</span> size s <span class="sym">&lt;</span> len <span class="kwa">then</span> stretch <span class="sym">(</span>s^s<span class="sym">)</span> <span class="kwa">else</span> <span class="sym">(</span>s^s<span class="sym">,</span> size s<span class="sym">)</span>
+
+    <span class="com">(* calculate cumulative probabilities *)</span>
+    <span class="kwa">fun</span> mkCumul l <span class="sym">=</span>
+	<span class="kwa">let val</span> <span class="sym">(</span>cl<span class="sym">,</span> pl<span class="sym">) =</span> <span class="kwa">ListPair</span>.unzip l
+	    <span class="kwa">val</span> <span class="sym">(</span>s<span class="sym">,</span> a<span class="sym">) = (</span>CharVector.fromList cl<span class="sym">,</span> Array.fromList pl<span class="sym">)</span>
+	    <span class="kwa">fun</span> upd <span class="sym">(</span>i<span class="sym">,</span> p<span class="sym">,</span> s<span class="sym">) =</span> <span class="kwa">let val</span> s <span class="sym">=</span> s<span class="sym">+</span>p <span class="kwa">in</span> <span class="sym">(</span>a<span class="sym">,</span>i<span class="sym">)&lt;-</span>s<span class="sym">;</span> s <span class="kwa">end</span>
+	<span class="kwa">in</span> ignore <span class="sym">(</span>Array.foldli upd <span class="num">0.0</span> a<span class="sym">); (</span>s<span class="sym">,</span> a<span class="sym">,</span> Array.length a <span class="sym">-</span> <span class="num">1</span><span class="sym">)</span> <span class="kwa">end</span>
+
+    <span class="com">(* fixed sequence to be repeated *)</span>
+    <span class="kwa">val</span> alu <span class="sym">=</span> stretch <span class="str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG</span><span class="esc">\</span>
+<span class="str"></span>		      <span class="esc">\G</span><span class="str">AGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA</span><span class="esc">\</span>
+<span class="str"></span>		      <span class="esc">\C</span><span class="str">CAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT</span><span class="esc">\</span>
+<span class="str"></span>		      <span class="esc">\A</span><span class="str">CAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA</span><span class="esc">\</span>
+<span class="str"></span>		      <span class="esc">\G</span><span class="str">CTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG</span><span class="esc">\</span>
+<span class="str"></span>		      <span class="esc">\A</span><span class="str">GGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC</span><span class="esc">\</span>
+<span class="str"></span>		      <span class="esc">\A</span><span class="str">GCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
+
+    <span class="com">(* the bases with their probabilities *)</span>
+    <span class="kwa">val</span> homosapiens <span class="sym">=</span> mkCumul <span class="sym">[(</span>#<span class="str">&quot;a&quot;</span><span class="sym">,</span> <span class="num">0.3029549426680</span><span class="sym">), (</span>#<span class="str">&quot;c&quot;</span><span class="sym">,</span> <span class="num">0.1979883004921</span><span class="sym">),</span>
+			       <span class="sym">(</span>#<span class="str">&quot;g&quot;</span><span class="sym">,</span> <span class="num">0.1975473066391</span><span class="sym">), (</span>#<span class="str">&quot;t&quot;</span><span class="sym">,</span> <span class="num">0.3015094502008</span><span class="sym">)]</span>
+
+    <span class="kwa">val</span> iub <span class="sym">=</span> mkCumul <span class="sym">[(</span>#<span class="str">&quot;a&quot;</span><span class="sym">,</span><span class="num">0.27</span><span class="sym">), (</span>#<span class="str">&quot;c&quot;</span><span class="sym">,</span><span class="num">0.12</span><span class="sym">), (</span>#<span class="str">&quot;g&quot;</span><span class="sym">,</span><span class="num">0.12</span><span class="sym">), (</span>#<span class="str">&quot;t&quot;</span><span class="sym">,</span><span class="num">0.27</span><span class="sym">),</span>
+		       <span class="sym">(</span>#<span class="str">&quot;B&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;D&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;H&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;K&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">),</span>
+		       <span class="sym">(</span>#<span class="str">&quot;M&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;N&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;R&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;S&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">),</span>
+		       <span class="sym">(</span>#<span class="str">&quot;V&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;W&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">), (</span>#<span class="str">&quot;Y&quot;</span><span class="sym">,</span><span class="num">0.02</span><span class="sym">)]</span>
+
+    <span class="com">(* select a random base *)</span>
+    <span class="kwa">fun</span> selRandom <span class="sym">(</span>s<span class="sym">,</span> a<span class="sym">,</span> n'<span class="sym">) =</span>
+	<span class="kwa">let val</span> r <span class="sym">=</span> random <span class="num">1.0</span>
+	    <span class="kwa">fun</span> l i <span class="sym">=</span> <span class="kwa">if</span> i <span class="sym">&gt;=</span> n' <span class="kwa">orelse</span> a$i <span class="sym">&gt;</span> r <span class="kwa">then</span> s<span class="sym">%</span>i <span class="kwa">else</span> l <span class="sym">(</span>succ i<span class="sym">)</span>
+	<span class="kwa">in</span> l <span class="num">0</span> <span class="kwa">end</span>
+
+    <span class="com">(* make a sequence by repeating a template *)</span>
+    <span class="kwa">fun</span> rptff <span class="sym">(</span>id<span class="sym">,</span> desc<span class="sym">, (</span>s<span class="sym">,</span> l<span class="sym">),</span> n<span class="sym">) =</span>
+	<span class="kwa">let fun</span> lp <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> _<span class="sym">) = ()</span>
+	      <span class="sym">|</span> lp <span class="sym">(</span>n<span class="sym">,</span> k<span class="sym">) =</span>
+		  <span class="kwa">if</span> n<span class="sym">&lt;</span>len <span class="kwa">then</span> ssl<span class="sym">(</span>s<span class="sym">,</span>k<span class="sym">,</span>n<span class="sym">)</span>
+		  <span class="kwa">else let val</span> k' <span class="sym">=</span> k<span class="sym">+</span>len
+		       <span class="kwa">in</span> ssl<span class="sym">(</span>s<span class="sym">,</span>k<span class="sym">,</span>len<span class="sym">);</span> lp<span class="sym">(</span>n<span class="sym">-</span>len<span class="sym">,</span> <span class="kwa">if</span> k'<span class="sym">&gt;=</span>l <span class="kwa">then</span> k'<span class="sym">-</span>l <span class="kwa">else</span> k'<span class="sym">)</span>
+		       <span class="kwa">end</span>
+	<span class="kwa">in</span> app out <span class="sym">[</span><span class="str">&quot;&gt;&quot;</span><span class="sym">,</span> id<span class="sym">,</span> <span class="str">&quot; &quot;</span><span class="sym">,</span> desc<span class="sym">,</span> <span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">];</span> lp <span class="sym">(</span>n<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span> <span class="kwa">end</span>
+
+    <span class="com">(* make random fasta fragment *)</span>
+    <span class="kwa">fun</span> rndff <span class="sym">(</span>id<span class="sym">,</span> desc<span class="sym">,</span> sa<span class="sym">,</span> n<span class="sym">) =</span>
+	<span class="kwa">let fun</span> loop n <span class="sym">=</span> <span class="kwa">let val</span> m <span class="sym">=</span> <span class="kwa">Int</span>.min<span class="sym">(</span>n<span class="sym">,</span>len<span class="sym">)</span> <span class="kwa">in</span> loop' <span class="sym">(</span>n<span class="sym">-</span>m<span class="sym">,</span>m<span class="sym">)</span> <span class="kwa">end</span>
+	    <span class="kwa">and</span> loop' <span class="sym">(</span>n<span class="sym">,</span> <span class="num">0</span><span class="sym">) = (</span>out1 #<span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">;</span> <span class="kwa">if</span> n<span class="sym">&gt;</span><span class="num">0</span> <span class="kwa">then</span> loop n <span class="kwa">else</span> <span class="sym">())</span>
+	      <span class="sym">|</span> loop' <span class="sym">(</span>n<span class="sym">,</span> m<span class="sym">) = (</span>out1 <span class="sym">(</span>selRandom sa<span class="sym">);</span> loop' <span class="sym">(</span>n<span class="sym">,</span>m<span class="sym">-</span><span class="num">1</span><span class="sym">))</span>
+	<span class="kwa">in</span> app out <span class="sym">[</span><span class="str">&quot;&gt;&quot;</span><span class="sym">,</span> id<span class="sym">,</span> <span class="str">&quot; &quot;</span><span class="sym">,</span> desc<span class="sym">,</span> <span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">];</span> loop n <span class="kwa">end</span>
+
+    <span class="com">(* test harness *)</span>
+    <span class="kwa">fun</span> make' n <span class="sym">= (</span>rptff<span class="sym">(</span><span class="str">&quot;ONE&quot;</span><span class="sym">,</span> <span class="str">&quot;Homo sapiens alu&quot;</span><span class="sym">,</span> alu<span class="sym">,</span> n<span class="sym">*</span><span class="num">2</span><span class="sym">);</span>
+		   rndff<span class="sym">(</span><span class="str">&quot;TWO&quot;</span><span class="sym">,</span> <span class="str">&quot;IUB ambiguity codes&quot;</span><span class="sym">,</span> iub<span class="sym">,</span> n<span class="sym">*</span><span class="num">3</span><span class="sym">);</span>
+		   rndff<span class="sym">(</span><span class="str">&quot;THREE&quot;</span><span class="sym">,</span> <span class="str">&quot;Homo sapiens frequency&quot;</span><span class="sym">,</span> homosapiens<span class="sym">,</span> n<span class="sym">*</span><span class="num">5</span><span class="sym">);</span>
+		   OS.Process.success<span class="sym">)</span>
+
+    <span class="com">(* driver *)</span>
+    <span class="kwa">fun</span> main <span class="sym">(</span>_<span class="sym">, []) =</span> make' <span class="num">1</span>
+      <span class="sym">|</span> main <span class="sym">(</span>_<span class="sym">,</span> arg <span class="sym">::</span> _<span class="sym">) =</span> make' <span class="sym">(</span>getOpt <span class="sym">(</span><span class="kwa">Int</span>.fromString arg<span class="sym">,</span> <span class="num">1</span><span class="sym">))</span>
+<span class="kwa">end</span>
+
+<span class="kwa">val</span> _ <span class="sym">=</span> Test.main <span class="sym">(</span>CommandLine.name <span class="sym">(),</span> CommandLine.arguments <span class="sym">())</span>

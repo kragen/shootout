@@ -1,0 +1,212 @@
+<span class="slc">-- The Great Computer Language Shootout</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">--</span>
+<span class="slc">-- contributed by Marius Amado Alves</span>
+<span class="slc">--</span>
+<span class="slc">-- gnatmake -O3 -gnatp word_frequency.adb</span>
+
+<span class="kwa">with</span> Ada.Streams<span class="sym">;</span>
+<span class="kwa">with</span> Ada.Streams.Stream_IO<span class="sym">;</span>
+<span class="kwa">with</span> Ada.Text_IO<span class="sym">;</span>
+<span class="kwa">with</span> Ada.Text_IO.Text_Streams<span class="sym">;</span>
+
+<span class="kwa">procedure</span> WordFreq <span class="kwa">is</span>
+
+    <span class="kwa">use</span> Ada.Streams<span class="sym">;</span>
+
+    Buffer <span class="sym">:</span> Stream_Element_Array <span class="sym">(</span><span class="num">1</span> .. <span class="num">4096</span><span class="sym">);</span>
+    Input_Stream <span class="sym">:</span> Ada.Text_IO.Text_Streams.Stream_Access
+      <span class="sym">:=</span> Ada.Text_IO.Text_Streams.Stream <span class="sym">(</span>Ada.Text_IO.Current_Input<span class="sym">);</span>
+    N <span class="sym">:</span> Stream_Element_Offset<span class="sym">;</span>
+    Is_Separator <span class="sym">:</span> <span class="kwa">array</span> <span class="sym">(</span>Stream_Element<span class="sym">)</span> <span class="kwa">of</span> <span class="kwb">Boolean</span> <span class="sym">:=</span>
+      <span class="sym">(</span><span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>A<span class="sym">')</span> .. <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>Z<span class="sym">') |</span>
+       <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>a<span class="sym">')</span> .. <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>z<span class="sym">') =&gt;</span> False<span class="sym">,</span>
+       <span class="kwa">others</span> <span class="sym">=&gt;</span> True<span class="sym">);</span>
+
+    <span class="slc">-- N-ary tree of word counts</span>
+    <span class="slc">-- used to increment the counts in one pass of the input file</span>
+    <span class="slc">-- branches on the letter</span>
+    <span class="slc">-- carries the count</span>
+    <span class="slc">-- very fast</span>
+    <span class="slc">-- but very space consuming</span>
+
+    <span class="kwa">subtype</span> Letter <span class="kwa">is</span> Stream_Element <span class="kwa">range</span>
+       <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>a<span class="sym">')</span> .. <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>z<span class="sym">');</span>
+    <span class="kwa">type</span> Word <span class="kwa">is array</span> <span class="sym">(</span><span class="kwb">Positive</span> <span class="kwa">range</span> <span class="sym">&lt;&gt;)</span> <span class="kwa">of</span> Letter<span class="sym">;</span>
+    <span class="kwa">type</span> Tree<span class="sym">;</span>
+    <span class="kwa">type</span> Tree_Ptr <span class="kwa">is access</span> Tree<span class="sym">;</span>
+    <span class="kwa">type</span> Node <span class="kwa">is</span>
+       <span class="kwa">record</span>
+          Count <span class="sym">:</span> <span class="kwb">Natural</span> <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+          Subtree <span class="sym">:</span> Tree_Ptr <span class="sym">:=</span> <span class="kwa">null</span><span class="sym">;</span>
+       <span class="kwa">end record</span><span class="sym">;</span>
+    <span class="kwa">type</span> Tree <span class="kwa">is array</span> <span class="sym">(</span>Letter<span class="sym">)</span> <span class="kwa">of</span> Node<span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Inc <span class="sym">(</span>X <span class="sym">:</span> <span class="kwa">in out</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">is begin</span> X <span class="sym">:=</span> X <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span> <span class="kwa">end</span><span class="sym">;</span>
+    <span class="kwa">procedure</span> Dec <span class="sym">(</span>X <span class="sym">:</span> <span class="kwa">in out</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">is begin</span> X <span class="sym">:=</span> X <span class="sym">-</span> <span class="num">1</span><span class="sym">;</span> <span class="kwa">end</span><span class="sym">;</span>
+    <span class="kwa">pragma</span> Inline <span class="sym">(</span>Inc<span class="sym">,</span> Dec<span class="sym">);</span>
+
+    <span class="kwa">procedure</span> Inc_Word <span class="sym">(</span>Parent <span class="sym">:</span> Tree_Ptr<span class="sym">;</span> Descendents <span class="sym">:</span> Word<span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">if</span> Descendents<span class="sym">'</span>Length <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+          <span class="kwa">declare</span>
+             Child_Index <span class="sym">:</span> <span class="kwb">Positive</span> <span class="sym">:=</span> Descendents<span class="sym">'</span>First<span class="sym">;</span>
+             Child <span class="sym">:</span> Letter <span class="kwa">renames</span> Descendents <span class="sym">(</span>Child_Index<span class="sym">);</span>
+          <span class="kwa">begin</span>
+             <span class="kwa">if</span> Descendents<span class="sym">'</span>Length <span class="sym">=</span> <span class="num">1</span> <span class="kwa">then</span>
+                Inc <span class="sym">(</span>Parent <span class="sym">(</span>Child<span class="sym">)</span>.Count<span class="sym">);</span>
+             <span class="kwa">else</span>
+                <span class="kwa">if</span> Parent <span class="sym">(</span>Child<span class="sym">)</span>.Subtree <span class="sym">=</span> <span class="kwa">null then</span>
+                   Parent <span class="sym">(</span>Child<span class="sym">)</span>.Subtree <span class="sym">:=</span> <span class="kwa">new</span> Tree<span class="sym">;</span>
+                <span class="kwa">end if</span><span class="sym">;</span>
+                Inc_Word
+                  <span class="sym">(</span>Parent <span class="sym">(</span>Child<span class="sym">)</span>.Subtree<span class="sym">,</span>
+                   Descendents <span class="sym">(</span>Child_Index <span class="sym">+</span> <span class="num">1</span> .. Descendents<span class="sym">'</span>Last<span class="sym">));</span>
+             <span class="kwa">end if</span><span class="sym">;</span>
+          <span class="kwa">end</span><span class="sym">;</span>
+       <span class="kwa">end if</span><span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="slc">-- Binary tree of word counts</span>
+    <span class="slc">-- used for sorting the result by the count (frequency)</span>
+    <span class="slc">-- branches on the word count</span>
+    <span class="slc">-- carries the word form</span>
+
+    <span class="kwa">type</span> Form_Ptr <span class="kwa">is access</span> Word<span class="sym">;</span>
+    <span class="kwa">type</span> Binary_Tree<span class="sym">;</span>
+    <span class="kwa">type</span> Binary_Tree_Ptr <span class="kwa">is access</span> Binary_Tree<span class="sym">;</span>
+    <span class="kwa">type</span> Binary_Tree <span class="kwa">is</span>
+       <span class="kwa">record</span>
+          Form <span class="sym">:</span> Form_Ptr<span class="sym">;</span>
+          Count <span class="sym">:</span> <span class="kwb">Natural</span><span class="sym">;</span>
+          Left<span class="sym">,</span> Right <span class="sym">:</span> Binary_Tree_Ptr<span class="sym">;</span>
+       <span class="kwa">end record</span><span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Add_Node <span class="sym">(</span>Parent <span class="sym">:</span> <span class="kwa">in out</span> Binary_Tree_Ptr<span class="sym">;</span>
+                        Form <span class="sym">:</span> Form_Ptr<span class="sym">;</span> Count <span class="sym">:</span> <span class="kwb">Natural</span><span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">if</span> Parent <span class="sym">=</span> <span class="kwa">null then</span>
+          Parent <span class="sym">:=</span> <span class="kwa">new</span> Binary_Tree<span class="sym">;</span>
+          Parent.Form <span class="sym">:=</span> Form<span class="sym">;</span>
+          Parent.Count <span class="sym">:=</span> Count<span class="sym">;</span>
+       <span class="kwa">else</span>
+          <span class="kwa">if</span> Count <span class="sym">&lt;</span> Parent.Count <span class="kwa">then</span>
+             Add_Node <span class="sym">(</span>Parent.Left<span class="sym">,</span> Form<span class="sym">,</span> Count<span class="sym">);</span>
+          <span class="kwa">else</span>
+             Add_Node <span class="sym">(</span>Parent.Right<span class="sym">,</span> Form<span class="sym">,</span> Count<span class="sym">);</span>
+          <span class="kwa">end if</span><span class="sym">;</span>
+       <span class="kwa">end if</span><span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="slc">-- end of binary tree primitives</span>
+
+    Root <span class="sym">:</span> Tree_Ptr <span class="sym">:=</span> <span class="kwa">new</span> Tree<span class="sym">;</span>
+    Btree <span class="sym">:</span> Binary_Tree_Ptr <span class="sym">:=</span> <span class="kwa">null</span><span class="sym">;</span>
+    Current_Word <span class="sym">:</span> Word <span class="sym">(</span><span class="num">1</span> .. <span class="num">1000</span><span class="sym">);</span>
+    Current_Word_Length <span class="sym">:</span> <span class="kwb">Natural</span> <span class="kwa">range</span> <span class="num">0</span> .. Current_Word<span class="sym">'</span>Last <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+    In_Word <span class="sym">:</span> <span class="kwb">Boolean</span> <span class="sym">:=</span> False<span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Append_To_Word <span class="sym">(</span>E <span class="sym">:</span> Letter<span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       Inc <span class="sym">(</span>Current_Word_Length<span class="sym">);</span>
+       Current_Word <span class="sym">(</span>Current_Word_Length<span class="sym">) :=</span> E<span class="sym">;</span>
+       In_Word <span class="sym">:=</span> True<span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">procedure</span> End_Word <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">if</span> Current_Word_Length <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+          Inc_Word <span class="sym">(</span>Root<span class="sym">,</span> Current_Word <span class="sym">(</span><span class="num">1</span> .. Current_Word_Length<span class="sym">));</span>
+       <span class="kwa">end if</span><span class="sym">;</span>
+       Current_Word_Length <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+       In_Word <span class="sym">:=</span> False<span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    To_Lower <span class="sym">:</span> <span class="kwa">array</span> <span class="sym">(</span>Stream_Element<span class="sym">)</span> <span class="kwa">of</span> Letter<span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Initialise_To_Lower_Map <span class="kwa">is</span>
+       D <span class="sym">:</span> <span class="kwb">Integer</span> <span class="sym">:=</span> <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>a<span class="sym">') -</span> <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>A<span class="sym">');</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">for</span> I <span class="kwa">in</span> <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>a<span class="sym">')</span> .. <span class="kwb">Character</span><span class="sym">'</span>Pos <span class="sym">('</span>z<span class="sym">')</span> <span class="kwa">loop</span>
+          To_Lower <span class="sym">(</span>Stream_Element <span class="sym">(</span>I<span class="sym">)) :=</span> Letter <span class="sym">(</span>I<span class="sym">);</span>
+          To_Lower <span class="sym">(</span>Stream_Element <span class="sym">(</span>I <span class="sym">-</span> D<span class="sym">)) :=</span> Letter <span class="sym">(</span>I<span class="sym">);</span>
+       <span class="kwa">end loop</span><span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Process <span class="sym">(</span>S <span class="sym">:</span> Stream_Element_Array<span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">for</span> I <span class="kwa">in</span> S<span class="sym">'</span><span class="kwa">Range loop</span>
+          <span class="kwa">if</span> Is_Separator <span class="sym">(</span>S <span class="sym">(</span>I<span class="sym">))</span> <span class="kwa">then</span>
+             <span class="kwa">if</span> In_Word <span class="kwa">then</span> End_Word<span class="sym">;</span> <span class="kwa">end if</span><span class="sym">;</span>
+          <span class="kwa">else</span>
+             Append_To_Word <span class="sym">(</span>To_Lower <span class="sym">(</span>S <span class="sym">(</span>I<span class="sym">)));</span>
+          <span class="kwa">end if</span><span class="sym">;</span>
+       <span class="kwa">end loop</span><span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">pragma</span> Inline <span class="sym">(</span>Append_To_Word<span class="sym">,</span> End_Word<span class="sym">,</span> Process<span class="sym">);</span>
+
+    <span class="kwa">procedure</span> Populate_Btree <span class="sym">(</span>Ntree <span class="sym">:</span> Tree_Ptr<span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       Inc <span class="sym">(</span>Current_Word_Length<span class="sym">);</span>
+       <span class="kwa">for</span> I <span class="kwa">in</span> Letter<span class="sym">'</span><span class="kwa">Range loop</span>
+          Current_Word <span class="sym">(</span>Current_Word_Length<span class="sym">) :=</span> I<span class="sym">;</span>
+          <span class="kwa">if</span> Ntree <span class="sym">(</span>I<span class="sym">)</span>.Count <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+             Add_Node
+                <span class="sym">(</span>Btree<span class="sym">,</span>
+                 Form <span class="sym">=&gt;</span> <span class="kwa">new</span> Word<span class="sym">'(</span>Current_Word <span class="sym">(</span><span class="num">1</span> .. Current_Word_Length<span class="sym">)),</span>
+                 Count <span class="sym">=&gt;</span> Ntree <span class="sym">(</span>I<span class="sym">)</span>.Count<span class="sym">);</span>
+          <span class="kwa">end if</span><span class="sym">;</span>
+          <span class="kwa">if</span> Ntree <span class="sym">(</span>I<span class="sym">)</span>.Subtree <span class="sym">/=</span> <span class="kwa">null then</span>
+             Populate_Btree <span class="sym">(</span>Ntree <span class="sym">(</span>I<span class="sym">)</span>.Subtree<span class="sym">);</span>
+          <span class="kwa">end if</span><span class="sym">;</span>
+       <span class="kwa">end loop</span><span class="sym">;</span>
+       Dec <span class="sym">(</span>Current_Word_Length<span class="sym">);</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Populate_Btree <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       Current_Word_Length <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+       Populate_Btree <span class="sym">(</span>Root<span class="sym">);</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">function</span> To_String <span class="sym">(</span>X <span class="sym">:</span> Form_Ptr<span class="sym">)</span> <span class="kwa">return</span> <span class="kwb">String</span> <span class="kwa">is</span>
+       S <span class="sym">:</span> <span class="kwb">String</span> <span class="sym">(</span>X<span class="sym">'</span><span class="kwa">Range</span><span class="sym">);</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">for</span> I <span class="kwa">in</span> X<span class="sym">'</span><span class="kwa">Range loop</span>
+          S <span class="sym">(</span>I<span class="sym">) :=</span> <span class="kwb">Character</span><span class="sym">'</span>Val <span class="sym">(</span>X <span class="sym">(</span>I<span class="sym">));</span>
+       <span class="kwa">end loop</span><span class="sym">;</span>
+       <span class="kwa">return</span> S<span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">subtype</span> String7 <span class="kwa">is</span> <span class="kwb">String</span> <span class="sym">(</span><span class="num">1</span> .. <span class="num">7</span><span class="sym">);</span>
+
+    <span class="kwa">function</span> Img7 <span class="sym">(</span>X <span class="sym">:</span> <span class="kwb">Natural</span><span class="sym">)</span> <span class="kwa">return</span> String7 <span class="kwa">is</span>
+       S <span class="sym">:</span> <span class="kwb">String</span> <span class="sym">:=</span> <span class="kwb">Natural</span><span class="sym">'</span>Image <span class="sym">(</span>X<span class="sym">);</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">return</span> <span class="kwb">String</span><span class="sym">' (</span><span class="num">1</span> .. <span class="num">8</span> <span class="sym">-</span> S<span class="sym">'</span>Length <span class="sym">=&gt; ' ') &amp;</span> S <span class="sym">(</span><span class="num">2</span> .. S<span class="sym">'</span>Last<span class="sym">);</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+    <span class="kwa">pragma</span> Inline <span class="sym">(</span>To_String<span class="sym">,</span> Img7<span class="sym">);</span>
+
+    <span class="kwa">procedure</span> Dump_Btree <span class="sym">(</span>X <span class="sym">:</span> Binary_Tree_Ptr <span class="sym">:=</span> Btree<span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+       <span class="kwa">if</span> X <span class="sym">/=</span> <span class="kwa">null then</span>
+          Dump_Btree <span class="sym">(</span>X.Right<span class="sym">);</span>
+          Ada.Text_IO.Put_Line
+            <span class="sym">(</span>Img7 <span class="sym">(</span>X.Count<span class="sym">) &amp;</span> <span class="str">&quot; &quot;</span> <span class="sym">&amp;</span> To_String <span class="sym">(</span>X.Form<span class="sym">));</span>
+          Dump_Btree <span class="sym">(</span>X.Left<span class="sym">);</span>
+       <span class="kwa">end if</span><span class="sym">;</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+
+<span class="kwa">begin</span>
+    Initialise_To_Lower_Map<span class="sym">;</span>
+    <span class="kwa">loop</span>
+       Read <span class="sym">(</span>Root_Stream_Type<span class="sym">'</span>Class <span class="sym">(</span>Input_Stream.<span class="kwa">all</span><span class="sym">),</span> Buffer<span class="sym">,</span> N<span class="sym">);</span>
+       Process <span class="sym">(</span>Buffer <span class="sym">(</span><span class="num">1</span> .. N<span class="sym">));</span>
+       <span class="kwa">exit when</span> N <span class="sym">&lt;</span> Buffer<span class="sym">'</span>Length<span class="sym">;</span>
+    <span class="kwa">end loop</span><span class="sym">;</span>
+    <span class="kwa">if</span> In_Word <span class="kwa">then</span> End_Word<span class="sym">;</span> <span class="kwa">end if</span><span class="sym">;</span>
+    Populate_Btree<span class="sym">;</span>
+    Dump_Btree<span class="sym">;</span>
+<span class="kwa">end</span><span class="sym">;</span>

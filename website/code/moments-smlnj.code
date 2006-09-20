@@ -1,0 +1,104 @@
+<span class="com">(* moments.sml</span>
+<span class="com"> *</span>
+<span class="com"> *   Calculate some statistics for univariate data samples.</span>
+<span class="com"> *</span>
+<span class="com"> * Copyright (c) 2004 by The Fellowship of SML/NJ</span>
+<span class="com"> *</span>
+<span class="com"> * Author: Matthias Blume (blume&#64;tti-c.org)</span>
+<span class="com"> *)</span>
+<span class="kwa">structure</span> Test<span class="sym">:</span><span class="kwa">sig val</span> main<span class="sym">:</span><span class="kwb">string</span><span class="sym">*</span><span class="kwb">string</span> list<span class="sym">-&gt;</span>OS.Process.status <span class="kwa">end</span> <span class="sym">=</span> <span class="kwa">struct</span>
+
+    <span class="kwa">infix</span> <span class="num">8</span> $  <span class="kwa">val op</span> $ <span class="sym">=</span> Unsafe.Array.sub
+    <span class="kwa">infix</span> <span class="num">3</span> <span class="sym">&lt;-</span> <span class="kwa">fun</span> <span class="sym">(</span>a<span class="sym">,</span> i<span class="sym">) &lt;-</span> x <span class="sym">=</span> Unsafe.Array.update <span class="sym">(</span>a<span class="sym">,</span> i<span class="sym">,</span> x<span class="sym">)</span>
+
+    <span class="com">(* min array size in sample: *)</span>
+    <span class="kwa">val</span> SZ <span class="sym">=</span> <span class="num">4096</span>
+    <span class="com">(* empty sample: *)</span>
+    <span class="kwa">val</span> empty <span class="sym">= (</span>Array.array <span class="sym">(</span>SZ<span class="sym">,</span> <span class="num">0.0</span><span class="sym">),</span> SZ<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0.0</span><span class="sym">,</span> <span class="num">0.0</span><span class="sym">,</span> <span class="num">0.0</span><span class="sym">,</span> <span class="num">0.0</span><span class="sym">)</span>
+
+    <span class="com">(* add a point to the sample:</span>
+<span class="com">     *   a sample is a tuple of:</span>
+<span class="com">     *      - the array of points</span>
+<span class="com">     *      - currently allocated size of the array</span>
+<span class="com">     *      - current number of points</span>
+<span class="com">     *      - sum of points^4</span>
+<span class="com">     *      - sum of points^3</span>
+<span class="com">     *      - sum of points^2</span>
+<span class="com">     *      - sum of points *)</span>
+    <span class="kwa">fun</span> point <span class="sym">(</span>x<span class="sym">:</span><span class="kwb">real</span><span class="sym">, (</span>a<span class="sym">,</span> sz<span class="sym">,</span> n<span class="sym">,</span> sx4<span class="sym">,</span> sx3<span class="sym">,</span> sx2<span class="sym">,</span> sx1<span class="sym">)) =</span>
+	<span class="kwa">let val</span> x2 <span class="sym">=</span> x<span class="sym">*</span>x <span class="kwa">val</span> <span class="sym">(</span>x3<span class="sym">,</span> x4<span class="sym">) = (</span>x2<span class="sym">*</span>x<span class="sym">,</span> x2<span class="sym">*</span>x2<span class="sym">)</span>
+	    <span class="kwa">val</span> <span class="sym">(</span>a<span class="sym">,</span> sz<span class="sym">) =</span>
+		<span class="kwa">if</span> n<span class="sym">&lt;</span>sz <span class="kwa">then</span> <span class="sym">(</span>a<span class="sym">,</span> sz<span class="sym">)</span>
+		<span class="kwa">else let val</span> sz<span class="sym">=</span>sz<span class="sym">+</span>sz
+			 <span class="kwa">val</span> b<span class="sym">=</span>Array.tabulate<span class="sym">(</span>sz<span class="sym">,</span><span class="kwa">fn</span> i<span class="sym">=&gt;</span><span class="kwa">if</span> i<span class="sym">&lt;</span>n <span class="kwa">then</span> a$i <span class="kwa">else</span> <span class="num">0.0</span><span class="sym">)</span>
+		     <span class="kwa">in</span> <span class="sym">(</span>b<span class="sym">,</span> sz<span class="sym">)</span> <span class="kwa">end</span>
+	<span class="kwa">in</span> <span class="sym">(</span>a<span class="sym">,</span>n<span class="sym">) &lt;-</span> x<span class="sym">; (</span>a<span class="sym">,</span> sz<span class="sym">,</span> n<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> sx4<span class="sym">+</span>x4<span class="sym">,</span> sx3<span class="sym">+</span>x3<span class="sym">,</span> sx2<span class="sym">+</span>x2<span class="sym">,</span> sx1<span class="sym">+</span>x<span class="sym">)</span> <span class="kwa">end</span>
+
+    <span class="com">(* calculate moments etc. of the sample *)</span>
+    <span class="kwa">fun</span> moments <span class="sym">(</span>a<span class="sym">,</span> sz<span class="sym">,</span> ni<span class="sym">,</span> sx4<span class="sym">,</span> sx3<span class="sym">,</span> sx2<span class="sym">,</span> sx1<span class="sym">) =</span>
+	<span class="kwa">let val</span> n <span class="sym">=</span> <span class="kwb">real</span> ni         <span class="kwa">val</span> n' <span class="sym">=</span> n <span class="sym">-</span> <span class="num">1.0</span>
+	    <span class="kwa">val</span> m <span class="sym">=</span> sx1<span class="sym">/</span>n           <span class="kwa">val</span> m2 <span class="sym">=</span> m<span class="sym">*</span>m         <span class="kwa">val</span> m3 <span class="sym">=</span> m2<span class="sym">*</span>m
+	    <span class="kwa">val</span> sd2 <span class="sym">= (</span>sx2 <span class="sym">+</span> m<span class="sym">*(</span>n<span class="sym">*</span>m<span class="sym">-</span><span class="num">2.0</span><span class="sym">*</span>sx1<span class="sym">))/</span>n'
+	    <span class="kwa">val</span> sd <span class="sym">=</span> Math.sqrt sd2  <span class="kwa">val</span> <span class="sym">(</span>sd3<span class="sym">,</span> sd4<span class="sym">) = (</span>sd<span class="sym">*</span>sd2<span class="sym">,</span> sd2<span class="sym">*</span>sd2<span class="sym">)</span>
+	    <span class="kwa">val</span> sk <span class="sym">= (</span>sx3<span class="sym">-</span>m<span class="sym">*(</span><span class="num">3.0</span><span class="sym">*(</span>sx2<span class="sym">-</span>sx1<span class="sym">*</span>m<span class="sym">)+</span>n<span class="sym">*</span>m2<span class="sym">))/(</span>n<span class="sym">*</span>sd3<span class="sym">)</span>
+	    <span class="kwa">val</span> k <span class="sym">= ((</span>sx4<span class="sym">+</span>m<span class="sym">*(</span><span class="num">6.0</span><span class="sym">*</span>sx2<span class="sym">*</span>m<span class="sym">-</span><span class="num">4.0</span><span class="sym">*(</span>sx3<span class="sym">+</span>sx1<span class="sym">*</span>m2<span class="sym">)+</span>n<span class="sym">*</span>m3<span class="sym">))/(</span>n<span class="sym">*</span>sd4<span class="sym">))-</span><span class="num">3.0</span>
+	<span class="kwa">in</span> <span class="sym">(</span>a<span class="sym">,</span> sz<span class="sym">,</span> ni<span class="sym">,</span> n<span class="sym">,</span> m<span class="sym">,</span> sd2<span class="sym">,</span> sd<span class="sym">,</span> sk<span class="sym">,</span> k<span class="sym">)</span> <span class="kwa">end</span>
+
+    <span class="com">(* initialize random number generator *)</span>
+    <span class="kwa">val</span> rand <span class="sym">=</span> Random.rand <span class="sym">(</span><span class="num">123</span><span class="sym">,</span> <span class="num">73256</span><span class="sym">)</span>
+
+    <span class="com">(* select i-th order statistic from unsorted array: *)</span>
+    <span class="kwa">fun</span> select <span class="sym">(</span>a<span class="sym">:</span> <span class="kwb">real</span> array<span class="sym">,</span> n<span class="sym">,</span> i<span class="sym">) =</span>
+	<span class="kwa">let fun</span> x <span class="sym">+</span> y <span class="sym">=</span> <span class="kwa">Word</span>.toIntX <span class="sym">(</span><span class="kwa">Word</span>.<span class="sym">+ (</span><span class="kwa">Word</span>.fromInt x<span class="sym">,</span> <span class="kwa">Word</span>.fromInt y<span class="sym">))</span>
+	    <span class="kwa">fun</span> x <span class="sym">-</span> y <span class="sym">=</span> <span class="kwa">Word</span>.toIntX <span class="sym">(</span><span class="kwa">Word</span>.<span class="sym">- (</span><span class="kwa">Word</span>.fromInt x<span class="sym">,</span> <span class="kwa">Word</span>.fromInt y<span class="sym">))</span>
+	    <span class="com">(* random partition: *)</span>
+	    <span class="kwa">fun</span> rp <span class="sym">(</span>p<span class="sym">,</span> r<span class="sym">) =</span>
+		<span class="kwa">let fun</span> sw<span class="sym">(</span>i<span class="sym">,</span>j<span class="sym">) =</span> <span class="kwa">let val</span> t<span class="sym">=</span>a$i <span class="kwa">in</span> <span class="sym">(</span>a<span class="sym">,</span>i<span class="sym">)&lt;-</span>a$j<span class="sym">; (</span>a<span class="sym">,</span>j<span class="sym">)&lt;-</span>t <span class="kwa">end</span>
+		    <span class="kwa">val</span> q <span class="sym">=</span> Random.randRange <span class="sym">(</span>p<span class="sym">,</span> r<span class="sym">)</span> rand
+		    <span class="kwa">val</span> qv <span class="sym">=</span> a$q
+		    <span class="kwa">val</span> _ <span class="sym">=</span> <span class="kwa">if</span> q<span class="sym">&lt;&gt;</span>p <span class="kwa">then</span> <span class="sym">((</span>a<span class="sym">,</span>q<span class="sym">)&lt;-</span>a$p<span class="sym">; (</span>a<span class="sym">,</span>p<span class="sym">)&lt;-</span>qv<span class="sym">)</span> <span class="kwa">else</span> <span class="sym">()</span>
+		    <span class="kwa">fun</span> up i <span class="sym">=</span> <span class="kwa">if</span> i<span class="sym">&gt;</span>r <span class="kwa">orelse</span> a$i<span class="sym">&gt;=</span>qv <span class="kwa">then</span> i <span class="kwa">else</span> up<span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+		    <span class="kwa">fun</span> dn i <span class="sym">=</span> <span class="kwa">if</span> i<span class="sym">&lt;</span>p <span class="kwa">orelse</span> a$i<span class="sym">&lt;=</span>qv <span class="kwa">then</span> i <span class="kwa">else</span> dn<span class="sym">(</span>i<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+		    <span class="kwa">fun</span> lp <span class="sym">(</span>i<span class="sym">,</span> j<span class="sym">) =</span>
+			<span class="kwa">let val</span> <span class="sym">(</span>i<span class="sym">,</span> j<span class="sym">) = (</span>up i<span class="sym">,</span> dn j<span class="sym">)</span>
+			<span class="kwa">in if</span> i<span class="sym">&gt;</span>j <span class="kwa">then let val</span> q' <span class="sym">=</span> i<span class="sym">-</span><span class="num">1</span> <span class="kwa">in</span> sw<span class="sym">(</span>p<span class="sym">,</span>q'<span class="sym">); (</span>q'<span class="sym">,</span>qv<span class="sym">)</span> <span class="kwa">end</span>
+			   <span class="kwa">else</span> <span class="sym">(</span>sw<span class="sym">(</span>i<span class="sym">,</span>j<span class="sym">);</span> lp <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> j<span class="sym">-</span><span class="num">1</span><span class="sym">))</span>
+			<span class="kwa">end</span>
+		<span class="kwa">in</span> lp <span class="sym">(</span>p<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> r<span class="sym">)</span> <span class="kwa">end</span>
+	    <span class="com">(* random select: *)</span>
+	    <span class="kwa">fun</span> rs <span class="sym">(</span>p<span class="sym">,</span> r<span class="sym">) =</span>
+		<span class="kwa">if</span> p<span class="sym">=</span>r <span class="kwa">then</span> a$r
+		<span class="kwa">else let val</span> <span class="sym">(</span>q<span class="sym">,</span> qv<span class="sym">) =</span> rp <span class="sym">(</span>p<span class="sym">,</span> r<span class="sym">)</span>
+		     <span class="kwa">in if</span> i<span class="sym">=</span>q <span class="kwa">then</span> qv <span class="kwa">else if</span> i<span class="sym">&lt;</span>q <span class="kwa">then</span> rs<span class="sym">(</span>p<span class="sym">,</span>q<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="kwa">else</span> rs<span class="sym">(</span>q<span class="sym">+</span><span class="num">1</span><span class="sym">,</span>r<span class="sym">)</span>
+		     <span class="kwa">end</span>
+	<span class="kwa">in</span> rs <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="kwa">end</span>
+
+    <span class="com">(* select maximum element with index &lt; n *)</span>
+    <span class="kwa">fun</span> getmax <span class="sym">(</span>a<span class="sym">,</span> n<span class="sym">) =</span>
+	<span class="kwa">let fun</span> l <span class="sym">(</span>i<span class="sym">,</span> m<span class="sym">) =</span> <span class="kwa">if</span> i <span class="sym">&gt;=</span> n <span class="kwa">then</span> m <span class="kwa">else</span> l <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> <span class="kwa">Real</span>.max <span class="sym">(</span>m<span class="sym">,</span> a$i<span class="sym">))</span>
+	<span class="kwa">in</span> l <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> a$<span class="num">0</span><span class="sym">)</span> <span class="kwa">end</span>
+
+    <span class="kwa">fun</span> main _ <span class="sym">=</span>
+	<span class="kwa">let fun</span> gather data <span class="sym">=</span>
+		<span class="kwa">case TextIO</span>.inputLine <span class="kwa">TextIO</span>.stdIn <span class="kwa">of</span>
+		    NONE <span class="sym">=&gt;</span> data
+		  <span class="sym">|</span> SOME l <span class="sym">=&gt; (</span><span class="kwa">case Real</span>.fromString l <span class="kwa">of</span>
+				   SOME x <span class="sym">=&gt;</span> gather <span class="sym">(</span>point <span class="sym">(</span>x<span class="sym">,</span> data<span class="sym">))</span>
+				 <span class="sym">|</span> NONE <span class="sym">=&gt;</span> gather data<span class="sym">)</span>
+
+	    <span class="kwa">val</span> <span class="sym">(</span>a<span class="sym">,</span> sz<span class="sym">,</span> n<span class="sym">,</span> nr<span class="sym">,</span> m<span class="sym">,</span> sd2<span class="sym">,</span> sd<span class="sym">,</span> sk<span class="sym">,</span> k<span class="sym">) =</span> moments <span class="sym">(</span>gather empty<span class="sym">)</span>
+	    <span class="kwa">fun</span> ad <span class="sym">(</span>i<span class="sym">,</span> ds<span class="sym">) =</span> <span class="kwa">if</span> i<span class="sym">&gt;=</span>n <span class="kwa">then</span> ds<span class="sym">/</span>nr <span class="kwa">else</span> ad <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> ds <span class="sym">+</span> abs<span class="sym">(</span>a$i<span class="sym">-</span>m<span class="sym">))</span>
+
+	    <span class="kwa">val</span> mid <span class="sym">=</span> n div <span class="num">2</span> <span class="kwa">val</span> m0 <span class="sym">=</span> select <span class="sym">(</span>a<span class="sym">,</span> n<span class="sym">,</span> mid<span class="sym">)</span>
+	    <span class="kwa">val</span> med <span class="sym">=</span> <span class="kwa">if</span> n mod <span class="num">2</span> <span class="sym">&lt;&gt;</span> <span class="num">0</span> <span class="kwa">then</span> m0 <span class="kwa">else</span> <span class="sym">(</span>m0 <span class="sym">+</span> getmax <span class="sym">(</span>a<span class="sym">,</span> mid<span class="sym">)) /</span> <span class="num">2.0</span>
+
+	    <span class="kwa">open</span> Format
+	<span class="kwa">in</span> formatf <span class="str">&quot;n:                  %d</span><span class="esc">\n</span><span class="str">median:             %f</span><span class="esc">\n\</span>
+<span class="str"></span>		   <span class="esc">\m</span><span class="str">ean:               %f</span><span class="esc">\n</span><span class="str">average_deviation:  %f</span><span class="esc">\n\</span>
+<span class="str"></span>		   <span class="esc">\s</span><span class="str">tandard_deviation: %f</span><span class="esc">\n</span><span class="str">variance:           %f</span><span class="esc">\n\</span>
+<span class="str"></span>		   <span class="esc">\s</span><span class="str">kew:               %f</span><span class="esc">\n</span><span class="str">kurtosis:           %f</span><span class="esc">\n</span><span class="str">&quot;</span>
+           print <span class="sym">[</span>INT n<span class="sym">,</span>   REAL med<span class="sym">,</span> REAL m<span class="sym">,</span>  REAL <span class="sym">(</span>ad <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> <span class="num">0.0</span><span class="sym">)),</span>
+		  REAL sd<span class="sym">,</span> REAL sd2<span class="sym">,</span> REAL sk<span class="sym">,</span> REAL k<span class="sym">];</span>
+	   OS.Process.success
+	<span class="kwa">end</span>
+<span class="kwa">end</span>

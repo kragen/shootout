@@ -1,0 +1,48 @@
+<span class="slc">-- $Id: echo-hugs.code,v 1.4 2006-09-20 05:51:07 bfulgham Exp $</span>
+<span class="slc">-- http://www.bagley.org/~doug/shootout/</span>
+<span class="slc">-- Haskell echo/client server</span>
+<span class="slc">-- written by Brian Gregor</span>
+<span class="slc">-- simplified / updated by JP Bernardy</span>
+<span class="slc">-- compile with:</span>
+<span class="slc">--      ghc -O2 -o echo echo.hs</span>
+
+<span class="kwa">import</span> Control.Concurrent
+<span class="kwa">import</span> Control.Monad<span class="sym">(</span>when<span class="sym">)</span>
+<span class="kwa">import</span> Network
+<span class="kwa">import</span> System <span class="sym">(</span>getArgs<span class="sym">,</span>exitFailure<span class="sym">)</span>
+<span class="kwa">import</span> System.IO
+
+message	    <span class="sym">=</span> <span class="str">&quot;Hello there sailor&quot;</span>
+portnum     <span class="sym">=</span> <span class="num">7001</span>
+
+echo_server <span class="sym">=</span> <span class="kwa">do</span> sock <span class="sym">&lt;-</span> listenOn <span class="sym">(</span>PortNumber portnum<span class="sym">)</span>
+		 <span class="sym">(</span>s<span class="sym">,</span> _<span class="sym">,</span> _<span class="sym">) &lt;-</span> accept sock
+		 hSetBuffering s LineBuffering
+		 proc <span class="sym">&lt;-</span> read_data s <span class="num">0</span>
+		 putStrLn <span class="sym">(</span><span class="str">&quot;server processed &quot;</span> <span class="sym">++</span> show proc <span class="sym">++</span> <span class="str">&quot; bytes&quot;</span><span class="sym">)</span>
+		 hClose s
+
+read_data sock totalbytes <span class="sym">=</span>
+    <span class="kwa">do</span> eof <span class="sym">&lt;-</span> hIsEOF sock
+       if eof <span class="kwa">then</span> return totalbytes
+	      <span class="kwa">else do</span> str <span class="sym">&lt;-</span> hGetLine sock
+	              hPutStrLn sock str
+	              read_data sock <span class="sym">(</span>totalbytes <span class="sym">+</span> length str <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
+
+echo_client n <span class="sym">=</span> <span class="kwa">do</span> s <span class="sym">&lt;-</span> connectTo <span class="str">&quot;127.0.0.1&quot;</span> <span class="sym">(</span>PortNumber portnum<span class="sym">)</span>
+		   hSetBuffering s LineBuffering
+		   mapM_ <span class="sym">(</span>server_echo s<span class="sym">) [</span><span class="num">1</span>..n<span class="sym">]</span>
+		   hClose s
+
+server_echo sock n <span class="sym">=</span> <span class="kwa">do</span> hPutStrLn sock message
+	                str <span class="sym">&lt;-</span> hGetLine sock
+		        when <span class="sym">(</span>str <span class="sym">/=</span> message<span class="sym">)</span> exitFailure
+
+main <span class="sym">=</span> withSocketsDo $ <span class="kwa">do</span> <span class="sym">[</span>n<span class="sym">] &lt;-</span> getArgs
+			  forkIO <span class="sym">(</span>echo_client <span class="sym">(</span>read n<span class="sym">::</span><span class="kwb">Int</span><span class="sym">))</span>
+			  echo_server
+
+
+
+
+

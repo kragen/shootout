@@ -1,0 +1,370 @@
+<span class="com">/* The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com">   Contributed by Branimir Maksimovic</span>
+<span class="com"></span>
+<span class="com"> * g++ version, this is test for __gnu_cxx::hash_map;</span>
+<span class="com"> * I've made MyString for this test with minimal implementation</span>
+<span class="com"> * in order to avoid excessive copying of std::string;</span>
+<span class="com"> * hash function is from this page: http://www.azillionmonkeys.com/qed/hash.html;</span>
+<span class="com"> * algorithm is exactly same as D program</span>
+<span class="com"> */</span>
+
+<span class="dir">#include &lt;algorithm&gt;</span>
+<span class="dir">#include &lt;map&gt;</span>
+<span class="dir">#include &lt;ext/hash_map&gt;</span>
+<span class="dir">#include &lt;utility&gt;</span>
+<span class="dir">#include &lt;cstdio&gt;</span>
+<span class="dir">#include &lt;cctype&gt;</span>
+<span class="dir">#include &lt;cstring&gt;</span>
+<span class="dir">#include &lt;iostream&gt;</span>
+<span class="dir">#include &lt;ostream&gt;</span>
+<span class="dir">#include &lt;iomanip&gt;</span>
+
+<span class="dir">#include</span> <span class="dstr">&quot;stdint.h&quot;</span><span class="dir"></span>
+
+<span class="dir">#undef get16bits</span>
+<span class="dir">#if ((defined(__GNUC__) || defined(__GNUG__)) &amp;&amp; defined(__i386__)) \</span>
+<span class="dir">  || defined(__WATCOMC__) || defined(_MSC_VER) || defined (__BORLANDC__) \</span>
+<span class="dir">  || defined (__TURBOC__)</span>
+<span class="dir">#define get16bits(d) (*((const uint16_t *) (d)))</span>
+<span class="dir">#endif</span>
+
+<span class="dir">#if !defined (get16bits)</span>
+<span class="dir">#define get16bits(d) ((((const uint8_t *)(d))[1] &lt;&lt; UINT32_C(8))\</span>
+<span class="dir">                      +((const uint8_t *)(d))[0])</span>
+<span class="dir">#endif</span>
+
+
+<span class="kwa">using namespace</span> std<span class="sym">;</span>
+<span class="kwa">using</span> __gnu_cxx<span class="sym">::</span>hash_map<span class="sym">;</span>
+
+
+<span class="kwc">class</span> MyString<span class="sym">{</span>
+<span class="kwc">public</span><span class="sym">:</span>
+<span class="kwd">MyString</span><span class="sym">():</span><span class="kwd">data_</span><span class="sym">(</span><span class="num">0</span><span class="sym">),</span><span class="kwd">parent_</span><span class="sym">(</span><span class="num">0</span><span class="sym">){}</span>
+<span class="kwd">MyString</span><span class="sym">(</span><span class="kwb">const</span> MyString<span class="sym">&amp;</span> in<span class="sym">):</span><span class="kwd">data_</span><span class="sym">(</span>in<span class="sym">.</span>data_<span class="sym">),</span><span class="kwd">parent_</span><span class="sym">(</span>in<span class="sym">.</span>parent_<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(</span>data_<span class="sym">)++</span>in<span class="sym">.</span>data_<span class="sym">-&gt;</span>refcount<span class="sym">;</span>
+  <span class="kwa">if</span><span class="sym">(</span>parent_<span class="sym">)++</span>parent_<span class="sym">-&gt;</span>refcount<span class="sym">;</span>
+<span class="sym">}</span>
+MyString<span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">=(</span><span class="kwb">const</span> MyString<span class="sym">&amp;</span> in<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(&amp;</span>in <span class="sym">==</span> <span class="kwa">this</span><span class="sym">)</span><span class="kwa">return</span> <span class="sym">*</span><span class="kwa">this</span><span class="sym">;</span>
+  <span class="kwd">dispose</span><span class="sym">();</span>
+  data_<span class="sym">=</span>in<span class="sym">.</span>data_<span class="sym">;</span>
+  parent_<span class="sym">=</span>in<span class="sym">.</span>parent_<span class="sym">;</span>
+  <span class="kwa">if</span><span class="sym">(</span>in<span class="sym">.</span>data_<span class="sym">)++</span>in<span class="sym">.</span>data_<span class="sym">-&gt;</span>refcount<span class="sym">;</span>
+  <span class="kwa">if</span><span class="sym">(</span>parent_<span class="sym">)++</span>parent_<span class="sym">-&gt;</span>refcount<span class="sym">;</span>
+  <span class="kwa">return</span> <span class="sym">*</span><span class="kwa">this</span><span class="sym">;</span>
+<span class="sym">}</span>
+<span class="kwd">MyString</span><span class="sym">(</span><span class="kwb">char</span><span class="sym">*</span> beg<span class="sym">):</span><span class="kwd">data_</span><span class="sym">(</span><span class="kwa">new</span> data<span class="sym">),</span><span class="kwd">parent_</span><span class="sym">(</span><span class="num">0</span><span class="sym">)</span>
+<span class="sym">{</span>
+  data_<span class="sym">-&gt;</span>size<span class="sym">=</span><span class="kwd">strlen</span><span class="sym">(</span>beg<span class="sym">);</span>
+  data_<span class="sym">-&gt;</span>ptr<span class="sym">=</span>beg<span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>freeptr<span class="sym">=</span><span class="kwa">false</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>refcount<span class="sym">=</span><span class="num">1</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>capacity<span class="sym">=</span><span class="kwd">strlen</span><span class="sym">(</span>beg<span class="sym">);</span>
+<span class="sym">}</span>
+<span class="kwd">MyString</span><span class="sym">(</span><span class="kwb">char</span><span class="sym">*</span> beg<span class="sym">,</span><span class="kwb">char</span><span class="sym">*</span> end<span class="sym">):</span><span class="kwd">data_</span><span class="sym">(</span><span class="kwa">new</span> data<span class="sym">),</span><span class="kwd">parent_</span><span class="sym">(</span><span class="num">0</span><span class="sym">)</span>
+<span class="sym">{</span>
+  data_<span class="sym">-&gt;</span>size<span class="sym">=</span>end<span class="sym">-</span>beg<span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>ptr<span class="sym">=</span>beg<span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>freeptr<span class="sym">=</span><span class="kwa">false</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>refcount<span class="sym">=</span><span class="num">1</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>capacity<span class="sym">=</span>end<span class="sym">-</span>beg<span class="sym">;</span>
+<span class="sym">}</span>
+<span class="kwc">template</span> <span class="sym">&lt;</span><span class="kwc">class</span> iter<span class="sym">&gt;</span>
+<span class="kwd">MyString</span><span class="sym">(</span>iter beg<span class="sym">,</span>iter end<span class="sym">):</span><span class="kwd">data_</span><span class="sym">(</span><span class="kwa">new</span> data<span class="sym">),</span><span class="kwd">parent_</span><span class="sym">(</span><span class="num">0</span><span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwd">initHelper</span><span class="sym">();</span>
+  <span class="kwb">unsigned</span> index <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+  <span class="kwa">for</span><span class="sym">(;</span>beg<span class="sym">!=</span>end<span class="sym">;++</span>beg<span class="sym">,++</span>index<span class="sym">)</span>
+  <span class="sym">{</span>
+    <span class="kwa">if</span><span class="sym">(++</span>data_<span class="sym">-&gt;</span>size<span class="sym">&gt;</span>data_<span class="sym">-&gt;</span>capacity<span class="sym">)</span>
+    <span class="sym">{</span>
+      data_<span class="sym">-&gt;</span>ptr <span class="sym">=(</span><span class="kwb">char</span><span class="sym">*)</span><span class="kwd">realloc</span><span class="sym">(</span>data_<span class="sym">-&gt;</span>ptr<span class="sym">,</span>data_<span class="sym">-&gt;</span>capacity<span class="sym">*=</span><span class="num">2</span><span class="sym">);</span>
+    <span class="sym">}</span>
+    data_<span class="sym">-&gt;</span>ptr<span class="sym">[</span>index<span class="sym">]=*</span>beg<span class="sym">;</span>
+  <span class="sym">}</span>
+<span class="sym">}</span>
+<span class="kwd">MyString</span><span class="sym">(</span><span class="kwb">char</span><span class="sym">*</span> b<span class="sym">,</span> <span class="kwb">char</span><span class="sym">*</span> e<span class="sym">,</span> MyString<span class="sym">&amp;</span> s<span class="sym">)</span>
+<span class="sym">:</span> <span class="kwd">data_</span><span class="sym">(</span><span class="kwa">new</span> data<span class="sym">)</span>
+<span class="sym">{</span>
+  data_<span class="sym">-&gt;</span>size<span class="sym">=</span>e<span class="sym">-</span>b<span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>ptr<span class="sym">=</span>b<span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>freeptr<span class="sym">=</span><span class="kwa">false</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>refcount<span class="sym">=</span><span class="num">1</span><span class="sym">;</span>
+  parent_<span class="sym">=</span>s<span class="sym">.</span>data_<span class="sym">;</span>
+  <span class="sym">++</span>parent_<span class="sym">-&gt;</span>refcount<span class="sym">;</span>
+<span class="sym">}</span>
+
+
+<span class="sym">~</span><span class="kwd">MyString</span><span class="sym">()</span>
+<span class="sym">{</span>
+  <span class="kwd">dispose</span><span class="sym">();</span>
+<span class="sym">}</span>
+<span class="kwb">unsigned</span> <span class="kwd">size</span><span class="sym">()</span><span class="kwb">const</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(!</span>data_<span class="sym">)</span><span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+  <span class="kwa">return</span> data_<span class="sym">-&gt;</span>size<span class="sym">;</span>
+<span class="sym">}</span>
+<span class="kwb">char</span><span class="sym">*</span> <span class="kwd">begin</span><span class="sym">()</span><span class="kwb">const</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(</span>data_<span class="sym">)</span>
+  <span class="kwa">return</span> data_<span class="sym">-&gt;</span>ptr<span class="sym">;</span>
+  <span class="kwa">else return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+<span class="kwb">char</span><span class="sym">*</span> <span class="kwd">end</span><span class="sym">()</span><span class="kwb">const</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(</span>data_<span class="sym">)</span>
+  <span class="kwa">return</span> data_<span class="sym">-&gt;</span>ptr<span class="sym">+</span>data_<span class="sym">-&gt;</span>size<span class="sym">;</span>
+  <span class="kwa">else return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">bool</span> <span class="kwc">operator</span><span class="sym">==(</span><span class="kwb">const</span> MyString<span class="sym">&amp;</span> rhs<span class="sym">)</span><span class="kwb">const</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(!</span>data_<span class="sym">)</span><span class="kwa">if</span><span class="sym">(!</span>rhs<span class="sym">.</span>data_<span class="sym">)</span><span class="kwa">return true</span><span class="sym">;</span>
+            <span class="kwa">else return false</span><span class="sym">;</span>
+  <span class="kwa">if</span><span class="sym">(!</span>rhs<span class="sym">.</span>data_<span class="sym">)</span><span class="kwa">return false</span><span class="sym">;</span>
+  <span class="kwa">if</span><span class="sym">(</span>data_<span class="sym">-&gt;</span>size<span class="sym">!=</span>rhs<span class="sym">.</span>data_<span class="sym">-&gt;</span>size<span class="sym">)</span><span class="kwa">return false</span><span class="sym">;</span>
+  <span class="kwa">return</span> <span class="kwd">strncmp</span><span class="sym">(</span>data_<span class="sym">-&gt;</span>ptr<span class="sym">,</span>rhs<span class="sym">.</span>data_<span class="sym">-&gt;</span>ptr<span class="sym">,</span>data_<span class="sym">-&gt;</span>size<span class="sym">)==</span><span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwc">friend</span> ostream<span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">&lt;&lt;(</span>ostream<span class="sym">&amp;</span> os<span class="sym">,</span> <span class="kwb">const</span> MyString<span class="sym">&amp;</span> s<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwa">return</span> os<span class="sym">.</span><span class="kwd">write</span><span class="sym">(</span>s<span class="sym">.</span><span class="kwd">begin</span><span class="sym">(),</span>s<span class="sym">.</span><span class="kwd">size</span><span class="sym">());</span>
+<span class="sym">}</span>
+<span class="kwc">friend</span> <span class="kwb">struct</span> hash<span class="sym">;</span>
+<span class="kwb">struct</span> hash<span class="sym">{</span>
+  <span class="kwb">size_t</span> <span class="kwc">operator</span><span class="sym">()(</span><span class="kwb">const</span> MyString<span class="sym">&amp;</span> p<span class="sym">)</span><span class="kwb">const</span>
+  <span class="sym">{</span>
+    <span class="kwa">if</span><span class="sym">(!</span>p<span class="sym">.</span>data_<span class="sym">)</span><span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwa">return</span> <span class="kwd">h</span><span class="sym">(</span>p<span class="sym">.</span><span class="kwd">begin</span><span class="sym">(),</span>p<span class="sym">.</span><span class="kwd">size</span><span class="sym">());</span>
+  <span class="sym">}</span>
+
+<span class="kwb">static uint32_t</span> <span class="kwd">h</span><span class="sym">(</span><span class="kwb">const char</span> <span class="sym">*</span> data<span class="sym">,</span> <span class="kwb">int</span> len<span class="sym">) {</span>
+<span class="kwb">uint32_t</span> hash <span class="sym">=</span> len<span class="sym">,</span> tmp<span class="sym">;</span>
+<span class="kwb">int</span> rem<span class="sym">;</span>
+
+    <span class="kwa">if</span> <span class="sym">(</span>len <span class="sym">&lt;=</span> <span class="num">0</span> <span class="sym">||</span> data <span class="sym">==</span> NULL<span class="sym">)</span> <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+
+    rem <span class="sym">=</span> len <span class="sym">&amp;</span> <span class="num">3</span><span class="sym">;</span>
+    len <span class="sym">&gt;&gt;=</span> <span class="num">2</span><span class="sym">;</span>
+
+    <span class="com">/* Main loop */</span>
+    <span class="kwa">for</span> <span class="sym">(;</span>len <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">;</span> len<span class="sym">--) {</span>
+        hash  <span class="sym">+=</span> <span class="kwd">get16bits</span> <span class="sym">(</span>data<span class="sym">);</span>
+        tmp    <span class="sym">= (</span><span class="kwd">get16bits</span> <span class="sym">(</span>data<span class="sym">+</span><span class="num">2</span><span class="sym">) &lt;&lt;</span> <span class="num">11</span><span class="sym">)</span> ^ hash<span class="sym">;</span>
+        hash   <span class="sym">= (</span>hash <span class="sym">&lt;&lt;</span> <span class="num">16</span><span class="sym">)</span> ^ tmp<span class="sym">;</span>
+        data  <span class="sym">+=</span> <span class="num">2</span><span class="sym">*</span><span class="kwa">sizeof</span> <span class="sym">(</span><span class="kwb">uint16_t</span><span class="sym">);</span>
+        hash  <span class="sym">+=</span> hash <span class="sym">&gt;&gt;</span> <span class="num">11</span><span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="com">/* Handle end cases */</span>
+    <span class="kwa">switch</span> <span class="sym">(</span>rem<span class="sym">) {</span>
+        <span class="kwa">case</span> <span class="num">3</span><span class="sym">:</span> hash <span class="sym">+=</span> <span class="kwd">get16bits</span> <span class="sym">(</span>data<span class="sym">);</span>
+                hash ^<span class="sym">=</span> hash <span class="sym">&lt;&lt;</span> <span class="num">16</span><span class="sym">;</span>
+                hash ^<span class="sym">=</span> data<span class="sym">[</span><span class="kwa">sizeof</span> <span class="sym">(</span><span class="kwb">uint16_t</span><span class="sym">)] &lt;&lt;</span> <span class="num">18</span><span class="sym">;</span>
+                hash <span class="sym">+=</span> hash <span class="sym">&gt;&gt;</span> <span class="num">11</span><span class="sym">;</span>
+                <span class="kwa">break</span><span class="sym">;</span>
+        <span class="kwa">case</span> <span class="num">2</span><span class="sym">:</span> hash <span class="sym">+=</span> <span class="kwd">get16bits</span> <span class="sym">(</span>data<span class="sym">);</span>
+                hash ^<span class="sym">=</span> hash <span class="sym">&lt;&lt;</span> <span class="num">11</span><span class="sym">;</span>
+                hash <span class="sym">+=</span> hash <span class="sym">&gt;&gt;</span> <span class="num">17</span><span class="sym">;</span>
+                <span class="kwa">break</span><span class="sym">;</span>
+        <span class="kwa">case</span> <span class="num">1</span><span class="sym">:</span> hash <span class="sym">+= *</span>data<span class="sym">;</span>
+                hash ^<span class="sym">=</span> hash <span class="sym">&lt;&lt;</span> <span class="num">10</span><span class="sym">;</span>
+                hash <span class="sym">+=</span> hash <span class="sym">&gt;&gt;</span> <span class="num">1</span><span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="com">/* Force &quot;avalanching&quot; of final 127 bits */</span>
+    hash ^<span class="sym">=</span> hash <span class="sym">&lt;&lt;</span> <span class="num">3</span><span class="sym">;</span>
+    hash <span class="sym">+=</span> hash <span class="sym">&gt;&gt;</span> <span class="num">5</span><span class="sym">;</span>
+    hash ^<span class="sym">=</span> hash <span class="sym">&lt;&lt;</span> <span class="num">2</span><span class="sym">;</span>
+    hash <span class="sym">+=</span> hash <span class="sym">&gt;&gt;</span> <span class="num">15</span><span class="sym">;</span>
+    hash ^<span class="sym">=</span> hash <span class="sym">&lt;&lt;</span> <span class="num">10</span><span class="sym">;</span>
+
+    <span class="kwa">return</span> hash<span class="sym">;</span>
+<span class="sym">}</span>
+<span class="sym">};</span>
+<span class="kwc">private</span><span class="sym">:</span>
+<span class="kwb">struct</span> data<span class="sym">{</span>
+<span class="kwb">char</span><span class="sym">*</span> ptr<span class="sym">;</span>
+<span class="kwb">unsigned</span> size<span class="sym">,</span>refcount<span class="sym">,</span>capacity<span class="sym">;</span>
+<span class="kwb">bool</span> freeptr<span class="sym">;</span>
+<span class="sym">} *</span>data_<span class="sym">, *</span>parent_<span class="sym">;</span>
+<span class="kwb">void</span> <span class="kwd">dispose</span><span class="sym">()</span>
+<span class="sym">{</span>
+  <span class="kwd">dispose_helper</span><span class="sym">(</span>data_<span class="sym">);</span>
+  <span class="kwd">dispose_helper</span><span class="sym">(</span>parent_<span class="sym">);</span>
+<span class="sym">}</span>
+<span class="kwb">static void</span> <span class="kwd">dispose_helper</span><span class="sym">(</span>data<span class="sym">*</span> d<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(</span>d<span class="sym">)</span>
+  <span class="sym">{</span>
+    <span class="sym">--</span>d<span class="sym">-&gt;</span>refcount<span class="sym">;</span>
+    <span class="kwa">if</span><span class="sym">(!</span>d<span class="sym">-&gt;</span>refcount<span class="sym">)</span>
+    <span class="sym">{</span>
+      <span class="kwa">if</span><span class="sym">(</span>d<span class="sym">-&gt;</span>freeptr<span class="sym">)</span><span class="kwd">free</span><span class="sym">(</span>d<span class="sym">-&gt;</span>ptr<span class="sym">);</span>
+      <span class="kwa">delete</span> d<span class="sym">;</span>
+    <span class="sym">}</span>
+  <span class="sym">}</span>
+<span class="sym">}</span>
+<span class="kwb">void</span> <span class="kwd">initHelper</span><span class="sym">()</span>
+<span class="sym">{</span>
+  data_<span class="sym">-&gt;</span>size <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>ptr<span class="sym">=(</span><span class="kwb">char</span><span class="sym">*)</span><span class="kwd">malloc</span><span class="sym">(</span><span class="num">8</span><span class="sym">);</span>
+  data_<span class="sym">-&gt;</span>refcount<span class="sym">=</span><span class="num">1</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>capacity<span class="sym">=</span><span class="num">8</span><span class="sym">;</span>
+  data_<span class="sym">-&gt;</span>freeptr<span class="sym">=</span><span class="kwa">true</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="sym">};</span>
+<span class="kwb">char</span><span class="sym">*</span> <span class="kwd">toUpper</span><span class="sym">(</span><span class="kwb">char</span><span class="sym">*</span> in<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwb">char</span><span class="sym">*</span> tmp <span class="sym">=</span> in<span class="sym">;</span>
+  <span class="kwa">for</span><span class="sym">(;*</span>in<span class="sym">;++</span>in<span class="sym">)</span>
+  <span class="sym">{</span>
+    <span class="sym">*</span>in<span class="sym">=</span><span class="kwd">toupper</span><span class="sym">(*</span>in<span class="sym">);</span>
+  <span class="sym">}</span>
+  <span class="kwa">return</span> tmp<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">struct</span> Ob<span class="sym">{</span>
+<span class="kwb">char</span><span class="sym">*</span> buf<span class="sym">;</span>
+<span class="kwb">size_t</span> size<span class="sym">,</span>capacity<span class="sym">;</span>
+<span class="kwd">Ob</span><span class="sym">():</span><span class="kwd">buf</span><span class="sym">((</span><span class="kwb">char</span><span class="sym">*)</span><span class="kwd">malloc</span><span class="sym">(</span><span class="num">4096</span><span class="sym">)),</span><span class="kwd">size</span><span class="sym">(</span><span class="num">0</span><span class="sym">),</span><span class="kwd">capacity</span><span class="sym">(</span><span class="num">4096</span><span class="sym">){}</span>
+<span class="sym">~</span><span class="kwd">Ob</span><span class="sym">(){</span><span class="kwd">free</span><span class="sym">(</span>buf<span class="sym">);}</span>
+<span class="kwb">void</span> <span class="kwd">append</span><span class="sym">(</span><span class="kwb">const char</span><span class="sym">*</span> in<span class="sym">)</span>
+<span class="sym">{</span>
+     <span class="kwa">for</span><span class="sym">(;*</span>in<span class="sym">;++</span>in<span class="sym">)</span>
+     <span class="sym">{</span>
+       <span class="kwa">if</span><span class="sym">(++</span>size<span class="sym">&gt;</span>capacity<span class="sym">)</span>buf<span class="sym">=(</span><span class="kwb">char</span><span class="sym">*)</span><span class="kwd">realloc</span><span class="sym">(</span>buf<span class="sym">,</span>capacity<span class="sym">*=</span><span class="num">2</span><span class="sym">);</span>
+       buf<span class="sym">[</span>size<span class="sym">-</span><span class="num">1</span><span class="sym">]=*</span>in<span class="sym">;</span>
+     <span class="sym">}</span>
+<span class="sym">}</span>
+<span class="kwb">char</span><span class="sym">*</span> <span class="kwd">begin</span><span class="sym">()</span><span class="kwb">const</span><span class="sym">{</span><span class="kwa">return</span> buf<span class="sym">;}</span>
+<span class="kwb">char</span><span class="sym">*</span> <span class="kwd">end</span><span class="sym">()</span><span class="kwb">const</span><span class="sym">{</span><span class="kwa">return</span> buf<span class="sym">+</span>size<span class="sym">;}</span>
+<span class="kwc">private</span><span class="sym">:</span>
+<span class="kwd">Ob</span><span class="sym">(</span><span class="kwb">const</span> Ob<span class="sym">&amp;);</span>
+Ob<span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">=(</span><span class="kwb">const</span> Ob<span class="sym">&amp;);</span>
+<span class="sym">};</span>
+
+<span class="slc">// end of optimisation things</span>
+
+<span class="kwc">class</span> KNucleotide<span class="sym">{</span>
+<span class="kwc">private</span><span class="sym">:</span>
+  <span class="kwb">struct</span> Cmp<span class="sym">{</span>
+    <span class="kwb">bool</span> <span class="kwc">operator</span><span class="sym">()(</span><span class="kwb">unsigned</span> lhs<span class="sym">,</span><span class="kwb">unsigned</span> rhs<span class="sym">)</span><span class="kwb">const</span>
+    <span class="sym">{</span>
+         <span class="kwa">return</span> rhs<span class="sym">&lt;</span>lhs<span class="sym">;</span>
+    <span class="sym">}</span>
+  <span class="sym">};</span>
+  MyString sequence<span class="sym">;</span>
+  <span class="kwc">typedef</span> hash_map<span class="sym">&lt;</span>MyString<span class="sym">,</span><span class="kwb">unsigned</span><span class="sym">,</span>MyString<span class="sym">::</span>hash<span class="sym">&gt;</span> hm_t<span class="sym">;</span>
+  <span class="kwc">typedef</span> map<span class="sym">&lt;</span><span class="kwb">unsigned</span><span class="sym">,</span>MyString<span class="sym">,</span>Cmp<span class="sym">&gt;</span> m_t<span class="sym">;</span>
+  hm_t frequencies<span class="sym">;</span>
+  <span class="kwb">unsigned</span> k<span class="sym">;</span>
+<span class="kwc">public</span><span class="sym">:</span>
+  <span class="kwd">KNucleotide</span><span class="sym">(</span><span class="kwb">const</span> MyString<span class="sym">&amp;</span> in<span class="sym">):</span><span class="kwd">sequence</span><span class="sym">(</span>in<span class="sym">),</span><span class="kwd">k</span><span class="sym">(</span><span class="num">0</span><span class="sym">)</span>
+  <span class="sym">{</span>
+  <span class="sym">}</span>
+  <span class="kwb">void</span> <span class="kwd">WriteFrequencies</span><span class="sym">(</span><span class="kwb">int</span> nucleotideLength<span class="sym">)</span>
+  <span class="sym">{</span>
+     <span class="kwd">GenerateFrequencies</span><span class="sym">(</span>nucleotideLength<span class="sym">);</span>
+
+     <span class="kwb">int</span> sum <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+     <span class="kwa">for</span><span class="sym">(</span>hm_t<span class="sym">::</span>iterator i <span class="sym">=</span> frequencies<span class="sym">.</span><span class="kwd">begin</span><span class="sym">();</span>i<span class="sym">!=</span>frequencies<span class="sym">.</span><span class="kwd">end</span><span class="sym">();++</span>i<span class="sym">)</span>
+     <span class="sym">{</span>
+       <span class="kwa">if</span><span class="sym">(</span>i<span class="sym">-&gt;</span>first<span class="sym">.</span><span class="kwd">size</span><span class="sym">() ==</span> nucleotideLength<span class="sym">)</span> sum <span class="sym">+=</span> i<span class="sym">-&gt;</span>second<span class="sym">;</span>
+     <span class="sym">}</span>
+
+     m_t freqsrt<span class="sym">;</span>
+     <span class="kwd">for_each</span><span class="sym">(</span>frequencies<span class="sym">.</span><span class="kwd">begin</span><span class="sym">(),</span>frequencies<span class="sym">.</span><span class="kwd">end</span><span class="sym">(),</span><span class="kwd">Insert</span><span class="sym">(</span>freqsrt<span class="sym">));</span>
+
+     <span class="kwb">int</span> last <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+     <span class="kwa">for</span><span class="sym">(</span>m_t<span class="sym">::</span>iterator i <span class="sym">=</span> freqsrt<span class="sym">.</span><span class="kwd">begin</span><span class="sym">();</span>i<span class="sym">!=</span>freqsrt<span class="sym">.</span><span class="kwd">end</span><span class="sym">();++</span>i<span class="sym">)</span>
+     <span class="sym">{</span>
+        <span class="kwa">if</span><span class="sym">(</span>i<span class="sym">-&gt;</span>first <span class="sym">!=</span> last<span class="sym">)</span>
+        <span class="sym">{</span>
+          <span class="kwa">for</span><span class="sym">(</span>m_t<span class="sym">::</span>iterator j <span class="sym">=</span> freqsrt<span class="sym">.</span><span class="kwd">begin</span><span class="sym">();</span>j<span class="sym">!=</span>freqsrt<span class="sym">.</span><span class="kwd">end</span><span class="sym">();++</span>j<span class="sym">)</span>
+          <span class="sym">{</span>
+              <span class="kwa">if</span><span class="sym">(</span>j<span class="sym">-&gt;</span>second<span class="sym">.</span><span class="kwd">size</span><span class="sym">() ==</span> nucleotideLength<span class="sym">)</span>
+              <span class="sym">{</span>
+                <span class="kwb">double</span> ratio <span class="sym">=</span> sum ? <span class="sym">(</span><span class="kwb">double</span><span class="sym">)</span>j<span class="sym">-&gt;</span>first <span class="sym">/ (</span><span class="kwb">double</span><span class="sym">)</span>sum <span class="sym">:</span> <span class="num">0</span><span class="sym">;</span>
+                <span class="kwa">if</span><span class="sym">(</span>j<span class="sym">-&gt;</span>first <span class="sym">==</span> i<span class="sym">-&gt;</span>first<span class="sym">)</span>
+                  cout<span class="sym">&lt;&lt;</span>j<span class="sym">-&gt;</span>second<span class="sym">&lt;&lt;</span><span class="str">' '</span><span class="sym">&lt;&lt;</span><span class="kwd">setprecision</span><span class="sym">(</span><span class="num">3</span><span class="sym">)&lt;&lt;</span><span class="kwd">setiosflags</span><span class="sym">(</span>ios<span class="sym">::</span>fixed<span class="sym">)&lt;&lt;</span>ratio <span class="sym">*</span> <span class="num">100.0</span><span class="sym">&lt;&lt;</span><span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+              <span class="sym">}</span>
+          <span class="sym">}</span>
+          last <span class="sym">=</span> i<span class="sym">-&gt;</span>first<span class="sym">;</span>
+        <span class="sym">}</span>
+     <span class="sym">}</span>
+    cout<span class="sym">&lt;&lt;</span><span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+  <span class="sym">}</span>
+  <span class="kwb">void</span> <span class="kwd">WriteCount</span><span class="sym">(</span><span class="kwb">const</span> MyString<span class="sym">&amp;</span> nucleotideFragment<span class="sym">)</span>
+  <span class="sym">{</span>
+      <span class="kwd">GenerateFrequencies</span><span class="sym">(</span>nucleotideFragment<span class="sym">.</span><span class="kwd">size</span><span class="sym">());</span>
+      hm_t<span class="sym">::</span>iterator i <span class="sym">=</span> frequencies<span class="sym">.</span><span class="kwd">find</span><span class="sym">(</span>nucleotideFragment<span class="sym">);</span>
+      <span class="kwb">int</span> count <span class="sym">=</span> i<span class="sym">!=</span>frequencies<span class="sym">.</span><span class="kwd">end</span><span class="sym">()</span> ? i<span class="sym">-&gt;</span>second <span class="sym">:</span> <span class="num">0</span><span class="sym">;</span>
+      cout<span class="sym">&lt;&lt;</span>count<span class="sym">&lt;&lt;</span><span class="str">'</span><span class="esc">\t</span><span class="str">'</span><span class="sym">&lt;&lt;</span>nucleotideFragment<span class="sym">&lt;&lt;</span><span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+  <span class="sym">}</span>
+<span class="kwc">private</span><span class="sym">:</span>
+  <span class="kwb">void</span> <span class="kwd">GenerateFrequencies</span><span class="sym">(</span><span class="kwb">int</span> length<span class="sym">)</span>
+  <span class="sym">{</span>
+      k <span class="sym">=</span> length<span class="sym">;</span>
+      <span class="kwa">for</span><span class="sym">(</span><span class="kwb">int</span> frame <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> frame <span class="sym">&lt;</span> k<span class="sym">;</span> frame<span class="sym">++)</span> <span class="kwd">KFrequency</span><span class="sym">(</span>frame<span class="sym">);</span>
+  <span class="sym">}</span>
+
+  <span class="kwb">void</span> <span class="kwd">KFrequency</span><span class="sym">(</span><span class="kwb">int</span> readingFrame<span class="sym">)</span>
+  <span class="sym">{</span>
+      <span class="kwb">int</span> n <span class="sym">=</span> sequence<span class="sym">.</span><span class="kwd">size</span><span class="sym">() -</span> k <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+      <span class="kwa">for</span><span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> readingFrame<span class="sym">;</span> i <span class="sym">&lt;</span> n<span class="sym">;</span> i <span class="sym">+=</span> k<span class="sym">)</span>
+      <span class="sym">{</span>
+          frequencies<span class="sym">[</span><span class="kwd">MyString</span><span class="sym">(</span>sequence<span class="sym">.</span><span class="kwd">begin</span><span class="sym">()+</span>i<span class="sym">,</span>sequence<span class="sym">.</span><span class="kwd">begin</span><span class="sym">()+</span>i<span class="sym">+</span>k<span class="sym">,</span>sequence<span class="sym">)]++;</span>
+      <span class="sym">}</span>
+  <span class="sym">}</span>
+  <span class="kwb">struct</span> Insert<span class="sym">{</span>
+  m_t<span class="sym">&amp;</span> mp<span class="sym">;</span>
+  <span class="kwd">Insert</span><span class="sym">(</span>m_t <span class="sym">&amp;</span>m<span class="sym">):</span><span class="kwd">mp</span><span class="sym">(</span>m<span class="sym">){}</span>
+  <span class="kwb">void</span> <span class="kwc">operator</span><span class="sym">()(</span><span class="kwb">const</span> pair<span class="sym">&lt;</span>MyString<span class="sym">,</span><span class="kwb">unsigned</span><span class="sym">&gt;&amp;</span> in<span class="sym">)</span>
+  <span class="sym">{</span>
+       mp<span class="sym">.</span><span class="kwd">insert</span><span class="sym">(</span><span class="kwd">make_pair</span><span class="sym">(</span>in<span class="sym">.</span>second<span class="sym">,</span>in<span class="sym">.</span>first<span class="sym">));</span>
+  <span class="sym">}</span>
+  <span class="sym">};</span>
+<span class="sym">};</span>
+
+
+<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span><span class="sym">*</span> argv<span class="sym">[])</span>
+<span class="sym">{</span>
+    <span class="kwb">bool</span> flag<span class="sym">=</span><span class="kwa">false</span><span class="sym">;</span>
+    <span class="kwb">char</span> buf<span class="sym">[</span><span class="num">4096</span><span class="sym">];</span>
+    Ob ob<span class="sym">;</span>
+    <span class="kwa">while</span><span class="sym">(</span>cin<span class="sym">.</span><span class="kwd">getline</span><span class="sym">(</span>buf<span class="sym">,</span><span class="num">4096</span><span class="sym">))</span>
+    <span class="sym">{</span>
+      <span class="kwa">if</span><span class="sym">(*</span>buf<span class="sym">)</span>
+      <span class="sym">{</span>
+         <span class="kwa">if</span><span class="sym">(!</span>flag<span class="sym">)</span>
+         <span class="sym">{</span>
+            flag <span class="sym">= !</span><span class="kwd">strncmp</span><span class="sym">(</span>buf<span class="sym">,</span><span class="str">&quot;&gt;THREE&quot;</span><span class="sym">,</span><span class="num">6</span><span class="sym">);</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+         <span class="sym">}</span>
+         <span class="kwa">else</span>
+         <span class="sym">{</span>
+            <span class="kwb">char</span> c <span class="sym">= *</span>buf<span class="sym">;</span>
+            <span class="kwa">if</span><span class="sym">(</span>c <span class="sym">==</span> <span class="str">'&gt;'</span><span class="sym">)</span> <span class="kwa">break</span><span class="sym">;</span>
+            <span class="kwa">else if</span><span class="sym">(</span>c <span class="sym">!=</span> <span class="str">';'</span><span class="sym">)</span> ob<span class="sym">.</span><span class="kwd">append</span><span class="sym">(</span><span class="kwd">toUpper</span><span class="sym">(</span>buf<span class="sym">));</span>
+         <span class="sym">}</span>
+      <span class="sym">}</span>
+    <span class="sym">}</span>
+    KNucleotide <span class="kwd">kn</span> <span class="sym">(</span><span class="kwd">MyString</span><span class="sym">(</span>ob<span class="sym">.</span><span class="kwd">begin</span><span class="sym">(),</span>ob<span class="sym">.</span><span class="kwd">end</span><span class="sym">()));</span>
+    kn<span class="sym">.</span><span class="kwd">WriteFrequencies</span><span class="sym">(</span><span class="num">1</span><span class="sym">);</span>
+    kn<span class="sym">.</span><span class="kwd">WriteFrequencies</span><span class="sym">(</span><span class="num">2</span><span class="sym">);</span>
+
+    kn<span class="sym">.</span><span class="kwd">WriteCount</span><span class="sym">(</span><span class="str">&quot;GGT&quot;</span><span class="sym">);</span>
+    kn<span class="sym">.</span><span class="kwd">WriteCount</span><span class="sym">(</span><span class="str">&quot;GGTA&quot;</span><span class="sym">);</span>
+    kn<span class="sym">.</span><span class="kwd">WriteCount</span><span class="sym">(</span><span class="str">&quot;GGTATT&quot;</span><span class="sym">);</span>
+    kn<span class="sym">.</span><span class="kwd">WriteCount</span><span class="sym">(</span><span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">);</span>
+    kn<span class="sym">.</span><span class="kwd">WriteCount</span><span class="sym">(</span><span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+
+<span class="sym">}</span>

@@ -1,0 +1,49 @@
+<span class="slc">-- $Id: regexmatch-hugs.code,v 1.14 2006-09-20 05:52:29 bfulgham Exp $</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">-- By Ray Racine (Haskell newbie)</span>
+<span class="slc">-- Usage for 10 iterations:: regexp 10 &lt; Input.txt</span>
+<span class="slc">--</span>
+<span class="slc">-- This seems very hard to get right with Haskell</span>
+<span class="slc">-- as GHC is too good with optimizing. It takes</span>
+<span class="slc">-- the regexmatch out of the loop making things</span>
+<span class="slc">-- too fast. Fixing this is dependant on GHC version</span>
+<span class="slc">-- and the amount of kludge one is willing to</span>
+<span class="slc">-- commit oneself. The current code seems to</span>
+<span class="slc">-- quite linear with GHC6.2.2 but GHC6.4 optimizer</span>
+<span class="slc">-- will kill this too...</span>
+<span class="slc">-- Added options into the Makefile to make this *slower*.</span>
+<span class="slc">-- ugliness by Einar Karttunen</span>
+
+<span class="kwa">import</span> Control.Monad
+<span class="kwa">import</span> Data.Maybe
+<span class="kwa">import</span> System <span class="sym">(</span>getArgs<span class="sym">)</span>
+<span class="kwa">import</span> Text.Regex <span class="sym">(</span>matchRegex<span class="sym">,</span> mkRegex<span class="sym">)</span>
+
+phoneMatch <span class="sym">=</span> matchRegex $ mkRegex regex
+	     <span class="kwa">where</span> regex <span class="sym">=</span>
+		       <span class="str">&quot;(^|[^0-9\\(]+)&quot;</span> <span class="sym">++</span>
+		       <span class="str">&quot;(&quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot;\\(([0-9][0-9][0-9])\\)&quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot;|&quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot;([0-9][0-9][0-9])&quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot;)&quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot; &quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot;([0-9][0-9][0-9])&quot;</span> <span class="sym">++</span>
+	               <span class="str">&quot;[ -]&quot;</span>  <span class="sym">++</span>
+	               <span class="str">&quot;([0-9][0-9][0-9][0-9])&quot;</span> <span class="sym">++</span>
+		       <span class="str">&quot;($|[^0-9])&quot;</span>
+
+canonicalPhone matchGrps <span class="sym">=</span> <span class="str">&quot;(&quot;</span> <span class="sym">++</span> areacode <span class="sym">++</span> <span class="str">&quot;) &quot;</span> <span class="sym">++</span> phnum
+                           <span class="kwa">where</span> areacode <span class="sym">=</span> <span class="kwa">let</span> <span class="sym">(</span>_<span class="sym">,</span>b<span class="sym">) =</span> splitAt <span class="num">2</span> matchGrps <span class="kwa">in</span>
+					    <span class="sym">(</span>head b<span class="sym">) ++ (</span>head . tail $ b<span class="sym">)</span>
+				 phnum <span class="sym">=</span> <span class="kwa">let</span> <span class="sym">(</span>_<span class="sym">,</span>b<span class="sym">) =</span> splitAt <span class="num">4</span> matchGrps <span class="kwa">in</span>
+					 <span class="sym">(</span>head b<span class="sym">) ++</span> <span class="str">&quot;-&quot;</span> <span class="sym">++ (</span>head . tail<span class="sym">)</span> b
+
+matches l <span class="sym">=</span> return $ concatMap <span class="sym">(</span>fun . phoneMatch<span class="sym">)</span> l
+    <span class="kwa">where</span> fun Nothing <span class="sym">= []</span>
+	  fun <span class="sym">(</span>Just v<span class="sym">)= [</span>canonicalPhone v<span class="sym">]</span>
+
+main <span class="sym">=</span> <span class="kwa">do</span> <span class="sym">[</span>num<span class="sym">] &lt;-</span> getArgs
+	  lined <span class="sym">&lt;-</span> getContents <span class="sym">&gt;&gt;=</span> return . lines
+	  foldM <span class="sym">(</span>\n _ <span class="sym">-&gt;</span> matches lined <span class="sym">&gt;&gt;=</span> \v <span class="sym">-&gt;</span> n `seq` return $ n <span class="sym">+</span> length v<span class="sym">)</span> <span class="num">0</span> <span class="sym">[</span><span class="num">2</span>..<span class="sym">(</span>read num<span class="sym">)]</span>
+	  matches lined <span class="sym">&gt;&gt;=</span> foldM_ <span class="sym">(</span>\n v <span class="sym">-&gt;</span> putStrLn <span class="sym">(</span>show n <span class="sym">++</span> <span class="str">&quot;: &quot;</span> <span class="sym">++</span> v<span class="sym">) &gt;&gt;</span> return <span class="sym">(</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">))</span> <span class="num">1</span>
