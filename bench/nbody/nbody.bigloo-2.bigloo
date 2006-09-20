@@ -1,0 +1,188 @@
+;;; The Great Computer Language Shootout
+;;; http://shootout.alioth.debian.org/
+;; contributed by Will M. Farr
+;; based on program by Greg Buchholz
+;; re-written in an imperative style with explicitly-typed vectors of
+;; double-precision floats.
+
+(module nbody
+  (type (tvector f64vector (double)))
+  (main main)
+  (extern (macro cprintf::int (string double) "printf"))
+  (static
+   (final-class planet
+     q::f64vector v::f64vector m::double)))
+
+(define (f64vector . args)
+  (let ((n (length args)))
+    (let ((result (make-f64vector n 0.0)))
+      (let loop ((i 0) (arg (car args)) (rem (cdr args)))
+	(f64vector-set! result i arg)
+	(if (null? rem)
+	    result
+	    (loop (+fx i 1) (car rem) (cdr rem)))))))
+
+(define-expander do-range
+  (lambda (x e)
+    (match-case x
+      ((do-range (?i ?aa ?bb) . ?body)
+       (let ((a (gensym))
+	     (b (gensym)))
+	 (e `(let ((,a ,aa)
+		   (,b ,bb))
+	       (do ((,i ,a (+fx ,i 1)))
+		   ((>=fx ,i ,b))
+		 ,@body)) e))))))
+
+(define-expander do-times
+  (lambda (x e)
+    (match-case x
+      ((do-times (?i ?nn) . ?body)
+       (e `(do-range (,i 0 ,nn) ,@body) e)))))
+
+(define (dot a b) 
+  (let ((sum 0.0))
+    (do-times (i 3)
+      (set! sum (+fl sum (*fl (f64vector-ref a i) 
+			      (f64vector-ref b i)))))
+    sum))
+
+(define (v+! into a b)
+  (do-times (i 3)
+    (f64vector-set! into i (+fl (f64vector-ref a i)
+				(f64vector-ref b i))))
+  into)
+
+(define (v-! into a b)
+  (do-times (i 3)
+    (f64vector-set! into i (-fl (f64vector-ref a i)
+				(f64vector-ref b i))))
+  into)
+
+(define (mag-squared v)
+  (let ((sum 0.0))
+    (do-times (i 3)
+      (let ((temp (f64vector-ref v i)))
+	(set! sum (+fl sum (*fl temp temp)))))
+    sum))
+
+(define (mag v)
+  (sqrtfl (mag-squared v)))
+
+(define (scale! into x v)
+  (do-times (i 3)
+    (f64vector-set! into i (*fl x (f64vector-ref v i))))
+  into)
+
+(define +pi+ 3.141592653589793)
+(define +solar-mass+ (* 4.0 +pi+ +pi+))
+(define +days-per-year+ 365.24)
+
+(define Jupiter
+  (make-planet
+   (f64vector 4.84143144246472090e+00 
+	      -1.16032004402742839e+00 
+	      -1.03622044471123109e-01)
+   (f64vector (* 1.66007664274403694e-03  +days-per-year+)
+	      (* 7.69901118419740425e-03  +days-per-year+)
+	      (* -6.90460016972063023e-05 +days-per-year+))
+   (* 9.54791938424326609e-04 +solar-mass+)))
+
+(define Saturn
+  (make-planet
+   (f64vector 8.34336671824457987e+00 
+	      4.12479856412430479e+00 
+	      -4.03523417114321381e-01)
+   (f64vector (* -2.76742510726862411e-03 +days-per-year+)
+	      (* 4.99852801234917238e-03  +days-per-year+)
+	      (* 2.30417297573763929e-05  +days-per-year+))
+   (* 2.85885980666130812e-04 +solar-mass+)))
+
+(define Uranus
+  (make-planet
+   (f64vector 1.28943695621391310e+01 
+	      -1.51111514016986312e+01 
+	      -2.23307578892655734e-01)
+   (f64vector (* 2.96460137564761618e-03  +days-per-year+)
+	      (* 2.37847173959480950e-03  +days-per-year+)
+	      (* -2.96589568540237556e-05 +days-per-year+))
+   (* 4.36624404335156298e-05 +solar-mass+)))
+
+(define Neptune
+  (make-planet
+   (f64vector 1.53796971148509165e+01 
+	      -2.59193146099879641e+01 
+	      1.79258772950371181e-01)
+   (f64vector (* 2.68067772490389322e-03  +days-per-year+)
+	      (* 1.62824170038242295e-03  +days-per-year+)
+	      (* -9.51592254519715870e-05 +days-per-year+))
+   (* 5.15138902046611451e-05 +solar-mass+)))
+
+(define Sun (make-planet 
+	     (f64vector 0.0 0.0 0.0) 
+	     (f64vector 0.0 0.0 0.0) 
+	     +solar-mass+))
+
+(define (distance v1 v2)
+  (let ((sum 0.0))
+    (do-times (i 3)
+      (let ((temp (-fl (f64vector-ref v1 i) 
+		       (f64vector-ref v2 i))))
+	(set! sum (+fl sum (*fl temp temp)))))
+    (sqrtfl sum)))
+
+(define adv-a/m (make-f64vector 3 0.0))
+(define adv-a (make-f64vector 3 0.0))
+(define store (make-f64vector 3 0.0))
+
+(define (advance! system dt)
+  (let ((n (vector-length system)))
+    (do-times (i n)
+      (with-access::planet (vector-ref system i) ((mi m) (qi q) (vi v))
+	(do-range (j (+fx i 1) n)
+	  (with-access::planet (vector-ref system j) ((mj m) (qj q) (vj v))
+	    (v-! adv-a/m qj qi)
+	    (let* ((r (mag adv-a/m))
+		   (dt/r3 (/fl dt
+			       (*fl (*fl r r) r))))
+	      (scale! adv-a/m dt/r3 adv-a/m) ;; a/m now holds dt*F_ij/(mi*mj)
+	      (scale! adv-a mj adv-a/m)
+	      (v+! vi vi adv-a)
+	      (scale! adv-a mi adv-a/m)
+	      (v-! vj vj adv-a))))))
+    (do-times (i n)
+      (with-access::planet (vector-ref system i) (m q v)
+	(scale! store dt v)
+	(v+! q q store)))))
+
+(define (energy system)
+  (let ((n (vector-length system))
+	(e 0.0))
+    (do-times (i n)
+      (with-access::planet (vector-ref system i) ((mi m) (qi q) (vi v))
+	(set! e (+fl e (*fl 0.5 (*fl mi (mag-squared vi)))))
+	(do-range (j (+fx i 1) n)
+	  (with-access::planet (vector-ref system j) ((mj m) (qj q))
+	    (let ((r (distance qi qj)))
+	      (set! e (-fl e (/fl (*fl mi mj) r))))))))
+    e))
+
+(define (zero-momentum! bs)
+  (let ((sun (vector-ref bs 0))
+	(p (make-f64vector 3 0.0))
+	(store (make-f64vector 3 0.0)))
+    (do-range (i 1 (vector-length bs))
+      (with-access::planet (vector-ref bs i) (m v)
+	(scale! store m v)
+	(v+! p p store)))
+    (scale! (planet-v sun) (/fl -1.0 +solar-mass+) p)))
+
+(define (main argv)
+  (let ((n (string->number (cadr argv)))
+	(system (vector Sun Jupiter Saturn Uranus Neptune)))
+    (zero-momentum! system)
+    (cprintf "%.9f\n" (energy system))
+    (do-times (i n)
+      (advance! system 0.01))
+    (cprintf "%.9f" (energy system)))
+  0)
