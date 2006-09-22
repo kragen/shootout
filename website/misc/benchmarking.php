@@ -25,7 +25,7 @@ means that most programs are small and spend most of their time in I/O and nativ
   <li><p><a href="http://ali-www.cs.umass.edu/DaCapo/gcbm.html">The DaCapo Benchmark Suite</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
 </ul>
-<p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less frequently measured.</p>
+<p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less often measured.</p>
 <ul>
   <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a></p></li>
 </ul>
@@ -68,7 +68,7 @@ software. Lua relies on C for those tasks."<br />
 </dd>
 
 <dt><a href="#scale" name="scale"><strong>Different design intentions - scale</strong></a></dt>
-<dd><blockquote><p>"Lua is not intended for building huge programs, where many programmers are involved 
+<dd><blockquote><p>"Lua is not intended for building huge programs, where many programmers are involved
 for long periods. Quite the opposite, Lua aims at small to medium programs, usually part
  of a larger system, typically developed by one or a few programmers, or even by non 
  programmers. Therefore, Lua avoids too much redundancy and artificial restrictions."<br />
