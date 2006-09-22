@@ -24,16 +24,19 @@ means that most programs are small and spend most of their time in I/O and nativ
 <ul>  
   <li><p><a href="http://ali-www.cs.umass.edu/DaCapo/gcbm.html">The DaCapo Benchmark Suite</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
-
+</ul>
+<p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less frequently measured.</p>
+<ul>
+  <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a></p></li>
 </ul>
 </dd>
 
 <dt><a href="#app" name="app"><strong>"your application is the ultimate benchmark"</strong></a></dt>
 <dd>
-<blockquote><p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric, 
+<blockquote><p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric,
 the origin of which is unknown to me but that may very well be Wirth's own invention. He used <strong>the 
 compiler's self-compilation speed</strong> as a measure of the compiler's quality. Considering that Wirth's 
-compilers were written in the languages they compiled, and that compilers are substantial and non-trivial 
+compilers were written in the languages they compiled, and that compilers are substantial and non-trivial
 pieces of software in their own right, this introduced a highly practical benchmark that directly
 contested a compiler's complexity against its performance. Under the self compilation speed benchmark,
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
