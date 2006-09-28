@@ -242,17 +242,17 @@ Do you want to help with the chores?</p>
 <dl>
 <dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
 <dd>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="http://shootout.alioth.debian.org/debian/fulldata.php?test=ackermann&amp;p1=gcc-3&amp;p2=gcc-3&amp;p3=gcc-3&amp;p4=gcc-3#cputable" title="full data"><strong>full data page</strong></a>.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=recursive&p1=ooc-0&p2=se-0&p3=gcc-0&p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </dd>
 
 <dt><a href="#version" name="version">Where can I see which language version was used?</a></dt>
-<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="http://shootout.alioth.debian.org/debian/benchmark.php?test=all&amp;lang=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
+<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&lang=gcc&lang2=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
 </dd>
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
 <dd><p>You can see the build commands and runtime commands on each program page in the 
-<a href="http://shootout.alioth.debian.org/debian/benchmark.php?test=ackermann&amp;lang=gcc&amp;id=3#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<a href="benchmark.php?test=recursive&lang=gcc&id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </dd>
 
 <dt><a href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></dt>
