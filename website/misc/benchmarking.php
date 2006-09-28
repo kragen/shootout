@@ -25,6 +25,10 @@ means that most programs are small and spend most of their time in I/O and nativ
   <li><p><a href="http://dacapobench.org/">The DaCapo Benchmark Suite</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
 </ul>
+<p>We should always question how useful a benchmark is for our specific purpose:</p>
+<ul>  
+  <li><p><a href="http://www-faculty.cs.uiuc.edu/~zilles/papers/health.pdf">Benchmark <tt>Health</tt> Considered Harmful</a></p></li>
+</ul>
 <p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less often measured.</p>
 <ul>
   <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a></p></li>
