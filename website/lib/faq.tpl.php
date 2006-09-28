@@ -304,7 +304,7 @@ and for 100 measurements of fasta ranged from 0.009% (Lua) to 0.088% (C#) to 0.6
 
 <dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></dt>
 <dd><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
-<p>(<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
+<p>(<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
 <pre>Perl times() builtin function
 16.650
 16.660
@@ -325,7 +325,7 @@ Bash time builtin command
 16.628
 16.638
 </pre>
-<p>We use (<a href="http://packages.debian.org/stable/interpreters/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
+<p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
 <p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
 </dd>
 
