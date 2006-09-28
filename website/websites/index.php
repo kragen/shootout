@@ -40,7 +40,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <p><strong>Use:</strong> these are particular truths, they are not general truths</p>
 <ul>
-<li>read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a> and read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a></li>
+<li>read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a> and read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a></li>
 <li>learn about the languages - read the programs</li>
 <li>understand that <em>the faster program</em> may become <em>the slower program</em> when the workload changes</li>
 </ul><br/>
