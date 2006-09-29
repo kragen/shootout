@@ -1,5 +1,5 @@
 <?=$Version;?>
 
-<p>Home Page: <a href="http://nekovm.org/">http://nekovm.org/</a></p>
+<p>Home Page: <a href="http://www.nekovm.com/">http://www.nekovm.com/</a></p>
 
-<p>Download: <a href="http://nekovm.org/download">http://nekovm.org/download</a></p>
+<p>Download: <a href="http://www.nekovm.com/?doc=download">http://www.nekovm.com/?doc=download</a></p>
