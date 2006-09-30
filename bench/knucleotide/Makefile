@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2006-07-29 19:19:13 davejf-guest Exp $
+# $Id: Makefile,v 1.17 2006-09-30 21:37:58 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -14,6 +14,7 @@ MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 DLANGOPTS := ../../Include/dlang/hashtable.d
+BIGFORTH_FLAGS := -d 8M
 GFORTH_FLAGS := -m 8M
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
