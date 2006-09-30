@@ -41,6 +41,11 @@
 <dt><a href="#talk" name="talk">Where can I discuss&#8230;?</a></dt>
 <dd><p>Discuss the benchmarks or ask for help in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p></dd>
 
+
+<dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
+<dd><p>"Feature Request", "Bug" and "Contribute Programs" tracker comments are being SPAMMED. We will no longer accept anonymous public comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a> and login.</p>
+</dd>
+
 <dt><a href="#contributeprogram" name="contributeprogram">Where do I contribute a program?</a></dt>
 <dd><p><strong>Before</strong> working on a benchmark program:</p>
 <ul>
@@ -155,7 +160,6 @@ each new target source file will start from the <strong>comment line</strong> wh
 <ol>
 <li>read the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
 <li>read <a href="faq.php#implement">&darr;&nbsp;<strong>How should I implement&#8230;?</strong></a></li>
-<li>login with an Alioth id <em>is not required</em> but login allows you to make updates after contributing a program - <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a>.</li>
 </ol>
 
 <p>Follow these instructions <strong>step-by-step</strong></p>
