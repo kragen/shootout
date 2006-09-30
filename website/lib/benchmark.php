@@ -63,10 +63,7 @@ if ($T=='all'){
   
       $Title = 'Create your own Overall Scores';
 
-      if (strstr(SITE_TITLE,'Gentoo')){ 
-         $TemplateName = 'scorecard.tpl.php'; }
-      else { 
-         $TemplateName = 'oldscorecard.tpl.php'; }
+      $TemplateName = 'scorecard.tpl.php'; 
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = 'scorecard-about.tpl.php'; 
@@ -102,17 +99,11 @@ if ($T=='all'){
       $Title = $LangName.' benchmarks';
 
       if ($L!=$L2){ 
-         if (strstr(SITE_TITLE,'Gentoo')){ 
-            $TemplateName = 'headtohead.tpl.php'; }
-         else { 
-            $TemplateName = 'oldheadtohead.tpl.php'; }      
+         $TemplateName = 'headtohead.tpl.php';     
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                      
 
       } else { 
-         if (strstr(SITE_TITLE,'Gentoo')){ 
-            $TemplateName = 'language.tpl.php'; }
-         else { 
-            $TemplateName = 'oldlanguage.tpl.php'; }
+         $TemplateName = 'language.tpl.php'; 
          $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                        
       }
       
@@ -133,10 +124,7 @@ if ($T=='all'){
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 
 
-      if (strstr(SITE_TITLE,'Gentoo')){ 
-         $TemplateName = 'benchmark.tpl.php'; }
-      else { 
-         $TemplateName = 'oldbenchmark.tpl.php'; }
+      $TemplateName = 'benchmark.tpl.php'; 
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php'; 
@@ -151,11 +139,7 @@ if ($T=='all'){
       $TestName = $Tests[$T][TEST_NAME];
       $LangName = $Langs[$L][LANG_FULL];       
 
-      if (strstr(SITE_TITLE,'Gentoo')){ 
-         $TemplateName = 'program.tpl.php'; }
-      else { 
-         $TemplateName = 'oldprogram.tpl.php'; }
-
+      $TemplateName = 'program.tpl.php'; 
       $Title = $TestName.' '.$LangName.IdName($I).' program';
 
       // NOTE Sometimes there's an alternative program for the benchmark test and language
