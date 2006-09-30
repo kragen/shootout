@@ -1,0 +1,149 @@
+/*
+** The Computer Language Shootout
+** http://shootout.alioth.debian.org/
+** contributed by Mike Pall
+** converted to D by Dave Fladebo
+**
+** regex-dna benchmark using PCRE
+**
+** compile with:
+**   dmd -O -inline -release -L-lpcre regexdna3.d
+*/
+
+import std.stdio, std.c.stdlib, std.c.string;
+
+int main(char[][] args)
+{
+  fbuf seq[2];
+  char** pp;
+  size_t ilen, clen, slen;
+  int flip;
+  fb_init(&seq[0]);
+  fb_init(&seq[1]);
+  ilen = fb_readall(&seq[0], stdin);
+  clen = fb_subst(&seq[1], &seq[0], ">.*|\n", "");
+  for (pp = variants; *pp; pp++)
+    printf("%s %d\n", *pp, fb_countmatches(&seq[1], *pp));
+  for (slen = 0, flip = 1, pp = subst; *pp; pp += 2, flip = 1 - flip)
+    slen = fb_subst(&seq[1-flip], &seq[flip], *pp, pp[1]);
+  printf("\n%zu\n%zu\n%zu\n", ilen, clen, slen);
+  return 0;
+}
+
+void fb_init(fbuf *b)
+{
+  b.buf = null;
+  b.len = b.size = 0;
+}
+
+char* fb_need(fbuf* b, size_t need)
+{
+  need += b.len;
+  if (need > b.size)
+  {
+    if (b.size == 0) b.size = need;
+    else while (need > b.size) b.size += b.size;
+    b.buf = cast(char*)realloc(b.buf, b.size);
+    if (!b.buf) exit(1);
+  }
+  return b.buf + b.len;
+}
+
+const FB_MINREAD = 3 << 16;
+
+/* Read all of a stdio stream into dst buffer. */
+size_t fb_readall(fbuf* dst, FILE* fp)
+{
+  char* dp;
+  int n;
+  for (dp = fb_need(dst, FB_MINREAD);
+       (n = fread(dp, 1, dst.size - dst.len, fp)) > 0;
+       dp = fb_need(dst, FB_MINREAD)) dst.len += n;
+  if (ferror(fp)) exit(1);
+  return dst.len;
+}
+
+/* Substitute pattern p with replacement r, copying from src to dst buffer. */
+size_t fb_subst(fbuf* dst, fbuf* src, char* p, char* r)
+{
+  pcre* re;
+  pcre_extra* re_ex;
+  char* re_e;
+  char* dp;
+  int re_eo, pos, rlen, clen;
+  int[3] m;
+  if ((re = pcre_compile(p, PCRE_FLAGS, &re_e, &re_eo, null)) is null) exit(1);
+  re_ex = pcre_study(re, 0, &re_e);
+  for (dst.len = 0, rlen = strlen(r), pos = 0;
+       pcre_exec(re, re_ex, src.buf, src.len, pos, 0, m, 3) >= 0;
+       pos = m[1])
+  {
+    clen = m[0] - pos;
+    dp = fb_need(dst, clen + rlen);
+    dst.len += clen + rlen;
+    memcpy(dp, src.buf + pos, clen);
+    memcpy(dp + clen, r, rlen);
+  }
+  clen = src.len - pos;
+  dp = fb_need(dst, clen);
+  dst.len += clen;
+  memcpy(dp, src.buf + pos, clen);
+  return dst.len;
+}
+
+/* Count all matches with pattern p in src buffer. */
+int fb_countmatches(fbuf* src, char* p)
+{
+  pcre* re;
+  pcre_extra* re_ex;
+  char* re_e;
+  int re_eo, pos, count;
+  int[3] m;
+  if ((re = pcre_compile(p, PCRE_FLAGS, &re_e, &re_eo, null)) is null) exit(1);
+  re_ex = pcre_study(re, 0, &re_e);
+  for (count = 0, pos = 0;
+       pcre_exec(re, re_ex, src.buf, src.len, pos, 0, m, 3) >= 0;
+       pos = m[1]) count++;
+  return count;
+}
+
+extern (C)
+{
+    struct pcre;
+    pcre* pcre_compile(char*, int, char**, int*, ubyte*);
+    pcre_extra* pcre_study(pcre*, int,char**);
+    int pcre_exec(pcre*, pcre_extra*, char*, int, int, int, int*, int);
+}
+
+const PCRE_FLAGS = 0x00000000;
+
+struct pcre_extra
+{
+  ulong flags;        /* Bits for which fields are set */
+  void *study_data;               /* Opaque data from pcre_study() */
+  ulong match_limit;  /* Maximum number of calls to match() */
+  void *callout_data;             /* Data passed back in callouts */
+  ubyte* tables;    /* Pointer to character tables */
+}
+
+struct fbuf
+{
+  char* buf;
+  size_t size, len;
+}
+
+const char* variants[] =
+[
+  "agggtaaa|tttaccct",         "[cgt]gggtaaa|tttaccc[acg]",
+  "a[act]ggtaaa|tttacc[agt]t", "ag[act]gtaaa|tttac[agt]ct",
+  "agg[act]taaa|ttta[agt]cct", "aggg[acg]aaa|ttt[cgt]ccct",
+  "agggt[cgt]aa|tt[acg]accct", "agggta[cgt]a|t[acg]taccct",
+  "agggtaa[cgt]|[acg]ttaccct", null
+];
+
+const char* subst[] =
+[
+  "B", "(c|g|t)", "D", "(a|g|t)",   "H", "(a|c|t)", "K", "(g|t)",
+  "M", "(a|c)",   "N", "(a|c|g|t)", "R", "(a|g)",   "S", "(c|g)",
+  "V", "(a|c|g)", "W", "(a|t)",     "Y", "(c|t)", null
+];
