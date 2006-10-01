@@ -338,11 +338,6 @@ Bash time builtin command
 <p>There's a race condition. When the program completes quickly, this sampling technique will fail.</p>       
 </dd>
 
-<dt><a href="#codelines" name="codelines">How did you measure <strong>lines-of-code?</strong></a></dt>
-<dd><p>In a haphazard and approximate way - blank lines and comments were removed, and then we counted the lines that remain.</p>
-<p>We reserve the right to format the code entries as we see fit, whatever the lines-of-code count may be.</p> 
-</dd>
-
 <dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>GZip Bytes?</strong></a></dt>
 <dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression.</p>
 </dd>
