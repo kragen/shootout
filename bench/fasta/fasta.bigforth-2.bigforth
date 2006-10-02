@@ -1,0 +1,90 @@
+\ fasta.gforth
+\ Submitted by Ian Osgood
+\ modified by Bernd Paysan
+
+\ read NUM from last command line argument
+0. argc @ 1- arg >number 2drop drop constant NUM
+
+import float float also
+
+: mem,
+  here over allot swap move ;
+
+\ random
+42 value seed
+: random ( -- u ) seed 3877 * 29573 + 139968 mod dup to seed ;
+: gen-random ( r -- r' ) random fm* 139968e f/ ;
+
+60 constant line-len
+128 constant lines
+line-len 1+ lines * Constant buf-size
+
+\ data arrays
+Variable linebuf buf-size allot
+
+create ALU
+  s" GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" mem,
+  s" GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" mem,
+  s" CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" mem,
+  s" ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" mem,
+  s" GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" mem,
+  s" AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" mem,
+  s" AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA" mem,
+here constant ALU-end
+
+: f+, ( a f -- a' ) f+ fdup f, ;
+: 0.02-remainder, ( a -- a>=1)
+  begin fdup 1e f< while 0.02e f+, repeat ;
+
+\ " acgtBDHKMNRSVWY"
+falign create IUB   0e
+  0.27e f+,  0.12e f+,  0.12e f+,  0.27e f+,
+  0.02-remainder, fdrop
+
+\ " acgt"
+falign create HomoSap  0e
+  0.3029549426680e f+,  0.1979883004921e f+,
+  0.1975473066391e f+,  0.3015094502008e f+,  fdrop
+
+: next-char ( a -- a' c )
+  dup ALU-end = if drop ALU then  count ;
+
+: flush, linebuf @+ swap type linebuf off ;
+: emit, ( char -- )  linebuf @+ + c!  1 linebuf +! ;
+: cr,  #lf emit, linebuf @ buf-size = IF
+	flush,
+    THEN ;
+
+: ?cr ( col -- col' ) 1- dup 0= if cr, line-len + then ;
+: ?end-cr ( col -- ) line-len < if cr, then flush, ;
+
+: fasta-repeat ( n -- ) ALU
+    begin over 0> while
+	    over line-len min 0 ?DO
+		next-char emit,  LOOP  cr,
+	    swap line-len - swap
+  repeat drop flush, ;
+
+: sel-random ( probs -- probs c )
+  1e gen-random s" acgtBDHKMNRSVWY" drop over
+  begin dup f@ fover f< while float+ swap char+ swap repeat
+  fdrop drop c@ ;
+
+: fasta-random ( n which -- )
+    begin over 0> while
+	    over line-len min 0 ?DO
+		sel-random emit,  LOOP  cr,
+	    swap line-len - swap
+  repeat drop flush, ;
+
+: main
+  ." >ONE Homo sapiens alu" cr
+  NUM 2* fasta-repeat
+  ." >TWO IUB ambiguity codes" cr
+  NUM 3 * IUB fasta-random
+  ." >THREE Homo sapiens frequency" cr
+  NUM 5 * HomoSap fasta-random ;
+
+main bye  \ done!
+
+
