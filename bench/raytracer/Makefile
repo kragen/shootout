@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2005-06-24 19:53:35 sgeard-guest Exp $
+# $Id: Makefile,v 1.11 2006-10-02 01:08:41 bfulgham Exp $
 include ../../Make.header
 
 TEST    := raytracer
@@ -16,7 +16,7 @@ BIGLOOOPTS := -farithmetic
 
 IFCOPTS	:= -u -what
 MB_CLRTS := -nr
-OCAMLOPTS := -ffast-math -inline 100
+OCAMLOPTS := -inline 100
 #OCAMLBOPTS := 
 OO2COPTS := -A --no-rtc
 PHPOPTS := -q -d max_execution_time=600

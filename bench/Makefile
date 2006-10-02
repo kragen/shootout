@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.48 2006-09-19 16:35:12 igouy-guest Exp $
+# $Id: Makefile,v 1.49 2006-10-02 01:08:41 bfulgham Exp $
 TESTS = \
     hello \
     binarytrees \
@@ -18,8 +18,7 @@ TESTS = \
     regexdna \
     revcomp \
     spectralnorm \
-    sumcol \
-    takfp
+    sumcol
 
 # get rid of this hardcoded path
 BIN:=/opt/shootout/shootout/bin

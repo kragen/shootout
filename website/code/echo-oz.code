@@ -1,0 +1,113 @@
+<span class="slc">%%% $Id: echo-oz.code,v 1.12 2006-10-02 01:08:41 bfulgham Exp $</span>
+<span class="slc">%%% http://dada.perl.it/shootout/</span>
+<span class="slc">%%%</span>
+<span class="slc">%%% contributed by Isaac Gouy</span>
+
+<span class="slc">%%  Usage: start from command line with</span>
+<span class="slc">%%     ozc -x echo.oz -o echo.oz.exe</span>
+<span class="slc">%%     echo.oz.exe 100000</span>
+
+<span class="kwa">functor</span>
+<span class="kwa">import</span>
+   System
+   Application
+   Open
+   OS
+
+<span class="kwa">define</span>
+   Data <span class="sym">=</span> &quot;Hello there sailor<span class="sym">\</span>n&quot;
+
+<span class="kwa">proc</span> <span class="sym">{</span>ServerThread Sock SPort Bytes<span class="sym">}</span>
+   Sock <span class="sym">= {</span>New Open<span class="sym">.</span>socket server<span class="sym">(</span>port<span class="sym">:</span>SPort<span class="sym">)}</span>
+   <span class="sym">{</span>ServerLoop Sock <span class="num">0</span> Bytes<span class="sym">}</span>
+   <span class="sym">{</span>Sock shutDown<span class="sym">(</span>how<span class="sym">: [</span>receive send<span class="sym">])}{</span>Sock close<span class="sym">}</span>
+<span class="kwa">end</span>
+
+<span class="kwa">proc</span> <span class="sym">{</span>ServerLoop Sock Sum Bytes<span class="sym">}</span>
+   <span class="kwa">local</span> Message NewSum DR DW CR ST <span class="kwa">in</span>
+
+      <span class="slc">%% low-level Selects seem ~6% faster total</span>
+      <span class="sym">{</span>Sock getDesc<span class="sym">(</span>DR DW<span class="sym">)}{</span>OS<span class="sym">.</span>readSelect DR<span class="sym">}</span>
+      <span class="sym">{</span>OS<span class="sym">.</span>read DR <span class="num">1024</span> Message nil CR<span class="sym">}</span>
+      <span class="slc">%% {Sock read(list: Message)} %% normal read</span>
+
+      <span class="kwa">if</span> Message <span class="sym">==</span> nil <span class="kwa">then</span> <span class="slc">%% connection has been closed</span>
+         Bytes <span class="sym">=</span> Sum
+      <span class="kwa">else</span>
+         NewSum <span class="sym">= {</span>Length Message<span class="sym">} +</span> Sum
+
+         <span class="sym">{</span>OS<span class="sym">.</span>writeSelect DW<span class="sym">}{</span>OS<span class="sym">.</span>write DW Message ST<span class="sym">}</span>
+         <span class="slc">%% {Sock write(vs: Message)} %% normal write</span>
+
+         <span class="sym">{</span>ServerLoop Sock NewSum Bytes<span class="sym">}</span>
+      <span class="kwa">end</span>
+   <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+
+<span class="kwa">proc</span> <span class="sym">{</span>ClientThread SPort N<span class="sym">}</span>
+   <span class="kwa">local</span> Sock <span class="kwa">in</span>
+      Sock <span class="sym">= {</span>New Open<span class="sym">.</span>socket client<span class="sym">(</span>port<span class="sym">:</span>SPort<span class="sym">)}</span>
+      <span class="sym">{</span>ClientLoop Sock N<span class="sym">}</span>
+      <span class="sym">{</span>Sock shutDown<span class="sym">(</span>how<span class="sym">: [</span>receive send<span class="sym">])}{</span>Sock close<span class="sym">}</span>
+   <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+<span class="kwa">proc</span> <span class="sym">{</span>ClientLoop Sock N<span class="sym">}</span>
+   <span class="kwa">local</span> Message DR DW CR ST <span class="kwa">in</span>
+      <span class="kwa">if</span> N <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+
+         <span class="sym">{</span>Sock getDesc<span class="sym">(</span>DR DW<span class="sym">)}</span>
+         <span class="sym">{</span>OS<span class="sym">.</span>writeSelect DW<span class="sym">}{</span>OS<span class="sym">.</span>write DW Data ST<span class="sym">}</span>
+             <span class="sym">{</span>OS<span class="sym">.</span>readSelect DR<span class="sym">}{</span>OS<span class="sym">.</span>read DR <span class="num">1024</span> Message nil CR<span class="sym">}</span>
+
+         <span class="slc">%% {Sock write(vs: Data)}     %% normal write</span>
+             <span class="slc">%% {Sock read(list: Message)} %% normal read</span>
+
+         <span class="kwa">if</span> Message <span class="sym">==</span> Data <span class="kwa">then</span> <span class="sym">{</span>ClientLoop Sock N<span class="sym">-</span><span class="num">1</span><span class="sym">}</span> <span class="kwa">end</span>
+      <span class="kwa">end</span>
+   <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+<span class="kwa">in</span>
+   <span class="kwa">local</span> Args A1 A2 A3 Socket SPort Bytes ArgList Pid <span class="kwa">in</span>
+      Args <span class="sym">= {</span>Application<span class="sym">.</span>getArgs plain<span class="sym">}</span>
+
+      <span class="kwa">if</span> <span class="sym">{</span>Length Args<span class="sym">} ==</span> <span class="num">1</span> <span class="kwa">then</span>
+         <span class="slc">%% We are the server process</span>
+
+         A3<span class="sym">|</span>nil <span class="sym">=</span> Args
+
+         <span class="kwa">thread</span> <span class="sym">{</span>ServerThread Socket SPort Bytes<span class="sym">}</span> <span class="kwa">end</span>
+
+         <span class="slc">%% Prepare to fork an OS process for the client</span>
+         <span class="slc">%%    automatically close cmd.exe</span>
+         <span class="slc">%%    start echo.oz.exe</span>
+         <span class="slc">%%    pass a flag indicating the client process</span>
+         <span class="slc">%%    pass the open server port SPort</span>
+         <span class="slc">%%    pass the number of times the client should send the data</span>
+
+         ArgList <span class="sym">= [</span>&quot;<span class="sym">/</span>C&quot; &quot;echo<span class="sym">.</span>oz&quot; &quot;client&quot; <span class="sym">{</span>IntToString SPort<span class="sym">}</span> A3<span class="sym">]</span>
+         Pid <span class="sym">= {</span>New Open<span class="sym">.</span>pipe init<span class="sym">(</span>cmd<span class="sym">:</span> &quot;<span class="sym">/</span>bin<span class="sym">/</span>sh&quot; args<span class="sym">:</span> ArgList<span class="sym">)}</span>
+
+         <span class="slc">%% Synchronize with server thread completion and indirectly with</span>
+         <span class="slc">%% the client process. Wait here until the dataflow variable Bytes</span>
+         <span class="slc">%% has been given a value in the server thread. That happens after</span>
+         <span class="slc">%% the client process closes the socket connection, when the client</span>
+         <span class="slc">%% process has sent all it's data and received all the replies.</span>
+
+         <span class="sym">{</span>System<span class="sym">.</span>showInfo <span class="str">'server processed '</span><span class="sym">#{</span>IntToString Bytes<span class="sym">}#</span><span class="str">' bytes'</span><span class="sym">}</span>
+
+      <span class="kwa">elseif</span> <span class="sym">{</span>Length Args<span class="sym">} ==</span> <span class="num">3</span> <span class="kwa">then</span>
+         <span class="slc">%% We are the client process</span>
+
+         <span class="slc">%% Take the flag, server port, times-to-repeat from the args</span>
+         <span class="slc">%% and use the main thread for the client</span>
+         A1<span class="sym">|</span>A2<span class="sym">|</span>A3<span class="sym">|</span>nil <span class="sym">=</span> Args
+         <span class="kwa">if</span> A1 <span class="sym">==</span> &quot;client&quot; <span class="kwa">then</span>
+            <span class="sym">{</span>ClientThread <span class="sym">{</span>StringToInt A2<span class="sym">} {</span>StringToInt A3<span class="sym">}}</span>
+         <span class="kwa">end</span>
+      <span class="kwa">end</span>
+   <span class="kwa">end</span>
+   <span class="sym">{</span>Application<span class="sym">.</span>exit <span class="num">0</span><span class="sym">}</span>
+<span class="kwa">end</span>

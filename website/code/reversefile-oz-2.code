@@ -1,0 +1,140 @@
+<span class="slc">% ----------------------------------------------------------------------</span>
+<span class="slc">% The Great Computer Language Shootout</span>
+<span class="slc">% http://shootout.alioth.debian.org/</span>
+<span class="slc">%</span>
+<span class="slc">% Attempt at a reasonably memory-efficient implementation which should:</span>
+<span class="slc">%</span>
+<span class="slc">% * Handle 'large' files [~ &gt;2MB] faster than existing version</span>
+<span class="slc">% * Handle arbitrarily large files [~ &gt;10MB] files without crashing</span>
+<span class="slc">%   [unlike existing version which, since it uses stack unwinding to perform</span>
+<span class="slc">%   its task, is very sensitive to the input file size]</span>
+<span class="slc">%</span>
+<span class="slc">% Use made of code from 'Concepts, Techniques and Models of Computer</span>
+<span class="slc">% Programming' [CTM] by P. van Roy, S. Haridi.</span>
+<span class="slc">%</span>
+<span class="slc">% Contributed by Anthony Borla</span>
+<span class="slc">% ----------------------------------------------------------------------</span>
+
+<span class="kwa">functor</span>
+
+<span class="kwa">import</span>
+  System<span class="sym">(</span>showInfo<span class="sym">)</span> Application<span class="sym">(</span>exit<span class="sym">)</span> Open<span class="sym">(</span>text file<span class="sym">)</span>
+
+<span class="kwa">define</span>
+
+<span class="slc">% ------------- %</span>
+
+  <span class="kwa">class</span> TextFile_
+    <span class="kwa">from</span> Open<span class="sym">.</span>file Open<span class="sym">.</span>text
+  <span class="kwa">end</span>
+
+<span class="slc">% ------------- %</span>
+
+  <span class="slc">%% General Purpose Stateful Stack [CTM implementation]</span>
+
+  <span class="kwa">fun</span> <span class="sym">{</span>NewStack<span class="sym">}</span>
+    C <span class="sym">= {</span>NewCell nil<span class="sym">}</span>
+
+    <span class="kwa">proc</span> <span class="sym">{</span>Push X<span class="sym">}</span> S <span class="kwa">in</span> S <span class="sym">= &#64;</span>C C <span class="sym">:=</span> X<span class="sym">|</span>S <span class="kwa">end</span>
+
+    <span class="kwa">fun</span> <span class="sym">{</span>Pop<span class="sym">}</span> S1 <span class="kwa">in</span>
+      S1 <span class="sym">= &#64;</span>C
+      <span class="kwa">case</span> S1 <span class="kwa">of</span> X<span class="sym">|</span>S <span class="kwa">then</span>
+        C <span class="sym">:=</span> S
+        X
+      <span class="kwa">end</span>
+    <span class="kwa">end</span>
+
+    <span class="kwa">fun</span> <span class="sym">{</span>IsEmpty<span class="sym">}</span> S <span class="kwa">in</span> S <span class="sym">= &#64;</span>C S <span class="sym">==</span> nil <span class="kwa">end</span>
+  <span class="kwa">in</span>
+    ops<span class="sym">(</span>push<span class="sym">:</span>Push pop<span class="sym">:</span>Pop isEmpty<span class="sym">:</span>IsEmpty<span class="sym">)</span>
+  <span class="kwa">end</span>
+
+<span class="slc">% ------------- %</span>
+
+  <span class="kwa">local</span>
+    LF <span class="sym">= &amp;\</span><span class="num">012</span> Lines <span class="sym">= {</span>NewStack<span class="sym">}</span> Spill <span class="sym">= {</span>NewCell nil<span class="sym">}</span>
+  <span class="kwa">in</span>
+    <span class="kwa">proc</span> <span class="sym">{</span>ProcessBuffer Buffer<span class="sym">}</span> Ys Yr <span class="kwa">in</span>
+      <span class="sym">{</span>String<span class="sym">.</span>token Buffer LF Ys Yr<span class="sym">}</span>
+      <span class="sym">{</span>SplitAndPrint Yr<span class="sym">}</span>
+      Spill <span class="sym">:=</span> Ys
+    <span class="kwa">end</span>
+
+    <span class="kwa">proc</span> <span class="sym">{</span>FlushBuffer<span class="sym">}</span>
+      <span class="sym">{</span>DumpSpill<span class="sym">}</span>
+    <span class="kwa">end</span>
+
+    <span class="kwa">proc</span> <span class="sym">{</span>DumpLines<span class="sym">}</span>
+      <span class="kwa">if</span> <span class="sym">{</span>Lines<span class="sym">.</span>isEmpty<span class="sym">}</span> <span class="kwa">then skip</span>
+      <span class="kwa">else</span> <span class="sym">{</span>System<span class="sym">.</span>showInfo <span class="sym">{</span>Lines<span class="sym">.</span>pop<span class="sym">}} {</span>DumpLines<span class="sym">}</span>
+      <span class="kwa">end</span>
+    <span class="kwa">end</span>
+
+    <span class="kwa">proc</span> <span class="sym">{</span>DumpSpill<span class="sym">}</span>
+      <span class="kwa">if</span> <span class="sym">&#64;</span>Spill <span class="sym">\=</span> nil <span class="kwa">then</span> <span class="sym">{</span>System<span class="sym">.</span>showInfo <span class="sym">&#64;</span>Spill<span class="sym">}</span> Spill <span class="sym">:=</span> nil <span class="kwa">end</span>
+    <span class="kwa">end</span>
+
+    <span class="kwa">proc</span> <span class="sym">{</span>SplitAndPrint Xs<span class="sym">}</span>
+      <span class="kwa">case</span> Xs <span class="kwa">of</span> nil <span class="kwa">then skip</span>
+      <span class="kwa">else</span> Ys Yr <span class="kwa">in</span>
+        <span class="sym">{</span>String<span class="sym">.</span>token Xs LF Ys Yr<span class="sym">}</span>
+
+        <span class="slc">%% Should really handle blank / LF-only lines here ...</span>
+        <span class="slc">%% case Ys#Yr of nil#nil then ...</span>
+        <span class="slc">%% [] nil#_ then ...</span>
+        <span class="slc">%% [] _#nil then ...</span>
+
+        <span class="kwa">case</span> Yr <span class="kwa">of</span> nil <span class="kwa">then</span>
+          <span class="kwa">if</span> <span class="sym">{</span>List<span class="sym">.</span>last Xs<span class="sym">} \=</span> LF <span class="kwa">then</span>
+            Spill <span class="sym">:= {</span>List<span class="sym">.</span>append Ys <span class="sym">&#64;</span>Spill<span class="sym">}</span>
+          <span class="kwa">else</span>
+            <span class="sym">{</span>Lines<span class="sym">.</span>push Ys<span class="sym">}</span>
+          <span class="kwa">end</span>
+          <span class="sym">{</span>DumpSpill<span class="sym">}</span>
+          <span class="sym">{</span>DumpLines<span class="sym">}</span>
+        <span class="kwa">else</span>
+          <span class="sym">{</span>Lines<span class="sym">.</span>push Ys<span class="sym">}</span>
+          <span class="sym">{</span>SplitAndPrint Yr<span class="sym">}</span>
+        <span class="kwa">end</span>
+      <span class="kwa">end</span>
+    <span class="kwa">end</span>
+
+  <span class="kwa">end</span>
+
+<span class="slc">% ------------- %</span>
+
+  <span class="kwa">proc</span> <span class="sym">{</span>ReverseFile FILE BufferSize<span class="sym">}</span>
+
+    <span class="kwa">proc</span> <span class="sym">{</span>ReadBuffer RemainingBytes<span class="sym">}</span> BytesRead Buffer StartPos ToRead <span class="kwa">in</span>
+      <span class="kwa">if</span> RemainingBytes <span class="sym">&lt;</span> <span class="num">1</span> <span class="kwa">then</span>
+        <span class="sym">{</span>FlushBuffer<span class="sym">}</span>
+      <span class="kwa">else</span>
+        ToRead <span class="sym">=</span> <span class="kwa">if</span> RemainingBytes <span class="sym">&lt;</span> BufferSize <span class="kwa">then</span> RemainingBytes <span class="kwa">else</span> BufferSize <span class="kwa">end</span>
+        <span class="sym">{</span>FILE seek<span class="sym">(</span>whence<span class="sym">:</span>current offset<span class="sym">:~</span>ToRead<span class="sym">)}</span>
+        <span class="sym">{</span>FILE tell<span class="sym">(</span>offset<span class="sym">:</span>StartPos<span class="sym">)}</span>
+        <span class="sym">{</span>FILE read<span class="sym">(</span>list<span class="sym">:</span>Buffer size<span class="sym">:</span>ToRead len<span class="sym">:</span>BytesRead<span class="sym">)}</span>
+        <span class="sym">{</span>FILE seek<span class="sym">(</span>whence<span class="sym">:</span>set offset<span class="sym">:</span>StartPos<span class="sym">)}</span>
+        <span class="sym">{</span>ProcessBuffer Buffer<span class="sym">}</span>
+        <span class="sym">{</span>ReadBuffer <span class="sym">(</span>RemainingBytes <span class="sym">-</span> BytesRead<span class="sym">)}</span>
+      <span class="kwa">end</span>
+    <span class="kwa">end</span>
+
+    RemainingBytes
+  <span class="kwa">in</span>
+    <span class="sym">{</span>FILE seek<span class="sym">(</span>whence<span class="sym">:</span><span class="str">'end'</span> offset<span class="sym">:</span><span class="num">0</span><span class="sym">)}</span>
+    <span class="sym">{</span>FILE tell<span class="sym">(</span>offset<span class="sym">:</span>RemainingBytes<span class="sym">)}</span>
+    <span class="sym">{</span>ReadBuffer RemainingBytes<span class="sym">}</span>
+  <span class="kwa">end</span>
+
+<span class="slc">% ------------- %</span>
+
+  READSIZE <span class="sym">=</span> <span class="num">4096</span>
+
+<span class="slc">% ------------- %</span>
+
+<span class="kwa">in</span>
+  <span class="sym">{</span>ReverseFile <span class="sym">{</span>New TextFile_ init<span class="sym">(</span>name<span class="sym">:</span>stdin flags<span class="sym">:[</span>read text<span class="sym">])}</span> READSIZE<span class="sym">}</span>
+  <span class="sym">{</span>Application<span class="sym">.</span>exit <span class="num">0</span><span class="sym">}</span>
+<span class="kwa">end</span>
+

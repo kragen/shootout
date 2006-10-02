@@ -1,0 +1,125 @@
+<span class="slc">%%% $Id: prodcons-oz.code,v 1.8 2006-10-02 01:08:42 bfulgham Exp $</span>
+<span class="slc">%%% http://dada.perl.it/shootout/</span>
+<span class="slc">%%%</span>
+<span class="slc">%%% contributed by Isaac Gouy</span>
+
+<span class="slc">%%  Section 11.5 of the Oz Tutorial provides these</span>
+<span class="slc">%%  implementations of Event and UnitBufferM and states:</span>
+<span class="slc">%%  in Oz, it is very rare to write programs in the</span>
+<span class="slc">%%  (traditional) monitor style shown above. In general</span>
+<span class="slc">%%  it is very awkward.</span>
+<span class="slc">%%</span>
+<span class="slc">%%  There's an extensive treatment of Oz concurrency in</span>
+<span class="slc">%%  the book 'Concepts, Techniques, and Models of Computer</span>
+<span class="slc">%%  Programming' - find it online with google.</span>
+<span class="slc">%%</span>
+<span class="slc">%%  Usage: start from command line with</span>
+<span class="slc">%%     ozc -x prodcons.oz -o prodcons.oz.exe</span>
+<span class="slc">%%     prodcons.oz.exe 100000</span>
+
+<span class="kwa">functor</span>
+<span class="kwa">import</span> System Application
+
+<span class="kwa">define</span>
+
+Produced
+Consumed
+
+<span class="kwa">class</span> Event <span class="kwa">from</span> BaseObject
+   prop locking
+   <span class="kwa">attr</span> f r
+   <span class="kwa">meth</span> init
+      X <span class="kwa">in</span> f <span class="sym">&lt;-</span> X r <span class="sym">&lt;-</span> X
+   <span class="kwa">end</span>
+   <span class="kwa">meth</span> put<span class="sym">(</span>I<span class="sym">)</span>
+      X <span class="kwa">in</span> lock <span class="sym">&#64;</span>r<span class="sym">=</span>I<span class="sym">|</span>X r<span class="sym">&lt;-</span>X <span class="kwa">end</span>
+   <span class="kwa">end</span>
+   <span class="kwa">meth</span> get<span class="sym">(?</span>I<span class="sym">)</span>
+      X <span class="kwa">in</span> lock <span class="sym">&#64;</span>f<span class="sym">=</span>I<span class="sym">|</span>X f<span class="sym">&lt;-</span>X <span class="kwa">end</span> <span class="sym">{</span>Wait I<span class="sym">}</span>
+   <span class="kwa">end</span>
+   <span class="kwa">meth</span> wait
+      <span class="sym">{</span><span class="kwa">self</span> get<span class="sym">(</span>_<span class="sym">)}</span>
+   <span class="kwa">end</span>
+   <span class="kwa">meth</span> notify
+      <span class="sym">{</span><span class="kwa">self</span> put<span class="sym">(</span>unit<span class="sym">)}</span>
+   <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+
+<span class="kwa">class</span> UnitBufferM
+   <span class="kwa">attr</span> item empty psignal csignal
+   prop locking
+   <span class="kwa">meth</span> init
+      empty <span class="sym">&lt;-</span> <span class="kwa">true</span>
+      psignal <span class="sym">&lt;- {</span>New Event init<span class="sym">}</span>
+      csignal <span class="sym">&lt;- {</span>New Event init<span class="sym">}</span>
+   <span class="kwa">end</span>
+   <span class="kwa">meth</span> put<span class="sym">(</span>I<span class="sym">)</span>
+      X <span class="kwa">in</span>
+      lock
+         <span class="kwa">if</span> <span class="sym">&#64;</span>empty <span class="kwa">then</span>
+            item <span class="sym">&lt;-</span> I
+            empty <span class="sym">&lt;-</span> <span class="kwa">false</span>
+            X <span class="sym">=</span> yes
+            <span class="sym">{&#64;</span>csignal notify<span class="sym">}</span>
+         <span class="kwa">else</span> X <span class="sym">=</span> no <span class="kwa">end</span>
+      <span class="kwa">end</span>
+      <span class="kwa">if</span> X <span class="sym">==</span> no <span class="kwa">then</span>
+         <span class="sym">{&#64;</span>psignal wait<span class="sym">}</span>
+         <span class="sym">{</span><span class="kwa">self</span> put<span class="sym">(</span>I<span class="sym">)}</span>
+      <span class="kwa">end</span>
+   <span class="kwa">end</span>
+   <span class="kwa">meth</span> get<span class="sym">(</span>I<span class="sym">)</span>
+      X <span class="kwa">in</span>
+      lock
+         <span class="kwa">if</span> <span class="sym">{</span>Not <span class="sym">&#64;</span>empty<span class="sym">}</span> <span class="kwa">then</span>
+            I <span class="sym">= &#64;</span>item
+            empty <span class="sym">&lt;-</span> <span class="kwa">true</span>
+            <span class="sym">{&#64;</span>psignal notify<span class="sym">}</span>
+            X <span class="sym">=</span> yes
+         <span class="kwa">else</span> X <span class="sym">=</span> no <span class="kwa">end</span>
+      <span class="kwa">end</span>
+      <span class="kwa">if</span> X <span class="sym">==</span> no <span class="kwa">then</span>
+         <span class="sym">{&#64;</span>csignal wait<span class="sym">}</span>
+         <span class="sym">{</span><span class="kwa">self</span> get<span class="sym">(</span>I<span class="sym">)}</span>
+      <span class="kwa">end</span>
+   <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+
+<span class="kwa">proc</span> <span class="sym">{</span>Producer N I B<span class="sym">}</span>
+   <span class="kwa">if</span> N <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+      <span class="sym">{</span>B put<span class="sym">(</span>I<span class="sym">)}</span>
+      <span class="slc">%% {System.showInfo 'Produced '#I} %% just to check synchronization</span>
+      <span class="sym">{</span>Producer N<span class="sym">-</span><span class="num">1</span> I<span class="sym">+</span><span class="num">1</span> B<span class="sym">}</span>
+   <span class="kwa">else</span> Produced <span class="sym">= {</span>NewCell I<span class="sym">}</span> <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+
+<span class="kwa">proc</span> <span class="sym">{</span>Consumer N I B<span class="sym">}</span>
+   <span class="kwa">if</span> N <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">then</span>
+      <span class="sym">{</span>B get<span class="sym">(</span>I<span class="sym">)}</span>
+      <span class="slc">%% {System.showInfo 'Consumed '#I} %% just to check synchronization</span>
+      <span class="sym">{</span>Consumer N<span class="sym">-</span><span class="num">1</span> I<span class="sym">+</span><span class="num">1</span> B<span class="sym">}</span>
+   <span class="kwa">else</span> Consumed <span class="sym">= {</span>NewCell I<span class="sym">}</span> <span class="kwa">end</span>
+<span class="kwa">end</span>
+
+
+<span class="kwa">in</span>
+   <span class="kwa">local</span> Args N UB <span class="kwa">in</span>
+      <span class="sym">[</span>Args<span class="sym">] = {</span>Application<span class="sym">.</span>getArgs plain<span class="sym">}</span>
+      N <span class="sym">= {</span>String<span class="sym">.</span>toInt Args<span class="sym">}</span>
+
+      UB <span class="sym">= {</span>New UnitBufferM init<span class="sym">}</span>
+      <span class="kwa">thread</span> <span class="sym">{</span>Producer N <span class="num">0</span> UB<span class="sym">}</span> <span class="kwa">end</span>
+      <span class="kwa">thread</span> <span class="sym">{</span>Consumer N <span class="num">0</span> UB<span class="sym">}</span> <span class="kwa">end</span>
+
+         <span class="slc">%% Oz is a dataflow language.</span>
+         <span class="slc">%% The main thread will wait until logic variables</span>
+         <span class="slc">%% Produced and Consumed have been given values</span>
+      <span class="sym">{</span>System<span class="sym">.</span>showInfo <span class="sym">{</span>Access Produced<span class="sym">}#</span><span class="str">' '</span><span class="sym">#{</span>Access Consumed<span class="sym">}}</span>
+   <span class="kwa">end</span>
+   <span class="sym">{</span>Application<span class="sym">.</span>exit <span class="num">0</span><span class="sym">}</span>
+<span class="kwa">end</span>
+
+
