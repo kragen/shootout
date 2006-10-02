@@ -1,0 +1,123 @@
+\ The Computer Language Shootout
+\ http://shootout.alioth.debian.org/
+\ contributed by Albert van der Horst, Ian Osgood
+\ modified by Bernd Paysan
+
+\ read NUM from last command line argument
+0. argc @ 1- arg >number 2drop drop constant NUM
+
+include locals.fs
+
+\
+\ Arbitrary precision arithmetic
+\ A p-number consists of a count plus count cells, 2-complement small-endian
+\
+
+\ Shorthand.
+: p>size ( pn -- size ) POSTPONE @ ; IMMEDIATE
+: p>last ( pn -- msb ) DUP p>size CELLS + ;
+: Ith' I CELLS + ; macro
+
+\ Give sign of p
+: p0< ( p -- flag ) p>last @ 0< ;
+
+\ Copy a p-number to another buffer
+: pcopy ( src dst -- ) OVER p>size 1+ CELLS MOVE ;
+
+\ Check for overflow, extend the p-number if needed
+: ?carry ( carry p -- ) 2DUP p0< <> IF 1 OVER +!  p>last ! ELSE 2DROP THEN ;
+
+\ In-place multiply by an unsigned integer
+: p* { n p }
+  p p0<  0. ( sign dcarry )
+  p p>size 1+ 1 DO
+    p Ith       ( digit )
+    n UM* D+ SWAP ( carry digit )
+    p Ith' ! 0
+  LOOP
+  ROT n UM* D+ DROP  p ?carry ;
+
+\ Ensure two p-numbers are the same size before adding
+: extend over p0< { p n sign }
+  p p>size 1+  n p +!
+  p p>size 1+ SWAP DO sign p Ith' ! LOOP ;
+: ?extend ( p1 p2 -- p1 p2 )
+  OVER p>size OVER p>size - ?DUP IF
+    DUP 0< IF >R OVER R> NEGATE
+    ELSE OVER SWAP
+    THEN extend
+  THEN ;
+
+\ In-place addition of another p-number
+: p+  ?extend { src p } 
+  src p0< p p0<  0. ( sign sign dcarry )
+  p p>size 1+ 1 DO
+    p   Ith 0 D+
+    src Ith 0 D+ SWAP
+    p   Ith' ! 0
+  LOOP
+  DROP + + p ?carry ; \ add signs, check for overflow
+  
+\ In-place subtraction of another p-number
+: p-  ?extend { src p } 
+  src p0< p p0<  0. ( sign sign dcarry )
+  p p>size 1+ 1 DO
+    p   Ith 0 D+
+    src Ith 0 D- SWAP
+    p   Ith' ! S>D
+  LOOP
+  DROP + + p ?carry ; \ add signs, check for overflow
+
+\
+\ pi-spigot specific computation
+\
+
+\ approximate upper limit on size required (1000 -> 1166)
+NUM 2* CELLS constant SIZE
+
+\ Current z transformation
+CREATE aq 1 , 1 , SIZE ALLOT
+CREATE ar 1 , 0 , SIZE ALLOT
+    \ "as" identical zero and remains so
+CREATE at 1 , 1 , SIZE ALLOT
+
+\ Generate non-zero parts of next matrix ( K 4K+2 2K+1 )
+VARIABLE K
+: generate ( -- q r t ) 1 K +!   K @  DUP 2* 1+  DUP 2* SWAP ;
+
+\ HERE is used as a temporary p-number
+
+\ Multiply z from the left
+: compose< ( bq br bt -- )
+  DUP at p*  ar p*  aq HERE pcopy  HERE p*  HERE ar p+  aq p* ;
+
+\ Multiply z from the right
+: compose> ( bt br bq -- )
+  DUP aq p*  ar p*  at HERE pcopy  HERE p*  HERE ar p-  at p* ;
+
+\ Calculate z at point 3, leaving integer part and fractional part.
+\ Division is by multiple subtraction until the fractional part is
+\ negative.
+: z(3)  ( -- n pfract ) HERE  aq OVER pcopy  3 OVER p*  ar OVER p+
+  0 BEGIN SWAP at OVER p-  DUP p0< 0= WHILE SWAP 1+ REPEAT ;
+
+\ Calculate z at point 4, based on the result for point 3
+\ and decide whether the integer parts are the same.
+: z(4)same? ( pfract -- flag ) aq OVER p+  p0< ;
+
+: pidigit ( -- nextdigit)
+    BEGIN z(3) z(4)same? 0= WHILE DROP generate compose< REPEAT
+    1   OVER 10 *   10   compose> ;
+
+: .digit ( -- ) pidigit [CHAR] 0 + EMIT ;
+
+: .count ( n -- ) #tab emit ': emit 1 U.R CR ;
+
+\ Spigot n digits with formatting
+: spigot ( digits -- ) 0
+  BEGIN 10 +  2DUP > WHILE
+    10 0 DO .digit LOOP  DUP .count
+  REPEAT
+  2DUP 10 - DO .digit LOOP  OVER - SPACES  .count ;
+
+NUM spigot bye
