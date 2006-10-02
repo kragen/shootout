@@ -792,6 +792,22 @@
        },
      },
           
+     octave =>
+     { Lang => 'octave',
+       Name => 'GNU Octave',
+       Status => 'X',
+       Home => 'http://www.gnu.org/software/octave/',
+       Down => 'http://www.gnu.org/software/octave/download.html',
+       Type => 'bytecomped/interpreted',
+       Note => 'Matlab-compatible, free, numerical computing',
+       Ext  => 'm',
+       Verfun => sub {
+	   my $ver = `$ENV{OCTAVE} -v`;
+	   $ver =~ /^GNU Octave, (.*)\n/;
+	   return("$1");
+       },
+     },
+          
      ooc =>
      { Lang => 'Oberon-2',
        Name => 'OO2C',
