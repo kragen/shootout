@@ -1,0 +1,123 @@
+\ The Computer Language Shootout
+\ http<span class="sym">:</span><span class="slc">//shootout.alioth.debian.org/</span>
+\ contributed by Albert van der Horst<span class="sym">,</span> Ian Osgood
+\ modified by Bernd Paysan
+
+\ read NUM from last command line argument
+<span class="num">0</span><span class="sym">.</span> argc &#64; <span class="num">1</span><span class="sym">-</span> arg <span class="sym">&gt;</span>number <span class="num">2</span>drop drop constant NUM
+
+include locals<span class="sym">.</span>fs
+
+\
+\ Arbitrary precision arithmetic
+\ A p<span class="sym">-</span>number consists of a count plus count cells<span class="sym">,</span> <span class="num">2</span><span class="sym">-</span>complement small<span class="sym">-</span>endian
+\
+
+\ Shorthand<span class="sym">.</span>
+<span class="sym">:</span> p<span class="sym">&gt;</span><span class="kwd">size</span> <span class="sym">(</span> pn <span class="sym">--</span> size <span class="sym">)</span> POSTPONE &#64; <span class="sym">;</span> IMMEDIATE
+<span class="sym">:</span> p<span class="sym">&gt;</span><span class="kwd">last</span> <span class="sym">(</span> pn <span class="sym">--</span> msb <span class="sym">)</span> DUP p<span class="sym">&gt;</span>size CELLS <span class="sym">+ ;</span>
+<span class="sym">:</span> Ith<span class="str">' I CELLS + ; macro</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Give sign of p</span>
+<span class="str">: p0&lt; ( p -- flag ) p&gt;last &#64; 0&lt; ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Copy a p-number to another buffer</span>
+<span class="str">: pcopy ( src dst -- ) OVER p&gt;size 1+ CELLS MOVE ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Check for overflow, extend the p-number if needed</span>
+<span class="str">: ?carry ( carry p -- ) 2DUP p0&lt; &lt;&gt; IF 1 OVER +!  p&gt;last ! ELSE 2DROP THEN ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">In-place multiply by an unsigned integer</span>
+<span class="str">: p* { n p }</span>
+<span class="str">  p p0&lt;  0. ( sign dcarry )</span>
+<span class="str">  p p&gt;size 1+ 1 DO</span>
+<span class="str">    p Ith       ( digit )</span>
+<span class="str">    n UM* D+ SWAP ( carry digit )</span>
+<span class="str">    p Ith'</span> <span class="sym">!</span> <span class="num">0</span>
+  LOOP
+  ROT n UM<span class="sym">*</span> D<span class="sym">+</span> DROP  p ?carry <span class="sym">;</span>
+
+\ Ensure two p<span class="sym">-</span>numbers are the same size before adding
+<span class="sym">:</span> extend over p0<span class="sym">&lt; {</span> p n sign <span class="sym">}</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span>  n p <span class="sym">+!</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> SWAP DO sign p Ith<span class="str">' ! LOOP ;</span>
+<span class="str">: ?extend ( p1 p2 -- p1 p2 )</span>
+<span class="str">  OVER p&gt;size OVER p&gt;size - ?DUP IF</span>
+<span class="str">    DUP 0&lt; IF &gt;R OVER R&gt; NEGATE</span>
+<span class="str">    ELSE OVER SWAP</span>
+<span class="str">    THEN extend</span>
+<span class="str">  THEN ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">In-place addition of another p-number</span>
+<span class="str">: p+  ?extend { src p }</span>
+<span class="str">  src p0&lt; p p0&lt;  0. ( sign sign dcarry )</span>
+<span class="str">  p p&gt;size 1+ 1 DO</span>
+<span class="str">    p   Ith 0 D+</span>
+<span class="str">    src Ith 0 D+ SWAP</span>
+<span class="str">    p   Ith'</span> <span class="sym">!</span> <span class="num">0</span>
+  LOOP
+  DROP <span class="sym">+ +</span> p ?carry <span class="sym">;</span> \ add signs<span class="sym">,</span> check <span class="kwa">for</span> overflow
+
+\ In<span class="sym">-</span>place subtraction of another p<span class="sym">-</span>number
+<span class="sym">:</span> p<span class="sym">-</span>  ?extend <span class="sym">{</span> src p <span class="sym">}</span>
+  src p0<span class="sym">&lt;</span> p p0<span class="sym">&lt;</span>  <span class="num">0</span><span class="sym">. (</span> sign sign dcarry <span class="sym">)</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> <span class="num">1</span> DO
+    p   Ith <span class="num">0</span> D<span class="sym">+</span>
+    src Ith <span class="num">0</span> D<span class="sym">-</span> SWAP
+    p   Ith<span class="str">' ! S&gt;D</span>
+<span class="str">  LOOP</span>
+<span class="str">  DROP + + p ?carry ;</span> <span class="esc">\ </span><span class="str">add signs, check for overflow</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\</span>
+<span class="str"></span><span class="esc">\ </span><span class="str">pi-spigot specific computation</span>
+<span class="str"></span><span class="esc">\</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">approximate upper limit on size required (1000 -&gt; 1166)</span>
+<span class="str">NUM 2* CELLS constant SIZE</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Current z transformation</span>
+<span class="str">CREATE aq 1 , 1 , SIZE ALLOT</span>
+<span class="str">CREATE ar 1 , 0 , SIZE ALLOT</span>
+<span class="str"></span>    <span class="esc">\ </span><span class="str">&quot;as&quot; identical zero and remains so</span>
+<span class="str">CREATE at 1 , 1 , SIZE ALLOT</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Generate non-zero parts of next matrix ( K 4K+2 2K+1 )</span>
+<span class="str">VARIABLE K</span>
+<span class="str">: generate ( -- q r t ) 1 K +!   K &#64;  DUP 2* 1+  DUP 2* SWAP ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">HERE is used as a temporary p-number</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Multiply z from the left</span>
+<span class="str">: compose&lt; ( bq br bt -- )</span>
+<span class="str">  DUP at p*  ar p*  aq HERE pcopy  HERE p*  HERE ar p+  aq p* ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Multiply z from the right</span>
+<span class="str">: compose&gt; ( bt br bq -- )</span>
+<span class="str">  DUP aq p*  ar p*  at HERE pcopy  HERE p*  HERE ar p-  at p* ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Calculate z at point 3, leaving integer part and fractional part.</span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Division is by multiple subtraction until the fractional part is</span>
+<span class="str"></span><span class="esc">\ </span><span class="str">negative.</span>
+<span class="str">: z(3)  ( -- n pfract ) HERE  aq OVER pcopy  3 OVER p*  ar OVER p+</span>
+<span class="str">  0 BEGIN SWAP at OVER p-  DUP p0&lt; 0= WHILE SWAP 1+ REPEAT ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Calculate z at point 4, based on the result for point 3</span>
+<span class="str"></span><span class="esc">\ </span><span class="str">and decide whether the integer parts are the same.</span>
+<span class="str">: z(4)same? ( pfract -- flag ) aq OVER p+  p0&lt; ;</span>
+<span class="str"></span>
+<span class="str">: pidigit ( -- nextdigit)</span>
+<span class="str">    BEGIN z(3) z(4)same? 0= WHILE DROP generate compose&lt; REPEAT</span>
+<span class="str">    1   OVER 10 *   10   compose&gt; ;</span>
+<span class="str"></span>
+<span class="str">: .digit ( -- ) pidigit [CHAR] 0 + EMIT ;</span>
+<span class="str"></span>
+<span class="str">: .count ( n -- ) #tab emit '</span><span class="sym">:</span> emit <span class="num">1</span> U<span class="sym">.</span>R CR <span class="sym">;</span>
+
+\ Spigot n digits with formatting
+<span class="sym">:</span> <span class="kwd">spigot</span> <span class="sym">(</span> digits <span class="sym">-- )</span> <span class="num">0</span>
+  BEGIN <span class="num">10</span> <span class="sym">+</span>  <span class="num">2</span>DUP <span class="sym">&gt;</span> WHILE
+    <span class="num">10 0</span> DO <span class="sym">.</span>digit LOOP  DUP <span class="sym">.</span>count
+  REPEAT
+  <span class="num">2</span>DUP <span class="num">10</span> <span class="sym">-</span> DO <span class="sym">.</span>digit LOOP  OVER <span class="sym">-</span> SPACES  <span class="sym">.</span>count <span class="sym">;</span>
+
+NUM spigot bye

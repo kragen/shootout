@@ -77,6 +77,21 @@
        },
      },
 
+     bigforth =>
+     { Lang => 'Forth',
+       Name => 'BigForth',
+       Status => '+',
+       Home => 'http://bigforth.sourceforge.net',
+       Down => 'http://bigforth.sourceforge.net/files',
+       Type => 'native compiled',
+       Note => 'native code postfix stack programming',
+       Ext  => 'c',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{BIGFORTH} --version 2>&1`);
+	   return($ver);
+       },
+     },
+
      cyc =>
      { Lang => 'Cyclone',
        Name => 'cyclone',
