@@ -203,7 +203,7 @@ language, benchmark, your-name, date, (version)<br />
 <p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" alt="Add to My Yahoo!"/></a></p>
 </dd>
 
-<dt><a href="#kinder" name="kinder">Sometimes the children help with the measurements...</a></dt>
+<dt><a href="#kinder" name="kinder">Sometimes the children help with the measurements&#8230;</a></dt>
 <dd><pre>
 Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
 
