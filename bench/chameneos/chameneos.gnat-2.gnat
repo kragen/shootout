@@ -1,0 +1,126 @@
+-----------------------------------------------------------------------
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Jim Rogers
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-- Chameneos2
+-----------------------------------------------------------------------
+with Ada.Text_Io; use Ada.Text_Io;
+with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+
+procedure Chameneos2 is
+   type Color is (Blue, Red, Yellow, Faded);
+   
+   Num_Meetings : Natural := 0;
+   Max_Meetings : Natural;
+   
+   protected Meeting_Place is
+      entry Engage(C : in Color; C_Other : out Color);
+   private
+      entry Waiting(C : in Color; C_Other : out Color);
+      First_Call : Boolean := True;
+      A_Color    : Color;
+      B_Color    : Color;
+   end Meeting_Place;
+   
+   protected body Meeting_Place is
+      entry Engage(C : in Color; C_Other : out Color)
+            when True is
+      begin
+         if First_Call then
+            A_Color := C;
+            First_Call := False;
+            requeue Waiting;
+         else
+            Num_Meetings := Num_Meetings + 1;
+            B_Color := C;
+            C_Other := A_Color;
+            First_Call := True;
+         end if;
+      end Engage;
+      entry Waiting(C : in Color; C_Other : out Color)
+            when First_Call is
+      begin
+         C_Other := B_Color;
+      end Waiting;
+   end Meeting_Place;
+      
+   task type Chameneos is
+      entry Start(C : in Color);
+      entry Get_Num_Met(N : out Natural);
+   end Chameneos;
+   
+   task body Chameneos is
+      My_Color : Color;
+      Other_Color : Color;
+      Creatures_Met : Natural := 0;
+      
+      function Complement return Color is
+         New_Color : Color;
+      begin
+         if Num_Meetings >= Max_Meetings then
+            return Faded;
+         end if;
+         
+         if My_Color = Other_Color then
+            return My_Color;
+         else
+            if My_Color = Blue then
+               if Other_Color = Red then
+                  New_Color := Yellow;
+               else
+                  New_Color := Red;
+               end if;
+            end if;
+            if My_Color = Red then
+               if Other_Color = Blue then
+                  New_Color := Yellow;
+               else
+                  New_Color := Blue;
+               end if;
+            end if;
+            if My_Color = Yellow then
+               if Other_Color = Blue then
+                  New_Color := Red;
+               else
+                  New_Color := Blue;
+               end if;
+            end if;
+            return New_Color;
+         end if;
+      end Complement;
+   begin
+      accept Start(C : in Color) do
+         My_Color := C;
+      end Start;
+      loop
+         Meeting_Place.Engage(My_Color, Other_Color);
+         Creatures_Met := Creatures_Met + 1;
+         My_Color := Complement;
+         exit when My_Color = Faded;
+      end loop;
+      accept Get_Num_Met(N : out Natural) do
+         N := Creatures_Met;
+      end Get_Num_Met;
+   end Chameneos;
+   
+   Creatures : array(1..4) of Chameneos;
+   Total_Meetings : Natural := 0;
+   Creature_Meetings : Natural;
+begin
+   Max_Meetings := Natural'Value(Argument(1));
+   Creatures(1).Start(Blue);
+   Creatures(2).Start(Red);
+   Creatures(3).Start(Yellow);
+   Creatures(4).Start(Blue);
+   for I in Creatures'range loop
+      Creatures(I).Get_Num_Met(Creature_Meetings);
+      Total_Meetings := Total_Meetings + Creature_Meetings;
+   end loop;
+   Put(Item => Total_Meetings, Width => 1);
+   New_Line;
+end Chameneos2;
+
