@@ -201,6 +201,37 @@ language, benchmark, your-name, date, (version)<br />
 <p>Normally, contributed programs will be measured and included on the website once or twice each week.</p>
 <p>The simplest way to find out when new measurements have been made is to subscribe to <a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a> - our <a href="<?=CORE_SITE;?>feeds/rss.xml">RSS feed</a>.</p>
 <p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" alt="Add to My Yahoo!"/></a></p>
+<p>Sometimes the children help with the measurements -</p><pre>
+Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:50 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+</pre>
 </dd>
 
 <dt><a href="#newbench" name="newbench">How can I contribute a new benchmark?</a></dt>
