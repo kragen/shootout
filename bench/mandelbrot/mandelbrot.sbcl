@@ -1,16 +1,19 @@
-;;; -*- mode: lisp -*-
-;;; $Id: mandelbrot.sbcl,v 1.6 2005-05-22 23:50:21 bfulgham Exp $
 ;;;
-;;; The Great Computer Language Shootout
-;;;   http://shootout.alioth.debian.org/
+;;; The Computer Language Shootout
+;;; http://shootout.alioth.debian.org/
+;;;
+;;; resubmitted by Wade Humeniuk (Fix Stream Problem)
+;;; Original contributed by Yannick Gingras <ygingras@ygingras.net>
+;;;
+;;; To compile
+;;; sbcl --load mandelbrot.lisp --eval "(save-lisp-and-die \"mandelbrot.core\" :purify t :toplevel (lambda () (main) (quit)))"
+;;; To run
+;;; sbcl --noinform --core mandelbrot.core %A
 
-;;; contributed by Yannick Gingras <ygingras@ygingras.net>
-
-(declaim (optimize speed (debug 0) (safety 0) (space 0)))
-  
-(defun render (size &optional (stream *standard-output*))
-  (declare (type fixnum size)
-           (type stream stream))
+(defun render (size stream)
+  (declare (type fixnum size) (type sb-sys:fd-stream stream)
+	   (optimize speed (safety 0) (debug 0)))
+  (assert (and (<= 8 size 10000) (zerop (mod size 8))))
   (let* ((code 0)
          (mask 128)
          (zi 0.0d0)
@@ -18,43 +21,43 @@
          (tr 0.0d0)
          (base-imag -1.0d0)
          (base-real -1.5d0)
-         (str (make-string (* size (ceiling size 8))))
-         (cur-char -1))
+         (buffer (make-array (* size (ceiling size 8)) :element-type '(unsigned-byte 8)))
+         (position -1))
     (declare (type (unsigned-byte 8) code mask)
              (type double-float zr zi tr base-real base-imag)
-             (type fixnum cur-char))
-    (format stream "P4~%~d ~d~%" size size)
+             (type fixnum position))
     (dotimes (y size)
-      (declare (type fixnum y))
       (setf base-imag (+ -1.0d0 (/ (* 2d0 y) size)))
       (dotimes (x size)
-        (declare (type fixnum x))
-	(setf base-real (+ -1.5d0 (/ (* 2d0 x) size)))
-	(setf zr 0.0d0)
-        (setf zi 0.0d0)
+	(setf base-real (+ -1.5d0 (/ (* 2d0 x) size))
+	      zr 0.0d0
+	      zi 0.0d0)
         (when (not (dotimes (n 51)
                      (when (< 4.0d0 (+ (* zr zr) (* zi zi)))
                        (return t))
-                     (setf tr (+ (* zr zr) (- (* zi zi)) base-real))
-                     (setf zi (+ (* 2.0d0 zr zi) base-imag))
-                     (setf zr tr)))
+                     (setf tr (+ (* zr zr) (- (* zi zi)) base-real)
+			   zi (+ (* 2.0d0 zr zi) base-imag)
+			   zr tr)))
           (setf code (logior mask code)))
         (setf mask (ash mask -1))
         (when (zerop mask)
-          (setf mask 128)
-          (setf (elt str (incf cur-char)) (code-char code))
-          (setf code 0)))
+          (setf mask 128
+		(aref buffer (incf position)) code
+		code 0)))
       (when (/= 128 mask)
-	(setf (elt str (incf cur-char)) (code-char code))
-	(setf code 0)
-	(setf mask 128)))
-    
-    (write-sequence str stream)))
+	(setf (aref buffer (incf position)) code
+	      code 0
+	      mask 128)))
+    (write-sequence buffer stream)))
 
 (defun main ()
-  (let* ((args #+sbcl sb-ext:*posix-argv*
-               #+cmu extensions:*command-line-strings*
-               #+gcl si::*command-args*)
-         (n (parse-integer (car (last args)))))
-    (render n)))
-
+  (declare (optimize (speed 2) (safety 2)))
+  (let* ((args sb-ext:*posix-argv*)
+         (n (parse-integer (car (last args))))
+	 (bistream (sb-sys:make-fd-stream (sb-sys:fd-stream-fd sb-sys:*stdout*)
+					  :element-type '(unsigned-byte 8)
+					  :buffering :none
+					  :output t :input nil)))
+    (format *standard-output* "P4~%~d ~d~%" n n)
+    (finish-output *standard-output*)
+    (render n bistream)))
