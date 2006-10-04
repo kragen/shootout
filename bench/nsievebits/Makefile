@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2006-10-03 06:43:50 bfulgham Exp $
+# $Id: Makefile,v 1.10 2006-10-04 19:44:57 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := nsievebits
@@ -18,6 +18,7 @@ OO2COPTS := -A --no-rtc
 OCAMLOPTS := bigarray.cmxa
 OCAMLBOPTS := bigarray.cma
 POLYOPTS := -q
+PHPOPTS := -d memory_limit=64M
 
 GPLCOPTS := --fast-math
 

@@ -1,7 +1,6 @@
-#!/usr/bin/php
 <?php
 #
-# The Great Computer Language Shootout
+# TheComputer Language Shootout
 # http://shootout.alioth.debian.org/
 #
 # reverse complement in PHP

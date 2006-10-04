@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2006-09-30 21:37:58 igouy-guest Exp $
+# $Id: Makefile,v 1.18 2006-10-04 19:44:57 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -18,6 +18,7 @@ BIGFORTH_FLAGS := -d 8M
 GFORTH_FLAGS := -m 8M
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
+PHPOPTS := -d memory_limit=64M
 
 GPLCOPTS := --fast-math
 

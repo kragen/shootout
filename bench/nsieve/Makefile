@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2006-10-03 06:43:50 bfulgham Exp $
+# $Id: Makefile,v 1.14 2006-10-04 19:44:57 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -17,7 +17,7 @@ GFORTH_FLAGS := -m 8M
 MB_CLRTS := -nr -h 10m 
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
-PHPOPTS := -d memory_limit=64M
+PHPOPTS := -d memory_limit=400M
 
 ERLFLAGS := -noinput -noshell -h 200000000
 GPLCOPTS := --fast-math

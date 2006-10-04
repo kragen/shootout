@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2006-10-03 06:43:50 bfulgham Exp $
+# $Id: Makefile,v 1.15 2006-10-04 19:44:57 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -22,6 +22,7 @@ GNATOPTS := -fno-unroll-loops
 
 GPLCOPTS := --fast-math
 PARROTOPTS := -Oc -Cj
+PHPOPTS := -d memory_limit=64M
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 25000,250000,2500000 \

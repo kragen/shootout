@@ -1,8 +1,6 @@
-<? /* The Great Computer Language Shootout 
-   http://shootout.alioth.debian.org/
-   
-   contributed by Isaac Gouy
-   
+<? /* The Computer Language Shootout 
+   http://shootout.alioth.debian.org/   
+   contributed by Isaac Gouy   
    php -q nsieve.php 2
 */
 
