@@ -1,0 +1,111 @@
+\ The Computer Language Shootout
+\ http://shootout.alioth.debian.org/
+
+\ contributed by Bernd Paysan
+
+\ run with "-m 64M"
+
+include locals.fs
+include string.fs
+include regexp.fs
+include filehelp.fs
+
+\ helper word for regexp: Replace current pattern
+\ This will be part of the next release of regexp.fs
+
+[IFUNDEF] <<"
+    0 Value >>ptr
+    0 Value <<ptr
+    Variable >>string
+    : >>  ( addr -- addr )  dup to >>ptr ;
+    : << ( run-addr addr u -- run-addr )
+	<<ptr 0= IF  start$ to <<ptr  THEN
+	>>string @ 0= IF  s" " >>string $!  THEN
+	<<ptr >>ptr over - >>string $+!
+	>>string $+! dup to <<ptr ;
+    : <<"  '" parse postpone SLiteral postpone << ; immediate
+    : >>string@ ( -- addr u )
+	>>string $@len dup allocate throw
+	swap 2dup >>string $@ drop -rot move
+	>>string $off  0 to >>ptr  0 to <<ptr ;
+    : >>next ( -- addr u ) <<ptr end$ over - ;
+[THEN]
+
+\ fast replacement for ="
+\ this replacement will be part of the next relase of regexp.fs
+
+: =" '" parse bounds ?DO
+	]] count [[ I c@ ]] Literal <> ?LEAVE [[
+    LOOP ; immediate
+
+[IFUNDEF] s//
+: s//  ]] BEGIN [[ ; immediate
+: //g  ]] WHILE >>next REPEAT end$ [[
+    s" " ]] SLiteral << >>string@ rot drop [[ ; immediate
+[THEN]
+
+\ counting syntactic sugar
+: //c ]] WHILE 1+ >>ptr end$ over - REPEAT  [[ ; immediate
+: c// ]] false -rot s// [[ ; immediate
+
+charclass [acg] 'a +char 'c +char 'g +char
+charclass [act] 'a +char 'c +char 't +char
+charclass [agt] 'a +char 'g +char 't +char
+charclass [cgt] 'c +char 'g +char 't +char
+
+: remove-newlines ( addr u -- addr u' )
+    s// (( // >> {{ ` > {** .? **} || }} count #lf <> ?LEAVE <<" " )) //g ;
+
+: pat1 ( addr u -- n )
+    c// (( // {{ =" agggtaaa" || =" tttaccct" }} >> )) //c ;
+: pat2 ( addr u -- n )
+    c// (( // {{ [cgt] c? =" gggtaaa" || =" tttaccc" [acg] c? }} >> )) //c ;
+: pat3 ( addr u -- n )
+    c// (( // {{ ` a [act] c? =" ggtaaa" || =" tttacc" [agt] c? ` t }} >> )) //c ;
+: pat4 ( addr u -- n )
+    c// (( // {{ =" ag" [act] c? =" gtaaa" || =" tttac" [agt] c? =" ct" }} >> )) //c ;
+: pat5 ( addr u -- n )
+    c// (( // {{ =" agg" [act] c? =" taaa" || =" ttta" [agt] c? =" cct" }} >> )) //c ;
+: pat6 ( addr u -- n )
+    c// (( // {{ =" aggg" [acg] c? =" aaa" || =" ttt" [cgt] c? =" ccct" }} >> )) //c ;
+: pat7 ( addr u -- n )
+    c// (( // {{ =" agggt" [cgt] c? =" aa" || =" tt" [acg] c? =" accct" }} >> )) //c ;
+: pat8 ( addr u -- n )
+    c// (( // {{ =" agggta" [cgt] c? ` a || ` t [acg] c? =" taccct" }} >> )) //c ;
+: pat9 ( addr u -- n )
+    c// (( // {{ =" agggtaa" [cgt] c? || [acg] c? =" ttaccct" }} >> )) //c ;
+
+stdin slurp-fid dup Constant ilen
+remove-newlines dup Constant clen 2Constant 'stdin
+burp
+
+.( agggtaaa|tttaccct ) 'stdin pat1 1 .r cr
+.( [cgt]gggtaaa|tttaccc[acg] ) 'stdin pat2 1 .r cr
+.( a[act]ggtaaa|tttacc[agt]t ) 'stdin pat3 1 .r cr
+.( ag[act]gtaaa|tttac[agt]ct ) 'stdin pat4 1 .r cr
+.( agg[act]taaa|ttta[agt]cct ) 'stdin pat5 1 .r cr
+.( aggg[acg]aaa|ttt[cgt]ccct ) 'stdin pat6 1 .r cr
+.( agggt[cgt]aa|tt[acg]accct ) 'stdin pat7 1 .r cr
+.( agggta[cgt]a|t[acg]taccct ) 'stdin pat8 1 .r cr
+.( agggtaa[cgt]|[acg]ttaccct ) 'stdin pat9 1 .r cr
+
+: replace-alternatives ( addr u -- )
+    2dup s// (( // >> {{ ` B <<" (c|g|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` D <<" (a|g|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` H <<" (a|c|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` K <<" (g|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` M <<" (a|c)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` N <<" (a|c|g|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` R <<" (a|g)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` S <<" (c|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` V <<" (a|c|g)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` W <<" (a|t)" }} )) //g 2swap drop free throw
+    2dup s// (( // >> {{ ` Y <<" (c|t)" }} )) //g 2swap drop free throw ;
+
+cr
+ilen 1 .r cr
+clen 1 .r cr
+
+'stdin replace-alternatives dup 1 .r cr
+
+bye
