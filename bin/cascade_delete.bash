@@ -69,6 +69,9 @@ key[15]=ocaml
 alias[15]=petitnasm
 key[15]=petit
 #
+alias[16]=bigforth
+key[16]=gforth
+#
 #
 ### remove .log and .code with no source file    
 #
