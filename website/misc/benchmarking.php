@@ -23,6 +23,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 <ul>  
   <li><p><a href="http://dacapobench.org/">The DaCapo Benchmark Suite</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
+  <li><p><a href="http://sbcl-test.boinkor.net/bench/">Version-to-version Steel Bank Common Lisp performance</a></p></li>
 </ul>
 <p>We should always question how useful a benchmark is for our specific purpose:</p>
 <ul>  
