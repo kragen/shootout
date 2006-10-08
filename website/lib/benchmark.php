@@ -1,4 +1,4 @@
-<?php 
+<?php
 // Copyright (c) Isaac Gouy 2004, 2005
 
 // LIBRARIES ////////////////////////////////////////////////
@@ -31,7 +31,7 @@ elseif (!isset($L2)){
 $S = '';
 
 if (isset($HTTP_GET_VARS['id'])){ $I = $HTTP_GET_VARS['id']; } 
-else { $I = 0; }
+else { $I = -1; }
 
 
 
@@ -103,7 +103,7 @@ if ($T=='all'){
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                      
 
       } else { 
-         $TemplateName = 'language.tpl.php'; 
+         $TemplateName = 'language.tpl.php';
          $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));                        
       }
       
@@ -111,7 +111,7 @@ if ($T=='all'){
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
-        
+
    }
 
 } elseif ($L=='all'){ // Benchmark  
@@ -124,7 +124,7 @@ if ($T=='all'){
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark'; 
 
-      $TemplateName = 'benchmark.tpl.php'; 
+      $TemplateName = 'benchmark.tpl.php';
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php'; 
@@ -136,23 +136,24 @@ if ($T=='all'){
 
       $PageId = 'program';
 
-      $TestName = $Tests[$T][TEST_NAME];
-      $LangName = $Langs[$L][LANG_FULL];       
+      $D = ProgramData(DATA_PATH.'data.csv',$T,$L,$I,$Langs,$Incl,$Excl);
+      if (sizeof($D)>0){ $I = $D[DATA_ID]; }
 
-      $TemplateName = 'program.tpl.php'; 
+      $TestName = $Tests[$T][TEST_NAME];
+      $LangName = $Langs[$L][LANG_FULL];
+
+      $TemplateName = 'program.tpl.php';
       $Title = $TestName.' '.$LangName.IdName($I).' program';
 
-      // NOTE Sometimes there's an alternative program for the benchmark test and language
-      //      so we need to look for files with a particular Id, as-well-as test and language    
 
       $Id = '';
-      if ($I > 0){ $Id = SEPARATOR.$I; }            
+      if ($I > 0){ $Id = SEPARATOR.$I; }
       $About = & new Template(ABOUT_PROGRAMS_PATH);
-      $AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php'; 
+      $AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
-      $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );      
-      $Body->set('Code', HtmlFragment( CODE_PATH.$T.SEPARATOR.$L.$Id.'.code' ));    
+      $Body->set('Data', $D );
+      $Body->set('Code', HtmlFragment( CODE_PATH.$T.SEPARATOR.$L.$Id.'.code' ));
       $Body->set('Log', HtmlFragment( LOG_PATH.$T.SEPARATOR.$L.$Id.'.log' ));
       $Body->set('Id', $I);
       $Body->set('Title', $Title);

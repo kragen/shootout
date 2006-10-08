@@ -29,31 +29,29 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <th>GZip Bytes</th>
 </tr>
 <?
-if (isset($Data[$SelectedLang])){   
-   foreach($Data[$SelectedLang] as $d){                 
-      if ($Id==$d[DATA_ID]){             
-         if ($d[DATA_FULLCPU]>0){
-            if ($d[DATA_MEMORY]==0){ 
-               $kb = '?'; 
-            } else { 
-               $kb = number_format((double)$d[DATA_MEMORY]); 
+if (sizeof($Data)>0){
+      if ($Id==$Data[DATA_ID]){
+         if ($Data[DATA_FULLCPU]>0){
+            if ($Data[DATA_MEMORY]==0){
+               $kb = '?';
+            } else {
+               $kb = number_format((double)$Data[DATA_MEMORY]);
             }
-        
-            $fullcpu = sprintf('%0.2f',$d[DATA_FULLCPU]);
+
+            $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
          } else {
             $kb = '&nbsp;'; $fullcpu = '&nbsp;';
-            if ($d[DATA_FULLCPU]==PROGRAM_TIMEOUT){ $fullcpu = 'Timout'; }
-            if ($d[DATA_FULLCPU]==PROGRAM_ERROR){ $fullcpu = 'Error'; }         
+            if ($Data[DATA_FULLCPU]==PROGRAM_TIMEOUT){ $fullcpu = 'Timout'; }
+            if ($Data[DATA_FULLCPU]==PROGRAM_ERROR){ $fullcpu = 'Error'; }
          }
 
-         if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }        
+         if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }
          printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td></tr>', 
-            $n,$fullcpu,$kb,$d[DATA_GZ]); echo "\n";
+            $n,$fullcpu,$kb,$Data[DATA_GZ]); echo "\n";
       }
-   }
 } else {
    echo '<tr class="a"><td></td> <td></td> <td></td></tr>'; echo "\n";
-}        
+}
 ?>
 </table>
 <pre><?=$Code;?></pre>
