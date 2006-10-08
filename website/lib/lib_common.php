@@ -263,10 +263,10 @@ function ExcludeData(&$d,&$langs,&$Excl){
          if ($x[EXCL_USE]==EXCLUDED){         
             return PROGRAM_EXCLUDED; 
 
-         } else {  
+         } else {
             return PROGRAM_SPECIAL; }
-      }     
-   }         
+      }
+   }
 
    if( $d[DATA_FULLCPU] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
    if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }  
@@ -282,27 +282,27 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
    // $data is an associative array keyed by language
    // Each value is itself an array of one or more data records
 
-   foreach($data as $ar){   
+   foreach($data as $ar){
       foreach($ar as $d){  
          $x = ExcludeData($d,$langs,$Excl);         
          if ($x==PROGRAM_SPECIAL){ 
             $Special[] = $d;
          } elseif ($x==PROGRAM_EXCLUDED) { 
-                   
-         } elseif ($x) {         
+
+         } elseif ($x) {
             $Rejected[] = $d;
          } else {
-            $Accepted[] = $d; 
+            $Accepted[] = $d;
          }
       }         
    }
 
-   if ($sort=='fullcpu'){ 
+   if ($sort=='fullcpu'){
       usort($Accepted, 'CompareFullCpuTime'); 
-      usort($Special, 'CompareFullCpuTime'); 
+      usort($Special, 'CompareFullCpuTime');
    } elseif ($sort=='kb'){ 
       usort($Accepted, 'CompareMemoryUse'); 
-      usort($Special, 'CompareMemoryUse'); 
+      usort($Special, 'CompareMemoryUse');
    } elseif ($sort=='lines'){ 
       usort($Accepted, 'CompareCodeLines'); 
       usort($Special, 'CompareCodeLines');
@@ -314,6 +314,48 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
    return array($Accepted,$Rejected,$Special);
 }
 
+
+
+function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
+   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+
+   $data = array();
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }
+
+      settype($row[DATA_ID],'integer');
+      if (($row[DATA_TEST]==$T)&&($row[DATA_LANG]==$L)){
+         $data[] = $row;
+      }
+   }
+   @fclose($f);
+   usort($data, 'CompareFullCpuTime');
+
+   if ($I == -1){
+      foreach($data as $ar){
+         if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])
+               && !ExcludeData($ar,$Langs,$Excl)){
+            return $ar;
+         }
+      }
+      foreach($data as $ar){
+         if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])){
+           $ex = ExcludeData($ar,$Langs,$Excl);
+           if (($ex == PROGRAM_TIMEOUT)||($ex == PROGRAM_ERROR)){
+              return $ar;
+           }
+         }
+      }
+   } else {
+      foreach($data as $ar){
+        if ($ar[DATA_ID]==$I){ return $ar; }
+      }
+   }
+
+   return array();
+}
 
 
 
