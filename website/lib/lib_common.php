@@ -325,9 +325,10 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
 
-      settype($row[DATA_ID],'integer');
       if (($row[DATA_TEST]==$T)&&($row[DATA_LANG]==$L)){
-         $data[] = $row;
+         settype($row[DATA_ID],'integer');
+         if (($I > -1)&&($row[DATA_ID]==$I)){ return $row; }
+         else { $data[] = $row; }
       }
    }
    @fclose($f);
@@ -348,12 +349,7 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
            }
          }
       }
-   } else {
-      foreach($data as $ar){
-        if ($ar[DATA_ID]==$I){ return $ar; }
-      }
    }
-
    return array();
 }
 
