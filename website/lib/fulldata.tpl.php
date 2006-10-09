@@ -76,7 +76,11 @@ foreach($Selected as $row){
    printf('<tr>'); echo "\n";
    printf('<td>%s</td>', $row[N_NAME]); echo "\n";
    foreach($row[N_MEMORY] as $v){ 
-      if ($v==0){ $kb = '?'; } else { $kb = number_format((double)$v); }
+      if ($TestName=='startup'){ $kb = '&nbsp;'; }      
+      else { 
+         if ($v==0){ $kb = '?'; } 
+         else { $kb = number_format((double)$v); }
+      }
       printf('<td class="r">%s</td>', $kb); echo "\n"; 
    }   
    echo "</tr>\n";                           
@@ -133,7 +137,11 @@ foreach($NData as $row){
       $SelectedTest,$row[N_LANG],$row[N_ID],$row[N_HTML]); echo "\n";
 
    foreach($row[N_MEMORY] as $v){ 
-      if ($v==0){ $kb = '?'; } else { $kb = number_format((double)$v); }
+      if ($TestName=='startup'){ $kb = '&nbsp;'; }
+      else { 
+         if ($v==0){ $kb = '?'; } 
+         else { $kb = number_format((double)$v); }
+      }
       printf('<td class="r">%s</td>', $kb); echo "\n"; 
    }   
    echo "</tr>\n";                          
