@@ -203,39 +203,6 @@ language, benchmark, your-name, date, (version)<br />
 <p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" alt="Add to My Yahoo!"/></a></p>
 </dd>
 
-<dt><a href="#kinder" name="kinder">Sometimes the children help with the measurements&#8230;</a></dt>
-<dd><pre>
-Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:50 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-</pre>
-</dd>
 
 <dt><a href="#newbench" name="newbench">How can I contribute a new benchmark?</a></dt>
 <dd>
@@ -387,6 +354,43 @@ Bash time builtin command
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
 <dd><p>We use <strong>Debian Linux&#8482;</strong> 'unstable', Kernel 2.6.17-1-k7 and <strong>Gentoo Linux&#8482;</strong> gentoo-sources-2.6.16-r13</p>
 </dd>
+
+
+<dt><a href="#kinder" name="kinder">Sometimes the children help with the measurements&#8230;</a></dt>
+<dd><pre>
+Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:50 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+</pre>
+</dd>
+
+
 </dl>
 </dd>
 
