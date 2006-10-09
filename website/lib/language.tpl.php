@@ -39,10 +39,10 @@ foreach($Tests as $Row){
       if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }                
                 
       if ($v[N_EXCLUDE] >= 0){    
-         if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
+         if ($Name=='startup'){ $kb = '&nbsp;'; } else { $kb = number_format($v[N_MEMORY]); }
 
          printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
-            $v[N_FULLCPU], number_format($kb), $v[N_GZ], $n); 
+            $v[N_FULLCPU], $kb, $v[N_GZ], $n); 
 
       } else {      
          if ($v[N_EXCLUDE] == PROGRAM_ERROR){ $message = 'Error'; } 
