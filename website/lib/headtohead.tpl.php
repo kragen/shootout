@@ -61,10 +61,12 @@ foreach($Tests as $Row){
       if ($v[N_LINES] >= 0){ 
       
          if ($v[N_N]==0){ $n = '<td></td>'; } 
-         else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }                         
+         else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }  
+
+         if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }                       
 
          printf('%s%s%s%s', 
-            PF($v[N_FULLCPU]), PF($v[N_MEMORY]), PF($v[N_GZ]), $n);                   
+            PF($v[N_FULLCPU]), PF($kb), PF($v[N_GZ]), $n);                   
 
       } else {      
          $r = FALSE;
