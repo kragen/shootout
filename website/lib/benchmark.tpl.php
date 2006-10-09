@@ -23,7 +23,7 @@ else { $P4 = ''; }
 $NString = 'N=?';
 $testValue = 1;
 foreach($Accepted as $d){
-   if ($d[DATA_TESTVALUE]>0){ 
+   if ($d[DATA_TESTVALUE]>0){
       $testValue = (double)$d[DATA_TESTVALUE];
       $NString = 'N='.number_format($testValue);
       break; }
@@ -120,14 +120,18 @@ foreach($Accepted as $d){
 
    $id = $d[DATA_ID];
    $fullcpu = $d[DATA_FULLCPU];
-   if ($TestName=='startup'){ $fc = number_format($fullcpu/$testValue,4); }
-   else { $fc = number_format($fullcpu,2); }
-   if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
+   if ($TestName=='startup'){
+      $fc = number_format($fullcpu/$testValue,4);
+      $kb = '&nbsp;';
+   } else { 
+      $fc = number_format($fullcpu,2);
+      if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
+   }
    $lines = $d[DATA_LINES];
    $gz = $d[DATA_GZ];
 
    printf('<tr>'); echo "\n";
-   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
+   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
    printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td>',
@@ -232,7 +236,7 @@ if (sizeof($No_Program_Langs)>0){
          echo '<td>No&nbsp;program</td><td></td><td></td>';       
          echo "</tr>\n";     
       }                                                      
-   }     
+   }
 }
 ?>
 </table>
