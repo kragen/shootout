@@ -35,7 +35,8 @@ if (sizeof($Data)>0){
             if ($Data[DATA_MEMORY]==0){
                $kb = '?';
             } else {
-               $kb = number_format((double)$Data[DATA_MEMORY]);
+               if ($TestName=='startup'){ $kb = '&nbsp;'; }
+               else { $kb = number_format((double)$Data[DATA_MEMORY]); }
             }
 
             $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
