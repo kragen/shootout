@@ -1,135 +1,132 @@
 ' The Computer Language Shootout
 ' http://shootout.alioth.debian.org/
-' contributed by Josh Goldfoot
-' converted to FreeBASIC by Simon Nash(yetifoot)
-
-Option Explicit
-Option Escape
+' gcc program contributed by Mike Pall
+' converted to FreeBASIC from gcc by Simon Nash
 
 #include "crt.bi"
-#undef size_t
-#include "regex.bi"
+#include "pcre/pcre.bi"
+'#include "pcre/pcreposix.bi"
 
-Sub regsub2 (ByVal buffer As ZString ptr, ByVal searchFor As ZString ptr, _
-             ByVal replaceWith As ZString ptr, ByVal buflen As uInteger, _
-             ByVal returnBuf As ZString ptr ptr, ByVal newLen As uInteger ptr)
-  Dim As regex_t preg
-  Dim As regmatch_t pmatch
-  Dim As Integer result, replaceLen
-    *returnBuf = malloc (buflen * 14 / 10)
-    If *returnBuf = 0 Then Exit Sub
-    If regcomp (@preg, searchFor, REG_EXTENDED OR REG_NEWLINE) <> 0 Then Exit Sub
-    Dim As uInteger start
-    replaceLen = strlen (replaceWith)
-    result = 0
-    start = 0
-    *newLen = 0
-    While result = 0
-      result = regexec (@preg, @buffer[start], 1, @pmatch, 0)
-      If result = 0 Then
-        If pmatch.rm_so > 0 Then
-          memcpy(*returnBuf + *newLen, @buffer[start], pmatch.rm_so)
-          *newLen = *newLen + pmatch.rm_so
-        End If
-        memcpy(*returnBuf + *newLen, replaceWith, replaceLen)
-        *newLen = *newLen + replaceLen
-        start = start + pmatch.rm_eo
-      Else
-        memcpy(*returnBuf + *newLen, @buffer[start], buflen-start)
-        *newLen = *newLen + buflen - start
-      End If
-    Wend
-End Sub
+Type fbuf_t
+  As ZString ptr buf
+  As size_t size, len
+End Type
 
-Sub regsub (ByVal bufHandle As ZString ptr ptr, ByVal searchFor As ZString ptr, _
-            ByVal replaceWith As ZString ptr, ByVal buflen As uInteger ptr)
-  Dim As ZString ptr tmp
-  Dim As uInteger newlen
-    regsub2(*bufHandle, searchFor, replaceWith, *buflen, @tmp, @newlen)
-    free(*bufHandle)
-    *bufHandle = tmp
-    *buflen = newlen
-End Sub
-
-Function count_matches (ByVal buffer As ZString ptr, ByVal searchFor As ZString ptr, _
-                        ByVal buflen As uInteger) As uInteger
-  Dim As regex_t preg
-  Dim As regmatch_t pmatch
-  Dim As Integer result
-  Dim As uInteger matches, start
-    If regcomp (@preg, searchFor, REG_EXTENDED) <> 0 Then
-      Return buflen
+Function fb_need(ByVal b As fbuf_t ptr, ByVal need As size_t) As ZString ptr
+  need += b->len
+  If need > b->size Then
+    If b->size = 0 Then 
+      b->size = need
+    Else 
+      While need > b->size
+        b->size += b->size
+      Wend
     End If
-    memset (@pmatch, 0, sizeof (pmatch))
-    result = 0
-    matches = 0
-    start = 0
-    While result = 0
-      result = regexec (@preg, @buffer[start], 1, @pmatch, 0)
-      If result = 0 Then
-        matches += 1
-        start = start + pmatch.rm_eo
-      End If
-    Wend
-    Return matches
+    b->buf = realloc(b->buf, b->size)
+    If b->buf = NULL Then End 1
+  End If
+  Return b->buf+b->len
 End Function
 
-  Dim As ZString ptr x, buffer, tmp
-  Dim As uInteger buflen, seqlen, clen, rlen
-  Dim As size_t readlen
-  Dim As Integer i
+#define FB_MINREAD  (3 shl 16)
 
-  seqlen = 0
-  buflen = 206848
-  buffer = malloc (buflen + 1)
-  If buffer = 0 Then
-    End -1
-  End If
-  x = buffer
+' Read all of a stdio stream into dst buffer
+Function fb_readall(ByVal dst As fbuf_t ptr, ByVal fp As FILE ptr) As size_t
+  Dim As ZString ptr dp
+  Dim As Integer n
+    dp = fb_need(dst, FB_MINREAD)
+    Do
+      n = fread(dp, 1, dst->size-dst->len, fp)
+      If n = 0 Then Exit Do
+      dst->len += n
+      dp = fb_need(dst, FB_MINREAD)
+    Loop
+    If ferror(fp) <> 0 Then End 1
+    Return dst->len
+End Function
+
+' Substitute pattern p with replacement r, copying from src to dst buffer.
+Function fb_subst(ByVal dst As fbuf_t ptr, ByVal src As fbuf_t ptr, _
+                  ByVal p As ZString ptr, ByVal r As ZString ptr) As size_t
+  Dim As pcre ptr re
+  Dim As pcre_extra ptr re_ex
+  Dim As ZString ptr re_e
+  Dim As ZString ptr dp
+  Dim As Integer re_eo, m(0 To 2), _pos, rlen, clen
+    re = pcre_compile(p, PCRE_CASELESS, @re_e, @re_eo, NULL)
+    If re = 0 Then End 1
+    re_ex = pcre_study(re, 0, @re_e)
+    rlen = strlen(r)
+    dst->len = 0
+    Do
+      If pcre_exec(re, re_ex, src->buf, src->len, _pos, 0, @m(0), 3) < 0 Then Exit Do
+      clen = m(0)-_pos
+      dp = fb_need(dst, clen+rlen)
+      dst->len += clen+rlen
+      memcpy(dp, src->buf+_pos, clen)
+      memcpy(dp+clen, r, rlen)
+      _pos = m(1)
+    Loop
+    clen = src->len-_pos
+    dp = fb_need(dst, clen)
+    dst->len += clen
+    memcpy(dp, src->buf+_pos, clen)
+    Return dst->len
+End Function
+
+' Count all matches with pattern p in src buffer.
+Function fb_countmatches(ByVal src As fbuf_t ptr, ByVal p As ZString ptr) As Integer
+  Dim As pcre ptr re
+  Dim As pcre_extra ptr re_ex
+  Dim As ZString ptr re_e
+  Dim As Integer re_eo, m(0 To 2), _pos, count
+    re = pcre_compile(p, PCRE_CASELESS, @re_e, @re_eo, NULL)
+    If re = 0 Then End 1
+    re_ex = pcre_study(re, 0, @re_e)
+    Do
+      If pcre_exec(re, re_ex, src->buf, src->len, _pos, 0, @m(0), 3) < 0 Then Exit Do
+      count += 1
+      _pos = m(1)
+    Loop
+    Return count
+End Function
+
+Dim Shared As ZString ptr variants(0 To 9) = { _
+  @"agggtaaa|tttaccct",         @"[cgt]gggtaaa|tttaccc[acg]", _
+  @"a[act]ggtaaa|tttacc[agt]t", @"ag[act]gtaaa|tttac[agt]ct", _
+  @"agg[act]taaa|ttta[agt]cct", @"aggg[acg]aaa|ttt[cgt]ccct", _
+  @"agggt[cgt]aa|tt[acg]accct", @"agggta[cgt]a|t[acg]taccct", _
+  @"agggtaa[cgt]|[acg]ttaccct", NULL _
+}
+
+Dim Shared As ZString ptr subst(0 To 22) = { _
+  @"B", @"(c|g|t)", @"D", @"(a|g|t)",   @"H", @"(a|c|t)", @"K", @"(g|t)", _
+  @"M", @"(a|c)",   @"N", @"(a|c|g|t)", @"R", @"(a|g)",   @"S", @"(c|g)", _
+  @"V", @"(a|c|g)", @"W", @"(a|t)",     @"Y", @"(c|t)",   NULL _
+}
+
+
+Dim As fbuf_t seq(0 To 1)
+Dim As ZString ptr ptr pp
+Dim As size_t ilen, clen, slen
+Dim As Integer _flip
+
+  ilen = fb_readall(@seq(0), stdin)
+  clen = fb_subst(@seq(1), @seq(0), ">.*|" & Chr(10), "")
   
+  pp = @variants(0)
+  While *pp
+    printf("%s %d%c", *pp, fb_countmatches(@seq(1), *pp), 10)
+    pp += 1
+  Wend
+    
+  _flip = 1
+  pp = @subst(0)
   Do
-    readlen = (fread (x, 1, buflen - seqlen - 1, stdin))
-    If readlen = 0 Then Exit Do
-    seqlen = seqlen + readlen
-    If feof (stdin) = 0 Then
-      buflen = buflen + 40960
-      tmp = realloc (buffer, buflen + 1)
-      If tmp = NULL Then
-        End -1
-      End If
-      buffer = tmp
-      x = @buffer[seqlen]
-    End If
+    If *pp = 0 Then Exit Do
+    slen = fb_subst(@seq(1-_flip), @seq(_flip), *pp, pp[1])
+    pp += 2
+    _flip = 1-_flip
   Loop
-  buffer[seqlen] = 0
-  clen = seqlen
-  regsub (@buffer, ">.*|\n", "", @clen)
+  printf("%c%zu%c%zu%c%zu%c", 10, ilen, 10, clen, 10, slen, 10)
 
-  Dim variants(0 To 8) As ZString * 27 
-  variants(0) = "agggtaaa|tttaccct"
-  variants(1) = "[cgt]gggtaaa|tttaccc[acg]"
-  variants(2) = "a[act]ggtaaa|tttacc[agt]t"
-  variants(3) = "ag[act]gtaaa|tttac[agt]ct"
-  variants(4) = "agg[act]taaa|ttta[agt]cct"
-  variants(5) = "aggg[acg]aaa|ttt[cgt]ccct"
-  variants(6) = "agggt[cgt]aa|tt[acg]accct"
-  variants(7) = "agggta[cgt]a|t[acg]taccct"
-  variants(8) = "agggtaa[cgt]|[acg]ttaccct"
-  For i = 0 To 8
-    printf ("%s %ld\n", variants(i), count_matches (buffer, variants(i), clen))
-  Next i
-  rlen = clen
-  regsub (@buffer, "B", "(c|g|t)", @rlen)
-  regsub (@buffer, "D", "(a|g|t)", @rlen)
-  regsub (@buffer, "H", "(a|c|t)", @rlen)
-  regsub (@buffer, "K", "(g|t)", @rlen)
-  regsub (@buffer, "M", "(a|c)", @rlen)
-  regsub (@buffer, "N", "(a|c|g|t)", @rlen)
-  regsub (@buffer, "R", "(a|g)", @rlen)
-  regsub (@buffer, "S", "(c|g)", @rlen)
-  regsub (@buffer, "V", "(a|c|g)", @rlen)
-  regsub (@buffer, "W", "(a|t)", @rlen)
-  regsub (@buffer, "Y", "(c|t)", @rlen)
-  printf ("\n%ld\n%ld\n%ld\n", seqlen, clen, rlen)
-  free (buffer)
-  End 0
