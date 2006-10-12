@@ -1,3 +1,4 @@
+<p><strong>NOT ACCEPTED:</strong> Uses arithmetic to complement colour - should use if-else or switch/case or pattern-match</p>
 <p>
 The Chameneos uses the cooperative multi-tasking library
 proposed by SmartEiffel: <a
