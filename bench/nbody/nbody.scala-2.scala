@@ -3,14 +3,14 @@
    contributed by Isaac Gouy
 */
 
-object nbody {
+object nbody { 
    def main(args: Array[String]) = {
       var n = Integer.parseInt(args(0))
 
       Console.printf("{0,number,0.000000000}\n")( JovianSystem.energy )
       while (n > 0) { JovianSystem.advance(0.01); n = n-1 }
       Console.printf("{0,number,0.000000000}\n")( JovianSystem.energy )
-   }
+   } 
 }
 
 
@@ -74,7 +74,7 @@ abstract class NBodySystem {
    }
 
 
-   protected var bodies: Array[Body] = _
+   protected val bodies: Array[Body]
 
    class Body(){
       var x = 0.0; var y = 0.0; var z = 0.0;
@@ -84,12 +84,15 @@ abstract class NBodySystem {
 }
 
 
-object JovianSystem extends NBodySystem {
-   private val PI = 3.141592653589793
-   private val SOLAR_MASS = 4 * PI * PI
-   private val DAYS_PER_YEAR = 365.24
 
-   { // constructor block
+object JovianSystem extends NBodySystem {
+
+   protected val bodies: Array[Body] = initialValues
+
+   private def initialValues() = { 
+      val PI = 3.141592653589793
+      val SOLAR_MASS = 4 * PI * PI
+      val DAYS_PER_YEAR = 365.24
 
       val sun = new Body
       sun.mass = SOLAR_MASS
@@ -131,10 +134,10 @@ object JovianSystem extends NBodySystem {
       neptune.mass = 5.15138902046611451e-05  * SOLAR_MASS
 
 
-      bodies = Array ( sun, jupiter, saturn, uranus, neptune )
+      val initialValues = Array ( sun, jupiter, saturn, uranus, neptune )
 
       var px = 0.0; var py = 0.0; var pz = 0.0;
-      for (val b <- bodies){
+      for (val b <- initialValues){
          px = px + (b.vx * b.mass)
          py = py + (b.vy * b.mass)
          pz = pz + (b.vz * b.mass)
@@ -142,6 +145,8 @@ object JovianSystem extends NBodySystem {
       sun.vx = -px / SOLAR_MASS
       sun.vy = -py / SOLAR_MASS
       sun.vz = -pz / SOLAR_MASS
+
+      initialValues
    }
 }
 
