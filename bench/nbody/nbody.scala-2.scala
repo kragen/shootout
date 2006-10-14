@@ -87,7 +87,7 @@ abstract class NBodySystem {
 
 object JovianSystem extends NBodySystem {
 
-   protected val bodies: Array[Body] = initialValues
+   protected val bodies = initialValues
 
    private def initialValues() = { 
       val PI = 3.141592653589793
