@@ -1,0 +1,115 @@
+<span class="slc">;; The Computer Language Shootout</span>
+<span class="slc">;;   http://shootout.alioth.debian.org/</span>
+<span class="slc">;;   contributed by James McIlree</span>
+<span class="slc">;;   Modified by Juho Snellman 2005-11-19</span>
+<span class="slc">;;     * About 50% speedup on both SBCL and CMUCL</span>
+<span class="slc">;;     * Use SIMPLE-BASE-STRINGs instead of (SIMPLE-ARRAY CHARACTER) for</span>
+<span class="slc">;;       lower memory use on Unicode SBCL</span>
+<span class="slc">;;     * Declare the type of SEQUENCE in ACCUMULATE-FREQUENCIES</span>
+<span class="slc">;;   Modified by Robert Brown 2006-10-09</span>
+<span class="slc">;;     * Program runs twice as fast.</span>
+<span class="slc">;;     * Use an SBCL feature to specify equality and hash functions</span>
+<span class="slc">;;       when creating hash tables for sequence fragments.</span>
+
+<span class="sym">(</span><span class="kwa">defun read</span><span class="sym">-</span>data <span class="sym">(</span>stream<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>debug <span class="num">0</span><span class="sym">) (</span>space <span class="num">0</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">)))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>data <span class="sym">(</span>make<span class="sym">-</span>array <span class="num">0</span>
+                          <span class="sym">:</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">'</span>base<span class="sym">-</span>char
+                          <span class="sym">:</span>adjustable t
+                          <span class="sym">:</span>fill<span class="sym">-</span>pointer <span class="num">0</span><span class="sym">)))</span>
+    <span class="sym">(</span>do <span class="sym">((</span><span class="kwa">line</span> <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil <span class="sym">'</span>eof<span class="sym">) (</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil <span class="sym">'</span>eof<span class="sym">)))</span>
+        <span class="sym">((</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">eq line</span> <span class="sym">'</span>eof<span class="sym">) (</span>string<span class="sym">=</span> <span class="str">&quot;&gt;THREE&quot;</span> <span class="kwa">line</span> <span class="sym">:</span>start2 <span class="num">0</span> <span class="sym">:</span>end2 <span class="num">6</span><span class="sym">))))</span>
+    <span class="sym">(</span>do <span class="sym">((</span><span class="kwa">line</span> <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil <span class="sym">'</span>eof<span class="sym">) (</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil <span class="sym">'</span>eof<span class="sym">)))</span>
+        <span class="sym">((</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">eq line</span> <span class="sym">'</span>eof<span class="sym">) (</span>char<span class="sym">= (</span>schar <span class="kwa">line</span> <span class="num">0</span><span class="sym">)</span> #\&gt;<span class="sym">)))</span>
+      <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">not</span> <span class="sym">(</span>char<span class="sym">= (</span>schar <span class="kwa">line</span> <span class="num">0</span><span class="sym">)</span> #\;<span class="sym">))</span>
+          <span class="sym">(</span>dotimes <span class="sym">(</span>char<span class="sym">-</span>index <span class="sym">(</span><span class="kwa">length line</span><span class="sym">))</span>
+            <span class="sym">(</span>vector<span class="sym">-</span>push<span class="sym">-</span>extend
+             <span class="sym">(</span>char<span class="sym">-</span>upcase <span class="sym">(</span>the base<span class="sym">-</span>char <span class="sym">(</span>schar <span class="kwa">line</span> char<span class="sym">-</span>index<span class="sym">)))</span> data<span class="sym">))))</span>
+    <span class="sym">(</span>coerce data <span class="sym">'</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> make<span class="sym">-</span>fragment<span class="sym">-</span>hash<span class="sym">-</span>table <span class="sym">(</span>sequence fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>debug <span class="num">0</span><span class="sym">) (</span>space <span class="num">0</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">)))</span>
+  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>integer <span class="num">0 20</span><span class="sym">)</span> fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+           <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)</span> sequence<span class="sym">))</span>
+  <span class="sym">(</span>labels <span class="sym">((</span>fragment<span class="sym">-</span><span class="kwa">equal</span> <span class="sym">(</span>fragment1 fragment2<span class="sym">)</span>
+             <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> fixnum fragment1 fragment2<span class="sym">))</span>
+             <span class="sym">(</span>dotimes <span class="sym">(</span>x fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+               <span class="sym">(</span>when <span class="sym">(</span><span class="kwa">not</span> <span class="sym">(</span>char<span class="sym">= (</span>aref sequence fragment1<span class="sym">)</span>
+                                 <span class="sym">(</span>aref sequence fragment2<span class="sym">)))</span>
+                 <span class="sym">(</span>return<span class="sym">-</span>from fragment<span class="sym">-</span><span class="kwa">equal</span> nil<span class="sym">))</span>
+               <span class="sym">(</span>incf fragment1<span class="sym">)</span>
+               <span class="sym">(</span>incf fragment2<span class="sym">))</span>
+             t<span class="sym">)</span>
+           <span class="sym">(</span>hash<span class="sym">-</span>fragment <span class="sym">(</span>fragment<span class="sym">)</span>
+             <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> fixnum fragment<span class="sym">))</span>
+             <span class="sym">(</span>macrolet <span class="sym">((</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(</span>form<span class="sym">)</span>
+                          <span class="sym">`(</span>setf result <span class="sym">(</span>ldb <span class="sym">(</span>byte <span class="num">32 0</span><span class="sym">) ,</span>form<span class="sym">))))</span>
+               <span class="sym">(</span>let <span class="sym">((</span>result <span class="num">0</span><span class="sym">))</span>
+                 <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>unsigned<span class="sym">-</span>byte <span class="num">32</span><span class="sym">)</span> result<span class="sym">))</span>
+                 <span class="sym">(</span>dotimes <span class="sym">(</span>x fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+                   <span class="sym">(</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(+</span> result <span class="sym">(</span>char<span class="sym">-</span>code <span class="sym">(</span>aref sequence fragment<span class="sym">))))</span>
+                   <span class="sym">(</span>incf fragment<span class="sym">)</span>
+                   <span class="sym">(</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(+</span> result <span class="sym">(</span>ash result <span class="num">10</span><span class="sym">)))</span>
+                   <span class="sym">(</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(</span>logxor result <span class="sym">(</span>ash result <span class="sym">-</span><span class="num">6</span><span class="sym">))))</span>
+                 <span class="sym">(</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(+</span> result <span class="sym">(</span>ash result <span class="num">3</span><span class="sym">)))</span>
+                 <span class="sym">(</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(</span>logxor result <span class="sym">(</span>ash result <span class="sym">-</span><span class="num">11</span><span class="sym">)))</span>
+                 <span class="sym">(</span><span class="kwa">set</span><span class="sym">-</span>result <span class="sym">(</span>logxor result <span class="sym">(</span>ash result <span class="num">15</span><span class="sym">)))</span>
+                 <span class="sym">(</span><span class="kwa">logand</span> result most<span class="sym">-</span>positive<span class="sym">-</span>fixnum<span class="sym">)))))</span>
+    <span class="sym">(</span>sb<span class="sym">-</span>int<span class="sym">:</span>define<span class="sym">-</span>hash<span class="sym">-</span>table<span class="sym">-</span>test <span class="sym">'</span>fragment #<span class="sym">'</span>fragment<span class="sym">-</span><span class="kwa">equal</span> #<span class="sym">'</span>hash<span class="sym">-</span>fragment<span class="sym">)</span>
+    <span class="sym">(</span>make<span class="sym">-</span>hash<span class="sym">-</span>table <span class="sym">:</span>test <span class="sym">'</span>fragment<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> calculate<span class="sym">-</span>frequencies <span class="sym">(</span>sequence fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>debug <span class="num">0</span><span class="sym">) (</span>space <span class="num">0</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">)))</span>
+  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)</span> sequence<span class="sym">)</span>
+           <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>integer <span class="num">0 20</span><span class="sym">)</span> fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>hash <span class="sym">(</span>make<span class="sym">-</span>fragment<span class="sym">-</span>hash<span class="sym">-</span>table sequence fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)))</span>
+    <span class="sym">(</span>dotimes <span class="sym">(</span>fragment <span class="sym">(- (</span><span class="kwa">length</span> sequence<span class="sym">)</span> fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">))</span>
+      <span class="sym">(</span>setf <span class="sym">(</span>gethash fragment hash<span class="sym">)</span>
+            <span class="sym">(</span><span class="num">1</span><span class="sym">+ (</span>the <span class="sym">(</span>integer <span class="num">0 1000000</span><span class="sym">) (</span>gethash fragment hash <span class="num">0</span><span class="sym">)))))</span>
+    hash<span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> write<span class="sym">-</span>frequencies <span class="sym">(</span>sequence <span class="kwa">length</span><span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)</span> sequence<span class="sym">))</span>
+  <span class="sym">(</span>labels <span class="sym">((</span>compare<span class="sym">-</span>fragments <span class="sym">(</span>fragment1 fragment2<span class="sym">)</span>
+             <span class="sym">(</span>string<span class="sym">&lt; (</span>subseq sequence fragment1 <span class="sym">(+</span> fragment1 <span class="kwa">length</span><span class="sym">))</span>
+                      <span class="sym">(</span>subseq sequence fragment2 <span class="sym">(+</span> fragment2 <span class="kwa">length</span><span class="sym">))))</span>
+           <span class="sym">(</span>compare<span class="sym">-</span>fragment<span class="sym">-</span>counts <span class="sym">(</span>fc1 fc2<span class="sym">)</span>
+             <span class="sym">(</span>let <span class="sym">((</span>count1 <span class="sym">(</span><span class="kwa">cdr</span> fc1<span class="sym">))</span>
+                   <span class="sym">(</span>count2 <span class="sym">(</span><span class="kwa">cdr</span> fc2<span class="sym">)))</span>
+               <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((&gt;</span> count1 count2<span class="sym">)</span> t<span class="sym">)</span>
+                     <span class="sym">((&lt;</span> count1 count2<span class="sym">)</span> nil<span class="sym">)</span>
+                     <span class="sym">(</span>t <span class="sym">(</span>compare<span class="sym">-</span>fragments <span class="sym">(</span><span class="kwa">car</span> fc1<span class="sym">) (</span><span class="kwa">car</span> fc2<span class="sym">)))))))</span>
+    <span class="sym">(</span>let <span class="sym">((</span>frequencies <span class="sym">(</span>calculate<span class="sym">-</span>frequencies sequence <span class="kwa">length</span><span class="sym">)))</span>
+      <span class="sym">(</span>multiple<span class="sym">-</span>value<span class="sym">-</span>bind <span class="sym">(</span>sum fragment<span class="sym">-</span>counts<span class="sym">)</span>
+          <span class="sym">(</span>loop for fragment being the hash<span class="sym">-</span>key of frequencies
+                using <span class="sym">(</span>hash<span class="sym">-</span>value count<span class="sym">)</span>
+                sum count into total<span class="sym">-</span>count
+                collect <span class="sym">(</span><span class="kwa">cons</span> fragment count<span class="sym">)</span> into fragment<span class="sym">-</span>counts
+                finally <span class="sym">(</span>return <span class="sym">(</span>values total<span class="sym">-</span>count fragment<span class="sym">-</span>counts<span class="sym">)))</span>
+        <span class="sym">(</span>let <span class="sym">((</span>sorted <span class="sym">(</span>sort fragment<span class="sym">-</span>counts #<span class="sym">'</span>compare<span class="sym">-</span>fragment<span class="sym">-</span>counts<span class="sym">)))</span>
+          <span class="sym">(</span>dolist <span class="sym">(</span>fragment<span class="sym">-</span>count sorted<span class="sym">)</span>
+            <span class="sym">(</span>let <span class="sym">((</span>fragment <span class="sym">(</span><span class="kwa">car</span> fragment<span class="sym">-</span>count<span class="sym">))</span>
+                  <span class="sym">(</span>count <span class="sym">(</span><span class="kwa">cdr</span> fragment<span class="sym">-</span>count<span class="sym">)))</span>
+              <span class="sym">(</span>format t <span class="str">&quot;~A ~,3F~%&quot;</span>
+                      <span class="sym">(</span>subseq sequence fragment <span class="sym">(+</span> fragment <span class="kwa">length</span><span class="sym">))</span>
+                      <span class="sym">(* (/</span> count sum<span class="sym">)</span> <span class="num">100.0</span><span class="sym">))))))))</span>
+  <span class="sym">(</span><span class="kwa">terpri</span><span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> write<span class="sym">-</span>frequency <span class="sym">(</span>sequence entry<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)</span> sequence<span class="sym">))</span>
+  <span class="sym">(</span>let<span class="sym">* ((</span>simple<span class="sym">-</span>entry <span class="sym">(</span>coerce entry <span class="sym">'</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">))</span>
+         <span class="sym">(</span>fragment <span class="sym">(</span>search simple<span class="sym">-</span>entry sequence<span class="sym">))</span>
+         <span class="sym">(</span><span class="kwa">length</span> <span class="sym">(</span><span class="kwa">length</span> simple<span class="sym">-</span>entry<span class="sym">)))</span>
+    <span class="sym">(</span>format t <span class="str">&quot;~A~C~A~%&quot;</span>
+            <span class="sym">(</span>gethash fragment <span class="sym">(</span>calculate<span class="sym">-</span>frequencies sequence <span class="kwa">length</span><span class="sym">)</span> <span class="num">0</span><span class="sym">)</span>
+            #\Tab
+            entry<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">()</span>
+  <span class="sym">(</span>let <span class="sym">((</span>sequence <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span>data <span class="sym">*</span>standard<span class="sym">-</span>input<span class="sym">*)))</span>
+    <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)</span> sequence<span class="sym">))</span>
+    <span class="sym">(</span>write<span class="sym">-</span>frequencies sequence <span class="num">1</span><span class="sym">)</span>
+    <span class="sym">(</span>write<span class="sym">-</span>frequencies sequence <span class="num">2</span><span class="sym">)</span>
+    <span class="sym">(</span>dolist <span class="sym">(</span>entry <span class="sym">'(</span><span class="str">&quot;GGT&quot;</span> <span class="str">&quot;GGTA&quot;</span> <span class="str">&quot;GGTATT&quot;</span> <span class="str">&quot;GGTATTTTAATT&quot;</span>
+                     <span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">))</span>
+      <span class="sym">(</span>write<span class="sym">-</span>frequency sequence entry<span class="sym">))))</span>

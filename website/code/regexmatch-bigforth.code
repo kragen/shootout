@@ -1,0 +1,123 @@
+\ <span class="sym">-*-</span> mode<span class="sym">:</span> forth <span class="sym">-*-</span>
+\ $Id<span class="sym">:</span> regexmatch<span class="sym">.</span>gforth<span class="sym">,</span>v <span class="num">1.2 2005</span><span class="sym">/</span><span class="num">03</span><span class="sym">/</span><span class="num">30 07</span><span class="sym">:</span><span class="num">42</span><span class="sym">:</span><span class="num">40</span> bfulgham Exp $
+\ http<span class="sym">:</span><span class="slc">//www.bagley.org/~doug/shootout/</span>
+
+\ from Anton Ertl<span class="sym">,</span> fixes by Ian Osgood<span class="sym">:</span>
+\ <span class="kwa">this</span> uses the Gray parser generator<span class="sym">,</span> which is probably too big a
+\ cannon <span class="kwa">for this</span> <span class="kwd">problem</span> <span class="sym">(</span>it also needs a lot of setup code<span class="sym">).</span>
+\ Writing a recursive descent parser by hand is probably both smaller
+\ <span class="kwa">and</span> faster in <span class="kwa">this case</span><span class="sym">.</span>
+
+
+<span class="num">0</span><span class="sym">.</span> argc &#64; <span class="num">1</span><span class="sym">-</span> arg <span class="sym">&gt;</span>number <span class="num">2</span>drop drop constant NUM
+
+warnings off \ Gray is a little wordy
+
+require gray<span class="sym">.</span>fs
+
+<span class="sym">:</span> bit<span class="sym">-</span><span class="kwd">equiv</span> <span class="sym">(</span> w1 w2 <span class="sym">--</span> w3 <span class="sym">)</span>
+    \ w3<span class="sym">=~</span>w1^w2
+    invert <span class="kwa">xor</span> <span class="sym">;</span>
+
+<span class="sym">:</span> set<span class="sym">-</span><span class="kwd">complement</span> <span class="sym">(</span> set1 <span class="sym">--</span> set2 <span class="sym">)</span>
+    empty <span class="sym">[</span><span class="str">'] bit-equiv binary-set-operation ;</span>
+<span class="str"></span>
+<span class="str">variable input</span> <span class="esc">\ </span><span class="str">pointer to next character to be scanned</span>
+<span class="str">variable end-input</span> <span class="esc">\ </span><span class="str">pointer to end of input</span>
+<span class="str">-1 constant eof-char</span>
+<span class="str"></span>
+<span class="str">: start ( -- addr )</span>
+<span class="str">    input &#64; ;</span>
+<span class="str"></span>
+<span class="str">: end ( addr -- addr u )</span>
+<span class="str">    input &#64; over - ;</span>
+<span class="str"></span>
+<span class="str">: get-input ( -- c )</span>
+<span class="str">    start end-input &#64; = if</span>
+<span class="str">        eof-char</span>
+<span class="str">    else</span>
+<span class="str">        start c&#64;</span>
+<span class="str">    endif ;</span>
+<span class="str"></span>
+<span class="str">256 max-member</span>
+<span class="str">s&quot; scan failed&quot; exception constant scanfail</span>
+<span class="str"></span>
+<span class="str">: ?nextchar ( f -- )</span>
+<span class="str">    0= scanfail and throw</span>
+<span class="str">    1 chars input +! ;</span>
+<span class="str"></span>
+<span class="str">: testchar? ( set -- f )</span>
+<span class="str">    get-input member? ;</span>
+<span class="str">'</span> testchar? test<span class="sym">-</span>vector <span class="sym">!</span>
+
+<span class="sym">: .. (</span> c1 c2 <span class="sym">--</span> set <span class="sym">)</span>
+ <span class="sym">(</span> creates a set that includes the characters c<span class="sym">,</span> c1<span class="sym">&lt;=</span>c<span class="sym">&lt;=</span>c2 <span class="sym">)</span>
+ empty copy<span class="sym">-</span>set
+ swap <span class="num">1</span><span class="sym">+</span> rot <span class="kwa">do</span>
+  i over add<span class="sym">-</span>member
+ loop <span class="sym">;</span>
+
+<span class="sym">:</span> ` <span class="sym">(</span> <span class="str">&quot;c&quot;</span> <span class="sym">--</span> terminal <span class="sym">)</span>
+    \ creates anonymous terminal <span class="kwa">for</span> the character c <span class="sym">)</span>
+    <span class="kwb">char</span> singleton <span class="sym">[</span><span class="str">'] ?nextchar make-terminal ;</span>
+<span class="str"></span>
+<span class="str">char 0 char 9 .. dup  '</span> ?nextchar  terminal digit
+set<span class="sym">-</span>complement        <span class="str">' ?nextchar  terminal nondigit</span>
+<span class="str">bl singleton          '</span> ?nextchar  terminal lspace
+
+<span class="num">2</span>variable areacode
+<span class="num">2</span>variable exchange
+<span class="num">2</span>variable last4
+
+<span class="sym">(( {{</span> start <span class="sym">}}</span> digit digit digit <span class="sym">{{</span> end areacode <span class="num">2</span><span class="sym">! }} ))</span>
+<span class="sym">&lt;-</span> area<span class="sym">-</span>code
+
+<span class="sym">(( ((</span> ` <span class="sym">(</span> area<span class="sym">-</span>code ` <span class="sym">) ||</span> area<span class="sym">-</span>code <span class="sym">))</span>
+   lspace <span class="sym">{{</span> start <span class="sym">}}</span> digit digit digit <span class="sym">{{</span> end exchange <span class="num">2</span><span class="sym">! }}</span>
+   <span class="sym">((</span> lspace <span class="sym">||</span> ` <span class="sym">- ))</span>
+   <span class="sym">{{</span> start <span class="sym">}}</span> digit digit digit digit <span class="sym">{{</span> end last4 <span class="num">2</span><span class="sym">! }}</span>
+   nondigit
+<span class="sym">)) &lt;-</span> <span class="kwd">telnum</span> <span class="sym">( -- )</span>
+
+telnum parser scan<span class="sym">-</span><span class="kwd">telnum</span> <span class="sym">( -- )</span>
+
+<span class="sym">:</span> scan<span class="sym">-</span><span class="kwa">for</span><span class="sym">-</span><span class="kwd">nondigit</span> <span class="sym">(</span> addr1 <span class="sym">--</span> addr2 <span class="sym">)</span>
+    begin
+        <span class="kwd">count</span> <span class="sym">(</span> c&#64;<span class="sym">+ ) &gt;</span>r
+        r&#64; <span class="str">'0 &lt; r&#64; '</span><span class="num">9</span> <span class="sym">&gt;</span> <span class="kwa">or</span>  r<span class="sym">&gt;</span> <span class="str">'( &lt;&gt;  and</span>
+<span class="str">        over end-input &#64; u&gt;= or</span>
+<span class="str">    until ;</span>
+<span class="str"></span>
+<span class="str">variable count  0 count !</span>
+<span class="str"></span>
+<span class="str">defer on-match  '</span> noop is on<span class="sym">-</span>match
+
+<span class="sym">:</span> output<span class="sym">-</span><span class="kwd">match</span> <span class="sym">( -- )</span>
+    <span class="num">1</span> count <span class="sym">+!</span> count &#64; <span class="num">1</span> u<span class="sym">.</span>r <span class="sym">.</span><span class="str">&quot; : &quot;</span>
+    <span class="sym">.</span><span class="str">&quot; (&quot;</span> areacode <span class="num">2</span>&#64; type <span class="sym">.</span><span class="str">&quot; ) &quot;</span> exchange <span class="num">2</span>&#64; type <span class="sym">.</span><span class="str">&quot; -&quot;</span> last4 <span class="num">2</span>&#64; type cr <span class="sym">;</span>
+
+<span class="sym">:</span> <span class="kwd">scanfile</span> <span class="sym">(</span> addr u <span class="sym">-- )</span>
+    over <span class="sym">+</span> end<span class="sym">-</span>input <span class="sym">!</span>
+    <span class="kwd">begin</span> <span class="sym">(</span> addr1 <span class="sym">)</span>
+        dup input <span class="sym">!</span>
+        <span class="sym">[</span><span class="str">'] scan-telnum catch</span>
+<span class="str">        dup dup scanfail &lt;&gt; and throw</span>
+<span class="str">        if ( addr1 )</span>
+<span class="str">            scan-for-nondigit</span>
+<span class="str">        else</span>
+<span class="str">            on-match</span>
+<span class="str">            end-input &#64; over - #lf scan drop</span> <span class="esc">\ </span><span class="str">skip rest of line</span>
+<span class="str">        endif</span>
+<span class="str">        dup end-input &#64; u&gt;=</span>
+<span class="str">    until</span>
+<span class="str">    drop ;</span>
+<span class="str"></span>
+<span class="str">: mainloop ( addr u -- )</span>
+<span class="str">    NUM 1 +do</span>
+<span class="str">        2dup scanfile</span>
+<span class="str">    loop</span>
+<span class="str">    ['</span><span class="sym">]</span> output<span class="sym">-</span>match <span class="sym">[</span>is<span class="sym">]</span> on<span class="sym">-</span>match
+    scanfile <span class="sym">;</span>
+
+stdin slurp<span class="sym">-</span>fid mainloop bye
+
