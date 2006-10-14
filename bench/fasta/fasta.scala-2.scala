@@ -9,7 +9,7 @@ import java.io.OutputStreamWriter
 object fasta { 
    def main(args: Array[String]) = {
 
-      val ALU =
+      val _ALU =
          "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +
          "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +
          "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +
@@ -17,6 +17,8 @@ object fasta {
          "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" +
          "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" +
          "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+
+      val ALU = _ALU.getBytes
 
       val _IUB = Array(
          Pair('a', 0.27), 
@@ -110,7 +112,7 @@ object fasta {
    }
 
 
-   def makeRepeatFasta(id: String, desc: String, alu: String,
+   def makeRepeatFasta(id: String, desc: String, alu: Array[byte],
           _n: int, w: BufferedWriter) = 
    {
       var n = _n; var k = 0; val kn = alu.length;
@@ -122,7 +124,7 @@ object fasta {
          var i = 0
          while (i < m){ 
             if (k == kn) k = 0
-            w.write(alu,k,1)
+            w.write( alu(k) )
             k = k+1
 
             i = i+1 
