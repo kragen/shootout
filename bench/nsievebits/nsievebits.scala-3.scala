@@ -8,16 +8,16 @@ import scala.collection.mutable.BitSet
 object nsievebits { 
 
    def nsieve(m: int) = {
-      val notSieved = new BitSet(m)
-      notSieved ++= Iterator.range(2,m)
+      val isPrime = new BitSet(m)
+      isPrime ++= Iterator.range(2,m)
 
       for (val i <- Iterator.range(2,m)){
-         if (notSieved.contains(i)){
+         if (isPrime.contains(i)){
             var k = i+i
-            while (k < m){ notSieved -= k; k = k+i }
+            while (k < m){ isPrime -= k; k = k+i }
          }
       }
-      notSieved.size
+      isPrime.size
    }
 
 
