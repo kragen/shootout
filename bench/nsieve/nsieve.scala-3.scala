@@ -27,11 +27,11 @@ object nsieve {
       val flags = new Array[boolean](m+1)
 
       def printPrimes(m: int) = {
+
          def pad(i: int, width: int) = {
-            var s = i.toString
-            var p = width - s.length
-            while (p > 0){ s = ' ' + s; p = p-1 }
-            s
+            val s = i.toString
+            List.range(0, width - s.length)
+               .map((i) => " ") .foldLeft("")((a,b) => a+b) + s 
          }
 
          Console.println("Primes up to " +  pad(m,8) + pad(nsieve(m,flags),9))
