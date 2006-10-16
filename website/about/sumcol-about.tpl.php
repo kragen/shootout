@@ -1,8 +1,7 @@
 <p><strong>diff</strong> program output for this 6KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=input">input file</a> with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
-<p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=sumcol&amp;lang=icon&amp;sort=<?=$Sort;?>">Icon program</a>.</p>
+<p>Each program should be implemented the same way as this <a href="benchmark.php?test=sumcol&amp;lang=icon&amp;sort=<?=$Sort;?>">Icon program</a>.</p>
 <p>The sum-file benchmark measures line-oriented I/O and string conversion.</p>
 <p>Each program should:</p>
 <ul>
