@@ -3,9 +3,7 @@
    contributed by Isaac Gouy
 */
 
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.BufferedOutputStream
+import java.io._
 import scala.collection.mutable.Stack
 
 object revcomp { 

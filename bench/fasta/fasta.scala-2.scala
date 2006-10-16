@@ -3,8 +3,7 @@
    contributed by Isaac Gouy
 */
 
-import java.io.BufferedWriter
-import java.io.OutputStreamWriter
+import java.io._
 
 object fasta { 
    def main(args: Array[String]) = {
