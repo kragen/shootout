@@ -11,7 +11,7 @@ debug(1) private import std.c.stdio;
 
 class HashTable(T)
 {
-    private const size_t ht_prime_list[] = [
+    private const size_t[] ht_prime_list = [
     53,         97,         193,       389,       769,
     1543,       3079,       6151,      12289,     24593,
     49157,      98317,      196613,    393241,    786433,
@@ -27,13 +27,7 @@ class HashTable(T)
 
         this(char[] key)
         {
-            static char[] pool;
-            static size_t ostr;
-            size_t oend = ostr + key.length;
-            if(oend >= pool.length) pool.length = oend * 2;
-            this.key = pool[ostr .. oend];
-            this.key[0 .. $] = key[0 .. $];
-            ostr = oend;
+            this.key = key;
             this.value = 0;
             this.next = null;
         }
@@ -60,7 +54,7 @@ public:
     {
         size_t i = 0;
         while(ht_prime_list[i] < size) { i++; }
-        tbl = new HashTableNode[ht_prime_list[i] * HashTableNode.sizeof];
+        tbl = new HashTableNode[](ht_prime_list[i]);
         iterIndex = 0;
         iterNext = null;
         items = 0;
