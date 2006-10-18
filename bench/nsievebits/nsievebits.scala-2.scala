@@ -9,7 +9,6 @@ object nsievebits {
 
    def nsieve(m: int) = {
       val notPrime = new BitSet(m+1)
-      notPrime += 0
       notPrime += 1
 
       var i = 2
