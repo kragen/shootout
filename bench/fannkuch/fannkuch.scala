@@ -7,8 +7,8 @@
 
 object fannkuch
 {
-  var permN : int = 0;
-  var maxFlips : int = 0;
+  var permN : int = 0
+  var maxFlips : int = 0
 
   def flips(l: List[int]): int = l match {
     case 1 :: ls => 0
@@ -22,27 +22,27 @@ object fannkuch
     { perm foreach(x => Console.print(x.toString())); Console.println; }
 
   def processPerm(perm: List[int]) = {
-    val f = flips(perm);
-    if (f > maxFlips) maxFlips = f;
+    val f = flips(perm)
+    if (f > maxFlips) maxFlips = f
     if (permN < 30) { printPerm(perm); permN = permN + 1; }
   }
 
   def permutations(l: List[int], n: int, i: int): unit = {
     if (i < n) {
       if (n == 1)
-	processPerm(l);
+	processPerm(l)
       else { 
-	permutations(l, n - 1, 0); 
-	permutations(rotateLeft(l take n) ::: (l drop n), n, i + 1);
+	permutations(l, n - 1, 0)
+	permutations(rotateLeft(l take n) ::: (l drop n), n, i + 1)
       }
     }
   }
 
   def main(args: Array[String]) = 
   {
-    val n = Integer.parseInt(args(0));
+    val n = Integer.parseInt(args(0))
 
-    permutations(List.range(1, n + 1), n, 0);
-    Console.println("Pfannkuchen(" + n + ") = " + maxFlips);
+    permutations(List.range(1, n + 1), n, 0)
+    Console.println("Pfannkuchen(" + n + ") = " + maxFlips)
   }
 }

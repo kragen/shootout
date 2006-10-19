@@ -9,8 +9,8 @@ object spectralnorm
 {
   def main(args: Array[String]): unit =
   {
-    val N = Integer.parseInt(args(0));
-    Console.printf("{0,number,0.000000000}\n")(approximate(N));
+    val N = Integer.parseInt(args(0))
+    Console.printf("{0,number,0.000000000}\n")(approximate(N))
   }
 
   def approximate(n: int): double =

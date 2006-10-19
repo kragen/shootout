@@ -5,6 +5,6 @@
 */
 
 object hello extends Application {
-  Console.println("hello world");
+  Console.println("hello world")
 }
 
