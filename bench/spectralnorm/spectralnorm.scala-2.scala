@@ -6,10 +6,10 @@
 object spectralnorm {
 
    def main(args: Array[String]) = {
-      val n = Integer.parseInt(args(0))
+      val n = Integer parseInt(args(0))
 
       Console.printf("{0,number,0.000000000}\n")( 
-         new SpectralNorm() .approximate(n) )
+         new SpectralNorm() approximate(n) )
    }
 }
 
@@ -39,7 +39,7 @@ class SpectralNorm(){
          i = i+1
       }
 
-      Math.sqrt(vbv/vv)
+      Math sqrt(vbv/vv)
    }
 
 
