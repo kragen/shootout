@@ -8,7 +8,7 @@ import java.io._
 object fasta { 
    def main(args: Array[String]) = {
 
-      val _ALU =
+      val ALU =
          "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +
          "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +
          "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +
@@ -16,8 +16,6 @@ object fasta {
          "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" +
          "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" +
          "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
-
-      val ALU = _ALU.getBytes
 
       val _IUB = Array(
          Pair('a', 0.27), 
@@ -50,20 +48,20 @@ object fasta {
       val HomoSapiens = makeCumulative(_HomoSapiens)
 
 
-      var n = Integer parseInt(args(0))
-      val w = new BufferedOutputStream(System.out)
+      val n = Integer parseInt(args(0))
+      val s = new FastaOutputStream(System.out)
 
-      makeRepeatFasta("ONE", "Homo sapiens alu", ALU, n*2, w)
-      makeRandomFasta("TWO", "IUB ambiguity codes", IUB, n*3, w)
-      makeRandomFasta("THREE", "Homo sapiens frequency", HomoSapiens, n*5, w)
+      s.writeDescription("ONE Homo sapiens alu")
+      s.writeRepeatingSequence(ALU,n*2)
 
-      w.close
+      s.writeDescription("TWO IUB ambiguity codes")
+      s.writeRandomSequence(IUB,n*3)
+
+      s.writeDescription("THREE Homo sapiens frequency")
+      s.writeRandomSequence(HomoSapiens,n*5)
+
+      s.close
    } 
-
-
-   class Frequency(_code: byte, _percent: double){ 
-      var code = _code; var percent = _percent;
-   }
 
    def makeCumulative(a: Array[Pair[Char,double]]) = {
       var cp = 0.0
@@ -75,65 +73,78 @@ object fasta {
       )
    }
 
-
-   val LineLength = 60
-
-   def makeRandomFasta(id: String, desc: String, a: Array[Frequency],
-          _n: int, w: BufferedOutputStream) = {
-
-      def selectRandom(): Byte = {
-         val n = a.length
-         val r = RandomNumber scaledTo(1.0)
-
-         var i = 0
-         while (i < n) {
-            if (r < a(i).percent) return a(i).code
-            i = i+1
-         }
-         return a(n-1).code
-      }
-
-      w.write((">" + id + " " + desc + "\n").getBytes )
-
-      val nl = '\n'.toByte
-      var n = _n
-      while (n > 0) {
-         val m = if (n < LineLength) n else LineLength
-
-         var i = 0
-         while (i < m){ 
-            w write( selectRandom() )
-            i = i+1 
-         }
-
-         w write(nl)
-         n = n - LineLength
-      }
-   }
+}
 
 
-   def makeRepeatFasta(id: String, desc: String, alu: Array[byte],
-          _n: int, w: BufferedOutputStream) = 
-   {
-      var n = _n; var k = 0; val kn = alu.length;
-      val nl = '\n'.toByte
-      w write((">" + id + " " + desc + "\n").getBytes )
-      
+// We could use instances of Pair or Tuple2 but specific labels
+// make the code more readable than index numbers
+
+class Frequency(_code: byte, _percent: double){ 
+   var code = _code; var percent = _percent;
+}
+
+
+// extend the Java BufferedOutputStream class
+
+class FastaOutputStream(in: OutputStream) extends BufferedOutputStream(in) {
+
+   private val LineLength = 60
+   private val nl = '\n'.toByte
+
+   def writeDescription(desc: String) = { write( (">" + desc + "\n").getBytes ) }
+
+   def writeRepeatingSequence(_alu: String, length: int) = {
+      val alu = _alu.getBytes
+      var n = length; var k = 0; val kn = alu.length;
+
       while (n > 0) {
          val m = if (n < LineLength) n else LineLength
 
          var i = 0
          while (i < m){ 
             if (k == kn) k = 0
-            w write( alu(k) )
+            val b = alu(k)
+            if (count < buf.length){ buf(count) = b; count = count + 1 }
+            else { write(b) } // flush buffer
             k = k+1
-
             i = i+1 
          }
 
-         w write(nl)
+         write(nl)
          n = n - LineLength
       }
+
+   }
+
+   def writeRandomSequence(distribution: Array[Frequency], length: int) = {
+      var n = length
+      while (n > 0) {
+         val m = if (n < LineLength) n else LineLength
+
+         var i = 0
+         while (i < m){ 
+            val b = selectRandom(distribution)
+            if (count < buf.length){ buf(count) = b; count = count + 1 }
+            else { write(b) } // flush buffer
+            i = i+1 
+         }
+
+         if (count < buf.length){ buf(count) = nl; count = count + 1 }
+         else { write(nl) } // flush buffer
+         n = n - LineLength
+      }
+   }
+
+   private def selectRandom(distribution: Array[Frequency]): Byte = {
+      val n = distribution.length
+      val r = RandomNumber scaledTo(1.0)
+
+      var i = 0
+      while (i < n) {
+         if (r < distribution(i).percent) return distribution(i).code
+         i = i+1
+      }
+      return distribution(n-1).code
    }
 }
 

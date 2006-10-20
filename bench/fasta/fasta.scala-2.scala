@@ -61,10 +61,6 @@ object fasta {
    } 
 
 
-   class Frequency(_code: byte, _percent: double){ 
-      var code = _code; var percent = _percent;
-   }
-
    def makeCumulative(a: Array[Pair[Char,double]]) = {
       var cp = 0.0
       a map (frequency =>
@@ -133,6 +129,14 @@ object fasta {
          n = n - LineLength
       }
    }
+}
+
+
+// We could use instances of Pair or Tuple2 but specific labels
+// make the code more readable than index numbers
+
+class Frequency(_code: byte, _percent: double){ 
+   var code = _code; var percent = _percent;
 }
 
 
