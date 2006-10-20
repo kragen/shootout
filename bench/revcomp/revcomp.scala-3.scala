@@ -34,7 +34,7 @@ trait FastaByteStream {
 
 // extend the Java BufferedInputStream class
 
-class FastaInputStream(in: InputStream) 
+final class FastaInputStream(in: InputStream) 
       extends BufferedInputStream(in) with FastaByteStream {
 
    def readSequenceStack(): Pair[Line,LineStack] = {
@@ -87,7 +87,7 @@ class FastaInputStream(in: InputStream)
 
 // extend the Java BufferedOutputStream class
 
-class FastaOutputStream(in: OutputStream) 
+final class FastaOutputStream(in: OutputStream) 
       extends BufferedOutputStream(in) with FastaByteStream {
 
    private val IUB = IUBCodeComplements
