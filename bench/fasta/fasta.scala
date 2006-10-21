@@ -86,7 +86,7 @@ class Frequency(_code: byte, _percent: double){
 
 // extend the Java BufferedOutputStream class
 
-class FastaOutputStream(in: OutputStream) extends BufferedOutputStream(in) {
+class FastaOutputStream(out: OutputStream) extends BufferedOutputStream(out) {
 
    private val LineLength = 60
    private val nl = '\n'.toByte
