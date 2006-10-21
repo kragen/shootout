@@ -23,9 +23,6 @@ object revcomp {
 
 trait FastaByteStream {
    val nl = '\n'.toByte  
-   val gt = '>'.toByte
-   val sc = ';'.toByte
-   val LineLength = 60
 
    type Line = Array[byte]
    type LineStack = Stack[Line]
@@ -36,6 +33,9 @@ trait FastaByteStream {
 
 final class FastaInputStream(in: InputStream) 
       extends BufferedInputStream(in) with FastaByteStream {
+
+   val gt = '>'.toByte
+   val sc = ';'.toByte
 
    def readSequenceStack(): Pair[Line,LineStack] = {
       var header: Line = null
@@ -124,6 +124,7 @@ final class FastaOutputStream(in: OutputStream)
             write(header); write(nl)
 
             val k = if (lines.isEmpty) 0 else lines.top.length
+            val LineLength = 60
             val isSplitLine = k < LineLength
             var isFirstLine = true
 

@@ -1,69 +1,80 @@
-/* ------------------------------------------------------------------ */
-/* The Great Computer Language Shootout                               */
-/* http://shootout.alioth.debian.org/                                 */
-/*                                                                    */
-/* Modelled on Pike version                                           */
-/*                                                                    */
-/* Contributed by Anthony Borla                                       */
-/* ------------------------------------------------------------------ */
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy
+*/
 
-import java.util.regex._
+import java.io._ , java.util.regex._
 
-object regexdna
-{
-  def main(args: Array[String]): unit =
-  {
-    // Read input data into string and record its length
-    var sequence: String = loadSequence
-    val initial_length: int = sequence.length
+object regexdna { 
+   def main(args: Array[String]) = {
 
-    // Remove newline and segment divider line occurrences; record new length
-    sequence = Pattern.compile(">.*\n|\n").matcher(sequence).replaceAll("")
-    val code_length: int = sequence.length
+      var sequence = readFully()
+      val initialLength = sequence.length
 
-    // Perform regexp counts
-    for (val i <- VARIANTS)
-    {
-      var count: int = 0
-      val m: Matcher = Pattern.compile("(?i)" + i).matcher(sequence)
-      while (m.find()) count = count + 1
-      Console.println(i + " " + count)
-    }  
+      // remove FASTA sequence descriptions and new-lines
+      var m = Pattern.compile(">.*\n|\n").matcher(sequence)
+      sequence = m.replaceAll("")
+      val codeLength = sequence.length
 
-    // Perform replacements
-    for (val i <- IUBS)
-    {
-      var iub: Array[String] = i.split(":")
-      sequence = Pattern.compile(iub(0)).matcher(sequence).replaceAll(iub(1))
-    }
+      // regex match
+      val variants = Array (
+         "agggtaaa|tttaccct"
+         ,"[cgt]gggtaaa|tttaccc[acg]"
+         ,"a[act]ggtaaa|tttacc[agt]t"
+         ,"ag[act]gtaaa|tttac[agt]ct"
+         ,"agg[act]taaa|ttta[agt]cct"
+         ,"aggg[acg]aaa|ttt[cgt]ccct"
+         ,"agggt[cgt]aa|tt[acg]accct"
+         ,"agggta[cgt]a|t[acg]taccct"
+         ,"agggtaa[cgt]|[acg]ttaccct"
+         )
 
-    // Print statistics
-    Console.println("\n" + initial_length + "\n" + code_length + "\n" + sequence.length)
-  } 
+      for (val v <- variants){
+         var count = 0
+         m = Pattern.compile(v).matcher(sequence)
+         while (m.find()) count = count + 1
+         Console.println(v + " " + count)
+      }
 
-  def loadSequence(): String =
-  {
-    val buffer: StringBuffer = new StringBuffer()
+      // regex substitution
+      val codes = Array (
+             Pair("B", "(c|g|t)")
+            ,Pair("D", "(a|g|t)")
+            ,Pair("H", "(a|c|t)")
+            ,Pair("K", "(g|t)")
+            ,Pair("M", "(a|c)")
+            ,Pair("N", "(a|c|g|t)")
+            ,Pair("R", "(a|g)")
+            ,Pair("S", "(c|g)")
+            ,Pair("V", "(a|c|g)")
+            ,Pair("W", "(a|t)")
+            ,Pair("Y", "(c|t)")
+         )
 
-    var line: String = Console.readLine
+      for (val iub <- codes){
+         iub match { 
+            case Pair(code,alternative) => 
+               sequence = Pattern.compile(code).matcher(sequence).replaceAll(alternative)
+         }
+      }
 
-    while (line != null)
-    {
-      // Needless work, but benchmark mandates sequence contain newlines
-      buffer.append(line).append('\n'); line = Console.readLine;
-    }
+      Console.println("\n" + initialLength + "\n" + codeLength + "\n" + sequence.length)
+   } 
 
-    return buffer.toString()
-  }
 
-  val VARIANTS: Array[String] = Array("agggtaaa|tttaccct",
-    "[cgt]gggtaaa|tttaccc[acg]", "a[act]ggtaaa|tttacc[agt]t",
-    "ag[act]gtaaa|tttac[agt]ct", "agg[act]taaa|ttta[agt]cct",
-    "aggg[acg]aaa|ttt[cgt]ccct", "agggt[cgt]aa|tt[acg]accct",
-    "agggta[cgt]a|t[acg]taccct", "agggtaa[cgt]|[acg]ttaccct")
+   def readFully() = {
+      val blockSize = 10240
+      val block = new Array[char](blockSize)
+      val buffer = new StringBuffer(blockSize)
+      val r = new InputStreamReader(System.in)
 
-  val IUBS: Array[String] = Array("B:(c|g|t)", "D:(a|g|t)",
-    "H:(a|c|t)", "K:(g|t)", "M:(a|c)", "N:(a|c|g|t)", 
-    "R:(a|g)", "S:(c|g)", "V:(a|c|g)", "W:(a|t)", "Y:(c|t)")
+      var charsRead = r.read(block, 0, blockSize)
+      while (charsRead > -1){
+         buffer.append(block,0,charsRead)
+         charsRead = r.read(block, 0, blockSize)
+      }
+
+      r.close
+      buffer.toString
+   }
 }
-
