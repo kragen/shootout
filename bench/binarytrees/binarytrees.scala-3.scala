@@ -39,9 +39,9 @@ object binarytrees {
 
 
 final class Tree(_i: Int, _left: Tree, _right: Tree) {
-    private val i: Int = _i
-    private var left: Tree = _left
-    private var right: Tree = _right
+    private val i = _i
+    private var left = _left
+    private var right = _right
 
     def this(i: Int, depth: Int) = {
        this(i, null, null)

@@ -3,7 +3,7 @@
   http://shootout.alioth.debian.org/
 
   - tree: single record type (using null to denote empty)
-  - loop: "for" loop over iterator range
+  - loop: explicit "while"
 
   Contributed by Kannan Goundan
   De-optimized by Isaac Gouy

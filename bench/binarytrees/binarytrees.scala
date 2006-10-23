@@ -3,7 +3,7 @@
   http://shootout.alioth.debian.org/
 
   - tree: disjoint union type
-  - loop: explicit "while"
+  - loop: "for" loop over iterator range
 
   Contributed by Kannan Goundan
   De-optimized by Isaac Gouy
