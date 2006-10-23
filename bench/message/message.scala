@@ -14,7 +14,7 @@ object message {
 
       case class Message(value: Int)
 
-      class Incrementor(next: Actor) extends Actor {
+      class Incrementor(next: Pid) extends Actor {
          var sum = 0
 
          override def run() = {
@@ -22,8 +22,8 @@ object message {
                receive { 
                   case Message(value) => 
                      val j = value + 1 
-                     if (next != null){ 
-                        next.send( Message(j) ) 
+                     if (null != next){ 
+                        next ! Message(j) 
                      } else { 
                         sum = sum + j
                         if (sum >= finalSum){ 
@@ -35,13 +35,13 @@ object message {
             }
          }
 
-         def istart() = { this.start; this }
+         def pid() = { this.start; this.self }
       }
 
-      def actorChain(i: Int, a: Actor): Actor = 
-         if (i > 0) actorChain(i-1, new Incrementor(a).istart ) else a
+      def actorChain(i: Int, a: Pid): Pid = 
+         if (i > 0) actorChain(i-1, new Incrementor(a).pid ) else a
 
       val firstActor = actorChain(nActors, null)
-      var i = n; while (i > 0){ firstActor.send( Message(0) ); i = i-1 }
+      var i = n; while (i > 0){ firstActor ! Message(0); i = i-1 }
    }
 }
