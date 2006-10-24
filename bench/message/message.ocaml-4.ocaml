@@ -1,0 +1,66 @@
+(* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   Contributed by Micky Latowicki
+*)
+
+module type CHANNEL = 
+sig
+  type 'a t
+  val create : unit -> 'a t
+  val send : 'a t -> 'a -> unit
+  val receive : 'a t -> ('a -> unit) -> unit
+end
+
+module Channel : CHANNEL = 
+struct
+  type 'a t = {
+    (* One of these queues is always empty. Sometimes both are. *)
+    waiters : ('a->unit) Queue.t;
+    values : 'a Queue.t
+  }  
+
+  let create () = { waiters = Queue.create (); 
+                    values = Queue.create ()}
+
+  let send {waiters=waiters; values=values} value = 
+    if Queue.is_empty waiters then
+      Queue.add value values
+    else
+      let waiter = Queue.take waiters in waiter value
+
+  let receive {waiters=waiters; values=values} waiter = 
+    if Queue.is_empty values then
+      Queue.add waiter waiters 
+    else
+      let value = Queue.take values in waiter value
+end
+
+let rec repeat n f x = if n<=0 then x else repeat (pred n) f (f x)
+
+let increamentor (input, output) =
+  let rec loop () = Channel.receive input cont
+  and cont x      = Channel.send output (x+1);
+                    loop ()
+  in loop 
+
+let increamentor_chain n input0 = 
+  let make_link input = 
+    let output = Channel.create () in
+      increamentor (input, output) ();
+      output
+  in repeat n make_link input0
+
+let process first last n =
+  let total       = ref 0 in
+  let rec step () = Channel.send first 0;
+                    Channel.receive last add
+  and add x       = total := !total+x in
+    repeat n step ();
+    !total
+
+let () =
+  let n = try int_of_string(Array.get Sys.argv 1) with _ -> 10
+  and first_channel = Channel.create () in
+  let last_channel  = increamentor_chain 500 first_channel in
+  print_int(process first_channel last_channel n); print_newline()
