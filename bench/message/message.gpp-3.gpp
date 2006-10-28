@@ -1,0 +1,237 @@
+//   The Computer Language Shootout
+//   http://shootout.alioth.debian.org/
+//   contributed by Paul Kitchin
+
+#include <iostream>
+#include <list>
+#include <sstream>
+
+namespace threads
+{
+
+   class thread;
+
+   struct thread_parameter
+   {
+
+      thread_parameter(unsigned int id, thread * next_thread)
+         :
+         id(id),
+         next_thread(next_thread)
+      {
+      }
+
+      unsigned int id;
+      thread * next_thread;
+
+   };
+
+   class thread
+   {
+
+      public:
+
+         thread(unsigned int (*function)(thread_parameter const &), thread_parameter const & arguments)
+            :
+            stack_top_(reinterpret_cast< std::size_t >(stack_ + (sizeof(stack_) / sizeof(unsigned int)))),
+            function_(function),
+            arguments_(arguments),
+            running_(true)
+         {
+         }
+
+         std::size_t stack_top() const
+         {
+            return stack_top_;
+         }
+
+         bool terminated() const
+         {
+            return !running_;
+         }
+
+      private:
+
+         std::size_t stack_top_;
+         unsigned int (*function_)(thread_parameter const &);
+         thread_parameter arguments_;
+         bool running_;
+         unsigned int stack_[128];
+
+   };
+
+   std::list< thread * > waiting_threads;
+   thread main_thread_object(0, thread_parameter(0, 0));
+   thread * current_thread = &main_thread_object;
+
+   std::size_t yield_thread()
+   {
+      return waiting_threads.front()->stack_top();
+   }
+
+   void schedule_thread()
+   {
+      current_thread = waiting_threads.front();
+      waiting_threads.pop_front();
+   }
+
+   void yield();
+
+   void naked()
+   {
+      asm
+      (
+         "_ZN7threads5yieldEv:\n\t"
+         "pusha\n\t"
+         "pushf\n\t"
+         "mov   _ZN7threads14current_threadE, %eax\n\t"
+         "mov   %esp, (%eax)\n\t"
+         "call   _ZN7threads12yield_threadEv\n\t"
+         "mov   %eax, %esp\n\t"
+         "popf\n\t"
+         "popa\n\t"
+         "call   _ZN7threads15schedule_threadEv\n\t"
+         "ret\n"
+         "_ZN7threads21thread_start_functionEv:\n\t"
+         "pusha\n\t"
+         "pushf\n\t"
+         "mov   %esp, (%eax)\n\t"
+         "mov   %ebx, %esp\n\t"
+         "ret\n"
+         "_ZN7threads12thread_startEv:\n\t"
+         "mov   %esp, %ebx\n\t"
+         "mov   (%eax), %esp\n\t"
+         "call   _ZN7threads21thread_start_functionEv\n\t"
+         "subl   $4, %esp\n\t"
+         "movl   _ZN7threads14current_threadE, %eax\n\t"
+         "leal   8(%eax), %ecx\n\t"
+         "movl   %ecx, (%esp)\n\t"
+         "call   *4(%eax)\n\t"
+         "movl   _ZN7threads14current_threadE, %edx\n\t"
+         "movb   $0, 16(%edx)\n\t"
+         "call   _ZN7threads5yieldEv\n\t"
+         "ret\n"
+      );
+   }
+
+   thread * create_thread(unsigned int (*thread_function)(thread_parameter const &), thread_parameter const & parameters)
+   {
+      thread * thread_ = new thread(thread_function, parameters);
+      asm
+      (
+         "push   %%eax\n\t"
+         "push   %%ebx\n\t"
+         "add   $8, %%esp\n\t"
+         "mov   %0, %%eax\n\t"
+         "sub   $8, %%esp\n\t"
+         "call   _ZN7threads12thread_startEv\n\t"
+         "pop   %%ebx\n\t"
+         "pop   %%eax"
+         :
+         :
+         "m"(thread_)
+      );
+      return thread_;
+   }
+
+   void resume(thread * thread)
+   {
+      waiting_threads.push_back(thread);
+   }
+
+   void suspend()
+   {
+      yield();
+   }
+
+   void join(thread * thread)
+   {
+      while (!thread->terminated())
+      {
+         yield();
+      }
+      delete thread;
+   }
+
+}
+
+unsigned int const number_of_threads = 500;
+unsigned int number_of_messages_per_thread;
+unsigned int message_total = 0;
+
+unsigned int volatile messages[number_of_threads];
+
+unsigned int thread_function(threads::thread_parameter const & parameters)
+{
+   using namespace threads;
+   unsigned int volatile & thread_message(messages[parameters.id]);
+   unsigned int messages_received = 0;
+   if (parameters.id + 1 != number_of_threads)
+   {
+      unsigned int volatile & next_thread_message(messages[parameters.id + 1]);
+      while (messages_received != number_of_messages_per_thread)
+      {
+         next_thread_message = thread_message + 1;
+         thread_message = 0;
+         ++messages_received;
+         resume(parameters.next_thread);
+         if (messages_received != number_of_messages_per_thread)
+         {
+            suspend();
+         }
+      }
+   }
+   else
+   {
+      while (messages_received != number_of_messages_per_thread)
+      {
+         message_total += thread_message + 1;
+         thread_message = 0;
+         ++messages_received;
+         resume(parameters.next_thread);
+         if (messages_received != number_of_messages_per_thread)
+         {
+            suspend();
+         }
+      }
+   }
+   return 0;
+}
+
+int main(int argc, char * * argv)
+{
+   using namespace threads;
+   if (argc != 2)
+   {
+      std::cout << "Usage: " << argv[0] << " <n>\n";
+      return 1;
+   }
+   {
+      std::istringstream convertor(argv[1]);
+      if (!(convertor >> number_of_messages_per_thread) || !convertor.eof())
+      {
+         std::cout << "Usage: " << argv[0] << " <n>\n";
+         std::cout << "\tn must be an integer\n";
+         return 1;
+      }
+   }
+   thread * threads[number_of_threads + 1];
+   threads[number_of_threads] = &main_thread_object;
+   for (unsigned int thread_number = number_of_threads; thread_number != 0;)
+   {
+      thread_parameter thread_parameters(thread_number - 1, threads[thread_number]);
+      --thread_number;
+      threads[thread_number] = create_thread(thread_function, thread_parameters);
+   }
+   for (unsigned int message_number = 0; message_number < number_of_messages_per_thread; ++message_number)
+   {
+      messages[0] = 0;
+      resume(threads[0]);
+      suspend();
+   }
+   for (unsigned int thread_number = 0; thread_number < number_of_threads; ++thread_number)
+   {
+      join(threads[thread_number]);
+   }
+   std::cout << message_total << '\n';
+}
