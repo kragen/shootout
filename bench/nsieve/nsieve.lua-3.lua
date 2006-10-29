@@ -14,7 +14,7 @@ local function nsieve(m,isPrime)
       if isPrime[i] then
          for k=i+i, m, i do
 --            if isPrime[k] then isPrime[k] = false end
-            isPrime[k] = false end
+            isPrime[k] = false
          end
          count = count + 1
       end
