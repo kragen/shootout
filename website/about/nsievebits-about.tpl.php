@@ -18,4 +18,4 @@
 
 <p>Calculate 3 prime counts, for M = 2<sup>N</sup> &#215; 10000, 2<sup>N-1</sup> &#215; 10000, and 2<sup>N-2</sup> &#215; 10000.</p>
 
-<p>A variation on the <a href="benchmark.php?test=nsieve&amp;lang=all&amp;sort=<?=$Sort;?>">nsieve benchmark</a> with 2 differences - bit values are used and it's acceptable to test the bit value and only flip values that need to be changed.</p>
+<p>A variation on the <a href="benchmark.php?test=nsieve&amp;lang=all&amp;sort=<?=$Sort;?>">nsieve benchmark</a> with 2 differences - bit flags are used and it's acceptable to test the bit value and only flip values that need to be changed.</p>

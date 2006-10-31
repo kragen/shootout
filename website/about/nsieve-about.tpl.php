@@ -3,12 +3,12 @@
 
 <p>Each program should count the prime numbers from 2 to M, using the same na&#239;ve Sieve of Eratosthenes algorithm:</p>
 <ul>
-  <li>create a sequence of M <strong>boolean flags</strong> (don't use a bitset)</li>
+  <li>create a sequence of M <strong>boolean flags</strong> (don't use bit flags)</li>
   <li>for each index number
      <ul>
      <li>if the flag value at that index is true
      <ul>
-     <li>set all the flag values at multiples of that index false</li>
+     <li>set <em>all</em> the flag values at multiples of that index false</li>
      <li>increment the count</li>
      </ul>
      </li>
