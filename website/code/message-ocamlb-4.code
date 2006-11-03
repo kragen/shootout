@@ -1,0 +1,66 @@
+<span class="com">(* The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   Contributed by Micky Latowicki</span>
+<span class="com">*)</span>
+
+<span class="kwa">module type</span> CHANNEL <span class="sym">=</span>
+<span class="kwa">sig</span>
+  <span class="kwa">type</span> <span class="str">'a t</span>
+<span class="str">  val create : unit -&gt; '</span>a t
+  <span class="kwa">val</span> send <span class="sym">:</span> <span class="str">'a t -&gt; '</span>a <span class="sym">-&gt;</span> <span class="kwb">unit</span>
+  <span class="kwa">val</span> receive <span class="sym">:</span> <span class="str">'a t -&gt; ('</span>a <span class="sym">-&gt;</span> <span class="kwb">unit</span><span class="sym">) -&gt;</span> <span class="kwb">unit</span>
+<span class="kwa">end</span>
+
+<span class="kwa">module</span> Channel <span class="sym">:</span> CHANNEL <span class="sym">=</span>
+<span class="kwa">struct</span>
+  <span class="kwa">type</span> <span class="str">'a t = {</span>
+<span class="str">    (* One of these queues is always empty. Sometimes both are. *)</span>
+<span class="str">    waiters : ('</span>a<span class="sym">-&gt;</span><span class="kwb">unit</span><span class="sym">)</span> Queue.t<span class="sym">;</span>
+    values <span class="sym">:</span> <span class="str">'a Queue.t</span>
+<span class="str">  }</span>
+<span class="str"></span>
+<span class="str">  let create () = { waiters = Queue.create ();</span>
+<span class="str">                    values = Queue.create ()}</span>
+<span class="str"></span>
+<span class="str">  let send {waiters=waiters; values=values} value =</span>
+<span class="str">    if Queue.is_empty waiters then</span>
+<span class="str">      Queue.add value values</span>
+<span class="str">    else</span>
+<span class="str">      let waiter = Queue.take waiters in waiter value</span>
+<span class="str"></span>
+<span class="str">  let receive {waiters=waiters; values=values} waiter =</span>
+<span class="str">    if Queue.is_empty values then</span>
+<span class="str">      Queue.add waiter waiters</span>
+<span class="str">    else</span>
+<span class="str">      let value = Queue.take values in waiter value</span>
+<span class="str">end</span>
+<span class="str"></span>
+<span class="str">let rec repeat n f x = if n&lt;=0 then x else repeat (pred n) f (f x)</span>
+<span class="str"></span>
+<span class="str">let increamentor (input, output) =</span>
+<span class="str">  let rec loop () = Channel.receive input cont</span>
+<span class="str">  and cont x      = Channel.send output (x+1);</span>
+<span class="str">                    loop ()</span>
+<span class="str">  in loop</span>
+<span class="str"></span>
+<span class="str">let increamentor_chain n input0 =</span>
+<span class="str">  let make_link input =</span>
+<span class="str">    let output = Channel.create () in</span>
+<span class="str">      increamentor (input, output) ();</span>
+<span class="str">      output</span>
+<span class="str">  in repeat n make_link input0</span>
+<span class="str"></span>
+<span class="str">let process first last n =</span>
+<span class="str">  let total       = ref 0 in</span>
+<span class="str">  let rec step () = Channel.send first 0;</span>
+<span class="str">                    Channel.receive last add</span>
+<span class="str">  and add x       = total := !total+x in</span>
+<span class="str">    repeat n step ();</span>
+<span class="str">    !total</span>
+<span class="str"></span>
+<span class="str">let () =</span>
+<span class="str">  let n = try int_of_string(Array.get Sys.argv 1) with _ -&gt; 10</span>
+<span class="str">  and first_channel = Channel.create () in</span>
+<span class="str">  let last_channel  = increamentor_chain 500 first_channel in</span>
+<span class="str">  print_int(process first_channel last_channel n); print_newline()</span>

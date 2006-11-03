@@ -295,6 +295,21 @@
        },
      },
 
+     scala =>
+     { Lang => 'scala',
+       Name => 'scala',
+       Status => 'X',
+       Home => 'http://scala.epfl.ch/',
+       Down => 'http://scala.epfl.ch/downloads/index.html',
+       Type => 'bytecomped/interpreted',
+       Note => 'Modern multi-paradigm programming',
+       Ext => 'scala',
+       Verfun => sub {
+           chomp(my $ver = `$ENV{CURRY} -v 2>&1`);
+	   return ($ver);
+       },
+     },
+
      curry =>
      { Lang => 'Curry',
        Name => 'Curry',

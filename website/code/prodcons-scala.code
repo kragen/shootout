@@ -1,0 +1,64 @@
+<span class="com">/* The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com">   contributed by Isaac Gouy (Scala novice)</span>
+<span class="com">*/</span>
+
+<span class="kwa">import</span> concurrent<span class="sym">.</span>SyncVar<span class="sym">;</span>
+<span class="kwa">import</span> concurrent<span class="sym">.</span>ops<span class="sym">.</span>_<span class="sym">;</span>
+
+<span class="kwa">object</span> prodcons <span class="sym">{</span>
+   <span class="kwa">def</span> main<span class="sym">(</span>args<span class="sym">:</span> <span class="kwc">Array</span><span class="sym">[</span><span class="kwc">String</span><span class="sym">]) = {</span>
+      <span class="kwa">val</span> n <span class="sym">=</span> toPositiveInt<span class="sym">(</span>args<span class="sym">);</span>
+      <span class="kwa">val</span> buffer <span class="sym">=</span> <span class="kwa">new</span> SharedBuffer<span class="sym">();</span>
+      <span class="kwa">var</span> p <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+      <span class="kwa">var</span> c <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+      <span class="kwa">val</span> cDone <span class="sym">=</span> <span class="kwa">new</span> SyncVar<span class="sym">[</span><span class="kwc">Boolean</span><span class="sym">];</span>
+
+      spawn <span class="sym">{</span>
+         <span class="kwa">while</span><span class="sym">(</span>p<span class="sym">&lt;</span>n<span class="sym">) {</span> p<span class="sym">=</span>p<span class="sym">+</span><span class="num">1</span><span class="sym">;</span> buffer put<span class="sym">(</span>p<span class="sym">); }</span>
+      <span class="sym">}</span>
+
+      spawn <span class="sym">{</span>
+         <span class="kwa">var</span> v<span class="sym">:</span> Int <span class="sym">=</span> _<span class="sym">;</span>
+         <span class="kwa">while</span><span class="sym">(</span>c<span class="sym">&lt;</span>n<span class="sym">) {</span> c<span class="sym">=</span>c<span class="sym">+</span><span class="num">1</span><span class="sym">;</span> v <span class="sym">=</span> buffer<span class="sym">.</span>get<span class="sym">; }</span>
+         cDone set true<span class="sym">;</span>
+      <span class="sym">}</span>
+
+      cDone<span class="sym">.</span>get<span class="sym">;</span>
+      Console println<span class="sym">(</span>p <span class="sym">+</span> <span class="str">&quot; &quot;</span> <span class="sym">+</span> c<span class="sym">);</span>
+   <span class="sym">}</span>
+
+
+   <span class="kwa">private def</span> toPositiveInt<span class="sym">(</span>s<span class="sym">:</span> <span class="kwc">Array</span><span class="sym">[</span><span class="kwc">String</span><span class="sym">]) = {</span>
+      <span class="kwa">val</span> i <span class="sym">=</span>
+         <span class="kwa">try</span> <span class="sym">{</span> <span class="kwc">Integer</span><span class="sym">.</span>parseInt<span class="sym">(</span>s<span class="sym">(</span><span class="num">0</span><span class="sym">)); }</span>
+         <span class="kwa">catch</span> <span class="sym">{</span> <span class="kwa">case</span> _ <span class="sym">=&gt;</span> <span class="num">1</span> <span class="sym">}</span>
+      <span class="kwa">if</span> <span class="sym">(</span>i<span class="sym">&gt;</span><span class="num">0</span><span class="sym">)</span> i<span class="sym">;</span> <span class="kwa">else</span> <span class="num">1</span><span class="sym">;</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+
+<span class="kwa">private class</span> SharedBuffer<span class="sym">() {</span>
+   <span class="kwa">var</span> contents<span class="sym">:</span> Int <span class="sym">=</span> _<span class="sym">;</span>
+   <span class="kwa">var</span> available <span class="sym">=</span> false<span class="sym">;</span>
+
+   <span class="kwa">def</span> get <span class="sym">=</span> <span class="kwa">synchronized</span> <span class="sym">{</span>
+      <span class="kwa">while</span> <span class="sym">(</span>available <span class="sym">==</span> false<span class="sym">)</span> wait<span class="sym">();</span>
+      available <span class="sym">=</span> false<span class="sym">;</span>
+         <span class="slc">// Console println(&quot;\t&quot; + &quot;get &quot; + contents);</span>
+      notifyAll<span class="sym">();</span>
+      contents
+   <span class="sym">}</span>
+
+   <span class="kwa">def</span> put<span class="sym">(</span>value<span class="sym">:</span> Int<span class="sym">) =</span> <span class="kwa">synchronized</span> <span class="sym">{</span>
+      <span class="kwa">while</span> <span class="sym">(</span>available <span class="sym">==</span> true<span class="sym">)</span> wait<span class="sym">();</span>
+      contents <span class="sym">=</span> value<span class="sym">;</span>
+      available <span class="sym">=</span> true<span class="sym">;</span>
+         <span class="slc">// Console println(&quot;put &quot; + value);</span>
+      notifyAll<span class="sym">();</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+
+
+

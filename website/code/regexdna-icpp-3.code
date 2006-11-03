@@ -1,0 +1,254 @@
+<span class="slc">//</span>
+<span class="slc">// The Computer Language Shootout</span>
+<span class="slc">// http://shootout.alioth.debian.org/</span>
+<span class="slc">//</span>
+<span class="slc">// Contributed by Shyamal Prasad</span>
+<span class="slc">// Modified by Paul Kitchin</span>
+
+
+<span class="slc">// This implementation of regexdna does not use the POSIX regex</span>
+<span class="slc">// included with the GNU libc. Instead it uses the Boost C++ libraries</span>
+<span class="slc">//</span>
+<span class="slc">// http://www.boost.org/libs/regex/doc/index.html</span>
+<span class="slc">//</span>
+<span class="slc">// (On Debian: apt-get install libboost-regex-dev before compiling,</span>
+<span class="slc">//  and then &quot;g++ -O3 -lboost_regex regexdna.cc -o regexdna</span>
+<span class="slc">//  Gentoo seems to package boost as, well, 'boost')</span>
+
+<span class="dir">#include &lt;iostream&gt;</span>
+<span class="dir">#include &lt;list&gt;</span>
+<span class="dir">#include &lt;string&gt;</span>
+<span class="dir">#include &lt;boost/regex.hpp&gt;</span>
+
+<span class="kwc">class</span> rope
+<span class="sym">{</span>
+
+   <span class="kwc">public</span><span class="sym">:</span>
+
+      <span class="kwb">struct</span> iterator
+         <span class="sym">:</span>
+         <span class="kwc">public</span> std<span class="sym">::</span>iterator<span class="sym">&lt;</span> std<span class="sym">::</span>bidirectional_iterator_tag<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">&gt;</span>
+      <span class="sym">{</span>
+
+         <span class="kwd">iterator</span><span class="sym">()</span>
+         <span class="sym">{</span>
+         <span class="sym">}</span>
+
+         <span class="kwd">iterator</span><span class="sym">(</span>std<span class="sym">::</span>list<span class="sym">&lt;</span> std<span class="sym">::</span>string <span class="sym">&gt;::</span>iterator chunk<span class="sym">)</span>
+            <span class="sym">:</span>
+            <span class="kwd">chunk_</span><span class="sym">(</span>chunk<span class="sym">),</span>
+            <span class="kwd">position_</span><span class="sym">(</span>chunk<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">())</span>
+         <span class="sym">{</span>
+         <span class="sym">}</span>
+
+         <span class="kwd">iterator</span><span class="sym">(</span>std<span class="sym">::</span>list<span class="sym">&lt;</span> std<span class="sym">::</span>string <span class="sym">&gt;::</span>iterator chunk<span class="sym">,</span> std<span class="sym">::</span>string<span class="sym">::</span>iterator position<span class="sym">)</span>
+            <span class="sym">:</span>
+            <span class="kwd">chunk_</span><span class="sym">(</span>chunk<span class="sym">),</span>
+            <span class="kwd">position_</span><span class="sym">(</span>position<span class="sym">)</span>
+         <span class="sym">{</span>
+            <span class="kwa">if</span> <span class="sym">(</span>position_ <span class="sym">==</span> chunk_<span class="sym">-&gt;</span><span class="kwd">end</span><span class="sym">())</span>
+            <span class="sym">{</span>
+               <span class="sym">++</span>chunk_<span class="sym">;</span>
+               position_ <span class="sym">=</span> chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">();</span>
+            <span class="sym">}</span>
+         <span class="sym">}</span>
+
+         iterator <span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">++()</span>
+         <span class="sym">{</span>
+            <span class="sym">++</span>position_<span class="sym">;</span>
+            <span class="kwa">if</span> <span class="sym">(</span>position_ <span class="sym">==</span> chunk_<span class="sym">-&gt;</span><span class="kwd">end</span><span class="sym">())</span>
+            <span class="sym">{</span>
+               <span class="sym">++</span>chunk_<span class="sym">;</span>
+               position_ <span class="sym">=</span> chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">();</span>
+            <span class="sym">}</span>
+            <span class="kwa">return</span> <span class="sym">*</span><span class="kwa">this</span><span class="sym">;</span>
+         <span class="sym">}</span>
+
+         iterator <span class="kwc">operator</span><span class="sym">++(</span><span class="kwb">int</span><span class="sym">)</span>
+         <span class="sym">{</span>
+            iterator <span class="kwd">pre_increment</span><span class="sym">(*</span><span class="kwa">this</span><span class="sym">);</span>
+            <span class="kwc">operator</span><span class="sym">++();</span>
+            <span class="kwa">return</span> pre_increment<span class="sym">;</span>
+         <span class="sym">}</span>
+
+         iterator <span class="kwc">operator</span><span class="sym">+(</span>std<span class="sym">::</span><span class="kwb">size_t</span> difference<span class="sym">)</span> <span class="kwb">const</span>
+         <span class="sym">{</span>
+            iterator <span class="kwd">result</span><span class="sym">(*</span><span class="kwa">this</span><span class="sym">);</span>
+            std<span class="sym">::</span><span class="kwb">size_t</span> offset <span class="sym">=</span> std<span class="sym">::</span><span class="kwd">distance</span><span class="sym">(</span>result<span class="sym">.</span>position_<span class="sym">,</span> result<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">end</span><span class="sym">());</span>
+            <span class="kwa">if</span> <span class="sym">(</span>offset <span class="sym">&gt;</span> difference<span class="sym">)</span>
+            <span class="sym">{</span>
+               result<span class="sym">.</span>position_ <span class="sym">+=</span> difference<span class="sym">;</span>
+               <span class="kwa">return</span> result<span class="sym">;</span>
+            <span class="sym">}</span>
+            <span class="sym">++</span>result<span class="sym">.</span>chunk_<span class="sym">;</span>
+            difference <span class="sym">-=</span> offset<span class="sym">;</span>
+            <span class="kwa">while</span> <span class="sym">(</span>difference <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">)</span>
+            <span class="sym">{</span>
+               <span class="kwa">if</span> <span class="sym">(</span>result<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">size</span><span class="sym">() &gt;</span> difference<span class="sym">)</span>
+               <span class="sym">{</span>
+                  result<span class="sym">.</span>position_ <span class="sym">=</span> result<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">() +</span> difference<span class="sym">;</span>
+                  <span class="kwa">return</span> result<span class="sym">;</span>
+               <span class="sym">}</span>
+               difference <span class="sym">-=</span> result<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">size</span><span class="sym">();</span>
+               <span class="sym">++</span>result<span class="sym">.</span>chunk_<span class="sym">;</span>
+            <span class="sym">}</span>
+            result<span class="sym">.</span>position_ <span class="sym">=</span> result<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">();</span>
+            <span class="kwa">return</span> result<span class="sym">;</span>
+         <span class="sym">}</span>
+         iterator <span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">--()</span>
+         <span class="sym">{</span>
+            <span class="kwa">if</span> <span class="sym">(</span>position_ <span class="sym">==</span> chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">())</span>
+            <span class="sym">{</span>
+               <span class="sym">--</span>chunk_<span class="sym">;</span>
+               position_ <span class="sym">=</span> chunk_<span class="sym">-&gt;</span><span class="kwd">end</span><span class="sym">();</span>
+            <span class="sym">}</span>
+            <span class="sym">--</span>position_<span class="sym">;</span>
+            <span class="kwa">return</span> <span class="sym">*</span><span class="kwa">this</span><span class="sym">;</span>
+         <span class="sym">}</span>
+
+         <span class="kwb">char</span> <span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">*()</span>
+         <span class="sym">{</span>
+            <span class="kwa">return</span> <span class="sym">*</span>position_<span class="sym">;</span>
+         <span class="sym">}</span>
+
+         std<span class="sym">::</span>list<span class="sym">&lt;</span> std<span class="sym">::</span>string <span class="sym">&gt;::</span>iterator chunk_<span class="sym">;</span>
+         std<span class="sym">::</span>string<span class="sym">::</span>iterator position_<span class="sym">;</span>
+
+      <span class="sym">};</span>
+
+      <span class="kwd">rope</span><span class="sym">(</span>std<span class="sym">::</span>istream <span class="sym">&amp;</span> stream<span class="sym">)</span>
+         <span class="sym">:</span>
+         <span class="kwd">data_</span><span class="sym">(</span><span class="num">1</span><span class="sym">,</span> std<span class="sym">::</span><span class="kwd">string</span><span class="sym">(</span><span class="num">256</span><span class="sym">,</span> <span class="str">'</span><span class="esc">\0</span><span class="str">'</span><span class="sym">))</span>
+      <span class="sym">{</span>
+         <span class="slc">// technically undefined behaviour but works and</span>
+         <span class="slc">// saves me having to implement replace for vector</span>
+         <span class="kwa">while</span> <span class="sym">(</span>stream<span class="sym">.</span><span class="kwd">read</span><span class="sym">(&amp;</span>data_<span class="sym">.</span><span class="kwd">back</span><span class="sym">()[</span><span class="num">0</span><span class="sym">],</span> <span class="num">256</span><span class="sym">))</span>
+         <span class="sym">{</span>
+            data_<span class="sym">.</span><span class="kwd">push_back</span><span class="sym">(</span>std<span class="sym">::</span><span class="kwd">string</span><span class="sym">(</span><span class="num">256</span><span class="sym">,</span> <span class="str">'</span><span class="esc">\0</span><span class="str">'</span><span class="sym">));</span>
+         <span class="sym">}</span>
+         data_<span class="sym">.</span><span class="kwd">back</span><span class="sym">().</span><span class="kwd">resize</span><span class="sym">(</span>stream<span class="sym">.</span><span class="kwd">gcount</span><span class="sym">());</span>
+         data_<span class="sym">.</span><span class="kwd">push_back</span><span class="sym">(</span>std<span class="sym">::</span><span class="kwd">string</span><span class="sym">(</span><span class="str">&quot;&quot;</span><span class="sym">,</span> <span class="num">1</span><span class="sym">));</span>
+      <span class="sym">}</span>
+
+      iterator <span class="kwd">begin</span><span class="sym">()</span>
+      <span class="sym">{</span>
+         <span class="kwa">return</span> <span class="kwd">iterator</span><span class="sym">(</span>data_<span class="sym">.</span><span class="kwd">begin</span><span class="sym">());</span>
+      <span class="sym">}</span>
+
+      iterator <span class="kwd">end</span><span class="sym">()</span>
+      <span class="sym">{</span>
+         <span class="kwa">return</span> <span class="kwd">iterator</span><span class="sym">(--</span>data_<span class="sym">.</span><span class="kwd">end</span><span class="sym">());</span>
+      <span class="sym">}</span>
+
+      std<span class="sym">::</span><span class="kwb">size_t</span> <span class="kwd">length</span><span class="sym">()</span> <span class="kwb">const</span>
+      <span class="sym">{</span>
+         std<span class="sym">::</span><span class="kwb">size_t</span> l <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+         <span class="kwa">for</span> <span class="sym">(</span>std<span class="sym">::</span>list<span class="sym">&lt;</span> std<span class="sym">::</span>string <span class="sym">&gt;::</span>const_iterator i <span class="sym">=</span> data_<span class="sym">.</span><span class="kwd">begin</span><span class="sym">(),</span> end <span class="sym">=</span> data_<span class="sym">.</span><span class="kwd">end</span><span class="sym">();</span> i <span class="sym">!=</span> end<span class="sym">; ++</span>i<span class="sym">)</span>
+         <span class="sym">{</span>
+            l <span class="sym">+=</span> i<span class="sym">-&gt;</span><span class="kwd">size</span><span class="sym">();</span>
+         <span class="sym">}</span>
+         <span class="sym">--</span>l<span class="sym">;</span>
+         <span class="kwa">return</span> l<span class="sym">;</span>
+      <span class="sym">}</span>
+
+      iterator <span class="kwd">replace</span><span class="sym">(</span>iterator begin<span class="sym">,</span> iterator end<span class="sym">,</span> <span class="kwb">char const</span> <span class="sym">*</span> replacement<span class="sym">)</span>
+      <span class="sym">{</span>
+         <span class="kwa">if</span> <span class="sym">(</span>begin<span class="sym">.</span>chunk_ <span class="sym">==</span> end<span class="sym">.</span>chunk_<span class="sym">)</span>
+         <span class="sym">{</span>
+            std<span class="sym">::</span><span class="kwb">size_t</span> offset <span class="sym">=</span> std<span class="sym">::</span><span class="kwd">distance</span><span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">(),</span> begin<span class="sym">.</span>position_<span class="sym">) +</span> std<span class="sym">::</span><span class="kwd">strlen</span><span class="sym">(</span>replacement<span class="sym">);</span>
+            begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">replace</span><span class="sym">(</span>begin<span class="sym">.</span>position_<span class="sym">,</span> end<span class="sym">.</span>position_<span class="sym">,</span> replacement<span class="sym">);</span>
+            <span class="kwa">if</span> <span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">empty</span><span class="sym">())</span>
+            <span class="sym">{</span>
+               begin<span class="sym">.</span>chunk_ <span class="sym">=</span> data_<span class="sym">.</span><span class="kwd">erase</span><span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">);</span>
+            <span class="sym">}</span>
+            <span class="kwa">return</span> <span class="kwd">iterator</span><span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">,</span> begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">() +</span> offset<span class="sym">);</span>
+         <span class="sym">}</span>
+         <span class="kwa">else</span>
+         <span class="sym">{</span>
+            begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">replace</span><span class="sym">(</span>begin<span class="sym">.</span>position_<span class="sym">,</span> begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">end</span><span class="sym">(),</span> replacement<span class="sym">);</span>
+            <span class="kwa">if</span> <span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">empty</span><span class="sym">())</span>
+            <span class="sym">{</span>
+               begin<span class="sym">.</span>chunk_ <span class="sym">=</span> data_<span class="sym">.</span><span class="kwd">erase</span><span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">);</span>
+            <span class="sym">}</span>
+            <span class="kwa">else</span>
+            <span class="sym">{</span>
+               <span class="sym">++</span>begin<span class="sym">.</span>chunk_<span class="sym">;</span>
+            <span class="sym">}</span>
+            data_<span class="sym">.</span><span class="kwd">erase</span><span class="sym">(</span>begin<span class="sym">.</span>chunk_<span class="sym">,</span> end<span class="sym">.</span>chunk_<span class="sym">);</span>
+            end<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">erase</span><span class="sym">(</span>end<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">(),</span> end<span class="sym">.</span>position_<span class="sym">);</span>
+            <span class="kwa">return</span> <span class="kwd">iterator</span><span class="sym">(</span>end<span class="sym">.</span>chunk_<span class="sym">,</span> end<span class="sym">.</span>chunk_<span class="sym">-&gt;</span><span class="kwd">begin</span><span class="sym">());</span>
+         <span class="sym">}</span>
+      <span class="sym">}</span>
+
+   <span class="kwc">private</span><span class="sym">:</span>
+
+      std<span class="sym">::</span>list<span class="sym">&lt;</span> std<span class="sym">::</span>string <span class="sym">&gt;</span> data_<span class="sym">;</span>
+<span class="sym">};</span>
+
+<span class="kwb">bool</span> <span class="kwc">operator</span><span class="sym">==(</span><span class="kwb">const</span> rope<span class="sym">::</span>iterator <span class="sym">&amp;</span> lhs<span class="sym">,</span> <span class="kwb">const</span> rope<span class="sym">::</span>iterator <span class="sym">&amp;</span> rhs<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwa">return</span> lhs<span class="sym">.</span>chunk_ <span class="sym">==</span> rhs<span class="sym">.</span>chunk_ <span class="sym">&amp;&amp;</span> lhs<span class="sym">.</span>position_ <span class="sym">==</span> rhs<span class="sym">.</span>position_<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">bool</span> <span class="kwc">operator</span><span class="sym">!=(</span><span class="kwb">const</span> rope<span class="sym">::</span>iterator <span class="sym">&amp;</span> lhs<span class="sym">,</span> <span class="kwb">const</span> rope<span class="sym">::</span>iterator <span class="sym">&amp;</span> rhs<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwa">return</span> <span class="sym">!(</span>lhs <span class="sym">==</span> rhs<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="kwc">template</span> <span class="sym">&lt;</span> typename type<span class="sym">,</span> std<span class="sym">::</span><span class="kwb">size_t</span> n <span class="sym">&gt;</span>
+std<span class="sym">::</span><span class="kwb">size_t</span> <span class="kwd">size</span><span class="sym">(</span><span class="kwd">type</span> <span class="sym">(&amp;)[</span>n<span class="sym">])</span>
+<span class="sym">{</span>
+   <span class="kwa">return</span> n<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> <span class="kwd">regex_replace</span><span class="sym">(</span>rope <span class="sym">&amp;</span> data<span class="sym">,</span> boost<span class="sym">::</span>regex <span class="kwb">const</span> <span class="sym">&amp;</span> pattern<span class="sym">,</span> <span class="kwb">char const</span> <span class="sym">*</span> replacement<span class="sym">)</span>
+<span class="sym">{</span>
+   rope<span class="sym">::</span>iterator begin <span class="sym">=</span> data<span class="sym">.</span><span class="kwd">begin</span><span class="sym">();</span>
+   rope<span class="sym">::</span>iterator end <span class="sym">=</span> data<span class="sym">.</span><span class="kwd">end</span><span class="sym">();</span>
+   boost<span class="sym">::</span>match_results<span class="sym">&lt;</span> rope<span class="sym">::</span>iterator <span class="sym">&gt;</span> results<span class="sym">;</span>
+   <span class="kwa">while</span> <span class="sym">(</span>boost<span class="sym">::</span><span class="kwd">regex_search</span><span class="sym">(</span>begin<span class="sym">,</span> end<span class="sym">,</span> results<span class="sym">,</span> pattern<span class="sym">))</span>
+   <span class="sym">{</span>
+      rope<span class="sym">::</span>iterator match_begin <span class="sym">=</span> begin <span class="sym">+</span> results<span class="sym">.</span><span class="kwd">position</span><span class="sym">();</span>
+      rope<span class="sym">::</span>iterator match_end <span class="sym">=</span> match_begin <span class="sym">+</span> results<span class="sym">.</span><span class="kwd">length</span><span class="sym">();</span>
+      begin <span class="sym">=</span> data<span class="sym">.</span><span class="kwd">replace</span><span class="sym">(</span>match_begin<span class="sym">,</span> match_end<span class="sym">,</span> replacement<span class="sym">);</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">()</span>
+<span class="sym">{</span>
+   rope <span class="kwd">data</span><span class="sym">(</span>std<span class="sym">::</span>cin<span class="sym">);</span>
+   std<span class="sym">::</span><span class="kwb">size_t</span> initial_length <span class="sym">=</span> data<span class="sym">.</span><span class="kwd">length</span><span class="sym">();</span>
+   boost<span class="sym">::</span>regex <span class="kwb">const</span> <span class="kwd">strip</span><span class="sym">(</span><span class="str">&quot;&gt;[^</span><span class="esc">\\</span><span class="str">n]*</span><span class="esc">\\</span><span class="str">n|</span><span class="esc">\\</span><span class="str">n&quot;</span><span class="sym">);</span>
+   <span class="kwd">regex_replace</span><span class="sym">(</span>data<span class="sym">,</span> strip<span class="sym">,</span> <span class="str">&quot;&quot;</span><span class="sym">);</span>
+   <span class="kwb">static char const</span> <span class="sym">*</span> patterns<span class="sym">[] = {</span>
+      <span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span>
+      <span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+   <span class="sym">};</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> <span class="kwd">size</span><span class="sym">(</span>patterns<span class="sym">); ++</span>i<span class="sym">)</span>
+   <span class="sym">{</span>
+      <span class="kwb">const</span> boost<span class="sym">::</span>regex <span class="kwd">pattern</span><span class="sym">(</span>patterns<span class="sym">[</span>i<span class="sym">]);</span>
+      <span class="kwc">typedef</span> boost<span class="sym">::</span>regex_iterator<span class="sym">&lt;</span> rope<span class="sym">::</span>iterator <span class="sym">&gt;</span> match_iterator<span class="sym">;</span>
+      std<span class="sym">::</span>cout <span class="sym">&lt;&lt;</span> patterns<span class="sym">[</span>i<span class="sym">] &lt;&lt;</span> <span class="str">' '</span> <span class="sym">&lt;&lt;</span> std<span class="sym">::</span><span class="kwd">distance</span><span class="sym">(</span><span class="kwd">match_iterator</span><span class="sym">(</span>data<span class="sym">.</span><span class="kwd">begin</span><span class="sym">(),</span> data<span class="sym">.</span><span class="kwd">end</span><span class="sym">(),</span> pattern<span class="sym">),</span> <span class="kwd">match_iterator</span><span class="sym">()) &lt;&lt;</span> std<span class="sym">::</span>endl<span class="sym">;</span>
+   <span class="sym">}</span>
+   std<span class="sym">::</span>cout <span class="sym">&lt;&lt;</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span> <span class="sym">&lt;&lt;</span> initial_length <span class="sym">&lt;&lt;</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span> <span class="sym">&lt;&lt;</span> data<span class="sym">.</span><span class="kwd">length</span><span class="sym">() &lt;&lt;</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+   <span class="kwc">typedef</span> std<span class="sym">::</span>pair<span class="sym">&lt;</span> <span class="kwb">char const</span> <span class="sym">*,</span> <span class="kwb">char const</span> <span class="sym">* &gt;</span> pair<span class="sym">;</span>
+   <span class="kwb">static const</span> pair alternatives<span class="sym">[] = {</span>
+      <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;B&quot;</span><span class="sym">,</span> <span class="str">&quot;(c|g|t)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;D&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|g|t)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;H&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|c|t)&quot;</span><span class="sym">),</span>
+      <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;K&quot;</span><span class="sym">,</span> <span class="str">&quot;(g|t)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;M&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|c)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;N&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">),</span>
+      <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;R&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|g)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;S&quot;</span><span class="sym">,</span> <span class="str">&quot;(c|t)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;V&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|c|g)&quot;</span><span class="sym">),</span>
+      <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;W&quot;</span><span class="sym">,</span> <span class="str">&quot;(a|t)&quot;</span><span class="sym">),</span> <span class="kwd">pair</span><span class="sym">(</span><span class="str">&quot;Y&quot;</span><span class="sym">,</span> <span class="str">&quot;(c|t)&quot;</span><span class="sym">)</span>
+   <span class="sym">};</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> <span class="kwa">sizeof</span><span class="sym">(</span>alternatives<span class="sym">) /</span> <span class="kwa">sizeof</span><span class="sym">(</span>alternatives<span class="sym">[</span><span class="num">0</span><span class="sym">]); ++</span>i<span class="sym">)</span>
+   <span class="sym">{</span>
+      <span class="kwd">regex_replace</span><span class="sym">(</span>data<span class="sym">,</span> boost<span class="sym">::</span><span class="kwd">regex</span><span class="sym">(</span>alternatives<span class="sym">[</span>i<span class="sym">].</span>first<span class="sym">),</span> alternatives<span class="sym">[</span>i<span class="sym">].</span>second<span class="sym">);</span>
+   <span class="sym">}</span>
+   std<span class="sym">::</span>cout <span class="sym">&lt;&lt;</span> data<span class="sym">.</span><span class="kwd">length</span><span class="sym">() &lt;&lt;</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+<span class="sym">}</span>
+
