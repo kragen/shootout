@@ -1,102 +1,72 @@
 <span class="com">/* The Computer Language Shootout</span>
 <span class="com"> * http://shootout.alioth.debian.org/</span>
-<span class="com"> * contributed by anon</span>
-<span class="com"> * modified by - Yakov Kravets</span>
-<span class="com"> * compile with -Os -lpthread</span>
-<span class="com"> */</span>
-
-<span class="dir">#include &lt;stdio.h&gt;</span>
-<span class="dir">#include &lt;stdlib.h&gt;</span>
-<span class="dir">#include &lt;unistd.h&gt;</span>
-<span class="dir">#include &lt;assert.h&gt;</span>
-<span class="dir">#include &lt;pthread.h&gt;</span>    <span class="slc">// -lpthread</span>
-<span class="dir"></span>
-<span class="dir">#define THREADS 500</span>
-
-<span class="dir">#define STACKSZ (100*1024)</span> <span class="slc">// 100K</span>
-<span class="dir"></span><span class="dir">#define SWL_SLEEP (1000000/1000)</span>
-
-<span class="kwb">struct</span> work_data <span class="sym">{</span>
-        pthread_t thread<span class="sym">;</span>
-        pthread_mutex_t mutex<span class="sym">;</span>
-        pthread_cond_t condition<span class="sym">;</span>
-        <span class="kwb">int</span> message<span class="sym">;</span>
-        <span class="kwb">struct</span> work_data <span class="sym">*</span>next<span class="sym">;</span>
-<span class="sym">};</span>
-
-<span class="kwb">void</span> <span class="sym">*</span>
-<span class="kwd">work</span><span class="sym">(</span><span class="kwb">void</span> <span class="sym">*</span>ptr<span class="sym">)</span>
-<span class="sym">{</span>
-        <span class="kwb">struct</span> work_data <span class="sym">*</span><span class="kwa">this</span> <span class="sym">= (</span><span class="kwb">struct</span> work_data <span class="sym">*)</span>ptr<span class="sym">;</span>
-        <span class="kwb">struct</span> work_data <span class="sym">*</span>next <span class="sym">=</span> <span class="kwa">this</span><span class="sym">-&gt;</span>next<span class="sym">;</span>
-        <span class="kwa">if</span> <span class="sym">(</span><span class="kwa">this</span> <span class="sym">==</span> NULL <span class="sym">||</span> next <span class="sym">==</span> NULL<span class="sym">)</span>
-                <span class="kwa">return</span> NULL<span class="sym">;</span>
-
-        <span class="kwa">for</span> <span class="sym">(;;) {</span>
-                <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;(</span><span class="kwa">this</span><span class="sym">-&gt;</span>mutex<span class="sym">));</span>
-                <span class="com">/* Wait for a signal from the links thread */</span>
-                <span class="kwd">pthread_cond_wait</span><span class="sym">(&amp;(</span><span class="kwa">this</span><span class="sym">-&gt;</span>condition<span class="sym">),&amp;(</span><span class="kwa">this</span><span class="sym">-&gt;</span>mutex<span class="sym">));</span>
-
-                <span class="com">/* Receive and Pass the message */</span>
-                <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;(</span>next<span class="sym">-&gt;</span>mutex<span class="sym">));</span>
-                next<span class="sym">-&gt;</span>message <span class="sym">=</span> <span class="kwa">this</span><span class="sym">-&gt;</span>message <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
-                <span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;(</span>next<span class="sym">-&gt;</span>mutex<span class="sym">));</span>
-
-                <span class="com">/* Signal linked thread */</span>
-                <span class="kwd">pthread_cond_signal</span><span class="sym">(&amp;(</span>next<span class="sym">-&gt;</span>condition<span class="sym">));</span>
-
-                <span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;(</span><span class="kwa">this</span><span class="sym">-&gt;</span>mutex<span class="sym">));</span>
-        <span class="sym">}</span>
-        <span class="kwa">return</span> NULL<span class="sym">;</span>
-<span class="sym">}</span>
-
-<span class="kwb">int</span>
-<span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">*</span>argv<span class="sym">[])</span>
-<span class="sym">{</span>
-        <span class="kwb">struct</span> work_data <span class="sym">*</span>wdata<span class="sym">;</span>
-        <span class="kwb">unsigned int</span> times<span class="sym">;</span>
-
-        <span class="kwd">assert</span><span class="sym">(</span>argc <span class="sym">==</span> <span class="num">2</span> <span class="sym">&amp;&amp;</span> <span class="kwd">sscanf</span><span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">],</span> <span class="str">&quot;%u&quot;</span><span class="sym">, &amp;</span>times<span class="sym">) ==</span> <span class="num">1</span><span class="sym">);</span>
-
-        <span class="kwb">int</span> sum <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
-        pthread_attr_t attr<span class="sym">;</span>
-        <span class="kwb">int</span> i<span class="sym">,</span> j<span class="sym">;</span>
-
-        wdata <span class="sym">=</span> <span class="kwd">malloc</span><span class="sym">(</span><span class="kwa">sizeof</span><span class="sym">(</span><span class="kwb">struct</span> work_data<span class="sym">) *</span> THREADS<span class="sym">);</span>
-        <span class="kwd">assert</span><span class="sym">(</span>wdata <span class="sym">!=</span> NULL<span class="sym">);</span>
-        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_attr_init</span><span class="sym">(&amp;</span>attr<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&amp;</span>attr<span class="sym">,</span> STACKSZ<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-
-        <span class="com">/* Initialize threads data */</span>
-        <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> THREADS<span class="sym">;</span> i<span class="sym">++) {</span>
-                <span class="kwd">pthread_mutex_init</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>i<span class="sym">].</span>mutex<span class="sym">,</span> NULL<span class="sym">);</span>
-                <span class="kwd">pthread_cond_init</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>i<span class="sym">].</span>condition<span class="sym">,</span> NULL<span class="sym">);</span>
-                wdata<span class="sym">[</span>i<span class="sym">].</span>message <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
-                wdata<span class="sym">[</span>i<span class="sym">].</span>next <span class="sym">= &amp;</span>wdata<span class="sym">[</span>i <span class="sym">+</span> <span class="num">1</span><span class="sym">];</span>
-                <span class="kwd">pthread_create</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>i<span class="sym">].</span>thread<span class="sym">, &amp;</span>attr<span class="sym">,</span> work<span class="sym">, &amp;</span>wdata<span class="sym">[</span>i<span class="sym">]);</span>
-        <span class="sym">}</span>
-        <span class="com">/* Initialize main thread */</span>
-        <span class="kwd">pthread_mutex_init</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>THREADS<span class="sym">].</span>mutex<span class="sym">,</span> NULL<span class="sym">);</span>
-        <span class="kwd">pthread_cond_init</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>THREADS<span class="sym">].</span>condition<span class="sym">,</span> NULL<span class="sym">);</span>
-        wdata<span class="sym">[</span>THREADS<span class="sym">].</span>message <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
-
-        <span class="kwa">for</span> <span class="sym">(</span>j <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> j <span class="sym">&lt;</span> times<span class="sym">;</span> j<span class="sym">++) {</span>
-                <span class="com">/* Pass the message */</span>
-                <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>mutex<span class="sym">);</span>
-                wdata<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>message <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
-                <span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>mutex<span class="sym">);</span>
-
-                <span class="com">/* Signal first thread */</span>
-                <span class="kwd">pthread_cond_signal</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>condition<span class="sym">);</span>
-
-                <span class="com">/* Wait for a signal from the last thread */</span>
-                <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>THREADS<span class="sym">].</span>mutex<span class="sym">);</span>
-                <span class="kwd">pthread_cond_wait</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>THREADS<span class="sym">].</span>condition<span class="sym">,&amp;</span>wdata<span class="sym">[</span>THREADS<span class="sym">].</span>mutex<span class="sym">);</span>
-                <span class="com">/* Read the message */</span>
-                sum <span class="sym">+=</span> wdata<span class="sym">[</span>THREADS<span class="sym">].</span>message<span class="sym">;</span>
-                <span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;</span>wdata<span class="sym">[</span>THREADS<span class="sym">].</span>mutex<span class="sym">);</span>
-        <span class="sym">}</span>
-        <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;%d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> sum<span class="sym">);</span>
-
-        <span class="kwd">exit</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
-<span class="sym">}</span>
+<span class="com"> * contributed contributed by Colin Gibbs</span>
+<span class="com"> * /</span>
+<span class="com"></span>
+<span class="com">#include &lt;stdio.h&gt;</span>
+<span class="com">#include &lt;stdlib.h&gt;</span>
+<span class="com">#include &lt;ucontext.h&gt;</span>
+<span class="com"></span>
+<span class="com">#define STACK_SIZE 1024</span>
+<span class="com"></span>
+<span class="com">struct thread_context {</span>
+<span class="com">   struct thread_context *next;</span>
+<span class="com">   ucontext_t ctx;</span>
+<span class="com">   int value;</span>
+<span class="com">   char stack[STACK_SIZE];</span>
+<span class="com">};</span>
+<span class="com"></span>
+<span class="com">static void thread(struct thread_context *c)</span>
+<span class="com">{</span>
+<span class="com">   while (1) {</span>
+<span class="com">      c-&gt;next-&gt;value = c-&gt;value + 1;</span>
+<span class="com">      swapcontext(&amp;c-&gt;ctx, &amp;c-&gt;next-&gt;ctx);</span>
+<span class="com">   }</span>
+<span class="com">}</span>
+<span class="com"></span>
+<span class="com">static void create_threads(struct thread_context **head, struct thread_context **tail, int n)</span>
+<span class="com">{</span>
+<span class="com">   struct thread_context *c;</span>
+<span class="com">   typedef void (*thread_t)(void);</span>
+<span class="com"></span>
+<span class="com">   c = malloc(sizeof(*c));</span>
+<span class="com">   *head = c;</span>
+<span class="com"></span>
+<span class="com">   getcontext(&amp;c-&gt;ctx);</span>
+<span class="com">   c-&gt;ctx.uc_stack.ss_sp = c-&gt;stack;</span>
+<span class="com">   c-&gt;ctx.uc_stack.ss_size = sizeof(c-&gt;stack);</span>
+<span class="com">   makecontext(&amp;c-&gt;ctx, (thread_t)thread, 1, c);</span>
+<span class="com"></span>
+<span class="com">   if (n &gt; 1) {</span>
+<span class="com">      create_threads(&amp;c-&gt;next, tail, n - 1);</span>
+<span class="com">   } else {</span>
+<span class="com">      c-&gt;next = NULL;</span>
+<span class="com">      *tail = c;</span>
+<span class="com">   }</span>
+<span class="com">}</span>
+<span class="com"></span>
+<span class="com">static int call_threads(struct thread_context *head, struct thread_context *tail)</span>
+<span class="com">{</span>
+<span class="com">   struct thread_context here;</span>
+<span class="com">   tail-&gt;next = &amp;here;</span>
+<span class="com">   head-&gt;value = 0;</span>
+<span class="com">   swapcontext(&amp;here.ctx, &amp;head-&gt;ctx);</span>
+<span class="com">   return here.value;</span>
+<span class="com">}</span>
+<span class="com"></span>
+<span class="com">int main(int argc, char **argv)</span>
+<span class="com">{</span>
+<span class="com">   int n, i, count;</span>
+<span class="com">   struct thread_context *head, *tail;</span>
+<span class="com"></span>
+<span class="com">   n = atoi(argv[1]);</span>
+<span class="com">   create_threads(&amp;head, &amp;tail, 500);</span>
+<span class="com"></span>
+<span class="com">   count = 0;</span>
+<span class="com">   for (i = 0; i &lt; n; i++)</span>
+<span class="com">      count += call_threads(head, tail);</span>
+<span class="com"></span>
+<span class="com">   printf(&quot;%d\n&quot;, count);</span>
+<span class="com"></span>
+<span class="com">   return 0;</span>
+<span class="com">}</span>
