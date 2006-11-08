@@ -46,28 +46,18 @@ class Solver () {
             val p = pieces(k)
             pieces.remove(k)
 
-            for (val i <- Iterator.range(0,Piece.nPermutations)){
-               val piece = p.nextPermutation
+            for (val i <- Iterator.range(0,Piece.orientations)){
+               val piece = p.nextOrientation
 
                for (val j <- Iterator.range(0,Piece.size)){
                   if (board.add(j,emptyCellIndex,piece)) {
 
-                     /* We have now put a piece on the board, so we have to
-                        continue this process with the next piece by recursively
-                        calling the solve() method. */
-
                      if (!shouldPrune) findSolutions
-
-                     /* We're back from the recursion and we have to continue
-                        searching at this level, so we remove the piece we
-                        just added from the board. */
 
                      board.remove(piece)
                   }
-                  // else the permutation doesn't fit on the board
                }
             }
-            // we're done with this piece
             pieces.insert(k,p)
          }
       }
@@ -82,14 +72,9 @@ class Solver () {
 
    protected def puzzleSolved() = solutions += board.asString
 
-   protected def shouldPrune(): Boolean = {
+   protected def shouldPrune() = {
       board.unmark
-      //board.cells.forall(c => c.islandSize % Piece.size == 0) 
-
-      for (val i <- Iterator.range(0,Board.size))
-         if (board.cells(i).islandSize % Piece.size != 0) return true
-
-      return false
+      !board.cells.forall(c => c.islandSize % Piece.size == 0) 
    }
 
 
@@ -138,49 +123,41 @@ class Board {
          c => if (c.piece == null) '-'.toByte 
               else (c.piece.number + 48).toByte ))
 
-   def firstEmptyCellIndex(): Int = {
-      for (val i <- Iterator.range(0,cells.length)){
-         if (cells(i).isEmpty) return i
-      }
-      -1
+   def firstEmptyCellIndex() = { 
+      val _cells: Iterable[BoardCell] = cells
+      _cells.indexOf(c => c.isEmpty)
    }
 
 
-   def add(pieceIndex: Int, boardIndex: Int, p: Piece): Boolean = {
+   type CellBuffer = ListBuffer[BoardCell]
+
+   def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
       val pCell = p.cells(pieceIndex)
       val bCell = cells(boardIndex)
-      val occupiedCells = new ArrayBuffer[BoardCell]
+      val cellsPieceWillFill = new CellBuffer
       p.unmark
     
-      accumulate(occupiedCells,pCell,bCell)
+      find(cellsPieceWillFill,pCell,bCell)
 
-      if (occupiedCells.length != Piece.size) return false
+      val boardHasSpace = cellsPieceWillFill.length == Piece.size && 
+         cellsPieceWillFill.forall(c => c.isEmpty)  
 
-      for (val i <- Iterator.range(0,occupiedCells.length))
-         if (!occupiedCells(i).isEmpty) return false
+      if (boardHasSpace) cellsPieceWillFill.foreach(c => c.piece = p) 
 
-      occupiedCells.foreach(c => c.piece = p)
-
-      return true
+      boardHasSpace
    }
 
    def remove(piece: Piece) = for (val c <- cells; c.piece == piece) c.empty
 
-   protected def accumulate(occupiedCells: ArrayBuffer[BoardCell], 
-         p: PieceCell, b: BoardCell): Unit = {
+
+   protected def find(cellsPieceWillFill: CellBuffer, p: PieceCell, 
+         b: BoardCell): Unit = {
 
       if (p != null && !p.marked && b != null){
-         occupiedCells += b
-
-         // Neighbouring cells can form loops, which would lead to an
-	 // infinite recursion. Avoid this by marking the processed cells. 
-
+         cellsPieceWillFill += b
          p.mark
-
-         // repeat for each neighbour of the piece cell
-
          for (val i <- Iterator.range(0,Cell.sides))
-            accumulate(occupiedCells, p.next(i), b.next(i))
+            find(cellsPieceWillFill, p.next(i), b.next(i))
       }
    }
 
@@ -278,7 +255,9 @@ class Board {
 
 object Piece {
    val size = 5
-   val nPermutations = 12
+   val rotations = Cell.sides
+   val flips = 2
+   val orientations = rotations * flips
 }
 
 class Piece(_number: Int) {
@@ -305,12 +284,12 @@ class Piece(_number: Int) {
    def unmark() = for (val c <- cells) c.unmark
 
 
-   var permIndex: Int = _
+   var orientation: Int = _
 
-   def nextPermutation() = {
-      if (permIndex == Piece.nPermutations) permIndex = 0
-      if (permIndex % 6 == 0) flip else rotate
-      permIndex = permIndex + 1
+   def nextOrientation() = {
+      if (orientation == Piece.orientations) orientation = 0
+      if (orientation % Piece.rotations == 0) flip else rotate
+      orientation = orientation + 1
       this
    }
 
