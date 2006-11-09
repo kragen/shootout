@@ -21,8 +21,9 @@
 <h5>Notes</h5>
 <ul><li>use a command line parameter to limit how many solutions will be found before the program halts, so that you can work with just a few solutions to debug and optimize your program (0 should trigger a search for all solutions).</li>
 <li>the <tt>printSolutions()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=0">the Scala program</a> provides one example of how to print the solutions.</li>
-<li>the <tt>printBoardCellsAndNeighbours()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=0">the Scala program</a> provides an example of how to print <a href="http://shootout.alioth.debian.org/download/meteor-puzzleboard.txt">the puzzle board (Save Target As… Save Link As…)</a>to check that the board cells are joined up correctly.
-<pre>cell    NW NE W  E  SW SE
+<li>the <tt>printBoardCellsAndNeighbours()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=0">the Scala program</a> provides an example of how to print <a href="http://shootout.alioth.debian.org/download/meteor-puzzleboard.txt">the puzzle board (Save Target As… Save Link As…)</a> to check that the board cells are joined up correctly.
+<pre>
+cell    NW NE W  E  SW SE
 0       -- -- -- 01 -- 05
 1       -- -- 00 02 05 06
 2       -- -- 01 03 06 07
@@ -75,5 +76,5 @@
 49      44 -- 48 -- -- --
 </pre></li>
 </ul>
-<p><strong>The Meteor Puzzle and 3 Java puzzle solvers</strong> are described in <a href="http://www-128.ibm.com/developerworks/java/library/j-javaopt/">"Optimize your Java application's performance"</a>.</p>
+<p><strong>The Meteor Puzzle and 3 Java puzzle solvers</strong> are described in <a href="http://www-128.ibm.com/developerworks/java/library/j-javaopt/"><strong>"Optimize your Java application's performance"</strong></a>.</p>
 
