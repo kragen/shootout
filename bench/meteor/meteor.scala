@@ -25,13 +25,13 @@ object meteor {
 // Solver.scala 
 // import scala.collection.mutable._
 
-class Solver () {
+final class Solver () {
    var enoughSolutions = 0
 
-   protected var solutions = new ListBuffer[String]
-   protected val board = new Board()
+   private var solutions = new ListBuffer[String]
+   private val board = new Board()
 
-   protected val pieces = new ArrayBuffer[Piece] ++ 
+   private val pieces = new ArrayBuffer[Piece] ++ 
       Array( new Piece(0), new Piece(1), new Piece(2), new Piece(3), new Piece(4), 
              new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
 
@@ -67,14 +67,14 @@ class Solver () {
    }
 
 
-   protected def weHaveEnoughSolutions() = 
+   private def weHaveEnoughSolutions() = 
       enoughSolutions > 0 && solutions.length >= enoughSolutions 
 
-   protected def puzzleSolved() = solutions += board.asString
+   private def puzzleSolved() = solutions += board.asString
 
-   protected def shouldPrune() = {
+   private def shouldPrune() = {
       board.unmark
-      !board.cells.forall(c => c.islandSize % Piece.size == 0) 
+      !board.cells.forall(c => c.contiguousEmptyCells % Piece.size == 0) 
    }
 
 
@@ -113,7 +113,7 @@ object Board {
    val size = rows * cols
 }
 
-class Board { 
+final class Board { 
    val cells = boardCells()
 
    def unmark() = for (val c <- cells) c.unmark
@@ -150,7 +150,7 @@ class Board {
    def remove(piece: Piece) = for (val c <- cells; c.piece == piece) c.empty
 
 
-   protected def find(cellsPieceWillFill: CellBuffer, p: PieceCell, 
+   private def find(cellsPieceWillFill: CellBuffer, p: PieceCell, 
          b: BoardCell): Unit = {
 
       if (p != null && !p.marked && b != null){
@@ -162,7 +162,7 @@ class Board {
    }
 
 
-   protected def boardCells() = {
+   private def boardCells() = {
       type Row = List[BoardCell]
       type Edges = List[Pair[BoardCell,BoardCell]]
 
@@ -260,22 +260,22 @@ object Piece {
    val orientations = rotations * flips
 }
 
-class Piece(_number: Int) {
+final class Piece(_number: Int) {
    val number = _number
    val cells = for (val i <- Array.range(0,Piece.size)) yield new PieceCell()
 
    { 
       number match {
-         case 0 => initializePiece0
-         case 1 => initializePiece1
-         case 2 => initializePiece2
-         case 3 => initializePiece3
-         case 4 => initializePiece4
-         case 5 => initializePiece5
-         case 6 => initializePiece6
-         case 7 => initializePiece7
-         case 8 => initializePiece8
-         case 9 => initializePiece9     
+         case 0 => make0
+         case 1 => make1
+         case 2 => make2
+         case 3 => make3
+         case 4 => make4
+         case 5 => make5
+         case 6 => make6
+         case 7 => make7
+         case 8 => make8
+         case 9 => make9     
       }
    }
 
@@ -284,7 +284,7 @@ class Piece(_number: Int) {
    def unmark() = for (val c <- cells) c.unmark
 
 
-   var orientation: Int = _
+   private var orientation = 0
 
    def nextOrientation() = {
       if (orientation == Piece.orientations) orientation = 0
@@ -294,7 +294,7 @@ class Piece(_number: Int) {
    }
 
 
-   def initializePiece0() = {
+   private def make0() = {
       cells(0).next(Cell.E) = cells(1)
       cells(1).next(Cell.W) = cells(0)
       cells(1).next(Cell.E) = cells(2)
@@ -305,7 +305,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NW) = cells(3)
    }
 
-   def initializePiece1() = {
+   private def make1() = {
       cells(0).next(Cell.SE) = cells(1)
       cells(1).next(Cell.NW) = cells(0)
       cells(1).next(Cell.SW) = cells(2)
@@ -316,7 +316,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NE) = cells(3)
    }
 
-   def initializePiece2() = {
+   private def make2() = {
       cells(0).next(Cell.W) = cells(1)
       cells(1).next(Cell.E) = cells(0)
       cells(1).next(Cell.SW) = cells(2)
@@ -327,7 +327,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NW) = cells(3)
    }
 
-   def initializePiece3() = {
+   private def make3() = {
       cells(0).next(Cell.SW) = cells(1)
       cells(1).next(Cell.NE) = cells(0)
       cells(1).next(Cell.W) = cells(2)
@@ -340,7 +340,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NW) = cells(3)
    }
 
-   def initializePiece4() = {
+   private def make4() = {
       cells(0).next(Cell.SE) = cells(1)
       cells(1).next(Cell.NW) = cells(0)
       cells(1).next(Cell.SW) = cells(2)
@@ -351,7 +351,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NW) = cells(3)
    }
 
-   def initializePiece5() = {
+   private def make5() = {
       cells(0).next(Cell.SW) = cells(1)
       cells(1).next(Cell.NE) = cells(0)
       cells(0).next(Cell.SE) = cells(2)
@@ -364,7 +364,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NE) = cells(3)
    }
 
-   def initializePiece6() = {
+   private def make6() = {
       cells(0).next(Cell.SW) = cells(1)
       cells(1).next(Cell.NE) = cells(0)
       cells(2).next(Cell.SE) = cells(1)
@@ -375,7 +375,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NE) = cells(3)
    }
 
-   def initializePiece7() = {
+   private def make7() = {
       cells(0).next(Cell.SE) = cells(1)
       cells(1).next(Cell.NW) = cells(0)
       cells(0).next(Cell.SW) = cells(2)
@@ -386,7 +386,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.NW) = cells(3)
    }
 
-   def initializePiece8() = {
+   private def make8() = {
       cells(0).next(Cell.E) = cells(1)
       cells(1).next(Cell.W) = cells(0)
       cells(1).next(Cell.E) = cells(2)
@@ -397,7 +397,7 @@ class Piece(_number: Int) {
       cells(4).next(Cell.W) = cells(3)
    }
 
-   def initializePiece9() = {
+   private def make9() = {
       cells(0).next(Cell.E) = cells(1)
       cells(1).next(Cell.W) = cells(0)
       cells(1).next(Cell.E) = cells(2)
@@ -439,7 +439,7 @@ abstract class Cell {
 
 // BoardCell.scala
 
-class BoardCell(_number: Int) extends Cell {
+final class BoardCell(_number: Int) extends Cell {
    type T = BoardCell
    val number = _number
    var piece: Piece = _
@@ -447,14 +447,14 @@ class BoardCell(_number: Int) extends Cell {
    def isEmpty() = piece == null
    def empty() = piece = null
 
-   def islandSize(): Int = {
+   def contiguousEmptyCells(): Int = {
       if (!marked && isEmpty){
          mark
          var count = 1 
 
          for (val neighbour <- next)
             if (neighbour != null && neighbour.isEmpty) 
-               count = count + neighbour.islandSize
+               count = count + neighbour.contiguousEmptyCells
 
          count } else { 0 }
    }
@@ -465,7 +465,7 @@ class BoardCell(_number: Int) extends Cell {
 
 // PieceCell.scala
 
-class PieceCell extends Cell {
+final class PieceCell extends Cell {
    type T = PieceCell
 
    def flip = {
