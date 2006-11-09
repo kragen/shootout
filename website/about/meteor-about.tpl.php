@@ -16,7 +16,7 @@
  7 7 7 9 9 
 
 </pre>
-<p>Check the <a href="http://shootout.alioth.debian.org/download/meteor-output.txt">237KB output file (Save Target As… Save Link As…)</a> for the exact format we expect.</p>
+<p>Diff against the <a href="http://shootout.alioth.debian.org/download/meteor-output.txt">237KB output file (Save Target As… Save Link As…)</a> to check the exact format we expect.</p>
 
 <h3>Hints</h3>
 <ul><li>use a command line parameter to limit how many solutions will be found before the program halts - and use 0 to trigger a search for all solutions.</li>
