@@ -19,5 +19,7 @@
 <p>Check the <a href="http://shootout.alioth.debian.org/download/meteor-output.txt">237KB output file (Save Target As… Save Link As…)</a> for the exact format we expect.</p>
 
 <h3>Hints</h3>
-<p>  </p>
-<p>The Meteor Puzzle and 3 Java puzzle solvers are described in <a href="http://www-128.ibm.com/developerworks/java/library/j-javaopt/">"Optimize your Java application's performance"</a>.</p>
+<ul><li>use a command line parameter to limit how many solutions will be found before the program halts - and use 0 to trigger a search for all solutions.</li>
+</ul>
+<p>the Meteor Puzzle and 3 Java puzzle solvers are described in <a href="http://www-128.ibm.com/developerworks/java/library/j-javaopt/">"Optimize your Java application's performance"</a>.</p>
+
