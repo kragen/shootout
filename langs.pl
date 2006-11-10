@@ -1201,6 +1201,24 @@
        },
      },
 
+     gambit =>
+     { Lang => 'Scheme',
+       Name => 'Gambit',
+       Status => '+',
+       Home => '',
+       Down => '',
+       Type => '',
+       Note => '',
+       Ext  => 'lisp',
+       Verfun => sub {
+	   my $ver = `$ENV{MZSCHEME} --version`;
+	   $ver =~ s/\n.*//s;
+	   $ver =~ s/Welcome to//s;
+	   $ver =~ s/, Copyright.*//s;
+	   return($ver);
+       },
+     },
+
      'slang' =>
      { Lang => 'S-Lang',
        Name => 'S-Lang',
