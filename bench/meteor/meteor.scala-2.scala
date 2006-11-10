@@ -3,7 +3,9 @@
    contributed by Isaac Gouy
 */
 
-// This is an un-optimised example implementation, it doesn't use caching 
+// This is an example implementation
+// One for-comprehension replaced by a while loop
+// Piece orientations are cached rather than repeatedly computed
 
 
 import scala.collection.mutable._
@@ -156,8 +158,13 @@ final class Board {
       if (p != null && !p.marked && b != null){
          cellsPieceWillFill += b
          p.mark
-         for (val i <- Iterator.range(0,Cell.sides))
+
+         var i = 0
+         while (i < Cell.sides){    
+//         for (val i <- Iterator.range(0,Cell.sides)){   // ~20%
             find(cellsPieceWillFill, p.next(i), b.next(i))
+            i = i + 1
+         }
       }
    }
 
@@ -268,7 +275,7 @@ final class Piece(_number: Int) {
 
    private val cache = 
       for (val i <- Array.range(0,Piece.orientations)) 
-         yield makeOrientation(i)
+         yield pieceOrientation(i)
 
    private var orientation = 0
 
@@ -278,20 +285,23 @@ final class Piece(_number: Int) {
    }
 
 
-   def makeOrientation(k: Int) = {
+   private def pieceOrientation(k: Int) = {
       val cells = for (val i <- Array.range(0,Piece.size)) yield new PieceCell()
       makePiece(number,cells)
 
-      for (val i <- Iterator.range(0,k))
+      var i = 0
+      while (i < k){  
          if (i % Piece.rotations == 0) 
             for (val c <- cells) c.flip
          else
             for (val c <- cells) c.rotate
-      
+
+         i = i + 1
+      }
       cells
    }
 
-   def makePiece(number: Int, cells: Array[PieceCell]) = {
+   private def makePiece(number: Int, cells: Array[PieceCell]) = {
       number match {
          case 0 => make0(cells)
          case 1 => make1(cells)
@@ -306,7 +316,7 @@ final class Piece(_number: Int) {
       }
    }
 
-   def make0(a: Array[PieceCell]) = {
+   private def make0(a: Array[PieceCell]) = {
       a(0).next(Cell.E) = a(1)
       a(1).next(Cell.W) = a(0)
       a(1).next(Cell.E) = a(2)
@@ -317,7 +327,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NW) = a(3)
    }
 
-   def make1(a: Array[PieceCell]) = {
+   private def make1(a: Array[PieceCell]) = {
       a(0).next(Cell.SE) = a(1)
       a(1).next(Cell.NW) = a(0)
       a(1).next(Cell.SW) = a(2)
@@ -328,7 +338,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NE) = a(3)
    }
 
-   def make2(a: Array[PieceCell]) = {
+   private def make2(a: Array[PieceCell]) = {
       a(0).next(Cell.W) = a(1)
       a(1).next(Cell.E) = a(0)
       a(1).next(Cell.SW) = a(2)
@@ -339,7 +349,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NW) = a(3)
    }
 
-   def make3(a: Array[PieceCell]) = {
+   private def make3(a: Array[PieceCell]) = {
       a(0).next(Cell.SW) = a(1)
       a(1).next(Cell.NE) = a(0)
       a(1).next(Cell.W) = a(2)
@@ -352,7 +362,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NW) = a(3)
    }
 
-   def make4(a: Array[PieceCell]) = {
+   private def make4(a: Array[PieceCell]) = {
       a(0).next(Cell.SE) = a(1)
       a(1).next(Cell.NW) = a(0)
       a(1).next(Cell.SW) = a(2)
@@ -363,7 +373,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NW) = a(3)
    }
 
-   def make5(a: Array[PieceCell]) = {
+   private def make5(a: Array[PieceCell]) = {
       a(0).next(Cell.SW) = a(1)
       a(1).next(Cell.NE) = a(0)
       a(0).next(Cell.SE) = a(2)
@@ -376,7 +386,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NE) = a(3)
    }
 
-   def make6(a: Array[PieceCell]) = {
+   private def make6(a: Array[PieceCell]) = {
       a(0).next(Cell.SW) = a(1)
       a(1).next(Cell.NE) = a(0)
       a(2).next(Cell.SE) = a(1)
@@ -387,7 +397,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NE) = a(3)
    }
 
-   def make7(a: Array[PieceCell]) = {
+   private def make7(a: Array[PieceCell]) = {
       a(0).next(Cell.SE) = a(1)
       a(1).next(Cell.NW) = a(0)
       a(0).next(Cell.SW) = a(2)
@@ -398,7 +408,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NW) = a(3)
    }
 
-   def make8(a: Array[PieceCell]) = {
+   private def make8(a: Array[PieceCell]) = {
       a(0).next(Cell.E) = a(1)
       a(1).next(Cell.W) = a(0)
       a(1).next(Cell.E) = a(2)
@@ -409,7 +419,7 @@ final class Piece(_number: Int) {
       a(4).next(Cell.W) = a(3)
    }
 
-   def make9(a: Array[PieceCell]) = {
+   private def make9(a: Array[PieceCell]) = {
       a(0).next(Cell.E) = a(1)
       a(1).next(Cell.W) = a(0)
       a(1).next(Cell.E) = a(2)

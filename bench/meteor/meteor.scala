@@ -3,7 +3,8 @@
    contributed by Isaac Gouy
 */
 
-// This is an un-optimised example implementation, it doesn't use caching 
+// This is an un-optimised example implementation
+// One for-comprehension replaced by a while loop
 
 
 import scala.collection.mutable._
@@ -156,8 +157,13 @@ final class Board {
       if (p != null && !p.marked && b != null){
          cellsPieceWillFill += b
          p.mark
-         for (val i <- Iterator.range(0,Cell.sides))
+
+         var i = 0
+         while (i < Cell.sides){    
+//         for (val i <- Iterator.range(0,Cell.sides)){   // ~20%
             find(cellsPieceWillFill, p.next(i), b.next(i))
+            i = i + 1
+         }
       }
    }
 
