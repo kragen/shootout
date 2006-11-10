@@ -1,0 +1,116 @@
+<span class="slc">;;   The Computer Language Shootout</span>
+<span class="slc">;;   http://shootout.alioth.debian.org/</span>
+<span class="slc">;;   contributed by Wade Humeniuk</span>
+<span class="slc">;;</span>
+<span class="slc">;;   Thanks to James McIlree and Juho Snellman</span>
+<span class="slc">;;   for the previous Lisp SBCL submisson.</span>
+<span class="slc">;;</span>
+<span class="slc">;;   This verson makes use of macros to create</span>
+<span class="slc">;;   a slice-and-dice domain language to</span>
+<span class="slc">;;   analyze the FASTA input.</span>
+<span class="slc">;;</span>
+
+<span class="sym">(</span>declaim <span class="sym">(</span>inline make<span class="sym">-</span>gene<span class="sym">))</span>
+<span class="sym">(</span><span class="kwa">defun</span> make<span class="sym">-</span>gene <span class="sym">(</span>n<span class="sym">)</span>
+  <span class="sym">(</span>coerce <span class="sym">(</span>make<span class="sym">-</span>array n <span class="sym">:</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">'</span>base<span class="sym">-</span>char<span class="sym">) '</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">eval</span><span class="sym">-</span>when <span class="sym">(:</span>compile<span class="sym">-</span>toplevel <span class="sym">:</span><span class="kwa">load</span><span class="sym">-</span>toplevel <span class="sym">:</span>execute<span class="sym">)</span>
+  <span class="sym">(</span><span class="kwa">defun</span> slice<span class="sym">-</span>name <span class="sym">(</span>n<span class="sym">) (</span>intern <span class="sym">(</span>format nil <span class="str">&quot;~A%~A&quot;</span> <span class="sym">'</span>slice n<span class="sym">)))</span>
+  <span class="sym">(</span><span class="kwa">defun</span> freq<span class="sym">-</span>name <span class="sym">(</span>n<span class="sym">) (</span>intern <span class="sym">(</span>format nil <span class="str">&quot;~A%~A&quot;</span> <span class="sym">'</span>freq n<span class="sym">)))</span>
+  <span class="sym">(</span><span class="kwa">defun</span> i<span class="sym">-</span>name <span class="sym">(</span>n<span class="sym">) (</span>intern <span class="sym">(</span>format nil <span class="str">&quot;~A%~A&quot;</span> <span class="sym">'</span>i n<span class="sym">)))</span>
+
+  <span class="sym">(</span><span class="kwa">defun</span> %single<span class="sym">-</span>slicer <span class="sym">()</span>
+    <span class="sym">`(</span>incf <span class="sym">(</span>the fixnum <span class="sym">(</span>gethash fasta%nucleotide <span class="sym">,(</span>freq<span class="sym">-</span>name <span class="num">1</span><span class="sym">)</span> <span class="num">0</span><span class="sym">))))</span>
+
+  <span class="sym">(</span><span class="kwa">defun</span> %slicer <span class="sym">(</span>n<span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(=</span> n <span class="num">1</span><span class="sym">)</span>
+	<span class="sym">(</span>%single<span class="sym">-</span>slicer<span class="sym">)</span>
+	<span class="sym">(</span>let <span class="sym">((</span>slice <span class="sym">(</span>slice<span class="sym">-</span>name n<span class="sym">))</span>
+	      <span class="sym">(</span>freq <span class="sym">(</span>freq<span class="sym">-</span>name n<span class="sym">))</span>
+	      <span class="sym">(</span>i <span class="sym">(</span>i<span class="sym">-</span>name n<span class="sym">)))</span>
+	  <span class="sym">`(</span><span class="kwa">progn</span>
+	    <span class="sym">(</span>setf <span class="sym">(</span>schar <span class="sym">,</span>slice <span class="sym">,</span>i<span class="sym">)</span> fasta%nucleotide<span class="sym">)</span>
+	    <span class="sym">(</span>incf <span class="sym">,</span>i<span class="sym">)</span>
+	    <span class="sym">(</span>when <span class="sym">(= ,</span>i <span class="sym">,</span>n<span class="sym">)</span>
+	      <span class="sym">(</span>when <span class="sym">(= (</span>the fixnum <span class="sym">(</span>incf <span class="sym">(</span>the fixnum <span class="sym">(</span>gethash <span class="sym">,</span>slice <span class="sym">,</span>freq <span class="num">0</span><span class="sym">))))</span> <span class="num">1</span><span class="sym">)</span>
+		<span class="sym">(</span>setf <span class="sym">,</span>slice <span class="sym">(</span>copy<span class="sym">-</span>seq <span class="sym">,</span>slice<span class="sym">)))</span>
+	      <span class="sym">(</span>dotimes <span class="sym">(</span>j <span class="sym">,(</span><span class="num">1</span><span class="sym">-</span> n<span class="sym">))</span>
+		<span class="sym">(</span>setf <span class="sym">(</span>schar <span class="sym">,</span>slice j<span class="sym">) (</span>schar <span class="sym">,</span>slice <span class="sym">(</span><span class="num">1</span><span class="sym">+</span> j<span class="sym">))))</span>
+	      <span class="sym">(</span>decf <span class="sym">,</span>i<span class="sym">))))))</span>
+<span class="sym">)</span>
+
+
+<span class="sym">(</span><span class="kwa">defun</span> discard<span class="sym">-</span>data<span class="sym">-</span>header <span class="sym">(</span>stream<span class="sym">)</span>
+  <span class="sym">(</span>loop for <span class="kwa">line</span> <span class="sym">= (</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil nil<span class="sym">)</span>
+	<span class="kwa">while</span> <span class="sym">(</span><span class="kwa">and line</span> <span class="sym">(</span>string<span class="sym">/=</span> <span class="str">&quot;&gt;THREE&quot;</span> <span class="kwa">line</span> <span class="sym">:</span>end2 <span class="num">6</span><span class="sym">))))</span>
+
+<span class="sym">(</span>declaim <span class="sym">(</span>inline <span class="kwa">read</span><span class="sym">-</span>data<span class="sym">-</span><span class="kwa">line</span><span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun read</span><span class="sym">-</span>data<span class="sym">-</span><span class="kwa">line</span> <span class="sym">(</span>stream<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>safety <span class="num">1</span><span class="sym">)))</span>
+  <span class="sym">(</span>let <span class="sym">((</span><span class="kwa">line</span> <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil nil<span class="sym">)))</span>
+    <span class="sym">(</span>when <span class="sym">(</span><span class="kwa">and line</span> <span class="sym">(</span>char<span class="sym">/=</span> #\&gt; <span class="sym">(</span>schar <span class="kwa">line</span> <span class="num">0</span><span class="sym">)))</span>
+      <span class="kwa">line</span><span class="sym">)))</span>
+
+<span class="sym">(</span>defmacro slice<span class="sym">-</span><span class="kwa">and</span><span class="sym">-</span>dice <span class="sym">((</span>stream sizes<span class="sym">) &amp;</span>body body<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>slices <span class="sym">(</span>loop for s in sizes collect <span class="sym">`(,(</span>slice<span class="sym">-</span>name s<span class="sym">) (</span>make<span class="sym">-</span>gene <span class="sym">,</span>s<span class="sym">))))</span>
+	<span class="sym">(</span>freqs <span class="sym">(</span>loop for s in sizes collect <span class="sym">`(,(</span>freq<span class="sym">-</span>name s<span class="sym">) (</span>make<span class="sym">-</span>hash<span class="sym">-</span>table <span class="sym">:</span>test #<span class="sym">'</span><span class="kwa">equal</span><span class="sym">))))</span>
+	<span class="sym">(</span>is <span class="sym">(</span>loop for s in sizes collect <span class="sym">`(,(</span>i<span class="sym">-</span>name s<span class="sym">)</span> <span class="num">0</span><span class="sym">)))</span>
+	<span class="sym">(</span>slicers <span class="sym">(</span>loop for s in sizes collect <span class="sym">(</span>%slicer s<span class="sym">)))</span>
+	<span class="sym">(</span><span class="kwa">line</span> <span class="sym">(</span>gensym <span class="str">&quot;LINE&quot;</span><span class="sym">)))</span>
+    <span class="sym">`(</span>let <span class="sym">(,</span>&#64;slices <span class="sym">,</span>&#64;freqs <span class="sym">,</span>&#64;is<span class="sym">)</span>
+      <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">) (</span>debug <span class="num">0</span><span class="sym">))</span>
+               <span class="sym">(</span><span class="kwa">type</span> simple<span class="sym">-</span>base<span class="sym">-</span>string <span class="sym">,</span>&#64;<span class="sym">(</span><span class="kwa">mapcar</span> <span class="sym">'</span>first slices<span class="sym">))</span>
+               <span class="sym">(</span><span class="kwa">type</span> hash<span class="sym">-</span>table <span class="sym">,</span>&#64;<span class="sym">(</span><span class="kwa">mapcar</span> <span class="sym">'</span>first freqs<span class="sym">))</span>
+               <span class="sym">(</span><span class="kwa">type</span> fixnum <span class="sym">,</span>&#64;<span class="sym">(</span><span class="kwa">mapcar</span> <span class="sym">'</span>first is<span class="sym">))</span>
+               <span class="sym">(</span>ignorable i%<span class="num">1</span> slice%<span class="num">1</span><span class="sym">))</span>
+      <span class="sym">(</span>loop for <span class="sym">,</span><span class="kwa">line</span> <span class="sym">= (</span><span class="kwa">read</span><span class="sym">-</span>data<span class="sym">-</span><span class="kwa">line</span> <span class="sym">,</span>stream<span class="sym">)</span>
+            <span class="kwa">while</span> <span class="sym">,</span><span class="kwa">line</span> do
+            <span class="sym">(</span>loop for fasta%nucleotide of<span class="sym">-</span><span class="kwa">type</span> base<span class="sym">-</span>char across <span class="sym">,</span><span class="kwa">line</span> do
+	          <span class="sym">(</span>setf fasta%nucleotide <span class="sym">(</span>char<span class="sym">-</span>upcase fasta%nucleotide<span class="sym">))</span>
+	          <span class="sym">,</span>&#64;slicers<span class="sym">))</span>
+      <span class="sym">,</span>&#64;body<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun print</span><span class="sym">-</span>precentages <span class="sym">(</span>freq<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>safety <span class="num">1</span><span class="sym">)))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>sorted<span class="sym">-</span>frequencies<span class="sym">)</span>
+        <span class="sym">(</span>sum <span class="num">0</span><span class="sym">))</span>
+    <span class="sym">(</span>maphash #<span class="sym">'(</span><span class="kwa">lambda</span> <span class="sym">(</span>k v<span class="sym">)</span>
+		 <span class="sym">(</span>incf sum v<span class="sym">)</span>
+		 <span class="sym">(</span>push <span class="sym">(</span><span class="kwa">cons</span> k v<span class="sym">)</span> sorted<span class="sym">-</span>frequencies<span class="sym">))</span>
+	     freq<span class="sym">)</span>
+    <span class="sym">(</span>setf sorted<span class="sym">-</span>frequencies
+	  <span class="sym">(</span>sort sorted<span class="sym">-</span>frequencies
+		#<span class="sym">'(</span><span class="kwa">lambda</span> <span class="sym">(</span>v1 v2<span class="sym">)</span>
+		    <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((&gt; (</span><span class="kwa">cdr</span> v1<span class="sym">) (</span><span class="kwa">cdr</span> v2<span class="sym">))</span> t<span class="sym">)</span>
+			  <span class="sym">((&lt; (</span><span class="kwa">cdr</span> v1<span class="sym">) (</span><span class="kwa">cdr</span> v2<span class="sym">))</span> nil<span class="sym">)</span>
+			  <span class="sym">(</span>t <span class="sym">(</span>string<span class="sym">&lt; (</span><span class="kwa">car</span> v1<span class="sym">) (</span><span class="kwa">car</span> v2<span class="sym">)))))))</span>
+    <span class="sym">(</span>dolist <span class="sym">(</span>entry sorted<span class="sym">-</span>frequencies<span class="sym">)</span>
+      <span class="sym">(</span>format t <span class="str">&quot;~A ~,3F~%&quot;</span>
+	      <span class="sym">(</span><span class="kwa">car</span> entry<span class="sym">)</span>
+	      <span class="sym">(* (/ (</span><span class="kwa">cdr</span> entry<span class="sym">) (</span><span class="kwa">float</span> sum<span class="sym">))</span> <span class="num">100.0</span><span class="sym">)))</span>
+    <span class="sym">(</span><span class="kwa">terpri</span><span class="sym">)))</span>
+
+<span class="sym">(</span>defmacro <span class="kwa">print</span><span class="sym">-</span>occurence <span class="sym">(</span>gene<span class="sym">)</span>
+  <span class="sym">`(</span>format t <span class="str">&quot;~A~C~A~%&quot;</span> <span class="sym">(</span>gethash <span class="sym">,</span>gene <span class="sym">,(</span>freq<span class="sym">-</span>name <span class="sym">(</span><span class="kwa">length</span> gene<span class="sym">))</span> <span class="num">0</span><span class="sym">)</span> #\Tab <span class="sym">,</span>gene<span class="sym">))</span>
+
+<span class="sym">(</span>defmacro <span class="kwa">print</span><span class="sym">-</span>occurences <span class="sym">(&amp;</span>rest genes<span class="sym">)</span>
+  <span class="sym">`(</span><span class="kwa">progn</span>
+    <span class="sym">,</span>&#64;<span class="sym">(</span><span class="kwa">mapcar</span> <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>gene<span class="sym">) `(</span><span class="kwa">print</span><span class="sym">-</span>occurence <span class="sym">,</span>gene<span class="sym">))</span> genes<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">()</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">0</span><span class="sym">) (</span>safety <span class="num">1</span><span class="sym">)))</span>
+  <span class="sym">(</span>discard<span class="sym">-</span>data<span class="sym">-</span>header <span class="sym">*</span>standard<span class="sym">-</span>input<span class="sym">*)</span>
+  <span class="sym">(</span>slice<span class="sym">-</span><span class="kwa">and</span><span class="sym">-</span>dice <span class="sym">(*</span>standard<span class="sym">-</span>input<span class="sym">* (</span><span class="num">1 2 3 4 6 12 18</span><span class="sym">))</span>
+    <span class="sym">(</span><span class="kwa">print</span><span class="sym">-</span>precentages freq%<span class="num">1</span><span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">print</span><span class="sym">-</span>precentages freq%<span class="num">2</span><span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">print</span><span class="sym">-</span>occurences <span class="str">&quot;GGT&quot;</span> <span class="str">&quot;GGTA&quot;</span> <span class="str">&quot;GGTATT&quot;</span> <span class="str">&quot;GGTATTTTAATT&quot;</span> <span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> test <span class="sym">()</span>
+  <span class="sym">(</span>with<span class="sym">-</span><span class="kwa">open</span><span class="sym">-</span>file <span class="sym">(*</span>standard<span class="sym">-</span>input<span class="sym">*</span> <span class="str">&quot;/home/wade/lisp/knucleotide/knucleotide-input.txt&quot;</span>
+				    <span class="sym">:</span>direction <span class="sym">:</span>input<span class="sym">)</span>
+    <span class="sym">(</span>with<span class="sym">-</span><span class="kwa">open</span><span class="sym">-</span>file <span class="sym">(*</span>standard<span class="sym">-</span>output<span class="sym">*</span> <span class="str">&quot;/home/wade/lisp/knucleotide/output.txt&quot;</span>
+				       <span class="sym">:</span>direction <span class="sym">:</span>output
+				       <span class="sym">:</span><span class="kwa">if</span><span class="sym">-</span>does<span class="sym">-</span><span class="kwa">not</span><span class="sym">-</span>exist <span class="sym">:</span>create
+				       <span class="sym">:</span><span class="kwa">if</span><span class="sym">-</span>exists <span class="sym">:</span>supersede<span class="sym">)</span>
+      <span class="sym">(</span>main<span class="sym">))))</span>

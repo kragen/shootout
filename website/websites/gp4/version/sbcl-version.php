@@ -1,1 +1,1 @@
-<p>This is SBCL 0.9.17, an implementation of ANSI Common Lisp.</p>
+<p>This is SBCL 0.9.18, an implementation of ANSI Common Lisp.</p>
