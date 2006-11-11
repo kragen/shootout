@@ -105,7 +105,7 @@ final class FastaOutputStream(in: OutputStream)
 
    def writeReverseComplement(sequence: Pair[Line,LineStack]) = {
 
-      def inplaceComplementReverse(b: Array[byte]){
+      def inplaceComplementReverse(b: Array[byte]) = {
          var i = 0 
          var j = b.length - 1
          while (i < j){

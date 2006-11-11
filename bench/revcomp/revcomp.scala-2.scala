@@ -55,7 +55,7 @@ object revcomp {
    def complementReverseWrite(desc: String, lines: LineStack, 
          w: BufferedOutputStream) = {
 
-      def inplaceComplementReverse(b: Array[byte]){
+      def inplaceComplementReverse(b: Array[byte]) = {
          var i = 0 
          var j = b.length - 1
          while (i < j){
