@@ -4,7 +4,6 @@
 */
 
 // This is an un-optimised example implementation
-// One for-comprehension replaced by a while loop
 
 
 import scala.collection.mutable._
@@ -158,12 +157,8 @@ final class Board {
          cellsPieceWillFill += b
          p.mark
 
-         var i = 0
-         while (i < Cell.sides){    
-//         for (val i <- Iterator.range(0,Cell.sides)){   // ~20%
+         for (val i <- Iterator.range(0,Cell.sides))
             find(cellsPieceWillFill, p.next(i), b.next(i))
-            i = i + 1
-         }
       }
    }
 
