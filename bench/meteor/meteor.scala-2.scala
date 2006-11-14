@@ -305,7 +305,7 @@ final class Piece(_number: Int) {
    def unmark() = {
       var i = 0
       while (i < cells.length){    
-         cells(i).unmark
+         cells()(i).unmark
          i = i + 1
       }
    }
