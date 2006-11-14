@@ -31,34 +31,41 @@ final class Solver () {
    private var solutions = new ListBuffer[String]
    private val board = new Board()
 
-   private val pieces = new ArrayBuffer[Piece] ++ 
-      Array( new Piece(0), new Piece(1), new Piece(2), new Piece(3), new Piece(4), 
-             new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
+   val pieces = Array( 
+      new Piece(0), new Piece(1), new Piece(2), new Piece(3), new Piece(4), 
+      new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
+
+   var count = pieces.length
+   val unplaced = new BitSet(10)
+   { unplaced ++= Iterator.range(0,count) }
 
 
    def findSolutions(): Unit = {
       if (weHaveEnoughSolutions) return
 
-      if (pieces.length > 0){
+      if (count > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
          for (val k <- Iterator.range(0,pieces.length)){
-            val p = pieces(k)
-            pieces.remove(k)
+            if (unplaced.contains(k)){
+               unplaced -= k
+               count = count - 1
 
-            for (val i <- Iterator.range(0,Piece.orientations)){
-               val piece = p.nextOrientation
+               for (val i <- Iterator.range(0,Piece.orientations)){
+                  val piece = pieces(k).nextOrientation
 
-               for (val j <- Iterator.range(0,Piece.size)){
-                  if (board.add(j,emptyCellIndex,piece)) {
+                  for (val j <- Iterator.range(0,Piece.size)){
+                     if (board.add(j,emptyCellIndex,piece)) {
 
-                     if (!shouldPrune) findSolutions
+                        if (!shouldPrune) findSolutions
 
-                     board.remove(piece)
+                        board.remove(piece)
+                     }
                   }
                }
+               unplaced += k
+               count = count + 1
             }
-            pieces.insert(k,p)
          }
       }
       else {
@@ -116,6 +123,9 @@ object Board {
 final class Board { 
    val cells = boardCells()
 
+   val cellsPieceWillFill = new Array[BoardCell](Piece.size)
+   var cellCount = 0
+
    def unmark() = for (val c <- cells) c.unmark
 
    def asString() = 
@@ -129,17 +139,15 @@ final class Board {
    }
 
 
-   type CellBuffer = ListBuffer[BoardCell]
-
    def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
       val pCell = p.cells(pieceIndex)
       val bCell = cells(boardIndex)
-      val cellsPieceWillFill = new CellBuffer
+      cellCount = 0
       p.unmark
     
       find(cellsPieceWillFill,pCell,bCell)
 
-      val boardHasSpace = cellsPieceWillFill.length == Piece.size && 
+      val boardHasSpace = cellCount == Piece.size && 
          cellsPieceWillFill.forall(c => c.isEmpty)  
 
       if (boardHasSpace) cellsPieceWillFill.foreach(c => c.piece = p) 
@@ -150,11 +158,12 @@ final class Board {
    def remove(piece: Piece) = for (val c <- cells; c.piece == piece) c.empty
 
 
-   private def find(cellsPieceWillFill: CellBuffer, p: PieceCell, 
-         b: BoardCell): Unit = {
+   private def find(cellsPieceWillFill: Array[BoardCell], 
+         p: PieceCell, b: BoardCell): Unit = {
 
       if (p != null && !p.marked && b != null){
-         cellsPieceWillFill += b
+         cellsPieceWillFill(cellCount) = b
+         cellCount = cellCount + 1
          p.mark
 
          for (val i <- Iterator.range(0,Cell.sides))
