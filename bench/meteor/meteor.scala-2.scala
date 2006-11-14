@@ -301,7 +301,14 @@ object Piece {
 
 final class Piece(_number: Int) {
    val number = _number
-   def unmark() = for (val c <- cells) c.unmark
+
+   def unmark() = {
+      var i = 0
+      while (i < cells.length){    
+         cells(i).unmark
+         i = i + 1
+      }
+   }
 
    def cells() = cache(orientation)
 
