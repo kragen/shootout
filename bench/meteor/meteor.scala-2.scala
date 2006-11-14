@@ -3,8 +3,8 @@
    contributed by Isaac Gouy
 */
 
-// This is an example implementation
-// One for-comprehension replaced by a while loop
+// This is an un-optimised example implementation
+// Most for-comprehension replaced by while loops
 // Piece orientations are cached rather than repeatedly computed
 
 
@@ -33,34 +33,44 @@ final class Solver () {
    private var solutions = new ListBuffer[String]
    private val board = new Board()
 
-   private val pieces = new ArrayBuffer[Piece] ++ 
-      Array( new Piece(0), new Piece(1), new Piece(2), new Piece(3), new Piece(4), 
-             new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
+   val pieces = Array( 
+      new Piece(0), new Piece(1), new Piece(2), new Piece(3), new Piece(4), 
+      new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
+
+   val unplaced = new BitSet(pieces.length)
+   { unplaced ++= Iterator.range(0,unplaced.capacity) }
 
 
    def findSolutions(): Unit = {
       if (weHaveEnoughSolutions) return
 
-      if (pieces.length > 0){
+      if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
-         for (val k <- Iterator.range(0,pieces.length)){
-            val p = pieces(k)
-            pieces.remove(k)
+         var k = 0
+         while (k < pieces.length){
+            if (unplaced.contains(k)){
+               unplaced -= k
 
-            for (val i <- Iterator.range(0,Piece.orientations)){
-               val piece = p.nextOrientation
+               var i = 0
+               while (i < Piece.orientations){
+                  val piece = pieces(k).nextOrientation
 
-               for (val j <- Iterator.range(0,Piece.size)){
-                  if (board.add(j,emptyCellIndex,piece)) {
+                  var j = 0
+                  while (j < Piece.size){
+                     if (board.add(j,emptyCellIndex,piece)) {
 
-                     if (!shouldPrune) findSolutions
+                        if (!shouldPrune) findSolutions
 
-                     board.remove(piece)
+                        board.remove(piece)
+                     }
+                     j = j + 1
                   }
+                  i = i + 1
                }
+               unplaced += k
             }
-            pieces.insert(k,p)
+            k = k + 1
          }
       }
       else {
@@ -74,11 +84,15 @@ final class Solver () {
 
    private def puzzleSolved() = solutions += board.asString
 
-   private def shouldPrune() = {
+   private def shouldPrune(): Boolean = {
       board.unmark
-      !board.cells.forall(c => c.contiguousEmptyCells % Piece.size == 0) 
+      var i = 0
+      while (i < board.cells.length){    
+         if (board.cells(i).contiguousEmptyCells % Piece.size != 0) return true 
+         i = i + 1
+      }
+      false
    }
-
 
    def printSolutions() = {
 
@@ -87,8 +101,10 @@ final class Solver () {
          var i = 0
          while (i < s.length){
             if (indent) Console.print(' ')
-            for (val j <- Iterator.range(0,Board.cols)){
+            var j = 0
+            while (j < Board.cols){
                Console.print(s.charAt(i)); Console.print(' ')
+               j = j + 1
                i = i + 1
             }
             Console.print('\n')
@@ -118,7 +134,16 @@ object Board {
 final class Board { 
    val cells = boardCells()
 
-   def unmark() = for (val c <- cells) c.unmark
+   val cellsPieceWillFill = new Array[BoardCell](Piece.size)
+   var cellCount = 0
+
+   def unmark() = {
+      var i = 0
+      while (i < cells.length){    
+         cells(i).unmark
+         i = i + 1
+      }
+   }
 
    def asString() = 
       new String( cells map( 
@@ -130,39 +155,46 @@ final class Board {
       _cells.indexOf(c => c.isEmpty)
    }
 
-
-   type CellBuffer = ListBuffer[BoardCell]
-
-   def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
-      val pCell = p.cells()(pieceIndex)
-      val bCell = cells(boardIndex)
-      val cellsPieceWillFill = new CellBuffer
+   def add(pieceIndex: Int, boardIndex: Int, p: Piece): Boolean = {
+      cellCount = 0
       p.unmark
     
-      find(cellsPieceWillFill,pCell,bCell)
+      find(p.cells()(pieceIndex), cells(boardIndex))
 
-      val boardHasSpace = cellsPieceWillFill.length == Piece.size && 
-         cellsPieceWillFill.forall(c => c.isEmpty)  
+      if (cellCount != Piece.size) return false
 
-      if (boardHasSpace) cellsPieceWillFill.foreach(c => c.piece = p) 
+      var i = 0
+      while (i < cellCount){
+         if (!cellsPieceWillFill(i).isEmpty) return false
+         i = i + 1
+      }
 
-      boardHasSpace
+      i = 0
+      while (i < cellCount){    
+         cellsPieceWillFill(i).piece  = p
+         i = i + 1
+      }
+
+      true
    }
 
-   def remove(piece: Piece) = for (val c <- cells; c.piece == piece) c.empty
+   def remove(piece: Piece) = {
+      var i = 0
+      while (i < cells.length){  
+         if (cells(i).piece == piece) cells(i).empty 
+         i = i + 1
+      }
+   }
 
-
-   private def find(cellsPieceWillFill: CellBuffer, p: PieceCell, 
-         b: BoardCell): Unit = {
-
+   private def find(p: PieceCell, b: BoardCell): Unit = {
       if (p != null && !p.marked && b != null){
-         cellsPieceWillFill += b
+         cellsPieceWillFill(cellCount) = b
+         cellCount = cellCount + 1
          p.mark
 
          var i = 0
          while (i < Cell.sides){    
-//         for (val i <- Iterator.range(0,Cell.sides)){   // ~20%
-            find(cellsPieceWillFill, p.next(i), b.next(i))
+            find(p.next(i), b.next(i))
             i = i + 1
          }
       }
@@ -431,7 +463,6 @@ final class Piece(_number: Int) {
       a(4).next(Cell.NW) = a(3)
       a(3).next(Cell.SE) = a(4)
    }
-
 }
 
 
@@ -474,9 +505,12 @@ final class BoardCell(_number: Int) extends Cell {
          mark
          var count = 1 
 
-         for (val neighbour <- next)
-            if (neighbour != null && neighbour.isEmpty) 
-               count = count + neighbour.contiguousEmptyCells
+         var i = 0
+         while (i < next.length){      
+            if (next(i) != null && next(i).isEmpty) 
+               count = count + next(i).contiguousEmptyCells
+            i = i + 1
+         }
 
          count } else { 0 }
    }
@@ -514,3 +548,7 @@ final class PieceCell extends Cell {
       next(Cell.SE) = swap
    }
 }
+
+
+
+

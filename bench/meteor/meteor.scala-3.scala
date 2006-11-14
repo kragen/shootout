@@ -36,22 +36,20 @@ final class Solver () {
       new Piece(0), new Piece(1), new Piece(2), new Piece(3), new Piece(4), 
       new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
 
-   var count = pieces.length
-   val unplaced = new BitSet(10)
-   { unplaced ++= Iterator.range(0,count) }
+   val unplaced = new BitSet(pieces.length)
+   { unplaced ++= Iterator.range(0,unplaced.capacity) }
 
 
    def findSolutions(): Unit = {
       if (weHaveEnoughSolutions) return
 
-      if (count > 0){
+      if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
          var k = 0
          while (k < pieces.length){
             if (unplaced.contains(k)){
                unplaced -= k
-               count = count - 1
 
                var i = 0
                while (i < Piece.orientations){
@@ -70,7 +68,6 @@ final class Solver () {
                   i = i + 1
                }
                unplaced += k
-               count = count + 1
             }
             k = k + 1
          }
@@ -158,12 +155,10 @@ final class Board {
    }
 
    def add(pieceIndex: Int, boardIndex: Int, p: Piece): Boolean = {
-      val pCell = p.cells(pieceIndex)
-      val bCell = cells(boardIndex)
       cellCount = 0
       p.unmark
     
-      find(cellsPieceWillFill,pCell,bCell)
+      find(p.cells(pieceIndex), cells(boardIndex))
 
       if (cellCount != Piece.size) return false
 
@@ -190,9 +185,7 @@ final class Board {
       }
    }
 
-   private def find(cellsPieceWillFill: Array[BoardCell], 
-         p: PieceCell, b: BoardCell): Unit = {
-
+   private def find(p: PieceCell, b: BoardCell): Unit = {
       if (p != null && !p.marked && b != null){
          cellsPieceWillFill(cellCount) = b
          cellCount = cellCount + 1
@@ -200,7 +193,7 @@ final class Board {
 
          var i = 0
          while (i < Cell.sides){    
-            find(cellsPieceWillFill, p.next(i), b.next(i))
+            find(p.next(i), b.next(i))
             i = i + 1
          }
       }
