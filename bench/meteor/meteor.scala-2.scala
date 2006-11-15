@@ -3,7 +3,6 @@
    contributed by Isaac Gouy
 */
 
-// This is an un-optimised example implementation
 // Most for-comprehension replaced by while loops
 
 
@@ -25,9 +24,10 @@ object meteor {
 
 final class Solver (_n: Int) {
    private val n = _n
-   private var countdown = n
-   private var first: String = null
-   private var last: String = null
+   private var count = 0
+   private var first = "55555555555555555555555555555555555555555555555555"
+   private var last =  first
+
    private val board = new Board()
 
    val pieces = Array( 
@@ -39,7 +39,7 @@ final class Solver (_n: Int) {
 
 
    def findSolutions(): Unit = {
-      if (countdown == 0) return
+      if (count == n) return
 
       if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
@@ -71,11 +71,8 @@ final class Solver (_n: Int) {
 
    private def puzzleSolved() = {
       val b = board.asString
-      if (first == null){ first = b; last = b }
-      else {
-         if (b < first){ first = b } else { if (b > last){ last = b } }
-      }
-      countdown = countdown - 1
+      if (b < first){ first = b } else { if (b > last){ last = b } }
+      count = count + 1
    }
 
    private def shouldPrune() = {
@@ -101,7 +98,7 @@ final class Solver (_n: Int) {
          Console.print('\n')
       }
 
-      Console.print(n - countdown + " solutions found\n\n")
+      Console.print(count + " solutions found\n\n")
       printBoard(first)
       printBoard(last)
    }
