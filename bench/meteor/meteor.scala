@@ -27,8 +27,8 @@ object meteor {
 
 final class Solver () {
    var enoughSolutions = 0
-
-   private var solutions = new ListBuffer[String]
+   private var solutions: List[String] = List()
+   private var count = 0
    private val board = new Board()
 
    val pieces = Array( 
@@ -71,9 +71,12 @@ final class Solver () {
    }
 
 
-   private def weHaveEnoughSolutions() = solutions.length >= enoughSolutions 
+   private def weHaveEnoughSolutions() = enoughSolutions == 0
 
-   private def puzzleSolved() = solutions += board.asString
+   private def puzzleSolved() = {
+      solutions = board.asString :: solutions
+      enoughSolutions = enoughSolutions - 1
+   }
 
    private def shouldPrune() = {
       board.unmark
@@ -98,10 +101,10 @@ final class Solver () {
          Console.print('\n')
       }
 
-      val s = solutions.toList .sort((a,b) => a < b)
-      Console.print(s.length + " solutions found\n\n")
-      printBoard(s.head)
-      printBoard(s.last)
+      solutions = solutions .sort((a,b) => a < b)
+      Console.print(solutions.length + " solutions found\n\n")
+      printBoard(solutions.head)
+      printBoard(solutions.last)
    }
 
 }
