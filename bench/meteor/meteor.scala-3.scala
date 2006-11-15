@@ -12,7 +12,7 @@ import scala.collection.mutable._
 
 object meteor {
    def main(args: Array[String]) = {
-      val n = if (args.length > 0) Integer.parseInt(args(0)) else 0
+      val n = Integer.parseInt(args(0))
 
       val solver = new Solver
       solver.enoughSolutions = n
@@ -79,8 +79,7 @@ final class Solver () {
    }
 
 
-   private def weHaveEnoughSolutions() = 
-      enoughSolutions > 0 && solutions.length >= enoughSolutions 
+   private def weHaveEnoughSolutions() = solutions.length >= enoughSolutions 
 
    private def puzzleSolved() = solutions += board.asString
 
@@ -113,8 +112,10 @@ final class Solver () {
          Console.print('\n')
       }
 
-      Console.print(solutions.length + " solutions found\n\n")
-      solutions.toList .sort((a,b) => a < b) .foreach(s => printBoard(s))
+      val s = solutions.toList .sort((a,b) => a < b)
+      Console.print(s.length + " solutions found\n\n")
+      printBoard(s.head)
+      printBoard(s.last)
    }
 
 }
