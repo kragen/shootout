@@ -11,10 +11,7 @@ import scala.collection.mutable._
 
 object meteor {
    def main(args: Array[String]) = {
-      val n = Integer.parseInt(args(0))
-
-      val solver = new Solver
-      solver.enoughSolutions = n
+      val solver = new Solver( Integer.parseInt(args(0)) )
       solver.findSolutions
       solver.printSolutions
    }
@@ -26,9 +23,11 @@ object meteor {
 // Solver.scala 
 // import scala.collection.mutable._
 
-final class Solver () {
-   var enoughSolutions = 0
-   private var solutions: List[String] = List()
+final class Solver (_n: Int) {
+   private val n = _n
+   private var countdown = n
+   private var first: String = null
+   private var last: String = null
    private val board = new Board()
 
    val pieces = Array( 
@@ -40,35 +39,29 @@ final class Solver () {
 
 
    def findSolutions(): Unit = {
-      if (weHaveEnoughSolutions) return
+      if (countdown == 0) return
 
       if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
-         var k = 0
-         while (k < pieces.length){
+         for (val k <- Iterator.range(0,pieces.length)){
             if (unplaced.contains(k)){
                unplaced -= k
 
-               var i = 0
-               while (i < Piece.orientations){
+               for (val i <- Iterator.range(0,Piece.orientations)){
                   val piece = pieces(k).nextOrientation
 
-                  var j = 0
-                  while (j < Piece.size){
+                  for (val j <- Iterator.range(0,Piece.size)){
                      if (board.add(j,emptyCellIndex,piece)) {
 
                         if (!shouldPrune) findSolutions
 
                         board.remove(piece)
                      }
-                     j = j + 1
                   }
-                  i = i + 1
                }
                unplaced += k
             }
-            k = k + 1
          }
       }
       else {
@@ -76,23 +69,20 @@ final class Solver () {
       }
    }
 
-
-   private def weHaveEnoughSolutions() = enoughSolutions == 0
-
    private def puzzleSolved() = {
-      solutions = board.asString :: solutions
-      enoughSolutions = enoughSolutions - 1
+      val b = board.asString
+      if (first == null){ first = b; last = b }
+      else {
+         if (b < first){ first = b } else { if (b > last){ last = b } }
+      }
+      countdown = countdown - 1
    }
 
-   private def shouldPrune(): Boolean = {
+   private def shouldPrune() = {
       board.unmark
-      var i = 0
-      while (i < board.cells.length){    
-         if (board.cells(i).contiguousEmptyCells % Piece.size != 0) return true 
-         i = i + 1
-      }
-      false
+      !board.cells.forall(c => c.contiguousEmptyCells % Piece.size == 0) 
    }
+
 
    def printSolutions() = {
 
@@ -101,10 +91,8 @@ final class Solver () {
          var i = 0
          while (i < s.length){
             if (indent) Console.print(' ')
-            var j = 0
-            while (j < Board.cols){
+            for (val j <- Iterator.range(0,Board.cols)){
                Console.print(s.charAt(i)); Console.print(' ')
-               j = j + 1
                i = i + 1
             }
             Console.print('\n')
@@ -113,13 +101,13 @@ final class Solver () {
          Console.print('\n')
       }
 
-      solutions = solutions .sort((a,b) => a < b)
-      Console.print(solutions.length + " solutions found\n\n")
-      printBoard(solutions.head)
-      printBoard(solutions.last)
+      Console.print(n - countdown + " solutions found\n\n")
+      printBoard(first)
+      printBoard(last)
    }
 
 }
+
 
 
 

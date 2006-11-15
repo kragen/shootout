@@ -10,10 +10,7 @@ import scala.collection.mutable._
 
 object meteor {
    def main(args: Array[String]) = {
-      val n = Integer.parseInt(args(0))
-
-      val solver = new Solver
-      solver.enoughSolutions = n
+      val solver = new Solver( Integer.parseInt(args(0)) )
       solver.findSolutions
       solver.printSolutions
    }
@@ -25,10 +22,11 @@ object meteor {
 // Solver.scala 
 // import scala.collection.mutable._
 
-final class Solver () {
-   var enoughSolutions = 0
-   private var solutions: List[String] = List()
-   private var count = 0
+final class Solver (_n: Int) {
+   private val n = _n
+   private var countdown = n
+   private var first: String = null
+   private var last: String = null
    private val board = new Board()
 
    val pieces = Array( 
@@ -40,7 +38,7 @@ final class Solver () {
 
 
    def findSolutions(): Unit = {
-      if (weHaveEnoughSolutions) return
+      if (countdown == 0) return
 
       if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
@@ -70,12 +68,13 @@ final class Solver () {
       }
    }
 
-
-   private def weHaveEnoughSolutions() = enoughSolutions == 0
-
    private def puzzleSolved() = {
-      solutions = board.asString :: solutions
-      enoughSolutions = enoughSolutions - 1
+      val b = board.asString
+      if (first == null){ first = b; last = b }
+      else {
+         if (b < first){ first = b } else { if (b > last){ last = b } }
+      }
+      countdown = countdown - 1
    }
 
    private def shouldPrune() = {
@@ -101,10 +100,9 @@ final class Solver () {
          Console.print('\n')
       }
 
-      solutions = solutions .sort((a,b) => a < b)
-      Console.print(solutions.length + " solutions found\n\n")
-      printBoard(solutions.head)
-      printBoard(solutions.last)
+      Console.print(n - countdown + " solutions found\n\n")
+      printBoard(first)
+      printBoard(last)
    }
 
 }
