@@ -6,6 +6,7 @@
 // Most for-comprehension replaced by while loops
 
 
+
 import scala.collection.mutable._
 
 object meteor {
@@ -22,10 +23,9 @@ object meteor {
 // Solver.scala 
 // import scala.collection.mutable._
 
-final class Solver (_n: Int) {
-   private val n = _n
-   private var count = 0
-   private var first = "55555555555555555555555555555555555555555555555555"
+final class Solver (n: Int) {
+   private var countdown = n
+   private var first = "11111111111111111111111111111111111111111111111111"
    private var last =  first
 
    private val board = new Board()
@@ -39,29 +39,35 @@ final class Solver (_n: Int) {
 
 
    def findSolutions(): Unit = {
-      if (count == n) return
+      if (countdown == 0) return
 
       if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
-         for (val k <- Iterator.range(0,pieces.length)){
+         var k = 0
+         while (k < pieces.length){
             if (unplaced.contains(k)){
                unplaced -= k
 
-               for (val i <- Iterator.range(0,Piece.orientations)){
+               var i = 0
+               while (i < Piece.orientations){
                   val piece = pieces(k).nextOrientation
 
-                  for (val j <- Iterator.range(0,Piece.size)){
+                  var j = 0
+                  while (j < Piece.size){
                      if (board.add(j,emptyCellIndex,piece)) {
 
                         if (!shouldPrune) findSolutions
 
                         board.remove(piece)
                      }
+                     j = j + 1
                   }
+                  i = i + 1
                }
                unplaced += k
             }
+            k = k + 1
          }
       }
       else {
@@ -72,12 +78,17 @@ final class Solver (_n: Int) {
    private def puzzleSolved() = {
       val b = board.asString
       if (b < first){ first = b } else { if (b > last){ last = b } }
-      count = count + 1
+      countdown = countdown - 1
    }
 
-   private def shouldPrune() = {
+   private def shouldPrune(): Boolean = {
       board.unmark
-      !board.cells.forall(c => c.contiguousEmptyCells % Piece.size == 0) 
+      var i = 0
+      while (i < board.cells.length){    
+         if (board.cells(i).contiguousEmptyCells % Piece.size != 0) return true 
+         i = i + 1
+      }
+      false
    }
 
 
@@ -88,8 +99,10 @@ final class Solver (_n: Int) {
          var i = 0
          while (i < s.length){
             if (indent) Console.print(' ')
-            for (val j <- Iterator.range(0,Board.cols)){
+            var j = 0
+            while (j < Board.cols){
                Console.print(s.charAt(i)); Console.print(' ')
+               j = j + 1
                i = i + 1
             }
             Console.print('\n')
@@ -98,7 +111,7 @@ final class Solver (_n: Int) {
          Console.print('\n')
       }
 
-      Console.print(count + " solutions found\n\n")
+      Console.print(n + " solutions found\n\n")
       printBoard(first)
       printBoard(last)
    }

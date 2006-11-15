@@ -22,11 +22,11 @@ object meteor {
 // Solver.scala 
 // import scala.collection.mutable._
 
-final class Solver (_n: Int) {
-   private val n = _n
+final class Solver (n: Int) {
    private var countdown = n
-   private var first: String = null
-   private var last: String = null
+   private var first = "11111111111111111111111111111111111111111111111111"
+   private var last =  first
+
    private val board = new Board()
 
    val pieces = Array( 
@@ -70,10 +70,7 @@ final class Solver (_n: Int) {
 
    private def puzzleSolved() = {
       val b = board.asString
-      if (first == null){ first = b; last = b }
-      else {
-         if (b < first){ first = b } else { if (b > last){ last = b } }
-      }
+      if (b < first){ first = b } else { if (b > last){ last = b } }
       countdown = countdown - 1
    }
 
@@ -100,7 +97,7 @@ final class Solver (_n: Int) {
          Console.print('\n')
       }
 
-      Console.print(n - countdown + " solutions found\n\n")
+      Console.print(n + " solutions found\n\n")
       printBoard(first)
       printBoard(last)
    }
