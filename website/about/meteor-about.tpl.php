@@ -3,12 +3,10 @@
 <p>You are expected to <strong>diff the output from your program N = 2098 against this </strong><a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output"><strong>output file</strong></a> <strong><em>before</em> you contribute your program.</strong></p>
 
 
-<p>The Meteor Puzzle board is made up of 10 rows of 5 hexagonal Cells. There are 10 puzzle pieces to be placed on the board, we'll number them 0 to 9. Each puzzle piece is made up of 5 hexagonal Cells. As different algorithms may be used to generate the puzzle solutions, we require that the solutions be printed in a standard order and format. Working along each row left to right, anddown the board from top to bottom, take the number of the piece placed in each cell on the board, and create a string from all 50 numbers, for example the first puzzle solution we show would be represented by </p><pre>00001222012661126155865558633348893448934747977799</pre><p>and the last puzzle solution would be represented by </p><pre>99998966856688568255777257472014220144031400311333</pre>
-<p>The Meteor Puzzle solutions should be sorted in ascending order based on these 50 character strings. The first and last solution should then be printed in a format that mimics the hexagonal board, like this</p>
+<p>The Meteor Puzzle board is made up of 10 rows of 5 hexagonal Cells. There are 10 puzzle pieces to be placed on the board, we'll number them 0 to 9. Each puzzle piece is made up of 5 hexagonal Cells. As different algorithms may be used to generate the puzzle solutions, we require that the solutions be printed in a standard order and format. Working along each row left to right, anddown the board from top to bottom, take the number of the piece placed in each cell on the board, and create a string from all 50 numbers, for example the smallest puzzle solution would be represented by </p><pre>00001222012661126155865558633348893448934747977799</pre>
+<p>Print the smallest and largest Meteor Puzzle 50 character solution string in this format to mimic the hexagonal puzzle board:</p>
 
-<pre>2098 solutions found
-
-0 0 0 0 1 
+<pre>0 0 0 0 1 
  2 2 2 0 1 
 2 6 6 1 1 
  2 6 1 5 5 
@@ -18,18 +16,6 @@
  4 4 8 9 3 
 4 7 4 7 9 
  7 7 7 9 9 
-
-9 9 9 9 8 
- 9 6 6 8 5 
-6 6 8 8 5 
- 6 8 2 5 5 
-7 7 7 2 5 
- 7 4 7 2 0 
-1 4 2 2 0 
- 1 4 4 0 3 
-1 4 0 0 3 
- 1 1 3 3 3 
-
 </pre>
 
 <p>The command line parameter N should limit how many solutions will be found before the program halts, so that you can work with just a few solutions to debug and optimize your program.</p>
