@@ -3,9 +3,9 @@
    contributed by Isaac Gouy
 */
 
-// This is an un-optimised example implementation
 // Most for-comprehension replaced by while loops
-// Piece orientations are cached rather than repeatedly computed
+// BoardCells occupited by each Piece orientation are cached
+//    rather than repeatedly computed
 
 
 import scala.collection.mutable._
@@ -128,6 +128,8 @@ object Board {
    val cols = 5
    val rows = 10
    val size = rows * cols
+   val pieces = 10
+   val noFit = new Array[BoardCell](0)
 }
 
 final class Board { 
@@ -154,28 +156,54 @@ final class Board {
       _cells.indexOf(c => c.isEmpty)
    }
 
+
+   private val cache: Array[Array[Array[Array[ Array[BoardCell] ]]]] = 
+      for (val i <- Array.range(0,Board.pieces)) 
+         yield 
+            for (val j <- Array.range(0,Piece.orientations)) 
+               yield 
+                  for (val k <- Array.range(0,Piece.size)) // piece cell index
+                     yield 
+                        for (val m <- Array.range(0,Board.size)) // board cell index
+                           yield null
+
+
    def add(pieceIndex: Int, boardIndex: Int, p: Piece): Boolean = {
+      var a = cache(p.number)(p.orientation)(pieceIndex)(boardIndex)
+
       cellCount = 0
       p.unmark
-    
-      find(p.cells()(pieceIndex), cells(boardIndex))
 
-      if (cellCount != Piece.size) return false
+      if (a == null){
+         find(p.cells()(pieceIndex), cells(boardIndex))
+
+         if (cellCount != Piece.size){ 
+            cache(p.number)(p.orientation)(pieceIndex)(boardIndex) = Board.noFit
+            return false
+         }
+
+         a = cellsPieceWillFill .filter(c => true)
+         cache(p.number)(p.orientation)(pieceIndex)(boardIndex) = a
+      } 
+      else {
+         if (a == Board.noFit) return false
+      }
 
       var i = 0
-      while (i < cellCount){
-         if (!cellsPieceWillFill(i).isEmpty) return false
+      while (i < a.length){
+         if (!a(i).isEmpty) return false
          i = i + 1
       }
 
       i = 0
-      while (i < cellCount){    
-         cellsPieceWillFill(i).piece  = p
+      while (i < a.length){    
+         a(i).piece = p
          i = i + 1
       }
 
       true
    }
+
 
    def remove(piece: Piece) = {
       var i = 0
@@ -316,7 +344,7 @@ final class Piece(_number: Int) {
       for (val i <- Array.range(0,Piece.orientations)) 
          yield pieceOrientation(i)
 
-   private var orientation = 0
+   var orientation = 0
 
    def nextOrientation() = {    
       orientation = (orientation + 1) % Piece.orientations
