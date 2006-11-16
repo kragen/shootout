@@ -26,8 +26,8 @@ object meteor {
 
 final class Solver (n: Int) {
    private var countdown = n
-   private var first = "11111111111111111111111111111111111111111111111111"
-   private var last =  first
+   private var first = "99999000000000000000000000000000000000000000000000"
+   private var last =  "00000000000000000000000000000000000000000000000000"
 
    private val board = new Board()
 
@@ -175,7 +175,7 @@ final class Board {
       p.unmark
 
       if (a == null){
-         find(p.cells()(pieceIndex), cells(boardIndex))
+         find(p.cells(pieceIndex), cells(boardIndex))
 
          if (cellCount != Piece.size){ 
             cache(p.number)(p.orientation)(pieceIndex)(boardIndex) = Board.noFit
@@ -338,7 +338,7 @@ final class Piece(_number: Int) {
       }
    }
 
-   def cells() = cache(orientation)
+   def cells = cache(orientation)
 
    private val cache = 
       for (val i <- Array.range(0,Piece.orientations)) 
