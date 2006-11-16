@@ -4,8 +4,8 @@
 */
 
 // Most for-comprehension replaced by while loops
-// BoardCells occupited by each Piece orientation are cached
-//    rather than repeatedly computed
+// BoardCells occupied by each Piece orientation are cached
+// Piece orientations are cached
 
 
 import scala.collection.mutable._

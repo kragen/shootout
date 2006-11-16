@@ -25,8 +25,8 @@ object meteor {
 
 final class Solver (n: Int) {
    private var countdown = n
-   private var first = "11111111111111111111111111111111111111111111111111"
-   private var last =  first
+   private var first = "99999000000000000000000000000000000000000000000000"
+   private var last =  "00000000000000000000000000000000000000000000000000"
 
    private val board = new Board()
 
