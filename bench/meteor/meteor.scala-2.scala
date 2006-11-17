@@ -3,8 +3,7 @@
    contributed by Isaac Gouy
 */
 
-// Most for-comprehension replaced by while loops
-
+// This is an un-optimised example implementation
 
 
 import scala.collection.mutable._
@@ -44,30 +43,24 @@ final class Solver (n: Int) {
       if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
-         var k = 0
-         while (k < pieces.length){
+         for (val k <- Iterator.range(0,pieces.length)){
             if (unplaced.contains(k)){
                unplaced -= k
 
-               var i = 0
-               while (i < Piece.orientations){
+               for (val i <- Iterator.range(0,Piece.orientations)){
                   val piece = pieces(k).nextOrientation
 
-                  var j = 0
-                  while (j < Piece.size){
+                  for (val j <- Iterator.range(0,Piece.size)){
                      if (board.add(j,emptyCellIndex,piece)) {
 
                         if (!shouldPrune) findSolutions
 
                         board.remove(piece)
                      }
-                     j = j + 1
                   }
-                  i = i + 1
                }
                unplaced += k
             }
-            k = k + 1
          }
       }
       else {
@@ -81,14 +74,9 @@ final class Solver (n: Int) {
       countdown = countdown - 1
    }
 
-   private def shouldPrune(): Boolean = {
+   private def shouldPrune() = {
       board.unmark
-      var i = 0
-      while (i < board.cells.length){    
-         if (board.cells(i).contiguousEmptyCells % Piece.size != 0) return true 
-         i = i + 1
-      }
-      false
+      !board.cells.forall(c => c.contiguousEmptyCells % Piece.size == 0) 
    }
 
 
@@ -99,10 +87,8 @@ final class Solver (n: Int) {
          var i = 0
          while (i < s.length){
             if (indent) Console.print(' ')
-            var j = 0
-            while (j < Board.cols){
+            for (val j <- Iterator.range(0,Board.cols)){
                Console.print(s.charAt(i)); Console.print(' ')
-               j = j + 1
                i = i + 1
             }
             Console.print('\n')
@@ -117,7 +103,6 @@ final class Solver (n: Int) {
    }
 
 }
-
 
 
 
@@ -137,13 +122,7 @@ final class Board {
    val cellsPieceWillFill = new Array[BoardCell](Piece.size)
    var cellCount = 0
 
-   def unmark() = {
-      var i = 0
-      while (i < cells.length){    
-         cells(i).unmark
-         i = i + 1
-      }
-   }
+   def unmark() = for (val c <- cells) c.unmark
 
    def asString() = 
       new String( cells map( 
@@ -155,48 +134,30 @@ final class Board {
       _cells.indexOf(c => c.isEmpty)
    }
 
-   def add(pieceIndex: Int, boardIndex: Int, p: Piece): Boolean = {
+
+   def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
       cellCount = 0
       p.unmark
     
-      find(p.cells(pieceIndex), cells(boardIndex))
+      find( p.cells(pieceIndex), cells(boardIndex))
 
-      if (cellCount != Piece.size) return false
+      val boardHasSpace = cellCount == Piece.size && 
+         cellsPieceWillFill.forall(c => c.isEmpty)  
 
-      var i = 0
-      while (i < cellCount){
-         if (!cellsPieceWillFill(i).isEmpty) return false
-         i = i + 1
-      }
+      if (boardHasSpace) cellsPieceWillFill.foreach(c => c.piece = p) 
 
-      i = 0
-      while (i < cellCount){    
-         cellsPieceWillFill(i).piece  = p
-         i = i + 1
-      }
-
-      true
+      boardHasSpace
    }
 
-   def remove(piece: Piece) = {
-      var i = 0
-      while (i < cells.length){  
-         if (cells(i).piece == piece) cells(i).empty 
-         i = i + 1
-      }
-   }
+   def remove(piece: Piece) = for (val c <- cells; c.piece == piece) c.empty
+
 
    private def find(p: PieceCell, b: BoardCell): Unit = {
       if (p != null && !p.marked && b != null){
          cellsPieceWillFill(cellCount) = b
          cellCount = cellCount + 1
          p.mark
-
-         var i = 0
-         while (i < Cell.sides){    
-            find(p.next(i), b.next(i))
-            i = i + 1
-         }
+         for (val i <- Iterator.range(0,Cell.sides)) find(p.next(i), b.next(i))
       }
    }
 
@@ -318,29 +279,9 @@ final class Piece(_number: Int) {
       }
    }
 
-   def flip() = {
-      var i = 0
-      while (i < cells.length){    
-         cells(i).flip
-         i = i + 1
-      }
-   }
-
-   def rotate() = {
-      var i = 0
-      while (i < cells.length){    
-         cells(i).rotate
-         i = i + 1
-      }
-   }
-
-   def unmark() = {
-      var i = 0
-      while (i < cells.length){    
-         cells(i).unmark
-         i = i + 1
-      }
-   }
+   def flip() = for (val c <- cells) c.flip
+   def rotate() = for (val c <- cells) c.rotate
+   def unmark() = for (val c <- cells) c.unmark
 
 
    private var orientation = 0
@@ -509,12 +450,9 @@ final class BoardCell(_number: Int) extends Cell {
          mark
          var count = 1 
 
-         var i = 0
-         while (i < next.length){      
-            if (next(i) != null && next(i).isEmpty) 
-               count = count + next(i).contiguousEmptyCells
-            i = i + 1
-         }
+         for (val neighbour <- next)
+            if (neighbour != null && neighbour.isEmpty) 
+               count = count + neighbour.contiguousEmptyCells
 
          count } else { 0 }
    }
