@@ -25,8 +25,8 @@ object meteor {
 
 final class Solver (n: Int) {
    private var countdown = n
-   private var first = "99999000000000000000000000000000000000000000000000"
-   private var last =  "00000000000000000000000000000000000000000000000000"
+   private var first: String = _
+   private var last: String = _
 
    private val board = new Board()
 
@@ -77,7 +77,11 @@ final class Solver (n: Int) {
 
    private def puzzleSolved() = {
       val b = board.asString
-      if (b < first){ first = b } else { if (b > last){ last = b } }
+      if (first == null){ 
+         first = b; last = b 
+      } else {
+         if (b < first){ first = b } else { if (b > last){ last = b } }
+      }
       countdown = countdown - 1
    }
 

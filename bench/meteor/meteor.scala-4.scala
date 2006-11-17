@@ -3,9 +3,9 @@
    contributed by Isaac Gouy
 */
 
-// This is an un-optimised example implementation
-// classes BoardCell and PieceCell have Array 
-
+// Most for-comprehension replaced by while loops
+// BoardCells occupied by each Piece orientation are cached
+// Piece orientations are cached
 
 import scala.collection.mutable._
 
@@ -44,24 +44,30 @@ final class Solver (n: Int) {
       if (unplaced.size > 0){
          val emptyCellIndex = board.firstEmptyCellIndex
 
-         for (val k <- Iterator.range(0,pieces.length)){
+         var k = 0
+         while (k < pieces.length){
             if (unplaced.contains(k)){
                unplaced -= k
 
-               for (val i <- Iterator.range(0,Piece.orientations)){
+               var i = 0
+               while (i < Piece.orientations){
                   val piece = pieces(k).nextOrientation
 
-                  for (val j <- Iterator.range(0,Piece.size)){
+                  var j = 0
+                  while (j < Piece.size){
                      if (board.add(j,emptyCellIndex,piece)) {
 
                         if (!shouldPrune) findSolutions
 
                         board.remove(piece)
                      }
+                     j = j + 1
                   }
+                  i = i + 1
                }
                unplaced += k
             }
+            k = k + 1
          }
       }
       else {
@@ -79,9 +85,14 @@ final class Solver (n: Int) {
       countdown = countdown - 1
    }
 
-   private def shouldPrune() = {
+   private def shouldPrune(): Boolean = {
       board.unmark
-      !board.cells.forall(c => c.contiguousEmptyCells % Piece.size == 0) 
+      var i = 0
+      while (i < board.cells.length){    
+         if (board.cells(i).contiguousEmptyCells % Piece.size != 0) return true 
+         i = i + 1
+      }
+      false
    }
 
 
@@ -92,8 +103,10 @@ final class Solver (n: Int) {
          var i = 0
          while (i < s.length){
             if (indent) Console.print(' ')
-            for (val j <- Iterator.range(0,Board.cols)){
+            var j = 0
+            while (j < Board.cols){
                Console.print(s.charAt(i)); Console.print(' ')
+               j = j + 1
                i = i + 1
             }
             Console.print('\n')
@@ -111,7 +124,6 @@ final class Solver (n: Int) {
 
 
 
-
 // Board.scala
 // import scala.collection.mutable._
 
@@ -119,6 +131,8 @@ object Board {
    val cols = 5
    val rows = 10
    val size = rows * cols
+   val pieces = 10
+   val noFit = new Array[BoardCell](0)
 }
 
 final class Board { 
@@ -127,7 +141,13 @@ final class Board {
    val cellsPieceWillFill = new Array[BoardCell](Piece.size)
    var cellCount = 0
 
-   def unmark() = for (val c <- cells) c.unmark
+   def unmark() = {
+      var i = 0
+      while (i < cells.length){    
+         cells(i).unmark
+         i = i + 1
+      }
+   }
 
    def asString() = 
       new String( cells map( 
@@ -140,29 +160,73 @@ final class Board {
    }
 
 
-   def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
+   private val cache: Array[Array[Array[Array[ Array[BoardCell] ]]]] = 
+      for (val i <- Array.range(0,Board.pieces)) 
+         yield 
+            for (val j <- Array.range(0,Piece.orientations)) 
+               yield 
+                  for (val k <- Array.range(0,Piece.size)) // piece cell index
+                     yield 
+                        for (val m <- Array.range(0,Board.size)) // board cell index
+                           yield null
+
+
+   def add(pieceIndex: Int, boardIndex: Int, p: Piece): Boolean = {
+      var a = cache(p.number)(p.orientation)(pieceIndex)(boardIndex)
+
       cellCount = 0
       p.unmark
-    
-      find( p.cells(pieceIndex), cells(boardIndex))
 
-      val boardHasSpace = cellCount == Piece.size && 
-         cellsPieceWillFill.forall(c => c.isEmpty)  
+      if (a == null){
+         find(p.cells(pieceIndex), cells(boardIndex))
 
-      if (boardHasSpace) cellsPieceWillFill.foreach(c => c.piece = p) 
+         if (cellCount != Piece.size){ 
+            cache(p.number)(p.orientation)(pieceIndex)(boardIndex) = Board.noFit
+            return false
+         }
 
-      boardHasSpace
+         a = cellsPieceWillFill .filter(c => true)
+         cache(p.number)(p.orientation)(pieceIndex)(boardIndex) = a
+      } 
+      else {
+         if (a == Board.noFit) return false
+      }
+
+      var i = 0
+      while (i < a.length){
+         if (!a(i).isEmpty) return false
+         i = i + 1
+      }
+
+      i = 0
+      while (i < a.length){    
+         a(i).piece = p
+         i = i + 1
+      }
+
+      true
    }
 
-   def remove(piece: Piece) = for (val c <- cells; c.piece == piece) c.empty
 
+   def remove(piece: Piece) = {
+      var i = 0
+      while (i < cells.length){  
+         if (cells(i).piece == piece) cells(i).empty 
+         i = i + 1
+      }
+   }
 
    private def find(p: PieceCell, b: BoardCell): Unit = {
       if (p != null && !p.marked && b != null){
          cellsPieceWillFill(cellCount) = b
          cellCount = cellCount + 1
          p.mark
-         for (val i <- Iterator.range(0,Cell.sides)) find(p.next(i), b.next(i))
+
+         var i = 0
+         while (i < Cell.sides){    
+            find(p.next(i), b.next(i))
+            i = i + 1
+         }
       }
    }
 
@@ -267,154 +331,176 @@ object Piece {
 
 final class Piece(_number: Int) {
    val number = _number
-   val cells = for (val i <- Array.range(0,Piece.size)) yield new PieceCell()
 
-   { 
-      number match {
-         case 0 => make0
-         case 1 => make1
-         case 2 => make2
-         case 3 => make3
-         case 4 => make4
-         case 5 => make5
-         case 6 => make6
-         case 7 => make7
-         case 8 => make8
-         case 9 => make9     
+   def unmark() = {
+      val c = cache(orientation)
+      var i = 0
+      while (i < c.length){    
+         c(i).unmark
+         i = i + 1
       }
    }
 
-   def flip() = for (val c <- cells) c.flip
-   def rotate() = for (val c <- cells) c.rotate
-   def unmark() = for (val c <- cells) c.unmark
+   def cells = cache(orientation)
 
+   private val cache = 
+      for (val i <- Array.range(0,Piece.orientations)) 
+         yield pieceOrientation(i)
 
-   private var orientation = 0
+   var orientation = 0
 
-   def nextOrientation() = {
-      if (orientation == Piece.orientations) orientation = 0
-      if (orientation % Piece.rotations == 0) flip else rotate
-      orientation = orientation + 1
+   def nextOrientation() = {    
+      orientation = (orientation + 1) % Piece.orientations
       this
    }
 
 
-   private def make0() = {
-      cells(0).next(Cell.E) = cells(1)
-      cells(1).next(Cell.W) = cells(0)
-      cells(1).next(Cell.E) = cells(2)
-      cells(2).next(Cell.W) = cells(1)
-      cells(2).next(Cell.E) = cells(3)
-      cells(3).next(Cell.W) = cells(2)
-      cells(3).next(Cell.SE) = cells(4)
-      cells(4).next(Cell.NW) = cells(3)
+   private def pieceOrientation(k: Int) = {
+      val cells = for (val i <- Array.range(0,Piece.size)) yield new PieceCell()
+      makePiece(number,cells)
+
+      var i = 0
+      while (i < k){  
+         if (i % Piece.rotations == 0) 
+            for (val c <- cells) c.flip
+         else
+            for (val c <- cells) c.rotate
+
+         i = i + 1
+      }
+      cells
    }
 
-   private def make1() = {
-      cells(0).next(Cell.SE) = cells(1)
-      cells(1).next(Cell.NW) = cells(0)
-      cells(1).next(Cell.SW) = cells(2)
-      cells(2).next(Cell.NE) = cells(1)
-      cells(2).next(Cell.W) = cells(3)
-      cells(3).next(Cell.E) = cells(2)
-      cells(3).next(Cell.SW) = cells(4)
-      cells(4).next(Cell.NE) = cells(3)
+   private def makePiece(number: Int, cells: Array[PieceCell]) = {
+      number match {
+         case 0 => make0(cells)
+         case 1 => make1(cells)
+         case 2 => make2(cells)
+         case 3 => make3(cells)
+         case 4 => make4(cells)
+         case 5 => make5(cells)
+         case 6 => make6(cells)
+         case 7 => make7(cells)
+         case 8 => make8(cells)
+         case 9 => make9(cells)
+      }
    }
 
-   private def make2() = {
-      cells(0).next(Cell.W) = cells(1)
-      cells(1).next(Cell.E) = cells(0)
-      cells(1).next(Cell.SW) = cells(2)
-      cells(2).next(Cell.NE) = cells(1)
-      cells(2).next(Cell.SE) = cells(3)
-      cells(3).next(Cell.NW) = cells(2)
-      cells(3).next(Cell.SE) = cells(4)
-      cells(4).next(Cell.NW) = cells(3)
+   private def make0(a: Array[PieceCell]) = {
+      a(0).next(Cell.E) = a(1)
+      a(1).next(Cell.W) = a(0)
+      a(1).next(Cell.E) = a(2)
+      a(2).next(Cell.W) = a(1)
+      a(2).next(Cell.E) = a(3)
+      a(3).next(Cell.W) = a(2)
+      a(3).next(Cell.SE) = a(4)
+      a(4).next(Cell.NW) = a(3)
    }
 
-   private def make3() = {
-      cells(0).next(Cell.SW) = cells(1)
-      cells(1).next(Cell.NE) = cells(0)
-      cells(1).next(Cell.W) = cells(2)
-      cells(2).next(Cell.E) = cells(1)
-      cells(1).next(Cell.SW) = cells(3)
-      cells(3).next(Cell.NE) = cells(1)
-      cells(2).next(Cell.SE) = cells(3)
-      cells(3).next(Cell.NW) = cells(2)
-      cells(3).next(Cell.SE) = cells(4)
-      cells(4).next(Cell.NW) = cells(3)
+   private def make1(a: Array[PieceCell]) = {
+      a(0).next(Cell.SE) = a(1)
+      a(1).next(Cell.NW) = a(0)
+      a(1).next(Cell.SW) = a(2)
+      a(2).next(Cell.NE) = a(1)
+      a(2).next(Cell.W) = a(3)
+      a(3).next(Cell.E) = a(2)
+      a(3).next(Cell.SW) = a(4)
+      a(4).next(Cell.NE) = a(3)
    }
 
-   private def make4() = {
-      cells(0).next(Cell.SE) = cells(1)
-      cells(1).next(Cell.NW) = cells(0)
-      cells(1).next(Cell.SW) = cells(2)
-      cells(2).next(Cell.NE) = cells(1)
-      cells(1).next(Cell.E) = cells(3)
-      cells(3).next(Cell.W) = cells(1)
-      cells(3).next(Cell.SE) = cells(4)
-      cells(4).next(Cell.NW) = cells(3)
+   private def make2(a: Array[PieceCell]) = {
+      a(0).next(Cell.W) = a(1)
+      a(1).next(Cell.E) = a(0)
+      a(1).next(Cell.SW) = a(2)
+      a(2).next(Cell.NE) = a(1)
+      a(2).next(Cell.SE) = a(3)
+      a(3).next(Cell.NW) = a(2)
+      a(3).next(Cell.SE) = a(4)
+      a(4).next(Cell.NW) = a(3)
    }
 
-   private def make5() = {
-      cells(0).next(Cell.SW) = cells(1)
-      cells(1).next(Cell.NE) = cells(0)
-      cells(0).next(Cell.SE) = cells(2)
-      cells(2).next(Cell.NW) = cells(0)
-      cells(1).next(Cell.SE) = cells(3)
-      cells(3).next(Cell.NW) = cells(1)
-      cells(2).next(Cell.SW) = cells(3)
-      cells(3).next(Cell.NE) = cells(2)
-      cells(3).next(Cell.SW) = cells(4)
-      cells(4).next(Cell.NE) = cells(3)
+   private def make3(a: Array[PieceCell]) = {
+      a(0).next(Cell.SW) = a(1)
+      a(1).next(Cell.NE) = a(0)
+      a(1).next(Cell.W) = a(2)
+      a(2).next(Cell.E) = a(1)
+      a(1).next(Cell.SW) = a(3)
+      a(3).next(Cell.NE) = a(1)
+      a(2).next(Cell.SE) = a(3)
+      a(3).next(Cell.NW) = a(2)
+      a(3).next(Cell.SE) = a(4)
+      a(4).next(Cell.NW) = a(3)
    }
 
-   private def make6() = {
-      cells(0).next(Cell.SW) = cells(1)
-      cells(1).next(Cell.NE) = cells(0)
-      cells(2).next(Cell.SE) = cells(1)
-      cells(1).next(Cell.NW) = cells(2)
-      cells(1).next(Cell.SE) = cells(3)
-      cells(3).next(Cell.NW) = cells(1)
-      cells(3).next(Cell.SW) = cells(4)
-      cells(4).next(Cell.NE) = cells(3)
+   private def make4(a: Array[PieceCell]) = {
+      a(0).next(Cell.SE) = a(1)
+      a(1).next(Cell.NW) = a(0)
+      a(1).next(Cell.SW) = a(2)
+      a(2).next(Cell.NE) = a(1)
+      a(1).next(Cell.E) = a(3)
+      a(3).next(Cell.W) = a(1)
+      a(3).next(Cell.SE) = a(4)
+      a(4).next(Cell.NW) = a(3)
    }
 
-   private def make7() = {
-      cells(0).next(Cell.SE) = cells(1)
-      cells(1).next(Cell.NW) = cells(0)
-      cells(0).next(Cell.SW) = cells(2)
-      cells(2).next(Cell.NE) = cells(0)
-      cells(2).next(Cell.SW) = cells(3)
-      cells(3).next(Cell.NE) = cells(2)
-      cells(3).next(Cell.SE) = cells(4)
-      cells(4).next(Cell.NW) = cells(3)
+   private def make5(a: Array[PieceCell]) = {
+      a(0).next(Cell.SW) = a(1)
+      a(1).next(Cell.NE) = a(0)
+      a(0).next(Cell.SE) = a(2)
+      a(2).next(Cell.NW) = a(0)
+      a(1).next(Cell.SE) = a(3)
+      a(3).next(Cell.NW) = a(1)
+      a(2).next(Cell.SW) = a(3)
+      a(3).next(Cell.NE) = a(2)
+      a(3).next(Cell.SW) = a(4)
+      a(4).next(Cell.NE) = a(3)
    }
 
-   private def make8() = {
-      cells(0).next(Cell.E) = cells(1)
-      cells(1).next(Cell.W) = cells(0)
-      cells(1).next(Cell.E) = cells(2)
-      cells(2).next(Cell.W) = cells(1)
-      cells(2).next(Cell.NE) = cells(3)
-      cells(3).next(Cell.SW) = cells(2)
-      cells(3).next(Cell.E) = cells(4)
-      cells(4).next(Cell.W) = cells(3)
+   private def make6(a: Array[PieceCell]) = {
+      a(0).next(Cell.SW) = a(1)
+      a(1).next(Cell.NE) = a(0)
+      a(2).next(Cell.SE) = a(1)
+      a(1).next(Cell.NW) = a(2)
+      a(1).next(Cell.SE) = a(3)
+      a(3).next(Cell.NW) = a(1)
+      a(3).next(Cell.SW) = a(4)
+      a(4).next(Cell.NE) = a(3)
    }
 
-   private def make9() = {
-      cells(0).next(Cell.E) = cells(1)
-      cells(1).next(Cell.W) = cells(0)
-      cells(1).next(Cell.E) = cells(2)
-      cells(2).next(Cell.W) = cells(1)
-      cells(2).next(Cell.NE) = cells(3)
-      cells(3).next(Cell.SW) = cells(2)
-      cells(2).next(Cell.E) = cells(4)
-      cells(4).next(Cell.W) = cells(2)
-      cells(4).next(Cell.NW) = cells(3)
-      cells(3).next(Cell.SE) = cells(4)
+   private def make7(a: Array[PieceCell]) = {
+      a(0).next(Cell.SE) = a(1)
+      a(1).next(Cell.NW) = a(0)
+      a(0).next(Cell.SW) = a(2)
+      a(2).next(Cell.NE) = a(0)
+      a(2).next(Cell.SW) = a(3)
+      a(3).next(Cell.NE) = a(2)
+      a(3).next(Cell.SE) = a(4)
+      a(4).next(Cell.NW) = a(3)
    }
 
+   private def make8(a: Array[PieceCell]) = {
+      a(0).next(Cell.E) = a(1)
+      a(1).next(Cell.W) = a(0)
+      a(1).next(Cell.E) = a(2)
+      a(2).next(Cell.W) = a(1)
+      a(2).next(Cell.NE) = a(3)
+      a(3).next(Cell.SW) = a(2)
+      a(3).next(Cell.E) = a(4)
+      a(4).next(Cell.W) = a(3)
+   }
+
+   private def make9(a: Array[PieceCell]) = {
+      a(0).next(Cell.E) = a(1)
+      a(1).next(Cell.W) = a(0)
+      a(1).next(Cell.E) = a(2)
+      a(2).next(Cell.W) = a(1)
+      a(2).next(Cell.NE) = a(3)
+      a(3).next(Cell.SW) = a(2)
+      a(2).next(Cell.E) = a(4)
+      a(4).next(Cell.W) = a(2)
+      a(4).next(Cell.NW) = a(3)
+      a(3).next(Cell.SE) = a(4)
+   }
 }
 
 
@@ -455,9 +541,12 @@ final class BoardCell(_number: Int) extends Cell {
          mark
          var count = 1 
 
-         for (val neighbour <- next)
-            if (neighbour != null && neighbour.isEmpty) 
-               count = count + neighbour.contiguousEmptyCells
+         var i = 0
+         while (i < next.length){      
+            if (next(i) != null && next(i).isEmpty) 
+               count = count + next(i).contiguousEmptyCells
+            i = i + 1
+         }
 
          count } else { 0 }
    }
