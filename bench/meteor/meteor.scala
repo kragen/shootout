@@ -430,6 +430,8 @@ object Cell {
 }
 
 abstract class Cell {
+   type T
+   val next = new Array[T](Cell.sides)
    var marked = false
 
    def mark() = marked = true
@@ -442,7 +444,7 @@ abstract class Cell {
 // BoardCell.scala
 
 final class BoardCell(_number: Int) extends Cell {
-   val next = new Array[BoardCell](Cell.sides)
+   type T = BoardCell
    val number = _number
    var piece: Piece = _
 
@@ -468,7 +470,7 @@ final class BoardCell(_number: Int) extends Cell {
 // PieceCell.scala
 
 final class PieceCell extends Cell {
-   val next = new Array[PieceCell](Cell.sides)
+   type T = PieceCell
 
    def flip = {
       var swap = next(Cell.NE)
