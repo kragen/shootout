@@ -16,11 +16,11 @@ proc FibFP {n} {
     expr {double($n) < 2.0 ? 1.0 : [Fib [expr {$n -2.0}]] + [Fib [expr {$n -1.0}]]}
 }
 proc Tak {x y z} {
-    expr { $y < $x ? ([Tak [Tak [expr {$x-1}] $y $z] [Tak [expr {$y-1}] $z $x] 
+    expr { $y < $x ? ([Tak [Tak [expr {$x-1}] $y $z] [Tak [expr {$y-1}] $z $x] \
        [Tak [expr {$z-1}] $x $y]]) : $z }
 }
 proc TakFP {x y z} {
-    expr { double($y) < double($x) ? double([Tak [Tak [expr {$x-1.0}] $y $z] 
+    expr { double($y) < double($x) ? double([Tak [Tak [expr {$x-1.0}] $y $z] \
        [Tak [expr {$y-1}] $z $x] [Tak [expr {$z-1}] $x $y]]) : double($z) }
 }
 
