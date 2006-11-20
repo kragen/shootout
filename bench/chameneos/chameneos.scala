@@ -1,11 +1,11 @@
 /* The Computer Language Shootout
    http://shootout.alioth.debian.org/
    contributed by Yura Taras
+   modified by Isaac Gouy
 */
 
-package chameneos
 
-object Chameneos {
+object chameneos {
   abstract class Colour 
   case object RED extends Colour
   case object YELLOW extends Colour
@@ -79,11 +79,10 @@ object Chameneos {
       val meetings = (creatures foldLeft 0) {(x, y) => (x + y.getCreaturesMet)}
       Console.println(meetings)
   }
-}
-object main {
+
   def main(args: Array[String]) {
     if(args.length < 1) throw new IllegalArgumentException();
-    Chameneos(Integer.parseInt(args(0)))
+    chameneos(Integer.parseInt(args(0)))
   }
 }
 
