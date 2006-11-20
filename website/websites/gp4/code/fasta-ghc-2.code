@@ -1,102 +1,59 @@
-<span class="com">{-# OPTIONS -O2 -funbox-strict-fields #-}</span>
-<span class="com">{-</span>
-<span class="com">   The Computer Language Shootout</span>
+<span class="com">{- The Computer Language Shootout</span>
 <span class="com">   http://shootout.alioth.debian.org/</span>
-<span class="com"></span>
 <span class="com">   contributed by Jeff Newbern</span>
-<span class="com">   Modified to fastest.hs by Chris Kuklewicz, 6 Jan 2006</span>
-<span class="com"></span>
-<span class="com">   Uses random generation code derived from Simon Marlow and Einar</span>
-<span class="com">   Karttunen's &quot;random&quot; test entry.</span>
-<span class="com"></span>
-<span class="com">   Compile with ghc --make filename.hs -o filename</span>
-<span class="com">-}</span>
+<span class="com">   updated by Spencer Janssen and Don Stewart -}</span>
 
-<span class="kwa">import</span> Control.Monad.State
-<span class="kwa">import</span> Data.<span class="kwb">Char</span><span class="sym">(</span>chr<span class="sym">,</span>ord<span class="sym">)</span>
-<span class="kwa">import</span> Data.List<span class="sym">(</span>mapAccumL<span class="sym">)</span>
-<span class="kwa">import</span> Data.Word<span class="sym">(</span>Word8<span class="sym">)</span>
-<span class="kwa">import</span> Foreign
-<span class="kwa">import</span> System<span class="sym">(</span>getArgs<span class="sym">)</span>
-<span class="kwa">import</span> System.IO<span class="sym">(</span>stdout<span class="sym">,</span>hPutBuf<span class="sym">)</span>
+<span class="kwa">import</span> System
+<span class="kwa">import qualified</span> Data.ByteString.Char8 <span class="kwa">as</span> B
 
-<span class="kwa">type</span> Base <span class="sym">=</span> Word8
-<span class="kwa">type</span> Sequence <span class="sym">= [</span>Base<span class="sym">]</span>
-<span class="kwa">data</span> BaseFrequency <span class="sym">=</span> BF <span class="sym">!</span>Base <span class="sym">!</span><span class="kwb">Int</span>
-<span class="kwa">data</span> Seed <span class="sym">=</span> S <span class="sym">!</span><span class="kwb">Int</span>
-<span class="kwa">type</span> Pseudo a <span class="sym">=</span> StateT Seed IO a
+randomSequence <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt; [(</span><span class="kwb">Char</span><span class="sym">,</span><span class="kwb">Double</span><span class="sym">)] -&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt; (</span>B.ByteString<span class="sym">,</span> <span class="kwb">Int</span><span class="sym">)</span>
+randomSequence n bf seed <span class="sym">= (</span>sequence<span class="sym">,</span> seed'<span class="sym">)</span>
+  <span class="kwa">where</span> <span class="sym">(</span>sequence<span class="sym">,</span> Just seed'<span class="sym">) =</span> B.unfoldrN n f seed
+        f s <span class="sym">=</span> Just <span class="sym">(</span>chooseBase bf <span class="sym">(</span>normalize s<span class="sym">),</span> nextSeed s<span class="sym">)</span>
 
-toBF <span class="sym">(</span>b<span class="sym">,</span>f<span class="sym">) =</span> BF b f
-c2b <span class="sym">::</span> <span class="kwb">Char</span> <span class="sym">-&gt;</span> Word8
-c2b <span class="sym">=</span> toEnum . ord
-b2c <span class="sym">::</span> Word8 <span class="sym">-&gt;</span> <span class="kwb">Char</span>
-b2c <span class="sym">=</span> chr . fromEnum
+chooseBase <span class="sym">:: [(</span><span class="kwb">Char</span><span class="sym">,</span><span class="kwb">Double</span><span class="sym">)] -&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> <span class="kwb">Char</span>
+chooseBase <span class="sym">[(</span>b<span class="sym">,</span>_<span class="sym">)]</span>    _ <span class="sym">=</span> b
+chooseBase <span class="sym">((</span>b<span class="sym">,</span>f<span class="sym">):</span>xs<span class="sym">)</span> p <span class="sym">|</span> p <span class="sym">&lt;</span> f     <span class="sym">=</span> b
+                        <span class="sym">|</span> otherwise <span class="sym">=</span> chooseBase xs <span class="sym">(</span>p<span class="sym">-</span>f<span class="sym">)</span>
 
-alu <span class="sym">::</span> String <span class="slc">-- predefined sequence</span>
-alu <span class="sym">=</span> <span class="str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
+writeFasta label title sequence <span class="sym">=</span> <span class="kwa">do</span>
+     putStrLn $ <span class="str">&quot;&gt;&quot;</span> <span class="sym">++</span> label <span class="sym">++</span> <span class="str">&quot; &quot;</span> <span class="sym">++</span> title
+     mapM_ B.putStrLn $ split <span class="num">60</span> sequence
 
-im <span class="sym">=</span> <span class="num">139968</span> <span class="sym">::</span> <span class="kwb">Double</span>
+split n xs <span class="sym">|</span> B.null xs <span class="sym">= []</span>
+           <span class="sym">|</span> otherwise <span class="sym">=</span> l <span class="sym">:</span> split n r
+    <span class="kwa">where</span> <span class="sym">(</span>l<span class="sym">,</span> r<span class="sym">) =</span> B.splitAt n xs
 
-iub <span class="sym">:: [</span>BaseFrequency<span class="sym">]</span>
-iub <span class="sym">=</span> map toBF $ snd $ mapAccumL <span class="sym">(</span>\rt <span class="sym">(</span>c<span class="sym">,</span>f<span class="sym">) -&gt; (</span>f<span class="sym">+</span>rt<span class="sym">,(</span>c2b c<span class="sym">,</span>round $ im <span class="sym">*(</span>f<span class="sym">+</span>rt<span class="sym">))))</span> <span class="num">0.0</span> $
-      <span class="sym">[ (</span><span class="str">'a'</span><span class="sym">,</span> <span class="num">0.27</span><span class="sym">), (</span><span class="str">'c'</span><span class="sym">,</span> <span class="num">0.12</span><span class="sym">), (</span><span class="str">'g'</span><span class="sym">,</span> <span class="num">0.12</span><span class="sym">), (</span><span class="str">'t'</span><span class="sym">,</span> <span class="num">0.27</span><span class="sym">), (</span><span class="str">'B'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">),</span>
-        <span class="sym">(</span><span class="str">'D'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'H'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'K'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'M'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'N'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">),</span>
-        <span class="sym">(</span><span class="str">'R'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'S'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'V'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'W'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span><span class="str">'Y'</span><span class="sym">,</span> <span class="num">0.02</span><span class="sym">) ]</span>
+main <span class="sym">=</span> <span class="kwa">do</span>
+    n <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> readIO . head
+    <span class="kwa">let</span> aluLen         <span class="sym">=</span> <span class="num">1</span> <span class="sym">+</span> <span class="num">2</span> <span class="sym">*</span> n `div` B.length alu
+        aluSeq         <span class="sym">=</span> B.take <span class="sym">(</span><span class="num">2</span> <span class="sym">*</span> n<span class="sym">)</span> . B.concat . replicate aluLen $ alu
+        <span class="sym">(</span>iubSeq<span class="sym">,</span> seed<span class="sym">) =</span> randomSequence <span class="sym">(</span><span class="num">3</span> <span class="sym">*</span> n<span class="sym">)</span> iub         initSeed
+        <span class="sym">(</span>homSeq<span class="sym">,</span> _<span class="sym">)    =</span> randomSequence <span class="sym">(</span><span class="num">5</span> <span class="sym">*</span> n<span class="sym">)</span> homosapiens seed
 
-homosapiens <span class="sym">:: [</span>BaseFrequency<span class="sym">]</span>
-homosapiens <span class="sym">=</span>  map toBF $ snd $ mapAccumL <span class="sym">(</span>\rt <span class="sym">(</span>c<span class="sym">,</span>f<span class="sym">) -&gt; (</span>f<span class="sym">+</span>rt<span class="sym">,(</span>c2b c<span class="sym">,</span>round $ im <span class="sym">* (</span>f<span class="sym">+</span>rt<span class="sym">))))</span> <span class="num">0.0</span> $
-              <span class="sym">[ (</span><span class="str">'a'</span><span class="sym">,</span> <span class="num">0.3029549426680</span><span class="sym">), (</span><span class="str">'c'</span><span class="sym">,</span> <span class="num">0.1979883004921</span><span class="sym">),</span>
-                <span class="sym">(</span><span class="str">'g'</span><span class="sym">,</span> <span class="num">0.1975473066391</span><span class="sym">), (</span><span class="str">'t'</span><span class="sym">,</span> <span class="num">0.3015094502008</span><span class="sym">) ]</span>
+    writeFasta <span class="str">&quot;ONE&quot;</span>   <span class="str">&quot;Homo sapiens alu&quot;</span>       aluSeq
+    writeFasta <span class="str">&quot;TWO&quot;</span>   <span class="str">&quot;IUB ambiguity codes&quot;</span>    iubSeq
+    writeFasta <span class="str">&quot;THREE&quot;</span> <span class="str">&quot;Homo sapiens frequency&quot;</span> homSeq
 
-chooseBase <span class="sym">:: [</span>BaseFrequency<span class="sym">] -&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> Base
-chooseBase <span class="sym">[(</span>BF b _<span class="sym">)]</span>    _ <span class="sym">=</span> b
-chooseBase <span class="sym">((</span>BF b f<span class="sym">):</span>xs<span class="sym">)</span> p <span class="sym">|</span> p <span class="sym">&lt;</span> f     <span class="sym">=</span> b
-                           <span class="sym">|</span> otherwise <span class="sym">=</span> chooseBase xs p
+alu <span class="sym">=</span> B.pack
+         <span class="str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\</span>
+<span class="str">         \GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\</span>
+<span class="str">         \CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\</span>
+<span class="str">         \ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA\</span>
+<span class="str">         \GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG\</span>
+<span class="str">         \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\</span>
+<span class="str">         \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
 
-prng <span class="sym">::</span> Pseudo Seed
-prng <span class="sym">=</span> <span class="kwa">let</span> nextSeed <span class="sym">(</span>S s<span class="sym">) =</span> S $ <span class="sym">(</span>s <span class="sym">*</span> ia <span class="sym">+</span> ic<span class="sym">)</span> `mod` im
-           im <span class="sym">=</span> <span class="num">139968</span><span class="sym">;</span> ia <span class="sym">=</span> <span class="num">3877</span><span class="sym">;</span> ic <span class="sym">=</span> <span class="num">29573</span>
-       <span class="kwa">in do</span> seed <span class="sym">&lt;-</span> get
-             <span class="kwa">let</span> seed<span class="str">' = nextSeed seed</span>
-<span class="str">             put seed'</span>
-             return seed<span class="str">'</span>
-<span class="str"></span>
-<span class="str">writeFastaHeader label title = liftIO $ putStrLn $ &quot;&gt;&quot; ++ (label ++ (&quot; &quot; ++ title))</span>
-<span class="str"></span>
-<span class="str">writeFasta label title sequence =</span>
-<span class="str">  do writeFastaHeader label title</span>
-<span class="str">     writeWrapped 60 sequence</span>
-<span class="str">  where writeWrapped _   []  = return ()</span>
-<span class="str">        writeWrapped len str = do let (s1,s2) = splitAt len str</span>
-<span class="str">                                  putStrLn s1</span>
-<span class="str">                                  writeWrapped len s2</span>
-<span class="str"></span>
-<span class="str">--writeWrapped'</span> <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt; (</span><span class="kwb">Int</span><span class="sym">-&gt;</span>Base<span class="sym">) -&gt;</span> Pseudo <span class="sym">()</span>
-writeWrapped<span class="str">' wrap total trans = do</span>
-<span class="str">    buf &lt;- liftIO $ mallocArray wrap</span>
-<span class="str">    let (full,end) = divMod total wrap</span>
-<span class="str">        fill 0 _   = return ()</span>
-<span class="str">        fill i ptr = do (S b) &lt;- prng</span>
-<span class="str">                        liftIO (poke ptr (trans b))</span>
-<span class="str">                        fill (pred i) (advancePtr ptr 1)</span>
-<span class="str">        workFull = do fill wrap buf</span>
-<span class="str">                      liftIO (hPutBuf stdout buf wrap &gt;&gt; putStrLn &quot;&quot;)</span>
-<span class="str">        workEnd = do fill end buf</span>
-<span class="str">                     liftIO (hPutBuf stdout buf end &gt;&gt; putStrLn &quot;&quot;)</span>
-<span class="str">    replicateM_ full workFull &gt;&gt; workEnd</span>
-<span class="str"></span>
-<span class="str">writeWrapped = writeWrapped'</span> <span class="num">60</span>
+iub <span class="sym">= [ (</span>'a'<span class="sym">,</span> <span class="num">0.27</span><span class="sym">), (</span>'c'<span class="sym">,</span> <span class="num">0.12</span><span class="sym">), (</span>'g'<span class="sym">,</span> <span class="num">0.12</span><span class="sym">), (</span>'t'<span class="sym">,</span> <span class="num">0.27</span><span class="sym">), (</span>'B'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">)</span>
+      <span class="sym">, (</span>'D'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'H'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'K'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'M'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'N'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">)</span>
+      <span class="sym">, (</span>'R'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'S'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'V'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'W'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'Y'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">) ]</span>
 
-main <span class="sym">=</span> <span class="kwa">do</span> args <span class="sym">&lt;-</span> getArgs
-          <span class="kwa">let</span> n <span class="sym">=</span> if <span class="sym">(</span>null args<span class="sym">)</span> <span class="kwa">then</span> <span class="sym">(</span><span class="num">2500000</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">)</span> <span class="kwa">else</span> read <span class="sym">(</span>head args<span class="sym">)</span>
-          writeFasta <span class="str">&quot;ONE&quot;</span> <span class="str">&quot;Homo sapiens alu&quot;</span> <span class="sym">(</span>take <span class="sym">(</span><span class="num">2</span><span class="sym">*</span>n<span class="sym">) (</span>cycle alu<span class="sym">))</span>
-          writeFastaHeader <span class="str">&quot;TWO&quot;</span> <span class="str">&quot;IUB ambiguity codes&quot;</span>
-          seed<span class="str">' &lt;- execStateT (writeWrapped (3*n) (chooseBase iub))  (S 42)</span>
-<span class="str">          writeFastaHeader &quot;THREE&quot; &quot;Homo sapiens frequency&quot;</span>
-<span class="str">          execStateT (writeWrapped (5*n) (chooseBase homosapiens)) seed'</span>
+homosapiens <span class="sym">= [ (</span>'a'<span class="sym">,</span> <span class="num">0.3029549426680</span><span class="sym">), (</span>'c'<span class="sym">,</span> <span class="num">0.1979883004921</span><span class="sym">),</span>
+                <span class="sym">(</span>'g'<span class="sym">,</span> <span class="num">0.1975473066391</span><span class="sym">), (</span>'t'<span class="sym">,</span> <span class="num">0.3015094502008</span><span class="sym">) ]</span>
+
+im          <span class="sym">=</span> <span class="num">139968</span>
+ia          <span class="sym">=</span> <span class="num">3877</span>
+ic          <span class="sym">=</span> <span class="num">29573</span>
+nextSeed s  <span class="sym">= (</span>s <span class="sym">*</span> ia <span class="sym">+</span> ic<span class="sym">)</span> `rem` im
+normalize n <span class="sym">= (</span>fromIntegral n<span class="sym">) * (</span><span class="num">1.0</span> <span class="sym">/</span> fromIntegral im<span class="sym">)</span>
+initSeed    <span class="sym">=</span> nextSeed <span class="num">42</span>
