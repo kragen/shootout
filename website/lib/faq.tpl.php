@@ -476,6 +476,11 @@ and Adam Chlipala has started <a href="http://www.softwarescrutiny.net/ss/intro/
 <dd><p>Never. There will always be new languages, new versions of languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#8230; And the project team will change over time, and the measurements and presentation will change with them.</p>
 </dd>
 
+<dt><a href="#mycontributionagain" name="mycontributionagain">When will you include my contribution?</a></dt>
+<dd>
+<p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done. <a href="#status"><strong>&darr;&nbsp;Check the status</strong></a> and check the <strong>most recent measurement</strong> date on the website.</p>
+</dd>
+
 <dt><a href="#whydo" name="whydo">Why are you doing this?</a></dt>
 <dd><p>To learn and to <strong>have fun</strong>.</p><p>We will continue as long as the fun holds out.</p></dd>
 </dl>
