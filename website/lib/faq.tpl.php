@@ -183,19 +183,21 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#status" name="status">How can I track what happens to the program I contributed?</a></dt>
 <dd>
-<p>Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a></p>
+<p>Browse <a href="http://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a></p>
 
 <p>Check the <strong>Resolution</strong> field, and check the <strong>State</strong> field</p>
 <ul>
 <li><em>Open items</em> are new contributions</li>
 <li><em>Pending items</em> have been added to CVS</li>
-<li><em>Closed items</em> are being shown on the website</li>
+<li><em>Closed items</em> have been measured and shown on the website</li>
 </ul>
+<p>Check the <strong>most recent measurement</strong> date on the website to see if measurements have been made since the program you contributed was added to CVS.</p>
 </dd>
 
 <dt><a href="#mycontribution" name="mycontribution">When will you include my contribution?</a></dt>
 <dd>
 <p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
+<p>Check the <strong>most recent measurement</strong> date on the website to see if measurements have been made since the program you contributed was added to CVS.</p>
 <p>Maybe you'd like to <a href="#chores">&darr;&nbsp;help us with the chores</a>?</p>
 <p>Normally, contributed programs will be measured and included on the website once or twice each week.</p>
 <p>The simplest way to find out when new measurements have been made is to subscribe to <a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a> - our <a href="<?=CORE_SITE;?>feeds/rss.xml">RSS feed</a>.</p>
