@@ -305,7 +305,7 @@
        Note => 'Modern multi-paradigm programming',
        Ext => 'scala',
        Verfun => sub {
-           chomp(my $ver = `$ENV{CURRY} -v 2>&1`);
+           chomp(my $ver = `$ENV{SCALA} -version 2>&1`);
 	   return ($ver);
        },
      },
