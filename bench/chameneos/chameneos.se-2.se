@@ -1,0 +1,223 @@
+--
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Unknown
+-- Modified by Leland McInnes
+--
+
+-- SPLITFILE=chameneos.e
+class CHAMENEOS
+
+insert
+   ARGUMENTS
+
+create {ANY}
+   make
+
+feature {}
+   colors: FAST_ARRAY[COLOR] is
+      local
+         c: COLOR
+      once
+         create Result.make(0)
+         Result.add_last(c.blue)
+         Result.add_last(c.red)
+         Result.add_last(c.yellow)
+         Result.add_last(c.blue)
+      end
+
+feature {}
+   stack: LOOP_STACK
+
+   make is
+      local
+         i, meetings: INTEGER; m: MEETING_PLACE; c: CREATURE
+         creatures: FAST_ARRAY[CREATURE]
+      do
+         if argument_count = 0 then
+            create m.make(1)
+         else
+            create m.make(argument(1).to_integer)
+         end
+         create stack.make; create creatures.make(0)
+         from i := colors.lower until i > colors.upper loop
+            create c.make(m, colors.item(i))
+            creatures.add_last(c); stack.add_job(c)
+            i := i + 1
+         end
+         stack.run
+         from i := creatures.lower until i > creatures.upper loop
+            meetings := meetings + creatures.item(i).creatures_met
+            i := i + 1
+         end
+         print(meetings.out + "%N")
+      end
+
+end
+-- SPLITFILE=color.e
+expanded class COLOR
+
+feature {ANY}
+   blue:   COLOR is do Result.set(blue_color) end
+   red:    COLOR is do Result.set(red_color) end
+   yellow: COLOR is do Result.set(yellow_color) end
+   faded:  COLOR is do Result.set(faded_color) end
+
+   complement (other: like Current) is
+      do
+            if color /= other.color then
+                inspect
+                    color
+                when blue_color then
+                    if other.color = red_color then
+                        set(yellow_color)
+                    else
+                        set(red_color)
+                    end
+                when red_color then
+                    if other.color = blue_color then
+                        set(yellow_color)
+                    else
+                        set(blue_color)
+                    end
+                when yellow_color then
+                    if other.color = blue_color then
+                        set(red_color)
+                    else
+                        set(blue_color)
+                    end
+                else
+                    -- do nothing
+                end
+            end
+      end
+
+   is_faded: BOOLEAN is
+      do
+         Result := color = faded_color
+      end
+
+feature {COLOR}
+   set (a_color: like color) is
+      do
+         color := a_color
+      end
+
+   color: INTEGER
+
+feature {}
+   faded_color:  INTEGER is 0
+   blue_color:   INTEGER is 1
+   red_color:    INTEGER is 2
+   yellow_color: INTEGER is 3
+
+end
+-- SPLITFILE=creature.e
+class CREATURE
+
+inherit
+   JOB
+
+create {CHAMENEOS}
+   make
+
+feature {ANY}
+   creatures_met: INTEGER
+   color: COLOR
+
+feature {}
+   meeting_place: MEETING_PLACE
+
+   make (a_meating_place: like meeting_place; a_color: like color) is
+      do
+         meeting_place := a_meating_place
+         color := a_color
+      end
+
+feature {LOOP_ITEM}
+   prepare (ready: READY_DESCRIPTION) is
+      do
+         ready.after(0)
+      end
+
+   is_ready (ready: READY_DESCRIPTION): BOOLEAN is
+      do
+         Result := meeting_place.continue(Current)
+      end
+
+   continue is
+      local
+         new_color: like color
+      do
+         new_color := meeting_place.other_creatures_color(Current)
+         if new_color.is_faded then
+            color := new_color
+         else
+            creatures_met := creatures_met + 1
+            color.complement(new_color)
+         end
+      end
+
+   done: BOOLEAN is
+      do
+         Result := color.is_faded
+      end
+
+   restart is
+      do
+      end
+
+end
+-- SPLITFILE=meeting_place.e
+class MEETING_PLACE
+
+create {CHAMENEOS}
+   make
+
+feature {CREATURE}
+   other_creatures_color (creature: CREATURE): COLOR is
+      do
+         if meetings_left <= 0 then
+            Result := Result.faded
+         else
+            if creature = first then
+               Result := second_color
+               first := Void; second := Void; wait := False
+               meetings_left := meetings_left - 1
+            else
+               Result := first_color
+            end
+         end
+      end
+
+   continue (creature: CREATURE): BOOLEAN is
+      do
+         if meetings_left > 0 then
+            if creature = first then
+               Result := second /= Void
+            elseif not wait then
+               if first = Void and then second = Void then
+                  first := creature; first_color := creature.color
+               elseif second = Void then
+                  second := creature; second_color := creature.color
+                  wait := True; Result := True
+               end
+            end
+         else
+            Result := True
+         end
+      end
+
+feature {}
+   first, second: CREATURE
+   first_color, second_color: COLOR
+   wait: BOOLEAN
+   meetings_left: INTEGER
+
+   make (max_meetings: like meetings_left) is
+      do
+         meetings_left := max_meetings
+      end
+
+end
