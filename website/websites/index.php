@@ -80,8 +80,10 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table><br/>
+</table>
 
+<blockquote>"No benchmark is perfect, but The Computer Language Shootout Benchmarks is a good starting point."</blockquote>
+<br/>
 
 <p class="img">
 <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
