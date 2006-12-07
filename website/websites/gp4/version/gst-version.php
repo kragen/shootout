@@ -1,1 +1,1 @@
-<p>GNU Smalltalk version 2.2</p>
+<p>GNU Smalltalk version 2.3</p>
