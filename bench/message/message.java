@@ -9,14 +9,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 
-public class MessageChain implements Runnable {
+public class message implements Runnable {
     private static final int NUMBER_OF_THREADS = 500;
     private static final double QUEUE_BUFFER_RATIO = Integer.getInteger("bufferPct", 100) / 100.0;
 
     private final BlockingQueue<Integer> queue;
-    private final MessageChain next;
+    private final message next;
 
-    MessageChain(MessageChain next, int queueSize) {
+    message(message next, int queueSize) {
         this.queue = new ArrayBlockingQueue<Integer>(queueSize);
         this.next = next;
     }
@@ -36,10 +36,10 @@ public class MessageChain implements Runnable {
         int messagesCount = Integer.parseInt(args[0]);
         int queueSize = (int) (messagesCount * QUEUE_BUFFER_RATIO);
 
-        MessageChain first = new MessageChain(null, queueSize);
-        MessageChain last = first;
+        message first = new message(null, queueSize);
+        message last = first;
         for (int i = 0; i < NUMBER_OF_THREADS-1; i++) {
-            last = new MessageChain(last, queueSize);
+            last = new message(last, queueSize);
             Thread thread = new Thread(last, "Worker-" + i);
             thread.setDaemon(true);
             thread.start();
