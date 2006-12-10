@@ -92,5 +92,7 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </p>
 
 </div>
+
+<? $virtual_page="home"; include_once("analyticstracking.php") ?>
 </body>
 </html>
