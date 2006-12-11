@@ -31,5 +31,7 @@
 </a>
 </p>
 </div>
+
+<? $virtual_page=$PageTitle; include_once("analyticstracking.php") ?>
 </body>
 </html>
