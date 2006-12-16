@@ -1,59 +1,44 @@
 # ----------------------------------------------------------------------
-# The Great Computer Language Shootout
+# The Computer Language Shootout
 # http://shootout.alioth.debian.org/
 #
-# Code based on / inspired by existing, relevant Shootout submissions
-#
-# Contributed by Anthony Borla
+# Contributed by Michael Schlenker
+# modified by Andrew McParland
 # ----------------------------------------------------------------------
 
-proc ack {n m} {
-  if {$m} {
-    if {$n} {
-      return [ack [ack [incr n -1] $m] [incr m -1]]
-    } else {
-      return [ack 1 [incr m -1]]
-    }
-  }
-  return [incr n]
+proc Ack {x y} {
+    expr { $x == 0 ? $y+1 : ($y == 0 ? [Ack [expr {$x-1}] 1] :
+       [Ack [expr {$x-1}] [Ack $x [expr {$y -1}]]])}
+}
+proc Fib {n} {
+    expr {$n < 2 ? 1 : [Fib [expr {$n -2}]] + [Fib [expr {$n -1}]]}
+}
+proc FibFP {n} {
+    expr {double($n) < 2.0 ? 1.0 : [Fib [expr {$n -2.0}]] + [Fib [expr {$n -1.0}]]}
+}
+proc Tak {x y z} {
+    expr { $y < $x ? ([Tak [Tak [expr {$x-1}] $y $z] [Tak [expr {$y-1}] $z $x] \
+       [Tak [expr {$z-1}] $x $y]]) : $z }
+}
+proc TakFP {x y z} {
+    expr { double($y) < double($x) ? double([Tak [Tak [expr {$x-1.0}] $y $z] \
+       [Tak [expr {$y-1}] $z $x] [Tak [expr {$z-1}] $x $y]]) : double($z) }
 }
 
-# ---------------
-
-proc fib {n} {
-  if {$n < 2} {return 1}
-  return [expr {[fib [incr n -2]] + [fib [incr n]]}]
+proc main {argv} {
+    set n [lindex $argv 0]
+    incr n -1
+    set n1 [expr {$n+1}]
+    set n28 [expr {28.0+$n}]
+    set n3 [expr {$n*3}]
+    set n2 [expr {$n*2}]
+    puts [format "Ack(3,%d): %d" $n1 [Ack 3 $n1]]
+    puts [format "Fib(%.1f): %.1f" $n28 [FibFP $n28]]
+    puts [format "Tak(%d,%d,%d): %d" $n3 $n2 $n [Tak $n3 $n2 $n]]
+    puts [format "Fib(3): %d" [Fib 3 ]]
+    puts [format "Tak(3.0,2.0,1.0): %.1f" [TakFP 3.0 2.0 1.0]]
+    return 0;
 }
 
-proc fibflt {n} {
-  if {$n < 2} {return 1}
-  return [expr {[fibflt [expr {$n - 2.0}]] + [fibflt [expr {$n - 1.0}]]}]
-}
-
-# ---------------
-
-proc tak {x y z} {
-  if {$y >= $x} {return $z}
-  return [tak [tak [expr {$x - 1}] $y $z] [tak [expr {$y - 1}] $z $x] [tak [expr {$z - 1}] $x $y]]
-}
-
-proc takflt {x y z} {
-  if {$y >= $x} {return $z}
-  return [takflt [takflt [expr {$x - 1.0}] $y $z] [takflt [expr {$y - 1.0}] $z $x] [takflt [expr {$z - 1.0}] $x $y]]
-}
-
-# ---------------------------------
-
-interp recursionlimit {} 20000
-set N [lindex $argv 0]
-if {$N < 1} {set N 1}
-
-puts [format "Ack(3,%d): %d" $N [ack 3 $N]]
-puts [format "Fib(%.1f): %.1f" [expr {27.0 + $N}] [fibflt [expr {27.0 + $N}]] ]
-
-set N [incr N -1]
-puts   [format "Tak(%d,%d,%d): %d" [expr {$N * 3}] [expr {$N * 2}] $N  [tak [expr {$N * 3}] [expr {$N * 2}] $N]  ]
-
-puts [format "Fib(3): %d" [fib 3]]
-puts [format "Tak(3.0,2.0,1.0): %.1f" [takflt 3.0 2.0 1.0]]
-
+interp recursionlimit {} 100000
+main $argv
