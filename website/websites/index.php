@@ -2,6 +2,71 @@
 echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
 $D = filemtime('../data/data.csv');
 $G = filemtime('./gp4/data/data.csv');
+
+$Now = time()/(3600 * 5);
+
+switch ($Now % 32){
+   case 0: $S = 'debian'; $T = 'nsieve'; break;
+   case 1: $S = 'gp4'; $T = 'chameneos'; break;
+   case 2: $S = 'debian'; $T = 'message'; break;
+   case 3: $S = 'gp4'; $T = 'fannkuch'; break;
+   case 4: $S = 'debian'; $T = 'fasta'; break;
+   case 5: $S = 'gp4'; $T = 'knucleotide'; break;
+   case 6: $S = 'debian'; $T = 'mandelbrot'; break;
+   case 7: $S = 'gp4'; $T = 'nbody'; break;
+   case 8: $S = 'debian'; $T = 'binarytrees'; break;
+   case 9: $S = 'gp4'; $T = 'nsievebits'; break;
+   case 10: $S = 'debian'; $T = 'partialsums'; break;
+   case 11: $S = 'gp4sandbox'; $T = 'pidigits'; break;
+   case 12: $S = 'debian'; $T = 'recursive'; break;
+   case 13: $S = 'sandbox'; $T = 'regexdna'; break;
+   case 14: $S = 'debian'; $T = 'revcomp'; break;
+   case 15: $S = 'gp4'; $T = 'spectralnorm'; break;
+   case 16: $S = 'gp4'; $T = 'nsieve'; break;
+   case 17: $S = 'debian'; $T = 'chameneos'; break;
+   case 18: $S = 'gp4'; $T = 'message'; break;
+   case 19: $S = 'debian'; $T = 'fannkuch'; break;
+   case 20: $S = 'gp4'; $T = 'fasta'; break;
+   case 21: $S = 'debian'; $T = 'knucleotide'; break;
+   case 22: $S = 'gp4'; $T = 'mandelbrot'; break;
+   case 23: $S = 'debian'; $T = 'nbody'; break;
+   case 24: $S = 'gp4'; $T = 'binarytrees'; break;
+   case 25: $S = 'debian'; $T = 'nsievebits'; break;
+   case 26: $S = 'gp4'; $T = 'partialsums'; break;
+   case 27: $S = 'sandbox'; $T = 'pidigits'; break;
+   case 28: $S = 'gp4'; $T = 'recursive'; break;
+   case 29: $S = 'gp4sandbox'; $T = 'regexdna'; break;
+   case 30: $S = 'gp4'; $T = 'revcomp'; break;
+   case 31: $S = 'debian'; $T = 'spectralnorm'; break;
+}
+
+$A = './'.$S.'/benchmark.php?test='.$T.'&amp;lang=all';
+
+switch ($Now % 20){
+   case 0: $L = 'zh0'; $R = 'zi0'; break;
+   case 1: $L = 'zt1'; $R = 'zb2'; break;
+   case 2: $L = 'zh6'; $R = 'zi4'; break;
+   case 3: $L = 'zi2'; $R = 'zv3'; break;
+   case 4: $L = 'zh2'; $R = 'zb4'; break;
+   case 5: $L = 'zi6'; $R = 'zh4'; break;
+   case 6: $L = 'zt6'; $R = 'zv1'; break;
+   case 7: $L = 'zh7'; $R = 'zt7'; break;
+   case 8: $L = 'zh8'; $R = 'zb8'; break;
+   case 9: $L = 'zt9'; $R = 'zv8'; break;
+   
+   case 10: $L = 'zh9'; $R = 'zi9'; break;
+   case 11: $L = 'zh4'; $R = 'zb9'; break;
+   case 12: $L = 'zt5'; $R = 'zh0'; break;
+   case 13: $L = 'zi7'; $R = 'zv9'; break;
+   case 14: $L = 'zi1'; $R = 'zh8'; break;
+   case 15: $L = 'zv7'; $R = 'zt4'; break;
+   case 16: $L = 'zv5'; $R = 'zt7'; break;
+   case 17: $L = 'zh1'; $R = 'zb9'; break;
+   case 18: $L = 'zi8'; $R = 'zh9'; break;
+   case 19: $L = 'zv2'; $R = 'zt2'; break;
+}
+
+
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
@@ -32,20 +97,16 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<p><strong>Contribute:</strong> you can make a difference</p>
-<ul>
-<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
-<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
-</ul><br/>
+<p><strong>Use:</strong> these are particular truths, they are not general truths</p><br/>
 
-<p><strong>Use:</strong> these are particular truths, they are not general truths</p>
-<ul>
-<li>read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a> and read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a></li>
-<li>learn about the languages - read the programs</li>
-<li>understand that <em>the faster program</em> may become <em>the slower program</em> when the workload changes</li>
-</ul><br/>
+<p><a href="<?=$A;?>" title="Browse the Programs and CPU times" ><strong>Programs, CPU times, Benchmarks</strong></a></p>
+<p style="white-space: nowrap">
+<a href="<?=$A;?>">
+   <img src="<?='./'.$L.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
+   <img src="<?='./'.$R.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
+</a>
+</p><br/>
 
-<p><strong>Start:</strong> click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
 <table class="layout">
 <tr>
 <td>
@@ -61,11 +122,6 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table><br/>
-
-
-<p><strong>Extra:</strong> more language implementations and alpha benchmarks</p>
-<table class="layout">
 <tr>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $G)) ?></p>
@@ -82,8 +138,18 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </tr>
 </table>
 
-<blockquote>"No benchmark is perfect, but The Computer Language Shootout Benchmarks is a good starting point."</blockquote>
-<br/>
+<ul>
+<li>read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a> and read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a></li>
+<li>learn about the languages - read the programs</li>
+<li>understand that <em>the faster program</em> may become <em>the slower program</em> when the workload changes</li>
+</ul><br/>
+
+
+<p><strong>Contribute:</strong> you can make a difference</p>
+<ul>
+<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
+<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
+</ul><br/>
 
 <p class="img">
 <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
