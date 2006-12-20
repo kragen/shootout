@@ -286,9 +286,9 @@ Do you want to help with the chores?</p>
 </dd>
 
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
-<dd><p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM, and for Erlang, and for Smalltalk, and for &#8230; You can see the <strong>difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>. Most of the benchmarks run for long enough that startup time is insignificant.</p>
+<dd><p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM, and for Erlang, and for Smalltalk, and for &#8230; You can see the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>. Most of the benchmarks run for long enough that startup time is insignificant.</p>
 
-<p>Sometimes Java programmers point out that dynamic optimization will improve the performance of Java programs that are run repeatedly. That's true, but again the differences aren't significant for most of the benchmarks. Here are some examples:</p>
+<p>Sometimes Java programmers point out that dynamic optimization will improve the performance of Java programs that are run repeatedly. That's true, but again the differences are insignificant for most of the benchmarks. Here are some examples:</p>
 
 <table>
 <tr>
@@ -415,7 +415,7 @@ Bash time builtin command
 16.638
 </pre>
 <p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
-<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
+<p>The <a href="#fullcpu"><strong>&darr;&nbsp;Full CPU time</strong></a> <em>includes</em> program startup time.</p>
 </dd>
 
 <dt><a href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></dt>
