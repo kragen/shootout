@@ -415,7 +415,7 @@ Bash time builtin command
 16.638
 </pre>
 <p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
-<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>enormous difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
+<p>The Full CPU time <em>includes</em> program startup time. You can see the <strong>difference in startup time</strong> between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark">startup benchmark</a>.</p>
 </dd>
 
 <dt><a href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></dt>
