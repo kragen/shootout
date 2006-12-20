@@ -154,7 +154,7 @@ final class Board {
          c => if (c.piece == null) '-'.toByte 
               else (c.piece.number + 48).toByte ))
 
-   def firstEmptyCellIndex() = cells.indexOf(c => c.isEmpty)
+   def firstEmptyCellIndex() = cells.indexOf((c: BoardCell) => c.isEmpty)
 
    private val cache: Array[Array[Array[Array[ Array[BoardCell] ]]]] = 
       for (val i <- Array.range(0,Board.pieces)) 

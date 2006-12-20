@@ -134,11 +134,7 @@ final class Board {
          c => if (c.piece == null) '-'.toByte 
               else (c.piece.number + 48).toByte ))
 
-   def firstEmptyCellIndex() = { 
-      val _cells: Iterable[BoardCell] = cells
-      _cells.indexOf(c => c.isEmpty)
-   }
-
+   def firstEmptyCellIndex() = cells.indexOf((c: BoardCell) => c.isEmpty)
 
    def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
       cellCount = 0
