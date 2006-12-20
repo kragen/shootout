@@ -133,16 +133,7 @@ final class Board {
          c => if (c.piece == null) '-'.toByte 
               else (c.piece.number + 48).toByte ))
 
-   // def firstEmptyCellIndex() = cells.indexOf((c: BoardCell) => c.isEmpty)
-
-   def firstEmptyCellIndex(): Int = {
-      var i = 0
-      while (i < cells.length){
-         if (cells(i).isEmpty) return i     
-         i = i + 1
-      }
-      return -1
-   }
+   def firstEmptyCellIndex() = cells.findIndexOf(c => c.isEmpty)
 
    def add(pieceIndex: Int, boardIndex: Int, p: Piece) = {
       cellCount = 0
