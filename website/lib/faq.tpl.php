@@ -286,7 +286,8 @@ Do you want to help with the chores?</p>
 </dd>
 
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
-<dd><p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM, and for Erlang, and for Smalltalk, and for &#8230; You can see the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>. Most of the benchmarks run for long enough that startup time is insignificant.</p>
+<dd><p>Full CPU Time means <strong>program run-time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM, and for Erlang &#8230;, and for Smalltalk &#8230;, and for Scala &#8230;, and for C# &#8230;, and for &#8230;</p> 
+<p>You can see the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>. Most of the benchmarks run for long enough that startup time is insignificant.</p>
 
 <p>Sometimes Java programmers point out that dynamic optimization will improve the performance of Java programs that are run repeatedly. That's true, but again the differences are insignificant for most of the benchmarks. Here are some examples:</p>
 
