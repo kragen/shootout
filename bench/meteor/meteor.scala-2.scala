@@ -107,6 +107,11 @@ final class Solver (n: Int) {
       printBoard(last)
    }
 
+/*
+   def printPieces() = 
+      for (val i <- Iterator.range(0,Board.pieces)) pieces(i).print 
+*/
+
 }
 
 
@@ -165,65 +170,36 @@ final class Board {
 
 
    private def boardCells() = {
-      type Row = List[BoardCell]
-      type Edges = List[Pair[BoardCell,BoardCell]]
+      val a = for (val i <- Array.range(0,Board.size)) yield new BoardCell(i)
+      val m = (Board.size / Board.cols) - 1
 
-      val cols = Board.cols
+      for (val i <- Iterator.range(0,a.length)){
+         val row = i / Board.cols
+         val isFirst = i % Board.cols == 0
+         val isLast = (i+1) % Board.cols == 0
+         val c = a(i)
 
-      def rowAsEdges(row: Row, indent: Boolean) = {
-         val e = row.take(cols-1) zip( row.drop(1) )
-         if (indent) 
-            Pair(null, e.head._1) :: e 
-         else 
-            e ::: List( Pair(e.last._2, null) )      
-      }
-
-      def joinEdgesNS(prev: Edges, row: Edges, indent: Boolean) =
-         (prev zip row).foreach(
-            pair => pair match {
-               case Pair(Pair(a1,a2),Pair(b1,b2)) => 
-                  if (indent){
-                     b2.next(Cell.NW) = a1
-                     b2.next(Cell.NE) = a2
-                     a1.next(Cell.SE) = b2
-                     if (a2 != null) a2.next(Cell.SW) = b2
-                  } else {
-                     b1.next(Cell.NW) = a1
-                     b1.next(Cell.NE) = a2
-                     a2.next(Cell.SW) = b1
-                     if (a1 != null) a1.next(Cell.SE) = b1
-                  }               
-            } ) 
-
-      def joinEdgesWE(row: Edges) = 
-         row.foreach( 
-            pair => pair match {
-               case Pair(a,b) => {
-                  if (a != null) a.next(Cell.E) = b
-                  if (b != null) b.next(Cell.W) = a 
-               }
-            } ) 
-
-      def makeBoardFromCellRows(prev: Edges, rows: List[Row], indent: Boolean): Unit = 
-         rows match {
-            case Nil => {}
-            case r :: rs => {
-               val current = rowAsEdges(r,indent)
-               if (prev != Nil) joinEdgesNS(prev,current,indent) 
-               joinEdgesWE(current)
-               makeBoardFromCellRows(current,rs,!indent) 
+         if (row % 2 == 1) {
+            if (!isLast) c.next(Cell.NE) = a(i-(Board.cols-1))
+            c.next(Cell.NW) = a(i-Board.cols) 
+            if (row != m) {
+               if (!isLast) c.next(Cell.SE) = a(i+(Board.cols+1))
+               c.next(Cell.SW) = a(i+Board.cols) 
+            }
+         } else {
+            if (row != 0) {
+               if (!isFirst) c.next(Cell.NW) = a(i-(Board.cols+1))
+               c.next(Cell.NE) = a(i-Board.cols)
+            }
+            if (row != m) {
+               if (!isFirst) c.next(Cell.SW) = a(i+(Board.cols-1))
+               c.next(Cell.SE) = a(i+Board.cols)
             }
          }
-
-      // a temporary list of lists of BoardCell representing the board
-      val rows = 
-         for (val i<- List.range(0,Board.rows)) 
-            yield 
-               for (val j <- List.range(0,cols)) yield new BoardCell(i*cols + j)
-
-      makeBoardFromCellRows(Nil,rows,false)
-
-      List.flatten(rows).toArray
+         if (!isFirst) c.next(Cell.W) = a(i-1)
+         if (!isLast) c.next(Cell.E) = a(i+1)
+      }
+      a
    }
 
 
@@ -411,6 +387,27 @@ final class Piece(_number: Int) {
       cells(4).next(Cell.NW) = cells(3)
       cells(3).next(Cell.SE) = cells(4)
    }
+
+/*
+   def print() = {
+      Console.println("Piece # " + number)
+      Console.println("cell\tNW NE W  E  SW SE")
+      for (val i <- Iterator.range(0,Piece.size)){
+         Console.print(i + "\t")
+         for (val j <- Iterator.range(0,Cell.sides)){
+            val c = cells(i).next(j)
+            if (c == null) 
+               Console.print("-- ") 
+            else 
+               for (val k <- Iterator.range(0,Piece.size)){
+                  if (cells(k) == c) Console.printf(" {0,number,0} ")(k)
+               }       
+         }
+         Console.println("")
+      }
+      Console.println("")
+   }
+*/
 
 }
 
