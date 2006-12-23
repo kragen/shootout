@@ -97,20 +97,16 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<p><strong>Contribute:</strong> you can make a difference</p>
-<ul>
-<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
-<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
-</ul><br/>
+<p><strong>Use:</strong> these are particular truths, they are not general truths</p><br/>
 
-<p><strong>Use:</strong> these are particular truths, they are not general truths</p>
-<ul>
-<li>read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a> and read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a></li>
-<li>learn about the languages - read the programs</li>
-<li>understand that <em>the faster program</em> may become <em>the slower program</em> when the workload changes</li>
-</ul><br/>
+<p><a href="<?=$A;?>" title="Browse the Programs and CPU times" ><strong>Programs, CPU times, Benchmarks</strong></a></p>
+<p style="white-space: nowrap">
+<a href="<?=$A;?>">
+   <img src="<?='./'.$L.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
+   <img src="<?='./'.$R.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
+</a>
+</p><br/>
 
-<p><strong>Start:</strong> click the colourful link to browse our current benchmarks, programs, languages and measurements</p>
 <table class="layout">
 <tr>
 <td>
@@ -126,11 +122,6 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table><br/>
-
-
-<p><strong>Extra:</strong> more language implementations and alpha benchmarks</p>
-<table class="layout">
 <tr>
 <td>
 <p class="timestamp"><? printf('%s', gmdate("d M Y", $G)) ?></p>
@@ -147,8 +138,18 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </tr>
 </table>
 
-<blockquote>"No benchmark is perfect, but The Computer Language Shootout Benchmarks is a good starting point."</blockquote>
-<br/>
+<ul>
+<li>understand that <em>the faster program</em> may become <em>the slower program</em> when the workload changes</li>
+<li>read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a> and read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a></li>
+<li>learn about the languages - read the programs</li>
+</ul><br/>
+
+
+<p><strong>Contribute:</strong> you can make a difference</p>
+<ul>
+<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributeprogram" title="FAQ: How can I help?">contribute faster more-elegant programs</a>&nbsp;(FAQ)</li>
+<li>you can <a href="http://shootout.alioth.debian.org/gp4/faq.php?&#35;contributebenchmark" title="FAQ: How can I contribute a new benchmark?">suggest new benchmark comparisons</a>&nbsp;(FAQ)</li>
+</ul><br/>
 
 <p class="img">
 <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
