@@ -81,7 +81,7 @@ VAR
    noFit : BoardPiece;
 
 
-PROCEDURE (c: Cell) Initialize (); BEGIN c.marked := FALSE; END Initialize;
+PROCEDURE (c: Cell) INIT* (); BEGIN c.marked := FALSE; END INIT;
 
 
 PROCEDURE (c: Cell) Mark (); BEGIN c.marked := TRUE; END Mark;
@@ -90,8 +90,8 @@ PROCEDURE (c: Cell) Mark (); BEGIN c.marked := TRUE; END Mark;
 PROCEDURE (c: Cell) Unmark (); BEGIN c.marked := FALSE; END Unmark;
 
 
-PROCEDURE (c: BoardCell) Number (i: LONGINT);
-BEGIN c.marked := FALSE; c.number := i; END Number;
+PROCEDURE (c: BoardCell) INIT* (i: LONGINT);
+BEGIN c.INIT^(); c.number := i; END INIT;
 
 
 PROCEDURE (c: BoardCell) Empty (); BEGIN c.piece := NIL; END Empty;
@@ -290,18 +290,15 @@ BEGIN
 END Make9;
 
 
-PROCEDURE (p: Piece) Initialize (n: LONGINT);
+PROCEDURE (p: Piece) INIT* (n: LONGINT);
 VAR
    i, j, k : LONGINT;
-   c : PieceCell;
 BEGIN
    p.orientation := 0;
    p.number := n;
 
    FOR k := 0 TO PIECE_ORIENTATIONS - 1 DO
-      FOR i := 0 TO PIECE_SIZE - 1 DO 
-         NEW(c); c.Initialize();p.cache[k][i] := c; 
-      END; 
+      FOR i := 0 TO PIECE_SIZE - 1 DO p.cache[k][i] := NEW(PieceCell); END; 
 
       CASE n OF
          0 : p.Make0( p.cache[k] );
@@ -324,7 +321,7 @@ BEGIN
          END;
       END;
    END; 
-END Initialize;
+END INIT;
 
 
 PROCEDURE (p: Piece) Unmark ();
@@ -352,11 +349,7 @@ VAR
    isFirst, isLast : BOOLEAN;
 BEGIN
    b.cellCount := 0;
-
-   FOR i := 0 TO BOARD_SIZE - 1 DO
-      NEW(c); c.Number(i); b.cells[i] := c;
-   END;
-
+   FOR i := 0 TO BOARD_SIZE - 1 DO b.cells[i] := NEW(BoardCell,i); END;
    m := (BOARD_SIZE DIV BOARD_COLS) - 1;
 
    FOR i := 0 TO BOARD_SIZE - 1 DO
@@ -473,12 +466,9 @@ END Add;
 PROCEDURE Initialize ();
 VAR 
    i : LONGINT;
-   p : Piece;
 BEGIN
    board.Initialize(); 
-   FOR i := 0 TO LEN(pieces) - 1 DO
-      NEW(p); p.Initialize(i); pieces[i] := p;
-   END;
+   FOR i := 0 TO LEN(pieces) - 1 DO pieces[i] := NEW(Piece,i); END;
    unplaced := {0..LEN(pieces)-1};
    once := TRUE;
    NEW(noFit);
