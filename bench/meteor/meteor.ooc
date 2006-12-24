@@ -41,8 +41,8 @@ TYPE
    Piece = POINTER TO PieceDesc;
    PieceDesc = 
       RECORD 
-         number : INTEGER;
-         orientation : INTEGER;
+         number : LONGINT;
+         orientation : LONGINT;
          cache : PieceCache;
       END;
 
@@ -50,7 +50,7 @@ TYPE
    BoardCellDesc = 
       RECORD (CellDesc)
          next : ARRAY SIDES OF BoardCell; 
-         number : INTEGER;
+         number : LONGINT;
          piece: Piece;
       END;
 
@@ -64,11 +64,11 @@ TYPE
       RECORD
          cells : ARRAY BOARD_SIZE OF BoardCell;
          cellsPieceWillFill : BoardPieceShape;
-         cellCount : INTEGER; 
+         cellCount : LONGINT; 
          cache : BoardCache;
       END;
 
-   BoardPieces = ARRAY BOARD_SIZE OF INTEGER;
+   BoardPieces = ARRAY BOARD_SIZE OF LONGINT;
 
 
 VAR
@@ -90,7 +90,7 @@ PROCEDURE (c: Cell) Mark (); BEGIN c.marked := TRUE; END Mark;
 PROCEDURE (c: Cell) Unmark (); BEGIN c.marked := FALSE; END Unmark;
 
 
-PROCEDURE (c: BoardCell) Number (i: INTEGER);
+PROCEDURE (c: BoardCell) Number (i: LONGINT);
 BEGIN c.marked := FALSE; c.number := i; END Number;
 
 
@@ -101,9 +101,9 @@ PROCEDURE (c: BoardCell) IsEmpty () : BOOLEAN;
 BEGIN RETURN c.piece = NIL; END IsEmpty;
 
 
-PROCEDURE (c: BoardCell) ContiguousEmptyCells () : INTEGER; 
+PROCEDURE (c: BoardCell) ContiguousEmptyCells () : LONGINT; 
 VAR
-   count, i : INTEGER;
+   count, i : LONGINT;
    neighbour : BoardCell;
 BEGIN 
    IF ~c.marked & c.IsEmpty() THEN
@@ -290,9 +290,9 @@ BEGIN
 END Make9;
 
 
-PROCEDURE (p: Piece) Initialize (n: INTEGER);
+PROCEDURE (p: Piece) Initialize (n: LONGINT);
 VAR
-   i, j, k : INTEGER;
+   i, j, k : LONGINT;
    c : PieceCell;
 BEGIN
    p.orientation := 0;
@@ -328,7 +328,7 @@ END Initialize;
 
 
 PROCEDURE (p: Piece) Unmark ();
-VAR i : INTEGER;
+VAR i : LONGINT;
 BEGIN 
    FOR i := 0 TO PIECE_SIZE - 1 DO p.cache[p.orientation][i].Unmark(); END; 
 END Unmark;
@@ -341,13 +341,13 @@ BEGIN
 END NextOrientation;
 
 
-PROCEDURE (p: Piece) cells (i : INTEGER) : PieceCell; 
+PROCEDURE (p: Piece) cells (i : LONGINT) : PieceCell; 
 BEGIN RETURN p.cache[p.orientation][i]; END cells;
 
 
 PROCEDURE (VAR b: Board) Initialize ();
 VAR
-   i, row, m : INTEGER;
+   i, row, m : LONGINT;
    c : BoardCell;
    isFirst, isLast : BOOLEAN;
 BEGIN
@@ -399,12 +399,12 @@ END Initialize;
 
 
 PROCEDURE (VAR b: Board) Unmark ();
-VAR i : INTEGER;
+VAR i : LONGINT;
 BEGIN FOR i := 0 TO BOARD_SIZE - 1 DO b.cells[i].Unmark(); END; END Unmark;
 
 
-PROCEDURE (VAR b: Board) FirstEmptyCellIndex () : INTEGER;
-VAR i : INTEGER;
+PROCEDURE (VAR b: Board) FirstEmptyCellIndex () : LONGINT;
+VAR i : LONGINT;
 BEGIN 
    FOR i := 0 TO BOARD_SIZE - 1 DO 
       IF b.cells[i].IsEmpty() THEN RETURN i; END;
@@ -414,7 +414,7 @@ END FirstEmptyCellIndex;
 
 
 PROCEDURE (VAR b: Board) Remove (p: Piece);
-VAR i : INTEGER;
+VAR i : LONGINT;
 BEGIN 
    FOR i := 0 TO BOARD_SIZE - 1 DO 
       IF b.cells[i].piece = p THEN b.cells[i].piece := NIL; END;
@@ -423,7 +423,7 @@ END Remove;
 
 
 PROCEDURE (VAR b: Board) Find (p: PieceCell; c: BoardCell);
-VAR i : INTEGER;
+VAR i : LONGINT;
 BEGIN 
    IF (p # NIL) & ~p.marked & (c # NIL) THEN
       b.cellsPieceWillFill[b.cellCount] := c;
@@ -437,9 +437,9 @@ END Find;
 
 
 PROCEDURE (VAR b: Board) Add (
-      pieceIndex: INTEGER; boardIndex: INTEGER; p: Piece) : BOOLEAN;
+      pieceIndex: LONGINT; boardIndex: LONGINT; p: Piece) : BOOLEAN;
 VAR 
-   i : INTEGER;
+   i : LONGINT;
    a : BoardPiece;
 BEGIN 
    a := b.cache[p.number][p.orientation][pieceIndex][boardIndex];
@@ -472,7 +472,7 @@ END Add;
 
 PROCEDURE Initialize ();
 VAR 
-   i : INTEGER;
+   i : LONGINT;
    p : Piece;
 BEGIN
    board.Initialize(); 
@@ -487,7 +487,7 @@ END Initialize;
 
 PROCEDURE UpdateFirstLast ();
 VAR 
-   i, n : INTEGER;
+   i, n : LONGINT;
    lessFirst, moreFirst, lessLast, moreLast : BOOLEAN;
 
    PROCEDURE CopyTo(VAR a : BoardPieces);
@@ -526,7 +526,7 @@ PROCEDURE PrintSolutions ();
    PROCEDURE PrintBoard (a : BoardPieces);
    VAR
       indent : BOOLEAN;
-      i, j : INTEGER;
+      i, j : LONGINT;
    BEGIN
       indent := FALSE;
       i := 0;
@@ -557,7 +557,7 @@ END PuzzleSolved;
 
 PROCEDURE ShouldPrune () : BOOLEAN;
 VAR 
-   i : INTEGER;
+   i : LONGINT;
    forall : BOOLEAN;
 BEGIN
    board.Unmark(); 
@@ -571,7 +571,7 @@ END ShouldPrune;
 
 PROCEDURE FindSolutions ();
 VAR
-   emptyCellIndex, k, i, j : INTEGER;   
+   emptyCellIndex, k, i, j : LONGINT;   
    piece : Piece;
 BEGIN
    IF countdown > 0 THEN
