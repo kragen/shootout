@@ -287,10 +287,10 @@ Do you want to help with the chores?</p>
 
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
 <dd><p>Full CPU Time means <strong>program usr+sys time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM and load class files, and for Erlang &#8230;, and for Smalltalk &#8230;, and for Scala &#8230;, and for C# &#8230;, and for &#8230;</p> 
-<p>You can get some idea of the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 
 <blockquote>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs." <a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></blockquote>
 
+<p>You can get some idea of the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 
 </dd>
 </dl>
