@@ -5,4 +5,5 @@
 <p><a href="http://java.sun.com/docs/hotspot/PerformanceFAQ.html#B1">Benchmarking the Java HotSpot VM</a></p>
 
 
-<blockquote>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs." <br /><a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></blockquote>
+<blockquote>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs."</blockquote>
+<p><a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></p>
