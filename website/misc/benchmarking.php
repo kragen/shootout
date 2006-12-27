@@ -87,8 +87,6 @@ components continues to be a central idea in the design."<br />
  <a href="http://www.adapower.com/rm95/RM-0-3.html">Ada Reference Manual</a>, Introduction, Design Goals
 </p></blockquote>
 
-<blockquote><p>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs." <br /><a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></p></blockquote>
-
 </dd>
 
 <dt><a href="#domain" name="domain"><strong>Different design intentions - domain</strong></a></dt>
