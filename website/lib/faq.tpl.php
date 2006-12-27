@@ -286,111 +286,11 @@ Do you want to help with the chores?</p>
 </dd>
 
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
-<dd><p>Full CPU Time means <strong>program usr+sys time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM, and for Erlang &#8230;, and for Smalltalk &#8230;, and for Scala &#8230;, and for C# &#8230;, and for &#8230;</p> 
-<p>You can see the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>. Most of the benchmarks run for long enough that startup time is insignificant.</p>
+<dd><p>Full CPU Time means <strong>program usr+sys time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM and load class files, and for Erlang &#8230;, and for Smalltalk &#8230;, and for Scala &#8230;, and for C# &#8230;, and for &#8230;</p> 
+<p>You can get some idea of the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 
-<p>Sometimes Java programmers point out that dynamic optimization will improve the performance of Java programs that are run repeatedly. That's true, but again the differences are insignificant for most of the benchmarks. Here are some examples:</p>
+<blockquote>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs." <a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></blockquote>
 
-<table>
-<tr>
-<th></th>
-<th>nbody</th>
-<th>partial-sums</th>
-<th>spectral-norm</th>
-<th>fannkuch</th>
-</tr>
-<tr>
-<td></td>
-<td>16,309ms</td>
-<td>11,694ms</td>
-<td>5,147ms</td>
-<td>1,196ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,063ms</td>
-<td>11,549ms</td>
-<td>4,906ms</td>
-<td>1,105ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,084ms</td>
-<td>11,478ms</td>
-<td>4,924ms</td>
-<td>976ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,054ms</td>
-<td>11,436ms</td>
-<td>4,897ms</td>
-<td>986ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,099ms</td>
-<td>11,432ms</td>
-<td>4,899ms</td>
-<td>981ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,062ms</td>
-<td>11,438ms</td>
-<td>4,897ms</td>
-<td>985ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,112ms</td>
-<td>11,435ms</td>
-<td>4,900ms</td>
-<td>981ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,024ms</td>
-<td>11,435ms</td>
-<td>4,896ms</td>
-<td>988ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,073ms</td>
-<td>11,429ms</td>
-<td>4,895ms</td>
-<td>981ms</td>
-</tr>
-<tr>
-<td></td>
-<td>16,049ms</td>
-<td>11,435ms</td>
-<td>4,898ms</td>
-<td>983ms</td>
-</tr>
-<tr>
-<td>improvement</td>
-<td>1.75%</td>
-<td>2.3%</td>
-<td>4.8%</td>
-<td>18%</td>
-</tr>
-<tr>
-<td>startup &amp; shutdown</td>
-<td>0.8%</td>
-<td>1.6%</td>
-<td>5%</td>
-<td>10%</td>
-</tr>
-<tr>
-<td>startup &amp; improvement</td>
-<td>2.6%</td>
-<td>3.8%</td>
-<td>9.6%</td>
-<td>25%</td>
-</tr>
-</table>
 
 </dd>
 </dl>
