@@ -298,9 +298,8 @@ Do you want to help with the chores?</p>
 <tr>
 <th></th>
 <th>1000 repeats</th>
-<th>Full CPU time</th>
-<th>difference</th>
-<th></th>
+<th>CPU</th>
+<th colspan="2">difference</th>
 </tr>
 
 <tr>
