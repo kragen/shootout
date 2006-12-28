@@ -292,6 +292,67 @@ Do you want to help with the chores?</p>
 
 <p>You can get some idea of the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 
+<p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again without shutting down the JVM. That's true. Here are some examples were we measured elapsed time once the program had started, and repeated the same Java program 1,000 times (taking from 15 minutes to over 4 hours), and then selected the fastest elapsed time. </p>
+
+<table>
+<tr>
+<th></th>
+<th>1000 repeats</th>
+<th>Full CPU time</th>
+<th>difference</th>
+<th></th>
+</tr>
+
+<tr>
+<td>fannkuch</td>
+<td>0.955</td>
+<td>1.328</td>
+<td>0.373</td>
+<td>28%</td>
+</tr>
+<tr>
+<td>nsieve</td>
+<td>2.108</td>
+<td>2.384</td>
+<td>0.276</td>
+<td>11%</td>
+</tr>
+<tr>
+<td>mandelbrot</td>
+<td>4.340</td>
+<td>4.852</td>
+<td>0.512</td>
+<td>19%</td>
+</tr>
+<tr>
+<td>binary-trees</td>
+<td>5.517</td>
+<td>6.736</td>
+<td>1.219</td>
+<td>18%</td>
+</tr>
+<tr>
+<td>recursive</td>
+<td>6.753</td>
+<td>7.076</td>
+<td>0.323</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>nsievebits</td>
+<td>8.222</td>
+<td>8.705</td>
+<td>0.483</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>nbody</td>
+<td>15.950</td>
+<td>17.017</td>
+<td>1.067</td>
+<td>6%</td>
+</tr>
+</table>
 </dd>
 </dl>
 </dd>
