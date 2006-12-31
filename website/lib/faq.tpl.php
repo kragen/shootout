@@ -293,14 +293,14 @@ Do you want to help with the chores?</p>
 
 <p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
 
-<p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then because we are so lucky we selected the fastest elapsed time, taking all the benefit and non of the cost:</p>
+<p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then because we are so lucky we selected the fastest elapsed time, taking all the benefit and none of the cost:</p>
 
 <table>
 <tr>
 <th></th>
 <th>luckiest 1 in a 1000&nbsp;</th>
 <th>&nbsp;Full CPU Time&nbsp;</th>
-<th colspan="2">&nbsp;difference&nbsp;</th>
+<th colspan="2">&nbsp;difference&nbsp;</th>4.98	
 </tr>
 
 <tr>
