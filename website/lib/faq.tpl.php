@@ -286,29 +286,23 @@ Do you want to help with the chores?</p>
 </dd>
 
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
-<dd><p>Full CPU Time means <strong>program usr+sys time</strong> including program <strong>startup time</strong>. So for Java that includes the time to startup a JVM and load class files, and for Erlang &#8230;, and for Smalltalk &#8230;, and for Scala &#8230;, and for C# &#8230;, and for &#8230;</p> 
+<dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
+<p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 
-<blockquote>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs." <br /><a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></blockquote>
+<p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. That's true.</p>
 
-<p>You can get some idea of the difference in startup time between languages on the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
+<p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
 
-<p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again without shutting down the JVM. That's true. Here are some examples were we measured elapsed time once the program had started, and repeated the same Java program 1,000 times (taking from 15 minutes to over 4 hours), and then selected the fastest elapsed time. </p>
+<p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then because we are so lucky we selected the fastest elapsed time, taking all the benefit and non of the cost:</p>
 
 <table>
 <tr>
 <th></th>
-<th>1000 repeats</th>
-<th>CPU</th>
-<th colspan="2">difference</th>
+<th>luckiest 1 in a 1000&nbsp;</th>
+<th>&nbsp;Full CPU Time&nbsp;</th>
+<th colspan="2">&nbsp;difference&nbsp;</th>
 </tr>
 
-<tr>
-<td>fannkuch</td>
-<td>0.955</td>
-<td>1.328</td>
-<td>0.373</td>
-<td>28%</td>
-</tr>
 <tr>
 <td>nsieve</td>
 <td>2.108</td>
