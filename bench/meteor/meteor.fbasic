@@ -1,0 +1,643 @@
+' The Computer Language Shootout
+' http://shootout.alioth.debian.org
+' contributed by Isaac Gouy (Oberon-2 novice)
+' converted to FreeBASIC by Simon Nash
+
+#include "crt.bi"
+
+#define chrTAB chr(8)
+#define ODD(n) ((n AND 1) = 1)
+#undef Swap
+
+Enum BOOL_E
+  FALSE = 0
+  TRUE = NOT FALSE
+End Enum
+
+Const NW = 0, NE = 1, W = 2, E = 3, SW = 4, SE = 5
+Const SIDES = 6
+
+Const BOARD_COLS = 5
+Const BOARD_ROWS = 10
+Const BOARD_SIZE = BOARD_COLS * BOARD_ROWS
+
+Const CPIECES = 10
+Const PIECE_SIZE = 5
+Const PIECE_ROTATIONS = SIDES
+Const PIECE_FLIPS = 2
+Const PIECE_ORIENTATIONS = PIECE_ROTATIONS * PIECE_FLIPS
+
+Type BOOLEAN As Integer
+
+Type SET 
+  data As Integer ptr
+  high As Integer
+  count As Integer
+End Type
+
+Type PieceCell As PieceCellDesc ptr
+Type PieceCellDesc
+  marked As BOOLEAN
+  next(0 To SIDES - 1) As PieceCell
+End Type
+
+Type PieceShape 
+  x(0 To PIECE_SIZE - 1) As PieceCell
+End Type
+
+Type PieceCache
+  x(0 To PIECE_ORIENTATIONS - 1) As PieceShape
+End Type
+
+Type Piece As PieceDesc ptr
+Type PieceDesc
+  number As INTEGER
+  orientation As INTEGER
+  cache As PieceCache
+End Type
+      
+Type BoardCell As BoardCellDesc ptr
+Type BoardCellDesc
+  marked As BOOLEAN
+  next(0 To SIDES - 1) As BoardCell
+  number As INTEGER
+  piece As Piece
+End Type
+
+Type BoardPieceShape 
+  x(0 To PIECE_SIZE - 1) As BoardCell
+End Type
+Type BoardPiece As BoardPieceShape ptr
+Type BoardCache
+  x(0 To CPIECES - 1, 0 To PIECE_ORIENTATIONS - 1, 0 To PIECE_SIZE - 1, 0 To BOARD_SIZE - 1) As BoardPiece
+End Type
+
+Type Board
+  cells(0 To BOARD_SIZE - 1) As BoardCell
+  cellsPieceWillFill As BoardPieceShape
+  cellCount As INTEGER
+  cache As BoardCache
+End Type
+
+Type BoardPieces
+  x(0 To BOARD_SIZE - 1) As INTEGER
+End Type
+
+Dim Shared As LONGINT countdown, n
+Dim Shared board As Board
+Dim Shared pieces(0 To CPIECES - 1) As Piece
+Dim Shared unplaced As SET
+Dim Shared As BoardPieces first, last, current
+Dim Shared once As BOOLEAN
+Dim Shared noFit As BoardPiece
+Dim Shared ptr_list As Any ptr ptr
+Dim Shared ptr_count As Integer
+Dim Shared ptr_used As Integer
+
+#undef CAllocate
+#undef Allocate
+#undef ReAllocate
+#undef DeAllocate
+
+#define PTR_GRAN 10000
+Function CAllocate(ByVal size As Integer) As Any ptr
+  If ptr_list = NULL Then
+    ptr_list = malloc(PTR_GRAN * sizeof(Any ptr))
+    ptr_count = PTR_GRAN
+  End If
+  If ptr_count = ptr_used Then
+    ptr_count += PTR_GRAN
+    ptr_list = realloc(ptr_list, ptr_count * sizeof(Any ptr))
+  End If
+  ptr_list[ptr_used] = calloc(size, 1)
+  Function = ptr_list[ptr_used]
+  ptr_used += 1
+End Function
+
+Sub ptr_list_free()
+  Dim i As Integer
+    If ptr_list <> NULL Then
+      For i = 0 To ptr_used - 1
+        free(ptr_list[i])
+      Next i
+      free(ptr_list)
+    End If
+    ptr_list = NULL
+    ptr_count = 0
+    ptr_used = 0
+End Sub
+
+' Set, always 0 based, specific to this program
+Sub SET_INIT(ByVal set As SET ptr, ByVal high As Integer)
+  Dim i As Integer
+    set->data = CAllocate(sizeof(Integer) * (high + 1))
+    set->high = high
+    set->count = high + 1
+    For i = 0 To high
+      set->data[i] = TRUE
+    Next i
+End Sub
+#define SET_EMPTY(set) (set.count = 0)
+#define SET_NOTEMPTY(set) (set.count <> 0)
+#define SET_ADD(set, k) If set.data[k] = FALSE Then set.data[k] = TRUE : set.count += 1 End If
+#define SET_REMOVE(set, k) If set.data[k] = TRUE Then set.data[k] = FALSE : set.count -= 1 End If
+#define SET_IN(set, k) (set.data[k] = TRUE)
+#define SET_NOTIN(set, k) (set.data[k] = FALSE)
+
+' Cell macros
+
+#define Cell_Initialize(c) c->marked = FALSE
+#define Cell_Mark(c) c->marked = TRUE
+#define Cell_Unmark(c) c->marked = FALSE
+#define Cell_Empty(c) c->piece = NULL
+#define Cell_IsEmpty(c) (c->piece = NULL)
+#define Cell_IsNotEmpty(c) (c->piece <> NULL)
+#define Cell_Number(c, i) c->marked = FALSE : c->number = i
+
+Function BoardCell_ContiguousEmptyCells (ByVal c As BoardCell) As INTEGER
+  Dim As INTEGER count, i
+  Dim neighbour As BoardCell
+    If (c->marked = 0) AND Cell_IsEmpty(c) Then
+      Cell_Mark(c)
+      count = 1
+      For i = 0 To SIDES - 1
+        neighbour = c->next(i)
+        If (neighbour <> NULL) Then
+          If Cell_IsEmpty(neighbour) Then
+            count += BoardCell_ContiguousEmptyCells(neighbour)
+          End If
+        End If
+      Next i
+    Else
+      count = 0
+    End If
+    Return count
+End Function
+
+Sub PieceCell_Flip(ByVal c As PieceCell)
+  Dim swap As PieceCell
+    swap = c->next(NE)
+    c->next(NE) = c->next(NW)
+    c->next(NW) = swap
+  
+    swap = c->next(E)
+    c->next(E) = c->next(W)
+    c->next(W) = swap
+  
+    swap = c->next(SE)
+    c->next(SE) = c->next(SW)
+    c->next(SW) = swap
+End Sub
+
+Sub PieceCell_Rotate(ByVal c As PieceCell)
+  Dim swap As PieceCell
+    swap = c->next(E)
+    c->next(E) = c->next(NE)
+    c->next(NE) = c->next(NW)
+    c->next(NW) = c->next(W)
+    c->next(W) = c->next(SW)
+    c->next(SW) = c->next(SE)
+    c->next(SE) = swap
+End Sub
+
+Sub Piece_Make0 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(E) = a.x(1)
+  a.x(1)->next(W) = a.x(0)
+  a.x(1)->next(E) = a.x(2)
+  a.x(2)->next(W) = a.x(1)
+  a.x(2)->next(E) = a.x(3)
+  a.x(3)->next(W) = a.x(2)
+  a.x(3)->next(SE) = a.x(4)
+  a.x(4)->next(NW) = a.x(3)
+End Sub
+
+Sub Piece_Make1 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(SE) = a.x(1)
+  a.x(1)->next(NW) = a.x(0)
+  a.x(1)->next(SW) = a.x(2)
+  a.x(2)->next(NE) = a.x(1)
+  a.x(2)->next(W) = a.x(3)
+  a.x(3)->next(E) = a.x(2)
+  a.x(3)->next(SW) = a.x(4)
+  a.x(4)->next(NE) = a.x(3)
+End Sub
+
+Sub Piece_Make2 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(W) = a.x(1)
+  a.x(1)->next(E) = a.x(0)
+  a.x(1)->next(SW) = a.x(2)
+  a.x(2)->next(NE) = a.x(1)
+  a.x(2)->next(SE) = a.x(3)
+  a.x(3)->next(NW) = a.x(2)
+  a.x(3)->next(SE) = a.x(4)
+  a.x(4)->next(NW) = a.x(3)
+End Sub
+
+Sub Piece_Make3 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(SW) = a.x(1)
+  a.x(1)->next(NE) = a.x(0)
+  a.x(1)->next(W) = a.x(2)
+  a.x(2)->next(E) = a.x(1)
+  a.x(1)->next(SW) = a.x(3)
+  a.x(3)->next(NE) = a.x(1)
+  a.x(2)->next(SE) = a.x(3)
+  a.x(3)->next(NW) = a.x(2)
+  a.x(3)->next(SE) = a.x(4)
+  a.x(4)->next(NW) = a.x(3)
+End Sub
+
+Sub Piece_Make4 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(SE) = a.x(1)
+  a.x(1)->next(NW) = a.x(0)
+  a.x(1)->next(SW) = a.x(2)
+  a.x(2)->next(NE) = a.x(1)
+  a.x(1)->next(E) = a.x(3)
+  a.x(3)->next(W) = a.x(1)
+  a.x(3)->next(SE) = a.x(4)
+  a.x(4)->next(NW) = a.x(3)
+End Sub
+
+Sub Piece_Make5 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(SW) = a.x(1)
+  a.x(1)->next(NE) = a.x(0)
+  a.x(0)->next(SE) = a.x(2)
+  a.x(2)->next(NW) = a.x(0)
+  a.x(1)->next(SE) = a.x(3)
+  a.x(3)->next(NW) = a.x(1)
+  a.x(2)->next(SW) = a.x(3)
+  a.x(3)->next(NE) = a.x(2)
+  a.x(3)->next(SW) = a.x(4)
+  a.x(4)->next(NE) = a.x(3)
+End Sub
+
+Sub Piece_Make6 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(SW) = a.x(1)
+  a.x(1)->next(NE) = a.x(0)
+  a.x(2)->next(SE) = a.x(1)
+  a.x(1)->next(NW) = a.x(2)
+  a.x(1)->next(SE) = a.x(3)
+  a.x(3)->next(NW) = a.x(1)
+  a.x(3)->next(SW) = a.x(4)
+  a.x(4)->next(NE) = a.x(3)
+End Sub
+
+Sub Piece_Make7 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(SE) = a.x(1)
+  a.x(1)->next(NW) = a.x(0)
+  a.x(0)->next(SW) = a.x(2)
+  a.x(2)->next(NE) = a.x(0)
+  a.x(2)->next(SW) = a.x(3)
+  a.x(3)->next(NE) = a.x(2)
+  a.x(3)->next(SE) = a.x(4)
+  a.x(4)->next(NW) = a.x(3)
+End Sub
+
+Sub Piece_Make8 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(E) = a.x(1)
+  a.x(1)->next(W) = a.x(0)
+  a.x(1)->next(E) = a.x(2)
+  a.x(2)->next(W) = a.x(1)
+  a.x(2)->next(NE) = a.x(3)
+  a.x(3)->next(SW) = a.x(2)
+  a.x(3)->next(E) = a.x(4)
+  a.x(4)->next(W) = a.x(3)
+End Sub
+
+Sub Piece_Make9 (ByVal p As Piece, ByRef a As PieceShape)
+  a.x(0)->next(E) = a.x(1)
+  a.x(1)->next(W) = a.x(0)
+  a.x(1)->next(E) = a.x(2)
+  a.x(2)->next(W) = a.x(1)
+  a.x(2)->next(NE) = a.x(3)
+  a.x(3)->next(SW) = a.x(2)
+  a.x(2)->next(E) = a.x(4)
+  a.x(4)->next(W) = a.x(2)
+  a.x(4)->next(NW) = a.x(3)
+  a.x(3)->next(SE) = a.x(4)
+End Sub
+
+Sub Piece_Initialize (ByVal p As Piece, ByVal n As INTEGER)
+  Dim As INTEGER i, j, k
+  Dim c As PieceCell
+    p->orientation = 0
+    p->number = n
+  
+    For k = 0 To PIECE_ORIENTATIONS - 1
+      For i = 0 TO PIECE_SIZE - 1
+        c = CAllocate(sizeof(PieceCellDesc))
+        Cell_Initialize(c)
+        p->cache.x(k).x(i) = c
+      Next i
+  
+      Select Case As Const n
+        Case 0
+          Piece_Make0( p, p->cache.x(k) )
+        Case 1
+          Piece_Make1( p, p->cache.x(k) )
+        Case 2
+          Piece_Make2( p, p->cache.x(k) )
+        Case 3
+          Piece_Make3( p, p->cache.x(k) )
+        Case 4
+          Piece_Make4( p, p->cache.x(k) )
+        Case 5
+          Piece_Make5( p, p->cache.x(k) )
+        Case 6
+          Piece_Make6( p, p->cache.x(k) )
+        Case 7
+          Piece_Make7( p, p->cache.x(k) )
+        Case 8
+          Piece_Make8( p, p->cache.x(k) )
+        Case 9
+          Piece_Make9( p, p->cache.x(k) )
+      End Select
+  
+      For i = 0 To k - 1
+        If (i MOD PIECE_ROTATIONS) = 0 Then
+          For j = 0 To PIECE_SIZE - 1
+            PieceCell_Flip(p->cache.x(k).x(j))
+          Next j
+        Else
+          For j = 0 To PIECE_SIZE - 1
+            PieceCell_Rotate(p->cache.x(k).x(j))
+          Next j
+        End If
+      Next i
+    Next k
+End Sub
+
+#define Piece_Unmark(p) Scope : Dim i As Integer : For i = 0 To PIECE_SIZE - 1 : Cell_Unmark(p->cache.x(p->orientation).x(i)) : Next i : End Scope
+
+Function Piece_NextOrientation (ByVal p As Piece) As Piece
+  p->orientation = (p->orientation + 1) MOD PIECE_ORIENTATIONS
+  Return p
+End Function
+
+Function Piece_cells(ByVal p As Piece, ByVal i As INTEGER) As PieceCell
+  Return p->cache.x(p->orientation).x(i)
+End Function
+
+Sub Board_Initialize (ByRef b As Board)
+  Dim As INTEGER i, row, m
+  Dim c As BoardCell
+  Dim As BOOLEAN isFirst, isLast
+  
+    b.cellCount = 0
+  
+    For i = 0 To BOARD_SIZE - 1
+      c = CAllocate(sizeof(BoardCellDesc))
+      Cell_Number(c, i)
+      b.cells(i) = c
+    Next i
+  
+    m = (BOARD_SIZE \ BOARD_COLS) - 1
+  
+    For i = 0 To BOARD_SIZE - 1
+      row = i \ BOARD_COLS
+      isFirst = (i MOD BOARD_COLS) = 0
+      isLast = ((i + 1) MOD BOARD_COLS) = 0
+      c = b.cells(i)
+  
+      If ODD(row) Then
+        If isLast = 0 Then
+          c->next(NE) = b.cells(i - (BOARD_COLS - 1))
+        End If
+        c->next(NW) = b.cells(i - BOARD_COLS)
+  
+        If row <> m Then
+          If isLast = 0 Then
+            c->next(SE) = b.cells(i + BOARD_COLS + 1)
+          End If
+          c->next(SW) = b.cells(i + BOARD_COLS)
+        End If
+      Else
+        If row <> 0 Then
+          If isFirst = 0 Then
+            c->next(NW) = b.cells(i - (BOARD_COLS + 1))
+          End If
+          c->next(NE) = b.cells(i - BOARD_COLS)
+        End If
+  
+        If row <> m Then
+          If isFirst = 0 Then
+            c->next(SW) = b.cells(i + (BOARD_COLS - 1))
+          End If
+          c->next(SE) = b.cells(i + BOARD_COLS)
+        End If
+      End If
+      If isFirst = 0 Then c->next(W) = b.cells(i - 1)
+      If isLast = 0 Then c->next(E) = b.cells(i + 1)
+    Next i
+End Sub
+
+Sub Board_Unmark(ByRef b As Board)
+  Dim i As INTEGER
+    For i = 0 To BOARD_SIZE - 1
+      Cell_Unmark(b.cells(i))
+    Next i
+End Sub
+
+Function Board_FirstEmptyCellIndex (ByRef b As Board) As INTEGER
+  Dim i As INTEGER
+    For i = 0 To BOARD_SIZE - 1
+      If Cell_IsEmpty(b.cells(i)) Then Return i
+    Next i
+    Return -1
+End Function
+
+Sub Board_Remove (ByRef b As Board, ByVal p As Piece)
+  Dim i As INTEGER
+    For i = 0 To BOARD_SIZE - 1
+      If b.cells(i)->piece = p Then 
+        b.cells(i)->piece = NULL
+      End If
+    Next i
+End Sub
+
+Sub Board_Find (ByRef b As Board, ByVal p As PieceCell, ByVal c As BoardCell)
+  Dim i As INTEGER
+    If (p <> NULL) Then
+      If (p->marked = 0) AND (c <> NULL) Then
+        b.cellsPieceWillFill.x(b.cellCount) = c
+        b.cellCount += 1
+        Cell_Mark(p)
+        For i = 0 To SIDES - 1
+          Board_Find(b, p->next(i), c->next(i))
+        Next i
+      End If
+    End If
+End Sub
+
+Function Board_Add (ByRef b As Board, _
+                    ByVal pieceIndex As INTEGER, _
+                    ByVal boardIndex As INTEGER, _
+                    ByVal p As Piece) As BOOLEAN
+  Dim i As INTEGER
+  Dim a As BoardPiece
+    a = b.cache.x(p->number, p->orientation, pieceIndex, boardIndex)
+  
+    b.cellCount = 0
+    Piece_Unmark(p)
+  
+    If a = NULL Then
+      Board_Find(b, Piece_cells(p, pieceIndex), b.cells(boardIndex))
+
+      If b.cellCount <> PIECE_SIZE Then
+        b.cache.x(p->number, p->orientation, pieceIndex, boardIndex) = noFit
+        Return FALSE
+      End If
+
+      a = CAllocate(sizeof(BoardPieceShape))
+      For i = 0 TO PIECE_SIZE - 1
+        a->x(i) = b.cellsPieceWillFill.x(i)
+      Next i
+      b.cache.x(p->number, p->orientation, pieceIndex, boardIndex) = a
+    Else
+      If a = noFit Then Return FALSE
+    End If
+    For i = 0 To PIECE_SIZE - 1
+      If Cell_IsNotEmpty(a->x(i)) Then Return FALSE
+    Next i
+  
+    For i = 0 TO PIECE_SIZE - 1
+      a->x(i)->piece = p
+    Next i
+    Return TRUE
+End Function
+
+Sub Initialize ()
+  Dim i As INTEGER
+  Dim p As Piece
+    Board_Initialize(board)
+    For i = 0 To ubound(pieces)
+      p = CAllocate(sizeof(PieceDesc))
+      Piece_Initialize(p, i)
+      pieces(i) = p
+    Next i
+    SET_INIT(@unplaced, ubound(pieces))
+    once = TRUE
+    noFit = CAllocate(sizeof(BoardPieceShape))
+End Sub
+
+Sub CopyTo(ByRef a As BoardPieces)
+  Dim i As Integer
+    For i = 0 To BOARD_SIZE - 1
+      a.x(i) = current.x(i)
+    Next i
+End Sub
+
+Sub UpdateFirstLast ()
+  Dim As INTEGER i, n
+  Dim As BOOLEAN lessFirst, moreFirst, lessLast, moreLast
+    If once Then
+      For i = 0 To BOARD_SIZE - 1
+        n = board.cells(i)->piece->number
+        first.x(i) = n
+        last.x(i) = n
+      Next i
+      once = FALSE
+    Else
+      lessFirst = FALSE
+      moreFirst = FALSE
+      lessLast = FALSE
+      moreLast = FALSE
+      For i = 0 To BOARD_SIZE - 1
+        n = board.cells(i)->piece->number
+  
+        IF (moreFirst = 0) AND (lessFirst = 0) AND (n < first.x(i)) Then
+          lessFirst = TRUE
+        ElseIf (n > first.x(i)) Then
+          moreFirst = TRUE
+        End If
+        If (lessLast = 0) AND (moreLast = 0) AND (n > last.x(i)) Then
+          moreLast = TRUE
+        ElseIf (n < last.x(i)) THEN
+          lessLast = TRUE
+        End If
+        current.x(i) = n
+      Next i
+      If lessFirst Then CopyTo(first)
+      If moreLast Then CopyTo(last)
+    End If
+End Sub
+
+Sub PrintBoard (ByVal a As BoardPieces)
+  Dim indent As BOOLEAN
+  Dim As INTEGER i, j
+    indent = FALSE
+    i = 0
+    While i < (ubound(a.x) + 1)
+      If indent Then Print " ";
+      For j = 0 To BOARD_COLS - 1
+        Print a.x(i) & " ";
+        i += 1
+      Next j
+      Print
+      indent = NOT indent
+    Wend
+    Print
+End Sub
+
+Sub PrintSolutions ()
+  Print n & " solutions found";
+  Print 
+  Print
+  PrintBoard(first)
+  PrintBoard(last)
+End Sub
+
+Sub PuzzleSolved ()
+  UpdateFirstLast()
+  countdown -= 1
+End Sub
+
+Function ShouldPrune () As BOOLEAN
+  Dim i As INTEGER
+  Dim forall As BOOLEAN
+    Board_Unmark(board)
+    For i = 0 To BOARD_SIZE - 1
+      forall = (BoardCell_ContiguousEmptyCells(board.cells(i)) MOD PIECE_SIZE) = 0
+      IF forall = 0 Then Return NOT forall
+    Next i
+    Return NOT forall
+End Function
+
+Sub FindSolutions ()
+  Dim As INTEGER emptyCellIndex, k, i, j
+  Dim piece As Piece
+    If countdown > 0 Then
+      If SET_NOTEMPTY(unplaced) Then
+        emptyCellIndex = Board_FirstEmptyCellIndex(board)
+
+        For k = 0 TO ubound(pieces)
+          If SET_IN(unplaced, k) Then
+            SET_REMOVE(unplaced, k)
+
+            For i = 0 To PIECE_ORIENTATIONS - 1
+              piece = Piece_NextOrientation(pieces(k))
+              For j = 0 To PIECE_SIZE - 1
+                If Board_Add(board, j, emptyCellIndex, piece) Then
+                  If ShouldPrune() = 0 Then FindSolutions()
+                  Board_Remove(board, piece)
+                End If
+              Next j
+            Next i
+            SET_ADD(unplaced, k)
+          End If
+        Next k
+      Else
+        PuzzleSolved()
+      End If
+    End If
+End Sub
+
+'MAIN
+
+n = Val(Command(1))
+countdown = n
+Initialize()
+
+FindSolutions()
+PrintSolutions()
+
+ptr_list_free()
