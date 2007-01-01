@@ -346,7 +346,7 @@ Do you want to help with the chores?</p>
 </tr>
 </table>
 
-<p>How much difference would those ideal "lucky" times make to the relative position of the Java programs?</p>
+<p></p>
 
 </dd>
 </dl>
