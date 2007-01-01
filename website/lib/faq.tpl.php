@@ -297,48 +297,48 @@ Do you want to help with the chores?</p>
 
 <table>
 <tr>
-<th colspan="2">&nbsp;&nbsp;luckiest 1 in a 1000</th>
+<th colspan="2">&nbsp;&nbsp;lucky 1 in a 1000</th>
 <th>&nbsp;&nbsp;Full CPU Time</th>
 <th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
 </tr>
 
 <tr>
-<td>nsieve</td>
+<td>nsieve&nbsp;&nbsp;</td>
 <td>2.108</td>
 <td>2.384</td>
 <td>0.276</td>
 <td>11%</td>
 </tr>
 <tr>
-<td>mandelbrot</td>
+<td>mandelbrot&nbsp;&nbsp;</td>
 <td>4.340</td>
 <td>4.852</td>
 <td>0.512</td>
 <td>19%</td>
 </tr>
 <tr>
-<td>binary-trees</td>
+<td>binary-trees&nbsp;&nbsp;</td>
 <td>5.517</td>
 <td>6.736</td>
 <td>1.219</td>
 <td>18%</td>
 </tr>
 <tr>
-<td>recursive</td>
+<td>recursive&nbsp;&nbsp;</td>
 <td>6.753</td>
 <td>7.076</td>
 <td>0.323</td>
 <td>5%</td>
 </tr>
 <tr>
-<td>nsievebits</td>
+<td>nsievebits&nbsp;&nbsp;</td>
 <td>8.222</td>
 <td>8.705</td>
 <td>0.483</td>
 <td>5%</td>
 </tr>
 <tr>
-<td>nbody</td>
+<td>nbody&nbsp;&nbsp;</td>
 <td>15.950</td>
 <td>17.017</td>
 <td>1.067</td>
@@ -346,8 +346,7 @@ Do you want to help with the chores?</p>
 </tr>
 </table>
 
-<p>
-</p>
+<p>How much difference would those ideal "lucky" times make to the relative position of the Java programs?</p>
 
 </dd>
 </dl>
