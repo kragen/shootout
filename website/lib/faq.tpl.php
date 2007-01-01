@@ -297,10 +297,9 @@ Do you want to help with the chores?</p>
 
 <table>
 <tr>
-<th></th>
-<th>luckiest 1 in a 1000&nbsp;</th>
-<th>&nbsp;Full CPU Time&nbsp;</th>
-<th colspan="2">&nbsp;difference&nbsp;</th>4.98	
+<th colspan="2">&nbsp;&nbsp;luckiest 1 in a 1000</th>
+<th>&nbsp;&nbsp;Full CPU Time</th>
+<th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
 </tr>
 
 <tr>
@@ -346,6 +345,10 @@ Do you want to help with the chores?</p>
 <td>6%</td>
 </tr>
 </table>
+
+<p>
+</p>
+
 </dd>
 </dl>
 </dd>
