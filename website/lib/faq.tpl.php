@@ -346,7 +346,7 @@ Do you want to help with the chores?</p>
 </tr>
 </table>
 
-<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how much or how little we might still be able to do by contributing better programs.</p>
+<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by contributing better programs.</p>
 
 </dd>
 </dl>
