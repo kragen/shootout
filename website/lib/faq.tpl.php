@@ -291,7 +291,7 @@ Do you want to help with the chores?</p>
 
 <p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. That's true.</p>
 
-<p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
+<p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1,000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
 
 <p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then because we are so lucky we selected the fastest elapsed time, taking all the benefit and none of the cost:</p>
 
