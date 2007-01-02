@@ -1,1 +1,1 @@
-<p>Glasgow Haskell Compiler, Version 6.4.2</p>
+<p>The Glorious Glasgow Haskell Compilation System, version 6.6</p>
