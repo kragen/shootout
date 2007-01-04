@@ -80,8 +80,7 @@ for long periods. Quite the opposite, Lua aims at small to medium programs, usua
 </p></blockquote>
 
 <blockquote><p>"Ada was originally designed with three overriding concerns: program reliability and maintenance,
-programming as a human activity, and efficiency &#8230; emphasis was placed on program readability over ease of writing &#8230; Like many other human acti<blockquote>"Hundreds of separate classes need to be loaded by the JVM before it can start executing even the simplest application code. This startup cost generally makes the Java platform better suited to long-running, server-type applications than for frequently used small programs." <a href="http://www-128.ibm.com/developerworks/java/library/j-dyn0429/">Classes and class loading</a></blockquote>vities, 
-the development of programs is becoming ever more decentralized and
+programming as a human activity, and efficiency &#8230; emphasis was placed on program readability over ease of writing &#8230; Like many other human activities, the development of programs is becoming ever more decentralized and
 distributed. Consequently, the ability to assemble a program from independently produced software
 components continues to be a central idea in the design."<br />
  <a href="http://www.adapower.com/rm95/RM-0-3.html">Ada Reference Manual</a>, Introduction, Design Goals
