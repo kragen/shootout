@@ -297,7 +297,7 @@ Do you want to help with the chores?</p>
 
 <table>
 <tr>
-<th colspan="2">&nbsp;&nbsp;all benefit : none of cost</th>
+<th colspan="2">&nbsp;&nbsp;all the benefit none of the cost</th>
 <th>&nbsp;&nbsp;Full CPU Time</th>
 <th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
 </tr>
