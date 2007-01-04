@@ -1,1 +1,1 @@
-<p>R11B Erlang (BEAM) emulator version 5.5 [source] [async-threads:0] [hipe]</p>
+<p>Erlang/OTP R11B-2</p>
