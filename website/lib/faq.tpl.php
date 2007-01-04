@@ -338,6 +338,13 @@ Do you want to help with the chores?</p>
 <td>5%</td>
 </tr>
 <tr>
+<td>fannkuch&nbsp;&nbsp;</td>
+<td>12.208</td>
+<td>13.753</td>
+<td>1.545</td>
+<td>11%</td>
+</tr>
+<tr>
 <td>nbody&nbsp;&nbsp;</td>
 <td>15.950</td>
 <td>17.017</td>
