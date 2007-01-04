@@ -1,0 +1,102 @@
+/* The Computer Language Shootout Benchmarks
+   http://shootout.alioth.debian.org/
+
+   contributed by Frits van Bommel (update from entry by Dave Fladebo)
+   compile: dmd -O -inline -release binarytrees.d
+*/
+
+import std.string, std.stdio;
+import c = std.c.stdlib;
+
+int main(char[][] args)
+{
+    TreeNode*   stretchTree, longLivedTree, tempTree;
+    int         depth, minDepth, maxDepth, stretchDepth, N = args.length > 1 ? atoi(args[1]) : 1;
+
+    minDepth = 4;
+    maxDepth = (minDepth + 2) > N ? minDepth + 2 : N;
+    stretchDepth = maxDepth + 1;
+
+    stretchTree = TreeNode.BottomUpTree(0, stretchDepth);
+    writefln("stretch tree of depth ",stretchDepth,"\t check: ",stretchTree.ItemCheck);
+    TreeNode.DeleteTree(stretchTree);
+
+    longLivedTree = TreeNode.BottomUpTree(0, maxDepth);
+
+    for(depth = minDepth; depth <= maxDepth; depth += 2)
+    {
+        int check, iterations = 1 << (maxDepth - depth + minDepth);
+
+        for(int i = 0; i < iterations; i++)
+        {
+            tempTree = TreeNode.BottomUpTree(i, depth);
+            check += tempTree.ItemCheck;
+            TreeNode.DeleteTree(tempTree);
+
+            tempTree = TreeNode.BottomUpTree(-i, depth);
+            check += tempTree.ItemCheck;
+            TreeNode.DeleteTree(tempTree);
+        }
+
+        writefln(iterations * 2,"\t trees of depth ",depth,"\t check: ",check);
+    }
+
+    writefln("long lived tree of depth ",maxDepth,"\t check: ",longLivedTree.ItemCheck);
+    TreeNode.DeleteTree(longLivedTree);
+
+    return 0;
+}
+
+struct TreeNode
+{
+public:
+    static TreeNode* BottomUpTree(int item, int depth)
+    {
+        if(depth > 0)
+            return TreeNode(item
+                           ,BottomUpTree(2 * item - 1, depth - 1)
+                           ,BottomUpTree(2 * item, depth - 1));
+        return TreeNode(item);
+    }
+
+    int ItemCheck()
+    {
+        if(left)
+            return item + left.ItemCheck() - right.ItemCheck();
+        return item;
+    }
+
+    static void DeleteTree(TreeNode* tree)
+    {
+        if(tree.left)
+        {
+            DeleteTree(tree.left);
+            DeleteTree(tree.right);
+        }
+
+        delete tree;
+    }
+
+private:
+    TreeNode*           left, right;
+    int                 item;
+
+    static TreeNode* opCall(int item, TreeNode* left = null, TreeNode* right = null)
+    {
+        TreeNode* t = new TreeNode;
+        t.left = left;
+        t.right = right;
+        t.item = item;
+        return t;
+    }
+
+    new(uint sz)
+    {
+        return c.malloc(sz);
+    }
+
+    delete(void* p)
+    {
+        c.free(p);
+    }
+}
