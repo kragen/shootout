@@ -297,7 +297,7 @@ Do you want to help with the chores?</p>
 
 <table>
 <tr>
-<th colspan="2">&nbsp;&nbsp;lucky 1 in a 1000</th>
+<th colspan="2">&nbsp;&nbsp;all benefit : none of cost</th>
 <th>&nbsp;&nbsp;Full CPU Time</th>
 <th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
 </tr>
