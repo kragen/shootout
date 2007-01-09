@@ -354,11 +354,15 @@ Do you want to help with the chores?</p>
 </table>
 
 <p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by contributing better programs.</p>
-
 </dd>
+
+<dt><a href="#whatlanguage" name="whatlanguage">What language was used to write the benchmark programs?</a></dt>
+<dd><p>Different benchmark programs, different authors - different languages.</p>
+<p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos; Haskell for pidigits; Erlang for cheap-concurrency. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
+</dd>
+
 </dl>
 </dd>
-
 
 
 
