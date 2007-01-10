@@ -507,7 +507,6 @@ or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gen
 <ol>
 <li>Buffered stdio.</li>
 <li>Dynamic hash tables and sequences (arrays or lists).</li>
-<li>Exception handling.</li>
 <li>Regular Expressions (preferably Perl compatible).</li>
 <li>Concurrency (threads, coroutines, &#8230;)</li>
 <li>TCP/IP Sockets.</li>
