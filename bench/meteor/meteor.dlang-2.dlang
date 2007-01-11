@@ -1,0 +1,517 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by - Michael Snoyman (D novice)
+*/
+import std.stdio;
+
+enum { E, SE, SW, W, NW, NE }
+const uint CellsPerRow = 5;
+const uint RowsPerBoard = 10;
+const uint CellsPerBoard = CellsPerRow * RowsPerBoard;
+const uint PermutationCount = 12;
+const uint CellsPerPiece = 5;
+
+class result_t {
+	uint[50] numbers;
+
+	void write() {
+		foreach(i, n; numbers) {
+			if((i % 10) == 5) // beginning of odd row
+				writef(" ");
+			assert(n < 10);
+			writef("%d ", n);
+			if((i % 5) == 4) // end of row
+				writefln("");
+		}
+		writefln("");
+	}
+
+	/// fill the values from a solved board
+	void fill(Board b)
+	in {
+		foreach(cell; b.cells)
+			assert(cell.number >= 0);
+	}
+	out {
+		uint nums[10];
+		foreach(n; numbers) {
+			assert(n < 10);
+			++nums[n];
+		}
+		foreach(i, num; nums)
+			assert(num == 5);
+	}
+	body {
+		foreach(n, cell; b.cells)
+			numbers[n] = cell.number;
+	}
+
+	int opCmp(Board rhs) {
+		foreach(index, number; numbers) {
+			int rnumber = rhs.cells[index].number;
+			assert(number < 10 && rnumber < 10);
+			if(number < rnumber)
+				return -1;
+			else if(number > rnumber)
+				return 1;
+		}
+		return 0;
+	}
+
+	invariant {
+		foreach(number; numbers)
+			assert(number < 10);
+	}
+}
+
+class PieceCell {
+	PieceCell[6] around;
+	bool marked;
+
+	void flip() {
+		PieceCell tmp = around[NE];
+		around[NE] = around[NW];
+		around[NW] = tmp;
+
+		tmp = around[SE];
+		around[SE] = around[SW];
+		around[SW] = tmp;
+
+		tmp = around[E];
+		around[E] = around[W];
+		around[W] = tmp;
+	}
+
+	void rotate() {
+		PieceCell tmp = around[0];
+		for(int i = 0; i < 5; ++i)
+			around[i] = around[i + 1];
+		around[5] = tmp;
+	}
+
+	bool fillPlaces(Board b, int place, ubyte[5] places, inout int index) {
+		marked = true;
+		places[index++] = place;
+		foreach(direction, cell; around) {
+			if(cell is null || cell.marked)
+				continue;
+			if(b.cells[place].around[direction] is null)
+				return false;
+			int place2 = b.cells[place].around[direction].place;
+			if(!cell.fillPlaces(b, place2, places, index))
+				return false;
+		}
+		return true;
+	}
+}
+
+class PieceConfig {
+	Piece piece;
+	PieceCell[5] cells;
+
+	bool[50][5] fits;
+	ubyte[5][50][5] places;
+	
+	this(Piece piece, int permIndex, Board b) {
+		this.piece = piece;
+		for(int i = 0; i < CellsPerPiece; ++i)
+			cells[i] = new PieceCell;
+		loadConfig(piece.number);
+		if(permIndex >= PermutationCount/2)
+			flip();
+		for(int i = permIndex%(PermutationCount/2); i; --i)
+			rotate();
+		generateFits(b);
+	}
+
+	bool marked()
+	out(result) {
+		foreach(cell; cells)
+			assert(cell.marked == result);
+	}
+	body {
+		return cells[0].marked;
+	}
+
+	void marked(bool b)
+	out {
+		assert(marked == b);
+	}
+	body {
+		foreach(cell; cells)
+			cell.marked = b;
+	}
+
+private:
+	void generateFits(Board b) {
+		for(int cell = 0; cell < 5; ++cell) {
+			for(int place = 0; place < 50; ++place) {
+				marked = false;
+				int index;
+				if(cells[cell].fillPlaces(b, place, places[cell][place], index)) {
+					assert(index == 5);
+					fits[cell][place] = true;
+				}
+			}
+		}
+	}
+
+	/// load the basic configuration for the given piece number
+	void loadConfig(int number)
+	in {
+		assert(number < 10);
+	}
+	body {
+		switch(number) {
+		case 0:
+			connect(0, E, 1);
+			connect(1, E, 2);
+			connect(2, E, 3);
+			connect(3, SE, 4);
+			break;
+		case 1:
+			connect(0, SE, 1);
+			connect(1, SW, 2);
+			connect(2, W, 3);
+			connect(3, SW, 4);
+			break;
+		case 2:
+			connect(0, W, 1);
+			connect(1, W, 2);
+			connect(2, SW, 3);
+			connect(3, SE, 4);
+			break;
+		case 3:
+			connect(0, E, 1);
+			connect(1, E, 2);
+			connect(1, SE, 3);
+			connect(2, SW, 3);
+			connect(3, SE, 4);
+			break;
+		case 4:
+			connect(0, SE, 1);
+			connect(1, SW, 2);
+			connect(1, E, 3);
+			connect(3, SE, 4);
+			break;
+		case 5:
+			connect(0, W, 1);
+			connect(0, SW, 2);
+			connect(1, SE, 2);
+			connect(1, SW, 3);
+			connect(2, W, 3);
+			connect(3, W, 4);
+			break;
+		case 6:
+			connect(0, E, 1);
+			connect(0, SE, 2);
+			connect(1, SW, 2);
+			connect(2, SW, 3);
+			connect(3, SE, 4);
+			break;
+		case 7:
+			connect(0, SW, 1);
+			connect(0, SE, 2);
+			connect(1, E, 2);
+			connect(2, E, 3);
+			connect(3, NE, 4);
+			break;
+		case 8:
+			connect(0, SE, 1);
+			connect(1, SE, 2);
+			connect(2, E, 3);
+			connect(3, SE, 4);
+			break;
+		case 9:
+			connect(0, SE, 1);
+			connect(1, SE, 2);
+			connect(2, SE, 3);
+			connect(2, SW, 4);
+			connect(3, W, 4);
+			break;
+		default:
+			assert(0);
+		}
+	}
+
+	/// connect two cells along the specified border
+	void connect(int cell1, int border, int cell2)
+	in {
+		assert(cell1 != cell2);
+		assert(0 <= border && border < 6);
+	}
+	body {
+		cells[cell1].around[border] = cells[cell2];
+		switch(border) {
+			case E: border = W; break;
+			case W: border = E; break;
+			case SE: border = NW; break;
+			case NW: border = SE; break;
+			case NE: border = SW; break;
+			case SW: border = NE; break;
+			default: assert(0);
+		}
+		cells[cell2].around[border] = cells[cell1];
+	}
+
+	void flip() {
+		foreach(cell; cells)
+			cell.flip;
+	}
+
+	void rotate() {
+		foreach(cell; cells)
+			cell.rotate;
+	}
+}
+
+class Piece {
+	PieceConfig[PermutationCount] configs;
+	int number;
+
+	this(int number, Board b)
+	in {
+		assert(number >= 0 && number < 10);
+	}
+	body {
+		this.number = number;
+		for(int i = 0; i < PermutationCount; ++i)
+			configs[i] = new PieceConfig(this, i, b);
+	}
+}
+
+class BoardCell {
+	BoardCell[6] around;
+	int number = -1;
+
+	uint place() { return place_; }
+	void setPlace(uint place, BoardCell[CellsPerBoard] cells)
+	in {
+		assert(place < 50);
+		foreach(cell; cells)
+			assert(!(cell is null));
+	}
+	body {
+		place_ = place;
+		uint row = place / 5;
+		assert(row < 10);
+		bool firstCol = ((place%5) == 0);
+		bool lastCol = ((place%5) == 4);
+
+		if(row % 2 == 0) { // even row
+			if(row) { // has northern around
+				if(!firstCol)
+					around[NW] = cells[place - 6];
+				around[NE] = cells[place - 5];
+			}
+			// all even rows have southern neighbors
+			if(!firstCol)
+				around[SW] = cells[place + 4];
+			around[SE] = cells[place + 5];
+		}
+		else { // odd row
+			// all odd rows have northern neighbors
+			around[NW] = cells[place - 5];
+			if(!lastCol)
+				around[NE] = cells[place - 4];
+			if(row != 9) { // has southern neighbors
+				around[SW] = cells[place + 5];
+				if(!lastCol)
+					around[SE] = cells[place + 6];
+			}
+		}
+
+		// add around on this row
+		if(!firstCol)
+			around[W] = cells[place - 1];
+		if(!lastCol)
+			around[E] = cells[place + 1];
+	}
+
+	/// size of the island i'm in; 0 for checked cells and placed ones
+	uint islandSize()
+	out(result) {
+		assert(result <= 50);
+	}
+	body {
+		uint ret = 1;
+		checked = true;
+		foreach(cell; around)
+			if((!(cell is null)) && (cell.number == -1) && (!cell.checked))
+				ret += cell.islandSize;
+		return ret;
+	}
+
+	invariant {
+		assert(number >= -1);
+		assert(number < 10);
+	}
+
+private:
+	uint place_;
+	bool checked;
+}
+
+class Board {
+	BoardCell[CellsPerBoard] cells;
+
+	this() {
+		for(int i = 0; i < CellsPerBoard; ++i)
+			cells[i] = new BoardCell();
+		for(int i = 0; i < CellsPerBoard; ++i)
+			cells[i].setPlace(i, cells);
+		assert(cells[0].islandSize == 50);
+	}
+
+	/// attempt to put a piececell in a boardcell
+	bool put(PieceConfig pc, uint pieceIndex, uint place)
+	in {
+		assert(pieceIndex < 5);
+		assert(place < 50);
+		assert(cells[place].number == -1);
+	}
+	out(result) {
+		assert((cells[place].number >= 0) == result);
+	}
+	body {
+		if(!pc.fits[pieceIndex][place])
+			return false;
+		foreach(place2; pc.places[pieceIndex][place])
+			if(cells[place2].number > -1)
+				return false;
+		int number = pc.piece.number;
+		foreach(i, place2; pc.places[pieceIndex][place]) {
+			piecePlaces[number][i] = place2;
+			cells[place2].number = number;
+		}
+		return true;
+	}
+
+	/// remove a piece from the board
+	void remove(int number)
+	out {
+		foreach(cell; cells)
+			assert(cell.number != number);
+	}
+	body {
+		foreach(place; piecePlaces[number]) {
+			assert(cells[place].number == number);
+			cells[place].number = -1;
+		}
+	}
+
+	/// checks that a possible solutions exists; purely an optimization
+	bool possible(out int newPlace) {
+		int placeSize = 51; // size of island at newPlace
+		foreach(cell; cells)
+			cell.checked = false;
+		foreach(place, cell; cells) {
+			if(cell.checked || cell.number >= 0)
+				continue;
+			int size = cell.islandSize;
+			if(size % 5)
+				return false;
+			if(size && size < placeSize) {
+				newPlace = place;
+				placeSize = size;
+			}
+		}
+		return true;
+	}
+
+	/*
+	/// print out the board-- merely for debugging purposes
+	void printBoard() {
+		int[6] printOrder = [NW, NE, W, E, SW, SE];
+		writefln("cell\tNW NE W  E  SW SE");
+		foreach(place, cell; cells) {
+			assert(cell.place == place);
+			writef("%d\t", place);
+			foreach(direction; printOrder) {
+				BoardCell b = cell.around[direction];
+				if(b is null)
+					writef("--");
+				else {
+					if(b.place < 10)
+						writef("0");
+					writef("%d", b.place);
+				}
+				writef(" ");
+			}
+			writefln("");
+		}
+		writefln("");
+	}
+	*/
+
+private:
+	uint piecePlaces[10][5];
+}
+
+class Solver {
+	this() {
+		b = new Board();
+		low = new result_t;
+		high = new result_t;
+		for(int i = 0; i < 50; ++i)
+			low.numbers[i] = 9;
+		for(int i = 0; i < 10; ++i)
+			pieces[i] = new Piece(i, b);
+	}
+
+	void solve(int place = 0) {
+		++placedCount;
+
+		// try fitting each piece in that slot
+		foreach(number, piece; pieces) {
+			assert(piece.number == number);
+			if(piecePlaced[number])
+				continue;
+			piecePlaced[number] = true;
+			
+			// try each configuration of the piece
+			foreach(config; piece.configs) {
+				// try each cell within the config
+				foreach(i, cell; config.cells) {
+					if(b.put(config, i, place)) {
+						if(placedCount == 10) {
+							++solutions;
+							if(low > b)
+								low.fill(b);
+							if(high < b)
+								high.fill(b);
+						}
+						else {
+							int newPlace;
+							if(b.possible(newPlace))
+								solve(newPlace);
+						}
+						b.remove(number);
+					}
+				}
+			}
+			piecePlaced[number] = false;
+		}
+		--placedCount;
+	}
+
+	void write() {
+		writefln("%d solutions found\n", solutions);
+		low.write;
+		high.write;
+	}
+private:
+	bool piecePlaced[10];
+	result_t low, high;
+	Piece[10] pieces;
+	Board b;
+	uint solutions;
+	int placedCount;
+}
+
+void main() {
+	Solver s = new Solver;
+	s.solve;
+	s.write;
+}
