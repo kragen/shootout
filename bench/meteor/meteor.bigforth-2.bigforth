@@ -1,0 +1,189 @@
+\ The Computer Language Shootout
+\ http://shootout.alioth.debian.org/
+\ Contributed by Ian Osgood
+\ modified by Anton Ertl
+
+: enum ( n -- ) 0 do I constant loop ;
+: table create does> ( i -- t[i] ) swap cells + @ ;
+
+7 enum         E   SE   SW    W   NW   NE   STOP
+table offset   1 ,  7 ,  6 , -1 , -7 , -6 ,    0 ,
+table rotate  SE , SW ,  W , NW , NE ,  E , STOP ,
+table reflect  E , NE , NW ,  W , SW , SE , STOP ,
+
+\ paths are more easily transformable than bit masks
+
+create path 5 cells allot
+create offsets 6 cells allot
+variable found-solutions
+create smallest 64 chars allot
+create largest  64 chars allot
+2variable board
+create used 10 cells allot
+1024 allot \ padding for Pentium 4 and bigforth shortcomings
+
+: init-path ( 4*dirs -- )
+  E path 5 0 do tuck ! cell+ loop drop ;
+: rotate-path
+  path 5 0 do dup @ rotate  over ! cell+ loop drop ;
+: reflect-path
+  path 5 0 do dup @ reflect over ! cell+ loop drop ;
+
+: path-offsets
+  0 offsets !
+  path offsets
+  5 0 do
+    over @ offset
+    over @ +
+    over cell+ !
+    swap cell+ swap cell+
+  loop 2drop ;
+: minimum-offset ( -- n )
+  offsets @
+  6 1 do offsets I cells + @ min loop ;
+: normalize-offsets
+  minimum-offset negate
+  6 0 do dup offsets I cells + +! loop drop ;
+: offsets-mask ( -- mask )
+  0
+  6 0 do
+    offsets I cells + @
+    1 swap lshift or
+  loop ;
+
+\ make and store the twelve transformations of the path
+
+: path-mask ( -- mask )
+  path-offsets normalize-offsets offsets-mask ;
+: path-masks ( 4*dirs -- )
+           init-path path-mask ,
+  5 0 do rotate-path path-mask , loop
+        reflect-path path-mask ,
+  5 0 do rotate-path path-mask , loop ;
+
+\  all paths start with an implicit E
+
+create pieces
+ STOP SE  E  E path-masks
+ STOP NE  E SE path-masks
+ STOP SW SE  E path-masks
+ STOP SE SW  E path-masks
+   SW  W  E SE path-masks \ one backtrack, since this shape branches
+ STOP SE NE SE path-masks
+ STOP NE SE SE path-masks
+ STOP  E SW SE path-masks
+ STOP  E SE  E path-masks
+ STOP NE SE  E path-masks
+
+\ 64-bit support
+
+\ a double cell result lshift
+: dlshift ( u s -- l h )
+  dup 32 < if
+    dup if  \ 32 rshift is not portable
+      2dup lshift -rot ( l u s )
+      negate 32 + rshift
+    then
+  else
+    32 - lshift 0 swap
+  then ;
+
+: 2and   ROT AND >R AND R> ;
+: 2xor   ROT XOR >R XOR R> ;
+
+: put-piece ( shift piece -- )
+  dup pieces - 12 cells / [char] 0 + >r ( R: piece-char )
+  swap chars here + swap @ ( buf mask )
+  begin
+   dup 1 and if
+     over r@ swap c!
+   then
+   swap char+  dup here 64 chars + <
+  while
+   swap 2/  dup 0=
+  until then 2drop r> drop ;
+
+\ extract solution from stack of (shift, piece addr)
+: store-solution
+  here 64 chars [char] * fill
+  depth 1 do
+    i pick i pick put-piece
+  2 +loop ;
+
+: .line ( line -- line+6 )
+  5 0 do dup c@ emit space char+ loop cr char+ ;
+: .solution ( buffer -- )
+  5 0 do .line char+  space .line loop drop cr ;
+
+: check-solution ( [st] -- [st] )
+  store-solution  \ here .solution
+  here 64 smallest 64 compare 0< if
+    here smallest 64 move
+  then
+  largest 64 here 64 compare 0< if
+    here largest 64 move
+  then
+  1 found-solutions +! ;  \ throw if found-solutions == NUM
+
+2 base !
+
+\ initial board, with edges filled in
+0000011.000001.0000011.000001.0000011.000001.0000011.000001.0000011.00000
+2constant init-board
+
+decimal
+
+\ check whether piece sticks off bottom of the board
+: fits? ( shift piece -- shift piece ? )
+  over 39 < if true exit then
+  over negate 64 + 1 swap lshift 1-
+  over @ U< 0= ;
+
+\ add/remove piece to the board
+: mark ( shift piece -- )
+  @ swap dlshift board 2@ 2xor board 2! ;
+
+\ find next free cell (64 if completely full)
+: next-shift ( shift -- shift+n )
+  begin
+    1+ dup 64 = if exit then
+    1 over dlshift board 2@ 2and or 0=
+  until ;
+
+\ variable nodes
+
+: solve ( shift -- )
+  dup 64 = if drop check-solution exit then
+\  1 nodes +!
+  pieces
+  10 0 do
+    used I cells + @ if
+      12 cells +
+    else
+      true used I cells + !
+      12 0 do
+        2dup @ swap dlshift board 2@ 2and or 0= if fits? if
+          2dup mark
+\ .s cr store-solution here .solution key 'q = if abort then
+          over next-shift recurse
+          2dup mark
+        then then
+        cell+
+      loop
+      false used I cells + !
+    then
+  loop 2drop ;
+
+: main
+  0 found-solutions !
+  smallest 64 chars [char] 9 fill
+  largest  64 chars [char] 0 fill
+  init-board board 2!
+  used 10 cells erase
+  0 solve   \ nodes ?
+  found-solutions @ . ." solutions found" cr cr
+  smallest .solution
+  largest  .solution ;
+
+main bye
+
