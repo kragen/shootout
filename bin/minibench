@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.44 2006-12-29 03:48:06 igouy-guest Exp $
+# $Id: minibench,v 1.45 2007-01-15 17:07:42 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -34,7 +34,7 @@ use POSIX ":sys_wait_h";
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.44 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.45 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -358,7 +358,7 @@ sub swapusage () {
 }
 
 # return current resident memory size for given pid in KB
-sub memsize ($) {
+sub memsize_orig ($) {
     my $pid = shift;
     my $val = (GTop->new->proc_mem($pid)->resident)/1024;
     return ($val);
@@ -386,7 +386,7 @@ sub is_main_pid {
 }
 
 # return a list of all descendants for given pid
-sub childpids ($) {
+sub childpids_orig ($) {
     my $pid = shift;
     my %children = ();
     my $gtop = GTop->new;
@@ -415,6 +415,52 @@ sub childpids ($) {
     }
     return(@childpids);
 }
+
+sub childpids ($) {
+   my $target = shift;
+   my @pp = ();
+   my @cp = ();
+
+   my $gtop = GTop->new;
+   my $allpids = ($gtop->proclist)[1];
+   foreach my $each (@{$allpids}) {
+      my $p = $gtop->proc_uid($each)->ppid;
+      if ($p > 5) {
+         push(@pp, $p);
+         push(@cp, $each);
+      }
+   }
+
+   my @pids = ($target);
+   my $j = 0;
+   while ($j < @pids){
+      for (my $i = 0; $i < @pp; ++$i){
+        if ($pp[$i] == $pids[$j]) {
+ # maybe there'll be a problem with threads?
+ #            my $found = 0; 
+ #            for (my $k = 0; $k < @pids; ++$k){ 
+ #               $found = $found || ($pids[$k] == $cp[$i]);
+ #            }
+ #            if (! $found) { push(@pids, $cp[$i]); }
+
+             push(@pids, $cp[$i]);
+         }
+      }
+      $j = $j + 1;
+  }
+  shift @pids;
+
+  return(@pids);
+}
+
+sub memsize {
+   my (@pids) = @_;
+   my $gtop = GTop->new;
+   my $sum = 0;
+   foreach my $pid (@pids) { $sum += $gtop->proc_mem($pid)->resident; }
+   return($sum/1024);
+}
+
 ##################################################
 #      END wrappers for GTop functions
 ##################################################
