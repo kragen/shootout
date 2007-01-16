@@ -23,15 +23,210 @@
 
 <dt><a href="#contents" name="contents">What else?</a></dt>
 <dd>
-<p><a href="#help"><strong>&darr;&nbsp;Where can I discuss&#8230; contribute&#8230;?</strong></a></p>
-<p><a href="#where"><strong>&darr;&nbsp;Where can I see&#8230;?</strong></a></p>
 <p><a href="#means"><strong>&darr;&nbsp;What does &#8230; mean?</strong></a></p>
 <p><a href="#measure"><strong>&darr;&nbsp;How did you measure&#8230;?</strong></a></p>
+<p><a href="#help"><strong>&darr;&nbsp;Where can I discuss&#8230; contribute&#8230;?</strong></a></p>
+<p><a href="#where"><strong>&darr;&nbsp;Where can I see&#8230;?</strong></a></p>
 <p><a href="#whydont"><strong>&darr;&nbsp;Why don't you &#8230;?</strong></a></p>
 <p><a href="#when"><strong>&darr;&nbsp;Who&#8230;?</strong> <strong>When&#8230;?</strong> <strong>Why&#8230;?</strong></a></p>
 </dd>
 </dl>
 </dd>
+
+
+<dt><a href="#means" name="means">&nbsp;What does &#8230; mean?</a></dt>
+<dd>
+<dl>
+<dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
+<dd><p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
+</dd>
+
+<dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
+<dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
+</dd>
+
+<dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
+<dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
+<p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
+
+<p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. That's true.</p>
+
+<p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1,000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
+
+<p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then we selected the fastest elapsed time, taking all the benefit and none of the cost:</p>
+
+<table>
+<tr>
+<th colspan="2">&nbsp;&nbsp;all the benefit none of the cost</th>
+<th>&nbsp;&nbsp;Full CPU Time</th>
+<th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
+</tr>
+
+<tr>
+<td>nsieve&nbsp;&nbsp;</td>
+<td>2.108</td>
+<td>2.384</td>
+<td>0.276</td>
+<td>11%</td>
+</tr>
+<tr>
+<td>mandelbrot&nbsp;&nbsp;</td>
+<td>4.340</td>
+<td>4.852</td>
+<td>0.512</td>
+<td>19%</td>
+</tr>
+<tr>
+<td>binary-trees&nbsp;&nbsp;</td>
+<td>5.517</td>
+<td>6.736</td>
+<td>1.219</td>
+<td>18%</td>
+</tr>
+<tr>
+<td>recursive&nbsp;&nbsp;</td>
+<td>6.753</td>
+<td>7.076</td>
+<td>0.323</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>nsievebits&nbsp;&nbsp;</td>
+<td>8.222</td>
+<td>8.705</td>
+<td>0.483</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>fannkuch&nbsp;&nbsp;</td>
+<td>12.208</td>
+<td>13.753</td>
+<td>1.545</td>
+<td>11%</td>
+</tr>
+<tr>
+<td>nbody&nbsp;&nbsp;</td>
+<td>15.950</td>
+<td>17.017</td>
+<td>1.067</td>
+<td>6%</td>
+</tr>
+</table>
+
+<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by contributing better programs.</p>
+</dd>
+
+<dt><a href="#whatlanguage" name="whatlanguage">What language was used to write the benchmark programs?</a></dt>
+<dd><p>Different benchmark programs, different authors - different languages.</p>
+<p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos; Haskell for pidigits; Erlang for cheap-concurrency. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
+</dd>
+
+</dl>
+</dd>
+
+
+
+<dt><a href="#measure" name="measure">&nbsp;How did you measure&#8230;?</a></dt>
+<dd>
+<dl>
+<dt><a href="#pretest" name="pretest">How did you measure?</a></dt>
+<dd>
+<p>Each program was run once pre-test to reduce cache effects. Program output is redirected to a log-file and compared to the expected output.</p>
+<p>Each program was then run 3 times with program output redirected to /dev/null. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
+<p>The variation between cpu times is different for different languages and for different benchmarks. 
+<em>The coefficient of variation</em> for 100 measurements of nbody ranged from 0.029% (Lua) to 0.074% (Oberon2) to 0.092% (C#); 
+and for 100 measurements of fasta ranged from 0.009% (Lua) to 0.088% (C#) to 0.655% (Oberon2).</p>
+<p>Don't sweat the small stuff - differences in cpu time of a few % are illusory.</p>
+</dd>
+
+<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></dt>
+<dd><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
+<p>(<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
+<pre>Perl times() builtin function
+16.650
+16.660
+16.640
+
+BSD::Resource::times
+16.659
+16.656
+16.655
+
+GNU time version 1.7
+16.62
+16.61
+16.60
+
+Bash time builtin command
+16.624
+16.628
+16.638
+</pre>
+<p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
+<p>The <a href="#fullcpu"><strong>&darr;&nbsp;Full CPU time</strong></a> <em>includes</em> program startup time.</p>
+</dd>
+
+<dt><a href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></dt>
+<dd><p>In a very approximate and unreliable way. We sampled the child-process resident memory size (VmRSS) multiple times a second. We identified the main thread by checking for SIGCHLD being registered as the exit_signal in the second to last field of /proc/{pid}/stat.</p>
+<p>There's a race condition. When the program completes quickly, this sampling technique will fail.</p>       
+</dd>
+
+<dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>GZip Bytes?</strong></a></dt>
+<dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression.</p>
+</dd>
+
+<dt><a href="#copts" name="copts">How did you set <strong>compiler options?</strong></a></dt>
+<dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=pentium4</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
+</dd>
+
+<dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
+<dd><p>We use a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512 MB of RAM and a 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and an 80GB IDE disk drive.</p>
+</dd>
+
+<dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
+<dd><p>We use <strong>Debian Linux&#8482;</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux&#8482;</strong> gentoo-sources-2.6.16-r13</p>
+</dd>
+
+
+<dt><a href="#kinder" name="kinder">Sometimes the children help with the measurements&#8230;</a></dt>
+<dd><pre>
+Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+
+Broadcast message from root@hopper (Sun Oct  1 16:33:50 2006):
+
+Power button pressed
+The system is going down for system halt NOW!
+</pre>
+</dd>
+
+
+</dl>
+</dd>
+
+
 
 
 
@@ -272,199 +467,6 @@ Do you want to help with the chores?</p>
 </dl>
 </dd>
 
-
-
-<dt><a href="#means" name="means">&nbsp;What does &#8230; mean?</a></dt>
-<dd>
-<dl>
-<dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
-<dd><p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
-</dd>
-
-<dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
-<dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
-</dd>
-
-<dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
-<dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
-<p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
-
-<p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. That's true.</p>
-
-<p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1,000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
-
-<p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then we selected the fastest elapsed time, taking all the benefit and none of the cost:</p>
-
-<table>
-<tr>
-<th colspan="2">&nbsp;&nbsp;all the benefit none of the cost</th>
-<th>&nbsp;&nbsp;Full CPU Time</th>
-<th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
-</tr>
-
-<tr>
-<td>nsieve&nbsp;&nbsp;</td>
-<td>2.108</td>
-<td>2.384</td>
-<td>0.276</td>
-<td>11%</td>
-</tr>
-<tr>
-<td>mandelbrot&nbsp;&nbsp;</td>
-<td>4.340</td>
-<td>4.852</td>
-<td>0.512</td>
-<td>19%</td>
-</tr>
-<tr>
-<td>binary-trees&nbsp;&nbsp;</td>
-<td>5.517</td>
-<td>6.736</td>
-<td>1.219</td>
-<td>18%</td>
-</tr>
-<tr>
-<td>recursive&nbsp;&nbsp;</td>
-<td>6.753</td>
-<td>7.076</td>
-<td>0.323</td>
-<td>5%</td>
-</tr>
-<tr>
-<td>nsievebits&nbsp;&nbsp;</td>
-<td>8.222</td>
-<td>8.705</td>
-<td>0.483</td>
-<td>5%</td>
-</tr>
-<tr>
-<td>fannkuch&nbsp;&nbsp;</td>
-<td>12.208</td>
-<td>13.753</td>
-<td>1.545</td>
-<td>11%</td>
-</tr>
-<tr>
-<td>nbody&nbsp;&nbsp;</td>
-<td>15.950</td>
-<td>17.017</td>
-<td>1.067</td>
-<td>6%</td>
-</tr>
-</table>
-
-<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by contributing better programs.</p>
-</dd>
-
-<dt><a href="#whatlanguage" name="whatlanguage">What language was used to write the benchmark programs?</a></dt>
-<dd><p>Different benchmark programs, different authors - different languages.</p>
-<p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos; Haskell for pidigits; Erlang for cheap-concurrency. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
-</dd>
-
-</dl>
-</dd>
-
-
-
-<dt><a href="#measure" name="measure">&nbsp;How did you measure&#8230;?</a></dt>
-<dd>
-<dl>
-<dt><a href="#pretest" name="pretest">How did you measure?</a></dt>
-<dd>
-<p>Each program was run once pre-test to reduce cache effects. Program output is redirected to a log-file and compared to the expected output.</p>
-<p>Each program was then run 3 times with program output redirected to /dev/null. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
-<p>The variation between cpu times is different for different languages and for different benchmarks. 
-<em>The coefficient of variation</em> for 100 measurements of nbody ranged from 0.029% (Lua) to 0.074% (Oberon2) to 0.092% (C#); 
-and for 100 measurements of fasta ranged from 0.009% (Lua) to 0.088% (C#) to 0.655% (Oberon2).</p>
-<p>Don't sweat the small stuff - differences in cpu time of a few % are illusory.</p>
-</dd>
-
-<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></dt>
-<dd><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
-<p>(<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
-<pre>Perl times() builtin function
-16.650
-16.660
-16.640
-
-BSD::Resource::times
-16.659
-16.656
-16.655
-
-GNU time version 1.7
-16.62
-16.61
-16.60
-
-Bash time builtin command
-16.624
-16.628
-16.638
-</pre>
-<p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
-<p>The <a href="#fullcpu"><strong>&darr;&nbsp;Full CPU time</strong></a> <em>includes</em> program startup time.</p>
-</dd>
-
-<dt><a href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></dt>
-<dd><p>In a very approximate and unreliable way. We sampled the child-process resident memory size (VmRSS) multiple times a second. We identified the main thread by checking for SIGCHLD being registered as the exit_signal in the second to last field of /proc/{pid}/stat.</p>
-<p>There's a race condition. When the program completes quickly, this sampling technique will fail.</p>       
-</dd>
-
-<dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>GZip Bytes?</strong></a></dt>
-<dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression.</p>
-</dd>
-
-<dt><a href="#copts" name="copts">How did you set <strong>compiler options?</strong></a></dt>
-<dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=pentium4</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
-</dd>
-
-<dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
-<dd><p>We use a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512 MB of RAM and a 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and an 80GB IDE disk drive.</p>
-</dd>
-
-<dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <strong>Debian Linux&#8482;</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux&#8482;</strong> gentoo-sources-2.6.16-r13</p>
-</dd>
-
-
-<dt><a href="#kinder" name="kinder">Sometimes the children help with the measurements&#8230;</a></dt>
-<dd><pre>
-Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:48 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:49 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-
-Broadcast message from root@hopper (Sun Oct  1 16:33:50 2006):
-
-Power button pressed
-The system is going down for system halt NOW!
-</pre>
-</dd>
-
-
-</dl>
-</dd>
 
 
 
