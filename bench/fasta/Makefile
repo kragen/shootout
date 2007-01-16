@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2006-09-15 14:53:56 bfulgham Exp $
+# $Id: Makefile,v 1.14 2007-01-16 16:37:50 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fasta
@@ -22,6 +22,6 @@ GPLCOPTS := --fast-math
 PARROTOPTS := -Cj
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 25000,250000,2500000 
+	  --range 25000,250000,2500000 --ignore fasta.bigforth-2.bigforth
 
 include ../../Make.footer
