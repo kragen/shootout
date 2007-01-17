@@ -37,8 +37,6 @@
 <dt><a href="#means" name="means">&nbsp;What does &#8230; mean?</a></dt>
 <dd>
 <dl>
-<dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
-
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
 <dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
 <p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
@@ -115,6 +113,7 @@
 <p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos; Haskell for pidigits; Erlang for cheap-concurrency. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
 </dd>
 
+<dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
 <dd><p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </dd>
 
