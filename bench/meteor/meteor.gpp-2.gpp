@@ -1,29 +1,14 @@
-/* The Computer Language Shootout
-http://shootout.alioth.debian.org/
-
-contributed by Ben St. John
-*/
+// The Computer Language Shootout
+// http://shootout.alioth.debian.org/
+// contributed by Ben St. John
 
 #include <iostream>
 #include <vector>
-#include <cassert>
 #include <string>
-// #include <algorithm> cygwin was unhappy with my sorting...
 
 using namespace std;
 
-#define FALSE 0
-#define TRUE  1
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-#define STATIC_ASSERT(b) {static int _ass[b ? 1 : -1];}
 #define FREE(p) {free(p); p = NULL;}
-
-// for 64bit constants in gcc, use INT64_C(0x1), and include <stdint.h>
-#ifndef INT64_C
-   #define INT64_C(i) (i ## i64)
-#endif
-
-#define ONE_64 INT64_C(1)
 
 enum {X, Y, N_DIM};
 enum {EVEN, ODD, N_PARITY};
@@ -32,7 +17,7 @@ typedef unsigned int TUInt32;
 typedef unsigned long long TUInt64;
 typedef signed char TInt8;
 
-typedef TUInt64 TBoardBitVector;
+typedef TUInt64 BitVec;
 
 namespace Meteor
 {
@@ -49,7 +34,7 @@ class Solution
 public:
    static const int NO_PIECE = -1;
 
-   void addPiece(const TBoardBitVector & vec, int iPiece);
+   void addPiece(const BitVec & vec, int iPiece);
    void removeLastPiece(void);
    void setCells(void);
    bool lessThan(Solution & r); ///< I don't feel like operator overloading
@@ -63,7 +48,7 @@ public:
    
 private:
    struct SPiece {
-      TBoardBitVector vec;
+      BitVec vec;
       TUInt32 iPiece;
    };
    vector<SPiece> m_pieces;
@@ -76,29 +61,26 @@ private:
 class Board
 {
 public:
-   static const TBoardBitVector L_EDGE_MASK =
-      (ONE_64 <<  0) | (ONE_64 <<  5) | (ONE_64 << 10) | (ONE_64 << 15) |
-      (ONE_64 << 20) | (ONE_64 << 25) | (ONE_64 << 30) | (ONE_64 << 35) |
-      (ONE_64 << 40) | (ONE_64 << 45) | (ONE_64 << 50) | (ONE_64 << 55);
-   static const TBoardBitVector R_EDGE_MASK = L_EDGE_MASK << 4;
-   static const TBoardBitVector TOP_ROW = INT64_C(0x1f);
-   static const TBoardBitVector ROW_0_MASK = 
+   static const BitVec L_EDGE_MASK =
+      (1LL <<  0) | (1LL <<  5) | (1LL << 10) | (1LL << 15) |
+      (1LL << 20) | (1LL << 25) | (1LL << 30) | (1LL << 35) |
+      (1LL << 40) | (1LL << 45) | (1LL << 50) | (1LL << 55);
+   static const BitVec R_EDGE_MASK = L_EDGE_MASK << 4;
+   static const BitVec TOP_ROW = 0x1fLL;
+   static const BitVec ROW_0_MASK = 
       ( TOP_ROW        | (TOP_ROW << 10) | (TOP_ROW << 20) | (TOP_ROW << 30) |
        (TOP_ROW << 40) | (TOP_ROW << 50));
-   static const TBoardBitVector ROW_1_MASK = ROW_0_MASK << 5;
-   static const TBoardBitVector BOARD_MASK = (ONE_64 << N_CELL) - 1;
+   static const BitVec ROW_1_MASK = ROW_0_MASK << 5;
+   static const BitVec BOARD_MASK = (1LL << N_CELL) - 1;
 
    Board();
 
-   static TUInt32 getIndex(TUInt32 x, TUInt32 y) {
-      assert(y < N_ROW); assert(x < N_COL);
-      return y * N_COL + x;
-   }
+   static TUInt32 getIndex(TUInt32 x, TUInt32 y) { return y * N_COL + x;    }
+   static bool hasBadFirstRegion(BitVec & toFill);
+   static bool hasBadIslands(const BitVec & boardVec);
 
-   bool genAllSolutions(TBoardBitVector boardVec, TUInt32 placedPieces, TUInt32 iNextFill);
+   void genAllSolutions(BitVec boardVec, TUInt32 placedPieces, TUInt32 iNextFill, const BitVec & maskNextFill);
    void recordSolution(Solution & s);
-   static bool hasBadFirstRegion(TBoardBitVector & emptyCells);
-   static bool hasBadIslands(const TBoardBitVector & boardVec);
 
    Solution m_curSolution;
    Solution m_minSolution;
@@ -112,8 +94,8 @@ class Piece
 {
 public:
    struct Instance {
-      TBoardBitVector m_vec;
-      TBoardBitVector m_allowed;
+      BitVec m_vec;
+      BitVec m_allowed;
       TUInt32 m_offset;
       TUInt32 m_w;
       TUInt32 m_h;
@@ -127,52 +109,31 @@ public:
 
    typedef int TCoordList[N_ELEM][N_DIM];
 
-   static const TBoardBitVector BaseDefinitions[N_TYPE];
+   static const BitVec BaseDefinitions[N_TYPE];
    static Piece s_basePiece[N_TYPE][N_ORIENT];
 
-   static const Piece::Instance & getPiece(TUInt32 iPiece, TUInt32 iOrient, TUInt32 iParity);
+   static const Instance & getPiece(TUInt32 iPiece, TUInt32 iOrient, TUInt32 iParity);
    static bool checkBaseDefinitions(void);
-   static TBoardBitVector toBitVector(const TCoordList & coords);
-   static void genOrientation(const TBoardBitVector & vec, TUInt32 iOrient, Piece & target);
-   static void setCoordList(const TBoardBitVector & vec, TCoordList & coords);
+   static BitVec toBitVector(const TCoordList & coords);
+   static void genOrientation(const BitVec & vec, TUInt32 iOrient, Piece & target);
+   static void setCoordList(const BitVec & vec, TCoordList & coords);
    static void shiftUpLines(TCoordList & coords, int shift);
    static void shiftToX0(TCoordList & coords, Instance & instance, int offsetRow);
-   static void setAllowedPositions(Piece::Instance & p);
-
+   static void setAllowedPositions(Instance & p);
    static void genAllOrientations(void);
-
-   friend bool operator==(const Piece::Instance & lhs, const Piece::Instance &rhs);
-   friend bool operator!=(const Piece::Instance & lhs, const Piece::Instance &rhs);
 
    Instance m_instance[N_PARITY];
 };
-
-bool operator==(const Piece::Instance & lhs, const Piece::Instance &rhs) {
-   bool same = (lhs.m_vec == rhs.m_vec);
-
-#ifdef _DEBUG
-   // we don't need to check derived values
-   same = (same && (lhs.m_offset == rhs.m_offset) && (lhs.m_h == rhs.m_h) && (lhs.m_w == lhs.m_w));
-#endif
-
-   return(same);
-}
-
-bool operator!=(const Piece::Instance & lhs, const Piece::Instance &rhs) {
-   return !(lhs == rhs);
-}
-
 
 //------------------------------------
 Solution::Solution(int fillVal)
 {
    fill(fillVal);
-   m_pieces.reserve(Meteor::Piece::N_TYPE);
+   m_pieces.reserve(Piece::N_TYPE);
 }
 
 void Solution::fill(int val)
 {
-   assert((TInt8)val == val);
    m_synched = false;
    memset(&m_cells[0][0], val, N_CELL);
 }
@@ -203,22 +164,19 @@ void Solution::setCells(void)
    if (m_synched)
       return;
 
-   assert(m_pieces.size() == Piece::N_TYPE);
-
    fill(NO_PIECE);
 
    // could be more efficient
    for (TUInt32 iPiece = 0; iPiece < m_pieces.size(); iPiece++) {
 
-      const TBoardBitVector & vec = m_pieces[iPiece].vec;
+      const BitVec & vec = m_pieces[iPiece].vec;
       int pID = m_pieces[iPiece].iPiece;
-      TBoardBitVector mask = 1;
+      BitVec mask = 1LL;
       int nNewCells = 0;
 
       for (int y = 0; y < N_ROW; y++) {
          for (int x = 0; x < N_COL; x++) {
             if (mask & vec) {
-               assert(m_cells[y][x] == NO_PIECE);
                m_cells[y][x] = (TInt8)pID;
 
                nNewCells++;
@@ -233,15 +191,12 @@ void Solution::setCells(void)
    m_synched = true;
 }
 
-void Solution::addPiece(const TBoardBitVector & vec, int iPiece)
-{
-   assert(iPiece > NO_PIECE && iPiece <= Piece::N_TYPE);
+void Solution::addPiece(const BitVec & vec, int iPiece) {
    SPiece p = {vec, iPiece};
    m_pieces.push_back(p);
 }
 
-void Solution::removeLastPiece(void)
-{
+void Solution::removeLastPiece(void) {
    m_pieces.pop_back();
    m_synched = false;
 }
@@ -271,11 +226,10 @@ bool Solution::lessThan(Solution & r)
 
 void Solution::spin(Solution & spun)
 {
-   assert(m_pieces.size() == Piece::N_TYPE);
    setCells();
 
    // swap cells
-   for (int y = 0; y < (N_ROW); y++) {
+   for (int y = 0; y < N_ROW; y++) {
       for (int x = 0; x < N_COL; x++) {
          TInt8 flipped = m_cells[N_ROW - y - 1][N_COL - x - 1];
          spun.m_cells[y][x] = flipped;
@@ -284,7 +238,6 @@ void Solution::spin(Solution & spun)
 
    // swap first and last pieces (the rest aren't used)
    spun.m_pieces.push_back(m_pieces[Piece::N_TYPE - 1]);
-
    spun.m_synched = true;
 }
 
@@ -292,68 +245,22 @@ void Solution::spin(Solution & spun)
 
 Piece Piece::s_basePiece[N_TYPE][N_ORIENT];
 
-const TBoardBitVector Piece::BaseDefinitions[] = 
-{
-   0x010f,  // 0
-// x x x x .
-//  . . . x .
-
-   0x00cb,  // 1
-// x x . x .
-//  . x x . .
-
-   0x1087,  // 2
-// x x x . .
-//  . . x . .
-// . . x . .
-
-   0x0427,  // 3
-// x x x . .
-//  x . . . .
-// x . . . .
-
-   0x0465,  // 4
-// x . x . .
-//  x x . . .
-// x . . . .
-
-   0x00c7,  // 5
-// o  o  o  .  .
-//   .  o  o  .  .
-
-   0x08423,  // 6
-// o  o  .  .  .
-//   o  .  .  .  .
-// o  .  .  .  .
-//   o  .  .  .  .
-
-   0x00a7,  // 7
-// o  o  o  .  .
-//   o  .  o  .  .
-
-   0x0187,  // 8
-// o  o  o  .  .
-//   .  .  o  o  .
-
-   0x008f,  // 9
-// o  o  o  o  .
-//   .  .  o  .  .
-
+const BitVec Piece::BaseDefinitions[] = {
+   0x010f,   0x00cb, 0x1087, 0x0427, 0x0465,
+   0x00c7, 0x08423, 0x00a7, 0x0187, 0x008f
 };
 
-int floor(int top, int bot)
-{
-   int towardsZero = top / bot;
+int floor(int top, int bot) {
+   int toZero = top / bot;
    // negative numbers should be rounded down, not towards zero
-   if ((towardsZero * bot != top) && ((top < 0) != (bot <= 0)))
-      towardsZero--;
+   if ((toZero * bot != top) && ((top < 0) != (bot <= 0)))
+      toZero--;
 
-   return towardsZero;
+   return toZero;
 }
 
-TUInt32 getFirstOne(const TBoardBitVector & v, TUInt32 startPos = 0)
-{
-   if (v == (TBoardBitVector)0)
+TUInt32 getFirstOne(const BitVec & v, TUInt32 startPos = 0) {
+   if (v == (BitVec)0)
       return 0;
    
    static const TUInt32 firstOne[16] =   {
@@ -364,7 +271,7 @@ TUInt32 getFirstOne(const TBoardBitVector & v, TUInt32 startPos = 0)
    };
 
    TUInt32 iPos = startPos;
-   TBoardBitVector mask = INT64_C(0xff) << startPos;
+   BitVec mask = 0xffLL << startPos;
    while ((mask & v) == 0) {
       mask <<= 8;
       iPos += 8;
@@ -379,8 +286,7 @@ TUInt32 getFirstOne(const TBoardBitVector & v, TUInt32 startPos = 0)
    return iPos;
 }
 
-TUInt32 countOnes(TBoardBitVector v)
-{
+TUInt32 countOnes(BitVec v) {
    TUInt32 n = 0;
    while (v) {
       n++;
@@ -391,21 +297,16 @@ TUInt32 countOnes(TBoardBitVector v)
 }
 
 void Piece::genAllOrientations(void) {
-
-   // calc all orientations
    for (int iPiece = 0; iPiece < N_TYPE; iPiece++) {
-      const TBoardBitVector & refPiece = BaseDefinitions[iPiece];
-      for (int iOrient = 0; iOrient < N_ORIENT; iOrient++) {
-         Piece & target = s_basePiece[iPiece][iOrient];
-         genOrientation(refPiece, iOrient, target);
-      }
+      const BitVec & refPiece = BaseDefinitions[iPiece];
+      for (int iOrient = 0; iOrient < N_ORIENT; iOrient++)
+         genOrientation(refPiece, iOrient, s_basePiece[iPiece][iOrient]);
    }
 }
 
-void Piece::setCoordList(const TBoardBitVector & vec, TCoordList & coords)
-{
+void Piece::setCoordList(const BitVec & vec, TCoordList & coords) {
    int iCoord = 0;
-   TBoardBitVector mask = 1;
+   BitVec mask = 1LL;
    for (int y = 0; y < N_ROW; y++) {
       for (int x = 0; x < N_COL; x++) {
          if (mask & vec) {
@@ -413,24 +314,22 @@ void Piece::setCoordList(const TBoardBitVector & vec, TCoordList & coords)
             coords[iCoord][Y] = y;
 
             iCoord++;
-            // could exit early if iCoord == 5
          }
          mask <<= 1;
       }
    }
-   assert(iCoord == N_ELEM);
 }
 
-TBoardBitVector Piece::toBitVector(const TCoordList & coords)
+BitVec Piece::toBitVector(const TCoordList & coords)
 {
    int y, x;
-   TBoardBitVector result = 0;
+   BitVec result = 0;
    for (int iCoord = 0; iCoord < N_ELEM; iCoord++) {
       x = coords[iCoord][X];
       y = coords[iCoord][Y];
 
       int pos = Board::getIndex(x, y);
-      result |= (ONE_64 << pos); // to generate a 64 bit representation of 1
+      result |= (1LL << pos); // to generate a 64 bit representation of 1
    }
    
    return result;
@@ -439,18 +338,13 @@ TBoardBitVector Piece::toBitVector(const TCoordList & coords)
 void Piece::shiftUpLines(TCoordList & coords, int shift)
 {
    // apply shifts are not so simple in the vertical direction
-   int odd = shift & 0x1;
    for (int iCoord = 0; iCoord < N_ELEM; iCoord++) {
       int & rx = coords[iCoord][X];
       int & ry = coords[iCoord][Y];
 
-      int srcOdd = ry & 0x1; 
+      if (ry & shift & 0x1)
+         rx++;
       ry -= shift;
-      assert(ry >= 0);
-
-      if (odd & srcOdd) {
-         rx++;         
-      }
    }
 }
 
@@ -479,7 +373,6 @@ void Piece::shiftToX0(TCoordList & coords, Piece::Instance & instance, int offse
       int & ry = coords[iCoord][Y];
 
       rx -= xMin;
-      assert(rx >= 0);
 
       // check offset -- leftmost cell on top line
       if ((ry == offsetRow) && (rx < offset))
@@ -488,33 +381,23 @@ void Piece::shiftToX0(TCoordList & coords, Piece::Instance & instance, int offse
 
    instance.m_w = xMax - xMin;
    instance.m_offset = offset;
-
-   // set bitVector
    instance.m_vec = toBitVector(coords);
 }
 
 void Piece::setAllowedPositions(Piece::Instance & p)
 {
-   TBoardBitVector & allowed = p.m_allowed;
-   allowed = INT64_C(0);
-   TBoardBitVector posMask = ONE_64;
+   BitVec & allowed = p.m_allowed = 0;
+   BitVec posMask = 1LL;
    TUInt32 iPos = 0;
    for (int y = 0; y < N_ROW; y++) {
       for (int x = 0; x < N_COL; x++, iPos++, posMask <<= 1){
          // check if the new position is on the board
          int xPos = x - p.m_offset;
-
          if ((xPos < 0) || (y + p.m_h >= N_ROW) || (xPos + p.m_w >= N_COL))
             continue;
 
-         // move it to the desired location, if possible and
-         TUInt32 shift = iPos - p.m_offset;
-         // .. any negative shifts should have been taken care of by the previous bounds check
-         assert(shift >= 0);
-         TBoardBitVector pieceVec = p.m_vec << shift;
-
-         // check if piece fills the required cell
-         assert(pieceVec & posMask);
+         // move it to the desired location
+         BitVec pieceVec = p.m_vec << (iPos - p.m_offset);
 
          if (Board::hasBadIslands(pieceVec))
             continue;
@@ -525,28 +408,23 @@ void Piece::setAllowedPositions(Piece::Instance & p)
    }
 }
 
-void Piece::genOrientation(const TBoardBitVector & vec, TUInt32 iOrient, Piece & target)
+void Piece::genOrientation(const BitVec & vec, TUInt32 iOrient, Piece & target)
 {
-   assert(iOrient < N_ORIENT);
-
    // get (x,y) coordinates
    TCoordList coords;
    setCoordList(vec, coords);
 
    int y, x;
    int iCoord = 0;
-
    int rot = iOrient % 6;
    int flip = iOrient >= 6;
-   // flip (if necessary)
    if (flip) {
       for (iCoord = 0; iCoord < N_ELEM; iCoord++)
          coords[iCoord][Y] = -coords[iCoord][Y];
    }
 
    // rotate (if necessary)
-   while (rot--)
-   {
+   while (rot--) {
       for (iCoord = 0; iCoord < N_ELEM; iCoord++) {
          x = coords[iCoord][X];
          y = coords[iCoord][Y];
@@ -587,12 +465,7 @@ void Piece::genOrientation(const TBoardBitVector & vec, TUInt32 iOrient, Piece &
    setAllowedPositions(target.m_instance[ODD]);
 }
 
-const Piece::Instance & Piece::getPiece(TUInt32 iPiece, TUInt32 iOrient, TUInt32 iParity)
-{
-   assert(iPiece < N_TYPE);
-   assert(iOrient < N_ORIENT);
-   assert(iParity < N_PARITY);
-
+const Piece::Instance & Piece::getPiece(TUInt32 iPiece, TUInt32 iOrient, TUInt32 iParity) {
    return s_basePiece[iPiece][iOrient].m_instance[iParity];
 }
 
@@ -604,81 +477,67 @@ Board::Board() :
 {
 }
 
-bool Board::hasBadFirstRegion(TBoardBitVector & emptyCells)
+bool Board::hasBadFirstRegion(BitVec & toFill)
 {
-   int iPos = getFirstOne(emptyCells);
+   int iPos = getFirstOne(toFill);
 
    // grow empty region, until it doesn't change any more
-   TBoardBitVector region, growth;
-   TBoardBitVector newRegion = ONE_64 << iPos;
+   BitVec region;
+   BitVec rNew = 1LL << iPos;
    do {
-      region = newRegion;
+      region = rNew;
 
-      // grow left
-      TBoardBitVector mask = ~L_EDGE_MASK;
-      mask &= region;
-      mask >>= 1;
-
-//      growth = (region & ~L_EDGE_MASK) >> 1;
-      newRegion |= mask;
-
-      // grow right
-      growth = (region & ~R_EDGE_MASK) << 1;
-      newRegion |= growth;
+      // grow right/left
+      rNew |= (region & ~L_EDGE_MASK) >> 1;
+      rNew |= (region & ~R_EDGE_MASK) << 1;
 
       // simple grow up/down
-      newRegion |= (region >> N_COL);
-      newRegion |= (region << N_COL);
+      rNew |= (region >> N_COL);
+      rNew |= (region << N_COL);
 
       // tricky growth
-      TBoardBitVector evenRegion = region & (ROW_0_MASK & ~L_EDGE_MASK);
-      newRegion |= evenRegion >> (N_COL + 1);
-      newRegion |= evenRegion << (N_COL - 1);
+      BitVec evenRegion = region & (ROW_0_MASK & ~L_EDGE_MASK);
+      rNew |= evenRegion >> (N_COL + 1);
+      rNew |= evenRegion << (N_COL - 1);
 
-      TBoardBitVector oddRegion = region & (ROW_1_MASK & ~R_EDGE_MASK);
-      newRegion |= oddRegion >> (N_COL - 1);
-      newRegion |= oddRegion << (N_COL + 1);
+      BitVec oddRegion = region & (ROW_1_MASK & ~R_EDGE_MASK);
+      rNew |= oddRegion >> (N_COL - 1);
+      rNew |= oddRegion << (N_COL + 1);
 
       // clamp against existing pieces
-      newRegion &= emptyCells;
-      assert((newRegion & BOARD_MASK) == newRegion);
+      rNew &= toFill;
    }
-   while ((newRegion != emptyCells) && (newRegion != region));
+   while ((rNew != toFill) && (rNew != region));
 
    // subtract empty region from board
-   // we can do this first, as 
-   emptyCells ^= newRegion;
+   toFill ^= rNew;
 
-   // count how many cells are in the empty region
-   TUInt32 nEmptyCells = countOnes(emptyCells);
+   TUInt32 nEmptyCells = countOnes(toFill);
    if (nEmptyCells % 5 != 0)
       return true;
 
    return false;
 }
 
-bool Board::hasBadIslands(const TBoardBitVector & boardVec)
+bool Board::hasBadIslands(const BitVec & boardVec)
 {
-   TBoardBitVector emptyCells = ~boardVec & BOARD_MASK;
+   BitVec toFill = ~boardVec & BOARD_MASK;
 
    // a little pre-work to speed things up
-   TBoardBitVector row = (Board::TOP_ROW << ((N_ROW - 1) * N_COL));
-   bool filled = ((row & emptyCells) == row);
-   while ((row & emptyCells) == row)
-   {
-      emptyCells ^= row;
+   BitVec row = (Board::TOP_ROW << ((N_ROW - 1) * N_COL));
+   bool filled = ((row & toFill) == row);
+   while ((row & toFill) == row) {
+      toFill ^= row;
       row >>= N_COL;
    }
    // undo the last row, so regions stay connected
-   if (filled)
-   {
+   if (filled)   {
       row <<= N_COL;
-      emptyCells |= row;
+      toFill |= row;
    }
 
-   while (emptyCells)
-   {
-      if (hasBadFirstRegion(emptyCells))
+   while (toFill)    {
+      if (hasBadFirstRegion(toFill))
          return true;
    }
 
@@ -686,19 +545,9 @@ bool Board::hasBadIslands(const TBoardBitVector & boardVec)
 }
 
 // recursive vs iterative?
-bool Board::genAllSolutions(TBoardBitVector boardVec, TUInt32 placedPieces, TUInt32 iNextFill)
+void Board::genAllSolutions(BitVec boardVec, TUInt32 placedPieces, TUInt32 iNextFill, const BitVec & maskNextFill)
 {
-   // cycle through all the pieces, trying to fit them
-   // so the next free spot is filled. Continue until 
-   // a solution is impossible, or a solution is found
-   // basically a depth-first search tree.
-   // Pruning early is important.
-
-   assert(countOnes(boardVec) == Piece::N_ELEM * countOnes(placedPieces));
-   assert(getFirstOne(~boardVec) == iNextFill);
-
-   TBoardBitVector fillCellMask = ONE_64 << iNextFill;
-   TBoardBitVector pieceVec;
+   BitVec pieceVec;
    int pieceMask = 1;
    int y = iNextFill / N_COL;
    int isOddLine = y & 1;
@@ -722,17 +571,11 @@ bool Board::genAllSolutions(TBoardBitVector boardVec, TUInt32 placedPieces, TUIn
          const Piece::Instance & p = Piece::getPiece(iPiece, iOrient, isOddLine);
          
          // check if the new position is allowed on the board
-         if (!(p.m_allowed & fillCellMask))
+         if (!(p.m_allowed & maskNextFill))
             continue;
 
          // move it to the desired location, if possible and
-         TUInt32 shift = iNextFill - p.m_offset;
-         // .. any negative shifts should have been taken care of by the previous bounds check
-         assert(shift >= 0);
-         pieceVec = p.m_vec << shift;
-
-         // check if piece fills the required cell
-         assert(pieceVec & fillCellMask);
+         pieceVec = p.m_vec << (iNextFill - p.m_offset);
 
          // check if piece conflicts with other pieces
          if (pieceVec & boardVec)
@@ -754,30 +597,14 @@ bool Board::genAllSolutions(TBoardBitVector boardVec, TUInt32 placedPieces, TUIn
          // recur if not done
          if (placedPieces != Piece::ALL_PIECE_MASK)   {
             // need to find the next unfilled cell
-#if 1
             TUInt32 iCell = getFirstOne(~boardVec, iNextFill + 1);
-#else
-            TUInt32 iCell = iNextFill + 1;
-            TBoardBitVector cellMask = ONE_64 << iCell;
-            while (cellMask & boardVec)   {
-               cellMask <<= 1;
-               iCell++;
-            }
-#endif
+            BitVec mNextFill = (maskNextFill << (iCell - iNextFill));
 
-            genAllSolutions(boardVec, placedPieces, iCell);
+            genAllSolutions(boardVec, placedPieces, iCell, mNextFill);
          }
          else {   
             // done, record piece/solution and end recursion
             recordSolution(m_curSolution);
-
-            // DEVNOTE: exits, after cleaning up
-#if 0
-            boardVec ^= pieceVec;
-            placedPieces &= ~pieceMask;
-            m_curSolution.removeLastPiece();
-            return true;
-#endif
          }
 
          // remove the piece before continuing with a new piece
@@ -787,22 +614,16 @@ bool Board::genAllSolutions(TBoardBitVector boardVec, TUInt32 placedPieces, TUIn
 
       placedPieces &= ~pieceMask;
    }
-
-   return FALSE;
 }
 
 void Board::recordSolution(Solution & s)
 {
    m_nSolutionFound += 2; // we add the solution and its rotation
 
-   if (m_minSolution.isEmpty())
-   {
-      m_minSolution = s;
-      m_maxSolution = s;
+   if (m_minSolution.isEmpty()) {
+      m_minSolution = m_maxSolution = s;
       return;
    }
-
-   assert(!m_maxSolution.isEmpty());
 
    if (s.lessThan(m_minSolution))
       m_minSolution = s;
@@ -823,16 +644,6 @@ using namespace Meteor;
 
 int main(int argc, char * argv [])
 {
-   STATIC_ASSERT(sizeof(TUInt64) * 8 >= Meteor::N_CELL);
-   STATIC_ASSERT(sizeof(TUInt64) == 8);
-   STATIC_ASSERT(ARRAY_SIZE(Piece::BaseDefinitions) == Piece::N_TYPE);
-
-   assert(Meteor::floor(1, 2) == 0);
-   assert(Meteor::floor(-1, 2) == -1);
-   assert(Meteor::floor(-1, 4) == -1);
-   assert(Meteor::floor(-3, 4) == -1);
-   assert(Meteor::floor(-5, 4) == -2);
-
    const int N_SOLUTION = 2098;
    TUInt32 nSolMax = N_SOLUTION;
    if (argc > 2)
@@ -842,7 +653,7 @@ int main(int argc, char * argv [])
 
    Board board;
    Piece::genAllOrientations();
-   board.genAllSolutions(0, 0, 0);
+   board.genAllSolutions(0, 0, 0, 1LL);
 
    cout << board.m_nSolutionFound << " solutions found.\n\n";
    cout << board.m_minSolution.toString() << '\n';
