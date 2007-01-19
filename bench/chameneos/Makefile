@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2006-12-15 08:32:59 bfulgham Exp $
+# $Id: Makefile,v 1.11 2007-01-19 03:31:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := chameneos
@@ -23,6 +23,7 @@ GCCOPTS :=  $(GCCOPTS)-lpthread
 ICCOPTS := $(ICCOPTS) -lpthread -D_GLIBCXX_GTHREAD_USE_WEAK=0
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 10000,100000,1000000 --ignore=chameneos.iron
+	  --range 10000,100000,1000000 --ignore=chameneos.iron \
+	  --ignore chameneos.bigforth
 
 include ../../Make.footer

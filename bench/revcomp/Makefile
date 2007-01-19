@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2006-10-04 19:44:57 igouy-guest Exp $
+# $Id: Makefile,v 1.16 2007-01-19 03:31:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -27,6 +27,7 @@ PHPOPTS := -d memory_limit=64M
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 25000,250000,2500000 \
 	  --inputfile ../../website/desc/revcomp-input.txt \
-	  --uniqueinput
+	  --uniqueinput --ignore revcomp.bigforth \
+	  --ignore revcomp.bigforth-2.bigforth
 
 include ../../Make.footer
