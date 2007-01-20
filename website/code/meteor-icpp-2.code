@@ -1,0 +1,666 @@
+<span class="slc">// The Computer Language Shootout</span>
+<span class="slc">// http://shootout.alioth.debian.org/</span>
+<span class="slc">// contributed by Ben St. John</span>
+
+<span class="dir">#include &lt;iostream&gt;</span>
+<span class="dir">#include &lt;vector&gt;</span>
+<span class="dir">#include &lt;string&gt;</span>
+
+<span class="kwa">using namespace</span> std<span class="sym">;</span>
+
+<span class="dir">#define FREE(p) {free(p); p = NULL;}</span>
+
+<span class="kwb">enum</span> <span class="sym">{</span>X<span class="sym">,</span> Y<span class="sym">,</span> N_DIM<span class="sym">};</span>
+<span class="kwb">enum</span> <span class="sym">{</span>EVEN<span class="sym">,</span> ODD<span class="sym">,</span> N_PARITY<span class="sym">};</span>
+
+<span class="kwc">typedef</span> <span class="kwb">unsigned int</span> TUInt32<span class="sym">;</span>
+<span class="kwc">typedef</span> <span class="kwb">unsigned long long</span> TUInt64<span class="sym">;</span>
+<span class="kwc">typedef</span> <span class="kwb">signed char</span> TInt8<span class="sym">;</span>
+
+<span class="kwc">typedef</span> TUInt64 BitVec<span class="sym">;</span>
+
+<span class="kwa">namespace</span> Meteor
+<span class="sym">{</span>
+<span class="kwb">static const int</span> N_COL <span class="sym">=</span> <span class="num">5</span><span class="sym">;</span>
+<span class="kwb">static const int</span> N_ROW <span class="sym">=</span> <span class="num">10</span><span class="sym">;</span>
+<span class="kwb">static const int</span> N_CELL <span class="sym">=</span> N_COL <span class="sym">*</span> N_ROW<span class="sym">;</span>
+
+<span class="kwc">class</span> Piece<span class="sym">;</span>
+
+<span class="slc">//------------------------------------</span>
+
+<span class="kwc">class</span> Solution
+<span class="sym">{</span>
+<span class="kwc">public</span><span class="sym">:</span>
+   <span class="kwb">static const int</span> NO_PIECE <span class="sym">= -</span><span class="num">1</span><span class="sym">;</span>
+
+   <span class="kwb">void</span> <span class="kwd">addPiece</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec<span class="sym">,</span> <span class="kwb">int</span> iPiece<span class="sym">);</span>
+   <span class="kwb">void</span> <span class="kwd">removeLastPiece</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">);</span>
+   <span class="kwb">void</span> <span class="kwd">setCells</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">);</span>
+   <span class="kwb">bool</span> <span class="kwd">lessThan</span><span class="sym">(</span>Solution <span class="sym">&amp;</span> r<span class="sym">);</span> <span class="slc">///&lt; I don't feel like operator overloading</span>
+   string <span class="kwd">toString</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">)</span> <span class="kwb">const</span><span class="sym">;</span>
+   <span class="kwb">void</span> <span class="kwd">fill</span><span class="sym">(</span><span class="kwb">int</span> val<span class="sym">);</span>
+   <span class="kwb">bool</span> <span class="kwd">isEmpty</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">) {</span><span class="kwa">return</span> <span class="sym">(</span>m_pieces<span class="sym">.</span><span class="kwd">size</span><span class="sym">() ==</span> <span class="num">0</span><span class="sym">);}</span>
+   <span class="kwb">void</span> <span class="kwd">spin</span><span class="sym">(</span>Solution <span class="sym">&amp;</span> spun<span class="sym">);</span>
+
+   <span class="kwd">Solution</span><span class="sym">(</span><span class="kwb">int</span> fillVal<span class="sym">);</span>
+   <span class="kwd">Solution</span><span class="sym">() {</span>m_synched <span class="sym">=</span> <span class="kwa">false</span><span class="sym">;}</span>
+
+<span class="kwc">private</span><span class="sym">:</span>
+   <span class="kwb">struct</span> SPiece <span class="sym">{</span>
+      BitVec vec<span class="sym">;</span>
+      TUInt32 iPiece<span class="sym">;</span>
+   <span class="sym">};</span>
+   vector<span class="sym">&lt;</span>SPiece<span class="sym">&gt;</span> m_pieces<span class="sym">;</span>
+   TInt8 m_cells<span class="sym">[</span>N_ROW<span class="sym">][</span>N_COL<span class="sym">];</span>
+   <span class="kwb">bool</span> m_synched<span class="sym">;</span>
+<span class="sym">};</span>
+
+<span class="slc">//------------------------------------</span>
+
+<span class="kwc">class</span> Board
+<span class="sym">{</span>
+<span class="kwc">public</span><span class="sym">:</span>
+   <span class="kwb">static const</span> BitVec L_EDGE_MASK <span class="sym">=</span>
+      <span class="sym">(</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span>  <span class="num">0</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span>  <span class="num">5</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">10</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">15</span><span class="sym">) |</span>
+      <span class="sym">(</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">20</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">25</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">30</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">35</span><span class="sym">) |</span>
+      <span class="sym">(</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">40</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">45</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">50</span><span class="sym">) | (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> <span class="num">55</span><span class="sym">);</span>
+   <span class="kwb">static const</span> BitVec R_EDGE_MASK <span class="sym">=</span> L_EDGE_MASK <span class="sym">&lt;&lt;</span> <span class="num">4</span><span class="sym">;</span>
+   <span class="kwb">static const</span> BitVec TOP_ROW <span class="sym">=</span> <span class="num">0x1f</span>LL<span class="sym">;</span>
+   <span class="kwb">static const</span> BitVec ROW_0_MASK <span class="sym">=</span>
+      <span class="sym">(</span> TOP_ROW        <span class="sym">| (</span>TOP_ROW <span class="sym">&lt;&lt;</span> <span class="num">10</span><span class="sym">) | (</span>TOP_ROW <span class="sym">&lt;&lt;</span> <span class="num">20</span><span class="sym">) | (</span>TOP_ROW <span class="sym">&lt;&lt;</span> <span class="num">30</span><span class="sym">) |</span>
+       <span class="sym">(</span>TOP_ROW <span class="sym">&lt;&lt;</span> <span class="num">40</span><span class="sym">) | (</span>TOP_ROW <span class="sym">&lt;&lt;</span> <span class="num">50</span><span class="sym">));</span>
+   <span class="kwb">static const</span> BitVec ROW_1_MASK <span class="sym">=</span> ROW_0_MASK <span class="sym">&lt;&lt;</span> <span class="num">5</span><span class="sym">;</span>
+   <span class="kwb">static const</span> BitVec BOARD_MASK <span class="sym">= (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> N_CELL<span class="sym">) -</span> <span class="num">1</span><span class="sym">;</span>
+
+   <span class="kwd">Board</span><span class="sym">();</span>
+
+   <span class="kwb">static</span> TUInt32 <span class="kwd">getIndex</span><span class="sym">(</span>TUInt32 x<span class="sym">,</span> TUInt32 y<span class="sym">) {</span> <span class="kwa">return</span> y <span class="sym">*</span> N_COL <span class="sym">+</span> x<span class="sym">;    }</span>
+   <span class="kwb">static bool</span> <span class="kwd">hasBadFirstRegion</span><span class="sym">(</span>BitVec <span class="sym">&amp;</span> toFill<span class="sym">);</span>
+   <span class="kwb">static bool</span> <span class="kwd">hasBadIslands</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> boardVec<span class="sym">);</span>
+
+   <span class="kwb">void</span> <span class="kwd">genAllSolutions</span><span class="sym">(</span>BitVec boardVec<span class="sym">,</span> TUInt32 placedPieces<span class="sym">,</span> TUInt32 iNextFill<span class="sym">,</span> <span class="kwb">const</span> BitVec <span class="sym">&amp;</span> maskNextFill<span class="sym">);</span>
+   <span class="kwb">void</span> <span class="kwd">recordSolution</span><span class="sym">(</span>Solution <span class="sym">&amp;</span> s<span class="sym">);</span>
+
+   Solution m_curSolution<span class="sym">;</span>
+   Solution m_minSolution<span class="sym">;</span>
+   Solution m_maxSolution<span class="sym">;</span>
+   TUInt32 m_nSolutionFound<span class="sym">;</span>
+<span class="sym">};</span>
+
+<span class="slc">//------------------------------------</span>
+
+<span class="kwc">class</span> Piece
+<span class="sym">{</span>
+<span class="kwc">public</span><span class="sym">:</span>
+   <span class="kwb">struct</span> Instance <span class="sym">{</span>
+      BitVec m_vec<span class="sym">;</span>
+      BitVec m_allowed<span class="sym">;</span>
+      TUInt32 m_offset<span class="sym">;</span>
+      TUInt32 m_w<span class="sym">;</span>
+      TUInt32 m_h<span class="sym">;</span>
+   <span class="sym">};</span>
+
+   <span class="kwb">static const int</span> N_ELEM <span class="sym">=</span> <span class="num">5</span><span class="sym">;</span>
+   <span class="kwb">static const int</span> N_ORIENT <span class="sym">=</span> <span class="num">12</span><span class="sym">;</span>
+   <span class="kwb">static const int</span> N_TYPE <span class="sym">=</span> <span class="num">10</span><span class="sym">;</span>
+   <span class="kwb">static const int</span> ALL_PIECE_MASK <span class="sym">= (</span><span class="num">1</span> <span class="sym">&lt;&lt;</span> N_TYPE<span class="sym">) -</span> <span class="num">1</span><span class="sym">;</span>
+   <span class="kwb">static const</span> TUInt32 SKIP_PIECE <span class="sym">=</span> <span class="num">5</span><span class="sym">;</span> <span class="slc">// it's magic!</span>
+
+   <span class="kwc">typedef</span> <span class="kwb">int</span> TCoordList<span class="sym">[</span>N_ELEM<span class="sym">][</span>N_DIM<span class="sym">];</span>
+
+   <span class="kwb">static const</span> BitVec BaseDefinitions<span class="sym">[</span>N_TYPE<span class="sym">];</span>
+   <span class="kwb">static</span> Piece s_basePiece<span class="sym">[</span>N_TYPE<span class="sym">][</span>N_ORIENT<span class="sym">];</span>
+
+   <span class="kwb">static const</span> Instance <span class="sym">&amp;</span> <span class="kwd">getPiece</span><span class="sym">(</span>TUInt32 iPiece<span class="sym">,</span> TUInt32 iOrient<span class="sym">,</span> TUInt32 iParity<span class="sym">);</span>
+   <span class="kwb">static bool</span> <span class="kwd">checkBaseDefinitions</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">);</span>
+   <span class="kwb">static</span> BitVec <span class="kwd">toBitVector</span><span class="sym">(</span><span class="kwb">const</span> TCoordList <span class="sym">&amp;</span> coords<span class="sym">);</span>
+   <span class="kwb">static void</span> <span class="kwd">genOrientation</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec<span class="sym">,</span> TUInt32 iOrient<span class="sym">,</span> Piece <span class="sym">&amp;</span> target<span class="sym">);</span>
+   <span class="kwb">static void</span> <span class="kwd">setCoordList</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec<span class="sym">,</span> TCoordList <span class="sym">&amp;</span> coords<span class="sym">);</span>
+   <span class="kwb">static void</span> <span class="kwd">shiftUpLines</span><span class="sym">(</span>TCoordList <span class="sym">&amp;</span> coords<span class="sym">,</span> <span class="kwb">int</span> shift<span class="sym">);</span>
+   <span class="kwb">static void</span> <span class="kwd">shiftToX0</span><span class="sym">(</span>TCoordList <span class="sym">&amp;</span> coords<span class="sym">,</span> Instance <span class="sym">&amp;</span> instance<span class="sym">,</span> <span class="kwb">int</span> offsetRow<span class="sym">);</span>
+   <span class="kwb">static void</span> <span class="kwd">setAllowedPositions</span><span class="sym">(</span>Instance <span class="sym">&amp;</span> p<span class="sym">);</span>
+   <span class="kwb">static void</span> <span class="kwd">genAllOrientations</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">);</span>
+
+   Instance m_instance<span class="sym">[</span>N_PARITY<span class="sym">];</span>
+<span class="sym">};</span>
+
+<span class="slc">//------------------------------------</span>
+Solution<span class="sym">::</span><span class="kwd">Solution</span><span class="sym">(</span><span class="kwb">int</span> fillVal<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwd">fill</span><span class="sym">(</span>fillVal<span class="sym">);</span>
+   m_pieces<span class="sym">.</span><span class="kwd">reserve</span><span class="sym">(</span>Piece<span class="sym">::</span>N_TYPE<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Solution<span class="sym">::</span><span class="kwd">fill</span><span class="sym">(</span><span class="kwb">int</span> val<span class="sym">)</span>
+<span class="sym">{</span>
+   m_synched <span class="sym">=</span> <span class="kwa">false</span><span class="sym">;</span>
+   <span class="kwd">memset</span><span class="sym">(&amp;</span>m_cells<span class="sym">[</span><span class="num">0</span><span class="sym">][</span><span class="num">0</span><span class="sym">],</span> val<span class="sym">,</span> N_CELL<span class="sym">);</span>
+<span class="sym">}</span>
+
+string Solution<span class="sym">::</span><span class="kwd">toString</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">)</span> <span class="kwb">const</span>
+<span class="sym">{</span>
+   string result<span class="sym">;</span>
+   result<span class="sym">.</span><span class="kwd">reserve</span><span class="sym">(</span>N_CELL <span class="sym">*</span> <span class="num">2</span><span class="sym">);</span>
+
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> y <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> y <span class="sym">&lt;</span> N_ROW<span class="sym">;</span> y<span class="sym">++) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> x <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> x <span class="sym">&lt;</span> N_COL<span class="sym">;</span> x<span class="sym">++) {</span>
+         <span class="kwb">int</span> val <span class="sym">=</span> m_cells<span class="sym">[</span>y<span class="sym">][</span>x<span class="sym">];</span>
+         result <span class="sym">+= ((</span>val <span class="sym">==</span> NO_PIECE<span class="sym">)</span> ? <span class="str">'.'</span> <span class="sym">:</span> <span class="kwb">char</span><span class="sym">(</span><span class="str">'0'</span> <span class="sym">+</span> val<span class="sym">));</span>
+         result <span class="sym">+=</span> <span class="str">' '</span><span class="sym">;</span>
+      <span class="sym">}</span>
+      result <span class="sym">+=</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+
+      <span class="slc">// indent every second line</span>
+      <span class="kwa">if</span> <span class="sym">(</span>y <span class="sym">%</span> <span class="num">2</span> <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span>
+         result <span class="sym">+=</span> <span class="str">&quot; &quot;</span><span class="sym">;</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">return</span> result<span class="sym">;</span> <span class="slc">// copies result. Oh well</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Solution<span class="sym">::</span><span class="kwd">setCells</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwa">if</span> <span class="sym">(</span>m_synched<span class="sym">)</span>
+      <span class="kwa">return</span><span class="sym">;</span>
+
+   <span class="kwd">fill</span><span class="sym">(</span>NO_PIECE<span class="sym">);</span>
+
+   <span class="slc">// could be more efficient</span>
+   <span class="kwa">for</span> <span class="sym">(</span>TUInt32 iPiece <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iPiece <span class="sym">&lt;</span> m_pieces<span class="sym">.</span><span class="kwd">size</span><span class="sym">();</span> iPiece<span class="sym">++) {</span>
+
+      <span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec <span class="sym">=</span> m_pieces<span class="sym">[</span>iPiece<span class="sym">].</span>vec<span class="sym">;</span>
+      <span class="kwb">int</span> pID <span class="sym">=</span> m_pieces<span class="sym">[</span>iPiece<span class="sym">].</span>iPiece<span class="sym">;</span>
+      BitVec mask <span class="sym">=</span> <span class="num">1L</span>L<span class="sym">;</span>
+      <span class="kwb">int</span> nNewCells <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> y <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> y <span class="sym">&lt;</span> N_ROW<span class="sym">;</span> y<span class="sym">++) {</span>
+         <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> x <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> x <span class="sym">&lt;</span> N_COL<span class="sym">;</span> x<span class="sym">++) {</span>
+            <span class="kwa">if</span> <span class="sym">(</span>mask <span class="sym">&amp;</span> vec<span class="sym">) {</span>
+               m_cells<span class="sym">[</span>y<span class="sym">][</span>x<span class="sym">] = (</span>TInt8<span class="sym">)</span>pID<span class="sym">;</span>
+
+               nNewCells<span class="sym">++;</span>
+            <span class="sym">}</span>
+            mask <span class="sym">&lt;&lt;=</span> <span class="num">1</span><span class="sym">;</span>
+         <span class="sym">}</span>
+         <span class="kwa">if</span> <span class="sym">(</span>nNewCells <span class="sym">==</span> Piece<span class="sym">::</span>N_ELEM<span class="sym">)</span>
+            <span class="kwa">break</span><span class="sym">;</span>
+      <span class="sym">}</span>
+   <span class="sym">}</span>
+
+   m_synched <span class="sym">=</span> <span class="kwa">true</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Solution<span class="sym">::</span><span class="kwd">addPiece</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec<span class="sym">,</span> <span class="kwb">int</span> iPiece<span class="sym">) {</span>
+   SPiece p <span class="sym">= {</span>vec<span class="sym">,</span> iPiece<span class="sym">};</span>
+   m_pieces<span class="sym">.</span><span class="kwd">push_back</span><span class="sym">(</span>p<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Solution<span class="sym">::</span><span class="kwd">removeLastPiece</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">) {</span>
+   m_pieces<span class="sym">.</span><span class="kwd">pop_back</span><span class="sym">();</span>
+   m_synched <span class="sym">=</span> <span class="kwa">false</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">bool</span> Solution<span class="sym">::</span><span class="kwd">lessThan</span><span class="sym">(</span>Solution <span class="sym">&amp;</span> r<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwa">if</span> <span class="sym">(</span>m_pieces<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>iPiece <span class="sym">!=</span> r<span class="sym">.</span>m_pieces<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>iPiece<span class="sym">) {</span>
+      <span class="kwa">return</span> m_pieces<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>iPiece <span class="sym">&lt;</span> r<span class="sym">.</span>m_pieces<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>iPiece<span class="sym">;</span>
+   <span class="sym">}</span>
+
+   <span class="kwd">setCells</span><span class="sym">();</span>
+   r<span class="sym">.</span><span class="kwd">setCells</span><span class="sym">();</span>
+
+   <span class="kwb">int</span> y<span class="sym">;</span>
+   <span class="kwa">for</span> <span class="sym">(</span>y <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> y <span class="sym">&lt;</span> N_ROW<span class="sym">;</span> y<span class="sym">++) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> x <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> x <span class="sym">&lt;</span> N_COL<span class="sym">;</span> x<span class="sym">++) {</span>
+         <span class="kwb">int</span> lval <span class="sym">=</span> m_cells<span class="sym">[</span>y<span class="sym">][</span>x<span class="sym">];</span>
+         <span class="kwb">int</span> rval <span class="sym">=</span> r<span class="sym">.</span>m_cells<span class="sym">[</span>y<span class="sym">][</span>x<span class="sym">];</span>
+
+         <span class="kwa">if</span> <span class="sym">(</span>lval <span class="sym">!=</span> rval<span class="sym">)</span>
+            <span class="kwa">return</span> <span class="sym">(</span>lval <span class="sym">&lt;</span> rval<span class="sym">);</span>
+      <span class="sym">}</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">return false</span><span class="sym">;</span> <span class="slc">// solutions are equal</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Solution<span class="sym">::</span><span class="kwd">spin</span><span class="sym">(</span>Solution <span class="sym">&amp;</span> spun<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwd">setCells</span><span class="sym">();</span>
+
+   <span class="slc">// swap cells</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> y <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> y <span class="sym">&lt;</span> N_ROW<span class="sym">;</span> y<span class="sym">++) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> x <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> x <span class="sym">&lt;</span> N_COL<span class="sym">;</span> x<span class="sym">++) {</span>
+         TInt8 flipped <span class="sym">=</span> m_cells<span class="sym">[</span>N_ROW <span class="sym">-</span> y <span class="sym">-</span> <span class="num">1</span><span class="sym">][</span>N_COL <span class="sym">-</span> x <span class="sym">-</span> <span class="num">1</span><span class="sym">];</span>
+         spun<span class="sym">.</span>m_cells<span class="sym">[</span>y<span class="sym">][</span>x<span class="sym">] =</span> flipped<span class="sym">;</span>
+      <span class="sym">}</span>
+   <span class="sym">}</span>
+
+   <span class="slc">// swap first and last pieces (the rest aren't used)</span>
+   spun<span class="sym">.</span>m_pieces<span class="sym">.</span><span class="kwd">push_back</span><span class="sym">(</span>m_pieces<span class="sym">[</span>Piece<span class="sym">::</span>N_TYPE <span class="sym">-</span> <span class="num">1</span><span class="sym">]);</span>
+   spun<span class="sym">.</span>m_synched <span class="sym">=</span> <span class="kwa">true</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="slc">//------------------------------------</span>
+
+Piece Piece<span class="sym">::</span>s_basePiece<span class="sym">[</span>N_TYPE<span class="sym">][</span>N_ORIENT<span class="sym">];</span>
+
+<span class="kwb">const</span> BitVec Piece<span class="sym">::</span>BaseDefinitions<span class="sym">[] = {</span>
+   <span class="num">0x010f</span><span class="sym">,</span>   <span class="num">0x00cb</span><span class="sym">,</span> <span class="num">0x1087</span><span class="sym">,</span> <span class="num">0x0427</span><span class="sym">,</span> <span class="num">0x0465</span><span class="sym">,</span>
+   <span class="num">0x00c7</span><span class="sym">,</span> <span class="num">0x08423</span><span class="sym">,</span> <span class="num">0x00a7</span><span class="sym">,</span> <span class="num">0x0187</span><span class="sym">,</span> <span class="num">0x008f</span>
+<span class="sym">};</span>
+
+<span class="kwb">int</span> <span class="kwd">floor</span><span class="sym">(</span><span class="kwb">int</span> top<span class="sym">,</span> <span class="kwb">int</span> bot<span class="sym">) {</span>
+   <span class="kwb">int</span> toZero <span class="sym">=</span> top <span class="sym">/</span> bot<span class="sym">;</span>
+   <span class="slc">// negative numbers should be rounded down, not towards zero</span>
+   <span class="kwa">if</span> <span class="sym">((</span>toZero <span class="sym">*</span> bot <span class="sym">!=</span> top<span class="sym">) &amp;&amp; ((</span>top <span class="sym">&lt;</span> <span class="num">0</span><span class="sym">) != (</span>bot <span class="sym">&lt;=</span> <span class="num">0</span><span class="sym">)))</span>
+      toZero<span class="sym">--;</span>
+
+   <span class="kwa">return</span> toZero<span class="sym">;</span>
+<span class="sym">}</span>
+
+TUInt32 <span class="kwd">getFirstOne</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> v<span class="sym">,</span> TUInt32 startPos <span class="sym">=</span> <span class="num">0</span><span class="sym">) {</span>
+   <span class="kwa">if</span> <span class="sym">(</span>v <span class="sym">== (</span>BitVec<span class="sym">)</span><span class="num">0</span><span class="sym">)</span>
+      <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+
+   <span class="kwb">static const</span> TUInt32 firstOne<span class="sym">[</span><span class="num">16</span><span class="sym">] =   {</span>
+      <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span>
+      <span class="num">2</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span>
+      <span class="num">3</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span>
+      <span class="num">2</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span>
+   <span class="sym">};</span>
+
+   TUInt32 iPos <span class="sym">=</span> startPos<span class="sym">;</span>
+   BitVec mask <span class="sym">=</span> <span class="num">0xff</span>LL <span class="sym">&lt;&lt;</span> startPos<span class="sym">;</span>
+   <span class="kwa">while</span> <span class="sym">((</span>mask <span class="sym">&amp;</span> v<span class="sym">) ==</span> <span class="num">0</span><span class="sym">) {</span>
+      mask <span class="sym">&lt;&lt;=</span> <span class="num">8</span><span class="sym">;</span>
+      iPos <span class="sym">+=</span> <span class="num">8</span><span class="sym">;</span>
+   <span class="sym">}</span>
+   TUInt32 result <span class="sym">=</span> <span class="kwd">TUInt32</span><span class="sym">((</span>mask <span class="sym">&amp;</span> v<span class="sym">) &gt;&gt;</span> iPos<span class="sym">);</span>
+   TUInt32 resultLow <span class="sym">=</span> result <span class="sym">&amp;</span> <span class="num">0x0f</span><span class="sym">;</span>
+   <span class="kwa">if</span> <span class="sym">(</span>resultLow <span class="sym">!=</span> <span class="num">0</span><span class="sym">)</span>
+      iPos <span class="sym">+=</span> firstOne<span class="sym">[</span>resultLow<span class="sym">];</span>
+   <span class="kwa">else</span>
+      iPos <span class="sym">+=</span> <span class="num">4</span> <span class="sym">+</span> firstOne<span class="sym">[</span>result <span class="sym">&gt;&gt;</span> <span class="num">4</span><span class="sym">];</span>
+
+   <span class="kwa">return</span> iPos<span class="sym">;</span>
+<span class="sym">}</span>
+
+TUInt32 <span class="kwd">countOnes</span><span class="sym">(</span>BitVec v<span class="sym">) {</span>
+   TUInt32 n <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+   <span class="kwa">while</span> <span class="sym">(</span>v<span class="sym">) {</span>
+      n<span class="sym">++;</span>
+      v <span class="sym">=</span> v <span class="sym">&amp; (</span>v <span class="sym">-</span> <span class="num">1</span><span class="sym">);</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">return</span> n<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Piece<span class="sym">::</span><span class="kwd">genAllOrientations</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">) {</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> iPiece <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iPiece <span class="sym">&lt;</span> N_TYPE<span class="sym">;</span> iPiece<span class="sym">++) {</span>
+      <span class="kwb">const</span> BitVec <span class="sym">&amp;</span> refPiece <span class="sym">=</span> BaseDefinitions<span class="sym">[</span>iPiece<span class="sym">];</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> iOrient <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iOrient <span class="sym">&lt;</span> N_ORIENT<span class="sym">;</span> iOrient<span class="sym">++)</span>
+         <span class="kwd">genOrientation</span><span class="sym">(</span>refPiece<span class="sym">,</span> iOrient<span class="sym">,</span> s_basePiece<span class="sym">[</span>iPiece<span class="sym">][</span>iOrient<span class="sym">]);</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Piece<span class="sym">::</span><span class="kwd">setCoordList</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec<span class="sym">,</span> TCoordList <span class="sym">&amp;</span> coords<span class="sym">) {</span>
+   <span class="kwb">int</span> iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+   BitVec mask <span class="sym">=</span> <span class="num">1L</span>L<span class="sym">;</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> y <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> y <span class="sym">&lt;</span> N_ROW<span class="sym">;</span> y<span class="sym">++) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> x <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> x <span class="sym">&lt;</span> N_COL<span class="sym">;</span> x<span class="sym">++) {</span>
+         <span class="kwa">if</span> <span class="sym">(</span>mask <span class="sym">&amp;</span> vec<span class="sym">) {</span>
+            coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">] =</span> x<span class="sym">;</span>
+            coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">] =</span> y<span class="sym">;</span>
+
+            iCoord<span class="sym">++;</span>
+         <span class="sym">}</span>
+         mask <span class="sym">&lt;&lt;=</span> <span class="num">1</span><span class="sym">;</span>
+      <span class="sym">}</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+BitVec Piece<span class="sym">::</span><span class="kwd">toBitVector</span><span class="sym">(</span><span class="kwb">const</span> TCoordList <span class="sym">&amp;</span> coords<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwb">int</span> y<span class="sym">,</span> x<span class="sym">;</span>
+   BitVec result <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++) {</span>
+      x <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">];</span>
+      y <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+
+      <span class="kwb">int</span> pos <span class="sym">=</span> Board<span class="sym">::</span><span class="kwd">getIndex</span><span class="sym">(</span>x<span class="sym">,</span> y<span class="sym">);</span>
+      result <span class="sym">|= (</span><span class="num">1L</span>L <span class="sym">&lt;&lt;</span> pos<span class="sym">);</span> <span class="slc">// to generate a 64 bit representation of 1</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">return</span> result<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Piece<span class="sym">::</span><span class="kwd">shiftUpLines</span><span class="sym">(</span>TCoordList <span class="sym">&amp;</span> coords<span class="sym">,</span> <span class="kwb">int</span> shift<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="slc">// apply shifts are not so simple in the vertical direction</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++) {</span>
+      <span class="kwb">int</span> <span class="sym">&amp;</span> rx <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">];</span>
+      <span class="kwb">int</span> <span class="sym">&amp;</span> ry <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+
+      <span class="kwa">if</span> <span class="sym">(</span>ry <span class="sym">&amp;</span> shift <span class="sym">&amp;</span> <span class="num">0x1</span><span class="sym">)</span>
+         rx<span class="sym">++;</span>
+      ry <span class="sym">-=</span> shift<span class="sym">;</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Piece<span class="sym">::</span><span class="kwd">shiftToX0</span><span class="sym">(</span>TCoordList <span class="sym">&amp;</span> coords<span class="sym">,</span> Piece<span class="sym">::</span>Instance <span class="sym">&amp;</span> instance<span class="sym">,</span> <span class="kwb">int</span> offsetRow<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="slc">// .. determine shift</span>
+   <span class="kwb">int</span> x<span class="sym">,</span> y<span class="sym">;</span>
+   <span class="kwb">int</span> xMin <span class="sym">=</span> coords<span class="sym">[</span><span class="num">0</span><span class="sym">][</span>X<span class="sym">];</span>
+   <span class="kwb">int</span> xMax <span class="sym">=</span> xMin<span class="sym">;</span>
+   <span class="kwb">int</span> iCoord<span class="sym">;</span>
+   <span class="kwa">for</span> <span class="sym">(</span>iCoord <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++) {</span>
+      x <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">];</span>
+      y <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+
+      <span class="kwa">if</span> <span class="sym">(</span>x <span class="sym">&lt;</span> xMin<span class="sym">)</span>
+         xMin <span class="sym">=</span> x<span class="sym">;</span>
+      <span class="kwa">else if</span> <span class="sym">(</span>x <span class="sym">&gt;</span> xMax<span class="sym">)</span>
+         xMax <span class="sym">=</span> x<span class="sym">;</span>
+   <span class="sym">}</span>
+
+   <span class="slc">// I'm dying for a 'foreach' here</span>
+   <span class="kwb">int</span> offset <span class="sym">=</span> N_ELEM<span class="sym">;</span>
+
+   <span class="kwa">for</span> <span class="sym">(</span>iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++) {</span>
+      <span class="kwb">int</span> <span class="sym">&amp;</span> rx <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">];</span>
+      <span class="kwb">int</span> <span class="sym">&amp;</span> ry <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+
+      rx <span class="sym">-=</span> xMin<span class="sym">;</span>
+
+      <span class="slc">// check offset -- leftmost cell on top line</span>
+      <span class="kwa">if</span> <span class="sym">((</span>ry <span class="sym">==</span> offsetRow<span class="sym">) &amp;&amp; (</span>rx <span class="sym">&lt;</span> offset<span class="sym">))</span>
+         offset <span class="sym">=</span> rx<span class="sym">;</span>
+   <span class="sym">}</span>
+
+   instance<span class="sym">.</span>m_w <span class="sym">=</span> xMax <span class="sym">-</span> xMin<span class="sym">;</span>
+   instance<span class="sym">.</span>m_offset <span class="sym">=</span> offset<span class="sym">;</span>
+   instance<span class="sym">.</span>m_vec <span class="sym">=</span> <span class="kwd">toBitVector</span><span class="sym">(</span>coords<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Piece<span class="sym">::</span><span class="kwd">setAllowedPositions</span><span class="sym">(</span>Piece<span class="sym">::</span>Instance <span class="sym">&amp;</span> p<span class="sym">)</span>
+<span class="sym">{</span>
+   BitVec <span class="sym">&amp;</span> allowed <span class="sym">=</span> p<span class="sym">.</span>m_allowed <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+   BitVec posMask <span class="sym">=</span> <span class="num">1L</span>L<span class="sym">;</span>
+   TUInt32 iPos <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> y <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> y <span class="sym">&lt;</span> N_ROW<span class="sym">;</span> y<span class="sym">++) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> x <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> x <span class="sym">&lt;</span> N_COL<span class="sym">;</span> x<span class="sym">++,</span> iPos<span class="sym">++,</span> posMask <span class="sym">&lt;&lt;=</span> <span class="num">1</span><span class="sym">){</span>
+         <span class="slc">// check if the new position is on the board</span>
+         <span class="kwb">int</span> xPos <span class="sym">=</span> x <span class="sym">-</span> p<span class="sym">.</span>m_offset<span class="sym">;</span>
+         <span class="kwa">if</span> <span class="sym">((</span>xPos <span class="sym">&lt;</span> <span class="num">0</span><span class="sym">) || (</span>y <span class="sym">+</span> p<span class="sym">.</span>m_h <span class="sym">&gt;=</span> N_ROW<span class="sym">) || (</span>xPos <span class="sym">+</span> p<span class="sym">.</span>m_w <span class="sym">&gt;=</span> N_COL<span class="sym">))</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+
+         <span class="slc">// move it to the desired location</span>
+         BitVec pieceVec <span class="sym">=</span> p<span class="sym">.</span>m_vec <span class="sym">&lt;&lt; (</span>iPos <span class="sym">-</span> p<span class="sym">.</span>m_offset<span class="sym">);</span>
+
+         <span class="kwa">if</span> <span class="sym">(</span>Board<span class="sym">::</span><span class="kwd">hasBadIslands</span><span class="sym">(</span>pieceVec<span class="sym">))</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+
+         <span class="slc">// position is allowed</span>
+         allowed <span class="sym">|=</span> posMask<span class="sym">;</span>
+      <span class="sym">}</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Piece<span class="sym">::</span><span class="kwd">genOrientation</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> vec<span class="sym">,</span> TUInt32 iOrient<span class="sym">,</span> Piece <span class="sym">&amp;</span> target<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="slc">// get (x,y) coordinates</span>
+   TCoordList coords<span class="sym">;</span>
+   <span class="kwd">setCoordList</span><span class="sym">(</span>vec<span class="sym">,</span> coords<span class="sym">);</span>
+
+   <span class="kwb">int</span> y<span class="sym">,</span> x<span class="sym">;</span>
+   <span class="kwb">int</span> iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+   <span class="kwb">int</span> rot <span class="sym">=</span> iOrient <span class="sym">%</span> <span class="num">6</span><span class="sym">;</span>
+   <span class="kwb">int</span> flip <span class="sym">=</span> iOrient <span class="sym">&gt;=</span> <span class="num">6</span><span class="sym">;</span>
+   <span class="kwa">if</span> <span class="sym">(</span>flip<span class="sym">) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span>iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++)</span>
+         coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">] = -</span>coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+   <span class="sym">}</span>
+
+   <span class="slc">// rotate (if necessary)</span>
+   <span class="kwa">while</span> <span class="sym">(</span>rot<span class="sym">--) {</span>
+      <span class="kwa">for</span> <span class="sym">(</span>iCoord <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++) {</span>
+         x <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">];</span>
+         y <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+
+         <span class="slc">// I just worked this out by hand. Took a while.</span>
+         <span class="kwb">int</span> xNew <span class="sym">=</span> <span class="kwd">floor</span><span class="sym">((</span><span class="num">2</span> <span class="sym">*</span> x <span class="sym">-</span> <span class="num">3</span> <span class="sym">*</span> y <span class="sym">+</span> <span class="num">1</span><span class="sym">),</span> <span class="num">4</span><span class="sym">);</span>
+         <span class="kwb">int</span> yNew <span class="sym">=</span> <span class="kwd">floor</span><span class="sym">((</span><span class="num">2</span> <span class="sym">*</span> x <span class="sym">+</span> y <span class="sym">+</span> <span class="num">1</span><span class="sym">),</span> <span class="num">2</span><span class="sym">);</span>
+         coords<span class="sym">[</span>iCoord<span class="sym">][</span>X<span class="sym">] =</span> xNew<span class="sym">;</span>
+         coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">] =</span> yNew<span class="sym">;</span>
+      <span class="sym">}</span>
+   <span class="sym">}</span>
+
+   <span class="slc">// shift vertically</span>
+   <span class="slc">// .. determine shift</span>
+   <span class="kwb">int</span> yMin <span class="sym">=</span> coords<span class="sym">[</span><span class="num">0</span><span class="sym">][</span>Y<span class="sym">];</span>
+   <span class="kwb">int</span> yMax <span class="sym">=</span> yMin<span class="sym">;</span>
+   <span class="kwa">for</span> <span class="sym">(</span>iCoord <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span> iCoord <span class="sym">&lt;</span> N_ELEM<span class="sym">;</span> iCoord<span class="sym">++) {</span>
+      y <span class="sym">=</span> coords<span class="sym">[</span>iCoord<span class="sym">][</span>Y<span class="sym">];</span>
+
+      <span class="kwa">if</span> <span class="sym">(</span>y <span class="sym">&lt;</span> yMin<span class="sym">)</span>
+         yMin <span class="sym">=</span> y<span class="sym">;</span>
+      <span class="kwa">else if</span> <span class="sym">(</span>y <span class="sym">&gt;</span> yMax<span class="sym">)</span>
+         yMax <span class="sym">=</span> y<span class="sym">;</span>
+   <span class="sym">}</span>
+   TUInt32 h <span class="sym">=</span> yMax <span class="sym">-</span> yMin<span class="sym">;</span>
+   target<span class="sym">.</span>m_instance<span class="sym">[</span>EVEN<span class="sym">].</span>m_h <span class="sym">=</span> h<span class="sym">;</span>
+   target<span class="sym">.</span>m_instance<span class="sym">[</span>ODD<span class="sym">].</span>m_h <span class="sym">=</span> h<span class="sym">;</span>
+
+   <span class="kwd">shiftUpLines</span><span class="sym">(</span>coords<span class="sym">,</span> yMin<span class="sym">);</span>
+   <span class="kwd">shiftToX0</span><span class="sym">(</span>coords<span class="sym">,</span> target<span class="sym">.</span>m_instance<span class="sym">[</span>EVEN<span class="sym">],</span> <span class="num">0</span><span class="sym">);</span>
+   <span class="kwd">setAllowedPositions</span><span class="sym">(</span>target<span class="sym">.</span>m_instance<span class="sym">[</span>EVEN<span class="sym">]);</span>
+
+   <span class="slc">// shift down one line</span>
+   <span class="kwd">shiftUpLines</span><span class="sym">(</span>coords<span class="sym">, -</span><span class="num">1</span><span class="sym">);</span>
+   <span class="kwd">shiftToX0</span><span class="sym">(</span>coords<span class="sym">,</span> target<span class="sym">.</span>m_instance<span class="sym">[</span>ODD<span class="sym">],</span> <span class="num">1</span><span class="sym">);</span>
+   <span class="slc">// shift the bitmask back one line</span>
+   target<span class="sym">.</span>m_instance<span class="sym">[</span>ODD<span class="sym">].</span>m_vec <span class="sym">&gt;&gt;=</span> N_COL<span class="sym">;</span>
+   <span class="kwd">setAllowedPositions</span><span class="sym">(</span>target<span class="sym">.</span>m_instance<span class="sym">[</span>ODD<span class="sym">]);</span>
+<span class="sym">}</span>
+
+<span class="kwb">const</span> Piece<span class="sym">::</span>Instance <span class="sym">&amp;</span> Piece<span class="sym">::</span><span class="kwd">getPiece</span><span class="sym">(</span>TUInt32 iPiece<span class="sym">,</span> TUInt32 iOrient<span class="sym">,</span> TUInt32 iParity<span class="sym">) {</span>
+   <span class="kwa">return</span> s_basePiece<span class="sym">[</span>iPiece<span class="sym">][</span>iOrient<span class="sym">].</span>m_instance<span class="sym">[</span>iParity<span class="sym">];</span>
+<span class="sym">}</span>
+
+<span class="slc">// ------------------------------------</span>
+
+Board<span class="sym">::</span><span class="kwd">Board</span><span class="sym">() :</span>
+   <span class="kwd">m_curSolution</span><span class="sym">(</span>Solution<span class="sym">::</span>NO_PIECE<span class="sym">),</span> <span class="kwd">m_minSolution</span><span class="sym">(</span>Piece<span class="sym">::</span>N_TYPE<span class="sym">),</span>
+   <span class="kwd">m_maxSolution</span><span class="sym">(</span>Solution<span class="sym">::</span>NO_PIECE<span class="sym">),</span> <span class="kwd">m_nSolutionFound</span><span class="sym">(</span><span class="num">0</span><span class="sym">)</span>
+<span class="sym">{</span>
+<span class="sym">}</span>
+
+<span class="kwb">bool</span> Board<span class="sym">::</span><span class="kwd">hasBadFirstRegion</span><span class="sym">(</span>BitVec <span class="sym">&amp;</span> toFill<span class="sym">)</span>
+<span class="sym">{</span>
+   <span class="kwb">int</span> iPos <span class="sym">=</span> <span class="kwd">getFirstOne</span><span class="sym">(</span>toFill<span class="sym">);</span>
+
+   <span class="slc">// grow empty region, until it doesn't change any more</span>
+   BitVec region<span class="sym">;</span>
+   BitVec rNew <span class="sym">=</span> <span class="num">1L</span>L <span class="sym">&lt;&lt;</span> iPos<span class="sym">;</span>
+   <span class="kwa">do</span> <span class="sym">{</span>
+      region <span class="sym">=</span> rNew<span class="sym">;</span>
+
+      <span class="slc">// grow right/left</span>
+      rNew <span class="sym">|= (</span>region <span class="sym">&amp; ~</span>L_EDGE_MASK<span class="sym">) &gt;&gt;</span> <span class="num">1</span><span class="sym">;</span>
+      rNew <span class="sym">|= (</span>region <span class="sym">&amp; ~</span>R_EDGE_MASK<span class="sym">) &lt;&lt;</span> <span class="num">1</span><span class="sym">;</span>
+
+      <span class="slc">// simple grow up/down</span>
+      rNew <span class="sym">|= (</span>region <span class="sym">&gt;&gt;</span> N_COL<span class="sym">);</span>
+      rNew <span class="sym">|= (</span>region <span class="sym">&lt;&lt;</span> N_COL<span class="sym">);</span>
+
+      <span class="slc">// tricky growth</span>
+      BitVec evenRegion <span class="sym">=</span> region <span class="sym">&amp; (</span>ROW_0_MASK <span class="sym">&amp; ~</span>L_EDGE_MASK<span class="sym">);</span>
+      rNew <span class="sym">|=</span> evenRegion <span class="sym">&gt;&gt; (</span>N_COL <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span>
+      rNew <span class="sym">|=</span> evenRegion <span class="sym">&lt;&lt; (</span>N_COL <span class="sym">-</span> <span class="num">1</span><span class="sym">);</span>
+
+      BitVec oddRegion <span class="sym">=</span> region <span class="sym">&amp; (</span>ROW_1_MASK <span class="sym">&amp; ~</span>R_EDGE_MASK<span class="sym">);</span>
+      rNew <span class="sym">|=</span> oddRegion <span class="sym">&gt;&gt; (</span>N_COL <span class="sym">-</span> <span class="num">1</span><span class="sym">);</span>
+      rNew <span class="sym">|=</span> oddRegion <span class="sym">&lt;&lt; (</span>N_COL <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span>
+
+      <span class="slc">// clamp against existing pieces</span>
+      rNew <span class="sym">&amp;=</span> toFill<span class="sym">;</span>
+   <span class="sym">}</span>
+   <span class="kwa">while</span> <span class="sym">((</span>rNew <span class="sym">!=</span> toFill<span class="sym">) &amp;&amp; (</span>rNew <span class="sym">!=</span> region<span class="sym">));</span>
+
+   <span class="slc">// subtract empty region from board</span>
+   toFill ^<span class="sym">=</span> rNew<span class="sym">;</span>
+
+   TUInt32 nEmptyCells <span class="sym">=</span> <span class="kwd">countOnes</span><span class="sym">(</span>toFill<span class="sym">);</span>
+   <span class="kwa">if</span> <span class="sym">(</span>nEmptyCells <span class="sym">%</span> <span class="num">5</span> <span class="sym">!=</span> <span class="num">0</span><span class="sym">)</span>
+      <span class="kwa">return true</span><span class="sym">;</span>
+
+   <span class="kwa">return false</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">bool</span> Board<span class="sym">::</span><span class="kwd">hasBadIslands</span><span class="sym">(</span><span class="kwb">const</span> BitVec <span class="sym">&amp;</span> boardVec<span class="sym">)</span>
+<span class="sym">{</span>
+   BitVec toFill <span class="sym">= ~</span>boardVec <span class="sym">&amp;</span> BOARD_MASK<span class="sym">;</span>
+
+   <span class="slc">// a little pre-work to speed things up</span>
+   BitVec row <span class="sym">= (</span>Board<span class="sym">::</span>TOP_ROW <span class="sym">&lt;&lt; ((</span>N_ROW <span class="sym">-</span> <span class="num">1</span><span class="sym">) *</span> N_COL<span class="sym">));</span>
+   <span class="kwb">bool</span> filled <span class="sym">= ((</span>row <span class="sym">&amp;</span> toFill<span class="sym">) ==</span> row<span class="sym">);</span>
+   <span class="kwa">while</span> <span class="sym">((</span>row <span class="sym">&amp;</span> toFill<span class="sym">) ==</span> row<span class="sym">) {</span>
+      toFill ^<span class="sym">=</span> row<span class="sym">;</span>
+      row <span class="sym">&gt;&gt;=</span> N_COL<span class="sym">;</span>
+   <span class="sym">}</span>
+   <span class="slc">// undo the last row, so regions stay connected</span>
+   <span class="kwa">if</span> <span class="sym">(</span>filled<span class="sym">)   {</span>
+      row <span class="sym">&lt;&lt;=</span> N_COL<span class="sym">;</span>
+      toFill <span class="sym">|=</span> row<span class="sym">;</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">while</span> <span class="sym">(</span>toFill<span class="sym">)    {</span>
+      <span class="kwa">if</span> <span class="sym">(</span><span class="kwd">hasBadFirstRegion</span><span class="sym">(</span>toFill<span class="sym">))</span>
+         <span class="kwa">return true</span><span class="sym">;</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">return false</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="slc">// recursive vs iterative?</span>
+<span class="kwb">void</span> Board<span class="sym">::</span><span class="kwd">genAllSolutions</span><span class="sym">(</span>BitVec boardVec<span class="sym">,</span> TUInt32 placedPieces<span class="sym">,</span> TUInt32 iNextFill<span class="sym">,</span> <span class="kwb">const</span> BitVec <span class="sym">&amp;</span> maskNextFill<span class="sym">)</span>
+<span class="sym">{</span>
+   BitVec pieceVec<span class="sym">;</span>
+   <span class="kwb">int</span> pieceMask <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span>
+   <span class="kwb">int</span> y <span class="sym">=</span> iNextFill <span class="sym">/</span> N_COL<span class="sym">;</span>
+   <span class="kwb">int</span> isOddLine <span class="sym">=</span> y <span class="sym">&amp;</span> <span class="num">1</span><span class="sym">;</span>
+
+   <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> iPlacedPiece <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iPlacedPiece <span class="sym">&lt;</span> Piece<span class="sym">::</span>N_TYPE<span class="sym">;</span> iPlacedPiece<span class="sym">++,</span> pieceMask <span class="sym">&lt;&lt;=</span> <span class="num">1</span><span class="sym">)</span>
+   <span class="sym">{</span>
+      TUInt32 iPiece <span class="sym">=</span> iPlacedPiece<span class="sym">;</span> <span class="slc">// leftover from when I remapped it</span>
+
+      <span class="slc">// skip if we've already used this piece</span>
+      <span class="kwa">if</span> <span class="sym">(</span>pieceMask <span class="sym">&amp;</span> placedPieces<span class="sym">)</span>
+         <span class="kwa">continue</span><span class="sym">;</span>
+
+      <span class="slc">// try to fit piece</span>
+      <span class="kwb">bool</span> skipFlippedOdd <span class="sym">= (</span>iPiece <span class="sym">==</span> Piece<span class="sym">::</span>SKIP_PIECE<span class="sym">);</span>
+      <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">int</span> iOrient <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> iOrient <span class="sym">&lt;</span> Piece<span class="sym">::</span>N_ORIENT<span class="sym">;</span> iOrient<span class="sym">++)</span>
+      <span class="sym">{</span>
+         <span class="kwa">if</span> <span class="sym">(</span>skipFlippedOdd <span class="sym">&amp;&amp; ((</span>iOrient <span class="sym">/</span> <span class="num">3</span><span class="sym">) &amp;</span> <span class="num">1</span><span class="sym">))</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+
+         <span class="slc">// get the particular piece in the particular orientation</span>
+         <span class="kwb">const</span> Piece<span class="sym">::</span>Instance <span class="sym">&amp;</span> p <span class="sym">=</span> Piece<span class="sym">::</span><span class="kwd">getPiece</span><span class="sym">(</span>iPiece<span class="sym">,</span> iOrient<span class="sym">,</span> isOddLine<span class="sym">);</span>
+
+         <span class="slc">// check if the new position is allowed on the board</span>
+         <span class="kwa">if</span> <span class="sym">(!(</span>p<span class="sym">.</span>m_allowed <span class="sym">&amp;</span> maskNextFill<span class="sym">))</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+
+         <span class="slc">// move it to the desired location, if possible and</span>
+         pieceVec <span class="sym">=</span> p<span class="sym">.</span>m_vec <span class="sym">&lt;&lt; (</span>iNextFill <span class="sym">-</span> p<span class="sym">.</span>m_offset<span class="sym">);</span>
+
+         <span class="slc">// check if piece conflicts with other pieces</span>
+         <span class="kwa">if</span> <span class="sym">(</span>pieceVec <span class="sym">&amp;</span> boardVec<span class="sym">)</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+
+         <span class="slc">// add the piece to the board</span>
+         boardVec <span class="sym">|=</span> pieceVec<span class="sym">;</span>
+
+         <span class="kwa">if</span> <span class="sym">((</span>boardVec <span class="sym">!=</span> pieceVec<span class="sym">) &amp;&amp;</span> <span class="kwd">hasBadIslands</span><span class="sym">(</span>boardVec<span class="sym">)) {</span>
+            <span class="slc">// remove the piece from the board vector</span>
+            boardVec ^<span class="sym">=</span> pieceVec<span class="sym">;</span>
+            <span class="kwa">continue</span><span class="sym">;</span>
+         <span class="sym">}</span>
+
+         <span class="slc">// mark piece as placed</span>
+         placedPieces <span class="sym">|=</span> pieceMask<span class="sym">;</span>
+         m_curSolution<span class="sym">.</span><span class="kwd">addPiece</span><span class="sym">(</span>pieceVec<span class="sym">,</span> iPiece<span class="sym">);</span>
+
+         <span class="slc">// recur if not done</span>
+         <span class="kwa">if</span> <span class="sym">(</span>placedPieces <span class="sym">!=</span> Piece<span class="sym">::</span>ALL_PIECE_MASK<span class="sym">)   {</span>
+            <span class="slc">// need to find the next unfilled cell</span>
+            TUInt32 iCell <span class="sym">=</span> <span class="kwd">getFirstOne</span><span class="sym">(~</span>boardVec<span class="sym">,</span> iNextFill <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span>
+            BitVec mNextFill <span class="sym">= (</span>maskNextFill <span class="sym">&lt;&lt; (</span>iCell <span class="sym">-</span> iNextFill<span class="sym">));</span>
+
+            <span class="kwd">genAllSolutions</span><span class="sym">(</span>boardVec<span class="sym">,</span> placedPieces<span class="sym">,</span> iCell<span class="sym">,</span> mNextFill<span class="sym">);</span>
+         <span class="sym">}</span>
+         <span class="kwa">else</span> <span class="sym">{</span>
+            <span class="slc">// done, record piece/solution and end recursion</span>
+            <span class="kwd">recordSolution</span><span class="sym">(</span>m_curSolution<span class="sym">);</span>
+         <span class="sym">}</span>
+
+         <span class="slc">// remove the piece before continuing with a new piece</span>
+         boardVec ^<span class="sym">=</span> pieceVec<span class="sym">;</span>
+         m_curSolution<span class="sym">.</span><span class="kwd">removeLastPiece</span><span class="sym">();</span>
+      <span class="sym">}</span>
+
+      placedPieces <span class="sym">&amp;= ~</span>pieceMask<span class="sym">;</span>
+   <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">void</span> Board<span class="sym">::</span><span class="kwd">recordSolution</span><span class="sym">(</span>Solution <span class="sym">&amp;</span> s<span class="sym">)</span>
+<span class="sym">{</span>
+   m_nSolutionFound <span class="sym">+=</span> <span class="num">2</span><span class="sym">;</span> <span class="slc">// we add the solution and its rotation</span>
+
+   <span class="kwa">if</span> <span class="sym">(</span>m_minSolution<span class="sym">.</span><span class="kwd">isEmpty</span><span class="sym">()) {</span>
+      m_minSolution <span class="sym">=</span> m_maxSolution <span class="sym">=</span> s<span class="sym">;</span>
+      <span class="kwa">return</span><span class="sym">;</span>
+   <span class="sym">}</span>
+
+   <span class="kwa">if</span> <span class="sym">(</span>s<span class="sym">.</span><span class="kwd">lessThan</span><span class="sym">(</span>m_minSolution<span class="sym">))</span>
+      m_minSolution <span class="sym">=</span> s<span class="sym">;</span>
+   <span class="kwa">else if</span> <span class="sym">(</span>m_maxSolution<span class="sym">.</span><span class="kwd">lessThan</span><span class="sym">(</span>s<span class="sym">))</span>
+      m_maxSolution <span class="sym">=</span> s<span class="sym">;</span>
+
+   Solution spun<span class="sym">;</span>
+   s<span class="sym">.</span><span class="kwd">spin</span><span class="sym">(</span>spun<span class="sym">);</span>
+   <span class="kwa">if</span> <span class="sym">(</span>spun<span class="sym">.</span><span class="kwd">lessThan</span><span class="sym">(</span>m_minSolution<span class="sym">))</span>
+      m_minSolution <span class="sym">=</span> spun<span class="sym">;</span>
+   <span class="kwa">else if</span> <span class="sym">(</span>m_maxSolution<span class="sym">.</span><span class="kwd">lessThan</span><span class="sym">(</span>s<span class="sym">))</span>
+      m_maxSolution <span class="sym">=</span> spun<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="sym">}</span> <span class="slc">// namespace</span>
+
+<span class="kwa">using namespace</span> Meteor<span class="sym">;</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">*</span> argv <span class="sym">[])</span>
+<span class="sym">{</span>
+   <span class="kwb">const int</span> N_SOLUTION <span class="sym">=</span> <span class="num">2098</span><span class="sym">;</span>
+   TUInt32 nSolMax <span class="sym">=</span> N_SOLUTION<span class="sym">;</span>
+   <span class="kwa">if</span> <span class="sym">(</span>argc <span class="sym">&gt;</span> <span class="num">2</span><span class="sym">)</span>
+      <span class="kwa">return</span> <span class="num">1</span><span class="sym">;</span> <span class="slc">// spec says this is an error</span>
+   <span class="kwa">else if</span> <span class="sym">(</span>argc <span class="sym">==</span> <span class="num">2</span><span class="sym">)</span>
+      nSolMax <span class="sym">= *((</span>TUInt32 <span class="sym">*)</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">]);</span>
+
+   Board board<span class="sym">;</span>
+   Piece<span class="sym">::</span><span class="kwd">genAllOrientations</span><span class="sym">();</span>
+   board<span class="sym">.</span><span class="kwd">genAllSolutions</span><span class="sym">(</span><span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1L</span>L<span class="sym">);</span>
+
+   cout <span class="sym">&lt;&lt;</span> board<span class="sym">.</span>m_nSolutionFound <span class="sym">&lt;&lt;</span> <span class="str">&quot; solutions found</span><span class="esc">\n\n</span><span class="str">&quot;</span><span class="sym">;</span>
+   cout <span class="sym">&lt;&lt;</span> board<span class="sym">.</span>m_minSolution<span class="sym">.</span><span class="kwd">toString</span><span class="sym">() &lt;&lt;</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+   cout <span class="sym">&lt;&lt;</span> board<span class="sym">.</span>m_maxSolution<span class="sym">.</span><span class="kwd">toString</span><span class="sym">() &lt;&lt;</span> endl<span class="sym">;</span>
+
+<span class="slc">//   if (nSolMax != N_SOLUTION)</span>
+<span class="slc">//      return 1;</span>
+
+   <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
