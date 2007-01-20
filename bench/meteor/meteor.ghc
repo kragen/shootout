@@ -1,0 +1,223 @@
+{-
+   The Computer Language Shootout
+      http://shootout.alioth.debian.org/
+      contributed by Olof Kraigher
+-}
+
+module Main where
+
+import System(getArgs)   
+import Data.Word(Word64)
+import Data.Bits
+import Data.List
+import Data.Array.IArray
+import Data.Maybe
+import Char(intToDigit)
+import Numeric(showIntAtBase)
+
+data Direction = E | SE | SW | W | NW | NE deriving (Enum, Eq, Ord, Show)
+type Piece = [Direction]
+type Cell = (Int, Int)
+type Mask = Word64
+type Color = Int
+
+class Rotatable a where
+   rot :: a -> a 
+
+class Floppable a where
+   flop :: a -> a   
+   
+class Maskable a where
+   mask :: a -> Mask
+
+instance Rotatable Direction where
+   rot NE = E
+   rot d = succ d
+
+instance Rotatable Piece where
+   rot a = map rot a
+
+instance Floppable Direction where
+   flop E = W
+   flop W = E
+   flop SE = SW
+   flop SW = SE
+   flop NE = NW
+   flop NW = NE
+
+instance Floppable Piece where
+   flop a = map flop a
+   
+instance Maskable Cell where
+   mask (x,y) = bit (x + y*width)
+
+instance Maskable [Cell] where
+   mask p = foldl' (\a b -> a .|. mask b) 0 p
+
+width :: Int
+width = 5
+
+height :: Int
+height = 10
+
+allCells :: [Cell]
+allCells = [(x,y) | y <- [0..height-1], x <- [0..width-1]]
+
+left :: Mask
+left = shift right (width-1)
+
+right :: Mask
+right = foldl' (\a b -> a .|. (shift 1 b)) 0 [0,width..width*(height-1)]
+
+bottom :: Mask
+bottom = 0x1f
+
+top :: Mask
+top = shift bottom (width*(height-1))
+
+fullMask :: Mask
+fullMask = 0x3FFFFFFFFFFFF
+      
+pieces :: Array Color Piece
+pieces = array (0,9) $ zip [0..9] $ 
+      [   [E,    E,  E,  SE],
+         [SE, SW, W,  SW],
+         [W,  W,  SW, SE],
+         [E,  E,  SW, SE],
+         [NW, W,  NW, SE, SW],
+         [E,  E,  NE, W],
+         [NW, NE, NE, W],
+         [NE, SE, E,  NE],
+         [SE, SE, E,  SE],
+         [E,  NW, NW, NW]]
+
+valid :: Cell -> Maybe Cell
+valid p@(x,y) | 0 <= x, x < width, 0 <= y, y < height = Just p
+           |otherwise = Nothing
+
+move :: Cell -> Direction -> Maybe Cell
+move (x,y) E = valid (x+1,y)
+move (x,y) W = valid (x-1,y)
+move (x,y) NE = valid (x+(mod y 2),y-1)
+move (x,y) NW = valid (x+(mod y 2)-1,y-1)
+move (x,y) SE = valid (x+(mod y 2),y+1)
+move (x,y) SW = valid (x+(mod y 2)-1,y+1)
+
+cells :: Piece -> Cell -> Maybe [Cell]
+cells [] cell = Just [cell]
+cells (d:ds) cell@(x,y) =
+   case move (x,y) d of
+      Nothing -> Nothing
+      Just (x',y') ->
+         case cells ds (x',y') of
+            Nothing -> Nothing
+            Just ps -> Just $ (x,y) : ps
+            
+bitCount :: Mask -> Int
+bitCount 0 = 0
+bitCount mask = (fromIntegral $ (mask .&. 1)) + (bitCount (shiftR mask 1))
+
+floodFill :: Mask -> Mask -> Mask
+floodFill mask fromBit
+   | overlaps fromBit mask = mask
+   | otherwise =   
+      let mask' = mask .|. fromBit
+      in foldl' (floodFill) mask' $ 
+            map snd $ filter (\(a, b) -> not $ overlaps a fromBit) $ 
+               zip [left, right, top, bottom] $ 
+                  map (shift fromBit) [1,-1,width,-width]
+
+findFreeBit :: Mask -> Mask
+findFreeBit mask = fromJust $ find (not.(overlaps mask)) $ map (shift 1) [0..width*height-1]
+
+noIslands :: Mask -> Bool
+noIslands mask = not $ any (<5) $ diffs $ noIslands' mask where
+   noIslands' mask
+      | mask == fullMask = [bitCount mask]
+      | otherwise = (bitCount mask): (noIslands' $ floodFill mask $ findFreeBit mask)
+   diffs (x:y:[]) = [y-x]
+   diffs (x:y:xs) = (y-x): (diffs $ y:xs)
+
+bitmasksWithColor :: Array Color [Mask]
+bitmasksWithColor = amap bitmasksWithColor' pieces where
+   
+   bitmasksWithColor' :: Piece -> [Mask]
+   bitmasksWithColor' piece 
+      | piece == [NW, W,  NW, SE, SW] = do 
+         piece' <- (take 3 $ iterate rot piece) ++ (take 3 $ iterate rot $ flop piece)
+         filter noIslands $ map mask $ mapMaybe (cells piece') allCells
+         
+      | otherwise = do 
+         piece' <- (take 6 $ iterate rot piece) ++ (take 6 $ iterate rot $ flop piece)
+         filter noIslands $ map mask $ mapMaybe (cells piece') allCells
+   
+
+bitmasksAtCell :: [Mask] -> Array Cell [Mask]
+bitmasksAtCell masks = 
+   let masks' = (bitmasksAtCell' (shift 1 $ width*height - 1) [] (reverse $ sort masks))
+   in  array ((0,0),(4,9)) $ zip [(x,y) | y <- [9,8..0], x <- [4,3..0]] masks' where
+   
+      bitmasksAtCell' :: Mask -> [Mask] -> [Mask] -> [[Mask]]
+      bitmasksAtCell' 1 cellMasks [] = [cellMasks] 
+      bitmasksAtCell' cellMask cellMasks [] = cellMasks:(bitmasksAtCell' (shiftR cellMask 1) [] [])
+      bitmasksAtCell' cellMask cellMasks masks@(m:ms)
+         | overlaps cellMask m = bitmasksAtCell' cellMask (m:cellMasks) ms
+         | otherwise = cellMasks : (bitmasksAtCell' (shiftR cellMask 1) [] masks)
+         
+
+bitmasksWithColorAtCell :: Array Color (Array Cell [Mask])
+bitmasksWithColorAtCell = amap bitmasksAtCell bitmasksWithColor
+
+nextCell :: Cell -> Cell
+nextCell (0,y) = (width-1,y-1)
+nextCell (x,y) =  (x-1,y)
+
+
+overlaps :: Mask -> Mask -> Bool
+overlaps a b = (a .&. b) /= 0
+
+legal :: Mask -> [Mask] -> [Mask]
+legal boardMask masks = filter (not.(overlaps boardMask)) masks      
+
+   
+solutions :: [String]
+solutions = solutions' 0 (width-1, height-1) [0..9] [] where
+
+   solutions' :: Mask -> Cell -> [Color] -> [(Color, Mask)]-> [String]
+   solutions' _ _ [] usedMasks =    let s = stringOfColorMasks usedMasks in   [s, invertString s]
+   solutions' board cell colorsLeft usedMasks 
+      | overlaps board (mask cell) = solutions' board (nextCell cell) colorsLeft usedMasks
+      | otherwise = do
+         color <- colorsLeft
+         mask <- legal board $ bitmasksWithColorAtCell!color!cell
+          (solutions' (board .|. mask) (nextCell cell) (colorsLeft \\ [color]) ((color, mask):usedMasks))
+
+stringOfColorMasks :: [(Color, Mask)] -> String
+stringOfColorMasks colorMasks = 
+   tail $ show $ (+) (10^(width*height)) $ 
+      sum $ map (\(c,m) -> ((fromIntegral c) * (read $ showIntAtBase 2 intToDigit m "")) :: Integer) colorMasks
+
+invertString :: String -> String
+invertString s = [s!!(width-x-1 + (height-y-1)*width) | y <- [0..height-1], x <- [0 .. width-1]]
+
+printSolution :: String -> IO ()
+printSolution solution = printSolution' 0 solution where
+   printSolution' cell [] = return ()
+   printSolution' cell (s:ss) = do
+      putStr $ s:" "
+      case mod (cell+1) width of
+         0 -> case mod (cell+1) (2*width) of
+               0 -> putStr "\n"
+               _ -> putStr "\n "
+         _ -> return ()
+                  
+      printSolution' (cell+1) ss
+
+main = do 
+   (n :: Int) <- return.read.head =<< getArgs
+   let nsolutions = take n solutions
+   putStrLn $ (show $ length nsolutions) ++ " solutions found\n"
+   printSolution $ minimum nsolutions
+   putStr "\n"
+   printSolution $ maximum nsolutions
+   putStr "\n"
