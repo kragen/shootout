@@ -90,8 +90,7 @@ class HashBag[A] extends HashTable[A] {
    def elements = entries
 
    def +=(elem: A): Unit = {
-      val h = index(elemHashCode(elem))
-      var bucket = table(h)
+      var bucket = table(index(elemHashCode(elem)))
       while (!bucket.isEmpty) {
          if (elemEquals(entryKey(bucket.head), elem)){
             bucket.head.inc
@@ -103,8 +102,7 @@ class HashBag[A] extends HashTable[A] {
    }
 
    def findOccurrences(elem: A): int = {
-      val h = index(elemHashCode(elem))
-      var bucket = table(h)
+      var bucket = table(index(elemHashCode(elem)))
       while (!bucket.isEmpty) {
          if (elemEquals(entryKey(bucket.head), elem)){
             return bucket.head.value
@@ -116,8 +114,7 @@ class HashBag[A] extends HashTable[A] {
 
 /*
    def -=(elem: A): Unit = {
-      val h = index(elemHashCode(elem))
-      var bucket = table(h)
+      var bucket = table(index(elemHashCode(elem)))
       while (!bucket.isEmpty) {
          if (elemEquals(entryKey(bucket.head), elem)){
             bucket.head.dec
