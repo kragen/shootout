@@ -1,0 +1,185 @@
+\ The Computer Language Shootout
+\ http://shootout.alioth.debian.org/
+\ Contributed by Ian Osgood
+\ modified by Anton Ertl
+\ Joshua Grams removed most of the double cell manipulation
+\  and added island detection.
+
+: enum ( n -- )  0 do I constant loop ;
+: table create does> ( i -- t[i] )  swap cells + @ ;
+
+7 enum         E   SE   SW    W   NW   NE   STOP
+table offset   1 ,  7 ,  6 , -1 , -7 , -6 ,    0 ,
+table rotate  SE , SW ,  W , NW , NE ,  E , STOP ,
+table reflect  E , NE , NW ,  W , SW , SE , STOP ,
+
+\ paths are more easily transformable than bit masks
+
+create path    5 cells allot
+create offsets 6 cells allot
+
+1024 allot \ padding for Pentium 4 and bigforth shortcomings
+
+: init-path ( 4*dirs -- )
+	E path 5 0 do tuck ! cell+ loop drop ;
+: rotate-path
+	path 5 0 do dup @ rotate  over ! cell+ loop drop ;
+: reflect-path
+	path 5 0 do dup @ reflect over ! cell+ loop drop ;
+
+: path-offsets
+	0 offsets !
+	path offsets
+	5 0 do
+		over @ offset
+		over @ +
+		over cell+ !
+		swap cell+ swap cell+
+	loop 2drop ;
+: minimum-offset ( -- n )
+	offsets @
+	6 1 do offsets I cells + @ min loop ;
+: normalize-offsets
+	minimum-offset negate
+	6 0 do dup offsets I cells + +! loop drop ;
+: offsets-mask ( -- mask )
+	0
+	6 0 do
+		offsets I cells + @
+		1 swap lshift or
+	loop ;
+
+\ make and store the twelve transformations of the path
+
+: path-mask ( -- mask )  path-offsets normalize-offsets offsets-mask ;
+: path-masks ( 4*dirs -- )
+	                       false , \ used flag
+	         init-path path-mask ,
+	5 0 do rotate-path path-mask , loop
+	      reflect-path path-mask ,
+	5 0 do rotate-path path-mask , loop ;
+
+13 cells constant /piece
+
+\  all paths start with an implicit E
+
+create pieces
+ STOP SE  E  E path-masks
+ STOP NE  E SE path-masks
+ STOP SW SE  E path-masks
+ STOP SE SW  E path-masks
+   SW  W  E SE path-masks \ one backtrack, since this shape branches
+ STOP SE NE SE path-masks
+ STOP NE SE SE path-masks
+ STOP  E SW SE path-masks
+ STOP  E SE  E path-masks
+ STOP NE SE  E path-masks
+
+variable #solutions
+create smallest 64 allot
+create largest  64 allot
+
+variable board    \ high word of board; low word on stack
+
+1024 allot \ padding for Pentium 4 and bigforth shortcomings
+
+: put-piece ( piece shift -- )
+	over pieces - /piece / [char] 0 + >r ( R: piece-char )
+	here + swap @ ( buf mask )
+	begin
+		dup 1 and if over r@ swap c! then
+		swap char+ swap 2/
+	dup 0= until 2drop r> drop ;
+
+\ extract solution from stack and store at HERE
+\ (non-destructive because we need the data for backtracking).
+: store-solution ( pieceN shiftN ... piece0 board )
+	\ here 64 [char] * fill
+	0 ( absolute-shift )
+	depth 1- 2 swap do
+		i pick over put-piece
+		i 1- pick +
+	-2 +loop drop ;
+
+: .line ( line -- line+6 )
+	5 0 do dup c@ emit space char+ loop cr char+ ;
+: .solution ( buffer -- )
+	5 0 do .line char+  space .line loop drop cr ;
+
+: record ( [st] -- [st] )
+	store-solution  \ here .solution
+	here 64 smallest 64 compare 0< if here smallest 64 move then
+	largest 64  here 64 compare 0< if here  largest 64 move then
+	1 #solutions +! ;  \ throw if #solutions == NUM
+
+\ initial board, with edges filled in
+2 base !
+0000011.000001.0000011.000001.0000011.000001.0000011.000001.0000011.00000
+2constant init-board
+
+\ board mask for a hexagon with an empty center
+110000101000011 constant empty-hex
+
+hex
+80000000 constant hi-bit
+
+decimal
+
+\ is it a single-cell island?
+	\ the center (empty) cell is 7 bits in.
+: island? ( board bit -- flag )  empty-hex * 7 rshift tuck and = ;
+
+\ fun with bit manipulation :)
+: fill-leading ( u -- u' )  dup 1- or ;
+: first-empty ( u -- bit )  dup dup 1+ or xor ;
+
+\ return a bit-mask for the second empty cell on the board.
+: second ( board -- bit )  fill-leading first-empty ;
+
+\ check two spots for single-cell islands
+: prune? ( board -- flag )
+	dup 1 island? if drop true else dup second island? then ;
+
+
+\ remove filled cells at the beginning of the board
+: shift-board ( board -- shift board' )
+	0 swap board @ begin
+		over 1 and while d2/ hi-bit or  rot 1+ -rot
+	repeat board ! ;
+
+\ restore filled cells at the beginning of the board
+: unshift-board ( shift board -- board' )
+	board @ rot 0 ?do d2* swap 1+ swap loop board ! ;
+
+
+: solve ( board -- board )
+	dup prune? if exit then
+	pieces  10 0 do
+		dup @ if
+			/piece +
+		else
+			true over ! cell+        \ mark used
+			12 0 do
+				2dup @ and 0= if
+					tuck @ xor       \ add piece
+					dup invert if
+						shift-board recurse unshift-board
+					else record then
+					over @ xor swap  \ remove piece
+				then
+			cell+ loop
+			false over /piece - !    \ mark unused
+		then
+	loop drop ;
+
+
+: main
+	0 #solutions !
+	smallest 64 [char] 9 fill
+	largest  64 [char] 0 fill
+		init-board board ! solve drop
+	#solutions @ . ." solutions found" cr cr
+	smallest .solution
+	largest  .solution ;
+
+main bye
