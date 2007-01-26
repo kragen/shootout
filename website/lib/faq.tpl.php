@@ -37,6 +37,19 @@
 <dt><a href="#means" name="means">&nbsp;What does &#8230; mean?</a></dt>
 <dd>
 <dl>
+
+<dt><a href="#fable" name="fable">What does <strong>"not fair"</strong> mean? (A fable)</a></dt>
+<dd>
+<p>They raced up, and down, and around and around and around, and forwards and backwards and sideways and upside-down.</p>
+<p>Cheetah's friends said <strong>"it's not fair"</strong> - everyone knows Cheetah is the fastest creature but the races are too long and Cheetah gets tired!</p>
+<p>Falcon's friends said <strong>"it's not fair"</strong> - everyone knows Falcon is the fastest creature but Falcon doesn't walk very well, he soars across the sky!</p>
+<p>Horse's friends said <strong>"it's not fair"</strong> - everyone knows Horse is the fastest creature but this is only a yearling, you must stop the races until a stallion takes part!</p>
+<p>Man's friends said <strong>"it's not fair"</strong> - everyone knows that in the "real world" Man would use a motorbike, you must let man race on a motorbike!</p>
+<p>Snail's friends said <strong>"it's not fair"</strong> - everyone knows that a creature should leave a slime trail, all those other creatures are cheating!</p>
+<p>Dalmation's tail was banging on the ground. Dalmation panted and between breaths said "Look at that beautiful mountain, let's race to the top!" </p>
+</dd>
+
+
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
 <dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
 <p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
