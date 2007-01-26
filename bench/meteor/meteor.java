@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-/** First hack at a Java solver for the Meteor puzzle - just the IBM 
+/** First hack at a Java solver for the meteor puzzle - just the IBM 
   * developerWorks article algorithm optimized with precalculated shapes 
   * and bitmasks. Should be possible to optimize it some more to take 
   * advantage of reflections but its turning out to be less obvious 
@@ -26,7 +26,7 @@ import java.util.TreeSet;
   *
   */
   
-public class Meteor
+public class meteor
    { // CONSTANTS
        
      private static final int[]    SHIFT = { 0,6,11,17,22,28,33,39,44,50 };
@@ -84,7 +84,7 @@ public class Meteor
             
           // ... solve puzzle
           
-          Meteor        puzzle = new Meteor ();
+          meteor        puzzle = new meteor ();
           Date      start;
           Date      end;
           long      time;
@@ -137,7 +137,7 @@ public class Meteor
        * 
        */
 
-     public Meteor ()
+     public meteor ()
         { for (int i=0; i<10; i++)
           solution[i] = new Entry();
         }
