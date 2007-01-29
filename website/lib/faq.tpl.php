@@ -79,7 +79,7 @@
 <td>4.340</td>
 <td>4.852</td>
 <td>0.512</td>
-<td>19%</td>
+<td>11%</td>
 </tr>
 <tr>
 <td>binary-trees&nbsp;&nbsp;</td>
