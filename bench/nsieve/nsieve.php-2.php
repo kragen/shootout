@@ -4,6 +4,7 @@
  * http://shootout.alioth.debian.org/
  *
  * contributed by Charles G.
+ * fixed by Isaac Gouy
  */
 
 function nsieve($m)
@@ -18,13 +19,14 @@ function nsieve($m)
             for ($j = $i << 1; $j < $m; $j += $i)
                 $flags[$j-1] = 'x';
         }
-    echo "Primes up to $m $count\n";
+
+//    echo "Primes up to $m $count\n";
+
+    printf("Primes up to %8d %8d\n", $m, $count);
+
 }
 
 $m = $argv[1];
-// $t0 = microtime(true);
 for ($i = 0; $i < 3; ++$i)
-    nsieve(10000 << ($m-$i));
-// echo (microtime(true) - $t0);
-
+    nsieve(10000 << ($m-$i));
 ?>
