@@ -1,0 +1,62 @@
+{-# OPTIONS -fbang-patterns #-}
+--
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Don Stewart
+--
+
+import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Base
+import Foreign
+
+main = do
+    (s:ss) <- S.lines `fmap` S.getContents
+    process s ss []
+
+process !s xs@(~(x:xx)) acc
+    | S.null s      = writeFasta acc
+    | null xs       = revcomp s >> writeFasta (s:acc)
+    | h == '>'      = writeFasta acc >> S.putStrLn s >> process x xx []
+    | otherwise     = revcomp s >> process x xx (s:acc)
+  where
+    (h,t)  = uncons s
+
+uncons s = (w2c (unsafeHead s), unsafeTail s)
+
+comp c = c2w $ case w2c c of
+    'A' -> 'T'; 'a' -> 'T'; 'C' -> 'G'; 'c' -> 'G'; 'G' -> 'C'
+    'g' -> 'C'; 'T' -> 'A'; 't' -> 'A'; 'U' -> 'A'; 'u' -> 'A'
+    'M' -> 'K'; 'm' -> 'K'; 'R' -> 'Y'; 'r' -> 'Y'; 'Y' -> 'R'
+    'y' -> 'R'; 'K' -> 'M'; 'k' -> 'M'; 'V' -> 'B'; 'v' -> 'B'
+    'H' -> 'D'; 'h' -> 'D'; 'D' -> 'H'; 'd' -> 'H'; 'B' -> 'V'; 'b' -> 'V'; x  -> x
+
+writeFasta []     = return ()
+writeFasta (t:ts) = go ts t
+  where
+    go [] !s
+        | S.null s  = return ()
+        | otherwise = S.putStrLn l >> go [] r
+        where (l,r) = S.splitAt 60 s
+    go ss !s
+        | ln >= 60  = S.putStrLn l               >> go ss r
+        | otherwise = S.putStr s >> S.putStrLn a >> go (tail ss) b
+        where
+            ln    = S.length s
+            (l,r) = S.splitAt 60 s
+            (a,b) = S.splitAt (60-ln) (head ss)
+
+--
+-- An inplace reverse. Since we have a uniquness here, just use the FFI as an ST monad
+--
+revcomp (PS fp s l) = withForeignPtr fp $ \p -> rc (p `plusPtr` s) 0 (l-1)
+  where
+    rc :: Ptr Word8 -> Int -> Int -> IO ()
+    rc !p !i !j
+        | i < j = do
+            x <- peekByteOff p i
+            pokeByteOff p i . comp =<< peekByteOff p j
+            pokeByteOff p j (comp x)
+            rc p (i+1) (j-1)
+        | otherwise = if i == j then pokeByteOff p i . comp =<< peekByteOff p i
+                                else return ()
