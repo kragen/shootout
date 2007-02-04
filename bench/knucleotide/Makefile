@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2006-10-05 20:23:32 igouy-guest Exp $
+# $Id: Makefile,v 1.20 2007-02-04 16:54:06 bfulgham Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -16,6 +16,7 @@ BIGLOOOPTS := -farithmetic
 DLANGOPTS := ../../Include/dlang/hashtable.d
 BIGFORTHOPTS := -d 8M
 GFORTH_FLAGS := -m 8M
+MZSCHEMEOPTS := -qu
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 PHPOPTS := -d memory_limit=64M
