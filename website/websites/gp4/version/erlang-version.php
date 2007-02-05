@@ -1,1 +1,1 @@
-<p>Erlang/OTP R11B-2</p>
+<p>Erlang/OTP R11B-3</p>

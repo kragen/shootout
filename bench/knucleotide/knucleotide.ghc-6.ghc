@@ -1,0 +1,93 @@
+{-# OPTIONS -fbang-patterns #-}
+--
+-- The Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- Chris Kuklewicz and Don Stewart
+--
+
+import Char
+import Foreign
+import List
+import Maybe
+import Text.Printf
+import GHC.Exts
+import GHC.Int
+import GHC.IOBase
+import Data.ByteString.Base
+import qualified Data.ByteString.Char8 as S
+import qualified Data.HashTable as T
+
+main = do
+    (PS fp o l) <- get (S.pack ">TH")
+    withForeignPtr fp $ \p -> do
+        let sec = (l, p `plusPtr` o)
+        mapM_ (writeFreqs sec) [1,2]
+        mapM_ (writeFrame sec) =<< mapM toseq strs
+
+strs = ["GGT","GGTA","GGTATT","GGTATTTTAATT","GGTATTTTAATTTATAGT"]
+
+get p = do
+    s <- S.getContents
+    let Just n = S.findSubstring p s
+    return $! S.map toUpper             -- array fusion!
+            . S.filter    ((/=) '\n')
+            . S.dropWhile ((/=) '\n')
+            . S.copy
+            . S.drop n $ s
+
+count :: Int -> Ptr Word8 -> Int -> Hash -> IO ()
+count s !p n !h = mapM_ (inc . plusPtr p) [0..s-n]
+  where
+    inc !k = do
+        mold <- T.lookup h k
+        case mold of
+            Nothing -> T.insert h k 1
+            Just n  -> do T.update h k $! n+1 ; return ()
+
+writeFreqs (size,p) n = do
+    h   <- newH n
+    count size p n h
+    mapM_ draw . sortBy kf =<< T.toList h
+    putChar '\n'
+  where
+    draw (p,f) = printf "%s %.3f\n" (ppr n p) pct
+        where pct   = (100 * (fromIntegral f) / total) :: Double
+              total = fromIntegral (size - n + 1)
+
+    kf (k,x) (j,y) = case compare y x of
+          EQ -> compare (ppr n k) (ppr n j); x  -> x
+
+writeFrame (size,p) (n,k) = do
+  h <- newH n
+  count size p n h
+  v <- T.lookup h k
+  putStrLn $ (show $ fromMaybe 0 v) ++ ('\t' : ppr n k)
+
+toseq s = fmap ((,) (length s)) (newArray0 0 (map c2w s))
+ppr n p = inlinePerformIO (map w2c `fmap` peekArray n p)
+
+------------------------------------------------------------------------
+
+type Hash = T.HashTable (Ptr Word8) Int
+
+newH :: Int -> IO Hash
+newH n = T.new (eq n) (hash n)
+
+hash n (Ptr p) = inlinePerformIO $ IO $ go n 0# p
+  where
+    go !n acc p s
+        | n == 0    = (# s, I32# acc #)
+        | otherwise = case readInt8OffAddr# p 0# s of
+                (# s, i #) -> go (n-1) (5# *# acc +# i) (plusAddr# p 1#) s
+
+-- Faster than a memcmp!
+eq !n (Ptr p) (Ptr q) = inlinePerformIO $ IO $ go n p q
+  where
+    go !n p q s
+        | n == 0    = (# s , True #)
+        | otherwise = case readInt8OffAddr# p 0# s of
+                (# s, a #) -> case readInt8OffAddr# q 0# s of
+                    (# s, b #) | a /=# b   -> (# s, False #)
+                               | otherwise -> go (n-1) (plusAddr# p 1#) (plusAddr# q 1#) s
+
