@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2006-10-05 20:23:31 igouy-guest Exp $
+# $Id: Makefile,v 1.18 2007-02-06 06:57:49 bfulgham Exp $
 include ../../Make.header
 
 TEST    := binarytrees
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 CYCOPTS := -lm
 IFCOPTS := -u -what
 BIGLOOOPTS := -farithmetic
+ERLFLAGS := -noinput
 
 GCCOPTS := -lm
 MZSCHEMEOPTS := -qu

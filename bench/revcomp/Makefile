@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2007-01-19 03:31:28 bfulgham Exp $
+# $Id: Makefile,v 1.17 2007-02-06 06:57:50 bfulgham Exp $
 include ../../Make.header
 
 TEST    := revcomp
@@ -13,6 +13,7 @@ MB_CLRTS := -nr -h 40m -s 1m
 
 BIGFORTHOPTS := -d 32M
 BIGLOOOPTS := -farithmetic
+ERLFLAGS := -noinput
 MZSCHEMEOPTS := -qu
 OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
