@@ -1,37 +1,274 @@
+<span class="com">{-# OPTIONS -funbox-strict-fields -fbang-patterns #-}</span>
 <span class="slc">--</span>
 <span class="slc">-- The Computer Language Shootout</span>
 <span class="slc">-- http://shootout.alioth.debian.org/</span>
 <span class="slc">--</span>
-<span class="slc">-- Contributed by Don Stewart</span>
+<span class="slc">-- Contributed by Don Stewart, Chris Kuklewicz and Alson Kemp.</span>
+<span class="slc">-- Updated for ByteString by Chris Kuklewicz February, 2007</span>
 <span class="slc">--</span>
-<span class="slc">-- Very inefficient until we use packed string regex</span>
+<span class="slc">-- Compile with: -O2 -package parsec</span>
+<span class="slc">--</span>
+<span class="slc">-- An idiomatic Haskell entry using lazy regex combinators, described in the paper:</span>
+<span class="slc">--</span>
+<span class="slc">--  Manuel  M. T. Chakravarty, Lazy Lexing is Fast.</span>
+<span class="slc">--  In A. Middeldorp and T. Sato, editors, Proceedings of Fourth Fuji</span>
+<span class="slc">--  International Symposium on Functional and Logic Programming,</span>
+<span class="slc">--  Springer-Verlag, LNCS 1722, 1999.</span>
+
+<span class="kwa">import</span> Monad
+
+<span class="kwa">import</span> Data.Array <span class="sym">(</span>Array<span class="sym">,</span> assocs<span class="sym">,</span> accumArray<span class="sym">,</span>bounds<span class="sym">,</span>listArray<span class="sym">)</span>
+<span class="kwa">import</span> Data.Array.Base <span class="sym">(</span>unsafeAt<span class="sym">)</span>
+
+<span class="kwa">import</span> Data.ByteString.Base
+<span class="kwa">import qualified</span> Data.ByteString <span class="kwa">as</span> B
+<span class="kwa">import qualified</span> Data.ByteString.Lazy <span class="kwa">as</span> L
+<span class="kwa">import qualified</span> Data.ByteString.Char8  <span class="kwa">as</span> BC
+
+<span class="kwa">import</span> Word
+<span class="kwa">import</span> List <span class="kwa">hiding</span> <span class="sym">(</span>delete<span class="sym">)</span>
+<span class="kwa">import qualified</span> Data.Map <span class="kwa">as</span> M
+<span class="kwa">import</span> System
+<span class="kwa">import qualified</span> Text.ParserCombinators.Parsec <span class="kwa">as</span> P
+<span class="kwa">import</span> Text.ParserCombinators.Parsec <span class="sym">((&lt;|&gt;),(&lt;</span>?<span class="sym">&gt;),</span>pzero<span class="sym">)</span>
+
+<span class="slc">------------------------------------------------------------------------</span>
+
+main <span class="sym">=</span> putStr . work <span class="sym">=&lt;&lt;</span> B.getContents
+
+work <span class="sym">!</span>fileIn <span class="sym">=</span> unlines $ counts <span class="sym">++ [[],</span>l0<span class="sym">,</span> l1<span class="sym">,</span> l2<span class="sym">]</span>
+  <span class="kwa">where</span>
+    l0     <span class="sym">=</span> show $ B.length fileIn
+    clean  <span class="sym">=</span> B.concat . delete <span class="str">&quot;\n|&gt;[^\n]+\n&quot;</span> $ fileIn
+    l1     <span class="sym">=</span> show $ B.length clean
+    counts <span class="sym">= [</span> re<span class="sym">++</span><span class="str">&quot; &quot;</span><span class="sym">++</span>show <span class="sym">(</span>count re clean<span class="sym">) |</span> re <span class="sym">&lt;-</span> variants <span class="sym">]</span>
+    l2     <span class="sym">=</span> show $ L.length <span class="sym">(</span>iubsExpand clean<span class="sym">)</span>
+
+iubsExpand <span class="sym">=</span> L.fromChunks . foldr1 <span class="sym">(</span>.<span class="sym">) (</span>map replace iubs<span class="sym">)</span> . return
+
+variants <span class="sym">= [</span>    <span class="str">&quot;agggtaaa|tttaccct&quot;</span>    <span class="sym">,</span><span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span><span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
+           <span class="sym">,</span><span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span><span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span><span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
+           <span class="sym">,</span><span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span><span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span><span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">]</span>
+
+iubs <span class="sym">=</span> map <span class="sym">(</span>\<span class="sym">(</span>s<span class="sym">,</span>new<span class="sym">) -&gt; (</span>regex s<span class="sym">,</span>BC.pack new<span class="sym">))</span> $
+  <span class="sym">[(</span><span class="str">&quot;B&quot;</span><span class="sym">,</span><span class="str">&quot;(c|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;D&quot;</span><span class="sym">,</span><span class="str">&quot;(a|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;H&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;K&quot;</span><span class="sym">,</span><span class="str">&quot;(g|t)&quot;</span><span class="sym">) ,(</span><span class="str">&quot;M&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c)&quot;</span><span class="sym">)</span>
+  <span class="sym">,(</span><span class="str">&quot;N&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;R&quot;</span><span class="sym">,</span><span class="str">&quot;(a|g)&quot;</span><span class="sym">) ,(</span><span class="str">&quot;S&quot;</span><span class="sym">,</span><span class="str">&quot;(c|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;V&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;W&quot;</span><span class="sym">,</span><span class="str">&quot;(a|t)&quot;</span><span class="sym">) ,(</span><span class="str">&quot;Y&quot;</span><span class="sym">,</span><span class="str">&quot;(c|t)&quot;</span><span class="sym">)]</span>
+
+<span class="slc">-- And that's it!</span>
+
+<span class="slc">------------------------------------------------------------------------</span>
+
+<span class="slc">-- external interface to regular expressions</span>
+
+regex <span class="sym">= (</span>either <span class="sym">(</span>error.show<span class="sym">)</span> accept<span class="sym">)</span> . <span class="sym">(</span>\x <span class="sym">-&gt;</span> P.parse p_regex x x<span class="sym">)</span>
+  <span class="kwa">where</span> accept re <span class="sym">=</span> re <span class="sym">(</span>Lexer <span class="kwa">True</span> Done<span class="sym">)</span> <span class="slc">-- Close a regular expression into a Lexer.</span>
+
+<span class="sym">(!) !</span>a b <span class="sym">=</span> unsafeAt a <span class="sym">(</span>fromEnum $ <span class="sym">(</span>b <span class="sym">-</span> fst <span class="sym">(</span>bounds a<span class="sym">)))</span>
+
+delete s <span class="sym">=</span> del <span class="kwa">where</span>
+  r <span class="sym">=</span> regex s
+  del b <span class="sym">=</span> pieces <span class="num">0</span> <span class="sym">(</span>run r b <span class="num">0</span><span class="sym">)</span> <span class="kwa">where</span>
+    pieces end <span class="sym">[] =</span> unsafeDrop end b <span class="sym">: []</span>
+    pieces <span class="sym">!</span>end <span class="sym">((</span>start<span class="sym">,</span>stop<span class="sym">):</span>rest<span class="sym">) =</span> unsafeTake <span class="sym">(</span>start<span class="sym">-</span>end<span class="sym">) (</span>unsafeDrop end b<span class="sym">) :</span> pieces stop rest
+
+count s b <span class="sym">=</span> runOverlappingCount r b <span class="num">0</span>
+  <span class="kwa">where</span> r <span class="sym">=</span> regex s
+
+replace <span class="sym">(</span>r<span class="sym">,</span>new<span class="sym">) =</span> rep <span class="kwa">where</span>
+  rep <span class="sym">[] = []</span>
+  rep <span class="sym">(!</span>b<span class="sym">:</span>bs<span class="sym">) =</span> pieces <span class="num">0</span> <span class="sym">(</span>run r b <span class="num">0</span><span class="sym">)</span> <span class="kwa">where</span>
+    pieces <span class="num">0</span> <span class="sym">[]   =</span> b <span class="sym">:</span> rep bs
+    pieces end <span class="sym">[] |</span> B.length b <span class="sym">&gt;</span> end <span class="sym">=</span> unsafeDrop end b <span class="sym">:</span> rep bs
+                  <span class="sym">|</span> otherwise        <span class="sym">=</span> rep bs
+
+    pieces end <span class="sym">((</span>start<span class="sym">,</span>stop<span class="sym">):</span>rest<span class="sym">)</span>
+        <span class="sym">|</span> start <span class="sym">&gt;</span> end <span class="sym">=</span> unsafeTake <span class="sym">(</span>start<span class="sym">-</span>end<span class="sym">) (</span>unsafeDrop end b<span class="sym">) :</span> new <span class="sym">:</span> pieces stop rest
+        <span class="sym">|</span> otherwise <span class="sym">=</span> new <span class="sym">:</span> pieces stop rest
+
+run <span class="sym">::</span> Lexer <span class="sym">-&gt;</span> B.ByteString <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt; [(</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">)]</span>
+run lexerIn <span class="sym">!</span>b offsetIn <span class="sym">=</span> loop offsetIn
+  <span class="kwa">where</span>
+    end <span class="sym">=</span> B.length b
+    loop offset <span class="sym">|</span> offset <span class="sym">==</span> end <span class="sym">= []</span>
+                <span class="sym">|</span> otherwise <span class="sym">=</span>
+      <span class="kwa">let</span> t<span class="sym">&#64;(</span>start<span class="sym">,</span>stop<span class="sym">) =</span> lexOne b lexerIn offset
+      <span class="kwa">in</span> if start <span class="sym">== -</span><span class="num">1</span> <span class="kwa">then</span>  <span class="sym">[]</span>
+           <span class="kwa">else</span> t <span class="sym">:</span> loop stop
+
+runOverlappingCount <span class="sym">::</span> Lexer <span class="sym">-&gt;</span> B.ByteString <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span>
+runOverlappingCount lexerIn <span class="sym">!</span>b offsetIn <span class="sym">=</span> loop offsetIn <span class="num">0</span>
+  <span class="kwa">where</span>
+    end <span class="sym">=</span> B.length b
+    loop <span class="sym">!</span>offset <span class="sym">!</span>c <span class="sym">|</span> offset <span class="sym">==</span> end <span class="sym">=</span> c
+                    <span class="sym">|</span> otherwise <span class="sym">=</span>
+      <span class="kwa">let</span> start <span class="sym">=</span> fst $ lexOne b lexerIn offset
+      <span class="kwa">in</span> if start <span class="sym">== -</span><span class="num">1</span> <span class="kwa">then</span> c
+           <span class="kwa">else</span> loop <span class="sym">(</span>succ start<span class="sym">) (</span>succ c<span class="sym">)</span>
+
+<span class="slc">--</span>
+<span class="slc">-- Construct a regex combinator from a string regex (use Parsec)</span>
+<span class="slc">-- Designed to follow &quot;man re_format&quot; (Mac OS X 10.4.4)</span>
+<span class="slc">--</span>
+<span class="slc">-- The regular expressions accepted by the program include those using</span>
+<span class="slc">-- |, empty group (), grouping with ( and ), wildcard '.', backslach</span>
+<span class="slc">-- escaped characters &quot;\.&quot;, greedy modifiers ? + and *, bracketed</span>
+<span class="slc">-- alternatives including ranges such as [a-z0-9] and inverted</span>
+<span class="slc">-- brackets such as [^]\n-].  Only 7-bit Ascii accepted.</span>
+
+<span class="slc">-- 'p_regex' is the only &quot;exported&quot; function, used by 'regex' above</span>
+
+p_regex <span class="sym">=</span> liftM <span class="sym">(</span>foldr1 <span class="sym">(&gt;|&lt;)) (</span>P.sepBy1 p_branch <span class="sym">(</span>P.char '<span class="sym">|</span>'<span class="sym">))</span>
+
+p_branch <span class="sym">=</span> liftM <span class="sym">((</span>$ epsilon<span class="sym">)</span>.<span class="sym">(</span>foldr <span class="sym">(</span>.<span class="sym">)</span> id<span class="sym">)) (</span>P.many1 <span class="sym">(</span>p_atom <span class="sym">&gt;&gt;=</span> p_post_atom<span class="sym">))</span>
+
+p_atom <span class="sym">=</span> P.try <span class="sym">(</span>P.string <span class="str">&quot;()&quot;</span> <span class="sym">&gt;&gt;</span> return epsilon<span class="sym">)</span>
+     <span class="sym">&lt;|&gt;</span> P.between <span class="sym">(</span>P.char '<span class="sym">(</span>'<span class="sym">) (</span>P.char '<span class="sym">)</span>'<span class="sym">)</span> p_regex
+     <span class="sym">&lt;|&gt;</span> p_bracket <span class="sym">&lt;|&gt;</span> p_dot <span class="sym">&lt;|&gt;</span> p_escaped_char <span class="sym">&lt;|&gt;</span> p_other_char
+     <span class="sym">&lt;|&gt; (</span>pzero <span class="sym">&lt;</span>?<span class="sym">&gt;</span> <span class="str">&quot;cannot parse regexp atom&quot;</span><span class="sym">)</span>
+
+p_post_atom atom <span class="sym">= (</span>P.char '?' <span class="sym">&gt;&gt;</span> return <span class="sym">(</span>atom `quest`<span class="sym">))</span>
+               <span class="sym">&lt;|&gt; (</span>P.char '<span class="sym">+</span>' <span class="sym">&gt;&gt;</span> return <span class="sym">(</span>atom `plus`<span class="sym">))</span>
+               <span class="sym">&lt;|&gt; (</span>P.char '<span class="sym">*</span>' <span class="sym">&gt;&gt;</span> return <span class="sym">(</span>atom `star`<span class="sym">))</span>
+               <span class="sym">&lt;|&gt; (</span>return <span class="sym">(</span>atom <span class="sym">+&gt;))</span>
+
+p_bracket <span class="sym">= (</span>P.char '<span class="sym">[</span>'<span class="sym">) &gt;&gt; ( (</span>P.char '^' <span class="sym">&gt;&gt;</span> p_set <span class="kwa">True</span><span class="sym">) &lt;|&gt; (</span>p_set <span class="kwa">False</span><span class="sym">) )</span>
+
+p_set invert <span class="sym">=</span> <span class="kwa">do</span> initial <span class="sym">&lt;- (</span>P.option <span class="str">&quot;&quot;</span> <span class="sym">((</span>P.char '<span class="sym">]</span>' <span class="sym">&gt;&gt;</span> return <span class="str">&quot;]&quot;</span><span class="sym">) &lt;|&gt; (</span>P.char '<span class="sym">-</span>' <span class="sym">&gt;&gt;</span> return <span class="str">&quot;-&quot;</span><span class="sym">)))</span>
+                  middle <span class="sym">&lt;-</span> P.manyTill P.anyChar <span class="sym">(</span>P.char '<span class="sym">]</span>'<span class="sym">)</span>
+                  <span class="kwa">let</span> expand <span class="sym">[] = []</span>
+                      expand <span class="sym">(</span>'<span class="sym">-</span>'<span class="sym">:[]) =</span> <span class="str">&quot;-&quot;</span>
+                      expand <span class="sym">(</span>a<span class="sym">:</span>'<span class="sym">-</span>'<span class="sym">:</span>b<span class="sym">:</span>rest<span class="sym">) |</span> a <span class="sym">/=</span> '<span class="sym">-</span>' <span class="sym">= (</span>enumFromTo a b<span class="sym">)++(</span>expand rest<span class="sym">)</span>
+                      expand <span class="sym">(</span>x<span class="sym">:</span>xs<span class="sym">) |</span> x <span class="sym">/=</span> '<span class="sym">-</span>'  <span class="sym">=</span> x<span class="sym">:(</span>expand xs<span class="sym">)</span>
+                                    <span class="sym">|</span> otherwise <span class="sym">=</span> error <span class="str">&quot;A dash is in the wrong place in a p_set&quot;</span>
+                      characters <span class="sym">=</span> nub <span class="sym">(</span> sort <span class="sym">(</span>initial <span class="sym">++ (</span>expand middle<span class="sym">)) )</span>
+                  return $ if invert <span class="kwa">then</span> alt <span class="sym">( [</span>'\<span class="num">0</span>'..'\<span class="num">127</span>'<span class="sym">]</span> \\ characters <span class="sym">)</span>
+                                     <span class="kwa">else</span> alt characters
+
+p_dot <span class="sym">=</span> P.char '.' <span class="sym">&gt;&gt;</span> return <span class="sym">(</span>alt <span class="sym">[</span>'\<span class="num">0</span>'..'\<span class="num">127</span>'<span class="sym">])</span>
+
+p_escaped_char <span class="sym">=</span> P.char '\\' <span class="sym">&gt;&gt;</span> liftM char P.anyChar
+
+p_other_char <span class="sym">=</span> liftM char <span class="sym">(</span>P.noneOf specials<span class="sym">)</span> <span class="kwa">where</span> specials <span class="sym">=</span> <span class="str">&quot;^.[$()|*+?\\&quot;</span>
+
+<span class="slc">--</span>
+<span class="slc">--  And everything else is the modified CTK library.</span>
+<span class="slc">--</span>
+<span class="slc">--  Compiler Toolkit: Self-optimizing lexers</span>
+<span class="slc">--  Author : Manuel M. T. Chakravarty</span>
 <span class="slc">--</span>
 
-<span class="kwa">import</span> Text.Regex
+<span class="slc">-- tree structure used to represent the lexer table</span>
+<span class="kwa">data</span> Lexer <span class="sym">=</span> Lexer <span class="sym">!</span><span class="kwb">Bool</span> <span class="sym">!</span>Cont
 
-main <span class="sym">=</span> getContents <span class="sym">&gt;&gt;=</span> putStr . output
+<span class="slc">-- represent the continuation of a lexer</span>
+            <span class="slc">-- on top of the tree, where entries are dense, we use arrays</span>
+<span class="kwa">data</span> Cont <span class="sym">=</span> Dense <span class="sym">!</span>BoundsNum <span class="sym">!(</span>Array Word8 Lexer<span class="sym">)</span>
+          <span class="slc">-- further down, where the valid entries are sparse, we</span>
+          <span class="slc">-- use association lists, to save memory</span>
+          <span class="sym">|</span> Sparse <span class="sym">!</span>BoundsNum <span class="sym">!(</span>M.Map Word8 Lexer<span class="sym">)</span>
+          <span class="slc">-- end of a automaton</span>
+          <span class="sym">|</span> Done
 
-output s <span class="sym">=</span> unlines $ countMatches <span class="sym">++ [[]] ++</span> map show <span class="sym">[</span>length s<span class="sym">,</span> length s'<span class="sym">,</span> finalLen<span class="sym">]</span>
-  <span class="kwa">where</span> s'           <span class="sym">=</span> replace <span class="str">&quot;&gt;.*\n|\n&quot;</span> <span class="str">&quot;&quot;</span> s
-        finalLen     <span class="sym">=</span> length $ replaceIubs s'
-        countMatches <span class="sym">=</span> map <span class="sym">(</span>\v <span class="sym">-&gt;</span> v <span class="sym">++</span> ' '<span class="sym">:</span> show <span class="sym">(</span>numHits v s'<span class="sym">))</span> variants
+<span class="kwa">type</span> Regexp <span class="sym">=</span> Lexer <span class="sym">-&gt;</span> Lexer
 
-replaceIubs <span class="sym">=</span> foldl1 <span class="sym">(</span>.<span class="sym">) (</span>map <span class="sym">(</span>uncurry replace<span class="sym">)</span> pairs<span class="sym">)</span>
+<span class="kwa">infixr</span> <span class="num">4</span> `quest`<span class="sym">,</span> `star`<span class="sym">,</span> `plus`
+<span class="kwa">infixl</span> <span class="num">3</span> <span class="sym">+&gt;</span>
 
-numHits <span class="sym">=</span> gmatch $ \m _ loop <span class="sym">-&gt;</span> maybe <span class="num">0</span> <span class="sym">(</span>\<span class="sym">(</span>_<span class="sym">,</span>_<span class="sym">,</span>t<span class="sym">,</span>_<span class="sym">) -&gt;</span> <span class="num">1</span> <span class="sym">+</span> loop t<span class="sym">)</span> m
+<span class="slc">-- Empty lexeme (noop)</span>
+epsilon <span class="sym">=</span> id <span class="sym">::</span> Regexp
 
-replace pat r <span class="sym">=</span> gmatch <span class="sym">(</span>\m s loop <span class="sym">-&gt;</span> maybe s <span class="sym">(</span>\<span class="sym">(</span>a<span class="sym">,</span>_<span class="sym">,</span>b<span class="sym">,</span>_<span class="sym">) -&gt;</span> a <span class="sym">++</span> r <span class="sym">++</span> loop b<span class="sym">)</span> m<span class="sym">)</span> pat
+<span class="slc">-- One character regexp</span>
+char c <span class="sym">= (</span>\l <span class="sym">-&gt;</span> Lexer <span class="kwa">False</span> <span class="sym">(</span>Dense <span class="sym">(</span>B <span class="num">1</span> w w<span class="sym">) (</span>listArray <span class="sym">(</span>w<span class="sym">,</span>w<span class="sym">) [</span>l<span class="sym">])))</span>
+  <span class="kwa">where</span> w <span class="sym">=</span> c2w c
 
-gmatch fn pat buf <span class="sym">=</span> loop buf
-  <span class="kwa">where</span> regex  <span class="sym">=</span> mkRegexWithOpts pat <span class="kwa">True True</span>
-        loop s <span class="sym">=</span> fn <span class="sym">(</span>matchRegexAll regex s<span class="sym">)</span> s loop
+<span class="slc">-- accepts a non-empty set of alternative characters</span>
+<span class="slc">-- Equiv. to `(foldr1 (&gt;|&lt;) . map char) cs', but much faster</span>
+alt cs  <span class="sym">=</span> \l <span class="sym">-&gt;</span> <span class="kwa">let</span> bnds <span class="sym">=</span> B <span class="sym">(</span>length ws<span class="sym">) (</span>minimum ws<span class="sym">) (</span>maximum ws<span class="sym">)</span>
+                <span class="kwa">in</span> Lexer <span class="kwa">False</span> <span class="sym">(</span>aggregate bnds <span class="sym">[(</span>w<span class="sym">,</span> l<span class="sym">) |</span> w <span class="sym">&lt;-</span> ws<span class="sym">])</span>
+  <span class="kwa">where</span> ws <span class="sym">=</span> map c2w cs
 
-variants <span class="sym">=</span>
-  <span class="sym">[</span><span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span><span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span><span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
-  <span class="sym">,</span><span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span><span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span><span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
-  <span class="sym">,</span><span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span><span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span><span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">]</span>
+<span class="slc">-- accept a character sequence</span>
+string cs <span class="sym">= (</span>foldr1 <span class="sym">(+&gt;)</span> . map char<span class="sym">)</span> cs
 
-pairs <span class="sym">=</span>
-  <span class="sym">[(</span><span class="str">&quot;B&quot;</span><span class="sym">,</span><span class="str">&quot;(c|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;D&quot;</span><span class="sym">,</span><span class="str">&quot;(a|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;H&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;K&quot;</span><span class="sym">,</span><span class="str">&quot;(g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;M&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c)&quot;</span><span class="sym">)</span>
-  <span class="sym">,(</span><span class="str">&quot;N&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">),(</span><span class="str">&quot;R&quot;</span><span class="sym">,</span><span class="str">&quot;(a|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;S&quot;</span><span class="sym">,</span><span class="str">&quot;(c|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;V&quot;</span><span class="sym">,</span><span class="str">&quot;(a|c|g)&quot;</span><span class="sym">),(</span><span class="str">&quot;W&quot;</span><span class="sym">,</span><span class="str">&quot;(a|t)&quot;</span><span class="sym">)</span>
-  <span class="sym">,(</span><span class="str">&quot;Y&quot;</span><span class="sym">,</span><span class="str">&quot;(c|t)&quot;</span><span class="sym">) ]</span>
+<span class="slc">-- Concatenation of regexps is just concatenation of functions</span>
+<span class="sym">(+&gt;)  = (</span>.<span class="sym">) ::</span> Regexp <span class="sym">-&gt;</span> Regexp <span class="sym">-&gt;</span> Regexp
+
+<span class="slc">-- disjunctive combination of two regexps, corresponding to x|y</span>
+re1 <span class="sym">&gt;|&lt;</span> re2  <span class="sym">=</span> \l <span class="sym">-&gt;</span> re1 l <span class="sym">&gt;||&lt;</span> re2 l
+
+<span class="slc">-- x `quest` y corresponds to the regular expression x?y</span>
+quest re1 re2  <span class="sym">= (</span>re1 <span class="sym">+&gt;</span> re2<span class="sym">) &gt;|&lt;</span> re2
+
+<span class="slc">-- x `plus` y corresponds to the regular expression x+y</span>
+plus re1 re2  <span class="sym">=</span> re1 <span class="sym">+&gt; (</span>re1 `star` re2<span class="sym">)</span>
+
+<span class="slc">-- x `star` y corresponds to the regular expression x*y</span>
+star re1 re2  <span class="sym">=</span> \l <span class="sym">-&gt;</span> <span class="kwa">let</span> self <span class="sym">=</span> re1 self <span class="sym">&gt;||&lt;</span> re2 l <span class="kwa">in</span> self
+
+<span class="slc">-- Scan forwards searching for a match anywhere at or after</span>
+<span class="slc">-- startOffset.  Return offsets of first matching character and after</span>
+<span class="slc">-- last matching character or (-1,-1) for failure</span>
+lexOne <span class="sym">!</span>b lexerIn <span class="sym">!</span>startOffset <span class="sym">=</span>
+    <span class="kwa">let</span> stop <span class="sym">=</span> oneLexeme lexerIn startOffset <span class="sym">(-</span><span class="num">1</span><span class="sym">)</span>
+    <span class="kwa">in</span> if stop <span class="sym">== -</span><span class="num">1</span>
+             <span class="kwa">then</span> if startOffset <span class="sym">&lt;</span> end
+                    <span class="kwa">then</span> lexOne b lexerIn <span class="sym">(</span>succ startOffset<span class="sym">)</span>
+                    <span class="kwa">else</span> <span class="sym">(-</span><span class="num">1</span><span class="sym">,-</span><span class="num">1</span><span class="sym">)</span>
+             <span class="kwa">else</span> <span class="sym">(</span>startOffset<span class="sym">,</span>stop<span class="sym">)</span>
+  <span class="kwa">where</span>
+    end <span class="sym">=</span> B.length b
+    oneLexeme <span class="sym">(</span>Lexer win cont<span class="sym">) !</span>offset <span class="sym">!</span>last <span class="sym">=</span>
+      <span class="kwa">let</span> last' <span class="sym">=</span> if win <span class="kwa">then</span> offset <span class="kwa">else</span> last
+      <span class="kwa">in</span> if offset <span class="sym">==</span> end
+           <span class="kwa">then</span> last' <span class="slc">-- at end, has to be this action</span>
+           <span class="kwa">else</span> oneChar cont <span class="sym">(</span>unsafeIndex b offset<span class="sym">) (</span>succ offset<span class="sym">)</span> last'   <span class="slc">-- keep looking</span>
+
+    oneChar tbl <span class="sym">!</span>c <span class="sym">!</span>offset' <span class="sym">!</span>last <span class="sym">=</span> <span class="kwa">case</span> peek tbl c <span class="kwa">of</span>
+      <span class="sym">(</span>Lexer win Done<span class="sym">)   -&gt;</span> if win <span class="kwa">then</span> offset' <span class="kwa">else</span> last
+      l'                 <span class="sym">-&gt;</span> oneLexeme l' offset' last
+
+    peek <span class="sym">(</span>Dense bn arr<span class="sym">)  !</span>c <span class="sym">|</span> c `inBounds` bn <span class="sym">=</span> arr <span class="sym">!</span> c
+    peek <span class="sym">(</span>Sparse bn cls<span class="sym">) !</span>c <span class="sym">|</span> c `inBounds` bn <span class="sym">=</span> M.findWithDefault <span class="sym">(</span>Lexer <span class="kwa">False</span> Done<span class="sym">)</span> c cls
+    peek _ _ <span class="sym">= (</span>Lexer <span class="kwa">False</span> Done<span class="sym">)</span>
+
+<span class="slc">-- disjunctive combination of two lexers (longest match, right biased)</span>
+<span class="sym">(</span>Lexer win c<span class="sym">) &gt;||&lt; (</span>Lexer win' c'<span class="sym">)  =</span> Lexer <span class="sym">(</span>win <span class="sym">||</span> win'<span class="sym">) (</span>joinConts c c'<span class="sym">)</span>
+
+<span class="slc">-- represents the number of (non-error) elements and the bounds of a</span>
+<span class="slc">-- DFA transition table</span>
+<span class="kwa">data</span> BoundsNum <span class="sym">=</span> B <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!</span>Word8 <span class="sym">!</span>Word8
+
+<span class="slc">-- combine two bounds</span>
+addBoundsNum <span class="sym">(</span>B n lc hc<span class="sym">) (</span>B n' lc' hc'<span class="sym">)  =</span> B <span class="sym">(</span>n <span class="sym">+</span> n'<span class="sym">) (</span>min lc lc'<span class="sym">) (</span>max hc hc'<span class="sym">)</span>
+
+<span class="slc">-- check whether a character is in the bounds</span>
+inBounds c <span class="sym">(</span>B _ lc hc<span class="sym">) =</span> c <span class="sym">&gt;=</span> lc <span class="sym">&amp;&amp;</span> c <span class="sym">&lt;=</span> hc
+
+<span class="slc">-- combine two disjunctive continuations</span>
+joinConts Done c'   <span class="sym">=</span> c'
+joinConts c    Done <span class="sym">=</span> c
+joinConts c    c'   <span class="sym">=</span> <span class="kwa">let</span> <span class="sym">(</span>bn <span class="sym">,</span> cls <span class="sym">) =</span> listify c
+                          <span class="sym">(</span>bn'<span class="sym">,</span> cls'<span class="sym">) =</span> listify c'
+                      <span class="slc">-- note: `addsBoundsNum' can, at this point, only</span>
+                      <span class="slc">--       approx. the number of *non-overlapping* cases;</span>
+                      <span class="slc">--       however, the bounds are correct</span>
+                      <span class="kwa">in</span> aggregate <span class="sym">(</span>addBoundsNum bn bn'<span class="sym">) (</span>cls <span class="sym">++</span> cls'<span class="sym">)</span>
+  <span class="kwa">where</span> listify <span class="sym">(</span>Dense  n arr<span class="sym">) = (</span>n<span class="sym">,</span> assocs arr<span class="sym">)</span>
+        listify <span class="sym">(</span>Sparse n cls<span class="sym">) = (</span>n<span class="sym">,</span> M.toList cls<span class="sym">)</span>
+
+<span class="slc">-- we use the dense representation if a table has at least the given</span>
+<span class="slc">-- number of (non-error) elements</span>
+denseMin  <span class="sym">=</span> <span class="num">1</span> <span class="sym">::</span> <span class="kwb">Int</span>
+
+<span class="slc">-- Note: `n' is only an upper bound of the number of non-overlapping cases</span>
+aggregate bn<span class="sym">&#64;(</span>B n lc hc<span class="sym">)</span> cls
+  <span class="sym">|</span> n <span class="sym">&gt;=</span> denseMin <span class="sym">=</span> Dense  bn <span class="sym">(</span>accumArray <span class="sym">(&gt;||&lt;) (</span>Lexer <span class="kwa">False</span> Done<span class="sym">) (</span>lc<span class="sym">,</span> hc<span class="sym">)</span> cls<span class="sym">)</span>
+  <span class="sym">|</span> otherwise     <span class="sym">=</span> Sparse bn <span class="sym">(</span>M.fromList <span class="sym">(</span>accum <span class="sym">(&gt;||&lt;)</span> cls<span class="sym">))</span>
+
+<span class="slc">-- combine the elements in the association list that have the same key</span>
+accum _ <span class="sym">[]           = []</span>
+accum f <span class="sym">((</span>c<span class="sym">,</span> el<span class="sym">):</span>ces<span class="sym">) =</span> <span class="kwa">let</span> <span class="sym">(</span>ce<span class="sym">,</span> ces'<span class="sym">) =</span> gather c el ces <span class="kwa">in</span> ce <span class="sym">:</span> accum f ces'
+  <span class="kwa">where</span> gather k e <span class="sym">[]                             = ((</span>k<span class="sym">,</span> e<span class="sym">), [])</span>
+        gather k e <span class="sym">(</span>ke'<span class="sym">&#64;(</span>k'<span class="sym">,</span> e'<span class="sym">):</span>kes<span class="sym">) |</span> k <span class="sym">==</span> k'   <span class="sym">=</span> gather k <span class="sym">(</span>f e e'<span class="sym">)</span> kes
+                                      <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">let</span> <span class="sym">(</span>ke''<span class="sym">,</span> kes'<span class="sym">) =</span> gather k e kes
+                                                    <span class="kwa">in</span> <span class="sym">(</span>ke''<span class="sym">,</span> ke'<span class="sym">:</span>kes'<span class="sym">)</span>
