@@ -1,51 +1,53 @@
-<span class="slc">-- The Great Computer Language Shootout</span>
+<span class="slc">-- {-# OPTIONS -O -fglasgow-exts -fbang-patterns -funbox-strict-fields -fexcess-precision -optc-O2 -optc-march=pentium4 -optc-mfpmath=sse -optc-msse2 #-}</span>
+<span class="slc">--</span>
+<span class="slc">-- The Computer Language Shootout</span>
 <span class="slc">-- http:--shootout.alioth.debian.org/</span>
 <span class="slc">--</span>
-<span class="slc">-- Original C contributed by Sebastien Loisel</span>
-<span class="slc">-- Conversion to C++ by Jon Harrop</span>
-<span class="slc">-- Conversion to Haskell by Einar Karttunen</span>
+<span class="slc">-- Contributed by Don Stewart</span>
+<span class="slc">--</span>
 
-<span class="kwa">import</span> Control.Monad.ST
-<span class="kwa">import</span> Data.Array.Base
-<span class="kwa">import</span> Data.Array.ST
-<span class="kwa">import</span> Numeric
+<span class="kwa">import</span> Monad
 <span class="kwa">import</span> System
+<span class="kwa">import</span> Text.Printf
+<span class="kwa">import</span> Data.Array.IO
+<span class="kwa">import</span> Data.Array.Base
 
-eval_A <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Double</span>
-eval_A i j <span class="sym">=</span> <span class="num">1</span> <span class="sym">/</span> fromIntegral <span class="sym">((</span>i<span class="sym">+</span>j<span class="sym">)*(</span>i<span class="sym">+</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> `div` <span class="num">2</span> <span class="sym">+</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
+main <span class="sym">=</span> getArgs <span class="sym">&gt;&gt;=</span> approximate . read . head <span class="sym">&gt;&gt;=</span> printf <span class="str">&quot;%.9f\n&quot;</span>
 
-plusAt <span class="sym">::</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> ST s <span class="sym">()</span>
-plusAt a i v <span class="sym">=</span> <span class="kwa">do</span> o <span class="sym">&lt;-</span> unsafeRead a i
-                  unsafeWrite a i <span class="sym">(</span>v<span class="sym">+</span>o<span class="sym">)</span>
+approximate n <span class="sym">=</span> <span class="kwa">do</span>
+    u <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">1</span> <span class="sym">::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Double</span><span class="sym">)</span>
+    v <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">0</span> <span class="sym">::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Double</span><span class="sym">)</span>
+    sequence_ $ replicate <span class="num">10</span> $ multiplyAtAv n u v <span class="sym">&gt;&gt;</span> multiplyAtAv n v u
 
-eval_A_Times_u <span class="sym">::</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> ST s <span class="sym">()</span>
-eval_A_Times_u u au <span class="sym">=</span> outer <span class="sym">(</span>snd $ bounds u<span class="sym">)</span>
-    <span class="kwa">where</span> outer <span class="num">0</span> <span class="sym">=</span> unsafeWrite au <span class="num">0 0</span> <span class="sym">&gt;&gt;</span> inner <span class="num">0</span> <span class="sym">(</span>snd $ bounds u<span class="sym">)</span>
-          outer i <span class="sym">=</span> unsafeWrite au i <span class="num">0</span> <span class="sym">&gt;&gt;</span> inner i <span class="sym">(</span>snd $ bounds u<span class="sym">) &gt;&gt;</span> outer <span class="sym">(</span>i<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
-          inner i <span class="num">0</span> <span class="sym">=</span> unsafeRead u <span class="num">0</span> <span class="sym">&gt;&gt;=</span> \uj <span class="sym">-&gt;</span> plusAt au i <span class="sym">(</span>eval_A i <span class="num">0</span> <span class="sym">*</span> uj<span class="sym">)</span>
-          inner i j <span class="sym">=</span> unsafeRead u j <span class="sym">&gt;&gt;=</span> \uj <span class="sym">-&gt;</span> plusAt au i <span class="sym">(</span>eval_A i j <span class="sym">*</span> uj<span class="sym">) &gt;&gt;</span> inner i <span class="sym">(</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+    <span class="kwa">let</span> loop <span class="sym">!</span>vbv <span class="sym">!</span>vv <span class="sym">!</span>i
+            <span class="sym">|</span> i <span class="sym">&gt;=</span> n    <span class="sym">=</span> return <span class="sym">(</span>vbv<span class="sym">,</span>vv<span class="sym">)</span>
+            <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> ui <span class="sym">&lt;-</span> unsafeRead u i
+                             vi <span class="sym">&lt;-</span> unsafeRead v i
+                             loop <span class="sym">(</span>vbv <span class="sym">+</span> ui <span class="sym">*</span> vi<span class="sym">) (</span>vv <span class="sym">+</span> vi <span class="sym">*</span> vi<span class="sym">) (</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+    <span class="sym">(</span>vbv<span class="sym">,</span>vv<span class="sym">) &lt;-</span> loop <span class="num">0 0 0</span>
+    return $<span class="sym">!</span> sqrt <span class="sym">(</span>vbv<span class="sym">/</span>vv<span class="sym">)</span>
 
-eval_At_Times_u <span class="sym">::</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> ST s <span class="sym">()</span>
-eval_At_Times_u u au <span class="sym">=</span> outer <span class="sym">(</span>snd $ bounds u<span class="sym">)</span>
-    <span class="kwa">where</span> outer <span class="num">0</span> <span class="sym">=</span> unsafeWrite au <span class="num">0 0</span> <span class="sym">&gt;&gt;</span> inner <span class="num">0</span> <span class="sym">(</span>snd $ bounds u<span class="sym">)</span>
-          outer i <span class="sym">=</span> unsafeWrite au i <span class="num">0</span> <span class="sym">&gt;&gt;</span> inner i <span class="sym">(</span>snd $ bounds u<span class="sym">) &gt;&gt;</span> outer <span class="sym">(</span>i<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
-          inner i <span class="num">0</span> <span class="sym">=</span> unsafeRead u <span class="num">0</span> <span class="sym">&gt;&gt;=</span> \uj <span class="sym">-&gt;</span> plusAt au i <span class="sym">(</span>eval_A <span class="num">0</span> i <span class="sym">*</span> uj<span class="sym">)</span>
-          inner i j <span class="sym">=</span> unsafeRead u j <span class="sym">&gt;&gt;=</span> \uj <span class="sym">-&gt;</span> plusAt au i <span class="sym">(</span>eval_A j i <span class="sym">*</span> uj<span class="sym">) &gt;&gt;</span> inner i <span class="sym">(</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+<span class="slc">-- return element i,j of infinite matrix A</span>
+a i j <span class="sym">=</span> <span class="num">1</span> <span class="sym">/</span> fromIntegral <span class="sym">(</span>x<span class="sym">*(</span>x<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> `div` <span class="num">2</span> <span class="sym">+</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span> <span class="kwa">where</span> x <span class="sym">=</span> i<span class="sym">+</span>j
 
-eval_AtA_Times_u u v <span class="sym">=</span> <span class="kwa">do</span> w <span class="sym">&lt;-</span> newArray <span class="sym">(</span>bounds u<span class="sym">)</span> <span class="num">0</span>
-                          eval_A_Times_u u w <span class="sym">&gt;&gt;</span> eval_At_Times_u w v
+<span class="slc">-- multiply vector v by matrix A */</span>
+multiplyAv <span class="sym">!</span>n <span class="sym">!</span>v <span class="sym">!</span>av <span class="sym">=</span> loop <span class="num">0</span>
+    <span class="kwa">where</span> loop i  <span class="sym">=</span> when <span class="sym">(</span>i <span class="sym">&lt;</span> n<span class="sym">)</span> $ <span class="kwa">do</span> avi <span class="sym">&lt;-</span> loop' i <span class="num">0 0</span>
+                                      unsafeWrite av i avi <span class="sym">&gt;&gt;</span> loop <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+          loop' <span class="sym">!</span>i <span class="sym">!</span>j <span class="sym">!</span>av <span class="sym">|</span> j <span class="sym">&gt;=</span> n    <span class="sym">=</span> return av
+                          <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> vj  <span class="sym">&lt;-</span> unsafeRead v j
+                                           loop' i <span class="sym">(</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>av <span class="sym">+</span> a i j <span class="sym">*</span> vj<span class="sym">)</span>
 
-main <span class="sym">=</span> <span class="kwa">do</span>
-  n <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> return.read.head
-  <span class="kwa">let</span> <span class="sym">(</span>vBv<span class="sym">,</span>vv<span class="sym">) =</span> runST <span class="sym">(</span><span class="kwa">do</span> u <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">1</span>
-                           v <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">0</span>
-                           sequence_ $ replicate <span class="num">10</span> <span class="sym">(</span>eval_AtA_Times_u u v <span class="sym">&gt;&gt;</span> eval_AtA_Times_u v u<span class="sym">)</span>
-                           vLoop u v n <span class="sym">(</span><span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">))</span>
-  putStrLn $ showFFloat <span class="sym">(</span>Just <span class="num">9</span><span class="sym">) (</span>sqrt <span class="sym">(</span>vBv<span class="sym">/</span>vv<span class="sym">))</span> <span class="str">&quot;&quot;</span>
+<span class="slc">-- multiply vector v by matrix A transposed</span>
+multiplyAtv <span class="sym">!</span>n <span class="sym">!</span>v <span class="sym">!</span>atv <span class="sym">=</span> loop <span class="num">0</span>
+    <span class="kwa">where</span> loop i <span class="sym">=</span> when <span class="sym">(</span>i <span class="sym">&lt;</span> n<span class="sym">)</span> $ <span class="kwa">do</span> atvi <span class="sym">&lt;-</span> loop' i <span class="num">0 0</span>
+                                     unsafeWrite atv i atvi <span class="sym">&gt;&gt;</span> loop <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+          loop' <span class="sym">!</span>i <span class="sym">!</span>j <span class="sym">!</span>atvi
+                <span class="sym">|</span> j <span class="sym">&gt;=</span> n    <span class="sym">=</span> return atvi
+                <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> vj <span class="sym">&lt;-</span> unsafeRead v j
+                                 loop' i <span class="sym">(</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>atvi <span class="sym">+</span> a j i <span class="sym">*</span> vj<span class="sym">)</span>
 
-vLoop <span class="sym">::</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> STUArray s <span class="kwb">Int Double</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt; (</span><span class="kwb">Double</span><span class="sym">,</span><span class="kwb">Double</span><span class="sym">) -&gt;</span> ST s <span class="sym">(</span><span class="kwb">Double</span><span class="sym">,</span><span class="kwb">Double</span><span class="sym">)</span>
-vLoop u v <span class="num">0</span> a            <span class="sym">=</span> return a
-vLoop u v <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>vBv<span class="sym">,</span>vv<span class="sym">) =</span> vLoop u v i <span class="sym">=&lt;&lt;</span> op
-    <span class="kwa">where</span> op <span class="sym">=</span> <span class="kwa">do</span> ui <span class="sym">&lt;-</span> unsafeRead u i
-                  vi <span class="sym">&lt;-</span> unsafeRead v i
-                  return <span class="sym">(</span>vBv<span class="sym">+(</span>ui<span class="sym">*</span>vi<span class="sym">),</span>vv<span class="sym">+(</span>vi<span class="sym">*</span>vi<span class="sym">))</span>
+<span class="slc">-- multiply vector v by matrix A and then by matrix A transposed */</span>
+multiplyAtAv <span class="sym">!</span>n <span class="sym">!</span>v <span class="sym">!</span>atav <span class="sym">=</span> <span class="kwa">do</span>
+    u  <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">0</span> <span class="sym">::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Double</span><span class="sym">)</span>
+    multiplyAv n v u <span class="sym">&gt;&gt;</span> multiplyAtv n u atav
