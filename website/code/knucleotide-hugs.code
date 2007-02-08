@@ -1,0 +1,174 @@
+<span class="com">{-# OPTIONS -fglasgow-exts -fbang-patterns -funbox-strict-fields #-}</span>
+<span class="slc">--</span>
+<span class="slc">-- The Computer Language Shootout</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">--</span>
+<span class="slc">-- Contributed by Don Stewart</span>
+<span class="slc">-- Uses a port of the simple hashtable from the Clean entry</span>
+<span class="slc">--</span>
+
+<span class="kwa">import</span> GHC.Exts
+<span class="kwa">import</span> GHC.IOBase
+
+<span class="kwa">import</span> Foreign
+<span class="kwa">import</span> <span class="kwb">Char</span>
+<span class="kwa">import</span> List
+<span class="kwa">import</span> Maybe
+<span class="kwa">import</span> Text.Printf
+
+<span class="kwa">import</span> Data.ByteString.Base
+<span class="kwa">import qualified</span> Data.ByteString.Char8 <span class="kwa">as</span> S
+
+<span class="kwa">import</span> Data.Array.Base
+<span class="kwa">import qualified</span> Data.Array.IO <span class="kwa">as</span> A
+
+main <span class="sym">=</span> <span class="kwa">do</span>
+    <span class="sym">(</span>PS fp o l<span class="sym">) &lt;-</span> get <span class="sym">(</span>S.pack <span class="str">&quot;&gt;TH&quot;</span><span class="sym">)</span>
+    withForeignPtr fp $ \p <span class="sym">-&gt;</span> <span class="kwa">do</span>
+        <span class="kwa">let</span> sec <span class="sym">=</span> p `plusPtr` o
+        mapM_ <span class="sym">(</span>writeFreqs l sec<span class="sym">) [</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">]</span>
+        mapM_ <span class="sym">(</span>writeFrame l sec<span class="sym">) =&lt;&lt;</span> mapM toseq strs
+
+strs <span class="sym">= [</span><span class="str">&quot;GGT&quot;</span><span class="sym">,</span><span class="str">&quot;GGTA&quot;</span><span class="sym">,</span><span class="str">&quot;GGTATT&quot;</span><span class="sym">,</span><span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">,</span><span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">]</span>
+
+get p <span class="sym">=</span> <span class="kwa">do</span>
+    s <span class="sym">&lt;-</span> S.getContents
+    <span class="kwa">let</span> Just n <span class="sym">=</span> S.findSubstring p s
+    return $<span class="sym">!</span> S.map toUpper             <span class="slc">-- array fusion!</span>
+            . S.filter    <span class="sym">((/=)</span> '\n'<span class="sym">)</span>
+            . S.dropWhile <span class="sym">((/=)</span> '\n'<span class="sym">)</span>
+            . S.copy
+            . S.drop n $ s
+
+writeFreqs size p n <span class="sym">=</span> <span class="kwa">do</span>
+    h   <span class="sym">&lt;-</span> htNew n size
+    htInsert size p n h
+    <span class="kwa">let</span> vs <span class="sym">=</span> htNodes h
+    mapM_ draw <span class="sym">(</span>sortBy kf vs<span class="sym">)</span>
+    putChar '\n'
+  <span class="kwa">where</span>
+    draw <span class="sym">(</span>Node p f<span class="sym">) =</span> printf <span class="str">&quot;%s %.3f\n&quot;</span> <span class="sym">(</span>ppr n p<span class="sym">)</span> pct
+        <span class="kwa">where</span> pct   <span class="sym">= (</span><span class="num">100</span> <span class="sym">* (</span>fromIntegral f<span class="sym">) /</span> total<span class="sym">) ::</span> <span class="kwb">Double</span>
+              total <span class="sym">=</span> fromIntegral <span class="sym">(</span>size <span class="sym">-</span> n <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
+
+    kf <span class="sym">(</span>Node k x<span class="sym">) (</span>Node j y<span class="sym">) =</span> <span class="kwa">case</span> compare y x <span class="kwa">of</span>
+          EQ <span class="sym">-&gt;</span> compare <span class="sym">(</span>ppr n k<span class="sym">) (</span>ppr n j<span class="sym">);</span> x  <span class="sym">-&gt;</span> x
+
+writeFrame size p <span class="sym">(</span>n<span class="sym">,</span>k<span class="sym">) =</span> <span class="kwa">do</span>
+    h <span class="sym">&lt;-</span> htNew n size
+    htInsert size p n h
+    Node k v <span class="sym">&lt;-</span> htFind k h
+    putStrLn $ <span class="sym">(</span>show v<span class="sym">) ++ (</span>'\t' <span class="sym">:</span> ppr n k<span class="sym">)</span>
+
+ppr n p <span class="sym">=</span> inlinePerformIO <span class="sym">(</span>map w2c `fmap` peekArray n p<span class="sym">)</span>
+toseq s <span class="sym">=</span> fmap <span class="sym">((,) (</span>length s<span class="sym">)) (</span>newArray0 <span class="num">0</span> <span class="sym">(</span>map c2w s<span class="sym">))</span>
+
+<span class="slc">------------------------------------------------------------------------</span>
+<span class="slc">--</span>
+<span class="slc">-- An implementation of simpl_hash.c in Haskell</span>
+<span class="slc">--</span>
+
+<span class="kwa">data</span> Hash    <span class="sym">=</span> HT <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!(</span>A.IOArray <span class="kwb">Int</span> Buckets<span class="sym">)</span>
+
+<span class="kwa">data</span> Buckets <span class="sym">=</span> Empty <span class="sym">|</span> Bucket <span class="sym">!(</span>Ptr Word8<span class="sym">) !</span><span class="kwb">Int</span> <span class="sym">|</span> Buckets <span class="sym">[</span>Node<span class="sym">]</span>
+
+<span class="kwa">data</span> Node    <span class="sym">=</span> Node <span class="sym">!(</span>Ptr Word8<span class="sym">) !</span><span class="kwb">Int</span>
+
+htNew <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO Hash
+htNew <span class="sym">!</span>fl <span class="sym">!</span>sz <span class="sym">=</span> HT fl nprime `fmap` A.newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>nprime<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> Empty
+  <span class="kwa">where</span>
+    n      <span class="sym">=</span> htSize fl sz
+    nprime <span class="sym">=</span> head <span class="sym">(</span>dropWhile <span class="sym">(&lt;</span> n<span class="sym">)</span> primes<span class="sym">)</span>
+
+htSize <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span>
+htSize <span class="sym">!</span>fl <span class="sym">!</span>buflen <span class="sym">=</span> min lim <span class="sym">(</span>go <span class="sym">(</span>fl<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">4</span><span class="sym">)</span>
+  <span class="kwa">where</span>
+    lim <span class="sym">= (</span>buflen <span class="sym">-</span> fl<span class="sym">)</span> `div` <span class="num">1024</span>
+    go <span class="sym">!</span>n <span class="sym">!</span>m <span class="sym">|</span> n <span class="sym">&gt;</span> <span class="num">0</span> <span class="sym">&amp;&amp;</span> m <span class="sym">&lt;</span> lim      <span class="sym">=</span> go <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">) (</span>m<span class="sym">*</span><span class="num">4</span><span class="sym">)</span>
+             <span class="sym">|</span> otherwise             <span class="sym">=</span> m
+
+htInsert <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> Ptr Word8 <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> Hash <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+htInsert <span class="sym">!</span>s <span class="sym">!</span>p n <span class="sym">!</span>h <span class="sym">=</span> mapM_ <span class="sym">(</span>htInc h . plusPtr p<span class="sym">) [</span><span class="num">0</span>..s<span class="sym">-</span>n<span class="sym">]</span>
+
+htInc <span class="sym">::</span> Hash <span class="sym">-&gt;</span> Ptr Word8 <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+htInc ht<span class="sym">&#64;(</span>HT n size arr<span class="sym">)</span> k  <span class="sym">=</span>
+    <span class="kwa">case</span> htHash size n k <span class="kwa">of</span>
+        <span class="sym">!</span>i <span class="sym">-&gt;</span> <span class="kwa">do</span> b <span class="sym">&lt;-</span> unsafeRead arr i
+                 unsafeWrite arr i $<span class="sym">!</span> inc b
+  <span class="kwa">where</span>
+    equal <span class="sym">=</span> eq n
+
+    inc <span class="sym">::</span> Buckets <span class="sym">-&gt;</span> Buckets
+    inc <span class="sym">(</span>Bucket <span class="sym">!</span>k' <span class="sym">!</span>v<span class="sym">)</span>
+        <span class="sym">|</span> k' `equal` k <span class="sym">=</span> Bucket  k' <span class="sym">(</span>v<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+        <span class="sym">|</span> otherwise    <span class="sym">=</span> Buckets $ Node k' v <span class="sym">: [</span>Node k <span class="num">1</span><span class="sym">]</span>
+    inc <span class="sym">(</span>Buckets b<span class="sym">)    =</span> Buckets $ incL b
+    inc Empty          <span class="sym">=</span> Bucket k <span class="num">1</span>
+
+    incL <span class="sym">:: [</span>Node<span class="sym">] -&gt; [</span>Node<span class="sym">]</span>
+    incL <span class="sym">(!</span>i<span class="sym">&#64;(</span>Node k' v<span class="sym">):</span>ls<span class="sym">)</span>
+        <span class="sym">|</span> k' `equal` k <span class="sym">=</span> Node k' <span class="sym">(</span>v<span class="sym">+</span><span class="num">1</span><span class="sym">) :</span> ls
+        <span class="sym">|</span> otherwise    <span class="sym">=</span> i <span class="sym">:</span> incL ls
+    incL <span class="sym">[]            = [</span>Node k <span class="num">1</span><span class="sym">]</span>
+
+htNodes <span class="sym">::</span> Hash <span class="sym">-&gt; [</span>Node<span class="sym">]</span>
+htNodes ht<span class="sym">&#64;(</span>HT n size arr<span class="sym">) =</span> items <span class="num">0</span>
+  <span class="kwa">where</span>
+    read i <span class="sym">=</span> inlinePerformIO $<span class="sym">!</span> unsafeRead arr i
+
+    items <span class="sym">!</span>i <span class="sym">|</span> i <span class="sym">&gt;=</span> size <span class="sym">= []</span>
+             <span class="sym">|</span> otherwise <span class="sym">=</span> items_bucket <span class="sym">(</span>read i<span class="sym">) (</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+
+    items_bucket <span class="sym">!(</span>Bucket <span class="sym">!</span>k' <span class="sym">!</span>v<span class="sym">)</span> i <span class="sym">=</span> Node k' v <span class="sym">:</span> items i
+    items_bucket <span class="sym">!(</span>Buckets <span class="sym">!</span>b<span class="sym">)</span> i    <span class="sym">=</span> items_list b i
+    items_bucket Empty        <span class="sym">!</span>i    <span class="sym">=</span> items i
+
+    items_list <span class="sym">(!</span>e<span class="sym">:</span>l<span class="sym">) !</span>i <span class="sym">=</span> e <span class="sym">:</span> items_list l i
+    items_list <span class="sym">[]     !</span>i <span class="sym">=</span> items i
+
+htFind <span class="sym">::</span> Ptr Word8 <span class="sym">-&gt;</span> Hash <span class="sym">-&gt;</span> IO Node
+htFind <span class="sym">!</span>k <span class="sym">!</span>h<span class="sym">&#64;(</span>HT n size arr<span class="sym">) =</span> <span class="kwa">do</span>
+    <span class="kwa">let</span> <span class="sym">!</span>i <span class="sym">=</span> htHash size n k
+    v <span class="sym">&lt;-</span> unsafeRead arr i
+    return $<span class="sym">!</span> find v
+  <span class="kwa">where</span>
+    equal <span class="sym">=</span> eq n
+
+    find  <span class="sym">(</span>Bucket k' v<span class="sym">) |</span> k' `equal` k <span class="sym">=</span> Node k' v
+                        <span class="sym">|</span> otherwise    <span class="sym">=</span> Node k  <span class="num">0</span>
+    find  <span class="sym">(</span>Buckets l<span class="sym">)   =</span> find' l
+    find  Empty         <span class="sym">=</span> Node k <span class="num">0</span>
+
+    find' <span class="sym">(</span>i<span class="sym">&#64;(</span>Node <span class="sym">!</span>k' v<span class="sym">):</span>ls<span class="sym">) |</span> k' `equal` k <span class="sym">=</span> i
+                              <span class="sym">|</span> otherwise    <span class="sym">=</span> find' ls
+    find' <span class="sym">[]           =</span> Node k <span class="num">0</span>
+
+htHash <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> Ptr Word8 <span class="sym">-&gt;</span> <span class="kwb">Int</span>
+htHash <span class="sym">(</span>I# max<span class="sym">) (</span>I# size<span class="sym">)</span> ptr<span class="sym">&#64;(</span>Ptr p<span class="sym">) =</span> abs . inlinePerformIO . IO $ go p <span class="num">0</span>#
+  <span class="kwa">where</span>
+    lim <span class="sym">=</span> p `plusAddr#` size
+    go p acc <span class="sym">!</span>s
+        <span class="sym">|</span> p `geAddr#` lim <span class="sym">= (</span># s<span class="sym">,</span> I# <span class="sym">(</span>acc `remInt#` max<span class="sym">)</span> #<span class="sym">)</span>
+        <span class="sym">|</span> otherwise       <span class="sym">=</span> <span class="kwa">case</span> readInt8OffAddr# p <span class="num">0</span># s <span class="kwa">of</span>
+                <span class="sym">(</span># s<span class="sym">,</span> i #<span class="sym">) -&gt;</span> go <span class="sym">(</span>p `plusAddr#` <span class="num">1</span>#<span class="sym">) (</span><span class="num">5</span># <span class="sym">*</span># acc <span class="sym">+</span># i<span class="sym">)</span> s
+
+<span class="slc">-- A fast Ptr comparison for Hash keys</span>
+eq <span class="sym">!</span>n p q <span class="sym">=</span> inlinePerformIO $ <span class="kwa">do</span>
+    a <span class="sym">&lt;-</span> peek p <span class="sym">::</span> IO Word8
+    b <span class="sym">&lt;-</span> peek q <span class="sym">::</span> IO Word8
+    if a <span class="sym">/=</span> b <span class="kwa">then</span> return <span class="kwa">False</span>
+              <span class="kwa">else</span> go n p q
+  <span class="kwa">where</span>
+    go <span class="sym">!</span>n <span class="sym">!</span>p <span class="sym">!</span>q
+        <span class="sym">|</span> n <span class="sym">==</span> <span class="num">0</span>    <span class="sym">=</span> return <span class="kwa">True</span>
+        <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span>
+            a <span class="sym">&lt;-</span> peek p <span class="sym">::</span> IO Word8
+            b <span class="sym">&lt;-</span> peek q <span class="sym">::</span> IO Word8
+            if a <span class="sym">/=</span> b <span class="kwa">then</span> return <span class="kwa">False</span>
+                      <span class="kwa">else</span> go <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">) (</span>p `plusPtr` <span class="num">1</span><span class="sym">) (</span>q `plusPtr` <span class="num">1</span><span class="sym">)</span>
+
+primes <span class="sym">= [</span> <span class="num">53</span><span class="sym">,</span>       <span class="num">97</span><span class="sym">,</span>        <span class="num">193</span><span class="sym">,</span>       <span class="num">389</span><span class="sym">,</span>       <span class="num">769</span><span class="sym">,</span>
+           <span class="num">1543</span><span class="sym">,</span>     <span class="num">3079</span><span class="sym">,</span>      <span class="num">6151</span><span class="sym">,</span>      <span class="num">12289</span><span class="sym">,</span>     <span class="num">24593</span><span class="sym">,</span>
+           <span class="num">49157</span><span class="sym">,</span>    <span class="num">98317</span><span class="sym">,</span>     <span class="num">196613</span><span class="sym">,</span>    <span class="num">93241</span><span class="sym">,</span>     <span class="num">786433</span><span class="sym">,</span>
+           <span class="num">1572869</span><span class="sym">,</span>  <span class="num">3145739</span><span class="sym">,</span>   <span class="num">6291469</span><span class="sym">,</span>   <span class="num">12582917</span><span class="sym">,</span>  <span class="num">25165843</span><span class="sym">,</span>
+           <span class="num">50331653</span><span class="sym">,</span> <span class="num">100663319</span><span class="sym">,</span> <span class="num">201326611</span><span class="sym">,</span> <span class="num">402653189</span><span class="sym">,</span> <span class="num">805306457</span> <span class="sym">]</span>

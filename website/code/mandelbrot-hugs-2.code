@@ -1,26 +1,49 @@
-<span class="slc">-- The Great Computer Language Shootout</span>
-<span class="slc">-- http://shootout.alioth.debian.org/</span>
-<span class="slc">-- Based on the SML version, written by Matthias Blume.</span>
-<span class="slc">-- Implemented in Haskell by Don Stewart</span>
+<span class="com">{-# OPTIONS -fbang-patterns -funbox-strict-fields #-}</span>
 <span class="slc">--</span>
-<span class="kwa">import</span> System<span class="sym">;</span> <span class="kwa">import</span> Data.Bits<span class="sym">;</span> <span class="kwa">import</span> Data.Word<span class="sym">;</span> <span class="kwa">import</span> GHC.Base<span class="sym">;</span> <span class="kwa">import</span> Text.Printf
+<span class="slc">-- The Computer Language Shootout</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">--</span>
+<span class="slc">-- Contributed by Trevor McCort, Spencer Janssen and Don Stewart</span>
+<span class="slc">-- For best results compile with:</span>
+<span class="slc">--</span>
+<span class="slc">-- ghc -O3 -fglasgow-exts -optc-ffast-math -optc-O3 -optc-march=pentium4 -fexcess-precision</span>
+<span class="slc">--</span>
 
-main <span class="sym">=</span> <span class="kwa">do</span> <span class="sym">(</span>w<span class="sym">::</span>Word32<span class="sym">) &lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> readIO . head
-          printf <span class="str">&quot;P4\n%d %d\n&quot;</span> <span class="sym">(</span>fromIntegral w<span class="sym">::</span><span class="kwb">Int</span><span class="sym">) (</span>fromIntegral w<span class="sym">::</span><span class="kwb">Int</span><span class="sym">) &gt;&gt;</span> yl <span class="num">0</span> w w
+<span class="kwa">import</span> System
+<span class="kwa">import</span> Foreign
+<span class="kwa">import qualified</span> Data.ByteString <span class="kwa">as</span> B
 
-yl y h w <span class="sym">=</span> if y <span class="sym">&lt;</span> h <span class="kwa">then</span> xl <span class="num">0</span> y <span class="num">0 8</span> h w <span class="kwa">else</span> return <span class="sym">()</span>
+main <span class="sym">=</span> <span class="kwa">do</span>
+    w <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> readIO . head
+    <span class="kwa">let</span> n      <span class="sym">=</span> w `div` <span class="num">8</span>
+        loop_y <span class="sym">=</span> B.unfoldrN n <span class="sym">(</span>next_x w <span class="sym">(</span><span class="num">2</span><span class="sym">/</span>fromIntegral w<span class="sym">)</span> n<span class="sym">)</span>
 
-xl x y b n h w
-    <span class="sym">|</span> x <span class="sym">==</span> w    <span class="sym">=</span> putChar <span class="sym">(</span>unsafeChr $ b `shiftL` n<span class="sym">) &gt;&gt;</span> yl <span class="sym">(</span>y<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> h w
-    <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span>
-        <span class="sym">(</span>b<span class="str">',n'</span><span class="sym">) &lt;-</span> if n <span class="sym">==</span> <span class="num">0</span> <span class="kwa">then</span> putChar <span class="sym">(</span>chr b<span class="sym">) &gt;&gt;</span> return <span class="sym">(</span><span class="num">0</span><span class="sym">,</span><span class="num">8</span><span class="sym">)</span> <span class="kwa">else</span> return <span class="sym">(</span>b<span class="sym">,</span>n<span class="sym">)</span>
-        xl <span class="sym">(</span>x<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> y <span class="sym">(</span>b<span class="str">'+b'</span><span class="sym">+</span> fromEnum <span class="sym">(</span>p x y w h<span class="sym">)) (</span>n<span class="str">'-1) h w</span>
-<span class="str"></span>
-<span class="str">p (x::Word32) y w h = lp 0.0 0.0 50 (f x * 2.0 / f w - 1.5) (f y * 2.0 / f h - 1.0)</span>
-<span class="str">    where f = fromIntegral</span>
-<span class="str"></span>
-<span class="str">lp r i k cr ci | r2 + i2 &gt; (4.0 :: Double) = 0 :: Word32</span>
-<span class="str">               | k == (0 :: Word32)        = 1</span>
-<span class="str">               | otherwise                 = lp (r2-i2+cr) ((r+r)*i+ci) (k-1) cr ci</span>
-<span class="str">    where r2 = r*r ; i2 = i*i</span>
-<span class="str"></span>
+        unfold x <span class="sym">=</span> <span class="kwa">case</span> loop_y x <span class="kwa">of</span>
+                    <span class="sym">(</span>s<span class="sym">,</span> Nothing<span class="sym">) -&gt;</span> B.putStr s
+                    <span class="sym">(</span>s<span class="sym">,</span> Just x<span class="sym">)  -&gt;</span> B.putStr s <span class="sym">&gt;&gt;</span> unfold x
+
+    putStrLn <span class="sym">(</span><span class="str">&quot;P4\n&quot;</span><span class="sym">++</span>show w<span class="sym">++</span><span class="str">&quot; &quot;</span><span class="sym">++</span>show w<span class="sym">)</span>
+    unfold <span class="sym">(</span>T <span class="num">1 0 0</span> <span class="sym">(-</span><span class="num">1</span><span class="sym">))</span>
+
+<span class="kwa">data</span> T <span class="sym">=</span> T <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!</span><span class="kwb">Double</span>
+
+next_x <span class="sym">!</span>w <span class="sym">!</span>iw <span class="sym">!</span>bw <span class="sym">(</span>T bx x y ci<span class="sym">)</span>
+    <span class="sym">|</span> y  <span class="sym">==</span> w   <span class="sym">=</span> Nothing
+    <span class="sym">|</span> bx <span class="sym">==</span> bw  <span class="sym">=</span> Just <span class="sym">(</span>loop_x w x <span class="num">8</span> iw ci <span class="num">0</span><span class="sym">,</span> T <span class="num">1 0</span>    <span class="sym">(</span>y<span class="sym">+</span><span class="num">1</span><span class="sym">)   (</span>iw<span class="sym">+</span>ci<span class="sym">))</span>
+    <span class="sym">|</span> otherwise <span class="sym">=</span> Just <span class="sym">(</span>loop_x w x <span class="num">8</span> iw ci <span class="num">0</span><span class="sym">,</span> T <span class="sym">(</span>bx<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>x<span class="sym">+</span><span class="num">8</span><span class="sym">)</span> y ci<span class="sym">)</span>
+
+loop_x <span class="sym">!</span>w <span class="sym">!</span>x <span class="sym">!</span>n <span class="sym">!</span>iw <span class="sym">!</span>ci <span class="sym">!</span>b
+    <span class="sym">|</span> x <span class="sym">&lt;</span> w <span class="sym">=</span> if n <span class="sym">==</span> <span class="num">0</span>
+                    <span class="kwa">then</span> b
+                    <span class="kwa">else</span> loop_x w <span class="sym">(</span>x<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> iw ci <span class="sym">(</span>b<span class="sym">+</span>b<span class="sym">+</span>v<span class="sym">)</span>
+    <span class="sym">|</span> otherwise <span class="sym">=</span> b `shiftL` n
+  <span class="kwa">where</span>
+    v <span class="sym">=</span> fractal <span class="num">0 0</span> <span class="sym">(</span>fromIntegral x <span class="sym">*</span> iw <span class="sym">-</span> <span class="num">1.5</span><span class="sym">)</span> ci <span class="num">50</span>
+
+fractal <span class="sym">::</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> Word8
+fractal <span class="sym">!</span>r <span class="sym">!</span>i <span class="sym">!</span>cr <span class="sym">!</span>ci <span class="sym">!</span>k
+    <span class="sym">|</span> r2 <span class="sym">+</span> i2 <span class="sym">&gt;</span> <span class="num">4</span> <span class="sym">=</span> <span class="num">0</span>
+    <span class="sym">|</span> k <span class="sym">==</span> <span class="num">0</span>      <span class="sym">=</span> <span class="num">1</span>
+    <span class="sym">|</span> otherwise   <span class="sym">=</span> fractal <span class="sym">(</span>r2<span class="sym">-</span>i2<span class="sym">+</span>cr<span class="sym">) ((</span>r<span class="sym">+</span>r<span class="sym">)*</span>i<span class="sym">+</span>ci<span class="sym">)</span> cr ci <span class="sym">(</span>k<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+  <span class="kwa">where</span>
+    <span class="sym">(!</span>r2<span class="sym">,!</span>i2<span class="sym">) = (</span>r<span class="sym">*</span>r<span class="sym">,</span>i<span class="sym">*</span>i<span class="sym">)</span>
