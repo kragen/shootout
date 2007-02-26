@@ -16,6 +16,7 @@
    <li>check that the long-lived binary tree still exists</li>
 </ul>
 
+<p>Note: this is an adaptation of a benchmark for testing GC so we are interested in the whole tree being allocated before any nodes are GC'd - which probably excludes lazy evaluation.</p>
 <p>Note: the left subtrees are heads of the right subtrees, keeping a depth counter in the accessors to avoid duplication is cheating!</p>
 <p>Note: the tree should have tree-nodes all the way down, replacing the bottom nodes by some other value is not acceptable; and the bottom nodes should be at depth 0.</p>
 
