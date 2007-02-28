@@ -16,8 +16,11 @@ uasort($Tests, 'CompareTestName');
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
-if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
-elseif (!isset($T)){ $T = 'ackermann'; }
+if (isset($HTTP_GET_VARS['test'])){
+   $T0 = $HTTP_GET_VARS['test']; 
+   if (isset($Tests[$T0])){ $T = $T0; } elseif (!isset($T)){ $T = 'binarytrees'; }
+   } 
+elseif (!isset($T)){ $T = 'binarytrees'; }
 
 if (isset($HTTP_GET_VARS['lang'])){ $L = $HTTP_GET_VARS['lang']; }
 elseif (!isset($L)){ $L = 'all'; } 
