@@ -22,6 +22,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 <p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>
 <ul>  
   <li><p><a href="http://dacapobench.org/">The DaCapo Benchmark Suite</a></p></li>
+  <li><p><a href="http://www.cse.unsw.edu.au/~dons/nobench.html">nobench performance comparisons between different Haskell systems</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
   <li><p><a href="http://sbcl-test.boinkor.net/bench/">Version-to-version Steel Bank Common Lisp performance</a></p></li>
 </ul>
