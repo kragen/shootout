@@ -18,7 +18,7 @@ uasort($Langs, 'CompareLangName');
 
 if (isset($HTTP_GET_VARS['test'])){
    $T0 = $HTTP_GET_VARS['test']; 
-   if (isset($Tests[$T0]) || $T0 = 'all'){ $T = $T0; } 
+   if (isset($Tests[$T0]) || $T0 == 'all'){ $T = $T0; } 
    elseif (!isset($T)){ $T = 'nbody'; }
    } 
 elseif (!isset($T)){ $T = 'nbody'; }
