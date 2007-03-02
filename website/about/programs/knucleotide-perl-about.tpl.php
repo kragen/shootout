@@ -1,1 +1,0 @@
-<p><strong>NOT ACCEPTED:</strong> Program should define a procedure/function for a particular reading-frame.</p>
