@@ -1,0 +1,78 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   contributed by Tim Hochberg, loosely based on Tobias Polzin's Python version
+*/
+
+module chameneos
+
+import StdEnv, ArgEnv
+
+:: Color = Red | Blue | Yellow | Nil
+
+:: GlobalState = {n :: !Int, 
+              meetings :: !Int, 
+              waiter1 :: !Color,
+              waiter2 :: !Color}
+              
+:: LocalState = {color :: !Color,
+             met :: !Int,
+             iswaiter1 :: !Bool}
+
+   
+Start = schedule state
+where
+   argc = size argv - 1
+   argv = getCommandLine
+   n = if (argc == 1) (toInt argv.[1]) 100
+   threads = [{color=c, met=0, iswaiter1=False} \\ c <- [Blue, Red, Yellow, Blue]]
+   state = (threads, {n=n, meetings=0, waiter1=Nil, waiter2=Nil})
+
+
+// Trivial round-robin scheduler.
+schedule :: (![*LocalState], !*GlobalState) -> Int
+schedule ([], gs) = gs.meetings
+schedule state=:(threads, gs) = schedule (dispatch state)
+where   
+   dispatch :: (![*LocalState], !*GlobalState) -> ([*LocalState], *GlobalState)
+   dispatch ([ls:rest], gs)
+      # (ls, gs) = creature (ls, gs) 
+      = newstate ls (dispatch (rest, gs))   
+   dispatch state = state
+   
+   newstate :: !*LocalState (![*LocalState],  !*GlobalState) -> ([*LocalState], *GlobalState)
+   newstate ls=:{color=Nil} (rest, gs)    = (rest, gs)
+   newstate ls (rest, gs)                 = ([ls:rest], gs)
+
+
+// A social creature
+creature :: (!*LocalState, !*GlobalState) -> (*LocalState, *GlobalState)
+creature (ls, gs=:{waiter1=Nil, waiter2=Nil})
+   = ({ls & iswaiter1=True}, {gs & waiter1=ls.color})
+creature (ls, gs=:{waiter2=Nil})
+   | done gs   
+      = ({ls & color=Nil}, {gs & meetings=gs.meetings+ls.met})   
+   | otherwise 
+      = (meet gs.waiter1 ls, {gs & waiter2=ls.color, n=gs.n-1})
+creature (ls, gs)
+   | ls.iswaiter1   
+      = (meet (gs.waiter2) {ls & iswaiter1=False},{gs & waiter1=Nil, waiter2=Nil})
+   | otherwise
+      = (ls, gs)
+   
+   
+done gs       :== (gs.n <= 0)
+meet other ls :== {ls & color=complement ls.color other, met=ls.met+1}
+         
+         
+complement Red Yellow    = Blue
+complement Red Blue      = Yellow
+complement Red Red       = Red
+complement Yellow Blue   = Red
+complement Yellow Red    = Blue
+complement Yellow Yellow = Yellow
+complement Blue Red      = Yellow
+complement Blue Yellow   = Red
+complement Blue Blue     = Blue
+complement _   _         = Nil
+    
