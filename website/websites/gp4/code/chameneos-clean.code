@@ -1,0 +1,78 @@
+<span class="com">/* The Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   contributed by Tim Hochberg, loosely based on Tobias Polzin's Python version</span>
+<span class="com">*/</span>
+
+<span class="kwa">module</span> chameneos
+
+<span class="kwa">import</span> StdEnv<span class="sym">,</span> ArgEnv
+
+<span class="sym">::</span> Color <span class="sym">=</span> Red <span class="sym">|</span> Blue <span class="sym">|</span> Yellow <span class="sym">|</span> Nil
+
+<span class="sym">::</span> GlobalState <span class="sym">= {</span>n <span class="sym">:: !</span><span class="kwb">Int</span><span class="sym">,</span>
+              meetings <span class="sym">:: !</span><span class="kwb">Int</span><span class="sym">,</span>
+              waiter1 <span class="sym">:: !</span>Color<span class="sym">,</span>
+              waiter2 <span class="sym">:: !</span>Color<span class="sym">}</span>
+
+<span class="sym">::</span> LocalState <span class="sym">= {</span>color <span class="sym">:: !</span>Color<span class="sym">,</span>
+             met <span class="sym">:: !</span><span class="kwb">Int</span><span class="sym">,</span>
+             iswaiter1 <span class="sym">:: !</span><span class="kwb">Bool</span><span class="sym">}</span>
+
+
+Start <span class="sym">=</span> schedule state
+<span class="kwa">where</span>
+   argc <span class="sym">=</span> size argv <span class="sym">-</span> <span class="num">1</span>
+   argv <span class="sym">=</span> getCommandLine
+   n <span class="sym">=</span> <span class="kwa">if</span> <span class="sym">(</span>argc <span class="sym">==</span> <span class="num">1</span><span class="sym">) (</span>toInt argv<span class="sym">.[</span><span class="num">1</span><span class="sym">])</span> <span class="num">100</span>
+   threads <span class="sym">= [{</span>color<span class="sym">=</span>c<span class="sym">,</span> met<span class="sym">=</span><span class="num">0</span><span class="sym">,</span> iswaiter1<span class="sym">=</span>False<span class="sym">} \\</span> c <span class="sym">&lt;- [</span>Blue<span class="sym">,</span> Red<span class="sym">,</span> Yellow<span class="sym">,</span> Blue<span class="sym">]]</span>
+   state <span class="sym">= (</span>threads<span class="sym">, {</span>n<span class="sym">=</span>n<span class="sym">,</span> meetings<span class="sym">=</span><span class="num">0</span><span class="sym">,</span> waiter1<span class="sym">=</span>Nil<span class="sym">,</span> waiter2<span class="sym">=</span>Nil<span class="sym">})</span>
+
+
+<span class="slc">// Trivial round-robin scheduler.</span>
+schedule <span class="sym">:: (![*</span>LocalState<span class="sym">], !*</span>GlobalState<span class="sym">) -&gt;</span> <span class="kwb">Int</span>
+schedule <span class="sym">([],</span> gs<span class="sym">) =</span> gs<span class="sym">.</span>meetings
+schedule state<span class="sym">=:(</span>threads<span class="sym">,</span> gs<span class="sym">) =</span> schedule <span class="sym">(</span>dispatch state<span class="sym">)</span>
+<span class="kwa">where</span>
+   dispatch <span class="sym">:: (![*</span>LocalState<span class="sym">], !*</span>GlobalState<span class="sym">) -&gt; ([*</span>LocalState<span class="sym">], *</span>GlobalState<span class="sym">)</span>
+   dispatch <span class="sym">([</span>ls<span class="sym">:</span>rest<span class="sym">],</span> gs<span class="sym">)</span>
+      <span class="sym"># (</span>ls<span class="sym">,</span> gs<span class="sym">) =</span> creature <span class="sym">(</span>ls<span class="sym">,</span> gs<span class="sym">)</span>
+      <span class="sym">=</span> newstate ls <span class="sym">(</span>dispatch <span class="sym">(</span>rest<span class="sym">,</span> gs<span class="sym">))</span>
+   dispatch state <span class="sym">=</span> state
+
+   newstate <span class="sym">:: !*</span>LocalState <span class="sym">(![*</span>LocalState<span class="sym">],  !*</span>GlobalState<span class="sym">) -&gt; ([*</span>LocalState<span class="sym">], *</span>GlobalState<span class="sym">)</span>
+   newstate ls<span class="sym">=:{</span>color<span class="sym">=</span>Nil<span class="sym">} (</span>rest<span class="sym">,</span> gs<span class="sym">)    = (</span>rest<span class="sym">,</span> gs<span class="sym">)</span>
+   newstate ls <span class="sym">(</span>rest<span class="sym">,</span> gs<span class="sym">)                 = ([</span>ls<span class="sym">:</span>rest<span class="sym">],</span> gs<span class="sym">)</span>
+
+
+<span class="slc">// A social creature</span>
+creature <span class="sym">:: (!*</span>LocalState<span class="sym">, !*</span>GlobalState<span class="sym">) -&gt; (*</span>LocalState<span class="sym">, *</span>GlobalState<span class="sym">)</span>
+creature <span class="sym">(</span>ls<span class="sym">,</span> gs<span class="sym">=:{</span>waiter1<span class="sym">=</span>Nil<span class="sym">,</span> waiter2<span class="sym">=</span>Nil<span class="sym">})</span>
+   <span class="sym">= ({</span>ls <span class="sym">&amp;</span> iswaiter1<span class="sym">=</span>True<span class="sym">}, {</span>gs <span class="sym">&amp;</span> waiter1<span class="sym">=</span>ls<span class="sym">.</span>color<span class="sym">})</span>
+creature <span class="sym">(</span>ls<span class="sym">,</span> gs<span class="sym">=:{</span>waiter2<span class="sym">=</span>Nil<span class="sym">})</span>
+   <span class="sym">|</span> done gs
+      <span class="sym">= ({</span>ls <span class="sym">&amp;</span> color<span class="sym">=</span>Nil<span class="sym">}, {</span>gs <span class="sym">&amp;</span> meetings<span class="sym">=</span>gs<span class="sym">.</span>meetings<span class="sym">+</span>ls<span class="sym">.</span>met<span class="sym">})</span>
+   <span class="sym">|</span> otherwise
+      <span class="sym">= (</span>meet gs<span class="sym">.</span>waiter1 ls<span class="sym">, {</span>gs <span class="sym">&amp;</span> waiter2<span class="sym">=</span>ls<span class="sym">.</span>color<span class="sym">,</span> n<span class="sym">=</span>gs<span class="sym">.</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">})</span>
+creature <span class="sym">(</span>ls<span class="sym">,</span> gs<span class="sym">)</span>
+   <span class="sym">|</span> ls<span class="sym">.</span>iswaiter1
+      <span class="sym">= (</span>meet <span class="sym">(</span>gs<span class="sym">.</span>waiter2<span class="sym">) {</span>ls <span class="sym">&amp;</span> iswaiter1<span class="sym">=</span>False<span class="sym">},{</span>gs <span class="sym">&amp;</span> waiter1<span class="sym">=</span>Nil<span class="sym">,</span> waiter2<span class="sym">=</span>Nil<span class="sym">})</span>
+   <span class="sym">|</span> otherwise
+      <span class="sym">= (</span>ls<span class="sym">,</span> gs<span class="sym">)</span>
+
+
+done gs       <span class="sym">:== (</span>gs<span class="sym">.</span>n &lt;<span class="sym">=</span> <span class="num">0</span><span class="sym">)</span>
+meet other ls <span class="sym">:== {</span>ls <span class="sym">&amp;</span> color<span class="sym">=</span>complement ls<span class="sym">.</span>color other<span class="sym">,</span> met<span class="sym">=</span>ls<span class="sym">.</span>met<span class="sym">+</span><span class="num">1</span><span class="sym">}</span>
+
+
+complement Red Yellow    <span class="sym">=</span> Blue
+complement Red Blue      <span class="sym">=</span> Yellow
+complement Red Red       <span class="sym">=</span> Red
+complement Yellow Blue   <span class="sym">=</span> Red
+complement Yellow Red    <span class="sym">=</span> Blue
+complement Yellow Yellow <span class="sym">=</span> Yellow
+complement Blue Red      <span class="sym">=</span> Yellow
+complement Blue Yellow   <span class="sym">=</span> Red
+complement Blue Blue     <span class="sym">=</span> Blue
+complement _   _         <span class="sym">=</span> Nil
+
