@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2007-01-16 16:37:50 bfulgham Exp $
+# $Id: Makefile,v 1.15 2007-03-06 04:59:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fasta
@@ -18,6 +18,7 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell
+GHCOPTS := -fbang-patterns -fexcess-precision
 GPLCOPTS := --fast-math
 PARROTOPTS := -Cj
 

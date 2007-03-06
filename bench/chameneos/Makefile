@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2007-01-19 03:31:28 bfulgham Exp $
+# $Id: Makefile,v 1.12 2007-03-06 04:59:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := chameneos
@@ -17,6 +17,7 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 ERLFLAGS := -noinput -noshell
+GHCOPTS := --make -O2 -optc-O3 -funbox-strict-fields
 GPLCOPTS := --fast-math
 GXXLDOPTS := $(GXXLDOPTS) -lpthread
 GCCOPTS :=  $(GCCOPTS)-lpthread

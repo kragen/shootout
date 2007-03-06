@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2007-01-16 16:37:50 bfulgham Exp $
+# $Id: Makefile,v 1.7 2007-03-06 04:59:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := partialsums
@@ -15,7 +15,7 @@ POLYOPTS := -q
 
 GCCOPTS := -lm
 GPLCOPTS := --fast-math
-GHCOPTS := -O2 -fexcess-precision
+GHCOPTS := -O2 -fexcess-precision -fbang-patterns
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 25000,250000,2500000 --ignore partialsums.bigforth

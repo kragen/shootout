@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-06-15 05:27:22 igouy-guest Exp $
+# $Id: Makefile,v 1.12 2007-03-06 04:59:02 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -18,6 +18,7 @@ POLYOPTS := -q
 GHCOPTS  := -fparr
 
 ERLFLAGS := -noinput -noshell
+GHCOPTS := --make -O2 -optc-O3
 GPLCOPTS := --fast-math
 OBJCOPTS := -std=gnu99
 

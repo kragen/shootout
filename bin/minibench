@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- mode: perl -*-
 ######################################################################
-# $Id: minibench,v 1.45 2007-01-15 17:07:42 bfulgham Exp $
+# $Id: minibench,v 1.46 2007-03-06 04:59:02 bfulgham Exp $
 ######################################################################
 
 # TBD - finish the documentation
@@ -34,7 +34,7 @@ use POSIX ":sys_wait_h";
 ######################################################################
 
 my $PROGNAME; { $^W=0; ($PROGNAME = $0) =~ s!^.*/!!; }
-my $VERSION = (split(/ /, q$Revision: 1.45 $ ))[1];
+my $VERSION = (split(/ /, q$Revision: 1.46 $ ))[1];
 # holds command line options
 my @GET_OPTIONS =
     (
@@ -51,7 +51,6 @@ my @GET_OPTIONS =
      'force!',
      'geninput!',
      'gnuplot!',
-     'graph!',
      'help|h!',
      'html!',
      'ignore=s',		# CSV, multi-valued
@@ -65,8 +64,6 @@ my @GET_OPTIONS =
      'maxtime=i',
      'minsummary!',
      'name=s',			# CSV, multi-valued
-     'plotrange=s',
-     'plotsummary=s',
      'quiet!',
      'range=s',			# CSV (not-multivalued)
      'repeat=i',
@@ -105,9 +102,7 @@ my %DEF_OPT =
      'html' => 1,
      'text' => 1,
      'sampledelay' => 0.2,	# seconds
-     'plotrange' => 'plot.mb --scale 1 --dsnames --width 600 --height 600 --type Lines --x_label "N" --ticklabels --graph_border 0 --gif_border 0 --brush_size 4 --title %T --imagefile %I %D',
      # we really only want to add --x_ticks vertical if number of datasets > 10 (or so)
-     'plotsummary' => 'plot.mb --x_ticks vertical --legend bottom --legend_labels "[qw(cpu mem)]" --y_label "CPU and Memory" --ynorm 10 --min_val 0 --max_val 11 --y_ticks 12 --width 500 --height 350 --type Bars --ticklabels --graph_border 0 --gif_border 0 --title %T --imagefile %I %D',
 
      'graphsummary' => qq{graph --x_labels_vertical --legend_placement RC --set_legend 'qw(cpu mem)' --y_label "CPU and Memory" --ynorm 10 --width 700 --height 500 --type bars --ticklabels --title 'Ackermanns Function' max.mbtab},
     );
@@ -759,19 +754,6 @@ sub _write_range_tables {
 	    catfile($file);
 	}
     }
-    if ($OPT->{graph} && $OPT->{plotrange}) {
-        err "About to plot...\n";
-	my $cmd = $OPT->{plotrange};
-	my $title = ($OPT->{title}) ? "$OPT->{title} - $Which Usage" : "$Which Usage";
-	$title = quote_title($title);
-	# substitue graph title into plot command
-	$cmd =~ s!%T!$title!g;
-	# substitue imagefile name into plot command
-	$cmd =~ s!%I!${which}.png!g;
-	# substitue data filename into plot command
-	$cmd =~ s!%D!$datafile!g;
-	system($cmd) == 0 or abort(qq{"$cmd" FAILED: ($?)});
-    }
 }
 
 sub _write_summary_tables {
@@ -867,18 +849,6 @@ sub _write_summary_tables {
 	    if ($OPT->{verbose}) {
 		catfile($file);
 	    }
-	}
-	if ($OPT->{graph} && $OPT->{plotsummary}) {
-	    my $cmd = $OPT->{plotsummary};
-	    my $title = ($OPT->{title}) ? "$OPT->{title} (N = $arg)" : "(N = $arg)";
-	    $title = quote_title($title);
-	    # substitue graph title into plot command
-	    $cmd =~ s!%T!$title!g;
-	    # substitue imagefile name into plot command
-	    $cmd =~ s!%I!${argname}.png!g;
-	    # substitue data filename into plot command
-	    $cmd =~ s!%D!$datafile!g;
-	    system($cmd) == 0 or abort(qq{"$cmd" FAILED: ($?)});
 	}
     }
 }
@@ -1665,7 +1635,6 @@ SYNOPSIS
       [--dir dir] [--rundir dir] [--datdir dir] [--tabdir dir] [--makedirs]
       [--automake ext1,ext2,...] [--makefile filename] [--force] [--text]
       [--tabulate] [--html] [--summary X,Y,Z] [--minsummary] [--maxsummary]
-      [--graph] [--plotrange 'command'] [--plotsummary 'command'] 
       [--verbose] [--quiet] [--testfirst] [--comparefile file]
       [--swapok] [--maxswap kb] [--maxtime sec] [--sampledelay sec]
       [--commandline 'ext1:command line'] [--uniqueinput]
@@ -1683,7 +1652,6 @@ SYNOPSIS
   --dir            all activity occurs in this directory
   --force          rerun each test even if data file is up-to-date
   --geninput       create inputs of different sizes from inputfile
-  --graph          create graphs
   --help           documentation
   --html           create html versions of aggregate tables
   --ignore         list of test progs on command line to ignore
@@ -1696,8 +1664,6 @@ SYNOPSIS
   --maxtime        specify max run-time allowed (seconds)
   --minsummary     create summary table/graph for smallest arg in range
   --name           explicitly name dataset for a test program
-  --plotrange      command line for producing a plot of data over range
-  --plotsummary    command line for producing a plot of one arg in range
   --quiet          be quiet about warnings
   --range          specify a range of input parameters
   --repeat         how many times to repeate each test
@@ -1852,11 +1818,6 @@ OPTIONS
     foo.2, foo.3, where foo.2 is 2 copies of foo, and foo.3 contains 3
     copies of foo.
 
-  --graph
-
-    Create graphs using the commandlines specified in --plotrange and
-    --plotsummary.
-
   --help
 
     Prints the documentation for this program.
@@ -1927,17 +1888,6 @@ OPTIONS
     option:
 
        --name uglyname.barf:nicename
-
-  --plotrange 'command line'
-
-    This specifies the command line to plot the {cpu,mem}.mbdat data
-    files.  The default uses the "plot" command.
-
-  --plotsummary 'command line'
-
-    This specifies the command line to plot the summary data files.
-    (Remember summaries are for a single N in --range).  The default
-    uses the "plot" command.
 
   --quiet
 
@@ -2029,7 +1979,6 @@ OPTIONS
     then the following files will be used at runtime: foo1,
     foo2, foo3, etc.
 
-  --graph
   --verbose
 
     This currently only modifies the --debug flag so that you get to
