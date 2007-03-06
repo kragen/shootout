@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2007-03-06 04:59:02 bfulgham Exp $
+# $Id: Makefile,v 1.13 2007-03-06 05:55:26 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexdna
@@ -19,7 +19,7 @@ OCAMLBOPTS := str.cma
 OO2COPTS :=  -A --no-rtc
 POLYOPTS := -q
 GFORTH_FLAGS := -m 16M
-GHCOPTS := -funbox-strict-fields -fbang-patterns
+GHCOPTS := -funbox-strict-fields -fbang-patterns -package parsec
 BIGFORTHOPTS := -m 64M
 GNATOPTS := -fno-unroll-loops
 GXXLDOPTS := -lboost_regex

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2006-06-13 03:47:48 bfulgham Exp $
+# $Id: Makefile,v 1.17 2007-03-06 05:55:26 bfulgham Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -18,7 +18,7 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 ERLFLAGS := -noinput
-GHCOPTS  := -fexcess-precision
+GHCOPTS  := -fglasgow-exts -fbang-patterns -funbox-strict-fields -optc-O2 -optc-msse2 -optc-march=athlon-xp
 GPLCOPTS := --fast-math
 
 GCCOPTS := -D_ISOC9X_SOURCE -mfpmath=sse -march=athlon-xp -lm

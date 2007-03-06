@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2006-10-02 01:08:41 bfulgham Exp $
+# $Id: Makefile,v 1.24 2007-03-06 05:55:26 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -23,7 +23,7 @@ POLYOPTS := -q
 
 ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
-GHCOPTS := -fexcess-precision -fallow-overlapping-instances -package mtl
+GHCOPTS := -fbang-patterns -fexcess-precision -fallow-overlapping-instances -package mtl
 OBJCOPTS := -std=gnu99
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
