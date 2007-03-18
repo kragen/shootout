@@ -115,13 +115,13 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <table class="layout">
 <tr>
 <td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $G)) ?></p>
+<p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
 <h3><span class="gp4">
 <a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
+<p class="timestamp"><a href="./debian/"><? printf('%s', gmdate("d M Y", $D)) ?></a></p>
 <h3><span class="debian">
 <a title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
@@ -129,13 +129,13 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 </tr>
 <tr>
 <td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $G)) ?></p>
+<p class="timestamp"><a href="./gp4sandbox/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
 <h3><span class="sandbox">
 <a title="Browse the Gentoo : Intel&#174; Pentium&#174; more language implementations and alpha benchmarks"
 href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><? printf('%s', gmdate("d M Y", $D)) ?></p>
+<p class="timestamp"><a href="./sandbox/"><? printf('%s', gmdate("d M Y", $D)) ?></a></p>
 <h3><span class="sandbox">
 <a title="Browse the Debian : AMD&#8482; Sempron&#8482; more language implementations and alpha benchmarks"
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
