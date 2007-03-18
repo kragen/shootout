@@ -100,6 +100,18 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p><strong>Use:</strong> these are particular truths, they are not general truths</p><br/>
 
 
+
+
+<p><a href="<?=$A;?>" title="Browse the Programs and CPU times" ><strong>Programs, CPU times, Benchmarks</strong></a></p>
+<p style="white-space: nowrap">
+<a href="<?=$A;?>">
+   <img src="<?='./'.$L.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
+   <img src="<?='./'.$R.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
+</a>
+</p><br/>
+
+
+
 <table class="layout">
 <tr>
 <td>
@@ -130,16 +142,6 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </td>
 </tr>
 </table>
-
-
-<p><a href="<?=$A;?>" title="Browse the Programs and CPU times" ><strong>Programs, CPU times, Benchmarks</strong></a></p>
-<p style="white-space: nowrap">
-<a href="<?=$A;?>">
-   <img src="<?='./'.$L.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
-   <img src="<?='./'.$R.'.png';?>" alt="Browse the Programs and CPU times" height="150" width="200" />
-</a>
-</p><br/>
-
 
 
 <ul>
