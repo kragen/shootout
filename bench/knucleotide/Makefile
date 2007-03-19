@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.22 2007-03-06 04:59:02 bfulgham Exp $
+# $Id: Makefile,v 1.23 2007-03-19 02:34:24 bfulgham Exp $
 include ../../Make.header
 
 TEST    := knucleotide
@@ -14,7 +14,7 @@ MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 DLANGOPTS := ../../Include/dlang/hashtable.d
-ERLFLAGS := -noinput
+#ERLFLAGS := -noinput
 BIGFORTHOPTS := -d 8M
 GFORTH_FLAGS := -m 8M
 GHCOPTS := -fglasgow-exts -fbang-patterns -funbox-strict-fields
