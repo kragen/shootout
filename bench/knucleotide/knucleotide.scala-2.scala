@@ -90,7 +90,7 @@ object knucleotide {
                   else a._2.value > b._2.value )
 
       for (val a <- sortedValues) 
-         Console.printf("{0} {1,number,0.000}\n")(a._1, a._2.value / n * 100.0)
+         Console.printf("{0} {1,number,0.000}\n", a._1, a._2.value / n * 100.0)
 
       Console.println
    }

@@ -16,15 +16,15 @@ object partialsums
     if (kd > n) {
       val f = "{0,number,0.000000000}\t"
 
-      Console.printf( f + "(2/3)^k\n" )(s1)
-      Console.printf( f + "k^-0.5\n" )(s2)
-      Console.printf( f + "1/k(k+1)\n" )(s3)
-      Console.printf( f + "Flint Hills\n" )(s4)
-      Console.printf( f + "Cookson Hills\n" )(s5)
-      Console.printf( f + "Harmonic\n" )(s6)
-      Console.printf( f + "Riemann Zeta\n" )(s7)
-      Console.printf( f + "Alternating Harmonic\n" )(s8)
-      Console.printf( f + "Gregory\n" )(s9)
+      Console.printf( f + "(2/3)^k\n", s1)
+      Console.printf( f + "k^-0.5\n", s2)
+      Console.printf( f + "1/k(k+1)\n", s3)
+      Console.printf( f + "Flint Hills\n", s4)
+      Console.printf( f + "Cookson Hills\n", s5)
+      Console.printf( f + "Harmonic\n", s6)
+      Console.printf( f + "Riemann Zeta\n", s7)
+      Console.printf( f + "Alternating Harmonic\n" ,s8)
+      Console.printf( f + "Gregory\n", s9)
     }
     else {
       val k2 =  Math.pow(kd, 2.0)

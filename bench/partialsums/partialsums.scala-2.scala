@@ -42,15 +42,15 @@ object partialsums {
       } else {
 
          val f = "{0,number,0.000000000}\t"
-         Console.printf( f + "(2/3)^k\n" )(a1)
-         Console.printf( f + "k^-0.5\n" )(a2)
-         Console.printf( f + "1/k(k+1)\n" )(a3)
-         Console.printf( f + "Flint Hills\n" )(a4)
-         Console.printf( f + "Cookson Hills\n" )(a5)
-         Console.printf( f + "Harmonic\n" )(a6)
-         Console.printf( f + "Riemann Zeta\n" )(a7)
-         Console.printf( f + "Alternating Harmonic\n" )(a8)
-         Console.printf( f + "Gregory\n" )(a9)
+         Console.printf( f + "(2/3)^k\n", a1)
+         Console.printf( f + "k^-0.5\n", a2)
+         Console.printf( f + "1/k(k+1)\n", a3)
+         Console.printf( f + "Flint Hills\n", a4)
+         Console.printf( f + "Cookson Hills\n", a5)
+         Console.printf( f + "Harmonic\n", a6)
+         Console.printf( f + "Riemann Zeta\n", a7)
+         Console.printf( f + "Alternating Harmonic\n", a8)
+         Console.printf( f + "Gregory\n", a9)
 
       }
    }

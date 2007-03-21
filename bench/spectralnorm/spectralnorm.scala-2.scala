@@ -1,6 +1,6 @@
 /* The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy
+   contributed by Isaac Gouy 
 */
 
 object spectralnorm {
@@ -8,7 +8,7 @@ object spectralnorm {
    def main(args: Array[String]) = {
       val n = Integer parseInt(args(0))
 
-      Console.printf("{0,number,0.000000000}\n")( 
+      Console.printf("{0,number,0.000000000}\n", 
          new SpectralNorm() approximate(n) )
    }
 }
