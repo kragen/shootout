@@ -3,7 +3,8 @@
    contributed by Isaac Gouy
 */
 
-import java.io._ , scala._
+import java.io._ , scala.collection.mutable.HashMap
+import scala.Console
 
 object knucleotide { 
 
