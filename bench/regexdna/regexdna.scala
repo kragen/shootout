@@ -3,7 +3,7 @@
    contributed by Isaac Gouy
 */
 
-import java.io._ , java.util.regex._
+import java.io.InputStreamReader, java.util.regex._
 
 object regexdna { 
    def main(args: Array[String]) = {

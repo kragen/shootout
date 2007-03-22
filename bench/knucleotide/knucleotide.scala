@@ -3,7 +3,8 @@
    contributed by Isaac Gouy
 */
 
-import java.io._
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import scala.collection.mutable.HashTable
 
 object knucleotide { 
