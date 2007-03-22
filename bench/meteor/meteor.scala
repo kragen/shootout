@@ -34,6 +34,7 @@ final class Solver (n: Int) {
       new Piece(5), new Piece(6), new Piece(7), new Piece(8), new Piece(9) )
 
    val unplaced = new BitSet(pieces.length)
+
    { unplaced ++= Iterator.range(0,unplaced.capacity) }
 
 
