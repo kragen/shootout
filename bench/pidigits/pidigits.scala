@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/* The Great Computer Language Shootout                               */
+/* The Computer Language Shootout                               */
 /* http://shootout.alioth.debian.org/                                 */
 /*                                                                    */
 /* Contributed by Anthony Borla                                       */
@@ -52,7 +52,9 @@ object pidigits
         y = extract(Z, 3)
       }
 
-      Z = compose(Array(10, (-y) * 10, 0, 1), Z)
+//      Z = compose(Array(10, (-y) * 10, 0, 1), Z)
+
+      Z = compose(Array(10, y * (-10), 0, 1), Z)
 
       r.append(y); i = i + 1; 
     }
