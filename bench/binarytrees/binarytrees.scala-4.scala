@@ -6,7 +6,7 @@
    optimized by David Pollak
 */
 
-object BinaryTrees {
+object binarytrees {
    def main(args: Array[String]) = {
       val n = try { Integer.parseInt(args(0)) } catch { case _ => 1 }
       val minDepth = 4
