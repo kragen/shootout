@@ -13,7 +13,7 @@ switch ($Now % 32){
    case 4: $S = 'debian'; $T = 'fasta&amp;lang=all'; break;
    case 5: $S = 'gp4'; $T = 'knucleotide&amp;lang=all'; break;
    case 6: $S = 'debian'; $T = 'mandelbrot&amp;lang=all'; break;
-   case 7: $S = 'gp4'; $T = 'nbody&amp;lang=all'; break;
+   case 7: $S = 'gp4'; $T = 'nbody&lang=ooc&id=0'; break;
    case 8: $S = 'debian'; $T = 'binarytrees&amp;lang=all'; break;
    case 9: $S = 'gp4'; $T = 'nsievebits&amp;lang=all'; break;
    case 10: $S = 'debian'; $T = 'partialsums&amp;lang=all'; break;
