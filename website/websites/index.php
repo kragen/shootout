@@ -17,26 +17,26 @@ switch ($Now % 32){
    case 8: $S = 'debian'; $T = 'binarytrees&amp;lang=all'; break;
    case 9: $S = 'gp4'; $T = 'nsievebits&amp;lang=all'; break;
    case 10: $S = 'debian'; $T = 'partialsums&amp;lang=all'; break;
-   case 11: $S = 'gp4sandbox'; $T = 'pidigits&amp;lang=all'; break;
+   case 11: $S = 'gp4sandbox'; $T = 'pidigits&amp;lang=ghc&id=0'; break;
    case 12: $S = 'debian'; $T = 'recursive&amp;lang=all'; break;
    case 13: $S = 'sandbox'; $T = 'regexdna&amp;lang=all'; break;
    case 14: $S = 'debian'; $T = 'revcomp&amp;lang=all'; break;
-   case 15: $S = 'gp4'; $T = 'spectralnorm&amp;lang=all'; break;
-   case 16: $S = 'gp4'; $T = 'nsieve&amp;lang=all'; break;
+   case 15: $S = 'gp4'; $T = 'spectralnorm&amp;lang=sbcl&id=0'; break;
+   case 16: $S = 'gp4'; $T = 'nsieve&amp;lang=gnat&id=0'; break;
    case 17: $S = 'debian'; $T = 'chameneos&amp;lang=all'; break;
-   case 18: $S = 'gp4'; $T = 'message&amp;lang=all'; break;
+   case 18: $S = 'gp4'; $T = 'message&amp;lang=hipe&id=2'; break;
    case 19: $S = 'debian'; $T = 'fannkuch&amp;lang=all'; break;
    case 20: $S = 'gp4'; $T = 'fasta&amp;lang=all'; break;
    case 21: $S = 'debian'; $T = 'knucleotide&amp;lang=all'; break;
    case 22: $S = 'gp4'; $T = 'mandelbrot&amp;lang=all'; break;
    case 23: $S = 'debian'; $T = 'nbody&amp;lang=all'; break;
-   case 24: $S = 'gp4'; $T = 'binarytrees&amp;lang=all'; break;
+   case 24: $S = 'gp4'; $T = 'binarytrees&amp;lang=mlton&id=2'; break;
    case 25: $S = 'debian'; $T = 'nsievebits&amp;lang=all'; break;
-   case 26: $S = 'gp4'; $T = 'partialsums&amp;lang=all'; break;
+   case 26: $S = 'gp4'; $T = 'partialsums&amp;lang=bigforth&id=0'; break;
    case 27: $S = 'sandbox'; $T = 'pidigits&amp;lang=all'; break;
-   case 28: $S = 'gp4'; $T = 'recursive&amp;lang=all'; break;+
-   case 29: $S = 'gp4sandbox'; $T = 'regexdna&amp;lang=all'; break;
-   case 30: $S = 'gp4'; $T = 'revcomp&amp;lang=all'; break;
+   case 28: $S = 'gp4'; $T = 'recursive&amp;lang=lua&id=0'; break;+
+   case 29: $S = 'gp4sandbox'; $T = 'regexdna&amp;lang=tcl&id=2'; break;
+   case 30: $S = 'gp4'; $T = 'revcomp&amp;lang=gpp&id=3'; break;
    case 31: $S = 'debian'; $T = 'spectralnorm&amp;lang=all'; break;
 }
 
