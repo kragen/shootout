@@ -6,41 +6,41 @@ $G = filemtime('./gp4/data/data.csv');
 $Now = time()/(3600 * 5);
 
 switch ($Now % 32){
-   case 0: $S = 'debian'; $T = 'nsieve'; break;
-   case 1: $S = 'gp4'; $T = 'chameneos'; break;
-   case 2: $S = 'debian'; $T = 'message'; break;
-   case 3: $S = 'gp4'; $T = 'fannkuch'; break;
-   case 4: $S = 'debian'; $T = 'fasta'; break;
-   case 5: $S = 'gp4'; $T = 'knucleotide'; break;
-   case 6: $S = 'debian'; $T = 'mandelbrot'; break;
-   case 7: $S = 'gp4'; $T = 'nbody'; break;
-   case 8: $S = 'debian'; $T = 'binarytrees'; break;
-   case 9: $S = 'gp4'; $T = 'nsievebits'; break;
-   case 10: $S = 'debian'; $T = 'partialsums'; break;
-   case 11: $S = 'gp4sandbox'; $T = 'pidigits'; break;
-   case 12: $S = 'debian'; $T = 'recursive'; break;
-   case 13: $S = 'sandbox'; $T = 'regexdna'; break;
-   case 14: $S = 'debian'; $T = 'revcomp'; break;
-   case 15: $S = 'gp4'; $T = 'spectralnorm'; break;
-   case 16: $S = 'gp4'; $T = 'nsieve'; break;
-   case 17: $S = 'debian'; $T = 'chameneos'; break;
-   case 18: $S = 'gp4'; $T = 'message'; break;
-   case 19: $S = 'debian'; $T = 'fannkuch'; break;
-   case 20: $S = 'gp4'; $T = 'fasta'; break;
-   case 21: $S = 'debian'; $T = 'knucleotide'; break;
-   case 22: $S = 'gp4'; $T = 'mandelbrot'; break;
-   case 23: $S = 'debian'; $T = 'nbody'; break;
-   case 24: $S = 'gp4'; $T = 'binarytrees'; break;
-   case 25: $S = 'debian'; $T = 'nsievebits'; break;
-   case 26: $S = 'gp4'; $T = 'partialsums'; break;
-   case 27: $S = 'sandbox'; $T = 'pidigits'; break;
-   case 28: $S = 'gp4'; $T = 'recursive'; break;
-   case 29: $S = 'gp4sandbox'; $T = 'regexdna'; break;
-   case 30: $S = 'gp4'; $T = 'revcomp'; break;
-   case 31: $S = 'debian'; $T = 'spectralnorm'; break;
+   case 0: $S = 'debian'; $T = 'nsieve&amp;lang=all'; break;
+   case 1: $S = 'gp4'; $T = 'chameneos&amp;lang=all'; break;
+   case 2: $S = 'debian'; $T = 'message&amp;lang=all'; break;
+   case 3: $S = 'gp4'; $T = 'fannkuch&amp;lang=all'; break;
+   case 4: $S = 'debian'; $T = 'fasta&amp;lang=all'; break;
+   case 5: $S = 'gp4'; $T = 'knucleotide&amp;lang=all'; break;
+   case 6: $S = 'debian'; $T = 'mandelbrot&amp;lang=all'; break;
+   case 7: $S = 'gp4'; $T = 'nbody&amp;lang=all'; break;
+   case 8: $S = 'debian'; $T = 'binarytrees&amp;lang=all'; break;
+   case 9: $S = 'gp4'; $T = 'nsievebits&amp;lang=all'; break;
+   case 10: $S = 'debian'; $T = 'partialsums&amp;lang=all'; break;
+   case 11: $S = 'gp4sandbox'; $T = 'pidigits&amp;lang=all'; break;
+   case 12: $S = 'debian'; $T = 'recursive&amp;lang=all'; break;
+   case 13: $S = 'sandbox'; $T = 'regexdna&amp;lang=all'; break;
+   case 14: $S = 'debian'; $T = 'revcomp&amp;lang=all'; break;
+   case 15: $S = 'gp4'; $T = 'spectralnorm&amp;lang=all'; break;
+   case 16: $S = 'gp4'; $T = 'nsieve&amp;lang=all'; break;
+   case 17: $S = 'debian'; $T = 'chameneos&amp;lang=all'; break;
+   case 18: $S = 'gp4'; $T = 'message&amp;lang=all'; break;
+   case 19: $S = 'debian'; $T = 'fannkuch&amp;lang=all'; break;
+   case 20: $S = 'gp4'; $T = 'fasta&amp;lang=all'; break;
+   case 21: $S = 'debian'; $T = 'knucleotide&amp;lang=all'; break;
+   case 22: $S = 'gp4'; $T = 'mandelbrot&amp;lang=all'; break;
+   case 23: $S = 'debian'; $T = 'nbody&amp;lang=all'; break;
+   case 24: $S = 'gp4'; $T = 'binarytrees&amp;lang=all'; break;
+   case 25: $S = 'debian'; $T = 'nsievebits&amp;lang=all'; break;
+   case 26: $S = 'gp4'; $T = 'partialsums&amp;lang=all'; break;
+   case 27: $S = 'sandbox'; $T = 'pidigits&amp;lang=all'; break;
+   case 28: $S = 'gp4'; $T = 'recursive&amp;lang=all'; break;+
+   case 29: $S = 'gp4sandbox'; $T = 'regexdna&amp;lang=all'; break;
+   case 30: $S = 'gp4'; $T = 'revcomp&amp;lang=all'; break;
+   case 31: $S = 'debian'; $T = 'spectralnorm&amp;lang=all'; break;
 }
 
-$A = './'.$S.'/benchmark.php?test='.$T.'&amp;lang=all';
+$A = './'.$S.'/benchmark.php?test='.$T;
 
 switch ($Now % 20){
    case 0: $L = 'zh0'; $R = 'zi0'; break;
