@@ -34,7 +34,7 @@ switch ($Now % 32){
    case 25: $S = 'debian'; $T = 'nsievebits&amp;lang=all'; break;
    case 26: $S = 'gp4'; $T = 'partialsums&amp;lang=bigforth&id=0'; break;
    case 27: $S = 'sandbox'; $T = 'pidigits&amp;lang=all'; break;
-   case 28: $S = 'gp4'; $T = 'recursive&amp;lang=lua&id=0'; break;+
+   case 28: $S = 'gp4'; $T = 'recursive&amp;lang=lua&id=0'; break;
    case 29: $S = 'gp4sandbox'; $T = 'regexdna&amp;lang=tcl&id=2'; break;
    case 30: $S = 'gp4'; $T = 'revcomp&amp;lang=gpp&id=3'; break;
    case 31: $S = 'debian'; $T = 'spectralnorm&amp;lang=all'; break;
