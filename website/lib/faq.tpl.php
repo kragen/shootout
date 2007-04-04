@@ -553,10 +553,6 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <dt><a href="#ack" name="ack">Who has contributed?</a></dt>
 <dd><p>So many people that we have an <a href="miscfile.php?file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></dd>
 
-<dt><a href="#similar" name="similar">Who's working on similar projects?</a></dt>
-<dd><p>Jack Andrews has started <a href="http://shootin.sourceforge.net/" title="Jack Andrew's shootin">"the shootin"</a>, 
-and Adam Chlipala has started <a href="http://www.softwarescrutiny.net/ss/intro/" title="Adam Chlipala's Software Scrutiny">"Software Scrutiny"</a>.</p></dd>
-
 <dt><a href="#finish" name="finish">When will the Language Shootout be finished?</a></dt>
 <dd><p>Never. There will always be new languages, new versions of languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#8230; And the project team will change over time, and the measurements and presentation will change with them.</p>
 </dd>
