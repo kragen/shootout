@@ -1,14 +1,26 @@
 "*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Eliot Miranda *"!
-
-!Shootout.Tests class methodsFor: 'benchmarking'!
-
-knucleotide
-   self knucleotideFrom: Stdin to: Stdout. !
+   contributed by Eliot Miranda *"
 
 
-knucleotideFrom: input to: output
+Smalltalk.Shootout defineClass: #Tests
+   superclass: #{Core.Object}
+   indexedType: #none
+   private: false
+   instanceVariableNames: ''
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'ComputerLanguageShootout' !
+
+!Shootout.Tests class methodsFor: 'benchmark scripts'!
+
+knucleotide3
+   self knucleotide3From: Stdin to: Stdout.
+   ^'' !
+
+!Shootout.Tests class methodsFor: 'benchmarks'!
+
+knucleotide3From: input to: output
    | sequence writeFrequencies writeCount |
 
    sequence := (self readFasta: 'THREE' from: input) asUppercase.
@@ -20,7 +32,8 @@ knucleotideFrom: input to: output
 
       count := 0.0.
       (sequence substringFrequencies: k using: (DNASequenceDictionary new: 1024))
-         associationsDo: [:each| frequencies add: each. count := count + each value].
+         associationsDo: [:each| 
+            frequencies add: each. count := count + each value].
 
       frequencies do: [:each | | percentage |
          percentage := (each value / count) * 100.0.
@@ -41,10 +54,9 @@ knucleotideFrom: input to: output
    writeCount value: 'GGTATT'.
    writeCount value: 'GGTATTTTAATT'.
    writeCount value: 'GGTATTTTAATTTATAGT'.
-   ^'' ! !
+   ^'' !
 
-
-!Shootout.Tests class methodsFor: 'utility'!
+!Shootout.Tests class methodsFor: 'auxilliaries'!
 
 readFasta: anId from: input 
    | idString newline buffer char |
@@ -72,45 +84,24 @@ readFasta: anId from: input
    ^buffer contents ! !
 
 
-!SequenceableCollection methodsFor: 'enumerating'!
+!Core.SequenceableCollection methodsFor: 'computer language shootout'!
 
 substringFrequencies: aLength using: aDictionary 
    1 to: self size - aLength + 1 do: 
       [:i | | fragment |
       fragment := self copyFrom: i to: i + aLength - 1.
-      aDictionary at: fragment putValueOf: [:sum| sum + 1] ifAbsentPutValueOf: 1].
+      aDictionary at: fragment 
+         putValueOf: [:sum| sum + 1] ifAbsentPutValueOf: 1].
    ^aDictionary ! !
 
 
-!String methodsFor: 'comparing'!
-
-dnaSequenceHash
-   "Answer a uniformly distributed SmallInteger computed from the contents
-   of the receiver, which is a string composed of only the lettersd ACGT."
-   "Each character contributes 2 bts to the hash.  Bit positions climb to 28
-    before wrapping"
-
-   | hash bitPosition |
-   hash := 0.
-   bitPosition := 0.
-   1 to: self size do:
-      [:i| | c |
-      c := self at: i.
-      hash := hash + ((c >= $G ifTrue: [c = $G ifTrue: [2] ifFalse: [3]] 
-         ifFalse: [c = $A ifTrue: [0] ifFalse: [1]]) bitShift: bitPosition).
-      (bitPosition := bitPosition + 2) >= 28 ifTrue:
-         [bitPosition := 0.
-          hash := hash bitAnd: 16rFFFFFFF]].
-   ^hash ! !
-
-
-!Dictionary methodsFor: 'accessing'!
+!Core.Dictionary methodsFor: 'computer language shootout'!
 
 at: key putValueOf: putBlock ifAbsentPutValueOf: absentBlock
-   "Set the value at key to be the value of evaluating putBlock with the 
-    existing value. If key is not found, create a new entry for key and set
-    is value to the evaluation of absentBlock. Answer the result of 
-    evaluating either block."
+   "Set the value at key to be the value of evaluating putBlock
+    with the existing value. If key is not found, create a new 
+    entry for key and set is value to the evaluation of
+    absentBlock. Answer the result of evaluating either block."
 
    | index element anObject |
    key == nil ifTrue:
@@ -134,9 +125,9 @@ Smalltalk.Shootout defineClass: #DNASequenceDictionary
    instanceVariableNames: ''
    classInstanceVariableNames: ''
    imports: ''
-   category: 'ComputerLanguageShootout'!
+   category: 'ComputerLanguageShootout' !
 
-!Shootout.DNASequenceDictionary class methodsFor: 'accessing'!
+!Shootout.DNASequenceDictionary methodsFor: 'private'!
 
 findKeyOrNil: key  
    "Look for the key in the receiver.  If it is found, answer
@@ -157,3 +148,23 @@ findKeyOrNil: key
    ^location ! !
 
 
+!Core.String methodsFor: 'comparing'!
+
+dnaSequenceHash
+   "Answer a uniformly distributed SmallInteger computed from the contents
+   of the receiver, which is a string composed of only the lettersd ACGT."
+   "Each character contributes 2 bts to the hash.  Bit positions climb to 28
+    before wrapping"
+
+   | hash bitPosition |
+   hash := 0.
+   bitPosition := 0.
+   1 to: self size do:
+      [:i| | c |
+      c := self at: i.
+      hash := hash + ((c >= $G ifTrue: [c = $G ifTrue: [2] ifFalse: [3]] 
+         ifFalse: [c = $A ifTrue: [0] ifFalse: [1]]) bitShift: bitPosition).
+      (bitPosition := bitPosition + 2) >= 28 ifTrue:
+         [bitPosition := 0.
+          hash := hash bitAnd: 16rFFFFFFF]].
+   ^hash ! !
