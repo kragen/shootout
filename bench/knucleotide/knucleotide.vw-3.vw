@@ -1,6 +1,6 @@
 "*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Eliot Miranda *"
+   contributed by Eliot Miranda *"!
 
 
 Smalltalk.Shootout defineClass: #Tests
