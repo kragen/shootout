@@ -107,7 +107,7 @@ Smalltalk.Shootout defineClass: #RandomStream
 	imports: ''
 	category: 'Shootout'!
 
-!Shootout.RepeatStream methodsFor: 'initialize-release'!
+!Shootout.RandomStream methodsFor: 'initialize-release'!
 
 on: aCollection
    | size cp |
@@ -122,7 +122,7 @@ on: aCollection
       percentages at: i put: (cp := cp + (aCollection at: i) value).
    ] ! !
 
-!Shootout.RepeatStream methodsFor: 'accessing'!
+!Shootout.RandomStream methodsFor: 'accessing'!
 
 next
    | r |
