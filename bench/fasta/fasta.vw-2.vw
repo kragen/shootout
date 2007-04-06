@@ -41,7 +41,7 @@ fasta2: n to: out
    self
       writeFasta: 'TWO IUB ambiguity codes'
       from:
-         (( RandomStream2
+         (( RandomStream
             to: n*3
             on: #(   #($a 0.27d)
                   #($c 0.12d)
@@ -67,7 +67,7 @@ fasta2: n to: out
    self
       writeFasta: 'THREE Homo sapiens frequency'
       from:
-         (( RandomStream2
+         (( RandomStream
             to: n*5
             on: #(   #($a 0.3029549426680d)
                   #($c 0.1979883004921d)
@@ -127,7 +127,7 @@ atEnd
    ^repeatPtr >= repeatLimit ! !
 
 
-Smalltalk.Shootout defineClass: #RandomStream2
+Smalltalk.Shootout defineClass: #RandomStream
    superclass: #{Shootout.RepeatStream}
    indexedType: #none
    private: false
@@ -136,7 +136,7 @@ Smalltalk.Shootout defineClass: #RandomStream2
    imports: ''
    category: 'Shootout'!
 
-!Shootout.RandomStream2 methodsFor: 'initialize-release'!
+!Shootout.RandomStream methodsFor: 'initialize-release'!
 
 on: aCollection
    | size cp |
@@ -151,7 +151,7 @@ on: aCollection
       percentages at: i put: (cp := cp + (aCollection at: i) value).
    ] ! !
 
-!Shootout.RandomStream2 methodsFor: 'accessing'!
+!Shootout.RandomStream methodsFor: 'accessing'!
 
 next
    | r |
