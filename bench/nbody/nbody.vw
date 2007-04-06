@@ -2,6 +2,16 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy *"!
 
+
+Smalltalk.Shootout defineClass: #Tests
+   superclass: #{Core.Object}
+   indexedType: #none
+   private: false
+   instanceVariableNames: ''
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'ComputerLanguageShootout' !
+
 !Shootout.Tests class methodsFor: 'benchmarking'!
 
 nbody
@@ -9,9 +19,9 @@ nbody
    n := CEnvironment argv first asNumber.
    bodies := NBodySystem new initialize.
 
-   OS.Stdout nextPutAll: (bodies energy asStringWith: 9); cr.
+   Stdout nextPutAll: (bodies energy asStringWith: 9); cr.
    n timesRepeat: [bodies after: 0.01d].
-   OS.Stdout nextPutAll: (bodies energy asStringWith: 9); cr.
+   Stdout nextPutAll: (bodies energy asStringWith: 9); cr.
    ^'' ! !
 
 
@@ -47,9 +57,9 @@ energy
 !Shootout.NBodySystem methodsFor: 'initialize-release'!
 
 initialize
-   bodies := (OrderedCollection new
+   bodies := OrderedCollection new
       add: Body sun; add: Body jupiter; add: Body saturn;
-      add: Body uranus; add: Body neptune; yourself) asArray.
+      add: Body uranus; add: Body neptune; yourself.
 
    bodies first offsetMomentum:
       (bodies inject: (Array with: 0.0d with: 0.0d with: 0.0d)

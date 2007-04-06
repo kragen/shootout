@@ -15,13 +15,13 @@ Smalltalk.Shootout defineClass: #Tests
 
 !Shootout.Tests class methodsFor: 'benchmark scripts'!
 
-knucleotide2
-   self knucleotide2From: Stdin to: Stdout.
+knucleotide
+   self knucleotideFrom: Stdin to: Stdout.
    ^'' !
 
 !Shootout.Tests class methodsFor: 'benchmarks'!
 
-knucleotide2From: input to: output
+knucleotideFrom: input to: output
    | sequence writeFrequencies writeCount |
 
    sequence := (self readFasta: 'THREE' from: input) asUppercase.
@@ -31,18 +31,18 @@ knucleotide2From: input to: output
          (a value = b value) ifTrue: [b key < a key] ifFalse: [b value < a value]].
 
       count := 0.0.
-      (sequence substringFrequencies2: k)
-         associationsDo: [:each| 
-            frequencies add: each. count := count + each value].
+      (sequence substringFrequencies: k)
+         associationsDo: [:each| frequencies add: each. count := count + each value].
 
       frequencies do: [:each | | percentage |
          percentage := (each value / count) * 100.0.
          output nextPutAll: each key; space; 
          nextPutAll: (percentage asStringWith: 3); cr]].
 
-   writeCount := [:nucleotideFragment | | frequencies count |
-      frequencies := sequence substringFrequencies2: nucleotideFragment size.
-      count := frequencies at: nucleotideFragment asSymbol ifAbsent: [0].
+   writeCount :=
+   [:nucleotideFragment | | frequencies count |
+      frequencies := sequence substringFrequencies: nucleotideFragment size.
+      count := frequencies at: nucleotideFragment ifAbsent: [0].
       output print: count; tab; nextPutAll: nucleotideFragment; cr].
 
    writeFrequencies value: 1. output cr.
@@ -85,20 +85,19 @@ readFasta: anId from: input
 
 !Core.String methodsFor: 'computer language shootout'!
 
-substringFrequencies2: aLength
+substringFrequencies: aLength 
    | answer |
-   answer := IdentityDictionary new.
-   1 to: aLength do: [:i |
-      self inject2: answer intoSubstringFrequencies: aLength offset: i].
+   answer := Dictionary new: 1024.
+   1 to: aLength do:
+      [:i |
+      self inject: answer intoSubstringFrequencies: aLength offset: i].
    ^answer ! 
 
-inject2: aDictionary intoSubstringFrequencies: aLength offset: anInteger
-   anInteger to: self size - aLength + 1 by: aLength do: [:i |
-      | fragment value |
-      fragment := (self copyFrom: i to: i + aLength - 1) asSymbol.
-
-      value := aDictionary at: fragment ifAbsent: [ 0 ].
-      aDictionary at: fragment put: value + 1 
-   ] ! !
+inject: aDictionary intoSubstringFrequencies: aLength offset: anInteger 
+   anInteger to: self size - aLength + 1 by: aLength do:
+      [:i | | fragment value |
+      fragment := self copyFrom: i to: i + aLength - 1.
+      value := aDictionary at: fragment ifAbsent: [0].
+      aDictionary at: fragment put: value + 1] ! !
 
 
