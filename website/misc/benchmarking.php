@@ -10,7 +10,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 <dd><ul>  
   <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
   <li><p>Are your programs tiny, like these benchmarks?</p></li>
-  <li><p>Do your programs avoid library re-use, like these benchmarks?</p></li>
+  <li><p>Do your programs avoid library use, like these benchmarks?</p></li>
 </ul></dd>
 
 <dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
