@@ -81,7 +81,7 @@ at: index put: bit
     ^bit !
 
 atAllPut: anObject 
-   "Put anObject at every one of the receiver's indices."
+   "*Put anObject at every one of the receiver's indices.*"
 
    | value |
    value := anObject ifTrue: [255] ifFalse: [0].
