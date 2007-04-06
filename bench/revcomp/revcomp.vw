@@ -23,7 +23,7 @@ revcomp
    stdout flush. 
    ^'' ! !
 
-
+ 
 !ExternalReadStream methodsFor: 'accessing'!
 
 readFasta: anId 

@@ -17,13 +17,13 @@ Smalltalk.Shootout defineClass: #Tests
 revcomp2
    #('ONE' 'TWO' 'THREE') do:
       [:sequenceName | 
-      self reverseComplementFrom: Stdin named: sequenceName to: Stdout].
+      self reverseComplement2From: Stdin named: sequenceName to: Stdout].
    Stdout flush.
    ^'' ! !
 
 !Shootout.Tests class methodsFor: 'auxillaries'!
 
-reverseComplementFrom: input named: sequenceName to: output 
+reverseComplement2From: input named: sequenceName to: output 
    | complement idString cr description char |
    complement := String new: 128.
    'ACGTUMRWSYKVHDBN'
