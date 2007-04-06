@@ -16,7 +16,7 @@ Smalltalk.Shootout defineClass: #Tests
 !Shootout.Tests class methodsFor: 'benchmark scripts'!
 
 chameneos2
-	^(self chameneos: CEnvironment argv first asNumber) printString withNl ! !
+   ^(self chameneos: CEnvironment argv first asNumber) printString withNl ! !
 
 !Shootout.Tests class methodsFor: 'benchmarks'!
 
@@ -40,21 +40,21 @@ chameneos: n
 
 
 Smalltalk.Shootout defineClass: #Chameleon
-	superclass: #{Core.Object}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'meetings color semaphore waitingForPair '
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
+   superclass: #{Core.Object}
+   indexedType: #none
+   private: false
+   instanceVariableNames: 'meetings color semaphore waitingForPair '
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'Shootout'!
 
 
 !Shootout.Chameleon class methodsFor: 'initialize-release'!
 
 color: c
     ^self new
-	initialize;
-	color: c ! !
+   initialize;
+   color: c ! !
 
 
 !Shootout.Chameleon methodsFor: 'initialize-release'!
@@ -82,8 +82,8 @@ fork: meetingPlace
 
 run: meetingPlace
     [ color == #faded ] whileFalse: [
-	meetingPlace reachedBy: self.
-	waitingForPair wait ] ! !
+   meetingPlace reachedBy: self.
+   waitingForPair wait ] ! !
 
 !Shootout.Chameleon methodsFor: 'changing colors'!
 
@@ -99,32 +99,32 @@ met: other
     | newColor |
     meetings := meetings + 1.
     color == #red ifTrue: [
-	newColor := other == #yellow ifTrue: [ #blue ] ifFalse: [ #yellow ] ].
+   newColor := other == #yellow ifTrue: [ #blue ] ifFalse: [ #yellow ] ].
     color == #yellow ifTrue: [
-	newColor := other == #red ifTrue: [ #blue ] ifFalse: [ #red ] ].
+   newColor := other == #red ifTrue: [ #blue ] ifFalse: [ #red ] ].
     color == #blue ifTrue: [
-	newColor := other == #red ifTrue: [ #yellow ] ifFalse: [ #red ] ].
+   newColor := other == #red ifTrue: [ #yellow ] ifFalse: [ #red ] ].
     color := newColor.
     waitingForPair signal ! !
 
 
 Smalltalk.Shootout defineClass: #MeetingPlace
-	superclass: #{Core.Object}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'mutex first total max '
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
+   superclass: #{Core.Object}
+   indexedType: #none
+   private: false
+   instanceVariableNames: 'mutex first total max '
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'Shootout'!
 
 
 !Shootout.MeetingPlace class methodsFor: 'instance creation'!
 
 forMeetings: maxMeetings
     ^super new
-	initialize;
-	max: maxMeetings;
-	yourself ! !
+   initialize;
+   max: maxMeetings;
+   yourself ! !
 
 
 !Shootout.MeetingPlace methodsFor: 'initialize-release'!
@@ -140,17 +140,17 @@ max: maxMeetings
 
 organizeMeetingWith: second
     total >= max
-	ifTrue: [
-	    first fade.
-	    second fade ]
-	ifFalse: [
-	    first met: second color.
-	    second met: first color ].
+   ifTrue: [
+       first fade.
+       second fade ]
+   ifFalse: [
+       first met: second color.
+       second met: first color ].
     total := total + 1 !
 
 reachedBy: chameleon
     mutex critical: [
-	first isNil
-	    ifTrue: [ first := chameleon ]
-	    ifFalse: [ self organizeMeetingWith: chameleon. first := nil ] ] ! !
+   first isNil
+       ifTrue: [ first := chameleon ]
+       ifFalse: [ self organizeMeetingWith: chameleon. first := nil ] ] ! !
 
