@@ -1,6 +1,6 @@
 "*  The Computer Language Shootout
    http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy *"!
+   contributed by Eliot Miranda *"!
 
 Smalltalk.Shootout defineClass: #Tests
    superclass: #{Core.Object}
@@ -13,66 +13,83 @@ Smalltalk.Shootout defineClass: #Tests
 
 !Shootout.Tests class methodsFor: 'benchmark scripts'!
 
-fasta
-   | n stdout r |
-   n := CEnvironment argv first asNumber.
-   stdout := ExternalWriteStream on: 
-      (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1)).
+fasta2
+   self fasta2: CEnvironment argv first asNumber to: Stdout ! !
 
-   stdout writeFasta: 'ONE Homo sapiens alu' sequence:
-   ( RepeatStream to: n*2 on:
-      'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
-      'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
-      'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT',
-      'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA',
-      'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG',
-      'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
-      'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' ).
+!Shootout.Tests class methodsFor: 'benchmarks'!
+
+fasta2: n to: out
+   | r lineLength |
+   lineLength := 60.
+   self
+      writeFasta: 'ONE Homo sapiens alu'
+      from:
+         ( RepeatStream
+            to: n*2
+            on:'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
+               'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
+               'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT',
+               'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA',
+               'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG',
+               'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
+               'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' )
+      to: out
+      lineLength: lineLength.
 
    r := RandomNumber to: 1. "Shared random sequence"
 
-   stdout writeFasta: 'TWO IUB ambiguity codes' sequence:
-   (( RandomStream to: n*3 on: (
-      OrderedCollection new
-         add: (Association key: $a value: 0.27d);
-         add: (Association key: $c value: 0.12d);
-         add: (Association key: $g value: 0.12d);
-         add: (Association key: $t value: 0.27d);
+   self
+      writeFasta: 'TWO IUB ambiguity codes'
+      from:
+         (( RandomStream
+            to: n*3
+            on: #(   #($a 0.27d)
+                  #($c 0.12d)
+                  #($g 0.12d)
+                  #($t 0.27d)
 
-         add: (Association key: $B value: 0.02d);
-         add: (Association key: $D value: 0.02d);
-         add: (Association key: $H value: 0.02d);
-         add: (Association key: $K value: 0.02d);
-         add: (Association key: $M value: 0.02d);
-         add: (Association key: $N value: 0.02d);
-         add: (Association key: $R value: 0.02d);
-         add: (Association key: $S value: 0.02d);
-         add: (Association key: $V value: 0.02d);
-         add: (Association key: $W value: 0.02d);
-         add: (Association key: $Y value: 0.02d);
-         yourself )) random: r).
+                  #($B 0.02d)
+                  #($D 0.02d)
+                  #($H 0.02d)
+                  #($K 0.02d)
+                  #($M 0.02d)
+                  #($N 0.02d)
+                  #($R 0.02d)
+                  #($S 0.02d)
+                  #($V 0.02d)
+                  #($W 0.02d)
+                  #($Y 0.02d)))
+         random: r;
+         yourself)
+      to: out
+      lineLength: lineLength.
 
-   stdout writeFasta: 'THREE Homo sapiens frequency' sequence:
-   (( RandomStream to: n*5 on: (
-      OrderedCollection new
-         add: (Association key: $a value: 0.3029549426680d);
-         add: (Association key: $c value: 0.1979883004921d);
-         add: (Association key: $g value: 0.1975473066391d);
-         add: (Association key: $t value: 0.3015094502008d);
-         yourself )) random: r).
+   self
+      writeFasta: 'THREE Homo sapiens frequency'
+      from:
+         (( RandomStream
+            to: n*5
+            on: #(   #($a 0.3029549426680d)
+                  #($c 0.1979883004921d)
+                  #($g 0.1975473066391d)
+                  #($t 0.3015094502008d)))
+            random: r;
+            yourself)
+      to: out
+      lineLength: lineLength.
 
-   stdout flush.
-   ^'' ! !
+   out flush.
+   ^''
 
 
 Smalltalk.Shootout defineClass: #RepeatStream
-	superclass: #{Core.ReadStream}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'repeatPtr repeatLimit'
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
+   superclass: #{Core.ReadStream}
+   indexedType: #none
+   private: false
+   instanceVariableNames: 'repeatPtr repeatLimit'
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'Shootout'!
 
 !Shootout.RepeatStream class methodsFor: 'instance creation'!
 
@@ -99,13 +116,13 @@ atEnd
 
 
 Smalltalk.Shootout defineClass: #RandomStream
-	superclass: #{Shootout.RepeatStream}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'random percentages'
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
+   superclass: #{Shootout.RepeatStream}
+   indexedType: #none
+   private: false
+   instanceVariableNames: 'random percentages'
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'Shootout'!
 
 !Shootout.RepeatStream methodsFor: 'initialize-release'!
 
@@ -151,43 +168,43 @@ writeFasta: aString sequence: aStream
 
 
 Smalltalk.Shootout defineClass: #RandomNumber
-	superclass: #{Core.Object}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'seed scale '
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
+   superclass: #{Core.Object}
+   indexedType: #none
+   private: false
+   instanceVariableNames: 'seed scale '
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'Shootout'!
 
 Shootout.RandomNumber defineSharedVariable: #Modulus
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '139968'!
+   private: false
+   constant: false
+   category: 'computer language shootout'
+   initializer: '139968'!
 
 #{Shootout.RandomNumber.Modulus} initialize!
 
 Shootout.RandomNumber defineSharedVariable: #FModulus
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '139968.0d'!
+   private: false
+   constant: false
+   category: 'computer language shootout'
+   initializer: '139968.0d'!
 
 #{Shootout.RandomNumber.FModulus} initialize!
 
 Shootout.RandomNumber defineSharedVariable: #Multiplier
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '3877'!
+   private: false
+   constant: false
+   category: 'computer language shootout'
+   initializer: '3877'!
 
 #{Shootout.RandomNumber.Multiplier} initialize!
 
 Shootout.RandomNumber defineSharedVariable: #Increment
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '29573'!
+   private: false
+   constant: false
+   category: 'computer language shootout'
+   initializer: '29573'!
 
 #{Shootout.RandomNumber.Increment} initialize!
 

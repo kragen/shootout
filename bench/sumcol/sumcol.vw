@@ -2,7 +2,16 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy *"!
 
-!Shootout.Tests class methodsFor: 'benchmarking'!
+Smalltalk.Shootout defineClass: #Tests
+   superclass: #{Core.Object}
+   indexedType: #none
+   private: false
+   instanceVariableNames: ''
+   classInstanceVariableNames: ''
+   imports: ''
+   category: 'ComputerLanguageShootout' !
+
+!Shootout.Tests class methodsFor: 'benchmark scripts'!
 
 sumcol
    | stdin sum |
