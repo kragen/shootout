@@ -41,7 +41,7 @@ fasta2: n to: out
    self
       writeFasta: 'TWO IUB ambiguity codes'
       from:
-         (( RandomStream
+         (( RandomStream2
             to: n*3
             on: #(   #($a 0.27d)
                   #($c 0.12d)
@@ -67,7 +67,7 @@ fasta2: n to: out
    self
       writeFasta: 'THREE Homo sapiens frequency'
       from:
-         (( RandomStream
+         (( RandomStream2
             to: n*5
             on: #(   #($a 0.3029549426680d)
                   #($c 0.1979883004921d)
@@ -84,14 +84,14 @@ fasta2: n to: out
 !Shootout.Tests class methodsFor: 'auxillaries'!
 
 writeFasta: aString from: inStream to: outStream lineLength: lineLength
-	| i |
-	outStream nextPut: $>; nextPutAll: aString; cr.
-	i := 0.
-	[inStream atEnd] whileFalse:
-		[i == lineLength ifTrue: [outStream cr. i := 0].
-		outStream nextPut: inStream next.
-		i := i + 1].
-	outStream cr ! !
+   | i |
+   outStream nextPut: $>; nextPutAll: aString; cr.
+   i := 0.
+   [inStream atEnd] whileFalse:
+      [i == lineLength ifTrue: [outStream cr. i := 0].
+      outStream nextPut: inStream next.
+      i := i + 1].
+   outStream cr ! !
 
 
 Smalltalk.Shootout defineClass: #RepeatStream
@@ -127,7 +127,7 @@ atEnd
    ^repeatPtr >= repeatLimit ! !
 
 
-Smalltalk.Shootout defineClass: #RandomStream
+Smalltalk.Shootout defineClass: #RandomStream2
    superclass: #{Shootout.RepeatStream}
    indexedType: #none
    private: false
@@ -136,7 +136,7 @@ Smalltalk.Shootout defineClass: #RandomStream
    imports: ''
    category: 'Shootout'!
 
-!Shootout.RandomStream methodsFor: 'initialize-release'!
+!Shootout.RandomStream2 methodsFor: 'initialize-release'!
 
 on: aCollection
    | size cp |
@@ -147,11 +147,10 @@ on: aCollection
    collection := Array new: size.
    cp := 0.0d.
    1 to: size do: [:i| 
-      collection at: i put: (aCollection at: i) key.
-      percentages at: i put: (cp := cp + (aCollection at: i) value).
-   ] ! !
+      collection at: i put: (aCollection at: i) first.
+      percentages at: i put: (cp := cp + (aCollection at: i) last)] ! !
 
-!Shootout.RandomStream methodsFor: 'accessing'!
+!Shootout.RandomStream2 methodsFor: 'accessing'!
 
 next
    | r |
