@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2007-03-06 05:55:26 bfulgham Exp $
+# $Id: Makefile,v 1.14 2007-04-07 17:10:51 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexdna
@@ -13,6 +13,7 @@ MB_CLRTS := -nr
 
 BIGLOOOPTS := -farithmetic
 DLANGOPTS := -L-lpcre
+GCCOPTS := -lpcre
 MZSCHEMEOPTS := -qu
 OCAMLOPTS  := str.cmxa
 OCAMLBOPTS := str.cma
@@ -30,6 +31,6 @@ GPLCOPTS := --fast-math
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 100000,300000,500000 \
 	  --inputfile ../../website/desc/regexdna-input.txt \
-	  --uniqueinput
+	  --uniqueinput --ignore regexdna.erlang --ignore regexdna.hipe
 
 include ../../Make.footer

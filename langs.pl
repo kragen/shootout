@@ -212,9 +212,8 @@
        Type => 'native compiled',
        Ext  => 'lisp',
        Verfun => sub {
-	   my $ver = `$ENV{CHICKEN} -version`;
-	   $ver =~ /Version (\d+), Build (\d+) - (.*)/;
-	   return("Chicken $1.$2 [$3]");
+	   chomp(my $ver = `$ENV{CHICKEN} -version | grep Version`);
+	   return($ver);
        },
      },
 
@@ -228,7 +227,7 @@
        Note => 'Lazy & strict, pure functional programming',
        Ext  => 'haskell',
        Verfun => sub {
-	   my $ver = "Clean 2.1";
+	   my $ver = "Clean 2.2";
 	   return($ver);
        },
      },
