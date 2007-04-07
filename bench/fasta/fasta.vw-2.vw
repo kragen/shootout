@@ -14,7 +14,8 @@ Smalltalk.Shootout defineClass: #Tests
 !Shootout.Tests class methodsFor: 'benchmark scripts'!
 
 fasta2
-   self fasta2: CEnvironment argv first asNumber to: Stdout ! !
+   self fasta2: CEnvironment argv first asNumber to: Stdout.
+   ^'' ! !
 
 !Shootout.Tests class methodsFor: 'benchmarks'!
 
