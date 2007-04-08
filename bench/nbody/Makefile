@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2007-03-06 05:55:26 bfulgham Exp $
+# $Id: Makefile,v 1.25 2007-04-08 00:04:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -6,7 +6,7 @@ TITLE   := N-Body orbit simulation
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+CLEANOPTS := $(CLEANOPTS) -nr -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries

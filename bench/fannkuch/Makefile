@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2007-03-06 04:59:02 bfulgham Exp $
+# $Id: Makefile,v 1.13 2007-04-08 00:04:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -6,7 +6,7 @@ TITLE   := Fannkuch Function
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -I ../Include/clean -I ../../Include/clean
+CLEANOPTS := $(CLEANOPTS) -nr -h 32k -s 32k -I ../Include/clean -I ../../Include/clean
 MB_CLRTS := -nr
 
 IFCOPTS := -ip

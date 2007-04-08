@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2007-03-06 04:59:02 bfulgham Exp $
+# $Id: Makefile,v 1.17 2007-04-08 00:04:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -6,7 +6,7 @@ TITLE   := Sieve Test
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+CLEANOPTS := $(CLEANOPTS) -nr -h 10m -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2007-02-04 16:54:06 bfulgham Exp $
+# $Id: Makefile,v 1.15 2007-04-08 00:04:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -6,7 +6,7 @@ TITLE   := Infinite Matrix Determinant Test
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+CLEANOPTS := $(CLEANOPTS) -IL StdLib -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/StdLib
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries

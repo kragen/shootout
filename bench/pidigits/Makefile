@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2007-04-07 17:10:51 bfulgham Exp $
+# $Id: Makefile,v 1.19 2007-04-08 00:04:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -6,11 +6,10 @@ TITLE   := Digits of Pi
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
+CLEANOPTS := $(CLEANOPTS) -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I /usr/lib/clean/lib/ArgEnv \
 		-I /usr/lib/clean/lib/ExtendedArith \
                 -I /usr/lib/clean/src/libraries/ExtendedArith/ExtendedArith \
-                -l /usr/lib/clean/lib/ExtendedArith/gmp.o \
 		-l -lgmp \
 		-I ../../Include/clean
 

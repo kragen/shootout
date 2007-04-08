@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2007-02-06 06:57:49 bfulgham Exp $
+# $Id: Makefile,v 1.11 2007-04-08 00:04:07 bfulgham Exp $
 include ../../Make.header
 
 TEST    := message
@@ -6,8 +6,9 @@ TITLE   := IPC Message Count
 
 #XLABEL  := N (number of iterations)
 
-CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
-		-I ../Include/clean -I ../../Include/clean
+CLEANOPTS := $(CLEANOPTS) -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
+		-I ../Include/clean -I ../../Include/clean \
+		-IL StdLib
 
 ERLFLAGS := -noinput
 BIGLOOOPTS := -farithmetic
