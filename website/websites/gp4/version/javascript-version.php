@@ -1,1 +1,1 @@
-<p>JavaScript-C 1.7 pre-release 1 2006-04-04</p>
+<p>JavaScript-C 1.7 pre-release 3 2007-04-01</p>
