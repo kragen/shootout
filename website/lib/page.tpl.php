@@ -25,7 +25,7 @@
 <div id="<?=$PageId;?>"> 
 <?=$PageBody;?>
 
-<p class="img">
+<p class="imgfooter">
 <a href="miscfile.php?sort=<?=$Sort;?>&amp;file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
