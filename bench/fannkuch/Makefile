@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2007-04-09 15:15:31 bfulgham Exp $
+# $Id: Makefile,v 1.16 2007-04-10 06:56:01 bfulgham Exp $
 include ../../Make.header
 
 TEST    := fannkuch
@@ -23,7 +23,6 @@ GPLCOPTS := --fast-math
 OBJCOPTS := -std=gnu99
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 9,10,11 --ignore fannkuch.hugs-2.hugs --ignore fannkuch.hugs \
-	  --ignore fannkuch.hugs-3.hugs
+	  --range 9,10,11 --ignore fannkuch.regina
 
 include ../../Make.footer
