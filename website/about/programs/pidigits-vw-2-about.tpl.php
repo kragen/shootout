@@ -1,8 +1,10 @@
-<pre>402 samples, 32.56 average ms/sample, 4118 scavenges, 13 incGCs,
+<pre>
+402 samples, 32.56 average ms/sample, 4118 scavenges, 13 incGCs,
 9.46s active, 3.5s other processes,
 13.09s real time, 0.13s profiling overhead
 </pre>
-<pre>** Totals **47.6 LargeInteger>>*
+<pre>** Totals **
+47.6 LargeInteger>>*
 25.1 LargeInteger>>//
 11.8 LargeInteger>>productFromInteger:
 10.4 LargeInteger>>+
