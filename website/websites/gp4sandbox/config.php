@@ -34,8 +34,8 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'sandbox');
-define('SITE_TITLE','Gentoo : Intel&#174; Pentium&#174;&nbsp;4 The Sandbox');
-define('BANNER_TITLE','Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 <br/>The&nbsp;Sandbox');
+define('SITE_TITLE','Gentoo : Intel&#174; Pentium&#174;&nbsp;4 Extra!');
+define('BANNER_TITLE','Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 <br/>Extra!');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');

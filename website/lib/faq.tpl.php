@@ -530,7 +530,7 @@ or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gen
 
 <dt><a href="#please" name="please">Please will you include my favourite language?</a></dt>
 <dd><p>Maybe we will when you write many benchmark programs in your favourite language, and contribute them to "The Computer Language Shootout" :-)</p>
-<p>Browse <span class="sandbox"><a title="Alpha benchmarks and more language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website to see if your favourite language is already shown.</p>
+<p>Browse the <span class="sandbox"><a title="More language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;Extra!&nbsp;</a></span> website to see if your favourite language is already shown.</p>
 <p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.
 You'll see that several languages have been <em>suggested</em> but no one has contributed programs yet.</p>
 </dd>
@@ -546,7 +546,7 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <dd><p>Doug Bagley created <a href="http://web.archive.org/web/20040401204425/www.bagley.org/~doug/shootout/index2.shtml" title="Doug Bagley's website from the Internet Archive">"The Great Computer Language Shootout"</a>, and it was active until 2001.</p>
 <p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
 <p>In mid-2004 <strong>Brent Fulgham revived</strong> <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
-<p>In the following months, things started to change. The website was redesigned showing the original benchmarks in a new way; then benchmarks were deprecated and new benchmarks were added. We continue to experiment on <span class="sandbox"><a title="Alpha benchmarks and more language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;The&nbsp;Sandbox&nbsp;</a></span> website.</p>
+<p>In the following months, things started to change. The website was redesigned showing the original benchmarks in a new way; then benchmarks were deprecated and new benchmarks were added. We continue to experiment on the <span class="sandbox"><a title="More language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;Extra!&nbsp;</a></span> website.</p>
 <p>In late-2005 Isaac Gouy started to experiment with the <span class="gp4"><a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it will end?</p>
 </dd>
 

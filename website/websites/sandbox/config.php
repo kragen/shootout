@@ -34,8 +34,8 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'sandbox');
-define('SITE_TITLE','Debian : AMD&#8482; Sempron&#8482; The Sandbox');
-define('BANNER_TITLE','Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>The&nbsp;Sandbox');
+define('SITE_TITLE','Debian : AMD&#8482; Sempron&#8482; Extra!');
+define('BANNER_TITLE','Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>Extra!');
 define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
