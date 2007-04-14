@@ -1,213 +1,92 @@
-"*  The Computer Language Shootout
-   http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy *"!
+"* The Computer Language Shootout
+    http://shootout.alioth.debian.org/
+    contributed by Isaac Gouy
+    modified by Eliot Miranda *"!
 
-Smalltalk.Shootout defineClass: #Tests
-   superclass: #{Core.Object}
-   indexedType: #none
-   private: false
-   instanceVariableNames: ''
-   classInstanceVariableNames: ''
-   imports: ''
-   category: 'ComputerLanguageShootout' !
+Object subclass: #RandomNumber   instanceVariableNames: 'seed scale'   classVariableNames: 'FModulus Increment Modulus Multiplier'   poolDictionaries: ''   category: 'Shootout'!
 
-!Shootout.Tests class methodsFor: 'benchmark scripts'!
+ReadStream subclass: #RepeatStream   instanceVariableNames: 'repeatPtr repeatLimit'   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!
 
-fasta
-   | n stdout r |
-   n := CEnvironment argv first asNumber.
-   stdout := ExternalWriteStream on: 
-      (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1)).
+RepeatStream subclass: #RandomStream   instanceVariableNames: 'random percentages'   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!
 
-   stdout writeFasta: 'ONE Homo sapiens alu' sequence:
-   ( RepeatStream to: n*2 on:
-      'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
-      'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
-      'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT',
-      'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA',
-      'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG',
-      'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
-      'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' ).
+Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!    contributed by Isaac Gouy
+    modified by Eliot Miranda *"!!RandomNumber methodsFor: 'private'!to: anInteger   seed := 42.   scale := anInteger! !!RandomNumber methodsFor: 'accessing'!next   seed := (seed * Multiplier + Increment) \\ Modulus.   ^(seed * scale) asFloatD / FModulus! !!RandomNumber class methodsFor: 'class initialization'!initialize   super initialize.   FModulus := 139968.0d0.   Increment := 29573.   Modulus := 139968.   Multiplier := 3877.! !!RandomNumber class methodsFor: 'initialize-release'!to: anInteger   ^self basicNew to: anInteger! !!RepeatStream methodsFor: 'accessing'!next   position >= readLimit ifTrue: [ self position: 0 ].   repeatPtr := repeatPtr + 1.   ^collection at: (position := position + 1)! !!RepeatStream methodsFor: 'testing'!atEnd   ^repeatPtr >= repeatLimit! !!RepeatStream methodsFor: 'initialize-release'!to: anInteger   repeatPtr := 0.   repeatLimit := anInteger! !!RandomStream methodsFor: 'accessing'!next   | r |   r := random next.   repeatPtr := repeatPtr + 1.   1 to: percentages size do: [:i|      (r < (percentages at: i)) ifTrue: [^collection at: i]]! !!RandomStream methodsFor: 'accessing'!random: aRandomNumber"* Share the random number generator so we can get the expected results. *"   random := aRandomNumber! !!RandomStream methodsFor: 'initialize-release'!on: aCollection   | size cp |   repeatPtr := 0.   random := RandomNumber to: 1.0d0.   size := aCollection size.   percentages := Array new: size.   collection := Array new: size.   cp := 0.0d0.   1 to: size do: [:i|      collection at: i put: (aCollection at: i) first.      percentages at: i put: (cp := cp + (aCollection at: i) last).   ]! !!RepeatStream class methodsFor: 'instance creation'!to: anInteger on: aCollection   ^(super on: aCollection) to: anInteger! !!Tests class methodsFor: 'platform'!arg   ^CEnvironment commandLine last asNumber! !!Tests class methodsFor: 'platform'!postscript   ^''! !!Tests class methodsFor: 'platform'!stdout   ^Stdout! !
+
+
+!Tests class methodsFor: 'benchmarking'!
+writeFasta: aString from: inStream to: outStream lineLength: lineLength
+   | i |
+   outStream nextPut: $>; nextPutAll: aString; nextPut: Character lf.
+   i := 0.
+   [inStream atEnd] whileFalse:
+      [i == lineLength ifTrue: [outStream nextPut: Character lf. i := 0].
+      outStream nextPut: inStream next.
+      i := i + 1].
+   outStream nextPut: Character lf ! !
+
+!Tests class methodsFor: 'benchmarking'!
+fasta: n to: out
+   | r lineLength |
+   lineLength := 60.
+   self
+      writeFasta: 'ONE Homo sapiens alu'
+      from:
+         ( RepeatStream
+            to: n*2
+            on:'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG',
+               'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA',
+               'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT',
+               'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA',
+               'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG',
+               'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC',
+               'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA' )
+      to: out
+      lineLength: lineLength.
 
    r := RandomNumber to: 1. "Shared random sequence"
 
-   stdout writeFasta: 'TWO IUB ambiguity codes' sequence:
-   (( RandomStream to: n*3 on: (
-      OrderedCollection new
-         add: (Association key: $a value: 0.27d);
-         add: (Association key: $c value: 0.12d);
-         add: (Association key: $g value: 0.12d);
-         add: (Association key: $t value: 0.27d);
+   self
+      writeFasta: 'TWO IUB ambiguity codes'
+      from:
+         (( RandomStream
+            to: n*3
+            on: #(   #($a 0.27d0)
+                  #($c 0.12d0)
+                  #($g 0.12d0)
+                  #($t 0.27d0)
 
-         add: (Association key: $B value: 0.02d);
-         add: (Association key: $D value: 0.02d);
-         add: (Association key: $H value: 0.02d);
-         add: (Association key: $K value: 0.02d);
-         add: (Association key: $M value: 0.02d);
-         add: (Association key: $N value: 0.02d);
-         add: (Association key: $R value: 0.02d);
-         add: (Association key: $S value: 0.02d);
-         add: (Association key: $V value: 0.02d);
-         add: (Association key: $W value: 0.02d);
-         add: (Association key: $Y value: 0.02d);
-         yourself )) random: r).
+                  #($B 0.02d0)
+                  #($D 0.02d0)
+                  #($H 0.02d0)
+                  #($K 0.02d0)
+                  #($M 0.02d0)
+                  #($N 0.02d0)
+                  #($R 0.02d0)
+                  #($S 0.02d0)
+                  #($V 0.02d0)
+                  #($W 0.02d0)
+                  #($Y 0.02d0)))
+         random: r;
+         yourself)
+      to: out
+      lineLength: lineLength.
 
-   stdout writeFasta: 'THREE Homo sapiens frequency' sequence:
-   (( RandomStream to: n*5 on: (
-      OrderedCollection new
-         add: (Association key: $a value: 0.3029549426680d);
-         add: (Association key: $c value: 0.1979883004921d);
-         add: (Association key: $g value: 0.1975473066391d);
-         add: (Association key: $t value: 0.3015094502008d);
-         yourself )) random: r).
+   self
+      writeFasta: 'THREE Homo sapiens frequency'
+      from:
+         (( RandomStream
+            to: n*5
+            on: #(   #($a 0.3029549426680d0)
+                  #($c 0.1979883004921d0)
+                  #($g 0.1975473066391d0)
+                  #($t 0.3015094502008d0)))
+            random: r;
+            yourself)
+      to: out
+      lineLength: lineLength.
 
-   stdout flush.
-   ^'' ! !
+   out flush. ! !
+!Tests class methodsFor: 'benchmark scripts'!
+fasta   self fasta: self arg to: self stdout.   ^self postscript! !
 
-
-Smalltalk.Shootout defineClass: #RepeatStream
-	superclass: #{Core.ReadStream}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'repeatPtr repeatLimit'
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
-
-!Shootout.RepeatStream class methodsFor: 'instance creation'!
-
-to: anInteger on: aCollection 
-   ^(super on: aCollection) to: anInteger ! !
-
-!Shootout.RepeatStream methodsFor: 'initialize-release'!
-
-to: anInteger
-   repeatPtr := 0.
-   repeatLimit := anInteger ! !
-
-!Shootout.RepeatStream methodsFor: 'accessing'!
-
-next
-   position >= readLimit ifTrue: [ self position: 0 ].
-   repeatPtr := repeatPtr + 1.
-   ^collection at: (position := position + 1) ! !
-
-!Shootout.RepeatStream methodsFor: 'testing'!
-
-atEnd
-   ^repeatPtr >= repeatLimit ! !
-
-
-Smalltalk.Shootout defineClass: #RandomStream
-	superclass: #{Shootout.RepeatStream}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'random percentages'
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
-
-!Shootout.RandomStream methodsFor: 'initialize-release'!
-
-on: aCollection
-   | size cp |
-   repeatPtr := 0.
-   random := RandomNumber to: 1.0.
-   size := aCollection size.
-   percentages := Array new: size.
-   collection := Array new: size.
-   cp := 0.0d.
-   1 to: size do: [:i| 
-      collection at: i put: (aCollection at: i) key.
-      percentages at: i put: (cp := cp + (aCollection at: i) value).
-   ] ! !
-
-!Shootout.RandomStream methodsFor: 'accessing'!
-
-next
-   | r |
-   r := random next.
-   repeatPtr := repeatPtr + 1.
-   1 to: percentages size do: [:i| 
-      (r < (percentages at: i)) ifTrue: [^collection at: i]] ! 
-
-random: aRandomNumber
-"* Share the random number generator so we can get the expected results. *"
-   random := aRandomNumber ! !
-
-
-! ExternalWriteStream methodsFor: 'accessing'!
-
-writeFasta: aString sequence: aStream
-   | i |
-   self nextPut: $>; nextPutAll: aString; cr.
-   i := 0.
-   [aStream atEnd] whileFalse: [
-      (i == 60) ifTrue: [self cr. i := 0].
-      self nextPut: aStream next.
-      i := i + 1.
-      ].
-   self cr ! !
-
-
-Smalltalk.Shootout defineClass: #RandomNumber
-	superclass: #{Core.Object}
-	indexedType: #none
-	private: false
-	instanceVariableNames: 'seed scale '
-	classInstanceVariableNames: ''
-	imports: ''
-	category: 'Shootout'!
-
-Shootout.RandomNumber defineSharedVariable: #Modulus
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '139968'!
-
-#{Shootout.RandomNumber.Modulus} initialize!
-
-Shootout.RandomNumber defineSharedVariable: #FModulus
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '139968.0d'!
-
-#{Shootout.RandomNumber.FModulus} initialize!
-
-Shootout.RandomNumber defineSharedVariable: #Multiplier
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '3877'!
-
-#{Shootout.RandomNumber.Multiplier} initialize!
-
-Shootout.RandomNumber defineSharedVariable: #Increment
-	private: false
-	constant: false
-	category: 'computer language shootout'
-	initializer: '29573'!
-
-#{Shootout.RandomNumber.Increment} initialize!
-
-
-!Shootout.RandomNumber class methodsFor: 'instance creation'!
-
-to: anInteger
-   ^self basicNew to: anInteger ! !
-
-
-!Shootout.RandomNumber methodsFor: 'accessing'!
-
-next
-   seed := (seed * Multiplier + Increment) \\ Modulus.
-   ^(seed * scale) asDouble / FModulus ! !
-
-!Shootout.RandomNumber methodsFor: 'private'!
-
-to: anInteger
-   seed := 42.
-   scale := anInteger ! !
-
-
+RandomNumber initialize!
