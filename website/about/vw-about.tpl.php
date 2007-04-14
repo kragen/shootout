@@ -3,3 +3,20 @@
 <?=$Version;?>
 <p>Home Page: <a href="http://smalltalk.cincom.com/prodinformation/index.ssp?content=vwfactsheet">Cincom Smalltalk&#8482; VisualWorksl&#174; Environment Data Sheet</a></p>
 <p>Download: <a href="http://www.cincomsmalltalk.com/userblogs/cincom/blogView?content=smalltalk">VisualWorksl&#174; Non-Commercial</a></p>
+<p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details:</p>
+<pre>
+Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!
+
+!Tests class methodsFor: 'platform'!arg   ^CEnvironment commandLine last asNumber! !
+!Tests class methodsFor: 'platform'!stdin   ^Stdin! !
+!Tests class methodsFor: 'platform'!stdout   ^Stdout! !
+
+!LimitedPrecisionReal methodsFor: 'platform'!asStringWithDecimalPlaces: anInteger   ^(self asFixedPoint: anInteger) printString copyWithout: $s! !
+
+!LimitedPrecisionReal methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
+
+!Integer methodsFor: 'platform'!asPaddedString: aWidth   | s |
+   s := WriteStream on: (String new: 10).
+   self printOn: s paddedWith: $  to: aWidth base: 10.
+   ^s contents ! !
+</pre>
