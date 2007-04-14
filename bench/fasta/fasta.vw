@@ -84,6 +84,6 @@ fasta: n to: out
 
    out flush. ! !
 !Tests class methodsFor: 'benchmark scripts'!
-fasta   self fasta: self arg to: self stdout.   ^''! !
+fasta   self fasta: self arg to: self stdoutSpecial.   ^''! !
 
 RandomNumber initialize!
