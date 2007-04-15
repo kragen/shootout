@@ -1,13 +1,9 @@
-"*  The Great Computer Language Shootout
-   contributed by Isaac Gouy
-   
-   To run: gst -QI /usr/share/gnu-smalltalk/gst.im sumcol.st < input.txt
-*"
+"* The Computer Language Shootout
+    http://shootout.alioth.debian.org/
+    contributed by Isaac Gouy *"!
+!Tests class methodsFor: 'benchmark scripts'!sumcol   | s sum |   s := self stdin.   sum := 0.   [s atEnd] whileFalse: [      sum := sum + (s upTo: Character cr) asNumber].
+   self stdout       nextPutAll: sum printString;      nextPut: Character lf.   ^''! !
 
-| sum inStream |
-sum := 0.
-inStream := FileStream stdin bufferSize: 4096.
-[inStream atEnd] whileFalse: [
-   sum := sum + inStream nextLine asInteger].
-   
-Transcript show: sum displayString; nl !
+
+
+Tests sumcol!

@@ -1,78 +1,74 @@
-"* The Computer Language Shootout
- http://shootout.alioth.debian.org/
- contributed by Isaac Gouy *"
+"*  The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+   contributed by Eliot Miranda and Isaac Gouy *"!
 
 
-! FileStream methodsFor: 'accessing'!
+!Tests class methodsFor: 'benchmarking'!
+reverseComplement: sequence named: sequenceName to: output
+   | complement newline lineLength n |
+   (sequenceName isNil) ifTrue: [^self].
 
-readFasta: anId 
-   | idString newline buffer description line char |
-   idString := '>',anId.
-   newline := Character nl.
+   complement := String new: 128 withAll: $*.
 
-   "* find start of particular fasta sequence *"
-   [(self atEnd) or: [
-         (self peek = $>) 
-            ifTrue: [(line := self nextLine) startsWith: idString]
-            ifFalse: [self skipTo: newline. false]]
-      ] whileFalse.
+   'ABCDGHKMNRSTVWY' with: 
+   'TVGHCDMKNYSABWR'
+      do: [:a :b|
+         complement at: a asInteger put: b.
+         complement at: a asLowercase asInteger put: b].
 
-   "* line-by-line read - it would be a lot faster to block read *"
-   description := line.
-   buffer := ByteStream on: (String new: 1028).
-   [(self atEnd) or: [(char := self peek) = $>]] whileFalse: [
-      (char = $;) 
-         ifTrue: [self nextLine] 
-         ifFalse: [buffer nextPutAll: self nextLine]
-      ].
+   newline := Character lf.
+   lineLength := 60.
+   n := sequence size.
 
-   ^Association key: description value: buffer contents !
-
-
-writeReverseComplementFasta: aString sequence: aSequence
-   | lineLength n iub |
-   (aString isNil) ifTrue: [^self].
-
-   lineLength := 60. n := aSequence size.
-
-   iub := String new: 128 withAll: $*.
-   iub at: $a value put: $T. iub at: $A value put: $T.
-   iub at: $b value put: $V. iub at: $B value put: $V.
-   iub at: $c value put: $G. iub at: $C value put: $G.
-   iub at: $d value put: $H. iub at: $D value put: $H.
-   iub at: $g value put: $C. iub at: $G value put: $C.
-   iub at: $h value put: $D. iub at: $H value put: $D.
-   iub at: $k value put: $M. iub at: $K value put: $M.
-   iub at: $m value put: $K. iub at: $M value put: $K.
-   iub at: $n value put: $N. iub at: $N value put: $N.
-   iub at: $r value put: $Y. iub at: $R value put: $Y.
-   iub at: $s value put: $S. iub at: $S value put: $S.
-   iub at: $t value put: $A. iub at: $T value put: $A.
-   iub at: $v value put: $B. iub at: $V value put: $B.
-   iub at: $w value put: $W. iub at: $W value put: $W.
-   iub at: $y value put: $R. iub at: $Y value put: $R.
-
-   self nextPutAll: aString; nl.
+   output nextPutAll: sequenceName; nextPut: newline.
 
    [n > 0] whileTrue: [ 
          1 to: ((n < lineLength) ifTrue: [n] ifFalse: [lineLength]) do:
-            [:i | self nextPut: (iub at: (aSequence at: n - i + 1) value)].
-         self nl.
+            [:i | output nextPut: 
+               (complement at: (sequence at: n - i + 1) asInteger)].
+         output nextPut: newline.
          n := n - lineLength. 
       ] ! !
 
 
-| in out fasta |
-in := FileStream stdin bufferSize: 4096.
-out := FileStream stdout bufferSize: 4096.
+!Tests class methodsFor: 'benchmarking'!
+readFasta: sequenceName from: input
+   | prefix newline buffer description line char |
+   prefix := '>',sequenceName.
+   newline := Character cr.
 
-fasta := in readFasta: 'ONE'.
-out writeReverseComplementFasta: fasta key sequence: fasta value.
+   "* find start of particular fasta sequence *"
+   [(input atEnd) or: [
+         (input peek = $>) 
+            ifTrue: [((line := input upTo: newline) 
+               indexOfSubCollection: prefix startingAt: 1) = 1]
+            ifFalse: [input skipThrough: newline. false]]
+      ] whileFalse.
 
-fasta := in readFasta: 'TWO'.
-out writeReverseComplementFasta: fasta key sequence: fasta value.
+   "* line-by-line read - it would be a lot faster to block read *"
+   description := line.
+   buffer := ReadWriteStream on: (String new: 1028).
+   [(input atEnd) or: [(char := input peek) = $>]] whileFalse: [
+      (char = $;) 
+         ifTrue: [input upTo: newline] 
+         ifFalse: [buffer nextPutAll: (input upTo: newline)]
+      ].
+   ^Association key: description value: buffer contents ! !
 
-fasta := in readFasta: 'THREE'.
-out writeReverseComplementFasta: fasta key sequence: fasta value.
 
-in close. out close !
+!Tests class methodsFor: 'benchmark scripts'!
+revcomp
+   | input output |
+   input := self stdinSpecial.
+   output := self stdoutSpecial.
+
+   #('ONE' 'TWO' 'THREE') do:
+      [:sequenceName|   | fasta |
+         fasta := self readFasta: sequenceName from: input.
+         self reverseComplement: fasta value named: fasta key to: output.
+      ].
+
+   output flush. 
+   ^'' ! !
+
+Tests revcomp!
