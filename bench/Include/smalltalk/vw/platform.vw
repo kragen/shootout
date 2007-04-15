@@ -17,7 +17,8 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
 
 !LimitedPrecisionReal methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
 
-!Integer methodsFor: 'platform'!asPaddedString: aWidth   | s |
+!SmallInteger methodsFor: 'platform'!asPaddedString: aWidth   | s |
    s := WriteStream on: (String new: 10).
    self printOn: s paddedWith: $  to: aWidth base: 10.
-   ^s contents ! !
+   ^s contents ! !
+!SmallInteger methodsFor: 'platform'!asFloatD   ^self Double! !

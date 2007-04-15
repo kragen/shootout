@@ -20,4 +20,4 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
 !SmallInteger methodsFor: 'platform'!asPaddedString: width
    | s |
    s := self printString.
-   ^(String new: (width - s size) withAll: $ ), s ! !!SmallInteger methodsFor: 'platform'!asDouble   ^self asFloat! !
+   ^(String new: (width - s size) withAll: $ ), s ! !!SmallInteger methodsFor: 'platform'!asFloatD   ^self asFloat! !
