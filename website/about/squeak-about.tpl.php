@@ -3,3 +3,17 @@
 <?=$Version;?>
 <p>Home Page: <a href="http://www.squeak.org/">http://www.squeak.org/</a></p>
 <p>Download: <a href="http://www.squeak.org/Download/">http://www.squeak.org/Download/</a></p>
+<p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details:</p>
+<pre>
+Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!
+
+!Tests class methodsFor: 'platform'!arg   ^(SmalltalkImage current getSystemAttribute: 3) asInteger! !
+
+!Tests class methodsFor: 'platform'!stdin   ^UnixProcess stdIn! !!Tests class methodsFor: 'platform'!stdout   ^UnixProcess stdOut! !
+
+!Float methodsFor: 'platform'!asStringWithDecimalPlaces: anInteger   | precision rounded |   anInteger <= 0 ifTrue: [^ self rounded printString].   precision := Utilities floatPrecisionForDecimalPlaces: anInteger.   rounded := self roundTo: precision.   ^(rounded asScaledDecimal: anInteger) printString copyUpTo: $s! !
+
+!Float methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
+
+!Integer methodsFor: 'platform'!asPaddedString: aWidth   ^self printStringLength: aWidth padded: false! !
+</pre>
