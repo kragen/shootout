@@ -79,37 +79,34 @@ dnaSequenceHash
 
 
 !Tests class methodsFor: 'benchmarking'!
-readFasta: anId from: input
-   | idString newline buffer char |
-   idString := '>' , anId.
-   newline := Character lf.
+readFasta: sequenceName from: input
+   | prefix newline buffer description line char |
+   prefix := '>',sequenceName.
+   newline := Character cr.
 
    "* find start of particular fasta sequence *"
-
-   [(char := input peek) == nil
-    or: [char = $>
-         ifTrue:
-            [((input upTo: newline)
-               indexOfSubCollection: idString startingAt: 1) = 1]
-         ifFalse:
-            [input skipThrough: newline.
-             false]]]
-      whileFalse.
+   [(input atEnd) or: [
+         (input peek = $>) 
+            ifTrue: [((line := input upTo: newline) 
+               indexOfSubCollection: prefix startingAt: 1) = 1]
+            ifFalse: [input skipThrough: newline. false]]
+      ] whileFalse.
 
    "* line-by-line read - it would be a lot faster to block read *"
-
+   description := line.
    buffer := ReadWriteStream on: (String new: 1028).
-   [(char := input peek) == nil or: [char = $>]] whileFalse:
-      [char = $;
-         ifTrue: [input upTo: newline]
-         ifFalse: [buffer nextPutAll: (input upTo: newline)]].
-   ^buffer contents ! !
+   [(input atEnd) or: [(char := input peek) = $>]] whileFalse: [
+      (char = $;) 
+         ifTrue: [input upTo: newline] 
+         ifFalse: [buffer nextPutAll: (input upTo: newline)]
+      ].
+   ^Association key: description value: buffer contents ! !
 
 !Tests class methodsFor: 'benchmarking'!
 knucleotideFrom: input to: output
    | sequence newline writeFrequencies writeCount |
 
-   sequence := (self readFasta: 'THREE' from: input) asUppercase.
+   sequence := (self readFasta: 'THREE' from: input) value asUppercase.
    newline := Character lf.
 
    writeFrequencies :=
@@ -124,8 +121,10 @@ knucleotideFrom: input to: output
 
       frequencies do: [:each | | percentage |
          percentage := (each value / count) * 100.0.
-         output nextPutAll: each key; space;
-            nextPutAll: (percentage asStringWith: 3); nextPut: newline]].
+         output 
+            nextPutAll: each key; space;
+            nextPutAll: (percentage asStringWithDecimalPlaces: 3); 
+            nextPut: newline]].
 
    writeCount := [:nucleotideFragment | | frequencies count |
       frequencies := sequence substringFrequencies: nucleotideFragment size
@@ -142,4 +141,4 @@ knucleotideFrom: input to: output
    writeCount value: 'GGTATTTTAATT'.
    writeCount value: 'GGTATTTTAATTTATAGT'.! !
 !Tests class methodsFor: 'benchmark scripts'!
-knucleotide   self knucleotideFrom: self stdinSpecial to: self stdoutSpecial.   ^''! !
+knucleotide   self knucleotideFrom: self stdinSpecial to: self stdout.   ^''! !
