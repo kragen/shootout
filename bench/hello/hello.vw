@@ -2,7 +2,5 @@
     http://shootout.alioth.debian.org/
     contributed by Isaac Gouy *"!
 
-!Tests class methodsFor: 'benchmark scripts'!
-hello
-   self stdout
+   Stdout
       nextPutAll: 'hello world'; nextPut: Character lf.   ^''! !
