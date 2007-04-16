@@ -25,14 +25,15 @@
 
            i = m ifTrue: [ bits := bits + 1 ].
            (x bitAnd: 7) == 7 ifTrue: [
-               output nextPutByte: bits.
+               output nextPut: bits.
                bits := 0.
            ]
        ]. 
        (extent bitAnd: 7) == 0 ifFalse: [
            bits := bits bitShift: 8 - (extent bitAnd: 7).
-           output nextPutByte: bits.
+           output nextPut: bits.
        ]
    ]! !
 
-!Tests class methodsFor: 'benchmark scripts'!mandelbrot2   | n output |    n := self arg.    (output := self stdout)      nextPutAll: 'P4'; nextPut: Character lf;      print: n; space; print: n; nextPut: Character lf.   self mandelbrot2: n to: output.   ^''! !
+!Tests class methodsFor: 'benchmark scripts'!mandelbrot2   | n output |   n := self arg.   (output := self stdout)      nextPutAll: 'P4'; nextPut: Character lf;      print: n; space; print: n; nextPut: Character lf;
+      binary.   self mandelbrot2: n to: output.   ^''! !
