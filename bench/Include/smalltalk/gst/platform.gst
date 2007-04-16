@@ -5,7 +5,7 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
 
 !Tests class methodsFor: 'platform'!arg   ^Smalltalk arguments first asInteger! !!Tests class methodsFor: 'platform'!stdin   ^FileStream stdin! !
 
-!Tests class methodsFor: 'platform'!stdinSpecial   ^self stdin bufferSize: 4096! ! !Tests class methodsFor: 'platform'!stdout   ^Transcript! !
+!Tests class methodsFor: 'platform'!stdinSpecial   ^self stdin bufferSize: 4096! ! !Tests class methodsFor: 'platform'!stdout   ^FileStream stdout! !
 
 !Tests class methodsFor: 'platform'!stdoutSpecial
    ^self stdout bufferSize: 4096! ! 
@@ -17,7 +17,7 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
 
 !Float methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
 
-!SmallInteger methodsFor: 'platform'!asPaddedString: width
+!Integer methodsFor: 'platform'!asPaddedString: width
    | s |
    s := self printString.
-   ^(String new: (width - s size) withAll: $ ), s ! !!SmallInteger methodsFor: 'platform'!asFloatD   ^self asFloat! !
+   ^(String new: (width - s size) withAll: $ ), s ! !!Integer methodsFor: 'platform'!asFloatD   ^self asFloat! !
