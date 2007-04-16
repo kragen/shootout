@@ -35,14 +35,14 @@ reverseComplement: sequence named: sequenceName to: output
 readFasta: sequenceName from: input
    | prefix newline buffer description line char |
    prefix := '>',sequenceName.
-   newline := Character cr.
+   newline := Character lf.
 
    "* find start of particular fasta sequence *"
    [(input atEnd) or: [
          (input peek = $>) 
             ifTrue: [((line := input upTo: newline) 
                indexOfSubCollection: prefix startingAt: 1) = 1]
-            ifFalse: [input skipThrough: newline. false]]
+            ifFalse: [input skipTo: newline. false]]
       ] whileFalse.
 
    "* line-by-line read - it would be a lot faster to block read *"
@@ -59,8 +59,8 @@ readFasta: sequenceName from: input
 !Tests class methodsFor: 'benchmark scripts'!
 revcomp
    | input output |
-   input := self stdinSpecial.
-   output := self stdoutSpecial.
+   input := self stdin.
+   output := self stdout.
 
    #('ONE' 'TWO' 'THREE') do:
       [:sequenceName|   | fasta |
