@@ -22,4 +22,4 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
    self printOn: s paddedWith: $  to: aWidth base: 10.
    ^s contents ! !
 
-!Integer methodsFor: 'platform'!asFloatD   ^self Double! !
+!Integer methodsFor: 'platform'!asFloatD   ^self asDouble! !
