@@ -5,15 +5,19 @@
 <p>Download: <a href="http://www.squeak.org/Download/">http://www.squeak.org/Download/</a></p>
 <p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details:</p>
 <pre>
-Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!
+Object subclass<span class="sym">: #</span>Tests   instanceVariableNames<span class="sym">:</span> <span class="str">''</span>   classVariableNames<span class="sym">:</span> <span class="str">''</span>   poolDictionaries<span class="sym">:</span> <span class="str">''</span>   category<span class="sym">:</span> <span class="str">'Shootout'</span><span class="sym">!</span>
 
-!Tests class methodsFor: 'platform'!arg   ^(SmalltalkImage current getSystemAttribute: 3) asInteger! !
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>arg   <span class="sym">^(</span>SmalltalkImage current getSystemAttribute<span class="sym">:</span> <span class="num">3</span><span class="sym">)</span> asInteger<span class="sym">! !</span>
 
-!Tests class methodsFor: 'platform'!stdin   ^UnixProcess stdIn! !!Tests class methodsFor: 'platform'!stdout   ^UnixProcess stdOut! !
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdin   <span class="sym">^</span>UnixProcess stdIn<span class="sym">! !</span>
 
-!Float methodsFor: 'platform'!asStringWithDecimalPlaces: anInteger   | precision rounded |   anInteger <= 0 ifTrue: [^ self rounded printString].   precision := Utilities floatPrecisionForDecimalPlaces: anInteger.   rounded := self roundTo: precision.   ^(rounded asScaledDecimal: anInteger) printString copyUpTo: $s! !
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdinSpecial   <span class="sym">^</span>UnixProcess stdIn<span class="sym">! !!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdout   <span class="sym">^</span>UnixProcess stdOut<span class="sym">! !</span>
 
-!Float methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdoutSpecial   <span class="sym">^</span>UnixProcess stdOut<span class="sym">! !</span>
 
-!Integer methodsFor: 'platform'!asPaddedString: aWidth   ^self printStringLength: aWidth padded: false! !
+<span class="sym">!</span>Float methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asStringWithDecimalPlaces<span class="sym">:</span> anInteger   <span class="sym">|</span> precision rounded <span class="sym">|</span>   anInteger <span class="sym">&lt;=</span> <span class="num">0</span> ifTrue<span class="sym">: [^</span> <span class="kwa">self</span> rounded printString<span class="sym">].</span>   precision <span class="sym">:=</span> Utilities floatPrecisionForDecimalPlaces<span class="sym">:</span> anInteger<span class="sym">.</span>   rounded <span class="sym">:=</span> <span class="kwa">self</span> roundTo<span class="sym">:</span> precision<span class="sym">.   ^(</span>rounded asScaledDecimal<span class="sym">:</span> anInteger<span class="sym">)</span> printString copyUpTo<span class="sym">: $</span>s<span class="sym">! !</span>
+
+<span class="sym">!</span>Float methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>printOn<span class="sym">:</span> aStream withName<span class="sym">:</span> aString   aStream  nextPutAll<span class="sym">: (</span><span class="kwa">self</span> asStringWithDecimalPlaces<span class="sym">:</span> <span class="num">9</span><span class="sym">);</span>      nextPut<span class="sym">:</span> Character tab<span class="sym">;</span> nextPutAll<span class="sym">:</span> aString<span class="sym">;</span> nextPut<span class="sym">:</span> Character lf<span class="sym">.! !</span>
+
+<span class="sym">!</span>Integer methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asPaddedString<span class="sym">:</span> aWidth   <span class="sym">^</span><span class="kwa">self</span> printStringLength<span class="sym">:</span> aWidth padded<span class="sym">:</span> <span class="kwa">false</span><span class="sym">! !</span>
 </pre>

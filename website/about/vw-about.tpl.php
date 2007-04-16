@@ -5,18 +5,29 @@
 <p>Download: <a href="http://www.cincomsmalltalk.com/userblogs/cincom/blogView?content=smalltalk">VisualWorksl&#174; Non-Commercial</a></p>
 <p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details:</p>
 <pre>
-Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: ''   poolDictionaries: ''   category: 'Shootout'!
 
-!Tests class methodsFor: 'platform'!arg   ^CEnvironment commandLine last asNumber! !
-!Tests class methodsFor: 'platform'!stdin   ^Stdin! !
-!Tests class methodsFor: 'platform'!stdout   ^Stdout! !
 
-!LimitedPrecisionReal methodsFor: 'platform'!asStringWithDecimalPlaces: anInteger   ^(self asFixedPoint: anInteger) printString copyWithout: $s! !
 
-!LimitedPrecisionReal methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
+Object subclass<span class="sym">: #</span>Tests   instanceVariableNames<span class="sym">:</span> <span class="str">''</span>   classVariableNames<span class="sym">:</span> <span class="str">''</span>   poolDictionaries<span class="sym">:</span> <span class="str">''</span>   category<span class="sym">:</span> <span class="str">'Shootout'</span><span class="sym">!</span>
 
-!Integer methodsFor: 'platform'!asPaddedString: aWidth   | s |
-   s := WriteStream on: (String new: 10).
-   self printOn: s paddedWith: $  to: aWidth base: 10.
-   ^s contents ! !
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>arg   <span class="sym">^</span>CEnvironment commandLine last asNumber<span class="sym">! !</span>
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdin   <span class="sym">^</span>Stdin<span class="sym">! !</span>
+
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdinSpecial   <span class="sym">^</span>ExternalReadStream on<span class="sym">:</span>
+      <span class="sym">(</span>ExternalConnection ioAccessor<span class="sym">: (</span>UnixDiskFileAccessor new handle<span class="sym">:</span> <span class="num">0</span><span class="sym">))! !</span>
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdout   <span class="sym">^</span>Stdout<span class="sym">! !</span>
+
+<span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdoutSpecial   <span class="sym">^</span>ExternalWriteStream on<span class="sym">:</span>
+      <span class="sym">(</span>ExternalConnection ioAccessor<span class="sym">: (</span>UnixDiskFileAccessor new handle<span class="sym">:</span> <span class="num">1</span><span class="sym">))! !</span>
+
+<span class="sym">!</span>LimitedPrecisionReal methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asStringWithDecimalPlaces<span class="sym">:</span> anInteger   <span class="sym">^(</span><span class="kwa">self</span> asFixedPoint<span class="sym">:</span> anInteger<span class="sym">)</span> printString copyWithout<span class="sym">: $</span>s<span class="sym">! !</span>
+
+<span class="sym">!</span>LimitedPrecisionReal methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>printOn<span class="sym">:</span> aStream withName<span class="sym">:</span> aString   aStream  nextPutAll<span class="sym">: (</span><span class="kwa">self</span> asStringWithDecimalPlaces<span class="sym">:</span> <span class="num">9</span><span class="sym">);</span>      nextPut<span class="sym">:</span> Character tab<span class="sym">;</span> nextPutAll<span class="sym">:</span> aString<span class="sym">;</span> nextPut<span class="sym">:</span> Character lf<span class="sym">.! !</span>
+
+<span class="sym">!</span>Integer methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asPaddedString<span class="sym">:</span> aWidth   <span class="sym">|</span> s <span class="sym">|</span>
+   s <span class="sym">:=</span> WriteStream on<span class="sym">: (</span>String new<span class="sym">:</span> <span class="num">10</span><span class="sym">).</span>
+   <span class="kwa">self</span> printOn<span class="sym">:</span> s paddedWith<span class="sym">: $</span>  to<span class="sym">:</span> aWidth base<span class="sym">:</span> <span class="num">10</span><span class="sym">.</span>
+   <span class="sym">^</span>s contents <span class="sym">! !</span>
+
+<span class="sym">!</span>Integer methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asFloatD   <span class="sym">^</span><span class="kwa">self</span> asDouble<span class="sym">! !</span>
 </pre>
