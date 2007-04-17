@@ -36,3 +36,5 @@
    ]! !
 
 !Tests class methodsFor: 'benchmark scripts'!mandelbrot2   | n output |    n := self arg.    (output := self stdout)      nextPutAll: 'P4'; nextPut: Character lf;      print: n; space; print: n; nextPut: Character lf.   self mandelbrot2: n to: output.   ^''! !
+
+Tests mandelbrot2!
