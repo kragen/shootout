@@ -4,21 +4,21 @@
 
 !Tests class methodsFor: 'benchmarking'!mandelbrot2: extent to: output   | limit2 m bits zr zi cr ci i tr stepr stepi |   limit2 := 4.0d0.
    m := 50.
-   stepr := 2.0 / extent.
-   stepi := 2.0 / extent.
+   stepr := 2.0d0 / extent.
+   stepi := 2.0d0 / extent.
 
    0 to: extent - 1 do: [ :y |
        bits := 0.
-       ci := stepi * y asFloat - 1.0.
+       ci := stepi * y asFloat - 1.0d0.
        0 to: extent - 1 do: [ :x |
-           cr := stepr * x asFloat - 1.5.
+           cr := stepr * x asFloat - 1.5d0.
            zr := cr. zi := ci.
 
            bits := bits bitShift: 1.
            i := 1.  
            [
                tr := (zr*zr) - (zi*zi) + cr.
-               zi := 2.0 * zr * zi + ci.
+               zi := 2.0d0 * zr * zi + ci.
                zr := tr.
                (zr*zr) + (zi*zi) < limit2 and: [ (i := i + 1) < m ]
            ] whileTrue.
