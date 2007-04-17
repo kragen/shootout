@@ -96,5 +96,3 @@ fasta   self fasta: self arg to: self stdout.   ^''! !
 
 RandomNumber initialize!
 
-
-Tests fasta!
