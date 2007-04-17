@@ -71,4 +71,3 @@ revcomp
    output flush. 
    ^'' ! !
 
-Tests revcomp!

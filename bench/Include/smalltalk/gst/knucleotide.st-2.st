@@ -40,7 +40,7 @@ readFasta: sequenceName from: input
    ^Association key: description value: buffer contents ! !
 
 !Tests class methodsFor: 'benchmarking'!
-knucleotideFrom: input to: output
+knucleotide2From: input to: output
    | sequence newline writeFrequencies writeCount |
 
    sequence := (self readFasta: 'THREE' from: input) value asUppercase.
@@ -78,6 +78,4 @@ knucleotideFrom: input to: output
    writeCount value: 'GGTATTTTAATT'.
    writeCount value: 'GGTATTTTAATTTATAGT'.! !
 !Tests class methodsFor: 'benchmark scripts'!
-knucleotide   self knucleotideFrom: self stdinSpecial to: self stdout.   ^''! !
-
-Tests knucleotide!
+knucleotide2   self knucleotide2From: self stdinSpecial to: self stdout.   ^''! !
