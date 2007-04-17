@@ -1,42 +1,27 @@
-<span class="com">{-# OPTIONS -fbang-patterns #-}</span>
+<span class="com">{-# OPTIONS -fglasgow-exts -fbang-patterns #-}</span>
 <span class="slc">--</span>
 <span class="slc">-- The Computer Language Shootout</span>
 <span class="slc">-- http://shootout.alioth.debian.org/</span>
 <span class="slc">--</span>
-<span class="slc">-- Contributed by Don Stewart</span>
+<span class="slc">-- Contributed by Vasile Gaburici</span>
 <span class="slc">--</span>
-<span class="kwa">import</span> Data.<span class="kwb">Char</span>
-<span class="kwa">import</span> Data.ByteString.Base
-<span class="kwa">import qualified</span> Data.ByteString.Char8      <span class="kwa">as</span> S
-<span class="kwa">import qualified</span> Data.ByteString.Lazy.Char8 <span class="kwa">as</span> L
-
-main <span class="sym">=</span> print . new <span class="num">0</span> . L.toChunks <span class="sym">=&lt;&lt;</span> L.getContents
-
-new  i <span class="sym">[]      =</span> i
-new <span class="sym">!</span>i <span class="sym">(!</span>s<span class="sym">:</span>t<span class="sym">:</span>ts<span class="sym">) |</span> S.last s <span class="sym">/=</span> '\n' <span class="sym">=</span> new <span class="sym">(</span>add i s'<span class="sym">)</span> ts'
-  <span class="kwa">where</span>
-    <span class="sym">(</span>s'<span class="sym">,</span>r<span class="sym">) =</span> S.breakEnd <span class="sym">(==</span>'\n'<span class="sym">)</span> s
-    ts'    <span class="sym">= (</span>S.append r t<span class="sym">) :</span> ts
-new  i <span class="sym">(</span>s<span class="sym">:</span> ss<span class="sym">) =</span> new <span class="sym">(</span>add i s<span class="sym">)</span> ss
-
+<span class="slc">-- Real line-oriented I/O</span>
 <span class="slc">--</span>
-<span class="slc">-- now jump into the fast path</span>
-<span class="slc">--</span>
-add <span class="sym">!</span>i <span class="sym">!</span>s    <span class="sym">|</span> S.null s  <span class="sym">=</span> i
-             <span class="sym">|</span> x <span class="sym">==</span> '<span class="sym">-</span>'  <span class="sym">=</span> sub i <span class="num">0</span> xs
-             <span class="sym">|</span> otherwise <span class="sym">=</span> pos i <span class="sym">(</span>parse x<span class="sym">)</span> xs
-  <span class="kwa">where</span> <span class="sym">(</span>x<span class="sym">,</span>xs<span class="sym">) =</span> uncons s
 
-sub <span class="sym">!</span>i <span class="sym">!</span>n <span class="sym">!</span>t <span class="sym">|</span> y <span class="sym">==</span> '\n'  <span class="sym">=</span> add <span class="sym">(</span>i<span class="sym">-</span>n<span class="sym">)</span> ys
-             <span class="sym">|</span> otherwise  <span class="sym">=</span> sub i n' ys
-  <span class="kwa">where</span> <span class="sym">(</span>y<span class="sym">,</span>ys<span class="sym">) =</span> uncons t
-        n'     <span class="sym">=</span> parse y <span class="sym">+</span> <span class="num">10</span> <span class="sym">*</span> n
+<span class="kwa">import</span> Data.List
+<span class="kwa">import qualified</span> Data.ByteString.Char8 <span class="kwa">as</span> C8
+<span class="kwa">import</span> System.IO.Error <span class="kwa">as</span> Err
 
-pos <span class="sym">!</span>i <span class="sym">!</span>n <span class="sym">!</span>t <span class="sym">|</span> y <span class="sym">==</span> '\n' <span class="sym">=</span> add <span class="sym">(</span>i<span class="sym">+</span>n<span class="sym">)</span> ys
-             <span class="sym">|</span> otherwise <span class="sym">=</span> pos i n' ys
-  <span class="kwa">where</span> <span class="sym">(</span>y<span class="sym">,</span>ys<span class="sym">) =</span> uncons t
-        n'     <span class="sym">=</span> parse y <span class="sym">+</span> <span class="num">10</span> <span class="sym">*</span> n
+maybeGetLine <span class="sym">::</span> IO <span class="sym">(</span>Maybe C8.ByteString<span class="sym">)</span>
+maybeGetLine <span class="sym">=</span>  Err.catch <span class="sym">(</span><span class="kwa">do</span> line <span class="sym">&lt;-</span> C8.getLine
+                              return $ Just line<span class="sym">) (</span>\e <span class="sym">-&gt;</span> return Nothing<span class="sym">)</span>
 
-parse c  <span class="sym">=</span> ord c <span class="sym">-</span> ord '<span class="num">0</span>'
+addLine <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+addLine the_sum <span class="sym">=</span> <span class="kwa">do</span> maybe_line <span class="sym">&lt;-</span> maybeGetLine
+                     <span class="kwa">case</span> maybe_line <span class="kwa">of</span>
+                       Nothing   <span class="sym">-&gt;</span> putStrLn $ show the_sum
+                       Just line <span class="sym">-&gt;</span> <span class="kwa">do</span>
+                         <span class="kwa">let</span> Just<span class="sym">(</span>num<span class="sym">,</span> _<span class="sym">) =</span> C8.readInt line
+                         addLine $<span class="sym">!</span> num <span class="sym">+</span> the_sum
 
-uncons s <span class="sym">= (</span>w2c <span class="sym">(</span>unsafeHead s<span class="sym">),</span> unsafeTail s<span class="sym">)</span>
+main <span class="sym">=</span> addLine <span class="num">0</span>

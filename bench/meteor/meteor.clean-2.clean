@@ -1,0 +1,376 @@
+/* The Computer Language Shootout
+   http://shootout.alioth.debian.org/
+
+   Contributed by Tim Hochberg.
+   
+   Some ideas taken from Olof Kraigher's Python and GHC implementations
+   and Ben St. John's GCC implementation.
+*/
+
+module meteor
+
+import StdEnv, LanguageShootout, StdLib, StdStrictLists
+
+Start 
+    = toString (length solns) +++ " solutions found\n\n"
+    +++ format (hd solns) +++ "\n"
+    +++ format (last solns) +++ "\n"
+where
+    solns =  (sort ([x \\ x <|- solutions argi]))
+     
+
+// --- Generate the solutions --- 
+
+
+:: *State = {results :: !.[!String], left :: !Int}
+
+
+solutions max = (solveCell 0 0 1023 EMPTY_SOLN initialState).results
+  where
+    initialState = {results=[!], left=max}
+    solveCell ::  !Int !Int !Int !Solution !State -> State
+    solveCell _  _  _  _ state=:{left=0}
+        = state
+    solveCell _  _  0 soln state=:{results, left}
+        | left==1 = {state & results=[!toString soln:results], left=0}
+                  = {state & results=[!s, revString s:results], left=left-2}
+                    with s = toString soln
+    solveCell offset board todo soln state
+        | board bitand M_TOP == M_TOP
+            = solveCell (offset+1024) (board >> N_COL) todo soln state
+        | otherwise 
+            = fold c masks.[c] masks state
+              with masks =  masksAtCell.[offset+(board bitand M_TOP2)] 
+                   c = firstOne.[todo]
+      where 
+        fold :: !Int![#Int!] !{![#Int!]} !State-> State
+        fold c [#m:ms!] masks state
+            | board bitand m <> 0 = fold c ms masks state
+            | otherwise           = fold c ms masks (solveCell offset board` todo` soln` state)
+                                    with board` = untag m bitor board
+                                         todo`  = todo bitxor (1 << c)
+                                         soln`  = [#m:soln!]
+        fold c [#!] masks state 
+            #! cm = todo bitand (2046 << c)
+            | cm == 0   = state
+                        = fold c masks.[c] masks state
+                          with c = firstOne.[cm]
+
+
+// --- Formatting ---
+    
+:: Solution :== [#Int!]
+EMPTY_SOLN :== [#!]
+    
+format :: String -> String
+format raw = format_ [c \\ c <-: raw] False
+  where
+    format_ :: [Char] Bool -> String 
+    format_ [] _ = ""
+    format_ chars isodd
+        # (cur, rest) = splitAt 5 chars
+        # spaced = flatten [[c, ' '] \\ c <- cur]
+        # str = {c \\ c <- spaced} +++ "\n" +++ format_ rest (not isodd)
+        = (if isodd " " "") +++ str
+
+PIECE_CHARS =: "0123456789."
+
+instance toString Solution
+  where
+    toString :: !Solution -> {#Char}
+    toString masks = {color n \\ n <|- CELLS} where
+        color n = PIECE_CHARS.[which masksWithRows]
+          where
+            which [] = 10
+            which [(r,m):rest]
+                #! n` = n - N_COL * r
+                | n` < 0 || n` > 30 || (untag m) bitand (1 << n`) == 0
+                    = which rest
+                | otherwise 
+                    = tagof m 
+        // The row associated with each mask is implicit in the order that appears
+        masksWithRows = fst (maprSt addrow  [m \\ m<|-masks] (0, 0))
+          where addrow m (board, r)
+                    # delta = first0 board / N_COL
+                    # board = (board >>  (delta * N_COL)) bitor (untag m)
+                    # r = r+delta 
+                    = ((r, m), (board, r))
+
+     
+revString :: {#Char} -> *{#Char}
+revString a 
+    # (n, a) = usize a
+    = {createArray n ' ' & [i]=c \\ c <-: a & i <- [n-1,n-2..0]}
+
+
+// --- The Board ---
+
+N_ELEM :== 5
+N_COL :== 5
+MAX_COL :== 4
+MAX_ROW :== 9
+N_ROW :== 10
+M_TOP :== 0x1F
+M_TOP2 :== 0x3ff
+CELLS =: [#0..49!]
+COLORS =: [#0..9!] 
+
+cellAt x y :== x + N_COL*y 
+coordOf i :== (i rem N_COL, i / N_COL)
+isValid x y :== 0 <= x && x < N_COL && 0 <= y && y < N_ROW
+
+
+// --- Piece Operations ---
+
+:: Dir = E | NE | NW | W | SW | SE
+DIRECTIONS =: [E, NE, NW, W, SW, SE]
+
+:: Piece :== [Dir]
+
+pieces :: {Piece}
+pieces =: { [E, E, E, SE]
+          , [SE, SW, W, SW]
+          , [W, W, SW, SE]
+          , [E , E, SW, SE]
+          , [NW, W, NW, SE, SW]
+          , [E, E, NE, W]
+          , [NW, NE, NE, W]
+          , [NE, SE, E, NE]
+          , [SE, SE, E, SE]
+          , [E, NW, NW, NW]
+          }
+
+permutations p = take 12 (perms p) 
+  where
+    perms p = [p, (flip p): perms (rotate p)] 
+    rotate piece = map r piece
+      where r E  = NE
+            r NE = NW
+            r NW = W
+            r W  = SW
+            r SW = SE
+            r SE = E
+    flip piece = map f piece
+      where f E  = W
+            f NE = NW
+            f NW = NE
+            f W  = E
+            f SW = SE
+            f SE = SW
+
+
+// --- Mask Operations ----
+
+// Most of the time we only use 25 bits of a mask
+// so we store info in a 5 bit tag.
+set   mask n :== mask bitor (1 << n)
+test1 mask n :== mask bitand (1 << n) <> 0
+test0 mask n :== mask bitand (1 << n) == 0
+retag mask n :== (mask bitand 0x1ffffff) bitor n << 25
+tagof mask   :==  (mask >> 25)
+tag   mask n :== mask bitor (n << 25)
+untag mask   :== (mask bitand 0x1ffffff) 
+
+count1s :: !Int -> Int
+count1s 0 = 0
+count1s i = (i bitand 1) + count1s (i >> 1)
+
+first0 :: !Int -> Int
+first0 i
+    #! i_low = i bitand 31
+    | i_low == 31   = (5 + first0 (i >> 5))  
+                =  firstZero.[i_low]
+     
+
+// --- Making the Bitmasks --- 
+    
+instance mod Int
+  where mod a b = if (r < 0) (r + b) r with r = a rem b
+        
+move :: !Dir (!Int, !Int) -> (!Int, !Int)
+move E  (x, y) = (x+1, y)
+move W  (x, y) = (x-1, y)
+move NE (x, y) = (x+(y mod 2), y-1)
+move NW (x, y) = (x+(y mod 2)-1, y-1)
+move SE (x, y) = (x+(y mod 2), y+1)
+move SW (x, y) = (x+(y mod 2)-1, y+1)
+
+packSize a b :== a*5+b
+unpackSize n :== (n/5, n rem 5)
+
+M_LEFT_ISLE = 0x40
+M_RIGHT_ISLE = 0x80
+
+:: MaskInfo = {mask :: !Int    // the mask itself shifted to the upper right 
+              ,  dx :: !Int    // Width of the mask
+              ,  dy :: !Int    // height of the mask
+              ,  x0 :: !Int    // location of the first 1 in the mask
+              ,  ok :: !Int    // columns where mask is OK: 0-4->standard, 5-9->at top 
+              }
+              
+pieceBounds piece isodd :== bounds piece 0 y0 0 y0 0 y0 with y0 = (if isodd 1 0)
+  where
+    bounds [] _ _ xmin ymin xmax ymax = (xmin, ymin, xmax, ymax) 
+    bounds [d:rest] x y xmin ymin xmax ymax
+        # (x, y) = move d (x, y)
+        = bounds rest x y (min x xmin) (min y ymin) (max x xmax) (max y ymax)
+
+pieceMask piece 
+    # (xmin, ymin, xmax, ymax) = pieceBounds piece False
+    # (x1, y1) = (~xmin, ~ymin)
+    # swap = y1 rem 2 <> 0
+    # w1 = xmax - xmin
+    # h1 = ymax - ymin
+    # (xmin, ymin, xmax, ymax) = pieceBounds piece True
+    # (x2, y2) = (~xmin, ~ymin+1)
+    # w2 = xmax - xmin
+    # h2 = ymax - ymin
+    | swap      = (makeInfo (mask piece x2 y2 0) w2 h2, makeInfo (mask piece x1 (y1+1) 0 >> N_COL) w1 h1)
+    | otherwise = (makeInfo (mask piece x1 y1 0) w1 h1, makeInfo (mask piece x2 (y2+1) 0 >> N_COL) w2 h2)
+  where
+    mask [] x y m = m bitor (1 << cellAt x y)
+    mask [d:rest] x y m  
+        = mask rest x` y` (m bitor (1 << cellAt x y))
+                           with (x`, y`) = move d (x, y)
+    makeInfo mask dx dy = {mask=mask, dx=dx, dy=dy, x0=x0, ok=ok}
+      where
+        x0 = firstOne.[mask bitand 1023]
+        xmax = MAX_COL - dx + x0
+        top_mask = mask << (N_COL*(5 - dy))
+        ok =     sum [1<<x \\ x <- [x0+1..xmax-1]] // all but edges  
+           bitor if (noLeftIslands mask)                    (1<<x0)   0
+           bitor if (noRightIslands (mask << (MAX_COL-dx))) (1<<xmax) 0  
+           bitor sum [1 << (5+i) \\ i <- [x0..xmax] | noIslands (top_mask << (i-x0))]
+           
+templatesForColor c = (unzip o map pieceMask) perms
+    where perms = if (c == 5) (take 6 ps) ps
+          ps = permutations pieces.[c]
+  
+masksForColor :: !Int -> {![#Int!]}
+masksForColor c = {atCell n \\ n <|- CELLS} 
+  where
+    (even, odd) = templatesForColor c
+    atCell n
+        #! (x, y) = coordOf n
+        | isEven y = [#tag (mi.mask << (x-mi.x0)) c \\ mi <- even | isok mi x y!]
+        | isOdd y  = [#tag (mi.mask << (x-mi.x0)) c \\ mi <- odd  | isok mi x y!]
+    isok mi x y  
+        #! ymax = y+mi.dy
+        =    (ymax <  MAX_ROW && test1 mi.ok x)
+         ||  (ymax == MAX_ROW && test1 mi.ok (5+x)) 
+
+                
+:: MaskData :== {!{![#Int!]}}
+
+masksAtCell :: MaskData
+masksAtCell =: transpose {values (masksForColor c) 10 0 (createArray (1024*N_ROW) [#!]) \\ c <|- COLORS} 
+  where
+    values :: !{![#Int!]} !Int !Int !*{![#Int!]} -> {![#Int!]} 
+    values a 0 0 result = result
+    values a y 0 result = values a (dec y) 1024 result
+    values a y n result
+        #! n = dec n
+        =  values a y n {result & [y*1024+n]=[#m \\ m <|- a.[5*y+firstZero.[n bitand 31]] 
+                                  |m bitand n == 0 && noSimpleIslands (m bitor n) (isOdd y)!]}
+    transpose ::{!{![#Int!]}} -> MaskData             
+    transpose a = {{a.[i, j] \\ i <|- COLORS} \\ j <|- [#0..1024*N_ROW-1!]}
+    
+
+// --- Looking for Islands ---
+    
+noLineIslands mask start stop step
+    # n = find test1 start step mask 
+    # n = find test0 n     step mask
+    # n = find test1 n     step mask
+    | n > stop  = True
+    | otherwise = False
+  where
+    find test n dn mask
+        | n >= 25       = 25
+        | test mask n   = n
+        | otherwise     = find test (n+dn) dn mask    
+noLeftIslands mask   :== noLineIslands mask 0  20 5
+noRightIslands mask  :== noLineIslands mask 4  24 5
+    
+noIslands board :== noisles board (count1s board) 
+  where  
+    noisles :: !Int !Int  -> Bool
+    noisles _ 30 = True
+    noisles board ones   
+        # board = fill board (coordOf (first0 board))
+        # ones` = count1s board
+        | (ones` - ones) rem N_ELEM <> 0    = False
+        | otherwise                         = noisles board ones` 
+    fill :: !Int !(!Int, !Int) -> Int 
+    fill m (x, y)
+        | x < 0 || x >= N_COL = m
+        | y < 0 || y >= 6     = m
+        # i = cellAt x y
+        | test1 m i           = m
+        = foldl (\m d -> fill m (move d (x, y))) (set m i) DIRECTIONS
+
+evenShift x :== x bitor (x bitand 30) >> 1
+oddShift x  :== x bitor (x bitand 15) << 1
+    
+noSimpleIslands :: !Int !Bool -> Bool    
+noSimpleIslands board isodd
+    #! todo0 = bitnot board
+    #! todo1 = todo0 >> 5
+    #! fill2 = (todo0 >> 10) bitand M_TOP
+    #! fill1a = expand (if isodd (oddShift fill2) (evenShift fill2) bitand todo1) todo1
+    #! fill0a = expand (if isodd (evenShift fill1a) (oddShift fill1a) bitand todo0) todo0
+    #! fill1b = expand (if isodd (oddShift fill0a) (evenShift fill0a)  bitand todo1) todo1
+    #! fill0b = expand (if isodd (evenShift fill1b) (oddShift fill1b) bitand todo0) todo0
+    #! full = onesCount.[(board bitand M_TOP) bitor fill0a bitor fill0b] 
+            + onesCount.[(board >> 5) bitand M_TOP bitor fill1a bitor fill1b]
+    = (full rem 5 == 0)
+  where  
+    expand :: !Int !Int -> Int
+    expand fill empty
+        #! next = (fill bitor ((fill bitand 15) << 1) bitor fill >> 1) bitand empty
+        | next == fill
+            = fill
+            = expand next empty            
+
+
+// --- Some misc, precomputed data ---
+
+onesCount :: {#Int}
+onesCount =: {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5}
+
+firstZero :: {#Int}
+firstZero =: {0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,0}
+
+firstOne :: {#Int}
+firstOne =: {10,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,
+             5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,
+             0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,
+             1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,7,0,1,
+             0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,
+             2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,
+             0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,
+             1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,8,0,1,0,2,0,1,
+             0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,
+             3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,
+             0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,
+             1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,7,0,1,0,2,0,1,0,3,0,1,
+             0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,
+             2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,
+             0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,
+             1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,9,0,1,0,2,0,1,0,3,0,1,0,2,0,1,
+             0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,
+             4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,
+             0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,
+             1,0,2,0,1,0,3,0,1,0,2,0,1,0,7,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,
+             0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,
+             2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,
+             0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,
+             1,0,3,0,1,0,2,0,1,0,8,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,
+             0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,
+             3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,
+             0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,
+             1,0,2,0,1,0,7,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,
+             0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,
+             2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,
+             0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0}
+
