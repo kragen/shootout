@@ -1,77 +1,62 @@
-"*  The Computer Language Shootout
-   http://shootout.alioth.debian.org/
-   contributed by Eliot Miranda *"!
+"* The Computer Language Shootout
+    http://shootout.alioth.debian.org/
+    contributed by Eliot Miranda *"!
 
 
-Smalltalk.Shootout defineClass: #Tests
-   superclass: #{Core.Object}
-   indexedType: #none
-   private: false
-   instanceVariableNames: ''
-   classInstanceVariableNames: ''
-   imports: ''
-   category: 'ComputerLanguageShootout' !
+!Tests class methodsFor: 'benchmarking'!matchPatterns
+   ^#(   'agggtaaa|tttaccct'
+         '[cgt]gggtaaa|tttaccc[acg]'
+         'a[act]ggtaaa|tttacc[agt]t'
+         'ag[act]gtaaa|tttac[agt]ct'
+         'agg[act]taaa|ttta[agt]cct'
+         'aggg[acg]aaa|ttt[cgt]ccct'
+         'agggt[cgt]aa|tt[acg]accct'
+         'agggta[cgt]a|t[acg]taccct'
+         'agggtaa[cgt]|[acg]ttaccct'
+   )! !
 
-!Shootout.Tests class methodsFor: 'benchmark scripts'!
+!Tests class methodsFor: 'benchmarking'!substitutionPatterns
+   ^#(   #('B' '(c|g|t)')
+         #('D' '(a|g|t)')
+         #('H' '(a|c|t)')
+         #('K' '(g|t)')
+         #('M' '(a|c)')
+         #('N' '(a|c|g|t)')
+         #('R' '(a|g)')
+         #('S' '(c|g)')
+         #('V' '(a|c|g)')
+         #('W' '(a|t)')
+         #('Y' '(c|t)'))! !
 
-regexdna
-   self regexDNAFrom: Stdin to: Stdout.
-   ^'' ! !
 
-!Shootout.Tests class methodsFor: 'benchmarks'!
-
-regexDNAFrom: input to: output 
+!Tests class methodsFor: 'benchmarking'!regexDNA: sequence to: output
    | s size1 size2 translation |
-   s := input contents.
-   size1 := s size.
+   size1 := sequence size.
 
    "* remove FASTA sequence descriptions and new-lines *"
-   s := s copyWithRegex: '>[^\r]*\r|\r' matchesReplacedWith: ''.
+   s := sequence copyWithRegex: '>[^\r]*\r|\r' matchesReplacedWith: ''.
    size2 := s size.
 
    "* regex match *"
-   #(   'agggtaaa|tttaccct'
-      '[cgt]gggtaaa|tttaccc[acg]'
-      'a[act]ggtaaa|tttacc[agt]t'
-      'ag[act]gtaaa|tttac[agt]ct'
-      'agg[act]taaa|ttta[agt]cct'
-      'aggg[acg]aaa|ttt[cgt]ccct'
-      'agggt[cgt]aa|tt[acg]accct'
-      'agggta[cgt]a|t[acg]taccct'
-      'agggtaa[cgt]|[acg]ttaccct') 
-      do: [:each | 
-         output nextPutAll: each; space; print: (s occurrencesOfRegex: each); cr].
-
+   self matchPatterns do: [:each| 
+      output 
+         nextPutAll: each; space; 
+         print: (s occurrencesOfRegex: each); nl
+      ]. 
 
    "* regex substitution *"
-   "#(   #('B' '(c|g|t)')
-      #('D' '(a|g|t)')
-      #('H' '(a|c|t)')
-      #('K' '(g|t)')
-      #('M' '(a|c)')
-      #('N' '(a|c|g|t)')
-      #('R' '(a|g)')
-      #('S' '(c|g)')
-      #('V' '(a|c|g)')
-      #('W' '(a|t)')
-      #('Y' '(c|t)')) 
-      do: [:each | s := s copyReplacingAllRegex: each first with: each last]."
    translation := Dictionary new.
-   #(   #('B' '(c|g|t)')
-      #('D' '(a|g|t)')
-      #('H' '(a|c|t)')
-      #('K' '(g|t)')
-      #('M' '(a|c)')
-      #('N' '(a|c|g|t)')
-      #('R' '(a|g)')
-      #('S' '(c|g)')
-      #('V' '(a|c|g)')
-      #('W' '(a|t)')
-      #('Y' '(c|t)')) 
-      do: [:each | translation at: each first put: each last].
-   s := s
-         copyWithRegex: '[', (translation keys asArray fold: [:a :b| a, b]), ']'
-         matchesTranslatedUsing: [:l| translation at: l].
+   self substitutionPatterns do: [:each| 
+      translation at: each first put: each last].
 
-   output cr; print: size1; cr; print: size2; cr; print: s size; cr ! !
+   s := s copyWithRegex: '[', 
+         (translation keys asArray fold: [:a :b| a, b]), ']'
+      matchesTranslatedUsing: [:l| translation at: l].
 
+   output
+      nl;
+      print: size1; nl; 
+      print: size2; nl; 
+      print: s size; nl! !!Tests class methodsFor: 'benchmark scripts'!regexdna
+   self regexDNA: self stdinSpecial contents to: self stdout.
+   ^'' ! !
