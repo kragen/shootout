@@ -4,5 +4,4 @@
 
 !Tests class methodsFor: 'benchmark scripts'!
 hello
-   self stdout
-      nextPutAll: 'hello world'; nextPut: Character lf.   ^''! !
+   self stdout nextPutAll: 'hello world'; nl.   ^''! !

@@ -13,16 +13,12 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
 !Tests class methodsFor: 'platform'!stdoutSpecial   ^ExternalWriteStream on:
       (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1))! !
 
-!Stream methodsFor: 'platform'!nl   ^self nextPut: Character lf! !
+!Stream methodsFor: 'platform'!nl   self nextPut: Character lf! !
 
-!LimitedPrecisionReal methodsFor: 'platform'!asStringWithDecimalPlaces: anInteger   ^(self asFixedPoint: anInteger) printString copyWithout: $s! !
+!Stream methodsFor: 'platform'!print: number digits: decimalPlaces   self nextPutAll: 
+      ((number asFixedPoint: decimalPlaces) printString copyWithout: $s)! !
 
-!LimitedPrecisionReal methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nl! !
-
-!Integer methodsFor: 'platform'!asPaddedString: aWidth   | s |
-   s := WriteStream on: (String new: 10).
-   self printOn: s paddedWith: $  to: aWidth base: 10.
-   ^s contents ! !
+!Stream methodsFor: 'platform'!print: number paddedTo: width   number printOn: self paddedWith: $  to: width base: 10! !
 
 !Integer methodsFor: 'platform'!asFloatD   ^self asDouble! !
 

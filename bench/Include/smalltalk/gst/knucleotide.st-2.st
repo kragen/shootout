@@ -60,17 +60,16 @@ knucleotide2From: input to: output
          percentage := (each value / count) * 100.0.
          output 
             nextPutAll: each key; space;
-            nextPutAll: (percentage asStringWithDecimalPlaces: 3); 
-            nextPut: newline]].
+            print: percentage digits: 3; nl]].
 
    writeCount := [:nucleotideFragment | | frequencies count |
       frequencies := sequence substringFrequencies: nucleotideFragment size
          using: Dictionary new.
       count := frequencies at: nucleotideFragment ifAbsent: [0].
-      output print: count; tab; nextPutAll: nucleotideFragment; nextPut: newline].
+      output print: count; tab; nextPutAll: nucleotideFragment; nl].
 
-   writeFrequencies value: 1. output nextPut: newline.
-   writeFrequencies value: 2. output nextPut: newline.
+   writeFrequencies value: 1. output nl.
+   writeFrequencies value: 2. output nl.
 
    writeCount value: 'GGT'.
    writeCount value: 'GGTA'.
