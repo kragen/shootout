@@ -13,9 +13,11 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
 !Tests class methodsFor: 'platform'!stdoutSpecial   ^ExternalWriteStream on:
       (ExternalConnection ioAccessor: (UnixDiskFileAccessor new handle: 1))! !
 
+!Stream methodsFor: 'platform'!nl   ^self nextPut: Character lf! !
+
 !LimitedPrecisionReal methodsFor: 'platform'!asStringWithDecimalPlaces: anInteger   ^(self asFixedPoint: anInteger) printString copyWithout: $s! !
 
-!LimitedPrecisionReal methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nextPut: Character lf.! !
+!LimitedPrecisionReal methodsFor: 'platform'!printOn: aStream withName: aString   aStream  nextPutAll: (self asStringWithDecimalPlaces: 9);      nextPut: Character tab; nextPutAll: aString; nl! !
 
 !Integer methodsFor: 'platform'!asPaddedString: aWidth   | s |
    s := WriteStream on: (String new: 10).
@@ -23,5 +25,4 @@ Object subclass: #Tests   instanceVariableNames: ''   classVariableNames: '' 
    ^s contents ! !
 
 !Integer methodsFor: 'platform'!asFloatD   ^self asDouble! !
-
-!Stream methodsFor: 'platform'!nl   ^self nextPut: Character lf! !
+

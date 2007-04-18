@@ -14,6 +14,6 @@
 !Tests class methodsFor: 'benchmark scripts'!sumcol   | input sum |   input := self stdin.   sum := 0.   [(line := input nextLine) isNil] whileFalse: [  
       sum := sum + line asNumber.
    ].
-   self stdout       nextPutAll: sum printString;      nextPut: Character lf.   ^''! !
+   self stdout print: sum; nl.   ^''! !
 
 
