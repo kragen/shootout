@@ -13,13 +13,13 @@ RepeatStream subclass: #RandomStream   instanceVariableNames: 'random percentag
 !Tests class methodsFor: 'benchmarking'!
 writeFasta: aString from: inStream to: outStream lineLength: lineLength
    | i |
-   outStream nextPut: $>; nextPutAll: aString; nextPut: Character lf.
+   outStream nextPut: $>; nextPutAll: aString; nl.
    i := 0.
    [inStream atEnd] whileFalse:
-      [i == lineLength ifTrue: [outStream nextPut: Character lf. i := 0].
+      [i == lineLength ifTrue: [outStream nl. i := 0].
       outStream nextPut: inStream next.
       i := i + 1].
-   outStream nextPut: Character lf ! !
+   outStream nl! !
 
 !Tests class methodsFor: 'benchmarking'!
 fasta: n to: out
