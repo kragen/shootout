@@ -3,6 +3,7 @@
 <?=$Version;?>
 <p>Home Page: <a href="http://www.squeak.org/">http://www.squeak.org/</a></p>
 <p>Download: <a href="http://www.squeak.org/Download/">http://www.squeak.org/Download/</a></p>
+<p>We use the Squeak map package <a href="http://map.squeak.org/package/812c9d14-5236-4cad-82ea-cc3e3837e30d">OSProcess</a> for stdio.</p>
 <p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details:</p>
 <pre>
 Object subclass<span class="sym">: #</span>Tests   instanceVariableNames<span class="sym">:</span> <span class="str">''</span>   classVariableNames<span class="sym">:</span> <span class="str">''</span>   poolDictionaries<span class="sym">:</span> <span class="str">''</span>   category<span class="sym">:</span> <span class="str">'Shootout'</span><span class="sym">!</span>
