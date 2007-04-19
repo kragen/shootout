@@ -5,9 +5,6 @@
 <p>Download: <a href="http://www.cincomsmalltalk.com/userblogs/cincom/blogView?content=smalltalk">VisualWorksl&#174; Non-Commercial</a></p>
 <p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details:</p>
 <pre>
-
-
-
 Object subclass<span class="sym">: #</span>Tests   instanceVariableNames<span class="sym">:</span> <span class="str">''</span>   classVariableNames<span class="sym">:</span> <span class="str">''</span>   poolDictionaries<span class="sym">:</span> <span class="str">''</span>   category<span class="sym">:</span> <span class="str">'Shootout'</span><span class="sym">!</span>
 
 <span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>arg   <span class="sym">^</span>CEnvironment commandLine last asNumber<span class="sym">! !</span>
@@ -20,14 +17,12 @@ Object subclass<span class="sym">: #</span>Tests   instanceVariableNames<span c
 <span class="sym">!</span>Tests class methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>stdoutSpecial   <span class="sym">^</span>ExternalWriteStream on<span class="sym">:</span>
       <span class="sym">(</span>ExternalConnection ioAccessor<span class="sym">: (</span>UnixDiskFileAccessor new handle<span class="sym">:</span> <span class="num">1</span><span class="sym">))! !</span>
 
-<span class="sym">!</span>LimitedPrecisionReal methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asStringWithDecimalPlaces<span class="sym">:</span> anInteger   <span class="sym">^(</span><span class="kwa">self</span> asFixedPoint<span class="sym">:</span> anInteger<span class="sym">)</span> printString copyWithout<span class="sym">: $</span>s<span class="sym">! !</span>
+<span class="sym">!</span>Stream methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>nl   <span class="kwa">self</span> nextPut<span class="sym">:</span> Character lf<span class="sym">! !</span>
 
-<span class="sym">!</span>LimitedPrecisionReal methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>printOn<span class="sym">:</span> aStream withName<span class="sym">:</span> aString   aStream  nextPutAll<span class="sym">: (</span><span class="kwa">self</span> asStringWithDecimalPlaces<span class="sym">:</span> <span class="num">9</span><span class="sym">);</span>      nextPut<span class="sym">:</span> Character tab<span class="sym">;</span> nextPutAll<span class="sym">:</span> aString<span class="sym">;</span> nextPut<span class="sym">:</span> Character lf<span class="sym">.! !</span>
+<span class="sym">!</span>Stream methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>print<span class="sym">:</span> number digits<span class="sym">:</span> decimalPlaces   <span class="kwa">self</span> nextPutAll<span class="sym">:</span>
+      <span class="sym">((</span>number asFixedPoint<span class="sym">:</span> decimalPlaces<span class="sym">)</span> printString copyWithout<span class="sym">: $</span>s<span class="sym">)! !</span>
 
-<span class="sym">!</span>Integer methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asPaddedString<span class="sym">:</span> aWidth   <span class="sym">|</span> s <span class="sym">|</span>
-   s <span class="sym">:=</span> WriteStream on<span class="sym">: (</span>String new<span class="sym">:</span> <span class="num">10</span><span class="sym">).</span>
-   <span class="kwa">self</span> printOn<span class="sym">:</span> s paddedWith<span class="sym">: $</span>  to<span class="sym">:</span> aWidth base<span class="sym">:</span> <span class="num">10</span><span class="sym">.</span>
-   <span class="sym">^</span>s contents <span class="sym">! !</span>
+<span class="sym">!</span>Stream methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>print<span class="sym">:</span> number paddedTo<span class="sym">:</span> width   number printOn<span class="sym">:</span> <span class="kwa">self</span> paddedWith<span class="sym">: $</span>  to<span class="sym">:</span> width base<span class="sym">:</span> <span class="num">10</span><span class="sym">! !</span>
 
 <span class="sym">!</span>Integer methodsFor<span class="sym">:</span> <span class="str">'platform'</span><span class="sym">!</span>asFloatD   <span class="sym">^</span><span class="kwa">self</span> asDouble<span class="sym">! !</span>
 </pre>
