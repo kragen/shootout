@@ -18,6 +18,7 @@
 !Tests class methodsFor: 'benchmarking'!
 print: number withName: name to: output
    output print: number digits: 9; tab; nextPutAll: name; nl! !
+
 !Tests class methodsFor: 'benchmark scripts'!partialsums   self partialsums: self arg asFloatD to: self stdout.   ^''! !
 
 Tests partialsums!
