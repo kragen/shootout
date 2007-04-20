@@ -1,4 +1,4 @@
-The Great Computer Language Shootout PHP pages Release 2.11
+The Computer Language Benchmarks Game PHP pages Release 2.11
 ===========================================================
 
 The PHP files in the different websites directories just include

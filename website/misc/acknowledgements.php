@@ -20,14 +20,14 @@
   <li>Malcolm Wallace (a core Haskell researcher and implementor of the 
 nhc98 interpreter) provided several enhanced Haskell implementations.</li>
   <li>Matthias Blume (a core SML/NJ researcher and implementor) provided many of the SML/NJ implementations.</li>
-  <li>Stephen Weeks contributed a number of SML solutions for MLton, and continues to provide valued input to the shootout.</li>
+  <li>Stephen Weeks contributed a number of SML solutions for MLton, and continues to provide valued input.</li>
   <li>Isaac Gouy provided a slew of PHP, Clean, Erlang, Oberon 2, and many other implementations.</li>
   <li>John Goerzen and Tomasz Zielonka and Greg Buchholz and Einar Karttunen and Aaron Denney all worked on improving the GHC Haskell programs.</li>
   <li>Felix Winkelmann (the creator of the excellent Chicken Scheme implementation) provided a great many Chicken test implementations.</li>
   <li>John Skaller added programs in his FELIX language.</li>
   <li>Lutz Mueller added newLISP implementations.</li>
   <li>Raymond Racine spotted a couple of problems with the MLton code.</li>
-  <li>"felix" added many Chicken Scheme programs to the shootout.</li>
+  <li>"felix" added many Chicken Scheme programs.</li>
   <li>Paolo Bonzini and Isaac Gouy sent in a set of new GNU Smalltalk implementations.</li>  
   <li>Sven Hartrumpf sent a much faster bigloo program and suggested a simple way to improve the benchmark.</li>
   <li>Roland C. Dowdeswell sent in improved Haskell programs.</li>
@@ -105,7 +105,7 @@ consequently, CMUCL) out.</li>
   <li>Ralph Becket helped out a lot with some Mercury programs.</li>
   <li>Fred Bremmer has helped improve the speed of some of the Python programs.</li>
   <li>Branko Vesligaj helped speed up a few of the Tcl programs noticeably.</li>
-  <li>Anton Ertl has made some helpful suggestions about the shootout, and
+  <li>Anton Ertl has made some helpful suggestions, and
   has contributed a few of the GForth solutions.</li>
   <li>Andrew D. McDowell has contributed some Common Lisp programs.</li>
   <li>Danny Valenzuela (Dirus) helped out with some faster and cleaner

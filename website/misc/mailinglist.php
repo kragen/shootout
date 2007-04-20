@@ -3,7 +3,7 @@
    <tr><td colspan="3"><h4 class="rev"><a class="arev" href="#list" name="list">&nbsp;shootout-list - mailing&nbsp;list</a></h4></td></tr>
    <tr>
       <td colspan="3">
-         <p>shootout-list is a mailing list for all aspects of the "The Great Computer Language Shootout":  
+         <p>shootout-list is a mailing list for all aspects of the "The Computer Language Benchmarks Game":  
             suggestions, problems, new languages, unfair programs,&#8230;
          </p>
          <p>
