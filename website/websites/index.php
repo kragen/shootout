@@ -11,10 +11,10 @@ $G = filemtime('./gp4/data/data.csv');
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="benchmarking fast faster programming language benchmark performance benchmarks shootout program faster language compare comparison" />
+<meta name="keywords" content="benchmarking fast faster programming language benchmark performance benchmarks shootout program faster language compare comparison benchmarks game" />
 <meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
 
-<title>The Computer Language Shootout Benchmarks</title>
+<title>The Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="./benchmark.css" />
 <link href="./feeds/rss.xml" rel="alternate" type="application/rss+xml" title="Computer Language Shootout" />
 <link rel="shortcut icon" href="./favicon.ico" />
@@ -22,7 +22,7 @@ $G = filemtime('./gp4/data/data.csv');
 
 <body id="core">
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks</a></h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a></h1></td>
 <td><a href="./feeds/rss.xml"><img src="./orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a></td>
 </tr></table>
 
@@ -41,13 +41,13 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <td>
 <p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
 <h3><span class="gp4">
-<a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout"
+<a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Benchmarks"
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
 <p class="timestamp"><a href="./debian/"><? printf('%s', gmdate("d M Y", $D)) ?></a></p>
 <h3><span class="debian">
-<a title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Shootout"
+<a title="Browse the Debian : AMD&#8482; Sempron&#8482; Computer Language Benchmarks"
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
@@ -148,7 +148,7 @@ switch ($Now % 20){
 </p><br/>
 
 <p class="imgfooter">
-<a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
+<a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
