@@ -19,8 +19,8 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - <a href="#aliothid">&darr;&nbsp;ask for help</a>.</p>
-<p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#help">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
+<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - <a href="#help">&darr;&nbsp;ask for help</a>.</p>
+<p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
@@ -30,7 +30,7 @@
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
 <dd>
-<p>It varies from week to week. It varies from benchmark to benchmark. It depends which language implementations are compared. It depends which measures are compared. Be curious - look and learn.</p>
+<p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared. Be curious.</p>
 </dd>
 
 <dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
@@ -250,7 +250,7 @@ The system is going down for system halt NOW!
 
 
 
-<dt><a href="#help" name="help">&nbsp;Where can I ask for help&#8230; contribute&#8230;?</a></dt>
+<dt><a href="#help" name="help">&nbsp;Where can I ask for help&#8230;?</a></dt>
 <dd>
 <dl>
 
@@ -259,23 +259,10 @@ The system is going down for system halt NOW!
 <p>Ask for help or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
 </dd>
 
-
-<dt><a href="#contributeprogram" name="contributeprogram">Where do I contribute a program?</a></dt>
-<dd><p><strong>Before</strong> working on a benchmark program:</p>
-<ul>
-<li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
-<li>read the benchmark description</li>
-<li>read some of the programs</li>
-<li>read <a href="#implement"><strong>&darr;&nbsp;"How should I implement&#8230;?"</strong></a></li>
-</ul>
-<p>Then follow these detailed instructions <a href="#contribute"><strong>&darr;&nbsp;"How do I contribute a program?"</strong></a></p>
-<p>Be Respectful! Don't ridicule other people's programs - just contribute a better program yourself.</p>
-</dd>
-
 <dt><a href="#report" name="report">Where can I report bugs&#8230; request features?</a></dt>
 <dd><p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Report a Bug</strong></a>.</p> 
 <p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Request</strong></a>.</p>
-<p>We use <a href="http://www.andre-simon.de/">Andre Simon's highlight</a> to convert program source code to XHTML, please contribute better language definition files.</p> 
+<p>We use <a href="http://www.andre-simon.de/">Andre Simon's highlight</a> to convert program source code to XHTML, please contribute better language definition files.</p>
 </dd>
 
 <dt>&nbsp;</dt>
@@ -290,15 +277,18 @@ The system is going down for system halt NOW!
 <dt><a href="#implement" name="implement">&nbsp;How should I implement&#8230;?</a></dt>
 <dd>
 <dl>
+
+<dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
+<dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p>
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">'Interesting Alternative Programs'</a> section.</p>
+</dd>
+
 <dt><a href="#correct" name="correct">How much effort should I put into getting the program correct?</a></dt>
 <dd><p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine - <strong>diff</strong> the program output with the provided output file. (Don't make-unnecessary-work for the committers.)</p>
 <p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to The Computer Language Benchmarks Game.</p> 
 </dd>
 
-<dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
-<dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
-<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">'Interesting Alternative Programs'</a> section.</p> 
-</dd>
+
 
 <dt><a href="#datainput" name="datainput">How should I implement data-input?</a></dt>
 <dd><p>Programs are measured across a range of input-values; programs are expected to either take a <strong>single command-line parameter</strong> or read text from <strong>stdin</strong>.</p> 
@@ -320,16 +310,6 @@ The system is going down for system halt NOW!
    modified by &#8230;
 */
 </pre>
-</dd>
-
-<dt><a href="#implementlist" name="implementlist">How should I implement&#8230;?</a></dt>
-<dd>
-<ol>
-<li>Keep to the spirit-of-the-specification not just the wording.</li>
-<li>Write the program to be as-fast-as possible.</li>
-<li>Write the program to conserve memory as-much-as possible.</li>
-<li>Write the program as-if lines of code were not being measured.</li>
-</ol>     
 </dd>
 
 <dt><a href="#split" name="split">How should I implement multiple source code files?</a></dt>
@@ -360,12 +340,11 @@ each new target source file will start from the <strong>comment line</strong> wh
 <dd>
 <dl>
 <dd><p>There are many contributors and few committers - a little more time spent by contributors saves committers a great deal more time.</p>
-<p>Please don't contribute patch-files. Do attach full source-code from tested programs.</p>
+<p>Attach full source-code from tested programs. Please don't contribute patch-files.</p>
 <p>Before contributing programs</p>
-<ol>
-<li>read the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
-<li>read <a href="faq.php#implement">&darr;&nbsp;<strong>How should I implement&#8230;?</strong></a></li>
-</ol>
+<ul>
+<li>read and accept the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
+</ul>
 
 <p>Follow these instructions <strong>step-by-step</strong></p>
 <ol>
@@ -388,15 +367,8 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#status" name="status">How can I track what happens to the program I contributed?</a></dt>
 <dd>
-<p>Browse <a href="http://alioth.debian.org/tracker/?func=browse&group_id=30402&atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a></p>
 
-<p>Check the <strong>Resolution</strong> field, and check the <strong>State</strong> field</p>
-<ul>
-<li><em>Open items</em> are new contributions</li>
-<li><em>Pending items</em> have been added to CVS</li>
-<li><em>Closed items</em> have been measured and shown on the website</li>
-</ul>
-<p>Check the <strong>most recent measurement</strong> date on the website to see if measurements have been made since the program you contributed was added to CVS.</p>
+<p>You created an <a href="#aliothid">&darr;&nbsp;Alioth Id</a> with a valid email address so you'll receive email updates when your program is accepted and measured.</p>
 </dd>
 
 </dl>
