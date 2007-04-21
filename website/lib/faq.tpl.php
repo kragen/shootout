@@ -30,7 +30,8 @@
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
 <dd>
-<p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared. Be curious.</p>
+<p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p> 
+<p>Be curious - look at several benchmarks, compare several language implementations, compare them on different measures.</p>
 </dd>
 
 <dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
@@ -296,7 +297,7 @@ The system is going down for system halt NOW!
 </dd>
 
 <dt><a href="#dataoutput" name="dataoutput">How should I implement data-output?</a></dt>
-<dd><p>Programs should write to <strong>stdout</strong>. Program output is redirected to a log-file and diff'd with the expected output.</p> 
+<dd><p>Programs should write to <strong>stdout</strong>. Program output is redirected to a log-file and diff'd with the expected output.</p>
 <p>(Look at what the other programs do.)</p>
 </dd>
 
