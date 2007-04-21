@@ -30,8 +30,8 @@
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
 <dd>
-<p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p> 
-<p>Be curious - look at several benchmarks, compare several language implementations, compare them on different measures.</p>
+<p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p>
+<p>Be curious - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?">Flawed Benchmarks</a>.</p>
 </dd>
 
 <dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
@@ -135,7 +135,7 @@
 </dd>
 
 <dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
-<dd><p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but <strong>we simply couldn't resist</strong> showing the program.</p>
+<dd><p>Interesting Alternative Program means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </dd>
 
 <dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
@@ -281,7 +281,7 @@ The system is going down for system halt NOW!
 
 <dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
 <dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p>
-<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">'Interesting Alternative Programs'</a> section.</p>
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> section.</p>
 </dd>
 
 <dt><a href="#correct" name="correct">How much effort should I put into getting the program correct?</a></dt>
