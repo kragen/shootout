@@ -33,7 +33,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<p>These are <strong>particular truths</strong>, they are not general truths.</p><br/>
+<p>These are <strong>particular truths</strong>, they are not general truths - <em>the <strong>slower</strong> program</em> may become <em>the <strong>faster</strong> program</em> when the workload changes.</p><br/>
 
 
 <table class="layout">
@@ -65,13 +65,7 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table>
-
-
-<p><em>The <strong>slower</strong> program</em> may become <em>the <strong>faster</strong> program</em> when the workload changes.</p>
-<p>Read <a href="http://shootout.alioth.debian.org/gp4/faq.php" title="Frequently Asked Questions"><strong>the FAQ</strong></a> and read about <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks.</strong></a></p>
-<p>Read the programs - learn about the languages.</p>
-<br/>
+</table><br/>
 
 
 <?php

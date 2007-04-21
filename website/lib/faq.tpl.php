@@ -19,7 +19,7 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - <a href="#help">&darr;&nbsp;ask for help</a>.</p>
+<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure <a href="#help">&darr;&nbsp;ask for help</a>.</p>
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
@@ -256,7 +256,7 @@ The system is going down for system halt NOW!
 <dl>
 
 <dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
-<dd><p>We will no longer accept anonymous public comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a> and login.</p>
+<dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a> and login.</p>
 <p>Ask for help or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
 </dd>
 
