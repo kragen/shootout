@@ -1,34 +1,41 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2007 ?>
 
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 <p>This FAQ is short. You can read it really quickly.</p>
 
 
 <dl>
-<dt><a href="#learn" name="learn">&nbsp;What can I learn from this FAQ?</a></dt>
+<dt><a href="#game" name="game">&nbsp;What kind of game is this?</a></dt>
 <dd>
 <dl>
 <dd>
-<p><em>The Computer Language Shootout</em> has a <strong>very narrow focus</strong>.</p>
-<p>We are only trying to show the performance of various programming language implementations, on a limited number of <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed benchmarks - Are there any other kind?"><strong>flawed benchmarks</strong></a>.</p>
-<p>We <strong>are not</strong> trying to</p>
-<ul>
-<li>compare different algorithms</li>
-<li>showcase the capabilities of different languages</li>
-<li>compare programming language productivity</li>
-<li>contest programmer effort and sneaky tricks</li>
-<li><em>etc etc</em></li>
-</ul>
+<p>A game begun years ago. A game with many winners. A game with many players.</p>
 </dd>
 
-<dt><a href="#contents" name="contents">What else?</a></dt>
+<dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
 <dd>
-<p><a href="#means"><strong>&darr;&nbsp;What does &#8230; mean?</strong></a></p>
-<p><a href="#measure"><strong>&darr;&nbsp;How did you measure&#8230;?</strong></a></p>
-<p><a href="#help"><strong>&darr;&nbsp;Where can I discuss&#8230; contribute&#8230;?</strong></a></p>
-<p><a href="#where"><strong>&darr;&nbsp;Where can I see&#8230;?</strong></a></p>
-<p><a href="#whydont"><strong>&darr;&nbsp;Why don't you &#8230;?</strong></a></p>
-<p><a href="#when"><strong>&darr;&nbsp;Who&#8230;?</strong> <strong>When&#8230;?</strong> <strong>Why&#8230;?</strong></a></p>
+<p>On 3 measures - cpu time, memory use and source code size.</p>
+</dd>
+
+<dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
+<dd>
+<p>Chose a programming language. Chose a benchmark. Read and accept the benchmark rules. When you aren't sure - ask for help.</p>
+<p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. Attach the program source code file to a tracker item.</p>
+</dd>
+
+<dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
+<dd>
+<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
+</dd>
+
+<dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
+<dd>
+<p>It varies from week to week. It varies from benchmark to benchmark. It depends which language implementations are compared. It depends which measures are compared.</p>
+</dd>
+
+<dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
+<dd>
+<p>When the facts exceed our curiousity.</p>
 </dd>
 </dl>
 </dd>
@@ -127,7 +134,7 @@
 </dd>
 
 <dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
-<dd><p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of the Computer Language Shootout - but <strong>we simply couldn't resist</strong> showing the program.</p>
+<dd><p>"Interesting Alternative Program" means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </dd>
 
 <dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
@@ -295,10 +302,10 @@ The system is going down for system halt NOW!
 <dl>
 <dt><a href="#correct" name="correct">How much effort should I put into getting the program correct?</a></dt>
 <dd><p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine - <strong>diff</strong> the program output with the provided output file. (Don't make-unnecessary-work for the committers.)</p>
-<p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to the Computer Language Shootout.</p> 
+<p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to The Computer Language Benchmarks Game.</p> 
 </dd>
 
-<dt><a href="#implementp" name="implementp">How should I implement programs for the Shootout?</a></dt>
+<dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
 <dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p> 
 <p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">'Interesting Alternative Programs'</a> section.</p> 
 </dd>
@@ -316,7 +323,7 @@ The system is going down for system halt NOW!
 <dt><a href="#brag" name="brag">How should I identify my program?</a></dt>
 <dd><p>Include a header comment in the program like this:</p>
 <pre>
-/* The Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org/
 
    contributed by &#8230;
@@ -402,50 +409,6 @@ language, benchmark, your-name, date, (version)<br />
 <p>Check the <strong>most recent measurement</strong> date on the website to see if measurements have been made since the program you contributed was added to CVS.</p>
 </dd>
 
-<dt><a href="#mycontribution" name="mycontribution">When will you include my contribution?</a></dt>
-<dd>
-<p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done.</p>
-<p>Check the <strong>most recent measurement</strong> date on the website to see if measurements have been made since the program you contributed was added to CVS.</p>
-<p>Maybe you'd like to <a href="#chores">&darr;&nbsp;help us with the chores</a>?</p>
-<p>Normally, contributed programs will be measured and included on the website once or twice each week.</p>
-<p>The simplest way to find out when new measurements have been made is to subscribe to <a href="<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a> - our <a href="<?=CORE_SITE;?>feeds/rss.xml">RSS feed</a>.</p>
-<p>My Yahoo! users can add our feed by clicking <a href="http://add.my.yahoo.com/rss?url=<?=CORE_SITE;?>feeds/rss.xml"><img src="<?=IMAGE_PATH;?>addtomyyahoo4.gif" width="91" height="17" alt="Add to My Yahoo!"/></a></p>
-</dd>
-
-
-<dt><a href="#newbench" name="newbench">How can I contribute a new benchmark?</a></dt>
-<dd>
-<p>Do all the work!</p>
-<ul>
-<li>Understand that benchmarks must be reasonable across a wide range of programming languages</li>
-<li>Identify what's missing or wrong with the current benchmarks</li>
-<li>Define a new benchmark and give some background information</li>
-<li>Provide implementations in an interpreted language, a JIT language, and a compiled language</li>
-</ul>
-<p>We will accept <strong>and reject</strong> benchmarks in a capricious, unfair, biased fashion.</p>
-<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Benchmark</strong> to see if it's already been suggested.</p>
-</dd>
-
-<dt><a href="#chores" name="chores">How can I help with <strong>the chores</strong>?</a></dt>
-<dd>
-<p>We need volunteers to</p>
-<ol>
-<li>Browse <a href="https://alioth.debian.org/tracker/?func=browse&amp;group_id=30402&amp;atid=411646" title="Browse Contribute Programs"><strong>Contribute Programs</strong></a> for <em>Open items</em></li>
-<li>check the <em>Open item</em> programs do what's required</li>
-<li>add acceptable <em>Open item</em> programs to CVS</li>
-<li>update the status of accepted <em>Open items</em> to <em>Pending</em></li>
-</ol>
-<p>And we need them to</p>
-<ol>
-<li>remove slower less-elegant programs from CVS</li>
-<li>update the status of removed <em>Closed items</em> to <em>Deleted</em></li>
-</ol>
-
-<p>And other chores listed in the <a href="miscfile.php?file=committerfaq&amp;title=Committer&nbsp;FAQ" title="Committer FAQ"><strong>Committer FAQ</strong></a>.</p>
-<p>Do you have the necessary programming language knowledge?<br />
-Do you want to help with the chores?</p>
-<p>Contact us! Contact one of the <strong>Project Admins</strong> - listed on the GForge project page under <a href="http://alioth.debian.org/projects/shootout/"  title="Contact one of the Project Admins"><strong>Developer Info</strong></a>.</p>
-</dd>
 </dl>
 </dd>
 
@@ -469,12 +432,9 @@ Do you want to help with the chores?</p>
 <a href="benchmark.php?test=recursive&lang=gcc&id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </dd>
 
-<dt><a href="#arch" name="arch">Where can I see what other people think about the Language Shootout?</a></dt>
-<dd><p>Google! Here's some <a href="http://groups-beta.google.com/group/comp.lang.functional/msg/ddb2894d9e3d8024?hl=en" title="comp.lang.functional"><strong>sensible criticism</strong></a> of the original Shootout.</p></dd>
-
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
-<dd><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Great Computer Language Shootout project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge Debian.org</a>.</p>
-<p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the Great Computer Language Shootout CVS tree">browse the CVS tree</a>.</p>
+<dd><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Computer Language Benchmarks Game project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge Debian.org</a>.</p>
+<p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the GComputer Language Benchmarks Game CVS tree">browse the CVS tree</a>.</p>
 <p>Build dependencies include <a href="http://search.cpan.org/~mjh/GTop-0.16/GTop.pod">GTop</a> and <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl">BSD::Resource</a> </p>
 </dd>
 </dl>
@@ -505,35 +465,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion.</p>
 </dd>
 
-<dt><a href="#acceptablemore" name="acceptablemore">Why don't you include my favourite language?</a></dt>
-<dd><p>Can the language implementation be used to write most of our benchmark programs?</p> 
-<p><strong>Must have</strong></p>
-<ol>
-<li>A <a href="http://packages.debian.org/unstable/" title="Debian packages">Debian package</a> (either from Debian itself, or the primary authors of the language)
-or a <a href="http://packages.gentoo.org/categories/" title="Gentoo ebuilds">Gentoo ebuild</a> or build and install with <tt>./configure &amp;&amp; make &amp;&amp; make install</tt> and a default target of <tt>/usr/local.</tt></li>
-<li>Command-line argument handling.</li>
-<li>32-bit Integers.</li>
-<li>Double precision floating point numbers.</li>
-<li>Line-oriented read &amp; write from stdin &amp; stdout.</li>
-<li>Documentation.</li>
-</ol>
 
-<p><strong>Should have</strong></p>
-<ol>
-<li>Buffered stdio.</li>
-<li>Dynamic hash tables and sequences (arrays or lists).</li>
-<li>Regular Expressions (preferably Perl compatible).</li>
-<li>Concurrency (threads, coroutines, &#8230;)</li>
-<li>TCP/IP Sockets.</li>
-</ol>
-</dd>
-
-<dt><a href="#please" name="please">Please will you include my favourite language?</a></dt>
-<dd><p>Maybe we will when you write many benchmark programs in your favourite language, and contribute them to "The Computer Language Shootout" :-)</p>
-<p>Browse the <span class="sandbox"><a title="More language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;Extra!&nbsp;</a></span> website to see if your favourite language is already shown.</p>
-<p>Browse <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Requests</strong></a> with Category <strong>New Language</strong> to see if it's already been suggested.
-You'll see that several languages have been <em>suggested</em> but no one has contributed programs yet.</p>
-</dd>
 </dl>
 </dd>
 
@@ -550,20 +482,6 @@ You'll see that several languages have been <em>suggested</em> but no one has co
 <p>In late-2005 Isaac Gouy started to experiment with the <span class="gp4"><a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it will end?</p>
 </dd>
 
-<dt><a href="#ack" name="ack">Who has contributed?</a></dt>
-<dd><p>So many people that we have an <a href="miscfile.php?file=acknowledgements&amp;title=acknowledgements" title="Acknowledgements to those who have contributed to The Great Computer Language Shootout">acknowledgements page</a>!</p></dd>
-
-<dt><a href="#finish" name="finish">When will the Language Shootout be finished?</a></dt>
-<dd><p>Never. There will always be new languages, new versions of languages, more sensible benchmarks, faster more-elegant programs, new operating systems, better graphics&#8230; And the project team will change over time, and the measurements and presentation will change with them.</p>
-</dd>
-
-<dt><a href="#mycontributionagain" name="mycontributionagain">When will you include my contribution?</a></dt>
-<dd>
-<p>When we can! We already spend way-too-much personal-time on this website. Things get-done when they get-done. <a href="#status"><strong>&darr;&nbsp;Check the status</strong></a> and check the <strong>most recent measurement</strong> date on the website.</p>
-</dd>
-
-<dt><a href="#whydo" name="whydo">Why are you doing this?</a></dt>
-<dd><p>To learn and to <strong>have fun</strong>.</p><p>We will continue as long as the fun holds out.</p></dd>
 </dl>
 </dd>
 </dl>
