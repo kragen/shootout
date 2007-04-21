@@ -256,7 +256,7 @@ The system is going down for system halt NOW!
 <dl>
 
 <dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
-<dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a> and login.</p>
+<dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth ID</strong></a> and login.</p>
 <p>Ask for help or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
 </dd>
 
@@ -369,7 +369,7 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#status" name="status">How can I track what happens to the program I contributed?</a></dt>
 <dd>
 
-<p>You created an <a href="#aliothid">&darr;&nbsp;Alioth Id</a> with a valid email address so you'll receive email updates when your program is accepted and measured.</p>
+<p>You created an <a href="#aliothid">&darr;&nbsp;Alioth ID</a> with a valid email address so you'll receive email updates when your program is accepted and measured.</p>
 </dd>
 
 </dl>
