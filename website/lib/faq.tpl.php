@@ -19,7 +19,7 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Chose a programming language. Chose a benchmark. Read and accept the benchmark rules. When you aren't sure - ask for help.</p>
+<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - ask for help.</p>
 <p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. Attach the program source code file to a tracker item.</p>
 </dd>
 
