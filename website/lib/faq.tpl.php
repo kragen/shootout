@@ -296,7 +296,7 @@ The system is going down for system halt NOW!
 </dd>
 
 <dt><a href="#dataoutput" name="dataoutput">How should I implement data-output?</a></dt>
-<dd><p>Programs should write to <strong>stdout</strong>. Program output is redirected to a log-file and compared to the expected output.</p> 
+<dd><p>Programs should write to <strong>stdout</strong>. Program output is redirected to a log-file and diff'd with the expected output.</p> 
 <p>(Look at what the other programs do.)</p>
 </dd>
 
