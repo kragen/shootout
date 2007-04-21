@@ -14,13 +14,13 @@
 
 <dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
 <dd>
-<p>On 3 measures - cpu time, memory use and source code size.</p>
+<p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;cpu time</a>, <a href="#memory">&darr;&nbsp;memory use</a> and <a href="#gzbytes">&darr;&nbsp;source code size</a>.</p>
 </dd>
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - ask for help.</p>
-<p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. Attach the program source code file to a tracker item.</p>
+<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions">ask for help</a>.</p>
+<p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
@@ -462,7 +462,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <li><strong>Used?</strong> There are way too many dead languages and unused new languages - see <a href="http://people.ku.edu/~nkinners/LangList/Extras/langlist.htm">The Language List</a> and <a href="http://www.levenez.com/lang/">Computer Languages History</a></li>
 <li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs?</li>
 </ul>
-<p>We will accept <strong>and reject</strong> languages in a capricious, unfair, biased fashion.</p>
+<p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion.</p>
 </dd>
 
 
