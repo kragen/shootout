@@ -19,8 +19,8 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions">ask for help</a>.</p>
-<p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
+<p>Choose a programming language. Choose a benchmark. Read and accept the benchmark rules. When you aren't sure - <a href="#aliothid">&darr;&nbsp;ask for help</a>.</p>
+<p>Write a new program and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#help">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
@@ -250,16 +250,15 @@ The system is going down for system halt NOW!
 
 
 
-<dt><a href="#help" name="help">&nbsp;Where can I discuss&#8230; contribute&#8230;?</a></dt>
+<dt><a href="#help" name="help">&nbsp;Where can I ask for help&#8230; contribute&#8230;?</a></dt>
 <dd>
 <dl>
-<dt><a href="#talk" name="talk">Where can I discuss&#8230;?</a></dt>
-<dd><p>Discuss the benchmarks or ask for help in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p></dd>
-
 
 <dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
-<dd><p>"Feature Request", "Bug" and "Contribute Programs" tracker comments are being SPAMMED. We will no longer accept anonymous public comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a> and login.</p>
+<dd><p>We will no longer accept anonymous public comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth id</strong></a> and login.</p>
+<p>Ask for help or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
 </dd>
+
 
 <dt><a href="#contributeprogram" name="contributeprogram">Where do I contribute a program?</a></dt>
 <dd><p><strong>Before</strong> working on a benchmark program:</p>
@@ -273,15 +272,6 @@ The system is going down for system halt NOW!
 <p>Be Respectful! Don't ridicule other people's programs - just contribute a better program yourself.</p>
 </dd>
 
-<dt><a href="#contributebenchmark" name="contributebenchmark">Where do I contribute a new benchmark?</a></dt>
-<dd><p><strong>Before</strong> working on a new benchmark</p>
-<ul>
-<li>browse the current benchmarks - <a href="http://shootout.alioth.debian.org/"><strong>Start:</strong> on the homepage</a></li>
-<li>read the benchmark descriptions</li>
-<li>read <a href="#newbench">&darr; <strong>"How can I contribute a new benchmark?"</strong></a></li>
-</ul>
-</dd>
-
 <dt><a href="#report" name="report">Where can I report bugs&#8230; request features?</a></dt>
 <dd><p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Report a Bug</strong></a>.</p> 
 <p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Request</strong></a>.</p>
@@ -290,7 +280,7 @@ The system is going down for system halt NOW!
 
 <dt>&nbsp;</dt>
 <dd><p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
-<p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll decide not to add the new benchmark. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
+<p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
 </dd>
 </dl>
 </dd>
@@ -470,20 +460,6 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 </dd>
 
 
-
-<dt><a href="#when" name="when">&nbsp;Who&#8230;? When&#8230;? Why&#8230;?</a></dt>
-<dd>
-<dl>
-<dt><a href="#start" name="start">Who started "The Great Computer Language Shootout"?</a></dt>
-<dd><p>Doug Bagley created <a href="http://web.archive.org/web/20040401204425/www.bagley.org/~doug/shootout/index2.shtml" title="Doug Bagley's website from the Internet Archive">"The Great Computer Language Shootout"</a>, and it was active until 2001.</p>
-<p>Aldo Calpini ported that to create <a href="http://dada.perl.it/shootout/" title="The Computer Language Shootout for MS Windows programming languages">"The Great Win32 Computer Language Shootout"</a> - it was last updated June 2003.</p>
-<p>In mid-2004 <strong>Brent Fulgham revived</strong> <a href="http://web.archive.org/web/20040611035744/http://shootout.alioth.debian.org/" title="Brent Fulgham's website from the Internet Archive">"The Great Computer Language Shootout"</a> here on Alioth&nbsp;Debian.org</p>
-<p>In the following months, things started to change. The website was redesigned showing the original benchmarks in a new way; then benchmarks were deprecated and new benchmarks were added. We continue to experiment on the <span class="sandbox"><a title="More language implementations" href="<?=SANDBOX_SITE;?>index.php" >&nbsp;Extra!&nbsp;</a></span> website.</p>
-<p>In late-2005 Isaac Gouy started to experiment with the <span class="gp4"><a title="Browse the Gentoo : Intel&#174; Pentium&#174; Computer Language Shootout" href="<?=GP4_SITE;?>index.php" >&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span> website. Who knows where it will end?</p>
-</dd>
-
-</dl>
-</dd>
 </dl>
 
 
