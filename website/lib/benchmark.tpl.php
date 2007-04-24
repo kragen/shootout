@@ -34,7 +34,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 
 <h2><a href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
-<p>Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark description</strong></a>.
+<p>Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.
 <?=$TestTag;?> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
 </p>
@@ -241,5 +241,5 @@ if (sizeof($No_Program_Langs)>0){
 ?>
 </table>
 
-<h3><a href="#about" name="about">&nbsp;about the <?=$TestName;?> <?=TESTS_PHRASE;?></a></h3>
+<h3><a href="#about" name="about">&nbsp;the <?=$TestName;?> <?=TESTS_PHRASE;?> rules</a></h3>
 <?=$About;?>
