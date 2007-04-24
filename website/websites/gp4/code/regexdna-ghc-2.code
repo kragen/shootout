@@ -1,312 +1,45 @@
-<span class="slc">--</span>
-<span class="slc">-- The Computer Language Shootout</span>
+<span class="slc">-- The Computer Language Benchmarks Game</span>
 <span class="slc">-- http://shootout.alioth.debian.org/</span>
-<span class="slc">--</span>
-<span class="slc">-- http://haskell.org/hawiki/ShootoutEntry</span>
-<span class="slc">--</span>
-<span class="slc">-- Contributed by Don Stewart</span>
-<span class="slc">-- A purely functional entry based on lazy regex combinators, described in the paper:</span>
-<span class="slc">--</span>
-<span class="slc">--  ``Lazy Lexing is Fast'', Manuel  M. T. Chakravarty, in A.</span>
-<span class="slc">--  Middeldorp and T. Sato, editors, Proceedings of Fourth Fuji</span>
-<span class="slc">--  International Symposium on Functional and Logic Programming,</span>
-<span class="slc">--  Springer-Verlag, LNCS 1722, 1999.</span>
-<span class="slc">--</span>
+<span class="slc">-- Contributed by: Sergei Matusevich 2007</span>
 
-<span class="kwa">import</span> Prelude <span class="kwa">hiding</span>   <span class="sym">(</span>last<span class="sym">)</span>
 <span class="kwa">import</span> List
-<span class="kwa">import</span> Maybe
-<span class="kwa">import</span> Data.Array            <span class="sym">(</span>Array<span class="sym">, (!),</span> assocs<span class="sym">,</span> accumArray<span class="sym">)</span>
-<span class="kwa">import qualified</span> Data.Map    <span class="kwa">as</span> M
-<span class="kwa">import qualified</span> Data.IntMap <span class="kwa">as</span> I
+<span class="kwa">import</span> Text.Regex.Posix
+<span class="kwa">import qualified</span> Data.ByteString.Char8 <span class="kwa">as</span> B
 
-main <span class="sym">=</span> interact $ \s0 <span class="sym">-&gt;</span>
-    <span class="kwa">let</span> l0 <span class="sym">=</span> length s0 <span class="kwa">in</span> l0 `seq`
-    <span class="kwa">let</span> s1       <span class="sym">=</span> fst $ run clean <span class="sym">(</span>LS s0 I.empty<span class="sym">)</span>
-        l1       <span class="sym">=</span> length s1 <span class="kwa">in</span> l1 `seq`
-    <span class="kwa">let</span> <span class="sym">(</span>LS _ m<span class="sym">) =</span> snd $ run count  <span class="sym">(</span>LS s1 I.empty<span class="sym">)</span>
-        <span class="sym">(</span>LS _ n<span class="sym">) =</span> snd $ run count' <span class="sym">(</span>LS s1 I.empty<span class="sym">)</span>
-        counts   <span class="sym">=</span> map <span class="sym">(</span>\<span class="sym">(</span>i<span class="sym">,</span>p<span class="sym">) -&gt;</span> p<span class="sym">++</span><span class="str">&quot; &quot;</span><span class="sym">++</span>show <span class="sym">(</span>I.findWithDefault <span class="num">0</span> i m<span class="sym">))</span> $ <span class="sym">(</span>init variants<span class="sym">)</span>
-        counts'  <span class="sym">= (</span>snd.last<span class="sym">)</span> variants<span class="sym">++</span><span class="str">&quot; &quot;</span><span class="sym">++</span>show <span class="sym">(</span>I.findWithDefault <span class="num">0 0</span> n<span class="sym">)</span>
-        l2       <span class="sym">=</span> length . concat . fst $ run replace  <span class="sym">(</span>LS s1 I.empty<span class="sym">)</span>
-    <span class="kwa">in</span> unlines $ <span class="sym">(</span>counts<span class="sym">++[</span>counts'<span class="sym">]) ++ [[]] ++</span> map show <span class="sym">[</span>l0<span class="sym">,</span> l1<span class="sym">,</span> l2<span class="sym">]</span>
+variants <span class="sym">= [</span>
+  <span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span>
+  <span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span> <span class="sym">]</span>
 
-dot      <span class="sym">=</span> alt   <span class="sym">[</span>'\<span class="num">32</span>' .. '\<span class="num">122</span>'<span class="sym">]</span>
-anyButNL <span class="sym">=</span> alt $ <span class="sym">[</span>'\<span class="num">32</span>' .. '\<span class="num">122</span>'<span class="sym">]</span> \\ <span class="sym">[</span>'\n'<span class="sym">]</span>
-
-<span class="slc">-- remove &quot;\n&quot; and lines with &quot;&gt;&quot;</span>
-clean <span class="sym">= (</span>dot                                   `action` \<span class="sym">[</span>c<span class="sym">] -&gt;</span> Just c<span class="sym">)</span>
-   <span class="sym">&gt;||&lt; (</span>char '\n'                             `action` const Nothing<span class="sym">)</span>
-   <span class="sym">&gt;||&lt; (</span>char '<span class="sym">&gt;</span>' <span class="sym">+&gt;</span> anyButNL `star` char '\n' `action` const Nothing<span class="sym">)</span>
-
-<span class="slc">-- count all variants, accumulating count in state threaded through regex matcher</span>
-count <span class="sym">= (</span>dot `action` const Nothing<span class="sym">)</span>
-   <span class="sym">&gt;||&lt; (</span>foldl1 <span class="sym">(&gt;||&lt;)</span> $ map match <span class="sym">(</span>zip pats <span class="sym">[</span><span class="num">0</span>..<span class="sym">]))</span>
-  <span class="kwa">where</span>
-    pats <span class="sym">= [(</span>string <span class="str">&quot;agggtaaa&quot;</span>                      <span class="sym">&gt;|&lt;</span>  string <span class="str">&quot;tttaccct&quot;</span><span class="sym">)</span>
-           <span class="sym">,((</span>cgt <span class="sym">+&gt;</span> string <span class="str">&quot;gggtaaa&quot;</span><span class="sym">)              &gt;|&lt; (</span>string <span class="str">&quot;tttaccc&quot;</span> <span class="sym">+&gt;</span> acg<span class="sym">))</span>
-           <span class="sym">,((</span>a <span class="sym">+&gt;</span> act <span class="sym">+&gt;</span> string <span class="str">&quot;ggtaaa&quot;</span><span class="sym">)          &gt;|&lt; (</span>string <span class="str">&quot;tttacc&quot;</span> <span class="sym">+&gt;</span> agt <span class="sym">+&gt;</span> t<span class="sym">))</span>
-           <span class="sym">,((</span>string <span class="str">&quot;ag&quot;</span> <span class="sym">+&gt;</span> act <span class="sym">+&gt;</span> string <span class="str">&quot;gtaaa&quot;</span><span class="sym">) &gt;|&lt; (</span>string <span class="str">&quot;tttac&quot;</span> <span class="sym">+&gt;</span> agt <span class="sym">+&gt;</span> string <span class="str">&quot;ct&quot;</span><span class="sym">))</span>
-           <span class="sym">,((</span>string <span class="str">&quot;agg&quot;</span> <span class="sym">+&gt;</span> act <span class="sym">+&gt;</span> string <span class="str">&quot;taaa&quot;</span><span class="sym">) &gt;|&lt; (</span>string <span class="str">&quot;ttta&quot;</span> <span class="sym">+&gt;</span> agt <span class="sym">+&gt;</span> string <span class="str">&quot;cct&quot;</span><span class="sym">))</span>
-           <span class="sym">,((</span>string <span class="str">&quot;aggg&quot;</span> <span class="sym">+&gt;</span> acg <span class="sym">+&gt;</span> string <span class="str">&quot;aaa&quot;</span><span class="sym">) &gt;|&lt; (</span>string <span class="str">&quot;ttt&quot;</span> <span class="sym">+&gt;</span> cgt <span class="sym">+&gt;</span> string <span class="str">&quot;ccct&quot;</span><span class="sym">))</span>
-           <span class="sym">,((</span>string <span class="str">&quot;agggt&quot;</span> <span class="sym">+&gt;</span> cgt <span class="sym">+&gt;</span> string <span class="str">&quot;aa&quot;</span><span class="sym">) &gt;|&lt; (</span>string <span class="str">&quot;tt&quot;</span> <span class="sym">+&gt;</span> acg <span class="sym">+&gt;</span> string <span class="str">&quot;accct&quot;</span><span class="sym">))</span>
-           <span class="sym">,((</span>string <span class="str">&quot;agggta&quot;</span> <span class="sym">+&gt;</span> cgt <span class="sym">+&gt;</span> a<span class="sym">)          &gt;|&lt; (</span>t <span class="sym">+&gt;</span> acg <span class="sym">+&gt;</span> string <span class="str">&quot;taccct&quot;</span><span class="sym">))]</span>
-
-<span class="slc">-- work around obscure problem with overlapping patterns(?)</span>
-count' <span class="sym">=</span> match <span class="sym">(((</span>string <span class="str">&quot;agggtaa&quot;</span> <span class="sym">+&gt;</span> cgt<span class="sym">) &gt;|&lt; (</span>acg <span class="sym">+&gt;</span> string <span class="str">&quot;ttaccct&quot;</span><span class="sym">)),</span><span class="num">0</span><span class="sym">)</span>
-
-cgt <span class="sym">=</span> alt <span class="str">&quot;cgt&quot;</span><span class="sym">;</span> act <span class="sym">=</span> alt <span class="str">&quot;act&quot;</span><span class="sym">;</span> acg <span class="sym">=</span> alt <span class="str">&quot;acg&quot;</span><span class="sym">;</span> agt <span class="sym">=</span> alt <span class="str">&quot;agt&quot;</span><span class="sym">;</span> a <span class="sym">=</span> char 'a'<span class="sym">;</span> t <span class="sym">=</span> char 't'
-
-<span class="slc">-- each pattern keeps track of its own count, so we can perform a single pass</span>
-match <span class="sym">(</span>p<span class="sym">,</span>i<span class="sym">) =</span> p `meta` \_ m <span class="sym">-&gt;</span> R Nothing <span class="sym">(</span>I.insertWith <span class="sym">(+)</span> i <span class="num">1</span> m<span class="sym">)</span> Nothing
-
-variants <span class="sym">=</span> zip <span class="sym">[</span><span class="num">0</span>..<span class="sym">]</span>
-  <span class="sym">[</span><span class="str">&quot;agggtaaa|tttaccct&quot;</span><span class="sym">,</span><span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="sym">,</span><span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
-  <span class="sym">,</span><span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="sym">,</span><span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="sym">,</span><span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
-  <span class="sym">,</span><span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="sym">,</span><span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="sym">,</span><span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">]</span>
-
-<span class="slc">-- substitute certain chars for patterns</span>
-replace <span class="sym">= (</span>alt <span class="sym">([</span>'a'..'z'<span class="sym">] ++ [</span>'A'..'Z'<span class="sym">])</span> `action` \c <span class="sym">-&gt;</span> Just c<span class="sym">)</span>
-     <span class="sym">&gt;||&lt;</span> foldl1 <span class="sym">(&gt;||&lt;) (</span>map <span class="sym">(</span>\<span class="sym">(</span>c<span class="sym">,</span>p<span class="sym">) -&gt;</span> char c `action` const <span class="sym">(</span>Just p<span class="sym">))</span> pairs<span class="sym">)</span>
-
-pairs <span class="sym">= [(</span>'B'<span class="sym">,</span><span class="str">&quot;(c|g|t)&quot;</span><span class="sym">),(</span>'D'<span class="sym">,</span><span class="str">&quot;(a|g|t)&quot;</span><span class="sym">),  (</span>'H'<span class="sym">,</span><span class="str">&quot;(a|c|t)&quot;</span><span class="sym">),(</span>'K'<span class="sym">,</span><span class="str">&quot;(g|t)&quot;</span><span class="sym">)</span>
-        <span class="sym">,(</span>'M'<span class="sym">,</span><span class="str">&quot;(a|c)&quot;</span><span class="sym">),  (</span>'N'<span class="sym">,</span><span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">),(</span>'R'<span class="sym">,</span><span class="str">&quot;(a|g)&quot;</span><span class="sym">),  (</span>'S'<span class="sym">,</span><span class="str">&quot;(c|g)&quot;</span><span class="sym">)</span>
-        <span class="sym">,(</span>'V'<span class="sym">,</span><span class="str">&quot;(a|c|g)&quot;</span><span class="sym">),(</span>'W'<span class="sym">,</span><span class="str">&quot;(a|t)&quot;</span><span class="sym">),    (</span>'Y'<span class="sym">,</span><span class="str">&quot;(c|t)&quot;</span><span class="sym">) ]</span>
-
-<span class="slc">------------------------------------------------------------------------</span>
-<span class="slc">-- And now the regex library</span>
-
-<span class="slc">--  Compiler Toolkit: Self-optimizing lexers</span>
-<span class="slc">--</span>
-<span class="slc">--  Author : Manuel M. T. Chakravarty</span>
-<span class="slc">--  Created: 24 February 95, 2 March 99</span>
-<span class="slc">--  Copyright (c) [1995..2000] Manuel M. T. Chakravarty</span>
-<span class="slc">--  Copyright (c) 2004-6 Don Stewart</span>
-<span class="slc">--</span>
-<span class="slc">--  Self-optimizing lexer combinators.</span>
-<span class="slc">--</span>
-<span class="slc">--  For detailed information, see ``Lazy Lexing is Fast'', Manuel</span>
-<span class="slc">--  M. T. Chakravarty, in A. Middeldorp and T. Sato, editors, Proceedings of</span>
-<span class="slc">--  Fourth Fuji International Symposium on Functional and Logic Programming,</span>
-<span class="slc">--  Springer-Verlag, LNCS 1722, 1999.  (See my Web page for details.)</span>
-<span class="slc">--</span>
-<span class="slc">--             http://www.cse.unsw.edu.au/~chak/papers/Cha99.html</span>
-<span class="slc">--</span>
-<span class="slc">--  Thanks to Simon L. Peyton Jones and Roman Leshchinskiy for their</span>
-<span class="slc">--  helpful suggestions that improved the design of this library.</span>
-<span class="slc">--</span>
-
-<span class="kwa">infixr</span> <span class="num">4</span> `quest`<span class="sym">,</span> `star`<span class="sym">,</span> `plus`
-<span class="kwa">infixl</span> <span class="num">3</span> <span class="sym">+&gt;,</span> `action`<span class="sym">,</span> `meta`
-<span class="kwa">infixl</span> <span class="num">2</span> <span class="sym">&gt;|&lt;, &gt;||&lt;</span>
-
-<span class="slc">-- we use the dense representation if a table has at least the given number of</span>
-<span class="slc">-- (non-error) elements</span>
-denseMin <span class="sym">::</span> <span class="kwb">Int</span>
-denseMin  <span class="sym">=</span> <span class="num">20</span>
-
-<span class="slc">-- represents the number of (non-error) elements and the bounds of a table</span>
-<span class="kwa">data</span> BoundsNum <span class="sym">=</span> B <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!</span><span class="kwb">Char</span> <span class="sym">!</span><span class="kwb">Char</span>
-
-<span class="slc">-- combine two bounds</span>
-addBoundsNum <span class="sym">(</span>B n lc hc<span class="sym">) (</span>B n' lc' hc'<span class="sym">)  =</span> B <span class="sym">(</span>n <span class="sym">+</span> n'<span class="sym">) (</span>min lc lc'<span class="sym">) (</span>max hc hc'<span class="sym">)</span>
-
-<span class="slc">-- check whether a character is in the bounds</span>
-inBounds c <span class="sym">(</span>B _ lc hc<span class="sym">) =</span> c <span class="sym">&gt;=</span> lc <span class="sym">&amp;&amp;</span> c <span class="sym">&lt;=</span> hc
-
-<span class="slc">-- Lexical actions take a lexeme with its position and may return a token; in</span>
-<span class="slc">-- a variant, an error can be returned</span>
-<span class="slc">--</span>
-<span class="slc">-- * if there is no token returned, the current lexeme is discarded lexing</span>
-<span class="slc">--   continues looking for a token</span>
-<span class="kwa">type</span> Action t <span class="sym">=</span> String <span class="sym">-&gt;</span> Maybe t
-
-<span class="slc">-- Meta actions transform the lexeme, and a user-defined state; they</span>
-<span class="slc">-- may return a lexer, which is then used for accepting the next token</span>
-<span class="slc">-- (this is important to implement non-regular behaviour like nested</span>
-<span class="slc">-- comments)</span>
-<span class="kwa">type</span> Meta t <span class="sym">=</span> String <span class="sym">-&gt;</span> S <span class="sym">-&gt;</span> Result t
-
-<span class="kwa">data</span> Result t <span class="sym">=</span> R <span class="sym">(</span>Maybe t<span class="sym">) !</span>S <span class="sym">(</span>Maybe <span class="sym">(</span>Lexer t<span class="sym">))</span>
-
-<span class="slc">-- threaded top-down during lexing (current input, meta state)</span>
-<span class="kwa">data</span> LexerState <span class="sym">=</span> LS <span class="sym">!</span>String <span class="sym">!</span>S
-
-<span class="kwa">type</span> S <span class="sym">=</span> I.IntMap <span class="kwb">Int</span>
-
-<span class="slc">-- tree structure used to represent the lexer table</span>
-<span class="slc">--</span>
-<span class="slc">-- * each node in the tree corresponds to a state of the lexer; the associated</span>
-<span class="slc">--   actions are those that apply when the corresponding state is reached</span>
-<span class="kwa">data</span> Lexer t <span class="sym">=</span> Lexer <span class="sym">(</span>LexAction t<span class="sym">) (</span>Cont t<span class="sym">)</span>
-
-<span class="slc">-- represent the continuation of a lexer</span>
-<span class="kwa">data</span> Cont t <span class="sym">=</span> <span class="slc">-- on top of the tree, where entries are dense, we use arrays</span>
-                Dense BoundsNum <span class="sym">(</span>Array <span class="kwb">Char</span> <span class="sym">(</span>Lexer t<span class="sym">))</span>
-
-                <span class="slc">-- further down, where the valid entries are sparse, we</span>
-                <span class="slc">-- use association lists, to save memory</span>
-              <span class="sym">|</span> Sparse BoundsNum <span class="sym">(</span>M.Map <span class="kwb">Char</span> <span class="sym">(</span>Lexer t<span class="sym">))</span>
-
-              <span class="sym">|</span> Done <span class="slc">-- end of a automaton</span>
-
-<span class="slc">-- lexical action</span>
-<span class="kwa">data</span> LexAction t <span class="sym">=</span> Action <span class="sym">!(</span>Meta t<span class="sym">) |</span> NoAction
-
-<span class="slc">-- a regular expression</span>
-<span class="kwa">type</span> Regexp t <span class="sym">=</span> Lexer t <span class="sym">-&gt;</span> Lexer t
-
-<span class="slc">-- Empty lexeme</span>
-epsilon <span class="sym">::</span> Regexp t
-epsilon <span class="sym">=</span> id
-
-<span class="slc">-- One character regexp</span>
-char <span class="sym">::</span> <span class="kwb">Char</span> <span class="sym">-&gt;</span> Regexp t
-char c <span class="sym">=</span> \l <span class="sym">-&gt;</span> Lexer NoAction <span class="sym">(</span>Sparse <span class="sym">(</span>B <span class="num">1</span> c c<span class="sym">) (</span>M.singleton c l<span class="sym">))</span>
-
-<span class="slc">-- Concatenation of regexps</span>
-<span class="sym">(+&gt;) ::</span> Regexp t <span class="sym">-&gt;</span> Regexp t <span class="sym">-&gt;</span> Regexp t
-<span class="sym">(+&gt;)  = (</span>.<span class="sym">)</span>
-
-<span class="slc">-- Close a regular expression with an action that converts the lexeme into a</span>
-<span class="slc">-- token</span>
-<span class="slc">--</span>
-<span class="slc">-- * Note: After the application of the action, the position is advanced</span>
-<span class="slc">--         according to the length of the lexeme.  This implies that normal</span>
-<span class="slc">--         actions should not be used in the case where a lexeme might contain</span>
-<span class="slc">--         control characters that imply non-standard changes of the position,</span>
-<span class="slc">--         such as newlines or tabs.</span>
-<span class="slc">--</span>
-action re a  <span class="sym">=</span> re `meta` a' <span class="kwa">where</span> a' lexeme s <span class="sym">=</span> R <span class="sym">(</span>a lexeme<span class="sym">)</span> s Nothing
-<span class="com">{-# INLINE action #-}</span>
-
-<span class="slc">-- Close a regular expression with a meta action</span>
-<span class="slc">--</span>
-<span class="slc">-- * Note: Meta actions have to advance the position in dependence of the</span>
-<span class="slc">--         lexeme by themselves.</span>
-<span class="slc">--</span>
-meta re a  <span class="sym">=</span> re <span class="sym">(</span>Lexer <span class="sym">(</span>Action a<span class="sym">)</span> Done<span class="sym">)</span>
-<span class="com">{-# INLINE meta #-}</span>
-
-<span class="slc">-- disjunctive combination of two regexps</span>
-re <span class="sym">&gt;|&lt;</span> re'  <span class="sym">=</span> \l <span class="sym">-&gt;</span> re l <span class="sym">&gt;||&lt;</span> re' l
-
-<span class="slc">-- disjunctive combination of two lexers</span>
-<span class="sym">(</span>Lexer a c<span class="sym">) &gt;||&lt; (</span>Lexer a' c'<span class="sym">)  =</span> Lexer <span class="sym">(</span>joinActions a a'<span class="sym">) (</span>joinConts c c'<span class="sym">)</span>
-
-<span class="slc">-- combine two disjunctive continuations</span>
-<span class="slc">--</span>
-joinConts <span class="sym">::</span> Cont t <span class="sym">-&gt;</span> Cont t <span class="sym">-&gt;</span> Cont t
-joinConts Done c'   <span class="sym">=</span> c'
-joinConts c    Done <span class="sym">=</span> c
-joinConts c    c'   <span class="sym">=</span> <span class="kwa">let</span> <span class="sym">(</span>bn <span class="sym">,</span> cls <span class="sym">) =</span> listify c
-                          <span class="sym">(</span>bn'<span class="sym">,</span> cls'<span class="sym">) =</span> listify c'
-                      <span class="slc">-- note: `addsBoundsNum' can, at this point, only</span>
-                      <span class="slc">--       approx. the number of *non-overlapping* cases;</span>
-                      <span class="slc">--       however, the bounds are correct</span>
-                      <span class="kwa">in</span> aggregate <span class="sym">(</span>addBoundsNum bn bn'<span class="sym">) (</span>cls <span class="sym">++</span> cls'<span class="sym">)</span>
-  <span class="kwa">where</span> listify <span class="sym">(</span>Dense  n arr<span class="sym">) = (</span>n<span class="sym">,</span> assocs arr<span class="sym">)</span>
-        listify <span class="sym">(</span>Sparse n cls<span class="sym">) = (</span>n<span class="sym">,</span> M.toList cls<span class="sym">)</span>
-
-<span class="slc">-- combine two actions. Use the latter in case of overlap (!)</span>
-joinActions NoAction a'       <span class="sym">=</span> a'
-joinActions a        NoAction <span class="sym">=</span> a
-joinActions _        a'       <span class="sym">=</span> a' <span class="slc">-- error &quot;Lexers.&gt;||&lt;: Overlapping actions!&quot;</span>
-
-<span class="slc">-- Note: `n' is only an upper bound of the number of non-overlapping cases</span>
-aggregate bn<span class="sym">&#64;(</span>B n lc hc<span class="sym">)</span> cls
-  <span class="sym">|</span> n <span class="sym">&gt;=</span> denseMin <span class="sym">=</span> Dense  bn <span class="sym">(</span>accumArray <span class="sym">(&gt;||&lt;) (</span>Lexer NoAction Done<span class="sym">) (</span>lc<span class="sym">,</span> hc<span class="sym">)</span> cls<span class="sym">)</span>
-  <span class="sym">|</span> otherwise     <span class="sym">=</span> Sparse bn <span class="sym">(</span>M.fromList <span class="sym">(</span>accum <span class="sym">(&gt;||&lt;)</span> cls<span class="sym">))</span>
-
-<span class="slc">-- combine the elements in the association list that have the same key</span>
-accum _ <span class="sym">[]           = []</span>
-accum f <span class="sym">((</span>c<span class="sym">,</span> el<span class="sym">):</span>ces<span class="sym">) =</span> <span class="kwa">let</span> <span class="sym">(</span>ce<span class="sym">,</span> ces'<span class="sym">) =</span> gather c el ces <span class="kwa">in</span> ce <span class="sym">:</span> accum f ces'
-  <span class="kwa">where</span> gather k e <span class="sym">[]                             = ((</span>k<span class="sym">,</span> e<span class="sym">), [])</span>
-        gather k e <span class="sym">(</span>ke'<span class="sym">&#64;(</span>k'<span class="sym">,</span> e'<span class="sym">):</span>kes<span class="sym">) |</span> k <span class="sym">==</span> k'   <span class="sym">=</span> gather k <span class="sym">(</span>f e e'<span class="sym">)</span> kes
-                                      <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">let</span> <span class="sym">(</span>ke''<span class="sym">,</span> kes'<span class="sym">) =</span> gather k e kes
-                                                    <span class="kwa">in</span> <span class="sym">(</span>ke''<span class="sym">,</span> ke'<span class="sym">:</span>kes'<span class="sym">)</span>
-
-<span class="slc">-- x `star` y corresponds to the regular expression x*y</span>
-<span class="slc">--</span>
-<span class="slc">-- The definition used below can be obtained by equational reasoning from this</span>
-<span class="slc">-- one (which is much easier to understand):</span>
-<span class="slc">--</span>
-<span class="slc">--   star re1 re2 = let self = (re1 +&gt; self &gt;|&lt; epsilon) in self +&gt; re2</span>
-<span class="slc">--</span>
-<span class="slc">-- However, in the above, `self' is of type `Regexp s t' (ie, a functional),</span>
-<span class="slc">-- whereas below it is of type `Lexer s t'.  Thus, below we have a graphical</span>
-<span class="slc">-- body (finite representation of an infinite structure), which doesn't grow</span>
-<span class="slc">-- with the size of the accepted lexeme - in contrast to the definition using</span>
-<span class="slc">-- the functional recursion.</span>
-star re1 re2  <span class="sym">=</span> \l <span class="sym">-&gt;</span> <span class="kwa">let</span> self <span class="sym">=</span> re1 self <span class="sym">&gt;||&lt;</span> re2 l <span class="kwa">in</span> self
-
-<span class="slc">-- x `plus` y corresponds to the regular expression x+y</span>
-plus re1 re2  <span class="sym">=</span> re1 <span class="sym">+&gt; (</span>re1 `star` re2<span class="sym">)</span>
-
-<span class="slc">-- x `quest` y corresponds to the regular expression x?y</span>
-quest re1 re2  <span class="sym">= (</span>re1 <span class="sym">+&gt;</span> re2<span class="sym">) &gt;|&lt;</span> re2
-
-<span class="slc">-- accepts a non-empty set of alternative characters</span>
-<span class="slc">--  Equiv. to `(foldr1 (&gt;|&lt;) . map char) cs', but much faster</span>
-alt cs  <span class="sym">=</span> \l <span class="sym">-&gt;</span> <span class="kwa">let</span> bnds <span class="sym">=</span> B <span class="sym">(</span>length cs<span class="sym">) (</span>minimum cs<span class="sym">) (</span>maximum cs<span class="sym">)</span>
-                <span class="kwa">in</span> Lexer NoAction <span class="sym">(</span>aggregate bnds <span class="sym">[(</span>c<span class="sym">,</span> l<span class="sym">) |</span> c <span class="sym">&lt;-</span> cs<span class="sym">])</span>
-
-<span class="slc">-- accept a character sequence</span>
-string cs <span class="sym">= (</span>foldr1 <span class="sym">(+&gt;)</span> . map char<span class="sym">)</span> cs
-
-<span class="slc">-- apply a lexer, yielding a token sequence and a list of errors</span>
-<span class="slc">--</span>
-<span class="slc">-- * Currently, all errors are fatal; thus, the result is undefined in case of</span>
-<span class="slc">--   an error (this changes when error correction is added).</span>
-<span class="slc">-- * The final lexer state is returned.</span>
-<span class="slc">-- * The order of the error messages is undefined</span>
-<span class="slc">-- * the following is moderately tuned</span>
-<span class="slc">--</span>
-run _ st<span class="sym">&#64;(</span>LS <span class="sym">[]</span> _<span class="sym">) = ([],</span> st<span class="sym">)</span>
-run l st <span class="sym">=</span> <span class="kwa">case</span> lexOne l st <span class="kwa">of</span>
-    <span class="sym">(</span>Nothing <span class="sym">,</span> _ <span class="sym">,</span> st'<span class="sym">) -&gt;</span> run l st'
-    <span class="sym">(</span>Just t<span class="sym">,</span> l'<span class="sym">,</span> st'<span class="sym">)   -&gt;</span> <span class="kwa">let</span> <span class="sym">(</span>ts<span class="sym">,</span> final<span class="sym">) =</span> run l' st'<span class="sym">;</span> ts' <span class="sym">= (</span>t<span class="sym">:</span>ts<span class="sym">)</span>
-                           <span class="kwa">in</span> ts' `seq` <span class="sym">(</span>ts'<span class="sym">,</span>final<span class="sym">)</span>
-  <span class="kwa">where</span>
-    <span class="slc">-- accept a single lexeme</span>
-    lexOne l0 st'<span class="sym">&#64;(</span>LS cs s<span class="sym">) =</span> oneLexeme l0 st' id lexErr
-
-      <span class="kwa">where</span>
-        lexErr <span class="sym">= (</span>Just undefined<span class="sym">,</span> l<span class="sym">, (</span>LS <span class="sym">(</span>tail cs<span class="sym">)</span> s<span class="sym">))</span>
-
-        <span class="slc">-- we take an open list of characters down, where we accumulate the</span>
-        <span class="slc">-- lexeme; this function returns maybe a token, the next lexer to use</span>
-        <span class="slc">-- (can be altered by a meta action), the new lexer state, and a list</span>
-        <span class="slc">-- of errors</span>
-        <span class="slc">--</span>
-        <span class="slc">-- we implement the &quot;principle of the longest match&quot; by taking a</span>
-        <span class="slc">-- potential result quadruple down (in the last argument); the</span>
-        <span class="slc">-- potential result quadruple is updated whenever we pass by an action</span>
-        <span class="slc">-- (different from `NoAction'); initially it is an error result</span>
-        <span class="slc">--</span>
-        oneLexeme <span class="sym">(</span>Lexer a cont<span class="sym">)</span> state<span class="sym">&#64;(</span>LS cs s<span class="sym">)</span> csDL last <span class="sym">=</span>
-            <span class="kwa">let</span> last' <span class="sym">=</span> doaction a csDL state last
-            <span class="kwa">in case</span> cs <span class="kwa">of</span>
-                <span class="sym">[]      -&gt;</span> last'    <span class="slc">-- at end, has to be this action</span>
-                <span class="sym">(</span>c<span class="sym">:</span>cs'<span class="sym">) -&gt;</span> oneChar cont c <span class="sym">(</span>LS cs' s<span class="sym">)</span> csDL last'   <span class="slc">-- keep looking</span>
-
-        <span class="slc">-- There are more chars. Look at the next one</span>
-        <span class="slc">-- Now, if the next tbl is Done, then there is no more</span>
-        <span class="slc">-- transition, so immediately execute our action</span>
-        oneChar tbl c state csDL last <span class="sym">=</span> <span class="kwa">case</span> peek tbl c <span class="kwa">of</span>
-                Nothing              <span class="sym">-&gt;</span> last
-                Just <span class="sym">(</span>Lexer a Done<span class="sym">)  -&gt;</span> doaction a <span class="sym">(</span>\l <span class="sym">-&gt;</span> csDL <span class="sym">(</span>c<span class="sym">:</span>l<span class="sym">))</span> state last
-                Just l'              <span class="sym">-&gt;</span> oneLexeme l' state <span class="sym">(</span>\l <span class="sym">-&gt;</span> csDL <span class="sym">(</span>c<span class="sym">:</span>l<span class="sym">))</span> last
-
-        <span class="slc">-- Do the lookup.</span>
-        peek <span class="sym">(</span>Dense bn arr<span class="sym">)</span>  c <span class="sym">|</span> c `inBounds` bn <span class="sym">=</span> Just $ arr <span class="sym">!</span> c
-        peek <span class="sym">(</span>Sparse bn cls<span class="sym">)</span> c <span class="sym">|</span> c `inBounds` bn <span class="sym">=</span> M.lookup c cls
-        peek _ _    <span class="sym">=</span> Nothing
-
-        <span class="slc">-- execute the action if present and finalise the current lexeme</span>
-        doaction <span class="sym">(</span>Action f<span class="sym">)</span> csDL <span class="sym">(</span>LS cs s<span class="sym">)</span> _ <span class="sym">=</span> <span class="kwa">case</span> f <span class="sym">((</span>$<span class="sym">[])</span> csDL<span class="sym">)</span> s <span class="kwa">of</span>
-                <span class="sym">(</span>R Nothing s' l'<span class="sym">) |</span> not . null $ cs <span class="sym">-&gt;</span> lexOne <span class="sym">(</span>fromMaybe l0 l'<span class="sym">) (</span>LS cs s'<span class="sym">)</span>
-                <span class="sym">(</span>R res     s' l'<span class="sym">)  -&gt; (</span>res<span class="sym">, (</span>fromMaybe l0 l'<span class="sym">), (</span>LS cs s'<span class="sym">))</span>
-
-        doaction NoAction _ _ last <span class="sym">=</span> last
+main <span class="sym">=</span> <span class="kwa">do</span>
+  file <span class="sym">&lt;-</span> B.getContents
+  <span class="kwa">let</span> <span class="sym">[</span>s1<span class="sym">,</span>s2<span class="sym">,</span>s3<span class="sym">] =</span> map <span class="sym">(</span>B.concat . tail<span class="sym">)</span> $ groupBy notHeader $ B.split '\n' file
+  mapM_ <span class="sym">(</span>printVars s2 s3<span class="sym">)</span> variants
+  putChar '\n'
+  print <span class="sym">(</span>B.length file<span class="sym">)</span>
+  print <span class="sym">(</span>B.length s1 <span class="sym">+</span> B.length s2 <span class="sym">+</span> B.length s3<span class="sym">)</span>
+  print <span class="sym">(</span>B.length s1 <span class="sym">+</span> B.length s3 <span class="sym">+</span> length <span class="sym">(</span>B.unpack s2 <span class="sym">&gt;&gt;=</span> substCh<span class="sym">))</span>
+  <span class="kwa">where</span> notHeader _ s <span class="sym">=</span> B.null s <span class="sym">||</span> B.head s <span class="sym">/=</span> '<span class="sym">&gt;</span>'
+        substCh 'B' <span class="sym">=</span> <span class="str">&quot;(c|g|t)&quot;</span>
+        substCh 'D' <span class="sym">=</span> <span class="str">&quot;(a|g|t)&quot;</span>
+        substCh 'H' <span class="sym">=</span> <span class="str">&quot;(a|c|t)&quot;</span>
+        substCh 'K' <span class="sym">=</span> <span class="str">&quot;(g|t)&quot;</span>
+        substCh 'M' <span class="sym">=</span> <span class="str">&quot;(a|c)&quot;</span>
+        substCh 'N' <span class="sym">=</span> <span class="str">&quot;(a|c|g|t)&quot;</span>
+        substCh 'R' <span class="sym">=</span> <span class="str">&quot;(a|g)&quot;</span>
+        substCh 'S' <span class="sym">=</span> <span class="str">&quot;(c|g)&quot;</span>
+        substCh 'V' <span class="sym">=</span> <span class="str">&quot;(a|c|g)&quot;</span>
+        substCh 'W' <span class="sym">=</span> <span class="str">&quot;(a|t)&quot;</span>
+        substCh 'Y' <span class="sym">=</span> <span class="str">&quot;(c|t)&quot;</span>
+        substCh etc <span class="sym">= [</span>etc<span class="sym">]</span>
+        printVars s2 s3 r <span class="sym">=</span> <span class="kwa">do</span>
+                            putStr r
+                            putChar ' '
+                            print <span class="sym">((</span>s2 <span class="sym">=~</span> r <span class="sym">::</span> <span class="kwb">Int</span><span class="sym">) + (</span>s3 <span class="sym">=~</span> r <span class="sym">::</span> <span class="kwb">Int</span><span class="sym">))</span>
 
