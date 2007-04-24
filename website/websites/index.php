@@ -33,7 +33,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<p>These are <strong>particular truths</strong>, they are not general truths - <em>the <strong>slower</strong> program</em> may become <em>the <strong>faster</strong> program</em> when the workload changes.</p><br/>
+<p>It can be fun to watch the Benchmarks Game<br/> but like other games <a href="./gp4/faq.php#play">it's more fun to play!</a></p>
 
 
 <table class="layout">
