@@ -29,7 +29,7 @@ $G = filemtime('./gp4/data/data.csv');
 <div id="home">
 
 <p>It can be fun to watch the Benchmarks Game<br/> but like other games <a href="./gp4/faq.php#play">it's more fun to <strong>play</strong>!</a></p>
-
+<br/>
 <h5>Benchmarking programming languages?</h5>
 <p>How can we benchmark a programming language?<br/>
 We can't - we benchmark programming language implementations.</p>
