@@ -361,8 +361,8 @@ language, benchmark, your-name, date, (version)<br />
 </ol>
 
 <p>Now <strong>start from the bottom</strong> of the
-   <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Contribute Programs - Submit New">
-   <strong>Contribute Programs Submit-New</strong></a> form and work your way up.
+   <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Play the Benchmarks Game - Submit New">
+   <strong>"Play the Benchmarks Game" Submit-New</strong></a> form and work your way up.
 </p>
 </dd>
 
@@ -410,7 +410,7 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <dl>
 <dt><a href="#contest" name="contest">Why don't you accept every program that gives the correct result?</a></dt>
-<dd><p>We are trying to show the performance of various programming language implementations - so we ask that contributed programs not only give the 
+<dd><p>We are trying to show the performance of various programming language implementations - so we ask that contributed programs not only give the
 correct result, but also <strong>use the same algorithm</strong> to calculate that result.</p>
 <p>Doug Bagley used both <em>same way</em> (same algorithm) and <em>same thing</em> (same result) benchmarks - so in many cases the performance
  differences were simply better algorithms.</p>
