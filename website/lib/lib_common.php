@@ -419,7 +419,7 @@ function HtmlFragment($FileName){
 
 
 function PFx($d){
-   if ($d>9.99){ return number_format($d); }   
+   if ($d>9.9){ return number_format($d); }   
    elseif ($d>0.0){ return number_format($d,1); }
    else { return "&nbsp;"; }
 }

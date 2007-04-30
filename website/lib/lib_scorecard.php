@@ -37,16 +37,16 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
-     
+
       $test = $row[DATA_TEST];
       $lang = $row[DATA_LANG];
-      settype($row[DATA_ID],'integer'); 
+      settype($row[DATA_ID],'integer');
      
       if ((isset($Incl[$test]) && isset($Incl[$lang])) 
             && !ExcludeData($row,$Langs,$Excl)){                                 
-                                                      
+
          if (isset( $data[$lang][$test])){         
-            // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU   
+            // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU
 
             if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) && (
                   ($data[$lang][$test][DATA_FULLCPU] <= PROGRAM_TIMEOUT) ||                             
@@ -65,11 +65,11 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          if ($cpu > 0){       
             if (!isset($range[$test][CPU_MIN])){ 
                $range[$test][CPU_MIN] = $cpu; 
-               $range[$test][CPU_MAX] = $cpu; 
+               //$range[$test][CPU_MAX] = $cpu;
             }   
             else {   
                if ($cpu<$range[$test][CPU_MIN]){ $range[$test][CPU_MIN] = $cpu; }   
-               if ($cpu>$range[$test][CPU_MAX]){ $range[$test][CPU_MAX] = $cpu; }   
+               //if ($cpu>$range[$test][CPU_MAX]){ $range[$test][CPU_MAX] = $cpu; }
             }   
          }                  
          
@@ -77,11 +77,11 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          if ($mem > 0){       
             if (!isset($range[$test][MEM_MIN])){ 
                $range[$test][MEM_MIN] = $mem; 
-               $range[$test][MEM_MAX] = $mem; 
+               //$range[$test][MEM_MAX] = $mem;
             }   
             else {   
-               if ($mem<$range[$test][MEM_MIN]){ $range[$test][MEM_MIN] = $mem; }   
-               if ($mem>$range[$test][MEM_MAX]){ $range[$test][MEM_MAX] = $mem; }   
+               if ($mem<$range[$test][MEM_MIN]){ $range[$test][MEM_MIN] = $mem; }
+               //if ($mem>$range[$test][MEM_MAX]){ $range[$test][MEM_MAX] = $mem; }
             }   
          } 
          
@@ -89,53 +89,53 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          if ($loc > 0){       
             if (!isset($range[$test][LOC_MIN])){ 
                $range[$test][LOC_MIN] = $loc; 
-               $range[$test][LOC_MAX] = $loc; 
+               //$range[$test][LOC_MAX] = $loc;
             }   
-            else {   
+            else {
                if ($loc<$range[$test][LOC_MIN]){ $range[$test][LOC_MIN] = $loc; }   
-               if ($loc>$range[$test][LOC_MAX]){ $range[$test][LOC_MAX] = $loc; }   
+               //if ($loc>$range[$test][LOC_MAX]){ $range[$test][LOC_MAX] = $loc; }
             }   
-         } 
+         }
 
          $gz = $row[DATA_GZ];                         
          if ($gz > 0){       
             if (!isset($range[$test][GZ_MIN])){ 
                $range[$test][GZ_MIN] = $gz; 
-               $range[$test][GZ_MAX] = $gz; 
+               //$range[$test][GZ_MAX] = $gz;
             }   
             else {   
                if ($gz<$range[$test][GZ_MIN]){ $range[$test][GZ_MIN] = $gz; }   
-               if ($gz>$range[$test][GZ_MAX]){ $range[$test][GZ_MAX] = $gz; }   
+               //if ($gz>$range[$test][GZ_MAX]){ $range[$test][GZ_MAX] = $gz; }
             }   
-         }                                     
+         }
       }      
    }
    @fclose($f);   
            
-   
+
    foreach($data as $k => $test){
       foreach($test as $t => $v){
          if (isset($range[$t][CPU_MIN])){$r = $range[$t][CPU_MIN]; } else { $r = 0; }
-         $cpuScore = LinearScore($v[DATA_FULLCPU], $r);
+         $cpuScore = RatioScore($v[DATA_FULLCPU], $r);
          $data[$k][$t][DATA_FULLCPU] = $cpuScore;    
                        
          if (isset($range[$t][MEM_MIN])){$r = $range[$t][MEM_MIN]; } else { $r = 0; }                       
-         $memScore = LinearScore($v[DATA_MEMORY], $r);
+         $memScore = RatioScore($v[DATA_MEMORY], $r);
          $data[$k][$t][DATA_MEMORY] = $memScore; 
                   
          if (isset($range[$t][LOC_MIN])){$r = $range[$t][LOC_MIN]; } else { $r = 0; }                  
-         $locScore = LinearScore($v[DATA_LINES], $r);
-         $data[$k][$t][DATA_LINES] = $locScore;         
+         $locScore = RatioScore($v[DATA_LINES], $r);
+         $data[$k][$t][DATA_LINES] = $locScore;
 
-         if (isset($range[$t][GZ_MIN])){$r = $range[$t][GZ_MIN]; } else { $r = 0; }                  
-         $gzScore = LinearScore($v[DATA_GZ], $r);
-         $data[$k][$t][DATA_GZ] = $gzScore;       
+         if (isset($range[$t][GZ_MIN])){$r = $range[$t][GZ_MIN]; } else { $r = 0; }
+         $gzScore = RatioScore($v[DATA_GZ], $r);
+         $data[$k][$t][DATA_GZ] = $gzScore;
       }
    }
-   return $data;  
+   return $data;
 }
 
-function LogScore($x, $b){   
+function LogScore($x, $b){
    if(($x==0)||($b==0)){ return 0.0; }
    $scale = 1.0;
    return 1 / (1 + $scale * log($x/$b)/log(2));
@@ -147,6 +147,10 @@ function LinearScore($x, $b){
    return ($b/$x)*$scale;
 }
 
+function RatioScore($x, $b){
+   if(($x==0)||($b==0)){ return 0.0; }
+   return $x/$b;
+}
 
 function Weights($Tests, $Action, $Vars, $CVars){
    $cookie = array();    
@@ -163,7 +167,7 @@ function Weights($Tests, $Action, $Vars, $CVars){
       $wd[$link] = $t[TEST_WEIGHT];                               
    }           
    
-   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);       
+   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);
    foreach($Metrics as $k => $v){ 
       if (isset($Vars[$k]) && is_numeric($Vars[$k])){ $x = $Vars[$k]; }                   
       elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
