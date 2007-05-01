@@ -202,6 +202,21 @@
        },
      },
      
+     'pnet' =>
+     { Lang => 'C#',
+       Name => 'Portable.NET,',
+       Status => '+',
+       Home => 'http://www.gnu.org/software/dotgnu/',
+       Down => 'http://www.gnu.org/software/dotgnu/',
+       Type => 'bytecomped/interpreted',
+       Note => 'GNOME project EMCA C#',
+       Ext  => 'cs',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{MONOC} --version 2>&1`);
+	   return($ver);
+       },
+     },
+
      chicken =>
      { Lang => 'Scheme',
        Name => 'Chicken',
