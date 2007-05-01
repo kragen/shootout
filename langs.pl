@@ -201,6 +201,22 @@
 	   return($ver);
        },
      },
+
+
+     'fsharp' =>
+     { Lang => 'F#',
+       Name => 'Mono',
+       Status => '+',
+       Home => 'http://www.go-mono.com/',
+       Down => 'http://www.go-mono.com/',
+       Type => 'bytecomped/interpreted',
+       Note => 'F#',
+       Ext  => 'fs',
+       Verfun => sub {
+	   chomp(my $ver = `$ENV{MONOC} --version 2>&1`);
+	   return($ver);
+       },
+     },
      
      'pnet' =>
      { Lang => 'C#',
