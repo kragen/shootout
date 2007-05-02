@@ -2,7 +2,7 @@
 
 <? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
 <h2><a href="#faster" name="faster">&nbsp;Create your own Overall Scores</a></h2>
-<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Shootout?</p><br/>
+<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Benchmarks Game?</p><br/>
 <p>"<strong>For every complex problem, there is a solution that is simple, neat, and wrong</strong>."</p>
 
 <? 
