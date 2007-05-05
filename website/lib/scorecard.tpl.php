@@ -24,22 +24,28 @@ foreach($Data as $k => $test){
 
       if ($w1>0){ 
         $val = $v[DATA_FULLCPU];
-        $s += log($val)*$w1;
-        $ws += $w1;
-        $include += $val;
+        if ($val > 0){
+           $s += log($val)*$w1;
+           $ws += $w1;
+           $include += $val;
+        }
       }
 
       if ($w2>0){ 
-        $val = $v[DATA_MEMORY]; 
-        $s += log($val)*$w2;
-        $ws += $w2;
-        $include += $val;
+        $val = $v[DATA_MEMORY];
+        if ($val > 0){
+           $s += log($val)*$w2;
+           $ws += $w2;
+           $include += $val;
+        }
       }
       if ($w3>0){
         $val = $v[DATA_GZ];
-        $s += log($val)*$w3;
-        $ws += $w3;
-        $include += $val;
+        if ($val > 0){
+           $s += log($val)*$w3;
+           $ws += $w3;
+           $include += $val;
+        }
       }
    }
    if ($ws == 0.0){ $ws = 1.0; }
