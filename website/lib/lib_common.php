@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2007
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
@@ -105,11 +105,12 @@ function ReadIncludeExclude(){
       if (!is_array($row)){ continue; }
       if (isset($row[EXCL_TEST]{0})){           
          if (!isset($row[EXCL_ID])){ $row[EXCL_ID] = 1; }
-         $excl[] = $row;               
-      }                                
+         $key = $row[EXCL_TEST].$row[EXCL_LANG].strval($row[EXCL_ID]);
+         $excl[$key] = $row;
+      }
    }
-   @fclose($f);   
-       
+   @fclose($f);
+
    return array($incl,$excl);
 }
 
@@ -253,24 +254,22 @@ function IdName($id){
 function ExcludeData(&$d,&$langs,&$Excl){
    if( !isset($langs[$d[DATA_LANG]]) ) { return LANGUAGE_EXCLUDED; }
 
-//######## Look for more efficient approach?   
-   foreach($Excl as $x){   
-
-      if ( ($d[DATA_TEST]==$x[EXCL_TEST]) && 
-              ($d[DATA_LANG]==$x[EXCL_LANG]) &&
-                  ($d[DATA_ID]==$x[EXCL_ID]) ){         
-                  
-         if ($x[EXCL_USE]==EXCLUDED){         
-            return PROGRAM_EXCLUDED; 
-
-         } else {
-            return PROGRAM_SPECIAL; }
-      }
+   $key = $d[DATA_TEST].$d[DATA_LANG].strval($d[DATA_ID]);
+   if (isset($Excl[$key])){
+      if ($Excl[$key][EXCL_USE]==EXCLUDED){ return PROGRAM_EXCLUDED; }
+      else { return PROGRAM_SPECIAL; }
    }
 
    if( $d[DATA_FULLCPU] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
-   if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }  
+   if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }
    return 0;
+}
+
+function NoExclude(&$d,&$langs,&$Excl){
+   return
+      $d[DATA_FULLCPU] > 0 &&
+         isset($langs[$d[DATA_LANG]]) &&
+            !isset($Excl[ $d[DATA_TEST].$d[DATA_LANG].strval($d[DATA_ID]) ]);
 }
 
 

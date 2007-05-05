@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005, 2006
+// Copyright (c) Isaac Gouy 2005-2007
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -17,7 +17,7 @@ function UnpackCSV($csv){
       $a = explode(',',$s);
       $i = 0;
       while ($i<sizeof($a)-1){
-         $k = $a[$i]; $v = $a[$i+1];                 
+         $k = $a[$i]; $v = $a[$i+1];
          if (is_string($k) && is_numeric($v)){ 
             $k = substr($k,0,64); // be defensive, limit acceptable length
             $aa[$k] = $v; 
@@ -32,7 +32,6 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
-
    $data = array();   
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
@@ -41,18 +40,18 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
       $test = $row[DATA_TEST];
       $lang = $row[DATA_LANG];
       settype($row[DATA_ID],'integer');
-     
-      if ((isset($Incl[$test]) && isset($Incl[$lang])) 
-            && !ExcludeData($row,$Langs,$Excl)){                                 
+
+      if (isset($Incl[$test]) && isset($Incl[$lang])
+            && NoExclude($row,$Langs,$Excl)){
 
          if (isset( $data[$lang][$test])){         
             // IF THERE ARE MULTIPLE IMPLEMENTATIONS RANK ON FULLCPU
 
             if (($row[DATA_FULLCPU] > PROGRAM_TIMEOUT) && (
                   ($data[$lang][$test][DATA_FULLCPU] <= PROGRAM_TIMEOUT) ||                             
-                  ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU]))){ 
-                                                 
-               $data[$lang][$test] = $row;  
+                  ($row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU]))){
+
+               $data[$lang][$test] = $row;
             }
          }
          else {            
@@ -61,13 +60,14 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
                   
          if (!isset($range[$test])){ $range[$test] = array(); }
          
-         $cpu = $row[DATA_FULLCPU];                        
+
+         $cpu = $row[DATA_FULLCPU];
          if ($cpu > 0){       
-            if (!isset($range[$test][CPU_MIN])){ 
-               $range[$test][CPU_MIN] = $cpu; 
+            if (!isset($range[$test][CPU_MIN])){
+               $range[$test][CPU_MIN] = $cpu;
                //$range[$test][CPU_MAX] = $cpu;
             }   
-            else {   
+            else {
                if ($cpu<$range[$test][CPU_MIN]){ $range[$test][CPU_MIN] = $cpu; }   
                //if ($cpu>$range[$test][CPU_MAX]){ $range[$test][CPU_MAX] = $cpu; }
             }   
@@ -100,18 +100,17 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          $gz = $row[DATA_GZ];                         
          if ($gz > 0){       
             if (!isset($range[$test][GZ_MIN])){ 
-               $range[$test][GZ_MIN] = $gz; 
+               $range[$test][GZ_MIN] = $gz;
                //$range[$test][GZ_MAX] = $gz;
-            }   
+            }
             else {   
                if ($gz<$range[$test][GZ_MIN]){ $range[$test][GZ_MIN] = $gz; }   
                //if ($gz>$range[$test][GZ_MAX]){ $range[$test][GZ_MAX] = $gz; }
-            }   
+            }
          }
-      }      
+      }
    }
-   @fclose($f);   
-           
+   @fclose($f);
 
    foreach($data as $k => $test){
       foreach($test as $t => $v){
