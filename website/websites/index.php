@@ -38,7 +38,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <table class="layout">
 <tr class="test">
-<th colspan="2">Rankings, Benchmarks, Programs</th>
+<th colspan="2">Rankings, Benchmarks, Programs, Times, &#8230;</th>
 </tr>
 <tr class="test">
 <td>
