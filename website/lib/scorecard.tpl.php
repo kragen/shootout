@@ -63,13 +63,14 @@ foreach($score as $k => $v){
 }
 ?>
 
+<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the best programming language in the Benchmarks Game?</p>
+
 
 <p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($r);?>"
    width="450" height="150"
  /></p>
 
 
-<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the best programming language in the Benchmarks Game?</p>
 
 <table class="layout"><tr><td>
 
