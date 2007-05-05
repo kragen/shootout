@@ -143,5 +143,5 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 </table>
 
 
-<p class="score"><a href="#play" name="play"><strong>&nbsp;For Fun:</strong></a> <span class="smaller">Create your own overall scores!</span></p>
+<p class="score"><a href="#play" name="play"><strong>&nbsp;For Fun:</strong></a> <span class="smaller">Create your own Ranking!</span></p>
 <? MkScorecardMenuForm("fullcpu"); ?>

@@ -437,4 +437,10 @@ function PTime($d){
    }
 }
 
+function HttpVarsEncodeArray($a){
+   foreach($a as $v){ $d[] = intval(sprintf('%d',$v*10)); }
+   $s = implode('o',$d);
+   return $s;
+}
+
 ?>

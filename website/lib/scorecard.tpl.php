@@ -1,9 +1,8 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2007 ?>
 
 <? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
-<h2><a href="#faster" name="faster">&nbsp;Create your own Overall Scores</a></h2>
-<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the fastest programming language in the Benchmarks Game?</p><br/>
-<p>"<strong>For every complex problem, there is a solution that is simple, neat, and wrong</strong>."</p>
+<h2><a href="#faster" name="faster">&nbsp;Create your own Ranking</a></h2>
+
 
 <? 
 $minWeight = 0;    // normalize weights
@@ -36,7 +35,7 @@ foreach($Data as $k => $test){
         $ws += $w2;
         $include += $val;
       }
-      if ($w3>0){ 
+      if ($w3>0){
         $val = $v[DATA_GZ];
         $s += log($val)*$w3;
         $ws += $w3;
@@ -55,7 +54,22 @@ function CompareMean($a, $b){
 
 $C0 = 'class="r"';
 uasort($score, 'CompareMean');
+
+$r = array();
+foreach($score as $k => $v){ 
+   if (!isset($first)){ $first = $v[0]; }
+   if ($first==0){ $r[] = 0.0; }
+   else { $r[] = $v[0]/$first; }
+}
 ?>
+
+
+<p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($r);?>"
+   width="450" height="150"
+ /></p>
+
+
+<p>What fun! Can you manipulate the multipliers and weights to make your favourite language the best programming language in the Benchmarks Game?</p>
 
 <table class="layout"><tr><td>
 
@@ -69,13 +83,13 @@ uasort($score, 'CompareMean');
 <th>&#215;</th>
 </tr>
 
-<?  
+<?
 
 
 foreach($score as $k => $v){
    if (!isset($first)){ $first = $v; }
-   if ($first[0]==0){ $ratio = 0; }
-   else { $ratio = $v[0]/$first[0]; }
+   if ($first==0){ $ratio = 0; }
+   else { $ratio = $v[0]/$first; }
 
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
@@ -141,5 +155,5 @@ foreach($Tests as $t){
 
 </td></tr></table>
 
-<h3><a href="#about" name="about">&nbsp;about the Overall Scores</a></h3>
+<h3><a href="#about" name="about">&nbsp;about the Ranking</a></h3>
 <?=$About;?>
