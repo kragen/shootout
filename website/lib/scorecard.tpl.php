@@ -81,7 +81,7 @@ foreach($score as $k => $v){
 <th>ratio</th>
 <th>language</th>
 <th>mean</th>
-<th>&#215;</th>
+<th>-</th>
 </tr>
 
 <?
