@@ -400,7 +400,7 @@ function MkScorecardMenuForm($Sort){
    echo '<select name="lang">', "\n";
    echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
    echo '</select>', "\n";
-   echo '<input type="submit" value="Show" title="Create your own Overall Scores"/>', "\n"; 
+   echo '<input type="submit" value="Show" title="Create your own Ranking"/>', "\n"; 
    echo '</p><br/></form>', "\n";
 }
 
