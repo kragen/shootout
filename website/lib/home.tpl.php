@@ -5,6 +5,13 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 ?>
 
 <?=$Intro;?>
+
+<p class="score"><a href="#play" name="play"><strong>&nbsp;For Fun:</strong></a> <span class="smaller">Create your own Ranking!</span></p>
+<? MkScorecardMenuForm("fullcpu"); ?>
+
+
+<p>It can be fun to watch the Benchmarks Game but like other games <a href="faq.php#play">it's more fun to play!</a></p>
+
 <p class="timestamp">Most recent measurement: <strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
 <? printf(' %s GMT', gmdate("g:i a", $Measured)) ?></p>
 
@@ -143,5 +150,4 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 </table>
 
 
-<p class="score"><a href="#play" name="play"><strong>&nbsp;For Fun:</strong></a> <span class="smaller">Create your own Ranking!</span></p>
-<? MkScorecardMenuForm("fullcpu"); ?>
+
