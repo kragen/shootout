@@ -66,7 +66,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 </tr>
 
 <tr>
-<th>Ratio</th>
+<th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
 <th>Program &amp; Logs</th>
 <th>Full&nbsp;CPU Time&nbsp;s</th>
 <th>Memory Use&nbsp;KB</th>

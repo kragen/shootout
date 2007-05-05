@@ -84,7 +84,7 @@ foreach($score as $k => $v){
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="2" class="num"></colgroup>
 <tr>
-<th>ratio</th>
+<th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
 <th>language</th>
 <th>mean</th>
 <th>-</th>
