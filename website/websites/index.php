@@ -33,7 +33,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<p>These are <strong>particular truths</strong>, they are not general truths - <em>the <strong>slower</strong> program</em> may become <em>the <strong>faster</strong> program</em> when the workload changes.</p><br/>
+<p>These are <strong>particular truths</strong>, they are not general truths<br/> - <em>the <strong>slower</strong> program</em> may become <em>the <strong>faster</strong> program</em><br/> when the workload changes.</p><br/>
 
 
 <table class="layout">
