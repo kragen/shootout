@@ -1,4 +1,4 @@
-<?php 
+<?php
 // Copyright (c) Isaac Gouy 2004, 2005
 
 // LIBRARIES ////////////////////////////////////////////////
@@ -33,7 +33,12 @@ $Body->set('MiscFile', MISC_PATH.$F.'.php');
 $Body->set('Changed', filemtime(MISC_PATH.$F.'.php'));
 
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
-$Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
+
+if ((SITE_NAME == 'gp4' || SITE_NAME == 'debian') && $F == 'benchmarking'){
+   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; }
+else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
+
+$Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', '');
 $Page->set('PageId', 'miscfile');
 
