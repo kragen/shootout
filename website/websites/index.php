@@ -66,15 +66,16 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-</table><br/>
-
-
+<tr>
+<td colspan="2">
 <p class="imgfooter">
 <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
-
+</td>
+</tr>
+</table>
 </div>
 
 <? $virtual_page="home"; include_once("analyticstracking.php") ?>
