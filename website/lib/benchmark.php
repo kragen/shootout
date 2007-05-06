@@ -53,12 +53,12 @@ if ($T=='all'){
 
       if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; }
       else { $S = 'mean'; }
-      
+
       require_once(LIB_PATH.'lib_scorecard.php');
       
       if (isset($HTTP_GET_VARS['calc'])){ $Action = $HTTP_GET_VARS['calc']; }
       else { $Action = 'Calculate'; }
-      
+
       $Title = 'Create your own Ranking';
       $TemplateName = 'scorecard.tpl.php';
       $About = & new Template(ABOUT_PATH);
@@ -67,7 +67,7 @@ if ($T=='all'){
       setcookie('weights', PackCSV($W), time()+(60*60*24*180), '/', 'shootout.alioth.debian.org');
       $Body->set('W', $W);
       $Body->set('Data', WeightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $W));
-      $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+      $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; 
 
 
    } else {           // Head to Head

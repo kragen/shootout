@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2007
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -26,8 +26,7 @@ $Body->set('Download', DOWNLOAD_PATH);
 $Body->set('Changed', filemtime(LIB_PATH.'faq.tpl.php'));
 
 $Page->set('PageBody', $Body->fetch('faq.tpl.php'));
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; }
-else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
+$metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', '');
 $Page->set('PageId', 'faq');

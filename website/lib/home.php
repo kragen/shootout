@@ -1,5 +1,5 @@
-<?php 
-// Copyright (c) Isaac Gouy 2004, 2005
+<?php
+// Copyright (c) Isaac Gouy 2004-2007
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -56,7 +56,7 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
-$metaRobots = '<meta name="robots" content="follow,noindex,noarchive" /><meta name="revisit" content="1 days" />';
+$metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="1 days" />';
 
 $Page->set('Robots', $metaRobots);
 $Page->set('PageId', 'nav');

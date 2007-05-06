@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2007
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -14,7 +14,7 @@ else { $S = 'cpu'; }
 if (isset($HTTP_GET_VARS['file'])){ $F = $HTTP_GET_VARS['file']; } 
 else { $F = ''; }
 
-if (isset($HTTP_GET_VARS['title'])){ $T = $HTTP_GET_VARS['title']; } 
+if (isset($HTTP_GET_VARS['title'])){ $T = $HTTP_GET_VARS['title']; }
 else { $T = ''; }
 
 // TEMPLATE VARS //////////////////////////////////////////////// 
@@ -34,8 +34,7 @@ $Body->set('Changed', filemtime(MISC_PATH.$F.'.php'));
 
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
 
-if ((SITE_NAME == 'gp4' || SITE_NAME == 'debian') && $F == 'benchmarking'){
-   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; }
+if ($F == 'benchmarking'){ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; }
 else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
 
 $Page->set('Robots', $metaRobots);

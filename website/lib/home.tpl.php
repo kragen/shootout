@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2007 ?>
 <?
 if (LANGS_PHRASE){ $LangsPhrase = LANGS_PHRASE; } else { $LangsPhrase = ''; }
 if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
@@ -10,7 +10,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <? MkScorecardMenuForm("fullcpu"); ?>
 
 
-<p>It can be fun to watch the Benchmarks Game but like other games <a href="faq.php#play">it's more fun to play!</a></p>
+<p>It can be fun to watch the Benchmarks Game but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p>
 
 <p class="timestamp">Most recent measurement: <strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
 <? printf(' %s GMT', gmdate("g:i a", $Measured)) ?></p>
