@@ -68,6 +68,12 @@ define('N_EXCLUDE',10);
 
 
 define('CPU_MIN',0);
+define('MEM_MIN',1);
+define('GZ_MIN',2);
+
+
+/*
+define('CPU_MIN',0);
 define('CPU_MAX',1);
 define('MEM_MIN',2);
 define('MEM_MAX',3);
@@ -75,8 +81,7 @@ define('LOC_MIN',4);
 define('LOC_MAX',5);
 define('GZ_MIN',6);
 define('GZ_MAX',7);
-
-
+*/
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -155,6 +160,21 @@ function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
    }
    @fclose($f);      
    return $rows;
+}
+
+
+function CompareTestCpuTime($a, $b){
+   if ($a[DATA_TEST] == $b[DATA_TEST]){
+      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
+         if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ 
+            if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
+            else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
+         }
+         else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
+      }
+      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
+   }
+   return  ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;
 }
 
 
@@ -265,13 +285,6 @@ function ExcludeData(&$d,&$langs,&$Excl){
    return 0;
 }
 
-function NoExclude(&$d,&$langs,&$Excl){
-   return
-      $d[DATA_FULLCPU] > 0 &&
-         isset($langs[$d[DATA_LANG]]) &&
-            !isset($Excl[ $d[DATA_TEST].$d[DATA_LANG].strval($d[DATA_ID]) ]);
-}
-
 
 function FilterAndSortData($langs,$data,$sort,&$Excl){
    $Accepted = array();
@@ -302,7 +315,7 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
    } elseif ($sort=='kb'){ 
       usort($Accepted, 'CompareMemoryUse'); 
       usort($Special, 'CompareMemoryUse');
-   } elseif ($sort=='lines'){ 
+   } elseif ($sort=='lines'){
       usort($Accepted, 'CompareCodeLines'); 
       usort($Special, 'CompareCodeLines');
    } elseif ($sort=='gz'){ 

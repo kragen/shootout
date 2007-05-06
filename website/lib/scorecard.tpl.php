@@ -13,10 +13,14 @@ foreach($W as $k => $v){
    elseif ($v < $minWeight){ $W[$k] = $minWeight; }
 }
 
+list($data,$mins) = $Data;
+unset($Data);
+
 $score = array();
-foreach($Data as $k => $test){
+foreach($data as $k => $test){
    $s = 0.0; $ws = 0.0; $include = 0.0;
    foreach($test as $t => $v){
+      $mt = &$mins[$t];
 
       $w1 = $W[$t] * $W['xfullcpu'];
       $w2 = $W[$t] * $W['xmem'];
@@ -25,7 +29,7 @@ foreach($Data as $k => $test){
       if ($w1>0){ 
         $val = $v[DATA_FULLCPU];
         if ($val > 0){
-           $s += log($val)*$w1;
+           $s += log($val/$mt[CPU_MIN])*$w1;
            $ws += $w1;
            $include += $val;
         }
@@ -34,7 +38,7 @@ foreach($Data as $k => $test){
       if ($w2>0){ 
         $val = $v[DATA_MEMORY];
         if ($val > 0){
-           $s += log($val)*$w2;
+           $s += log($val/$mt[MEM_MIN])*$w2;
            $ws += $w2;
            $include += $val;
         }
@@ -42,7 +46,7 @@ foreach($Data as $k => $test){
       if ($w3>0){
         $val = $v[DATA_GZ];
         if ($val > 0){
-           $s += log($val)*$w3;
+           $s += log($val/$mt[GZ_MIN])*$w3;
            $ws += $w3;
            $include += $val;
         }
@@ -51,7 +55,7 @@ foreach($Data as $k => $test){
    if ($ws == 0.0){ $ws = 1.0; }
    if ($include > 0){ $score[$k] = array(exp($s/$ws),sizeof($Tests)-sizeof($test)); }
 }
-unset($Data);
+unset($data); unset($mins);
 
 function CompareMean($a, $b){
    if ($a[0] == $b[0]) return 0;
