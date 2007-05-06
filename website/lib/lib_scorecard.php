@@ -1,7 +1,8 @@
 <?php
 // Copyright (c) Isaac Gouy 2005-2007
 
-// FUNCTIONS ///////////////////////////////////////////////////
+// Cookies ///////////////////////////////////////////////////
+
 
 function PackCSV($a){
    $s = "";
@@ -22,16 +23,59 @@ function UnpackCSV($csv){
             $k = substr($k,0,64); // be defensive, limit acceptable length
             $aa[$k] = $v;
          }
-         $i += 2;    
+         $i += 2;
       }
    }
    return $aa;
 }
 
-function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+function Weights($Tests, $Action, $Vars, $CVars){
+   $cookie = array();    
+   if (isset($CVars['weights'])){ $cookie = UnpackCSV( $CVars['weights'] );}                        
+
+   $w = array(); $wd = array();
+   foreach($Tests as $t){
+      $link = $t[TEST_LINK];  
+      if (isset($Vars[$link]) && is_numeric($Vars[$link])){ $x = $Vars[$link]; }              
+      elseif (isset($cookie[$link])){ $x = $cookie[$link]; }          
+      else { $x = $t[TEST_WEIGHT]; } 
+               
+      if (is_numeric($x)){ $w[$link] = $x; }
+      $wd[$link] = $t[TEST_WEIGHT];                               
+   }           
+
+   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);
+   foreach($Metrics as $k => $v){
+      if (isset($Vars[$k]) && is_numeric($Vars[$k])){ $x = $Vars[$k]; }
+      elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
+      else { $x = $v; }
+
+      if (is_numeric($x)){ $w[$k] = $x; }
+      $wd[$k] = $v;
+   }         
+   
+   if ($Action=='Reset'){ $w = $wd; }
+   
+   // normalize weights
+   $minWeight = 0;
+   $maxWeight = 5;
+
+   foreach($w as $k => $v){
+      if ($v > $maxWeight){ $w[$k] = $maxWeight; }
+      elseif ($v < $minWeight){ $w[$k] = $minWeight; }
+   }
+   return $w;
+}
+
+
+// Data filtering and summary ///////////////////////////////////////////
+
+
+function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TRUE){
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
+   // assume no values larger than 1,000,000
    $mins = array();
    foreach($Tests as $k => $v){ $mins[$k] = array(1000000,1000000,1000000); }
 
@@ -72,71 +116,73 @@ function ScoreData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
       }
    }
    @fclose($f);
-
-   return array($data,$mins);
-}
-
-
-function Weights($Tests, $Action, $Vars, $CVars){
-   $cookie = array();    
-   if (isset($CVars['weights'])){ $cookie = UnpackCSV( $CVars['weights'] );}                        
-
-   $w = array(); $wd = array();
-   foreach($Tests as $t){
-      $link = $t[TEST_LINK];  
-      if (isset($Vars[$link]) && is_numeric($Vars[$link])){ $x = $Vars[$link]; }              
-      elseif (isset($cookie[$link])){ $x = $cookie[$link]; }          
-      else { $x = $t[TEST_WEIGHT]; } 
-               
-      if (is_numeric($x)){ $w[$link] = $x; }
-      $wd[$link] = $t[TEST_WEIGHT];                               
-   }           
    
-   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);
-   foreach($Metrics as $k => $v){ 
-      if (isset($Vars[$k]) && is_numeric($Vars[$k])){ $x = $Vars[$k]; }                   
-      elseif (isset($cookie[$k])){ $x = $cookie[$k]; }    
-      else { $x = $v; }          
-         
-      if (is_numeric($x)){ $w[$k] = $x; }
-      $wd[$k] = $v;                                
-   }         
-   
-   if ($Action=='Reset'){ $w = $wd; }
-   return $w;
-}
 
-
-function MedianScores(&$Scores, &$Weights){
-   $arraysOfScores = array(); 
-   foreach($Scores as $lang => $test){
+   $score = array();
+   foreach($data as $k => $test){
+      $s = 0.0; $ws = 0.0; $include = 0.0;
       foreach($test as $t => $v){
-         $w = $Weights[$t]>0.0 ? 1.0 : 0.0;
-         $arraysOfScores[$lang]['xfullcpu'][] = $v[DATA_FULLCPU] * $w;
-         $arraysOfScores[$lang]['xmem'][] = $v[DATA_MEMORY] * $w;
-         $arraysOfScores[$lang]['xloc'][] = $v[DATA_LINES] * $w;
+         $mt = &$mins[$t];
+
+         $w1 = $W[$t] * $W['xfullcpu'];
+         $w2 = $W[$t] * $W['xmem'];
+         $w3 = $W[$t] * $W['xloc'];
+
+         if ($w1>0){
+           $val = $v[DATA_FULLCPU];
+           if ($val > 0){
+              $s += log($val/$mt[CPU_MIN])*$w1;
+              $ws += $w1;
+              $include += $val;
+           }
+         }
+         if ($w2>0){
+           $val = $v[DATA_MEMORY];
+           if ($val > 0){
+              $s += log($val/$mt[MEM_MIN])*$w2;
+              $ws += $w2;
+              $include += $val;
+           }
+         }
+         if ($w3>0){
+           $val = $v[DATA_GZ];
+           if ($val > 0){
+              $s += log($val/$mt[GZ_MIN])*$w3;
+              $ws += $w3;
+              $include += $val;
+           }
+         }
       }
+      if ($ws == 0.0){ $ws = 1.0; }
+      if ($include > 0){ $score[$k] = array(1.0,exp($s/$ws),sizeof($Tests)-sizeof($test)); }
    }
 
-   $medianScores = array(); 
-   foreach($arraysOfScores as $lang => $measure){
-      $medianSum = 0.0;
-      foreach($measure as $m => $a){
-         sort($a);
-         $n = sizeof($a);
-         $mid = $n/2;
-         $median = ($n%2!=0) ? $a[$mid] : ($a[$mid]+$a[$mid-1])/2.0;
-         $medianSum += $median * $Weights[$m];
-      }
-      $medianScores[$lang] = $medianSum;
+   uasort($score, 'CompareMeanScore');
+   $ratio = array();
+   foreach($score as $k => $v){
+      if (!isset($first)){ $first = $v[SCORE_MEAN]; }
+      if ($first==0){ $r = 0.0; } else { $r = $v[SCORE_MEAN]/$first; }
+      $score[$k][SCORE_RATIO] = $r;
+      $ratio[] = $r;   // for chart
    }
-   unset($arraysOfScores);
-   return $medianScores;
+
+   return array($score,$ratio);
 }
+
+
+
+function CompareMeanScore($a, $b){
+   if ($a[SCORE_MEAN] == $b[SCORE_MEAN]) return 0;
+   return  ($a[SCORE_MEAN] < $b[SCORE_MEAN]) ? -1 : 1;
+}
+
+
+// Formating ///////////////////////////////////////////
 
 function PBlank($d){
    if ($d>0){ return number_format($d); }   
    else { return "&nbsp;"; }
 }
+
 
 ?>

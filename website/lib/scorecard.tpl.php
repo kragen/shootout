@@ -5,78 +5,14 @@
 
 
 <? 
-$minWeight = 0;    // normalize weights
-$maxWeight = 5;
-
-foreach($W as $k => $v){
-   if ($v > $maxWeight){ $W[$k] = $maxWeight; }
-   elseif ($v < $minWeight){ $W[$k] = $minWeight; }
-}
-
-list($data,$mins) = $Data;
-unset($Data);
-
-$score = array();
-foreach($data as $k => $test){
-   $s = 0.0; $ws = 0.0; $include = 0.0;
-   foreach($test as $t => $v){
-      $mt = &$mins[$t];
-
-      $w1 = $W[$t] * $W['xfullcpu'];
-      $w2 = $W[$t] * $W['xmem'];
-      $w3 = $W[$t] * $W['xloc'];
-
-      if ($w1>0){ 
-        $val = $v[DATA_FULLCPU];
-        if ($val > 0){
-           $s += log($val/$mt[CPU_MIN])*$w1;
-           $ws += $w1;
-           $include += $val;
-        }
-      }
-
-      if ($w2>0){ 
-        $val = $v[DATA_MEMORY];
-        if ($val > 0){
-           $s += log($val/$mt[MEM_MIN])*$w2;
-           $ws += $w2;
-           $include += $val;
-        }
-      }
-      if ($w3>0){
-        $val = $v[DATA_GZ];
-        if ($val > 0){
-           $s += log($val/$mt[GZ_MIN])*$w3;
-           $ws += $w3;
-           $include += $val;
-        }
-      }
-   }
-   if ($ws == 0.0){ $ws = 1.0; }
-   if ($include > 0){ $score[$k] = array(exp($s/$ws),sizeof($Tests)-sizeof($test)); }
-}
-unset($data); unset($mins);
-
-function CompareMean($a, $b){
-   if ($a[0] == $b[0]) return 0;
-   return  ($a[0] < $b[0]) ? -1 : 1;
-}
-
-$C0 = 'class="r"';
-uasort($score, 'CompareMean');
-
-$r = array();
-foreach($score as $k => $v){ 
-   if (!isset($first)){ $first = $v[0]; }
-   if ($first==0){ $r[] = 0.0; }
-   else { $r[] = $v[0]/$first; }
-}
+   list($score,$ratio) = $Data;
+   unset($Data);
 ?>
 
 <p>What fun! Can you manipulate the multipliers and weights to make your favourite language <a href="#about">the best</a> programming language in the Benchmarks Game?</p>
 
 
-<p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($r);?>"
+<p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($ratio);?>"
    width="450" height="150"
  /></p>
 
@@ -95,22 +31,16 @@ foreach($score as $k => $v){
 </tr>
 
 <?
-
-
 foreach($score as $k => $v){
-   if (!isset($first)){ $first = $v; }
-   if ($first==0){ $ratio = 0; }
-   else { $ratio = $v[0]/$first; }
-
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr>');
-   printf('<td>%s</td>', PFx($ratio));
+   printf('<td>%s</td>', PFx($v[SCORE_RATIO]));
 
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>',
       $k,$k,$HtmlName); echo "\n";
    printf('<td>%0.2f</td><td>%s</td>',
-      $v[0], PBlank($v[1])); echo "\n";
+      $v[SCORE_MEAN], PBlank($v[SCORE_TESTS])); echo "\n";
    echo "</tr>\n";
 }
 ?>

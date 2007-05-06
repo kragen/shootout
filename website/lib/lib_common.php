@@ -71,17 +71,10 @@ define('CPU_MIN',0);
 define('MEM_MIN',1);
 define('GZ_MIN',2);
 
+define('SCORE_RATIO',0);
+define('SCORE_MEAN',1);
+define('SCORE_TESTS',2);
 
-/*
-define('CPU_MIN',0);
-define('CPU_MAX',1);
-define('MEM_MIN',2);
-define('MEM_MAX',3);
-define('LOC_MIN',4);
-define('LOC_MAX',5);
-define('GZ_MIN',6);
-define('GZ_MAX',7);
-*/
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
