@@ -47,8 +47,6 @@ $MetaKeywords = '';
 $Page = & new Template(LIB_PATH);
 $Body = & new Template(LIB_PATH);
 
-//$tt = GetMicroTime();
-
 if ($T=='all'){
    if ($L=='all'){    // Scorecard
       $PageId = 'scorecard';
@@ -70,8 +68,6 @@ if ($T=='all'){
       $Body->set('W', $W);
       $Body->set('Data', WeightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $W));
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-
-//echo GetMicroTime() - $tt, "\n";
 
 
    } else {           // Head to Head
@@ -107,9 +103,8 @@ if ($T=='all'){
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-      $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
-   }
-
+      $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php')); 
+      }
 
    } elseif ($L=='all'){ // Benchmark
    
@@ -152,6 +147,7 @@ if ($T=='all'){
       $Body->set('Id', $I);
       $Body->set('Title', $Title);
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+
 }
 
 
