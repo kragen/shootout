@@ -228,8 +228,8 @@ function PF($d){
    else {
       if ($d>0){
          $i = 1.0 / $d;
-            if ($i>14.99){ return '<td class="num1">-'.number_format($i).'</td>'; } 
-            elseif ($i>1.001){ return '<td class="num2">-'.number_format($i,1).'</td>'; }          
+            if ($i>14.99){ return '<td class="num1">~'.number_format($i).'</td>'; }
+            elseif ($i>1.001){ return '<td class="num2">~'.number_format($i,1).'</td>'; }
             else { return '<td>&nbsp;</td>'; }
       } else { return '<td>&nbsp;</td>'; }
    }

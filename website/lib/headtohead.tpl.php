@@ -36,7 +36,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><?=$ShortName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>- <?=$ShortName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th></tr>
+<tr><th colspan="5"><?=$ShortName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>~ <?=$ShortName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th></tr>
 
 <tr>
 <th>Program &amp; Logs</th>
