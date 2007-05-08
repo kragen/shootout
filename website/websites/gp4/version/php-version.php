@@ -1,1 +1,1 @@
-<p>PHP 5.1.6-pl4-gentoo (cli) (built: Sep 11 2006 08:15:49)</p>
+<p>PHP 5.2.2-pl1-gentoo (cli) (built: May  8 2007 09:51:53)</p>
