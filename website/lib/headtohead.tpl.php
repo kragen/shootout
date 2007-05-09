@@ -18,7 +18,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;Are the <?=$ShortName;?> programs better?</a></h2>
+<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better?</a></h2>
 <p>For each of one our benchmarks, a white bar shows which language implementation had the faster program, and a black bar shows which used the least memory.</p>
 
 
@@ -36,7 +36,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><?=$ShortName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>~ <?=$ShortName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th></tr>
+<tr><th colspan="5"><?=$LangName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>~ <?=$LangName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th></tr>
 
 <tr>
 <th>Program &amp; Logs</th>
