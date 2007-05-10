@@ -25,8 +25,8 @@ else { $L2 = $L; }
 if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
 else { $S = 'cpu'; }
 
-$ShortName = $Langs[$L][LANG_NAME];
-$ShortName2 = $Langs[$L2][LANG_NAME];
+$ShortName = $Langs[$L][LANG_FULL];
+$ShortName2 = $Langs[$L2][LANG_FULL];
 
 
 // FILTER & SORT DATA ////////////////////////////////////////
