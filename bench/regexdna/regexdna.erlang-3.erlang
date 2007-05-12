@@ -1,0 +1,69 @@
+% The Computer Language Benchmarks Game
+% http://shootout.alioth.debian.org/
+% Contributed by: Sergei Matusevich 2007
+
+-module(regexdna).
+
+-export([main/1]).
+
+-define( VARIANTS,
+  [ "agggtaaa|tttaccct",
+    "[cgt]gggtaaa|tttaccc[acg]",
+    "a[act]ggtaaa|tttacc[agt]t",
+    "ag[act]gtaaa|tttac[agt]ct",
+    "agg[act]taaa|ttta[agt]cct",
+    "aggg[acg]aaa|ttt[cgt]ccct",
+    "agggt[cgt]aa|tt[acg]accct",
+    "agggta[cgt]a|t[acg]taccct",
+    "agggtaa[cgt]|[acg]ttaccct" ] ).
+
+read_lines(File, SzTotal, [Seg|Segz]) ->
+  case io:get_line(File, '') of
+    eof -> {SzTotal, [Seg|Segz]};
+    Str ->
+      Len = size(Str),
+      Eol = Len - 1,
+      read_lines( File, SzTotal + Len,
+        case Str of
+          <<">",_/binary>>         ->     [[],Seg|Segz];
+          <<Trim:Eol/binary,"\n">> -> [[Trim|Seg]|Segz];
+          _                        ->  [[Str|Seg]|Segz]
+        end )
+  end.
+
+main(_) ->
+  io:setopts(standard_io, [binary]),
+  {SzTotal, [S3Raw,S2Raw,S1Raw|_]} = read_lines(standard_io, 0, [[]]),
+  B1 = list_to_binary(lists:reverse(S1Raw)),
+  B2 = list_to_binary(lists:reverse(S2Raw)),
+  B3 = list_to_binary(lists:reverse(S3Raw)),
+  S2 = binary_to_list(B2),
+  S3 = binary_to_list(B3),
+  L2  = size(B2),
+  L13 = size(B1) + size(B3),
+  lists:foreach(
+    fun(Re) ->
+      {match, M2} = regexp:matches(S2, Re),
+      {match, M3} = regexp:matches(S3, Re),
+      io:format("~s ~w~n", [Re, length(M2) + length(M3)])
+    end, ?VARIANTS ),
+  L2Subst = length( lists:flatmap(
+    fun(Ch) ->
+      case Ch of
+        $B -> "(c|g|t)";
+        $D -> "(a|g|t)";
+        $H -> "(a|c|t)";
+        $K -> "(g|t)";
+        $M -> "(a|c)";
+        $N -> "(a|c|g|t)";
+        $R -> "(a|g)";
+        $S -> "(c|g)";
+        $V -> "(a|c|g)";
+        $W -> "(a|t)";
+        $Y -> "(c|t)";
+        XX -> [XX]
+      end
+    end, S2 ) ),
+  io:format("~n~w~n~w~n~w~n", [SzTotal, L13 + L2, L13 + L2Subst]),
+  halt(0).
+
