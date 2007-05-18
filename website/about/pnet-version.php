@@ -1,1 +1,1 @@
-<p>cscc version 0.7.4</p>
+<p>Mono C# compiler version 1.2.2.1</p>
