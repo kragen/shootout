@@ -1,0 +1,129 @@
+/* -*- mode: objc -*-
+ *
+ * The Computer Language Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ *
+ * Original C contributed by Mike Pall
+ * Conversion to Objective-C by Selman Ulug
+ */
+
+#include <objc/Object.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <gmp.h>
+
+@interface Pidigits : Object
+{
+  mpz_t q, r, s, t;     /* Transformation matrix components. */
+  mpz_t u, v, w;        /* Temporary numbers. */
+  int d, i, n;          /* Counters. */
+  char digits[10+1];    /* Accumulated digits for one line. */
+}
+- init: (int)c;
+- (void) compose_r: (int)bq : (int)br : (int)bs : (int)bt;
+- (void) compose_l: (int)bq : (int)br : (int)bs : (int)bt;
+- (int) extract: (unsigned int)j;
+- (int) prdigit: (int)y;
+- (void) generate;
+@end
+
+@implementation Pidigits
+- init: (int)c
+{
+  [super init];
+  n = c;
+  return self;
+}
+
+/* Compose matrix with numbers on the right. */
+- (void) compose_r: (int)bq : (int)br : (int)bs : (int)bt;
+{
+  mpz_mul_si(u, r, bs);
+  mpz_mul_si(r, r, bq);
+  mpz_mul_si(v, t, br);
+  mpz_add(r, r, v);
+  mpz_mul_si(t, t, bt);
+  mpz_add(t, t, u);
+  mpz_mul_si(s, s, bt);
+  mpz_mul_si(u, q, bs);
+  mpz_add(s, s, u);
+  mpz_mul_si(q, q, bq);
+}
+
+/* Compose matrix with numbers on the left. */
+- (void) compose_l: (int)bq : (int)br : (int)bs : (int)bt;
+{
+  mpz_mul_si(r, r, bt);
+  mpz_mul_si(u, q, br);
+  mpz_add(r, r, u);
+  mpz_mul_si(u, t, bs);
+  mpz_mul_si(t, t, bt);
+  mpz_mul_si(v, s, br);
+  mpz_add(t, t, v);
+  mpz_mul_si(s, s, bq);
+  mpz_add(s, s, u);
+  mpz_mul_si(q, q, bq);
+}
+
+/* Extract one digit. */
+- (int) extract: (unsigned int)j;
+{
+  mpz_mul_ui(u, q, j);
+  mpz_add(u, u, r);
+  mpz_mul_ui(v, s, j);
+  mpz_add(v, v, t);
+  mpz_tdiv_q(w, u, v);
+  return mpz_get_ui(w);
+}
+
+/* Print one digit. Returns 1 for the last digit. */
+- (int) prdigit: (int)y;
+{
+  digits[d++] = '0'+y;
+  if (++i % 10 == 0 || i == n)
+    {
+      digits[d] = '\0';
+      printf("%-10s\t:%d\n", digits, i);
+      d = 0;
+    }
+  return i == n;
+}
+
+/* Generate successive digits of PI. */
+- (void) generate;
+{
+  int k = 1;
+  d = 0;
+  i = 0;
+  mpz_init_set_ui(q, 1);
+  mpz_init_set_ui(r, 0);
+  mpz_init_set_ui(s, 0);
+  mpz_init_set_ui(t, 1);
+  mpz_init(u);
+  mpz_init(v);
+  mpz_init(w);
+  for (;;)
+    {
+      int y = [self extract: 3];
+      if (y == [self extract: 4])
+	{
+	  if ([self prdigit: y]) return;
+	  [self compose_r: 10 : -10*y : 0 : 1];
+	}
+      else
+	{
+	  [self compose_l: k : 4*k+2 : 0 : 2*k+1];
+	  k++;
+	}
+    }
+}
+@end
+
+int
+main(int argc, char **argv)
+{
+  int n = argc > 1 ? atoi (argv[1]) : 27;
+  Pidigits* pidigits = [[Pidigits alloc] init: n];
+  [pidigits generate];
+  return 0;
+}
