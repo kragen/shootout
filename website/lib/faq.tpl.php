@@ -61,72 +61,84 @@
 <dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
 <dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
 <p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
+</dd>
 
-<p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. That's true.</p>
 
-<p>Let's pretend that we don't startup the JVM or load all those class files, and let's pretend the same program is used again and again and again 1,000 times without any other program being used, and let's pretend we don't shutdown the JVM. Let's pretend that we luckily used the program after a mass of JVM profiling and dynamic compilation has taken place - so we get all the benefit of dynamic compilation without paying any of the cost.</p>
+<dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
+<dd><p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. That's true.</p>
 
-<p>Here are some examples where we measured elapsed time once the Java program had started, and measured the same program again and again and again 1,000 times (taking from 30 minutes to over 4 hours). Then we selected the fastest elapsed time, taking all the benefit and none of the cost:</p>
+<p>Sometimes other programmers don't believe that JVM profiling and dynamic compilation will have any effect on simple programs like those shown in the benchmarks game, so let's take a look.</p>
+
+<p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 400 times; in the second case, we started the program once and measured the program again and again and again 400 times, without restarting the JVM. </p>
+
 
 <table>
 <tr>
-<th colspan="2">&nbsp;&nbsp;all the benefit none of the cost</th>
-<th>&nbsp;&nbsp;Full CPU Time</th>
-<th colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;difference</th>	
+<th colspan="3">&nbsp;started&nbsp;400&nbsp;times&nbsp;</th>
+<th colspan="2">&nbsp;started&nbsp;once&nbsp;</th>
+</tr>
+
+<tr>
+<th>&nbsp;</th>
+<th>mean</th>
+<th>&#963;</th>
+<th>mean</th>
+<th>&#963;</th>
 </tr>
 
 <tr>
 <td>nsieve&nbsp;&nbsp;</td>
-<td>2.108</td>
-<td>2.384</td>
-<td>0.276</td>
-<td>11%</td>
-</tr>
-<tr>
-<td>mandelbrot&nbsp;&nbsp;</td>
-<td>4.340</td>
-<td>4.852</td>
-<td>0.512</td>
-<td>11%</td>
+<td>2.37</td>
+<td>&nbsp;&nbsp;0.05</td>
+<td>&nbsp;&nbsp;2.14</td>
+<td>&nbsp;&nbsp;0.01</td>
 </tr>
 <tr>
 <td>binary-trees&nbsp;&nbsp;</td>
-<td>5.517</td>
-<td>6.736</td>
-<td>1.219</td>
-<td>18%</td>
-</tr>
-<tr>
-<td>recursive&nbsp;&nbsp;</td>
-<td>6.753</td>
-<td>7.076</td>
-<td>0.323</td>
-<td>5%</td>
+<td>6.37</td>
+<td>0.06</td>
+<td>5.66</td>
+<td>0.05</td>
 </tr>
 <tr>
 <td>nsievebits&nbsp;&nbsp;</td>
-<td>8.222</td>
-<td>8.705</td>
-<td>0.483</td>
-<td>5%</td>
+<td>7.39</td>
+<td>0.45</td>
+<td>7.00</td>
+<td>0.01</td>
 </tr>
 <tr>
 <td>fannkuch&nbsp;&nbsp;</td>
-<td>12.208</td>
-<td>13.753</td>
-<td>1.545</td>
-<td>11%</td>
+<td>13.46</td>
+<td>0.06</td>
+<td>13.18</td>
+<td>2.04</td>
 </tr>
 <tr>
 <td>nbody&nbsp;&nbsp;</td>
-<td>15.950</td>
-<td>17.017</td>
-<td>1.067</td>
-<td>6%</td>
+<td>16.21</td>
+<td>0.05</td>
+<td>16.06</td>
+<td>0.34</td>
+</tr>
+<tr>
+<td>spectral-norm&nbsp;&nbsp;</td>
+<td>24.71</td>
+<td>0.02</td>
+<td>23.65</td>
+<td>0.05</td>
 </tr>
 </table>
 
-<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by contributing better programs.</p>
+<p>The costs of class loading and JVM profiling and dynamic compilation are included in the first case, and always in the first measurement - the next 399 measurements show the benefits without showing any of the costs.</p>
+
+<p><img src="<?=IMAGE_PATH;?>jspectralnorm.png"
+   alt=""
+   title=""
+   width="450" height="150"
+ /></p>
+
+<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by writing better programs.</p>
 </dd>
 
 <dt><a href="#whatlanguage" name="whatlanguage">What language was used to write each initial benchmark program?</a></dt>
