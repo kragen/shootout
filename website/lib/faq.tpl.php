@@ -69,7 +69,7 @@
 
 <p>Sometimes other programmers don't believe that JVM profiling and dynamic compilation will have any effect on simple programs like those shown in the benchmarks game, so let's take a look.</p>
 
-<p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 400 times; in the second case, we started the program once and measured the program again and again and again 400 times, without restarting the JVM. </p>
+<p>In <a href="miscfile.php?file=dynamic&amp;title=Java Dynamic Compilation">these examples</a> we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 400 times; in the second case, we started the program once and measured the program again and again and again 400 times, without restarting the JVM. </p>
 
 
 <table>
