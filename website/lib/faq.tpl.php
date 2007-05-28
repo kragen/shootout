@@ -130,7 +130,7 @@
 </tr>
 </table>
 
-<p>The costs of class loading and JVM profiling and dynamic compilation are included in the first case, and always in the first measurement - the next 399 measurements show the benefits without showing any of the costs.</p>
+<p>The costs of JVM profiling and dynamic compilation are included in the first case, and always in the first measurement - the next 399 measurements show the benefits without showing any of the costs.</p>
 
 <p><img src="<?=IMAGE_PATH;?>jspectralnorm.png"
    alt=""
