@@ -138,7 +138,7 @@
    width="450" height="150"
  /></p>
 
-<p>As part of performance analysis, those differences hint at how much is not accounted for by JVM startup or dynamic compilation, and how little or how much we might still be able to achieve by writing better programs.</p>
+<p>As part of performance analysis, those differences hint at how much is not accounted for by dynamic compilation, and how little or how much we might still be able to achieve by writing better programs.</p>
 </dd>
 
 <dt><a href="#whatlanguage" name="whatlanguage">What language was used to write each initial benchmark program?</a></dt>
