@@ -1,141 +1,141 @@
-<span class="slc">;;; -*- mode: lisp -*-</span>
-<span class="slc">;;; http://shootout.alioth.debian.org/</span>
-<span class="slc">;;;</span>
-<span class="slc">;;; contributed by Patrick Frankenberger</span>
-<span class="slc">;;; modified by Juho Snellman 2005-11-18</span>
-<span class="slc">;;;   * About 40% speedup on SBCL, 90% speedup on CMUCL</span>
-<span class="slc">;;;   * Represent a body as a DEFSTRUCT with (:TYPE VECTOR DOUBLE-FLOAT), a</span>
-<span class="slc">;;;     not as a structure that contains vectors</span>
-<span class="slc">;;;   * Inline APPLYFORCES</span>
-<span class="slc">;;;   * Replace (/ DT DISTANCE DISTANCE DISTANCE) with</span>
-<span class="slc">;;;     (/ DT (* DISTANCE DISTANCE DISTANCE)), as is done in the other</span>
-<span class="slc">;;;     implementations of this test.</span>
-<span class="slc">;;;   * Add a couple of declarations</span>
-<span class="slc">;;;   * Heavily rewritten for style (represent system as a list instead of</span>
-<span class="slc">;;;     an array to make the nested iterations over it less clumsy, use</span>
-<span class="slc">;;;     INCF/DECF where appropriate, break very long lines, etc)</span>
+<span class="hl slc">;;; -*- mode: lisp -*-</span>
+<span class="hl slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="hl slc">;;;</span>
+<span class="hl slc">;;; contributed by Patrick Frankenberger</span>
+<span class="hl slc">;;; modified by Juho Snellman 2005-11-18</span>
+<span class="hl slc">;;;   * About 40% speedup on SBCL, 90% speedup on CMUCL</span>
+<span class="hl slc">;;;   * Represent a body as a DEFSTRUCT with (:TYPE VECTOR DOUBLE-FLOAT), a</span>
+<span class="hl slc">;;;     not as a structure that contains vectors</span>
+<span class="hl slc">;;;   * Inline APPLYFORCES</span>
+<span class="hl slc">;;;   * Replace (/ DT DISTANCE DISTANCE DISTANCE) with</span>
+<span class="hl slc">;;;     (/ DT (* DISTANCE DISTANCE DISTANCE)), as is done in the other</span>
+<span class="hl slc">;;;     implementations of this test.</span>
+<span class="hl slc">;;;   * Add a couple of declarations</span>
+<span class="hl slc">;;;   * Heavily rewritten for style (represent system as a list instead of</span>
+<span class="hl slc">;;;     an array to make the nested iterations over it less clumsy, use</span>
+<span class="hl slc">;;;     INCF/DECF where appropriate, break very long lines, etc)</span>
 
-<span class="sym">(</span>defconstant <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+</span> <span class="num">365.24</span>d0<span class="sym">)</span>
-<span class="sym">(</span>defconstant <span class="sym">+</span>solar<span class="sym">-</span>mass<span class="sym">+ (*</span> <span class="num">4</span>d0 pi pi<span class="sym">))</span>
+<span class="hl sym">(</span>defconstant <span class="hl sym">+</span>days-per-year<span class="hl sym">+</span> <span class="hl num">365.24</span>d0<span class="hl sym">)</span>
+<span class="hl sym">(</span>defconstant <span class="hl sym">+</span>solar-mass<span class="hl sym">+ (*</span> <span class="hl num">4</span>d0 pi pi<span class="hl sym">))</span>
 
-<span class="sym">(</span>defstruct <span class="sym">(</span>body <span class="sym">(:</span><span class="kwa">type</span> <span class="sym">(</span>vector double<span class="sym">-</span><span class="kwa">float</span><span class="sym">))</span>
-                 <span class="sym">(:</span>conc<span class="sym">-</span>name nil<span class="sym">)</span>
-                 <span class="sym">(:</span>constructor make<span class="sym">-</span>body <span class="sym">(</span>x y z vx vy vz mass<span class="sym">)))</span>
+<span class="hl sym">(</span>defstruct <span class="hl sym">(</span>body <span class="hl sym">(:</span><span class="hl kwa">type</span> <span class="hl sym">(</span>vector double-<span class="hl kwa">float</span><span class="hl sym">))</span>
+                 <span class="hl sym">(:</span>conc-name nil<span class="hl sym">)</span>
+                 <span class="hl sym">(:</span>constructor make-body <span class="hl sym">(</span>x y z vx vy vz mass<span class="hl sym">)))</span>
   x y z
   vx vy vz
-  mass<span class="sym">)</span>
-<span class="sym">(</span>deftype body <span class="sym">() '(</span>vector double<span class="sym">-</span><span class="kwa">float</span> <span class="num">7</span><span class="sym">))</span>
+  mass<span class="hl sym">)</span>
+<span class="hl sym">(</span>deftype body <span class="hl sym">() '(</span>vector double-<span class="hl kwa">float</span> <span class="hl num">7</span><span class="hl sym">))</span>
 
-<span class="sym">(</span>defparameter <span class="sym">*</span>jupiter<span class="sym">*</span>
-  <span class="sym">(</span>make<span class="sym">-</span>body <span class="num">4.84143144246472090</span>d0
-             <span class="sym">-</span><span class="num">1.16032004402742839</span>d0
-             <span class="sym">-</span><span class="num">1.03622044471123109</span>d<span class="sym">-</span><span class="num">1</span>
-             <span class="sym">(*</span> <span class="num">1.66007664274403694</span>d<span class="sym">-</span><span class="num">3</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">7.69901118419740425</span>d<span class="sym">-</span><span class="num">3</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(* -</span><span class="num">6.90460016972063023</span>d<span class="sym">-</span><span class="num">5</span>  <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">9.54791938424326609</span>d<span class="sym">-</span><span class="num">4</span> <span class="sym">+</span>solar<span class="sym">-</span>mass<span class="sym">+)))</span>
+<span class="hl sym">(</span>defparameter <span class="hl sym">*</span>jupiter<span class="hl sym">*</span>
+  <span class="hl sym">(</span>make-body <span class="hl num">4.84143144246472090</span>d0
+             -<span class="hl num">1.16032004402742839</span>d0
+             -<span class="hl num">1.03622044471123109</span>d-<span class="hl num">1</span>
+             <span class="hl sym">(*</span> <span class="hl num">1.66007664274403694</span>d-<span class="hl num">3</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">7.69901118419740425</span>d-<span class="hl num">3</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> -<span class="hl num">6.90460016972063023</span>d-<span class="hl num">5</span>  <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">9.54791938424326609</span>d-<span class="hl num">4</span> <span class="hl sym">+</span>solar-mass<span class="hl sym">+)))</span>
 
-<span class="sym">(</span>defparameter <span class="sym">*</span>saturn<span class="sym">*</span>
-  <span class="sym">(</span>make<span class="sym">-</span>body <span class="num">8.34336671824457987</span>d0
-             <span class="num">4.12479856412430479</span>d0
-             <span class="sym">-</span><span class="num">4.03523417114321381</span>d<span class="sym">-</span><span class="num">1</span>
-             <span class="sym">(* -</span><span class="num">2.76742510726862411</span>d<span class="sym">-</span><span class="num">3</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">4.99852801234917238</span>d<span class="sym">-</span><span class="num">3</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">2.30417297573763929</span>d<span class="sym">-</span><span class="num">5</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">2.85885980666130812</span>d<span class="sym">-</span><span class="num">4</span> <span class="sym">+</span>solar<span class="sym">-</span>mass<span class="sym">+)))</span>
+<span class="hl sym">(</span>defparameter <span class="hl sym">*</span>saturn<span class="hl sym">*</span>
+  <span class="hl sym">(</span>make-body <span class="hl num">8.34336671824457987</span>d0
+             <span class="hl num">4.12479856412430479</span>d0
+             -<span class="hl num">4.03523417114321381</span>d-<span class="hl num">1</span>
+             <span class="hl sym">(*</span> -<span class="hl num">2.76742510726862411</span>d-<span class="hl num">3</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">4.99852801234917238</span>d-<span class="hl num">3</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">2.30417297573763929</span>d-<span class="hl num">5</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">2.85885980666130812</span>d-<span class="hl num">4</span> <span class="hl sym">+</span>solar-mass<span class="hl sym">+)))</span>
 
-<span class="sym">(</span>defparameter <span class="sym">*</span>uranus<span class="sym">*</span>
-  <span class="sym">(</span>make<span class="sym">-</span>body <span class="num">1.28943695621391310</span>d1
-             <span class="sym">-</span><span class="num">1.51111514016986312</span>d1
-             <span class="sym">-</span><span class="num">2.23307578892655734</span>d<span class="sym">-</span><span class="num">1</span>
-             <span class="sym">(*</span> <span class="num">2.96460137564761618</span>d<span class="sym">-</span><span class="num">03</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">2.37847173959480950</span>d<span class="sym">-</span><span class="num">03</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(* -</span><span class="num">2.96589568540237556</span>d<span class="sym">-</span><span class="num">05</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">4.36624404335156298</span>d<span class="sym">-</span><span class="num">05</span> <span class="sym">+</span>solar<span class="sym">-</span>mass<span class="sym">+)))</span>
+<span class="hl sym">(</span>defparameter <span class="hl sym">*</span>uranus<span class="hl sym">*</span>
+  <span class="hl sym">(</span>make-body <span class="hl num">1.28943695621391310</span>d1
+             -<span class="hl num">1.51111514016986312</span>d1
+             -<span class="hl num">2.23307578892655734</span>d-<span class="hl num">1</span>
+             <span class="hl sym">(*</span> <span class="hl num">2.96460137564761618</span>d-<span class="hl num">03</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">2.37847173959480950</span>d-<span class="hl num">03</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> -<span class="hl num">2.96589568540237556</span>d-<span class="hl num">05</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">4.36624404335156298</span>d-<span class="hl num">05</span> <span class="hl sym">+</span>solar-mass<span class="hl sym">+)))</span>
 
-<span class="sym">(</span>defparameter <span class="sym">*</span>neptune<span class="sym">*</span>
-  <span class="sym">(</span>make<span class="sym">-</span>body <span class="num">1.53796971148509165</span>d<span class="sym">+</span><span class="num">01</span>
-             <span class="sym">-</span><span class="num">2.59193146099879641</span>d<span class="sym">+</span><span class="num">01</span>
-             <span class="num">1.79258772950371181</span>d<span class="sym">-</span><span class="num">01</span>
-             <span class="sym">(*</span> <span class="num">2.68067772490389322</span>d<span class="sym">-</span><span class="num">03</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">1.62824170038242295</span>d<span class="sym">-</span><span class="num">03</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(* -</span><span class="num">9.51592254519715870</span>d<span class="sym">-</span><span class="num">05</span> <span class="sym">+</span>days<span class="sym">-</span>per<span class="sym">-</span>year<span class="sym">+)</span>
-             <span class="sym">(*</span> <span class="num">5.15138902046611451</span>d<span class="sym">-</span><span class="num">05</span> <span class="sym">+</span>solar<span class="sym">-</span>mass<span class="sym">+)))</span>
+<span class="hl sym">(</span>defparameter <span class="hl sym">*</span>neptune<span class="hl sym">*</span>
+  <span class="hl sym">(</span>make-body <span class="hl num">1.53796971148509165</span>d<span class="hl sym">+</span><span class="hl num">01</span>
+             -<span class="hl num">2.59193146099879641</span>d<span class="hl sym">+</span><span class="hl num">01</span>
+             <span class="hl num">1.79258772950371181</span>d-<span class="hl num">01</span>
+             <span class="hl sym">(*</span> <span class="hl num">2.68067772490389322</span>d-<span class="hl num">03</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">1.62824170038242295</span>d-<span class="hl num">03</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> -<span class="hl num">9.51592254519715870</span>d-<span class="hl num">05</span> <span class="hl sym">+</span>days-per-year<span class="hl sym">+)</span>
+             <span class="hl sym">(*</span> <span class="hl num">5.15138902046611451</span>d-<span class="hl num">05</span> <span class="hl sym">+</span>solar-mass<span class="hl sym">+)))</span>
 
-<span class="sym">(</span>defparameter <span class="sym">*</span>sun<span class="sym">*</span>
-  <span class="sym">(</span>make<span class="sym">-</span>body <span class="num">0.0</span>d0 <span class="num">0.0</span>d0 <span class="num">0.0</span>d0 <span class="num">0.0</span>d0 <span class="num">0.0</span>d0 <span class="num">0.0</span>d0 <span class="sym">+</span>solar<span class="sym">-</span>mass<span class="sym">+))</span>
+<span class="hl sym">(</span>defparameter <span class="hl sym">*</span>sun<span class="hl sym">*</span>
+  <span class="hl sym">(</span>make-body <span class="hl num">0.0</span>d0 <span class="hl num">0.0</span>d0 <span class="hl num">0.0</span>d0 <span class="hl num">0.0</span>d0 <span class="hl num">0.0</span>d0 <span class="hl num">0.0</span>d0 <span class="hl sym">+</span>solar-mass<span class="hl sym">+))</span>
 
-<span class="sym">(</span>declaim <span class="sym">(</span>inline applyforces<span class="sym">))</span>
-<span class="sym">(</span><span class="kwa">defun</span> applyforces <span class="sym">(</span>a b dt<span class="sym">)</span>
-  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> body a b<span class="sym">) (</span><span class="kwa">type</span> double<span class="sym">-</span><span class="kwa">float</span> dt<span class="sym">))</span>
-  <span class="sym">(</span>let<span class="sym">* ((</span>dx <span class="sym">(- (</span>x a<span class="sym">) (</span>x b<span class="sym">)))</span>
-         <span class="sym">(</span>dy <span class="sym">(- (</span>y a<span class="sym">) (</span>y b<span class="sym">)))</span>
-         <span class="sym">(</span>dz <span class="sym">(- (</span>z a<span class="sym">) (</span>z b<span class="sym">)))</span>
-	 <span class="sym">(</span><span class="kwa">distance</span> <span class="sym">(</span><span class="kwa">sqrt</span> <span class="sym">(+ (*</span> dx dx<span class="sym">) (*</span> dy dy<span class="sym">) (*</span> dz dz<span class="sym">))))</span>
-	 <span class="sym">(</span>mag <span class="sym">(/</span> dt <span class="sym">(*</span> <span class="kwa">distance distance distance</span><span class="sym">)))</span>
-         <span class="sym">(</span>dxmag <span class="sym">(*</span> dx mag<span class="sym">))</span>
-         <span class="sym">(</span>dymag <span class="sym">(*</span> dy mag<span class="sym">))</span>
-         <span class="sym">(</span>dzmag <span class="sym">(*</span> dz mag<span class="sym">)))</span>
-    <span class="sym">(</span>decf <span class="sym">(</span>vx a<span class="sym">) (*</span> dxmag <span class="sym">(</span>mass b<span class="sym">)))</span>
-    <span class="sym">(</span>decf <span class="sym">(</span>vy a<span class="sym">) (*</span> dymag <span class="sym">(</span>mass b<span class="sym">)))</span>
-    <span class="sym">(</span>decf <span class="sym">(</span>vz a<span class="sym">) (*</span> dzmag <span class="sym">(</span>mass b<span class="sym">)))</span>
-    <span class="sym">(</span>incf <span class="sym">(</span>vx b<span class="sym">) (*</span> dxmag <span class="sym">(</span>mass a<span class="sym">)))</span>
-    <span class="sym">(</span>incf <span class="sym">(</span>vy b<span class="sym">) (*</span> dymag <span class="sym">(</span>mass a<span class="sym">)))</span>
-    <span class="sym">(</span>incf <span class="sym">(</span>vz b<span class="sym">) (*</span> dzmag <span class="sym">(</span>mass a<span class="sym">))))</span>
-  nil<span class="sym">)</span>
+<span class="hl sym">(</span>declaim <span class="hl sym">(</span>inline applyforces<span class="hl sym">))</span>
+<span class="hl sym">(</span><span class="hl kwa">defun</span> applyforces <span class="hl sym">(</span>a b dt<span class="hl sym">)</span>
+  <span class="hl sym">(</span>declare <span class="hl sym">(</span><span class="hl kwa">type</span> body a b<span class="hl sym">) (</span><span class="hl kwa">type</span> double-<span class="hl kwa">float</span> dt<span class="hl sym">))</span>
+  <span class="hl sym">(</span>let<span class="hl sym">* ((</span>dx <span class="hl sym">(</span>- <span class="hl sym">(</span>x a<span class="hl sym">) (</span>x b<span class="hl sym">)))</span>
+         <span class="hl sym">(</span>dy <span class="hl sym">(</span>- <span class="hl sym">(</span>y a<span class="hl sym">) (</span>y b<span class="hl sym">)))</span>
+         <span class="hl sym">(</span>dz <span class="hl sym">(</span>- <span class="hl sym">(</span>z a<span class="hl sym">) (</span>z b<span class="hl sym">)))</span>
+	 <span class="hl sym">(</span><span class="hl kwa">distance</span> <span class="hl sym">(</span><span class="hl kwa">sqrt</span> <span class="hl sym">(+ (*</span> dx dx<span class="hl sym">) (*</span> dy dy<span class="hl sym">) (*</span> dz dz<span class="hl sym">))))</span>
+	 <span class="hl sym">(</span>mag <span class="hl sym">(/</span> dt <span class="hl sym">(*</span> <span class="hl kwa">distance distance distance</span><span class="hl sym">)))</span>
+         <span class="hl sym">(</span>dxmag <span class="hl sym">(*</span> dx mag<span class="hl sym">))</span>
+         <span class="hl sym">(</span>dymag <span class="hl sym">(*</span> dy mag<span class="hl sym">))</span>
+         <span class="hl sym">(</span>dzmag <span class="hl sym">(*</span> dz mag<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>decf <span class="hl sym">(</span>vx a<span class="hl sym">) (*</span> dxmag <span class="hl sym">(</span>mass b<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>decf <span class="hl sym">(</span>vy a<span class="hl sym">) (*</span> dymag <span class="hl sym">(</span>mass b<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>decf <span class="hl sym">(</span>vz a<span class="hl sym">) (*</span> dzmag <span class="hl sym">(</span>mass b<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>incf <span class="hl sym">(</span>vx b<span class="hl sym">) (*</span> dxmag <span class="hl sym">(</span>mass a<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>incf <span class="hl sym">(</span>vy b<span class="hl sym">) (*</span> dymag <span class="hl sym">(</span>mass a<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>incf <span class="hl sym">(</span>vz b<span class="hl sym">) (*</span> dzmag <span class="hl sym">(</span>mass a<span class="hl sym">))))</span>
+  nil<span class="hl sym">)</span>
 
-<span class="sym">(</span><span class="kwa">defun</span> advance <span class="sym">(</span>system dt<span class="sym">)</span>
-  <span class="sym">(</span>declare <span class="sym">(</span>double<span class="sym">-</span><span class="kwa">float</span> dt<span class="sym">))</span>
-  <span class="sym">(</span>loop for <span class="sym">(</span>a . rest<span class="sym">)</span> on system do
-        <span class="sym">(</span>dolist <span class="sym">(</span>b rest<span class="sym">)</span>
-          <span class="sym">(</span>applyforces a b dt<span class="sym">)))</span>
-  <span class="sym">(</span>dolist <span class="sym">(</span>b system<span class="sym">)</span>
-    <span class="sym">(</span>incf <span class="sym">(</span>x b<span class="sym">) (*</span> dt <span class="sym">(</span>vx b<span class="sym">)))</span>
-    <span class="sym">(</span>incf <span class="sym">(</span>y b<span class="sym">) (*</span> dt <span class="sym">(</span>vy b<span class="sym">)))</span>
-    <span class="sym">(</span>incf <span class="sym">(</span>z b<span class="sym">) (*</span> dt <span class="sym">(</span>vz b<span class="sym">)))))</span>
+<span class="hl sym">(</span><span class="hl kwa">defun</span> advance <span class="hl sym">(</span>system dt<span class="hl sym">)</span>
+  <span class="hl sym">(</span>declare <span class="hl sym">(</span>double-<span class="hl kwa">float</span> dt<span class="hl sym">))</span>
+  <span class="hl sym">(</span>loop for <span class="hl sym">(</span>a . rest<span class="hl sym">)</span> on system do
+        <span class="hl sym">(</span>dolist <span class="hl sym">(</span>b rest<span class="hl sym">)</span>
+          <span class="hl sym">(</span>applyforces a b dt<span class="hl sym">)))</span>
+  <span class="hl sym">(</span>dolist <span class="hl sym">(</span>b system<span class="hl sym">)</span>
+    <span class="hl sym">(</span>incf <span class="hl sym">(</span>x b<span class="hl sym">) (*</span> dt <span class="hl sym">(</span>vx b<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>incf <span class="hl sym">(</span>y b<span class="hl sym">) (*</span> dt <span class="hl sym">(</span>vy b<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>incf <span class="hl sym">(</span>z b<span class="hl sym">) (*</span> dt <span class="hl sym">(</span>vz b<span class="hl sym">)))))</span>
 
-<span class="sym">(</span><span class="kwa">defun</span> energy <span class="sym">(</span>system<span class="sym">)</span>
-  <span class="sym">(</span>let <span class="sym">((</span>e <span class="num">0.0</span>d0<span class="sym">))</span>
-    <span class="sym">(</span>declare <span class="sym">(</span>double<span class="sym">-</span><span class="kwa">float</span> e<span class="sym">))</span>
-    <span class="sym">(</span>loop for <span class="sym">(</span>a . rest<span class="sym">)</span> on system do
-          <span class="sym">(</span>incf e <span class="sym">(*</span> <span class="num">0.5</span>d0
-                     <span class="sym">(</span>mass a<span class="sym">)</span>
-                     <span class="sym">(+ (* (</span>vx a<span class="sym">) (</span>vx a<span class="sym">))</span>
-                        <span class="sym">(* (</span>vy a<span class="sym">) (</span>vy a<span class="sym">))</span>
-                        <span class="sym">(* (</span>vz a<span class="sym">) (</span>vz a<span class="sym">)))))</span>
-          <span class="sym">(</span>dolist <span class="sym">(</span>b rest<span class="sym">)</span>
-            <span class="sym">(</span>let<span class="sym">* ((</span>dx <span class="sym">(- (</span>x a<span class="sym">) (</span>x b<span class="sym">)))</span>
-                   <span class="sym">(</span>dy <span class="sym">(- (</span>y a<span class="sym">) (</span>y b<span class="sym">)))</span>
-                   <span class="sym">(</span>dz <span class="sym">(- (</span>z a<span class="sym">) (</span>z b<span class="sym">)))</span>
-                   <span class="sym">(</span>dist <span class="sym">(</span><span class="kwa">sqrt</span> <span class="sym">(+ (*</span> dx dx<span class="sym">) (*</span> dy dy<span class="sym">) (*</span> dz dz<span class="sym">)))))</span>
-              <span class="sym">(</span>decf e <span class="sym">(/ (* (</span>mass a<span class="sym">) (</span>mass b<span class="sym">))</span> dist<span class="sym">)))))</span>
-    e<span class="sym">))</span>
+<span class="hl sym">(</span><span class="hl kwa">defun</span> energy <span class="hl sym">(</span>system<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let <span class="hl sym">((</span>e <span class="hl num">0.0</span>d0<span class="hl sym">))</span>
+    <span class="hl sym">(</span>declare <span class="hl sym">(</span>double-<span class="hl kwa">float</span> e<span class="hl sym">))</span>
+    <span class="hl sym">(</span>loop for <span class="hl sym">(</span>a . rest<span class="hl sym">)</span> on system do
+          <span class="hl sym">(</span>incf e <span class="hl sym">(*</span> <span class="hl num">0.5</span>d0
+                     <span class="hl sym">(</span>mass a<span class="hl sym">)</span>
+                     <span class="hl sym">(+ (* (</span>vx a<span class="hl sym">) (</span>vx a<span class="hl sym">))</span>
+                        <span class="hl sym">(* (</span>vy a<span class="hl sym">) (</span>vy a<span class="hl sym">))</span>
+                        <span class="hl sym">(* (</span>vz a<span class="hl sym">) (</span>vz a<span class="hl sym">)))))</span>
+          <span class="hl sym">(</span>dolist <span class="hl sym">(</span>b rest<span class="hl sym">)</span>
+            <span class="hl sym">(</span>let<span class="hl sym">* ((</span>dx <span class="hl sym">(</span>- <span class="hl sym">(</span>x a<span class="hl sym">) (</span>x b<span class="hl sym">)))</span>
+                   <span class="hl sym">(</span>dy <span class="hl sym">(</span>- <span class="hl sym">(</span>y a<span class="hl sym">) (</span>y b<span class="hl sym">)))</span>
+                   <span class="hl sym">(</span>dz <span class="hl sym">(</span>- <span class="hl sym">(</span>z a<span class="hl sym">) (</span>z b<span class="hl sym">)))</span>
+                   <span class="hl sym">(</span>dist <span class="hl sym">(</span><span class="hl kwa">sqrt</span> <span class="hl sym">(+ (*</span> dx dx<span class="hl sym">) (*</span> dy dy<span class="hl sym">) (*</span> dz dz<span class="hl sym">)))))</span>
+              <span class="hl sym">(</span>decf e <span class="hl sym">(/ (* (</span>mass a<span class="hl sym">) (</span>mass b<span class="hl sym">))</span> dist<span class="hl sym">)))))</span>
+    e<span class="hl sym">))</span>
 
-<span class="sym">(</span><span class="kwa">defun</span> offset<span class="sym">-</span>momentum <span class="sym">(</span>system<span class="sym">)</span>
-  <span class="sym">(</span>let <span class="sym">((</span>px <span class="num">0.0</span>d0<span class="sym">)</span>
-	<span class="sym">(</span>py <span class="num">0.0</span>d0<span class="sym">)</span>
-	<span class="sym">(</span>pz <span class="num">0.0</span>d0<span class="sym">))</span>
-    <span class="sym">(</span>dolist <span class="sym">(</span>p system<span class="sym">)</span>
-      <span class="sym">(</span>incf px <span class="sym">(* (</span>vx p<span class="sym">) (</span>mass p<span class="sym">)))</span>
-      <span class="sym">(</span>incf py <span class="sym">(* (</span>vy p<span class="sym">) (</span>mass p<span class="sym">)))</span>
-      <span class="sym">(</span>incf pz <span class="sym">(* (</span>vz p<span class="sym">) (</span>mass p<span class="sym">))))</span>
-    <span class="sym">(</span>setf <span class="sym">(</span>vx <span class="sym">(</span><span class="kwa">car</span> system<span class="sym">)) (/ (-</span> px<span class="sym">) +</span>solar<span class="sym">-</span>mass<span class="sym">+)</span>
-          <span class="sym">(</span>vy <span class="sym">(</span><span class="kwa">car</span> system<span class="sym">)) (/ (-</span> py<span class="sym">) +</span>solar<span class="sym">-</span>mass<span class="sym">+)</span>
-          <span class="sym">(</span>vz <span class="sym">(</span><span class="kwa">car</span> system<span class="sym">)) (/ (-</span> pz<span class="sym">) +</span>solar<span class="sym">-</span>mass<span class="sym">+))</span>
-    nil<span class="sym">))</span>
+<span class="hl sym">(</span><span class="hl kwa">defun</span> offset-momentum <span class="hl sym">(</span>system<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let <span class="hl sym">((</span>px <span class="hl num">0.0</span>d0<span class="hl sym">)</span>
+	<span class="hl sym">(</span>py <span class="hl num">0.0</span>d0<span class="hl sym">)</span>
+	<span class="hl sym">(</span>pz <span class="hl num">0.0</span>d0<span class="hl sym">))</span>
+    <span class="hl sym">(</span>dolist <span class="hl sym">(</span>p system<span class="hl sym">)</span>
+      <span class="hl sym">(</span>incf px <span class="hl sym">(* (</span>vx p<span class="hl sym">) (</span>mass p<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>incf py <span class="hl sym">(* (</span>vy p<span class="hl sym">) (</span>mass p<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>incf pz <span class="hl sym">(* (</span>vz p<span class="hl sym">) (</span>mass p<span class="hl sym">))))</span>
+    <span class="hl sym">(</span>setf <span class="hl sym">(</span>vx <span class="hl sym">(</span><span class="hl kwa">car</span> system<span class="hl sym">)) (/ (</span>- px<span class="hl sym">) +</span>solar-mass<span class="hl sym">+)</span>
+          <span class="hl sym">(</span>vy <span class="hl sym">(</span><span class="hl kwa">car</span> system<span class="hl sym">)) (/ (</span>- py<span class="hl sym">) +</span>solar-mass<span class="hl sym">+)</span>
+          <span class="hl sym">(</span>vz <span class="hl sym">(</span><span class="hl kwa">car</span> system<span class="hl sym">)) (/ (</span>- pz<span class="hl sym">) +</span>solar-mass<span class="hl sym">+))</span>
+    nil<span class="hl sym">))</span>
 
-<span class="sym">(</span><span class="kwa">defun</span> nbody <span class="sym">(</span>n<span class="sym">)</span>
-  <span class="sym">(</span>declare <span class="sym">(</span>fixnum n<span class="sym">))</span>
-  <span class="sym">(</span>let <span class="sym">((</span>system <span class="sym">(</span><span class="kwa">list</span> <span class="sym">*</span>sun<span class="sym">* *</span>jupiter<span class="sym">* *</span>saturn<span class="sym">* *</span>uranus<span class="sym">* *</span>neptune<span class="sym">*)))</span>
-    <span class="sym">(</span>offset<span class="sym">-</span>momentum system<span class="sym">)</span>
-    <span class="sym">(</span>format t <span class="str">&quot;~,9F~%&quot;</span> <span class="sym">(</span>energy system<span class="sym">))</span>
-    <span class="sym">(</span>dotimes <span class="sym">(</span>i n<span class="sym">)</span>
-      <span class="sym">(</span>advance system <span class="num">0.01</span>d0<span class="sym">))</span>
-    <span class="sym">(</span>format t <span class="str">&quot;~,9F~%&quot;</span> <span class="sym">(</span>energy system<span class="sym">))))</span>
+<span class="hl sym">(</span><span class="hl kwa">defun</span> nbody <span class="hl sym">(</span>n<span class="hl sym">)</span>
+  <span class="hl sym">(</span>declare <span class="hl sym">(</span>fixnum n<span class="hl sym">))</span>
+  <span class="hl sym">(</span>let <span class="hl sym">((</span>system <span class="hl sym">(</span><span class="hl kwa">list</span> <span class="hl sym">*</span>sun<span class="hl sym">* *</span>jupiter<span class="hl sym">* *</span>saturn<span class="hl sym">* *</span>uranus<span class="hl sym">* *</span>neptune<span class="hl sym">*)))</span>
+    <span class="hl sym">(</span>offset-momentum system<span class="hl sym">)</span>
+    <span class="hl sym">(</span>format t <span class="hl str">&quot;~,9F~%&quot;</span> <span class="hl sym">(</span>energy system<span class="hl sym">))</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">(</span>i n<span class="hl sym">)</span>
+      <span class="hl sym">(</span>advance system <span class="hl num">0.01</span>d0<span class="hl sym">))</span>
+    <span class="hl sym">(</span>format t <span class="hl str">&quot;~,9F~%&quot;</span> <span class="hl sym">(</span>energy system<span class="hl sym">))))</span>
 
-<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">()</span>
-  <span class="sym">(</span>let <span class="sym">((</span>n <span class="sym">(</span>parse<span class="sym">-</span>integer <span class="sym">(</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">car</span> <span class="sym">(</span><span class="kwa">last</span> #<span class="sym">+</span>sbcl sb<span class="sym">-</span>ext<span class="sym">:*</span>posix<span class="sym">-</span>argv<span class="sym">*</span>
-                                         #<span class="sym">+</span>cmu  extensions<span class="sym">:*</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>strings<span class="sym">*</span>
-					 #<span class="sym">+</span>gcl  si<span class="sym">::*</span><span class="kwa">command</span><span class="sym">-</span>args<span class="sym">*))</span> <span class="str">&quot;1&quot;</span><span class="sym">))))</span>
-    <span class="sym">(</span>nbody n<span class="sym">)))</span>
+<span class="hl sym">(</span><span class="hl kwa">defun</span> main <span class="hl sym">()</span>
+  <span class="hl sym">(</span>let <span class="hl sym">((</span>n <span class="hl sym">(</span>parse-integer <span class="hl sym">(</span><span class="hl kwa">or</span> <span class="hl sym">(</span><span class="hl kwa">car</span> <span class="hl sym">(</span><span class="hl kwa">last</span> #<span class="hl sym">+</span>sbcl sb-ext<span class="hl sym">:*</span>posix-argv<span class="hl sym">*</span>
+                                         #<span class="hl sym">+</span>cmu  extensions<span class="hl sym">:*</span><span class="hl kwa">command</span>-<span class="hl kwa">line</span>-strings<span class="hl sym">*</span>
+					 #<span class="hl sym">+</span>gcl  si<span class="hl sym">::*</span><span class="hl kwa">command</span>-args<span class="hl sym">*))</span> <span class="hl str">&quot;1&quot;</span><span class="hl sym">))))</span>
+    <span class="hl sym">(</span>nbody n<span class="hl sym">)))</span>
 
