@@ -32,7 +32,9 @@ means that most programs are small and spend most of their time in I/O and nativ
 </ul>
 <p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less often measured.</p>
 <ul>
-  <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a></p></li>
+  <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a></p>
+<p>Note: After reading the "Comparison Validity" section at the foot of pages 24-25, you might decide that it doesn't seem reasonable to compare <i>independently measured programming time</i> for one group of languages against <i>programming time reported by program authors</i> for another group of languages, <i>etc etc</i></p>
+</li>
 </ul>
 </dd>
 
