@@ -1,303 +1,303 @@
-<span class="slc">'The Computer Language Shootout</span>
-<span class="slc">'http://shootout.alioth.debian.org/</span>
-<span class="slc">'contributed by Antoni Gual</span>
+<span class="hl slc">'The Computer Language Shootout</span>
+<span class="hl slc">'http://shootout.alioth.debian.org/</span>
+<span class="hl slc">'contributed by Antoni Gual</span>
 
-#include <span class="str">&quot;crt.bi&quot;</span>
+#include <span class="hl str">&quot;crt.bi&quot;</span>
 
-<span class="kwa">type</span> ht_node
-  key <span class="kwa">as</span> zstring ptr
-  _val <span class="kwa">as</span> <span class="kwb">integer</span>
-  _next <span class="kwa">as</span> ht_node ptr
-<span class="kwa">end type</span>
-<span class="slc">'</span>
-<span class="kwa">type</span> ht_ht
-  size <span class="kwa">as</span> <span class="kwb">integer</span>
-  tbl <span class="kwa">as</span> ht_node ptr ptr
-  iter_index <span class="kwa">as</span> <span class="kwb">integer</span>
-  iter_next <span class="kwa">as</span> ht_node ptr
-  items <span class="kwa">as</span> <span class="kwb">integer</span>
-  totals <span class="kwa">as</span> <span class="kwb">integer</span>
-<span class="kwa">end type</span>
-<span class="slc">'</span>
-<span class="kwa">type</span> sorter
-  _string <span class="kwa">as</span> zstring ptr
-  num <span class="kwa">as</span> <span class="kwb">integer</span>
-<span class="kwa">end type</span>
-<span class="slc">'</span>
-<span class="slc">'--------------------------------------------------</span>
-<span class="kwa">function</span> ht_hashcode<span class="sym">(</span><span class="kwa">ByVal</span> ht <span class="kwa">as</span> ht_ht ptr<span class="sym">,</span> <span class="kwa">ByVal</span> key <span class="kwa">as</span> zstring ptr<span class="sym">)</span> <span class="kwa">As</span> <span class="kwb">Integer</span>
-   <span class="kwa">dim as</span> uinteger _val <span class="sym">=</span> <span class="num">0</span>
-   <span class="kwa">while</span> <span class="sym">*</span> key
-     _val <span class="sym">=</span> <span class="num">5</span> <span class="sym">*</span> _val <span class="sym">+ *</span>key
-     key<span class="sym">+=</span><span class="num">1</span>
-   wend
-   return <span class="sym">(</span>_val mod ht<span class="sym">-&gt;</span>size<span class="sym">)</span>
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'----------------------------------------------------</span>
-<span class="kwa">function</span> ht_node_create <span class="sym">(</span><span class="kwa">ByVal</span> key <span class="kwa">as</span> zstring ptr<span class="sym">)</span> <span class="kwa">as</span> ht_node ptr
-   <span class="kwa">dim</span> newkey <span class="kwa">as</span> zstring ptr
-   <span class="kwa">dim</span>  node <span class="kwa">as</span> ht_node ptr
-   node <span class="sym">=</span>  allocate<span class="sym">(</span>sizeof<span class="sym">(</span>ht_node<span class="sym">))</span>
-   <span class="kwa">if</span> node<span class="sym">=</span><span class="num">0</span> <span class="kwa">then</span> ? <span class="str">&quot;Error allocating node&quot;</span><span class="sym">:</span> <span class="kwa">end</span> <span class="num">1</span>
-   <span class="slc">'no strdup in the crt lib !!!</span>
-   newkey<span class="sym">=</span>allocate<span class="sym">(</span>strlen<span class="sym">(</span>key<span class="sym">)+</span><span class="num">1</span><span class="sym">)</span>
-   <span class="kwa">if</span> newkey<span class="sym">=</span><span class="num">0</span> <span class="kwa">then</span> ? <span class="str">&quot;Can't allocate key&quot;</span><span class="sym">:</span><span class="kwa">end</span>
-   memcpy <span class="sym">(</span>newkey<span class="sym">,</span>key<span class="sym">,</span> strlen<span class="sym">(</span>key<span class="sym">)+</span><span class="num">1</span><span class="sym">)</span>
-   node<span class="sym">-&gt;</span>key <span class="sym">=</span> newkey
-   node<span class="sym">-&gt;</span>_val <span class="sym">=</span> <span class="num">0</span>
-   node<span class="sym">-&gt;</span>_next <span class="sym">=</span> <span class="kwa">NULL</span>
-   return node
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'-----------------------------------------------------</span>
-<span class="kwa">function</span> ht_create<span class="sym">(</span><span class="kwa">ByVal</span> size <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">as</span> ht_ht  ptr  <span class="slc">'''</span>
-    <span class="kwa">dim</span> i <span class="kwa">As</span> <span class="kwb">Integer</span> <span class="sym">=</span> <span class="num">0</span>
-    #define  ht_num_primes <span class="num">28</span>
-    <span class="kwa">dim as</span> uinteger ht_prime_list<span class="sym">(</span>ht_num_primes<span class="sym">) = {</span>_
-    <span class="num">53u</span>l<span class="sym">,</span>         <span class="num">97u</span>l<span class="sym">,</span>         <span class="num">193u</span>l<span class="sym">,</span>       <span class="num">389u</span>l<span class="sym">,</span>       <span class="num">769u</span>l<span class="sym">,</span>_
-    <span class="num">1543u</span>l<span class="sym">,</span>       <span class="num">3079u</span>l<span class="sym">,</span>       <span class="num">6151u</span>l<span class="sym">,</span>      <span class="num">12289u</span>l<span class="sym">,</span>     <span class="num">24593u</span>l<span class="sym">,</span>_
-    <span class="num">49157u</span>l<span class="sym">,</span>      <span class="num">98317u</span>l<span class="sym">,</span>      <span class="num">196613u</span>l<span class="sym">,</span>    <span class="num">393241u</span>l<span class="sym">,</span>    <span class="num">786433u</span>l<span class="sym">,</span>_
-    <span class="num">1572869u</span>l<span class="sym">,</span>    <span class="num">3145739u</span>l<span class="sym">,</span>    <span class="num">6291469u</span>l<span class="sym">,</span>   <span class="num">12582917u</span>l<span class="sym">,</span>  <span class="num">25165843u</span>l<span class="sym">,</span>_
-    <span class="num">50331653u</span>l<span class="sym">,</span>   <span class="num">100663319u</span>l<span class="sym">,</span>  <span class="num">201326611u</span>l<span class="sym">,</span> <span class="num">402653189u</span>l<span class="sym">,</span> <span class="num">805306457u</span>l<span class="sym">,</span>_
-    <span class="num">1610612741u</span>l<span class="sym">,</span> <span class="num">3221225473u</span>l<span class="sym">,</span> <span class="num">4294967291u</span>l<span class="sym">}</span>
+<span class="hl kwa">type</span> ht_node
+  key <span class="hl kwa">as</span> zstring ptr
+  _val <span class="hl kwa">as</span> <span class="hl kwb">integer</span>
+  _next <span class="hl kwa">as</span> ht_node ptr
+<span class="hl kwa">end type</span>
+<span class="hl slc">'</span>
+<span class="hl kwa">type</span> ht_ht
+  size <span class="hl kwa">as</span> <span class="hl kwb">integer</span>
+  tbl <span class="hl kwa">as</span> ht_node ptr ptr
+  iter_index <span class="hl kwa">as</span> <span class="hl kwb">integer</span>
+  iter_next <span class="hl kwa">as</span> ht_node ptr
+  items <span class="hl kwa">as</span> <span class="hl kwb">integer</span>
+  totals <span class="hl kwa">as</span> <span class="hl kwb">integer</span>
+<span class="hl kwa">end type</span>
+<span class="hl slc">'</span>
+<span class="hl kwa">type</span> sorter
+  _string <span class="hl kwa">as</span> zstring ptr
+  num <span class="hl kwa">as</span> <span class="hl kwb">integer</span>
+<span class="hl kwa">end type</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'--------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">ht_hashcode</span><span class="hl sym">(</span><span class="hl kwa">ByVal</span> ht <span class="hl kwa">as</span> ht_ht ptr<span class="hl sym">,</span> <span class="hl kwa">ByVal</span> key <span class="hl kwa">as</span> zstring ptr<span class="hl sym">)</span> <span class="hl kwa">As</span> <span class="hl kwb">Integer</span>
+   <span class="hl kwa">dim as</span> uinteger _val <span class="hl sym">=</span> <span class="hl num">0</span>
+   <span class="hl kwa">while</span> <span class="hl sym">*</span> key
+     _val <span class="hl sym">=</span> <span class="hl num">5</span> <span class="hl sym">*</span> _val <span class="hl sym">+ *</span>key
+     key<span class="hl sym">+=</span><span class="hl num">1</span>
+   <span class="hl kwa">wend</span>
+   <span class="hl kwa">return</span> <span class="hl sym">(</span>_val mod ht<span class="hl sym">-&gt;</span>size<span class="hl sym">)</span>
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'----------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">ht_node_create</span> <span class="hl sym">(</span><span class="hl kwa">ByVal</span> key <span class="hl kwa">as</span> zstring ptr<span class="hl sym">)</span> <span class="hl kwa">as</span> ht_node ptr
+   <span class="hl kwa">dim</span> newkey <span class="hl kwa">as</span> zstring ptr
+   <span class="hl kwa">dim</span>  node <span class="hl kwa">as</span> ht_node ptr
+   node <span class="hl sym">=</span>  <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">sizeof</span><span class="hl sym">(</span>ht_node<span class="hl sym">))</span>
+   <span class="hl kwa">if</span> node<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">then</span> ? <span class="hl str">&quot;Error allocating node&quot;</span><span class="hl sym">:</span> <span class="hl kwa">end</span> <span class="hl num">1</span>
+   <span class="hl slc">'no strdup in the crt lib !!!</span>
+   newkey<span class="hl sym">=</span><span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">strlen</span><span class="hl sym">(</span>key<span class="hl sym">)+</span><span class="hl num">1</span><span class="hl sym">)</span>
+   <span class="hl kwa">if</span> newkey<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">then</span> ? <span class="hl str">&quot;Can't allocate key&quot;</span><span class="hl sym">:</span><span class="hl kwa">end</span>
+   <span class="hl kwd">memcpy</span> <span class="hl sym">(</span>newkey<span class="hl sym">,</span>key<span class="hl sym">,</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>key<span class="hl sym">)+</span><span class="hl num">1</span><span class="hl sym">)</span>
+   node<span class="hl sym">-&gt;</span>key <span class="hl sym">=</span> newkey
+   node<span class="hl sym">-&gt;</span>_val <span class="hl sym">=</span> <span class="hl num">0</span>
+   node<span class="hl sym">-&gt;</span>_next <span class="hl sym">=</span> NULL
+   <span class="hl kwa">return</span> node
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'-----------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">ht_create</span><span class="hl sym">(</span><span class="hl kwa">ByVal</span> size <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span> <span class="hl kwa">as</span> ht_ht  ptr  <span class="hl slc">'''</span>
+    <span class="hl kwa">dim</span> i <span class="hl kwa">As</span> <span class="hl kwb">Integer</span> <span class="hl sym">=</span> <span class="hl num">0</span>
+    #define  ht_num_primes <span class="hl num">28</span>
+    <span class="hl kwa">dim as</span> uinteger <span class="hl kwd">ht_prime_list</span><span class="hl sym">(</span>ht_num_primes<span class="hl sym">) = {</span>_
+    <span class="hl num">53u</span>l<span class="hl sym">,</span>         <span class="hl num">97u</span>l<span class="hl sym">,</span>         <span class="hl num">193u</span>l<span class="hl sym">,</span>       <span class="hl num">389u</span>l<span class="hl sym">,</span>       <span class="hl num">769u</span>l<span class="hl sym">,</span>_
+    <span class="hl num">1543u</span>l<span class="hl sym">,</span>       <span class="hl num">3079u</span>l<span class="hl sym">,</span>       <span class="hl num">6151u</span>l<span class="hl sym">,</span>      <span class="hl num">12289u</span>l<span class="hl sym">,</span>     <span class="hl num">24593u</span>l<span class="hl sym">,</span>_
+    <span class="hl num">49157u</span>l<span class="hl sym">,</span>      <span class="hl num">98317u</span>l<span class="hl sym">,</span>      <span class="hl num">196613u</span>l<span class="hl sym">,</span>    <span class="hl num">393241u</span>l<span class="hl sym">,</span>    <span class="hl num">786433u</span>l<span class="hl sym">,</span>_
+    <span class="hl num">1572869u</span>l<span class="hl sym">,</span>    <span class="hl num">3145739u</span>l<span class="hl sym">,</span>    <span class="hl num">6291469u</span>l<span class="hl sym">,</span>   <span class="hl num">12582917u</span>l<span class="hl sym">,</span>  <span class="hl num">25165843u</span>l<span class="hl sym">,</span>_
+    <span class="hl num">50331653u</span>l<span class="hl sym">,</span>   <span class="hl num">100663319u</span>l<span class="hl sym">,</span>  <span class="hl num">201326611u</span>l<span class="hl sym">,</span> <span class="hl num">402653189u</span>l<span class="hl sym">,</span> <span class="hl num">805306457u</span>l<span class="hl sym">,</span>_
+    <span class="hl num">1610612741u</span>l<span class="hl sym">,</span> <span class="hl num">3221225473u</span>l<span class="hl sym">,</span> <span class="hl num">4294967291u</span>l<span class="hl sym">}</span>
 
-    <span class="kwa">dim as</span>  ht_ht ptr ht<span class="sym">=</span>allocate<span class="sym">(</span>sizeof<span class="sym">(</span>ht_ht<span class="sym">))</span>
+    <span class="hl kwa">dim as</span>  ht_ht ptr ht<span class="hl sym">=</span><span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">sizeof</span><span class="hl sym">(</span>ht_ht<span class="hl sym">))</span>
 
-    <span class="slc">'print &quot;size &quot;; size</span>
-    <span class="kwa">while</span> <span class="sym">(</span>ht_prime_list<span class="sym">(</span>i<span class="sym">) &lt;</span> size<span class="sym">):</span> i<span class="sym">+=</span><span class="num">1</span><span class="sym">:</span>wend
-    ht<span class="sym">-&gt;</span>size <span class="sym">=</span> ht_prime_list<span class="sym">(</span>i<span class="sym">)</span>
-    ht<span class="sym">-&gt;</span>tbl <span class="sym">=</span> callocate<span class="sym">(</span>ht<span class="sym">-&gt;</span>size <span class="sym">*</span> sizeof<span class="sym">(</span>ht_node ptr<span class="sym">))</span>
-    ht<span class="sym">-&gt;</span>iter_index <span class="sym">=</span> <span class="num">0</span>
-    ht<span class="sym">-&gt;</span>iter_next <span class="sym">=</span> <span class="num">0</span>
-    ht<span class="sym">-&gt;</span>items <span class="sym">=</span> <span class="num">0</span>
-    ht<span class="sym">-&gt;</span>totals<span class="sym">=</span><span class="num">0</span>
-    return<span class="sym">(</span>ht<span class="sym">)</span>
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'------------------------------------------------------</span>
-<span class="kwa">sub</span> ht_destroy<span class="sym">(</span><span class="kwa">ByVal</span> ht <span class="kwa">as</span> ht_ht ptr<span class="sym">)</span>      <span class="slc">'''</span>
-    <span class="kwa">dim as</span> ht_node  ptr cur<span class="sym">,</span>_next
-    <span class="kwa">dim</span> i <span class="kwa">As</span> <span class="kwb">Integer</span>
-    <span class="kwa">for</span> i<span class="sym">=</span><span class="num">0</span> <span class="kwa">to</span> ht<span class="sym">-&gt;</span>size<span class="sym">-</span><span class="num">1</span>
-     _next <span class="sym">=</span> ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>i<span class="sym">]</span>
-     <span class="kwa">while</span> <span class="sym">(</span>_next<span class="sym">)</span>
-      cur <span class="sym">=</span> _next
-      _next <span class="sym">=</span> _next<span class="sym">-&gt;</span>_next
-      deallocate<span class="sym">(</span>cur<span class="sym">-&gt;</span>key<span class="sym">)</span>
-      deallocate<span class="sym">(</span>cur<span class="sym">)</span>
-     wend
-    <span class="kwa">next</span>
-    deallocate <span class="sym">(</span>ht<span class="sym">-&gt;</span>tbl<span class="sym">)</span>
-    deallocate<span class="sym">(</span>ht<span class="sym">)</span>
-<span class="kwa">end sub</span>
-<span class="slc">'</span>
-<span class="slc">'---------------------------------------------------</span>
-<span class="kwa">function</span> ht_find_new<span class="sym">(</span><span class="kwa">ByVal</span> ht <span class="kwa">as</span> ht_ht ptr<span class="sym">,</span> <span class="kwa">ByVal</span> key <span class="kwa">as</span> zstring ptr<span class="sym">)</span> <span class="kwa">as</span> ht_node ptr
-    <span class="kwa">dim</span> hash_code <span class="kwa">As</span> <span class="kwb">Integer</span> <span class="sym">=</span> ht_hashcode<span class="sym">(</span>ht<span class="sym">,</span> key<span class="sym">)</span>
-    <span class="kwa">dim as</span>  ht_node ptr prev <span class="sym">=</span> <span class="num">0</span><span class="sym">,</span>node <span class="sym">=</span> ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>hash_code<span class="sym">]</span>
-    <span class="slc">'exists</span>
-    <span class="kwa">while</span> <span class="sym">(</span>node<span class="sym">)</span>
-      <span class="kwa">if</span> strcmp<span class="sym">(</span>key<span class="sym">,</span> node<span class="sym">-&gt;</span>key<span class="sym">)=</span><span class="num">0</span> <span class="kwa">then</span>  return node
-      prev <span class="sym">=</span> node
-      node <span class="sym">=</span> node<span class="sym">-&gt;</span>_next
-    wend
-    <span class="slc">'does not exist</span>
-    ht<span class="sym">-&gt;</span>items<span class="sym">+=</span><span class="num">1</span>
-    <span class="slc">'not the first node</span>
-    <span class="kwa">if</span> <span class="sym">(</span>prev<span class="sym">)</span> <span class="kwa">then</span>
-      prev<span class="sym">-&gt;</span>_next <span class="sym">=</span> ht_node_create<span class="sym">(</span>key<span class="sym">)</span>
-      return prev<span class="sym">-&gt;</span>_next
-    <span class="slc">'first node of string</span>
-    <span class="kwa">else</span>
-      ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>hash_code<span class="sym">] =</span> ht_node_create<span class="sym">(</span>key<span class="sym">)</span>
-      return ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>hash_code<span class="sym">]</span>
-    <span class="kwa">end if</span>
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'  Hash Table iterator data/functions</span>
-<span class="slc">'-------------------------------------------------------</span>
-<span class="kwa">function</span> ht_next<span class="sym">(</span><span class="kwa">ByVal</span> ht <span class="kwa">as</span> ht_ht ptr<span class="sym">)</span><span class="kwa">as</span> ht_node ptr   <span class="slc">'''</span>
-    <span class="kwa">dim</span> index <span class="kwa">as</span> uinteger
-    <span class="kwa">dim as</span> ht_node ptr node <span class="sym">=</span> ht<span class="sym">-&gt;</span>iter_next
-    <span class="slc">'first node found</span>
-    <span class="kwa">if</span> <span class="sym">(</span>node<span class="sym">)</span> <span class="kwa">then</span>
-     ht<span class="sym">-&gt;</span>iter_next <span class="sym">=</span> node<span class="sym">-&gt;</span>_next
-     return<span class="sym">(</span>node<span class="sym">)</span>
-    <span class="kwa">else</span>
-     <span class="slc">'must search for first node</span>
-     <span class="kwa">while</span> ht<span class="sym">-&gt;</span>iter_index <span class="sym">&lt;</span> ht<span class="sym">-&gt;</span>size
-      index <span class="sym">=</span> ht<span class="sym">-&gt;</span>iter_index
-      ht<span class="sym">-&gt;</span>iter_index<span class="sym">+=</span><span class="num">1</span>
-      <span class="kwa">if</span> ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>index<span class="sym">]</span> <span class="kwa">then</span>
-       ht<span class="sym">-&gt;</span>iter_next <span class="sym">=</span> ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>index<span class="sym">]-&gt;</span>_next
-       return ht<span class="sym">-&gt;</span>tbl<span class="sym">[</span>index<span class="sym">]</span>
-      <span class="kwa">end if</span>
-     wend
-    <span class="kwa">end if</span>
-    return <span class="kwa">null</span>
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'-----------------------------------------------------</span>
-<span class="kwa">function</span> ht_first<span class="sym">(</span><span class="kwa">ByVal</span> ht <span class="kwa">as</span> ht_ht ptr<span class="sym">)</span> <span class="kwa">as</span> ht_node ptr   <span class="slc">'''</span>
-    ht<span class="sym">-&gt;</span>iter_index <span class="sym">=</span> <span class="num">0</span>
-    ht<span class="sym">-&gt;</span>iter_next <span class="sym">=</span> cast <span class="sym">(</span>ht_node ptr<span class="sym">,</span> <span class="kwa">NULL</span><span class="sym">)</span>
-    return ht_next<span class="sym">(</span>ht<span class="sym">)</span>
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'-----------------------------------------------------</span>
-<span class="kwa">function</span> hash_table_size <span class="sym">(</span><span class="kwa">ByVal</span> fl <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">,</span> <span class="kwa">ByVal</span> buflen <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">As</span> <span class="kwb">Integer</span>
-  <span class="kwa">dim As</span> <span class="kwb">Integer</span> maxsize1<span class="sym">,</span> maxsize2
-  maxsize1 <span class="sym">=</span> buflen <span class="sym">-</span> fl
-  maxsize2 <span class="sym">=</span> <span class="num">4</span>
-  fl<span class="sym">-=</span><span class="num">1</span>
-  <span class="kwa">while</span> <span class="sym">(</span>fl <span class="sym">&gt;</span> <span class="num">0</span> <span class="kwa">and</span> maxsize2 <span class="sym">&lt;</span> maxsize1<span class="sym">)</span>
-   maxsize2 <span class="sym">=</span> maxsize2 <span class="sym">*</span> <span class="num">4</span>
-   fl<span class="sym">-=</span><span class="num">1</span>
-  wend
-  <span class="kwa">if</span> <span class="sym">(</span>maxsize1 <span class="sym">&lt;</span> maxsize2<span class="sym">)</span> <span class="kwa">then</span> return maxsize1
-  return maxsize2
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'-----------------------------------------------------</span>
-<span class="kwa">function</span> generate_frequencies <span class="sym">(</span><span class="kwa">ByVal</span> fl <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">,</span> _
-                               <span class="kwa">ByVal</span> buffer <span class="kwa">as</span> zstring ptr<span class="sym">,</span> _
-                               <span class="kwa">ByVal</span> buflen <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">as</span> ht_ht ptr
-  <span class="kwa">dim  as</span> ht_ht ptr  ht
-  <span class="kwa">dim</span> reader <span class="kwa">as</span> zstring ptr
-  <span class="kwa">dim</span> i <span class="kwa">As</span> <span class="kwb">Integer</span>
-  <span class="kwa">dim as</span> ubyte nulled
+    <span class="hl slc">'print &quot;size &quot;; size</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">ht_prime_list</span><span class="hl sym">(</span>i<span class="hl sym">) &lt;</span> size<span class="hl sym">):</span> i<span class="hl sym">+=</span><span class="hl num">1</span><span class="hl sym">:</span><span class="hl kwa">wend</span>
+    ht<span class="hl sym">-&gt;</span>size <span class="hl sym">=</span> <span class="hl kwd">ht_prime_list</span><span class="hl sym">(</span>i<span class="hl sym">)</span>
+    ht<span class="hl sym">-&gt;</span>tbl <span class="hl sym">=</span> <span class="hl kwd">callocate</span><span class="hl sym">(</span>ht<span class="hl sym">-&gt;</span>size <span class="hl sym">*</span> <span class="hl kwd">sizeof</span><span class="hl sym">(</span>ht_node ptr<span class="hl sym">))</span>
+    ht<span class="hl sym">-&gt;</span>iter_index <span class="hl sym">=</span> <span class="hl num">0</span>
+    ht<span class="hl sym">-&gt;</span>iter_next <span class="hl sym">=</span> <span class="hl num">0</span>
+    ht<span class="hl sym">-&gt;</span>items <span class="hl sym">=</span> <span class="hl num">0</span>
+    ht<span class="hl sym">-&gt;</span>totals<span class="hl sym">=</span><span class="hl num">0</span>
+    <span class="hl kwa">return</span><span class="hl sym">(</span>ht<span class="hl sym">)</span>
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'------------------------------------------------------</span>
+<span class="hl kwa">sub</span> <span class="hl kwd">ht_destroy</span><span class="hl sym">(</span><span class="hl kwa">ByVal</span> ht <span class="hl kwa">as</span> ht_ht ptr<span class="hl sym">)</span>      <span class="hl slc">'''</span>
+    <span class="hl kwa">dim as</span> ht_node  ptr cur<span class="hl sym">,</span>_next
+    <span class="hl kwa">dim</span> i <span class="hl kwa">As</span> <span class="hl kwb">Integer</span>
+    <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">to</span> ht<span class="hl sym">-&gt;</span>size<span class="hl sym">-</span><span class="hl num">1</span>
+     _next <span class="hl sym">=</span> ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>i<span class="hl sym">]</span>
+     <span class="hl kwa">while</span> <span class="hl sym">(</span>_next<span class="hl sym">)</span>
+      cur <span class="hl sym">=</span> _next
+      _next <span class="hl sym">=</span> _next<span class="hl sym">-&gt;</span>_next
+      <span class="hl kwd">deallocate</span><span class="hl sym">(</span>cur<span class="hl sym">-&gt;</span>key<span class="hl sym">)</span>
+      <span class="hl kwd">deallocate</span><span class="hl sym">(</span>cur<span class="hl sym">)</span>
+     <span class="hl kwa">wend</span>
+    <span class="hl kwa">next</span>
+    <span class="hl kwd">deallocate</span> <span class="hl sym">(</span>ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">)</span>
+    <span class="hl kwd">deallocate</span><span class="hl sym">(</span>ht<span class="hl sym">)</span>
+<span class="hl kwa">end sub</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'---------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span><span class="hl kwa">ByVal</span> ht <span class="hl kwa">as</span> ht_ht ptr<span class="hl sym">,</span> <span class="hl kwa">ByVal</span> key <span class="hl kwa">as</span> zstring ptr<span class="hl sym">)</span> <span class="hl kwa">as</span> ht_node ptr
+    <span class="hl kwa">dim</span> hash_code <span class="hl kwa">As</span> <span class="hl kwb">Integer</span> <span class="hl sym">=</span> <span class="hl kwd">ht_hashcode</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> key<span class="hl sym">)</span>
+    <span class="hl kwa">dim as</span>  ht_node ptr prev <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span>node <span class="hl sym">=</span> ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>hash_code<span class="hl sym">]</span>
+    <span class="hl slc">'exists</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>node<span class="hl sym">)</span>
+      <span class="hl kwa">if</span> <span class="hl kwd">strcmp</span><span class="hl sym">(</span>key<span class="hl sym">,</span> node<span class="hl sym">-&gt;</span>key<span class="hl sym">)=</span><span class="hl num">0</span> <span class="hl kwa">then  return</span> node
+      prev <span class="hl sym">=</span> node
+      node <span class="hl sym">=</span> node<span class="hl sym">-&gt;</span>_next
+    <span class="hl kwa">wend</span>
+    <span class="hl slc">'does not exist</span>
+    ht<span class="hl sym">-&gt;</span>items<span class="hl sym">+=</span><span class="hl num">1</span>
+    <span class="hl slc">'not the first node</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>prev<span class="hl sym">)</span> <span class="hl kwa">then</span>
+      prev<span class="hl sym">-&gt;</span>_next <span class="hl sym">=</span> <span class="hl kwd">ht_node_create</span><span class="hl sym">(</span>key<span class="hl sym">)</span>
+      <span class="hl kwa">return</span> prev<span class="hl sym">-&gt;</span>_next
+    <span class="hl slc">'first node of string</span>
+    <span class="hl kwa">else</span>
+      ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>hash_code<span class="hl sym">] =</span> <span class="hl kwd">ht_node_create</span><span class="hl sym">(</span>key<span class="hl sym">)</span>
+      <span class="hl kwa">return</span> ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>hash_code<span class="hl sym">]</span>
+    <span class="hl kwa">end if</span>
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'  Hash Table iterator data/functions</span>
+<span class="hl slc">'-------------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span><span class="hl kwa">ByVal</span> ht <span class="hl kwa">as</span> ht_ht ptr<span class="hl sym">)</span><span class="hl kwa">as</span> ht_node ptr   <span class="hl slc">'''</span>
+    <span class="hl kwa">dim</span> index <span class="hl kwa">as</span> uinteger
+    <span class="hl kwa">dim as</span> ht_node ptr node <span class="hl sym">=</span> ht<span class="hl sym">-&gt;</span>iter_next
+    <span class="hl slc">'first node found</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>node<span class="hl sym">)</span> <span class="hl kwa">then</span>
+     ht<span class="hl sym">-&gt;</span>iter_next <span class="hl sym">=</span> node<span class="hl sym">-&gt;</span>_next
+     <span class="hl kwa">return</span><span class="hl sym">(</span>node<span class="hl sym">)</span>
+    <span class="hl kwa">else</span>
+     <span class="hl slc">'must search for first node</span>
+     <span class="hl kwa">while</span> ht<span class="hl sym">-&gt;</span>iter_index <span class="hl sym">&lt;</span> ht<span class="hl sym">-&gt;</span>size
+      index <span class="hl sym">=</span> ht<span class="hl sym">-&gt;</span>iter_index
+      ht<span class="hl sym">-&gt;</span>iter_index<span class="hl sym">+=</span><span class="hl num">1</span>
+      <span class="hl kwa">if</span> ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>index<span class="hl sym">]</span> <span class="hl kwa">then</span>
+       ht<span class="hl sym">-&gt;</span>iter_next <span class="hl sym">=</span> ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>index<span class="hl sym">]-&gt;</span>_next
+       <span class="hl kwa">return</span> ht<span class="hl sym">-&gt;</span>tbl<span class="hl sym">[</span>index<span class="hl sym">]</span>
+      <span class="hl kwa">end if</span>
+     <span class="hl kwa">wend</span>
+    <span class="hl kwa">end if</span>
+    <span class="hl kwa">return</span> null
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'-----------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">ht_first</span><span class="hl sym">(</span><span class="hl kwa">ByVal</span> ht <span class="hl kwa">as</span> ht_ht ptr<span class="hl sym">)</span> <span class="hl kwa">as</span> ht_node ptr   <span class="hl slc">'''</span>
+    ht<span class="hl sym">-&gt;</span>iter_index <span class="hl sym">=</span> <span class="hl num">0</span>
+    ht<span class="hl sym">-&gt;</span>iter_next <span class="hl sym">=</span> <span class="hl kwd">cast</span> <span class="hl sym">(</span>ht_node ptr<span class="hl sym">,</span> NULL<span class="hl sym">)</span>
+    <span class="hl kwa">return</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span>ht<span class="hl sym">)</span>
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'-----------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">hash_table_size</span> <span class="hl sym">(</span><span class="hl kwa">ByVal</span> fl <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">,</span> <span class="hl kwa">ByVal</span> buflen <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span> <span class="hl kwa">As</span> <span class="hl kwb">Integer</span>
+  <span class="hl kwa">dim As</span> <span class="hl kwb">Integer</span> maxsize1<span class="hl sym">,</span> maxsize2
+  maxsize1 <span class="hl sym">=</span> buflen <span class="hl sym">-</span> fl
+  maxsize2 <span class="hl sym">=</span> <span class="hl num">4</span>
+  fl<span class="hl sym">-=</span><span class="hl num">1</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>fl <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">and</span> maxsize2 <span class="hl sym">&lt;</span> maxsize1<span class="hl sym">)</span>
+   maxsize2 <span class="hl sym">=</span> maxsize2 <span class="hl sym">*</span> <span class="hl num">4</span>
+   fl<span class="hl sym">-=</span><span class="hl num">1</span>
+  <span class="hl kwa">wend</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>maxsize1 <span class="hl sym">&lt;</span> maxsize2<span class="hl sym">)</span> <span class="hl kwa">then return</span> maxsize1
+  <span class="hl kwa">return</span> maxsize2
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'-----------------------------------------------------</span>
+<span class="hl kwa">function</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span><span class="hl kwa">ByVal</span> fl <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">,</span> _
+                               <span class="hl kwa">ByVal</span> buffer <span class="hl kwa">as</span> zstring ptr<span class="hl sym">,</span> _
+                               <span class="hl kwa">ByVal</span> buflen <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span> <span class="hl kwa">as</span> ht_ht ptr
+  <span class="hl kwa">dim  as</span> ht_ht ptr  ht
+  <span class="hl kwa">dim</span> reader <span class="hl kwa">as</span> zstring ptr
+  <span class="hl kwa">dim</span> i <span class="hl kwa">As</span> <span class="hl kwb">Integer</span>
+  <span class="hl kwa">dim as</span> ubyte nulled
 
-  <span class="kwa">if</span> <span class="sym">(</span>fl <span class="sym">&gt;</span> buflen<span class="sym">)</span> <span class="kwa">then</span> return <span class="kwa">NULL</span>
-  ht <span class="sym">=</span> ht_create <span class="sym">(</span>hash_table_size <span class="sym">(</span>fl<span class="sym">,</span> buflen<span class="sym">))</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>fl <span class="hl sym">&gt;</span> buflen<span class="hl sym">)</span> <span class="hl kwa">then return</span> NULL
+  ht <span class="hl sym">=</span> <span class="hl kwd">ht_create</span> <span class="hl sym">(</span><span class="hl kwd">hash_table_size</span> <span class="hl sym">(</span>fl<span class="hl sym">,</span> buflen<span class="hl sym">))</span>
 
-   <span class="kwa">for</span> i <span class="sym">=</span> <span class="num">0</span> <span class="kwa">to</span>  buflen <span class="sym">-</span>fl
-    reader <span class="sym">=</span> &#64;buffer<span class="sym">[</span>i<span class="sym">]</span>
-    nulled <span class="sym">=</span> reader<span class="sym">[</span>fl<span class="sym">]</span>
-    reader<span class="sym">[</span>fl<span class="sym">] =</span> <span class="num">0</span>
-    ht_find_new<span class="sym">(</span>ht<span class="sym">,</span> reader<span class="sym">)-&gt;</span>_val<span class="sym">+=</span><span class="num">1</span>
-    ht<span class="sym">-&gt;</span>totals<span class="sym">+=</span><span class="num">1</span>
-    reader<span class="sym">[</span>fl<span class="sym">] =</span> nulled
-  <span class="kwa">next</span>
-  return ht
-<span class="kwa">end function</span>
-<span class="slc">'</span>
-<span class="slc">'----------------------------------------------------</span>
-<span class="kwa">sub</span> write_frequencies <span class="sym">(</span><span class="kwa">ByVal</span> fl <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">,</span> _
-                       <span class="kwa">ByVal</span> buffer <span class="kwa">as</span> zstring ptr<span class="sym">,</span> _
-                       <span class="kwa">ByVal</span> buflen <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">)</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">to</span>  buflen <span class="hl sym">-</span>fl
+    reader <span class="hl sym">=</span> &#64;buffer<span class="hl sym">[</span>i<span class="hl sym">]</span>
+    nulled <span class="hl sym">=</span> reader<span class="hl sym">[</span>fl<span class="hl sym">]</span>
+    reader<span class="hl sym">[</span>fl<span class="hl sym">] =</span> <span class="hl num">0</span>
+    <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> reader<span class="hl sym">)-&gt;</span>_val<span class="hl sym">+=</span><span class="hl num">1</span>
+    ht<span class="hl sym">-&gt;</span>totals<span class="hl sym">+=</span><span class="hl num">1</span>
+    reader<span class="hl sym">[</span>fl<span class="hl sym">] =</span> nulled
+  <span class="hl kwa">next</span>
+  <span class="hl kwa">return</span> ht
+<span class="hl kwa">end function</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'----------------------------------------------------</span>
+<span class="hl kwa">sub</span> <span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl kwa">ByVal</span> fl <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">,</span> _
+                       <span class="hl kwa">ByVal</span> buffer <span class="hl kwa">as</span> zstring ptr<span class="hl sym">,</span> _
+                       <span class="hl kwa">ByVal</span> buflen <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span>
 
-  <span class="kwa">dim as</span>  ht_ht ptr ht
-  <span class="kwa">dim AS</span> <span class="kwb">Integer</span> total<span class="sym">,</span> i<span class="sym">,</span> j<span class="sym">,</span> size
-  <span class="kwa">dim as</span>  ht_node ptr nd
-  <span class="kwa">dim as</span> sorter ptr s
-  <span class="kwa">dim as</span> sorter tmp
+  <span class="hl kwa">dim as</span>  ht_ht ptr ht
+  <span class="hl kwa">dim AS</span> <span class="hl kwb">Integer</span> total<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> size
+  <span class="hl kwa">dim as</span>  ht_node ptr nd
+  <span class="hl kwa">dim as</span> sorter ptr s
+  <span class="hl kwa">dim as</span> sorter tmp
 
-  ht <span class="sym">=</span> generate_frequencies <span class="sym">(</span>fl<span class="sym">,</span> buffer<span class="sym">,</span> buflen<span class="sym">)</span>
+  ht <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span>fl<span class="hl sym">,</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">)</span>
 
-    total <span class="sym">=</span> <span class="num">0</span>
-    size <span class="sym">=</span> <span class="num">0</span>
-    nd <span class="sym">=</span> ht_first<span class="sym">(</span>ht<span class="sym">)</span>
-    <span class="kwa">While</span> nd <span class="sym">&lt;&gt;</span> <span class="kwa">NULL</span>
-      total <span class="sym">=</span> total <span class="sym">+</span> nd<span class="sym">-&gt;</span>_val
-      size <span class="sym">+=</span> <span class="num">1</span>
-      nd <span class="sym">=</span> ht_next<span class="sym">(</span>ht<span class="sym">)</span>
-    Wend
+    total <span class="hl sym">=</span> <span class="hl num">0</span>
+    size <span class="hl sym">=</span> <span class="hl num">0</span>
+    nd <span class="hl sym">=</span> <span class="hl kwd">ht_first</span><span class="hl sym">(</span>ht<span class="hl sym">)</span>
+    <span class="hl kwa">While</span> nd <span class="hl sym">&lt;&gt;</span> NULL
+      total <span class="hl sym">=</span> total <span class="hl sym">+</span> nd<span class="hl sym">-&gt;</span>_val
+      size <span class="hl sym">+=</span> <span class="hl num">1</span>
+      nd <span class="hl sym">=</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span>ht<span class="hl sym">)</span>
+    <span class="hl kwa">Wend</span>
 
-  s <span class="sym">=</span> callocate <span class="sym">(</span>size<span class="sym">,</span> sizeof <span class="sym">(</span>sorter<span class="sym">))</span>
-  i <span class="sym">=</span> <span class="num">0</span>
+  s <span class="hl sym">=</span> <span class="hl kwd">callocate</span> <span class="hl sym">(</span>size<span class="hl sym">,</span> <span class="hl kwd">sizeof</span> <span class="hl sym">(</span>sorter<span class="hl sym">))</span>
+  i <span class="hl sym">=</span> <span class="hl num">0</span>
 
-  <span class="slc">'print ht-&gt;items,ht-&gt;size, ht-&gt;totals</span>
-  nd <span class="sym">=</span> ht_first <span class="sym">(</span>ht<span class="sym">)</span>
+  <span class="hl slc">'print ht-&gt;items,ht-&gt;size, ht-&gt;totals</span>
+  nd <span class="hl sym">=</span> <span class="hl kwd">ht_first</span> <span class="hl sym">(</span>ht<span class="hl sym">)</span>
 
-  <span class="kwa">while</span> nd <span class="sym">&lt;&gt;</span> <span class="kwa">NULL</span>
-    s<span class="sym">[</span>i<span class="sym">]</span>._string <span class="sym">=</span> nd<span class="sym">-&gt;</span>key
-    s<span class="sym">[</span>i<span class="sym">]</span>.num <span class="sym">=</span> nd<span class="sym">-&gt;</span>_val
-    i<span class="sym">+=</span><span class="num">1</span>
-    nd <span class="sym">=</span> ht_next <span class="sym">(</span>ht<span class="sym">)</span>
-  wend
+  <span class="hl kwa">while</span> nd <span class="hl sym">&lt;&gt;</span> NULL
+    s<span class="hl sym">[</span>i<span class="hl sym">]</span>._string <span class="hl sym">=</span> nd<span class="hl sym">-&gt;</span>key
+    s<span class="hl sym">[</span>i<span class="hl sym">]</span>.num <span class="hl sym">=</span> nd<span class="hl sym">-&gt;</span>_val
+    i<span class="hl sym">+=</span><span class="hl num">1</span>
+    nd <span class="hl sym">=</span> <span class="hl kwd">ht_next</span> <span class="hl sym">(</span>ht<span class="hl sym">)</span>
+  <span class="hl kwa">wend</span>
 
-  <span class="slc">'bubble sort</span>
-  <span class="kwa">for</span> i <span class="sym">=</span> <span class="num">0</span>  <span class="kwa">to</span> size <span class="sym">-</span> <span class="num">2</span>
-    <span class="kwa">for</span> j <span class="sym">=</span> i <span class="sym">+</span> <span class="num">1</span> <span class="kwa">to</span> size<span class="sym">-</span><span class="num">1</span>
-      <span class="kwa">if</span> s<span class="sym">[</span>i<span class="sym">]</span>.num <span class="sym">&lt;</span> s<span class="sym">[</span>j<span class="sym">]</span>.num <span class="kwa">then</span>
-         swap s<span class="sym">[</span>i<span class="sym">],</span>s<span class="sym">[</span>j<span class="sym">]</span>
-      <span class="kwa">end if</span>
-    <span class="kwa">next</span>
-  <span class="kwa">next</span>
+  <span class="hl slc">'bubble sort</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span>  <span class="hl kwa">to</span> size <span class="hl sym">-</span> <span class="hl num">2</span>
+    <span class="hl kwa">for</span> j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl kwa">to</span> size<span class="hl sym">-</span><span class="hl num">1</span>
+      <span class="hl kwa">if</span> s<span class="hl sym">[</span>i<span class="hl sym">]</span>.num <span class="hl sym">&lt;</span> s<span class="hl sym">[</span>j<span class="hl sym">]</span>.num <span class="hl kwa">then</span>
+         swap s<span class="hl sym">[</span>i<span class="hl sym">],</span>s<span class="hl sym">[</span>j<span class="hl sym">]</span>
+      <span class="hl kwa">end if</span>
+    <span class="hl kwa">next</span>
+  <span class="hl kwa">next</span>
 
-  <span class="kwa">for</span> i <span class="sym">=</span> <span class="num">0</span>  <span class="kwa">to</span> size <span class="sym">-</span><span class="num">1</span>
-    printf <span class="sym">(</span><span class="str">&quot;%s %.3f%c&quot;</span><span class="sym">,</span> s<span class="sym">[</span>i<span class="sym">]</span>._string<span class="sym">,</span> <span class="num">100</span> <span class="sym">*</span> s<span class="sym">[</span>i<span class="sym">]</span>.num <span class="sym">/</span> ht<span class="sym">-&gt;</span>totals<span class="sym">,</span> <span class="num">10</span><span class="sym">)</span>
-  <span class="kwa">next</span>
-  printf <span class="sym">(</span><span class="str">&quot;%c&quot;</span><span class="sym">,</span> <span class="num">10</span><span class="sym">)</span>
-  ht_destroy <span class="sym">(</span>ht<span class="sym">)</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span>  <span class="hl kwa">to</span> size <span class="hl sym">-</span><span class="hl num">1</span>
+    <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%s %.3f%c&quot;</span><span class="hl sym">,</span> s<span class="hl sym">[</span>i<span class="hl sym">]</span>._string<span class="hl sym">,</span> <span class="hl num">100</span> <span class="hl sym">*</span> s<span class="hl sym">[</span>i<span class="hl sym">]</span>.num <span class="hl sym">/</span> ht<span class="hl sym">-&gt;</span>totals<span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">)</span>
+  <span class="hl kwa">next</span>
+  <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%c&quot;</span><span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">)</span>
+  <span class="hl kwd">ht_destroy</span> <span class="hl sym">(</span>ht<span class="hl sym">)</span>
 
-  deallocate <span class="sym">(</span>s<span class="sym">)</span>
-<span class="kwa">end sub</span>
-<span class="slc">'</span>
-<span class="slc">'----------------------------------------------------</span>
-<span class="kwa">sub</span> write_count <span class="sym">(</span><span class="kwa">ByVal</span> searchFor <span class="kwa">as</span> zstring ptr<span class="sym">,</span> _
-                 <span class="kwa">ByVal</span> buffer <span class="kwa">as</span> zstring ptr<span class="sym">,</span> _
-                 <span class="kwa">ByVal</span> buflen <span class="kwa">As</span> <span class="kwb">Integer</span><span class="sym">)</span>
-  <span class="kwa">dim</span> ht <span class="kwa">as</span> ht_ht ptr
-  <span class="slc">'print strlen(searchFor)</span>
-  ht <span class="sym">=</span> generate_frequencies <span class="sym">(</span>strlen<span class="sym">(</span>searchFor<span class="sym">),</span> buffer<span class="sym">,</span> buflen<span class="sym">)</span>
+  <span class="hl kwd">deallocate</span> <span class="hl sym">(</span>s<span class="hl sym">)</span>
+<span class="hl kwa">end sub</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'----------------------------------------------------</span>
+<span class="hl kwa">sub</span> <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl kwa">ByVal</span> searchFor <span class="hl kwa">as</span> zstring ptr<span class="hl sym">,</span> _
+                 <span class="hl kwa">ByVal</span> buffer <span class="hl kwa">as</span> zstring ptr<span class="hl sym">,</span> _
+                 <span class="hl kwa">ByVal</span> buflen <span class="hl kwa">As</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span>
+  <span class="hl kwa">dim</span> ht <span class="hl kwa">as</span> ht_ht ptr
+  <span class="hl slc">'print strlen(searchFor)</span>
+  ht <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span><span class="hl kwd">strlen</span><span class="hl sym">(</span>searchFor<span class="hl sym">),</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">)</span>
 
-  printf <span class="sym">(</span><span class="str">&quot;%d%c%s%c&quot;</span><span class="sym">,</span> ht_find_new<span class="sym">(</span>ht<span class="sym">,</span> searchFor<span class="sym">)-&gt;</span>_val<span class="sym">,</span> <span class="num">9</span><span class="sym">,</span> searchFor<span class="sym">,</span> <span class="num">10</span><span class="sym">)</span>
-  ht_destroy <span class="sym">(</span>ht<span class="sym">)</span>
-<span class="kwa">end sub</span>
-<span class="slc">'</span>
-<span class="slc">'----------------------------------------------------</span>
-  <span class="kwa">dim</span> c <span class="kwa">as</span> ubyte
-  <span class="kwa">dim as</span> zstring ptr _line<span class="sym">,</span>buffer<span class="sym">,</span>tmp<span class="sym">,</span>x
-  <span class="kwa">dim As</span> <span class="kwb">Integer</span> i<span class="sym">,</span> linelen<span class="sym">,</span> nothree
-  <span class="kwa">dim As</span> <span class="kwb">Integer</span> buflen<span class="sym">,</span> seqlen
-  const bufsize<span class="sym">=</span> <span class="num">65536</span>
+  <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%d%c%s%c&quot;</span><span class="hl sym">,</span> <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> searchFor<span class="hl sym">)-&gt;</span>_val<span class="hl sym">,</span> <span class="hl num">9</span><span class="hl sym">,</span> searchFor<span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">)</span>
+  <span class="hl kwd">ht_destroy</span> <span class="hl sym">(</span>ht<span class="hl sym">)</span>
+<span class="hl kwa">end sub</span>
+<span class="hl slc">'</span>
+<span class="hl slc">'----------------------------------------------------</span>
+  <span class="hl kwa">dim</span> c <span class="hl kwa">as</span> ubyte
+  <span class="hl kwa">dim as</span> zstring ptr _line<span class="hl sym">,</span>buffer<span class="hl sym">,</span>tmp<span class="hl sym">,</span>x
+  <span class="hl kwa">dim As</span> <span class="hl kwb">Integer</span> i<span class="hl sym">,</span> linelen<span class="hl sym">,</span> nothree
+  <span class="hl kwa">dim As</span> <span class="hl kwb">Integer</span> buflen<span class="hl sym">,</span> seqlen
+  <span class="hl kwa">const</span> bufsize<span class="hl sym">=</span> <span class="hl num">65536</span>
 
-  <span class="slc">'go to the third section</span>
-  _line <span class="sym">=</span> allocate <span class="sym">(</span><span class="num">256</span><span class="sym">)</span>
-  <span class="kwa">if</span> _line<span class="sym">=</span><span class="num">0</span> <span class="kwa">then  end</span> <span class="sym">-</span><span class="num">1</span>
-  nothree <span class="sym">= -</span><span class="num">1</span>
-  do
-  do
-  do
-    <span class="kwa">if</span> fgets<span class="sym">(</span>_line<span class="sym">,</span> <span class="num">255</span><span class="sym">,</span> stdin<span class="sym">)=</span><span class="num">0</span> <span class="kwa">then</span> ?<span class="str">&quot;Can't find section three&quot;</span><span class="sym">:</span><span class="kwa">end</span>
-  loop until _line<span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> asc<span class="sym">(</span><span class="str">&quot;&gt;&quot;</span><span class="sym">)</span>
-  loop until _line<span class="sym">[</span><span class="num">1</span><span class="sym">] =</span> asc<span class="sym">(</span><span class="str">&quot;T&quot;</span><span class="sym">)</span>
-  loop until _line<span class="sym">[</span><span class="num">2</span><span class="sym">] =</span> asc<span class="sym">(</span><span class="str">&quot;H&quot;</span><span class="sym">)</span>
-  <span class="slc">'print timer-T!</span>
-  deallocate <span class="sym">(</span>_line<span class="sym">)</span>
+  <span class="hl slc">'go to the third section</span>
+  _line <span class="hl sym">=</span> <span class="hl kwd">allocate</span> <span class="hl sym">(</span><span class="hl num">256</span><span class="hl sym">)</span>
+  <span class="hl kwa">if</span> _line<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">then  end</span> <span class="hl sym">-</span><span class="hl num">1</span>
+  nothree <span class="hl sym">= -</span><span class="hl num">1</span>
+  <span class="hl kwa">do</span>
+  <span class="hl kwa">do</span>
+  <span class="hl kwa">do</span>
+    <span class="hl kwa">if</span> <span class="hl kwd">fgets</span><span class="hl sym">(</span>_line<span class="hl sym">,</span> <span class="hl num">255</span><span class="hl sym">,</span> stdin<span class="hl sym">)=</span><span class="hl num">0</span> <span class="hl kwa">then</span> ?<span class="hl str">&quot;Can't find section three&quot;</span><span class="hl sym">:</span><span class="hl kwa">end</span>
+  <span class="hl kwa">loop until</span> _line<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl kwd">asc</span><span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">loop until</span> _line<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] =</span> <span class="hl kwd">asc</span><span class="hl sym">(</span><span class="hl str">&quot;T&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">loop until</span> _line<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] =</span> <span class="hl kwd">asc</span><span class="hl sym">(</span><span class="hl str">&quot;H&quot;</span><span class="hl sym">)</span>
+  <span class="hl slc">'print timer-T!</span>
+  <span class="hl kwd">deallocate</span> <span class="hl sym">(</span>_line<span class="hl sym">)</span>
 
-  <span class="slc">'reading buffer</span>
+  <span class="hl slc">'reading buffer</span>
 
-  buffer <span class="sym">=</span> allocate <span class="sym">(</span>bufsize <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
-  <span class="kwa">if</span> buffer <span class="sym">=</span><span class="num">0</span> <span class="kwa">then   end</span> <span class="sym">(-</span><span class="num">1</span><span class="sym">)</span>
+  buffer <span class="hl sym">=</span> <span class="hl kwd">allocate</span> <span class="hl sym">(</span>bufsize <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">if</span> buffer <span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">then   end</span> <span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">)</span>
 
-  x <span class="sym">=</span> buffer
-  seqlen <span class="sym">=</span> <span class="num">0</span>
-  <span class="kwa">while</span> <span class="sym">(</span>fgets <span class="sym">(</span>x<span class="sym">,</span> <span class="num">255</span><span class="sym">,</span> stdin<span class="sym">)&lt;&gt;</span><span class="num">0</span><span class="sym">)</span>
-     linelen<span class="sym">=</span>strlen<span class="sym">(</span>x<span class="sym">)</span>
-     <span class="kwa">if</span> x<span class="sym">[</span>linelen<span class="sym">-</span><span class="num">1</span><span class="sym">]=</span><span class="num">10</span> <span class="kwa">then</span> linelen<span class="sym">-=</span><span class="num">1</span>
-     seqlen <span class="sym">=</span> seqlen <span class="sym">+</span> linelen
-     <span class="kwa">if</span> <span class="sym">(</span>seqlen <span class="sym">+</span> <span class="num">512</span> <span class="sym">&gt;=</span> buflen<span class="sym">)</span> <span class="kwa">then</span>
-       buflen <span class="sym">=</span> buflen <span class="sym">+</span> bufsize
-       tmp <span class="sym">=</span> reallocate <span class="sym">(</span>buffer<span class="sym">,</span> buflen <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
-       <span class="kwa">if</span> <span class="sym">(</span>tmp <span class="sym">=</span> <span class="kwa">NULL</span><span class="sym">)</span> <span class="kwa">then end</span><span class="sym">(-</span><span class="num">1</span><span class="sym">)</span>
-       buffer <span class="sym">=</span> tmp
-       x <span class="sym">=</span> &#64;buffer<span class="sym">[</span>seqlen<span class="sym">]</span>
-     <span class="kwa">else</span>
-       x <span class="sym">=</span> &#64;x<span class="sym">[</span>linelen<span class="sym">]</span>
-     <span class="kwa">end if</span>
-  wend
-  x<span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> <span class="num">0</span>
+  x <span class="hl sym">=</span> buffer
+  seqlen <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span> <span class="hl sym">(</span>x<span class="hl sym">,</span> <span class="hl num">255</span><span class="hl sym">,</span> stdin<span class="hl sym">)&lt;&gt;</span><span class="hl num">0</span><span class="hl sym">)</span>
+     linelen<span class="hl sym">=</span><span class="hl kwd">strlen</span><span class="hl sym">(</span>x<span class="hl sym">)</span>
+     <span class="hl kwa">if</span> x<span class="hl sym">[</span>linelen<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]=</span><span class="hl num">10</span> <span class="hl kwa">then</span> linelen<span class="hl sym">-=</span><span class="hl num">1</span>
+     seqlen <span class="hl sym">=</span> seqlen <span class="hl sym">+</span> linelen
+     <span class="hl kwa">if</span> <span class="hl sym">(</span>seqlen <span class="hl sym">+</span> <span class="hl num">512</span> <span class="hl sym">&gt;=</span> buflen<span class="hl sym">)</span> <span class="hl kwa">then</span>
+       buflen <span class="hl sym">=</span> buflen <span class="hl sym">+</span> bufsize
+       tmp <span class="hl sym">=</span> <span class="hl kwd">reallocate</span> <span class="hl sym">(</span>buffer<span class="hl sym">,</span> buflen <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>tmp <span class="hl sym">=</span> NULL<span class="hl sym">)</span> <span class="hl kwa">then end</span><span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">)</span>
+       buffer <span class="hl sym">=</span> tmp
+       x <span class="hl sym">=</span> &#64;buffer<span class="hl sym">[</span>seqlen<span class="hl sym">]</span>
+     <span class="hl kwa">else</span>
+       x <span class="hl sym">=</span> &#64;x<span class="hl sym">[</span>linelen<span class="hl sym">]</span>
+     <span class="hl kwa">end if</span>
+  <span class="hl kwa">wend</span>
+  x<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">0</span>
 
-  <span class="sym">*</span>buffer <span class="sym">=</span> ucase<span class="sym">(*</span>buffer<span class="sym">)</span>
-  write_frequencies <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  write_frequencies <span class="sym">(</span><span class="num">2</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  write_count <span class="sym">(</span><span class="str">&quot;GGT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  write_count <span class="sym">(</span><span class="str">&quot;GGTA&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  write_count <span class="sym">(</span><span class="str">&quot;GGTATT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  write_count <span class="sym">(</span><span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  write_count <span class="sym">(</span><span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">)</span>
-  deallocate <span class="sym">(</span>buffer<span class="sym">)</span>
-<span class="kwa">end</span> <span class="num">0</span>
+  <span class="hl sym">*</span>buffer <span class="hl sym">=</span> <span class="hl kwd">ucase</span><span class="hl sym">(*</span>buffer<span class="hl sym">)</span>
+  <span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">)</span>
+  <span class="hl kwd">deallocate</span> <span class="hl sym">(</span>buffer<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl num">0</span>
