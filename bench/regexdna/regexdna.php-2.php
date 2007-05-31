@@ -8,7 +8,7 @@
 
 # regexp matches
 
-ini_set("memory_limit","40M");
+#ini_set("memory_limit","40M");
 
 $variants = array(
     'agggtaaa|tttaccct',
