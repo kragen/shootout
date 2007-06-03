@@ -103,13 +103,13 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
                $data[$lang][$test] = $row;
 
                $mt = &$mins[$test];
-               if ($row[DATA_FULLCPU] < $mt[CPU_MIN]){
+               if (($row[DATA_FULLCPU] < $mt[CPU_MIN]) && $row[DATA_FULLCPU] > 0.0){
                   $mt[CPU_MIN] = $row[DATA_FULLCPU];
                }
-               if ($row[DATA_MEMORY] < $mt[MEM_MIN]){
+               if (($row[DATA_MEMORY] < $mt[MEM_MIN]) && $row[DATA_MEMORY] > 0){
                   $mt[MEM_MIN] = $row[DATA_MEMORY];
                }
-               if ($row[DATA_GZ] < $mt[GZ_MIN]){
+               if (($row[DATA_GZ] < $mt[GZ_MIN]) && $row[DATA_GZ] > 0){
                   $mt[GZ_MIN] = $row[DATA_GZ];
                }
             }
