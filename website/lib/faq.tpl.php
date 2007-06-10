@@ -28,6 +28,11 @@
 <p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
 </dd>
 
+<dt><a href="#oneone" name="oneone"><strong>How do I compare language implementations?</strong></a></dt>
+<dd>
+<p>Compare them directly <a href="benchmark.php?test=all&lang=oz&lang2=hipe"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
+</dd>
+
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
 <dd>
 <p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p>
