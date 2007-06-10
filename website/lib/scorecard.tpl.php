@@ -9,7 +9,7 @@
    unset($Data);
 ?>
 
-<p>What fun! Can you manipulate the multipliers and weights to make your favourite language <a href="#about">the best</a> programming language in the Benchmarks Game?</p>
+<p>What <strong>fun!</strong> Can you manipulate the multipliers and weights to make your favourite language <a href="#about">the best</a> programming language in the Benchmarks Game?</p>
 
 
 <p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($ratio);?>"
