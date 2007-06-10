@@ -30,7 +30,7 @@
 
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 programs?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="fulldata.php?test=binarytrees&p1=oz-0&p2=hipe-0&p3=python-3&p4=oz-0"><strong>side-by-side</strong> for all the data points.</a>.</p>
+<p>Compare them directly <a href="fulldata.php?test=binarytrees&p1=oz-0&p2=hipe-0&p3=python-3&p4=oz-0"><strong>side-by-side</strong> for all the data points</a>.</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
