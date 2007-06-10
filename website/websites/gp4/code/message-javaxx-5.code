@@ -1,0 +1,114 @@
+<span class="hl com">/*</span>
+<span class="hl com"> The Computer Language Shootout</span>
+<span class="hl com"> http://shootout.alioth.debian.org/</span>
+<span class="hl com"> #303303</span>
+<span class="hl com"> contributed by tt&#64;kyon.de</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>locks<span class="hl sym">.</span><span class="hl kwc">Condition</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>locks<span class="hl sym">.</span><span class="hl kwc">ReentrantLock</span><span class="hl sym">;</span>
+
+<span class="hl kwa">public final class</span> message <span class="hl kwa">extends</span> <span class="hl kwc">Thread</span> <span class="hl sym">{</span>
+
+	<span class="hl kwa">private static final</span> <span class="hl kwb">int</span> THREADS <span class="hl sym">=</span> <span class="hl num">500</span><span class="hl sym">;</span>
+	<span class="hl kwa">private static</span> <span class="hl kwb">int</span> msgCount<span class="hl sym">;</span>
+	<span class="hl kwa">private static</span> <span class="hl kwb">int</span> max<span class="hl sym">;</span>
+	<span class="hl kwa">private final</span> message nextThread<span class="hl sym">;</span>
+	<span class="hl kwa">private</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> messages <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span><span class="hl num">1024</span><span class="hl sym">];</span> <span class="hl slc">// reasonably sized buffer</span>
+	<span class="hl kwa">private final</span> <span class="hl kwc">ReentrantLock</span> lock <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">ReentrantLock</span><span class="hl sym">();</span>
+	<span class="hl kwa">private final</span> <span class="hl kwc">Condition</span> notEmpty <span class="hl sym">=</span> lock<span class="hl sym">.</span><span class="hl kwd">newCondition</span><span class="hl sym">();</span>
+	<span class="hl kwa">private</span> <span class="hl kwb">int</span> todo<span class="hl sym">;</span>
+	<span class="hl kwa">private</span> <span class="hl kwb">boolean</span> waiting<span class="hl sym">;</span>
+
+	<span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwc">String</span> args<span class="hl sym">[]) {</span>
+		msgCount <span class="hl sym">=</span> <span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">parseInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+		max <span class="hl sym">=</span> msgCount <span class="hl sym">*</span> THREADS<span class="hl sym">;</span>
+		message thread <span class="hl sym">=</span> null<span class="hl sym">;</span>
+		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> THREADS<span class="hl sym">; --</span>i <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">;) {</span>
+			<span class="hl sym">(</span>thread <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">message</span><span class="hl sym">(</span>thread<span class="hl sym">)).</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+		<span class="hl sym">}</span>
+		<span class="hl kwa">try</span> <span class="hl sym">{</span>
+			<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> msgCount<span class="hl sym">; --</span>i <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">;) {</span>
+				thread<span class="hl sym">.</span><span class="hl kwd">send</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+			<span class="hl sym">}</span>
+		<span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwc">InterruptedException</span> e<span class="hl sym">) {</span>
+			<span class="hl slc">// will not be thrown under any normal circumstances</span>
+			e<span class="hl sym">.</span><span class="hl kwd">printStackTrace</span><span class="hl sym">();</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">private</span> <span class="hl kwd">message</span><span class="hl sym">(</span>message next<span class="hl sym">) {</span>
+		nextThread <span class="hl sym">=</span> next<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">() {</span>
+		lock<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+		<span class="hl kwa">try</span> <span class="hl sym">{</span>
+			<span class="hl kwa">while</span> <span class="hl sym">(</span>todo <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+				waiting <span class="hl sym">=</span> true<span class="hl sym">;</span>
+				notEmpty<span class="hl sym">.</span><span class="hl kwd">await</span><span class="hl sym">();</span>
+			<span class="hl sym">}</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>nextThread <span class="hl sym">!=</span> null<span class="hl sym">) {</span>
+				<span class="hl kwd">pass</span><span class="hl sym">();</span>
+			<span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+				<span class="hl kwd">add</span><span class="hl sym">();</span>
+			<span class="hl sym">}</span>
+		<span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwc">InterruptedException</span> e<span class="hl sym">) {</span>
+			<span class="hl slc">// will not be thrown under any normal circumstances</span>
+			e<span class="hl sym">.</span><span class="hl kwd">printStackTrace</span><span class="hl sym">();</span>
+		<span class="hl sym">}</span> <span class="hl kwa">finally</span> <span class="hl sym">{</span>
+			lock<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">private</span> <span class="hl kwb">void</span> <span class="hl kwd">pass</span><span class="hl sym">()</span> <span class="hl kwa">throws</span> <span class="hl kwc">InterruptedException</span> <span class="hl sym">{</span>
+		<span class="hl kwa">for</span> <span class="hl sym">(;;) {</span>
+			<span class="hl kwb">int</span> done <span class="hl sym">=</span> todo<span class="hl sym">;</span>
+			<span class="hl kwb">int</span><span class="hl sym">[]</span> m <span class="hl sym">=</span> messages<span class="hl sym">;</span>
+			<span class="hl kwa">do</span> <span class="hl sym">{</span>
+				nextThread<span class="hl sym">.</span><span class="hl kwd">send</span><span class="hl sym">(</span>m<span class="hl sym">[--</span>done<span class="hl sym">] +</span> <span class="hl num">1</span><span class="hl sym">);</span>
+			<span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>done <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">);</span>
+			todo <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+			<span class="hl kwa">do</span> <span class="hl sym">{</span>
+				waiting <span class="hl sym">=</span> true<span class="hl sym">;</span>
+				notEmpty<span class="hl sym">.</span><span class="hl kwd">await</span><span class="hl sym">();</span>
+			<span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>todo <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">private</span> <span class="hl kwb">void</span> <span class="hl kwd">add</span><span class="hl sym">()</span> <span class="hl kwa">throws</span> <span class="hl kwc">InterruptedException</span> <span class="hl sym">{</span>
+		<span class="hl kwb">int</span> sum <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		<span class="hl kwa">for</span> <span class="hl sym">(;;) {</span>
+			<span class="hl kwb">int</span> done <span class="hl sym">=</span> todo<span class="hl sym">;</span>
+			<span class="hl kwb">int</span><span class="hl sym">[]</span> m <span class="hl sym">=</span> messages<span class="hl sym">;</span>
+			<span class="hl kwa">do</span> <span class="hl sym">{</span>
+				sum <span class="hl sym">+=</span> m<span class="hl sym">[--</span>done<span class="hl sym">] +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+			<span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>done <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">);</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>sum <span class="hl sym">==</span> max<span class="hl sym">) {</span>
+				<span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span>sum<span class="hl sym">);</span>
+				<span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+			<span class="hl sym">}</span>
+			todo <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+			<span class="hl kwa">do</span> <span class="hl sym">{</span>
+				waiting <span class="hl sym">=</span> true<span class="hl sym">;</span>
+				notEmpty<span class="hl sym">.</span><span class="hl kwd">await</span><span class="hl sym">();</span>
+			<span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>todo <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">private</span> <span class="hl kwb">void</span> <span class="hl kwd">send</span><span class="hl sym">(</span><span class="hl kwb">int</span> message<span class="hl sym">)</span> <span class="hl kwa">throws</span> <span class="hl kwc">InterruptedException</span> <span class="hl sym">{</span>
+		lock<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+		<span class="hl kwa">try</span> <span class="hl sym">{</span>
+			<span class="hl kwb">int</span><span class="hl sym">[]</span> m <span class="hl sym">=</span> messages<span class="hl sym">;</span>
+			<span class="hl kwb">int</span> l <span class="hl sym">=</span> m<span class="hl sym">.</span>length<span class="hl sym">;</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>todo <span class="hl sym">==</span> l<span class="hl sym">) {</span>
+				<span class="hl kwb">int</span><span class="hl sym">[]</span> n <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>l <span class="hl sym">&lt;&lt;</span> <span class="hl num">2</span><span class="hl sym">];</span>
+				<span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">arraycopy</span><span class="hl sym">(</span>m<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> l<span class="hl sym">);</span>
+				messages <span class="hl sym">=</span> m <span class="hl sym">=</span> n<span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+			m<span class="hl sym">[</span>todo<span class="hl sym">++] =</span> message<span class="hl sym">;</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>waiting<span class="hl sym">) {</span>
+				<span class="hl slc">// otherwise already notified</span>
+				waiting <span class="hl sym">=</span> false<span class="hl sym">;</span>
+				notEmpty<span class="hl sym">.</span><span class="hl kwd">signal</span><span class="hl sym">();</span>
+			<span class="hl sym">}</span>
+		<span class="hl sym">}</span> <span class="hl kwa">finally</span> <span class="hl sym">{</span>
+			lock<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">}</span>
