@@ -23,11 +23,6 @@
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
-<dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
-<dd>
-<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
-</dd>
-
 <dt><a href="#oneone" name="oneone"><strong>How do I compare language implementations?</strong></a></dt>
 <dd>
 <p>Compare them directly <a href="benchmark.php?test=all&lang=oz&lang2=hipe"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
@@ -36,6 +31,11 @@
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 programs?</strong></a></dt>
 <dd>
 <p>Compare them directly <a href="fulldata.php?test=binarytrees&p1=oz-0&p2=hipe-0&p3=python-3&p4=oz-0"><strong>side-by-side</strong> for all the data points.</a>.</p>
+</dd>
+
+<dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
+<dd>
+<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
 </dd>
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
