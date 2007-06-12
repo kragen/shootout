@@ -1,1 +1,1 @@
-<p>Welcome to MzScheme version 360, Copyright (c) 2004-2006 PLT Scheme Inc.</p>
+<p>Welcome to MzScheme v370 [3m], Copyright (c) 2004-2007 PLT Scheme Inc.</p>
