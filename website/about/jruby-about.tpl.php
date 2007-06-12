@@ -1,4 +1,4 @@
-<p>online book <a href="http://www.rubycentral.com/book/">"Programming Ruby: The Pragmatic Programmer's Guide</a></p>
+<blockquote>JRuby 1.0 was focused almost entirely on one goal: Ruby 1.8.x compatibility. ... The next step is making it run as well as possible. ... The heavy lifting for performance and scalability are coming up ...</blockquote>
 
 <?=$Version;?>
 
