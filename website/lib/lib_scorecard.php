@@ -80,6 +80,7 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
    foreach($Tests as $k => $v){ $mins[$k] = array(1000000,1000000,1000000); }
 
    $data = array();
+   $timeout = array();
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
@@ -93,12 +94,17 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
       // accumulate all acceptable datarows, exclude duplicates
 
       if (isset($Incl[$test]) && isset($Incl[$lang]) &&
-            $row[DATA_FULLCPU] > 0 &&
                isset($Langs[$lang]) &&
                   !isset($Excl[$key])){
+                    
+            // this isn't quite correct doesn't take account of more than one program
+            if (PROGRAM_TIMEOUT == $row[DATA_FULLCPU]){
+               if (!isset($timeout[$lang])){ $timeout[$lang] = 1; }
+               else { $timeout[$lang]++; }
+            }
 
-            if (!isset($data[$lang][$test]) ||
-                  $row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU]){
+            if ($row[DATA_FULLCPU] > 0 && (!isset($data[$lang][$test]) ||
+                  $row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])){
 
                $data[$lang][$test] = $row;
 
@@ -113,48 +119,51 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
                   $mt[GZ_MIN] = $row[DATA_GZ];
                }
             }
+
       }
    }
    @fclose($f);
-   
 
    $score = array();
    foreach($data as $k => $test){
-      $s = 0.0; $ws = 0.0; $include = 0.0;
-      foreach($test as $t => $v){
-         $mt = &$mins[$t];
+      if (!isset($timeout[$k]) || ($timeout[$k] < 3)){
 
-         $w1 = $W[$t] * $W['xfullcpu'];
-         $w2 = $W[$t] * $W['xmem'];
-         $w3 = $W[$t] * $W['xloc'];
+         $s = 0.0; $ws = 0.0; $include = 0.0;
+         foreach($test as $t => $v){
+            $mt = &$mins[$t];
 
-         if ($w1>0){
-           $val = $v[DATA_FULLCPU];
-           if ($val > 0){
-              $s += log($val/$mt[CPU_MIN])*$w1;
-              $ws += $w1;
-              $include += $val;
-           }
+            $w1 = $W[$t] * $W['xfullcpu'];
+            $w2 = $W[$t] * $W['xmem'];
+            $w3 = $W[$t] * $W['xloc'];
+
+            if ($w1>0){
+              $val = $v[DATA_FULLCPU];
+              if ($val > 0){
+                 $s += log($val/$mt[CPU_MIN])*$w1;
+                 $ws += $w1;
+                 $include += $val;
+              }
+            }
+            if ($w2>0){
+              $val = $v[DATA_MEMORY];
+              if ($val > 0){
+                 $s += log($val/$mt[MEM_MIN])*$w2;
+                 $ws += $w2;
+                 $include += $val;
+              }
+            }
+            if ($w3>0){
+              $val = $v[DATA_GZ];
+              if ($val > 0){
+                 $s += log($val/$mt[GZ_MIN])*$w3;
+                 $ws += $w3;
+                 $include += $val;
+              }
+            }
          }
-         if ($w2>0){
-           $val = $v[DATA_MEMORY];
-           if ($val > 0){
-              $s += log($val/$mt[MEM_MIN])*$w2;
-              $ws += $w2;
-              $include += $val;
-           }
-         }
-         if ($w3>0){
-           $val = $v[DATA_GZ];
-           if ($val > 0){
-              $s += log($val/$mt[GZ_MIN])*$w3;
-              $ws += $w3;
-              $include += $val;
-           }
-         }
+         if ($ws == 0.0){ $ws = 1.0; }
+         if ($include > 0){ $score[$k] = array(1.0,exp($s/$ws),sizeof($Tests)-sizeof($test)); }
       }
-      if ($ws == 0.0){ $ws = 1.0; }
-      if ($include > 0){ $score[$k] = array(1.0,exp($s/$ws),sizeof($Tests)-sizeof($test)); }
    }
 
    uasort($score, 'CompareMeanScore');
