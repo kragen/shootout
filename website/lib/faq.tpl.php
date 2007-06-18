@@ -102,6 +102,13 @@
 <td>&nbsp;&nbsp;0.01</td>
 </tr>
 <tr>
+<td>mandelbrot&nbsp;&nbsp;</td>
+<td>3.41</td>
+<td>&nbsp;&nbsp;0.01</td>
+<td>&nbsp;&nbsp;3.21</td>
+<td>&nbsp;&nbsp;0.01</td>
+</tr>
+<tr>
 <td>binary-trees&nbsp;&nbsp;</td>
 <td>6.37</td>
 <td>0.06</td>

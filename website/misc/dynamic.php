@@ -35,7 +35,34 @@
    width="450" height="150"
  /></p>
  </dd>
-
+ 
+ 
+<dt><a href="#mandelbrot" name="mandelbrot">mandelbrot</a></dt>
+<dd>
+<table>
+<tr>
+<th colspan="2">&nbsp;started&nbsp;400&nbsp;times&nbsp;</th>
+<th colspan="2">&nbsp;started&nbsp;once&nbsp;</th>
+</tr>
+<tr>
+<th class="txt">mean</th>
+<th class="txt">&#963;</th>
+<th class="txt">mean</th>
+<th class="txt">&#963;</th>
+</tr>
+<tr>
+<td>3.41</td>
+<td>0.01</td>
+<td>3.21</td>
+<td>0.01</td>
+</tr>
+</table>
+<p><img src="<?=IMAGE_PATH;?>jmandelbrot.png"
+   alt=""
+   title=""
+   width="450" height="150"
+ /></p>
+ </dd>
 
 <dt><a href="#binarytrees" name="binarytrees">binary-trees</a></dt>
 <dd>
