@@ -1,1 +1,1 @@
-<p>HUGS Version: 20050308</p>
+<p>HUGS Version: September 2006</p>
