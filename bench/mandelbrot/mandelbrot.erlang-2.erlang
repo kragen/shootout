@@ -1,0 +1,65 @@
+%% The Computer Language Benchmark Games
+%% http://shootout.alioth.debian.org/
+%% Contributed  by Per Gustafsson
+%% Slightly modified by Ulf Wiger
+
+-module(mandelbrot).
+-export([main/1]).
+
+main([Arg]) ->
+  N = list_to_integer(Arg),
+  io:fwrite("P4\n~w ~w\n",[N,N]),
+  write_lines(N),
+  halt(0).
+
+-define(LIMIT, 2.0).
+-define(ITER, 50).
+-define(F(X),is_float(X)).
+-define(SR, -1.5).
+-define(SI, -1.0).
+
+write_lines(N) ->
+  Step = 2.0/N,
+  StepList = lists:seq(0,N-1),
+  RList = [?SR + R*Step || R <- StepList],
+  Port = open_port({fd,0,1}, [out]),
+  F = fun(I) -> write_line(RList,(?SI+I*Step), Port) end,
+  write_lines(F,0,N).
+
+write_lines(_F,N,N) ->
+  ok;
+write_lines(F,I,N) ->
+  F(I),write_lines(F,I+1,N).
+
+
+write_line(RList,I, P) ->
+  write_bits([mand(R,I)||R<-RList], P).
+
+write_bits([X1,X2,X3,X4,X5,X6,X7,X8|Rest], P) ->
+  port_command(P, [((X1 bsl 7) + (X2 bsl 6) + (X3 bsl 5) + (X4 bsl 4) +
+   	            (X5 bsl 3) + (X6 bsl 2) + (X7 bsl 1) + (X8))]),
+  write_bits(Rest, P);
+write_bits([], _) -> ok;
+write_bits(List, P) ->
+  write_bits(List++lists:duplicate(8-length(List),0), P).
+
+
+mand(X,Y) -> mand(?ITER,0.0,0.0,X,Y).
+
+mand(0,R,I,_CR,_CI) ->
+  R2 = R*R, I2 = I*I,
+  LimVal = R2+I2,
+  if LimVal > (?LIMIT*?LIMIT) -> 0;
+     true -> 1
+  end;
+mand(N,R,I,CR,CI) when ?F(R),?F(I),?F(CR),?F(CI) ->
+  R2 = R*R, I2 = I*I,
+  LimVal = R2+I2,
+  NR = R2-I2+CR,
+  NI = 2*R*I+CI,
+  if LimVal > (?LIMIT*?LIMIT) -> 0;
+     true -> mand(N-1,NR,NI,CR,CI)
+  end.
+
+
+
