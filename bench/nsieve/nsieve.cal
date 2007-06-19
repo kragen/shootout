@@ -1,0 +1,123 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Nsieve;
+
+import Cal.Core.Prelude using
+    typeClass = Inputable, Outputable;
+    typeConstructor = Boolean, Int, String;
+    dataConstructor = False, True;
+    function = eager, seq, stringToInt;
+    ;
+
+import Cal.Core.String using
+    function = replicate;
+    ;
+
+import Cal.Core.Bits using
+    function = shiftL, shiftR;
+    ;
+
+import Cal.Core.Debug;
+
+import Cal.Collections.List using
+    function = head;
+    ;
+
+
+data foreign unsafe import jvm "boolean[]"
+    JBooleanArray deriving Inputable, Outputable;
+
+foreign unsafe import jvm "newArray" booleanArray_new :: Int -> JBooleanArray;
+
+foreign unsafe import jvm "subscriptArray"
+    get :: JBooleanArray -> Int -> Boolean;
+
+foreign unsafe import jvm "updateArray"
+    set :: JBooleanArray -> Int -> Boolean -> Boolean;
+
+data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
+
+foreign unsafe import jvm "static field java.lang.System.out"
+    private stdout :: JPrintStream;
+
+foreign unsafe import jvm "method println"
+    private printLn :: JPrintStream -> String -> ();
+
+/**pad width number returns number padded to width with spaces*/
+pad :: Int -> Int -> String;
+pad !width !number =
+    let
+        str = Debug.show number;
+    in
+        replicate (width - String.length str) ' ' ++ str
+    ;
+
+/**this is used to initialise the values in the array to true*/
+setAll !start !end !array =
+    if start == end then
+        array
+    else
+        set array start True
+        `seq`
+        setAll (start + 1) end array
+    ;
+
+/** Count primes using nseive method*/
+nsieve :: Int -> JBooleanArray -> Int;
+nsieve !n !isPrime =
+    let
+        nsieve_helper :: Int -> Int -> Int;
+        nsieve_helper !i !numPrimesFound =
+            if i == n then
+                numPrimesFound
+            else if get isPrime i then
+                let
+                    update :: Int -> Int -> Int -> ();
+                    update !k !i !n =
+                        if k > n then
+                            ()
+                        else
+                            set isPrime k False
+                            `seq`
+                            update (k + i) i n
+                        ;
+                in
+                    update (i + i) i n
+                    `seq`
+                    nsieve_helper (i + 1) (numPrimesFound + 1)
+            else
+                nsieve_helper (i + 1) numPrimesFound
+            ;
+    in
+        setAll 0 (n + 1) isPrime
+        `seq`
+        nsieve_helper 2 0
+    ;
+
+main :: [String] -> ();
+public main !args =
+    let
+        n = eager $ stringToInt (head args);
+        showResult n =
+            printLn
+                stdout
+                (
+                    "Primes up to "
+                    ++ pad 8 n
+                    ++ " "
+                    ++ pad 8 (nsieve n flags)
+                )
+            ;
+        m = shiftL 1 n * 10000;
+        flags = booleanArray_new (m + 1);
+    in
+        showResult m
+        `seq`
+        showResult (shiftR m 1)
+        `seq`
+        showResult (shiftR m 2)
+    ;
+

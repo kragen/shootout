@@ -1,0 +1,266 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Revcomp;
+
+import Cal.Core.Prelude using
+    typeClass = Inputable, Outputable;
+    typeConstructor = String, Boolean, JObject, Int, Byte, Char;
+    function =
+        eager, toByte, stringToInt, add, not, seq, input, fromInt, snd, fst, 
+        induceComparator, combineComparators, reverseComparator;
+    ;
+
+import Cal.Core.Debug using
+    typeClass = Show;
+    function = show;
+    ;
+import Cal.Core.Char using
+    function = toLowerCase, toInt;
+    ;
+import Cal.Core.String using
+    function = length, subscript, toUpperCase, startsWith, substring;
+    ;
+import Cal.Collections.List using
+    function =
+        foldLeft1Strict, map, takeWhile, dropWhile, tail, foldLeftStrict, 
+        sortBy;
+    ;
+import Cal.Collections.Map using
+    typeConstructor = Map;
+    function = fromList;
+    ;
+import Cal.Utilities.MessageFormat using
+    function = formatWithPattern;
+    ;
+import Cal.Utilities.Locale using
+    function = invariantLocale;
+    ;
+
+data foreign unsafe import jvm "java.io.BufferedReader" private JBufferedReader;
+
+data foreign unsafe import jvm "java.io.InputStream" private JInputStream;
+
+data foreign unsafe import jvm "java.io.InputStreamReader"
+    private JInputStreamReader;
+
+data foreign unsafe import jvm "java.io.Reader" private JReader;
+
+data foreign unsafe import jvm "java.io.FileReader" private JFileReader;
+
+data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
+
+data foreign unsafe import jvm "java.lang.StringBuffer"
+    private JStringBuffer deriving Show;
+
+foreign unsafe import jvm "constructor"
+    private createStringBuffer :: JStringBuffer;
+
+foreign unsafe import jvm "constructor"
+    private createBufferedReader :: JReader -> JBufferedReader;
+
+foreign unsafe import jvm "constructor"
+    private createInputStreamReaderStream :: JInputStream -> JInputStreamReader;
+
+foreign unsafe import jvm "method append"
+    private append :: JStringBuffer -> String -> JStringBuffer;
+
+foreign unsafe import jvm "method readLine"
+    private readLine :: JBufferedReader -> String;
+
+foreign unsafe import jvm "static field java.lang.System.out"
+    private stdout :: JPrintStream;
+
+foreign unsafe import jvm "static field java.lang.System.in"
+    private stdin :: JInputStream;
+
+foreign unsafe import jvm "isNull" private isNull :: String -> Boolean;
+
+foreign unsafe import jvm "method println"
+    private printLn :: JPrintStream -> String -> ();
+
+foreign unsafe import jvm "method write"
+    private write :: JPrintStream -> JByteArray -> Int -> Int -> ();
+
+data foreign unsafe import jvm "byte[]"
+    JByteArray deriving Inputable, Outputable, Show;
+
+//Import Java integer arrays
+foreign unsafe import jvm "newArray" byteArray_new :: Int -> JByteArray;
+
+foreign unsafe import jvm "subscriptArray"
+    byteArray_subscript :: JByteArray -> Int -> Byte;
+
+foreign unsafe import jvm "updateArray"
+    byteArray_update :: JByteArray -> Int -> Byte -> Byte;
+
+foreign unsafe import jvm "cast"
+    jInputStreamReaderToJReader :: JInputStreamReader -> JReader;
+
+charToByte :: Char -> Byte;
+charToByte !c = toByte (Cal.Core.Char.toInt c);
+
+initCharMap :: JByteArray -> ();
+initCharMap !charMap =
+    let
+        loop :: Int -> ();
+        loop !i =
+            if i < 128 then
+                byteArray_update charMap i (toByte i)
+                `seq`
+                ()
+            else
+                ()
+            ;
+
+        mappings :: [(Char, Char)];
+        mappings =
+            [
+                ('A', 'T'),
+                ('C', 'G'),
+                ('G', 'C'),
+                ('T', 'A'),
+                ('U', 'A'),
+                ('M', 'K'),
+                ('R', 'Y'),
+                ('W', 'W'),
+                ('S', 'S'),
+                ('Y', 'R'),
+                ('K', 'M'),
+                ('V', 'B'),
+                ('H', 'D'),
+                ('D', 'H'),
+                ('B', 'V'),
+                ('N', 'N')
+            ]
+            ;
+    in
+        loop 0
+        `seq`
+        foldLeftStrict
+            (
+                \a mapping ->
+                    byteArray_update
+                        charMap
+                        (Char.toInt mapping.#1)
+                        (charToByte mapping.#2)
+                    `seq`
+                    byteArray_update
+                        charMap
+                        (Char.toInt (toLowerCase mapping.#1))
+                        (charToByte mapping.#2)
+                    `seq`
+                    a
+            )
+            ()
+            mappings
+    ;
+
+printReverseComplement :: JByteArray -> String -> ();
+printReverseComplement !charMap !sequence =
+    let
+        lineLength :: Int;
+        lineLength = 60;
+
+        outputBufferSize :: Int;
+        outputBufferSize = 10240;
+
+        outputBuffer :: JByteArray;
+        outputBuffer = eager $ byteArray_new outputBufferSize;
+
+        eol :: Byte;
+        eol = eager $ toByte (eager $ Cal.Core.Char.toInt '\n');
+
+        startIndex :: Int;
+        startIndex = String.length sequence - 1;
+
+        loop :: Int -> Int -> Int -> ();
+        loop !inputIndex !outputIndex !eolCount =
+            if inputIndex >= 0 then
+                byteArray_update
+                    outputBuffer
+                    outputIndex
+                    (byteArray_subscript
+                        charMap
+                        (toInt (String.subscript sequence inputIndex))
+                    )
+                `seq`
+                (
+                    if outputIndex + 1 == eolCount then
+                        byteArray_update outputBuffer (outputIndex + 1) eol
+                        `seq`
+                        (
+                            if
+                                outputIndex + lineLength + 3 > outputBufferSize
+                            then
+                                write stdout outputBuffer 0 (outputIndex + 2)
+                                `seq`
+                                loop (inputIndex - 1) 0 lineLength
+                            else
+                                loop
+                                    (inputIndex - 1)
+                                    (outputIndex + 2)
+                                    (outputIndex + 2 + lineLength)
+                        )
+                    else
+                        loop (inputIndex - 1) (outputIndex + 1) eolCount
+                )
+            else if eolCount - outputIndex != lineLength then
+                //we need to terminate sequence with an extra \n
+                byteArray_update outputBuffer outputIndex eol
+                `seq`
+                write stdout outputBuffer 0 (outputIndex + 1)
+            else
+                write stdout outputBuffer 0 outputIndex
+            ;
+    in
+        if startIndex >= 0 then
+            loop (String.length sequence - 1) 0 lineLength
+        else
+            ()
+    ;
+
+main :: [String] -> ();
+public main args =
+    let
+        charMap :: JByteArray;
+        charMap = eager $ byteArray_new 128;
+
+        reader :: JBufferedReader;
+        reader =
+            eager
+            $ createBufferedReader
+                (jInputStreamReaderToJReader
+                    (createInputStreamReaderStream stdin)
+                )
+            ;
+
+        processLines :: JBufferedReader -> JStringBuffer -> ();
+        processLines !reader !buffer =
+            let
+                line :: String;
+                line = eager $ readLine reader;
+            in
+
+                if isNull line then
+                    printReverseComplement charMap (show buffer)
+                else if subscript line 0 == '>' then
+                    printReverseComplement charMap (show buffer)
+                    `seq`
+                    printLn stdout line
+                    `seq`
+                    processLines reader createStringBuffer
+                else
+                    append buffer line
+                    `seq`
+                    processLines reader buffer
+            ;
+    in
+
+        initCharMap charMap
+        `seq`
+        processLines reader createStringBuffer
+    ;
+

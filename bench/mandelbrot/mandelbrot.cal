@@ -1,0 +1,169 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Mandelbrot;
+
+import Cal.Core.Prelude using
+    typeClass = Inputable, Outputable;
+    typeConstructor = Boolean, Int, String, Byte, Double;
+    dataConstructor = False, True;
+    function = seq, max, eager, fromInt, stringToInt;
+    ;
+
+import Cal.Core.Debug using
+    function = show;
+    ;
+import Cal.Core.Bits using
+    function = bitwiseXor, shiftL, bitwiseOr, bitwiseAnd;
+    ;
+
+import Cal.Collections.List using
+    function = map, head;
+    ;
+
+import Cal.Utilities.Math using
+    function = power, sin, cos, sqrt;
+    ;
+
+
+data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
+
+data foreign unsafe import jvm "java.io.FilterOutputStream"
+    private JFilterOutputStream;
+
+foreign unsafe import jvm "static field java.lang.System.out"
+    private stdout :: JPrintStream;
+
+foreign unsafe import jvm "method print"
+    private print :: JPrintStream -> String -> ();
+
+data foreign unsafe import jvm "java.io.OutputStream" private JOutputStream;
+
+data foreign unsafe import jvm "java.io.BufferedOutputStream"
+    private JBufferedOutputStream;
+
+foreign unsafe import jvm "constructor"
+    private createBufferedOutputStream :: JOutputStream -> JBufferedOutputStream;
+
+foreign unsafe import jvm "method write"
+    private write :: JBufferedOutputStream -> Int -> ();
+
+foreign unsafe import jvm "method flush"
+    private flush :: JBufferedOutputStream -> ();
+
+foreign unsafe import jvm "cast"
+    jPrintStreamToJOutputStream :: JPrintStream -> JOutputStream;
+
+/** 
+ * compute a binary mandelbrot image and write to stdout as a pbm file
+ */
+main :: [String] -> ();
+public main !args =
+    let
+        size = eager $ stringToInt (head args);
+
+        bufferedOutput =
+            eager
+            $ createBufferedOutputStream (jPrintStreamToJOutputStream stdout)
+            ;
+
+        maxIterations :: Int;
+        maxIterations = 50;
+        
+        /** write out the byte buffer every 8th pixel*/
+        outputBitBuffer :: Int -> Int -> Int;
+        outputBitBuffer !x !buffer =
+            if bitwiseAnd x 7 == 7 then
+                //write the buffer
+                write bufferedOutput buffer
+                `seq`
+                0
+            else
+                //no, output buffer is not yet full
+                buffer
+            ;
+        /** write out partial byte buffer at the end of line if necessary*/
+        outputPartialBuffer :: Int -> Int -> ();
+        outputPartialBuffer !x !buffer =
+            if bitwiseAnd x 7 != 0 then
+                write bufferedOutput (shiftL buffer (8 - bitwiseAnd x 7))
+            else
+                ()
+            ;
+        /** compute and output every pixel in the image*/
+        process :: Int -> Int -> Int -> ();
+        process !x !y !bitBuffer =
+            if x < size then
+                let
+                    calculateBit ::
+                        Int-> Double -> Double -> Double -> Double -> Int;
+                    calculateBit !i !zr !zi !cr !ci =
+                        if i == maxIterations then
+                            1
+                        else if zr * zr + zi * zi > 4 then
+                            0
+                        else
+                            calculateBit
+                                (i + 1)
+                                (zr * zr - zi * zi + cr)
+                                (2.0 * zr * zi + ci)
+                                cr
+                                ci
+                        ;
+                in
+                    process
+                        (x + 1)
+                        y
+                        (outputBitBuffer
+                            x
+                            (
+                                eager
+                                $ bitwiseOr
+                                    (eager $ shiftL bitBuffer 1)
+                                    (
+                                        eager
+                                        $ calculateBit
+                                            0
+                                            (
+                                                fromInt (2 * x)
+                                                    / fromInt size
+                                                - 1.5
+                                            )
+                                            (
+                                                fromInt (2 * y)
+                                                    / fromInt size
+                                                - 1.0
+                                            )
+                                            (
+                                                fromInt (2 * x)
+                                                    / fromInt size
+                                                - 1.5
+                                            )
+                                            (
+                                                fromInt (2 * y)
+                                                    / fromInt size
+                                                - 1.0
+                                            )
+                                    )
+                            )
+                        )
+
+            else if y < size - 1 then
+                outputPartialBuffer x bitBuffer
+                `seq`
+                process 0 (y + 1) 0
+            else
+                outputPartialBuffer x bitBuffer
+                `seq`
+                flush bufferedOutput
+            ;
+    in
+        //write out the image header
+        print stdout ("P4\n" ++ show size ++ " " ++ show size ++ "\n")
+        `seq`
+        //compute and write out the binary image body
+        process 0 0 0
+    ;
+

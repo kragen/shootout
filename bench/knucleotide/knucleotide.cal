@@ -1,0 +1,331 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Knucleotide;
+
+import Cal.Core.Prelude using
+    typeClass = Inputable, Outputable;
+    typeConstructor = Boolean, Int, JObject, String;
+    function =
+        combineComparators, eager, fromInt, fst, induceComparator, input, not, 
+        reverseComparator, seq, snd;
+    ;
+
+import Cal.Core.Debug using
+    typeClass = Show;
+    function = show;
+    ;
+
+import Cal.Core.String using
+    function = length, startsWith, subscript, substring, toUpperCase;
+    ;
+
+import Cal.Collections.List using
+    function = dropWhile, foldLeftStrict, map, sortBy, tail, takeWhile;
+    ;
+
+import Cal.Collections.Map;
+
+import Cal.Utilities.MessageFormat using
+    function = formatWithPattern;
+    ;
+
+import Cal.Utilities.Locale using
+    function = invariantLocale;
+    ;
+
+
+data foreign unsafe import jvm "java.io.BufferedReader" private JBufferedReader;
+
+data foreign unsafe import jvm "java.io.InputStream" private JInputStream;
+
+data foreign unsafe import jvm "java.io.InputStreamReader"
+    private JInputStreamReader;
+
+data foreign unsafe import jvm "java.io.Reader" private JReader;
+
+data foreign unsafe import jvm "java.io.FileReader" private JFileReader;
+
+data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
+
+data foreign unsafe import jvm "java.lang.StringBuffer"
+    private JStringBuffer deriving Show;
+
+data foreign unsafe import jvm "java.util.Collection" private JCollection;
+
+foreign unsafe import jvm "constructor"
+    private createStringBuffer :: JStringBuffer;
+
+foreign unsafe import jvm "constructor"
+    private createBufferedReader :: JReader -> JBufferedReader;
+
+foreign unsafe import jvm "constructor"
+    private createInputStreamReaderStream :: JInputStream -> JInputStreamReader;
+
+foreign unsafe import jvm "method append"
+    private append :: JStringBuffer -> String -> JStringBuffer;
+
+foreign unsafe import jvm "method readLine"
+    private readLine :: JBufferedReader -> String;
+
+foreign unsafe import jvm "static field java.lang.System.out"
+    private stdout :: JPrintStream;
+
+foreign unsafe import jvm "static field java.lang.System.in"
+    private stdin :: JInputStream;
+
+foreign unsafe import jvm "isNull" private isNull :: String -> Boolean;
+
+foreign unsafe import jvm "method print"
+    private print :: JPrintStream -> String -> ();
+
+data foreign unsafe import jvm "int[]"
+    JIntArray deriving Inputable, Outputable, Show;
+
+//Import Java integer arrays
+foreign unsafe import jvm "newArray" newArray :: Int -> JIntArray;
+
+foreign unsafe import jvm "subscriptArray"
+    subscriptArray :: JIntArray -> Int -> Int;
+
+foreign unsafe import jvm "updateArray"
+    updateArray :: JIntArray -> Int -> Int -> Int;
+
+data foreign unsafe import jvm "java.util.HashMap"
+    private JHashMap deriving Show;
+
+data foreign unsafe import jvm "java.util.Set" private JSet;
+
+//Import mutable Java Hash Maps
+
+foreign unsafe import jvm "constructor" private createHashMap :: JHashMap;
+
+foreign unsafe import jvm "isNull" private isArrayNull :: JIntArray -> Boolean;
+
+foreign unsafe import jvm "method get"
+    private lookup :: JHashMap -> JObject -> JObject;
+
+foreign unsafe import jvm "method keySet" private keySet :: JHashMap -> JSet;
+
+foreign unsafe import jvm "method put"
+    private insert :: JHashMap -> JObject -> JObject -> JObject;
+
+foreign unsafe import jvm "cast" stringToObject :: String -> JObject;
+
+foreign unsafe import jvm "cast" objectToJIntArray :: JObject -> JIntArray;
+
+foreign unsafe import jvm "cast" jIntArrayToJObject :: JIntArray -> JObject;
+
+foreign unsafe import jvm "cast"
+    jInputStreamReaderToJReader :: JInputStreamReader -> JReader;
+
+foreign unsafe import jvm "cast" jSetToJObject :: JSet -> JObject;
+
+/** 
+ * update the count for a given key in the map
+ * if the key is not in the map, it is added with value 1.
+ */
+update :: JHashMap -> String -> Int;
+update !map !string =
+    let
+        value :: JIntArray;
+        value =
+            eager $ objectToJIntArray (lookup map (stringToObject string));
+    in
+        if not (isArrayNull value) then
+            updateArray value 0 (1 + value `subscriptArray` 0)
+        else
+            let
+                array :: JIntArray;
+                array = eager (newArray 1);
+            in
+                insert map (stringToObject string) (jIntArrayToJObject array)
+                `seq`
+                updateArray array 0 1
+    ;
+
+/** 
+ * Lookup a value in a hashmap.
+ * Return 0 if the key is not in the hashmap
+ */
+getValue :: JHashMap -> String -> Int;
+getValue !map !string =
+    let
+        value :: JIntArray;
+        value =
+            eager $ objectToJIntArray (lookup map (stringToObject string));
+    in
+        if not (isArrayNull value) then
+            value `subscriptArray` 0
+        else
+            //the key is not in the map
+            0
+    ;
+
+/**convert a JhashMap to a list of key, value pairs.*/
+hashMapToPairs :: JHashMap -> [(String, Int)];
+hashMapToPairs !jmap =
+    let
+        keys :: [String];
+        keys = input (jSetToJObject (keySet jmap));
+    in
+        map (\!key -> (key, getValue jmap key)) keys
+    ;
+
+/**compute the frequency table for a specified fragment length*/
+calculateFrequencies :: String -> Int -> JHashMap;
+calculateFrequencies !sequence !fragmentLength =
+    let
+        len :: Int;
+        len = eager $ length sequence - fragmentLength + 1;
+
+        freqMap :: JHashMap;
+        freqMap = eager createHashMap;
+
+        process :: Int -> Int -> JHashMap;
+        process !offset !index =
+            if index < len then
+                update
+                    freqMap
+                    (substring sequence index (index + fragmentLength))
+                `seq`
+                process offset (index + 1)
+            else
+                freqMap
+            ;
+    in
+        process 0 0
+    ;
+
+//read the sequence from the input lines
+sequence :: [String] -> String;
+sequence !input =
+    let
+        stringBuffer :: JStringBuffer;
+        stringBuffer = eager $ createStringBuffer;
+
+        addIfNotComment :: JStringBuffer -> String -> JStringBuffer;
+        addIfNotComment !stringBuffer !line =
+            if subscript line 0 != ';' then
+                append stringBuffer (toUpperCase line)
+                `seq`
+                stringBuffer
+            else
+                stringBuffer
+            ;
+
+        isNotThree :: String -> Boolean;
+        isNotThree !line = not (startsWith ">THREE" line);
+
+        isNotStartOfSequence :: String -> Boolean;
+        isNotStartOfSequence !line = subscript line 0 != '>';
+    in
+        show
+            (foldLeftStrict
+                addIfNotComment
+                stringBuffer
+                (takeWhile
+                    isNotStartOfSequence
+                    (tail (dropWhile isNotThree input))
+                )
+            )
+    ;
+
+//list of lines representing the input
+lines :: JBufferedReader -> [String];
+lines !bufferedReader =
+    let
+        line :: String;
+        line = eager $ readLine bufferedReader;
+    in
+        if isNull line then
+            []
+        else
+            line : lines bufferedReader
+    ;
+
+showFreq :: [(String, Int)] -> Int -> String;
+showFreq !freqList !total =
+    foldLeftStrict
+        (
+            \str item ->
+                case item of
+                (name, freq)
+                ->
+                    formatWithPattern
+                        "{0}{1} {2,number,0.000}\n"
+                        invariantLocale
+                        (str, name, fromInt freq / fromInt total * 100.0)
+                    ;
+        )
+        ""
+        (sortBy
+            (combineComparators
+                (reverseComparator (induceComparator snd))
+                (induceComparator fst)
+            )
+            freqList
+        )
+    ++ "\n"
+    ;
+
+showCount :: JHashMap -> String -> String;
+showCount !hashmap !nucleotide =
+    show (getValue hashmap nucleotide) ++ "\t" ++ nucleotide ++ "\n";
+
+main :: [String] -> ();
+public main !args =
+    let
+        reader :: JBufferedReader;
+        reader =
+            createBufferedReader
+                (jInputStreamReaderToJReader
+                    (createInputStreamReaderStream stdin)
+                )
+            ;
+
+        sq :: String;
+        sq = eager $ sequence (lines reader);
+
+        //build freqnece map for length 1 nucledotides
+        freq1 :: [(String, Int)];
+        freq1 = hashMapToPairs (calculateFrequencies sq 1);
+
+        //build freqnece map for length 2 nucledotides
+        freq2 :: [(String, Int)];
+        freq2 = hashMapToPairs (calculateFrequencies sq 2);
+
+        seqLength :: Int;
+        seqLength = length sq;
+
+        //build 3,4,6,12,18 nucledotide maps and get counts for some specific instances.
+        counts :: String;
+        counts =
+            foldLeftStrict
+                (
+                    \str item ->
+                        str
+                        ++ showCount
+                            (calculateFrequencies sq (length item))
+                            item
+                )
+                ""
+                [
+                    "GGT",
+                    "GGTA",
+                    "GGTATT",
+                    "GGTATTTTAATT",
+                    "GGTATTTTAATTTATAGT"
+                ]
+            ;
+    in
+
+        print stdout (showFreq freq1 seqLength)
+        `seq`
+        print stdout (showFreq freq2 (seqLength - 1))
+        `seq`
+        print stdout counts
+    ;
+

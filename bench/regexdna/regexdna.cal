@@ -1,0 +1,235 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Regexdna;
+
+import Cal.Core.Prelude using
+    typeClass = Inputable, Outputable;
+    typeConstructor = String, Boolean, JObject, Int;
+    function =
+        eager, stringToInt, add, not, seq, input, fromInt, snd, fst, 
+        induceComparator, combineComparators, reverseComparator;
+    ;
+import Cal.Core.Debug using
+    typeClass = Show;
+    function = show;
+    ;
+import Cal.Core.String using
+    function =
+        length, subscript, toUpperCase, startsWith, substring, replaceAllString;
+    ;
+import Cal.Collections.List using
+    function =
+        foldLeft1Strict, map, takeWhile, dropWhile, tail, foldLeftStrict, 
+        sortBy, head;
+    ;
+import Cal.Collections.Map using
+    typeConstructor = Map;
+    function = fromList;
+    ;
+import Cal.Utilities.MessageFormat using
+    function = formatWithPattern;
+    ;
+import Cal.Utilities.Locale using
+    function = invariantLocale;
+    ;
+
+data foreign unsafe import jvm "java.io.BufferedReader" private JBufferedReader;
+
+data foreign unsafe import jvm "java.io.InputStream" private JInputStream;
+
+data foreign unsafe import jvm "java.io.InputStreamReader"
+    private JInputStreamReader;
+
+data foreign unsafe import jvm "java.io.Reader" private JReader;
+
+data foreign unsafe import jvm "java.io.FileReader" private JFileReader;
+
+data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
+
+data foreign unsafe import jvm "java.lang.StringBuffer"
+    private JStringBuffer deriving Show;
+
+data foreign unsafe import jvm "java.util.regex.Matcher" private JMatcher;
+
+data foreign unsafe import jvm "java.util.regex.Pattern" private JPattern;
+
+data foreign unsafe import jvm "java.lang.CharSequence" private JCharSequence;
+
+foreign unsafe import jvm "static method java.util.regex.Pattern.compile"
+    private compilePattern :: String -> JPattern;
+
+foreign unsafe import jvm "method matcher"
+    private getMatcher :: JPattern -> JCharSequence -> JMatcher;
+
+foreign unsafe import jvm "method find" private find :: JMatcher -> Boolean;
+
+foreign unsafe import jvm "constructor"
+    private createStringBuffer :: JStringBuffer;
+
+foreign unsafe import jvm "constructor"
+    private createBufferedReader :: JReader -> JBufferedReader;
+
+foreign unsafe import jvm "constructor"
+    private createInputStreamReaderStream :: JInputStream -> JInputStreamReader;
+
+foreign unsafe import jvm "method append"
+    private append :: JStringBuffer -> JCharArray -> Int -> Int -> JStringBuffer;
+
+foreign unsafe import jvm "method read"
+    private read :: JBufferedReader -> JCharArray -> Int -> Int -> Int;
+
+foreign unsafe import jvm "static field java.lang.System.out"
+    private stdout :: JPrintStream;
+
+foreign unsafe import jvm "static field java.lang.System.in"
+    private stdin :: JInputStream;
+
+foreign unsafe import jvm "method print"
+    private print :: JPrintStream -> String -> ();
+
+foreign unsafe import jvm "method println"
+    private printLn :: JPrintStream -> String -> ();
+
+data foreign unsafe import jvm "char[]" JCharArray;
+
+foreign unsafe import jvm "newArray" char_newArray :: Int -> JCharArray;
+
+foreign unsafe import jvm "cast"
+    jInputStreamReaderToJReader :: JInputStreamReader -> JReader;
+
+foreign unsafe import jvm "cast"
+    stringToJCharSequence :: String -> JCharSequence;
+
+/**read a dna file from stdin into a buffer*/
+readFile :: JBufferedReader -> String;
+readFile !bufferedReader =
+    let
+        charBuffer :: JCharArray;
+        charBuffer = eager $ char_newArray 10240;
+
+        stringBuffer :: JStringBuffer;
+        stringBuffer = eager $ createStringBuffer;
+
+        readAll :: JCharArray -> JStringBuffer -> String;
+        readAll !charBuffer !stringBuffer =
+            let
+                charsRead :: Int;
+                charsRead = read bufferedReader charBuffer 0 10240;
+            in
+                if charsRead != -1 then
+                    append stringBuffer charBuffer 0 charsRead
+                    `seq`
+                    readAll charBuffer stringBuffer
+                else
+                    show stringBuffer
+            ;
+    in
+        readAll charBuffer stringBuffer
+    ;
+
+/** Counts the number of matches remaining in a matcher*/
+countMatches :: JMatcher -> Int -> Int;
+countMatches !matcher !count =
+    if find matcher then
+        countMatches matcher (count + 1)
+    else
+        count
+    ;
+
+/** List of variants to search for */
+variants :: [String];
+variants =
+    [
+        "agggtaaa|tttaccct",
+        "[cgt]gggtaaa|tttaccc[acg]",
+        "a[act]ggtaaa|tttacc[agt]t",
+        "ag[act]gtaaa|tttac[agt]ct",
+        "agg[act]taaa|ttta[agt]cct",
+        "aggg[acg]aaa|ttt[cgt]ccct",
+        "agggt[cgt]aa|tt[acg]accct",
+        "agggta[cgt]a|t[acg]taccct",
+        "agggtaa[cgt]|[acg]ttaccct"
+    ]
+    ;
+
+/** list of replacements to make (from, to)*/
+replacements =
+    [
+        ("B", "(c|g|t)"),
+        ("D", "(a|g|t)"),
+        ("H", "(a|c|t)"),
+        ("K", "(g|t)"),
+        ("M", "(a|c)"),
+        ("N", "(a|c|g|t)"),
+        ("R", "(a|g)"),
+        ("S", "(c|g)"),
+        ("V", "(a|c|g)"),
+        ("W", "(a|t)"),
+        ("Y", "(c|t)")
+    ]
+    ;
+
+doReplacement !str !replacement =
+    case replacement of
+    (stringToReplace, newValue)
+    -> replaceAllString str stringToReplace newValue;
+    ;
+
+main :: [String] -> ();
+public main args =
+    let
+        bufferReader :: JBufferedReader;
+        bufferReader =
+            eager
+            $ createBufferedReader
+                (jInputStreamReaderToJReader
+                    (createInputStreamReaderStream stdin)
+                )
+            ;
+
+        input :: String;
+        input = eager $ readFile bufferReader;
+
+        sequence :: String;
+        sequence = replaceAllString input ">.*\n|\n" "";
+    in
+
+        print
+            stdout
+            (foldLeftStrict
+                (
+                    \accumulator variant ->
+                        accumulator
+                        ++ variant
+                        ++ " "
+                        ++ show
+                            (countMatches
+                                (getMatcher
+                                    (compilePattern variant)
+                                    (stringToJCharSequence sequence)
+                                )
+                                0
+                            )
+                        ++ "\n"
+                )
+                ""
+                variants
+            )
+        `seq`
+        printLn stdout ""
+        `seq`
+        printLn stdout (show $ length input)
+        `seq`
+        printLn stdout (show $ length sequence)
+        `seq`
+        printLn
+            stdout
+            (
+                show
+                $ length (foldLeftStrict doReplacement sequence replacements)
+            )
+    ;
+

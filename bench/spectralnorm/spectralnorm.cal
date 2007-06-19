@@ -1,0 +1,193 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Spectralnorm;
+
+import Cal.Core.Prelude using
+    typeClass = Inputable, Outputable;
+    typeConstructor = Boolean, Int, String, Double;
+    dataConstructor = False, True;
+    function = seq, fromInt, eager, stringToInt;
+    ;
+import Cal.Core.Bits using
+    function = shiftL;
+    ;
+import Cal.Core.Debug using
+    function = show;
+    ;
+import Cal.Utilities.Math using
+    function = sqrt;
+    ;
+import Cal.Collections.List using
+    function = head;
+    ;
+import Cal.Utilities.MessageFormat using
+    function = formatWithPattern;
+    ;
+import Cal.Utilities.Locale using
+    function = invariantLocale;
+    ;
+
+data foreign unsafe import jvm "double[]" JVector deriving Inputable, Outputable;
+
+foreign unsafe import jvm "newArray" newVector :: Int -> JVector;
+
+foreign unsafe import jvm "subscriptArray" subscript :: JVector -> Int -> Double;
+
+foreign unsafe import jvm "updateArray"
+    update :: JVector -> Int -> Double -> Double;
+
+data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
+
+foreign unsafe import jvm "static field java.lang.System.out"
+    private stdout :: JPrintStream;
+
+foreign unsafe import jvm "method println"
+    private printLn :: JPrintStream -> String -> ();
+
+/** get element i,j of infinite matrix A*/
+matrixA :: Int -> Int -> Double;
+matrixA !i !j = 1.0 / fromInt ((i + j) * (i + j + 1) / 2 + i + 1);
+
+/** multiply A by v*/
+multiplyAv :: Int -> JVector -> JVector -> ();
+multiplyAv !n !v !av =
+    let
+        go :: Int -> Int -> ();
+        go !i !j =
+            if j < n then
+                update
+                    av
+                    i
+                    (av `subscript` i + matrixA i j * v `subscript` j)
+                `seq`
+                go i (j + 1)
+            else
+                let
+                    inc :: Int;
+                    inc = i + 1;
+                in
+                    if inc < n then
+                        update av inc 0.0
+                        `seq`
+                        go inc 0
+                    else
+                        ()
+            ;
+    in
+        go (-1) n
+    ;
+
+/** multiply (Transpose A) by v*/
+multiplyAtv :: Int -> JVector -> JVector -> ();
+multiplyAtv !n !v !av =
+    let
+        go :: Int -> Int -> ();
+        go !i !j =
+            if j < n then
+                update
+                    av
+                    i
+                    (av `subscript` i + matrixA j i * v `subscript` j)
+                `seq`
+                go i (j + 1)
+            else
+                let
+                    inc :: Int;
+                    inc = i + 1;
+                in
+                    if inc < n then
+                        update av inc 0.0
+                        `seq`
+                        go inc 0
+                    else
+                        ()
+            ;
+    in
+        go (-1) n
+    ;
+
+/**(transpose A) * A * v*/
+multiplyAtAv :: Int -> JVector -> JVector -> JVector -> ();
+multiplyAtAv !n !temp !v !result =
+    multiplyAv n v temp
+    `seq`
+    multiplyAtv n temp result
+    ;
+
+/**run n steps of the approximation*/
+approximate :: Int -> Double;
+approximate !n =
+    let
+        u :: JVector;
+        u = eager $ newVector n;
+
+        v :: JVector;
+        v = eager $ newVector n;
+
+        temp :: JVector;
+        temp = eager $ newVector n;
+
+        doStep :: Int -> ();
+        doStep !i =
+            if i == 0 then
+                ()
+            else
+                multiplyAtAv n temp u v
+                `seq`
+                multiplyAtAv n temp v u
+                `seq`
+                doStep (i - 1)
+            ;
+
+        vbv :: Int -> Double -> Double;
+        vbv !i !sum =
+            if i == n then
+                sum
+            else
+                vbv (i + 1) (sum + u `subscript` i * v `subscript` i)
+            ;
+
+        vv :: Int -> Double -> Double;
+        vv !i !sum =
+            if i == n then
+                sum
+            else
+                vv (i + 1) (sum + v `subscript` i * v `subscript` i)
+            ;
+
+        initVector :: Int -> Int -> JVector -> ();
+        initVector !i !size !v =
+            if i == size then
+                ()
+            else
+                update v i 1.0
+                `seq`
+                initVector (i + 1) size v
+            ;
+    in
+
+        initVector 0 n u
+        `seq`
+        doStep 10
+        `seq`
+        sqrt (vbv 0 0.0 / vv 0 0.0)
+    ;
+
+main :: [String] -> ();
+public main !args =
+    let
+        n :: Int;
+        n = eager $ stringToInt (head args);
+    in
+        printLn
+            stdout
+            (formatWithPattern
+                "{0,number,#.000000000}"
+                invariantLocale
+                {#1 = approximate n}
+            )
+    ;
+
