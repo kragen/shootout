@@ -1,0 +1,376 @@
+<span class="hl com">/**</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * Based on the CAL Open Quark version</span>
+<span class="hl com"> * Contributed by Magnus Byne.</span>
+<span class="hl com"> */</span>
+module Nbody<span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Prelude using
+    typeClass <span class="hl sym">=</span> Inputable<span class="hl sym">,</span> Outputable<span class="hl sym">;</span>
+    typeConstructor <span class="hl sym">=</span> <span class="hl kwc">Boolean</span><span class="hl sym">,</span> Int<span class="hl sym">,</span> <span class="hl kwc">String</span><span class="hl sym">,</span> <span class="hl kwc">Double</span><span class="hl sym">,</span> CalValue<span class="hl sym">;</span>
+    dataConstructor <span class="hl sym">=</span> False<span class="hl sym">,</span> True<span class="hl sym">;</span>
+    function <span class="hl sym">=</span> seq<span class="hl sym">,</span> eager<span class="hl sym">,</span> stringToInt<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Bits using
+    function <span class="hl sym">=</span> shiftL<span class="hl sym">,</span> shiftR<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span><span class="hl kwc">String</span><span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Debug using
+    function <span class="hl sym">=</span> show<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Collections</span><span class="hl sym">.</span><span class="hl kwc">Array</span> using
+    typeConstructor <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">;</span>
+    function <span class="hl sym">=</span> fromList<span class="hl sym">,</span> foldLeftStrict<span class="hl sym">,</span> subscript<span class="hl sym">,</span> length<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Collections</span><span class="hl sym">.</span><span class="hl kwc">List</span> using
+    function <span class="hl sym">=</span> head<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Utilities</span><span class="hl sym">.</span><span class="hl kwc">Math</span> using
+    function <span class="hl sym">=</span> sqrt<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Utilities</span><span class="hl sym">.</span><span class="hl kwc">MessageFormat</span> using
+    function <span class="hl sym">=</span> formatWithPattern<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Utilities</span><span class="hl sym">.</span><span class="hl kwc">Locale</span> using
+    function <span class="hl sym">=</span> invariantLocale<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+
+data foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;java.io.PrintStream&quot;</span> <span class="hl kwa">private</span> JPrintStream<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;static field java.lang.System.out&quot;</span>
+    <span class="hl kwa">private</span> stdout <span class="hl sym">::</span> JPrintStream<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;method println&quot;</span>
+    <span class="hl kwa">private</span> printLn <span class="hl sym">::</span> JPrintStream <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span> <span class="hl sym">-&gt; ();</span>
+
+data foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;double[]&quot;</span> JVector deriving Inputable<span class="hl sym">,</span> Outputable<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;newArray&quot;</span> newVector <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> JVector<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;subscriptArray&quot;</span> get <span class="hl sym">::</span> JVector <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;updateArray&quot;</span>
+    set <span class="hl sym">::</span> JVector <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+
+<span class="hl com">/** a body is represented by position, velocity and mass*/</span>
+data <span class="hl kwa">public</span> Body <span class="hl sym">=</span>
+    Body
+        position <span class="hl sym">:: !</span>JVector
+        velocity <span class="hl sym">:: !</span>JVector
+        mass <span class="hl sym">:: !</span><span class="hl kwc">Double</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** construct a vector from three doubles*/</span>
+makeVector <span class="hl sym">::</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> JVector<span class="hl sym">;</span>
+makeVector <span class="hl sym">!</span>x <span class="hl sym">!</span>y <span class="hl sym">!</span>z <span class="hl sym">=</span>
+    let
+        v <span class="hl sym">::</span> JVector<span class="hl sym">;</span>
+        v <span class="hl sym">=</span> newVector <span class="hl num">3</span><span class="hl sym">;</span>
+    in
+        set v <span class="hl num">0</span> x
+        `seq`
+        set v <span class="hl num">1</span> y
+        `seq`
+        set v <span class="hl num">2</span> z
+        `seq`
+        v
+    <span class="hl sym">;</span>
+
+daysPerYear <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+daysPerYear <span class="hl sym">=</span> <span class="hl num">365.24</span><span class="hl sym">;</span>
+
+pi <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+pi <span class="hl sym">=</span> <span class="hl num">3.141592653589793</span><span class="hl sym">;</span>
+
+solarMass <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+solarMass <span class="hl sym">=</span> <span class="hl num">4</span> <span class="hl sym">*</span> pi <span class="hl sym">*</span> pi<span class="hl sym">;</span>
+
+<span class="hl com">/** calculate the initial offset moment for the sun*/</span>
+computeOffsetMomentum <span class="hl sym">::</span> <span class="hl kwc">Array</span> Body <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+computeOffsetMomentum bodies <span class="hl sym">=</span>
+    let
+        offset <span class="hl sym">::</span> JVector<span class="hl sym">;</span>
+        offset <span class="hl sym">=</span> makeVector <span class="hl num">0 0 0</span><span class="hl sym">;</span>
+
+        sun <span class="hl sym">::</span> Body<span class="hl sym">;</span>
+        sun <span class="hl sym">=</span> bodies `subscript` <span class="hl num">0</span><span class="hl sym">;</span>
+
+        updateOffset <span class="hl sym">!</span>offset <span class="hl sym">!</span>body <span class="hl sym">=</span>
+            <span class="hl kwa">case</span> body of
+            Body position velocity mass <span class="hl sym">-&gt;</span>
+                set offset <span class="hl kwd">0</span> <span class="hl sym">(</span>get offset <span class="hl num">0</span> <span class="hl sym">+</span> get velocity <span class="hl num">0</span> <span class="hl sym">*</span> mass<span class="hl sym">)</span>
+                `seq`
+                set offset <span class="hl kwd">1</span> <span class="hl sym">(</span>get offset <span class="hl num">1</span> <span class="hl sym">+</span> get velocity <span class="hl num">1</span> <span class="hl sym">*</span> mass<span class="hl sym">)</span>
+                `seq`
+                set offset <span class="hl kwd">2</span> <span class="hl sym">(</span>get offset <span class="hl num">2</span> <span class="hl sym">+</span> get velocity <span class="hl num">2</span> <span class="hl sym">*</span> mass<span class="hl sym">)</span>
+                `seq`
+                offset
+                <span class="hl sym">;</span>
+            <span class="hl sym">;</span>
+    in
+        foldLeftStrict updateOffset offset bodies
+        `seq`
+        <span class="hl sym">(</span>
+            <span class="hl kwa">case</span> sun of
+            Body pos velocity mass <span class="hl sym">-&gt;</span>
+                set velocity <span class="hl kwd">0</span> <span class="hl sym">(-</span>get offset <span class="hl num">0</span> <span class="hl sym">/</span> solarMass<span class="hl sym">)</span>
+                `seq`
+                set velocity <span class="hl kwd">1</span> <span class="hl sym">(-</span>get offset <span class="hl num">1</span> <span class="hl sym">/</span> solarMass<span class="hl sym">)</span>
+                `seq`
+                set velocity <span class="hl kwd">2</span> <span class="hl sym">(-</span>get offset <span class="hl num">2</span> <span class="hl sym">/</span> solarMass<span class="hl sym">)</span>
+                <span class="hl sym">;</span>
+        <span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** calcualte the potential and kenetic energy*/</span>
+energy <span class="hl sym">::</span> <span class="hl kwc">Array</span> Body <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+energy <span class="hl sym">!</span>bodies <span class="hl sym">=</span>
+    let
+        numBodies <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        numBodies <span class="hl sym">=</span> eager $ length bodies<span class="hl sym">;</span>
+
+        loop <span class="hl sym">::</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+        loop <span class="hl sym">!</span>energy <span class="hl sym">!</span>i <span class="hl sym">!</span>j <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> j <span class="hl sym">&lt;</span> numBodies then
+                <span class="hl kwa">case</span> bodies `subscript` i of
+                Body pos1 vel1 mass1 <span class="hl sym">-&gt;</span>
+                    <span class="hl kwa">case</span> bodies `subscript` j of
+                    Body pos2 vel2 mass2 <span class="hl sym">-&gt;</span>
+                        let
+                            dx <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                            dx <span class="hl sym">=</span> eager $ get pos1 <span class="hl num">0</span> <span class="hl sym">-</span> get pos2 <span class="hl num">0</span><span class="hl sym">;</span>
+
+                            dy <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                            dy <span class="hl sym">=</span> eager $ get pos1 <span class="hl num">1</span> <span class="hl sym">-</span> get pos2 <span class="hl num">1</span><span class="hl sym">;</span>
+
+                            dz <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                            dz <span class="hl sym">=</span> eager $ get pos1 <span class="hl num">2</span> <span class="hl sym">-</span> get pos2 <span class="hl num">2</span><span class="hl sym">;</span>
+
+                            distance <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                            distance <span class="hl sym">=</span>
+                                eager $ <span class="hl kwd">sqrt</span> <span class="hl sym">(</span>dx <span class="hl sym">*</span> dx <span class="hl sym">+</span> dy <span class="hl sym">*</span> dy <span class="hl sym">+</span> dz <span class="hl sym">*</span> dz<span class="hl sym">);</span>
+                        in
+                            loop
+                                <span class="hl sym">(</span>energy <span class="hl sym">-</span> mass1 <span class="hl sym">*</span> mass2 <span class="hl sym">/</span> distance<span class="hl sym">)</span>
+                                i
+                                <span class="hl sym">(</span>j <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                        <span class="hl sym">;</span>
+                    <span class="hl sym">;</span>
+            <span class="hl kwa">else if</span> i <span class="hl sym">&lt;</span> numBodies then
+                <span class="hl kwa">case</span> bodies `subscript` i of
+                Body pos vel mass <span class="hl sym">-&gt;</span>
+                    loop
+                        <span class="hl sym">(</span>
+                            energy
+                            <span class="hl sym">+</span> <span class="hl num">0.5</span> <span class="hl sym">*</span> mass
+                                <span class="hl sym">*</span>
+                                <span class="hl sym">(</span>
+                                    get vel <span class="hl num">0</span> <span class="hl sym">*</span> get vel <span class="hl num">0</span>
+                                    <span class="hl sym">+</span> get vel <span class="hl num">1</span> <span class="hl sym">*</span> get vel <span class="hl num">1</span>
+                                    <span class="hl sym">+</span> get vel <span class="hl num">2</span> <span class="hl sym">*</span> get vel <span class="hl num">2</span>
+                                <span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                        <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">)</span>
+                    <span class="hl sym">;</span>
+            <span class="hl kwa">else</span>
+                energy
+            <span class="hl sym">;</span>
+    in
+        loop <span class="hl num">0.0 0 1</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** advance state of the bodies by time delta*/</span>
+advance <span class="hl sym">::</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Array</span> Body <span class="hl sym">-&gt; ();</span>
+advance <span class="hl sym">!</span>dt <span class="hl sym">!</span>bodies <span class="hl sym">=</span>
+    let
+        numBodies <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        numBodies <span class="hl sym">=</span> eager $ length bodies<span class="hl sym">;</span>
+
+        updateVelocity <span class="hl sym">::</span>
+            JVector
+            <span class="hl sym">-&gt;</span> JVector
+            <span class="hl sym">-&gt;</span> JVector
+            <span class="hl sym">-&gt;</span> JVector
+            <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span>
+            <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span>
+            <span class="hl sym">-&gt; ();</span>
+        updateVelocity <span class="hl sym">!</span>pos1 <span class="hl sym">!</span>pos2 <span class="hl sym">!</span>vel1 <span class="hl sym">!</span>vel2 <span class="hl sym">!</span>mass1 <span class="hl sym">!</span>mass2 <span class="hl sym">=</span>
+            let
+                dx <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                dx <span class="hl sym">=</span> eager $ get pos1 <span class="hl num">0</span> <span class="hl sym">-</span> get pos2 <span class="hl num">0</span><span class="hl sym">;</span>
+
+                dy <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                dy <span class="hl sym">=</span> eager $ get pos1 <span class="hl num">1</span> <span class="hl sym">-</span> get pos2 <span class="hl num">1</span><span class="hl sym">;</span>
+
+                dz <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                dz <span class="hl sym">=</span> eager $ get pos1 <span class="hl num">2</span> <span class="hl sym">-</span> get pos2 <span class="hl num">2</span><span class="hl sym">;</span>
+
+                distance <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                distance <span class="hl sym">=</span> eager $ <span class="hl kwd">sqrt</span> <span class="hl sym">(</span>dx <span class="hl sym">*</span> dx <span class="hl sym">+</span> dy <span class="hl sym">*</span> dy <span class="hl sym">+</span> dz <span class="hl sym">*</span> dz<span class="hl sym">);</span>
+
+                mag <span class="hl sym">::</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+                mag <span class="hl sym">=</span> eager $ dt <span class="hl sym">/ (</span>distance <span class="hl sym">*</span> distance <span class="hl sym">*</span> distance<span class="hl sym">);</span>
+            in
+                set vel1 <span class="hl kwd">0</span> <span class="hl sym">(</span>get vel1 <span class="hl num">0</span> <span class="hl sym">-</span> dx <span class="hl sym">*</span> mass2 <span class="hl sym">*</span> mag<span class="hl sym">)</span>
+                `seq`
+                set vel1 <span class="hl kwd">1</span> <span class="hl sym">(</span>get vel1 <span class="hl num">1</span> <span class="hl sym">-</span> dy <span class="hl sym">*</span> mass2 <span class="hl sym">*</span> mag<span class="hl sym">)</span>
+                `seq`
+                set vel1 <span class="hl kwd">2</span> <span class="hl sym">(</span>get vel1 <span class="hl num">2</span> <span class="hl sym">-</span> dz <span class="hl sym">*</span> mass2 <span class="hl sym">*</span> mag<span class="hl sym">)</span>
+                `seq`
+
+                set vel2 <span class="hl kwd">0</span> <span class="hl sym">(</span>get vel2 <span class="hl num">0</span> <span class="hl sym">+</span> dx <span class="hl sym">*</span> mass1 <span class="hl sym">*</span> mag<span class="hl sym">)</span>
+                `seq`
+                set vel2 <span class="hl kwd">1</span> <span class="hl sym">(</span>get vel2 <span class="hl num">1</span> <span class="hl sym">+</span> dy <span class="hl sym">*</span> mass1 <span class="hl sym">*</span> mag<span class="hl sym">)</span>
+                `seq`
+                set vel2 <span class="hl kwd">2</span> <span class="hl sym">(</span>get vel2 <span class="hl num">2</span> <span class="hl sym">+</span> dz <span class="hl sym">*</span> mass1 <span class="hl sym">*</span> mag<span class="hl sym">)</span>
+                `seq`
+                <span class="hl sym">()</span>
+            <span class="hl sym">;</span>
+
+        updateVelocities <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt; ();</span>
+        updateVelocities <span class="hl sym">!</span>i <span class="hl sym">!</span>j <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> j <span class="hl sym">&lt;</span> numBodies then
+                <span class="hl sym">(</span>
+                    <span class="hl kwa">case</span> bodies `subscript` i of
+                    Body pos1 vel1 mass1 <span class="hl sym">-&gt;</span>
+                        <span class="hl kwa">case</span> bodies `subscript` j of
+                        Body pos2 vel2 mass2 <span class="hl sym">-&gt;</span>
+                            updateVelocity pos1 pos2 vel1 vel2 mass1 mass2<span class="hl sym">;</span>
+                        <span class="hl sym">;</span>
+                <span class="hl sym">)</span>
+                `seq`
+                updateVelocities <span class="hl kwd">i</span> <span class="hl sym">(</span>j <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl kwa">else if</span> i <span class="hl sym">&lt;</span> numBodies then
+                <span class="hl kwd">updateVelocities</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">) (</span>i <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">)</span>
+            <span class="hl kwa">else</span>
+                <span class="hl sym">()</span>
+            <span class="hl sym">;</span>
+
+        updatePosition <span class="hl sym">::</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt;</span> Body <span class="hl sym">-&gt;</span> <span class="hl kwc">Double</span><span class="hl sym">;</span>
+        updatePosition <span class="hl sym">!</span>dt <span class="hl sym">!</span>body <span class="hl sym">=</span>
+            <span class="hl kwa">case</span> body of
+            Body pos velocity mass <span class="hl sym">-&gt;</span>
+                set pos <span class="hl kwd">0</span> <span class="hl sym">(</span>get pos <span class="hl num">0</span> <span class="hl sym">+</span> dt <span class="hl sym">*</span> get velocity <span class="hl num">0</span><span class="hl sym">)</span>
+                `seq`
+                set pos <span class="hl kwd">1</span> <span class="hl sym">(</span>get pos <span class="hl num">1</span> <span class="hl sym">+</span> dt <span class="hl sym">*</span> get velocity <span class="hl num">1</span><span class="hl sym">)</span>
+                `seq`
+                set pos <span class="hl kwd">2</span> <span class="hl sym">(</span>get pos <span class="hl num">2</span> <span class="hl sym">+</span> dt <span class="hl sym">*</span> get velocity <span class="hl num">2</span><span class="hl sym">)</span>
+                <span class="hl sym">;</span>
+            <span class="hl sym">;</span>
+
+        updatePositions <span class="hl sym">::</span> Int <span class="hl sym">-&gt; ();</span>
+        updatePositions <span class="hl sym">!</span>i <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> i <span class="hl sym">==</span> numBodies then
+                <span class="hl sym">()</span>
+            <span class="hl kwa">else</span>
+                updatePosition <span class="hl kwd">dt</span> <span class="hl sym">(</span>bodies `subscript` i<span class="hl sym">)</span>
+                `seq`
+                <span class="hl kwd">updatePositions</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl sym">;</span>
+    in
+
+        updateVelocities <span class="hl num">0 1</span>
+        `seq`
+        updatePositions <span class="hl num">0</span>
+    <span class="hl sym">;</span>
+
+main <span class="hl sym">:: [</span><span class="hl kwc">String</span><span class="hl sym">] -&gt; ();</span>
+<span class="hl kwa">public</span> main <span class="hl sym">!</span>args <span class="hl sym">=</span>
+    let
+        n <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        n <span class="hl sym">=</span> eager $ <span class="hl kwd">stringToInt</span> <span class="hl sym">(</span>head args<span class="hl sym">);</span>
+        bodies <span class="hl sym">::</span> <span class="hl kwc">Array</span> Body<span class="hl sym">;</span>
+        bodies <span class="hl sym">=</span>
+            fromList
+                <span class="hl sym">[</span>
+                    <span class="hl slc">//the sun</span>
+                    <span class="hl kwd">Body</span> <span class="hl sym">(</span>makeVector <span class="hl num">0 0 0</span><span class="hl sym">) (</span>makeVector <span class="hl num">0 0 0</span><span class="hl sym">)</span> solarMass<span class="hl sym">,</span>
+                    <span class="hl slc">//jupiter</span>
+                    Body
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl num">4.841431442464721</span>
+                            <span class="hl sym">(-</span><span class="hl num">1.1603200440274284</span><span class="hl sym">)</span>
+                            <span class="hl sym">(-</span><span class="hl num">0.10362204447112311</span><span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl sym">(</span><span class="hl num">0.001660076642744037</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(</span><span class="hl num">0.007699011184197404</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(-</span><span class="hl num">6.90460016972063E-5</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span><span class="hl num">9.547919384243266E-4</span> <span class="hl sym">*</span> solarMass<span class="hl sym">),</span>
+                    <span class="hl slc">//saturn</span>
+                    Body
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl num">8.34336671824458</span>
+                            <span class="hl num">4.124798564124305</span>
+                            <span class="hl sym">(-</span><span class="hl num">0.4035234171143214</span><span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl sym">(-</span><span class="hl num">0.002767425107268624</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(</span><span class="hl num">0.004998528012349172</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(</span><span class="hl num">2.3041729757376393E-5</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span><span class="hl num">2.858859806661308E-4</span> <span class="hl sym">*</span> solarMass<span class="hl sym">),</span>
+                    <span class="hl slc">//uranus</span>
+                    Body
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl num">12.894369562139131</span>
+                            <span class="hl sym">(-</span><span class="hl num">15.111151401698631</span><span class="hl sym">)</span>
+                            <span class="hl sym">(-</span><span class="hl num">0.22330757889265573</span><span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl sym">(</span><span class="hl num">0.002964601375647616</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(</span><span class="hl num">0.0023784717395948095</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(-</span><span class="hl num">2.9658956854023756E-5</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span><span class="hl num">4.366244043351563E-5</span> <span class="hl sym">*</span> solarMass<span class="hl sym">),</span>
+                    <span class="hl slc">//neptune</span>
+                    Body
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl num">15.379697114850917</span>
+                            <span class="hl sym">(-</span><span class="hl num">25.919314609987964</span><span class="hl sym">)</span>
+                            <span class="hl num">0.17925877295037118</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span>makeVector
+                            <span class="hl sym">(</span><span class="hl num">0.0026806777249038932</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(</span><span class="hl num">0.001628241700382423</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                            <span class="hl sym">(-</span><span class="hl num">9.515922545197159E-5</span> <span class="hl sym">*</span> daysPerYear<span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                        <span class="hl sym">(</span><span class="hl num">5.1513890204661145E-5</span> <span class="hl sym">*</span> solarMass<span class="hl sym">)</span>
+                <span class="hl sym">]</span>
+            <span class="hl sym">;</span>
+
+        loop <span class="hl sym">::</span> Int <span class="hl sym">-&gt; ();</span>
+        loop <span class="hl sym">!</span>n <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> n <span class="hl sym">&gt;</span> <span class="hl num">0</span> then
+                advance <span class="hl num">0.01</span> bodies
+                `seq`
+                <span class="hl kwd">loop</span> <span class="hl sym">(</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl kwa">else</span>
+                <span class="hl sym">()</span>
+            <span class="hl sym">;</span>
+        <span class="hl com">/** function to display energy in specified format*/</span>
+        showEnergy <span class="hl sym">::</span> <span class="hl kwc">Double</span> <span class="hl sym">-&gt; ();</span>
+        showEnergy <span class="hl sym">!</span>e <span class="hl sym">=</span>
+            printLn
+                stdout
+                <span class="hl sym">(</span>formatWithPattern
+                    <span class="hl str">&quot;{0,number,0.000000000}&quot;</span>
+                    invariantLocale
+                    <span class="hl sym">{</span>#<span class="hl num">1</span> <span class="hl sym">=</span> e<span class="hl sym">}</span>
+                <span class="hl sym">)</span>
+            <span class="hl sym">;</span>
+    in
+
+        computeOffsetMomentum bodies
+        `seq`
+        <span class="hl kwd">showEnergy</span> <span class="hl sym">(</span>energy bodies<span class="hl sym">)</span>
+        `seq`
+        loop n
+        `seq`
+        <span class="hl kwd">showEnergy</span> <span class="hl sym">(</span>energy bodies<span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+

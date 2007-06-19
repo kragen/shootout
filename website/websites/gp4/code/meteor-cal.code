@@ -1,0 +1,765 @@
+<span class="hl com">/**</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * Based on the CAL Open Quark version</span>
+<span class="hl com"> * Contributed by Magnus Byne.</span>
+<span class="hl com"> */</span>
+module Meteor<span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Prelude using
+    typeClass <span class="hl sym">=</span> <span class="hl kwc">Enum</span><span class="hl sym">,</span> Inputable<span class="hl sym">,</span> IntEnum<span class="hl sym">,</span> Outputable<span class="hl sym">,</span> Bounded<span class="hl sym">;</span>
+    typeConstructor <span class="hl sym">=</span> <span class="hl kwc">Boolean</span><span class="hl sym">,</span> Int<span class="hl sym">,</span> <span class="hl kwc">Long</span><span class="hl sym">,</span> <span class="hl kwc">String</span><span class="hl sym">;</span>
+    dataConstructor <span class="hl sym">=</span> False<span class="hl sym">,</span> True<span class="hl sym">;</span>
+    function <span class="hl sym">=</span>
+        eager<span class="hl sym">,</span> enumToInt<span class="hl sym">,</span> fromInt<span class="hl sym">,</span> iff<span class="hl sym">,</span> intToEnum<span class="hl sym">,</span> seq<span class="hl sym">,</span> stringToInt<span class="hl sym">,</span> maxBound<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Debug using
+    typeClass <span class="hl sym">=</span> Show<span class="hl sym">;</span>
+    function <span class="hl sym">=</span> show<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Bits using
+    function <span class="hl sym">=</span> bitwiseAnd<span class="hl sym">,</span> bitwiseOr<span class="hl sym">,</span> shiftL<span class="hl sym">,</span> shiftRUnsigned<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Collections</span><span class="hl sym">.</span><span class="hl kwc">List</span> using
+    function <span class="hl sym">=</span> foldLeftStrict<span class="hl sym">,</span> head<span class="hl sym">,</span> map<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Collections</span><span class="hl sym">.</span><span class="hl kwc">Array</span> using
+    typeConstructor <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span><span class="hl kwc">Utilities</span><span class="hl sym">.</span><span class="hl kwc">MessageFormat</span><span class="hl sym">;</span>
+
+
+data foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;long[]&quot;</span>
+    JLongArray deriving Inputable<span class="hl sym">,</span> Outputable<span class="hl sym">,</span> Show<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;newArray&quot;</span> longArray_new <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> JLongArray<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;lengthArray&quot;</span> longArray_length <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;subscriptArray&quot;</span>
+    longArray_subscript <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;updateArray&quot;</span>
+    longArray_update <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+
+data foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;java.io.PrintStream&quot;</span> <span class="hl kwa">private</span> JPrintStream<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;static field java.lang.System.out&quot;</span>
+    <span class="hl kwa">private</span> stdout <span class="hl sym">::</span> JPrintStream<span class="hl sym">;</span>
+
+foreign unsafe <span class="hl kwa">import</span> jvm <span class="hl str">&quot;method println&quot;</span>
+    <span class="hl kwa">private</span> printLn <span class="hl sym">::</span> JPrintStream <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span> <span class="hl sym">-&gt; ();</span>
+
+<span class="hl com">/** build an array from a list*/</span>
+jLongArrayfromList <span class="hl sym">:: [</span><span class="hl kwc">Long</span><span class="hl sym">] -&gt;</span> JLongArray<span class="hl sym">;</span>
+jLongArrayfromList <span class="hl sym">!</span>input <span class="hl sym">=</span>
+    let
+        array <span class="hl sym">::</span> JLongArray<span class="hl sym">;</span>
+        array <span class="hl sym">=</span> eager $ <span class="hl kwd">longArray_new</span> <span class="hl sym">(</span><span class="hl kwc">List</span><span class="hl sym">.</span>length input<span class="hl sym">);</span>
+    in
+        array
+        `seq`
+        foldLeftStrict
+            <span class="hl sym">(</span>
+                \<span class="hl sym">!</span>index <span class="hl sym">!</span>value <span class="hl sym">-&gt;</span>
+                    longArray_update array index value
+                    `seq`
+                    <span class="hl sym">(</span>index <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl sym">)</span>
+            <span class="hl num">0</span>
+            input
+        `seq`
+        array
+    <span class="hl sym">;</span>
+
+data Direction <span class="hl sym">=</span>
+    E <span class="hl sym">|</span> SE <span class="hl sym">|</span> SW <span class="hl sym">|</span> W <span class="hl sym">|</span> NW <span class="hl sym">|</span> NE
+    deriving <span class="hl kwc">Enum</span><span class="hl sym">,</span> IntEnum
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** the puzzle peices*/</span>
+pieces <span class="hl sym">:: [[</span>Direction<span class="hl sym">]];</span>
+pieces <span class="hl sym">=</span>
+    <span class="hl sym">[</span>
+        <span class="hl sym">[</span>E<span class="hl sym">,</span> E<span class="hl sym">,</span> E<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+        <span class="hl sym">[</span>SE<span class="hl sym">,</span> SW<span class="hl sym">,</span> W<span class="hl sym">,</span> SW<span class="hl sym">],</span>
+        <span class="hl sym">[</span>W<span class="hl sym">,</span> W<span class="hl sym">,</span> SW<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+        <span class="hl sym">[</span>E<span class="hl sym">,</span> E<span class="hl sym">,</span> SW<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+        <span class="hl sym">[</span>NW<span class="hl sym">,</span> W<span class="hl sym">,</span> NW<span class="hl sym">,</span> SE<span class="hl sym">,</span> SW<span class="hl sym">],</span>
+        <span class="hl sym">[</span>E<span class="hl sym">,</span> E<span class="hl sym">,</span> NE<span class="hl sym">,</span> W<span class="hl sym">],</span>
+        <span class="hl sym">[</span>NW<span class="hl sym">,</span> NE<span class="hl sym">,</span> NE<span class="hl sym">,</span> W<span class="hl sym">],</span>
+        <span class="hl sym">[</span>NE<span class="hl sym">,</span> SE<span class="hl sym">,</span> E<span class="hl sym">,</span> NE<span class="hl sym">],</span>
+        <span class="hl sym">[</span>SE<span class="hl sym">,</span> SE<span class="hl sym">,</span> E<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+        <span class="hl sym">[</span>E<span class="hl sym">,</span> NW<span class="hl sym">,</span> NW<span class="hl sym">,</span> NW<span class="hl sym">]</span>
+    <span class="hl sym">]</span>
+    <span class="hl sym">;</span>
+
+width <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+width <span class="hl sym">=</span> <span class="hl num">5</span><span class="hl sym">;</span>
+
+height <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+height <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">;</span>
+
+<span class="hl com">/** rotate a puzzle piece clockwise */</span>
+rotatePiece <span class="hl sym">:: [</span>Direction<span class="hl sym">] -&gt; [</span>Direction<span class="hl sym">];</span>
+rotatePiece <span class="hl sym">!</span>piece <span class="hl sym">=</span>
+    let
+        rotate <span class="hl sym">::</span> Direction <span class="hl sym">-&gt;</span> Direction<span class="hl sym">;</span>
+        rotate <span class="hl sym">!</span>direction <span class="hl sym">=</span>
+            <span class="hl kwa">case</span> direction of
+            E <span class="hl sym">-&gt;</span> SE<span class="hl sym">;</span>
+            SE <span class="hl sym">-&gt;</span> SW<span class="hl sym">;</span>
+            SW <span class="hl sym">-&gt;</span> W<span class="hl sym">;</span>
+            W <span class="hl sym">-&gt;</span> NW<span class="hl sym">;</span>
+            NW <span class="hl sym">-&gt;</span> NE<span class="hl sym">;</span>
+            NE <span class="hl sym">-&gt;</span> E<span class="hl sym">;</span>
+            <span class="hl sym">;</span>
+    in
+        map rotate piece
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** flip a peice about it's vertical axis*/</span>
+flipPiece <span class="hl sym">:: [</span>Direction<span class="hl sym">] -&gt; [</span>Direction<span class="hl sym">];</span>
+flipPiece <span class="hl sym">!</span>piece <span class="hl sym">=</span>
+    let
+        flip <span class="hl sym">::</span> Direction <span class="hl sym">-&gt;</span> Direction<span class="hl sym">;</span>
+        flip <span class="hl sym">!</span>direction <span class="hl sym">=</span>
+            <span class="hl kwa">case</span> direction of
+            E <span class="hl sym">-&gt;</span> W<span class="hl sym">;</span>
+            SE <span class="hl sym">-&gt;</span> SW<span class="hl sym">;</span>
+            SW <span class="hl sym">-&gt;</span> SE<span class="hl sym">;</span>
+            W <span class="hl sym">-&gt;</span> E<span class="hl sym">;</span>
+            NW <span class="hl sym">-&gt;</span> NE<span class="hl sym">;</span>
+            NE <span class="hl sym">-&gt;</span> NW<span class="hl sym">;</span>
+            <span class="hl sym">;</span>
+    in
+        map flip piece
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * the puzzle board is represented as a 64 long. The positions on the board,</span>
+<span class="hl com"> * from the top left, row by row, to the bottom right are represented</span>
+<span class="hl com"> * by bits highbit to lowbit inclusive. A set bit means the position is occupied.</span>
+<span class="hl com"> * An unset bit means the bit is not occupied.</span>
+<span class="hl com"> */</span>
+highBit <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+highBit <span class="hl sym">=</span> <span class="hl num">4611686018427387904</span><span class="hl sym">;</span>
+
+lowBit <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+lowBit <span class="hl sym">=</span> <span class="hl num">8192</span><span class="hl sym">;</span>
+
+fullBoard <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+fullBoard <span class="hl sym">=</span> <span class="hl num">9223372036854767616</span><span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * an array with one mask for each position on the board. The set bits in the mask</span>
+<span class="hl com"> * correspond to positions on the board that are adjacent.</span>
+<span class="hl com"> */</span>
+adjacentSquares <span class="hl sym">::</span> JLongArray<span class="hl sym">;</span>
+adjacentSquares <span class="hl sym">=</span>
+    let
+        adjacent <span class="hl sym">:: [</span>Direction<span class="hl sym">];</span>
+        <span class="hl slc">//route of steps to surround the square</span>
+        adjacent <span class="hl sym">= [</span>E<span class="hl sym">,</span> SW<span class="hl sym">,</span> W<span class="hl sym">,</span> NW<span class="hl sym">,</span> NE<span class="hl sym">,</span> E<span class="hl sym">];</span>
+    in
+        jLongArrayfromList
+            <span class="hl sym">(</span><span class="hl kwc">List</span><span class="hl sym">.</span>mapIndexed
+                <span class="hl sym">(</span>
+                    \a i <span class="hl sym">-&gt;</span>
+                        toBits
+                        $ validCoords
+                        $ <span class="hl kwc">List</span><span class="hl sym">.</span>tail
+                        $ toCoords <span class="hl kwd">adjacent</span> <span class="hl sym">(</span>i <span class="hl sym">%</span> width<span class="hl sym">) (</span>i <span class="hl sym">/</span> width<span class="hl sym">)</span>
+                <span class="hl sym">)</span>
+                <span class="hl sym">(</span><span class="hl kwc">List</span><span class="hl sym">.</span><span class="hl kwd">replicate</span> <span class="hl sym">(</span>width <span class="hl sym">*</span> height<span class="hl sym">) (</span><span class="hl num">0</span> <span class="hl sym">::</span> Int<span class="hl sym">))</span>
+            <span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * returns the board position 0 .. 49 of the first occuipied square</span>
+<span class="hl com"> */</span>
+getFirstSetBit <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+getFirstSetBit <span class="hl sym">!</span>word <span class="hl sym">=</span>
+    let
+        helper <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+        helper <span class="hl sym">!</span>word <span class="hl sym">!</span>bit <span class="hl sym">!</span>i <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> bitwiseAnd word bit <span class="hl sym">!=</span> <span class="hl num">0</span> then
+                i
+            <span class="hl kwa">else</span>
+                helper <span class="hl kwd">word</span> <span class="hl sym">(</span>shiftRUnsigned bit <span class="hl num">1</span><span class="hl sym">) (</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl sym">;</span>
+    in
+        helper word highBit <span class="hl num">0</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * return the number of bits that are set in a mask</span>
+<span class="hl com"> */</span>
+countBits <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+countBits <span class="hl sym">!</span>word <span class="hl sym">=</span>
+    let
+        helper <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+        helper <span class="hl sym">!</span>word <span class="hl sym">!</span>count <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> word <span class="hl sym">==</span> <span class="hl num">0</span> then
+                count
+            <span class="hl kwa">else</span>
+                <span class="hl kwd">helper</span> <span class="hl sym">(</span>bitwiseAnd <span class="hl kwd">word</span> <span class="hl sym">(</span>word <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)) (</span>count <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl sym">;</span>
+    in
+        eager $ helper word <span class="hl num">0</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * returns true if the board mask has an island of fewer than five positions -</span>
+<span class="hl com"> * used to prune positions tha have 'holes' that no peice could fit into</span>
+<span class="hl com"> * (as all peices are of size 5)</span>
+<span class="hl com"> */</span>
+hasSmallIslands <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Boolean</span><span class="hl sym">;</span>
+hasSmallIslands <span class="hl sym">!</span>board <span class="hl sym">=</span>
+    let
+        fill <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+        fill <span class="hl sym">!</span>board <span class="hl sym">!</span>filled <span class="hl sym">!</span>seeds <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> seeds <span class="hl sym">==</span> <span class="hl num">0</span> then
+                filled
+            <span class="hl kwa">else</span>
+                let
+                    highestSeed <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+                    highestSeed <span class="hl sym">=</span> eager $ getFirstSetBit seeds<span class="hl sym">;</span>
+
+                    newSeeds <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                    newSeeds <span class="hl sym">=</span>
+                        eager
+                        $ bitwiseAnd
+                            <span class="hl sym">(</span>longArray_subscript adjacentSquares highestSeed<span class="hl sym">)</span>
+                            <span class="hl sym">(</span>Bits<span class="hl sym">.</span>complement $ bitwiseOr filled board<span class="hl sym">)</span>
+                        <span class="hl sym">;</span>
+                in
+                    fill
+                        board
+                        <span class="hl sym">(</span>bitwiseOr <span class="hl kwd">filled</span> <span class="hl sym">(</span>bitwiseOr seeds newSeeds<span class="hl sym">))</span>
+                        <span class="hl sym">(</span>bitwiseAnd
+                            <span class="hl sym">(</span>bitwiseOr seeds newSeeds<span class="hl sym">)</span>
+                            <span class="hl sym">(</span>
+                                Bits<span class="hl sym">.</span>complement
+                                $ Bits<span class="hl sym">.</span>shiftR <span class="hl kwd">highBit</span> <span class="hl sym">(</span>fromInt highestSeed<span class="hl sym">)</span>
+                            <span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+            <span class="hl sym">;</span>
+    in
+
+        <span class="hl kwa">if</span> bitwiseAnd board fullBoard <span class="hl sym">==</span> fullBoard then
+            False
+        <span class="hl kwa">else</span>
+            let
+                island <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                island <span class="hl sym">=</span>
+                    eager
+                    $ fill
+                        board
+                        <span class="hl num">0</span>
+                        <span class="hl sym">(</span>
+                            Bits<span class="hl sym">.</span>highestBitMask
+                            $ bitwiseAnd <span class="hl kwd">fullBoard</span> <span class="hl sym">(</span>Bits<span class="hl sym">.</span>complement board<span class="hl sym">)</span>
+                        <span class="hl sym">)</span>
+                    <span class="hl sym">;</span>
+            in
+                <span class="hl kwa">if</span> countBits island <span class="hl sym">&lt;</span> <span class="hl num">5</span> then
+                    True
+                <span class="hl kwa">else</span>
+                    <span class="hl kwd">hasSmallIslands</span> <span class="hl sym">(</span>bitwiseOr board island<span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * take a solution and make the reverse - a second solution that is a rotation of the first.</span>
+<span class="hl com"> */</span>
+makeReverseSolution <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray<span class="hl sym">;</span>
+makeReverseSolution <span class="hl sym">!</span>solution <span class="hl sym">!</span>reversed <span class="hl sym">=</span>
+    let
+        reverseMask <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+        reverseMask <span class="hl sym">!</span>board <span class="hl sym">=</span>
+            let
+                reverse <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                reverse <span class="hl sym">!</span>board <span class="hl sym">!</span>res <span class="hl sym">!</span>fromBit <span class="hl sym">!</span>toBit <span class="hl sym">=</span>
+                    <span class="hl kwa">if</span> fromBit <span class="hl sym">&lt;</span> lowBit then
+                        res
+                    <span class="hl kwa">else if</span> bitwiseAnd fromBit board <span class="hl sym">!=</span> <span class="hl num">0</span> then
+                        reverse
+                            board
+                            <span class="hl sym">(</span>bitwiseOr res toBit<span class="hl sym">)</span>
+                            <span class="hl sym">(</span>shiftRUnsigned fromBit <span class="hl num">1</span><span class="hl sym">)</span>
+                            <span class="hl sym">(</span>shiftL toBit <span class="hl num">1</span><span class="hl sym">)</span>
+                    <span class="hl kwa">else</span>
+                        reverse
+                            board
+                            res
+                            <span class="hl sym">(</span>shiftRUnsigned fromBit <span class="hl num">1</span><span class="hl sym">)</span>
+                            <span class="hl sym">(</span>shiftL toBit <span class="hl num">1</span><span class="hl sym">)</span>
+                    <span class="hl sym">;</span>
+            in
+                reverse <span class="hl kwd">board</span> <span class="hl sym">(</span>bitwiseAnd board <span class="hl num">15</span><span class="hl sym">)</span> highBit lowBit
+            <span class="hl sym">;</span>
+
+        len <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        len <span class="hl sym">=</span> eager $ longArray_length solution<span class="hl sym">;</span>
+
+        loop <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> JLongArray<span class="hl sym">;</span>
+        loop <span class="hl sym">!</span>i <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> len then
+                longArray_update
+                    reversed
+                    i
+                    <span class="hl sym">(</span>reverseMask $ longArray_subscript solution i<span class="hl sym">)</span>
+                `seq`
+                <span class="hl kwd">loop</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl kwa">else</span>
+                reversed
+            <span class="hl sym">;</span>
+    in
+        loop <span class="hl num">1</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** true if the coord is on the board*/</span>
+validCoord <span class="hl sym">:: (</span>Int<span class="hl sym">,</span> Int<span class="hl sym">) -&gt;</span> <span class="hl kwc">Boolean</span><span class="hl sym">;</span>
+validCoord <span class="hl sym">!</span>coord <span class="hl sym">=</span>
+    <span class="hl kwa">case</span> coord of
+    <span class="hl sym">(</span>x<span class="hl sym">,</span> y<span class="hl sym">) -&gt;</span> x <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> x <span class="hl sym">&lt;</span> width <span class="hl sym">&amp;&amp;</span> y <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> y <span class="hl sym">&lt;</span> height<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** filter a list of corrds and return only those that fit on the board*/</span>
+validCoords <span class="hl sym">:: [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)] -&gt; [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)];</span>
+validCoords <span class="hl sym">!</span>coords <span class="hl sym">=</span> <span class="hl kwc">List</span><span class="hl sym">.</span>filter validCoord coords<span class="hl sym">;</span>
+
+<span class="hl com">/** convert a peice to a list of coords*/</span>
+toCoords <span class="hl sym">:: [</span>Direction<span class="hl sym">] -&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt; [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)];</span>
+toCoords <span class="hl sym">!</span>piece <span class="hl sym">!</span>x <span class="hl sym">!</span>y <span class="hl sym">=</span>
+    <span class="hl kwa">case</span> piece of
+    head <span class="hl sym">:</span> tail <span class="hl sym">-&gt;</span>
+        <span class="hl kwa">case</span> head of
+        E <span class="hl sym">-&gt; (</span>x<span class="hl sym">,</span> y<span class="hl sym">) :</span> toCoords <span class="hl kwd">tail</span> <span class="hl sym">(</span>x <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> y<span class="hl sym">;</span>
+        SE <span class="hl sym">-&gt; (</span>x<span class="hl sym">,</span> y<span class="hl sym">) :</span> toCoords <span class="hl kwd">tail</span> <span class="hl sym">(</span>x <span class="hl sym">+</span> bitwiseAnd y <span class="hl num">1</span><span class="hl sym">) (</span>y <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        SW <span class="hl sym">-&gt;</span>
+            <span class="hl sym">(</span>x<span class="hl sym">,</span> y<span class="hl sym">) :</span> toCoords <span class="hl kwd">tail</span> <span class="hl sym">(</span>x <span class="hl sym">- (</span><span class="hl num">1</span> <span class="hl sym">-</span> bitwiseAnd y <span class="hl num">1</span><span class="hl sym">)) (</span>y <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        W <span class="hl sym">-&gt; (</span>x<span class="hl sym">,</span> y<span class="hl sym">) :</span> toCoords <span class="hl kwd">tail</span> <span class="hl sym">(</span>x <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> y<span class="hl sym">;</span>
+        NW <span class="hl sym">-&gt;</span>
+            <span class="hl sym">(</span>x<span class="hl sym">,</span> y<span class="hl sym">) :</span> toCoords <span class="hl kwd">tail</span> <span class="hl sym">(</span>x <span class="hl sym">- (</span><span class="hl num">1</span> <span class="hl sym">-</span> bitwiseAnd y <span class="hl num">1</span><span class="hl sym">)) (</span>y <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        NE <span class="hl sym">-&gt; (</span>x<span class="hl sym">,</span> y<span class="hl sym">) :</span> toCoords <span class="hl kwd">tail</span> <span class="hl sym">(</span>x <span class="hl sym">+</span> bitwiseAnd y <span class="hl num">1</span><span class="hl sym">) (</span>y <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">;</span>
+    <span class="hl sym">[] -&gt; [(</span>x<span class="hl sym">,</span> y<span class="hl sym">)];</span>
+    <span class="hl sym">;</span>
+
+getValueAtbit <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+getValueAtbit <span class="hl sym">!</span>solution <span class="hl sym">!</span>bit <span class="hl sym">!</span>i <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> bitwiseAnd <span class="hl kwd">bit</span> <span class="hl sym">(</span>longArray_subscript solution i<span class="hl sym">) !=</span> <span class="hl num">0</span> then
+        <span class="hl kwd">bitwiseAnd</span> <span class="hl sym">(</span>longArray_subscript solution i<span class="hl sym">)</span> <span class="hl num">15</span>
+    <span class="hl kwa">else</span>
+        getValueAtbit solution <span class="hl kwd">bit</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+copy <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt; ();</span>
+copy <span class="hl sym">!</span>solution1 <span class="hl sym">!</span>solution2 <span class="hl sym">!</span>i <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> <span class="hl num">11</span> then
+        longArray_update solution1 <span class="hl kwd">i</span> <span class="hl sym">(</span>longArray_subscript solution2 i<span class="hl sym">)</span>
+        `seq`
+        copy solution1 <span class="hl kwd">solution2</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">else</span>
+        <span class="hl sym">()</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * set solution 2 to the max of solution 2 and solution 1.</span>
+<span class="hl com"> */</span>
+updateMaxSolution <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt; ();</span>
+updateMaxSolution <span class="hl sym">!</span>solution1 <span class="hl sym">!</span>solution2 <span class="hl sym">=</span>
+    let
+        greaterThan <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Boolean</span><span class="hl sym">;</span>
+        greaterThan <span class="hl sym">!</span>solution1 <span class="hl sym">!</span>solution2 <span class="hl sym">!</span>bit <span class="hl sym">=</span>
+            let
+                v1 <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                v1 <span class="hl sym">=</span> eager $ getValueAtbit solution1 bit <span class="hl num">1</span><span class="hl sym">;</span>
+
+                v2 <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                v2 <span class="hl sym">=</span> eager $ getValueAtbit solution2 bit <span class="hl num">1</span><span class="hl sym">;</span>
+            in
+                <span class="hl kwa">if</span> v1 <span class="hl sym">==</span> v2 then
+                    greaterThan solution1 <span class="hl kwd">solution2</span> <span class="hl sym">(</span>shiftRUnsigned bit <span class="hl num">1</span><span class="hl sym">)</span>
+                <span class="hl kwa">else</span>
+                    v1 <span class="hl sym">&lt;</span> v2
+            <span class="hl sym">;</span>
+    in
+
+        <span class="hl kwa">if</span> greaterThan solution1 solution2 highBit then
+            copy solution1 solution2 <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            <span class="hl sym">()</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * set solution 2 to the minimum of solution 2 and solution 1.</span>
+<span class="hl com"> */</span>
+updateMinSolution <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt; ();</span>
+updateMinSolution <span class="hl sym">!</span>solution1 <span class="hl sym">!</span>solution2 <span class="hl sym">=</span>
+    let
+        lessThan <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Boolean</span><span class="hl sym">;</span>
+        lessThan <span class="hl sym">!</span>solution1 <span class="hl sym">!</span>solution2 <span class="hl sym">!</span>bit <span class="hl sym">=</span>
+            let
+                v1 <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                v1 <span class="hl sym">=</span> eager $ getValueAtbit solution1 bit <span class="hl num">1</span><span class="hl sym">;</span>
+
+                v2 <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                v2 <span class="hl sym">=</span> eager $ getValueAtbit solution2 bit <span class="hl num">1</span><span class="hl sym">;</span>
+            in
+                <span class="hl kwa">if</span> v1 <span class="hl sym">==</span> v2 then
+                    lessThan solution1 <span class="hl kwd">solution2</span> <span class="hl sym">(</span>shiftRUnsigned bit <span class="hl num">1</span><span class="hl sym">)</span>
+                <span class="hl kwa">else</span>
+                    v1 <span class="hl sym">&gt;</span> v2
+            <span class="hl sym">;</span>
+    in
+
+        <span class="hl kwa">if</span> lessThan solution1 solution2 highBit then
+            copy solution1 solution2 <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            <span class="hl sym">()</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** true if the list of coords all fit on the board*/</span>
+fits <span class="hl sym">:: [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)] -&gt;</span> <span class="hl kwc">Boolean</span><span class="hl sym">;</span>
+fits <span class="hl sym">!</span>coords <span class="hl sym">=</span> <span class="hl kwc">List</span><span class="hl sym">.</span>all validCoord coords<span class="hl sym">;</span>
+
+<span class="hl com">/** convert a coord to a bit mask*/</span>
+toBit <span class="hl sym">:: (</span>Int<span class="hl sym">,</span> Int<span class="hl sym">) -&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+toBit <span class="hl sym">!</span>coord <span class="hl sym">=</span> shiftRUnsigned <span class="hl kwd">highBit</span> <span class="hl sym">(</span><span class="hl kwd">fromInt</span> <span class="hl sym">(</span>coord<span class="hl sym">.</span>#<span class="hl num">1</span> <span class="hl sym">+</span> coord<span class="hl sym">.</span>#<span class="hl num">2</span> <span class="hl sym">*</span> <span class="hl num">5</span><span class="hl sym">));</span>
+
+<span class="hl com">/** convert a list of coords to be bit mask*/</span>
+toBits <span class="hl sym">:: [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)] -&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+toBits <span class="hl sym">!</span>coords <span class="hl sym">=</span> foldLeftStrict bitwiseOr <span class="hl kwd">0</span> <span class="hl sym">(</span>map toBit coords<span class="hl sym">);</span>
+
+<span class="hl com">/** convert a list of coords to be bit mask, with a piece id in the lower bits*/</span>
+coordsToBits <span class="hl sym">:: [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)] -&gt;</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+coordsToBits <span class="hl sym">!</span>coords <span class="hl sym">!</span>pieceNo <span class="hl sym">=</span>
+    let
+        bits <span class="hl sym">:: [</span><span class="hl kwc">Long</span><span class="hl sym">];</span>
+        bits <span class="hl sym">=</span> map toBit coords<span class="hl sym">;</span>
+    in
+        foldLeftStrict <span class="hl kwd">bitwiseOr</span> <span class="hl sym">(</span>fromInt pieceNo<span class="hl sym">)</span> bits
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** find the next empty square starting at square*/</span>
+findNextEmptySquare <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+findNextEmptySquare <span class="hl sym">!</span>board <span class="hl sym">!</span>square <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> bitwiseAnd <span class="hl kwd">board</span> <span class="hl sym">(</span>shiftRUnsigned <span class="hl kwd">highBit</span> <span class="hl sym">(</span>fromInt square<span class="hl sym">)) ==</span> <span class="hl num">0</span> then
+        square
+    <span class="hl kwa">else</span>
+        findNextEmptySquare <span class="hl kwd">board</span> <span class="hl sym">(</span>square <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** convert a solution to s string in the benchmark format*/</span>
+showSolution <span class="hl sym">::</span> JLongArray <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span><span class="hl sym">;</span>
+showSolution <span class="hl sym">!</span>solution <span class="hl sym">=</span>
+    let
+        findId <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span><span class="hl sym">;</span>
+        findId <span class="hl sym">!</span>i <span class="hl sym">!</span>bit <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> i <span class="hl sym">==</span> <span class="hl num">11</span> then
+                <span class="hl str">&quot;-&quot;</span>
+            <span class="hl kwa">else if</span> <span class="hl kwd">bitwiseAnd</span> <span class="hl sym">(</span>longArray_subscript solution i<span class="hl sym">)</span> bit <span class="hl sym">&gt;</span> <span class="hl num">0</span> then
+                <span class="hl kwd">show</span> <span class="hl sym">(</span>i <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl kwa">else</span>
+                <span class="hl kwd">findId</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> bit
+            <span class="hl sym">;</span>
+
+        drawBoard <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span><span class="hl sym">;</span>
+        drawBoard <span class="hl sym">!</span>i <span class="hl sym">!</span>bit <span class="hl sym">!</span>result <span class="hl sym">=</span>
+            let
+                term1 <span class="hl sym">::</span> <span class="hl kwc">String</span><span class="hl sym">;</span>
+                term1 <span class="hl sym">=</span>
+                    <span class="hl kwa">if</span> i <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> i <span class="hl sym">%</span> <span class="hl num">5</span> <span class="hl sym">==</span> <span class="hl num">0</span> then
+                        <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span>
+                    <span class="hl kwa">else</span>
+                        <span class="hl str">&quot;&quot;</span>
+                    <span class="hl sym">;</span>
+
+                term2 <span class="hl sym">::</span> <span class="hl kwc">String</span><span class="hl sym">;</span>
+                term2 <span class="hl sym">=</span>
+                    <span class="hl kwa">if</span> i <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">5</span> then
+                        <span class="hl str">&quot; &quot;</span>
+                    <span class="hl kwa">else</span>
+                        <span class="hl str">&quot;&quot;</span>
+                    <span class="hl sym">;</span>
+            in
+                <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> <span class="hl num">50</span> then
+                    drawBoard
+                        <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                        <span class="hl sym">(</span>shiftRUnsigned bit <span class="hl num">1</span><span class="hl sym">)</span>
+                        <span class="hl sym">(</span>result <span class="hl sym">++</span> term1 <span class="hl sym">++</span> term2 <span class="hl sym">++</span> findId <span class="hl num">0</span> bit <span class="hl sym">++</span> <span class="hl str">&quot; &quot;</span><span class="hl sym">)</span>
+                <span class="hl kwa">else</span>
+                    result
+            <span class="hl sym">;</span>
+    in
+
+        drawBoard <span class="hl num">0</span> highBit <span class="hl str">&quot;&quot;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * Creates an array in which for each square on the board</span>
+<span class="hl com"> * there is an array of bit masks for the peices that occupy that square as their first square</span>
+<span class="hl com"> */</span>
+allSortedMasks <span class="hl sym">:: [[</span>Direction<span class="hl sym">]] -&gt;</span> <span class="hl kwc">Array</span> JLongArray<span class="hl sym">;</span>
+allSortedMasks <span class="hl sym">!</span>pieces <span class="hl sym">=</span>
+    let
+        masks <span class="hl sym">:: [</span><span class="hl kwc">Long</span><span class="hl sym">];</span>
+        masks <span class="hl sym">=</span>
+            <span class="hl kwc">List</span><span class="hl sym">.</span>reverse
+            $ <span class="hl kwc">List</span><span class="hl sym">.</span>sortExternal
+            $ Prelude<span class="hl sym">.</span>concat
+            $ <span class="hl kwc">List</span><span class="hl sym">.</span>zipWith getAllMasks pieces <span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">,</span> <span class="hl num">4</span><span class="hl sym">,</span> <span class="hl num">5</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">,</span> <span class="hl num">7</span><span class="hl sym">,</span> <span class="hl num">8</span><span class="hl sym">,</span> <span class="hl num">9</span><span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">]</span>
+            <span class="hl sym">;</span>
+
+        loop <span class="hl sym">::</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">] -&gt; [[</span><span class="hl kwc">Long</span><span class="hl sym">]] -&gt; [[</span><span class="hl kwc">Long</span><span class="hl sym">]];</span>
+        loop <span class="hl sym">!</span>bit <span class="hl sym">!</span>masks <span class="hl sym">!</span>res <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> bit <span class="hl sym">&lt;</span> lowBit then
+                res
+            <span class="hl kwa">else</span>
+                loop
+                    <span class="hl sym">(</span>shiftRUnsigned bit <span class="hl num">1</span><span class="hl sym">)</span>
+                    <span class="hl sym">(</span><span class="hl kwc">List</span><span class="hl sym">.</span><span class="hl kwd">dropWhile</span> <span class="hl sym">(</span>\a <span class="hl sym">-&gt;</span> a <span class="hl sym">&gt;</span> bit<span class="hl sym">)</span> masks<span class="hl sym">)</span>
+                    <span class="hl sym">(</span>res <span class="hl sym">++ [</span><span class="hl kwc">List</span><span class="hl sym">.</span><span class="hl kwd">takeWhile</span> <span class="hl sym">(</span>\a <span class="hl sym">-&gt;</span> a <span class="hl sym">&gt;</span> bit<span class="hl sym">)</span> masks<span class="hl sym">])</span>
+            <span class="hl sym">;</span>
+    in
+
+        <span class="hl kwc">Array</span><span class="hl sym">.</span><span class="hl kwd">fromList</span> <span class="hl sym">(</span>map <span class="hl kwd">jLongArrayfromList</span> <span class="hl sym">(</span>loop highBit masks <span class="hl sym">[]))</span>
+    <span class="hl sym">;</span>
+
+meteor <span class="hl sym">::</span> Int <span class="hl sym">-&gt; ();</span>
+meteor <span class="hl sym">!</span>n <span class="hl sym">=</span>
+    let
+        masks <span class="hl sym">::</span> <span class="hl kwc">Array</span> JLongArray<span class="hl sym">;</span>
+        masks <span class="hl sym">=</span> allSortedMasks pieces<span class="hl sym">;</span>
+
+        minSol <span class="hl sym">::</span> JLongArray<span class="hl sym">;</span>
+        minSol <span class="hl sym">=</span> longArray_new <span class="hl num">11</span><span class="hl sym">;</span>
+
+        maxSol <span class="hl sym">::</span> JLongArray<span class="hl sym">;</span>
+        maxSol <span class="hl sym">=</span> longArray_new <span class="hl num">11</span><span class="hl sym">;</span>
+
+        workingSolution <span class="hl sym">::</span> JLongArray<span class="hl sym">;</span>
+        workingSolution <span class="hl sym">=</span> longArray_new <span class="hl num">11</span><span class="hl sym">;</span>
+    in
+        longArray_update maxSol <span class="hl num">1</span> highBit
+        `seq`
+        longArray_update minSol <span class="hl kwd">1</span> <span class="hl sym">(</span>bitwiseOr highBit <span class="hl num">11</span><span class="hl sym">)</span>
+        `seq`
+        solve
+            <span class="hl num">0</span>
+            emptyBoard
+            workingSolution
+            <span class="hl sym">(</span>longArray_new <span class="hl num">11</span><span class="hl sym">)</span>
+            masks
+            <span class="hl sym">(</span><span class="hl kwc">Array</span><span class="hl sym">.</span>subscript masks <span class="hl num">0</span><span class="hl sym">)</span>
+            <span class="hl num">0</span>
+            <span class="hl num">0</span>
+            maxSol
+            minSol
+        `seq`
+        printLn
+            stdout
+            <span class="hl sym">(</span>
+                <span class="hl kwd">show</span> <span class="hl sym">(</span>longArray_subscript workingSolution <span class="hl num">0</span><span class="hl sym">)</span>
+                <span class="hl sym">++</span> <span class="hl str">&quot; solutions found&quot;</span>
+            <span class="hl sym">)</span>
+        `seq`
+        printLn stdout <span class="hl str">&quot;&quot;</span>
+        `seq`
+        printLn <span class="hl kwd">stdout</span> <span class="hl sym">(</span>showSolution minSol<span class="hl sym">)</span>
+        `seq`
+        printLn stdout <span class="hl str">&quot;&quot;</span>
+        `seq`
+        printLn <span class="hl kwd">stdout</span> <span class="hl sym">(</span>showSolution maxSol<span class="hl sym">)</span>
+        `seq`
+        printLn stdout <span class="hl str">&quot;&quot;</span>
+    <span class="hl sym">;</span>
+
+solve <span class="hl sym">::</span>
+    Int <span class="hl sym">-&gt;</span> <span class="hl kwc">Long</span> <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> <span class="hl kwc">Array</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray
+    <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt;</span> JLongArray <span class="hl sym">-&gt; ();</span>
+solve <span class="hl sym">!</span>i <span class="hl sym">!</span>board <span class="hl sym">!</span>solution <span class="hl sym">!</span>reverseSolution <span class="hl sym">!</span>allMasks <span class="hl sym">!</span>masks <span class="hl sym">!</span>numPieces
+      <span class="hl sym">!</span>boardSquare <span class="hl sym">!</span>maxSolution <span class="hl sym">!</span>minSolution <span class="hl sym">=</span>
+
+    <span class="hl kwa">if</span> i <span class="hl sym">&gt;=</span> longArray_length masks then
+        <span class="hl sym">()</span>
+    <span class="hl kwa">else</span>
+        let
+            peiceMask <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+            peiceMask <span class="hl sym">=</span> eager $ longArray_subscript masks i<span class="hl sym">;</span>
+
+            peiceId <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+            peiceId <span class="hl sym">=</span> eager $ Prelude<span class="hl sym">.</span><span class="hl kwd">fromLong</span> <span class="hl sym">(</span>bitwiseAnd peiceMask <span class="hl num">15</span><span class="hl sym">);</span>
+        in
+
+            <span class="hl slc">//if the piece is not already in use and it fits</span>
+            <span class="hl kwa">if</span>
+                longArray_subscript solution peiceId <span class="hl sym">==</span> <span class="hl num">0</span>
+                <span class="hl sym">&amp;&amp;</span> bitwiseAnd board peiceMask <span class="hl sym">&lt;</span> <span class="hl num">16</span>
+            then
+                let
+                    newBoard <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                    newBoard <span class="hl sym">=</span> eager $ bitwiseOr board peiceMask<span class="hl sym">;</span>
+
+                    nextSquare <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+                    nextSquare <span class="hl sym">=</span>
+                        eager $ findNextEmptySquare newBoard boardSquare<span class="hl sym">;</span>
+                in
+                    longArray_update solution peiceId peiceMask
+                    `seq`
+                    <span class="hl sym">(</span>
+                        <span class="hl kwa">if</span> numPieces <span class="hl sym">==</span> <span class="hl num">9</span> then
+                            longArray_update
+                                solution
+                                <span class="hl num">0</span>
+                                <span class="hl sym">(</span>longArray_subscript solution <span class="hl num">0</span> <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">)</span>
+                            `seq`
+                            makeReverseSolution solution reverseSolution
+                            `seq`
+                            updateMaxSolution maxSolution solution
+                            `seq`
+                            updateMaxSolution maxSolution reverseSolution
+                            `seq`
+                            updateMinSolution minSolution solution
+                            `seq`
+                            updateMinSolution minSolution reverseSolution
+                            `seq`
+                            longArray_update solution peiceId <span class="hl num">0</span>
+                            `seq`
+                            <span class="hl sym">()</span>
+                        <span class="hl kwa">else if</span>
+                            nextSquare <span class="hl sym">&gt;</span> <span class="hl num">25</span>
+                            <span class="hl sym">&amp;&amp;</span> longArray_subscript solution <span class="hl num">1</span> <span class="hl sym">==</span> <span class="hl num">0</span>
+                        then
+                            longArray_update solution peiceId <span class="hl num">0</span>
+                            `seq`
+                            solve
+                                <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                                board
+                                solution
+                                reverseSolution
+                                allMasks
+                                masks
+                                numPieces
+                                boardSquare
+                                maxSolution
+                                minSolution
+                        <span class="hl kwa">else</span>
+                            solve
+                                <span class="hl num">0</span>
+                                newBoard
+                                solution
+                                reverseSolution
+                                allMasks
+                                <span class="hl sym">(</span><span class="hl kwc">Array</span><span class="hl sym">.</span>subscript allMasks nextSquare<span class="hl sym">)</span>
+                                <span class="hl sym">(</span>numPieces <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                                nextSquare
+                                maxSolution
+                                minSolution
+                            `seq`
+                            longArray_update solution peiceId <span class="hl num">0</span>
+                            `seq`
+                            solve
+                                <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                                board
+                                solution
+                                reverseSolution
+                                allMasks
+                                masks
+                                numPieces
+                                boardSquare
+                                maxSolution
+                                minSolution
+                    <span class="hl sym">)</span>
+            <span class="hl kwa">else</span>
+                solve
+                    <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                    board
+                    solution
+                    reverseSolution
+                    allMasks
+                    masks
+                    numPieces
+                    boardSquare
+                    maxSolution
+                    minSolution
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * computes a list of all the masks for a particular piece.</span>
+<span class="hl com"> * The list includes all positions, rotations and flips of the piece.</span>
+<span class="hl com"> */</span>
+getAllMasks <span class="hl sym">:: [</span>Direction<span class="hl sym">] -&gt;</span> Int <span class="hl sym">-&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">];</span>
+getAllMasks <span class="hl sym">!</span>piece <span class="hl sym">!</span>pieceNo <span class="hl sym">=</span>
+    let
+
+        <span class="hl slc">//this is used so we omit masks were peice 1 is in the bottom half of the board</span>
+        <span class="hl slc">//these positions will be covered by symmetry</span>
+        heightp <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        heightp <span class="hl sym">=</span>
+            eager
+            $
+            <span class="hl sym">(</span>
+                <span class="hl kwa">if</span> pieceNo <span class="hl sym">==</span> <span class="hl num">1</span> then
+                    height <span class="hl sym">/</span> <span class="hl num">2</span> <span class="hl sym">-</span> <span class="hl num">1</span>
+                <span class="hl kwa">else</span>
+                    height
+            <span class="hl sym">)</span>
+            <span class="hl sym">;</span>
+
+        getRotationMasks <span class="hl sym">:: [</span>Direction<span class="hl sym">] -&gt;</span> Int <span class="hl sym">-&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">] -&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">];</span>
+        getRotationMasks <span class="hl sym">!</span>piece <span class="hl sym">!</span>n <span class="hl sym">!</span>masks <span class="hl sym">=</span>
+            getTranslationMasks piece
+            <span class="hl sym">++</span> iff
+                <span class="hl sym">(</span>n <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+                <span class="hl sym">(</span><span class="hl kwd">getRotationMasks</span> <span class="hl sym">(</span>rotatePiece piece<span class="hl sym">) (</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> masks<span class="hl sym">)</span>
+                <span class="hl sym">[]</span>
+            <span class="hl sym">;</span>
+
+        getTranslationMasks <span class="hl sym">:: [</span>Direction<span class="hl sym">] -&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">];</span>
+        getTranslationMasks <span class="hl sym">!</span>piece <span class="hl sym">=</span>
+            let
+                loop <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">] -&gt; [</span><span class="hl kwc">Long</span><span class="hl sym">];</span>
+                loop <span class="hl sym">!</span>x <span class="hl sym">!</span>y <span class="hl sym">!</span>masks <span class="hl sym">=</span>
+                    <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> width then
+                        let
+                            coords <span class="hl sym">:: [(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">)];</span>
+                            coords <span class="hl sym">=</span> eager $ toCoords piece x y<span class="hl sym">;</span>
+
+                            mask <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+                            mask <span class="hl sym">=</span> eager $ coordsToBits coords pieceNo<span class="hl sym">;</span>
+                        in
+                            <span class="hl kwa">if</span>
+                                fits coords
+                                <span class="hl sym">&amp;&amp; (</span>Prelude<span class="hl sym">.</span>not $ hasSmallIslands mask<span class="hl sym">)</span>
+                            then
+                                <span class="hl kwd">loop</span> <span class="hl sym">(</span>x <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwd">y</span> <span class="hl sym">(</span>mask <span class="hl sym">:</span> masks<span class="hl sym">)</span>
+                            <span class="hl kwa">else</span>
+                                <span class="hl slc">//reject the piece</span>
+                                <span class="hl kwd">loop</span> <span class="hl sym">(</span>x <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> y masks
+                    <span class="hl kwa">else if</span> y <span class="hl sym">&lt;</span> heightp then
+                        loop <span class="hl kwd">0</span> <span class="hl sym">(</span>y <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> masks
+                    <span class="hl kwa">else</span>
+                        masks
+                    <span class="hl sym">;</span>
+            in
+                loop <span class="hl num">0 0</span> <span class="hl sym">[]</span>
+            <span class="hl sym">;</span>
+    in
+        getRotationMasks piece <span class="hl num">5</span> <span class="hl sym">[]</span>
+        <span class="hl sym">++</span> <span class="hl kwd">getRotationMasks</span> <span class="hl sym">(</span>flipPiece piece<span class="hl sym">)</span> <span class="hl num">5</span> <span class="hl sym">[]</span>
+    <span class="hl sym">;</span>
+
+emptyBoard <span class="hl sym">::</span> <span class="hl kwc">Long</span><span class="hl sym">;</span>
+emptyBoard <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+main <span class="hl sym">:: [</span><span class="hl kwc">String</span><span class="hl sym">] -&gt; ();</span>
+<span class="hl kwa">public</span> main <span class="hl sym">!</span>args <span class="hl sym">=</span>
+    let
+        n <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        n <span class="hl sym">=</span> eager $ <span class="hl kwd">stringToInt</span> <span class="hl sym">(</span>head args<span class="hl sym">);</span>
+    in
+        meteor n
+    <span class="hl sym">;</span>
+
