@@ -36,9 +36,9 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 usort($Selected,'CompareMaxCpu');
 foreach($Selected as $row){
    printf('<tr>'); echo "\n";
-   printf('<td>%s</td>', $row[N_NAME]); echo "\n";
+   printf('<td>%s</td>', $row[N_FULL]); echo "\n";
    foreach($row[N_FULLCPU] as $v){ 
-      printf('<td class="r">%0.2f</td>', $v); echo "\n"; 
+      printf('<td class="r">%0.2f</td>', $v); echo "\n";
    }   
    echo "</tr>\n";                          
 }
@@ -74,7 +74,7 @@ usort($Selected,'CompareMaxMemory');
 
 foreach($Selected as $row){
    printf('<tr>'); echo "\n";
-   printf('<td>%s</td>', $row[N_NAME]); echo "\n";
+   printf('<td>%s</td>', $row[N_FULL]); echo "\n";
    foreach($row[N_MEMORY] as $v){ 
       if ($TestName=='startup'){ $kb = '&nbsp;'; }      
       else { 
