@@ -1,1 +1,1 @@
-<p>Java HotSpot(TM) Client VM (build 1.5.0_08-b03, mixed mode, sharing)</p>
+<p>Java HotSpot(TM) Client VM (build 1.6.0-b105, mixed mode, sharing)</p>

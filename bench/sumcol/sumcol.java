@@ -1,4 +1,4 @@
-// $Id: sumcol.java,v 1.4 2005-06-24 16:12:05 igouy-guest Exp $
+// $Id: sumcol.java,v 1.5 2007-06-20 03:32:39 bfulgham Exp $
 // http://www.bagley.org/~doug/shootout/ 
 
 import java.io.*;

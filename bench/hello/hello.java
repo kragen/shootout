@@ -1,4 +1,4 @@
-// $Id: hello.java,v 1.2 2004-06-21 07:24:00 bfulgham Exp $
+// $Id: hello.java,v 1.3 2007-06-20 03:32:39 bfulgham Exp $
 // http://shootout.alioth.debian.org/
 
 public class hello {

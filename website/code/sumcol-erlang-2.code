@@ -1,25 +1,41 @@
-<span class="slc">%%% The Computer Language Benchmarks Game</span>
-<span class="slc">%%% http://shootout.alioth.debian.org/</span>
-<span class="slc">%%% contributed by Fredrik Svahn</span>
+<span class="slc">%% The Computer Language Benchmark Games</span>
+<span class="slc">%% http://shootout.alioth.debian.org/</span>
+<span class="slc">%% Contributed by Ulf Wiger</span>
 
 <span class="sym">-</span><span class="kwa">module</span><span class="sym">(</span>sumcol<span class="sym">).</span>
 <span class="sym">-</span><span class="kwa">export</span><span class="sym">([</span>main<span class="sym">/</span><span class="num">1</span><span class="sym">]).</span>
-<span class="sym">-</span><span class="kwa">define</span><span class="sym">(</span>stdin<span class="sym">,</span><span class="num">0</span><span class="sym">).</span>
-<span class="sym">-</span><span class="kwa">define</span><span class="sym">(</span>stdout<span class="sym">,</span><span class="num">1</span><span class="sym">).</span>
-<span class="sym">-</span><span class="kwa">define</span><span class="sym">(</span>maxline<span class="sym">,</span><span class="num">128</span><span class="sym">).</span>
+<span class="sym">-</span><span class="kwa">export</span><span class="sym">([</span>start<span class="sym">/</span><span class="num">0</span><span class="sym">]).</span>
 
-<span class="kwd">main</span><span class="sym">(</span>_<span class="sym">)-&gt;</span>
-    <span class="kwb">open_port</span><span class="sym">({</span>fd<span class="sym">, ?</span>stdin<span class="sym">, ?</span>stdout<span class="sym">}, [{</span>line<span class="sym">, ?</span>maxline<span class="sym">},</span> eof<span class="sym">]),</span>
-    io<span class="sym">:</span><span class="kwd">format</span><span class="sym">(</span><span class="str">&quot;~p~n&quot;</span><span class="sym">,[</span><span class="kwd">read</span><span class="sym">(</span><span class="num">0</span><span class="sym">)]),</span>
-    <span class="kwb">halt</span><span class="sym">().</span>
-
-
-<span class="kwd">read</span><span class="sym">(</span>Sum<span class="sym">)-&gt;</span>
+<span class="slc">%% get the program argument, which is how many test iterations to run</span>
+<span class="slc">%% for this test, we ignore this parameter</span>
+<span class="kwd">main</span><span class="sym">(</span>_Args<span class="sym">) -&gt;</span>
+    user <span class="sym">! {</span><span class="kwb">self</span><span class="sym">(),</span> wait_ready<span class="sym">},</span>
     <span class="kwa">receive</span>
-	<span class="sym">{</span>_<span class="sym">,</span> eof<span class="sym">}            -&gt;</span> Sum<span class="sym">;</span>
-	<span class="sym">{</span>_<span class="sym">, {</span>data<span class="sym">, {</span>_<span class="sym">,</span> S<span class="sym">}}} -&gt;</span> <span class="kwd">read</span><span class="sym">(</span>Sum <span class="sym">+</span> <span class="kwb">element</span><span class="sym">(</span><span class="num">1</span><span class="sym">,</span> string<span class="sym">:</span><span class="kwd">to_integer</span><span class="sym">(</span>S<span class="sym">)))</span>
+	ready <span class="sym">-&gt;</span>
+	    <span class="kwb">halt</span><span class="sym">()</span>
     <span class="kwa">end</span><span class="sym">.</span>
 
+<span class="slc">%% callback function for user-defined line-oriented io</span>
+<span class="kwd">start</span><span class="sym">() -&gt;</span>
+    <span class="kwb">spawn</span><span class="sym">(</span><span class="kwa">fun</span><span class="sym">() -&gt;</span>
+		  <span class="kwb">process_flag</span><span class="sym">(</span>priority<span class="sym">,</span>high<span class="sym">),</span>
+		  <span class="kwb">register</span><span class="sym">(</span>user<span class="sym">,</span> <span class="kwb">self</span><span class="sym">()),</span>
+		  <span class="kwd">read_in</span><span class="sym">(</span><span class="kwb">open_port</span><span class="sym">({</span>fd<span class="sym">,</span><span class="num">0</span><span class="sym">,</span><span class="num">1</span><span class="sym">}, [{</span>line<span class="sym">,</span><span class="num">128</span><span class="sym">},</span>eof<span class="sym">]),</span> <span class="num">0</span><span class="sym">)</span>
+	  <span class="kwa">end</span><span class="sym">).</span>
 
+<span class="kwd">read_in</span><span class="sym">(</span>Port<span class="sym">,</span> Sum<span class="sym">) -&gt;</span>
+    <span class="kwa">receive</span>
+	<span class="sym">{</span>Port<span class="sym">, {</span>data<span class="sym">, {</span>Eol<span class="sym">,</span> Str<span class="sym">}}}</span> <span class="kwa">when</span> Eol<span class="sym">==</span>eol<span class="sym">;</span> Eol<span class="sym">==</span>noeol<span class="sym">-&gt;</span>
+	    <span class="kwd">read_in</span><span class="sym">(</span>Port<span class="sym">,</span> Sum <span class="sym">+</span> <span class="kwb">list_to_integer</span><span class="sym">(</span>Str<span class="sym">));</span>
+	<span class="sym">{</span>Port<span class="sym">,</span> eof<span class="sym">}  -&gt;</span>
+	    <span class="kwd">ready</span><span class="sym">(</span>Port<span class="sym">,</span> Sum<span class="sym">)</span>
+    <span class="kwa">end</span><span class="sym">.</span>
 
-
+<span class="kwd">ready</span><span class="sym">(</span>Port<span class="sym">,</span> Sum<span class="sym">) -&gt;</span>
+    <span class="kwd">port_command</span><span class="sym">(</span>Port<span class="sym">, [</span><span class="kwb">integer_to_list</span><span class="sym">(</span>Sum<span class="sym">),</span> <span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">]),</span>
+    <span class="kwa">catch</span> <span class="kwd">port_command</span><span class="sym">(</span>Port<span class="sym">, [</span><span class="kwb">integer_to_list</span><span class="sym">(</span>erlang<span class="sym">:</span><span class="kwd">memory</span><span class="sym">(</span>maximum<span class="sym">)),</span><span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">]),</span>
+    erlang<span class="sym">:</span><span class="kwb">port_close</span><span class="sym">(</span>Port<span class="sym">),</span>
+    <span class="kwa">receive</span>
+	<span class="sym">{</span>From<span class="sym">,</span> wait_ready<span class="sym">} -&gt;</span>
+	     From <span class="sym">!</span> ready
+    <span class="kwa">end</span><span class="sym">.</span>
