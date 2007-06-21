@@ -3,24 +3,18 @@
 <p>Download: <a href="http://www.zonnon.ethz.ch/compiler/download.html">compiler for Mono/Rotor (Eclipse plugin)</a></p>
 
 <pre>
-module BenchmarksGame;
-import System;
+<span class="hl kwa">module</span> BenchmarksGame;
+<span class="hl kwa">import</span> System;
 
-procedure {public} argi(): integer;
-var 
+<span class="hl kwa">procedure</span> {public} argi(): <span class="hl kwa">integer</span>;
+<span class="hl kwa">var</span> 
    objArray : System.Array;
    obj : System.Object;
-begin
+<span class="hl kwa">begin</span>
    objArray := System.Environment.GetCommandLineArgs();
    obj := objArray.GetValue(1);
-   return integer(System.Int32.Parse(obj.ToString()));
-end argi;
+   <span class="hl kwa">return</span> <span class="hl kwa">integer</span>(System.Int32.Parse(obj.ToString()));
+<span class="hl kwa">end</span> argi;
 
-
-procedure {public} writex(x:real); 
-begin
-   System.Console.Write("{0:f9}",x); 
-end writex;
-
-end BenchmarksGame.
+<span class="hl kwa">end</span> BenchmarksGame.
 </pre>
