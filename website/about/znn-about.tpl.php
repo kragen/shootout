@@ -10,7 +10,6 @@ procedure {public} argi(): integer;
 var 
    objArray : System.Array;
    obj : System.Object;
-   n : integer;
 begin
    objArray := System.Environment.GetCommandLineArgs();
    obj := objArray.GetValue(1);
