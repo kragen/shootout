@@ -23,7 +23,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 
 <p class="img"><img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>"
-   alt="Are the <?=$LangName;?> programs better or are the the <?=$LangName2;?> programs better?"
+   alt=""
    title="Are the <?=$LangName;?> programs better or are the the <?=$LangName2;?> programs better?"
    width="300" height="300"
  /></p>

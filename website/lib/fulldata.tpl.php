@@ -15,7 +15,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <table class="layout"><tr><td>
 
 <img src="chartcpu.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
-   width="160" height="240" alt="CPU Time comparison chart" />
+   width="160" height="240" alt="" />
 
 </td><td>
 
@@ -52,7 +52,7 @@ foreach($Selected as $row){
 <table class="layout"><tr><td>
 
 <img src="chartmem.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
-   width="160" height="240" alt="Memory use comparison chart" />
+   width="160" height="240" alt="" />
 
 </td><td>
 

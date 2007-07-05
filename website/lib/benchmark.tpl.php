@@ -40,7 +40,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 </p>
 
 <p><img src="chart.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"
-   alt="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
+   alt=""
    title="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
    width="450" height="150"
  /></p>
