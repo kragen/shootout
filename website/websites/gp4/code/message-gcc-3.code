@@ -1,82 +1,64 @@
-<span class="com">/* The Computer Language Shootout</span>
-<span class="com"> * http://shootout.alioth.debian.org/</span>
-<span class="com"> * contributed by anon</span>
-<span class="com"> */</span>
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> * contributed contributed by Ian Chiew</span>
+<span class="hl com"> */</span>
 
-<span class="dir">#include &lt;stdio.h&gt;</span>
-<span class="dir">#include &lt;stdlib.h&gt;</span>
-<span class="dir">#include &lt;assert.h&gt;</span>
-<span class="dir">#include &lt;unistd.h&gt;</span>
-<span class="dir">#include &lt;pthread.h&gt;</span>	<span class="slc">// -lpthread</span>
-<span class="dir"></span>
-<span class="dir">#define THREADS 500</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+<span class="hl dir">#include &lt;semaphore.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;assert.h&gt;</span>
 
-<span class="dir">#define STACKSZ (16*1024)</span> <span class="slc">// 16kb stack</span>
-<span class="dir"></span>
-<span class="kwc">typedef</span> <span class="kwb">struct</span> <span class="sym">{</span>
-  pthread_t t<span class="sym">;</span>
-  pthread_cond_t c<span class="sym">,*</span>nextc<span class="sym">;</span>
-  pthread_mutex_t m<span class="sym">,*</span>nextm<span class="sym">;</span>
-  <span class="kwb">int</span> times<span class="sym">;</span>
-  <span class="kwb">int</span> condready<span class="sym">,*</span>nextcondready<span class="sym">;</span>
-  <span class="kwb">int</span> lastflag<span class="sym">;</span>
-<span class="sym">}</span> threadinfo_t<span class="sym">;</span>
+<span class="hl dir">#define THREADS 500</span>
+<span class="hl dir">#define THREAD_STACK_SIZE (1024 * 100)</span>
 
-<span class="kwb">static void</span>
-<span class="sym">*</span><span class="kwd">work</span><span class="sym">(</span>threadinfo_t <span class="sym">*</span>me<span class="sym">) {</span>
-  <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;(</span>me<span class="sym">-&gt;</span>m<span class="sym">));</span>
-  <span class="kwa">for</span><span class="sym">( ;</span> me<span class="sym">-&gt;</span>times <span class="sym">!=</span> <span class="num">0</span><span class="sym">;</span> me<span class="sym">-&gt;</span>times<span class="sym">--) {</span>
-    <span class="kwa">while</span><span class="sym">(</span>me<span class="sym">-&gt;</span>condready <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span><span class="kwd">pthread_cond_wait</span><span class="sym">(&amp;(</span>me<span class="sym">-&gt;</span>c<span class="sym">),&amp;(</span>me<span class="sym">-&gt;</span>m<span class="sym">));</span>
-    <span class="kwd">pthread_mutex_lock</span><span class="sym">(</span>me<span class="sym">-&gt;</span>nextm<span class="sym">);</span>
-    <span class="kwa">if</span><span class="sym">(</span>me<span class="sym">-&gt;</span>lastflag <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span>
-        <span class="sym">*(</span>me<span class="sym">-&gt;</span>nextcondready<span class="sym">) +=</span> me<span class="sym">-&gt;</span>condready <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
-    <span class="kwa">else</span>
-       <span class="sym">*(</span>me<span class="sym">-&gt;</span>nextcondready<span class="sym">) +=</span> me<span class="sym">-&gt;</span>condready<span class="sym">;</span>
-    me<span class="sym">-&gt;</span>condready <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
-    <span class="kwd">pthread_cond_signal</span><span class="sym">(</span>me<span class="sym">-&gt;</span>nextc<span class="sym">);</span>
-    <span class="kwd">pthread_mutex_unlock</span><span class="sym">(</span>me<span class="sym">-&gt;</span>nextm<span class="sym">);</span>
-  <span class="sym">}</span>
-  <span class="kwa">return</span><span class="sym">(</span>NULL<span class="sym">);</span>
-<span class="sym">}</span>
+<span class="hl kwb">struct</span> inbox <span class="hl sym">{</span>
+    sem_t sem<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> n<span class="hl sym">;</span>
+<span class="hl sym">};</span>
 
-<span class="kwb">int</span>
-<span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">*</span>argv<span class="sym">[])</span>
-<span class="sym">{</span>
-	<span class="kwb">unsigned int</span> times<span class="sym">;</span>
-	<span class="kwd">assert</span><span class="sym">(</span>argc <span class="sym">==</span> <span class="num">2</span> <span class="sym">&amp;&amp;</span> <span class="kwd">sscanf</span><span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">],</span> <span class="str">&quot;%u&quot;</span><span class="sym">, &amp;</span>times<span class="sym">) ==</span> <span class="num">1</span><span class="sym">);</span>
+<span class="hl kwb">struct</span> worker <span class="hl sym">{</span>
+    <span class="hl kwb">struct</span> inbox inbox<span class="hl sym">, *</span>next_inbox<span class="hl sym">;</span>
+    pthread_t thread<span class="hl sym">;</span>
+<span class="hl sym">};</span>
 
-	pthread_attr_t attr<span class="sym">;</span>
-        threadinfo_t t<span class="sym">[</span>THREADS<span class="sym">];</span>
-	pthread_cond_t main_cond <span class="sym">=</span> PTHREAD_COND_INITIALIZER<span class="sym">;</span>
-	pthread_mutex_t main_mutex <span class="sym">=</span> PTHREAD_MUTEX_INITIALIZER<span class="sym">;</span>
-	<span class="kwb">int</span> i<span class="sym">,</span>sum <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+<span class="hl kwb">void</span> <span class="hl sym">*</span><span class="hl kwd">work</span><span class="hl sym">(</span><span class="hl kwb">void</span> <span class="hl sym">*</span>data<span class="hl sym">) {</span>
+    <span class="hl kwb">struct</span> worker <span class="hl sym">*</span>worker <span class="hl sym">= (</span><span class="hl kwb">struct</span> worker <span class="hl sym">*)</span>data<span class="hl sym">;</span>
 
-	<span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_attr_init</span><span class="sym">(&amp;</span>attr<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-	<span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&amp;</span>attr<span class="sym">,</span> STACKSZ<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-	<span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> THREADS<span class="sym">;</span> i<span class="sym">++) {</span>
-	  t<span class="sym">[</span>i<span class="sym">].</span>times <span class="sym">=</span> times<span class="sym">;</span>
-	  t<span class="sym">[</span>i<span class="sym">].</span>nextc <span class="sym">=</span> i <span class="sym">!= (</span>THREADS<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> ? <span class="sym">&amp;(</span>t<span class="sym">[</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">].</span>c<span class="sym">) : &amp;</span>main_cond<span class="sym">;</span>
-	  t<span class="sym">[</span>i<span class="sym">].</span>nextm <span class="sym">=</span> i <span class="sym">!= (</span>THREADS<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> ? <span class="sym">&amp;(</span>t<span class="sym">[</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">].</span>m<span class="sym">) : &amp;</span>main_mutex<span class="sym">;</span>
-	  t<span class="sym">[</span>i<span class="sym">].</span>nextcondready <span class="sym">=</span> i <span class="sym">!= (</span>THREADS<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> ? <span class="sym">(&amp;</span>t<span class="sym">[</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">].</span>condready<span class="sym">) : &amp;</span>sum<span class="sym">;</span>
-	  t<span class="sym">[</span>i<span class="sym">].</span>condready <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
-          t<span class="sym">[</span>i<span class="sym">].</span>lastflag <span class="sym">=</span> i <span class="sym">== (</span>THREADS <span class="sym">-</span> <span class="num">1</span><span class="sym">);</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) {</span>
+        <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">sem_wait</span><span class="hl sym">(&amp;</span>worker<span class="hl sym">-&gt;</span>inbox<span class="hl sym">.</span>sem<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+        worker<span class="hl sym">-&gt;</span>next_inbox<span class="hl sym">-&gt;</span>n <span class="hl sym">=</span> worker<span class="hl sym">-&gt;</span>inbox<span class="hl sym">.</span>n <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">sem_post</span><span class="hl sym">(&amp;</span>worker<span class="hl sym">-&gt;</span>next_inbox<span class="hl sym">-&gt;</span>sem<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
 
-	  <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_cond_init</span><span class="sym">(&amp;(</span>t<span class="sym">[</span>i<span class="sym">].</span>c<span class="sym">),</span>NULL<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-	  <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_mutex_init</span><span class="sym">(&amp;(</span>t<span class="sym">[</span>i<span class="sym">].</span>m<span class="sym">),</span>NULL<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-	  <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_create</span><span class="sym">(&amp;(</span>t<span class="sym">[</span>i<span class="sym">].</span>t<span class="sym">), &amp;</span>attr<span class="sym">,</span> work<span class="sym">,</span>t<span class="sym">+</span>i<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-	<span class="sym">}</span>
+    <span class="hl kwa">return</span> NULL<span class="hl sym">;</span>
+<span class="hl sym">}</span>
 
-	<span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;</span>main_mutex<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-	<span class="kwa">for</span><span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> times<span class="sym">;</span> i<span class="sym">++) {</span>
-          <span class="kwb">int</span> lastsum <span class="sym">=</span> sum<span class="sym">;</span>
-          <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;(</span>t<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>m<span class="sym">));</span>
-	  t<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>condready<span class="sym">++;</span>
-          <span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;(</span>t<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>m<span class="sym">));</span>
-	  <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_cond_signal</span><span class="sym">(&amp;(</span>t<span class="sym">[</span><span class="num">0</span><span class="sym">].</span>c<span class="sym">)) ==</span> <span class="num">0</span><span class="sym">);</span>
-	  <span class="kwa">while</span><span class="sym">(</span>sum <span class="sym">==</span> lastsum<span class="sym">)</span>
-	      <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_cond_wait</span><span class="sym">(&amp;</span>main_cond<span class="sym">,&amp;</span>main_mutex<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
-        <span class="sym">}</span>
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">) {</span>
+    <span class="hl kwb">struct</span> worker workers<span class="hl sym">[</span>THREADS<span class="hl sym">];</span>
+    <span class="hl kwb">struct</span> inbox main_inbox<span class="hl sym">;</span>
+    pthread_attr_t attr<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> n<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> sum <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
 
-	<span class="kwd">pthread_join</span><span class="sym">(&amp;(</span>t<span class="sym">[</span>THREADS<span class="sym">-</span><span class="num">1</span><span class="sym">].</span>t<span class="sym">),</span>NULL<span class="sym">);</span>
-	<span class="kwa">return</span><span class="sym">(</span><span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;%d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> sum<span class="sym">),</span>EXIT_SUCCESS<span class="sym">);</span>
-<span class="sym">}</span>
+    <span class="hl kwd">assert</span><span class="hl sym">(</span>argc <span class="hl sym">==</span> <span class="hl num">2</span> <span class="hl sym">&amp;&amp; (</span>n <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])) != -</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">sem_init</span><span class="hl sym">(&amp;</span>main_inbox<span class="hl sym">.</span>sem<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">pthread_attr_init</span><span class="hl sym">(&amp;</span>attr<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">pthread_attr_setstacksize</span><span class="hl sym">(&amp;</span>attr<span class="hl sym">,</span> THREAD_STACK_SIZE<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> THREADS<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+        workers<span class="hl sym">[</span>i<span class="hl sym">].</span>next_inbox <span class="hl sym">=</span> i <span class="hl sym">==</span> <span class="hl num">0</span> ? <span class="hl sym">&amp;</span>main_inbox <span class="hl sym">: &amp;</span>workers<span class="hl sym">[</span>i <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">].</span>inbox<span class="hl sym">;</span>
+        <span class="hl kwd">sem_init</span><span class="hl sym">(&amp;</span>workers<span class="hl sym">[</span>i<span class="hl sym">].</span>inbox<span class="hl sym">.</span>sem<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+        <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>workers<span class="hl sym">[</span>i<span class="hl sym">].</span>thread<span class="hl sym">, &amp;</span>attr<span class="hl sym">,</span> work<span class="hl sym">, &amp;</span>workers<span class="hl sym">[</span>i<span class="hl sym">]) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+    <span class="hl sym">{</span>
+        workers<span class="hl sym">[</span>THREADS <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">].</span>inbox<span class="hl sym">.</span>n <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">sem_post</span><span class="hl sym">(&amp;</span>workers<span class="hl sym">[</span>THREADS <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">].</span>inbox<span class="hl sym">.</span>sem<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+        <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwd">sem_wait</span><span class="hl sym">(&amp;</span>main_inbox<span class="hl sym">.</span>sem<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+        sum <span class="hl sym">+=</span> main_inbox<span class="hl sym">.</span>n<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> sum<span class="hl sym">);</span>
+    <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
