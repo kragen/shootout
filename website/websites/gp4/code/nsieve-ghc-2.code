@@ -1,41 +1,33 @@
-<span class="slc">-- written by Einar Karttunen</span>
-<span class="slc">-- further optimized by Jeff Newbern</span>
+<span class="hl com">{-# OPTIONS -O2 -fasm -fbang-patterns #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Don Stewart.</span>
+<span class="hl slc">-- Uses Word8 values to represent Bools, avoiding a bit-packing Array Bool</span>
+<span class="hl slc">--</span>
 
-<span class="kwa">import</span> Data.Array.IO
-<span class="kwa">import</span> Data.Array.Base
-<span class="kwa">import</span> Data.Bits <span class="sym">(</span>shiftL<span class="sym">)</span>
-<span class="kwa">import</span> System <span class="sym">(</span>getArgs<span class="sym">)</span>
-<span class="kwa">import</span> Control.Monad<span class="sym">(</span>when<span class="sym">)</span>
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> Foreign
+<span class="hl kwa">import</span> Data.ByteString.Base
+<span class="hl kwa">import</span> Text.Printf
 
-buildSieve <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Bool</span><span class="sym">)</span>
-buildSieve hi <span class="sym">=</span> <span class="kwa">do</span> arr <span class="sym">&lt;-</span> newArray<span class="sym">(</span><span class="num">2</span><span class="sym">,</span>hi<span class="sym">)</span> <span class="kwa">True</span>
-                   mapM_ <span class="sym">(</span>\i <span class="sym">-&gt;</span> unsafeWrite arr i <span class="kwa">False</span><span class="sym">) [</span><span class="num">4</span><span class="sym">,</span><span class="num">6</span>..hi<span class="sym">]</span>  <span class="slc">--inline n=2 case</span>
-                   sieve arr <span class="num">3</span> hi
-                   return arr
-  <span class="slc">-- here we assume n is odd and n &gt;= 3</span>
-  <span class="kwa">where</span> sieve arr n hi <span class="sym">|</span> n <span class="sym">&gt;</span> hi    <span class="sym">=</span> <span class="kwa">do</span> return <span class="sym">()</span>
-                       <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> el <span class="sym">&lt;-</span> unsafeRead arr n
-                                        when el <span class="sym">(</span>elimMults arr n hi<span class="sym">)</span>
-                                        sieve arr <span class="sym">(</span>n<span class="sym">+</span><span class="num">2</span><span class="sym">)</span> hi
-        elimMults arr n hi <span class="sym">=</span> mapM_ <span class="sym">(</span>\i <span class="sym">-&gt;</span> unsafeWrite arr i <span class="kwa">False</span><span class="sym">) [(</span><span class="num">3</span><span class="sym">*</span>n<span class="sym">),(</span><span class="num">5</span><span class="sym">*</span>n<span class="sym">)</span>..hi<span class="sym">]</span>
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
+    mapM_ <span class="hl sym">(</span>sieve . <span class="hl sym">(</span><span class="hl num">10000</span> <span class="hl sym">*)</span> . <span class="hl sym">(</span><span class="hl num">2</span> ^<span class="hl sym">)) [</span>n<span class="hl sym">,</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span> n<span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">]</span>
 
-countTrue <span class="sym">::</span> IOUArray <span class="kwb">Int Bool</span> <span class="sym">-&gt; (</span><span class="kwb">Int</span><span class="sym">,</span><span class="kwb">Int</span><span class="sym">) -&gt;</span> IO <span class="kwb">Int</span>
-countTrue arr <span class="sym">(</span>lo<span class="sym">,</span>hi<span class="sym">) =</span> helper arr lo hi <span class="num">0</span>
-  <span class="kwa">where</span> helper arr idx end acc <span class="sym">|</span> idx <span class="sym">&gt;</span> end <span class="sym">=</span> <span class="kwa">do</span> return acc
-                               <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> el <span class="sym">&lt;-</span> unsafeRead arr idx
-                                                if el <span class="kwa">then</span> helper arr <span class="sym">(</span>idx<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> end $<span class="sym">! (</span>acc <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
-                                                      <span class="kwa">else</span> helper arr <span class="sym">(</span>idx<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> end acc
+sieve n <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    a <span class="hl sym">&lt;-</span> create n $ \p <span class="hl sym">-&gt;</span> memset p <span class="hl num">0</span> <span class="hl sym">(</span>fromIntegral n<span class="hl sym">) &gt;&gt;</span> return <span class="hl sym">()</span>
+    r <span class="hl sym">&lt;-</span> go n a <span class="hl num">0 2</span>
+    printf <span class="hl str">&quot;Primes up to %8d %8d\n&quot;</span> <span class="hl sym">(</span>n<span class="hl sym">::</span><span class="hl kwb">Int</span><span class="hl sym">) (</span>r<span class="hl sym">::</span><span class="hl kwb">Int</span><span class="hl sym">)</span>
 
-writeCount m c <span class="sym">|</span> m <span class="sym">&gt;</span> <span class="num">0</span>     <span class="sym">=</span> putStrLn <span class="sym">(</span><span class="str">&quot;Primes up to &quot;</span><span class="sym">++</span>fmt <span class="num">8</span> m<span class="sym">++</span><span class="str">&quot; &quot;</span><span class="sym">++</span>fmt <span class="num">8</span> c<span class="sym">)</span>
-               <span class="sym">|</span> otherwise <span class="sym">=</span> return <span class="sym">()</span>
-  <span class="kwa">where</span> fmt width i <span class="sym">=</span> <span class="kwa">let</span> is <span class="sym">=</span> show i <span class="kwa">in</span> <span class="sym">(</span>take <span class="sym">(</span>width <span class="sym">-</span> length is<span class="sym">) (</span>repeat ' '<span class="sym">)) ++</span> is
+go m <span class="hl sym">!</span>a <span class="hl sym">!</span>c <span class="hl sym">!</span>n
+    <span class="hl sym">|</span> n <span class="hl sym">==</span> m    <span class="hl sym">=</span> return c
+    <span class="hl sym">|</span> true a n  <span class="hl sym">=</span> go m a c <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> set <span class="hl sym">(</span>n<span class="hl sym">+</span>n<span class="hl sym">)</span>
+  <span class="hl kwa">where</span>
+    set <span class="hl sym">!</span>j <span class="hl sym">|</span> j <span class="hl sym">&lt;=</span> m    <span class="hl sym">=</span> false a j <span class="hl sym">&gt;&gt;</span> set <span class="hl sym">(</span>j<span class="hl sym">+</span>n<span class="hl sym">)</span>
+           <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> go m a <span class="hl sym">(</span>c<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
 
-main <span class="sym">=</span> <span class="kwa">do</span> n <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> readIO.head
-          <span class="kwa">let</span> b1 <span class="sym">= (</span><span class="num">1</span> `shiftL` <span class="sym">(</span>n<span class="sym">-</span><span class="num">2</span><span class="sym">)) *</span> <span class="num">10000</span>
-          <span class="kwa">let</span> b2 <span class="sym">= (</span><span class="num">1</span> `shiftL` <span class="sym">(</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)) *</span> <span class="num">10000</span>
-          <span class="kwa">let</span> b3 <span class="sym">= (</span><span class="num">1</span> `shiftL` n<span class="sym">) *</span> <span class="num">10000</span>
-          arr <span class="sym">&lt;-</span> buildSieve b3
-          c1 <span class="sym">&lt;-</span> countTrue arr <span class="sym">(</span><span class="num">2</span><span class="sym">,</span>b1<span class="sym">)</span>
-          c2 <span class="sym">&lt;-</span> countTrue arr <span class="sym">((</span>b1<span class="sym">+</span><span class="num">1</span><span class="sym">),</span>b2<span class="sym">)</span>
-          c3 <span class="sym">&lt;-</span> countTrue arr <span class="sym">((</span>b2<span class="sym">+</span><span class="num">1</span><span class="sym">),</span>b3<span class="sym">)</span>
-          writeCount b3 <span class="sym">(</span>c1<span class="sym">+</span>c2<span class="sym">+</span>c3<span class="sym">) &gt;&gt;</span> writeCount b2 <span class="sym">(</span>c1<span class="sym">+</span>c2<span class="sym">) &gt;&gt;</span> writeCount b1 c1
+true  <span class="hl sym">!</span>a <span class="hl sym">!</span>n          <span class="hl sym">=</span> unsafeIndex a n <span class="hl sym">==</span> <span class="hl num">1</span>
+false <span class="hl sym">(</span>PS fp _ _<span class="hl sym">) !</span>n <span class="hl sym">=</span> withForeignPtr fp $ \p <span class="hl sym">-&gt;</span> pokeByteOff p n <span class="hl sym">(</span><span class="hl num">1</span> <span class="hl sym">::</span> Word8<span class="hl sym">)</span>
