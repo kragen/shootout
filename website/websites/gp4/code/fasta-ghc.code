@@ -1,71 +1,104 @@
-<span class="slc">-- The Computer Language Shootout</span>
-<span class="slc">-- http://shootout.alioth.debian.org/</span>
-<span class="slc">-- contributed by Jeff Newbern</span>
+<span class="hl com">{-# OPTIONS -O2 -optc-O2 -optc-ffast-math -fbang-patterns -fexcess-precision #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Don Stewart</span>
+<span class="hl slc">-- A lazy bytestring solution.</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Add:</span>
+<span class="hl slc">-- -optc-mfpmath=sse -optc-msse2</span>
+<span class="hl slc">--</span>
 
-<span class="slc">-- Uses random generation code derived from Simon Marlow and Einar Karttunen's</span>
-<span class="slc">-- &quot;random&quot; test entry.</span>
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> Data.Word
+<span class="hl kwa">import</span> Control.Arrow
 
-<span class="slc">-- Note: This code has not been optimized *at all*.  It is written to be clear</span>
-<span class="slc">-- and to follow standard Haskell idioms as much as possible (but we have to match</span>
-<span class="slc">-- the stateful PRNG idiom in the test definition, which is oriented toward an</span>
-<span class="slc">-- imperative language).  Performance is decent with ghc -O2, but if it can be</span>
-<span class="slc">-- improved without sacrificing the clarity of the code, by all means go for it!</span>
+<span class="hl kwa">import qualified</span> Data.ByteString.Lazy <span class="hl kwa">as</span> L
+<span class="hl kwa">import qualified</span> Data.ByteString.Lazy.Char8 <span class="hl kwa">as</span> C <span class="hl sym">(</span>pack<span class="hl sym">,</span>unfoldr<span class="hl sym">)</span>
+<span class="hl kwa">import qualified</span> Data.ByteString <span class="hl kwa">as</span> S
+<span class="hl kwa">import</span> Data.ByteString.Base
 
-<span class="kwa">import</span> System<span class="sym">(</span>getArgs<span class="sym">)</span>
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
+    writeFasta  <span class="hl str">&quot;ONE&quot;</span>   <span class="hl str">&quot;Homo sapiens alu&quot;</span>       <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">) (</span>L.cycle alu<span class="hl sym">)</span>
+    g <span class="hl sym">&lt;-</span> unfold <span class="hl str">&quot;TWO&quot;</span>   <span class="hl str">&quot;IUB ambiguity codes&quot;</span>    <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">) (</span>look iubs<span class="hl sym">)</span> <span class="hl num">42</span>
+    unfold      <span class="hl str">&quot;THREE&quot;</span> <span class="hl str">&quot;Homo sapiens frequency&quot;</span> <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">5</span><span class="hl sym">) (</span>look homs<span class="hl sym">)</span> g
 
-<span class="kwa">type</span> Base <span class="sym">=</span> <span class="kwb">Char</span>
-<span class="kwa">type</span> Sequence <span class="sym">= [</span>Base<span class="sym">]</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- lazily unfold the randomised dna sequences</span>
+<span class="hl slc">--</span>
 
-alu <span class="sym">::</span> Sequence  <span class="slc">-- predefined sequence</span>
-alu <span class="sym">=</span> <span class="str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC&quot;</span> <span class="sym">++</span>
-      <span class="str">&quot;AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
+unfold l t n f <span class="hl sym">!</span>g <span class="hl sym">=</span> putStrLn <span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">++</span> l <span class="hl sym">++</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">++</span> t<span class="hl sym">) &gt;&gt;</span> unroll f g n
 
-<span class="kwa">type</span> BaseFrequency <span class="sym">= (</span>Base<span class="sym">,</span><span class="kwb">Double</span><span class="sym">)</span>
+unroll <span class="hl sym">:: (</span><span class="hl kwb">Int</span> <span class="hl sym">-&gt; (</span>Word8<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">)) -&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Int</span>
+unroll f <span class="hl sym">=</span> loop
+    <span class="hl kwa">where</span>
+        loop r <span class="hl num">0</span>   <span class="hl sym">=</span> return r
+        loop <span class="hl sym">!</span>r <span class="hl sym">!</span>i <span class="hl sym">=</span> <span class="hl kwa">case</span> S.unfoldrN m <span class="hl sym">(</span>Just . f<span class="hl sym">)</span> r <span class="hl kwa">of</span>
+                        <span class="hl sym">(!</span>s<span class="hl sym">,</span> Just r<span class="hl str">') -&gt; do</span>
+<span class="hl str">                            S.putStrLn s</span>
+<span class="hl str">                            loop r'</span> <span class="hl sym">(</span>i<span class="hl sym">-</span>m<span class="hl sym">)</span>
+          <span class="hl kwa">where</span> m <span class="hl sym">=</span> min i <span class="hl num">60</span>
 
-iub <span class="sym">:: [</span>BaseFrequency<span class="sym">]</span>
-iub <span class="sym">= [ (</span>'a'<span class="sym">,</span> <span class="num">0.27</span><span class="sym">), (</span>'c'<span class="sym">,</span> <span class="num">0.12</span><span class="sym">), (</span>'g'<span class="sym">,</span> <span class="num">0.12</span><span class="sym">), (</span>'t'<span class="sym">,</span> <span class="num">0.27</span><span class="sym">),</span>
-        <span class="sym">(</span>'B'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'D'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'H'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'K'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'M'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'N'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">),</span>
-        <span class="sym">(</span>'R'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'S'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'V'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'W'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">), (</span>'Y'<span class="sym">,</span> <span class="num">0.02</span><span class="sym">) ]</span>
+look ds <span class="hl sym">!</span>k <span class="hl sym">=</span> <span class="hl kwa">let</span> <span class="hl sym">(</span>d<span class="hl sym">,</span>j<span class="hl sym">) =</span> rand k <span class="hl kwa">in</span> <span class="hl sym">(</span>choose ds d<span class="hl sym">,</span> j<span class="hl sym">)</span>
 
-homosapiens <span class="sym">:: [</span>BaseFrequency<span class="sym">]</span>
-homosapiens <span class="sym">= [ (</span>'a'<span class="sym">,</span> <span class="num">0.3029549426680</span><span class="sym">), (</span>'c'<span class="sym">,</span> <span class="num">0.1979883004921</span><span class="sym">),</span>
-                <span class="sym">(</span>'g'<span class="sym">,</span> <span class="num">0.1975473066391</span><span class="sym">), (</span>'t'<span class="sym">,</span> <span class="num">0.3015094502008</span><span class="sym">) ]</span>
+choose <span class="hl sym">:: [(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)] -&gt;</span> <span class="hl kwb">Float</span> <span class="hl sym">-&gt;</span> Word8
+choose <span class="hl sym">[(</span>b<span class="hl sym">,</span>_<span class="hl sym">)]</span>       _ <span class="hl sym">=</span> b
+choose <span class="hl sym">((!</span>b<span class="hl sym">,!</span>f<span class="hl sym">):</span>xs<span class="hl sym">) !</span>p <span class="hl sym">=</span> if p <span class="hl sym">&lt;</span> f <span class="hl kwa">then</span> b <span class="hl kwa">else</span> choose xs <span class="hl sym">(</span>p<span class="hl sym">-</span>f<span class="hl sym">)</span>
 
-<span class="slc">-- select a base whose interval covers the given double</span>
-chooseBase <span class="sym">:: [</span>BaseFrequency<span class="sym">] -&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> Base
-chooseBase <span class="sym">[(</span>b<span class="sym">,</span>_<span class="sym">)]</span>    _ <span class="sym">=</span> b
-chooseBase <span class="sym">((</span>b<span class="sym">,</span>f<span class="sym">):</span>xs<span class="sym">)</span> p <span class="sym">|</span> p <span class="sym">&lt;</span> f     <span class="sym">=</span> b
-                        <span class="sym">|</span> otherwise <span class="sym">=</span> chooseBase xs <span class="sym">(</span>p<span class="sym">-</span>f<span class="sym">)</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- only demand as much of the infinite sequence as we require</span>
 
-<span class="slc">-- write a sequence in Fasta format</span>
-writeFasta <span class="sym">::</span> String <span class="sym">-&gt;</span> String <span class="sym">-&gt;</span> Sequence <span class="sym">-&gt;</span> IO <span class="sym">()</span>
-writeFasta label title sequence <span class="sym">=</span>
-  <span class="kwa">do</span> putStrLn $ <span class="str">&quot;&gt;&quot;</span> <span class="sym">++ (</span>label <span class="sym">++ (</span><span class="str">&quot; &quot;</span> <span class="sym">++</span> title<span class="sym">))</span>
-     writeWrapped <span class="num">60</span> sequence
-  <span class="kwa">where</span> writeWrapped _   <span class="sym">[]  =</span> <span class="kwa">do</span> return <span class="sym">()</span>
-        writeWrapped len str <span class="sym">=</span> <span class="kwa">do let</span> <span class="sym">(</span>s1<span class="sym">,</span>s2<span class="sym">) =</span> splitAt len str
-                                  putStrLn s1
-                                  writeWrapped len s2
+writeFasta label title n s <span class="hl sym">=</span> <span class="hl kwa">do</span>
+     putStrLn $ <span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">++</span> label <span class="hl sym">++</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">++</span> title
+     <span class="hl kwa">let</span> <span class="hl sym">(</span>t<span class="hl sym">:</span>ts<span class="hl sym">) =</span> L.toChunks s
+     go ts t n
+  <span class="hl kwa">where</span>
+     go ss <span class="hl sym">!</span>s <span class="hl sym">!</span>n
+        <span class="hl sym">|</span> l60 <span class="hl sym">&amp;&amp;</span> n60 <span class="hl sym">=</span> S.putStrLn l               <span class="hl sym">&gt;&gt;</span> go ss        r <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">60</span><span class="hl sym">)</span>
+        <span class="hl sym">|</span>        n60 <span class="hl sym">=</span> S.putStr s <span class="hl sym">&gt;&gt;</span> S.putStrLn a <span class="hl sym">&gt;&gt;</span> go <span class="hl sym">(</span>tail ss<span class="hl sym">)</span> b <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">60</span><span class="hl sym">)</span>
+        <span class="hl sym">|</span> n <span class="hl sym">&lt;=</span> ln    <span class="hl sym">=</span> S.putStrLn <span class="hl sym">(</span>S.take n s<span class="hl sym">)</span>
+        <span class="hl sym">|</span> otherwise  <span class="hl sym">=</span> S.putStr s <span class="hl sym">&gt;&gt;</span> S.putStrLn <span class="hl sym">(</span>S.take <span class="hl sym">(</span>n<span class="hl sym">-</span>ln<span class="hl sym">) (</span>head ss<span class="hl sym">))</span>
+        <span class="hl kwa">where</span>
+            <span class="hl sym">!</span>ln   <span class="hl sym">=</span> S.length s
+            <span class="hl sym">!</span>l60  <span class="hl sym">=</span> ln <span class="hl sym">&gt;=</span> <span class="hl num">60</span>
+            <span class="hl sym">!</span>n60  <span class="hl sym">=</span> n  <span class="hl sym">&gt;=</span> <span class="hl num">60</span>
+            <span class="hl sym">(</span>l<span class="hl sym">,</span>r<span class="hl sym">) =</span> S.splitAt <span class="hl num">60</span> s
+            <span class="hl sym">(</span>a<span class="hl sym">,</span>b<span class="hl sym">) =</span> S.splitAt <span class="hl sym">(</span><span class="hl num">60</span><span class="hl sym">-</span>ln<span class="hl sym">) (</span>head ss<span class="hl sym">)</span>
 
-<span class="slc">-- generate an infinite sequence of random doubles using the</span>
-<span class="slc">-- prng from the &quot;random&quot; test</span>
-probs <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt; [</span><span class="kwb">Double</span><span class="sym">]</span>
-probs seed <span class="sym">=</span> tail $ map normalize <span class="sym">(</span>iterate nextSeed seed<span class="sym">)</span>
-  <span class="kwa">where</span> nextSeed s <span class="sym">= (</span>s <span class="sym">*</span> ia <span class="sym">+</span> ic<span class="sym">)</span> `mod` im
-        im <span class="sym">=</span> <span class="num">139968</span>
-        ia <span class="sym">=</span> <span class="num">3877</span>
-        ic <span class="sym">=</span> <span class="num">29573</span>
-        normalize n <span class="sym">= (</span>fromIntegral n<span class="sym">) * (</span><span class="num">1.0</span> <span class="sym">/</span> fromIntegral im<span class="sym">)</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
 
-main <span class="sym">=</span> <span class="kwa">do</span> args <span class="sym">&lt;-</span> getArgs
-          <span class="kwa">let</span> n <span class="sym">=</span> if <span class="sym">(</span>null args<span class="sym">)</span> <span class="kwa">then</span> <span class="num">1000</span> <span class="kwa">else</span> read <span class="sym">(</span>head args<span class="sym">)</span>
-          writeFasta <span class="str">&quot;ONE&quot;</span> <span class="str">&quot;Homo sapiens alu&quot;</span> <span class="sym">(</span>take <span class="sym">(</span><span class="num">2</span><span class="sym">*</span>n<span class="sym">) (</span>cycle alu<span class="sym">))</span>
-          <span class="kwa">let</span> <span class="sym">(</span>seq1<span class="sym">,</span>seq2<span class="sym">) =</span> splitAt <span class="sym">(</span><span class="num">3</span><span class="sym">*</span>n<span class="sym">) (</span>probs <span class="num">42</span><span class="sym">)</span> <span class="slc">-- we have to match the imperative version</span>
-          <span class="kwa">let</span> seq2' <span class="sym">=</span> take <span class="sym">(</span><span class="num">5</span><span class="sym">*</span>n<span class="sym">)</span> seq2                <span class="slc">-- instead of using the Haskell idiom</span>
-          writeFasta <span class="str">&quot;TWO&quot;</span> <span class="str">&quot;IUB ambiguity codes&quot;</span> <span class="sym">(</span>map <span class="sym">(</span>chooseBase iub<span class="sym">)</span> seq1<span class="sym">)</span>
-          writeFasta <span class="str">&quot;THREE&quot;</span> <span class="str">&quot;Homo sapiens frequency&quot;</span> <span class="sym">(</span>map <span class="sym">(</span>chooseBase homosapiens<span class="sym">)</span> seq2'<span class="sym">)</span>
+im  <span class="hl sym">=</span> <span class="hl num">139968</span>
+ia  <span class="hl sym">=</span> <span class="hl num">3877</span>
+ic  <span class="hl sym">=</span> <span class="hl num">29573</span>
+
+rand <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt; (</span><span class="hl kwb">Float</span><span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">)</span>
+rand <span class="hl sym">!</span>seed <span class="hl sym">= (</span>newran<span class="hl sym">,</span>newseed<span class="hl sym">)</span>
+    <span class="hl kwa">where</span>
+        <span class="hl sym">!</span>newseed <span class="hl sym">= (</span>seed <span class="hl sym">*</span> ia <span class="hl sym">+</span> ic<span class="hl sym">)</span> `rem` im
+        <span class="hl sym">!</span>newran  <span class="hl sym">=</span>  <span class="hl num">1.0</span> <span class="hl sym">*</span> fromIntegral newseed <span class="hl sym">/</span> imd
+        imd      <span class="hl sym">=</span> fromIntegral im
+
+<span class="hl slc">------------------------------------------------------------------------</span>
+
+alu <span class="hl sym">=</span> C.pack
+        <span class="hl str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\</span>
+<span class="hl str">        \GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\</span>
+<span class="hl str">        \CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\</span>
+<span class="hl str">        \ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA\</span>
+<span class="hl str">        \GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG\</span>
+<span class="hl str">        \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\</span>
+<span class="hl str">        \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
+
+iubs <span class="hl sym">=</span> map <span class="hl sym">(</span>c2w <span class="hl sym">***</span> id<span class="hl sym">)</span>
+        <span class="hl sym">[(</span><span class="hl str">'a'</span><span class="hl sym">,</span><span class="hl num">0.27</span><span class="hl sym">),(</span><span class="hl str">'c'</span><span class="hl sym">,</span><span class="hl num">0.12</span><span class="hl sym">),(</span><span class="hl str">'g'</span><span class="hl sym">,</span><span class="hl num">0.12</span><span class="hl sym">),(</span><span class="hl str">'t'</span><span class="hl sym">,</span><span class="hl num">0.27</span><span class="hl sym">),(</span><span class="hl str">'B'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">)</span>
+        <span class="hl sym">,(</span><span class="hl str">'D'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'H'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'K'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'M'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'N'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">)</span>
+        <span class="hl sym">,(</span><span class="hl str">'R'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'S'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'V'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'W'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span><span class="hl str">'Y'</span><span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">)]</span>
+
+homs <span class="hl sym">=</span> map <span class="hl sym">(</span>c2w <span class="hl sym">***</span> id<span class="hl sym">)</span>
+        <span class="hl sym">[(</span><span class="hl str">'a'</span><span class="hl sym">,</span><span class="hl num">0.3029549426680</span><span class="hl sym">),(</span><span class="hl str">'c'</span><span class="hl sym">,</span><span class="hl num">0.1979883004921</span><span class="hl sym">)</span>
+        <span class="hl sym">,(</span><span class="hl str">'g'</span><span class="hl sym">,</span><span class="hl num">0.1975473066391</span><span class="hl sym">),(</span><span class="hl str">'t'</span><span class="hl sym">,</span><span class="hl num">0.3015094502008</span><span class="hl sym">)]</span>
+
