@@ -6,38 +6,22 @@
 module Revcomp;
 
 import Cal.Core.Prelude using
-    typeClass = Inputable, Outputable;
-    typeConstructor = String, Boolean, JObject, Int, Byte, Char;
-    function =
-        eager, toByte, stringToInt, add, not, seq, input, fromInt, snd, fst, 
-        induceComparator, combineComparators, reverseComparator;
-    ;
-
-import Cal.Core.Debug using
-    typeClass = Show;
-    function = show;
+    typeConstructor = Boolean, Byte, Char, Int, JObject, String;
+    function = eager, seq, toByte;
     ;
 import Cal.Core.Char using
-    function = toLowerCase, toInt;
+    function = toInt, toLowerCase;
     ;
 import Cal.Core.String using
-    function = length, subscript, toUpperCase, startsWith, substring;
+    function = subscript;
     ;
 import Cal.Collections.List using
-    function =
-        foldLeft1Strict, map, takeWhile, dropWhile, tail, foldLeftStrict, 
-        sortBy;
+    function = foldLeftStrict;
     ;
-import Cal.Collections.Map using
-    typeConstructor = Map;
-    function = fromList;
+import Cal.IO.Console using
+    function = printLine;
     ;
-import Cal.Utilities.MessageFormat using
-    function = formatWithPattern;
-    ;
-import Cal.Utilities.Locale using
-    function = invariantLocale;
-    ;
+
 
 data foreign unsafe import jvm "java.io.BufferedReader" private JBufferedReader;
 
@@ -52,20 +36,11 @@ data foreign unsafe import jvm "java.io.FileReader" private JFileReader;
 
 data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
 
-data foreign unsafe import jvm "java.lang.StringBuffer"
-    private JStringBuffer deriving Show;
-
-foreign unsafe import jvm "constructor"
-    private createStringBuffer :: JStringBuffer;
-
 foreign unsafe import jvm "constructor"
     private createBufferedReader :: JReader -> JBufferedReader;
 
 foreign unsafe import jvm "constructor"
     private createInputStreamReaderStream :: JInputStream -> JInputStreamReader;
-
-foreign unsafe import jvm "method append"
-    private append :: JStringBuffer -> String -> JStringBuffer;
 
 foreign unsafe import jvm "method readLine"
     private readLine :: JBufferedReader -> String;
@@ -78,20 +53,18 @@ foreign unsafe import jvm "static field java.lang.System.in"
 
 foreign unsafe import jvm "isNull" private isNull :: String -> Boolean;
 
-foreign unsafe import jvm "method println"
-    private printLn :: JPrintStream -> String -> ();
-
 foreign unsafe import jvm "method write"
     private write :: JPrintStream -> JByteArray -> Int -> Int -> ();
 
-data foreign unsafe import jvm "byte[]"
-    JByteArray deriving Inputable, Outputable, Show;
+data foreign unsafe import jvm "byte[]" JByteArray;
 
-//Import Java integer arrays
+//Import Java byte arrays
 foreign unsafe import jvm "newArray" byteArray_new :: Int -> JByteArray;
 
 foreign unsafe import jvm "subscriptArray"
     byteArray_subscript :: JByteArray -> Int -> Byte;
+
+foreign unsafe import jvm "lengthArray" byteArray_length :: JByteArray -> Int;
 
 foreign unsafe import jvm "updateArray"
     byteArray_update :: JByteArray -> Int -> Byte -> Byte;
@@ -99,8 +72,16 @@ foreign unsafe import jvm "updateArray"
 foreign unsafe import jvm "cast"
     jInputStreamReaderToJReader :: JInputStreamReader -> JReader;
 
+foreign unsafe import jvm "cast" cast :: JByteArray -> JObject;
+
+data Chunk =
+    Chunk
+        dataChunk :: !JByteArray
+        length :: !Int
+    ;
+
 charToByte :: Char -> Byte;
-charToByte !c = toByte (Cal.Core.Char.toInt c);
+charToByte !c = toByte (Char.toInt c);
 
 initCharMap :: JByteArray -> ();
 initCharMap !charMap =
@@ -141,7 +122,7 @@ initCharMap !charMap =
         `seq`
         foldLeftStrict
             (
-                \a mapping ->
+                \!a !mapping ->
                     byteArray_update
                         charMap
                         (Char.toInt mapping.#1)
@@ -158,72 +139,96 @@ initCharMap !charMap =
             mappings
     ;
 
-printReverseComplement :: JByteArray -> String -> ();
-printReverseComplement !charMap !sequence =
+//this includes the CR
+outputLineLength :: Int;
+outputLineLength = 61;
+
+printChunks :: [Chunk] -> ();
+printChunks chunks =
     let
-        lineLength :: Int;
-        lineLength = 60;
-
-        outputBufferSize :: Int;
-        outputBufferSize = 10240;
-
         outputBuffer :: JByteArray;
-        outputBuffer = eager $ byteArray_new outputBufferSize;
+        outputBuffer =
+            eager $ byteArray_new (chunkSize * List.length chunks * 61 / 60)
+            ;
 
         eol :: Byte;
-        eol = eager $ toByte (eager $ Cal.Core.Char.toInt '\n');
+        eol = eager $ toByte (eager $ Char.toInt '\n');
 
-        startIndex :: Int;
-        startIndex = String.length sequence - 1;
-
-        loop :: Int -> Int -> Int -> ();
-        loop !inputIndex !outputIndex !eolCount =
-            if inputIndex >= 0 then
+        appendChunk :: JByteArray -> Int -> Int -> Int -> Int;
+        appendChunk !chunk !i !charsOnLine !ptr =
+            if i >= 0 then
                 byteArray_update
                     outputBuffer
-                    outputIndex
-                    (byteArray_subscript
-                        charMap
-                        (toInt (String.subscript sequence inputIndex))
-                    )
+                    ptr
+                    (byteArray_subscript chunk i)
                 `seq`
                 (
-                    if outputIndex + 1 == eolCount then
-                        byteArray_update outputBuffer (outputIndex + 1) eol
+                    if (ptr + 2) % outputLineLength == 0 then
+                        byteArray_update outputBuffer (ptr + 1) eol
                         `seq`
-                        (
-                            if
-                                outputIndex + lineLength + 3 > outputBufferSize
-                            then
-                                write stdout outputBuffer 0 (outputIndex + 2)
-                                `seq`
-                                loop (inputIndex - 1) 0 lineLength
-                            else
-                                loop
-                                    (inputIndex - 1)
-                                    (outputIndex + 2)
-                                    (outputIndex + 2 + lineLength)
-                        )
+                        appendChunk chunk (i - 1) 0 (ptr + 2)
                     else
-                        loop (inputIndex - 1) (outputIndex + 1) eolCount
+                        appendChunk
+                            chunk
+                            (i - 1)
+                            (charsOnLine + 1)
+                            (ptr + 1)
                 )
-            else if eolCount - outputIndex != lineLength then
-                //we need to terminate sequence with an extra \n
-                byteArray_update outputBuffer outputIndex eol
-                `seq`
-                write stdout outputBuffer 0 (outputIndex + 1)
             else
-                write stdout outputBuffer 0 outputIndex
+                ptr
+            ;
+
+        appendChunks :: [Chunk] -> Int -> Int;
+        appendChunks !chunks !ptr =
+            case chunks of
+            [] ->
+                if ptr % outputLineLength != 0 then
+                    byteArray_update outputBuffer ptr eol 
+                    `seq` 
+                    ptr + 1
+                else
+                    ptr
+                ;
+            first : rest ->
+                case first of
+                Chunk buffer bytes ->
+                    appendChunks
+                        rest
+                        (appendChunk buffer (bytes - 1) (0 :: Int) ptr)
+                    ;
+                ;
             ;
     in
-        if startIndex >= 0 then
-            loop (String.length sequence - 1) 0 lineLength
-        else
-            ()
+        write stdout outputBuffer 0 (appendChunks chunks 0)
     ;
 
+appendToChunk :: JByteArray -> String -> JByteArray -> Int -> ();
+appendToChunk !charMap !line !buffer !offset =
+    let
+        helper :: Int -> Int -> ();
+        helper !i !end =
+            if i < end then
+                byteArray_update
+                    buffer
+                    (offset + i)
+                    (byteArray_subscript
+                        charMap
+                        (toInt (String.subscript line i))
+                    )
+                `seq`
+                helper (i + 1) end
+            else
+                ()
+            ;
+    in
+        helper 0 (String.length line)
+    ;
+
+chunkSize :: Int;
+chunkSize = 10240;
+
 main :: [String] -> ();
-public main args =
+public main !args =
     let
         charMap :: JByteArray;
         charMap = eager $ byteArray_new 128;
@@ -237,30 +242,49 @@ public main args =
                 )
             ;
 
-        processLines :: JBufferedReader -> JStringBuffer -> ();
-        processLines !reader !buffer =
+        readLines :: JBufferedReader -> [Chunk] -> JByteArray -> Int -> ();
+        readLines !reader !chunks !buffer !bytesInBuffer =
             let
                 line :: String;
                 line = eager $ readLine reader;
             in
 
                 if isNull line then
-                    printReverseComplement charMap (show buffer)
+                    printChunks (Chunk buffer bytesInBuffer : chunks)
                 else if subscript line 0 == '>' then
-                    printReverseComplement charMap (show buffer)
+                    printChunks (Chunk buffer bytesInBuffer : chunks)
                     `seq`
-                    printLn stdout line
+                    printLine line
                     `seq`
-                    processLines reader createStringBuffer
+                    readLines reader [] (byteArray_new chunkSize) 0
+                else if bytesInBuffer + String.length line < chunkSize then
+                    appendToChunk charMap line buffer bytesInBuffer
+                    `seq`
+                    readLines
+                        reader
+                        chunks
+                        buffer
+                        (bytesInBuffer + String.length line)
                 else
-                    append buffer line
-                    `seq`
-                    processLines reader buffer
+                    let
+                        newBuffer :: JByteArray;
+                        newBuffer = eager $ byteArray_new chunkSize;
+
+                        len :: Int;
+                        len = eager $ String.length line;
+                    in
+                        appendToChunk charMap line newBuffer 0
+                        `seq`
+                        readLines
+                            reader
+                            (Chunk buffer bytesInBuffer : chunks)
+                            newBuffer
+                            len
             ;
     in
 
         initCharMap charMap
         `seq`
-        processLines reader createStringBuffer
+        readLines reader [] (byteArray_new chunkSize) 0
     ;
 

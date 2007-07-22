@@ -1,28 +1,16 @@
 /** 
  * The Computer Language Benchmarks Game 
  * Based on the CAL Open Quark version
- * Contributed by Magnus Byne.
+ * Contributed by Joseph Wong.
  */
 module Nbody;
 
 import Cal.Core.Prelude using
     typeClass = Inputable, Outputable;
-    typeConstructor = Boolean, Int, String, Double, CalValue;
-    dataConstructor = False, True;
-    function = seq, eager, stringToInt;
+    typeConstructor = CalValue, Double, Int, JObject, String;
+    function = eager, input, output, seq, stringToInt, unsafeCoerce;
     ;
-import Cal.Core.Bits using
-    function = shiftL, shiftR;
-    ;
-import Cal.Core.String;
-
-import Cal.Core.Debug using
-    function = show;
-    ;
-import Cal.Collections.Array using
-    typeConstructor = Array;
-    function = fromList, foldLeftStrict, subscript, length;
-    ;
+import Cal.Collections.Array;
 import Cal.Collections.List using
     function = head;
     ;
@@ -35,15 +23,9 @@ import Cal.Utilities.MessageFormat using
 import Cal.Utilities.Locale using
     function = invariantLocale;
     ;
-
-
-data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
-
-foreign unsafe import jvm "static field java.lang.System.out"
-    private stdout :: JPrintStream;
-
-foreign unsafe import jvm "method println"
-    private printLn :: JPrintStream -> String -> ();
+import Cal.IO.Console using
+    function = printLine;
+    ;
 
 data foreign unsafe import jvm "double[]" JVector deriving Inputable, Outputable;
 
@@ -88,29 +70,38 @@ solarMass :: Double;
 solarMass = 4 * pi * pi;
 
 /** calculate the initial offset moment for the sun*/
-computeOffsetMomentum :: Array Body -> Double;
+computeOffsetMomentum :: BodyArray -> Double;
 computeOffsetMomentum bodies =
     let
         offset :: JVector;
         offset = makeVector 0 0 0;
 
         sun :: Body;
-        sun = bodies `subscript` 0;
+        sun = eager (bodies `subscriptBodyArray` 0);
 
-        updateOffset !offset !body =
-            case body of
-            Body position velocity mass ->
-                set offset 0 (get offset 0 + get velocity 0 * mass)
+        length :: Int;
+        length = eager $ lengthBodyArray bodies;
+        
+        updateOffsetForBodies :: Int -> ();
+        updateOffsetForBodies !i =
+            if i < length then
+                (
+                    case bodies `subscriptBodyArray` i of
+                    Body position velocity mass ->
+                        set offset 0 (get offset 0 + get velocity 0 * mass)
+                        `seq`
+                        set offset 1 (get offset 1 + get velocity 1 * mass)
+                        `seq`
+                        set offset 2 (get offset 2 + get velocity 2 * mass)
+                        ;
+                )
                 `seq`
-                set offset 1 (get offset 1 + get velocity 1 * mass)
-                `seq`
-                set offset 2 (get offset 2 + get velocity 2 * mass)
-                `seq`
-                offset
-                ;
-            ;
+                updateOffsetForBodies (i+1)
+            else
+                ();
+        
     in
-        foldLeftStrict updateOffset offset bodies
+        updateOffsetForBodies 0
         `seq`
         (
             case sun of
@@ -125,18 +116,18 @@ computeOffsetMomentum bodies =
     ;
 
 /** calcualte the potential and kenetic energy*/
-energy :: Array Body -> Double;
+energy :: BodyArray -> Double;
 energy !bodies =
     let
         numBodies :: Int;
-        numBodies = eager $ length bodies;
+        numBodies = eager $ lengthBodyArray bodies;
 
         loop :: Double -> Int -> Int -> Double;
         loop !energy !i !j =
             if j < numBodies then
-                case bodies `subscript` i of
+                case bodies `subscriptBodyArray` i of
                 Body pos1 vel1 mass1 ->
-                    case bodies `subscript` j of
+                    case bodies `subscriptBodyArray` j of
                     Body pos2 vel2 mass2 ->
                         let
                             dx :: Double;
@@ -159,7 +150,7 @@ energy !bodies =
                         ;
                     ;
             else if i < numBodies then
-                case bodies `subscript` i of
+                case bodies `subscriptBodyArray` i of
                 Body pos vel mass ->
                     loop
                         (
@@ -183,20 +174,14 @@ energy !bodies =
     ;
 
 /** advance state of the bodies by time delta*/
-advance :: Double -> Array Body -> ();
+advance :: Double -> BodyArray -> ();
 advance !dt !bodies =
     let
         numBodies :: Int;
-        numBodies = eager $ length bodies;
+        numBodies = eager $ lengthBodyArray bodies;
 
         updateVelocity ::
-            JVector
-            -> JVector
-            -> JVector
-            -> JVector
-            -> Double
-            -> Double
-            -> ();
+            JVector -> JVector -> JVector -> JVector -> Double -> Double -> ();
         updateVelocity !pos1 !pos2 !vel1 !vel2 !mass1 !mass2 =
             let
                 dx :: Double;
@@ -208,11 +193,20 @@ advance !dt !bodies =
                 dz :: Double;
                 dz = eager $ get pos1 2 - get pos2 2;
 
-                distance :: Double;
-                distance = eager $ sqrt (dx * dx + dy * dy + dz * dz);
-
                 mag :: Double;
-                mag = eager $ dt / (distance * distance * distance);
+                mag =
+                    eager
+                        (
+                            let
+                                distance :: Double;
+                                distance =
+                                    eager
+                                    $ sqrt (dx * dx + dy * dy + dz * dz)
+                                    ;
+                            in
+                                dt / (distance * distance * distance)
+                        )
+                    ;
             in
                 set vel1 0 (get vel1 0 - dx * mass2 * mag)
                 `seq`
@@ -234,9 +228,9 @@ advance !dt !bodies =
         updateVelocities !i !j =
             if j < numBodies then
                 (
-                    case bodies `subscript` i of
+                    case bodies `subscriptBodyArray` i of
                     Body pos1 vel1 mass1 ->
-                        case bodies `subscript` j of
+                        case bodies `subscriptBodyArray` j of
                         Body pos2 vel2 mass2 ->
                             updateVelocity pos1 pos2 vel1 vel2 mass1 mass2;
                         ;
@@ -266,7 +260,7 @@ advance !dt !bodies =
             if i == numBodies then
                 ()
             else
-                updatePosition dt (bodies `subscript` i)
+                updatePosition dt (eager (bodies `subscriptBodyArray` i))
                 `seq`
                 updatePositions (i + 1)
             ;
@@ -282,9 +276,9 @@ public main !args =
     let
         n :: Int;
         n = eager $ stringToInt (head args);
-        bodies :: Array Body;
+        bodies :: BodyArray;
         bodies =
-            fromList
+            bodyArrayFromList
                 [
                     //the sun
                     Body (makeVector 0 0 0) (makeVector 0 0 0) solarMass,
@@ -355,8 +349,7 @@ public main !args =
         /** function to display energy in specified format*/
         showEnergy :: Double -> ();
         showEnergy !e =
-            printLn
-                stdout
+            printLine
                 (formatWithPattern
                     "{0,number,0.000000000}"
                     invariantLocale
@@ -374,3 +367,37 @@ public main !args =
         showEnergy (energy bodies)
     ;
 
+
+/** A {@link typeConstructor=Body@} array implemented as a Java array. */
+data foreign unsafe import jvm "java.lang.Object[]" BodyArray deriving Inputable, Outputable;
+
+/** Constructs a {@link BodyArray@} from a list. */
+bodyArrayFromList :: [Body] -> BodyArray;
+bodyArrayFromList !bodies =
+    jObjectToBodyArray $ Array.outputPrimitive $ Array.fromList bodies;
+
+instance Outputable Body where
+    output = outputBodyAsCalValue;
+    ;
+
+outputBodyAsCalValue :: Body -> JObject;
+outputBodyAsCalValue !body = output ((unsafeCoerce body) :: CalValue);
+
+instance Inputable Body where
+    input = inputBodyAsCalValue;
+    ;
+
+inputBodyAsCalValue :: JObject -> Body;
+inputBodyAsCalValue !object = unsafeCoerce ((input object) :: CalValue);
+
+foreign unsafe import jvm "cast" jObjectToBodyArray :: JObject -> BodyArray;
+
+/** @return the i{@sup th@} element in the array. */
+subscriptBodyArray :: BodyArray -> Int -> Body;
+subscriptBodyArray !bodies !i =
+    input (eager $ jSubscriptBodyArray bodies i);
+
+foreign unsafe import jvm "subscriptArray" jSubscriptBodyArray :: BodyArray -> Int -> JObject;
+
+/** @return the length of the array. */
+foreign unsafe import jvm "lengthArray" lengthBodyArray :: BodyArray -> Int;

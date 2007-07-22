@@ -6,7 +6,6 @@
 module Knucleotide;
 
 import Cal.Core.Prelude using
-    typeClass = Inputable, Outputable;
     typeConstructor = Boolean, Int, JObject, String;
     function =
         combineComparators, eager, fromInt, fst, induceComparator, input, not, 
@@ -23,10 +22,8 @@ import Cal.Core.String using
     ;
 
 import Cal.Collections.List using
-    function = dropWhile, foldLeftStrict, map, sortBy, tail, takeWhile;
+    function = foldLeftStrict, map, sortBy;
     ;
-
-import Cal.Collections.Map;
 
 import Cal.Utilities.MessageFormat using
     function = formatWithPattern;
@@ -36,19 +33,11 @@ import Cal.Utilities.Locale using
     function = invariantLocale;
     ;
 
+import Cal.IO.Console using
+    function = isNullString, makeBufferedReader, print, readLine, stdin;
+    typeConstructor = JBufferedReader;
+    ;
 
-data foreign unsafe import jvm "java.io.BufferedReader" private JBufferedReader;
-
-data foreign unsafe import jvm "java.io.InputStream" private JInputStream;
-
-data foreign unsafe import jvm "java.io.InputStreamReader"
-    private JInputStreamReader;
-
-data foreign unsafe import jvm "java.io.Reader" private JReader;
-
-data foreign unsafe import jvm "java.io.FileReader" private JFileReader;
-
-data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
 
 data foreign unsafe import jvm "java.lang.StringBuffer"
     private JStringBuffer deriving Show;
@@ -58,31 +47,10 @@ data foreign unsafe import jvm "java.util.Collection" private JCollection;
 foreign unsafe import jvm "constructor"
     private createStringBuffer :: JStringBuffer;
 
-foreign unsafe import jvm "constructor"
-    private createBufferedReader :: JReader -> JBufferedReader;
-
-foreign unsafe import jvm "constructor"
-    private createInputStreamReaderStream :: JInputStream -> JInputStreamReader;
-
 foreign unsafe import jvm "method append"
     private append :: JStringBuffer -> String -> JStringBuffer;
 
-foreign unsafe import jvm "method readLine"
-    private readLine :: JBufferedReader -> String;
-
-foreign unsafe import jvm "static field java.lang.System.out"
-    private stdout :: JPrintStream;
-
-foreign unsafe import jvm "static field java.lang.System.in"
-    private stdin :: JInputStream;
-
-foreign unsafe import jvm "isNull" private isNull :: String -> Boolean;
-
-foreign unsafe import jvm "method print"
-    private print :: JPrintStream -> String -> ();
-
-data foreign unsafe import jvm "int[]"
-    JIntArray deriving Inputable, Outputable, Show;
+data foreign unsafe import jvm "int[]" JIntArray;
 
 //Import Java integer arrays
 foreign unsafe import jvm "newArray" newArray :: Int -> JIntArray;
@@ -117,9 +85,6 @@ foreign unsafe import jvm "cast" stringToObject :: String -> JObject;
 foreign unsafe import jvm "cast" objectToJIntArray :: JObject -> JIntArray;
 
 foreign unsafe import jvm "cast" jIntArrayToJObject :: JIntArray -> JObject;
-
-foreign unsafe import jvm "cast"
-    jInputStreamReaderToJReader :: JInputStreamReader -> JReader;
 
 foreign unsafe import jvm "cast" jSetToJObject :: JSet -> JObject;
 
@@ -164,7 +129,7 @@ getValue !map !string =
             0
     ;
 
-/**convert a JhashMap to a list of key, value pairs.*/
+/** convert a JhashMap to a list of key, value pairs.*/
 hashMapToPairs :: JHashMap -> [(String, Int)];
 hashMapToPairs !jmap =
     let
@@ -174,7 +139,7 @@ hashMapToPairs !jmap =
         map (\!key -> (key, getValue jmap key)) keys
     ;
 
-/**compute the frequency table for a specified fragment length*/
+/** compute the frequency table for a specified fragment length*/
 calculateFrequencies :: String -> Int -> JHashMap;
 calculateFrequencies !sequence !fragmentLength =
     let
@@ -199,58 +164,55 @@ calculateFrequencies !sequence !fragmentLength =
         process 0 0
     ;
 
-//read the sequence from the input lines
-sequence :: [String] -> String;
-sequence !input =
+/**read dna seq from stdin*/
+read :: JBufferedReader -> String;
+read !reader =
     let
+        skipTill3 :: JBufferedReader -> ();
+        skipTill3 !reader =
+            let
+                line :: String;
+                line = eager $ readLine reader;
+            in
+                if not (startsWith ">THREE" line) then
+                    skipTill3 reader
+                else
+                    ()
+            ;
+
         stringBuffer :: JStringBuffer;
         stringBuffer = eager $ createStringBuffer;
 
-        addIfNotComment :: JStringBuffer -> String -> JStringBuffer;
-        addIfNotComment !stringBuffer !line =
-            if subscript line 0 != ';' then
-                append stringBuffer (toUpperCase line)
-                `seq`
-                stringBuffer
-            else
-                stringBuffer
+        readSeq :: JBufferedReader -> ();
+        readSeq !reader =
+            let
+                line :: String;
+                line = eager $ readLine reader;
+            in
+                if isNullString line then
+                    ()
+                else if subscript line 0 == '>' then
+                    ()
+                else if subscript line 0 != ';' then
+                    append stringBuffer (toUpperCase line)
+                    `seq`
+                    readSeq reader
+                else
+                    readSeq reader
             ;
-
-        isNotThree :: String -> Boolean;
-        isNotThree !line = not (startsWith ">THREE" line);
-
-        isNotStartOfSequence :: String -> Boolean;
-        isNotStartOfSequence !line = subscript line 0 != '>';
     in
-        show
-            (foldLeftStrict
-                addIfNotComment
-                stringBuffer
-                (takeWhile
-                    isNotStartOfSequence
-                    (tail (dropWhile isNotThree input))
-                )
-            )
-    ;
-
-//list of lines representing the input
-lines :: JBufferedReader -> [String];
-lines !bufferedReader =
-    let
-        line :: String;
-        line = eager $ readLine bufferedReader;
-    in
-        if isNull line then
-            []
-        else
-            line : lines bufferedReader
+        skipTill3 reader
+        `seq`
+        readSeq reader
+        `seq`
+        show stringBuffer
     ;
 
 showFreq :: [(String, Int)] -> Int -> String;
 showFreq !freqList !total =
     foldLeftStrict
         (
-            \str item ->
+            \!str !item ->
                 case item of
                 (name, freq)
                 ->
@@ -278,16 +240,10 @@ showCount !hashmap !nucleotide =
 main :: [String] -> ();
 public main !args =
     let
-        reader :: JBufferedReader;
-        reader =
-            createBufferedReader
-                (jInputStreamReaderToJReader
-                    (createInputStreamReaderStream stdin)
-                )
-            ;
-
         sq :: String;
-        sq = eager $ sequence (lines reader);
+        sq = eager $ read (makeBufferedReader stdin);
+
+        //sequence (readLines (makeBufferedReader stdin));
 
         //build freqnece map for length 1 nucledotides
         freq1 :: [(String, Int)];
@@ -305,7 +261,7 @@ public main !args =
         counts =
             foldLeftStrict
                 (
-                    \str item ->
+                    \!str !item ->
                         str
                         ++ showCount
                             (calculateFrequencies sq (length item))
@@ -322,10 +278,10 @@ public main !args =
             ;
     in
 
-        print stdout (showFreq freq1 seqLength)
+        print (showFreq freq1 seqLength)
         `seq`
-        print stdout (showFreq freq2 (seqLength - 1))
+        print (showFreq freq2 (seqLength - 1))
         `seq`
-        print stdout counts
+        print counts
     ;
 

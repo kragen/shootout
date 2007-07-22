@@ -21,7 +21,7 @@ cp $bname.cal cal/src/CAL/$uname.cal
 #create a workspace file for just this benchmark
 cat > "cal/src/Workspace Declarations/cal.$bname.cws" << END
 StandardVault $uname
-import StandardVault cal.platform.cws
+import StandardVault cal.libraries.cws
 END
 
 #compile the benchmark

@@ -6,11 +6,10 @@
 module Meteor;
 
 import Cal.Core.Prelude using
-    typeClass = Enum, Inputable, IntEnum, Outputable, Bounded;
+    typeClass = Enum, Inputable, IntEnum, Outputable;
     typeConstructor = Boolean, Int, Long, String;
     dataConstructor = False, True;
-    function =
-        eager, enumToInt, fromInt, iff, intToEnum, seq, stringToInt, maxBound;
+    function = eager, fromInt, iff, seq, stringToInt;
     ;
 import Cal.Core.Debug using
     typeClass = Show;
@@ -25,7 +24,9 @@ import Cal.Collections.List using
 import Cal.Collections.Array using
     typeConstructor = Array;
     ;
-import Cal.Utilities.MessageFormat;
+import Cal.IO.Console using
+    function = printLine;
+    ;
 
 
 data foreign unsafe import jvm "long[]"
@@ -40,14 +41,6 @@ foreign unsafe import jvm "subscriptArray"
 
 foreign unsafe import jvm "updateArray"
     longArray_update :: JLongArray -> Int -> Long -> Long;
-
-data foreign unsafe import jvm "java.io.PrintStream" private JPrintStream;
-
-foreign unsafe import jvm "static field java.lang.System.out"
-    private stdout :: JPrintStream;
-
-foreign unsafe import jvm "method println"
-    private printLn :: JPrintStream -> String -> ();
 
 /** build an array from a list*/
 jLongArrayfromList :: [Long] -> JLongArray;
@@ -76,7 +69,7 @@ data Direction =
     deriving Enum, IntEnum
     ;
 
-/** the puzzle peices*/
+/** the puzzle pieces*/
 pieces :: [[Direction]];
 pieces =
     [
@@ -117,7 +110,7 @@ rotatePiece !piece =
         map rotate piece
     ;
 
-/** flip a peice about it's vertical axis*/
+/** flip a piece about it's vertical axis*/
 flipPiece :: [Direction] -> [Direction];
 flipPiece !piece =
     let
@@ -164,7 +157,7 @@ adjacentSquares =
         jLongArrayfromList
             (List.mapIndexed
                 (
-                    \a i ->
+                    \!a !i ->
                         toBits
                         $ validCoords
                         $ List.tail
@@ -210,8 +203,8 @@ countBits !word =
 
 /** 
  * returns true if the board mask has an island of fewer than five positions -
- * used to prune positions tha have 'holes' that no peice could fit into
- * (as all peices are of size 5)
+ * used to prune positions tha have 'holes' that no piece could fit into
+ * (as all pieces are of size 5)
  */
 hasSmallIslands :: Long -> Boolean;
 hasSmallIslands !board =
@@ -328,7 +321,7 @@ validCoord !coord =
 validCoords :: [(Int, Int)] -> [(Int, Int)];
 validCoords !coords = List.filter validCoord coords;
 
-/** convert a peice to a list of coords*/
+/** convert a piece to a list of coords*/
 toCoords :: [Direction] -> Int -> Int -> [(Int, Int)];
 toCoords !piece !x !y =
     case piece of
@@ -499,7 +492,7 @@ showSolution !solution =
 
 /** 
  * Creates an array in which for each square on the board
- * there is an array of bit masks for the peices that occupy that square as their first square
+ * there is an array of bit masks for the pieces that occupy that square as their first square
  */
 allSortedMasks :: [[Direction]] -> Array JLongArray;
 allSortedMasks !pieces =
@@ -519,8 +512,8 @@ allSortedMasks !pieces =
             else
                 loop
                     (shiftRUnsigned bit 1)
-                    (List.dropWhile (\a -> a > bit) masks)
-                    (res ++ [List.takeWhile (\a -> a > bit) masks])
+                    (List.dropWhile (\!a -> a > bit) masks)
+                    (res ++ [List.takeWhile (\!a -> a > bit) masks])
             ;
     in
 
@@ -558,22 +551,21 @@ meteor !n =
             maxSol
             minSol
         `seq`
-        printLn
-            stdout
+        printLine
             (
                 show (longArray_subscript workingSolution 0)
                 ++ " solutions found"
             )
         `seq`
-        printLn stdout ""
+        printLine ""
         `seq`
-        printLn stdout (showSolution minSol)
+        printLine (showSolution minSol)
         `seq`
-        printLn stdout ""
+        printLine ""
         `seq`
-        printLn stdout (showSolution maxSol)
+        printLine (showSolution maxSol)
         `seq`
-        printLn stdout ""
+        printLine ""
     ;
 
 solve ::
@@ -586,27 +578,27 @@ solve !i !board !solution !reverseSolution !allMasks !masks !numPieces
         ()
     else
         let
-            peiceMask :: Long;
-            peiceMask = eager $ longArray_subscript masks i;
+            pieceMask :: Long;
+            pieceMask = eager $ longArray_subscript masks i;
 
-            peiceId :: Int;
-            peiceId = eager $ Prelude.fromLong (bitwiseAnd peiceMask 15);
+            pieceId :: Int;
+            pieceId = eager $ Prelude.fromLong (bitwiseAnd pieceMask 15);
         in
 
             //if the piece is not already in use and it fits
             if
-                longArray_subscript solution peiceId == 0
-                && bitwiseAnd board peiceMask < 16
+                longArray_subscript solution pieceId == 0
+                && bitwiseAnd board pieceMask < 16
             then
                 let
                     newBoard :: Long;
-                    newBoard = eager $ bitwiseOr board peiceMask;
+                    newBoard = eager $ bitwiseOr board pieceMask;
 
                     nextSquare :: Int;
                     nextSquare =
                         eager $ findNextEmptySquare newBoard boardSquare;
                 in
-                    longArray_update solution peiceId peiceMask
+                    longArray_update solution pieceId pieceMask
                     `seq`
                     (
                         if numPieces == 9 then
@@ -625,14 +617,14 @@ solve !i !board !solution !reverseSolution !allMasks !masks !numPieces
                             `seq`
                             updateMinSolution minSolution reverseSolution
                             `seq`
-                            longArray_update solution peiceId 0
+                            longArray_update solution pieceId 0
                             `seq`
                             ()
                         else if
                             nextSquare > 25
                             && longArray_subscript solution 1 == 0
                         then
-                            longArray_update solution peiceId 0
+                            longArray_update solution pieceId 0
                             `seq`
                             solve
                                 (i + 1)
@@ -658,7 +650,7 @@ solve !i !board !solution !reverseSolution !allMasks !masks !numPieces
                                 maxSolution
                                 minSolution
                             `seq`
-                            longArray_update solution peiceId 0
+                            longArray_update solution pieceId 0
                             `seq`
                             solve
                                 (i + 1)
@@ -694,7 +686,7 @@ getAllMasks :: [Direction] -> Int -> [Long];
 getAllMasks !piece !pieceNo =
     let
 
-        //this is used so we omit masks were peice 1 is in the bottom half of the board
+        //this is used so we omit masks were piece 1 is in the bottom half of the board
         //these positions will be covered by symmetry
         heightp :: Int;
         heightp =
