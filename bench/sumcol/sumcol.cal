@@ -1,149 +1,34 @@
 /** 
  * The Computer Language Benchmarks Game 
  * Based on the CAL Open Quark version
- * Contributed by Joseph Wong.
+ * Contributed by Magnus Byne.
  */
 module Sumcol;
 
 import Cal.Core.Prelude using
-    typeConstructor = Byte, Int, String;
-    function = eager, intToString, seq;
+    typeConstructor = Int, String;
+    function = eager, intToString, stringToInt;
     ;
 
 import Cal.IO.Console using
-    function = printLine;
+    typeConstructor = JBufferedReader;
+    function = isNullString, makeBufferedReader, printLine, readLine, stdin;
     ;
-
-import Cal.Core.Char;
 
 main :: [String] -> ();
 public main args =
     let
-        byteString :: ByteString;
-        byteString = eager $ makeByteString 128; // max line length
-        
-        readBufferLength :: Int;
-        readBufferLength = 1024;
-        
-        readBuffer :: ByteString;
-        readBuffer = eager $ makeByteString readBufferLength;
-        
-        inputStream :: JBufferedInputStream;
-        inputStream = eager $ makeBufferedInputStream stdin;
-        
-        loop :: Int -> Int -> Int;
-        loop !sum !pos =
+        loop :: JBufferedReader -> Int -> Int;
+        loop !input !sum =
             let
-                newPos :: Int;
-                newPos = eager $ readLineIntoByteString inputStream readBuffer readBufferLength pos byteString;
+                line = eager $ readLine input;
             in
-                newPos
-                `seq`
-                (
-                    if (eager $ subscriptByteString byteString 0) == 0 then
-                        sum
-                    else
-                        loop (sum + lineToInt byteString) newPos
-                )
+                if isNullString line then
+                    sum
+                else
+                    loop input (sum + stringToInt line)
             ;
     in
-        fillBuffer inputStream readBuffer 0 readBufferLength
-        `seq`
-        printLine (intToString (loop 0 0))
+        printLine (intToString (loop (makeBufferedReader stdin) 0))
     ;
 
-lineToInt :: ByteString -> Int;
-lineToInt !line =
-    let
-        addLoop :: Int -> Int -> Int;
-        addLoop !i !sum =
-            let
-                c :: Byte;
-                c = eager $ subscriptByteString line i;
-            in
-                if c != 0 then
-                    addLoop (i+1) (sum*10 + (Prelude.toInt c) - (Char.toInt '0'))
-                else
-                    sum;
-    in
-        if (Prelude.toInt (eager $ subscriptByteString line 0)) == (Char.toInt '-') then
-            -(addLoop 1 0)
-        else
-            addLoop 0 0
-    ;
-
-/** Custom string implementation based on 8-bit char buffer. */
-data foreign unsafe import jvm "byte[]" ByteString;
-
-foreign unsafe import jvm "updateArray"
-    setCharAtByteString :: ByteString -> Int -> Byte -> Byte;
-
-foreign unsafe import jvm "subscriptArray"
-    subscriptByteString :: ByteString -> Int -> Byte;
-
-foreign unsafe import jvm "newArray"
-    makeByteString :: Int -> ByteString;
-
-fillBuffer :: JBufferedInputStream -> ByteString -> Int -> Int -> ();
-fillBuffer !stream !buf !offset !len =
-    let
-        nBytesRead :: Int;
-        nBytesRead = eager $ readIntoArray stream buf offset len;
-    in
-        if nBytesRead == len then
-            ()
-        else if nBytesRead == -1 then
-            setCharAtByteString buf offset (-1)
-            `seq`
-            ()
-        else
-            fillBuffer stream buf (offset+nBytesRead) (len-nBytesRead)
-    ;
-
-readLineIntoByteString ::
-    JBufferedInputStream -> ByteString -> Int -> Int -> ByteString -> Int;
-readLineIntoByteString !stream !globalBuffer !bufferLength !posInBuffer !byteString =
-    let
-        loop :: Int -> Int -> Int;
-        loop !i !bufPos =
-            if bufPos < bufferLength then
-                let
-                    c :: Byte;
-                    c = eager $ subscriptByteString globalBuffer bufPos;
-                in
-                    case Prelude.toInt c of
-                    13 -> // \r - part of \r\n... drop it
-                        loop (i+1) (bufPos+1);
-                    (-1|10) -> // \n or EOF
-                        setCharAtByteString byteString i 0 // null-terminated
-                        `seq`
-                        (bufPos+1);
-                    _ ->
-                        setCharAtByteString byteString i c
-                        `seq`
-                        loop (i+1) (bufPos+1);
-            else
-                fillBuffer stream globalBuffer 0 bufferLength
-                `seq`
-                loop i 0;
-    in
-        loop 0 posInBuffer
-    ;
-
-makeBufferedInputStream :: a -> JBufferedInputStream;
-makeBufferedInputStream !input =
-    eager $ createBufferedInputStream stdin 1024
-    ;
-
-data foreign unsafe import jvm "java.io.BufferedInputStream" JBufferedInputStream;
-
-foreign unsafe import jvm "constructor"
-    private createBufferedInputStream :: JInputStream -> Int -> JBufferedInputStream;
-
-foreign unsafe import jvm "method read"
-    public readIntoArray :: JBufferedInputStream -> ByteString -> Int -> Int -> Int;
-
-foreign unsafe import jvm "static field java.lang.System.in"
-    stdin :: JInputStream;
-
-data foreign unsafe import jvm "java.io.InputStream" JInputStream;
