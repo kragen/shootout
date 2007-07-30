@@ -1,0 +1,178 @@
+/* The Computer Language Benchmarks Game
+ http://shootout.alioth.debian.org/
+
+ contributed by Patrick Perry
+ 
+ ported from the Java 6 -server #3 program
+ which was contributed by Luzius Meisser
+ based on a contribution by Keenan Tims
+ that was modified by Michael Barker
+ */
+
+using System;
+using System.Threading;
+
+
+public class Chameneos 
+{
+    public enum Color { Red, Blue, Yellow, Faded }
+
+    public static Color Complement (Color color, Color other) 
+    {
+        if (color == other) {
+            return color;
+        } else if (color == Color.Blue) {
+            return color == Color.Red ? Color.Yellow : Color.Red;
+        } else if (color == Color.Yellow) {
+            return color == Color.Blue ? Color.Red : Color.Blue;
+        } else {
+            return color == Color.Yellow ? Color.Blue : Color.Yellow;
+        }
+    }
+
+    public class Future<T>
+    {
+        private volatile T t;
+        private volatile bool hasValue;
+        
+        public T Value {
+            get {
+                while (!hasValue) {
+                    Thread.Sleep(0);
+                }
+            
+                return t;
+            }
+        
+            set {
+                t = value;
+                hasValue = true;
+            }
+        }
+    }
+
+    public class InterruptedException : Exception { }
+
+    public class Creature 
+    {
+        private MeetingPlace mp;
+        private Color color;
+        private int met;
+
+        public Creature (Color initialColor, MeetingPlace mp) 
+        {
+            this.color = initialColor;
+            this.mp = mp;
+            this.met = 0;
+        }
+
+        public void Be () 
+        {
+            try {
+                while (true) {
+                    color = mp.Meet(color);
+                    met++;
+                }
+            } catch (InterruptedException) {
+                color = Color.Faded;
+            }
+        }
+   
+        public int CreaturesMet 
+        {
+            get { return met; }
+        }
+
+        public Color Color 
+        {
+            get { return color; }
+        }
+    }
+
+    public class MeetingPlace 
+    {
+        private int meetingsLeft;
+        private Color first;
+        private bool hasFirst = false;
+        private Future<Color> current;
+
+        public MeetingPlace (int meetings) 
+        {
+            this.meetingsLeft = meetings;
+        }
+
+        public Color Meet (Color myColor)
+        {
+            Future<Color> newColor;
+
+            lock (this) {
+                if (meetingsLeft == 0) {
+                    throw new InterruptedException();
+                } else {
+                    if (!hasFirst) {
+                        first = myColor;
+                        hasFirst = true;
+                        current = new Future<Color>();
+                    } else {
+                        current.Value = Chameneos.Complement(myColor, first);
+                        hasFirst = false;
+                        meetingsLeft--;
+                    }
+                    newColor = current;
+                }
+            }
+        
+            return newColor.Value;
+        }
+    }
+    
+    public static readonly Color[] Colors = { 
+        Color.Blue, Color.Red, Color.Yellow, Color.Blue };
+
+    private MeetingPlace mp;
+    private Creature[] creatures;
+    private Thread[] threads;
+
+    public Chameneos (int meetings) 
+    {
+        this.mp = new MeetingPlace(meetings);
+        this.creatures = new Creature[Colors.Length];
+        this.threads = new Thread[Colors.Length];
+    }
+
+    public void Run ()
+    {
+        for (int i = 0; i < Colors.Length; i++) {
+            creatures[i] = new Creature(Colors[i], mp);
+            threads[i] = new Thread(creatures[i].Be);
+            threads[i].Start();
+        }
+
+        for (int i = 0; i < Colors.Length; i++) {
+            threads[i].Join();
+        }
+    }
+
+    public void PrintResult () 
+    {
+        int meetings = 0;
+        
+        for (int i = 0; i < Colors.Length; i++) {
+            meetings += creatures[i].CreaturesMet;
+        }
+        
+        Console.WriteLine(meetings);
+    }
+
+    public static void Main (String[] args)
+    {
+        if (args.Length < 1) {
+            throw new ArgumentException();
+        } else {
+            Chameneos cham = new Chameneos(Int32.Parse(args[0]));
+            cham.Run();
+            cham.PrintResult();
+        }
+    }
+}
+
