@@ -1,59 +1,104 @@
-<span class="com">{-# OPTIONS -optc-O #-}</span>
-<span class="slc">--</span>
-<span class="slc">-- The Great Computer Language Shootout</span>
-<span class="slc">-- http:--shootout.alioth.debian.org/</span>
-<span class="slc">--</span>
-<span class="slc">-- Contributed by Don Stewart</span>
-<span class="slc">--</span>
+<span class="hl com">{-# OPTIONS -fexcess-precision #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Modified by Ryan Trinkle: 1) change from divInt# to uncheckedIShiftRA#</span>
+<span class="hl slc">--                           2) changed -optc-O to -optc-O3</span>
+<span class="hl slc">--                           3) added -optc-ffast-math</span>
+<span class="hl slc">-- Translation from Clean by Don Stewart</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Should be compiled with:</span>
+<span class="hl slc">--      -O -fglasgow-exts -fbang-patterns</span>
+<span class="hl slc">--      -optc-O3 -optc-march=pentium4 -optc-mfpmath=sse -optc-msse2 -optc-ffast-math</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Note: The following flags appear to INCREASE running time:</span>
+<span class="hl slc">--      -O2 -optc-funroll-loops</span>
 
-<span class="kwa">import</span> Monad
-<span class="kwa">import</span> System
-<span class="kwa">import</span> Text.Printf
-<span class="kwa">import</span> Data.Array.IO
-<span class="kwa">import</span> Data.Array.Base
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> Foreign.Marshal.Array
+<span class="hl kwa">import</span> Foreign
+<span class="hl kwa">import</span> Text.Printf
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> Data.ByteString.Base
 
-main <span class="sym">=</span> getArgs <span class="sym">&gt;&gt;=</span> approximate . read . head <span class="sym">&gt;&gt;=</span> printf <span class="str">&quot;%.9f\n&quot;</span>
+<span class="hl kwa">import</span> GHC.Base
+<span class="hl kwa">import</span> GHC.<span class="hl kwb">Float</span>
+<span class="hl kwa">import</span> GHC.<span class="hl kwb">Int</span>
 
-approximate n <span class="sym">=</span> <span class="kwa">do</span>
-    u <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">1</span> <span class="sym">::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Double</span><span class="sym">)</span>
-    v <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">0</span> <span class="sym">::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Double</span><span class="sym">)</span>
-    sequence_ $ replicate <span class="num">10</span> $ multiplyAtAv n u v <span class="sym">&gt;&gt;</span> multiplyAtAv n v u
+<span class="hl kwa">type</span> Reals <span class="hl sym">=</span> Ptr <span class="hl kwb">Double</span>
 
-    <span class="kwa">let</span> loop vbv vv i <span class="sym">|</span> vbv `seq` vv `seq` i `seq` <span class="kwa">False</span> <span class="sym">=</span> undefined
-        loop vbv vv i <span class="sym">|</span> i <span class="sym">&gt;=</span> n    <span class="sym">=</span> return <span class="sym">(</span>vbv<span class="sym">,</span>vv<span class="sym">)</span>
-                      <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> ui <span class="sym">&lt;-</span> unsafeRead u i
-                                       vi <span class="sym">&lt;-</span> unsafeRead v i
-                                       loop <span class="sym">(</span>vbv <span class="sym">+</span> ui <span class="sym">*</span> vi<span class="sym">) (</span>vv <span class="sym">+</span> vi <span class="sym">*</span> vi<span class="sym">) (</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
-    <span class="sym">(</span>vbv<span class="sym">,</span>vv<span class="sym">) &lt;-</span> loop <span class="num">0 0 0</span>
-    return $<span class="sym">!</span> sqrt <span class="sym">(</span>vbv<span class="sym">/</span>vv<span class="sym">)</span>
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
 
-<span class="slc">-- return element i,j of infinite matrix A</span>
-a i j <span class="sym">=</span> <span class="num">1</span> <span class="sym">/</span> fromIntegral <span class="sym">(</span>x<span class="sym">*(</span>x<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> `div` <span class="num">2</span> <span class="sym">+</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span> <span class="kwa">where</span> x <span class="sym">=</span> i<span class="sym">+</span>j
+    u <span class="hl sym">&lt;-</span> mallocArray n <span class="hl sym">::</span> IO Reals
+    forM_ <span class="hl sym">[</span><span class="hl num">0</span>..n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \i <span class="hl sym">-&gt;</span> pokeElemOff u i <span class="hl num">1</span>
+    v <span class="hl sym">&lt;-</span> mallocArray n <span class="hl sym">::</span> IO Reals
+    forM_ <span class="hl sym">[</span><span class="hl num">0</span>..n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \i <span class="hl sym">-&gt;</span> pokeElemOff v i <span class="hl num">0</span>
 
-<span class="slc">-- multiply vector v by matrix A */</span>
-multiplyAv n v av <span class="sym">|</span> n `seq` v `seq` av `seq` <span class="kwa">False</span> <span class="sym">=</span> undefined
-multiplyAv n v av <span class="sym">=</span> loop <span class="num">0</span>
-    <span class="kwa">where</span> loop i  <span class="sym">=</span> when <span class="sym">(</span>i <span class="sym">&lt;</span> n<span class="sym">)</span> $ <span class="kwa">do</span> avi <span class="sym">&lt;-</span> loop' i <span class="num">0 0</span>
-                                      unsafeWrite av i avi <span class="sym">&gt;&gt;</span> loop <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+    powerMethod <span class="hl num">10</span> n u v
+    printf <span class="hl str">&quot;%.9f\n&quot;</span> <span class="hl sym">(</span>eigenvalue n u v <span class="hl num">0 0 0</span><span class="hl sym">)</span>
 
-          loop' i j av <span class="sym">|</span> i `seq` j `seq` av `seq` <span class="kwa">False</span> <span class="sym">=</span> undefined
-          loop' i j av <span class="sym">|</span> j <span class="sym">&gt;=</span> n    <span class="sym">=</span> return av
-                       <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> vj  <span class="sym">&lt;-</span> unsafeRead v j
-                                        loop' i <span class="sym">(</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>av <span class="sym">+</span> a i j <span class="sym">*</span> vj<span class="sym">)</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
 
-<span class="slc">-- multiply vector v by matrix A transposed</span>
-multiplyAtv n v atv <span class="sym">|</span> n `seq` v `seq` atv `seq` <span class="kwa">False</span> <span class="sym">=</span> undefined
-multiplyAtv n v atv <span class="sym">=</span> loop <span class="num">0</span>
-    <span class="kwa">where</span> loop i <span class="sym">=</span> when <span class="sym">(</span>i <span class="sym">&lt;</span> n<span class="sym">)</span> $ <span class="kwa">do</span> atvi <span class="sym">&lt;-</span> loop' i <span class="num">0 0</span>
-                                     unsafeWrite atv i atvi <span class="sym">&gt;&gt;</span> loop <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+eigenvalue <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span>
+eigenvalue <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>v <span class="hl sym">!</span>i <span class="hl sym">!</span>vBv <span class="hl sym">!</span>vv
+    <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> n     <span class="hl sym">=</span> eigenvalue n u v <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>vBv <span class="hl sym">+</span> ui <span class="hl sym">*</span> vi<span class="hl sym">) (</span>vv <span class="hl sym">+</span> vi <span class="hl sym">*</span> vi<span class="hl sym">)</span>
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> sqrt $<span class="hl sym">!</span> vBv <span class="hl sym">/</span> vv
+    <span class="hl kwa">where</span>
+       ui <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>peekElemOff u i<span class="hl sym">)</span>
+       vi <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>peekElemOff v i<span class="hl sym">)</span>
 
-          loop' i j atvi <span class="sym">|</span> i `seq` j `seq` atvi `seq` <span class="kwa">False</span> <span class="sym">=</span> undefined
-          loop' i j atvi <span class="sym">|</span> j <span class="sym">&gt;=</span> n    <span class="sym">=</span> return atvi
-                         <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span> vj <span class="sym">&lt;-</span> unsafeRead v j
-                                          loop' i <span class="sym">(</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>atvi <span class="sym">+</span> a j i <span class="sym">*</span> vj<span class="sym">)</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
 
-<span class="slc">-- multiply vector v by matrix A and then by matrix A transposed */</span>
-multiplyAtAv n v atav <span class="sym">|</span> n `seq` v `seq` atav `seq` <span class="kwa">False</span> <span class="sym">=</span> undefined
-multiplyAtAv n v atav <span class="sym">=</span> <span class="kwa">do</span> u  <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> <span class="num">0</span> <span class="sym">::</span> IO <span class="sym">(</span>IOUArray <span class="kwb">Int Double</span><span class="sym">)</span>
-                           multiplyAv n v u <span class="sym">&gt;&gt;</span> multiplyAtv n u atav
+powerMethod <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+powerMethod <span class="hl sym">!</span>i <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>v <span class="hl sym">=</span> allocaArray n $ \t <span class="hl sym">-&gt;</span>
+    replicateM_ i $ timesAtAv t n u v <span class="hl sym">&gt;&gt;</span> timesAtAv t n v u
 
+<span class="hl slc">-- multiply vector v by matrix A and then by matrix A transposed</span>
+timesAtAv <span class="hl sym">::</span> Reals <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+timesAtAv <span class="hl sym">!</span>t <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>atau <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    timesAv  n u t
+    timesAtv n t atau
+<span class="hl com">{-# INLINE timesAtAv #-}</span>
+
+timesAv <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+timesAv <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>au <span class="hl sym">=</span> go <span class="hl num">0</span>
+  <span class="hl kwa">where</span>
+    go <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+    go <span class="hl sym">!</span>i <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> n<span class="hl sym">)</span> $ <span class="hl kwa">do</span>
+        pokeElemOff au i <span class="hl sym">(</span>avsum i <span class="hl num">0 0</span><span class="hl sym">)</span>
+        go <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+
+    avsum <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span>
+    avsum <span class="hl sym">!</span>i <span class="hl sym">!</span>j <span class="hl sym">!</span>acc
+        <span class="hl sym">|</span> j <span class="hl sym">&lt;</span> n <span class="hl sym">=</span> avsum i <span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>acc <span class="hl sym">+ ((</span>aij i j<span class="hl sym">) *</span> uj<span class="hl sym">))</span>
+        <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> acc
+        <span class="hl kwa">where</span> uj <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>peekElemOff u j<span class="hl sym">)</span>
+<span class="hl com">{-# INLINE timesAv #-}</span>
+
+timesAtv <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+timesAtv <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>a <span class="hl sym">=</span> go <span class="hl num">0</span>
+  <span class="hl kwa">where</span>
+    go <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+    go <span class="hl sym">!</span>i <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> n<span class="hl sym">)</span> $ <span class="hl kwa">do</span>
+        pokeElemOff a i <span class="hl sym">(</span>atvsum i <span class="hl num">0 0</span><span class="hl sym">)</span>
+        go <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+
+    atvsum <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span>
+    atvsum <span class="hl sym">!</span>i <span class="hl sym">!</span>j <span class="hl sym">!</span>acc
+        <span class="hl sym">|</span> j <span class="hl sym">&lt;</span> n     <span class="hl sym">=</span> atvsum i <span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>acc <span class="hl sym">+ ((</span>aij j i<span class="hl sym">) *</span> uj<span class="hl sym">))</span>
+        <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> acc
+        <span class="hl kwa">where</span> uj <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>peekElemOff u j<span class="hl sym">)</span>
+<span class="hl com">{-# INLINE timesAtv #-}</span>
+
+<span class="hl slc">--</span>
+<span class="hl slc">-- manually unbox the inner loop:</span>
+<span class="hl slc">-- aij i j = 1 / fromIntegral ((i+j) * (i+j+1) `div` 2 + i + 1)</span>
+<span class="hl slc">--</span>
+aij <span class="hl sym">(</span>I# i<span class="hl sym">) (</span>I# j<span class="hl sym">) =</span> D# <span class="hl sym">(</span>
+    <span class="hl kwa">case</span> i <span class="hl sym">+</span># j <span class="hl kwa">of</span>
+        n <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> n <span class="hl sym">*</span># <span class="hl sym">(</span>n<span class="hl sym">+</span>#<span class="hl num">1</span>#<span class="hl sym">)</span> <span class="hl kwa">of</span>
+                t <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> t `uncheckedIShiftRA#` <span class="hl num">1</span># <span class="hl kwa">of</span>
+                        u <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> u <span class="hl sym">+</span># <span class="hl sym">(</span>i <span class="hl sym">+</span># <span class="hl num">1</span>#<span class="hl sym">)</span> <span class="hl kwa">of</span>
+                                r <span class="hl sym">-&gt;</span> <span class="hl num">1.0</span>## <span class="hl sym">/</span>## <span class="hl sym">(</span>int2Double# r<span class="hl sym">))</span>
