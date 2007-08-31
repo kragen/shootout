@@ -1,0 +1,429 @@
+-------------------------------------------------------------------------------
+--  The Computer Language Benchmarks Game 
+--  http://shootout.alioth.debian.org/
+--
+--  Contributed by Martin Krischik
+-------------------------------------------------------------------------------
+
+pragma Ada_2005;
+
+--  Standart set of performance improving pragmas as suggested by the GNAT users manual.
+pragma Restrictions (Max_Asynchronous_Select_Nesting => 0);
+pragma Restrictions (No_Abort_Statements);
+
+with Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
+with Ada.Containers.Generic_Constrained_Array_Sort;
+with Ada.Containers.Hashed_Maps;
+with Ada.Float_Text_IO;
+with Ada.IO_Exceptions;
+with Ada.Integer_Text_IO;
+with Ada.Strings.Bounded;
+with Ada.Text_IO;
+
+procedure KNucleotide_3 is
+   --  Appox. gain 0.3s for N=250.000 - that realy proves that runtime checks are bad for you
+   --  ;-).
+   pragma Suppress (All_Checks);
+
+   subtype Frequencies is Natural range 1 .. 18;
+
+   package Fragments is new Ada.Strings.Bounded.Generic_Bounded_Length (Frequencies'Last);
+
+   use type Fragments.Bounded_String;
+
+   subtype Fragment is Fragments.Bounded_String;
+
+   package Reader is
+      ----------------------------------------------------------------------------
+      --
+      --  Read data from Standart_Input and return the section THREE as String
+      --
+      function Read return String;
+      pragma Inline (Read);
+   end Reader;
+
+   ------------------------------------------------------------------------
+   --
+   --  The Calculator package calculates the nucleotide frequencies and keeps the result inside
+   --  a hash table as requested by the shootout rules.
+   --
+   package Calculator is
+      ---------------------------------------------------------------------
+      --
+      --  Elements used to store inside hash table
+      --
+      type Element_Type is private;
+      type Element_Array is array (Natural range <>) of Element_Type;
+
+      ---------------------------------------------------------------------
+      --
+      --  Calculate the calculates the nucleotide frequencies
+      --
+      procedure Calculate_Frequencies (Length : in Frequencies);
+
+      function Hash (Key : in Fragment) return Ada.Containers.Hash_Type;
+
+      ---------------------------------------------------------------------
+      --
+      --  Calculate the calculates the nucleotide frequencies
+      --
+      function Get (Nucleotide_Fragment : in Fragment) return Natural;
+
+      ---------------------------------------------------------------------
+      --
+      --  Get count for element
+      --
+      function Key (Element : in Element_Type) return Fragment;
+
+      ---------------------------------------------------------------------
+      --
+      --  Get count for element
+      --
+      function Count (Element : in Element_Type) return Natural;
+      ---------------------------------------------------------------------
+      --
+      --  Get total count over all elements - as well as the count of elements
+      --
+      procedure Get_Total (Total : out Natural; Count : out Natural);
+      function Get_Array (Count : in Natural) return Element_Array;
+      function ">" (Left : in Element_Type; Right : in Element_Type) return Boolean;
+
+      pragma Inline (">");
+      pragma Inline (Calculate_Frequencies);
+      pragma Inline (Count);
+      pragma Inline (Get);
+      pragma Inline (Get_Total);
+      pragma Inline (Hash);
+      pragma Inline (Key);
+   private
+      ---------------------------------------------------------------------
+      --
+      --  Elements used to store inside hash table.
+      --
+      type Element_Type is record
+         Count : Natural  := 0;
+         Key   : Fragment := Fragments.Null_Bounded_String;
+      end record;
+   end Calculator;
+
+   ----------------------------------------------------------------------------
+   --
+   --  Calculate and write data - either a percentage for all fragments found or - when
+   --  Nucleotide_Fragment is given - the count for that fragment.
+   --
+   procedure Write (Nucleotide_Length : in Frequencies);
+   procedure Write (Nucleotide_Fragment : in Fragment);
+
+   ----------------------------------------------------------------------------
+   --
+   --  List of fragments to be analyzed for this test
+   --
+   Fragment_3  : constant Fragment := Fragments.To_Bounded_String ("GGT");
+   Fragment_4  : constant Fragment := Fragments.To_Bounded_String ("GGTA");
+   Fragment_6  : constant Fragment := Fragments.To_Bounded_String ("GGTATT");
+   Fragment_12 : constant Fragment := Fragments.To_Bounded_String ("GGTATTTTAATT");
+   Fragment_18 : constant Fragment := Fragments.To_Bounded_String ("GGTATTTTAATTTATAGT");
+
+   package body Reader is
+      -------------------------------------------------------------------------
+      --
+      --  Skip data on Standart_Input until ">THREE" is found
+      --
+      procedure Skip_To_Section;
+
+      -------------------------------------------------------------------------
+      --
+      --  Read next data section - until EOF oder a line beginning with > is found
+      --
+      function Read_Section return String;
+
+      pragma Inline (Read_Section);
+      pragma Inline (Skip_To_Section);
+
+      Section_Marker : constant Character := '>';
+      Section        : constant String    := Section_Marker & "THREE";
+
+      function Read return String is
+      begin
+         Skip_To_Section;
+         return Ada.Characters.Handling.To_Upper (Read_Section);
+      end Read;
+
+      -------------------------------------------------------------------------
+      --
+      --  Read next data section - until EOF oder a line beginning with > is found
+      --
+      function Read_Section return String is
+         Buffer     : String (1 .. 10240);
+         Read_First : Natural := Buffer'First;
+         Read_Last  : Natural := Buffer'First;
+      begin
+         loop
+            Ada.Text_IO.Get_Line
+              (Item => Buffer (Read_First .. Buffer'Last),
+               Last => Read_Last);
+            exit when Buffer (Read_First) = Section_Marker;
+            if Read_Last = Buffer'Last then
+               return Buffer & Read_Section;
+            end if;
+            Read_First := Read_Last + 1;
+         end loop;
+         return Buffer (1 .. Read_Last);
+      exception
+         when Ada.IO_Exceptions.End_Error =>
+            return Buffer (1 .. Read_Last);
+      end Read_Section;
+
+      -------------------------------------------------------------------------
+      --
+      --  Skip data on Standart_Input until ">THREE" is found
+      --
+      procedure Skip_To_Section is
+         --
+         --  The line lenght of the test data is 60 character. Note: Get_Line would survive
+         --  longer lines as well - they would just be read in two parts.
+         --
+         Line      : String (1 .. 60);
+         Read_Last : Natural;
+      begin
+         loop
+            Ada.Text_IO.Get_Line (Item => Line, Last => Read_Last);
+            exit when Line (1 .. 6) = Section;
+         end loop;
+      end Skip_To_Section;
+   end Reader;
+
+   ---------------------------------------------------------------------------
+   --
+   --  Data read as single String
+   --
+   Buffer : constant String := Reader.Read;
+
+   ------------------------------------------------------------------------
+   --
+   --  The Calculator package calculates the nucleotide frequencies and keeps the result inside
+   --  a hash table as requested by the shootout rules.
+   --
+   package body Calculator is
+
+      procedure Increment (Key : in Fragment; Element : in out Element_Type);
+
+      package Element_Maps is new Ada.Containers.Hashed_Maps (
+         Key_Type => Fragment,
+         Element_Type => Element_Type,
+         Hash => Hash,
+         Equivalent_Keys => "=",
+         "=" => Calculator. "=");
+
+      Table : Element_Maps.Map;
+
+      function ">" (Left : in Element_Type; Right : in Element_Type) return Boolean is
+      begin
+         return Left.Count > Right.Count;
+      end ">";
+
+      ---------------------------------------------------------------------
+      --
+      --  Calculate the calculates the nucleotide frequencies
+      --
+      procedure Calculate_Frequencies (Length : Frequencies) is
+
+      begin
+         Table.Clear;
+         Table.Reserve_Capacity (Ada.Containers.Count_Type (4 ** Length));
+         for I in 1 .. Buffer'Last - Integer (Length) + 1 loop
+            declare
+               use type Element_Maps.Cursor;
+
+               Key     : constant Fragment            :=
+                  Fragments.To_Bounded_String (Buffer (I .. I + Integer (Length) - 1));
+               Element : constant Element_Maps.Cursor := Table.Find (Key);
+            begin
+               if Element /= Element_Maps.No_Element then
+                  Table.Update_Element (Position => Element, Process => Increment'Access);
+               else
+                  Table.Insert
+                    (Key      => Key,
+                     New_Item => Element_Type'(Count => 1, Key => Key));
+               end if;
+            end;
+         end loop;
+         return;
+      end Calculate_Frequencies;
+
+      ---------------------------------------------------------------------
+      --
+      --  Get count for element
+      --
+      function Count (Element : in Element_Type) return Natural is
+      begin
+         return Element.Count;
+      end Count;
+
+      ---------------------------------------------------------------------
+      --
+      --  Calculate the calculates the nucleotide frequencies
+      --
+      function Get (Nucleotide_Fragment : in Fragment) return Natural is
+         use type Element_Maps.Cursor;
+         The_Element : constant Element_Maps.Cursor := Table.Find (Nucleotide_Fragment);
+      begin
+         if The_Element /= Element_Maps.No_Element then
+            return Element_Maps.Element (The_Element).Count;
+         else
+            return 0;
+         end if;
+      end Get;
+
+      function Get_Array (Count : in Natural) return Element_Array is
+         subtype Retval_Index is Natural range 1 .. Count;
+         subtype Retval_Type is Element_Array (Retval_Index);
+         Retval : Retval_Type;
+
+         use type Calculator.Element_Type;
+
+         procedure Sort is new Ada.Containers.Generic_Constrained_Array_Sort (
+            Index_Type => Retval_Index,
+            Element_Type => Element_Type,
+            Array_Type => Retval_Type,
+            "<" => ">");
+
+         The_Element : Element_Maps.Cursor := Table.First;
+      begin
+         for I in Retval'Range loop
+            Retval (I) := Element_Maps.Element (The_Element);
+            Element_Maps.Next (The_Element);
+         end loop;
+
+         Sort (Retval);
+
+         return Retval;
+      end Get_Array;
+
+      ---------------------------------------------------------------------
+      --
+      --  Get total count over all elements - as well as the count of elements
+      --
+      procedure Get_Total (Total : out Natural; Count : out Natural) is
+         use type Element_Maps.Cursor;
+         The_Element : Element_Maps.Cursor := Table.First;
+      begin
+         Total := 0;
+         Count := 0;
+         while The_Element /= Element_Maps.No_Element loop
+            Total := Total + Element_Maps.Element (The_Element).Count;
+            Count := Count + 1;
+            Element_Maps.Next (The_Element);
+         end loop;
+      end Get_Total;
+
+      function Hash (Key : Fragment) return Ada.Containers.Hash_Type is
+         use type Ada.Containers.Hash_Type;
+
+         function Rotate_Left
+           (Value  : Ada.Containers.Hash_Type;
+            Amount : Natural)
+            return   Ada.Containers.Hash_Type;
+         pragma Import (Intrinsic, Rotate_Left);
+
+         Hash_Value : Ada.Containers.Hash_Type;
+
+      begin
+         Hash_Value := 0;
+         for J in 1 .. Fragments.Length (Key) loop
+            Hash_Value := Rotate_Left (Hash_Value, 3) +
+                          Character'Pos (Fragments.Element (Key, J));
+         end loop;
+
+         return Hash_Value;
+      end Hash;
+
+      procedure Increment (Key : in Fragment; Element : in out Element_Type) is
+         pragma Unreferenced (Key);
+      begin
+         Element.Count := Natural'Succ (Element.Count);
+      end Increment;
+
+      ---------------------------------------------------------------------
+      --
+      --  Get count for element
+      --
+      function Key (Element : in Element_Type) return Fragment is
+      begin
+         return Element.Key;
+      end Key;
+
+   end Calculator;
+
+   ----------------------------------------------------------------------------
+   --
+   --  Calculate and write data - either a percentage for all fragments found or - when
+   --  Nucleotide_Fragment is given - the count for that fragment.
+   --
+   procedure Write (Nucleotide_Length : in Frequencies) is
+   begin
+      Calculator.Calculate_Frequencies (Nucleotide_Length);
+
+      Calculate_Total : declare
+         Count : Natural;
+         Total : Natural;
+      begin
+         Calculator.Get_Total (Total => Total, Count => Count);
+
+         Get_Sort_Put : declare
+            Data : constant Calculator.Element_Array := Calculator.Get_Array (Count);
+         begin
+            for I in Data'Range loop
+               Ada.Text_IO.Put (Fragments.To_String (Calculator.Key (Data (I))));
+               Ada.Text_IO.Put (Ada.Characters.Latin_1.Space);
+               Ada.Float_Text_IO.Put
+                 (Item => 100.0 * Float (Calculator.Count (Data (I))) / Float (Total),
+                  Fore => 1,
+                  Aft  => 3,
+                  Exp  => 0);
+               Ada.Text_IO.New_Line;
+            end loop;
+            Ada.Text_IO.New_Line;
+         end Get_Sort_Put;
+      end Calculate_Total;
+
+      return;
+   end Write;
+
+   ----------------------------------------------------------------------------
+   --
+   --  Calculate and write data - either a percentage for all fragments found or - when
+   --  Nucleotide_Fragment is given - the count for that fragment.
+   --
+   procedure Write (Nucleotide_Fragment : in Fragment) is
+   begin
+      Calculator.Calculate_Frequencies (Fragments.Length (Nucleotide_Fragment));
+      Ada.Integer_Text_IO.Put (Item => Calculator.Get (Nucleotide_Fragment), Width => 1);
+      Ada.Text_IO.Put (Ada.Characters.Latin_1.HT);
+      Ada.Text_IO.Put_Line (Fragments.To_String (Nucleotide_Fragment));
+      return;
+   end Write;
+
+begin
+   Write (1);
+   Write (2);
+   Write (Fragment_3);
+   Write (Fragment_4);
+   Write (Fragment_6);
+   Write (Fragment_12);
+   Write (Fragment_18);
+   return;
+end KNucleotide_3;
+
+----------------------------------------------------------------------------
+--  $Author: igouy-guest $
+--
+--  $Revision: 1.1 $
+--  $Date: 2007-08-31 03:26:26 $
+--
+--  $Id: knucleotide.gnat-2.gnat,v 1.1 2007-08-31 03:26:26 igouy-guest Exp $
+--  $HeadURL: http://wikibook-ada.svn.sourceforge.net/svnroot/wikibook-ada/trunk/demos/Source/Language_Shootout/knucleotide_3.adb $
+-------------------------------------------------------------------------------
+--   vim: textwidth=0 nowrap tabstop=8 shiftwidth=3 softtabstop=3 expandtab filetype=ada vim:
+--   fileencoding=latin1 fileformat=unix
