@@ -1,1 +1,1 @@
-<p>Mono JIT compiler version 1.2.4 (tarball)</p>
+<p>Mono JIT compiler version 1.2.5 (tarball)</p>
