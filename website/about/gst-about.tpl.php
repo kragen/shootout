@@ -1,7 +1,8 @@
 <p><a href="http://users.ipa.net/~dwighth/smalltalk/byte_aug81/design_principles_behind_smalltalk.html">"Design Principles Behind Smalltalk" by Daniel Ingalls</a></p>
 <?=$Version;?>
-<p>Home Page: <a href="http://www.gnu.org/software/smalltalk/smalltalk.html">http://www.gnu.org/software/smalltalk/smalltalk.html</a></p>
-<p>Download: <a href="http://www.gnu.org/software/smalltalk/smalltalk.html">http://www.gnu.org/software/smalltalk/smalltalk.html</a></p>
+<p>Home Page: <a href="http://smalltalk.gnu.org/"> GNU Smalltalk : The Smalltalk for those who can type </a></p>
+<p>Download: <a href="http://smalltalk.gnu.org/download">Downloading GNU Smalltalk</a></p><br/>
+
 <p></br>We've made the Smalltalk code a little more generic by abstracting out these implementation specific details, these are read from the command line before each script:</p>
 <pre>
 Object subclass<span class="sym">: #</span>Tests   instanceVariableNames<span class="sym">:</span> <span class="str">''</span>   classVariableNames<span class="sym">:</span> <span class="str">''</span>   poolDictionaries<span class="sym">:</span> <span class="str">''</span>   category<span class="sym">:</span> <span class="str">'Shootout'</span><span class="sym">!</span>
