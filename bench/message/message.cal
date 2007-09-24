@@ -1,0 +1,122 @@
+/** 
+ * The Computer Language Benchmarks Game 
+ * Based on the CAL Open Quark version
+ * Contributed by Magnus Byne.
+ */
+module Message;
+
+import Cal.Core.Prelude using
+    typeConstructor = Int, String;
+    function = eager, error, intToString, seq, stringToInt;
+    ;
+
+import Cal.IO.Console using
+    function = printLine;
+    ;
+
+import Cal.Collections.List using
+    function = head;
+    ;
+
+import Cal.Experimental.Concurrent.Parallel using
+    function = par;
+    ;
+
+import Cal.Experimental.Concurrent.BlockingQueue using
+    typeConstructor = BlockingQueue;
+    function = makeBlockingQueue, take, put;
+    ;
+
+import Cal.Core.System using
+    function = concurrentRuntime;
+    ;
+
+/** this value is used to tell the workers to end */
+end :: Int;
+end = -1;
+
+/** default queue length */
+queueLength = 256;
+
+/**
+ * an indivual worker which takes values from the upstream queue, adds one, and
+ * puts them on the downstream queue.
+ */
+worker :: BlockingQueue Int -> BlockingQueue Int -> ();
+worker !inq !outq =
+    let
+        input :: Int;
+        input = eager $ take inq;
+    in
+        if (input == end) then
+            put outq end
+            `seq`
+            ()
+        else
+            (
+                put outq (input + 1)
+                `seq`
+                worker inq outq
+            )
+    ;
+
+/**
+ * create a chain of worker functions running in parallel this is done using
+ * the par function.
+ */
+createChain :: Int -> BlockingQueue Int -> BlockingQueue Int;
+createChain !length !input =
+    if (length == 0) then
+        input
+    else
+        (
+            let
+                output :: BlockingQueue Int;
+                output = makeBlockingQueue queueLength;
+            in
+                worker input output
+                `par`
+                createChain (length - (1 :: Int)) output
+        )
+    ;
+
+main :: [String] -> ();
+public main !args =
+    let
+        n :: Int;
+        n = eager $ stringToInt (head args);
+
+        inQueue :: BlockingQueue Int;
+        inQueue = eager $ makeBlockingQueue queueLength;
+
+        outQueue :: BlockingQueue Int;
+        outQueue = eager $ createChain (500 :: Int) inQueue;
+
+        /** this feeds n 0's into the first queue */
+        feedQueue :: Int -> ();
+        feedQueue n =
+            if (n == 0) then
+                put inQueue end
+            else
+                put inQueue (0 :: Int)
+                `seq`
+                feedQueue (n - 1)
+            ;
+
+        /** this collects n values from the last queue */
+        sumResult :: Int -> Int -> Int;
+        sumResult !n !sum =
+            if (n == 0) then
+                sum
+            else
+                sumResult (n - 1) (sum + (take outQueue))
+            ;
+    in
+        if concurrentRuntime then
+            feedQueue n 
+            `par` 
+            printLine (intToString $ sumResult n 0)
+        else
+            error
+                "You must define the VM arg org.openquark.cal.machine.lecc.concurrent_runtime to run this program"
+    ;
