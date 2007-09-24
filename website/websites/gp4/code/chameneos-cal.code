@@ -1,0 +1,248 @@
+<span class="hl com">/**</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * Based on the CAL Open Quark version</span>
+<span class="hl com"> * Contributed by Magnus Byne.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">module</span> Chameneos<span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Prelude <span class="hl kwa">using</span>
+    <span class="hl kwa">typeClass</span> <span class="hl sym">=</span> Eq<span class="hl sym">,</span> Inputable<span class="hl sym">,</span> Outputable<span class="hl sym">;</span>
+    <span class="hl kwa">typeConstructor</span> <span class="hl sym">=</span> Int<span class="hl sym">,</span> String<span class="hl sym">,</span> CalValue<span class="hl sym">,</span> JObject<span class="hl sym">,</span> Boolean<span class="hl sym">;</span>
+    <span class="hl kwa">function</span> <span class="hl sym">=</span>
+        eager<span class="hl sym">,</span> input<span class="hl sym">,</span> output<span class="hl sym">,</span> seq<span class="hl sym">,</span> stringToInt<span class="hl sym">,</span> add<span class="hl sym">,</span> toCalValue<span class="hl sym">,</span> unsafeCoerce<span class="hl sym">,</span>
+        unsafeFromCalValue<span class="hl sym">,</span> error<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>Debug <span class="hl kwa">using</span>
+    <span class="hl kwa">function</span> <span class="hl sym">=</span> show<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Collections<span class="hl sym">.</span>List <span class="hl kwa">using</span>
+    <span class="hl kwa">function</span> <span class="hl sym">=</span> map<span class="hl sym">,</span> head<span class="hl sym">,</span> strictList<span class="hl sym">,</span> foldLeft1Strict<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Experimental<span class="hl sym">.</span>Concurrent<span class="hl sym">.</span>Parallel <span class="hl kwa">using</span>
+    <span class="hl kwa">function</span> <span class="hl sym">=</span> parallelMap<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>IO<span class="hl sym">.</span>Console <span class="hl kwa">using</span>
+    <span class="hl kwa">function</span> <span class="hl sym">=</span> printLine<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">import</span> Cal<span class="hl sym">.</span>Core<span class="hl sym">.</span>System <span class="hl kwa">using</span>
+    <span class="hl kwa">function</span> <span class="hl sym">=</span> concurrentRuntime<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">data</span> Color <span class="hl sym">=</span>
+    Blue <span class="hl sym">|</span>
+    Red <span class="hl sym">|</span>
+    Yellow <span class="hl sym">|</span>
+    Faded
+    <span class="hl kwa">deriving</span> Inputable<span class="hl sym">,</span> Outputable<span class="hl sym">,</span> Eq
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * A meeting room is a place where Chameneos meet. The meeting room can either</span>
+<span class="hl com"> * be empty or occupied. The meeting room has a count of the number of meetings</span>
+<span class="hl com"> * can take place. This is decremented every time a meeting occurs.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">data</span> MeetingRoom <span class="hl sym">=</span>
+    Empty n <span class="hl sym">:: !</span>Int <span class="hl sym">|</span>
+    Occupied
+        n <span class="hl sym">:: !</span>Int
+        other <span class="hl sym">:: !</span>Color
+    <span class="hl kwa">deriving</span> Inputable<span class="hl sym">,</span> Outputable<span class="hl sym">,</span> Eq
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** get new color based on the color of two meeting Chameneos */</span>
+complement <span class="hl sym">::</span> Color <span class="hl sym">-&gt;</span> Color <span class="hl sym">-&gt;</span> Color<span class="hl sym">;</span>
+complement <span class="hl sym">!</span>color1 <span class="hl sym">!</span>color2 <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>color1 <span class="hl sym">==</span> color2<span class="hl sym">)</span> <span class="hl kwa">then</span>
+        color1
+    <span class="hl kwa">else</span>
+        <span class="hl sym">(</span>
+            <span class="hl kwa">case</span> color1 <span class="hl kwa">of</span>
+            Blue <span class="hl sym">-&gt;</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>color2 <span class="hl sym">==</span> Red<span class="hl sym">)</span> <span class="hl kwa">then</span>
+                    Yellow
+                <span class="hl kwa">else</span>
+                    Red
+                <span class="hl sym">;</span>
+            Red <span class="hl sym">-&gt;</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>color2 <span class="hl sym">==</span> Blue<span class="hl sym">)</span> <span class="hl kwa">then</span>
+                    Yellow
+                <span class="hl kwa">else</span>
+                    Blue
+                <span class="hl sym">;</span>
+            Yellow <span class="hl sym">-&gt;</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>color2 <span class="hl sym">==</span> Blue<span class="hl sym">)</span> <span class="hl kwa">then</span>
+                    Red
+                <span class="hl kwa">else</span>
+                    Blue
+                <span class="hl sym">;</span>
+        <span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * This function implements the behaviour of each chameneo. It keeps trying to</span>
+<span class="hl com"> * enter the meeting room until it's colour is faded, and then returns the</span>
+<span class="hl com"> * number of meetings.</span>
+<span class="hl com"> */</span>
+chameneos <span class="hl sym">::</span>
+    Color
+    <span class="hl sym">-&gt;</span> MutableVariable MeetingRoom
+    <span class="hl sym">-&gt;</span> MutableVariable Color
+    <span class="hl sym">-&gt;</span> Int
+    <span class="hl sym">-&gt;</span> Int<span class="hl sym">;</span>
+chameneos <span class="hl sym">!</span>color <span class="hl sym">!</span>meeting <span class="hl sym">!</span>occupant <span class="hl sym">!</span>meetingCount <span class="hl sym">=</span>
+    <span class="hl kwa">let</span>
+        meetingRoom <span class="hl sym">::</span> MeetingRoom<span class="hl sym">;</span>
+        meetingRoom <span class="hl sym">=</span> eager $ takeMutableVariable meeting<span class="hl sym">;</span>
+    <span class="hl kwa">in</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>color <span class="hl sym">==</span> Faded<span class="hl sym">)</span> <span class="hl kwa">then</span>
+            meetingCount
+        <span class="hl kwa">else</span>
+            <span class="hl sym">(</span>
+                <span class="hl kwa">case</span> meetingRoom <span class="hl kwa">of</span>
+                Empty n <span class="hl sym">-&gt;</span>
+                    <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+                        putMutableVariable meeting <span class="hl sym">(</span>Empty <span class="hl num">0</span><span class="hl sym">)</span>
+                        <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+                        chameneos Faded meeting occupant meetingCount
+                    <span class="hl kwa">else</span>
+                        putMutableVariable meeting <span class="hl sym">(</span>Occupied n color<span class="hl sym">)</span>
+                        <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+                        chameneos
+                            <span class="hl sym">(</span>complement <span class="hl sym">(</span>takeMutableVariable occupant<span class="hl sym">)</span> color<span class="hl sym">)</span>
+                            meeting
+                            occupant
+                            <span class="hl sym">(</span>meetingCount <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                    <span class="hl sym">;</span>
+                Occupied n otherColor <span class="hl sym">-&gt;</span>
+                    putMutableVariable occupant color
+                    <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+                    putMutableVariable meeting <span class="hl sym">(</span>Empty <span class="hl sym">(</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">))</span>
+                    <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+                    chameneos
+                        <span class="hl sym">(</span>complement otherColor color<span class="hl sym">)</span>
+                        meeting
+                        occupant
+                        <span class="hl sym">(</span>meetingCount <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                    <span class="hl sym">;</span>
+            <span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+main <span class="hl sym">:: [</span>String<span class="hl sym">] -&gt; ();</span>
+<span class="hl kwa">public</span> main <span class="hl sym">!</span>args <span class="hl sym">=</span>
+    <span class="hl kwa">let</span>
+        n <span class="hl sym">::</span> Int<span class="hl sym">;</span>
+        n <span class="hl sym">=</span> eager $ stringToInt <span class="hl sym">(</span>head args<span class="hl sym">);</span>
+
+        meetingRoom <span class="hl sym">::</span> MutableVariable MeetingRoom<span class="hl sym">;</span>
+        meetingRoom <span class="hl sym">=</span> eager $ makeMutableVariable <span class="hl sym">();</span>
+
+        occupant <span class="hl sym">::</span> MutableVariable Color<span class="hl sym">;</span>
+        occupant <span class="hl sym">=</span> eager $ makeMutableVariable <span class="hl sym">();</span>
+    <span class="hl kwa">in</span>
+        <span class="hl sym">(</span>
+            <span class="hl kwa">if</span> concurrentRuntime <span class="hl kwa">then</span>
+                <span class="hl sym">()</span>
+            <span class="hl kwa">else</span>
+                error
+                    <span class="hl str">&quot;You must define the VM arg org.openquark.cal.machine.lecc.concurrent_runtime to run this program&quot;</span>
+        <span class="hl sym">)</span>
+        <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+        putMutableVariable meetingRoom <span class="hl sym">(</span>Empty n<span class="hl sym">)</span>
+        <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+        printLine
+            <span class="hl sym">(</span>show
+                <span class="hl sym">(</span>foldLeft1Strict
+                    add
+                    <span class="hl sym">(</span>parallelMap
+                        <span class="hl sym">(</span>\colour <span class="hl sym">-&gt;</span> chameneos colour meetingRoom occupant <span class="hl num">0</span><span class="hl sym">)</span>
+                        <span class="hl sym">[</span>Red<span class="hl sym">,</span> Blue<span class="hl sym">,</span> Yellow<span class="hl sym">]</span>
+                    <span class="hl sym">)</span>
+                <span class="hl sym">)</span>
+            <span class="hl sym">)</span>
+    <span class="hl sym">;</span>
+
+<span class="hl slc">//////////////////////////////////////////////////////////////////////</span>
+<span class="hl slc">// This implements MutableVariable, similar to m-structures in Id.</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * MutableVariable represent a value that can be passed between threads using</span>
+<span class="hl com"> * put and take. It has the same semantics as a BlockableQueue of length 1.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">data public</span> MutableVariable a <span class="hl sym">=</span>
+    <span class="hl kwa">private</span> MutableVariable atomicRef <span class="hl sym">:: !</span>AtomicReference
+    <span class="hl sym">;</span>
+
+<span class="hl com">/** make a new mutable variable */</span>
+makeMutableVariable <span class="hl sym">:: () -&gt;</span> MutableVariable a<span class="hl sym">;</span>
+<span class="hl kwa">public</span> makeMutableVariable <span class="hl sym">!</span>unused <span class="hl sym">=</span> MutableVariable createAtomicReference<span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * Put a value into a mutable variable. If the variable is not empty this</span>
+<span class="hl com"> * function will block.</span>
+<span class="hl com"> */</span>
+putMutableVariable <span class="hl sym">::</span> MutableVariable a <span class="hl sym">-&gt;</span> a <span class="hl sym">-&gt; ();</span>
+<span class="hl kwa">public</span> putMutableVariable <span class="hl sym">!</span>mutable <span class="hl sym">!</span>value <span class="hl sym">=</span>
+    <span class="hl kwa">let</span>
+        put <span class="hl sym">::</span> AtomicReference <span class="hl sym">-&gt;</span> JObject <span class="hl sym">-&gt; ();</span>
+        put <span class="hl sym">!</span>ref <span class="hl sym">!</span>value <span class="hl sym">=</span>
+            <span class="hl kwa">if</span> compareAndSet ref null value <span class="hl kwa">then</span>
+                <span class="hl sym">()</span>
+            <span class="hl kwa">else</span>
+                yield
+                <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+                put ref value
+            <span class="hl sym">;</span>
+    <span class="hl kwa">in</span>
+        <span class="hl kwa">case</span> mutable <span class="hl kwa">of</span>
+        MutableVariable <span class="hl sym">{</span>atomicRef<span class="hl sym">} -&gt;</span>
+            put atomicRef <span class="hl sym">(</span>output <span class="hl sym">(</span>toCalValue value<span class="hl sym">));</span>
+    <span class="hl sym">;</span>
+
+<span class="hl com">/**</span>
+<span class="hl com"> * take a value from a mutable variable, if the there is no value in the</span>
+<span class="hl com"> * variable this will block.</span>
+<span class="hl com"> */</span>
+takeMutableVariable <span class="hl sym">::</span> MutableVariable a <span class="hl sym">-&gt;</span> a<span class="hl sym">;</span>
+<span class="hl kwa">public</span> takeMutableVariable <span class="hl sym">!</span>mutable <span class="hl sym">=</span>
+    <span class="hl kwa">let</span>
+        take <span class="hl sym">::</span> AtomicReference <span class="hl sym">-&gt;</span> JObject<span class="hl sym">;</span>
+        take <span class="hl sym">!</span>atomicRef <span class="hl sym">=</span>
+            <span class="hl kwa">let</span>
+                value <span class="hl sym">=</span> eager $ getAndSet atomicRef null<span class="hl sym">;</span>
+            <span class="hl kwa">in</span>
+                <span class="hl kwa">if</span> isNull value <span class="hl kwa">then</span>
+                    yield
+                    <span class="hl sym">`</span>seq<span class="hl sym">`</span>
+                    take atomicRef
+                <span class="hl kwa">else</span>
+                    value
+            <span class="hl sym">;</span>
+    <span class="hl kwa">in</span>
+        <span class="hl kwa">case</span> mutable <span class="hl kwa">of</span>
+        MutableVariable <span class="hl sym">{</span>atomicRef<span class="hl sym">} -&gt;</span>
+            unsafeFromCalValue $ input $ take atomicRef<span class="hl sym">;</span>
+    <span class="hl sym">;</span>
+
+<span class="hl kwa">data foreign unsafe import jvm</span> <span class="hl str">&quot;java.util.concurrent.atomic.AtomicReference&quot;</span>
+    <span class="hl kwa">private</span> AtomicReference<span class="hl sym">;</span>
+
+<span class="hl kwa">foreign unsafe import jvm</span> <span class="hl str">&quot;constructor&quot;</span>
+    <span class="hl kwa">private</span> createAtomicReference <span class="hl sym">::</span> AtomicReference<span class="hl sym">;</span>
+
+<span class="hl kwa">foreign unsafe import jvm</span> <span class="hl str">&quot;method weakCompareAndSet&quot;</span>
+    <span class="hl kwa">private</span> compareAndSet <span class="hl sym">::</span> AtomicReference <span class="hl sym">-&gt;</span> JObject <span class="hl sym">-&gt;</span> JObject <span class="hl sym">-&gt;</span> Boolean<span class="hl sym">;</span>
+
+<span class="hl kwa">foreign unsafe import jvm</span> <span class="hl str">&quot;method getAndSet&quot;</span>
+    <span class="hl kwa">private</span> getAndSet <span class="hl sym">::</span> AtomicReference <span class="hl sym">-&gt;</span> JObject <span class="hl sym">-&gt;</span> JObject<span class="hl sym">;</span>
+
+<span class="hl kwa">foreign unsafe import jvm</span> <span class="hl str">&quot;static method java.lang.Thread.yield&quot;</span>
+    <span class="hl kwa">private</span> yield <span class="hl sym">:: ();</span>
+
+<span class="hl kwa">foreign unsafe import jvm</span> <span class="hl str">&quot;isNull&quot;</span> <span class="hl kwa">private</span> isNull <span class="hl sym">::</span> JObject <span class="hl sym">-&gt;</span> Boolean<span class="hl sym">;</span>
+
+<span class="hl kwa">foreign unsafe import jvm</span> <span class="hl str">&quot;null&quot;</span> <span class="hl kwa">private</span> null <span class="hl sym">::</span> JObject<span class="hl sym">;</span>
