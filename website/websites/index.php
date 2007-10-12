@@ -39,17 +39,16 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <table class="layout">
 <tr class="test">
-<th colspan="2">Rankings, Benchmarks, Programs, Times, &#8230;</th>
-</tr>
-<tr class="test">
 <td>
 <p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
+<p><a href="./gp4/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="gp4">
 <a title="Computer Language Benchmarks on Gentoo : Intel&#174; Pentium&#174;"
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
 <p class="timestamp"><a href="./debian/"><? printf('%s', gmdate("d M Y", $D)) ?></a></p>
+<p><a href="./debian/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="debian">
 <a title="Computer Language Benchmarks on Debian : AMD&#8482; Sempron&#8482;"
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
@@ -57,11 +56,13 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 </tr>
 <tr class="test">
 <td>
+<p><br/><a href="./gp4sandbox/"><strong>Extra languages</strong> timed on:</a></p>
 <h3><span class="sandbox">
 <a title="Extra languages on Gentoo : Intel&#174; Pentium&#174;"
 href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
+<p><br/><a href="./sandbox/"><strong>Extra languages</strong> timed on:</a></p>
 <h3><span class="sandbox">
 <a title="Extra languages on Debian : AMD&#8482; Sempron&#8482;"
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
