@@ -1,0 +1,165 @@
+<span class="com">/* The Computer Language Benchmarks Game</span>
+<span class="com"> * http://shootout.alioth.debian.org/</span>
+<span class="com"> * Contributed by Branimir Maksimovic</span>
+<span class="com"> * Modified by Dmitriy Nikitinskiy</span>
+<span class="com"> * should be linked with -lpthread</span>
+<span class="com"> */</span>
+
+<span class="dir">#include &lt;pthread.h&gt;</span>
+<span class="dir">#include &lt;iostream&gt;</span>
+<span class="dir">#include &lt;ostream&gt;</span>
+<span class="kwa">using namespace</span> std<span class="sym">;</span>
+
+<span class="dir">#define arrLen(arr) (sizeof arr / sizeof arr[0])</span>
+
+<span class="kwb">enum</span> Colour <span class="sym">{</span> blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> faded <span class="sym">};</span>
+
+<span class="kwc">class</span> MeetingPlace
+<span class="sym">{</span>
+<span class="kwc">private</span><span class="sym">:</span>
+ Colour first<span class="sym">;</span>
+ <span class="kwb">bool</span> firstCall<span class="sym">;</span>
+ <span class="kwb">int</span> n<span class="sym">;</span>
+ pthread_mutex_t mlock<span class="sym">;</span>
+ <span class="kwc">volatile</span> Colour<span class="sym">*</span> fptr<span class="sym">;</span>
+
+<span class="kwc">public</span><span class="sym">:</span>
+<span class="kwd">MeetingPlace</span><span class="sym">(</span><span class="kwb">int</span> maxMeetings<span class="sym">)</span>
+<span class="sym">:</span> <span class="kwd">firstCall</span><span class="sym">(</span><span class="kwa">true</span><span class="sym">),</span><span class="kwd">n</span><span class="sym">(</span>maxMeetings<span class="sym">),</span> <span class="kwd">fptr</span><span class="sym">(</span>NULL<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwd">pthread_mutex_init</span><span class="sym">(&amp;</span>mlock<span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
+
+Colour <span class="kwd">OtherCreaturesColour</span><span class="sym">(</span>Colour me<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwd">pthread_mutex_lock</span><span class="sym">(&amp;</span>mlock<span class="sym">);</span>
+    <span class="kwc">volatile</span> Colour other<span class="sym">;</span>
+
+    <span class="kwa">if</span> <span class="sym">(</span>firstCall<span class="sym">)</span>
+    <span class="sym">{</span>
+      <span class="kwa">if</span> <span class="sym">(</span>n<span class="sym">-- &gt;</span> <span class="num">0</span><span class="sym">)</span>
+      <span class="sym">{</span>
+        first <span class="sym">=</span> me<span class="sym">;</span>
+        firstCall <span class="sym">=</span> <span class="kwa">false</span><span class="sym">;</span>
+	other <span class="sym">=</span> faded <span class="sym">;</span>
+	fptr <span class="sym">= &amp;</span>other<span class="sym">;</span>
+
+	<span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;</span>mlock<span class="sym">);</span>
+
+        <span class="kwa">while</span> <span class="sym">(</span>other <span class="sym">==</span> faded<span class="sym">)</span>
+        <span class="sym">{</span>
+        <span class="sym">}</span>
+
+	<span class="kwa">return</span> other <span class="sym">;</span>
+      <span class="sym">}</span>
+      <span class="kwa">else</span>
+      <span class="sym">{</span>
+	n <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+        other <span class="sym">=</span> faded<span class="sym">;</span>
+      <span class="sym">}</span>
+    <span class="sym">}</span>
+    <span class="kwa">else</span>
+    <span class="sym">{</span>
+      other <span class="sym">=</span> first<span class="sym">;</span>
+      <span class="sym">*</span>fptr <span class="sym">=</span> me <span class="sym">;</span> <span class="slc">//May be atomic assign</span>
+      fptr <span class="sym">=</span> NULL <span class="sym">;</span>
+      firstCall <span class="sym">=</span> <span class="kwa">true</span><span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwd">pthread_mutex_unlock</span><span class="sym">(&amp;</span>mlock<span class="sym">);</span>
+    <span class="kwa">return</span> other<span class="sym">;</span>
+<span class="sym">}</span>
+<span class="sym">~</span><span class="kwd">MeetingPlace</span><span class="sym">()</span>
+<span class="sym">{</span>
+  <span class="kwd">pthread_mutex_destroy</span><span class="sym">(&amp;</span>mlock<span class="sym">);</span>
+<span class="sym">}</span>
+<span class="kwc">private</span><span class="sym">:</span>
+<span class="kwd">MeetingPlace</span><span class="sym">(</span><span class="kwb">const</span> MeetingPlace<span class="sym">&amp;);</span>
+MeetingPlace<span class="sym">&amp;</span> <span class="kwc">operator</span><span class="sym">=(</span><span class="kwb">const</span> MeetingPlace<span class="sym">&amp;);</span>
+<span class="sym">};</span>
+
+<span class="kwc">class</span> Creature
+<span class="sym">{</span>
+<span class="kwc">private</span><span class="sym">:</span>
+  MeetingPlace<span class="sym">*</span> m<span class="sym">;</span>
+  <span class="kwb">int</span> creaturesMet_<span class="sym">;</span>
+  Colour me<span class="sym">;</span>
+
+<span class="kwc">public</span><span class="sym">:</span>
+  <span class="kwd">Creature</span><span class="sym">(</span>MeetingPlace<span class="sym">*</span> m_<span class="sym">,</span> Colour c<span class="sym">)</span>
+  <span class="sym">:</span><span class="kwd">m</span><span class="sym">(</span>m_<span class="sym">),</span><span class="kwd">creaturesMet_</span><span class="sym">(</span><span class="num">0</span><span class="sym">),</span><span class="kwd">me</span><span class="sym">(</span>c<span class="sym">)</span>
+  <span class="sym">{</span>
+  <span class="sym">}</span>
+
+  <span class="kwb">void</span> <span class="kwd">Be</span><span class="sym">()</span>
+  <span class="sym">{</span>
+    <span class="kwa">while</span><span class="sym">(</span>me <span class="sym">!=</span> faded<span class="sym">){</span> <span class="kwd">MeetOtherCreature</span><span class="sym">(); }</span>
+  <span class="sym">}</span>
+
+  <span class="kwb">void</span> <span class="kwd">MeetOtherCreature</span><span class="sym">()</span>
+  <span class="sym">{</span>
+    Colour other <span class="sym">=</span> m<span class="sym">-&gt;</span><span class="kwd">OtherCreaturesColour</span><span class="sym">(</span>me<span class="sym">);</span>
+    <span class="kwa">if</span> <span class="sym">(</span>other <span class="sym">==</span> faded<span class="sym">)</span>
+    <span class="sym">{</span>
+      me <span class="sym">=</span> other<span class="sym">;</span>
+    <span class="sym">}</span>
+    <span class="kwa">else</span>
+    <span class="sym">{</span>
+      creaturesMet_<span class="sym">++;</span>
+      me <span class="sym">=</span> <span class="kwd">Complement</span><span class="sym">(</span>other<span class="sym">);</span>
+    <span class="sym">}</span>
+  <span class="sym">}</span>
+  Colour <span class="kwd">Complement</span><span class="sym">(</span>Colour other<span class="sym">)</span>
+  <span class="sym">{</span>
+    <span class="kwa">if</span> <span class="sym">(</span>me <span class="sym">==</span> other<span class="sym">)</span> <span class="kwa">return</span> me<span class="sym">;</span>
+    <span class="kwa">switch</span><span class="sym">(</span>me<span class="sym">)</span>
+    <span class="sym">{</span>
+      <span class="kwa">case</span> blue<span class="sym">:</span>
+            <span class="kwa">return</span> other <span class="sym">==</span> red ? yellow <span class="sym">:</span> red<span class="sym">;</span>
+      <span class="kwa">case</span> red<span class="sym">:</span>
+            <span class="kwa">return</span> other <span class="sym">==</span> blue ? yellow <span class="sym">:</span> blue<span class="sym">;</span>
+      <span class="kwa">case</span> yellow<span class="sym">:</span>
+            <span class="kwa">return</span> other <span class="sym">==</span> blue ? red <span class="sym">:</span> blue<span class="sym">;</span>
+      <span class="kwa">default</span><span class="sym">:</span> <span class="kwa">return</span> me<span class="sym">;</span>
+    <span class="sym">}</span>
+   <span class="sym">}</span>
+   <span class="kwb">int</span> <span class="kwd">creaturesMet</span><span class="sym">()</span><span class="kwb">const</span> <span class="sym">{</span> <span class="kwa">return</span> creaturesMet_<span class="sym">; }</span>
+<span class="sym">};</span>
+
+<span class="kwb">static</span> Colour colours <span class="sym">[]= {</span> blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> blue <span class="sym">};</span>
+<span class="kwb">static</span> Creature<span class="sym">*</span> creatures<span class="sym">[</span><span class="kwd">arrLen</span><span class="sym">(</span>colours<span class="sym">)];</span>
+<span class="kwb">static</span> pthread_t threads<span class="sym">[</span><span class="kwd">arrLen</span><span class="sym">(</span>colours<span class="sym">)];</span>
+
+<span class="kwc">extern</span> <span class="str">&quot;C&quot;</span> <span class="kwb">void</span><span class="sym">*</span> <span class="kwd">thread_run</span><span class="sym">(</span><span class="kwb">void</span><span class="sym">*</span> c<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="sym">((</span>Creature<span class="sym">*)</span>c<span class="sym">)-&gt;</span><span class="kwd">Be</span><span class="sym">();</span>
+  <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span><span class="kwb">char</span><span class="sym">*</span>argv<span class="sym">[])</span>
+<span class="sym">{</span>
+  <span class="kwa">if</span><span class="sym">(</span>argc<span class="sym">&lt;</span><span class="num">2</span><span class="sym">)</span><span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+  <span class="kwb">int</span> n <span class="sym">=</span> <span class="kwd">atoi</span><span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">]);</span>
+  MeetingPlace <span class="kwd">m</span><span class="sym">(</span>n<span class="sym">);</span>
+
+  <span class="kwa">for</span> <span class="sym">(</span><span class="kwb">unsigned</span> i<span class="sym">=</span><span class="num">0</span><span class="sym">;</span> i<span class="sym">&lt;</span><span class="kwd">arrLen</span><span class="sym">(</span>colours<span class="sym">);</span> i<span class="sym">++)</span>
+  <span class="sym">{</span>
+    creatures<span class="sym">[</span>i<span class="sym">] =</span> <span class="kwa">new</span> <span class="kwd">Creature</span><span class="sym">(&amp;</span>m<span class="sym">,</span>colours<span class="sym">[</span>i<span class="sym">]);</span>
+    <span class="kwd">pthread_create</span><span class="sym">(&amp;</span>threads<span class="sym">[</span>i<span class="sym">],</span><span class="num">0</span><span class="sym">,</span>thread_run<span class="sym">,</span>creatures<span class="sym">[</span>i<span class="sym">]);</span>
+  <span class="sym">}</span>
+
+  <span class="kwa">for</span><span class="sym">(</span><span class="kwb">unsigned</span> i <span class="sym">=</span><span class="num">0</span><span class="sym">;</span> i<span class="sym">&lt;</span><span class="kwd">arrLen</span><span class="sym">(</span>colours<span class="sym">);</span> i<span class="sym">++)</span>
+    <span class="kwd">pthread_join</span><span class="sym">(</span>threads<span class="sym">[</span>i<span class="sym">],</span><span class="num">0</span><span class="sym">);</span>
+
+  <span class="kwb">int</span> meetings <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+  <span class="kwa">for</span><span class="sym">(</span><span class="kwb">unsigned</span> i<span class="sym">=</span><span class="num">0</span><span class="sym">;</span>i<span class="sym">&lt;</span><span class="kwd">arrLen</span><span class="sym">(</span>colours<span class="sym">);</span>i<span class="sym">++)</span>
+  <span class="sym">{</span>
+    meetings <span class="sym">+=</span> creatures<span class="sym">[</span>i<span class="sym">]-&gt;</span><span class="kwd">creaturesMet</span><span class="sym">();</span>
+    <span class="kwa">delete</span> creatures<span class="sym">[</span>i<span class="sym">];</span>
+  <span class="sym">}</span>
+
+  cout<span class="sym">&lt;&lt;</span>meetings<span class="sym">&lt;&lt;</span><span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">;</span>
+  <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+

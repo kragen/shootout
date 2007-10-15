@@ -1,1 +1,1 @@
-<p>gij (GNU libgcj) version 4.1.2 20061115 (prerelease) (Debian 4.1.1-20)</p>
+<p>gij (GNU libgcj) version 4.1.3 20070831 (prerelease) (Debian 4.1.2-16)</p>

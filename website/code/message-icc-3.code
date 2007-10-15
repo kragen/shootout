@@ -1,0 +1,64 @@
+<span class="com">/* The Computer Language Benchmarks Game</span>
+<span class="com"> * http://shootout.alioth.debian.org/</span>
+<span class="com"> * contributed contributed by Ian Chiew</span>
+<span class="com"> */</span>
+
+<span class="dir">#include &lt;pthread.h&gt;</span>
+<span class="dir">#include &lt;semaphore.h&gt;</span>
+<span class="dir">#include &lt;stdio.h&gt;</span>
+<span class="dir">#include &lt;stdlib.h&gt;</span>
+<span class="dir">#include &lt;assert.h&gt;</span>
+
+<span class="dir">#define THREADS 500</span>
+<span class="dir">#define THREAD_STACK_SIZE (1024 * 100)</span>
+
+<span class="kwb">struct</span> inbox <span class="sym">{</span>
+    sem_t sem<span class="sym">;</span>
+    <span class="kwb">int</span> n<span class="sym">;</span>
+<span class="sym">};</span>
+
+<span class="kwb">struct</span> worker <span class="sym">{</span>
+    <span class="kwb">struct</span> inbox inbox<span class="sym">, *</span>next_inbox<span class="sym">;</span>
+    pthread_t thread<span class="sym">;</span>
+<span class="sym">};</span>
+
+<span class="kwb">void</span> <span class="sym">*</span><span class="kwd">work</span><span class="sym">(</span><span class="kwb">void</span> <span class="sym">*</span>data<span class="sym">) {</span>
+    <span class="kwb">struct</span> worker <span class="sym">*</span>worker <span class="sym">= (</span><span class="kwb">struct</span> worker <span class="sym">*)</span>data<span class="sym">;</span>
+
+    <span class="kwa">while</span> <span class="sym">(</span><span class="num">1</span><span class="sym">) {</span>
+        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">sem_wait</span><span class="sym">(&amp;</span>worker<span class="sym">-&gt;</span>inbox<span class="sym">.</span>sem<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+        worker<span class="sym">-&gt;</span>next_inbox<span class="sym">-&gt;</span>n <span class="sym">=</span> worker<span class="sym">-&gt;</span>inbox<span class="sym">.</span>n <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">sem_post</span><span class="sym">(&amp;</span>worker<span class="sym">-&gt;</span>next_inbox<span class="sym">-&gt;</span>sem<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">return</span> NULL<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">**</span>argv<span class="sym">) {</span>
+    <span class="kwb">struct</span> worker workers<span class="sym">[</span>THREADS<span class="sym">];</span>
+    <span class="kwb">struct</span> inbox main_inbox<span class="sym">;</span>
+    pthread_attr_t attr<span class="sym">;</span>
+    <span class="kwb">int</span> n<span class="sym">,</span> i<span class="sym">,</span> j<span class="sym">,</span> sum <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+
+    <span class="kwd">assert</span><span class="sym">(</span>argc <span class="sym">==</span> <span class="num">2</span> <span class="sym">&amp;&amp; (</span>n <span class="sym">=</span> <span class="kwd">atoi</span><span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">])) != -</span><span class="num">1</span><span class="sym">);</span>
+    <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">sem_init</span><span class="sym">(&amp;</span>main_inbox<span class="sym">.</span>sem<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+    <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_attr_init</span><span class="sym">(&amp;</span>attr<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+    <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&amp;</span>attr<span class="sym">,</span> THREAD_STACK_SIZE<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> THREADS<span class="sym">;</span> i<span class="sym">++) {</span>
+        workers<span class="sym">[</span>i<span class="sym">].</span>next_inbox <span class="sym">=</span> i <span class="sym">==</span> <span class="num">0</span> ? <span class="sym">&amp;</span>main_inbox <span class="sym">: &amp;</span>workers<span class="sym">[</span>i <span class="sym">-</span> <span class="num">1</span><span class="sym">].</span>inbox<span class="sym">;</span>
+        <span class="kwd">sem_init</span><span class="sym">(&amp;</span>workers<span class="sym">[</span>i<span class="sym">].</span>inbox<span class="sym">.</span>sem<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">pthread_create</span><span class="sym">(&amp;</span>workers<span class="sym">[</span>i<span class="sym">].</span>thread<span class="sym">, &amp;</span>attr<span class="sym">,</span> work<span class="sym">, &amp;</span>workers<span class="sym">[</span>i<span class="sym">]) ==</span> <span class="num">0</span><span class="sym">);</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">for</span> <span class="sym">(</span>j <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> j <span class="sym">&lt;</span> n<span class="sym">;</span> j<span class="sym">++)</span>
+    <span class="sym">{</span>
+        workers<span class="sym">[</span>THREADS <span class="sym">-</span> <span class="num">1</span><span class="sym">].</span>inbox<span class="sym">.</span>n <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">sem_post</span><span class="sym">(&amp;</span>workers<span class="sym">[</span>THREADS <span class="sym">-</span> <span class="num">1</span><span class="sym">].</span>inbox<span class="sym">.</span>sem<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+        <span class="kwd">assert</span><span class="sym">(</span><span class="kwd">sem_wait</span><span class="sym">(&amp;</span>main_inbox<span class="sym">.</span>sem<span class="sym">) ==</span> <span class="num">0</span><span class="sym">);</span>
+        sum <span class="sym">+=</span> main_inbox<span class="sym">.</span>n<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;%d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> sum<span class="sym">);</span>
+    <span class="kwd">exit</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
