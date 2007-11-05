@@ -1,1 +1,1 @@
-<p>Digital Mars D Compiler v1.022</p>
+<p>Digital Mars D Compiler v1.023</p>
