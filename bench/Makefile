@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2006-10-02 01:08:41 bfulgham Exp $
+# $Id: Makefile,v 1.50 2007-11-08 22:01:47 igouy-guest Exp $
 TESTS = \
     hello \
     binarytrees \
@@ -9,6 +9,7 @@ TESTS = \
     magicsquares \
     mandelbrot \
     message \
+    messagering \
     nbody \
     nsieve \
     nsievebits \
