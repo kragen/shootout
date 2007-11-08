@@ -1,7 +1,7 @@
 <p><strong>diff</strong> program output N = 10 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
-<p>Each program should create, keep alive, and <em>send N integer messages</em> between 500 explicitly-linked threads. Programs may use kernel threads, lightweight threads, cooperative threads&#8230;</p>
+<p>Each program should create, keep alive, and <em>send integer messages</em> between 500 explicitly-linked threads. Programs may use kernel threads, lightweight threads, cooperative threads&#8230;</p>
 
 <p>Each program should</p>
 <ul>
