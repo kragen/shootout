@@ -34,9 +34,9 @@ define
    [Arg] = {Application.getArgs plain}
    NumberOfMessagesToSend = {String.toInt Arg}
 
-   fun {Ring NumberOfThreads NextThread} 
+   fun {MakeRing NumberOfThreads NextThread} 
       if NumberOfThreads > 0 then
-         {Ring NumberOfThreads-1 {MessageRingThread NumberOfThreads NextThread}}
+         {MakeRing NumberOfThreads-1 {MessageRingThread NumberOfThreads NextThread}}
       else 
          NextThread
       end
@@ -44,10 +44,10 @@ define
 
 
    % The unbound logic variable FirstThread is passed into recursive function 
-   % Ring and the value returned by that function is then bound to variable 
+   % MakeRing and the value returned by that function is then bound to variable 
    % FirstThread, closing the message thread ring.
 
-   FirstThread = {Ring NumberOfThreads FirstThread}
+   FirstThread = {MakeRing NumberOfThreads FirstThread}
 
 in  
    {FirstThread.take NumberOfMessagesToSend}
