@@ -1,7 +1,7 @@
 <p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
-<p>Each program should create and keep alive, 503 threads linked in an unbroken ring, and pass a value between one thread and the next thread at least N times. Programs may use kernel threads, lightweight threads, cooperative threads&#8230;</p>
+<p>Each program should create and keep alive, 503 threads linked in an unbroken ring, and pass a value between one thread and the next thread at least N times. Programs may use kernel threads, lightweight threads&#8230; (cooperative threads&#8230; and other programs with custom schedulers will be listed as interesting alternative implementations)</p>
 
 <p>Each program should</p>
 <ul>
