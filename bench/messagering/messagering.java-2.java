@@ -6,7 +6,7 @@
 
 import java.util.*;
 
-public class messageringcoop {
+public class messagering {
 
   public static long startTime;
   public static final int THREAD_COUNT = 503;
