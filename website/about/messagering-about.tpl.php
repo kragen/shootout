@@ -7,7 +7,7 @@
 <ul>
    <li>create 503 linked threads (named 1 to 503)</li>
    <li>thread 503 should be linked to thread 1, forming an unbroken ring</li>           
-   <li>pass a message to thread 1</li>     
+   <li>pass the message to thread 1</li>     
    <li>pass the message from thread to thread N times</li>        
    <li>print the name of the last thread (1 to 503) to take the message</li>
 </ul>
