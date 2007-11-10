@@ -173,7 +173,7 @@ foreach($Langs as $k => $v){
 
 <?
 if (sizeof($Special)>0){
-   echo '<tr><th colspan="5"><a href="#alt" name="alt">rejected (<em>aka</em> interesting alternative programs)</a></th></tr>', "\n";
+   echo '<tr><th colspan="5"><a href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
 
    foreach($Special as $d){
       $k = $d[DATA_LANG];         

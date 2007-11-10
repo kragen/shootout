@@ -1,6 +1,8 @@
 <p><strong>diff</strong> program output N = 100 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
+<p>Programs may use kernel threads, lightweight threads&#8230; <strong>cooperative threads&#8230; and other programs with custom schedulers will be listed as interesting alternative implementations</strong>. Briefly say what concurrency technique is used in the program header comment.</p>
+
 <p>Each program should</p>
 <ul>
 <li>create four differently coloured (blue, red, yellow, blue) concurrent chameneos creatures</li>
