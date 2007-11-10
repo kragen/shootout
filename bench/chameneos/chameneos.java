@@ -87,7 +87,7 @@ public class chameneos {
   public static void main(String[] args) throws Exception {
     int n = 5000000;
     if (args.length >= 1) n = Integer.parseInt(args[0]);
-    chameneos0 cham = new chameneos0(n);
+    chameneos cham = new chameneos(n);
     cham.run();
   }
 }
