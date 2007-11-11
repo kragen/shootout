@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.50 2007-11-08 22:01:47 igouy-guest Exp $
+# $Id: Makefile,v 1.51 2007-11-11 22:11:12 igouy-guest Exp $
 TESTS = \
     hello \
     binarytrees \
@@ -9,7 +9,6 @@ TESTS = \
     magicsquares \
     mandelbrot \
     message \
-    messagering \
     nbody \
     nsieve \
     nsievebits \
@@ -19,7 +18,8 @@ TESTS = \
     regexdna \
     revcomp \
     spectralnorm \
-    sumcol
+    sumcol \
+    threadring
 
 # get rid of this hardcoded path
 BIN:=/opt/shootout/shootout/bin
