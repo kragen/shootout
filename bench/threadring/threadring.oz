@@ -41,9 +41,9 @@ define
 
       FirstThread
    in
-      % The unbound logic variable FirstThread is passed into recursive function 
-      % MakeRing and the value returned by that function is then bound to variable 
-      % FirstThread, closing the thread ring.
+      % The unbound logic variable FirstThread is passed into recursive 
+      % function MakeRing and the value returned by that function is then
+      % bound to variable FirstThread, closing the thread ring.
 
       FirstThread = {MakeRing NumberOfThreads FirstThread}
    end
