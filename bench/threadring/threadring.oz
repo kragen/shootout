@@ -20,12 +20,12 @@ define
          end         
       end
 
-      proc {Take M}
-         {Port.send MessagePort M} 
+      proc {Take Token}
+         {Port.send MessagePort Token} 
       end
    in
-      thread {Loop MessageList} end % spawn a thread 
       newthread(take: Take)         % let function Take be used elsewhere
+      thread {Loop MessageList} end % spawn a thread 
    end
 
 
@@ -50,8 +50,7 @@ define
 
 
    [Arg] = {Application.getArgs plain}
-   NumberOfThreadSwitches = {String.toInt Arg}
 
 in  
-   {{NewRing 503}.take NumberOfThreadSwitches}
+   {{NewRing 503}.take {String.toInt Arg}}
 end
