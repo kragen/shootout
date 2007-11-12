@@ -24,8 +24,8 @@ define
          {Port.send MessagePort Token} 
       end
    in
-      newthread(take: Take)         % let function Take be used elsewhere
       thread {Loop MessageList} end % spawn a thread 
+      newthread(take: Take)         % let function Take be used elsewhere
    end
 
 
