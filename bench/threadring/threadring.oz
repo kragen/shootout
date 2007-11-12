@@ -10,8 +10,8 @@ define
       MessageList
       MessagePort = {Port.new MessageList}
 
-      proc {Loop Token|Tokens}     % basic message loop
-         if Token > 0 then 
+      proc {Loop Token|Tokens}     % wait for list-head list-tail pattern to
+         if Token > 0 then         % match and bind Token
             {Next.take Token-1}
             {Loop Tokens}
          else
