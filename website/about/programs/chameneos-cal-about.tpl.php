@@ -10,6 +10,6 @@ implementation as MutableVariable rely on Java's AtomicReferences and
 Yield to pass values between the threads.</p>
 
 <p>The MutableVariables are a very reasonable method to pass
-the values between threads in f functional language - this is
+the values between threads in functional language - this is
 equivalent to the MVar's in Haskell - originating from m- and i-
 structures in the Id functional language.</p>
