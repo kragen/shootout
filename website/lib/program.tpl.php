@@ -57,8 +57,10 @@ if (sizeof($Data)>0){
 </table>
 <pre><?=$Code;?></pre>
 
+<h3><a href="#about" name="about">&nbsp;about the program</a></h3>
+<?=$About;?>
+
 <h3><a href="#log" name="log">&nbsp;build &amp; benchmark results</a></h3>
 <pre><?=$Log;?></pre>
 
-<h3><a href="#about" name="about">&nbsp;about the program</a></h3>
-<?=$About;?>
+
