@@ -68,8 +68,8 @@
 </dd>
 
 
-<dt><a href="#fullcpu" name="fullcpu">What does Full CPU Time mean?</a></dt>
-<dd><p>Full CPU Time means <strong>program usr+sys time</strong> which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the Full CPU Time includes the time taken to startup and shutdown the VM.</p>
+<dt><a href="#fullcpu" name="fullcpu">What does CPU Time mean?</a></dt>
+<dd><p>CPU Time means <strong>program usr+sys time</strong> (in seconds) which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the CPU Time includes the time taken to startup and shutdown the VM.</p>
 <p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 </dd>
 

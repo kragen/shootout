@@ -24,7 +24,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>&nbsp;N&nbsp;</th>
-<th>Full&nbsp;CPU Time&nbsp;s</th>
+<th>CPU Time&nbsp;secs</th>
 <th>Memory Use&nbsp;KB</th>
 <th>GZip Bytes</th>
 </tr>

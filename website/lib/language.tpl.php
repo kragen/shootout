@@ -18,7 +18,7 @@ $Family = $Row[LANG_FAMILY];
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
-<th>Full&nbsp;CPU Time&nbsp;s</th>
+<th>CPU Time&nbsp;secs</th>
 <th>Memory Use&nbsp;KB</th>
 <th>GZip Bytes</th>
 <th>&nbsp;N&nbsp;</th>
