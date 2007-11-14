@@ -21,7 +21,8 @@ fork   [ self run ] fork ! !
 !Thread methodsFor: 'accessing'!
 run 
    [ self tokenNotDone ] whileTrue: [ nextThread takeToken: token - 1 ].
-   Tests stdout print: name; nl ! !
+   (token = 0) ifTrue: [Tests stdout print: name; nl].
+   nextThread takeToken: -1 ! !
 
 !Thread methodsFor: 'accessing'!takeToken: x   token := x.   semaphore signal ! !
 
@@ -41,5 +42,3 @@ run
 
 !Tests class methodsFor: 'benchmarking'!threadring   self firstThread takeToken: self arg.   ^''! !
 
-
-Tests threadring!
