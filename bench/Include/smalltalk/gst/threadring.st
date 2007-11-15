@@ -32,14 +32,12 @@ run
 !Thread class methodsFor: 'instance creation'!named: anInteger next: aThread   ^self new name: anInteger; nextThread: aThread; fork ! !
 
 
-!Tests class methodsFor: 'benchmarking'!firstThread   | first last |
+!Tests class methodsFor: 'benchmarking'!threadRing   | first last |
    503 to: 1 by: -1 do: [:i| 
       first := Thread named: i next: first.
       last isNil ifTrue: [ last := first ].
    ].
    last nextThread: first.   ^first ! !
 
-!Tests class methodsFor: 'benchmarking'!threadring   self firstThread takeToken: self arg.   ^''! !
+!Tests class methodsFor: 'benchmarking'!threadring   self threadRing takeToken: self arg.   ^''! !
 
-
-Tests threadring!
