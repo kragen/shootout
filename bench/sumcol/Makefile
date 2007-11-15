@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2007-04-05 15:11:36 bfulgham Exp $
+# $Id: Makefile,v 1.33 2007-11-15 06:50:30 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -10,7 +10,7 @@ ERLFLAGS := -noinput -noshell
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv
-GHCOPTS := -fbang-patterns
+GHCOPTS := -O2 -fasm
 MB_GHCRTS  := +RTS -H10M
 MB_NHCRTS := +RTS -H20M -RTS
 MZSCHEMEOPTS := -uqxA

@@ -1,0 +1,321 @@
+{ The Computer Language Benchmarks Game
+  http://shootout.alioth.debian.org
+
+  contributed by Steve Fisher
+  modified by Peter Vreman
+  modified by Steve Fisher
+}
+
+
+const
+  patterns : array[1..9] of string[255] =
+    (
+      'agggtaaa|tttaccct',
+      '[cgt]gggtaaa|tttaccc[acg]',
+      'a[act]ggtaaa|tttacc[agt]t',
+      'ag[act]gtaaa|tttac[agt]ct',
+      'agg[act]taaa|ttta[agt]cct',
+      'aggg[acg]aaa|ttt[cgt]ccct',
+      'agggt[cgt]aa|tt[acg]accct',
+      'agggta[cgt]a|t[acg]taccct',
+      'agggtaa[cgt]|[acg]ttaccct'
+    );
+  replacements : array[0..10,0..1] of string[15] =
+  (
+    ('B', '(c|g|t)'), ('D', '(a|g|t)'), ('H', '(a|c|t)'), ('K', '(g|t)'),
+    ('M', '(a|c)'), ('N', '(a|c|g|t)'), ('R', '(a|g)'), ('S', '(c|t)'),
+    ('V', '(a|c|g)'), ('W', '(a|t)'), ('Y', '(c|t)')
+  );
+
+
+type
+
+  skip_type = array[low(char) .. high(char)] of integer;
+
+  TRegexEngine = record
+    left, right: string;
+    size: longint;
+    cclass: set of char;
+    skip: skip_type;
+    simple: boolean;
+  end;
+
+
+
+function RegexCreate( pat: pchar ): TRegexEngine;
+var
+  p, i: longint;
+  str: string;
+  ch: char;
+begin
+  p := pos( '[', pat );
+  with RegexCreate do
+  begin
+    cclass := [];
+    if p > 0 then
+    begin
+      left := copy( pat, 1, p - 1 );
+      for i := p to pos( ']', pat ) - 2 do
+        cclass := cclass + [ pat[i] ];
+      right := '';
+      for i := i+2 to length(pat)-1 do
+        right += pat[i];
+      size := length(left) + 1 + length(right);
+      simple := false;
+    end
+    else
+    begin
+      left := pat;
+      right := '';
+      size := length( pat );
+      simple := true;
+    end;
+    str := left;
+    if length(str) < length(right) then   str := right;
+    if str <> '' then
+    begin
+      // Set up Boyer-Moore table for longer string.
+      for ch := low(char) to high(char) do
+        skip[ch] := length(str);
+      for i := 1 to length(str) - 1 do
+        skip[ str[i] ] := length(str) - i;
+    end;
+  end;
+end;
+
+function bm_search( const pat: string; const skip: skip_type;
+                    str: pchar; len: longint ): pchar;
+var
+  i, size: longint;
+  where, top, p: pchar;
+begin
+  size := length(pat);
+  if size = 0 then
+    exit( str );
+
+  where := str + size - 1;
+  top := str + len - 1;
+  while where <= top do
+  begin
+    p := where;
+    i := size;
+    while i > 0 do
+      if p^ = pat[i] then
+      begin
+        dec(i);
+        dec(p);
+      end
+      else
+        break;
+    if i = 0 then
+      exit( p+1 );
+    where += skip[ where^ ];
+  end; // while
+  exit( nil )
+end;
+
+
+function str_eq( const str: string; p: pchar): boolean; inline;
+var i: longint;
+begin
+  for i := 1 to length(str) do
+  begin
+    if str[i] <> p^ then
+      exit( false );
+    inc( p )
+  end;
+  exit( true )
+end;
+
+
+function Regex_search( const rx: TRegexEngine; const str: ansistring; start: longint;
+                var index: longint): boolean;
+var
+  p, last_p, ceiling, found_at: pchar;
+  remainder: longint;
+begin
+  p := @str[start];
+  last_p := @str[length(str)];
+
+  if rx.simple then
+  begin
+    found_at := bm_search( rx.left, rx.skip, p, last_p - p + 1 );
+    if found_at <> nil then
+    begin
+      index := found_at - @str[1] + 1;
+      exit( true );
+    end
+    else
+      exit(false);
+  end;
+
+  ceiling := last_p - rx.size + 2;
+
+  // If right string is longer than left, look for it.
+  if length(rx.left) < length(rx.right) then
+  begin
+    remainder := rx.size - length(rx.right);
+    inc( p, remainder );
+    inc( ceiling, remainder );
+    while p < ceiling do
+    begin
+      found_at := bm_search( rx.right, rx.skip, p, last_p - p + 1);
+      if found_at <> nil then
+        if ((found_at - 1)^ in rx.cclass) and
+          str_eq(rx.left, found_at - remainder) then
+        begin
+          index := found_at - remainder - @str[1];
+          exit( true );
+        end
+        else
+          p := found_at + 1
+      else
+        exit( false );
+    end; // while
+    exit( false )
+  end;
+
+  while p < ceiling do
+  begin
+    found_at := bm_search( rx.left, rx.skip, p, last_p - p + 1);
+    if found_at <> nil then
+    begin
+      p := found_at + length(rx.left);
+      if (p^ in rx.cclass) and str_eq( rx.right, p+1 ) then
+      begin
+        index := found_at - @str[1] + 1;
+        exit( true );
+      end
+      else
+        p := found_at + 1;
+    end
+    else
+      exit( false );
+  end;
+
+  exit( false )
+end;
+
+
+
+// Append 2 strings to an ansistring rapidly.  Note: the ansistring's
+// length will be increased by a more than sufficient amount.
+function append2( var dest: ansistring; len0: longint;
+                  s1: pchar; len1: longint;
+                  s2: pchar; len2: longint): longint; inline;
+const  quantum = 599000;
+var  newlength: longint;
+begin
+  newlength := len0 + len1 + len2;
+  // Since setlength() is somewhat costly, we'll do it less
+  // often than you would think.
+  if length( dest ) < newlength then
+    setlength( dest, newlength + quantum );
+  move( s1^, dest[len0 + 1], len1 );
+  move( s2^, dest[len0 + 1 + len1], len2 );
+  exit( newlength );
+end;
+
+procedure replace_matches( const str: ansistring;  var dest: ansistring );
+var
+  engine : TRegexEngine;
+  starti, index, truelength, i : longint;
+  target, repl: string[255];
+begin
+  // Instead of looking for one letter at a time, lump them all
+  // together in a character-class.
+  target := '[';
+  for i := 0 to high(replacements) do
+    target += replacements[i,0];
+  target += ']' + char(0);
+  engine := RegexCreate( @target[1] );
+
+  dest := '';   truelength := 0;
+  starti := 1;
+  while starti <= length(str) do
+    if Regex_search(engine, str, starti, index ) then
+    begin
+      repl := replacements[ pos( str[index], target) - 2, 1 ];
+      truelength := append2(
+        dest, truelength,  @str[index], index-starti,  @repl[1], length(repl) );
+      starti := index + engine.size;
+    end
+    else
+      break;
+  setlength( dest, truelength );
+  dest := dest + Copy( str, starti, length(str)-starti+1);
+end;
+
+
+function count_matches_simple( pattern: pchar; const str: ansistring ): longint;
+var
+  engine : TRegexEngine;
+  start, ceiling, count, index : longint;
+begin
+  engine := RegexCreate( pattern );
+  ceiling := length(str) - engine.size + 2;
+  count := 0;
+  start := 1;
+  while start < ceiling do
+    if Regex_search(engine, str, start, index ) then
+    begin
+      inc(count);
+      start := index + engine.size;
+    end
+    else
+      break;
+
+  exit(count)
+end;
+
+function count_matches( pattern: string[255]; const str: ansistring ): longint;
+var
+  count, p: longint;
+begin
+  pattern += char(0);
+  p := pos( '|', pattern );
+  pattern[p] := char(0);
+  count := count_matches_simple( @pattern[1], str );
+  count += count_matches_simple( @pattern[p+1], str );
+  exit( count )
+end;
+
+
+var
+  sequence, new_seq, lowered : ansiString;
+  line: string[255];
+  i, count, init_length, clean_length : longint;
+  inbuf : array[1..64*1024] of char;
+
+begin
+  settextbuf(input, inbuf);
+  sequence := '';
+  init_length := 0;
+  while not eof do
+  begin
+    readln( line );
+    init_length += length( line ) + 1;
+    if line[1] <> '>' then
+      sequence += line;
+  end;
+  clean_length := length(sequence);
+
+
+  // Count pattern-matches.
+  lowered := lowercase( sequence );
+  for i := low(patterns) to high(patterns) do
+  begin
+    count := count_matches( patterns[i], lowered );
+    writeln( patterns[i], ' ', count);
+  end;
+
+
+  //  Replace.
+  replace_matches(sequence, new_seq);
+
+
+  writeln;
+  writeln( init_length );
+  writeln( clean_length );
+  writeln( length(new_seq) );
+end.
