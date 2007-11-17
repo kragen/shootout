@@ -1,0 +1,485 @@
+{ The Computer Language Benchmarks Game
+  http://shootout.alioth.debian.org
+
+  contributed by Steve Fisher
+  modified by Peter Vreman
+  modified by Steve Fisher
+}
+
+// This version allows * search.
+
+
+const
+  patterns : array[1..9] of string[255] =
+    (
+      'agggtaaa|tttaccct',
+      '[cgt]gggtaaa|tttaccc[acg]',
+      'a[act]ggtaaa|tttacc[agt]t',
+      'ag[act]gtaaa|tttac[agt]ct',
+      'agg[act]taaa|ttta[agt]cct',
+      'aggg[acg]aaa|ttt[cgt]ccct',
+      'agggt[cgt]aa|tt[acg]accct',
+      'agggta[cgt]a|t[acg]taccct',
+      'agggtaa[cgt]|[acg]ttaccct'
+    );
+  replacements : array[0..10,0..1] of string[15] =
+  (
+    ('B', '(c|g|t)'), ('D', '(a|g|t)'), ('H', '(a|c|t)'), ('K', '(g|t)'),
+    ('M', '(a|c)'), ('N', '(a|c|g|t)'), ('R', '(a|g)'), ('S', '(c|t)'),
+    ('V', '(a|c|g)'), ('W', '(a|t)'), ('Y', '(c|t)')
+  );
+
+
+type
+  skip_type = array[low(char) .. high(char)] of integer;
+  TRegexEngine = record
+    left, right, starred: string[255];
+    size: longint;
+    cclass: set of char;
+    skip: skip_type;
+    simple: boolean;
+  end;
+  t_escaped = array[1..255] of boolean;
+
+procedure rx_mark_escapes( const str:string[255]; var dest: string[255];
+                  var escaped: t_escaped);
+var
+  i: longint;
+  flag: boolean;
+begin
+  dest := '';   flag := false;   i := 1;
+  while i <= length(str) do
+  begin
+    if  ('\' = str[i]) and (i < length(str)) then
+      begin   inc(i);   flag := true   end;
+    dest += str[i];
+    escaped[ length(dest) ] := flag;
+    flag := false;
+    inc(i)
+  end;
+end;
+
+procedure rx_parse_pat( const str: string[255];
+                        var left, middle, right: string[255]);
+var
+  temp: string[255];
+  escaped: t_escaped;
+  i,j: longint;
+begin
+  rx_mark_escapes( str, temp, escaped );
+  left := temp;   middle := '';   right := '';
+  for i := 1 to length(temp) do
+    if not escaped[i] then
+      if '[' = temp[i] then
+      begin
+        j := i+1;
+        while not ((temp[j]=']') and not escaped[j]) do
+          inc(j);
+        left := copy(temp, 1, i-1);
+        right := copy(temp, j+1, length(temp) - j);
+        middle := copy(temp, i, j - i + 1);
+        break;
+      end
+      else if ('*' = temp[i]) and (i>1) then
+      begin
+        left := copy(temp,1, i-2);
+        right := copy(temp, i+1, length(temp) - i);
+        if escaped[i-1] then  middle := '\';
+        middle += temp[i-1];
+        break;
+      end;
+end;
+
+
+function RegexCreate( pat: pchar ): TRegexEngine;
+var
+  i: longint;
+  str, middle : string[255];
+  ch: char;
+begin
+  with RegexCreate do
+  begin
+    cclass := [];
+    str := pat;
+    rx_parse_pat( str, left, middle, right );
+    if ('[' = middle[1]) and (']' = middle[length(middle)]) then
+    begin
+      for i := 2 to length(middle) - 1 do
+        cclass := cclass + [ middle[i] ];
+      size := length(left) + 1 + length(right);
+      simple := false;
+    end
+    else if middle <> '' then
+    begin
+      simple := false;
+      size := length(left) + length(right);
+      if '\' = middle[1] then
+        starred := middle[2]
+      else if '.' = middle then
+        starred := ''
+      else
+        starred := middle
+    end
+    else
+    begin
+      simple := true;
+      size := length( left );
+    end;
+    str := left;
+    if simple or (cclass <> []) then
+      if length(str) < length(right) then   str := right;
+    if str <> '' then
+    begin
+      // Set up Boyer-Moore table for longer string.
+      for ch := low(char) to high(char) do
+        skip[ch] := length(str);
+      for i := 1 to length(str) - 1 do
+        skip[ str[i] ] := length(str) - i;
+    end;
+  end;
+end;
+
+function bm_search( const pat: string; const skip: skip_type;
+                    str: pchar; len: longint ): pchar;
+var
+  i, size: longint;
+  where, top, p: pchar;
+begin
+  size := length(pat);
+  if size = 0 then
+    exit( str );
+
+  where := str + size - 1;
+  top := str + len - 1;
+  while where <= top do
+  begin
+    p := where;
+    i := size;
+    while i > 0 do
+      if p^ = pat[i] then
+      begin
+        dec(i);
+        dec(p);
+      end
+      else
+        break;
+    if i = 0 then
+      exit( p+1 );
+    where += skip[ where^ ];
+  end; // while
+  exit( nil )
+end;
+
+
+function str_eq( const str: string; p: pchar): boolean; inline;
+var i: longint;
+begin
+  for i := 1 to length(str) do
+  begin
+    if str[i] <> p^ then
+      exit( false );
+    inc( p )
+  end;
+  exit( true )
+end;
+
+
+// Non-greedy.
+function rx_wild_match( const skip_this, stop_at: string[255]; p: pchar ): pchar;
+var i: longint;
+begin
+  while (p <> nil) and ( p^ <> #0 ) do
+  begin
+    if str_eq( stop_at, p ) then
+      exit( p + length(stop_at) )
+    else if '' = skip_this then
+      inc( p )
+    else if str_eq( skip_this, p ) then
+      for i := 1 to length( skip_this) do
+      begin
+        inc(p);
+        if p^ = #0 then
+          exit( nil );
+      end
+    else
+      exit( nil );
+  end;
+  if stop_at = '' then  exit( p );
+  exit( nil )
+end;
+
+
+
+function Regex_search( const rx: TRegexEngine; const str: ansistring;
+                       start: longint;  var index, len: longint): boolean;
+var
+  p, last_p, ceiling, found_at, just_past: pchar;
+  remainder: longint;
+begin
+  p := @str[start];
+  last_p := @str[length(str)];
+
+  if rx.simple then
+  begin
+    found_at := bm_search( rx.left, rx.skip, p, last_p - p + 1 );
+    if found_at <> nil then
+    begin
+      index := found_at - @str[1] + 1;
+      len := rx.size;
+      exit( true );
+    end
+    else
+      exit(false);
+  end;
+
+  ceiling := last_p - rx.size + 2;
+
+  // Do a * search?
+  if rx.cclass = [] then
+  begin
+    while p < ceiling do
+    begin
+      found_at := bm_search( rx.left, rx.skip, p, last_p - p + 1 );
+      if found_at = nil then
+        exit( false );
+      just_past := rx_wild_match(
+        rx.starred, rx.right, found_at + length(rx.left) );
+      if just_past = nil then
+        p := found_at + 1
+      else
+      begin
+        index := found_at - pchar(str) + 1;
+        len := just_past - found_at;
+        exit( true )
+      end;
+    end; // while
+    exit( false );
+  end;
+
+  // Do a character-class search.
+  // If right string is longer than left, look for it.
+  if length(rx.left) < length(rx.right) then
+  begin
+    remainder := rx.size - length(rx.right);
+    inc( p, remainder );
+    inc( ceiling, remainder );
+    while p < ceiling do
+    begin
+      found_at := bm_search( rx.right, rx.skip, p, last_p - p + 1);
+      if found_at <> nil then
+        if ((found_at - 1)^ in rx.cclass) and
+          str_eq(rx.left, found_at - remainder) then
+        begin
+          index := found_at - remainder - @str[1];
+          len := rx.size;
+          exit( true );
+        end
+        else
+          p := found_at + 1
+      else
+        exit( false );
+    end; // while
+    exit( false )
+  end;
+
+  while p < ceiling do
+  begin
+    found_at := bm_search( rx.left, rx.skip, p, last_p - p + 1);
+    if found_at <> nil then
+    begin
+      p := found_at + length(rx.left);
+      if (p^ in rx.cclass) and str_eq( rx.right, p+1 ) then
+      begin
+        index := found_at - @str[1] + 1;
+        exit( true );
+      end
+      else
+        p := found_at + 1;
+    end
+    else
+      exit( false );
+  end;
+
+  exit( false )
+end;
+
+
+
+// Append 2 strings to an ansistring rapidly.  Note: the ansistring's
+// length will be increased by a more than sufficient amount.
+function append2( var dest: ansistring; len0: longint;
+                  s1: pchar; len1: longint;
+                  s2: pchar; len2: longint): longint; inline;
+const  quantum = 599000;
+var  newlength: longint;
+begin
+  newlength := len0 + len1 + len2;
+  // Since setlength() is somewhat costly, we'll do it less
+  // often than you would think.
+  if length( dest ) < newlength then
+    setlength( dest, newlength + quantum );
+  move( s1^, dest[len0 + 1], len1 );
+  move( s2^, dest[len0 + 1 + len1], len2 );
+  exit( newlength );
+end;
+
+procedure rx_gsub(const this, that: string[255];
+                  const str: ansistring;  var dest: ansistring );
+var
+  engine : TRegexEngine;
+  starti, index, foundsize, truelength: longint;
+  temp: string[255];
+begin
+  temp := this + #0;
+  engine := RegexCreate( @temp[1] );
+  dest := '';   truelength := 0;
+  starti := 1;
+  while starti <= length(str) do
+    if Regex_search(engine, str, starti, index, foundsize) then
+    begin
+      truelength := append2(
+        dest, truelength,  @str[starti], index-starti,  @that[1], length(that) );
+      starti := index + foundsize;
+    end
+    else
+      break;
+  setlength( dest, truelength );
+  dest := dest + Copy( str, starti, length(str)-starti+1);
+end;
+
+
+procedure replace_matches( const str: ansistring;  var dest: ansistring );
+var
+  engine : TRegexEngine;
+  starti, index, foundsize, truelength, i : longint;
+  target, repl: string[255];
+begin
+  // Instead of looking for one letter at a time, lump them all
+  // together in a character-class.
+  target := '[';
+  for i := 0 to high(replacements) do
+    target += replacements[i,0];
+  target += ']' + char(0);
+  engine := RegexCreate( @target[1] );
+
+  dest := '';   truelength := 0;
+  starti := 1;
+  while starti <= length(str) do
+    if Regex_search(engine, str, starti, index, foundsize) then
+    begin
+      repl := replacements[ pos( str[index], target) - 2, 1 ];
+      truelength := append2(
+        dest, truelength,  @str[starti], index-starti,  @repl[1], length(repl) );
+      starti := index + engine.size;
+    end
+    else
+      break;
+  setlength( dest, truelength );
+  dest := dest + Copy( str, starti, length(str)-starti+1);
+end;
+
+type t_cc = set of char;
+function cclass2str( cc: t_cc): string;
+var
+  s: string;
+  ch: char;
+begin
+  s := '';
+  for ch := char(32) to char(127) do
+    if ch in cc then
+      s += ch;
+  exit(s)
+end;
+
+function count_matches_simple( pattern: pchar; const str: ansistring ): longint;
+var
+  engine : TRegexEngine;
+  start, ceiling, count, index, foundsize : longint;
+begin
+  engine := RegexCreate( pattern );
+
+  {
+  with engine do
+  begin
+    if pos('[', pattern) > 0 then
+    begin
+      writeln('Pattern: ', pattern );
+      writeln('Left: ', left , '<<');
+      writeln('cclass: ', cclass2str( cclass ), '<<');
+      writeln('Right: ', right, '<<' );
+      writeln('Starred: ', starred, '<<' );
+      halt;
+    end;
+  end;
+  }
+
+  ceiling := length(str) - engine.size + 2;
+  count := 0;
+  start := 1;
+  while start < ceiling do
+    if Regex_search(engine, str, start, index, foundsize ) then
+    begin
+      inc(count);
+      // start := index + engine.size;
+      start := index + foundsize;
+    end
+    else
+      break;
+
+  exit(count)
+end;
+
+function count_matches( pattern: string[255]; const str: ansistring ): longint;
+var
+  count, p: longint;
+begin
+  pattern += char(0);
+  p := pos( '|', pattern );
+  pattern[p] := char(0);
+  count := count_matches_simple( @pattern[1], str );
+  count += count_matches_simple( @pattern[p+1], str );
+  exit( count )
+end;
+
+
+var
+  dirty_sequence, sequence, new_seq, temp : ansiString;
+  line, linefeed: string[255];
+  truelength, i, count: longint;
+  inbuf : array[1..64*1024] of char;
+
+begin
+  settextbuf(input, inbuf);
+  linefeed := #10;
+  dirty_sequence := '';
+  truelength := 0;
+  while not eof do
+  begin
+    readln( line );
+    truelength := append2(dirty_sequence,truelength,
+        @line[1],length(line), @linefeed[1],1);
+  end;
+  setlength( dirty_sequence, truelength );
+
+  rx_gsub( '>.*' + linefeed, '', dirty_sequence, temp );
+  rx_gsub( linefeed, '', temp, sequence );
+
+
+  // Count pattern-matches.
+  temp := lowercase( sequence );
+  for i := low(patterns) to high(patterns) do
+  begin
+    count := count_matches( patterns[i], temp );
+    writeln( patterns[i], ' ', count);
+  end;
+
+
+  //  Replace.
+  replace_matches(sequence, new_seq);
+
+
+  writeln;
+  writeln( length( dirty_sequence ) );
+  writeln( length( sequence ) );
+  writeln( length(new_seq) );
+end.

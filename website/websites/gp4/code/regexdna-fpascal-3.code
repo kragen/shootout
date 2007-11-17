@@ -1,0 +1,485 @@
+<span class="hl com">{ The Computer Language Benchmarks Game</span>
+<span class="hl com">  http://shootout.alioth.debian.org</span>
+<span class="hl com"></span>
+<span class="hl com">  contributed by Steve Fisher</span>
+<span class="hl com">  modified by Peter Vreman</span>
+<span class="hl com">  modified by Steve Fisher</span>
+<span class="hl com">}</span>
+
+<span class="hl slc">// This version allows * search.</span>
+
+
+<span class="hl kwa">const</span>
+  patterns <span class="hl sym">:</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">.</span><span class="hl num">.9</span><span class="hl sym">]</span> <span class="hl kwa">of string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">] =</span>
+    <span class="hl sym">(</span>
+      <span class="hl str">'agggtaaa|tttaccct'</span><span class="hl sym">,</span>
+      <span class="hl str">'[cgt]gggtaaa|tttaccc[acg]'</span><span class="hl sym">,</span>
+      <span class="hl str">'a[act]ggtaaa|tttacc[agt]t'</span><span class="hl sym">,</span>
+      <span class="hl str">'ag[act]gtaaa|tttac[agt]ct'</span><span class="hl sym">,</span>
+      <span class="hl str">'agg[act]taaa|ttta[agt]cct'</span><span class="hl sym">,</span>
+      <span class="hl str">'aggg[acg]aaa|ttt[cgt]ccct'</span><span class="hl sym">,</span>
+      <span class="hl str">'agggt[cgt]aa|tt[acg]accct'</span><span class="hl sym">,</span>
+      <span class="hl str">'agggta[cgt]a|t[acg]taccct'</span><span class="hl sym">,</span>
+      <span class="hl str">'agggtaa[cgt]|[acg]ttaccct'</span>
+    <span class="hl sym">);</span>
+  replacements <span class="hl sym">:</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">.</span><span class="hl num">.10</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">.</span><span class="hl num">.1</span><span class="hl sym">]</span> <span class="hl kwa">of string</span><span class="hl sym">[</span><span class="hl num">15</span><span class="hl sym">] =</span>
+  <span class="hl sym">(</span>
+    <span class="hl sym">(</span><span class="hl str">'B'</span><span class="hl sym">,</span> <span class="hl str">'(c|g|t)'</span><span class="hl sym">), (</span><span class="hl str">'D'</span><span class="hl sym">,</span> <span class="hl str">'(a|g|t)'</span><span class="hl sym">), (</span><span class="hl str">'H'</span><span class="hl sym">,</span> <span class="hl str">'(a|c|t)'</span><span class="hl sym">), (</span><span class="hl str">'K'</span><span class="hl sym">,</span> <span class="hl str">'(g|t)'</span><span class="hl sym">),</span>
+    <span class="hl sym">(</span><span class="hl str">'M'</span><span class="hl sym">,</span> <span class="hl str">'(a|c)'</span><span class="hl sym">), (</span><span class="hl str">'N'</span><span class="hl sym">,</span> <span class="hl str">'(a|c|g|t)'</span><span class="hl sym">), (</span><span class="hl str">'R'</span><span class="hl sym">,</span> <span class="hl str">'(a|g)'</span><span class="hl sym">), (</span><span class="hl str">'S'</span><span class="hl sym">,</span> <span class="hl str">'(c|t)'</span><span class="hl sym">),</span>
+    <span class="hl sym">(</span><span class="hl str">'V'</span><span class="hl sym">,</span> <span class="hl str">'(a|c|g)'</span><span class="hl sym">), (</span><span class="hl str">'W'</span><span class="hl sym">,</span> <span class="hl str">'(a|t)'</span><span class="hl sym">), (</span><span class="hl str">'Y'</span><span class="hl sym">,</span> <span class="hl str">'(c|t)'</span><span class="hl sym">)</span>
+  <span class="hl sym">);</span>
+
+
+<span class="hl kwa">type</span>
+  skip_type <span class="hl sym">=</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl kwd">low</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">) ..</span> <span class="hl kwd">high</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">)]</span> <span class="hl kwa">of</span> <span class="hl kwb">integer</span><span class="hl sym">;</span>
+  TRegexEngine <span class="hl sym">=</span> <span class="hl kwa">record</span>
+    left<span class="hl sym">,</span> right<span class="hl sym">,</span> starred<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+    size<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+    cclass<span class="hl sym">:</span> <span class="hl kwa">set of</span> <span class="hl kwb">char</span><span class="hl sym">;</span>
+    skip<span class="hl sym">:</span> skip_type<span class="hl sym">;</span>
+    simple<span class="hl sym">:</span> <span class="hl kwb">boolean</span><span class="hl sym">;</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  t_escaped <span class="hl sym">=</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">.</span><span class="hl num">.255</span><span class="hl sym">]</span> <span class="hl kwa">of</span> <span class="hl kwb">boolean</span><span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> <span class="hl kwd">rx_mark_escapes</span><span class="hl sym">(</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span><span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span> <span class="hl kwa">var</span> dest<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+                  <span class="hl kwa">var</span> escaped<span class="hl sym">:</span> t_escaped<span class="hl sym">);</span>
+<span class="hl kwa">var</span>
+  i<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  flag<span class="hl sym">:</span> <span class="hl kwb">boolean</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  dest <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>   flag <span class="hl sym">:=</span> <span class="hl kwb">false</span><span class="hl sym">;</span>   i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> i <span class="hl sym">&lt;=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)</span> <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    <span class="hl kwa">if</span>  <span class="hl sym">(</span><span class="hl str">'\'</span> <span class="hl sym">=</span> str<span class="hl sym">[</span>i<span class="hl sym">])</span> <span class="hl kwa">and</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">))</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>   <span class="hl kwd">inc</span><span class="hl sym">(</span>i<span class="hl sym">);</span>   flag <span class="hl sym">:=</span> <span class="hl kwb">true</span>   <span class="hl kwa">end</span><span class="hl sym">;</span>
+    dest <span class="hl sym">+=</span> str<span class="hl sym">[</span>i<span class="hl sym">];</span>
+    escaped<span class="hl sym">[</span> <span class="hl kwd">length</span><span class="hl sym">(</span>dest<span class="hl sym">) ] :=</span> flag<span class="hl sym">;</span>
+    flag <span class="hl sym">:=</span> <span class="hl kwb">false</span><span class="hl sym">;</span>
+    <span class="hl kwd">inc</span><span class="hl sym">(</span>i<span class="hl sym">)</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> <span class="hl kwd">rx_parse_pat</span><span class="hl sym">(</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+                        <span class="hl kwa">var</span> left<span class="hl sym">,</span> middle<span class="hl sym">,</span> right<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">]);</span>
+<span class="hl kwa">var</span>
+  temp<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+  escaped<span class="hl sym">:</span> t_escaped<span class="hl sym">;</span>
+  i<span class="hl sym">,</span>j<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  <span class="hl kwd">rx_mark_escapes</span><span class="hl sym">(</span> str<span class="hl sym">,</span> temp<span class="hl sym">,</span> escaped <span class="hl sym">);</span>
+  left <span class="hl sym">:=</span> temp<span class="hl sym">;</span>   middle <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>   right <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl kwa">to</span> <span class="hl kwd">length</span><span class="hl sym">(</span>temp<span class="hl sym">)</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">if not</span> escaped<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">if</span> <span class="hl str">'['</span> <span class="hl sym">=</span> temp<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>
+        j <span class="hl sym">:=</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">while not</span> <span class="hl sym">((</span>temp<span class="hl sym">[</span>j<span class="hl sym">]=</span><span class="hl str">']'</span><span class="hl sym">)</span> <span class="hl kwa">and not</span> escaped<span class="hl sym">[</span>j<span class="hl sym">])</span> <span class="hl kwa">do</span>
+          <span class="hl kwd">inc</span><span class="hl sym">(</span>j<span class="hl sym">);</span>
+        left <span class="hl sym">:=</span> <span class="hl kwd">copy</span><span class="hl sym">(</span>temp<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">);</span>
+        right <span class="hl sym">:=</span> <span class="hl kwd">copy</span><span class="hl sym">(</span>temp<span class="hl sym">,</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl kwd">length</span><span class="hl sym">(</span>temp<span class="hl sym">) -</span> j<span class="hl sym">);</span>
+        middle <span class="hl sym">:=</span> <span class="hl kwd">copy</span><span class="hl sym">(</span>temp<span class="hl sym">,</span> i<span class="hl sym">,</span> j <span class="hl sym">-</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        break<span class="hl sym">;</span>
+      <span class="hl kwa">end</span>
+      <span class="hl kwa">else if</span> <span class="hl sym">(</span><span class="hl str">'*'</span> <span class="hl sym">=</span> temp<span class="hl sym">[</span>i<span class="hl sym">])</span> <span class="hl kwa">and</span> <span class="hl sym">(</span>i<span class="hl sym">&gt;</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>
+        left <span class="hl sym">:=</span> <span class="hl kwd">copy</span><span class="hl sym">(</span>temp<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">,</span> i<span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">);</span>
+        right <span class="hl sym">:=</span> <span class="hl kwd">copy</span><span class="hl sym">(</span>temp<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl kwd">length</span><span class="hl sym">(</span>temp<span class="hl sym">) -</span> i<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> escaped<span class="hl sym">[</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> <span class="hl kwa">then</span>  middle <span class="hl sym">:=</span> <span class="hl str">'\'</span><span class="hl sym">;</span>
+        middle <span class="hl sym">+=</span> temp<span class="hl sym">[</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">];</span>
+        break<span class="hl sym">;</span>
+      <span class="hl kwa">end</span><span class="hl sym">;</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+<span class="hl kwa">function</span> <span class="hl kwd">RegexCreate</span><span class="hl sym">(</span> pat<span class="hl sym">:</span> pchar <span class="hl sym">):</span> TRegexEngine<span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  i<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  str<span class="hl sym">,</span> middle <span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+  ch<span class="hl sym">:</span> <span class="hl kwb">char</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  <span class="hl kwa">with</span> RegexCreate <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    cclass <span class="hl sym">:= [];</span>
+    str <span class="hl sym">:=</span> pat<span class="hl sym">;</span>
+    <span class="hl kwd">rx_parse_pat</span><span class="hl sym">(</span> str<span class="hl sym">,</span> left<span class="hl sym">,</span> middle<span class="hl sym">,</span> right <span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl str">'['</span> <span class="hl sym">=</span> middle<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span> <span class="hl kwa">and</span> <span class="hl sym">(</span><span class="hl str">']'</span> <span class="hl sym">=</span> middle<span class="hl sym">[</span><span class="hl kwd">length</span><span class="hl sym">(</span>middle<span class="hl sym">)])</span> <span class="hl kwa">then</span>
+    <span class="hl kwa">begin</span>
+      <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">2</span> <span class="hl kwa">to</span> <span class="hl kwd">length</span><span class="hl sym">(</span>middle<span class="hl sym">) -</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+        cclass <span class="hl sym">:=</span> cclass <span class="hl sym">+ [</span> middle<span class="hl sym">[</span>i<span class="hl sym">] ];</span>
+      size <span class="hl sym">:=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>left<span class="hl sym">) +</span> <span class="hl num">1</span> <span class="hl sym">+</span> <span class="hl kwd">length</span><span class="hl sym">(</span>right<span class="hl sym">);</span>
+      simple <span class="hl sym">:=</span> <span class="hl kwb">false</span><span class="hl sym">;</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else if</span> middle <span class="hl sym">&lt;&gt;</span> <span class="hl str">''</span> <span class="hl kwa">then</span>
+    <span class="hl kwa">begin</span>
+      simple <span class="hl sym">:=</span> <span class="hl kwb">false</span><span class="hl sym">;</span>
+      size <span class="hl sym">:=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>left<span class="hl sym">) +</span> <span class="hl kwd">length</span><span class="hl sym">(</span>right<span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl str">'\'</span> <span class="hl sym">=</span> middle<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]</span> <span class="hl kwa">then</span>
+        starred <span class="hl sym">:=</span> middle<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">]</span>
+      <span class="hl kwa">else if</span> <span class="hl str">'.'</span> <span class="hl sym">=</span> middle <span class="hl kwa">then</span>
+        starred <span class="hl sym">:=</span> <span class="hl str">''</span>
+      <span class="hl kwa">else</span>
+        starred <span class="hl sym">:=</span> middle
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+    <span class="hl kwa">begin</span>
+      simple <span class="hl sym">:=</span> <span class="hl kwb">true</span><span class="hl sym">;</span>
+      size <span class="hl sym">:=</span> <span class="hl kwd">length</span><span class="hl sym">(</span> left <span class="hl sym">);</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span>
+    str <span class="hl sym">:=</span> left<span class="hl sym">;</span>
+    <span class="hl kwa">if</span> simple <span class="hl kwa">or</span> <span class="hl sym">(</span>cclass <span class="hl sym">&lt;&gt; [])</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">if</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">) &lt;</span> <span class="hl kwd">length</span><span class="hl sym">(</span>right<span class="hl sym">)</span> <span class="hl kwa">then</span>   str <span class="hl sym">:=</span> right<span class="hl sym">;</span>
+    <span class="hl kwa">if</span> str <span class="hl sym">&lt;&gt;</span> <span class="hl str">''</span> <span class="hl kwa">then</span>
+    <span class="hl kwa">begin</span>
+      <span class="hl slc">// Set up Boyer-Moore table for longer string.</span>
+      <span class="hl kwa">for</span> ch <span class="hl sym">:=</span> <span class="hl kwd">low</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">)</span> <span class="hl kwa">to</span> <span class="hl kwd">high</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">)</span> <span class="hl kwa">do</span>
+        skip<span class="hl sym">[</span>ch<span class="hl sym">] :=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">);</span>
+      <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl kwa">to</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">) -</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+        skip<span class="hl sym">[</span> str<span class="hl sym">[</span>i<span class="hl sym">] ] :=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">) -</span> i<span class="hl sym">;</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">function</span> <span class="hl kwd">bm_search</span><span class="hl sym">(</span> <span class="hl kwa">const</span> pat<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">;</span> <span class="hl kwa">const</span> skip<span class="hl sym">:</span> skip_type<span class="hl sym">;</span>
+                    str<span class="hl sym">:</span> pchar<span class="hl sym">;</span> len<span class="hl sym">:</span> <span class="hl kwb">longint</span> <span class="hl sym">):</span> pchar<span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  i<span class="hl sym">,</span> size<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  where<span class="hl sym">,</span> top<span class="hl sym">,</span> p<span class="hl sym">:</span> pchar<span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  size <span class="hl sym">:=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>pat<span class="hl sym">);</span>
+  <span class="hl kwa">if</span> size <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+    <span class="hl kwd">exit</span><span class="hl sym">(</span> str <span class="hl sym">);</span>
+
+  where <span class="hl sym">:=</span> str <span class="hl sym">+</span> size <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  top <span class="hl sym">:=</span> str <span class="hl sym">+</span> len <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> where <span class="hl sym">&lt;=</span> top <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    p <span class="hl sym">:=</span> where<span class="hl sym">;</span>
+    i <span class="hl sym">:=</span> size<span class="hl sym">;</span>
+    <span class="hl kwa">while</span> i <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">do</span>
+      <span class="hl kwa">if</span> p<span class="hl sym">^ =</span> pat<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>
+        <span class="hl kwd">dec</span><span class="hl sym">(</span>i<span class="hl sym">);</span>
+        <span class="hl kwd">dec</span><span class="hl sym">(</span>p<span class="hl sym">);</span>
+      <span class="hl kwa">end</span>
+      <span class="hl kwa">else</span>
+        break<span class="hl sym">;</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span> p<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">);</span>
+    where <span class="hl sym">+=</span> skip<span class="hl sym">[</span> where<span class="hl sym">^ ];</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span> <span class="hl slc">// while</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwa">nil</span> <span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+<span class="hl kwa">function</span> <span class="hl kwd">str_eq</span><span class="hl sym">(</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">;</span> p<span class="hl sym">:</span> pchar<span class="hl sym">):</span> <span class="hl kwb">boolean</span><span class="hl sym">;</span> <span class="hl kwa">inline</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span> i<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl kwa">to</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)</span> <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    <span class="hl kwa">if</span> str<span class="hl sym">[</span>i<span class="hl sym">] &lt;&gt;</span> p<span class="hl sym">^</span> <span class="hl kwa">then</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">);</span>
+    <span class="hl kwd">inc</span><span class="hl sym">(</span> p <span class="hl sym">)</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">true</span> <span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+<span class="hl slc">// Non-greedy.</span>
+<span class="hl kwa">function</span> <span class="hl kwd">rx_wild_match</span><span class="hl sym">(</span> <span class="hl kwa">const</span> skip_this<span class="hl sym">,</span> stop_at<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span> p<span class="hl sym">:</span> pchar <span class="hl sym">):</span> pchar<span class="hl sym">;</span>
+<span class="hl kwa">var</span> i<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>p <span class="hl sym">&lt;&gt;</span> <span class="hl kwa">nil</span><span class="hl sym">)</span> <span class="hl kwa">and</span> <span class="hl sym">(</span> p<span class="hl sym">^ &lt;&gt;</span> <span class="hl esc">#0</span> <span class="hl sym">)</span> <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    <span class="hl kwa">if</span> <span class="hl kwd">str_eq</span><span class="hl sym">(</span> stop_at<span class="hl sym">,</span> p <span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span> p <span class="hl sym">+</span> <span class="hl kwd">length</span><span class="hl sym">(</span>stop_at<span class="hl sym">) )</span>
+    <span class="hl kwa">else if</span> <span class="hl str">''</span> <span class="hl sym">=</span> skip_this <span class="hl kwa">then</span>
+      <span class="hl kwd">inc</span><span class="hl sym">(</span> p <span class="hl sym">)</span>
+    <span class="hl kwa">else if</span> <span class="hl kwd">str_eq</span><span class="hl sym">(</span> skip_this<span class="hl sym">,</span> p <span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl kwa">to</span> <span class="hl kwd">length</span><span class="hl sym">(</span> skip_this<span class="hl sym">)</span> <span class="hl kwa">do</span>
+      <span class="hl kwa">begin</span>
+        <span class="hl kwd">inc</span><span class="hl sym">(</span>p<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> p<span class="hl sym">^ =</span> <span class="hl esc">#0</span> <span class="hl kwa">then</span>
+          <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwa">nil</span> <span class="hl sym">);</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwa">nil</span> <span class="hl sym">);</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  <span class="hl kwa">if</span> stop_at <span class="hl sym">=</span> <span class="hl str">''</span> <span class="hl kwa">then</span>  <span class="hl kwd">exit</span><span class="hl sym">(</span> p <span class="hl sym">);</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwa">nil</span> <span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+
+<span class="hl kwa">function</span> <span class="hl kwd">Regex_search</span><span class="hl sym">(</span> <span class="hl kwa">const</span> rx<span class="hl sym">:</span> TRegexEngine<span class="hl sym">;</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span> ansistring<span class="hl sym">;</span>
+                       start<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>  <span class="hl kwa">var</span> index<span class="hl sym">,</span> len<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">):</span> <span class="hl kwb">boolean</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  p<span class="hl sym">,</span> last_p<span class="hl sym">,</span> ceiling<span class="hl sym">,</span> found_at<span class="hl sym">,</span> just_past<span class="hl sym">:</span> pchar<span class="hl sym">;</span>
+  remainder<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  p <span class="hl sym">:= &#64;</span>str<span class="hl sym">[</span>start<span class="hl sym">];</span>
+  last_p <span class="hl sym">:= &#64;</span>str<span class="hl sym">[</span><span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)];</span>
+
+  <span class="hl kwa">if</span> rx<span class="hl sym">.</span>simple <span class="hl kwa">then</span>
+  <span class="hl kwa">begin</span>
+    found_at <span class="hl sym">:=</span> <span class="hl kwd">bm_search</span><span class="hl sym">(</span> rx<span class="hl sym">.</span>left<span class="hl sym">,</span> rx<span class="hl sym">.</span>skip<span class="hl sym">,</span> p<span class="hl sym">,</span> last_p <span class="hl sym">-</span> p <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">);</span>
+    <span class="hl kwa">if</span> found_at <span class="hl sym">&lt;&gt;</span> <span class="hl kwa">nil then</span>
+    <span class="hl kwa">begin</span>
+      index <span class="hl sym">:=</span> found_at <span class="hl sym">- &#64;</span>str<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      len <span class="hl sym">:=</span> rx<span class="hl sym">.</span>size<span class="hl sym">;</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">true</span> <span class="hl sym">);</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl kwb">false</span><span class="hl sym">);</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+  ceiling <span class="hl sym">:=</span> last_p <span class="hl sym">-</span> rx<span class="hl sym">.</span>size <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">;</span>
+
+  <span class="hl slc">// Do a * search?</span>
+  <span class="hl kwa">if</span> rx<span class="hl sym">.</span>cclass <span class="hl sym">= []</span> <span class="hl kwa">then</span>
+  <span class="hl kwa">begin</span>
+    <span class="hl kwa">while</span> p <span class="hl sym">&lt;</span> ceiling <span class="hl kwa">do</span>
+    <span class="hl kwa">begin</span>
+      found_at <span class="hl sym">:=</span> <span class="hl kwd">bm_search</span><span class="hl sym">(</span> rx<span class="hl sym">.</span>left<span class="hl sym">,</span> rx<span class="hl sym">.</span>skip<span class="hl sym">,</span> p<span class="hl sym">,</span> last_p <span class="hl sym">-</span> p <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">);</span>
+      <span class="hl kwa">if</span> found_at <span class="hl sym">=</span> <span class="hl kwa">nil then</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">);</span>
+      just_past <span class="hl sym">:=</span> <span class="hl kwd">rx_wild_match</span><span class="hl sym">(</span>
+        rx<span class="hl sym">.</span>starred<span class="hl sym">,</span> rx<span class="hl sym">.</span>right<span class="hl sym">,</span> found_at <span class="hl sym">+</span> <span class="hl kwd">length</span><span class="hl sym">(</span>rx<span class="hl sym">.</span>left<span class="hl sym">) );</span>
+      <span class="hl kwa">if</span> just_past <span class="hl sym">=</span> <span class="hl kwa">nil then</span>
+        p <span class="hl sym">:=</span> found_at <span class="hl sym">+</span> <span class="hl num">1</span>
+      <span class="hl kwa">else</span>
+      <span class="hl kwa">begin</span>
+        index <span class="hl sym">:=</span> found_at <span class="hl sym">-</span> <span class="hl kwd">pchar</span><span class="hl sym">(</span>str<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        len <span class="hl sym">:=</span> just_past <span class="hl sym">-</span> found_at<span class="hl sym">;</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">true</span> <span class="hl sym">)</span>
+      <span class="hl kwa">end</span><span class="hl sym">;</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span> <span class="hl slc">// while</span>
+    <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">);</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+  <span class="hl slc">// Do a character-class search.</span>
+  <span class="hl slc">// If right string is longer than left, look for it.</span>
+  <span class="hl kwa">if</span> <span class="hl kwd">length</span><span class="hl sym">(</span>rx<span class="hl sym">.</span>left<span class="hl sym">) &lt;</span> <span class="hl kwd">length</span><span class="hl sym">(</span>rx<span class="hl sym">.</span>right<span class="hl sym">)</span> <span class="hl kwa">then</span>
+  <span class="hl kwa">begin</span>
+    remainder <span class="hl sym">:=</span> rx<span class="hl sym">.</span>size <span class="hl sym">-</span> <span class="hl kwd">length</span><span class="hl sym">(</span>rx<span class="hl sym">.</span>right<span class="hl sym">);</span>
+    <span class="hl kwd">inc</span><span class="hl sym">(</span> p<span class="hl sym">,</span> remainder <span class="hl sym">);</span>
+    <span class="hl kwd">inc</span><span class="hl sym">(</span> ceiling<span class="hl sym">,</span> remainder <span class="hl sym">);</span>
+    <span class="hl kwa">while</span> p <span class="hl sym">&lt;</span> ceiling <span class="hl kwa">do</span>
+    <span class="hl kwa">begin</span>
+      found_at <span class="hl sym">:=</span> <span class="hl kwd">bm_search</span><span class="hl sym">(</span> rx<span class="hl sym">.</span>right<span class="hl sym">,</span> rx<span class="hl sym">.</span>skip<span class="hl sym">,</span> p<span class="hl sym">,</span> last_p <span class="hl sym">-</span> p <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+      <span class="hl kwa">if</span> found_at <span class="hl sym">&lt;&gt;</span> <span class="hl kwa">nil then</span>
+        <span class="hl kwa">if</span> <span class="hl sym">((</span>found_at <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)^</span> <span class="hl kwa">in</span> rx<span class="hl sym">.</span>cclass<span class="hl sym">)</span> <span class="hl kwa">and</span>
+          <span class="hl kwd">str_eq</span><span class="hl sym">(</span>rx<span class="hl sym">.</span>left<span class="hl sym">,</span> found_at <span class="hl sym">-</span> remainder<span class="hl sym">)</span> <span class="hl kwa">then</span>
+        <span class="hl kwa">begin</span>
+          index <span class="hl sym">:=</span> found_at <span class="hl sym">-</span> remainder <span class="hl sym">- &#64;</span>str<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+          len <span class="hl sym">:=</span> rx<span class="hl sym">.</span>size<span class="hl sym">;</span>
+          <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">true</span> <span class="hl sym">);</span>
+        <span class="hl kwa">end</span>
+        <span class="hl kwa">else</span>
+          p <span class="hl sym">:=</span> found_at <span class="hl sym">+</span> <span class="hl num">1</span>
+      <span class="hl kwa">else</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">);</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span> <span class="hl slc">// while</span>
+    <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">)</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+  <span class="hl kwa">while</span> p <span class="hl sym">&lt;</span> ceiling <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    found_at <span class="hl sym">:=</span> <span class="hl kwd">bm_search</span><span class="hl sym">(</span> rx<span class="hl sym">.</span>left<span class="hl sym">,</span> rx<span class="hl sym">.</span>skip<span class="hl sym">,</span> p<span class="hl sym">,</span> last_p <span class="hl sym">-</span> p <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl kwa">if</span> found_at <span class="hl sym">&lt;&gt;</span> <span class="hl kwa">nil then</span>
+    <span class="hl kwa">begin</span>
+      p <span class="hl sym">:=</span> found_at <span class="hl sym">+</span> <span class="hl kwd">length</span><span class="hl sym">(</span>rx<span class="hl sym">.</span>left<span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>p<span class="hl sym">^</span> <span class="hl kwa">in</span> rx<span class="hl sym">.</span>cclass<span class="hl sym">)</span> <span class="hl kwa">and</span> <span class="hl kwd">str_eq</span><span class="hl sym">(</span> rx<span class="hl sym">.</span>right<span class="hl sym">,</span> p<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>
+        index <span class="hl sym">:=</span> found_at <span class="hl sym">- &#64;</span>str<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">true</span> <span class="hl sym">);</span>
+      <span class="hl kwa">end</span>
+      <span class="hl kwa">else</span>
+        p <span class="hl sym">:=</span> found_at <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">);</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+  <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl kwb">false</span> <span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+
+<span class="hl slc">// Append 2 strings to an ansistring rapidly.  Note: the ansistring's</span>
+<span class="hl slc">// length will be increased by a more than sufficient amount.</span>
+<span class="hl kwa">function</span> <span class="hl kwd">append2</span><span class="hl sym">(</span> <span class="hl kwa">var</span> dest<span class="hl sym">:</span> ansistring<span class="hl sym">;</span> len0<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+                  s1<span class="hl sym">:</span> pchar<span class="hl sym">;</span> len1<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+                  s2<span class="hl sym">:</span> pchar<span class="hl sym">;</span> len2<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">):</span> <span class="hl kwb">longint</span><span class="hl sym">;</span> <span class="hl kwa">inline</span><span class="hl sym">;</span>
+<span class="hl kwa">const</span>  quantum <span class="hl sym">=</span> <span class="hl num">599000</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span>  newlength<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  newlength <span class="hl sym">:=</span> len0 <span class="hl sym">+</span> len1 <span class="hl sym">+</span> len2<span class="hl sym">;</span>
+  <span class="hl slc">// Since setlength() is somewhat costly, we'll do it less</span>
+  <span class="hl slc">// often than you would think.</span>
+  <span class="hl kwa">if</span> <span class="hl kwd">length</span><span class="hl sym">(</span> dest <span class="hl sym">) &lt;</span> newlength <span class="hl kwa">then</span>
+    <span class="hl kwd">setlength</span><span class="hl sym">(</span> dest<span class="hl sym">,</span> newlength <span class="hl sym">+</span> quantum <span class="hl sym">);</span>
+  <span class="hl kwd">move</span><span class="hl sym">(</span> s1<span class="hl sym">^,</span> dest<span class="hl sym">[</span>len0 <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">],</span> len1 <span class="hl sym">);</span>
+  <span class="hl kwd">move</span><span class="hl sym">(</span> s2<span class="hl sym">^,</span> dest<span class="hl sym">[</span>len0 <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">+</span> len1<span class="hl sym">],</span> len2 <span class="hl sym">);</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span> newlength <span class="hl sym">);</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> <span class="hl kwd">rx_gsub</span><span class="hl sym">(</span><span class="hl kwa">const</span> this<span class="hl sym">,</span> that<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+                  <span class="hl kwa">const</span> str<span class="hl sym">:</span> ansistring<span class="hl sym">;</span>  <span class="hl kwa">var</span> dest<span class="hl sym">:</span> ansistring <span class="hl sym">);</span>
+<span class="hl kwa">var</span>
+  engine <span class="hl sym">:</span> TRegexEngine<span class="hl sym">;</span>
+  starti<span class="hl sym">,</span> index<span class="hl sym">,</span> foundsize<span class="hl sym">,</span> truelength<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  temp<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+<span class="hl kwa">begin</span>
+  temp <span class="hl sym">:=</span> this <span class="hl sym">+</span> <span class="hl esc">#0</span><span class="hl sym">;</span>
+  engine <span class="hl sym">:=</span> <span class="hl kwd">RegexCreate</span><span class="hl sym">( &#64;</span>temp<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] );</span>
+  dest <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>   truelength <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  starti <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> starti <span class="hl sym">&lt;=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">if</span> <span class="hl kwd">Regex_search</span><span class="hl sym">(</span>engine<span class="hl sym">,</span> str<span class="hl sym">,</span> starti<span class="hl sym">,</span> index<span class="hl sym">,</span> foundsize<span class="hl sym">)</span> <span class="hl kwa">then</span>
+    <span class="hl kwa">begin</span>
+      truelength <span class="hl sym">:=</span> <span class="hl kwd">append2</span><span class="hl sym">(</span>
+        dest<span class="hl sym">,</span> truelength<span class="hl sym">,  &#64;</span>str<span class="hl sym">[</span>starti<span class="hl sym">],</span> index<span class="hl sym">-</span>starti<span class="hl sym">,  &#64;</span>that<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> <span class="hl kwd">length</span><span class="hl sym">(</span>that<span class="hl sym">) );</span>
+      starti <span class="hl sym">:=</span> index <span class="hl sym">+</span> foundsize<span class="hl sym">;</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      break<span class="hl sym">;</span>
+  <span class="hl kwd">setlength</span><span class="hl sym">(</span> dest<span class="hl sym">,</span> truelength <span class="hl sym">);</span>
+  dest <span class="hl sym">:=</span> dest <span class="hl sym">+</span> <span class="hl kwd">Copy</span><span class="hl sym">(</span> str<span class="hl sym">,</span> starti<span class="hl sym">,</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)-</span>starti<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+<span class="hl kwa">procedure</span> <span class="hl kwd">replace_matches</span><span class="hl sym">(</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span> ansistring<span class="hl sym">;</span>  <span class="hl kwa">var</span> dest<span class="hl sym">:</span> ansistring <span class="hl sym">);</span>
+<span class="hl kwa">var</span>
+  engine <span class="hl sym">:</span> TRegexEngine<span class="hl sym">;</span>
+  starti<span class="hl sym">,</span> index<span class="hl sym">,</span> foundsize<span class="hl sym">,</span> truelength<span class="hl sym">,</span> i <span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  target<span class="hl sym">,</span> repl<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+<span class="hl kwa">begin</span>
+  <span class="hl slc">// Instead of looking for one letter at a time, lump them all</span>
+  <span class="hl slc">// together in a character-class.</span>
+  target <span class="hl sym">:=</span> <span class="hl str">'['</span><span class="hl sym">;</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> <span class="hl kwd">high</span><span class="hl sym">(</span>replacements<span class="hl sym">)</span> <span class="hl kwa">do</span>
+    target <span class="hl sym">+=</span> replacements<span class="hl sym">[</span>i<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">];</span>
+  target <span class="hl sym">+=</span> <span class="hl str">']'</span> <span class="hl sym">+</span> <span class="hl kwb">char</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+  engine <span class="hl sym">:=</span> <span class="hl kwd">RegexCreate</span><span class="hl sym">( &#64;</span>target<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] );</span>
+
+  dest <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>   truelength <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  starti <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> starti <span class="hl sym">&lt;=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">if</span> <span class="hl kwd">Regex_search</span><span class="hl sym">(</span>engine<span class="hl sym">,</span> str<span class="hl sym">,</span> starti<span class="hl sym">,</span> index<span class="hl sym">,</span> foundsize<span class="hl sym">)</span> <span class="hl kwa">then</span>
+    <span class="hl kwa">begin</span>
+      repl <span class="hl sym">:=</span> replacements<span class="hl sym">[</span> <span class="hl kwd">pos</span><span class="hl sym">(</span> str<span class="hl sym">[</span>index<span class="hl sym">],</span> target<span class="hl sym">) -</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">1</span> <span class="hl sym">];</span>
+      truelength <span class="hl sym">:=</span> <span class="hl kwd">append2</span><span class="hl sym">(</span>
+        dest<span class="hl sym">,</span> truelength<span class="hl sym">,  &#64;</span>str<span class="hl sym">[</span>starti<span class="hl sym">],</span> index<span class="hl sym">-</span>starti<span class="hl sym">,  &#64;</span>repl<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> <span class="hl kwd">length</span><span class="hl sym">(</span>repl<span class="hl sym">) );</span>
+      starti <span class="hl sym">:=</span> index <span class="hl sym">+</span> engine<span class="hl sym">.</span>size<span class="hl sym">;</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      break<span class="hl sym">;</span>
+  <span class="hl kwd">setlength</span><span class="hl sym">(</span> dest<span class="hl sym">,</span> truelength <span class="hl sym">);</span>
+  dest <span class="hl sym">:=</span> dest <span class="hl sym">+</span> <span class="hl kwd">Copy</span><span class="hl sym">(</span> str<span class="hl sym">,</span> starti<span class="hl sym">,</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">)-</span>starti<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">type</span> t_cc <span class="hl sym">=</span> <span class="hl kwa">set of</span> <span class="hl kwb">char</span><span class="hl sym">;</span>
+<span class="hl kwa">function</span> <span class="hl kwd">cclass2str</span><span class="hl sym">(</span> cc<span class="hl sym">:</span> t_cc<span class="hl sym">):</span> <span class="hl kwa">string</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  s<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">;</span>
+  ch<span class="hl sym">:</span> <span class="hl kwb">char</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  s <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>
+  <span class="hl kwa">for</span> ch <span class="hl sym">:=</span> <span class="hl kwb">char</span><span class="hl sym">(</span><span class="hl num">32</span><span class="hl sym">)</span> <span class="hl kwa">to</span> <span class="hl kwb">char</span><span class="hl sym">(</span><span class="hl num">127</span><span class="hl sym">)</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">if</span> ch <span class="hl kwa">in</span> cc <span class="hl kwa">then</span>
+      s <span class="hl sym">+=</span> ch<span class="hl sym">;</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span>s<span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">function</span> <span class="hl kwd">count_matches_simple</span><span class="hl sym">(</span> pattern<span class="hl sym">:</span> pchar<span class="hl sym">;</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span> ansistring <span class="hl sym">):</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  engine <span class="hl sym">:</span> TRegexEngine<span class="hl sym">;</span>
+  start<span class="hl sym">,</span> ceiling<span class="hl sym">,</span> count<span class="hl sym">,</span> index<span class="hl sym">,</span> foundsize <span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  engine <span class="hl sym">:=</span> <span class="hl kwd">RegexCreate</span><span class="hl sym">(</span> pattern <span class="hl sym">);</span>
+
+  <span class="hl com">{</span>
+<span class="hl com">  with engine do</span>
+<span class="hl com">  begin</span>
+<span class="hl com">    if pos('[', pattern) &gt; 0 then</span>
+<span class="hl com">    begin</span>
+<span class="hl com">      writeln('Pattern: ', pattern );</span>
+<span class="hl com">      writeln('Left: ', left , '&lt;&lt;');</span>
+<span class="hl com">      writeln('cclass: ', cclass2str( cclass ), '&lt;&lt;');</span>
+<span class="hl com">      writeln('Right: ', right, '&lt;&lt;' );</span>
+<span class="hl com">      writeln('Starred: ', starred, '&lt;&lt;' );</span>
+<span class="hl com">      halt;</span>
+<span class="hl com">    end;</span>
+<span class="hl com">  end;</span>
+<span class="hl com">  }</span>
+
+  ceiling <span class="hl sym">:=</span> <span class="hl kwd">length</span><span class="hl sym">(</span>str<span class="hl sym">) -</span> engine<span class="hl sym">.</span>size <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">;</span>
+  count <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  start <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> start <span class="hl sym">&lt;</span> ceiling <span class="hl kwa">do</span>
+    <span class="hl kwa">if</span> <span class="hl kwd">Regex_search</span><span class="hl sym">(</span>engine<span class="hl sym">,</span> str<span class="hl sym">,</span> start<span class="hl sym">,</span> index<span class="hl sym">,</span> foundsize <span class="hl sym">)</span> <span class="hl kwa">then</span>
+    <span class="hl kwa">begin</span>
+      <span class="hl kwd">inc</span><span class="hl sym">(</span>count<span class="hl sym">);</span>
+      <span class="hl slc">// start := index + engine.size;</span>
+      start <span class="hl sym">:=</span> index <span class="hl sym">+</span> foundsize<span class="hl sym">;</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      break<span class="hl sym">;</span>
+
+  <span class="hl kwd">exit</span><span class="hl sym">(</span>count<span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">function</span> <span class="hl kwd">count_matches</span><span class="hl sym">(</span> pattern<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span> <span class="hl kwa">const</span> str<span class="hl sym">:</span> ansistring <span class="hl sym">):</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  count<span class="hl sym">,</span> p<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  pattern <span class="hl sym">+=</span> <span class="hl kwb">char</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+  p <span class="hl sym">:=</span> <span class="hl kwd">pos</span><span class="hl sym">(</span> <span class="hl str">'|'</span><span class="hl sym">,</span> pattern <span class="hl sym">);</span>
+  pattern<span class="hl sym">[</span>p<span class="hl sym">] :=</span> <span class="hl kwb">char</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+  count <span class="hl sym">:=</span> <span class="hl kwd">count_matches_simple</span><span class="hl sym">( &#64;</span>pattern<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> str <span class="hl sym">);</span>
+  count <span class="hl sym">+=</span> <span class="hl kwd">count_matches_simple</span><span class="hl sym">( &#64;</span>pattern<span class="hl sym">[</span>p<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">],</span> str <span class="hl sym">);</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span> count <span class="hl sym">)</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+<span class="hl kwa">var</span>
+  dirty_sequence<span class="hl sym">,</span> sequence<span class="hl sym">,</span> new_seq<span class="hl sym">,</span> temp <span class="hl sym">:</span> ansiString<span class="hl sym">;</span>
+  line<span class="hl sym">,</span> linefeed<span class="hl sym">:</span> <span class="hl kwa">string</span><span class="hl sym">[</span><span class="hl num">255</span><span class="hl sym">];</span>
+  truelength<span class="hl sym">,</span> i<span class="hl sym">,</span> count<span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  inbuf <span class="hl sym">:</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">.</span><span class="hl num">.64</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">]</span> <span class="hl kwa">of</span> <span class="hl kwb">char</span><span class="hl sym">;</span>
+
+<span class="hl kwa">begin</span>
+  <span class="hl kwd">settextbuf</span><span class="hl sym">(</span>input<span class="hl sym">,</span> inbuf<span class="hl sym">);</span>
+  linefeed <span class="hl sym">:=</span> <span class="hl esc">#10</span><span class="hl sym">;</span>
+  dirty_sequence <span class="hl sym">:=</span> <span class="hl str">''</span><span class="hl sym">;</span>
+  truelength <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl kwa">while not</span> eof <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    <span class="hl kwd">readln</span><span class="hl sym">(</span> line <span class="hl sym">);</span>
+    truelength <span class="hl sym">:=</span> <span class="hl kwd">append2</span><span class="hl sym">(</span>dirty_sequence<span class="hl sym">,</span>truelength<span class="hl sym">,</span>
+        <span class="hl sym">&#64;</span>line<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span><span class="hl kwd">length</span><span class="hl sym">(</span>line<span class="hl sym">), &#64;</span>linefeed<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span><span class="hl num">1</span><span class="hl sym">);</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  <span class="hl kwd">setlength</span><span class="hl sym">(</span> dirty_sequence<span class="hl sym">,</span> truelength <span class="hl sym">);</span>
+
+  <span class="hl kwd">rx_gsub</span><span class="hl sym">(</span> <span class="hl str">'&gt;.*'</span> <span class="hl sym">+</span> linefeed<span class="hl sym">,</span> <span class="hl str">''</span><span class="hl sym">,</span> dirty_sequence<span class="hl sym">,</span> temp <span class="hl sym">);</span>
+  <span class="hl kwd">rx_gsub</span><span class="hl sym">(</span> linefeed<span class="hl sym">,</span> <span class="hl str">''</span><span class="hl sym">,</span> temp<span class="hl sym">,</span> sequence <span class="hl sym">);</span>
+
+
+  <span class="hl slc">// Count pattern-matches.</span>
+  temp <span class="hl sym">:=</span> <span class="hl kwd">lowercase</span><span class="hl sym">(</span> sequence <span class="hl sym">);</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl kwd">low</span><span class="hl sym">(</span>patterns<span class="hl sym">)</span> <span class="hl kwa">to</span> <span class="hl kwd">high</span><span class="hl sym">(</span>patterns<span class="hl sym">)</span> <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    count <span class="hl sym">:=</span> <span class="hl kwd">count_matches</span><span class="hl sym">(</span> patterns<span class="hl sym">[</span>i<span class="hl sym">],</span> temp <span class="hl sym">);</span>
+    <span class="hl kwd">writeln</span><span class="hl sym">(</span> patterns<span class="hl sym">[</span>i<span class="hl sym">],</span> <span class="hl str">' '</span><span class="hl sym">,</span> count<span class="hl sym">);</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+  <span class="hl slc">//  Replace.</span>
+  <span class="hl kwd">replace_matches</span><span class="hl sym">(</span>sequence<span class="hl sym">,</span> new_seq<span class="hl sym">);</span>
+
+
+  writeln<span class="hl sym">;</span>
+  <span class="hl kwd">writeln</span><span class="hl sym">(</span> <span class="hl kwd">length</span><span class="hl sym">(</span> dirty_sequence <span class="hl sym">) );</span>
+  <span class="hl kwd">writeln</span><span class="hl sym">(</span> <span class="hl kwd">length</span><span class="hl sym">(</span> sequence <span class="hl sym">) );</span>
+  <span class="hl kwd">writeln</span><span class="hl sym">(</span> <span class="hl kwd">length</span><span class="hl sym">(</span>new_seq<span class="hl sym">) );</span>
+<span class="hl kwa">end</span><span class="hl sym">.</span>
