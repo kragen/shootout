@@ -65,7 +65,7 @@ define
          if @colour == Other then 
             Other
          else
-            case Other
+            case @colour
             of blue then if Other == red then yellow else red end
             [] red then if Other == blue then yellow else blue end
             [] yellow then if Other == blue then red else blue end
