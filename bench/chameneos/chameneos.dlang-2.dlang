@@ -1,0 +1,123 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+
+   Reference implementation in C# contributed by Isaac Gouy
+
+   converted to D by Dave Fladebo
+   bugfix by Klaus Friedel
+   compile: dmd -O -inline -release chameneos.d
+*/
+
+import std.stdio, std.string, std.thread, std.c.linux.linux;
+
+void main(char[][] args)
+{
+    int meetings, n = args.length > 1 ? atoi(args[1]) : 1;
+    MeetingPlace m = new MeetingPlace(n);
+
+    Creature[] creatures = new Creature[colours.length];
+    foreach(int i, inout Creature c; creatures)
+    {
+        c = new Creature(m,colours[i]);
+        c.start();
+    }
+    foreach(Creature c; creatures)
+    {
+        c.wait();
+        meetings += c.creaturesMet;
+    }
+    writefln(meetings);
+}
+
+enum Colour { blue, red, yellow, faded }
+Colour[] colours = [ Colour.blue, Colour.red, Colour.yellow, Colour.blue ];
+
+class MeetingPlace
+{
+    private sem_t mustWait;
+    private sem_t wait4second;
+    private Colour first, second;
+    private bool firstCall = true;
+    private int n;
+
+    this(int maxMeetings)
+    {
+        n = maxMeetings;
+        sem_init(&mustWait,0,1);
+        sem_init(&wait4second,0,0);
+    }
+
+    private Colour OtherCreaturesColour(Colour me)
+    {
+        Colour other = Colour.faded;
+
+        sem_wait(&mustWait);
+        if(firstCall)
+        {
+            if(n)
+            {
+                first = me;
+                firstCall = false;
+                sem_post(&mustWait); // second may enter now
+								sem_wait(&wait4second);
+								// second arrived
+                other = second;
+                n--;
+            }
+            sem_post(&mustWait); // meeting done: other creatures may enter now
+        } else {
+            firstCall = true;
+            second = me;
+            other = first;
+            sem_post(&wait4second);
+        }
+
+        return other;
+    }
+}
+
+class Creature : Thread
+{
+    private MeetingPlace m;
+    private int creaturesMet = 0;
+    private Colour me;
+
+    this(MeetingPlace m, Colour c)
+    {
+        this.m = m; this.me = c;
+    }
+
+    int run()
+    {
+        while(me != Colour.faded) MeetOtherCreature();
+        return 0;
+    }
+
+    private void MeetOtherCreature()
+    {
+        Colour other = m.OtherCreaturesColour(me);
+        if(other == Colour.faded)
+        {
+            me = other;
+        } else {
+            me = Complement(other);
+            creaturesMet++;
+        }
+    }
+
+    private Colour Complement(Colour other)
+    {
+        switch(me)
+        {
+            case Colour.blue:
+                return other == Colour.red ? Colour.yellow : Colour.red;
+            case Colour.red:
+                return other == Colour.blue ? Colour.yellow : Colour.blue;
+            case Colour.yellow:
+                return other == Colour.blue ? Colour.red : Colour.blue;
+            default:
+                break;
+        }
+        return me;
+    }
+}
