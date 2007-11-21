@@ -1,1 +1,1 @@
-<p>Release 2.2 (Monday December 19th 2005) [Pomme de terre]</p>
+<p>Release 2.3 (Thursday July 11th 2007) [Antoine-Auguste Parmentier]</p>
