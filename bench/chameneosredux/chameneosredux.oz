@@ -97,7 +97,7 @@ define
 
    proc {TestColourChanges}
       ColourList = [blue red yellow]
-      TestCreatures = {Map ColourList fun{$ C} {New Creature init(0 C nil)} end}   
+      TestCreatures = {Map ColourList fun{$ C} {New Creature init(0 C nil)} end}
    in
       {ForAll TestCreatures 
          proc {$ C} {
@@ -114,32 +114,37 @@ define
 
 
    proc {ReportRendezvouses ColourList}
-      TestCreatures Sum
+
+      Numbers = {Tuple.toArray {List.toTuple '#' 
+         {Map 
+            [zero one two three four five six seven eight nine] 
+            fun {$ A} {AtomToString A} end 
+         } } } 
+
+      fun {Spellout K}
+         {Flatten {Map {IntToString K} 
+            fun {$ C} [" " Numbers.({StringToInt [C]} + 1)] end } }
+      end 
+
+      Sum = {NewCell 0}
+      TestCreatures
    in
       {System.showInfo
-         {Flatten 
-            {Map ColourList fun {$ C} [{AtomToString C} " "] end }
-         }}
+         {Flatten {Map ColourList fun {$ C} [" " {AtomToString C}] end } }}
 
       TestCreatures = {MakeCreatures ColourList}
 
-      Sum = {FoldL TestCreatures 
-            fun{$ Count C} {C creaturesMet($)} + Count end 0}
-
-      {System.show Sum}
-
-      {ForAll TestCreatures 
-         proc {$ C} {
-             System.show {C creaturesMet($)}
-         } end
+      {ForAll TestCreatures
+         proc {$ C} 
+            Meetings = {C creaturesMet($)} 
+         in            
+            Sum := @Sum + Meetings 
+            {System.showInfo {IntToString Meetings} #  
+               {Spellout {C selfMet($)} } }
+         end
       }
 
-      {System.showInfo
-         {Flatten 
-            {Map TestCreatures fun {$ C} 
-               if {C selfMet($)} == 0 then ["zero" " "] else ["ERROR" " "] end end }
-         }}
-
+      {System.showInfo {Spellout @Sum}}
       {System.showInfo ""}
    end
 
