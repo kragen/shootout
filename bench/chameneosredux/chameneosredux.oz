@@ -83,23 +83,23 @@ define
 
 
 
-   fun {MakeCreatures ColourList}
+   fun {StartRendezvousCreaturesWith ColourList}
       Done
       Rendezvous = {RendezvousServer Done N}
 
       C = {List.mapInd ColourList 
-         fun{$ I C} {New Creature init(I C Rendezvous)} end}
+         fun{$ I C} {New Creature init(I C Rendezvous)} end }
    in
       {Wait Done}
       C
    end
 
 
-   proc {TestColourChanges}
+   proc {CheckCreatureColourChanges}
       ColourList = [blue red yellow]
-      TestCreatures = {Map ColourList fun{$ C} {New Creature init(0 C nil)} end}
+      Creatures = {Map ColourList fun{$ C} {New Creature init(0 C nil)} end }
    in
-      {ForAll TestCreatures 
+      {ForAll Creatures 
          proc {$ C} {
             ForAll ColourList 
                proc {$ X} { 
@@ -127,20 +127,19 @@ define
       end 
 
       Sum = {NewCell 0}
-      TestCreatures
+      RendezvousCreatures
    in
       {System.showInfo
-         {Flatten {Map ColourList fun {$ C} [" " {AtomToString C}] end } }}
+         {Flatten {Map ColourList fun {$ C} [" " {AtomToString C}] end } } }
 
-      TestCreatures = {MakeCreatures ColourList}
+      RendezvousCreatures = {StartRendezvousCreaturesWith ColourList}
 
-      {ForAll TestCreatures
+      {ForAll RendezvousCreatures
          proc {$ C} 
             Meetings = {C creaturesMet($)} 
          in            
             Sum := @Sum + Meetings 
-            {System.showInfo {IntToString Meetings} #  
-               {Spellout {C selfMet($)} } }
+            {System.showInfo {IntToString Meetings} # {Spellout {C selfMet($)} } }
          end
       }
 
@@ -152,7 +151,7 @@ define
    [Arg] = {Application.getArgs plain}
    N = {String.toInt Arg}
 in  
-   {TestColourChanges}
+   {CheckCreatureColourChanges}
    {ReportRendezvouses [blue red yellow]}
    {ReportRendezvouses [blue red yellow red yellow blue red yellow red blue]}
 
