@@ -1,0 +1,150 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy
+*/
+
+
+enum Colour { blue, red, yellow }
+
+Colour complementColour(Colour self, Colour other); 
+complementColour(blue,blue) = blue;
+complementColour(blue,red) = yellow;
+complementColour(blue,yellow) = red;
+complementColour(red,red) = red;
+complementColour(red,blue) = yellow;
+complementColour(red,yellow) = blue;
+complementColour(yellow,yellow) = yellow;
+complementColour(yellow,blue) = red;
+complementColour(yellow,red) = blue;
+
+void checkCreatureColourChanges() {
+   let colours = [blue,red,yellow];
+   for (self : colours)
+      for (other : colours)
+         println(self + " + " + other + " -> " + complementColour(self,other));
+   println();
+}
+
+
+// Based on the "Chameneos, a Concurrency Game for Java, Ada and Others" 
+// implementation, but ...
+// there seems to be thread starvation and a race condition on countdown?
+
+class RendezvousServer {
+   private int nameA = 0; private Colour colourA = blue;
+   private int nameB = 0; private Colour colourB = blue;
+
+   private boolean firstCall = true;
+   private boolean mustWait = false;
+
+   private int countdown = n;
+
+
+   (int,Colour) notify(int name, Colour colour) {
+
+      synchronized(this) {
+
+         var answerName = 0;
+         var answerColour = blue;
+
+         while ( mustWait && countdown > 0 ) this.wait();
+  
+         if ( firstCall ) {
+            nameA = name; colourA = colour;
+            firstCall = false;
+
+            while ( ! firstCall && countdown > 0 ) this.wait();
+            answerName = nameB; answerColour = colourB; 
+            mustWait = false;
+            this.notifyAll();
+         } 
+         else {
+            if (countdown > 0) { 
+               nameB = name; colourB = colour;
+               answerName = nameA; answerColour = colourA;
+            } 
+            else { 
+               nameB = 0; answerName = 0; 
+            }
+
+            firstCall = true;
+            mustWait = true; 
+            --countdown;
+            this.notifyAll();               
+         } 
+
+         return (answerName,answerColour);         
+      }
+   }
+
+}
+
+
+class Creature extends Thread {
+   private int name;
+   Colour colour;
+   int selfMet = 0; 
+   int creaturesMet = 0; 
+   private RendezvousServer rendezvous;
+
+   override void run(){ 
+      while (true) {
+         (int otherName, Colour otherColour) = rendezvous.notify(name,colour);
+
+         if (otherName == 0) break;
+
+         colour = complementColour(colour,otherColour);
+         if (otherName == name) selfMet++;
+         creaturesMet++;
+      }
+   }
+   
+}
+
+
+List<Creature> startRendezvousCreaturesWith(List<Colour> colourList){
+   let r = new RendezvousServer();
+   var i = 0;
+   let rendezvousCreatures = colourList .map(
+      Colour c => new Creature(name: ++i, colour: c, rendezvous: r));
+
+   for (c : rendezvousCreatures) c.start();
+   for (c : rendezvousCreatures) c.join();
+ 
+   return rendezvousCreatures;
+}
+
+
+void reportRendezvouses(List<Colour> colourList){
+   let numbers = ["zero", "one", "two", "three", "four", 
+                  "five", "six", "seven", "eight", "nine"];
+
+   String spellout(int k) =
+      k .toString .toCharArray .foldLeft(
+         (String s, char c) => 
+            s + " " + numbers[ Character.getNumericValue(c) ], "");
+
+
+   for (c : colourList) print(" " + c); println();
+
+   let rendezvousCreatures = startRendezvousCreaturesWith(colourList);
+
+   var sum = 0;
+   for (c : rendezvousCreatures){
+      sum += c.creaturesMet;
+      println(c.creaturesMet + spellout(c.selfMet) );
+   }
+   println( spellout(sum) );
+   println();
+}
+
+
+var int n = 0;
+
+void main(String[] args){
+   n = Integer.parseInt(args[0]);
+
+   checkCreatureColourChanges();
+   reportRendezvouses([blue,red,yellow]);
+   reportRendezvouses([blue,red,yellow,red,yellow,blue,red,yellow,red,blue]);
+}
