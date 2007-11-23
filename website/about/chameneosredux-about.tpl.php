@@ -10,10 +10,10 @@
 caller does not know whether another chameneos is already present or not, neither if there will be one in some future)"</li>
 <li>both creatures will change colour to complement the colour of the chameneos that they met - don't use arithmetic to complement the colour, use if-else or switch/case or pattern-match</li>
 <li>write all the colour changes for blue red and yellow creatures, using the colour complement function</li>
-<li>for rendezvouses with an odd number of creatures (blue red yellow) and with an even number of creatures (blue red yellow red yellow blue red yellow red blue), after N meetings have taken place:
+<li>for rendezvouses with an odd number of creatures (blue red yellow) and with an even number of creatures (blue red yellow red yellow blue red yellow red blue)
 <ul>
 <li>write the colours the creatures start with</li>
-<li>for each creature, write the number of creatures met and spell out the number of times the creature met a creature with the same name (should be zero)</li>
+<li>after N meetings have taken place, for each creature write the number of creatures met and spell out the number of times the creature met a creature with the same name (should be zero)</li>
 <li>spell out the sum of the number of creatures met (should be 2N)</li>
 </ul>
 </li>
