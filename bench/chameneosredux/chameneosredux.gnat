@@ -1,0 +1,193 @@
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+-- contributed by Jim Rogers
+
+with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Text_Io; use Ada.Text_Io;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+procedure ChameneosRedux is
+   N : Natural;
+   
+   type Numbers is (Zero, One, Two, Three, Four, Five,
+      Six, Seven, Eight, Nine);
+      
+   type Colors is (Blue, Red, Yellow);
+   
+   type Colors_Complements is array(Colors, Colors) of Colors;
+   
+   Complement_Color : constant Colors_Complements := 
+      (Blue => (Blue => Blue,
+                Red  => Yellow,
+                Yellow => Red),
+      Red =>  (Red => Red,
+               Blue => Yellow,
+               Yellow => Blue),
+      Yellow => (Yellow => Yellow,
+                  Blue  => Red,
+                  Red  => Blue));
+   function To_Lower(Item : String) return String is
+      Temp : String := Item;
+   begin
+      for I in Temp'range loop
+         Temp(I) := To_Lower(Temp(I));
+      end loop;
+      return Temp;
+   end To_Lower;
+   
+      
+   procedure Printcolorchanges is
+   begin
+      for Self in Colors loop
+         for Other in Colors loop
+            Put_Line(To_lower(Colors'Image(Self)) & " + " &
+               To_Lower(Colors'Image(Other)) & " -> " &
+               To_Lower(Colors'Image(Complement_Color(Self, Other))));
+         end loop;
+      end loop;
+      New_Line;
+   end Printcolorchanges;
+   
+   
+   protected type Meeting_Place(N : Natural) is
+      entry Exchange(Me : in Colors; My_Id : in Positive; Other : out Colors; Other_Id : out Positive);
+      entry Wait_N_Meetings;
+   private
+      First_Call : Boolean := True;
+      First_Color : Colors;
+      Second_Color : Colors;
+      Count : Natural := N;
+      First_Id : Positive;
+      Second_Id : Positive;
+      entry Wait_Others(Me : in Colors; My_Id : in Positive; Other : out Colors; Other_id : out Positive);
+   end Meeting_Place;
+   
+   protected body Meeting_Place is
+      entry Exchange(Me : in Colors; My_Id : in Positive; Other : out Colors; Other_Id : out Positive) when Count > 0 is
+      begin
+         if First_Call then
+            First_Call := False;
+            First_Color := Me;
+            First_Id := My_id;
+            requeue Wait_Others;
+         else
+            Second_Color := Me;
+            second_Id := My_Id;
+            Other := First_Color;
+            Other_Id := First_Id;
+            First_Call := True;
+            Count := Count - 1;
+         end if;
+      end Exchange;
+      
+      entry Wait_Others(Me : in Colors; My_Id : in Positive; Other : out Colors; Other_id : out Positive) when First_Call is
+      begin
+         Other := Second_Color;
+         Other_Id := Second_Id;
+      end Wait_Others;
+      
+      entry Wait_N_Meetings when Count = 0 is
+      begin
+         null;
+      end Wait_N_Meetings;
+   end Meeting_Place;
+   
+   type Meeting_Ref is access Meeting_Place;
+   
+   task type Creature(My_Color : Colors; Place : Meeting_Ref; Id : Positive) is
+      entry Report(Count : out Natural; Self : out Natural);
+   end Creature;
+   
+   task body Creature is
+      Meeting_Count : Natural := 0;
+      Self_Count : Natural := 0;
+      Me : Colors := My_Color;
+      
+      procedure Meet_Other_Creature is
+         Other : Colors;
+         Foreign : Positive;
+      begin
+         Place.Exchange(Me, Id, Other, Foreign);
+         if Id = Foreign then
+            Self_Count := Self_Count + 1;
+         end if;
+         Meeting_Count := Meeting_Count + 1;
+         Me := Complement_Color(Me, Other);
+      end Meet_Other_Creature;
+      
+   begin
+      loop
+         select
+            accept Report(Count : out Natural; Self : out natural) do
+               Count := Meeting_Count;
+               Self := Self_Count;
+            end Report;
+            exit;
+         else
+            select
+               delay 0.02;
+            then abort
+               Meet_Other_Creature;
+            end select;
+         end select;
+      end loop;
+   end Creature;
+   
+   type Creature_Ref is access Creature;
+   
+   type Color_List is array(Positive range <>) of Colors;
+   
+   function Spell_Out(Item : Natural) return String is
+      Temp_Str : String := Natural'Image(Item);
+      Words : Unbounded_String := Null_Unbounded_String;
+   begin
+      for I in 2..Temp_Str'Last loop
+         Append(Words, " " & To_Lower(Numbers'Image(Numbers'Val(Character'Pos(Temp_Str(I)) - 48))));
+      end loop;
+      return To_String(Words);
+   end Spell_Out;
+   
+   procedure Start_Creatures(List : Color_List) is
+      package Int_Io is new Ada.Text_Io.Integer_Io(Integer);
+      use Int_Io;
+      
+      subtype Creature_Index is Positive range List'range;
+      type Creature_List is array(Creature_Index) of Creature_Ref;
+      Creatures : Creature_List;
+      Rendezvous : Meeting_Ref := new Meeting_Place(N);
+      Tid : Positive := 1;
+      Sum : Natural := 0;
+      Self_Met : Natural;
+      Tot_Met : Natural;
+   begin
+      for I in List'range loop
+         Put(" " & To_Lower(Colors'Image(List(I))));
+         Creatures(I) := new Creature(List(I), Rendezvous, Tid);
+         Tid := Tid + 1;
+      end loop;
+      New_Line;
+      Rendezvous.Wait_N_Meetings;
+      for I in Creatures'range loop
+         Creatures(I).Report(Tot_Met, Self_Met);
+         Sum := Sum + Tot_Met;
+         Put(Item => Tot_Met, Width => 1);
+         Put_Line(Spell_Out(Self_Met));
+      end loop;
+      Put_Line(Spell_Out(Sum));
+   end Start_Creatures;
+   
+begin
+   if Argument_Count < 1 then
+      N := 600;
+   else
+      N := Natural'Value(Argument(1));
+   end if;
+   
+   Printcolorchanges;
+   
+   Start_Creatures((Blue, Red, Yellow));
+   New_Line;
+   Start_Creatures((blue, red, yellow, red, yellow, blue, red, yellow, red, blue));
+   New_Line;
+end ChameneosRedux;
