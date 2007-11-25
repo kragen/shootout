@@ -1,0 +1,66 @@
+<span class="com">{ The Computer Language Benchmarks Game</span>
+<span class="com">  http://shootout.alioth.debian.org</span>
+<span class="com"></span>
+<span class="com">  contributed by Marc Weustink</span>
+<span class="com">}</span>
+
+<span class="kwa">program</span> thread_ring<span class="sym">;</span>
+<span class="com">{$mode objfpc}</span><span class="com">{$h-}</span><span class="com">{$i-}</span>
+<span class="kwa">uses</span>
+  PThreads<span class="sym">;</span>
+
+<span class="kwa">var</span>
+  SemList<span class="sym">:</span> <span class="kwa">array</span><span class="sym">[</span><span class="num">1</span>.<span class="num">.503</span><span class="sym">]</span> <span class="kwa">of</span> TSemaphore<span class="sym">;</span>
+
+  ThreadAttr<span class="sym">:</span> TThreadAttr<span class="sym">;</span>
+  ThreadFuncAddr<span class="sym">:</span> TStartRoutine<span class="sym">;</span>
+  FinishedSem<span class="sym">:</span> TSemaphore<span class="sym">;</span>
+  Count<span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">;</span>
+
+<span class="kwa">function</span> <span class="kwd">ThreadFunc</span><span class="sym">(</span>AIndex<span class="sym">:</span> PtrInt<span class="sym">):</span> <span class="kwb">Pointer</span><span class="sym">;</span> <span class="kwa">cdecl</span><span class="sym">;</span>
+<span class="kwa">var</span>
+  MySem<span class="sym">,</span> NextSem<span class="sym">:</span> PSemaphore<span class="sym">;</span>
+  Id<span class="sym">:</span> TThreadID<span class="sym">;</span>
+<span class="kwa">begin</span>
+  MySem <span class="sym">:= &#64;</span>SemList<span class="sym">[</span>AIndex<span class="sym">];</span>
+  <span class="kwa">if</span> AIndex <span class="sym">&lt;</span> <span class="kwd">High</span><span class="sym">(</span>SemList<span class="sym">)</span>
+  <span class="kwa">then begin</span>
+    NextSem <span class="sym">:=</span> MySem<span class="sym">+</span><span class="num">1</span><span class="sym">;</span>
+    <span class="kwd">sem_init</span><span class="sym">(</span>NextSem<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+    <span class="kwd">pthread_create</span><span class="sym">(&#64;</span>Id<span class="sym">, &#64;</span>ThreadAttr<span class="sym">,</span> ThreadFuncAddr<span class="sym">,</span> <span class="kwb">Pointer</span><span class="sym">(</span>AIndex<span class="sym">+</span><span class="num">1</span><span class="sym">));</span>
+  <span class="kwa">end</span>
+  <span class="kwa">else</span> NextSem <span class="sym">:= &#64;</span>SemList<span class="sym">[</span><span class="kwd">Low</span><span class="sym">(</span>SemList<span class="sym">)];</span>
+
+  <span class="kwa">repeat</span>
+    <span class="kwd">sem_wait</span><span class="sym">(</span>MySem<span class="sym">);</span>
+    <span class="kwa">if</span> Count <span class="sym">=</span> <span class="num">0</span> <span class="kwa">then begin</span>
+      <span class="kwd">WriteLn</span><span class="sym">(</span>Aindex<span class="sym">);</span>
+      <span class="kwd">sem_post</span><span class="sym">(</span>FinishedSem<span class="sym">);</span>
+    <span class="kwa">end</span>
+    <span class="kwa">else begin</span>
+      <span class="kwd">Dec</span><span class="sym">(</span>Count<span class="sym">);</span>
+      <span class="kwd">sem_post</span><span class="sym">(</span>NextSem<span class="sym">);</span>
+    <span class="kwa">end</span><span class="sym">;</span>
+  <span class="kwa">until</span> <span class="kwb">False</span><span class="sym">;</span>
+<span class="kwa">end</span><span class="sym">;</span>
+
+
+<span class="kwa">var</span>
+  n<span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">;</span>
+  Id<span class="sym">:</span> TThreadId<span class="sym">;</span>
+<span class="kwa">begin</span>
+  <span class="kwd">Val</span><span class="sym">(</span><span class="kwd">paramstr</span><span class="sym">(</span><span class="num">1</span><span class="sym">),</span> count<span class="sym">,</span> n<span class="sym">);</span>
+  <span class="kwa">if</span> n <span class="sym">&lt;&gt;</span> <span class="num">0</span> <span class="kwa">then</span> exit<span class="sym">;</span>
+
+  <span class="kwd">sem_init</span><span class="sym">(</span>SemList<span class="sym">[</span><span class="kwd">Low</span><span class="sym">(</span>SemList<span class="sym">)],</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+  <span class="kwd">sem_init</span><span class="sym">(</span>FinishedSem<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+
+  <span class="kwd">pthread_attr_init</span><span class="sym">(&#64;</span>ThreadAttr<span class="sym">);</span>
+  <span class="kwd">pthread_attr_setdetachstate</span><span class="sym">(&#64;</span>ThreadAttr<span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+  <span class="kwd">pthread_attr_setstacksize</span><span class="sym">(&#64;</span>ThreadAttr<span class="sym">,</span> <span class="num">1024</span> <span class="sym">*</span> <span class="num">16</span><span class="sym">);</span>
+
+  ThreadFuncAddr <span class="sym">:=</span> <span class="kwd">TStartRoutine</span><span class="sym">(&#64;</span>ThreadFunc<span class="sym">);</span>
+  <span class="kwd">pthread_create</span><span class="sym">(&#64;</span>Id<span class="sym">, &#64;</span>ThreadAttr<span class="sym">,</span> ThreadFuncAddr<span class="sym">,</span> <span class="kwb">Pointer</span><span class="sym">(</span><span class="kwd">PtrUInt</span><span class="sym">(</span><span class="kwd">Low</span><span class="sym">(</span>SemList<span class="sym">))));</span>
+
+  <span class="kwd">sem_wait</span><span class="sym">(</span>FinishedSem<span class="sym">);</span>
+<span class="kwa">end</span>.

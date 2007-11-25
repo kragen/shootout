@@ -1,0 +1,134 @@
+<span class="com">/* The Computer Language Benchmarks Game</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   Written by Jorge Peixoto de Morais Neto</span>
+<span class="com">   based on code by Josh Goldfoot */</span>
+
+<span class="dir">#include &lt;stdio.h&gt;</span>
+<span class="dir">#include &lt;stdlib.h&gt;</span>
+<span class="dir">#include &lt;pthread.h&gt;</span>
+<span class="dir">#include &lt;semaphore.h&gt;</span>
+<span class="dir">#include &lt;err.h&gt;</span>
+
+<span class="kwb">static</span> sem_t mutex<span class="sym">,</span> second_creature<span class="sym">;</span>
+
+<span class="kwb">static unsigned long</span> meetingsleft<span class="sym">;</span>
+
+<span class="kwc">typedef</span> <span class="kwb">enum</span> <span class="sym">{</span> Blue<span class="sym">,</span> Red<span class="sym">,</span> Yellow<span class="sym">,</span> Faded <span class="sym">}</span> color_t<span class="sym">;</span>
+<span class="kwc">typedef</span> <span class="kwb">struct</span> <span class="sym">{</span>
+    <span class="kwb">unsigned long</span> <span class="sym">*</span>meetingsp<span class="sym">;</span>
+    color_t color<span class="sym">;</span>
+<span class="sym">}</span> creature_t<span class="sym">;</span>
+
+<span class="com">/* When this function is called with two different colors, it must return the other color */</span>
+<span class="com">/* We assume that none of the colors is Faded */</span>
+<span class="com">/* If it is called with two equal colors, the specification allows us to return any color.  */</span>
+<span class="com">/* In this case, we return Red if both colors are Blue, Yellow if both are Red and Blue if both are Yellow */</span>
+<span class="kwb">static</span> color_t <span class="kwd">complementarycolor</span> <span class="sym">(</span>color_t c1<span class="sym">,</span> color_t c2<span class="sym">) {</span>
+    <span class="kwa">switch</span> <span class="sym">(</span>c1<span class="sym">) {</span>
+    <span class="kwa">case</span> Blue<span class="sym">:</span>
+	<span class="kwa">return</span> c2 <span class="sym">==</span> Red ? Yellow <span class="sym">:</span> Red<span class="sym">;</span>
+    <span class="kwa">case</span> Red<span class="sym">:</span>
+	<span class="kwa">return</span> c2 <span class="sym">==</span> Yellow ? Blue <span class="sym">:</span> Yellow<span class="sym">;</span>
+    <span class="kwa">case</span> Yellow<span class="sym">:</span>
+    <span class="kwa">default</span><span class="sym">:</span>
+	<span class="kwa">return</span> c2 <span class="sym">==</span> Blue ? Red <span class="sym">:</span> Blue<span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="com">/* This is the meeting place. Multiple threads call this function.  */</span>
+<span class="com">/* This function returns the new color the creature must assume after the meeting*/</span>
+<span class="com">/* The first creature locks mutex, sets color1 = color, updates mp_state, */</span>
+<span class="com">/* unlocks the mutex and waits to lock second_creature */</span>
+<span class="com">/* The second creature locks mutex, sets othercolor=color1 and color2 = color , */</span>
+<span class="com">/* decrements meetingsleft, updates mp_state, unlocks second_creature and returns */</span>
+<span class="com">/* The first creature sets othercolor = color2, unlocks mutex and returns */</span>
+<span class="com">/* mp_state is EMPTY again, the two semaphores are back to initial values and the cycle continues */</span>
+<span class="com">/* until meetingsleft reaches 0. */</span>
+<span class="kwb">static</span> color_t <span class="kwd">new_color</span> <span class="sym">(</span>color_t color<span class="sym">) {</span>
+<span class="com">/* Meeting place state*/</span>
+    <span class="kwb">static enum</span> <span class="sym">{</span>
+	MEETINGS_LIMIT_REACHED <span class="sym">= -</span><span class="num">1</span><span class="sym">,</span>
+	EMPTY<span class="sym">,</span>
+	ONE_CREATURE
+    <span class="sym">}</span> mp_state <span class="sym">=</span> EMPTY<span class="sym">;</span>
+
+    <span class="kwb">static</span> color_t color1<span class="sym">,</span> color2<span class="sym">;</span>
+    color_t othercolor<span class="sym">;</span>
+    <span class="kwd">sem_wait</span> <span class="sym">(&amp;</span>mutex<span class="sym">);</span>
+    <span class="kwa">switch</span> <span class="sym">(</span>mp_state<span class="sym">) {</span>
+    <span class="kwa">case</span> EMPTY<span class="sym">:</span>
+	color1 <span class="sym">=</span> color<span class="sym">;</span>
+	mp_state <span class="sym">=</span> ONE_CREATURE<span class="sym">;</span>
+	<span class="kwd">sem_post</span> <span class="sym">(&amp;</span>mutex<span class="sym">);</span>
+	<span class="kwd">sem_wait</span> <span class="sym">(&amp;</span>second_creature<span class="sym">);</span>
+	othercolor <span class="sym">=</span> color2<span class="sym">;</span>
+	<span class="kwd">sem_post</span> <span class="sym">(&amp;</span>mutex<span class="sym">);</span>
+	<span class="kwa">break</span><span class="sym">;</span>
+    <span class="kwa">case</span> ONE_CREATURE<span class="sym">:</span>
+	othercolor <span class="sym">=</span> color1<span class="sym">;</span>
+	color2 <span class="sym">=</span> color<span class="sym">;</span>
+	mp_state <span class="sym">= (--</span>meetingsleft ? EMPTY <span class="sym">:</span> MEETINGS_LIMIT_REACHED<span class="sym">);</span>
+	<span class="kwd">sem_post</span> <span class="sym">(&amp;</span>second_creature<span class="sym">);</span>
+	<span class="kwa">break</span><span class="sym">;</span>
+    <span class="kwa">case</span> MEETINGS_LIMIT_REACHED<span class="sym">:</span>
+    <span class="kwa">default</span><span class="sym">:</span>
+	<span class="kwd">sem_post</span> <span class="sym">(&amp;</span>mutex<span class="sym">);</span>
+	<span class="kwa">return</span> Faded<span class="sym">;</span>
+    <span class="sym">}</span>
+    <span class="kwa">return</span> <span class="kwd">complementarycolor</span> <span class="sym">(</span>color<span class="sym">,</span> othercolor<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="com">/* This function simulates a creature. */</span>
+<span class="kwb">static void</span> <span class="sym">*</span><span class="kwd">run_creature</span> <span class="sym">(</span><span class="kwb">void</span> <span class="sym">*</span>voidpme<span class="sym">) {</span>
+    creature_t <span class="kwb">const</span> <span class="sym">*</span>me <span class="sym">=</span> voidpme<span class="sym">;</span>
+    <span class="kwb">unsigned long</span> meetings <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    color_t color <span class="sym">=</span> me<span class="sym">-&gt;</span>color<span class="sym">;</span>
+    <span class="kwa">do</span> <span class="sym">{</span>
+	meetings<span class="sym">++;</span>
+	color <span class="sym">=</span> <span class="kwd">new_color</span> <span class="sym">(</span>color<span class="sym">);</span>
+    <span class="sym">}</span> <span class="kwa">while</span> <span class="sym">(</span>color <span class="sym">!=</span> Faded<span class="sym">);</span>
+<span class="com">/* The '-1' compensates the fact that the meetings variable counts the meeting  */</span>
+<span class="com">/* in wich the creature becomes faded (but it shouldn't) */</span>
+    <span class="sym">*</span>me<span class="sym">-&gt;</span>meetingsp <span class="sym">=</span> meetings <span class="sym">-</span> <span class="num">1</span><span class="sym">;</span>
+    <span class="kwb">static int</span> zero <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+<span class="com">/* We return a pointer to 0, meaning success. */</span>
+    <span class="kwa">return</span> <span class="sym">&amp;</span>zero<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="com">/* This function sets loose four creatures and returns the sum of reported meetings*/</span>
+<span class="kwb">static unsigned long</span> <span class="kwd">meetings_of_four_creatures</span> <span class="sym">(</span><span class="kwb">void</span><span class="sym">) {</span>
+    <span class="kwd">sem_init</span> <span class="sym">(&amp;</span>mutex<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+    <span class="kwd">sem_init</span> <span class="sym">(&amp;</span>second_creature<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+
+    <span class="kwb">unsigned long</span> reports<span class="sym">[</span><span class="num">4</span><span class="sym">];</span>
+    creature_t creatures<span class="sym">[</span><span class="num">4</span><span class="sym">] = {{&amp;</span>reports<span class="sym">[</span><span class="num">0</span><span class="sym">],</span> Blue<span class="sym">},</span>
+			       <span class="sym">{&amp;</span>reports<span class="sym">[</span><span class="num">1</span><span class="sym">],</span> Red<span class="sym">},</span>
+			       <span class="sym">{&amp;</span>reports<span class="sym">[</span><span class="num">2</span><span class="sym">],</span> Yellow<span class="sym">},</span>
+			       <span class="sym">{&amp;</span>reports<span class="sym">[</span><span class="num">3</span><span class="sym">],</span> Blue<span class="sym">}};</span>
+    pthread_t pids<span class="sym">[</span><span class="num">4</span><span class="sym">];</span>
+    <span class="kwb">int</span> i<span class="sym">;</span>
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> <span class="num">4</span><span class="sym">;</span> i<span class="sym">++)</span>
+	<span class="kwd">pthread_create</span> <span class="sym">(&amp;</span>pids<span class="sym">[</span>i<span class="sym">],</span> NULL<span class="sym">,</span> run_creature<span class="sym">, &amp;</span>creatures<span class="sym">[</span>i<span class="sym">]);</span>
+
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> <span class="num">4</span><span class="sym">;</span> i<span class="sym">++)</span>
+	<span class="kwd">pthread_join</span> <span class="sym">(</span>pids<span class="sym">[</span>i<span class="sym">],</span> NULL<span class="sym">);</span>
+
+    <span class="kwb">unsigned long</span> sum <span class="sym">=</span> reports<span class="sym">[</span><span class="num">0</span><span class="sym">];</span>
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span> i <span class="sym">&lt;</span> <span class="num">4</span><span class="sym">;</span> i<span class="sym">++)</span>
+	sum <span class="sym">+=</span> reports<span class="sym">[</span>i<span class="sym">];</span>
+    <span class="kwa">return</span> sum<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span> <span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char const</span> <span class="sym">**</span>argv<span class="sym">) {</span>
+    meetingsleft <span class="sym">=</span> <span class="num">1</span>e6<span class="sym">;</span>
+    <span class="kwa">if</span> <span class="sym">(</span>argc <span class="sym">&gt;</span> <span class="num">1</span><span class="sym">) {</span>
+	<span class="kwb">char</span> <span class="sym">*</span>tail<span class="sym">;</span>
+	meetingsleft <span class="sym">=</span> <span class="kwd">strtoul</span> <span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">], &amp;</span>tail<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+	<span class="kwa">if</span> <span class="sym">(</span>tail <span class="sym">==</span> argv<span class="sym">[</span><span class="num">1</span><span class="sym">])</span>
+	    <span class="kwd">errx</span> <span class="sym">(</span><span class="num">1</span><span class="sym">,</span> <span class="str">&quot;Could not convert</span> <span class="esc">\&quot;</span><span class="str">%s</span><span class="esc">\&quot;</span> <span class="str">to an unsigned long integer&quot;</span><span class="sym">,</span> argv<span class="sym">[</span><span class="num">1</span><span class="sym">]);</span>
+    <span class="sym">}</span>
+    <span class="kwb">unsigned long</span> sum <span class="sym">=</span> <span class="kwd">meetings_of_four_creatures</span> <span class="sym">();</span>
+    <span class="kwd">printf</span> <span class="sym">(</span><span class="str">&quot;%lu</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> sum<span class="sym">);</span>
+    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
