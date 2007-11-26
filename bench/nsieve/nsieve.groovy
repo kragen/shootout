@@ -1,40 +1,54 @@
-/* The Computer Language Benchmarks Game
+/* The Computer Language Benchmarks Game 
    http://shootout.alioth.debian.org/
-   contributed by Jochen Hinrichsen
-   The NSieveBits sample is more groovy style than this fixed boolean array
+
+   contributed by Pilho Kim
 */
 
-def nsieve(isPrime, m) {
-   isPrime.each() {
-      it = true
-   }
+def countSieve(m, primes) {
+      def i, k
+      def count = 0
 
-def count = 0
-   for (i in 2..m) {
-      if (isPrime[i]) {
-         (i+i..m).step(i) { j ->
-            isPrime[j] = false
-         }
-         count++
+      i = 2
+      while (i <= m) { 
+          primes[i] = true
+          i++
       }
-   }
-   count
+
+      i = 2
+      while (i <= m) { 
+         if (primes[i]) {
+            k = i + i
+            while (k <= m) {
+                 primes[k] = false
+                 k += i
+            }
+            count++
+         }
+         i++
+      }
+      return count
 }
 
-def run(isPrime, n) {
-   def m = 2**n*10000
-   print("Primes up to ${m.toString().padLeft(8)}")
-   println(nsieve(isPrime, m).toString().padLeft(9))
+def padNumber(number, fieldLen) {
+      def bareNumber = "" + number
+      def numSpaces = fieldLen - bareNumber.length()
+      def sb = new StringBuffer(" "*numSpaces)
+      sb.append(bareNumber)
+      return sb.toString()
 }
 
-def n = args.length == 0 ? 2 : args[0].toInteger()
-n = (int) Math.max(n, 2)
+def n = 2
+if (args.length > 0) 
+    n = args[0].toInteger()
+if (n < 2) 
+    n = 2
 
-// Allocate once for all runs
-def isPrime = [ true ] * (2**n*10000+1)
+def m = (1<<n)*10000
+def flags = new boolean[m+1]
 
-run(isPrime, n)
-run(isPrime, n-1)
-run(isPrime, n-2)
-
-
+[n, n-1, n-2].each {
+    def k = (1<<it)*10000
+    def s1 = padNumber(k, 8)
+    def s2 = padNumber(countSieve(k,flags), 9)
+    println("Primes up to $s1$s2")
+}
