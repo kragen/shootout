@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2007-11-22 18:07:49 igouy-guest Exp $
+# $Id: Makefile,v 1.3 2007-11-27 23:40:35 igouy-guest Exp $
 include ../../Make.header
 
 TEST    := chameneosredux
@@ -16,6 +16,6 @@ CALFLAGS := -Dorg.openquark.cal.machine.lecc.concurrent_runtime
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 60000,600000,6000000 \
-	  --ndiff "-abserr 60"
+	  --ndiff "-relerr 0.3"
 
 include ../../Make.footer
