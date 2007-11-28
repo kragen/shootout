@@ -1,0 +1,145 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> * Contributed by Joern Inge Vestgaarden</span>
+<span class="hl com"> * Modified by Jorge Peixoto de Morais Neto</span>
+<span class="hl com"> */</span>
+
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;string.h&gt;</span>
+<span class="hl dir">#include &lt;error.h&gt;</span>
+
+<span class="hl dir">#define WIDTH 60</span>
+<span class="hl dir">#define MIN(a,b) ((a) &lt;= (b) ? (a) : (b))</span>
+<span class="hl dir">#define NELEMENTS(x) (sizeof (x) / sizeof ((x)[0]))</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> <span class="hl sym">{</span>
+    <span class="hl kwb">float</span> p<span class="hl sym">;</span>
+    <span class="hl kwb">char</span> c<span class="hl sym">;</span>
+<span class="hl sym">}</span> aminoacid_t<span class="hl sym">;</span>
+
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">float</span> <span class="hl kwd">myrandom</span> <span class="hl sym">(</span><span class="hl kwb">double</span> max<span class="hl sym">) {</span>
+    <span class="hl kwb">unsigned long const</span> IM <span class="hl sym">=</span> <span class="hl num">139968</span><span class="hl sym">;</span>
+    <span class="hl kwb">unsigned long const</span> IA <span class="hl sym">=</span> <span class="hl num">3877</span><span class="hl sym">;</span>
+    <span class="hl kwb">unsigned long const</span> IC <span class="hl sym">=</span> <span class="hl num">29573</span><span class="hl sym">;</span>
+    <span class="hl kwb">static unsigned long</span> last <span class="hl sym">=</span> <span class="hl num">42</span><span class="hl sym">;</span>
+    last <span class="hl sym">= (</span>last <span class="hl sym">*</span> IA <span class="hl sym">+</span> IC<span class="hl sym">) %</span> IM<span class="hl sym">;</span>
+    <span class="hl kwa">return</span> max <span class="hl sym">*</span> last <span class="hl sym">/</span> IM<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">accumulate_probabilities</span> <span class="hl sym">(</span>aminoacid_t <span class="hl sym">*</span>genelist<span class="hl sym">,</span> <span class="hl kwb">size_t</span> len<span class="hl sym">) {</span>
+    <span class="hl kwb">float</span> cp <span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span> i<span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> len<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+        cp <span class="hl sym">+=</span> genelist<span class="hl sym">[</span>i<span class="hl sym">].</span>p<span class="hl sym">;</span>
+        genelist<span class="hl sym">[</span>i<span class="hl sym">].</span>p <span class="hl sym">=</span> cp<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* This function prints the characters of the string s. When it */</span>
+<span class="hl com">/* reaches the end of the string, it goes back to the beginning */</span>
+<span class="hl com">/* It stops when the total number of characters printed is count. */</span>
+<span class="hl com">/* count may not be a multiple of the length of the string */</span>
+<span class="hl com">/* Between each group of consecutive WIDTH characters, */</span>
+<span class="hl com">/* it prints a newline */</span>
+<span class="hl com">/* This function assumes that WIDTH &lt;= strlen (s) + 1 */</span>
+<span class="hl kwb">static void</span> <span class="hl kwd">repeat_fasta</span> <span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span>s<span class="hl sym">,</span> <span class="hl kwb">size_t</span> count<span class="hl sym">) {</span>
+    <span class="hl kwb">size_t</span> len <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+    <span class="hl kwb">size_t</span> pos <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>count<span class="hl sym">) {</span>
+ 	<span class="hl kwb">size_t</span> line <span class="hl sym">=</span> <span class="hl kwd">MIN</span><span class="hl sym">(</span>WIDTH<span class="hl sym">,</span> count<span class="hl sym">);</span>
+ 	<span class="hl kwb">size_t</span> available <span class="hl sym">=</span> len <span class="hl sym">-</span> pos<span class="hl sym">;</span>
+ 	<span class="hl kwa">if</span> <span class="hl sym">(</span>line <span class="hl sym">&lt;=</span> available<span class="hl sym">) {</span>
+	    <span class="hl com">/* We can print the whole line at once*/</span>
+ 	    <span class="hl kwd">fwrite_unlocked</span> <span class="hl sym">(</span>s<span class="hl sym">+</span>pos<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">,</span>line<span class="hl sym">,</span>stdout<span class="hl sym">);</span>
+ 	    pos <span class="hl sym">+=</span> line<span class="hl sym">;</span>
+ 	<span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+ 	    <span class="hl kwd">fwrite_unlocked</span> <span class="hl sym">(</span>s<span class="hl sym">+</span>pos<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">,</span>available<span class="hl sym">,</span>stdout<span class="hl sym">);</span>
+	    <span class="hl kwd">fwrite_unlocked</span> <span class="hl sym">(</span>s<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">,</span>line<span class="hl sym">-</span>available<span class="hl sym">,</span>stdout<span class="hl sym">);</span>
+ 	    pos <span class="hl sym">=</span> line <span class="hl sym">-</span> available<span class="hl sym">;</span>
+ 	<span class="hl sym">}</span>
+	<span class="hl kwd">putc_unlocked</span> <span class="hl sym">(</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+ 	count <span class="hl sym">-=</span> line<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* This function takes a pointer to the first element of an array  */</span>
+<span class="hl com">/* Each element of the array is a struct with a character and */</span>
+<span class="hl com">/* a float number p between 0 and 1. */</span>
+<span class="hl com">/* The function generates a random float number r and */</span>
+<span class="hl com">/* finds the first number of the array such that p &gt;= r. */</span>
+<span class="hl com">/* This is a weighted random selection. */</span>
+<span class="hl com">/* The function then prints this character. */</span>
+<span class="hl com">/* This is done count times. */</span>
+<span class="hl com">/* Between each group of consecutive WIDTH characters,  */</span>
+<span class="hl com">/* the function prints a newline */</span>
+<span class="hl kwb">static void</span> <span class="hl kwd">random_fasta</span> <span class="hl sym">(</span>aminoacid_t <span class="hl kwb">const</span> <span class="hl sym">*</span>genelist<span class="hl sym">,</span> <span class="hl kwb">size_t</span> count<span class="hl sym">) {</span>
+     <span class="hl kwb">char</span> buf<span class="hl sym">[</span>WIDTH <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">];</span>
+     <span class="hl kwa">while</span> <span class="hl sym">(</span>count<span class="hl sym">) {</span>
+ 	<span class="hl kwb">size_t</span> line <span class="hl sym">=</span> <span class="hl kwd">MIN</span><span class="hl sym">(</span>WIDTH<span class="hl sym">,</span> count<span class="hl sym">);</span>
+ 	count <span class="hl sym">-=</span> line<span class="hl sym">;</span>
+ 	<span class="hl kwb">size_t</span> pos <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+ 	<span class="hl kwa">while</span> <span class="hl sym">(</span>pos <span class="hl sym">&lt;</span> line<span class="hl sym">) {</span>
+ 	    aminoacid_t <span class="hl kwb">const</span> <span class="hl sym">*</span>a <span class="hl sym">=</span> genelist<span class="hl sym">;</span>
+ 	    <span class="hl kwb">float</span> r <span class="hl sym">=</span> <span class="hl kwd">myrandom</span><span class="hl sym">(</span><span class="hl num">1.0</span><span class="hl sym">);</span>
+ 	    <span class="hl kwa">while</span> <span class="hl sym">(</span>a<span class="hl sym">-&gt;</span>p <span class="hl sym">&lt;</span> r<span class="hl sym">)</span>
+ 		<span class="hl sym">++</span>a<span class="hl sym">;</span> <span class="hl com">/* Linear search */</span>
+ 	    buf<span class="hl sym">[</span>pos<span class="hl sym">++] =</span> a<span class="hl sym">-&gt;</span>c<span class="hl sym">;</span>
+ 	<span class="hl sym">}</span>
+ 	buf<span class="hl sym">[</span>pos<span class="hl sym">] =</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">;</span>
+ 	<span class="hl kwd">fwrite_unlocked</span> <span class="hl sym">(</span>buf<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> line<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">) {</span>
+    <span class="hl kwb">char const</span> <span class="hl sym">*</span>alu <span class="hl sym">=</span><span class="hl str">&quot;</span><span class="hl esc">\</span>
+<span class="hl str">GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG</span><span class="hl esc">\</span>
+<span class="hl str">GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA</span><span class="hl esc">\</span>
+<span class="hl str">CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT</span><span class="hl esc">\</span>
+<span class="hl str">ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA</span><span class="hl esc">\</span>
+<span class="hl str">GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG</span><span class="hl esc">\</span>
+<span class="hl str">AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC</span><span class="hl esc">\</span>
+<span class="hl str">AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span><span class="hl sym">;</span>
+
+    aminoacid_t iub<span class="hl sym">[] = {</span>
+	<span class="hl sym">{</span> <span class="hl num">0.27</span><span class="hl sym">,</span> <span class="hl str">'a'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.12</span><span class="hl sym">,</span> <span class="hl str">'c'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.12</span><span class="hl sym">,</span> <span class="hl str">'g'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.27</span><span class="hl sym">,</span> <span class="hl str">'t'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'B'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'D'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'H'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'K'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'M'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'N'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'R'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'S'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'V'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'W'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> <span class="hl str">'Y'</span> <span class="hl sym">}};</span>
+
+    aminoacid_t homosapiens<span class="hl sym">[] = {</span>
+	<span class="hl sym">{</span> <span class="hl num">0.3029549426680</span><span class="hl sym">,</span> <span class="hl str">'a'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.1979883004921</span><span class="hl sym">,</span> <span class="hl str">'c'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.1975473066391</span><span class="hl sym">,</span> <span class="hl str">'g'</span> <span class="hl sym">},</span>
+	<span class="hl sym">{</span> <span class="hl num">0.3015094502008</span><span class="hl sym">,</span> <span class="hl str">'t'</span> <span class="hl sym">}};</span>
+
+    <span class="hl kwb">size_t</span> count <span class="hl sym">=</span> <span class="hl num">1000</span><span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+ 	<span class="hl kwb">char</span> <span class="hl sym">*</span>tail<span class="hl sym">;</span>
+ 	count <span class="hl sym">=</span> <span class="hl kwd">strtoul</span> <span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">], &amp;</span>tail<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+ 	<span class="hl kwa">if</span> <span class="hl sym">(</span>tail <span class="hl sym">==</span> argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span>
+ 	    <span class="hl kwd">error</span> <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl str">&quot;Could not convert</span> <span class="hl esc">\&quot;</span><span class="hl str">%s</span><span class="hl esc">\&quot;</span> <span class="hl str">to an unsigned long integer&quot;</span><span class="hl sym">,</span> argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwd">accumulate_probabilities</span> <span class="hl sym">(</span>iub<span class="hl sym">,</span> <span class="hl kwd">NELEMENTS</span><span class="hl sym">(</span>iub<span class="hl sym">));</span>
+    <span class="hl kwd">accumulate_probabilities</span> <span class="hl sym">(</span>homosapiens<span class="hl sym">,</span> <span class="hl kwd">NELEMENTS</span><span class="hl sym">(</span>homosapiens<span class="hl sym">));</span>
+
+    <span class="hl kwd">puts</span> <span class="hl sym">(</span><span class="hl str">&quot;&gt;ONE Homo sapiens alu&quot;</span><span class="hl sym">);</span>
+    <span class="hl kwd">repeat_fasta</span> <span class="hl sym">(</span>alu<span class="hl sym">,</span> count <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">);</span>
+    <span class="hl kwd">puts</span> <span class="hl sym">(</span><span class="hl str">&quot;&gt;TWO IUB ambiguity codes&quot;</span><span class="hl sym">);</span>
+    <span class="hl kwd">random_fasta</span> <span class="hl sym">(</span>iub<span class="hl sym">,</span> count <span class="hl sym">*</span> <span class="hl num">3</span><span class="hl sym">);</span>
+    <span class="hl kwd">puts</span> <span class="hl sym">(</span><span class="hl str">&quot;&gt;THREE Homo sapiens frequency&quot;</span><span class="hl sym">);</span>
+    <span class="hl kwd">random_fasta</span> <span class="hl sym">(</span>homosapiens<span class="hl sym">,</span> count <span class="hl sym">*</span> <span class="hl num">5</span><span class="hl sym">);</span>
+    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>

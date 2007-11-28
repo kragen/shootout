@@ -1,0 +1,69 @@
+<span class="hl com">{- The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com">   Written by Tom Pledger, 13 Nov 2006. modified by Don Stewart</span>
+<span class="hl com">   Updated for chameneos-redux by Spencer Janssen, 27 Nov 2007 -}</span>
+
+<span class="hl kwa">import</span> Control.Concurrent
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> Data.<span class="hl kwb">Char</span>
+<span class="hl kwa">import</span> System.Environment
+<span class="hl kwa">import</span> System.IO
+
+<span class="hl kwa">default</span><span class="hl sym">(</span><span class="hl kwb">Int</span><span class="hl sym">)</span>
+
+<span class="hl kwa">data</span> Colour <span class="hl sym">=</span> Blue <span class="hl sym">|</span> Red <span class="hl sym">|</span> Yellow <span class="hl kwa">deriving</span> <span class="hl sym">(</span>Show<span class="hl sym">,</span> Eq<span class="hl sym">,</span> Enum<span class="hl sym">)</span>
+
+complement a b <span class="hl sym">|</span> a <span class="hl sym">==</span> b <span class="hl sym">=</span> a
+complement a b <span class="hl sym">=</span> <span class="hl kwa">case</span> a <span class="hl kwa">of</span>
+    Blue   <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> b <span class="hl kwa">of</span> Red  <span class="hl sym">-&gt;</span> Yellow<span class="hl sym">;</span> _ <span class="hl sym">-&gt;</span> Red
+    Red    <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> b <span class="hl kwa">of</span> Blue <span class="hl sym">-&gt;</span> Yellow<span class="hl sym">;</span> _ <span class="hl sym">-&gt;</span> Blue
+    Yellow <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> b <span class="hl kwa">of</span> Blue <span class="hl sym">-&gt;</span> Red<span class="hl sym">;</span>    _ <span class="hl sym">-&gt;</span> Blue
+
+<span class="hl kwa">data</span> MP <span class="hl sym">=</span> MP <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!(</span>Maybe <span class="hl sym">(</span>Colour<span class="hl sym">,</span> ThreadId<span class="hl sym">,</span> MVar <span class="hl sym">(</span>Colour<span class="hl sym">,</span> ThreadId<span class="hl sym">)))</span>
+
+arrive mpv finish c0 <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    tid <span class="hl sym">&lt;-</span> myThreadId
+    <span class="hl kwa">let</span> inc x <span class="hl sym">= (</span>fromEnum <span class="hl sym">(</span>tid <span class="hl sym">==</span> x<span class="hl sym">) +)</span>
+        go <span class="hl sym">!</span>c <span class="hl sym">!</span>t <span class="hl sym">!</span>b <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            MP q w <span class="hl sym">&lt;-</span> takeMVar mpv
+            <span class="hl kwa">case</span> w <span class="hl kwa">of</span>
+                _ <span class="hl sym">|</span> q <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+                    putMVar mpv $ MP <span class="hl num">0</span> w
+                    putMVar finish <span class="hl sym">(</span>t<span class="hl sym">,</span> b<span class="hl sym">)</span>
+
+                Nothing <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+                     waker <span class="hl sym">&lt;-</span> newEmptyMVar
+                     putMVar mpv $ MP q <span class="hl sym">(</span>Just <span class="hl sym">(</span>c<span class="hl sym">,</span> tid<span class="hl sym">,</span> waker<span class="hl sym">))</span>
+                     <span class="hl sym">(</span>c<span class="hl str">', tid'</span><span class="hl sym">) &lt;-</span> takeMVar waker
+                     go c<span class="hl str">' (t+1) $ inc tid'</span> b
+
+                Just <span class="hl sym">(</span>k<span class="hl sym">,</span> tid<span class="hl str">', waker) -&gt; do</span>
+<span class="hl str">                    let !c'</span> <span class="hl sym">=</span> complement k c
+                    putMVar waker <span class="hl sym">(</span>c<span class="hl str">', tid)</span>
+<span class="hl str">                    putMVar mpv $ MP (q-1) Nothing</span>
+<span class="hl str">                    go c'</span> <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc tid<span class="hl str">' b</span>
+<span class="hl str">    go c0 0 0</span>
+<span class="hl str"></span>
+<span class="hl str">showN = unwords . map ((digits !!) . digitToInt) . show</span>
+<span class="hl str"></span>
+<span class="hl str">digits = words &quot;zero one two three four five six seven eight nine&quot;</span>
+<span class="hl str"></span>
+<span class="hl str">run n cs = do</span>
+<span class="hl str">    fs    &lt;- replicateM (length cs) newEmptyMVar</span>
+<span class="hl str">    mpv   &lt;- newMVar $ MP n Nothing</span>
+<span class="hl str">    zipWithM ((forkIO .) . arrive mpv) fs cs</span>
+<span class="hl str">    ns    &lt;- mapM takeMVar fs</span>
+<span class="hl str"></span>
+<span class="hl str">    putStrLn . map toLower . unwords . ([]:) . map show $ cs</span>
+<span class="hl str">    putStr . map toLower . unlines $ [unwords [show n, showN b] | (n, b) &lt;- ns]</span>
+<span class="hl str">    putStrLn . (&quot; &quot;++) . showN . sum . map fst $ ns</span>
+<span class="hl str">    putStrLn &quot;&quot;</span>
+<span class="hl str"></span>
+<span class="hl str">main = do</span>
+<span class="hl str">    putStrLn . map toLower . unlines $</span>
+<span class="hl str">        [unwords [show a, &quot;+&quot;, show b, &quot;-&gt;&quot;, show $ complement a b]</span>
+<span class="hl str">            | a &lt;- [Blue ..], b &lt;- [Blue ..]]</span>
+<span class="hl str"></span>
+<span class="hl str">    n &lt;- readIO . head =&lt;&lt; getArgs</span>
+<span class="hl str">    run n [Blue ..]</span>
+<span class="hl str">    run n [Blue, Red, Yellow, Red, Yellow, Blue, Red, Yellow, Red, Blue]</span>
