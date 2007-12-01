@@ -1,8 +1,9 @@
-# $Id: Makefile,v 1.51 2007-11-11 22:11:12 igouy-guest Exp $
+# $Id: Makefile,v 1.52 2007-12-01 18:35:28 bfulgham Exp $
 TESTS = \
     hello \
     binarytrees \
     chameneos \
+    chameneosredux \
     fannkuch \
     fasta \
     knucleotide \

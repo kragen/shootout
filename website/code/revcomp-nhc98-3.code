@@ -1,0 +1,76 @@
+<span class="com">{-# OPTIONS -O2 -optc-O3 -fglasgow-exts #-}</span>
+<span class="slc">--</span>
+<span class="slc">-- The Computer Language Benchmarks Game</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">--</span>
+<span class="slc">-- Contributed by Sterling Clover</span>
+<span class="slc">-- Heavily inspired by contribution from Don Stewart</span>
+<span class="slc">-- Suggested flags: -funfolding-use-threshold=32 -O2 -optc-O3</span>
+<span class="slc">--</span>
+
+<span class="kwa">import qualified</span> Data.ByteString.Char8 <span class="kwa">as</span> S
+<span class="kwa">import</span> Data.ByteString.Base
+<span class="kwa">import</span> Foreign
+<span class="kwa">import</span> Control.Arrow
+<span class="kwa">import</span> GHC.Base
+<span class="kwa">import</span> GHC.Ptr
+<span class="kwa">import</span> GHC.IOBase
+
+main <span class="sym">=</span> uncurry proc <span class="sym">=&lt;&lt;</span> clines `fmap` S.getContents
+
+proc <span class="sym">[]</span> _ <span class="sym">=</span> return <span class="sym">()</span>
+proc <span class="sym">(</span>h<span class="sym">:</span>hs<span class="sym">) (</span>b<span class="sym">:</span>bs<span class="sym">) =</span> S.putStrLn h <span class="sym">&gt;&gt;</span> revcomp b <span class="sym">&gt;&gt;</span> writeFasta b <span class="sym">&gt;&gt;</span> proc hs bs
+
+writeFasta t
+    <span class="sym">|</span> S.null t <span class="sym">=</span>return <span class="sym">()</span>
+    <span class="sym">|</span> otherwise <span class="sym">=</span> S.putStrLn l <span class="sym">&gt;&gt;</span> writeFasta r
+    <span class="kwa">where</span> <span class="sym">(</span>l<span class="sym">,</span>r<span class="sym">) =</span> S.splitAt <span class="num">60</span> t
+
+clines <span class="sym">::</span> ByteString <span class="sym">-&gt; ([</span>ByteString<span class="sym">],[</span>ByteString<span class="sym">])</span>
+clines ps <span class="sym">=</span> clines' ps <span class="sym">([],[])</span>
+    <span class="kwa">where</span>
+      clines' ps accum<span class="sym">&#64;(</span>f<span class="sym">,</span>s<span class="sym">)</span>
+          <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">case</span> S.elemIndex '\n' ps <span class="kwa">of</span>
+                          Just n  <span class="sym">-&gt;</span> clines'' <span class="sym">(</span>S.drop <span class="sym">(</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> ps<span class="sym">) (</span>f<span class="sym">++[</span>S.take n ps<span class="sym">],</span>s<span class="sym">)</span>
+      clines'' ps accum<span class="sym">&#64;(</span>f<span class="sym">,</span>s<span class="sym">)</span>
+          <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">case</span> S.elemIndex '<span class="sym">&gt;</span>' ps <span class="kwa">of</span>
+                      Nothing <span class="sym">-&gt; (</span>f<span class="sym">,</span>s<span class="sym">++[</span>S.filter <span class="sym">(/=</span>'\n'<span class="sym">)</span> ps<span class="sym">])</span>
+                      Just n  <span class="sym">-&gt;</span> clines' <span class="sym">(</span>S.drop n ps<span class="sym">) (</span>f<span class="sym">,</span>s<span class="sym">++[</span>S.filter <span class="sym">(/=</span>'\n'<span class="sym">)</span> . S.take n $ ps<span class="sym">])</span>
+
+comps <span class="sym">=</span> map <span class="sym">(</span>ord <span class="sym">***</span> c2w<span class="sym">) [</span>
+    <span class="sym">(</span>'A' <span class="sym">,</span> 'T'<span class="sym">), (</span> 'a' <span class="sym">,</span> 'T'<span class="sym">), (</span> 'C' <span class="sym">,</span> 'G'<span class="sym">), (</span> 'c' <span class="sym">,</span> 'G'<span class="sym">), (</span> 'G' <span class="sym">,</span> 'C'<span class="sym">),</span>
+    <span class="sym">(</span>'g' <span class="sym">,</span> 'C'<span class="sym">), (</span> 'T' <span class="sym">,</span> 'A'<span class="sym">), (</span> 't' <span class="sym">,</span> 'A'<span class="sym">), (</span> 'U' <span class="sym">,</span> 'A'<span class="sym">), (</span> 'u' <span class="sym">,</span> 'A'<span class="sym">),</span>
+    <span class="sym">(</span>'M' <span class="sym">,</span> 'K'<span class="sym">), (</span> 'm' <span class="sym">,</span> 'K'<span class="sym">), (</span> 'R' <span class="sym">,</span> 'Y'<span class="sym">), (</span> 'r' <span class="sym">,</span> 'Y'<span class="sym">), (</span> 'Y' <span class="sym">,</span> 'R'<span class="sym">),</span>
+    <span class="sym">(</span>'y' <span class="sym">,</span> 'R'<span class="sym">), (</span> 'K' <span class="sym">,</span> 'M'<span class="sym">), (</span> 'k' <span class="sym">,</span> 'M'<span class="sym">), (</span> 'V' <span class="sym">,</span> 'B'<span class="sym">), (</span> 'v' <span class="sym">,</span> 'B'<span class="sym">),</span>
+    <span class="sym">(</span>'H' <span class="sym">,</span> 'D'<span class="sym">), (</span> 'h' <span class="sym">,</span> 'D'<span class="sym">), (</span> 'D' <span class="sym">,</span> 'H'<span class="sym">), (</span> 'd' <span class="sym">,</span> 'H'<span class="sym">), (</span> 'B' <span class="sym">,</span> 'V'<span class="sym">), (</span> 'b' <span class="sym">,</span> 'V'<span class="sym">)]</span>
+
+<span class="com">{- NOINLINE -}</span>
+ca <span class="sym">::</span> Ptr Word8
+ca <span class="sym">=</span> inlinePerformIO $ <span class="kwa">do</span>
+       a <span class="sym">&lt;-</span> mallocArray <span class="num">200</span>
+       mapM_ <span class="sym">(</span>uncurry <span class="sym">(</span>pokeByteOff a<span class="sym">))</span> $ zip <span class="sym">[</span><span class="num">0</span>.<span class="num">.199</span><span class="sym">::</span><span class="kwb">Int</span><span class="sym">] [</span><span class="num">0</span>.<span class="num">.199</span><span class="sym">::</span>Word8<span class="sym">]</span>
+       mapM_ <span class="sym">(</span>uncurry <span class="sym">(</span>pokeByteOff a<span class="sym">))</span> comps
+       return a
+
+comp <span class="sym">::</span> Word# <span class="sym">-&gt;</span> Word#
+comp c <span class="sym">=</span> rw8 ca <span class="sym">(</span>word2Int# c<span class="sym">)</span>
+
+revcomp <span class="sym">(</span>PS fp s <span class="sym">(</span>I# l<span class="sym">)) =</span> withForeignPtr fp $ \p <span class="sym">-&gt;</span> rc <span class="sym">(</span>p `plusPtr` s<span class="sym">)</span> <span class="num">0</span># <span class="sym">(</span>l <span class="sym">-</span># <span class="num">1</span>#<span class="sym">)</span>
+  <span class="kwa">where</span>
+    rc <span class="sym">::</span> Ptr Word8 <span class="sym">-&gt;</span> <span class="kwb">Int</span># <span class="sym">-&gt;</span> <span class="kwb">Int</span># <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+    rc p i j  <span class="sym">=</span> rc' i j
+        <span class="kwa">where</span>
+          rc' i j
+              <span class="sym">|</span> i <span class="sym">&lt;</span># j <span class="sym">=</span> <span class="kwa">do</span>
+                          <span class="kwa">let</span> x <span class="sym">=</span> rw8 p i
+                          ww8 p i <span class="sym">(</span>comp <span class="sym">(</span>rw8 p j<span class="sym">))</span>
+                          ww8 p j <span class="sym">(</span>comp x<span class="sym">)</span>
+                          rc' <span class="sym">(</span>i <span class="sym">+</span># <span class="num">1</span>#<span class="sym">) (</span>j <span class="sym">-</span># <span class="num">1</span>#<span class="sym">)</span>
+              <span class="sym">|</span> i <span class="sym">==</span># j <span class="sym">=</span> ww8 p i <span class="sym">(</span>comp <span class="sym">(</span>rw8 p i<span class="sym">))</span>
+              <span class="sym">|</span> otherwise <span class="sym">=</span>  return <span class="sym">()</span>
+
+rw8 <span class="sym">::</span> Ptr Word8 <span class="sym">-&gt;</span> <span class="kwb">Int</span># <span class="sym">-&gt;</span> Word#
+rw8 <span class="sym">(</span>Ptr a<span class="sym">)</span> i <span class="sym">=</span> <span class="kwa">case</span> readWord8OffAddr# a i realWorld#  <span class="kwa">of</span> <span class="sym">(</span># _<span class="sym">,</span> x #<span class="sym">) -&gt;</span>  x
+
+ww8 <span class="sym">::</span> Ptr Word8 <span class="sym">-&gt;</span> <span class="kwb">Int</span># <span class="sym">-&gt;</span> Word# <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+ww8 <span class="sym">(</span>Ptr a<span class="sym">)</span> i x  <span class="sym">=</span> IO $ \s <span class="sym">-&gt;</span> <span class="kwa">case</span> writeWord8OffAddr# a i x s <span class="kwa">of</span> s2 <span class="sym">-&gt; (</span># s2<span class="sym">, ()</span> #<span class="sym">)</span>

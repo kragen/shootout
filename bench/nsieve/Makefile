@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2007-04-08 00:04:07 bfulgham Exp $
+# $Id: Makefile,v 1.18 2007-12-01 18:35:28 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -32,6 +32,6 @@ GCCOPTS := $(GCCOPTS) -std=c99
 ICCOPTS := $(ICCOPTS) -std=c99
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 7,8,9
+	  --range 8,9,10 --ignore nsieve.bigforth
 
 include ../../Make.footer
