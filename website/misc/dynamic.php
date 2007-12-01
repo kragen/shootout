@@ -51,9 +51,9 @@
 <th class="txt">&#963;</th>
 </tr>
 <tr>
-<td>3.41</td>
+<td>3.42</td>
 <td>0.01</td>
-<td>3.21</td>
+<td>3.20</td>
 <td>0.01</td>
 </tr>
 </table>
@@ -106,10 +106,10 @@
 <th class="txt">&#963;</th>
 </tr>
 <tr>
-<td>7.39</td>
-<td>0.45</td>
-<td>7.00</td>
-<td>0.01</td>
+<td>7.43</td>
+<td>0.28</td>
+<td>7.15</td>
+<td>0.08</td>
 </tr>
 </table>
 <p><img src="<?=IMAGE_PATH;?>jnsievebits.png"
@@ -133,10 +133,10 @@
 <th class="txt">&#963;</th>
 </tr>
 <tr>
-<td>13.46</td>
-<td>0.06</td>
-<td>13.18</td>
-<td>2.04</td>
+<td>11.66</td>
+<td>0.16</td>
+<td>11.13</td>
+<td>0.43</td>
 </tr>
 </table>
 <p><img src="<?=IMAGE_PATH;?>jfannkuch.png"
