@@ -446,13 +446,16 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>At present, we are only trying to show benchmarks.</p>
 </dd>
 
-<dt><a href="#acceptable" name="acceptable">Why don't you include my favourite language?</a></dt>
+<dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
 <dd><p>Is the language implementation</p>
 <ul>
 <li><strong>Used?</strong> There are way too many dead languages and unused new languages - see <a href="http://people.ku.edu/~nkinners/LangList/Extras/langlist.htm">The Language List</a> and <a href="http://www.levenez.com/lang/">Computer Languages History</a></li>
 <li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs?</li>
 </ul>
-<p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion.</p>
+<p>If that wasn't discouraging enough: in too many cases we've been asked to include a language implementation, and been told that of course programs would be contributed, but once the language didn't seem to perform as-well-as hoped no more programs were contributed. We're interested in a whole range of performance - not just in the 5 programs which show a language implementation at it's best.</p>
+<p>We have no ambition to measure every Python implmentation or every Haskell implementation or every C implmentation - that's a chore for Python enthusiasts and Haskell enthusiasts and C enthusiasts.</p>
+<p>We are unable to publish measurements for many commercial language implementations simply because their license conditions forbid it.</p>
+<p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
 </dd>
 
 
