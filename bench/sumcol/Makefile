@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.33 2007-11-15 06:50:30 igouy-guest Exp $
+# $Id: Makefile,v 1.34 2007-12-04 06:32:39 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -6,7 +6,7 @@ TITLE   := Sum a File of Numbers
 
 #XLABEL  := N (number of copies of input data)
 
-ERLFLAGS := -noinput -noshell
+#ERLFLAGS := -noshell
 CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 		-I ../Include/clean -I ../../Include/clean \
 		-I /usr/lib/clean/lib/ArgEnv

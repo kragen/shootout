@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2007-04-08 00:04:07 bfulgham Exp $
+# $Id: Makefile,v 1.26 2007-12-04 06:32:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -27,6 +27,7 @@ GHCOPTS := -fbang-patterns -fexcess-precision -fallow-overlapping-instances -pac
 OBJCOPTS := -std=gnu99
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 200000,2000000,20000000
+	  --range 200000,2000000,20000000 \
+	  --ndiff "-abserr 1.0e-8"
 
 include ../../Make.footer

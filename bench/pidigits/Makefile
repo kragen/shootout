@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2007-04-08 00:20:14 bfulgham Exp $
+# $Id: Makefile,v 1.21 2007-12-04 06:32:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -14,9 +14,10 @@ BIGLOOOPTS := -farithmetic
 DLANGOPTS := -L-lgmp -I../../Include/dlang/gmp4d ../../Include/dlang/gmp4d/gmp.d ../../Include/dlang/gmp4d/gmppool.d ../../Include/dlang/gmp4d/mpz.d 
 MONOOPTS := -r:Mono.Security
 MZSCHEMEOPTS := -qu
+OBJCOPTS := -lgmp
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
-OCAMLOPTS := nums.cmxa
+OCAMLOPTS := -I +gmp gmp.cmxa nums.cmxa
 OCAMLBOPTS := nums.cma
 
 ERLFLAGS := -noinput -noshell
@@ -26,6 +27,6 @@ GXXLDOPTS := $(GXXLDOPTS) -lgmp
 ICCOPTS := $(ICCOPTS) -lgmp
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 600,800,1000
+	  --range 500,1500,2500
 
 include ../../Make.footer

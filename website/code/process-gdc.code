@@ -1,0 +1,102 @@
+<span class="com">/* The Great Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   contributed by Isaac Gouy</span>
+<span class="com"></span>
+<span class="com">   converted to D by Dave Fladebo</span>
+<span class="com">   compile: dmd -O -inline -release process.d</span>
+<span class="com">*/</span>
+
+<span class="kwa">import</span> std<span class="sym">.</span>thread<span class="sym">,</span> std<span class="sym">.</span>stream<span class="sym">,</span> std<span class="sym">.</span>string<span class="sym">;</span>
+
+<span class="kwa">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwa">char</span><span class="sym">[][]</span> args<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwa">int</span> n <span class="sym">=</span> args<span class="sym">.</span>length <span class="sym">&gt;</span> <span class="num">1</span> ? <span class="kwd">atoi</span><span class="sym">(</span>args<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">1</span><span class="sym">;</span>
+
+    EndLink chainEnd <span class="sym">=</span> <span class="kwa">new</span> <span class="kwd">EndLink</span><span class="sym">(</span>n<span class="sym">);</span>
+    chainEnd<span class="sym">.</span><span class="kwd">start</span><span class="sym">();</span>
+
+    Link chain <span class="sym">=</span> chainEnd<span class="sym">;</span>
+    <span class="kwa">for</span><span class="sym">(</span><span class="kwa">int</span> i <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span> i <span class="sym">&lt;</span> n<span class="sym">;</span> i<span class="sym">++)</span>
+    <span class="sym">{</span>
+        Link link <span class="sym">=</span> <span class="kwa">new</span> <span class="kwd">Link</span><span class="sym">(</span>chain<span class="sym">);</span>
+        chain <span class="sym">=</span> link<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    chain<span class="sym">.</span><span class="kwd">put</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+    <span class="kwa">while</span><span class="sym">(</span>chain<span class="sym">.</span>next<span class="sym">)</span>
+    <span class="sym">{</span>
+        chain<span class="sym">.</span><span class="kwd">start</span><span class="sym">();</span>
+        chain<span class="sym">.</span><span class="kwc">wait</span><span class="sym">();</span>
+        chain <span class="sym">=</span> chain<span class="sym">.</span>next<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    chainEnd<span class="sym">.</span><span class="kwc">wait</span><span class="sym">();</span>
+    stdout<span class="sym">.</span><span class="kwd">writefln</span><span class="sym">(</span>chainEnd<span class="sym">.</span>count<span class="sym">);</span>
+
+    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwa">class</span> Link<span class="sym">:</span> Thread
+<span class="sym">{</span>
+<span class="kwa">private</span><span class="sym">:</span>
+    <span class="kwa">int</span> message <span class="sym">= -</span><span class="num">1</span><span class="sym">;</span>
+
+<span class="kwa">public</span><span class="sym">:</span>
+    Link next<span class="sym">;</span>
+
+    <span class="kwa">this</span><span class="sym">(</span>Link t<span class="sym">)</span>
+    <span class="sym">{</span>
+        next <span class="sym">=</span> t<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">int</span> <span class="kwd">run</span><span class="sym">()</span>
+    <span class="sym">{</span>
+        next<span class="sym">.</span><span class="kwd">put</span><span class="sym">(</span><span class="kwa">this</span><span class="sym">.</span><span class="kwd">take</span><span class="sym">());</span>
+        <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">synchronized void</span> <span class="kwd">put</span><span class="sym">(</span><span class="kwa">int</span> m<span class="sym">)</span>
+    <span class="sym">{</span>
+        message <span class="sym">=</span> m<span class="sym">;</span>
+        <span class="kwd">yield</span><span class="sym">();</span>
+    <span class="sym">}</span>
+
+<span class="kwa">protected</span><span class="sym">:</span>
+    <span class="kwa">synchronized int</span> <span class="kwd">take</span><span class="sym">()</span>
+    <span class="sym">{</span>
+        <span class="kwa">if</span><span class="sym">(</span>message <span class="sym">!= -</span><span class="num">1</span><span class="sym">)</span>
+        <span class="sym">{</span>
+            <span class="kwa">int</span> m <span class="sym">=</span> message<span class="sym">;</span>
+            message <span class="sym">= -</span><span class="num">1</span><span class="sym">;</span>
+            <span class="kwa">return</span> m <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+        <span class="sym">}</span>
+        <span class="kwd">yield</span><span class="sym">();</span>
+        <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwa">class</span> EndLink<span class="sym">:</span> Link
+<span class="sym">{</span>
+<span class="kwa">private</span><span class="sym">:</span>
+    <span class="kwa">int</span> finalCount<span class="sym">;</span>
+
+<span class="kwa">public</span><span class="sym">:</span>
+    <span class="kwa">int</span> count <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+
+    <span class="kwa">this</span><span class="sym">(</span><span class="kwa">int</span> i<span class="sym">)</span>
+    <span class="sym">{</span>
+        <span class="kwa">super</span><span class="sym">(</span><span class="kwa">null</span><span class="sym">);</span>
+        finalCount <span class="sym">=</span> i<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">int</span> <span class="kwd">run</span><span class="sym">()</span>
+    <span class="sym">{</span>
+        <span class="kwa">while</span><span class="sym">(</span>count <span class="sym">&lt;</span> finalCount<span class="sym">)</span>
+        <span class="sym">{</span>
+            count <span class="sym">+=</span> <span class="kwa">this</span><span class="sym">.</span><span class="kwd">take</span><span class="sym">();</span>
+            <span class="kwd">yield</span><span class="sym">();</span>
+        <span class="sym">}</span>
+        <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>

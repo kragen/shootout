@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2007-12-01 18:35:28 bfulgham Exp $
+# $Id: Makefile,v 1.20 2007-12-04 06:32:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := mandelbrot
@@ -24,6 +24,6 @@ GPLCOPTS := --fast-math
 GCCOPTS := -D_ISOC9X_SOURCE -mfpmath=sse -march=athlon-xp -lm
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 400,600,800
+	  --range 400,600,3000 --ignore mandelbrot.bigforth
 
 include ../../Make.footer

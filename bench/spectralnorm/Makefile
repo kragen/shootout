@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2007-04-08 02:07:28 bfulgham Exp $
+# $Id: Makefile,v 1.17 2007-12-04 06:32:39 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -14,6 +14,7 @@ GCCOPTS := -lm
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 MZSCHEMEOPTS := -qu
+OBJCOPTS := -lm
 OCAMLOPTS  := -inline 10
 #OCAMLBOPTS := 
 OO2COPTS :=  -A --no-rtc

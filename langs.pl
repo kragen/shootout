@@ -279,6 +279,22 @@
        },
      },
 
+     gdc =>
+     { Lang => 'D',
+       Name => 'GNU D',
+       Status => '+',
+       Home => 'http://dgcc.sourceforge.net/',
+       Down => 'http://dgcc.sourceforge.net/\#download',
+       Type => 'native compiled',
+       Note => 'D Language for the GNU Compiler Collection',
+       Ext => 'd',
+       Verfun => sub {
+          #chomp(my $ver = `/usr/bin/gdc -v`;
+	  $ver = "gdc 0.24";
+	  return $ver;
+       },
+     },
+
      io =>
      { Lang => 'Io',
        Name => 'Io',

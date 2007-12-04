@@ -1,0 +1,115 @@
+<span class="com">/* The Great Computer Language Shootout</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">   http://www.bagley.org/~doug/shootout/</span>
+<span class="com"></span>
+<span class="com">   converted to D by Dave Fladebo</span>
+<span class="com">   compile: dmd -O -inline -release echo.d</span>
+<span class="com">*/</span>
+
+<span class="kwa">import</span> std<span class="sym">.</span>stdio<span class="sym">,</span> std<span class="sym">.</span>string<span class="sym">,</span> std<span class="sym">.</span>socket<span class="sym">,</span> std<span class="sym">.</span>thread<span class="sym">;</span>
+
+<span class="kwa">uint</span> port<span class="sym">;</span>
+
+<span class="kwa">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwa">char</span><span class="sym">[][]</span> args<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwa">int</span> n <span class="sym">=</span> args<span class="sym">.</span>length <span class="sym">&gt;</span> <span class="num">1</span> ? <span class="kwd">atoi</span><span class="sym">(</span>args<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">1</span><span class="sym">;</span>
+
+    Thread server <span class="sym">=</span> <span class="kwa">new</span> <span class="kwd">Thread</span><span class="sym">(&amp;</span>echoServer<span class="sym">,</span><span class="kwa">cast</span><span class="sym">(</span><span class="kwa">void</span><span class="sym">*)</span>n<span class="sym">);</span>
+    Thread client <span class="sym">=</span> <span class="kwa">new</span> <span class="kwd">Thread</span><span class="sym">(&amp;</span>echoClient<span class="sym">,</span><span class="kwa">cast</span><span class="sym">(</span><span class="kwa">void</span><span class="sym">*)</span>n<span class="sym">);</span>
+
+    server<span class="sym">.</span><span class="kwd">start</span><span class="sym">();</span>
+    client<span class="sym">.</span><span class="kwd">start</span><span class="sym">();</span>
+
+    server<span class="sym">.</span><span class="kwc">wait</span><span class="sym">();</span>
+    client<span class="sym">.</span><span class="kwc">wait</span><span class="sym">();</span>
+
+    <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="kwa">int</span> <span class="kwd">echoServer</span><span class="sym">(</span><span class="kwa">void</span><span class="sym">*</span> arg<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwa">int</span> n <span class="sym">=</span> <span class="kwa">cast</span><span class="sym">(</span><span class="kwa">int</span><span class="sym">)</span>arg<span class="sym">;</span>
+
+    Socket sock<span class="sym">;</span>
+
+    <span class="kwa">try</span>
+    <span class="sym">{</span>
+        sock <span class="sym">=</span> serverSock<span class="sym">.</span><span class="kwd">accept</span><span class="sym">();</span>
+    <span class="sym">}</span>
+    <span class="kwa">catch</span><span class="sym">(</span>SocketAcceptException sae<span class="sym">)</span>
+    <span class="sym">{</span>
+        <span class="kwd">fwritefln</span><span class="sym">(</span>stderr<span class="sym">,</span><span class="str">&quot;server/accept&quot;</span><span class="sym">);</span>
+        <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">int</span> len<span class="sym">,</span> total<span class="sym">;</span>
+    <span class="kwa">char</span><span class="sym">[]</span> buffer <span class="sym">=</span> <span class="kwa">new char</span><span class="sym">[</span><span class="num">4096</span><span class="sym">];</span>
+    <span class="kwa">while</span><span class="sym">((</span>len <span class="sym">=</span> sock<span class="sym">.</span><span class="kwd">receive</span><span class="sym">(</span>buffer<span class="sym">)) &gt;</span> <span class="num">0</span><span class="sym">)</span>
+    <span class="sym">{</span>
+        total <span class="sym">+=</span> len<span class="sym">;</span>
+        <span class="kwa">if</span><span class="sym">(</span>sock<span class="sym">.</span><span class="kwd">send</span><span class="sym">(</span>buffer<span class="sym">[</span><span class="num">0</span><span class="sym">..</span>len<span class="sym">]) ==</span> Socket<span class="sym">.</span>ERROR<span class="sym">)</span>
+        <span class="sym">{</span>
+            <span class="kwd">fwritefln</span><span class="sym">(</span>stderr<span class="sym">,</span><span class="str">&quot;server/write&quot;</span><span class="sym">);</span>
+            <span class="kwa">break</span><span class="sym">;</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">if</span><span class="sym">(</span>len <span class="sym">==</span> Socket<span class="sym">.</span>ERROR<span class="sym">)</span> <span class="kwd">fwritefln</span><span class="sym">(</span>stderr<span class="sym">,</span><span class="str">&quot;server/read&quot;</span><span class="sym">);</span>
+    sock<span class="sym">.</span><span class="kwd">close</span><span class="sym">();</span>
+
+    <span class="kwd">writefln</span><span class="sym">(</span><span class="str">&quot;server processed &quot;</span><span class="sym">,</span>total<span class="sym">,</span><span class="str">&quot; bytes&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="kwa">int</span> <span class="kwd">echoClient</span><span class="sym">(</span><span class="kwa">void</span><span class="sym">*</span> arg<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwa">int</span> n <span class="sym">=</span> <span class="kwa">cast</span><span class="sym">(</span><span class="kwa">int</span><span class="sym">)</span>arg<span class="sym">;</span>
+
+    Socket sock <span class="sym">=</span> <span class="kwd">clientSock</span><span class="sym">();</span>
+
+    <span class="kwa">char</span><span class="sym">[]</span> input<span class="sym">,</span> buffer <span class="sym">=</span> <span class="kwa">new char</span><span class="sym">[</span><span class="num">4096</span><span class="sym">],</span> output <span class="sym">=</span> <span class="str">&quot;Hello there sailor</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">;</span>
+    <span class="kwa">for</span><span class="sym">(</span><span class="kwa">int</span> i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> n<span class="sym">;</span> i<span class="sym">++)</span>
+    <span class="sym">{</span>
+        <span class="kwa">int</span> len<span class="sym">,</span> total<span class="sym">,</span> start<span class="sym">;</span>
+        <span class="kwa">if</span><span class="sym">((</span>len <span class="sym">=</span> sock<span class="sym">.</span><span class="kwd">send</span><span class="sym">(</span>output<span class="sym">)) ==</span> Socket<span class="sym">.</span>ERROR<span class="sym">)</span>
+        <span class="sym">{</span>
+            <span class="kwd">fwritefln</span><span class="sym">(</span>stderr<span class="sym">,</span><span class="str">&quot;client/write&quot;</span><span class="sym">);</span>
+            <span class="kwa">break</span><span class="sym">;</span>
+        <span class="sym">}</span>
+        <span class="kwa">while</span><span class="sym">((</span>len <span class="sym">=</span> sock<span class="sym">.</span><span class="kwd">receive</span><span class="sym">(</span>buffer<span class="sym">)) &gt;</span> <span class="num">0</span><span class="sym">)</span>
+        <span class="sym">{</span>
+            total <span class="sym">+=</span> len<span class="sym">;</span>
+            input<span class="sym">.</span>length <span class="sym">=</span> total<span class="sym">;</span>
+            input<span class="sym">[</span>start<span class="sym">..</span>total<span class="sym">] =</span> buffer<span class="sym">[</span><span class="num">0</span><span class="sym">..</span>len<span class="sym">];</span>
+            <span class="kwa">if</span><span class="sym">(</span>input<span class="sym">[</span>total <span class="sym">-</span> <span class="num">1</span><span class="sym">] ==</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">)</span> <span class="kwa">break</span><span class="sym">;</span>
+            start <span class="sym">=</span> total<span class="sym">;</span>
+        <span class="sym">}</span>
+        <span class="kwa">if</span><span class="sym">(</span>input <span class="sym">!=</span> output <span class="sym">||</span> len <span class="sym">==</span> Socket<span class="sym">.</span>ERROR<span class="sym">)</span>
+        <span class="sym">{</span>
+            <span class="kwd">fwritefln</span><span class="sym">(</span>stderr<span class="sym">,</span><span class="str">&quot;client/read: &quot;</span><span class="sym">,</span>input<span class="sym">,</span><span class="str">&quot; ne</span> <span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span>output<span class="sym">);</span>
+            <span class="kwa">break</span><span class="sym">;</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    sock<span class="sym">.</span><span class="kwd">close</span><span class="sym">();</span>
+
+    <span class="kwa">return</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
+
+Socket <span class="kwd">serverSock</span><span class="sym">()</span>
+<span class="sym">{</span>
+    Socket sock <span class="sym">=</span> <span class="kwa">new</span> <span class="kwd">TcpSocket</span><span class="sym">();</span>
+    sock<span class="sym">.</span><span class="kwd">bind</span><span class="sym">(</span><span class="kwa">new</span> <span class="kwd">InternetAddress</span><span class="sym">(</span>InternetAddress<span class="sym">.</span>PORT_ANY<span class="sym">));</span>
+    port <span class="sym">= (</span><span class="kwa">cast</span><span class="sym">(</span>InternetAddress<span class="sym">)</span>sock<span class="sym">.</span><span class="kwd">localAddress</span><span class="sym">()).</span>port<span class="sym">;</span>
+    sock<span class="sym">.</span><span class="kwd">listen</span><span class="sym">(</span><span class="num">10</span><span class="sym">);</span>
+    <span class="kwa">return</span><span class="sym">(</span>sock<span class="sym">);</span>
+<span class="sym">}</span>
+
+Socket <span class="kwd">clientSock</span><span class="sym">()</span>
+<span class="sym">{</span>
+    Socket sock <span class="sym">=</span> <span class="kwa">new</span> <span class="kwd">TcpSocket</span><span class="sym">();</span>
+    sock<span class="sym">.</span><span class="kwd">connect</span><span class="sym">(</span><span class="kwa">new</span> <span class="kwd">InternetAddress</span><span class="sym">(</span>port<span class="sym">));</span>
+    <span class="kwa">return</span><span class="sym">(</span>sock<span class="sym">);</span>
+<span class="sym">}</span>
