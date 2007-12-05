@@ -5,7 +5,7 @@
 // based very closely on Ruby version by jose fco. gonzalez
 
 
-ddef seq = new StringBuffer();   
+def seq = new StringBuffer();   
 seq = System.in.readLines().join("\n")+"\n";
 
 initialLength = seq.length();
