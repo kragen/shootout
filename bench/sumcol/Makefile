@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.34 2007-12-04 06:32:39 bfulgham Exp $
+# $Id: Makefile,v 1.35 2007-12-06 15:54:05 bfulgham Exp $
 include ../../Make.header
 
 TEST    := sumcol
@@ -19,8 +19,9 @@ PARROTOPTS := -j
 POLYOPTS := -q
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 400,700,1000,8000 \
-	  --inputfile ../../website/desc/sumcol-input.txt --geninput
+	  --range 1000,11000,21000 \
+	  --inputfile ../../website/desc/sumcol-input.txt --geninput \
+	  --ignore sumcol.bash
 	  
 
 include ../../Make.footer

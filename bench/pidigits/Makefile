@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2007-12-04 06:32:38 bfulgham Exp $
+# $Id: Makefile,v 1.22 2007-12-06 15:54:05 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -27,6 +27,6 @@ GXXLDOPTS := $(GXXLDOPTS) -lgmp
 ICCOPTS := $(ICCOPTS) -lgmp
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
-	  --range 500,1500,2500
+	  --range 1500,2500,5000
 
 include ../../Make.footer
