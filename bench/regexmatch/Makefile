@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2006-06-09 23:27:21 bfulgham Exp $
+# $Id: Makefile,v 1.31 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexmatch
@@ -7,6 +7,7 @@ CYCOPTS  := -lpcre
 GXXOPTS   := $(GXXOPTS) -I/usr/local/include
 GXXLDOPTS := $(GXXLDOPTS) -lregexx -lpcre
 GCCOPTS   := $(GCCOPTS) -lpcre
+GDCOPTS   := $(GDCOPTS) -lpcre
 OCAMLOPTS := str.cmxa
 OCAMLBOPTS := str.cma
 OO2COPTS := -A --no-rtc

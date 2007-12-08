@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2007-12-04 06:32:37 bfulgham Exp $
+# $Id: Makefile,v 1.5 2007-12-08 03:58:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := chameneosredux
@@ -9,6 +9,7 @@ TITLE   := Thread rendezvous
 BIGLOOOPTS := -farithmetic
 CALFLAGS := -Dorg.openquark.cal.machine.lecc.concurrent_runtime
 GCCOPTS := -lpthread
+GDCOPTS := -lpthread
 GHCOPTS := -fbang-patterns -funbox-strict-fields
 MB_GHCRTS := +RTS -K100M -RTS
 GXXLDOPTS  := $(GXXLDOPTS) -lpthread

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2007-03-06 04:59:02 bfulgham Exp $
+# $Id: Makefile,v 1.13 2007-12-08 03:58:36 bfulgham Exp $
 include ../../Make.header
 
 TEST    := chameneos
@@ -20,7 +20,8 @@ ERLFLAGS := -noinput -noshell
 GHCOPTS := --make -O2 -optc-O3 -funbox-strict-fields
 GPLCOPTS := --fast-math
 GXXLDOPTS := $(GXXLDOPTS) -lpthread
-GCCOPTS :=  $(GCCOPTS)-lpthread
+GCCOPTS :=  $(GCCOPTS) -lpthread
+GDCOPTS :=  $(GDCOPTS) -lpthread
 ICCOPTS := $(ICCOPTS) -lpthread -D_GLIBCXX_GTHREAD_USE_WEAK=0
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2007-04-08 00:04:07 bfulgham Exp $
+# $Id: Makefile,v 1.12 2007-12-08 03:58:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := message
@@ -23,6 +23,7 @@ GPLCOPTS := --fast-math
 GXXLDOPTS  := $(GXXLDOPTS) -lpthread
 
 GCCOPTS :=  $(GCCOPTS) -lpthread
+GDCOPTS := $(GDCOPTS) -lpthread
 ICCOPTS := $(ICCOPTS) -lpthread
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \

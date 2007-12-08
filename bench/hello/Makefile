@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2006-04-13 14:41:43 bfulgham Exp $
+# $Id: Makefile,v 1.19 2007-12-08 03:58:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := hello
@@ -19,6 +19,7 @@ post: data/startup.tab
 
 ERLFLAGS := -noinput -noshell
 GCCOPTS := -static
+GDCOPTS := -static
 OO2COPTS := -A --no-rtc
 PARROTOPTS := -j
 POLYOPTS := -q

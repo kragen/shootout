@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-05-01 12:04:33 igouy-guest Exp $
+# $Id: Makefile,v 1.3 2007-12-08 03:58:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := implicitode
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries
 
 GCCOPTS := -lm
+GDCOPTS := -lm
 
 BIGLOOOPTS := -farithmetic
 MB_CLRTS := -nr

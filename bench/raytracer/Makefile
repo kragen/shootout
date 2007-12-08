@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2006-10-02 01:08:41 bfulgham Exp $
+# $Id: Makefile,v 1.12 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := raytracer
@@ -11,6 +11,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnvUnix/ArgEnvC.o \
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries
 
 GCCOPTS := -std=c99 -ffast-math -lm
+GDCOPTS := -ffast-math -lm
 
 BIGLOOOPTS := -farithmetic
 

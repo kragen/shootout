@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2006-06-09 23:27:21 bfulgham Exp $
+# $Id: Makefile,v 1.32 2007-12-08 03:58:39 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spellcheck
@@ -18,6 +18,7 @@ setup:
 
 CYCOPTS := -I../../Include/cyclone
 GCCOPTS := -I ../../Include
+GDCOPTS := -I ../../Include
 GXXOPTS := -I ../../Include
 ICCOPTS := -I ../../Include
 ICPPOPTS := -I ../../Include

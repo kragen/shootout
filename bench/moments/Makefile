@@ -1,10 +1,11 @@
-# $Id: Makefile,v 1.34 2006-07-29 05:03:34 bfulgham Exp $
+# $Id: Makefile,v 1.35 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := moments
 TITLE   := Statistical Moments
 
 GCCOPTS := -lm
+GDCOPTS := -lm
 
 #XLABEL  := N (number of copies of input data)
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2007-12-04 06:32:38 bfulgham Exp $
+# $Id: Makefile,v 1.27 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nbody
@@ -12,6 +12,7 @@ CLEANOPTS := $(CLEANOPTS) -nr -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries
 
 GCCOPTS := -lm
+GDCOPTS := -lm
 
 MB_CLRTS := -nr
 MZSCHEMEOPTS := -qu

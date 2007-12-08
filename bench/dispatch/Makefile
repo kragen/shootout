@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-07-03 22:53:51 bfulgham Exp $
+# $Id: Makefile,v 1.3 2007-12-08 03:58:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := dispatch
@@ -14,6 +14,7 @@ IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
 # gcc -O3 is detrimental for this test!
 GCCOPTS := -O1
+GDCOPTS := -O1
 OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 

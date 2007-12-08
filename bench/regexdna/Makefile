@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2007-12-04 06:32:39 bfulgham Exp $
+# $Id: Makefile,v 1.16 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := regexdna
@@ -14,6 +14,7 @@ MB_CLRTS := -nr
 BIGLOOOPTS := -farithmetic
 DLANGOPTS := -L-lpcre
 GCCOPTS := -lpcre
+GDCOPTS := -lpcre
 MZSCHEMEOPTS := -qu
 OCAMLOPTS  := str.cmxa
 OCAMLBOPTS := str.cma

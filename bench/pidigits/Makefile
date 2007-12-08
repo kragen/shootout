@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.22 2007-12-06 15:54:05 bfulgham Exp $
+# $Id: Makefile,v 1.23 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -23,6 +23,7 @@ OCAMLBOPTS := nums.cma
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 GCCOPTS := $(GCCOPTS) -lgmp
+GDCOPTS := $(GDCOPTS) -lgmp
 GXXLDOPTS := $(GXXLDOPTS) -lgmp
 ICCOPTS := $(ICCOPTS) -lgmp
 

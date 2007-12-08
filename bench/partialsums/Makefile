@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2007-12-04 06:32:38 bfulgham Exp $
+# $Id: Makefile,v 1.9 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := partialsums
@@ -14,6 +14,7 @@ OO2COPTS := -A --no-rtc
 POLYOPTS := -q
 
 GCCOPTS := -lm
+GDCOPTS := -lm
 GPLCOPTS := --fast-math
 GHCOPTS := -O2 -fexcess-precision -fbang-patterns
 

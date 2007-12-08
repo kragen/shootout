@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2007-12-06 15:54:05 bfulgham Exp $
+# $Id: Makefile,v 1.19 2007-12-08 03:58:38 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -10,6 +10,7 @@ CLEANOPTS := $(CLEANOPTS) -IL ArgEnv -I ../../Include/clean -IL StdLib
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries
 
 GCCOPTS := -lm
+GDCOPTS := -lm
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic

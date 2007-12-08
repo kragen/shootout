@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2007-03-06 04:59:02 bfulgham Exp $
+# $Id: Makefile,v 1.3 2007-12-08 03:58:37 bfulgham Exp $
 include ../../Make.header
 
 TEST    := magicsquares
@@ -12,6 +12,7 @@ CLEANOPTS := -l /usr/lib/clean/lib/ArgEnv/ArgEnvC.o \
 #CHICKENOPTS := -O3 -d0 -C "-Os -fomit-frame-pointer -fno-strict-aliasing" -vk -unsafe-libraries
 
 GCCOPTS := -lm
+GDCOPTS := -lm
 GHCOPTS := -funbox-strict-fields
 MB_GHCRTS := -H20m
 
