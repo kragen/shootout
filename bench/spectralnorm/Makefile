@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2007-12-08 03:58:38 bfulgham Exp $
+# $Id: Makefile,v 1.20 2007-12-08 07:41:35 bfulgham Exp $
 include ../../Make.header
 
 TEST    := spectralnorm
@@ -11,6 +11,7 @@ CLEANOPTS := $(CLEANOPTS) -IL ArgEnv -I ../../Include/clean -IL StdLib
 
 GCCOPTS := -lm
 GDCOPTS := -lm
+TCCOPTS := -lm
 
 IFCOPTS := -ip
 BIGLOOOPTS := -farithmetic
@@ -24,7 +25,7 @@ POLYOPTS := -q
 
 ERLFLAGS := -noinput
 GPLCOPTS := --fast-math
-GHCOPTS := -fexcess-precision
+GHCOPTS := -fexcess-precision -fbang-patterns
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 500,3000,5500 --ignore spectralnorm.io \
