@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2007-12-08 07:41:35 bfulgham Exp $
+# $Id: Makefile,v 1.25 2007-12-08 21:14:24 bfulgham Exp $
 include ../../Make.header
 
 TEST    := pidigits
@@ -23,7 +23,7 @@ OCAMLBOPTS := -I +gmp gmp.cma nums.cma
 ERLFLAGS := -noinput -noshell
 GPLCOPTS := --fast-math
 GCCOPTS := $(GCCOPTS) -lgmp
-GDCOPTS := $(GDCOPTS) -lgmp
+GDCOPTS := -lgmp -I../../Include/dlang/gmp4d ../../Include/dlang/gmp4d/gmp.d ../../Include/dlang/gmp4d/gmppool.d ../../Include/dlang/gmp4d/mpz.d 
 GXXLDOPTS := $(GXXLDOPTS) -lgmp
 ICCOPTS := $(ICCOPTS) -lgmp
 TCCOPTS := $(TCCOPTS) -lgmp

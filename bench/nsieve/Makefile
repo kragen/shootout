@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2007-12-08 07:41:35 bfulgham Exp $
+# $Id: Makefile,v 1.20 2007-12-08 21:14:24 bfulgham Exp $
 include ../../Make.header
 
 TEST    := nsieve
@@ -30,7 +30,7 @@ SWIOPTS = -q -G0 -g main -t halt
 
 GCCOPTS := $(GCCOPTS) -std=c99
 ICCOPTS := $(ICCOPTS) -std=c99
-TCCOPTS := $(TCCOPTS) -std=c99
+TCCOPTS := $(TCCOPTS) 
 
 RUNTESTS := $(MINIBENCH) --conf ../../Minibench.conf \
 	  --range 8,9,10 --ignore nsieve.bigforth
