@@ -211,7 +211,7 @@ Bash time builtin command
 16.638
 </pre>
 <p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
-<p>The <a href="#fullcpu"><strong>&darr;&nbsp;Full CPU time</strong></a> <em>includes</em> program startup time.</p>
+<p>The <a href="#fullcpu"><strong>&darr;&nbsp;CPU time</strong></a> <em>includes</em> program startup time.</p>
 </dd>
 
 <dt><a href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></dt>
