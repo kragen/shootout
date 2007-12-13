@@ -33,7 +33,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-
+<p>"We must make do with the imperfect evidence that we can find, not merely lament its deficiencies."</p><br/>
 
 <table class="layout">
 <tr class="test">
