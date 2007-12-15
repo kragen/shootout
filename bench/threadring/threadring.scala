@@ -2,9 +2,7 @@
    http://shootout.alioth.debian.org/
 
    Contributed by Vincent Kraeutler
-   modified by Isaac Gouy
 */
-
 import scala.actors.Actor
 import scala.actors.Actor._
 
@@ -17,7 +15,7 @@ object threadring {
                 
         def act() { loop { react {
                         case 0 => {
-                                println("Terminating at thread: " + label)
+                                println(label)
                                 System.exit(0)
                         }
                         case (n: int) => {
