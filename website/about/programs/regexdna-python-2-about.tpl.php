@@ -1,3 +1,4 @@
+<p><strong>Don't split pattern at |</strong></p>
 <pre>While working on this Python benchmark, I looked into most of the regexdna benchmarks for the other languages. The idea
 was to find differences and ideas that might affect performance there. Also, I wanted to avoid implementing 'tricks'
 that would be rejected anyway. In fact all the changes that affect speed were taken from the other (accepted) benchmarks,
