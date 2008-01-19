@@ -1,27 +1,46 @@
-<span class="com">{-# OPTIONS -fglasgow-exts -fbang-patterns #-}</span>
-<span class="slc">--</span>
-<span class="slc">-- The Computer Language Shootout</span>
-<span class="slc">-- http://shootout.alioth.debian.org/</span>
-<span class="slc">--</span>
-<span class="slc">-- Contributed by Vasile Gaburici</span>
-<span class="slc">--</span>
-<span class="slc">-- Real line-oriented I/O</span>
-<span class="slc">--</span>
+<span class="hl com">{-# OPTIONS -O2 -fvia-C -optc-O2 -fbang-patterns #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Don Stewart</span>
+<span class="hl slc">--</span>
+<span class="hl kwa">import</span> Data.<span class="hl kwb">Char</span>
 
-<span class="kwa">import</span> Data.List
-<span class="kwa">import qualified</span> Data.ByteString.Char8 <span class="kwa">as</span> C8
-<span class="kwa">import</span> System.IO.Error <span class="kwa">as</span> Err
+<span class="hl kwa">import</span> Data.ByteString.Internal
+<span class="hl kwa">import</span> Data.ByteString.Lazy.Internal
+<span class="hl kwa">import</span> Data.ByteString.Unsafe
+<span class="hl kwa">import qualified</span> Data.ByteString.Char8      <span class="hl kwa">as</span> S
+<span class="hl kwa">import qualified</span> Data.ByteString.Lazy.Char8 <span class="hl kwa">as</span> L
 
-maybeGetLine <span class="sym">::</span> IO <span class="sym">(</span>Maybe C8.ByteString<span class="sym">)</span>
-maybeGetLine <span class="sym">=</span>  Err.catch <span class="sym">(</span><span class="kwa">do</span> line <span class="sym">&lt;-</span> C8.getLine
-                              return $ Just line<span class="sym">) (</span>\e <span class="sym">-&gt;</span> return Nothing<span class="sym">)</span>
+main <span class="hl sym">=</span> print . new <span class="hl num">0</span> <span class="hl sym">=&lt;&lt;</span> L.getContents
 
-addLine <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO <span class="sym">()</span>
-addLine the_sum <span class="sym">=</span> <span class="kwa">do</span> maybe_line <span class="sym">&lt;-</span> maybeGetLine
-                     <span class="kwa">case</span> maybe_line <span class="kwa">of</span>
-                       Nothing   <span class="sym">-&gt;</span> putStrLn $ show the_sum
-                       Just line <span class="sym">-&gt;</span> <span class="kwa">do</span>
-                         <span class="kwa">let</span> Just<span class="sym">(</span>num<span class="sym">,</span> _<span class="sym">) =</span> C8.readInt line
-                         addLine $<span class="sym">!</span> num <span class="sym">+</span> the_sum
+new  i Empty   <span class="hl sym">=</span> i
+new <span class="hl sym">!</span>i <span class="hl sym">(</span>Chunk s <span class="hl sym">(</span>Chunk t ts<span class="hl sym">)) |</span> S.last s <span class="hl sym">/=</span> '\n' <span class="hl sym">=</span> new <span class="hl sym">(</span>add i s'<span class="hl sym">)</span> ts'
+  <span class="hl kwa">where</span>
+    <span class="hl sym">(</span>s'<span class="hl sym">,</span>r<span class="hl sym">)  =</span> S.breakEnd <span class="hl sym">((==)</span> '\n'<span class="hl sym">)</span> s
+    <span class="hl sym">(</span>r'<span class="hl sym">,</span>rs<span class="hl sym">) =</span> S.break    <span class="hl sym">((==)</span> '\n'<span class="hl sym">)</span> t
+    ts'     <span class="hl sym">=</span> Chunk <span class="hl sym">(</span>S.concat <span class="hl sym">[</span>r<span class="hl sym">,</span>r'<span class="hl sym">,</span>S.singleton '\n'<span class="hl sym">]) (</span>Chunk <span class="hl sym">(</span>unsafeTail rs<span class="hl sym">)</span> ts<span class="hl sym">)</span>
+new  i <span class="hl sym">(</span>Chunk s ss<span class="hl sym">) =</span> new <span class="hl sym">(</span>add i s<span class="hl sym">)</span> ss
 
-main <span class="sym">=</span> addLine <span class="num">0</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- now jump into the fast path</span>
+<span class="hl slc">--</span>
+add <span class="hl sym">!</span>i <span class="hl sym">!</span>s    <span class="hl sym">|</span> S.null s  <span class="hl sym">=</span> i
+             <span class="hl sym">|</span> x <span class="hl sym">==</span> '<span class="hl sym">-</span>'  <span class="hl sym">=</span> sub i <span class="hl num">0</span> xs
+             <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> pos i <span class="hl sym">(</span>parse x<span class="hl sym">)</span> xs
+  <span class="hl kwa">where</span> <span class="hl sym">(</span>x<span class="hl sym">,</span>xs<span class="hl sym">) =</span> uncons s
+
+sub <span class="hl sym">!</span>i <span class="hl sym">!</span>n <span class="hl sym">!</span>t <span class="hl sym">|</span> y <span class="hl sym">==</span> '\n'  <span class="hl sym">=</span> add <span class="hl sym">(</span>i<span class="hl sym">-</span>n<span class="hl sym">)</span> ys
+             <span class="hl sym">|</span> otherwise  <span class="hl sym">=</span> sub i n' ys
+  <span class="hl kwa">where</span> <span class="hl sym">(</span>y<span class="hl sym">,</span>ys<span class="hl sym">) =</span> uncons t
+        n'     <span class="hl sym">=</span> parse y <span class="hl sym">+</span> <span class="hl num">10</span> <span class="hl sym">*</span> n
+
+pos <span class="hl sym">!</span>i <span class="hl sym">!</span>n <span class="hl sym">!</span>t <span class="hl sym">|</span> y <span class="hl sym">==</span> '\n' <span class="hl sym">=</span> add <span class="hl sym">(</span>i<span class="hl sym">+</span>n<span class="hl sym">)</span> ys
+             <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> pos i n' ys
+  <span class="hl kwa">where</span> <span class="hl sym">(</span>y<span class="hl sym">,</span>ys<span class="hl sym">) =</span> uncons t
+        n'     <span class="hl sym">=</span> parse y <span class="hl sym">+</span> <span class="hl num">10</span> <span class="hl sym">*</span> n
+
+parse c  <span class="hl sym">=</span> ord c <span class="hl sym">-</span> ord '<span class="hl num">0</span>'
+
+uncons s <span class="hl sym">= (</span>w2c <span class="hl sym">(</span>unsafeHead s<span class="hl sym">),</span> unsafeTail s<span class="hl sym">)</span>

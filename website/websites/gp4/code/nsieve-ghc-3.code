@@ -1,16 +1,38 @@
-<span class="slc">-- $Id: nsieve-ghc-3.code,v 1.11 2007-01-02 20:00:18 igouy-guest Exp $</span>
-<span class="slc">-- Written by Einar Karttunen, shortened by Don Stewart</span>
+<span class="hl com">{-# OPTIONS -O2 -optc-O -fbang-patterns #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Don Stewart</span>
+<span class="hl slc">-- nsieve over an ST monad Word8 array</span>
+<span class="hl slc">--</span>
 
-<span class="kwa">import</span> Data.Array.IO<span class="sym">;</span> <span class="kwa">import</span> Data.Array.Base<span class="sym">;</span> <span class="kwa">import</span> Data.Bits<span class="sym">;</span> <span class="kwa">import</span> System<span class="sym">;</span> <span class="kwa">import</span> Text.Printf
+<span class="hl kwa">import</span> Control.Monad.ST
+<span class="hl kwa">import</span> Data.Array.ST
+<span class="hl kwa">import</span> Data.Array.Base
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> Data.Bits
+<span class="hl kwa">import</span> Data.Word
+<span class="hl kwa">import</span> Text.Printf
 
-loop arr m n c <span class="sym">=</span> if n <span class="sym">==</span> m <span class="kwa">then</span> return c <span class="kwa">else do</span>
-    el <span class="sym">&lt;-</span> unsafeRead arr n
-    if el <span class="kwa">then do</span> mapM_ <span class="sym">(</span>flip <span class="sym">(</span>unsafeWrite arr<span class="sym">)</span> <span class="kwa">False</span><span class="sym">) (</span>tail <span class="sym">[</span>n<span class="sym">,</span>n<span class="sym">+</span>n..m<span class="sym">])</span>
-                  loop arr m <span class="sym">(</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> $<span class="sym">!</span> c <span class="sym">+</span> <span class="num">1</span>
-          <span class="kwa">else</span> loop <span class="sym">(</span>arr <span class="sym">::</span> IOUArray <span class="kwb">Int Bool</span><span class="sym">)</span> m <span class="sym">(</span>n<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> c
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head <span class="hl sym">::</span> IO <span class="hl kwb">Int</span>
+    mapM_ <span class="hl sym">(</span>\i <span class="hl sym">-&gt;</span> sieve <span class="hl sym">(</span><span class="hl num">10000</span> `shiftL` <span class="hl sym">(</span>n<span class="hl sym">-</span>i<span class="hl sym">))) [</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">]</span>
 
-sieve m <span class="sym">=</span> <span class="kwa">do</span> c <span class="sym">&lt;-</span> newArray <span class="sym">(</span><span class="num">2</span><span class="sym">,</span>m<span class="sym">)</span> <span class="kwa">True</span> <span class="sym">&gt;&gt;=</span> \a <span class="sym">-&gt;</span> loop a m <span class="num">2 0</span>
-             printf <span class="str">&quot;Primes up to %8d %8d\n&quot;</span> <span class="sym">(</span>m<span class="sym">::</span><span class="kwb">Int</span><span class="sym">) (</span>c<span class="sym">::</span><span class="kwb">Int</span><span class="sym">) ::</span> IO <span class="sym">()</span>
+sieve n <span class="hl sym">=</span> <span class="hl kwa">do</span>
+   <span class="hl kwa">let</span> r <span class="hl sym">=</span> runST <span class="hl sym">(</span><span class="hl kwa">do</span> a <span class="hl sym">&lt;-</span> newArray <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span>n<span class="hl sym">)</span> <span class="hl num">0</span> <span class="hl sym">::</span> ST s <span class="hl sym">(</span>STUArray s <span class="hl kwb">Int</span> Word8<span class="hl sym">)</span>
+                     go a n <span class="hl num">2 0</span><span class="hl sym">)</span>
+   printf <span class="hl str">&quot;Primes up to %8d %8d\n&quot;</span> <span class="hl sym">(</span>n<span class="hl sym">::</span><span class="hl kwb">Int</span><span class="hl sym">) (</span>r<span class="hl sym">::</span><span class="hl kwb">Int</span><span class="hl sym">) ::</span> IO <span class="hl sym">()</span>
 
-main <span class="sym">= (</span>\n <span class="sym">-&gt;</span> mapM_ <span class="sym">(</span>sieve.<span class="sym">(</span><span class="num">10000</span> <span class="sym">*)</span>.shiftL <span class="num">1</span><span class="sym">) [</span>n<span class="sym">,</span>n<span class="sym">-</span><span class="num">1</span><span class="sym">,</span>n<span class="sym">-</span><span class="num">2</span><span class="sym">])</span> . read . head <span class="sym">=&lt;&lt;</span> getArgs
+go <span class="hl sym">!</span>a <span class="hl sym">!</span>m <span class="hl sym">!</span>n <span class="hl sym">!</span>c
+    <span class="hl sym">|</span> n <span class="hl sym">==</span> m    <span class="hl sym">=</span> return c
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl kwa">do</span>
+          e <span class="hl sym">&lt;-</span> unsafeRead a n
+          if e <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span> set <span class="hl sym">(</span>n `shiftL` <span class="hl num">1</span><span class="hl sym">)</span>
+                       <span class="hl kwa">else</span> go a m <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> c
+  <span class="hl kwa">where</span>
+    set <span class="hl sym">!</span>j
+        <span class="hl sym">|</span> j <span class="hl sym">&lt;</span> m     <span class="hl sym">=</span> unsafeWrite a j <span class="hl num">1</span> <span class="hl sym">&gt;&gt;</span> set <span class="hl sym">(</span>j<span class="hl sym">+</span>n<span class="hl sym">)</span>
+        <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> go a m <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>c<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
 
