@@ -1,125 +1,175 @@
-<span class="com">{-# OPTIONS -funbox-strict-fields #-}</span>
-<span class="slc">--</span>
-<span class="slc">-- http://shootout.alioth.debian.org/</span>
-<span class="slc">--</span>
-<span class="slc">-- By Chris Kuklewicz and Don Stewart</span>
-<span class="slc">--</span>
-<span class="kwa">import</span> Control.Monad
-<span class="kwa">import</span> Foreign
-<span class="kwa">import</span> Text.Printf      <span class="sym">(</span>printf<span class="sym">)</span>
+<span class="hl com">{-# OPTIONS -fvia-C -fbang-patterns -funbox-strict-fields #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Don Stewart</span>
+<span class="hl slc">-- Uses a port of the simple hashtable from the Clean entry</span>
+<span class="hl slc">--</span>
 
-<span class="kwa">import</span> Data.List
-<span class="kwa">import</span> Data.Maybe       <span class="sym">(</span>maybe<span class="sym">,</span>fromMaybe<span class="sym">)</span>
-<span class="kwa">import</span> Data.<span class="kwb">Char</span>        <span class="sym">(</span>ord<span class="sym">,</span>chr<span class="sym">,</span>toUpper<span class="sym">)</span>
-<span class="kwa">import qualified</span> Data.HashTable <span class="kwa">as</span> Table
+<span class="hl kwa">import</span> GHC.Exts
+<span class="hl kwa">import</span> GHC.IOBase
 
-<span class="kwa">import</span> GHC.Exts
-<span class="kwa">import</span> GHC.IOBase
+<span class="hl kwa">import</span> Foreign
+<span class="hl kwa">import</span> <span class="hl kwb">Char</span>
+<span class="hl kwa">import</span> List
+<span class="hl kwa">import</span> Maybe
+<span class="hl kwa">import</span> Text.Printf
 
-<span class="kwa">type</span> Base <span class="sym">=</span> Word8
-c2b <span class="sym">::</span> <span class="kwb">Char</span> <span class="sym">-&gt;</span> Base <span class="sym">=</span> fromIntegral . ord . toUpper
-b2c <span class="sym">::</span> Base <span class="sym">-&gt;</span> <span class="kwb">Char</span> <span class="sym">=</span> chr . fromIntegral
+<span class="hl kwa">import</span> Data.ByteString.Internal
+<span class="hl kwa">import</span> Data.ByteString.Unsafe
+<span class="hl kwa">import qualified</span> Data.ByteString.Char8 <span class="hl kwa">as</span> S
 
-<span class="slc">-- The ptr are usually into the main fasta data, which is read-only</span>
-<span class="kwa">data</span> Seq <span class="sym">=</span> Seq <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!(</span>Ptr Base<span class="sym">)</span>
+<span class="hl kwa">import</span> Data.Array.Base
+<span class="hl kwa">import qualified</span> Data.Array.IO <span class="hl kwa">as</span> A
 
-seqStrings <span class="sym">= [</span><span class="str">&quot;GGT&quot;</span><span class="sym">,</span><span class="str">&quot;GGTA&quot;</span><span class="sym">,</span><span class="str">&quot;GGTATT&quot;</span><span class="sym">,</span><span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">,</span><span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">]</span>
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl sym">(</span>PS fp o l<span class="hl sym">) &lt;-</span> get <span class="hl sym">(</span>S.pack <span class="hl str">&quot;&gt;TH&quot;</span><span class="hl sym">)</span>
+    withForeignPtr fp $ \p <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+        <span class="hl kwa">let</span> sec <span class="hl sym">=</span> p `plusPtr` o
+        mapM_ <span class="hl sym">(</span>writeFreqs l sec<span class="hl sym">) [</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">2</span><span class="hl sym">]</span>
+        mapM_ <span class="hl sym">(</span>writeFrame l sec<span class="hl sym">) =&lt;&lt;</span> mapM toseq strs
 
-main <span class="sym">=</span> <span class="kwa">do</span> section <span class="sym">&lt;-</span> getSection <span class="str">&quot;&gt;THREE&quot;</span>
-          mapM_ <span class="sym">(</span>writeFreq section<span class="sym">) [</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">]</span>
-          mapM_ <span class="sym">(</span>writeFrame section<span class="sym">) =&lt;&lt;</span> mapM stringToSeq seqStrings
+strs <span class="hl sym">= [</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">]</span>
 
-<span class="slc">-- allocate, read, and return the main fasta data</span>
-getSection prefix <span class="sym">=</span> <span class="kwa">do</span> findPrefix
-                       baseArray <span class="sym">&lt;-</span> newArray0 <span class="num">0</span> <span class="sym">=&lt;&lt;</span> getRest <span class="sym">=&lt;&lt;</span> skipComments
-                       size      <span class="sym">&lt;-</span> lengthArray0 <span class="num">0</span> baseArray
-                       return <span class="sym">(</span>Seq size baseArray<span class="sym">)</span>
+get p <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    s <span class="hl sym">&lt;-</span> S.getContents
+    <span class="hl kwa">let</span> Just n <span class="hl sym">=</span> S.findSubstring p s
+    return $<span class="hl sym">!</span> S.map toUpper             <span class="hl slc">-- array fusion!</span>
+            . S.filter    <span class="hl sym">((/=)</span> '\n'<span class="hl sym">)</span>
+            . S.dropWhile <span class="hl sym">((/=)</span> '\n'<span class="hl sym">)</span>
+            . S.copy
+            . S.drop n $ s
 
-  <span class="kwa">where</span> findPrefix   <span class="sym">=</span> <span class="kwa">do</span> line <span class="sym">&lt;-</span> getLine<span class="sym">;</span> unless <span class="sym">(</span>isPrefixOf prefix line<span class="sym">)</span> findPrefix
-        skipComments <span class="sym">=</span> <span class="kwa">do</span> line <span class="sym">&lt;-</span> getLine
-                          if '<span class="sym">;</span>' <span class="sym">==</span> head line <span class="kwa">then</span> skipComments <span class="kwa">else</span> return line
-        getRest fl   <span class="sym">=</span> <span class="kwa">do</span> all <span class="sym">&lt;-</span> getContents
-                          <span class="kwa">let</span> asLines <span class="sym">=</span> takeWhile <span class="sym">((</span>'<span class="sym">&gt;</span>'<span class="sym">/=)</span>.head<span class="sym">) (</span>fl <span class="sym">:</span> lines all<span class="sym">)</span>
-                          return $ concatMap <span class="sym">(</span>map c2b<span class="sym">)</span> asLines
+writeFreqs size p n <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    h   <span class="hl sym">&lt;-</span> htNew n size
+    htInsert size p n h
+    <span class="hl kwa">let</span> vs <span class="hl sym">=</span> htNodes h
+    mapM_ draw <span class="hl sym">(</span>sortBy kf vs<span class="hl sym">)</span>
+    putChar '\n'
+  <span class="hl kwa">where</span>
+    draw <span class="hl sym">(</span>Node p f<span class="hl sym">) =</span> printf <span class="hl str">&quot;%s %.3f\n&quot;</span> <span class="hl sym">(</span>ppr n p<span class="hl sym">)</span> pct
+        <span class="hl kwa">where</span> pct   <span class="hl sym">= (</span><span class="hl num">100</span> <span class="hl sym">* (</span>fromIntegral f<span class="hl sym">) /</span> total<span class="hl sym">) ::</span> <span class="hl kwb">Double</span>
+              total <span class="hl sym">=</span> fromIntegral <span class="hl sym">(</span>size <span class="hl sym">-</span> n <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
 
-<span class="slc">-- Apply f at every subsequence of length frameSize inside bases</span>
-mapSeq <span class="sym">(</span>Seq size bases<span class="sym">)</span> frameSize f <span class="sym">=</span> mapM_ act <span class="sym">[</span><span class="num">0</span>..size<span class="sym">-</span>frameSize<span class="sym">]</span>
-    <span class="kwa">where</span> act i <span class="sym">=</span> f <span class="sym">(</span>Seq frameSize <span class="sym">(</span>advancePtr bases i<span class="sym">))</span>
+    kf <span class="hl sym">(</span>Node k x<span class="hl sym">) (</span>Node j y<span class="hl sym">) =</span> <span class="hl kwa">case</span> compare y x <span class="hl kwa">of</span>
+          EQ <span class="hl sym">-&gt;</span> compare <span class="hl sym">(</span>ppr n k<span class="hl sym">) (</span>ppr n j<span class="hl sym">);</span> x  <span class="hl sym">-&gt;</span> x
 
-<span class="slc">-- This is most of the program time and memory</span>
-<span class="slc">-- HashTable needs a spiffier API</span>
-countFrame table frame <span class="sym">=</span> <span class="kwa">do</span> mOld <span class="sym">&lt;-</span> Table.lookup table frame
-                            Table.update table frame $<span class="sym">!</span> maybe <span class="num">1</span> succ mOld
+writeFrame size p <span class="hl sym">(</span>n<span class="hl sym">,</span>k<span class="hl sym">) =</span> <span class="hl kwa">do</span>
+    h <span class="hl sym">&lt;-</span> htNew n size
+    htInsert size p n h
+    Node k v <span class="hl sym">&lt;-</span> htFind k h
+    putStrLn $ <span class="hl sym">(</span>show v<span class="hl sym">) ++ (</span>'\t' <span class="hl sym">:</span> ppr n k<span class="hl sym">)</span>
 
-<span class="slc">-- This nails down the type 'Int' for counting the frames</span>
-newTable <span class="sym">=</span> Table.new eqSeq hashSeq <span class="sym">::</span> IO <span class="sym">(</span>Table.HashTable Seq <span class="kwb">Int</span><span class="sym">)</span>
+ppr n p <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>map w2c `fmap` peekArray n p<span class="hl sym">)</span>
+toseq s <span class="hl sym">=</span> fmap <span class="hl sym">((,) (</span>length s<span class="hl sym">)) (</span>newArray0 <span class="hl num">0</span> <span class="hl sym">(</span>map c2w s<span class="hl sym">))</span>
 
-<span class="slc">-- (countFreq sb) satisfies &quot;define a procedure/function to update a</span>
-<span class="slc">-- hashtable of k-nucleotide keys and count values, for a particular</span>
-<span class="slc">-- reading-frame&quot;</span>
-countFreq sb frameSize table <span class="sym">=</span> mapSeq sb frameSize <span class="sym">(</span>countFrame table<span class="sym">)</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- An implementation of simpl_hash.c in Haskell</span>
+<span class="hl slc">--</span>
 
-<span class="slc">-- This builds the table for a given frameSize and prints the table</span>
-writeFreq sb<span class="sym">&#64;(</span>Seq size bases<span class="sym">)</span> frameSize <span class="sym">=</span> <span class="kwa">do</span>
-    table    <span class="sym">&lt;-</span> newTable
-    countFreq sb frameSize table
-    unsorted <span class="sym">&lt;-</span> Table.toList table
-    mapM_ printBSF <span class="sym">(</span>mySort unsorted<span class="sym">) &gt;&gt;</span> putChar '\n'
+<span class="hl kwa">data</span> Hash    <span class="hl sym">=</span> HT <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!(</span>A.IOArray <span class="hl kwb">Int</span> Buckets<span class="hl sym">)</span>
 
-  <span class="kwa">where</span> printBSF <span class="sym">(</span>bs<span class="sym">,</span>f<span class="sym">) =</span> printf <span class="str">&quot;%s %.3f\n&quot;</span> <span class="sym">(</span>showSeq bs<span class="sym">) (</span>percent f<span class="sym">)</span>
-        total     <span class="sym">=</span> fromIntegral <span class="sym">(</span>size <span class="sym">-</span> frameSize <span class="sym">+</span> <span class="num">1</span><span class="sym">)</span>
-        percent n <span class="sym">=</span> <span class="num">100</span> <span class="sym">* (</span>fromIntegral n<span class="sym">) /</span> total <span class="sym">::</span> <span class="kwb">Double</span>
-        mySort    <span class="sym">=</span> sortBy $ \<span class="sym">(</span>k1<span class="sym">,</span>x<span class="sym">) (</span>k2<span class="sym">,</span>y<span class="sym">) -&gt;</span> <span class="kwa">case</span> compare y x <span class="kwa">of</span>
-                                                    EQ <span class="sym">-&gt;</span> cmpSeq k1 k2
-                                                    z  <span class="sym">-&gt;</span> z
+<span class="hl kwa">data</span> Buckets <span class="hl sym">=</span> Empty <span class="hl sym">|</span> Bucket <span class="hl sym">!(</span>Ptr Word8<span class="hl sym">) !</span><span class="hl kwb">Int</span> <span class="hl sym">|</span> Buckets <span class="hl sym">[</span>Node<span class="hl sym">]</span>
 
-<span class="slc">-- This builds the table for the size of the given frame and prints</span>
-<span class="slc">-- that frame's frequency</span>
-writeFrame sb<span class="sym">&#64;(</span>Seq size bases<span class="sym">)</span> frame<span class="sym">&#64;(</span>Seq frameSize _<span class="sym">) =</span> <span class="kwa">do</span>
-    table   <span class="sym">&lt;-</span> newTable
-    countFreq sb frameSize table
-    mAnswer <span class="sym">&lt;-</span> Table.lookup table frame
-    putStrLn $ show <span class="sym">(</span>fromMaybe <span class="num">0</span> mAnswer<span class="sym">) ++</span> '\t' <span class="sym">:</span> showSeq frame
+<span class="hl kwa">data</span> Node    <span class="hl sym">=</span> Node <span class="hl sym">!(</span>Ptr Word8<span class="hl sym">) !</span><span class="hl kwb">Int</span>
 
-<span class="slc">-- Routines to convert strings to Seq and back</span>
-stringToSeq str <span class="sym">=</span>
-    newArray0 <span class="num">0</span> <span class="sym">(</span>map c2b str<span class="sym">) &gt;&gt;=</span> \b <span class="sym">-&gt;</span> lengthArray0 <span class="num">0</span> b <span class="sym">&gt;&gt;=</span> \s <span class="sym">-&gt;</span> return <span class="sym">(</span>Seq s b<span class="sym">)</span>
+htNew <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO Hash
+htNew <span class="hl sym">!</span>fl <span class="hl sym">!</span>sz <span class="hl sym">=</span> HT fl nprime `fmap` A.newArray <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>nprime<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> Empty
+  <span class="hl kwa">where</span>
+    n      <span class="hl sym">=</span> htSize fl sz
+    nprime <span class="hl sym">=</span> head <span class="hl sym">(</span>dropWhile <span class="hl sym">(&lt;</span> n<span class="hl sym">)</span> primes<span class="hl sym">)</span>
 
-showSeq <span class="sym">(</span>Seq size ptr<span class="sym">) =</span> inlinePerformIO $ peekArray size ptr <span class="sym">&gt;&gt;=</span> return.<span class="sym">(</span>map b2c<span class="sym">)</span>
+htSize <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+htSize <span class="hl sym">!</span>fl <span class="hl sym">!</span>buflen <span class="hl sym">=</span> min lim <span class="hl sym">(</span>go <span class="hl sym">(</span>fl<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl num">4</span><span class="hl sym">)</span>
+  <span class="hl kwa">where</span>
+    lim <span class="hl sym">= (</span>buflen <span class="hl sym">-</span> fl<span class="hl sym">)</span> `div` <span class="hl num">1024</span>
+    go <span class="hl sym">!</span>n <span class="hl sym">!</span>m <span class="hl sym">|</span> n <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> m <span class="hl sym">&lt;</span> lim      <span class="hl sym">=</span> go <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) (</span>m<span class="hl sym">*</span><span class="hl num">4</span><span class="hl sym">)</span>
+             <span class="hl sym">|</span> otherwise             <span class="hl sym">=</span> m
 
-<span class="slc">--</span>
-<span class="slc">-- Performance tweaked routines for (HashTable Seq Int)</span>
-<span class="slc">--</span>
+htInsert <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Hash <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+htInsert <span class="hl sym">!</span>s <span class="hl sym">!</span>p n <span class="hl sym">!</span>h <span class="hl sym">=</span> mapM_ <span class="hl sym">(</span>htInc h . plusPtr p<span class="hl sym">) [</span><span class="hl num">0</span>..s<span class="hl sym">-</span>n<span class="hl sym">]</span>
 
-<span class="com">{-# INLINE inlinePerformIO #-}</span>
-inlinePerformIO <span class="sym">(</span>IO m<span class="sym">) =</span> <span class="kwa">case</span> m realWorld# <span class="kwa">of</span> <span class="sym">(</span># _<span class="sym">,</span> r #<span class="sym">) -&gt;</span> r
+htInc <span class="hl sym">::</span> Hash <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+htInc ht&#64;<span class="hl sym">(</span>HT n size arr<span class="hl sym">)</span> k  <span class="hl sym">=</span>
+    <span class="hl kwa">case</span> htHash size n k <span class="hl kwa">of</span>
+        <span class="hl sym">!</span>i <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span> b <span class="hl sym">&lt;-</span> unsafeRead arr i
+                 unsafeWrite arr i $<span class="hl sym">!</span> inc b
+  <span class="hl kwa">where</span>
+    equal <span class="hl sym">=</span> eq n
 
-hashSeq <span class="sym">(</span>Seq <span class="sym">(</span>I# size<span class="sym">) (</span>Ptr ptr<span class="sym">)) =</span> inlinePerformIO . IO $ hashmem size ptr <span class="num">0</span>#
+    inc <span class="hl sym">::</span> Buckets <span class="hl sym">-&gt;</span> Buckets
+    inc <span class="hl sym">(</span>Bucket <span class="hl sym">!</span>k' <span class="hl sym">!</span>v<span class="hl sym">)</span>
+        <span class="hl sym">|</span> k' `equal` k <span class="hl sym">=</span> Bucket  k' <span class="hl sym">(</span>v<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl sym">|</span> otherwise    <span class="hl sym">=</span> Buckets $ Node k' v <span class="hl sym">: [</span>Node k <span class="hl num">1</span><span class="hl sym">]</span>
+    inc <span class="hl sym">(</span>Buckets b<span class="hl sym">)    =</span> Buckets $ incL b
+    inc Empty          <span class="hl sym">=</span> Bucket k <span class="hl num">1</span>
 
-eqSeq <span class="sym">(</span>Seq <span class="sym">(</span>I# size1<span class="sym">) (</span>Ptr ptr1<span class="sym">)) (</span>Seq <span class="sym">(</span>I# size2<span class="sym">) (</span>Ptr ptr2<span class="sym">)) =</span>
-    if size1 <span class="sym">/=</span># size2 <span class="kwa">then False</span>
-                       <span class="kwa">else</span> inlinePerformIO . IO $ eqmem size1 ptr1 ptr2
+    incL <span class="hl sym">:: [</span>Node<span class="hl sym">] -&gt; [</span>Node<span class="hl sym">]</span>
+    incL <span class="hl sym">(!</span>i&#64;<span class="hl sym">(</span>Node k' v<span class="hl sym">):</span>ls<span class="hl sym">)</span>
+        <span class="hl sym">|</span> k' `equal` k <span class="hl sym">=</span> Node k' <span class="hl sym">(</span>v<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) :</span> ls
+        <span class="hl sym">|</span> otherwise    <span class="hl sym">=</span> i <span class="hl sym">:</span> incL ls
+    incL <span class="hl sym">[]            = [</span>Node k <span class="hl num">1</span><span class="hl sym">]</span>
 
-cmpSeq <span class="sym">(</span>Seq size1 ptr1<span class="sym">) (</span>Seq size2 ptr2<span class="sym">) =</span> <span class="kwa">case</span> compare size1 size2 <span class="kwa">of</span>
-    EQ <span class="sym">-&gt;</span> inlinePerformIO $ cmpmem size1 ptr1 ptr2
-    z  <span class="sym">-&gt;</span> z
+htNodes <span class="hl sym">::</span> Hash <span class="hl sym">-&gt; [</span>Node<span class="hl sym">]</span>
+htNodes ht&#64;<span class="hl sym">(</span>HT n size arr<span class="hl sym">) =</span> items <span class="hl num">0</span>
+  <span class="hl kwa">where</span>
+    read i <span class="hl sym">=</span> inlinePerformIO $<span class="hl sym">!</span> unsafeRead arr i
 
-<span class="com">{-# INLINE hashmem #-}</span>
-hashmem i p h s <span class="sym">=</span> if i <span class="sym">==</span># <span class="num">0</span># <span class="kwa">then</span> <span class="sym">(</span># s<span class="sym">,</span> toEnum <span class="sym">(</span>I# h<span class="sym">)</span> #<span class="sym">)</span> <span class="kwa">else</span>
-    <span class="kwa">case</span> readInt8OffAddr# p <span class="num">0</span># s <span class="kwa">of</span>
-         <span class="sym">(</span># s<span class="sym">,</span> i8  #<span class="sym">) -&gt;</span> hashmem <span class="sym">(</span>i <span class="sym">-</span># <span class="num">1</span>#<span class="sym">) (</span>plusAddr# p <span class="num">1</span>#<span class="sym">) (</span><span class="num">17</span># <span class="sym">*</span># h <span class="sym">+</span># i8<span class="sym">)</span> s
+    items <span class="hl sym">!</span>i <span class="hl sym">|</span> i <span class="hl sym">&gt;=</span> size <span class="hl sym">= []</span>
+             <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> items_bucket <span class="hl sym">(</span>read i<span class="hl sym">) (</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
 
-<span class="com">{-# INLINE eqmem #-}</span>
-eqmem i ptr1 ptr2 s <span class="sym">=</span> if i <span class="sym">==</span># <span class="num">0</span># <span class="kwa">then</span> <span class="sym">(</span># s <span class="sym">,</span> <span class="kwa">True</span> #<span class="sym">)</span> <span class="kwa">else</span>
-    <span class="kwa">case</span> readInt8OffAddr# ptr1 <span class="num">0</span># s <span class="kwa">of</span> { <span class="sym">(</span># s<span class="sym">,</span> i8a #<span class="sym">) -&gt;</span>
-    <span class="kwa">case</span> readInt8OffAddr# ptr2 <span class="num">0</span># s <span class="kwa">of</span> { <span class="sym">(</span># s<span class="sym">,</span> i8b #<span class="sym">) -&gt;</span>
-    if i8a <span class="sym">==</span># i8b
-        <span class="kwa">then</span> eqmem <span class="sym">(</span>i <span class="sym">-</span># <span class="num">1</span>#<span class="sym">) (</span>plusAddr# ptr1 <span class="num">1</span>#<span class="sym">) (</span>plusAddr# ptr2 <span class="num">1</span>#<span class="sym">)</span> s
-        <span class="kwa">else</span> <span class="sym">(</span># s<span class="sym">,</span> <span class="kwa">False</span> #<span class="sym">)</span> } }
+    items_bucket <span class="hl sym">!(</span>Bucket <span class="hl sym">!</span>k' <span class="hl sym">!</span>v<span class="hl sym">)</span> i <span class="hl sym">=</span> Node k' v <span class="hl sym">:</span> items i
+    items_bucket <span class="hl sym">!(</span>Buckets <span class="hl sym">!</span>b<span class="hl sym">)</span> i    <span class="hl sym">=</span> items_list b i
+    items_bucket Empty        <span class="hl sym">!</span>i    <span class="hl sym">=</span> items i
 
-<span class="com">{-# INLINE cmpmem #-}</span>
-cmpmem i ptr1 ptr2 <span class="sym">=</span> if i <span class="sym">==</span> <span class="num">0</span> <span class="kwa">then</span> return EQ <span class="kwa">else do</span>
-    cmp <span class="sym">&lt;-</span> liftM2 compare <span class="sym">(</span>peek ptr1<span class="sym">) (</span>peek ptr2<span class="sym">)</span>
-    <span class="kwa">case</span> cmp <span class="kwa">of</span> EQ <span class="sym">-&gt;</span> cmpmem <span class="sym">(</span>pred i<span class="sym">) (</span>ptr1 `advancePtr` <span class="num">1</span><span class="sym">) (</span>ptr2 `advancePtr` <span class="num">1</span><span class="sym">)</span>
-                z  <span class="sym">-&gt;</span> return z
+    items_list <span class="hl sym">(!</span>e<span class="hl sym">:</span>l<span class="hl sym">) !</span>i <span class="hl sym">=</span> e <span class="hl sym">:</span> items_list l i
+    items_list <span class="hl sym">[]     !</span>i <span class="hl sym">=</span> items i
 
+htFind <span class="hl sym">::</span> Ptr Word8 <span class="hl sym">-&gt;</span> Hash <span class="hl sym">-&gt;</span> IO Node
+htFind <span class="hl sym">!</span>k <span class="hl sym">!</span>h&#64;<span class="hl sym">(</span>HT n size arr<span class="hl sym">) =</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">let</span> <span class="hl sym">!</span>i <span class="hl sym">=</span> htHash size n k
+    v <span class="hl sym">&lt;-</span> unsafeRead arr i
+    return $<span class="hl sym">!</span> find v
+  <span class="hl kwa">where</span>
+    equal <span class="hl sym">=</span> eq n
+
+    find  <span class="hl sym">(</span>Bucket k' v<span class="hl sym">) |</span> k' `equal` k <span class="hl sym">=</span> Node k' v
+                        <span class="hl sym">|</span> otherwise    <span class="hl sym">=</span> Node k  <span class="hl num">0</span>
+    find  <span class="hl sym">(</span>Buckets l<span class="hl sym">)   =</span> find' l
+    find  Empty         <span class="hl sym">=</span> Node k <span class="hl num">0</span>
+
+    find' <span class="hl sym">(</span>i&#64;<span class="hl sym">(</span>Node <span class="hl sym">!</span>k' v<span class="hl sym">):</span>ls<span class="hl sym">) |</span> k' `equal` k <span class="hl sym">=</span> i
+                              <span class="hl sym">|</span> otherwise    <span class="hl sym">=</span> find' ls
+    find' <span class="hl sym">[]           =</span> Node k <span class="hl num">0</span>
+
+htHash <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+htHash <span class="hl sym">(</span>I# max<span class="hl sym">) (</span>I# size<span class="hl sym">)</span> ptr&#64;<span class="hl sym">(</span>Ptr p<span class="hl sym">) =</span> abs . inlinePerformIO . IO $ go p <span class="hl num">0</span>#
+  <span class="hl kwa">where</span>
+    lim <span class="hl sym">=</span> p `plusAddr#` size
+    go p acc <span class="hl sym">!</span>s
+        <span class="hl sym">|</span> p `geAddr#` lim <span class="hl sym">= (</span># s<span class="hl sym">,</span> I# <span class="hl sym">(</span>acc `remInt#` max<span class="hl sym">)</span> #<span class="hl sym">)</span>
+        <span class="hl sym">|</span> otherwise       <span class="hl sym">=</span> <span class="hl kwa">case</span> readInt8OffAddr# p <span class="hl num">0</span># s <span class="hl kwa">of</span>
+                <span class="hl sym">(</span># s<span class="hl sym">,</span> i #<span class="hl sym">) -&gt;</span> go <span class="hl sym">(</span>p `plusAddr#` <span class="hl num">1</span>#<span class="hl sym">) (</span><span class="hl num">5</span># <span class="hl sym">*</span># acc <span class="hl sym">+</span># i<span class="hl sym">)</span> s
+
+<span class="hl slc">-- A fast Ptr comparison for Hash keys</span>
+eq <span class="hl sym">!</span>n p q <span class="hl sym">=</span> inlinePerformIO $ <span class="hl kwa">do</span>
+    a <span class="hl sym">&lt;-</span> peek p <span class="hl sym">::</span> IO Word8
+    b <span class="hl sym">&lt;-</span> peek q <span class="hl sym">::</span> IO Word8
+    if a <span class="hl sym">/=</span> b <span class="hl kwa">then</span> return <span class="hl kwa">False</span>
+              <span class="hl kwa">else</span> go <span class="hl num">1</span> p q
+  <span class="hl kwa">where</span>
+    go <span class="hl sym">!</span>i <span class="hl sym">!</span>p <span class="hl sym">!</span>q
+          <span class="hl sym">|</span> i <span class="hl sym">&gt;=</span> n    <span class="hl sym">=</span> return <span class="hl kwa">True</span>
+          <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl kwa">do</span>
+                a <span class="hl sym">&lt;-</span> peek p <span class="hl sym">::</span> IO Word8
+                b <span class="hl sym">&lt;-</span> peek q <span class="hl sym">::</span> IO Word8
+                if a <span class="hl sym">/=</span> b <span class="hl kwa">then</span> return <span class="hl kwa">False else</span> go <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>p `plusPtr` <span class="hl num">1</span><span class="hl sym">) (</span>q `plusPtr` <span class="hl num">1</span><span class="hl sym">)</span>
+<span class="hl com">{-# INLINE eq #-}</span>
+
+primes <span class="hl sym">= [</span> <span class="hl num">53</span><span class="hl sym">,</span>       <span class="hl num">97</span><span class="hl sym">,</span>        <span class="hl num">193</span><span class="hl sym">,</span>       <span class="hl num">389</span><span class="hl sym">,</span>       <span class="hl num">769</span><span class="hl sym">,</span>
+           <span class="hl num">1543</span><span class="hl sym">,</span>     <span class="hl num">3079</span><span class="hl sym">,</span>      <span class="hl num">6151</span><span class="hl sym">,</span>      <span class="hl num">12289</span><span class="hl sym">,</span>     <span class="hl num">24593</span><span class="hl sym">,</span>
+           <span class="hl num">49157</span><span class="hl sym">,</span>    <span class="hl num">98317</span><span class="hl sym">,</span>     <span class="hl num">196613</span><span class="hl sym">,</span>    <span class="hl num">93241</span><span class="hl sym">,</span>     <span class="hl num">786433</span><span class="hl sym">,</span>
+           <span class="hl num">1572869</span><span class="hl sym">,</span>  <span class="hl num">3145739</span><span class="hl sym">,</span>   <span class="hl num">6291469</span><span class="hl sym">,</span>   <span class="hl num">12582917</span><span class="hl sym">,</span>  <span class="hl num">25165843</span><span class="hl sym">,</span>
+           <span class="hl num">50331653</span><span class="hl sym">,</span> <span class="hl num">100663319</span><span class="hl sym">,</span> <span class="hl num">201326611</span><span class="hl sym">,</span> <span class="hl num">402653189</span><span class="hl sym">,</span> <span class="hl num">805306457</span> <span class="hl sym">]</span>
