@@ -4,10 +4,11 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="robots" content="noindex,noarchive" />
 <title>The Computer Language Benchmarks Game</title>
-<meta http-equiv="refresh" content="3;url=http://shootout.alioth.debian.org/debian/erlang.php">
+<meta http-equiv="refresh" content="3;url=http://shootout.alioth.debian.org/gp4/lisaac.php">
 </head>
 <body>
 <p>Redirecting in 3 seconds</p> 
-<h3><a href="http://shootout.alioth.debian.org/debian/erlang.php">http://shootout.alioth.debian.org/debian/erlang.php</a></h3>
+<h3><a href="http://shootout.alioth.debian.org/gp4/cal.php">http://shootout.alioth.debian.org/gp4/lisaac.php</a></h3>
 </body>
 </html>
+
