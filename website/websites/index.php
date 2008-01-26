@@ -130,8 +130,14 @@ function PrintIncludedLanguages(&$sites,&$a,$isExtra0 ){
          $site = $keys[$link];
          if ($site == 'debian' || $site == 'sandbox'){ $arch = '<em>Debian</em>'; }
 
-          printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
-             $site, $link, $a[4], $tag, $arch);
+         if (isset($a[8]) && !empty($a[8])){ // special_url
+             printf('<p><a href="./%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
+                $site, $a[8], $a[4], $tag, $arch);
+         } else {
+             printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
+                $site, $link, $a[4], $tag, $arch);
+         }
+
       }
    }
    return $isExtra;
