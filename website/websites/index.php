@@ -119,7 +119,7 @@ function PrintIncludedLanguages(&$sites,&$a,$isExtra0 ){
    $isExtra = $isExtra0;
    $showTag = TRUE;
    foreach($sites as $keys){
-      if (isset($keys[$link])){
+      if (isset($keys[$link]) && !empty($link)){
          $isExtra = FALSE;
          if ($showTag) {
             $tag = $a[5];
