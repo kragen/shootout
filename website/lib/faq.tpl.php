@@ -411,7 +411,7 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#previous" name="previous">Where can I see previous programs?</a></dt>
 <dd>
 <p>Periodically we go through and remove slower programs from the website (if there's a faster program for the same language implementation). <strong>We don't remove those programs from the "Play the Benchmarks Game" tracker.</strong></p>
-<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=411646&group_id=30402&func=browse">"Play the Benchmarks Game" tracker items</a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
+<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=411646&group_id=30402&func=browse"><strong>Play the Benchmarks Game tracker items</strong></a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
 </dd>
 
 <dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
