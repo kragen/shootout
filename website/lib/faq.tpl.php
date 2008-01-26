@@ -388,7 +388,7 @@ language, benchmark, your-name, date, (version)<br />
 </ol>
 
 <p>Now <strong>start from the bottom</strong> of the
-   <a href="https://alioth.debian.org/tracker/?func=add&amp;group_id=30402&amp;atid=411646"  title="Play the Benchmarks Game - Submit New">
+   <a href="http://alioth.debian.org/tracker/?atid=411646&group_id=30402&func=browse"  title="Play the Benchmarks Game - Submit New">
    <strong>"Play the Benchmarks Game" Submit-New</strong></a> form and work your way up.
 </p>
 </dd>
@@ -407,6 +407,13 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#where" name="where">&nbsp;Where can I see&#8230;?</a></dt>
 <dd>
 <dl>
+
+<dt><a href="#previous" name="previous">Where can I see previous programs?</a></dt>
+<dd>
+<p>Periodically we go through and remove slower programs from the website (if there's a faster program for the same language implementation). <strong>We don't remove those programs from the "Play the Benchmarks Game" tracker.</strong></p>
+<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=411646&group_id=30402&func=browse">"Play the Benchmarks Game" tracker items</a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
+</dd>
+
 <dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
 <dd>
 <p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=recursive&p1=ooc-0&p2=se-0&p3=gcc-0&p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
@@ -443,7 +450,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
  differences were simply better algorithms.</p>
 <p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
  we should think of <em>same thing</em> (same result) tests as <strong>contests</strong>.</p>
-<p>At present, we are only trying to show benchmarks.</p>
+<p>At present, we show just one contest - <a href="benchmark.php?test=meteor&lang=all">meteor-contest</a>.</p>
 </dd>
 
 <dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
