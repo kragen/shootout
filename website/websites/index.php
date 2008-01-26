@@ -33,8 +33,6 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<p>"We must make do with the imperfect evidence that we can find,<br/> not merely lament its deficiencies."</p><br/>
-
 <table class="layout">
 <tr class="test">
 <td>
@@ -82,18 +80,81 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </p><br/></form>
 </td>
 </tr>
+</table>
 
 
-<tr>
-<td colspan="2">
+<h5>Programming languages A to Z</h5><br/>
+
+<?php // Don't use library functions, define what we need here
+
+function ReadA($FileName){
+   $f = @fopen($FileName,'r') or die('Cannot open '.$FileName);
+   $row = @fgetcsv($f,1024,',');
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }
+      $rows[ $row[0] ] = $row;
+   }
+   @fclose($f);
+   return $rows;
+}
+
+function Keys($sites){
+   $siteKeys = array();
+   foreach($sites as $s){
+      $a = array_flip( array_keys( ReadA('./'.$s.'/include.csv') ));
+      $akeys = array_keys($a);
+      foreach($akeys as $k){ $a[$k] = $s; }
+      $siteKeys[] = $a;
+   }
+   return $siteKeys;
+}
+
+function CompareLangName($a, $b){
+   return strcasecmp($a[3],$b[3]);
+}
+
+function PrintIncludedLanguages(&$sites,&$a,$isExtra0 ){
+   $link = $a[0];
+   $isExtra = $isExtra0;
+   $showTag = TRUE;
+   foreach($sites as $keys){
+      if (isset($keys[$link])){
+         $isExtra = FALSE;
+         if ($showTag) {
+            $tag = $a[5];
+            $showTag = FALSE;
+         } else { $tag = ''; }
+
+         $arch = '';
+         $site = $keys[$link];
+         if ($site == 'debian' || $site == 'sandbox'){ $arch = '<em>Debian</em>'; }
+
+          printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
+             $site, $link, $a[4], $tag, $arch);
+      }
+   }
+   return $isExtra;
+}
+
+$Langs = ReadA('../desc/lang.csv');
+uasort($Langs, 'CompareLangName');
+
+$main = Keys( array( 'gp4', 'debian' ));
+$extra = Keys( array( 'gp4sandbox', 'sandbox' ));
+
+foreach($Langs as $a){
+   $isExtra = PrintIncludedLanguages($main,$a,TRUE);
+   if ($isExtra){ PrintIncludedLanguages($extra,$a,$isExtra); }
+}
+?>
+
 <p class="imgfooter">
 <a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
-</td>
-</tr>
-</table>
+
 </div>
 
 <? $virtual_page="home"; include_once("analyticstracking.php") ?>
