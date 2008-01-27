@@ -474,7 +474,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
-<li>direct use of the programs - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
+<li>more benchmarking - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
 <li>lighthearted asides - <a href="http://research.microsoft.com/~simonpj/papers/history-of-haskell/history.pdf">A History of Haskell: Being Lazy With Class (pdf)</a></li>
 <li>dispelling myths - <a href="http://ftp.openvms.compaq.com/openvms/journal/v10/openvms_journal.pdf">Java and OpenVMS: Myths and realities (pdf)</a></li>
 <li>getting some perspective - <a href="http://openquark.org/svn/openquark/tags/1.4.0_0/OpenQuark/docs/CAL%20and%20the%20Computer%20Language%20Shootout%20Benchmarks.pdf">CAL and the Computer Language Benchmarks Game (pdf)</a></li>
