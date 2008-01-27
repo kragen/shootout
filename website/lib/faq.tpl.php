@@ -446,7 +446,7 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#contest" name="contest">Why don't you accept every program that gives the correct result?</a></dt>
 <dd><p>We are trying to show the performance of various programming language implementations - so we ask that contributed programs not only give the
 correct result, but also <strong>use the same algorithm</strong> to calculate that result.</p>
-<p>Doug Bagley used both <em>same way</em> (same algorithm) and <em>same thing</em> (same result) benchmarks - so in many cases the performance
+<p>Back in the day, Doug Bagley used both <em>same way</em> (same algorithm) and <em>same thing</em> (same result) benchmarks - so in many cases the performance
  differences were simply better algorithms.</p>
 <p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
  we should think of <em>same thing</em> (same result) tests as <strong>contests</strong>.</p>
@@ -464,11 +464,25 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>We are unable to publish measurements for many commercial language implementations simply because their license conditions forbid it.</p>
 <p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
 </dd>
-
-
 </dl>
 </dd>
 
+
+
+<dt><a href="#useful" name="useful">&nbsp;What's it useful for&#8230;?</a></dt>
+<dd>
+<dl>
+<dd><p>You'll come across a range of uses for the programs and measurements:</p>
+<ul>
+<li>direct use of the programs - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
+<li>lighthearted asides - <a href="http://research.microsoft.com/~simonpj/papers/history-of-haskell/history.pdf">A History of Haskell: Being Lazy With Class (pdf)</a></li>
+<li>dispelling myths - <a href="http://ftp.openvms.compaq.com/openvms/journal/v10/openvms_journal.pdf">Java and OpenVMS: Myths and realities (pdf)</a></li>
+<li>nostalgia - <a href="http://upsilon.cc/~zack/teaching/0607/labsomfosset/ocaml_hot.pdf">Introduction to HOT languages (pdf)</a>, "we will show you 2004 data"</li>
+<li>even <a href="http://java.sys-con.com/read/358792.htm">learning a little about some uncommon programming languages</a>.</li>
+</ul>
+</dd>
+</dl>
+</dd>
 
 </dl>
 
