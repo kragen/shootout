@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2007 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
 
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 <p>This FAQ is short. You can read it really quickly.</p>
@@ -460,7 +460,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs?</li>
 </ul>
 <p>If that wasn't discouraging enough: in too many cases we've been asked to include a language implementation, and been told that of course programs would be contributed, but once the language didn't seem to perform as-well-as hoped no more programs were contributed. We're interested in the whole range of performance - not just in the 5 programs which show a language implementation at it's best.</p>
-<p>We have no ambition to measure every Python implmentation or every Haskell implementation or every C implmentation - that's a chore for Python enthusiasts and Haskell enthusiasts and C enthusiasts.</p>
+<p>We have no ambition to measure every Python implementation or every Haskell implementation or every C implementation - that's a chore for Python enthusiasts and Haskell enthusiasts and C enthusiasts.</p>
 <p>We are unable to publish measurements for many commercial language implementations simply because their license conditions forbid it.</p>
 <p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
 </dd>
