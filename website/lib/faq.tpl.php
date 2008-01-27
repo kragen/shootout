@@ -469,7 +469,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 
 
 
-<dt><a href="#useful" name="useful">&nbsp;What's it useful for&#8230;?</a></dt>
+<dt><a href="#useful" name="useful">&nbsp;What's it useful for?</a></dt>
 <dd>
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
