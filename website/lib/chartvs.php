@@ -71,8 +71,6 @@ $bgray = ImageColorAllocate($im,204,204,204);
 
 $gray = ImageColorAllocate($im,221,221,221);
 
-if ( $L != 'stx'){ // test fonts
-
 ImageString($im, 3, $o-$v1*9+8+5+90, $ts-15 , $ShortName.' better', $black);
 
 ImageString($im, 2, $o -2, $ts, '1', $white);
@@ -104,9 +102,9 @@ foreach($Tests as $Row){
          $wsec = $v[N_FULLCPU];   
          if ($wsec < 1){ 
             if ($wsec==0){ $wsec = 0.0001; }      
-            $wsec = min( (1/$wsec)*$v1, $w2) - $v1;
+            $wsec = min( (1/$wsec)*$v1, $w2) - $v1; 
             ImageFilledRectangle($im, $o-$wsec, $ysec, $o, $ysec+$hsec, $white);
-         }
+         }            
          else { 
             $wsec = min( $wsec*$v1, $w2) - $v1;
             ImageFilledRectangle($im, $o, $ysec, $o+$wsec, $ysec+$hsec, $white);
@@ -149,27 +147,6 @@ ImageString($im, 3, $o-$v1*9+8+5+10, $b+32, 'CPU Time', $white);
 
 ImageFilledRectangle($im, $o-$v1*9+110, $b+39, $o-$v1*9+8+110, $b+39+$hmem, $black);
 ImageString($im, 2, $o-$v1*9+8+5+110, $b+32, 'Memory Use', $black);
-
-
-} else {
-
-$xx = 14;
-$yy = 8;
-$n=0;
-$c=160;
-while ($n < 20 && $c < 255){
-   while ($n < 20 && $c < 255){
-      ImageString($im, 5, $xx, $yy, chr($c), $black);
-      $xx += 14;
-      $n++;
-      $c++;
-   }
-   $n=0;
-   $xx = 14;
-   $yy += 25;
-}
-
-}
 
 
 ImageInterlace($im,1);
