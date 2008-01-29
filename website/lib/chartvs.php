@@ -48,12 +48,12 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
    $hmem = 1;
    $vscale = CHART_VSCALE;
    $hscale = 15;   
-   
-   $ts = 18;
+
+   $ts = 28;
    $t = $ts+13;   
    $v1 = $w2/$hscale;
-   $b = $h-50;   
-   
+   $b = $h-68;
+
    $ysec = $t+7;
    $ymem = $t+7 -1;
    $height = 9;
@@ -71,7 +71,9 @@ $bgray = ImageColorAllocate($im,204,204,204);
 
 $gray = ImageColorAllocate($im,221,221,221);
 
-ImageString($im, 3, $o-$v1*9+8+5+90, $ts-15 , $ShortName.' better', $black);
+ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
+ImageString($im, 5, $o-$v1*12 -6, $ts-14 , 'worse', $white);
+ImageString($im, 5, $o+$v1*9 -8, $ts-14 , 'better', $white);
 
 ImageString($im, 2, $o -2, $ts, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $ts, '5x', $white);
@@ -124,7 +126,7 @@ foreach($Tests as $Row){
    }      
 
    $ysec = $ysec + $height;
-   $ymem = $ymem + $height;   
+   $ymem = $ymem + $height;
 }
 
 
@@ -140,13 +142,15 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND 
 
-ImageString($im, 3, $o-$v1*9+8+5-55, $b+15, $ShortName2.' better', $black);
+ImageString($im, 3, $o-$v1*3 -6, $b+26, $ShortName2, $black);
+ImageString($im, 5, $o-$v1*12 -6, $b+11 , 'better', $white);
+ImageString($im, 5, $o+$v1*9 -8, $b+11 , 'worse', $white);
 
-ImageFilledRectangle($im, $o-$v1*9+10, $b+36, $o-$v1*9+8+10, $b+36+$hsec, $white);
-ImageString($im, 3, $o-$v1*9+8+5+10, $b+32, 'CPU Time', $white);
+ImageFilledRectangle($im, $o-$v1*9+10, $b+54, $o-$v1*9+8+10, $b+54+$hsec, $white);
+ImageString($im, 3, $o-$v1*9+8+5+10, $b+50, 'CPU Time', $white);
 
-ImageFilledRectangle($im, $o-$v1*9+110, $b+39, $o-$v1*9+8+110, $b+39+$hmem, $black);
-ImageString($im, 2, $o-$v1*9+8+5+110, $b+32, 'Memory Use', $black);
+ImageFilledRectangle($im, $o-$v1*9+110, $b+57, $o-$v1*9+8+110, $b+57+$hmem, $black);
+ImageString($im, 2, $o-$v1*9+8+5+110, $b+50, 'Memory Use', $black);
 
 
 ImageInterlace($im,1);
