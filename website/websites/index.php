@@ -83,7 +83,7 @@ href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </table>
 
 
-<h5>Programming languages A to Z</h5><br/>
+<h5>Programming language measurements A to Z</h5><br/>
 
 <?php // Don't use library functions, define what we need here
 
