@@ -457,7 +457,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dd><p>Is the language implementation</p>
 <ul>
 <li><strong>Used?</strong> There are way too many dead languages and unused new languages - see <a href="http://people.ku.edu/~nkinners/LangList/Extras/langlist.htm">The Language List</a> and <a href="http://www.levenez.com/lang/">Computer Languages History</a></li>
-<li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs?</li>
+<li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs? (But look closely and you'll notice that we sometimes include languages just because <em>we find them interesting</em>.)</li>
 </ul>
 <p>If that wasn't discouraging enough: in too many cases we've been asked to include a language implementation, and been told that of course programs would be contributed, but once the language didn't seem to perform as-well-as hoped no more programs were contributed. We're interested in the whole range of performance - not just in the 5 programs which show a language implementation at it's best.</p>
 <p>We have no ambition to measure every Python implementation or every Haskell implementation or every C implementation - that's a chore for Python enthusiasts and Haskell enthusiasts and C enthusiasts.</p>
