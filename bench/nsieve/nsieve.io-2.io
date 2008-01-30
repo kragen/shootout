@@ -27,6 +27,6 @@ nsieve := method(n,
 )
 
 n := System args at(1) asNumber
-nsieve( (2^n)*10000 )
-nsieve( (2^(n-1))*10000 )
-nsieve( (2^(n-2))*10000 )
+nsieve( (1<<n)*10000 )
+nsieve( (1<<(n-1))*10000 )
+nsieve( (1<<(n-2))*10000 )

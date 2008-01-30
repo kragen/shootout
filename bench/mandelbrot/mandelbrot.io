@@ -32,7 +32,7 @@ MandelbrotSet := Object clone do(
         zi2 := Vector clone setSize(size)
         temp := Vector clone setSize(size)
         
-        max_iterations repeatTimes(
+        max_iterations repeat(
             temp copy(zr) *= zi
         
             zr2 copy(zr) square
@@ -49,10 +49,10 @@ MandelbrotSet := Object clone do(
         writeln("P4\n", dim, " ", dim)
         out := File standardOutput
         i := 0
-        dim repeatTimes(
-            (dim / 8) repeatTimes(
+        dim repeat(
+            (dim / 8) repeat(
                 pixel := 0
-                8 repeatTimes(
+                8 repeat(
                     pixel = pixel shiftLeft(1)
                     if (limit > result at(i), pixel = pixel | 1)
                     i = i + 1

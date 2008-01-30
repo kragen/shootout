@@ -26,9 +26,9 @@ spectralNorm := block(n,
     u := List clone preallocateToSize(n)
     v := List clone preallocateToSize(n)
     w := List clone preallocateToSize(n)
-    n repeatTimes( u push(1); v push(0); w push(0) )
+    n repeat( u push(1); v push(0); w push(0) )
 
-    10 repeatTimes( AtAu(u,v,w); AtAu(v,u,w) )
+    10 repeat( AtAu(u,v,w); AtAu(v,u,w) )
 
     vBv := vv := 0
     v foreach(i, vi,

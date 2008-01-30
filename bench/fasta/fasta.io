@@ -14,7 +14,7 @@ ALU := String with(
 # probabilities for symbols in Fasta codes
 
 IUB := list(0.27, 0.12, 0.12, 0.27)
-11 repeatTimes( IUB append(0.02) )
+11 repeat( IUB append(0.02) )
 
 HomoSap := list(0.3029549426680, 0.1979883004921, 0.1975473066391, 0.3015094502008)
 
@@ -25,7 +25,7 @@ Fasta := Object clone do(
     )
     repeat := method(n,seq, i := li := 0
         line := Sequence clone setSize(60)
-        n repeatTimes(
+        n repeat(
             line atPut(li, seq at(i))
             li = li + 1
             if (li == line size, line println; li = 0)
@@ -37,7 +37,7 @@ Fasta := Object clone do(
     random := method(n,probs, sum := li := 0
         line := Sequence clone setSize(60)
         probs mapInPlace(prob, sum = sum + prob)
-        n repeatTimes(
+        n repeat(
             r := gen_random; i := 0
             while (r > probs at(i), i = i + 1)
             line atPut(li, codes at(i))

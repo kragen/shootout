@@ -8,7 +8,7 @@ sieve := Object clone do(
     flags := List clone
     show := method(n,
         flags empty preallocateToSize(n)
-        n repeatTimes(flags append(Object))  # true
+        n repeat(flags append(Object))  # true
         primes := 0
         for (i, 2, n-1,
             if (flags at(i),
