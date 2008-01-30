@@ -1,6 +1,5 @@
-/* The Great Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org
-
    contributed by Ian Osgood */
 
 Sequence pad := method(w, s:=self; while (s size < w, s=" ".. s) )
@@ -25,7 +24,7 @@ sieve := Object clone do(
     )
 )
 
-n := args at(1) asNumber
+n := System args at(1) asNumber
 sieve show(10000 shiftLeft(n))
 sieve show(10000 shiftLeft(n-1))
 sieve show(10000 shiftLeft(n-2))

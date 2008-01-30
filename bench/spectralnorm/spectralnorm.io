@@ -1,7 +1,6 @@
-/* The Great Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org
-
-   Contributed by Ian Osgood */
+   contributed by Ian Osgood */
 
 A := block(i,j, 1/(((i+j)*(i+j+1)/2) + i+1))
 
@@ -39,5 +38,5 @@ spectralNorm := block(n,
     (vBv / vv) sqrt
 )
 
-spectralNorm(args at(1) asNumber) asString(0,9) println
+spectralNorm(System args at(1) asNumber) asString(0,9) println
 

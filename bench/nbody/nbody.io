@@ -1,7 +1,6 @@
-/* The Great Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org
-
-   Contributed by Ian Osgood */
+   contributed by Ian Osgood */
 
 # similar protocol as Vector (floats), but with Numbers (doubles)
 Point := List clone do(
@@ -107,6 +106,6 @@ bodies advance := method(dt,
 
 bodies energy asString(0,9) println
 
-args at(1) asNumber repeatTimes( bodies advance(0.01) )
+System args at(1) asNumber repeatTimes( bodies advance(0.01) )
 
 bodies energy asString(0,9) println

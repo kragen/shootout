@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/* The Great Computer Language Shootout                               */
+/* The Computer Language Benchmarks Game                               */
 /* http://shootout.alioth.debian.org/                                 */
 /*                                                                    */
 /* Whilst this program was successfully tested at a load of:          */
@@ -29,23 +29,20 @@ ack := method(x, y,
   return ack(x - 1, ack(x, y - 1))
 )
 
-/* ----------- */
 
 fib := method(n,
   if(n < 2, return 1)
   return fib(n - 1) + fib(n - 2)
 )
 
-/* ----------- */
 
 tak := method(x, y, z,
   if(y < x, return tak(tak(x - 1, y, z), tak(y - 1, z, x), tak(z - 1, x, y)))
   return z
 )
 
-/* ----------------------------- */
 
-n := args at(1) asNumber
+n := System args at(1) asNumber
 
 // Use interpolation for complex string expressions
 "Ack(3,#io{n}): #io{ack(3, n)}" interpolate println

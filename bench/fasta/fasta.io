@@ -1,7 +1,6 @@
-/* The Great Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org
-
-   Contributed by Ian Osgood */
+   contributed by Ian Osgood */
 
 ALU := String with(
        "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG",
@@ -49,7 +48,7 @@ Fasta := Object clone do(
     )
 )
 
-n := args at(1) asNumber
+n := System args at(1) asNumber
 
 ">ONE Homo sapiens alu" println
 Fasta repeat(2*n, ALU)

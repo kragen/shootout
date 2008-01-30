@@ -1,7 +1,6 @@
-/* The Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org
-
-   Contributed by Ian Osgood */
+   contributed by Ian Osgood */
 
 TreeNode := Object clone do(
     bottomUpTree := method(n,d,
@@ -18,7 +17,7 @@ TreeNode := Object clone do(
 )
 
 minDepth := 4
-maxDepth := args at(1) asNumber max(minDepth+2)
+maxDepth := System args at(1) asNumber max(minDepth+2)
 
 check := TreeNode clone bottomUpTree(0, maxDepth+1) itemCheck
 writeln("stretch tree of depth ", maxDepth+1, "\t check: ", check)

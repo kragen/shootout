@@ -1,7 +1,6 @@
-/* The Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org
-
-   Contributed by Ian Osgood, Steve Dekorte */
+   contributed by Ian Osgood, Steve Dekorte */
 
 MandelbrotSet := Object clone do(
     max_iterations := 50
@@ -65,5 +64,5 @@ MandelbrotSet := Object clone do(
     )
 )
 
-MandelbrotSet dim := args at(1) asNumber
+MandelbrotSet dim := System args at(1) asNumber
 MandelbrotSet do( calc; printSet )

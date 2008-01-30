@@ -1,4 +1,4 @@
-/* The Great Computer Language Shootout
+/* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org/
    contributed by Ian Osgood */
 
@@ -41,6 +41,6 @@ fannkuch := method(n,
     )
 )
 
-n := args at(1) asNumber
+n := System args at(1) asNumber
 f := fannkuch(n)
 writeln("Pfannkuchen(", n, ") = ", f)
