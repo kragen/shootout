@@ -2,7 +2,7 @@
 
 
 <?  
-$rect = imagettfbbox( 50, 0, "arial", "bounding box" );
+$rect = imagettfbbox( 50, 0, "./arial.ttf", "bounding box" );
 print_r($rect);
 ?>
 
