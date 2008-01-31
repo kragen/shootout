@@ -4,6 +4,8 @@
 <?  
 $ttfont = trim (`ls /usr/share/fonts/*`);
 echo $ttfont;
+
+print_r( imagettfbbox(10, 0, '~/arial.ttf, 'abcdef') );
 ?>
 
 <p><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
