@@ -2,10 +2,8 @@
 
 
 <?  
-$d = opendir("/usr/share/fonts");
-$s = readdir($d);
-closedir($d);
-echo $s;
+$rect = imagettfbbox( 50, 0, "arial", "bounding box" );
+print_r($rect);
 ?>
 
 <p><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
