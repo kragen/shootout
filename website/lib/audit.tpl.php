@@ -1,5 +1,13 @@
 <?   // Copyright (c) Isaac Gouy 2005-2006 ?>
 
+
+<?  
+$d = opendir("/usr/share/fonts");
+$s = readdir($d);
+closedir($d);
+echo $s;
+?>
+
 <p><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
 <p>PHP Version: <?=PHP_VERSION;?></p>
 
