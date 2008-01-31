@@ -1,0 +1,187 @@
+<span class="hl com">/*</span>
+<span class="hl com">The Computer Language Shootout</span>
+<span class="hl com">http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">Contributed by Josh Goldfoot</span>
+<span class="hl com">Directly adapted from the C version by bearophile</span>
+<span class="hl com">This version uses &quot;simple_hash.d&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">This is an example of low-level coding in D,</span>
+<span class="hl com">higher-level coding (and shorter code) is possible.</span>
+<span class="hl com">It shows that D can use quite C-style code too.</span>
+<span class="hl com">*/</span>
+
+
+<span class="hl slc">// full qualified imports to avoid bugs</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>c<span class="hl sym">.</span>stdio<span class="hl sym">:</span> printf<span class="hl sym">,</span> fgets<span class="hl sym">,</span> stdin<span class="hl sym">,</span> perror<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>c<span class="hl sym">.</span>string<span class="hl sym">:</span> strlen<span class="hl sym">,</span> memcpy<span class="hl sym">,</span> memset<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>ctype<span class="hl sym">:</span> toupper<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>c<span class="hl sym">.</span>stdlib<span class="hl sym">:</span> exit<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>gc<span class="hl sym">:</span> malloc<span class="hl sym">,</span> realloc<span class="hl sym">;</span>
+<span class="hl kwa">import</span> simple_hash<span class="hl sym">:</span> ht_node<span class="hl sym">,</span> ht_ht<span class="hl sym">,</span> ht_create<span class="hl sym">,</span> ht_first<span class="hl sym">,</span>
+                    ht_find_new<span class="hl sym">,</span> ht_next<span class="hl sym">,</span> ht_destroy<span class="hl sym">;</span>
+
+
+<span class="hl kwa">long</span> <span class="hl kwd">hash_table_size</span><span class="hl sym">(</span><span class="hl kwa">int</span> fl<span class="hl sym">,</span> <span class="hl kwa">long</span> buflen<span class="hl sym">) {</span>
+    <span class="hl kwa">long</span> maxsize1 <span class="hl sym">=</span> buflen <span class="hl sym">-</span> fl<span class="hl sym">;</span>
+    <span class="hl kwa">long</span> maxsize2 <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">while</span> <span class="hl sym">(--</span>fl <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> maxsize2 <span class="hl sym">&lt;</span> maxsize1<span class="hl sym">)</span>
+        maxsize2 <span class="hl sym">=</span> maxsize2 <span class="hl sym">*</span> <span class="hl num">4</span><span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>maxsize1 <span class="hl sym">&lt;</span> maxsize2<span class="hl sym">)</span>
+        <span class="hl kwa">return</span> maxsize1<span class="hl sym">;</span>
+    <span class="hl kwa">return</span> maxsize2<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+ht_ht<span class="hl sym">*</span> <span class="hl kwd">generate_frequencies</span><span class="hl sym">(</span><span class="hl kwa">int</span> fl<span class="hl sym">,</span> <span class="hl kwa">char</span><span class="hl sym">*</span> buffer<span class="hl sym">,</span> <span class="hl kwa">long</span> buflen<span class="hl sym">) {</span>
+    ht_ht<span class="hl sym">*</span> ht<span class="hl sym">;</span>
+    <span class="hl kwa">char</span><span class="hl sym">*</span> reader<span class="hl sym">;</span>
+    <span class="hl kwa">long</span> i<span class="hl sym">;</span>
+    <span class="hl kwa">char</span> nulled<span class="hl sym">;</span>
+
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>fl <span class="hl sym">&gt;</span> buflen<span class="hl sym">)</span>
+        <span class="hl kwa">return null</span><span class="hl sym">;</span>
+
+    ht <span class="hl sym">=</span> <span class="hl kwd">ht_create</span><span class="hl sym">(</span><span class="hl kwd">hash_table_size</span><span class="hl sym">(</span>fl<span class="hl sym">,</span> buflen<span class="hl sym">));</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> buflen <span class="hl sym">-</span> fl <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+        reader <span class="hl sym">= &amp;(</span>buffer<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+        nulled <span class="hl sym">=</span> reader<span class="hl sym">[</span>fl<span class="hl sym">];</span>
+        reader<span class="hl sym">[</span>fl<span class="hl sym">] =</span> <span class="hl num">0x00</span><span class="hl sym">;</span>
+        <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> reader<span class="hl sym">).</span>val<span class="hl sym">++;</span>
+        reader<span class="hl sym">[</span>fl<span class="hl sym">] =</span> nulled<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">return</span> ht<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwa">void</span> <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span><span class="hl kwa">int</span> fl<span class="hl sym">,</span> <span class="hl kwa">char</span><span class="hl sym">*</span> buffer<span class="hl sym">,</span> <span class="hl kwa">long</span> buflen<span class="hl sym">) {</span>
+    <span class="hl kwa">struct</span> sorter <span class="hl sym">{</span>
+        <span class="hl kwa">char</span><span class="hl sym">*</span> sstring<span class="hl sym">;</span>
+        <span class="hl kwa">int</span> num<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    ht_ht<span class="hl sym">*</span> ht<span class="hl sym">;</span>
+    <span class="hl kwa">long</span> total<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> size<span class="hl sym">;</span>
+    ht_node<span class="hl sym">*</span> nd<span class="hl sym">;</span>
+    sorter<span class="hl sym">*</span> s<span class="hl sym">;</span>
+    sorter tmp<span class="hl sym">;</span>
+
+    ht <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span><span class="hl sym">(</span>fl<span class="hl sym">,</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">);</span>
+    total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    size <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>nd <span class="hl sym">=</span> <span class="hl kwd">ht_first</span><span class="hl sym">(</span>ht<span class="hl sym">);</span> nd <span class="hl sym">!</span><span class="hl kwa">is null</span><span class="hl sym">;</span> nd <span class="hl sym">=</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span>ht<span class="hl sym">)) {</span>
+        total <span class="hl sym">=</span> total <span class="hl sym">+</span> nd<span class="hl sym">.</span>val<span class="hl sym">;</span>
+        size<span class="hl sym">++;</span>
+    <span class="hl sym">}</span>
+
+    s <span class="hl sym">=</span> <span class="hl kwa">cast</span><span class="hl sym">(</span>sorter<span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>size <span class="hl sym">*</span> sorter<span class="hl sym">.</span>sizeof<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>s <span class="hl kwa">is null</span><span class="hl sym">) {</span>
+        <span class="hl kwd">perror</span><span class="hl sym">(</span><span class="hl str">&quot;s&quot;</span><span class="hl sym">);</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwd">memset</span><span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> size <span class="hl sym">*</span> sorter<span class="hl sym">.</span>sizeof<span class="hl sym">);</span>
+
+
+    i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>nd <span class="hl sym">=</span> <span class="hl kwd">ht_first</span><span class="hl sym">(</span>ht<span class="hl sym">);</span> nd <span class="hl sym">!</span><span class="hl kwa">is null</span><span class="hl sym">;</span> nd <span class="hl sym">=</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span>ht<span class="hl sym">)) {</span>
+        s<span class="hl sym">[</span>i<span class="hl sym">].</span>sstring <span class="hl sym">=</span> nd<span class="hl sym">.</span>key<span class="hl sym">;</span>
+        s<span class="hl sym">[</span>i<span class="hl sym">++].</span>num <span class="hl sym">=</span> nd<span class="hl sym">.</span>val<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> size<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>s<span class="hl sym">[</span>i<span class="hl sym">].</span>num <span class="hl sym">&lt;</span> s<span class="hl sym">[</span>j<span class="hl sym">].</span>num<span class="hl sym">) {</span>
+                <span class="hl kwd">memcpy</span><span class="hl sym">(&amp;</span>tmp<span class="hl sym">, &amp;(</span>s<span class="hl sym">[</span>i<span class="hl sym">]),</span> sorter<span class="hl sym">.</span>sizeof<span class="hl sym">);</span>
+                <span class="hl kwd">memcpy</span><span class="hl sym">(&amp;(</span>s<span class="hl sym">[</span>i<span class="hl sym">]), &amp;(</span>s<span class="hl sym">[</span>j<span class="hl sym">]),</span> sorter<span class="hl sym">.</span>sizeof<span class="hl sym">);</span>
+                <span class="hl kwd">memcpy</span><span class="hl sym">(&amp;(</span>s<span class="hl sym">[</span>j<span class="hl sym">]), &amp;</span>tmp<span class="hl sym">,</span> sorter<span class="hl sym">.</span>sizeof<span class="hl sym">);</span>
+            <span class="hl sym">}</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+        <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">[</span>i<span class="hl sym">].</span>sstring<span class="hl sym">,</span> <span class="hl num">100</span> <span class="hl sym">*</span> <span class="hl kwa">cast</span><span class="hl sym">(</span><span class="hl kwa">float</span><span class="hl sym">)</span>s<span class="hl sym">[</span>i<span class="hl sym">].</span>num <span class="hl sym">/</span> total<span class="hl sym">);</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+    <span class="hl kwd">ht_destroy</span><span class="hl sym">(</span>ht<span class="hl sym">);</span>
+    <span class="hl kwd">realloc</span><span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwa">void</span> <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl kwa">char</span><span class="hl sym">*</span> searchFor<span class="hl sym">,</span> <span class="hl kwa">char</span><span class="hl sym">*</span> buffer<span class="hl sym">,</span> <span class="hl kwa">long</span> buflen<span class="hl sym">) {</span>
+    ht_ht<span class="hl sym">*</span> ht<span class="hl sym">;</span>
+
+    ht <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span><span class="hl sym">(</span><span class="hl kwd">strlen</span><span class="hl sym">(</span>searchFor<span class="hl sym">),</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">);</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> searchFor<span class="hl sym">).</span>val<span class="hl sym">,</span> searchFor<span class="hl sym">);</span>
+    <span class="hl kwd">ht_destroy</span><span class="hl sym">(</span>ht<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwa">void</span> <span class="hl kwd">main</span><span class="hl sym">() {</span>
+    <span class="hl kwa">const</span> BLEN <span class="hl sym">=</span> <span class="hl num">10240</span><span class="hl sym">;</span>
+    <span class="hl kwa">char</span> c<span class="hl sym">;</span>
+    <span class="hl kwa">char</span><span class="hl sym">*</span> line<span class="hl sym">;</span>
+    <span class="hl kwa">char</span><span class="hl sym">*</span> buffer<span class="hl sym">;</span>
+    <span class="hl kwa">char</span><span class="hl sym">*</span> tmp<span class="hl sym">;</span>
+    <span class="hl kwa">char</span><span class="hl sym">*</span> x<span class="hl sym">;</span>
+    <span class="hl kwa">int</span> i<span class="hl sym">,</span> linelen<span class="hl sym">,</span> nothree<span class="hl sym">;</span>
+    <span class="hl kwa">long</span> buflen<span class="hl sym">,</span> seqlen<span class="hl sym">;</span>
+
+    line <span class="hl sym">=</span> <span class="hl kwa">cast</span><span class="hl sym">(</span><span class="hl kwa">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl num">256</span><span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>line<span class="hl sym">)</span>
+        <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+    seqlen <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    nothree <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>nothree <span class="hl sym">&amp;&amp;</span> <span class="hl kwd">fgets</span><span class="hl sym">(</span>line<span class="hl sym">,</span> <span class="hl num">255</span><span class="hl sym">,</span> stdin<span class="hl sym">))</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>line<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ==</span> <span class="hl str">'&gt;'</span> <span class="hl sym">&amp;&amp;</span> line<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'T'</span> <span class="hl sym">&amp;&amp;</span> line<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] ==</span> <span class="hl str">'H'</span><span class="hl sym">)</span>
+            nothree <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwd">realloc</span><span class="hl sym">(</span>line<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+
+    buflen <span class="hl sym">=</span> BLEN<span class="hl sym">;</span>
+    buffer <span class="hl sym">=</span> <span class="hl kwa">cast</span><span class="hl sym">(</span><span class="hl kwa">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>buflen <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>buffer<span class="hl sym">)</span>
+        <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+    x <span class="hl sym">=</span> buffer<span class="hl sym">;</span>
+
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>x<span class="hl sym">,</span> <span class="hl num">255</span><span class="hl sym">,</span> stdin<span class="hl sym">)) {</span>
+        linelen <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>x<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>linelen<span class="hl sym">) {</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>x<span class="hl sym">[</span>linelen <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+                linelen<span class="hl sym">--;</span>
+
+            c <span class="hl sym">=</span> x<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">==</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span>
+                <span class="hl kwa">break</span><span class="hl sym">;</span>
+            <span class="hl kwa">else if</span> <span class="hl sym">(</span>c <span class="hl sym">!=</span> <span class="hl str">';'</span><span class="hl sym">) {</span>
+                seqlen <span class="hl sym">=</span> seqlen <span class="hl sym">+</span> linelen<span class="hl sym">;</span>
+
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>seqlen <span class="hl sym">+</span> <span class="hl num">512</span> <span class="hl sym">&gt;=</span> buflen<span class="hl sym">) {</span>
+                    buflen <span class="hl sym">=</span> buflen <span class="hl sym">+</span> BLEN<span class="hl sym">;</span>
+                    tmp <span class="hl sym">=</span> <span class="hl kwa">cast</span><span class="hl sym">(</span><span class="hl kwa">char</span><span class="hl sym">*)</span><span class="hl kwd">realloc</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> buflen <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+                    <span class="hl kwa">if</span> <span class="hl sym">(</span>tmp <span class="hl kwa">is null</span><span class="hl sym">)</span>
+                        <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+                    buffer <span class="hl sym">=</span> tmp<span class="hl sym">;</span>
+                    x <span class="hl sym">= &amp;(</span>buffer<span class="hl sym">[</span>seqlen<span class="hl sym">]);</span>
+                <span class="hl sym">}</span>
+                <span class="hl kwa">else</span>
+                    x <span class="hl sym">= &amp;(</span>x<span class="hl sym">[</span>linelen<span class="hl sym">]);</span>
+
+                x<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> seqlen<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+        buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwd">toupper</span><span class="hl sym">(</span>buffer<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+
+    <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+    <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+
+    <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+    <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+    <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+    <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+    <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
+
+    <span class="hl kwd">realloc</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
