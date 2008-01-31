@@ -2,8 +2,7 @@
 
 
 <?  
-$rect = imagettfbbox( 50, 0, "/usr/share/fonts/corefonts/arial.ttf", "bounding box" );
-print_r($rect);
+phpinfo();
 ?>
 
 <p><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
