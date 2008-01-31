@@ -2,7 +2,8 @@
 
 
 <?  
-phpinfo();
+$ttfont = trim (`locate -n 1 .ttf`);
+echo $ttfont;
 ?>
 
 <p><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
