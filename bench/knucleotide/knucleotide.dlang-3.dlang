@@ -1,0 +1,187 @@
+/*
+The Computer Language Shootout
+http://shootout.alioth.debian.org/
+
+Contributed by Josh Goldfoot
+Directly adapted from the C version by bearophile
+This version uses "simple_hash.d"
+
+This is an example of low-level coding in D,
+higher-level coding (and shorter code) is possible.
+It shows that D can use quite C-style code too.
+*/
+
+
+// full qualified imports to avoid bugs
+import std.c.stdio: printf, fgets, stdin, perror;
+import std.c.string: strlen, memcpy, memset;
+import std.ctype: toupper;
+import std.c.stdlib: exit;
+import std.gc: malloc, realloc;
+import simple_hash: ht_node, ht_ht, ht_create, ht_first,
+                    ht_find_new, ht_next, ht_destroy;
+
+
+long hash_table_size(int fl, long buflen) {
+    long maxsize1 = buflen - fl;
+    long maxsize2 = 4;
+
+    while (--fl > 0 && maxsize2 < maxsize1)
+        maxsize2 = maxsize2 * 4;
+    if (maxsize1 < maxsize2)
+        return maxsize1;
+    return maxsize2;
+}
+
+
+ht_ht* generate_frequencies(int fl, char* buffer, long buflen) {
+    ht_ht* ht;
+    char* reader;
+    long i;
+    char nulled;
+
+    if (fl > buflen)
+        return null;
+
+    ht = ht_create(hash_table_size(fl, buflen));
+    for (i = 0; i < buflen - fl + 1; i++) {
+        reader = &(buffer[i]);
+        nulled = reader[fl];
+        reader[fl] = 0x00;
+        ht_find_new(ht, reader).val++;
+        reader[fl] = nulled;
+    }
+
+    return ht;
+}
+
+
+void write_frequencies(int fl, char* buffer, long buflen) {
+    struct sorter {
+        char* sstring;
+        int num;
+    }
+
+    ht_ht* ht;
+    long total, i, j, size;
+    ht_node* nd;
+    sorter* s;
+    sorter tmp;
+
+    ht = generate_frequencies(fl, buffer, buflen);
+    total = 0;
+    size = 0;
+    for (nd = ht_first(ht); nd !is null; nd = ht_next(ht)) {
+        total = total + nd.val;
+        size++;
+    }
+
+    s = cast(sorter*)malloc(size * sorter.sizeof);
+    if (s is null) {
+        perror("s");
+        exit(1);
+    }
+    memset(s, 0, size * sorter.sizeof);
+
+
+    i = 0;
+    for (nd = ht_first(ht); nd !is null; nd = ht_next(ht)) {
+        s[i].sstring = nd.key;
+        s[i++].num = nd.val;
+    }
+
+    for (i = 0; i < size - 1; i++)
+        for (j = i + 1; j < size; j++)
+            if (s[i].num < s[j].num) {
+                memcpy(&tmp, &(s[i]), sorter.sizeof);
+                memcpy(&(s[i]), &(s[j]), sorter.sizeof);
+                memcpy(&(s[j]), &tmp, sorter.sizeof);
+            }
+
+    for (i = 0; i < size; i++)
+        printf("%s %.3f\n", s[i].sstring, 100 * cast(float)s[i].num / total);
+    printf("\n");
+    ht_destroy(ht);
+    realloc(s, 0);
+}
+
+
+void write_count(char* searchFor, char* buffer, long buflen) {
+    ht_ht* ht;
+
+    ht = generate_frequencies(strlen(searchFor), buffer, buflen);
+    printf("%d\t%s\n", ht_find_new(ht, searchFor).val, searchFor);
+    ht_destroy(ht);
+}
+
+
+void main() {
+    const BLEN = 10240;
+    char c;
+    char* line;
+    char* buffer;
+    char* tmp;
+    char* x;
+    int i, linelen, nothree;
+    long buflen, seqlen;
+
+    line = cast(char*)malloc(256);
+    if (!line)
+        return -1;
+    seqlen = 0;
+    nothree = 1;
+
+    while (nothree && fgets(line, 255, stdin))
+        if (line[0] == '>' && line[1] == 'T' && line[2] == 'H')
+            nothree = 0;
+    realloc(line, 0);
+
+    buflen = BLEN;
+    buffer = cast(char*)malloc(buflen + 1);
+    if (!buffer)
+        return -1;
+    x = buffer;
+
+    while (fgets(x, 255, stdin)) {
+        linelen = strlen(x);
+        if (linelen) {
+            if (x[linelen - 1] == '\n')
+                linelen--;
+
+            c = x[0];
+
+            if (c == '>')
+                break;
+            else if (c != ';') {
+                seqlen = seqlen + linelen;
+
+                if (seqlen + 512 >= buflen) {
+                    buflen = buflen + BLEN;
+                    tmp = cast(char*)realloc(buffer, buflen + 1);
+                    if (tmp is null)
+                        return -1;
+                    buffer = tmp;
+                    x = &(buffer[seqlen]);
+                }
+                else
+                    x = &(x[linelen]);
+
+                x[0] = 0;
+            }
+        }
+    }
+
+    for (i = 0; i < seqlen; i++)
+        buffer[i] = toupper(buffer[i]);
+
+    write_frequencies(1, buffer, seqlen);
+    write_frequencies(2, buffer, seqlen);
+
+    write_count("GGT", buffer, seqlen);
+    write_count("GGTA", buffer, seqlen);
+    write_count("GGTATT", buffer, seqlen);
+    write_count("GGTATTTTAATT", buffer, seqlen);
+    write_count("GGTATTTTAATTTATAGT", buffer, seqlen);
+
+    realloc(buffer, 0);
+}
