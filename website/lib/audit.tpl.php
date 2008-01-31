@@ -2,7 +2,7 @@
 
 
 <?  
-$ttfont = trim (`locate -n 1 .ttf`);
+$ttfont = trim (`ls /usr/share/fonts/*`);
 echo $ttfont;
 ?>
 
