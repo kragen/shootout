@@ -1,5 +1,18 @@
 <?   // Copyright (c) Isaac Gouy 2005-2008 ?>
 
+
+<?
+$im = ImageCreate($w,$h);
+ImageColorAllocate($im,204,204,204);
+$black = ImageColorAllocate($im,0,0,0);
+
+print_r( imagettfbbox(20,0,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf','abcdef') );
+
+print_r( imagettftext($im,20,0,0,5,$black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf','abcdef') );
+
+ImageDestroy($im); 
+?>
+
 <p><? printf('%s GMT', gmdate("l, M d, Y g:i a", $Now)) ?></p>
 <p>PHP Version: <?=PHP_VERSION;?></p>
 
