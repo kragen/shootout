@@ -2,7 +2,7 @@
 
 
 <?
-$im = ImageCreate($w,$h);
+$im = ImageCreate(300,300);
 ImageColorAllocate($im,204,204,204);
 $black = ImageColorAllocate($im,0,0,0);
 
