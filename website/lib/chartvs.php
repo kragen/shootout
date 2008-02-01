@@ -71,16 +71,18 @@ $bgray = ImageColorAllocate($im,204,204,204);
 
 $gray = ImageColorAllocate($im,221,221,221);
 
+$font = '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf';
+
 
 if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
 } else {
-$rect = ImageTtfBbox(16,0,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf',$ShortName);
+$rect = ImageTtfBbox(16,0,$font,$ShortName);
 $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,16,0, $left, $ysize, $black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf',$ShortName);
+ImageTtfText($im,16,0, $left, $ysize, $black,$font,$ShortName);
 }
 
 
