@@ -2,10 +2,13 @@
 
 
 <?  
-$ttfont = trim (`ls /usr/share/fonts/*`);
+$ttfont = trim (`ls /usr/share/fonts/truetype/ttf-bitstream-vera/*`);
 echo $ttfont;
 
-print_r( imagettfbbox(10, 0, '~/arial.ttf', 'abcdef') );
+$ttfont = trim (`ls /usr/share/fonts/truetype/ttf-dejavu/*`);
+echo $ttfont;
+
+print_r( imagettfbbox(10, 0, '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf', 'abcdef') );
 
 print_r( imagettfbbox(10, 0, '/usr/share/fonts/truetype/arial.ttf', 'abcdef') );
 ?>
