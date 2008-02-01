@@ -42,7 +42,7 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
 
    $w = 300;
    $w2 = 150;
-   $o = 150;  
+   $o = 150;
    $h = 300;
    $hsec = 5;
    $hmem = 1;
@@ -67,26 +67,23 @@ $black = ImageColorAllocate($im,0,0,0);
 $bgray = ImageColorAllocate($im,204,204,204);
 
 
-// TOP GRIDLINES & GRIDLINE LABELS
-
-$gray = ImageColorAllocate($im,221,221,221);
-
+/* TrueType font
 $fpath = '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf';
 $fsize = 10;
-
-if ($L != 'javascript'){
-ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
-} else {
 $rect = ImageTtfBbox($fsize,0,$fpath,$ShortName);
 $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
-
 ImageTtfText($im,$fsize,0, $left, $ysize - 3, $black,$fpath,$ShortName);
-}
+*/
 
 
+// TOP GRIDLINES & GRIDLINE LABELS
 
+$gray = ImageColorAllocate($im,221,221,221);
+$meanwidth = 6.97; // for size 3
+
+ImageString($im, 3, ($w-(strlen($ShortName)*$meanwidth))/2, $ts-25, $ShortName, $black);
 ImageString($im, 5, $o-$v1*12 -6, $ts-14 , 'worse', $white);
 ImageString($im, 5, $o+$v1*9 -8, $ts-14 , 'better', $white);
 
@@ -157,18 +154,7 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND 
 
-if ($L != 'javascript'){
-ImageString($im, 3, $o-$v1*3 -6, $b+26, $ShortName2, $black);
-} else {
-$rect = ImageTtfBbox($fsize,0,$fpath,$ShortName2);
-$xsize = abs($rect[0]) + abs($rect[2]);
-$ysize = abs($rect[5]) + abs($rect[1]);
-$left = ($w - $xsize) / 2;
-
-ImageTtfText($im,$fsize,0, $left, $b+40, $black,$fpath,$ShortName2);
-}
-
-
+ImageString($im, 3, ($w-(strlen($ShortName2)*$meanwidth))/2, $b+26, $ShortName2, $black);
 ImageString($im, 5, $o-$v1*12 -6, $b+11 , 'better', $white);
 ImageString($im, 5, $o+$v1*9 -8, $b+11 , 'worse', $white);
 
