@@ -71,6 +71,10 @@ $bgray = ImageColorAllocate($im,204,204,204);
 
 $gray = ImageColorAllocate($im,221,221,221);
 
+
+if ($L != 'znn'){
+
+
 ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
 ImageString($im, 5, $o-$v1*12 -6, $ts-14 , 'worse', $white);
 ImageString($im, 5, $o+$v1*9 -8, $ts-14 , 'better', $white);
@@ -152,6 +156,12 @@ ImageString($im, 3, $o-$v1*9+8+5+10, $b+50, 'CPU Time', $white);
 ImageFilledRectangle($im, $o-$v1*9+110, $b+57, $o-$v1*9+8+110, $b+57+$hmem, $black);
 ImageString($im, 2, $o-$v1*9+8+5+110, $b+50, 'Memory Use', $black);
 
+
+} else {
+
+print_r( imagettftext($im,20,0,0,5,$black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf','abcdef') );
+
+}
 
 
 ImageInterlace($im,1);
