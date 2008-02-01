@@ -72,7 +72,7 @@ $bgray = ImageColorAllocate($im,204,204,204);
 $gray = ImageColorAllocate($im,221,221,221);
 
 $fpath = '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf';
-$fsize = 8;
+$fsize = 10;
 
 if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
@@ -165,7 +165,7 @@ $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,$fsize,0, $left, $b+8, $black,$fpath,$ShortName2);
+ImageTtfText($im,$fsize,0, $left, $b+36, $black,$fpath,$ShortName2);
 }
 
 
