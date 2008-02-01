@@ -159,7 +159,7 @@ ImageString($im, 2, $o-$v1*9+8+5+110, $b+50, 'Memory Use', $black);
 
 } else {
 
-$box = imagettftext($im,20,0,0,5,$black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf','abcdef');
+$box = imagettftext($im,20,0,16,5,$black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf','abcdef');
 
 }
 
