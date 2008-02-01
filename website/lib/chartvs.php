@@ -81,9 +81,9 @@ ImageTtfText($im,$fsize,0, $left, $ysize - 3, $black,$fpath,$ShortName);
 // TOP GRIDLINES & GRIDLINE LABELS
 
 $gray = ImageColorAllocate($im,221,221,221);
-$meanwidth = 6.97; // for size 3
+$charwidth = 7.0; // for size 3
 
-ImageString($im, 3, ($w-(strlen($ShortName)*$meanwidth))/2, $ts-25, $ShortName, $black);
+ImageString($im, 3, ($w-(strlen($ShortName)*$charwidth))/2, $ts-25, $ShortName, $black);
 ImageString($im, 5, $o-$v1*12 -6, $ts-14 , 'worse', $white);
 ImageString($im, 5, $o+$v1*9 -8, $ts-14 , 'better', $white);
 
@@ -154,7 +154,7 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND 
 
-ImageString($im, 3, ($w-(strlen($ShortName2)*$meanwidth))/2, $b+26, $ShortName2, $black);
+ImageString($im, 3, ($w-(strlen($ShortName2)*$charwidth))/2, $b+26, $ShortName2, $black);
 ImageString($im, 5, $o-$v1*12 -6, $b+11 , 'better', $white);
 ImageString($im, 5, $o+$v1*9 -8, $b+11 , 'worse', $white);
 
