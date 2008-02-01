@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004-2006
+// Copyright (c) Isaac Gouy 2004-2008
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -77,12 +77,12 @@ $fsize = 11;
 if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
 } else {
-$rect = ImageTtfBbox($fsize,0,fpath,$ShortName);
+$rect = ImageTtfBbox($fsize,0,$fpath,$ShortName);
 $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,$fsize,0, $left, $ysize, $black,fpath,$ShortName);
+ImageTtfText($im,$fsize,0, $left, $ysize, $black,$fpath,$ShortName);
 }
 
 
@@ -160,12 +160,12 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $b+26, $ShortName2, $black);
 } else {
-$rect = ImageTtfBbox($fsize,0,fpath,$ShortName2);
+$rect = ImageTtfBbox($fsize,0,$fpath,$ShortName2);
 $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,$fsize,0, $left, $b+26, $black,fpath,$ShortName2);
+ImageTtfText($im,$fsize,0, $left, $b+26, $black,$fpath,$ShortName2);
 }
 
 
