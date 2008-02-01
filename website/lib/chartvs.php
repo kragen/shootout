@@ -72,10 +72,19 @@ $bgray = ImageColorAllocate($im,204,204,204);
 $gray = ImageColorAllocate($im,221,221,221);
 
 
-if ($L != 'znn'){
-
-
+if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
+} else {
+$rect = ImageTtfBbox(20,0,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf',$ShortName);
+$xsize = abs($rect[0]) + abs($rect[2]);
+$ysize = abs($rect[5]) + abs($rect[1]);
+$left = ($w - $xsize) / 2;
+
+ImageTtfText($im,20,0, $left, $ysize, $black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf',$ShortName);
+}
+
+
+
 ImageString($im, 5, $o-$v1*12 -6, $ts-14 , 'worse', $white);
 ImageString($im, 5, $o+$v1*9 -8, $ts-14 , 'better', $white);
 
@@ -155,13 +164,6 @@ ImageString($im, 3, $o-$v1*9+8+5+10, $b+50, 'CPU Time', $white);
 
 ImageFilledRectangle($im, $o-$v1*9+110, $b+57, $o-$v1*9+8+110, $b+57+$hmem, $black);
 ImageString($im, 2, $o-$v1*9+8+5+110, $b+50, 'Memory Use', $black);
-
-
-} else {
-
-$box = imagettftext($im,20,0,16,5,$black,'/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf','abcdef');
-
-}
 
 
 ImageInterlace($im,1);
