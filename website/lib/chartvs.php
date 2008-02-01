@@ -71,18 +71,18 @@ $bgray = ImageColorAllocate($im,204,204,204);
 
 $gray = ImageColorAllocate($im,221,221,221);
 
-$font = '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf';
-
+$fpath = '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf';
+$fsize = 11;
 
 if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $ts-25 , $ShortName, $black);
 } else {
-$rect = ImageTtfBbox(16,0,$font,$ShortName);
+$rect = ImageTtfBbox($fsize,0,fpath,$ShortName);
 $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,16,0, $left, $ysize, $black,$font,$ShortName);
+ImageTtfText($im,$fsize,0, $left, $ysize, $black,fpath,$ShortName);
 }
 
 
@@ -157,7 +157,18 @@ ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND 
 
+if ($L != 'javascript'){
 ImageString($im, 3, $o-$v1*3 -6, $b+26, $ShortName2, $black);
+} else {
+$rect = ImageTtfBbox($fsize,0,fpath,$ShortName2);
+$xsize = abs($rect[0]) + abs($rect[2]);
+$ysize = abs($rect[5]) + abs($rect[1]);
+$left = ($w - $xsize) / 2;
+
+ImageTtfText($im,$fsize,0, $left, $b+26, $black,fpath,$ShortName2);
+}
+
+
 ImageString($im, 5, $o-$v1*12 -6, $b+11 , 'better', $white);
 ImageString($im, 5, $o+$v1*9 -8, $b+11 , 'worse', $white);
 
