@@ -82,7 +82,7 @@ $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,$fsize,0, $left, $ysize - 2, $black,$fpath,$ShortName);
+ImageTtfText($im,$fsize,0, $left, $ysize - 5, $black,$fpath,$ShortName);
 }
 
 
@@ -165,7 +165,7 @@ $xsize = abs($rect[0]) + abs($rect[2]);
 $ysize = abs($rect[5]) + abs($rect[1]);
 $left = ($w - $xsize) / 2;
 
-ImageTtfText($im,$fsize,0, $left, $b+36, $black,$fpath,$ShortName2);
+ImageTtfText($im,$fsize,0, $left, $b+46, $black,$fpath,$ShortName2);
 }
 
 
