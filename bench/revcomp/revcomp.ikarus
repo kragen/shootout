@@ -1,0 +1,92 @@
+;; The Computer Language Benchmarks Game
+;; http://shootout.alioth.debian.org/
+;;
+;; Derived by Michael D. Adams from the MzScheme varient
+
+
+(import (rnrs)
+        (rnrs mutable-strings))
+
+(define translation (make-vector 128))
+
+(for-each
+ (lambda (from-to)
+   (let* ([char (lambda (sym) (string-ref (symbol->string sym) 0))]
+          [from (char (car from-to))]
+          [to (char-upcase (char (cadr from-to)))])
+     (vector-set! translation (char->integer from) to)
+     (vector-set! translation (char->integer (char-upcase from)) to)))
+ '([a t]
+   [c g]
+   [g c]
+   [t a]
+   [u a]
+   [m k]
+   [r y]
+   [w w]
+   [s s]
+   [y R]
+   [k M]
+   [v b]
+   [h d]
+   [d h]
+   [b v]
+   [n n]))
+
+(define out (current-output-port))
+
+;; TODO: Ikarus doesn't have 4 arg form of put-substring yet
+(define (put-substring s i j)
+  (let f ([i i])
+    (unless (= i j)
+      (put-char out (string-ref s i))
+      (f (+ i 1)))))
+
+;; Versions of (newline) and (put-string) that don't flush the buffer
+(define (newline*) (put-char out #\newline))
+(define (put-whole-string s) (put-substring s 0 (string-length s)))
+
+(define (output lines)
+  (if (> (length lines) 2)
+      (let* ([pos (- (string-length (cadr lines)) (string-length (car lines)))]
+             [put-first-half
+              (lambda (s i) (put-substring s 0 i))]
+             [put-second-half 
+              (lambda (s i) (put-substring s i (string-length s)))])
+        (put-whole-string (car lines))
+        (put-first-half (cadr lines) pos)
+        (newline*)
+        (let loop ([l (cdr lines)])
+          (cond
+           [(null? (cdr l))
+            (put-second-half (car l) pos)
+            (newline*)]
+           [else
+            (put-second-half (car l) pos)
+            (put-first-half (cadr l) pos)
+            (newline*)
+            (loop (cdr l))])))))
+
+(let ([in (current-input-port)])
+  (let loop ([accum '()])
+    (let ([l (get-line in)])
+      (if (eof-object? l)
+          (output accum)
+          (cond
+           [(and (not (zero? (string-length l)))
+                 (eqv? #\> (string-ref l 0)))
+            (output accum)
+            (put-whole-string l)
+            (newline*)
+            (loop '())]
+           [else
+            (let* ([len (string-length l)]
+                   [dest (make-string len)])
+              (let loop ([i 0][j (- len 1)])
+                (unless (= i len)
+                        (string-set! dest j
+                           (vector-ref translation 
+                              (char->integer (string-ref l i))))
+                        (loop (+ i 1) (- j 1))))
+              (loop (cons dest accum)))]))))
+  (flush-output-port out))
