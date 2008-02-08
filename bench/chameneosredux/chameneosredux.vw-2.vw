@@ -3,34 +3,34 @@
     contributed by Carlo Teixeira *"!
 
 Object subclass: #Tests
-	instanceVariableNames: ''
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'Shootout'!
+   instanceVariableNames: ''
+   classVariableNames: ''
+   poolDictionaries: ''
+   category: 'Shootout'!
 
 Tests class
-	instanceVariableNames: ''!
+   instanceVariableNames: ''!
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
 
 !Tests class methodsFor: 'benchmarking-scripts'!
 
-chameneousBenchmark
-	Mall runBenchMark: self arg on: self stdout.
-	^''! !
+chameneosredux2
+   Mall runBenchMark: self arg on: self stdout.
+   ^''! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
 
 Object subclass: #Pair
-	instanceVariableNames: 'partner me sema '
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: '(none)'!
+   instanceVariableNames: 'partner me sema '
+   classVariableNames: ''
+   poolDictionaries: ''
+   category: '(none)'!
 
 Pair class
-	instanceVariableNames: ''!
+   instanceVariableNames: ''!
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -38,13 +38,13 @@ Pair class
 !Pair class methodsFor: 'instance creation'!
 
 new
-	"Answer a newly created and initialized instance."
-	^super new initialize.!
+   "Answer a newly created and initialized instance."
+   ^super new initialize.!
 
 with: me 
-	"Answer a newly created and initialized instance."
+   "Answer a newly created and initialized instance."
 self halt.
-	^super new initialize me: me! !
+   ^super new initialize me: me! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -55,44 +55,44 @@ Pair comment:
 !Pair methodsFor: 'accessing'!
 
 me
-	^me!
+   ^me!
 
 me: anObject
-	me := anObject!
+   me := anObject!
 
 partner
-	^partner!
+   ^partner!
 
 partner: anObject
-	partner := anObject! !
+   partner := anObject! !
 
 !Pair methodsFor: 'initialize-release'!
 
 initialize
-	"Initialize a newly created instance. This method must answer the receiver."
+   "Initialize a newly created instance. This method must answer the receiver."
 
-	partner := nil.
-	me := nil.
-	sema := Semaphore new.
-	^self!
+   partner := nil.
+   me := nil.
+   sema := Semaphore new.
+   ^self!
 
 release
 partner:=nil.!
 
 signal
-	sema signal!
+   sema signal!
 
 wait
-	sema wait! !
+   sema wait! !
 
 Object subclass: #Mall
-	instanceVariableNames: 'guard maxRendezvous open process queue cache pairCache '
-	classVariableNames: 'Units '
-	poolDictionaries: ''
-	category: 'chameleon'!
+   instanceVariableNames: 'guard maxRendezvous open process queue cache pairCache '
+   classVariableNames: 'Units '
+   poolDictionaries: ''
+   category: 'chameleon'!
 
 Mall class
-	instanceVariableNames: ''!
+   instanceVariableNames: ''!
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -100,127 +100,127 @@ Mall class
 !Mall class methodsFor: 'printing'!
 
 generateReportFor: creatures printOn: stream 
-	| sum |
-	sum := creatures inject: 0 into: [:accum :each | accum + each creaturesMet].
-	creatures do: 
-			[:aCreature | 
-			aCreature creaturesMet printOn: stream.
-			stream
-				space;
-				nextPutAll: (self units at: aCreature selfMet + 1);
-				nl].
-	stream space.
-	sum printString 
-		do: [:el | stream nextPutAll: (self units at: el digitValue + 1)]
-		separatedBy: [stream space].
-	^stream!
+   | sum |
+   sum := creatures inject: 0 into: [:accum :each | accum + each creaturesMet].
+   creatures do: 
+         [:aCreature | 
+         aCreature creaturesMet printOn: stream.
+         stream
+            space;
+            nextPutAll: (self units at: aCreature selfMet + 1);
+            nl].
+   stream space.
+   sum printString 
+      do: [:el | stream nextPutAll: (self units at: el digitValue + 1)]
+      separatedBy: [stream space].
+   ^stream!
 
 generateReportForColours: colours printOn: stream 
-	stream space.
-	colours do: [:colour | colour printOn: stream] separatedBy: [stream space].
-	^stream! !
+   stream space.
+   colours do: [:colour | colour printOn: stream] separatedBy: [stream space].
+   ^stream! !
 
 !Mall class methodsFor: 'initialize-release'!
 
 createAllowing: maxRendezvous 
-	"Private"
+   "Private"
 
-	^self basicNew initialize maxRendezvous: maxRendezvous!
+   ^self basicNew initialize maxRendezvous: maxRendezvous!
 
 createCreaturesWith: aCollectionOfColours 
-	"Private"
+   "Private"
 
-	| aName |
-	aName := 0.
-	^aCollectionOfColours collect: 
-			[:aColour | 
-			aName := aName + 1.
-			Creature withName: aName colour: aColour]!
+   | aName |
+   aName := 0.
+   ^aCollectionOfColours collect: 
+         [:aColour | 
+         aName := aName + 1.
+         Creature withName: aName colour: aColour]!
 
 initialize
-	"self initialize"
+   "self initialize"
 
-	Units := #('zero' 'one' 'two' 'three' 'four' 'five' 'six' 'seven' 'eight' 'nine')!
+   Units := #('zero' 'one' 'two' 'three' 'four' 'five' 'six' 'seven' 'eight' 'nine')!
 
 new
-	^self shouldNotImplement!
+   ^self shouldNotImplement!
 
 openMallWith: aCollectionOfColours forNumberOfMeets: aNumber 
-	| mall creatures guard |
-	mall := self createAllowing: aNumber.
-	mall run.
-	creatures := self createCreaturesWith: aCollectionOfColours.
-	guard := Semaphore new.
-	self 
-		openMall: mall
-		forCreatures: creatures
-		usingGuard: guard.
-	self 
-		waitForClosingOfMall: mall
-		withCreatures: creatures
-		usingGuard: guard.
-	^creatures! !
+   | mall creatures guard |
+   mall := self createAllowing: aNumber.
+   mall run.
+   creatures := self createCreaturesWith: aCollectionOfColours.
+   guard := Semaphore new.
+   self 
+      openMall: mall
+      forCreatures: creatures
+      usingGuard: guard.
+   self 
+      waitForClosingOfMall: mall
+      withCreatures: creatures
+      usingGuard: guard.
+   ^creatures! !
 
 !Mall class methodsFor: 'private'!
 
 openMall: aMall forCreatures: creatures usingGuard: sema 
-	| processes |
-	processes := creatures 
-				collect: [:aCreature | 
-					[aCreature visitMall: aMall.
-					sema signal] newProcess].
-	processes do: 
-			[:proc | 
-			proc priority: Processor userBackgroundPriority.
-			proc resume]!
+   | processes |
+   processes := creatures 
+            collect: [:aCreature | 
+               [aCreature visitMall: aMall.
+               sema signal] newProcess].
+   processes do: 
+         [:proc | 
+         proc priority: Processor userBackgroundPriority.
+         proc resume]!
 
 waitForClosingOfMall: aMall withCreatures: creatures usingGuard: guard 
-	creatures size timesRepeat: [guard wait].
-	aMall close! !
+   creatures size timesRepeat: [guard wait].
+   aMall close! !
 
 !Mall class methodsFor: 'accessing'!
 
 units
-	^Units! !
+   ^Units! !
 
 !Mall class methodsFor: 'public'!
 
 runBenchMark: number on: anOutputStream 
-	"self runBenchMark: 60000 on: Transcript."
+   "self runBenchMark: 60000 on: Transcript."
 
-	| firstTestColours secondTestColours blue red yellow creatures |
-	blue := ChameneosColour blue.
-	red := ChameneosColour red.
-	yellow := ChameneosColour yellow.
-	firstTestColours := Array 
-				with: blue
-				with: red
-				with: yellow.
-	secondTestColours := (OrderedCollection new)
-				add: blue;
-				add: red;
-				add: yellow;
-				add: red;
-				add: yellow;
-				add: blue;
-				add: red;
-				add: yellow;
-				add: red;
-				add: blue;
-				yourself.
-	(ChameneosColour generateReportOfColoursOn: anOutputStream) nl.
-	(self generateReportForColours: firstTestColours printOn: anOutputStream) 
-		nl.
-	creatures := Mall openMallWith: firstTestColours forNumberOfMeets: number.
-	(self generateReportFor: creatures printOn: anOutputStream)
-		nl;
-		nl.
-	(self generateReportForColours: secondTestColours printOn: anOutputStream) 
-		nl.
-	creatures := Mall openMallWith: secondTestColours forNumberOfMeets: number.
-	(self generateReportFor: creatures printOn: anOutputStream)
-		nl;
-		nl! !
+   | firstTestColours secondTestColours blue red yellow creatures |
+   blue := ChameneosColour blue.
+   red := ChameneosColour red.
+   yellow := ChameneosColour yellow.
+   firstTestColours := Array 
+            with: blue
+            with: red
+            with: yellow.
+   secondTestColours := (OrderedCollection new)
+            add: blue;
+            add: red;
+            add: yellow;
+            add: red;
+            add: yellow;
+            add: blue;
+            add: red;
+            add: yellow;
+            add: red;
+            add: blue;
+            yourself.
+   (ChameneosColour generateReportOfColoursOn: anOutputStream) nl.
+   (self generateReportForColours: firstTestColours printOn: anOutputStream) 
+      nl.
+   creatures := Mall openMallWith: firstTestColours forNumberOfMeets: number.
+   (self generateReportFor: creatures printOn: anOutputStream)
+      nl;
+      nl.
+   (self generateReportForColours: secondTestColours printOn: anOutputStream) 
+      nl.
+   creatures := Mall openMallWith: secondTestColours forNumberOfMeets: number.
+   (self generateReportFor: creatures printOn: anOutputStream)
+      nl;
+      nl! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -231,82 +231,82 @@ Mall comment:
 !Mall methodsFor: 'accessing'!
 
 maxRendezvous: max 
-	maxRendezvous := max! !
+   maxRendezvous := max! !
 
 !Mall methodsFor: 'private'!
 
 obtainPair
-	^cache removeFirst!
+   ^cache removeFirst!
 
 processVisitors
-	[open] whileTrue: 
-			[1 to: maxRendezvous
-				do: 
-					[:x | 
-					| first second |
-					first := queue next.
-					second := queue next.
-					self setPartnersOn: first and: second.
-					first signal.
-					second signal].
-			[queue isEmpty] whileFalse: [queue next signal]].
-	process terminate.
-	process := nil!
+   [open] whileTrue: 
+         [1 to: maxRendezvous
+            do: 
+               [:x | 
+               | first second |
+               first := queue next.
+               second := queue next.
+               self setPartnersOn: first and: second.
+               first signal.
+               second signal].
+         [queue isEmpty] whileFalse: [queue next signal]].
+   process terminate.
+   process := nil!
 
 releasePair: pair 
-	pair release.
-	cache addFirst: pair!
+   pair release.
+   cache addFirst: pair!
 
 setPartnersOn: first and: second
-	first partner: second me.
-	second partner: first me.
+   first partner: second me.
+   second partner: first me.
 !
 
 shutdown
-	[queue isEmpty] whileFalse: [queue next signal].
-	process terminate.
-	process := nil! !
+   [queue isEmpty] whileFalse: [queue next signal].
+   process terminate.
+   process := nil! !
 
 !Mall methodsFor: 'initialize-release'!
 
 initialize
-	guard := Semaphore forMutualExclusion.
-	queue := SharedQueue new.
-	cache := OrderedCollection new.
-	1 to: 10 do: [:x | cache add: Pair new]!
+   guard := Semaphore forMutualExclusion.
+   queue := SharedQueue new.
+   cache := OrderedCollection new.
+   1 to: 10 do: [:x | cache add: Pair new]!
 
 run
-	open := true.
-	process ifNil: 
-			[process := [self processVisitors] newProcess.
-			process priority: Processor userBackgroundPriority -1 ].
-	process resume! !
+   open := true.
+   process ifNil: 
+         [process := [self processVisitors] newProcess.
+         process priority: Processor userBackgroundPriority -1 ].
+   process resume! !
 
 !Mall methodsFor: 'controlling'!
 
 close
-	open := false!
+   open := false!
 
 visitWith: aChameneos 
-	| pair partner |
-	pair := self obtainPair.
-	pair me: aChameneos.
-	queue nextPut: pair.
-	pair wait.
-	partner := pair partner.
-	self releasePair: pair.
-	^partner! !
+   | pair partner |
+   pair := self obtainPair.
+   pair me: aChameneos.
+   queue nextPut: pair.
+   pair wait.
+   partner := pair partner.
+   self releasePair: pair.
+   ^partner! !
 
 Mall initialize!
 
 Object subclass: #Creature
-	instanceVariableNames: 'creatureName colour selfMet creaturesMet '
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'chameleon'!
+   instanceVariableNames: 'creatureName colour selfMet creaturesMet '
+   classVariableNames: ''
+   poolDictionaries: ''
+   category: 'chameleon'!
 
 Creature class
-	instanceVariableNames: ''!
+   instanceVariableNames: ''!
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -314,9 +314,9 @@ Creature class
 !Creature class methodsFor: 'initialize-release'!
 
 withName: aName colour: aColour 
-	^(Creature new initialize)
-		name: aName;
-		colour: aColour! !
+   ^(Creature new initialize)
+      name: aName;
+      colour: aColour! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -324,56 +324,56 @@ withName: aName colour: aColour
 !Creature methodsFor: 'accessing'!
 
 colour
-	^colour!
+   ^colour!
 
 colour: anObject 
-	colour := anObject!
+   colour := anObject!
 
 creaturesMet
-	^creaturesMet!
+   ^creaturesMet!
 
 creaturesMet: anObject 
-	creaturesMet := anObject!
+   creaturesMet := anObject!
 
 name
-	^creatureName!
+   ^creatureName!
 
 name: anObject 
-	creatureName := anObject!
+   creatureName := anObject!
 
 selfMet
-	^selfMet!
+   ^selfMet!
 
 selfMet: anObject 
-	^selfMet := anObject! !
+   ^selfMet := anObject! !
 
 !Creature methodsFor: 'initialize-release'!
 
 initialize
-	selfMet := 0.
-	creaturesMet := 0! !
+   selfMet := 0.
+   creaturesMet := 0! !
 
 !Creature methodsFor: 'controlling'!
 
 visitMall: mall 
-	
-	[| partner |
-	partner := mall visitWith: self.
-	partner ifNotNil: 
-			[colour := colour complementaryColourFor: partner colour.
-			self == partner ifTrue: [selfMet := selfMet + 1].
-			creaturesMet := creaturesMet + 1].
-	partner isNil] 
-			whileFalse! !
+   
+   [| partner |
+   partner := mall visitWith: self.
+   partner ifNotNil: 
+         [colour := colour complementaryColourFor: partner colour.
+         self == partner ifTrue: [selfMet := selfMet + 1].
+         creaturesMet := creaturesMet + 1].
+   partner isNil] 
+         whileFalse! !
 
 Object subclass: #ChameneosColour
-	instanceVariableNames: 'color '
-	classVariableNames: 'Blue Red Yellow '
-	poolDictionaries: ''
-	category: 'chameleon'!
+   instanceVariableNames: 'color '
+   classVariableNames: 'Blue Red Yellow '
+   poolDictionaries: ''
+   category: 'chameleon'!
 
 ChameneosColour class
-	instanceVariableNames: ''!
+   instanceVariableNames: ''!
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -381,66 +381,66 @@ ChameneosColour class
 !ChameneosColour class methodsFor: 'accessing'!
 
 blue
-	^Blue!
+   ^Blue!
 
 blue: anObject
-	Blue := anObject!
+   Blue := anObject!
 
 red
-	^Red!
+   ^Red!
 
 red: anObject
-	Red := anObject!
+   Red := anObject!
 
 yellow
-	^Yellow!
+   ^Yellow!
 
 yellow: anObject
-	Yellow := anObject! !
+   Yellow := anObject! !
 
 !ChameneosColour class methodsFor: 'initialize-release'!
 
 createBlue
-	"comment stating purpose of message"
+   "comment stating purpose of message"
 
-	^super new color: #blue!
+   ^super new color: #blue!
 
 createRed
-	"comment stating purpose of message"
+   "comment stating purpose of message"
 
-	^super new color: #red!
+   ^super new color: #red!
 
 createYellow
-	"comment stating purpose of message"
+   "comment stating purpose of message"
 
-	^super new color: #yellow!
+   ^super new color: #yellow!
 
 initialize
-	"self initialize"
+   "self initialize"
 
-	Red := self createRed.
-	Blue := self createBlue.
-	Yellow := self createYellow! !
+   Red := self createRed.
+   Blue := self createBlue.
+   Yellow := self createYellow! !
 
 !ChameneosColour class methodsFor: 'printing'!
 
 generateReportOfColoursOn: readOut 
-	| colours |
-	colours := Array 
-				with: Blue
-				with: Red
-				with: Yellow.
-	colours do: 
-			[:aColour | 
-			colours do: 
-					[:anotherColour | 
-					aColour printOn: readOut.
-					readOut nextPutAll: ' + '.
-					anotherColour printOn: readOut.
-					readOut nextPutAll: ' -> '.
-					(aColour complementaryColourFor: anotherColour) printOn: readOut.
-					readOut nl]].
-	^readOut! !
+   | colours |
+   colours := Array 
+            with: Blue
+            with: Red
+            with: Yellow.
+   colours do: 
+         [:aColour | 
+         colours do: 
+               [:anotherColour | 
+               aColour printOn: readOut.
+               readOut nextPutAll: ' + '.
+               anotherColour printOn: readOut.
+               readOut nextPutAll: ' -> '.
+               (aColour complementaryColourFor: anotherColour) printOn: readOut.
+               readOut nl]].
+   ^readOut! !
 
 "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!
 
@@ -448,48 +448,48 @@ generateReportOfColoursOn: readOut
 !ChameneosColour methodsFor: 'as yet unclassified'!
 
 complementaryColourFor: aChameneosColour 
-	"determine the complementary colour defined as..."
+   "determine the complementary colour defined as..."
 
-	self == aChameneosColour ifTrue: [^self].
-	self isBlue 
-		ifTrue: 
-			[aChameneosColour isRed 
-				ifTrue: [^self class yellow]
-				ifFalse: [^self class red]].
-	self isRed 
-		ifTrue: 
-			[aChameneosColour isBlue 
-				ifTrue: [^self class yellow]
-				ifFalse: [^self class blue]].
-	aChameneosColour isBlue 
-		ifTrue: [^self class red]
-		ifFalse: [^self class blue]! !
+   self == aChameneosColour ifTrue: [^self].
+   self isBlue 
+      ifTrue: 
+         [aChameneosColour isRed 
+            ifTrue: [^self class yellow]
+            ifFalse: [^self class red]].
+   self isRed 
+      ifTrue: 
+         [aChameneosColour isBlue 
+            ifTrue: [^self class yellow]
+            ifFalse: [^self class blue]].
+   aChameneosColour isBlue 
+      ifTrue: [^self class red]
+      ifFalse: [^self class blue]! !
 
 !ChameneosColour methodsFor: 'testing'!
 
 hasSameColorAs: aChameneos 
-	^self color == aChameneos color!
+   ^self color == aChameneos color!
 
 isBlue
-	^self == self class blue!
+   ^self == self class blue!
 
 isRed
-	^self == self class red!
+   ^self == self class red!
 
 isYellow
-	^self == self class yellow! !
+   ^self == self class yellow! !
 
 !ChameneosColour methodsFor: 'accessing'!
 
 color
-	^color!
+   ^color!
 
 color: aColor 
-	color := aColor! !
+   color := aColor! !
 
 !ChameneosColour methodsFor: 'printing'!
 
 printOn: aStream 
-	aStream nextPutAll: self color! !
+   aStream nextPutAll: self color! !
 
 ChameneosColour initialize!
