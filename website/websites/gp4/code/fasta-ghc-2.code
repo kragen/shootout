@@ -1,32 +1,30 @@
-<span class="hl com">{-# OPTIONS -O2 -optc-O3 -optc-ffast-math -fbang-patterns -fexcess-precision -fglasgow-exts #-}</span>
+<span class="hl com">{-# OPTIONS -fvia-C -O2 -optc-O2 -optc-ffast-math -fbang-patterns -fexcess-precision #-}</span>
 <span class="hl slc">--</span>
 <span class="hl slc">-- The Computer Language Benchmarks Game</span>
 <span class="hl slc">-- http://shootout.alioth.debian.org/</span>
 <span class="hl slc">--</span>
 <span class="hl slc">-- Contributed by Don Stewart</span>
 <span class="hl slc">-- A lazy bytestring solution.</span>
-<span class="hl slc">-- Some more optimizations by Sterling Clover, 11/07</span>
+<span class="hl slc">-- Unnecessary strictness annotations removed by Sterling Clover 2/08</span>
 <span class="hl slc">--</span>
 <span class="hl slc">-- Add:</span>
 <span class="hl slc">-- -optc-mfpmath=sse -optc-msse2</span>
-<span class="hl slc">-- -funfolding-use-threshold=32 -O2 -optc-O3</span>
+<span class="hl slc">--</span>
 
-<span class="hl kwa">import</span> System.Environment
+<span class="hl kwa">import</span> System
 <span class="hl kwa">import</span> Data.Word
 <span class="hl kwa">import</span> Control.Arrow
-<span class="hl kwa">import</span> Data.List
+
 <span class="hl kwa">import qualified</span> Data.ByteString.Lazy <span class="hl kwa">as</span> L
 <span class="hl kwa">import qualified</span> Data.ByteString.Lazy.Char8 <span class="hl kwa">as</span> C <span class="hl sym">(</span>pack<span class="hl sym">,</span>unfoldr<span class="hl sym">)</span>
 <span class="hl kwa">import qualified</span> Data.ByteString <span class="hl kwa">as</span> S
-<span class="hl kwa">import</span> Data.ByteString.Base
-<span class="hl kwa">import</span> GHC.<span class="hl kwb">Int</span>
-<span class="hl kwa">import</span> GHC.Base
-<span class="hl kwa">import</span> GHC.<span class="hl kwb">Float</span>
+<span class="hl kwa">import</span> Data.ByteString.Internal
+<span class="hl kwa">import</span> Data.ByteString.Unsafe
 
 main <span class="hl sym">=</span> <span class="hl kwa">do</span>
     n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
     writeFasta  <span class="hl str">&quot;ONE&quot;</span>   <span class="hl str">&quot;Homo sapiens alu&quot;</span>       <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">) (</span>L.cycle alu<span class="hl sym">)</span>
-    g <span class="hl sym">&lt;-</span> unfold <span class="hl str">&quot;TWO&quot;</span>   <span class="hl str">&quot;IUB ambiguity codes&quot;</span>    <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">) (</span>look iubs<span class="hl sym">) (</span>rands <span class="hl num">42</span>#<span class="hl sym">)</span>
+    g <span class="hl sym">&lt;-</span> unfold <span class="hl str">&quot;TWO&quot;</span>   <span class="hl str">&quot;IUB ambiguity codes&quot;</span>    <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">) (</span>look iubs<span class="hl sym">)</span> <span class="hl num">42</span>
     unfold      <span class="hl str">&quot;THREE&quot;</span> <span class="hl str">&quot;Homo sapiens frequency&quot;</span> <span class="hl sym">(</span>n<span class="hl sym">*</span><span class="hl num">5</span><span class="hl sym">) (</span>look homs<span class="hl sym">)</span> g
 
 <span class="hl slc">------------------------------------------------------------------------</span>
@@ -34,24 +32,24 @@ main <span class="hl sym">=</span> <span class="hl kwa">do</span>
 <span class="hl slc">-- lazily unfold the randomised dna sequences</span>
 <span class="hl slc">--</span>
 
-unfold l t n f <span class="hl sym">!</span>g <span class="hl sym">=</span> putStrLn <span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">++</span> l <span class="hl sym">++</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">++</span> t<span class="hl sym">) &gt;&gt;</span> unroll f g n
+unfold l t n f g <span class="hl sym">=</span> putStrLn <span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">++</span> l <span class="hl sym">++</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">++</span> t<span class="hl sym">) &gt;&gt;</span> unroll f g n
 
-unroll <span class="hl sym">:: ([</span><span class="hl kwb">Float</span><span class="hl sym">] -&gt; (</span>Word8<span class="hl sym">, [</span><span class="hl kwb">Float</span><span class="hl sym">])) -&gt; [</span><span class="hl kwb">Float</span><span class="hl sym">] -&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">[</span><span class="hl kwb">Float</span><span class="hl sym">]</span>
+unroll <span class="hl sym">:: (</span><span class="hl kwb">Int</span> <span class="hl sym">-&gt; (</span>Word8<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">)) -&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Int</span>
 unroll f <span class="hl sym">=</span> loop
     <span class="hl kwa">where</span>
-        loop <span class="hl sym">!</span>r <span class="hl num">0</span>   <span class="hl sym">=</span> return r
-        loop <span class="hl sym">!</span>r <span class="hl sym">!</span>i <span class="hl sym">=</span> <span class="hl kwa">case</span> S.unfoldrN m <span class="hl sym">(</span>Just . f<span class="hl sym">)</span> r <span class="hl kwa">of</span>
+        loop r <span class="hl num">0</span>   <span class="hl sym">=</span> return r
+        loop <span class="hl sym">!</span>r i <span class="hl sym">=</span> <span class="hl kwa">case</span> S.unfoldrN m <span class="hl sym">(</span>Just . f<span class="hl sym">)</span> r <span class="hl kwa">of</span>
                         <span class="hl sym">(!</span>s<span class="hl sym">,</span> Just r'<span class="hl sym">) -&gt;</span> <span class="hl kwa">do</span>
                             S.putStrLn s
                             loop r' <span class="hl sym">(</span>i<span class="hl sym">-</span>m<span class="hl sym">)</span>
           <span class="hl kwa">where</span> m <span class="hl sym">=</span> min i <span class="hl num">60</span>
 
-look <span class="hl sym">:: [(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)] -&gt; [</span><span class="hl kwb">Float</span><span class="hl sym">] -&gt; (</span>Word8<span class="hl sym">,[</span><span class="hl kwb">Float</span><span class="hl sym">])</span>
-look ds <span class="hl sym">(!</span>r<span class="hl sym">:</span>rs<span class="hl sym">) = (</span>choose ds r<span class="hl sym">,</span> rs<span class="hl sym">)</span>
+look ds k <span class="hl sym">= (</span>choose ds d<span class="hl sym">,</span> j<span class="hl sym">)</span>
+  <span class="hl kwa">where</span> <span class="hl sym">(</span>d<span class="hl sym">,</span>j<span class="hl sym">) =</span> rand k
 
 choose <span class="hl sym">:: [(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)] -&gt;</span> <span class="hl kwb">Float</span> <span class="hl sym">-&gt;</span> Word8
 choose <span class="hl sym">[(</span>b<span class="hl sym">,</span>_<span class="hl sym">)]</span>       _ <span class="hl sym">=</span> b
-choose <span class="hl sym">((!</span>b<span class="hl sym">,!</span>f<span class="hl sym">):</span>xs<span class="hl sym">)</span> p <span class="hl sym">=</span> if p <span class="hl sym">&lt;</span> f <span class="hl kwa">then</span> b <span class="hl kwa">else</span> choose xs p
+choose <span class="hl sym">((</span>b<span class="hl sym">,</span>f<span class="hl sym">):</span>xs<span class="hl sym">)</span> p <span class="hl sym">=</span> if p <span class="hl sym">&lt;</span> f <span class="hl kwa">then</span> b <span class="hl kwa">else</span> choose xs <span class="hl sym">(</span>p<span class="hl sym">-</span>f<span class="hl sym">)</span>
 
 <span class="hl slc">------------------------------------------------------------------------</span>
 <span class="hl slc">--</span>
@@ -62,28 +60,30 @@ writeFasta label title n s <span class="hl sym">=</span> <span class="hl kwa">do
      <span class="hl kwa">let</span> <span class="hl sym">(</span>t<span class="hl sym">:</span>ts<span class="hl sym">) =</span> L.toChunks s
      go ts t n
   <span class="hl kwa">where</span>
-     go ss <span class="hl sym">!</span>s <span class="hl sym">!</span>n
+     go ss s n
         <span class="hl sym">|</span> l60 <span class="hl sym">&amp;&amp;</span> n60 <span class="hl sym">=</span> S.putStrLn l               <span class="hl sym">&gt;&gt;</span> go ss        r <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">60</span><span class="hl sym">)</span>
         <span class="hl sym">|</span>        n60 <span class="hl sym">=</span> S.putStr s <span class="hl sym">&gt;&gt;</span> S.putStrLn a <span class="hl sym">&gt;&gt;</span> go <span class="hl sym">(</span>tail ss<span class="hl sym">)</span> b <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">60</span><span class="hl sym">)</span>
         <span class="hl sym">|</span> n <span class="hl sym">&lt;=</span> ln    <span class="hl sym">=</span> S.putStrLn <span class="hl sym">(</span>S.take n s<span class="hl sym">)</span>
         <span class="hl sym">|</span> otherwise  <span class="hl sym">=</span> S.putStr s <span class="hl sym">&gt;&gt;</span> S.putStrLn <span class="hl sym">(</span>S.take <span class="hl sym">(</span>n<span class="hl sym">-</span>ln<span class="hl sym">) (</span>head ss<span class="hl sym">))</span>
         <span class="hl kwa">where</span>
-            <span class="hl sym">!</span>ln   <span class="hl sym">=</span> S.length s
-            <span class="hl sym">!</span>l60  <span class="hl sym">=</span> ln <span class="hl sym">&gt;=</span> <span class="hl num">60</span>
-            <span class="hl sym">!</span>n60  <span class="hl sym">=</span> n  <span class="hl sym">&gt;=</span> <span class="hl num">60</span>
+            ln   <span class="hl sym">=</span> S.length s
+            l60  <span class="hl sym">=</span> ln <span class="hl sym">&gt;=</span> <span class="hl num">60</span>
+            n60  <span class="hl sym">=</span> n  <span class="hl sym">&gt;=</span> <span class="hl num">60</span>
             <span class="hl sym">(</span>l<span class="hl sym">,</span>r<span class="hl sym">) =</span> S.splitAt <span class="hl num">60</span> s
             <span class="hl sym">(</span>a<span class="hl sym">,</span>b<span class="hl sym">) =</span> S.splitAt <span class="hl sym">(</span><span class="hl num">60</span><span class="hl sym">-</span>ln<span class="hl sym">) (</span>head ss<span class="hl sym">)</span>
 
 <span class="hl slc">------------------------------------------------------------------------</span>
 
-rand <span class="hl sym">::</span> <span class="hl kwb">Int</span># <span class="hl sym">-&gt; (</span># <span class="hl kwb">Float</span><span class="hl sym">,</span> <span class="hl kwb">Int</span># #<span class="hl sym">)</span>
-rand seed <span class="hl sym">= (</span># newran<span class="hl sym">,</span> newseed #<span class="hl sym">)</span>
-    <span class="hl kwa">where</span>
-        newseed <span class="hl sym">= (</span>seed <span class="hl sym">*</span># <span class="hl num">3877</span># <span class="hl sym">+</span># <span class="hl num">29573</span>#<span class="hl sym">)</span> `remInt#` <span class="hl num">139968</span>#
-        newran  <span class="hl sym">=</span> F# <span class="hl sym">(</span>int2Float# newseed `divideFloat#` <span class="hl num">139968.0</span>#<span class="hl sym">)</span>
+im  <span class="hl sym">=</span> <span class="hl num">139968</span>
+ia  <span class="hl sym">=</span> <span class="hl num">3877</span>
+ic  <span class="hl sym">=</span> <span class="hl num">29573</span>
 
-rands <span class="hl sym">::</span> <span class="hl kwb">Int</span># <span class="hl sym">-&gt; [</span><span class="hl kwb">Float</span><span class="hl sym">]</span>
-rands x <span class="hl sym">=</span> <span class="hl kwa">let</span> <span class="hl sym">(</span># r<span class="hl sym">,</span> s #<span class="hl sym">) =</span> rand x <span class="hl kwa">in</span> r <span class="hl sym">:</span> rands s
+rand <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt; (</span><span class="hl kwb">Float</span><span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">)</span>
+rand seed <span class="hl sym">= (</span>newran<span class="hl sym">,</span>newseed<span class="hl sym">)</span>
+    <span class="hl kwa">where</span>
+        newseed <span class="hl sym">= (</span>seed <span class="hl sym">*</span> ia <span class="hl sym">+</span> ic<span class="hl sym">)</span> `rem` im
+        newran  <span class="hl sym">=</span>  <span class="hl num">1.0</span> <span class="hl sym">*</span> fromIntegral newseed <span class="hl sym">/</span> imd
+        imd      <span class="hl sym">=</span> fromIntegral im
 
 <span class="hl slc">------------------------------------------------------------------------</span>
 
@@ -96,17 +96,11 @@ alu <span class="hl sym">=</span> C.pack
 <span class="hl str">        \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\</span>
 <span class="hl str">        \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
 
-makeCumul <span class="hl sym">:: [(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)]-&gt;[(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)]</span>
-makeCumul freqMap <span class="hl sym">=</span> tail . reverse . foldl' fm' <span class="hl sym">[(</span>undefined<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">)]</span> $ freqMap
-    <span class="hl kwa">where</span> fm' acc&#64;<span class="hl sym">((</span>_<span class="hl sym">,</span>ct<span class="hl sym">):</span>rst<span class="hl sym">) (</span>w<span class="hl sym">,</span>f<span class="hl sym">) = (</span>w<span class="hl sym">,</span>ct <span class="hl sym">+</span> f<span class="hl sym">) :</span> acc
-
-iubs <span class="hl sym">:: [(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)]</span>
-iubs <span class="hl sym">=</span> makeCumul $ map <span class="hl sym">(</span>first c2w<span class="hl sym">)</span>
+iubs <span class="hl sym">=</span> map <span class="hl sym">(</span>c2w <span class="hl sym">***</span> id<span class="hl sym">)</span>
         <span class="hl sym">[(</span>'a'<span class="hl sym">,</span><span class="hl num">0.27</span><span class="hl sym">),(</span>'c'<span class="hl sym">,</span><span class="hl num">0.12</span><span class="hl sym">),(</span>'g'<span class="hl sym">,</span><span class="hl num">0.12</span><span class="hl sym">),(</span>'t'<span class="hl sym">,</span><span class="hl num">0.27</span><span class="hl sym">),(</span>'B'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">)</span>
         <span class="hl sym">,(</span>'D'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'H'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'K'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'M'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'N'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">)</span>
         <span class="hl sym">,(</span>'R'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'S'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'V'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'W'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">),(</span>'Y'<span class="hl sym">,</span><span class="hl num">0.02</span><span class="hl sym">)]</span>
 
-homs <span class="hl sym">:: [(</span>Word8<span class="hl sym">,</span><span class="hl kwb">Float</span><span class="hl sym">)]</span>
-homs <span class="hl sym">=</span> makeCumul $ map <span class="hl sym">(</span>first c2w<span class="hl sym">)</span>
+homs <span class="hl sym">=</span> map <span class="hl sym">(</span>c2w <span class="hl sym">***</span> id<span class="hl sym">)</span>
         <span class="hl sym">[(</span>'a'<span class="hl sym">,</span><span class="hl num">0.3029549426680</span><span class="hl sym">),(</span>'c'<span class="hl sym">,</span><span class="hl num">0.1979883004921</span><span class="hl sym">)</span>
         <span class="hl sym">,(</span>'g'<span class="hl sym">,</span><span class="hl num">0.1975473066391</span><span class="hl sym">),(</span>'t'<span class="hl sym">,</span><span class="hl num">0.3015094502008</span><span class="hl sym">)]</span>
