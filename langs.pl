@@ -403,6 +403,18 @@
        },
      },
 
+     lisaac =>
+     { Lang => 'Lisaac',
+       Name => '',
+       Status => '+',
+       Home => '',
+       Down => '',
+       Type => '',
+       Note => '',
+       Ext  => 'li',
+       Verfun => '',
+     },
+
      erlang =>
      { Lang => 'Erlang',
        Name => 'Erlang',
