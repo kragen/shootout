@@ -19,7 +19,7 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a benchmark. Read and accept <a href="benchmark.php?test=binarytrees&lang=all#about">the benchmark rules</a>. When you aren't sure <a href="#help">&darr;&nbsp;ask for help</a>.</p>
+<p>Choose a programming language. Choose a benchmark. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Rules">the benchmark rules</a>. When you aren't sure <a href="#help">&darr;&nbsp;ask for help</a>.</p>
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
