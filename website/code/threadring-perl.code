@@ -1,0 +1,55 @@
+<span class="slc">#  The Computer Language Benchmarks Game</span>
+<span class="slc">#  http://shootout.alioth.debian.org/</span>
+
+<span class="slc">#  contributed by Richard Cottrill</span>
+
+
+<span class="kwa">use</span> strict<span class="sym">;</span>
+<span class="kwa">use</span> warnings<span class="sym">;</span>
+<span class="kwa">use</span> threads<span class="sym">;</span>
+<span class="kwa">use</span> threads<span class="sym">::</span>shared<span class="sym">;</span>
+<span class="kwa">use</span> Thread<span class="sym">::</span>Semaphore<span class="sym">;</span>
+
+<span class="kwc">my</span> <span class="kwb">$numThreads</span>	<span class="sym">:</span>shared<span class="sym">;</span>
+<span class="kwc">my</span> <span class="kwb">$data</span>	<span class="sym">:</span>shared<span class="sym">;</span>
+<span class="kwc">my</span> <span class="kwb">$result</span>	<span class="sym">:</span>shared<span class="sym">;</span>
+<span class="kwc">my</span> <span class="kwb">&#64;mutex</span>	<span class="sym">:</span>shared<span class="sym">;</span>
+
+<span class="kwb">$numThreads</span> <span class="sym">=</span> <span class="num">503</span><span class="sym">;</span>
+
+<span class="kwa">sub</span> thr_func <span class="sym">{</span>
+  <span class="kwc">my</span> <span class="sym">(</span><span class="kwb">$nextThread</span><span class="sym">,</span> <span class="kwb">$thr_name</span><span class="sym">);</span>
+  <span class="kwb">$thr_name</span> <span class="sym">=</span> threads<span class="sym">-&gt;</span><span class="kwd">tid</span><span class="sym">();</span>
+  threads<span class="sym">-&gt;</span><span class="kwd">detach</span><span class="sym">();</span>
+  <span class="kwa">if</span> <span class="sym">(</span><span class="kwb">$thr_name</span> <span class="sym">==</span> <span class="kwb">$numThreads</span><span class="sym">) {</span>
+    <span class="kwb">$nextThread</span> <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span>
+  <span class="sym">}</span>
+  <span class="kwa">else</span> <span class="sym">{</span>
+    <span class="kwb">$nextThread</span> <span class="sym">=</span> <span class="kwb">$thr_name</span> <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+  <span class="sym">}</span>
+  <span class="kwa">while</span> <span class="sym">(</span><span class="num">1</span><span class="sym">) {</span>
+    <span class="kwb">$mutex</span><span class="sym">[</span><span class="kwb">$thr_name</span><span class="sym">]-&gt;</span><span class="kwd">down</span><span class="sym">();</span>
+    <span class="kwa">if</span> <span class="sym">(</span><span class="kwb">$data</span><span class="sym">) {</span>
+      <span class="kwb">$data</span> <span class="sym">= --</span><span class="kwb">$data</span><span class="sym">;</span>
+      <span class="kwb">$mutex</span><span class="sym">[</span><span class="kwb">$nextThread</span><span class="sym">]-&gt;</span><span class="kwd">up</span><span class="sym">();</span>
+    <span class="sym">}</span>
+    <span class="kwa">else</span> <span class="sym">{</span>
+      <span class="kwb">$result</span> <span class="sym">=</span> <span class="kwb">$thr_name</span><span class="sym">;</span>
+      <span class="kwb">$mutex</span><span class="sym">[</span><span class="num">0</span><span class="sym">]-&gt;</span><span class="kwd">up</span><span class="sym">();</span>
+    <span class="sym">}</span>
+  <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">$data</span> <span class="sym">=</span> <span class="kwb">$ARGV</span><span class="sym">[</span><span class="num">0</span><span class="sym">];</span>
+
+<span class="kwb">$mutex</span><span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> new Thread<span class="sym">::</span><span class="kwd">Semaphore</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+<span class="sym">{</span>
+  <span class="kwa">for</span> <span class="sym">(</span><span class="num">1</span> .. <span class="kwb">$numThreads</span><span class="sym">) {</span>
+    <span class="kwb">$mutex</span><span class="sym">[</span><span class="kwb">$_</span><span class="sym">] =</span> new Thread<span class="sym">::</span><span class="kwd">Semaphore</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>
+    threads<span class="sym">-&gt;</span><span class="kwd">create</span><span class="sym">(</span><span class="esc">\&amp;</span>thr_func<span class="sym">);</span>
+  <span class="sym">}</span>
+<span class="sym">}</span>
+<span class="kwb">$mutex</span><span class="sym">[</span><span class="num">1</span><span class="sym">]-&gt;</span><span class="kwd">up</span><span class="sym">();</span>
+<span class="kwb">$mutex</span><span class="sym">[</span><span class="num">0</span><span class="sym">]-&gt;</span><span class="kwd">down</span><span class="sym">();</span>
+print <span class="str">&quot;$result</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">;</span>
+<span class="kwd">exit</span><span class="sym">(</span><span class="num">0</span><span class="sym">);</span>

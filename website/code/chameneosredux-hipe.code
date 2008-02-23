@@ -1,0 +1,96 @@
+<span class="slc">%%% The Computer Language Benchmarks Game</span>
+<span class="slc">%%% http://shootout.alioth.debian.org/</span>
+<span class="slc">%%% contributed by Christian von Roques</span>
+
+<span class="slc">%% Compile: erlc +native +&quot;{hipe, [o3]}&quot; chameneos_redux.erl</span>
+<span class="slc">%% Run: erl -noinput -noshell -run chameneos_redux main 600</span>
+
+<span class="slc">%% Each chameneos is its own process.</span>
+<span class="slc">%% A chameneos sends {self(), Color} to the broker to request a</span>
+<span class="slc">%% meeting with another chameneos.</span>
+<span class="slc">%% The broker replies with {Pid, Color} of the partner met or 'stop'</span>
+<span class="slc">%% whereupon the chameneos prints the Meetings and Selfmeetings it had</span>
+<span class="slc">%% and replies with the number of Meetings for the broker to sum.</span>
+
+<span class="sym">-</span><span class="kwa">module</span><span class="sym">(</span>chameneosredux<span class="sym">).</span>
+<span class="sym">-</span><span class="kwa">export</span><span class="sym">([</span>main<span class="sym">/</span><span class="num">1</span><span class="sym">]).</span>
+
+<span class="sym">-</span><span class="kwd">import</span><span class="sym">(</span>lists<span class="sym">, [</span>foreach<span class="sym">/</span><span class="num">2</span><span class="sym">]).</span>
+
+<span class="kwd">spell</span><span class="sym">(</span><span class="num">0</span><span class="sym">) -&gt;</span> <span class="str">&quot; zero&quot;</span><span class="sym">;</span>
+<span class="kwd">spell</span><span class="sym">(</span>N<span class="sym">) -&gt;</span> <span class="kwd">spell</span><span class="sym">(</span>N<span class="sym">, []).</span>
+
+<span class="kwd">spell</span><span class="sym">(</span><span class="num">0</span><span class="sym">,</span> L<span class="sym">) -&gt;</span> L<span class="sym">;</span>
+<span class="kwd">spell</span><span class="sym">(</span>N<span class="sym">,</span> L<span class="sym">) -&gt;</span> <span class="kwd">spell</span><span class="sym">(</span>N <span class="kwa">div</span> <span class="num">10</span><span class="sym">, [</span><span class="kwb">element</span><span class="sym">(</span>N <span class="kwa">rem</span> <span class="num">10</span> <span class="sym">+</span> <span class="num">1</span><span class="sym">, {</span><span class="str">&quot; zero&quot;</span><span class="sym">,</span> <span class="str">&quot; one&quot;</span><span class="sym">,</span> <span class="str">&quot; two&quot;</span><span class="sym">,</span> <span class="str">&quot; three&quot;</span><span class="sym">,</span> <span class="str">&quot; four&quot;</span><span class="sym">,</span> <span class="str">&quot; five&quot;</span><span class="sym">,</span> <span class="str">&quot; six&quot;</span><span class="sym">,</span> <span class="str">&quot; seven&quot;</span><span class="sym">,</span> <span class="str">&quot; eight&quot;</span><span class="sym">,</span> <span class="str">&quot; nine&quot;</span><span class="sym">}) |</span> L<span class="sym">]).</span>
+
+
+<span class="kwd">complement</span><span class="sym">(</span>C<span class="sym">,</span> C<span class="sym">) -&gt;</span> C<span class="sym">;</span>
+<span class="kwd">complement</span><span class="sym">(</span>blue<span class="sym">,</span> red<span class="sym">) -&gt;</span> yellow<span class="sym">;</span>
+<span class="kwd">complement</span><span class="sym">(</span>blue<span class="sym">,</span> yellow<span class="sym">) -&gt;</span> red<span class="sym">;</span>
+<span class="kwd">complement</span><span class="sym">(</span>red<span class="sym">,</span> blue<span class="sym">) -&gt;</span> yellow<span class="sym">;</span>
+<span class="kwd">complement</span><span class="sym">(</span>red<span class="sym">,</span> yellow<span class="sym">) -&gt;</span> blue<span class="sym">;</span>
+<span class="kwd">complement</span><span class="sym">(</span>yellow<span class="sym">,</span> blue<span class="sym">) -&gt;</span> red<span class="sym">;</span>
+<span class="kwd">complement</span><span class="sym">(</span>yellow<span class="sym">,</span> red<span class="sym">) -&gt;</span> blue<span class="sym">.</span>
+
+
+<span class="kwd">show_complements</span><span class="sym">() -&gt;</span>
+    <span class="sym">[</span> io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~p + ~p -&gt; ~p~n&quot;</span><span class="sym">, [</span>A<span class="sym">,</span> B<span class="sym">,</span> <span class="kwd">complement</span><span class="sym">(</span>A<span class="sym">,</span> B<span class="sym">)]) ||</span>
+	A <span class="sym">&lt;- [</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">],</span>
+	B <span class="sym">&lt;- [</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">]].</span>
+
+
+<span class="kwd">run</span><span class="sym">(</span>L<span class="sym">,</span> N<span class="sym">) -&gt;</span>
+    io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~n&quot;</span><span class="sym">),</span>
+    Broker <span class="sym">=</span> <span class="kwb">self</span><span class="sym">(),</span>
+    <span class="kwd">foreach</span><span class="sym">(</span><span class="kwa">fun</span><span class="sym">(</span>Color<span class="sym">) -&gt;</span> <span class="kwb">spawn</span><span class="sym">(</span><span class="kwa">fun</span><span class="sym">() -&gt;</span> <span class="kwd">chameneos</span><span class="sym">(</span>Broker<span class="sym">,</span> Color<span class="sym">)</span> <span class="kwa">end</span><span class="sym">)</span> <span class="kwa">end</span><span class="sym">,</span> L<span class="sym">),</span>
+    <span class="kwd">broker</span><span class="sym">(</span>N<span class="sym">),</span>
+    io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~n&quot;</span><span class="sym">),</span>
+    <span class="kwd">cleanup</span><span class="sym">(</span><span class="kwb">length</span><span class="sym">(</span>L<span class="sym">),</span> <span class="num">0</span><span class="sym">).</span>
+
+
+<span class="kwd">chameneos</span><span class="sym">(</span>Broker<span class="sym">,</span> Color<span class="sym">) -&gt;</span>
+    io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot; ~p&quot;</span><span class="sym">, [</span>Color<span class="sym">]),</span>
+    <span class="kwd">chameneos</span><span class="sym">(</span>Broker<span class="sym">,</span> Color<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">0</span><span class="sym">).</span>
+
+<span class="kwd">chameneos</span><span class="sym">(</span>Broker<span class="sym">,</span> Color<span class="sym">,</span> Meetings<span class="sym">,</span> MetSelf<span class="sym">) -&gt;</span>
+    Broker <span class="sym">! {</span> <span class="kwb">self</span><span class="sym">(),</span> Color <span class="sym">},</span>
+    <span class="kwa">receive</span>
+	<span class="sym">{</span>OPid<span class="sym">,</span> OColor<span class="sym">} -&gt;</span>
+	    <span class="kwd">chameneos</span><span class="sym">(</span>Broker<span class="sym">,</span> <span class="kwd">complement</span><span class="sym">(</span>Color<span class="sym">,</span> OColor<span class="sym">),</span> Meetings<span class="sym">+</span><span class="num">1</span><span class="sym">,</span>
+		      <span class="kwa">if</span> OPid <span class="sym">==</span> <span class="kwb">self</span><span class="sym">() -&gt;</span> MetSelf<span class="sym">+</span><span class="num">1</span><span class="sym">;</span> true <span class="sym">-&gt;</span> MetSelf <span class="kwa">end</span><span class="sym">);</span>
+	stop <span class="sym">-&gt;</span>
+	    io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~w~s</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">, [</span>Meetings<span class="sym">,</span> <span class="kwd">spell</span><span class="sym">(</span>MetSelf<span class="sym">)]),</span>
+	    Broker <span class="sym">!</span> Meetings
+    <span class="kwa">end</span><span class="sym">.</span>
+
+
+<span class="kwd">broker</span><span class="sym">(</span><span class="num">0</span><span class="sym">) -&gt;</span> nil<span class="sym">;</span>
+<span class="kwd">broker</span><span class="sym">(</span>N<span class="sym">) -&gt;</span>
+    <span class="kwa">receive</span>
+	C1 <span class="sym">= {</span>Pid1<span class="sym">,</span> _<span class="sym">} -&gt;</span> nil
+    <span class="kwa">end</span><span class="sym">,</span>
+    <span class="kwa">receive</span>
+	C2 <span class="sym">= {</span>Pid2<span class="sym">,</span> _<span class="sym">} -&gt;</span>
+	    Pid1 <span class="sym">!</span> C2<span class="sym">,</span>
+	    Pid2 <span class="sym">!</span> C1<span class="sym">,</span>
+	    <span class="kwd">broker</span><span class="sym">(</span>N<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+    <span class="kwa">end</span><span class="sym">.</span>
+
+<span class="kwd">cleanup</span><span class="sym">(</span><span class="num">0</span><span class="sym">,</span> M<span class="sym">) -&gt;</span> io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~s~n&quot;</span><span class="sym">, [</span><span class="kwd">spell</span><span class="sym">(</span>M<span class="sym">)]);</span>
+<span class="kwd">cleanup</span><span class="sym">(</span>N<span class="sym">,</span> M<span class="sym">) -&gt;</span>
+    <span class="kwa">receive</span>
+	<span class="sym">{</span>Pid<span class="sym">,</span> _Color<span class="sym">} -&gt;</span>
+	    Pid <span class="sym">!</span> stop<span class="sym">,</span>
+	    <span class="kwd">cleanup</span><span class="sym">(</span>N<span class="sym">,</span> M<span class="sym">);</span>
+	Meetings <span class="sym">-&gt;</span>
+	    <span class="kwd">cleanup</span><span class="sym">(</span>N<span class="sym">-</span><span class="num">1</span><span class="sym">,</span> M<span class="sym">+</span>Meetings<span class="sym">)</span>
+    <span class="kwa">end</span><span class="sym">.</span>
+
+
+<span class="kwd">main</span><span class="sym">([</span>Arg<span class="sym">]) -&gt;</span>
+    N <span class="sym">=</span> <span class="kwb">list_to_integer</span><span class="sym">(</span>Arg<span class="sym">),</span>
+    <span class="kwd">show_complements</span><span class="sym">(),</span>
+    <span class="kwd">run</span><span class="sym">([</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">],</span> N<span class="sym">),</span>
+    <span class="kwd">run</span><span class="sym">([</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> red<span class="sym">,</span> blue<span class="sym">],</span> N<span class="sym">),</span>
+    io<span class="sym">:</span><span class="kwd">fwrite</span><span class="sym">(</span><span class="str">&quot;~n&quot;</span><span class="sym">),</span>
+    <span class="kwb">halt</span><span class="sym">(</span><span class="num">0</span><span class="sym">).</span>

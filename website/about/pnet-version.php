@@ -1,1 +1,1 @@
-<p>Mono C# compiler version 1.2.5.1</p>
+<p>Mono C# compiler version 1.2.6.0</p>
