@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.53 2007-12-04 06:32:37 bfulgham Exp $
+# $Id: Makefile,v 1.54 2008-02-24 23:47:46 bfulgham Exp $
 
 BIN := $(PWD)/bin/
 
@@ -25,6 +25,8 @@ website:
 	-bin/make_highlight
 	-(cd website/code; ../../bin/add_strays)
 	-bin/make_feed.php
+
+commit:
 	-cvs commit -m "Rerun of benchmarks."
 
 test plot show loc:

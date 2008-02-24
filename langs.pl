@@ -752,6 +752,22 @@
        },
      },     
      
+     'kjs' =>
+     { Lang => 'JavaScript',
+       Name => 'WebKit JavaScriptCore',
+       Status => '+',
+       Home => 'http://webkit.org/projects/javascript/',
+       Down => 'http://webkit.org/projects/javascript/',
+       Type => 'interpreted',
+       Note => '',
+       Ext  => 'js',
+       Verfun => sub {
+	   my $ver = `$ENV{JAVASCRIPT} -v 2>&1`;
+	   $ver =~ /(JavaScript-C.*)\n/;
+	   return($1);
+       },
+     },     
+     
      rep =>
      { Lang => 'Lisp',
        Name => 'librep',
