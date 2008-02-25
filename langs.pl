@@ -412,7 +412,10 @@
        Type => '',
        Note => '',
        Ext  => 'li',
-       Verfun => '',
+       Verfun => sub {
+	   my $ver = 'Unknown';
+	   return($ver);
+       },
      },
 
      erlang =>
@@ -752,9 +755,9 @@
        },
      },     
      
-     'kjs' =>
+     'jsc' =>
      { Lang => 'JavaScript',
-       Name => 'WebKit JavaScriptCore',
+       Name => 'JavaScriptCore',
        Status => '+',
        Home => 'http://webkit.org/projects/javascript/',
        Down => 'http://webkit.org/projects/javascript/',
@@ -762,9 +765,8 @@
        Note => '',
        Ext  => 'js',
        Verfun => sub {
-	   my $ver = `$ENV{JAVASCRIPT} -v 2>&1`;
-	   $ver =~ /(JavaScript-C.*)\n/;
-	   return($1);
+	   my $ver = 'svn tot';
+	   return($ver);
        },
      },     
      

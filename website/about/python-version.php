@@ -1,1 +1,1 @@
-<p>Python 2.5.1</p>
+<p>Python 2.5.2</p>

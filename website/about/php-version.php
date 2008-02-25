@@ -1,2 +1,2 @@
-<p>PHP 5.2.3-1+lenny1 (cli) (built: Oct  3 2007 19:22:40) 
+<p>PHP 5.2.5-2 with Suhosin-Patch 0.9.6.2 (cli) (built: Feb  1 2008 21:17:20) 
 </p>
