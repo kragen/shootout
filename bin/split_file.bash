@@ -7,7 +7,7 @@
 # exit code 0 if the file named $1 was split
 # exit code 1 if the file named $1 was not split
 
-# Isaac Gouy 30 May 2005
+# Isaac Gouy 30 May 2005, 13 March 2008
 
 
 
@@ -34,16 +34,17 @@ then
          fi
          
          echo "splitfile " $name
-         mv -f $each ${PWD}/$name
+         sed '/SPLITFILE/d' $each > ${PWD}/$name
+         rm -f $each
       done
       exit 0
    else
       rm -f ${PWD}/tmp00
-      exit 1
+      exit 0
    fi
 
 else
    # $1 didn't contain SPLITFILE
 
-   exit 1
+   exit 0
 fi
