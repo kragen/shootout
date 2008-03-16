@@ -173,6 +173,7 @@ public class chameneosredux {
             total += creature.getCount();
         }
         System.out.println(getNumber(total));
+        System.out.println();
     }
     
     public static void main(String[] args) {
@@ -186,7 +187,6 @@ public class chameneosredux {
         printColours();
         System.out.println();
         run(n, Colour.blue, Colour.red, Colour.yellow);
-        System.out.println();
         run(n, Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.yellow, 
                 Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.blue);
     }    
