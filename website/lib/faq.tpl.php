@@ -368,7 +368,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 <dd>
 <dl>
 <dd><p>There are many contributors and few committers - a little more time spent by contributors saves committers a great deal more time.</p>
-<p>Attach full source-code from tested programs. Please don't contribute patch-files.</p>
+<p>Attach the full source-code file of a tested program. Please don't paste source-code into the description field. Please don't contribute patch-files.</p>
 <p>Before contributing programs</p>
 <ul>
 <li>read and accept the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
