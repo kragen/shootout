@@ -1,0 +1,208 @@
+;; The Computer Language Benchmarks Game
+;; http://shootout.alioth.debian.org/
+;; contributed by elf, mar 2008
+
+
+(eval-when (compile)
+    (declare
+        (uses srfi-1 srfi-4)
+        (fixnum-arithmetic)
+        (usual-integrations)
+        (block)
+        (number-type fixnum)
+        (disable-interrupts)
+        (lambda-lift)
+        (unsafe)
+        (inline)
+        (bound-to-procedure
+            vector-swap!
+            make-swap!
+            vector-reverse!
+            flips
+            circular-append
+            make-pclos
+            make-plist-even
+            make-plist-odd
+            make-plist1
+            make-plist2
+            run-permute2
+            run-permute
+            errinvoke
+            main
+        )
+    ))
+
+
+(define-inline (vector-swap! v x y xval)
+    (u8vector-set! v x (u8vector-ref v y))
+    (u8vector-set! v y xval)
+    v)
+
+(define-inline (make-swap! x y)
+    (lambda (v)
+        (vector-swap! v x y (u8vector-ref v x))))
+
+(define-inline (vector-reverse! v i)
+    (let loop ((j   0)
+               (i   i))
+        (cond ((fx>= j i)
+                  v)
+              (else
+                  (vector-swap! v j i (u8vector-ref v j))
+                  (loop (fx+ 1 j) (fx- i 1))))))
+
+(define-inline (flips ov vl)
+    (let loop ((c   1)
+               (v   (vector-reverse! vl (u8vector-ref vl 0))))
+        (if (fx= 0 (u8vector-ref v 0))
+            (fxmax ov c)
+            (loop (fx+ 1 c) (vector-reverse! v (u8vector-ref v 0))))))
+
+(define-inline (circular-append l1 l2)
+    (let ((r   (append l1 l2)))
+        (set-cdr! (last-pair r) r)
+        r))
+
+(define-inline (make-pclos l)
+    (lambda (v)
+        (let ((t   ((car l) v)))
+            (set! l (cdr l))
+            t)))
+
+(define-inline (make-plist-even i1 i2 l)
+    (append l
+            (append-map
+                (lambda (x)
+                    (cons (make-swap! i1 x) l))
+                (cons i2 (iota i2)))))
+
+(define-inline (make-plist-odd i1 i2 l)
+    (append l
+            (append-map
+                (lambda (x)
+                    (cons (make-swap! i1 i2) l))
+                (iota i1))))
+
+(define-inline (make-plist1 n)
+    (if (fx< n 4)
+        (case n
+            ((1)
+                '())
+            ((2)
+                (list (make-swap! 0 1)))
+            ((3)
+                (list
+                    (make-swap! 0 1)
+                    (make-swap! 1 2)
+                    (make-swap! 0 1)
+                    (make-swap! 1 2)
+                    (make-swap! 0 1))))
+        (let loop ((l   (list (make-swap! 0 1)
+                              (make-swap! 1 2)
+                              (make-swap! 0 1)
+                              (make-swap! 1 2)
+                              (make-swap! 0 1)))
+                   (i   4))
+            (cond ((fx> i n)
+                      l)
+                  ((even? i)
+                      (loop (make-plist-even (fx- i 1) (fx- i 2) l)
+                            (fx+ 1 i)))
+                  (else
+                      (loop (make-plist-odd (fx- i 1) (fx- i 2) l)
+                            (fx+ 1 i)))))))
+
+(define-inline (make-plist2 i n p)
+    (let loop ((i   i)
+               (l   '()))
+        (cond ((fx> i n)
+                  (make-pclos
+                      (circular-append
+                          p
+                          (list
+                              (make-pclos
+                                  (append
+                                      l
+                                      (list (lambda (v) #f))))))))
+              ((even? i)
+                  (loop (fx+ 1 i)
+                        (make-plist-even (fx- i 1) (fx- i 2) l)))
+              (else
+                  (loop (fx+ 1 i)
+                        (make-plist-odd (fx- i 1) (fx- i 2) l))))))
+
+(define-inline (run-permute2 n n1 pl v c)
+    (let loop ((v   (pl v))
+               (c   (if (or (fx= 0 (u8vector-ref v 0))
+                            (fx= 0 (u8vector-ref v (u8vector-ref v 0)))
+                            (fx= n1 (u8vector-ref v n1)))
+                        c
+                        (flips c (subu8vector v 0 n)))))
+        (if v
+            (loop
+                (pl v)
+                (if (or (fx= 0 (u8vector-ref v 0))
+                        (fx= 0 (u8vector-ref v (u8vector-ref v 0)))
+                        (fx= n1 (u8vector-ref v n1)))
+                    c
+                    (flips c (subu8vector v 0 n))))
+            c)))
+
+(define-inline (run-permute n n1 pl)
+    (let loop ((v   (let ((v   (make-u8vector n 0 #t)))
+                        (for-each
+                            (lambda (x)
+                                (u8vector-set! v x x))
+                            (iota n))
+                        v))
+               (c   1)
+               (t   30))
+        (cond (v
+                  (for-each
+                      (lambda (x)
+                          (display (fx+ 1 x)))
+                      (u8vector->list v))
+                  (newline)
+                  (if (fx= 0 t)
+                      (run-permute2 n n1 pl v c)
+                      (loop
+                          (pl v)
+                          (if (or (fx= 0 (u8vector-ref v 0))
+                                  (fx= 0 (u8vector-ref v (u8vector-ref v 0)))
+                                  (fx= n1 (u8vector-ref v n1)))
+                              c
+                              (flips c (subu8vector v 0 n)))
+                          (fx- t 1))))
+              (else
+                  c))))
+
+(define-inline (errinvoke)
+    (display "syntax: ")
+    (display (program-name))
+    (display " [positive integer]")
+    (newline)
+    (exit 1))
+
+(define (main args)
+    (or (fx= 1 (length args))
+        (errinvoke))
+    (let ((n   (string->number (car args))))
+        (or (and (integer? n) (fx> n 0))
+            (errinvoke))
+        (let ((r   (run-permute
+                       n
+                       (fx- n 1)
+                       (if (fx< n 6)
+                           (make-pclos
+                               (append (make-plist1 n)
+                                       (list (lambda (v) #f))))
+                           (make-plist2 (fx+ 1 (fxshr n 1)) n
+                                        (make-plist1 (fxshr n 1)))))))
+            (display "Pfannkuchen(")
+            (display n)
+            (display ") = ")
+            (display r)
+            (newline)
+            (exit 0))))
+
+(main (command-line-arguments))
