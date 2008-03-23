@@ -1,4 +1,4 @@
-"*  The Computer Language Shootout
+"* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org/
    contributed by Eliot Miranda and Isaac Gouy *"!
 

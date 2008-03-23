@@ -12,7 +12,7 @@ multiplyAtv
    n := self size.
    atv := Array new: n.
    1 to: n do: [:i|
-      sum := 0.0d.
+      sum := 0.0d0.
       1 to: n do: [:j|
          sum := sum + ((j matrixA: i) * (self at: j)) ].
       atv at: i put: sum].
@@ -24,7 +24,7 @@ multiplyAv
    n := self size.
    av := Array new: n.
    1 to: n do: [:i|
-      sum := 0.0d.
+      sum := 0.0d0.
       1 to: n do: [:j|
          sum := sum + ((i matrixA: j) * (self at: j)) ].
       av at: i put: sum].

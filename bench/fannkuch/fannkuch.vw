@@ -1,6 +1,6 @@
-"* The Computer Language Shootout
-    http://shootout.alioth.debian.org/
-    contributed by Paolo Bonzini *"!
+"* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+   contributed by Paolo Bonzini *"!
 
 
 Object subclass: #PermGenerator
