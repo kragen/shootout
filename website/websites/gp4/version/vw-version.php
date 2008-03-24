@@ -1,1 +1,1 @@
-<p>Non-Commercial Pre-Release 7.5 of April 17, 2007</p>
+<p>VisualWorks(R) 7.6 Feb 14 2008</p>
