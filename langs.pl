@@ -1140,6 +1140,21 @@
        },
      },
 
+     yap =>
+     { Lang => 'Prolog',
+       Name => 'YAP',
+       Status => 'X',
+       Home => '',
+       Down => '',
+       Type => '',
+       Note => '',
+       Ext  => 'pro',
+       Verfun => sub {
+           my $ver = `$ENV{SWIPROLOG} -v 2>&1`;
+	   return ($ver);
+       },
+     },
+
      psyco =>
      { Lang => 'Python',
        Name => 'Psyco',
