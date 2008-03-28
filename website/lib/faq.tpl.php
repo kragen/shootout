@@ -475,6 +475,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
 <li>more comparisons - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
+<li>performance testing - <a href="http://dromaeo.com/">Mozilla JavaScript performance testing</a></li>
 <li>lighthearted asides - <a href="http://research.microsoft.com/~simonpj/papers/history-of-haskell/history.pdf">A History of Haskell: Being Lazy With Class (pdf)</a></li>
 <li>diagnostics - <a href="http://smalltalk.gnu.org/project/issue/200">awful memory usage with lots of big objects</a></li>
 <li>dispelling myths - <a href="http://ftp.openvms.compaq.com/openvms/journal/v10/openvms_journal.pdf">Java and OpenVMS: Myths and realities (pdf)</a></li>
