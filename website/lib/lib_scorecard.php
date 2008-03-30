@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005-2007
+// Copyright (c) Isaac Gouy 2005-2008
 
 // Cookies ///////////////////////////////////////////////////
 
@@ -126,7 +126,8 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
 
    $score = array();
    foreach($data as $k => $test){
-      if ((!isset($timeout[$k]) || ($timeout[$k] < 3)) && (sizeof($test) > 8)){
+//      if ((!isset($timeout[$k]) || ($timeout[$k] < 3)) && (sizeof($test) > 8)){
+      if ((!isset($timeout[$k]) || ($timeout[$k] < 4)) && (sizeof($test) > 7)){
 
          $s = 0.0; $ws = 0.0; $include = 0.0;
          foreach($test as $t => $v){
