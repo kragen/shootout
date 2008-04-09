@@ -22,7 +22,7 @@ $G = filemtime('./gp4/data/data.csv');
 
 <body id="core">
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a></h1></td><td><h4><a href="./gp4/faq.php">Frequently Asked Questions</a></h4></td><td>&nbsp;</td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a></h1></td><td><h4><a href="./gp4/faq.php">Read the FAQ!</a></h4></td><td>&nbsp;</td>
 <td><a href="./feeds/rss.xml"><img src="./orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a></td>
 </tr></table>
 
