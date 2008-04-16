@@ -25,6 +25,7 @@ Section Public
     + depth           :INTEGER;
     + iterations      :INTEGER;
     + long_lived_tree :TREENODE;
+    + short_lived_tree:TREENODE;
 
     (COMMAND_LINE.upper = 1).if {
       n := COMMAND_LINE.item 1.to_integer;
@@ -36,8 +37,8 @@ Section Public
       max_depth := n;
     };
     stretch_depth := max_depth+1;
-    check := TREENODE.bottom_up_tree (0,stretch_depth).item_check;
-    TREENODE.reset;
+    short_lived_tree := TREENODE.clone;
+    check := short_lived_tree.bottom_up_tree (0,stretch_depth).item_check;
 
     "stretch tree of depth ".print;
     stretch_depth.print;
@@ -45,17 +46,14 @@ Section Public
     check.print;
     '\n'.print;
     
-    long_lived_tree := TREENODE.bottom_up_tree (0, max_depth);
-    TREENODE.clear;
+    long_lived_tree := TREENODE.clone.bottom_up_tree (0, max_depth);
     depth := min_depth;
     {depth <= max_depth}.while_do {
       iterations := 1 << (max_depth - depth  + min_depth);
       check := 0;
       1.to iterations do { i:INTEGER;
-        check := check + TREENODE.bottom_up_tree (i,depth) .item_check;
-        TREENODE.reset;
-        check := check + TREENODE.bottom_up_tree (-i,depth).item_check;
-        TREENODE.reset;
+        check := check + short_lived_tree.bottom_up_tree (i,depth) .item_check;
+        check := check + short_lived_tree.bottom_up_tree (-i,depth).item_check;
       };
       (iterations * 2).print;
       "\t trees of depth ".print;
@@ -72,6 +70,7 @@ Section Public
     long_lived_tree.item_check.print;
     '\n'.print;
   );
+
 // class BINARYTREES
 
 // SPLITFILE=treenode.li
@@ -85,9 +84,6 @@ Section Inherit
 
 Section Private
 
-  - tab:FAST_ARRAY[TREENODE] := FAST_ARRAY[TREENODE].create_with_capacity 262_144;
-  - top:INTEGER;
-
   + left  :TREENODE;
 
   + right :TREENODE;
@@ -95,14 +91,6 @@ Section Private
   + item  :INTEGER;
 
 Section Public
-  
-  - reset <- top := 0;
-  
-  - clear <-
-  (
-    tab.clear;
-    top := 0;
-  );
   
   - item_check:INTEGER <-
   ( + item_tmp:INTEGER;
@@ -115,40 +103,19 @@ Section Public
     item_tmp
   );
 
-  - bottom_up_tree (item, depth:INTEGER) :TREENODE <-
-  ( + result :TREENODE;
-    
-    (top = tab.count).if {      
-      result := clone;
-      tab.add_last result;
-      top := top + 1;
-    } else {
-      result := tab.item top;
-      top := top + 1;
-    };
-        
+  - bottom_up_tree (itm, depth:INTEGER) :TREENODE <-
+  (     
+    item := itm;
     (depth > 0).if {
-      result.make (
-        bottom_up_tree(2*item-1, depth-1),
-        bottom_up_tree(2*item, depth-1),
-        item
-      );
+      (left = NULL).if {
+        left  := TREENODE.clone;
+        right := TREENODE.clone;                
+      };
+      left.bottom_up_tree  (2*itm-1, depth-1);
+      right.bottom_up_tree (2*itm  , depth-1);
     } else {
-      result.make_item_only item;
+      left := right := NULL;
     };
-    result
-  );
-
-  - make (l, r:TREENODE, i:INTEGER) <-
-  (
-    left  := l;
-    right := r;
-    item  := i;
-  );
-
-  - make_item_only i:INTEGER <-
-  (
-    item := i;
-    left := right := NULL;
+    Self
   );
 // class TREENODE

@@ -1,0 +1,156 @@
+/* The Computer Language Shootout Benchmarks
+   http://shootout.alioth.debian.org/
+   contributed by Benoit Sonntag
+*/
+
+// SPLITFILE=threadring.li
+Section Header
+  
+  + name := THREADRING;
+  
+  - external := 
+`
+#include <pthread.h>
+pthread_attr_t stack_attr;
+`;
+  
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+  
+Section Public
+  
+  - threads:INTEGER := 503;
+
+  // staticaly initialize mutex[0] mutex 
+  - mutex:FAST_ARRAY[MUTEX] := FAST_ARRAY[MUTEX].create threads;
+
+  - data:FAST_ARRAY[INTEGER] := FAST_ARRAY[INTEGER].create threads;
+  
+  - stacks:FAST_ARRAY[STACK] := FAST_ARRAY[STACK].create threads;
+
+  // stacks must be defined staticaly, or my i386 box run of virtual memory for this
+  // process while creating thread +- #400 
+  
+Section External
+  
+  - thread num:POINTER :POINTER <-
+  ( +l,r,token:INTEGER;
+    
+    l := CONVERT[POINTER,INTEGER].on num;
+    r := (l+1) % threads;
+   
+    {`(1)`:BOOLEAN(TRUE,FALSE)}.while_do { // It's always TRUE
+      mutex.item l.lock;
+      token := data.item l;
+      (token != 0).if {
+        data.put (token - 1) to r;
+        mutex.item r.unlock;
+      } else {
+        (l+1).print;
+        '\n'.print;        
+        die_with_code 0;
+      };
+    };
+    NULL
+  );
+  
+Section Public
+  
+  - main <-
+  (     
+    data.put (COMMAND_LINE.item 1.to_integer) to 0;
+
+    init_attr; 
+    
+    0.to (threads-1) do { i:INTEGER;      
+      mutex.item i.init;
+      mutex.item i.lock;
+
+      stacks.item i.set_attr;
+      THREAD.create i;      
+    };
+    
+    mutex.first.unlock;
+    THREAD.join;
+    die_with_code 0;
+    thread 0;
+    thread 1;    
+  );
+  
+Section Private
+  
+  - init_attr <- `pthread_attr_init(&stack_attr)`;
+// class THREADRING
+
+// SPLITFILE=mutex.li
+Section Header
+
+  + name := Expanded MUTEX;
+
+  - type := `pthread_mutex_t`;
+
+  - default := `MUTEX__`:MUTEX;
+
+  - external := `pthread_mutex_t MUTEX__;`;
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - init   <- `pthread_mutex_init(&@Self, NULL)`;
+
+  - lock   <- `pthread_mutex_lock(&@Self)`;
+
+  - unlock <- `pthread_mutex_unlock(&@Self)`;
+// class MUTEX
+
+// SPLITFILE=stack.li
+Section Header
+
+  + name := Expanded STACK;
+
+  - type := `struct stack`;
+
+  - default := `STACK__`:STACK;
+
+  - external :=
+`
+#include <limits.h>
+struct stack {
+  char x[PTHREAD_STACK_MIN];
+};
+struct stack STACK__;
+`;
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - set_attr <- `pthread_attr_setstack(&stack_attr, &@Self, sizeof(struct stack))`;
+// class STACK
+
+
+// SPLITFILE=thread.li
+Section Header
+
+  + name := THREAD;
+
+  - type := `pthread_t`;
+
+  - external := `pthread_t THREAD__;`;
+
+Section Insert
+
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+
+  - create i:INTEGER <- `pthread_create(&@Self, &stack_attr, thread, (void*)@i)`;
+
+  - join <- `pthread_join(@Self, NULL)`;
+// class THREAD

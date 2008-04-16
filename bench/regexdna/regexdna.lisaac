@@ -1,0 +1,170 @@
+/* The Computer Language Shootout Benchmarks
+   http://shootout.alioth.debian.org/
+   contributed by Xavier Oswald
+*/
+
+Section Header
+  
+  + name := REGEXDNA;
+  
+  - external := 
+`
+#define __USE_STRING_INLINES
+#include <pcre.h>
+pcre *re;
+pcre_extra *re_ex;
+int re_eo;
+const char *re_e;
+`;
+
+Section Inherit
+  
+  - parent_object:OBJECT := OBJECT;
+
+Section Public
+  
+  - mem:NATIVE_ARRAY[INTEGER] := NATIVE_ARRAY[INTEGER].create 3;
+  
+  - fb_subst(dst,src:STRING, p:STRING_CONSTANT,r:STRING_CONSTANT) :INTEGER <-
+  // Substitute pattern p with replacement r, copying from src to dst buffer. 
+  ( + pos:INTEGER;
+        
+    pcre_compile p;
+    pcre_study;
+    dst.clear;    
+    pos := src.lower;
+    {pcre_exec src position pos mem mem >= 0}.while_do {                   
+      pos.to (mem.item 0) do { j:INTEGER;
+        dst.add_last (src.item j);
+      };    
+      dst.append r;
+      pos  := mem.item 1 + 1;
+    };    
+    // Copy end.    
+    pos.to (src.upper) do { j:INTEGER;
+      dst.add_last (src.item j);
+    };      
+    dst.count
+  );
+
+  - fb_countmatches (src:STRING, p:STRING_CONSTANT) :INTEGER <-
+  // Count all matches with pattern p in src buffer. 
+  ( + pos,count:INTEGER;
+    
+    pcre_compile p;
+    pcre_study;    
+    pos := src.lower;
+    {pcre_exec src position pos mem mem >= 0}.while_do {
+      pos := mem.item 1 + 1;
+      count := count + 1;
+    };
+    count
+  );
+
+  - variants:FAST_ARRAY[STRING_CONSTANT] := 
+  ( + result:FAST_ARRAY[STRING_CONSTANT];
+    
+    result := FAST_ARRAY[STRING_CONSTANT].create_with_capacity 9;
+    result.add_last "agggtaaa|tttaccct";         result.add_last "[cgt]gggtaaa|tttaccc[acg]";
+    result.add_last "a[act]ggtaaa|tttacc[agt]t"; result.add_last "ag[act]gtaaa|tttac[agt]ct";
+    result.add_last "agg[act]taaa|ttta[agt]cct"; result.add_last "aggg[acg]aaa|ttt[cgt]ccct";
+    result.add_last "agggt[cgt]aa|tt[acg]accct"; result.add_last "agggta[cgt]a|t[acg]taccct";
+    result.add_last "agggtaa[cgt]|[acg]ttaccct"; 
+    result
+  );
+
+  - subst:FAST_ARRAY[STRING_CONSTANT] := 
+  ( + result:FAST_ARRAY[STRING_CONSTANT];
+    
+    result := FAST_ARRAY[STRING_CONSTANT].create_with_capacity 22;
+    result.add_last "B"; result.add_last "(c|g|t)"; 
+    result.add_last "D"; result.add_last "(a|g|t)";
+    result.add_last "H"; result.add_last "(a|c|t)";
+    result.add_last "K"; result.add_last "(g|t)";
+    result.add_last "M"; result.add_last "(a|c)";
+    result.add_last "N"; result.add_last "(a|c|g|t)";
+    result.add_last "R"; result.add_last "(a|g)";
+    result.add_last "S"; result.add_last "(c|g)";
+    result.add_last "V"; result.add_last "(a|c|g)";
+    result.add_last "W"; result.add_last "(a|t)";
+    result.add_last "Y"; result.add_last "(c|t)";
+    result
+  );
+  
+  - string_tmp:STRING := STRING.create 512;
+  
+  - main <-
+  ( + seq:FAST_ARRAY[STRING];
+    + ilen, clen, slen:INTEGER;
+    + flip:INTEGER;
+    
+    seq := FAST_ARRAY[STRING].create_with_capacity 2;
+    seq.add_last (STRING.create (5.mb));
+    seq.add_last (STRING.create (5.mb));
+    read_stdin (seq.first);    
+    
+    ilen := seq.first.count;
+        
+    clen := fb_subst (seq.second,seq.first, ">.*|\n", "");
+    
+    (variants.lower).to (variants.upper) do { i:INTEGER;
+      string_tmp.append (variants.item i);
+      string_tmp.add_last ' ';
+      fb_countmatches (seq.second, variants.item i).append_in string_tmp;
+      string_tmp.add_last '\n';
+    };
+            
+    flip := 1;    
+    (subst.lower).to (subst.upper) by 2 do { i:INTEGER;    
+      slen := fb_subst(seq.item (1-flip), seq.item flip, subst.item i, subst.item (i+1));
+      flip := 1-flip;
+    };
+    string_tmp.add_last '\n';    
+    ilen.append_in string_tmp;
+    string_tmp.add_last '\n';    
+    clen.append_in string_tmp;
+    string_tmp.add_last '\n';
+    slen.append_in string_tmp;
+    string_tmp.println;
+  );
+  
+Section Private
+  
+  - read_stdin str:STRING <-
+  // BS: put this function in library...
+  ( + storage:NATIVE_ARRAY[CHARACTER];
+    + n,cap:INTEGER;
+    {
+      cap := str.capacity;
+      ((cap - str.count) < 1024).if {
+        cap := cap * 2;
+        str.set_capacity cap;
+      };
+      storage := str.storage + str.upper;
+      n := `fread(@storage,1,@cap,stdin)`:INTEGER;
+      str.set_count (str.count+n);
+    }.do_until {n = 0};    
+  );
+  
+  //
+  // External Function.
+  //
+  
+  - pcre_compile p:STRING_CONSTANT <-
+  ( + storage:NATIVE_ARRAY[CHARACTER];
+    storage := p.storage;
+    `re = pcre_compile(@storage, PCRE_CASELESS, &re_e, &re_eo, NULL)`;
+  );
+  
+  - pcre_study <-
+  (
+    `re_ex = pcre_study(re, 0, &re_e)`;
+  );
+  
+  - pcre_exec src:STRING position pos:INTEGER mem m:NATIVE_ARRAY[INTEGER] :INTEGER <-
+  ( + storage:NATIVE_ARRAY[CHARACTER];
+    + len:INTEGER;
+    storage := src.storage;
+    len := src.count;
+    `pcre_exec(re, re_ex, @storage, @len, @pos-1, 0, @m, 3)`:INTEGER
+  );

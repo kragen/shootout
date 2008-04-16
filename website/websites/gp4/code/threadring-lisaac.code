@@ -1,0 +1,156 @@
+<span class="hl com">/* The Computer Language Shootout Benchmarks</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com">   contributed by Benoit Sonntag</span>
+<span class="hl com">*/</span>
+
+<span class="hl slc">// SPLITFILE=threadring.li</span>
+Section Header
+
+  <span class="hl sym">+</span> name <span class="hl sym">:=</span> THREADRING<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> external <span class="hl sym">:=</span>
+`
+#include <span class="hl sym">&lt;</span>pthread.h<span class="hl sym">&gt;</span>
+pthread_attr_t stack_attr<span class="hl sym">;</span>
+`<span class="hl sym">;</span>
+
+Section Inherit
+
+  <span class="hl sym">-</span> parent_object<span class="hl sym">:</span>OBJECT <span class="hl sym">:=</span> OBJECT<span class="hl sym">;</span>
+
+Section Public
+
+  <span class="hl sym">-</span> threads<span class="hl sym">:</span>INTEGER <span class="hl sym">:=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+
+  <span class="hl slc">// staticaly initialize mutex[0] mutex</span>
+  <span class="hl sym">-</span> mutex<span class="hl sym">:</span>FAST_ARRAY<span class="hl sym">[</span>MUTEX<span class="hl sym">] :=</span> FAST_ARRAY<span class="hl sym">[</span>MUTEX<span class="hl sym">]</span>.create threads<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> data<span class="hl sym">:</span>FAST_ARRAY<span class="hl sym">[</span>INTEGER<span class="hl sym">] :=</span> FAST_ARRAY<span class="hl sym">[</span>INTEGER<span class="hl sym">]</span>.create threads<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> stacks<span class="hl sym">:</span>FAST_ARRAY<span class="hl sym">[</span>STACK<span class="hl sym">] :=</span> FAST_ARRAY<span class="hl sym">[</span>STACK<span class="hl sym">]</span>.create threads<span class="hl sym">;</span>
+
+  <span class="hl slc">// stacks must be defined staticaly, or my i386 box run of virtual memory for this</span>
+  <span class="hl slc">// process while creating thread +- #400</span>
+
+Section External
+
+  <span class="hl sym">-</span> thread num<span class="hl sym">:</span>POINTER <span class="hl sym">:</span>POINTER <span class="hl sym">&lt;-</span>
+  <span class="hl sym">( +</span>l<span class="hl sym">,</span>r<span class="hl sym">,</span>token<span class="hl sym">:</span>INTEGER<span class="hl sym">;</span>
+
+    l <span class="hl sym">:=</span> CONVERT<span class="hl sym">[</span>POINTER<span class="hl sym">,</span>INTEGER<span class="hl sym">]</span>.on num<span class="hl sym">;</span>
+    r <span class="hl sym">:= (</span>l<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> % threads<span class="hl sym">;</span>
+
+    <span class="hl sym">{</span>`<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span>`<span class="hl sym">:</span>BOOLEAN<span class="hl sym">(</span>TRUE<span class="hl sym">,</span>FALSE<span class="hl sym">)}</span>.while_do <span class="hl sym">{</span> <span class="hl slc">// It's always TRUE</span>
+      mutex.item l.lock<span class="hl sym">;</span>
+      token <span class="hl sym">:=</span> data.item l<span class="hl sym">;</span>
+      <span class="hl sym">(</span>token <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>.if <span class="hl sym">{</span>
+        data.put <span class="hl sym">(</span>token <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> to r<span class="hl sym">;</span>
+        mutex.item r.unlock<span class="hl sym">;</span>
+      <span class="hl sym">}</span> else <span class="hl sym">{</span>
+        <span class="hl sym">(</span>l<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>.print<span class="hl sym">;</span>
+        <span class="hl str">'\n'</span>.print<span class="hl sym">;</span>
+        die_with_code <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl sym">};</span>
+    <span class="hl sym">};</span>
+    NULL
+  <span class="hl sym">);</span>
+
+Section Public
+
+  <span class="hl sym">-</span> main <span class="hl sym">&lt;-</span>
+  <span class="hl sym">(</span>
+    data.put <span class="hl sym">(</span>COMMAND_LINE.item <span class="hl num">1</span>.to_integer<span class="hl sym">)</span> to <span class="hl num">0</span><span class="hl sym">;</span>
+
+    init_attr<span class="hl sym">;</span>
+
+    <span class="hl num">0</span>.to <span class="hl sym">(</span>threads<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> do <span class="hl sym">{</span> i<span class="hl sym">:</span>INTEGER<span class="hl sym">;</span>
+      mutex.item i.init<span class="hl sym">;</span>
+      mutex.item i.lock<span class="hl sym">;</span>
+
+      stacks.item i.set_attr<span class="hl sym">;</span>
+      THREAD.create i<span class="hl sym">;</span>
+    <span class="hl sym">};</span>
+
+    mutex.first.unlock<span class="hl sym">;</span>
+    THREAD.join<span class="hl sym">;</span>
+    die_with_code <span class="hl num">0</span><span class="hl sym">;</span>
+    thread <span class="hl num">0</span><span class="hl sym">;</span>
+    thread <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl sym">);</span>
+
+Section Private
+
+  <span class="hl sym">-</span> init_attr <span class="hl sym">&lt;-</span> `pthread_attr_init<span class="hl sym">(&amp;</span>stack_attr<span class="hl sym">)</span>`<span class="hl sym">;</span>
+<span class="hl slc">// class THREADRING</span>
+
+<span class="hl slc">// SPLITFILE=mutex.li</span>
+Section Header
+
+  <span class="hl sym">+</span> name <span class="hl sym">:=</span> Expanded MUTEX<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> type <span class="hl sym">:=</span> `pthread_mutex_t`<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> default <span class="hl sym">:=</span> `MUTEX__`<span class="hl sym">:</span>MUTEX<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> external <span class="hl sym">:=</span> `pthread_mutex_t MUTEX__<span class="hl sym">;</span>`<span class="hl sym">;</span>
+
+Section Insert
+
+  <span class="hl sym">-</span> parent_object<span class="hl sym">:</span>OBJECT <span class="hl sym">:=</span> OBJECT<span class="hl sym">;</span>
+
+Section Public
+
+  <span class="hl sym">-</span> init   <span class="hl sym">&lt;-</span> `pthread_mutex_init<span class="hl sym">(&amp;</span>&#64;Self<span class="hl sym">,</span> NULL<span class="hl sym">)</span>`<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> lock   <span class="hl sym">&lt;-</span> `pthread_mutex_lock<span class="hl sym">(&amp;</span>&#64;Self<span class="hl sym">)</span>`<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> unlock <span class="hl sym">&lt;-</span> `pthread_mutex_unlock<span class="hl sym">(&amp;</span>&#64;Self<span class="hl sym">)</span>`<span class="hl sym">;</span>
+<span class="hl slc">// class MUTEX</span>
+
+<span class="hl slc">// SPLITFILE=stack.li</span>
+Section Header
+
+  <span class="hl sym">+</span> name <span class="hl sym">:=</span> Expanded STACK<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> type <span class="hl sym">:=</span> `struct stack`<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> default <span class="hl sym">:=</span> `STACK__`<span class="hl sym">:</span>STACK<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> external <span class="hl sym">:=</span>
+`
+#include <span class="hl sym">&lt;</span>limits.h<span class="hl sym">&gt;</span>
+struct stack <span class="hl sym">{</span>
+  char x<span class="hl sym">[</span>PTHREAD_STACK_MIN<span class="hl sym">];</span>
+<span class="hl sym">};</span>
+struct stack STACK__<span class="hl sym">;</span>
+`<span class="hl sym">;</span>
+
+Section Insert
+
+  <span class="hl sym">-</span> parent_object<span class="hl sym">:</span>OBJECT <span class="hl sym">:=</span> OBJECT<span class="hl sym">;</span>
+
+Section Public
+
+  <span class="hl sym">-</span> set_attr <span class="hl sym">&lt;-</span> `pthread_attr_setstack<span class="hl sym">(&amp;</span>stack_attr<span class="hl sym">, &amp;</span>&#64;Self<span class="hl sym">,</span> sizeof<span class="hl sym">(</span>struct stack<span class="hl sym">))</span>`<span class="hl sym">;</span>
+<span class="hl slc">// class STACK</span>
+
+
+<span class="hl slc">// SPLITFILE=thread.li</span>
+Section Header
+
+  <span class="hl sym">+</span> name <span class="hl sym">:=</span> THREAD<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> type <span class="hl sym">:=</span> `pthread_t`<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> external <span class="hl sym">:=</span> `pthread_t THREAD__<span class="hl sym">;</span>`<span class="hl sym">;</span>
+
+Section Insert
+
+  <span class="hl sym">-</span> parent_object<span class="hl sym">:</span>OBJECT <span class="hl sym">:=</span> OBJECT<span class="hl sym">;</span>
+
+Section Public
+
+  <span class="hl sym">-</span> create i<span class="hl sym">:</span>INTEGER <span class="hl sym">&lt;-</span> `pthread_create<span class="hl sym">(&amp;</span>&#64;Self<span class="hl sym">, &amp;</span>stack_attr<span class="hl sym">,</span> thread<span class="hl sym">, (</span>void<span class="hl sym">*)</span>&#64;i<span class="hl sym">)</span>`<span class="hl sym">;</span>
+
+  <span class="hl sym">-</span> join <span class="hl sym">&lt;-</span> `pthread_join<span class="hl sym">(</span>&#64;Self<span class="hl sym">,</span> NULL<span class="hl sym">)</span>`<span class="hl sym">;</span>
+<span class="hl slc">// class THREAD</span>

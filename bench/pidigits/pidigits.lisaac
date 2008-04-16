@@ -1,0 +1,174 @@
+/* The Computer Language Shootout Benchmarks
+   http://shootout.alioth.debian.org/
+   contributed by Benoit Sonntag
+*/
+
+// SPLITFILE=pidigits.li
+Section Header
+  
+  + name := PIDIGITS;
+  
+Section Public
+
+  - main <-
+  ( + n:INTEGER;
+    
+    (COMMAND_LINE.count > 1).if {
+      n := COMMAND_LINE.item 1.to_integer;
+    } else {
+      n := 27;
+    };
+    CTX.pidigits n;
+  );
+// class PIDIGITS
+
+// SPLITFILE=ctx.li
+Section Header
+
+  + name := CTX;
+
+  - external := `#include <gmp.h>`;
+
+Section Private
+
+  // Transformation matrix components.
+  - q:MPZ := ( `((/*`; `n`:MPZ); // */
+  - r:MPZ;
+  - s:MPZ;
+  - t:MPZ;
+
+  // Temporary numbers.
+  - u:MPZ;
+  - v:MPZ;
+  - w:MPZ := ( `*/NULL`:MPZ);
+
+  // Counters.
+  - d:INTEGER;
+  - i:INTEGER;
+  - n:INTEGER;
+
+  // Accumulated digits for one line.
+  - digits:STRING;
+
+Section Private
+
+  - compose_r (bq,br,bs,bt:INTEGER) <-
+  // Compose matrix with numbers on the right.
+  (
+    mul_si (u,r,bs);
+    mul_si (r,r,bq);
+    mul_si (v,t,br);
+    add    (r,r,v);
+    mul_si (t,t,bt);
+    add    (t,t,u);
+    mul_si (s,s,bt);
+    mul_si (u,q,bs);
+    add    (s,s,u);
+    mul_si (q,q,bq);
+  );
+
+  - compose_l (bq,br,bs,bt:INTEGER) <-
+  // Compose matrix with numbers on the left.
+  (
+    mul_si (r,r,bt);
+    mul_si (u,q,br);
+    add    (r,r,u);
+    mul_si (u,t,bs);
+    mul_si (t,t,bt);
+    mul_si (v,s,br);
+    add    (t,t,v);
+    mul_si (s,s,bq);
+    add    (s,s,u);
+    mul_si (q,q,bq);
+  );
+
+  - extract j:UINTEGER_32 :INTEGER <-
+  // Extract one digit.
+  (
+    mul_ui (u,q,j);
+    add    (u,u,r);
+    mul_ui (v,s,j);
+    add    (v,v,t);
+    tdiv_q (w,u,v);
+    get_ui w
+  );
+
+  - prdigit y:INTEGER :BOOLEAN <-
+  // Print one digit. Returns TRUE for the last digit.
+  (
+    digits.add_last (y.decimal_digit);
+    i := i + 1;
+    ((digits.count = 10) || {i = n}).if {
+      digits.add_last '\t';
+      digits.add_last ':';
+      i.append_in digits;
+      digits.add_last '\n';
+      digits.print;
+      digits.clear;
+    };
+    i = n
+  );
+
+Section Public
+
+  - pidigits nb:INTEGER <-
+  // Generate successive digits of PI.
+  ( + k,y:INTEGER;
+    + stop:BOOLEAN;
+    k := 1;
+    n := nb;
+    d := i:= 0;
+    digits := STRING.create 20;
+    init_set_ui (q,1);
+    init_set_ui (r,0);
+    init_set_ui (s,0);
+    init_set_ui (t,1);
+    init u;
+    init v;
+    init w;
+    {
+      y := extract 3;
+      (y = extract 4).if {
+        (prdigit y).if {
+          stop := TRUE;
+        } else {
+          compose_r (10, -10*y, 0, 1);
+        };
+      } else {
+        compose_l (k, 4*k+2, 0, 2*k+1);
+        k := k + 1;
+      };
+    }.do_while {! stop};
+  );
+
+Section Private
+
+  //
+  // External mapping.
+  //
+
+  - init vu:MPZ <- `mpz_init(@vu)`;
+
+  - init_set_ui (vq:MPZ,vi:INTEGER) <- `mpz_init_set_ui(@vq, @vi)`;
+
+  - mul_si (vu,vr:MPZ,vs:INTEGER) <- `mpz_mul_si(@vu,@vr,@vs)`;
+
+  - mul_ui (vu,vq:MPZ,vj:INTEGER) <- `mpz_mul_ui(@vu,@vq, @vj)`;
+
+  - tdiv_q (vw,vu,vv:MPZ) <- `mpz_tdiv_q(@vw,@vu,@vv)`;
+
+  - add (a,b:MPZ,res:MPZ) <- `mpz_add(@a,@b,@res)`;
+
+  - get_ui vw:MPZ :INTEGER <- `mpz_get_ui(@vw)`:INTEGER;
+
+// class CTX
+
+// SPLITFILE=mpz.li
+Section Header
+
+  + name := Expanded MPZ;
+
+  - type := `mpz_t`;
+
+  - default := `n`:MPZ;
+// class MPZ
