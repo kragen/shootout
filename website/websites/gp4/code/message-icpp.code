@@ -1,0 +1,214 @@
+<span class="hl com">/* The Computer Language Shootout</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> * Contributed by Branimir Maksimovic</span>
+<span class="hl com"> */</span>
+
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+<span class="hl dir">#include &lt;errno.h&gt;</span>
+<span class="hl dir">#include &lt;cstdlib&gt;</span>
+<span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;ostream&gt;</span>
+<span class="hl dir">#include &lt;deque&gt;</span>
+<span class="hl kwa">using namespace</span> std<span class="hl sym">;</span>
+
+<span class="hl dir">#define STACK_SIZE 65536</span>
+
+<span class="hl kwc">extern</span> <span class="hl str">&quot;C&quot;</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">static void</span><span class="hl sym">*</span> <span class="hl kwd">thread_run</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwc">class</span> Mutex<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+  <span class="hl kwd">Mutex</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_mutex_init</span><span class="hl sym">(&amp;</span>m<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">void</span> <span class="hl kwd">lock</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">(&amp;</span>m<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">void</span> <span class="hl kwd">unlock</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">(&amp;</span>m<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl sym">~</span><span class="hl kwd">Mutex</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_mutex_destroy</span><span class="hl sym">(&amp;</span>m<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+<span class="hl kwc">private</span><span class="hl sym">:</span>
+  <span class="hl kwd">Mutex</span><span class="hl sym">(</span><span class="hl kwb">const</span> Mutex<span class="hl sym">&amp;);</span>
+  Mutex<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">=(</span><span class="hl kwb">const</span> Mutex<span class="hl sym">&amp;);</span>
+  pthread_mutex_t m<span class="hl sym">;</span>
+  <span class="hl kwc">friend class</span> Cond<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">class</span> Cond<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+  <span class="hl kwd">Cond</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_cond_init</span><span class="hl sym">(&amp;</span>c<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">void</span> <span class="hl kwd">wait</span><span class="hl sym">(</span>Mutex<span class="hl sym">&amp;</span> m<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_cond_wait</span><span class="hl sym">(&amp;</span>c<span class="hl sym">,&amp;</span>m<span class="hl sym">.</span>m<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">void</span> <span class="hl kwd">signal</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_cond_signal</span><span class="hl sym">(&amp;</span>c<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl sym">~</span><span class="hl kwd">Cond</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_cond_destroy</span><span class="hl sym">(&amp;</span>c<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+<span class="hl kwc">private</span><span class="hl sym">:</span>
+  <span class="hl kwd">Cond</span><span class="hl sym">(</span><span class="hl kwb">const</span> Cond<span class="hl sym">&amp;);</span>
+  Cond<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">=(</span><span class="hl kwb">const</span> Cond<span class="hl sym">&amp;);</span>
+  pthread_cond_t c<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">struct</span> Sum<span class="hl sym">{</span>
+<span class="hl kwb">int</span> sum<span class="hl sym">;</span>
+<span class="hl kwb">int</span> increments<span class="hl sym">;</span>
+Mutex m<span class="hl sym">;</span>
+Cond c<span class="hl sym">;</span>
+<span class="hl sym">}</span>gs<span class="hl sym">;</span>
+
+<span class="hl kwc">class</span> Thread<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+  <span class="hl kwd">Thread</span><span class="hl sym">(</span>Thread<span class="hl sym">*</span> t<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">)</span>
+  <span class="hl sym">:</span><span class="hl kwd">next_</span><span class="hl sym">(</span>t<span class="hl sym">),</span><span class="hl kwd">message</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span><span class="hl kwd">stop_</span><span class="hl sym">(</span><span class="hl kwa">false</span><span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+  <span class="hl sym">}</span>
+
+  Thread<span class="hl sym">*</span> <span class="hl kwd">next</span><span class="hl sym">(){</span> <span class="hl kwa">return</span> next_<span class="hl sym">; }</span>
+
+  <span class="hl kwb">void</span> <span class="hl kwd">start</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    pthread_attr_t attrs<span class="hl sym">;</span>
+    <span class="hl kwd">pthread_attr_init</span><span class="hl sym">(&amp;</span>attrs<span class="hl sym">);</span>
+    <span class="hl kwd">pthread_attr_setstacksize</span><span class="hl sym">(&amp;</span>attrs<span class="hl sym">,</span>STACK_SIZE<span class="hl sym">);</span>
+    <span class="hl kwa">while</span><span class="hl sym">(</span><span class="hl kwb">int</span> err <span class="hl sym">=</span> <span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>tid<span class="hl sym">,&amp;</span>attrs<span class="hl sym">,</span>thread_run<span class="hl sym">,</span><span class="hl kwa">this</span><span class="hl sym">))</span>
+    <span class="hl sym">{</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span>err <span class="hl sym">==</span> EAGAIN<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+        cout<span class="hl sym">&lt;&lt;</span><span class="hl str">&quot;pthread create EAGAIN...</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+        <span class="hl kwd">sleep</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span> <span class="hl kwd">exit</span><span class="hl sym">(</span>EXIT_FAILURE<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">void</span> <span class="hl kwd">join</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwd">pthread_join</span><span class="hl sym">(</span>tid<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">void</span> <span class="hl kwd">stop</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    mutex<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+    stop_<span class="hl sym">=</span><span class="hl kwa">true</span><span class="hl sym">;</span>
+    monitor<span class="hl sym">.</span><span class="hl kwd">signal</span><span class="hl sym">();</span>
+    mutex<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwb">void</span> <span class="hl kwd">push</span><span class="hl sym">(</span><span class="hl kwb">int</span> msg<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    mutex<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+    message<span class="hl sym">.</span><span class="hl kwd">push_front</span><span class="hl sym">(</span>msg<span class="hl sym">);</span>
+    monitor<span class="hl sym">.</span><span class="hl kwd">signal</span><span class="hl sym">();</span>
+    mutex<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwb">int</span> <span class="hl kwd">run</span><span class="hl sym">()</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwa">while</span><span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+      mutex<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+      <span class="hl kwa">while</span><span class="hl sym">(</span>message<span class="hl sym">.</span><span class="hl kwd">empty</span><span class="hl sym">() &amp;&amp; !</span>stop_<span class="hl sym">)</span>monitor<span class="hl sym">.</span><span class="hl kwd">wait</span><span class="hl sym">(</span>mutex<span class="hl sym">);</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span>stop_<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+        mutex<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+        <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span>next_<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+        next_<span class="hl sym">-&gt;</span>mutex<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+        next_<span class="hl sym">-&gt;</span>message<span class="hl sym">.</span><span class="hl kwd">push_front</span><span class="hl sym">(</span>message<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">()+</span><span class="hl num">1</span><span class="hl sym">);</span>
+        next_<span class="hl sym">-&gt;</span>monitor<span class="hl sym">.</span><span class="hl kwd">signal</span><span class="hl sym">();</span>
+        next_<span class="hl sym">-&gt;</span>mutex<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+      <span class="hl sym">{</span>
+        gs<span class="hl sym">.</span>m<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+        gs<span class="hl sym">.</span>sum<span class="hl sym">+=</span>message<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">()+</span><span class="hl num">1</span><span class="hl sym">;</span>
+        gs<span class="hl sym">.</span>increments<span class="hl sym">++;</span>
+        gs<span class="hl sym">.</span>c<span class="hl sym">.</span><span class="hl kwd">signal</span><span class="hl sym">();</span>
+        gs<span class="hl sym">.</span>m<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+      message<span class="hl sym">.</span><span class="hl kwd">pop_back</span><span class="hl sym">();</span>
+      mutex<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+
+<span class="hl kwc">private</span><span class="hl sym">:</span>
+  Cond monitor<span class="hl sym">;</span>
+  Mutex mutex<span class="hl sym">;</span>
+  Thread<span class="hl sym">*</span> next_<span class="hl sym">;</span>
+  deque<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;</span> message<span class="hl sym">;</span>
+  pthread_t tid<span class="hl sym">;</span>
+  <span class="hl kwb">bool</span> stop_<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">extern</span> <span class="hl str">&quot;C&quot;</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">static void</span><span class="hl sym">*</span> <span class="hl kwd">thread_run</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*</span> t<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwa">return</span> <span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*)((</span>Thread<span class="hl sym">*)</span>t<span class="hl sym">)-&gt;</span><span class="hl kwd">run</span><span class="hl sym">();</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> argv<span class="hl sym">[])</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">int</span> N<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span>
+  gs<span class="hl sym">.</span>sum<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>
+  gs<span class="hl sym">.</span>increments<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl kwb">const int</span> NTHREADS <span class="hl sym">=</span> <span class="hl num">500</span><span class="hl sym">;</span>
+  <span class="hl kwa">if</span><span class="hl sym">(</span>argc<span class="hl sym">&gt;</span><span class="hl num">1</span><span class="hl sym">)</span>N<span class="hl sym">=</span><span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+
+  Thread <span class="hl sym">*</span>first<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,*</span>tmp<span class="hl sym">=</span><span class="hl kwa">new</span> <span class="hl kwd">Thread</span><span class="hl sym">();</span>
+  tmp<span class="hl sym">-&gt;</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+  <span class="hl kwa">for</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span>i<span class="hl sym">&lt;</span>NTHREADS<span class="hl sym">;++</span>i<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    first <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Thread</span><span class="hl sym">(</span>tmp<span class="hl sym">);</span>
+    tmp <span class="hl sym">=</span> first<span class="hl sym">;</span>
+    first<span class="hl sym">-&gt;</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwa">for</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>i<span class="hl sym">&lt;</span>N<span class="hl sym">;++</span>i<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    first<span class="hl sym">-&gt;</span><span class="hl kwd">push</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+
+  gs<span class="hl sym">.</span>m<span class="hl sym">.</span><span class="hl kwd">lock</span><span class="hl sym">();</span>
+  <span class="hl kwa">while</span><span class="hl sym">(</span>gs<span class="hl sym">.</span>increments<span class="hl sym">&lt;</span>N<span class="hl sym">)</span>gs<span class="hl sym">.</span>c<span class="hl sym">.</span><span class="hl kwd">wait</span><span class="hl sym">(</span>gs<span class="hl sym">.</span>m<span class="hl sym">);</span>
+  gs<span class="hl sym">.</span>m<span class="hl sym">.</span><span class="hl kwd">unlock</span><span class="hl sym">();</span>
+
+  tmp <span class="hl sym">=</span> first<span class="hl sym">;</span>
+
+  <span class="hl kwa">while</span><span class="hl sym">(</span>tmp<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    tmp<span class="hl sym">-&gt;</span><span class="hl kwd">stop</span><span class="hl sym">();</span>
+    tmp<span class="hl sym">=</span>tmp<span class="hl sym">-&gt;</span><span class="hl kwd">next</span><span class="hl sym">();</span>
+  <span class="hl sym">}</span>
+
+  Thread<span class="hl sym">*</span> tmp1 <span class="hl sym">=</span> first<span class="hl sym">;</span>
+  <span class="hl kwa">while</span><span class="hl sym">(</span>tmp1<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    tmp1<span class="hl sym">-&gt;</span><span class="hl kwd">join</span><span class="hl sym">();</span>
+    tmp <span class="hl sym">=</span> tmp1<span class="hl sym">;</span>
+    tmp1<span class="hl sym">=</span>tmp1<span class="hl sym">-&gt;</span><span class="hl kwd">next</span><span class="hl sym">();</span>
+    <span class="hl kwa">delete</span> tmp<span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  cout<span class="hl sym">&lt;&lt;</span>gs<span class="hl sym">.</span>sum<span class="hl sym">&lt;&lt;</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
