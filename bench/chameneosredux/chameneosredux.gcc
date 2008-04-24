@@ -33,8 +33,9 @@ char *digits[] = { "zero", "one", "two", "three", "four", "five",
 sem_t at_most_two;
 sem_t mutex;
 sem_t sem_priv;
-
 sem_t sem_print;
+
+pthread_mutex_t print_mutex;
 
 int meetings_left = 0;
 int first_arrived = 0;
@@ -126,7 +127,7 @@ spell_the_number(int prefix, int number) {
    string_length = sprintf(string_number, "%d", number);
    for(i = 0; i < string_length; i++) {
       digit = string_number[i] - '0';
-      output_so_far += sprintf(buff+output_so_far, " %s ", digits[digit]);
+      output_so_far += sprintf(buff+output_so_far, " %s", digits[digit]);
    }
    printf("%s\n",buff);
    
@@ -197,7 +198,6 @@ creature(void *arg) {
    int met_self = 0;
    int *total_meetings = NULL;
    
-   printf(" %s ", colors[critter.my_color]);
    sem_wait(&sem_print);   
    
    while(done != 1) {
@@ -217,7 +217,9 @@ creature(void *arg) {
       free(other_critter);
    } 
    
+   pthread_mutex_lock(&print_mutex);
    spell_the_number(met_others + met_self, met_self);
+   pthread_mutex_unlock(&print_mutex);
    
    total_meetings = malloc(sizeof(int));
    *total_meetings =met_others + met_self;
@@ -256,12 +258,15 @@ run_the_meetings(color *starting_colors, int n_colors, int total_meetings_to_run
    sem_init(&mutex, 0, 1);
    sem_init(&sem_priv, 0, 0);
    sem_init(&sem_print, 0, 0);
+   
+   pthread_mutex_init(&print_mutex, NULL);
 
    meetings_left = total_meetings_to_run;
    first_arrived = 0;
    done = 0;
    
    for(i = 0; i < n_colors; i++) {
+      printf(" %s", colors[starting_colors[i]]);
       pthread_create(&pid_tab[i], NULL, &creature, (void *)starting_colors[i]);
    }
    printf("\n");
@@ -282,7 +287,7 @@ int
 main(int argc, char **argv) {
    color first_generation[NUMBER1] = { BLUE, RED, YELLOW };
    color second_generation[NUMBER2] = {BLUE, RED, YELLOW, RED, YELLOW,
-                   BLUE, RED, YELLOW, RED, YELLOW};
+                   BLUE, RED, YELLOW, RED, BLUE};
    int number_of_meetings_to_run = 600;
    
    if(argc > 1) {
