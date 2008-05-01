@@ -9,7 +9,7 @@
   <li>extract DNA sequence THREE</li>
 
   <li><strong>define a procedure/function</strong> to update a hashtable of k-nucleotide keys and count values, for a particular reading-frame &#8212; even though we'll combine k-nucleotide counts for all reading-frames (grow the <strong>hashtable</strong> from a small default size)</li>
-  <li>use that procedure/function to
+  <li>use that procedure/function and hashtable to
      <ul>
      <li>count <strong>all</strong> the 1-nucleotide and 2-nucleotide sequences, and write the code and percentage frequency, sorted by descending frequency and then ascending k-nucleotide key</li>
      <li>count <strong>all</strong> the 3- 4- 6- 12- and 18-nucleotide sequences, and write the count and code for the specific sequences GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT</li>
