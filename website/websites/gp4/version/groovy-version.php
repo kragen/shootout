@@ -1,1 +1,1 @@
-<p>Groovy Version: 1.5.4 JVM: 10.0-b19</p>
+<p>Groovy Version: 1.6-beta-1 JVM: 1.6.0_06</p>
