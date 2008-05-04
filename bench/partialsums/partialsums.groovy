@@ -1,52 +1,43 @@
-// ---------------------------------------------------------------------
-// The Great Computer Language Shootout
-// http://shootout.alioth.debian.org/
-// 
-// Use JRE 1.4 features only [JRE 1.5 'printf' would have helped better
-// streamline code]
-//
-// Contributed by Anthony Borla
-// ---------------------------------------------------------------------
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy
+*/
 
-import java.text.DecimalFormat
+def n = Integer.parseInt(args[0])
 
-def main()
-{
-  n = Integer.parseInt(args[0])
+def twothirds = 2.0/3.0
+def a1 = a2 = a3 = a4 = a5 = a6 = a7 = a8 = a9 = 0.0D
+def alt = -1.0D
+def k = 1.0D
 
-  s0 = s1 = s2 = s3 = s4 = s5 = s6 = s7 = s8 = 0.0D ; alt = 1.0D ; d = 1.0D
+while (k <= n) {
+   def k2 = k * k
+   def k3 = k2 * k 
+   def sk = Math.sin(k)
+   def ck = Math.cos(k)
+   alt = -alt 
 
-  while (d <= n)
-  {
-    d2 = d * d ; d3 = d2 * d ; ds = Math.sin(d) ; dc = Math.cos(d)
+   a1 += twothirds**(k-1.0)
+   a2 += 1.0/Math.sqrt(k)
+   a3 += 1.0/(k*(k+1.0))
+   a4 += 1.0/(k3*sk*sk)
+   a5 += 1.0/(k3*ck*ck)
+   a6 += 1.0/k
+   a7 += 1.0/k2
+   a8 += alt/k
+   a9 += alt/(2.0*k - 1.0)
 
-    s0 += (2.0 / 3.0) ** (d - 1.0)
-    s1 += 1.0 / Math.sqrt(d)
-    s2 += 1.0 / (d * (d + 1.0))
-    s3 += 1.0 / (d3 * ds * ds)
-    s4 += 1.0 / (d3 * dc * dc)
-    s5 += 1.0 / d
-    s6 += 1.0 / d2
-    s7 += alt / d
-    s8 += alt / (2.0 * d - 1.0)
-
-    alt = -alt ; d += 1.0 
-  }
-
-  fmt = new DecimalFormat("##0.000000000")
-
-  result = fmt.format(s0) ; println "${result}\t(2/3)^k"
-  result = fmt.format(s1) ; println "${result}\tk^-0.5"
-  result = fmt.format(s2) ; println "${result}\t1/k(k+1)"
-  result = fmt.format(s3) ; println "${result}\tFlint Hills"
-  result = fmt.format(s4) ; println "${result}\tCookson Hills"
-  result = fmt.format(s5) ; println "${result}\tHarmonic"
-  result = fmt.format(s6) ; println "${result}\tRiemann Zeta"
-  result = fmt.format(s7) ; println "${result}\tAlternating Harmonic"
-  result = fmt.format(s8) ; println "${result}\tGregory"
+   k += 1.0 
 }
 
-// --------------------------------
+printf("%.9f\t(2/3)^k\n", a1);
+printf("%.9f\tk^-0.5\n", a2);
+printf("%.9f\t1/k(k+1)\n", a3);
+printf("%.9f\tFlint Hills\n", a4);
+printf("%.9f\tCookson Hills\n", a5);
+printf("%.9f\tHarmonic\n", a6);
+printf("%.9f\tRiemann Zeta\n", a7);
+printf("%.9f\tAlternating Harmonic\n", a8);
+printf("%.9f\tGregory\n", a9);
 
-main()
 
