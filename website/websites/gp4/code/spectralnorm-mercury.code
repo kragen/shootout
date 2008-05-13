@@ -1,0 +1,161 @@
+<span class="hl slc">% The Computer Language Shootout Benchmarks Game</span>
+<span class="hl slc">% http://shootout.alioth.debian.org/</span>
+<span class="hl slc">%</span>
+<span class="hl slc">% Based on work by Sebastien Loisel and Troestler Christophe</span>
+<span class="hl slc">% contributed by Glendon Holst</span>
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+
+<span class="hl sym">:-</span> module spectralnorm.
+<span class="hl sym">:-</span> interface.
+<span class="hl sym">:-</span> import_module io.
+
+<span class="hl sym">:-</span> pred main<span class="hl sym">(</span>io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+<span class="hl sym">:-</span> implementation.
+
+<span class="hl sym">:-</span> import_module list.
+<span class="hl sym">:-</span> import_module array.
+<span class="hl sym">:-</span> import_module math.
+<span class="hl sym">:-</span> import_module int.
+<span class="hl sym">:-</span> import_module <span class="hl kwb">float</span>.
+<span class="hl sym">:-</span> import_module string.
+
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+<span class="hl sym">:-</span> type sn_vect <span class="hl sym">==</span> array<span class="hl sym">(</span><span class="hl kwb">float</span><span class="hl sym">)</span>.
+
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+main<span class="hl sym">(!</span>IO<span class="hl sym">) :-</span>
+   io.command_line_arguments<span class="hl sym">(</span>Args<span class="hl sym">, !</span>IO<span class="hl sym">),</span>
+   <span class="hl sym">(</span>
+      if
+         Args <span class="hl sym">= [</span>AString<span class="hl sym">|</span>_<span class="hl sym">],</span>
+         string.to_int<span class="hl sym">(</span>string.strip<span class="hl sym">(</span>AString<span class="hl sym">),</span> Aint<span class="hl sym">)</span>
+      then
+         N <span class="hl sym">=</span> Aint
+      else
+         N <span class="hl kwa">is</span> <span class="hl num">5500</span>
+   <span class="hl sym">),</span>
+
+   U0 <span class="hl sym">=</span> array.init<span class="hl sym">(</span>N<span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">),</span>
+   V0 <span class="hl sym">=</span> array.init<span class="hl sym">(</span>N<span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">),</span>
+
+   eval_AtA<span class="hl sym">(</span><span class="hl num">10</span><span class="hl sym">,</span> U0<span class="hl sym">,</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">),</span>
+
+   Vv <span class="hl sym">=</span> sum_Products<span class="hl sym">(</span>N<span class="hl sym">,</span><span class="hl num">0.0</span><span class="hl sym">,</span>V<span class="hl sym">,</span> V<span class="hl sym">),</span>
+   VBv <span class="hl sym">=</span> sum_Products<span class="hl sym">(</span>N<span class="hl sym">,</span><span class="hl num">0.0</span><span class="hl sym">,</span>U<span class="hl sym">,</span> V<span class="hl sym">),</span>
+
+   io.format<span class="hl sym">(</span><span class="hl str">&quot;%0.9f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">, [</span>f<span class="hl sym">(</span><span class="hl kwb">sqrt</span><span class="hl sym">(</span>VBv <span class="hl sym">/</span> Vv<span class="hl sym">))], !</span>IO<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
+
+<span class="hl sym">:-</span> pred eval_AtA<span class="hl sym">(</span>int<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_AtA<span class="hl sym">(</span>N<span class="hl sym">,</span> U0<span class="hl sym">,</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   N <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">-&gt;</span>
+   eval_AtA_times_u<span class="hl sym">(</span>U0<span class="hl sym">,</span> V0<span class="hl sym">,</span> V1<span class="hl sym">),</span>
+   eval_AtA_times_u<span class="hl sym">(</span>V1<span class="hl sym">,</span> U0<span class="hl sym">,</span> U1<span class="hl sym">),</span>
+   eval_AtA<span class="hl sym">(</span>N <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> U1<span class="hl sym">,</span> U<span class="hl sym">,</span> V1<span class="hl sym">,</span> V<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   U <span class="hl sym">=</span> U0<span class="hl sym">,</span>
+   V <span class="hl sym">=</span> V0
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> func eval_A<span class="hl sym">(</span>int<span class="hl sym">,</span> int<span class="hl sym">) =</span> <span class="hl kwb">float</span>.
+
+eval_A<span class="hl sym">(</span>I<span class="hl sym">,</span> J<span class="hl sym">) =</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> <span class="hl kwb">float</span><span class="hl sym">((((</span>I <span class="hl sym">+</span> J<span class="hl sym">) * (</span>I <span class="hl sym">+</span> J <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) /</span> <span class="hl num">2</span><span class="hl sym">) +</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> func sum_Products<span class="hl sym">(</span>int<span class="hl sym">,</span> <span class="hl kwb">float</span><span class="hl sym">,</span> sn_vect<span class="hl sym">,</span> sn_vect<span class="hl sym">) =</span> <span class="hl kwb">float</span>.
+
+sum_Products<span class="hl sym">(</span>N<span class="hl sym">,</span> V<span class="hl sym">,</span> Arr1<span class="hl sym">,</span> Arr2<span class="hl sym">) =</span> sum_Products_<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> N<span class="hl sym">,</span> V<span class="hl sym">,</span> Arr1<span class="hl sym">,</span> Arr2<span class="hl sym">)</span>.
+
+<span class="hl sym">:-</span> func sum_Products_<span class="hl sym">(</span>int<span class="hl sym">,</span> int<span class="hl sym">,</span> <span class="hl kwb">float</span><span class="hl sym">,</span> sn_vect<span class="hl sym">,</span> sn_vect<span class="hl sym">) =</span> <span class="hl kwb">float</span>.
+
+sum_Products_<span class="hl sym">(</span>I<span class="hl sym">,</span> N<span class="hl sym">,</span> V<span class="hl sym">,</span> Arr1<span class="hl sym">,</span> Arr2<span class="hl sym">) =</span> Result <span class="hl sym">:-</span>
+<span class="hl sym">(</span>
+   I <span class="hl sym">&lt;</span> N <span class="hl sym">-&gt;</span>
+   Result <span class="hl sym">=</span> sum_Products_<span class="hl sym">(</span>I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> N<span class="hl sym">,</span>
+                       <span class="hl sym">(</span>V <span class="hl sym">+ (</span>array.lookup<span class="hl sym">(</span>Arr1<span class="hl sym">,</span>I<span class="hl sym">) *</span> array.lookup<span class="hl sym">(</span>Arr2<span class="hl sym">,</span>I<span class="hl sym">))),</span> Arr1<span class="hl sym">,</span> Arr2<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   Result <span class="hl sym">=</span> V
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
+
+<span class="hl sym">:-</span> pred eval_AtA_times_u<span class="hl sym">(</span>sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_AtA_times_u<span class="hl sym">(</span>U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span>
+   W0 <span class="hl sym">=</span> array.init<span class="hl sym">(</span>array.size<span class="hl sym">(</span>U<span class="hl sym">),</span> <span class="hl num">0.0</span><span class="hl sym">),</span>
+   eval_A_times_u<span class="hl sym">(</span>U<span class="hl sym">,</span> W0<span class="hl sym">,</span> W1<span class="hl sym">),</span>
+   eval_At_times_u<span class="hl sym">(</span>W1<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred eval_A_times_u<span class="hl sym">(</span>sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_A_times_u<span class="hl sym">(</span>U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span> eval_A_times_u_i_<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> array.size<span class="hl sym">(</span>U<span class="hl sym">),</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">)</span>.
+
+<span class="hl sym">:-</span> pred eval_A_times_u_i_<span class="hl sym">(</span>int<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_A_times_u_i_<span class="hl sym">(</span>I<span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   I <span class="hl sym">&lt;</span> N <span class="hl sym">-&gt;</span>
+   array.set<span class="hl sym">(</span>V0<span class="hl sym">,</span> I<span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">,</span> V1<span class="hl sym">),</span>
+   eval_A_times_u_j_<span class="hl sym">(</span>I<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V1<span class="hl sym">,</span> V2<span class="hl sym">),</span>
+   eval_A_times_u_i_<span class="hl sym">(</span>I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V2<span class="hl sym">,</span> V<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   V <span class="hl sym">=</span> V0
+<span class="hl sym">)</span>.
+
+<span class="hl sym">:-</span> pred eval_A_times_u_j_<span class="hl sym">(</span>int<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_A_times_u_j_<span class="hl sym">(</span>I<span class="hl sym">,</span> J<span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   J <span class="hl sym">&lt;</span> N <span class="hl sym">-&gt;</span>
+   Vi <span class="hl sym">=</span> array.lookup<span class="hl sym">(</span>V0<span class="hl sym">,</span> I<span class="hl sym">) +</span> eval_A<span class="hl sym">(</span>I<span class="hl sym">,</span>J<span class="hl sym">) *</span> array.lookup<span class="hl sym">(</span>U<span class="hl sym">,</span> J<span class="hl sym">),</span>
+   array.set<span class="hl sym">(</span>V0<span class="hl sym">,</span> I<span class="hl sym">,</span> Vi<span class="hl sym">,</span> V1<span class="hl sym">),</span>
+   eval_A_times_u_j_<span class="hl sym">(</span>I<span class="hl sym">,</span> J <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V1<span class="hl sym">,</span> V<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   V <span class="hl sym">=</span> V0
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred eval_At_times_u<span class="hl sym">(</span>sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_At_times_u<span class="hl sym">(</span>U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span> eval_At_times_u_i_<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> array.size<span class="hl sym">(</span>U<span class="hl sym">),</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">)</span>.
+
+<span class="hl sym">:-</span> pred eval_At_times_u_i_<span class="hl sym">(</span>int<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_At_times_u_i_<span class="hl sym">(</span>I<span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   I <span class="hl sym">&lt;</span> N <span class="hl sym">-&gt;</span>
+   array.set<span class="hl sym">(</span>V0<span class="hl sym">,</span> I<span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">,</span> V1<span class="hl sym">),</span>
+   eval_At_times_u_j_<span class="hl sym">(</span>I<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V1<span class="hl sym">,</span> V2<span class="hl sym">),</span>
+   eval_At_times_u_i_<span class="hl sym">(</span>I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V2<span class="hl sym">,</span> V<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   V <span class="hl sym">=</span> V0
+<span class="hl sym">)</span>.
+
+<span class="hl sym">:-</span> pred eval_At_times_u_j_<span class="hl sym">(</span>int<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>in<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_di<span class="hl sym">,</span> sn_vect<span class="hl sym">::</span>array_uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+eval_At_times_u_j_<span class="hl sym">(</span>I<span class="hl sym">,</span> J<span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V0<span class="hl sym">,</span> V<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   J <span class="hl sym">&lt;</span> N <span class="hl sym">-&gt;</span>
+   Vi <span class="hl sym">=</span> array.lookup<span class="hl sym">(</span>V0<span class="hl sym">,</span> I<span class="hl sym">) +</span> eval_A<span class="hl sym">(</span>J<span class="hl sym">,</span> I<span class="hl sym">) *</span> array.lookup<span class="hl sym">(</span>U<span class="hl sym">,</span> J<span class="hl sym">),</span>
+   array.set<span class="hl sym">(</span>V0<span class="hl sym">,</span> I<span class="hl sym">,</span> Vi<span class="hl sym">,</span> V1<span class="hl sym">),</span>
+   eval_At_times_u_j_<span class="hl sym">(</span>I<span class="hl sym">,</span> J <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> N<span class="hl sym">,</span> U<span class="hl sym">,</span> V1<span class="hl sym">,</span> V<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   V <span class="hl sym">=</span> V0
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>

@@ -1,0 +1,136 @@
+% The Computer Language Shootout Benchmarks Game
+% http://shootout.alioth.debian.org/
+%
+% Based on work by Anthony Borla
+% Modified for Mercury by Glendon Holst
+
+:- module mandelbrot.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+% ----------------------------------------------------------------------
+
+:- implementation.
+
+:- import_module list.
+:- import_module bool.
+:- import_module int.
+:- import_module char.
+:- import_module float.
+:- import_module string.
+
+% ----------------------------------------------------------------------
+
+:- type byte == int.
+
+% ----------------------------------------------------------------------
+
+main(!IO) :-
+   io.command_line_arguments(Args, !IO),
+   (
+      if
+         Args = [AString|_],
+         string.to_int(string.strip(AString), Aint)
+      then
+         N = Aint
+      else
+         N is 3000
+   ),
+
+  Width = N, Height = N,
+  
+  io.format("P4\n%i %i\n",[i(Height), i(Width)], !IO),
+  io.flush_output(!IO),
+  pointsY(Height, Width, 0, 0, 0, _, 0, _, !IO ).
+
+% ------------------------------- %
+
+:- pred pointsY(int::in, int::in, int::in, int::in, 
+   int::in, int::out,
+   byte::in, byte::out, 
+   io::di, io::uo) is det.
+
+pointsY(Height, Width, Y, X, BitN0, BitN, ByteOut0, ByteOut, !IO) :-
+(
+   Y1 is Y + 1, 
+   Height >= Y1 -> 
+   pointsX(Height, Width, Y, 0, BitN0, BitN1, ByteOut0, ByteOut1, !IO),
+   pointsY(Height, Width, Y1, X, BitN1, BitN, ByteOut1, ByteOut, !IO)
+;
+   BitN = BitN0,
+   ByteOut = ByteOut0
+).
+
+
+% ------------- %
+
+:- pred pointsX(int::in, int::in, int::in, int::in, 
+   int::in, int::out, 
+   byte::in, byte::out, 
+   io::di, io::uo) is det.
+
+pointsX(Height, Width, Y, X, BitN0, BitN, ByteOut0, ByteOut, !IO) :-
+(
+   X1 is X + 1, 
+   Width >= X1 ->
+   
+   (
+      mandel(Height, Width, Y, X, 50) -> 
+      ByteOut1 is (ByteOut0 << 1)
+   ; 
+      ByteOut1 is (ByteOut0 << 1) \/ 0x1
+   ),
+   
+   BitN1 is BitN0 + 1,
+
+   (
+      Width = X1, 
+      BitN1 \= 8 -> 
+      ByteOut2 is ByteOut1 << (8 - Width mod 8), 
+      BitN2 = 8
+   ; 
+      ByteOut2 = ByteOut1,
+      BitN2 = BitN1
+   ),
+
+   (
+      BitN2 = 8 -> 
+      io.write_byte(ByteOut2, !IO), 
+      BitN3 = 0, 
+      ByteOut3 = 0
+   ; 
+      BitN3 = BitN2, 
+      ByteOut3 = ByteOut2
+   ),
+   
+   pointsX(Height, Width, Y, X1, BitN3, BitN, ByteOut3, ByteOut, !IO)
+   
+;
+   BitN = BitN0,
+   ByteOut = ByteOut0
+).
+
+% ------------- %
+
+:- pred mandel(int::in, int::in, int::in, int::in, int::in) is semidet.
+:- pred mandel_(float::in, float::in, float::in, float::in, int::in) is semidet.
+
+mandel(Height, Width, Y, X, Repetitions) :-
+   mandel_((2.0 * float(X) / float(Width) - 1.5), 
+           (2.0 * float(Y) / float(Height) - 1.0), 0.0, 0.0, Repetitions).
+
+mandel_(Cr, Ci, Zr, Zi, N) :-
+(
+   N =< 0 ->
+   (Zr * Zr + Zi * Zi) > 4.0
+;
+   Zr1 is Zr * Zr - Zi * Zi + Cr, Zi1 is 2.0 * Zr * Zi + Ci, 
+   (Zr1 * Zr1 + Zi1 * Zi1) =< 4.0 -> 
+   mandel_(Cr, Ci, Zr1, Zi1, N - 1)
+;
+   true
+).
+
+% ------------------------------- %

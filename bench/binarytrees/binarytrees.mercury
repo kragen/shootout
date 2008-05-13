@@ -1,0 +1,130 @@
+% The Computer Language Shootout Benchmarks Game
+% http://shootout.alioth.debian.org/
+%
+% Based on work by Anthony Borla
+% contributed by Glendon Holst
+% ----------------------------------------------------------------------
+
+:- module binarytrees.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+% ----------------------------------------------------------------------
+
+:- implementation.
+
+:- import_module list.
+:- import_module int.
+:- import_module bool.
+:- import_module string.
+:- import_module char.
+:- import_module exception.
+
+% ----------------------------------------------------------------------
+
+:- type tree(T) ---> nil ; node(T, tree(T), tree(T)).
+
+% ----------------------------------------------------------------------
+
+main(!IO) :-
+   io.command_line_arguments(Args, !IO),
+   (
+      if
+         Args = [AString|_],
+         string.to_int(string.strip(AString), Aint)
+      then
+         N = Aint
+      else
+         N is 16
+   ),
+
+
+  MIN_DEPTH is 4, 
+  
+  MinDepth is MIN_DEPTH + 2,
+  (MinDepth > N -> MAX_DEPTH = MinDepth ; MAX_DEPTH = N),
+  STRETCH_DEPTH is MAX_DEPTH + 1,
+
+  bottom_up_tree(0, STRETCH_DEPTH, ST),
+
+  check_tree(ST, ITS),
+  io.format("stretch tree of depth %d\t check: %d\n", [i(STRETCH_DEPTH), i(ITS)], !IO),
+
+  bottom_up_tree(0, MAX_DEPTH, LLT),
+
+  descend_trees(MIN_DEPTH, MIN_DEPTH, MAX_DEPTH, !IO),
+
+  check_tree(LLT, ITL),
+  io.format("long lived tree of depth %d\t check: %d\n", [i(MAX_DEPTH), i(ITL)], !IO).
+
+% ------------------------------- %
+
+:- pred descend_trees(int::in, int::in, int::in, io::di, io::uo) is det.
+
+descend_trees(CurrentDepth, MinDepth, MaxDepth, !IO) :-
+(
+   CurrentDepth =< MaxDepth ->
+    N is int.pow(2, (MaxDepth - CurrentDepth + MinDepth)), Iterations is 2 * N,
+    sum_trees(N, CurrentDepth, 0, Sum),
+    format("%d\t trees of depth %d\t check: %d\n", [i(Iterations), i(CurrentDepth), i(Sum)], !IO),
+   descend_trees(CurrentDepth + 2, MinDepth, MaxDepth, !IO)
+;
+    true
+).
+
+% ------------- %
+
+:- pred sum_trees(int::in, int::in, int::in, int::out) is det.
+
+sum_trees(N, CurrentDepth, AccSum, Sum) :-
+(
+   N =< 0 -> Sum = AccSum
+;
+   bottom_up_tree(N, CurrentDepth, TreeLeft),
+   bottom_up_tree(-1 * N, CurrentDepth, TreeRight),
+   check_tree(TreeLeft, ItemLeft), check_tree(TreeRight, ItemRight),
+   sum_trees(N - 1, CurrentDepth, AccSum + ItemLeft + ItemRight, Sum)
+).
+
+% ------------------------------- %
+
+:- pred make_tree(int::in, tree(int)::in, tree(int)::in, tree(int)::out) is det.
+
+make_tree(Item, Left, Right, node(Item, Left, Right)).
+
+% ------------- %
+
+:- pred bottom_up_tree(int::in, int::in, tree(int)::out) is det.
+
+bottom_up_tree(Item, Depth, Tree) :-
+(
+   Depth =< 0 -> Tree = node(Item, nil, nil)
+;
+  bottom_up_tree(2 * Item - 1, Depth - 1, TreeLeft),
+  bottom_up_tree(2 * Item, Depth - 1, TreeRight),
+  make_tree(Item, TreeLeft, TreeRight, Tree)   
+).
+
+% ------------- %
+
+:- type binarytrees__error ---> error.
+
+:- pred check_tree(tree(int)::in, int::out) is det.
+
+check_tree(Tree, Item) :-
+(
+   Tree = node(Item0,nil, _) -> Item = Item0
+;
+   Tree = node(Item0,_, nil) -> Item = Item0
+;
+   Tree = node(Item0, Left, Right) ->
+   check_tree(Left, ItemLeft),
+   check_tree(Right, ItemRight),
+   Item is Item0 + ItemLeft - ItemRight
+;
+   throw(binarytrees__error)   
+).
+
+% ------------------------------- %

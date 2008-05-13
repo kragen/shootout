@@ -1,0 +1,182 @@
+% The Computer Language Shootout Benchmarks Game
+% http://shootout.alioth.debian.org/
+%
+% Based on work by Anthony Borla
+% Modified for Mercury by Glendon Holst
+
+:- module fasta.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+% ----------------------------------------------------------------------
+
+:- implementation.
+
+:- import_module list.
+:- import_module int.
+:- import_module bool.
+:- import_module string.
+:- import_module char.
+:- import_module float.
+:- import_module exception.
+
+% ----------------------------------------------------------------------
+
+main(!IO) :-
+   io.command_line_arguments(Args, !IO),
+   (
+      if
+         Args = [AString|_],
+         string.to_int(string.strip(AString), Aint)
+      then
+         N = Aint
+      else
+         N is 2500000
+   ),
+
+   LineLength = 60,
+   ALU = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA",
+   IUB = [{'a', 0.27}, {'c', 0.12}, {'g', 0.12}, {'t', 0.27}, {'B', 0.02}, {'D', 0.02}, {'H', 0.02}, {'K', 0.02}, {'M', 0.02}, {'N', 0.02}, {'R', 0.02}, {'S', 0.02}, {'V', 0.02}, {'W', 0.02}, {'Y', 0.02}],
+   HOMOSAPIENS = [{'a', 0.3029549426680}, {'c', 0.1979883004921}, {'g', 0.1975473066391}, {'t', 0.3015094502008}],
+   RS0 = init_random(42),
+
+   N1 is N * 2,
+   N2 is N * 3,
+   N3 is N * 5,
+   
+   repeat_fasta("ONE", "Homo sapiens alu", ALU, LineLength, N1, !IO),
+
+   make_cumulative(IUB, CVIUB),
+   random_fasta("TWO", "IUB ambiguity codes", CVIUB, LineLength, N2, RS0, RS1, !IO),
+
+   make_cumulative(HOMOSAPIENS, CVHOMOSAPIENS),
+   random_fasta("THREE", "Homo sapiens frequency", CVHOMOSAPIENS, LineLength, N3, RS1, _, !IO).
+
+% ------------------------------- %
+
+:- pred repeat_fasta(string::in, string::in, string::in, int::in, int::in, io::di, io::uo) is det.
+:- pred repeat_fasta_(int::in, int::in, string::in, int::in, int::in, io::di, io::uo) is det.
+
+repeat_fasta(Id, Desc, ALU, LineLength, N, !IO) :-
+   ALULength = string.length(ALU),
+   io.format(">%s %s\n",[s(Id), s(Desc)], !IO),
+   repeat_fasta_(N, 0, ALU, ALULength, LineLength, !IO).
+
+% ------------- %
+
+repeat_fasta_(N, Q, ALU, ALULength, LineLength, !IO) :-
+(
+   N =< 0 -> true
+;
+   (   
+      N < LineLength -> L1 = N 
+   ; 
+      L1 = LineLength
+   ),
+   (
+      L1 + Q < ALULength ->
+      Lineout = string.substring(ALU, Q, L1), 
+      Q1 is L1 + Q, 
+      io.format("%s\n",[s(Lineout)], !IO)   
+   ;
+      Prefix = string.substring(ALU, Q, ALULength - Q),
+      Q1 is L1 - string.length(Prefix),
+      Segment = string.substring(ALU, 0, Q1),
+      io.format("%s%s\n",[s(Prefix), s(Segment)], !IO)
+   ),
+   repeat_fasta_(N - L1, Q1, ALU, ALULength, L1, !IO)
+).
+
+% ------------------------------- %
+
+:- pred random_fasta(
+   string::in, string::in, 
+   list({char, float})::in, 
+   int::in, int::in, 
+   random_state::in, random_state::out, 
+   io::di, io::uo) is det.
+:- pred random_fasta_(
+   int::in, list({char, float})::in, int::in, 
+   random_state::in, random_state::out, 
+   io::di, io::uo) is det.
+
+random_fasta(Id, Desc, CumTbl, LineLength, N, !RS, !IO) :-
+   io.format(">%s %s\n",[s(Id), s(Desc)], !IO),
+   random_fasta_(N, CumTbl, LineLength, !RS, !IO).
+
+% ------------- %
+
+random_fasta_(N, CumTbl, LineLength, !RS, !IO) :-
+(
+   N =< 0 -> true
+;
+   (
+      N < LineLength -> L1 = N 
+   ; 
+      L1 = LineLength
+   ),
+   gen_line(L1, CumTbl, "", Lineout, !RS),
+   io.format("%s\n",[s(Lineout)], !IO),   
+   random_fasta_(N - L1, CumTbl, L1, !RS, !IO)
+).
+
+% ------------- %
+
+:- pred gen_line(int::in, list({char, float})::in, string::in, string::out, random_state::in, random_state::out) is det.
+
+gen_line(N, CumTbl, Acc, Result, !RS) :-
+(
+   N = 0 -> Result = Acc
+;
+   select_random(CumTbl, C, !RS), 
+   gen_line(N-1, CumTbl, Acc ++ string.char_to_string(C), Result, !RS)
+).
+
+% ------------------------------- %
+
+:- pred make_cumulative(list({char, float})::in, list({char, float})::out) is det.
+:- pred make_cumulative_(list({char, float})::in, list({char, float})::out, float::in) is det.
+
+make_cumulative(L, RL) :- make_cumulative_(L, RL, 0.0).
+
+make_cumulative_(L, R, CV) :-
+(
+   L = [{K, V}|Ts] -> (CV1 is CV + V, R = [{K, CV1}|Ts1], make_cumulative_(Ts, Ts1, CV1))
+;
+   R = L
+).
+
+% ------------- %
+
+:- pred select_random(list({char, float})::in, char::out, random_state::in, random_state::out) is det. 
+:- pred select_random_(list({char, float})::in, float::in, char::out) is det. 
+
+:- type fasta__error ---> error.
+
+select_random(L, RK, !RS) :- R = gen_random(1.0, !.RS, !:RS), select_random_(L, R, RK).
+
+select_random_(T, R, RK) :- 
+(
+   T = [{K, V}|Ts] -> (R < V -> RK = K ; select_random_(Ts, R, RK))
+;
+   throw(fasta__error)
+).
+
+% ------------------------------- %
+:- type random_state == int.
+
+:- func init_random(int) = random_state.
+
+init_random(Seed) = Seed.
+
+:- func gen_random(float, random_state, random_state) = float.
+:- mode gen_random(in, in, out) = out.
+
+gen_random(UB, RS0, RS) = RV :- 
+   IA = 3877, IC = 29573, IM = 139968, 
+   RS is (RS0 * IA + IC) mod IM, 
+   RV = UB * float(RS) / float(IM).
+
+% ------------------------------- %
