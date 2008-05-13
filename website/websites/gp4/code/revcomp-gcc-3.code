@@ -2,14 +2,18 @@
 <span class="hl com"> * The Computer Language Benchmarks Game</span>
 <span class="hl com"> * http://shootout.alioth.debian.org</span>
 <span class="hl com"> *</span>
-<span class="hl com"> * contributed by Bob W (2008-05-05)</span>
+<span class="hl com"> * &quot;reverse-complement&quot; benchmark for Gnu C</span>
+<span class="hl com"> * contributed by Bob W (V2, 2008-05-10)</span>
 <span class="hl com"> *</span>
-<span class="hl com"> * Further optimisation is possible by removing data integrity</span>
-<span class="hl com"> * checks and expecting source to be in LF terminated text format.</span>
+<span class="hl com"> * - Further optimisation is possible by removing data integrity checks</span>
+<span class="hl com"> * - Chars 'j' and 'q' are shortcut indicators for I/O buffer variables</span>
 <span class="hl com"> */</span>
 
 <span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;string.h&gt;</span>
 
+<span class="hl dir">#define BFSIZE 10245</span>                 <span class="hl slc">// size of I/O buffers</span>
+<span class="hl dir"></span>
 <span class="hl kwb">static const char</span> XTAB<span class="hl sym">[</span><span class="hl num">128</span><span class="hl sym">] = {</span>  <span class="hl slc">// 7-bit character conversion table</span>
   <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span>
   <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span>
@@ -20,58 +24,65 @@
 <span class="hl sym">};</span>
 
 
-<span class="hl kwb">int</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl kwb">char</span> <span class="hl sym">*</span>s<span class="hl sym">,</span> <span class="hl kwb">int</span> n<span class="hl sym">) {</span>      <span class="hl slc">// display message &amp; value, return 1</span>
+<span class="hl kwb">int</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl kwb">char</span> <span class="hl sym">*</span>s<span class="hl sym">,</span> <span class="hl kwb">int</span> n<span class="hl sym">) {</span>          <span class="hl slc">// show message &amp; value, return 1</span>
   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;*** Error: %s [%d]!</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> n<span class="hl sym">);</span>
   <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
 
-<span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">() {</span>
-  <span class="hl kwb">char</span> c<span class="hl sym">;</span>                                <span class="hl slc">// temp</span>
-  <span class="hl kwb">int</span>  lile<span class="hl sym">;</span>                             <span class="hl slc">// output sequence line length</span>
-  <span class="hl kwb">char</span> <span class="hl sym">*</span>pj<span class="hl sym">, *</span>pjstop<span class="hl sym">, *</span>pq<span class="hl sym">, *</span>pr<span class="hl sym">, *</span>prlo<span class="hl sym">;</span>    <span class="hl slc">// pointers to I/O buffers</span>
+<span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">() {</span>                            <span class="hl slc">// ******* main *******</span>
+  <span class="hl kwb">char</span> c<span class="hl sym">;</span>  <span class="hl kwb">int</span> n<span class="hl sym">;</span>                        <span class="hl slc">// temps</span>
+  <span class="hl kwb">char</span> jjj<span class="hl sym">[</span>BFSIZE<span class="hl sym">],</span> qqq<span class="hl sym">[</span>BFSIZE<span class="hl sym">];</span>         <span class="hl slc">// input (j) and output (q) buffer</span>
+  <span class="hl kwb">char</span> <span class="hl sym">*</span>pj<span class="hl sym">, *</span>pq<span class="hl sym">, *</span>pr<span class="hl sym">;</span>                    <span class="hl slc">// buffer pointers: inp, out, /out</span>
+  <span class="hl kwb">char</span> <span class="hl sym">*</span>pjstop<span class="hl sym">, *</span>pqstop <span class="hl sym">=</span> qqq<span class="hl sym">+</span>BFSIZE<span class="hl sym">;</span>    <span class="hl slc">// end-of-buffer pointers</span>
 
-  <span class="hl kwb">char</span>   bbj<span class="hl sym">[</span><span class="hl num">11888</span><span class="hl sym">],</span> bbq<span class="hl sym">[</span><span class="hl num">11888</span><span class="hl sym">];</span>         <span class="hl slc">// input and output buffers</span>
-  <span class="hl kwb">size_t</span> bbjsz<span class="hl sym">=</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>bbj<span class="hl sym">);</span>              <span class="hl slc">// max. size of input buffer</span>
-  <span class="hl kwb">size_t</span> bbjle<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>                        <span class="hl slc">// actual length of buffer data</span>
+  n <span class="hl sym">=</span> <span class="hl kwd">fread</span><span class="hl sym">(</span>jjj<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> BFSIZE<span class="hl sym">,</span> stdin<span class="hl sym">);</span>      <span class="hl slc">// get 1st input block from stdin</span>
+  pj <span class="hl sym">=</span> jjj<span class="hl sym">;</span>  pjstop <span class="hl sym">=</span> pj<span class="hl sym">+</span>n<span class="hl sym">;</span>              <span class="hl slc">// init input buffer pointers</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">)</span>
+    <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;Input data size&quot;</span><span class="hl sym">,</span>n<span class="hl sym">);</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(*</span>jjj <span class="hl sym">!=</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span>
+    <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;1st char is not '&gt;'&quot;</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
 
-  bbjle <span class="hl sym">=</span> <span class="hl kwd">fread</span><span class="hl sym">(</span>bbj<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> bbjsz<span class="hl sym">,</span> stdin<span class="hl sym">);</span>   <span class="hl slc">// get input from stdin</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>bbjle <span class="hl sym">&lt;</span> <span class="hl num">999</span> <span class="hl sym">||</span> bbjle <span class="hl sym">&gt; (</span>bbjsz<span class="hl sym">-</span><span class="hl num">9</span><span class="hl sym">))</span>  <span class="hl slc">// (# remove check if desired #)</span>
-    <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;Input data size&quot;</span><span class="hl sym">,</span>bbjle<span class="hl sym">);</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(*</span>bbj<span class="hl sym">!=</span><span class="hl str">'&gt;'</span><span class="hl sym">)</span>                         <span class="hl slc">// (# remove check if desired #)</span>
-    <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;expected '&gt;' as 1st char&quot;</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(!</span>bbj<span class="hl sym">[</span>bbjle<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">])</span>                     <span class="hl slc">// discard ev. trailing zero</span>
-    bbjle<span class="hl sym">--;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>pj <span class="hl sym">&lt;</span> pjstop<span class="hl sym">) {</span>                  <span class="hl slc">// MAIN LOOP: process data</span>
 
-  pj<span class="hl sym">=</span>bbj<span class="hl sym">;</span>  pq<span class="hl sym">=</span>bbq<span class="hl sym">;</span>  pjstop<span class="hl sym">=</span>pj<span class="hl sym">+</span>bbjle<span class="hl sym">;</span>     <span class="hl slc">// init pointers for good ol'C</span>
-
-  <span class="hl kwa">while</span> <span class="hl sym">(</span>pj<span class="hl sym">&lt;</span>pjstop<span class="hl sym">) {</span>                    <span class="hl slc">// loop: read input data</span>
-    <span class="hl kwa">while</span> <span class="hl sym">(*</span>pj<span class="hl sym">!=</span><span class="hl num">0xA</span> <span class="hl sym">&amp;&amp; *</span>pj<span class="hl sym">!=</span><span class="hl num">0xD</span><span class="hl sym">) {</span>       <span class="hl slc">// loop: copy ID line</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>pj<span class="hl sym">&gt;=</span>pjstop<span class="hl sym">)</span>                    <span class="hl slc">// (# remove check if desired #)</span>
-        <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;Unexpected end of data&quot;</span><span class="hl sym">, (</span><span class="hl kwb">int</span><span class="hl sym">)(</span>pj<span class="hl sym">-</span>bbj<span class="hl sym">));</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>pq<span class="hl sym">=</span>qqq<span class="hl sym">; *</span>pj<span class="hl sym">!=</span><span class="hl num">10</span> <span class="hl sym">&amp;&amp; *</span>pj<span class="hl sym">!=</span><span class="hl num">13</span><span class="hl sym">; ) {</span> <span class="hl slc">// LOOP: copy entire ID line</span>
       <span class="hl sym">*</span>pq<span class="hl sym">++ = *</span>pj<span class="hl sym">++;</span>                     <span class="hl slc">// copy line contents (chars)</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>pj <span class="hl sym">&gt;=</span> pjstop<span class="hl sym">) {</span>                <span class="hl slc">// need more input data</span>
+        n <span class="hl sym">=</span> <span class="hl kwd">fread</span><span class="hl sym">(</span>jjj<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">,</span>BFSIZE<span class="hl sym">,</span>stdin<span class="hl sym">);</span>   <span class="hl slc">// get data block from stdin</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(!</span>n<span class="hl sym">)</span>
+          <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;EOD within ID line&quot;</span><span class="hl sym">,</span> pj<span class="hl sym">-</span>jjj<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>pq <span class="hl sym">&gt; (</span>qqq<span class="hl sym">+</span><span class="hl num">60</span><span class="hl sym">))</span>
+          <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;ID line too long&quot;</span><span class="hl sym">,</span> pq<span class="hl sym">-</span>qqq<span class="hl sym">);</span>
+        pj <span class="hl sym">=</span> jjj<span class="hl sym">;</span>  pjstop <span class="hl sym">=</span> pj<span class="hl sym">+</span>n<span class="hl sym">;</span>        <span class="hl slc">// update input buffer pointers</span>
+      <span class="hl sym">}</span>
     <span class="hl sym">}</span>
-    <span class="hl sym">*</span>pq<span class="hl sym">++ =</span> <span class="hl num">0xa</span><span class="hl sym">;</span>  prlo<span class="hl sym">=</span>pj<span class="hl sym">;</span>               <span class="hl slc">// add LF; mark start of data</span>
+    <span class="hl sym">*</span>pq<span class="hl sym">++ =</span> <span class="hl num">0xA</span><span class="hl sym">;</span>                         <span class="hl slc">// add LF to ID line</span>
 
-    <span class="hl kwa">while</span> <span class="hl sym">(*</span>pj<span class="hl sym">!=</span><span class="hl str">'&gt;'</span> <span class="hl sym">&amp;&amp;</span> pj<span class="hl sym">&lt;</span>pjstop<span class="hl sym">)</span>        <span class="hl slc">// find seq. data block end</span>
-      pj<span class="hl sym">++;</span>                              <span class="hl slc">// adjust pointer accordingly</span>
-
-    pr<span class="hl sym">=</span>pj<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>  lile<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>                    <span class="hl slc">// init reverse ptr and line len.</span>
-    <span class="hl kwa">if</span> <span class="hl sym">(</span>pr<span class="hl sym">&lt;=</span>prlo<span class="hl sym">)</span>                        <span class="hl slc">// (# remove check if desired #)</span>
-      <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;Sequence too short&quot;</span><span class="hl sym">,(</span><span class="hl kwb">int</span><span class="hl sym">)(</span>prlo<span class="hl sym">-</span>bbj<span class="hl sym">));</span>
-
-    <span class="hl kwa">while</span> <span class="hl sym">(</span>pr<span class="hl sym">&gt;=</span>prlo<span class="hl sym">) {</span>                   <span class="hl slc">// loop: revert &amp; convert</span>
-      c<span class="hl sym">=</span>XTAB<span class="hl sym">[*</span>pr<span class="hl sym">-- &amp;</span> <span class="hl num">0x7f</span><span class="hl sym">];</span>              <span class="hl slc">// get char, use 7 bits</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">) {</span>                           <span class="hl slc">// conversion possible</span>
-        <span class="hl sym">*</span>pq<span class="hl sym">++ =</span> c<span class="hl sym">;</span>  lile<span class="hl sym">++;</span>              <span class="hl slc">// output to buffer; inc. length</span>
-        <span class="hl kwa">if</span> <span class="hl sym">(</span>lile<span class="hl sym">&gt;</span><span class="hl num">59</span><span class="hl sym">)</span>                     <span class="hl slc">// long line - EOL required</span>
-          <span class="hl sym">{</span> lile<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;  *</span>pq<span class="hl sym">++ =</span> <span class="hl num">0xa</span><span class="hl sym">; }</span>      <span class="hl slc">// reset line length; add LF</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>pr<span class="hl sym">=</span>pqstop<span class="hl sym">; *</span>pj <span class="hl sym">!=</span> <span class="hl str">'&gt;'</span><span class="hl sym">; ) {</span>      <span class="hl slc">// LOOP: revert &amp; convert data</span>
+      c<span class="hl sym">=</span>XTAB<span class="hl sym">[*</span>pj<span class="hl sym">++ &amp;</span> <span class="hl num">0x7f</span><span class="hl sym">];</span>              <span class="hl slc">// get &amp; convert char, use 7 bits</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">) {</span>                           <span class="hl slc">// conversion result is useful</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>pr <span class="hl sym">&lt;=</span> pq<span class="hl sym">)</span>
+          <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;Output buffer overflow&quot;</span><span class="hl sym">,</span> BFSIZE<span class="hl sym">);</span>
+        <span class="hl sym">*--</span>pr <span class="hl sym">=</span> c<span class="hl sym">;</span>                       <span class="hl slc">// move converted char to buffer</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>pj <span class="hl sym">&gt;=</span> pjstop<span class="hl sym">) {</span>                <span class="hl slc">// try to get more input data</span>
+        n <span class="hl sym">=</span> <span class="hl kwd">fread</span><span class="hl sym">(</span>jjj<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">,</span>BFSIZE<span class="hl sym">,</span>stdin<span class="hl sym">);</span>   <span class="hl slc">// fetch data block from stdin</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(!</span>n<span class="hl sym">)</span>  <span class="hl kwa">break</span><span class="hl sym">;</span>                  <span class="hl slc">// no more data: terminate loop</span>
+        pj <span class="hl sym">=</span> jjj<span class="hl sym">;</span>  pjstop <span class="hl sym">=</span> pj<span class="hl sym">+</span>n<span class="hl sym">;</span>        <span class="hl slc">// update input buffer pointers</span>
       <span class="hl sym">}</span>
     <span class="hl sym">}</span>
 
-    <span class="hl kwa">if</span> <span class="hl sym">(</span>lile<span class="hl sym">)  *</span>pq<span class="hl sym">++ =</span> <span class="hl num">0xa</span><span class="hl sym">;</span>              <span class="hl slc">// last line not empty, add LF</span>
-  <span class="hl sym">}</span>
+    <span class="hl kwa">if</span> <span class="hl sym">((</span>pr<span class="hl sym">-</span>pq<span class="hl sym">) &lt; (</span>BFSIZE<span class="hl sym">/</span><span class="hl num">60</span><span class="hl sym">))</span>
+      <span class="hl kwa">return</span> <span class="hl kwd">errex</span><span class="hl sym">(</span><span class="hl str">&quot;No space to insert LFs&quot;</span><span class="hl sym">,</span> n<span class="hl sym">);</span>
 
-  <span class="hl kwd">fwrite</span><span class="hl sym">(</span>bbq<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">, (</span><span class="hl kwb">int</span><span class="hl sym">)(</span>pq<span class="hl sym">-</span>bbq<span class="hl sym">),</span> stdout<span class="hl sym">);</span> <span class="hl slc">// dump buffer to stdout</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>pr<span class="hl sym">&lt;</span>pqstop<span class="hl sym">) {</span>                  <span class="hl slc">// LOOP: format output</span>
+      n <span class="hl sym">= (</span>pqstop<span class="hl sym">-</span>pr<span class="hl sym">);</span>                   <span class="hl slc">// calc remaining chunk size</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&gt;</span> <span class="hl num">60</span><span class="hl sym">)</span>  n <span class="hl sym">=</span> <span class="hl num">60</span><span class="hl sym">;</span>               <span class="hl slc">// move 1 line at a time</span>
+      <span class="hl kwd">memmove</span><span class="hl sym">(</span>pq<span class="hl sym">,</span>pr<span class="hl sym">,</span>n<span class="hl sym">);</span>                  <span class="hl slc">// move line to empty space</span>
+      pr<span class="hl sym">+=</span>n<span class="hl sym">;</span>  pq<span class="hl sym">+=</span>n<span class="hl sym">;  *</span>pq<span class="hl sym">++ =</span> <span class="hl num">0xA</span><span class="hl sym">;</span>       <span class="hl slc">// adjust pointers, add LF</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwd">fwrite</span><span class="hl sym">(</span>qqq<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> pq<span class="hl sym">-</span>qqq<span class="hl sym">,</span> stdout<span class="hl sym">);</span>      <span class="hl slc">// output converted data</span>
+
+  <span class="hl sym">}</span>
   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
