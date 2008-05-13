@@ -1,206 +1,195 @@
-<span class="com">{-# OPTIONS -fexcess-precision #-}</span>
-<span class="slc">--</span>
-<span class="slc">-- The Computer Language Shootout</span>
-<span class="slc">-- http://shootout.alioth.debian.org/</span>
-<span class="slc">--</span>
-<span class="slc">-- Contributed by Don Stewart</span>
-<span class="slc">--</span>
-<span class="slc">-- Compile with:</span>
-<span class="slc">--  -O -fglasgow-exts -fbang-patterns -optc-O3 -optc-march=pentium4</span>
-<span class="slc">--</span>
-<span class="kwa">import</span> System
-<span class="kwa">import</span> System.IO.Unsafe
-<span class="kwa">import</span> Text.Printf
-<span class="kwa">import</span> Foreign.Marshal.Array
-<span class="kwa">import</span> Foreign
-<span class="kwa">import</span> Control.Monad
-<span class="kwa">import</span> Bits
+<span class="hl com">{-# OPTIONS -fvia-C -fexcess-precision #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Olof Kraigher and Don Stewart.</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- To be compiled with:</span>
+<span class="hl slc">--</span>
+<span class="hl slc">--  -O2 -fglasgow-exts -funbox-strict-fields -fbang-patterns -optc-O</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Don't enable -optc-mfpmath=sse -optc-msse2, this triggers a gcc bug on x86</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- TODO, rewrite in ST.</span>
+<span class="hl slc">--</span>
 
-<span class="kwa">import</span> GHC.Exts
+<span class="hl kwa">import</span> Foreign
+<span class="hl kwa">import</span> Foreign.Storable
+<span class="hl kwa">import</span> Foreign.Marshal.Alloc
+<span class="hl kwa">import</span> Data.IORef
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> Text.Printf
 
-<span class="slc">------------------------------------------------------------------------</span>
-
-main <span class="sym">=</span> <span class="kwa">do</span>
-    n <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> readIO . head
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO.head
+    initialize
     offset_momentum
-    printf <span class="str">&quot;%.9f\n&quot;</span> <span class="sym">=&lt;&lt;</span> energy
-    replicateM_ n advance
-    printf <span class="str">&quot;%.9f\n&quot;</span> <span class="sym">=&lt;&lt;</span> energy
+    energy <span class="hl num">0</span> planets <span class="hl sym">&gt;&gt;=</span> printf <span class="hl str">&quot;%.9f\n&quot;</span>
+    replicateM_ n <span class="hl sym">(</span>advance planets<span class="hl sym">)</span>
+    energy <span class="hl num">0</span> planets <span class="hl sym">&gt;&gt;=</span> printf <span class="hl str">&quot;%.9f\n&quot;</span>
 
-<span class="slc">------------------------------------------------------------------------</span>
+offset_momentum <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    m <span class="hl sym">&lt;-</span> foldr <span class="hl sym">(</span>.<span class="hl sym">+</span>.<span class="hl sym">) (</span>Vec <span class="hl num">0 0 0</span><span class="hl sym">)</span>
+             `fmap` <span class="hl sym">(</span>mapM momentum
+                   . take <span class="hl sym">(</span>nbodies <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                   . iterate next $ next planets<span class="hl sym">)</span>
 
-<span class="kwa">type</span> Bodies <span class="sym">=</span> Ptr <span class="kwb">Double</span>
+    setVec <span class="hl sym">(</span>vel planets<span class="hl sym">)</span> $ <span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">/</span>solar_mass<span class="hl sym">) *</span>. m
+  <span class="hl kwa">where</span>
+    momentum p <span class="hl sym">=</span> liftM2 <span class="hl sym">(*</span>.<span class="hl sym">) (</span>mass p<span class="hl sym">) (</span>getVec <span class="hl sym">(</span>vel p<span class="hl sym">))</span>
 
-nbodies <span class="sym">=</span> <span class="num">5</span>
+energy <span class="hl sym">::</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Double</span>
+energy <span class="hl sym">!</span>e p
+    <span class="hl sym">|</span> p <span class="hl sym">==</span> end <span class="hl sym">=</span> return e
+    <span class="hl sym">|</span> otherwise      <span class="hl sym">=</span> <span class="hl kwa">do</span>
+        p1 <span class="hl sym">&lt;-</span> getVec <span class="hl sym">(</span>pos p<span class="hl sym">)</span>
+        v1 <span class="hl sym">&lt;-</span> getVec <span class="hl sym">(</span>vel p<span class="hl sym">)</span>
+        m1 <span class="hl sym">&lt;-</span> mass p
+        e  <span class="hl sym">&lt;-</span> energy2 p1 m1 e p2
+        energy <span class="hl sym">(</span>e <span class="hl sym">+</span> <span class="hl num">0.5</span> <span class="hl sym">*</span> m1 <span class="hl sym">*</span> magnitude2 v1<span class="hl sym">)</span> p2
+    <span class="hl kwa">where</span> p2 <span class="hl sym">=</span> next p
 
-bodies <span class="sym">::</span> Bodies
-bodies <span class="sym">=</span> unsafePerformIO . newArray . concat $
-   <span class="sym">[</span>planet <span class="num">1 0 0 0 0 0 0</span>                <span class="slc">-- sun</span>
-   <span class="sym">,</span>planet <span class="num">9.54791938424326609e-04</span>      <span class="slc">-- jupiter</span>
-        <span class="num">4.84143144246472090e+00</span>  <span class="sym">(-</span><span class="num">1.16032004402742839e+00</span><span class="sym">) (-</span><span class="num">1.03622044471123109e-01</span><span class="sym">)</span>
-      <span class="sym">(</span> <span class="num">1.66007664274403694e-03</span><span class="sym">) (</span> <span class="num">7.69901118419740425e-03</span><span class="sym">) (-</span><span class="num">6.90460016972063023e-05</span><span class="sym">)</span>
-   <span class="sym">,</span>planet <span class="num">2.85885980666130812e-04</span>      <span class="slc">-- saturn</span>
-        <span class="num">8.34336671824457987e+00    4.12479856412430479e+00</span>  <span class="sym">(-</span><span class="num">4.03523417114321381e-01</span><span class="sym">)</span>
-      <span class="sym">(-</span><span class="num">2.76742510726862411e-03</span><span class="sym">) (</span> <span class="num">4.99852801234917238e-03</span><span class="sym">) (</span> <span class="num">2.30417297573763929e-05</span><span class="sym">)</span>
-   <span class="sym">,</span>planet <span class="num">4.36624404335156298e-05</span>      <span class="slc">-- uranus</span>
-        <span class="num">1.28943695621391310e+01</span>  <span class="sym">(-</span><span class="num">1.51111514016986312e+01</span><span class="sym">) (-</span><span class="num">2.23307578892655734e-01</span><span class="sym">)</span>
-      <span class="sym">(</span> <span class="num">2.96460137564761618e-03</span><span class="sym">) (</span> <span class="num">2.37847173959480950e-03</span><span class="sym">) (-</span><span class="num">2.96589568540237556e-05</span><span class="sym">)</span>
-   <span class="sym">,</span>planet <span class="num">5.15138902046611451e-05</span>      <span class="slc">-- neptune</span>
-        <span class="num">1.53796971148509165e+01</span>  <span class="sym">(-</span><span class="num">2.59193146099879641e+01</span><span class="sym">)</span>   <span class="num">1.79258772950371181e-01</span>
-      <span class="sym">(</span> <span class="num">2.68067772490389322e-03</span><span class="sym">) (</span> <span class="num">1.62824170038242295e-03</span><span class="sym">) (-</span><span class="num">9.51592254519715870e-05</span><span class="sym">)]</span>
-  <span class="kwa">where</span>
-    planet m x y z vx vy vz <span class="sym">=</span>
-        <span class="sym">[</span>m<span class="sym">*</span>solar_mass<span class="sym">,</span>x<span class="sym">,</span> y<span class="sym">,</span> z<span class="sym">,</span> vx<span class="sym">*</span>days_per_year<span class="sym">,</span> vy<span class="sym">*</span>days_per_year<span class="sym">,</span> vz<span class="sym">*</span>days_per_year<span class="sym">,</span> <span class="num">0</span><span class="sym">]</span>
-    <span class="slc">-- n.b widht of 8 doubles to make bitwise math nice</span>
+energy2 <span class="hl sym">::</span> Vector3 <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Double</span>
+energy2 p1 m1 <span class="hl sym">!</span>e p
+    <span class="hl sym">|</span> p  <span class="hl sym">==</span> end <span class="hl sym">=</span> return e
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl kwa">do</span>
+        p2 <span class="hl sym">&lt;-</span> getVec <span class="hl sym">(</span>pos p<span class="hl sym">)</span>
+        v2 <span class="hl sym">&lt;-</span> getVec <span class="hl sym">(</span>vel p<span class="hl sym">)</span>
+        m2 <span class="hl sym">&lt;-</span> mass p
+        <span class="hl kwa">let</span> distance <span class="hl sym">=</span> sqrt . magnitude2 $ p1 .<span class="hl sym">-</span>. p2
+        energy2 p1 m1 <span class="hl sym">(</span>e <span class="hl sym">-</span> m1 <span class="hl sym">*</span> m2 <span class="hl sym">/</span> distance<span class="hl sym">) (</span>next p<span class="hl sym">)</span>
 
-<span class="slc">-- field access</span>
-<span class="sym">(</span>W# body<span class="sym">)</span> `at` <span class="sym">(</span>W# field<span class="sym">) =</span> I#
-    <span class="sym">(</span>word2Int# <span class="sym">(</span>field `or#` <span class="sym">(</span>body `uncheckedShiftL#` <span class="num">3</span>#<span class="sym">)))</span> <span class="slc">-- sizeof Double</span>
+advance <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+advance p1 <span class="hl sym">=</span> when <span class="hl sym">(</span>p1 <span class="hl sym">/=</span> end<span class="hl sym">)</span> $ <span class="hl kwa">do</span>
+    pos1 <span class="hl sym">&lt;-</span> getVec <span class="hl sym">(</span>pos p1<span class="hl sym">)</span>
+    m1   <span class="hl sym">&lt;-</span> mass p1
+    go pos1 m1 p2
+    advance  p2
+ <span class="hl kwa">where</span>
+    vel1 <span class="hl sym">=</span> vel p1
+    p2   <span class="hl sym">=</span> next p1
 
-put <span class="sym">!</span>body <span class="sym">!</span>field  <span class="sym">=</span> pokeElemOff bodies <span class="sym">(</span>body `at` field<span class="sym">)</span>
-get <span class="sym">!</span>body <span class="sym">!</span>field  <span class="sym">=</span> peekElemOff bodies <span class="sym">(</span>body `at` field<span class="sym">)</span>
+    go pos1 m1 p2
+         <span class="hl sym">|</span> p2 <span class="hl sym">/=</span> end <span class="hl sym">=</span> <span class="hl kwa">do</span>
+                pos2 <span class="hl sym">&lt;-</span> getVec <span class="hl sym">(</span>pos p2<span class="hl sym">)</span>
+                m2   <span class="hl sym">&lt;-</span> mass p2
+                <span class="hl kwa">let</span> vel2       <span class="hl sym">=</span> vel p2
+                    difference <span class="hl sym">=</span> pos1 .<span class="hl sym">-</span>. pos2
+                    distance2  <span class="hl sym">=</span> magnitude2 difference
+                    distance   <span class="hl sym">=</span> sqrt distance2
+                    magnitude  <span class="hl sym">=</span> delta_t <span class="hl sym">/ (</span>distance2 <span class="hl sym">*</span> distance<span class="hl sym">)</span>
+                    mass_magn  <span class="hl sym">=</span> magnitude <span class="hl sym">*</span>. difference
+                vel1 <span class="hl sym">-=</span> m2 <span class="hl sym">*</span>. mass_magn
+                vel2 <span class="hl sym">+=</span> m1 <span class="hl sym">*</span>. mass_magn
+                go pos1 m1 <span class="hl sym">(</span>next p2<span class="hl sym">)</span>
 
-<span class="slc">--</span>
-<span class="slc">-- field offsets in flattened array</span>
-<span class="slc">--</span>
-mass <span class="sym">=</span> <span class="num">0</span>
-x    <span class="sym">=</span> <span class="num">1</span>
-y    <span class="sym">=</span> <span class="num">2</span>
-z    <span class="sym">=</span> <span class="num">3</span>
-vx   <span class="sym">=</span> <span class="num">4</span>
-vy   <span class="sym">=</span> <span class="num">5</span>
-vz   <span class="sym">=</span> <span class="num">6</span>
-solar_mass    <span class="sym">=</span> <span class="num">4</span> <span class="sym">*</span> pi <span class="sym">*</span> pi
-days_per_year <span class="sym">=</span> <span class="num">365.24</span>
+          <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl kwa">do</span>
+                v1 <span class="hl sym">&lt;-</span> getVec vel1
+                p1 <span class="hl sym">+=</span> delta_t <span class="hl sym">*</span>. v1
 
-<span class="slc">------------------------------------------------------------------------</span>
-<span class="slc">-- Offset momentum</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
 
-offset_momentum <span class="sym">::</span> IO <span class="sym">()</span>
-offset_momentum <span class="sym">=</span> <span class="kwa">do</span>
-    <span class="sym">(</span>px<span class="sym">,</span>py<span class="sym">,</span>pz<span class="sym">) &lt;-</span> go <span class="num">0 0 0 0</span>
-    put <span class="num">0</span> vx <span class="sym">(-</span> px <span class="sym">/</span> solar_mass<span class="sym">)</span>
-    put <span class="num">0</span> vy <span class="sym">(-</span> py <span class="sym">/</span> solar_mass<span class="sym">)</span>
-    put <span class="num">0</span> vz <span class="sym">(-</span> pz <span class="sym">/</span> solar_mass<span class="sym">)</span>
-  <span class="kwa">where</span>
-    go <span class="sym">!</span>i <span class="sym">!</span>px <span class="sym">!</span>py <span class="sym">!</span>pz
-        <span class="sym">|</span> i <span class="sym">&gt;=</span> nbodies <span class="sym">=</span> return <span class="sym">(</span>px<span class="sym">,</span>py<span class="sym">,</span>pz<span class="sym">)</span>
-        <span class="sym">|</span> otherwise    <span class="sym">=</span> <span class="kwa">do</span>
-            imass <span class="sym">&lt;-</span> look mass
-            ivx   <span class="sym">&lt;-</span> look vx
-            ivy   <span class="sym">&lt;-</span> look vy
-            ivz   <span class="sym">&lt;-</span> look vz
-            go <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>px <span class="sym">+</span> ivx <span class="sym">*</span> imass<span class="sym">)</span>
-                     <span class="sym">(</span>py <span class="sym">+</span> ivy <span class="sym">*</span> imass<span class="sym">)</span>
-                     <span class="sym">(</span>pz <span class="sym">+</span> ivz <span class="sym">*</span> imass<span class="sym">)</span>
+planets <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span>
+planets <span class="hl sym">=</span> unsafePerformIO $ mallocBytes <span class="hl sym">(</span><span class="hl num">7</span> <span class="hl sym">*</span> nbodies <span class="hl sym">*</span> sizeOf <span class="hl sym">(</span>undefined <span class="hl sym">::</span> <span class="hl kwb">Double</span><span class="hl sym">))</span>
 
-        <span class="kwa">where</span> look <span class="sym">=</span> get i
+nbodies <span class="hl sym">::</span> <span class="hl kwb">Int</span>
+nbodies <span class="hl sym">=</span> <span class="hl num">5</span>
 
-<span class="slc">------------------------------------------------------------------------</span>
-<span class="slc">-- Energy</span>
+solar_mass<span class="hl sym">,</span> delta_t<span class="hl sym">,</span> days_per_year <span class="hl sym">::</span> <span class="hl kwb">Double</span>
+days_per_year <span class="hl sym">=</span> <span class="hl num">365.24</span>
+delta_t       <span class="hl sym">=</span> <span class="hl num">0.01</span>
+solar_mass    <span class="hl sym">=</span> <span class="hl num">4</span> <span class="hl sym">*</span> pi <span class="hl sym">**</span> <span class="hl num">2</span>
 
-energy <span class="sym">=</span> goI <span class="num">0 0</span>
+initialize <span class="hl sym">=</span> mapM_ newPlanet planets
+  <span class="hl kwa">where</span>
+   dp <span class="hl sym">=</span> days_per_year
+   planets <span class="hl sym">=</span>
+    <span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>
+     <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>
+     <span class="hl num">1</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span>
+     <span class="hl num">4.84143144246472090e+00</span><span class="hl sym">,        (-</span><span class="hl num">1.16032004402742839e+00</span><span class="hl sym">), (-</span><span class="hl num">1.03622044471123109e-01</span><span class="hl sym">),</span>
+     <span class="hl num">1.66007664274403694e-03</span><span class="hl sym">*</span>dp<span class="hl sym">,</span>     <span class="hl num">7.69901118419740425e-03</span><span class="hl sym">*</span>dp<span class="hl sym">, (-</span><span class="hl num">6.90460016972063023e-05</span><span class="hl sym">)*</span>dp<span class="hl sym">,</span>
+     <span class="hl num">9.54791938424326609e-04</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span>
 
-goI <span class="sym">::</span> Word <span class="sym">-&gt;</span> <span class="kwb">Double</span> <span class="sym">-&gt;</span> IO <span class="kwb">Double</span>
-goI <span class="sym">!</span>i <span class="sym">!</span>e
-    <span class="sym">|</span> i <span class="sym">&gt;=</span> nbodies <span class="sym">=</span> return e
-    <span class="sym">|</span> otherwise    <span class="sym">=</span> <span class="kwa">do</span>
-       im   <span class="sym">&lt;-</span> look mass
-       ix   <span class="sym">&lt;-</span> look x      <span class="slc">-- cache the body offset calculation?</span>
-       iy   <span class="sym">&lt;-</span> look y
-       iz   <span class="sym">&lt;-</span> look z
-       ivx  <span class="sym">&lt;-</span> look vx
-       ivy  <span class="sym">&lt;-</span> look vy
-       ivz  <span class="sym">&lt;-</span> look vz
-       e'   <span class="sym">&lt;-</span> goJ ix iy iz im <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>e <span class="sym">+</span> <span class="num">0.5</span> <span class="sym">*</span> im <span class="sym">* (</span>ivx <span class="sym">*</span> ivx <span class="sym">+</span> ivy <span class="sym">*</span> ivy <span class="sym">+</span> ivz <span class="sym">*</span> ivz<span class="sym">))</span>
-       goI <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> e'
-    <span class="kwa">where</span>
-       look <span class="sym">=</span> get i
+     <span class="hl num">8.34336671824457987e+00</span><span class="hl sym">,</span>        <span class="hl num">4.12479856412430479e+00</span><span class="hl sym">,    (-</span><span class="hl num">4.03523417114321381e-01</span><span class="hl sym">),</span>
+     <span class="hl sym">(-</span><span class="hl num">2.76742510726862411e-03</span><span class="hl sym">)*</span>dp<span class="hl sym">,</span>  <span class="hl num">4.99852801234917238e-03</span><span class="hl sym">*</span>dp<span class="hl sym">,</span> <span class="hl num">2.30417297573763929e-05</span><span class="hl sym">*</span>dp<span class="hl sym">,</span>
+     <span class="hl num">2.85885980666130812e-04</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span>
 
-goJ <span class="sym">!</span>ix <span class="sym">!</span>iy <span class="sym">!</span>iz <span class="sym">!</span>im <span class="sym">!</span>j <span class="sym">!</span>e
-    <span class="sym">|</span> j <span class="sym">&gt;=</span> nbodies <span class="sym">=</span> return e
-    <span class="sym">|</span> otherwise    <span class="sym">=</span> <span class="kwa">do</span>
+     <span class="hl num">1.28943695621391310e+01</span><span class="hl sym">,        (-</span><span class="hl num">1.51111514016986312e+01</span><span class="hl sym">), (-</span><span class="hl num">2.23307578892655734e-01</span><span class="hl sym">),</span>
+     <span class="hl num">2.96460137564761618e-03</span><span class="hl sym">*</span>dp<span class="hl sym">,</span>     <span class="hl num">2.37847173959480950e-03</span><span class="hl sym">*</span>dp<span class="hl sym">, (-</span><span class="hl num">2.96589568540237556e-05</span><span class="hl sym">)*</span>dp<span class="hl sym">,</span>
+     <span class="hl num">4.36624404335156298e-05</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span>
 
-        b2m  <span class="sym">&lt;-</span> look mass
-        b2x  <span class="sym">&lt;-</span> look x
-        b2y  <span class="sym">&lt;-</span> look y
-        b2z  <span class="sym">&lt;-</span> look z
-        <span class="kwa">let</span> dx   <span class="sym">=</span> ix <span class="sym">-</span> b2x
-            dy   <span class="sym">=</span> iy <span class="sym">-</span> b2y
-            dz   <span class="sym">=</span> iz <span class="sym">-</span> b2z
-            distance <span class="sym">=</span> sqrt $<span class="sym">!</span> dx <span class="sym">*</span> dx <span class="sym">+</span> dy <span class="sym">*</span> dy <span class="sym">+</span> dz <span class="sym">*</span> dz
-        goJ ix iy iz im <span class="sym">(</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span>e <span class="sym">- ((</span>im <span class="sym">*</span> b2m<span class="sym">) /</span> distance<span class="sym">))</span>
-    <span class="kwa">where</span>
-        look <span class="sym">=</span> get j
+     <span class="hl num">1.53796971148509165e+01</span><span class="hl sym">,        (-</span><span class="hl num">2.59193146099879641e+01</span><span class="hl sym">),</span> <span class="hl num">1.79258772950371181e-01</span><span class="hl sym">,</span>
+     <span class="hl num">2.68067772490389322e-03</span><span class="hl sym">*</span>dp<span class="hl sym">,</span>     <span class="hl num">1.62824170038242295e-03</span><span class="hl sym">*</span>dp<span class="hl sym">, (-</span><span class="hl num">9.51592254519715870e-05</span><span class="hl sym">)*</span>dp<span class="hl sym">,</span>
+     <span class="hl num">5.15138902046611451e-05</span> <span class="hl sym">*</span> solar_mass
+    <span class="hl sym">]</span>
 
-<span class="slc">------------------------------------------------------------------------</span>
-<span class="slc">-- Advance</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
+<span class="hl slc">-- Support for 3 dimensional mutable vectors</span>
 
-advance <span class="sym">::</span> IO <span class="sym">()</span>
-advance <span class="sym">=</span> advanceI <span class="num">0</span> <span class="sym">&gt;&gt;</span> update
+cursor <span class="hl sym">::</span> IORef <span class="hl sym">(</span>Ptr <span class="hl kwb">Double</span><span class="hl sym">)</span>
+cursor <span class="hl sym">=</span> unsafePerformIO $ newIORef planets
 
-advanceI i<span class="sym">&#64;(</span>W# ii<span class="sym">) =</span> when <span class="sym">(</span>i <span class="sym">&lt;</span> nbodies<span class="sym">)</span> $ <span class="kwa">do</span>
-    bm  <span class="sym">&lt;-</span> lookI mass
-    bx  <span class="sym">&lt;-</span> lookI x      <span class="slc">-- cache the body offset calculation!</span>
-    by  <span class="sym">&lt;-</span> lookI y
-    bz  <span class="sym">&lt;-</span> lookI z
-    bvx <span class="sym">&lt;-</span> lookI vx              <span class="slc">-- float these out to an accumultor</span>
-    bvy <span class="sym">&lt;-</span> lookI vy
-    bvz <span class="sym">&lt;-</span> lookI vz
-    advanceJ off bm bx by bz bvx bvy bvz <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
-    advanceI <span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
-  <span class="kwa">where</span>
-    off   <span class="sym">=</span> W# <span class="sym">(</span>ii `uncheckedShiftL#` <span class="num">3</span>#<span class="sym">)</span>
-    lookI x <span class="sym">=</span> peekElemOff bodies <span class="sym">(</span>fromIntegral $ x .<span class="sym">|</span>. off<span class="sym">)</span>
-    setI  <span class="sym">=</span> put i
+<span class="hl kwa">data</span> Vector3 <span class="hl sym">=</span> Vec <span class="hl sym">!</span><span class="hl kwb">Double</span> <span class="hl sym">!</span><span class="hl kwb">Double</span> <span class="hl sym">!</span><span class="hl kwb">Double</span>
 
-advanceJ <span class="sym">!</span>i_off <span class="sym">!</span>bm <span class="sym">!</span>bx <span class="sym">!</span>by <span class="sym">!</span>bz <span class="sym">!</span>bvx <span class="sym">!</span>bvy <span class="sym">!</span>bvz <span class="sym">!</span>j<span class="sym">&#64;(</span>W# jj<span class="sym">)</span>
-     <span class="sym">|</span> j <span class="sym">&gt;=</span> nbodies <span class="sym">=</span> <span class="kwa">do</span>
-        <span class="kwa">let</span> setI x <span class="sym">=</span> pokeElemOff bodies <span class="sym">(</span>fromIntegral $ x .<span class="sym">|</span>. i_off<span class="sym">)</span>
-        setI vx bvx
-        setI vy bvy
-        setI vz bvz
+end <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span>
+end <span class="hl sym">=</span> inc planets $<span class="hl sym">!</span> nbodies <span class="hl sym">*</span> <span class="hl num">7</span>
 
-     <span class="sym">|</span> otherwise    <span class="sym">=</span> <span class="kwa">do</span>
+next  <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Double</span>
+next p <span class="hl sym">=</span> inc p <span class="hl num">7</span>
 
-        b2mass <span class="sym">&lt;-</span> lookJ mass
-        b2x    <span class="sym">&lt;-</span> lookJ x
-        b2y    <span class="sym">&lt;-</span> lookJ y
-        b2z    <span class="sym">&lt;-</span> lookJ z
-        b2vx   <span class="sym">&lt;-</span> lookJ vx
-        b2vy   <span class="sym">&lt;-</span> lookJ vy
-        b2vz   <span class="sym">&lt;-</span> lookJ vz
+inc <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Double</span>
+inc ptr n <span class="hl sym">=</span> plusPtr ptr <span class="hl sym">(</span>n <span class="hl sym">*</span> sizeOf <span class="hl sym">(</span>undefined <span class="hl sym">::</span> <span class="hl kwb">Double</span><span class="hl sym">))</span>
 
-        <span class="kwa">let</span> dx <span class="sym">=</span> bx <span class="sym">-</span> b2x
-            dy <span class="sym">=</span> by <span class="sym">-</span> b2y
-            dz <span class="sym">=</span> bz <span class="sym">-</span> b2z
-            distance <span class="sym">=</span> sqrt <span class="sym">(</span>dx <span class="sym">*</span> dx <span class="sym">+</span> dy <span class="sym">*</span> dy <span class="sym">+</span> dz <span class="sym">*</span> dz<span class="sym">)</span>
-            mag      <span class="sym">=</span> <span class="num">0.01</span> <span class="sym">/ (</span>distance <span class="sym">*</span> distance <span class="sym">*</span> distance<span class="sym">)</span>
-            massmag  <span class="sym">=</span> bm     <span class="sym">*</span> mag
+newPlanet <span class="hl sym">::</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+newPlanet d <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    ptr <span class="hl sym">&lt;-</span> readIORef cursor
+    pokeElemOff ptr <span class="hl num">0</span> d
+    writeIORef cursor $<span class="hl sym">!</span> inc ptr <span class="hl num">1</span>
 
-        setJ vx <span class="sym">(</span>b2vx <span class="sym">+</span> dx <span class="sym">*</span> massmag<span class="sym">)</span>
-        setJ vy <span class="sym">(</span>b2vy <span class="sym">+</span> dy <span class="sym">*</span> massmag<span class="sym">)</span>
-        setJ vz <span class="sym">(</span>b2vz <span class="sym">+</span> dz <span class="sym">*</span> massmag<span class="sym">)</span>
+pos <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Double</span>
+pos ptr <span class="hl sym">=</span> ptr
 
-        <span class="kwa">let</span> mass2mag <span class="sym">= -</span> b2mass <span class="sym">*</span> mag
+vel <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Double</span>
+vel ptr <span class="hl sym">=</span> inc ptr <span class="hl num">3</span>
 
-        advanceJ i_off bm bx by bz <span class="sym">(</span>bvx <span class="sym">+</span> dx <span class="sym">*</span> mass2mag<span class="sym">)</span>
-                               <span class="sym">(</span>bvy <span class="sym">+</span> dy <span class="sym">*</span> mass2mag<span class="sym">)</span>
-                               <span class="sym">(</span>bvz <span class="sym">+</span> dz <span class="sym">*</span> mass2mag<span class="sym">) (</span>j<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
-   <span class="kwa">where</span>
-    off   <span class="sym">=</span> W# <span class="sym">(</span>jj `uncheckedShiftL#` <span class="num">3</span>#<span class="sym">)</span>
-    lookJ x <span class="sym">=</span> peekElemOff bodies <span class="sym">(</span>fromIntegral $ x .<span class="sym">|</span>. off<span class="sym">)</span>
-    setJ  x <span class="sym">=</span> pokeElemOff bodies <span class="sym">(</span>fromIntegral $ x .<span class="sym">|</span>. off<span class="sym">)</span>
+mass <span class="hl sym">::</span> Ptr <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Double</span>
+mass ptr <span class="hl sym">=</span> peekElemOff ptr <span class="hl num">6</span>
 
-update <span class="sym">=</span> forM_ <span class="sym">[</span><span class="num">0</span>..nbodies<span class="sym">-</span><span class="num">1</span><span class="sym">]</span> $ \i <span class="sym">-&gt;</span> <span class="kwa">do</span>
-    <span class="kwa">let</span> look  <span class="sym">=</span> get i
-        set   <span class="sym">=</span> put i
-    bx  <span class="sym">&lt;-</span> look x
-    by  <span class="sym">&lt;-</span> look y
-    bz  <span class="sym">&lt;-</span> look z
-    bvx <span class="sym">&lt;-</span> look vx
-    bvy <span class="sym">&lt;-</span> look vy
-    bvz <span class="sym">&lt;-</span> look vz
-    set x <span class="sym">(</span>bx <span class="sym">+</span> <span class="num">0.01</span> <span class="sym">*</span> bvx<span class="sym">)</span>
-    set y <span class="sym">(</span>by <span class="sym">+</span> <span class="num">0.01</span> <span class="sym">*</span> bvy<span class="sym">)</span>
-    set z <span class="sym">(</span>bz <span class="sym">+</span> <span class="num">0.01</span> <span class="sym">*</span> bvz<span class="sym">)</span>
+<span class="hl slc">------------------------------------------------------------------------</span>
+
+<span class="hl sym">(</span>Vec x y z<span class="hl sym">)</span> .<span class="hl sym">+</span>. <span class="hl sym">(</span>Vec u v w<span class="hl sym">) =</span> Vec <span class="hl sym">(</span>x<span class="hl sym">+</span>u<span class="hl sym">) (</span>y<span class="hl sym">+</span>v<span class="hl sym">) (</span>z<span class="hl sym">+</span>w<span class="hl sym">)</span>
+
+<span class="hl sym">(</span>Vec x y z<span class="hl sym">)</span> .<span class="hl sym">-</span>. <span class="hl sym">(</span>Vec u v w<span class="hl sym">) =</span> Vec <span class="hl sym">(</span>x<span class="hl sym">-</span>u<span class="hl sym">) (</span>y<span class="hl sym">-</span>v<span class="hl sym">) (</span>z<span class="hl sym">-</span>w<span class="hl sym">)</span>
+
+k <span class="hl sym">*</span>. <span class="hl sym">(</span>Vec x y z<span class="hl sym">) =</span> Vec <span class="hl sym">(</span>k<span class="hl sym">*</span>x<span class="hl sym">) (</span>k<span class="hl sym">*</span>y<span class="hl sym">) (</span>k<span class="hl sym">*</span>z<span class="hl sym">)</span> <span class="hl slc">-- allocates</span>
+
+magnitude2 <span class="hl sym">(</span>Vec x y z<span class="hl sym">) =</span> x<span class="hl sym">*</span>x <span class="hl sym">+</span> y<span class="hl sym">*</span>y <span class="hl sym">+</span> z<span class="hl sym">*</span>z
+
+<span class="hl slc">------------------------------------------------------------------------</span>
+
+getVec p <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    x <span class="hl sym">&lt;-</span> peek p
+    y <span class="hl sym">&lt;-</span> peekElemOff p <span class="hl num">1</span>
+    z <span class="hl sym">&lt;-</span> peekElemOff p <span class="hl num">2</span>
+    return $<span class="hl sym">!</span> Vec x y z
+
+setVec p <span class="hl sym">(</span>Vec x y z<span class="hl sym">)=</span> <span class="hl kwa">do</span>
+    poke        p   x
+    pokeElemOff p <span class="hl num">1</span> y
+    pokeElemOff p <span class="hl num">2</span> z
+
+<span class="hl kwa">infix</span> <span class="hl num">4</span> <span class="hl sym">+=</span>
+<span class="hl kwa">infix</span> <span class="hl num">4</span> <span class="hl sym">-=</span>
+
+v1 <span class="hl sym">+= (</span>Vec u v w<span class="hl sym">) =</span> <span class="hl kwa">do</span>
+    x <span class="hl sym">&lt;-</span> peek v1<span class="hl sym">;</span>          poke        v1   <span class="hl sym">(</span>x<span class="hl sym">+</span>u<span class="hl sym">)</span>
+    y <span class="hl sym">&lt;-</span> peekElemOff v1 <span class="hl num">1</span><span class="hl sym">;</span> pokeElemOff v1 <span class="hl num">1</span> <span class="hl sym">(</span>y<span class="hl sym">+</span>v<span class="hl sym">)</span>
+    z <span class="hl sym">&lt;-</span> peekElemOff v1 <span class="hl num">2</span><span class="hl sym">;</span> pokeElemOff v1 <span class="hl num">2</span> <span class="hl sym">(</span>z<span class="hl sym">+</span>w<span class="hl sym">)</span>
+
+v1 <span class="hl sym">-= (</span>Vec u v w<span class="hl sym">)  =</span> <span class="hl kwa">do</span>
+    x <span class="hl sym">&lt;-</span> peek v1<span class="hl sym">;</span>          poke        v1   <span class="hl sym">(</span>x<span class="hl sym">-</span>u<span class="hl sym">)</span>
+    y <span class="hl sym">&lt;-</span> peekElemOff v1 <span class="hl num">1</span><span class="hl sym">;</span> pokeElemOff v1 <span class="hl num">1</span> <span class="hl sym">(</span>y<span class="hl sym">-</span>v<span class="hl sym">)</span>
+    z <span class="hl sym">&lt;-</span> peekElemOff v1 <span class="hl num">2</span><span class="hl sym">;</span> pokeElemOff v1 <span class="hl num">2</span> <span class="hl sym">(</span>z<span class="hl sym">-</span>w<span class="hl sym">)</span>
