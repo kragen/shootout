@@ -2,13 +2,17 @@
  * The Computer Language Benchmarks Game
  * http://shootout.alioth.debian.org
  *
- * contributed by Bob W (2008-05-05)
+ * "reverse-complement" benchmark for Gnu C
+ * contributed by Bob W (V2, 2008-05-10)
  *
- * Further optimisation is possible by removing data integrity
- * checks and expecting source to be in LF terminated text format.
+ * - Further optimisation is possible by removing data integrity checks
+ * - Chars 'j' and 'q' are shortcut indicators for I/O buffer variables
  */
 
 #include <stdio.h>
+#include <string.h>
+
+#define BFSIZE 10245                 // size of I/O buffers
 
 static const char XTAB[128] = {  // 7-bit character conversion table
   0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
@@ -20,58 +24,65 @@ static const char XTAB[128] = {  // 7-bit character conversion table
 };
 
 
-int errex(char *s, int n) {      // display message & value, return 1
+int errex(char *s, int n) {          // show message & value, return 1
   printf("*** Error: %s [%d]!\n", s, n);
   return 1;
 }
 
 
-int main () {                          
-  char c;                                // temp
-  int  lile;                             // output sequence line length
-  char *pj, *pjstop, *pq, *pr, *prlo;    // pointers to I/O buffers
+int main () {                            // ******* main *******
+  char c;  int n;                        // temps
+  char jjj[BFSIZE], qqq[BFSIZE];         // input (j) and output (q) buffer
+  char *pj, *pq, *pr;                    // buffer pointers: inp, out, /out
+  char *pjstop, *pqstop = qqq+BFSIZE;    // end-of-buffer pointers
 
-  char   bbj[11888], bbq[11888];         // input and output buffers
-  size_t bbjsz=sizeof(bbj);              // max. size of input buffer
-  size_t bbjle=0;                        // actual length of buffer data
+  n = fread(jjj, 1, BFSIZE, stdin);      // get 1st input block from stdin
+  pj = jjj;  pjstop = pj+n;              // init input buffer pointers
+  if (n < 4)
+    return errex("Input data size",n);
+  if (*jjj != '>')
+    return errex("1st char is not '>'", 0);
 
-  bbjle = fread(bbj, 1, bbjsz, stdin);   // get input from stdin
-  if (bbjle < 999 || bbjle > (bbjsz-9))  // (# remove check if desired #)
-    return errex("Input data size",bbjle);
-  if (*bbj!='>')                         // (# remove check if desired #)
-    return errex("expected '>' as 1st char", 0);
-  if (!bbj[bbjle-1])                     // discard ev. trailing zero
-    bbjle--;
+  while (pj < pjstop) {                  // MAIN LOOP: process data
 
-  pj=bbj;  pq=bbq;  pjstop=pj+bbjle;     // init pointers for good ol'C
-
-  while (pj<pjstop) {                    // loop: read input data
-    while (*pj!=0xA && *pj!=0xD) {       // loop: copy ID line
-      if (pj>=pjstop)                    // (# remove check if desired #)
-        return errex("Unexpected end of data", (int)(pj-bbj));
+    for (pq=qqq; *pj!=10 && *pj!=13; ) { // LOOP: copy entire ID line
       *pq++ = *pj++;                     // copy line contents (chars)
+      if (pj >= pjstop) {                // need more input data
+        n = fread(jjj,1,BFSIZE,stdin);   // get data block from stdin
+        if (!n)
+          return errex("EOD within ID line", pj-jjj);
+        if (pq > (qqq+60))
+          return errex("ID line too long", pq-qqq);
+        pj = jjj;  pjstop = pj+n;        // update input buffer pointers
+      }
     }
-    *pq++ = 0xa;  prlo=pj;               // add LF; mark start of data
+    *pq++ = 0xA;                         // add LF to ID line
 
-    while (*pj!='>' && pj<pjstop)        // find seq. data block end
-      pj++;                              // adjust pointer accordingly
-
-    pr=pj-1;  lile=0;                    // init reverse ptr and line len.
-    if (pr<=prlo)                        // (# remove check if desired #)
-      return errex("Sequence too short",(int)(prlo-bbj));
-
-    while (pr>=prlo) {                   // loop: revert & convert
-      c=XTAB[*pr-- & 0x7f];              // get char, use 7 bits
-      if (c) {                           // conversion possible
-        *pq++ = c;  lile++;              // output to buffer; inc. length
-        if (lile>59)                     // long line - EOL required
-          { lile=0;  *pq++ = 0xa; }      // reset line length; add LF
+    for (pr=pqstop; *pj != '>'; ) {      // LOOP: revert & convert data
+      c=XTAB[*pj++ & 0x7f];              // get & convert char, use 7 bits
+      if (c) {                           // conversion result is useful
+        if (pr <= pq)
+          return errex("Output buffer overflow", BFSIZE);
+        *--pr = c;                       // move converted char to buffer
+      }
+      if (pj >= pjstop) {                // try to get more input data
+        n = fread(jjj,1,BFSIZE,stdin);   // fetch data block from stdin
+        if (!n)  break;                  // no more data: terminate loop
+        pj = jjj;  pjstop = pj+n;        // update input buffer pointers
       }
     }
 
-    if (lile)  *pq++ = 0xa;              // last line not empty, add LF
-  }
+    if ((pr-pq) < (BFSIZE/60))
+      return errex("No space to insert LFs", n);
 
-  fwrite(bbq, 1, (int)(pq-bbq), stdout); // dump buffer to stdout
+    while (pr<pqstop) {                  // LOOP: format output
+      n = (pqstop-pr);                   // calc remaining chunk size
+      if (n > 60)  n = 60;               // move 1 line at a time
+      memmove(pq,pr,n);                  // move line to empty space
+      pr+=n;  pq+=n;  *pq++ = 0xA;       // adjust pointers, add LF
+    }
+    fwrite(qqq, 1, pq-qqq, stdout);      // output converted data
+
+  }
   return 0;
 }
