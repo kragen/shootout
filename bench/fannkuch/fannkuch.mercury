@@ -1,0 +1,225 @@
+% The Computer Language Shootout Benchmarks Game
+% http://shootout.alioth.debian.org/
+%
+% Based on work by Heiner Marxen (C) and Amir K aka Razii (Java)
+% contributed by Glendon Holst
+% ----------------------------------------------------------------------
+
+:- module fannkuch.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is cc_multi.
+
+% ----------------------------------------------------------------------
+
+:- implementation.
+:- import_module solutions.
+:- import_module univ.
+:- import_module array.
+:- import_module list.
+:- import_module int.
+:- import_module bool.
+:- import_module string.
+:- import_module exception.
+
+% ----------------------------------------------------------------------
+
+main(!IO) :- 
+(
+	io.command_line_arguments(Args, !IO),
+	(
+		if
+			Args = [AString|_],
+			string.to_int(string.strip(AString), Aint)
+		then
+			N = Aint
+		else
+			N is 11
+	),
+
+	Seq = (pred(L1::out) is multi :- seq_interval(1, N, L1)),
+	solutions(Seq,L),
+	
+	P = array(L),
+
+	io.set_globals(univ({0, 0}), !IO),
+	Permutations = (pred(P1::array_uo) is multi :- permute(P, P1)),
+	Calculate = (pred(P2::in, !.IO::di, !:IO::uo) is det :- 
+	(
+		P3 = array.copy(P2),
+		flip_array(P3,FlipCount),
+		get_globals(OldFlipCount, OldSeqCount, !IO),
+		(
+			FlipCount > OldFlipCount -> 
+			NewFlipCount = FlipCount, 
+			set_globals(NewFlipCount, OldSeqCount, !IO) 
+		; 
+			NewFlipCount = OldFlipCount
+		),
+		(
+			OldSeqCount < 30 -> 
+			print_permutation(P2, !IO),
+			set_globals(NewFlipCount, OldSeqCount + 1, !IO) 
+		;
+			true
+		)			
+	)),
+	
+	unsorted_aggregate( Permutations, Calculate, !IO),
+	get_globals(MaxCount, _, !IO),
+	
+	io.format("Pfannkuchen(%d) = %d\n", [i(N), i(MaxCount)], !IO)
+).
+
+% ------------------------------- %
+%
+% seq_interval(A,B, X) => X is in interval [A..B].
+%
+
+:- pred seq_interval(int::in, int::in, int::out) is multi.
+
+seq_interval(N, M, Result) :-
+(
+	N >= M ->
+	Result = N
+;
+	(
+		Result = N
+	;
+		seq_interval(N + 1, M, Result)
+	)
+).
+
+% ------------- %
+
+:- pred set_globals(int::in, int::in, io::di, io::uo) is det.
+
+set_globals(FlipCount, PrintCount, !IO) :- 
+(
+	io.set_globals(univ({FlipCount, PrintCount}), !IO) 
+).
+
+:- pred get_globals(int::out, int::out, io::di, io::uo) is det.
+
+get_globals(FlipCount, PrintCount, !IO) :- 
+(
+	io.get_globals(OldUniv, !IO),
+	det_univ_to_type(OldUniv,{FlipCount, PrintCount})
+).
+
+% ------------- %
+
+:- pred print_permutation(array(int)::in, io::di, io::uo) is det.
+
+print_permutation(Permute, !IO) :- print_permutation_(0, Permute, !IO).
+
+:- pred print_permutation_(int::in, array(int)::in, io::di, io::uo) is det.
+
+print_permutation_(Idx, Permute, !IO) :- 
+(
+	Idx < array.size(Permute) ->
+	io.write_int(array.lookup(Permute, Idx), !IO),
+	print_permutation_(Idx + 1, Permute, !IO)
+;
+	io.nl(!IO),
+	io.flush_output(!IO)
+).
+
+% ------------------------------- %
+
+:- pred permute(array(int)::array_di, array(int)::array_uo) is multi.
+
+permute(Arr0, Arr) :- 
+(
+	permute_(array.size(Arr0), array.size(Arr0) - 1, Arr0, Arr1) -> 
+	Arr = Arr1 
+; 
+	Arr = Arr0
+).
+
+:- pred permute_(int, int, array(int), array(int)) is nondet.
+:- mode permute_(in, in, array_di, array_uo) is nondet.
+
+permute_(N, Idx, Arr0, Arr) :-
+(
+	N > 0 ->
+	(
+		permute_(Idx, Idx - 1, Arr0, Arr)
+	;
+		(
+			rotate_n(Idx, Arr0, Arr2),
+			permute_(N - 1, Idx, Arr2, Arr)
+		)
+	)
+;
+	Idx = 0 ->
+	Arr = Arr0
+;
+	fail
+).
+
+% ------------- %
+
+:- pred rotate_n(int::in, array(int)::array_di, array(int)::array_uo) is det.
+
+rotate_n(N, Arr0, Arr) :-
+(
+	N =< 0 ->
+	Arr = Arr0
+;
+	V = array.lookup(Arr0, N),
+	array.set(Arr0, N, array.lookup(Arr0, 0), Arr1),
+	shift_down(N - 1, V, Arr1, Arr)
+).
+
+:- pred shift_down(int, int, array(int), array(int)) is det.
+:- mode shift_down(in, in, array_di, array_uo) is det.
+
+shift_down(Idx, Val, Arr0, Arr) :-
+(
+	Idx > 0 ->
+	V = array.lookup(Arr0, Idx),
+	array.set(Arr0, Idx, Val, Arr1), 
+	shift_down(Idx - 1, V, Arr1, Arr)
+;
+	array.set(Arr0, 0, Val, Arr) 	
+).
+
+% ------------------------------- %
+
+:- pred reverse_n_to_m(
+	int::in, 
+	int::in, 
+	array(int)::array_di, 
+	array(int)::array_uo) is det.
+
+reverse_n_to_m(N, M, Arr0, Arr) :-
+(
+	N < M ->
+	T = array.lookup(Arr0, N),
+	array.set(Arr0, N, array.lookup(Arr0, M), Arr1),
+	array.set(Arr1, M, T, Arr2),
+	reverse_n_to_m(N + 1, M - 1, Arr2, Arr)
+;
+	Arr = Arr0
+).
+
+% ------------- %
+
+:- pred flip_array(array(int)::array_di, int::out) is det.
+
+flip_array(Arr, Count) :-
+(
+	N = array.lookup(Arr, 0),
+	(
+		N = 1 ->
+		Count = 0
+	;
+		reverse_n_to_m(0, N - 1, Arr, Arr1),
+		flip_array(Arr1, C2),
+		Count = C2 + 1
+	)
+).
+
+% ------------------------------- %
