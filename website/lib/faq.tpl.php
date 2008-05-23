@@ -307,7 +307,7 @@ The system is going down for system halt NOW!
 <dl>
 
 <dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
-<dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill.</p>
+<dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable to please format your code to fit in less than 80 columns (we don't measure lines-of-code!).</p>
 <p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> section.</p>
 </dd>
 
