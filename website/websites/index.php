@@ -111,47 +111,55 @@ function Keys($sites){
 }
 
 function CompareLangName($a, $b){
-   return strcasecmp($a[3],$b[3]);
+   if (isset($a[3]) && isset($b[3])){
+      return strcasecmp($a[3],$b[3]);
+   } else {
+      return 0;
+   }
 }
 
-function PrintIncludedLanguages(&$sites,&$a,$isExtra0 ){
+function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
    $link = $a[0];
-   $isExtra = $isExtra0;
+   $notShown = $notShown0;
    $showTag = TRUE;
    foreach($sites as $keys){
       if (isset($keys[$link]) && !empty($link)){
-         $isExtra = FALSE;
+         $notShown = FALSE;
+         $notShownYet =$showTag;
          if ($showTag) {
             $tag = $a[5];
             $showTag = FALSE;
          } else { $tag = ''; }
 
-         $arch = '';
-         $site = $keys[$link];
-         if ($site == 'debian' || $site == 'sandbox'){ $arch = '<em>Debian</em>'; }
+         if ($notShownYet){
 
-         if (isset($a[8]) && !empty($a[8])){ // special_url
-             printf('<p><a href="./%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
-                $site, $a[8], $a[4], $tag, $arch);
-         } else {
-             printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
-                $site, $link, $a[4], $tag, $arch);
+            $arch = '';
+            $site = $keys[$link];
+            if ($site == 'debian' || $site == 'sandbox'){ $arch = '<em>Debian</em>'; }
+
+            if (isset($a[8]) && !empty($a[8])){ // special_url
+                printf('<p><a href="./%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
+                   $site, $a[8], $a[4], $tag, $arch);
+            } else {
+                printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
+                   $site, $link, $a[4], $tag, $arch);
+            }
+
          }
-
       }
    }
-   return $isExtra;
+   return $notShown;
 }
 
 $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
-$main = Keys( array( 'gp4', 'debian' ));
-$extra = Keys( array( 'gp4sandbox', 'sandbox' ));
+$gentoo = Keys( array( 'gp4', 'gp4sandbox' ));
+$debian = Keys( array( 'debian', 'sandbox' )); // Debian isn't being updated, only show languages not on Gentoo
 
 foreach($Langs as $a){
-   $isExtra = PrintIncludedLanguages($main,$a,TRUE);
-   if ($isExtra){ PrintIncludedLanguages($extra,$a,$isExtra); }
+   $notShown = PrintIncludedLanguages($gentoo,$a,TRUE);
+   if ($notShown){ PrintIncludedLanguages($debian,$a,$notShown); }
 }
 ?>
 
