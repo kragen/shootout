@@ -64,22 +64,6 @@ href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbs
 href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-
-<tr>
-<td colspan="2">
-<p class="score"><br/>
-<strong>&nbsp;For Fun:</strong> <span class="smaller">Create your own Ranking!</span></p>
-<form class="score" method="get" action="./gp4/benchmark.php">
-<p><select name="test">
-<option selected="selected" value="all">- all benchmarks -</option>
-</select>
-<select name="lang">
-<option value="all">- all languages -</option>
-</select>
-<input type="submit" value="Show" title="Create your own Ranking"/>
-</p><br/></form>
-</td>
-</tr>
 </table>
 
 
