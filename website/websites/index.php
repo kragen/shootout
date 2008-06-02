@@ -50,24 +50,10 @@ href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbs
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
-<tr class="test">
-<td>
-<p><br/><a href="./gp4sandbox/"><strong>Extra languages</strong> timed on:</a></p>
-<h3><span class="sandbox">
-<a title="Extra languages on Gentoo : Intel&#174; Pentium&#174;"
-href="./gp4sandbox/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
-</td>
-<td>
-<p><br/><a href="./sandbox/"><strong>Extra languages</strong> timed on:</a></p>
-<h3><span class="sandbox">
-<a title="Extra languages on Debian : AMD&#8482; Sempron&#8482;"
-href="./sandbox/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
-</td>
-</tr>
 </table>
 
 
-<h5>Programming language measurements A to Z</h5><br/>
+<h5><br/>Programming language measurements A to Z</h5><br/>
 
 <?php // Don't use library functions, define what we need here
 
