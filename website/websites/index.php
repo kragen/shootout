@@ -124,8 +124,8 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
 $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
-$gentoo = Keys( array( 'gp4', 'gp4sandbox' ));
-$debian = Keys( array( 'debian', 'sandbox' )); // Debian isn't being updated, only show languages not on Gentoo
+$gentoo = Keys( array( 'gp4' ));
+$debian = Keys( array( 'debian' )); // Debian isn't being updated, only show languages not on Gentoo
 
 foreach($Langs as $a){
    $notShown = PrintIncludedLanguages($gentoo,$a,TRUE);
