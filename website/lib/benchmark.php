@@ -67,7 +67,7 @@ if ($T=='all'){
       
       if (isset($HTTP_GET_VARS['calc'])){ 
          $Action = strip_tags($HTTP_GET_VARS['calc']); 
-         if (($Action != 'Calculate') && (($Action != 'Reset')){ $S = 'Calculate'; }
+         if (($Action != 'Calculate') && ($Action != 'Reset')){ $S = 'Calculate'; }
       }
       else { $Action = 'Calculate'; }
 
