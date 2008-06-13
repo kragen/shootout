@@ -16,23 +16,23 @@ $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
 if (isset($HTTP_GET_VARS['test'])){
-   $T0 = $HTTP_GET_VARS['test'];
+   $T0 = strip_tags($HTTP_GET_VARS['test']);
    if (isset($Tests[$T0]) || $T0 == 'all'){ $T = $T0; }
    elseif (!isset($T)){ $T = 'nbody'; }
    }
 elseif (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['lang'])){ $L = $HTTP_GET_VARS['lang']; }
+if (isset($HTTP_GET_VARS['lang'])){ $L = strip_tags($HTTP_GET_VARS['lang']); }
 elseif (!isset($L)){ $L = 'all'; }
 
-if (isset($HTTP_GET_VARS['lang2'])){ $L2 = $HTTP_GET_VARS['lang2']; }
+if (isset($HTTP_GET_VARS['lang2'])){ $L2 = strip_tags($HTTP_GET_VARS['lang2']); }
 elseif (!isset($L2)){
    if ($L=='all'){ $L2 = $L; }
    else { $L2 = $Langs[$L][LANG_COMPARE]; }
 }
 
 $S = '';
-if (isset($HTTP_GET_VARS['id'])){ $I = $HTTP_GET_VARS['id']; }
+if (isset($HTTP_GET_VARS['id'])){ $I = strip_tags($HTTP_GET_VARS['id']); }
 else { $I = -1; }
 
 $MetaKeywords = '';
@@ -51,12 +51,12 @@ if ($T=='all'){
    if ($L=='all'){    // Scorecard
       $PageId = 'scorecard';
 
-      if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; }
+      if (isset($HTTP_GET_VARS['sort'])){ $S = strip_tags($HTTP_GET_VARS['sort']); }
       else { $S = 'mean'; }
 
       require_once(LIB_PATH.'lib_scorecard.php');
       
-      if (isset($HTTP_GET_VARS['calc'])){ $Action = $HTTP_GET_VARS['calc']; }
+      if (isset($HTTP_GET_VARS['calc'])){ $Action = strip_tags($HTTP_GET_VARS['calc']); }
       else { $Action = 'Calculate'; }
 
       $Title = 'Create your own Ranking';
