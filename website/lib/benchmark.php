@@ -65,7 +65,10 @@ if ($T=='all'){
 
       require_once(LIB_PATH.'lib_scorecard.php');
       
-      if (isset($HTTP_GET_VARS['calc'])){ $Action = strip_tags($HTTP_GET_VARS['calc']); }
+      if (isset($HTTP_GET_VARS['calc'])){ 
+         $Action = strip_tags($HTTP_GET_VARS['calc']); 
+         if (($Action != 'Calculate') && (($Action != 'Reset')){ $S = 'Calculate'; }
+      }
       else { $Action = 'Calculate'; }
 
       $Title = 'Create your own Ranking';
