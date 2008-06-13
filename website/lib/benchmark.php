@@ -22,17 +22,26 @@ if (isset($HTTP_GET_VARS['test'])){
    }
 elseif (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['lang'])){ $L = strip_tags($HTTP_GET_VARS['lang']); }
+if (isset($HTTP_GET_VARS['lang'])){ 
+   $L = strip_tags($HTTP_GET_VARS['lang']); 
+   if (!isset($Langs[$L]) && $L != 'all'){ $L = 'all'; }
+   }
 elseif (!isset($L)){ $L = 'all'; }
 
-if (isset($HTTP_GET_VARS['lang2'])){ $L2 = strip_tags($HTTP_GET_VARS['lang2']); }
+if (isset($HTTP_GET_VARS['lang2'])){ 
+   $L2 = strip_tags($HTTP_GET_VARS['lang2']);
+   if (!isset($Langs[$L2]) && $L2 != 'all'){ $L2 = $L; }
+   }
 elseif (!isset($L2)){
    if ($L=='all'){ $L2 = $L; }
    else { $L2 = $Langs[$L][LANG_COMPARE]; }
 }
 
 $S = '';
-if (isset($HTTP_GET_VARS['id'])){ $I = strip_tags($HTTP_GET_VARS['id']); }
+if (isset($HTTP_GET_VARS['id'])){ 
+   $I = strip_tags($HTTP_GET_VARS['id']); 
+   if (!is_numeric($I)){ $I = -1; }
+   }
 else { $I = -1; }
 
 $MetaKeywords = '';
@@ -110,7 +119,10 @@ if ($T=='all'){
    
       $PageId = 'benchmark';
       
-      if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; }
+      if (isset($HTTP_GET_VARS['sort'])){ 
+         $S = strip_tags($HTTP_GET_VARS['sort']); 
+         if (($S != 'fullcpu') && (($S != 'kb') && ($S != 'gz'))){ $S = 'fullcpu'; }
+      }
       else { $S = 'fullcpu'; }
       
       $TestName = $Tests[$T][TEST_NAME];
