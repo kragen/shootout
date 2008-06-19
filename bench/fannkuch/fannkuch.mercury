@@ -15,7 +15,6 @@
 
 :- implementation.
 :- import_module solutions.
-:- import_module univ.
 :- import_module array.
 :- import_module list.
 :- import_module int.
@@ -43,33 +42,31 @@ main(!IO) :-
 	
 	P = array(L),
 
-	io.set_globals(univ({0, 0}), !IO),
 	Permutations = (pred(P1::array_uo) is multi :- permute(P, P1)),
-	Calculate = (pred(P2::in, !.IO::di, !:IO::uo) is det :- 
+	Calculate = (pred(P2::array_ui, 
+			{IO0, FlipCount0, SeqCount0}::di, 
+			{IO1, FlipCount, SeqCount}::uo) is det :- 
 	(
 		P3 = array.copy(P2),
-		flip_array(P3,FlipCount),
-		get_globals(OldFlipCount, OldSeqCount, !IO),
+		flip_array(P3,FlipCount1),
 		(
-			FlipCount > OldFlipCount -> 
-			NewFlipCount = FlipCount, 
-			set_globals(NewFlipCount, OldSeqCount, !IO) 
+			FlipCount1 > FlipCount0 -> 
+			FlipCount = unsafe_promise_unique(FlipCount1)
 		; 
-			NewFlipCount = OldFlipCount
+			FlipCount = FlipCount0
 		),
 		(
-			OldSeqCount < 30 -> 
-			print_permutation(P2, !IO),
-			set_globals(NewFlipCount, OldSeqCount + 1, !IO) 
+			SeqCount0 < 30 -> 
+			print_permutation(P2, IO0, IO1),
+			SeqCount = SeqCount0 + 1 
 		;
-			true
-		)			
+			IO1 = IO0,
+			SeqCount = SeqCount0
+		)
 	)),
+	unsorted_aggregate( Permutations, Calculate, {!.IO, 0, 0}, {!:IO, MaxCount, _}),
 	
-	unsorted_aggregate( Permutations, Calculate, !IO),
-	get_globals(MaxCount, _, !IO),
-	
-	io.format("Pfannkuchen(%d) = %d\n", [i(N), i(MaxCount)], !IO)
+	io.format("Pfannkuchen(%d) = %d\n", [i(N), i(MaxCount)], !.IO, !:IO)
 ).
 
 % ------------------------------- %
@@ -89,23 +86,6 @@ seq_interval(N, M, Result) :-
 	;
 		seq_interval(N + 1, M, Result)
 	)
-).
-
-% ------------- %
-
-:- pred set_globals(int::in, int::in, io::di, io::uo) is det.
-
-set_globals(FlipCount, PrintCount, !IO) :- 
-(
-	io.set_globals(univ({FlipCount, PrintCount}), !IO) 
-).
-
-:- pred get_globals(int::out, int::out, io::di, io::uo) is det.
-
-get_globals(FlipCount, PrintCount, !IO) :- 
-(
-	io.get_globals(OldUniv, !IO),
-	det_univ_to_type(OldUniv,{FlipCount, PrintCount})
 ).
 
 % ------------- %
@@ -207,7 +187,7 @@ reverse_n_to_m(N, M, Arr0, Arr) :-
 
 % ------------- %
 
-:- pred flip_array(array(int)::array_di, int::out) is det.
+:- pred flip_array(array(int)::array_di, int::uo) is det.
 
 flip_array(Arr, Count) :-
 (

@@ -1,0 +1,209 @@
+% ------------------------------------------------------------------------------
+% The Computer Language Benchmarks Game
+% http://shootout.alioth.debian.org/
+%
+% Contributed by Anthony Borla
+% Modified for Mercury by Glendon Holst
+% ----------------------------------------------------------------------
+
+:- module knucleotide.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is cc_multi.
+
+% ----------------------------------------------------------------------
+
+:- implementation.
+
+:- import_module solutions.
+:- import_module map.
+:- import_module pair.
+:- import_module assoc_list.
+:- import_module list.
+:- import_module int.
+:- import_module bool.
+:- import_module string.
+:- import_module float.
+:- import_module exception.
+
+
+% ----------------------------------------------------------------------
+
+:- type count_table == map(string, int).
+:- type freq_table == map(string, float).
+
+% ------------- %
+
+main(!IO) :-
+   load_sequence(Seq, !IO),
+
+   MemberLength = (pred(E::out) is nondet :- list.member(E, [1, 2])),
+   PrintFreq = (pred(E::in, !.IO::di, !:IO::uo) is det :- 
+   (
+      print_frequencies(Seq, E, !IO), 
+      io.nl(!IO)
+   )),
+   unsorted_aggregate(MemberLength, PrintFreq, !IO),
+
+   Fragments = ["GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT"],
+
+   MemberFragments = (pred(E::out) is nondet :- list.member(E, Fragments)),
+   PrintCounts = (pred(E::in, !.IO::di, !:IO::uo) is det :- (print_count(Seq, E, !IO))),
+   unsorted_aggregate(MemberFragments, PrintCounts, !IO).
+
+% ------------------------------- %
+
+:- pred compare_freqs(pair(string, float)::in, pair(string, float)::in, 
+      comparison_result::uo) is det.
+
+compare_freqs(KV1, KV2, R) :- 
+   KV1 = K1-V1, KV2 = K2-V2,
+(
+   V2 < V1 ->
+   R = (<)
+;
+   V1 = V2 ->
+   compare(R, K2, K1)
+;
+   R = (>)
+).  
+
+% ------------- %
+
+:- pred print_frequencies(string::in, int::in, io::di, io::uo) is det.
+
+print_frequencies(Seq, KeyLen, !IO) :-
+   generate_counts(Seq, KeyLen, CountTable0),
+   Sum = (pred(V::in, Acc0::in, Acc::out) is det :- (Acc = Acc0 + V)),
+   list.foldl(Sum, map.values(CountTable0), 0, SumCounts),
+   Percentage = (pred(_::in, V::in, W::out) is det :- 
+      (W = 100.0 * (float(V) / float(SumCounts)))),
+   map.map_values(Percentage, CountTable0, CountTable1),
+   map.to_assoc_list(CountTable1, FreqTable0),
+
+   list.sort(compare_freqs, FreqTable0, FreqTable),
+
+   print_freq_table_(FreqTable, !IO).
+
+% ------------- %
+
+:- pred print_freq_table_(assoc_list(string, float)::in, io::di, io::uo) is det.
+
+print_freq_table_(FreqTable, !IO) :-
+(
+   FreqTable = [K-V | FTs] ->
+   io.format("%s %.3f\n", [s(K), f(V)], !IO), io.flush_output(!IO),
+   print_freq_table_(FTs, !IO)
+;
+   true
+).
+
+% ------------------------------- %
+
+:- pred print_count(string::in, string::in, io::di, io::uo) is det.
+
+print_count(Seq, Fragment, !IO) :-
+   generate_counts(Seq, string.length(Fragment), CountTable),
+   (
+      map.search(CountTable, Fragment, Count0) ->
+      Count = Count0
+   ;
+      Count = 0
+   ),
+   io.format("%d\t%s\n", [i(Count), s(Fragment)], !IO), io.flush_output(!IO).
+
+% ------------- %
+
+:- pred generate_counts(string::in, int::in, count_table::out) is det.
+
+generate_counts(Seq, Length, CountTable) :-
+   mct_i_loop_(0, string.length(Seq), Length, Seq, map.init, CountTable).
+
+% ------------------------------- %
+
+:- pred mct_i_loop_(int, int, int, string, count_table, count_table) is det.
+:- mode mct_i_loop_(in, in, in, in, in, out) is det.
+
+mct_i_loop_(Start, Last, Length, Seq, CountTable0, CountTable) :-
+(
+   Start < Length ->
+   mct_j_loop_(Start, Last, Length, Seq, CountTable0, CountTable1),
+   mct_i_loop_(Start + 1, Last, Length, Seq, CountTable1, CountTable)
+;
+   CountTable = CountTable0
+).
+
+% ------------- %
+
+:- pred mct_j_loop_(int, int, int, string, count_table, count_table) is det.
+:- mode mct_j_loop_(in, in, in, in, in, out) is det.
+
+mct_j_loop_(Start, Last, Length, Seq, CountTable0, CountTable) :-
+   End = Start + Length,
+(
+   End =< Last ->
+   Key = string.unsafe_substring(Seq, Start, Length),
+   (
+      map.search(CountTable0, Key, Value) ->
+      map.det_update(CountTable0, Key, Value + 1,  CountTable1)
+   ;
+      map.det_insert(CountTable0, Key, 1, CountTable1)
+   ),
+   mct_j_loop_(End, Last, Length, Seq, CountTable1, CountTable)
+;
+   CountTable = CountTable0
+).
+
+% ------------------------------- %
+
+:- pred load_sequence(string::out, io::di, io::uo) is det.
+
+load_sequence(Seq, !IO) :- load_sequence_(no, "", Seq, !IO).
+
+% ------------- %
+
+:- pred load_sequence_(bool::in, string::in, string::out, io::di, io::uo) is det.
+
+load_sequence_(Loading, Seq, RetSeq, !IO) :-
+   io.read_line_as_string(IOResult, !IO),
+( 
+   IOResult = ok(LineIn) ->
+   (
+      Loading = yes ->
+      process_sequence(string.chomp(LineIn), Seq, RetSeq, !IO)
+   ;
+      ignore_sequence(string.chomp(LineIn), Seq, RetSeq, !IO)
+   )
+;
+   RetSeq = Seq
+).
+
+% ------------- %
+
+:- pred ignore_sequence(string::in, string::in, string::out, io::di, io::uo) is det. 
+
+ignore_sequence(Line, Seq, RetSeq, !IO) :-
+(
+   string.prefix(Line, ">THREE") ->
+   load_sequence_(yes, Seq, RetSeq, !IO)
+;
+   load_sequence_(no, Seq, RetSeq, !IO)
+). 
+
+% ------------- %
+
+:- pred process_sequence(string::in, string::in, string::out, io::di, io::uo) is det.
+
+process_sequence(Line, Seq, RetSeq, !IO) :-
+(
+   string.prefix(Line, ">") ->
+   RetSeq = Seq
+;
+   string.prefix(Line, ";") ->
+   load_sequence_(yes, Seq, RetSeq, !IO)
+;
+   load_sequence_(yes, Seq ++ string.to_upper(Line), RetSeq, !IO)
+).
+
+% ------------------------------- %

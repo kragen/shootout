@@ -1,0 +1,209 @@
+<span class="hl slc">% ------------------------------------------------------------------------------</span>
+<span class="hl slc">% The Computer Language Benchmarks Game</span>
+<span class="hl slc">% http://shootout.alioth.debian.org/</span>
+<span class="hl slc">%</span>
+<span class="hl slc">% Contributed by Anthony Borla</span>
+<span class="hl slc">% Modified for Mercury by Glendon Holst</span>
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+<span class="hl sym">:-</span> module knucleotide.
+<span class="hl sym">:-</span> interface.
+<span class="hl sym">:-</span> import_module io.
+
+<span class="hl sym">:-</span> pred main<span class="hl sym">(</span>io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> cc_multi.
+
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+<span class="hl sym">:-</span> implementation.
+
+<span class="hl sym">:-</span> import_module solutions.
+<span class="hl sym">:-</span> import_module map.
+<span class="hl sym">:-</span> import_module pair.
+<span class="hl sym">:-</span> import_module assoc_list.
+<span class="hl sym">:-</span> import_module list.
+<span class="hl sym">:-</span> import_module int.
+<span class="hl sym">:-</span> import_module bool.
+<span class="hl sym">:-</span> import_module string.
+<span class="hl sym">:-</span> import_module <span class="hl kwb">float</span>.
+<span class="hl sym">:-</span> import_module exception.
+
+
+<span class="hl slc">% ----------------------------------------------------------------------</span>
+
+<span class="hl sym">:-</span> type count_table <span class="hl sym">==</span> map<span class="hl sym">(</span>string<span class="hl sym">,</span> int<span class="hl sym">)</span>.
+<span class="hl sym">:-</span> type freq_table <span class="hl sym">==</span> map<span class="hl sym">(</span>string<span class="hl sym">,</span> <span class="hl kwb">float</span><span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+main<span class="hl sym">(!</span>IO<span class="hl sym">) :-</span>
+   load_sequence<span class="hl sym">(</span>Seq<span class="hl sym">, !</span>IO<span class="hl sym">),</span>
+
+   MemberLength <span class="hl sym">= (</span>pred<span class="hl sym">(</span>E<span class="hl sym">::</span>out<span class="hl sym">)</span> <span class="hl kwa">is</span> nondet <span class="hl sym">:-</span> list.member<span class="hl sym">(</span>E<span class="hl sym">, [</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">])),</span>
+   PrintFreq <span class="hl sym">= (</span>pred<span class="hl sym">(</span>E<span class="hl sym">::</span>in<span class="hl sym">, !</span>.IO<span class="hl sym">::</span>di<span class="hl sym">, !:</span>IO<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det <span class="hl sym">:-</span>
+   <span class="hl sym">(</span>
+      print_frequencies<span class="hl sym">(</span>Seq<span class="hl sym">,</span> E<span class="hl sym">, !</span>IO<span class="hl sym">),</span>
+      io.<span class="hl kwa">nl</span><span class="hl sym">(!</span>IO<span class="hl sym">)</span>
+   <span class="hl sym">)),</span>
+   unsorted_aggregate<span class="hl sym">(</span>MemberLength<span class="hl sym">,</span> PrintFreq<span class="hl sym">, !</span>IO<span class="hl sym">),</span>
+
+   Fragments <span class="hl sym">= [</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">],</span>
+
+   MemberFragments <span class="hl sym">= (</span>pred<span class="hl sym">(</span>E<span class="hl sym">::</span>out<span class="hl sym">)</span> <span class="hl kwa">is</span> nondet <span class="hl sym">:-</span> list.member<span class="hl sym">(</span>E<span class="hl sym">,</span> Fragments<span class="hl sym">)),</span>
+   PrintCounts <span class="hl sym">= (</span>pred<span class="hl sym">(</span>E<span class="hl sym">::</span>in<span class="hl sym">, !</span>.IO<span class="hl sym">::</span>di<span class="hl sym">, !:</span>IO<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det <span class="hl sym">:- (</span>print_count<span class="hl sym">(</span>Seq<span class="hl sym">,</span> E<span class="hl sym">, !</span>IO<span class="hl sym">))),</span>
+   unsorted_aggregate<span class="hl sym">(</span>MemberFragments<span class="hl sym">,</span> PrintCounts<span class="hl sym">, !</span>IO<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
+
+<span class="hl sym">:-</span> pred compare_freqs<span class="hl sym">(</span>pair<span class="hl sym">(</span>string<span class="hl sym">,</span> <span class="hl kwb">float</span><span class="hl sym">)::</span>in<span class="hl sym">,</span> pair<span class="hl sym">(</span>string<span class="hl sym">,</span> <span class="hl kwb">float</span><span class="hl sym">)::</span>in<span class="hl sym">,</span>
+      comparison_result<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+compare_freqs<span class="hl sym">(</span>KV1<span class="hl sym">,</span> KV2<span class="hl sym">,</span> R<span class="hl sym">) :-</span>
+   KV1 <span class="hl sym">=</span> K1<span class="hl sym">-</span>V1<span class="hl sym">,</span> KV2 <span class="hl sym">=</span> K2<span class="hl sym">-</span>V2<span class="hl sym">,</span>
+<span class="hl sym">(</span>
+   V2 <span class="hl sym">&lt;</span> V1 <span class="hl sym">-&gt;</span>
+   R <span class="hl sym">= (&lt;)</span>
+<span class="hl sym">;</span>
+   V1 <span class="hl sym">=</span> V2 <span class="hl sym">-&gt;</span>
+   compare<span class="hl sym">(</span>R<span class="hl sym">,</span> K2<span class="hl sym">,</span> K1<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   R <span class="hl sym">= (&gt;)</span>
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred print_frequencies<span class="hl sym">(</span>string<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+print_frequencies<span class="hl sym">(</span>Seq<span class="hl sym">,</span> KeyLen<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span>
+   generate_counts<span class="hl sym">(</span>Seq<span class="hl sym">,</span> KeyLen<span class="hl sym">,</span> CountTable0<span class="hl sym">),</span>
+   Sum <span class="hl sym">= (</span>pred<span class="hl sym">(</span>V<span class="hl sym">::</span>in<span class="hl sym">,</span> Acc0<span class="hl sym">::</span>in<span class="hl sym">,</span> Acc<span class="hl sym">::</span>out<span class="hl sym">)</span> <span class="hl kwa">is</span> det <span class="hl sym">:- (</span>Acc <span class="hl sym">=</span> Acc0 <span class="hl sym">+</span> V<span class="hl sym">)),</span>
+   list.foldl<span class="hl sym">(</span>Sum<span class="hl sym">,</span> map.values<span class="hl sym">(</span>CountTable0<span class="hl sym">),</span> <span class="hl num">0</span><span class="hl sym">,</span> SumCounts<span class="hl sym">),</span>
+   Percentage <span class="hl sym">= (</span>pred<span class="hl sym">(</span>_<span class="hl sym">::</span>in<span class="hl sym">,</span> V<span class="hl sym">::</span>in<span class="hl sym">,</span> W<span class="hl sym">::</span>out<span class="hl sym">)</span> <span class="hl kwa">is</span> det <span class="hl sym">:-</span>
+      <span class="hl sym">(</span>W <span class="hl sym">=</span> <span class="hl num">100.0</span> <span class="hl sym">* (</span><span class="hl kwb">float</span><span class="hl sym">(</span>V<span class="hl sym">) /</span> <span class="hl kwb">float</span><span class="hl sym">(</span>SumCounts<span class="hl sym">)))),</span>
+   map.map_values<span class="hl sym">(</span>Percentage<span class="hl sym">,</span> CountTable0<span class="hl sym">,</span> CountTable1<span class="hl sym">),</span>
+   map.to_assoc_list<span class="hl sym">(</span>CountTable1<span class="hl sym">,</span> FreqTable0<span class="hl sym">),</span>
+
+   list.sort<span class="hl sym">(</span>compare_freqs<span class="hl sym">,</span> FreqTable0<span class="hl sym">,</span> FreqTable<span class="hl sym">),</span>
+
+   print_freq_table_<span class="hl sym">(</span>FreqTable<span class="hl sym">, !</span>IO<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred print_freq_table_<span class="hl sym">(</span>assoc_list<span class="hl sym">(</span>string<span class="hl sym">,</span> <span class="hl kwb">float</span><span class="hl sym">)::</span>in<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+print_freq_table_<span class="hl sym">(</span>FreqTable<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   FreqTable <span class="hl sym">= [</span>K<span class="hl sym">-</span>V <span class="hl sym">|</span> FTs<span class="hl sym">] -&gt;</span>
+   io.format<span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">, [</span>s<span class="hl sym">(</span>K<span class="hl sym">),</span> f<span class="hl sym">(</span>V<span class="hl sym">)], !</span>IO<span class="hl sym">),</span> io.flush_output<span class="hl sym">(!</span>IO<span class="hl sym">),</span>
+   print_freq_table_<span class="hl sym">(</span>FTs<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   <span class="hl kwa">true</span>
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
+
+<span class="hl sym">:-</span> pred print_count<span class="hl sym">(</span>string<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>in<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+print_count<span class="hl sym">(</span>Seq<span class="hl sym">,</span> Fragment<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span>
+   generate_counts<span class="hl sym">(</span>Seq<span class="hl sym">,</span> string.length<span class="hl sym">(</span>Fragment<span class="hl sym">),</span> CountTable<span class="hl sym">),</span>
+   <span class="hl sym">(</span>
+      map.search<span class="hl sym">(</span>CountTable<span class="hl sym">,</span> Fragment<span class="hl sym">,</span> Count0<span class="hl sym">) -&gt;</span>
+      Count <span class="hl sym">=</span> Count0
+   <span class="hl sym">;</span>
+      Count <span class="hl sym">=</span> <span class="hl num">0</span>
+   <span class="hl sym">),</span>
+   io.format<span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">, [</span>i<span class="hl sym">(</span>Count<span class="hl sym">),</span> s<span class="hl sym">(</span>Fragment<span class="hl sym">)], !</span>IO<span class="hl sym">),</span> io.flush_output<span class="hl sym">(!</span>IO<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred generate_counts<span class="hl sym">(</span>string<span class="hl sym">::</span>in<span class="hl sym">,</span> int<span class="hl sym">::</span>in<span class="hl sym">,</span> count_table<span class="hl sym">::</span>out<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+generate_counts<span class="hl sym">(</span>Seq<span class="hl sym">,</span> Length<span class="hl sym">,</span> CountTable<span class="hl sym">) :-</span>
+   mct_i_loop_<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> string.length<span class="hl sym">(</span>Seq<span class="hl sym">),</span> Length<span class="hl sym">,</span> Seq<span class="hl sym">,</span> map.init<span class="hl sym">,</span> CountTable<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
+
+<span class="hl sym">:-</span> pred mct_i_loop_<span class="hl sym">(</span>int<span class="hl sym">,</span> int<span class="hl sym">,</span> int<span class="hl sym">,</span> string<span class="hl sym">,</span> count_table<span class="hl sym">,</span> count_table<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+<span class="hl sym">:-</span> mode mct_i_loop_<span class="hl sym">(</span>in<span class="hl sym">,</span> in<span class="hl sym">,</span> in<span class="hl sym">,</span> in<span class="hl sym">,</span> in<span class="hl sym">,</span> out<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+mct_i_loop_<span class="hl sym">(</span>Start<span class="hl sym">,</span> Last<span class="hl sym">,</span> Length<span class="hl sym">,</span> Seq<span class="hl sym">,</span> CountTable0<span class="hl sym">,</span> CountTable<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   Start <span class="hl sym">&lt;</span> Length <span class="hl sym">-&gt;</span>
+   mct_j_loop_<span class="hl sym">(</span>Start<span class="hl sym">,</span> Last<span class="hl sym">,</span> Length<span class="hl sym">,</span> Seq<span class="hl sym">,</span> CountTable0<span class="hl sym">,</span> CountTable1<span class="hl sym">),</span>
+   mct_i_loop_<span class="hl sym">(</span>Start <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> Last<span class="hl sym">,</span> Length<span class="hl sym">,</span> Seq<span class="hl sym">,</span> CountTable1<span class="hl sym">,</span> CountTable<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   CountTable <span class="hl sym">=</span> CountTable0
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred mct_j_loop_<span class="hl sym">(</span>int<span class="hl sym">,</span> int<span class="hl sym">,</span> int<span class="hl sym">,</span> string<span class="hl sym">,</span> count_table<span class="hl sym">,</span> count_table<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+<span class="hl sym">:-</span> mode mct_j_loop_<span class="hl sym">(</span>in<span class="hl sym">,</span> in<span class="hl sym">,</span> in<span class="hl sym">,</span> in<span class="hl sym">,</span> in<span class="hl sym">,</span> out<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+mct_j_loop_<span class="hl sym">(</span>Start<span class="hl sym">,</span> Last<span class="hl sym">,</span> Length<span class="hl sym">,</span> Seq<span class="hl sym">,</span> CountTable0<span class="hl sym">,</span> CountTable<span class="hl sym">) :-</span>
+   End <span class="hl sym">=</span> Start <span class="hl sym">+</span> Length<span class="hl sym">,</span>
+<span class="hl sym">(</span>
+   End <span class="hl sym">=&lt;</span> Last <span class="hl sym">-&gt;</span>
+   Key <span class="hl sym">=</span> string.unsafe_substring<span class="hl sym">(</span>Seq<span class="hl sym">,</span> Start<span class="hl sym">,</span> Length<span class="hl sym">),</span>
+   <span class="hl sym">(</span>
+      map.search<span class="hl sym">(</span>CountTable0<span class="hl sym">,</span> Key<span class="hl sym">,</span> Value<span class="hl sym">) -&gt;</span>
+      map.det_update<span class="hl sym">(</span>CountTable0<span class="hl sym">,</span> Key<span class="hl sym">,</span> Value <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span>  CountTable1<span class="hl sym">)</span>
+   <span class="hl sym">;</span>
+      map.det_insert<span class="hl sym">(</span>CountTable0<span class="hl sym">,</span> Key<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> CountTable1<span class="hl sym">)</span>
+   <span class="hl sym">),</span>
+   mct_j_loop_<span class="hl sym">(</span>End<span class="hl sym">,</span> Last<span class="hl sym">,</span> Length<span class="hl sym">,</span> Seq<span class="hl sym">,</span> CountTable1<span class="hl sym">,</span> CountTable<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   CountTable <span class="hl sym">=</span> CountTable0
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
+
+<span class="hl sym">:-</span> pred load_sequence<span class="hl sym">(</span>string<span class="hl sym">::</span>out<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+load_sequence<span class="hl sym">(</span>Seq<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span> load_sequence_<span class="hl sym">(</span>no<span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">,</span> Seq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred load_sequence_<span class="hl sym">(</span>bool<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>out<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+load_sequence_<span class="hl sym">(</span>Loading<span class="hl sym">,</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span>
+   io.read_line_as_string<span class="hl sym">(</span>IOResult<span class="hl sym">, !</span>IO<span class="hl sym">),</span>
+<span class="hl sym">(</span>
+   IOResult <span class="hl sym">=</span> ok<span class="hl sym">(</span>LineIn<span class="hl sym">) -&gt;</span>
+   <span class="hl sym">(</span>
+      Loading <span class="hl sym">=</span> yes <span class="hl sym">-&gt;</span>
+      process_sequence<span class="hl sym">(</span>string.chomp<span class="hl sym">(</span>LineIn<span class="hl sym">),</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+   <span class="hl sym">;</span>
+      ignore_sequence<span class="hl sym">(</span>string.chomp<span class="hl sym">(</span>LineIn<span class="hl sym">),</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+   <span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   RetSeq <span class="hl sym">=</span> Seq
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred ignore_sequence<span class="hl sym">(</span>string<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>out<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+ignore_sequence<span class="hl sym">(</span>Line<span class="hl sym">,</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   string.prefix<span class="hl sym">(</span>Line<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">) -&gt;</span>
+   load_sequence_<span class="hl sym">(</span>yes<span class="hl sym">,</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   load_sequence_<span class="hl sym">(</span>no<span class="hl sym">,</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------- %</span>
+
+<span class="hl sym">:-</span> pred process_sequence<span class="hl sym">(</span>string<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>in<span class="hl sym">,</span> string<span class="hl sym">::</span>out<span class="hl sym">,</span> io<span class="hl sym">::</span>di<span class="hl sym">,</span> io<span class="hl sym">::</span>uo<span class="hl sym">)</span> <span class="hl kwa">is</span> det.
+
+process_sequence<span class="hl sym">(</span>Line<span class="hl sym">,</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">) :-</span>
+<span class="hl sym">(</span>
+   string.prefix<span class="hl sym">(</span>Line<span class="hl sym">,</span> <span class="hl str">&quot;&gt;&quot;</span><span class="hl sym">) -&gt;</span>
+   RetSeq <span class="hl sym">=</span> Seq
+<span class="hl sym">;</span>
+   string.prefix<span class="hl sym">(</span>Line<span class="hl sym">,</span> <span class="hl str">&quot;;&quot;</span><span class="hl sym">) -&gt;</span>
+   load_sequence_<span class="hl sym">(</span>yes<span class="hl sym">,</span> Seq<span class="hl sym">,</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+<span class="hl sym">;</span>
+   load_sequence_<span class="hl sym">(</span>yes<span class="hl sym">,</span> Seq <span class="hl sym">++</span> string.to_upper<span class="hl sym">(</span>Line<span class="hl sym">),</span> RetSeq<span class="hl sym">, !</span>IO<span class="hl sym">)</span>
+<span class="hl sym">)</span>.
+
+<span class="hl slc">% ------------------------------- %</span>
