@@ -28,13 +28,10 @@
  for {set i $ring_size} {$i >1} {incr i -1} {
     set cnext $c
     set c [thread::cond create]
-    set tnext [thread::create [string map [list %main% [thread::id] 
-       %i% $i %m% $m %c% $c %cnext% $cnext %n% $tnext %do% run] $script]]
+    set tnext [thread::create [string map [list %main% [thread::id] %i% $i %m% $m %c% $c %cnext% $cnext %n% $tnext %do% run] $script]]
  }
  #close the ring
- set script [string map [list %main% [thread::id] 
-    %i% 1 %m% $m %c% $c1 %cnext% $c %n% $tnext %do% 
-    "thread::send -async [thread::id] {set ::start 1};run"] $script]
+ set script [string map [list %main% [thread::id] %i% 1 %m% $m %c% $c1 %cnext% $c %n% $tnext %do% "thread::send -async [thread::id] {set ::start 1};run"] $script]
  thread::send -async $t1 $script
  vwait ::start
  after 5
