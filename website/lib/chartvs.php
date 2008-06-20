@@ -16,14 +16,33 @@ $Langs = ReadUniqueArrays('lang.csv',$Incl);
 $Tests = ReadUniqueArrays('test.csv',$Incl);
 uasort($Tests, 'CompareTestName');
 
-if (isset($HTTP_GET_VARS['lang'])){ $L = $HTTP_GET_VARS['lang']; } 
-else { $L = 'all'; }
 
-if (isset($HTTP_GET_VARS['lang2'])){ $L2 = $HTTP_GET_VARS['lang2']; } 
-else { $L2 = $L; }
+if (isset($HTTP_GET_VARS['lang'])
+      && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= 16)){
+   $X = $HTTP_GET_VARS['lang'];
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L = $X; }
+}
+if (!isset($L)){ $L = 'all'; }
 
-if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'cpu'; }
+
+if (isset($HTTP_GET_VARS['lang2'])
+      && strlen($HTTP_GET_VARS['lang2']) && (strlen($HTTP_GET_VARS['lang2']) <= 16)){
+   $X = $HTTP_GET_VARS['lang2'];
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L2 = $X; }
+}
+if (!isset($L2)){
+   if ($L=='all'){ $L2 = $L; }
+   else { $L2 = $Langs[$L][LANG_COMPARE]; }
+}
+
+
+if (isset($HTTP_GET_VARS['sort'])
+      && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
+   $X = $HTTP_GET_VARS['sort'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz')){ $S = $X; }
+}
+if (!isset($S)){ $S = 'fullcpu'; }
+
 
 $ShortName = $Langs[$L][LANG_FULL];
 $ShortName2 = $Langs[$L2][LANG_FULL];

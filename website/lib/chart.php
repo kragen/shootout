@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2008
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -12,13 +12,20 @@ require_once(LIB_PATH.'lib_common.php');
 list($Incl,$Excl) = ReadIncludeExclude();
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 
-if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
-else { $T = 'ackermann'; }
+if (isset($HTTP_GET_VARS['test'])
+      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= 16)){
+   $X = $HTTP_GET_VARS['test'];
+   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
+}
+if (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'cpu'; }
 
-if (($T==STARTUP)&&($S=='cpu')){ $S = 'fullcpu'; }
+if (isset($HTTP_GET_VARS['sort'])
+      && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
+   $X = $HTTP_GET_VARS['sort'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz')){ $S = $X; }
+}
+if (!isset($S)){ $S = 'fullcpu'; }
 
 
 // FILTER & SORT DATA ////////////////////////////////////////
