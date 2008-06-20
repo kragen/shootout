@@ -15,34 +15,40 @@ uasort($Tests, 'CompareTestName');
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
-if (isset($HTTP_GET_VARS['test'])){
-   $T0 = strip_tags($HTTP_GET_VARS['test']);
-   if (isset($Tests[$T0]) || $T0 == 'all'){ $T = $T0; }
-   elseif (!isset($T)){ $T = 'nbody'; }
-   }
-elseif (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['lang'])){ 
-   $L = strip_tags($HTTP_GET_VARS['lang']); 
-   if (!isset($Langs[$L]) && $L != 'all'){ $L = 'all'; }
-   }
-elseif (!isset($L)){ $L = 'all'; }
+if (isset($HTTP_GET_VARS['test']) 
+      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= 16)){
+   $X = $HTTP_GET_VARS['test'];
+   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
+}
+if (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['lang2'])){ 
-   $L2 = strip_tags($HTTP_GET_VARS['lang2']);
-   if (!isset($Langs[$L2]) && $L2 != 'all'){ $L2 = $L; }
-   }
-elseif (!isset($L2)){
+
+if (isset($HTTP_GET_VARS['lang'])
+      && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= 16)){
+   $X = $HTTP_GET_VARS['lang'];
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L = $X; }
+}
+if (!isset($L)){ $L = 'all'; }
+
+
+if (isset($HTTP_GET_VARS['lang2'])
+      && strlen($HTTP_GET_VARS['lang2']) && (strlen($HTTP_GET_VARS['lang2']) <= 16)){
+   $X = $HTTP_GET_VARS['lang2'];
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L2 = $X; }
+}
+if (!isset($L2)){
    if ($L=='all'){ $L2 = $L; }
    else { $L2 = $Langs[$L][LANG_COMPARE]; }
 }
 
-$S = '';
-if (isset($HTTP_GET_VARS['id'])){ 
-   $I = strip_tags($HTTP_GET_VARS['id']); 
-   if (!is_numeric($I)){ $I = -1; }
-   }
-else { $I = -1; }
+
+if (isset($HTTP_GET_VARS['id']) && strlen($HTTP_GET_VARS['id']) == 1){
+   $X = $HTTP_GET_VARS['id'];
+   if (ereg("^[0-9]+$",$X)){ $I = $X; }
+}
+if (!isset($I)){ $I = -1; }
+
 
 $MetaKeywords = '';
 
@@ -59,17 +65,18 @@ $Body = & new Template(LIB_PATH);
 if ($T=='all'){
    if ($L=='all'){    // Scorecard
       $PageId = 'scorecard';
-
-      if (isset($HTTP_GET_VARS['sort'])){ $S = strip_tags($HTTP_GET_VARS['sort']); }
-      else { $S = 'mean'; }
+      $S = 'mean';
 
       require_once(LIB_PATH.'lib_scorecard.php');
-      
-      if (isset($HTTP_GET_VARS['calc'])){ 
-         $Action = strip_tags($HTTP_GET_VARS['calc']); 
-         if (($Action != 'Calculate') && ($Action != 'Reset')){ $S = 'Calculate'; }
+
+
+      if (isset($HTTP_GET_VARS['calc'])
+            && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
+         $X = $HTTP_GET_VARS['calc'];
+         if (ereg("^[a-z]+$",$X) && ($X == 'reset')){ $Action = $X; }
       }
-      else { $Action = 'Calculate'; }
+      if (!isset($Action)){ $Action = 'calculate'; }
+
 
       $Title = 'Create your own Ranking';
       $TemplateName = 'scorecard.tpl.php';
@@ -84,6 +91,7 @@ if ($T=='all'){
 
    } else {           // Head to Head
 
+      $S = '';
       $PageId = 'headtohead';
       require_once(LIB_PATH.'lib_headtohead.php');
       $LangName = $Langs[$L][LANG_FULL];
@@ -121,13 +129,16 @@ if ($T=='all'){
    } elseif ($L=='all'){ // Benchmark
    
       $PageId = 'benchmark';
+
       
-      if (isset($HTTP_GET_VARS['sort'])){ 
-         $S = strip_tags($HTTP_GET_VARS['sort']); 
-         if (($S != 'fullcpu') && (($S != 'kb') && ($S != 'gz'))){ $S = 'fullcpu'; }
+      if (isset($HTTP_GET_VARS['sort'])
+            && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
+         $X = $HTTP_GET_VARS['sort'];
+         if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz')){ $S = $X; }
       }
-      else { $S = 'fullcpu'; }
-      
+      if (!isset($S)){ $S = 'fullcpu'; }
+
+
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark';
       $TemplateName = 'benchmark.tpl.php';
@@ -140,6 +151,7 @@ if ($T=='all'){
 
    } else {              // Program
    
+      $S = '';
       $PageId = 'program';
       $D = ProgramData(DATA_PATH.'data.csv',$T,$L,$I,$Langs,$Incl,$Excl);
       if (sizeof($D)>0){ $I = $D[DATA_ID]; }

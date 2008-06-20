@@ -55,8 +55,8 @@ foreach($score as $k => $v){
 <table>
 <colgroup span="2" class="txt"></colgroup>
 <tr>
-<td><input type="submit" name="calc" value="Calculate" /></td>
-<td><input type="submit" name="calc" value="Reset" /></td>
+<td><input type="submit" name="calc" value="calculate" /></td>
+<td><input type="submit" name="calc" value="reset" /></td>
 </tr>
 
 <tr><th colspan="2">multipliers</th></tr>
@@ -88,8 +88,8 @@ foreach($Tests as $t){
 ?>
 
 <tr>
-<td><p><input type="submit" name="calc" value="Calculate" /></p></td>
-<td><p><input type="submit" name="calc" value="Reset" /></p></td>
+<td><p><input type="submit" name="calc" value="calculate" /></p></td>
+<td><p><input type="submit" name="calc" value="reset" /></p></td>
 </tr>
 </table>
 </form>

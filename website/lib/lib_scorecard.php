@@ -54,7 +54,7 @@ function Weights($Tests, $Action, $Vars, $CVars){
       $wd[$k] = $v;
    }         
    
-   if ($Action=='Reset'){ $w = $wd; }
+   if ($Action=='reset'){ $w = $wd; }
    
    // normalize weights
    $minWeight = 0;
