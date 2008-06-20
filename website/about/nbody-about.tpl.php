@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should model the orbits of Jovian planets, using the same simple symplectic-integrator - see the <a href="benchmark.php?test=nbody&amp;lang=java&amp;sort=<?=$Sort;?>">Java program</a>.</p>

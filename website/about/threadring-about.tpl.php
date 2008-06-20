@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should create and keep alive 503 threads, explicity or implicitly linked in a ring, and pass a token between one thread and the next thread at least N times.</p>

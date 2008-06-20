@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 4 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><strong>diff</strong> program output N = 4 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should calculate the Ackermann function using the same na&#239;ve recursive-algorithm</p>

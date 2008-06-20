@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 27 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><strong>diff</strong> program output N = 27 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should use the same step-by-step spigot algorithm to calculate digits of Pi.</p>

@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 25000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
+<p><strong>diff</strong> program output N = 25000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
 
 <p>(Programs may use a single-loop or several-loops; programs may cache <tt>&#178;&#8260;<sub>3</sub></tt>, <tt>k&#178;</tt>, <tt>k&#179;</tt>, <tt>sin k</tt>, <tt>cos k</tt> in local variables)
 

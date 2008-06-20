@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output for this 6KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=input">input file</a> with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><strong>diff</strong> program output for this 6KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=input">input file</a> with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should be implemented the same way as this <a href="benchmark.php?test=sumcol&amp;lang=icon&amp;sort=<?=$Sort;?>">Icon program</a>.</p>

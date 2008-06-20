@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 200 with this 5KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><strong>diff</strong> program output N = 200 with this 5KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <img src="<?=IMAGE_PATH;?>mandelbrot200.png" alt="Mandlebrot output N=200,converted to PNG" height="200" width="200" />
