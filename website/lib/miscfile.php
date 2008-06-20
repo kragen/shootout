@@ -1,33 +1,43 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2007
+// Copyright (c) Isaac Gouy 2004-2008
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(LIB_PATH.'lib_common.php'); 
+require_once(LIB_PATH.'lib_common.php');
 require_once(LIB); 
 
 // DATA ///////////////////////////////////////////
 
-if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'cpu'; }
+if (isset($HTTP_GET_VARS['file'])
+      && strlen($HTTP_GET_VARS['file']) && (strlen($HTTP_GET_VARS['file']) <= 16)){
+   $X = $HTTP_GET_VARS['file'];
+   if (ereg("^[a-z]+$",$X) && (
+         $X == 'acknowledgements' ||
+         $X == 'benchmarking' ||
+         $X == 'dynamic' ||
+         $X == 'license'
+      )){ $F = $X; }
+}
+if (!isset($F)){ $F = 'license'; }
 
-if (isset($HTTP_GET_VARS['file'])){ $F = $HTTP_GET_VARS['file']; } 
-else { $F = ''; }
 
-if (isset($HTTP_GET_VARS['title'])){ $T = $HTTP_GET_VARS['title']; }
-else { $T = ''; }
+if (isset($HTTP_GET_VARS['title'])
+      && strlen($HTTP_GET_VARS['title']) && (strlen($HTTP_GET_VARS['title']) <= 32)){
+   $T = strip_tags($HTTP_GET_VARS['title']);
+}
+if (!isset($T)){ $T = ''; }
 
-// TEMPLATE VARS //////////////////////////////////////////////// 
+
+// TEMPLATE VARS ////////////////////////////////////////////////
 
 $Page = & new Template(LIB_PATH);  
 $Page->set('PageTitle', $T.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('PageBody', BLANK);
-$Page->set('Sort', $S);
 $Page->set('PicturePath', CORE_SITE);
 
-$Body = & new Template(LIB_PATH); 
+$Body = & new Template(LIB_PATH);
 $Body->set('Title', $T);
 $Body->set('MiscFile', MISC_PATH.$F.'.php');
 $Body->set('Changed', filemtime(MISC_PATH.$F.'.php'));
