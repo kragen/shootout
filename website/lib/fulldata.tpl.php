@@ -1,8 +1,8 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
 
 <?
 $p = array($P1,$P2,$P3,$P4);
-list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,"fullcpu",$p,$Excl);
+list($NData,$Selected,$TestValues) = ComparisonData($Langs,$Data,$p,$Excl);
 
 $cols = sizeof($TestValues) + 1;
 $TestName = $Tests[$SelectedTest][TEST_NAME];

@@ -9,7 +9,7 @@ require_once(LIB);
 // DATA ///////////////////////////////////////////
 
 if (isset($HTTP_GET_VARS['file'])
-      && strlen($HTTP_GET_VARS['file']) && (strlen($HTTP_GET_VARS['file']) <= 16)){
+      && strlen($HTTP_GET_VARS['file']) && (strlen($HTTP_GET_VARS['file']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['file'];
    if (ereg("^[a-z]+$",$X) && (
          $X == 'acknowledgements' ||
@@ -22,7 +22,7 @@ if (!isset($F)){ $F = 'license'; }
 
 
 if (isset($HTTP_GET_VARS['title'])
-      && strlen($HTTP_GET_VARS['title']) && (strlen($HTTP_GET_VARS['title']) <= 32)){
+      && strlen($HTTP_GET_VARS['title']) && (strlen($HTTP_GET_VARS['title']) <= 2*NAME_LEN)){
    $T = strip_tags($HTTP_GET_VARS['title']);
 }
 if (!isset($T)){ $T = ''; }

@@ -1,11 +1,11 @@
 <?php
-// Copyright (c) Isaac Gouy 2005
+// Copyright (c) Isaac Gouy 2005-2008
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
 
-function ComparisonData($langs,$data,$sort,$p,&$Excl){
-   list($Accepted) = FilterAndSortData($langs,$data,$sort,&$Excl);
+function ComparisonData($langs,$data,$p,&$Excl){
+   list($Accepted) = FilterAndSortData($langs,$data,'fullcpu',&$Excl);
 
 // SELECTION DEPENDS ON THIS SORT ORDER
 
@@ -13,7 +13,7 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
 
 // TRANSFORM SELECTED DATA
 
-   $lang = ""; $id = ""; 
+   $lang = ""; $id = "";
    $NData = array(); $TestValues = array();
 
    foreach($Accepted as $d){
@@ -45,10 +45,10 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
 // SUB-SELECT DATA FOR SPECIFIC PROGRAMS
 
    $plang = array(); $pid = array();
-   foreach($p as $pdash){  
-      list($a, $b) = explode('-', $pdash);   
+   foreach($p as $pdash){
+      list($a, $b) = explode('-', $pdash);
       $plang[] = $a; 
-      $pid[] = $b;  
+      $pid[] = $b;
    }
 
    $Selected = array();
@@ -82,7 +82,7 @@ function ComparisonData($langs,$data,$sort,$p,&$Excl){
       }
 
 // USE SAME COLOR FOR PROGRAM IN EVERY CHART
-      $Selected[$i][N_COLOR] = $i; 
+      $Selected[$i][N_COLOR] = $i;
    }
    uasort($NData,'CompareNName');
    sort($TestValues);
@@ -109,20 +109,33 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
    
      
 // NASTY HACK      
-// ADD DUMMY VALUES TO PRESERVE SELECTION IN DROP-DOWN MENUS       
+// ADD DUMMY VALUES TO PRESERVE SELECTION IN DROP-DOWN MENUS 
+// default is '-0' so check $a
 
-   list($a, $b) = explode('-', $p1); $c = $Langs[$a]; $d = IdName($b);    
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);    
+   list($a, $b) = explode('-', $p1); 
+   if (strlen($a)){
+      $c = $Langs[$a]; $d = IdName($b);
+      $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);
+   }
 
-   list($a, $b) = explode('-', $p2); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);   
+   list($a, $b) = explode('-', $p2); 
+   if (strlen($a)){
+      $c = $Langs[$a]; $d = IdName($b);
+      $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);
+   }
 
-   list($a, $b) = explode('-', $p3); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);     
+   list($a, $b) = explode('-', $p3); 
+   if (strlen($a)){
+      $c = $Langs[$a]; $d = IdName($b);
+      $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);
+   }
 
-   list($a, $b) = explode('-', $p4); $c = $Langs[$a]; $d = IdName($b);
-   $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);     
-        
+   list($a, $b) = explode('-', $p4); 
+   if (strlen($a)){
+      $c = $Langs[$a]; $d = IdName($b);
+      $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);
+   }
+
         
    echo '<p class="h"><strong>Choose</strong> programs for side-by-side comparison: <br />', "\n";    
    echo '<select name="p1">', "\n";

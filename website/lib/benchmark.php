@@ -17,7 +17,7 @@ uasort($Langs, 'CompareLangName');
 
 
 if (isset($HTTP_GET_VARS['test'])
-      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= 16)){
+      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
    if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
 }
@@ -25,7 +25,7 @@ if (!isset($T)){ $T = 'nbody'; }
 
 
 if (isset($HTTP_GET_VARS['lang'])
-      && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= 16)){
+      && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang'];
    if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L = $X; }
 }
@@ -33,7 +33,7 @@ if (!isset($L)){ $L = 'all'; }
 
 
 if (isset($HTTP_GET_VARS['lang2'])
-      && strlen($HTTP_GET_VARS['lang2']) && (strlen($HTTP_GET_VARS['lang2']) <= 16)){
+      && strlen($HTTP_GET_VARS['lang2']) && (strlen($HTTP_GET_VARS['lang2']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang2'];
    if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L2 = $X; }
 }

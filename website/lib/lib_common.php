@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2007
+// Copyright (c) Isaac Gouy 2004-2008
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
@@ -75,6 +75,8 @@ define('SCORE_RATIO',0);
 define('SCORE_MEAN',1);
 define('SCORE_TESTS',2);
 
+define('NAME_LEN',16);
+define('PRG_ID_LEN',NAME_LEN+2);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -308,13 +310,10 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
    } elseif ($sort=='kb'){ 
       usort($Accepted, 'CompareMemoryUse'); 
       usort($Special, 'CompareMemoryUse');
-   } elseif ($sort=='lines'){
-      usort($Accepted, 'CompareCodeLines'); 
-      usort($Special, 'CompareCodeLines');
-   } elseif ($sort=='gz'){ 
+   } elseif ($sort=='gz'){
       usort($Accepted, 'CompareGz'); 
       usort($Special, 'CompareGz'); 
-   } 
+   }
 
    return array($Accepted,$Rejected,$Special);
 }

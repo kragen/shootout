@@ -13,7 +13,7 @@ list($Incl,$Excl) = ReadIncludeExclude();
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 
 if (isset($HTTP_GET_VARS['test'])
-      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= 16)){
+      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
    if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
 }

@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2008
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -13,31 +13,66 @@ require_once(LIB_PATH.'lib_fulldata.php');
 
 list($Incl,$Excl) = ReadIncludeExclude();
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
+$Tests = ReadUniqueArrays('test.csv',$Incl);
 
-if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
-else { $T = 'ackermann'; }
 
-if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'fullcpu'; }
+if (isset($HTTP_GET_VARS['test'])
+      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
+   $X = $HTTP_GET_VARS['test'];
+   if (ereg("^[a-z]+$",$X) && isset($Tests[$X])){ $T = $X; }
+}
+if (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['p1'])){ $P1 = $HTTP_GET_VARS['p1']; } 
-else { $P1 = ''; }
 
-if (isset($HTTP_GET_VARS['p2'])){ $P2 = $HTTP_GET_VARS['p2']; } 
-else { $P2 = ''; }
+if (isset($HTTP_GET_VARS['p1'])
+      && strlen($HTTP_GET_VARS['p1']) && (strlen($HTTP_GET_VARS['p1']) <= PRG_ID_LEN)){
+   $X = $HTTP_GET_VARS['p1'];
+   if (ereg("^[a-z0-9]+-[0-9]$",$X)){
+      list($a, $b) = explode('-', $X);
+      if (isset($Langs[$a])){ $P1 = $X; }
+   }
+}
+if (!isset($P1)){ $P1 = '-0'; }
 
-if (isset($HTTP_GET_VARS['p3'])){ $P3 = $HTTP_GET_VARS['p3']; } 
-else { $P3 = ''; }
 
-if (isset($HTTP_GET_VARS['p4'])){ $P4 = $HTTP_GET_VARS['p4']; } 
-else { $P4 = ''; }
+if (isset($HTTP_GET_VARS['p2'])
+      && strlen($HTTP_GET_VARS['p2']) && (strlen($HTTP_GET_VARS['p2']) <= PRG_ID_LEN)){
+   $X = $HTTP_GET_VARS['p2'];
+   if (ereg("^[a-z0-9]+-[0-9]$",$X)){
+      list($a, $b) = explode('-', $X);
+      if (isset($Langs[$a])){ $P2 = $X; }
+   }
+}
+if (!isset($P2)){ $P2 = '-0'; }
+
+
+if (isset($HTTP_GET_VARS['p3'])
+      && strlen($HTTP_GET_VARS['p3']) && (strlen($HTTP_GET_VARS['p3']) <= PRG_ID_LEN)){
+   $X = $HTTP_GET_VARS['p3'];
+   if (ereg("^[a-z0-9]+-[0-9]$",$X)){
+      list($a, $b) = explode('-', $X);
+      if (isset($Langs[$a])){ $P3 = $X; }
+   }
+}
+if (!isset($P3)){ $P3 = '-0'; }
+
+
+if (isset($HTTP_GET_VARS['p4'])
+      && strlen($HTTP_GET_VARS['p4']) && (strlen($HTTP_GET_VARS['p4']) <= PRG_ID_LEN)){
+   $X = $HTTP_GET_VARS['p4'];
+   if (ereg("^[a-z0-9]+-[0-9]$",$X)){
+      list($a, $b) = explode('-', $X);
+      if (isset($Langs[$a])){ $P4 = $X; }
+   }
+}
+if (!isset($P4)){ $P4 = '-0'; }
 
 
 // FILTER & SORT DATA ////////////////////////////////////////
 
 $nd = ReadSelectedDataArrays(DATA_PATH.'ndata.csv',$T,$Incl);
 $p = array($P1,$P2,$P3,$P4);
-list($NData,$Selected,$TestValues) = ComparisonData($Langs,$nd,$S,$p,$Excl);
+list($NData,$Selected,$TestValues) = ComparisonData($Langs,$nd,$p,$Excl);
 usort($Selected,'CompareMaxMemory');
 
 
