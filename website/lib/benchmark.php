@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2007
+// Copyright (c) Isaac Gouy 2004-2008
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -16,7 +16,7 @@ $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
 
-if (isset($HTTP_GET_VARS['test']) 
+if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= 16)){
    $X = $HTTP_GET_VARS['test'];
    if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }

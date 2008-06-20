@@ -1,5 +1,5 @@
-<?php 
-// Copyright (c) Isaac Gouy 2004, 2005
+<?php
+// Copyright (c) Isaac Gouy 2004-2008
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -11,38 +11,50 @@ require_once(LIB);
 list($Incl,$Excl) = ReadIncludeExclude();
 $Tests = ReadUniqueArrays('test.csv',$Incl);
 
-if (isset($HTTP_GET_VARS['test'])){ $T = $HTTP_GET_VARS['test']; } 
-else { $T = 'ackermann'; }
+if (isset($HTTP_GET_VARS['test'])
+      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= 16)){
+   $X = $HTTP_GET_VARS['test'];
+   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
+}
+if (!isset($T)){ $T = 'nbody'; }
 
-if (isset($HTTP_GET_VARS['sort'])){ $S = $HTTP_GET_VARS['sort']; } 
-else { $S = 'cpu'; }
 
-if (isset($HTTP_GET_VARS['file'])){ $F = $HTTP_GET_VARS['file']; } 
-else { $F = 'input'; }
+if (isset($HTTP_GET_VARS['file'])
+      && strlen($HTTP_GET_VARS['file']) && (strlen($HTTP_GET_VARS['file']) <= 6)){
+   $X = $HTTP_GET_VARS['file'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'input')){ $F = $X; }
+}
+if (!isset($F)){ $F = 'output'; }
 
-if (isset($HTTP_GET_VARS['ext'])){ $X = $HTTP_GET_VARS['ext']; } 
-else { $X = 'txt'; }
+/*
+if (isset($HTTP_GET_VARS['ext'])
+      && strlen($HTTP_GET_VARS['ext']) && (strlen($HTTP_GET_VARS['ext']) <= 3)){
+   $X = $HTTP_GET_VARS['ext'];
+   if (ereg("^[a-z]+$",$X)){ $E = $X; }
+}
+*/
+if (!isset($E)){ $E = 'txt'; }
+
 
 $TestName = $Tests[$T][TEST_NAME];
 
 if ($F == 'input'){ $Title = $TestName.' input file'; } 
 elseif ($F == 'output'){ $Title = $TestName.' output file'; }
-elseif ($F == 'dict') { $Title = $TestName.' Usr.Dict.Words file'; }
+//elseif ($F == 'dict') { $Title = $TestName.' Usr.Dict.Words file'; }
 else { $Title = $TestName; }
 
-// TEMPLATE VARS //////////////////////////////////////////////// 
+// TEMPLATE VARS ////////////////////////////////////////////////
 
-$Page = & new Template(LIB_PATH);  
+$Page = & new Template(LIB_PATH);
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('PageBody', BLANK);
-$Page->set('Sort', $S);
 
-$Body = & new Template(LIB_PATH); 
+$Body = & new Template(LIB_PATH);
 $Body->set('Title', $Title);
-$Body->set('Download', DOWNLOAD_PATH.$T.SEPARATOR.$F.'.'.$X);
-$Body->set('Text', HtmlFragment( DOWNLOAD_PATH.$T.SEPARATOR.$F.'.'.$X ));
+$Body->set('Download', DOWNLOAD_PATH.$T.SEPARATOR.$F.'.'.$E);
+$Body->set('Text', HtmlFragment( DOWNLOAD_PATH.$T.SEPARATOR.$F.'.'.$E ));
 
 $Page->set('PageBody', $Body->fetch('iofile.tpl.php'));
 $Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');

@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2007 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
 
 <? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
 <h2><a href="#faster" name="faster">&nbsp;Create your own Ranking</a></h2>
