@@ -35,7 +35,7 @@ if (!isset($L)){ $L = 'all'; }
 if (isset($HTTP_GET_VARS['lang2'])
       && strlen($HTTP_GET_VARS['lang2']) && (strlen($HTTP_GET_VARS['lang2']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang2'];
-   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L2 = $X; }
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]))){ $L2 = $X; }
 }
 if (!isset($L2)){
    if ($L=='all'){ $L2 = $L; }
@@ -45,7 +45,7 @@ if (!isset($L2)){
 
 if (isset($HTTP_GET_VARS['id']) && strlen($HTTP_GET_VARS['id']) == 1){
    $X = $HTTP_GET_VARS['id'];
-   if (ereg("^[0-9]+$",$X)){ $I = $X; }
+   if (ereg("^[0-9]$",$X)){ $I = $X; }
 }
 if (!isset($I)){ $I = -1; }
 

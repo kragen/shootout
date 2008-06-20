@@ -19,6 +19,7 @@ function UnpackCSV($csv){
       $i = 0;
       while ($i<sizeof($a)-1){
          $k = $a[$i]; $v = $a[$i+1];
+
          if (is_string($k) && is_numeric($v)){
             $k = substr($k,0,64); // be defensive, limit acceptable length
             $aa[$k] = $v;
@@ -30,32 +31,45 @@ function UnpackCSV($csv){
 }
 
 function Weights($Tests, $Action, $Vars, $CVars){
-   $cookie = array();    
-   if (isset($CVars['weights'])){ $cookie = UnpackCSV( $CVars['weights'] );}                        
+
+   if (isset($CVars['weights']) && (strlen($CVars['weights']) <= 1024)
+         && (ereg("^[a-z0-9,]+$",$CVars['weights']))){
+      $cookie = UnpackCSV( $CVars['weights'] );
+   }
+   else {
+      $cookie = array(); 
+   }
 
    $w = array(); $wd = array();
    foreach($Tests as $t){
-      $link = $t[TEST_LINK];  
-      if (isset($Vars[$link]) && is_numeric(strip_tags($Vars[$link]))){ $x = strip_tags($Vars[$link]); }              
-      elseif (isset($cookie[$link])){ $x = strip_tags($cookie[$link]); }          
-      else { $x = $t[TEST_WEIGHT]; } 
-               
-      if (is_numeric($x)){ $w[$link] = $x; }
-      $wd[$link] = $t[TEST_WEIGHT];                               
-   }           
+      $link = $t[TEST_LINK];
+      
+      if (isset($Vars[$link]) && (strlen($Vars[$link]) == 1)
+            && (ereg("^[0-9]$",$Vars[$link]))){ $x = $Vars[$link]; }
+      elseif (isset($cookie[$link]) && (strlen($cookie[$link]) == 1)
+            && (ereg("^[0-9]$",$cookie[$link]))){ $x = $cookie[$link]; }
+      else { $x = $t[TEST_WEIGHT]; }
 
-   $Metrics = array('xcpu' => 0, 'xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);
+      $w[$link] = $x;
+      $wd[$link] = $t[TEST_WEIGHT];
+   }
+
+
+   $Metrics = array('xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);
    foreach($Metrics as $k => $v){
-      if (isset($Vars[$k]) && is_numeric(strip_tags($Vars[$k]))){ $x = strip_tags($Vars[$k]); }
-      elseif (isset($cookie[$k])){ $x = strip_tags($cookie[$k]); }    
+     
+      if (isset($Vars[$k]) && (strlen($Vars[$k]) == 1) 
+            && (ereg("^[0-9]$",$Vars[$k]))){ $x = $Vars[$k]; }
+      elseif (isset($cookie[$k]) && (strlen($cookie[$k]) == 1)
+            && (ereg("^[0-9]$",$cookie[$k]))){ $x = $cookie[$k]; }
       else { $x = $v; }
 
-      if (is_numeric($x)){ $w[$k] = $x; }
+      $w[$k] = $x;
       $wd[$k] = $v;
-   }         
-   
+   }
+
    if ($Action=='reset'){ $w = $wd; }
-   
+
    // normalize weights
    $minWeight = 0;
    $maxWeight = 5;
