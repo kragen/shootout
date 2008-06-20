@@ -3,11 +3,13 @@ header("Content-type: image/png");
 
 // DATA ////////////////////////////////////////////////////
 
-   $d = array();
-   if (isset($HTTP_GET_VARS['d'])){
-      $s = $HTTP_GET_VARS['d'];
-      if (is_string($s)){ $d = explode('o',$s); }
-   }
+
+if (isset($HTTP_GET_VARS['d'])
+      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 256))){
+   $X = $HTTP_GET_VARS['d'];
+   if (ereg("^[0-9o]+$",$X)){ $D = explode('o',$X); }
+}
+if (!isset($D)){ $D = array(); }
 
 // CHART //////////////////////////////////////////////////
 
@@ -45,7 +47,7 @@ ImageLine($im, 0, $h3, $w, $h3, $gray);
 ImageLine($im, 0, $h4, $w, $h4, $gray);
 
 
-foreach($d as $v){
+foreach($D as $v){
    $hratio = min( ($v/10.0)*($h/$vscale), $h);
    ImageFilledRectangle($im, $xratio, $h-$hratio, $xratio+$wratio, $h, $white);
    $xratio = $xratio + $width;
