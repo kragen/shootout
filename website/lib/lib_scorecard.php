@@ -1,67 +1,26 @@
 <?php
 // Copyright (c) Isaac Gouy 2005-2008
 
-// Cookies ///////////////////////////////////////////////////
 
-
-function PackCSV($a){
-   $s = "";
-   foreach($a as $k => $v){ $s .= $k.','.$v.','; }
-   return substr($s,0,-1);
-}
-
-function UnpackCSV($csv){
-   $aa = array();
-   if (is_string($csv)){   
-      $s = substr($csv,0,1024); // be defensive, limit acceptable length
-
-      $a = explode(',',$s);
-      $i = 0;
-      while ($i<sizeof($a)-1){
-         $k = $a[$i]; $v = $a[$i+1];
-
-         if (is_string($k) && is_numeric($v)){
-            $k = substr($k,0,64); // be defensive, limit acceptable length
-            $aa[$k] = $v;
-         }
-         $i += 2;
-      }
-   }
-   return $aa;
-}
-
-function Weights($Tests, $Action, $Vars, $CVars){
-
-   if (isset($CVars['weights']) && (strlen($CVars['weights']) <= 1024)
-         && (ereg("^[a-z0-9,]+$",$CVars['weights']))){
-      $cookie = UnpackCSV( $CVars['weights'] );
-   }
-   else {
-      $cookie = array(); 
-   }
-
+function Weights($Tests, $Action, $Vars){
    $w = array(); $wd = array();
    foreach($Tests as $t){
       $link = $t[TEST_LINK];
       
       if (isset($Vars[$link]) && (strlen($Vars[$link]) == 1)
-            && (ereg("^[0-9]$",$Vars[$link]))){ $x = $Vars[$link]; }
-      elseif (isset($cookie[$link]) && (strlen($cookie[$link]) == 1)
-            && (ereg("^[0-9]$",$cookie[$link]))){ $x = $cookie[$link]; }
-      else { $x = $t[TEST_WEIGHT]; }
+            && (ereg("^[0-9]$",$Vars[$link]))){ $x = intval($Vars[$link]); }
+      else { $x = intval($t[TEST_WEIGHT]); }
 
       $w[$link] = $x;
-      $wd[$link] = $t[TEST_WEIGHT];
+      $wd[$link] = intval($t[TEST_WEIGHT]);
    }
 
 
    $Metrics = array('xfullcpu' => 1, 'xmem' => 0, 'xloc' => 0);
    foreach($Metrics as $k => $v){
-     
-      if (isset($Vars[$k]) && (strlen($Vars[$k]) == 1) 
-            && (ereg("^[0-9]$",$Vars[$k]))){ $x = $Vars[$k]; }
-      elseif (isset($cookie[$k]) && (strlen($cookie[$k]) == 1)
-            && (ereg("^[0-9]$",$cookie[$k]))){ $x = $cookie[$k]; }
+
+      if (isset($Vars[$k]) && (strlen($Vars[$k]) == 1)
+            && (ereg("^[0-9]$",$Vars[$k]))){ $x = intval($Vars[$k]); }
       else { $x = $v; }
 
       $w[$k] = $x;

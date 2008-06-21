@@ -3,13 +3,17 @@ header("Content-type: image/png");
 
 // DATA ////////////////////////////////////////////////////
 
-
+$D = array();
 if (isset($HTTP_GET_VARS['d'])
-      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 256))){
+      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 512))){
    $X = $HTTP_GET_VARS['d'];
-   if (ereg("^[0-9o]+$",$X)){ $D = explode('o',$X); }
+   if (ereg("^[0-9o]+$",$X)){
+      foreach(explode('o',$X) as $v){
+         if (strlen($v) && (strlen($v) <= 5)){ $D[] = intval($v); }
+      }
+   }
 }
-if (!isset($D)){ $D = array(); }
+
 
 // CHART //////////////////////////////////////////////////
 

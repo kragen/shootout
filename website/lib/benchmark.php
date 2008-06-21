@@ -77,16 +77,14 @@ if ($T=='all'){
       }
       if (!isset($Action)){ $Action = 'calculate'; }
 
-
       $Title = 'Create your own Ranking';
       $TemplateName = 'scorecard.tpl.php';
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = 'scorecard-about.tpl.php';
-      $W = Weights($Tests, $Action, $HTTP_GET_VARS, $_COOKIE);
-      setcookie('weights', PackCSV($W), time()+(60*60*24*180), '/', 'shootout.alioth.debian.org');
+      $W = Weights($Tests, $Action, $HTTP_GET_VARS);
       $Body->set('W', $W);
       $Body->set('Data', WeightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $W));
-      $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; 
+      $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 
 
    } else {           // Head to Head
