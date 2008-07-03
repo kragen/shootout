@@ -1,0 +1,275 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+
+   contributed by Anh Tran
+   based on programs by Luzius Meisser and Michael Barker
+*/
+
+import std.stdio;
+import std.thread : Thread;
+import std.conv;
+
+enum Colour 
+{
+   blue,
+   red,
+   yellow,
+   Invalid
+}
+
+const char[][3] ColourName = ["blue", "red", "yellow"];
+int   creatureID = 0;
+
+Colour doCompliment(Colour c1, Colour c2) 
+{
+   switch (c1) 
+   {
+   case Colour.blue:
+      switch (c2) 
+      {
+      case Colour.blue:
+         return Colour.blue;
+      case Colour.red:
+         return Colour.yellow;
+      case Colour.yellow:
+         return Colour.red;
+      }
+   case Colour.red:
+      switch (c2) 
+      {
+      case Colour.blue:
+         return Colour.yellow;
+      case Colour.red:
+         return Colour.red;
+      case Colour.yellow:
+         return Colour.blue;
+      }
+   case Colour.yellow:
+      switch (c2) 
+      {
+      case Colour.blue:
+         return Colour.red;
+      case Colour.red:
+         return Colour.blue;
+      case Colour.yellow:
+         return Colour.yellow;
+      }
+   }
+   
+   throw new Exception("Invalid colour");
+}
+
+class Future(T) 
+{
+   private T t = null;
+
+   public T getItem() 
+   {
+      while (t is null) 
+      {
+         Thread.yield();
+      }
+      return t;
+   }
+
+   // no synchronization necessary as assignment is atomic
+   public void setItem(T t) 
+   {
+      this.t = t;
+   }
+}
+
+class Pair 
+{
+   public bool sameId;
+   public Colour colour;
+
+   public this(bool sameId, Colour c) 
+   {
+      this.sameId = sameId;
+      this.colour = c;
+   }
+}
+
+class MeetingPlace 
+{
+private:
+   int meetingsLeft;
+   Colour firstColour = Colour.Invalid;
+   int firstId = 0;
+   Future!(Pair) current;
+
+   public this(int meetings) 
+   {
+      this.meetingsLeft = meetings;
+   }
+
+   public Pair meet(int id, Colour c) 
+   {
+      Future!(Pair) newPair;
+      
+      synchronized (this) 
+      {
+         if (meetingsLeft == 0) 
+         {
+            throw new Exception("Finished");
+         } 
+         else 
+         {
+            if (firstColour == Colour.Invalid) 
+            {
+               firstColour = c;
+               firstId = id;
+               current = new Future!(Pair)();
+            } 
+            else 
+            {
+               Colour newColour = doCompliment(c, firstColour);
+               current.setItem(new Pair(id == firstId, newColour));
+               firstColour = Colour.Invalid;
+               meetingsLeft--;
+            }
+            newPair = current;
+         }
+      }
+      
+      return newPair.getItem();
+   }
+}
+
+
+
+class Creature : public Thread 
+{
+private:
+   MeetingPlace place;
+   int count = 0;
+   int sameCount = 0;
+   Colour colour;
+   int id;
+
+public:
+   this(MeetingPlace place, Colour colour) 
+   {
+      super(64*1024);
+      
+      this.place = place;
+      this.id = ++creatureID;
+      this.colour = colour;
+   }
+
+   override int run() 
+   {
+      try
+      {
+         while (true) 
+         {
+            Pair p = place.meet(id, colour);
+            colour = p.colour;
+            if (p.sameId) 
+               sameCount++;
+            count++;
+         }
+      }
+      catch (Exception) {}
+      
+      return 1;
+   }
+
+   int getCount() 
+   {
+      return count;
+   }
+
+   string toString() 
+   {
+      char[] r = to!(char[])(count) ~ getNumber(sameCount);
+      return cast(string)(r);
+   }
+}
+
+void run(int n, Colour[] colours ...) 
+{
+   MeetingPlace place = new MeetingPlace(n);
+   Creature[] creatures = new Creature[colours.length];
+
+   foreach (int i, cl; colours) 
+   {
+      writef(ColourName[cl], " ");
+      creatures[i] = new Creature(place, cl);
+   }
+   writefln();
+
+   foreach (c ; creatures) 
+      c.start();
+
+   foreach (t ; creatures) 
+      t.wait();
+
+   int total = 0;
+   foreach (cr ; creatures) 
+   {
+      writefln(cr);
+      total += cr.getCount();
+   }
+   
+   writefln(getNumber(total));
+   writefln();
+}
+
+char[] getNumber(int n) 
+{
+   const char[][10] NUMBERS =
+   [
+      "zero", "one", "two", "three", "four", "five",
+      "six", "seven", "eight", "nine"
+   ];
+
+   char[] st = to!(char[])(n);
+   
+   char[] ret;
+   foreach (c; st) 
+   {
+      ret ~= " ";
+      ret ~= NUMBERS[c -'0'];
+   }
+
+   return ret;
+}
+
+void printColours(Colour c1, Colour c2) 
+{
+   writefln(ColourName[c1], " + ", ColourName[c2], " -> ", 
+      ColourName[doCompliment(c1, c2)]);
+}
+
+void printColours() 
+{
+   printColours(Colour.blue, Colour.blue);
+   printColours(Colour.blue, Colour.red);
+   printColours(Colour.blue, Colour.yellow);
+   printColours(Colour.red, Colour.blue);
+   printColours(Colour.red, Colour.red);
+   printColours(Colour.red, Colour.yellow);
+   printColours(Colour.yellow, Colour.blue);
+   printColours(Colour.yellow, Colour.red);
+   printColours(Colour.yellow, Colour.yellow);
+}
+
+void main(string[] args) 
+{
+   int n = 600;
+   try
+   {
+      n = to!(int)(args[1]);
+   }
+   catch (Exception)   {}
+
+   printColours();
+   writefln();
+   
+   run(n, Colour.blue, Colour.red, Colour.yellow);
+   run(n, Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.yellow,
+         Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.blue);
+}
+
