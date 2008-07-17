@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench.py,v 1.2 2008-07-17 06:17:41 igouy-guest Exp $
+# $Id: nanobench.py,v 1.3 2008-07-17 06:42:23 igouy-guest Exp $
 
 """
 nanobench gathers cpu time measurements, samples resident memory usage, and
@@ -57,7 +57,7 @@ def main():
 
 
 def targetPrograms():
-"""Assumes dat file is only written once all data is available"""
+   """Assumes dat file is only written once all data is available"""
    from os import getcwd, listdir, mkdir
    from os.path import join, isdir, getmtime
    from fnmatch import filter
@@ -80,7 +80,7 @@ def targetPrograms():
       mkdir(datdir)      
       programs = set(files)
 
-   return programs
+   return frozenset(programs)
 
 
      
