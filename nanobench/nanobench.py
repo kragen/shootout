@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench.py,v 1.1 2008-07-16 20:11:49 igouy-guest Exp $
+# $Id: nanobench.py,v 1.2 2008-07-17 06:17:41 igouy-guest Exp $
 
 """
 nanobench gathers cpu time measurements, samples resident memory usage, and
@@ -11,16 +11,14 @@ nanobench is intended to be a much simplified replacement for minibench.
 __author__ =  'Isaac Gouy'
 
 
-
 # globals
 automake = frozenset()
 commandlines = {}
-run = { 'maxtime': 120, 'repeat': 5, 'sampletime': 0.2 }
+run = { 'maxtime': 120, 'repeat': 5, 'sampledelay': 0.2 }
 testvalues = []
 
 
-
-def configure():
+def main():
    global automake
    config_file = 'nanobench.conf'
 
@@ -42,7 +40,6 @@ def configure():
       print str(ex)
       exit(2)
 
-
    # need to use ConfigParser not SafeConfigParser
    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
@@ -57,5 +54,38 @@ def configure():
    except (NoSectionError,NoOptionError), ex:
       print str(ex)
       exit(2)
+
+
+def targetPrograms():
+"""Assumes dat file is only written once all data is available"""
+   from os import getcwd, listdir, mkdir
+   from os.path import join, isdir, getmtime
+   from fnmatch import filter
+
+   path = getcwd()
+
+   # undeleted filenames that might have a file extension
+   files = filter( listdir(path), '*.*[!~]' )
+
+   programs = set()
+   datdir = join(path,'dat')
+   if isdir(datdir):
+      for f in files:
+         try:
+            if getmtime(f) > getmtime( join(datdir,f) ):
+               programs.add(f)
+         except OSError: # assume - No such file or directory
+               programs.add(f)
+   else:
+      mkdir(datdir)      
+      programs = set(files)
+
+   return programs
+
+
+     
+if __name__ == "__main__":
+    main()
+    print targetPrograms()
 
 
