@@ -1,4 +1,4 @@
-# $Id: planB.py,v 1.1 2008-07-17 06:18:41 igouy-guest Exp $
+# $Id: planB.py,v 1.2 2008-07-18 16:22:56 igouy-guest Exp $
 
 """
 measure without libgtop2
@@ -6,41 +6,56 @@ measure without libgtop2
 __author__ =  'Isaac Gouy'
 
 
-from subprocess import Popen
-import os, time, thread, signal
 
-_timedout = False
+def measure(arg,commandline,delay,maxTime):
+   from subprocess import Popen
+   import os, cPickle, time, thread, signal
 
-def measure(commandline,sampleTime,maxTime):
-   global _maxMem, _timedout
+   r,w = os.pipe()
+   main = os.fork()
 
-   def sampleOrTimeout(p,t,timeRemaining):
-      global _maxMem, _timedout
-      while timeRemaining > 0:
-         if p.poll(): break # if program exited exit
-   
-         timeRemaining = timeRemaining - t
-         time.sleep(t)
-      else:
-         _timedout = True
-         os.kill(p.pid,signal.SIGTERM)
-         if not p.poll():
-            os.kill(p.pid,signal.SIGKILL)   
-            p.poll()
+   if main: # read pickled measurements from the pipe
+      os.close(w); rPipe = os.fdopen(r); r = cPickle.Unpickler(rPipe)
+      measurements = r.load()
+      rPipe.close()
+      return measurements
+
+   else: 
+      global _maxMem, _timedout; _maxMem = 0; _timedout = False
+
+      def sample(program):
+         """sample thread will be destroyed when the forked process _exits,
+            use globals to pass data from the thread to the forked process."""
+         global _maxMem, _timedout
+
+         remaining = maxTime
+         while remaining > 0:
+
+
+            time.sleep(delay)
+            remaining = remaining - delay
+         else:
+            _timedout = True
+            os.kill(program, signal.SIGTERM)
+            #os.kill(program, signal.SIGKILL)
+
+
+      # only write pickles to the pipe
+      os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
 
 
 
 
-
-   try:
-      # spawn the program in a child process
+      # spawn the program in a separate process
       p = Popen(commandline)
 
       # start a thread to sample the program's resident memory use
-      thread.start_new_thread(sampleOrTimeout,(p,sampleTime,maxTime))
+      thread.start_new_thread(sample,(p.pid,))
 
       # wait for program exit status and resource usage
       rusage = os.wait3(0)
+
+
 
 
       # summarize measurements 
@@ -48,14 +63,20 @@ def measure(commandline,sampleTime,maxTime):
       utime_stime = rusage[2][0] + rusage[2][1]
 
 
-   except OSError, (err,detail): 
-      print "OSError(%s): %s" % (err,detail)
-      status = -1; utime_stime = -1.0
-
-   return (status, utime_stime, -1, "%")
+ 
 
 
 
 
 
+
+
+
+
+
+      load = "%"
+
+      w.dump( (arg, status, utime_stime, _maxMem, load) )
+      wPipe.close()
+      os._exit(0)
 

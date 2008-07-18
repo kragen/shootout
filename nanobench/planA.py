@@ -1,4 +1,4 @@
-# $Id: planA.py,v 1.2 2008-07-18 06:48:09 igouy-guest Exp $
+# $Id: planA.py,v 1.3 2008-07-18 16:22:56 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -67,7 +67,6 @@ def measure(arg,commandline,delay,maxTime):
             lambda t0,t1: 
                int(round( 
                   100.0 * (1.0 - float(t1.idle-t0.idle)/(t1.total-t0.total))
-#                  ((t1.sys-t0.sys)+(t1.user-t0.user))*100.0/(t1.total-t0.total) 
                ))
             ,cpus0 ,cpus1 )
 
