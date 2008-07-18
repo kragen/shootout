@@ -1,4 +1,4 @@
-# $Id: planA.py,v 1.1 2008-07-17 06:18:41 igouy-guest Exp $
+# $Id: planA.py,v 1.2 2008-07-18 06:48:09 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -6,71 +6,78 @@ measure with libgtop2
 __author__ =  'Isaac Gouy'
 
 
-from subprocess import Popen
-import os, time, thread, signal, gtop
 
-_timedout = False; _maxMem = -1
+def measure(arg,commandline,delay,maxTime):
+   from subprocess import Popen
+   import os, cPickle, time, thread, signal, gtop
 
-def measure(commandline,sampleDelay,maxTime):
-   global _maxMem, _timedout
+   r,w = os.pipe()
+   main = os.fork()
 
-   def sampleOrTimeout(p,t,timeRemaining):
-      global _maxMem, _timedout
-      while timeRemaining > 0:
-         if p.poll(): break # if program exited exit
+   if main: # read pickled measurements from the pipe
+      os.close(w); rPipe = os.fdopen(r); r = cPickle.Unpickler(rPipe)
+      measurements = r.load()
+      rPipe.close()
+      return measurements
 
-         mem = gtop.proc_mem(p.pid).resident 
-         _maxMem = max(mem/1024, _maxMem) 
-   
-         timeRemaining = timeRemaining - t
-         time.sleep(t)
-      else:
-         _timedout = True
-         os.kill(p.pid,signal.SIGTERM)
-         if not p.poll():
-            os.kill(p.pid,signal.SIGKILL)   
-            p.poll()
+   else: 
+      global _maxMem, _timedout; _maxMem = 0; _timedout = False
+
+      def sample(program):
+         """sample thread will be destroyed when the forked process _exits,
+            use globals to pass data from the thread to the forked process."""
+         global _maxMem, _timedout
+
+         remaining = maxTime
+         while remaining > 0:
+            mem = gtop.proc_mem( program ).resident
+            _maxMem = max(mem/1024, _maxMem)
+            time.sleep(delay)
+            remaining = remaining - delay
+         else:
+            _timedout = True
+            os.kill(program, signal.SIGTERM)
+            #os.kill(program, signal.SIGKILL)
 
 
-   try:
+      # only write pickles to the pipe
+      os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
+
       # gtop cpu is since machine boot, so we need a before measurement
       cpus0 = gtop.cpu().cpus 
 
-      # spawn the program in a child process
+      # spawn the program in a separate process
       p = Popen(commandline)
 
       # start a thread to sample the program's resident memory use
-      thread.start_new_thread(sampleOrTimeout,(p,sampleTime,maxTime))
+      thread.start_new_thread(sample,(p.pid,))
 
       # wait for program exit status and resource usage
       rusage = os.wait3(0)
 
-      # gtop cpu is since machine bootrusage[1], so we need an after measurement
+      # gtop cpu is since machine boot, so we need an after measurement
       cpus1 = gtop.cpu().cpus 
-
 
       # summarize measurements 
       status = -2 if _timedout else rusage[1] if rusage[1] == os.EX_OK else -1
       utime_stime = rusage[2][0] + rusage[2][1]
 
-      load = map( 
-         lambda t0,t1: 
-            int(round( 
-               ((t1.sys-t0.sys)+(t1.user-t0.user))*100.0/(t1.total-t0.total) 
-            ))
-         ,cpus0 ,cpus1 )
+      try:
+         load = map( 
+            lambda t0,t1: 
+               int(round( 
+                  100.0 * (1.0 - float(t1.idle-t0.idle)/(t1.total-t0.total))
+#                  ((t1.sys-t0.sys)+(t1.user-t0.user))*100.0/(t1.total-t0.total) 
+               ))
+            ,cpus0 ,cpus1 )
 
-      load.sort(reverse=1)
-      load = ("% ".join([str(i) for i in load]))+"%"
+         load.sort(reverse=1)
+         load = ("% ".join([str(i) for i in load]))+"%"
 
-   except OSError, (err,detail): 
-      print "OSError(%s): %s" % (err,detail)
-      status = -1; utime_stime = -1.0; load = "%" 
+      except ZeroDivisionError: # too fast
+         load = "%"
 
-   return (status, utime_stime, _maxMem, load)
-
-
-
-
-
+      w.dump( (arg, status, utime_stime, _maxMem, load) )
+      wPipe.close()
+      os._exit(0)
 
