@@ -1,0 +1,258 @@
+#!/usr/bin/python
+
+# $Id Exp $
+
+"""
+Description: nanobench records a program's cpu
+time, and samples resident memory usage and
+records cpu load while a program is running. 
+
+nanobench can be used in a limited way standalone
+- it is intended for use with the make files and 
+directories of The Computer Language Benchmarks Game. 
+
+Usage: nanobench [-options]
+
+where standalone options include:
+
+   --cmd <commandline string>
+      commandline string should be sufficient 
+      to run a program from the current directory
+
+   --repeat <int>
+      how often to run a program [5]
+
+   --delay <float>
+      delay in seconds between sampling 
+      memory usage and cpu load [0.2]
+
+   --maxtime <int>
+      how many seconds to allow before 
+      stopping a program [600]
+
+   -h --help
+      print this help message
+
+where benchmarks game options include:
+
+   --conf <path>
+      configuration file [./nanobench.conf]
+
+   --range <test values>
+      comma separated int program args
+
+
+Output: _,0,40.739,6356,100% 0% 0% 0%
+   _ 
+   0		exit status (-1 error, -2 timeout)
+   40.739	user time + system time (seconds)
+   6356		sampled resident memory usage (KB)
+   100%		cpu load during a program run
+"""
+__author__ =  'Isaac Gouy'
+
+
+
+# globals
+make = frozenset()
+commandlines = {}
+testvalues = []
+
+delay = 0.2
+repeat = 5
+maxtime = 600
+
+
+def initialize():
+   global make
+   config_file = 'nanobench.conf'
+
+   from sys import exit
+   from os.path import realpath
+   # need to use ConfigParser not SafeConfigParser
+   from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+
+   try:
+      parser = ConfigParser()
+      parser.read(config_file)
+
+      make = frozenset( parser.get("build", "make").split() )
+      commandlines.update( parser.items("commandlines") )
+
+      s = 'measure'
+      if parser.has_section(s):
+         for o in parser.options(name):
+            if o in ('delay'):
+               delay = parser.getfloat(s,o)
+            elif o in ('repeat'):
+               repeat = parser.getint(s,o)
+            elif o in ('maxtime'):
+               maxtime = parser.getint(s,o)  
+
+   except (NoSectionError,NoOptionError), ex:
+      print str(ex), 'in', realpath(config_file)
+      exit(2)
+
+
+
+def targetPrograms(path):
+   # Assume dat file is only written once all data is available
+   from os import listdir, mkdir
+   from os.path import join, isdir, getmtime
+   from fnmatch import filter
+
+   # undeleted filenames that might have a file extension
+   files = filter( listdir(path), '*.*[!~]' )
+
+   programs = set()
+   datdir = join(path,'dat')
+   if isdir(datdir):
+      for f in files:
+         try:
+            if getmtime(f) > getmtime( join(datdir,f) ):
+               programs.add(f)
+         except OSError: # assume - No such file or directory
+               programs.add(f)
+   else:
+      mkdir(datdir)      
+      programs = frozenset(files)
+
+   return frozenset(programs)
+
+
+
+def cmdTemplate(filename,ext):
+   vars = {}
+   vars['%X'] = filename + '_run' if ext in make else filename
+   vars['%T'] = filename.split('.').pop(0) # We only selected filenames with a .
+
+   s = commandlines[ext]
+
+   from os import environ
+   from re import finditer, sub
+
+   for m in finditer('\$[\w]+' ,s):
+      value = environ.get( m.group(0).lstrip('$'), '' )
+      s = sub('\\'+ m.group(0)+'[\W]', value+' ', s) # eaten the trailing space?
+
+   for m in finditer('\%[XT]' ,s):
+      value = vars.get( m.group(0), '' )
+      s = sub('\\'+ m.group(0), value, s) 
+
+   return s
+
+
+
+def cmdWithArg(s,arg):
+   from re import finditer, sub
+   for m in finditer('\%A' ,s):
+      s = sub('\\'+ m.group(0), arg, s) 
+   return s
+
+
+
+# adapt to unavailable libgtop2
+try:
+   import gtop
+except ImportError:
+   from planB import measure # only rusage cpu time
+else:
+   from planA import measure # cpu load, resident memory and rusage cpu time
+
+
+
+def standalone(cmd):
+   from cStringIO import StringIO
+   out = StringIO()
+   for i in range(repeat,0,-1):
+      m = measure('_',cmd.split(),delay,maxtime)
+      print >>out, '%s,%d,%.3f,%d,%s' % m
+      if m[1] != 0: break # unexpected exit status
+   print out.getvalue()
+   out.close()
+
+
+
+def benchmarksGame():
+   # Assume $CWD is a program source directory
+   from os import getcwd, chdir, mkdir
+   from os.path import join
+   from cStringIO import StringIO
+
+   initialize()
+   path = getcwd()
+   programs = targetPrograms(path)
+
+   # do the work in a tmp directory
+   tmpdir = join(path,'tmp')
+   try:
+      chdir(tmpdir)
+   except OSError: # assume - No such file or directory
+      mkdir(tmpdir); chdir(tmpdir)
+    
+   for filename in programs:
+      ext = filename.split('.').pop() # We only selected filenames with a .
+      if ext in make:
+         pass
+
+      t = cmdTemplate(filename,ext)
+      out = StringIO()
+
+      for i in range(repeat,0,-1):
+         for a in testvalues:
+            cmd = cmdWithArg(t,a)
+            if not ext in make:
+               m = measure(a,cmd.split(),delay,maxtime)
+               print >>out, '%s,%d,%.3f,%d,%s' % m
+
+      dat = open( join(path,'dat',filename), 'w')
+      dat.write( out.getvalue() )
+      dat.close()
+      out.close()
+
+
+
+def main():
+   global delay, repeat, maxtime
+   from sys import argv, exit
+   from getopt import getopt, GetoptError
+
+   try:
+      options,_ = getopt(argv[1:],'h',['cmd=' ,'delay=' ,'repeat='
+         ,'maxtime=' ,'range=' ,'conf=' ,'help'])
+
+      cmd = None
+      for o, v in options:
+         if o in ('-h', '--help'):
+            print __doc__
+            exit(0)
+         elif o in ('--cmd'):
+            cmd = v
+         elif o in ('--delay'):
+            delay = float(v)
+         elif o in ('--repeat'):
+            repeat = int(v)
+         elif o in ('--maxtime'):
+            maxtime = int(v)  
+
+      if cmd:
+         standalone(cmd)
+      else:
+         for o, v in options:
+            if o in ('--range'):
+               testvalues.extend( v.split(',') )
+            elif o in ('--conf'):
+               config_file = v
+
+         benchmarksGame()
+
+   except GetoptError, ex:
+      print str(ex)
+      print 'please try --help'
+      exit(2)
+
+           
+if __name__ == "__main__":
+   main()
+
+
