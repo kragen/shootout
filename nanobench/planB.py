@@ -1,4 +1,4 @@
-# $Id: planB.py,v 1.2 2008-07-18 16:22:56 igouy-guest Exp $
+# $Id: planB.py,v 1.3 2008-07-19 04:34:17 igouy-guest Exp $
 
 """
 measure without libgtop2
@@ -7,7 +7,7 @@ __author__ =  'Isaac Gouy'
 
 
 
-def measure(arg,commandline,delay,maxTime):
+def measure(arg,commandline,delay,maxtime):
    from subprocess import Popen
    import os, cPickle, time, thread, signal
 
@@ -24,11 +24,11 @@ def measure(arg,commandline,delay,maxTime):
       global _maxMem, _timedout; _maxMem = 0; _timedout = False
 
       def sample(program):
-         """sample thread will be destroyed when the forked process _exits,
-            use globals to pass data from the thread to the forked process."""
+         # sample thread will be destroyed when the forked process _exits
+         # use globals to pass data from the thread to the forked process
          global _maxMem, _timedout
 
-         remaining = maxTime
+         remaining = maxtime
          while remaining > 0:
 
 
