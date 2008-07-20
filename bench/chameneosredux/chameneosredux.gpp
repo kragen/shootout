@@ -1,0 +1,321 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+
+   contributed by Michael Barker
+   based on a Java contribution by Luzius Meisser
+   Convert to c++ by dualamd
+*/
+
+#include <iostream>
+#include <pthread.h>
+
+enum Colour 
+{
+   blue      = 0,
+   red      = 1,
+   yellow   = 2,
+   Invalid   = 3
+};
+
+const char* ColourName[] = {"blue", "red", "yellow"};
+
+
+Colour doCompliment(Colour c1, Colour c2) 
+{
+   switch (c1) 
+   {
+   case blue:
+      switch (c2) 
+      {
+      case blue:
+         return blue;
+      case red:
+         return yellow;
+      case yellow:
+         return red;
+      default:
+         goto errlb;
+      }
+   case red:
+      switch (c2) 
+      {
+      case blue:
+         return yellow;
+      case red:
+         return red;
+      case yellow:
+         return blue;
+      default:
+         goto errlb;
+      }
+   case yellow:
+      switch (c2) 
+      {
+      case blue:
+         return red;
+      case red:
+         return blue;
+      case yellow:
+         return yellow;
+      default:
+         goto errlb;
+      }
+   default:
+      break;
+   }
+
+errlb:   
+   std::cerr << "Invalid colour" << std::endl;
+   exit( 1 );
+}
+
+char* getNumber(int n, char* outbuf) 
+{
+   static const char* NUMBERS[] =
+   {
+      "zero", "one", "two", "three", "four", "five",
+      "six", "seven", "eight", "nine"
+   };
+
+   char tmp[64];
+   int ichar = sprintf(tmp, "%d", n);
+   int ochar = 0;
+
+   for (int i = 0; i < ichar; i++)
+      ochar += sprintf( outbuf + ochar, " %s", NUMBERS[ tmp[i] -'0' ] );
+
+   return outbuf;
+}
+
+class Pair 
+{
+public:
+   bool   two_met;
+   bool    sameid;
+   Colour    colour;
+   
+   void Copy(const Pair &p)
+   {
+      sameid   = p.sameid;
+      colour   = p.colour;
+      two_met   = p.two_met;
+   }
+
+   void Meet(bool sameid, Colour c)
+   {
+      this->sameid = sameid;
+      this->colour = c;
+      two_met = true;
+   }
+
+   Pair()   {   two_met = false;   }
+   
+};
+
+class MeetingPlace 
+{
+private:
+   pthread_mutex_t   mutex;
+
+   int meetingsLeft;
+   Colour firstColour;
+   int firstId;
+
+   Pair* current;
+
+public:
+   MeetingPlace( int meetings ) 
+   {
+      pthread_mutex_init( &mutex, 0 );
+      meetingsLeft = meetings;
+      firstColour = Invalid;
+      firstId = 0;
+   }
+   ~MeetingPlace()
+   {
+      pthread_mutex_destroy( &mutex );
+   }
+
+   bool meet( int id, Colour c, Pair* rp )
+   {
+      pthread_mutex_lock( &mutex );
+      bool retval = true;
+
+      if ( meetingsLeft > 0 )
+      {
+         if ( firstColour == Invalid ) 
+         {
+            firstColour = c;
+            firstId = id;
+            
+            rp->two_met = false;
+            current = rp;
+         } 
+         else 
+         {
+            Colour newColour = doCompliment( c, firstColour );
+
+            rp->Meet( (id == firstId), newColour );
+            current->Copy( *rp );
+
+            firstColour = Invalid;
+            meetingsLeft--;
+         }
+      } 
+      else 
+         retval = false;
+
+      pthread_mutex_unlock( &mutex );
+      return retval;
+   }
+};
+
+
+
+class Creature
+{
+private:
+   pthread_t ht;
+   pthread_attr_t stack_att;
+
+   MeetingPlace* place;
+   int count;
+   int sameCount;
+
+   Colour colour;
+   int id;
+   
+   static int creatureID;
+   static const int STACK_SIZE   = 32*1024;
+   
+public:
+   Creature( MeetingPlace* place, Colour colour ) 
+   {
+      this->place = place;
+      this->id = ++creatureID;
+      this->colour = colour;
+      count = sameCount = 0;
+
+      pthread_attr_init( &stack_att );
+      pthread_attr_setstacksize( &stack_att, STACK_SIZE );
+      pthread_create( &ht, &stack_att, &Creature::ThreadRun, (void*)this );
+   }
+
+   static void* ThreadRun(void* param)
+   {
+      Creature* cr = (Creature*)param;
+      cr->run();
+      return 0;
+   }
+
+   void run()
+   {
+      Pair* pr = new Pair();
+      
+      while (true) 
+      {
+         if ( place->meet( id, colour, pr ) )
+         {
+            while (pr->two_met == false)
+               sched_yield();
+               
+            colour = pr->colour;
+            if (pr->sameid) 
+               sameCount++;
+            count++;
+         }
+         else
+            break;
+      }
+      
+      delete pr;
+   }
+
+   int getCount() 
+   {   return count;   }
+
+   char* getResult(char* str) 
+   {
+      char numstr[512];
+      getNumber(sameCount, numstr);
+
+      sprintf( str, "%u%s", count, numstr );
+      return str;
+   }
+
+   void wait()
+   {   pthread_join( ht, 0 );   }
+};
+
+int Creature::creatureID = 0;
+
+
+void runGame(int n, int ncolor, const Colour* colours) 
+{
+   MeetingPlace* place = new MeetingPlace(n);
+   Creature **creatures = (Creature**)calloc(ncolor, sizeof(Creature*));
+
+   for (int i = 0; i < ncolor; i++)
+   {
+      std::cout << ColourName[ colours[i] ] << " ";
+      creatures[i] = new Creature( place, colours[i] );
+   }
+   std::cout << std::endl;
+
+
+   for (int i = 0; i < ncolor; i++) 
+      creatures[i]->wait();
+
+   int total = 0;
+   char str[256];
+
+   for (int i = 0; i < ncolor; i++) 
+   {
+      std::cout <<  creatures[i]->getResult(str)  << std::endl;
+      total += creatures[i]->getCount();
+   }
+
+   std::cout << getNumber(total, str) << std::endl << std::endl;
+
+   for (int i = 0; i < ncolor; i++) 
+      delete creatures[i];
+   free(creatures);
+   delete place;
+}
+
+
+void printColours(Colour c1, Colour c2) 
+{
+   std::cout << ColourName[c1] << " + " << ColourName[c2] 
+         << " -> " << ColourName[doCompliment(c1, c2)] 
+         << std::endl;
+}
+
+void printColours() 
+{
+   printColours(blue, blue);
+   printColours(blue, red);
+   printColours(blue, yellow);
+   printColours(red, blue);
+   printColours(red, red);
+   printColours(red, yellow);
+   printColours(yellow, blue);
+   printColours(yellow, red);
+   printColours(yellow, yellow);
+}
+
+int main(char argc, char** argv) 
+{
+   int n = (argc == 2) ? atoi(argv[1]) : 600;
+
+   printColours();
+   std::cout << std::endl;
+   
+   const Colour r1[] = {   blue, red, yellow   };
+   const Colour r2[] = {   blue, red, yellow, 
+            red, yellow, blue, 
+            red, yellow, red, blue   };
+
+   runGame( n, sizeof(r1) / sizeof(r1[0]), r1 );
+   runGame( n, sizeof(r2) / sizeof(r2[0]), r2 );
+}
