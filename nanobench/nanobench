@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench,v 1.3 2008-07-19 04:41:56 igouy-guest Exp $
+# $Id: nanobench,v 1.4 2008-07-20 18:41:47 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -49,6 +49,9 @@ Output: _,0,40.739,6356,100% 0% 0% 0%
    6356		sampled resident memory usage (KB)
    100%		cpu load during a program run
 """
+
+from __future__ import with_statement
+
 __author__ =  'Isaac Gouy'
 
 
@@ -61,11 +64,11 @@ testvalues = []
 delay = 0.2
 repeat = 5
 maxtime = 600
+config_file = 'nanobench.conf'
 
 
 def initialize():
    global make
-   config_file = 'nanobench.conf'
 
    from sys import exit
    from os.path import realpath
@@ -81,7 +84,7 @@ def initialize():
 
       s = 'measure'
       if parser.has_section(s):
-         for o in parser.options(name):
+         for o in parser.options(s):
             if o in ('delay'):
                delay = parser.getfloat(s,o)
             elif o in ('repeat'):
@@ -89,14 +92,15 @@ def initialize():
             elif o in ('maxtime'):
                maxtime = parser.getint(s,o)  
 
-   except (NoSectionError,NoOptionError), ex:
-      print str(ex), 'in', realpath(config_file)
+   except (NoSectionError,NoOptionError), e:
+      print e, 'in', realpath(config_file)
       exit(2)
 
 
 
 def targetPrograms(path):
    # Assume dat file is only written once all data is available
+   from errno import ENOENT
    from os import listdir, mkdir
    from os.path import join, isdir, getmtime
    from fnmatch import filter
@@ -111,8 +115,11 @@ def targetPrograms(path):
          try:
             if getmtime(f) > getmtime( join(datdir,f) ):
                programs.add(f)
-         except OSError: # assume - No such file or directory
+         except OSError, (e,_): 
+            if e == ENOENT: # No such file or directory
                programs.add(f)
+            # what if it was a different error?
+            
    else:
       mkdir(datdir)      
       programs = frozenset(files)
@@ -157,38 +164,59 @@ try:
 except ImportError:
    from planB import measure # only rusage cpu time
 else:
-   from planA import measure # cpu load, resident memory and rusage cpu time
+   from planB import measure # cpu load, resident memory and rusage cpu time
+
+
+
+def outFilename(filename,index):
+   return filename + '_out' if index == 0 else '/dev/null'
 
 
 
 def standalone(cmd):
+   from tempfile import TemporaryFile
    from cStringIO import StringIO
+   from contextlib import nested
+
    out = StringIO()
-   for i in range(repeat,0,-1):
-      m = measure('_',cmd.split(),delay,maxtime)
-      print >>out, '%s,%d,%.3f,%d,%s' % m
-      if m[1] != 0: break # unexpected exit status
+   for i in range(0,repeat):
+      with nested( open( outFilename('',i), 'w'), 
+                   TemporaryFile(mode='w+t')) as (of,ef):
+         m = measure('_',cmd.split(),delay,maxtime,of,ef)
+         print >>out, '%s,%d,%.3f,%d,%s' % m
+         if ef.tell(): ef.seek(0); print >>out, ef.read()
+         if m[1] != 0: break
+
    print out.getvalue()
    out.close()
 
 
 
+def setWorkingDirectory(path):
+   from errno import ENOENT
+   from os import chdir, mkdir
+   from os.path import join
+
+   tmpdir = join(path,'tmp')
+   try:
+      chdir(tmpdir)
+   except OSError, (e,_): 
+      if e == ENOENT: # No such file or directory
+         mkdir(tmpdir); chdir(tmpdir)
+         # what if it was a different error?
+
+
+
 def benchmarksGame():
    # Assume $CWD is a program source directory
-   from os import getcwd, chdir, mkdir
+   from os import getcwd
    from os.path import join
    from cStringIO import StringIO
 
    initialize()
    path = getcwd()
    programs = targetPrograms(path)
-
-   # do the work in a tmp directory
-   tmpdir = join(path,'tmp')
-   try:
-      chdir(tmpdir)
-   except OSError: # assume - No such file or directory
-      mkdir(tmpdir); chdir(tmpdir)
+   setWorkingDirectory(path)
     
    for filename in programs:
       ext = filename.split('.').pop() # We only selected filenames with a .
@@ -196,24 +224,26 @@ def benchmarksGame():
          pass
 
       t = cmdTemplate(filename,ext)
-      out = StringIO()
+      cache = StringIO()
 
-      for i in range(repeat,0,-1):
+      for i in range(0,repeat):
          for a in testvalues:
             cmd = cmdWithArg(t,a)
-            if not ext in make:
-               m = measure(a,cmd.split(),delay,maxtime)
-               print >>out, '%s,%d,%.3f,%d,%s' % m
+
+            with open( outFilename(filename,i), 'w') as of:
+               if not ext in make:
+                  m = measure(a,cmd.split(),delay,maxtime,outFile=of)
+                  print >>cache, '%s,%d,%.3f,%d,%s' % m
 
       dat = open( join(path,'dat',filename), 'w')
-      dat.write( out.getvalue() )
+      dat.write( cache.getvalue() )
       dat.close()
-      out.close()
+      cache.close()
 
 
 
 def main():
-   global delay, repeat, maxtime
+   global delay, repeat, maxtime, config_file
    from sys import argv, exit
    from getopt import getopt, GetoptError
 
@@ -246,8 +276,8 @@ def main():
 
          benchmarksGame()
 
-   except GetoptError, ex:
-      print str(ex)
+   except GetoptError, (_,e):
+      print e
       print 'please try --help'
       exit(2)
 
