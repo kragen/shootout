@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench,v 1.4 2008-07-20 18:41:47 igouy-guest Exp $
+# $Id: nanobench,v 1.5 2008-07-20 20:33:30 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -21,6 +21,10 @@ where standalone options include:
 
    --repeat <int>
       how often to run a program [5]
+
+   --cutoff <int>
+      how many seconds to allow before 
+      cancelling repeat of program run [60]
 
    --delay <float>
       delay in seconds between sampling 
@@ -61,14 +65,15 @@ make = frozenset()
 commandlines = {}
 testvalues = []
 
-delay = 0.2
 repeat = 5
+cutoff = 60
+delay = 0.2
 maxtime = 600
 config_file = 'nanobench.conf'
 
 
 def initialize():
-   global make
+   global repeat, cutoff, delay, maxtime, make
 
    from sys import exit
    from os.path import realpath
@@ -85,10 +90,12 @@ def initialize():
       s = 'measure'
       if parser.has_section(s):
          for o in parser.options(s):
-            if o in ('delay'):
-               delay = parser.getfloat(s,o)
-            elif o in ('repeat'):
+            if o in ('repeat'):
                repeat = parser.getint(s,o)
+            elif o in ('cutoff'):
+               cutoff = parser.getint(s,o)
+            elif o in ('delay'):
+               delay = parser.getfloat(s,o)
             elif o in ('maxtime'):
                maxtime = parser.getint(s,o)  
 
@@ -164,7 +171,7 @@ try:
 except ImportError:
    from planB import measure # only rusage cpu time
 else:
-   from planB import measure # cpu load, resident memory and rusage cpu time
+   from planA import measure # cpu load, resident memory and rusage cpu time
 
 
 
@@ -173,22 +180,32 @@ def outFilename(filename,index):
 
 
 
+def hasUnexpectedExitStatus(measurement):
+   return measurement[1] != 0
+
+
+
+def hasExceededCutoff(measurement):
+   return measurement[2] > cutoff
+
+
+
 def standalone(cmd):
    from tempfile import TemporaryFile
    from cStringIO import StringIO
    from contextlib import nested
 
-   out = StringIO()
+   results = StringIO()
    for i in range(0,repeat):
       with nested( open( outFilename('',i), 'w'), 
                    TemporaryFile(mode='w+t')) as (of,ef):
          m = measure('_',cmd.split(),delay,maxtime,of,ef)
-         print >>out, '%s,%d,%.3f,%d,%s' % m
-         if ef.tell(): ef.seek(0); print >>out, ef.read()
-         if m[1] != 0: break
+         print >>results, '%s,%d,%.3f,%d,%s' % m
+         if ef.tell(): ef.seek(0); print >>results, ef.read()
+         if hasUnexpectedExitStatus(m) or hasExceededCutoff(m): break
 
-   print out.getvalue()
-   out.close()
+   print results.getvalue()
+   results.close()
 
 
 
@@ -204,6 +221,43 @@ def setWorkingDirectory(path):
       if e == ENOENT: # No such file or directory
          mkdir(tmpdir); chdir(tmpdir)
          # what if it was a different error?
+
+
+
+def measureAndCheckOutput(t,f,r):
+
+   def checkedMeasurements(measurements,outFile):
+      return measurements
+
+   from tempfile import TemporaryFile
+   from contextlib import nested
+
+   revisedTestValues = []
+
+   for a in testvalues:
+      cmd = cmdWithArg(t,a)
+
+      with nested( open( outFilename(f,0), 'w'), 
+                   TemporaryFile(mode='w+t')) as (of,ef):
+         m = measure(a,cmd.split(),delay,maxtime,of,ef)
+         m = checkedMeasurements(m,of)
+         print >>r, '%s,%d,%.3f,%d,%s' % m
+         if ef.tell(): ef.seek(0); print >>of, ef.read()
+         if hasUnexpectedExitStatus(m) or hasExceededCutoff(m): break
+         revisedTestValues.append(a)
+
+   return revisedTestValues
+
+
+
+def measureOnly(revisedTestValues,t,f,r):
+   for i in range(1,repeat):
+      for a in revisedTestValues:
+         cmd = cmdWithArg(t,a)
+
+         with open( outFilename(f,i), 'w') as of:
+            m = measure(a,cmd.split(),delay,maxtime,of)
+            print >>r, '%s,%d,%.3f,%d,%s' % m
 
 
 
@@ -224,32 +278,26 @@ def benchmarksGame():
          pass
 
       t = cmdTemplate(filename,ext)
-      cache = StringIO()
+      r = StringIO()
 
-      for i in range(0,repeat):
-         for a in testvalues:
-            cmd = cmdWithArg(t,a)
-
-            with open( outFilename(filename,i), 'w') as of:
-               if not ext in make:
-                  m = measure(a,cmd.split(),delay,maxtime,outFile=of)
-                  print >>cache, '%s,%d,%.3f,%d,%s' % m
+      revisedTestValues = measureAndCheckOutput(t,filename,r)
+      measureOnly(revisedTestValues,t,filename,r)
 
       dat = open( join(path,'dat',filename), 'w')
-      dat.write( cache.getvalue() )
+      dat.write( r.getvalue() )
       dat.close()
-      cache.close()
+      r.close()
 
 
 
 def main():
-   global delay, repeat, maxtime, config_file
+   global repeat, cutoff, delay, maxtime, config_file
    from sys import argv, exit
    from getopt import getopt, GetoptError
 
    try:
-      options,_ = getopt(argv[1:],'h',['cmd=' ,'delay=' ,'repeat='
-         ,'maxtime=' ,'range=' ,'conf=' ,'help'])
+      options,_ = getopt(argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
+         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'help'])
 
       cmd = None
       for o, v in options:
@@ -258,10 +306,12 @@ def main():
             exit(0)
          elif o in ('--cmd'):
             cmd = v
-         elif o in ('--delay'):
-            delay = float(v)
          elif o in ('--repeat'):
             repeat = int(v)
+         elif o in ('--cutoff'):
+            cutoff = int(v)
+         elif o in ('--delay'):
+            delay = float(v)
          elif o in ('--maxtime'):
             maxtime = int(v)  
 

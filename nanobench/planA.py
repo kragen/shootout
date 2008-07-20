@@ -1,4 +1,4 @@
-# $Id: planA.py,v 1.5 2008-07-20 18:41:47 igouy-guest Exp $
+# $Id: planA.py,v 1.6 2008-07-20 20:33:30 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -9,7 +9,7 @@ __author__ =  'Isaac Gouy'
 
 def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None):
 
-   from subprocess import Popen, STDOUT
+   from subprocess import Popen
    import os, cPickle, time, thread, signal, gtop
 
    r,w = os.pipe()
