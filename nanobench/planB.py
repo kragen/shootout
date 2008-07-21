@@ -1,4 +1,4 @@
-# $Id: planB.py,v 1.6 2008-07-21 06:15:54 igouy-guest Exp $
+# $Id: planB.py,v 1.7 2008-07-21 22:59:19 igouy-guest Exp $
 
 """
 measure without libgtop2
@@ -8,7 +8,7 @@ __author__ =  'Isaac Gouy'
 import exit
 
 
-def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None):
+def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None):
 
    from subprocess import Popen
    import os, cPickle, time, thread, signal
@@ -51,7 +51,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None):
 
       try:
          # spawn the program in a separate process
-         p = Popen(commandline,stdout=outFile,stderr=errFile)
+         p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
 
          # start a thread to sample the program's resident memory use
          thread.start_new_thread(sample,(p.pid,))

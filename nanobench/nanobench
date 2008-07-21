@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench,v 1.7 2008-07-21 19:46:37 igouy-guest Exp $
+# $Id: nanobench,v 1.8 2008-07-21 22:59:19 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -45,6 +45,9 @@ where benchmarks game options include:
    --range <test values>
       comma separated int program args
 
+   --data <path>
+      test data file
+
 
 Output: _,0,40.739,6356,100% 0% 0% 0%
    _ 
@@ -64,14 +67,22 @@ __author__ =  'Isaac Gouy'
 make = frozenset()
 commandlines = {}
 testvalues = []
+conf = 'nanobench.conf'
+data = None
+ndiff = None
 
 repeat = 5
 cutoff = 60
 delay = 0.2
 maxtime = 600
-config_file = 'nanobench.conf'
-ndiff = None
+
 maxsize = 1024
+
+_DIFF = '_diff'
+_ERR = '_err'
+_MAKE = '_make'
+_OUT = '_out'
+
 
 
 def initialize():
@@ -84,7 +95,7 @@ def initialize():
 
    try:
       parser = ConfigParser()
-      parser.read(config_file)
+      parser.read(conf)
 
       make = frozenset( parser.get("build", "make").split() )
       commandlines.update( parser.items("commandlines") )
@@ -102,7 +113,7 @@ def initialize():
                maxtime = parser.getint(s,o)  
 
    except (NoSectionError,NoOptionError), e:
-      print e, 'in', realpath(config_file)
+      print e, 'in', realpath(conf)
       exit(2)
 
 
@@ -170,8 +181,9 @@ def cmdTemplate(filename,ext):
 
 def cmdWithArg(s,arg):
    from re import finditer, sub
+   _a = '' if data else arg
    for m in finditer('\%A' ,s):
-      s = sub('\\'+ m.group(0), arg, s) 
+      s = sub('\\'+ m.group(0), _a, s) 
    return s
 
 
@@ -188,8 +200,16 @@ import exit
 
 
 
+def dataName(arg):
+   # assume there is a data file
+   from os.path import splitext
+   root,ext = splitext(data)
+   return root + arg + ext
+
+
+
 def outName(filename,index):
-   return '_out' if index == 0 else '/dev/null'
+   return _OUT if index == 0 else '/dev/null'
 
 
 
@@ -213,12 +233,12 @@ def callMake(path,filename):
    from os.path import join
    from subprocess import call,STDOUT
 
-   with open('_make', 'w') as mf: 
+   with open(_MAKE, 'w') as mf: 
       mf.write('\nMAKE:\n')
 
    makeName = join(path,'..','Makefile.mb')
    cmd = 'make --no-print-directory -f ' + makeName + ' ' + runName(filename)
-   with open('_make', 'a') as mf:
+   with open(_MAKE, 'a') as mf:
       call( cmd.split(),stdout=mf,stderr=STDOUT)
 
 
@@ -272,9 +292,9 @@ def checkAndLog(m,outFile,logf):
       print >>logf, '\nTIMEOUT\n'
 
    else:
-      argFile = m[0] + '_out'
+      argFile = m[0] + _OUT
       if isfile(argFile): 
-         with open('_diff', 'w') as df:
+         with open(_DIFF, 'w') as df:
             try:
                if ndiff:
                   call(["ndiff",'-quiet',ndiff,outFile,argFile],
@@ -300,7 +320,7 @@ def checkAndLog(m,outFile,logf):
 def measureCheckAndLog(t,f,ext,r):
    from tempfile import TemporaryFile
    from time import strftime,gmtime
-   from os.path import getsize
+   from os.path import getsize, split
 
    revisedTestValues = []
 
@@ -309,52 +329,71 @@ def measureCheckAndLog(t,f,ext,r):
       ofName = outName(f,0)
       m = ('_',exit.ERROR,0,0,"%")
 
-      with open('_err','w+') as ef:
-         with open(logName(f),'w') as logf:
+      try:
+         with open(_ERR,'w+') as ef:
+            with open(logName(f),'w') as logf:
 
-            with open(ofName,'w') as of:
-               print >>logf, '\n', strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
+               with open(ofName,'w') as of:
+                  print >>logf, '\n', strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
 
-               if hasMake(ext):
-                  with open('_make', 'r') as mf:
-                     logf.write( mf.read() )    
+                  if hasMake(ext):
+                     with open(_MAKE, 'r') as mf:
+                        logf.write( mf.read() )    
 
-               print >>logf, '\nCOMMAND LINE:\n', cmd
-               m = measure(a,cmd.split(),delay,maxtime,of,ef)
+
+                  if data:
+                     dfName = dataName(a)
+                     print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
+                     with open(dfName,'r') as df:
+                        m = measure(a,cmd.split(),delay,maxtime,of,ef,df)
+                  else:
+                     print >>logf, '\nCOMMAND LINE:\n', cmd
+                     m = measure(a,cmd.split(),delay,maxtime,of,ef)
+
             
-            m = checkAndLog(m,ofName,logf)
-            print >>r, '%s,%d,%.3f,%d,%s' % m
+               m = checkAndLog(m,ofName,logf)
+               print >>r, '%s,%d,%.3f,%d,%s' % m
 
-            with open(ofName,'r+') as of:
-               if exit.isBadout(m):
-                  with open('_diff', 'r') as df:
-                     logf.write( df.read() )               
+               with open(ofName,'r+') as of:
+                  if exit.isBadout(m):
+                     with open(_DIFF, 'r') as df:
+                        logf.write( df.read() )               
 
-               if getsize(ofName) > maxsize:
-                  of.truncate(maxsize)
-                  logf.write( '\nTRUNCATED PROGRAM OUTPUT:\n' )
-               else:
-                  logf.write( '\nPROGRAM OUTPUT:\n' )
-               logf.write( of.read() )
+                  if getsize(ofName) > maxsize:
+                     of.truncate(maxsize)
+                     logf.write( '\nTRUNCATED PROGRAM OUTPUT:\n' )
+                  else:
+                     logf.write( '\nPROGRAM OUTPUT:\n' )
+                  logf.write( of.read() )
 
-               logf.write( '\n' )
-               ef.seek(0); logf.write( ef.read() )               
+                  logf.write( '\n' )
+                  ef.seek(0); logf.write( ef.read() )               
 
 
-      if not exit.isOk(m) or hasExceededCutoff(m): break
-      revisedTestValues.append(a)
+         if not exit.isOk(m) or hasExceededCutoff(m): break
+         revisedTestValues.append(a)
+
+      except IOError, (_,e):
+         print e # need to do something better when there's a missing file
 
    return revisedTestValues
 
 
 
 def measureOnly(revisedTestValues,t,f,r):
+   from subprocess import STDOUT
    for i in range(1,repeat):
       for a in revisedTestValues:
          cmd = cmdWithArg(t,a)
 
          with open( outName(f,i), 'w') as of:
-            m = measure(a,cmd.split(),delay,maxtime,of)
+            if data:
+               dfName = dataName(a)
+               with open(dfName,'r') as df:
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df)
+            else:
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT)
+
             print >>r, '%s,%d,%.3f,%d,%s' % m
 
 
@@ -394,13 +433,13 @@ def benchmarksGame():
 
 
 def main():
-   global repeat, cutoff, delay, maxtime, config_file
+   global repeat, cutoff, delay, maxtime, conf, data
    from sys import argv, exit
    from getopt import getopt, GetoptError
 
    try:
       options,_ = getopt(argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
-         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'help'])
+         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'data=' ,'help'])
 
       cmd = None
       for o, v in options:
@@ -425,7 +464,9 @@ def main():
             if o in ('--range'):
                testvalues.extend( v.split(',') )
             elif o in ('--conf'):
-               config_file = v
+               conf = v
+            elif o in ('--data'):
+               data = v
             elif o in ('--ndiff'):
                ndiff = v
 
