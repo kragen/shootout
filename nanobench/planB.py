@@ -1,10 +1,11 @@
-# $Id: planB.py,v 1.5 2008-07-20 20:33:30 igouy-guest Exp $
+# $Id: planB.py,v 1.6 2008-07-21 06:15:54 igouy-guest Exp $
 
 """
 measure without libgtop2
 """
 __author__ =  'Isaac Gouy'
 
+import exit
 
 
 def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None):
@@ -59,7 +60,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None):
          rusage = os.wait3(0)
 
       except (OSError,ValueError), (_,e):
-         status = -1; utime_stime = 0
+         status = exit.ERROR; utime_stime = 0
          print e, commandline
 
       else:
@@ -67,7 +68,8 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None):
 
 
          # summarize measurements 
-         status = -2 if _timedout else rusage[1] if rusage[1] == os.EX_OK else -1
+         status = exit.TIMEOUT if _timedout else rusage[1] \
+            if rusage[1] == os.EX_OK else exit.ERROR
          utime_stime = rusage[2][0] + rusage[2][1]
 
 

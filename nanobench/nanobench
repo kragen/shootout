@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench,v 1.5 2008-07-20 20:33:30 igouy-guest Exp $
+# $Id: nanobench,v 1.6 2008-07-21 06:15:53 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -70,6 +70,7 @@ cutoff = 60
 delay = 0.2
 maxtime = 600
 config_file = 'nanobench.conf'
+ndiff = None
 
 
 def initialize():
@@ -173,20 +174,23 @@ except ImportError:
 else:
    from planA import measure # cpu load, resident memory and rusage cpu time
 
+import exit
+
 
 
 def outFilename(filename,index):
-   return filename + '_out' if index == 0 else '/dev/null'
+   return '_out' if index == 0 else '/dev/null'
 
 
 
-def hasUnexpectedExitStatus(measurement):
-   return measurement[1] != 0
+def logFilename(filename):
+   from os.path import splitext
+   return (splitext(filename)[0] if filename.find('-') > -1 else filename) + '.log'
 
 
 
-def hasExceededCutoff(measurement):
-   return measurement[2] > cutoff
+def hasExceededCutoff(m):
+   return m[2] > cutoff
 
 
 
@@ -202,7 +206,7 @@ def standalone(cmd):
          m = measure('_',cmd.split(),delay,maxtime,of,ef)
          print >>results, '%s,%d,%.3f,%d,%s' % m
          if ef.tell(): ef.seek(0); print >>results, ef.read()
-         if hasUnexpectedExitStatus(m) or hasExceededCutoff(m): break
+         if exit.status(m) != exit.OK or hasExceededCutoff(m): break
 
    print results.getvalue()
    results.close()
@@ -224,27 +228,74 @@ def setWorkingDirectory(path):
 
 
 
-def measureAndCheckOutput(t,f,r):
+def checkAndLog(m,outFile,logf):
+   # Lots of side-effects!
+   from subprocess import call
+   from os.path import isfile
+   from shutil import copyfile
+   m_ = m
 
-   def checkedMeasurements(measurements,outFile):
-      return measurements
+   if (exit.status(m) == exit.ERROR):
+      print >>logf,  '\nERROR\n'
 
+   elif (exit.status(m) == exit.TIMEOUT):
+      print >>logf,  '\nTIMEOUT\n'
+
+   else:
+      argFile = m[0] + '_out'
+      if isfile(argFile): 
+         if ndiff:
+            pass
+         else:
+            with open('_diff', 'w') as df:
+               call(["diff",outFile,argFile],stdout=df)
+               if df.tell(): 
+                  print >>logf, '\nUNEXPECTED OUTPUT\n'
+                  m_ = (m[0],exit.BADOUT,m[2],m[3],m[4])
+      else:
+         copyfile(outFile,argFile)
+
+   return m_
+
+
+
+def measureCheckAndLog(t,f,ext,r):
    from tempfile import TemporaryFile
    from contextlib import nested
+   from time import ctime
 
    revisedTestValues = []
 
    for a in testvalues:
       cmd = cmdWithArg(t,a)
+      ofName = outFilename(f,0)
+      m = ('_',exit.ERROR,0,0,"%")
 
-      with nested( open( outFilename(f,0), 'w'), 
-                   TemporaryFile(mode='w+t')) as (of,ef):
-         m = measure(a,cmd.split(),delay,maxtime,of,ef)
-         m = checkedMeasurements(m,of)
-         print >>r, '%s,%d,%.3f,%d,%s' % m
-         if ef.tell(): ef.seek(0); print >>of, ef.read()
-         if hasUnexpectedExitStatus(m) or hasExceededCutoff(m): break
-         revisedTestValues.append(a)
+      with open('_err','w+') as ef:
+         with open(logFilename(f),'w+') as logf:
+
+            with open(ofName,'w') as of:
+               print >>logf, '\n', ctime()
+               print >>logf, '\nCommand line:\n', cmd
+               m = measure(a,cmd.split(),delay,maxtime,of,ef)
+            
+            m = checkAndLog(m,ofName,logf)
+            print >>r, '%s,%d,%.3f,%d,%s' % m
+
+            with open(ofName,'r') as of:
+               if exit.status(m) == exit.BADOUT:
+                  with open('_diff', 'r') as df:
+                     logf.write( df.read() )               
+
+               logf.write( '\n' )
+               logf.write( of.read() )
+
+               logf.write( '\n' )
+               ef.seek(0); logf.write( ef.read() )               
+
+
+      if exit.status(m) != exit.OK or hasExceededCutoff(m): break
+      revisedTestValues.append(a)
 
    return revisedTestValues
 
@@ -264,7 +315,7 @@ def measureOnly(revisedTestValues,t,f,r):
 def benchmarksGame():
    # Assume $CWD is a program source directory
    from os import getcwd
-   from os.path import join
+   from os.path import join, splitext
    from cStringIO import StringIO
 
    initialize()
@@ -275,17 +326,19 @@ def benchmarksGame():
    for filename in programs:
       ext = filename.split('.').pop() # We only selected filenames with a .
       if ext in make:
-         pass
+         pass     
 
       t = cmdTemplate(filename,ext)
       r = StringIO()
 
-      revisedTestValues = measureAndCheckOutput(t,filename,r)
+      revisedTestValues = measureCheckAndLog(t,filename,ext,r)
+
       measureOnly(revisedTestValues,t,filename,r)
 
-      dat = open( join(path,'dat',filename), 'w')
-      dat.write( r.getvalue() )
-      dat.close()
+      # Write dat file once, when all data is available
+      with open( join(path,'dat',filename),'w') as datf:
+         datf.write( r.getvalue() )
+
       r.close()
 
 
@@ -297,7 +350,7 @@ def main():
 
    try:
       options,_ = getopt(argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
-         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'help'])
+         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'help'])
 
       cmd = None
       for o, v in options:
@@ -323,6 +376,8 @@ def main():
                testvalues.extend( v.split(',') )
             elif o in ('--conf'):
                config_file = v
+            elif o in ('--ndiff'):
+               ndiff = v
 
          benchmarksGame()
 
