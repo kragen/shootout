@@ -1,4 +1,4 @@
-# $Id: exit.py,v 1.1 2008-07-21 06:17:38 igouy-guest Exp $
+# $Id: exit.py,v 1.2 2008-07-21 19:46:37 igouy-guest Exp $
 
 """
 exit status constants
@@ -10,9 +10,17 @@ ERROR = -1
 TIMEOUT = -2
 BADOUT = -3
 
+def isOk(m):
+   return m[1] == OK
 
-def status(m):
-   return m[1]
+def isError(m):
+   return m[1] == ERROR
+
+def isTimeout(m):
+   return m[1] == TIMEOUT
+
+def isBadout(m):
+   return m[1] == BADOUT
 
 
 
