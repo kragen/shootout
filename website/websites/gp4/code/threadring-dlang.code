@@ -1,92 +1,88 @@
 <span class="hl com">/*</span>
 <span class="hl com"> * The Computer Language Benchmarks Game</span>
 <span class="hl com"> * http://shootout.alioth.debian.org/</span>
-<span class="hl com"> * contributed by Alexander Suhoverhov</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Contributed by Premysl Hruby</span>
+<span class="hl com"> * convert to D by dualamd</span>
 <span class="hl com"> */</span>
 
-<span class="hl kwa">import</span> std<span class="hl sym">.</span>stdio<span class="hl sym">:</span> writef<span class="hl sym">;</span>
-<span class="hl kwa">import</span> <span class="hl kwc">str</span> <span class="hl sym">=</span> std<span class="hl sym">.</span>string<span class="hl sym">:</span> toString<span class="hl sym">;</span>
-<span class="hl kwa">import</span> std<span class="hl sym">.</span>thread <span class="hl sym">:</span> Thread<span class="hl sym">;</span>
-<span class="hl kwa">import</span> std<span class="hl sym">.</span>conv<span class="hl sym">:</span> toInt<span class="hl sym">;</span>
+<span class="hl kwa">module</span> ThreadRing<span class="hl sym">;</span>
 
-<span class="hl kwa">const</span> NUM_THREADS <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>stdio <span class="hl sym">:</span> writefln<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>conv <span class="hl sym">:</span> toInt<span class="hl sym">;</span>
 
-<span class="hl kwa">int</span> n<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>c<span class="hl sym">.</span>linux<span class="hl sym">.</span>pthread<span class="hl sym">;</span>
+<span class="hl kwa">import</span> std<span class="hl sym">.</span>c<span class="hl sym">.</span>stdlib <span class="hl sym">:</span> exit<span class="hl sym">;</span>
 
+<span class="hl kwa">const uint</span> NUM_THREADS <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+<span class="hl kwa">const uint</span> STACK_SIZE <span class="hl sym">=</span> <span class="hl num">16</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">;</span>
+
+<span class="hl kwa">int</span>   token <span class="hl sym">= -</span><span class="hl num">1</span><span class="hl sym">;</span>
 bool finished <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
 
-<span class="hl kwa">alias char</span><span class="hl sym">[]</span> string<span class="hl sym">;</span>
+<span class="hl kwa">extern</span> <span class="hl sym">(</span>C<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   pthread_mutex_t<span class="hl sym">[</span>NUM_THREADS<span class="hl sym">]</span>      mutex<span class="hl sym">;</span>
+   <span class="hl kwa">char</span><span class="hl sym">[</span>STACK_SIZE<span class="hl sym">][</span>NUM_THREADS<span class="hl sym">]</span>   stacks<span class="hl sym">;</span>
 
-<span class="hl kwa">class</span> MessageThread<span class="hl sym">:</span> Thread <span class="hl sym">{</span>
-   MessageThread next_<span class="hl sym">;</span>
-   <span class="hl kwa">int</span> message_<span class="hl sym">;</span>
-   string name_<span class="hl sym">;</span>
-
-   <span class="hl kwa">this</span><span class="hl sym">(</span>string name<span class="hl sym">) {</span>
-      <span class="hl kwa">super</span><span class="hl sym">();</span>
-      name_ <span class="hl sym">=</span> name<span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
-   MessageThread <span class="hl kwd">next</span><span class="hl sym">(</span>MessageThread n<span class="hl sym">) {</span>
-      <span class="hl kwa">return</span> next_ <span class="hl sym">=</span> n<span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
-   MessageThread <span class="hl kwd">next</span><span class="hl sym">() {</span>
-      <span class="hl kwa">return</span> next_<span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
-   <span class="hl kwa">void</span> <span class="hl kwd">message</span><span class="hl sym">(</span><span class="hl kwa">int</span> m<span class="hl sym">) {</span>
-      message_ <span class="hl sym">=</span> m<span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
-   <span class="hl kwa">int</span> <span class="hl kwd">run</span><span class="hl sym">() {</span>
-      <span class="hl kwa">while</span><span class="hl sym">(!</span>finished<span class="hl sym">) {</span>
-         <span class="hl kwa">while</span><span class="hl sym">(</span>message_ <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp; !</span>finished<span class="hl sym">) {</span>
-            yield<span class="hl sym">;</span>
-         <span class="hl sym">}</span>
-
-         <span class="hl kwa">if</span> <span class="hl sym">(</span>finished<span class="hl sym">)</span>
-            <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
-
-         <span class="hl kwa">if</span><span class="hl sym">(</span>message_ <span class="hl sym">==</span> n<span class="hl sym">) {</span>
-            finished <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
-            <span class="hl kwd">writef</span><span class="hl sym">(</span>name_<span class="hl sym">);</span>
-            <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         <span class="hl sym">}</span>
-
-         <span class="hl kwa">auto</span> m <span class="hl sym">=</span> message_<span class="hl sym">;</span>
-         message_ <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         next_<span class="hl sym">.</span><span class="hl kwd">message</span><span class="hl sym">(</span>m <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
-      <span class="hl sym">}</span>
-      <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-<span class="hl sym">}</span>
-
-<span class="hl kwa">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span>string<span class="hl sym">[]</span> args<span class="hl sym">) {</span>
-
-   n <span class="hl sym">=</span> <span class="hl kwd">toInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
-
-   <span class="hl kwa">auto</span> head <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">MessageThread</span><span class="hl sym">(</span><span class="hl str">&quot;1&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwa">void</span><span class="hl sym">*</span> <span class="hl kwd">thread_func</span><span class="hl sym">(</span> <span class="hl kwa">void</span> <span class="hl sym">*</span>num <span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      <span class="hl kwa">auto</span> tail <span class="hl sym">=</span> head<span class="hl sym">;</span>
+      <span class="hl kwa">int</span> thisnode   <span class="hl sym">=</span> <span class="hl kwa">cast</span><span class="hl sym">(</span><span class="hl kwa">int</span><span class="hl sym">)</span>num<span class="hl sym">;</span>
+      <span class="hl kwa">int</span> nextnode   <span class="hl sym">= (</span> thisnode <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">) %</span> NUM_THREADS<span class="hl sym">;</span>
 
-      <span class="hl kwa">for</span><span class="hl sym">(</span><span class="hl kwa">auto</span> i <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> NUM_THREADS<span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
-         tail<span class="hl sym">.</span>next <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">MessageThread</span><span class="hl sym">(</span><span class="hl kwd">toString</span><span class="hl sym">(</span>i<span class="hl sym">));</span>
-         tail <span class="hl sym">=</span> tail<span class="hl sym">.</span>next<span class="hl sym">;</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">( &amp;(</span>mutex<span class="hl sym">[</span> thisnode <span class="hl sym">]) );</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> token <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            token<span class="hl sym">--;</span>
+            <span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">( &amp;(</span>mutex<span class="hl sym">[</span> nextnode <span class="hl sym">]) );</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">else</span>
+         <span class="hl sym">{</span>
+             <span class="hl kwd">writefln</span><span class="hl sym">(</span> thisnode <span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">);</span>
+             <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+         <span class="hl sym">}</span>
       <span class="hl sym">}</span>
-      tail<span class="hl sym">.</span>next <span class="hl sym">=</span> head<span class="hl sym">;</span>
-   <span class="hl sym">}</span>
 
-   <span class="hl kwa">auto</span> current <span class="hl sym">=</span> head<span class="hl sym">;</span>
-   <span class="hl kwa">for</span><span class="hl sym">(</span><span class="hl kwa">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NUM_THREADS<span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
-      current<span class="hl sym">.</span>start<span class="hl sym">;</span>
-      current <span class="hl sym">=</span> current<span class="hl sym">.</span>next<span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
-   head<span class="hl sym">.</span><span class="hl kwd">message</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
-
-   <span class="hl kwa">for</span><span class="hl sym">(</span><span class="hl kwa">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NUM_THREADS<span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
-      current<span class="hl sym">.</span><span class="hl kwc">wait</span><span class="hl sym">;</span>
-      current <span class="hl sym">=</span> current<span class="hl sym">.</span>next<span class="hl sym">;</span>
+      <span class="hl kwa">return null</span><span class="hl sym">;</span>
    <span class="hl sym">}</span>
 <span class="hl sym">}</span>
+
+<span class="hl kwa">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span>string<span class="hl sym">[]</span> args<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">try</span>
+   <span class="hl sym">{</span>
+      token <span class="hl sym">=</span> <span class="hl kwd">toInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">catch</span> <span class="hl sym">(</span>Exception e<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      token <span class="hl sym">=</span> <span class="hl num">1000</span><span class="hl sym">;</span> <span class="hl slc">// test case</span>
+   <span class="hl sym">}</span>
+
+   pthread_t cthread<span class="hl sym">;</span>
+   pthread_attr_t stack_attr<span class="hl sym">;</span>
+
+   <span class="hl kwd">pthread_attr_init</span><span class="hl sym">(&amp;</span>stack_attr<span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwa">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NUM_THREADS<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">pthread_mutex_init</span><span class="hl sym">( &amp;(</span>mutex<span class="hl sym">[</span> i <span class="hl sym">]),</span> <span class="hl kwa">null</span><span class="hl sym">);</span>
+      <span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">( &amp;(</span>mutex<span class="hl sym">[</span> i <span class="hl sym">]) );</span>
+
+      <span class="hl slc">// manual set stack space &amp; stack size for each thread</span>
+      <span class="hl kwd">pthread_attr_setstack</span><span class="hl sym">( &amp;</span>stack_attr<span class="hl sym">, &amp;(</span>stacks<span class="hl sym">[</span>i<span class="hl sym">]),</span> STACK_SIZE <span class="hl sym">);</span>
+
+      <span class="hl kwd">pthread_create</span><span class="hl sym">( &amp;</span>cthread<span class="hl sym">, &amp;</span>stack_attr<span class="hl sym">, &amp;</span>thread_func<span class="hl sym">,</span> <span class="hl kwa">cast</span><span class="hl sym">(</span><span class="hl kwa">void</span><span class="hl sym">*)</span>i <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// start game</span>
+   <span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">( &amp;(</span>mutex<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]) );</span>
+
+   <span class="hl slc">// wait for result</span>
+   <span class="hl kwd">pthread_join</span><span class="hl sym">(</span> cthread<span class="hl sym">,</span> <span class="hl kwa">null</span> <span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
