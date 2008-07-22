@@ -1,92 +1,88 @@
 /*
  * The Computer Language Benchmarks Game
  * http://shootout.alioth.debian.org/
- * contributed by Alexander Suhoverhov
+ *
+ * Contributed by Premysl Hruby
+ * convert to D by dualamd
  */
 
-import std.stdio: writef;
-import str = std.string: toString;
-import std.thread : Thread;
-import std.conv: toInt;
+module ThreadRing;
 
-const NUM_THREADS = 503;
+import std.stdio : writefln;
+import std.conv : toInt;
 
-int n;
+import std.c.linux.pthread;
+import std.c.stdlib : exit;
 
+const uint NUM_THREADS = 503;
+const uint STACK_SIZE = 16*1024;
+
+int   token = -1;
 bool finished = false;
 
-alias char[] string;
+extern (C)
+{
+   pthread_mutex_t[NUM_THREADS]      mutex;
+   char[STACK_SIZE][NUM_THREADS]   stacks;
 
-class MessageThread: Thread {
-   MessageThread next_;
-   int message_;
-   string name_;
-
-   this(string name) {
-      super();
-      name_ = name;
-   }
-
-   MessageThread next(MessageThread n) {
-      return next_ = n;
-   }
-
-   MessageThread next() {
-      return next_;
-   }
-
-   void message(int m) {
-      message_ = m;
-   }
-
-   int run() {
-      while(!finished) {
-         while(message_ == 0 && !finished) {
-            yield;
-         }
-         
-         if (finished)
-            return 0;
-
-         if(message_ == n) {
-            finished = true;
-            writef(name_);
-            return 0;
-         }
-
-         auto m = message_;
-         message_ = 0;
-         next_.message(m + 1);
-      }
-      return 0;
-   }
-}
-
-void main(string[] args) {
-
-   n = toInt(args[1]);
-
-   auto head = new MessageThread("1");
+   void* thread_func( void *num )
    {
-      auto tail = head;
+      int thisnode   = cast(int)num;
+      int nextnode   = ( thisnode + 1 ) % NUM_THREADS;
 
-      for(auto i = 2; i <= NUM_THREADS; ++i) {
-         tail.next = new MessageThread(toString(i));
-         tail = tail.next;
+      while (true) 
+      {
+         pthread_mutex_lock( &(mutex[ thisnode ]) );
+
+         if ( token > 0 ) 
+         {
+            token--;
+            pthread_mutex_unlock( &(mutex[ nextnode ]) );
+         }
+         else 
+         {
+             writefln( thisnode +1 );
+             exit(0);
+         }
       }
-      tail.next = head;
-   }
 
-   auto current = head;
-   for(int i = 0; i < NUM_THREADS; ++i) {
-      current.start;
-      current = current.next;
-   }
-
-   head.message(1);
-
-   for(int i = 0; i < NUM_THREADS; ++i) {
-      current.wait;
-      current = current.next;
+      return null;
    }
 }
+
+int main(string[] args)
+{
+   try
+   {
+      token = toInt(args[1]);
+   }
+   catch (Exception e)   
+   {
+      token = 1000; // test case
+   }
+
+   pthread_t cthread;
+   pthread_attr_t stack_attr;
+
+   pthread_attr_init(&stack_attr);
+
+   for (int i = 0; i < NUM_THREADS; i++) 
+   {
+      pthread_mutex_init( &(mutex[ i ]), null);
+      pthread_mutex_lock( &(mutex[ i ]) );
+
+      // manual set stack space & stack size for each thread
+      pthread_attr_setstack( &stack_attr, &(stacks[i]), STACK_SIZE );
+
+      pthread_create( &cthread, &stack_attr, &thread_func, cast(void*)i );
+   }
+
+   // start game
+   pthread_mutex_unlock( &(mutex[0]) );
+
+   // wait for result
+   pthread_join( cthread, null );
+
+   return 1;
+}
+
