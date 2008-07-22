@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench,v 1.10 2008-07-22 17:10:35 igouy-guest Exp $
+# $Id: nanobench,v 1.11 2008-07-22 22:15:05 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -159,7 +159,9 @@ def runName(filename):
 
 
 
-def cmdTemplate(filename,ext):
+def cmdTemplate(path,filename,ext):
+   from os.path import join
+
    vars = {}
    vars['%X'] = runName(filename) if hasMake(ext) else filename
 
@@ -170,21 +172,23 @@ def cmdTemplate(filename,ext):
    p = names[1].split('-')
    vars['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
 
+   vars['%S'] = join(path,'')
+
    s = commandlines.get(ext,None)
    if s:
       from os import environ
       from re import finditer, sub
 
-      for m in finditer('\$[\w]+' ,s):
-         value = environ.get( m.group(0).lstrip('$'), '' )
-         s = sub('\\'+ m.group(0)+'[\W]', value+' ', s) # eaten the trailing space?
+      for m in finditer('\$[\w]+' ,s): 
+         k = m.group(0)
+         v = environ.get( k.lstrip('$'), '' )
+         s = sub('\\' + k + '(?P<c>[\W])', v + '\g<c>', s) # ate [\W] !
 
-      for m in finditer('\%[XTBI]' ,s):
+      for m in finditer('\%[XTBIS]' ,s):
          value = vars.get( m.group(0), '' )
          s = sub('\\'+ m.group(0), value, s) 
 
    else:
-      from os.path import join
       s = join('.',runName(filename)) + ' %A'
 
    return s
@@ -366,7 +370,7 @@ def measureCheckAndLog(t,f,ext,r):
 
                   # append command line showing test value argument to log
                   else:
-                     print >>logf, '\nCOMMAND LINE:\n ; stdout.flush()', cmd
+                     print >>logf, '\nCOMMAND LINE:\n', cmd
                      m = measure(a,cmd.split(),delay,maxtime,of,ef)
 
             # check the program output was as expected
@@ -406,11 +410,11 @@ def measureCheckAndLog(t,f,ext,r):
    if exit.isOk(m):
       print 'OK',
    elif exit.isError(m):
-      print 'Error',
+      print 'ERROR',
    elif exit.isTimeout(m):
-      print 'Timeout',
+      print 'TIMEOUT',
    elif exit.isBadout(m):
-      print 'Bad Output',
+      print 'BAD OUTPUT',
    stdout.flush()
 
    return revisedTestValues
@@ -462,7 +466,7 @@ def benchmarksGame():
       if hasMake(ext):
          callMake(path,filename)    
 
-      t = cmdTemplate(filename,ext)
+      t = cmdTemplate(path,filename,ext)
       r = StringIO()
 
       revisedTestValues = measureCheckAndLog(t,filename,ext,r)
