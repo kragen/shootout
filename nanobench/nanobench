@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: nanobench,v 1.9 2008-07-22 01:47:15 igouy-guest Exp $
+# $Id: nanobench,v 1.10 2008-07-22 17:10:35 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -48,6 +48,9 @@ where benchmarks game options include:
    --data <path>
       test data file
 
+   --ndiff <parameter string>
+      ndiff parameters, example "-abserr 1.0e-8"
+
 
 Output: _,0,40.739,6356,100% 0% 0% 0%
    _ 
@@ -81,6 +84,10 @@ _DIFF = '_diff'
 _ERR = '_err'
 _MAKE = '_make'
 _OUT = '_out'
+
+logdirName = 'log'
+datdirName = 'dat'
+tmpdirName = 'tmp'
 
 
 
@@ -128,7 +135,7 @@ def targetPrograms(path):
    files = filter( listdir(path), '*.*[!~]' )
 
    programs = set()
-   datdir = join(path,'dat')
+   datdir = join(path,datdirName)
    if isdir(datdir):
       for f in files:
          try:
@@ -155,7 +162,13 @@ def runName(filename):
 def cmdTemplate(filename,ext):
    vars = {}
    vars['%X'] = runName(filename) if hasMake(ext) else filename
-   vars['%T'] = filename.split('.').pop(0) # We only selected filenames with a .
+
+   names = filename.split('.') # We only selected filenames with a .
+   vars['%T'] = names[0]
+   vars['%B'] = '.'.join( names[0:len(names)-1] )
+
+   p = names[1].split('-')
+   vars['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
 
    s = commandlines.get(ext,None)
    if s:
@@ -166,7 +179,7 @@ def cmdTemplate(filename,ext):
          value = environ.get( m.group(0).lstrip('$'), '' )
          s = sub('\\'+ m.group(0)+'[\W]', value+' ', s) # eaten the trailing space?
 
-      for m in finditer('\%[XT]' ,s):
+      for m in finditer('\%[XTBI]' ,s):
          value = vars.get( m.group(0), '' )
          s = sub('\\'+ m.group(0), value, s) 
 
@@ -266,7 +279,7 @@ def setWorkingDirectory(path):
    from os import chdir, mkdir
    from os.path import join
 
-   tmpdir = join(path,'tmp')
+   tmpdir = join(path,tmpdirName)
    try:
       chdir(tmpdir)
    except OSError, (e,_): 
@@ -320,6 +333,7 @@ def checkAndLog(m,outFile,logf):
 
 
 def measureCheckAndLog(t,f,ext,r):
+   from sys import stdout
    from tempfile import TemporaryFile
    from time import strftime,gmtime
    from os.path import getsize, split
@@ -352,7 +366,7 @@ def measureCheckAndLog(t,f,ext,r):
 
                   # append command line showing test value argument to log
                   else:
-                     print >>logf, '\nCOMMAND LINE:\n', cmd
+                     print >>logf, '\nCOMMAND LINE:\n ; stdout.flush()', cmd
                      m = measure(a,cmd.split(),delay,maxtime,of,ef)
 
             # check the program output was as expected
@@ -379,18 +393,32 @@ def measureCheckAndLog(t,f,ext,r):
                      logf.write( '\n' )
                      logf.write( ef.read() )               
 
-
          if not exit.isOk(m) or hasExceededCutoff(m): break
          revisedTestValues.append(a)
 
       except IOError, (_,e):
-         print e # need to do something better when there's a missing file
+         print 'FAIL', e # need to do something better when there's a missing file
+
+      finally:
+         print '.', ; stdout.flush()
+
+
+   if exit.isOk(m):
+      print 'OK',
+   elif exit.isError(m):
+      print 'Error',
+   elif exit.isTimeout(m):
+      print 'Timeout',
+   elif exit.isBadout(m):
+      print 'Bad Output',
+   stdout.flush()
 
    return revisedTestValues
 
 
 
 def measureOnly(revisedTestValues,t,f,r):
+   from sys import stdout
    from subprocess import STDOUT
    for i in range(1,repeat):
       for a in revisedTestValues:
@@ -410,12 +438,15 @@ def measureOnly(revisedTestValues,t,f,r):
             # record the measurement tuple 
             print >>r, '%s,%d,%.3f,%d,%s' % m
 
+         print '.', ; stdout.flush()
 
 
 def benchmarksGame():
    # Assume $CWD is a program source directory
    from os import getcwd
    from os import environ
+   from time import strftime,localtime
+   from sys import stdout
    from os.path import join, splitext
    from cStringIO import StringIO
 
@@ -425,6 +456,7 @@ def benchmarksGame():
    setWorkingDirectory(path)
     
    for filename in programs:
+      print strftime("%a %H:%M:%S", localtime()), ; stdout.flush()
       ext = filename.split('.').pop() # We only selected filenames with a .
 
       if hasMake(ext):
@@ -442,6 +474,7 @@ def benchmarksGame():
          datf.write( r.getvalue() )
 
       r.close()
+      print filename 
 
 
 
