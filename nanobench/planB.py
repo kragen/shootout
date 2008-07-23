@@ -1,4 +1,4 @@
-# $Id: planB.py,v 1.7 2008-07-21 22:59:19 igouy-guest Exp $
+# $Id: planB.py,v 1.8 2008-07-23 02:47:24 igouy-guest Exp $
 
 """
 measure without libgtop2
@@ -11,36 +11,39 @@ import exit
 def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None):
 
    from subprocess import Popen
-   import os, cPickle, time, thread, signal
+   import os, cPickle, time, threading, signal
 
    r,w = os.pipe()
-   main = os.fork()
+   forkedPid = os.fork()
 
-   if main: # read pickled measurements from the pipe
+   if forkedPid: # read pickled measurements from the pipe
       os.close(w); rPipe = os.fdopen(r); r = cPickle.Unpickler(rPipe)
       measurements = r.load()
       rPipe.close()
+      os.waitpid(forkedPid,0)
       return measurements
 
    else: 
-      # use a child process to make sure the sample thread is 
-      # destroyed - which will happen when the child process _exits
-      global _maxMem, _timedout; _maxMem = 0; _timedout = False
+      # Sample thread will be destroyed when the forked process _exits
+      class Sample(threading.Thread):
+         def __init__(self,program):
+            threading.Thread.__init__(self)
+            self.setDaemon(1)
+            self.p = program
+            self.maxMem = 0
+            self.timedout = False     
+            self.start()      
+         def run(self):
+            remaining = maxtime
+            while remaining > 0:
 
-      def sample(program):         
-         # use globals to pass data from the thread to the forked process
-         global _maxMem, _timedout
 
-         remaining = maxtime
-         while remaining > 0:
-
-
-            time.sleep(delay)
-            remaining = remaining - delay
-         else:
-            _timedout = True
-            os.kill(program, signal.SIGTERM)
-            #os.kill(program, signal.SIGKILL)
+               time.sleep(delay)
+               remaining -= delay
+            else:
+               self.timedout = True
+               os.kill(self.p, signal.SIGTERM)
+               #os.kill(self.p, signal.SIGKILL)            
 
 
       # only write pickles to the pipe
@@ -54,13 +57,13 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
          p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
 
          # start a thread to sample the program's resident memory use
-         thread.start_new_thread(sample,(p.pid,))
+         t = Sample( program = p.pid )
 
          # wait for program exit status and resource usage
          rusage = os.wait3(0)
 
       except (OSError,ValueError), (_,e):
-         status = exit.ERROR; utime_stime = 0
+         status = exit.ERROR; utime_stime = 0; load = "%"
          print e, commandline
 
       else:
@@ -68,7 +71,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
 
 
          # summarize measurements 
-         status = exit.TIMEOUT if _timedout else rusage[1] \
+         status = exit.TIMEOUT if t.timedout else rusage[1] \
             if rusage[1] == os.EX_OK else exit.ERROR
          utime_stime = rusage[2][0] + rusage[2][1]
 
@@ -87,8 +90,9 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
 
    
       finally:
-         w.dump( (arg, status, utime_stime, _maxMem, "%") )
+         w.dump( (arg, status, utime_stime, t.maxMem, '%') )
          wPipe.close()
 
+      # Sample thread will be destroyed when the forked process _exits
       os._exit(0)
 
