@@ -1,0 +1,599 @@
+#!/usr/bin/python
+
+# $Id: nanobench,v 1.1 2008-07-24 05:41:27 igouy-guest Exp $
+
+"""
+Description: nanobench records a program's cpu
+time, and samples resident memory usage and
+records cpu load while a program is running. 
+
+nanobench can be used in a limited way standalone
+- it is intended for use with the make files and 
+directories of The Computer Language Benchmarks Game. 
+
+Usage: nanobench -options
+
+where standalone options include:
+
+   --cmd <commandline string>
+      commandline string should be sufficient 
+      to run a program from the current directory
+
+   --repeat <int>
+      how often to run a program [5]
+
+   --cutoff <int>
+      how many seconds to allow before 
+      cancelling repeat of program run [60]
+
+   --delay <float>
+      delay in seconds between sampling 
+      memory usage [0.2]
+
+   --maxtime <int>
+      how many seconds to allow before 
+      stopping a program [600]
+
+   -h --help
+      print this help message
+
+where benchmarks game options include:
+
+   --conf <path>
+      configuration file [./nanobench.conf]
+
+   --range <test values>
+      comma separated int program args
+
+   --data <path>
+      test data file
+
+   --ndiff <parameter string>
+      ndiff parameters, example "-abserr 1.0e-8"
+
+
+Output: _,0,40.739,6356,100% 0% 0% 0%
+   _ 
+   0		exit status (-1 error, -2 timeout)
+   40.739	user time + system time (seconds)
+   6356		sampled resident memory usage (KB)
+   100%		cpu load during a program run
+"""
+
+from __future__ import with_statement
+
+__author__ =  'Isaac Gouy'
+
+
+
+# globals
+make = frozenset()
+commandlines = {}
+testvalues = []
+data = None
+ndiff = None
+
+repeat = 5
+cutoff = 60
+delay = 0.2
+maxtime = 600
+
+maxsize = 10240
+
+_OUT = '.out'
+
+logdirName = 'log'
+datdirName = 'dat'
+tmpdirName = 'tmp'
+
+sitename = None
+sourcedir = None
+rootdir = None
+makedir = None
+logdir = None
+datdir = None
+tmpdir = None
+
+
+
+def initializeFrom(ini):
+   global repeat, cutoff, delay, maxtime, make
+
+   from sys import exit
+   from os.path import realpath
+   # need to use ConfigParser not SafeConfigParser
+   from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+
+   try:
+      parser = ConfigParser()
+      parser.read(ini)
+
+      make = frozenset( parser.get("build", "make").split() )
+      commandlines.update( parser.items("commandlines") )
+
+      s = 'measure'
+      if parser.has_section(s):
+         for o in parser.options(s):
+            if o in ('repeat'):
+               repeat = parser.getint(s,o)
+            elif o in ('cutoff'):
+               cutoff = parser.getint(s,o)
+            elif o in ('delay'):
+               delay = parser.getfloat(s,o)
+            elif o in ('maxtime'):
+               maxtime = parser.getint(s,o)  
+
+   except (NoSectionError,NoOptionError), e:
+      print e, 'in', realpath(ini)
+      exit(2)
+
+
+
+def createDirectories():
+   global sourcedir,sitename,rootdir,makedir,logdir,datdir,tmpdir
+   from os import getcwd,environ,mkdir
+   from os.path import split,join,expanduser,expandvars,normpath,isdir
+   from sys import exit
+
+   sourcedir = getcwd()
+   environ['SOURCE_DIR'] = sourcedir # Make.common uses $SOURCE_DIR
+
+   # assume sourcedir path ends with a test name
+   rootdir = normpath( expandvars( expanduser( environ.get( 'SITE_ROOT', ''))))
+   if isdir(rootdir):
+      rootdir = join(rootdir,split(sourcedir)[1])
+      if not isdir(rootdir):
+         mkdir(rootdir) 
+   else:
+      print 'please set SITE_ROOT in Makefile_local'
+      exit(0)
+   
+   sitename = environ.get( 'SITE_NAME', '')
+   if not sitename:
+      print 'please set SITE_NAME in Makefile_local'
+      exit(0)
+
+   makedir = normpath( expandvars( expanduser( environ.get( 'SITE_MAKEFILES', ''))))
+   if not isdir(makedir):
+      print 'please set MAKE_ROOT in Makefile_local'
+      exit(0)
+
+   logdir = join(rootdir,logdirName)
+   if not isdir(logdir):
+      mkdir(logdir) 
+
+   datdir = join(rootdir,datdirName)
+   if not isdir(datdir):
+      mkdir(datdir) 
+
+   tmpdir = join(rootdir,tmpdirName)
+   if not isdir(tmpdir):
+      mkdir(tmpdir) 
+
+
+
+def targetPrograms():
+   # assume dat file is only written once all data is available
+   from errno import ENOENT
+   from os import listdir
+   from os.path import join, getmtime
+   from fnmatch import filter
+
+   # undeleted filenames that might have a file extension
+   files = filter( listdir(sourcedir), '*.*[!~]' )
+
+   # exclude bogus files created by touch
+   files = [f for f in files if not f.startswith('*')]
+
+   programs = set()
+   for f in files:
+      try:
+         if getmtime(f) > getmtime( join(datdir,f) ):
+            programs.add(f)
+      except OSError, (e,_): 
+         if e == ENOENT: # No such file or directory
+            programs.add(f)
+
+   return frozenset(programs)
+
+
+
+def runName(filename):
+   return filename + '_run'
+
+
+
+def cmdTemplate(filename,ext):
+   from os import getcwd
+   from os.path import join
+
+   vars = {}
+   vars['%X'] = runName(filename) if hasMake(ext) else filename
+
+   names = filename.split('.') # We only selected filenames with a .
+   vars['%T'] = names[0]
+   vars['%B'] = '.'.join( names[0:len(names)-1] )
+
+   p = names[1].split('-')
+   vars['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
+
+   vars['%S'] = join(getcwd(),'')
+
+   s = commandlines.get(ext,None)
+   if s:
+      from os import environ
+      from re import finditer, sub
+
+      for m in finditer('\$[\w]+' ,s): 
+         k = m.group(0)
+         v = environ.get( k.lstrip('$'), '' )
+         s = sub('\\' + k + '(?P<c>[\W])', v + '\g<c>', s) # ate [\W] !
+
+      for m in finditer('\%[XTBIS]' ,s):
+         value = vars.get( m.group(0), '' )
+         s = sub('\\'+ m.group(0), value, s) 
+
+   else:
+      s = join('.',runName(filename)) + ' %A'
+
+   return s
+
+
+
+def cmdWithArg(s,arg):
+   from re import finditer, sub
+   _a = '' if data else arg
+   for m in finditer('\%A' ,s):
+      s = sub('\\'+ m.group(0), _a, s) 
+   return s
+
+
+
+# adapt to unavailable libgtop2
+try:
+   import gtop
+except ImportError:
+   from planB import measure # only rusage cpu time
+else:
+   from planA import measure # cpu load, resident memory and rusage cpu time
+
+import exit
+
+
+
+def dataName(arg):
+   # assume there is a data file
+   from os.path import splitext
+   root,ext = splitext(data)
+   return root + arg + ext
+
+
+
+def outName(directory,index):
+   from os.path import join
+   return join(directory,_OUT) if index == 0 else '/dev/null'
+
+
+
+def logName(filename):
+   from os.path import join,splitext
+   return join(logdir,
+         (splitext(filename)[0] if filename.find('-') > -1 
+            else filename) + '.log')
+
+
+
+def diffName():
+   from os.path import join
+   return join(tmpdir,'_diff')
+
+
+
+def errName():
+   from os.path import join
+   return join(tmpdir,'_err')
+
+
+
+def makeName():
+   from os.path import join
+   return join(tmpdir,'_make')
+
+
+
+def hasExceededCutoff(m):
+   return m[2] > cutoff
+
+
+
+def hasMake(ext):
+   return ext in make
+
+
+
+def callMake(root,filename):
+   from os import chdir
+   from os.path import join
+   from subprocess import call,STDOUT
+
+   # step into tmpdir before the make 
+   chdir(tmpdir)
+
+   with open( makeName(), 'w') as mf: 
+      mf.write('\nMAKE:\n')
+
+   optionFile = join(root,'Make.common_' + sitename)
+   cmd = 'make --no-print-directory -f ' + optionFile + ' ' + runName(filename)
+   with open( makeName(), 'a') as mf:
+      call(cmd.split(),stdout=mf,stderr=STDOUT)
+
+
+
+def standalone(cmd):
+   from tempfile import TemporaryFile
+   from cStringIO import StringIO
+   from contextlib import nested
+
+   results = StringIO()
+   for i in range(0,repeat):
+      with nested( open( outName('./',i), 'w'), 
+                   TemporaryFile(mode='w+t')) as (of,ef):
+         m = measure('_',cmd.split(),delay,maxtime,of,ef)
+         print >>results, '%s,%d,%.3f,%d,%s' % m
+         if ef.tell(): ef.seek(0); print >>results, ef.read()
+         if not exit.isOk(m) or hasExceededCutoff(m): break
+
+   print results.getvalue()
+   results.close()
+
+
+
+def checkAndLog(m,outFile,logf):
+   # assume outFile has been closed
+   from subprocess import call,STDOUT
+   from os.path import isfile, join
+   from shutil import copyfile
+   m_ = m
+
+   if exit.isError(m):
+      print >>logf, '\nERROR\n'
+
+   elif exit.isTimeout(m):
+      print >>logf, '\nTIMEOUT\n'
+
+   elif exit.isFailure(m):
+      print >>logf, '\nFAILURE\n'
+
+   else:
+      argFile = join(tmpdir,m[0]+_OUT)
+
+      # diff against expected output file
+      if isfile(argFile): 
+         with open( diffName(), 'w') as df:
+            try:
+               if ndiff:
+                  call(["ndiff",'-quiet',ndiff,outFile,argFile],
+                        stdout=df,stderr=STDOUT)
+               else:
+                  call(["diff",outFile,argFile],stdout=df,stderr=STDOUT)
+
+            except OSError, (e,err): 
+               if e == ENOENT: # No such file or directory 
+                  print >>logf, '\nFAIL:', err, '\n'
+
+            if df.tell(): 
+               print >>logf, '\nUNEXPECTED OUTPUT:'
+
+               # mark the measurement tuple as bad output
+               m_ = (m[0],exit.BADOUT,m[2],m[3],m[4])
+
+      else: # create the initial expected output file
+         copyfile(outFile,argFile)
+
+   return m_
+
+
+
+def measureCheckAndLog(t,f,ext,r):
+   from sys import stdout
+   from tempfile import TemporaryFile
+   from time import strftime,gmtime
+   from os.path import join,getsize,split
+
+   revisedTestValues = []
+
+   for a in testvalues:
+      cmd = cmdWithArg(t,a)
+      ofName = outName(tmpdir,0)
+      m = ('_',exit.ERROR,0,0,"%")
+
+      try:
+         with open(logName(f),'w') as logf:
+            with open(ofName,'w') as of:
+               # append timestamp to log
+               print >>logf, '\n', strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
+
+               # append Make output to log
+               if hasMake(ext):
+                  with open( makeName(), 'r') as mf:
+                     logf.write( mf.read() ) 
+
+               with open(errName(),'w+') as ef:
+                  # append command line showing redirected test data file to log
+                  if data:
+                     dfName = dataName(a)
+                     print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
+                     with open(dfName,'r') as df:
+                        m = measure(a,cmd.split(),delay,maxtime,of,ef,df)
+
+                  # append command line showing test value argument to log
+                  else:
+                     print >>logf, '\nCOMMAND LINE:\n', cmd
+                     m = measure(a,cmd.split(),delay,maxtime,of,ef)
+
+            # check the program output was as expected
+            m = checkAndLog(m,ofName,logf)
+            print >>r, '%s,%d,%.3f,%d,%s' % m
+
+            with open(ofName,'r+') as of:
+               # append diff or ndiff output to log
+               if exit.isBadout(m):
+                  with open(diffName(), 'r') as df:
+                     logf.write( df.read() )               
+
+               # append program output to log
+               if getsize(ofName) > maxsize:
+                  of.truncate(maxsize)
+                  logf.write( '\nTRUNCATED PROGRAM OUTPUT:\n' )
+               else:
+                  logf.write( '\nPROGRAM OUTPUT:\n' )
+               logf.write( of.read() )
+
+               # append program stderr to log
+               if getsize(errName()):
+                  with open(errName(), 'r') as ef:
+                     logf.write( '\n' )
+                     logf.write( ef.read() )               
+
+         if not exit.isOk(m) or hasExceededCutoff(m): break
+         revisedTestValues.append(a)
+
+      except IOError, (_,e):
+         print 'FAIL', e # need to do something better when there's a missing file
+
+      finally:
+         stdout.write('.'); stdout.flush()
+
+   if exit.isOk(m):
+      print 'OK ',
+   elif exit.isError(m):
+      print 'ERROR ',
+   elif exit.isTimeout(m):
+      print 'TIMEOUT ',
+   elif exit.isBadout(m):
+      print 'BAD OUTPUT ',
+   elif exit.isFailure(m):
+      print 'FAILURE ',
+   stdout.flush()
+
+   return revisedTestValues
+
+
+
+def measureOnly(revisedTestValues,t,f,r):
+   from sys import stdout
+   from subprocess import STDOUT
+   for i in range(1,repeat):
+      for a in revisedTestValues:
+         cmd = cmdWithArg(t,a)
+         with open( outName(tmpdir,i), 'w') as of:
+
+            # pass the test data file to program stdin
+            if data:
+               dfName = dataName(a)
+               with open(dfName,'r') as df:
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df)
+
+            # pass the test value as a command line argument in cmd
+            else:
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT)
+
+            # record the measurement tuple 
+            print >>r, '%s,%d,%.3f,%d,%s' % m
+
+         stdout.write('.'); stdout.flush()
+
+
+
+def benchmarksGame():
+   # assume $CWD is a program source directory
+   from time import strftime,localtime
+   from sys import stdout
+   from os import chdir
+   from os.path import join, splitext
+   from cStringIO import StringIO
+
+   createDirectories()
+   programs = targetPrograms()
+    
+   for filename in programs:
+      stdout.write('%s ' % strftime('%a %H:%M:%S', localtime())); stdout.flush()
+      ext = filename.split('.').pop() # We only selected filenames with a .
+
+      if hasMake(ext):
+         # step into tmpdir before the make 
+         callMake(makedir,filename)    
+
+      t = cmdTemplate(filename,ext)
+      r = StringIO()
+
+      revisedTestValues = measureCheckAndLog(t,filename,ext,r)
+
+      measureOnly(revisedTestValues,t,filename,r)
+
+      # Write dat file once, when all data is available
+      with open( join(datdir,filename),'w') as datf:
+         datf.write( r.getvalue() )
+
+      r.close()
+      print filename 
+
+      # step into sourcedir (we might have stepped into tmpdir)
+      chdir(sourcedir)
+
+
+
+def main():
+   global repeat, cutoff, delay, maxtime, data
+   import sys, getopt
+
+   try:
+      options,_ = getopt.getopt(sys.argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
+         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'data=' ,'help'])
+
+      for o, v in options:
+         if o in ('--conf'):
+            initializeFrom(v)
+
+      # allow config file settings to be over-ridden from the command line
+
+      cmd = None
+      for o, v in options:
+         if o in ('-h', '--help'):
+            print __doc__
+            exit(0)
+         elif o in ('--cmd'):
+            cmd = v
+         elif o in ('--repeat'):
+            repeat = int(v)
+         elif o in ('--cutoff'):
+            cutoff = int(v)
+         elif o in ('--delay'):
+            delay = float(v)
+         elif o in ('--maxtime'):
+            maxtime = int(v)  
+         elif o in ('--range'):
+            testvalues.extend( v.split(',') )
+         elif o in ('--data'):
+            data = v
+         elif o in ('--ndiff'):
+            ndiff = v
+
+      if cmd:
+         standalone(cmd)
+      else:
+         benchmarksGame()
+
+   except getopt.GetoptError, (_,e):
+      print e
+      print 'please try --help'
+      sys.exit(2)
+
+   except KeyboardInterrupt:
+      sys.exit(1)
+
+           
+if __name__ == "__main__":
+   main()
+
+
