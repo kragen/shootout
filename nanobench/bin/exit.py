@@ -1,4 +1,5 @@
-# $Id: exit.py,v 1.1 2008-07-24 05:41:27 igouy-guest Exp $
+# The Computer Language Benchmarks Game
+# $Id: exit.py,v 1.2 2008-07-24 19:27:24 igouy-guest Exp $
 
 """
 exit status constants
@@ -9,7 +10,7 @@ OK = 0
 ERROR = -1
 TIMEOUT = -2
 BADOUT = -3
-FAIL = -4
+MISSING = -4
 
 def isOk(m):
    return m[1] == OK
@@ -23,8 +24,8 @@ def isTimeout(m):
 def isBadout(m):
    return m[1] == BADOUT
 
-def isFailure(m):
-   return m[1] == FAIL
+def isMissing(m):
+   return m[1] == MISSING
 
 
 

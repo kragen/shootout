@@ -1,4 +1,5 @@
-# $Id: planA.py,v 1.1 2008-07-24 05:41:27 igouy-guest Exp $
+# The Computer Language Benchmarks Game
+# $Id: planA.py,v 1.2 2008-07-24 19:27:24 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -51,7 +52,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
                sys.exit(1)
 
       try:
-         status = exit.FAIL; utime_stime = 0.0; maxMem = 0; load = '%'
+         status = exit.ERROR; utime_stime = 0.0; maxMem = 0; load = '%'
 
          # only write pickles to the pipe
          os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
@@ -72,7 +73,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
          except (OSError,ValueError), (e,err):
             # common case - No such file or directory
             if e == ENOENT:
-               status = exit.ERROR 
+               status = exit.MISSING 
             print err, commandline,
 
          else:

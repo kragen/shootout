@@ -1,6 +1,6 @@
 #!/usr/bin/python
-
-# $Id: nanobench,v 1.1 2008-07-24 05:41:27 igouy-guest Exp $
+# The Computer Language Benchmarks Game
+# $Id: nanobench,v 1.2 2008-07-24 19:27:24 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -51,6 +51,9 @@ where benchmarks game options include:
    --ndiff <parameter string>
       ndiff parameters, example "-abserr 1.0e-8"
 
+   --binarycmp
+      program output is binary, use cmp
+
 
 Output: _,0,40.739,6356,100% 0% 0% 0%
    _ 
@@ -62,6 +65,10 @@ Output: _,0,40.739,6356,100% 0% 0% 0%
 
 from __future__ import with_statement
 
+import sys, os, os.path
+from cStringIO import StringIO
+from tempfile import TemporaryFile
+
 __author__ =  'Isaac Gouy'
 
 
@@ -72,6 +79,7 @@ commandlines = {}
 testvalues = []
 data = None
 ndiff = None
+binarycmp = None
 
 repeat = 5
 cutoff = 60
@@ -80,7 +88,7 @@ maxtime = 600
 
 maxsize = 10240
 
-_OUT = '.out'
+_OUT = '_out'
 
 logdirName = 'log'
 datdirName = 'dat'
@@ -99,8 +107,6 @@ tmpdir = None
 def initializeFrom(ini):
    global repeat, cutoff, delay, maxtime, make
 
-   from sys import exit
-   from os.path import realpath
    # need to use ConfigParser not SafeConfigParser
    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
@@ -124,71 +130,84 @@ def initializeFrom(ini):
                maxtime = parser.getint(s,o)  
 
    except (NoSectionError,NoOptionError), e:
-      print e, 'in', realpath(ini)
-      exit(2)
+      print e, 'in', os.path.realpath(ini)
+      sys.exit(2)
 
 
 
 def createDirectories():
    global sourcedir,sitename,rootdir,makedir,logdir,datdir,tmpdir
-   from os import getcwd,environ,mkdir
-   from os.path import split,join,expanduser,expandvars,normpath,isdir
-   from sys import exit
+   from os.path import join,split,expanduser,expandvars,normpath,isdir
 
-   sourcedir = getcwd()
-   environ['SOURCE_DIR'] = sourcedir # Make.common uses $SOURCE_DIR
+   sourcedir = os.getcwd()
+   os.environ['SOURCE_DIR'] = sourcedir # Make.common uses $SOURCE_DIR
 
    # assume sourcedir path ends with a test name
-   rootdir = normpath( expandvars( expanduser( environ.get( 'SITE_ROOT', ''))))
+   rootdir = normpath( expandvars( expanduser( os.environ.get( 'SITE_ROOT', ''))))
    if isdir(rootdir):
       rootdir = join(rootdir,split(sourcedir)[1])
       if not isdir(rootdir):
-         mkdir(rootdir) 
+         os.mkdir(rootdir) 
    else:
       print 'please set SITE_ROOT in Makefile_local'
-      exit(0)
+      sys.exit(0)
    
-   sitename = environ.get( 'SITE_NAME', '')
+   sitename = os.environ.get( 'SITE_NAME', '')
    if not sitename:
       print 'please set SITE_NAME in Makefile_local'
-      exit(0)
+      sys.exit(0)
 
-   makedir = normpath( expandvars( expanduser( environ.get( 'SITE_MAKEFILES', ''))))
+   makedir = normpath( expandvars( expanduser( os.environ.get( 'SITE_MAKEFILES', ''))))
    if not isdir(makedir):
       print 'please set MAKE_ROOT in Makefile_local'
-      exit(0)
+      sys.exit(0)
 
    logdir = join(rootdir,logdirName)
    if not isdir(logdir):
-      mkdir(logdir) 
+      os.mkdir(logdir) 
 
    datdir = join(rootdir,datdirName)
    if not isdir(datdir):
-      mkdir(datdir) 
+      os.mkdir(datdir) 
 
    tmpdir = join(rootdir,tmpdirName)
    if not isdir(tmpdir):
-      mkdir(tmpdir) 
+      os.mkdir(tmpdir) 
 
 
 
 def targetPrograms():
    # assume dat file is only written once all data is available
    from errno import ENOENT
-   from os import listdir
-   from os.path import join, getmtime
+   from os.path import getmtime,splitext
    from fnmatch import filter
 
-   # undeleted filenames that might have a file extension
-   files = filter( listdir(sourcedir), '*.*[!~]' )
+   # include undeleted filenames that might have a file extension
+   files = filter( os.listdir(sourcedir), '*.*[!~]' )
 
    # exclude bogus files created by touch
    files = [f for f in files if not f.startswith('*')]
 
+   # if some file extensions are explicitly selected, exclude those not selected
+   selected = os.environ.get( 'SELECT', '')
+   if selected:
+      imps = [i for i in selected.split() if not i.startswith('*')]
+      if imps:
+         imps = frozenset(imps)
+         files = [f for f in files if splitext(f)[1].lstrip('.') in imps]
+
+   # if some file extensions are explicitly ignored, exclude them
+   excluded = os.environ.get( 'IGNORE', '')
+   if excluded:
+      imps = [i for i in excluded.split() if not i.startswith('*')]
+      if imps:
+         imps = frozenset(imps)
+         files = [f for f in files if not splitext(f)[1].lstrip('.') in imps]
+
    programs = set()
    for f in files:
       try:
-         if getmtime(f) > getmtime( join(datdir,f) ):
+         if getmtime(f) > getmtime( os.path.join(datdir,f) ):
             programs.add(f)
       except OSError, (e,_): 
          if e == ENOENT: # No such file or directory
@@ -204,9 +223,6 @@ def runName(filename):
 
 
 def cmdTemplate(filename,ext):
-   from os import getcwd
-   from os.path import join
-
    vars = {}
    vars['%X'] = runName(filename) if hasMake(ext) else filename
 
@@ -217,16 +233,15 @@ def cmdTemplate(filename,ext):
    p = names[1].split('-')
    vars['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
 
-   vars['%S'] = join(getcwd(),'')
+   vars['%S'] = os.path.join( os.getcwd(),'')
 
    s = commandlines.get(ext,None)
    if s:
-      from os import environ
       from re import finditer, sub
 
       for m in finditer('\$[\w]+' ,s): 
          k = m.group(0)
-         v = environ.get( k.lstrip('$'), '' )
+         v = os.environ.get( k.lstrip('$'), '' )
          s = sub('\\' + k + '(?P<c>[\W])', v + '\g<c>', s) # ate [\W] !
 
       for m in finditer('\%[XTBIS]' ,s):
@@ -234,7 +249,7 @@ def cmdTemplate(filename,ext):
          s = sub('\\'+ m.group(0), value, s) 
 
    else:
-      s = join('.',runName(filename)) + ' %A'
+      s = os.path.join('.',runName(filename)) + ' %A'
 
    return s
 
@@ -263,41 +278,35 @@ import exit
 
 def dataName(arg):
    # assume there is a data file
-   from os.path import splitext
-   root,ext = splitext(data)
+   root,ext = os.path.splitext(data)
    return root + arg + ext
 
 
 
 def outName(directory,index):
-   from os.path import join
-   return join(directory,_OUT) if index == 0 else '/dev/null'
+   return os.path.join(directory,_OUT) if index == 0 else '/dev/null'
 
 
 
 def logName(filename):
-   from os.path import join,splitext
-   return join(logdir,
-         (splitext(filename)[0] if filename.find('-') > -1 
+   return os.path.join(logdir,
+         (os.path.splitext(filename)[0] if filename.find('-') > -1 
             else filename) + '.log')
 
 
 
 def diffName():
-   from os.path import join
-   return join(tmpdir,'_diff')
+   return os.path.join(tmpdir,'_diff')
 
 
 
 def errName():
-   from os.path import join
-   return join(tmpdir,'_err')
+   return os.path.join(tmpdir,'_err')
 
 
 
 def makeName():
-   from os.path import join
-   return join(tmpdir,'_make')
+   return os.path.join(tmpdir,'_make')
 
 
 
@@ -312,17 +321,15 @@ def hasMake(ext):
 
 
 def callMake(root,filename):
-   from os import chdir
-   from os.path import join
    from subprocess import call,STDOUT
 
    # step into tmpdir before the make 
-   chdir(tmpdir)
+   os.chdir(tmpdir)
 
    with open( makeName(), 'w') as mf: 
       mf.write('\nMAKE:\n')
 
-   optionFile = join(root,'Make.common_' + sitename)
+   optionFile = os.path.join(root,'Make.common_' + sitename)
    cmd = 'make --no-print-directory -f ' + optionFile + ' ' + runName(filename)
    with open( makeName(), 'a') as mf:
       call(cmd.split(),stdout=mf,stderr=STDOUT)
@@ -330,8 +337,6 @@ def callMake(root,filename):
 
 
 def standalone(cmd):
-   from tempfile import TemporaryFile
-   from cStringIO import StringIO
    from contextlib import nested
 
    results = StringIO()
@@ -350,8 +355,8 @@ def standalone(cmd):
 
 def checkAndLog(m,outFile,logf):
    # assume outFile has been closed
+   # assume $CWD contains the comparison files for different arg values
    from subprocess import call,STDOUT
-   from os.path import isfile, join
    from shutil import copyfile
    m_ = m
 
@@ -361,25 +366,29 @@ def checkAndLog(m,outFile,logf):
    elif exit.isTimeout(m):
       print >>logf, '\nTIMEOUT\n'
 
-   elif exit.isFailure(m):
-      print >>logf, '\nFAILURE\n'
+   elif exit.isMissing(m):
+      print >>logf, '\nMISSING\n'
 
    else:
-      argFile = join(tmpdir,m[0]+_OUT)
+      # assume $CWD contains the comparison files for different arg values
+      argFile = m[0]+_OUT
 
       # diff against expected output file
-      if isfile(argFile): 
+      if os.path.isfile(argFile): 
          with open( diffName(), 'w') as df:
             try:
+               # compare _OUT not outFile so short name will be shown in logf
                if ndiff:
-                  call(["ndiff",'-quiet',ndiff,outFile,argFile],
+                  call(["ndiff",'-quiet',ndiff,_OUT,argFile],
                         stdout=df,stderr=STDOUT)
+               elif binarycmp:
+                  call(["cmp",_OUT,argFile],stdout=df,stderr=STDOUT)
                else:
-                  call(["diff",outFile,argFile],stdout=df,stderr=STDOUT)
+                  call(["diff",_OUT,argFile],stdout=df,stderr=STDOUT)
 
             except OSError, (e,err): 
                if e == ENOENT: # No such file or directory 
-                  print >>logf, '\nFAIL:', err, '\n'
+                  print >>logf, '\nMISSING:', err, '\n'
 
             if df.tell(): 
                print >>logf, '\nUNEXPECTED OUTPUT:'
@@ -395,10 +404,7 @@ def checkAndLog(m,outFile,logf):
 
 
 def measureCheckAndLog(t,f,ext,r):
-   from sys import stdout
-   from tempfile import TemporaryFile
    from time import strftime,gmtime
-   from os.path import join,getsize,split
 
    revisedTestValues = []
 
@@ -422,7 +428,7 @@ def measureCheckAndLog(t,f,ext,r):
                   # append command line showing redirected test data file to log
                   if data:
                      dfName = dataName(a)
-                     print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
+                     print >>logf, '\nCOMMAND LINE:\n', cmd, '<', os.path.split(dfName)[1]
                      with open(dfName,'r') as df:
                         m = measure(a,cmd.split(),delay,maxtime,of,ef,df)
 
@@ -442,15 +448,18 @@ def measureCheckAndLog(t,f,ext,r):
                      logf.write( df.read() )               
 
                # append program output to log
-               if getsize(ofName) > maxsize:
+               if binarycmp:
+                  logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
+               elif os.path.getsize(ofName) > maxsize:
                   of.truncate(maxsize)
-                  logf.write( '\nTRUNCATED PROGRAM OUTPUT:\n' )
+                  logf.write( '\n(TRUNCATED) PROGRAM OUTPUT:\n' )
+                  logf.write( of.read() )
                else:
                   logf.write( '\nPROGRAM OUTPUT:\n' )
-               logf.write( of.read() )
+                  logf.write( of.read() )
 
                # append program stderr to log
-               if getsize(errName()):
+               if os.path.getsize(errName()):
                   with open(errName(), 'r') as ef:
                      logf.write( '\n' )
                      logf.write( ef.read() )               
@@ -459,10 +468,10 @@ def measureCheckAndLog(t,f,ext,r):
          revisedTestValues.append(a)
 
       except IOError, (_,e):
-         print 'FAIL', e # need to do something better when there's a missing file
+         print 'MISSING', e # need to do something better when there's a missing file
 
       finally:
-         stdout.write('.'); stdout.flush()
+         sys.stdout.write('.'); sys.stdout.flush()
 
    if exit.isOk(m):
       print 'OK ',
@@ -472,16 +481,15 @@ def measureCheckAndLog(t,f,ext,r):
       print 'TIMEOUT ',
    elif exit.isBadout(m):
       print 'BAD OUTPUT ',
-   elif exit.isFailure(m):
-      print 'FAILURE ',
-   stdout.flush()
+   elif exit.isMissing(m):
+      print 'MISSING ',
+   sys.stdout.flush()
 
    return revisedTestValues
 
 
 
 def measureOnly(revisedTestValues,t,f,r):
-   from sys import stdout
    from subprocess import STDOUT
    for i in range(1,repeat):
       for a in revisedTestValues:
@@ -501,23 +509,19 @@ def measureOnly(revisedTestValues,t,f,r):
             # record the measurement tuple 
             print >>r, '%s,%d,%.3f,%d,%s' % m
 
-         stdout.write('.'); stdout.flush()
+         sys.stdout.write('.'); sys.stdout.flush()
 
 
 
 def benchmarksGame():
    # assume $CWD is a program source directory
    from time import strftime,localtime
-   from sys import stdout
-   from os import chdir
-   from os.path import join, splitext
-   from cStringIO import StringIO
 
    createDirectories()
    programs = targetPrograms()
     
    for filename in programs:
-      stdout.write('%s ' % strftime('%a %H:%M:%S', localtime())); stdout.flush()
+      sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime())); sys.stdout.flush()
       ext = filename.split('.').pop() # We only selected filenames with a .
 
       if hasMake(ext):
@@ -532,24 +536,25 @@ def benchmarksGame():
       measureOnly(revisedTestValues,t,filename,r)
 
       # Write dat file once, when all data is available
-      with open( join(datdir,filename),'w') as datf:
+      with open( os.path.join(datdir,filename),'w') as datf:
          datf.write( r.getvalue() )
 
       r.close()
-      print filename 
+      sys.stdout.write('%s\n' % filename); sys.stdout.flush()
 
       # step into sourcedir (we might have stepped into tmpdir)
-      chdir(sourcedir)
+      os.chdir(sourcedir)
 
 
 
 def main():
-   global repeat, cutoff, delay, maxtime, data
-   import sys, getopt
+   global repeat, cutoff, delay, maxtime, data, binarycmp
+   from getopt import getopt, GetoptError
 
    try:
-      options,_ = getopt.getopt(sys.argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
-         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'data=' ,'help'])
+      options,_ = getopt(sys.argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
+         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'data=' 
+         ,'binarycmp' ,'help'])
 
       for o, v in options:
          if o in ('--conf'):
@@ -578,13 +583,15 @@ def main():
             data = v
          elif o in ('--ndiff'):
             ndiff = v
+         elif o in ('--binarycmp'):
+            binarycmp = True
 
       if cmd:
          standalone(cmd)
       else:
          benchmarksGame()
 
-   except getopt.GetoptError, (_,e):
+   except GetoptError, (_,e):
       print e
       print 'please try --help'
       sys.exit(2)
