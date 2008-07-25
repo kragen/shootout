@@ -1,20 +1,20 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.2 2008-07-24 19:27:24 igouy-guest Exp $
+# $Id: planA.py,v 1.3 2008-07-25 01:57:33 igouy-guest Exp $
 
 """
 measure with libgtop2
 """
 __author__ =  'Isaac Gouy'
 
-import exit
+
+import os, sys, cPickle, time, threading, signal, gtop
+
+from errno import ENOENT
+from subprocess import Popen
+from measurement import Measurement
 
 
 def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None):
-
-   from subprocess import Popen
-   from errno import ENOENT
-   import os, sys, cPickle, time, threading, signal, gtop
-
    r,w = os.pipe()
    forkedPid = os.fork()
 
@@ -52,7 +52,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
                sys.exit(1)
 
       try:
-         status = exit.ERROR; utime_stime = 0.0; maxMem = 0; load = '%'
+         m = Measurement(arg)
 
          # only write pickles to the pipe
          os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
@@ -71,20 +71,25 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
             rusage = os.wait3(0)
 
          except (OSError,ValueError), (e,err):
-            # common case - No such file or directory
-            if e == ENOENT:
-               status = exit.MISSING 
-            print err, commandline,
+            if e == ENOENT: # No such file or directory
+               print err, commandline,
+            else:
+               m.setError()            
 
          else:
             # gtop cpu is since machine boot, so we need an after measurement
             cpus1 = gtop.cpu().cpus 
 
             # summarize measurements 
-            status = exit.TIMEOUT if t.timedout else rusage[1] \
-               if rusage[1] == os.EX_OK else exit.ERROR
-            utime_stime = rusage[2][0] + rusage[2][1]
-            maxMem = t.maxMem
+            if t.timedout:
+               m.setTimedout()
+            elif rusage[1] == os.EX_OK:
+               m.setOkay()
+            else:
+               m.setError()
+
+            m.userSysTime = rusage[2][0] + rusage[2][1]
+            m.maxMem = t.maxMem
 
             try:
                load = map( 
@@ -95,13 +100,13 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
                   ,cpus0 ,cpus1 )
 
                load.sort(reverse=1)
-               load = ("% ".join([str(i) for i in load]))+"%"
+               m.load = ("% ".join([str(i) for i in load]))+"%"
 
-            except ZeroDivisionError: # too fast
-               load = "%"
+            except ZeroDivisionError: 
+               pass # too fast to measure
    
          finally:
-            w.dump( (arg, status, utime_stime, maxMem, load) )
+            w.dump(m)
             wPipe.close()
 
          # Sample thread will be destroyed when the forked process _exits

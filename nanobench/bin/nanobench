@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.3 2008-07-25 00:27:29 igouy-guest Exp $
+# $Id: nanobench,v 1.4 2008-07-25 01:57:33 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -65,6 +65,10 @@ Output: _,0,40.739,6356,100% 0% 0% 0%
 
 from __future__ import with_statement
 
+__author__ =  'Isaac Gouy'
+
+
+
 import sys, os, re, fnmatch
 
 # need to use ConfigParser not SafeConfigParser
@@ -74,6 +78,7 @@ from contextlib import nested
 from cStringIO import StringIO
 from errno import ENOENT
 from getopt import getopt, GetoptError
+from measurement import Measurement
 from shutil import copyfile
 from subprocess import call, STDOUT
 from tempfile import TemporaryFile
@@ -81,9 +86,6 @@ from time import strftime, localtime, gmtime
 from os.path import expanduser, expandvars, getsize, getmtime, isdir, isfile, \
                     join, normpath, realpath, split, splitext   
                     
-
-__author__ =  'Isaac Gouy'
-
 
 
 # globals
@@ -277,8 +279,6 @@ except ImportError:
 else:
    from planA import measure # cpu load, resident memory and rusage cpu time
 
-import exit
-
 
 
 def dataName(arg):
@@ -315,11 +315,6 @@ def makeName():
 
 
 
-def hasExceededCutoff(m):
-   return m[2] > cutoff
-
-
-
 def hasMake(ext):
    return ext in make
 
@@ -347,7 +342,7 @@ def standalone(cmd):
          m = measure('_',cmd.split(),delay,maxtime,of,ef)
          print >>results, '%s,%d,%.3f,%d,%s' % m
          if ef.tell(): ef.seek(0); print >>results, ef.read()
-         if not exit.isOk(m) or hasExceededCutoff(m): break
+         if not m.isOkay() or m.hasExceeded(cutoff): break
 
    print results.getvalue()
    results.close()
@@ -355,22 +350,11 @@ def standalone(cmd):
 
 
 def checkAndLog(m,outFile,logf):
-   # assume outFile has been closed
-   # assume $CWD contains the comparison files for different arg values
-   m_ = m
-
-   if exit.isError(m):
-      print >>logf, '\nERROR\n'
-
-   elif exit.isTimeout(m):
-      print >>logf, '\nTIMEOUT\n'
-
-   elif exit.isMissing(m):
-      print >>logf, '\nMISSING\n'
-
-   else:
+   if m.isOkay():
+      print 'OK'
+      # assume outFile has been closed
       # assume $CWD contains the comparison files for different arg values
-      argFile = m[0]+_OUT
+      argFile = m.arg + _OUT
 
       # diff against expected output file
       if isfile(argFile): 
@@ -378,8 +362,7 @@ def checkAndLog(m,outFile,logf):
             try:
                # compare _OUT not outFile so short name will be shown in logf
                if ndiff:
-                  call(["ndiff",'-quiet',ndiff,_OUT,argFile],
-                        stdout=df,stderr=STDOUT)
+                  call(["ndiff",'-quiet',ndiff,_OUT,argFile],stdout=df,stderr=STDOUT)
                elif binarycmp:
                   call(["cmp",_OUT,argFile],stdout=df,stderr=STDOUT)
                else:
@@ -387,18 +370,19 @@ def checkAndLog(m,outFile,logf):
 
             except OSError, (e,err): 
                if e == ENOENT: # No such file or directory 
-                  print >>logf, '\nMISSING:', err, '\n'
+                  m.setBadOutput()
+                  print >>logf, '\nFAIL:', err, '\n'
+                  print 'FAIL ', err, 
 
             if df.tell(): 
-               print >>logf, '\nUNEXPECTED OUTPUT:'
-
-               # mark the measurement tuple as bad output
-               m_ = (m[0],exit.BADOUT,m[2],m[3],m[4])
+               m.setBadOutput()
 
       else: # create the initial expected output file
          copyfile(outFile,argFile)
 
-   return m_
+   if not m.isOkay():
+      print >>logf, '\n%s\n' % m.statusStr()
+
 
 
 
@@ -408,7 +392,7 @@ def measureCheckAndLog(t,f,ext,r):
    for a in testvalues:
       cmd = cmdWithArg(t,a)
       ofName = outName(tmpdir,0)
-      m = ('_',exit.ERROR,0,0,"%")
+      m = Measurement()
 
       try:
          with open(logName(f),'w') as logf:
@@ -435,12 +419,12 @@ def measureCheckAndLog(t,f,ext,r):
                      m = measure(a,cmd.split(),delay,maxtime,of,ef)
 
             # check the program output was as expected
-            m = checkAndLog(m,ofName,logf)
-            print >>r, '%s,%d,%.3f,%d,%s' % m
+            checkAndLog(m,ofName,logf)
+            print >>r, m
 
             with open(ofName,'r+') as of:
                # append diff or ndiff output to log
-               if exit.isBadout(m):
+               if m.hasBadOutput():
                   with open(diffName(), 'r') as df:
                      logf.write( df.read() )               
 
@@ -461,7 +445,7 @@ def measureCheckAndLog(t,f,ext,r):
                      logf.write( '\n' )
                      logf.write( ef.read() )               
 
-         if not exit.isOk(m) or hasExceededCutoff(m): break
+         if not m.isOkay() or m.hasExceeded(cutoff): break
          revisedTestValues.append(a)
 
       except IOError, (_,e):
@@ -470,17 +454,7 @@ def measureCheckAndLog(t,f,ext,r):
       finally:
          sys.stdout.write('.'); sys.stdout.flush()
 
-   if exit.isOk(m):
-      print 'OK ',
-   elif exit.isError(m):
-      print 'ERROR ',
-   elif exit.isTimeout(m):
-      print 'TIMEOUT ',
-   elif exit.isBadout(m):
-      print 'BAD OUTPUT ',
-   elif exit.isMissing(m):
-      print 'MISSING ',
-   sys.stdout.flush()
+   sys.stdout.write( m.statusStr() ); sys.stdout.flush()
 
    return revisedTestValues
 
@@ -503,7 +477,7 @@ def measureOnly(revisedTestValues,t,f,r):
                   m = measure(a,cmd.split(),delay,maxtime,of,STDOUT)
 
             # record the measurement tuple 
-            print >>r, '%s,%d,%.3f,%d,%s' % m
+            print >>r, m
 
          sys.stdout.write('.'); sys.stdout.flush()
 
@@ -561,7 +535,7 @@ def main():
       for o, v in options:
          if o in ('-h', '--help'):
             print __doc__
-            exit(0)
+            sys.exit(0)
          elif o in ('--cmd'):
             cmd = v
          elif o in ('--repeat'):
