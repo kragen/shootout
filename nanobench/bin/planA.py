@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.3 2008-07-25 01:57:33 igouy-guest Exp $
+# $Id: planA.py,v 1.4 2008-07-25 07:00:26 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -100,14 +100,14 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
                   ,cpus0 ,cpus1 )
 
                load.sort(reverse=1)
-               m.load = ("% ".join([str(i) for i in load]))+"%"
+               m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
 
             except ZeroDivisionError: 
                pass # too fast to measure
    
-         finally:
-            w.dump(m)
-            wPipe.close()
+            finally:
+               w.dump(m)
+               wPipe.close()
 
          # Sample thread will be destroyed when the forked process _exits
          os._exit(0)
