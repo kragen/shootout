@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.10 2008-07-26 18:58:45 igouy-guest Exp $
+# $Id: nanobench,v 1.11 2008-07-26 21:02:46 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -104,6 +104,7 @@ logfilemax = 0
 logger = None
 loggerLine = None
 
+
 make = frozenset()
 commandlines = {}
 alias = {}
@@ -166,24 +167,26 @@ def initializeFrom(ini):
                outputmax = parser.getint(s,o) 
 
    except (NoSectionError,NoOptionError), e:
+      if log: log.debug(e)
       print e, 'in', realpath(ini)
       sys.exit(2)
 
 
 
 def configureNanobenchLogger(loggerDir):
-   global logger
+   global logger, ifmt, dfmt
    # if a logfilemax size was set, log line-by-line to a rotating log file
    # (as well as logging program-run by program-run to stdout)
    if logfilemax:
       f = join(loggerDir,'nano.log')
-      fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
       h = RotatingFileHandler(filename=f,maxBytes=logfilemax,backupCount=1)
+
+      fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s \t%(funcName)s')
       h.setFormatter(fmt)
 
       logger = logging.getLogger("nanobench")
       logger.addHandler(h)
-      logger.setLevel(logging.INFO)
+      logger.setLevel(logging.DEBUG)
 
 
 
@@ -202,16 +205,19 @@ def createDirectories():
    if isdir(rootdir):
       testdir = ifNoneMkdir(rootdir,split(sourcedir)[1])
    else:
+      if log: log.debug('please set SITE_ROOT in Makefile.site_*')
       print 'please set SITE_ROOT in Makefile.site_*'
       sys.exit(0)
 
    sitename = os.environ.get( 'SITE_NAME', '')
    if not sitename:
+      if log: log.debug('please set SITE_NAME in Makefile.site_*')
       print 'please set SITE_NAME in Makefile.site_*'
       sys.exit(0)
 
    makedir = normpath( expandvars( expanduser( os.environ.get( 'SITE_MAKEFILES', ''))))
    if not isdir(makedir):
+      if log: log.debug('please set MAKE_ROOT in Makefile.site_*')
       print 'please set MAKE_ROOT in Makefile.site_*'
       sys.exit(0)
 
@@ -345,7 +351,8 @@ def cmdWithArg(s,arg):
 # adapt to unavailable libgtop2
 try:
    import gtop
-except ImportError:
+except ImportError, (_,err):
+   if log: log.warn(err)
    from planB import measure # only rusage cpu time
 else:
    from planA import measure # cpu load, resident memory and rusage cpu time
@@ -486,12 +493,12 @@ def measureCheckAndLog(t,f,ext,r):
                      dfName = dataName(a)
                      print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
                      with open(dfName,'r') as df:
-                        m = measure(a,cmd.split(),delay,maxtime,of,ef,df)
+                        m = measure(a,cmd.split(),delay,maxtime,of,ef,df,log=logger)
 
                   # append command line showing test value argument to log
                   else:
                      print >>logf, '\nCOMMAND LINE:\n', cmd
-                     m = measure(a,cmd.split(),delay,maxtime,of,ef)
+                     m = measure(a,cmd.split(),delay,maxtime,of,ef,log=logger)
 
             # check the program output was as expected
             checkAndLog(m,ofName,logf)
@@ -525,8 +532,8 @@ def measureCheckAndLog(t,f,ext,r):
          if not m.isOkay() or m.hasExceeded(cutoff): break
          revisedTestValues.append(a)
 
-      except IOError, (_,e):
-         pass # the error will be logged
+      except IOError, (_,err):
+         if log: log.error(err)
 
       finally:
          sys.stdout.write('.'); sys.stdout.flush()
@@ -549,11 +556,11 @@ def measureOnly(revisedTestValues,t,f,r):
             if data:
                dfName = dataName(a)
                with open(dfName,'r') as df:
-                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df)
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,log=logger)
 
             # pass the test value as a command line argument in cmd
             else:
-                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT)
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,log=logger)
 
             # record the measurement tuple 
             print >>r, m
@@ -676,10 +683,12 @@ def main():
       else:
          benchmarksGame()
 
-   except KeyboardInterrupt:
+   except KeyboardInterrupt, (_,err):
+      if log: log.debug(err)
       sys.exit(1)
 
-   except GetoptError, (_,e):
+   except GetoptError, (_,err):
+      if log: log.debug(err)
       print e
       print 'please try --help'
       sys.exit(2)

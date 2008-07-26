@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.5 2008-07-26 03:50:25 igouy-guest Exp $
+# $Id: planA.py,v 1.6 2008-07-26 21:02:46 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -14,7 +14,10 @@ from subprocess import Popen
 from measurement import Measurement
 
 
-def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None):
+
+def measure(arg,commandline,delay,maxtime,
+      outFile=None,errFile=None,inFile=None,log=None):
+
    r,w = os.pipe()
    forkedPid = os.fork()
 
@@ -48,6 +51,7 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
                   os.kill(self.p, signal.SIGTERM)
                   #os.kill(self.p, signal.SIGKILL)   
             except KeyboardInterrupt:
+               if log: log.debug(err)
                raise
                sys.exit(1)
 
@@ -95,16 +99,18 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
          m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
 
 
-      except KeyboardInterrupt:
+      except KeyboardInterrupt, (e,err):
+         if log: log.debug(err)
          sys.exit(1)
 
-      except ZeroDivisionError: 
-         pass # too fast to measure
+      except ZeroDivisionError, (e,err): 
+         if log: log.warn('%s %s',err,'too fast to measure?')
 
       except (OSError,ValueError), (e,err):
          if e == ENOENT: # No such file or directory
-            print err, commandline,
+            if log: log.warn('%s %s',err,commandline)
          else:
+            if log: log.warn('%s %s',e,err)
             m.setError()       
    
       finally:
