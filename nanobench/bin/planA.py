@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.6 2008-07-26 21:02:46 igouy-guest Exp $
+# $Id: planA.py,v 1.7 2008-07-26 22:41:30 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -31,30 +31,27 @@ def measure(arg,commandline,delay,maxtime,
    else: 
       # Sample thread will be destroyed when the forked process _exits
       class Sample(threading.Thread):
+
          def __init__(self,program):
             threading.Thread.__init__(self)
             self.setDaemon(1)
             self.p = program
             self.maxMem = 0
             self.timedout = False     
-            self.start()      
+            self.start()     
+ 
          def run(self):
-            try:
-               remaining = maxtime
-               while remaining > 0:
-                  mem = gtop.proc_mem(self.p).resident
-                  self.maxMem = max(mem/1024, self.maxMem)
-                  time.sleep(delay)
-                  remaining -= delay
-               else:
-                  self.timedout = True
-                  os.kill(self.p, signal.SIGTERM)
-                  #os.kill(self.p, signal.SIGKILL)   
-            except KeyboardInterrupt:
-               if log: log.debug(err)
-               raise
-               sys.exit(1)
-
+            remaining = maxtime
+            while remaining > 0:
+               mem = gtop.proc_mem(self.p).resident
+               self.maxMem = max(mem/1024, self.maxMem)
+               time.sleep(delay)
+               remaining -= delay
+            else:
+               self.timedout = True
+               os.kill(self.p, signal.SIGTERM)
+               #os.kill(self.p, signal.SIGKILL)
+      
       try:
          m = Measurement(arg)
 
@@ -99,9 +96,10 @@ def measure(arg,commandline,delay,maxtime,
          m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
 
 
-      except KeyboardInterrupt, (e,err):
-         if log: log.debug(err)
-         sys.exit(1)
+      except KeyboardInterrupt:
+         w.dump(m)
+         wPipe.close()
+         raise # needed to clean up first 
 
       except ZeroDivisionError, (e,err): 
          if log: log.warn('%s %s',err,'too fast to measure?')
@@ -109,6 +107,7 @@ def measure(arg,commandline,delay,maxtime,
       except (OSError,ValueError), (e,err):
          if e == ENOENT: # No such file or directory
             if log: log.warn('%s %s',err,commandline)
+            m.setMissing() 
          else:
             if log: log.warn('%s %s',e,err)
             m.setError()       
