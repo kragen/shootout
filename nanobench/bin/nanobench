@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.8 2008-07-25 06:02:12 igouy-guest Exp $
+# $Id: nanobench,v 1.9 2008-07-26 03:50:25 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -19,12 +19,12 @@ where standalone options include:
       commandline string should be sufficient 
       to run a program from the current directory
 
-   --repeat <int>
-      how often to run a program [3]
+   --runs <int>
+      how many times to run a program [3]
 
    --cutoff <int>
       how many seconds to allow before 
-      cancelling repeat of program run [60]
+      cancelling additional program runs [60]
 
    --delay <float>
       delay in seconds between sampling 
@@ -76,7 +76,7 @@ from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 from contextlib import nested
 from cStringIO import StringIO
-from errno import ENOENT
+from errno import ENOENT, EEXIST
 from getopt import getopt, GetoptError
 from measurement import Measurement
 from shutil import copyfile
@@ -97,7 +97,7 @@ data = None
 ndiff = None
 binarycmp = None
 
-repeat = 3
+runs = 3
 cutoff = 60
 delay = 0.2
 maxtime = 600
@@ -119,11 +119,11 @@ logdir = None
 datdir = None
 tmpdir = None
 symdir = None
-
+#programdir = None
 
 
 def initializeFrom(ini):
-   global repeat, cutoff, delay, maxtime, make
+   global runs, cutoff, delay, maxtime, make
 
    try:
       parser = ConfigParser()
@@ -138,8 +138,8 @@ def initializeFrom(ini):
       s = 'measure'
       if parser.has_section(s):
          for o in parser.options(s):
-            if o in ('repeat'):
-               repeat = parser.getint(s,o)
+            if o in ('runs'):
+               runs = parser.getint(s,o)
             elif o in ('cutoff'):
                cutoff = parser.getint(s,o)
             elif o in ('delay'):
@@ -162,8 +162,8 @@ def createDirectories():
       return d
 
    sourcedir = os.getcwd()
-
    # assume sourcedir path ends with a test name
+
    rootdir = normpath( expandvars( expanduser( os.environ.get( 'SITE_ROOT', ''))))
    if isdir(rootdir):
       rootdir = ifNoneMkdir(rootdir,split(sourcedir)[1])
@@ -188,13 +188,7 @@ def createDirectories():
 
 
 
-def targetPrograms():
-   src = targetSources()
-   return src, targetSymlinks(src)
-
-
-
-def targetSources():
+def targets():
    # assume dat file is only written once all data is available
 
    # include undeleted filenames that might have a file extension
@@ -203,50 +197,73 @@ def targetSources():
    # exclude bogus files created by touch
    files = [f for f in files if not f.startswith('*')]
 
-   # if some file extensions are explicitly selected, exclude those not selected
-   selected = os.environ.get( 'SELECT', '')
-   if selected:
-      imps = [i for i in selected.split() if not i.startswith('*')]
-      if imps:
-         imps = frozenset(imps)
-         files = [f for f in files if splitext(f)[1].lstrip('.') in imps]
+   # make the file extension accessible as tuple (f,e)
+   files = [(f, splitext(f)[1].lstrip('.') ) for f in files]
 
-   # if some file extensions are explicitly ignored, exclude them
-   excluded = os.environ.get( 'IGNORE', '')
-   if excluded:
-      imps = [i for i in excluded.split() if not i.startswith('*')]
-      if imps:
-         imps = frozenset(imps)
-         files = [f for f in files if not splitext(f)[1].lstrip('.') in imps]
 
-   programs = set()
-   for f in files:
+   # ALLOW these helper file extensions to be available unchanged 
+   # from the working directory - they will never be measured
+   a = frozenset( os.environ.get( 'ALLOW', '').split() )
+   allowed = []; _files = files; files = []
+
+   for f,e in _files:
+      if e in a:
+         allowed.append(f)
+      else:
+         files.append( (f,e) )
+
+      # giving a list of ALLOWed filenames and a list without ALLOWed filenames
+
+
+   links = [] 
+
+   # reverse alias dictionary so we can look up the target for each alias
+   revAlias = {}
+   for k,vs in alias.iteritems():
+      for v in vs:
+         revAlias[v] = k
+ 
+   # ONLY measure files with these extensions 
+   o = os.environ.get( 'ONLY', '').split()
+   if o:
+      _files = files; files = []
+      
+      for ext in o:
+         reva = revAlias.get(ext,None)   
+         for f,e in _files:
+            if reva:
+               if e == reva:
+                  links.append( (f,re.sub(e,ext,f)) )
+            else:
+               if e == ext:
+                  files.append( (f,e) )
+
+      # giving a list of ONLY links and a list of ONLY filenames
+
+   else: 
+      # create alias filenames
+      for f,e in files:
+         for a in alias.get(e,[]):
+            links.append( (f,re.sub(e,a,f),a) )
+
+
+      # IGNORE files or links with these extensions
+      ignore = frozenset( os.environ.get( 'IGNORE', '').split() )
+      if ignore:
+         files = [(f,e) for f,e in files if not e in ignore]
+         links = [(src,dst) for src,dst,e in links if not e in ignore]
+
+
+   def notUptodate(f):
       try:
-         if getmtime(f) > getmtime( join(datdir,f) ):
-            programs.add(f)
+         return getmtime(f) > getmtime( join(datdir,f) )
       except OSError, (e,_): 
-         if e == ENOENT: # No such file or directory
-            programs.add(f)
+         return e == ENOENT # No such file or directory
 
-   return frozenset(programs)
+   files = [f for f,e in files if notUptodate(f)]
+   links = [(src,dst) for src,dst in links if notUptodate(src)]
 
-
-
-def targetSymlinks(sources):
-   links = []
-   for f in sources:
-      ext = splitext(f)[1].lstrip('.')
-      aliasList = alias.get(ext,None)
-      if aliasList:
-         for newExt in aliasList:
-            newf = re.sub(ext,newExt,f)
-            links.append(newf)
-
-            src = join(sourcedir,f)
-            dst = join(symdir,newf)
-            os.symlink(src,dst)
-            
-   return links
+   return allowed,files,links
 
 
 
@@ -256,17 +273,15 @@ def runName(filename):
 
 
 def cmdTemplate(filename,ext):
-   vars = {}
-   vars['%X'] = runName(filename) if hasMake(ext) else filename
+   specials = {}
+   specials['%X'] = runName(filename) if hasMake(ext) else filename
 
    names = filename.split('.') # We only selected filenames with a .
-   vars['%T'] = names[0]
-   vars['%B'] = '.'.join( names[0:len(names)-1] )
+   specials['%T'] = names[0]
+   specials['%B'] = '.'.join( names[0:len(names)-1] )
 
    p = names[1].split('-')
-   vars['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
-
-   vars['%S'] = join( os.getcwd(),'')
+   specials['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
 
    s = commandlines.get(ext,None)
    if s:
@@ -275,8 +290,8 @@ def cmdTemplate(filename,ext):
          v = os.environ.get( k.lstrip('$'), '' )
          s = re.sub('\\' + k + '(?P<c>[\W])', v + '\g<c>', s) # ate [\W] !
 
-      for m in re.finditer('\%[XTBIS]' ,s):
-         value = vars.get( m.group(0), '' )
+      for m in re.finditer('\%[XTBI]' ,s):
+         value = specials.get( m.group(0), '' )
          s = re.sub('\\'+ m.group(0), value, s) 
 
    else:
@@ -344,9 +359,6 @@ def hasMake(ext):
 
 
 def callMake(root,filename):
-   # step into tmpdir before the make 
-   os.chdir(tmpdir)
-
    with open( makeName(), 'w') as mf: 
       mf.write('\nMAKE:\n')
 
@@ -357,9 +369,20 @@ def callMake(root,filename):
 
 
 
+def symlinkSource(srcdir,filename):
+   src = join(srcdir,filename)
+   dst = join(filename) # tmpdir is $CWD
+   try:
+      os.symlink(src,dst)
+   except OSError, (e,_):
+      if e == EEXIST: 
+         pass # OK the symlink already exists
+
+
+
 def standalone(cmd):
    results = StringIO()
-   for i in range(0,repeat):
+   for i in range(0,runs):
       with nested( open( outName('./',i), 'w'), 
                    TemporaryFile(mode='w+t')) as (of,ef):
          m = measure('_',cmd.split(),delay,maxtime,of,ef)
@@ -375,7 +398,6 @@ def standalone(cmd):
 def checkAndLog(m,outFile,logf):
    if m.isOkay():
       # assume outFile has been closed
-      # assume $CWD contains the comparison files for different arg values
       argFile = m.arg + _OUT
 
       # diff against expected output file
@@ -404,7 +426,6 @@ def checkAndLog(m,outFile,logf):
 
    if not m.isOkay():
       print >>logf, '\n%s\n' % m.statusStr()
-
 
 
 
@@ -444,28 +465,30 @@ def measureCheckAndLog(t,f,ext,r):
             checkAndLog(m,ofName,logf)
             print >>r, m
 
-            with open(ofName,'r+') as of:
-               # append diff or ndiff output to log
-               if m.hasBadOutput():
-                  with open(diffName(), 'r') as df:
-                     logf.write( df.read() )               
+            # if there was a problem finding the program just ignore the program output
+            if not m.isMissing():
+               with open(ofName,'r+') as of:
+                  # append diff or ndiff or cmp output to log
+                  if m.hasBadOutput():
+                     with open(diffName(), 'r') as df:
+                        logf.write( df.read() )               
 
-               # append program output to log
-               if binarycmp:
-                  logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
-               elif getsize(ofName) > maxsize:
-                  of.truncate(maxsize)
-                  logf.write( '\n(TRUNCATED) PROGRAM OUTPUT:\n' )
-                  logf.write( of.read() )
-               else:
-                  logf.write( '\nPROGRAM OUTPUT:\n' )
-                  logf.write( of.read() )
+                  # append program output to log
+                  if binarycmp:
+                     logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
+                  elif getsize(ofName) > maxsize:
+                     of.truncate(maxsize)
+                     logf.write( '\n(TRUNCATED) PROGRAM OUTPUT:\n' )
+                     logf.write( of.read() )
+                  else:
+                     logf.write( '\nPROGRAM OUTPUT:\n' )
+                     logf.write( of.read() )
 
-               # append program stderr to log
-               if getsize(errName()):
-                  with open(errName(), 'r') as ef:
-                     logf.write( '\n' )
-                     logf.write( ef.read() )               
+                  # append program stderr to log
+                  if getsize(errName()):
+                     with open(errName(), 'r') as ef:
+                        logf.write( '\n' )
+                        logf.write( ef.read() )               
 
          if not m.isOkay() or m.hasExceeded(cutoff): break
          revisedTestValues.append(a)
@@ -483,7 +506,7 @@ def measureCheckAndLog(t,f,ext,r):
 
 
 def measureOnly(revisedTestValues,t,f,r):
-   for i in range(1,repeat):
+   for i in range(1,runs):
       for a in revisedTestValues:
          cmd = cmdWithArg(t,a)
          with open( outName(tmpdir,i), 'w') as of:
@@ -505,17 +528,17 @@ def measureOnly(revisedTestValues,t,f,r):
 
 
 
-def measurePrograms(programs,programDir):
-   os.environ['SOURCE_DIR'] = programDir # Make.common uses $SOURCE_DIR
+def measurePrograms(programs,programDir,total):
    for filename in programs:
+      symlinkSource(programDir,filename)
+
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
 
       ext = filename.split('.').pop() # We only selected filenames with a .
 
       if hasMake(ext):
-         # step into tmpdir before the make 
-         callMake(makedir,filename)    
+         callMake(makedir,filename)   
 
       t = cmdTemplate(filename,ext)
       r = StringIO()
@@ -529,27 +552,50 @@ def measurePrograms(programs,programDir):
          datf.write( r.getvalue() )
 
       r.close()
-      sys.stdout.write('%s\n' % filename); sys.stdout.flush()
+      sys.stdout.write('%s [%d]\n' % (filename,total)); sys.stdout.flush()
+      total -= 1
 
-      # step into programDir (we might have stepped into tmpdir)
-      os.chdir(programDir)
+   return total
 
 
 
 def benchmarksGame():
    # assume $CWD is a program source directory
    createDirectories()
-   sources,symlinks = targetPrograms()
-   measurePrograms(sources,sourcedir)
-   measurePrograms(symlinks,symdir)
+   allowed,sources,symlinks = targets()
+
+   # make sure all build files and crash files are created in tmpdir
+   os.chdir(tmpdir)
+
+   # symlink from tmpdir to Include directory
+   symlinkSource( normpath( join(sourcedir,'..') ) ,'Include')
+
+   # symlink these allowed helper files from tmpdir
+   for filename in allowed:
+      symlinkSource(sourcedir,filename)
+
+   # symlink these program aliases from symdir so we 
+   # have them later when we measure the source code gzip
+   for src,dst in symlinks:
+      s = join(sourcedir,src)
+      d = join(symdir,dst)
+      try:
+         os.symlink(s,d)
+      except OSError, (e,_):
+         if e == EEXIST: 
+            pass # OK the symlink already exists
+
+   total = len(sources) + len(symlinks)
+   total = measurePrograms(sources, sourcedir, total)
+   total = measurePrograms([f for _,f in symlinks], symdir, total)
 
 
 
 def main():
-   global repeat, cutoff, delay, maxtime, data, binarycmp
+   global runs, cutoff, delay, maxtime, data, binarycmp
 
    try:
-      options,_ = getopt(sys.argv[1:],'h',['cmd=' ,'repeat=' ,'cutoff=' 
+      options,_ = getopt(sys.argv[1:],'h',['cmd=' ,'runs=' ,'cutoff=' 
          ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'data=' 
          ,'binarycmp' ,'help'])
 
@@ -566,8 +612,8 @@ def main():
             sys.exit(0)
          elif o in ('--cmd'):
             cmd = v
-         elif o in ('--repeat'):
-            repeat = int(v)
+         elif o in ('--runs'):
+            runs = int(v)
          elif o in ('--cutoff'):
             cutoff = int(v)
          elif o in ('--delay'):

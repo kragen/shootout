@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.4 2008-07-25 07:00:26 igouy-guest Exp $
+# $Id: planA.py,v 1.5 2008-07-26 03:50:25 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -60,58 +60,59 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
          # gtop cpu is since machine boot, so we need a before measurement
          cpus0 = gtop.cpu().cpus 
 
-         try:
-            # spawn the program in a separate process
-            p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
 
-            # start a thread to sample the program's resident memory use
-            t = Sample( program = p.pid )
+         # spawn the program in a separate process
+         p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
 
-            # wait for program exit status and resource usage
-            rusage = os.wait3(0)
+         # start a thread to sample the program's resident memory use
+         t = Sample( program = p.pid )
 
-         except (OSError,ValueError), (e,err):
-            if e == ENOENT: # No such file or directory
-               print err, commandline,
-            else:
-               m.setError()            
+         # wait for program exit status and resource usage
+         rusage = os.wait3(0)
 
+         # gtop cpu is since machine boot, so we need an after measurement
+         cpus1 = gtop.cpu().cpus 
+
+         # summarize measurements 
+         if t.timedout:
+            m.setTimedout()
+         elif rusage[1] == os.EX_OK:
+            m.setOkay()
          else:
-            # gtop cpu is since machine boot, so we need an after measurement
-            cpus1 = gtop.cpu().cpus 
+            m.setError()
 
-            # summarize measurements 
-            if t.timedout:
-               m.setTimedout()
-            elif rusage[1] == os.EX_OK:
-               m.setOkay()
-            else:
-               m.setError()
+         m.userSysTime = rusage[2][0] + rusage[2][1]
+         m.maxMem = t.maxMem
 
-            m.userSysTime = rusage[2][0] + rusage[2][1]
-            m.maxMem = t.maxMem
+         load = map( 
+            lambda t0,t1: 
+               int(round( 
+                  100.0 * (1.0 - float(t1.idle-t0.idle)/(t1.total-t0.total))
+               ))
+            ,cpus0 ,cpus1 )
 
-            try:
-               load = map( 
-                  lambda t0,t1: 
-                     int(round( 
-                        100.0 * (1.0 - float(t1.idle-t0.idle)/(t1.total-t0.total))
-                     ))
-                  ,cpus0 ,cpus1 )
+         load.sort(reverse=1)
+         m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
 
-               load.sort(reverse=1)
-               m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
 
-            except ZeroDivisionError: 
-               pass # too fast to measure
+      except KeyboardInterrupt:
+         sys.exit(1)
+
+      except ZeroDivisionError: 
+         pass # too fast to measure
+
+      except (OSError,ValueError), (e,err):
+         if e == ENOENT: # No such file or directory
+            print err, commandline,
+         else:
+            m.setError()       
    
-            finally:
-               w.dump(m)
-               wPipe.close()
+      finally:
+         w.dump(m)
+         wPipe.close()
 
          # Sample thread will be destroyed when the forked process _exits
          os._exit(0)
 
-      except KeyboardInterrupt:
-         sys.exit(1)
+
 
