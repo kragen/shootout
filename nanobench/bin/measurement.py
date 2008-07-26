@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: measurement.py,v 1.2 2008-07-26 18:58:44 igouy-guest Exp $
+# $Id: measurement.py,v 1.3 2008-07-26 22:41:30 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -9,13 +9,15 @@ class Measurement():
 
    _OK = 0
    _ERROR = -1
-   _TIMEDOUT = -2
-   _BADOUT = -3
-   _MISSING = -4
+   _EMPTY = -2
+   _MISSING = -3
+   _TIMEDOUT = -4
+   _BADOUT = -5
+
 
    def __init__(self,arg='_'):
       self.arg = arg
-      self.status = self._MISSING
+      self.status = self._EMPTY
       self.userSysTime = 0.0 
       self.maxMem = 0
       self.cpuLoad = '%'   
@@ -36,11 +38,17 @@ class Measurement():
    def setBadOutput(self):
       self.status = self._BADOUT
 
+   def setMissing(self):
+      self.status = self._MISSING
+
    def isOkay(self):
       return self.status == self._OK
 
    def hasError(self):
       return self.status == self._ERROR
+
+   def isEmpty(self):
+      return self.status == self._EMPTY
 
    def hasTimedout(self):
       return self.status == self._TIMEDOUT
@@ -57,7 +65,8 @@ class Measurement():
    def statusStr(self):
       return 'OK ' if self.isOkay() else (
          'ERROR ' if self.hasError() else (
+         'EMPTY ' if self.isEmpty() else (
          'TIMED OUT ' if self.hasTimedout() else (
          'UNEXPECTED OUTPUT ' if self.hasBadOutput() else 
-         'MISSING ' )))
+         'MISSING FILE' ))))
 
