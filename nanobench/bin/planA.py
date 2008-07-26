@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.7 2008-07-26 22:41:30 igouy-guest Exp $
+# $Id: planA.py,v 1.8 2008-07-26 22:45:49 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -16,7 +16,7 @@ from measurement import Measurement
 
 
 def measure(arg,commandline,delay,maxtime,
-      outFile=None,errFile=None,inFile=None,log=None):
+      outFile=None,errFile=None,inFile=None,logger=None):
 
    r,w = os.pipe()
    forkedPid = os.fork()
@@ -102,14 +102,14 @@ def measure(arg,commandline,delay,maxtime,
          raise # needed to clean up first 
 
       except ZeroDivisionError, (e,err): 
-         if log: log.warn('%s %s',err,'too fast to measure?')
+         if logger: logger.warn('%s %s',err,'too fast to measure?')
 
       except (OSError,ValueError), (e,err):
          if e == ENOENT: # No such file or directory
-            if log: log.warn('%s %s',err,commandline)
+            if logger: logger.warn('%s %s',err,commandline)
             m.setMissing() 
          else:
-            if log: log.warn('%s %s',e,err)
+            if logger: logger.warn('%s %s',e,err)
             m.setError()       
    
       finally:
