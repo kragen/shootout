@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.9 2008-07-26 03:50:25 igouy-guest Exp $
+# $Id: nanobench,v 1.10 2008-07-26 18:58:45 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -54,6 +54,17 @@ where benchmarks game options include:
    --binarycmp
       program output is binary, use cmp
 
+where benchmarks game .ini file options include:
+
+   logfilemax: <int>
+      set greater than 0 to create a rotating
+      log file [0]
+
+   outputmax: <int>
+      how many bytes of a program output to 
+      include in each build & run log before 
+      truncating program output [10240]
+
 
 Output: _,0,40.739,6356,100% 0% 0% 0%
    _ 
@@ -69,11 +80,12 @@ __author__ =  'Isaac Gouy'
 
 
 
-import sys, os, re, fnmatch
+import sys, os, re, fnmatch, logging
 
 # need to use ConfigParser not SafeConfigParser
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
+from logging.handlers import RotatingFileHandler
 from contextlib import nested
 from cStringIO import StringIO
 from errno import ENOENT, EEXIST
@@ -85,10 +97,13 @@ from tempfile import TemporaryFile
 from time import strftime, localtime, gmtime
 from os.path import expanduser, expandvars, getsize, getmtime, isdir, isfile, \
                     join, normpath, realpath, split, splitext   
-                    
 
 
 # globals
+logfilemax = 0
+logger = None
+loggerLine = None
+
 make = frozenset()
 commandlines = {}
 alias = {}
@@ -102,7 +117,7 @@ cutoff = 60
 delay = 0.2
 maxtime = 600
 
-maxsize = 10240
+outputmax = 10240
 
 _OUT = '_out'
 
@@ -113,17 +128,16 @@ symdirName = 'sym'
 
 sitename = None
 sourcedir = None
-rootdir = None
 makedir = None
 logdir = None
 datdir = None
 tmpdir = None
 symdir = None
-#programdir = None
+
 
 
 def initializeFrom(ini):
-   global runs, cutoff, delay, maxtime, make
+   global runs, cutoff, delay, maxtime, logfilemax, outputmax, make
 
    try:
       parser = ConfigParser()
@@ -146,6 +160,10 @@ def initializeFrom(ini):
                delay = parser.getfloat(s,o)
             elif o in ('maxtime'):
                maxtime = parser.getint(s,o)  
+            elif o in ('logfilemax'):
+               logfilemax = parser.getint(s,o)  
+            elif o in ('outputmax'):
+               outputmax = parser.getint(s,o) 
 
    except (NoSectionError,NoOptionError), e:
       print e, 'in', realpath(ini)
@@ -153,24 +171,40 @@ def initializeFrom(ini):
 
 
 
+def configureNanobenchLogger(loggerDir):
+   global logger
+   # if a logfilemax size was set, log line-by-line to a rotating log file
+   # (as well as logging program-run by program-run to stdout)
+   if logfilemax:
+      f = join(loggerDir,'nano.log')
+      fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+      h = RotatingFileHandler(filename=f,maxBytes=logfilemax,backupCount=1)
+      h.setFormatter(fmt)
+
+      logger = logging.getLogger("nanobench")
+      logger.addHandler(h)
+      logger.setLevel(logging.INFO)
+
+
+
 def createDirectories():
-   global sourcedir,sitename,rootdir,makedir,logdir,datdir,tmpdir,symdir
+   global sourcedir,sitename,makedir,logdir,datdir,tmpdir,symdir
 
    def ifNoneMkdir(path,name):
       d = join(path,name)
       if not isdir(d): os.mkdir(d) 
       return d
 
-   sourcedir = os.getcwd()
    # assume sourcedir path ends with a test name
+   sourcedir = os.getcwd()
 
    rootdir = normpath( expandvars( expanduser( os.environ.get( 'SITE_ROOT', ''))))
    if isdir(rootdir):
-      rootdir = ifNoneMkdir(rootdir,split(sourcedir)[1])
+      testdir = ifNoneMkdir(rootdir,split(sourcedir)[1])
    else:
       print 'please set SITE_ROOT in Makefile.site_*'
       sys.exit(0)
-   
+
    sitename = os.environ.get( 'SITE_NAME', '')
    if not sitename:
       print 'please set SITE_NAME in Makefile.site_*'
@@ -181,10 +215,12 @@ def createDirectories():
       print 'please set MAKE_ROOT in Makefile.site_*'
       sys.exit(0)
 
-   logdir = ifNoneMkdir(rootdir,logdirName)
-   datdir = ifNoneMkdir(rootdir,datdirName)
-   tmpdir = ifNoneMkdir(rootdir,tmpdirName)
-   symdir = ifNoneMkdir(rootdir,symdirName)
+   configureNanobenchLogger(rootdir)
+
+   logdir = ifNoneMkdir(testdir,logdirName)
+   datdir = ifNoneMkdir(testdir,datdirName)
+   tmpdir = ifNoneMkdir(testdir,tmpdirName)
+   symdir = ifNoneMkdir(testdir,symdirName)
 
 
 
@@ -211,9 +247,7 @@ def targets():
          allowed.append(f)
       else:
          files.append( (f,e) )
-
       # giving a list of ALLOWed filenames and a list without ALLOWed filenames
-
 
    links = [] 
 
@@ -237,15 +271,14 @@ def targets():
             else:
                if e == ext:
                   files.append( (f,e) )
-
       # giving a list of ONLY links and a list of ONLY filenames
 
+   # measure files with ANY extension, except ...
    else: 
       # create alias filenames
       for f,e in files:
          for a in alias.get(e,[]):
             links.append( (f,re.sub(e,a,f),a) )
-
 
       # IGNORE files or links with these extensions
       ignore = frozenset( os.environ.get( 'IGNORE', '').split() )
@@ -375,8 +408,7 @@ def symlinkSource(srcdir,filename):
    try:
       os.symlink(src,dst)
    except OSError, (e,_):
-      if e == EEXIST: 
-         pass # OK the symlink already exists
+      if e == EEXIST: pass # OK the symlink already exists
 
 
 
@@ -476,8 +508,8 @@ def measureCheckAndLog(t,f,ext,r):
                   # append program output to log
                   if binarycmp:
                      logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
-                  elif getsize(ofName) > maxsize:
-                     of.truncate(maxsize)
+                  elif getsize(ofName) > outputmax:
+                     of.truncate(outputmax)
                      logf.write( '\n(TRUNCATED) PROGRAM OUTPUT:\n' )
                      logf.write( of.read() )
                   else:
@@ -498,8 +530,10 @@ def measureCheckAndLog(t,f,ext,r):
 
       finally:
          sys.stdout.write('.'); sys.stdout.flush()
+         loggerLine.write('.')
 
    sys.stdout.write( m.statusStr() ); sys.stdout.flush()
+   loggerLine.write( m.statusStr() )
 
    return revisedTestValues
 
@@ -525,11 +559,16 @@ def measureOnly(revisedTestValues,t,f,r):
             print >>r, m
 
          sys.stdout.write('.'); sys.stdout.flush()
+         loggerLine.write('.')
 
 
 
 def measurePrograms(programs,programDir,total):
+   global loggerLine
+
    for filename in programs:
+      loggerLine = StringIO()
+ 
       symlinkSource(programDir,filename)
 
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
@@ -553,7 +592,11 @@ def measurePrograms(programs,programDir,total):
 
       r.close()
       sys.stdout.write('%s [%d]\n' % (filename,total)); sys.stdout.flush()
+      loggerLine.write('%s [%d]' % (filename,total))
       total -= 1
+
+      if logger: logger.info( loggerLine.getvalue() )
+      loggerLine.close()
 
    return total
 
@@ -582,8 +625,7 @@ def benchmarksGame():
       try:
          os.symlink(s,d)
       except OSError, (e,_):
-         if e == EEXIST: 
-            pass # OK the symlink already exists
+         if e == EEXIST: pass # OK the symlink already exists
 
    total = len(sources) + len(symlinks)
    total = measurePrograms(sources, sourcedir, total)
@@ -603,7 +645,7 @@ def main():
          if o in ('--conf'):
             initializeFrom(v)
 
-      # allow config file settings to be over-ridden from the command line
+      # allow some config file settings to be over-ridden from the command line
 
       cmd = None
       for o, v in options:
@@ -634,13 +676,14 @@ def main():
       else:
          benchmarksGame()
 
+   except KeyboardInterrupt:
+      sys.exit(1)
+
    except GetoptError, (_,e):
       print e
       print 'please try --help'
       sys.exit(2)
 
-   except KeyboardInterrupt:
-      sys.exit(1)
 
            
 if __name__ == "__main__":

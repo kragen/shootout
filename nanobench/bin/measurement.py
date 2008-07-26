@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: measurement.py,v 1.1 2008-07-25 01:57:33 igouy-guest Exp $
+# $Id: measurement.py,v 1.2 2008-07-26 18:58:44 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -57,7 +57,7 @@ class Measurement():
    def statusStr(self):
       return 'OK ' if self.isOkay() else (
          'ERROR ' if self.hasError() else (
-         'TIMEDOUT ' if self.hasTimedout() else (
+         'TIMED OUT ' if self.hasTimedout() else (
          'UNEXPECTED OUTPUT ' if self.hasBadOutput() else 
          'MISSING ' )))
 
