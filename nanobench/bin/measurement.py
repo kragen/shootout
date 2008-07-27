@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: measurement.py,v 1.3 2008-07-26 22:41:30 igouy-guest Exp $
+# $Id: measurement.py,v 1.4 2008-07-27 00:05:48 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -68,5 +68,5 @@ class Measurement():
          'EMPTY ' if self.isEmpty() else (
          'TIMED OUT ' if self.hasTimedout() else (
          'UNEXPECTED OUTPUT ' if self.hasBadOutput() else 
-         'MISSING FILE' ))))
+         'MISSING FILE ' ))))
 
