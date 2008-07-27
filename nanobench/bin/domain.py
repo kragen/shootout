@@ -1,65 +1,106 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.1 2008-07-27 17:22:10 igouy-guest Exp $
+# $Id: domain.py,v 1.2 2008-07-27 21:05:12 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
 
 
-class FileNameParts():
+class FileNameParts(object):
    """ 
    self.filename = 'binarytrees.gcc' | self.filename = 'binarytrees.gcc-4.gcc'
    self.name = 'binarytrees' | self.name = 'binarytrees'
    self.ext = 'gcc' | self.ext = 'gcc'
-   self.extid = None | self.extid = 'gcc-4'
    self.id = None | self.id = '4'
+   self.extid = None | self.extid = 'gcc-4'
+   self.programName = 'binarytrees.gcc' | self.programName = 'binarytrees.gcc-4.gcc'
    """
    def __init__(self,filename):
       self.filename = filename
+      part = filename.split('.')
+      self.name = part[0]
+      self._lazy_extid = None
 
-      ps = filename.split('.')
-      self.name = ps[0]
-
-      a,_,b = ps[1].rpartition('-') 
+      a,_,b = part[1].rpartition('-') 
       if a:
-         self.ext = ps[2]
-         self.extid = ps[1]
+         self.ext = part[2]
          self.id = b
       else:
          self.ext = b
-         self.extid = None
-         self.id = None
+         self.id = ''
 
-   def isNumbered(self):
-      return self.id != None
+
+   def _extid(self):
+      if self._lazy_extid == None: # not initialized rather than initialized to ''
+         self._lazy_extid = '-'.join((self.ext, self.id)) if self.isNumbered() else ''
+      return self._lazy_extid 
+
+   extid = property(_extid)
+
+
+   def _programName(self):
+      return self.filename
+
+   def _programName_getter(self):
+      return self._programName()
+
+   programName = property(_programName_getter)
+
+
+   def _baseName(self):
+      return '.'.join( (self.name, self.extid) ) if self.extid else self.name
+
+   baseName = property(_baseName)
+
+
+   def _runName(self):
+      return self.programName + '_run'
+
+   runName = property(_runName)
+
+
+   def _logName(self):
+      e = self.extid if self.extid else self.ext
+      return '.'.join( ('-'.join( (self.name, e) ),'log') ) 
+
+   logName = property(_logName)
+
 
    def __str__(self):
       return '%s,%s,%s' % (self.name, self.ext, self.id)
+
+   def isNumbered(self):
+      return len(self.id) > 0
+
 
 
 
 class LinkNameParts(FileNameParts):
    """ 
    self.filename = 'binarytrees.gcc' | self.filename = 'binarytrees.gcc-4.gcc'
-   newExt = 'icc'
-   self.linkname = 'binarytrees.icc' | self.linkname = 'binarytrees.icc-4.icc'
+   ext = 'icc'
+   self.programName = 'binarytrees.icc' | self.linkname = 'binarytrees.icc-4.icc'
    """
-   def __init__(self,fp,newext):
-      self.filename = fp.filename
-      self.name = fp.name
-      self.ext = fp.ext
-      self.extid = fp.extid
-      self.id = fp.id
-      self.newext = newext
-      self.linkname = \
-         '.'.join( (self.name, '-'.join( (newext,self.id) ), newext) ) \
-            if self.isNumbered() else '.'.join( (self.name,newext) )
+   def __init__(self,filename,ext): 
+      FileNameParts.__init__(self,filename)  
+      self._lazy_programName = None
+      self.ext = ext
+
+   def _programName(self):
+      if self._lazy_programName == None: # not initialized rather than initialized to '' 
+         self._lazy_programName = \
+         '.'.join( (self.name, '-'.join( (self.ext,self.id) ), self.ext) ) \
+            if self.isNumbered() else '.'.join( (self.name,self.ext) ) 
+
+      return self._lazy_programName 
+
 
    def __str__(self):
-      return '%s,%s,%s,%s' % (self.name, self.ext, self.id, self.linkname)
+      return '%s,%s,%s,%s' % (self.name, self.ext, self.id, self.filename)
 
 
 
-class Record():
+
+class Record(object):
 
    _OK = 0
    _TIMEDOUT = -1

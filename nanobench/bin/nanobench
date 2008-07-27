@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.18 2008-07-27 17:19:15 igouy-guest Exp $
+# $Id: nanobench,v 1.19 2008-07-27 21:05:13 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -271,7 +271,7 @@ def targets():
          for f in _files:
             if reva:
                if f.ext == reva:
-                  links.append(LinkNameParts(f,ext)) 
+                  links.append(LinkNameParts(f.filename,ext)) 
             else:
                if f.ext == ext:
                   files.append(f)
@@ -282,12 +282,12 @@ def targets():
       # create alias filenames
       for f in files:
          for ext in alias.get(f.ext,[]):
-            links.append(LinkNameParts(f,ext)) 
+            links.append(LinkNameParts(f.filename,ext)) 
 
       # IGNORE files or links with these extensions
       ignore = frozenset( os.environ.get( 'IGNORE', '').split() )
       if ignore:
-         links = [f for f in links if not f.newext in ignore]
+         links = [f for f in links if not f.ext in ignore]
          files = [f for f in files if not f.ext in ignore]
 
 
@@ -297,30 +297,21 @@ def targets():
       except OSError, (e,_): 
          return e == ENOENT # No such file or directory
 
-   links = [f for f in links if notUpToDate(f.filename,f.linkname)]
-   files = [f for f in files if notUpToDate(f.filename,f.filename)]
+   links = [f for f in links if notUpToDate(f.filename,f.programName)]
+   files = [f for f in files if notUpToDate(f.filename,f.programName)]
 
    return allowed,files,links
 
 
 
-def runName(filename):
-   return filename + '_run'
-
-
-
-def cmdTemplate(filename,ext):
+def cmdTemplate(p):
    specials = {}
-   specials['%X'] = runName(filename) if hasMake(ext) else filename
+   specials['%X'] = p.runName if hasMake(p.ext) else p.programName
+   specials['%T'] = p.name
+   specials['%B'] = p.baseName
+   specials['%I'] = p.id
 
-   names = filename.split('.') # We only selected filenames with a .
-   specials['%T'] = names[0]
-   specials['%B'] = '.'.join( names[0:len(names)-1] )
-
-   p = names[1].split('-')
-   specials['%I'] = p[1] if len(p) == 2 and p[1].isdigit() else ''
-
-   s = commandlines.get(ext,None)
+   s = commandlines.get(p.ext,None)
    if s:
       for m in re.finditer('\$[\w]+' ,s): 
          k = m.group(0)
@@ -332,7 +323,7 @@ def cmdTemplate(filename,ext):
          s = re.sub('\\'+ m.group(0), value, s) 
 
    else:
-      s = join('.',runName(filename)) + ' %A'
+      s = join('.',p.runName) + ' %A'
 
    return s
 
@@ -369,10 +360,8 @@ def outName(directory,index):
 
 
 
-def logName(filename):
-   return join(logdir,
-         (splitext(filename)[0] if filename.find('-') > -1 
-            else filename) + '.log')
+def logName(p):
+   return join(logdir, p.logName)
 
 
 
@@ -396,19 +385,19 @@ def hasMake(ext):
 
 
 
-def callMake(root,filename):
+def callMake(p):
    with open( makeName(), 'w') as mf: 
       mf.write('\nMAKE:\n')
 
-   optionFile = join(root,'Make.programs_' + sitename)
-   cmd = 'make -f ' + optionFile + ' ' + runName(filename)
+   optionFile = join(makedir,'Make.programs_' + sitename)
+   cmd = 'make -f ' + optionFile + ' ' + p.runName
    with open( makeName(), 'a') as mf:
       call(cmd.split(),stdout=mf,stderr=STDOUT)
 
 
 
-def symlinkSource(srcdir,filename):
-   src = join(srcdir,filename)
+def symlinkSource(directory,filename):
+   src = join(directory,filename)
    dst = join(filename) # tmpdir is $CWD
    try:
       os.symlink(src,dst)
@@ -467,7 +456,7 @@ def checkAndLog(m,outFile,logf):
 
 
 
-def measureCheckAndLog(t,f,ext,rs):
+def measureCheckAndLog(p,t,rs):
    revisedTestValues = []
 
    for a in testvalues:
@@ -476,13 +465,13 @@ def measureCheckAndLog(t,f,ext,rs):
       r = Record()
 
       try:
-         with open(logName(f),'w') as logf:
+         with open(logName(p),'w') as logf:
             with open(ofName,'w') as of:
                # append timestamp to log
                print >>logf, '\n', strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
 
                # append Make output to log
-               if hasMake(ext):
+               if hasMake(p.ext):
                   with open( makeName(), 'r') as mf:
                      logf.write( mf.read() ) 
 
@@ -547,7 +536,7 @@ def measureCheckAndLog(t,f,ext,rs):
 
 
 
-def measureOnly(revisedTestValues,t,f,rs):
+def measureOnly(revisedTestValues,t,rs):
    for i in range(1,runs):
       for a in revisedTestValues:
          cmd = cmdWithArg(t,a)
@@ -574,35 +563,34 @@ def measureOnly(revisedTestValues,t,f,rs):
 def measurePrograms(programs,programDir,total):
    global loggerLine
 
-   for filename in programs:
+   for p in programs:
       loggerLine = StringIO()
  
-      symlinkSource(programDir,filename)
+      # need programDir to distinguish between srcdir and symdir
+      symlinkSource(programDir,p.programName)
 
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
 
-      ext = filename.split('.').pop() # We only selected filenames with a .
+      if hasMake(p.ext):
+         callMake(p)   
 
-      if hasMake(ext):
-         callMake(makedir,filename)   
-
-      t = cmdTemplate(filename,ext)
+      t = cmdTemplate(p)
       rs = []
-      revisedTestValues = measureCheckAndLog(t,filename,ext,rs)
-      measureOnly(revisedTestValues,t,filename,rs)
+      revisedTestValues = measureCheckAndLog(p,t,rs)
+      measureOnly(revisedTestValues,t,rs)
 
       # Write compressed dat file once, when all data is available
       try:
-         datf = bz2.BZ2File( join(datdir,filename) ,'w')
+         datf = bz2.BZ2File( join(datdir,p.programName) ,'w')
          for r in rs: print >>datf, r
       except IOError, err:
          if logger: logger.error(err)
       finally:
          datf.close()
 
-      sys.stdout.write('%s [%d]\n' % (filename,total)); sys.stdout.flush()
-      loggerLine.write('%s [%d]' % (filename,total))
+      sys.stdout.write('%s [%d]\n' % (p.programName,total)); sys.stdout.flush()
+      loggerLine.write('%s [%d]' % (p.programName,total))
       total -= 1
 
       if logger: logger.info( loggerLine.getvalue() )
@@ -631,16 +619,15 @@ def benchmarksGame():
    # have them later when we measure the source code gzip
    for f in links:
       s = join(srcdir,f.filename)
-      d = join(symdir,f.linkname)
+      d = join(symdir,f.programName)
       try:
          os.symlink(s,d)
       except OSError, (e,_):
          if e == EEXIST: pass # OK the symlink already exists
 
    total = len(sources) + len(links)
-   total = measurePrograms([f.filename for f in sources], srcdir, total)
-   total = measurePrograms([f.linkname for f in links], symdir, total)
-
+   total = measurePrograms(sources, srcdir, total)
+   total = measurePrograms(links, symdir, total)
 
 
 def main():
