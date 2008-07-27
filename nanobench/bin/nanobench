@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.14 2008-07-27 00:05:51 igouy-guest Exp $
+# $Id: nanobench,v 1.15 2008-07-27 02:52:41 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -80,11 +80,12 @@ __author__ =  'Isaac Gouy'
 
 
 
-import sys, os, re, fnmatch, logging
+import sys, os, re, fnmatch, logging, bz2
 
 # need to use ConfigParser not SafeConfigParser
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
+from cPickle import Pickler
 from logging.handlers import RotatingFileHandler
 from contextlib import nested
 from cStringIO import StringIO
@@ -181,7 +182,7 @@ def configureNanobenchLogger(loggerDir):
       f = join(loggerDir,'nano.log')
       h = RotatingFileHandler(filename=f,maxBytes=logfilemax,backupCount=1)
 
-      fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s \t(%(funcName)s)')
+      fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
       h.setFormatter(fmt)
 
       logger = logging.getLogger("nanobench")
@@ -469,7 +470,7 @@ def checkAndLog(m,outFile,logf):
 
 
 
-def measureCheckAndLog(t,f,ext,r):
+def measureCheckAndLog(t,f,ext,ms):
    revisedTestValues = []
 
    for a in testvalues:
@@ -503,7 +504,10 @@ def measureCheckAndLog(t,f,ext,r):
 
             # check the program output was as expected
             checkAndLog(m,ofName,logf)
-            print >>r, m
+
+            # add to the measurements
+            ms.append(m)
+            #print >>r, m
 
             # if there was a problem finding the program just ignore the program output
             if not m.isMissing():
@@ -547,7 +551,7 @@ def measureCheckAndLog(t,f,ext,r):
 
 
 
-def measureOnly(revisedTestValues,t,f,r):
+def measureOnly(revisedTestValues,t,f,ms):
    for i in range(1,runs):
       for a in revisedTestValues:
          cmd = cmdWithArg(t,a)
@@ -563,8 +567,9 @@ def measureOnly(revisedTestValues,t,f,r):
             else:
                   m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,logger=logger)
 
-            # record the measurement tuple 
-            print >>r, m
+            # add to the measurements
+            ms.append(m)
+            #print >>r, m
 
          sys.stdout.write('.'); sys.stdout.flush()
          loggerLine.write('.')
@@ -588,17 +593,21 @@ def measurePrograms(programs,programDir,total):
          callMake(makedir,filename)   
 
       t = cmdTemplate(filename,ext)
-      r = StringIO()
+      ms = []
+      revisedTestValues = measureCheckAndLog(t,filename,ext,ms)
+      measureOnly(revisedTestValues,t,filename,ms)
 
-      revisedTestValues = measureCheckAndLog(t,filename,ext,r)
+      # Write compressed dat file once, when all data is available
+      # Write pickles for use with other Python scripts
+      try:
+         datf = bz2.BZ2File( join(datdir,filename) ,'w')
+         p = Pickler(datf)
+         for m in ms: p.dump(m)
+      except IOError, err:
+         print err
+      finally:
+         datf.close()
 
-      measureOnly(revisedTestValues,t,filename,r)
-
-      # Write dat file once, when all data is available
-      with open( join(datdir,filename),'w') as datf:
-         datf.write( r.getvalue() )
-
-      r.close()
       sys.stdout.write('%s [%d]\n' % (filename,total)); sys.stdout.flush()
       loggerLine.write('%s [%d]' % (filename,total))
       total -= 1
