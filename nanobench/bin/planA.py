@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.10 2008-07-27 06:53:16 igouy-guest Exp $
+# $Id: planA.py,v 1.11 2008-07-27 17:19:15 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -7,7 +7,7 @@ measure with libgtop2
 __author__ =  'Isaac Gouy'
 
 
-from data import Record
+from domain import Record
 
 import os, sys, cPickle, time, threading, signal, gtop
 

@@ -1,38 +1,61 @@
 # The Computer Language Benchmarks Game
-# $Id: data.py,v 1.2 2008-07-27 17:19:15 igouy-guest Exp $
+# $Id: domain.py,v 1.1 2008-07-27 17:22:10 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
 
 
-class FilenameParts()
+class FileNameParts():
    """ 
-   self.filename = 'binarytrees.ghc' | self.filename = 'binarytrees.ghc-4.ghc'
+   self.filename = 'binarytrees.gcc' | self.filename = 'binarytrees.gcc-4.gcc'
    self.name = 'binarytrees' | self.name = 'binarytrees'
-   self.ext = 'ghc' | self.ext = 'ghc'
-   self.extid = None | self.extid = 'ghc-4'
+   self.ext = 'gcc' | self.ext = 'gcc'
+   self.extid = None | self.extid = 'gcc-4'
    self.id = None | self.id = '4'
    """
-
    def __init__(self,filename):
       self.filename = filename
 
       ps = filename.split('.')
       self.name = ps[0]
 
-      ext,_,id = ps[1].rpartition('-')   
-      if id:
+      a,_,b = ps[1].rpartition('-') 
+      if a:
          self.ext = ps[2]
          self.extid = ps[1]
-         self.id = id
+         self.id = b
       else:
-         self.ext = ext
+         self.ext = b
          self.extid = None
          self.id = None
 
-   def isNumbered():
+   def isNumbered(self):
       return self.id != None
 
+   def __str__(self):
+      return '%s,%s,%s' % (self.name, self.ext, self.id)
+
+
+
+class LinkNameParts(FileNameParts):
+   """ 
+   self.filename = 'binarytrees.gcc' | self.filename = 'binarytrees.gcc-4.gcc'
+   newExt = 'icc'
+   self.linkname = 'binarytrees.icc' | self.linkname = 'binarytrees.icc-4.icc'
+   """
+   def __init__(self,fp,newext):
+      self.filename = fp.filename
+      self.name = fp.name
+      self.ext = fp.ext
+      self.extid = fp.extid
+      self.id = fp.id
+      self.newext = newext
+      self.linkname = \
+         '.'.join( (self.name, '-'.join( (newext,self.id) ), newext) ) \
+            if self.isNumbered() else '.'.join( (self.name,newext) )
+
+   def __str__(self):
+      return '%s,%s,%s,%s' % (self.name, self.ext, self.id, self.linkname)
 
 
 
@@ -57,7 +80,7 @@ class Record():
      
 
    def __str__(self):
-      return '%s,%d,%d,%.3f,%d,%s' % (
+      return '%s,%d,%.3f,%d,%d,%s' % (
          self.arg, self.gz, self.userSysTime, self.maxMem, self.status, self.cpuLoad)
 
    def setOkay(self):
