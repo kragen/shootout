@@ -1,8 +1,39 @@
 # The Computer Language Benchmarks Game
-# $Id: data.py,v 1.1 2008-07-27 06:55:07 igouy-guest Exp $
+# $Id: data.py,v 1.2 2008-07-27 17:19:15 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
+
+
+class FilenameParts()
+   """ 
+   self.filename = 'binarytrees.ghc' | self.filename = 'binarytrees.ghc-4.ghc'
+   self.name = 'binarytrees' | self.name = 'binarytrees'
+   self.ext = 'ghc' | self.ext = 'ghc'
+   self.extid = None | self.extid = 'ghc-4'
+   self.id = None | self.id = '4'
+   """
+
+   def __init__(self,filename):
+      self.filename = filename
+
+      ps = filename.split('.')
+      self.name = ps[0]
+
+      ext,_,id = ps[1].rpartition('-')   
+      if id:
+         self.ext = ps[2]
+         self.extid = ps[1]
+         self.id = id
+      else:
+         self.ext = ext
+         self.extid = None
+         self.id = None
+
+   def isNumbered():
+      return self.id != None
+
+
 
 
 class Record():
