@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.8 2008-07-26 22:45:49 igouy-guest Exp $
+# $Id: planA.py,v 1.9 2008-07-27 03:05:56 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -109,7 +109,7 @@ def measure(arg,commandline,delay,maxtime,
             if logger: logger.warn('%s %s',err,commandline)
             m.setMissing() 
          else:
-            if logger: logger.warn('%s %s',e,err)
+            if logger: logger.error('%s %s',e,err)
             m.setError()       
    
       finally:
