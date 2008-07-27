@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.9 2008-07-27 03:05:56 igouy-guest Exp $
+# $Id: planA.py,v 1.10 2008-07-27 06:53:16 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -7,11 +7,12 @@ measure with libgtop2
 __author__ =  'Isaac Gouy'
 
 
+from data import Record
+
 import os, sys, cPickle, time, threading, signal, gtop
 
 from errno import ENOENT
 from subprocess import Popen
-from measurement import Measurement
 
 
 
@@ -53,7 +54,7 @@ def measure(arg,commandline,delay,maxtime,
                #os.kill(self.p, signal.SIGKILL)
       
       try:
-         m = Measurement(arg)
+         m = Record(arg)
 
          # only write pickles to the pipe
          os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)

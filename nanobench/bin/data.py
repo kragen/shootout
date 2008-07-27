@@ -1,11 +1,11 @@
 # The Computer Language Benchmarks Game
-# $Id: measurement.py,v 1.5 2008-07-27 06:53:16 igouy-guest Exp $
+# $Id: data.py,v 1.1 2008-07-27 06:55:07 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
 
 
-class MeasurementRecord():
+class Record():
 
    _OK = 0
    _TIMEDOUT = -1
@@ -17,9 +17,6 @@ class MeasurementRecord():
 
 
    def __init__(self,arg='_'):
-      self.name = None
-      self.ext = None
-      self.id = None
       self.arg = arg
       self.gz = 0
       self.userSysTime = 0.0 
@@ -29,8 +26,8 @@ class MeasurementRecord():
      
 
    def __str__(self):
-      return '%s,%d,%.3f,%d,%s' % (
-         self.arg, self.status, self.userSysTime, self.maxMem, self.cpuLoad)
+      return '%s,%d,%d,%.3f,%d,%s' % (
+         self.arg, self.gz, self.userSysTime, self.maxMem, self.status, self.cpuLoad)
 
    def setOkay(self):
       self.status = self._OK
