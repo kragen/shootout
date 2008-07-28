@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.2 2008-07-27 21:05:12 igouy-guest Exp $
+# $Id: domain.py,v 1.3 2008-07-28 07:20:05 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -118,11 +118,30 @@ class Record(object):
       self.maxMem = 0
       self.status = self._EMPTY 
       self.cpuLoad = '%' 
-     
+
+   def fromString(self,s):
+      a = s.split(',')
+      self.arg = a[0]
+      self.gz = int(a[1])
+      self.userSysTime = float(a[2])
+      self.maxMem = int(a[3])
+      self.status = int(a[4]) 
+      self.cpuLoad = a[5]
+      return self
 
    def __str__(self):
       return '%s,%d,%.3f,%d,%d,%s' % (
          self.arg, self.gz, self.userSysTime, self.maxMem, self.status, self.cpuLoad)
+
+   def __cmp__(self,other):
+      return \
+        -1 if self.arg < other.arg else (
+         1 if self.arg > other.arg else (
+        -1 if self.status > other.status else (
+         1 if self.status < other.status else (
+        -1 if self.userSysTime < other.userSysTime else (
+         1 if self.userSysTime > other.userSysTime else (
+         0 )) )) ))
 
    def setOkay(self):
       self.status = self._OK
