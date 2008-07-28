@@ -1,0 +1,138 @@
+#!/usr/bin/python -OO
+# The Computer Language Benchmarks Game
+# $Id: mkcsv,v 1.1 2008-07-28 20:39:04 igouy-guest Exp $
+
+from __future__ import with_statement
+
+__author__ =  'Isaac Gouy'
+
+
+from domain import FileNameParts, Record
+
+import os, bz2
+from domain import Record
+from contextlib import nested
+from errno import ENOENT
+
+from os.path import expanduser, expandvars, isdir, join, normpath
+
+# globals
+datdirName = 'dat'
+
+
+
+def appendNames(fp,f):
+   # append benchmark name, language implementation and program id
+   f.write('%s,%s,%s,' % (fp.name,fp.ext,fp.id))
+
+
+
+def appendToBothDataCsv(ms,fp,df,ndf):
+   # for each test value find the measurements with lowest userSysTime
+   d = {}
+   mem = {}
+   for each in ms: 
+      # find lowest userSysTime
+      v = d.get(each.arg,None)
+      if not v or (each.isOkay() and each.userSysTime < v.userSysTime):
+         d[each.arg] = each
+
+      # find highest maxMem
+      v = mem.get(each.arg,None)
+      if not v or (each.isOkay() and each.maxMem > v):
+         mem[each.arg] = each.maxMem
+
+   # set maxMem to the highest recorded memory for that test value
+   for k,v in d.iteritems():
+      v.maxMem = mem[k]
+
+   # sort and append measurements to ndata.csv
+   ms = d.values()
+   ms.sort()
+   for each in ms:
+      appendNames(fp,ndf)
+      ndf.write(str(each)); ndf.write('\n')
+
+   # there should be a measurement for each test value
+   # the measurements are sorted ascending by test value
+   # the last measurement should be the largest test value
+   # append that last measurement to data.csv
+   try:
+      appendNames(fp,df)
+      df.write(str(ms[-1:][0])); df.write('\n')
+   except IndexError, err:
+      print err
+
+
+
+def appendToBulkdataCsv(ms,fp,bdf):
+   # append every measurement to bulkdata.csv
+   for each in ms:
+      bdf.write('%s,%s,%s,' % (fp.name,fp.ext,fp.id))
+      bdf.write(str(each)); bdf.write('\n')
+
+
+
+def appendToCsv(path,filename,df,ndf,bdf):
+   try:
+      f = bz2.BZ2File( join(path,filename),'r')
+      ms = [Record().fromString( s.rstrip('\n')) for s in f.readlines()]
+      fp = FileNameParts(filename)
+      appendToBulkdataCsv(ms,fp,bdf)
+      appendToBothDataCsv(ms,fp,df,ndf)
+
+   except IOError, err:
+      print err
+   finally:
+      f.close()
+
+
+
+def walkBenchmarksGameDatFiles(root,df,ndf,bdf):
+   subdirs = [each for each in os.listdir(root) if isdir(each)]
+   subdirs.sort()
+   for d in subdirs:
+      try:
+         path = join(d,datdirName)
+         datfiles = os.listdir(path)
+      except OSError, (e,_): 
+         if e == ENOENT: break # No such file or directory
+      else:
+         for f in datfiles: appendToCsv(path,f,df,ndf,bdf)
+
+
+
+def writeHeader(f):
+   f.write('name,lang,id,n,size(B),cpu(s),mem(KB),status,load\n')
+
+
+
+def main():
+   rootdir = normpath( expandvars( expanduser( '~/Documents/benchmarksgame' )))
+
+   with nested( open( join(rootdir,'data.csv'), 'w'), 
+                open( join(rootdir,'ndata.csv'), 'w')) as (df,ndf):
+
+      try:
+         bdf = bz2.BZ2File( join(rootdir,'bulkdata.csv.bz2'), 'w')
+
+         writeHeader(df); writeHeader(ndf); writeHeader(bdf)
+         walkBenchmarksGameDatFiles(rootdir,df,ndf,bdf)
+
+      except IOError, err:
+         print err
+      finally:
+         bdf.close()
+
+
+
+if __name__ == "__main__":
+   main()
+
+
+
+
+
+
+
+
