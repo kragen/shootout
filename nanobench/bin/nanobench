@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.22 2008-07-28 07:20:05 igouy-guest Exp $
+# $Id: nanobench,v 1.23 2008-07-28 16:36:24 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -416,10 +416,13 @@ def standalone(cmd):
    for i in range(0,runs):
       with nested( open( outName('./',i), 'w'), 
                    TemporaryFile(mode='w+t')) as (of,ef):
+
          m = measure('_',cmd.split(),delay,maxtime,of,ef)
-         print >>results, '%s,%d,%.3f,%d,%s' % m
+         print >>results, m
          if ef.tell(): ef.seek(0); print >>results, ef.read()
-         if not m.isOkay() or m.hasExceeded(cutoff): break
+
+         if not m.isOkay(): break
+         if m.hasExceeded(cutoff): continue
 
    print results.getvalue()
    results.close()
@@ -429,7 +432,7 @@ def standalone(cmd):
 def checkAndLog(m,outFile,logf):
    if m.isOkay():
       # assume outFile has been closed
-      argFile = m.arg + _OUT
+      argFile = m.argString + _OUT
 
       # diff against expected output file
       if isfile(argFile): 
@@ -461,14 +464,17 @@ def checkAndLog(m,outFile,logf):
 
 
 
-def measureCheckAndLog(p,t,rs):
+def measureCheckAndLog(p,t,ms):
    revisedTestValues = []
 
    for a in testvalues:
       cmd = cmdWithArg(t,a)
       ofName = outName(tmpdir,0)
-      r = Record()
 
+      # a logged Empty record will reveal a nanobench failure
+      m = Record() 
+
+      for x in ms: print '\n',x
       try:
          with open(logName(p),'w') as logf:
             with open(ofName,'w') as of:
@@ -486,24 +492,24 @@ def measureCheckAndLog(p,t,rs):
                      dfName = dataName(a)
                      print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
                      with open(dfName,'r') as df:
-                        r = measure(a,cmd.split(),delay,maxtime,of,ef,df,logger=logger)
+                        m = measure(a,cmd.split(),delay,maxtime,of,ef,df,logger=logger)
 
                   # append command line showing test value argument to log
                   else:
                      print >>logf, '\nCOMMAND LINE:\n', cmd
-                     r = measure(a,cmd.split(),delay,maxtime,of,ef,logger=logger)
+                     m = measure(a,cmd.split(),delay,maxtime,of,ef,logger=logger)
 
             # check the program output was as expected
-            checkAndLog(r,ofName,logf)
+            checkAndLog(m,ofName,logf)
 
             # add to the measurements
-            rs.append(r)
+            ms.append(m)
 
             # if there was a problem finding the program just ignore the program output
-            if not r.isMissing():
+            if not m.isMissing():
                with open(ofName,'r+') as of:
                   # append diff or ndiff or cmp output to log
-                  if r.hasBadOutput():
+                  if m.hasBadOutput():
                      with open(diffName(), 'r') as df:
                         logf.write( df.read() )               
 
@@ -524,8 +530,8 @@ def measureCheckAndLog(p,t,rs):
                         logf.write( '\n' )
                         logf.write( ef.read() )               
 
-         if not r.isOkay(): break
-         if r.hasExceeded(cutoff): continue
+         if not m.isOkay(): break
+         if m.hasExceeded(cutoff): continue
          revisedTestValues.append(a)
 
       except IOError, err:
@@ -535,14 +541,14 @@ def measureCheckAndLog(p,t,rs):
          sys.stdout.write('.'); sys.stdout.flush()
          loggerLine.write('.')
 
-   sys.stdout.write( r.statusStr() ); sys.stdout.flush()
-   loggerLine.write( r.statusStr() )
+   sys.stdout.write( m.statusStr() ); sys.stdout.flush()
+   loggerLine.write( m.statusStr() )
 
    return revisedTestValues
 
 
 
-def measureOnly(revisedTestValues,t,rs):
+def measureOnly(revisedTestValues,t,ms):
    for i in range(1,runs):
       for a in revisedTestValues:
          cmd = cmdWithArg(t,a)
@@ -552,14 +558,14 @@ def measureOnly(revisedTestValues,t,rs):
             if data:
                dfName = dataName(a)
                with open(dfName,'r') as df:
-                  r = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,logger=logger)
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,logger=logger)
 
             # pass the test value as a command line argument in cmd
             else:
-                  r = measure(a,cmd.split(),delay,maxtime,of,STDOUT,logger=logger)
+                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,logger=logger)
 
             # add to the measurements
-            rs.append(r)
+            ms.append(m)
 
          sys.stdout.write('.'); sys.stdout.flush()
          loggerLine.write('.')
@@ -569,12 +575,12 @@ def measureOnly(revisedTestValues,t,rs):
 def measurePrograms(programs):
    global loggerLine
 
-   def fillInMissingRecords(rs):
-      for a in testvalues[len(rs):]:
-         c = copy.deepcopy(rs[-1:])
+   def fillInMissingRecords(ms):
+      for a in testvalues[len(ms):]:
+         c = copy.deepcopy(ms[-1:])
          if c:
-            c[0].arg = a
-            rs.append(c[0])
+            c[0].argString = a
+            ms.append(c[0])
 
 
    total = len(programs)
@@ -591,15 +597,15 @@ def measurePrograms(programs):
          callMake(p)   
 
       t = cmdTemplate(p)
-      rs = []
-      revisedTestValues = measureCheckAndLog(p,t,rs)
-      fillInMissingRecords(rs)
-      measureOnly(revisedTestValues,t,rs)
+      ms = []
+      revisedTestValues = measureCheckAndLog(p,t,ms)
+      fillInMissingRecords(ms)
+      measureOnly(revisedTestValues,t,ms)
 
       # Write compressed dat file once, when all data is available
       try:
          datf = bz2.BZ2File( join(datdir,p.programName) ,'w')
-         for r in rs: print >>datf, r
+         for m in ms: print >>datf, m
       except IOError, err:
          if logger: logger.error(err)
       finally:
