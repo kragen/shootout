@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.11 2008-07-27 17:19:15 igouy-guest Exp $
+# $Id: planA.py,v 1.12 2008-07-28 16:36:24 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -10,10 +10,8 @@ __author__ =  'Isaac Gouy'
 from domain import Record
 
 import os, sys, cPickle, time, threading, signal, gtop
-
 from errno import ENOENT
 from subprocess import Popen
-
 
 
 def measure(arg,commandline,delay,maxtime,
@@ -42,17 +40,21 @@ def measure(arg,commandline,delay,maxtime,
             self.start()     
  
          def run(self):
-            remaining = maxtime
-            while remaining > 0:
-               mem = gtop.proc_mem(self.p).resident
-               self.maxMem = max(mem/1024, self.maxMem)
-               time.sleep(delay)
-               remaining -= delay
-            else:
-               self.timedout = True
-               os.kill(self.p, signal.SIGTERM)
-               #os.kill(self.p, signal.SIGKILL)
-      
+            try:
+               remaining = maxtime
+               while remaining > 0:
+                  mem = gtop.proc_mem(self.p).resident
+                  self.maxMem = max(mem/1024, self.maxMem)
+                  time.sleep(delay)
+                  remaining -= delay
+               else:
+                  self.timedout = True
+                  os.kill(self.p, signal.SIGTERM)
+                  #os.kill(self.p, signal.SIGKILL)
+            except OSError, (e,err):
+               if logger: logger.error('%s %s',e,err)
+
+       
       try:
          m = Record(arg)
 

@@ -1,17 +1,21 @@
-# $Id: planB.py,v 1.1 2008-07-24 05:41:27 igouy-guest Exp $
+# The Computer Language Benchmarks Game
+# $Id: planB.py,v 1.2 2008-07-28 16:36:24 igouy-guest Exp $
 
 """
 measure without libgtop2
 """
 __author__ =  'Isaac Gouy'
 
-import exit
+
+from domain import Record
+
+import os, sys, cPickle, time, threading, signal
+from errno import ENOENT
+from subprocess import Popen
 
 
-def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None):
-
-   from subprocess import Popen
-   import os, cPickle, time, threading, signal
+def measure(arg,commandline,delay,maxtime,
+      outFile=None,errFile=None,inFile=None,logger=None):
 
    r,w = os.pipe()
    forkedPid = os.fork()
@@ -26,33 +30,41 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
    else: 
       # Sample thread will be destroyed when the forked process _exits
       class Sample(threading.Thread):
+
          def __init__(self,program):
             threading.Thread.__init__(self)
             self.setDaemon(1)
             self.p = program
             self.maxMem = 0
             self.timedout = False     
-            self.start()      
+            self.start()     
+ 
          def run(self):
-            remaining = maxtime
-            while remaining > 0:
+            try:
+               remaining = maxtime
+               while remaining > 0:
 
 
-               time.sleep(delay)
-               remaining -= delay
-            else:
-               self.timedout = True
-               os.kill(self.p, signal.SIGTERM)
-               #os.kill(self.p, signal.SIGKILL)            
+                  time.sleep(delay)
+                  remaining -= delay
+               else:
+                  self.timedout = True
+                  os.kill(self.p, signal.SIGTERM)
+                  #os.kill(self.p, signal.SIGKILL)
+            except OSError, (e,err):
+               if logger: logger.error('%s %s',e,err)
 
-
-      # only write pickles to the pipe
-      os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
-
-
-
-
+       
       try:
+         m = Record(arg)
+
+         # only write pickles to the pipe
+         os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
+
+
+
+
+
          # spawn the program in a separate process
          p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
 
@@ -62,18 +74,19 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
          # wait for program exit status and resource usage
          rusage = os.wait3(0)
 
-      except (OSError,ValueError), (_,e):
-         status = exit.ERROR; utime_stime = 0; load = "%"
-         print e, commandline
-
-      else:
 
 
 
          # summarize measurements 
-         status = exit.TIMEOUT if t.timedout else rusage[1] \
-            if rusage[1] == os.EX_OK else exit.ERROR
-         utime_stime = rusage[2][0] + rusage[2][1]
+         if t.timedout:
+            m.setTimedout()
+         elif rusage[1] == os.EX_OK:
+            m.setOkay()
+         else:
+            m.setError()
+
+         m.userSysTime = rusage[2][0] + rusage[2][1]
+         m.maxMem = t.maxMem
 
 
 
@@ -86,13 +99,28 @@ def measure(arg,commandline,delay,maxtime,outFile=None,errFile=None,inFile=None)
 
 
 
+      except KeyboardInterrupt:
+         w.dump(m)
+         wPipe.close()
+         raise # needed to clean up first 
 
+      except ZeroDivisionError, (e,err): 
+         if logger: logger.warn('%s %s',err,'too fast to measure?')
 
+      except (OSError,ValueError), (e,err):
+         if e == ENOENT: # No such file or directory
+            if logger: logger.warn('%s %s',err,commandline)
+            m.setMissing() 
+         else:
+            if logger: logger.error('%s %s',e,err)
+            m.setError()       
    
       finally:
-         w.dump( (arg, status, utime_stime, t.maxMem, '%') )
+         w.dump(m)
          wPipe.close()
 
-      # Sample thread will be destroyed when the forked process _exits
-      os._exit(0)
+         # Sample thread will be destroyed when the forked process _exits
+         os._exit(0)
+
+
 

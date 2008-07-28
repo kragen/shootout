@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.3 2008-07-28 07:20:05 igouy-guest Exp $
+# $Id: domain.py,v 1.4 2008-07-28 16:36:24 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -111,17 +111,13 @@ class Record(object):
    _EMPTY = -12
 
 
-   def __init__(self,arg='_'):
-      self.arg = arg
-      self.gz = 0
-      self.userSysTime = 0.0 
-      self.maxMem = 0
-      self.status = self._EMPTY 
-      self.cpuLoad = '%' 
+   def __init__(self,arg='0'):
+      self.setEmpty()
+      self.argString = arg
 
    def fromString(self,s):
       a = s.split(',')
-      self.arg = a[0]
+      self.arg = int(a[0])
       self.gz = int(a[1])
       self.userSysTime = float(a[2])
       self.maxMem = int(a[3])
@@ -130,7 +126,7 @@ class Record(object):
       return self
 
    def __str__(self):
-      return '%s,%d,%.3f,%d,%d,%s' % (
+      return '%d,%d,%.3f,%d,%d,%s' % (
          self.arg, self.gz, self.userSysTime, self.maxMem, self.status, self.cpuLoad)
 
    def __cmp__(self,other):
@@ -157,6 +153,14 @@ class Record(object):
 
    def setMissing(self):
       self.status = self._MISSING
+
+   def setEmpty(self):
+      self.arg = 0
+      self.gz = 0
+      self.userSysTime = 0.0 
+      self.maxMem = 0
+      self.status = self._EMPTY 
+      self.cpuLoad = '%' 
 
    def isOkay(self):
       return self.status == self._OK
@@ -186,4 +190,12 @@ class Record(object):
          'TIMED OUT ' if self.hasTimedout() else (
          'UNEXPECTED OUTPUT ' if self.hasBadOutput() else 
          'MISSING FILE ' ))))
+
+   def _getArgString(self):
+      return str(self.arg)
+
+   def _setArgString(self,arg):
+      self.arg = int(arg)
+
+   argString = property(_getArgString,_setArgString)
 
