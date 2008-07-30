@@ -1,7 +1,7 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.1 2008-07-30 19:00:32 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.2 2008-07-30 19:44:28 igouy-guest Exp $
 
-include $(SITE_MAKEFILES)/Make.header_$(SITE_NAME)
+include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
 ############################################################
 # common definitions go here 
