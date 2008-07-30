@@ -1,0 +1,63 @@
+# The Computer Language Benchmarks Game
+# $Id: website.Makefile,v 1.1 2008-07-30 19:00:30 igouy-guest Exp $
+
+
+.PHONY: logs highlight
+
+
+
+# _LOGS are the files we have, if they change we want LOGS to change
+
+_LOGS = $(wildcard *_log)
+
+# we make LOGS by substituting the suffixes
+
+LOGS = $(_LOGS:_log=.log)
+
+# the target we call wants to make just LOGS which are out of date
+# if there's a CODE_SWEEP cp all *.log preserving their timestamps
+
+ifneq (($strip $(LOG_SWEEP)),)
+   logs: $(LOGS)
+	-@cp -pu *.log $(LOG_SWEEP) 
+else
+   logs: $(LOGS)
+	-@echo no log sweep
+endif
+
+# the pattern for each LOGS suffix matches a _LOGS file on which 
+# it is dependent so copy and rename that _LOGS file
+
+%.log: %_log
+	@cp $< $@
+
+
+
+
+# _SRCS are the files we have, if they change we want SRCS to change
+
+_SRCS = $(wildcard *_code)
+
+# we make SRCS by substituting the suffix we want .code for _code
+
+SRCS = $(_SRCS:_code=.code)
+
+# the target we call wants to make just SRCS which are out of date
+# if there's a CODE_SWEEP cp all *.code preserving their timestamps
+
+ifneq (($strip $(CODE_SWEEP)),)
+   highlight: $(SRCS)
+	-@cp -pu *.code $(CODE_SWEEP) 
+else
+   highlight: $(SRCS)
+	-@echo no highlight sweep
+endif
+
+# the pattern for each SRCS suffix matches a _SRCS file on which 
+# it is dependent so use highlight to create xml markup of the source
+
+%.code: %_code
+	-@highlight --fragment --xml --data-dir=$(NANO_BIN) --force -i $< -o $@ 
+
+
+

@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: nanolib.py,v 1.2 2008-07-30 01:50:03 igouy-guest Exp $
+# $Id: nanolib.py,v 1.3 2008-07-30 18:57:16 igouy-guest Exp $
 
 
 
@@ -35,7 +35,7 @@ def envPath(s):
 
 
 
-def chCWD():
+def chCWD(subdir=None):
    global cwdir,rootdir
    if cwdir:
       os.chdir(cwdir)   
@@ -47,7 +47,10 @@ def chCWD():
          print 'please set SITE_ROOT in Makefile.site_*'
          sys.exit(0)   
 
-      os.chdir(rootdir)
+      if subdir and not isdir(subdir): 
+         os.mkdir(subdir) 
+
+      os.chdir(subdir if subdir else rootdir)
 
 
 

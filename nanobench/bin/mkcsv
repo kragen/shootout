@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: mkcsv,v 1.4 2008-07-30 01:50:03 igouy-guest Exp $
+# $Id: mkcsv,v 1.5 2008-07-30 18:57:16 igouy-guest Exp $
 
 from __future__ import with_statement
 
@@ -8,12 +8,13 @@ __author__ =  'Isaac Gouy'
 
 
 from domain import FileNameParts, Record
-from nanolib import chCWD, configureLogger, getLogger
+from nanolib import envPath, chCWD, configureLogger, getLogger
 
 import os, bz2
 from contextlib import nested
 from errno import ENOENT
 from os.path import isdir, join
+from shutil import move
 
 # globals
 datdirName = 'dat'
@@ -22,7 +23,7 @@ logger = None
 
 def appendNames(fp,f):
    # append benchmark name, language implementation and program id
-   f.write('%s,%s,%s,' % (fp.name,fp.ext,fp.id))
+   f.write('%s,%s,%s,' % (fp.name,fp.extPrefix,fp.id))
 
 
 
@@ -93,11 +94,13 @@ def walkBenchmarksGameDatFiles(df,ndf,bdf):
    for d in subdirs:
       try:
          path = join(d,datdirName)
-         if logger: logger.info('mkcsv building csv files from %s',path)
          datfiles = os.listdir(path)
-      except OSError, (e,_): 
-         if e == ENOENT: break # No such file or directory
+      except OSError, err: 
+         if err[0] == ENOENT: 
+            if logger: logger.debug(err)
+            continue # No such file or directory
       else:
+         if logger: logger.info('mkcsv building csv files from %s',path)
          for f in datfiles: appendToCsv(path,f,df,ndf,bdf)
 
 
@@ -110,25 +113,37 @@ def writeHeader(f):
 def main():
    global logger
 
-   chCWD() # step into SITE_ROOT
+   chCWD() # step into working directory
    configureLogger(102400) # should get max from ini file
    logger = getLogger()
- 
-   with nested( open( join('data.csv'), 'w'), 
-                open( join('ndata.csv'), 'w')) as (df,ndf):
+
+   datacsv = 'data.csv'
+   ndatacsv = 'ndata.csv'
+   bulkdatacsv = 'bulkdata.csv.bz2'
+
+   with nested( open( join(datacsv), 'w'), 
+                open( join(ndatacsv), 'w')) as (df,ndf):
 
       try:
-         bdf = bz2.BZ2File( join('bulkdata.csv.bz2'), 'w')
+         bdf = bz2.BZ2File( join(bulkdatacsv), 'w')
 
          writeHeader(df); writeHeader(ndf); writeHeader(bdf)
          walkBenchmarksGameDatFiles(df,ndf,bdf)
 
-      except IOError, err:
+         sweepdir = envPath('CSV_SWEEP') 
+         if sweepdir:
+            move( join(datacsv), join(sweepdir,datacsv))
+            move( join(ndatacsv), join(sweepdir,ndatacsv))
+            move( join(bulkdatacsv), join(sweepdir,bulkdatacsv))
+
+      except (OSError,IOError), err:
          if logger: logger.error(err)
       finally:
          bdf.close()
 
    chCWD() # step back 
+
+
 
 if __name__ == "__main__":
    main()

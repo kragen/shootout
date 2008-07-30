@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.26 2008-07-30 01:50:03 igouy-guest Exp $
+# $Id: nanobench,v 1.27 2008-07-30 18:57:16 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -125,7 +125,7 @@ _OUT = '_out'
 logdirName = 'log'
 datdirName = 'dat'
 tmpdirName = 'tmp'
-symdirName = 'sym'
+codedirName = 'code'
 
 sitename = None
 srcdir = None
@@ -133,7 +133,7 @@ makedir = None
 logdir = None
 datdir = None
 tmpdir = None
-symdir = None
+codedir = None
 
 
 
@@ -174,18 +174,23 @@ def initializeFrom(ini):
 
 
 def createDirectories():
-   global srcdir,sitename,makedir,logdir,datdir,tmpdir,symdir,logger
+   global srcdir,sitename,makedir,logdir,datdir,tmpdir,codedir,logger
 
    def ifNoneMkdir(path,name):
       d = join(path,name)
-      if not isdir(d): os.mkdir(d) 
+      if not isdir(d): 
+         os.mkdir(d) 
+         if logger: logger.debug('mkdir %s' % d)
       return d
 
    # assume srcdir path ends with a test name
    srcdir = os.getcwd()
 
    rootdir = envPath('SITE_ROOT')
-   if isdir(rootdir):
+   if rootdir:
+      if not isdir(rootdir): os.mkdir(rootdir) 
+      configureLogger(logfilemax,rootdir)
+      logger = getLogger()
       testdir = ifNoneMkdir(rootdir,split(srcdir)[1])
    else:
       print 'please set SITE_ROOT in Makefile.site_*'
@@ -194,20 +199,35 @@ def createDirectories():
    sitename = os.environ.get( 'SITE_NAME', '')
    if not sitename:
       print 'please set SITE_NAME in Makefile.site_*'
+      if logger: logger.critical('please set SITE_NAME in Makefile.site_*')
       sys.exit(0)
 
    makedir = envPath('SITE_MAKEFILES')
    if not isdir(makedir):
-      print 'please set MAKE_ROOT in Makefile.site_*'
+      print 'please set NANO_ROOT for MAKE_ROOT in Makefile.site_*'
+      if logger: logger.critical('please set NANO_ROOT for MAKE_ROOT in Makefile.site_*')
       sys.exit(0)
 
-   configureLogger(logfilemax,rootdir)
-   logger = getLogger()
+   csvsweep = envPath('CSV_SWEEP')
+   if csvsweep and not isdir(csvsweep): 
+      os.mkdir(csvsweep) 
+      if logger: logger.debug('mkdir CSV_SWEEP %s' % csvsweep)
+
+   codesweep = envPath('CODE_SWEEP')
+   if codesweep and not isdir(codesweep): 
+      os.mkdir(codesweep) 
+      if logger: logger.debug('mkdir CODE_SWEEP %s' % codesweep)
+
+   logsweep = envPath('LOG_SWEEP')
+   if logsweep and not isdir(logsweep): 
+      os.mkdir(logsweep) 
+      if logger: logger.debug('mkdir LOG_SWEEP %s' % logsweep)
 
    logdir = ifNoneMkdir(testdir,logdirName)
    datdir = ifNoneMkdir(testdir,datdirName)
    tmpdir = ifNoneMkdir(testdir,tmpdirName)
-   symdir = ifNoneMkdir(testdir,symdirName)
+   codedir = ifNoneMkdir(testdir,codedirName)
+
 
 
 
@@ -568,7 +588,8 @@ def measurePrograms(programs):
    for p in programs:
       loggerLine = StringIO()
  
-      symlinkSource(p.homedir,p.programName)
+      # symlink from tmpdir to program source code file
+      symlinkSource(codedir,p.programName)
 
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
@@ -606,11 +627,17 @@ def benchmarksGame():
    createDirectories()
    allowed,sources,links = targets()
 
-   # symlink these program aliases from symdir so we 
-   # have them later when we measure the source code gzip
-   for f in links:
+   programs = set(sources)
+   programs.update(links)
+
+   # symlink these programs from codedir so they are available 
+   # for conversion to highlight-ed xml files
+   for f in programs:
       symlinkSource(directory=srcdir, srcFilename=f.filename,
-         dstDir=symdir, filename=f.programName)
+         dstDir=codedir, filename=f.programName)
+
+      symlinkSource(directory=srcdir, srcFilename=f.filename,
+         dstDir=codedir, filename=f.codeName)
 
 
    # make sure all build files and crash files are created in tmpdir
@@ -623,12 +650,6 @@ def benchmarksGame():
    for f in allowed:
       symlinkSource(srcdir,f.filename)
 
-   # make it easy to symlink from tmpdir to srcdir or symdir as appropriate
-   FileNameParts.homedir = srcdir
-   LinkNameParts.homedir = symdir
-   
-   programs = set(sources)
-   programs.update(links)
    measurePrograms(programs)
 
 

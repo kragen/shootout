@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.5 2008-07-30 01:50:03 igouy-guest Exp $
+# $Id: domain.py,v 1.6 2008-07-30 18:57:16 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -47,7 +47,7 @@ class FileNameParts(object):
 
 
    def _datName(self):
-      return self.programName + '.dat'
+      return self.programName + '_dat'
 
    datName = property(_datName)
 
@@ -65,9 +65,21 @@ class FileNameParts(object):
 
 
    def _logName(self):
-      return self.programName + '.log'
+      return self.programName + '_log'
 
    logName = property(_logName)
+
+
+   def _codeName(self):
+      return self.programName + '_code'
+
+   codeName = property(_codeName)
+
+
+   def _extPrefix(self):
+      return self.ext.partition('_')[0]
+
+   extPrefix = property(_extPrefix)
 
 
    def __str__(self):
