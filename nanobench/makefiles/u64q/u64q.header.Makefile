@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.header.Makefile,v 1.1 2008-07-30 19:00:32 igouy-guest Exp $
+# $Id: u64q.header.Makefile,v 1.2 2008-07-31 05:46:13 igouy-guest Exp $
 
 ############################################################
 # common definitions go here
@@ -66,7 +66,7 @@ SCALA := /usr/local/src/scala-2.7.1.final/bin/scala
 SCALAC := /usr/local/src/scala-2.7.1.final/bin/scalac
 SMLNJ := /opt/smlnj/bin/sml
 SMLNJBUILD := /opt/smlnj/bin/ml-build
-SWIPROLOG := /usr/bin/swiprolog
+SWIPROLOG := /usr/bin/swipl
 TCL := /usr/bin/tclsh
 VW := /opt/vw7/bin/linux86/vwlinux86
 YARV := /opt/ruby/ruby

@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.site.Makefile,v 1.2 2008-07-30 19:16:43 igouy-guest Exp $
+# $Id: gp4.site.Makefile,v 1.3 2008-07-31 05:46:13 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -19,10 +19,10 @@ NANO_ROOT := ~/shootout/nanobench
 ### SWEEP DIRS 
 
 # if not empty, somewhere all csv summary files should be put
-CSV_SWEEP := $(SITE_ROOT)/data
+CSV_SWEEP := $(SITE_ROOT)/_data
 
 # if not empty, somewhere all highlight-ed xml code files should be put
-CODE_SWEEP := $(SITE_ROOT)/code
+CODE_SWEEP := $(SITE_ROOT)/_code
 
 # if not empty, somewhere all program log files should be put
 LOG_SWEEP := $(CODE_SWEEP)

@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.site.Makefile,v 1.2 2008-07-30 19:16:43 igouy-guest Exp $
+# $Id: u64q.site.Makefile,v 1.3 2008-07-31 05:46:13 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -19,10 +19,10 @@ NANO_ROOT := ~/shootout/nanobench
 ### SWEEP DIRS 
 
 # if not empty, somewhere all csv summary files should be put
-CSV_SWEEP := $(SITE_ROOT)/data
+CSV_SWEEP := $(SITE_ROOT)/_data
 
 # if not empty, somewhere all highlight-ed xml code files should be put
-CODE_SWEEP := $(SITE_ROOT)/code
+CODE_SWEEP := $(SITE_ROOT)/_code
 
 # if not empty, somewhere all program log files should be put
 LOG_SWEEP := $(CODE_SWEEP)
@@ -47,6 +47,9 @@ SRC_DIRS := \
  fannkuch \
  knucleotide \
  nsieve \
+ nsievebits \
+ partialsums \
+
 
 
 # binarytrees \
@@ -84,9 +87,11 @@ ONLY := \
 
 # IGNORE files with these extensions, if there are no ONLY extensions
 IGNORE := \
- parrot slang octave cyc tcc gwydion regina \
- neko xds stx proto icon \
- squeak vw rhino sbcl
+ parrot slang octave cyc tcc gwydion regina bigloo cmucl objc \
+ neko xds stx proto icon io newlisp iron java14 znn \
+ ooc cint gcj icc icpp g95 ifc fbasic rebol bigforth \
+ squeak vw rhino sbcl mercury smlnj ruby cal gst yarv oz jruby se gnat \
+ chicken groovy fsharp lisaac dlang clean psyco luajit ikarus gforth \
 
 
 

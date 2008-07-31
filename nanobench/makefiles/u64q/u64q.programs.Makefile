@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.2 2008-07-30 19:44:28 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.3 2008-07-31 05:46:13 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -19,11 +19,11 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 DLANGOPTS := -O -inline -release $(DLANGOPTS)
 EIFFELOPTS := c -clean -boost -no_split $(COPTS) $(EIFFELOPTS)
 FLXOPTS := -c --optimize --static
-FPCOPTS := -XX -Xs -O3ppentium4 -Cppentium4
+FPCOPTS := -XX -Xs 
 G95OPTS := -pipe $(COPTS) $(G95OPTS)
 GCCOPTS := -pipe -Wall $(COPTS) $(GCCOPTS)
 GCJOPTS := $(COPTS) -fno-bounds-check -fno-store-check
-GHCOPTS  := --make -O2 -fglasgow-exts $(GHCOPTS) -optc-march=pentium4
+GHCOPTS  := --make -O2 -fglasgow-exts $(GHCOPTS) 
 GNATOPTS := -gnatp $(COPTS) $(GNATOPTS)
 GXXOPTS := -pipe $(COPTS) $(GXXOPTS)
 GXXLDOPTS := -L/usr/local/lib $(GXXLDOPTS)
@@ -425,7 +425,7 @@ clean:
 	-@rm -rf $@ 
 	-( if [ ! -d $@ ] ; then mkdir $@ ; fi)
 	-cp $< $@/$(TEST).cal
-	-( cd $@ ; ../Include/cal/compile.sh $(TEST).cal )
+	-( cd $@ ; /Include/cal/compile.sh $(TEST).cal )
 	-touch $@
 
 
@@ -532,11 +532,8 @@ SBCL_TRACE :=
 ########################################
 
 %.nice_run: %.nice $(NICEC)
-	-@rm -rf $@  
-	-( if [ ! -d $@ ] ; then mkdir $@ ; mkdir $@/$(TEST) ; fi)
-	-cp $< $@/$(TEST)/$(TEST).nice
-	-( cd $@/$(TEST) ; $(NICEC) -d . --sourcepath "..:../../../.." -a ../../$(TEST).jar $(TEST) )
-	-touch $@
+	-$(NICEC) -d . --sourcepath ".:.." -a $(TEST).jar tmp
+
 
 ########################################
 # Oberon-2 (XDS C)
