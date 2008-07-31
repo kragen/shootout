@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.programs.Makefile,v 1.2 2008-07-30 19:44:28 igouy-guest Exp $
+# $Id: gp4.programs.Makefile,v 1.3 2008-07-31 06:19:39 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -664,16 +664,11 @@ SBCL_TRACE :=
 ########################################
 # gambit
 ########################################
-%.gambit: %.gambit $(GAMBIT) $(GCC)
-	-cp $< $@
 
 %.gambit_run: %.gambit
-	-rm -f $@
-	-rm -f *.c
 	-$(GAMBIT) -link $<
 #	-$(GAMBIT) -postlude '(main (cadr (command-line)))' $(GAMBITOPTS) $< 
 	-$(GCC) $(GCCOPTS) -D___SHARED_HOST $(TEST)*.c -lgambc -o $@
-	-@rm -f $*.o $*.c
 
 
 ########################################
@@ -800,7 +795,7 @@ SBCL_TRACE :=
 	-cp $< $@/$(TEST).scala
 	-( cd $@ ; $(SCALAC) $(TEST).scala )
 	-touch $@
-	-export JAVACMD="$JDKRUN $JDKFLAGS -server -Xbatch" 
+	-export JAVACMD="$(JDKRUN) $(JDKFLAGS) -server -Xbatch" 
 
 
 

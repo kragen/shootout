@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.3 2008-07-31 05:46:13 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.4 2008-07-31 06:19:39 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -797,7 +797,7 @@ SBCL_TRACE :=
 	-cp $< $@/$(TEST).scala
 	-( cd $@ ; $(SCALAC) $(TEST).scala )
 	-touch $@
-	-export JAVACMD="$JDKRUN $JDKFLAGS -server -Xbatch" 
+	-export JAVACMD="$(JDKRUN) $(JDKFLAGS) -server -Xbatch"
 
 
 

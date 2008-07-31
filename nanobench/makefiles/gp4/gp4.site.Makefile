@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.site.Makefile,v 1.3 2008-07-31 05:46:13 igouy-guest Exp $
+# $Id: gp4.site.Makefile,v 1.4 2008-07-31 06:19:39 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -45,9 +45,12 @@ DATA_ROOT := $(SOURCE_ROOT)/../website/desc
 
 SRC_DIRS := \
  fannkuch \
+ fasta \
  knucleotide \
  nsieve \
-
+ nsievebits \
+ partialsums \
+ threadring \
 
 # binarytrees \
 # chameneosredux \
@@ -84,9 +87,10 @@ ONLY := \
 
 # IGNORE files with these extensions, if there are no ONLY extensions
 IGNORE := \
- parrot slang octave cyc tcc gwydion regina \
- neko xds stx proto icon \
-
+ parrot slang octave cyc tcc gwydion regina bigloo objc \
+ neko xds stx proto icon newlisp \
+ cmucl bigforth gforth \
+ vw yarv rhino squeak \
 
 
 

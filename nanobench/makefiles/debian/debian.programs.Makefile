@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: debian.programs.Makefile,v 1.2 2008-07-30 19:44:28 igouy-guest Exp $
+# $Id: debian.programs.Makefile,v 1.3 2008-07-31 06:19:39 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -800,7 +800,7 @@ SBCL_TRACE :=
 	-cp $< $@/$(TEST).scala
 	-( cd $@ ; $(SCALAC) $(TEST).scala )
 	-touch $@
-	-export JAVACMD="$JDKRUN $JDKFLAGS -server -Xbatch" 
+	-export JAVACMD="$(JDKRUN) $(JDKFLAGS) -server -Xbatch"
 
 
 
