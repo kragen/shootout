@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.28 2008-07-30 19:44:28 igouy-guest Exp $
+# $Id: nanobench,v 1.29 2008-07-31 00:48:31 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -89,9 +89,9 @@ from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 from contextlib import nested
 from cStringIO import StringIO
-from errno import ENOENT, EEXIST
+from errno import ENOENT, EEXIST, EISDIR
 from getopt import getopt, GetoptError
-from shutil import copyfile
+from shutil import copyfile,rmtree
 from subprocess import call, STDOUT
 from tempfile import TemporaryFile
 from time import strftime, localtime, gmtime
@@ -129,6 +129,7 @@ codedirName = 'code'
 
 sitename = None
 srcdir = None
+testdir = None
 makedir = None
 logdir = None
 datdir = None
@@ -174,7 +175,7 @@ def initializeFrom(ini):
 
 
 def createDirectories():
-   global srcdir,sitename,makedir,logdir,datdir,tmpdir,codedir,logger
+   global srcdir,sitename,testdir,makedir,logdir,datdir,codedir,logger
 
    def ifNoneMkdir(path,name):
       d = join(path,name)
@@ -225,9 +226,7 @@ def createDirectories():
 
    logdir = ifNoneMkdir(testdir,logdirName)
    datdir = ifNoneMkdir(testdir,datdirName)
-   tmpdir = ifNoneMkdir(testdir,tmpdirName)
    codedir = ifNoneMkdir(testdir,codedirName)
-
 
 
 
@@ -356,8 +355,8 @@ def dataName(arg):
 
 
 
-def outName(directory,index):
-   return join(directory,_OUT) if index == 0 else '/dev/null'
+def outName(index):
+   return join(_OUT) if index == 0 else '/dev/null'
 
 
 
@@ -415,7 +414,7 @@ def symlinkSource(directory,filename,dstDir=None,srcFilename=None):
 def standalone(cmd):
    results = StringIO()
    for i in range(0,runs):
-      with nested( open( outName('./',i), 'w'), 
+      with nested( open( outName(i), 'w'), 
                    TemporaryFile(mode='w+t')) as (of,ef):
 
          m = measure('_',cmd.split(),delay,maxtime,of,ef)
@@ -457,8 +456,8 @@ def checkAndLog(m,outFile,logf):
                m.setBadOutput()
 
       else: # create the initial expected output file
-         copyfile(outFile,argFile)
-
+         copyfile(outFile, join('..', m.argString + _OUT))
+                  
    if not m.isOkay():
       extra = '' if not m.hasTimedout() else ' %s%d%s' % ('after',maxtime,'s')
       print >>logf, '\n%s%s\n' % (m.statusStr(),extra)
@@ -470,7 +469,7 @@ def measureCheckAndLog(p,t,ms):
 
    for a in testvalues:
       cmd = cmdWithArg(t,a)
-      ofName = outName(tmpdir,0)
+      ofName = outName(0)
 
       # a logged Empty record will reveal a nanobench failure
       m = Record() 
@@ -552,7 +551,7 @@ def measureOnly(revisedTestValues,t,ms):
    for i in range(1,runs):
       for a in revisedTestValues:
          cmd = cmdWithArg(t,a)
-         with open( outName(tmpdir,i), 'w') as of:
+         with open( outName(i), 'w') as of:
 
             # pass the test data file to program stdin
             if data:
@@ -572,7 +571,38 @@ def measureOnly(revisedTestValues,t,ms):
 
 
 
-def measurePrograms(programs):
+def cleanTmpdirFor(p,allowed):
+   global tmpdir
+
+   # every time, provide each program with a clean empty tmpdir
+   os.chdir(testdir)
+   tmpdir = join(testdir,tmpdirName)
+   try:
+      rmtree(tmpdir)
+      os.mkdir(tmpdir)
+   except OSError, err:
+      if logger: logger.error(err)
+
+   # make sure all build files and crash files are created in tmpdir
+   os.chdir(tmpdir)
+
+   # symlink from tmpdir to Include directory
+   symlinkSource( normpath( join(srcdir,'..') ) ,'Include')
+
+   # symlink from tmpdir to these allowed helper files 
+   for f in allowed:
+      symlinkSource(srcdir,f.filename)
+
+   # symlink from tmpdir to expected output files
+   for f in [f for f in os.listdir(testdir) if f.endswith(_OUT)]:
+      symlinkSource(testdir,f)
+
+   # symlink from tmpdir to the program source code file
+   symlinkSource(codedir,p.programName)
+
+
+
+def measurePrograms(programs,allowed):
    global loggerLine
 
    def fillInMissingRecords(ms):
@@ -582,14 +612,10 @@ def measurePrograms(programs):
             c[0].argString = a
             ms.append(c[0])
 
-
    total = len(programs)
 
    for p in programs:
-      loggerLine = StringIO()
- 
-      # symlink from tmpdir to program source code file
-      symlinkSource(codedir,p.programName)
+      cleanTmpdirFor(p,allowed)
 
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
@@ -597,6 +623,8 @@ def measurePrograms(programs):
       if hasMake(p.ext):
          callMake(p)   
 
+
+      loggerLine = StringIO()
       t = cmdTemplate(p)
       ms = []
       revisedTestValues = measureCheckAndLog(p,t,ms)
@@ -612,13 +640,12 @@ def measurePrograms(programs):
       finally:
          datf.close()
 
-      sys.stdout.write('%s [%d]\n' % (p.programName,total)); sys.stdout.flush()
       loggerLine.write('%s [%d]' % (p.programName,total))
+      sys.stdout.write('%s [%d]\n' % (p.programName,total)); sys.stdout.flush()
       total -= 1
 
       if logger: logger.info( loggerLine.getvalue() )
       loggerLine.close()
-
 
 
 
@@ -639,18 +666,7 @@ def benchmarksGame():
       symlinkSource(directory=srcdir, srcFilename=f.filename,
          dstDir=codedir, filename=f.codeName)
 
-
-   # make sure all build files and crash files are created in tmpdir
-   os.chdir(tmpdir)
-
-   # symlink from tmpdir to Include directory
-   symlinkSource( normpath( join(srcdir,'..') ) ,'Include')
-
-   # symlink these allowed helper files from tmpdir
-   for f in allowed:
-      symlinkSource(srcdir,f.filename)
-
-   measurePrograms(programs)
+   measurePrograms(programs,allowed)
 
 
 
