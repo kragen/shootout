@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.site.Makefile,v 1.4 2008-07-31 06:19:39 igouy-guest Exp $
+# $Id: gp4.site.Makefile,v 1.5 2008-08-01 17:09:28 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -19,10 +19,10 @@ NANO_ROOT := ~/shootout/nanobench
 ### SWEEP DIRS 
 
 # if not empty, somewhere all csv summary files should be put
-CSV_SWEEP := $(SITE_ROOT)/_data
+CSV_SWEEP := $(SITE_ROOT)/Data
 
 # if not empty, somewhere all highlight-ed xml code files should be put
-CODE_SWEEP := $(SITE_ROOT)/_code
+CODE_SWEEP := $(SITE_ROOT)/Code
 
 # if not empty, somewhere all program log files should be put
 LOG_SWEEP := $(CODE_SWEEP)
@@ -39,18 +39,19 @@ NANO_BIN := $(NANO_ROOT)/bin
 # data files in CVS
 DATA_ROOT := $(SOURCE_ROOT)/../website/desc
 
+# highlight dislikes ~ in NANO_ROOT so subst them with the HOME text
+expandedvars := $(subst ~,$(HOME),$(NANO_ROOT))
+NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
+
 
 
 # MUST set which source directories to search
 
 SRC_DIRS := \
- fannkuch \
  fasta \
  knucleotide \
  nsieve \
- nsievebits \
- partialsums \
- threadring \
+
 
 # binarytrees \
 # chameneosredux \
@@ -75,7 +76,7 @@ SRC_DIRS := \
 # ALLOW these helper file extensions to be available unchanged 
 # from the working directory - they will never be measured
 ALLOW := \
- sq cm
+ sq cm mlb
 
 
 
@@ -87,10 +88,9 @@ ONLY := \
 
 # IGNORE files with these extensions, if there are no ONLY extensions
 IGNORE := \
- parrot slang octave cyc tcc gwydion regina bigloo objc \
- neko xds stx proto icon newlisp \
+ parrot slang octave cyc tcc gwydion regina bigloo cmucl objc guile \
+ neko xds stx proto newlisp \
  cmucl bigforth gforth \
- vw yarv rhino squeak \
 
 
 
