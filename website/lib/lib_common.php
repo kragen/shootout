@@ -26,8 +26,9 @@ define('DATA_TESTVALUE',3);
 define('DATA_GZ',4);
 define('DATA_FULLCPU',5);
 define('DATA_MEMORY',6);
-define('DATA_LINES',7);
-define('DATA_DATE',8);
+define('DATA_STATUS',7);
+define('DATA_LOAD',8);
+define('DATA_ELAPSED',9);
 
 define('INCL_LINK',0);
 define('INCL_NAME',1);
@@ -176,8 +177,8 @@ function CompareTestCpuTime($a, $b){
 function CompareFullCpuTime($a, $b){
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
       if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
-         if ($a[DATA_LINES] == $b[DATA_LINES]){ return 0; }
-         else { return ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1; }            
+         if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
+         else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
       }
       else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
    }
@@ -187,8 +188,8 @@ function CompareFullCpuTime($a, $b){
 function CompareMemoryUse($a, $b){
    if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
       if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
-         if ($a[DATA_LINES] == $b[DATA_LINES]){ return 0; }
-         else { return ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1; }            
+         if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
+         else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
       }
       else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
    }
@@ -196,14 +197,14 @@ function CompareMemoryUse($a, $b){
 }
 
 function CompareCodeLines($a, $b){
-   if ($a[DATA_LINES] == $b[DATA_LINES]){
+   if ($a[DATA_GZ] == $b[DATA_GZ]){
       if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
          if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ return 0; }
          else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }            
       }
       else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
    }
-   return  ($a[DATA_LINES] < $b[DATA_LINES]) ? -1 : 1;
+   return  ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1;
 }
 
 function CompareGz($a, $b){

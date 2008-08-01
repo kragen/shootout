@@ -96,14 +96,12 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $cpu = 1;                     
             
             //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; } 
-            //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; } 
-            //if ($r2[DATA_LINES]>0){ $lines = $r1[DATA_LINES] / $r2[DATA_LINES]; } 
-            //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }  
+            //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
+            //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }
 
-            if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; } 
-            if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; } 
-            if ($r1[DATA_LINES]>0){ $lines = $r2[DATA_LINES] / $r1[DATA_LINES]; } 
-            if ($r1[DATA_GZ]>0){ $gz = $r2[DATA_GZ] / $r1[DATA_GZ]; }                                   
+            if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; }
+            if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; }
+            if ($r1[DATA_GZ]>0){ $gz = $r2[DATA_GZ] / $r1[DATA_GZ]; }
                                  
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]         
@@ -117,7 +115,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                , $lines
                , $gz
                , 0
-               );                           
+               );
                                                     
             while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }  
          }      
@@ -249,7 +247,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    }
    @fclose($f);         
       
-   // Filter again in memory      
+   // Filter again in memory
    $Data = array();   
    foreach($rows as $row){ 
       if (isset($Incl[$row[DATA_TEST]])){   
@@ -299,7 +297,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
                                                  
       if (isset($row)){                                                    
          $NData[$row[DATA_TEST]] = array(
-              $row[DATA_TEST]         
+              $row[DATA_TEST]
             , $row[DATA_LANG]
             , $row[DATA_ID]
             , $row[DATA_TESTVALUE]
@@ -307,7 +305,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
             , $Langs[$row[DATA_LANG]][LANG_HTML].IdName($row[DATA_ID])
             , $row[DATA_FULLCPU]
             , $row[DATA_MEMORY]
-            , $row[DATA_LINES]
+            , 0 //$row[DATA_GZ]
             , $row[DATA_GZ]
             , ExcludeData($row,$Langs,$Excl)
             );                           

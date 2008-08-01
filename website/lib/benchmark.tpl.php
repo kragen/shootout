@@ -11,7 +11,7 @@ list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl)
 if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; } 
 else { $P1 = ''; }
 
-if (sizeof($Accepted)>1){ $P2 = $Accepted[1][DATA_LANG].'-'.$Accepted[1][DATA_ID]; } 
+if (sizeof($Accepted)>1){ $P2 = $Accepted[1][DATA_LANG].'-'.$Accepted[1][DATA_ID]; }
 else { $P2 = ''; }
 
 if (sizeof($Accepted)>2){ $P3 = $Accepted[2][DATA_LANG].'-'.$Accepted[2][DATA_ID]; } 
@@ -35,7 +35,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
 <p>Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.
-<?=$TestTag;?> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>" 
+<?=$TestTag;?> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>"
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
 </p>
 
@@ -107,8 +107,8 @@ foreach($Accepted as $d){
       if (($TestName=='startup')||($first[DATA_MEMORY]==0)){ $ratio = 0; }
       else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
    } elseif ($Sort=='lines'){ 
-      if ($first[DATA_LINES]==0){ $ratio = 0; }
-      else { $ratio = $d[DATA_LINES]/$first[DATA_LINES]; }
+      if ($first[DATA_GZ]==0){ $ratio = 0; }
+      else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
    } elseif ($Sort=='gz'){ 
       if ($first[DATA_GZ]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
@@ -127,7 +127,6 @@ foreach($Accepted as $d){
       $fc = number_format($fullcpu,2);
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
    }
-   $lines = $d[DATA_LINES];
    $gz = $d[DATA_GZ];
 
    printf('<tr>'); echo "\n";
@@ -154,16 +153,15 @@ foreach($Langs as $k => $v){
                     
          $id = $d[DATA_ID];
          $fullcpu = $d[DATA_FULLCPU];
-         $lines = $d[DATA_LINES]; 
          $gz = $d[DATA_GZ];   
-                    
+
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
             $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
          if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
          if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
-         printf('<td>%s</td><td></td><td>%d</td>', $message, $gz);   
-       
+         printf('<td>%s</td><td></td><td>%d</td>', $message, $gz);
+
          echo "</tr>\n";   
          unset($No_Program_Langs[$k]);         
       }  
@@ -176,7 +174,7 @@ if (sizeof($Special)>0){
    echo '<tr><th colspan="5"><a href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
 
    foreach($Special as $d){
-      $k = $d[DATA_LANG];         
+      $k = $d[DATA_LANG];
       $Name = $Langs[$k][LANG_FULL];
       $HtmlName = $Langs[$k][LANG_HTML];
       if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }   
@@ -187,17 +185,16 @@ if (sizeof($Special)>0){
       } elseif ($Sort=='kb'){ 
          if (($TestName=='startup')||($first[DATA_MEMORY]==0)){ $ratio = 0; }
          else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
-      } elseif ($Sort=='lines'){ 
-         if ($first[DATA_LINES]==0){ $ratio = 0; }
-         else { $ratio = $d[DATA_LINES]/$first[DATA_LINES]; }
-      } 
+      } elseif ($Sort=='lines'){
+         if ($first[DATA_GZ]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
+      }
 
      
       $id = $d[DATA_ID];   
       $gz = $d[DATA_GZ];
       $fullcpu = $d[DATA_FULLCPU];
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
-      $lines = $d[DATA_LINES];
 
       printf('<tr>'); echo "\n";
       printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
