@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.site.Makefile,v 1.5 2008-08-01 07:03:48 igouy-guest Exp $
+# $Id: u64q.site.Makefile,v 1.6 2008-08-01 16:58:03 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -50,7 +50,7 @@ NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
 
 SRC_DIRS := \
  nsieve \
- threadring \
+
 
 
 

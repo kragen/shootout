@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.5 2008-08-01 01:55:03 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.6 2008-08-01 16:58:03 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -9,24 +9,9 @@
 
 # TYPICAL actions include an initial mv to give the expected extension 
 
+# ASSUME environment variables for compilers and interpreters are set in the header
 
-# environment variables for compilers and interpreters are set in the header
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
-
-
-############################################################
-# common definitions go here 
-############################################################
-
-SPLITFILE := $(NANO_BIN)/split_file.bash
-
-COPTS := -O3 -fomit-frame-pointer $(COPTS)
-
-GXXOPTS := -pipe $(COPTS) $(GXXOPTS)
-GXXLDOPTS := -L/usr/local/lib $(GXXLDOPTS)
-
-# ???? FLXOPTS := -c --optimize --static
-
 
 
 ########################################

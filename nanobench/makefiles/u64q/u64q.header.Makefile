@@ -1,12 +1,17 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.header.Makefile,v 1.3 2008-08-01 01:55:03 igouy-guest Exp $
+# $Id: u64q.header.Makefile,v 1.4 2008-08-01 16:58:03 igouy-guest Exp $
 
 ############################################################
-# common definitions go here
+# 
 ############################################################
-
 
 BENCHMARKER := $(NANO_BIN)/nanobench
+
+SPLITFILE := $(NANO_BIN)/split_file.bash
+
+############################################################
+# locations for exes and interpreters
+############################################################
 
 CALRUN := /usr/local/src/Quark/quarklaunch.sh
 CINT := /opt/cint-5.16.19/cint
@@ -76,6 +81,13 @@ ZONNONC := /opt/ch.ethz.zonnon_1.0.79/compiler/zc.exe
 
 
 ############################################################
+# 
+############################################################
+
+COPTS := -O3 -fomit-frame-pointer $(COPTS)
+GXXOPTS := -pipe $(COPTS) $(GXXOPTS)
+GXXLDOPTS := -L/usr/local/lib $(GXXLDOPTS)
+
 
 #CLEANFLAGS :=
 ERLFLAGS := -noshell -run
@@ -93,8 +105,10 @@ JRUBYFLAGS := -J-server
 GROOVYFLAGS := -server
 JAVA_OPTS = $(GROOVYFLAGS)
 
+QUARK_HOME = /usr/local/src/Quark
 QUARK_JAVACMD = $(JDKRUN)
 QUARK_VMARGS =  $(JDKFLAGS) -server -Xbatch $(CALFLAGS)
+
 
 ############################################################
 	
