@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.13 2008-08-01 01:55:03 igouy-guest Exp $
+# $Id: planA.py,v 1.14 2008-08-01 07:03:48 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -40,8 +40,8 @@ def measure(arg,commandline,delay,maxtime,
             self.start()     
  
          def run(self):
-            try:
-               remaining = maxtime
+            try:              
+               remaining = maxtime               
                while remaining > 0:
                   mem = gtop.proc_mem(self.p).resident
                   self.maxMem = max(mem/1024, self.maxMem)
@@ -63,7 +63,7 @@ def measure(arg,commandline,delay,maxtime,
 
          # gtop cpu is since machine boot, so we need a before measurement
          cpus0 = gtop.cpu().cpus 
-
+         start = time.time()
 
          # spawn the program in a separate process
          p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
@@ -75,6 +75,7 @@ def measure(arg,commandline,delay,maxtime,
          rusage = os.wait3(0)
 
          # gtop cpu is since machine boot, so we need an after measurement
+         elapsed = time.time() - start
          cpus1 = gtop.cpu().cpus 
 
          # summarize measurements 
@@ -97,6 +98,8 @@ def measure(arg,commandline,delay,maxtime,
 
          load.sort(reverse=1)
          m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
+
+         m.elapsed = elapsed
 
 
       except KeyboardInterrupt:

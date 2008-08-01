@@ -1,9 +1,12 @@
 # The Computer Language Benchmarks Game
-# $Id: website.Makefile,v 1.2 2008-08-01 01:55:03 igouy-guest Exp $
+# $Id: website.Makefile,v 1.3 2008-08-01 07:03:48 igouy-guest Exp $
+
+
+# Copy new log files to the sweep directory
+# Create highlight markup for new program source and copy to the sweep directory
 
 
 .PHONY: logs highlight
-
 
 
 # _LOGS are the files we have, if they change we want LOGS to change
