@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: website.Makefile,v 1.1 2008-07-30 19:00:30 igouy-guest Exp $
+# $Id: website.Makefile,v 1.2 2008-08-01 01:55:03 igouy-guest Exp $
 
 
 .PHONY: logs highlight
@@ -57,7 +57,8 @@ endif
 # it is dependent so use highlight to create xml markup of the source
 
 %.code: %_code
-	-@highlight --fragment --xml --data-dir=$(NANO_BIN) --force -i $< -o $@ 
+	-@highlight --fragment --xml --add-data-dir=$(NANO_HIGHLIGHT) \
+		--add-config-dir=$(NANO_HIGHLIGHT) --force -i $< -o $@ 
 
 
 

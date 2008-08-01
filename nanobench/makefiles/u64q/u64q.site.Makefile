@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.site.Makefile,v 1.3 2008-07-31 05:46:13 igouy-guest Exp $
+# $Id: u64q.site.Makefile,v 1.4 2008-08-01 01:55:03 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -19,10 +19,10 @@ NANO_ROOT := ~/shootout/nanobench
 ### SWEEP DIRS 
 
 # if not empty, somewhere all csv summary files should be put
-CSV_SWEEP := $(SITE_ROOT)/_data
+CSV_SWEEP := $(SITE_ROOT)/Data
 
 # if not empty, somewhere all highlight-ed xml code files should be put
-CODE_SWEEP := $(SITE_ROOT)/_code
+CODE_SWEEP := $(SITE_ROOT)/Code
 
 # if not empty, somewhere all program log files should be put
 LOG_SWEEP := $(CODE_SWEEP)
@@ -39,16 +39,34 @@ NANO_BIN := $(NANO_ROOT)/bin
 # data files in CVS
 DATA_ROOT := $(SOURCE_ROOT)/../website/desc
 
+# highlight dislikes ~ in NANO_ROOT so subst them with the HOME text
+expandedvars := $(subst ~,$(HOME),$(NANO_ROOT))
+NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
+
+
 
 
 # MUST set which source directories to search
 
 SRC_DIRS := \
+ binarytrees \
+ chameneosredux \
  fannkuch \
+ fasta \
  knucleotide \
+ mandelbrot \
+ meteor \
+ nbody \
  nsieve \
  nsievebits \
  partialsums \
+ pidigits \
+ recursive \
+ regexdna \
+ revcomp \
+ spectralnorm \
+ threadring \
+
 
 
 
@@ -75,7 +93,7 @@ SRC_DIRS := \
 # ALLOW these helper file extensions to be available unchanged 
 # from the working directory - they will never be measured
 ALLOW := \
- sq cm
+ sq cm mlb
 
 
 
@@ -87,11 +105,11 @@ ONLY := \
 
 # IGNORE files with these extensions, if there are no ONLY extensions
 IGNORE := \
- parrot slang octave cyc tcc gwydion regina bigloo cmucl objc \
+ parrot slang octave cyc tcc gwydion regina bigloo cmucl objc guile \
  neko xds stx proto icon io newlisp iron java14 znn \
- ooc cint gcj icc icpp g95 ifc fbasic rebol bigforth \
- squeak vw rhino sbcl mercury smlnj ruby cal gst yarv oz jruby se gnat \
- chicken groovy fsharp lisaac dlang clean psyco luajit ikarus gforth \
+ ooc cint gcj icc icpp g95 ifc fbasic rebol bigforth gambit \
+ squeak vw rhino sbcl mercury smlnj ruby yarv oz jruby se \
+ chicken fsharp lisaac dlang clean psyco luajit ikarus gforth \
 
 
 

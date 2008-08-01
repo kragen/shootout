@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.header.Makefile,v 1.2 2008-07-31 05:46:13 igouy-guest Exp $
+# $Id: u64q.header.Makefile,v 1.3 2008-08-01 01:55:03 igouy-guest Exp $
 
 ############################################################
 # common definitions go here
@@ -8,7 +8,7 @@
 
 BENCHMARKER := $(NANO_BIN)/nanobench
 
-CALRUN := /opt/Quark/quarklaunch.sh
+CALRUN := /usr/local/src/Quark/quarklaunch.sh
 CINT := /opt/cint-5.16.19/cint
 CHICKEN := /opt/chicken-3.0.0/csc
 CLEANC := /opt/clean/bin/clm
@@ -26,8 +26,8 @@ BIGFORTH := /opt/bigforth/bigforth
 GHC := /usr/bin/ghc
 GNATC := /usr/bin/gnatmake
 GNATCHOP := /usr/bin/gnatchop
-GROOVY := /opt/groovy-1.6-beta-1/bin/groovy
-GST := /opt/gst/bin/gst
+GROOVY := /usr/local/src/groovy-1.6-beta-1/bin/groovy
+GST := /usr/local/bin/gst
 GWYDION := /usr/bin/d2c
 GXX := /usr/bin/g++
 ICPC := /opt/intel/cc/10.1.012/bin/icpc
