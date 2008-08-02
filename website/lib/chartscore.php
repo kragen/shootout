@@ -22,7 +22,7 @@ if (isset($HTTP_GET_VARS['d'])
    $v3 = 20;
    $v4 = 40;
 
-   $w = 450;
+   $w = 600;
    $h = 150;
    $wratio = 5;
    $vscale = 48;

@@ -42,7 +42,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <p><img src="chart.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"
    alt=""
    title="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
-   width="450" height="150"
+   width="600" height="150"
  /></p>
 
 <table>
@@ -68,8 +68,8 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <tr>
 <th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
 <th>Program &amp; Logs</th>
-<th>CPU Time&nbsp;secs</th>
-<th>Memory Use&nbsp;KB</th>
+<th>CPU&nbsp;secs</th>
+<th>Memory&nbsp;KB</th>
 <th>GZip Bytes</th>
 </tr>
 
@@ -84,7 +84,7 @@ foreach($Accepted as $d){
    
    $CPU = '';
    $MEM = '';
-   $LOCS = ''; 
+   $LOCS = '';
    $GZBYTES = '';      
    if (!isset($better[$k])){  
       $better[$k] = TRUE;
@@ -109,7 +109,7 @@ foreach($Accepted as $d){
    } elseif ($Sort=='lines'){ 
       if ($first[DATA_GZ]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
-   } elseif ($Sort=='gz'){ 
+   } elseif ($Sort=='gz'){
       if ($first[DATA_GZ]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
    } 
@@ -141,11 +141,11 @@ foreach($Accepted as $d){
 unset($better);
 ?>
 
-<? 
+<?
 uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
-   foreach($Rejected as $d){                   
-      if ($d[DATA_LANG]==$k){         
+   foreach($Rejected as $d){
+      if ($d[DATA_LANG]==$k){
          printf('<tr>'); echo "\n";             
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];    
@@ -153,20 +153,18 @@ foreach($Langs as $k => $v){
                     
          $id = $d[DATA_ID];
          $fullcpu = $d[DATA_FULLCPU];
-         $gz = $d[DATA_GZ];   
+         $gz = $d[DATA_GZ];
 
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
             $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-         $message = '';
-         if ($d[DATA_STATUS]==PROGRAM_TIMEOUT){ $message = 'Timout'; }
-         if ($d[DATA_STATUS]==PROGRAM_ERROR){ $message = 'Error'; }
+         $message = StatusMessage($d[DATA_STATUS]);
          printf('<td>%s</td><td></td><td>%d</td>', $message, $gz);
 
          echo "</tr>\n";   
          unset($No_Program_Langs[$k]);         
       }  
-   }    
+   }
 }
 ?>
 
@@ -192,24 +190,24 @@ if (sizeof($Special)>0){
       }
 
 
-      $id = $d[DATA_ID];   
+      $id = $d[DATA_ID];
       $gz = $d[DATA_GZ];
       $fullcpu = $d[DATA_FULLCPU];
       $status = $d[DATA_STATUS];
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
 
       printf('<tr>'); echo "\n";
-      printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
-         PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-      if ($status > PROGRAM_TIMEOUT){
-            printf('<td>%0.2f</td><td>%s</td><td>%d</td>',
-               $fullcpu, $kb, $gz ); echo "\n";
+      if ($status < 0){
+         printf('<td>&nbsp;</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
+            $SelectedTest,$k,$id,$HtmlName); echo "\n";
+
+         printf('<td>%s</td><td>&nbsp;</td><td>%d</td>', StatusMessage($status), $gz);
       }
       else {
-         if ($status==PROGRAM_TIMEOUT){ $message = 'Timout'; }
-         if ($status==PROGRAM_ERROR){ $message = 'Error'; }
-         printf('<td>%s</td><td>&nbsp;</td><td>%d</td>', $message, $gz);         
+         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
+            PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
+         printf('<td>%0.2f</td><td>%s</td><td>%d</td>', $fullcpu, $kb, $gz ); echo "\n";
       }
       echo "</tr>\n";
    }

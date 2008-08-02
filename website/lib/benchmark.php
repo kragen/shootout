@@ -69,7 +69,6 @@ if ($T=='all'){
 
       require_once(LIB_PATH.'lib_scorecard.php');
 
-
       if (isset($HTTP_GET_VARS['calc'])
             && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
          $X = $HTTP_GET_VARS['calc'];

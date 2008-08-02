@@ -265,16 +265,16 @@ function ExcludeData(&$d,&$langs,&$Excl){
       else { return PROGRAM_SPECIAL; }
    }
 
-   if( $d[DATA_STATUS] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
-   if( $d[DATA_STATUS] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }
-   return 0;
+//   if( $d[DATA_STATUS] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
+//   if( $d[DATA_STATUS] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }
+   return $d[DATA_STATUS];
 }
 
 
 function FilterAndSortData($langs,$data,$sort,&$Excl){
    $Accepted = array();
    $Rejected = array();   
-   $Special = array();  
+   $Special = array();
 
    // $data is an associative array keyed by language
    // Each value is itself an array of one or more data records
@@ -435,6 +435,27 @@ function HttpVarsEncodeArray($a){
    foreach($a as $v){ $d[] = intval(sprintf('%d',$v*10)); }
    $s = implode('o',$d);
    return $s;
+}
+
+
+function StatusMessage($i){
+   if ($i==0){ $m = ''; }
+   elseif ($i==-1){ $m = 'Timed Out'; }
+   elseif ($i==-2){ $m = 'Error'; }
+   elseif ($i==-10){ $m = 'Bad Output'; }
+   elseif ($i==-11){ $m = 'Missing'; }
+   elseif ($i==-12){ $m = 'Empty'; }
+   else { $m = ''; }
+   return $m;
+}
+
+
+function ElapsedTime($d){
+   if ($d[DATA_ELAPSED] > 0.0){
+      return sprintf('%0.2f',$d[DATA_ELAPSED]);
+   } else {
+      return '';
+   }
 }
 
 ?>

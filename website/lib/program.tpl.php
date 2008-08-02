@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
 
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
@@ -27,31 +27,33 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <th>CPU Time&nbsp;secs</th>
 <th>Memory Use&nbsp;KB</th>
 <th>GZip Bytes</th>
+<th>Elapsed&nbsp;secs</th>
+<th>CPU Load</th>
 </tr>
 <?
 if (sizeof($Data)>0){
       if ($Id==$Data[DATA_ID]){
-         if ($Data[DATA_FULLCPU]>0){
+         if ($Data[DATA_STATUS]<0){
+            $kb = '&nbsp;'; $fullcpu = '&nbsp;';$elapsed = '&nbsp;'; $load = '&nbsp;';
+            $fullcpu = StatusMessage($Data[DATA_STATUS]);
+         } else {
             if ($Data[DATA_MEMORY]==0){
                $kb = '?';
             } else {
                if ($TestName=='startup'){ $kb = '&nbsp;'; }
                else { $kb = number_format((double)$Data[DATA_MEMORY]); }
             }
-
             $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
-         } else {
-            $kb = '&nbsp;'; $fullcpu = '&nbsp;';
-            if ($Data[DATA_STATUS]==PROGRAM_TIMEOUT){ $fullcpu = 'Timout'; }
-            if ($Data[DATA_STATUS]==PROGRAM_ERROR){ $fullcpu = 'Error'; }
+            $elapsed = ElapsedTime($Data);
+            $load = $Data[DATA_LOAD];
          }
 
          if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }
-         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td></tr>', 
-            $n,$fullcpu,$kb,$Data[DATA_GZ]); echo "\n";
+         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">%s</td></tr>',
+            $n,$fullcpu,$kb,$Data[DATA_GZ],$elapsed,$load); echo "\n";
       }
 } else {
-   echo '<tr class="a"><td></td> <td></td> <td></td></tr>'; echo "\n";
+   echo '<tr class="a"><td></td> <td></td> <td></td> <td></td> <td></td></tr>'; echo "\n";
 }
 ?>
 </table>

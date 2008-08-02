@@ -11,6 +11,7 @@ require_once(LIB_PATH.'lib_common.php');
 
 list($Incl,$Excl) = ReadIncludeExclude();
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
+$Tests = ReadUniqueArrays('test.csv',$Incl);
 
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
@@ -36,7 +37,7 @@ list($Accepted) = FilterAndSortData($Langs,$Data,$S,$Excl);
 
 // CHART /////////////////////////////////////////////////////
 
-   $w = 450;
+   $w = 600;
    $h = 150;
    $wsec = 5;
    $wmem = 1;
@@ -108,7 +109,7 @@ ImageString($im, 2, $w-26, $h3-14, CHART_V3.'x', $white);
 // LEGEND - SHOW SORT ORDER BY PUTTING SORT CRITERIA AT TOP OF LEGEND
 
 if (($S=='kb')||($S=='lines')||($S=='gz')){ 
-   $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('fullcpu'); } 
+   $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('fullcpu'); }
 else { 
    $kbTop = $h-135; $cpuTop = $h-148; $sortname = SortName('fullcpu'); }  
 
@@ -121,5 +122,5 @@ ImageString($im, 3, 20, $kbTop, SortName('kb'), $black);
 
 ImageInterlace($im,1);
 ImagePNG($im);
-ImageDestroy($im); 
-?> 
+ImageDestroy($im);
+?>

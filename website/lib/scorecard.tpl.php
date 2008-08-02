@@ -13,7 +13,7 @@
 
 
 <p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($ratio);?>"
-   width="450" height="150" alt=""
+   width="600" height="150" alt=""
  /></p>
 
 
@@ -60,7 +60,7 @@ foreach($score as $k => $v){
 
 <tr><th colspan="2">multipliers</th></tr>
 <tr>
-<td><a href="faq.php#fullcpu">Full CPU Time</a></td>
+<td><a href="faq.php#fullcpu">CPU Time</a></td>
 <td><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></td>
 </tr>
 <tr>
@@ -68,7 +68,7 @@ foreach($score as $k => $v){
 <td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></td>
 </tr>
 <tr>
-<td><a href="faq.php#gzbytes">GZip Bytes</a></td>
+<td><a href="faq.php#gzbytes">Source GZip</a></td>
 <td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></td>
 </tr>
 

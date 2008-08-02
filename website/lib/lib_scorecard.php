@@ -76,8 +76,9 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
                else { $timeout[$lang]++; }
             }
 
-            if ($row[DATA_FULLCPU] > 0 && (!isset($data[$lang][$test]) ||
-                  $row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])){
+            if ($row[DATA_STATUS] == 0 && (
+                  ($row[DATA_FULLCPU] > 0 && (!isset($data[$lang][$test]) ||
+                     $row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])))){
 
                $data[$lang][$test] = $row;
 
@@ -101,7 +102,6 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
    foreach($data as $k => $test){
 //      if ((!isset($timeout[$k]) || ($timeout[$k] < 3)) && (sizeof($test) > 8)){
       if ((!isset($timeout[$k]) || ($timeout[$k] < 5)) && (sizeof($test) > 9)){
-
          $s = 0.0; $ws = 0.0; $include = 0.0;
          foreach($test as $t => $v){
             $mt = &$mins[$t];
