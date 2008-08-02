@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.site.Makefile,v 1.5 2008-08-01 17:09:28 igouy-guest Exp $
+# $Id: gp4.site.Makefile,v 1.6 2008-08-02 04:24:52 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -48,8 +48,6 @@ NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
 # MUST set which source directories to search
 
 SRC_DIRS := \
- fasta \
- knucleotide \
  nsieve \
 
 
