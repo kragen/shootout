@@ -52,9 +52,9 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       do {
          $dj = $Data[$j];
                               
-         if ($dj[DATA_FULLCPU] > PROGRAM_TIMEOUT){
+         if ($dj[DATA_STATUS] > PROGRAM_TIMEOUT){
             if (isset($comparable[$dj[DATA_LANG]])){ 
-               if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){  
+               if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){
                   if ($isComparable){
                      if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){                  
                         $comparable[$dj[DATA_LANG]] = $Data[$j];   
@@ -95,7 +95,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $lines = 1;
             $cpu = 1;                     
             
-            //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; } 
+            //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; }
             //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
             //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }
 

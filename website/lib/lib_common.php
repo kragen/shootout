@@ -196,17 +196,6 @@ function CompareMemoryUse($a, $b){
    return  ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1;
 }
 
-function CompareCodeLines($a, $b){
-   if ($a[DATA_GZ] == $b[DATA_GZ]){
-      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
-         if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ return 0; }
-         else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }            
-      }
-      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
-   }
-   return  ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1;
-}
-
 function CompareGz($a, $b){
    if ($a[DATA_GZ] == $b[DATA_GZ]){
       if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
@@ -276,8 +265,8 @@ function ExcludeData(&$d,&$langs,&$Excl){
       else { return PROGRAM_SPECIAL; }
    }
 
-   if( $d[DATA_FULLCPU] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
-   if( $d[DATA_FULLCPU] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }
+   if( $d[DATA_STATUS] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
+   if( $d[DATA_STATUS] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }
    return 0;
 }
 

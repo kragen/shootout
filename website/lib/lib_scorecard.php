@@ -71,7 +71,7 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
                   !isset($Excl[$key])){
                     
             // this isn't quite correct doesn't take account of more than one program
-            if (PROGRAM_TIMEOUT == $row[DATA_FULLCPU]){
+            if (PROGRAM_TIMEOUT == $row[DATA_STATUS]){
                if (!isset($timeout[$lang])){ $timeout[$lang] = 1; }
                else { $timeout[$lang]++; }
             }

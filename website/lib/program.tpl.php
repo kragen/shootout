@@ -42,8 +42,8 @@ if (sizeof($Data)>0){
             $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
          } else {
             $kb = '&nbsp;'; $fullcpu = '&nbsp;';
-            if ($Data[DATA_FULLCPU]==PROGRAM_TIMEOUT){ $fullcpu = 'Timout'; }
-            if ($Data[DATA_FULLCPU]==PROGRAM_ERROR){ $fullcpu = 'Error'; }
+            if ($Data[DATA_STATUS]==PROGRAM_TIMEOUT){ $fullcpu = 'Timout'; }
+            if ($Data[DATA_STATUS]==PROGRAM_ERROR){ $fullcpu = 'Error'; }
          }
 
          if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }

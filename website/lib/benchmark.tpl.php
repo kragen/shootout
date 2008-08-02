@@ -158,8 +158,9 @@ foreach($Langs as $k => $v){
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
             $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-         if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
-         if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
+         $message = '';
+         if ($d[DATA_STATUS]==PROGRAM_TIMEOUT){ $message = 'Timout'; }
+         if ($d[DATA_STATUS]==PROGRAM_ERROR){ $message = 'Error'; }
          printf('<td>%s</td><td></td><td>%d</td>', $message, $gz);
 
          echo "</tr>\n";   
@@ -190,23 +191,24 @@ if (sizeof($Special)>0){
          else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
       }
 
-     
+
       $id = $d[DATA_ID];   
       $gz = $d[DATA_GZ];
       $fullcpu = $d[DATA_FULLCPU];
+      $status = $d[DATA_STATUS];
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
 
       printf('<tr>'); echo "\n";
       printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-      if ($fullcpu > PROGRAM_TIMEOUT){
+      if ($status > PROGRAM_TIMEOUT){
             printf('<td>%0.2f</td><td>%s</td><td>%d</td>',
                $fullcpu, $kb, $gz ); echo "\n";
       }
       else {
-         if ($fullcpu==PROGRAM_TIMEOUT){ $message = 'Timout'; }
-         if ($fullcpu==PROGRAM_ERROR){ $message = 'Error'; }             
+         if ($status==PROGRAM_TIMEOUT){ $message = 'Timout'; }
+         if ($status==PROGRAM_ERROR){ $message = 'Error'; }
          printf('<td>%s</td><td>&nbsp;</td><td>%d</td>', $message, $gz);         
       }
       echo "</tr>\n";
