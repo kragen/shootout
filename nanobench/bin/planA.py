@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.14 2008-08-01 07:03:48 igouy-guest Exp $
+# $Id: planA.py,v 1.15 2008-08-03 22:24:14 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -49,8 +49,13 @@ def measure(arg,commandline,delay,maxtime,
                   remaining -= delay
                else:
                   self.timedout = True
-                  #os.kill(self.p, signal.SIGTERM)
-                  os.kill(self.p, signal.SIGKILL) # YAP can be too persistent
+                  os.kill(self.p, signal.SIGKILL) 
+            except KeyboardInterrupt:
+               try:
+                  os.kill(self.p, signal.SIGKILL)
+                  raise
+               except OSError, (e,err):
+                  if logger: logger.error('%s %s',e,err)
             except OSError, (e,err):
                if logger: logger.error('%s %s',e,err)
 
