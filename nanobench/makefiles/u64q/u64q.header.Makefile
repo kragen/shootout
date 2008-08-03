@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.header.Makefile,v 1.4 2008-08-01 16:58:03 igouy-guest Exp $
+# $Id: u64q.header.Makefile,v 1.5 2008-08-03 20:08:11 igouy-guest Exp $
 
 ############################################################
 # 
@@ -105,7 +105,6 @@ JRUBYFLAGS := -J-server
 GROOVYFLAGS := -server
 JAVA_OPTS = $(GROOVYFLAGS)
 
-QUARK_HOME = /usr/local/src/Quark
 QUARK_JAVACMD = $(JDKRUN)
 QUARK_VMARGS =  $(JDKFLAGS) -server -Xbatch $(CALFLAGS)
 

@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q_threadring.Makefile,v 1.1 2008-07-30 18:57:17 igouy-guest Exp $
+# $Id: u64q_threadring.Makefile,v 1.2 2008-08-03 20:08:11 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -30,7 +30,7 @@ CALFLAGS := -Dorg.openquark.cal.machine.lecc.concurrent_runtime
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \
-	  --range 100000,1000000,10000000 
+	  --range 500000,5000000,50000000 
 
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).footer.Makefile

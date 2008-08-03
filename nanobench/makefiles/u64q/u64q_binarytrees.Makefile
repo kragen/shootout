@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q_binarytrees.Makefile,v 1.1 2008-07-30 18:57:17 igouy-guest Exp $
+# $Id: u64q_binarytrees.Makefile,v 1.2 2008-08-03 20:08:11 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -19,7 +19,7 @@ BIGFORTH_FLAGS := -m 16M
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \
-	  --range 12,14,16
+	  --range 12,16,20
  
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).footer.Makefile
