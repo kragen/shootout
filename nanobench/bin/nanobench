@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.32 2008-08-03 22:24:14 igouy-guest Exp $
+# $Id: nanobench,v 1.33 2008-08-04 05:19:21 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -465,7 +465,7 @@ def checkAndLog(m,outFile,logf):
 
 
 def measureCheckAndLog(p,t,ms):
-   revisedTestValues = []
+   repeatTestValue = None
 
    for a in testvalues:
       cmd = cmdWithArg(t,a)
@@ -529,9 +529,14 @@ def measureCheckAndLog(p,t,ms):
                         logf.write( '\n' )
                         logf.write( ef.read() )               
 
-         if not m.isOkay(): break
-         if m.hasExceeded(cutoff): continue
-         revisedTestValues.append(a)
+         if m.isOkay():
+            if m.hasExceeded(cutoff):
+               repeatTestValue = None
+            else:
+               repeatTestValue = a
+         else:
+            break
+
 
       except IOError, err:
          if logger: logger.error(err)
@@ -543,31 +548,30 @@ def measureCheckAndLog(p,t,ms):
    sys.stdout.write( m.statusStr() ); sys.stdout.flush()
    loggerLine.write( m.statusStr() )
 
-   return revisedTestValues
+   return repeatTestValue
 
 
 
-def measureOnly(revisedTestValues,t,ms):
+def measureOnly(a,t,ms):
    for i in range(1,runs):
-      for a in revisedTestValues:
-         cmd = cmdWithArg(t,a)
-         with open( outName(i), 'w') as of:
+      cmd = cmdWithArg(t,a)
+      with open( outName(i), 'w') as of:
 
-            # pass the test data file to program stdin
-            if data:
-               dfName = dataName(a)
-               with open(dfName,'r') as df:
-                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,logger=logger)
+         # pass the test data file to program stdin
+         if data:
+            dfName = dataName(a)
+            with open(dfName,'r') as df:
+               m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,logger=logger)
 
-            # pass the test value as a command line argument in cmd
-            else:
-                  m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,logger=logger)
+         # pass the test value as a command line argument in cmd
+         else:
+               m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,logger=logger)
 
-            # add to the measurements
-            ms.append(m)
+         # add to the measurements
+         ms.append(m)
 
-         sys.stdout.write('.'); sys.stdout.flush()
-         loggerLine.write('.')
+      sys.stdout.write('.'); sys.stdout.flush()
+      loggerLine.write('.')
 
 
 
@@ -629,13 +633,9 @@ def measurePrograms(programs,allowed):
       loggerLine = StringIO()
       t = cmdTemplate(p)
       ms = []
-      revisedTestValues = measureCheckAndLog(p,t,ms)
+      repeatTestValue = measureCheckAndLog(p,t,ms)
       fillInMissingRecords(ms)
-
-      # only repeat for the last (largest) test value
-      revisedTestValues = revisedTestValues[-1:]
-
-      measureOnly(revisedTestValues,t,ms)
+      measureOnly(repeatTestValue,t,ms)
 
       # Write compressed dat file once, when all data is available
       try:
