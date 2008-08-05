@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4_mandelbrot.Makefile,v 1.1 2008-07-30 18:57:16 igouy-guest Exp $
+# $Id: gp4_mandelbrot.Makefile,v 1.2 2008-08-05 14:37:47 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -16,7 +16,7 @@ GHCOPTS  := -fbang-patterns -funbox-strict-fields -optc-O2 -optc-mfpmath=sse -op
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \
-	--range 120,600,3000 \
+	--range 800,1600,3200 \
 	--binarycmp
 
 
