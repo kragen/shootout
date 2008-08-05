@@ -1,0 +1,89 @@
+<source>
+<def></def><slc>//</slc><br />
+<def></def><slc>// The Computer Language Shootout</slc><br />
+<def></def><slc>// http://shootout.alioth.debian.org/</slc><br />
+<def></def><slc>//</slc><br />
+<def></def><slc>// Contributed by Shyamal Prasad</slc><br />
+<def></def><slc>//</slc><br />
+<def></def><br />
+<br />
+<slc>// This implementation of regexdna does not use the POSIX regex</slc><br />
+<def></def><slc>// included with the GNU libc. Instead it uses the Boost C++ libraries</slc><br />
+<def></def><slc>//</slc><br />
+<def></def><slc>// http://www.boost.org/libs/regex/doc/index.html</slc><br />
+<def></def><slc>//</slc><br />
+<def></def><slc>// (On Debian: apt-get install libboost-regex-dev before compiling,</slc><br />
+<def></def><slc>//  and then &quot;g++ -O3 -lboost_regex regexdna.cc -o regexdna</slc><br />
+<def></def><slc>//  Gentoo seems to package boost as, well, 'boost')</slc><br />
+<def></def><slc>//</slc><br />
+<def></def><br />
+<br />
+<dir>#include &lt;iostream&gt;</dir><br />
+<def></def><dir>#include &lt;string&gt;</dir><br />
+<def></def><dir>#include &lt;map&gt;</dir><br />
+<def></def><dir>#include &lt;boost/regex.hpp&gt;</dir><br />
+<def></def><br />
+<slc>// Use plain old arrays for the 8-mers and IUB code alternatives</slc><br />
+<def></def><kwb>static const</kwb> <def>std</def><sym>::</sym><def>string patterns</def><sym>[] = {</sym><br />
+<def></def>  <str>&quot;agggtaaa|tttaccct&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;a[act]ggtaaa|tttacc[agt]t&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;ag[act]gtaaa|tttac[agt]ct&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;agg[act]taaa|ttta[agt]cct&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;agggt[cgt]aa|tt[acg]accct&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;agggta[cgt]a|t[acg]taccct&quot;</str><def></def><sym>,</sym><br />
+<def></def>  <str>&quot;agggtaa[cgt]|[acg]ttaccct&quot;</str><def></def><br />
+<sym>};</sym><br />
+<def></def><br />
+<kwc>typedef</kwc> <def>std</def><sym>::</sym><def>pair</def><sym>&lt;</sym><def>std</def><sym>::</sym><def>string</def><sym>,</sym> <def>std</def><sym>::</sym><def>string</def><sym>&gt;</sym> <def>Pair</def><sym>;</sym><br />
+<def></def><kwb>static const</kwb> <def>Pair alternatives</def><sym>[] = {</sym><br />
+<def></def>  <kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;B&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(c|g|t)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;D&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|g|t)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;H&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|c|t)&quot;</str><def></def><sym>),</sym><br />
+<def></def>  <kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;K&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(g|t)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;M&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|c)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;N&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|c|g|t)&quot;</str><def></def><sym>),</sym><br />
+<def></def>  <kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;R&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|g)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;S&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(c|t)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;V&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|c|g)&quot;</str><def></def><sym>),</sym><br />
+<def></def>  <kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;W&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(a|t)&quot;</str><def></def><sym>),</sym> <def></def><kwd>Pair</kwd><def></def><sym>(</sym><def></def><str>&quot;Y&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;(c|t)&quot;</str><def></def><sym>)</sym><br />
+<def></def><sym>};</sym><br />
+<def></def><br />
+<kwb>int</kwb> <def></def><kwd>main</kwd><def></def><sym>()</sym><br />
+<def></def><sym>{</sym><br />
+<def></def>  <slc>// Read file, remove headers and newlines to get sequence</slc><br />
+<def>  std</def><sym>::</sym><def>string line</def><sym>,</sym> <def>buf</def><sym>;</sym><br />
+<def></def>  <kwa>while</kwa> <def></def><sym>(</sym> <def>std</def><sym>::</sym><def></def><kwd>getline</kwd><def></def><sym>(</sym><def>std</def><sym>::</sym><def>cin</def><sym>,</sym> <def>line</def><sym>) ){</sym><br />
+<def>    buf</def> <sym>+=</sym> <def>line</def><sym>;</sym><br />
+<def>    buf</def> <sym>+=</sym> <def></def><str>'</str><esc>\n</esc><str>'</str><def></def><sym>;</sym> <def></def><slc>// FASTA files always add a newline at line end</slc><br />
+<def></def>  <sym>}</sym><br />
+<def></def>  <kwb>const</kwb> <def>boost</def><sym>::</sym><def>regex</def> <kwd>lose</kwd><def></def><sym>(</sym><def></def><str>&quot;&gt;[^</str><esc>\\</esc><str>n]*</str><esc>\\</esc><str>n|</str><esc>\\</esc><str>n&quot;</str><def></def><sym>);</sym><br />
+<def>  std</def><sym>::</sym><def>string sequence</def> <sym>=</sym> <def>boost</def><sym>::</sym><def></def><kwd>regex_replace</kwd><def></def><sym>(</sym><def>buf</def><sym>,</sym> <def>lose</def><sym>,</sym> <def></def><str>&quot;&quot;</str><def></def><sym>);</sym><br />
+<def></def><br />
+<br />
+  <slc>// Count the number of times patterns occur in sequence</slc><br />
+<def></def>  <kwa>for</kwa> <def></def><sym>(</sym><def></def><kwb>unsigned</kwb> <def>i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def>patterns</def><sym>)/</sym><def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def>std</def><sym>::</sym><def>string</def><sym>);</sym> <def>i</def><sym>++) {</sym><br />
+<def></def>    <kwb>const</kwb> <def>boost</def><sym>::</sym><def>regex</def> <kwd>e</kwd><def></def><sym>(</sym><def>patterns</def><sym>[</sym><def>i</def><sym>]);</sym><br />
+<def>    boost</def><sym>::</sym><def>sregex_iterator</def> <kwd>m</kwd><def></def><sym>(</sym><def>sequence</def><sym>.</sym><def></def><kwd>begin</kwd><def></def><sym>(),</sym> <def>sequence</def><sym>.</sym><def></def><kwd>end</kwd><def></def><sym>(),</sym> <def>e</def><sym>);</sym><br />
+<def></def>    <kwb>const</kwb> <def>boost</def><sym>::</sym><def>sregex_iterator end</def><sym>;</sym><br />
+<def></def><br />
+    <kwb>unsigned</kwb> <def>sum</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>    <kwa>while</kwa> <def></def><sym>(</sym> <def>m</def> <sym>!=</sym> <def>end</def> <sym>)</sym><br />
+<def></def>      <sym>++</sym><def>sum</def><sym>, ++</sym><def>m</def><sym>;</sym><br />
+<def><br />
+    std</def><sym>::</sym><def>cout</def> <sym>&lt;&lt;</sym> <def>patterns</def><sym>[</sym><def>i</def><sym>] &lt;&lt;</sym> <def></def><str>' '</str><def></def> <sym>&lt;&lt;</sym> <def>sum</def> <sym>&lt;&lt;</sym> <def>std</def><sym>::</sym><def>endl</def><sym>;</sym><br />
+<def></def>  <sym>}</sym><br />
+<def><br />
+  std</def><sym>::</sym><def>cout</def> <sym>&lt;&lt;</sym> <def>std</def><sym>::</sym><def>endl</def> <sym>&lt;&lt;</sym> <def>buf</def><sym>.</sym><def></def><kwd>length</kwd><def></def><sym>() &lt;&lt;</sym> <def>std</def><sym>::</sym><def>endl</def><sym>;</sym><br />
+<def>  std</def><sym>::</sym><def>cout</def> <sym>&lt;&lt;</sym> <def>sequence</def><sym>.</sym><def></def><kwd>length</kwd><def></def><sym>() &lt;&lt;</sym> <def>std</def><sym>::</sym><def>endl</def><sym>;</sym><br />
+<def></def><br />
+  <slc>// Insert alternatives into sequence</slc><br />
+<def></def>  <kwa>for</kwa> <def></def><sym>(</sym> <def></def><kwb>unsigned</kwb> <def>i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def>alternatives</def><sym>)/</sym><def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def>Pair</def><sym>);</sym> <def>i</def><sym>++ ){</sym><br />
+<def></def>    <kwb>const</kwb> <def>boost</def><sym>::</sym><def>regex</def> <kwd>e</kwd><def></def><sym>(</sym><def>alternatives</def><sym>[</sym><def>i</def><sym>].</sym><def>first</def><sym>);</sym><br />
+<def>    sequence</def> <sym>=</sym> <def>boost</def><sym>::</sym><def></def><kwd>regex_replace</kwd><def></def><sym>(</sym><def>sequence</def><sym>,</sym> <def>e</def><sym>,</sym><br />
+<def>					   alternatives</def><sym>[</sym><def>i</def><sym>].</sym><def>second</def><sym>);</sym><br />
+<def></def>  <sym>}</sym><br />
+<def>  std</def><sym>::</sym><def>cout</def> <sym>&lt;&lt;</sym> <def>sequence</def><sym>.</sym><def></def><kwd>length</kwd><def></def><sym>() &lt;&lt;</sym> <def>std</def><sym>::</sym><def>endl</def><sym>;</sym><br />
+<def></def><br />
+  <kwa>return</kwa> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<slc>// Local Variables: *</slc><br />
+<def></def><slc>// compile-command: &quot;g++ -Wall -Wextra -lboost_regex regexdna.cc -o regexdna&quot;*</slc><br />
+<def></def><slc>// End: *</slc><def></def><br />
+</source>

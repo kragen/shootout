@@ -1,0 +1,308 @@
+<source>
+<def></def><com>/* The Computer Language Benchmarks Game</com><br />
+<com>   http://shootout.alioth.debian.org</com><br />
+<com></com><br />
+<com>   contributed by Alex Burlyga</com><br />
+<com>*/</com><def></def><br />
+<br />
+<br />
+<dir>#include &lt;stdio.h&gt;</dir><br />
+<def></def><dir>#include &lt;stdlib.h&gt;</dir><br />
+<def></def><dir>#include &lt;string.h&gt;</dir><br />
+<def></def><dir>#include &lt;pthread.h&gt;</dir><br />
+<def></def><dir>#include &lt;semaphore.h&gt;</dir><br />
+<def></def><br />
+<kwc>typedef</kwc> <def></def><kwb>enum</kwb> <def>_color</def> <sym>{</sym><br />
+<def>   ZERO</def>    <sym>=</sym> <def></def><num>0</num><def></def><sym>,</sym><br />
+<def>   BLUE</def>    <sym>=</sym> <def></def><num>1</num><def></def><sym>,</sym><br />
+<def>   RED</def>     <sym>=</sym> <def></def><num>2</num><def></def><sym>,</sym><br />
+<def>   YELLOW</def>  <sym>=</sym> <def></def><num>3</num><def></def><sym>,</sym><br />
+<def>   INVALID</def> <sym>=</sym> <def></def><num>4</num><def></def><sym>,</sym><br />
+<def></def><sym>}</sym> <def>color</def><sym>;</sym><br />
+<def></def><br />
+<kwb>char</kwb> <def></def><sym>*</sym><def>colors</def><sym>[] = {</sym> <def></def><str>&quot;zero&quot;</str><def></def><sym>,</sym><br />
+<def></def>         <str>&quot;blue&quot;</str><def></def><sym>,</sym><br />
+<def></def>         <str>&quot;red&quot;</str><def></def><sym>,</sym><br />
+<def></def>         <str>&quot;yellow&quot;</str><def></def><sym>,</sym><br />
+<def></def>         <str>&quot;invalid&quot;</str><def></def><br />
+       <sym>};</sym><br />
+<def></def><br />
+<kwb>char</kwb> <def></def><sym>*</sym><def>digits</def><sym>[] = {</sym> <def></def><str>&quot;zero&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;one&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;two&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;three&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;four&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;five&quot;</str><def></def><sym>,</sym><br />
+<def></def>              <str>&quot;six&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;seven&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;eight&quot;</str><def></def><sym>,</sym> <def></def><str>&quot;nine&quot;</str><def></def><br />
+            <sym>};</sym><br />
+<def><br />
+sem_t at_most_two</def><sym>;</sym><br />
+<def>sem_t mutex</def><sym>;</sym><br />
+<def>sem_t sem_priv</def><sym>;</sym><br />
+<def>sem_t sem_print</def><sym>;</sym><br />
+<def><br />
+pthread_mutex_t print_mutex</def><sym>;</sym><br />
+<def></def><br />
+<kwb>int</kwb> <def>meetings_left</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><kwb>int</kwb> <def>first_arrived</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><kwb>int</kwb> <def>done</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><br />
+<kwc>typedef</kwc> <def></def><kwb>struct</kwb> <def>_creature</def> <sym>{</sym><br />
+<def>   color my_color</def><sym>;</sym><br />
+<def>   pthread_t id</def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>number_of_meetings</def><sym>;</sym><br />
+<def></def><sym>}</sym> <def>chameos</def><sym>;</sym><br />
+<def><br />
+chameos A</def><sym>;</sym><br />
+<def>chameos B</def><sym>;</sym><br />
+<def></def><br />
+<kwb>static</kwb> <def>color</def><br />
+<kwd>compliment_color</kwd><def></def><sym>(</sym><def>color c1</def><sym>,</sym> <def>color c2</def><sym>) {</sym><br />
+<def>   color result</def><sym>;</sym><br />
+<def></def><br />
+   <kwa>switch</kwa><def></def><sym>(</sym><def>c1</def><sym>) {</sym><br />
+<def></def>   <kwa>case</kwa> <def>BLUE</def><sym>:</sym><br />
+<def></def>      <kwa>switch</kwa><def></def><sym>(</sym><def>c2</def><sym>) {</sym><br />
+<def></def>      <kwa>case</kwa> <def>BLUE</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>BLUE</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>case</kwa> <def>RED</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>YELLOW</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>case</kwa> <def>YELLOW</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>RED</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>default</kwa><def></def><sym>:</sym><br />
+<def></def>         <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;error complementing colors: %d, %d</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym> <def>c1</def><sym>,</sym> <def>c2</def><sym>);</sym><br />
+<def></def>         <kwd>exit</kwd><def></def><sym>(</sym><def></def><num>1</num><def></def><sym>);</sym><br />
+<def></def>      <sym>}</sym><br />
+<def></def>      <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>   <kwa>case</kwa> <def>RED</def><sym>:</sym><br />
+<def></def>      <kwa>switch</kwa><def></def><sym>(</sym><def>c2</def><sym>) {</sym><br />
+<def></def>      <kwa>case</kwa> <def>BLUE</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>YELLOW</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>case</kwa> <def>RED</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>RED</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>case</kwa> <def>YELLOW</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>BLUE</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>default</kwa><def></def><sym>:</sym><br />
+<def></def>         <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;error complementing colors: %d, %d</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym> <def>c1</def><sym>,</sym> <def>c2</def><sym>);</sym><br />
+<def></def>         <kwd>exit</kwd><def></def><sym>(</sym><def></def><num>2</num><def></def><sym>);</sym><br />
+<def></def>      <sym>}</sym><br />
+<def></def>      <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>   <kwa>case</kwa> <def>YELLOW</def><sym>:</sym><br />
+<def></def>      <kwa>switch</kwa><def></def><sym>(</sym><def>c2</def><sym>) {</sym><br />
+<def></def>      <kwa>case</kwa> <def>BLUE</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>RED</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>case</kwa> <def>RED</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>BLUE</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>case</kwa> <def>YELLOW</def><sym>:</sym><br />
+<def>         result</def> <sym>=</sym> <def>YELLOW</def><sym>;</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwa>default</kwa><def></def><sym>:</sym><br />
+<def></def>         <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;error complementing colors: %d, %d</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym> <def>c1</def><sym>,</sym> <def>c2</def><sym>);</sym><br />
+<def></def>         <kwd>exit</kwd><def></def><sym>(</sym><def></def><num>3</num><def></def><sym>);</sym><br />
+<def></def>      <sym>}</sym><br />
+<def></def>      <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>   <kwa>default</kwa><def></def><sym>:</sym><br />
+<def></def>      <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;error complementing colors: %d, %d</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym> <def>c1</def><sym>,</sym> <def>c2</def><sym>);</sym><br />
+<def></def>      <kwd>exit</kwd><def></def><sym>(</sym><def></def><num>4</num><def></def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def>   <kwa>return</kwa> <def>result</def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<kwb>static void</kwb><br />
+<def></def><kwd>spell_the_number</kwd><def></def><sym>(</sym><def></def><kwb>int</kwb> <def>prefix</def><sym>,</sym> <def></def><kwb>int</kwb> <def>number</def><sym>) {</sym><br />
+<def></def>   <kwb>char</kwb> <def></def><sym>*</sym><def>string_number</def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>string_length</def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>i</def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>digit</def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>output_so_far</def>  <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>   <kwb>char</kwb> <def>buff</def><sym>[</sym><def></def><num>1024</num><def></def><sym>];</sym><br />
+<def></def><br />
+   <kwa>if</kwa><def></def><sym>(</sym><def>prefix</def> <sym>!= -</sym><def></def><num>1</num><def></def><sym>) {</sym><br />
+<def>      output_so_far</def> <sym>=</sym> <def></def><kwd>sprintf</kwd><def></def><sym>(</sym><def>buff</def><sym>,</sym> <def></def><str>&quot;%d&quot;</str><def></def><sym>,</sym> <def>prefix</def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def><br />
+   string_number</def> <sym>=</sym> <def></def><kwd>malloc</kwd><def></def><sym>(</sym><def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def></def><kwb>char</kwb><def></def><sym>)*</sym><def></def><num>10</num><def></def><sym>);</sym><br />
+<def>   string_length</def> <sym>=</sym> <def></def><kwd>sprintf</kwd><def></def><sym>(</sym><def>string_number</def><sym>,</sym> <def></def><str>&quot;%d&quot;</str><def></def><sym>,</sym> <def>number</def><sym>);</sym><br />
+<def></def>   <kwa>for</kwa><def></def><sym>(</sym><def>i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def>string_length</def><sym>;</sym> <def>i</def><sym>++) {</sym><br />
+<def>      digit</def> <sym>=</sym> <def>string_number</def><sym>[</sym><def>i</def><sym>] -</sym> <def></def><str>'0'</str><def></def><sym>;</sym><br />
+<def>      output_so_far</def> <sym>+=</sym> <def></def><kwd>sprintf</kwd><def></def><sym>(</sym><def>buff</def><sym>+</sym><def>output_so_far</def><sym>,</sym> <def></def><str>&quot; %s&quot;</str><def></def><sym>,</sym> <def>digits</def><sym>[</sym><def>digit</def><sym>]);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def>   <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;%s</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym><def>buff</def><sym>);</sym><br />
+<def></def><br />
+<sym>}</sym><br />
+<def></def><br />
+<kwb>static</kwb> <def>chameos</def> <sym>*</sym><br />
+<def></def><kwd>meeting</kwd><def></def><sym>(</sym><def>chameos c</def><sym>) {</sym><br />
+<def>   chameos</def> <sym>*</sym><def>other_critter</def><sym>;</sym><br />
+<def>   other_critter</def> <sym>=</sym> <def></def><kwd>malloc</kwd><def></def><sym>(</sym><def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def>chameos</def><sym>));</sym><br />
+<def></def><br />
+   <kwd>sem_wait</kwd><def></def><sym>(&amp;</sym><def>at_most_two</def><sym>);</sym><br />
+<def></def>   <kwa>if</kwa><def></def><sym>(</sym><def>done</def> <sym>==</sym> <def></def><num>1</num><def></def><sym>) {</sym><br />
+<def></def>      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>at_most_two</def><sym>);</sym><br />
+<def></def>      <kwa>return</kwa> <def>NULL</def><sym>;</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwd>sem_wait</kwd><def></def><sym>(&amp;</sym><def>mutex</def><sym>);</sym><br />
+<def></def>   <kwa>if</kwa><def></def><sym>(</sym><def>done</def> <sym>==</sym> <def></def><num>1</num><def></def><sym>) {</sym><br />
+<def></def>      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>mutex</def><sym>);</sym><br />
+<def></def>      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>at_most_two</def><sym>);</sym><br />
+<def></def>      <kwa>return</kwa> <def>NULL</def><sym>;</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwa>if</kwa><def></def><sym>(</sym><def>first_arrived</def> <sym>==</sym> <def></def><num>0</num><def></def><sym>) {</sym><br />
+<def>      first_arrived</def> <sym>=</sym> <def></def><num>1</num><def></def><sym>;</sym><br />
+<def><br />
+      A</def><sym>.</sym><def>my_color</def> <sym>=</sym> <def>c</def><sym>.</sym><def>my_color</def><sym>;</sym><br />
+<def>      A</def><sym>.</sym><def>id</def> <sym>=</sym> <def>c</def><sym>.</sym><def>id</def><sym>;</sym><br />
+<def></def><br />
+      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>mutex</def><sym>);</sym><br />
+<def></def>      <kwd>sem_wait</kwd><def></def><sym>(&amp;</sym><def>sem_priv</def><sym>);</sym><br />
+<def><br />
+      other_critter</def><sym>-&gt;</sym><def>my_color</def> <sym>=</sym> <def>B</def><sym>.</sym><def>my_color</def><sym>;</sym><br />
+<def>      other_critter</def><sym>-&gt;</sym><def>id</def> <sym>=</sym> <def>B</def><sym>.</sym><def>id</def><sym>;</sym><br />
+<def><br />
+      meetings_left</def><sym>--;</sym><br />
+<def></def>      <kwa>if</kwa><def></def><sym>(</sym><def>meetings_left</def> <sym>==</sym> <def></def><num>0</num><def></def><sym>) {</sym><br />
+<def>         done</def> <sym>=</sym> <def></def><num>1</num><def></def><sym>;</sym><br />
+<def></def>      <sym>}</sym><br />
+<def></def><br />
+      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>mutex</def><sym>);</sym><br />
+<def></def>      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>at_most_two</def><sym>);</sym> <def></def><kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>at_most_two</def><sym>);</sym><br />
+<def></def>   <sym>}</sym> <def></def><kwa>else</kwa> <def></def><sym>{</sym><br />
+<def>      first_arrived</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def><br />
+      B</def><sym>.</sym><def>my_color</def> <sym>=</sym> <def>c</def><sym>.</sym><def>my_color</def><sym>;</sym><br />
+<def>      B</def><sym>.</sym><def>id</def> <sym>=</sym> <def>c</def><sym>.</sym><def>id</def><sym>;</sym><br />
+<def><br />
+      other_critter</def><sym>-&gt;</sym><def>my_color</def> <sym>=</sym> <def>A</def><sym>.</sym><def>my_color</def><sym>;</sym><br />
+<def>      other_critter</def><sym>-&gt;</sym><def>id</def> <sym>=</sym> <def>A</def><sym>.</sym><def>id</def><sym>;</sym><br />
+<def></def><br />
+      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>sem_priv</def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwa>return</kwa> <def>other_critter</def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<kwb>static void</kwb> <def></def><sym>*</sym><br />
+<def></def><kwd>creature</kwd><def></def><sym>(</sym><def></def><kwb>void</kwb> <def></def><sym>*</sym><def>arg</def><sym>) {</sym><br />
+<def>   chameos critter</def><sym>;</sym><br />
+<def>   critter</def><sym>.</sym><def>my_color</def> <sym>= (</sym><def>color</def><sym>)</sym><def>arg</def><sym>;</sym><br />
+<def>   critter</def><sym>.</sym><def>id</def> <sym>=</sym> <def></def><kwd>pthread_self</kwd><def></def><sym>();</sym><br />
+<def>   critter</def><sym>.</sym><def>number_of_meetings</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def><br />
+   chameos</def> <sym>*</sym><def>other_critter</def><sym>;</sym><br />
+<def></def><br />
+   <kwb>int</kwb> <def>met_others</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>met_self</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def></def><sym>*</sym><def>total_meetings</def> <sym>=</sym> <def>NULL</def><sym>;</sym><br />
+<def></def><br />
+   <kwa>while</kwa><def></def><sym>(</sym><def>done</def> <sym>!=</sym> <def></def><num>1</num><def></def><sym>) {</sym><br />
+<def>      other_critter</def> <sym>=</sym> <def></def><kwd>meeting</kwd><def></def><sym>(</sym><def>critter</def><sym>);</sym><br />
+<def></def><br />
+      <kwa>if</kwa><def></def><sym>(</sym><def>other_critter</def> <sym>==</sym> <def>NULL</def><sym>) {</sym><br />
+<def></def>         <kwa>break</kwa><def></def><sym>;</sym><br />
+<def></def>      <sym>}</sym><br />
+<def></def><br />
+      <kwa>if</kwa><def></def><sym>(</sym><def>critter</def><sym>.</sym><def>id</def> <sym>==</sym> <def>other_critter</def><sym>-&gt;</sym><def>id</def><sym>) {</sym><br />
+<def>         met_self</def><sym>++;</sym><br />
+<def></def>      <sym>}</sym><def></def><kwa>else</kwa><def></def><sym>{</sym><br />
+<def>         met_others</def><sym>++;</sym><br />
+<def></def>      <sym>}</sym><br />
+<def><br />
+      critter</def><sym>.</sym><def>my_color</def> <sym>=</sym> <def></def><kwd>compliment_color</kwd><def></def><sym>(</sym><def>critter</def><sym>.</sym><def>my_color</def><sym>,</sym> <def>other_critter</def><sym>-&gt;</sym><def>my_color</def><sym>);</sym><br />
+<def></def>      <kwd>free</kwd><def></def><sym>(</sym><def>other_critter</def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwd>sem_wait</kwd><def></def><sym>(&amp;</sym><def>sem_print</def><sym>);</sym><br />
+<def></def>   <kwd>pthread_mutex_lock</kwd><def></def><sym>(&amp;</sym><def>print_mutex</def><sym>);</sym><br />
+<def></def>   <kwd>spell_the_number</kwd><def></def><sym>(</sym><def>met_others</def> <sym>+</sym> <def>met_self</def><sym>,</sym> <def>met_self</def><sym>);</sym><br />
+<def></def>   <kwd>pthread_mutex_unlock</kwd><def></def><sym>(&amp;</sym><def>print_mutex</def><sym>);</sym><br />
+<def><br />
+   total_meetings</def> <sym>=</sym> <def></def><kwd>malloc</kwd><def></def><sym>(</sym><def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def></def><kwb>int</kwb><def></def><sym>));</sym><br />
+<def></def>   <sym>*</sym><def>total_meetings</def> <sym>=</sym><def>met_others</def> <sym>+</sym> <def>met_self</def><sym>;</sym><br />
+<def></def><br />
+   <kwd>pthread_exit</kwd><def></def><sym>((</sym><def></def><kwb>void</kwb> <def></def><sym>*)</sym><def>total_meetings</def><sym>);</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<kwb>void</kwb><br />
+<def></def><kwd>print_colors</kwd><def></def><sym>(</sym><def></def><kwb>void</kwb><def></def><sym>) {</sym><br />
+<def></def>   <kwb>int</kwb> <def>i</def><sym>,</sym> <def>j</def><sym>;</sym><br />
+<def>   color c</def><sym>;</sym><br />
+<def></def><br />
+   <kwa>for</kwa><def></def><sym>(</sym><def>i</def> <sym>=</sym> <def></def><num>1</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def>INVALID</def><sym>;</sym> <def>i</def><sym>++) {</sym><br />
+<def></def>      <kwa>for</kwa><def></def><sym>(</sym><def>j</def> <sym>=</sym> <def></def><num>1</num><def></def><sym>;</sym> <def>j</def> <sym>&lt;</sym> <def>INVALID</def><sym>;</sym> <def>j</def><sym>++) {</sym><br />
+<def>         c</def> <sym>=</sym> <def></def><kwd>compliment_color</kwd><def></def><sym>(</sym><def>i</def><sym>,</sym><def>j</def><sym>);</sym><br />
+<def></def>         <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;%s + %s -&gt; %s</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym><def>colors</def><sym>[</sym><def>i</def><sym>],</sym><def>colors</def><sym>[</sym><def>j</def><sym>],</sym> <def>colors</def><sym>[</sym><def>c</def><sym>]);</sym><br />
+<def></def>      <sym>}</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def>   <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;</str><esc>\n</esc><str>&quot;</str><def></def><sym>);</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<br />
+<dir>#define NUMBER1      3</dir><br />
+<def></def><dir>#define NUMBER2    10</dir><br />
+<def></def><br />
+<kwb>void</kwb><br />
+<def></def><kwd>run_the_meetings</kwd><def></def><sym>(</sym><def>color</def> <sym>*</sym><def>starting_colors</def><sym>,</sym> <def></def><kwb>int</kwb> <def>n_colors</def><sym>,</sym> <def></def><kwb>int</kwb> <def>total_meetings_to_run</def><sym>) {</sym><br />
+<def></def>   <kwb>struct</kwb> <def>sched_param priority</def><sym>;</sym><br />
+<def>   priority</def><sym>.</sym><def>sched_priority</def> <sym>=</sym> <def></def><num>1</num><def></def><sym>;</sym><br />
+<def><br />
+   pthread_t pid_tab</def><sym>[</sym><def>NUMBER2</def><sym>];</sym><br />
+<def></def>   <kwd>memset</kwd><def></def><sym>(</sym><def>pid_tab</def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><kwa>sizeof</kwa><def></def><sym>(</sym><def>pthread_t</def><sym>)*</sym><def>NUMBER2</def><sym>);</sym><br />
+<def></def><br />
+   <kwb>int</kwb> <def>i</def><sym>;</sym><br />
+<def></def>   <kwb>int</kwb> <def>total</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>   <kwb>void</kwb> <def></def><sym>*</sym><def>rslt</def> <sym>=</sym> <def>NULL</def><sym>;</sym><br />
+<def></def><br />
+   <kwd>sem_init</kwd><def></def><sym>(&amp;</sym><def>at_most_two</def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>2</num><def></def><sym>);</sym><br />
+<def></def>   <kwd>sem_init</kwd><def></def><sym>(&amp;</sym><def>mutex</def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>1</num><def></def><sym>);</sym><br />
+<def></def>   <kwd>sem_init</kwd><def></def><sym>(&amp;</sym><def>sem_priv</def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>);</sym><br />
+<def></def>   <kwd>sem_init</kwd><def></def><sym>(&amp;</sym><def>sem_print</def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>);</sym><br />
+<def></def><br />
+   <kwd>pthread_mutex_init</kwd><def></def><sym>(&amp;</sym><def>print_mutex</def><sym>,</sym> <def>NULL</def><sym>);</sym><br />
+<def><br />
+   meetings_left</def> <sym>=</sym> <def>total_meetings_to_run</def><sym>;</sym><br />
+<def>   first_arrived</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def>   done</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><br />
+   <kwd>sched_setscheduler</kwd><def></def><sym>(</sym><def></def><num>0</num><def></def><sym>,</sym> <def>SCHED_FIFO</def><sym>, &amp;</sym><def>priority</def><sym>);</sym><br />
+<def></def><br />
+   <kwa>for</kwa><def></def><sym>(</sym><def>i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def>n_colors</def><sym>;</sym> <def>i</def><sym>++) {</sym><br />
+<def></def>      <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot; %s&quot;</str><def></def><sym>,</sym> <def>colors</def><sym>[</sym><def>starting_colors</def><sym>[</sym><def>i</def><sym>]]);</sym><br />
+<def></def>      <kwd>pthread_create</kwd><def></def><sym>(&amp;</sym><def>pid_tab</def><sym>[</sym><def>i</def><sym>],</sym> <def>NULL</def><sym>, &amp;</sym><def>creature</def><sym>, (</sym><def></def><kwb>void</kwb> <def></def><sym>*)</sym><def>starting_colors</def><sym>[</sym><def>i</def><sym>]);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def>   <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;</str><esc>\n</esc><str>&quot;</str><def></def><sym>);</sym><br />
+<def></def>   <kwa>for</kwa><def></def><sym>(</sym><def>i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def>n_colors</def><sym>;</sym> <def>i</def><sym>++) {</sym><br />
+<def></def>      <kwd>sem_post</kwd><def></def><sym>(&amp;</sym><def>sem_print</def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwa>for</kwa><def></def><sym>(</sym><def>i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def>n_colors</def><sym>;</sym> <def>i</def><sym>++) {</sym><br />
+<def></def>      <kwd>pthread_join</kwd><def></def><sym>(</sym><def>pid_tab</def><sym>[</sym><def>i</def><sym>], &amp;</sym><def>rslt</def><sym>);</sym><br />
+<def>      total</def> <sym>+= *(</sym><def></def><kwb>int</kwb> <def></def><sym>*)</sym><def>rslt</def><sym>;</sym><br />
+<def></def>      <kwd>free</kwd><def></def><sym>(</sym><def>rslt</def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def>   <kwd>spell_the_number</kwd><def></def><sym>(-</sym><def></def><num>1</num><def></def><sym>,</sym> <def>total</def><sym>);</sym><br />
+<def></def>   <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;</str><esc>\n</esc><str>&quot;</str><def></def><sym>);</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<kwb>int</kwb><br />
+<def></def><kwd>main</kwd><def></def><sym>(</sym><def></def><kwb>int</kwb> <def>argc</def><sym>,</sym> <def></def><kwb>char</kwb> <def></def><sym>**</sym><def>argv</def><sym>) {</sym><br />
+<def>   color first_generation</def><sym>[</sym><def>NUMBER1</def><sym>] = {</sym> <def>BLUE</def><sym>,</sym> <def>RED</def><sym>,</sym> <def>YELLOW</def> <sym>};</sym><br />
+<def>   color second_generation</def><sym>[</sym><def>NUMBER2</def><sym>] = {</sym><def>BLUE</def><sym>,</sym> <def>RED</def><sym>,</sym> <def>YELLOW</def><sym>,</sym> <def>RED</def><sym>,</sym> <def>YELLOW</def><sym>,</sym><br />
+<def>                   BLUE</def><sym>,</sym> <def>RED</def><sym>,</sym> <def>YELLOW</def><sym>,</sym> <def>RED</def><sym>,</sym> <def>BLUE</def><sym>};</sym><br />
+<def></def>   <kwb>int</kwb> <def>number_of_meetings_to_run</def> <sym>=</sym> <def></def><num>600</num><def></def><sym>;</sym><br />
+<def></def><br />
+   <kwa>if</kwa><def></def><sym>(</sym><def>argc</def> <sym>&gt;</sym> <def></def><num>1</num><def></def><sym>) {</sym><br />
+<def>      number_of_meetings_to_run</def> <sym>=</sym> <def></def><kwd>strtol</kwd><def></def><sym>(</sym><def>argv</def><sym>[</sym><def></def><num>1</num><def></def><sym>],</sym> <def>NULL</def><sym>,</sym> <def></def><num>10</num><def></def><sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwd>print_colors</kwd><def></def><sym>();</sym><br />
+<def></def>   <kwd>run_the_meetings</kwd><def></def><sym>(</sym><def>first_generation</def><sym>,</sym> <def>NUMBER1</def><sym>,</sym> <def>number_of_meetings_to_run</def><sym>);</sym><br />
+<def></def>   <kwd>run_the_meetings</kwd><def></def><sym>(</sym><def>second_generation</def><sym>,</sym> <def>NUMBER2</def><sym>,</sym> <def>number_of_meetings_to_run</def><sym>);</sym><br />
+<def></def><br />
+   <kwa>return</kwa> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><sym>}</sym><def></def><br />
+</source>

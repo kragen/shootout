@@ -1,0 +1,166 @@
+<source>
+<def></def><com>/**</com><br />
+<com> * The Computer Language Benchmarks Game</com><br />
+<com> * Based on the CAL Open Quark version</com><br />
+<com> * Contributed by Magnus Byne.</com><br />
+<com> */</com><def></def><br />
+<kwa>module</kwa> <def>Mandelbrot</def><sym>;</sym><br />
+<def></def><br />
+<kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Core</def><sym>.</sym><def>Prelude</def> <kwa>using</kwa><br />
+<def></def>    <kwa>typeConstructor</kwa> <def></def><sym>=</sym> <def>Double</def><sym>,</sym> <def>Int</def><sym>,</sym> <def>String</def><sym>;</sym><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>eager</def><sym>,</sym> <def>fromInt</def><sym>,</sym> <def>seq</def><sym>,</sym> <def>stringToInt</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><br />
+<kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Core</def><sym>.</sym><def>Debug</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>show</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Core</def><sym>.</sym><def>Bits</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>bitwiseAnd</def><sym>,</sym> <def>bitwiseOr</def><sym>,</sym> <def>shiftL</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><br />
+<kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Collections</def><sym>.</sym><def>List</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>head</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><br />
+<kwa>import</kwa> <def>Cal</def><sym>.</sym><def>IO</def><sym>.</sym><def>Console</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>print</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><br />
+<br />
+<kwa>data foreign unsafe import jvm</kwa> <def></def><str>&quot;java.io.PrintStream&quot;</str><def></def> <kwa>private</kwa> <def>JPrintStream</def><sym>;</sym><br />
+<def></def><br />
+<kwa>data foreign unsafe import jvm</kwa> <def></def><str>&quot;java.io.FilterOutputStream&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>JFilterOutputStream</def><sym>;</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;static field java.lang.System.out&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>stdout</def> <sym>::</sym> <def>JPrintStream</def><sym>;</sym><br />
+<def></def><br />
+<kwa>data foreign unsafe import jvm</kwa> <def></def><str>&quot;java.io.OutputStream&quot;</str><def></def> <kwa>private</kwa> <def>JOutputStream</def><sym>;</sym><br />
+<def></def><br />
+<kwa>data foreign unsafe import jvm</kwa> <def></def><str>&quot;java.io.BufferedOutputStream&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>JBufferedOutputStream</def><sym>;</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;constructor&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>createBufferedOutputStream</def> <sym>::</sym> <def>JOutputStream</def> <sym>-&gt;</sym> <def>JBufferedOutputStream</def><sym>;</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;method write&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>write</def> <sym>::</sym> <def>JBufferedOutputStream</def> <sym>-&gt;</sym> <def>Int</def> <sym>-&gt; ();</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;method flush&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>flush</def> <sym>::</sym> <def>JBufferedOutputStream</def> <sym>-&gt; ();</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;cast&quot;</str><def><br />
+    jPrintStreamToJOutputStream</def> <sym>::</sym> <def>JPrintStream</def> <sym>-&gt;</sym> <def>JOutputStream</def><sym>;</sym><br />
+<def></def><br />
+<com>/**</com><br />
+<com> * compute a binary mandelbrot image and write to stdout as a pbm file</com><br />
+<com> */</com><def><br />
+main</def> <sym>:: [</sym><def>String</def><sym>] -&gt; ();</sym><br />
+<def></def><kwa>public</kwa> <def>main</def> <sym>!</sym><def>args</def> <sym>=</sym><br />
+<def></def>    <kwa>let</kwa><br />
+<def>        size</def> <sym>=</sym> <def>eager $ stringToInt</def> <sym>(</sym><def>head args</def><sym>);</sym><br />
+<def><br />
+        offset</def> <sym>::</sym> <def>Int</def><sym>;</sym><br />
+<def>        offset</def> <sym>=</sym> <def>eager $ bitwiseAnd size</def> <num>7</num><def></def><sym>;</sym><br />
+<def><br />
+        shift</def> <sym>::</sym> <def>Int</def><sym>;</sym><br />
+<def>        shift</def> <sym>=</sym><br />
+<def>            eager<br />
+            $</def><br />
+            <sym>(</sym><br />
+<def></def>                <kwa>if</kwa> <def>offset</def> <sym>==</sym> <def></def><num>0</num> <def></def><kwa>then</kwa><br />
+<def></def>                    <num>0</num><br />
+<def></def>                <kwa>else</kwa><br />
+<def></def>                    <num>8</num> <def></def><sym>-</sym> <def>offset</def><br />
+            <sym>)</sym><br />
+<def></def>            <sym>;</sym><br />
+<def><br />
+        bufferedOutput</def> <sym>=</sym><br />
+<def>            eager<br />
+            $ createBufferedOutputStream</def> <sym>(</sym><def>jPrintStreamToJOutputStream stdout</def><sym>)</sym><br />
+<def></def>            <sym>;</sym><br />
+<def><br />
+        maxIterations</def> <sym>::</sym> <def>Int</def><sym>;</sym><br />
+<def>        maxIterations</def> <sym>=</sym> <def></def><num>50</num><def></def><sym>;</sym><br />
+<def></def><br />
+        <com>/** write out the byte buffer every 8th pixel*/</com><def><br />
+        outputBitBuffer</def> <sym>::</sym> <def>Int</def> <sym>-&gt;</sym> <def>Int</def> <sym>-&gt;</sym> <def>Int</def><sym>;</sym><br />
+<def>        outputBitBuffer</def> <sym>!</sym><def>x</def> <sym>!</sym><def>buffer</def> <sym>=</sym><br />
+<def></def>            <kwa>if</kwa> <def>bitwiseAnd x</def> <num>7</num> <def></def><sym>==</sym> <def></def><num>7</num> <def></def><kwa>then</kwa><br />
+<def></def>                <slc>//write the buffer</slc><br />
+<def>                write bufferedOutput buffer</def><br />
+                <sym>`</sym><def>seq</def><sym>`</sym><br />
+<def></def>                <num>0</num><br />
+<def></def>            <kwa>else</kwa><br />
+<def></def>                <slc>//no, output buffer is not yet full</slc><br />
+<def>                buffer</def><br />
+            <sym>;</sym><br />
+<def></def><br />
+        <com>/**write out the paritial byte buffer at end of line if necessary*/</com><def><br />
+        writeLastByte</def> <sym>::</sym> <def>Int</def> <sym>-&gt; ();</sym><br />
+<def>        writeLastByte</def> <sym>!</sym><def>bitBuffer</def> <sym>=</sym><br />
+<def></def>            <kwa>if</kwa> <def></def><sym>(</sym><def>shift</def> <sym>!=</sym> <def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def>                write bufferedOutput</def> <sym>(</sym><def>shiftL bitBuffer shift</def><sym>)</sym><br />
+<def></def>            <kwa>else</kwa><br />
+<def></def>                <sym>()</sym><br />
+<def></def>            <sym>;</sym><br />
+<def></def><br />
+        <com>/** compute and output every pixel in the image*/</com><def><br />
+        process</def> <sym>::</sym> <def>Int</def> <sym>-&gt;</sym> <def>Int</def> <sym>-&gt;</sym> <def>Int</def> <sym>-&gt;</sym> <def>Double</def> <sym>-&gt;</sym> <def>Double</def> <sym>-&gt; ();</sym><br />
+<def>        process</def> <sym>!</sym><def>x</def> <sym>!</sym><def>y</def> <sym>!</sym><def>bitBuffer</def> <sym>!</sym><def>ix</def> <sym>!</sym><def>iy</def> <sym>=</sym><br />
+<def></def>            <kwa>if</kwa> <def>x</def> <sym>&lt;</sym> <def>size</def> <kwa>then</kwa><br />
+<def></def>                <kwa>let</kwa><br />
+<def>                    calculateBit</def> <sym>::</sym><br />
+<def>                        Int</def> <sym>-&gt;</sym> <def>Double</def> <sym>-&gt;</sym> <def>Double</def> <sym>-&gt;</sym> <def>Double</def> <sym>-&gt;</sym> <def>Double</def> <sym>-&gt;</sym> <def>Int</def><sym>;</sym><br />
+<def>                    calculateBit</def> <sym>!</sym><def>i</def> <sym>!</sym><def>zr</def> <sym>!</sym><def>zi</def> <sym>!</sym><def>cr</def> <sym>!</sym><def>ci</def> <sym>=</sym><br />
+<def></def>                        <kwa>if</kwa> <def>i</def> <sym>==</sym> <def>maxIterations</def> <kwa>then</kwa><br />
+<def></def>                            <num>1</num><br />
+<def></def>                        <kwa>else if</kwa> <def>zr</def> <sym>*</sym> <def>zr</def> <sym>+</sym> <def>zi</def> <sym>*</sym> <def>zi</def> <sym>&gt;</sym> <def></def><num>4</num> <def></def><kwa>then</kwa><br />
+<def></def>                            <num>0</num><br />
+<def></def>                        <kwa>else</kwa><br />
+<def>                            calculateBit</def><br />
+                                <sym>(</sym><def>i</def> <sym>+</sym> <def></def><num>1</num><def></def><sym>)</sym><br />
+<def></def>                                <sym>(</sym><def>zr</def> <sym>*</sym> <def>zr</def> <sym>-</sym> <def>zi</def> <sym>*</sym> <def>zi</def> <sym>+</sym> <def>cr</def><sym>)</sym><br />
+<def></def>                                <sym>(</sym><def></def><num>2.0</num> <def></def><sym>*</sym> <def>zr</def> <sym>*</sym> <def>zi</def> <sym>+</sym> <def>ci</def><sym>)</sym><br />
+<def>                                cr<br />
+                                ci</def><br />
+                        <sym>;</sym><br />
+<def></def>                <kwa>in</kwa><br />
+<def>                    process</def><br />
+                        <sym>(</sym><def>x</def> <sym>+</sym> <def></def><num>1</num><def></def><sym>)</sym><br />
+<def>                        y</def><br />
+                        <sym>(</sym><def>outputBitBuffer<br />
+                            x</def><br />
+                            <sym>(</sym><br />
+<def>                                eager<br />
+                                $ bitwiseOr</def><br />
+                                    <sym>(</sym><def>eager $ shiftL bitBuffer</def> <num>1</num><def></def><sym>)</sym><br />
+<def></def>                                    <sym>(</sym><def>eager $ calculateBit</def> <num>0</num> <def>ix iy ix iy</def><sym>)</sym><br />
+<def></def>                            <sym>)</sym><br />
+<def></def>                        <sym>)</sym><br />
+<def></def>                        <sym>(</sym><def>fromInt</def> <sym>(</sym><def></def><num>2</num> <def></def><sym>* (</sym><def>x</def> <sym>+</sym> <def></def><num>1</num><def></def><sym>)) /</sym> <def>fromInt size</def> <sym>-</sym> <def></def><num>1.5</num><def></def><sym>)</sym><br />
+<def>                        iy</def><br />
+            <kwa>else</kwa><br />
+<def>                writeLastByte bitBuffer</def><br />
+                <sym>`</sym><def>seq</def><sym>`</sym><br />
+<def></def>                <sym>(</sym><br />
+<def></def>                    <kwa>if</kwa> <def>y</def> <sym>&lt;</sym> <def>size</def> <sym>-</sym> <def></def><num>1</num> <def></def><kwa>then</kwa><br />
+<def>                        process</def><br />
+                            <num>0</num><br />
+<def></def>                            <sym>(</sym><def>y</def> <sym>+</sym> <def></def><num>1</num><def></def><sym>)</sym><br />
+<def></def>                            <num>0</num><br />
+<def></def>                            <sym>(-</sym><def></def><num>1.5</num><def></def><sym>)</sym><br />
+<def></def>                            <sym>(</sym><def>fromInt</def> <sym>(</sym><def></def><num>2</num> <def></def><sym>* (</sym><def>y</def> <sym>+</sym> <def></def><num>1</num><def></def><sym>)) /</sym> <def>fromInt size</def> <sym>-</sym> <def></def><num>1.0</num><def></def><sym>)</sym><br />
+<def></def>                    <kwa>else</kwa><br />
+<def>                        flush bufferedOutput</def><br />
+                <sym>)</sym><br />
+<def></def>            <sym>;</sym><br />
+<def></def>    <kwa>in</kwa><br />
+<def></def>        <slc>//write out the image header</slc><br />
+<def>        print</def> <sym>(</sym><def></def><str>&quot;P4</str><esc>\n</esc><str>&quot;</str><def></def> <sym>++</sym> <def>show size</def> <sym>++</sym> <def></def><str>&quot; &quot;</str><def></def> <sym>++</sym> <def>show size</def> <sym>++</sym> <def></def><str>&quot;</str><esc>\n</esc><str>&quot;</str><def></def><sym>)</sym><br />
+<def></def>        <sym>`</sym><def>seq</def><sym>`</sym><br />
+<def></def>        <slc>//compute and write out the binary image body</slc><br />
+<def>        process</def> <num>0 0 0</num> <def></def><sym>(-</sym><def></def><num>1.5</num><def></def><sym>) (-</sym><def></def><num>1.0</num><def></def><sym>)</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><br />
+</source>

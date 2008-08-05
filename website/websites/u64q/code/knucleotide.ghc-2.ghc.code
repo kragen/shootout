@@ -1,0 +1,178 @@
+<source>
+<def></def><com>{-# OPTIONS -fvia-C -fbang-patterns -funbox-strict-fields #-}</com><def></def><br />
+<slc>--</slc><br />
+<def></def><slc>-- The Computer Language Benchmarks Game</slc><br />
+<def></def><slc>-- http://shootout.alioth.debian.org/</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><slc>-- Contributed by Don Stewart</slc><br />
+<def></def><slc>-- Uses a port of the simple hashtable from the Clean entry</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><br />
+<kwa>import</kwa> <def>GHC.Exts</def><br />
+<kwa>import</kwa> <def>GHC.IOBase</def><br />
+<br />
+<kwa>import</kwa> <def>Foreign</def><br />
+<kwa>import</kwa> <def></def><kwb>Char</kwb><br />
+<def></def><kwa>import</kwa> <def>List</def><br />
+<kwa>import</kwa> <def>Maybe</def><br />
+<kwa>import</kwa> <def>Text.Printf</def><br />
+<br />
+<kwa>import</kwa> <def>Data.ByteString.Internal</def><br />
+<kwa>import</kwa> <def>Data.ByteString.Unsafe</def><br />
+<kwa>import qualified</kwa> <def>Data.ByteString.Char8</def> <kwa>as</kwa> <def>S</def><br />
+<br />
+<kwa>import</kwa> <def>Data.Array.Base</def><br />
+<kwa>import qualified</kwa> <def>Data.Array.IO</def> <kwa>as</kwa> <def>A<br />
+<br />
+main</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def></def>    <sym>(</sym><def>PS fp o l</def><sym>) &lt;-</sym> <def>get</def> <sym>(</sym><def>S.pack</def> <str>&quot;&gt;TH&quot;</str><def></def><sym>)</sym><br />
+<def>    withForeignPtr fp $ \p</def> <sym>-&gt;</sym> <def></def><kwa>do</kwa><br />
+<def></def>        <kwa>let</kwa> <def>sec</def> <sym>=</sym> <def>p `plusPtr` o<br />
+        mapM_</def> <sym>(</sym><def>writeFreqs l sec</def><sym>) [</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>]</sym><br />
+<def>        mapM_</def> <sym>(</sym><def>writeFrame l sec</def><sym>) =&lt;&lt;</sym> <def>mapM toseq strs<br />
+<br />
+strs</def> <sym>= [</sym><def></def><str>&quot;GGT&quot;</str><def></def><sym>,</sym><def></def><str>&quot;GGTA&quot;</str><def></def><sym>,</sym><def></def><str>&quot;GGTATT&quot;</str><def></def><sym>,</sym><def></def><str>&quot;GGTATTTTAATT&quot;</str><def></def><sym>,</sym><def></def><str>&quot;GGTATTTTAATTTATAGT&quot;</str><def></def><sym>]</sym><br />
+<def><br />
+get p</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def>    s</def> <sym>&lt;-</sym> <def>S.getContents</def><br />
+    <kwa>let</kwa> <def>Just n</def> <sym>=</sym> <def>S.findSubstring p s<br />
+    return $</def><sym>!</sym> <def>S.map toUpper</def>             <slc>-- array fusion!</slc><br />
+<def>            . S.filter</def>    <sym>((/=)</sym> <def>'\n'</def><sym>)</sym><br />
+<def>            . S.dropWhile</def> <sym>((/=)</sym> <def>'\n'</def><sym>)</sym><br />
+<def>            . S.copy<br />
+            . S.drop n $ s<br />
+<br />
+writeFreqs size p n</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def>    h</def>   <sym>&lt;-</sym> <def>htNew n size<br />
+    htInsert size p n h</def><br />
+    <kwa>let</kwa> <def>vs</def> <sym>=</sym> <def>htNodes h<br />
+    mapM_ draw</def> <sym>(</sym><def>sortBy kf vs</def><sym>)</sym><br />
+<def>    putChar '\n'</def><br />
+  <kwa>where</kwa><br />
+<def>    draw</def> <sym>(</sym><def>Node p f</def><sym>) =</sym> <def>printf</def> <str>&quot;%s %.3f\n&quot;</str><def></def> <sym>(</sym><def>ppr n p</def><sym>)</sym> <def>pct</def><br />
+        <kwa>where</kwa> <def>pct</def>   <sym>= (</sym><def></def><num>100</num> <def></def><sym>* (</sym><def>fromIntegral f</def><sym>) /</sym> <def>total</def><sym>) ::</sym> <def></def><kwb>Double</kwb><br />
+<def>              total</def> <sym>=</sym> <def>fromIntegral</def> <sym>(</sym><def>size</def> <sym>-</sym> <def>n</def> <sym>+</sym> <def></def><num>1</num><def></def><sym>)</sym><br />
+<def><br />
+    kf</def> <sym>(</sym><def>Node k x</def><sym>) (</sym><def>Node j y</def><sym>) =</sym> <def></def><kwa>case</kwa> <def>compare y x</def> <kwa>of</kwa><br />
+<def>          EQ</def> <sym>-&gt;</sym> <def>compare</def> <sym>(</sym><def>ppr n k</def><sym>) (</sym><def>ppr n j</def><sym>);</sym> <def>x</def>  <sym>-&gt;</sym> <def>x<br />
+<br />
+writeFrame size p</def> <sym>(</sym><def>n</def><sym>,</sym><def>k</def><sym>) =</sym> <def></def><kwa>do</kwa><br />
+<def>    h</def> <sym>&lt;-</sym> <def>htNew n size<br />
+    htInsert size p n h<br />
+    Node k v</def> <sym>&lt;-</sym> <def>htFind k h<br />
+    putStrLn $</def> <sym>(</sym><def>show v</def><sym>) ++ (</sym><def>'\t'</def> <sym>:</sym> <def>ppr n k</def><sym>)</sym><br />
+<def><br />
+ppr n p</def> <sym>=</sym> <def>inlinePerformIO</def> <sym>(</sym><def>map w2c `fmap` peekArray n p</def><sym>)</sym><br />
+<def>toseq s</def> <sym>=</sym> <def>fmap</def> <sym>((,) (</sym><def>length s</def><sym>)) (</sym><def>newArray0</def> <num>0</num> <def></def><sym>(</sym><def>map c2w s</def><sym>))</sym><br />
+<def></def><br />
+<slc>------------------------------------------------------------------------</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><slc>-- An implementation of simpl_hash.c in Haskell</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><br />
+<kwa>data</kwa> <def>Hash</def>    <sym>=</sym> <def>HT</def> <sym>!</sym><def></def><kwb>Int</kwb> <def></def><sym>!</sym><def></def><kwb>Int</kwb> <def></def><sym>!(</sym><def>A.IOArray</def> <kwb>Int</kwb> <def>Buckets</def><sym>)</sym><br />
+<def></def><br />
+<kwa>data</kwa> <def>Buckets</def> <sym>=</sym> <def>Empty</def> <sym>|</sym> <def>Bucket</def> <sym>!(</sym><def>Ptr Word8</def><sym>) !</sym><def></def><kwb>Int</kwb> <def></def><sym>|</sym> <def>Buckets</def> <sym>[</sym><def>Node</def><sym>]</sym><br />
+<def></def><br />
+<kwa>data</kwa> <def>Node</def>    <sym>=</sym> <def>Node</def> <sym>!(</sym><def>Ptr Word8</def><sym>) !</sym><def></def><kwb>Int</kwb><br />
+<def><br />
+htNew</def> <sym>::</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def>IO Hash<br />
+htNew</def> <sym>!</sym><def>fl</def> <sym>!</sym><def>sz</def> <sym>=</sym> <def>HT fl nprime `fmap` A.newArray</def> <sym>(</sym><def></def><num>0</num><def></def><sym>,</sym><def>nprime</def><sym>-</sym><def></def><num>1</num><def></def><sym>)</sym> <def>Empty</def><br />
+  <kwa>where</kwa><br />
+<def>    n</def>      <sym>=</sym> <def>htSize fl sz<br />
+    nprime</def> <sym>=</sym> <def>head</def> <sym>(</sym><def>dropWhile</def> <sym>(&lt;</sym> <def>n</def><sym>)</sym> <def>primes</def><sym>)</sym><br />
+<def><br />
+htSize</def> <sym>::</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def></def><kwb>Int</kwb><br />
+<def>htSize</def> <sym>!</sym><def>fl</def> <sym>!</sym><def>buflen</def> <sym>=</sym> <def>min lim</def> <sym>(</sym><def>go</def> <sym>(</sym><def>fl</def><sym>-</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><num>4</num><def></def><sym>)</sym><br />
+<def></def>  <kwa>where</kwa><br />
+<def>    lim</def> <sym>= (</sym><def>buflen</def> <sym>-</sym> <def>fl</def><sym>)</sym> <def>`div`</def> <num>1024</num><br />
+<def>    go</def> <sym>!</sym><def>n</def> <sym>!</sym><def>m</def> <sym>|</sym> <def>n</def> <sym>&gt;</sym> <def></def><num>0</num> <def></def><sym>&amp;&amp;</sym> <def>m</def> <sym>&lt;</sym> <def>lim</def>      <sym>=</sym> <def>go</def> <sym>(</sym><def>n</def><sym>-</sym><def></def><num>1</num><def></def><sym>) (</sym><def>m</def><sym>*</sym><def></def><num>4</num><def></def><sym>)</sym><br />
+<def></def>             <sym>|</sym> <def>otherwise</def>             <sym>=</sym> <def>m<br />
+<br />
+htInsert</def> <sym>::</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def>Ptr Word8</def> <sym>-&gt;</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def>Hash</def> <sym>-&gt;</sym> <def>IO</def> <sym>()</sym><br />
+<def>htInsert</def> <sym>!</sym><def>s</def> <sym>!</sym><def>p n</def> <sym>!</sym><def>h</def> <sym>=</sym> <def>mapM_</def> <sym>(</sym><def>htInc h . plusPtr p</def><sym>) [</sym><def></def><num>0</num><def>..s</def><sym>-</sym><def>n</def><sym>]</sym><br />
+<def><br />
+htInc</def> <sym>::</sym> <def>Hash</def> <sym>-&gt;</sym> <def>Ptr Word8</def> <sym>-&gt;</sym> <def>IO</def> <sym>()</sym><br />
+<def>htInc ht</def><sym>@(</sym><def>HT n size arr</def><sym>)</sym> <def>k</def>  <sym>=</sym><br />
+<def></def>    <kwa>case</kwa> <def>htHash size n k</def> <kwa>of</kwa><br />
+<def></def>        <sym>!</sym><def>i</def> <sym>-&gt;</sym> <def></def><kwa>do</kwa> <def>b</def> <sym>&lt;-</sym> <def>unsafeRead arr i<br />
+                 unsafeWrite arr i $</def><sym>!</sym> <def>inc b</def><br />
+  <kwa>where</kwa><br />
+<def>    equal</def> <sym>=</sym> <def>eq n<br />
+<br />
+    inc</def> <sym>::</sym> <def>Buckets</def> <sym>-&gt;</sym> <def>Buckets<br />
+    inc</def> <sym>(</sym><def>Bucket</def> <sym>!</sym><def>k'</def> <sym>!</sym><def>v</def><sym>)</sym><br />
+<def></def>        <sym>|</sym> <def>k' `equal` k</def> <sym>=</sym> <def>Bucket  k'</def> <sym>(</sym><def>v</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def></def>        <sym>|</sym> <def>otherwise</def>    <sym>=</sym> <def>Buckets $ Node k' v</def> <sym>: [</sym><def>Node k</def> <num>1</num><def></def><sym>]</sym><br />
+<def>    inc</def> <sym>(</sym><def>Buckets b</def><sym>)    =</sym> <def>Buckets $ incL b<br />
+    inc Empty</def>          <sym>=</sym> <def>Bucket k</def> <num>1</num><br />
+<def><br />
+    incL</def> <sym>:: [</sym><def>Node</def><sym>] -&gt; [</sym><def>Node</def><sym>]</sym><br />
+<def>    incL</def> <sym>(!</sym><def>i</def><sym>@(</sym><def>Node k' v</def><sym>):</sym><def>ls</def><sym>)</sym><br />
+<def></def>        <sym>|</sym> <def>k' `equal` k</def> <sym>=</sym> <def>Node k'</def> <sym>(</sym><def>v</def><sym>+</sym><def></def><num>1</num><def></def><sym>) :</sym> <def>ls</def><br />
+        <sym>|</sym> <def>otherwise</def>    <sym>=</sym> <def>i</def> <sym>:</sym> <def>incL ls<br />
+    incL</def> <sym>[]            = [</sym><def>Node k</def> <num>1</num><def></def><sym>]</sym><br />
+<def><br />
+htNodes</def> <sym>::</sym> <def>Hash</def> <sym>-&gt; [</sym><def>Node</def><sym>]</sym><br />
+<def>htNodes ht</def><sym>@(</sym><def>HT n size arr</def><sym>) =</sym> <def>items</def> <num>0</num><br />
+<def></def>  <kwa>where</kwa><br />
+<def>    read i</def> <sym>=</sym> <def>inlinePerformIO $</def><sym>!</sym> <def>unsafeRead arr i<br />
+<br />
+    items</def> <sym>!</sym><def>i</def> <sym>|</sym> <def>i</def> <sym>&gt;=</sym> <def>size</def> <sym>= []</sym><br />
+<def></def>             <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>items_bucket</def> <sym>(</sym><def>read i</def><sym>) (</sym><def>i</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def><br />
+    items_bucket</def> <sym>!(</sym><def>Bucket</def> <sym>!</sym><def>k'</def> <sym>!</sym><def>v</def><sym>)</sym> <def>i</def> <sym>=</sym> <def>Node k' v</def> <sym>:</sym> <def>items i<br />
+    items_bucket</def> <sym>!(</sym><def>Buckets</def> <sym>!</sym><def>b</def><sym>)</sym> <def>i</def>    <sym>=</sym> <def>items_list b i<br />
+    items_bucket Empty</def>        <sym>!</sym><def>i</def>    <sym>=</sym> <def>items i<br />
+<br />
+    items_list</def> <sym>(!</sym><def>e</def><sym>:</sym><def>l</def><sym>) !</sym><def>i</def> <sym>=</sym> <def>e</def> <sym>:</sym> <def>items_list l i<br />
+    items_list</def> <sym>[]     !</sym><def>i</def> <sym>=</sym> <def>items i<br />
+<br />
+htFind</def> <sym>::</sym> <def>Ptr Word8</def> <sym>-&gt;</sym> <def>Hash</def> <sym>-&gt;</sym> <def>IO Node<br />
+htFind</def> <sym>!</sym><def>k</def> <sym>!</sym><def>h</def><sym>@(</sym><def>HT n size arr</def><sym>) =</sym> <def></def><kwa>do</kwa><br />
+<def></def>    <kwa>let</kwa> <def></def><sym>!</sym><def>i</def> <sym>=</sym> <def>htHash size n k<br />
+    v</def> <sym>&lt;-</sym> <def>unsafeRead arr i<br />
+    return $</def><sym>!</sym> <def>find v</def><br />
+  <kwa>where</kwa><br />
+<def>    equal</def> <sym>=</sym> <def>eq n<br />
+<br />
+    find</def>  <sym>(</sym><def>Bucket k' v</def><sym>) |</sym> <def>k' `equal` k</def> <sym>=</sym> <def>Node k' v</def><br />
+                        <sym>|</sym> <def>otherwise</def>    <sym>=</sym> <def>Node k</def>  <num>0</num><br />
+<def>    find</def>  <sym>(</sym><def>Buckets l</def><sym>)   =</sym> <def>find' l<br />
+    find  Empty</def>         <sym>=</sym> <def>Node k</def> <num>0</num><br />
+<def><br />
+    find'</def> <sym>(</sym><def>i</def><sym>@(</sym><def>Node</def> <sym>!</sym><def>k' v</def><sym>):</sym><def>ls</def><sym>) |</sym> <def>k' `equal` k</def> <sym>=</sym> <def>i</def><br />
+                              <sym>|</sym> <def>otherwise</def>    <sym>=</sym> <def>find' ls<br />
+    find'</def> <sym>[]           =</sym> <def>Node k</def> <num>0</num><br />
+<def><br />
+htHash</def> <sym>::</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def>Ptr Word8</def> <sym>-&gt;</sym> <def></def><kwb>Int</kwb><br />
+<def>htHash</def> <sym>(</sym><def>I# max</def><sym>) (</sym><def>I# size</def><sym>)</sym> <def>ptr</def><sym>@(</sym><def>Ptr p</def><sym>) =</sym> <def>abs . inlinePerformIO . IO $ go p</def> <num>0</num><def>#</def><br />
+  <kwa>where</kwa><br />
+<def>    lim</def> <sym>=</sym> <def>p `plusAddr#` size<br />
+    go p acc</def> <sym>!</sym><def>s</def><br />
+        <sym>|</sym> <def>p `geAddr#` lim</def> <sym>= (</sym><def># s</def><sym>,</sym> <def>I#</def> <sym>(</sym><def>acc `remInt#` max</def><sym>)</sym> <def>#</def><sym>)</sym><br />
+<def></def>        <sym>|</sym> <def>otherwise</def>       <sym>=</sym> <def></def><kwa>case</kwa> <def>readInt8OffAddr# p</def> <num>0</num><def># s</def> <kwa>of</kwa><br />
+<def></def>                <sym>(</sym><def># s</def><sym>,</sym> <def>i #</def><sym>) -&gt;</sym> <def>go</def> <sym>(</sym><def>p `plusAddr#`</def> <num>1</num><def>#</def><sym>) (</sym><def></def><num>5</num><def>#</def> <sym>*</sym><def># acc</def> <sym>+</sym><def># i</def><sym>)</sym> <def>s</def><br />
+<br />
+<slc>-- A fast Ptr comparison for Hash keys</slc><br />
+<def>eq</def> <sym>!</sym><def>n p q</def> <sym>=</sym> <def>inlinePerformIO $</def> <kwa>do</kwa><br />
+<def>    a</def> <sym>&lt;-</sym> <def>peek p</def> <sym>::</sym> <def>IO Word8<br />
+    b</def> <sym>&lt;-</sym> <def>peek q</def> <sym>::</sym> <def>IO Word8<br />
+    if a</def> <sym>/=</sym> <def>b</def> <kwa>then</kwa> <def>return</def> <kwa>False</kwa><br />
+<def></def>              <kwa>else</kwa> <def>go n p q</def><br />
+  <kwa>where</kwa><br />
+<def>    go</def> <sym>!</sym><def>n</def> <sym>!</sym><def>p</def> <sym>!</sym><def>q</def><br />
+        <sym>|</sym> <def>n</def> <sym>==</sym> <def></def><num>0</num>    <def></def><sym>=</sym> <def>return</def> <kwa>True</kwa><br />
+<def></def>        <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def>            a</def> <sym>&lt;-</sym> <def>peek p</def> <sym>::</sym> <def>IO Word8<br />
+            b</def> <sym>&lt;-</sym> <def>peek q</def> <sym>::</sym> <def>IO Word8<br />
+            if a</def> <sym>/=</sym> <def>b</def> <kwa>then</kwa> <def>return</def> <kwa>False</kwa><br />
+<def></def>                      <kwa>else</kwa> <def>go</def> <sym>(</sym><def>n</def><sym>-</sym><def></def><num>1</num><def></def><sym>) (</sym><def>p `plusPtr`</def> <num>1</num><def></def><sym>) (</sym><def>q `plusPtr`</def> <num>1</num><def></def><sym>)</sym><br />
+<def></def><com>{-# INLINE eq #-}</com><def><br />
+<br />
+primes</def> <sym>= [</sym> <def></def><num>53</num><def></def><sym>,</sym>       <def></def><num>97</num><def></def><sym>,</sym>        <def></def><num>193</num><def></def><sym>,</sym>       <def></def><num>389</num><def></def><sym>,</sym>       <def></def><num>769</num><def></def><sym>,</sym><br />
+<def></def>           <num>1543</num><def></def><sym>,</sym>     <def></def><num>3079</num><def></def><sym>,</sym>      <def></def><num>6151</num><def></def><sym>,</sym>      <def></def><num>12289</num><def></def><sym>,</sym>     <def></def><num>24593</num><def></def><sym>,</sym><br />
+<def></def>           <num>49157</num><def></def><sym>,</sym>    <def></def><num>98317</num><def></def><sym>,</sym>     <def></def><num>196613</num><def></def><sym>,</sym>    <def></def><num>93241</num><def></def><sym>,</sym>     <def></def><num>786433</num><def></def><sym>,</sym><br />
+<def></def>           <num>1572869</num><def></def><sym>,</sym>  <def></def><num>3145739</num><def></def><sym>,</sym>   <def></def><num>6291469</num><def></def><sym>,</sym>   <def></def><num>12582917</num><def></def><sym>,</sym>  <def></def><num>25165843</num><def></def><sym>,</sym><br />
+<def></def>           <num>50331653</num><def></def><sym>,</sym> <def></def><num>100663319</num><def></def><sym>,</sym> <def></def><num>201326611</num><def></def><sym>,</sym> <def></def><num>402653189</num><def></def><sym>,</sym> <def></def><num>805306457</num> <def></def><sym>]</sym><def></def><br />
+</source>

@@ -1,0 +1,140 @@
+<source>
+<def></def><com>/**</com><br />
+<com> * The Computer Language Benchmarks Game</com><br />
+<com> * Based on the CAL Open Quark version</com><br />
+<com> * Contributed by Magnus Byne.</com><br />
+<com> */</com><def></def><br />
+<br />
+<kwa>module</kwa> <def>Threadring</def><sym>;</sym><br />
+<def></def><br />
+<kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Core</def><sym>.</sym><def>Prelude</def> <kwa>using</kwa><br />
+<def></def>    <kwa>typeConstructor</kwa> <def></def><sym>=</sym> <def>Int</def><sym>,</sym> <def>JObject</def><sym>,</sym> <def>String</def><sym>;</sym><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym><br />
+<def>        eager</def><sym>,</sym> <def>error</def><sym>,</sym> <def>input</def><sym>,</sym> <def>intToString</def><sym>,</sym> <def>output</def><sym>,</sym> <def>seq</def><sym>,</sym> <def>stringToInt</def><sym>,</sym> <def>toCalValue</def><sym>,</sym><br />
+<def>        unsafeFromCalValue</def><sym>,</sym> <def>upFromTo</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><kwa>import</kwa> <def>Cal</def><sym>.</sym><def>IO</def><sym>.</sym><def>Console</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>printLine</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Experimental</def><sym>.</sym><def>Concurrent</def><sym>.</sym><def>Parallel</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>par</def><sym>,</sym> <def>parallelMap</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Collections</def><sym>.</sym><def>List</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>cycle</def><sym>,</sym> <def>head</def><sym>,</sym> <def>map</def><sym>,</sym> <def>replicate</def><sym>,</sym> <def>tail</def><sym>,</sym> <def>zip3</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def></def><kwa>import</kwa> <def>Cal</def><sym>.</sym><def>Core</def><sym>.</sym><def>System</def> <kwa>using</kwa><br />
+<def></def>    <kwa>function</kwa> <def></def><sym>=</sym> <def>concurrentRuntime</def><sym>;</sym><br />
+<def></def>    <sym>;</sym><br />
+<def><br />
+<br />
+ringSize</def> <sym>::</sym> <def>Int</def><sym>;</sym><br />
+<def>ringSize</def> <sym>=</sym> <def></def><num>503</num><def></def><sym>;</sym><br />
+<def></def><br />
+<com>/**</com><br />
+<com> * this implements the thread body, taking tokens form its input queue,</com><br />
+<com> * decrementing the token, and then putting it on the output queue.</com><br />
+<com> * When the token is zero, the id is printed, and exit is called.</com><br />
+<com> */</com><def><br />
+threadBody</def> <sym>::</sym> <def>Int</def> <sym>-&gt;</sym> <def>SynchronousQueue Int</def> <sym>-&gt;</sym> <def>SynchronousQueue Int</def> <sym>-&gt; ();</sym><br />
+<def>threadBody</def> <sym>!</sym><def>id</def> <sym>!</sym><def>input</def> <sym>!</sym><def>output</def> <sym>=</sym><br />
+<def></def>    <kwa>let</kwa><br />
+<def>        token</def> <sym>::</sym> <def>Int</def><sym>;</sym><br />
+<def>        token</def> <sym>=</sym> <def>eager $</def> <sym>(</sym><def>take input</def><sym>);</sym><br />
+<def></def>    <kwa>in</kwa><br />
+<def></def>        <kwa>if</kwa> <def></def><sym>(</sym><def>token</def> <sym>==</sym> <def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def>            printLine</def> <sym>(</sym><def>intToString id</def><sym>) `</sym><def>seq</def><sym>`</sym><br />
+<def>            exit</def> <num>0</num><br />
+<def></def>        <kwa>else</kwa><br />
+<def>            put output</def> <sym>(</sym><def>token</def> <sym>-</sym> <def></def><num>1</num><def></def><sym>) `</sym><def>seq</def><sym>`</sym><br />
+<def>            threadBody id input output</def><br />
+    <sym>;</sym><br />
+<def><br />
+<br />
+startThreads</def> <sym>::</sym> <def>Int</def> <sym>-&gt;</sym> <def>Int</def> <sym>-&gt; [()];</sym><br />
+<def>startThreads</def> <sym>!</sym><def>ringSize</def> <sym>!</sym><def>token</def> <sym>=</sym><br />
+<def></def>    <kwa>let</kwa><br />
+<def>        queues</def> <sym>:: [</sym><def>SynchronousQueue a</def><sym>];</sym><br />
+<def>        queues</def> <sym>=</sym> <def>map makeSynchronousQueue</def> <sym>(</sym><def>replicate ringSize</def> <sym>());</sym><br />
+<def><br />
+        ids</def> <sym>:: [</sym><def>Int</def><sym>];</sym><br />
+<def>        ids</def> <sym>=</sym> <def>upFromTo</def> <num>1</num> <def>ringSize</def><sym>;</sym><br />
+<def></def>    <kwa>in</kwa><br />
+<def></def>        <slc>//feed the token into the first queue</slc><br />
+<def>        put</def> <sym>(</sym><def>head queues</def><sym>)</sym> <def>token</def><br />
+        <sym>`</sym><def>par</def><sym>`</sym><br />
+<def></def>        <slc>//create threads running the threadBody func, with ids [1 .. ringSize]</slc><br />
+<def>        parallelMap</def><br />
+            <sym>(</sym><def>\</def><sym>!</sym><def>args</def> <sym>-&gt;</sym> <def>threadBody args</def><sym>.</sym><def>#</def><num>1</num> <def>args</def><sym>.</sym><def>#</def><num>2</num> <def>args</def><sym>.</sym><def>#</def><num>3</num><def></def><sym>)</sym><br />
+<def></def>            <sym>(</sym><def>zip3 ids queues</def> <sym>(</sym><def>tail $ cycle queues</def><sym>))</sym><br />
+<def></def>    <sym>;</sym><br />
+<def><br />
+main</def> <sym>:: [</sym><def>String</def><sym>] -&gt; ();</sym><br />
+<def></def><kwa>public</kwa> <def>main</def> <sym>!</sym><def>args</def> <sym>=</sym><br />
+<def></def>    <kwa>let</kwa><br />
+<def>        n</def> <sym>::</sym> <def>Int</def><sym>;</sym><br />
+<def>        n</def> <sym>=</sym> <def>stringToInt</def> <sym>(</sym><def>head args</def><sym>);</sym><br />
+<def></def>    <kwa>in</kwa><br />
+<def></def><br />
+        <kwa>if</kwa> <def>concurrentRuntime</def> <kwa>then</kwa><br />
+<def>            List</def><sym>.</sym><def>strictList</def> <sym>(</sym><def>startThreads ringSize n</def><sym>)</sym><br />
+<def></def>            <sym>`</sym><def>seq</def><sym>`</sym><br />
+<def></def>            <sym>()</sym><br />
+<def></def>        <kwa>else</kwa><br />
+<def>            error</def><br />
+                <str>&quot;You must define the VM arg org.openquark.cal.machine.lecc.concurrent_runtime to run this program&quot;</str><def></def><br />
+    <sym>;</sym><br />
+<def></def><br />
+<br />
+<com>/**</com><br />
+<com> * A Synchronous queue has no storage. There must always be a matching put for</com><br />
+<com> * every take and visa versa</com><br />
+<com> */</com><def></def><br />
+<kwa>data public</kwa> <def>SynchronousQueue a</def> <sym>=</sym><br />
+<def></def>    <kwa>private</kwa> <def>SynchronousQueue jqueue</def> <sym>:: !</sym><def>JSynchronousQueue</def><br />
+    <sym>;</sym><br />
+<def></def><br />
+<com>/**</com><br />
+<com> * This creates a Synchronous queue. Whenever you attempt to put an element</com><br />
+<com> * into the queue it will block if there is not already a thread waiting on</com><br />
+<com> * take. Get will block unless there is already a thread waiting on put.</com><br />
+<com> */</com><def><br />
+makeSynchronousQueue</def> <sym>:: () -&gt;</sym> <def>SynchronousQueue a</def><sym>;</sym><br />
+<def></def><kwa>public</kwa> <def>makeSynchronousQueue</def> <sym>!</sym><def>unused</def> <sym>=</sym> <def>SynchronousQueue</def> <sym>(</sym><def>jmakeQueue</def><sym>);</sym><br />
+<def></def><br />
+<com>/**</com><br />
+<com> * Puts an element into the queue. This will block unless there is already a</com><br />
+<com> * thread waiting on take.</com><br />
+<com> *</com><br />
+<com> * @arg queue the queue to add to</com><br />
+<com> * @arg item the item to add</com><br />
+<com> */</com><def><br />
+put</def> <sym>::</sym> <def>SynchronousQueue a</def> <sym>-&gt;</sym> <def>a</def> <sym>-&gt; ();</sym><br />
+<def></def><kwa>public</kwa> <def>put</def> <sym>!</sym><def>queue item</def> <sym>=</sym><br />
+<def>    jput queue</def><sym>.</sym><def>SynchronousQueue</def><sym>.</sym><def>jqueue</def> <sym>(</sym><def>output $ toCalValue item</def><sym>);</sym><br />
+<def></def><br />
+<com>/**</com><br />
+<com> * Takes an item from a queue. This will block, unless there is already a</com><br />
+<com> * thread waiting on put.</com><br />
+<com> *</com><br />
+<com> * @arg queue the queue to take an item from.</com><br />
+<com> */</com><def><br />
+take</def> <sym>::</sym> <def>SynchronousQueue a</def> <sym>-&gt;</sym> <def>a</def><sym>;</sym><br />
+<def></def><kwa>public</kwa> <def>take</def> <sym>!</sym><def>queue</def> <sym>=</sym><br />
+<def>    unsafeFromCalValue $ input $ jtake queue</def><sym>.</sym><def>SynchronousQueue</def><sym>.</sym><def>jqueue</def><sym>;</sym><br />
+<def></def><br />
+<kwa>data foreign unsafe import jvm</kwa> <def></def><str>&quot;java.util.concurrent.SynchronousQueue&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>JSynchronousQueue</def><sym>;</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;constructor&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>jmakeQueue</def> <sym>::</sym> <def>JSynchronousQueue</def><sym>;</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;method put&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>jput</def> <sym>::</sym> <def>JSynchronousQueue</def> <sym>-&gt;</sym> <def>JObject</def> <sym>-&gt; ();</sym><br />
+<def></def><br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;method take&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>jtake</def> <sym>::</sym> <def>JSynchronousQueue</def> <sym>-&gt;</sym> <def>JObject</def><sym>;</sym><br />
+<def></def><br />
+<br />
+<kwa>foreign unsafe import jvm</kwa> <def></def><str>&quot;static method java.lang.System.exit&quot;</str><def></def><br />
+    <kwa>private</kwa> <def>exit</def> <sym>::</sym> <def>Int</def> <sym>-&gt; ();</sym><def></def><br />
+</source>

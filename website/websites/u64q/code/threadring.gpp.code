@@ -1,0 +1,110 @@
+<source>
+<def></def><com>/*</com><br />
+<com>* The Computer Language Benchmarks Game</com><br />
+<com>* http://shootout.alioth.debian.org/</com><br />
+<com></com><br />
+<com>* contributed by Premysl Hruby</com><br />
+<com>*/</com><def></def><br />
+<br />
+<dir>#include &lt;iostream&gt;</dir><br />
+<def></def><dir>#include &lt;pthread.h&gt;</dir><br />
+<def></def><dir>#include &lt;sched.h&gt;</dir><br />
+<def></def><br />
+<kwc>typedef</kwc> <def></def><kwb>unsigned int</kwb> <def>uint</def><sym>;</sym><br />
+<def></def><br />
+<kwb>const</kwb> <def>uint NUM_THREADS</def>   <sym>=</sym> <def></def><num>503</num><def></def><sym>;</sym><br />
+<def></def><kwb>const</kwb> <def>uint STACK_SIZE</def>   <sym>=</sym> <def></def><num>16</num><def></def><sym>*</sym><def></def><num>1024</num><def></def><sym>;</sym><br />
+<def></def><br />
+<kwb>int</kwb> <def>token</def> <sym>= -</sym><def></def><num>1</num><def></def><sym>;</sym><br />
+<def></def><br />
+<kwc>class</kwc> <def>RingThread</def><sym>;</sym><br />
+<def>RingThread</def><sym>*</sym> <def>rt_arr</def><sym>[</sym><def>NUM_THREADS</def><sym>] = {</sym><def></def><num>0</num><def></def><sym>};</sym><br />
+<def></def><br />
+<kwc>class</kwc> <def>RingThread</def><br />
+<sym>{</sym><br />
+<def></def><kwc>private</kwc><def></def><sym>:</sym><br />
+<def>   pthread_mutex_t   m_mutex</def><sym>;</sym><br />
+<def>   uint   node_id</def><sym>;</sym><br />
+<def>   uint   next_id</def><sym>;</sym><br />
+<def></def><br />
+<kwc>public</kwc><def></def><sym>:</sym><br />
+<def></def><br />
+   <kwd>RingThread</kwd><def></def><sym>(</sym> <def></def><kwb>int</kwb> <def>id</def> <sym>)</sym><br />
+<def></def>   <sym>{</sym><br />
+<def></def>      <slc>//mutex type is PTHREAD_MUTEX_NORMAL</slc><br />
+<def></def>      <slc>// we want self lock behaviour</slc><br />
+<def></def>      <kwd>pthread_mutex_init</kwd><def></def><sym>( &amp;</sym><def>m_mutex</def><sym>,</sym> <def></def><num>0</num> <def></def><sym>);</sym><br />
+<def><br />
+      node_id</def> <sym>=</sym> <def>id</def><sym>;</sym><br />
+<def>      next_id</def> <sym>=</sym> <def>id</def> <sym>+</sym><def></def><num>1</num><def></def><sym>;</sym><br />
+<def></def><br />
+      <kwa>if</kwa> <def></def><sym>(</sym><def>next_id</def> <sym>==</sym> <def>NUM_THREADS</def><sym>)</sym><br />
+<def>         next_id</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwc>inline</kwc> <def></def><kwb>void</kwb> <def></def><kwd>AcquireLock</kwd><def></def><sym>()</sym><br />
+<def></def>   <sym>{</sym><br />
+<def></def>      <slc>// type is PTHREAD_MUTEX_NORMAL, therefore, try to lock to a locked</slc><br />
+<def></def>      <slc>// mutex will result deadlock. However, other thread will unlock for this</slc><br />
+<def></def>      <slc>// mutex</slc><br />
+<def></def>      <kwd>pthread_mutex_lock</kwd><def></def><sym>( &amp;</sym><def>m_mutex</def> <sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def>   <kwc>inline</kwc> <def></def><kwb>void</kwb> <def></def><kwd>ReleaseLock</kwd><def></def><sym>()</sym><br />
+<def></def>   <sym>{</sym><br />
+<def></def>      <kwd>pthread_mutex_unlock</kwd><def></def><sym>( &amp;</sym><def>m_mutex</def> <sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <kwb>static void</kwb><def></def><sym>*</sym> <def></def><kwd>Run</kwd><def></def><sym>(</sym> <def></def><kwb>void</kwb><def></def><sym>*</sym> <def>param</def> <sym>)</sym><br />
+<def></def>   <sym>{</sym><br />
+<def>      RingThread</def><sym>*</sym> <def>prt</def> <sym>= (</sym><def>RingThread</def><sym>*)</sym><def>param</def><sym>;</sym><br />
+<def></def><br />
+      <kwa>while</kwa> <def></def><sym>(</sym><def></def><kwa>true</kwa><def></def><sym>)</sym><br />
+<def></def>      <sym>{</sym><br />
+<def></def>         <slc>// is my turn???</slc><br />
+<def>         prt</def><sym>-&gt;</sym><def></def><kwd>AcquireLock</kwd><def></def><sym>();</sym><br />
+<def></def><br />
+         <kwa>if</kwa> <def></def><sym>(</sym><def>token</def> <sym>!=</sym> <def></def><num>0</num><def></def><sym>)</sym><br />
+<def>            token</def><sym>--;</sym><br />
+<def></def>         <kwa>else</kwa> <def></def><slc>// this turn is the end of token passing</slc><br />
+<def></def>         <sym>{</sym><br />
+<def>            std</def><sym>::</sym><def>cout</def> <sym>&lt;&lt; (</sym><def>prt</def><sym>-&gt;</sym><def>node_id</def> <sym>+</sym><def></def><num>1</num><def></def><sym>) &lt;&lt;</sym> <def>std</def><sym>::</sym><def>endl</def><sym>;</sym><br />
+<def></def>            <kwd>exit</kwd><def></def><sym>(</sym> <def></def><num>0</num> <def></def><sym>);</sym> <def></def><slc>// a fast way to terminate :D</slc><br />
+<def></def>         <sym>}</sym><br />
+<def><br />
+         rt_arr</def><sym>[</sym> <def>prt</def><sym>-&gt;</sym><def>next_id</def> <sym>]-&gt;</sym><def></def><kwd>ReleaseLock</kwd><def></def><sym>();</sym> <def></def><slc>// release lock for next thread</slc><br />
+<def></def>         <kwd>sched_yield</kwd><def></def><sym>();</sym> <def></def><slc>// my turn is finished. Yield cpu for next thread</slc><br />
+<def></def>      <sym>}</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><sym>};</sym><br />
+<def></def><br />
+<kwb>int</kwb> <def></def><kwd>main</kwd><def></def><sym>(</sym><def></def><kwb>int</kwb> <def>argc</def><sym>,</sym> <def></def><kwb>char</kwb><def></def><sym>**</sym> <def>argv</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def>   token</def> <sym>= (</sym><def>argc</def> <sym>==</sym> <def></def><num>2</num><def></def><sym>)</sym> <def>?</def> <kwd>atoi</kwd><def></def><sym>(</sym> <def>argv</def><sym>[</sym><def></def><num>1</num><def></def><sym>] ) :</sym> <def></def><num>1000</num><def></def><sym>;</sym><br />
+<def></def>   <slc>//std::cout &lt;&lt; token;</slc><br />
+<def></def><br />
+   <slc>// must set stack size for each thread. Otherwise, can't spawn 503 threads :)</slc><br />
+<def>   pthread_attr_t stack_att</def><sym>;</sym><br />
+<def></def>   <kwd>pthread_attr_init</kwd><def></def><sym>( &amp;</sym><def>stack_att</def> <sym>);</sym><br />
+<def></def>   <kwd>pthread_attr_setstacksize</kwd><def></def><sym>( &amp;</sym><def>stack_att</def><sym>,</sym> <def>STACK_SIZE</def> <sym>);</sym><br />
+<def>   pthread_t ht</def><sym>;</sym><br />
+<def></def><br />
+   <kwa>for</kwa> <def></def><sym>(</sym><def>uint i</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym> <def>i</def> <sym>&lt;</sym> <def>NUM_THREADS</def><sym>;</sym> <def>i</def><sym>++)</sym><br />
+<def></def>   <sym>{</sym><br />
+<def>      RingThread</def><sym>*</sym> <def>r</def> <sym>=</sym>  <def></def><kwa>new</kwa> <def></def><kwd>RingThread</kwd><def></def><sym>(</sym> <def>i</def> <sym>);</sym><br />
+<def><br />
+      rt_arr</def><sym>[</sym><def>i</def><sym>] =</sym> <def>r</def><sym>;</sym><br />
+<def>      r</def><sym>-&gt;</sym><def></def><kwd>AcquireLock</kwd><def></def><sym>();</sym><br />
+<def></def><br />
+      <kwd>pthread_create</kwd><def></def><sym>( &amp;</sym><def>ht</def><sym>, &amp;</sym><def>stack_att</def><sym>, &amp;</sym><def>RingThread</def><sym>::</sym><def>Run</def><sym>, (</sym><def></def><kwb>void</kwb><def></def><sym>*)</sym><def>r</def> <sym>);</sym><br />
+<def></def>   <sym>}</sym><br />
+<def></def><br />
+   <slc>// let's roll</slc><br />
+<def>   rt_arr</def><sym>[</sym><def></def><num>0</num><def></def><sym>]-&gt;</sym><def></def><kwd>ReleaseLock</kwd><def></def><sym>();</sym><br />
+<def></def><br />
+   <slc>// wait for result</slc><br />
+<def></def>   <kwd>pthread_join</kwd><def></def><sym>(</sym> <def>ht</def><sym>,</sym> <def></def><num>0</num> <def></def><sym>);</sym><br />
+<def></def><br />
+   <kwa>return</kwa> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+</source>

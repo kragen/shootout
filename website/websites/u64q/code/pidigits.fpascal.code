@@ -1,0 +1,532 @@
+<source>
+<def></def><com>{%BuildCommand $(CompPath) $(EdFile) -O2p3r}</com><def></def><br />
+<kwa>program</kwa> <def>pidigits</def><sym>;</sym><br />
+<def></def><com>{ The Great Computer Language Shootout</com><br />
+<com>  http://shootout.alioth.debian.org</com><br />
+<com>  Calculate digits of pi using the</com><br />
+<com>  Unbounded Spigot Algorithms</com><br />
+<com></com><br />
+<com>  contributed by Vincent Snijders</com><br />
+<com>}</com><def></def><br />
+<br />
+<com>{$mode objfpc}</com><def></def><br />
+<br />
+<kwa>type</kwa><br />
+<def></def><br />
+  <com>{ TBigInt }</com><def><br />
+<br />
+  PBigInt</def> <sym>= ^</sym><def>TBigInt</def><sym>;</sym><br />
+<def></def><br />
+  <com>{ TBigInt }</com><def><br />
+<br />
+  TBigInt</def> <sym>=</sym> <def></def><kwa>class</kwa><br />
+<def></def>  <kwa>private</kwa><br />
+<def>    Digit</def><sym>:</sym> <def>pdword</def><sym>;</sym><br />
+<def>    FSize</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>    Capacity</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>    FNextFree</def><sym>:</sym> <def>TBigInt</def><sym>;</sym> <def></def><slc>// used to maintain the freelist</slc><br />
+<def></def>    <kwa>procedure</kwa> <def>Clear</def><sym>;</sym><br />
+<def></def>    <kwa>procedure</kwa> <def></def><kwd>Resize</kwd><def></def><sym>(</sym><def>NewSize</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>);</sym><br />
+<def></def>    <kwa>function</kwa> <def>IsNegative</def><sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def>    <kwa>function</kwa> <def>IsZero</def><sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def>    <kwa>procedure</kwa> <def>Negate</def><sym>;</sym><br />
+<def></def>  <kwa>public</kwa><br />
+<def></def>    <kwa>constructor</kwa> <def></def><kwd>Create</kwd><def></def><sym>(</sym><def>InitialSize</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>);</sym><br />
+<def></def>    <kwa>destructor</kwa> <def>Destroy</def><sym>;</sym> <def></def><kwa>override</kwa><def></def><sym>;</sym><br />
+<def></def>    <kwa>function</kwa> <def></def><kwd>GetDigit</kwd><def></def><sym>(</sym><def>i</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>) :</sym> <def>DWord</def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>type</kwa><br />
+<def>  TBigMatrix</def> <sym>=</sym> <def></def><kwa>array</kwa><def></def><sym>[</sym><def></def><num>1</num><def></def><sym>.</sym><def></def><num>.2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>.</sym><def></def><num>.2</num><def></def><sym>]</sym> <def></def><kwa>of</kwa> <def>TBigInt</def><sym>;</sym><br />
+<def>  TIntMatrix</def> <sym>=</sym> <def></def><kwa>array</kwa><def></def><sym>[</sym><def></def><num>1</num><def></def><sym>.</sym><def></def><num>.2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>.</sym><def></def><num>.2</num><def></def><sym>]</sym> <def></def><kwa>of</kwa> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>var</kwa><br />
+<def>  BigIntStack</def><sym>:</sym> <def>PBigInt</def><sym>;</sym><br />
+<def>  BigIntStackLen</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  BigIntTop</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  FirstFreeBigInt</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def></def><br />
+<com>{ BigInt memory management }</com><def></def><br />
+<br />
+<kwa>procedure</kwa> <def>FreeBigInts</def><sym>;</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  Next</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwa>while</kwa> <def></def><kwd>assigned</kwd><def></def><sym>(</sym><def>FirstFreeBigInt</def><sym>)</sym> <def></def><kwa>do begin</kwa><br />
+<def>    Next</def> <sym>:=</sym> <def>FirstFreeBigInt</def><sym>.</sym><def>FNextFree</def><sym>;</sym><br />
+<def>    FirstFreeBigInt</def><sym>.</sym><def>Free</def><sym>;</sym><br />
+<def>    FirstFreeBigInt</def> <sym>:=</sym> <def>Next</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def>Size</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym> <def>DoClear</def><sym>:</sym> <def></def><kwb>boolean</kwb> <def></def><sym>=</sym> <def></def><kwb>true</kwb><def></def><sym>) :</sym> <def>TBigInt</def><sym>;</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  Current</def><sym>,</sym> <def>Previous</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwa>if</kwa> <def></def><kwd>assigned</kwd><def></def><sym>(</sym><def>FirstFreeBigInt</def><sym>)</sym> <def></def><kwa>then begin</kwa><br />
+<def>    Previous</def> <sym>:=</sym> <def></def><kwa>nil</kwa><def></def><sym>;</sym><br />
+<def>    Current</def> <sym>:=</sym> <def>FirstFreeBigInt</def><sym>;</sym><br />
+<def></def>    <kwa>repeat</kwa><br />
+<def></def>      <kwa>if</kwa> <def></def><sym>(</sym><def>Current</def><sym>.</sym><def>Capacity</def><sym>&gt;=</sym><def>Size</def><sym>)</sym> <def></def><kwa>then begin</kwa><br />
+<def>        Result</def><sym>:=</sym><def>Current</def><sym>;</sym><br />
+<def>        Result</def><sym>.</sym><def>FSize</def><sym>:=</sym> <def>Size</def><sym>;</sym><br />
+<def></def>        <kwa>if</kwa> <def>DoClear</def> <kwa>then</kwa><br />
+<def>          Result</def><sym>.</sym><def>Clear</def><sym>;</sym><br />
+<def></def>        <kwa>if</kwa> <def></def><kwd>assigned</kwd><def></def><sym>(</sym><def>previous</def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def>          Previous</def><sym>.</sym><def>FNextFree</def> <sym>:=</sym> <def>Current</def><sym>.</sym><def>FNextFree</def><br />
+        <kwa>else</kwa><br />
+<def>          FirstFreeBigInt</def> <sym>:=</sym> <def>Current</def><sym>.</sym><def>FNextFree</def><sym>;</sym><br />
+<def>        exit</def><sym>;</sym><br />
+<def></def>      <kwa>end</kwa><def></def><sym>;</sym><br />
+<def>      Previous</def> <sym>:=</sym> <def>Current</def><sym>;</sym><br />
+<def>      Current</def> <sym>:=</sym> <def>Current</def><sym>.</sym><def>FNextFree</def><sym>;</sym><br />
+<def></def>    <kwa>until</kwa> <def>Current</def><sym>=</sym><def></def><kwa>nil</kwa><def></def><sym>;</sym><br />
+<def>    Result</def> <sym>:=</sym> <def>FirstFreeBigInt</def><sym>;</sym><br />
+<def>    Result</def><sym>.</sym><def></def><kwd>Resize</kwd><def></def><sym>(</sym><def>Size</def><sym>);</sym><br />
+<def>    FirstFreeBigInt</def> <sym>:=</sym> <def>FirstFreeBigInt</def><sym>.</sym><def>FNextFree</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><br />
+<def></def>  <kwa>else</kwa> <def>result</def> <sym>:=</sym> <def>TBigInt</def><sym>.</sym><def></def><kwd>Create</kwd><def></def><sym>(</sym><def>Size</def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def>bi</def><sym>:</sym> <def>TBigInt</def><sym>) :</sym> <def>TBigInt</def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def> <sym>:=</sym> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def>bi</def><sym>.</sym><def>FSize</def><sym>,</sym> <def></def><kwb>false</kwb><def></def><sym>);</sym><br />
+<def></def>  <kwd>Move</kwd><def></def><sym>(</sym><def>bi</def><sym>.</sym><def>Digit</def><sym>^,</sym> <def>Result</def><sym>.</sym><def>Digit</def><sym>^,</sym> <def>bi</def><sym>.</sym><def>FSize</def><sym>*</sym><def></def><kwd>sizeof</kwd><def></def><sym>(</sym><def>dword</def><sym>));</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def></def><kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>bi</def><sym>:</sym> <def>TBigInt</def><sym>);</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  bi</def><sym>.</sym><def>FNextFree</def> <sym>:=</sym> <def>FirstFreeBigInt</def><sym>;</sym><br />
+<def>  FirstFreeBigInt</def> <sym>:=</sym> <def>bi</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<com>{ TBigInt }</com><def><br />
+<br />
+operator</def> <sym>:= (</sym><def>i</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>) :</sym> <def>TBigInt</def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  Result</def> <sym>:=</sym> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def></def><num>1</num><def></def><sym>);</sym><br />
+<def>  Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def></def><num>0</num><def></def><sym>] :=</sym> <def></def><kwd>dword</kwd><def></def><sym>(</sym><def>i</def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>constructor</kwa> <def>TBigInt</def><sym>.</sym><def></def><kwd>Create</kwd><def></def><sym>(</sym><def>InitialSize</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>);</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  FSize</def><sym>:=</sym> <def>InitialSize</def><sym>;</sym><br />
+<def>  Capacity</def><sym>:=</sym> <def></def><num>2</num><def></def><sym>*</sym><def>FSize</def><sym>;</sym><br />
+<def></def>  <kwd>GetMem</kwd><def></def><sym>(</sym><def>Digit</def><sym>,</sym> <def>Capacity</def><sym>*</sym><def></def><kwd>sizeof</kwd><def></def><sym>(</sym><def>DWord</def><sym>));</sym><br />
+<def>  Clear</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>destructor</kwa> <def>TBigInt</def><sym>.</sym><def>Destroy</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>FreeMem</kwd><def></def><sym>(</sym><def>Digit</def><sym>);</sym><br />
+<def></def>  <kwa>inherited</kwa> <def>Destroy</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def>TBigInt</def><sym>.</sym><def>Clear</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>FillChar</kwd><def></def><sym>(</sym><def>Digit</def><sym>[</sym><def></def><num>0</num><def></def><sym>],</sym> <def>FSize</def><sym>*</sym><def></def><kwd>sizeof</kwd><def></def><sym>(</sym><def>DWord</def><sym>),</sym> <def></def><num>0</num><def></def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def>TBigInt</def><sym>.</sym><def></def><kwd>Resize</kwd><def></def><sym>(</sym><def>NewSize</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>);</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>FreeMem</kwd><def></def><sym>(</sym><def>Digit</def><sym>);</sym><br />
+<def>  FSize</def><sym>:=</sym> <def>NewSize</def><sym>;</sym><br />
+<def>  Capacity</def><sym>:=</sym> <def></def><num>2</num><def></def><sym>*</sym><def>FSize</def><sym>;</sym><br />
+<def></def>  <kwd>GetMem</kwd><def></def><sym>(</sym><def>Digit</def><sym>,</sym> <def>Capacity</def><sym>*</sym><def></def><kwd>sizeof</kwd><def></def><sym>(</sym><def>DWord</def><sym>));</sym><br />
+<def>  Clear</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def>TBigInt</def><sym>.</sym><def>IsNegative</def><sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def> <sym>:= (</sym><def>Digit</def><sym>[</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$80000000</num><def></def><sym>)&gt;</sym><def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def>TBigInt</def><sym>.</sym><def>IsZero</def><sym>:</sym><def></def><kwb>boolean</kwb><def></def><sym>;</sym><def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def> <sym>:= (</sym><def>FSize</def><sym>=</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><kwa>and</kwa> <def></def><sym>(</sym><def>Digit</def><sym>^=</sym><def></def><num>0</num><def></def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def>TBigInt</def><sym>.</sym><def>Negate</def><sym>;</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  value</def><sym>:</sym> <def></def><kwb>int64</kwb><def></def><sym>;</sym><br />
+<def>  valueparts</def> <sym>:</sym> <def></def><kwa>array</kwa><def></def><sym>[</sym><def></def><num>0</num><def></def><sym>.</sym><def></def><num>.1</num><def></def><sym>]</sym> <def></def><kwa>of</kwa> <def>dword</def> <kwa>absolute</kwa> <def>value</def><sym>;</sym><br />
+<def>  carry</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  CurDigit</def><sym>:</sym> <def>PDWord</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwa>if</kwa> <def>IsZero</def> <kwa>then</kwa> <def>exit</def><sym>;</sym><br />
+<def>  CurDigit</def><sym>:= @</sym><def>Digit</def><sym>[</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def></def>  <kwa>repeat</kwa><br />
+<def>    CurDigit</def><sym>^:=</sym> <def></def><kwa>not</kwa> <def>CurDigit</def><sym>^;</sym><br />
+<def></def>    <kwd>dec</kwd><def></def><sym>(</sym><def>CurDigit</def><sym>);</sym><br />
+<def></def>  <kwa>until</kwa> <def>CurDigit</def><sym>&lt;</sym><def>Digit</def><sym>;</sym><br />
+<def>  carry</def> <sym>:=</sym> <def></def><num>1</num><def></def><sym>;</sym><br />
+<def>  CurDigit</def><sym>:=</sym><def>Digit</def><sym>;</sym><br />
+<def></def>  <kwa>while</kwa> <def></def><sym>(</sym><def>carry</def><sym>&gt;</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>do begin</kwa><br />
+<def>    value</def> <sym>:=</sym> <def>CurDigit</def><sym>^;</sym><br />
+<def></def>    <kwd>inc</kwd><def></def><sym>(</sym><def>value</def><sym>);</sym><br />
+<def>    CurDigit</def><sym>^ :=</sym> <def>valueparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def>    carry</def> <sym>:=</sym> <def>valueparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def></def>    <kwd>inc</kwd><def></def><sym>(</sym><def>CurDigit</def><sym>);</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def>TBigInt</def><sym>.</sym><def></def><kwd>GetDigit</kwd><def></def><sym>(</sym><def>i</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>):</sym> <def>DWord</def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwa>if</kwa> <def></def><sym>(</sym><def>i</def><sym>&lt;</sym><def>FSize</def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def>    result</def> <sym>:=</sym> <def>Digit</def><sym>[</sym><def>i</def><sym>]</sym><br />
+<def></def>  <kwa>else if</kwa> <def>IsNegative</def> <kwa>then</kwa><br />
+<def>    result</def> <sym>:=</sym> <def></def><num>$FFFFFFFF</num><br />
+<def></def>  <kwa>else</kwa><br />
+<def>    result</def> <sym>:=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<com>{ BigInt Calculation }</com><def></def><br />
+<br />
+<kwa>procedure</kwa> <def></def><kwd>PushBigInt</kwd><def></def><sym>(</sym><def>bi</def><sym>:</sym> <def>TBigInt</def><sym>);</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>inc</kwd><def></def><sym>(</sym><def>BigIntTop</def><sym>);</sym><br />
+<def></def>  <kwa>if</kwa> <def></def><sym>(</sym><def>BigIntTop</def><sym>=</sym><def>BigIntStackLen</def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def></def>    <kwd>RunError</kwd><def></def><sym>(</sym><def></def><num>1025</num><def></def><sym>);</sym> <def></def><slc>// not implemented, too complicated calculation</slc><br />
+<def>  BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>]:=</sym><def>bi</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def></def><kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>bi</def><sym>:</sym> <def>TBigInt</def><sym>);</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>inc</kwd><def></def><sym>(</sym><def>BigIntTop</def><sym>);</sym><br />
+<def></def>  <kwa>if</kwa> <def></def><sym>(</sym><def>BigIntTop</def><sym>=</sym><def>BigIntStackLen</def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def></def>    <kwd>RunError</kwd><def></def><sym>(</sym><def></def><num>1025</num><def></def><sym>);</sym> <def></def><slc>// not implemented, too complicated calculation</slc><br />
+<def>  BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>]:=</sym> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def>bi</def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def>PopBigInt</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def><sym>:=</sym><def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>];</sym><br />
+<def></def>  <kwd>dec</kwd><def></def><sym>(</sym><def>BigIntTop</def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def>BigIntAdd</def><sym>;</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  a</def><sym>,</sym> <def>b</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def>  bSignExtend</def><sym>:</sym> <def>dword</def><sym>;</sym><br />
+<def>  Result</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def>  carry</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  sum</def><sym>:</sym> <def></def><kwb>int64</kwb><def></def><sym>;</sym><br />
+<def>  maxsize</def><sym>,</sym> <def>minsize</def><sym>,</sym> <def>i</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  sumparts</def> <sym>:</sym> <def></def><kwa>array</kwa><def></def><sym>[</sym><def></def><num>0</num><def></def><sym>.</sym><def></def><num>.1</num><def></def><sym>]</sym> <def></def><kwa>of</kwa> <def></def><kwb>integer</kwb> <def></def><kwa>absolute</kwa> <def>sum</def><sym>;</sym><br />
+<def>  aDigit</def><sym>,</sym> <def>bDigit</def><sym>,</sym> <def>ResultDigit</def><sym>:</sym> <def>PDWord</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwa>if</kwa> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>-</sym><def></def><num>1</num><def></def><sym>].</sym><def>FSize</def><sym>&lt;</sym><def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>].</sym><def>FSize</def> <kwa>then begin</kwa><br />
+<def>    a</def><sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>];</sym><br />
+<def>    b</def><sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>-</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def></def>  <kwa>end</kwa><br />
+<def></def>  <kwa>else begin</kwa><br />
+<def>    a</def><sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>-</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def>    b</def><sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>];</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwa>if</kwa> <def>b</def><sym>.</sym><def>IsZero</def> <kwa>then</kwa><br />
+<def>    Result</def> <sym>:=</sym> <def>a</def><br />
+  <kwa>else begin</kwa><br />
+<def>    maxsize</def><sym>:=</sym><def>a</def><sym>.</sym><def>FSize</def><sym>;</sym><br />
+<def>    minsize</def><sym>:=</sym><def>b</def><sym>.</sym><def>FSize</def><sym>;</sym><br />
+<def>    Result</def> <sym>:=</sym> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def>maxsize</def><sym>+</sym><def></def><num>1</num><def></def><sym>);</sym><br />
+<def>    carry</def> <sym>:=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def>    aDigit</def><sym>:=</sym> <def>a</def><sym>.</sym><def>Digit</def><sym>;</sym> <def>bDigit</def><sym>:=</sym> <def>b</def><sym>.</sym><def>Digit</def><sym>;</sym> <def>ResultDigit</def><sym>:=</sym> <def>Result</def><sym>.</sym><def>Digit</def><sym>;</sym><br />
+<def></def>    <kwa>for</kwa> <def>i</def><sym>:=</sym> <def></def><num>0</num> <def></def><kwa>to</kwa> <def>minsize</def><sym>-</sym><def></def><num>1</num> <def></def><kwa>do begin</kwa><br />
+<def>      sum</def> <sym>:=</sym> <def></def><kwb>int64</kwb><def></def><sym>(</sym><def>aDigit</def><sym>^) +</sym> <def></def><kwb>int64</kwb><def></def><sym>(</sym><def>bDigit</def><sym>^) +</sym> <def>carry</def><sym>;</sym><br />
+<def>      carry</def> <sym>:=</sym> <def>sumparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def>      ResultDigit</def><sym>^ :=</sym> <def>sumparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def></def>      <kwd>inc</kwd><def></def><sym>(</sym><def>aDigit</def><sym>);</sym> <def></def><kwd>inc</kwd><def></def><sym>(</sym><def>bDigit</def><sym>);</sym> <def></def><kwd>inc</kwd><def></def><sym>(</sym><def>ResultDigit</def><sym>);</sym><br />
+<def></def>    <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>    <kwa>if</kwa> <def>b</def><sym>.</sym><def>IsNegative</def> <kwa>then</kwa><br />
+<def>      bSignExtend</def> <sym>:=</sym> <def></def><num>$FFFFFFFF</num><br />
+<def></def>    <kwa>else</kwa><br />
+<def>      bSignExtend</def> <sym>:=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>    <kwa>for</kwa> <def>i</def><sym>:=</sym> <def>minsize</def> <kwa>to</kwa> <def>maxsize</def> <kwa>do begin</kwa><br />
+<def>      sum</def> <sym>:=</sym> <def></def><kwb>int64</kwb><def></def><sym>(</sym><def>a</def><sym>.</sym><def></def><kwd>GetDigit</kwd><def></def><sym>(</sym><def>i</def><sym>)) +</sym> <def>bSignExtend</def> <sym>+</sym> <def>carry</def><sym>;</sym><br />
+<def>      carry</def> <sym>:=</sym> <def>sumparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def>      ResultDigit</def><sym>^ :=</sym> <def>sumparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def></def>      <kwd>inc</kwd><def></def><sym>(</sym><def>ResultDigit</def><sym>);</sym><br />
+<def></def>    <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>    <kwa>while</kwa> <def></def><sym>(</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>&gt;</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><kwa>and</kwa> <def></def><sym>(</sym><def>Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>]=</sym><def></def><num>0</num><def></def><sym>)</sym><br />
+<def></def>      <kwa>and</kwa> <def></def><sym>(</sym><def>Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>2</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$80000000</num><def></def><sym>=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>do</kwa><br />
+<def></def>      <kwd>dec</kwd><def></def><sym>(</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>);</sym><br />
+<def></def>    <kwa>while</kwa> <def></def><sym>(</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>&gt;</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><kwa>and</kwa><br />
+<def></def>       <sym>(</sym><def>Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>]=</sym><def></def><num>$FFFFFFFF</num><def></def><sym>)</sym> <def></def><kwa>and</kwa><br />
+<def></def>       <sym>(</sym><def>Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>2</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$80000000</num><def></def><sym>&gt;</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>do</kwa><br />
+<def></def>      <kwd>dec</kwd><def></def><sym>(</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>);</sym><br />
+<def></def>    <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>a</def><sym>);</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>b</def><sym>);</sym><br />
+<def></def>  <kwd>dec</kwd><def></def><sym>(</sym><def>BigIntTop</def><sym>);</sym><br />
+<def>  BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>]:=</sym><def>Result</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def></def><kwd>BigIntMulInt</kwd><def></def><sym>(</sym><def>int</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>);</sym><br />
+<def></def><kwa>type</kwa><br />
+<def>  TWordPart</def> <sym>=</sym> <def></def><kwa>record</kwa><br />
+<def>    w1</def><sym>,</sym> <def>w2</def><sym>:</sym> <def></def><kwb>word</kwb><def></def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  mcarry</def><sym>:</sym> <def>dword</def><sym>;</sym><br />
+<def>  value</def><sym>:</sym> <def>qword</def><sym>;</sym><br />
+<def>  valueparts</def> <sym>:</sym> <def></def><kwa>array</kwa><def></def><sym>[</sym><def></def><num>0</num><def></def><sym>.</sym><def></def><num>.1</num><def></def><sym>]</sym> <def></def><kwa>of</kwa> <def>dword</def> <kwa>absolute</kwa> <def>value</def><sym>;</sym><br />
+<def>  BiNeg</def><sym>,</sym> <def>IntNeg</def><sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>;</sym><br />
+<def>  i</def><sym>:</sym><def></def><kwb>Integer</kwb><def></def><sym>;</sym><br />
+<def>  TopBi</def><sym>,</sym> <def>Result</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def>  TopBiDigit</def><sym>,</sym> <def>ResultDigit</def><sym>:</sym> <def>PDWord</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  TopBi</def> <sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>];</sym><br />
+<def></def>  <kwa>if</kwa> <def></def><sym>(</sym><def>int</def><sym>=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>or</kwa> <def></def><sym>(</sym><def>TopBi</def><sym>.</sym><def>IsZero</def><sym>)</sym> <def></def><kwa>then begin</kwa><br />
+<def>    TopBi</def><sym>.</sym><def>FSize</def> <sym>:=</sym> <def></def><num>1</num><def></def><sym>;</sym><br />
+<def>    TopBi</def><sym>.</sym><def>Digit</def><sym>[</sym><def></def><num>0</num><def></def><sym>]:=</sym><def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><br />
+<def></def>  <kwa>else begin</kwa><br />
+<def>    BiNeg</def> <sym>:=</sym> <def>TopBi</def><sym>.</sym><def>IsNegative</def><sym>;</sym><br />
+<def></def>    <kwa>if</kwa> <def>BiNeg</def> <kwa>then</kwa><br />
+<def>      TopBi</def><sym>.</sym><def>Negate</def><sym>;</sym><br />
+<def>    IntNeg</def> <sym>:=</sym> <def>int</def><sym>&lt;</sym><def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>    <kwa>if</kwa> <def>IntNeg</def> <kwa>then</kwa><br />
+<def>      int</def> <sym>:= -</sym><def>int</def><sym>;</sym><br />
+<def>    Result</def> <sym>:=</sym> <def></def><kwd>GetBigInt</kwd><def></def><sym>(</sym><def>TopBi</def><sym>.</sym><def>FSize</def><sym>+</sym><def></def><num>1</num><def></def><sym>,</sym> <def></def><kwb>false</kwb><def></def><sym>);</sym><br />
+<def>    mcarry</def> <sym>:=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def>    TopBiDigit</def> <sym>:=</sym> <def>TopBi</def><sym>.</sym><def>Digit</def><sym>;</sym><br />
+<def>    ResultDigit</def> <sym>:=</sym> <def>Result</def><sym>.</sym><def>Digit</def><sym>;</sym><br />
+<def></def>    <kwa>if</kwa> <def></def><sym>(</sym><def>int</def> <kwa>and</kwa> <def></def><num>$FFFF0000</num><def></def><sym>)=</sym><def></def><num>0</num> <def></def><kwa>then</kwa><br />
+<def></def>      <kwa>for</kwa> <def>i</def><sym>:=</sym> <def></def><num>0</num> <def></def><kwa>to</kwa> <def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>2</num> <def></def><kwa>do begin</kwa><br />
+<def></def>        <com>{this is what I want to do, but to get to the carry fpc compiles it into</com><br />
+<com>        an expensive qword*qword mulitplication:   }</com><def></def><br />
+        <com>{value := qword(TopBiDigit^) * int + mcarry;}</com><def><br />
+        value</def> <sym>:=</sym> <def></def><kwd>TWordPart</kwd><def></def><sym>(</sym><def>TopBiDigit</def><sym>^).</sym><def>w1</def> <sym>*</sym> <def></def><kwb>word</kwb><def></def><sym>(</sym><def>int</def><sym>) +</sym><br />
+<def></def>          <kwd>qword</kwd><def></def><sym>(</sym><def></def><kwd>TWordPart</kwd><def></def><sym>(</sym><def>TopBiDigit</def><sym>^).</sym><def>w2</def> <sym>*</sym> <def></def><kwb>word</kwb><def></def><sym>(</sym><def>int</def><sym>))</sym> <def></def><kwa>shl</kwa> <def></def><num>16</num> <def></def><sym>+</sym> <def>mcarry</def><sym>;</sym><br />
+<def>        ResultDigit</def><sym>^ :=</sym> <def>valueparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def>        mcarry</def> <sym>:=</sym> <def>valueparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def></def>        <kwd>inc</kwd><def></def><sym>(</sym><def>TopBiDigit</def><sym>);</sym> <def></def><kwd>inc</kwd><def></def><sym>(</sym><def>ResultDigit</def><sym>);</sym><br />
+<def></def>      <kwa>end</kwa><br />
+<def></def>    <kwa>else</kwa><br />
+<def></def>    <slc>// this branch is less often taken, so no hand code dword * dword multiplication</slc><br />
+<def></def>      <kwa>for</kwa> <def>i</def><sym>:=</sym> <def></def><num>0</num> <def></def><kwa>to</kwa> <def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>2</num> <def></def><kwa>do begin</kwa><br />
+<def>        value</def> <sym>:=</sym> <def></def><kwd>qword</kwd><def></def><sym>(</sym><def>TopBiDigit</def><sym>^) *</sym> <def>int</def> <sym>+</sym> <def>mcarry</def><sym>;</sym><br />
+<def>        ResultDigit</def><sym>^ :=</sym> <def>valueparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def>        mcarry</def> <sym>:=</sym> <def>valueparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def></def>        <kwd>inc</kwd><def></def><sym>(</sym><def>TopBiDigit</def><sym>);</sym> <def></def><kwd>inc</kwd><def></def><sym>(</sym><def>ResultDigit</def><sym>);</sym><br />
+<def></def>      <kwa>end</kwa><def></def><sym>;</sym><br />
+<def>    ResultDigit</def><sym>^ :=</sym> <def>mcarry</def><sym>;</sym><br />
+<def></def>    <kwa>while</kwa> <def></def><sym>(</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>&gt;</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><kwa>and</kwa> <def></def><sym>(</sym><def>Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>]=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>and</kwa><br />
+<def></def>      <sym>((</sym><def>Result</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>2</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$80000000</num><def></def><sym>)=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>do</kwa><br />
+<def></def>      <kwd>dec</kwd><def></def><sym>(</sym><def>Result</def><sym>.</sym><def>FSize</def><sym>);</sym><br />
+<def></def>    <kwa>if</kwa> <def></def><sym>(</sym><def>BiNeg</def><sym>&lt;&gt;</sym><def>IntNeg</def><sym>)</sym> <def></def><kwa>then</kwa><br />
+<def>      Result</def><sym>.</sym><def>Negate</def><sym>;</sym><br />
+<def></def>    <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>TopBi</def><sym>);</sym><br />
+<def>    BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>]:=</sym><def>Result</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def>BigIntDivIntResult</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  dividend</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def>  divisor</def><sym>:</sym> <def>TBigInt</def><sym>;</sym><br />
+<def>  carry</def><sym>:</sym> <def>dword</def><sym>;</sym><br />
+<def>  diff</def><sym>:</sym> <def></def><kwb>int64</kwb><def></def><sym>;</sym><br />
+<def>  diffparts</def><sym>:</sym> <def></def><kwa>array</kwa><def></def><sym>[</sym><def></def><num>0</num><def></def><sym>.</sym><def></def><num>.1</num><def></def><sym>]</sym> <def></def><kwa>of</kwa> <def>dword</def> <kwa>absolute</kwa> <def>diff</def><sym>;</sym><br />
+<def>  i</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  DividendDigit</def><sym>:</sym> <def>PDWord</def><sym>;</sym><br />
+<def>  DivisorDigit</def><sym>:</sym> <def>PDWord</def><sym>;</sym><br />
+<def></def><br />
+  <kwa>function</kwa> <def>DividendIsSmallerThanDivisor</def> <sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwa>var</kwa><br />
+<def>    i</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def>  <kwa>begin</kwa><br />
+<def></def>    <kwa>while</kwa> <def></def><sym>(</sym><def>Dividend</def><sym>.</sym><def>FSize</def><sym>&gt;</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><kwa>and</kwa> <def></def><sym>(</sym><def>Dividend</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Dividend</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>]=</sym><def></def><num>0</num><def></def><sym>)</sym><br />
+<def></def>      <kwa>and</kwa> <def></def><sym>(</sym><def>Dividend</def><sym>.</sym><def>Digit</def><sym>[</sym><def>Dividend</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>2</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$80000000</num><def></def><sym>=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>do</kwa><br />
+<def></def>      <kwd>dec</kwd><def></def><sym>(</sym><def>Dividend</def><sym>.</sym><def>FSize</def><sym>);</sym><br />
+<def></def>    <kwa>if</kwa> <def>dividend</def><sym>.</sym><def>FSize</def><sym>=</sym><def>divisor</def><sym>.</sym><def>FSize</def> <kwa>then begin</kwa><br />
+<def>      i</def> <sym>:=</sym> <def>dividend</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num><def></def><sym>;</sym><br />
+<def></def>      <kwa>while</kwa> <def></def><sym>(</sym><def>i</def><sym>&gt;=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>and</kwa> <def></def><sym>(</sym><def>dividend</def><sym>.</sym><def>Digit</def><sym>[</sym><def>i</def><sym>]=</sym><def>divisor</def><sym>.</sym><def>Digit</def><sym>[</sym><def>i</def><sym>])</sym> <def></def><kwa>do</kwa><br />
+<def></def>        <kwd>dec</kwd><def></def><sym>(</sym><def>i</def><sym>);</sym><br />
+<def>      Result</def><sym>:= (</sym><def>i</def><sym>&gt;=</sym><def></def><num>0</num><def></def><sym>)</sym> <def></def><kwa>and</kwa> <def></def><sym>(</sym><def>dividend</def><sym>.</sym><def>Digit</def><sym>[</sym><def>i</def><sym>]&lt;</sym><def>divisor</def><sym>.</sym><def>Digit</def><sym>[</sym><def>i</def><sym>]);</sym><br />
+<def></def>    <kwa>end</kwa><br />
+<def></def>    <kwa>else</kwa><br />
+<def>      Result</def><sym>:=</sym><def>dividend</def><sym>.</sym><def>FSize</def><sym>&lt;</sym><def>divisor</def><sym>.</sym><def>FSize</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>begin</kwa><br />
+<def>  dividend</def> <sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>-</sym><def></def><num>1</num><def></def><sym>];</sym><br />
+<def>  divisor</def> <sym>:=</sym> <def>BigIntStack</def><sym>[</sym><def>BigIntTop</def><sym>];</sym><br />
+<def>  Result</def><sym>:=</sym><def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>  <kwa>while not</kwa> <def>DividendIsSmallerThanDivisor</def> <kwa>do begin</kwa><br />
+<def></def>    <kwd>inc</kwd><def></def><sym>(</sym><def>Result</def><sym>);</sym><br />
+<def>    carry</def> <sym>:=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def>    DividendDigit</def> <sym>:=</sym> <def>Dividend</def><sym>.</sym><def>Digit</def><sym>;</sym><br />
+<def>    DivisorDigit</def> <sym>:=</sym> <def>Divisor</def><sym>.</sym><def>Digit</def><sym>;</sym><br />
+<def></def>    <kwa>for</kwa> <def>i</def><sym>:=</sym> <def></def><num>0</num> <def></def><kwa>to</kwa> <def>divisor</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num> <def></def><kwa>do begin</kwa><br />
+<def>      diff</def> <sym>:=</sym> <def></def><kwb>int64</kwb><def></def><sym>(</sym><def>dividendDigit</def><sym>^) - (</sym><def>divisorDigit</def><sym>^ +</sym> <def>carry</def><sym>);</sym><br />
+<def>      carry</def> <sym>:=</sym> <def>diffparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$1</num><def></def><sym>;</sym><br />
+<def>      dividendDigit</def><sym>^ :=</sym> <def>diffparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def></def>      <kwd>inc</kwd><def></def><sym>(</sym><def>DividendDigit</def><sym>);</sym> <def></def><kwd>inc</kwd><def></def><sym>(</sym><def>DivisorDigit</def><sym>);</sym><br />
+<def></def>    <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>    <kwa>for</kwa> <def>i</def><sym>:=</sym> <def>divisor</def><sym>.</sym><def>FSize</def> <kwa>to</kwa> <def>dividend</def><sym>.</sym><def>FSize</def><sym>-</sym><def></def><num>1</num> <def></def><kwa>do begin</kwa><br />
+<def>      diff</def> <sym>:=</sym> <def></def><kwb>int64</kwb><def></def><sym>(</sym><def>dividendDigit</def><sym>^) - (</sym><def>divisor</def><sym>.</sym><def></def><kwd>GetDigit</kwd><def></def><sym>(</sym><def>i</def><sym>) +</sym> <def>carry</def><sym>);</sym><br />
+<def>      carry</def> <sym>:=</sym> <def>diffparts</def><sym>[</sym><def></def><num>1</num><def></def><sym>]</sym> <def></def><kwa>and</kwa> <def></def><num>$1</num><def></def><sym>;</sym><br />
+<def>      dividendDigit</def><sym>^ :=</sym> <def>diffparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def>      dividend</def><sym>.</sym><def>Digit</def><sym>[</sym><def>i</def><sym>] :=</sym> <def>diffparts</def><sym>[</sym><def></def><num>0</num><def></def><sym>];</sym><br />
+<def></def>      <kwd>inc</kwd><def></def><sym>(</sym><def>DividendDigit</def><sym>);</sym><br />
+<def></def>    <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>dividend</def><sym>);</sym><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>divisor</def><sym>);</sym><br />
+<def></def>  <kwd>dec</kwd><def></def><sym>(</sym><def>BigIntTop</def><sym>,</sym><def></def><num>2</num><def></def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def>Init</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  BigIntStackLen</def> <sym>:=</sym> <def></def><num>8</num><def></def><sym>;</sym><br />
+<def></def>  <kwd>GetMem</kwd><def></def><sym>(</sym><def>BigIntStack</def><sym>,</sym> <def>BigIntStackLen</def> <sym>*</sym> <def></def><kwd>sizeof</kwd><def></def><sym>(</sym><def>TBigInt</def><sym>));</sym><br />
+<def>  BigIntTop</def> <sym>:= -</sym><def></def><num>1</num><def></def><sym>;</sym><br />
+<def>  FirstFreeBigInt</def> <sym>:=</sym> <def></def><kwa>nil</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>procedure</kwa> <def>Finalize</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>Freemem</kwd><def></def><sym>(</sym><def>BigIntStack</def><sym>);</sym><br />
+<def>  FreeBigInts</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<com>{ Matrix manipulation }</com><def></def><br />
+<br />
+<kwa>procedure</kwa> <def></def><kwd>FreeBigIntMatrix</kwd><def></def><sym>(</sym><def>a</def><sym>:</sym> <def>TBigMatrix</def><sym>);</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>]);</sym><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>]);</sym><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>]);</sym><br />
+<def></def>  <kwd>FreeBigInt</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>]);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>a1</def><sym>,</sym><def>a2</def><sym>:</sym> <def>TBigInt</def><sym>;</sym> <def>b1</def><sym>,</sym><def>b2</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym> <def>FreeBigInt</def><sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>) :</sym> <def>TBigInt</def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def></def>  <kwa>if</kwa> <def>FreeBigInt</def> <kwa>then</kwa><br />
+<def></def>    <kwd>PushBigInt</kwd><def></def><sym>(</sym><def>a1</def><sym>)</sym><br />
+<def></def>  <kwa>else</kwa><br />
+<def></def>    <kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>a1</def><sym>);</sym><br />
+<def></def>  <kwd>BigIntMulInt</kwd><def></def><sym>(</sym><def>b1</def><sym>);</sym><br />
+<def></def>  <kwa>if</kwa> <def>FreeBigInt</def> <kwa>then</kwa><br />
+<def></def>    <kwd>PushBigInt</kwd><def></def><sym>(</sym><def>a2</def><sym>)</sym><br />
+<def></def>  <kwa>else</kwa><br />
+<def></def>    <kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>a2</def><sym>);</sym><br />
+<def></def>  <kwd>BigIntMulInt</kwd><def></def><sym>(</sym><def>b2</def><sym>);</sym><br />
+<def>  BigIntAdd</def><sym>;</sym><br />
+<def>  Result</def><sym>:=</sym> <def>PopBigInt</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def><br />
+operator</def> <sym>* (</sym><def>a</def><sym>:</sym> <def>TBigMatrix</def><sym>;</sym> <def>b</def> <sym>:</sym> <def>TIntMatrix</def><sym>) :</sym> <def>TBigMatrix</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym> <def></def><kwb>false</kwb><def></def><sym>);</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def></def><kwb>true</kwb><def></def><sym>);</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym> <def></def><kwb>false</kwb><def></def><sym>);</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def></def><kwb>true</kwb><def></def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def><br />
+operator</def> <sym>* (</sym><def>a</def><sym>:</sym> <def>TIntMatrix</def><sym>;</sym> <def>b</def> <sym>:</sym> <def>TBigMatrix</def><sym>) :</sym> <def>TBigMatrix</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def></def><kwb>false</kwb><def></def><sym>);</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym><def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def></def><kwb>false</kwb><def></def><sym>);</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def></def><kwb>true</kwb><def></def><sym>);</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def></def><kwd>DotProduct</kwd><def></def><sym>(</sym><def>b</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym><def>b</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>],</sym><def>a</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>],</sym> <def></def><kwb>true</kwb><def></def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def></def><kwd>InitBigMatrix</kwd><def></def><sym>(</sym><def>a</def><sym>,</sym><def>b</def><sym>,</sym><def>c</def><sym>,</sym><def>d</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>):</sym> <def>TBigMatrix</def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def>a</def><sym>;</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def>b</def><sym>;</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def>c</def><sym>;</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def>d</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>function</kwa> <def></def><kwd>InitIntMatrix</kwd><def></def><sym>(</sym><def>a</def><sym>,</sym><def>b</def><sym>,</sym><def>c</def><sym>,</sym><def>d</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>):</sym> <def>TIntMatrix</def><sym>;</sym> <def></def><kwa>inline</kwa><def></def><sym>;</sym><br />
+<def></def><kwa>begin</kwa><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def>a</def><sym>;</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def>b</def><sym>;</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def>c</def><sym>;</sym><br />
+<def>  result</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def>d</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<com>{ calculating pidigits}</com><def></def><br />
+<br />
+<kwa>procedure</kwa> <def></def><kwd>PrintPiDigits</kwd><def></def><sym>(</sym><def></def><kwa>const</kwa> <def>NumDigits</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>);</sym><br />
+<def></def><kwa>var</kwa><br />
+<def>  n</def><sym>:</sym> <def></def><kwb>integer</kwb> <def></def><sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def>  k</def><sym>:</sym> <def></def><kwb>integer</kwb> <def></def><sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def>  z</def><sym>:</sym> <def>TBigMatrix</def><sym>;</sym><br />
+<def>  x</def><sym>,</sym><def>p</def><sym>:</sym> <def>TIntMatrix</def><sym>;</sym><br />
+<def>  Digit</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def><br />
+  <kwa>function</kwa> <def></def><kwd>Extract</kwd><def></def><sym>(</sym><def>x</def><sym>:</sym><def></def><kwb>integer</kwb><def></def><sym>) :</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def>  <kwa>begin</kwa><br />
+<def></def>    <kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>z</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>]);</sym><br />
+<def></def>    <kwd>BigIntMulInt</kwd><def></def><sym>(</sym><def>x</def><sym>);</sym><br />
+<def></def>    <kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>z</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>]);</sym><br />
+<def>    BigIntAdd</def><sym>;</sym><br />
+<def></def>    <kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>z</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>]);</sym><br />
+<def></def>    <kwd>BigIntMulInt</kwd><def></def><sym>(</sym><def>x</def><sym>);</sym><br />
+<def></def>    <kwd>PushBigIntByValue</kwd><def></def><sym>(</sym><def>z</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>]);</sym><br />
+<def>    BigIntAdd</def><sym>;</sym><br />
+<def>    result</def> <sym>:=</sym> <def>BigIntDivIntResult</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+  <kwa>function</kwa> <def>GetDigit</def> <sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def>  <kwa>begin</kwa><br />
+<def>    result</def> <sym>:=</sym> <def></def><kwd>Extract</kwd><def></def><sym>(</sym><def></def><num>3</num><def></def><sym>);</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+  <kwa>function</kwa> <def>IsSafe</def> <sym>:</sym> <def></def><kwb>boolean</kwb><def></def><sym>;</sym><br />
+<def></def>  <kwa>begin</kwa><br />
+<def>    result</def> <sym>:=</sym> <def>Digit</def> <sym>=</sym> <def></def><kwd>Extract</kwd><def></def><sym>(</sym><def></def><num>4</num><def></def><sym>);</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+  <kwa>procedure</kwa> <def>Produce</def><sym>;</sym><br />
+<def></def>  <kwa>begin</kwa><br />
+<def>    p</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] := -</sym><def></def><num>10</num> <def></def><sym>*</sym> <def>digit</def><sym>;</sym><br />
+<def>    z</def> <sym>:=</sym> <def>p</def> <sym>*</sym> <def>z</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+  <kwa>procedure</kwa> <def>Consume</def><sym>;</sym><br />
+<def></def>  <kwa>begin</kwa><br />
+<def></def>    <kwd>inc</kwd><def></def><sym>(</sym><def>k</def><sym>);</sym><br />
+<def>    x</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def>k</def><sym>;</sym><br />
+<def>    x</def><sym>[</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def></def><num>4</num><def></def><sym>*</sym><def>k</def><sym>+</sym><def></def><num>2</num><def></def><sym>;</sym><br />
+<def>    x</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>] :=</sym> <def></def><num>2</num><def></def><sym>*</sym><def>k</def><sym>+</sym><def></def><num>1</num><def></def><sym>;</sym><br />
+<def>    z</def><sym>:=</sym> <def>z</def> <sym>*</sym> <def>x</def><sym>;</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>begin</kwa><br />
+<def>  z</def> <sym>:=</sym> <def></def><kwd>InitBigMatrix</kwd><def></def><sym>(</sym><def></def><num>1</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>1</num><def></def><sym>);</sym><br />
+<def>  p</def> <sym>:=</sym> <def></def><kwd>InitIntMatrix</kwd><def></def><sym>(</sym><def></def><num>10</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>1</num><def></def><sym>);</sym><br />
+<def>  x</def><sym>[</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>] :=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>  <kwa>while</kwa> <def></def><sym>(</sym><def>n</def><sym>&lt;</sym><def>NumDigits</def><sym>)</sym> <def></def><kwa>do begin</kwa><br />
+<def>    Digit</def> <sym>:=</sym> <def>GetDigit</def><sym>;</sym><br />
+<def></def>    <kwa>while not</kwa> <def>IsSafe</def> <kwa>do begin</kwa><br />
+<def>      Consume</def><sym>;</sym><br />
+<def>      Digit</def><sym>:=</sym> <def>GetDigit</def><sym>;</sym><br />
+<def></def>    <kwa>end</kwa><def></def><sym>;</sym><br />
+<def>    Produce</def><sym>;</sym><br />
+<def></def>    <kwd>write</kwd><def></def><sym>(</sym><def>Digit</def><sym>);</sym><br />
+<def></def>    <kwd>inc</kwd><def></def><sym>(</sym><def>n</def><sym>);</sym><br />
+<def></def>    <kwa>if</kwa> <def></def><sym>(</sym><def>n</def> <kwa>mod</kwa> <def></def><num>10</num><def></def><sym>)=</sym><def></def><num>0</num> <def></def><kwa>then</kwa><br />
+<def></def>      <kwd>writeln</kwd><def></def><sym>(</sym><def></def><esc>#9</esc><def></def><str>':'</str><def></def><sym>,</sym> <def>n</def><sym>);</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def>  <kwd>FreeBigIntMatrix</kwd><def></def><sym>(</sym><def>z</def><sym>);</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>var</kwa><br />
+<def>  n</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def>  errorcode</def><sym>:</sym> <def></def><kwb>integer</kwb><def></def><sym>;</sym><br />
+<def></def><br />
+<kwa>begin</kwa><br />
+<def>  Init</def><sym>;</sym><br />
+<def></def>  <kwa>if</kwa> <def></def><sym>(</sym><def>ParamCount</def><sym>=</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><kwa>then begin</kwa><br />
+<def></def>    <kwd>val</kwd><def></def><sym>(</sym><def></def><kwd>ParamStr</kwd><def></def><sym>(</sym><def></def><num>1</num><def></def><sym>),</sym> <def>n</def><sym>,</sym> <def>errorcode</def><sym>);</sym><br />
+<def></def>    <kwd>PrintPiDigits</kwd><def></def><sym>(</sym><def>n</def><sym>);</sym><br />
+<def></def>  <kwa>end</kwa><def></def><sym>;</sym><br />
+<def>  Finalize</def><sym>;</sym><br />
+<def></def><kwa>end</kwa><def></def><sym>.</sym><br />
+<def></def><br />
+</source>

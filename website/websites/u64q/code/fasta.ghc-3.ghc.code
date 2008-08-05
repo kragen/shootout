@@ -1,0 +1,115 @@
+<source>
+<def></def><com>{-# OPTIONS_GHC -O2 -funbox-strict-fields #-}</com><def></def><br />
+<slc>-- The Great Computer Language Shootout</slc><br />
+<def></def><slc>-- http://shootout.alioth.debian.org/</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><slc>-- contributed by Jeff Newbern</slc><br />
+<def></def><slc>-- Modified to fastest.hs by Chris Kuklewicz, 6 Jan 2006</slc><br />
+<def></def><slc>-- Modified to fixed-fasta.hs by Chris Kuklewicz, 17 Jan 2006</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><slc>-- Uses random generation code derived from Simon Marlow and Einar</slc><br />
+<def></def><slc>-- Karttunen's &quot;random&quot; test entry.  No longer uses Double during run,</slc><br />
+<def></def><slc>-- everything has been pre-converted to Int.  And pre-converted to a</slc><br />
+<def></def><slc>-- binary tree for lookup.  Ideally this tree could be constructed</slc><br />
+<def></def><slc>-- with the probabilities in mind, but it isn't in this version.</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><slc>-- Compile with ghc --make resub-fasta.hs -o resub-fasta.ghc_run</slc><br />
+<def></def><slc>-- Run with &quot;./rsub-fasta.ghc_run %A&quot; where %A is the parameter</slc><br />
+<def></def><br />
+<kwa>import</kwa> <def>Control.Monad</def><br />
+<kwa>import</kwa> <def>Data.</def><kwb>Char</kwb><def></def><sym>(</sym><def>chr</def><sym>,</sym><def>ord</def><sym>)</sym><br />
+<def></def><kwa>import</kwa> <def>Data.List</def><sym>(</sym><def>mapAccumL</def><sym>)</sym><br />
+<def></def><kwa>import</kwa> <def>Data.Word</def><sym>(</sym><def>Word8</def><sym>)</sym><br />
+<def></def><kwa>import</kwa> <def>Data.IORef</def><br />
+<kwa>import</kwa> <def>Foreign</def><br />
+<kwa>import</kwa> <def>System</def><sym>(</sym><def>getArgs</def><sym>)</sym><br />
+<def></def><kwa>import</kwa> <def>System.IO</def><br />
+<br />
+<kwa>type</kwa> <def>Base</def> <sym>=</sym> <def>Word8</def><br />
+<kwa>data</kwa> <def>BaseFrequencyTree</def> <sym>=</sym> <def>Node</def> <sym>!</sym><def>Base</def><br />
+                       <sym>|</sym> <def>TreeNodes</def> <sym>!</sym><def></def><kwb>Int</kwb> <def></def><sym>!</sym><def>Base</def> <sym>!</sym><def>Base</def><br />
+                       <sym>|</sym> <def>Tree</def> <sym>!</sym><def></def><kwb>Int</kwb> <def></def><sym>!</sym><def>BaseFrequencyTree</def> <sym>!</sym><def>BaseFrequencyTree</def><br />
+<kwa>data</kwa> <def>Seed</def> <sym>=</sym> <def>Seed</def> <sym>!</sym><def></def><kwb>Int</kwb><br />
+<def><br />
+b2c</def> <sym>::</sym> <def>Word8</def> <sym>-&gt;</sym> <def></def><kwb>Char</kwb><br />
+<def>b2c</def> <sym>=</sym> <def>chr . fromEnum<br />
+c2b</def> <sym>=</sym> <def>toEnum . ord<br />
+<br />
+alu</def> <sym>=</sym> <def></def><str>&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG&quot;</str><def></def> <sym>++</sym><br />
+<def></def>      <str>&quot;GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA&quot;</str><def></def> <sym>++</sym><br />
+<def></def>      <str>&quot;CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT&quot;</str><def></def> <sym>++</sym><br />
+<def></def>      <str>&quot;ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA&quot;</str><def></def> <sym>++</sym><br />
+<def></def>      <str>&quot;GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG&quot;</str><def></def> <sym>++</sym><br />
+<def></def>      <str>&quot;AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC&quot;</str><def></def> <sym>++</sym><br />
+<def></def>      <str>&quot;AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</str><def><br />
+<br />
+im</def> <sym>=</sym> <def></def><num>139968</num> <def></def><sym>::</sym> <def></def><kwb>Double</kwb><br />
+<def><br />
+iub</def> <sym>=</sym> <def>mkTree $ snd . mapAccumL</def> <sym>(</sym><def>\rt</def> <sym>(</sym><def>c</def><sym>,</sym><def>f</def><sym>) -&gt; (</sym><def>f</def><sym>+</sym><def>rt</def><sym>,(</sym><def>c2b c</def><sym>,</sym><def>ceiling $ im</def><sym>*(</sym><def>f</def><sym>+</sym><def>rt</def><sym>))))</sym> <def></def><num>0.0</num> <def>$</def><br />
+  <sym>[ (</sym><def>'a'</def><sym>,</sym> <def></def><num>0.27</num><def></def><sym>), (</sym><def>'c'</def><sym>,</sym> <def></def><num>0.12</num><def></def><sym>), (</sym><def>'g'</def><sym>,</sym> <def></def><num>0.12</num><def></def><sym>), (</sym><def>'t'</def><sym>,</sym> <def></def><num>0.27</num><def></def><sym>), (</sym><def>'B'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>),</sym><br />
+<def></def>    <sym>(</sym><def>'D'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'H'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'K'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'M'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'N'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>),</sym><br />
+<def></def>    <sym>(</sym><def>'R'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'S'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'V'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'W'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>), (</sym><def>'Y'</def><sym>,</sym> <def></def><num>0.02</num><def></def><sym>) ]</sym><br />
+<def><br />
+homosapiens</def> <sym>=</sym>  <def>mkTree $ snd . mapAccumL</def> <sym>(</sym><def>\rt</def> <sym>(</sym><def>c</def><sym>,</sym><def>f</def><sym>) -&gt; (</sym><def>f</def><sym>+</sym><def>rt</def><sym>,(</sym><def>c2b c</def><sym>,</sym><def>ceiling $ im</def><sym>*(</sym><def>f</def><sym>+</sym><def>rt</def><sym>))))</sym> <def></def><num>0.0</num> <def>$</def><br />
+  <sym>[ (</sym><def>'a'</def><sym>,</sym> <def></def><num>0.3029549426680</num><def></def><sym>), (</sym><def>'c'</def><sym>,</sym> <def></def><num>0.1979883004921</num><def></def><sym>), (</sym><def>'g'</def><sym>,</sym> <def></def><num>0.1975473066391</num><def></def><sym>), (</sym><def>'t'</def><sym>,</sym> <def></def><num>0.3015094502008</num><def></def><sym>) ]</sym><br />
+<def><br />
+mkTree</def> <sym>[(</sym><def>b</def><sym>,</sym><def>_</def><sym>)] =</sym> <def>Node b<br />
+mkTree</def> <sym>[(</sym><def>b</def><sym>,</sym><def>f</def><sym>),(</sym><def>b'</def><sym>,</sym><def>_</def><sym>)] =</sym> <def>TreeNodes f b b'<br />
+mkTree xs</def> <sym>=</sym> <def></def><kwa>let</kwa> <def></def><sym>(</sym><def>h</def><sym>,</sym><def>t</def><sym>) =</sym> <def>splitAt</def> <sym>(</sym><def>length xs `div`</def> <num>2</num><def></def><sym>)</sym> <def>xs</def><br />
+                <sym>(</sym><def>_</def><sym>,</sym><def>f</def><sym>) =</sym> <def>last h</def><br />
+            <kwa>in</kwa> <def>Tree f</def> <sym>(</sym><def>mkTree h</def><sym>) (</sym><def>mkTree t</def><sym>)</sym><br />
+<def><br />
+chooseBase</def> <sym>(</sym><def>Node b</def><sym>)</sym> <def>_</def> <sym>=</sym> <def>b<br />
+chooseBase</def> <sym>(</sym><def>TreeNodes f b b'</def><sym>)</sym> <def>p</def> <sym>=</sym> <def>if</def> <sym>(</sym><def>p</def><sym>&lt;</sym><def>f</def><sym>)</sym> <def></def><kwa>then</kwa> <def>b</def> <kwa>else</kwa> <def>b'<br />
+chooseBase</def> <sym>(</sym><def>Tree f l r</def><sym>)</sym> <def>p</def> <sym>|</sym> <def>p</def> <sym>&lt;</sym> <def>f</def>     <sym>=</sym> <def>chooseBase l p</def><br />
+                          <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>chooseBase r p<br />
+<br />
+writeFastaHeader label title</def> <sym>=  (</sym><def>putStrLn</def> <sym>((</sym><def>'</def><sym>&gt;</sym><def>'</def><sym>:</sym><def>label</def><sym>) ++ (</sym><def>' '</def><sym>:</sym><def>title</def><sym>)))</sym><br />
+<def>perLine</def> <sym>=</sym> <def></def><num>60</num><br />
+<def><br />
+writeAluBuffer total</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def></def>  <kwa>let</kwa> <def>l</def> <sym>=</sym> <def>length alu<br />
+      bufSize</def> <sym>=</sym> <def>l</def> <sym>+</sym> <def>perLine</def> <sym>-</sym> <def></def><num>1</num><br />
+<def>  aluBuf</def> <sym>&lt;-</sym> <def>mallocArray bufSize<br />
+  foldM_</def> <sym>(</sym><def>\ptr c</def> <sym>-&gt;</sym> <def>poke ptr</def> <sym>(</sym><def>c2b c</def><sym>) &gt;&gt;</sym> <def>return</def> <sym>(</sym><def>advancePtr ptr</def> <num>1</num><def></def><sym>))</sym> <def>aluBuf</def> <sym>(</sym><def>take bufSize</def> <sym>(</sym><def>cycle alu</def><sym>))</sym><br />
+<def></def>  <kwa>let</kwa> <def></def><sym>(</sym><def>full</def><sym>,</sym><def>end</def><sym>) =</sym> <def>total `divMod` perLine<br />
+      fullLine n</def> <sym>=</sym> <def></def><kwa>let</kwa> <def>ptr</def> <sym>=</sym> <def>advancePtr aluBuf</def> <sym>((</sym><def>n</def> <sym>*</sym> <def>perLine</def><sym>)</sym> <def>`mod` l</def><sym>)</sym><br />
+<def></def>                   <kwa>in</kwa> <def>hPutBuf stdout ptr perLine</def> <sym>&gt;&gt;</sym> <def>hPutChar stdout '\n'<br />
+      lastLine</def> <sym>=</sym> <def></def><kwa>let</kwa> <def>ptr</def> <sym>=</sym> <def>advancePtr aluBuf</def> <sym>((</sym><def>full</def><sym>*</sym><def>perLine</def><sym>)</sym> <def>`mod` l</def><sym>)</sym><br />
+<def></def>                 <kwa>in</kwa> <def>hPutBuf stdout ptr end</def> <sym>&gt;&gt;</sym> <def>hPutChar stdout '\n'<br />
+  mapM_ fullLine</def> <sym>[</sym><def></def><num>0</num><def>..pred full</def><sym>]</sym><br />
+<def>  when</def> <sym>(</sym><def>end</def><sym>&gt;</sym><def></def><num>0</num><def></def><sym>)</sym> <def>lastLine<br />
+<br />
+writeWrapped total trans initSeed</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def>  seedRef</def> <sym>&lt;-</sym> <def>newIORef initSeed</def><br />
+  <kwa>let</kwa> <def>l</def> <sym>=</sym> <def>succ perLine</def><br />
+      <sym>(</sym><def>im</def><sym>,</sym><def>ia</def><sym>,</sym><def>ic</def><sym>)=(</sym><def></def><num>139968</num><def></def><sym>,</sym><def></def><num>3877</num><def></def><sym>,</sym><def></def><num>29573</num><def></def><sym>)</sym><br />
+<def>      nextSeed</def> <sym>(</sym><def>Seed s</def><sym>) =</sym> <def>Seed</def> <sym>( (</sym><def>s</def> <sym>*</sym> <def>ia</def> <sym>+</sym> <def>ic</def><sym>)</sym> <def>`mod` im</def> <sym>)</sym><br />
+<def>      prng</def> <sym>=</sym> <def></def><kwa>do</kwa> <def>newSeed</def> <sym>&lt;-</sym> <def>return.nextSeed</def> <sym>=&lt;&lt;</sym> <def>readIORef seedRef<br />
+                writeIORef seedRef newSeed<br />
+                return newSeed<br />
+  buf</def> <sym>&lt;-</sym> <def>mallocArray l<br />
+  poke</def> <sym>(</sym><def>advancePtr buf perLine</def><sym>) (</sym><def>c2b '\n'</def><sym>)</sym><br />
+<def></def>  <kwa>let</kwa> <def></def><sym>(</sym><def>full</def><sym>,</sym><def>end</def><sym>) =</sym> <def>total `divMod` perLine<br />
+      fill</def> <num>0</num> <def>_</def>   <sym>=</sym> <def>return</def> <sym>()</sym><br />
+<def>      fill i ptr</def> <sym>=</sym> <def></def><kwa>do</kwa> <def></def><sym>(</sym><def>Seed b</def><sym>) &lt;-</sym> <def>prng<br />
+                      poke ptr</def> <sym>(</sym><def>trans b</def><sym>)</sym><br />
+<def>                      fill</def> <sym>(</sym><def>pred i</def><sym>) (</sym><def>advancePtr ptr</def> <num>1</num><def></def><sym>)</sym><br />
+<def>      fullLine</def> <sym>=</sym> <def></def><kwa>do</kwa> <def>fill perLine buf<br />
+                    hPutBuf stdout buf l<br />
+      lastLine</def> <sym>=</sym> <def></def><kwa>do</kwa> <def>fill end buf<br />
+                    poke</def> <sym>(</sym><def>advancePtr buf end</def><sym>) (</sym><def>c2b '\n'</def><sym>)</sym><br />
+<def>                    hPutBuf stdout buf</def> <sym>(</sym><def>succ end</def><sym>)</sym><br />
+<def>  replicateM_ full fullLine<br />
+  when</def> <sym>(</sym><def>end</def><sym>&gt;</sym><def></def><num>0</num><def></def><sym>)</sym> <def>lastLine<br />
+  readIORef seedRef<br />
+<br />
+main</def> <sym>=</sym> <def></def><kwa>do</kwa> <def>args</def> <sym>&lt;-</sym> <def>getArgs</def><br />
+          <kwa>let</kwa> <def>n</def> <sym>=</sym> <def>if null args</def> <kwa>then</kwa> <def></def><num>2500000</num> <def></def><kwa>else</kwa> <def>read</def> <sym>(</sym><def>head args</def><sym>)</sym><br />
+<def>          writeFastaHeader</def> <str>&quot;ONE&quot;</str><def></def> <str>&quot;Homo sapiens alu&quot;</str><def><br />
+          writeAluBuffer</def> <sym>(</sym><def></def><num>2</num><def></def><sym>*</sym><def>n</def><sym>)</sym><br />
+<def>          writeFastaHeader</def> <str>&quot;TWO&quot;</str><def></def> <str>&quot;IUB ambiguity codes&quot;</str><def><br />
+          seed'</def> <sym>&lt;-</sym> <def>writeWrapped</def> <sym>(</sym><def></def><num>3</num><def></def><sym>*</sym><def>n</def><sym>) (</sym><def>chooseBase iub</def><sym>) (</sym><def>Seed</def> <num>42</num><def></def><sym>)</sym><br />
+<def>          writeFastaHeader</def> <str>&quot;THREE&quot;</str><def></def> <str>&quot;Homo sapiens frequency&quot;</str><def><br />
+          writeWrapped</def> <sym>(</sym><def></def><num>5</num><def></def><sym>*</sym><def>n</def><sym>) (</sym><def>chooseBase homosapiens</def><sym>)</sym> <def>seed'</def><br />
+</source>

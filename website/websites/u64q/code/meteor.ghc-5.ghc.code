@@ -1,0 +1,271 @@
+<source>
+<def></def><com>{-# OPTIONS -O2 -fbang-patterns -optc-O3 #-}</com><def></def><br />
+<br />
+<slc>-- The Computer Language Benchmarks Game</slc><br />
+<def></def><slc>--   http://shootout.alioth.debian.org/</slc><br />
+<def></def><slc>--</slc><br />
+<def></def><slc>--   Sterling Clover's translation of Tim Hochberg's Clean implementation</slc><br />
+<def></def><br />
+<kwa>module</kwa> <def>Main</def> <kwa>where</kwa><br />
+<def></def><kwa>import</kwa> <def>System.Environment</def><br />
+<kwa>import</kwa> <def>Data.Bits</def><br />
+<kwa>import</kwa> <def>Data.List</def><br />
+<kwa>import</kwa> <def>Data.Array.IArray</def><br />
+<kwa>import</kwa> <def>Data.Array.Unboxed</def><br />
+<kwa>import</kwa> <def>Control.Arrow</def><br />
+<br />
+<slc>--- The Board ---</slc><br />
+<def>n_elem</def> <sym>=</sym> <def></def><num>5</num><br />
+<def>n_col</def> <sym>=</sym> <def></def><num>5</num><br />
+<def>n_row</def> <sym>=</sym> <def></def><num>10</num><br />
+<def><br />
+m_top</def> <sym>::</sym> <def>Mask<br />
+m_top</def> <sym>=</sym> <def></def><num>0x1F</num><br />
+<def><br />
+cells</def> <sym>:: [</sym><def>Cell</def><sym>]</sym><br />
+<def>cells</def> <sym>= [</sym><def></def><num>0</num><def>.</def><num>.49</num><def></def><sym>]</sym><br />
+<def><br />
+colors</def> <sym>:: [</sym><def>Color</def><sym>]</sym><br />
+<def>colors</def> <sym>= [</sym><def></def><num>0</num><def>.</def><num>.9</num><def></def><sym>]</sym><br />
+<def><br />
+cellAt x y</def> <sym>=</sym> <def>x</def> <sym>+</sym> <def>n_col</def> <sym>*</sym> <def>y<br />
+coordOf i</def> <sym>=</sym> <def>snd</def> <sym>&amp;&amp;&amp;</sym> <def>fst $ i `quotRem` n_col<br />
+isValid x y</def> <sym>=</sym> <def></def><num>0</num> <def></def><sym>&lt;=</sym> <def>x</def> <sym>&amp;&amp;</sym> <def>x</def> <sym>&lt;</sym> <def>n_col</def> <sym>&amp;&amp;</sym> <def></def><num>0</num> <def></def><sym>&lt;=</sym> <def>y</def> <sym>&amp;&amp;</sym> <def>y</def> <sym>&lt;</sym> <def>n_row</def><br />
+<br />
+<slc>--- Piece Operations ---</slc><br />
+<def></def><kwa>data</kwa> <def>Direction</def> <sym>=</sym> <def>E</def> <sym>|</sym> <def>SE</def> <sym>|</sym> <def>SW</def> <sym>|</sym> <def>W</def> <sym>|</sym> <def>NW</def> <sym>|</sym> <def>NE</def> <kwa>deriving</kwa> <def></def><sym>(</sym><def>Enum</def><sym>,</sym> <def>Eq</def><sym>,</sym> <def>Ord</def><sym>)</sym><br />
+<def></def><kwa>type</kwa> <def>Piece</def> <sym>= [</sym><def>Direction</def><sym>]</sym><br />
+<def></def><kwa>type</kwa> <def>CellCoord</def> <sym>= (</sym><def></def><kwb>Int</kwb><def></def><sym>,</sym> <def></def><kwb>Int</kwb><def></def><sym>)</sym><br />
+<def></def><kwa>type</kwa> <def>Mask</def> <sym>=</sym> <def></def><kwb>Int</kwb><def></def><sym>;</sym> <def></def><kwa>type</kwa> <def>Color</def> <sym>=</sym> <def></def><kwb>Int</kwb><def></def><sym>;</sym> <def></def><kwa>type</kwa> <def>Row</def> <sym>=</sym> <def></def><kwb>Int</kwb><def></def><sym>;</sym><br />
+<def></def><kwa>type</kwa> <def>Col</def> <sym>=</sym> <def></def><kwb>Int</kwb><def></def><sym>;</sym> <def></def><kwa>type</kwa> <def>Tag</def> <sym>=</sym> <def></def><kwb>Int</kwb><def></def><sym>;</sym> <def></def><kwa>type</kwa> <def>Cell</def> <sym>=</sym> <def></def><kwb>Int</kwb><br />
+<def></def><kwa>type</kwa> <def>Solution</def> <sym>= [</sym><def>Mask</def><sym>]</sym><br />
+<def><br />
+pieces</def> <sym>::</sym> <def>Array</def> <kwb>Int</kwb> <def>Piece<br />
+pieces</def> <sym>=</sym> <def>array</def> <sym>(</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>9</num><def></def><sym>)</sym> <def>$ zip</def> <sym>[</sym><def></def><num>0</num><def>.</def><num>.9</num><def></def><sym>]</sym> <def>$</def><br />
+         <sym>[[</sym><def>E</def><sym>,</sym>  <def>E</def><sym>,</sym>  <def>E</def><sym>,</sym>  <def>SE</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>SE</def><sym>,</sym> <def>SW</def><sym>,</sym> <def>W</def><sym>,</sym>  <def>SW</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>W</def><sym>,</sym>  <def>W</def><sym>,</sym>  <def>SW</def><sym>,</sym> <def>SE</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>E</def><sym>,</sym>  <def>E</def><sym>,</sym>  <def>SW</def><sym>,</sym> <def>SE</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>NW</def><sym>,</sym> <def>W</def><sym>,</sym>  <def>NW</def><sym>,</sym> <def>SE</def><sym>,</sym> <def>SW</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>E</def><sym>,</sym>  <def>E</def><sym>,</sym>  <def>NE</def><sym>,</sym> <def>W</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>NW</def><sym>,</sym> <def>NE</def><sym>,</sym> <def>NE</def><sym>,</sym> <def>W</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>NE</def><sym>,</sym> <def>SE</def><sym>,</sym> <def>E</def><sym>,</sym>  <def>NE</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>SE</def><sym>,</sym> <def>SE</def><sym>,</sym> <def>E</def><sym>,</sym>  <def>SE</def><sym>],</sym><br />
+<def></def>	  <sym>[</sym><def>E</def><sym>,</sym>  <def>NW</def><sym>,</sym> <def>NW</def><sym>,</sym> <def>NW</def><sym>]]</sym><br />
+<def><br />
+permutations</def> <sym>::</sym> <def>Piece</def> <sym>-&gt; [</sym><def>Piece</def><sym>]</sym><br />
+<def>permutations p</def> <sym>=</sym> <def>take</def> <num>12</num> <def></def><sym>(</sym><def>perms p</def><sym>)</sym><br />
+<def></def>    <kwa>where</kwa><br />
+<def>      perms p</def> <sym>=</sym> <def>p</def><sym>:(</sym><def>flip p</def><sym>) :</sym> <def>perms</def> <sym>(</sym><def>rotate p</def><sym>)</sym><br />
+<def>      rotate piece</def> <sym>=</sym> <def>map r piece</def><br />
+          <kwa>where</kwa> <def>r E</def>  <sym>=</sym> <def>NE<br />
+                r NE</def> <sym>=</sym> <def>NW<br />
+                r NW</def> <sym>=</sym> <def>W<br />
+                r W</def>  <sym>=</sym> <def>SW<br />
+                r SW</def> <sym>=</sym> <def>SE<br />
+                r SE</def> <sym>=</sym> <def>E<br />
+      flip piece</def> <sym>=</sym> <def>map f piece</def><br />
+          <kwa>where</kwa> <def>f E</def>  <sym>=</sym> <def>W<br />
+                f NE</def> <sym>=</sym> <def>NW<br />
+                f NW</def> <sym>=</sym> <def>NE<br />
+                f W</def>  <sym>=</sym> <def>E<br />
+                f SW</def> <sym>=</sym> <def>SE<br />
+                f SE</def> <sym>=</sym> <def>SW</def><br />
+<br />
+<slc>--- Mask Operations ----</slc><br />
+<def>untag</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Mask<br />
+untag mask</def>   <sym>=</sym> <def>mask .</def><sym>&amp;</sym><def>.</def> <num>0x1ffffff</num><br />
+<def><br />
+retag</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Tag</def> <sym>-&gt;</sym> <def>Mask<br />
+retag mask n</def> <sym>=</sym> <def>untag mask .</def><sym>|</sym><def>. n `shiftL`</def> <num>25</num><br />
+<def><br />
+tagof</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Tag<br />
+tagof mask</def>   <sym>=</sym> <def>mask `shiftR`</def> <num>25</num><br />
+<def><br />
+tag</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Tag</def> <sym>-&gt;</sym> <def>Mask<br />
+tag   mask n</def> <sym>=</sym> <def>mask .</def><sym>|</sym><def>. n `shiftL`</def> <num>25</num><br />
+<def><br />
+count1s</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def></def><kwb>Int</kwb><br />
+<def>count1s i</def><br />
+    <sym>|</sym> <def>i</def> <sym>==</sym> <def></def><num>0</num> <def></def><sym>=</sym> <def></def><num>0</num><br />
+<def></def>    <sym>|</sym> <def>i .</def><sym>&amp;</sym><def>.</def> <num>1</num> <def></def><sym>==</sym> <def></def><num>1</num> <def></def><sym>=</sym> <def></def><num>1</num> <def></def><sym>+</sym> <def>count1s</def> <sym>(</sym><def>i `shiftR`</def> <num>1</num><def></def><sym>)</sym><br />
+<def></def>    <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>count1s</def> <sym>(</sym><def>i `shiftR`</def> <num>1</num><def></def><sym>)</sym><br />
+<def><br />
+first0</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def></def><kwb>Int</kwb><br />
+<def>first0 i</def><br />
+    <sym>|</sym> <def>i .</def><sym>&amp;</sym><def>.</def> <num>1</num> <def></def><sym>==</sym> <def></def><num>0</num> <def></def><sym>=</sym> <def></def><num>0</num><br />
+<def></def>    <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def></def><num>1</num> <def></def><sym>+</sym> <def>first0</def> <sym>(</sym><def>i `shiftR`</def> <num>1</num><def></def><sym>)</sym><br />
+<def></def><br />
+<slc>--- Making the Bitmasks ---</slc><br />
+<def>mod2 x</def> <sym>=</sym> <def>x .</def><sym>&amp;</sym><def>.</def> <num>1</num><br />
+<def>packSize a b</def> <sym>=</sym> <def>a</def><sym>*</sym><def></def><num>5</num><def></def><sym>+</sym><def>b<br />
+unpackSize n</def> <sym>=</sym> <def>quotRem n</def> <num>5</num><br />
+<def><br />
+move</def> <sym>::</sym> <def>Direction</def> <sym>-&gt;</sym> <def>CellCoord</def> <sym>-&gt;</sym> <def>CellCoord<br />
+move E</def>  <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) = (</sym><def>x</def><sym>+</sym><def></def><num>1</num><def></def><sym>,</sym> <def>y</def><sym>)</sym><br />
+<def>move W</def>  <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) = (</sym><def>x</def><sym>-</sym><def></def><num>1</num><def></def><sym>,</sym> <def>y</def><sym>)</sym><br />
+<def>move NE</def> <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) = (</sym><def>x</def><sym>+(</sym><def>mod2 y</def><sym>),</sym>   <def>y</def><sym>-</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def>move NW</def> <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) = (</sym><def>x</def><sym>+(</sym><def>mod2 y</def><sym>)-</sym><def></def><num>1</num><def></def><sym>,</sym> <def>y</def><sym>-</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def>move SE</def> <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) = (</sym><def>x</def><sym>+(</sym><def>mod2 y</def><sym>),</sym>   <def>y</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def>move SW</def> <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) = (</sym><def>x</def><sym>+(</sym><def>mod2 y</def><sym>)-</sym><def></def><num>1</num><def></def><sym>,</sym> <def>y</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def><br />
+pieceBounds</def> <sym>::</sym> <def>Piece</def> <sym>-&gt;</sym> <def></def><kwb>Bool</kwb> <def></def><sym>-&gt; (</sym><def></def><kwb>Int</kwb><def></def><sym>,</sym> <def></def><kwb>Int</kwb><def></def><sym>,</sym> <def></def><kwb>Int</kwb><def></def><sym>,</sym> <def></def><kwb>Int</kwb><def></def><sym>)</sym><br />
+<def>pieceBounds piece isodd</def> <sym>=</sym> <def>bnds piece</def> <num>0</num> <def>y0</def> <num>0</num> <def>y0</def> <num>0</num> <def>y0</def><br />
+  <kwa>where</kwa><br />
+<def>    y0</def> <sym>|</sym> <def>isodd</def> <sym>=</sym> <def></def><num>1</num> <def></def><sym>|</sym> <def>otherwise</def> <sym>=</sym> <def></def><num>0</num><br />
+<def>    bnds</def> <sym>[]</sym> <def>_ _ xmin ymin xmax ymax</def> <sym>= (</sym><def>xmin</def><sym>,</sym> <def>ymin</def><sym>,</sym> <def>xmax</def><sym>,</sym> <def>ymax</def><sym>)</sym><br />
+<def>    bnds</def> <sym>(</sym><def>d</def><sym>:</sym><def>rest</def><sym>)</sym> <def>x y xmin ymin xmax ymax</def> <sym>=</sym><br />
+<def>        bnds rest x' y'</def> <sym>(</sym><def>min x' xmin</def><sym>) (</sym><def>min y' ymin</def><sym>) (</sym><def>max x' xmax</def><sym>) (</sym><def>max y' ymax</def><sym>)</sym><br />
+<def></def>            <kwa>where</kwa> <def></def><sym>(</sym><def>x'</def><sym>,</sym> <def>y'</def><sym>) =</sym> <def>move d</def> <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>)</sym><br />
+<def><br />
+pieceMask</def> <sym>::</sym> <def>Piece</def> <sym>-&gt; (</sym><def>Mask</def><sym>,</sym> <def>Mask</def><sym>)</sym><br />
+<def>pieceMask piece</def><br />
+    <sym>|</sym> <def>odd y1</def>    <sym>= (</sym><def>tag</def> <sym>(</sym><def>msk piece x2 y2</def> <num>0</num><def></def><sym>) (</sym><def>packSize w2 h2</def><sym>),</sym><br />
+<def>                   tag</def> <sym>(</sym><def>msk piece x1</def> <sym>(</sym><def>y1</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><num>0</num> <def>`shiftR` n_col</def><sym>) (</sym><def>packSize w1 h1</def><sym>))</sym><br />
+<def></def>    <sym>|</sym> <def>otherwise</def> <sym>= (</sym><def>tag</def> <sym>(</sym><def>msk piece x1 y1</def> <num>0</num><def></def><sym>) (</sym><def>packSize w1 h1</def><sym>),</sym><br />
+<def>                   tag</def> <sym>(</sym><def>msk piece x2</def> <sym>(</sym><def>y2</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym> <def></def><num>0</num> <def>`shiftR` n_col</def><sym>) (</sym><def>packSize w2 h2</def><sym>))</sym><br />
+<def></def>    <kwa>where</kwa><br />
+<def></def>      <sym>(</sym><def>xmin</def><sym>,</sym> <def>ymin</def><sym>,</sym> <def>xmax</def><sym>,</sym> <def>ymax</def><sym>) =</sym> <def>pieceBounds piece</def> <kwa>False</kwa><br />
+<def></def>      <sym>(</sym><def>x1</def><sym>,</sym> <def>y1</def><sym>) = (-</sym><def>xmin</def><sym>, -</sym><def>ymin</def><sym>)</sym><br />
+<def>      w1</def> <sym>=</sym> <def>xmax</def> <sym>-</sym> <def>xmin<br />
+      h1</def> <sym>=</sym> <def>ymax</def> <sym>-</sym> <def>ymin</def><br />
+      <sym>(</sym><def>xmin'</def><sym>,</sym> <def>ymin'</def><sym>,</sym> <def>xmax'</def><sym>,</sym> <def>ymax'</def><sym>) =</sym> <def>pieceBounds piece</def> <kwa>True</kwa><br />
+<def></def>      <sym>(</sym><def>x2</def><sym>,</sym> <def>y2</def><sym>) = (-</sym><def>xmin'</def><sym>, (-</sym><def>ymin'</def><sym>)+</sym><def></def><num>1</num><def></def><sym>)</sym><br />
+<def>      w2</def> <sym>=</sym> <def>xmax'</def> <sym>-</sym> <def>xmin'<br />
+      h2</def> <sym>=</sym> <def>ymax'</def> <sym>-</sym> <def>ymin'<br />
+      msk</def> <sym>::</sym> <def>Piece</def> <sym>-&gt;</sym> <def>Col</def> <sym>-&gt;</sym> <def>Row</def> <sym>-&gt;</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Mask<br />
+      msk</def> <sym>[]</sym> <def>x y m</def> <sym>=</sym> <def>m `setBit` cellAt x y<br />
+      msk</def> <sym>(</sym><def>d</def><sym>:</sym><def>rest</def><sym>)</sym> <def>x y m</def> <sym>=</sym> <def>msk rest x' y'</def> <sym>(</sym><def>m `setBit` cellAt x y</def><sym>)</sym><br />
+<def></def>          <kwa>where</kwa> <def></def><sym>(</sym><def>x'</def><sym>,</sym> <def>y'</def><sym>) =</sym> <def>move d</def> <sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>)</sym><br />
+<def><br />
+templatesForColor</def> <sym>::</sym> <def>Color</def> <sym>-&gt; ([</sym><def>Mask</def><sym>], [</sym><def>Mask</def><sym>])</sym><br />
+<def>templatesForColor c</def> <sym>= (</sym><def>unzip . map pieceMask</def><sym>)</sym> <def>perms</def><br />
+    <kwa>where</kwa> <def>perms</def> <sym>|</sym> <def>c</def> <sym>==</sym> <def></def><num>5</num> <def></def><sym>=</sym> <def>take</def> <num>6</num> <def>ps</def> <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>ps<br />
+          ps</def> <sym>=</sym> <def>permutations $ pieces</def> <sym>!</sym> <def>c</def><br />
+<br />
+<slc>--- Looking for Islands ---</slc><br />
+<def>noLineIslands</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Cell</def> <sym>-&gt;</sym> <def>Cell</def> <sym>-&gt;</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def></def><kwb>Bool</kwb><br />
+<def>noLineIslands mask start stop step</def><br />
+    <sym>| (</sym><def>fnd testBit . fnd</def> <sym>((</sym><def>not .</def><sym>)</sym> <def>. testBit</def><sym>)</sym> <def>. fnd testBit</def><sym>)</sym>  <def>start</def> <sym>&gt;</sym> <def>stop</def>  <sym>=</sym> <def></def><kwa>True</kwa><br />
+<def></def>    <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def></def><kwa>False</kwa><br />
+<def></def>  <kwa>where</kwa><br />
+<def>    fnd test</def> <sym>!</sym><def>x</def><br />
+        <sym>|</sym> <def>x</def> <sym>&gt;=</sym> <def></def><num>25</num>     <def></def><sym>=</sym> <def></def><num>25</num><br />
+<def></def>        <sym>|</sym> <def>test mask x</def> <sym>=</sym> <def>x</def><br />
+        <sym>|</sym> <def>otherwise</def>   <sym>=</sym> <def>fnd test</def> <sym>(</sym><def>x</def><sym>+</sym><def>step</def><sym>)</sym><br />
+<def><br />
+noLeftIslands</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def></def><kwb>Bool</kwb><br />
+<def>noLeftIslands  mask</def>  <sym>=</sym> <def>noLineIslands mask</def> <num>0 20 5</num><br />
+<def>noRightIslands mask</def>  <sym>=</sym> <def>noLineIslands mask</def> <num>4 24 5</num><br />
+<def><br />
+noIslands</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def></def><kwb>Bool</kwb><br />
+<def>noIslands board</def> <sym>=</sym> <def>noisles board</def> <sym>(</sym><def>count1s board</def><sym>)</sym><br />
+<def><br />
+noisles</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def></def><kwb>Int</kwb> <def></def><sym>-&gt;</sym> <def></def><kwb>Bool</kwb><br />
+<def>noisles _</def> <num>30</num> <def></def><sym>=</sym> <def></def><kwa>True</kwa><br />
+<def>noisles board ones</def><br />
+    <sym>| (</sym><def>ones'</def> <sym>-</sym> <def>ones</def><sym>)</sym> <def>`rem` n_elem</def> <sym>/=</sym> <def></def><num>0</num> <def></def><sym>=</sym> <def></def><kwa>False</kwa><br />
+<def></def>    <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>noisles board' ones'</def><br />
+    <kwa>where</kwa> <def>board'</def> <sym>=</sym> <def>fill board</def> <sym>(</sym><def>coordOf</def> <sym>(</sym><def>first0 board</def><sym>))</sym><br />
+<def>          ones'</def> <sym>=</sym> <def>count1s board'<br />
+<br />
+fill</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>CellCoord</def> <sym>-&gt;</sym> <def>Mask<br />
+fill m cc</def><sym>@(</sym><def>x</def><sym>,</sym> <def>y</def><sym>)</sym><br />
+<def></def>    <sym>|</sym> <def>x</def> <sym>&lt;</sym> <def></def><num>0</num> <def></def><sym>||</sym> <def>x</def> <sym>&gt;=</sym> <def>n_col</def> <sym>=</sym> <def>m</def><br />
+    <sym>|</sym> <def>y</def> <sym>&lt;</sym> <def></def><num>0</num> <def></def><sym>||</sym> <def>y</def> <sym>&gt;=</sym> <def></def><num>6</num>     <def></def><sym>=</sym> <def>m</def><br />
+    <sym>|</sym> <def>testBit m i</def> <sym>=</sym> <def>m</def><br />
+    <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>foldl</def> <sym>(</sym><def>\m d</def> <sym>-&gt;</sym> <def>fill m</def> <sym>(</sym><def>move d cc</def><sym>)) (</sym><def>setBit m i</def><sym>)</sym><br />
+<def></def>                  <sym>[</sym><def>E</def><sym>,</sym> <def>NE</def><sym>,</sym> <def>NW</def><sym>,</sym> <def>W</def><sym>,</sym> <def>SW</def><sym>,</sym> <def>SE</def><sym>]</sym><br />
+<def></def>    <kwa>where</kwa> <def>i</def> <sym>=</sym> <def>cellAt x y</def><br />
+<br />
+<slc>--- More Mask Generation ---</slc><br />
+<def>masksForColor</def> <sym>::</sym> <def>Color</def> <sym>-&gt; [(</sym><def>Row</def><sym>,</sym> <def>Mask</def><sym>)]</sym><br />
+<def>masksForColor c</def> <sym>=</sym> <def>concatMap atCell cells</def><br />
+  <kwa>where</kwa><br />
+<def></def>    <sym>(</sym><def>evens</def><sym>,</sym> <def>odds</def><sym>) =</sym> <def>templatesForColor c<br />
+    atCell n</def><br />
+        <sym>|</sym> <def>even y</def> <sym>= [(</sym><def>y</def><sym>,</sym> <def>retag</def> <sym>(</sym><def>m `shiftL` x</def><sym>)</sym> <def>c</def><sym>) |</sym> <def>m</def> <sym>&lt;-</sym> <def>evens</def> <sym>,</sym> <def>isok m x y</def><sym>]</sym><br />
+<def></def>        <sym>|</sym> <def>odd  y</def> <sym>= [(</sym><def>y</def><sym>,</sym> <def>retag</def> <sym>(</sym><def>m `shiftL` x</def><sym>)</sym> <def>c</def><sym>) |</sym> <def>m</def> <sym>&lt;-</sym> <def>odds</def>  <sym>,</sym> <def>isok m x y</def><sym>]</sym><br />
+<def></def>        <kwa>where</kwa> <def></def><sym>(</sym><def>x</def><sym>,</sym> <def>y</def><sym>) =</sym> <def>coordOf n<br />
+<br />
+isok</def> <sym>::</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Row</def> <sym>-&gt;</sym> <def>Col</def> <sym>-&gt;</sym> <def></def><kwb>Bool</kwb><br />
+<def>isok mask x y</def> <sym>=</sym><br />
+<def>    isValid</def> <sym>(</sym><def>x</def><sym>+</sym><def>width</def><sym>) (</sym><def>y</def><sym>+</sym><def>height</def><sym>) &amp;&amp;</sym><br />
+<def></def>            <kwa>case</kwa> <def></def><sym>(</sym><def>y</def> <sym>==</sym> <def></def><num>0</num><def></def><sym>,</sym> <def>y</def><sym>+</sym><def>height</def><sym>==</sym><def></def><num>9</num><def></def><sym>)</sym> <def></def><kwa>of</kwa><br />
+<def></def>              <sym>(</sym><def></def><kwa>False</kwa><def></def><sym>,</sym> <def></def><kwa>False</kwa><def></def><sym>) -&gt;</sym> <def>noLeftIslands mask'</def> <sym>&amp;&amp;</sym> <def>noRightIslands mask'</def><br />
+              <sym>(</sym><def></def><kwa>False</kwa><def></def><sym>,</sym> <def></def><kwa>True</kwa><def></def><sym>)  -&gt;</sym> <def>noIslands</def> <sym>(</sym><def>mask' `shiftL`</def> <sym>(</sym><def>n_col</def> <sym>* (</sym><def>y</def> <sym>-</sym> <def></def><num>4</num><def></def><sym>)))</sym><br />
+<def></def>              <sym>(</sym><def></def><kwa>True</kwa><def></def><sym>,</sym> <def>_</def> <sym>) -&gt;</sym> <def>noIslands mask'</def><br />
+    <kwa>where</kwa> <def></def><sym>(</sym><def>width</def><sym>,</sym> <def>height</def><sym>) =</sym> <def>unpackSize</def> <sym>(</sym><def>tagof mask</def><sym>)</sym><br />
+<def>          mask'</def> <sym>=</sym> <def>untag mask `shiftL` x<br />
+<br />
+masksAtCell</def> <sym>::</sym> <def>Array</def> <sym>(</sym><def>Row</def><sym>,</sym><def>Col</def><sym>) (</sym><def>Array Color</def> <sym>[</sym><def>Mask</def><sym>])</sym><br />
+<def>masksAtCell</def> <sym>=</sym> <def>trps $ map</def> <sym>(</sym><def>masksAt cells . masksForColor</def><sym>)</sym> <def>colors<br />
+<br />
+masksAt</def> <sym>:: [</sym><def></def><kwb>Int</kwb><def></def><sym>] -&gt; [(</sym><def>Row</def><sym>,</sym><def>Mask</def><sym>)]-&gt; [[</sym><def>Mask</def><sym>]]</sym><br />
+<def>masksAt</def> <sym>[]</sym> <def>_</def> <sym>= []</sym><br />
+<def>masksAt</def> <sym>(</sym><def>n</def><sym>:</sym><def>ns</def><sym>) !</sym><def>masks</def> <sym>=</sym> <def>map snd t</def> <sym>:</sym> <def>masksAt ns f</def><br />
+    <kwa>where</kwa><br />
+<def></def>      <sym>(</sym><def>t</def><sym>,</sym> <def>f</def><sym>) =</sym> <def>partition test masks<br />
+      test</def> <sym>(</sym><def>r</def><sym>,</sym> <def>m</def><sym>) =</sym> <def>n'</def> <sym>&gt;=</sym> <def></def><num>0</num> <def></def><sym>&amp;&amp;</sym> <def>n'</def> <sym>&lt;</sym> <def></def><num>25</num> <def></def><sym>&amp;&amp;</sym>  <def>m `testBit` n'</def><br />
+          <kwa>where</kwa> <def>n'</def> <sym>=</sym> <def>n</def> <sym>- (</sym><def>n_col</def> <sym>*</sym> <def>r</def><sym>)</sym><br />
+<def><br />
+trps</def> <sym>:: [[[</sym><def>Mask</def><sym>]]] -&gt;</sym> <def>Array</def> <sym>(</sym><def>Row</def><sym>,</sym> <def>Col</def><sym>) (</sym><def>Array Color</def> <sym>[</sym><def>Mask</def><sym>])</sym><br />
+<def>trps</def> <sym>!</sym><def>a</def> <sym>=</sym> <def>array</def> <sym>((</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>),(</sym><def></def><num>9</num><def></def><sym>,</sym><def></def><num>4</num><def></def><sym>))</sym> <def>$ concatMap</def> <sym>(</sym><def>uncurry</def> <sym>(</sym><def>map . first .</def> <sym>(,)))</sym> <def>$<br />
+          zip</def> <sym>[</sym><def></def><num>0</num><def>.</def><num>.9</num><def></def><sym>] [</sym><def>copy</def> <sym>!!</sym> <def>y</def> <sym>|</sym> <def>y</def> <sym>&lt;- [</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>3</num><def></def><sym>,</sym><def></def><num>4</num><def></def><sym>,</sym><def></def><num>5</num><def></def><sym>,</sym><def></def><num>6</num><def></def><sym>]]</sym><br />
+<def></def>    <kwa>where</kwa><br />
+<def>      copy</def> <sym>= [ [(</sym><def>x</def><sym>,</sym><def>copy'</def> <sym>(</sym><def>cellAt x y</def><sym>)) |</sym> <def>x</def> <sym>&lt;- [</sym><def></def><num>0</num><def>..n_col</def><sym>-</sym><def></def><num>1</num><def></def><sym>]] |</sym><br />
+<def>               y</def> <sym>&lt;- [</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>5</num><def></def><sym>,</sym><def></def><num>6</num><def></def><sym>,</sym><def></def><num>7</num><def></def><sym>,</sym><def></def><num>8</num><def></def><sym>,</sym><def></def><num>9</num><def></def><sym>]]</sym><br />
+<def>      copy' cell</def> <sym>=</sym> <def>array</def> <sym>(</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>9</num><def></def><sym>)</sym> <def>$ map</def> <sym>(</sym><def>\clr</def> <sym>-&gt; (</sym><def>clr</def><sym>,</sym><def>a</def> <sym>!!</sym> <def>clr</def> <sym>!!</sym> <def>cell</def><sym>))</sym> <def>colors</def><br />
+<br />
+<slc>--- Formatting ---</slc><br />
+<def>format</def> <sym>::</sym> <def></def><kwb>Bool</kwb> <def></def><sym>-&gt;</sym> <def>String</def> <sym>-&gt;</sym> <def>String<br />
+format _</def> <sym>[] =</sym> <def></def><str>&quot;&quot;</str><def><br />
+format isodd chars</def> <sym>|</sym> <def>isodd</def> <sym>=</sym> <def></def><str>&quot; &quot;</str><def></def> <sym>++</sym> <def>str</def> <sym>|</sym> <def>otherwise</def> <sym>=</sym> <def>str</def><br />
+        <kwa>where</kwa><br />
+<def></def>          <sym>(</sym><def>cur</def><sym>,</sym> <def>rest</def><sym>) =</sym> <def>splitAt</def> <num>5</num> <def>chars<br />
+          str</def> <sym>=</sym>  <def>intersperse ' ' cur</def> <sym>++</sym> <def></def><str>&quot; \n&quot;</str><def></def> <sym>++</sym> <def>format</def> <sym>(</sym><def>not isodd</def><sym>)</sym> <def>rest<br />
+<br />
+toString</def> <sym>::</sym> <def>Solution</def> <sym>-&gt;</sym> <def>String<br />
+toString</def> <sym>!</sym><def>masks</def> <sym>=</sym> <def>map color cells</def><br />
+    <kwa>where</kwa><br />
+<def>      masksWithRows</def> <sym>=</sym> <def>withRows</def> <num>0 0</num> <def></def><sym>(</sym><def>reverse masks</def><sym>)</sym><br />
+<def>      withRows _ _</def> <sym>[] = []</sym><br />
+<def>      withRows board r</def> <sym>(</sym><def>m</def><sym>:</sym><def>rest</def><sym>) = (</sym><def>r'</def><sym>,</sym> <def>m</def><sym>) :</sym> <def>withRows board' r' rest</def><br />
+          <kwa>where</kwa> <def>delta</def> <sym>=</sym> <def>first0 board `quot` n_col<br />
+                board'</def> <sym>=</sym> <def>board `shiftR`</def>  <sym>(</sym><def>delta</def> <sym>*</sym> <def>n_col</def><sym>)</sym> <def>.</def><sym>|</sym><def>. untag m<br />
+                r'</def> <sym>=</sym> <def>r</def><sym>+</sym><def>delta<br />
+      color n</def> <sym>=</sym> <def>maybe '.'</def> <sym>((</sym><def></def><str>&quot;0123456789&quot;</str><def></def> <sym>!!)</sym> <def>. tagof . snd</def><sym>)</sym><br />
+<def></def>                <sym>(</sym><def>find matches masksWithRows</def><sym>)</sym><br />
+<def></def>          <kwa>where</kwa><br />
+<def>            matches</def> <sym>(</sym><def>r</def><sym>,</sym> <def>m</def><sym>)</sym><br />
+<def></def>              <sym>|</sym> <def>n'</def> <sym>&lt;</sym> <def></def><num>0</num> <def></def><sym>||</sym> <def>n'</def> <sym>&gt;</sym> <def></def><num>30</num>  <def></def><sym>=</sym> <def></def><kwa>False</kwa><br />
+<def></def>              <sym>|</sym> <def>otherwise</def>  <sym>= (</sym><def>untag m</def><sym>)</sym> <def>`testBit` n'</def><br />
+              <kwa>where</kwa> <def>n'</def> <sym>=</sym> <def>n</def> <sym>- (</sym><def>n_col</def> <sym>*</sym> <def>r</def><sym>)</sym><br />
+<def></def><br />
+<slc>--- Generate the solutions ---</slc><br />
+<def>firstZero</def> <sym>::</sym> <def>UArray</def> <kwb>Int Int</kwb><br />
+<def>firstZero</def> <sym>=</sym> <def>array</def> <sym>(</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>31</num><def></def><sym>)</sym> <def>$ zip</def> <sym>[</sym><def></def><num>0</num><def>.</def><num>.31</num><def></def><sym>]</sym><br />
+<def></def>            <sym>[</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>3</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>4</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>3</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>2</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>1</num><def></def><sym>,</sym><def></def><num>0</num><def></def><sym>,</sym><def></def><num>5</num><def></def><sym>]</sym><br />
+<def><br />
+solutions</def> <sym>:: [</sym><def>String</def><sym>]</sym><br />
+<def>solutions</def> <sym>=</sym> <def>solveCell</def> <num>0</num> <def>colors</def> <num>0</num> <def></def><sym>[] []</sym><br />
+<def><br />
+solveCell</def> <sym>::</sym> <def>Row</def> <sym>-&gt; [</sym><def>Color</def><sym>] -&gt;</sym> <def>Mask</def> <sym>-&gt;</sym> <def>Solution</def> <sym>-&gt; [</sym><def>String</def><sym>] -&gt; [</sym><def>String</def><sym>]</sym><br />
+<def>solveCell _</def> <sym>[]</sym> <def>board soln results</def> <sym>=</sym> <def></def><kwa>let</kwa> <def>s</def> <sym>=</sym> <def>toString soln</def><br />
+                                    <kwa>in</kwa>  <def>s</def><sym>:(</sym><def>reverse s</def><sym>):</sym><def>results<br />
+solveCell</def> <sym>!</sym><def>row</def> <sym>!</sym><def>todo</def> <sym>!</sym><def>board</def> <sym>!</sym><def>soln results</def><br />
+    <sym>|</sym> <def>top</def><sym>/=</sym><def>m_top</def> <sym>=</sym> <def>foldr solveMask results</def><br />
+                   <sym>[(</sym><def>m</def><sym>,</sym> <def>c</def><sym>) |</sym> <def>c</def> <sym>&lt;-</sym> <def>todo</def><sym>,</sym> <def>m</def>  <sym>&lt;-</sym> <def>masks</def> <sym>!</sym> <def>c</def><sym>,</sym>  <def>board .</def><sym>&amp;</sym><def>. m</def> <sym>==</sym> <def></def><num>0</num><def></def><sym>]</sym><br />
+<def></def>    <sym>|</sym> <def>otherwise</def>  <sym>=</sym> <def>solveCell</def> <sym>(</sym><def>row</def><sym>+</sym><def></def><num>1</num><def></def><sym>)</sym> <def>todo</def> <sym>(</sym><def>board `shiftR` n_col</def><sym>)</sym> <def>soln results</def><br />
+    <kwa>where</kwa> <def>top</def> <sym>=</sym> <def>board .</def><sym>&amp;</sym><def>. m_top<br />
+          masks</def> <sym>=</sym> <def>masksAtCell</def> <sym>! (</sym><def>row</def><sym>, (</sym><def>firstZero</def> <sym>!</sym> <def>top</def><sym>) )</sym><br />
+<def>          solveMask</def> <sym>(!</sym><def>m</def><sym>,!</sym><def>c</def><sym>)</sym> <def>results</def> <sym>=</sym><br />
+<def>              solveCell row</def> <sym>(</sym><def>delete c todo</def><sym>) (</sym><def>untag m .</def><sym>|</sym><def>. board</def><sym>) (</sym><def>m</def><sym>:</sym><def>soln</def><sym>)</sym> <def>results<br />
+<br />
+main</def> <sym>=</sym> <def></def><kwa>do</kwa><br />
+<def>    n</def> <sym>&lt;-</sym> <def>return.read.head</def> <sym>=&lt;&lt;</sym> <def>getArgs</def><br />
+    <kwa>let</kwa> <def>nsolutions</def> <sym>=</sym> <def>take n solutions<br />
+    putStrLn $</def> <sym>(</sym><def>show $ length nsolutions</def><sym>) ++</sym> <def></def><str>&quot; solutions found\n&quot;</str><def><br />
+    putStrLn . format</def> <kwa>False</kwa> <def>. minimum $ nsolutions<br />
+    putStrLn . format</def> <kwa>False</kwa> <def>. maximum $ nsolutions</def><br />
+</source>

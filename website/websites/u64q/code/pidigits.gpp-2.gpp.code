@@ -1,0 +1,101 @@
+<source>
+<def></def><com>/*</com><br />
+<com>** The Computer Language Shootout</com><br />
+<com>** http://shootout.alioth.debian.org/</com><br />
+<com>** contributed by Mike Pall</com><br />
+<com>** converted to C++ by Mario Pernici</com><br />
+<com>** g++ -O2  -o pidigits pidigits.cc -lgmpxx -lgmp</com><br />
+<com>*/</com><def></def><br />
+<br />
+<dir>#include &lt;cstdio&gt;</dir><br />
+<def></def><dir>#include &lt;cstdlib&gt;</dir><br />
+<def></def><dir>#include &lt;gmpxx.h&gt;</dir><br />
+<def></def><br />
+<kwc>typedef</kwc> <def></def><kwb>struct</kwb> <def>ctx_s</def> <sym>{</sym><br />
+<def></def>  <kwd>ctx_s</kwd><def></def><sym>(</sym><def></def><kwb>int</kwb> <def>dd</def><sym>,</sym> <def></def><kwb>int</kwb> <def>ii</def><sym>,</sym> <def></def><kwb>int</kwb> <def>qq</def><sym>,</sym> <def></def><kwb>int</kwb> <def>rr</def><sym>,</sym> <def></def><kwb>int</kwb> <def>ss</def><sym>,</sym> <def></def><kwb>int</kwb> <def>tt</def><sym>):</sym><br />
+<def></def>    <kwd>d</kwd><def></def><sym>(</sym><def>dd</def><sym>),</sym> <def></def><kwd>i</kwd><def></def><sym>(</sym><def>ii</def><sym>),</sym> <def></def><kwd>q</kwd><def></def><sym>(</sym><def>qq</def><sym>),</sym> <def></def><kwd>r</kwd><def></def><sym>(</sym><def>rr</def><sym>),</sym> <def></def><kwd>s</kwd><def></def><sym>(</sym><def>ss</def><sym>),</sym> <def></def><kwd>t</kwd><def></def><sym>(</sym><def>tt</def><sym>) {}</sym><br />
+<def>  mpz_class q</def><sym>,</sym> <def>r</def><sym>,</sym> <def>s</def><sym>,</sym> <def>t</def><sym>;</sym>     <def></def><com>/* Transformation matrix components. */</com><def><br />
+  mpz_class u</def><sym>,</sym> <def>v</def><sym>,</sym> <def>w</def><sym>;</sym>        <def></def><com>/* Temporary numbers. */</com><def></def><br />
+  <kwb>int</kwb> <def>d</def><sym>,</sym> <def>i</def><sym>,</sym> <def>n</def><sym>;</sym>          <def></def><com>/* Counters. */</com><def></def><br />
+  <kwb>char</kwb> <def>digits</def><sym>[</sym><def></def><num>10</num><def></def><sym>+</sym><def></def><num>1</num><def></def><sym>];</sym>    <def></def><com>/* Accumulated digits for one line. */</com><def></def><br />
+<sym>}</sym> <def>ctx_t</def><sym>;</sym><br />
+<def></def><br />
+<com>/* Compose matrix with numbers on the right. */</com><def></def><br />
+<kwb>static void</kwb> <def></def><kwd>compose_r</kwd><def></def><sym>(</sym><def>ctx_t</def> <sym>*</sym><def>c</def><sym>,</sym> <def></def><kwb>int</kwb> <def>bq</def><sym>,</sym> <def></def><kwb>int</kwb> <def>br</def><sym>,</sym> <def></def><kwb>int</kwb> <def>bs</def><sym>,</sym> <def></def><kwb>int</kwb> <def>bt</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>u</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>r</def> <sym>*</sym> <def>bs</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>r</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>r</def> <sym>*</sym> <def>bq</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>v</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>t</def> <sym>*</sym> <def>br</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>r</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>r</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>v</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>t</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>t</def> <sym>*</sym> <def>bt</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>t</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>t</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>u</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>s</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>s</def> <sym>*</sym> <def>bt</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>u</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>q</def> <sym>*</sym> <def>bs</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>s</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>s</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>u</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>q</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>q</def> <sym>*</sym> <def>bq</def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<com>/* Compose matrix with numbers on the left. */</com><def></def><br />
+<kwb>static void</kwb> <def></def><kwd>compose_l</kwd><def></def><sym>(</sym><def>ctx_t</def> <sym>*</sym><def>c</def><sym>,</sym> <def></def><kwb>int</kwb> <def>bq</def><sym>,</sym> <def></def><kwb>int</kwb> <def>br</def><sym>,</sym> <def></def><kwb>int</kwb> <def>bs</def><sym>,</sym> <def></def><kwb>int</kwb> <def>bt</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>r</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>r</def> <sym>*</sym> <def>bt</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>u</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>q</def> <sym>*</sym> <def>br</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>r</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>r</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>u</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>u</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>t</def> <sym>*</sym> <def>bs</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>t</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>t</def> <sym>*</sym> <def>bt</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>v</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>s</def> <sym>*</sym> <def>br</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>t</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>t</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>v</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>s</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>s</def> <sym>*</sym> <def>bq</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>s</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>s</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>u</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>q</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>q</def> <sym>*</sym> <def>bq</def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<com>/* Extract one digit. */</com><def></def><br />
+<kwb>static int</kwb> <def></def><kwd>extract</kwd><def></def><sym>(</sym><def>ctx_t</def> <sym>*</sym><def>c</def><sym>,</sym> <def></def><kwb>unsigned int</kwb> <def>j</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>u</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>q</def> <sym>*</sym> <def>j</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>u</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>u</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>r</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>v</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>s</def> <sym>*</sym> <def>j</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>v</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>v</def> <sym>+</sym> <def>c</def><sym>-&gt;</sym><def>t</def><sym>;</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>w</def> <sym>=</sym> <def>c</def><sym>-&gt;</sym><def>u</def> <sym>/</sym> <def>c</def><sym>-&gt;</sym><def>v</def><sym>;</sym><br />
+<def></def>  <kwa>return</kwa> <def>c</def><sym>-&gt;</sym><def>w</def><sym>.</sym><def></def><kwd>get_ui</kwd><def></def><sym>();</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<com>/* Print one digit. Returns 1 for the last digit. */</com><def></def><br />
+<kwb>static int</kwb> <def></def><kwd>prdigit</kwd><def></def><sym>(</sym><def>ctx_t</def> <sym>*</sym><def>c</def><sym>,</sym> <def></def><kwb>int</kwb> <def>y</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def>  c</def><sym>-&gt;</sym><def>digits</def><sym>[</sym><def>c</def><sym>-&gt;</sym><def>d</def><sym>++] =</sym> <def></def><str>'0'</str><def></def><sym>+</sym><def>y</def><sym>;</sym><br />
+<def></def>  <kwa>if</kwa> <def></def><sym>(++</sym><def>c</def><sym>-&gt;</sym><def>i</def> <sym>%</sym> <def></def><num>10</num> <def></def><sym>==</sym> <def></def><num>0</num> <def></def><sym>||</sym> <def>c</def><sym>-&gt;</sym><def>i</def> <sym>==</sym> <def>c</def><sym>-&gt;</sym><def>n</def><sym>) {</sym><br />
+<def>    c</def><sym>-&gt;</sym><def>digits</def><sym>[</sym><def>c</def><sym>-&gt;</sym><def>d</def><sym>] =</sym> <def></def><str>'\0'</str><def></def><sym>;</sym><br />
+<def></def>    <kwd>printf</kwd><def></def><sym>(</sym><def></def><str>&quot;%-10s</str><esc>\t</esc><str>:%d</str><esc>\n</esc><str>&quot;</str><def></def><sym>,</sym> <def>c</def><sym>-&gt;</sym><def>digits</def><sym>,</sym> <def>c</def><sym>-&gt;</sym><def>i</def><sym>);</sym><br />
+<def>    c</def><sym>-&gt;</sym><def>d</def> <sym>=</sym> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def>  <sym>}</sym><br />
+<def></def>  <kwa>return</kwa> <def>c</def><sym>-&gt;</sym><def>i</def> <sym>==</sym> <def>c</def><sym>-&gt;</sym><def>n</def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<com>/* Generate successive digits of PI. */</com><def></def><br />
+<kwb>static void</kwb> <def></def><kwd>pidigits</kwd><def></def><sym>(</sym><def>ctx_t</def> <sym>*</sym><def>c</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def></def>  <kwb>int</kwb> <def>k</def> <sym>=</sym> <def></def><num>1</num><def></def><sym>;</sym><br />
+<def></def>  <kwa>for</kwa> <def></def><sym>(;;) {</sym><br />
+<def></def>    <kwb>int</kwb> <def>y</def> <sym>=</sym> <def></def><kwd>extract</kwd><def></def><sym>(</sym><def>c</def><sym>,</sym> <def></def><num>3</num><def></def><sym>);</sym><br />
+<def></def>    <kwa>if</kwa> <def></def><sym>(</sym><def>y</def> <sym>==</sym> <def></def><kwd>extract</kwd><def></def><sym>(</sym><def>c</def><sym>,</sym> <def></def><num>4</num><def></def><sym>)) {</sym><br />
+<def></def>      <kwa>if</kwa> <def></def><sym>(</sym><def></def><kwd>prdigit</kwd><def></def><sym>(</sym><def>c</def><sym>,</sym> <def>y</def><sym>))</sym> <def></def><kwa>return</kwa><def></def><sym>;</sym><br />
+<def></def>      <kwd>compose_r</kwd><def></def><sym>(</sym><def>c</def><sym>,</sym> <def></def><num>10</num><def></def><sym>, -</sym><def></def><num>10</num><def></def><sym>*</sym><def>y</def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>1</num><def></def><sym>);</sym><br />
+<def></def>    <sym>}</sym> <def></def><kwa>else</kwa> <def></def><sym>{</sym><br />
+<def></def>      <kwd>compose_l</kwd><def></def><sym>(</sym><def>c</def><sym>,</sym> <def>k</def><sym>,</sym> <def></def><num>4</num><def></def><sym>*</sym><def>k</def><sym>+</sym><def></def><num>2</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>2</num><def></def><sym>*</sym><def>k</def><sym>+</sym><def></def><num>1</num><def></def><sym>);</sym><br />
+<def>      k</def><sym>++;</sym><br />
+<def></def>    <sym>}</sym><br />
+<def></def>  <sym>}</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<kwb>int</kwb> <def></def><kwd>main</kwd><def></def><sym>(</sym><def></def><kwb>int</kwb> <def>argc</def><sym>,</sym> <def></def><kwb>char</kwb> <def></def><sym>**</sym><def>argv</def><sym>)</sym><br />
+<def></def><sym>{</sym><br />
+<def>  ctx_s</def> <kwd>c</kwd><def></def><sym>(</sym><def></def><num>0</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>1</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>0</num><def></def><sym>,</sym> <def></def><num>1</num><def></def><sym>);</sym><br />
+<def>  c</def><sym>.</sym><def>n</def> <sym>=</sym> <def>argc</def> <sym>&gt;</sym> <def></def><num>1</num> <def>?</def> <kwd>atoi</kwd><def></def><sym>(</sym><def>argv</def><sym>[</sym><def></def><num>1</num><def></def><sym>]) :</sym> <def></def><num>27</num><def></def><sym>;</sym><br />
+<def></def>  <kwd>pidigits</kwd><def></def><sym>(&amp;</sym><def>c</def><sym>);</sym><br />
+<def></def>  <kwa>return</kwa> <def></def><num>0</num><def></def><sym>;</sym><br />
+<def></def><sym>}</sym><br />
+<def></def><br />
+<br />
+</source>
