@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.8 2008-08-01 16:58:03 igouy-guest Exp $
+# $Id: domain.py,v 1.9 2008-08-05 16:51:27 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -13,6 +13,7 @@ class FileNameParts(object):
    self.id = None | self.id = '4'
    self.extid = None | self.extid = 'gcc-4'
    self.programName = 'binarytrees.gcc' | self.programName = 'binarytrees.gcc-4.gcc'
+   self.simpleName = 'binarytrees.1.gcc' | self.simpleName = 'binarytrees.4.gcc'
    """
    def __init__(self,filename):
       self.filename = filename
@@ -26,7 +27,7 @@ class FileNameParts(object):
          self.id = b
       else:
          self.ext = b
-         self.id = ''
+         self.id = '1'
 
 
    def _extid(self):
@@ -80,6 +81,12 @@ class FileNameParts(object):
       return self.ext.partition('_')[0]
 
    extPrefix = property(_extPrefix)
+
+
+   def _simpleName(self):
+      return '.'.join(self.name,self.id,self.ext)
+
+   simpleName = property(_simpleName)
 
 
    def __str__(self):

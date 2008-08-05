@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: website.Makefile,v 1.3 2008-08-01 07:03:48 igouy-guest Exp $
+# $Id: website.Makefile,v 1.4 2008-08-05 16:51:27 igouy-guest Exp $
 
 
 # Copy new log files to the sweep directory
@@ -60,8 +60,11 @@ endif
 # it is dependent so use highlight to create xml markup of the source
 
 %.code: %_code
-	-@highlight --fragment --xml --add-data-dir=$(NANO_HIGHLIGHT) \
-		--add-config-dir=$(NANO_HIGHLIGHT) --force -i $< -o $@ 
+	-@highlight --fragment \
+		--add-data-dir=$(NANO_HIGHLIGHT) \
+		--add-config-dir=$(NANO_HIGHLIGHT) \
+		--style=typical \
+		--force -i $< -o $@ 
 
 
 
