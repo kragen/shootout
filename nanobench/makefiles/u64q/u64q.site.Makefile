@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.site.Makefile,v 1.7 2008-08-03 20:08:11 igouy-guest Exp $
+# $Id: u64q.site.Makefile,v 1.8 2008-08-05 21:26:10 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -49,6 +49,7 @@ NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
 # MUST set which source directories to search
 
 SRC_DIRS := \
+ nsieve \
  binarytrees \
  chameneosredux \
  fannkuch \
@@ -95,7 +96,6 @@ ALLOW := \
 # ONLY measure files with these extensions 
 # if there are none, measure files with any extension not ALLOWed or IGNOREd
 ONLY := \
-
 
 
 # IGNORE files with these extensions, if there are no ONLY extensions

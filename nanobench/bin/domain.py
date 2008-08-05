@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.9 2008-08-05 16:51:27 igouy-guest Exp $
+# $Id: domain.py,v 1.10 2008-08-05 21:26:10 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -66,13 +66,13 @@ class FileNameParts(object):
 
 
    def _logName(self):
-      return self.programName + '_log'
+      return self.simpleName + '_log'
 
    logName = property(_logName)
 
 
    def _codeName(self):
-      return self.programName + '_code'
+      return self.simpleName + '_code'
 
    codeName = property(_codeName)
 
@@ -84,7 +84,7 @@ class FileNameParts(object):
 
 
    def _simpleName(self):
-      return '.'.join(self.name,self.id,self.ext)
+      return '.'.join( (self.name,self.id,self.ext) )
 
    simpleName = property(_simpleName)
 
