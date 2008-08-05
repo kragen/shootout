@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
 
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); 
@@ -8,13 +8,19 @@ $TestTag = $Row[TEST_TAG];
 
 list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl);
 
-if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; } 
+// Change to using ndata.csv instead of data.csv
+//list($Accepted,$OthersAccepted) = SplitByTestValue($AllAccepted);
+//list($Rejected,$OthersRejected) = SplitByTestValue($AllRejected);
+//list($Special,$OthersSpecial) = SplitByTestValue($AllSpecial);
+
+
+if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; }
 else { $P1 = ''; }
 
 if (sizeof($Accepted)>1){ $P2 = $Accepted[1][DATA_LANG].'-'.$Accepted[1][DATA_ID]; }
 else { $P2 = ''; }
 
-if (sizeof($Accepted)>2){ $P3 = $Accepted[2][DATA_LANG].'-'.$Accepted[2][DATA_ID]; } 
+if (sizeof($Accepted)>2){ $P3 = $Accepted[2][DATA_LANG].'-'.$Accepted[2][DATA_ID]; }
 else { $P3 = ''; }
 
 if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID]; } 
@@ -53,15 +59,15 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <th class="c">&nbsp;</th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=fullcpu" 
-   title="Sort by Full CPU Time, including Startup Time">sort</a>
+   title="Sort by CPU Time secs">sort</a>
 </th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb" 
-   title="Sort by Memory Use">sort</a>
+   title="Sort by Memory Use KB">sort</a>
 </th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" 
-   title="Sort by GZ bytes">sort</a>
+   title="Sort by Compressed Source Code size Bytes">sort</a>
 </th>
 </tr>
 
@@ -70,10 +76,12 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <th>Program &amp; Logs</th>
 <th>CPU&nbsp;secs</th>
 <th>Memory&nbsp;KB</th>
-<th>GZip Bytes</th>
+<th>GZip&nbsp;Bytes</th>
+<th>&nbsp;Elapsed&nbsp;secs</th>
+<th>&nbsp;~&nbsp;CPU&nbsp;Load</th>
 </tr>
 
-<? 
+<?
 foreach($Langs as $k => $v){ $No_Program_Langs[$k] = TRUE; }
 
 $better = array();
@@ -81,15 +89,15 @@ if (sizeof($Accepted) > 0){ $first = $Accepted[0]; }
 
 foreach($Accepted as $d){
    $k = $d[DATA_LANG];
-   
+
    $CPU = '';
    $MEM = '';
    $LOCS = '';
-   $GZBYTES = '';      
-   if (!isset($better[$k])){  
+   $GZBYTES = '';
+   if (!isset($better[$k])){
       $better[$k] = TRUE;
       // Sort according to current sort criteria, bold the sort-column
-      if ($Sort=='fullcpu'){ 
+      if ($Sort=='fullcpu'){
          $CPU = ' class="sort"';    
       } elseif ($Sort=='kb'){ 
          $MEM = ' class="sort"';
@@ -98,7 +106,7 @@ foreach($Accepted as $d){
       } elseif ($Sort=='gz'){ 
          $GZBYTES = ' class="sort"';
       }  
-   }      
+   }
 
    if ($Sort=='fullcpu'){   
       if ($first[DATA_FULLCPU]==0){ $ratio = 0; }
@@ -113,7 +121,7 @@ foreach($Accepted as $d){
       if ($first[DATA_GZ]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
    } 
-        
+
    unset($No_Program_Langs[$k]);
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
@@ -126,6 +134,9 @@ foreach($Accepted as $d){
    } else { 
       $fc = number_format($fullcpu,2);
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
+      $e = ElapsedTime($d);
+      $ld = CpuLoad($d);
+
    }
    $gz = $d[DATA_GZ];
 
@@ -133,8 +144,8 @@ foreach($Accepted as $d){
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td>',
-         $CPU, $fc, $MEM, $kb, $GZBYTES, $gz ); echo "\n";
+   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td>',
+         $CPU, $fc, $MEM, $kb, $GZBYTES, $gz, $e, $ld); echo "\n";
 
    echo "</tr>\n";
 }
@@ -150,27 +161,32 @@ foreach($Langs as $k => $v){
          $Name = $v[LANG_FULL];
          $HtmlName = $v[LANG_HTML];    
          if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }             
-                    
+
          $id = $d[DATA_ID];
          $fullcpu = $d[DATA_FULLCPU];
          $gz = $d[DATA_GZ];
 
-         printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
-            $SelectedTest,$k,$id,$HtmlName); echo "\n";
+         if ($d[DATA_STATUS]==PROGRAM_TIMEOUT){
+            $ratio = ''; $e = ElapsedTime($d);
+         } else { $ratio = ''; $e = ''; }
+
+
+         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
+            $ratio,$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
          $message = StatusMessage($d[DATA_STATUS]);
-         printf('<td>%s</td><td></td><td>%d</td>', $message, $gz);
+         printf('<td>%s</td><td></td><td>%d</td><td>%s</td><td></td>', $message, $gz, $e);
 
-         echo "</tr>\n";   
+         echo "</tr>\n";
          unset($No_Program_Langs[$k]);         
-      }  
+      }
    }
 }
 ?>
 
 <?
 if (sizeof($Special)>0){
-   echo '<tr><th colspan="5"><a href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
+   echo '<tr><th colspan="7"><a href="#alt" name="alt">interesting alternative programs</a></th></tr>', "\n";
 
    foreach($Special as $d){
       $k = $d[DATA_LANG];
@@ -207,7 +223,7 @@ if (sizeof($Special)>0){
       else {
          printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
             PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
-         printf('<td>%0.2f</td><td>%s</td><td>%d</td>', $fullcpu, $kb, $gz ); echo "\n";
+         printf('<td>%0.2f</td><td>%s</td><td>%d</td><td></td><td></td>', $fullcpu, $kb, $gz ); echo "\n";
       }
       echo "</tr>\n";
    }
@@ -218,7 +234,7 @@ if (sizeof($Special)>0){
 <? // MISSING PROGRAMS TABLE //////////////////////////
 
 if (sizeof($No_Program_Langs)>0){
-   echo '<tr><th colspan="5"><a href="#missing" name="missing">missing programs</a></th></tr>', "\n";
+   echo '<tr><th colspan="7"><a href="#missing" name="missing">missing programs</a></th></tr>', "\n";
       
    foreach($Langs as $k => $v){
       $no_program = isset($No_Program_Langs[$k]);        
@@ -230,9 +246,9 @@ if (sizeof($No_Program_Langs)>0){
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
             $SelectedTest,$k,$HtmlName); echo "\n";
 
-         echo '<td>No&nbsp;program</td><td></td><td></td>';       
+         echo '<td>No&nbsp;program</td><td></td><td></td><td></td><td></td>';
          echo "</tr>\n";     
-      }                                                      
+      }
    }
 }
 ?>

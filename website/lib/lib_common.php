@@ -159,6 +159,29 @@ function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
 }
 
 
+function SplitByTestValue(&$data){
+   $splitdata = array();
+   foreach($data as $d){
+      if (isset($splitdata[ $d[DATA_TESTVALUE] ])){
+         $splitdata[ $d[DATA_TESTVALUE] ][] = $d;
+      } else {
+         $splitdata[ $d[DATA_TESTVALUE] ] = array($d);
+      }
+   }
+   krsort($splitdata);
+   $ks = array_keys($splitdata);
+   $k = array_shift($ks);
+   $largest = $splitdata[ $k ];
+   unset( $splitdata[ $k ] );
+   $others = array();
+   foreach ($splitdata as $k => $v){
+      $others = array_merge($others,$v);
+   }
+   return array($largest,$others);
+}
+
+
+
 function CompareTestCpuTime($a, $b){
    if ($a[DATA_TEST] == $b[DATA_TEST]){
       if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
@@ -237,8 +260,9 @@ function CompareTestValue2($a, $b){
    }
    else {
       return ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;      
-   }   
+   }
 }
+
 
 function CompareNName($a, $b){
    return strcasecmp($a[N_FULL],$b[N_FULL]);
@@ -264,9 +288,6 @@ function ExcludeData(&$d,&$langs,&$Excl){
       if ($Excl[$key][EXCL_USE]==EXCLUDED){ return PROGRAM_EXCLUDED; }
       else { return PROGRAM_SPECIAL; }
    }
-
-//   if( $d[DATA_STATUS] == PROGRAM_TIMEOUT ) { return PROGRAM_TIMEOUT; }
-//   if( $d[DATA_STATUS] == PROGRAM_ERROR ) { return PROGRAM_ERROR; }
    return $d[DATA_STATUS];
 }
 
@@ -452,10 +473,20 @@ function StatusMessage($i){
 
 function ElapsedTime($d){
    if ($d[DATA_ELAPSED] > 0.0){
-      return sprintf('%0.2f',$d[DATA_ELAPSED]);
+      return number_format($d[DATA_ELAPSED],2);
    } else {
       return '';
    }
 }
+
+
+function CpuLoad($d){
+   if (strlen($d[DATA_LOAD])>1){
+      return str_replace(' ','&nbsp;',$d[DATA_LOAD]);
+   } else {
+      return '';
+   }
+}
+
 
 ?>

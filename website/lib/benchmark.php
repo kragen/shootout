@@ -120,7 +120,7 @@ if ($T=='all'){
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-      $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php')); 
+      $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
       }
 
    } elseif ($L=='all'){ // Benchmark

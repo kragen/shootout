@@ -27,8 +27,8 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <th>CPU Time&nbsp;secs</th>
 <th>Memory Use&nbsp;KB</th>
 <th>GZip Bytes</th>
-<th>Elapsed&nbsp;secs</th>
-<th>CPU Load</th>
+<th>&nbsp;Elapsed&nbsp;secs</th>
+<th>&nbsp;~&nbsp;CPU&nbsp;Load</th>
 </tr>
 <?
 if (sizeof($Data)>0){
@@ -45,11 +45,11 @@ if (sizeof($Data)>0){
             }
             $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
             $elapsed = ElapsedTime($Data);
-            $load = $Data[DATA_LOAD];
+            $load = CpuLoad($Data);
          }
 
          if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }
-         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">%s</td></tr>',
+         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">&nbsp;&nbsp;%s</td></tr>',
             $n,$fullcpu,$kb,$Data[DATA_GZ],$elapsed,$load); echo "\n";
       }
 } else {
