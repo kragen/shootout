@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.site.Makefile,v 1.7 2008-08-05 14:37:47 igouy-guest Exp $
+# $Id: gp4.site.Makefile,v 1.8 2008-08-06 20:30:25 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -50,7 +50,10 @@ NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
 SRC_DIRS := \
  binarytrees \
  fannkuch \
+ fasta \
  mandelbrot \
+ meteor \
+ nbody \
  spectralnorm \
 
 # binarytrees \
