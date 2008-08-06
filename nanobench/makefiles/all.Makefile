@@ -1,12 +1,12 @@
 # The Computer Language Benchmarks Game
-# $Id: all.Makefile,v 1.5 2008-08-05 21:26:10 igouy-guest Exp $
+# $Id: all.Makefile,v 1.6 2008-08-06 00:22:20 igouy-guest Exp $
 
 
 .PHONY: benchmarks datafiles logs highlight $(SRC_DIRS) 
 
 #all: benchmarks datafiles logs highlight
 
-all: datafiles logs highlight
+all: benchmarks datafiles logs highlight
 
 
 benchmarks: 

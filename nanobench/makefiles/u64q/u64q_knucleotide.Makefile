@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q_knucleotide.Makefile,v 1.2 2008-07-31 05:46:13 igouy-guest Exp $
+# $Id: u64q_knucleotide.Makefile,v 1.3 2008-08-06 00:22:21 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -19,8 +19,8 @@ GNATOPTS := -static -E -gnatf -gnatU -gnatwcdfijklmopruvz -gnati1 -gnatT4 -fPIC 
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \
-	  --range 10000,100000,1000000 \
-	  --data $(DATA_ROOT)/knucleotide-input.txt \
+	  --range 50000,500000,5000000 \
+	  --data ../knucleotide-input.txt \
 
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).footer.Makefile
