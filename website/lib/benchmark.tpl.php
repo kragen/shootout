@@ -62,7 +62,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
    title="Sort by CPU Time secs">sort</a>
 </th>
 <th>
-   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb" 
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb"
    title="Sort by Memory Use KB">sort</a>
 </th>
 <th>
@@ -76,9 +76,9 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <th>Program &amp; Logs</th>
 <th>CPU&nbsp;secs</th>
 <th>Memory&nbsp;KB</th>
-<th>GZip&nbsp;Bytes</th>
-<th>&nbsp;Elapsed&nbsp;secs</th>
-<th>&nbsp;~&nbsp;CPU&nbsp;Load</th>
+<th>Size&nbsp;B</th>
+<th>Elapsed</th>
+<th>~&nbsp;CPU&nbsp;Load</th>
 </tr>
 
 <?
@@ -159,8 +159,7 @@ foreach($Langs as $k => $v){
       if ($d[DATA_LANG]==$k){
          printf('<tr>'); echo "\n";             
          $Name = $v[LANG_FULL];
-         $HtmlName = $v[LANG_HTML];    
-         if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }             
+         $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
 
          $id = $d[DATA_ID];
          $fullcpu = $d[DATA_FULLCPU];
@@ -191,8 +190,7 @@ if (sizeof($Special)>0){
    foreach($Special as $d){
       $k = $d[DATA_LANG];
       $Name = $Langs[$k][LANG_FULL];
-      $HtmlName = $Langs[$k][LANG_HTML];
-      if ($d[DATA_ID]>0){ $HtmlName .= ' #'.$d[DATA_ID]; }   
+      $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
 
       if ($Sort=='fullcpu'){   
          if ($first[DATA_FULLCPU]==0){ $ratio = 0; }

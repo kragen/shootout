@@ -93,8 +93,9 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $full = 1;
             $mem = 1;
             $lines = 1;
-            $cpu = 1;                     
-            
+            $cpu = 1; 
+            $gz = 1;
+
             //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; }
             //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
             //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }
@@ -104,7 +105,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             if ($r1[DATA_GZ]>0){ $gz = $r2[DATA_GZ] / $r1[DATA_GZ]; }
                                  
             $NData[$r1[DATA_TEST]] = array(
-                 $r1[DATA_TEST]         
+                 $r1[DATA_TEST]
                , $r1[DATA_LANG]
                , $r1[DATA_ID]
                , ($r1[DATA_TESTVALUE] == $n) ? 0 : $r1[DATA_TESTVALUE]
@@ -117,10 +118,10 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                , 0
                );
                                                     
-            while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }  
+            while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }
          }      
          else {
-         
+
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]         
                , $L2

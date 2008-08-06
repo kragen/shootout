@@ -157,17 +157,18 @@ if ($T=='all'){
       $LangName = $Langs[$L][LANG_FULL];
       $TemplateName = 'program.tpl.php';
       $Title = $TestName.' '.$LangName.IdName($I).' program';
-      
+
       $Id = '';
-      if ($I > 0){ $Id = SEPARATOR.$I; }
+      if ($I > 1){ $Id = SEPARATOR.$I; }
       
       $About = & new Template(ABOUT_PROGRAMS_PATH);
       $AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-      
+
       $Body->set('Data', $D );
-      $Body->set('Code', HtmlFragment( CODE_PATH.$T.SEPARATOR.$L.$Id.'.code' ));
-      $Body->set('Log', HtmlFragment( LOG_PATH.$T.SEPARATOR.$L.$Id.'.log' ));
+      $Body->set('Code', HtmlFragment( CODE_PATH.$T.'.'.$I.'.'.$L.'.code' ));
+      $Body->set('Log', HtmlFragment( LOG_PATH.$T.'.'.$I.'.'.$L.'.log' ));
+
       $Body->set('Id', $I);
       $Body->set('Title', $Title);
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';

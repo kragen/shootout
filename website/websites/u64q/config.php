@@ -24,7 +24,7 @@ define('SANDBOX_SITE', '../sandbox/');
 define('GREAT_SITE', '../great/');
 define('OLD_SITE', '../old/');
 define('CONTESTS_SITE', '../contests/');
-define('GP4_SITE', './');
+define('GP4_SITE', '../gp4');
 define('U64Q_SITE', './');
 
 

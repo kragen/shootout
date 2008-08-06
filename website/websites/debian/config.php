@@ -1,17 +1,17 @@
 <?php
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2008
 
 // FILE PATHS ///////////////////////////////////////////////////
 
 define('LIB_PATH', '../../lib/');
 define('LIB', '../../lib/lib.php');
 
-define('DATA_PATH', '../../data/');
+define('DATA_PATH', './data/');
 define('DESC_PATH', '../../desc/');
 define('ABOUT_PATH', '../../about/');
 define('ABOUT_PROGRAMS_PATH', '../../about/programs/');
-define('CODE_PATH', '../../code/');
-define('LOG_PATH', '../../code/');
+define('CODE_PATH', './code/');
+define('LOG_PATH', './code/');
 define('MISC_PATH', '../../misc/');
 define('DOWNLOAD_PATH', '../download/');
 define('IMAGE_PATH', '../');
@@ -36,7 +36,7 @@ define('HOMEPAGE_ROWS',0);          // show 26 rows of languages on the homepage
 define('SITE_NAME', 'debian');
 define('SITE_TITLE','Debian : AMD&#8482; Sempron&#8482; Computer Language Benchmarks Game');
 define('BANNER_TITLE','Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp; <br/>Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game&nbsp;');
-define('FAQ_TITLE','Read the FAQ!');
+define('FAQ_TITLE','Frequently Asked Questions');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');

@@ -24,11 +24,11 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>&nbsp;N&nbsp;</th>
-<th>CPU Time&nbsp;secs</th>
-<th>Memory Use&nbsp;KB</th>
-<th>GZip Bytes</th>
-<th>&nbsp;Elapsed&nbsp;secs</th>
-<th>&nbsp;~&nbsp;CPU&nbsp;Load</th>
+<th>CPU&nbsp;secs</th>
+<th>Memory&nbsp;KB</th>
+<th>Size B</th>
+<th>Elapsed&nbsp;secs</th>
+<th>~&nbsp;CPU&nbsp;Load</th>
 </tr>
 <?
 if (sizeof($Data)>0){

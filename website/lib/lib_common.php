@@ -276,7 +276,7 @@ function SortName($sort){
 }
 
 function IdName($id){
-   if ($id>0){ return ' #'.$id; } else { return ''; }
+   if ($id>1){ return ' #'.$id; } else { return ''; }
 }
 
 
