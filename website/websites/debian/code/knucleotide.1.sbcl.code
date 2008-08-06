@@ -1,0 +1,72 @@
+<span class="slc">;; The Great Computer Language Shootout</span>
+<span class="slc">;;   http://shootout.alioth.debian.org/</span>
+<span class="slc">;;   contributed by James McIlree</span>
+<span class="slc">;;   Modified by Juho Snellman 2005-11-19</span>
+<span class="slc">;;     * About 50% speedup on both SBCL and CMUCL</span>
+<span class="slc">;;     * Use SIMPLE-BASE-STRINGs instead of (SIMPLE-ARRAY CHARACTER) for</span>
+<span class="slc">;;       lower memory use on Unicode SBCL</span>
+<span class="slc">;;     * Declare the type of SEQUENCE in ACCUMULATE-FREQUENCIES</span>
+
+<span class="sym">(</span><span class="kwa">defun read</span><span class="sym">-</span>data <span class="sym">(</span>stream<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>data <span class="sym">(</span>make<span class="sym">-</span>array <span class="num">0</span> <span class="sym">:</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="str">'base-char :adjustable t :fill-pointer 0)))</span>
+<span class="str">    (do ((line (read-line stream nil '</span>eof<span class="sym">) (</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil <span class="str">'eof)))</span>
+<span class="str">        ((or (eq line '</span>eof<span class="sym">) (</span>string<span class="sym">=</span> <span class="str">&quot;&gt;THREE&quot;</span> <span class="kwa">line</span> <span class="sym">:</span>start2 <span class="num">0</span> <span class="sym">:</span>end2 <span class="num">6</span><span class="sym">))))</span>
+    <span class="sym">(</span>do <span class="sym">((</span><span class="kwa">line</span> <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span><span class="kwa">line</span> stream nil <span class="str">'eof) (read-line stream nil '</span>eof<span class="sym">)))</span>
+        <span class="sym">((</span><span class="kwa">or</span> <span class="sym">(</span><span class="kwa">eq line</span> <span class="str">'eof) (char= (schar line 0) #</span><span class="esc">\&gt;</span><span class="str">)))</span>
+<span class="str">      (if (not (char= (schar line 0) #</span><span class="esc">\;</span><span class="str">))</span>
+<span class="str">          (dotimes (char-index (length line))</span>
+<span class="str">            (vector-push-extend (char-upcase (the base-char (schar line char-index))) data))))</span>
+<span class="str">    (coerce data '</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> accumulate<span class="sym">-</span>frequencies <span class="sym">(</span>hashmap sequence offset fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>integer <span class="num">0 18</span><span class="sym">)</span> fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+           <span class="sym">(</span>fixnum offset<span class="sym">)</span>
+           <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>base<span class="sym">-</span>string<span class="sym">)</span> sequence<span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span><span class="kwa">last</span><span class="sym">-</span>sequence<span class="sym">-</span>index <span class="sym">(- (</span><span class="kwa">length</span> sequence<span class="sym">)</span> fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)))</span>
+    <span class="sym">(</span>do <span class="sym">((</span>start offset <span class="sym">(+</span> start fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)))</span>
+        <span class="sym">((&gt;</span> start <span class="kwa">last</span><span class="sym">-</span>sequence<span class="sym">-</span>index<span class="sym">))</span>
+      <span class="sym">(</span>let <span class="sym">((</span>fragment <span class="sym">(</span>subseq sequence start <span class="sym">(+</span> start fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">))))</span>
+        <span class="sym">(</span>setf <span class="sym">(</span>gethash fragment hashmap<span class="sym">) (</span><span class="num">1</span><span class="sym">+ (</span>the <span class="sym">(</span>integer <span class="num">0 999999</span><span class="sym">) (</span>gethash fragment hashmap <span class="num">0</span><span class="sym">))))))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> calculate<span class="sym">-</span>frequencies <span class="sym">(</span>sequence fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>integer <span class="num">0 18</span><span class="sym">)</span> fragment<span class="sym">-</span><span class="kwa">length</span><span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>hashmap <span class="sym">(</span>make<span class="sym">-</span>hash<span class="sym">-</span>table <span class="sym">:</span>test #<span class="str">'equal)))</span>
+<span class="str">    (dotimes (offset fragment-length)</span>
+<span class="str">      (accumulate-frequencies hashmap sequence offset fragment-length))</span>
+<span class="str">    hashmap))</span>
+<span class="str"></span>
+<span class="str">(defun write-frequencies (sequence length)</span>
+<span class="str">  (let ((sorted-frequencies)</span>
+<span class="str">        (sum 0))</span>
+<span class="str">    (declare (fixnum sum))</span>
+<span class="str">    (maphash #'</span><span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>k v<span class="sym">)</span>
+                 <span class="sym">(</span>setf sum <span class="sym">(+</span> sum <span class="sym">(</span>the fixnum v<span class="sym">)))</span>
+                 <span class="sym">(</span>setf sorted<span class="sym">-</span>frequencies <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span><span class="kwa">cons</span> k v<span class="sym">)</span> sorted<span class="sym">-</span>frequencies<span class="sym">))) (</span>calculate<span class="sym">-</span>frequencies sequence <span class="kwa">length</span><span class="sym">))</span>
+    <span class="sym">(</span>setf sorted<span class="sym">-</span>frequencies <span class="sym">(</span>sort sorted<span class="sym">-</span>frequencies #<span class="str">'(lambda (v1 v2)</span>
+<span class="str">                                                          (cond ((&gt; (the (integer 0 999999) (cdr v1)) (the (integer 0 999999) (cdr v2))) t)</span>
+<span class="str">                                                                ((&lt; (the (integer 0 999999) (cdr v1)) (the (integer 0 999999) (cdr v2))) nil)</span>
+<span class="str">                                                                (t (string&lt; (car v1) (car v2)))))))</span>
+<span class="str">    (dolist (entry sorted-frequencies) (format t &quot;~A ~,3F~%&quot; (car entry) (* (/ (the (integer 0 999999) (cdr entry)) sum) 100.0)))</span>
+<span class="str">    (terpri)))</span>
+<span class="str"></span>
+<span class="str">;;</span>
+<span class="str">;; Delete this before including in the shootout, test method only.</span>
+<span class="str">;;</span>
+<span class="str">;;(defun test-main (filename)</span>
+<span class="str">;;  (with-open-file (stream filename)</span>
+<span class="str">;;    (let ((sequence (read-data stream)))</span>
+<span class="str">;;      (declare (type (simple-array * *) sequence))</span>
+<span class="str">;;      (dolist (entry '</span><span class="sym">(</span><span class="num">1 2</span><span class="sym">)) (</span>write<span class="sym">-</span>frequencies sequence entry<span class="sym">))</span>
+<span class="slc">;;      (dolist (entry '(&quot;GGT&quot; &quot;GGTA&quot; &quot;GGTATT&quot; &quot;GGTATTTTAATT&quot; &quot;GGTATTTTAATTTATAGT&quot;))</span>
+<span class="slc">;;        (declare (type (simple-array * *) entry))</span>
+<span class="slc">;;        (format t &quot;~A~C~A~%&quot; (gethash entry (calculate-frequencies sequence (length entry)) 0) #\Tab entry)))))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">()</span>
+  <span class="sym">(</span>let <span class="sym">((</span>sequence <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span>data <span class="sym">*</span>standard<span class="sym">-</span>input<span class="sym">*)))</span>
+    <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>array <span class="sym">* *)</span> sequence<span class="sym">))</span>
+    <span class="sym">(</span>dolist <span class="sym">(</span>entry <span class="str">'(1 2)) (write-frequencies sequence entry))</span>
+<span class="str">    (dolist (entry '</span><span class="sym">(</span><span class="str">&quot;GGT&quot;</span> <span class="str">&quot;GGTA&quot;</span> <span class="str">&quot;GGTATT&quot;</span> <span class="str">&quot;GGTATTTTAATT&quot;</span> <span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">))</span>
+      <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">type</span> <span class="sym">(</span>simple<span class="sym">-</span>array <span class="sym">* *)</span> entry<span class="sym">))</span>
+      <span class="sym">(</span>format t <span class="str">&quot;~A~C~A~%&quot;</span>
+              <span class="sym">(</span>gethash entry <span class="sym">(</span>calculate<span class="sym">-</span>frequencies sequence <span class="sym">(</span><span class="kwa">length</span> entry<span class="sym">))</span> <span class="num">0</span><span class="sym">)</span>
+              #\Tab entry<span class="sym">))))</span>

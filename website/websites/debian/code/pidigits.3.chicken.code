@@ -1,0 +1,169 @@
+<span class="slc">;;; The Computer Language Benchmarks Game</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; contributed by Anthony Borla</span>
+<span class="slc">;;</span>
+<span class="slc">;; Another GMP-based implementation. This one, however, is considerably</span>
+<span class="slc">;; faster than the previous submission:</span>
+<span class="slc">;;</span>
+<span class="slc">;; * Attempt to create a general-purpose, high-level interface to GMP</span>
+<span class="slc">;;   was scrapped, thus removing most of the interface overhead, and</span>
+<span class="slc">;;   making for a much simplified design. Note some of the routines</span>
+<span class="slc">;;   comprising this interface have been retained, in modified form,</span>
+<span class="slc">;;   as helper routines</span>
+<span class="slc">;;</span>
+<span class="slc">;; * Implemented as a closure [i.e. similar to an OOP-style object but</span>
+<span class="slc">;;   without the overhead]. This approach eliminated need to create/use/</span>
+<span class="slc">;;   free many GMP objects. Instead, a small number of GMP objects were</span>
+<span class="slc">;;   encapsulated within the closure, and reused as necessary [note:</span>
+<span class="slc">;;   presently these are hardcoded (to keep design simple); a larger</span>
+<span class="slc">;;   application would use some sort of object pooling strategy]</span>
+<span class="slc">;;</span>
+<span class="slc">;; * A possible [future] improvement would be to avoid use of strings</span>
+<span class="slc">;;   [via 'mpz_set_str'] to initialise/update GMP objects, instead</span>
+<span class="slc">;;   converting fixnums to C-types and using those values directly. This</span>
+<span class="slc">;;   is, obviously, only possible only for 'smaller', hardware-mappable</span>
+<span class="slc">;;   numeric values</span>
+
+
+<span class="sym">(</span>require<span class="sym">-</span>extension gmp<span class="sym">)</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object #<span class="sym">!</span>optional <span class="sym">(</span>value<span class="sym">-</span>as<span class="sym">-</span>string <span class="str">&quot;0&quot;</span><span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>mpz<span class="sym">-</span>object <span class="sym">(</span>make<span class="sym">-</span>mpz_t<span class="sym">)))</span>
+    <span class="sym">(</span>mpz_init_set_str mpz<span class="sym">-</span>object value<span class="sym">-</span>as<span class="sym">-</span>string <span class="num">10</span><span class="sym">)</span>
+    mpz<span class="sym">-</span>object<span class="sym">))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>free<span class="sym">-</span>mpz<span class="sym">-</span>object mpz<span class="sym">-</span>object<span class="sym">)</span>
+  <span class="sym">(</span>mpz_clear mpz<span class="sym">-</span>object<span class="sym">))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>mpz<span class="sym">-</span>vector #<span class="sym">!</span>rest <span class="kwa">list</span><span class="sym">-</span>of<span class="sym">-</span>string<span class="sym">-</span>values<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>object <span class="sym">(</span>make<span class="sym">-</span>vector <span class="sym">(</span><span class="kwa">length list</span><span class="sym">-</span>of<span class="sym">-</span>string<span class="sym">-</span>values<span class="sym">))))</span>
+    <span class="sym">(</span>let loop <span class="sym">((</span>lovas <span class="kwa">list</span><span class="sym">-</span>of<span class="sym">-</span>string<span class="sym">-</span>values<span class="sym">) (</span>i <span class="num">0</span><span class="sym">))</span>
+      <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">null</span>? lovas<span class="sym">)</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>object
+      <span class="slc">; else</span>
+      <span class="sym">(</span>begin
+        <span class="sym">(</span>vector<span class="sym">-</span><span class="kwa">set</span><span class="sym">!</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>object i <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object <span class="sym">(</span><span class="kwa">car</span> lovas<span class="sym">)))</span>
+        <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">cdr</span> lovas<span class="sym">) (</span>add1 i<span class="sym">)) ))) ))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>update<span class="sym">!</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>target #<span class="sym">!</span>rest <span class="kwa">list</span><span class="sym">-</span>of<span class="sym">-</span>string<span class="sym">-</span>values<span class="sym">)</span>
+  <span class="sym">(</span>let loop <span class="sym">((</span>lovas <span class="kwa">list</span><span class="sym">-</span>of<span class="sym">-</span>string<span class="sym">-</span>values<span class="sym">) (</span>i <span class="num">0</span><span class="sym">))</span>
+    <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">null</span>? lovas<span class="sym">) '()</span>
+    <span class="slc">; else</span>
+    <span class="sym">(</span>begin
+      <span class="sym">(</span>mpz_set_str <span class="sym">(</span>vector<span class="sym">-</span>ref mpz<span class="sym">-</span>vector<span class="sym">-</span>target i<span class="sym">) (</span><span class="kwa">car</span> lovas<span class="sym">)</span> <span class="num">10</span><span class="sym">)</span>
+      <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">cdr</span> lovas<span class="sym">) (</span>add1 i<span class="sym">)) ))) )</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>copy<span class="sym">!</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>target mpz<span class="sym">-</span>vector<span class="sym">-</span>source<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>source<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span>vector<span class="sym">-</span><span class="kwa">length</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>source<span class="sym">)))</span>
+    <span class="sym">(</span>do <span class="sym">((</span>i <span class="num">0</span> <span class="sym">(</span>add1 i<span class="sym">)))</span>
+        <span class="sym">((=</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>source<span class="sym">-</span><span class="kwa">length</span> i<span class="sym">))</span>
+      <span class="sym">(</span>mpz_set <span class="sym">(</span>vector<span class="sym">-</span>ref mpz<span class="sym">-</span>vector<span class="sym">-</span>target i<span class="sym">) (</span>vector<span class="sym">-</span>ref mpz<span class="sym">-</span>vector<span class="sym">-</span>source i<span class="sym">) )) ))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>vector size #<span class="sym">!</span>optional <span class="sym">(</span>initial<span class="sym">-</span>value<span class="sym">-</span>as<span class="sym">-</span>string <span class="str">&quot;0&quot;</span><span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>object <span class="sym">(</span>make<span class="sym">-</span>vector size<span class="sym">)))</span>
+    <span class="sym">(</span>do <span class="sym">((</span>i <span class="num">0</span> <span class="sym">(</span>add1 i<span class="sym">)))</span>
+        <span class="sym">((=</span> size i<span class="sym">))</span>
+      <span class="sym">(</span>vector<span class="sym">-</span><span class="kwa">set</span><span class="sym">!</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>object i <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object initial<span class="sym">-</span>value<span class="sym">-</span>as<span class="sym">-</span>string<span class="sym">)))</span>
+  mpz<span class="sym">-</span>vector<span class="sym">-</span>object<span class="sym">))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>free<span class="sym">-</span>mpz<span class="sym">-</span>vector mpz<span class="sym">-</span>vector<span class="sym">-</span>object<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>object<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span>vector<span class="sym">-</span><span class="kwa">length</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>object<span class="sym">)))</span>
+    <span class="sym">(</span>do <span class="sym">((</span>i <span class="num">0</span> <span class="sym">(</span>add1 i<span class="sym">)))</span>
+        <span class="sym">((=</span> mpz<span class="sym">-</span>vector<span class="sym">-</span>object<span class="sym">-</span><span class="kwa">length</span> i<span class="sym">))</span>
+      <span class="sym">(</span>free<span class="sym">-</span>mpz<span class="sym">-</span>object <span class="sym">(</span>vector<span class="sym">-</span>ref mpz<span class="sym">-</span>vector<span class="sym">-</span>object i<span class="sym">)) )))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>make<span class="sym">-</span>pidigits<span class="sym">)</span>
+  <span class="sym">(</span>let<span class="sym">*</span>
+
+    <span class="sym">((+</span>ten<span class="sym">+ (</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object <span class="str">&quot;10&quot;</span><span class="sym">)) (</span>k_ <span class="num">0</span><span class="sym">) (</span>y_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">)) (</span>j_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">))</span>
+     <span class="sym">(</span>target_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>vector <span class="num">4</span><span class="sym">)) (</span>t_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>vector <span class="num">4</span><span class="sym">)) (</span>z_ <span class="sym">(</span>mpz<span class="sym">-</span>vector <span class="str">&quot;1&quot;</span> <span class="str">&quot;0&quot;</span> <span class="str">&quot;0&quot;</span> <span class="str">&quot;1&quot;</span><span class="sym">))</span>
+     <span class="sym">(</span>left_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">)) (</span>right_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">)) (</span>result_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">))</span>
+
+    <span class="sym">(</span>compose
+      <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>a b<span class="sym">)</span>
+        <span class="sym">(</span>mpz_mul <span class="sym">(</span>vector<span class="sym">-</span>ref target_ <span class="num">0</span><span class="sym">) (</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">0</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_mul left_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">1</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_mul right_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">3</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_add <span class="sym">(</span>vector<span class="sym">-</span>ref target_ <span class="num">1</span><span class="sym">)</span> left_ right_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_mul left_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">0</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_mul right_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">3</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">2</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_add <span class="sym">(</span>vector<span class="sym">-</span>ref target_ <span class="num">2</span><span class="sym">)</span> left_ right_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_mul left_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">1</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_mul right_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">3</span><span class="sym">) (</span>vector<span class="sym">-</span>ref b <span class="num">3</span><span class="sym">))</span>
+        <span class="sym">(</span>mpz_add <span class="sym">(</span>vector<span class="sym">-</span>ref target_ <span class="num">3</span><span class="sym">)</span> left_ right_<span class="sym">)</span>
+        target_<span class="sym">))</span>
+
+    <span class="sym">(</span>extract
+      <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>a j<span class="sym">)</span>
+        <span class="sym">(</span>mpz_set_str j_ <span class="sym">(</span>number<span class="sym">-&gt;</span>string j<span class="sym">)</span> <span class="num">10</span><span class="sym">)</span>
+        <span class="sym">(</span>mpz_mul left_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">0</span><span class="sym">)</span> j_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_mul right_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">2</span><span class="sym">)</span> j_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_add left_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">1</span><span class="sym">)</span> left_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_add right_ <span class="sym">(</span>vector<span class="sym">-</span>ref a <span class="num">3</span><span class="sym">)</span> right_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_tdiv_q result_ left_ right_<span class="sym">)</span>
+        <span class="sym">(</span>mpz_get_str #f <span class="num">10</span> result_<span class="sym">)))</span>
+
+    <span class="sym">(</span>pi<span class="sym">-</span>clear
+      <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">()</span>
+        <span class="sym">(</span>free<span class="sym">-</span>mpz<span class="sym">-</span>object j_<span class="sym">) (</span>free<span class="sym">-</span>mpz<span class="sym">-</span>object left_<span class="sym">) (</span>free<span class="sym">-</span>mpz<span class="sym">-</span>object right_<span class="sym">)</span>
+        <span class="sym">(</span>free<span class="sym">-</span>mpz<span class="sym">-</span>object result_<span class="sym">)</span>
+        <span class="sym">(</span>free<span class="sym">-</span>mpz<span class="sym">-</span>vector t_<span class="sym">) (</span>free<span class="sym">-</span>mpz<span class="sym">-</span>vector z_<span class="sym">)</span>
+        <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> k_ <span class="num">0</span><span class="sym">) (</span><span class="kwa">set</span><span class="sym">!</span> y_ <span class="num">0</span><span class="sym">)</span>
+        <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> j_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">)) (</span><span class="kwa">set</span><span class="sym">!</span> left_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">)) (</span><span class="kwa">set</span><span class="sym">!</span> right_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">))</span>
+        <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> result_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>object<span class="sym">))</span>
+        <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> t_ <span class="sym">(</span>make<span class="sym">-</span>mpz<span class="sym">-</span>vector <span class="num">4</span><span class="sym">)) (</span><span class="kwa">set</span><span class="sym">!</span> z_ <span class="sym">(</span>mpz<span class="sym">-</span>vector <span class="str">&quot;1&quot;</span> <span class="str">&quot;0&quot;</span> <span class="str">&quot;0&quot;</span> <span class="str">&quot;1&quot;</span><span class="sym">))</span>
+        #t<span class="sym">))</span>
+
+    <span class="sym">(</span>pi<span class="sym">-</span>run
+      <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>c<span class="sym">)</span>
+        <span class="sym">(</span>let loop<span class="sym">-</span>o <span class="sym">((</span>i <span class="num">0</span><span class="sym">) (</span>r <span class="sym">(</span>make<span class="sym">-</span>string <span class="num">0</span><span class="sym">)))</span>
+          <span class="sym">(</span><span class="kwa">cond</span>
+            <span class="sym">((&lt;</span> i c<span class="sym">)</span>
+              <span class="sym">(</span>let loop<span class="sym">-</span>i <span class="sym">((</span>ys <span class="sym">(</span>extract z_ <span class="num">3</span><span class="sym">)))</span>
+                <span class="sym">(</span><span class="kwa">cond</span>
+                  <span class="sym">((</span>string<span class="sym">=</span>? ys <span class="sym">(</span>extract z_ <span class="num">4</span><span class="sym">))</span>
+                    <span class="sym">(</span>mpz_set_str y_ ys <span class="num">10</span><span class="sym">)</span>
+                    <span class="sym">(</span>mpz_neg y_ y_<span class="sym">)</span>
+                    <span class="sym">(</span>mpz_mul y_ <span class="sym">+</span>ten<span class="sym">+</span> y_<span class="sym">)</span>
+                    <span class="sym">(</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>update<span class="sym">!</span> t_ <span class="str">&quot;10&quot;</span> <span class="sym">(</span>mpz_get_str #f <span class="num">10</span> y_<span class="sym">)</span> <span class="str">&quot;0&quot;</span> <span class="str">&quot;1&quot;</span><span class="sym">)</span>
+                    <span class="sym">(</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>copy<span class="sym">!</span> z_ <span class="sym">(</span>compose t_ z_<span class="sym">))</span>
+                    <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> r <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">append</span> r ys<span class="sym">)) )</span>
+                  <span class="sym">(</span>else
+                    <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> k_ <span class="sym">(</span>add1 k_<span class="sym">))</span>
+                    <span class="sym">(</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>update<span class="sym">!</span> t_
+                      <span class="sym">(</span>number<span class="sym">-&gt;</span>string k_<span class="sym">)</span>
+                      <span class="sym">(</span>number<span class="sym">-&gt;</span>string <span class="sym">(+ (*</span> <span class="num">4</span> k_<span class="sym">)</span> <span class="num">2</span><span class="sym">))</span>
+                      <span class="sym">(</span>number<span class="sym">-&gt;</span>string <span class="num">0</span><span class="sym">)</span>
+                      <span class="sym">(</span>number<span class="sym">-&gt;</span>string <span class="sym">(+</span> <span class="num">1</span> <span class="sym">(*</span> <span class="num">2</span> k_<span class="sym">))))</span>
+                    <span class="sym">(</span>mpz<span class="sym">-</span>vector<span class="sym">-</span>copy<span class="sym">!</span> z_ <span class="sym">(</span>compose z_ t_<span class="sym">))</span>
+                    <span class="sym">(</span>loop<span class="sym">-</span>i <span class="sym">(</span>extract z_ <span class="num">3</span><span class="sym">)))))</span>
+              <span class="sym">(</span>loop<span class="sym">-</span>o <span class="sym">(</span>add1 i<span class="sym">)</span> r<span class="sym">))</span>
+            <span class="sym">(</span>else r<span class="sym">))))) )</span>
+
+    <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>op<span class="sym">)</span>
+      <span class="sym">(</span><span class="kwa">cond</span>
+        <span class="sym">((</span><span class="kwa">eq</span>? op <span class="sym">'</span>clear<span class="sym">)</span> pi<span class="sym">-</span>clear<span class="sym">)</span>
+        <span class="sym">((</span><span class="kwa">eq</span>? op <span class="sym">'</span>run<span class="sym">)</span> pi<span class="sym">-</span>run<span class="sym">)</span>
+        <span class="sym">(</span>else <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">() (</span>display <span class="str">&quot;*** make-pidigits:invalid operation ***</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">))))) ))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>pidigits pi<span class="sym">-</span>object c<span class="sym">)</span>
+  <span class="sym">(</span><span class="kwa">apply</span> <span class="sym">(</span>pi<span class="sym">-</span>object <span class="sym">'</span>run<span class="sym">) (</span><span class="kwa">list</span> c<span class="sym">)))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>main args<span class="sym">)</span>
+  <span class="sym">(</span>let <span class="sym">((</span>n <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">null</span>? args<span class="sym">)</span>
+               <span class="num">1</span>
+               <span class="sym">(</span>string<span class="sym">-&gt;</span>number <span class="sym">(</span><span class="kwa">car</span> args<span class="sym">))))</span>
+
+    <span class="sym">(</span>pi<span class="sym">-</span>object <span class="sym">(</span>make<span class="sym">-</span>pidigits<span class="sym">)))</span>
+
+    <span class="sym">(</span>let loop <span class="sym">((</span>i <span class="num">10</span><span class="sym">))</span>
+      <span class="sym">(</span><span class="kwa">cond</span>
+         <span class="sym">((&lt;=</span> i n<span class="sym">)</span>
+           <span class="sym">(</span><span class="kwa">print</span> <span class="sym">(</span>pidigits pi<span class="sym">-</span>object <span class="num">10</span><span class="sym">)</span> <span class="str">&quot;</span><span class="esc">\t</span><span class="str">:&quot;</span> i<span class="sym">)</span>
+           <span class="sym">(</span>loop <span class="sym">(+</span> i <span class="num">10</span><span class="sym">)))</span>
+         <span class="sym">(</span>else
+           <span class="sym">(</span>let <span class="sym">((</span>t <span class="sym">(-</span> i <span class="num">10</span><span class="sym">)))</span>
+             <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(&lt;</span> t n<span class="sym">) (</span><span class="kwa">print</span> <span class="sym">(</span>pidigits pi<span class="sym">-</span>object <span class="sym">(-</span> n t<span class="sym">))</span> <span class="str">&quot;</span><span class="esc">\t</span><span class="str">:&quot;</span> n<span class="sym">)))))) ))</span>
+
+<span class="sym">(</span>main <span class="sym">(</span><span class="kwa">command</span><span class="sym">-</span><span class="kwa">line</span><span class="sym">-</span>arguments<span class="sym">))</span>
+

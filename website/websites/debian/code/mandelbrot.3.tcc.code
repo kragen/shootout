@@ -1,0 +1,91 @@
+<span class="com">/*The Computer Language Shootout</span>
+<span class="com">  http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">  contributed by Greg Buchholz</span>
+<span class="com"></span>
+<span class="com">  Uses SSE packed doubles to run the inner loop computations in parallel.</span>
+<span class="com">  I don't have a machine with SSE to test with, but the assembly looks</span>
+<span class="com">  pretty nice.  With gcc-3.4.2 there's no difference in the assembly</span>
+<span class="com">  between -msse2 and -msse3, YMMV.  It uses gcc's vector extentions</span>
+<span class="com">  ( http://gcc.gnu.org/onlinedocs/gcc-4.0.0/gcc/Vector-Extensions.html ),</span>
+<span class="com">  so it will run (slowly) on hardware without SSE.</span>
+<span class="com"></span>
+<span class="com">  compile (AMD):</span>
+<span class="com">  gcc -D_ISOC9X_SOURCE -O3 -mfpmath=sse -msse2 -march=athlon-xp</span>
+<span class="com">      -ffast-math -funroll-loops -o mandelbrot.gcc-3.gcc_run mandelbrot.c -lm</span>
+<span class="com"></span>
+<span class="com">  compile (INTEL):</span>
+<span class="com">  gcc -D_ISOC9X_SOURCE -O3 -mfpmath=sse -msse2 -march=pentium4</span>
+<span class="com">      -ffast-math -funroll-loops -o mandelbrot.gcc-3.gcc_run mandelbrot.c -lm</span>
+<span class="com">*/</span>
+
+<span class="dir">#include&lt;stdio.h&gt;</span>
+<span class="dir">#include&lt;math.h&gt;</span>
+<span class="dir">#include&lt;fenv.h&gt;</span>
+<span class="kwc">typedef</span> <span class="kwb">double</span> v2df <span class="kwd">__attribute__</span> <span class="sym">((</span><span class="kwd">mode</span><span class="sym">(</span>V2DF<span class="sym">)));</span> <span class="slc">// vector of two double floats</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span> <span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">**</span>argv<span class="sym">)</span>
+<span class="sym">{</span>
+    <span class="kwb">int</span> w<span class="sym">,</span> h<span class="sym">,</span> bit_num <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwb">char</span> byte_acc <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwb">int</span> i<span class="sym">,</span> iter <span class="sym">=</span> <span class="num">50</span><span class="sym">;</span>
+    <span class="kwb">double</span> x<span class="sym">,</span> y<span class="sym">,</span> limit_sqr <span class="sym">=</span> <span class="num">4.0</span><span class="sym">;</span>
+    v2df Zrv<span class="sym">,</span> Ziv<span class="sym">,</span> Crv<span class="sym">,</span> Civ<span class="sym">,</span> Trv<span class="sym">,</span> Tiv<span class="sym">;</span>
+    v2df zero<span class="sym">,</span> one<span class="sym">,</span> _1p5<span class="sym">,</span> two<span class="sym">;</span>
+    <span class="kwb">double</span> <span class="sym">*</span>Zr <span class="sym">= (</span><span class="kwb">double</span><span class="sym">*)&amp;</span>Zrv<span class="sym">, *</span>Zi <span class="sym">= (</span><span class="kwb">double</span><span class="sym">*)&amp;</span>Ziv<span class="sym">,</span>
+           <span class="sym">*</span>Cr <span class="sym">= (</span><span class="kwb">double</span><span class="sym">*)&amp;</span>Crv<span class="sym">, *</span>Ci <span class="sym">= (</span><span class="kwb">double</span><span class="sym">*)&amp;</span>Civ<span class="sym">,</span>
+           <span class="sym">*</span>Tr <span class="sym">= (</span><span class="kwb">double</span><span class="sym">*)&amp;</span>Trv<span class="sym">, *</span>Ti <span class="sym">= (</span><span class="kwb">double</span><span class="sym">*)&amp;</span>Tiv<span class="sym">;</span>
+
+<span class="dir">#define initv(name, val) *((double*)&amp;name)   = (double) val; \</span>
+<span class="dir">                         *((double*)&amp;name+1) = (double) val</span>
+    <span class="kwd">initv</span><span class="sym">(</span>zero<span class="sym">,</span><span class="num">0.0</span><span class="sym">);</span> <span class="kwd">initv</span><span class="sym">(</span>one<span class="sym">,</span><span class="num">1.0</span><span class="sym">);</span> <span class="kwd">initv</span><span class="sym">(</span>_1p5<span class="sym">,</span><span class="num">1.5</span><span class="sym">);</span> <span class="kwd">initv</span><span class="sym">(</span>two<span class="sym">,</span><span class="num">2.0</span><span class="sym">);</span>
+
+    w <span class="sym">=</span> h <span class="sym">=</span> <span class="kwd">atoi</span><span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">]);</span>
+
+    <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;P4</span><span class="esc">\n</span><span class="str">%d %d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span>w<span class="sym">,</span>h<span class="sym">);</span>
+
+    <span class="kwa">for</span><span class="sym">(</span>y<span class="sym">=</span><span class="num">0</span><span class="sym">;</span>y<span class="sym">&lt;</span>h<span class="sym">;++</span>y<span class="sym">)</span>
+    <span class="sym">{</span>
+        <span class="kwa">for</span><span class="sym">(</span>x<span class="sym">=</span><span class="num">0</span><span class="sym">;</span>x<span class="sym">&lt;</span>w<span class="sym">;</span>x<span class="sym">+=</span><span class="num">2</span><span class="sym">)</span>
+        <span class="sym">{</span>
+            Zrv <span class="sym">=</span> Ziv <span class="sym">=</span> Trv <span class="sym">=</span> Tiv <span class="sym">=</span> zero<span class="sym">;</span>
+            <span class="sym">*</span>Cr <span class="sym">=</span> x<span class="sym">/</span>w<span class="sym">;  *(</span>Cr<span class="sym">+</span><span class="num">1</span><span class="sym">) = (</span>x<span class="sym">+</span><span class="num">1.0</span><span class="sym">)/</span>w<span class="sym">;</span>
+            <span class="sym">*</span>Ci <span class="sym">=</span> y<span class="sym">/</span>h<span class="sym">;  *(</span>Ci<span class="sym">+</span><span class="num">1</span><span class="sym">) = *</span>Ci<span class="sym">;</span>
+            Crv <span class="sym">=</span> two <span class="sym">*</span> Crv <span class="sym">-</span> _1p5<span class="sym">;</span>
+            Civ <span class="sym">=</span> two <span class="sym">*</span> Civ <span class="sym">-</span> one<span class="sym">;</span>
+
+            <span class="kwa">for</span> <span class="sym">(</span>i<span class="sym">=</span><span class="num">0</span><span class="sym">;</span>i<span class="sym">&lt;</span>iter <span class="sym">&amp;&amp; (</span><span class="kwd">islessequal</span><span class="sym">( *</span>Tr    <span class="sym">+  *</span>Ti<span class="sym">,</span>   limit_sqr<span class="sym">) ||</span>
+                                <span class="kwd">islessequal</span><span class="sym">(*(</span>Tr<span class="sym">+</span><span class="num">1</span><span class="sym">) + *(</span>Ti<span class="sym">+</span><span class="num">1</span><span class="sym">),</span>limit_sqr<span class="sym">)   ); ++</span>i<span class="sym">)</span>
+            <span class="sym">{</span>
+                Ziv <span class="sym">=</span> two<span class="sym">*</span>Zrv<span class="sym">*</span>Ziv <span class="sym">+</span> Civ<span class="sym">;</span>
+                Zrv <span class="sym">=</span> Trv <span class="sym">-</span> Tiv <span class="sym">+</span> Crv<span class="sym">;</span>
+                Trv <span class="sym">=</span> Zrv <span class="sym">*</span> Zrv<span class="sym">;</span>
+                Tiv <span class="sym">=</span> Ziv <span class="sym">*</span> Ziv<span class="sym">;</span>
+            <span class="sym">}</span>
+
+            byte_acc <span class="sym">&lt;&lt;=</span> <span class="num">2</span><span class="sym">;</span>
+            <span class="kwa">if</span><span class="sym">(</span><span class="kwd">islessequal</span><span class="sym">(*</span>Tr <span class="sym">+ *</span>Ti<span class="sym">,</span> limit_sqr<span class="sym">))</span>
+                byte_acc <span class="sym">|=</span> <span class="num">0x02</span><span class="sym">;</span>
+
+            <span class="kwa">if</span><span class="sym">(</span><span class="kwd">islessequal</span><span class="sym">(*(</span>Tr<span class="sym">+</span><span class="num">1</span><span class="sym">) + *(</span>Ti<span class="sym">+</span><span class="num">1</span><span class="sym">),</span> limit_sqr<span class="sym">))</span>
+                byte_acc <span class="sym">|=</span> <span class="num">0x01</span><span class="sym">;</span>
+
+            bit_num<span class="sym">+=</span><span class="num">2</span><span class="sym">;</span>
+
+            <span class="kwa">if</span><span class="sym">(</span>bit_num <span class="sym">==</span> <span class="num">8</span><span class="sym">)</span>
+            <span class="sym">{</span>
+                <span class="kwd">putc</span><span class="sym">(</span>byte_acc<span class="sym">,</span>stdout<span class="sym">);</span>
+                byte_acc <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+                bit_num <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+            <span class="sym">}</span>
+            <span class="kwa">else if</span><span class="sym">(</span>x <span class="sym">==</span> w<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+            <span class="sym">{</span>
+                byte_acc <span class="sym">&lt;&lt;= (</span><span class="num">8</span><span class="sym">-</span>w<span class="sym">%</span><span class="num">8</span><span class="sym">);</span>
+                <span class="kwd">putc</span><span class="sym">(</span>byte_acc<span class="sym">,</span>stdout<span class="sym">);</span>
+                byte_acc <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+                bit_num <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+            <span class="sym">}</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+<span class="sym">}</span>
+

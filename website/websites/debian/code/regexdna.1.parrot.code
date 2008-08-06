@@ -1,0 +1,158 @@
+#<span class="sym">!</span>.<span class="sym">/</span>parrot
+# by Joshua Isom
+
+.<span class="kwa">sub</span> main <span class="sym">:</span>main
+	load_bytecode <span class="str">&quot;PGE.pbc&quot;</span>
+	.<span class="kwa">local</span> pmc p6rule_compile<span class="sym">,</span> rulesub<span class="sym">,</span> match<span class="sym">,</span> variants<span class="sym">,</span> variants_p5<span class="sym">,</span> iub<span class="sym">,</span> iter<span class="sym">,</span> matches<span class="sym">,</span> capt
+	.<span class="kwa">local</span> string pattern<span class="sym">,</span> chunk<span class="sym">,</span> seq<span class="sym">,</span> key<span class="sym">,</span> replacement
+	.<span class="kwa">local int</span> readlen<span class="sym">,</span> chunklen<span class="sym">,</span> seqlen<span class="sym">,</span> finallen<span class="sym">,</span> i<span class="sym">,</span> varnum<span class="sym">,</span> count
+	p6rule_compile <span class="sym">=</span> compreg <span class="str">&quot;PGE::P6Regex&quot;</span>
+
+	# Store the regexes we need...
+	variants <span class="sym">=</span> new .FixedStringArray
+	variants <span class="sym">=</span> <span class="num">9</span>
+	variants<span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> <span class="str">'      agggtaaa|tttaccct      '</span>
+	variants<span class="sym">[</span><span class="num">1</span><span class="sym">] =</span> <span class="str">'&lt;[cgt]&gt;gggtaaa|tttaccc&lt;[acg]&gt;'</span>
+	variants<span class="sym">[</span><span class="num">2</span><span class="sym">] =</span> <span class="str">'a&lt;[act]&gt;ggtaaa|tttacc&lt;[agt]&gt;t'</span>
+	variants<span class="sym">[</span><span class="num">3</span><span class="sym">] =</span> <span class="str">'ag&lt;[act]&gt;gtaaa|tttac&lt;[agt]&gt;ct'</span>
+	variants<span class="sym">[</span><span class="num">4</span><span class="sym">] =</span> <span class="str">'agg&lt;[act]&gt;taaa|ttta&lt;[agt]&gt;cct'</span>
+	variants<span class="sym">[</span><span class="num">5</span><span class="sym">] =</span> <span class="str">'aggg&lt;[acg]&gt;aaa|ttt&lt;[cgt]&gt;ccct'</span>
+	variants<span class="sym">[</span><span class="num">6</span><span class="sym">] =</span> <span class="str">'agggt&lt;[cgt]&gt;aa|tt&lt;[acg]&gt;accct'</span>
+	variants<span class="sym">[</span><span class="num">7</span><span class="sym">] =</span> <span class="str">'agggta&lt;[cgt]&gt;a|t&lt;[acg]&gt;taccct'</span>
+	variants<span class="sym">[</span><span class="num">8</span><span class="sym">] =</span> <span class="str">'agggtaa&lt;[cgt]&gt;|&lt;[acg]&gt;ttaccct'</span>
+	# <span class="kwa">and</span> store the p5regex style for printing
+	variants_p5 <span class="sym">=</span> new .Hash
+	variants_p5<span class="sym">[</span><span class="str">'      agggtaaa|tttaccct      '</span><span class="sym">] =</span> <span class="str">'agggtaaa|tttaccct'</span>
+	variants_p5<span class="sym">[</span><span class="str">'&lt;[cgt]&gt;gggtaaa|tttaccc&lt;[acg]&gt;'</span><span class="sym">] =</span> <span class="str">'[cgt]gggtaaa|tttaccc[acg]'</span>
+	variants_p5<span class="sym">[</span><span class="str">'a&lt;[act]&gt;ggtaaa|tttacc&lt;[agt]&gt;t'</span><span class="sym">] =</span> <span class="str">'a[act]ggtaaa|tttacc[agt]t'</span>
+	variants_p5<span class="sym">[</span><span class="str">'ag&lt;[act]&gt;gtaaa|tttac&lt;[agt]&gt;ct'</span><span class="sym">] =</span> <span class="str">'ag[act]gtaaa|tttac[agt]ct'</span>
+	variants_p5<span class="sym">[</span><span class="str">'agg&lt;[act]&gt;taaa|ttta&lt;[agt]&gt;cct'</span><span class="sym">] =</span> <span class="str">'agg[act]taaa|ttta[agt]cct'</span>
+	variants_p5<span class="sym">[</span><span class="str">'aggg&lt;[acg]&gt;aaa|ttt&lt;[cgt]&gt;ccct'</span><span class="sym">] =</span> <span class="str">'aggg[acg]aaa|ttt[cgt]ccct'</span>
+	variants_p5<span class="sym">[</span><span class="str">'agggt&lt;[cgt]&gt;aa|tt&lt;[acg]&gt;accct'</span><span class="sym">] =</span> <span class="str">'agggt[cgt]aa|tt[acg]accct'</span>
+	variants_p5<span class="sym">[</span><span class="str">'agggta&lt;[cgt]&gt;a|t&lt;[acg]&gt;taccct'</span><span class="sym">] =</span> <span class="str">'agggta[cgt]a|t[acg]taccct'</span>
+	variants_p5<span class="sym">[</span><span class="str">'agggtaa&lt;[cgt]&gt;|&lt;[acg]&gt;ttaccct'</span><span class="sym">] =</span> <span class="str">'agggtaa[cgt]|[acg]ttaccct'</span>
+
+	iub <span class="sym">=</span> new .Hash
+	iub<span class="sym">[</span><span class="str">'b'</span><span class="sym">] =</span> <span class="str">'(c|g|t)'</span>
+	iub<span class="sym">[</span><span class="str">'d'</span><span class="sym">] =</span> <span class="str">'(a|g|t)'</span>
+	iub<span class="sym">[</span><span class="str">'h'</span><span class="sym">] =</span> <span class="str">'(a|c|t)'</span>
+	iub<span class="sym">[</span><span class="str">'k'</span><span class="sym">] =</span> <span class="str">'(g|t)'</span>
+	iub<span class="sym">[</span><span class="str">'m'</span><span class="sym">] =</span> <span class="str">'(a|c)'</span>
+	iub<span class="sym">[</span><span class="str">'n'</span><span class="sym">] =</span> <span class="str">'(a|c|g|t)'</span>
+	iub<span class="sym">[</span><span class="str">'r'</span><span class="sym">] =</span> <span class="str">'(a|g)'</span>
+	iub<span class="sym">[</span><span class="str">'s'</span><span class="sym">] =</span> <span class="str">'(c|g)'</span>
+	iub<span class="sym">[</span><span class="str">'v'</span><span class="sym">] =</span> <span class="str">'(a|c|g)'</span>
+	iub<span class="sym">[</span><span class="str">'w'</span><span class="sym">] =</span> <span class="str">'(a|t)'</span>
+	iub<span class="sym">[</span><span class="str">'y'</span><span class="sym">] =</span> <span class="str">'(c|t)'</span>
+
+	############################################
+	# Read <span class="kwa">in</span> the file
+beginwhile<span class="sym">:</span>
+	chunk <span class="sym">=</span> read <span class="num">65535</span>
+	chunklen <span class="sym">=</span> <span class="kwa">length</span> chunk
+	unless chunklen goto endwhile
+	# They don<span class="str">'t say you have to match case insenitive...</span>
+<span class="str">	downcase chunk</span>
+<span class="str">	seq .= chunk</span>
+<span class="str">	goto beginwhile</span>
+<span class="str">endwhile:</span>
+<span class="str">	readlen = length seq</span>
+<span class="str"></span>
+<span class="str">	#############################################</span>
+<span class="str">	# Remove all junk</span>
+<span class="str">	pattern = '</span><span class="sym">[ ( [</span> \<span class="sym">&gt;</span> \N<span class="sym">*: ] )  |</span> \N<span class="sym">*:(</span>\n<span class="sym">) ]*</span><span class="str">'</span>
+<span class="str">	rulesub = p6rule_compile(pattern)</span>
+<span class="str">	match = rulesub(seq)</span>
+<span class="str"></span>
+<span class="str">	capt = match[0]</span>
+<span class="str">stripfind:</span>
+<span class="str">	unless capt goto endstripfind</span>
+<span class="str">	$P0 = pop capt</span>
+<span class="str">	$I0 = $P0.&quot;from&quot;()</span>
+<span class="str">	$I1 = $P0.&quot;to&quot;()</span>
+<span class="str">	$I1 -= $I0</span>
+<span class="str">	substr seq, $I0, $I1, '</span><span class="str">'</span>
+<span class="str">	goto stripfind</span>
+<span class="str">endstripfind:</span>
+<span class="str">	seqlen = length seq</span>
+<span class="str"></span>
+<span class="str">	###########################################</span>
+<span class="str">	# Count the matches</span>
+<span class="str">	varnum = elements variants</span>
+<span class="str">	i = 0</span>
+<span class="str">beginfor:</span>
+<span class="str">	count = 0</span>
+<span class="str">	unless i &lt; varnum goto endfor</span>
+<span class="str"></span>
+<span class="str">	pattern = variants[i]</span>
+<span class="str">	# The spec says to print the p5 style regex, shame on them</span>
+<span class="str">	$S0 = variants_p5[pattern]</span>
+<span class="str">	print $S0</span>
+<span class="str">	print &quot; &quot;</span>
+<span class="str">	# And out of spite, use p6 rules anyway</span>
+<span class="str">	rulesub = p6rule_compile(pattern)</span>
+<span class="str">	match = rulesub(seq)</span>
+<span class="str"></span>
+<span class="str">match_loop:</span>
+<span class="str">	unless match goto next</span>
+<span class="str">	inc count</span>
+<span class="str">	match.&quot;next&quot;()</span>
+<span class="str">	goto match_loop</span>
+<span class="str">next:</span>
+<span class="str">	inc i</span>
+<span class="str">	print count</span>
+<span class="str">	print &quot;\n&quot;</span>
+<span class="str">	goto beginfor</span>
+<span class="str">endfor:</span>
+<span class="str"></span>
+<span class="str">	#####################################################</span>
+<span class="str">	# Final replace to make the sequence a p5 style regex</span>
+<span class="str">	.include &quot;iterator.pasm&quot;</span>
+<span class="str">	iter = new .Iterator, iub</span>
+<span class="str">	set iter, .ITERATE_FROM_START</span>
+<span class="str">	matches = new .ResizablePMCArray</span>
+<span class="str">iter_loop:</span>
+<span class="str">	unless iter goto iter_end</span>
+<span class="str">	key = shift iter</span>
+<span class="str">	replacement = iub[key]</span>
+<span class="str">	# Ok, using a regex to match a single fixed character is probably excessive</span>
+<span class="str">	# But it'</span>s what<span class="str">'s wanted...</span>
+<span class="str">	rulesub = p6rule_compile(key)</span>
+<span class="str">	match = rulesub(seq)</span>
+<span class="str"></span>
+<span class="str">##########################################</span>
+<span class="str">switch:</span>
+<span class="str">	unless match goto endswitch</span>
+<span class="str">	$I0 = match.&quot;from&quot;()</span>
+<span class="str">	$I1 = match.&quot;to&quot;()</span>
+<span class="str">	$I1 -= $I0</span>
+<span class="str">	$P0 = new .FixedIntegerArray</span>
+<span class="str">	$P0 = 2</span>
+<span class="str">	$P0[0] = $I0</span>
+<span class="str">	$P0[1] = $I1</span>
+<span class="str">	push matches, $P0</span>
+<span class="str">	match.&quot;next&quot;()</span>
+<span class="str">	goto switch</span>
+<span class="str">endswitch:</span>
+<span class="str"></span>
+<span class="str">switchloop:</span>
+<span class="str">	unless matches goto endswitchloop</span>
+<span class="str">	$P0 = pop matches</span>
+<span class="str">	$I0 = $P0[0]</span>
+<span class="str">	$I1 = $P0[1]</span>
+<span class="str">	substr seq, $I0, $I1, replacement</span>
+<span class="str">	goto switchloop</span>
+<span class="str">endswitchloop:</span>
+<span class="str">#############################################</span>
+<span class="str">	goto iter_loop</span>
+<span class="str">iter_end:</span>
+<span class="str">	finallen = length seq</span>
+<span class="str"></span>
+<span class="str">	print &quot;\n&quot;</span>
+<span class="str">	print readlen</span>
+<span class="str">	print &quot;\n&quot;</span>
+<span class="str">	print seqlen</span>
+<span class="str">	print &quot;\n&quot;</span>
+<span class="str">	print finallen</span>
+<span class="str">	print &quot;\n&quot;</span>
+<span class="str">.end</span>

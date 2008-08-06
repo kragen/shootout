@@ -1,0 +1,85 @@
+<span class="kwb">module</span><span class="sym">:</span>  pidigits
+<span class="kwa">use</span><span class="sym">-</span>libraries<span class="sym">:</span> common<span class="sym">-</span>dylan<span class="sym">,</span> io<span class="sym">,</span> transcendental<span class="sym">,</span> dylan
+<span class="kwa">use</span><span class="sym">-</span>modules<span class="sym">:</span> common<span class="sym">-</span>dylan<span class="sym">,</span> standard<span class="sym">-</span>io<span class="sym">,</span> streams<span class="sym">,</span> format<span class="sym">-</span>out<span class="sym">,</span> extensions
+
+<span class="com">/*</span>
+<span class="com"> *  Based on Christopher Neufeld's  &lt;shootout0000&#64;cneufeld.ca&gt;</span>
+<span class="com"> *  SBCL implementation.</span>
+<span class="com"> */</span>
+
+<span class="kwa">define constant</span> $digits<span class="sym">-</span>per<span class="sym">-</span>line <span class="sym">=</span> <span class="num">10</span><span class="sym">;</span>
+
+<span class="kwa">define function</span> compose<span class="sym">-</span><span class="kwd">val</span> <span class="sym">(</span>a1<span class="sym">,</span> a2<span class="sym">)</span>
+  <span class="kwd">vector</span><span class="sym">(</span>
+          <span class="sym">(</span> a1<span class="sym">[</span><span class="num">0</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">0</span><span class="sym">] ) + (</span> a1<span class="sym">[</span><span class="num">1</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">2</span><span class="sym">] ),</span>
+          <span class="sym">(</span> a1<span class="sym">[</span><span class="num">0</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">1</span><span class="sym">] ) + (</span> a1<span class="sym">[</span><span class="num">1</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">3</span><span class="sym">] ),</span>
+          <span class="sym">(</span> a1<span class="sym">[</span><span class="num">2</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">0</span><span class="sym">] ) + (</span> a1<span class="sym">[</span><span class="num">3</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">2</span><span class="sym">] ),</span>
+          <span class="sym">(</span> a1<span class="sym">[</span><span class="num">2</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">1</span><span class="sym">] ) + (</span> a1<span class="sym">[</span><span class="num">3</span><span class="sym">] *</span> a2<span class="sym">[</span><span class="num">3</span><span class="sym">] ) );</span>
+<span class="kwa">end function</span> compose<span class="sym">-</span>val<span class="sym">;</span>
+
+<span class="kwa">define function</span> compute<span class="sym">-</span><span class="kwd">pi</span> <span class="sym">( *</span>stop<span class="sym">-</span>digits<span class="sym">*)</span>
+  <span class="kwa">let</span> z <span class="sym">=</span> <span class="kwd">vector</span><span class="sym">(</span>#e1<span class="sym">,</span> #e0<span class="sym">,</span> #e0<span class="sym">,</span> #e1<span class="sym">);</span>
+  <span class="kwa">let</span> $curstate <span class="sym">=</span> <span class="kwd">vector</span><span class="sym">(</span> #e0<span class="sym">,</span> #e2<span class="sym">,</span> #e0<span class="sym">,</span> #e1 <span class="sym">);</span>
+
+  <span class="kwa">local method</span> extract<span class="sym">-</span><span class="kwd">digit</span> <span class="sym">(</span>state<span class="sym">,</span> x <span class="sym">::</span> <span class="kwa">&lt;integer&gt;</span> <span class="sym">) =</span>&gt; result <span class="sym">::</span> <span class="kwa">&lt;extended-integer&gt;</span><span class="sym">;</span>
+        <span class="kwa">let</span> factor <span class="sym">::</span> <span class="kwa">&lt;extended-integer&gt;</span> <span class="sym">=</span> <span class="kwd">as</span><span class="sym">(</span><span class="kwa">&lt;extended-integer&gt;</span><span class="sym">,</span> x<span class="sym">);</span>
+        <span class="kwa">let</span> numerator <span class="sym">::</span> <span class="kwa">&lt;extended-integer&gt;</span> <span class="sym">=</span> factor <span class="sym">*</span> state<span class="sym">[</span><span class="num">0</span><span class="sym">] +</span> state<span class="sym">[</span><span class="num">1</span><span class="sym">];</span>
+        <span class="kwa">let</span> denominator <span class="sym">::</span> <span class="kwa">&lt;extended-integer&gt;</span> <span class="sym">=</span> factor <span class="sym">*</span> state<span class="sym">[</span><span class="num">2</span><span class="sym">] +</span> state<span class="sym">[</span><span class="num">3</span><span class="sym">];</span>
+        floor<span class="sym">/ (</span> numerator<span class="sym">,</span> denominator <span class="sym">);</span>
+      <span class="kwa">end method</span> extract<span class="sym">-</span>digit<span class="sym">;</span>
+
+  <span class="kwa">local method</span> safe?<span class="sym">(</span> val<span class="sym">,</span> n <span class="sym">) =</span>&gt; result <span class="sym">::</span> <span class="kwa">&lt;boolean&gt;</span><span class="sym">;</span>
+        n <span class="sym">=</span> extract<span class="sym">-</span><span class="kwd">digit</span><span class="sym">(</span>val<span class="sym">,</span> <span class="num">4</span><span class="sym">);</span>
+      <span class="kwa">end method</span> safe?<span class="sym">;</span>
+
+  <span class="kwa">local method</span> <span class="kwd">produce</span> <span class="sym">(</span>val<span class="sym">,</span> n<span class="sym">)</span>
+        compose<span class="sym">-</span><span class="kwd">val</span><span class="sym">(</span> <span class="kwd">vector</span><span class="sym">(</span> <span class="num">10</span><span class="sym">, (</span>n <span class="sym">* -</span><span class="num">10</span><span class="sym">),</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span> <span class="sym">),</span> val <span class="sym">);</span>
+      <span class="kwa">end method</span> produce<span class="sym">;</span>
+
+  <span class="kwa">local method</span> next<span class="sym">-</span><span class="kwd">digit</span> <span class="sym">(</span>val<span class="sym">)</span>
+        extract<span class="sym">-</span><span class="kwd">digit</span><span class="sym">(</span> val<span class="sym">,</span> <span class="num">3</span> <span class="sym">);</span>
+      <span class="kwa">end method</span> next<span class="sym">-</span>digit<span class="sym">;</span>
+
+  <span class="kwa">local method</span> <span class="kwd">consume</span> <span class="sym">(</span>val<span class="sym">,</span> val<span class="sym">-</span>prime<span class="sym">)</span>
+        compose<span class="sym">-</span><span class="kwd">val</span><span class="sym">(</span>val<span class="sym">,</span> val<span class="sym">-</span>prime<span class="sym">);</span>
+      <span class="kwa">end method</span> consume<span class="sym">;</span>
+
+  <span class="kwa">local method</span> next<span class="sym">-</span><span class="kwd">state</span> <span class="sym">()</span>
+<span class="com">/*</span>
+<span class="com">      $curstate[0] := ( $curstate[0] + 1 );</span>
+<span class="com">      $curstate[1] := ( $curstate[1] + 4 );</span>
+<span class="com">      $curstate[3] := ( $curstate[3] + 2 );</span>
+<span class="com">*/</span>
+      $curstate<span class="sym">[</span><span class="num">0</span><span class="sym">] := (</span> $curstate<span class="sym">[</span><span class="num">0</span><span class="sym">] +</span> <span class="num">1</span> <span class="sym">);</span>
+      $curstate<span class="sym">[</span><span class="num">1</span><span class="sym">] := (</span> $curstate<span class="sym">[</span><span class="num">0</span><span class="sym">] *</span> <span class="num">4</span> <span class="sym">) +</span> <span class="num">2</span><span class="sym">;</span>
+      $curstate<span class="sym">[</span><span class="num">3</span><span class="sym">] := (</span> $curstate<span class="sym">[</span><span class="num">0</span><span class="sym">] *</span> <span class="num">2</span> <span class="sym">) +</span> <span class="num">1</span><span class="sym">;</span>
+      $curstate<span class="sym">;</span>
+    <span class="kwa">end method</span> next<span class="sym">-</span>state<span class="sym">;</span>
+
+  <span class="kwa">let</span> digits<span class="sym">-</span>out <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+
+  <span class="kwa">while</span> <span class="sym">(</span> digits<span class="sym">-</span>out <span class="kwa">&lt; *stop-digits* )</span>
+    <span class="kwa">let</span> y <span class="sym">=</span> next<span class="sym">-</span><span class="kwd">digit</span><span class="sym">(</span> z <span class="sym">);</span>
+
+    <span class="kwa">if</span> <span class="sym">(</span> safe?<span class="sym">(</span>z<span class="sym">,</span> y<span class="sym">) )</span>
+      <span class="kwa">begin</span>
+        format<span class="sym">-</span><span class="kwd">out</span><span class="sym">(</span> <span class="str">&quot;%d&quot;</span><span class="sym">,</span> y <span class="sym">);</span>
+        digits<span class="sym">-</span>out <span class="sym">:=</span> digits<span class="sym">-</span>out <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+        <span class="kwa">if</span> <span class="sym">(</span> zero?<span class="sym">(</span> <span class="kwd">modulo</span><span class="sym">(</span> digits<span class="sym">-</span>out<span class="sym">,</span> $digits<span class="sym">-</span>per<span class="sym">-</span>line <span class="sym">) ) )</span>
+          format<span class="sym">-</span><span class="kwd">out</span><span class="sym">(</span> <span class="str">&quot;</span><span class="esc">\t</span><span class="str">:%d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> digits<span class="sym">-</span>out <span class="sym">);</span>
+        <span class="kwa">end if</span><span class="sym">;</span>
+        z <span class="sym">:=</span> <span class="kwd">produce</span><span class="sym">(</span> z<span class="sym">,</span> y <span class="sym">);</span>
+      <span class="kwa">end</span><span class="sym">;</span>
+    <span class="kwa">else</span>
+        z <span class="sym">:=</span> <span class="kwd">consume</span><span class="sym">(</span> z<span class="sym">,</span> next<span class="sym">-</span><span class="kwd">state</span><span class="sym">() );</span>
+    <span class="kwa">end if</span><span class="sym">;</span>
+  <span class="kwa">end while</span><span class="sym">;</span>
+<span class="kwa">end function</span> compute<span class="sym">-</span>pi<span class="sym">;</span>
+
+<span class="kwa">begin</span>
+  <span class="kwa">let</span> <span class="sym">*</span>stop<span class="sym">-</span>digits<span class="sym">* =</span>
+    string<span class="sym">-</span><span class="kwa">to</span><span class="sym">-</span><span class="kwd">integer</span><span class="sym">(</span> <span class="kwd">element</span><span class="sym">(</span> application<span class="sym">-</span><span class="kwd">arguments</span><span class="sym">(),</span> <span class="num">0</span><span class="sym">,</span> default<span class="sym">:</span> <span class="str">&quot;300&quot;</span><span class="sym">));</span>
+
+  compute<span class="sym">-</span><span class="kwd">pi</span><span class="sym">( *</span>stop<span class="sym">-</span>digits<span class="sym">* );</span>
+<span class="kwa">end</span><span class="sym">;</span>
+

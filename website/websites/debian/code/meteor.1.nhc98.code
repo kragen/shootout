@@ -1,0 +1,218 @@
+<span class="com">{-</span>
+<span class="com">   The Computer Language Shootout</span>
+<span class="com">      http://shootout.alioth.debian.org/</span>
+<span class="com">      contributed by Olof Kraigher</span>
+<span class="com">-}</span>
+
+<span class="kwa">module</span> Main <span class="kwa">where</span>
+
+<span class="kwa">import</span> System<span class="sym">(</span>getArgs<span class="sym">);</span>      <span class="kwa">import</span> Data.List<span class="sym">;</span>   <span class="kwa">import</span> Data.Bits<span class="sym">;</span>         <span class="kwa">import</span> Data.Array.IArray<span class="sym">;</span>
+<span class="kwa">import</span> <span class="kwb">Char</span><span class="sym">(</span>intToDigit<span class="sym">);</span>   <span class="kwa">import</span> Data.Maybe<span class="sym">;</span>   <span class="kwa">import</span> Data.Word<span class="sym">(</span>Word64<span class="sym">);</span>   <span class="kwa">import</span> Numeric<span class="sym">(</span>showIntAtBase<span class="sym">);</span>
+
+<span class="kwa">data</span> Direction <span class="sym">=</span> E <span class="sym">|</span> SE <span class="sym">|</span> SW <span class="sym">|</span> W <span class="sym">|</span> NW <span class="sym">|</span> NE <span class="kwa">deriving</span> <span class="sym">(</span>Enum<span class="sym">,</span> Eq<span class="sym">,</span> Ord<span class="sym">,</span> Show<span class="sym">)</span>
+<span class="kwa">type</span> Piece <span class="sym">= [</span>Direction<span class="sym">]</span>
+<span class="kwa">type</span> Cell <span class="sym">= (</span><span class="kwb">Int</span><span class="sym">,</span> <span class="kwb">Int</span><span class="sym">)</span>
+<span class="kwa">type</span> Mask <span class="sym">=</span> Word64
+<span class="kwa">type</span> Color <span class="sym">=</span> <span class="kwb">Int</span>
+
+<span class="kwa">class</span> Rotatable a <span class="kwa">where</span>
+   rot <span class="sym">::</span> a <span class="sym">-&gt;</span> a
+
+<span class="kwa">class</span> Floppable a <span class="kwa">where</span>
+   flop <span class="sym">::</span> a <span class="sym">-&gt;</span> a
+
+<span class="kwa">class</span> Maskable a <span class="kwa">where</span>
+   mask <span class="sym">::</span> a <span class="sym">-&gt;</span> Mask
+
+<span class="kwa">instance</span> Rotatable Direction <span class="kwa">where</span>
+   rot NE <span class="sym">=</span> E
+   rot d <span class="sym">=</span> succ d
+
+<span class="kwa">instance</span> Rotatable Piece <span class="kwa">where</span>
+   rot a <span class="sym">=</span> map rot a
+
+<span class="kwa">instance</span> Floppable Direction <span class="kwa">where</span>
+   flop E <span class="sym">=</span> W
+   flop W <span class="sym">=</span> E
+   flop SE <span class="sym">=</span> SW
+   flop SW <span class="sym">=</span> SE
+   flop NE <span class="sym">=</span> NW
+   flop NW <span class="sym">=</span> NE
+
+<span class="kwa">instance</span> Floppable Piece <span class="kwa">where</span>
+   flop a <span class="sym">=</span> map flop a
+
+<span class="kwa">instance</span> Maskable Cell <span class="kwa">where</span>
+   mask <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">) =</span> bit <span class="sym">(</span>x <span class="sym">+</span> y<span class="sym">*</span>width<span class="sym">)</span>
+
+<span class="kwa">instance</span> Maskable <span class="sym">[</span>Cell<span class="sym">]</span> <span class="kwa">where</span>
+   mask p <span class="sym">=</span> foldl' <span class="sym">(</span>\a b <span class="sym">-&gt;</span> a .<span class="sym">|</span>. mask b<span class="sym">)</span> <span class="num">0</span> p
+
+width <span class="sym">::</span> <span class="kwb">Int</span>
+width <span class="sym">=</span> <span class="num">5</span>
+
+height <span class="sym">::</span> <span class="kwb">Int</span>
+height <span class="sym">=</span> <span class="num">10</span>
+
+allCells <span class="sym">:: [</span>Cell<span class="sym">]</span>
+allCells <span class="sym">= [(</span>x<span class="sym">,</span>y<span class="sym">) |</span> y <span class="sym">&lt;- [</span><span class="num">0</span>..height<span class="sym">-</span><span class="num">1</span><span class="sym">],</span> x <span class="sym">&lt;- [</span><span class="num">0</span>..width<span class="sym">-</span><span class="num">1</span><span class="sym">]]</span>
+
+left <span class="sym">::</span> Mask
+left <span class="sym">=</span> shift right <span class="sym">(</span>width<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+
+right <span class="sym">::</span> Mask
+right <span class="sym">=</span> foldl' <span class="sym">(</span>\a b <span class="sym">-&gt;</span> a .<span class="sym">|</span>. <span class="sym">(</span>shift <span class="num">1</span> b<span class="sym">))</span> <span class="num">0</span> <span class="sym">[</span><span class="num">0</span><span class="sym">,</span>width..width<span class="sym">*(</span>height<span class="sym">-</span><span class="num">1</span><span class="sym">)]</span>
+
+bottom <span class="sym">::</span> Mask
+bottom <span class="sym">=</span> <span class="num">0x1f</span>
+
+top <span class="sym">::</span> Mask
+top <span class="sym">=</span> shift bottom <span class="sym">(</span>width<span class="sym">*(</span>height<span class="sym">-</span><span class="num">1</span><span class="sym">))</span>
+
+fullMask <span class="sym">::</span> Mask
+fullMask <span class="sym">=</span> <span class="num">0x3FFFFFFFFFFFF</span>
+
+pieces <span class="sym">::</span> Array Color Piece
+pieces <span class="sym">=</span> array <span class="sym">(</span><span class="num">0</span><span class="sym">,</span><span class="num">9</span><span class="sym">)</span> $ zip <span class="sym">[</span><span class="num">0</span>.<span class="num">.9</span><span class="sym">]</span> $
+      <span class="sym">[   [</span>E<span class="sym">,</span>    E<span class="sym">,</span>  E<span class="sym">,</span>  SE<span class="sym">],</span>
+         <span class="sym">[</span>SE<span class="sym">,</span> SW<span class="sym">,</span> W<span class="sym">,</span>  SW<span class="sym">],</span>
+         <span class="sym">[</span>W<span class="sym">,</span>  W<span class="sym">,</span>  SW<span class="sym">,</span> SE<span class="sym">],</span>
+         <span class="sym">[</span>E<span class="sym">,</span>  E<span class="sym">,</span>  SW<span class="sym">,</span> SE<span class="sym">],</span>
+         <span class="sym">[</span>NW<span class="sym">,</span> W<span class="sym">,</span>  NW<span class="sym">,</span> SE<span class="sym">,</span> SW<span class="sym">],</span>
+         <span class="sym">[</span>E<span class="sym">,</span>  E<span class="sym">,</span>  NE<span class="sym">,</span> W<span class="sym">],</span>
+         <span class="sym">[</span>NW<span class="sym">,</span> NE<span class="sym">,</span> NE<span class="sym">,</span> W<span class="sym">],</span>
+         <span class="sym">[</span>NE<span class="sym">,</span> SE<span class="sym">,</span> E<span class="sym">,</span>  NE<span class="sym">],</span>
+         <span class="sym">[</span>SE<span class="sym">,</span> SE<span class="sym">,</span> E<span class="sym">,</span>  SE<span class="sym">],</span>
+         <span class="sym">[</span>E<span class="sym">,</span>  NW<span class="sym">,</span> NW<span class="sym">,</span> NW<span class="sym">]]</span>
+
+valid <span class="sym">::</span> Cell <span class="sym">-&gt;</span> Maybe Cell
+valid p<span class="sym">&#64;(</span>x<span class="sym">,</span>y<span class="sym">)</span>
+   <span class="sym">|</span> <span class="num">0</span> <span class="sym">&lt;=</span> x<span class="sym">,</span> x <span class="sym">&lt;</span> width<span class="sym">,</span> <span class="num">0</span> <span class="sym">&lt;=</span> y<span class="sym">,</span> y <span class="sym">&lt;</span> height <span class="sym">=</span> Just p
+   <span class="sym">|</span>otherwise <span class="sym">=</span> Nothing
+
+move <span class="sym">::</span> Cell <span class="sym">-&gt;</span> Direction <span class="sym">-&gt;</span> Maybe Cell
+move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> E <span class="sym">=</span> valid <span class="sym">(</span>x<span class="sym">+</span><span class="num">1</span><span class="sym">,</span>y<span class="sym">)</span>
+move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> W <span class="sym">=</span> valid <span class="sym">(</span>x<span class="sym">-</span><span class="num">1</span><span class="sym">,</span>y<span class="sym">)</span>
+move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> NE <span class="sym">=</span> valid <span class="sym">(</span>x<span class="sym">+(</span>mod y <span class="num">2</span><span class="sym">),</span>y<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> NW <span class="sym">=</span> valid <span class="sym">(</span>x<span class="sym">+(</span>mod y <span class="num">2</span><span class="sym">)-</span><span class="num">1</span><span class="sym">,</span>y<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> SE <span class="sym">=</span> valid <span class="sym">(</span>x<span class="sym">+(</span>mod y <span class="num">2</span><span class="sym">),</span>y<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> SW <span class="sym">=</span> valid <span class="sym">(</span>x<span class="sym">+(</span>mod y <span class="num">2</span><span class="sym">)-</span><span class="num">1</span><span class="sym">,</span>y<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+
+cells <span class="sym">::</span> Piece <span class="sym">-&gt;</span> Cell <span class="sym">-&gt;</span> Maybe <span class="sym">[</span>Cell<span class="sym">]</span>
+cells <span class="sym">[]</span> cell <span class="sym">=</span> Just <span class="sym">[</span>cell<span class="sym">]</span>
+cells <span class="sym">(</span>d<span class="sym">:</span>ds<span class="sym">)</span> cell<span class="sym">&#64;(</span>x<span class="sym">,</span>y<span class="sym">) =</span>
+   <span class="kwa">case</span> move <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">)</span> d <span class="kwa">of</span>
+      Nothing <span class="sym">-&gt;</span> Nothing
+      Just <span class="sym">(</span>x'<span class="sym">,</span>y'<span class="sym">) -&gt;</span>
+         <span class="kwa">case</span> cells ds <span class="sym">(</span>x'<span class="sym">,</span>y'<span class="sym">)</span> <span class="kwa">of</span>
+            Nothing <span class="sym">-&gt;</span> Nothing
+            Just ps <span class="sym">-&gt;</span> Just $ <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">) :</span> ps
+
+bitCount <span class="sym">::</span> Mask <span class="sym">-&gt;</span> <span class="kwb">Int</span>
+bitCount <span class="num">0</span> <span class="sym">=</span> <span class="num">0</span>
+bitCount mask <span class="sym">= (</span>fromIntegral $ <span class="sym">(</span>mask .<span class="sym">&amp;</span>. <span class="num">1</span><span class="sym">)) + (</span>bitCount <span class="sym">(</span>shiftR mask <span class="num">1</span><span class="sym">))</span>
+
+floodFill <span class="sym">::</span> Mask <span class="sym">-&gt;</span> Mask <span class="sym">-&gt;</span> Mask
+floodFill mask fromBit
+   <span class="sym">|</span> overlaps fromBit mask <span class="sym">=</span> mask
+   <span class="sym">|</span> otherwise <span class="sym">=</span>
+      <span class="kwa">let</span> mask' <span class="sym">=</span> mask .<span class="sym">|</span>. fromBit
+      <span class="kwa">in</span> foldl' <span class="sym">(</span>floodFill<span class="sym">)</span> mask' $
+            map snd $ filter <span class="sym">(</span>\<span class="sym">(</span>a<span class="sym">,</span> b<span class="sym">) -&gt;</span> not $ overlaps a fromBit<span class="sym">)</span> $
+               zip <span class="sym">[</span>left<span class="sym">,</span> right<span class="sym">,</span> top<span class="sym">,</span> bottom<span class="sym">]</span> $
+                  map <span class="sym">(</span>shift fromBit<span class="sym">) [</span><span class="num">1</span><span class="sym">,-</span><span class="num">1</span><span class="sym">,</span>width<span class="sym">,-</span>width<span class="sym">]</span>
+
+findFreeBit <span class="sym">::</span> Mask <span class="sym">-&gt;</span> Mask
+findFreeBit mask <span class="sym">=</span> fromJust $ find <span class="sym">(</span>not.<span class="sym">(</span>overlaps mask<span class="sym">))</span> $ map <span class="sym">(</span>shift <span class="num">1</span><span class="sym">) [</span><span class="num">0</span>..width<span class="sym">*</span>height<span class="sym">-</span><span class="num">1</span><span class="sym">]</span>
+
+noIslands <span class="sym">::</span> Mask <span class="sym">-&gt;</span> <span class="kwb">Bool</span>
+noIslands mask <span class="sym">=</span> not $ any <span class="sym">(&lt;</span><span class="num">5</span><span class="sym">)</span> $ diffs $ noIslands' mask <span class="kwa">where</span>
+   noIslands' mask
+      <span class="sym">|</span> mask <span class="sym">==</span> fullMask <span class="sym">= [</span>bitCount mask<span class="sym">]</span>
+      <span class="sym">|</span> otherwise <span class="sym">= (</span>bitCount mask<span class="sym">): (</span>noIslands' $ floodFill mask $ findFreeBit mask<span class="sym">)</span>
+   diffs <span class="sym">(</span>x<span class="sym">:</span>y<span class="sym">:[]) = [</span>y<span class="sym">-</span>x<span class="sym">]</span>
+   diffs <span class="sym">(</span>x<span class="sym">:</span>y<span class="sym">:</span>xs<span class="sym">) = (</span>y<span class="sym">-</span>x<span class="sym">): (</span>diffs $ y<span class="sym">:</span>xs<span class="sym">)</span>
+
+bitmasksWithColor <span class="sym">::</span> Array Color <span class="sym">[</span>Mask<span class="sym">]</span>
+bitmasksWithColor <span class="sym">=</span> amap bitmasksWithColor' pieces <span class="kwa">where</span>
+
+   bitmasksWithColor' <span class="sym">::</span> Piece <span class="sym">-&gt; [</span>Mask<span class="sym">]</span>
+   bitmasksWithColor' piece
+      <span class="sym">|</span> piece <span class="sym">== [</span>NW<span class="sym">,</span> W<span class="sym">,</span>  NW<span class="sym">,</span> SE<span class="sym">,</span> SW<span class="sym">] =</span> <span class="kwa">do</span>
+         piece' <span class="sym">&lt;- (</span>take <span class="num">3</span> $ iterate rot piece<span class="sym">) ++ (</span>take <span class="num">3</span> $ iterate rot $ flop piece<span class="sym">)</span>
+         filter noIslands $ map mask $ mapMaybe <span class="sym">(</span>cells piece'<span class="sym">)</span> allCells
+
+      <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span>
+         piece' <span class="sym">&lt;- (</span>take <span class="num">6</span> $ iterate rot piece<span class="sym">) ++ (</span>take <span class="num">6</span> $ iterate rot $ flop piece<span class="sym">)</span>
+         filter noIslands $ map mask $ mapMaybe <span class="sym">(</span>cells piece'<span class="sym">)</span> allCells
+
+
+bitmasksAtCell <span class="sym">:: [</span>Mask<span class="sym">] -&gt;</span> Array Cell <span class="sym">[</span>Mask<span class="sym">]</span>
+bitmasksAtCell masks <span class="sym">=</span>
+   <span class="kwa">let</span> masks' <span class="sym">= (</span>bitmasksAtCell' <span class="sym">(</span>shift <span class="num">1</span> $ width<span class="sym">*</span>height <span class="sym">-</span> <span class="num">1</span><span class="sym">) [] (</span>reverse $ sort masks<span class="sym">))</span>
+   <span class="kwa">in</span>  array <span class="sym">((</span><span class="num">0</span><span class="sym">,</span><span class="num">0</span><span class="sym">),(</span><span class="num">4</span><span class="sym">,</span><span class="num">9</span><span class="sym">))</span> $ zip <span class="sym">[(</span>x<span class="sym">,</span>y<span class="sym">) |</span> y <span class="sym">&lt;- [</span><span class="num">9</span><span class="sym">,</span><span class="num">8</span>.<span class="num">.0</span><span class="sym">],</span> x <span class="sym">&lt;- [</span><span class="num">4</span><span class="sym">,</span><span class="num">3</span>.<span class="num">.0</span><span class="sym">]]</span> masks' <span class="kwa">where</span>
+
+      bitmasksAtCell' <span class="sym">::</span> Mask <span class="sym">-&gt; [</span>Mask<span class="sym">] -&gt; [</span>Mask<span class="sym">] -&gt; [[</span>Mask<span class="sym">]]</span>
+      bitmasksAtCell' <span class="num">1</span> cellMasks <span class="sym">[] = [</span>cellMasks<span class="sym">]</span>
+      bitmasksAtCell' cellMask cellMasks <span class="sym">[] =</span> cellMasks<span class="sym">:(</span>bitmasksAtCell' <span class="sym">(</span>shiftR cellMask <span class="num">1</span><span class="sym">) [] [])</span>
+      bitmasksAtCell' cellMask cellMasks masks<span class="sym">&#64;(</span>m<span class="sym">:</span>ms<span class="sym">)</span>
+         <span class="sym">|</span> overlaps cellMask m <span class="sym">=</span> bitmasksAtCell' cellMask <span class="sym">(</span>m<span class="sym">:</span>cellMasks<span class="sym">)</span> ms
+         <span class="sym">|</span> otherwise <span class="sym">=</span> cellMasks <span class="sym">: (</span>bitmasksAtCell' <span class="sym">(</span>shiftR cellMask <span class="num">1</span><span class="sym">) []</span> masks<span class="sym">)</span>
+
+
+bitmasksWithColorAtCell <span class="sym">::</span> Array Color <span class="sym">(</span>Array Cell <span class="sym">[</span>Mask<span class="sym">])</span>
+bitmasksWithColorAtCell <span class="sym">=</span> amap bitmasksAtCell bitmasksWithColor
+
+nextCell <span class="sym">::</span> Cell <span class="sym">-&gt;</span> Cell
+nextCell <span class="sym">(</span><span class="num">0</span><span class="sym">,</span>y<span class="sym">) = (</span>width<span class="sym">-</span><span class="num">1</span><span class="sym">,</span>y<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+nextCell <span class="sym">(</span>x<span class="sym">,</span>y<span class="sym">) =  (</span>x<span class="sym">-</span><span class="num">1</span><span class="sym">,</span>y<span class="sym">)</span>
+
+
+overlaps <span class="sym">::</span> Mask <span class="sym">-&gt;</span> Mask <span class="sym">-&gt;</span> <span class="kwb">Bool</span>
+overlaps a b <span class="sym">= (</span>a .<span class="sym">&amp;</span>. b<span class="sym">) /=</span> <span class="num">0</span>
+
+legal <span class="sym">::</span> Mask <span class="sym">-&gt; [</span>Mask<span class="sym">] -&gt; [</span>Mask<span class="sym">]</span>
+legal boardMask masks <span class="sym">=</span> filter <span class="sym">(</span>not.<span class="sym">(</span>overlaps boardMask<span class="sym">))</span> masks
+
+
+solutions <span class="sym">:: [</span>String<span class="sym">]</span>
+solutions <span class="sym">=</span> solutions' <span class="num">0</span> <span class="sym">(</span>width<span class="sym">-</span><span class="num">1</span><span class="sym">,</span> height<span class="sym">-</span><span class="num">1</span><span class="sym">) [</span><span class="num">0</span>.<span class="num">.9</span><span class="sym">] []</span> <span class="kwa">where</span>
+
+   solutions' <span class="sym">::</span> Mask <span class="sym">-&gt;</span> Cell <span class="sym">-&gt; [</span>Color<span class="sym">] -&gt; [(</span>Color<span class="sym">,</span> Mask<span class="sym">)]-&gt; [</span>String<span class="sym">]</span>
+   solutions' _ _ <span class="sym">[]</span> usedMasks <span class="sym">=</span>    <span class="kwa">let</span> s <span class="sym">=</span> stringOfColorMasks usedMasks <span class="kwa">in</span>   <span class="sym">[</span>s<span class="sym">,</span> invertString s<span class="sym">]</span>
+   solutions' board cell colorsLeft usedMasks
+      <span class="sym">|</span> overlaps board <span class="sym">(</span>mask cell<span class="sym">) =</span> solutions' board <span class="sym">(</span>nextCell cell<span class="sym">)</span> colorsLeft usedMasks
+      <span class="sym">|</span> otherwise <span class="sym">=</span> <span class="kwa">do</span>
+         color <span class="sym">&lt;-</span> colorsLeft
+         mask <span class="sym">&lt;-</span> legal board $ bitmasksWithColorAtCell<span class="sym">!</span>color<span class="sym">!</span>cell
+         solutions' <span class="sym">(</span>board .<span class="sym">|</span>. mask<span class="sym">) (</span>nextCell cell<span class="sym">) (</span>colorsLeft \\ <span class="sym">[</span>color<span class="sym">]) ((</span>color<span class="sym">,</span> mask<span class="sym">):</span>usedMasks<span class="sym">)</span>
+
+stringOfColorMasks <span class="sym">:: [(</span>Color<span class="sym">,</span> Mask<span class="sym">)] -&gt;</span> String
+stringOfColorMasks colorMasks <span class="sym">=</span>
+   tail $ show $ <span class="sym">(+) (</span><span class="num">10</span>^<span class="sym">(</span>width<span class="sym">*</span>height<span class="sym">))</span> $
+      sum $ map <span class="sym">(</span>\<span class="sym">(</span>c<span class="sym">,</span>m<span class="sym">) -&gt; ((</span>fromIntegral c<span class="sym">) * (</span>read $ showIntAtBase <span class="num">2</span> intToDigit m <span class="str">&quot;&quot;</span><span class="sym">)) ::</span> Integer<span class="sym">)</span> colorMasks
+
+invertString <span class="sym">::</span> String <span class="sym">-&gt;</span> String
+invertString s <span class="sym">= [</span>s<span class="sym">!!(</span>width<span class="sym">-</span>x<span class="sym">-</span><span class="num">1</span> <span class="sym">+ (</span>height<span class="sym">-</span>y<span class="sym">-</span><span class="num">1</span><span class="sym">)*</span>width<span class="sym">) |</span> y <span class="sym">&lt;- [</span><span class="num">0</span>..height<span class="sym">-</span><span class="num">1</span><span class="sym">],</span> x <span class="sym">&lt;- [</span><span class="num">0</span> .. width<span class="sym">-</span><span class="num">1</span><span class="sym">]]</span>
+
+printSolution <span class="sym">::</span> String <span class="sym">-&gt;</span> IO <span class="sym">()</span>
+printSolution solution <span class="sym">=</span> printSolution' <span class="num">0</span> solution <span class="kwa">where</span>
+   printSolution' cell <span class="sym">[] =</span> return <span class="sym">()</span>
+   printSolution' cell <span class="sym">(</span>s<span class="sym">:</span>ss<span class="sym">) =</span> <span class="kwa">do</span>
+      putStr $ s<span class="sym">:</span><span class="str">&quot; &quot;</span>
+      <span class="kwa">case</span> mod <span class="sym">(</span>cell<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> width <span class="kwa">of</span>
+         <span class="num">0</span> <span class="sym">-&gt;</span> <span class="kwa">case</span> mod <span class="sym">(</span>cell<span class="sym">+</span><span class="num">1</span><span class="sym">) (</span><span class="num">2</span><span class="sym">*</span>width<span class="sym">)</span> <span class="kwa">of</span>
+            <span class="num">0</span> <span class="sym">-&gt;</span> putStr <span class="str">&quot;\n&quot;</span>
+            _ <span class="sym">-&gt;</span> putStr <span class="str">&quot;\n &quot;</span>
+         _ <span class="sym">-&gt;</span> return <span class="sym">()</span>
+
+      printSolution' <span class="sym">(</span>cell<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> ss
+
+main <span class="sym">=</span> <span class="kwa">do</span>
+   <span class="sym">(</span>n <span class="sym">::</span> <span class="kwb">Int</span><span class="sym">) &lt;-</span> return.read.head <span class="sym">=&lt;&lt;</span> getArgs
+   <span class="kwa">let</span> nsolutions <span class="sym">=</span> take n solutions
+   putStrLn $ <span class="sym">(</span>show $ length nsolutions<span class="sym">) ++</span> <span class="str">&quot; solutions found\n&quot;</span>
+   printSolution $ minimum nsolutions
+   putStr <span class="str">&quot;\n&quot;</span>
+   printSolution $ maximum nsolutions
+   putStr <span class="str">&quot;\n&quot;</span>

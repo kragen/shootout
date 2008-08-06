@@ -1,0 +1,75 @@
+<span class="slc">;;; The Computer Language Shootout</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;; Michael Weber 2006-07-18</span>
+<span class="slc">;;; Changes by Stefan Lang 2007-02-08</span>
+
+<span class="sym">(</span>defconstant <span class="sym">+</span>buffer<span class="sym">-</span>size<span class="sym">+ (</span><span class="kwa">expt</span> <span class="num">2 15</span><span class="sym">))</span>
+<span class="sym">(</span>defconstant <span class="sym">+</span>newline<span class="sym">+ (</span>char<span class="sym">-</span>code #\Newline<span class="sym">))</span>
+<span class="sym">(</span>defconstant <span class="sym">+</span>ub<span class="sym">+ '(</span>unsigned<span class="sym">-</span>byte <span class="num">8</span><span class="sym">))</span>
+
+<span class="sym">(</span>defconstant <span class="sym">+</span>lut<span class="sym">+</span>
+  <span class="sym">(</span>let <span class="sym">((</span>lut <span class="sym">(</span>make<span class="sym">-</span>array <span class="num">256</span> <span class="sym">:</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">+</span>ub<span class="sym">+)))</span>
+    <span class="sym">(</span>loop for a across <span class="str">&quot;wsatugcyrkmbdhvnWSATUGCYRKMBDHVN&quot;</span>
+          for b across <span class="str">&quot;WSTAACGRYMKVHDBNWSTAACGRYMKVHDBN&quot;</span>
+          do <span class="sym">(</span>setf <span class="sym">(</span>aref lut <span class="sym">(</span>char<span class="sym">-</span>code a<span class="sym">)) (</span>char<span class="sym">-</span>code b<span class="sym">)))</span>
+    lut<span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> slice <span class="sym">(</span>array start end<span class="sym">)</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">))</span>
+           <span class="sym">((</span>simple<span class="sym">-</span>array #.<span class="sym">+</span>ub<span class="sym">+)</span> array<span class="sym">)</span>
+           <span class="sym">(</span>fixnum start end<span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>res <span class="sym">(</span>make<span class="sym">-</span>array <span class="sym">(-</span> end start<span class="sym">) :</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">+</span>ub<span class="sym">+)))</span>
+    <span class="sym">(</span>loop for i from start below end
+          for j from <span class="num">0</span>
+          do <span class="sym">(</span>setf <span class="sym">(</span>aref res j<span class="sym">) (</span>aref array i<span class="sym">)))</span>
+    res<span class="sym">))</span>
+
+<span class="sym">(</span><span class="kwa">defun</span> main <span class="sym">()</span>
+  <span class="sym">(</span>declare <span class="sym">(</span>optimize <span class="sym">(</span>speed <span class="num">3</span><span class="sym">) (</span>safety <span class="num">0</span><span class="sym">)))</span>
+  <span class="sym">(</span>with<span class="sym">-</span><span class="kwa">open</span><span class="sym">-</span>file <span class="sym">(</span>in <span class="str">&quot;/dev/stdin&quot;</span> <span class="sym">:</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">+</span>ub<span class="sym">+)</span>
+    <span class="sym">(</span>with<span class="sym">-</span><span class="kwa">open</span><span class="sym">-</span>file <span class="sym">(</span>out <span class="str">&quot;/dev/stdout&quot;</span> <span class="sym">:</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">+</span>ub<span class="sym">+ :</span>direction <span class="sym">:</span>output <span class="sym">:</span><span class="kwa">if</span><span class="sym">-</span>exists <span class="sym">:</span><span class="kwa">append</span><span class="sym">)</span>
+      <span class="sym">(</span>let <span class="sym">((</span>i<span class="sym">-</span>buf <span class="sym">(</span>make<span class="sym">-</span>array <span class="sym">+</span>buffer<span class="sym">-</span>size<span class="sym">+ :</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">+</span>ub<span class="sym">+))</span>
+            <span class="sym">(</span>o<span class="sym">-</span>buf <span class="sym">(</span>make<span class="sym">-</span>array <span class="sym">+</span>buffer<span class="sym">-</span>size<span class="sym">+ :</span>element<span class="sym">-</span><span class="kwa">type</span> <span class="sym">+</span>ub<span class="sym">+))</span>
+            <span class="sym">(</span>chunks nil<span class="sym">))</span>
+        <span class="sym">(</span>declare <span class="sym">(</span><span class="kwa">list</span> chunks<span class="sym">))</span>
+        <span class="sym">(</span>flet <span class="sym">((</span>flush<span class="sym">-</span>chunks <span class="sym">()</span>
+                 <span class="sym">(</span>let <span class="sym">((</span>j <span class="num">0</span><span class="sym">) (</span>k <span class="num">0</span><span class="sym">))</span>
+                   <span class="sym">(</span>declare <span class="sym">(</span>fixnum j k<span class="sym">))</span>
+                   <span class="slc">;; reverse, complement, filter out old newlines, put newlines back in after 60 chars,</span>
+                   <span class="slc">;; buffer output, and write buffers.  all in one go :(</span>
+                   <span class="sym">(</span>loop for chunk in chunks
+                         do <span class="sym">(</span>loop for i from <span class="sym">(</span><span class="num">1</span><span class="sym">- (</span><span class="kwa">length</span> <span class="sym">(</span>the <span class="sym">(</span>simple<span class="sym">-</span>array #.<span class="sym">+</span>ub<span class="sym">+)</span> chunk<span class="sym">)))</span> downto <span class="num">0</span>
+                                  for byte <span class="sym">= (</span>aref chunk i<span class="sym">)</span>
+                                  unless <span class="sym">(=</span> byte <span class="sym">+</span>newline<span class="sym">+)</span>
+				  do <span class="sym">(</span>setf <span class="sym">(</span>aref o<span class="sym">-</span>buf k<span class="sym">) (</span>aref <span class="sym">+</span>lut<span class="sym">+</span> byte<span class="sym">)</span> j <span class="sym">(</span><span class="num">1</span><span class="sym">+</span> j<span class="sym">)</span> k <span class="sym">(</span><span class="num">1</span><span class="sym">+</span> k<span class="sym">))</span>
+                                  <span class="kwa">if</span> <span class="sym">(=</span> j <span class="num">60</span><span class="sym">)</span> do <span class="sym">(</span>setf <span class="sym">(</span>aref o<span class="sym">-</span>buf k<span class="sym">) +</span>newline<span class="sym">+</span> j <span class="num">0</span> k <span class="sym">(</span><span class="num">1</span><span class="sym">+</span> k<span class="sym">))</span>
+                                  <span class="kwa">if</span> <span class="sym">(&gt;</span> k <span class="sym">(- +</span>buffer<span class="sym">-</span>size<span class="sym">+</span> <span class="num">2</span><span class="sym">))</span> do <span class="sym">(</span>write<span class="sym">-</span>sequence o<span class="sym">-</span>buf out <span class="sym">:</span>end <span class="sym">(</span>shiftf k <span class="num">0</span><span class="sym">)))</span>
+                         finally <span class="sym">(</span>when <span class="sym">(</span>plusp k<span class="sym">)</span>
+                                   <span class="sym">(</span>write<span class="sym">-</span>sequence o<span class="sym">-</span>buf out <span class="sym">:</span>end k<span class="sym">))</span>
+                                 <span class="sym">(</span>when <span class="sym">(</span>plusp j<span class="sym">)</span>
+                                   <span class="sym">(</span>write<span class="sym">-</span>byte <span class="sym">+</span>newline<span class="sym">+</span> out<span class="sym">)))</span>
+                   <span class="sym">(</span>setf chunks nil<span class="sym">))))</span>
+          <span class="sym">(</span>prog <span class="sym">((</span>start <span class="num">0</span><span class="sym">) (</span>end <span class="num">0</span><span class="sym">))</span>
+           <span class="kwa">read</span><span class="sym">-</span>chunk
+             <span class="sym">(</span>setf end <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span>sequence i<span class="sym">-</span>buf in<span class="sym">))</span>
+             <span class="sym">(</span>when <span class="sym">(</span><span class="kwa">zerop</span> end<span class="sym">) (</span>go end<span class="sym">-</span>of<span class="sym">-</span>input<span class="sym">))</span>
+           parse<span class="sym">-</span>chunk
+             <span class="sym">(</span>let <span class="sym">((</span>bod <span class="sym">(</span>position #.<span class="sym">(</span>char<span class="sym">-</span>code #\&gt;<span class="sym">)</span> i<span class="sym">-</span>buf <span class="sym">:</span>start start <span class="sym">:</span>end end<span class="sym">)))</span>
+               <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((</span><span class="kwa">numberp</span> bod<span class="sym">)</span>
+                      <span class="sym">(</span>push <span class="sym">(</span>slice i<span class="sym">-</span>buf start bod<span class="sym">)</span> chunks<span class="sym">)</span>
+                      <span class="sym">(</span>setf start bod<span class="sym">)</span>
+                      <span class="sym">(</span>flush<span class="sym">-</span>chunks<span class="sym">)</span>
+                      <span class="slc">;; parse description</span>
+                      <span class="sym">(</span>loop for eod <span class="sym">= (</span>position <span class="sym">+</span>newline<span class="sym">+</span> i<span class="sym">-</span>buf <span class="sym">:</span>start start <span class="sym">:</span>end end<span class="sym">)</span>
+                            do <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((</span><span class="kwa">numberp</span> eod<span class="sym">)</span>
+                                      <span class="sym">(</span>write<span class="sym">-</span>sequence i<span class="sym">-</span>buf out <span class="sym">:</span>start start <span class="sym">:</span>end <span class="sym">(</span>incf eod<span class="sym">))</span>
+                                      <span class="sym">(</span>setf start eod<span class="sym">)</span>
+                                      <span class="sym">(</span>go parse<span class="sym">-</span>chunk<span class="sym">))</span>
+                                     <span class="sym">(</span>t <span class="sym">(</span>write<span class="sym">-</span>sequence i<span class="sym">-</span>buf out <span class="sym">:</span>start start <span class="sym">:</span>end end<span class="sym">)</span>
+                                        <span class="sym">(</span>setf start <span class="num">0</span><span class="sym">)</span>
+                                        <span class="sym">(</span>setf end <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span>sequence i<span class="sym">-</span>buf in<span class="sym">))))))</span>
+                     <span class="sym">(</span>t <span class="sym">(</span>push <span class="sym">(</span>slice i<span class="sym">-</span>buf start end<span class="sym">)</span> chunks<span class="sym">)</span>
+                        <span class="sym">(</span>setf start <span class="num">0</span><span class="sym">)</span>
+                        <span class="sym">(</span>go <span class="kwa">read</span><span class="sym">-</span>chunk<span class="sym">))))</span>
+           end<span class="sym">-</span>of<span class="sym">-</span>input
+             <span class="sym">(</span>flush<span class="sym">-</span>chunks<span class="sym">)))))))</span>

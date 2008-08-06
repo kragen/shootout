@@ -1,0 +1,94 @@
+<span class="slc">;;; The Computer Language Benchmarks Game</span>
+<span class="slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="slc">;;;</span>
+<span class="slc">;;; contributed by Ivan Raikov</span>
+<span class="slc">;;; based on code by Anthony Borla</span>
+
+<span class="sym">(</span>require<span class="sym">-</span>extension format regex posix srfi<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+
+<span class="sym">(</span>define<span class="sym">-</span>constant VARIANTS
+  <span class="sym">(</span><span class="kwa">list</span>
+    <span class="str">&quot;agggtaaa|tttaccct&quot;</span> <span class="str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span> <span class="str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
+    <span class="str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span> <span class="str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span> <span class="str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
+    <span class="str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span> <span class="str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span> <span class="str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="sym">))</span>
+
+<span class="sym">(</span>define<span class="sym">-</span>constant IUBS
+  <span class="sym">(</span><span class="kwa">list</span>
+    <span class="sym">(</span><span class="kwa">cons</span> <span class="str">&quot;B&quot;</span> <span class="str">&quot;(c|g|t)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;D&quot;</span> <span class="str">&quot;(a|g|t)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;H&quot;</span> <span class="str">&quot;(a|c|t)&quot;</span><span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">cons</span> <span class="str">&quot;K&quot;</span> <span class="str">&quot;(g|t)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;M&quot;</span> <span class="str">&quot;(a|c)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;N&quot;</span> <span class="str">&quot;(a|c|g|t)&quot;</span><span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">cons</span> <span class="str">&quot;R&quot;</span> <span class="str">&quot;(a|g)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;S&quot;</span> <span class="str">&quot;(c|g)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;V&quot;</span> <span class="str">&quot;(a|c|g)&quot;</span><span class="sym">)</span>
+    <span class="sym">(</span><span class="kwa">cons</span> <span class="str">&quot;W&quot;</span> <span class="str">&quot;(a|t)&quot;</span><span class="sym">) (</span><span class="kwa">cons</span> <span class="str">&quot;Y&quot;</span> <span class="str">&quot;(c|t)&quot;</span><span class="sym">)))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>sequence<span class="sym">-</span><span class="kwa">length</span> lines<span class="sym">)</span>
+  <span class="sym">(</span>fold <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>x ax<span class="sym">) (+</span> ax <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">length</span> x<span class="sym">)))</span> <span class="num">0</span> lines<span class="sym">))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span><span class="kwa">load</span><span class="sym">-</span>sequence<span class="sym">)</span>
+  <span class="sym">(</span>let<span class="sym">* ((</span>lines  <span class="sym">(</span><span class="kwa">read</span><span class="sym">-</span>lines<span class="sym">)))</span>
+    <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span>sequence<span class="sym">-</span><span class="kwa">length</span> lines<span class="sym">)</span> lines<span class="sym">)))</span>
+
+<span class="sym">(</span>define <span class="sym">(</span>match<span class="sym">-</span>count rx sequence<span class="sym">)</span>
+  <span class="sym">(</span>let loop <span class="sym">((</span>sequence sequence<span class="sym">) (</span>spos <span class="num">0</span><span class="sym">) (</span>count <span class="num">0</span><span class="sym">))</span>
+    <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((</span><span class="kwa">null</span>? sequence<span class="sym">)</span> count<span class="sym">)</span>
+	  <span class="sym">((</span><span class="kwa">null</span>? <span class="sym">(</span><span class="kwa">cdr</span> sequence<span class="sym">))</span>
+	   <span class="sym">(+</span> count <span class="sym">((</span><span class="kwa">lambda</span> <span class="sym">(</span>x<span class="sym">) (</span><span class="kwa">if</span> x <span class="num">1 0</span><span class="sym">)) (</span>string<span class="sym">-</span>search<span class="sym">-</span>positions rx <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">)</span> spos<span class="sym">))))</span>
+	  <span class="sym">(</span>else
+	   <span class="sym">(</span>let <span class="sym">((</span>len <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">)))</span>
+		 <span class="sym">(</span>pos <span class="sym">(</span>string<span class="sym">-</span>search<span class="sym">-</span>positions rx <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">append</span> <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">) (</span><span class="kwa">cadr</span> sequence<span class="sym">))</span> spos<span class="sym">)))</span>
+	     <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span><span class="kwa">not</span> pos<span class="sym">)</span>
+		 <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">cdr</span> sequence<span class="sym">)</span> <span class="num">0</span> count<span class="sym">)</span>
+		 <span class="slc">;; determine if the match is in the car or the cadr of sequence</span>
+		 <span class="sym">(</span>let <span class="sym">((</span>end <span class="sym">(</span><span class="kwa">cadr</span> <span class="sym">(</span><span class="kwa">car</span> pos<span class="sym">))))</span>
+		   <span class="sym">(</span><span class="kwa">if</span> <span class="sym">(</span>fx<span class="sym">&gt;=</span> end len<span class="sym">)</span>
+		       <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">cdr</span> sequence<span class="sym">) (</span>fx<span class="sym">-</span> end len<span class="sym">) (</span>fx<span class="sym">+</span> <span class="num">1</span> count<span class="sym">))</span>
+		       <span class="sym">(</span>loop sequence end <span class="sym">(</span>fx<span class="sym">+</span> <span class="num">1</span> count<span class="sym">))))))))))</span>
+
+
+<span class="sym">(</span>define <span class="sym">(</span>match<span class="sym">-</span>replace rp sequence<span class="sym">)</span>
+  <span class="sym">(</span>define S <span class="num">240</span><span class="sym">)</span>
+  <span class="sym">(</span>define S<span class="sym">-</span>half <span class="sym">(</span>fx<span class="sym">/</span> S <span class="num">2</span><span class="sym">))</span>
+  <span class="sym">(</span>let <span class="sym">((</span>rx     <span class="sym">(</span>regexp <span class="sym">(</span><span class="kwa">car</span> rp<span class="sym">)</span> #t<span class="sym">))</span>
+	<span class="sym">(</span>rstr   <span class="sym">(</span><span class="kwa">cdr</span> rp<span class="sym">)))</span>
+    <span class="sym">(</span>let loop <span class="sym">((</span>sequence sequence<span class="sym">) (</span>new<span class="sym">-</span>sequence <span class="sym">(</span><span class="kwa">list</span><span class="sym">)))</span>
+      <span class="sym">(</span><span class="kwa">cond</span> <span class="sym">((</span><span class="kwa">null</span>? sequence<span class="sym">)  (</span><span class="kwa">reverse</span> new<span class="sym">-</span>sequence<span class="sym">))</span>
+	    <span class="sym">((</span><span class="kwa">null</span>? <span class="sym">(</span><span class="kwa">cdr</span> sequence<span class="sym">))</span>
+	     <span class="sym">(</span><span class="kwa">reverse</span> <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span>string<span class="sym">-</span>substitute rx rstr <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">)</span> #t<span class="sym">)</span> new<span class="sym">-</span>sequence<span class="sym">)))</span>
+	    <span class="sym">((</span>fx<span class="sym">&lt;</span> S <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">)))</span>
+	     <span class="sym">(</span>let<span class="sym">-</span>values <span class="sym">(((</span>shd stl<span class="sym">) (</span>split<span class="sym">-</span>at<span class="sym">! (</span>string<span class="sym">-&gt;</span><span class="kwa">list</span> <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">))</span> S<span class="sym">-</span>half<span class="sym">)))</span>
+		 <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">cons</span> <span class="sym">(</span><span class="kwa">list</span><span class="sym">-&gt;</span>string shd<span class="sym">) (</span><span class="kwa">cons</span> <span class="sym">(</span><span class="kwa">list</span><span class="sym">-&gt;</span>string stl<span class="sym">) (</span><span class="kwa">cdr</span> sequence<span class="sym">)))</span>
+		       new<span class="sym">-</span>sequence<span class="sym">)))</span>
+	    <span class="sym">(</span>else
+	     <span class="sym">(</span>let<span class="sym">* ((</span>sstr   <span class="sym">(</span>string<span class="sym">-</span><span class="kwa">append</span> <span class="sym">(</span><span class="kwa">car</span> sequence<span class="sym">) (</span><span class="kwa">cadr</span> sequence<span class="sym">)))</span>
+		    <span class="sym">(</span>flds   <span class="sym">(</span>string<span class="sym">-</span>split<span class="sym">-</span>fields rx sstr #<span class="sym">:</span>infix<span class="sym">))</span>
+		    <span class="sym">(</span>nflds  <span class="sym">(</span><span class="kwa">length</span> flds<span class="sym">)))</span>
+	       <span class="sym">(</span>loop <span class="sym">(</span><span class="kwa">cddr</span> sequence<span class="sym">) (</span><span class="kwa">cons</span> <span class="sym">(</span>string<span class="sym">-</span>intersperse flds rstr<span class="sym">)</span> new<span class="sym">-</span>sequence<span class="sym">))))))))</span>
+
+
+<span class="sym">(</span>define <span class="sym">(</span>main<span class="sym">)</span>
+
+  <span class="slc">; Load sequence and record its length</span>
+  <span class="sym">(</span>let<span class="sym">* ((</span>buffer <span class="sym">(</span><span class="kwa">load</span><span class="sym">-</span>sequence<span class="sym">))</span>
+	 <span class="sym">(</span>sequence <span class="sym">(</span><span class="kwa">cdr</span> buffer<span class="sym">))</span>
+         <span class="sym">(</span>initial<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span><span class="kwa">car</span> buffer<span class="sym">))</span>
+	 <span class="sym">(</span>code<span class="sym">-</span><span class="kwa">length</span> <span class="num">0</span><span class="sym">)</span>
+	 <span class="sym">(</span>segdiv <span class="sym">(</span>regexp <span class="str">&quot;&gt;.*?&quot;</span><span class="sym">)))</span>
+
+    <span class="slc">; Remove segment divider line occurrences; record new length</span>
+    <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> sequence <span class="sym">(</span>filter <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span><span class="kwa">line</span><span class="sym">) (</span><span class="kwa">not</span> <span class="sym">(</span>string<span class="sym">-</span>match segdiv <span class="kwa">line</span><span class="sym">)))</span> sequence<span class="sym">))</span>
+    <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> code<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span>sequence<span class="sym">-</span><span class="kwa">length</span> sequence<span class="sym">))</span>
+
+    <span class="slc">; Perform regexp counts</span>
+    <span class="sym">(</span>for<span class="sym">-</span>each
+     <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>i<span class="sym">)</span>
+       <span class="sym">(</span>format #t <span class="str">&quot;~A ~A~%&quot;</span> i <span class="sym">(</span>match<span class="sym">-</span>count <span class="sym">(</span>regexp i<span class="sym">)</span> sequence<span class="sym">)))</span>
+     VARIANTS<span class="sym">)</span>
+
+    <span class="slc">; Perform regexp replacements, and record sequence length</span>
+    <span class="sym">(</span>for<span class="sym">-</span>each
+     <span class="sym">(</span><span class="kwa">lambda</span> <span class="sym">(</span>i<span class="sym">)</span>
+       <span class="sym">(</span><span class="kwa">set</span><span class="sym">!</span> sequence <span class="sym">(</span>match<span class="sym">-</span>replace i sequence<span class="sym">)))</span>
+     IUBS<span class="sym">)</span>
+    <span class="slc">; Print statistics</span>
+    <span class="sym">(</span>format #t <span class="str">&quot;~%~A~%~A~%~A~%&quot;</span> initial<span class="sym">-</span><span class="kwa">length</span> code<span class="sym">-</span><span class="kwa">length</span> <span class="sym">(</span>sequence<span class="sym">-</span><span class="kwa">length</span> sequence<span class="sym">))))</span>
+
+<span class="sym">(</span>main<span class="sym">)</span>
+

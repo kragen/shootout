@@ -1,0 +1,282 @@
+<span class="slc">! -*- mode: f90 -*-</span>
+<span class="slc">!</span>
+<span class="slc">! $Id: pidigits.1.ifc.code,v 1.1 2008-08-06 16:05:20 igouy-guest Exp $ ; $Name:  $</span>
+<span class="slc">!</span>
+<span class="slc">! The Computer Language Shootout Benchmarks</span>
+<span class="slc">! http://shootout.alioth.debian.org/</span>
+<span class="slc">!</span>
+<span class="slc">! contributed by Steve Decker</span>
+<span class="slc">! compilation:</span>
+<span class="slc">!    g95 -O3 -funroll-loops -fomit-frame-pointer pidigits.f90</span>
+<span class="slc">!    ifort -O -ip pidigits.f90</span>
+
+module big_int_mod
+  implicit none
+  save
+
+  integer<span class="sym">,</span> parameter<span class="sym">,</span> private <span class="sym">::</span> Pwr <span class="sym">=</span> <span class="num">15</span><span class="sym">,</span> Base <span class="sym">=</span> <span class="num">2</span><span class="sym">**</span>Pwr<span class="sym">,</span> maxDigs <span class="sym">=</span> <span class="num">2558</span>
+
+  type big_int
+     private
+     integer <span class="sym">::</span> sigDigs
+     logical <span class="sym">::</span> sign
+     integer<span class="sym">,</span> dimension<span class="sym">(</span>maxDigs<span class="sym">) ::</span> digits
+  end type big_int
+
+  interface assignment <span class="sym">(=)</span>
+     module procedure int_to_big_int
+  end interface
+
+  interface operator <span class="sym">(*)</span>
+     module procedure big_int_times_int
+  end interface
+
+  interface operator <span class="sym">(+)</span>
+     module procedure big_int_plus_big_int
+  end interface
+
+  interface operator <span class="sym">(/)</span>
+     module procedure big_int_div_big_int
+  end interface
+
+contains
+
+  subroutine int_to_big_int<span class="sym">(</span>bi<span class="sym">,</span> n<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> intent<span class="sym">(</span>inout<span class="sym">) ::</span> bi
+    integer<span class="sym">,</span>       intent<span class="sym">(</span>in<span class="sym">)    ::</span> n
+
+    integer <span class="sym">::</span> i
+
+    if <span class="sym">(</span>n <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">)</span> then
+       bi <span class="sym">=</span> big_int<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> .true.<span class="sym">, (/</span> n<span class="sym">, (</span><span class="num">0</span><span class="sym">,</span> i <span class="sym">=</span> <span class="num">2</span><span class="sym">,</span> maxDigs<span class="sym">) /) )</span>
+    else
+       bi <span class="sym">=</span> big_int<span class="sym">(</span><span class="num">0</span><span class="sym">,</span> .true.<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span>
+    end if
+  end subroutine int_to_big_int
+
+  function big_int_times_int<span class="sym">(</span>bi<span class="sym">,</span> n<span class="sym">)</span> result<span class="sym">(</span>c<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> bi
+    integer<span class="sym">,</span>       intent<span class="sym">(</span>in<span class="sym">) ::</span> n
+    type<span class="sym">(</span>big_int<span class="sym">) ::</span> c
+
+    integer <span class="sym">::</span> m<span class="sym">,</span> i<span class="sym">,</span> curDig<span class="sym">,</span> k<span class="sym">,</span> j<span class="sym">,</span> carry
+
+    c <span class="sym">=</span> big_int<span class="sym">(</span><span class="num">0</span><span class="sym">,</span> .true.<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span>
+    if <span class="sym">(</span>n <span class="sym">==</span> <span class="num">0</span> .or. bi<span class="sym">%</span>sigDigs <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> return
+    c<span class="sym">%</span>sign <span class="sym">=</span> n <span class="sym">&gt;=</span> <span class="num">0</span> .eqv. bi<span class="sym">%</span>sign
+    m <span class="sym">=</span> abs<span class="sym">(</span>n<span class="sym">)</span>
+
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> maxDigs
+       curDig <span class="sym">=</span> mod<span class="sym">(</span>m<span class="sym">,</span>Base<span class="sym">)</span>
+       k <span class="sym">=</span> <span class="num">1</span>
+       carry <span class="sym">=</span> <span class="num">0</span>
+       do j <span class="sym">=</span> i<span class="sym">,</span> i <span class="sym">+</span> bi<span class="sym">%</span>sigDigs <span class="sym">+</span> <span class="num">1</span>
+          c<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) =</span> c<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) +</span> curDig <span class="sym">*</span> bi<span class="sym">%</span>digits<span class="sym">(</span>k<span class="sym">) +</span> carry
+          carry <span class="sym">=</span> ibits<span class="sym">(</span>c<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">),</span>Pwr<span class="sym">,</span>Pwr<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+          c<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) =</span> mod<span class="sym">(</span>c<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">),</span>Base<span class="sym">)</span>
+          k <span class="sym">=</span> k <span class="sym">+</span> <span class="num">1</span>
+       end do
+       m <span class="sym">=</span> ibits<span class="sym">(</span>m<span class="sym">,</span>Pwr<span class="sym">,</span>Pwr<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+       if <span class="sym">(</span>m <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> exit
+    end do
+    do j <span class="sym">=</span> i <span class="sym">+</span> bi<span class="sym">%</span>sigDigs<span class="sym">,</span> <span class="num">1</span><span class="sym">, -</span><span class="num">1</span>
+       c<span class="sym">%</span>sigDigs <span class="sym">=</span> j
+       if <span class="sym">(</span>c<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) /=</span> <span class="num">0</span><span class="sym">)</span> exit
+    end do
+  end function big_int_times_int
+
+  function big_int_plus_big_int<span class="sym">(</span>bi1<span class="sym">,</span> bi2<span class="sym">)</span> result<span class="sym">(</span>c<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> target<span class="sym">,</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> bi1<span class="sym">,</span> bi2
+    type<span class="sym">(</span>big_int<span class="sym">) ::</span> c
+
+    integer <span class="sym">::</span> i<span class="sym">,</span> carry<span class="sym">,</span> n
+    type<span class="sym">(</span>big_int<span class="sym">),</span> pointer <span class="sym">::</span> a<span class="sym">,</span> b
+
+    c <span class="sym">=</span> big_int<span class="sym">(</span><span class="num">0</span><span class="sym">,</span> .true.<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span>
+
+    if <span class="sym">(</span>bi1<span class="sym">%</span>sigDigs <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> then
+       c <span class="sym">=</span> bi2
+       return
+    else if <span class="sym">(</span>bi2<span class="sym">%</span>sigDigs <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> then
+       c <span class="sym">=</span> bi1
+       return
+    end if
+
+    if <span class="sym">(</span>bi1<span class="sym">%</span>sign .eqv. bi2<span class="sym">%</span>sign<span class="sym">)</span> then
+       c<span class="sym">%</span>sign <span class="sym">=</span> bi1<span class="sym">%</span>sign
+       carry <span class="sym">=</span> <span class="num">0</span>
+       n <span class="sym">=</span> max<span class="sym">(</span>bi1<span class="sym">%</span>sigDigs<span class="sym">,</span> bi2<span class="sym">%</span>sigDigs<span class="sym">) +</span> <span class="num">1</span>
+       do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+          c<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) =</span> bi1<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) +</span> bi2<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) +</span> carry
+          carry <span class="sym">=</span> ibits<span class="sym">(</span>c<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">),</span>Pwr<span class="sym">,</span>Pwr<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+          c<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) =</span> mod<span class="sym">(</span>c<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">),</span>Base<span class="sym">)</span>
+       end do
+    else
+       if <span class="sym">(</span>greater_in_mag<span class="sym">(</span>bi1<span class="sym">,</span> bi2<span class="sym">))</span> then
+          a <span class="sym">=&gt;</span> bi1
+          b <span class="sym">=&gt;</span> bi2
+       else if <span class="sym">(</span>greater_in_mag<span class="sym">(</span>bi2<span class="sym">,</span> bi1<span class="sym">))</span> then
+          a <span class="sym">=&gt;</span> bi2
+          b <span class="sym">=&gt;</span> bi1
+       else
+          return
+       end if
+
+       n <span class="sym">=</span> max<span class="sym">(</span>a<span class="sym">%</span>sigDigs<span class="sym">,</span> b<span class="sym">%</span>sigDigs<span class="sym">)</span>
+       c<span class="sym">%</span>sign <span class="sym">=</span> a<span class="sym">%</span>sign
+       do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+          if <span class="sym">(</span>a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) &lt;</span> b<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">))</span> then
+             a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) =</span> a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) +</span> Base
+             a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">) =</span> a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">) -</span> <span class="num">1</span>
+          end if
+          c<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) =</span> a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) -</span> b<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">)</span>
+       end do
+    end if
+
+    do i <span class="sym">=</span> n<span class="sym">,</span> <span class="num">1</span><span class="sym">, -</span><span class="num">1</span>
+       c<span class="sym">%</span>sigDigs <span class="sym">=</span> i
+       if <span class="sym">(</span>c<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) /=</span> <span class="num">0</span><span class="sym">)</span> exit
+    end do
+  end function big_int_plus_big_int
+
+  function big_int_div_big_int<span class="sym">(</span>a<span class="sym">,</span> b<span class="sym">)</span> result<span class="sym">(</span>c<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> a<span class="sym">,</span> b
+    integer                   <span class="sym">::</span> c
+
+    integer <span class="sym">::</span> k<span class="sym">,</span> carry<span class="sym">,</span> n<span class="sym">,</span> j
+    type<span class="sym">(</span>big_int<span class="sym">) ::</span> accumulator
+
+    c <span class="sym">=</span> <span class="num">0</span>
+    if <span class="sym">(</span>a<span class="sym">%</span>sigDigs <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> return
+
+    accumulator <span class="sym">=</span> big_int<span class="sym">(</span><span class="num">0</span><span class="sym">,</span> .true.<span class="sym">,</span> <span class="num">0</span><span class="sym">)</span>
+    do k <span class="sym">=</span> <span class="num">0</span><span class="sym">,</span> Base<span class="sym">-</span><span class="num">1</span>
+       carry <span class="sym">=</span> <span class="num">0</span>
+       n <span class="sym">=</span> max<span class="sym">(</span>accumulator<span class="sym">%</span>sigDigs<span class="sym">,</span> b<span class="sym">%</span>sigDigs<span class="sym">) +</span> <span class="num">1</span>
+       do j <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+          accumulator<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) =  &amp;</span>
+               accumulator<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) +</span> b<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) +</span> carry
+          carry <span class="sym">=</span> ibits<span class="sym">(</span>accumulator<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">),</span>Pwr<span class="sym">,</span>Pwr<span class="sym">+</span><span class="num">1</span><span class="sym">)</span>
+          accumulator<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) =</span> mod<span class="sym">(</span>accumulator<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">),</span>Base<span class="sym">)</span>
+       end do
+       do j <span class="sym">=</span> n<span class="sym">,</span> <span class="num">1</span><span class="sym">, -</span><span class="num">1</span>
+          accumulator<span class="sym">%</span>sigDigs <span class="sym">=</span> j
+          if <span class="sym">(</span>accumulator<span class="sym">%</span>digits<span class="sym">(</span>j<span class="sym">) /=</span> <span class="num">0</span><span class="sym">)</span> exit
+       end do
+       if <span class="sym">(</span>greater_in_mag<span class="sym">(</span>accumulator<span class="sym">,</span> a<span class="sym">))</span> then
+          c <span class="sym">=</span> k
+          exit
+       end if
+    end do
+  end function big_int_div_big_int
+
+  logical function greater_in_mag<span class="sym">(</span>a<span class="sym">,</span> b<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> a<span class="sym">,</span> b
+
+    integer <span class="sym">::</span> i
+
+    greater_in_mag <span class="sym">=</span> .false.
+    do i <span class="sym">=</span> max<span class="sym">(</span>a<span class="sym">%</span>sigDigs<span class="sym">,</span> b<span class="sym">%</span>sigDigs<span class="sym">),</span> <span class="num">1</span><span class="sym">, -</span><span class="num">1</span>
+       if <span class="sym">(</span>a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) &gt;</span> b<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">))</span> then
+          greater_in_mag <span class="sym">=</span> .true.
+          exit
+       else if <span class="sym">(</span>a<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">) &lt;</span> b<span class="sym">%</span>digits<span class="sym">(</span>i<span class="sym">))</span> then
+          exit
+       end if
+    end do
+  end function greater_in_mag
+end module big_int_mod
+
+module pi_mod
+  use big_int_mod
+  implicit none
+
+contains
+
+  function lfts<span class="sym">(</span>k<span class="sym">)</span>
+    integer<span class="sym">,</span> intent<span class="sym">(</span>in<span class="sym">)     ::</span> k
+    integer<span class="sym">,</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) ::</span> lfts
+
+    lfts <span class="sym">=</span> reshape<span class="sym">( (/</span> k<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">4</span><span class="sym">*</span>k <span class="sym">+</span> <span class="num">2</span><span class="sym">,</span> <span class="num">2</span><span class="sym">*</span>k <span class="sym">+</span> <span class="num">1</span> <span class="sym">/), (/</span> <span class="num">2</span><span class="sym">,</span> <span class="num">2</span> <span class="sym">/) )</span>
+  end function lfts
+
+  function comp1<span class="sym">(</span>a<span class="sym">,</span> b<span class="sym">)</span>
+    integer<span class="sym">,</span>       dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> a
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> b
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) ::</span> comp1
+
+    comp1<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) =</span> b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) +</span> b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)</span>
+    comp1<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) =</span> b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) +</span> b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)</span>
+    comp1<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">) =</span> b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) +</span> b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)</span>
+    comp1<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) =</span> b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) +</span> b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)</span>
+  end function comp1
+
+  function comp2<span class="sym">(</span>a<span class="sym">,</span> b<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> a
+    integer<span class="sym">,</span>       dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> b
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) ::</span> comp2
+
+    comp2<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) =</span> a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) +</span> a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">)</span>
+    comp2<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) =</span> a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) +</span> a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">)</span>
+    comp2<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">) =</span> a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">) +</span> a<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)</span>
+    comp2<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) =</span> a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">) +</span> a<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)*</span>b<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">)</span>
+  end function comp2
+
+  function prod<span class="sym">(</span>z<span class="sym">,</span> n<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> z
+    integer<span class="sym">,</span>                       intent<span class="sym">(</span>in<span class="sym">) ::</span> n
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) ::</span> prod
+
+    prod <span class="sym">=</span> comp1<span class="sym">(</span>reshape<span class="sym">( (/</span> <span class="num">10</span><span class="sym">,</span> <span class="num">0</span><span class="sym">, -</span><span class="num">10</span><span class="sym">*</span>n<span class="sym">,</span> <span class="num">1</span> <span class="sym">/), (/</span> <span class="num">2</span><span class="sym">,</span> <span class="num">2</span> <span class="sym">/) ),</span> z<span class="sym">)</span>
+  end function prod
+
+  logical function safe<span class="sym">(</span>z<span class="sym">,</span> n<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> z
+    integer<span class="sym">,</span>                       intent<span class="sym">(</span>in<span class="sym">) ::</span> n
+
+    safe <span class="sym">=</span> n <span class="sym">== (</span>z<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) *</span> <span class="num">4</span> <span class="sym">+</span> z<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)) / (</span>z<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) *</span> <span class="num">4</span> <span class="sym">+</span> z<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">))</span>
+  end function safe
+
+  integer function next<span class="sym">(</span>z<span class="sym">)</span>
+    type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> z
+
+    next <span class="sym">= (</span>z<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) *</span> <span class="num">3</span> <span class="sym">+</span> z<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">)) / (</span>z<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) *</span> <span class="num">3</span> <span class="sym">+</span> z<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">))</span>
+  end function next
+end module pi_mod
+
+program pidigits
+  use pi_mod
+  implicit none
+
+  character<span class="sym">(</span>len<span class="sym">=</span><span class="num">12</span><span class="sym">),</span> parameter  <span class="sym">::</span> proForma <span class="sym">=</span> <span class="str">&quot;          &quot;</span> <span class="sym">//</span> achar<span class="sym">(</span><span class="num">9</span><span class="sym">) //</span> <span class="str">&quot;:&quot;</span>
+  type<span class="sym">(</span>big_int<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) ::</span> z
+  integer           <span class="sym">::</span> num<span class="sym">,</span> y<span class="sym">,</span> i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> j <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> k <span class="sym">=</span> <span class="num">1</span>
+  character<span class="sym">(</span>len<span class="sym">=</span><span class="num">17</span><span class="sym">) ::</span> outLine <span class="sym">=</span> proForma
+  character<span class="sym">(</span>len<span class="sym">=</span><span class="num">4</span><span class="sym">)  ::</span> argv
+
+  call get_command_argument<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> argv<span class="sym">)</span>
+  read<span class="sym">(</span>argv<span class="sym">, *)</span> num
+
+  z<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">1</span><span class="sym">) =</span> <span class="num">1</span><span class="sym">;</span> z<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">1</span><span class="sym">) =</span> <span class="num">0</span><span class="sym">;</span> z<span class="sym">(</span><span class="num">1</span><span class="sym">,</span><span class="num">2</span><span class="sym">) =</span> <span class="num">0</span><span class="sym">;</span> z<span class="sym">(</span><span class="num">2</span><span class="sym">,</span><span class="num">2</span><span class="sym">) =</span> <span class="num">1</span>
+
+  do
+     y <span class="sym">=</span> next<span class="sym">(</span>z<span class="sym">)</span>
+     if <span class="sym">(</span>safe<span class="sym">(</span>z<span class="sym">,</span> y<span class="sym">))</span> then
+        write<span class="sym">(</span>unit<span class="sym">=</span>outLine<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">),</span> fmt<span class="sym">=</span><span class="str">&quot;(i1)&quot;</span><span class="sym">)</span> y
+        if <span class="sym">(</span>k <span class="sym">&lt;</span> <span class="num">10</span> .and. i <span class="sym">&lt;</span> num<span class="sym">)</span> then
+           k <span class="sym">=</span> k <span class="sym">+</span> <span class="num">1</span>
+        else
+           k <span class="sym">=</span> <span class="num">1</span>
+           write<span class="sym">(</span>unit<span class="sym">=</span>outLine<span class="sym">(</span><span class="num">13</span><span class="sym">:</span><span class="num">17</span><span class="sym">),</span> fmt<span class="sym">=</span><span class="str">&quot;(i0)&quot;</span><span class="sym">)</span> i
+           write<span class="sym">(*,</span> <span class="str">&quot;(a)&quot;</span><span class="sym">)</span> trim<span class="sym">(</span>outLine<span class="sym">)</span>
+           outLine <span class="sym">=</span> proForma
+        end if
+        if <span class="sym">(</span>i <span class="sym">==</span> num<span class="sym">)</span> exit
+        z <span class="sym">=</span> prod<span class="sym">(</span>z<span class="sym">,</span> y<span class="sym">)</span>
+        i <span class="sym">=</span> i <span class="sym">+</span> <span class="num">1</span>
+     else
+        z <span class="sym">=</span> comp2<span class="sym">(</span>z<span class="sym">,</span> lfts<span class="sym">(</span>j<span class="sym">))</span>
+        j <span class="sym">=</span> j <span class="sym">+</span> <span class="num">1</span>
+     end if
+  end do
+end program pidigits

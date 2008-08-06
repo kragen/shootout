@@ -1,0 +1,106 @@
+<span class="com">{-# OPTIONS -fvia-C -O2 -optc-O2 -optc-ffast-math -fbang-patterns -fexcess-precision #-}</span>
+<span class="slc">--</span>
+<span class="slc">-- The Computer Language Benchmarks Game</span>
+<span class="slc">-- http://shootout.alioth.debian.org/</span>
+<span class="slc">--</span>
+<span class="slc">-- Contributed by Don Stewart</span>
+<span class="slc">-- A lazy bytestring solution.</span>
+<span class="slc">-- Unnecessary strictness annotations removed by Sterling Clover 2/08</span>
+<span class="slc">--</span>
+<span class="slc">-- Add:</span>
+<span class="slc">-- -optc-mfpmath=sse -optc-msse2</span>
+<span class="slc">--</span>
+
+<span class="kwa">import</span> System
+<span class="kwa">import</span> Data.Word
+<span class="kwa">import</span> Control.Arrow
+
+<span class="kwa">import qualified</span> Data.ByteString.Lazy <span class="kwa">as</span> L
+<span class="kwa">import qualified</span> Data.ByteString.Lazy.Char8 <span class="kwa">as</span> C <span class="sym">(</span>pack<span class="sym">,</span>unfoldr<span class="sym">)</span>
+<span class="kwa">import qualified</span> Data.ByteString <span class="kwa">as</span> S
+<span class="kwa">import</span> Data.ByteString.Internal
+<span class="kwa">import</span> Data.ByteString.Unsafe
+
+main <span class="sym">=</span> <span class="kwa">do</span>
+    n <span class="sym">&lt;-</span> getArgs <span class="sym">&gt;&gt;=</span> readIO . head
+    writeFasta  <span class="str">&quot;ONE&quot;</span>   <span class="str">&quot;Homo sapiens alu&quot;</span>       <span class="sym">(</span>n<span class="sym">*</span><span class="num">2</span><span class="sym">) (</span>L.cycle alu<span class="sym">)</span>
+    g <span class="sym">&lt;-</span> unfold <span class="str">&quot;TWO&quot;</span>   <span class="str">&quot;IUB ambiguity codes&quot;</span>    <span class="sym">(</span>n<span class="sym">*</span><span class="num">3</span><span class="sym">) (</span>look iubs<span class="sym">)</span> <span class="num">42</span>
+    unfold      <span class="str">&quot;THREE&quot;</span> <span class="str">&quot;Homo sapiens frequency&quot;</span> <span class="sym">(</span>n<span class="sym">*</span><span class="num">5</span><span class="sym">) (</span>look homs<span class="sym">)</span> g
+
+<span class="slc">------------------------------------------------------------------------</span>
+<span class="slc">--</span>
+<span class="slc">-- lazily unfold the randomised dna sequences</span>
+<span class="slc">--</span>
+
+unfold l t n f g <span class="sym">=</span> putStrLn <span class="sym">(</span><span class="str">&quot;&gt;&quot;</span> <span class="sym">++</span> l <span class="sym">++</span> <span class="str">&quot; &quot;</span> <span class="sym">++</span> t<span class="sym">) &gt;&gt;</span> unroll f g n
+
+unroll <span class="sym">:: (</span><span class="kwb">Int</span> <span class="sym">-&gt; (</span>Word8<span class="sym">,</span> <span class="kwb">Int</span><span class="sym">)) -&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> <span class="kwb">Int</span> <span class="sym">-&gt;</span> IO <span class="kwb">Int</span>
+unroll f <span class="sym">=</span> loop
+    <span class="kwa">where</span>
+        loop r <span class="num">0</span>   <span class="sym">=</span> return r
+        loop <span class="sym">!</span>r i <span class="sym">=</span> <span class="kwa">case</span> S.unfoldrN m <span class="sym">(</span>Just . f<span class="sym">)</span> r <span class="kwa">of</span>
+                        <span class="sym">(!</span>s<span class="sym">,</span> Just r'<span class="sym">) -&gt;</span> <span class="kwa">do</span>
+                            S.putStrLn s
+                            loop r' <span class="sym">(</span>i<span class="sym">-</span>m<span class="sym">)</span>
+          <span class="kwa">where</span> m <span class="sym">=</span> min i <span class="num">60</span>
+
+look ds k <span class="sym">= (</span>choose ds d<span class="sym">,</span> j<span class="sym">)</span>
+  <span class="kwa">where</span> <span class="sym">(</span>d<span class="sym">,</span>j<span class="sym">) =</span> rand k
+
+choose <span class="sym">:: [(</span>Word8<span class="sym">,</span><span class="kwb">Float</span><span class="sym">)] -&gt;</span> <span class="kwb">Float</span> <span class="sym">-&gt;</span> Word8
+choose <span class="sym">[(</span>b<span class="sym">,</span>_<span class="sym">)]</span>       _ <span class="sym">=</span> b
+choose <span class="sym">((</span>b<span class="sym">,</span>f<span class="sym">):</span>xs<span class="sym">)</span> p <span class="sym">=</span> if p <span class="sym">&lt;</span> f <span class="kwa">then</span> b <span class="kwa">else</span> choose xs <span class="sym">(</span>p<span class="sym">-</span>f<span class="sym">)</span>
+
+<span class="slc">------------------------------------------------------------------------</span>
+<span class="slc">--</span>
+<span class="slc">-- only demand as much of the infinite sequence as we require</span>
+
+writeFasta label title n s <span class="sym">=</span> <span class="kwa">do</span>
+     putStrLn $ <span class="str">&quot;&gt;&quot;</span> <span class="sym">++</span> label <span class="sym">++</span> <span class="str">&quot; &quot;</span> <span class="sym">++</span> title
+     <span class="kwa">let</span> <span class="sym">(</span>t<span class="sym">:</span>ts<span class="sym">) =</span> L.toChunks s
+     go ts t n
+  <span class="kwa">where</span>
+     go ss s n
+        <span class="sym">|</span> l60 <span class="sym">&amp;&amp;</span> n60 <span class="sym">=</span> S.putStrLn l               <span class="sym">&gt;&gt;</span> go ss        r <span class="sym">(</span>n<span class="sym">-</span><span class="num">60</span><span class="sym">)</span>
+        <span class="sym">|</span>        n60 <span class="sym">=</span> S.putStr s <span class="sym">&gt;&gt;</span> S.putStrLn a <span class="sym">&gt;&gt;</span> go <span class="sym">(</span>tail ss<span class="sym">)</span> b <span class="sym">(</span>n<span class="sym">-</span><span class="num">60</span><span class="sym">)</span>
+        <span class="sym">|</span> n <span class="sym">&lt;=</span> ln    <span class="sym">=</span> S.putStrLn <span class="sym">(</span>S.take n s<span class="sym">)</span>
+        <span class="sym">|</span> otherwise  <span class="sym">=</span> S.putStr s <span class="sym">&gt;&gt;</span> S.putStrLn <span class="sym">(</span>S.take <span class="sym">(</span>n<span class="sym">-</span>ln<span class="sym">) (</span>head ss<span class="sym">))</span>
+        <span class="kwa">where</span>
+            ln   <span class="sym">=</span> S.length s
+            l60  <span class="sym">=</span> ln <span class="sym">&gt;=</span> <span class="num">60</span>
+            n60  <span class="sym">=</span> n  <span class="sym">&gt;=</span> <span class="num">60</span>
+            <span class="sym">(</span>l<span class="sym">,</span>r<span class="sym">) =</span> S.splitAt <span class="num">60</span> s
+            <span class="sym">(</span>a<span class="sym">,</span>b<span class="sym">) =</span> S.splitAt <span class="sym">(</span><span class="num">60</span><span class="sym">-</span>ln<span class="sym">) (</span>head ss<span class="sym">)</span>
+
+<span class="slc">------------------------------------------------------------------------</span>
+
+im  <span class="sym">=</span> <span class="num">139968</span>
+ia  <span class="sym">=</span> <span class="num">3877</span>
+ic  <span class="sym">=</span> <span class="num">29573</span>
+
+rand <span class="sym">::</span> <span class="kwb">Int</span> <span class="sym">-&gt; (</span><span class="kwb">Float</span><span class="sym">,</span> <span class="kwb">Int</span><span class="sym">)</span>
+rand seed <span class="sym">= (</span>newran<span class="sym">,</span>newseed<span class="sym">)</span>
+    <span class="kwa">where</span>
+        newseed <span class="sym">= (</span>seed <span class="sym">*</span> ia <span class="sym">+</span> ic<span class="sym">)</span> `rem` im
+        newran  <span class="sym">=</span>  <span class="num">1.0</span> <span class="sym">*</span> fromIntegral newseed <span class="sym">/</span> imd
+        imd      <span class="sym">=</span> fromIntegral im
+
+<span class="slc">------------------------------------------------------------------------</span>
+
+alu <span class="sym">=</span> C.pack
+        <span class="str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\</span>
+<span class="str">        \GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\</span>
+<span class="str">        \CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\</span>
+<span class="str">        \ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA\</span>
+<span class="str">        \GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG\</span>
+<span class="str">        \AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\</span>
+<span class="str">        \AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
+
+iubs <span class="sym">=</span> map <span class="sym">(</span>c2w <span class="sym">***</span> id<span class="sym">)</span>
+        <span class="sym">[(</span>'a'<span class="sym">,</span><span class="num">0.27</span><span class="sym">),(</span>'c'<span class="sym">,</span><span class="num">0.12</span><span class="sym">),(</span>'g'<span class="sym">,</span><span class="num">0.12</span><span class="sym">),(</span>'t'<span class="sym">,</span><span class="num">0.27</span><span class="sym">),(</span>'B'<span class="sym">,</span><span class="num">0.02</span><span class="sym">)</span>
+        <span class="sym">,(</span>'D'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'H'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'K'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'M'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'N'<span class="sym">,</span><span class="num">0.02</span><span class="sym">)</span>
+        <span class="sym">,(</span>'R'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'S'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'V'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'W'<span class="sym">,</span><span class="num">0.02</span><span class="sym">),(</span>'Y'<span class="sym">,</span><span class="num">0.02</span><span class="sym">)]</span>
+
+homs <span class="sym">=</span> map <span class="sym">(</span>c2w <span class="sym">***</span> id<span class="sym">)</span>
+        <span class="sym">[(</span>'a'<span class="sym">,</span><span class="num">0.3029549426680</span><span class="sym">),(</span>'c'<span class="sym">,</span><span class="num">0.1979883004921</span><span class="sym">)</span>
+        <span class="sym">,(</span>'g'<span class="sym">,</span><span class="num">0.1975473066391</span><span class="sym">),(</span>'t'<span class="sym">,</span><span class="num">0.3015094502008</span><span class="sym">)]</span>

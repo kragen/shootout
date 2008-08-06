@@ -1,0 +1,83 @@
+<span class="slc">! The Great Computer Language Shootout</span>
+<span class="slc">!   http://shootout.alioth.debian.org/</span>
+<span class="slc">!</span>
+<span class="slc">! contributed by Steve Decker based on the version by Simon Geard</span>
+<span class="slc">! compilation:</span>
+<span class="slc">!   g95 -O1 -fomit-frame-pointer -funroll-loops spectral_norm.f90</span>
+<span class="slc">!   ifort -ipo -O3 -static spectral_norm.f90</span>
+module norm_subs
+  implicit none
+
+  integer<span class="sym">,</span> parameter <span class="sym">::</span> dp <span class="sym">=</span> selected_real_kind<span class="sym">(</span><span class="num">12</span><span class="sym">)</span>
+
+contains
+
+  <span class="slc">! Return element i,j of infinite matrix A</span>
+  pure real<span class="sym">(</span>dp<span class="sym">)</span> function A<span class="sym">(</span>i<span class="sym">,</span> j<span class="sym">)</span>
+    integer<span class="sym">,</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> i<span class="sym">,</span> j
+
+    a <span class="sym">=</span> <span class="num">1</span>.d0 <span class="sym">/ ((</span>i<span class="sym">+</span>j<span class="sym">-</span><span class="num">2</span><span class="sym">) * (</span>i<span class="sym">+</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)/</span><span class="num">2</span> <span class="sym">+</span> i<span class="sym">)</span>
+  end function A
+
+  <span class="slc">! Multiply v by A</span>
+  pure function MultiplyAv<span class="sym">(</span>v<span class="sym">)</span> result <span class="sym">(</span>Av<span class="sym">)</span>
+    real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(:),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> v
+    real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(</span>size<span class="sym">(</span>v<span class="sym">))       ::</span> Av
+
+    integer <span class="sym">::</span> n<span class="sym">,</span> i<span class="sym">,</span> j
+
+    n <span class="sym">=</span> size<span class="sym">(</span>v<span class="sym">)</span>
+    Av <span class="sym">=</span> <span class="num">0</span>.d0
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+       do j <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+          Av<span class="sym">(</span>i<span class="sym">) =</span> Av<span class="sym">(</span>i<span class="sym">) +</span> A<span class="sym">(</span>i<span class="sym">,</span>j<span class="sym">) *</span> v<span class="sym">(</span>j<span class="sym">)</span>
+       end do
+    end do
+  end function MultiplyAv
+
+  <span class="slc">! Multiply v by A transpose</span>
+  pure function MultiplyAtv<span class="sym">(</span>v<span class="sym">)</span> result <span class="sym">(</span>Atv<span class="sym">)</span>
+    real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(:),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> v
+    real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(</span>size<span class="sym">(</span>v<span class="sym">))       ::</span> Atv
+
+    integer <span class="sym">::</span> n<span class="sym">,</span> i<span class="sym">,</span> j
+
+    n <span class="sym">=</span> size<span class="sym">(</span>v<span class="sym">)</span>
+    Atv <span class="sym">=</span> <span class="num">0</span>.d0
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+       do j <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+          Atv<span class="sym">(</span>i<span class="sym">) =</span> Atv<span class="sym">(</span>i<span class="sym">) +</span> A<span class="sym">(</span>j<span class="sym">,</span>i<span class="sym">) *</span> v<span class="sym">(</span>j<span class="sym">)</span>
+       end do
+    end do
+  end function MultiplyAtv
+
+  <span class="slc">! Multiply v by A and then by A transpose</span>
+  pure function MultiplyAtAv<span class="sym">(</span>v<span class="sym">)</span> result <span class="sym">(</span>AtAv<span class="sym">)</span>
+    real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(:),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> v
+    real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(</span>size<span class="sym">(</span>v<span class="sym">))       ::</span> AtAv
+
+    AtAv <span class="sym">=</span> MultiplyAtv<span class="sym">(</span>MultiplyAv<span class="sym">(</span>v<span class="sym">))</span>
+  end function MultiplyAtAv
+end module norm_subs
+
+program spectral_norm
+  use norm_subs
+  implicit none
+
+  real<span class="sym">(</span>dp<span class="sym">),</span> dimension<span class="sym">(:),</span> allocatable <span class="sym">::</span> u<span class="sym">,</span> v
+  integer          <span class="sym">::</span> i<span class="sym">,</span> n
+  character<span class="sym">(</span>len<span class="sym">=</span><span class="num">6</span><span class="sym">) ::</span> argv
+
+  call get_command_argument<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> argv<span class="sym">)</span>
+  read<span class="sym">(</span>argv<span class="sym">, *)</span> n
+
+  allocate<span class="sym">(</span>u<span class="sym">(</span>n<span class="sym">),</span> v<span class="sym">(</span>n<span class="sym">))</span>
+  u <span class="sym">=</span> <span class="num">1</span>.d0
+  do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> <span class="num">10</span>
+     v <span class="sym">=</span> MultiplyAtAv<span class="sym">(</span>u<span class="sym">)</span>
+     u <span class="sym">=</span> MultiplyAtAv<span class="sym">(</span>v<span class="sym">)</span>
+  end do
+
+  write<span class="sym">(*,</span> <span class="str">&quot;(f0.9)&quot;</span><span class="sym">)</span> sqrt<span class="sym">(</span>dot_product<span class="sym">(</span>u<span class="sym">,</span>v<span class="sym">) /</span> dot_product<span class="sym">(</span>v<span class="sym">,</span>v<span class="sym">))</span>
+  deallocate<span class="sym">(</span>u<span class="sym">,</span> v<span class="sym">)</span>
+end program spectral_norm

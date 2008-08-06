@@ -1,0 +1,80 @@
+<span class="com">(* knucleotide.ml</span>
+<span class="com"> *</span>
+<span class="com"> * The Great Computer Language Shootout</span>
+<span class="com"> * http://shootout.alioth.debian.org/</span>
+<span class="com"> *</span>
+<span class="com"> * Contributed by Troestler Christophe</span>
+<span class="com"> *)</span>
+
+<span class="kwa">module</span> S <span class="sym">=</span> <span class="kwa">struct</span>
+  <span class="kwa">type</span> t <span class="sym">=</span> <span class="kwb">string</span>
+
+  <span class="kwa">let</span> size <span class="sym">=</span> <span class="num">0x40000</span>
+
+  <span class="kwa">let</span> <span class="kwd">equal</span> <span class="sym">(</span>s1<span class="sym">:</span><span class="kwb">string</span><span class="sym">)</span> s2 <span class="sym">= (</span>s1 <span class="sym">=</span> s2<span class="sym">)</span>
+
+  <span class="kwa">let</span> hash s <span class="sym">=</span>
+    <span class="kwa">let</span> h <span class="sym">=</span> ref <span class="num">0</span> <span class="kwa">in</span>
+    <span class="kwa">for</span> i <span class="sym">=</span> <span class="num">0</span> <span class="kwa">to</span> String.length s <span class="sym">-</span> <span class="num">1</span> <span class="kwa">do</span> h <span class="sym">:= !</span>h <span class="sym">*</span> <span class="num">5</span> <span class="sym">+</span> Char.code s.<span class="sym">[</span>i<span class="sym">]</span> <span class="kwa">done</span><span class="sym">;</span>
+    <span class="sym">!</span>h
+<span class="kwa">end</span>
+
+<span class="kwa">module</span> H <span class="sym">=</span> Hashtbl.<span class="kwd">Make</span><span class="sym">(</span>S<span class="sym">)</span>
+
+<span class="com">(* [counts k dna] fills and return the hashtable [count] of</span>
+<span class="com">   k-nucleotide keys and count values for a particular reading-frame</span>
+<span class="com">   of length [k] of the string [dna].  Keys point to mutable values</span>
+<span class="com">   for speed (to avoid looking twice the same key to reinsert the</span>
+<span class="com">   value). *)</span>
+<span class="kwa">let</span> count <span class="sym">=</span> H.create S.size
+<span class="kwa">let</span> counts k dna <span class="sym">=</span>
+  H.clear count<span class="sym">;</span>
+  <span class="kwa">for</span> i <span class="sym">=</span> <span class="num">0</span> <span class="kwa">to</span> String.length dna <span class="sym">-</span> k <span class="kwa">do</span>
+    <span class="kwa">let</span> key <span class="sym">=</span> String.sub dna i k <span class="kwa">in</span>
+    <span class="kwa">try</span> <span class="kwd">incr</span><span class="sym">(</span>H.find count key<span class="sym">)</span> <span class="kwa">with</span> Not_found <span class="sym">-&gt;</span> H.add count <span class="kwd">key</span> <span class="sym">(</span>ref <span class="num">1</span><span class="sym">)</span>
+  <span class="kwa">done</span><span class="sym">;</span>
+  count
+
+<span class="com">(* [write_frequencies k dna] writes the frequencies for a</span>
+<span class="com">   reading-frame of length [k] sorted by descending frequency and then</span>
+<span class="com">   ascending k-nucleotide key. *)</span>
+<span class="kwa">let</span> <span class="kwd">compare_freq</span> <span class="sym">((</span>k1<span class="sym">:</span><span class="kwb">string</span><span class="sym">),(</span>f1<span class="sym">:</span><span class="kwb">float</span><span class="sym">)) (</span>k2<span class="sym">,</span> f2<span class="sym">) =</span>
+  <span class="kwa">if</span> f1 <span class="sym">&gt;</span> f2 <span class="kwa">then</span> <span class="sym">-</span><span class="num">1</span> <span class="kwa">else if</span> f1 <span class="sym">&lt;</span> f2 <span class="kwa">then</span> <span class="num">1</span> <span class="kwa">else</span> compare k1 k2
+
+<span class="kwa">let</span> write_frequencies k dna <span class="sym">=</span>
+  <span class="kwa">let</span> cnt <span class="sym">=</span> counts k dna <span class="kwa">in</span>
+  <span class="kwa">let</span> tot <span class="sym">=</span> <span class="kwb">float</span><span class="sym">(</span>H.<span class="kwd">fold</span> <span class="sym">(</span><span class="kwa">fun</span> _ n t <span class="sym">-&gt; !</span>n <span class="sym">+</span> t<span class="sym">)</span> cnt <span class="num">0</span><span class="sym">)</span> <span class="kwa">in</span>
+  <span class="kwa">let</span> frq <span class="sym">=</span> H.<span class="kwd">fold</span> <span class="sym">(</span><span class="kwa">fun</span> k n l <span class="sym">-&gt; (</span>k<span class="sym">,</span> <span class="num">100</span>. <span class="sym">*</span>. <span class="kwb">float</span> <span class="sym">!</span>n <span class="sym">/</span>. tot<span class="sym">) ::</span> l<span class="sym">)</span> cnt <span class="sym">[]</span> <span class="kwa">in</span>
+  <span class="kwa">let</span> frq <span class="sym">=</span> List.sort compare_freq frq <span class="kwa">in</span>
+  List.<span class="kwd">iter</span> <span class="sym">(</span><span class="kwa">fun</span> <span class="sym">(</span>k<span class="sym">,</span>f<span class="sym">) -&gt;</span> Printf.printf <span class="str">&quot;%s %.3f</span><span class="esc">\n</span><span class="str">&quot;</span> k f<span class="sym">)</span> frq<span class="sym">;</span>
+  print_string <span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span>
+
+<span class="kwa">let</span> write_count seq dna <span class="sym">=</span>
+  <span class="kwa">let</span> cnt <span class="sym">=</span> <span class="kwd">counts</span> <span class="sym">(</span>String.length seq<span class="sym">)</span> dna <span class="kwa">in</span>
+  Printf.printf <span class="str">&quot;%d</span><span class="esc">\t</span><span class="str">%s</span><span class="esc">\n</span><span class="str">&quot;</span> <span class="sym">(</span><span class="kwa">try</span> <span class="sym">!(</span>H.find cnt seq<span class="sym">)</span> <span class="kwa">with</span> Not_found <span class="sym">-&gt;</span> <span class="num">0</span><span class="sym">)</span> seq
+
+<span class="com">(* Extract DNA sequence &quot;THREE&quot; from stdin *)</span>
+<span class="kwa">let</span> dna_three <span class="sym">=</span>
+  <span class="kwa">let</span> is_not_three s <span class="sym">=</span> <span class="kwa">try</span> String.sub s <span class="num">0 6</span> <span class="sym">&lt;&gt;</span> <span class="str">&quot;&gt;THREE&quot;</span> <span class="kwa">with</span> _ <span class="sym">-&gt;</span> <span class="kwa">true in</span>
+  <span class="kwa">while</span> <span class="kwd">is_not_three</span><span class="sym">(</span>input_line stdin<span class="sym">)</span> <span class="kwa">do</span> <span class="sym">()</span> <span class="kwa">done</span><span class="sym">;</span>
+  <span class="kwa">let</span> buf <span class="sym">=</span> Buffer.create <span class="num">1000</span> <span class="kwa">in</span>
+  <span class="com">(* Skip possible comment *)</span>
+  <span class="sym">(</span><span class="kwa">try while true do</span>
+     <span class="kwa">let</span> line <span class="sym">=</span> input_line stdin <span class="kwa">in</span>
+     <span class="kwa">if</span> line.<span class="sym">[</span><span class="num">0</span><span class="sym">] &lt;&gt;</span> <span class="str">';'</span> <span class="kwa">then</span>
+       <span class="sym">(</span>Buffer.add_string <span class="kwd">buf</span> <span class="sym">(</span>String.uppercase line<span class="sym">);</span> raise Exit<span class="sym">)</span>
+   <span class="kwa">done with</span> _ <span class="sym">-&gt; ());</span>
+  <span class="com">(* Read the DNA sequence *)</span>
+  <span class="sym">(</span><span class="kwa">try while true do</span>
+       <span class="kwa">let</span> line <span class="sym">=</span> input_line stdin <span class="kwa">in</span>
+       <span class="kwa">if</span> line.<span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> <span class="str">'&gt;'</span> <span class="kwa">then</span> raise End_of_file<span class="sym">;</span>
+       Buffer.add_string <span class="kwd">buf</span> <span class="sym">(</span>String.uppercase line<span class="sym">)</span>
+   <span class="kwa">done with</span> End_of_file <span class="sym">-&gt; ());</span>
+  Buffer.contents buf
+
+<span class="kwa">let</span> <span class="sym">() =</span> Gc.set <span class="sym">{ (</span>Gc.<span class="kwd">get</span><span class="sym">())</span> <span class="kwa">with</span> Gc.minor_heap_size <span class="sym">=</span> <span class="num">1024</span> <span class="sym">*</span> <span class="num">2048</span> <span class="sym">}</span>
+
+<span class="kwa">let</span> <span class="sym">() =</span>
+  List.<span class="kwd">iter</span> <span class="sym">(</span><span class="kwa">fun</span> i <span class="sym">-&gt;</span> write_frequencies i dna_three<span class="sym">) [</span><span class="num">1</span><span class="sym">;</span> <span class="num">2</span><span class="sym">];</span>
+  List.<span class="kwd">iter</span> <span class="sym">(</span><span class="kwa">fun</span> k <span class="sym">-&gt;</span> write_count k dna_three<span class="sym">)</span>
+    <span class="sym">[</span><span class="str">&quot;GGT&quot;</span><span class="sym">;</span> <span class="str">&quot;GGTA&quot;</span><span class="sym">;</span> <span class="str">&quot;GGTATT&quot;</span><span class="sym">;</span> <span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">;</span> <span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">]</span>

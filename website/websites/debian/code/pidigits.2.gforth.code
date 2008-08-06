@@ -1,0 +1,121 @@
+\ Computer Language Shootout
+\ http<span class="sym">:</span><span class="slc">//shootout.alioth.debian.org/</span>
+\ contributed by Albert van der Horst<span class="sym">,</span> Ian Osgood
+
+\ read NUM from last command line argument
+<span class="num">0</span><span class="sym">.</span> argc &#64; <span class="num">1</span><span class="sym">-</span> arg <span class="sym">&gt;</span>number <span class="num">2</span>drop drop constant NUM
+
+\
+\ Arbitrary precision arithmetic
+\ A p<span class="sym">-</span>number consists of a count plus count cells<span class="sym">,</span> <span class="num">2</span><span class="sym">-</span>complement small<span class="sym">-</span>endian
+\
+
+\ Shorthand<span class="sym">.</span>
+<span class="sym">:</span> p<span class="sym">&gt;</span><span class="kwd">size</span> <span class="sym">(</span> pn <span class="sym">--</span> size <span class="sym">)</span> POSTPONE &#64; <span class="sym">;</span> IMMEDIATE
+<span class="sym">:</span> p<span class="sym">&gt;</span><span class="kwd">last</span> <span class="sym">(</span> pn <span class="sym">--</span> msb <span class="sym">)</span> DUP p<span class="sym">&gt;</span>size CELLS <span class="sym">+ ;</span>
+<span class="sym">: [</span>I<span class="sym">]</span> POSTPONE I POSTPONE CELLS POSTPONE <span class="sym">+ ;</span> IMMEDIATE
+
+\ Give sign of p
+<span class="sym">:</span> p0<span class="sym">&lt; (</span> p <span class="sym">--</span> flag <span class="sym">)</span> p<span class="sym">&gt;</span>last &#64; <span class="num">0</span><span class="sym">&lt; ;</span>
+
+\ Copy a p<span class="sym">-</span>number to another buffer
+<span class="sym">:</span> <span class="kwd">pcopy</span> <span class="sym">(</span> src dst <span class="sym">-- )</span> OVER p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> CELLS MOVE <span class="sym">;</span>
+
+\ Check <span class="kwa">for</span> overflow<span class="sym">,</span> extend the p<span class="sym">-</span>number <span class="kwa">if</span> needed
+<span class="sym">:</span> ?<span class="kwd">carry</span> <span class="sym">(</span> carry p <span class="sym">-- )</span> <span class="num">2</span>DUP p0<span class="sym">&lt; &lt;&gt;</span> IF <span class="num">1</span> OVER <span class="sym">+!</span>  p<span class="sym">&gt;</span>last <span class="sym">!</span> ELSE <span class="num">2</span>DROP THEN <span class="sym">;</span>
+
+\ In<span class="sym">-</span>place multiply by an <span class="kwb">unsigned</span> integer
+<span class="sym">:</span> p<span class="sym">* {</span> n p <span class="sym">-- }</span>
+  p p0<span class="sym">&lt;</span>  <span class="num">0</span><span class="sym">. (</span> sign dcarry <span class="sym">)</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> <span class="num">1</span> DO
+    p <span class="sym">[</span>I<span class="sym">]</span> &#64;       <span class="sym">(</span> digit <span class="sym">)</span>
+    n UM<span class="sym">*</span> D<span class="sym">+</span> <span class="kwd">SWAP</span> <span class="sym">(</span> carry digit <span class="sym">)</span>
+    p <span class="sym">[</span>I<span class="sym">] !</span> <span class="num">0</span>
+  LOOP
+  ROT n UM<span class="sym">*</span> D<span class="sym">+</span> DROP  p ?carry <span class="sym">;</span>
+
+\ Ensure two p<span class="sym">-</span>numbers are the same size before adding
+<span class="sym">:</span> extend <span class="sym">{</span> p n <span class="sym">-- }</span>
+  p p0<span class="sym">&lt; {</span> sign <span class="sym">}</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span>  n p <span class="sym">+!</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> SWAP DO sign p <span class="sym">[</span>I<span class="sym">] !</span> LOOP <span class="sym">;</span>
+<span class="sym">:</span> ?<span class="kwd">extend</span> <span class="sym">(</span> p1 p2 <span class="sym">--</span> p1 p2 <span class="sym">)</span>
+  OVER p<span class="sym">&gt;</span>size OVER p<span class="sym">&gt;</span>size <span class="sym">-</span> ?DUP IF
+    DUP <span class="num">0</span><span class="sym">&lt;</span> IF <span class="sym">&gt;</span>R OVER R<span class="sym">&gt;</span> NEGATE
+    ELSE OVER SWAP
+    THEN extend
+  THEN <span class="sym">;</span>
+
+\ In<span class="sym">-</span>place addition of another p<span class="sym">-</span>number
+<span class="sym">:</span> p<span class="sym">+</span>  ?extend <span class="sym">{</span> src p <span class="sym">-- }</span>
+  src p0<span class="sym">&lt;</span> p p0<span class="sym">&lt;</span>  <span class="num">0</span><span class="sym">. (</span> sign sign dcarry <span class="sym">)</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> <span class="num">1</span> DO
+    p   <span class="sym">[</span>I<span class="sym">]</span> &#64; <span class="num">0</span> D<span class="sym">+</span>
+    src <span class="sym">[</span>I<span class="sym">]</span> &#64; <span class="num">0</span> D<span class="sym">+</span> SWAP
+    p   <span class="sym">[</span>I<span class="sym">] !</span> <span class="num">0</span>
+  LOOP
+  DROP <span class="sym">+ +</span> p ?carry <span class="sym">;</span> \ add signs<span class="sym">,</span> check <span class="kwa">for</span> overflow
+
+\ In<span class="sym">-</span>place subtraction of another p<span class="sym">-</span>number
+<span class="sym">:</span> p<span class="sym">-</span>  ?extend <span class="sym">{</span> src p <span class="sym">-- }</span>
+  src p0<span class="sym">&lt;</span> p p0<span class="sym">&lt;</span>  <span class="num">0</span><span class="sym">. (</span> sign sign dcarry <span class="sym">)</span>
+  p p<span class="sym">&gt;</span>size <span class="num">1</span><span class="sym">+</span> <span class="num">1</span> DO
+    p   <span class="sym">[</span>I<span class="sym">]</span> &#64; <span class="num">0</span> D<span class="sym">+</span>
+    src <span class="sym">[</span>I<span class="sym">]</span> &#64; <span class="num">0</span> D<span class="sym">-</span> SWAP
+    p   <span class="sym">[</span>I<span class="sym">] !</span> S<span class="sym">&gt;</span>D
+  LOOP
+  DROP <span class="sym">+ +</span> p ?carry <span class="sym">;</span> \ add signs<span class="sym">,</span> check <span class="kwa">for</span> overflow
+
+\
+\ pi<span class="sym">-</span>spigot specific computation
+\
+
+\ approximate upper limit on size <span class="kwd">required</span> <span class="sym">(</span><span class="num">1000</span> <span class="sym">-&gt;</span> <span class="num">1166</span><span class="sym">)</span>
+NUM <span class="num">2</span><span class="sym">*</span> CELLS constant SIZE
+
+\ Current z transformation
+CREATE aq <span class="num">1</span> <span class="sym">,</span> <span class="num">1</span> <span class="sym">,</span> SIZE ALLOT
+CREATE ar <span class="num">1</span> <span class="sym">,</span> <span class="num">0</span> <span class="sym">,</span> SIZE ALLOT
+    \ <span class="str">&quot;as&quot;</span> identical zero <span class="kwa">and</span> remains so
+CREATE at <span class="num">1</span> <span class="sym">,</span> <span class="num">1</span> <span class="sym">,</span> SIZE ALLOT
+
+\ Generate non<span class="sym">-</span>zero parts of next <span class="kwd">matrix</span> <span class="sym">(</span> K <span class="num">4</span>K<span class="sym">+</span><span class="num">2 2</span>K<span class="sym">+</span><span class="num">1</span> <span class="sym">)</span>
+VARIABLE K
+<span class="sym">:</span> <span class="kwd">generate</span> <span class="sym">( --</span> q r t <span class="sym">)</span> <span class="num">1</span> K <span class="sym">+!</span>   K &#64;  DUP <span class="num">2</span><span class="sym">*</span> <span class="num">1</span><span class="sym">+</span>  DUP <span class="num">2</span><span class="sym">*</span> SWAP <span class="sym">;</span>
+
+\ HERE is used as a temporary p<span class="sym">-</span>number
+
+\ Multiply z from the left
+<span class="sym">:</span> compose<span class="sym">&lt; (</span> bq br bt <span class="sym">-- )</span>
+  DUP at p<span class="sym">*</span>  ar p<span class="sym">*</span>  aq HERE pcopy  HERE p<span class="sym">*</span>  HERE ar p<span class="sym">+</span>  aq p<span class="sym">* ;</span>
+
+\ Multiply z from the right
+<span class="sym">:</span> compose<span class="sym">&gt; (</span> bt br bq <span class="sym">-- )</span>
+  DUP aq p<span class="sym">*</span>  ar p<span class="sym">*</span>  at HERE pcopy  HERE p<span class="sym">*</span>  HERE ar p<span class="sym">-</span>  at p<span class="sym">* ;</span>
+
+\ Calculate z at point <span class="num">3</span><span class="sym">,</span> leaving integer part <span class="kwa">and</span> fractional part<span class="sym">.</span>
+\ Division is by multiple subtraction until the fractional part is
+\ negative<span class="sym">.</span>
+<span class="sym">:</span> <span class="kwd">z</span><span class="sym">(</span><span class="num">3</span><span class="sym">)  ( --</span> n pfract <span class="sym">)</span> HERE  aq OVER pcopy  <span class="num">3</span> OVER p<span class="sym">*</span>  ar OVER p<span class="sym">+</span>
+  <span class="num">0</span> BEGIN SWAP at OVER p<span class="sym">-</span>  DUP p0<span class="sym">&lt;</span> <span class="num">0</span><span class="sym">=</span> WHILE SWAP <span class="num">1</span><span class="sym">+</span> REPEAT <span class="sym">;</span>
+
+\ Calculate z at point <span class="num">4</span><span class="sym">,</span> based on the result <span class="kwa">for</span> point <span class="num">3</span>
+\ <span class="kwa">and</span> decide whether the integer parts are the same<span class="sym">.</span>
+<span class="sym">:</span> <span class="kwd">z</span><span class="sym">(</span><span class="num">4</span><span class="sym">)</span>same? <span class="sym">(</span> pfract <span class="sym">--</span> flag <span class="sym">)</span> aq OVER p<span class="sym">+</span>  p0<span class="sym">&lt; ;</span>
+
+<span class="sym">:</span> <span class="kwd">pidigit</span> <span class="sym">( --</span> nextdigit<span class="sym">)</span>
+    BEGIN <span class="kwd">z</span><span class="sym">(</span><span class="num">3</span><span class="sym">)</span> <span class="kwd">z</span><span class="sym">(</span><span class="num">4</span><span class="sym">)</span>same? <span class="num">0</span><span class="sym">=</span> WHILE DROP generate compose<span class="sym">&lt;</span> REPEAT
+    <span class="num">1</span>   OVER <span class="num">10</span> <span class="sym">*</span>   <span class="num">10</span>   compose<span class="sym">&gt; ;</span>
+
+<span class="sym">: .</span><span class="kwd">digit</span> <span class="sym">( -- )</span> pidigit <span class="sym">[</span>CHAR<span class="sym">]</span> <span class="num">0</span> <span class="sym">+</span> EMIT <span class="sym">;</span>
+
+<span class="sym">: .</span><span class="kwd">count</span> <span class="sym">(</span> n <span class="sym">-- ) .</span>\&quot; \t<span class="sym">:</span><span class="str">&quot; 1 U.R CR ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">Spigot n digits with formatting</span>
+<span class="str">: spigot ( digits -- ) 0</span>
+<span class="str">  BEGIN 10 +  2DUP &gt; WHILE</span>
+<span class="str">    10 0 DO .digit LOOP  DUP .count</span>
+<span class="str">  REPEAT</span>
+<span class="str">  2DUP 10 - DO .digit LOOP  OVER - SPACES  .count ;</span>
+<span class="str"></span>
+<span class="str">NUM spigot bye</span>

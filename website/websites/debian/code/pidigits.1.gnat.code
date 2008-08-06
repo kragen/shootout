@@ -1,0 +1,161 @@
+<span class="slc">--  The Computer Language Shootout</span>
+<span class="slc">--  http://shootout.alioth.debian.org</span>
+<span class="slc">--  Calculate digits of pi using the</span>
+<span class="slc">--  Unbounded Spigot Algorithms</span>
+<span class="slc">--</span>
+<span class="slc">--  From Pascal code by Vincent Snijders</span>
+<span class="slc">--  gmp headers by Karl-Michael Schindler</span>
+<span class="slc">--  Translated by (New) P2Ada v. 17-June-2006</span>
+
+<span class="kwa">with</span> Ada.Text_IO<span class="sym">;</span>                       <span class="kwa">use</span> Ada.Text_IO<span class="sym">;</span>
+<span class="kwa">with</span> Ada.Integer_Text_IO<span class="sym">;</span>               <span class="kwa">use</span> Ada.Integer_Text_IO<span class="sym">;</span>
+<span class="kwa">with</span> Ada.Command_Line<span class="sym">;</span>                  <span class="kwa">use</span> Ada.Command_Line<span class="sym">;</span>
+<span class="kwa">with</span> Ada.Calendar<span class="sym">;</span>                      <span class="kwa">use</span> Ada.Calendar<span class="sym">;</span>
+
+<span class="kwa">with</span> Interfaces.C<span class="sym">;</span>
+
+<span class="kwa">procedure</span> pidigits <span class="kwa">is</span>
+
+  <span class="kwa">pragma</span> Suppress<span class="sym">(</span>All_Checks<span class="sym">);</span>
+
+  <span class="kwa">package</span> GMP_mini <span class="kwa">is</span>
+    <span class="kwa">type</span> mp_limb_t <span class="kwa">is new</span> Interfaces.C.unsigned<span class="sym">;</span>
+    <span class="kwa">type</span> mp_ptr <span class="kwa">is access</span> mp_limb_t<span class="sym">;</span>
+
+    <span class="kwa">type</span> mpz_t <span class="kwa">is record</span>
+      mp_alloc<span class="sym">,</span> mp_size <span class="sym">:</span> Interfaces.C.int<span class="sym">;</span>
+      mp_d    <span class="sym">:</span> mp_ptr<span class="sym">;</span>
+    <span class="kwa">end record</span><span class="sym">;</span>
+
+    <span class="kwa">procedure</span> mpz_init <span class="sym">(</span>Dest<span class="sym">:</span> <span class="kwa">out</span> mpz_t<span class="sym">);</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_init<span class="sym">,</span> <span class="str">&quot;__gmpz_init&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">procedure</span> mpz_init_set_ui <span class="sym">(</span>Dest<span class="sym">:</span> <span class="kwa">out</span> mpz_t<span class="sym">;</span> Src<span class="sym">:</span> <span class="kwa">in</span> Interfaces.C.unsigned_long<span class="sym">);</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_init_set_ui<span class="sym">,</span> <span class="str">&quot;__gmpz_init_set_ui&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">procedure</span> mpz_mul_ui <span class="sym">(</span>Dest<span class="sym">:</span> <span class="kwa">out</span> mpz_t<span class="sym">;</span> Src1<span class="sym">:</span> <span class="kwa">in</span> mpz_t<span class="sym">;</span> Src2<span class="sym">:</span> <span class="kwa">in</span> Interfaces.C.unsigned_long<span class="sym">);</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_mul_ui<span class="sym">,</span> <span class="str">&quot;__gmpz_mul_ui&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">procedure</span> mpz_mul_si <span class="sym">(</span>Dest<span class="sym">:</span> <span class="kwa">out</span> mpz_t<span class="sym">;</span> Src1<span class="sym">:</span> <span class="kwa">in</span> mpz_t<span class="sym">;</span> Src2<span class="sym">:</span> <span class="kwa">in</span> Interfaces.C.int<span class="sym">);</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_mul_si<span class="sym">,</span> <span class="str">&quot;__gmpz_mul_si&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">procedure</span> mpz_add <span class="sym">(</span>Dest<span class="sym">:</span> <span class="kwa">out</span> mpz_t<span class="sym">;</span> Src1<span class="sym">,</span> Src2<span class="sym">:</span> <span class="kwa">in</span> mpz_t<span class="sym">);</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_add<span class="sym">,</span> <span class="str">&quot;__gmpz_add&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">procedure</span> mpz_tdiv_q <span class="sym">(</span>Dest<span class="sym">:</span> <span class="kwa">out</span> mpz_t<span class="sym">;</span> Src1<span class="sym">,</span> Src2<span class="sym">:</span> <span class="kwa">in</span> mpz_t<span class="sym">);</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_tdiv_q<span class="sym">,</span> <span class="str">&quot;__gmpz_tdiv_q&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">function</span>  mpz_get_ui <span class="sym">(</span>Src<span class="sym">:</span> <span class="kwa">in</span> mpz_t<span class="sym">)</span> <span class="kwa">return</span> Interfaces.C.unsigned_long<span class="sym">;</span>
+    <span class="kwa">pragma</span> Import<span class="sym">(</span>C<span class="sym">,</span> mpz_get_ui<span class="sym">,</span> <span class="str">&quot;__gmpz_get_ui&quot;</span><span class="sym">);</span>
+
+    <span class="kwa">pragma</span> Linker_Options<span class="sym">(</span><span class="str">&quot;-lgmp&quot;</span><span class="sym">);</span>
+
+  <span class="kwa">end</span> GMP_Mini<span class="sym">;</span>
+
+  <span class="kwa">procedure</span> Print_pi_digits<span class="sym">(</span>num_digits<span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">)</span> <span class="kwa">is</span>
+    <span class="kwa">use</span> GMP_mini<span class="sym">;</span>
+
+    q<span class="sym">,</span>r<span class="sym">,</span>s<span class="sym">,</span>t<span class="sym">:</span> mpz_t<span class="sym">;</span> <span class="slc">--  Transformation matrix components</span>
+
+    u<span class="sym">,</span>v<span class="sym">,</span>w<span class="sym">:</span> mpz_t<span class="sym">;</span>   <span class="slc">--  Temporary variables</span>
+
+    k<span class="sym">,</span>digit<span class="sym">:</span> Interfaces.C.int<span class="sym">;</span>
+    c<span class="sym">,</span>i<span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">;</span>
+    line<span class="sym">:</span> <span class="kwb">String</span><span class="sym">(</span><span class="num">1</span> .<span class="num">.10</span><span class="sym">);</span>
+
+    <span class="kwa">function</span> Extract<span class="sym">(</span>x<span class="sym">:</span> Interfaces.C.Unsigned_long<span class="sym">)</span> <span class="kwa">return</span> Interfaces.C.int <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+      mpz_mul_ui<span class="sym">(</span>u<span class="sym">,</span> q<span class="sym">,</span> x<span class="sym">);</span>
+      mpz_add<span class="sym">(</span>u<span class="sym">,</span> u<span class="sym">,</span> r<span class="sym">);</span>
+      mpz_mul_ui<span class="sym">(</span>v<span class="sym">,</span> s<span class="sym">,</span> x<span class="sym">);</span>
+      mpz_add<span class="sym">(</span>v<span class="sym">,</span> v<span class="sym">,</span> t<span class="sym">);</span>
+      mpz_tdiv_q<span class="sym">(</span>w<span class="sym">,</span> u<span class="sym">,</span> v<span class="sym">);</span>
+      <span class="kwa">return</span> Interfaces.C.int<span class="sym">(</span>mpz_get_ui<span class="sym">(</span>w<span class="sym">));</span>
+    <span class="kwa">end</span> Extract<span class="sym">;</span>
+
+    <span class="kwa">use</span> Interfaces.C<span class="sym">;</span>
+
+    <span class="kwa">function</span> IsSafe <span class="kwa">return</span> <span class="kwb">Boolean</span> <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+      <span class="kwa">return</span> digit <span class="sym">=</span> Extract<span class="sym">(</span><span class="num">4</span><span class="sym">);</span>
+    <span class="kwa">end</span> IsSafe<span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Produce <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+      mpz_mul_si<span class="sym">(</span>r<span class="sym">,</span> r<span class="sym">,</span> <span class="num">10</span><span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>v<span class="sym">,</span> t<span class="sym">, -</span><span class="num">10</span> <span class="sym">*</span> digit<span class="sym">);</span>
+      mpz_add<span class="sym">(</span>r<span class="sym">,</span> r<span class="sym">,</span> v<span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>q<span class="sym">,</span> q<span class="sym">,</span> <span class="num">10</span><span class="sym">);</span>
+    <span class="kwa">end</span> Produce<span class="sym">;</span>
+
+    <span class="kwa">procedure</span> Consume <span class="kwa">is</span>
+    <span class="kwa">begin</span>
+      k<span class="sym">:=</span> k <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+      mpz_mul_si<span class="sym">(</span>r<span class="sym">,</span> r<span class="sym">,</span> <span class="num">2</span><span class="sym">*</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>u<span class="sym">,</span> q<span class="sym">,</span> <span class="num">4</span><span class="sym">*</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">);</span>
+      mpz_add<span class="sym">(</span>r<span class="sym">,</span> r<span class="sym">,</span> u<span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>t<span class="sym">,</span> t<span class="sym">,</span> <span class="num">2</span><span class="sym">*</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>v<span class="sym">,</span> s<span class="sym">,</span> <span class="num">4</span><span class="sym">*</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">);</span>
+      mpz_add<span class="sym">(</span>t<span class="sym">,</span> t<span class="sym">,</span> v<span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>s<span class="sym">,</span> s<span class="sym">,</span> k<span class="sym">);</span>
+      mpz_mul_si<span class="sym">(</span>q<span class="sym">,</span> q<span class="sym">,</span> k<span class="sym">);</span>
+    <span class="kwa">end</span> Consume<span class="sym">;</span>
+
+  <span class="kwa">begin</span>
+    k <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+    i <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+    c <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+    mpz_init_set_ui<span class="sym">(</span>q<span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+    mpz_init_set_ui<span class="sym">(</span>r<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+    mpz_init_set_ui<span class="sym">(</span>s<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+    mpz_init_set_ui<span class="sym">(</span>t<span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+    mpz_init<span class="sym">(</span>u<span class="sym">);</span>
+    mpz_init<span class="sym">(</span>v<span class="sym">);</span>
+    mpz_init<span class="sym">(</span>w<span class="sym">);</span>
+    <span class="kwa">while</span> i <span class="sym">&lt;</span> num_digits <span class="kwa">loop</span>
+      digit <span class="sym">:=</span> Extract<span class="sym">(</span><span class="num">3</span><span class="sym">);</span>
+      <span class="kwa">while not</span> IsSafe <span class="kwa">loop</span>
+        Consume<span class="sym">;</span>
+        digit<span class="sym">:=</span> Extract<span class="sym">(</span><span class="num">3</span><span class="sym">);</span>
+      <span class="kwa">end loop</span><span class="sym">;</span>
+      Produce<span class="sym">;</span>
+      c<span class="sym">:=</span> c <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+      line<span class="sym">(</span>c<span class="sym">) :=</span> <span class="kwb">Character</span><span class="sym">'</span>Val<span class="sym">(</span><span class="kwb">Character</span><span class="sym">'</span>Pos<span class="sym">('</span><span class="num">0</span><span class="sym">')+</span>digit<span class="sym">);</span>
+      i<span class="sym">:=</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span>
+      <span class="kwa">if</span> c <span class="sym">=</span> <span class="num">10</span> <span class="kwa">then</span>
+        Put<span class="sym">(</span>line <span class="sym">&amp;</span> ASCII.HT <span class="sym">&amp; ':');</span>
+        Put<span class="sym">(</span>i<span class="sym">,</span><span class="num">0</span><span class="sym">);</span> New_Line<span class="sym">;</span>
+        c <span class="sym">:=</span> <span class="num">0</span><span class="sym">;</span>
+      <span class="kwa">end if</span><span class="sym">;</span>
+    <span class="kwa">end loop</span><span class="sym">;</span>
+    <span class="kwa">if</span>  c<span class="sym">/=</span><span class="num">0</span> <span class="kwa">then</span>
+      Put<span class="sym">(</span>line<span class="sym">(</span><span class="num">1</span>..c<span class="sym">));</span>
+      <span class="kwa">for</span> i <span class="kwa">in</span> c<span class="sym">+</span><span class="num">1</span>.<span class="num">.10</span> <span class="kwa">loop</span>
+        Put<span class="sym">(' ');</span>
+      <span class="kwa">end loop</span><span class="sym">;</span>
+      Put<span class="sym">(</span>ASCII.HT <span class="sym">&amp; ':');</span>
+      Put<span class="sym">(</span>i<span class="sym">,</span><span class="num">0</span><span class="sym">);</span>
+      New_Line<span class="sym">;</span>
+    <span class="kwa">end if</span><span class="sym">;</span>
+  <span class="kwa">end</span> Print_pi_digits<span class="sym">;</span>
+
+  n<span class="sym">:</span> <span class="kwb">Integer</span><span class="sym">;</span>
+
+  t0<span class="sym">,</span>t1<span class="sym">:</span> Time<span class="sym">;</span>
+  timing<span class="sym">:</span> <span class="kwa">constant</span> <span class="kwb">Boolean</span><span class="sym">:=</span> False<span class="sym">;</span>
+
+<span class="kwa">begin</span>
+  n<span class="sym">:=</span> <span class="num">2</span>_500<span class="sym">;</span>
+  <span class="kwa">if</span> Argument_Count<span class="sym">=</span><span class="num">1</span> <span class="kwa">then</span>
+    n<span class="sym">:=</span> <span class="kwb">Integer</span><span class="sym">'</span>Value<span class="sym">(</span>Argument<span class="sym">(</span><span class="num">1</span><span class="sym">));</span>
+  <span class="kwa">end if</span><span class="sym">;</span>
+  <span class="kwa">if</span> timing <span class="kwa">then</span>
+    t0<span class="sym">:=</span> Clock<span class="sym">;</span>
+  <span class="kwa">end if</span><span class="sym">;</span>
+  Print_pi_digits<span class="sym">(</span>n<span class="sym">);</span>
+  <span class="kwa">if</span> timing <span class="kwa">then</span>
+    t1<span class="sym">:=</span> Clock<span class="sym">;</span>
+    Put<span class="sym">(</span><span class="str">&quot;Time in seconds: &quot;</span> <span class="sym">&amp;</span> <span class="kwb">Duration</span><span class="sym">'</span>Image<span class="sym">(</span>t1<span class="sym">-</span>t0<span class="sym">) &amp;</span> <span class="str">&quot; [press return]&quot;</span><span class="sym">);</span>
+    Skip_Line<span class="sym">;</span>
+  <span class="kwa">end if</span><span class="sym">;</span>
+<span class="kwa">end</span> pidigits<span class="sym">;</span>

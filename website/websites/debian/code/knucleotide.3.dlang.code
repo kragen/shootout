@@ -1,0 +1,187 @@
+<span class="com">/*</span>
+<span class="com">The Computer Language Shootout</span>
+<span class="com">http://shootout.alioth.debian.org/</span>
+<span class="com"></span>
+<span class="com">Contributed by Josh Goldfoot</span>
+<span class="com">Directly adapted from the C version by bearophile</span>
+<span class="com">This version uses &quot;simple_hash.d&quot;</span>
+<span class="com"></span>
+<span class="com">This is an example of low-level coding in D,</span>
+<span class="com">higher-level coding (and shorter code) is possible.</span>
+<span class="com">It shows that D can use quite C-style code too.</span>
+<span class="com">*/</span>
+
+
+<span class="slc">// full qualified imports to avoid bugs</span>
+<span class="kwa">import</span> std<span class="sym">.</span>c<span class="sym">.</span>stdio<span class="sym">:</span> printf<span class="sym">,</span> fgets<span class="sym">,</span> stdin<span class="sym">,</span> perror<span class="sym">;</span>
+<span class="kwa">import</span> std<span class="sym">.</span>c<span class="sym">.</span>string<span class="sym">:</span> strlen<span class="sym">,</span> memcpy<span class="sym">,</span> memset<span class="sym">;</span>
+<span class="kwa">import</span> std<span class="sym">.</span>ctype<span class="sym">:</span> toupper<span class="sym">;</span>
+<span class="kwa">import</span> std<span class="sym">.</span>c<span class="sym">.</span>stdlib<span class="sym">:</span> exit<span class="sym">;</span>
+<span class="kwa">import</span> std<span class="sym">.</span>gc<span class="sym">:</span> malloc<span class="sym">,</span> realloc<span class="sym">;</span>
+<span class="kwa">import</span> simple_hash<span class="sym">:</span> ht_node<span class="sym">,</span> ht_ht<span class="sym">,</span> ht_create<span class="sym">,</span> ht_first<span class="sym">,</span>
+                    ht_find_new<span class="sym">,</span> ht_next<span class="sym">,</span> ht_destroy<span class="sym">;</span>
+
+
+<span class="kwa">long</span> <span class="kwd">hash_table_size</span><span class="sym">(</span><span class="kwa">int</span> fl<span class="sym">,</span> <span class="kwa">long</span> buflen<span class="sym">) {</span>
+    <span class="kwa">long</span> maxsize1 <span class="sym">=</span> buflen <span class="sym">-</span> fl<span class="sym">;</span>
+    <span class="kwa">long</span> maxsize2 <span class="sym">=</span> <span class="num">4</span><span class="sym">;</span>
+
+    <span class="kwa">while</span> <span class="sym">(--</span>fl <span class="sym">&gt;</span> <span class="num">0</span> <span class="sym">&amp;&amp;</span> maxsize2 <span class="sym">&lt;</span> maxsize1<span class="sym">)</span>
+        maxsize2 <span class="sym">=</span> maxsize2 <span class="sym">*</span> <span class="num">4</span><span class="sym">;</span>
+    <span class="kwa">if</span> <span class="sym">(</span>maxsize1 <span class="sym">&lt;</span> maxsize2<span class="sym">)</span>
+        <span class="kwa">return</span> maxsize1<span class="sym">;</span>
+    <span class="kwa">return</span> maxsize2<span class="sym">;</span>
+<span class="sym">}</span>
+
+
+ht_ht<span class="sym">*</span> <span class="kwd">generate_frequencies</span><span class="sym">(</span><span class="kwa">int</span> fl<span class="sym">,</span> <span class="kwa">char</span><span class="sym">*</span> buffer<span class="sym">,</span> <span class="kwa">long</span> buflen<span class="sym">) {</span>
+    ht_ht<span class="sym">*</span> ht<span class="sym">;</span>
+    <span class="kwa">char</span><span class="sym">*</span> reader<span class="sym">;</span>
+    <span class="kwa">long</span> i<span class="sym">;</span>
+    <span class="kwa">char</span> nulled<span class="sym">;</span>
+
+    <span class="kwa">if</span> <span class="sym">(</span>fl <span class="sym">&gt;</span> buflen<span class="sym">)</span>
+        <span class="kwa">return null</span><span class="sym">;</span>
+
+    ht <span class="sym">=</span> <span class="kwd">ht_create</span><span class="sym">(</span><span class="kwd">hash_table_size</span><span class="sym">(</span>fl<span class="sym">,</span> buflen<span class="sym">));</span>
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> buflen <span class="sym">-</span> fl <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span> i<span class="sym">++) {</span>
+        reader <span class="sym">= &amp;(</span>buffer<span class="sym">[</span>i<span class="sym">]);</span>
+        nulled <span class="sym">=</span> reader<span class="sym">[</span>fl<span class="sym">];</span>
+        reader<span class="sym">[</span>fl<span class="sym">] =</span> <span class="num">0x00</span><span class="sym">;</span>
+        <span class="kwd">ht_find_new</span><span class="sym">(</span>ht<span class="sym">,</span> reader<span class="sym">).</span>val<span class="sym">++;</span>
+        reader<span class="sym">[</span>fl<span class="sym">] =</span> nulled<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">return</span> ht<span class="sym">;</span>
+<span class="sym">}</span>
+
+
+<span class="kwa">void</span> <span class="kwd">write_frequencies</span><span class="sym">(</span><span class="kwa">int</span> fl<span class="sym">,</span> <span class="kwa">char</span><span class="sym">*</span> buffer<span class="sym">,</span> <span class="kwa">long</span> buflen<span class="sym">) {</span>
+    <span class="kwa">struct</span> sorter <span class="sym">{</span>
+        <span class="kwa">char</span><span class="sym">*</span> sstring<span class="sym">;</span>
+        <span class="kwa">int</span> num<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    ht_ht<span class="sym">*</span> ht<span class="sym">;</span>
+    <span class="kwa">long</span> total<span class="sym">,</span> i<span class="sym">,</span> j<span class="sym">,</span> size<span class="sym">;</span>
+    ht_node<span class="sym">*</span> nd<span class="sym">;</span>
+    sorter<span class="sym">*</span> s<span class="sym">;</span>
+    sorter tmp<span class="sym">;</span>
+
+    ht <span class="sym">=</span> <span class="kwd">generate_frequencies</span><span class="sym">(</span>fl<span class="sym">,</span> buffer<span class="sym">,</span> buflen<span class="sym">);</span>
+    total <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    size <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwa">for</span> <span class="sym">(</span>nd <span class="sym">=</span> <span class="kwd">ht_first</span><span class="sym">(</span>ht<span class="sym">);</span> nd <span class="sym">!</span><span class="kwa">is null</span><span class="sym">;</span> nd <span class="sym">=</span> <span class="kwd">ht_next</span><span class="sym">(</span>ht<span class="sym">)) {</span>
+        total <span class="sym">=</span> total <span class="sym">+</span> nd<span class="sym">.</span>val<span class="sym">;</span>
+        size<span class="sym">++;</span>
+    <span class="sym">}</span>
+
+    s <span class="sym">=</span> <span class="kwa">cast</span><span class="sym">(</span>sorter<span class="sym">*)</span><span class="kwd">malloc</span><span class="sym">(</span>size <span class="sym">*</span> sorter<span class="sym">.</span>sizeof<span class="sym">);</span>
+    <span class="kwa">if</span> <span class="sym">(</span>s <span class="kwa">is null</span><span class="sym">) {</span>
+        <span class="kwd">perror</span><span class="sym">(</span><span class="str">&quot;s&quot;</span><span class="sym">);</span>
+        <span class="kwd">exit</span><span class="sym">(</span><span class="num">1</span><span class="sym">);</span>
+    <span class="sym">}</span>
+    <span class="kwd">memset</span><span class="sym">(</span>s<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> size <span class="sym">*</span> sorter<span class="sym">.</span>sizeof<span class="sym">);</span>
+
+
+    i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwa">for</span> <span class="sym">(</span>nd <span class="sym">=</span> <span class="kwd">ht_first</span><span class="sym">(</span>ht<span class="sym">);</span> nd <span class="sym">!</span><span class="kwa">is null</span><span class="sym">;</span> nd <span class="sym">=</span> <span class="kwd">ht_next</span><span class="sym">(</span>ht<span class="sym">)) {</span>
+        s<span class="sym">[</span>i<span class="sym">].</span>sstring <span class="sym">=</span> nd<span class="sym">.</span>key<span class="sym">;</span>
+        s<span class="sym">[</span>i<span class="sym">++].</span>num <span class="sym">=</span> nd<span class="sym">.</span>val<span class="sym">;</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> size <span class="sym">-</span> <span class="num">1</span><span class="sym">;</span> i<span class="sym">++)</span>
+        <span class="kwa">for</span> <span class="sym">(</span>j <span class="sym">=</span> i <span class="sym">+</span> <span class="num">1</span><span class="sym">;</span> j <span class="sym">&lt;</span> size<span class="sym">;</span> j<span class="sym">++)</span>
+            <span class="kwa">if</span> <span class="sym">(</span>s<span class="sym">[</span>i<span class="sym">].</span>num <span class="sym">&lt;</span> s<span class="sym">[</span>j<span class="sym">].</span>num<span class="sym">) {</span>
+                <span class="kwd">memcpy</span><span class="sym">(&amp;</span>tmp<span class="sym">, &amp;(</span>s<span class="sym">[</span>i<span class="sym">]),</span> sorter<span class="sym">.</span>sizeof<span class="sym">);</span>
+                <span class="kwd">memcpy</span><span class="sym">(&amp;(</span>s<span class="sym">[</span>i<span class="sym">]), &amp;(</span>s<span class="sym">[</span>j<span class="sym">]),</span> sorter<span class="sym">.</span>sizeof<span class="sym">);</span>
+                <span class="kwd">memcpy</span><span class="sym">(&amp;(</span>s<span class="sym">[</span>j<span class="sym">]), &amp;</span>tmp<span class="sym">,</span> sorter<span class="sym">.</span>sizeof<span class="sym">);</span>
+            <span class="sym">}</span>
+
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> size<span class="sym">;</span> i<span class="sym">++)</span>
+        <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;%s %.3f</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> s<span class="sym">[</span>i<span class="sym">].</span>sstring<span class="sym">,</span> <span class="num">100</span> <span class="sym">*</span> <span class="kwa">cast</span><span class="sym">(</span><span class="kwa">float</span><span class="sym">)</span>s<span class="sym">[</span>i<span class="sym">].</span>num <span class="sym">/</span> total<span class="sym">);</span>
+    <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">);</span>
+    <span class="kwd">ht_destroy</span><span class="sym">(</span>ht<span class="sym">);</span>
+    <span class="kwd">realloc</span><span class="sym">(</span>s<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>
+
+
+<span class="kwa">void</span> <span class="kwd">write_count</span><span class="sym">(</span><span class="kwa">char</span><span class="sym">*</span> searchFor<span class="sym">,</span> <span class="kwa">char</span><span class="sym">*</span> buffer<span class="sym">,</span> <span class="kwa">long</span> buflen<span class="sym">) {</span>
+    ht_ht<span class="sym">*</span> ht<span class="sym">;</span>
+
+    ht <span class="sym">=</span> <span class="kwd">generate_frequencies</span><span class="sym">(</span><span class="kwd">strlen</span><span class="sym">(</span>searchFor<span class="sym">),</span> buffer<span class="sym">,</span> buflen<span class="sym">);</span>
+    <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;%d</span><span class="esc">\t</span><span class="str">%s</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> <span class="kwd">ht_find_new</span><span class="sym">(</span>ht<span class="sym">,</span> searchFor<span class="sym">).</span>val<span class="sym">,</span> searchFor<span class="sym">);</span>
+    <span class="kwd">ht_destroy</span><span class="sym">(</span>ht<span class="sym">);</span>
+<span class="sym">}</span>
+
+
+<span class="kwa">void</span> <span class="kwd">main</span><span class="sym">() {</span>
+    <span class="kwa">const</span> BLEN <span class="sym">=</span> <span class="num">10240</span><span class="sym">;</span>
+    <span class="kwa">char</span> c<span class="sym">;</span>
+    <span class="kwa">char</span><span class="sym">*</span> line<span class="sym">;</span>
+    <span class="kwa">char</span><span class="sym">*</span> buffer<span class="sym">;</span>
+    <span class="kwa">char</span><span class="sym">*</span> tmp<span class="sym">;</span>
+    <span class="kwa">char</span><span class="sym">*</span> x<span class="sym">;</span>
+    <span class="kwa">int</span> i<span class="sym">,</span> linelen<span class="sym">,</span> nothree<span class="sym">;</span>
+    <span class="kwa">long</span> buflen<span class="sym">,</span> seqlen<span class="sym">;</span>
+
+    line <span class="sym">=</span> <span class="kwa">cast</span><span class="sym">(</span><span class="kwa">char</span><span class="sym">*)</span><span class="kwd">malloc</span><span class="sym">(</span><span class="num">256</span><span class="sym">);</span>
+    <span class="kwa">if</span> <span class="sym">(!</span>line<span class="sym">)</span>
+        <span class="kwa">return</span> <span class="sym">-</span><span class="num">1</span><span class="sym">;</span>
+    seqlen <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    nothree <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span>
+
+    <span class="kwa">while</span> <span class="sym">(</span>nothree <span class="sym">&amp;&amp;</span> <span class="kwd">fgets</span><span class="sym">(</span>line<span class="sym">,</span> <span class="num">255</span><span class="sym">,</span> stdin<span class="sym">))</span>
+        <span class="kwa">if</span> <span class="sym">(</span>line<span class="sym">[</span><span class="num">0</span><span class="sym">] ==</span> <span class="str">'&gt;'</span> <span class="sym">&amp;&amp;</span> line<span class="sym">[</span><span class="num">1</span><span class="sym">] ==</span> <span class="str">'T'</span> <span class="sym">&amp;&amp;</span> line<span class="sym">[</span><span class="num">2</span><span class="sym">] ==</span> <span class="str">'H'</span><span class="sym">)</span>
+            nothree <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+    <span class="kwd">realloc</span><span class="sym">(</span>line<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+
+    buflen <span class="sym">=</span> BLEN<span class="sym">;</span>
+    buffer <span class="sym">=</span> <span class="kwa">cast</span><span class="sym">(</span><span class="kwa">char</span><span class="sym">*)</span><span class="kwd">malloc</span><span class="sym">(</span>buflen <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span>
+    <span class="kwa">if</span> <span class="sym">(!</span>buffer<span class="sym">)</span>
+        <span class="kwa">return</span> <span class="sym">-</span><span class="num">1</span><span class="sym">;</span>
+    x <span class="sym">=</span> buffer<span class="sym">;</span>
+
+    <span class="kwa">while</span> <span class="sym">(</span><span class="kwd">fgets</span><span class="sym">(</span>x<span class="sym">,</span> <span class="num">255</span><span class="sym">,</span> stdin<span class="sym">)) {</span>
+        linelen <span class="sym">=</span> <span class="kwd">strlen</span><span class="sym">(</span>x<span class="sym">);</span>
+        <span class="kwa">if</span> <span class="sym">(</span>linelen<span class="sym">) {</span>
+            <span class="kwa">if</span> <span class="sym">(</span>x<span class="sym">[</span>linelen <span class="sym">-</span> <span class="num">1</span><span class="sym">] ==</span> <span class="str">'</span><span class="esc">\n</span><span class="str">'</span><span class="sym">)</span>
+                linelen<span class="sym">--;</span>
+
+            c <span class="sym">=</span> x<span class="sym">[</span><span class="num">0</span><span class="sym">];</span>
+
+            <span class="kwa">if</span> <span class="sym">(</span>c <span class="sym">==</span> <span class="str">'&gt;'</span><span class="sym">)</span>
+                <span class="kwa">break</span><span class="sym">;</span>
+            <span class="kwa">else if</span> <span class="sym">(</span>c <span class="sym">!=</span> <span class="str">';'</span><span class="sym">) {</span>
+                seqlen <span class="sym">=</span> seqlen <span class="sym">+</span> linelen<span class="sym">;</span>
+
+                <span class="kwa">if</span> <span class="sym">(</span>seqlen <span class="sym">+</span> <span class="num">512</span> <span class="sym">&gt;=</span> buflen<span class="sym">) {</span>
+                    buflen <span class="sym">=</span> buflen <span class="sym">+</span> BLEN<span class="sym">;</span>
+                    tmp <span class="sym">=</span> <span class="kwa">cast</span><span class="sym">(</span><span class="kwa">char</span><span class="sym">*)</span><span class="kwd">realloc</span><span class="sym">(</span>buffer<span class="sym">,</span> buflen <span class="sym">+</span> <span class="num">1</span><span class="sym">);</span>
+                    <span class="kwa">if</span> <span class="sym">(</span>tmp <span class="kwa">is null</span><span class="sym">)</span>
+                        <span class="kwa">return</span> <span class="sym">-</span><span class="num">1</span><span class="sym">;</span>
+                    buffer <span class="sym">=</span> tmp<span class="sym">;</span>
+                    x <span class="sym">= &amp;(</span>buffer<span class="sym">[</span>seqlen<span class="sym">]);</span>
+                <span class="sym">}</span>
+                <span class="kwa">else</span>
+                    x <span class="sym">= &amp;(</span>x<span class="sym">[</span>linelen<span class="sym">]);</span>
+
+                x<span class="sym">[</span><span class="num">0</span><span class="sym">] =</span> <span class="num">0</span><span class="sym">;</span>
+            <span class="sym">}</span>
+        <span class="sym">}</span>
+    <span class="sym">}</span>
+
+    <span class="kwa">for</span> <span class="sym">(</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span> i <span class="sym">&lt;</span> seqlen<span class="sym">;</span> i<span class="sym">++)</span>
+        buffer<span class="sym">[</span>i<span class="sym">] =</span> <span class="kwd">toupper</span><span class="sym">(</span>buffer<span class="sym">[</span>i<span class="sym">]);</span>
+
+    <span class="kwd">write_frequencies</span><span class="sym">(</span><span class="num">1</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+    <span class="kwd">write_frequencies</span><span class="sym">(</span><span class="num">2</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+
+    <span class="kwd">write_count</span><span class="sym">(</span><span class="str">&quot;GGT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+    <span class="kwd">write_count</span><span class="sym">(</span><span class="str">&quot;GGTA&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+    <span class="kwd">write_count</span><span class="sym">(</span><span class="str">&quot;GGTATT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+    <span class="kwd">write_count</span><span class="sym">(</span><span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+    <span class="kwd">write_count</span><span class="sym">(</span><span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">,</span> buffer<span class="sym">,</span> seqlen<span class="sym">);</span>
+
+    <span class="kwd">realloc</span><span class="sym">(</span>buffer<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+<span class="sym">}</span>

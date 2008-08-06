@@ -1,0 +1,69 @@
+<span class="com">{- The Computer Language Benchmarks Game</span>
+<span class="com">   http://shootout.alioth.debian.org/</span>
+<span class="com">   Written by Tom Pledger, 13 Nov 2006. modified by Don Stewart</span>
+<span class="com">   Updated for chameneos-redux by Spencer Janssen, 27 Nov 2007 -}</span>
+
+<span class="kwa">import</span> Control.Concurrent
+<span class="kwa">import</span> Control.Monad
+<span class="kwa">import</span> Data.<span class="kwb">Char</span>
+<span class="kwa">import</span> System.Environment
+<span class="kwa">import</span> System.IO
+
+<span class="kwa">default</span><span class="sym">(</span><span class="kwb">Int</span><span class="sym">)</span>
+
+<span class="kwa">data</span> Colour <span class="sym">=</span> Blue <span class="sym">|</span> Red <span class="sym">|</span> Yellow <span class="kwa">deriving</span> <span class="sym">(</span>Show<span class="sym">,</span> Eq<span class="sym">,</span> Enum<span class="sym">)</span>
+
+complement a b <span class="sym">|</span> a <span class="sym">==</span> b <span class="sym">=</span> a
+complement a b <span class="sym">=</span> <span class="kwa">case</span> a <span class="kwa">of</span>
+    Blue   <span class="sym">-&gt;</span> <span class="kwa">case</span> b <span class="kwa">of</span> Red  <span class="sym">-&gt;</span> Yellow<span class="sym">;</span> _ <span class="sym">-&gt;</span> Red
+    Red    <span class="sym">-&gt;</span> <span class="kwa">case</span> b <span class="kwa">of</span> Blue <span class="sym">-&gt;</span> Yellow<span class="sym">;</span> _ <span class="sym">-&gt;</span> Blue
+    Yellow <span class="sym">-&gt;</span> <span class="kwa">case</span> b <span class="kwa">of</span> Blue <span class="sym">-&gt;</span> Red<span class="sym">;</span>    _ <span class="sym">-&gt;</span> Blue
+
+<span class="kwa">data</span> MP <span class="sym">=</span> MP <span class="sym">!</span><span class="kwb">Int</span> <span class="sym">!(</span>Maybe <span class="sym">(</span>Colour<span class="sym">,</span> ThreadId<span class="sym">,</span> MVar <span class="sym">(</span>Colour<span class="sym">,</span> ThreadId<span class="sym">)))</span>
+
+arrive mpv finish c0 <span class="sym">=</span> <span class="kwa">do</span>
+    tid <span class="sym">&lt;-</span> myThreadId
+    <span class="kwa">let</span> inc x <span class="sym">= (</span>fromEnum <span class="sym">(</span>tid <span class="sym">==</span> x<span class="sym">) +)</span>
+        go <span class="sym">!</span>c <span class="sym">!</span>t <span class="sym">!</span>b <span class="sym">=</span> <span class="kwa">do</span>
+            MP q w <span class="sym">&lt;-</span> takeMVar mpv
+            <span class="kwa">case</span> w <span class="kwa">of</span>
+                _ <span class="sym">|</span> q <span class="sym">==</span> <span class="num">0</span> <span class="sym">-&gt;</span> <span class="kwa">do</span>
+                    putMVar mpv $ MP <span class="num">0</span> w
+                    putMVar finish <span class="sym">(</span>t<span class="sym">,</span> b<span class="sym">)</span>
+
+                Nothing <span class="sym">-&gt;</span> <span class="kwa">do</span>
+                     waker <span class="sym">&lt;-</span> newEmptyMVar
+                     putMVar mpv $ MP q <span class="sym">(</span>Just <span class="sym">(</span>c<span class="sym">,</span> tid<span class="sym">,</span> waker<span class="sym">))</span>
+                     <span class="sym">(</span>c'<span class="sym">,</span> tid'<span class="sym">) &lt;-</span> takeMVar waker
+                     go c' <span class="sym">(</span>t<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> $ inc tid' b
+
+                Just <span class="sym">(</span>k<span class="sym">,</span> tid'<span class="sym">,</span> waker<span class="sym">) -&gt;</span> <span class="kwa">do</span>
+                    <span class="kwa">let</span> <span class="sym">!</span>c' <span class="sym">=</span> complement k c
+                    putMVar waker <span class="sym">(</span>c'<span class="sym">,</span> tid<span class="sym">)</span>
+                    putMVar mpv $ MP <span class="sym">(</span>q<span class="sym">-</span><span class="num">1</span><span class="sym">)</span> Nothing
+                    go c' <span class="sym">(</span>t<span class="sym">+</span><span class="num">1</span><span class="sym">)</span> $ inc tid' b
+    go c0 <span class="num">0 0</span>
+
+showN <span class="sym">=</span> unwords . map <span class="sym">((</span>digits <span class="sym">!!)</span> . digitToInt<span class="sym">)</span> . show
+
+digits <span class="sym">=</span> words <span class="str">&quot;zero one two three four five six seven eight nine&quot;</span>
+
+run n cs <span class="sym">=</span> <span class="kwa">do</span>
+    fs    <span class="sym">&lt;-</span> replicateM <span class="sym">(</span>length cs<span class="sym">)</span> newEmptyMVar
+    mpv   <span class="sym">&lt;-</span> newMVar $ MP n Nothing
+    zipWithM <span class="sym">((</span>forkIO .<span class="sym">)</span> . arrive mpv<span class="sym">)</span> fs cs
+    ns    <span class="sym">&lt;-</span> mapM takeMVar fs
+
+    putStrLn . map toLower . unwords . <span class="sym">([]:)</span> . map show $ cs
+    putStr . map toLower . unlines $ <span class="sym">[</span>unwords <span class="sym">[</span>show n<span class="sym">,</span> showN b<span class="sym">] | (</span>n<span class="sym">,</span> b<span class="sym">) &lt;-</span> ns<span class="sym">]</span>
+    putStrLn . <span class="sym">(</span><span class="str">&quot; &quot;</span><span class="sym">++)</span> . showN . sum . map fst $ ns
+    putStrLn <span class="str">&quot;&quot;</span>
+
+main <span class="sym">=</span> <span class="kwa">do</span>
+    putStrLn . map toLower . unlines $
+        <span class="sym">[</span>unwords <span class="sym">[</span>show a<span class="sym">,</span> <span class="str">&quot;+&quot;</span><span class="sym">,</span> show b<span class="sym">,</span> <span class="str">&quot;-&gt;&quot;</span><span class="sym">,</span> show $ complement a b<span class="sym">]</span>
+            <span class="sym">|</span> a <span class="sym">&lt;- [</span>Blue ..<span class="sym">],</span> b <span class="sym">&lt;- [</span>Blue ..<span class="sym">]]</span>
+
+    n <span class="sym">&lt;-</span> readIO . head <span class="sym">=&lt;&lt;</span> getArgs
+    run n <span class="sym">[</span>Blue ..<span class="sym">]</span>
+    run n <span class="sym">[</span>Blue<span class="sym">,</span> Red<span class="sym">,</span> Yellow<span class="sym">,</span> Red<span class="sym">,</span> Yellow<span class="sym">,</span> Blue<span class="sym">,</span> Red<span class="sym">,</span> Yellow<span class="sym">,</span> Red<span class="sym">,</span> Blue<span class="sym">]</span>

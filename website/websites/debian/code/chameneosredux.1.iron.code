@@ -1,0 +1,126 @@
+<span class="slc"># The Computer Language Benchmarks Game</span>
+<span class="slc"># http://shootout.alioth.debian.org/</span>
+<span class="slc"># contributed by Tupteq</span>
+<span class="slc">#</span>
+<span class="slc"># Based on codes from PDF and Nice #3 version.</span>
+<span class="slc"># Before use of threading.Condition I tried semaphores (code similar to</span>
+<span class="slc"># C code from PDF), but it was slower.</span>
+
+<span class="kwa">from</span> __future__ <span class="kwa">import</span> with_statement  <span class="slc"># Required until Python 2.6</span>
+
+<span class="kwa">import</span> sys
+<span class="kwa">from</span> threading <span class="kwa">import</span> Thread<span class="sym">,</span> Condition
+
+<span class="slc"># Constatnts</span>
+all_colors <span class="sym">=</span> blue<span class="sym">,</span> red<span class="sym">,</span> yellow <span class="sym">=</span> <span class="str">&quot;blue&quot;</span><span class="sym">,</span> <span class="str">&quot;red&quot;</span><span class="sym">,</span> <span class="str">&quot;yellow&quot;</span>
+stop <span class="sym">=</span> <span class="num">0</span><span class="sym">,</span> blue  <span class="slc"># Stop condition</span>
+
+
+<span class="kwa">def</span> <span class="kwd">complement</span><span class="sym">(</span>c1<span class="sym">,</span> c2<span class="sym">):</span>
+    <span class="slc"># I used 'is' except '==' here, it's faster</span>
+    <span class="kwa">return</span> <span class="sym">(</span>c1 <span class="kwa">if</span> c1 <span class="kwa">is</span> c2
+        <span class="kwa">else</span> <span class="sym">(</span>yellow <span class="kwa">if</span> c2 <span class="kwa">is</span> red <span class="kwa">else</span> red<span class="sym">)</span> <span class="kwa">if</span> c1 <span class="kwa">is</span> blue
+        <span class="kwa">else</span> <span class="sym">(</span>yellow <span class="kwa">if</span> c2 <span class="kwa">is</span> blue <span class="kwa">else</span> blue<span class="sym">)</span> <span class="kwa">if</span> c1 <span class="kwa">is</span> red
+        <span class="kwa">else</span> <span class="sym">(</span>red <span class="kwa">if</span> c2 <span class="kwa">is</span> blue <span class="kwa">else</span> blue<span class="sym">))</span>
+
+
+<span class="kwa">def</span> <span class="kwd">print_color_changes</span><span class="sym">():</span>
+    <span class="slc"># Print complement for each combination</span>
+    <span class="kwa">for</span> c1 <span class="kwa">in</span> all_colors<span class="sym">:</span>
+        <span class="kwa">for</span> c2 <span class="kwa">in</span> all_colors<span class="sym">:</span>
+            <span class="kwa">print</span> <span class="str">&quot;%s + %s -&gt; %s&quot;</span> <span class="sym">% (</span>c1<span class="sym">,</span> c2<span class="sym">,</span> <span class="kwd">complement</span><span class="sym">(</span>c1<span class="sym">,</span> c2<span class="sym">))</span>
+
+
+<span class="kwa">class</span> Mall<span class="sym">:</span>
+    <span class="kwa">def</span> <span class="kwd">__init__</span><span class="sym">(</span>self<span class="sym">,</span> n<span class="sym">):</span>
+        self<span class="sym">.</span>first <span class="sym">=</span> <span class="kwa">True</span>
+        self<span class="sym">.</span>must_wait <span class="sym">=</span> <span class="kwa">False</span>
+        self<span class="sym">.</span>counter <span class="sym">=</span> n
+        self<span class="sym">.</span>cond <span class="sym">=</span> <span class="kwd">Condition</span><span class="sym">()</span>
+
+    <span class="kwa">def</span> <span class="kwd">notify</span><span class="sym">(</span>self<span class="sym">,</span> me<span class="sym">):</span>
+        <span class="slc"># &quot;with&quot; makes all the job (no acquire() and release() needed)</span>
+        with self<span class="sym">.</span>cond<span class="sym">:</span>
+            <span class="kwa">while</span> self<span class="sym">.</span>must_wait <span class="kwa">and</span> self<span class="sym">.</span>counter <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">:</span>
+                self<span class="sym">.</span>cond<span class="sym">.</span><span class="kwd">wait</span><span class="sym">()</span>
+
+            <span class="kwa">if</span> self<span class="sym">.</span>first<span class="sym">:</span>
+                <span class="slc"># Creature is first</span>
+                self<span class="sym">.</span>a <span class="sym">=</span> me
+                self<span class="sym">.</span>first <span class="sym">=</span> <span class="kwa">False</span>
+
+                <span class="kwa">while not</span> self<span class="sym">.</span>first <span class="kwa">and</span> self<span class="sym">.</span>counter <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">:</span>
+                    self<span class="sym">.</span>cond<span class="sym">.</span><span class="kwd">wait</span><span class="sym">()</span>
+
+                he <span class="sym">=</span> self<span class="sym">.</span>b
+                self<span class="sym">.</span>must_wait <span class="sym">=</span> <span class="kwa">False</span>
+                self<span class="sym">.</span>cond<span class="sym">.</span><span class="kwd">notifyAll</span><span class="sym">()</span>
+
+                self<span class="sym">.</span>counter <span class="sym">-=</span> <span class="num">1</span>
+            <span class="kwa">else</span><span class="sym">:</span>
+                <span class="slc"># Creature is second</span>
+                self<span class="sym">.</span>b <span class="sym">=</span> me
+                he <span class="sym">=</span> self<span class="sym">.</span>a
+                self<span class="sym">.</span>first <span class="sym">=</span> <span class="kwa">True</span>
+                self<span class="sym">.</span>must_wait <span class="sym">=</span> <span class="kwa">True</span>
+                self<span class="sym">.</span>cond<span class="sym">.</span><span class="kwd">notifyAll</span><span class="sym">()</span>
+
+            <span class="kwa">return</span> he <span class="kwa">if</span> self<span class="sym">.</span>counter <span class="sym">&gt;=</span> <span class="num">0</span> <span class="kwa">else</span> stop
+
+
+<span class="kwa">class</span> <span class="kwd">Creature</span><span class="sym">(</span>Thread<span class="sym">):</span>
+    <span class="kwa">def</span> <span class="kwd">__init__</span><span class="sym">(</span>self<span class="sym">,</span> name<span class="sym">,</span> color<span class="sym">,</span> mall<span class="sym">):</span>
+        <span class="slc"># Thread initialization, thread built in name is not used</span>
+        Thread<span class="sym">.</span><span class="kwd">__init__</span><span class="sym">(</span>self<span class="sym">)</span>
+        self<span class="sym">.</span>name <span class="sym">=</span> name
+        self<span class="sym">.</span>color <span class="sym">=</span> color
+        self<span class="sym">.</span>mall <span class="sym">=</span> mall
+        self<span class="sym">.</span>self_met <span class="sym">=</span> <span class="num">0</span>
+        self<span class="sym">.</span>met <span class="sym">=</span> <span class="num">0</span>
+
+    <span class="kwa">def</span> <span class="kwd">run</span><span class="sym">(</span>self<span class="sym">):</span>
+        <span class="kwa">while</span> <span class="num">1</span><span class="sym">:</span>
+            <span class="slc"># Go to meeting place</span>
+            his_name<span class="sym">,</span> his_color <span class="sym">=</span> self<span class="sym">.</span>mall<span class="sym">.</span><span class="kwd">notify</span><span class="sym">((</span>self<span class="sym">.</span>name<span class="sym">,</span> self<span class="sym">.</span>color<span class="sym">))</span>
+            <span class="kwa">if</span> his_name <span class="sym">==</span> <span class="num">0</span><span class="sym">:</span>
+                <span class="kwa">break</span>
+
+            <span class="slc"># Change color and increment counters</span>
+            self<span class="sym">.</span>color <span class="sym">=</span> <span class="kwd">complement</span><span class="sym">(</span>self<span class="sym">.</span>color<span class="sym">,</span> his_color<span class="sym">)</span>
+            <span class="kwa">if</span> self<span class="sym">.</span>name <span class="kwa">is</span> his_name<span class="sym">:</span>
+                self<span class="sym">.</span>self_met <span class="sym">+=</span> <span class="num">1</span>
+            self<span class="sym">.</span>met <span class="sym">+=</span> <span class="num">1</span>
+
+
+<span class="kwa">def</span> <span class="kwd">simulate</span><span class="sym">(</span>colors<span class="sym">,</span> n<span class="sym">):</span>
+    <span class="slc"># Prepare and execute simulation</span>
+    r <span class="sym">=</span> <span class="kwd">Mall</span><span class="sym">(</span>n<span class="sym">)</span>
+    creatures <span class="sym">= [</span><span class="kwd">Creature</span><span class="sym">(</span>i<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> color<span class="sym">,</span> r<span class="sym">)</span> <span class="kwa">for</span> i<span class="sym">,</span> color <span class="kwa">in</span> <span class="kwb">enumerate</span><span class="sym">(</span>colors<span class="sym">)]</span>
+    <span class="kwa">for</span> c <span class="kwa">in</span> creatures<span class="sym">:</span>
+        c<span class="sym">.</span><span class="kwd">start</span><span class="sym">()</span>
+    <span class="kwa">for</span> c <span class="kwa">in</span> creatures<span class="sym">:</span>
+        c<span class="sym">.</span><span class="kwd">join</span><span class="sym">()</span>
+
+    <span class="slc"># Prepare spellout function</span>
+    numbers <span class="sym">= (</span><span class="str">&quot;zero&quot;</span><span class="sym">,</span> <span class="str">&quot;one&quot;</span><span class="sym">,</span> <span class="str">&quot;two&quot;</span><span class="sym">,</span> <span class="str">&quot;three&quot;</span><span class="sym">,</span> <span class="str">&quot;four&quot;</span><span class="sym">,</span>
+        <span class="str">&quot;five&quot;</span><span class="sym">,</span> <span class="str">&quot;six&quot;</span><span class="sym">,</span> <span class="str">&quot;seven&quot;</span><span class="sym">,</span> <span class="str">&quot;eight&quot;</span><span class="sym">,</span> <span class="str">&quot;nine&quot;</span><span class="sym">)</span>
+    <span class="kwa">def</span> <span class="kwd">spellout</span><span class="sym">(</span>i<span class="sym">):</span>
+        <span class="kwa">return</span> <span class="str">&quot; &quot;</span> <span class="sym">+</span> <span class="str">&quot; &quot;</span><span class="sym">.</span><span class="kwd">join</span><span class="sym">(</span>numbers<span class="sym">[</span><span class="kwb">int</span><span class="sym">(</span>x<span class="sym">)]</span> <span class="kwa">for</span> x <span class="kwa">in</span> <span class="kwb">str</span><span class="sym">(</span>i<span class="sym">))</span>
+
+    <span class="slc"># Print results</span>
+    <span class="kwa">print</span>
+    <span class="kwa">print</span> <span class="str">&quot; &quot;</span> <span class="sym">+</span> <span class="str">&quot; &quot;</span><span class="sym">.</span><span class="kwd">join</span><span class="sym">(</span>colors<span class="sym">)</span>
+    <span class="kwb">sum</span> <span class="sym">=</span> <span class="num">0</span>
+    <span class="kwa">for</span> c <span class="kwa">in</span> creatures<span class="sym">:</span>
+        <span class="kwb">sum</span> <span class="sym">+=</span> c<span class="sym">.</span>met
+        <span class="kwa">print</span> <span class="kwb">str</span><span class="sym">(</span>c<span class="sym">.</span>met<span class="sym">) +</span> <span class="kwd">spellout</span><span class="sym">(</span>c<span class="sym">.</span>self_met<span class="sym">)</span>
+    <span class="kwa">print</span> <span class="kwd">spellout</span><span class="sym">(</span><span class="kwb">sum</span><span class="sym">)</span>
+
+
+<span class="kwa">def</span> <span class="kwd">main</span><span class="sym">():</span>
+    n <span class="sym">=</span> <span class="kwb">int</span><span class="sym">(</span>sys<span class="sym">.</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">])</span>
+    <span class="kwd">print_color_changes</span><span class="sym">()</span>
+    <span class="kwd">simulate</span><span class="sym">([</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">],</span> n<span class="sym">)</span>
+    <span class="kwd">simulate</span><span class="sym">([</span>blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> blue<span class="sym">,</span> red<span class="sym">,</span> yellow<span class="sym">,</span> red<span class="sym">,</span> blue<span class="sym">],</span> n<span class="sym">)</span>
+
+<span class="kwd">main</span><span class="sym">()</span>

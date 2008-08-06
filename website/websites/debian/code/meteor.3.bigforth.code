@@ -1,0 +1,169 @@
+\ The Computer Language Shootout
+\ http<span class="sym">:</span><span class="slc">//shootout.alioth.debian.org/</span>
+\ Contributed by Ian Osgood <span class="kwa">and</span> Josh Grams
+
+<span class="sym">:</span> <span class="kwb">enum</span> <span class="sym">(</span> n <span class="sym">-- )</span> <span class="num">0</span> <span class="kwa">do</span> I constant loop <span class="sym">;</span>
+<span class="sym">:</span> table create does<span class="sym">&gt; (</span> i <span class="sym">--</span> t<span class="sym">[</span>i<span class="sym">] )</span> swap cells <span class="sym">+</span> &#64; <span class="sym">;</span>
+
+<span class="num">7</span> <span class="kwb">enum</span>         E   SE   SW    W   NW   NE   STOP
+table offset   <span class="num">1</span> <span class="sym">,</span>  <span class="num">7</span> <span class="sym">,</span>  <span class="num">6</span> <span class="sym">, -</span><span class="num">1</span> <span class="sym">, -</span><span class="num">7</span> <span class="sym">, -</span><span class="num">6</span> <span class="sym">,</span>    <span class="num">0</span> <span class="sym">,</span>
+table rotate  SE <span class="sym">,</span> SW <span class="sym">,</span>  W <span class="sym">,</span> NW <span class="sym">,</span> NE <span class="sym">,</span>  E <span class="sym">,</span> STOP <span class="sym">,</span>
+table reflect  E <span class="sym">,</span> NE <span class="sym">,</span> NW <span class="sym">,</span>  W <span class="sym">,</span> SW <span class="sym">,</span> SE <span class="sym">,</span> STOP <span class="sym">,</span>
+
+\ paths are more easily transformable than bit masks
+
+create path <span class="num">5</span> cells allot
+create offsets <span class="num">6</span> cells allot
+variable <span class="dir">#solutions</span>
+create smallest <span class="num">64</span> chars allot
+create largest  <span class="num">64</span> chars allot
+variable board
+<span class="num">1024</span> allot \ padding <span class="kwa">for</span> Pentium <span class="num">4</span> <span class="kwa">and</span> bigforth shortcomings
+
+<span class="sym">:</span> init<span class="sym">-</span><span class="kwd">path</span> <span class="sym">(</span> <span class="num">4</span><span class="sym">*</span>dirs <span class="sym">-- )</span>
+  E path <span class="num">5 0</span> <span class="kwa">do</span> tuck <span class="sym">!</span> cell<span class="sym">+</span> loop drop <span class="sym">;</span>
+<span class="sym">:</span> rotate<span class="sym">-</span>path
+  path <span class="num">5 0</span> <span class="kwa">do</span> dup &#64; rotate  over <span class="sym">!</span> cell<span class="sym">+</span> loop drop <span class="sym">;</span>
+<span class="sym">:</span> reflect<span class="sym">-</span>path
+  path <span class="num">5 0</span> <span class="kwa">do</span> dup &#64; reflect over <span class="sym">!</span> cell<span class="sym">+</span> loop drop <span class="sym">;</span>
+
+<span class="sym">:</span> path<span class="sym">-</span>offsets
+  <span class="num">0</span> offsets <span class="sym">!</span>
+  path offsets
+  <span class="num">5 0</span> <span class="kwa">do</span>
+    over &#64; offset
+    over &#64; <span class="sym">+</span>
+    over cell<span class="sym">+ !</span>
+    swap cell<span class="sym">+</span> swap cell<span class="sym">+</span>
+  loop <span class="num">2</span>drop <span class="sym">;</span>
+<span class="sym">:</span> minimum<span class="sym">-</span><span class="kwd">offset</span> <span class="sym">( --</span> n <span class="sym">)</span>
+  offsets &#64;
+  <span class="num">6 1</span> <span class="kwa">do</span> offsets I cells <span class="sym">+</span> &#64; min loop <span class="sym">;</span>
+<span class="sym">:</span> normalize<span class="sym">-</span>offsets
+  minimum<span class="sym">-</span>offset negate
+  <span class="num">6 0</span> <span class="kwa">do</span> dup offsets I cells <span class="sym">+ +!</span> loop drop <span class="sym">;</span>
+<span class="sym">:</span> offsets<span class="sym">-</span><span class="kwd">mask</span> <span class="sym">( --</span> mask <span class="sym">)</span>
+  <span class="num">0</span>
+  <span class="num">6 0</span> <span class="kwa">do</span>
+    offsets I cells <span class="sym">+</span> &#64;
+    <span class="num">1</span> swap lshift <span class="kwa">or</span>
+  loop <span class="sym">;</span>
+
+\ make <span class="kwa">and</span> store the twelve transformations of the path
+
+<span class="sym">:</span> path<span class="sym">-</span><span class="kwd">mask</span> <span class="sym">( --</span> mask <span class="sym">)</span>
+  path<span class="sym">-</span>offsets normalize<span class="sym">-</span>offsets offsets<span class="sym">-</span>mask <span class="sym">;</span>
+<span class="sym">:</span> path<span class="sym">-</span><span class="kwd">masks</span> <span class="sym">(</span> <span class="num">4</span><span class="sym">*</span>dirs <span class="sym">-- )</span>
+                             <span class="num">0</span> <span class="sym">,</span> \ used flag
+           init<span class="sym">-</span>path path<span class="sym">-</span>mask <span class="sym">,</span>
+  <span class="num">5 0</span> <span class="kwa">do</span> rotate<span class="sym">-</span>path path<span class="sym">-</span>mask <span class="sym">,</span> loop
+        reflect<span class="sym">-</span>path path<span class="sym">-</span>mask <span class="sym">,</span>
+  <span class="num">5 0</span> <span class="kwa">do</span> rotate<span class="sym">-</span>path path<span class="sym">-</span>mask <span class="sym">,</span> loop <span class="sym">;</span>
+
+<span class="num">13</span> cells constant <span class="sym">/</span>piece
+
+\  all paths start with an implicit E
+
+create pieces
+ STOP SE  E  E path<span class="sym">-</span>masks
+ STOP NE  E SE path<span class="sym">-</span>masks
+ STOP SW SE  E path<span class="sym">-</span>masks
+ STOP SE SW  E path<span class="sym">-</span>masks
+   SW  W  E SE path<span class="sym">-</span>masks \ one backtrack<span class="sym">,</span> since <span class="kwa">this</span> shape branches
+ STOP SE NE SE path<span class="sym">-</span>masks
+ STOP NE SE SE path<span class="sym">-</span>masks
+ STOP  E SW SE path<span class="sym">-</span>masks
+ STOP  E SE  E path<span class="sym">-</span>masks
+ STOP NE SE  E path<span class="sym">-</span>masks
+
+<span class="sym">:</span> put<span class="sym">-</span><span class="kwd">piece</span> <span class="sym">(</span> shift piece <span class="sym">-- )</span>
+        dup pieces <span class="sym">- /</span>piece <span class="sym">/ [</span><span class="kwb">char</span><span class="sym">]</span> <span class="num">0</span> <span class="sym">+ &gt;</span><span class="kwd">r</span> <span class="sym">(</span> R<span class="sym">:</span> piece<span class="sym">-</span><span class="kwb">char</span> <span class="sym">)</span>
+        swap chars here <span class="sym">+</span> swap &#64; <span class="sym">(</span> buf mask <span class="sym">)</span>
+        begin
+                dup <span class="num">1</span> <span class="kwa">and if</span> over r&#64; swap c<span class="sym">!</span>  then
+                swap <span class="kwb">char</span><span class="sym">+</span>
+        dup here <span class="num">64</span> chars <span class="sym">+ &lt;</span> <span class="kwa">while</span>
+                swap <span class="num">2</span><span class="sym">/</span>
+        dup <span class="num">0</span><span class="sym">=</span> until then <span class="num">2</span>drop r<span class="sym">&gt;</span> drop <span class="sym">;</span>
+
+variable shift
+<span class="sym">:</span> <span class="kwd">adjust</span> <span class="sym">(</span> shift <span class="sym">--</span> shift<span class="str">' )</span>
+<span class="str">        shift &#64; tuck + shift ! ;</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">extract solution from stack and store at HERE</span>
+<span class="str"></span><span class="esc">\ </span><span class="str">(non-destructive because we need the data for backtracking).</span>
+<span class="str">: store-solution ( pieceN shiftN ... piece0 shift0 board )</span>
+<span class="str">  0 shift !</span>
+<span class="str">  here 64 [char] * fill</span>
+<span class="str">  depth 1- 2 swap do</span>
+<span class="str">    i pick i pick adjust swap put-piece</span>
+<span class="str">  -2 +loop ;</span>
+<span class="str"></span>
+<span class="str">: .line ( line -- line+6 )</span>
+<span class="str">  5 0 do dup c&#64; emit space char+ loop cr char+ ;</span>
+<span class="str">: .solution ( buffer -- )</span>
+<span class="str">  5 0 do .line char+  space .line loop drop cr ;</span>
+<span class="str"></span>
+<span class="str">: record ( [st] -- [st] )</span>
+<span class="str">  store-solution</span>  <span class="esc">\ </span><span class="str">here .solution</span>
+<span class="str">  here 64 smallest 64 compare 0&lt; if here smallest 64 move then</span>
+<span class="str">  largest 64 here 64 compare 0&lt; if here largest 64 move then</span>
+<span class="str">  1 #solutions +! ;</span>  <span class="esc">\ </span><span class="str">throw if #solutions == NUM</span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">initial board, with edges filled in</span>
+<span class="str">2 base !</span>
+<span class="str">0000011.000001.0000011.000001.0000011.000001.0000011.000001.0000011.00000</span>
+<span class="str">2constant init-board</span>
+<span class="str"></span>
+<span class="str">hex</span>
+<span class="str">80000000 constant hi-bit</span>
+<span class="str"></span>
+<span class="str">decimal</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str">: shift-board ( board -- shift board'</span> <span class="sym">)</span>
+        <span class="num">0</span> swap board &#64; begin
+                over <span class="num">1</span> <span class="kwa">and while</span> d2<span class="sym">/</span> hi<span class="sym">-</span>bit <span class="kwa">or</span> rot <span class="num">1</span><span class="sym">+ -</span>rot
+        repeat board <span class="sym">! ;</span>
+
+<span class="sym">:</span> unshift<span class="sym">-</span><span class="kwd">board</span> <span class="sym">(</span> shift board <span class="sym">--</span> board<span class="str">' )</span>
+<span class="str">        swap &gt;r board &#64; begin r&gt; dup while 1- &gt;r</span>
+<span class="str">                d2* swap 1+ swap repeat drop board ! ;</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str"></span><span class="esc">\ </span><span class="str">returns true if solution is complete</span>
+<span class="str">: add ( board piece -- piece shift board'</span> flag <span class="sym">)</span>
+        tuck &#64; <span class="kwa">xor</span> dup invert <span class="kwa">if</span> shift<span class="sym">-</span>board <span class="kwa">false else</span> <span class="num">0</span> swap dup then
+<span class="sym">;</span>
+
+<span class="sym">:</span> <span class="kwd">remove</span> <span class="sym">(</span> piece shift board<span class="str">' -- board piece )</span>
+<span class="str">        unshift-board  over &#64; xor swap ;</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str">: solve ( board -- board )</span>
+<span class="str">        pieces  10 0 do</span>
+<span class="str">                dup &#64; if</span>
+<span class="str">                        /piece +</span>
+<span class="str">                else</span>
+<span class="str">                        true over ! cell+</span>  <span class="esc">\ </span><span class="str">mark used</span>
+<span class="str">                        12 0 do</span>
+<span class="str">                                2dup &#64; and 0= if</span>
+<span class="str">                                        add if record else recurse then</span>
+<span class="str">remove</span>
+<span class="str">                                then</span>
+<span class="str">                        cell+ loop</span>
+<span class="str">                        false over /piece - !</span>  <span class="esc">\ </span><span class="str">mark unused</span>
+<span class="str">                then</span>
+<span class="str">        loop drop ;</span>
+<span class="str"></span>
+<span class="str"></span>
+<span class="str">: main</span>
+<span class="str">        0 #solutions !</span>
+<span class="str">        smallest 64 [char] 9 fill</span>
+<span class="str">        largest  64 [char] 0 fill</span>
+<span class="str">                init-board board ! solve</span>
+<span class="str">        #solutions &#64; . .&quot; solutions found&quot; cr cr</span>
+<span class="str">        smallest .solution</span>
+<span class="str">        largest  .solution ;</span>
+<span class="str"></span>
+<span class="str">main bye</span>

@@ -1,0 +1,355 @@
+<span class="slc">! -*- mode: f90 -*-</span>
+<span class="slc">!</span>
+<span class="slc">! The Computer Language Shootout Benchmarks</span>
+<span class="slc">! http://shootout.alioth.debian.org/</span>
+<span class="slc">!</span>
+<span class="slc">! contributed by Steve Decker</span>
+<span class="slc">! using the hash function posted by Rich Townsend to comp.lang.fortran</span>
+<span class="slc">! on 5 October 2005.</span>
+<span class="slc">! compilation:</span>
+<span class="slc">!    g95 -O1 knucleotide.f90</span>
+<span class="slc">!    ifort -O3 -ip knucleotide.f90</span>
+<span class="slc">!</span>
+<span class="slc">! This implementation requires TR15581</span>
+
+module knuc_mod
+  implicit none
+  private
+  public <span class="sym">::</span> init_table<span class="sym">,</span> read_frame<span class="sym">,</span> keys_of_given_len<span class="sym">,</span> cnt
+
+  integer<span class="sym">,</span> parameter <span class="sym">::</span> MaxWordLen <span class="sym">=</span> <span class="num">18</span>
+
+  type<span class="sym">,</span> public <span class="sym">::</span> key
+     integer                   <span class="sym">::</span> count <span class="sym">=</span> <span class="num">0</span>
+     character<span class="sym">(</span>len<span class="sym">=</span>MaxWordLen<span class="sym">) ::</span> word <span class="sym">=</span> <span class="str">&quot;&quot;</span>
+  end type key
+
+  type<span class="sym">,</span> public <span class="sym">::</span> table
+     private
+     integer <span class="sym">::</span> hashBits<span class="sym">,</span> maxWords<span class="sym">,</span> nWords
+     type<span class="sym">(</span>key<span class="sym">),</span> allocatable<span class="sym">,</span> dimension<span class="sym">(:) ::</span> words
+  end type table
+
+contains
+
+  pure subroutine init_table<span class="sym">(</span>kNuc<span class="sym">,</span> nBits<span class="sym">)</span>
+    type<span class="sym">(</span>table<span class="sym">),</span> intent<span class="sym">(</span>out<span class="sym">) ::</span> kNuc
+    integer<span class="sym">,</span>     intent<span class="sym">(</span>in<span class="sym">)  ::</span> nBits
+
+    kNuc <span class="sym">=</span> table<span class="sym">(</span>nBits<span class="sym">,</span> <span class="num">2</span><span class="sym">**</span>nBits<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> null<span class="sym">())</span>
+    allocate<span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>kNuc<span class="sym">%</span>maxWords<span class="sym">))</span>
+  end subroutine init_table
+
+  subroutine read_frame<span class="sym">(</span>buf<span class="sym">,</span> n<span class="sym">,</span> length<span class="sym">,</span> kNuc<span class="sym">)</span>
+    character<span class="sym">,</span> dimension<span class="sym">(:),</span> intent<span class="sym">(</span>in<span class="sym">)    ::</span> buf
+    integer<span class="sym">,</span>                 intent<span class="sym">(</span>in<span class="sym">)    ::</span> n<span class="sym">,</span> length
+    type<span class="sym">(</span>table<span class="sym">),</span>             intent<span class="sym">(</span>inout<span class="sym">) ::</span> kNuc
+
+    integer               <span class="sym">::</span> i<span class="sym">,</span> j
+    character<span class="sym">(</span>len<span class="sym">=</span>length<span class="sym">) ::</span> word
+
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> n
+       do j <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> length
+          word<span class="sym">(</span>j<span class="sym">:</span>j<span class="sym">) =</span> buf<span class="sym">(</span>i<span class="sym">+</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+       end do
+       call add<span class="sym">(</span>kNuc<span class="sym">,</span> word<span class="sym">)</span>
+    end do
+  end subroutine read_frame
+
+  subroutine add<span class="sym">(</span>kNuc<span class="sym">,</span> word<span class="sym">)</span>
+    type<span class="sym">(</span>table<span class="sym">),</span>      intent<span class="sym">(</span>inout<span class="sym">) ::</span> kNuc
+    character<span class="sym">(</span>len<span class="sym">=*),</span> intent<span class="sym">(</span>in<span class="sym">)    ::</span> word
+
+    integer <span class="sym">::</span> m
+
+    m <span class="sym">=</span> hash_value<span class="sym">(</span>word<span class="sym">,</span> kNuc<span class="sym">%</span>maxWords<span class="sym">)</span>
+    do
+       if <span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>count <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> then
+          kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">) =</span> key<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> word<span class="sym">)</span>
+          kNuc<span class="sym">%</span>nWords <span class="sym">=</span> kNuc<span class="sym">%</span>nWords <span class="sym">+</span> <span class="num">1</span>
+          if <span class="sym">(</span>kNuc<span class="sym">%</span>nWords <span class="sym">&gt;</span> kNuc<span class="sym">%</span>maxWords<span class="sym">/</span><span class="num">2</span><span class="sym">)</span> call resize_table<span class="sym">(</span>kNuc<span class="sym">)</span>
+          exit
+       else if <span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>word <span class="sym">==</span> word<span class="sym">)</span> then
+          kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>count <span class="sym">=</span> kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>count <span class="sym">+</span> <span class="num">1</span>
+          exit
+       end if
+       m <span class="sym">=</span> merge<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> m<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> m <span class="sym">==</span> kNuc<span class="sym">%</span>maxWords<span class="sym">)</span>
+    end do
+  end subroutine add
+
+  subroutine resize_table<span class="sym">(</span>kNuc<span class="sym">)</span>
+    type<span class="sym">(</span>table<span class="sym">),</span> intent<span class="sym">(</span>inout<span class="sym">) ::</span> kNuc
+
+    integer     <span class="sym">::</span> i<span class="sym">,</span> m
+    type<span class="sym">(</span>table<span class="sym">) ::</span> temp
+
+    temp <span class="sym">=</span> table<span class="sym">(</span>kNuc<span class="sym">%</span>hashBits <span class="sym">+</span> <span class="num">1</span><span class="sym">,</span> <span class="num">2</span> <span class="sym">*</span> kNuc<span class="sym">%</span>maxWords<span class="sym">,</span> kNuc<span class="sym">%</span>nWords<span class="sym">,</span> null<span class="sym">())</span>
+    allocate<span class="sym">(</span>temp<span class="sym">%</span>words<span class="sym">(</span>temp<span class="sym">%</span>maxWords<span class="sym">))</span>
+
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> kNuc<span class="sym">%</span>maxWords
+       if <span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>i<span class="sym">)%</span>count <span class="sym">&gt;</span> <span class="num">0</span><span class="sym">)</span> then
+          m <span class="sym">=</span> hash_value<span class="sym">(</span>trim<span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>i<span class="sym">)%</span>word<span class="sym">),</span> temp<span class="sym">%</span>maxWords<span class="sym">)</span>
+          do
+             if <span class="sym">(</span>temp<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>count <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> then
+                temp<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">) =</span> kNuc<span class="sym">%</span>words<span class="sym">(</span>i<span class="sym">)</span>
+                exit
+             end if
+             m <span class="sym">=</span> merge<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> m<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> m <span class="sym">==</span> temp<span class="sym">%</span>maxWords<span class="sym">)</span>
+          end do
+       end if
+    end do
+
+    kNuc <span class="sym">=</span> temp
+  end subroutine resize_table
+
+  pure function keys_of_given_len<span class="sym">(</span>kNuc<span class="sym">,</span> length<span class="sym">)</span>
+    type<span class="sym">(</span>table<span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> kNuc
+    integer<span class="sym">,</span>     intent<span class="sym">(</span>in<span class="sym">) ::</span> length
+    type<span class="sym">(</span>key<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">4</span><span class="sym">**</span>length<span class="sym">) ::</span> keys_of_given_len
+
+    integer <span class="sym">::</span> i<span class="sym">,</span> n
+
+    n <span class="sym">=</span> <span class="num">1</span>
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> kNuc<span class="sym">%</span>maxWords
+       if <span class="sym">(</span>len_trim<span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>i<span class="sym">)%</span>word<span class="sym">) ==</span> length<span class="sym">)</span> then
+          keys_of_given_len<span class="sym">(</span>n<span class="sym">) =</span> kNuc<span class="sym">%</span>words<span class="sym">(</span>i<span class="sym">)</span>
+          n <span class="sym">=</span> n <span class="sym">+</span> <span class="num">1</span>
+          if <span class="sym">(</span>n <span class="sym">&gt;</span> size<span class="sym">(</span>keys_of_given_len<span class="sym">))</span> exit
+       end if
+    end do
+  end function keys_of_given_len
+
+  integer function cnt<span class="sym">(</span>kNuc<span class="sym">,</span> string<span class="sym">)</span>
+    type<span class="sym">(</span>table<span class="sym">),</span> intent<span class="sym">(</span>in<span class="sym">)      ::</span> kNuc
+    character<span class="sym">(</span>len<span class="sym">=*),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> string
+
+    integer <span class="sym">::</span> m
+
+    m <span class="sym">=</span> hash_value<span class="sym">(</span>string<span class="sym">,</span> kNuc<span class="sym">%</span>maxWords<span class="sym">)</span>
+    do
+       if <span class="sym">(</span>kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>word <span class="sym">==</span> string .or. kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>count <span class="sym">==</span> <span class="num">0</span><span class="sym">)</span> then
+          cnt <span class="sym">=</span> kNuc<span class="sym">%</span>words<span class="sym">(</span>m<span class="sym">)%</span>count
+          exit
+       end if
+       m <span class="sym">=</span> merge<span class="sym">(</span><span class="num">1</span><span class="sym">,</span> m<span class="sym">+</span><span class="num">1</span><span class="sym">,</span> m <span class="sym">==</span> kNuc<span class="sym">%</span>maxWords<span class="sym">)</span>
+    end do
+  end function cnt
+
+  integer function hash_value<span class="sym">(</span>key<span class="sym">,</span> range<span class="sym">)</span>
+    character<span class="sym">(</span>len<span class="sym">=*),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> key
+    integer<span class="sym">,</span>          intent<span class="sym">(</span>in<span class="sym">) ::</span> range
+
+    integer <span class="sym">::</span> len_key<span class="sym">,</span> a<span class="sym">,</span> b<span class="sym">,</span> c<span class="sym">,</span> k
+
+    <span class="slc">! Hash the key into a code, using the algorithm</span>
+    <span class="slc">! described by Bob Jenkins at:</span>
+    <span class="slc">!  http://burtleburtle.net/bob/hash/doobs.html</span>
+    <span class="slc">!</span>
+    <span class="slc">! Note that range should be a power of 2, and</span>
+    <span class="slc">! that the 32-bit algorithm is used</span>
+
+    len_key <span class="sym">=</span> len<span class="sym">(</span>key<span class="sym">)</span>
+
+    a <span class="sym">= -</span><span class="num">1640531527</span> <span class="slc">! 0x9E3779B9</span>
+    b <span class="sym">=</span> a
+    c <span class="sym">=</span> <span class="num">305419896</span>   <span class="slc">! 0x12345678</span>
+
+    k <span class="sym">=</span> <span class="num">1</span>
+
+    do
+       if <span class="sym">(</span>len_key <span class="sym">&lt;</span> <span class="num">12</span><span class="sym">)</span> exit
+
+       <span class="slc">! Pack the key into 32 bits</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">)) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span> <span class="num">8</span><span class="sym">) +  &amp;</span>
+            ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span> <span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span> <span class="num">24</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">)) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span> <span class="num">8</span><span class="sym">) +  &amp;</span>
+            ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">)),</span> <span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">)),</span> <span class="num">24</span><span class="sym">)</span>
+       c <span class="sym">=</span> c <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">)) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">9</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">9</span><span class="sym">)),</span> <span class="num">8</span><span class="sym">) +  &amp;</span>
+            ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">10</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">10</span><span class="sym">)),</span> <span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">11</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">11</span><span class="sym">)),</span> <span class="num">24</span><span class="sym">)</span>
+
+       <span class="slc">! Mix it up</span>
+       call hash_mix<span class="sym">()</span>
+       k <span class="sym">=</span> k <span class="sym">+</span> <span class="num">12</span>
+       len_key <span class="sym">=</span> len_key <span class="sym">-</span> <span class="num">12</span>
+    end do
+
+    c <span class="sym">=</span> c <span class="sym">+</span> len_key
+
+    <span class="slc">! Process remaining bits</span>
+    select case<span class="sym">(</span>len_key<span class="sym">)</span>
+    case<span class="sym">(</span><span class="num">11</span><span class="sym">)</span>
+       c <span class="sym">=</span> c <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">10</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">10</span><span class="sym">)),</span><span class="num">24</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">9</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">9</span><span class="sym">)),</span><span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">)),</span><span class="num">8</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">10</span><span class="sym">)</span>
+       c <span class="sym">=</span> c <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">9</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">9</span><span class="sym">)),</span><span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">)),</span><span class="num">8</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">9</span><span class="sym">)</span>
+       c <span class="sym">=</span> c <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">8</span><span class="sym">)),</span><span class="num">8</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">8</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">7</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">7</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">6</span><span class="sym">)),</span><span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span><span class="num">8</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">6</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">5</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">5</span><span class="sym">)</span>
+       b <span class="sym">=</span> b <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">4</span><span class="sym">))</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">4</span><span class="sym">)</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">3</span><span class="sym">)),</span><span class="num">24</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">3</span><span class="sym">)</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">)),</span><span class="num">16</span><span class="sym">) +</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">)  &amp;</span>
+            <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">2</span><span class="sym">)</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ishft<span class="sym">(</span>ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">:</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">)),</span><span class="num">8</span><span class="sym">) +</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    case<span class="sym">(</span><span class="num">1</span><span class="sym">)</span>
+       a <span class="sym">=</span> a <span class="sym">+</span> ichar<span class="sym">(</span>key<span class="sym">(</span>k<span class="sym">:</span>k<span class="sym">))</span>
+    end select
+
+    call hash_mix<span class="sym">()</span>
+
+    hash_value <span class="sym">=</span> iand<span class="sym">(</span>c<span class="sym">,</span> range <span class="sym">-</span> <span class="num">1</span><span class="sym">) +</span> <span class="num">1</span>
+
+  contains
+
+    subroutine hash_mix
+      <span class="slc">! Mix a, b and c</span>
+      a <span class="sym">=</span> ieor<span class="sym">(</span>a <span class="sym">-</span> b <span class="sym">-</span> c<span class="sym">,</span> ishft<span class="sym">(</span>c<span class="sym">, -</span><span class="num">13</span><span class="sym">))</span>
+      b <span class="sym">=</span> ieor<span class="sym">(</span>b <span class="sym">-</span> c <span class="sym">-</span> a<span class="sym">,</span> ishft<span class="sym">(</span>a<span class="sym">,</span> <span class="num">8</span><span class="sym">))</span>
+      c <span class="sym">=</span> ieor<span class="sym">(</span>c <span class="sym">-</span> a <span class="sym">-</span> b<span class="sym">,</span> ishft<span class="sym">(</span>b<span class="sym">, -</span><span class="num">13</span><span class="sym">))</span>
+
+      a <span class="sym">=</span> ieor<span class="sym">(</span>a <span class="sym">-</span> b <span class="sym">-</span> c<span class="sym">,</span> ishft<span class="sym">(</span>c<span class="sym">, -</span><span class="num">12</span><span class="sym">))</span>
+      b <span class="sym">=</span> ieor<span class="sym">(</span>b <span class="sym">-</span> c <span class="sym">-</span> a<span class="sym">,</span> ishft<span class="sym">(</span>a<span class="sym">,</span> <span class="num">16</span><span class="sym">))</span>
+      c <span class="sym">=</span> ieor<span class="sym">(</span>c <span class="sym">-</span> a <span class="sym">-</span> b<span class="sym">,</span> ishft<span class="sym">(</span>b<span class="sym">, -</span><span class="num">5</span><span class="sym">))</span>
+
+      a <span class="sym">=</span> ieor<span class="sym">(</span>a <span class="sym">-</span> b <span class="sym">-</span> c<span class="sym">,</span> ishft<span class="sym">(</span>c<span class="sym">, -</span><span class="num">3</span><span class="sym">))</span>
+      b <span class="sym">=</span> ieor<span class="sym">(</span>b <span class="sym">-</span> c <span class="sym">-</span> a<span class="sym">,</span> ishft<span class="sym">(</span>a<span class="sym">,</span> <span class="num">10</span><span class="sym">))</span>
+      c <span class="sym">=</span> ieor<span class="sym">(</span>c <span class="sym">-</span> a <span class="sym">-</span> b<span class="sym">,</span> ishft<span class="sym">(</span>b<span class="sym">, -</span><span class="num">15</span><span class="sym">))</span>
+    end subroutine hash_mix
+  end function hash_value
+end module knuc_mod
+
+program knucleotide
+  use knuc_mod
+  implicit none
+
+  integer<span class="sym">,</span> parameter <span class="sym">::</span> LineLen <span class="sym">=</span> <span class="num">60</span><span class="sym">,</span> InitialTableSize <span class="sym">=</span> <span class="num">1</span>
+
+  integer <span class="sym">::</span> bufferSize <span class="sym">=</span> <span class="num">16384</span><span class="sym">,</span> stat<span class="sym">,</span> n <span class="sym">=</span> <span class="num">0</span><span class="sym">,</span> i
+  logical <span class="sym">::</span> atThirdPart <span class="sym">=</span> .false.
+  type<span class="sym">(</span>table<span class="sym">) ::</span> kn
+  character<span class="sym">(</span>len<span class="sym">=</span>LineLen<span class="sym">) ::</span> line
+  character<span class="sym">,</span> dimension<span class="sym">(:),</span> allocatable <span class="sym">::</span> buffer<span class="sym">,</span> tempBuffer
+
+  character<span class="sym">,</span> dimension<span class="sym">(</span><span class="num">65</span><span class="sym">:</span><span class="num">116</span><span class="sym">),</span> parameter <span class="sym">::</span> Codes <span class="sym">= (/</span> <span class="str">&quot;A&quot;</span><span class="sym">,</span> <span class="str">&quot; &quot;</span><span class="sym">,</span> <span class="str">&quot;C&quot;</span><span class="sym">,  &amp;</span>
+       <span class="sym">(</span><span class="str">&quot; &quot;</span><span class="sym">,</span> i <span class="sym">=</span> <span class="num">68</span><span class="sym">,</span> <span class="num">70</span><span class="sym">),</span> <span class="str">&quot;G&quot;</span><span class="sym">, (</span><span class="str">&quot; &quot;</span><span class="sym">,</span> i <span class="sym">=</span> <span class="num">72</span><span class="sym">,</span> <span class="num">83</span><span class="sym">),</span> <span class="str">&quot;T&quot;</span><span class="sym">, (</span><span class="str">&quot; &quot;</span><span class="sym">,</span> i <span class="sym">=</span> <span class="num">85</span><span class="sym">,</span> <span class="num">96</span><span class="sym">),  &amp;</span>
+       <span class="str">&quot;A&quot;</span><span class="sym">,</span> <span class="str">&quot; &quot;</span><span class="sym">,</span> <span class="str">&quot;C&quot;</span><span class="sym">, (</span><span class="str">&quot; &quot;</span><span class="sym">,</span> i <span class="sym">=</span> <span class="num">100</span><span class="sym">,</span> <span class="num">102</span><span class="sym">),</span> <span class="str">&quot;G&quot;</span><span class="sym">, (</span><span class="str">&quot; &quot;</span><span class="sym">,</span> i <span class="sym">=</span> <span class="num">104</span><span class="sym">,</span> <span class="num">115</span><span class="sym">),</span> <span class="str">&quot;T&quot;</span> <span class="sym">/)</span>
+
+  allocate<span class="sym">(</span>buffer<span class="sym">(</span>bufferSize<span class="sym">))</span>
+
+  <span class="slc">! Read FASTA file line-by-line, extracting sequence three, and converting to</span>
+  <span class="slc">! uppercase.</span>
+  do
+     read<span class="sym">(*,</span> <span class="str">&quot;(a)&quot;</span><span class="sym">,</span> iostat<span class="sym">=</span>stat<span class="sym">)</span> line
+     if <span class="sym">(</span>stat <span class="sym">/=</span> <span class="num">0</span><span class="sym">)</span> exit
+     if <span class="sym">(</span>.not. atThirdPart<span class="sym">)</span> then
+        atThirdPart <span class="sym">=</span> line<span class="sym">(</span><span class="num">1</span><span class="sym">:</span><span class="num">3</span><span class="sym">) ==</span> <span class="str">&quot;&gt;TH&quot;</span>
+     else
+        if <span class="sym">(</span>n<span class="sym">+</span>LineLen <span class="sym">&gt;</span> bufferSize<span class="sym">)</span> then
+           allocate<span class="sym">(</span>tempBuffer<span class="sym">(</span>bufferSize<span class="sym">))</span>
+           tempBuffer <span class="sym">=</span> buffer
+           deallocate<span class="sym">(</span>buffer<span class="sym">)</span>
+           allocate<span class="sym">(</span>buffer<span class="sym">(</span><span class="num">2</span><span class="sym">*</span>bufferSize<span class="sym">))</span>
+           buffer<span class="sym">(</span><span class="num">1</span><span class="sym">:</span>bufferSize<span class="sym">) =</span> tempBuffer
+           buffer<span class="sym">(</span>bufferSize<span class="sym">+</span><span class="num">1</span><span class="sym">:</span><span class="num">2</span><span class="sym">*</span>bufferSize<span class="sym">) =</span> <span class="str">&quot; &quot;</span>
+           deallocate<span class="sym">(</span>tempBuffer<span class="sym">)</span>
+           bufferSize <span class="sym">=</span> <span class="num">2</span><span class="sym">*</span>bufferSize
+        end if
+        do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> LineLen
+           buffer<span class="sym">(</span>n<span class="sym">+</span>i<span class="sym">) =</span> Codes<span class="sym">(</span>iachar<span class="sym">(</span>line<span class="sym">(</span>i<span class="sym">:</span>i<span class="sym">)))</span>
+        end do
+        n <span class="sym">=</span> n <span class="sym">+</span> LineLen
+     end if
+  end do
+
+  n <span class="sym">=</span> minloc<span class="sym">(</span>iachar<span class="sym">(</span>buffer<span class="sym">),</span><span class="num">1</span><span class="sym">) -</span> <span class="num">1</span>
+
+  call init_table<span class="sym">(</span>kn<span class="sym">,</span> InitialTableSize<span class="sym">)</span>
+
+  call write_frequencies<span class="sym">(</span><span class="num">1</span><span class="sym">)</span>
+  call write_frequencies<span class="sym">(</span><span class="num">2</span><span class="sym">)</span>
+
+  call write_count<span class="sym">(</span><span class="str">&quot;GGT&quot;</span><span class="sym">)</span>
+  call write_count<span class="sym">(</span><span class="str">&quot;GGTA&quot;</span><span class="sym">)</span>
+  call write_count<span class="sym">(</span><span class="str">&quot;GGTATT&quot;</span><span class="sym">)</span>
+  call write_count<span class="sym">(</span><span class="str">&quot;GGTATTTTAATT&quot;</span><span class="sym">)</span>
+  call write_count<span class="sym">(</span><span class="str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="sym">)</span>
+
+contains
+
+  subroutine write_frequencies<span class="sym">(</span>length<span class="sym">)</span>
+    integer<span class="sym">,</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> length
+
+    integer <span class="sym">::</span> numNuc<span class="sym">,</span> j
+    type<span class="sym">(</span>key<span class="sym">),</span> dimension<span class="sym">(</span><span class="num">4</span><span class="sym">**</span>length<span class="sym">) ::</span> nucleotides
+    type<span class="sym">(</span>key<span class="sym">) ::</span> temp
+
+    numNuc <span class="sym">=</span> n <span class="sym">-</span> length <span class="sym">+</span> <span class="num">1</span>
+
+    call read_frame<span class="sym">(</span>buffer<span class="sym">,</span> numNuc<span class="sym">,</span> length<span class="sym">,</span> kn<span class="sym">)</span>
+
+    nucleotides <span class="sym">=</span> keys_of_given_len<span class="sym">(</span>kn<span class="sym">,</span> length<span class="sym">)</span>
+
+    <span class="slc">! Insertion sort</span>
+    do i <span class="sym">=</span> <span class="num">2</span><span class="sym">,</span> size<span class="sym">(</span>nucleotides<span class="sym">)</span>
+       temp <span class="sym">=</span> nucleotides<span class="sym">(</span>i<span class="sym">)</span>
+       do j <span class="sym">=</span> i<span class="sym">,</span> <span class="num">2</span><span class="sym">, -</span><span class="num">1</span>
+          if <span class="sym">(</span>nucleotides<span class="sym">(</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)%</span>count <span class="sym">&gt;</span> temp<span class="sym">%</span>count .or.  <span class="sym">&amp;</span>
+               nucleotides<span class="sym">(</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)%</span>count <span class="sym">==</span> temp<span class="sym">%</span>count .and.  <span class="sym">&amp;</span>
+               nucleotides<span class="sym">(</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)%</span>word <span class="sym">&lt;</span> temp<span class="sym">%</span>word<span class="sym">)</span> exit
+          nucleotides<span class="sym">(</span>j<span class="sym">) =</span> nucleotides<span class="sym">(</span>j<span class="sym">-</span><span class="num">1</span><span class="sym">)</span>
+       end do
+       nucleotides<span class="sym">(</span>j<span class="sym">) =</span> temp
+    end do
+
+    do i <span class="sym">=</span> <span class="num">1</span><span class="sym">,</span> size<span class="sym">(</span>nucleotides<span class="sym">)</span>
+       write<span class="sym">(*,</span> <span class="str">&quot;(a2,f6.3)&quot;</span><span class="sym">)</span> nucleotides<span class="sym">(</span>i<span class="sym">)%</span>word<span class="sym">(</span><span class="num">1</span><span class="sym">:</span><span class="num">2</span><span class="sym">),  &amp;</span>
+            <span class="num">100</span>. <span class="sym">*</span> nucleotides<span class="sym">(</span>i<span class="sym">)%</span>count <span class="sym">/</span> real<span class="sym">(</span>numNuc<span class="sym">)</span>
+    end do
+    write<span class="sym">(*,</span> <span class="str">&quot;(a)&quot;</span><span class="sym">)</span> <span class="str">&quot;&quot;</span>
+  end subroutine write_frequencies
+
+  subroutine write_count<span class="sym">(</span>string<span class="sym">)</span>
+    character<span class="sym">(</span>len<span class="sym">=*),</span> intent<span class="sym">(</span>in<span class="sym">) ::</span> string
+
+    character<span class="sym">,</span> parameter <span class="sym">::</span> tab <span class="sym">=</span> achar<span class="sym">(</span><span class="num">9</span><span class="sym">)</span>
+    integer <span class="sym">::</span> length<span class="sym">,</span> numNuc
+
+    length <span class="sym">=</span> len<span class="sym">(</span>string<span class="sym">)</span>
+    numNuc <span class="sym">=</span> n <span class="sym">-</span> length <span class="sym">+</span> <span class="num">1</span>
+
+    call read_frame<span class="sym">(</span>buffer<span class="sym">,</span> numNuc<span class="sym">,</span> length<span class="sym">,</span> kn<span class="sym">)</span>
+
+    write<span class="sym">(*,</span> <span class="str">&quot;(i0,a)&quot;</span><span class="sym">)</span> cnt<span class="sym">(</span>kn<span class="sym">,</span> string<span class="sym">),</span> tab<span class="sym">//</span>string
+  end subroutine write_count
+end program knucleotide

@@ -1,0 +1,105 @@
+<span class="com">/*</span>
+<span class="com">** The Computer Language Shootout</span>
+<span class="com">** http://shootout.alioth.debian.org/</span>
+<span class="com">** contributed by Mike Pall</span>
+<span class="com">**</span>
+<span class="com">**   gcc -O3 -fomit-frame-pointer -o pidigits pidigits.c -lgmp</span>
+<span class="com">*/</span>
+
+<span class="dir">#include &lt;stdio.h&gt;</span>
+<span class="dir">#include &lt;stdlib.h&gt;</span>
+<span class="dir">#include &lt;gmp.h&gt;</span>
+
+<span class="kwc">typedef</span> <span class="kwb">struct</span> ctx_s <span class="sym">{</span>
+  mpz_t q<span class="sym">,</span> r<span class="sym">,</span> s<span class="sym">,</span> t<span class="sym">;</span>	<span class="com">/* Transformation matrix components. */</span>
+  mpz_t u<span class="sym">,</span> v<span class="sym">,</span> w<span class="sym">;</span>	<span class="com">/* Temporary numbers. */</span>
+  <span class="kwb">int</span> d<span class="sym">,</span> i<span class="sym">,</span> n<span class="sym">;</span>		<span class="com">/* Counters. */</span>
+  <span class="kwb">char</span> digits<span class="sym">[</span><span class="num">10</span><span class="sym">+</span><span class="num">1</span><span class="sym">];</span>	<span class="com">/* Accumulated digits for one line. */</span>
+<span class="sym">}</span> ctx_t<span class="sym">;</span>
+
+<span class="com">/* Compose matrix with numbers on the right. */</span>
+<span class="kwb">static void</span> <span class="kwd">compose_r</span><span class="sym">(</span>ctx_t <span class="sym">*</span>c<span class="sym">,</span> <span class="kwb">int</span> bq<span class="sym">,</span> <span class="kwb">int</span> br<span class="sym">,</span> <span class="kwb">int</span> bs<span class="sym">,</span> <span class="kwb">int</span> bt<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>r<span class="sym">,</span> bs<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>r<span class="sym">,</span> c<span class="sym">-&gt;</span>r<span class="sym">,</span> bq<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>v<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">,</span> br<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>r<span class="sym">,</span> c<span class="sym">-&gt;</span>r<span class="sym">,</span> c<span class="sym">-&gt;</span>v<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>t<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">,</span> bt<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>t<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">,</span> c<span class="sym">-&gt;</span>u<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>s<span class="sym">,</span> c<span class="sym">-&gt;</span>s<span class="sym">,</span> bt<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>q<span class="sym">,</span> bs<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>s<span class="sym">,</span> c<span class="sym">-&gt;</span>s<span class="sym">,</span> c<span class="sym">-&gt;</span>u<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>q<span class="sym">,</span> c<span class="sym">-&gt;</span>q<span class="sym">,</span> bq<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="com">/* Compose matrix with numbers on the left. */</span>
+<span class="kwb">static void</span> <span class="kwd">compose_l</span><span class="sym">(</span>ctx_t <span class="sym">*</span>c<span class="sym">,</span> <span class="kwb">int</span> bq<span class="sym">,</span> <span class="kwb">int</span> br<span class="sym">,</span> <span class="kwb">int</span> bs<span class="sym">,</span> <span class="kwb">int</span> bt<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>r<span class="sym">,</span> c<span class="sym">-&gt;</span>r<span class="sym">,</span> bt<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>q<span class="sym">,</span> br<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>r<span class="sym">,</span> c<span class="sym">-&gt;</span>r<span class="sym">,</span> c<span class="sym">-&gt;</span>u<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">,</span> bs<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>t<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">,</span> bt<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>v<span class="sym">,</span> c<span class="sym">-&gt;</span>s<span class="sym">,</span> br<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>t<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">,</span> c<span class="sym">-&gt;</span>v<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>s<span class="sym">,</span> c<span class="sym">-&gt;</span>s<span class="sym">,</span> bq<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>s<span class="sym">,</span> c<span class="sym">-&gt;</span>s<span class="sym">,</span> c<span class="sym">-&gt;</span>u<span class="sym">);</span>
+  <span class="kwd">mpz_mul_si</span><span class="sym">(</span>c<span class="sym">-&gt;</span>q<span class="sym">,</span> c<span class="sym">-&gt;</span>q<span class="sym">,</span> bq<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="com">/* Extract one digit. */</span>
+<span class="kwb">static int</span> <span class="kwd">extract</span><span class="sym">(</span>ctx_t <span class="sym">*</span>c<span class="sym">,</span> <span class="kwb">unsigned int</span> j<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwd">mpz_mul_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>q<span class="sym">,</span> j<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>r<span class="sym">);</span>
+  <span class="kwd">mpz_mul_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>v<span class="sym">,</span> c<span class="sym">-&gt;</span>s<span class="sym">,</span> j<span class="sym">);</span>
+  <span class="kwd">mpz_add</span><span class="sym">(</span>c<span class="sym">-&gt;</span>v<span class="sym">,</span> c<span class="sym">-&gt;</span>v<span class="sym">,</span> c<span class="sym">-&gt;</span>t<span class="sym">);</span>
+  <span class="kwd">mpz_tdiv_q</span><span class="sym">(</span>c<span class="sym">-&gt;</span>w<span class="sym">,</span> c<span class="sym">-&gt;</span>u<span class="sym">,</span> c<span class="sym">-&gt;</span>v<span class="sym">);</span>
+  <span class="kwa">return</span> <span class="kwd">mpz_get_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>w<span class="sym">);</span>
+<span class="sym">}</span>
+
+<span class="com">/* Print one digit. Returns 1 for the last digit. */</span>
+<span class="kwb">static int</span> <span class="kwd">prdigit</span><span class="sym">(</span>ctx_t <span class="sym">*</span>c<span class="sym">,</span> <span class="kwb">int</span> y<span class="sym">)</span>
+<span class="sym">{</span>
+  c<span class="sym">-&gt;</span>digits<span class="sym">[</span>c<span class="sym">-&gt;</span>d<span class="sym">++] =</span> <span class="str">'0'</span><span class="sym">+</span>y<span class="sym">;</span>
+  <span class="kwa">if</span> <span class="sym">(++</span>c<span class="sym">-&gt;</span>i <span class="sym">%</span> <span class="num">10</span> <span class="sym">==</span> <span class="num">0</span> <span class="sym">||</span> c<span class="sym">-&gt;</span>i <span class="sym">==</span> c<span class="sym">-&gt;</span>n<span class="sym">) {</span>
+    c<span class="sym">-&gt;</span>digits<span class="sym">[</span>c<span class="sym">-&gt;</span>d<span class="sym">] =</span> <span class="str">'</span><span class="esc">\0</span><span class="str">'</span><span class="sym">;</span>
+    <span class="kwd">printf</span><span class="sym">(</span><span class="str">&quot;%-10s</span><span class="esc">\t</span><span class="str">:%d</span><span class="esc">\n</span><span class="str">&quot;</span><span class="sym">,</span> c<span class="sym">-&gt;</span>digits<span class="sym">,</span> c<span class="sym">-&gt;</span>i<span class="sym">);</span>
+    c<span class="sym">-&gt;</span>d <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+  <span class="sym">}</span>
+  <span class="kwa">return</span> c<span class="sym">-&gt;</span>i <span class="sym">==</span> c<span class="sym">-&gt;</span>n<span class="sym">;</span>
+<span class="sym">}</span>
+
+<span class="com">/* Generate successive digits of PI. */</span>
+<span class="kwb">static void</span> <span class="kwd">pidigits</span><span class="sym">(</span>ctx_t <span class="sym">*</span>c<span class="sym">)</span>
+<span class="sym">{</span>
+  <span class="kwb">int</span> k <span class="sym">=</span> <span class="num">1</span><span class="sym">;</span>
+  c<span class="sym">-&gt;</span>d <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+  c<span class="sym">-&gt;</span>i <span class="sym">=</span> <span class="num">0</span><span class="sym">;</span>
+  <span class="kwd">mpz_init_set_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>q<span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+  <span class="kwd">mpz_init_set_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>r<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+  <span class="kwd">mpz_init_set_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>s<span class="sym">,</span> <span class="num">0</span><span class="sym">);</span>
+  <span class="kwd">mpz_init_set_ui</span><span class="sym">(</span>c<span class="sym">-&gt;</span>t<span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+  <span class="kwd">mpz_init</span><span class="sym">(</span>c<span class="sym">-&gt;</span>u<span class="sym">);</span>
+  <span class="kwd">mpz_init</span><span class="sym">(</span>c<span class="sym">-&gt;</span>v<span class="sym">);</span>
+  <span class="kwd">mpz_init</span><span class="sym">(</span>c<span class="sym">-&gt;</span>w<span class="sym">);</span>
+  <span class="kwa">for</span> <span class="sym">(;;) {</span>
+    <span class="kwb">int</span> y <span class="sym">=</span> <span class="kwd">extract</span><span class="sym">(</span>c<span class="sym">,</span> <span class="num">3</span><span class="sym">);</span>
+    <span class="kwa">if</span> <span class="sym">(</span>y <span class="sym">==</span> <span class="kwd">extract</span><span class="sym">(</span>c<span class="sym">,</span> <span class="num">4</span><span class="sym">)) {</span>
+      <span class="kwa">if</span> <span class="sym">(</span><span class="kwd">prdigit</span><span class="sym">(</span>c<span class="sym">,</span> y<span class="sym">))</span> <span class="kwa">return</span><span class="sym">;</span>
+      <span class="kwd">compose_r</span><span class="sym">(</span>c<span class="sym">,</span> <span class="num">10</span><span class="sym">, -</span><span class="num">10</span><span class="sym">*</span>y<span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">1</span><span class="sym">);</span>
+    <span class="sym">}</span> <span class="kwa">else</span> <span class="sym">{</span>
+      <span class="kwd">compose_l</span><span class="sym">(</span>c<span class="sym">,</span> k<span class="sym">,</span> <span class="num">4</span><span class="sym">*</span>k<span class="sym">+</span><span class="num">2</span><span class="sym">,</span> <span class="num">0</span><span class="sym">,</span> <span class="num">2</span><span class="sym">*</span>k<span class="sym">+</span><span class="num">1</span><span class="sym">);</span>
+      k<span class="sym">++;</span>
+    <span class="sym">}</span>
+  <span class="sym">}</span>
+<span class="sym">}</span>
+
+<span class="kwb">int</span> <span class="kwd">main</span><span class="sym">(</span><span class="kwb">int</span> argc<span class="sym">,</span> <span class="kwb">char</span> <span class="sym">**</span>argv<span class="sym">)</span>
+<span class="sym">{</span>
+  ctx_t c<span class="sym">;</span>
+  c<span class="sym">.</span>n <span class="sym">=</span> argc <span class="sym">&gt;</span> <span class="num">1</span> ? <span class="kwd">atoi</span><span class="sym">(</span>argv<span class="sym">[</span><span class="num">1</span><span class="sym">]) :</span> <span class="num">27</span><span class="sym">;</span>
+  <span class="kwd">pidigits</span><span class="sym">(&amp;</span>c<span class="sym">);</span>
+  <span class="kwa">return</span> <span class="num">0</span><span class="sym">;</span>
+<span class="sym">}</span>
+
