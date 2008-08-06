@@ -37,6 +37,16 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <tr class="test">
 <td>
 <p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
+<p><a href="./u64q/"><strong>Benchmarks</strong> timed on:</a></p>
+<h3><span class="u64q">
+<a title="Computer Language Benchmarks on Ubuntu : Intel&#174; Q6600&#8482;"
+href="./u64q/">&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#8482;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a></span></h3>
+</td>
+</tr>
+
+<tr class="test">
+<td>
+<p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
 <p><a href="./gp4/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="gp4">
 <a title="Computer Language Benchmarks on Gentoo : Intel&#174; Pentium&#174;"
