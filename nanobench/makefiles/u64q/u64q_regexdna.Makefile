@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q_regexdna.Makefile,v 1.1 2008-07-30 18:57:17 igouy-guest Exp $
+# $Id: u64q_regexdna.Makefile,v 1.2 2008-08-06 14:47:59 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -25,8 +25,8 @@ PHPOPTS := -d memory_limit=64M
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \
-	  --range 100000,300000,500000 \
-	  --data $(DATA_ROOT)/regexdna-input.txt \
+	  --range 50000,500000,5000000 \
+	  --data ../regexdna-input.txt \
 
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).footer.Makefile

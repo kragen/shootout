@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q_revcomp.Makefile,v 1.1 2008-07-30 18:57:17 igouy-guest Exp $
+# $Id: u64q_revcomp.Makefile,v 1.2 2008-08-06 14:47:59 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -17,8 +17,8 @@ GROOVYFLAGS := $(GROOVYFLAGS) -Xmx256m
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \
-	  --range 25000,250000,2500000 \
-	  --data $(DATA_ROOT)/revcomp-input.txt \
+	  --range 250000,2500000,25000000 \
+	  --data ../revcomp-input.txt \
 
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).footer.Makefile

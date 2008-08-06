@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.site.Makefile,v 1.9 2008-08-06 00:22:21 igouy-guest Exp $
+# $Id: u64q.site.Makefile,v 1.10 2008-08-06 14:47:59 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -49,9 +49,17 @@ NANO_HIGHLIGHT := $(addsuffix /highlight/, $(expandedvars) )
 # MUST set which source directories to search
 
 SRC_DIRS := \
+ binarytrees \
+ fannkuch \
+ fasta \
  knucleotide \
-
-
+ mandelbrot \
+ meteor \
+ nbody \
+ spectralnorm \
+ regexdna \
+ revcomp \
+ threadring \
 
 
 # binarytrees \
