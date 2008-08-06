@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.10 2008-08-05 21:26:10 igouy-guest Exp $
+# $Id: domain.py,v 1.11 2008-08-06 02:54:56 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -93,7 +93,7 @@ class FileNameParts(object):
       return '%s,%s,%s' % (self.name, self.ext, self.id)
 
    def isNumbered(self):
-      return len(self.id) > 0
+      return len(self.id) > 1
 
 
 
