@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q_revcomp.Makefile,v 1.2 2008-08-06 14:47:59 igouy-guest Exp $
+# $Id: u64q_revcomp.Makefile,v 1.3 2008-08-07 14:03:52 igouy-guest Exp $
 
 include $(SITE_MAKEFILES)/$(SITE_NAME).header.Makefile
 
@@ -14,6 +14,7 @@ GFORTH_FLAGS := -m 16M
 BIGFORTH_FLAGS := -d 32M
 GHCOPTS := -funfolding-use-threshold=32 -optc-O3
 GROOVYFLAGS := $(GROOVYFLAGS) -Xmx256m
+PHPOPTS := -d memory_limit=256M
 
 
 RUNTESTS := $(BENCHMARKER) --conf $(SITE_MAKEFILES)/$(SITE_NAME).ini \

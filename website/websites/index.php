@@ -40,7 +40,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p><a href="./u64q/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="u64q">
 <a title="Computer Language Benchmarks on Ubuntu : Intel&#174; Q6600&#8482;"
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;&nbsp;&nbsp;</a></span></h3>
+href="./u64q/">&nbsp;x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;</a></span></h3>
 </td>
 </tr>
 
