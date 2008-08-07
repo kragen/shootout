@@ -10,7 +10,7 @@ require_once(LIB);
 
 list($Incl,$Excl) = ReadIncludeExclude();
 $Tests = ReadUniqueArrays('test.csv',$Incl);
-if (SITE_NAME != 'debian' && SITE_NAME != 'gp4'){ uasort($Tests, 'CompareTestName'); }
+//if (SITE_NAME != 'debian' && SITE_NAME != 'gp4'){ uasort($Tests, 'CompareTestName'); }
 
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
