@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.7 2008-08-03 20:08:11 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.8 2008-08-07 01:55:58 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -455,8 +455,8 @@ FPCOPTS := -XX -Xs
 ########################################
 
 %.pike_run: %.pike $(PIKE)
-	-mv $< $*.pike
-	-$(PIKE) -x dump $*.pike
+	-mv $< $(TEST).pike
+	-$(PIKE) -x dump $(TEST).pike
 
 
 #######################################
@@ -466,8 +466,8 @@ FPCOPTS := -XX -Xs
 SWIOPTS := -O -t halt --goal=main --stand_alone=true
 
 %.swiprolog_run: %.swiprolog $(SWIPROLOG)
-	-mv $< $*.pl
-	-$(SWIPROLOG) $(SWIOPTS) -o $@ -c $*.pl
+	-mv $< $(TEST).pl
+	-$(SWIPROLOG) $(SWIOPTS) -o $@ -c $(TEST).pl
 
 
 ########################################
@@ -475,8 +475,8 @@ SWIOPTS := -O -t halt --goal=main --stand_alone=true
 ########################################
 
 %.python_run: %.python $(PYTHON)
-	-mv $< $*.py
-	-$(PYTHON) -OO -c "from py_compile import compile; compile('$*.py')"
+	-mv $< $(TEST).py
+	-$(PYTHON) -OO -c "from py_compile import compile; compile('$(TEST).py')"
 
 
 ########################################
@@ -484,8 +484,8 @@ SWIOPTS := -O -t halt --goal=main --stand_alone=true
 ########################################
 
 %.psyco_run: %.psyco $(PYTHON)
-	-mv $< $*.py
-	-$(PSYCO) -OO -c "from py_compile import compile; compile('$*.py')"
+	-mv $< $(TEST).py
+	-$(PSYCO) -OO -c "from py_compile import compile; compile('$(TEST).py')"
 
 
 ########################################

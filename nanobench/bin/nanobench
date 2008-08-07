@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.36 2008-08-05 16:51:27 igouy-guest Exp $
+# $Id: nanobench,v 1.37 2008-08-07 01:55:58 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -88,6 +88,7 @@ import sys, os, re, fnmatch, bz2, copy
 # need to use ConfigParser not SafeConfigParser
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
+from gzip import GzipFile
 from contextlib import nested
 from cStringIO import StringIO
 from errno import ENOENT, EEXIST
@@ -132,6 +133,7 @@ sitename = None
 srcdir = None
 testdir = None
 makedir = None
+hidir = None
 logdir = None
 datdir = None
 tmpdir = None
@@ -176,7 +178,7 @@ def initializeFrom(ini):
 
 
 def createDirectories():
-   global srcdir,sitename,testdir,makedir,logdir,datdir,codedir,logger
+   global srcdir,sitename,testdir,makedir,hidir,logdir,datdir,codedir,logger
 
    def ifNoneMkdir(path,name):
       d = join(path,name)
@@ -209,6 +211,10 @@ def createDirectories():
       print 'please set NANO_ROOT for MAKE_ROOT in Makefile.site_*'
       if logger: logger.critical('please set NANO_ROOT for MAKE_ROOT in Makefile.site_*')
       sys.exit(0)
+
+   hidir = envPath('NANO_HIGHLIGHT')
+   if not isdir(hidir):
+      if logger: logger.warn('NANO_HOGHLIGHT directory not set')
 
    csvsweep = envPath('CSV_SWEEP')
    if csvsweep and not isdir(csvsweep): 
@@ -609,6 +615,62 @@ def cleanTmpdirFor(p,allowed):
 
 
 
+def callHighlightSourceCodeMarkup(p):
+   if hidir:
+      cmd = ['highlight','--fragment'
+            ,'--add-data-dir='+hidir+'/'
+            ,'--add-config-dir='+hidir+'/'
+            ,'--style=typical'
+            ,'--force'
+            ,'-i'
+            ,join(codedir,p.codeName)
+            ,'-o'
+            ,join(codedir,p.highlightName)
+            ]
+      try:
+         call(cmd)
+      except OSError, (e,err): 
+         if logger: logger.debug('%s %s',e,err)
+
+
+
+def sizeCompressedSourceCode(p):
+   s = ''
+   with open( join(codedir,p.highlightName), 'r') as sf:
+      s = sf.read()
+      s = re.sub('<span class="com">.*<\/span>', '', s)
+      s = re.sub('<span class="slc">.*<\/span>', '', s)
+      s = re.sub('<span class="[a-z]{3}">', '', s)
+
+      s = re.sub('<span class="hl com">.*<\/span>', '', s)
+      s = re.sub('<span class="hl slc">.*<\/span>', '', s)
+      s = re.sub('<span class="hl [a-z]{3}">', '', s)
+
+      s = re.sub('<\/span>', '', s)
+
+      s = re.sub('\s+', ' ', s)
+      s = re.sub('&quot;', '"', s)
+      s = re.sub('&lt;', '<', s)
+      s = re.sub('&gt;', '>', s)
+      s = re.sub('&#64;', '@', s)
+
+   sz = 0
+   if s:
+      path = join(tmpdir,'_gz')
+      try:
+         gz = GzipFile(path,'wb',1)
+         gz.write(s)
+      except (OSError,IOError), err:
+         if logger: logger.error(err)
+      finally:
+         gz.close()
+
+      sz = os.stat(path).st_size
+
+   return sz
+
+
+
 def measurePrograms(programs,allowed):
    global loggerLine
 
@@ -627,9 +689,11 @@ def measurePrograms(programs,allowed):
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
 
+      callHighlightSourceCodeMarkup(p)
+      srcSize = sizeCompressedSourceCode(p)
+
       if hasMake(p.ext):
          callMake(p)   
-
 
       loggerLine = StringIO()
       t = cmdTemplate(p)
@@ -642,7 +706,9 @@ def measurePrograms(programs,allowed):
       # Write compressed dat file once, when all data is available
       try:
          datf = bz2.BZ2File( join(datdir,p.datName) ,'w')
-         for m in ms: print >>datf, m
+         for m in ms: 
+            m.gz = srcSize
+            print >>datf, m
       except IOError, err:
          if logger: logger.error(err)
       finally:

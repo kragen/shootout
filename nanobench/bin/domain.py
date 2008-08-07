@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.11 2008-08-06 02:54:56 igouy-guest Exp $
+# $Id: domain.py,v 1.12 2008-08-07 01:55:58 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -75,6 +75,12 @@ class FileNameParts(object):
       return self.simpleName + '_code'
 
    codeName = property(_codeName)
+
+
+   def _highlightName(self):
+      return self.simpleName + '.code'
+
+   highlightName = property(_highlightName)
 
 
    def _extPrefix(self):

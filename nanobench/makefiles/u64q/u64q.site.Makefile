@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.site.Makefile,v 1.10 2008-08-06 14:47:59 igouy-guest Exp $
+# $Id: u64q.site.Makefile,v 1.11 2008-08-07 01:55:58 igouy-guest Exp $
 
 
 ### ROOT DIRS
@@ -56,9 +56,10 @@ SRC_DIRS := \
  mandelbrot \
  meteor \
  nbody \
- spectralnorm \
+ pidigits \
  regexdna \
  revcomp \
+ spectralnorm \
  threadring \
 
 
