@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: website.Makefile,v 1.4 2008-08-05 16:51:27 igouy-guest Exp $
+# $Id: website.Makefile,v 1.5 2008-08-07 02:15:41 igouy-guest Exp $
 
 
 # Copy new log files to the sweep directory
@@ -59,12 +59,14 @@ endif
 # the pattern for each SRCS suffix matches a _SRCS file on which 
 # it is dependent so use highlight to create xml markup of the source
 
-%.code: %_code
-	-@highlight --fragment \
-		--add-data-dir=$(NANO_HIGHLIGHT) \
-		--add-config-dir=$(NANO_HIGHLIGHT) \
-		--style=typical \
-		--force -i $< -o $@ 
+# NO LONGER USED - now we call highlight per program in nanobench
+
+#%.code: %_code
+#	-@highlight --fragment \
+#		--add-data-dir=$(NANO_HIGHLIGHT) \
+#		--add-config-dir=$(NANO_HIGHLIGHT) \
+#		--style=typical \
+#		--force -i $< -o $@ 
 
 
 
