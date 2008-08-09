@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.programs.Makefile,v 1.6 2008-08-09 18:16:31 igouy-guest Exp $
+# $Id: gp4.programs.Makefile,v 1.1 2008-08-09 23:39:47 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
