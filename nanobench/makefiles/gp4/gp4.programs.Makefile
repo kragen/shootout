@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.11 2008-08-09 18:15:34 igouy-guest Exp $
+# $Id: gp4.programs.Makefile,v 1.6 2008-08-09 18:16:31 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -14,7 +14,7 @@
 
 SPLITFILE := $(NANO_BIN)/split_file.bash
 
-COPTS := -O3 -fomit-frame-pointer
+COPTS := -O3 -fomit-frame-pointer -march=pentium4
 GXXOPTS := -pipe $(COPTS)
 GXXLDOPTS := -L/usr/local/lib
 
