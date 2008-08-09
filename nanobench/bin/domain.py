@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.13 2008-08-09 05:19:44 igouy-guest Exp $
+# $Id: domain.py,v 1.14 2008-08-09 22:42:41 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -39,7 +39,7 @@ class FileNameParts(object):
             self.imp = b
             self.id = '1'
 
-      self.simpleName = '.'.join( (self.name,self.id,self.imp) )
+      self.__simpleName = None
 
 
    def _programName(self):
@@ -89,6 +89,14 @@ class FileNameParts(object):
       return self.simpleName + '.code'
 
    highlightName = property(_highlightName)
+
+
+   def _simpleName(self):
+      if not self.__simpleName: 
+         self.__simpleName = '.'.join( (self.name,self.id,self.imp) )
+      return self.__simpleName
+
+   simpleName = property(_simpleName)
 
 
    def __str__(self):
