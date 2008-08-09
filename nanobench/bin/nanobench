@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.39 2008-08-09 05:19:44 igouy-guest Exp $
+# $Id: nanobench,v 1.40 2008-08-09 20:44:52 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -65,7 +65,7 @@ from getopt import getopt, GetoptError
 from gzip import GzipFile
 from logging.handlers import RotatingFileHandler
 from os.path import expanduser, expandvars, normpath, isdir, join, realpath, \
-   getmtime, isfile, getsize
+   getmtime, isfile, getsize, split, splitext
 from shutil import copyfile,move, rmtree
 from subprocess import call, STDOUT
 from time import strftime, localtime, gmtime
@@ -153,18 +153,25 @@ def configure(ini):
       for k,v in parser.items('alias'):
          alias[k] = v.split() 
 
-      for k,v in parser.items('testrange'):
-         testrange[k] = v.split() 
+      make = frozenset( parser.get('build', 'make').split() )
 
       # compiler interpreter runtime location shell vars
       for k,v in parser.items('tools'):
          os.environ[k.upper()] = v
 
-      for k,v in parser.items('ndiff'):
-         ndiff[k] = v
+      commandlines.update( parser.items('commandlines') )
+
+      for k,v in parser.items('testrange'):
+         testrange[k] = v.split() 
+
+      for k,v in parser.items('testdata'):
+         testdata[k] = v
 
       for k,v in parser.items('binarycmp'):
          binarycmp[k] = v
+
+      for k,v in parser.items('ndiff'):
+         ndiff[k] = v
 
       # test specific shell vars
       for each in filters['onlydirs']:
@@ -173,10 +180,6 @@ def configure(ini):
             for k,v in parser.items(each):
                d[k.upper()] = v
             testenv[each] = d
-
-
-      make = frozenset( parser.get('build', 'make').split() )
-      commandlines.update( parser.items('commandlines') )
 
       s = 'measure'
       if parser.has_section(s):
@@ -347,8 +350,8 @@ def targets(originalFiles,aliasedFiles):
    if o:
       _files = files; files = []
       
-      for ext in o:
-         reva = revAlias.get(ext,None)   
+      for imp in o:
+         reva = revAlias.get(imp,None)   
          for f in _files:
             if reva:
                if f.imp == reva:
@@ -379,7 +382,7 @@ def targets(originalFiles,aliasedFiles):
 
    links = [f for f in links if notUpToDate(f.filename,f.datName)]
    files = [f for f in files if notUpToDate(f.filename,f.datName)]
-
+   for a in links: print a
    return allowed,files,links
 
 
@@ -519,6 +522,13 @@ def logName(p):
 
 def outName(index):
    return join(_OUT) if index == 0 else '/dev/null'
+
+
+
+def dataName(f,arg):
+   # assume there is a data file
+   stem,ext = splitext(f)
+   return normpath( expandvars( expanduser( stem + arg + ext )))
 
 
 
@@ -688,7 +698,7 @@ def measureCheckAndLog(p,t,ms):
                with open(errName(),'w+') as ef:
                   # append command line showing redirected test data file to log
                   if testdata.get(testname,None):
-                     dfName = dataName(a)
+                     dfName = dataName(testdata[testname],a)
                      print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
                      with open(dfName,'r') as df:
                         m = measure(a,cmd.split(),delay,maxtime,of,ef,df,logger=logger)
@@ -759,7 +769,7 @@ def measureOnly(a,t,ms):
 
          # pass the test data file to program stdin
          if testdata.get(testname,None):
-            dfName = dataName(a)
+            dfName = dataName(testdata[testname],a)
             with open(dfName,'r') as df:
                m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,logger=logger)
 
