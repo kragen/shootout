@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.12 2008-08-07 01:55:58 igouy-guest Exp $
+# $Id: domain.py,v 1.13 2008-08-09 05:19:44 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -9,9 +9,8 @@ class FileNameParts(object):
    """ 
    self.filename = 'binarytrees.gcc' | self.filename = 'binarytrees.gcc-4.gcc'
    self.name = 'binarytrees' | self.name = 'binarytrees'
-   self.ext = 'gcc' | self.ext = 'gcc'
+   self.imp = 'gcc' | self.imp = 'gcc'
    self.id = None | self.id = '4'
-   self.extid = None | self.extid = 'gcc-4'
    self.programName = 'binarytrees.gcc' | self.programName = 'binarytrees.gcc-4.gcc'
    self.simpleName = 'binarytrees.1.gcc' | self.simpleName = 'binarytrees.4.gcc'
    """
@@ -19,23 +18,28 @@ class FileNameParts(object):
       self.filename = filename
       part = filename.split('.')
       self.name = part[0]
-      self._lazy_extid = None
 
-      a,_,b = part[1].rpartition('-') 
-      if a:
-         self.ext = part[2]
-         self.id = b
-      else:
-         self.ext = b
-         self.id = '1'
+      if part[1].isdigit(): # binarytrees.1.gcc binarytrees.1.gcc_log
+         self.id = part[1]
+         if len(part) == 4:
+            self.imp = part[2]
+         elif len(part) == 3:
+            a,_,b = part[2].rpartition('_')
+            if a:
+               self.imp = a
+            else:
+               self.imp = b
 
+      else: # binarytrees.gcc binarytrees.gcc-4.gcc
+         a,_,b = part[1].rpartition('-') 
+         if a:
+            self.imp = part[2]
+            self.id = b
+         else:
+            self.imp = b
+            self.id = '1'
 
-   def _extid(self):
-      if self._lazy_extid == None: # not initialized rather than initialized to ''
-         self._lazy_extid = '-'.join((self.ext, self.id)) if self.isNumbered() else ''
-      return self._lazy_extid 
-
-   extid = property(_extid)
+      self.simpleName = '.'.join( (self.name,self.id,self.imp) )
 
 
    def _programName(self):
@@ -48,13 +52,17 @@ class FileNameParts(object):
 
 
    def _datName(self):
-      return self.programName + '_dat'
+      return self.simpleName + '_dat'
 
    datName = property(_datName)
 
 
    def _baseName(self):
-      return '.'.join( (self.name, self.extid) ) if self.extid else self.name
+      if self.isNumbered():
+         impid = '-'.join( (self.imp,self.id) )
+         return '.'.join( (self.name,impid) )
+      else:
+         return self.name
 
    baseName = property(_baseName)
 
@@ -66,7 +74,7 @@ class FileNameParts(object):
 
 
    def _logName(self):
-      return self.simpleName + '_log'
+      return self.simpleName + '.log'
 
    logName = property(_logName)
 
@@ -83,23 +91,11 @@ class FileNameParts(object):
    highlightName = property(_highlightName)
 
 
-   def _extPrefix(self):
-      return self.ext.partition('_')[0]
-
-   extPrefix = property(_extPrefix)
-
-
-   def _simpleName(self):
-      return '.'.join( (self.name,self.id,self.ext) )
-
-   simpleName = property(_simpleName)
-
-
    def __str__(self):
-      return '%s,%s,%s' % (self.name, self.ext, self.id)
+      return '%s,%s,%s' % (self.name, self.id, self.imp)
 
    def isNumbered(self):
-      return len(self.id) > 1
+      return self.id != '0' and self.id != '1'
 
 
 
@@ -107,25 +103,22 @@ class FileNameParts(object):
 class LinkNameParts(FileNameParts):
    """ 
    self.filename = 'binarytrees.gcc' | self.filename = 'binarytrees.gcc-4.gcc'
-   ext = 'icc'
-   self.programName = 'binarytrees.icc' | self.linkname = 'binarytrees.icc-4.icc'
+   imp = 'icc'
+   self.programName = 'binarytrees.icc' | self.programName = 'binarytrees.icc-4.icc'
    """
-   def __init__(self,filename,ext): 
+   def __init__(self,filename,imp): 
       FileNameParts.__init__(self,filename)  
-      self._lazy_programName = None
-      self.ext = ext
+      self.imp = imp
+
+      if self.isNumbered():
+         impid = '-'.join( (self.imp,self.id) )
+         self.__programName = '.'.join( (self.name,impid,self.imp) )
+      else:
+         self.__programName = '.'.join( (self.name,self.imp) )
+
 
    def _programName(self):
-      if self._lazy_programName == None: # not initialized rather than initialized to '' 
-         self._lazy_programName = \
-         '.'.join( (self.name, '-'.join( (self.ext,self.id) ), self.ext) ) \
-            if self.isNumbered() else '.'.join( (self.name,self.ext) ) 
-
-      return self._lazy_programName 
-
-
-   def __str__(self):
-      return '%s,%s,%s,%s' % (self.name, self.ext, self.id, self.filename)
+      return self.__programName 
 
 
 
@@ -142,7 +135,13 @@ class Record(object):
 
 
    def __init__(self,arg='0'):
-      self.setEmpty()
+      self.arg = 0
+      self.elapsed = 0.0 
+      self.userSysTime = 0.0 
+      self.maxMem = 0
+      self.gz = 0
+      self.status = self._EMPTY 
+      self.cpuLoad = '%' 
       self.argString = arg
 
    def fromString(self,s):
@@ -185,15 +184,6 @@ class Record(object):
 
    def setMissing(self):
       self.status = self._MISSING
-
-   def setEmpty(self):
-      self.arg = 0
-      self.elapsed = 0.0 
-      self.userSysTime = 0.0 
-      self.maxMem = 0
-      self.gz = 0
-      self.status = self._EMPTY 
-      self.cpuLoad = '%' 
 
    def isOkay(self):
       return self.status == self._OK

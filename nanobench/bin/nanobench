@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # The Computer Language Benchmarks Game
-# $Id: nanobench,v 1.38 2008-08-07 14:03:52 igouy-guest Exp $
+# $Id: nanobench,v 1.39 2008-08-09 05:19:44 igouy-guest Exp $
 
 """
 Description: nanobench records a program's cpu
@@ -19,52 +19,15 @@ where standalone options include:
       commandline string should be sufficient 
       to run a program from the current directory
 
-   --runs <int>
-      how many times to run a program [3]
-
-   --cutoff <int>
-      how many seconds to allow before 
-      cancelling additional program runs [60]
-
-   --delay <float>
-      delay in seconds between sampling 
-      memory usage [0.2]
-
-   --maxtime <int>
-      how many seconds to allow before 
-      stopping a program [600]
-
-   -h --help
-      print this help message
-
-where benchmarks game options include:
-
    --conf <path>
       configuration file [./nanobench.conf]
 
-   --range <test values>
-      comma separated int program args
+   --force <string>
+      force the implementations or benchmarks to be 
+      measured again even if they are up to date
 
-   --data <path>
-      test data file
-
-   --ndiff <parameter string>
-      ndiff parameters, example "-abserr 1.0e-8"
-
-   --binarycmp
-      program output is binary, use cmp
-
-where benchmarks game .ini file options include:
-
-   logfilemax: <int>
-      set greater than 0 to create a rotating
-      log file [0]
-
-   outputmax: <int>
-      how many bytes of a program output to 
-      include in each build & run log before 
-      truncating program output [10240]
-
+   -h --help
+      print this help message
 
 Output: _,40.739,6356,0,100% 0% 0% 0%,40.782
    _ 
@@ -75,84 +38,145 @@ Output: _,40.739,6356,0,100% 0% 0% 0%,40.782
    40.782	elapsed time (seconds)
 """
 
+
+
 from __future__ import with_statement
 
 __author__ =  'Isaac Gouy'
 
 
-from domain import FileNameParts, LinkNameParts, Record
-from nanolib import configureLogger, getLogger, envPath
 
-import sys, os, re, fnmatch, bz2, copy
+# =============================
+# imports
+# =============================
+
+
+
+import bz2, copy, fnmatch, logging, os, re, sys
 
 # need to use ConfigParser not SafeConfigParser
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
-from gzip import GzipFile
 from contextlib import nested
 from cStringIO import StringIO
+from domain import FileNameParts, LinkNameParts, Record
 from errno import ENOENT, EEXIST
 from getopt import getopt, GetoptError
-from shutil import copyfile,rmtree
+from gzip import GzipFile
+from logging.handlers import RotatingFileHandler
+from os.path import expanduser, expandvars, normpath, isdir, join, realpath, \
+   getmtime, isfile, getsize
+from shutil import copyfile,move, rmtree
 from subprocess import call, STDOUT
-from tempfile import TemporaryFile
 from time import strftime, localtime, gmtime
-from os.path import expanduser, expandvars, getsize, getmtime, isdir, isfile, \
-                    join, normpath, realpath, split, splitext   
 
 
-# globals
+
+# =============================
+# global variables
+# =============================
+
+
+
 logfilemax = 0
 logger = None
-loggerLine = None
-
-
-make = frozenset()
-commandlines = {}
-alias = {}
-testvalues = []
-data = None
-ndiff = None
-binarycmp = None
-
-runs = 3
-cutoff = 60
-delay = 0.2
-maxtime = 600
-
-outputmax = 10240
-
-_OUT = '_out'
 
 logdirName = 'log'
 datdirName = 'dat'
 tmpdirName = 'tmp'
 codedirName = 'code'
 
-sitename = None
-srcdir = None
-testdir = None
-makedir = None
-hidir = None
-logdir = None
-datdir = None
-tmpdir = None
+_OUT = '_out'
+
 codedir = None
+datdir = None
+logdir = None
+testdir = None
+tmpdir = None
+srcdir = None
+
+dirs = {
+    'nano' : None
+   ,'root' : None
+   ,'src' : None
+
+   ,'make' : None
+   ,'data' : None
+
+   ,'dat_sweep' : None
+   ,'code_sweep' : None
+   ,'log_sweep' : None
+   }
+
+filters = {
+    'onlydirs' : frozenset()
+   ,'allow' : []
+   ,'only' : []
+   ,'ignore' : []
+   }
+
+alias = {}
+binarycmp = {}
+commandlines = {}
+make = frozenset()
+ndiff = {}
+testname = None
+testdata = {}
+testenv = {}
+testrange = {}
+testvalues = []
+
+outputmax = 10240
+
+
+# =============================
+# initialize & configure
+# =============================
 
 
 
-def initializeFrom(ini):
+def configure(ini):
    global runs, cutoff, delay, maxtime, logfilemax, outputmax, make
 
    try:
       parser = ConfigParser()
       parser.read(ini)
 
-      make = frozenset( parser.get("build", "make").split() )
-      commandlines.update( parser.items("commandlines") )
+      # site specific directories
+      for k,v in parser.items('dirs'):
+         dirs[k] = normpath( expandvars( expanduser( v ))) 
 
-      for k,v in parser.items("alias"):
+      for k,v in parser.items('filters'):
+         filters[k] = v.split() 
+      filters['onlydirs'] = frozenset( filters['onlydirs'])
+
+      for k,v in parser.items('alias'):
          alias[k] = v.split() 
+
+      for k,v in parser.items('testrange'):
+         testrange[k] = v.split() 
+
+      # compiler interpreter runtime location shell vars
+      for k,v in parser.items('tools'):
+         os.environ[k.upper()] = v
+
+      for k,v in parser.items('ndiff'):
+         ndiff[k] = v
+
+      for k,v in parser.items('binarycmp'):
+         binarycmp[k] = v
+
+      # test specific shell vars
+      for each in filters['onlydirs']:
+         if parser.has_section(each):
+            d = {}
+            for k,v in parser.items(each):
+               d[k.upper()] = v
+            testenv[each] = d
+
+
+      make = frozenset( parser.get('build', 'make').split() )
+      commandlines.update( parser.items('commandlines') )
 
       s = 'measure'
       if parser.has_section(s):
@@ -177,8 +201,8 @@ def initializeFrom(ini):
 
 
 
-def createDirectories():
-   global srcdir,sitename,testdir,makedir,hidir,logdir,datdir,codedir,logger
+def makeNanobenchDirectories(dirName):
+   global logger,datdir
 
    def ifNoneMkdir(path,name):
       d = join(path,name)
@@ -187,219 +211,48 @@ def createDirectories():
          if logger: logger.debug('mkdir %s' % d)
       return d
 
-   # assume srcdir path ends with a test name
-   srcdir = os.getcwd()
-
-   rootdir = envPath('SITE_ROOT')
-   if rootdir:
-      if not isdir(rootdir): os.mkdir(rootdir) 
-      configureLogger(logfilemax,rootdir)
-      logger = getLogger()
-      testdir = ifNoneMkdir(rootdir,split(srcdir)[1])
+   if dirs['root'] and isdir(dirs['root']):
+      configureLogger(logfilemax,dirs['root'])
+      workingdir = ifNoneMkdir(dirs['root'],dirName)
    else:
-      print 'please set SITE_ROOT in Makefile.site_*'
+      print 'please set [dirs] root: in *.ini'
       sys.exit(0)
 
-   sitename = os.environ.get( 'SITE_NAME', '')
-   if not sitename:
-      print 'please set SITE_NAME in Makefile.site_*'
-      if logger: logger.critical('please set SITE_NAME in Makefile.site_*')
+   if not (dirs['make'] and isdir(dirs['make'])):
+      print 'please set [dirs] make: in *.ini'
+      if logger: logger.critical('please set [dirs] make: in *.ini')
       sys.exit(0)
 
-   makedir = envPath('SITE_MAKEFILES')
-   if not isdir(makedir):
-      print 'please set NANO_ROOT for MAKE_ROOT in Makefile.site_*'
-      if logger: logger.critical('please set NANO_ROOT for MAKE_ROOT in Makefile.site_*')
-      sys.exit(0)
+   if dirs['dat_sweep'] and not isdir(dirs['dat_sweep']): 
+      if logger: logger.warn('no directory ', dirs['dat_sweep'])
 
-   hidir = envPath('NANO_HIGHLIGHT')
-   if not isdir(hidir):
-      if logger: logger.warn('NANO_HOGHLIGHT directory not set')
+   if dirs['log_sweep'] and not isdir(dirs['log_sweep']): 
+      if logger: logger.warn('no directory ', dirs['log_sweep'])
 
-   csvsweep = envPath('CSV_SWEEP')
-   if csvsweep and not isdir(csvsweep): 
-      os.mkdir(csvsweep) 
-      if logger: logger.debug('mkdir CSV_SWEEP %s' % csvsweep)
+   if dirs['code_sweep'] and not isdir(dirs['code_sweep']): 
+      if logger: logger.warn('no directory ', dirs['code_sweep'])
 
-   codesweep = envPath('CODE_SWEEP')
-   if codesweep and not isdir(codesweep): 
-      os.mkdir(codesweep) 
-      if logger: logger.debug('mkdir CODE_SWEEP %s' % codesweep)
-
-   logsweep = envPath('LOG_SWEEP')
-   if logsweep and not isdir(logsweep): 
-      os.mkdir(logsweep) 
-      if logger: logger.debug('mkdir LOG_SWEEP %s' % logsweep)
-
-   logdir = ifNoneMkdir(testdir,logdirName)
-   datdir = ifNoneMkdir(testdir,datdirName)
-   codedir = ifNoneMkdir(testdir,codedirName)
+   ifNoneMkdir(workingdir,logdirName)
+   datdir = ifNoneMkdir(workingdir,datdirName)
+   ifNoneMkdir(workingdir,codedirName)
 
 
 
-def targets():
-   # include undeleted filenames that might have a file extension
-   files = fnmatch.filter( os.listdir(srcdir), '*.*[!~]' )
+def configureLogger(logfilemax,loggerDir=None):
+   global logger
+   # if a logfilemax size was set, log line-by-line to a rotating log file
+   # (as well as logging program-run by program-run to stdout)
 
-   # exclude bogus files created by touch
-   files = [FileNameParts(f) for f in files if not f.startswith('*')]
+   if logfilemax:
+      f = join(loggerDir,'nano.log') if loggerDir else join('nano.log')
+      h = RotatingFileHandler(filename=f,maxBytes=logfilemax,backupCount=1)
 
+      fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+      h.setFormatter(fmt)
 
-   # ALLOW these helper file extensions to be available unchanged 
-   # from the working directory - they will never be measured
-   a = frozenset( os.environ.get( 'ALLOW', '').split() )
-   allowed = []; _files = files; files = []
-
-   for f in _files:
-      if f.ext in a:
-         allowed.append(f)
-      else:
-         files.append(f)
-      # giving a list of ALLOWed filenames and a list without ALLOWed filenames
-
-
-   # reverse alias dictionary so we can look up the target for each alias
-   revAlias = {}
-   for k,vs in alias.iteritems():
-      for v in vs:
-         revAlias[v] = k
-
-   links = [] 
- 
-   # ONLY measure files with these extensions 
-   o = os.environ.get( 'ONLY', '').split()
-   if o:
-      _files = files; files = []
-      
-      for ext in o:
-         reva = revAlias.get(ext,None)   
-         for f in _files:
-            if reva:
-               if f.ext == reva:
-                  links.append(LinkNameParts(f.filename,ext)) 
-            else:
-               if f.ext == ext:
-                  files.append(f)
-      # giving a list of ONLY links and a list of ONLY files
-
-   # measure files with ANY extension, except ...
-   else: 
-      # create alias filenames
-      for f in files:
-         for ext in alias.get(f.ext,[]):
-            links.append(LinkNameParts(f.filename,ext)) 
-
-      # IGNORE files or links with these extensions
-      ignore = frozenset( os.environ.get( 'IGNORE', '').split() )
-      if ignore:
-         links = [f for f in links if not f.ext in ignore]
-         files = [f for f in files if not f.ext in ignore]
-
-
-   # assume dat file is only written once, when all data is available
-
-   def notUpToDate(s,d):
-      try:
-         return getmtime(s) > getmtime( join(datdir,d) )
-      except OSError, (e,_): 
-         return e == ENOENT # No such file or directory
-
-   links = [f for f in links if notUpToDate(f.filename,f.datName)]
-   files = [f for f in files if notUpToDate(f.filename,f.datName)]
-
-   return allowed,files,links
-
-
-
-def cmdTemplate(p):
-   specials = {}
-   specials['%X'] = p.runName if hasMake(p.ext) else p.programName
-   specials['%T'] = p.name
-   specials['%B'] = p.baseName
-   specials['%I'] = p.id
-
-   s = commandlines.get(p.ext,None)
-   if s:
-      for m in re.finditer('\$[\w]+' ,s): 
-         k = m.group(0)
-         v = os.environ.get( k.lstrip('$'), '' )
-         s = re.sub('\\' + k + '(?P<c>[\W])', v + '\g<c>', s) # ate [\W] !
-
-      for m in re.finditer('\%[XTBI]' ,s):
-         value = specials.get( m.group(0), '' )
-         s = re.sub('\\'+ m.group(0), value, s) 
-
-   else:
-      s = join('.',p.runName) + ' %A'
-
-   return s
-
-
-
-def cmdWithArg(s,arg):
-   _a = '0' if data else arg
-   for m in re.finditer('\%A' ,s):
-      s = re.sub('\\'+ m.group(0), _a, s) 
-   return s
-
-
-
-# adapt to unavailable libgtop2
-try:
-   import gtop
-except ImportError, (_,err):
-   if logger: logger.warn(err)
-   from planB import measure # only rusage cpu time
-else:
-   from planA import measure # cpu load, resident memory and rusage cpu time
-
-
-
-def dataName(arg):
-   # assume there is a data file
-   root,ext = splitext(data)
-   return normpath( expandvars( expanduser( root + arg + ext )))
-
-
-
-def outName(index):
-   return join(_OUT) if index == 0 else '/dev/null'
-
-
-
-def logName(p):
-   return join(logdir, p.logName)
-
-
-
-def diffName():
-   return join(tmpdir,'_diff')
-
-
-
-def errName():
-   return join(tmpdir,'_err')
-
-
-
-def makeName():
-   return join(tmpdir,'_make')
-
-
-
-def hasMake(ext):
-   return ext in make
-
-
-
-def callMake(p):
-   with open( makeName(), 'w') as mf: 
-      mf.write('\nMAKE:\n')
-
-   optionFile = join(makedir, sitename + '.programs.Makefile')
-   cmd = 'make -f ' + optionFile + ' ' + p.runName
-   with open( makeName(), 'a') as mf:
-      call(cmd.split(),stdout=mf,stderr=STDOUT)
+      logger = logging.getLogger("nanobench")
+      logger.addHandler(h)
+      logger.setLevel(logging.DEBUG)
 
 
 
@@ -418,21 +271,361 @@ def symlinkSource(directory,filename,dstDir=None,srcFilename=None):
 
 
 
-def standalone(cmd):
-   results = StringIO()
-   for i in range(0,runs):
-      with nested( open( outName(i), 'w'), 
-                   TemporaryFile(mode='w+t')) as (of,ef):
+# adapt to unavailable libgtop2
+try:
+   import gtop
+except ImportError, (_,err):
+   if logger: logger.warn(err)
+   from planB import measure # only rusage cpu time
+else:
+   from planA import measure # cpu load, resident memory and rusage cpu time
 
-         m = measure('_',cmd.split(),delay,maxtime,of,ef)
-         print >>results, m
-         if ef.tell(): ef.seek(0); print >>results, ef.read()
 
-         if not m.isOkay(): break
-         if m.hasExceeded(cutoff): continue
 
-   print results.getvalue()
-   results.close()
+# =============================
+# clean & filter files
+# =============================
+
+
+
+def clean(d,srcSet): 
+
+   def cleanLocal(name,localDirName,ext,sweepDir=None,isSymlink=False):
+      names = frozenset( [n.__getattribute__(name) for n in srcSet] )
+      localNames = frozenset(
+         [f for f in os.listdir( join(d,localDirName)) if f.endswith(ext)] )
+      obsolete = localNames - names
+      if obsolete and logger: logger.debug('cleaning %s directory', d)
+      # rm those obsolete files
+
+      if sweepDir:
+         sweepNames = frozenset( 
+            [f for f in os.listdir( sweepDir) if f.endswith(ext)])
+         obsolete = sweepNames - names
+         if obsolete and logger: logger.debug('cleaning %s directory', sweepDir)
+         # rm those obsolete files
+         # probably want this to be a CVS remove?
+
+   #cleanLocal('datName',datdirName,'dat')
+   #cleanLocal('logName',logdirName,'log',sweepDir=dirs['log_sweep'])
+   #cleanLocal('codeName',codedirName,'_code',isSymlink=True)
+   #cleanLocal('highlightName',codedirName,'.code', dirs['code_sweep'])
+
+   names = frozenset( [n.programName for n in srcSet] )
+   localNames = frozenset( 
+      [f for f in os.listdir( join(d,codedirName)) if not f.endswith('code')] )
+   obsolete = localNames - names
+   if obsolete and logger: logger.debug('cleaning %s directory', d)
+
+   # rm those obsolete files
+
+
+
+def targets(originalFiles,aliasedFiles):
+   # ALLOW these helper file extensions to be available unchanged 
+   # from the working directory - they will never be measured
+   a = frozenset( filters['allow'] )
+   allowed = []; _files = originalFiles; files = []
+
+   for f in _files:
+      if f.imp in a:
+         allowed.append(f)
+      else:
+         files.append(f)
+      # giving a list of ALLOWed filenames and a list without ALLOWed filenames
+
+   # reverse alias dictionary so we can look up the target for each alias
+   revAlias = {}
+   for k,vs in alias.iteritems():
+      for v in vs:
+         revAlias[v] = k
+
+   links = [] 
+ 
+   # ONLY measure files with these extensions 
+   o = filters['only']
+   if o:
+      _files = files; files = []
+      
+      for ext in o:
+         reva = revAlias.get(ext,None)   
+         for f in _files:
+            if reva:
+               if f.imp == reva:
+                  links.append(LinkNameParts(f.filename,imp)) 
+            else:
+               if f.imp == imp:
+                  files.append(f)
+      # giving a list of ONLY links and a list of ONLY files
+
+   # measure files with ANY extension, except ...
+   else: 
+      # create alias filenames
+      links = aliasedFiles
+
+      # IGNORE files or links with these extensions
+      ignore = frozenset( filters['ignore'] )
+      if ignore:
+         links = [f for f in links if not f.imp in ignore]
+         files = [f for f in files if not f.imp in ignore]
+
+   # assume dat file is only written once, when all data is available
+
+   def notUpToDate(s,d):
+      try:
+         return getmtime( join(srcdir,s) ) > getmtime( join(datdir,d) )
+      except OSError, (e,_): 
+         return e == ENOENT # No such file or directory
+
+   links = [f for f in links if notUpToDate(f.filename,f.datName)]
+   files = [f for f in files if notUpToDate(f.filename,f.datName)]
+
+   return allowed,files,links
+
+
+
+def worklist():
+   global srcdir
+
+   w = []
+   subdirs = [each for each in os.listdir( dirs['src'] ) 
+      if each in filters['onlydirs']]
+
+   subdirs.sort()
+   for d in subdirs:  
+      makeNanobenchDirectories(d) 
+ 
+      # take all likely names in src directory
+      # create simpleNames for each name and each possible alias
+      srcdir = join(dirs['src'],d)
+
+      # include undeleted filenames that might have a file extension
+      files = fnmatch.filter( os.listdir(srcdir), '*.*[!~]' )
+
+      # exclude bogus files created by touch
+      files = [FileNameParts(f) for f in files if not f.startswith('*')]
+
+      original = [fp for fp in files]
+
+      src = set( original )
+      aliased = []
+      for o in original:
+         for imp in alias.get(o.imp,[]): 
+            aliased.append( LinkNameParts(o.filename,imp))
+      src.update(aliased)
+
+      #clean(each,src)
+
+      allowed,sources,links = targets(original,aliased)
+
+      programs = set(sources)
+      programs.update(links)
+
+      # symlink these programs from codedir so they are available 
+      # for conversion to highlight-ed xml files
+      codedir = join(dirs['root'],d,'code')
+      for f in programs:
+         symlinkSource(directory=srcdir, srcFilename=f.filename,
+            dstDir=codedir, filename=f.programName)
+
+         symlinkSource(directory=srcdir, srcFilename=f.filename,
+            dstDir=codedir, filename=f.codeName)
+
+      w.append( (d,programs,allowed) )
+
+   return w
+
+
+
+# =============================
+# make
+# =============================
+
+
+def makeName():
+   return join('_make')
+
+
+
+def hasMake(ext):
+   return ext in make
+
+
+
+def callMake(p):
+   with open( makeName(), 'w') as mf: 
+      mf.write('\nMAKE:\n')
+
+   makedir = dirs['root']
+   optionFile = join(makedir, 'programs.Makefile')
+   cmd = 'make -f ' + optionFile + ' ' + p.runName
+   with open( makeName(), 'a') as mf:
+      call(cmd.split(),stdout=mf,stderr=STDOUT)
+
+
+
+def cmdTemplate(p):
+   specials = {}
+   specials['%X'] = p.runName if hasMake(p.imp) else p.programName
+   specials['%T'] = p.name
+   specials['%B'] = p.baseName
+   specials['%I'] = p.id
+
+   s = commandlines.get(p.imp,None)
+   if s:
+      for m in re.finditer('\$[\w]+' ,s): 
+         k = m.group(0)
+         v = os.environ.get( k.lstrip('$'), '' )
+         s = re.sub('\\' + k + '(?P<c>[\W])', v + '\g<c>', s) # ate [\W] !
+
+      for m in re.finditer('\%[XTBI]' ,s):
+         value = specials.get( m.group(0), '' )
+         s = re.sub('\\'+ m.group(0), value, s) 
+
+   else:
+      s = join('.',p.runName) + ' %A'
+
+   return s
+
+
+
+def cmdWithArg(s,arg):
+   _a = '0' if testdata.get(testname,None) else arg
+   for m in re.finditer('\%A' ,s):
+      s = re.sub('\\'+ m.group(0), _a, s) 
+   return s
+
+
+# =============================
+# measure
+# =============================
+
+
+
+def diffName():
+   return join('_diff')
+
+
+
+def errName():
+   return join('_err')
+
+
+
+def logName(p):
+   return join(logdir, p.logName)
+
+
+
+def outName(index):
+   return join(_OUT) if index == 0 else '/dev/null'
+
+
+
+def setVariables(name):
+   global testname,testvalues,testdir,codedir,datdir,logdir,srcdir
+   testname = name
+
+   # export test specific environment variables for tools
+   os.environ['TEST'] = testname
+   for k,v in testenv.get(testname,{}).iteritems():
+      os.environ[k] = v
+
+   testvalues = testrange[name]
+   testdir = join(dirs['root'],testname)
+   codedir = join(testdir,codedirName)
+   datdir = join(testdir,datdirName)
+   logdir = join(testdir,logdirName)
+   srcdir = join(dirs['src'],testname)
+
+
+
+def cleanTmpdirFor(p,allowed):
+   # every time, provide each program with a clean empty tmpdir
+   os.chdir(testdir)
+   tmpdir = join(testdir,tmpdirName)
+
+   try:
+      rmtree(tmpdir)
+   except OSError, (e,err):
+      if e == ENOENT:
+         if logger: logger.info('%s %s %s',e,err,tmpdir)
+
+   # make sure all build files and crash files are created in tmpdir
+   os.mkdir(tmpdir)
+   os.chdir(tmpdir)
+
+   # symlink from tmpdir to Include directory
+   symlinkSource(dirs['src'],'Include')
+
+   # symlink from tmpdir to these allowed helper files 
+   for f in allowed:
+      symlinkSource(srcdir,f.filename)
+
+   # symlink from tmpdir to expected output files
+   for f in [f for f in os.listdir(testdir) if f.endswith(_OUT)]:
+      symlinkSource(testdir,f)
+
+   # symlink from tmpdir to the program source code file
+   symlinkSource(codedir,p.programName)
+
+
+
+def callHighlightSourceCodeMarkup(p):
+   hidir = join( dirs['nano'], 'highlight')
+
+   cmd = ['highlight','--fragment'
+         ,'--add-data-dir=' + hidir + '/'
+         ,'--add-config-dir=' + hidir + '/'
+         ,'--style=typical'
+         ,'--force'
+         ,'-i'
+         ,join(codedir,p.codeName)
+         ,'-o'
+         ,join(codedir,p.highlightName)
+         ]
+
+   try:
+      call(cmd)
+   except OSError, (e,err): 
+      if logger: logger.debug('%s %s',e,err)
+
+
+
+def sizeCompressedSourceCode(p):
+   s = ''
+   with open( join(codedir,p.highlightName), 'r') as sf:
+      s = sf.read()
+      s = re.sub('<span class="com">.*<\/span>', '', s)
+      s = re.sub('<span class="slc">.*<\/span>', '', s)
+      s = re.sub('<span class="[a-z]{3}">', '', s)
+
+      s = re.sub('<span class="hl com">.*<\/span>', '', s)
+      s = re.sub('<span class="hl slc">.*<\/span>', '', s)
+      s = re.sub('<span class="hl [a-z]{3}">', '', s)
+
+      s = re.sub('<\/span>', '', s)
+
+      s = re.sub('\s+', ' ', s)
+      s = re.sub('&quot;', '"', s)
+      s = re.sub('&lt;', '<', s)
+      s = re.sub('&gt;', '>', s)
+      s = re.sub('&#64;', '@', s)
+
+   sz = 0
+   if s:
+      path = join('_gz')
+      try:
+         gz = GzipFile(path,'wb',1)
+         gz.write(s)
+      except (OSError,IOError), err:
+         if logger: logger.error(err)
+      finally:
+         gz.close()
+
+      sz = os.stat(path).st_size
+
+   return sz
 
 
 
@@ -446,9 +639,9 @@ def checkAndLog(m,outFile,logf):
          with open( diffName(), 'w') as df:
             try:
                # compare _OUT not outFile so short name will be shown in logf
-               if ndiff:
-                  call(["ndiff",'-quiet',ndiff,_OUT,argFile],stdout=df,stderr=STDOUT)
-               elif binarycmp:
+               if ndiff.get(testname,None):
+                  call(["ndiff",'-quiet',ndiff[testname],_OUT,argFile],stdout=df,stderr=STDOUT)
+               elif binarycmp.get(testname,None):
                   call(["cmp",_OUT,argFile],stdout=df,stderr=STDOUT)
                else:
                   call(["diff",_OUT,argFile],stdout=df,stderr=STDOUT)
@@ -466,7 +659,7 @@ def checkAndLog(m,outFile,logf):
          copyfile(outFile, join('..', m.argString + _OUT))
                   
    if not m.isOkay():
-      extra = '' if not m.hasTimedout() else ' %s %d%s' % ('after',maxtime,'s')
+      extra = '' if not m.hasTimedout() else '%s %d%s' % ('after',maxtime,'s')
       print >>logf, '\n%s%s\n' % (m.statusStr(),extra)
 
 
@@ -476,7 +669,7 @@ def measureCheckAndLog(p,t,ms):
 
    for a in testvalues:
       cmd = cmdWithArg(t,a)
-      ofName = outName(0)
+      ofName = outName(0) 
 
       # a logged Empty record will reveal a nanobench failure
       m = Record() 
@@ -488,13 +681,13 @@ def measureCheckAndLog(p,t,ms):
                print >>logf, '\n', strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
 
                # append Make output to log
-               if hasMake(p.ext):
+               if hasMake(p.imp):
                   with open( makeName(), 'r') as mf:
                      logf.write( mf.read() ) 
 
                with open(errName(),'w+') as ef:
                   # append command line showing redirected test data file to log
-                  if data:
+                  if testdata.get(testname,None):
                      dfName = dataName(a)
                      print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
                      with open(dfName,'r') as df:
@@ -520,7 +713,7 @@ def measureCheckAndLog(p,t,ms):
                         logf.write( df.read() )               
 
                   # append program output to log
-                  if binarycmp:
+                  if binarycmp.get(testname,None):
                      logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
                   elif getsize(ofName) > outputmax:
                      of.truncate(outputmax)
@@ -565,7 +758,7 @@ def measureOnly(a,t,ms):
       with open( outName(i), 'w') as of:
 
          # pass the test data file to program stdin
-         if data:
+         if testdata.get(testname,None):
             dfName = dataName(a)
             with open(dfName,'r') as df:
                m = measure(a,cmd.split(),delay,maxtime,of,STDOUT,df,logger=logger)
@@ -582,106 +775,17 @@ def measureOnly(a,t,ms):
 
 
 
-def cleanTmpdirFor(p,allowed):
-   global tmpdir
-
-   # every time, provide each program with a clean empty tmpdir
-   os.chdir(testdir)
-   tmpdir = join(testdir,tmpdirName)
-
-   try:
-      rmtree(tmpdir)
-   except OSError, (e,err):
-      if e == ENOENT:
-         if logger: logger.info('%s %s %s',e,err,tmpdir)
-
-   # make sure all build files and crash files are created in tmpdir
-   os.mkdir(tmpdir)
-   os.chdir(tmpdir)
-
-   # symlink from tmpdir to Include directory
-   symlinkSource( normpath( join(srcdir,'..') ) ,'Include')
-
-   # symlink from tmpdir to these allowed helper files 
-   for f in allowed:
-      symlinkSource(srcdir,f.filename)
-
-   # symlink from tmpdir to expected output files
-   for f in [f for f in os.listdir(testdir) if f.endswith(_OUT)]:
-      symlinkSource(testdir,f)
-
-   # symlink from tmpdir to the program source code file
-   symlinkSource(codedir,p.programName)
-
-
-
-def callHighlightSourceCodeMarkup(p):
-   if hidir:
-      cmd = ['highlight','--fragment'
-            ,'--add-data-dir='+hidir+'/'
-            ,'--add-config-dir='+hidir+'/'
-            ,'--style=typical'
-            ,'--force'
-            ,'-i'
-            ,join(codedir,p.codeName)
-            ,'-o'
-            ,join(codedir,p.highlightName)
-            ]
-      try:
-         call(cmd)
-      except OSError, (e,err): 
-         if logger: logger.debug('%s %s',e,err)
-
-
-
-def sizeCompressedSourceCode(p):
-   s = ''
-   with open( join(codedir,p.highlightName), 'r') as sf:
-      s = sf.read()
-      s = re.sub('<span class="com">.*<\/span>', '', s)
-      s = re.sub('<span class="slc">.*<\/span>', '', s)
-      s = re.sub('<span class="[a-z]{3}">', '', s)
-
-      s = re.sub('<span class="hl com">.*<\/span>', '', s)
-      s = re.sub('<span class="hl slc">.*<\/span>', '', s)
-      s = re.sub('<span class="hl [a-z]{3}">', '', s)
-
-      s = re.sub('<\/span>', '', s)
-
-      s = re.sub('\s+', ' ', s)
-      s = re.sub('&quot;', '"', s)
-      s = re.sub('&lt;', '<', s)
-      s = re.sub('&gt;', '>', s)
-      s = re.sub('&#64;', '@', s)
-
-   sz = 0
-   if s:
-      path = join(tmpdir,'_gz')
-      try:
-         gz = GzipFile(path,'wb',1)
-         gz.write(s)
-      except (OSError,IOError), err:
-         if logger: logger.error(err)
-      finally:
-         gz.close()
-
-      sz = os.stat(path).st_size
-
-   return sz
-
-
-
-def measurePrograms(programs,allowed):
+def measurePrograms(name,programs,allowed,total):
    global loggerLine
 
-   def fillInMissingRecords(ms):
+   def fillInMissingRecords(ms): 
       for a in testvalues[len(ms):]:
          c = copy.deepcopy(ms[-1:])
          if c:
             c[0].argString = a
             ms.append(c[0])
 
-   total = len(programs)
+   setVariables(name)
 
    for p in programs:
       cleanTmpdirFor(p,allowed)
@@ -692,7 +796,7 @@ def measurePrograms(programs,allowed):
       callHighlightSourceCodeMarkup(p)
       srcSize = sizeCompressedSourceCode(p)
 
-      if hasMake(p.ext):
+      if hasMake(p.imp):
          callMake(p)   
 
       loggerLine = StringIO()
@@ -721,82 +825,250 @@ def measurePrograms(programs,allowed):
       if logger: logger.info( loggerLine.getvalue() )
       loggerLine.close()
 
+   return total
 
 
-def benchmarksGame():
-   # assume $CWD is a program source directory
-   createDirectories()
-   allowed,sources,links = targets()
 
-   programs = set(sources)
-   programs.update(links)
+# =============================
+# summary files
+# =============================
 
-   # symlink these programs from codedir so they are available 
-   # for conversion to highlight-ed xml files
-   for f in programs:
-      symlinkSource(directory=srcdir, srcFilename=f.filename,
-         dstDir=codedir, filename=f.programName)
 
-      symlinkSource(directory=srcdir, srcFilename=f.filename,
-         dstDir=codedir, filename=f.codeName)
 
-   measurePrograms(programs,allowed)
+def appendNames(fp,f):
+   # append benchmark name, language implementation and program id
+   f.write('%s,%s,%s,' % (fp.name,fp.imp,fp.id))
+
+
+
+def appendToBothDataCsv(ms,fp,df,ndf):
+   # for each test value find the measurements with lowest userSysTime
+   d = {}
+   mem = {}
+   for each in ms: 
+      # find lowest userSysTime
+      v = d.get(each.arg,None)
+      if not v or (each.isOkay() and each.userSysTime < v.userSysTime):
+         d[each.arg] = each
+
+      # find highest maxMem
+      v = mem.get(each.arg,None)
+      if not v or (each.isOkay() and each.maxMem > v):
+         mem[each.arg] = each.maxMem
+
+      # if there's something wrong then these measurements are bogus
+      if not each.isOkay():
+         each.userSysTime = 0.0
+         each.maxMem = 0
+
+
+   # set maxMem to the highest recorded memory for that test value
+   for k,v in d.iteritems():
+      v.maxMem = mem[k]
+
+   # sort and append measurements to ndata.csv
+   ms = d.values()
+   ms.sort()
+   for each in ms:
+      appendNames(fp,ndf)
+      ndf.write(str(each)); ndf.write('\n')
+
+   # there should be a measurement for each test value
+   # the measurements are sorted ascending by test value
+   # the last measurement should be the largest test value
+   # append that last measurement to data.csv
+   try:
+      appendNames(fp,df)
+      df.write(str(ms[-1:][0])); df.write('\n')
+   except IndexError, err:
+      if logger: logger.error(err)
+
+
+
+def appendToBulkdataCsv(ms,fp,bdf):
+   # append every measurement to bulkdata.csv
+   for each in ms:
+      if each.isOkay():
+         appendNames(fp,bdf)
+         bdf.write(str(each)); bdf.write('\n')
+
+
+
+def appendToCsv(d,path,filename,df,ndf,bdf):
+   try:
+      f = bz2.BZ2File( join(path,filename),'r')
+      ms = [Record().fromString( s.rstrip('\n')) for s in f.readlines()]
+      fp = FileNameParts(filename)
+      appendToBulkdataCsv(ms,fp,bdf)
+      appendToBothDataCsv(ms,fp,df,ndf)
+
+   except IOError, err:
+      if logger: logger.error(err)
+   finally:
+      f.close()
+
+
+
+def walkDatFiles(df,ndf,bdf):
+   subdirs = [each for each in os.listdir( dirs['root'] ) 
+      if each in filters['onlydirs']]
+   subdirs.sort()
+   for d in subdirs: 
+      try:
+         path = join(d,datdirName)
+         datfiles = os.listdir(path)
+      except OSError, err: 
+         if err[0] == ENOENT: 
+            if logger: logger.debug(err)
+            continue # No such file or directory
+      else:
+         if logger: logger.info('mkcsv building csv files from %s',path)
+         for f in datfiles: appendToCsv(d,path,f,df,ndf,bdf)
+
+
+
+def writeHeader(f):
+   f.write('name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s)\n')
+
+
+
+def makeSummaryFiles():
+   os.chdir(dirs['root'])
+
+   datacsv = 'data.csv'
+   ndatacsv = 'ndata.csv'
+   bulkdatacsv = 'bulkdata.csv.bz2'
+
+   with nested( open( join(datacsv), 'w'), 
+                open( join(ndatacsv), 'w')) as (df,ndf):
+
+      try:
+         bdf = bz2.BZ2File( join(bulkdatacsv), 'w')
+
+         writeHeader(df); writeHeader(ndf); writeHeader(bdf)
+         walkDatFiles(df,ndf,bdf)
+
+         if dirs['dat_sweep']:
+            move( join(datacsv), join(dirs['dat_sweep'],datacsv))
+            move( join(ndatacsv), join(dirs['dat_sweep'],ndatacsv))
+            move( join(bulkdatacsv), join(dirs['dat_sweep'],bulkdatacsv))
+
+      except (OSError,IOError), err:
+         if logger: logger.error(err)
+      finally:
+         bdf.close()
+
+
+
+
+# =============================
+# main
+# =============================
+
+
+
+def standalone(cmd):
+   results = StringIO()
+   for i in range(0,runs):
+      with nested( open( outName(i), 'w'), 
+                   TemporaryFile(mode='w+t')) as (of,ef):
+
+         m = measure('_',cmd.split(),delay,maxtime,of,ef)
+         print >>results, m
+         if ef.tell(): ef.seek(0); print >>results, ef.read()
+
+         if not m.isOkay(): break
+         if m.hasExceeded(cutoff): continue
+
+   print results.getvalue()
+   results.close()
+
+
+
+def benchmarksGame(ini):
+   try:
+      configure(ini)
+      w = worklist()
+      total = sum([len(s) for k,s,a in w])
+
+      for d,s,a in w:
+         total = measurePrograms(d,s,a,total) 
+
+      makeSummaryFiles()
+
+   except KeyboardInterrupt:
+      if logger: logger.debug('Keyboard Interrupt')
+      sys.exit(1)
+
+
+
+def force(items,ini):
+   try:
+      configure(ini)
+      items = set(items)
+      onlydirs = set(filters['onlydirs'])
+      dirsToForce = items.intersection(onlydirs)
+      impsToForce = items.difference(onlydirs)
+
+      for each in dirsToForce:
+         d = join(dirs['root'],each,datdirName)
+         if logger: logger.info('force %s',d)
+         fs = fnmatch.filter( os.listdir(d), '*.*' )
+         for f in fs:
+            try:
+               os.remove( join(d,f) )
+            except OSError, (e,err):
+               if logger: logger.error('%s %s %s %s',e,err,d,f)
+
+      for each in onlydirs:
+         d = join(dirs['root'],each,datdirName)
+         for i in impsToForce:
+            fs = fnmatch.filter( os.listdir(d), '*.' + i + '_dat' )
+            for f in fs:
+               try:
+                  os.remove( join(d,f) )
+                  if logger: logger.info('force %s %s',d,f)
+               except OSError, (e,err):
+                  if logger: logger.error('%s %s %s %s',e,err,d,f)
+
+   except KeyboardInterrupt:
+      if logger: logger.debug('Keyboard Interrupt')
+      sys.exit(1)
 
 
 
 def main():
-   global runs, cutoff, delay, maxtime, data, binarycmp
-
    try:
-      options,_ = getopt(sys.argv[1:],'h',['cmd=' ,'runs=' ,'cutoff=' 
-         ,'delay=' ,'maxtime=' ,'range=' ,'conf=' ,'ndiff=' ,'data=' 
-         ,'binarycmp' ,'help'])
-
-      for o, v in options:
-         if o in ('--conf'):
-            initializeFrom(v)
-
-      # allow some config file settings to be over-ridden from the command line
+      options,_ = getopt(sys.argv[1:],'h',['cmd=','conf=','force=','help'])
 
       cmd = None
+      items = None
+      ini = None
+
       for o, v in options:
          if o in ('-h', '--help'):
             print __doc__
             sys.exit(0)
          elif o in ('--cmd'):
             cmd = v
-         elif o in ('--runs'):
-            runs = int(v)
-         elif o in ('--cutoff'):
-            cutoff = int(v)
-         elif o in ('--delay'):
-            delay = float(v)
-         elif o in ('--maxtime'):
-            maxtime = int(v)  
-         elif o in ('--range'):
-            testvalues.extend( v.split(',') )
-         elif o in ('--data'):
-            data = v
-         elif o in ('--ndiff'):
-            ndiff = v
-         elif o in ('--binarycmp'):
-            binarycmp = True
+         elif o in ('--force'):
+            items = v.split()
+         elif o in ('--conf'):
+            ini = v
 
-      if cmd:
+      if cmd: 
          standalone(cmd)
-      else:
-         benchmarksGame()
+      elif items and ini: 
+         force(items,ini)
+      elif ini: 
+         benchmarksGame(ini)
 
-   except KeyboardInterrupt:
-      if logger: logger.debug('Keyboard Interrupt')
-      sys.exit(1)
 
    except GetoptError, err:
       if logger: logger.debug(err)
       print err
       print 'please try --help'
       sys.exit(2)
-
 
            
 if __name__ == "__main__":
