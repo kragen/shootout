@@ -1,7 +1,8 @@
 <?php
 echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
-$D = filemtime('../data/data.csv');
+$D = filemtime('./debian/data/data.csv');
 $G = filemtime('./gp4/data/data.csv');
+$U = filemtime('./u64q/data/data.csv');
 ?>
 
 
@@ -36,7 +37,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
+<p class="timestamp"><a href="./u64q/"><? printf('%s', gmdate("d M Y", $U)) ?></a></p>
 <p><a href="./u64q/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="u64q">
 <a title="Computer Language Benchmarks on Ubuntu : Intel&#174; Q6600&#8482;"
