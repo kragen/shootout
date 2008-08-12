@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.1 2008-08-09 22:42:41 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.2 2008-08-12 07:17:17 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -29,24 +29,20 @@ GXXLDOPTS := -L/usr/local/lib
 # gnat ADA 2005
 ########################################
 
-GNATOPTS := -gnatp $(COPTS) $(GNATOPTS)
-
 %.gnat_run: %.gnat
 	-$(GNATCHOP) -w $<
-	-$(GNATC) $(GNATOPTS) -f $(TEST).adb -o $@
+	-$(GNATC) -gnatp $(COPTS) $(GNATOPTS) -f $(TEST).adb -o $@
 
 
 ########################################
 # gcc
 ########################################
 
-GCCOPTS := -pipe -Wall $(COPTS) $(GCCOPTS)
-
 %.c: %.gcc $(GCC)
 	-@mv $< $@
 
 %.gcc_run: %.c $(GCC)
-	-$(GCC) $(GCCOPTS) $< -o $@
+	-$(GCC) -pipe -Wall $(COPTS) $(GCCOPTS) $< -o $@
 
 
 ########################################
@@ -77,27 +73,23 @@ GCCOPTS := -pipe -Wall $(COPTS) $(GCCOPTS)
 # icc
 ########################################
 
-ICCCOPTS := -O3 -ipo -static $(ICCCOPTS)
-
 %.c: %.icc $(ICC)
 	-@mv $< $@
 
 %.icc_run: %.c $(ICC)
-	-$(ICC) $(ICCOPTS) $< -o $@
+	-$(ICC) -O3 -ipo -static $(ICCOPTS) $< -o $@
 
 
 ########################################
 # Intel C++
 ########################################
 
-ICPCOPTS := -O3 -ipo -static $(ICPCOPTS)
-
 %.c++: %.icpp $(ICPC)
 	-@mv $< $@
 
 %.icpp_run: %.c++
-	-$(ICPC) -c $(ICPCOPTS) $< -o $<.o &&  \
-        $(ICPC) $<.o -o $@ $(ICPCOPTS) 
+	-$(ICPC) -c -O3 -ipo -static $(ICPCOPTS) $< -o $<.o &&  \
+        $(ICPC) $<.o -o $@ -O3 -ipo -static $(ICPCOPTS) 
 
 
 ########################################
@@ -137,21 +129,17 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 # SmartEiffel
 ########################################
 
-EIFFELOPTS := c -clean -boost -no_split $(COPTS) $(EIFFELOPTS)
-
 %.e: %.se $(EIFFELC)
 	-mv $< $(TEST).e
 	-$(SPLITFILE) $< $(TEST).e
 
 %.se_run: %.e
-	-$(EIFFELC) $(EIFFELOPTS) -o $@ $(TEST)
+	-$(EIFFELC) c -clean -boost -no_split $(COPTS) $(EIFFELOPTS) -o $@ $(TEST)
 
 
 ########################################
 # Lisaac
 ########################################
-
-LISAACOPTS := -O -i20
 
 %.li: %.lisaac $(LISAAC)
 	-mv $< $(TEST).li
@@ -198,26 +186,22 @@ LISAACOPTS := -O -i20
 # Clean
 ########################################
 
-CLEANOPTS := -b -nt -IL ArgEnv -I Include/clean $(CLEANOPTS)
-
 %.icl: %.clean $(CLEANC)
 	-mv $< $(TEST).icl
 
 %.clean_run: %.icl
-	-$(CLEANC) $(CLEANOPTS) $(TEST) -o $@
+	-$(CLEANC) -b -nt -IL ArgEnv -I Include/clean $(CLEANOPTS) $(TEST) -o $@
 
 
 ########################################
 # D Language
 ########################################
 
-DLANGOPTS := -O -inline -release $(DLANGOPTS)
-
 %.d: %.dlang $(DLANG)
 	-mv $< $(TEST).d
 
 %.dlang_run: %.d
-	-$(DLANG) $(DLANGOPTS) -of$@ $(TEST).d
+	-$(DLANG) -O -inline -release  $(DLANGOPTS) -of$@ $(TEST).d
 
 
 ########################################
@@ -235,13 +219,11 @@ DLANGOPTS := -O -inline -release $(DLANGOPTS)
 # Hipe
 ########################################
 
-HIPE_OPTS := +native +"{hipe, [o3]}"
-
 %.erl: %.hipe $(ERLC)
 	-mv $< $(TEST).erl
 
 %.hipe_run: %.erl
-	-$(ERLC) $(HIPE_OPTS) $(TEST).erl
+	-$(ERLC) +native +"{hipe, [o3]}" $(HIPE_OPTS) $(TEST).erl
 
 
 ########################################
@@ -259,13 +241,11 @@ HIPE_OPTS := +native +"{hipe, [o3]}"
 # g95 (GNU Fortran)
 ########################################
 
-G95OPTS := -pipe $(COPTS) $(G95OPTS)
-
 %.f90: %.g95 $(G95)
 	-@mv $< $@
 
 %.g95_run: %.f90
-	-$(G95) $(G95OPTS) $< -o $@
+	-$(G95) -pipe $(COPTS) $(G95OPTS) $< -o $@
 
 
 ########################################
@@ -283,26 +263,22 @@ G95OPTS := -pipe $(COPTS) $(G95OPTS)
 # ifort (Intel Fortran)
 ########################################
 
-IFCOPTS := -O3 -ipo -static $(IFCOPTS)
-
 %.f90: %.ifc $(IFORT)
 	-@mv $< $@
 
 %.ifc_run: %.f90
-	-$(IFORT) $(IFCOPTS) $< -o $@
+	-$(IFORT) -O3 -ipo -static $(IFCOPTS) $< -o $@
 
 
 ########################################
 # ghc (glasgow haskell compiler)
 ########################################
 
-GHCOPTS  := --make -O2 -fglasgow-exts $(GHCOPTS) 
-
 %.hs: %.ghc $(GHC)
 	-mv $< $@
 
 %.ghc_run: %.hs $(GHC)
-	-$(GHC) $(GHCOPTS) $< -o $@
+	-$(GHC) --make -O2 -fglasgow-exts $(GHCOPTS) $< -o $@
 
 
 ########################################
@@ -350,15 +326,13 @@ GHCOPTS  := --make -O2 -fglasgow-exts $(GHCOPTS)
 
 ########################################
 # gcj
-########################################
-
-GCJOPTS := $(COPTS) -fno-bounds-check -fno-store-check
+#######################################--make -O2 -fglasgow-exts $(GHCOPTS)#
 
 %.javagcj: %.gcj $(GCJ)
 	-@mv $< $@
 
 %.gcj_run: %.javagcj $(GCJ)
-	-$(GCJ) -x java $(GCJOPTS) -o $@ --main=$(TEST) $<
+	-$(GCJ) -x java $(COPTS) -fno-bounds-check -fno-store-check $(GCJOPTS) -o $@ --main=$(TEST) $<
 
 
 ########################################
@@ -401,12 +375,10 @@ SBCL_TRACE :=
 ########################################
 # Oberon-2 (oo2c) 
 ########################################
-
-OO2COPTS := -A --no-rtc --cflags "$(COPTS)"
 	
 %.ooc_run: %.ooc
 	-mv $< $(TEST).ooc
-	-$(OOC) -r Include/ooc -r . $(OO2COPTS) -M $(TEST).ooc
+	-$(OOC) -r Include/ooc -r . -A --no-rtc --cflags "$(COPTS)" $(OO2COPTS) -M $(TEST).ooc
 	-mv bin/* $@
 
 
@@ -414,14 +386,11 @@ OO2COPTS := -A --no-rtc --cflags "$(COPTS)"
 # ocaml native code compiler
 ########################################
 
-#OCAMLOPTS := -noassert -unsafe -I /usr/lib/ocaml/contrib $(OCAMLOPTS)
-OCAMLOPTS := -noassert -unsafe $(OCAMLOPTS)
-
 %.ml: %.ocaml $(OCAML)
 	-mv $< $@
 
 %.ocaml_run: %.ml
-	-$(OCAML) $(OCAMLOPTS) $< -o $@
+	-$(OCAML) -noassert -unsafe $(OCAMLOPTS) $< -o $@
 
 
 ########################################
@@ -451,13 +420,11 @@ OCAMLOPTS := -noassert -unsafe $(OCAMLOPTS)
 # fpascal (Free Pascal Compiler)
 ########################################
 
-FPCOPTS := -XX -Xs 
-
 %.pas: %.fpascal $(FPASCAL)
 	-mv $< $@
 
 %.fpascal_run: %.pas
-	-$(FPASCAL) -FuInclude/fpascal $(FPCOPTS) -oFPASCAL_RUN $<
+	-$(FPASCAL) -FuInclude/fpascal -XX -Xs  $(FPCOPTS) -oFPASCAL_RUN $<
 	-mv FPASCAL_RUN $@
 
 
@@ -474,11 +441,9 @@ FPCOPTS := -XX -Xs
 # SWI Prolog
 ########################################
 
-SWIOPTS := -O -t halt --goal=main --stand_alone=true
-
 %.swiprolog_run: %.swiprolog $(SWIPROLOG)
 	-mv $< $(TEST).pl
-	-$(SWIPROLOG) $(SWIOPTS) -o $@ -c $(TEST).pl
+	-$(SWIPROLOG) -O -t halt --goal=main --stand_alone=true $(SWIOPTS) -o $@ -c $(TEST).pl
 
 
 ########################################
