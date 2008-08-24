@@ -100,8 +100,9 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
 
    $score = array();
    foreach($data as $k => $test){
-//      if ((!isset($timeout[$k]) || ($timeout[$k] < 3)) && (sizeof($test) > 8)){
-      if ((!isset($timeout[$k]) || ($timeout[$k] < 5)) && (sizeof($test) > 9)){
+//      if ((!isset($timeout[$k]) || ($timeout[$k] < 5)) && (sizeof($test) > 9)){
+      if (sizeof($test)/sizeof($Tests) > 0.7){
+
          $s = 0.0; $ws = 0.0; $include = 0.0;
          foreach($test as $t => $v){
             $mt = &$mins[$t];

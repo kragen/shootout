@@ -26,7 +26,7 @@
 <th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
 <th>language</th>
 <th>mean</th>
-<th>-</th>
+<th>missing</th>
 </tr>
 
 <?
