@@ -463,10 +463,10 @@ function HttpVarsEncodeArray($a){
 function StatusMessage($i){
    if ($i==0){ $m = ''; }
    elseif ($i==PROGRAM_TIMEOUT){ $m = 'Timed Out'; }
-   elseif ($i==PROGRAM_ERROR){ $m = 'Error'; }
+   elseif ($i==PROGRAM_ERROR){ $m = 'Failed'; }
    elseif ($i==NO_COMPARISON){ $m = 'No Comparison'; }
    elseif ($i==-10){ $m = 'Bad Output'; }
-   elseif ($i==-11){ $m = 'Missing'; }
+   elseif ($i==-11){ $m = 'Build Failed'; }
    elseif ($i==-12){ $m = 'Empty'; }
    else { $m = ''; }
    return $m;
