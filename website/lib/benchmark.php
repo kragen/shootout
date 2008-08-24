@@ -94,7 +94,7 @@ if ($T=='all'){
       $LangName = $Langs[$L][LANG_FULL];
       $Title = $LangName.' benchmarks';
       
-      if (isset($metaRobots) && (SITE_NAME == 'debian' || SITE_NAME == 'gp4')){ // Assume it's one of our special pages which should be indexed
+      if (isset($metaRobots) && (SITE_NAME == 'debian' || SITE_NAME == 'gp4' || SITE_NAME == 'u64q')){ // Assume it's one of our special pages which should be indexed
          $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content="'.

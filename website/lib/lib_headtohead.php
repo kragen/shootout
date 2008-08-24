@@ -25,13 +25,15 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       if (isset($Incl[$row[DATA_TEST]])){   
          settype($row[DATA_ID],'integer');                              
            
-         if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){  
+         //if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){ 
+         $ex = ExcludeData($row,$Langs,$Excl);
+         if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
             $Data[] = $row;                                                                      
          } 
-      }      
-   }            
-   unset($rows);     
-  
+      }
+   }
+   unset($rows);
+
 // SELECTION DEPENDS ON THIS SORT ORDER
    usort($Data,'CompareTestValue2');   
 
@@ -39,16 +41,16 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
 
    $lang = ""; $id = ""; $test = ""; $n = 0;
    $NData = array(); 
-   $comparable = array(); 
+   $comparable = array();
    $errorRowL1 = NULL;
    
 
    $i=0; $j=0;
    while ($i<sizeof($Data)){
-    
+
       $n = $Data[$i][DATA_TESTVALUE];
       $test = $Data[$i][DATA_TEST];                
-            
+
       do {
          $dj = $Data[$j];
                               
@@ -58,7 +60,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                   if ($isComparable){
                      if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){                  
                         $comparable[$dj[DATA_LANG]] = $Data[$j];   
-                     }                
+                     }
                   }
                   else {
                      $comparable[$dj[DATA_LANG]] = $Data[$j];                   
@@ -73,10 +75,10 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $errorRowL1 = $Data[$j];
          }
                     
-         $isComparable = isset($comparable[$L1]) && isset($comparable[$L2]) 
+         $isComparable = isset($comparable[$L1]) && isset($comparable[$L2])
             && ($comparable[$L1][DATA_TESTVALUE]==$comparable[$L2][DATA_TESTVALUE]);  
-                                                       
-         $j++;                                 
+
+         $j++;
          $hasMore = $j<sizeof($Data);                                    
          $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);
          
@@ -95,10 +97,6 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $lines = 1;
             $cpu = 1; 
             $gz = 1;
-
-            //if ($r2[DATA_FULLCPU]>0){ $full = $r1[DATA_FULLCPU] / $r2[DATA_FULLCPU]; }
-            //if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
-            //if ($r2[DATA_CPU]>0){ $cpu = $r1[DATA_CPU] / $r2[DATA_CPU]; }
 
             if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; }
             if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; }
@@ -134,7 +132,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                , NO_COMPARISON
                , 0
                , 0
-               );          
+               );
          
             while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }          
          }                                             
@@ -158,7 +156,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             );          
               
       }
-      
+
       unset($comparable[$L1]); 
       unset($comparable[$L2]);
       unset($errorRowL1);
@@ -254,7 +252,9 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
       if (isset($Incl[$row[DATA_TEST]])){   
          settype($row[DATA_ID],'integer');                              
            
-         if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){  
+         //if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){  
+         $ex = ExcludeData($row,$Langs,$Excl);
+         if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
             $Data[] = $row;                                                                      
          } 
       }      

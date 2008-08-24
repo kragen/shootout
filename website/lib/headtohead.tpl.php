@@ -58,7 +58,7 @@ foreach($Tests as $Row){
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Name);
                 
-      if ($v[N_LINES] >= 0){ 
+      if ($v[N_LINES] >= 0){
       
          if ($v[N_N]==0){ $n = '<td></td>'; } 
          else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }  
@@ -68,15 +68,14 @@ foreach($Tests as $Row){
          printf('%s%s%s%s', 
             PF($v[N_FULLCPU]), PF($kb), PF($v[N_GZ]), $n);                   
 
-      } else {      
-         $r = FALSE;
-         if ($v[N_LINES] == PROGRAM_ERROR){ $message = 'Error'; } 
-         elseif ($v[N_LINES] == PROGRAM_TIMEOUT){ $message = 'Timout'; } 
-         elseif ($r = $v[N_LINES] == NO_COMPARISON){ $message = 'No '.$Langs[$v[N_LANG]][LANG_NAME]; } 
-         else {$message = 'X'; } 
-         
-         if ($r) { printf('<td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td>', $message); }
-         else { printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message); }
+      } else {
+         if ($v[N_LINES] == NO_COMPARISON){
+            $message = 'No '.$Langs[$v[N_LANG]][LANG_NAME]; 
+            printf('<td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td>', $message);
+         } else {
+            $message = StatusMessage($v[N_LINES]);
+            printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message);
+         }
       }
 
    } else {

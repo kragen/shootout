@@ -44,11 +44,8 @@ foreach($Tests as $Row){
          printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
             $v[N_FULLCPU], $kb, $v[N_GZ], $n); 
 
-      } else {      
-         if ($v[N_EXCLUDE] == PROGRAM_ERROR){ $message = 'Error'; } 
-         elseif ($v[N_EXCLUDE] == PROGRAM_TIMEOUT){ $message = 'Timout'; } 
-         else { $message = 'X'; } 
-         
+      } else {
+         $message = StatusMessage($v[N_EXCLUDE]);
          printf('<td><span class="message">%s</span></td><td></td><td>%s</td><td><span class="numN">%s</span></td>', $message, $v[N_LINES], $n);
       }
 

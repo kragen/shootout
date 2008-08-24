@@ -359,7 +359,8 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
       foreach($data as $ar){
          if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])){
            $ex = ExcludeData($ar,$Langs,$Excl);
-           if (($ex == PROGRAM_TIMEOUT)||($ex == PROGRAM_ERROR)){
+           //if (($ex == PROGRAM_TIMEOUT)||($ex == PROGRAM_ERROR)){
+           if ($ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
               return $ar;
            }
          }
@@ -461,8 +462,9 @@ function HttpVarsEncodeArray($a){
 
 function StatusMessage($i){
    if ($i==0){ $m = ''; }
-   elseif ($i==-1){ $m = 'Timed Out'; }
-   elseif ($i==-2){ $m = 'Error'; }
+   elseif ($i==PROGRAM_TIMEOUT){ $m = 'Timed Out'; }
+   elseif ($i==PROGRAM_ERROR){ $m = 'Error'; }
+   elseif ($i==NO_COMPARISON){ $m = 'No Comparison'; }
    elseif ($i==-10){ $m = 'Bad Output'; }
    elseif ($i==-11){ $m = 'Missing'; }
    elseif ($i==-12){ $m = 'Empty'; }
