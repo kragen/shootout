@@ -24,29 +24,29 @@ $Family = $Row[LANG_FAMILY];
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
-<? 
+<?
 foreach($Tests as $Row){
    printf('<tr>'); echo "\n";
    $Link = $Row[TEST_LINK];
    $Name = $Row[TEST_NAME];
 
    if (isset($Data[$Link])){
-      $v = $Data[$Link];     
+      $v = $Data[$Link];
 
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Name);
                 
-      if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }                
+      if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }
                 
       if ($v[N_EXCLUDE] >= 0){    
          if ($Name=='startup'){ $kb = '&nbsp;'; } else { $kb = number_format($v[N_MEMORY]); }
 
          printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
-            $v[N_FULLCPU], $kb, $v[N_GZ], $n); 
+            $v[N_FULLCPU], $kb, $v[N_GZ], $n);
 
       } else {
          $message = StatusMessage($v[N_EXCLUDE]);
-         printf('<td><span class="message">%s</span></td><td></td><td>%s</td><td><span class="numN">%s</span></td>', $message, $v[N_LINES], $n);
+         printf('<td><span class="message">%s</span></td><td></td><td>%s</td><td><span class="numN">%s</span></td>', $message, $v[N_GZ], $n);
       }
 
    } else {

@@ -466,7 +466,7 @@ function StatusMessage($i){
    elseif ($i==PROGRAM_ERROR){ $m = 'Failed'; }
    elseif ($i==NO_COMPARISON){ $m = 'No Comparison'; }
    elseif ($i==-10){ $m = 'Bad Output'; }
-   elseif ($i==-11){ $m = 'Build Error'; }
+   elseif ($i==-11){ $m = 'Make Error'; }
    elseif ($i==-12){ $m = 'Empty'; }
    else { $m = ''; }
    return $m;

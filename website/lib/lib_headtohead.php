@@ -251,8 +251,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    foreach($rows as $row){ 
       if (isset($Incl[$row[DATA_TEST]])){   
          settype($row[DATA_ID],'integer');                              
-           
-         //if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){  
+
          $ex = ExcludeData($row,$Langs,$Excl);
          if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
             $Data[] = $row;                                                                      
@@ -269,7 +268,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    $lang = ""; $id = ""; $test = ""; $n = 0;
    $NData = array(); 
    unset($row);    
-   
+
    $i=0; $j=0;
    while ($i<sizeof($Data)){
     
@@ -309,15 +308,15 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
             , 0 //$row[DATA_GZ]
             , $row[DATA_GZ]
             , ExcludeData($row,$Langs,$Excl)
-            );                           
+            );
       }    
-                                                   
-      while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }                                                   
-                
-      unset($row); 
+
+      while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }
+
+      unset($row);
       $i = $j;               
    }
-   return $NData;     
+   return $NData;
 }
 
 ?>
