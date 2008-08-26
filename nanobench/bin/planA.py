@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.15 2008-08-03 22:24:14 igouy-guest Exp $
+# $Id: planA.py,v 1.16 2008-08-26 22:33:28 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -50,12 +50,6 @@ def measure(arg,commandline,delay,maxtime,
                else:
                   self.timedout = True
                   os.kill(self.p, signal.SIGKILL) 
-            except KeyboardInterrupt:
-               try:
-                  os.kill(self.p, signal.SIGKILL)
-                  raise
-               except OSError, (e,err):
-                  if logger: logger.error('%s %s',e,err)
             except OSError, (e,err):
                if logger: logger.error('%s %s',e,err)
 
@@ -108,9 +102,7 @@ def measure(arg,commandline,delay,maxtime,
 
 
       except KeyboardInterrupt:
-         w.dump(m)
-         wPipe.close()
-         raise # needed to clean up first 
+         os.kill(p.pid, signal.SIGKILL)
 
       except ZeroDivisionError, (e,err): 
          if logger: logger.warn('%s %s',err,'too fast to measure?')
