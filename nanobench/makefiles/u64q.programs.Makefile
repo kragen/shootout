@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.4 2008-08-27 07:15:57 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.5 2008-08-27 17:32:05 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -320,7 +320,6 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 
 %.cal_run: %.cal 
 	-mv $< $(TEST).cal
-	-@echo $(QUARK_HOME)
 	-Include/cal/compile.sh $(TEST).cal
 
 

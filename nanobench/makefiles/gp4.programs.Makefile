@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.programs.Makefile,v 1.1 2008-08-09 23:39:47 igouy-guest Exp $
+# $Id: gp4.programs.Makefile,v 1.2 2008-08-27 17:32:05 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -344,7 +344,6 @@ GHCOPTS  := --make -O2 -fglasgow-exts $(GHCOPTS)
 
 %.cal_run: %.cal 
 	-mv $< $(TEST).cal
-	-@echo $(QUARK_HOME)
 	-Include/cal/compile.sh $(TEST).cal
 
 
@@ -599,7 +598,7 @@ SWIOPTS := -O -t halt --goal=main --stand_alone=true
 
 %.scala_run: %.scala $(SCALAC)
 	-mv $< $(TEST).scala
-	-( $(SCALAC) $(TEST).scala ; export JAVACMD="$(JDKRUN) $(JDKFLAGS) -server -Xbatch" )
+	-$(SCALAC) -optimise $(TEST).scala
 
 
 
