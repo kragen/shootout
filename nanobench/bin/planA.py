@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.16 2008-08-26 22:33:28 igouy-guest Exp $
+# $Id: planA.py,v 1.17 2008-08-27 02:36:31 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -34,24 +34,37 @@ def measure(arg,commandline,delay,maxtime,
          def __init__(self,program):
             threading.Thread.__init__(self)
             self.setDaemon(1)
+            self.timedout = False 
             self.p = program
             self.maxMem = 0
-            self.timedout = False     
-            self.start()     
+            self.childpids = None   
+            self.start() 
  
          def run(self):
             try:              
                remaining = maxtime               
-               while remaining > 0:
-                  mem = gtop.proc_mem(self.p).resident
-                  self.maxMem = max(mem/1024, self.maxMem)
-                  time.sleep(delay)
+               while remaining > 0: 
+                  mem = gtop.proc_mem(self.p).resident                                   
+                  time.sleep(delay)                    
                   remaining -= delay
+                  # race condition - will child processes have been created yet?
+                  self.maxMem = max((mem + self.childmem())/1024, self.maxMem)  
                else:
                   self.timedout = True
                   os.kill(self.p, signal.SIGKILL) 
             except OSError, (e,err):
                if logger: logger.error('%s %s',e,err)
+
+         def childmem(self):
+            if self.childpids == None:
+               self.childpids = set()
+               for each in gtop.proclist():
+                  if gtop.proc_uid(each).ppid == self.p:
+                     self.childpids.add(each)
+            mem = 0
+            for each in self.childpids:
+               mem += gtop.proc_mem(each).resident
+            return mem
 
        
       try:
