@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.3 2008-08-27 05:11:09 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.4 2008-08-27 07:15:57 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -544,7 +544,7 @@ SBCL_TRACE :=
 # groovy needs a file not a symlink
 
 %.groovy_run: %.groovy
-	-( cp $< $(TEST).groovy ; export JAVA_OPTS="-server" )
+	-cp $< $(TEST).groovy
 
 
 ########################################
