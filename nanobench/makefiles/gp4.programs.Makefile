@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: gp4.programs.Makefile,v 1.2 2008-08-27 17:32:05 igouy-guest Exp $
+# $Id: gp4.programs.Makefile,v 1.3 2008-08-29 00:19:30 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -140,8 +140,9 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 EIFFELOPTS := c -clean -boost -no_split $(COPTS) $(EIFFELOPTS)
 
 %.e: %.se $(EIFFELC)
-	-mv $< $(TEST).e
-	-$(SPLITFILE) $< $(TEST).e
+	-cp $< $(TEST).e
+	-@echo split_file.bash $(TEST).e $(TEST).e
+	-$(SPLITFILE) $(TEST).e $(TEST).e
 
 %.se_run: %.e
 	-$(EIFFELC) $(EIFFELOPTS) -o $@ $(TEST)
@@ -154,13 +155,13 @@ EIFFELOPTS := c -clean -boost -no_split $(COPTS) $(EIFFELOPTS)
 LISAACOPTS := -O -i20
 
 %.li: %.lisaac $(LISAAC)
-	-mv $< $(TEST).li
-	-$(SPLITFILE) $< $(TEST).li
+	-cp $< $(TEST).li
+	-@echo split_file.bash $(TEST).li $(TEST).li
+	-$(SPLITFILE) $(TEST).li $(TEST).li
 
 %.lisaac_run: %.li
-#	-$(LISAAC) $(TEST) $(LISAACOPTS) -o lisaac_run 
-#	-mv lisaac_run $@
 	-$(LISAAC) -O -i20 $(TEST)
+	-@echo $(GCCOPTS)
 	-$(GCC) $(GCCOPTS) $(TEST).c -o $@
 
 
