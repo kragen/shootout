@@ -1,0 +1,157 @@
+<span class="hl slc">-- The Great Computer Language Shootout</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Pascal Obry on 2005/04/07</span>
+
+<span class="hl kwa">package</span> Fasta_Pck <span class="hl kwa">is</span>
+
+   <span class="hl kwa">type</span> Real <span class="hl kwa">is new</span> <span class="hl kwb">Long_Float</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Aminoacid <span class="hl kwa">is record</span>
+      C <span class="hl sym">:</span> <span class="hl kwb">Character</span><span class="hl sym">;</span>
+      P <span class="hl sym">:</span> Real<span class="hl sym">;</span>
+   <span class="hl kwa">end record</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Aminoacid_Set <span class="hl kwa">is array</span> <span class="hl sym">(</span><span class="hl kwb">Positive</span> <span class="hl kwa">range</span> <span class="hl sym">&lt;&gt;)</span> <span class="hl kwa">of</span> Aminoacid<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Make_Cumulative <span class="hl sym">(</span>Gene_List <span class="hl sym">:</span> <span class="hl kwa">in out</span> Aminoacid_Set<span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> Select_Random <span class="hl sym">(</span>Gene_List <span class="hl sym">:</span> <span class="hl kwa">in</span> Aminoacid_Set<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Character</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Make_Random_Fasta
+     <span class="hl sym">(</span>Id<span class="hl sym">,</span> Desc <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">String</span><span class="hl sym">;</span> Gene_List <span class="hl sym">:</span> <span class="hl kwa">in</span> Aminoacid_Set<span class="hl sym">;</span> N <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Positive</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">procedure</span> Make_Repeat_Fasta <span class="hl sym">(</span>Id<span class="hl sym">,</span> Desc<span class="hl sym">,</span> S <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">String</span><span class="hl sym">;</span> N <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Positive</span><span class="hl sym">);</span>
+
+<span class="hl kwa">end</span> Fasta_Pck<span class="hl sym">;</span>
+
+<span class="hl kwa">with</span> Ada.Text_IO<span class="hl sym">;</span> <span class="hl kwa">use</span> Ada.Text_IO<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> Fasta_Pck <span class="hl kwa">is</span>
+
+   Line_Length <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">60</span><span class="hl sym">;</span>
+
+   Last        <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">42</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">function</span> Gen_Random <span class="hl sym">(</span>Max <span class="hl sym">:</span> <span class="hl kwa">in</span> Real<span class="hl sym">)</span> <span class="hl kwa">return</span> Real<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Gen_Random<span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> Gen_Random <span class="hl sym">(</span>Max <span class="hl sym">:</span> <span class="hl kwa">in</span> Real<span class="hl sym">)</span> <span class="hl kwa">return</span> Real <span class="hl kwa">is</span>
+      IM <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">139</span>_968<span class="hl sym">;</span>
+      IA <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span>   <span class="hl num">3</span>_877<span class="hl sym">;</span>
+      IC <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span>  <span class="hl num">29</span>_573<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      Last <span class="hl sym">:= (</span>Last <span class="hl sym">*</span> IA <span class="hl sym">+</span> IC<span class="hl sym">)</span> <span class="hl kwa">mod</span> IM<span class="hl sym">;</span>
+      <span class="hl kwa">return</span> <span class="hl sym">(</span>Max <span class="hl sym">*</span> Real <span class="hl sym">(</span>Last<span class="hl sym">)) /</span> Real <span class="hl sym">(</span>IM<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Gen_Random<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Make_Cumulative <span class="hl sym">(</span>Gene_List <span class="hl sym">:</span> <span class="hl kwa">in out</span> Aminoacid_Set<span class="hl sym">)</span> <span class="hl kwa">is</span>
+      C <span class="hl sym">:</span> Real <span class="hl sym">:=</span> Gene_List <span class="hl sym">(</span>Gene_List<span class="hl sym">'</span>First<span class="hl sym">)</span>.P<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">for</span> K <span class="hl kwa">in</span> Gene_List<span class="hl sym">'</span>First <span class="hl sym">+</span> <span class="hl num">1</span> .. Gene_List<span class="hl sym">'</span>Last <span class="hl kwa">loop</span>
+         C <span class="hl sym">:=</span> C <span class="hl sym">+</span> Gene_List <span class="hl sym">(</span>K<span class="hl sym">)</span>.P<span class="hl sym">;</span>
+         Gene_List <span class="hl sym">(</span>K<span class="hl sym">)</span>.P <span class="hl sym">:=</span> C<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Make_Cumulative<span class="hl sym">;</span>
+
+   <span class="hl kwa">function</span> Select_Random <span class="hl sym">(</span>Gene_List <span class="hl sym">:</span> <span class="hl kwa">in</span> Aminoacid_Set<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Character</span> <span class="hl kwa">is</span>
+      R         <span class="hl sym">:</span> Real <span class="hl sym">:=</span> Gen_Random <span class="hl sym">(</span><span class="hl num">1.0</span><span class="hl sym">);</span>
+      I<span class="hl sym">,</span> Lo<span class="hl sym">,</span> Hi <span class="hl sym">:</span> <span class="hl kwb">Integer</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">if</span> R <span class="hl sym">&lt;</span> Gene_List <span class="hl sym">(</span>Gene_List<span class="hl sym">'</span>First<span class="hl sym">)</span>.P <span class="hl kwa">then</span>
+         <span class="hl kwa">return</span> Gene_List <span class="hl sym">(</span>Gene_List<span class="hl sym">'</span>First<span class="hl sym">)</span>.C<span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      Lo <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Hi <span class="hl sym">:=</span> Gene_List<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+
+      <span class="hl kwa">while</span> Hi <span class="hl sym">&gt;</span> Lo <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl kwa">loop</span>
+         I <span class="hl sym">:= (</span>Hi <span class="hl sym">+</span> Lo<span class="hl sym">) /</span> <span class="hl num">2</span><span class="hl sym">;</span>
+         <span class="hl kwa">if</span> R <span class="hl sym">&lt;</span> Gene_List <span class="hl sym">(</span>I<span class="hl sym">)</span>.P <span class="hl kwa">then</span>
+            Hi <span class="hl sym">:=</span> I<span class="hl sym">;</span>
+         <span class="hl kwa">else</span>
+            Lo <span class="hl sym">:=</span> I<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">return</span> Gene_List <span class="hl sym">(</span>Hi<span class="hl sym">)</span>.C<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Select_Random<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Make_Random_Fasta
+     <span class="hl sym">(</span>Id<span class="hl sym">,</span> Desc <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">String</span><span class="hl sym">;</span> Gene_List <span class="hl sym">:</span> <span class="hl kwa">in</span> Aminoacid_Set<span class="hl sym">;</span> N <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Positive</span><span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      Todo <span class="hl sym">:</span> <span class="hl kwb">Integer</span> <span class="hl sym">:=</span> N<span class="hl sym">;</span>
+      M    <span class="hl sym">:</span> <span class="hl kwb">Integer</span><span class="hl sym">;</span>
+      Pick <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Line_Length<span class="hl sym">);</span>
+   <span class="hl kwa">begin</span>
+      Put_Line <span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">&amp;</span> Id <span class="hl sym">&amp; ' ' &amp;</span> Desc<span class="hl sym">);</span>
+
+      <span class="hl kwa">while</span> Todo <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">loop</span>
+         M <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">'</span>Min <span class="hl sym">(</span>Todo<span class="hl sym">,</span> Line_Length<span class="hl sym">);</span>
+
+         <span class="hl kwa">for</span> K <span class="hl kwa">in</span> <span class="hl num">1</span> .. M <span class="hl kwa">loop</span>
+            Pick <span class="hl sym">(</span>K<span class="hl sym">) :=</span> Select_Random <span class="hl sym">(</span>Gene_List<span class="hl sym">);</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+         Put_Line <span class="hl sym">(</span>Pick <span class="hl sym">(</span><span class="hl num">1</span> .. M<span class="hl sym">));</span>
+         Todo <span class="hl sym">:=</span> Todo <span class="hl sym">-</span> Line_Length<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Make_Random_Fasta<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Make_Repeat_Fasta <span class="hl sym">(</span>Id<span class="hl sym">,</span> Desc<span class="hl sym">,</span> S <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">String</span><span class="hl sym">;</span> N <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Positive</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+      Todo <span class="hl sym">:</span> <span class="hl kwb">Integer</span> <span class="hl sym">:=</span> N<span class="hl sym">;</span>
+      K    <span class="hl sym">:</span> <span class="hl kwb">Positive</span> <span class="hl sym">:=</span> S<span class="hl sym">'</span>First<span class="hl sym">;</span>
+      M    <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      Put_Line <span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">&amp;</span> Id <span class="hl sym">&amp; ' ' &amp;</span> Desc<span class="hl sym">);</span>
+
+      <span class="hl kwa">while</span> Todo <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">loop</span>
+         M <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">'</span>Min <span class="hl sym">(</span>Todo<span class="hl sym">,</span> Line_Length<span class="hl sym">);</span>
+
+         <span class="hl kwa">while</span> M <span class="hl sym">&gt;=</span> S<span class="hl sym">'</span>Length <span class="hl sym">-</span> K <span class="hl sym">+</span> S<span class="hl sym">'</span>First <span class="hl kwa">loop</span>
+            Put <span class="hl sym">(</span>S <span class="hl sym">(</span>K .. S<span class="hl sym">'</span>Last<span class="hl sym">));</span>
+            M <span class="hl sym">:=</span> M <span class="hl sym">- (</span>S<span class="hl sym">'</span>Length <span class="hl sym">-</span> K <span class="hl sym">+</span> S<span class="hl sym">'</span>First<span class="hl sym">);</span>
+            K <span class="hl sym">:=</span> S<span class="hl sym">'</span>First<span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+         Put_Line <span class="hl sym">(</span>S <span class="hl sym">(</span>K .. K <span class="hl sym">+</span> M <span class="hl sym">-</span> S<span class="hl sym">'</span>First<span class="hl sym">));</span>
+         K <span class="hl sym">:=</span> K <span class="hl sym">+</span> M <span class="hl sym">-</span> S<span class="hl sym">'</span>First <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+         Todo <span class="hl sym">:=</span> Todo <span class="hl sym">-</span> Line_Length<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Make_Repeat_Fasta<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Fasta_Pck<span class="hl sym">;</span>
+
+<span class="hl kwa">with</span> Ada.Command_Line<span class="hl sym">;</span> <span class="hl kwa">use</span> Ada.Command_Line<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Fasta_Pck<span class="hl sym">;</span>        <span class="hl kwa">use</span> Fasta_Pck<span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> Fasta <span class="hl kwa">is</span>
+   Homosapiens <span class="hl sym">:</span> Aminoacid_Set <span class="hl sym">:=</span>
+                   <span class="hl sym">(('</span>a<span class="hl sym">',</span> <span class="hl num">0.3029549426680</span><span class="hl sym">), ('</span>c<span class="hl sym">',</span> <span class="hl num">0.1979883004921</span><span class="hl sym">),</span>
+                    <span class="hl sym">('</span>g<span class="hl sym">',</span> <span class="hl num">0.1975473066391</span><span class="hl sym">), ('</span>t<span class="hl sym">',</span> <span class="hl num">0.3015094502008</span><span class="hl sym">));</span>
+   Iub         <span class="hl sym">:</span> Aminoacid_Set <span class="hl sym">:=</span>
+                   <span class="hl sym">(('</span>a<span class="hl sym">',</span> <span class="hl num">0.27</span><span class="hl sym">), ('</span>c<span class="hl sym">',</span> <span class="hl num">0.12</span><span class="hl sym">), ('</span>g<span class="hl sym">',</span> <span class="hl num">0.12</span><span class="hl sym">), ('</span>t<span class="hl sym">',</span> <span class="hl num">0.27</span><span class="hl sym">),</span>
+                    <span class="hl sym">('</span>B<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>D<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>H<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>K<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">),</span>
+                    <span class="hl sym">('</span>M<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>N<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>R<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>S<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">),</span>
+                    <span class="hl sym">('</span>V<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>W<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">), ('</span>Y<span class="hl sym">',</span> <span class="hl num">0.02</span><span class="hl sym">));</span>
+   Alu         <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span>
+                    <span class="hl str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG&quot;</span> <span class="hl sym">&amp;</span>
+                    <span class="hl str">&quot;GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA&quot;</span> <span class="hl sym">&amp;</span>
+                    <span class="hl str">&quot;CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT&quot;</span> <span class="hl sym">&amp;</span>
+                    <span class="hl str">&quot;ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA&quot;</span> <span class="hl sym">&amp;</span>
+                    <span class="hl str">&quot;GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG&quot;</span> <span class="hl sym">&amp;</span>
+                    <span class="hl str">&quot;AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC&quot;</span> <span class="hl sym">&amp;</span>
+                    <span class="hl str">&quot;AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span><span class="hl sym">;</span>
+
+   N           <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Positive</span> <span class="hl sym">:=</span> <span class="hl kwb">Positive</span><span class="hl sym">'</span>Value <span class="hl sym">(</span>Argument <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">));</span>
+
+<span class="hl kwa">begin</span>
+   Make_Cumulative <span class="hl sym">(</span>Iub<span class="hl sym">);</span>
+   Make_Cumulative <span class="hl sym">(</span>Homosapiens<span class="hl sym">);</span>
+
+   Make_Repeat_Fasta <span class="hl sym">(</span><span class="hl str">&quot;ONE&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;Homo sapiens alu&quot;</span><span class="hl sym">,</span> alu<span class="hl sym">,</span> N <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">);</span>
+   Make_Random_Fasta <span class="hl sym">(</span><span class="hl str">&quot;TWO&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;IUB ambiguity codes&quot;</span><span class="hl sym">,</span> Iub<span class="hl sym">,</span> N <span class="hl sym">*</span> <span class="hl num">3</span><span class="hl sym">);</span>
+   Make_Random_Fasta
+     <span class="hl sym">(</span><span class="hl str">&quot;THREE&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;Homo sapiens frequency&quot;</span><span class="hl sym">,</span> Homosapiens<span class="hl sym">,</span> N <span class="hl sym">*</span> <span class="hl num">5</span><span class="hl sym">);</span>
+<span class="hl kwa">end</span> Fasta<span class="hl sym">;</span>
