@@ -482,11 +482,11 @@ function HttpVarsEncodeArray($a){
 
 function StatusMessage($i){
    if ($i==0){ $m = ''; }
-   elseif ($i==PROGRAM_TIMEOUT){ $m = 'Timed Out'; }
+   elseif ($i==PROGRAM_TIMEOUT){ $m = 'Timed&nbsp;Out'; }
    elseif ($i==PROGRAM_ERROR){ $m = 'Failed'; }
-   elseif ($i==NO_COMPARISON){ $m = 'No Comparison'; }
-   elseif ($i==-10){ $m = 'Bad Output'; }
-   elseif ($i==-11){ $m = 'Make Error'; }
+   elseif ($i==NO_COMPARISON){ $m = 'No&nbsp;Comparison'; }
+   elseif ($i==-10){ $m = 'Bad&nbsp;Output'; }
+   elseif ($i==-11){ $m = 'Make&nbsp;Error'; }
    elseif ($i==-12){ $m = 'Empty'; }
    else { $m = ''; }
    return $m;
