@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.16 2008-08-28 04:24:44 igouy-guest Exp $
+# $Id: domain.py,v 1.17 2008-08-29 00:12:31 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'
@@ -220,7 +220,7 @@ class Record(object):
          'EMPTY ' if self.isEmpty() else (
          'TIMED OUT ' if self.hasTimedout() else (
          'UNEXPECTED OUTPUT ' if self.hasBadOutput() else 
-         'MISSING FILE - MAKE ERROR? ' ))))
+         'MAKE ERROR ' ))))
 
    def _getArgString(self):
       return str(self.arg)
