@@ -75,7 +75,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <th>CPU&nbsp;secs</th>
 <th>Memory&nbsp;KB</th>
 <th>Size&nbsp;B</th>
-<th>Elapsed</th>
+<th>Elapsed&nbsp;secs</th>
 <th>~&nbsp;CPU&nbsp;Load</th>
 </tr>
 
