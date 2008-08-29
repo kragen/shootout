@@ -47,14 +47,14 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nb
 
 <tr class="test">
 <td>
-<p class="timestamp"><a href="./gp4/"><? printf('%s', gmdate("d M Y", $G)) ?></a></p>
+<p class="timestamp"><a href="./gp4/">neglected since July 2008</a></p>
 <p><a href="./gp4/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="gp4">
 <a title="Computer Language Benchmarks on Gentoo : Intel&#174; Pentium&#174;"
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><a href="./debian/"><? printf('%s', gmdate("d M Y", $D)) ?></a></p>
+<p class="timestamp"><a href="./debian/">neglected since March 2008</a></p>
 <p><a href="./debian/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="debian">
 <a title="Computer Language Benchmarks on Debian : AMD&#8482; Sempron&#8482;"
