@@ -131,9 +131,9 @@ if ($T=='all'){
       if (isset($HTTP_GET_VARS['sort'])
             && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
          $X = $HTTP_GET_VARS['sort'];
-         if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz')){ $S = $X; }
+         if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz' || $X == 'elapsed')){ $S = $X; }
       }
-      if (!isset($S)){ $S = 'fullcpu'; }
+      if (!isset($S)){ $S = 'elapsed'; }
 
 
       $TestName = $Tests[$T][TEST_NAME];

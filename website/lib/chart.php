@@ -24,9 +24,9 @@ if (!isset($T)){ $T = 'nbody'; }
 if (isset($HTTP_GET_VARS['sort'])
       && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
    $X = $HTTP_GET_VARS['sort'];
-   if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz')){ $S = $X; }
+   if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz' || $X == 'elapsed')){ $S = $X; }
 }
-if (!isset($S)){ $S = 'fullcpu'; }
+if (!isset($S)){ $S = 'elapsed'; }
 
 
 // FILTER & SORT DATA ////////////////////////////////////////
@@ -108,17 +108,17 @@ ImageString($im, 2, $w-26, $h3-14, CHART_V3.'x', $white);
 
 // LEGEND - SHOW SORT ORDER BY PUTTING SORT CRITERIA AT TOP OF LEGEND
 
-if (($S=='kb')||($S=='lines')||($S=='gz')){ 
-   $kbTop = $h-148; $cpuTop = $h-135; $sortname = SortName('fullcpu'); }
-else { 
-   $kbTop = $h-135; $cpuTop = $h-148; $sortname = SortName('fullcpu'); }  
+if ($S=='kb'){
+   $kbTop = $h-148; $cpuTop = $h-135; }
+else {
+   $kbTop = $h-135; $cpuTop = $h-148; }
 
 ImageFilledRectangle($im, 2, $cpuTop, $wsec+105, $cpuTop+13, $bgray);
 ImageFilledRectangle($im, 6, $cpuTop+2, $wsec+6, $cpuTop+10, $white);
-ImageString($im, 3, 20, $cpuTop, $sortname, $black);
+ImageString($im, 3, 20, $cpuTop, 'CPU secs', $black);
 ImageFilledRectangle($im, 2, $kbTop, $wsec+80, $kbTop+13, $bgray);
 ImageFilledRectangle($im, 6, $kbTop+2, $wmem+6, $kbTop+10, $black);
-ImageString($im, 3, 20, $kbTop, SortName('kb'), $black);
+ImageString($im, 3, 20, $kbTop, 'Memory KB', $black);
 
 ImageInterlace($im,1);
 ImagePNG($im);

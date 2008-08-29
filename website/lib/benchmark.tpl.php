@@ -8,12 +8,6 @@ $TestTag = $Row[TEST_TAG];
 
 list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl);
 
-// Change to using ndata.csv instead of data.csv
-//list($Accepted,$OthersAccepted) = SplitByTestValue($AllAccepted);
-//list($Rejected,$OthersRejected) = SplitByTestValue($AllRejected);
-//list($Special,$OthersSpecial) = SplitByTestValue($AllSpecial);
-
-
 if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; }
 else { $P1 = ''; }
 
@@ -23,7 +17,7 @@ else { $P2 = ''; }
 if (sizeof($Accepted)>2){ $P3 = $Accepted[2][DATA_LANG].'-'.$Accepted[2][DATA_ID]; }
 else { $P3 = ''; }
 
-if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID]; } 
+if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID]; }
 else { $P4 = ''; }
 
 $NString = 'N=?';
@@ -66,8 +60,12 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
    title="Sort by Memory Use KB">sort</a>
 </th>
 <th>
-   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" 
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz"
    title="Sort by Compressed Source Code size Bytes">sort</a>
+</th>
+<th>
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=elapsed"
+   title="Sort by Elapsed Time secs">sort</a>
 </th>
 </tr>
 
@@ -92,7 +90,7 @@ foreach($Accepted as $d){
 
    $CPU = '';
    $MEM = '';
-   $LOCS = '';
+   $ELAPSED = '';
    $GZBYTES = '';
    if (!isset($better[$k])){
       $better[$k] = TRUE;
@@ -101,11 +99,11 @@ foreach($Accepted as $d){
          $CPU = ' class="sort"';    
       } elseif ($Sort=='kb'){ 
          $MEM = ' class="sort"';
-      } elseif ($Sort=='lines'){ 
-         $LOCS = ' class="sort"';
+      } elseif ($Sort=='elapsed'){
+         $ELAPSED = ' class="sort"';
       } elseif ($Sort=='gz'){ 
          $GZBYTES = ' class="sort"';
-      }  
+      }
    }
 
    if ($Sort=='fullcpu'){   
@@ -114,13 +112,13 @@ foreach($Accepted as $d){
    } elseif ($Sort=='kb'){ 
       if (($TestName=='startup')||($first[DATA_MEMORY]==0)){ $ratio = 0; }
       else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
-   } elseif ($Sort=='lines'){ 
-      if ($first[DATA_GZ]==0){ $ratio = 0; }
-      else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
+   } elseif ($Sort=='elapsed'){
+      if ($first[DATA_ELAPSED]==0){ $ratio = 0; }
+      else { $ratio = $d[DATA_ELAPSED]/$first[DATA_ELAPSED]; }
    } elseif ($Sort=='gz'){
       if ($first[DATA_GZ]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
-   } 
+   }
 
    unset($No_Program_Langs[$k]);
    $Name = $Langs[$k][LANG_FULL];
@@ -131,6 +129,8 @@ foreach($Accepted as $d){
    if ($TestName=='startup'){
       $fc = number_format($fullcpu/$testValue,4);
       $kb = '&nbsp;';
+      $e = '&nbsp;';
+      $ld = '&nbsp;';
    } else { 
       $fc = number_format($fullcpu,2);
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
@@ -144,8 +144,8 @@ foreach($Accepted as $d){
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td>',
-         $CPU, $fc, $MEM, $kb, $GZBYTES, $gz, $e, $ld); echo "\n";
+   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td><td%s>%s</td><td class="smaller">&nbsp;&nbsp;%s</td>',
+         $CPU, $fc, $MEM, $kb, $GZBYTES, $gz, $ELAPSED, $e, $ld); echo "\n";
 
    echo "</tr>\n";
 }
@@ -177,7 +177,7 @@ foreach($Langs as $k => $v){
          printf('<td>%s</td><td></td><td>%d</td><td>%s</td><td></td>', $message, $gz, $e);
 
          echo "</tr>\n";
-         unset($No_Program_Langs[$k]);         
+         unset($No_Program_Langs[$k]);
       }
    }
 }
@@ -195,12 +195,12 @@ if (sizeof($Special)>0){
       if ($Sort=='fullcpu'){   
          if ($first[DATA_FULLCPU]==0){ $ratio = 0; }
          else { $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU]; }
-      } elseif ($Sort=='kb'){ 
+      } elseif ($Sort=='elapsed'){
+         if ($first[DATA_ELAPSED]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_ELAPSED]/$first[DATA_ELAPSED]; }
+      } elseif ($Sort=='kb'){
          if (($TestName=='startup')||($first[DATA_MEMORY]==0)){ $ratio = 0; }
          else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
-      } elseif ($Sort=='lines'){
-         if ($first[DATA_GZ]==0){ $ratio = 0; }
-         else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
       }
 
 
@@ -208,6 +208,7 @@ if (sizeof($Special)>0){
       $gz = $d[DATA_GZ];
       $fullcpu = $d[DATA_FULLCPU];
       $status = $d[DATA_STATUS];
+      $e = ElapsedTime($d);
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
 
       printf('<tr>'); echo "\n";
@@ -221,7 +222,7 @@ if (sizeof($Special)>0){
       else {
          printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
             PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
-         printf('<td>%0.2f</td><td>%s</td><td>%d</td><td></td><td></td>', $fullcpu, $kb, $gz ); echo "\n";
+         printf('<td>%0.2f</td><td>%s</td><td>%d</td><td>%0.2f</td><td></td>', $fullcpu, $kb, $gz, $e ); echo "\n";
       }
       echo "</tr>\n";
    }

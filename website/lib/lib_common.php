@@ -230,6 +230,18 @@ function CompareGz($a, $b){
    return  ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1;
 }
 
+function CompareElapsed($a, $b){
+   if ($a[DATA_ELAPSED] == $b[DATA_ELAPSED]){
+      if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
+         if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
+         else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
+      }
+      else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
+   }
+   return  ($a[DATA_ELAPSED] < $b[DATA_ELAPSED]) ? -1 : 1;
+}
+
+
 function CompareLangName($a, $b){
    return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
 }
@@ -271,7 +283,7 @@ function CompareNName($a, $b){
 function SortName($sort){
    if ($sort=='fullcpu'){ return 'Full CPU Time'; }
    elseif ($sort=='gz'){ return 'GZ Compressed Source'; }
-   elseif ($sort=='lines'){ return 'Lines Of Code'; }
+   elseif ($sort=='elapsed'){ return 'Elapsed Time'; }
    else { return 'Memory use'; }
 }
 
@@ -292,7 +304,7 @@ function ExcludeData(&$d,&$langs,&$Excl){
 }
 
 
-function FilterAndSortData($langs,$data,$sort,&$Excl){
+function FilterAndSortData($langs,$data,&$sort,&$Excl){
    $Accepted = array();
    $Rejected = array();   
    $Special = array();
@@ -314,16 +326,24 @@ function FilterAndSortData($langs,$data,$sort,&$Excl){
          }
       }         
    }
+   
+   // hack for old data which doesn't have Elapsed times only CPU times
+   if ($sort=='elapsed' && sizeof($Accepted)>0 && $Accepted[0][DATA_ELAPSED]== 0.0){
+      $sort = 'fullcpu';
+   }
 
    if ($sort=='fullcpu'){
-      usort($Accepted, 'CompareFullCpuTime'); 
+      usort($Accepted, 'CompareFullCpuTime');
       usort($Special, 'CompareFullCpuTime');
-   } elseif ($sort=='kb'){ 
+   } elseif ($sort=='kb'){
       usort($Accepted, 'CompareMemoryUse'); 
       usort($Special, 'CompareMemoryUse');
    } elseif ($sort=='gz'){
-      usort($Accepted, 'CompareGz'); 
+      usort($Accepted, 'CompareGz');
       usort($Special, 'CompareGz'); 
+   } elseif ($sort=='elapsed'){
+      usort($Accepted, 'CompareElapsed');
+      usort($Special, 'CompareElapsed');
    }
 
    return array($Accepted,$Rejected,$Special);
