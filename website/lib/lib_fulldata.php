@@ -5,7 +5,8 @@
 
 
 function ComparisonData($langs,$data,$p,&$Excl){
-   list($Accepted) = FilterAndSortData($langs,$data,'fullcpu',&$Excl);
+   $sortValue = 'fullcpu';
+   list($Accepted) = FilterAndSortData($langs,$data,&$sortValue,&$Excl);
 
 // SELECTION DEPENDS ON THIS SORT ORDER
 
@@ -36,7 +37,7 @@ function ComparisonData($langs,$data,$p,&$Excl){
             );
 
          $i = sizeof($NData)-1;         
-      } 
+      }
       $NData[$i][N_FULLCPU][] = $d[DATA_FULLCPU];
       $NData[$i][N_MEMORY][] = $d[DATA_MEMORY];    
       $TestValues[ $d[DATA_TESTVALUE] ] = $d[DATA_TESTVALUE];
