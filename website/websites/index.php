@@ -1,7 +1,7 @@
 <?php
 echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
 $U64Q = filemtime('./u64q/data/data.csv');
-//$U32Q = filemtime('./u32q/data/data.csv');
+$U32Q = filemtime('./u32q/data/data.csv');
 //$U32 = filemtime('./u32/data/data.csv');
 ?>
 
@@ -35,19 +35,24 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <h5><br/>Programming language measurements by OS and CPU</h5><br/>
+
 <table class="layout">
 <tr class="test">
 <td>
+<p class="timestamp"><a href="./u32q/"><? printf('%s', gmdate("d M Y", $U32Q)) ?></a></p>
+<h3><span class="u32q">
+<a title="Computer Language Benchmarks on Ubuntu&#8482; : Intel&#174; Q6600&#174;"
+href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
 </td>
+</tr>
+</table>
+<table class="layout">
+<tr class="test">
 <td>
 <p class="timestamp"><a href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
 <h3><span class="u64q">
-<a title="Computer Language Benchmarks on Ubuntu : Intel&#174; Q6600&#8482;"
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
-</td>
-</tr>
-<tr class="test">
-<td>
+<a title="Computer Language Benchmarks on Ubuntu&#8482; : Intel&#174; Q6600&#174;"
+href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>

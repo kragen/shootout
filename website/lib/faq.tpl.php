@@ -142,7 +142,7 @@ For the older measurements (Gentoo Pentium 4 and Debian Sempron) each program wa
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<p>We use <strong>Ubuntu&#8482; 8.04 Linux</strong> Kernel </p><dd>
+<p>We use <strong>Ubuntu&#8482; 8.04 Linux</strong> Kernel 2.6.24-19-generic</p><dd>
 
 <p>We use <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
