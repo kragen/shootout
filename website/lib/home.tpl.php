@@ -12,8 +12,20 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <p>It can be fun to watch the Benchmarks Game but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p>
 
-<p class="timestamp">Most recent measurement: <strong><? printf('%s', gmdate("d M Y, l,", $Measured)) ?></strong>
-<? printf(' %s GMT', gmdate("g:i a", $Measured)) ?></p>
+<?
+if (SITE_NAME == 'debian'){
+   $DataDate = 'late 2007';
+   $DataTime = '';
+} elseif (SITE_NAME == 'gp4'){
+   $DataDate = 'mid 2008';
+   $DataTime = '';
+} else {
+   $DataDate = gmdate("d M Y, l,", $Measured);
+   $DataTime = ' '.gmdate("g:i a", $Measured).'  GMT';
+}
+?>
+
+<p class="timestamp">Most recent measurement: <strong><?=$DataDate;?></strong><?=$DataTime;?></p>
 
 
 <table class="layout">
