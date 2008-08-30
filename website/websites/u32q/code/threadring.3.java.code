@@ -1,0 +1,68 @@
+<span class="hl com">/**</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> * contributed by Klaus Friedel</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>locks<span class="hl sym">.</span><span class="hl kwc">LockSupport</span><span class="hl sym">;</span>
+
+<span class="hl kwa">public class</span> threadring <span class="hl sym">{</span>
+  <span class="hl kwa">static final</span> <span class="hl kwb">int</span> THREAD_COUNT <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+
+  <span class="hl kwa">public static class</span> MessageThread <span class="hl kwa">extends</span> <span class="hl kwc">Thread</span> <span class="hl sym">{</span>
+    MessageThread nextThread<span class="hl sym">;</span>
+    <span class="hl kwa">volatile</span> <span class="hl kwc">Integer</span> message<span class="hl sym">;</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwd">MessageThread</span><span class="hl sym">(</span>MessageThread nextThread<span class="hl sym">,</span> <span class="hl kwb">int</span> name<span class="hl sym">) {</span>
+      <span class="hl kwa">super</span><span class="hl sym">(</span><span class="hl str">&quot;&quot;</span><span class="hl sym">+</span>name<span class="hl sym">);</span>
+      <span class="hl kwa">this</span><span class="hl sym">.</span>nextThread <span class="hl sym">=</span> nextThread<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">() {</span>
+      <span class="hl kwa">while</span><span class="hl sym">(</span>true<span class="hl sym">)</span> nextThread<span class="hl sym">.</span><span class="hl kwd">enqueue</span><span class="hl sym">(</span><span class="hl kwd">dequeue</span><span class="hl sym">());</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">enqueue</span><span class="hl sym">(</span><span class="hl kwc">Integer</span> hopsRemaining<span class="hl sym">) {</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span>hopsRemaining <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">){</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span><span class="hl kwd">getName</span><span class="hl sym">());</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+      <span class="hl slc">// as only one message populates the ring, it's impossible</span>
+      <span class="hl slc">// that queue is not empty</span>
+      message <span class="hl sym">=</span> hopsRemaining <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl kwc">LockSupport</span><span class="hl sym">.</span><span class="hl kwd">unpark</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span> <span class="hl slc">// work waiting...</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private</span> <span class="hl kwc">Integer</span> <span class="hl kwd">dequeue</span><span class="hl sym">(){</span>
+      <span class="hl kwa">while</span><span class="hl sym">(</span>message <span class="hl sym">==</span> null<span class="hl sym">){</span>
+        <span class="hl kwc">LockSupport</span><span class="hl sym">.</span><span class="hl kwd">park</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwc">Integer</span> msg <span class="hl sym">=</span> message<span class="hl sym">;</span>
+      message <span class="hl sym">=</span> null<span class="hl sym">;</span>
+      <span class="hl kwa">return</span> msg<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwc">String</span> args<span class="hl sym">[])</span> <span class="hl kwa">throws</span> <span class="hl kwc">Exception</span><span class="hl sym">{</span>
+    <span class="hl kwb">int</span> hopCount <span class="hl sym">=</span> <span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">parseInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+
+    MessageThread first <span class="hl sym">=</span> null<span class="hl sym">;</span>
+    MessageThread last <span class="hl sym">=</span> null<span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> THREAD_COUNT<span class="hl sym">;</span> i <span class="hl sym">&gt;=</span> <span class="hl num">1</span> <span class="hl sym">;</span> i<span class="hl sym">--) {</span>
+      first <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">MessageThread</span><span class="hl sym">(</span>first<span class="hl sym">,</span> i<span class="hl sym">);</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span>i <span class="hl sym">==</span> THREAD_COUNT<span class="hl sym">)</span> last <span class="hl sym">=</span> first<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+    <span class="hl slc">// close the ring:</span>
+    last<span class="hl sym">.</span>nextThread <span class="hl sym">=</span> first<span class="hl sym">;</span>
+
+    <span class="hl slc">// start all Threads</span>
+    MessageThread t <span class="hl sym">=</span> first<span class="hl sym">;</span>
+    <span class="hl kwa">do</span><span class="hl sym">{</span>
+      t<span class="hl sym">.</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+      t <span class="hl sym">=</span> t<span class="hl sym">.</span>nextThread<span class="hl sym">;</span>
+    <span class="hl sym">}</span><span class="hl kwa">while</span><span class="hl sym">(</span>t <span class="hl sym">!=</span> first<span class="hl sym">);</span>
+    <span class="hl slc">// inject message</span>
+    first<span class="hl sym">.</span><span class="hl kwd">enqueue</span><span class="hl sym">(</span>hopCount<span class="hl sym">);</span>
+    first<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">();</span> <span class="hl slc">// wait for System.exit</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
