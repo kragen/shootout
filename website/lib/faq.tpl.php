@@ -33,6 +33,12 @@
 <p>Compare them directly <a href="fulldata.php?test=binarytrees&p1=oz-0&p2=hipe-0&p3=python-3&p4=oz-0"><strong>side-by-side</strong> for all the data points</a>.</p>
 </dd>
 
+<dt><a href="#datasets" name="datasets"><strong>Why does it do better on ...?</strong></a></dt>
+<dd>
+<p>Too many things differ between the test machine installs to allow comparison across test machines. As well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
+<p>Look at the source code!</p>
+</dd>
+
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
 <dd>
 <p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
@@ -65,89 +71,6 @@
 <p>Man's friends said <strong>"it's not fair"</strong> - everyone knows that in the "real world" Man would use a motorbike, you must wait until Man has fueled and warmed up the engine!</p>
 <p>Snail's friends said <strong>"it's not fair"</strong> - everyone knows that a creature should leave a slime trail, all those other creatures are cheating!</p>
 <p>Dalmatian's tail was banging on the ground. Dalmatian panted and between breaths said "Look at that beautiful mountain, let's race to the top!" </p>
-</dd>
-
-
-<dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
-<dd><p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. Sometimes other programmers don't believe that JVM profiling and dynamic compilation will have any effect on simple programs like those shown in the benchmarks game - let's take a look.</p>
-
-<p>In <strong><a href="miscfile.php?file=dynamic&amp;title=Java Dynamic Compilation">these examples</a></strong> we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 400 times; in the second case, we started the program once and measured the program again and again and again 400 times, without restarting the JVM. </p>
-
-
-<table>
-<tr>
-<th colspan="3">&nbsp;started&nbsp;400&nbsp;times&nbsp;</th>
-<th colspan="2">&nbsp;started&nbsp;once&nbsp;</th>
-</tr>
-
-<tr>
-<th>&nbsp;</th>
-<th>mean</th>
-<th>&#963;</th>
-<th>mean</th>
-<th>&#963;</th>
-</tr>
-
-<tr>
-<td>nsieve&nbsp;&nbsp;</td>
-<td>2.37</td>
-<td>&nbsp;&nbsp;0.05</td>
-<td>&nbsp;&nbsp;2.14</td>
-<td>&nbsp;&nbsp;0.01</td>
-</tr>
-<tr>
-<td>mandelbrot&nbsp;&nbsp;</td>
-<td>3.42</td>
-<td>&nbsp;&nbsp;0.01</td>
-<td>&nbsp;&nbsp;3.20</td>
-<td>&nbsp;&nbsp;0.01</td>
-</tr>
-<tr>
-<td>binary-trees&nbsp;&nbsp;</td>
-<td>6.37</td>
-<td>0.06</td>
-<td>5.66</td>
-<td>0.05</td>
-</tr>
-<tr>
-<td>nsievebits&nbsp;&nbsp;</td>
-<td>7.43</td>
-<td>0.28</td>
-<td>7.15</td>
-<td>0.08</td>
-</tr>
-<tr>
-<td>fannkuch&nbsp;&nbsp;</td>
-<td>11.66</td>
-<td>0.16</td>
-<td>11.13</td>
-<td>0.43</td>
-</tr>
-<tr>
-<td>nbody&nbsp;&nbsp;</td>
-<td>16.21</td>
-<td>0.05</td>
-<td>16.06</td>
-<td>0.34</td>
-</tr>
-<tr>
-<td>spectral-norm&nbsp;&nbsp;</td>
-<td>24.71</td>
-<td>0.02</td>
-<td>23.65</td>
-<td>0.05</td>
-</tr>
-</table>
-
-<p>The costs of JVM profiling and dynamic compilation are always included in the first case; in the second case the first measurement shows the costs of partial interpretation and JVM profiling and dynamic compilation, but the next 399 measurements show the benefits without showing the costs. We can't just wish the costs away - Java bytecode does need to be loaded and profiled and compiled.</p>
-
-<p><img src="<?=IMAGE_PATH;?>jspectralnorm.png"
-   alt=""
-   title=""
-   width="450" height="150"
- /></p>
-
-<p>As part of performance analysis, those differences hint at how much is not accounted for and how little or how much we might still be able to achieve by writing better programs.</p>
 </dd>
 
 <dt><a href="#whatlanguage" name="whatlanguage">What language was used to write each initial benchmark program?</a></dt>
@@ -259,6 +182,88 @@ The system is going down for system halt NOW!
 </pre>
 </dd>
 
+
+<dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
+<dd><p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. Sometimes other programmers don't believe that JVM profiling and dynamic compilation will have any effect on simple programs like those shown in the benchmarks game - let's take a look.</p>
+
+<p>In <strong><a href="miscfile.php?file=dynamic&amp;title=Java Dynamic Compilation">these examples</a></strong> we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 400 times; in the second case, we started the program once and measured the program again and again and again 400 times, without restarting the JVM. </p>
+
+
+<table>
+<tr>
+<th colspan="3">&nbsp;started&nbsp;400&nbsp;times&nbsp;</th>
+<th colspan="2">&nbsp;started&nbsp;once&nbsp;</th>
+</tr>
+
+<tr>
+<th>&nbsp;</th>
+<th>mean</th>
+<th>&#963;</th>
+<th>mean</th>
+<th>&#963;</th>
+</tr>
+
+<tr>
+<td>nsieve&nbsp;&nbsp;</td>
+<td>2.37</td>
+<td>&nbsp;&nbsp;0.05</td>
+<td>&nbsp;&nbsp;2.14</td>
+<td>&nbsp;&nbsp;0.01</td>
+</tr>
+<tr>
+<td>mandelbrot&nbsp;&nbsp;</td>
+<td>3.42</td>
+<td>&nbsp;&nbsp;0.01</td>
+<td>&nbsp;&nbsp;3.20</td>
+<td>&nbsp;&nbsp;0.01</td>
+</tr>
+<tr>
+<td>binary-trees&nbsp;&nbsp;</td>
+<td>6.37</td>
+<td>0.06</td>
+<td>5.66</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td>nsievebits&nbsp;&nbsp;</td>
+<td>7.43</td>
+<td>0.28</td>
+<td>7.15</td>
+<td>0.08</td>
+</tr>
+<tr>
+<td>fannkuch&nbsp;&nbsp;</td>
+<td>11.66</td>
+<td>0.16</td>
+<td>11.13</td>
+<td>0.43</td>
+</tr>
+<tr>
+<td>nbody&nbsp;&nbsp;</td>
+<td>16.21</td>
+<td>0.05</td>
+<td>16.06</td>
+<td>0.34</td>
+</tr>
+<tr>
+<td>spectral-norm&nbsp;&nbsp;</td>
+<td>24.71</td>
+<td>0.02</td>
+<td>23.65</td>
+<td>0.05</td>
+</tr>
+</table>
+
+<p>The costs of JVM profiling and dynamic compilation are always included in the first case; in the second case the first measurement shows the costs of partial interpretation and JVM profiling and dynamic compilation, but the next 399 measurements show the benefits without showing the costs. We can't just wish the costs away - Java bytecode does need to be loaded and profiled and compiled.</p>
+
+<p><img src="<?=IMAGE_PATH;?>jspectralnorm.png"
+   alt=""
+   title=""
+   width="450" height="150"
+ /></p>
+
+<p>As part of performance analysis, those differences hint at how much is not accounted for and how little or how much we might still be able to achieve by writing better programs.</p>
+</dd>
 
 </dl>
 </dd>
