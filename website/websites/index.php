@@ -1,8 +1,8 @@
 <?php
 echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
-$D = filemtime('./debian/data/data.csv');
-$G = filemtime('./gp4/data/data.csv');
-$U = filemtime('./u64q/data/data.csv');
+$U64Q = filemtime('./u64q/data/data.csv');
+//$U32Q = filemtime('./u32q/data/data.csv');
+//$U32 = filemtime('./u32/data/data.csv');
 ?>
 
 
@@ -34,28 +34,34 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
+<h5><br/>Programming language measurements by OS and CPU</h5><br/>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a href="./u64q/"><? printf('%s', gmdate("d M Y", $U)) ?></a></p>
-<p><a href="./u64q/"><strong>Benchmarks</strong> timed on:</a></p>
+</td>
+<td>
+<p class="timestamp"><a href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
 <h3><span class="u64q">
 <a title="Computer Language Benchmarks on Ubuntu : Intel&#174; Q6600&#8482;"
 href="./u64q/">&nbsp;x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
 </td>
 </tr>
+<tr class="test">
+<td>
+</td>
+</tr>
+</table>
 
+<table class="layout">
 <tr class="test">
 <td>
 <p class="timestamp"><a href="./gp4/">mid 2008</a></p>
-<p><a href="./gp4/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="gp4">
 <a title="Computer Language Benchmarks on Gentoo : Intel&#174; Pentium&#174;"
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
 <p class="timestamp"><a href="./debian/">late 2007</a></p>
-<p><a href="./debian/"><strong>Benchmarks</strong> timed on:</a></p>
 <h3><span class="debian">
 <a title="Computer Language Benchmarks on Debian : AMD&#8482; Sempron&#8482;"
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
