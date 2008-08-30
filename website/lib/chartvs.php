@@ -66,12 +66,14 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
    $hsec = 5;
    $hmem = 1;
    $vscale = CHART_VSCALE;
-   $hscale = 15;   
+   $hscale = 15;
 
-   $ts = 28;
-   $t = $ts+13;   
+   //$ts = 28;
+   $ts = 48;
+   $t = $ts+13;
    $v1 = $w2/$hscale;
-   $b = $h-68;
+   //$b = $h-68;
+   $b = $h-36;
 
    $ysec = $t+7;
    $ymem = $t+7 -1;
@@ -102,17 +104,16 @@ ImageTtfText($im,$fsize,0, $left, $ysize - 3, $black,$fpath,$ShortName);
 $gray = ImageColorAllocate($im,221,221,221);
 $charwidth = 7.0; // for size 3
 
-ImageString($im, 3, ($w-(strlen($ShortName)*$charwidth))/2, $ts-25, $ShortName, $black);
-ImageString($im, 5, $o-$v1*12 -6, $ts-14 , 'worse', $white);
-ImageString($im, 5, $o+$v1*9 -8, $ts-14 , 'better', $white);
+$label = '<<< '.$ShortName.' better';
+ImageString($im, 3, $o-$v1*14,$ts-16, $label, $black);
 
 ImageString($im, 2, $o -2, $ts, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $ts, '5x', $white);
 ImageString($im, 2, $o-$v1*9 -8, $ts, '10x', $white);
-ImageString($im, 2, $o-$v1*14 -6, $ts, '>15x', $white);
+ImageString($im, 2, $o-$v1*14 -6, $ts, '15x', $white);
 ImageString($im, 2, $o+$v1*4 -6, $ts, '5x', $white);
 ImageString($im, 2, $o+$v1*9 -8, $ts, '10x', $white);
-ImageString($im, 2, $o+$v1*14 -16, $ts, '>15x', $white);
+ImageString($im, 2, $o+$v1*14 -12, $ts, '15x', $white);
 
 ImageLine($im, $o-$v1*14, $t+5, $o+$v1*14, $t+5, $white);
 ImageLine($im, $o-$v1*14, $b-5, $o+$v1*14, $b-5, $white);
@@ -136,25 +137,25 @@ foreach($Tests as $Row){
          if ($wsec < 1){ 
             if ($wsec==0){ $wsec = 0.0001; }      
             $wsec = min( (1/$wsec)*$v1, $w2) - $v1; 
-            ImageFilledRectangle($im, $o-$wsec, $ysec, $o, $ysec+$hsec, $white);
+            ImageFilledRectangle($im, $o, $ysec, $o+$wsec, $ysec+$hsec, $white);
          }            
          else { 
             $wsec = min( $wsec*$v1, $w2) - $v1;
-            ImageFilledRectangle($im, $o, $ysec, $o+$wsec, $ysec+$hsec, $white);
+            ImageFilledRectangle($im, $o-$wsec, $ysec, $o, $ysec+$hsec, $white);
          }
 
          $wmem = $v[N_MEMORY];
          if ($wmem < 1){ 
             if ($wmem==0){ $wmem = 0.0001; }      
             $wmem = min( (1/$wmem)*$v1, $w2) - $v1; 
-            ImageFilledRectangle($im, $o-$wmem, $ymem, $o, $ymem+$hmem, $black);
+            ImageFilledRectangle($im, $o, $ymem, $o+$wmem, $ymem+$hmem, $black);
          }            
          else { 
             $wmem = min( $wmem*$v1, $w2) - $v1;
-            ImageFilledRectangle($im, $o, $ymem, $o+$wmem, $ymem+$hmem, $black);
-         }                             
+            ImageFilledRectangle($im, $o-$wmem, $ymem, $o, $ymem+$hmem, $black);
+         }
       }
-   }      
+   }
 
    $ysec = $ysec + $height;
    $ymem = $ymem + $height;
@@ -166,25 +167,24 @@ foreach($Tests as $Row){
 ImageString($im, 2, $o -2, $b, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $b, '5x', $white);
 ImageString($im, 2, $o-$v1*9 -8, $b, '10x', $white);
-ImageString($im, 2, $o-$v1*14 -6, $b, '>15x', $white);
+ImageString($im, 2, $o-$v1*14 -6, $b, '15x', $white);
 ImageString($im, 2, $o+$v1*4 -6, $b, '5x', $white);
 ImageString($im, 2, $o+$v1*9 -8, $b, '10x', $white);
-ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
+ImageString($im, 2, $o+$v1*14 -12, $b, '15x', $white);
 
-// LEGEND 
+// LEGEND
 
-ImageString($im, 3, ($w-(strlen($ShortName2)*$charwidth))/2, $b+26, $ShortName2, $black);
-ImageString($im, 5, $o-$v1*12 -6, $b+11 , 'better', $white);
-ImageString($im, 5, $o+$v1*9 -8, $b+11 , 'worse', $white);
+$label = $ShortName2.' better >>>';
+ImageString($im, 3, $o+$v1*14 -(strlen($label)*$charwidth), $b+16, $label, $black);
 
-ImageFilledRectangle($im, $o-$v1*9+10, $b+54, $o-$v1*9+8+10, $b+54+$hsec, $white);
-ImageString($im, 3, $o-$v1*9+8+5+10, $b+50, 'CPU Time', $white);
+ImageFilledRectangle($im, $o-$v1*9-40, 8, $o-$v1*9+8-40, 8+$hsec, $white);
+ImageString($im, 3, $o-$v1*9+8+5-40, 4, 'better CPU Time', $white);
 
-ImageFilledRectangle($im, $o-$v1*9+110, $b+57, $o-$v1*9+8+110, $b+57+$hmem, $black);
-ImageString($im, 2, $o-$v1*9+8+5+110, $b+50, 'Memory Use', $black);
+ImageFilledRectangle($im, $o-$v1*9+100, 10, $o-$v1*9+8+100, 10+$hmem, $black);
+ImageString($im, 2, $o-$v1*9+8+5+100, 4, 'better Memory Use', $black);
 
 
 ImageInterlace($im,1);
 ImagePNG($im);
-ImageDestroy($im); 
+ImageDestroy($im);
 ?> 

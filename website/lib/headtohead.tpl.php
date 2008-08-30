@@ -19,7 +19,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
 <h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better?</a></h2>
-<p>For each of one our benchmarks, a white bar shows which language implementation had the faster program, and a black bar shows which used the least memory.</p>
+<p>For each of one our benchmarks, a white bar shows which language implementation had the better CPU time, and a black bar shows which had the better memory use.</p>
 
 
 <p class="img"><img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>"
@@ -61,7 +61,7 @@ foreach($Tests as $Row){
       if ($v[N_LINES] >= 0){
       
          if ($v[N_N]==0){ $n = '<td></td>'; } 
-         else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }  
+         else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }
 
          if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }                       
 
