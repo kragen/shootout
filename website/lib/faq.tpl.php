@@ -14,7 +14,7 @@
 
 <dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
 <dd>
-<p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;cpu time</a>, <a href="#memory">&darr;&nbsp;memory use</a> and <a href="#gzbytes">&darr;&nbsp;source code size</a>.</p>
+<p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;time</a>, <a href="#memory">&darr;&nbsp;memory use</a> and <a href="#gzbytes">&darr;&nbsp;source code size</a>.</p>
 </dd>
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
@@ -65,12 +65,6 @@
 <p>Man's friends said <strong>"it's not fair"</strong> - everyone knows that in the "real world" Man would use a motorbike, you must wait until Man has fueled and warmed up the engine!</p>
 <p>Snail's friends said <strong>"it's not fair"</strong> - everyone knows that a creature should leave a slime trail, all those other creatures are cheating!</p>
 <p>Dalmatian's tail was banging on the ground. Dalmatian panted and between breaths said "Look at that beautiful mountain, let's race to the top!" </p>
-</dd>
-
-
-<dt><a href="#fullcpu" name="fullcpu">What does CPU Time mean?</a></dt>
-<dd><p>CPU Time means <strong>program usr+sys time</strong> (in seconds) which includes the time taken to startup and shutdown the program. For language implementations that use a Virtual Machine the CPU Time includes the time taken to startup and shutdown the VM.</p>
-<p>You can get a vague idea of the difference in startup time between language implementations from the <a href="benchmark.php?test=hello&amp;lang=all" title="Compare performance on the startup benchmark"><strong>startup benchmark</strong></a>.</p>
 </dd>
 
 
@@ -179,44 +173,35 @@
 <dl>
 <dt><a href="#pretest" name="pretest">How did you measure?</a></dt>
 <dd>
-<p>Each program was run once pre-test to reduce cache effects. Program output is redirected to a log-file and compared to the expected output.</p>
-<p>Each program was then run 3 times with program output redirected to /dev/null. We show the lowest measured CPU time and the highest memory usage, from the 3 runs.</p>
-<p>The variation between cpu times is different for different languages and for different benchmarks. 
-<em>The coefficient of variation</em> for 100 measurements of nbody ranged from 0.029% (Lua) to 0.074% (Oberon2) to 0.092% (C#); 
-and for 100 measurements of fasta ranged from 0.009% (Lua) to 0.088% (C#) to 0.655% (Oberon2).</p>
-<p>Don't sweat the small stuff - differences in cpu time of a few % are illusory.</p>
+<ol>
+<li>Each program was run and measured at the smallest input value, program output redirected to a file and compared to expected output. As long as the output matched expected output, the program was then run and measured at the next larger input value until measurements had been made at every input value.</li>
+
+<li>If the program gave the expected output within an arbitrary cutoff time (now 60 seconds) the program was measured again repeatedly (now 6 times) with output redirected to /dev/null.</li>
+
+<li>If the program didn't give the expected output within an arbitrary timeout (usually one hour) the program was forced to quit. If measurements at a smaller input value had been successful, the program was measured again repeatedly (now 6 times) at that smaller input value, with output redirected to /dev/null.</li>
+
+<li>The measurements shown on the website are either
+<ul><li>within the arbitrary cutoff - the lowest time and highest memory use from repeated measurements</li>
+<li>outside the arbitrary cutoff - the sole time and memory use measurement</li></ul></li>
+
+<li>For sure, programs taking 4 and 5 hours were only measured once!</li>
+</ol>
 </dd>
 
-<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>CPU time?</strong></a></dt>
-<dd><p>Each program was run as a child-process of a Perl script. We take the script child-process usr+sys time, before forking the child-process and after the child-process exits.</p>
-<p>(<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3] does seem to provide better resolution than Perl times() builtin function or <a href="http://www.danlj.org/mkj/lad/info/time.html#SEC10" title="Measuring Program Resource Use: The GNU time Command">GNU time</a>, for example measuring the same program:</p>
-<pre>Perl times() builtin function
-16.650
-16.660
-16.640
+<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>time?</strong></a></dt>
+<dd><p>The measurement techniques have changed a little:
+<ul>
+<li>For the newer measurements (Ubuntu Q6600) each program was run as a child-process of a Python script using Popen. The script child-process usr+sys rusage time was taken using os.wait3, and time was taken before forking the child-process and after the child-process exits, using time.time().</li>
+<li>
+For the older measurements (Gentoo Pentium 4 and Debian Sempron) each program was run as a child-process of a Perl script. The script child-process usr+sys time was taken before forking the child-process and after the child-process exits, using <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>[2,3].
+</li>
+</ul></p>
 
-BSD::Resource::times
-16.659
-16.656
-16.655
-
-GNU time version 1.7
-16.62
-16.61
-16.60
-
-Bash time builtin command
-16.624
-16.628
-16.638
-</pre>
-<p>We use (<a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>)[2,3]</p>
-<p>The <a href="#fullcpu"><strong>&darr;&nbsp;CPU time</strong></a> <em>includes</em> program startup time.</p>
+<p><strong>Time measurements include program startup time.</strong></p>
 </dd>
 
-<dt><a href="#memory" name="memory">How did you measure <strong>memory usage?</strong></a></dt>
-<dd><p>In a very approximate and unreliable way. We sampled the child-process resident memory size (VmRSS) multiple times a second. We identified the main thread by checking for SIGCHLD being registered as the exit_signal in the second to last field of /proc/{pid}/stat.</p>
-<p>There's a race condition. When the program completes quickly, this sampling technique will fail.</p>       
+<dt><a href="#memory" name="memory">How did you measure <strong>memory use?</strong></a></dt>
+<dd><p>By sampling GTop proc_mem for the program and it's child processes every 0.2 seconds. Obviously those measurements are unlikely to be reliable for programs that run for less than 0.2 seconds.</p>
 </dd>
 
 <dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>GZip Bytes?</strong></a></dt>
@@ -228,11 +213,15 @@ Bash time builtin command
 </dd>
 
 <dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
-<dd><p>We use a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512 MB of RAM and a 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and an 80GB IDE disk drive.</p>
+<dd>
+<p>We use a quad-core 2.4Ghz Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine with 4GB of RAM and 250GB SATA II disk drive.</p>
+<p>We use a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512MB of RAM and 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and 80GB IDE disk drive.</p>
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <strong>Debian Linux&#8482;</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux&#8482;</strong> gentoo-sources-2.6.20-r6</p>
+<p>We use <strong>Ubuntu&#8482; 8.04 Linux</strong> Kernel </p><dd>
+
+<p>We use <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
 
 
