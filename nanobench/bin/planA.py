@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.17 2008-08-27 02:36:31 igouy-guest Exp $
+# $Id: planA.py,v 1.18 2008-08-31 21:57:18 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -12,10 +12,11 @@ from domain import Record
 import os, sys, cPickle, time, threading, signal, gtop
 from errno import ENOENT
 from subprocess import Popen
+from affinity import set_process_affinity_mask
 
 
 def measure(arg,commandline,delay,maxtime,
-      outFile=None,errFile=None,inFile=None,logger=None):
+      outFile=None,errFile=None,inFile=None,logger=None,affinitymask=None):
 
    r,w = os.pipe()
    forkedPid = os.fork()
@@ -68,6 +69,10 @@ def measure(arg,commandline,delay,maxtime,
 
        
       try:
+         def setAffinity():
+            if affinitymask: 
+               set_process_affinity_mask(os.getpid(),affinitymask)
+
          m = Record(arg)
 
          # only write pickles to the pipe
@@ -78,8 +83,8 @@ def measure(arg,commandline,delay,maxtime,
          start = time.time()
 
          # spawn the program in a separate process
-         p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
-
+         p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile,preexec_fn=setAffinity)
+         
          # start a thread to sample the program's resident memory use
          t = Sample( program = p.pid )
 
