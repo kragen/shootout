@@ -25,7 +25,7 @@ define('GREAT_SITE', '../great/');
 define('OLD_SITE', '../old/');
 define('CONTESTS_SITE', '../contests/');
 define('GP4_SITE', '../gp4');
-define('U32Q_SITE', './');
+define('U32_SITE', './');
 
 
 // CONSTANTS ///////////////////////////////////////////////////
@@ -34,9 +34,9 @@ define('DEV',TRUE);                // show excluded languages, tests, programs, 
 define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
-define('SITE_NAME', 'u32q');
-define('SITE_TITLE','Ubuntu : Intel&#174; Q6600&#174; quad-core Computer Language Benchmarks Game');
-define('BANNER_TITLE','Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core<br/>Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game&nbsp;');
+define('SITE_NAME', 'u32');
+define('SITE_TITLE','Ubuntu : Intel&#174; Q6600&#174; one-core Computer Language Benchmarks Game');
+define('BANNER_TITLE','Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one-core<br/>Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game&nbsp;');
 define('FAQ_TITLE','Read the FAQ!');
 define('BAR',' | ');
 define('DASH',' - ');
