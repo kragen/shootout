@@ -177,11 +177,11 @@ ImageString($im, 2, $o+$v1*14 -12, $b, '15x', $white);
 $label = $ShortName2.' better >>>';
 ImageString($im, 3, $o+$v1*14 -(strlen($label)*$charwidth), $b+16, $label, $black);
 
-ImageFilledRectangle($im, $o-$v1*9-40, 8, $o-$v1*9+8-40, 8+$hsec, $white);
-ImageString($im, 3, $o-$v1*9+8+5-40, 4, 'better CPU Time', $white);
+ImageFilledRectangle($im, $o-$v1*9-38, 8, $o-$v1*9+8-38, 8+$hsec, $white);
+ImageString($im, 3, $o-$v1*9+8+5-38, 4, 'better CPU Time', $black);
 
-ImageFilledRectangle($im, $o-$v1*9+100, 10, $o-$v1*9+8+100, 10+$hmem, $black);
-ImageString($im, 2, $o-$v1*9+8+5+100, 4, 'better Memory Use', $black);
+ImageFilledRectangle($im, $o-$v1*9+90, 10, $o-$v1*9+8+90, 10+$hmem, $black);
+ImageString($im, 3, $o-$v1*9+8+5+90, 4, 'better Memory Use', $black);
 
 
 ImageInterlace($im,1);
