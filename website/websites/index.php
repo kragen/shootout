@@ -127,7 +127,8 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
 
             $arch = '';
             $site = $keys[$link];
-            if ($site == 'debian' || $site == 'sandbox'){ $arch = '<em>Debian</em>'; }
+            if ($site == 'debian'){ $arch = '<em>Debian</em>'; }
+            elseif ($site == 'gp4'){ $arch = '<em>Gentoo</em>'; }
 
             if (isset($a[8]) && !empty($a[8])){ // special_url
                 printf('<p><a href="./%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
@@ -146,11 +147,13 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
 $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
+$ubuntu = Keys( array( 'u32q' ));
 $gentoo = Keys( array( 'gp4' ));
 $debian = Keys( array( 'debian' )); // Debian isn't being updated, only show languages not on Gentoo
 
 foreach($Langs as $a){
-   $notShown = PrintIncludedLanguages($gentoo,$a,TRUE);
+   $notShown = PrintIncludedLanguages($ubuntu,$a,TRUE);
+   if ($notShown){ $notShown = PrintIncludedLanguages($gentoo,$a,$notShown); }
    if ($notShown){ PrintIncludedLanguages($debian,$a,$notShown); }
 }
 ?>
