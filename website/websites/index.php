@@ -42,7 +42,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", $U32)) ?></a></p>
 <h3><span class="u32">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;</a></span></h3>
+href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -52,7 +52,7 @@ href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;</a></
 <p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32q/"><? printf('%s', gmdate("d M Y", $U32Q)) ?></a></p>
 <h3><span class="u32q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core</a></span></h3>
+href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -62,7 +62,7 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
 <h3><span class="u64q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core</a></span></h3>
+href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
