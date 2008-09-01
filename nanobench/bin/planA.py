@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.18 2008-08-31 21:57:18 igouy-guest Exp $
+# $Id: planA.py,v 1.19 2008-09-01 15:16:52 igouy-guest Exp $
 
 """
 measure with libgtop2
@@ -113,7 +113,7 @@ def measure(arg,commandline,delay,maxtime,
                ))
             ,cpus0 ,cpus1 )
 
-         load.sort(reverse=1)
+         #load.sort(reverse=1) # maybe more obvious unsorted
          m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
 
          m.elapsed = elapsed
