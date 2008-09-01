@@ -39,20 +39,20 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a href="./u32q/"><? printf('%s', gmdate("d M Y", $U32Q)) ?></a></p>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32q/"><? printf('%s', gmdate("d M Y", $U32Q)) ?></a></p>
 <h3><span class="u32q">
-<a title="Computer Language Benchmarks on Ubuntu&#8482; : Intel&#174; Q6600&#174;"
-href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core</a></span></h3>
 </td>
 </tr>
 </table>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
 <h3><span class="u64q">
-<a title="Computer Language Benchmarks on Ubuntu&#8482; : Intel&#174; Q6600&#174;"
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core</a></span></h3>
 </td>
 </tr>
 </table>
@@ -60,15 +60,15 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a href="./gp4/">mid 2008</a></p>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./gp4/">mid 2008</a></p>
 <h3><span class="gp4">
-<a title="Computer Language Benchmarks on Gentoo : Intel&#174; Pentium&#174;"
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><a href="./debian/">late 2007</a></p>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./debian/">late 2007</a></p>
 <h3><span class="debian">
-<a title="Computer Language Benchmarks on Debian : AMD&#8482; Sempron&#8482;"
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
