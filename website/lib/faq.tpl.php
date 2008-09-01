@@ -36,7 +36,7 @@
 <dt><a href="#datasets" name="datasets"><strong>Why does it do better on ...?</strong></a></dt>
 <dd>
 <p>Too many things differ between the test machine installs to allow comparison across test machines. As well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
-<p>Look at the source code!</p>
+<p><em>Caveat Emptor!</em> Check the source code!</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
