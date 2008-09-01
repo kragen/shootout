@@ -1,0 +1,140 @@
+<span class="hl com">(* knucleotide.ml</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * The Great Computer Language Shootout</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Contributed by Troestler Christophe</span>
+<span class="hl com"> * translated to MLton/SML by sweeks&#64;sweeks.com.</span>
+<span class="hl com"> *)</span>
+
+<span class="hl kwa">structure</span> H <span class="hl sym">=</span> HashTable
+<span class="hl com">(* [counts k dna] fills and return the hashtable [count] of</span>
+<span class="hl com"> * k-nucleotide keys and count values for a particular reading-frame</span>
+<span class="hl com"> * of length [k] of the string [dna].</span>
+<span class="hl com"> *)</span>
+<span class="hl kwa">fun</span> counts <span class="hl sym">(</span>k<span class="hl sym">,</span> dna<span class="hl sym">) =</span>
+   <span class="hl kwa">let</span>
+      <span class="hl kwa">val</span> count <span class="hl sym">=</span> H.new <span class="hl sym">{</span>equals <span class="hl sym">=</span> <span class="hl kwa">op</span> <span class="hl sym">=,</span> hash <span class="hl sym">=</span> <span class="hl kwa">String</span>.hash<span class="hl sym">,</span> size <span class="hl sym">=</span> <span class="hl num">0x40000</span><span class="hl sym">}</span>
+      <span class="hl kwa">val</span> n <span class="hl sym">=</span> size dna <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">-</span> k
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span>
+	 for <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl kwa">fn</span> i <span class="hl sym">=&gt;</span>
+	      <span class="hl kwa">Int</span>.inc
+	      <span class="hl sym">(</span>H.lookupOrInsert <span class="hl sym">(</span>count<span class="hl sym">,</span> <span class="hl kwa">String</span>.substring <span class="hl sym">(</span>dna<span class="hl sym">,</span> i<span class="hl sym">,</span> k<span class="hl sym">),</span>
+				 <span class="hl kwa">fn</span> <span class="hl sym">() =&gt;</span> ref <span class="hl num">0</span><span class="hl sym">)))</span>
+   <span class="hl kwa">in</span>
+      <span class="hl sym">(</span>n<span class="hl sym">,</span> count<span class="hl sym">)</span>
+   <span class="hl kwa">end</span>
+
+<span class="hl com">(* [write_frequencies k dna] writes the frequencies for a</span>
+<span class="hl com"> * reading-frame of length [k] sorted by descending frequency and then</span>
+<span class="hl com"> * ascending k-nucleotide key.</span>
+<span class="hl com"> *)</span>
+<span class="hl kwa">fun</span> compareFreq <span class="hl sym">((</span>k1<span class="hl sym">:</span><span class="hl kwb">string</span><span class="hl sym">,</span> f1<span class="hl sym">:</span><span class="hl kwb">real</span><span class="hl sym">), (</span>k2<span class="hl sym">,</span> f2<span class="hl sym">)) =</span>
+   f1 <span class="hl sym">&gt;</span> f2 <span class="hl kwa">orelse</span> <span class="hl sym">(</span><span class="hl kwa">Real</span>.<span class="hl sym">== (</span>f1<span class="hl sym">,</span> f2<span class="hl sym">)</span> <span class="hl kwa">andalso String</span>.<span class="hl sym">&lt;= (</span>k1<span class="hl sym">,</span> k2<span class="hl sym">))</span>
+
+<span class="hl kwa">fun</span> writeFrequencies <span class="hl sym">(</span>k<span class="hl sym">,</span> dna<span class="hl sym">) =</span>
+  <span class="hl kwa">let</span>
+     <span class="hl kwa">val</span> <span class="hl sym">(</span>n<span class="hl sym">,</span> cnt<span class="hl sym">) =</span> counts <span class="hl sym">(</span>k<span class="hl sym">,</span> dna<span class="hl sym">)</span>
+     <span class="hl kwa">val</span> tot <span class="hl sym">=</span> <span class="hl kwa">Real</span>.fromInt n
+     <span class="hl kwa">val</span> frq <span class="hl sym">=</span>
+	Array.fromList <span class="hl sym">(</span>H.fold <span class="hl sym">(</span>cnt<span class="hl sym">, [],</span> <span class="hl kwa">fn</span> <span class="hl sym">(</span>k<span class="hl sym">,</span> r<span class="hl sym">,</span> l<span class="hl sym">) =&gt;</span>
+				<span class="hl sym">(</span>k<span class="hl sym">,</span> <span class="hl num">100.0</span> <span class="hl sym">*</span> <span class="hl kwa">Real</span>.fromInt <span class="hl sym">(!</span>r<span class="hl sym">) /</span> tot<span class="hl sym">) ::</span> l<span class="hl sym">))</span>
+     <span class="hl kwa">val</span> _ <span class="hl sym">=</span> QuickSort.sortArray <span class="hl sym">(</span>frq<span class="hl sym">,</span> compareFreq<span class="hl sym">)</span>
+     <span class="hl kwa">val</span> <span class="hl sym">() =</span>
+	Array.foreach <span class="hl sym">(</span>frq<span class="hl sym">,</span> <span class="hl kwa">fn</span> <span class="hl sym">(</span>k<span class="hl sym">,</span> f<span class="hl sym">) =&gt;</span>
+		       print <span class="hl sym">(</span>concat <span class="hl sym">[</span>k<span class="hl sym">,</span> <span class="hl str">&quot; &quot;</span><span class="hl sym">,</span>
+				      <span class="hl kwa">Real</span>.fmt <span class="hl sym">(</span><span class="hl kwa">StringCvt</span>.FIX <span class="hl sym">(</span>SOME <span class="hl num">3</span><span class="hl sym">))</span> f<span class="hl sym">,</span>
+				      <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">]))</span>
+  <span class="hl kwa">in</span>
+     print <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span>
+  <span class="hl kwa">end</span>
+
+<span class="hl kwa">fun</span> writeCount <span class="hl sym">(</span>seq<span class="hl sym">,</span> dna<span class="hl sym">) =</span>
+  <span class="hl kwa">let</span>
+     <span class="hl kwa">val</span> <span class="hl sym">(</span>_<span class="hl sym">,</span> cnt<span class="hl sym">) =</span> counts <span class="hl sym">(</span>size seq<span class="hl sym">,</span> dna<span class="hl sym">)</span>
+  <span class="hl kwa">in</span>
+     print <span class="hl sym">(</span>concat <span class="hl sym">[</span><span class="hl kwa">Int</span>.toString <span class="hl sym">(</span><span class="hl kwa">case</span> H.peek <span class="hl sym">(</span>cnt<span class="hl sym">,</span> seq<span class="hl sym">)</span> <span class="hl kwa">of</span>
+				     NONE <span class="hl sym">=&gt;</span> <span class="hl num">0</span>
+				   <span class="hl sym">|</span> SOME r <span class="hl sym">=&gt; !</span>r<span class="hl sym">),</span>
+		    <span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">&quot;</span><span class="hl sym">,</span> seq<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">])</span>
+  <span class="hl kwa">end</span>
+
+<span class="hl kwa">structure</span> Buffer<span class="hl sym">:</span>
+   <span class="hl kwa">sig</span>
+      <span class="hl kwa">type</span> t
+
+      <span class="hl kwa">val</span> addLine<span class="hl sym">:</span> t <span class="hl sym">*</span> <span class="hl kwb">string</span> <span class="hl sym">-&gt;</span> t
+      <span class="hl kwa">val</span> contents<span class="hl sym">:</span> t <span class="hl sym">-&gt;</span> char array
+      <span class="hl kwa">val</span> empty<span class="hl sym">:</span> t
+   <span class="hl kwa">end</span> <span class="hl sym">=</span>
+   <span class="hl kwa">struct</span>
+      <span class="hl kwa">datatype</span> t <span class="hl sym">=</span> T <span class="hl kwa">of</span> <span class="hl kwb">string</span> list
+
+      <span class="hl kwa">val</span> empty<span class="hl sym">:</span> t <span class="hl sym">=</span> T <span class="hl sym">[]</span>
+
+      <span class="hl kwa">fun</span> addLine <span class="hl sym">(</span>T xs<span class="hl sym">,</span> x<span class="hl sym">) =</span> T <span class="hl sym">(</span>x <span class="hl sym">::</span> xs<span class="hl sym">)</span>
+
+      <span class="hl kwa">fun</span> contents <span class="hl sym">(</span>T lines<span class="hl sym">) =</span>
+	 <span class="hl kwa">let</span>
+	    <span class="hl kwa">val</span> n <span class="hl sym">=</span> foldl <span class="hl sym">(</span><span class="hl kwa">fn</span> <span class="hl sym">(</span>s<span class="hl sym">,</span> n<span class="hl sym">) =&gt;</span> n <span class="hl sym">+</span> size s <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl num">0</span> lines
+	    <span class="hl kwa">val</span> a <span class="hl sym">=</span> Array.array <span class="hl sym">(</span>n<span class="hl sym">,</span> #<span class="hl str">&quot;</span><span class="hl esc">\000</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+	    <span class="hl kwa">val</span> _ <span class="hl sym">=</span>
+	       foldl <span class="hl sym">(</span><span class="hl kwa">fn</span> <span class="hl sym">(</span>s<span class="hl sym">,</span> i<span class="hl sym">) =&gt;</span>
+		      <span class="hl kwa">let</span>
+			 <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>i<span class="hl sym">,</span> j<span class="hl sym">)  =</span>
+			    <span class="hl kwa">if</span> j <span class="hl sym">&lt;</span> <span class="hl num">0</span>
+			       <span class="hl kwa">then</span> i
+			    <span class="hl kwa">else</span> <span class="hl sym">(</span>Array.update <span class="hl sym">(</span>a<span class="hl sym">,</span> i<span class="hl sym">,</span> <span class="hl kwa">String</span>.sub <span class="hl sym">(</span>s<span class="hl sym">,</span> j<span class="hl sym">))</span>
+				  <span class="hl sym">;</span> loop <span class="hl sym">(</span>i <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> j <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">))</span>
+		      <span class="hl kwa">in</span>
+			 loop <span class="hl sym">(</span>i<span class="hl sym">,</span> <span class="hl kwa">String</span>.size s <span class="hl sym">-</span> <span class="hl num">2</span><span class="hl sym">)</span>
+		      <span class="hl kwa">end</span><span class="hl sym">)</span>
+	       <span class="hl sym">(</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> lines
+	 <span class="hl kwa">in</span>
+	    a
+	 <span class="hl kwa">end</span>
+   <span class="hl kwa">end</span>
+
+<span class="hl com">(* Extract DNA sequence &quot;THREE&quot; from stdin *)</span>
+<span class="hl kwa">val</span> dnaThree <span class="hl sym">=</span>
+  <span class="hl kwa">let</span>
+     <span class="hl kwa">fun</span> line <span class="hl sym">() =</span> <span class="hl kwa">TextIO</span>.inputLine <span class="hl kwa">TextIO</span>.stdIn
+     <span class="hl kwa">fun</span> isThree s <span class="hl sym">=</span> <span class="hl kwa">String</span>.substring <span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) =</span> <span class="hl str">&quot;&gt;THREE&quot;</span>
+     <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">while</span> not <span class="hl sym">(</span>isThree <span class="hl sym">(</span>valOf <span class="hl sym">(</span>line <span class="hl sym">())))</span> <span class="hl kwa">do</span> <span class="hl sym">()</span>
+     <span class="hl kwa">fun</span> loop <span class="hl sym">() =</span>
+	<span class="hl kwa">let</span>
+	   <span class="hl kwa">val</span> l <span class="hl sym">=</span> valOf <span class="hl sym">(</span>line <span class="hl sym">())</span>
+	<span class="hl kwa">in</span>
+	   <span class="hl kwa">if</span> #<span class="hl str">&quot;;&quot;</span> <span class="hl sym">=</span> <span class="hl kwa">String</span>.sub <span class="hl sym">(</span>l<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>  <span class="hl com">(* Skip possible comment *)</span>
+	      <span class="hl kwa">then</span> loop <span class="hl sym">()</span>
+	   <span class="hl kwa">else</span>
+	      <span class="hl kwa">let</span>
+		 <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>b<span class="hl sym">,</span> l<span class="hl sym">) =</span>
+		    <span class="hl kwa">let</span>
+		       <span class="hl kwa">val</span> b <span class="hl sym">=</span> Buffer.addLine <span class="hl sym">(</span>b<span class="hl sym">,</span> l<span class="hl sym">)</span>
+		    <span class="hl kwa">in</span>
+		       <span class="hl kwa">case</span> line <span class="hl sym">()</span> <span class="hl kwa">of</span>
+			  NONE <span class="hl sym">=&gt;</span> b
+			<span class="hl sym">|</span> SOME l <span class="hl sym">=&gt;</span>
+			     <span class="hl kwa">if</span> #<span class="hl str">&quot;&lt;&quot;</span> <span class="hl sym">=</span> <span class="hl kwa">String</span>.sub <span class="hl sym">(</span>l<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+				<span class="hl kwa">then</span> b
+			     <span class="hl kwa">else</span> loop <span class="hl sym">(</span>b<span class="hl sym">,</span> l<span class="hl sym">)</span>
+		    <span class="hl kwa">end</span>
+	      <span class="hl kwa">in</span>
+		 loop <span class="hl sym">(</span>Buffer.empty<span class="hl sym">,</span> l<span class="hl sym">)</span>
+	      <span class="hl kwa">end</span>
+	<span class="hl kwa">end</span>
+     <span class="hl kwa">val</span> a <span class="hl sym">=</span> Buffer.contents <span class="hl sym">(</span>loop <span class="hl sym">())</span>
+  <span class="hl kwa">in</span>
+     <span class="hl kwa">String</span>.toUpper
+     <span class="hl sym">(</span><span class="hl kwa">String</span>.tabulate <span class="hl sym">(</span>Array.length a<span class="hl sym">,</span> <span class="hl kwa">fn</span> i <span class="hl sym">=&gt;</span> Array.sub <span class="hl sym">(</span>a<span class="hl sym">,</span> i<span class="hl sym">)))</span>
+  <span class="hl kwa">end</span>
+
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> writeFrequencies <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> dnaThree<span class="hl sym">)</span>
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> writeFrequencies <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span> dnaThree<span class="hl sym">)</span>
+<span class="hl kwa">val</span> <span class="hl sym">() =</span>
+   <span class="hl kwa">List</span>.foreach
+   <span class="hl sym">([</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">],</span>
+    <span class="hl kwa">fn</span> k <span class="hl sym">=&gt;</span> writeCount <span class="hl sym">(</span>k<span class="hl sym">,</span> dnaThree<span class="hl sym">))</span>
+
+
