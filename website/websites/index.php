@@ -2,7 +2,7 @@
 echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
 $U64Q = filemtime('./u64q/data/data.csv');
 $U32Q = filemtime('./u32q/data/data.csv');
-//$U32 = filemtime('./u32/data/data.csv');
+$U32 = filemtime('./u32/data/data.csv');
 ?>
 
 
@@ -36,6 +36,16 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <h5><br/>Programming language measurements by OS and CPU</h5><br/>
 
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", $U32)) ?></a></p>
+<h3><span class="u32">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;</a></span></h3>
+</td>
+</tr>
+</table>
 <table class="layout">
 <tr class="test">
 <td>
