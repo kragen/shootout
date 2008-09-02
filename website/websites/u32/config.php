@@ -35,7 +35,7 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
 define('SITE_NAME', 'u32');
-define('SITE_TITLE','Ubuntu : Intel&#174; Q6600&#174; one-core Computer Language Benchmarks Game');
+define('SITE_TITLE','Ubuntu : Intel&#174; Q6600&#174; Computer Language Benchmarks Game');
 define('BANNER_TITLE','Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;<br/>Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game&nbsp;');
 define('FAQ_TITLE','Read the FAQ!');
 define('BAR',' | ');
