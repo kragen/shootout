@@ -1,18 +1,17 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.20 2008-09-02 04:20:08 igouy-guest Exp $
+# $Id: planC.py,v 1.1 2008-09-02 04:20:08 igouy-guest Exp $
 
 """
-measure with libgtop2 and CPU affinity
+measure without libgtop2
 """
 __author__ =  'Isaac Gouy'
 
 
 from domain import Record
 
-import os, sys, cPickle, time, threading, signal, gtop
+import os, sys, cPickle, time, threading, signal
 from errno import ENOENT
 from subprocess import Popen
-from affinity import set_process_affinity_mask
 
 
 def measure(arg,commandline,delay,maxtime,
@@ -44,46 +43,27 @@ def measure(arg,commandline,delay,maxtime,
          def run(self):
             try:              
                remaining = maxtime               
-               while remaining > 0: 
-                  mem = gtop.proc_mem(self.p).resident                                   
+               while remaining > 0:                                   
                   time.sleep(delay)                    
                   remaining -= delay
-                  # race condition - will child processes have been created yet?
-                  self.maxMem = max((mem + self.childmem())/1024, self.maxMem)  
                else:
                   self.timedout = True
                   os.kill(self.p, signal.SIGKILL) 
             except OSError, (e,err):
                if logger: logger.error('%s %s',e,err)
 
-         def childmem(self):
-            if self.childpids == None:
-               self.childpids = set()
-               for each in gtop.proclist():
-                  if gtop.proc_uid(each).ppid == self.p:
-                     self.childpids.add(each)
-            mem = 0
-            for each in self.childpids:
-               mem += gtop.proc_mem(each).resident
-            return mem
-
        
       try:
-         def setAffinity():
-            if affinitymask: 
-               set_process_affinity_mask(os.getpid(),affinitymask)
 
          m = Record(arg)
 
          # only write pickles to the pipe
          os.close(r); wPipe = os.fdopen(w, 'w'); w = cPickle.Pickler(wPipe)
 
-         # gtop cpu is since machine boot, so we need a before measurement
-         cpus0 = gtop.cpu().cpus 
          start = time.time()
 
          # spawn the program in a separate process
-         p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile,preexec_fn=setAffinity)
+         p = Popen(commandline,stdout=outFile,stderr=errFile,stdin=inFile)
          
          # start a thread to sample the program's resident memory use
          t = Sample( program = p.pid )
@@ -91,9 +71,8 @@ def measure(arg,commandline,delay,maxtime,
          # wait for program exit status and resource usage
          rusage = os.wait3(0)
 
-         # gtop cpu is since machine boot, so we need an after measurement
+
          elapsed = time.time() - start
-         cpus1 = gtop.cpu().cpus 
 
          # summarize measurements 
          if t.timedout:
@@ -105,17 +84,7 @@ def measure(arg,commandline,delay,maxtime,
 
          m.userSysTime = rusage[2][0] + rusage[2][1]
          m.maxMem = t.maxMem
-
-         load = map( 
-            lambda t0,t1: 
-               int(round( 
-                  100.0 * (1.0 - float(t1.idle-t0.idle)/(t1.total-t0.total))
-               ))
-            ,cpus0 ,cpus1 )
-
-         #load.sort(reverse=1) # maybe more obvious unsorted
-         m.cpuLoad = ("% ".join([str(i) for i in load]))+"%"
-
+         m.cpuLoad = "%"
          m.elapsed = elapsed
 
 
