@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.9 2008-09-03 23:02:12 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.10 2008-09-04 01:58:48 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -16,7 +16,6 @@ SPLITFILE := $(NANO_BIN)/split_file.bash
 
 COPTS := -O3 -fomit-frame-pointer
 GXXOPTS := -pipe $(COPTS)
-GXXLDOPTS := -L/usr/lib
 
 
 
@@ -56,7 +55,7 @@ GCCOPTS := -pipe -Wall $(COPTS) $(GCCOPTS)
 
 %.gpp_run: %.c++
 	-$(GXX) -c $(GXXOPTS) $< -o $<.o &&  \
-        $(GXX) $<.o -o $@ $(GXXLDOPTS) 
+        $(GXX) $<.o -o $@ -L/usr/lib $(GXXLDOPTS) 
 
 
 ########################################
@@ -68,7 +67,7 @@ GCCOPTS := -pipe -Wall $(COPTS) $(GCCOPTS)
 
 %.cgpp_run: %.c
 	-$(GXX) -c $(GXXOPTS) $< -o $<.o &&  \
-        $(GXX) $<.o -o $@ $(GXXLDOPTS) 
+        $(GXX) $<.o -o $@ -L/usr/lib $(GXXLDOPTS) 
 
 
 ########################################
