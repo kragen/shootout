@@ -10,7 +10,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 ?>
 
 <? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,"fullcpu"); ?>
-<h2><a href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> full data - CPU Time secs</a></h2>
+<h2><a href="#cpuchart" name="cpuchart">&nbsp;<?=$TestName;?> full data - Time secs</a></h2>
 
 <table class="layout"><tr><td>
 
@@ -22,7 +22,7 @@ $TestTag = $Tests[$SelectedTest][TEST_TAG];
 <table class="data">
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
-<tr><th colspan="<?=$cols;?>">CPU Time secs as N increases</th></tr>
+<tr><th colspan="<?=$cols;?>">Time secs as N increases</th></tr>
 
 <tr>
 <th>N</th>
@@ -90,14 +90,14 @@ foreach($Selected as $row){
 
 </td></tr></table>
 
-<h2><a href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - CPU Time secs</a></h2>
+<h2><a href="#cputable" name="cputable">&nbsp;<?=$TestName;?> full data - Time secs</a></h2>
 <table class="data">
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
-<tr><th colspan="<?=$cols;?>">CPU Time secs as N increases</th></tr>
+<tr><th colspan="<?=$cols;?>">Time secs as N increases</th></tr>
 <tr>
 <th>Program &amp; Logs</th>
-<? foreach($TestValues as $v){ 
+<? foreach($TestValues as $v){
       if ($v>0){ $fv = number_format((double)$v); } else { $fv = '?'; }
       printf('<th>%s</th>',$fv); echo "\n"; 
    } 
