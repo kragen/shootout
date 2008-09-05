@@ -1,0 +1,87 @@
+<span class="hl slc">//</span>
+<span class="hl slc">// The Computer Language Shootout</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Contributed by Shyamal Prasad</span>
+<span class="hl slc">//</span>
+
+
+<span class="hl slc">// This implementation of regexdna does not use the POSIX regex</span>
+<span class="hl slc">// included with the GNU libc. Instead it uses the Boost C++ libraries</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// http://www.boost.org/libs/regex/doc/index.html</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// (On Debian: apt-get install libboost-regex-dev before compiling,</span>
+<span class="hl slc">//  and then &quot;g++ -O3 -lboost_regex regexdna.cc -o regexdna</span>
+<span class="hl slc">//  Gentoo seems to package boost as, well, 'boost')</span>
+<span class="hl slc">//</span>
+
+
+<span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;string&gt;</span>
+<span class="hl dir">#include &lt;map&gt;</span>
+<span class="hl dir">#include &lt;boost/regex.hpp&gt;</span>
+
+<span class="hl slc">// Use plain old arrays for the 8-mers and IUB code alternatives</span>
+<span class="hl kwb">static const</span> std<span class="hl sym">::</span>string patterns<span class="hl sym">[] = {</span>
+  <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">typedef</span> std<span class="hl sym">::</span>pair<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>string<span class="hl sym">,</span> std<span class="hl sym">::</span>string<span class="hl sym">&gt;</span> Pair<span class="hl sym">;</span>
+<span class="hl kwb">static const</span> Pair alternatives<span class="hl sym">[] = {</span>
+  <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">),</span>
+  <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;K&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;M&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;N&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">),</span>
+  <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;R&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;S&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">),</span>
+  <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">Pair</span><span class="hl sym">(</span><span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">)</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+  <span class="hl slc">// Read file, remove headers and newlines to get sequence</span>
+  std<span class="hl sym">::</span>string line<span class="hl sym">,</span> buf<span class="hl sym">;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span> std<span class="hl sym">::</span><span class="hl kwd">getline</span><span class="hl sym">(</span>std<span class="hl sym">::</span>cin<span class="hl sym">,</span> line<span class="hl sym">) ){</span>
+    buf <span class="hl sym">+=</span> line<span class="hl sym">;</span>
+    buf <span class="hl sym">+=</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">;</span> <span class="hl slc">// FASTA files always add a newline at line end</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwb">const</span> boost<span class="hl sym">::</span>regex <span class="hl kwd">lose</span><span class="hl sym">(</span><span class="hl str">&quot;&gt;[^</span><span class="hl esc">\\</span><span class="hl str">n]*</span><span class="hl esc">\\</span><span class="hl str">n|</span><span class="hl esc">\\</span><span class="hl str">n&quot;</span><span class="hl sym">);</span>
+  std<span class="hl sym">::</span>string sequence <span class="hl sym">=</span> boost<span class="hl sym">::</span><span class="hl kwd">regex_replace</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> lose<span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">);</span>
+
+
+  <span class="hl slc">// Count the number of times patterns occur in sequence</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">unsigned</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>patterns<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>std<span class="hl sym">::</span>string<span class="hl sym">);</span> i<span class="hl sym">++) {</span>
+    <span class="hl kwb">const</span> boost<span class="hl sym">::</span>regex <span class="hl kwd">e</span><span class="hl sym">(</span>patterns<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+    boost<span class="hl sym">::</span>sregex_iterator <span class="hl kwd">m</span><span class="hl sym">(</span>sequence<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> sequence<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span> e<span class="hl sym">);</span>
+    <span class="hl kwb">const</span> boost<span class="hl sym">::</span>sregex_iterator end<span class="hl sym">;</span>
+
+    <span class="hl kwb">unsigned</span> sum <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span> m <span class="hl sym">!=</span> end <span class="hl sym">)</span>
+      <span class="hl sym">++</span>sum<span class="hl sym">, ++</span>m<span class="hl sym">;</span>
+
+    std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> patterns<span class="hl sym">[</span>i<span class="hl sym">] &lt;&lt;</span> <span class="hl str">' '</span> <span class="hl sym">&lt;&lt;</span> sum <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+
+  std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl <span class="hl sym">&lt;&lt;</span> buf<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">() &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+  std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> sequence<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">() &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+
+  <span class="hl slc">// Insert alternatives into sequence</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">unsigned</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>alternatives<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>Pair<span class="hl sym">);</span> i<span class="hl sym">++ ){</span>
+    <span class="hl kwb">const</span> boost<span class="hl sym">::</span>regex <span class="hl kwd">e</span><span class="hl sym">(</span>alternatives<span class="hl sym">[</span>i<span class="hl sym">].</span>first<span class="hl sym">);</span>
+    sequence <span class="hl sym">=</span> boost<span class="hl sym">::</span><span class="hl kwd">regex_replace</span><span class="hl sym">(</span>sequence<span class="hl sym">,</span> e<span class="hl sym">,</span>
+					   alternatives<span class="hl sym">[</span>i<span class="hl sym">].</span>second<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> sequence<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">() &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+
+  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// Local Variables: *</span>
+<span class="hl slc">// compile-command: &quot;g++ -Wall -Wextra -lboost_regex regexdna.cc -o regexdna&quot;*</span>
+<span class="hl slc">// End: *</span>
