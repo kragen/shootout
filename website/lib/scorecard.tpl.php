@@ -60,15 +60,15 @@ foreach($score as $k => $v){
 
 <tr><th colspan="2">multipliers</th></tr>
 <tr>
-<td><a href="faq.php#fullcpu">CPU Time</a></td>
+<td><a href="faq.php#measurecpu">Time&nbsp;secs</a></td>
 <td><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></td>
 </tr>
 <tr>
-<td><a href="faq.php#memory">Memory Use</a></td>
+<td><a href="faq.php#memory">Memory&nbsp;KB</a></td>
 <td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></td>
 </tr>
 <tr>
-<td><a href="faq.php#gzbytes">Source GZip</a></td>
+<td><a href="faq.php#gzbytes">Size B</a></td>
 <td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></td>
 </tr>
 

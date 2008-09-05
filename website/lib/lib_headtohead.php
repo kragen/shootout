@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005
+// Copyright (c) Isaac Gouy 2005-2008
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -56,7 +56,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                               
          if ($dj[DATA_STATUS] > PROGRAM_TIMEOUT){
             if (isset($comparable[$dj[DATA_LANG]])){ 
-               if ($dj[DATA_FULLCPU] < $comparable[$dj[DATA_LANG]][DATA_FULLCPU]){
+               if ($dj[DATA_TIME] < $comparable[$dj[DATA_LANG]][DATA_TIME]){
                   if ($isComparable){
                      if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){                  
                         $comparable[$dj[DATA_LANG]] = $Data[$j];   
@@ -98,7 +98,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
             $cpu = 1; 
             $gz = 1;
 
-            if ($r1[DATA_FULLCPU]>0){ $full = $r2[DATA_FULLCPU] / $r1[DATA_FULLCPU]; }
+            if ($r1[DATA_TIME]>0){ $full = $r2[DATA_TIME] / $r1[DATA_TIME]; }
             if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; }
             if ($r1[DATA_GZ]>0){ $gz = $r2[DATA_GZ] / $r1[DATA_GZ]; }
                                  
@@ -117,11 +117,11 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
                );
                                                     
             while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }
-         }      
+         }
          else {
 
             $NData[$r1[DATA_TEST]] = array(
-                 $r1[DATA_TEST]         
+                 $r1[DATA_TEST]
                , $L2
                , $r1[DATA_ID]
                , ($r1[DATA_TESTVALUE] == $n) ? 0 : $r1[DATA_TESTVALUE]
@@ -276,13 +276,13 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
       $test = $Data[$i][DATA_TEST];                
             
       do {                                
-         if (isset($row)){           
+         if (isset($row)){
             if ( ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]) 
                || (($Data[$j][DATA_TESTVALUE] == $row[DATA_TESTVALUE])
                 && ((ExcludeData($row,$Langs,$Excl)<=PROGRAM_TIMEOUT)
                  || ((ExcludeData($Data[$j],$Langs,$Excl)>PROGRAM_TIMEOUT)
-                  && ($Data[$j][DATA_FULLCPU]<$row[DATA_FULLCPU])))) ){
-                                                   
+                  && ($Data[$j][DATA_TIME]<$row[DATA_TIME])))) ){
+
                   $row = $Data[$j];              
             }         
          }
@@ -303,7 +303,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
             , $row[DATA_TESTVALUE]
             , $Langs[$row[DATA_LANG]][LANG_FULL].IdName($row[DATA_ID])
             , $Langs[$row[DATA_LANG]][LANG_HTML].IdName($row[DATA_ID])
-            , $row[DATA_FULLCPU]
+            , $row[DATA_TIME]
             , $row[DATA_MEMORY]
             , 0 //$row[DATA_GZ]
             , $row[DATA_GZ]

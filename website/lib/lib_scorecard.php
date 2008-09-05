@@ -77,14 +77,14 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
             }
 
             if ($row[DATA_STATUS] == 0 && (
-                  ($row[DATA_FULLCPU] > 0 && (!isset($data[$lang][$test]) ||
-                     $row[DATA_FULLCPU] < $data[$lang][$test][DATA_FULLCPU])))){
+                  ($row[DATA_TIME] > 0 && (!isset($data[$lang][$test]) ||
+                     $row[DATA_TIME] < $data[$lang][$test][DATA_TIME])))){
 
                $data[$lang][$test] = $row;
 
                $mt = &$mins[$test];
-               if (($row[DATA_FULLCPU] < $mt[CPU_MIN]) && $row[DATA_FULLCPU] > 0.0){
-                  $mt[CPU_MIN] = $row[DATA_FULLCPU];
+               if (($row[DATA_TIME] < $mt[CPU_MIN]) && $row[DATA_TIME] > 0.0){
+                  $mt[CPU_MIN] = $row[DATA_TIME];
                }
                if (($row[DATA_MEMORY] < $mt[MEM_MIN]) && $row[DATA_MEMORY] > 0){
                   $mt[MEM_MIN] = $row[DATA_MEMORY];
@@ -112,7 +112,7 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
             $w3 = $W[$t] * $W['xloc'];
 
             if ($w1>0){
-              $val = $v[DATA_FULLCPU];
+              $val = $v[DATA_TIME];
               if ($val > 0){
                  $s += log($val/$mt[CPU_MIN])*$w1;
                  $ws += $w1;

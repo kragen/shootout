@@ -18,9 +18,9 @@ $Family = $Row[LANG_FAMILY];
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
-<th>CPU Time&nbsp;secs</th>
-<th>Memory Use&nbsp;KB</th>
-<th>GZip Bytes</th>
+<th>Time&nbsp;secs</th>
+<th>Memory&nbsp;KB</th>
+<th>Size B</th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
@@ -35,7 +35,7 @@ foreach($Tests as $Row){
 
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Name);
-                
+
       if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }
                 
       if ($v[N_EXCLUDE] >= 0){    

@@ -38,8 +38,8 @@ function ComparisonData($langs,$data,$p,&$Excl){
 
          $i = sizeof($NData)-1;         
       }
-      $NData[$i][N_FULLCPU][] = $d[DATA_FULLCPU];
-      $NData[$i][N_MEMORY][] = $d[DATA_MEMORY];    
+      $NData[$i][N_FULLCPU][] = $d[DATA_TIME];
+      $NData[$i][N_MEMORY][] = $d[DATA_MEMORY];
       $TestValues[ $d[DATA_TESTVALUE] ] = $d[DATA_TESTVALUE];
    }  
 
