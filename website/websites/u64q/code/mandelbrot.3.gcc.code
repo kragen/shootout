@@ -1,91 +1,85 @@
-<span class="hl com">/*The Computer Language Shootout</span>
+<span class="hl com">/*The Computer Language Benchmarks Game</span>
 <span class="hl com">  http://shootout.alioth.debian.org/</span>
 <span class="hl com"></span>
-<span class="hl com">  contributed by Greg Buchholz</span>
-<span class="hl com"></span>
-<span class="hl com">  Uses SSE packed doubles to run the inner loop computations in parallel.</span>
-<span class="hl com">  I don't have a machine with SSE to test with, but the assembly looks</span>
-<span class="hl com">  pretty nice.  With gcc-3.4.2 there's no difference in the assembly</span>
-<span class="hl com">  between -msse2 and -msse3, YMMV.  It uses gcc's vector extentions</span>
-<span class="hl com">  ( http://gcc.gnu.org/onlinedocs/gcc-4.0.0/gcc/Vector-Extensions.html ),</span>
-<span class="hl com">  so it will run (slowly) on hardware without SSE.</span>
-<span class="hl com"></span>
-<span class="hl com">  compile (AMD):</span>
-<span class="hl com">  gcc -D_ISOC9X_SOURCE -O3 -mfpmath=sse -msse2 -march=athlon-xp</span>
-<span class="hl com">      -ffast-math -funroll-loops -o mandelbrot.gcc-3.gcc_run mandelbrot.c -lm</span>
-<span class="hl com"></span>
-<span class="hl com">  compile (INTEL):</span>
-<span class="hl com">  gcc -D_ISOC9X_SOURCE -O3 -mfpmath=sse -msse2 -march=pentium4</span>
-<span class="hl com">      -ffast-math -funroll-loops -o mandelbrot.gcc-3.gcc_run mandelbrot.c -lm</span>
+<span class="hl com">  contributed by Paolo Bonzini</span>
+<span class="hl com">  further optimized by Jason Garrett-Glaser</span>
 <span class="hl com">*/</span>
 
-<span class="hl dir">#include&lt;stdio.h&gt;</span>
-<span class="hl dir">#include&lt;math.h&gt;</span>
-<span class="hl dir">#include&lt;fenv.h&gt;</span>
-<span class="hl kwc">typedef</span> <span class="hl kwb">double</span> v2df <span class="hl kwd">__attribute__</span> <span class="hl sym">((</span><span class="hl kwd">mode</span><span class="hl sym">(</span>V2DF<span class="hl sym">)));</span> <span class="hl slc">// vector of two double floats</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">double</span> v2df <span class="hl kwd">__attribute__</span> <span class="hl sym">((</span><span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)));</span> <span class="hl slc">// vector of two doubles</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">int</span> v4si <span class="hl kwd">__attribute__</span> <span class="hl sym">((</span><span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)));</span> <span class="hl slc">// vector of four ints</span>
 
 <span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">)</span>
 <span class="hl sym">{</span>
     <span class="hl kwb">int</span> w<span class="hl sym">,</span> h<span class="hl sym">,</span> bit_num <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
     <span class="hl kwb">char</span> byte_acc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
     <span class="hl kwb">int</span> i<span class="hl sym">,</span> iter <span class="hl sym">=</span> <span class="hl num">50</span><span class="hl sym">;</span>
-    <span class="hl kwb">double</span> x<span class="hl sym">,</span> y<span class="hl sym">,</span> limit_sqr <span class="hl sym">=</span> <span class="hl num">4.0</span><span class="hl sym">;</span>
-    v2df Zrv<span class="hl sym">,</span> Ziv<span class="hl sym">,</span> Crv<span class="hl sym">,</span> Civ<span class="hl sym">,</span> Trv<span class="hl sym">,</span> Tiv<span class="hl sym">;</span>
-    v2df zero<span class="hl sym">,</span> one<span class="hl sym">,</span> _1p5<span class="hl sym">,</span> two<span class="hl sym">;</span>
-    <span class="hl kwb">double</span> <span class="hl sym">*</span>Zr <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)&amp;</span>Zrv<span class="hl sym">, *</span>Zi <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)&amp;</span>Ziv<span class="hl sym">,</span>
-           <span class="hl sym">*</span>Cr <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)&amp;</span>Crv<span class="hl sym">, *</span>Ci <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)&amp;</span>Civ<span class="hl sym">,</span>
-           <span class="hl sym">*</span>Tr <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)&amp;</span>Trv<span class="hl sym">, *</span>Ti <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)&amp;</span>Tiv<span class="hl sym">;</span>
+    <span class="hl kwb">double</span> x<span class="hl sym">,</span> y<span class="hl sym">;</span>
+    v2df zero <span class="hl sym">= {</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span> <span class="hl sym">};</span>
+    v2df four <span class="hl sym">= {</span> <span class="hl num">4.0</span><span class="hl sym">,</span> <span class="hl num">4.0</span> <span class="hl sym">};</span>
+    v2df nzero <span class="hl sym">= -</span>zero<span class="hl sym">;</span>
 
-<span class="hl dir">#define initv(name, val) *((double*)&amp;name)   = (double) val; \</span>
-<span class="hl dir">                         *((double*)&amp;name+1) = (double) val</span>
-    <span class="hl kwd">initv</span><span class="hl sym">(</span>zero<span class="hl sym">,</span><span class="hl num">0.0</span><span class="hl sym">);</span> <span class="hl kwd">initv</span><span class="hl sym">(</span>one<span class="hl sym">,</span><span class="hl num">1.0</span><span class="hl sym">);</span> <span class="hl kwd">initv</span><span class="hl sym">(</span>_1p5<span class="hl sym">,</span><span class="hl num">1.5</span><span class="hl sym">);</span> <span class="hl kwd">initv</span><span class="hl sym">(</span>two<span class="hl sym">,</span><span class="hl num">2.0</span><span class="hl sym">);</span>
+    <span class="hl com">/* Detect endianness.  */</span>
+    v4si mask <span class="hl sym">= (</span>v4si<span class="hl sym">)</span>nzero<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> <span class="hl sym">*</span>pmask <span class="hl sym">= (</span><span class="hl kwb">int</span> <span class="hl sym">*) &amp;</span>mask<span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>pmask<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span> pmask<span class="hl sym">++;</span>
 
     w <span class="hl sym">=</span> h <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+
+    <span class="hl kwb">char</span> <span class="hl sym">*</span>data <span class="hl sym">=</span> <span class="hl kwd">malloc</span><span class="hl sym">((</span>w<span class="hl sym">/</span><span class="hl num">4</span><span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">)*</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">));</span>
+
+    <span class="hl kwb">double</span> inverse_w <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> w<span class="hl sym">;</span>
+    <span class="hl kwb">double</span> inverse_h <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> h<span class="hl sym">;</span>
 
     <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>w<span class="hl sym">,</span>h<span class="hl sym">);</span>
 
     <span class="hl kwa">for</span><span class="hl sym">(</span>y<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>y<span class="hl sym">&lt;</span>h<span class="hl sym">;++</span>y<span class="hl sym">)</span>
     <span class="hl sym">{</span>
-        <span class="hl kwa">for</span><span class="hl sym">(</span>x<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>x<span class="hl sym">&lt;</span>w<span class="hl sym">;</span>x<span class="hl sym">+=</span><span class="hl num">2</span><span class="hl sym">)</span>
+        <span class="hl kwa">for</span><span class="hl sym">(</span>bit_num<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,</span>x<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>x<span class="hl sym">&lt;</span>w<span class="hl sym">;</span>x<span class="hl sym">+=</span><span class="hl num">2</span><span class="hl sym">)</span>
         <span class="hl sym">{</span>
-            Zrv <span class="hl sym">=</span> Ziv <span class="hl sym">=</span> Trv <span class="hl sym">=</span> Tiv <span class="hl sym">=</span> zero<span class="hl sym">;</span>
-            <span class="hl sym">*</span>Cr <span class="hl sym">=</span> x<span class="hl sym">/</span>w<span class="hl sym">;  *(</span>Cr<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) = (</span>x<span class="hl sym">+</span><span class="hl num">1.0</span><span class="hl sym">)/</span>w<span class="hl sym">;</span>
-            <span class="hl sym">*</span>Ci <span class="hl sym">=</span> y<span class="hl sym">/</span>h<span class="hl sym">;  *(</span>Ci<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) = *</span>Ci<span class="hl sym">;</span>
-            Crv <span class="hl sym">=</span> two <span class="hl sym">*</span> Crv <span class="hl sym">-</span> _1p5<span class="hl sym">;</span>
-            Civ <span class="hl sym">=</span> two <span class="hl sym">*</span> Civ <span class="hl sym">-</span> one<span class="hl sym">;</span>
+    	    v2df Crv <span class="hl sym">= {</span> x<span class="hl sym">*</span>inverse_w<span class="hl sym">-</span><span class="hl num">1.5</span><span class="hl sym">, (</span>x<span class="hl sym">+</span><span class="hl num">1.0</span><span class="hl sym">)*</span>inverse_w<span class="hl sym">-</span><span class="hl num">1.5</span> <span class="hl sym">};</span>
+    	    v2df Civ <span class="hl sym">= {</span> y<span class="hl sym">*</span>inverse_h<span class="hl sym">-</span><span class="hl num">1.0</span><span class="hl sym">,</span> y<span class="hl sym">*</span>inverse_h<span class="hl sym">-</span><span class="hl num">1.0</span> <span class="hl sym">};</span>
+    	    v2df Zrv <span class="hl sym">= {</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span> <span class="hl sym">};</span>
+    	    v2df Ziv <span class="hl sym">= {</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span> <span class="hl sym">};</span>
+            v2df Trv <span class="hl sym">= {</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span> <span class="hl sym">};</span>
+    	    v2df Tiv <span class="hl sym">= {</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span> <span class="hl sym">};</span>
+            i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
 
-            <span class="hl kwa">for</span> <span class="hl sym">(</span>i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>i<span class="hl sym">&lt;</span>iter <span class="hl sym">&amp;&amp; (</span><span class="hl kwd">islessequal</span><span class="hl sym">( *</span>Tr    <span class="hl sym">+  *</span>Ti<span class="hl sym">,</span>   limit_sqr<span class="hl sym">) ||</span>
-                                <span class="hl kwd">islessequal</span><span class="hl sym">(*(</span>Tr<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) + *(</span>Ti<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">),</span>limit_sqr<span class="hl sym">)   ); ++</span>i<span class="hl sym">)</span>
-            <span class="hl sym">{</span>
-                Ziv <span class="hl sym">=</span> two<span class="hl sym">*</span>Zrv<span class="hl sym">*</span>Ziv <span class="hl sym">+</span> Civ<span class="hl sym">;</span>
+            <span class="hl kwa">do</span> <span class="hl sym">{</span>
+                Ziv <span class="hl sym">= (</span>Zrv<span class="hl sym">*</span>Ziv<span class="hl sym">) + (</span>Zrv<span class="hl sym">*</span>Ziv<span class="hl sym">) +</span> Civ<span class="hl sym">;</span>
                 Zrv <span class="hl sym">=</span> Trv <span class="hl sym">-</span> Tiv <span class="hl sym">+</span> Crv<span class="hl sym">;</span>
                 Trv <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Zrv<span class="hl sym">;</span>
                 Tiv <span class="hl sym">=</span> Ziv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span>
-            <span class="hl sym">}</span>
+
+                <span class="hl com">/* sign bit zeroed if 4.0 - Trv - Tiv &gt;= 0.0 (i.e. |Z| &lt;= 4.0).  */</span>
+                v2df delta <span class="hl sym">=</span> four <span class="hl sym">-</span> Trv <span class="hl sym">-</span> Tiv<span class="hl sym">;</span>
+                mask <span class="hl sym">= (</span>v4si<span class="hl sym">)</span>delta <span class="hl sym">&amp; (</span>v4si<span class="hl sym">)</span>nzero<span class="hl sym">;</span>
+            <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(++</span>i <span class="hl sym">&lt;</span> iter <span class="hl sym">&amp;&amp; !(</span>pmask<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] &amp;</span> pmask<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">]));</span>
 
             byte_acc <span class="hl sym">&lt;&lt;=</span> <span class="hl num">2</span><span class="hl sym">;</span>
-            <span class="hl kwa">if</span><span class="hl sym">(</span><span class="hl kwd">islessequal</span><span class="hl sym">(*</span>Tr <span class="hl sym">+ *</span>Ti<span class="hl sym">,</span> limit_sqr<span class="hl sym">))</span>
+            <span class="hl kwa">if</span><span class="hl sym">(!</span>pmask<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">])</span>
                 byte_acc <span class="hl sym">|=</span> <span class="hl num">0x02</span><span class="hl sym">;</span>
-
-            <span class="hl kwa">if</span><span class="hl sym">(</span><span class="hl kwd">islessequal</span><span class="hl sym">(*(</span>Tr<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) + *(</span>Ti<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">),</span> limit_sqr<span class="hl sym">))</span>
+            <span class="hl kwa">if</span><span class="hl sym">(!</span>pmask<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">])</span>
                 byte_acc <span class="hl sym">|=</span> <span class="hl num">0x01</span><span class="hl sym">;</span>
-
             bit_num<span class="hl sym">+=</span><span class="hl num">2</span><span class="hl sym">;</span>
 
-            <span class="hl kwa">if</span><span class="hl sym">(</span>bit_num <span class="hl sym">==</span> <span class="hl num">8</span><span class="hl sym">)</span>
-            <span class="hl sym">{</span>
-                <span class="hl kwd">putc</span><span class="hl sym">(</span>byte_acc<span class="hl sym">,</span>stdout<span class="hl sym">);</span>
+            <span class="hl kwa">if</span><span class="hl sym">(!(</span>bit_num<span class="hl sym">&amp;</span><span class="hl num">7</span><span class="hl sym">)) {</span>
+                data<span class="hl sym">[(</span>bit_num<span class="hl sym">&gt;&gt;</span><span class="hl num">3</span><span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">] =</span> byte_acc<span class="hl sym">;</span>
                 byte_acc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-                bit_num <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-            <span class="hl sym">}</span>
-            <span class="hl kwa">else if</span><span class="hl sym">(</span>x <span class="hl sym">==</span> w<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
-            <span class="hl sym">{</span>
-                byte_acc <span class="hl sym">&lt;&lt;= (</span><span class="hl num">8</span><span class="hl sym">-</span>w<span class="hl sym">%</span><span class="hl num">8</span><span class="hl sym">);</span>
-                <span class="hl kwd">putc</span><span class="hl sym">(</span>byte_acc<span class="hl sym">,</span>stdout<span class="hl sym">);</span>
-                byte_acc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-                bit_num <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
             <span class="hl sym">}</span>
         <span class="hl sym">}</span>
+
+        <span class="hl kwa">if</span><span class="hl sym">(</span>bit_num<span class="hl sym">&amp;</span><span class="hl num">7</span><span class="hl sym">) {</span>
+            byte_acc <span class="hl sym">&lt;&lt;= (</span><span class="hl num">8</span><span class="hl sym">-</span>w<span class="hl sym">%</span><span class="hl num">8</span><span class="hl sym">);</span>
+            bit_num <span class="hl sym">+=</span> <span class="hl num">8</span><span class="hl sym">;</span>
+            data<span class="hl sym">[</span>bit_num<span class="hl sym">&gt;&gt;</span><span class="hl num">3</span><span class="hl sym">] =</span> byte_acc<span class="hl sym">;</span>
+            byte_acc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwd">fwrite</span><span class="hl sym">(</span>data<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">, (</span>bit_num<span class="hl sym">&gt;&gt;</span><span class="hl num">3</span><span class="hl sym">),</span> stdout<span class="hl sym">);</span>
     <span class="hl sym">}</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>data<span class="hl sym">);</span>
+    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
