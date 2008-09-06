@@ -1,0 +1,137 @@
+
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- Contributed by Wim Couwenberg</span>
+
+
+<span class="hl slc">-- This is a pure lua implementation of the spigot algorithm for calculating</span>
+<span class="hl slc">-- the digits of pi.  It combines the production step and the calculation of</span>
+<span class="hl slc">-- the image of the interval [3, 4] into a single computation.  This is based</span>
+<span class="hl slc">-- on the fact that for any integer n &gt;= 1 the following equation between</span>
+<span class="hl slc">-- matrix products holds:</span>
+<span class="hl slc">--</span>
+<span class="hl slc">--              [ n  4*n + 2][4  3]   [4  3][2*n - 1  n - 1]</span>
+<span class="hl slc">--              [ 0  2*n + 1][1  1] = [1  1][   2     n + 2]</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- 1 September 2008</span>
+
+
+<span class="hl slc">-- the requested number of digits</span>
+<span class="hl kwa">local</span> N <span class="hl sym">=</span> <span class="hl kwb">tonumber</span><span class="hl sym">(...)</span>
+
+<span class="hl slc">-- Large numbers are expanded in base 2^exp.  Assumption: arithmetic in the Lua</span>
+<span class="hl slc">-- interpreter is based on IEEE doubles and we don't need more than 4*N</span>
+<span class="hl slc">-- productions to obtain the first N digits of pi.</span>
+<span class="hl kwa">local</span> <span class="hl kwb">exp</span> <span class="hl sym">=</span> <span class="hl num">50</span> <span class="hl sym">-</span> math<span class="hl sym">.</span><span class="hl kwb">ceil</span><span class="hl sym">(</span>math<span class="hl sym">.</span><span class="hl kwb">log</span><span class="hl sym">(</span>N<span class="hl sym">)/</span>math<span class="hl sym">.</span><span class="hl kwb">log</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">))</span>
+<span class="hl kwa">local</span> base <span class="hl sym">=</span> <span class="hl num">2</span>^<span class="hl kwb">exp</span>
+
+<span class="hl slc">-- hardwiring the base in the large number computations (instead of using it as</span>
+<span class="hl slc">-- an upvalue) saves quite some time!  Therefore the core algorithms are</span>
+<span class="hl slc">-- compiled dynamically for the base that is computed above.  (Idea courtesy of</span>
+<span class="hl slc">-- Mike Pall.)</span>
+<span class="hl kwa">local</span> algo <span class="hl sym">= [[</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">produce</span><span class="hl sym">(</span>n1<span class="hl sym">,</span> n2<span class="hl sym">,</span> d<span class="hl sym">,</span> n<span class="hl sym">)</span>
+    <span class="hl kwa">local</span> c1<span class="hl sym">,</span> c2<span class="hl sym">,</span> c3 <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span>
+    <span class="hl kwa">local</span> f <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">*</span>n <span class="hl sym">+</span> <span class="hl num">1</span>
+    <span class="hl kwa">local</span> m11<span class="hl sym">,</span> m12 <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">*</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> n <span class="hl sym">-</span> <span class="hl num">1</span>
+    <span class="hl kwa">local</span>      m22 <span class="hl sym">=</span>          n <span class="hl sym">+</span> <span class="hl num">2</span>
+    <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl slc">#n1 do</span>
+        <span class="hl kwa">local</span> n1i<span class="hl sym">,</span> n2i <span class="hl sym">=</span> n1<span class="hl sym">[</span>i<span class="hl sym">],</span> n2<span class="hl sym">[</span>i<span class="hl sym">]</span>
+        <span class="hl kwa">local</span> x <span class="hl sym">=</span> m11<span class="hl sym">*</span>n1i <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">*</span>n2i <span class="hl sym">+</span> c1
+        <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> base <span class="hl kwa">then</span>
+            n1<span class="hl sym">[</span>i<span class="hl sym">],</span> c1 <span class="hl sym">=</span> x<span class="hl sym">,</span> <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            c1 <span class="hl sym">=</span> x<span class="hl sym">%</span>base
+            n1<span class="hl sym">[</span>i<span class="hl sym">],</span> c1 <span class="hl sym">=</span> c1<span class="hl sym">, (</span>x <span class="hl sym">-</span> c1<span class="hl sym">)/</span>base
+        <span class="hl kwa">end</span>
+        x <span class="hl sym">=</span> m12<span class="hl sym">*</span>n1i <span class="hl sym">+</span> m22<span class="hl sym">*</span>n2i <span class="hl sym">+</span> c2
+        <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> base <span class="hl kwa">then</span>
+            n2<span class="hl sym">[</span>i<span class="hl sym">],</span> c2 <span class="hl sym">=</span> x<span class="hl sym">,</span> <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            c2 <span class="hl sym">=</span> x<span class="hl sym">%</span>base
+            n2<span class="hl sym">[</span>i<span class="hl sym">],</span> c2 <span class="hl sym">=</span> c2<span class="hl sym">, (</span>x <span class="hl sym">-</span> c2<span class="hl sym">)/</span>base
+        <span class="hl kwa">end</span>
+        x <span class="hl sym">=</span> f<span class="hl sym">*</span>d<span class="hl sym">[</span>i<span class="hl sym">] +</span> c3
+        <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> base <span class="hl kwa">then</span>
+            d<span class="hl sym">[</span>i<span class="hl sym">],</span> c3 <span class="hl sym">=</span> x<span class="hl sym">,</span> <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            c3 <span class="hl sym">=</span> x<span class="hl sym">%</span>base
+            d<span class="hl sym">[</span>i<span class="hl sym">],</span> c3 <span class="hl sym">=</span> c3<span class="hl sym">, (</span>x <span class="hl sym">-</span> c3<span class="hl sym">)/</span>base
+        <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">if</span> c1 ~<span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">or</span> c3 ~<span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+        <span class="hl kwa">local</span> nn1 <span class="hl sym">=</span> <span class="hl slc">#n1 + 1</span>
+        n1<span class="hl sym">[</span>nn1<span class="hl sym">],</span> n2<span class="hl sym">[</span>nn1<span class="hl sym">],</span> d<span class="hl sym">[</span>nn1<span class="hl sym">] =</span> c1<span class="hl sym">,</span> c2<span class="hl sym">,</span> c3
+    <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">local function</span> <span class="hl kwd">extract</span><span class="hl sym">(</span>n1<span class="hl sym">,</span> n2<span class="hl sym">,</span> d<span class="hl sym">,</span> n<span class="hl sym">)</span>
+    <span class="hl kwa">local</span> c1<span class="hl sym">,</span> c2 <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span>
+    <span class="hl kwa">local</span> f <span class="hl sym">= -</span><span class="hl num">10</span><span class="hl sym">*</span>n
+    <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl slc">#n1 do</span>
+        <span class="hl kwa">local</span> fdi <span class="hl sym">=</span> f<span class="hl sym">*</span>d<span class="hl sym">[</span>i<span class="hl sym">]</span>
+        <span class="hl kwa">local</span> x <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">*</span>n1<span class="hl sym">[</span>i<span class="hl sym">] +</span> fdi <span class="hl sym">+</span> c1
+        <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> base <span class="hl kwa">and</span> x <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            n1<span class="hl sym">[</span>i<span class="hl sym">],</span> c1 <span class="hl sym">=</span> x<span class="hl sym">,</span> <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            c1 <span class="hl sym">=</span> x<span class="hl sym">%</span>base
+            n1<span class="hl sym">[</span>i<span class="hl sym">],</span> c1 <span class="hl sym">=</span> c1<span class="hl sym">, (</span>x <span class="hl sym">-</span> c1<span class="hl sym">)/</span>base
+        <span class="hl kwa">end</span>
+        x <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">*</span>n2<span class="hl sym">[</span>i<span class="hl sym">] +</span> fdi <span class="hl sym">+</span> c2
+        <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> base <span class="hl kwa">and</span> x <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            n2<span class="hl sym">[</span>i<span class="hl sym">],</span> c2 <span class="hl sym">=</span> x<span class="hl sym">,</span> <span class="hl num">0</span>
+        <span class="hl kwa">else</span>
+            c2 <span class="hl sym">=</span> x<span class="hl sym">%</span>base
+            n2<span class="hl sym">[</span>i<span class="hl sym">],</span> c2 <span class="hl sym">=</span> c2<span class="hl sym">, (</span>x <span class="hl sym">-</span> c2<span class="hl sym">)/</span>base
+        <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">if</span> c1 ~<span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+        <span class="hl kwa">local</span> nn <span class="hl sym">=</span> <span class="hl slc">#n1 + 1</span>
+        n1<span class="hl sym">[</span>nn<span class="hl sym">],</span> n2<span class="hl sym">[</span>nn<span class="hl sym">],</span> d<span class="hl sym">[</span>nn<span class="hl sym">] =</span> c1<span class="hl sym">,</span> c2<span class="hl sym">,</span> <span class="hl num">0</span>
+    <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">return</span> produce<span class="hl sym">,</span> extract
+]]
+
+<span class="hl kwa">local</span> produce<span class="hl sym">,</span> extract <span class="hl sym">=</span> <span class="hl kwd">loadstring</span><span class="hl sym">(</span><span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwb">gsub</span><span class="hl sym">(</span>algo<span class="hl sym">,</span> <span class="hl str">&quot;base&quot;</span><span class="hl sym">,</span> <span class="hl kwb">tostring</span><span class="hl sym">(</span>base<span class="hl sym">)))()</span>
+
+<span class="hl kwa">local function</span> <span class="hl kwd">digit</span><span class="hl sym">(</span>n1<span class="hl sym">,</span> n2<span class="hl sym">,</span> d<span class="hl sym">)</span>
+    <span class="hl kwa">local</span> nn <span class="hl sym">=</span> <span class="hl slc">#n1</span>
+    <span class="hl kwa">local</span> dnn <span class="hl sym">=</span> d<span class="hl sym">[</span>nn<span class="hl sym">]</span>
+    <span class="hl kwa">if</span> dnn ~<span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+        <span class="hl kwa">local</span> n1nn<span class="hl sym">,</span> n2nn <span class="hl sym">=</span> n1<span class="hl sym">[</span>nn<span class="hl sym">],</span> n2<span class="hl sym">[</span>nn<span class="hl sym">]</span>
+        <span class="hl kwa">local</span> r1<span class="hl sym">,</span> r2 <span class="hl sym">=</span> n1nn<span class="hl sym">%</span>dnn<span class="hl sym">,</span> n2nn<span class="hl sym">%</span>dnn
+        <span class="hl kwa">local</span> p1<span class="hl sym">,</span> p2 <span class="hl sym">= (</span>n1nn <span class="hl sym">-</span> r1<span class="hl sym">)/</span>dnn<span class="hl sym">, (</span>n2nn <span class="hl sym">-</span> r2<span class="hl sym">)/</span>dnn
+        <span class="hl kwa">if</span> p1 <span class="hl sym">==</span> p2 <span class="hl kwa">and</span> p1 <span class="hl sym">&lt;=</span> r1 <span class="hl kwa">and</span> p2 <span class="hl sym">&lt;=</span> r2 <span class="hl kwa">then return</span> p1 <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- first approximants are 4/1 and 3/1</span>
+<span class="hl slc">-- these are expressed in large numbers n1/d, n2/d</span>
+<span class="hl kwa">local</span> n1 <span class="hl sym">= {</span><span class="hl num">4</span><span class="hl sym">}</span>
+<span class="hl kwa">local</span> n2 <span class="hl sym">= {</span><span class="hl num">3</span><span class="hl sym">}</span>
+<span class="hl kwa">local</span> d  <span class="hl sym">= {</span><span class="hl num">1</span><span class="hl sym">}</span>
+
+<span class="hl slc">-- next production step index</span>
+<span class="hl kwa">local</span> n <span class="hl sym">=</span> <span class="hl num">1</span>
+
+<span class="hl slc">-- here goes...</span>
+<span class="hl kwa">local</span> <span class="hl kwb">write</span> <span class="hl sym">=</span> io<span class="hl sym">.</span><span class="hl kwb">write</span>
+<span class="hl kwa">local</span> digits <span class="hl sym">=</span> <span class="hl num">0</span>
+<span class="hl kwa">while</span> digits <span class="hl sym">&lt;</span> N <span class="hl kwa">do</span>
+    <span class="hl kwa">local</span> g <span class="hl sym">=</span> <span class="hl kwd">digit</span><span class="hl sym">(</span>n1<span class="hl sym">,</span> n2<span class="hl sym">,</span> d<span class="hl sym">)</span>
+    <span class="hl kwa">if</span> g <span class="hl kwa">then</span>
+        <span class="hl kwb">write</span><span class="hl sym">(</span>g<span class="hl sym">)</span>
+        <span class="hl kwd">extract</span><span class="hl sym">(</span>n1<span class="hl sym">,</span> n2<span class="hl sym">,</span> d<span class="hl sym">,</span> g<span class="hl sym">)</span>
+        digits <span class="hl sym">=</span> digits <span class="hl sym">+</span> <span class="hl num">1</span>
+        <span class="hl kwa">if</span> digits<span class="hl sym">%</span><span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">:&quot;</span><span class="hl sym">,</span> digits<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span> <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+        <span class="hl kwd">produce</span><span class="hl sym">(</span>n1<span class="hl sym">,</span> n2<span class="hl sym">,</span> d<span class="hl sym">,</span> n<span class="hl sym">)</span>
+        n <span class="hl sym">=</span> n <span class="hl sym">+</span> <span class="hl num">1</span>
+    <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">if</span> N<span class="hl sym">%</span><span class="hl num">10</span> ~<span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+    <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwd">rep</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> <span class="hl num">10</span> <span class="hl sym">-</span> N<span class="hl sym">%</span><span class="hl num">10</span><span class="hl sym">),</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">:&quot;</span><span class="hl sym">,</span> N<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span>
