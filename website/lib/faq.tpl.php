@@ -33,7 +33,7 @@
 <p>Compare them directly <a href="fulldata.php?test=binarytrees&p1=oz-0&p2=hipe-0&p3=python-3&p4=oz-0"><strong>side-by-side</strong> for all the data points</a>.</p>
 </dd>
 
-<dt><a href="#datasets" name="datasets"><strong>Why does it do better on ...?</strong></a></dt>
+<dt><a href="#datasets" name="datasets"><strong>Why is the program better on ...?</strong></a></dt>
 <dd>
 <p>That might be an interesting question <em>if</em> it's asked about the different measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine.</p>
 <p>However, if the question is asked about about different test machines then as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
