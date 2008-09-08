@@ -34,7 +34,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 if (sizeof($Data)>0){
       if ($Id==$Data[DATA_ID]){
          if ($Data[DATA_STATUS]<0){
-            $kb = '&nbsp;'; $fullcpu = '&nbsp;';$elapsed = '&nbsp;'; $load = '&nbsp;';
+            $n = '&nbsp;'; $kb = '&nbsp;'; $fullcpu = '&nbsp;';$elapsed = '&nbsp;'; $load = '&nbsp;';
             $fullcpu = StatusMessage($Data[DATA_STATUS]);
          } else {
             if ($Data[DATA_MEMORY]==0){
@@ -43,12 +43,12 @@ if (sizeof($Data)>0){
                if ($TestName=='startup'){ $kb = '&nbsp;'; }
                else { $kb = number_format((double)$Data[DATA_MEMORY]); }
             }
+            if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }
             $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
             $elapsed = ElapsedTime($Data);
             $load = CpuLoad($Data);
          }
 
-         if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }
          printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">&nbsp;&nbsp;%s</td></tr>',
             $n,$fullcpu,$kb,$Data[DATA_GZ],$elapsed,$load); echo "\n";
       }
