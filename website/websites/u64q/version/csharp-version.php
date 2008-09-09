@@ -1,1 +1,1 @@
-<p>Mono JIT compiler version 1.2.6 (tarball)</p>
+<p>Mono C# compiler version 2.0.0.0 (Release Candidate 1)</p>
