@@ -1,0 +1,377 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   Based on C contribution by Alex Burlyga</span>
+<span class="hl com">   Further tweaking by The Anh Tran</span>
+<span class="hl com">*/</span>
+
+
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+
+
+<span class="hl slc">// Synchronization primitive for single core policy</span>
+
+<span class="hl slc">//#define   MP_LTYPE      pthread_mutex_t</span>
+<span class="hl dir">#define   MP_LTYPE      pthread_spinlock_t</span>
+
+<span class="hl slc">//#define CR_LTYPE      pthread_mutex_t</span>
+<span class="hl slc">//#define CR_LTYPE      pthread_spinlock_t</span>
+<span class="hl dir">#define CR_LTYPE      void</span>
+<span class="hl dir">#define _VOID_LOCK_</span>
+
+
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span>typename T1 <span class="hl sym">=</span> <span class="hl kwb">void</span><span class="hl sym">&gt;</span>
+<span class="hl kwc">class</span> CLock
+<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   <span class="hl kwd">CLock</span><span class="hl sym">()   {   }</span>
+   <span class="hl sym">~</span><span class="hl kwd">CLock</span><span class="hl sym">()   {   }</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Wait</span><span class="hl sym">()   {   }</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">Signal</span><span class="hl sym">()   {   }</span>
+   <span class="hl kwb">bool</span> <span class="hl kwd">TryLock</span><span class="hl sym">()   {</span>   <span class="hl kwa">return true</span><span class="hl sym">;   }</span>
+   <span class="hl kwb">bool</span> <span class="hl kwd">Lock</span><span class="hl sym">()   {</span>   <span class="hl kwa">return true</span><span class="hl sym">;   }</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">Unlock</span><span class="hl sym">()   {   }</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">template</span> <span class="hl sym">&lt;&gt;</span>
+<span class="hl kwc">class</span> CLock<span class="hl sym">&lt;</span>pthread_mutex_t<span class="hl sym">&gt;</span>
+<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   pthread_mutex_t   mlock<span class="hl sym">;</span>
+
+   <span class="hl kwd">CLock</span><span class="hl sym">()   {</span>   <span class="hl kwd">pthread_mutex_init</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);      }</span>
+   <span class="hl sym">~</span><span class="hl kwd">CLock</span><span class="hl sym">()   {</span>   <span class="hl kwd">pthread_mutex_destroy</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">);      }</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Wait</span><span class="hl sym">()   {</span>   <span class="hl kwd">Lock</span><span class="hl sym">();   }</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">Signal</span><span class="hl sym">()   {</span>   <span class="hl kwd">Unlock</span><span class="hl sym">();   }</span>
+
+   <span class="hl kwb">bool</span> <span class="hl kwd">Lock</span><span class="hl sym">()   {</span>   <span class="hl kwa">return</span> <span class="hl num">0</span> <span class="hl sym">==</span> <span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">);   }</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">Unlock</span><span class="hl sym">()   {</span>   <span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">);   }</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">template</span> <span class="hl sym">&lt;&gt;</span>
+<span class="hl kwc">class</span> CLock<span class="hl sym">&lt;</span>pthread_spinlock_t<span class="hl sym">&gt;</span>
+<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   pthread_spinlock_t   mlock<span class="hl sym">;</span>
+
+   <span class="hl kwd">CLock</span><span class="hl sym">()   {</span>   <span class="hl kwd">pthread_spin_init</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">,</span> PTHREAD_PROCESS_PRIVATE<span class="hl sym">);   }</span>
+   <span class="hl sym">~</span><span class="hl kwd">CLock</span><span class="hl sym">()   {</span>   <span class="hl kwd">pthread_spin_destroy</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">);      }</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Wait</span><span class="hl sym">()   {</span>   <span class="hl kwd">Lock</span><span class="hl sym">();   }</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">Signal</span><span class="hl sym">()   {</span>   <span class="hl kwd">Unlock</span><span class="hl sym">();   }</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Unlock</span><span class="hl sym">()   {</span>   <span class="hl kwd">pthread_spin_unlock</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">);   }</span>
+   <span class="hl kwb">bool</span> <span class="hl kwd">Lock</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">pthread_spin_trylock</span><span class="hl sym">(&amp;</span>mlock<span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl kwd">sched_yield</span><span class="hl sym">();</span>
+      <span class="hl kwa">return true</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl kwb">enum</span> Color
+<span class="hl sym">{</span>
+   blue      <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span>
+   red      <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span>
+   yellow   <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">,</span>
+   Invalid   <span class="hl sym">=</span> <span class="hl num">3</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">const char</span><span class="hl sym">*</span>   ColorName<span class="hl sym">[]   = {</span><span class="hl str">&quot;blue&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;red&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;yellow&quot;</span><span class="hl sym">};</span>
+<span class="hl kwb">const int</span>      STACK_SIZE   <span class="hl sym">=</span> <span class="hl num">16</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">;</span>
+
+
+Color <span class="hl kwd">ColorCompliment</span><span class="hl sym">(</span>Color c1<span class="hl sym">,</span> Color c2<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c1<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+   <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> blue<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> yellow<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> red<span class="hl sym">;</span>
+      <span class="hl kwa">default</span><span class="hl sym">:</span>
+         <span class="hl kwa">goto</span> errlb<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> yellow<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> red<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> blue<span class="hl sym">;</span>
+      <span class="hl kwa">default</span><span class="hl sym">:</span>
+         <span class="hl kwa">goto</span> errlb<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> red<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> blue<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+         <span class="hl kwa">return</span> yellow<span class="hl sym">;</span>
+      <span class="hl kwa">default</span><span class="hl sym">:</span>
+         <span class="hl kwa">goto</span> errlb<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">default</span><span class="hl sym">:</span>
+      <span class="hl kwa">break</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+errlb<span class="hl sym">:</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;Invalid color</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">exit</span><span class="hl sym">(</span> <span class="hl num">1</span> <span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">char</span><span class="hl sym">*</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> outbuf<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">const char</span><span class="hl sym">*</span> NUMBERS<span class="hl sym">[] =</span>
+   <span class="hl sym">{</span>
+      <span class="hl str">&quot;zero&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;one&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;two&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;three&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;four&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;five&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;six&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;seven&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;eight&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;nine&quot;</span>
+   <span class="hl sym">};</span>
+
+   <span class="hl kwb">char</span> tmp<span class="hl sym">[</span><span class="hl num">64</span><span class="hl sym">];</span>
+    <span class="hl kwb">int</span> ichar <span class="hl sym">=</span> <span class="hl kwd">sprintf</span><span class="hl sym">(</span>tmp<span class="hl sym">,</span> <span class="hl str">&quot;%d&quot;</span><span class="hl sym">,</span> n<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> ochar <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ichar<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      ochar <span class="hl sym">+=</span> <span class="hl kwd">sprintf</span><span class="hl sym">(</span> outbuf <span class="hl sym">+</span> ochar<span class="hl sym">,</span> <span class="hl str">&quot; %s&quot;</span><span class="hl sym">,</span> NUMBERS<span class="hl sym">[</span> tmp<span class="hl sym">[</span>i<span class="hl sym">] -</span> <span class="hl str">'0'</span> <span class="hl sym">] );</span>
+
+   <span class="hl kwa">return</span> outbuf<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwc">class</span> Creature<span class="hl sym">;</span>
+<span class="hl kwc">class</span> MeetingPlace
+<span class="hl sym">{</span>
+<span class="hl kwc">protected</span><span class="hl sym">:</span>
+   CLock<span class="hl sym">&lt;</span>MP_LTYPE<span class="hl sym">&gt;</span>   mp_lock<span class="hl sym">;</span>
+
+   <span class="hl kwb">int</span>             meetings_left<span class="hl sym">;</span>
+   Creature<span class="hl sym">*</span>         waiting_creature<span class="hl sym">;</span>
+
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   <span class="hl kwd">MeetingPlace</span><span class="hl sym">(</span><span class="hl kwb">int</span> N<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      meetings_left <span class="hl sym">=</span> N<span class="hl sym">;</span>
+      waiting_creature <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">bool</span> <span class="hl kwd">Meet</span><span class="hl sym">(</span> Creature<span class="hl sym">*</span> cr <span class="hl sym">);</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl kwc">class</span> Creature
+<span class="hl sym">{</span>
+<span class="hl kwc">protected</span><span class="hl sym">:</span>
+   pthread_t         ht<span class="hl sym">;</span>
+   pthread_attr_t      stack_att<span class="hl sym">;</span>
+   CLock<span class="hl sym">&lt;</span>CR_LTYPE<span class="hl sym">&gt;</span>   cr_lock<span class="hl sym">;</span>
+
+   MeetingPlace<span class="hl sym">*</span>   place<span class="hl sym">;</span>
+   <span class="hl kwb">int</span>         count<span class="hl sym">;</span>
+   <span class="hl kwb">int</span>         samecount<span class="hl sym">;</span>
+
+   Color   color<span class="hl sym">;</span>
+   <span class="hl kwb">int</span>      id<span class="hl sym">;</span>
+   <span class="hl kwb">bool</span>   met<span class="hl sym">;</span>
+
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   <span class="hl kwd">Creature</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      count   <span class="hl sym">=</span> samecount <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      id      <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      met      <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+
+      <span class="hl kwd">pthread_attr_init</span><span class="hl sym">( &amp;</span>stack_att <span class="hl sym">);</span>
+      <span class="hl kwd">pthread_attr_setstacksize</span><span class="hl sym">( &amp;</span>stack_att<span class="hl sym">,</span> STACK_SIZE <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Start</span><span class="hl sym">(</span> MeetingPlace<span class="hl sym">*</span> mp<span class="hl sym">,</span> Color c <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      place   <span class="hl sym">=</span> mp<span class="hl sym">;</span>
+      color      <span class="hl sym">=</span> c<span class="hl sym">;</span>
+
+      <span class="hl kwd">pthread_create</span><span class="hl sym">( &amp;</span>ht<span class="hl sym">, &amp;</span>stack_att<span class="hl sym">, &amp;</span>Creature<span class="hl sym">::</span>ThreadRun<span class="hl sym">, (</span><span class="hl kwb">void</span><span class="hl sym">*)</span><span class="hl kwa">this</span> <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">static void</span><span class="hl sym">*</span> <span class="hl kwd">ThreadRun</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*</span> param<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl sym">((</span>Creature<span class="hl sym">*)</span>param<span class="hl sym">)-&gt;</span><span class="hl kwd">Run</span><span class="hl sym">();</span>
+      <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Run</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      id <span class="hl sym">=</span> <span class="hl kwd">pthread_self</span><span class="hl sym">();</span>
+      cr_lock<span class="hl sym">.</span><span class="hl kwd">Lock</span><span class="hl sym">();</span>
+
+      <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         met <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> place<span class="hl sym">-&gt;</span><span class="hl kwd">Meet</span><span class="hl sym">(</span> <span class="hl kwa">this</span> <span class="hl sym">) )</span>
+         <span class="hl sym">{</span>
+            count<span class="hl sym">++;</span>
+<span class="hl dir">#ifdef _VOID_LOCK_</span>
+            <span class="hl kwa">while</span> <span class="hl sym">(</span>met <span class="hl sym">==</span> <span class="hl kwa">false</span><span class="hl sym">)</span>
+               <span class="hl kwd">sched_yield</span><span class="hl sym">();</span>
+<span class="hl dir">#else</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>met <span class="hl sym">==</span> <span class="hl kwa">false</span><span class="hl sym">)</span>
+               cr_lock<span class="hl sym">.</span><span class="hl kwd">Wait</span><span class="hl sym">();</span>
+<span class="hl dir">#endif</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">else</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+
+      cr_lock<span class="hl sym">.</span><span class="hl kwd">Unlock</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Meet</span><span class="hl sym">(</span>Creature<span class="hl sym">*</span> other<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>id <span class="hl sym">==</span> other<span class="hl sym">-&gt;</span>id<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">))</span>
+      <span class="hl sym">{</span>
+         samecount<span class="hl sym">++;</span>
+         other<span class="hl sym">-&gt;</span>samecount<span class="hl sym">++;</span>
+      <span class="hl sym">}</span>
+
+      Color newcolor   <span class="hl sym">=</span> <span class="hl kwd">ColorCompliment</span><span class="hl sym">(</span> color<span class="hl sym">,</span> other<span class="hl sym">-&gt;</span>color <span class="hl sym">);</span>
+      other<span class="hl sym">-&gt;</span>color   <span class="hl sym">=</span> color   <span class="hl sym">=</span> newcolor<span class="hl sym">;</span>
+      other<span class="hl sym">-&gt;</span>met   <span class="hl sym">=</span> met   <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
+
+      other<span class="hl sym">-&gt;</span>cr_lock<span class="hl sym">.</span><span class="hl kwd">Signal</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">GetMeetingTimes</span><span class="hl sym">(</span><span class="hl kwb">int</span> <span class="hl sym">&amp;</span>total<span class="hl sym">,</span> <span class="hl kwb">int</span> <span class="hl sym">&amp;</span>same<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      total   <span class="hl sym">=</span> count<span class="hl sym">;</span>
+      same <span class="hl sym">=</span> samecount<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">Wait</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>   <span class="hl kwd">pthread_join</span><span class="hl sym">(</span> ht<span class="hl sym">,</span> <span class="hl num">0</span> <span class="hl sym">);   }</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl kwb">bool</span> MeetingPlace<span class="hl sym">::</span><span class="hl kwd">Meet</span><span class="hl sym">(</span> Creature<span class="hl sym">*</span> currrent_creature <span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl com">/*</span>
+<span class="hl com">   This function need atomic accesses to 2 variables:</span>
+<span class="hl com">      meetings_left</span>
+<span class="hl com">      waiting_creature</span>
+<span class="hl com">   */</span>
+   mp_lock<span class="hl sym">.</span><span class="hl kwd">Lock</span><span class="hl sym">();</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span> meetings_left <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> waiting_creature <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">)</span>  <span class="hl slc">// first arrive</span>
+      <span class="hl sym">{</span>
+         waiting_creature <span class="hl sym">=</span> currrent_creature<span class="hl sym">;</span>
+         mp_lock<span class="hl sym">.</span><span class="hl kwd">Unlock</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span> <span class="hl slc">// second arrive</span>
+      <span class="hl sym">{</span>
+         <span class="hl slc">// store pointer to first creature</span>
+         Creature<span class="hl sym">*</span> first_creature <span class="hl sym">=</span> waiting_creature<span class="hl sym">;</span>
+         waiting_creature <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+         meetings_left<span class="hl sym">--;</span>
+
+         <span class="hl slc">// release MeetingPlace's lock ASAP</span>
+         <span class="hl slc">// for other creatures to gain lock</span>
+         mp_lock<span class="hl sym">.</span><span class="hl kwd">Unlock</span><span class="hl sym">();</span>
+
+         <span class="hl slc">// 2 creatures meeting each other</span>
+         currrent_creature<span class="hl sym">-&gt;</span><span class="hl kwd">Meet</span><span class="hl sym">(</span>first_creature<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl kwa">return true</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   mp_lock<span class="hl sym">.</span><span class="hl kwd">Unlock</span><span class="hl sym">();</span>
+   <span class="hl kwa">return false</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">void</span> <span class="hl kwd">RunGame</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">,</span> <span class="hl kwb">int</span> ncolor<span class="hl sym">,</span> <span class="hl kwb">const</span> Color<span class="hl sym">*</span> cl<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   MeetingPlace   <span class="hl kwd">place</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
+   Creature      cr<span class="hl sym">[</span>ncolor<span class="hl sym">];</span>
+
+   <span class="hl slc">// print initial color of each creature</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">printf</span><span class="hl sym">(</span> <span class="hl str">&quot;%s &quot;</span><span class="hl sym">,</span> ColorName<span class="hl sym">[</span> cl<span class="hl sym">[</span>i<span class="hl sym">] ] );</span>
+      cr<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">Start</span><span class="hl sym">( &amp;</span>place<span class="hl sym">,</span> cl<span class="hl sym">[</span>i<span class="hl sym">] );</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+
+   <span class="hl slc">// wait for them to meet</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      cr<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">Wait</span><span class="hl sym">();</span>
+
+   <span class="hl kwb">int</span> total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">char</span> str<span class="hl sym">[</span><span class="hl num">256</span><span class="hl sym">];</span>
+
+   <span class="hl slc">// print meeting times of each creature</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> count<span class="hl sym">,</span> same<span class="hl sym">;</span>
+      cr<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">GetMeetingTimes</span><span class="hl sym">(</span>count<span class="hl sym">,</span> same<span class="hl sym">);</span>
+
+      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%u%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> count<span class="hl sym">,</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>same<span class="hl sym">,</span> str<span class="hl sym">) );</span>
+
+      total <span class="hl sym">+=</span> count<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// print total meeting times</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>total<span class="hl sym">,</span> str<span class="hl sym">) );</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">void</span> <span class="hl kwd">PrintColors</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> c1 <span class="hl sym">=</span> blue<span class="hl sym">;</span> c1 <span class="hl sym">&lt;=</span> yellow<span class="hl sym">;</span> c1<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> c2 <span class="hl sym">=</span> blue<span class="hl sym">;</span> c2 <span class="hl sym">&lt;=</span> yellow<span class="hl sym">;</span> c2<span class="hl sym">++)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwd">printf</span> <span class="hl sym">(</span> <span class="hl str">&quot;%s + %s -&gt; %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+            ColorName<span class="hl sym">[</span>c1<span class="hl sym">],</span>
+            ColorName<span class="hl sym">[</span>c2<span class="hl sym">],</span>
+            ColorName<span class="hl sym">[</span> <span class="hl kwd">ColorCompliment</span><span class="hl sym">( (</span>Color<span class="hl sym">)</span>c1<span class="hl sym">, (</span>Color<span class="hl sym">)</span>c2 <span class="hl sym">) ]      );</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">char</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">**</span> argv<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> n <span class="hl sym">= (</span>argc <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">600</span><span class="hl sym">;</span>
+
+   <span class="hl kwd">PrintColors</span><span class="hl sym">();</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+
+   <span class="hl kwb">const</span> Color r1<span class="hl sym">[] = {</span>   blue<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow   <span class="hl sym">};</span>
+   <span class="hl kwb">const</span> Color r2<span class="hl sym">[] = {</span>   blue<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow<span class="hl sym">,</span>
+            red<span class="hl sym">,</span> yellow<span class="hl sym">,</span> blue<span class="hl sym">,</span>
+            red<span class="hl sym">,</span> yellow<span class="hl sym">,</span> red<span class="hl sym">,</span> blue   <span class="hl sym">};</span>
+
+   <span class="hl kwd">RunGame</span><span class="hl sym">(</span> n<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>r1<span class="hl sym">) /</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>r1<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]),</span> r1 <span class="hl sym">);</span>
+   <span class="hl kwd">RunGame</span><span class="hl sym">(</span> n<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>r2<span class="hl sym">) /</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>r2<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]),</span> r2 <span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
