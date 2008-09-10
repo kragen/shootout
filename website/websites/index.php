@@ -3,6 +3,7 @@ echo '<?xml version="1.0" encoding="iso-8859-1" ?>';
 $U64Q = filemtime('./u64q/data/data.csv');
 $U32Q = filemtime('./u32q/data/data.csv');
 $U32 = filemtime('./u32/data/data.csv');
+$U64 = filemtime('./u64/data/data.csv');
 ?>
 
 
@@ -59,6 +60,16 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <table class="layout">
 <tr class="test">
 <td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64/"><? printf('%s', gmdate("d M Y", $U64)) ?></a></p>
+<h3><span class="u64">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+<table class="layout">
+<tr class="test">
+<td>
 <p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
 <h3><span class="u64q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
@@ -66,6 +77,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 </td>
 </tr>
 </table>
+
 
 <table class="layout">
 <tr class="test">
