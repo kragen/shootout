@@ -1,0 +1,272 @@
+<span class="hl slc">// The Computer Language Benchmarks Game</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Original C contributed by Sebastien Loisel</span>
+<span class="hl slc">// Conversion to C++ by Jon Harrop</span>
+<span class="hl slc">// Vectorizing &amp; tweaking by The Anh Tran</span>
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl dir">#include &lt;cmath&gt;</span>
+<span class="hl dir">#include &lt;vector&gt;</span>
+<span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;iomanip&gt;</span>
+
+<span class="hl slc">// comment the following define to use standard FP divide instruction</span>
+<span class="hl dir">#define USE_FAST_DIV</span>
+
+<span class="hl kwa">using namespace</span> std<span class="hl sym">;</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">float</span>   v4f   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)));</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">double</span>   v2d   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)));</span>
+
+<span class="hl kwb">union</span> v2du
+<span class="hl sym">{</span>
+   v2d      xmm<span class="hl sym">;</span>
+   <span class="hl kwb">double</span>   mem<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">];</span>
+<span class="hl sym">};</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl slc">// original eval_A, for odd size array. Should be *never* called</span>
+<span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwb">const</span><span class="hl sym">,</span> nothrow<span class="hl sym">))</span>
+<span class="hl kwc">inline</span>
+<span class="hl kwb">double</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> d <span class="hl sym">= (</span>i <span class="hl sym">+</span> j<span class="hl sym">) * (</span>i <span class="hl sym">+</span> j <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">return</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> d<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl slc">//   vectorized eval_A. Use reciprocal &amp; Newton-Raphson instead of FP divide.</span>
+<span class="hl slc">//   Input:   scalar type   i, j</span>
+<span class="hl slc">//   Return:   vector type   1/[i, j]   1/[i, j+1]</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwb">const</span><span class="hl sym">,</span> nothrow<span class="hl sym">))</span>
+<span class="hl kwc">inline</span>
+v2d <span class="hl kwd">eval_Aj</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> d1 <span class="hl sym">= (</span>i <span class="hl sym">+</span> j      <span class="hl sym">) * (</span>i <span class="hl sym">+</span> j       <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> d2 <span class="hl sym">= (</span>i <span class="hl sym">+</span> j <span class="hl sym">+</span><span class="hl num">1</span>   <span class="hl sym">) * (</span>i <span class="hl sym">+</span> j <span class="hl sym">+</span><span class="hl num">1</span>   <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+<span class="hl dir">#ifdef USE_FAST_DIV</span>
+
+   <span class="hl slc">// df = d1 d2 0 0   (float)</span>
+   v4f df   <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+
+   <span class="hl slc">// reciprocal packed single precision (SP)</span>
+   <span class="hl slc">// precision is 12 bit ~3rd digit after '.'</span>
+   <span class="hl slc">// rdf = 1/d1 1/d2 Inf Inf   (float)</span>
+   v4f rdf   <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_rcpps</span><span class="hl sym">(</span>df<span class="hl sym">);</span>
+
+   <span class="hl slc">// d      = d1 d2   (double)</span>
+   v2d d   <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+
+   <span class="hl slc">// x0      = 1/d1 1/d2   (double)</span>
+   v2d x0   <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_cvtps2pd</span><span class="hl sym">(</span>rdf<span class="hl sym">);</span> <span class="hl slc">// convert packed SP to DP</span>
+
+   <span class="hl slc">// 1st newton-raphson iteration, to improve precision</span>
+   <span class="hl slc">// x0 = rcpof(d)</span>
+   <span class="hl slc">// x1 = (2*x0) - (d * x0 * x0)</span>
+   <span class="hl slc">// got precision at 7th digit after '.', which is as precise as FP divide (float type)</span>
+   v2d x1 <span class="hl sym">= (</span>x0 <span class="hl sym">+</span> x0<span class="hl sym">) - (</span>d <span class="hl sym">*</span> x0 <span class="hl sym">*</span> x0<span class="hl sym">);</span>
+
+   <span class="hl slc">// 2nd newton-raphson iteration</span>
+   <span class="hl slc">// 14th digit after '.', which is more precise than game output</span>
+   <span class="hl slc">// but not as precise as FP divide (double)</span>
+   x0 <span class="hl sym">=</span> x1<span class="hl sym">;</span>
+   x1 <span class="hl sym">= (</span>x0 <span class="hl sym">+</span> x0<span class="hl sym">) - (</span>d <span class="hl sym">*</span> x0 <span class="hl sym">*</span> x0<span class="hl sym">);</span>
+
+   <span class="hl slc">// 3rd iteration has *very small* speed improvement than using FP divide (double type)</span>
+   <span class="hl slc">// precision same as FP divide (double)</span>
+   <span class="hl slc">//x0 = x1;</span>
+   <span class="hl slc">//x1 = (x0 + x0) - (d * x0 * x0);</span>
+   <span class="hl kwa">return</span> x1<span class="hl sym">;</span>
+
+<span class="hl dir">#else</span>
+
+   <span class="hl slc">// FP divide here</span>
+   v2d r <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+   v2d v1 <span class="hl sym">= {</span><span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">};</span>
+   <span class="hl kwa">return</span> v1 <span class="hl sym">/</span> r<span class="hl sym">;</span>
+
+<span class="hl dir">#endif</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl slc">//   vectorized eval_A. Use reciprocal &amp; Newton-Raphson instead of FP divide.</span>
+<span class="hl slc">//   Input:   i, j</span>
+<span class="hl slc">//   Return:   1/[i, j]   1/[i +1, j]</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwb">const</span><span class="hl sym">,</span> nothrow<span class="hl sym">))</span>
+<span class="hl kwc">inline</span>
+v2d <span class="hl kwd">eval_Ai</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> d1 <span class="hl sym">= (</span>i       <span class="hl sym">+</span> j<span class="hl sym">) * (</span>i       <span class="hl sym">+</span> j <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> i       <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> d2 <span class="hl sym">= (</span>i <span class="hl sym">+</span><span class="hl num">1</span>      <span class="hl sym">+</span> j<span class="hl sym">) * (</span>i <span class="hl sym">+</span><span class="hl num">1</span>   <span class="hl sym">+</span> j <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+ (</span>i <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)   +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+<span class="hl dir">#ifdef USE_FAST_DIV</span>
+
+   v4f df   <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+   v4f rdf   <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_rcpps</span><span class="hl sym">(</span>df<span class="hl sym">);</span>
+
+   v2d d   <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+   v2d x0   <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_cvtps2pd</span><span class="hl sym">(</span>rdf<span class="hl sym">);</span>
+
+   <span class="hl slc">// 1st iteration</span>
+   v2d x1   <span class="hl sym">= (</span>x0 <span class="hl sym">+</span> x0<span class="hl sym">) - (</span>d <span class="hl sym">*</span> x0 <span class="hl sym">*</span> x0<span class="hl sym">);</span>
+
+   <span class="hl slc">// 2nd iteration</span>
+   x0 <span class="hl sym">=</span> x1<span class="hl sym">;</span>
+   x1 <span class="hl sym">= (</span>x0 <span class="hl sym">+</span> x0<span class="hl sym">) - (</span>d <span class="hl sym">*</span> x0 <span class="hl sym">*</span> x0<span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> x1<span class="hl sym">;</span>
+
+<span class="hl dir">#else</span>
+
+   <span class="hl slc">// FP divide</span>
+   v2d r <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+   v2d v1 <span class="hl sym">= {</span><span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">};</span>
+   <span class="hl kwa">return</span> v1 <span class="hl sym">/</span> r<span class="hl sym">;</span>
+
+<span class="hl dir">#endif</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwd">__attribute__</span><span class="hl sym">((</span>nothrow<span class="hl sym">))</span>
+<span class="hl kwb">void</span> <span class="hl kwd">eval_A_times_u</span> <span class="hl sym">(</span><span class="hl kwb">const double</span> u<span class="hl sym">[],</span> <span class="hl kwb">int</span> inRange<span class="hl sym">,</span> <span class="hl kwb">double</span> Au<span class="hl sym">[])</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">const int</span> N2 <span class="hl sym">=</span> inRange<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">;</span>
+   <span class="hl kwb">const</span> v2d<span class="hl sym">*</span> pU <span class="hl sym">= (</span><span class="hl kwb">const</span> v2d<span class="hl sym">*)</span>u<span class="hl sym">;</span>
+   v2du sum<span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> inRange<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      sum<span class="hl sym">.</span>xmm ^<span class="hl sym">=</span> sum<span class="hl sym">.</span>xmm<span class="hl sym">;</span> <span class="hl slc">// sum =0</span>
+
+      <span class="hl kwb">int</span> j<span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> N2<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+         sum<span class="hl sym">.</span>xmm <span class="hl sym">+=</span> <span class="hl kwd">eval_Aj</span><span class="hl sym">(</span> i<span class="hl sym">,</span> j <span class="hl sym">*</span><span class="hl num">2</span> <span class="hl sym">) *</span> pU<span class="hl sym">[</span> j <span class="hl sym">];</span>
+
+      Au<span class="hl sym">[</span>i<span class="hl sym">] =</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+
+      <span class="hl slc">// odd size array, *should be never*</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>j <span class="hl sym">&lt;</span> inRange<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span> j<span class="hl sym">++)</span>
+         Au<span class="hl sym">[</span>i<span class="hl sym">] +=</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span> i<span class="hl sym">,</span> j <span class="hl sym">) *</span> u<span class="hl sym">[</span>j<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwd">__attribute__</span><span class="hl sym">((</span>nothrow<span class="hl sym">))</span>
+<span class="hl kwb">void</span> <span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span><span class="hl kwb">const double</span> u<span class="hl sym">[],</span> <span class="hl kwb">int</span> inRange<span class="hl sym">,</span> <span class="hl kwb">double</span> Au<span class="hl sym">[])</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">const int</span> N2 <span class="hl sym">=</span> inRange<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">;</span>
+   <span class="hl kwb">const</span> v2d<span class="hl sym">*</span> pU <span class="hl sym">= (</span><span class="hl kwb">const</span> v2d<span class="hl sym">*)</span>u<span class="hl sym">;</span>
+   v2du sum<span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> inRange<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      sum<span class="hl sym">.</span>xmm ^<span class="hl sym">=</span> sum<span class="hl sym">.</span>xmm<span class="hl sym">;</span> <span class="hl slc">// sum =0</span>
+
+      <span class="hl kwb">int</span> j<span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> N2<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+         sum<span class="hl sym">.</span>xmm <span class="hl sym">+=</span> <span class="hl kwd">eval_Ai</span><span class="hl sym">(</span> j <span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">,</span> i <span class="hl sym">) *</span> pU<span class="hl sym">[</span> j <span class="hl sym">];</span>
+
+      Au<span class="hl sym">[</span>i<span class="hl sym">] =</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+
+      <span class="hl slc">// odd size array, *should be never*</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>j <span class="hl sym">&lt;</span> inRange<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span> j<span class="hl sym">++)</span>
+         Au<span class="hl sym">[</span>i<span class="hl sym">] +=</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span>j<span class="hl sym">,</span>i<span class="hl sym">) *</span> u<span class="hl sym">[</span>j<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwb">void</span> <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span><span class="hl kwb">const double</span> u<span class="hl sym">[],</span> <span class="hl kwb">double</span> AtAu<span class="hl sym">[],</span> <span class="hl kwb">double</span> v<span class="hl sym">[],</span> <span class="hl kwb">int</span> inRange<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwd">eval_A_times_u</span><span class="hl sym">(</span> u<span class="hl sym">,</span> inRange<span class="hl sym">,</span> v <span class="hl sym">);</span>
+   <span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span> v<span class="hl sym">,</span> inRange<span class="hl sym">,</span> AtAu <span class="hl sym">);</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwb">void</span> <span class="hl kwd">spectral_game</span><span class="hl sym">(</span><span class="hl kwb">double</span> u<span class="hl sym">[],</span> <span class="hl kwb">double</span> v<span class="hl sym">[],</span> <span class="hl kwb">int</span> N<span class="hl sym">,</span> <span class="hl kwb">double</span> <span class="hl sym">&amp;</span>vBv<span class="hl sym">,</span> <span class="hl kwb">double</span> <span class="hl sym">&amp;</span>vv<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> tmp<span class="hl sym">[</span>N<span class="hl sym">];</span>
+
+   <span class="hl kwb">const int</span> N2 <span class="hl sym">=</span> N<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">;</span>
+   v2d<span class="hl sym">*</span> pU <span class="hl sym">= (</span>v2d<span class="hl sym">*)</span>u<span class="hl sym">;</span>
+   v2d<span class="hl sym">*</span> pV <span class="hl sym">= (</span>v2d<span class="hl sym">*)</span>v<span class="hl sym">;</span>
+
+   <span class="hl slc">// fill 1.0 to u[N]</span>
+   v2d fill_1 <span class="hl sym">= {</span><span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">};</span>
+   <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N2<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      pU<span class="hl sym">[</span> i <span class="hl sym">] =</span> fill_1<span class="hl sym">;</span>
+
+   <span class="hl slc">// odd size array</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> i <span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>i <span class="hl sym">&lt;</span> N<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span> i<span class="hl sym">++)</span>
+      u<span class="hl sym">[</span> i <span class="hl sym">] =</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
+
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>u<span class="hl sym">,</span> v<span class="hl sym">,</span> tmp<span class="hl sym">,</span> N<span class="hl sym">);</span>
+      <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>v<span class="hl sym">,</span> u<span class="hl sym">,</span> tmp<span class="hl sym">,</span> N<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+
+   v2du sumB<span class="hl sym">,</span> sumv<span class="hl sym">;</span>
+   sumB<span class="hl sym">.</span>xmm ^<span class="hl sym">=</span> sumB<span class="hl sym">.</span>xmm<span class="hl sym">;</span>   <span class="hl slc">// sumB = 0</span>
+   sumv<span class="hl sym">.</span>xmm <span class="hl sym">=</span> sumB<span class="hl sym">.</span>xmm<span class="hl sym">;</span>   <span class="hl slc">// sumv = 0</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N2<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      sumB<span class="hl sym">.</span>xmm <span class="hl sym">+=</span> pU<span class="hl sym">[</span> i <span class="hl sym">] *</span> pV<span class="hl sym">[</span> i <span class="hl sym">];</span>
+      sumv<span class="hl sym">.</span>xmm <span class="hl sym">+=</span> pV<span class="hl sym">[</span> i <span class="hl sym">] *</span> pV<span class="hl sym">[</span> i <span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+
+   vBv   <span class="hl sym">=</span> sumB<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> sumB<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+   vv   <span class="hl sym">=</span> sumv<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> sumv<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+
+   <span class="hl slc">// odd size array</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> i <span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>i <span class="hl sym">&lt;</span> N<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      vBv <span class="hl sym">+=</span> u<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">];</span>
+      vv <span class="hl sym">+=</span> v<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>argv<span class="hl sym">[])</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> N <span class="hl sym">= ((</span>argc <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">2000</span><span class="hl sym">);</span>
+
+   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> u<span class="hl sym">[</span>N<span class="hl sym">];</span>
+   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> v<span class="hl sym">[</span>N<span class="hl sym">];</span>
+
+   <span class="hl slc">// main calculation</span>
+   <span class="hl kwb">double</span> vBv<span class="hl sym">,</span> vv<span class="hl sym">;</span>
+   <span class="hl kwd">spectral_game</span><span class="hl sym">(</span>u<span class="hl sym">,</span> v<span class="hl sym">,</span> N<span class="hl sym">,</span> vBv<span class="hl sym">,</span> vv<span class="hl sym">);</span>
+
+   cout <span class="hl sym">&lt;&lt;</span> <span class="hl kwd">setprecision</span><span class="hl sym">(</span><span class="hl num">10</span><span class="hl sym">) &lt;&lt;</span> <span class="hl kwd">sqrt</span><span class="hl sym">(</span> vBv <span class="hl sym">/</span> vv <span class="hl sym">) &lt;&lt;</span> endl<span class="hl sym">;</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+<span class="hl slc">//-------------------------------------------------------------------------------</span>
+
