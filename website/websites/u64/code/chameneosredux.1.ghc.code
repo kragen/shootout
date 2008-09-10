@@ -1,0 +1,69 @@
+<span class="hl com">{- The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com">   Written by Tom Pledger, 13 Nov 2006. modified by Don Stewart</span>
+<span class="hl com">   Updated for chameneos-redux by Spencer Janssen, 27 Nov 2007 -}</span>
+
+<span class="hl kwa">import</span> Control.Concurrent
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> Data.<span class="hl kwb">Char</span>
+<span class="hl kwa">import</span> System.Environment
+<span class="hl kwa">import</span> System.IO
+
+<span class="hl kwa">default</span><span class="hl sym">(</span><span class="hl kwb">Int</span><span class="hl sym">)</span>
+
+<span class="hl kwa">data</span> Colour <span class="hl sym">=</span> Blue <span class="hl sym">|</span> Red <span class="hl sym">|</span> Yellow <span class="hl kwa">deriving</span> <span class="hl sym">(</span>Show<span class="hl sym">,</span> Eq<span class="hl sym">,</span> Enum<span class="hl sym">)</span>
+
+complement a b <span class="hl sym">|</span> a <span class="hl sym">==</span> b <span class="hl sym">=</span> a
+complement a b <span class="hl sym">=</span> <span class="hl kwa">case</span> a <span class="hl kwa">of</span>
+    Blue   <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> b <span class="hl kwa">of</span> Red  <span class="hl sym">-&gt;</span> Yellow<span class="hl sym">;</span> _ <span class="hl sym">-&gt;</span> Red
+    Red    <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> b <span class="hl kwa">of</span> Blue <span class="hl sym">-&gt;</span> Yellow<span class="hl sym">;</span> _ <span class="hl sym">-&gt;</span> Blue
+    Yellow <span class="hl sym">-&gt;</span> <span class="hl kwa">case</span> b <span class="hl kwa">of</span> Blue <span class="hl sym">-&gt;</span> Red<span class="hl sym">;</span>    _ <span class="hl sym">-&gt;</span> Blue
+
+<span class="hl kwa">data</span> MP <span class="hl sym">=</span> MP <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!(</span>Maybe <span class="hl sym">(</span>Colour<span class="hl sym">,</span> ThreadId<span class="hl sym">,</span> MVar <span class="hl sym">(</span>Colour<span class="hl sym">,</span> ThreadId<span class="hl sym">)))</span>
+
+arrive mpv finish c0 <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    tid <span class="hl sym">&lt;-</span> myThreadId
+    <span class="hl kwa">let</span> inc x <span class="hl sym">= (</span>fromEnum <span class="hl sym">(</span>tid <span class="hl sym">==</span> x<span class="hl sym">) +)</span>
+        go <span class="hl sym">!</span>c <span class="hl sym">!</span>t <span class="hl sym">!</span>b <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            MP q w <span class="hl sym">&lt;-</span> takeMVar mpv
+            <span class="hl kwa">case</span> w <span class="hl kwa">of</span>
+                _ <span class="hl sym">|</span> q <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+                    putMVar mpv $ MP <span class="hl num">0</span> w
+                    putMVar finish <span class="hl sym">(</span>t<span class="hl sym">,</span> b<span class="hl sym">)</span>
+
+                Nothing <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+                     waker <span class="hl sym">&lt;-</span> newEmptyMVar
+                     putMVar mpv $ MP q <span class="hl sym">(</span>Just <span class="hl sym">(</span>c<span class="hl sym">,</span> tid<span class="hl sym">,</span> waker<span class="hl sym">))</span>
+                     <span class="hl sym">(</span>c'<span class="hl sym">,</span> tid'<span class="hl sym">) &lt;-</span> takeMVar waker
+                     go c' <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc tid' b
+
+                Just <span class="hl sym">(</span>k<span class="hl sym">,</span> tid'<span class="hl sym">,</span> waker<span class="hl sym">) -&gt;</span> <span class="hl kwa">do</span>
+                    <span class="hl kwa">let</span> <span class="hl sym">!</span>c' <span class="hl sym">=</span> complement k c
+                    putMVar waker <span class="hl sym">(</span>c'<span class="hl sym">,</span> tid<span class="hl sym">)</span>
+                    putMVar mpv $ MP <span class="hl sym">(</span>q<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> Nothing
+                    go c' <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc tid' b
+    go c0 <span class="hl num">0 0</span>
+
+showN <span class="hl sym">=</span> unwords . map <span class="hl sym">((</span>digits <span class="hl sym">!!)</span> . digitToInt<span class="hl sym">)</span> . show
+
+digits <span class="hl sym">=</span> words <span class="hl str">&quot;zero one two three four five six seven eight nine&quot;</span>
+
+run n cs <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    fs    <span class="hl sym">&lt;-</span> replicateM <span class="hl sym">(</span>length cs<span class="hl sym">)</span> newEmptyMVar
+    mpv   <span class="hl sym">&lt;-</span> newMVar $ MP n Nothing
+    zipWithM <span class="hl sym">((</span>forkIO .<span class="hl sym">)</span> . arrive mpv<span class="hl sym">)</span> fs cs
+    ns    <span class="hl sym">&lt;-</span> mapM takeMVar fs
+
+    putStrLn . map toLower . unwords . <span class="hl sym">([]:)</span> . map show $ cs
+    putStr . map toLower . unlines $ <span class="hl sym">[</span>unwords <span class="hl sym">[</span>show n<span class="hl sym">,</span> showN b<span class="hl sym">] | (</span>n<span class="hl sym">,</span> b<span class="hl sym">) &lt;-</span> ns<span class="hl sym">]</span>
+    putStrLn . <span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">++)</span> . showN . sum . map fst $ ns
+    putStrLn <span class="hl str">&quot;&quot;</span>
+
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    putStrLn . map toLower . unlines $
+        <span class="hl sym">[</span>unwords <span class="hl sym">[</span>show a<span class="hl sym">,</span> <span class="hl str">&quot;+&quot;</span><span class="hl sym">,</span> show b<span class="hl sym">,</span> <span class="hl str">&quot;-&gt;&quot;</span><span class="hl sym">,</span> show $ complement a b<span class="hl sym">]</span>
+            <span class="hl sym">|</span> a <span class="hl sym">&lt;- [</span>Blue ..<span class="hl sym">],</span> b <span class="hl sym">&lt;- [</span>Blue ..<span class="hl sym">]]</span>
+
+    n <span class="hl sym">&lt;-</span> readIO . head <span class="hl sym">=&lt;&lt;</span> getArgs
+    run n <span class="hl sym">[</span>Blue ..<span class="hl sym">]</span>
+    run n <span class="hl sym">[</span>Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Red<span class="hl sym">,</span> Blue<span class="hl sym">]</span>
