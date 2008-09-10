@@ -1,1 +1,1 @@
-<p>For this to work we have to manually set <tt>ulimit -s 100</tt></p>
+<p>For this to work on 32bit we have to set <tt>ulimit -s 100</tt></p>
