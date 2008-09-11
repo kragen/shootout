@@ -3,82 +3,83 @@
    contributed by Benoit Sonntag
 */
 
+// SPLITFILE=knucleotide.li
 Section Header
-
+  
   + name := KNUCLEOTIDE;
-
+  
 Section Inherit
-
+  
   - parent_object:OBJECT := OBJECT;
-
+  
 Section Public
-
+  
   - buffer:STRING;
-
+  
   - dico:HASHED_SET[SORTER];
-
+  
   - idf:STRING_CONSTANT := "GGTATTTTAATTTATAGT";
   - key:SORTER;
   - key2:SORTER;
-
+  
   - main <-
   (
     key := SORTER.clone;
     key2 := SORTER.clone;
     // Read file.
     buffer := STRING.create 10240;
-    {
+    {      
       buffer.clear;
-      IO.read_line_in buffer;
+      IO.read_line_in buffer;      
     }.do_until {buffer.has_prefix ">THREE"};
     buffer.clear;
-
-    {! IO.end_of_input}.while_do {
-      IO.read_line_in buffer;
+    
+    {! IO.end_of_input}.while_do {      
+      IO.read_line_in buffer;      
     };
     buffer.to_upper;
     // Compute frequently.
     dico := HASHED_SET[SORTER].create;
-
+    
     //
-    sort 1;
+    sort 1;    
     sort 2;
     //
     key2.init_with (idf.storage);
-    display 3;
-    display 4;
+    display 3; 
+    display 4; 
     display 6;
     display 12;
     display 18;
-
+    
   );
-
+  
   - count n:INTEGER <-
-  (
+  (     
     dico.clear;
-    (buffer.lower).to (buffer.upper-n+1) do { j:INTEGER;
+    (buffer.lower).to (buffer.upper-n+1) do { j:INTEGER;            
       key.init_with (buffer.storage + (j - 1));
       //
       key.set_count n;
       inc_key;
-    };
+    };    
   );
-
+  
   - inc_key <-
   ( + new_key:SORTER;
-
+        
     new_key := dico.reference_at key;
-    (new_key = NULL).if {
-      new_key := key.clone;
+    (new_key = NULL).if {      
+      new_key := key.clone;      
       dico.add new_key;
     } else {
       new_key.inc_freq;
     };
   );
-
+  
   - display n:INTEGER <-
   ( + ref:SORTER;
-
+    
     count n;
     key2.set_count n;
     ref := dico.reference_at key2;
@@ -91,22 +92,24 @@ Section Public
     key2.print;
     '\n'.print;
   );
-
+  
   - array:NATIVE_ARRAY[SORTER] := NATIVE_ARRAY[SORTER].create 16;
-
+  - string_tmp:STRING := STRING.create 5;
+  
   - sort n:INTEGER <-
   ( + cnt,low,up,i,freq:INTEGER;
+    + r:INTEGER;
     + swap:BOOLEAN;
     + s:SORTER;
     + tmp:SORTER;
-
+    
     count n;
     (dico.lower).to (dico.upper) do { j:INTEGER;
-      s := dico.item j;
-      array.put s to (j-1);
+      s := dico.item j;      
+      array.put s to (j-1);      
       cnt := cnt + s.freq;
     };
-
+    
     low := 0;
     up  := dico.count - 2;
     {
@@ -116,26 +119,89 @@ Section Public
           tmp := array.item j;
           array.put (array.item (j+1)) to j;
           array.put tmp to (j+1);
-          swap := TRUE;
+          swap := TRUE;	  
         };
         i := dico.count - 2 - j;
         (array.item i.freq < array.item (i+1).freq).if {
           tmp := array.item i;
           array.put (array.item (i+1)) to i;
           array.put tmp to (i+1);
-          swap := TRUE;
+          swap := TRUE;	  
         };
 
       };
       low := low + 1;
       up  := up  - 1;
-    }.do_while {swap};
-    0.to (dico.count-1) do { j:INTEGER;
-      s := array.item j;
-      s.print;
-      freq := s.freq;
-      ((100.0*freq.to_real_64)/cnt).print_format_c " %.3f\n";
-    };
-    '\n'.print;
+      }.do_while {swap};    
+      0.to (dico.count-1) do { j:INTEGER;
+        s := array.item j;
+        s.print;
+        ' '.print;      
+        freq := s.freq;
+        //
+        r := (freq * 100_000) / cnt;
+        (r / 1000).print;
+        '.'.print;
+        string_tmp.clear;
+        (r % 1000).append_in string_tmp format 3 with '0';      
+        string_tmp.print;
+        //
+        '\n'.print;
+      };
+      '\n'.print;
+    );
+// class KNUCLEOTIDE
+
+// SPLITFILE=sorter.li
+Section Header
+  
+  + name := SORTER;
+  
+Section Inherit
+  
+  + parent_string:Expanded STRING;
+  
+Section Public
+  
+  + hash_code:INTEGER;
+  
+  + freq:INTEGER := 1;
+  
+  - init_with buf:NATIVE_ARRAY[CHARACTER] <-
+  (
+    storage   := buf;
+    hash_code := count := 0;    
   );
+  
+  - set_count new_count:INTEGER <-
+  ( + result,low:INTEGER;
+    
+    result := hash_code;
+    low    := count + 1;
+    count  := new_count;
+    (low).to (new_count) do { i:INTEGER;
+      result := (result * 5) + item i.code;
+    };
+    (result < 0).if {
+      result := ~ result;
+    };
+    hash_code := result;
+    capacity := count;
+  );
+  
+  - '==' Left 40 other:SELF :BOOLEAN <-
+  ( + result:BOOLEAN;
+   
+    ((count = other.count) && {hash_code = other.hash_code}).if {
+      ? {count != 0};
+      result:=storage.fast_memcmp (other.storage) until count;
+    };
+    result
+  );
+  
+  - inc_freq <-
+  ( 
+    freq := freq + 1;
+  );
+// class SORTER
 
