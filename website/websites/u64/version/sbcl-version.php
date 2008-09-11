@@ -1,1 +1,1 @@
-<p>This is SBCL 1.0.15-gentoo, an implementation of ANSI Common Lisp.</p>
+<p>SBCL 1.0.20</p>
