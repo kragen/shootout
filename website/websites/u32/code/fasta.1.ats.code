@@ -1,0 +1,224 @@
+<span class="hl com">(*</span>
+<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** http://shootout.alioth.debian.org/</span>
+<span class="hl com">**</span>
+<span class="hl com">** contributed by Hongwei Xi</span>
+<span class="hl com">**</span>
+<span class="hl com">** compilation command:</span>
+<span class="hl com">**   atscc -O3 fasta.dats -msse2 -mfpmath=sse -o fasta</span>
+<span class="hl com">*)</span>
+
+staload <span class="hl str">&quot;libc/SATS/stdio.sats&quot;</span>
+staload <span class="hl str">&quot;libc/SATS/stdlib.sats&quot;</span> <span class="hl sym">//</span> <span class="hl kwa">for</span> <span class="hl sym">[</span>atoi<span class="hl sym">]</span>
+
+<span class="hl sym">%{</span>^
+
+static inline
+ats_void_type fwrite_substring_exn
+  <span class="hl sym">(</span>ats_ptr_type s<span class="hl sym">,</span> ats_int_type start<span class="hl sym">,</span> ats_int_type n<span class="hl sym">,</span> ats_ptr_type out<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  int res <span class="hl sym">=</span> fwrite<span class="hl sym">(((</span>char*)s<span class="hl sym">)+</span>start<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> n<span class="hl sym">, (</span>FILE*)out<span class="hl sym">) ;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>res <span class="hl sym">&lt;</span> n<span class="hl sym">)</span> ats_exit_errmsg <span class="hl sym">(</span>errno<span class="hl sym">,</span> <span class="hl str">&quot;Exit: [fwrite] failed.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">) ;</span>
+  return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Random number generator (Shootout version) */</span>
+
+<span class="hl dir">#define IM 139968</span>
+<span class="hl dir">#define IM_recip (1 / (double)IM)</span>
+<span class="hl dir">#define IA 3877</span>
+<span class="hl dir">#define IC 29573</span>
+
+static inline
+ats_double_type
+gen_random <span class="hl sym">(</span>ats_double_type max<span class="hl sym">) {</span>
+  static int state <span class="hl sym">=</span> <span class="hl num">42</span> <span class="hl sym">;</span>
+  return max <span class="hl sym">* ((</span>state <span class="hl sym">= (</span>state <span class="hl sym">*</span> IA <span class="hl sym">+</span> IC<span class="hl sym">) %</span> IM<span class="hl sym">) *</span> IM_recip<span class="hl sym">) ;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">typedef</span> amino <span class="hl sym">=</span> &#64;<span class="hl sym">{</span> c<span class="hl sym">=</span> char<span class="hl sym">,</span> p<span class="hl sym">=</span> double <span class="hl sym">}</span>
+
+<span class="hl kwa">extern fun</span> gen_random <span class="hl sym">(</span>max<span class="hl sym">:</span> double<span class="hl sym">):</span> double <span class="hl sym">=</span> <span class="hl str">&quot;gen_random&quot;</span>
+
+<span class="hl kwa">fn</span> make_cumulative <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>n<span class="hl sym">]</span> &#64; l<span class="hl sym">) |</span> table<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> n<span class="hl sym">:</span> int n<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>
+      pf<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>n<span class="hl sym">]</span> &#64; l<span class="hl sym">)</span>
+    <span class="hl sym">|</span> table<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> i<span class="hl sym">:</span> natLte n<span class="hl sym">,</span> prob<span class="hl sym">:</span> double
+  <span class="hl sym">) :</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> n <span class="hl kwa">then let</span>
+      <span class="hl kwa">val</span> prob <span class="hl sym">=</span> prob <span class="hl sym">+ !</span>table<span class="hl sym">.[</span>i<span class="hl sym">].</span>p
+    <span class="hl kwa">in</span>
+      <span class="hl sym">!</span>table<span class="hl sym">.[</span>i<span class="hl sym">].</span>p <span class="hl sym">:=</span> prob<span class="hl sym">;</span> loop <span class="hl sym">(</span>pf <span class="hl sym">|</span> table<span class="hl sym">,</span> n<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> prob<span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+<span class="hl kwa">in</span>
+  loop <span class="hl sym">(</span>pf <span class="hl sym">|</span> table<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>make_cumulative<span class="hl sym">]</span>
+
+<span class="hl dir">#define WIDTH 60</span>
+
+<span class="hl kwa">extern fun</span> fwrite_substring_exn
+  <span class="hl sym">{</span>m<span class="hl sym">,</span>p<span class="hl sym">,</span>n<span class="hl sym">:</span>nat <span class="hl sym">|</span> p <span class="hl sym">+</span> n <span class="hl sym">&lt;=</span> m<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>s<span class="hl sym">:</span> string m<span class="hl sym">,</span> start<span class="hl sym">:</span> int p<span class="hl sym">,</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> file<span class="hl sym">: &amp;</span>FILE w<span class="hl sym">):</span> void
+  <span class="hl sym">=</span> <span class="hl str">&quot;fwrite_substring_exn&quot;</span>
+
+<span class="hl sym">%{</span>^
+
+static inline
+ats_void_type fasta_fputc
+  <span class="hl sym">(</span>ats_char_type c<span class="hl sym">,</span> ats_ptr_type out<span class="hl sym">) {</span>
+  fputc <span class="hl sym">((</span>char<span class="hl sym">)</span>c<span class="hl sym">, (</span>FILE*)out<span class="hl sym">) ;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">extern fun</span> fputc <span class="hl sym">{</span>m<span class="hl sym">:</span>file_mode<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">:</span> file_mode_lte <span class="hl sym">(</span>m<span class="hl sym">,</span> w<span class="hl sym">) |</span> c<span class="hl sym">:</span> char<span class="hl sym">,</span> out<span class="hl sym">: &amp;</span>FILE m<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;fasta_fputc&quot;</span>
+
+<span class="hl kwa">fn</span> repeat_fasta <span class="hl sym">{</span>len<span class="hl sym">:</span>nat<span class="hl sym">}</span>
+  <span class="hl sym">(</span>file<span class="hl sym">: &amp;</span>FILE w<span class="hl sym">,</span> s<span class="hl sym">:</span> string len<span class="hl sym">,</span> n<span class="hl sym">:</span> Nat<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> len <span class="hl sym">=</span> length s
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert <span class="hl sym">(</span>len <span class="hl sym">&gt;=</span> WIDTH<span class="hl sym">)</span>
+  <span class="hl kwa">fun</span> loop <span class="hl sym">{</span>n<span class="hl sym">,</span>pos<span class="hl sym">:</span>nat <span class="hl sym">|</span> pos <span class="hl sym">&lt;=</span> len<span class="hl sym">}</span>
+    <span class="hl sym">(</span>file<span class="hl sym">: &amp;</span>FILE w<span class="hl sym">,</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> pos<span class="hl sym">:</span> int pos<span class="hl sym">):&lt;</span>cloptr1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&gt;</span> WIDTH <span class="hl kwa">then let</span>
+      <span class="hl kwa">val</span> left <span class="hl sym">=</span> len <span class="hl sym">-</span> pos
+    <span class="hl kwa">in</span>
+      <span class="hl kwa">if</span> left <span class="hl sym">&gt;=</span> WIDTH <span class="hl kwa">then begin</span>
+        fwrite_substring_exn <span class="hl sym">(</span>s<span class="hl sym">,</span> pos<span class="hl sym">,</span> WIDTH<span class="hl sym">,</span> file<span class="hl sym">);</span>
+        fputc <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">|</span> '\n'<span class="hl sym">,</span> file<span class="hl sym">);</span>
+        loop <span class="hl sym">(</span>file<span class="hl sym">,</span> n<span class="hl sym">-</span>WIDTH<span class="hl sym">,</span> pos<span class="hl sym">+</span>WIDTH<span class="hl sym">)</span>
+      <span class="hl kwa">end else begin</span>
+        fwrite_substring_exn <span class="hl sym">(</span>s<span class="hl sym">,</span> pos<span class="hl sym">,</span> left<span class="hl sym">,</span> file<span class="hl sym">);</span>
+	fwrite_substring_exn <span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> WIDTH<span class="hl sym">-</span>left<span class="hl sym">,</span> file<span class="hl sym">);</span>
+        fputc <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">|</span> '\n'<span class="hl sym">,</span> file<span class="hl sym">);</span>
+	loop<span class="hl sym">(</span>file<span class="hl sym">,</span> n<span class="hl sym">-</span>WIDTH<span class="hl sym">,</span> WIDTH<span class="hl sym">-</span>left<span class="hl sym">)</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end else let</span>
+      <span class="hl kwa">val</span> left <span class="hl sym">=</span> len <span class="hl sym">-</span> pos
+    <span class="hl kwa">in</span>
+      <span class="hl kwa">if</span> left <span class="hl sym">&gt;=</span> n <span class="hl kwa">then begin</span>
+        fwrite_substring_exn <span class="hl sym">(</span>s<span class="hl sym">,</span> pos<span class="hl sym">,</span> n<span class="hl sym">,</span> file<span class="hl sym">);</span>
+        fputc <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">|</span> '\n'<span class="hl sym">,</span> file<span class="hl sym">);</span>
+      <span class="hl kwa">end else begin</span>
+        fwrite_substring_exn <span class="hl sym">(</span>s<span class="hl sym">,</span> pos<span class="hl sym">,</span> left<span class="hl sym">,</span> file<span class="hl sym">);</span>
+	fwrite_substring_exn <span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> n<span class="hl sym">-</span>left<span class="hl sym">,</span> file<span class="hl sym">);</span>
+        fputc <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">|</span> '\n'<span class="hl sym">,</span> file<span class="hl sym">);</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+<span class="hl kwa">in</span>
+  loop <span class="hl sym">(</span>file<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>repeat_fasta<span class="hl sym">]</span>
+
+<span class="hl sym">//</span>
+
+<span class="hl kwa">fun</span> random_char <span class="hl sym">{</span>i<span class="hl sym">,</span>sz<span class="hl sym">:</span>nat <span class="hl sym">|</span> i <span class="hl sym">&lt;=</span> sz<span class="hl sym">} {</span>l_tbl<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf_tbl<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>sz<span class="hl sym">]</span> &#64; l_tbl<span class="hl sym">) |</span>
+  tbl<span class="hl sym">:</span> ptr l_tbl<span class="hl sym">,</span> sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> prob<span class="hl sym">:</span> double<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">):</span> char <span class="hl sym">=</span>
+  <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> sz <span class="hl kwa">then</span>
+    <span class="hl kwa">if</span> prob <span class="hl sym">&gt;= !</span>tbl<span class="hl sym">.[</span>i<span class="hl sym">].</span>p <span class="hl kwa">then</span> random_char <span class="hl sym">(</span>pf_tbl <span class="hl sym">|</span> tbl<span class="hl sym">,</span> sz<span class="hl sym">,</span> prob<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">else</span> <span class="hl sym">!</span>tbl<span class="hl sym">.[</span>i<span class="hl sym">].</span>c
+  <span class="hl kwa">else begin</span>
+    exit_errmsg <span class="hl sym">{</span>char<span class="hl sym">} (</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl str">&quot;Exit: [random_char] failed.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">end</span>
+
+<span class="hl kwa">fun</span> random_buf
+  <span class="hl sym">{</span>sz<span class="hl sym">:</span>nat<span class="hl sym">} {</span>i<span class="hl sym">,</span>len<span class="hl sym">,</span>bsz<span class="hl sym">:</span>nat <span class="hl sym">|</span> i <span class="hl sym">&lt;=</span> len<span class="hl sym">;</span> len <span class="hl sym">&lt;=</span> bsz<span class="hl sym">} {</span>l_tbl<span class="hl sym">,</span>l_buf<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf_tbl<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>sz<span class="hl sym">]</span> &#64; l_tbl<span class="hl sym">),</span> pf_buf<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>byte<span class="hl sym">][</span>bsz<span class="hl sym">]</span> &#64; l_buf<span class="hl sym">) |</span>
+   tbl<span class="hl sym">:</span> ptr l_tbl<span class="hl sym">,</span> buf<span class="hl sym">:</span> ptr l_buf<span class="hl sym">,</span> sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> len<span class="hl sym">:</span> int len<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">)</span>
+  <span class="hl sym">:</span> void <span class="hl sym">=</span>
+  <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> len <span class="hl kwa">then let</span>
+    <span class="hl kwa">val</span> c <span class="hl sym">=</span> random_char <span class="hl sym">(</span>pf_tbl <span class="hl sym">|</span> tbl<span class="hl sym">,</span> sz<span class="hl sym">,</span> gen_random <span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> buf<span class="hl sym">[</span>i<span class="hl sym">] :=</span> byte_of_char c
+  <span class="hl kwa">in</span>
+    random_buf <span class="hl sym">(</span>pf_tbl<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> tbl<span class="hl sym">,</span> buf<span class="hl sym">,</span> sz<span class="hl sym">,</span> len<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">end</span>
+
+<span class="hl sym">//</span>
+
+<span class="hl kwa">fn</span> ignore <span class="hl sym">(</span>x<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">= ()</span>
+
+<span class="hl sym">//</span>
+
+<span class="hl kwa">fn</span> random_fasta <span class="hl sym">{</span>sz<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l_tbl<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf_tbl<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>sz<span class="hl sym">]</span> &#64; l_tbl<span class="hl sym">) |</span>
+   file<span class="hl sym">: &amp;</span>FILE w<span class="hl sym">,</span> tbl<span class="hl sym">:</span> ptr l_tbl<span class="hl sym">,</span> sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> n<span class="hl sym">:</span> Nat<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">fun</span> loop <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l_buf<span class="hl sym">:</span>addr<span class="hl sym">} .&lt;</span>n<span class="hl sym">&gt;.</span>
+    <span class="hl sym">(</span>pf_tbl<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>sz<span class="hl sym">]</span> &#64; l_tbl<span class="hl sym">),</span> pf_buf<span class="hl sym">: !(</span>&#64;<span class="hl sym">[</span>byte<span class="hl sym">][</span>WIDTH<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]</span> &#64; l_buf<span class="hl sym">) |</span>
+     file<span class="hl sym">: &amp;</span>FILE w<span class="hl sym">,</span> buf<span class="hl sym">:</span> ptr l_buf<span class="hl sym">,</span> n<span class="hl sym">:</span> int n<span class="hl sym">):&lt;</span>cloptr1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&gt;</span> WIDTH<span class="hl sym">)</span> <span class="hl kwa">then begin</span>
+      random_buf <span class="hl sym">(</span>pf_tbl<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> tbl<span class="hl sym">,</span> buf<span class="hl sym">,</span> sz<span class="hl sym">,</span> WIDTH<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+      ignore <span class="hl sym">(</span>fwrite_byte <span class="hl sym">(</span>file_mode_lte_w_w<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> buf<span class="hl sym">,</span> WIDTH<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> file<span class="hl sym">));</span>
+      loop <span class="hl sym">(</span>pf_tbl<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> file<span class="hl sym">,</span> buf<span class="hl sym">,</span> n<span class="hl sym">-</span>WIDTH<span class="hl sym">)</span>
+    <span class="hl kwa">end else begin</span>
+      random_buf <span class="hl sym">(</span>pf_tbl<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> tbl<span class="hl sym">,</span> buf<span class="hl sym">,</span> sz<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+      ignore <span class="hl sym">(</span>fwrite_byte <span class="hl sym">(</span>file_mode_lte_w_w<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> buf<span class="hl sym">,</span> n<span class="hl sym">,</span> file<span class="hl sym">));</span>
+      fputc <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">|</span> '\n'<span class="hl sym">,</span> file<span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> make_cumulative <span class="hl sym">(</span>pf_tbl <span class="hl sym">|</span> tbl<span class="hl sym">,</span> sz<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>pf_ngc<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> buf<span class="hl sym">) =</span> malloc_ngc <span class="hl sym">(</span>WIDTH<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> buf<span class="hl sym">[</span>WIDTH<span class="hl sym">] :=</span> byte_of_char '\n'
+<span class="hl kwa">in</span>
+  loop <span class="hl sym">(</span>pf_tbl<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> file<span class="hl sym">,</span> buf<span class="hl sym">,</span> n<span class="hl sym">);</span> free_ngc <span class="hl sym">(</span>pf_ngc<span class="hl sym">,</span> pf_buf <span class="hl sym">|</span> buf<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>random_fasta<span class="hl sym">]</span>
+
+<span class="hl sym">//</span>
+
+<span class="hl kwa">val</span> alu <span class="hl sym">=</span><span class="hl str">&quot;\</span>
+<span class="hl str">GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\</span>
+<span class="hl str">GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA\</span>
+<span class="hl str">CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT\</span>
+<span class="hl str">ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA\</span>
+<span class="hl str">GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG\</span>
+<span class="hl str">AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC\</span>
+<span class="hl str">AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span>
+
+<span class="hl sym">//</span>
+
+<span class="hl kwa">implement</span> main <span class="hl sym">(</span>argc<span class="hl sym">,</span> argv<span class="hl sym">) =</span> <span class="hl kwa">let</span>
+
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> assert <span class="hl sym">(</span>argc <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+<span class="hl kwa">val</span> s <span class="hl sym">=</span> argv<span class="hl sym">.[</span><span class="hl num">1</span><span class="hl sym">]</span>
+<span class="hl kwa">val</span> n <span class="hl sym">=</span> atoi <span class="hl sym">(</span>s<span class="hl sym">)</span>
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> assert <span class="hl sym">(</span>n <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">val</span> <span class="hl sym">(</span>pf_stdout <span class="hl sym">|</span> stdout<span class="hl sym">) =</span> stdout_get <span class="hl sym">()</span>
+<span class="hl kwa">val</span> &#64;<span class="hl sym">(</span>pf_gc<span class="hl sym">,</span> pf_iub <span class="hl sym">|</span> iub<span class="hl sym">,</span> iub_sz<span class="hl sym">) =</span> &#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>
+  &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'a'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.27</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'c'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.12</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'g'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.12</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'t'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.27</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'B'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'D'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'H'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'K'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'M'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'N'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'R'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'S'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'V'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'W'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'Y'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.02</span><span class="hl sym">}</span>
+<span class="hl sym">]</span>
+
+<span class="hl kwa">val</span> &#64;<span class="hl sym">(</span>pf_homo_gc<span class="hl sym">,</span> pf_homo <span class="hl sym">|</span> homo<span class="hl sym">,</span> homo_sz<span class="hl sym">) =</span> &#64;<span class="hl sym">[</span>amino<span class="hl sym">][</span>
+  &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'a'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.3029549426680</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'c'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.1979883004921</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'g'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.1975473066391</span><span class="hl sym">}</span>
+<span class="hl sym">,</span> &#64;<span class="hl sym">{</span>c<span class="hl sym">=</span>'t'<span class="hl sym">,</span> p<span class="hl sym">=</span><span class="hl num">0.3015094502008</span><span class="hl sym">}</span>
+<span class="hl sym">]</span>
+
+<span class="hl kwa">in</span>
+
+fprint <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">| !</span>stdout<span class="hl sym">,</span> <span class="hl str">&quot;&gt;ONE Homo sapiens alu</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">) ;</span>
+repeat_fasta <span class="hl sym">(!</span>stdout<span class="hl sym">,</span> alu<span class="hl sym">,</span> n <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">) ;</span>
+fprint <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">| !</span>stdout<span class="hl sym">,</span> <span class="hl str">&quot;&gt;TWO IUB ambiguity codes</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+random_fasta <span class="hl sym">(</span>pf_iub <span class="hl sym">| !</span>stdout<span class="hl sym">,</span> iub<span class="hl sym">,</span> iub_sz<span class="hl sym">,</span> n <span class="hl sym">*</span> <span class="hl num">3</span><span class="hl sym">) ;</span>
+array_ptr_free <span class="hl sym">{</span>amino<span class="hl sym">} (</span>pf_gc<span class="hl sym">,</span> pf_iub <span class="hl sym">|</span> iub<span class="hl sym">) ;</span>
+fprint <span class="hl sym">(</span>file_mode_lte_w_w <span class="hl sym">| !</span>stdout<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE Homo sapiens frequency</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+random_fasta <span class="hl sym">(</span>pf_homo <span class="hl sym">| !</span>stdout<span class="hl sym">,</span> homo<span class="hl sym">,</span> homo_sz<span class="hl sym">,</span> n <span class="hl sym">*</span> <span class="hl num">5</span><span class="hl sym">) ;</span>
+array_ptr_free <span class="hl sym">{</span>amino<span class="hl sym">} (</span>pf_homo_gc<span class="hl sym">,</span> pf_homo <span class="hl sym">|</span> homo<span class="hl sym">) ;</span>
+stdout_view_set <span class="hl sym">(</span>pf_stdout <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">)</span>
+
+<span class="hl kwa">end</span>
