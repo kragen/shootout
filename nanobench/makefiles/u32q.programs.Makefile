@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.10 2008-09-12 01:29:25 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.11 2008-09-12 17:00:17 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -37,7 +37,9 @@ COPTS := -O3 -fomit-frame-pointer
 ########################################
 
 %.dats: %.ats $(ATS)
-	-@mv $< $(TEST).dats
+	-@cp $< $(TEST).dats
+	-@echo split_file.bash $(TEST).dats $(TEST).dats
+	-@$(SPLITFILE) $(TEST).dats $(TEST).dats
 
 %.ats_run: %.dats $(ATS)
 	-$(ATS) -pipe -Wall $(COPTS) $(GCCOPTS) $< -o $@
