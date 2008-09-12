@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.9 2008-09-11 21:24:03 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.10 2008-09-12 01:29:25 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -29,6 +29,18 @@ COPTS := -O3 -fomit-frame-pointer
 %.gnat_run: %.gnat
 	-$(GNATCHOP) -w $<
 	-$(GNATC) -gnatp $(COPTS) $(GNATOPTS) -f $(TEST).adb -o $@
+
+
+
+########################################
+# ATS Advanced Type System
+########################################
+
+%.dats: %.ats $(ATS)
+	-@mv $< $(TEST).dats
+
+%.ats_run: %.dats $(ATS)
+	-$(ATS) -pipe -Wall $(COPTS) $(GCCOPTS) $< -o $@
 
 
 ########################################
