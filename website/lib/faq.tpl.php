@@ -87,6 +87,11 @@
 <dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
 </dd>
 
+<dt><a href="#loadstring" name="loadstring">What does '100% 100% 99% 98%' ~ CPU Load mean?</a></dt>
+<dd><p>When the program was being measured: the first core was not-idle about 100% of the time, the second core was not-idle about 100% of the time, the third core was not-idle about 99% of the time, the fourth core was not-idle about 98% of the time.</p>
+<p>When <em>all the programs</em> show ~CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core (rather than being allowed to use any or all of the four CPU cores).</p>
+</dd>
+
 </dl>
 </dd>
 
@@ -131,6 +136,11 @@ For the older measurements (Gentoo Pentium 4 and Debian Sempron) each program wa
 <dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>GZip Bytes?</strong></a></dt>
 <dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression.</p>
 </dd>
+
+<dt><a href="#cpuload" name="cpuload">How did you measure <strong>~ CPU Load?</strong></a></dt>
+<dd><p>The gtop cpu idle and gtop cpu total was taken before forking the child-process and after the child-process exits, The percentages represent the proportion of cpu not-idle to cpu total for each core.</p>
+</dd>
+
 
 <dt><a href="#copts" name="copts">How did you set <strong>compiler options?</strong></a></dt>
 <dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=pentium4</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
