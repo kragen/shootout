@@ -19,6 +19,7 @@
 <p>Note: this is an adaptation of a benchmark for testing GC so we are interested in the whole tree being allocated before any nodes are GC'd - which probably excludes lazy evaluation.</p>
 <p>Note: the left subtrees are heads of the right subtrees, keeping a depth counter in the accessors to avoid duplication is cheating!</p>
 <p>Note: the tree should have tree-nodes all the way down, replacing the bottom nodes by some other value is not acceptable; and the bottom nodes should be at depth 0.</p>
+<p>Note: these programs are being measured with <em>the default initial heap size</em> - the measurements may be very different if a larger initial heap size is set.</p>
 
 <p>There are reference implementations in OCaml, C#, and PHP.</p>
 <br />

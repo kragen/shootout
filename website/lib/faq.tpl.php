@@ -87,9 +87,9 @@
 <dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
 </dd>
 
-<dt><a href="#loadstring" name="loadstring">What does '100% 100% 99% 98%' ~ CPU Load mean?</a></dt>
-<dd><p>When the program was being measured: the first core was not-idle about 100% of the time, the second core was not-idle about 100% of the time, the third core was not-idle about 99% of the time, the fourth core was not-idle about 98% of the time.</p>
-<p>When <em>all the programs</em> show ~CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core (rather than being allowed to use any or all of the four CPU cores).</p>
+<dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' ~ CPU Load mean?</a></dt>
+<dd><p>When the program was being measured: the first core was not-idle about 27% of the time, the second core was not-idle about 34% of the time, the third core was not-idle about 28% of the time, the fourth core was not-idle about 67% of the time.</p>
+<p>When <em>all the programs</em> show ~CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core - the fourth core (rather than being allowed to use any or all of the CPU cores).</p>
 </dd>
 
 </dl>
