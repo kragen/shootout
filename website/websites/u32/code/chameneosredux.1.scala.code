@@ -1,0 +1,158 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   Contributed by Vincent Kraeutler</span>
+<span class="hl com">*/</span>
+
+<span class="hl kwa">import</span> scala<span class="hl sym">.</span>actors<span class="hl sym">.</span>Actor
+<span class="hl kwa">import</span> scala<span class="hl sym">.</span>actors<span class="hl sym">.</span>Actor<span class="hl sym">.</span>_
+<span class="hl kwa">import</span> scala<span class="hl sym">.</span>actors<span class="hl sym">.</span>Exit
+
+<span class="hl kwa">object</span> chameneosredux <span class="hl sym">{</span>
+
+    <span class="hl kwa">case object</span> <span class="hl kwc">Color</span> <span class="hl kwa">extends</span> <span class="hl kwc">Enumeration</span> <span class="hl sym">{</span>  <span class="hl kwa">val</span> Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow <span class="hl sym">=</span> Value <span class="hl sym">}</span>
+
+    <span class="hl slc">// the input sets of creatures defined by the benchmark</span>
+    <span class="hl kwa">val</span> firstCreatures <span class="hl sym">=</span> <span class="hl kwc">List</span><span class="hl sym">(</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Blue<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> secondCreatures <span class="hl sym">=</span> <span class="hl kwc">List</span><span class="hl sym">(</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Blue<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">,</span>
+            <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Blue<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Blue<span class="hl sym">)</span>
+
+    <span class="hl kwa">def</span> complement<span class="hl sym">(</span>a<span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">,</span> b<span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">) :</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value <span class="hl sym">= {</span>
+        <span class="hl slc">// the complement of two identical colors is defined to be that color</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>a <span class="hl sym">==</span> b<span class="hl sym">)</span> a
+        <span class="hl kwa">else if</span> <span class="hl sym">(</span>a <span class="hl sym">&gt;</span> b<span class="hl sym">)</span> complement<span class="hl sym">(</span>b<span class="hl sym">,</span> a<span class="hl sym">)</span>
+        <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            Pair<span class="hl sym">(</span>a<span class="hl sym">,</span> b<span class="hl sym">)</span> match <span class="hl sym">{</span>
+                <span class="hl kwa">case</span> Pair<span class="hl sym">(</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Blue<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">) =&gt;</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow
+                <span class="hl kwa">case</span> Pair<span class="hl sym">(</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Blue<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow<span class="hl sym">) =&gt;</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red
+                <span class="hl kwa">case</span> Pair<span class="hl sym">(</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Red<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow<span class="hl sym">) =&gt;</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Blue
+                <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> creature<span class="hl sym">(</span>id <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">,</span> initialColor <span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">,</span> meetingPlace <span class="hl sym">:</span> Actor<span class="hl sym">) =</span> actor <span class="hl sym">{</span>
+
+        self<span class="hl sym">.</span>trapExit <span class="hl sym">=</span> true
+        self<span class="hl sym">.</span>link<span class="hl sym">(</span>meetingPlace<span class="hl sym">)</span>
+
+        <span class="hl kwa">def</span> compareIds<span class="hl sym">(</span>ido<span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) :</span> <span class="hl kwb">int</span> <span class="hl sym">= {</span> <span class="hl kwa">if</span> <span class="hl sym">(</span>id <span class="hl sym">==</span> ido<span class="hl sym">)</span> <span class="hl num">1</span> <span class="hl kwa">else</span> <span class="hl num">0</span> <span class="hl sym">}</span>
+
+        <span class="hl kwa">def</span> visit<span class="hl sym">(</span>color <span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">,</span> nMeetings <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">,</span> nMetSelf <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) {</span>
+
+            <span class="hl slc">// go for a visit</span>
+            meetingPlace <span class="hl sym">!</span> Triple<span class="hl sym">(</span>self<span class="hl sym">,</span> color<span class="hl sym">,</span> id<span class="hl sym">)</span>
+
+            <span class="hl slc">// then handle the response</span>
+            react <span class="hl sym">{</span>
+                <span class="hl kwa">case</span> Pair<span class="hl sym">(</span>c <span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">,</span> ido <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) =&gt; {</span>
+                    visit<span class="hl sym">(</span>c<span class="hl sym">,</span> nMeetings <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> nMetSelf <span class="hl sym">+</span> compareIds<span class="hl sym">(</span>ido<span class="hl sym">))</span>
+                <span class="hl sym">}</span>
+                <span class="hl kwa">case</span> Exit<span class="hl sym">(</span>a<span class="hl sym">,</span> b<span class="hl sym">) =&gt; {</span>
+                    <span class="hl slc">// meeting place has exited, report final status</span>
+                    exit<span class="hl sym">(</span>Pair<span class="hl sym">(</span>nMeetings<span class="hl sym">,</span> nMetSelf<span class="hl sym">))</span>
+                <span class="hl sym">}</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+
+        visit<span class="hl sym">(</span>initialColor<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+
+
+    <span class="hl kwa">def</span> meetingPlace<span class="hl sym">(</span>nMaxMatch <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) =</span> actor <span class="hl sym">{</span>
+
+        <span class="hl kwa">type</span> Visit <span class="hl sym">=</span> Triple<span class="hl sym">[</span>Actor<span class="hl sym">,</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">,</span> <span class="hl kwb">int</span><span class="hl sym">]</span>
+
+        <span class="hl kwa">def</span> makeMatch<span class="hl sym">(</span>first <span class="hl sym">:</span> Visit<span class="hl sym">,</span> second <span class="hl sym">:</span> Visit<span class="hl sym">) {</span>
+            <span class="hl kwa">val</span> cc <span class="hl sym">=</span> complement<span class="hl sym">(</span>first<span class="hl sym">.</span>_2<span class="hl sym">,</span> second<span class="hl sym">.</span>_2<span class="hl sym">)</span>
+            first<span class="hl sym">.</span>_1 <span class="hl sym">!</span> Pair<span class="hl sym">(</span>cc<span class="hl sym">,</span> second<span class="hl sym">.</span>_3<span class="hl sym">)</span>
+            second<span class="hl sym">.</span>_1 <span class="hl sym">!</span> Pair<span class="hl sym">(</span>cc<span class="hl sym">,</span> first<span class="hl sym">.</span>_3<span class="hl sym">)</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">def</span> waitForTwoCreatures<span class="hl sym">(</span>n <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) {</span>
+            react <span class="hl sym">{</span>
+                <span class="hl kwa">case</span> <span class="hl sym">(</span>first <span class="hl sym">:</span> Visit<span class="hl sym">) =&gt; {</span>
+                    react <span class="hl sym">{</span>
+                        <span class="hl kwa">case</span> <span class="hl sym">(</span>second <span class="hl sym">:</span> Visit<span class="hl sym">) =&gt; {</span>
+                            makeMatch<span class="hl sym">(</span>first<span class="hl sym">,</span> second<span class="hl sym">)</span>
+                            <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> exit
+                            <span class="hl kwa">else</span> waitForTwoCreatures<span class="hl sym">(</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                            <span class="hl sym">}}}}}</span>
+
+        waitForTwoCreatures<span class="hl sym">(</span>nMaxMatch<span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> chameneosredux<span class="hl sym">(</span>nMeetings <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) =</span> actor <span class="hl sym">{</span>
+
+        self<span class="hl sym">.</span>trapExit <span class="hl sym">=</span> true
+
+        <span class="hl kwa">def</span> spellNumber<span class="hl sym">(</span>n <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) :</span> <span class="hl kwc">String</span> <span class="hl sym">= {</span>
+            <span class="hl kwa">val</span> numbers <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">(</span><span class="hl str">&quot;zero&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;one&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;two&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;three&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;four&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;five&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;six&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;seven&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;eight&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;nine&quot;</span><span class="hl sym">)</span>
+
+            <span class="hl kwa">def</span> spellDigits<span class="hl sym">(</span>m <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) :</span> <span class="hl kwc">String</span> <span class="hl sym">= {</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>m <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">) {</span>
+                    numbers<span class="hl sym">(</span>m <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">)</span>
+                <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                    spellDigits<span class="hl sym">(</span>m <span class="hl sym">/</span> <span class="hl num">10</span><span class="hl sym">) +</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> numbers<span class="hl sym">(</span>m <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">)</span>
+                <span class="hl sym">}</span>
+            <span class="hl sym">}</span>
+
+            spellDigits<span class="hl sym">(</span>n<span class="hl sym">)</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">def</span> collect<span class="hl sym">(</span>nCreatures <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">,</span> total <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) :</span> <span class="hl kwc">String</span> <span class="hl sym">= {</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> nCreatures<span class="hl sym">)</span> spellNumber<span class="hl sym">(</span>total<span class="hl sym">)</span>
+            <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                receive <span class="hl sym">{</span> <span class="hl slc">// wait for all creatures to exit</span>
+                    <span class="hl kwa">case</span> Exit<span class="hl sym">(</span>a<span class="hl sym">,</span> Pair<span class="hl sym">(</span>n <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">,</span> m <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">)) =&gt; {</span>
+                        println<span class="hl sym">(</span>n <span class="hl sym">+</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> spellNumber<span class="hl sym">(</span>m<span class="hl sym">))</span>
+                        collect<span class="hl sym">(</span>nCreatures <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> total <span class="hl sym">+</span> n<span class="hl sym">)</span>
+                    <span class="hl sym">}}}}</span>
+
+        <span class="hl kwa">def</span> go<span class="hl sym">(</span>maxMeetings <span class="hl sym">:</span> <span class="hl kwb">int</span><span class="hl sym">) {</span>
+            <span class="hl kwa">val</span> s <span class="hl sym">=</span> meetingPlace<span class="hl sym">(</span>maxMeetings<span class="hl sym">)</span>
+
+            <span class="hl kwa">def</span> launch<span class="hl sym">(</span>colors <span class="hl sym">:</span> <span class="hl kwc">List</span><span class="hl sym">[</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">]) {</span>
+                println <span class="hl sym">((</span>colors map showColor<span class="hl sym">)</span> mkString<span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">))</span>
+                <span class="hl kwa">for</span> <span class="hl sym">{ (</span>color<span class="hl sym">,</span> id<span class="hl sym">) &lt;-</span> colors<span class="hl sym">.</span>zipWithIndex <span class="hl sym">}</span> <span class="hl kwa">yield</span> <span class="hl sym">{</span>
+                    self<span class="hl sym">.</span>link<span class="hl sym">(</span>creature<span class="hl sym">(</span>id<span class="hl sym">,</span> color<span class="hl sym">,</span> s<span class="hl sym">))</span>
+                    <span class="hl sym">}}</span>
+
+            receive <span class="hl sym">{</span>
+                <span class="hl kwa">case</span> colors <span class="hl sym">:</span> <span class="hl kwc">List</span><span class="hl sym">[</span><span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">] =&gt; {</span>
+                    launch<span class="hl sym">(</span>colors<span class="hl sym">)</span>
+                    println<span class="hl sym">(</span><span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> collect<span class="hl sym">(</span>colors<span class="hl sym">.</span>length<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">))</span>
+                    println<span class="hl sym">(</span><span class="hl str">&quot;&quot;</span><span class="hl sym">)</span>
+                    sender <span class="hl sym">!</span> <span class="hl num">0</span>
+                <span class="hl sym">}}}</span>
+
+        go<span class="hl sym">(</span>nMeetings<span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+
+
+    <span class="hl kwa">def</span> showColor<span class="hl sym">(</span>c <span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">) = {</span>
+        c match <span class="hl sym">{</span>
+            <span class="hl kwa">case</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Red <span class="hl sym">=&gt;</span> <span class="hl str">&quot;red&quot;</span>
+            <span class="hl kwa">case</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Yellow <span class="hl sym">=&gt;</span> <span class="hl str">&quot;yellow&quot;</span>
+            <span class="hl kwa">case</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Blue <span class="hl sym">=&gt;</span> <span class="hl str">&quot;blue&quot;</span>
+    <span class="hl sym">}}</span>
+
+    <span class="hl kwa">def</span> showComplements<span class="hl sym">() {</span>
+
+        <span class="hl kwa">def</span> showComplement<span class="hl sym">(</span>a <span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">,</span> b <span class="hl sym">:</span> <span class="hl kwc">Color</span><span class="hl sym">.</span>Value<span class="hl sym">) {</span>
+            println<span class="hl sym">(</span>showColor<span class="hl sym">(</span>a<span class="hl sym">)  +</span> <span class="hl str">&quot; + &quot;</span>  <span class="hl sym">+</span> showColor<span class="hl sym">(</span>b<span class="hl sym">) +</span> <span class="hl str">&quot; -&gt; &quot;</span> <span class="hl sym">+</span> showColor<span class="hl sym">(</span>complement<span class="hl sym">(</span>a<span class="hl sym">,</span> b<span class="hl sym">)))</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwc">Color</span><span class="hl sym">.</span>elements<span class="hl sym">.</span>foreach<span class="hl sym">{</span> a <span class="hl sym">=&gt;</span>
+            <span class="hl kwc">Color</span><span class="hl sym">.</span>elements<span class="hl sym">.</span>foreach<span class="hl sym">{</span> b <span class="hl sym">=&gt;</span>
+                showComplement<span class="hl sym">(</span>a<span class="hl sym">,</span> b<span class="hl sym">) }}</span>
+
+        println<span class="hl sym">(</span><span class="hl str">&quot;&quot;</span><span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> main<span class="hl sym">(</span>args <span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">String</span><span class="hl sym">]) :</span> Unit <span class="hl sym">= {</span>
+        showComplements
+        <span class="hl kwa">val</span> nMeetings <span class="hl sym">=</span> <span class="hl kwc">Integer</span><span class="hl sym">.</span>parseInt<span class="hl sym">(</span>args<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">))</span>
+        chameneosredux<span class="hl sym">(</span>nMeetings<span class="hl sym">) !</span>? firstCreatures
+        chameneosredux<span class="hl sym">(</span>nMeetings<span class="hl sym">) !</span>? secondCreatures
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>

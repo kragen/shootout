@@ -1,0 +1,74 @@
+<span class="hl com">{-# OPTIONS -fbang-patterns -funbox-strict-fields #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Don Stewart and Thomas Davie</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- This implementation uses a parallel strategy to exploit the quad core machine.</span>
+<span class="hl slc">-- For more information about Haskell parallel strategies, see,</span>
+<span class="hl slc">--</span>
+<span class="hl slc">--  http://www.macs.hw.ac.uk/~dsg/gph/papers/html/Strategies/strategies.html</span>
+<span class="hl slc">--</span>
+
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> Data.Bits
+<span class="hl kwa">import</span> Text.Printf
+<span class="hl kwa">import</span> Control.Parallel.Strategies
+<span class="hl kwa">import</span> Control.Parallel
+
+<span class="hl slc">--</span>
+<span class="hl slc">-- an artificially strict tree.</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- normally you would ensure the branches are lazy, but this benchmark</span>
+<span class="hl slc">-- requires strict allocation.</span>
+<span class="hl slc">--</span>
+<span class="hl kwa">data</span> Tree <span class="hl sym">=</span> Nil <span class="hl sym">|</span> Node <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!</span>Tree <span class="hl sym">!</span>Tree
+
+minN <span class="hl sym">=</span> <span class="hl num">4</span>
+
+io s n t <span class="hl sym">=</span> printf <span class="hl str">&quot;%s of depth %d\t check: %d\n&quot;</span> s n t
+
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
+    <span class="hl kwa">let</span> maxN     <span class="hl sym">=</span> max <span class="hl sym">(</span>minN <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">)</span> n
+        stretchN <span class="hl sym">=</span> maxN <span class="hl sym">+</span> <span class="hl num">1</span>
+
+    <span class="hl slc">-- stretch memory tree</span>
+    <span class="hl kwa">let</span> c <span class="hl sym">=</span> check <span class="hl sym">(</span>make <span class="hl num">0</span> stretchN<span class="hl sym">)</span>
+    io <span class="hl str">&quot;stretch tree&quot;</span> stretchN c
+
+    <span class="hl slc">-- allocate a long lived tree</span>
+    <span class="hl kwa">let</span> <span class="hl sym">!</span>long    <span class="hl sym">=</span> make <span class="hl num">0</span> maxN
+
+    <span class="hl slc">-- allocate, walk, and deallocate many bottom-up binary trees</span>
+    <span class="hl kwa">let</span> vs <span class="hl sym">= (</span>parMap rnf<span class="hl sym">) (</span>depth' maxN<span class="hl sym">) [</span>minN<span class="hl sym">,</span>minN<span class="hl sym">+</span><span class="hl num">2</span>..maxN<span class="hl sym">]</span>
+    mapM_ <span class="hl sym">(</span>\<span class="hl sym">((</span>m<span class="hl sym">,</span>d<span class="hl sym">,</span>i<span class="hl sym">)) -&gt;</span> io <span class="hl sym">(</span>show m <span class="hl sym">++</span> <span class="hl str">&quot;\t trees&quot;</span><span class="hl sym">)</span> d i<span class="hl sym">)</span> vs
+
+    <span class="hl slc">-- confirm the the long-lived binary tree still exists</span>
+    io <span class="hl str">&quot;long lived tree&quot;</span> maxN <span class="hl sym">(</span>check long<span class="hl sym">)</span>
+
+<span class="hl slc">-- generate many trees</span>
+depth' <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt; (</span><span class="hl kwb">Int</span><span class="hl sym">,</span><span class="hl kwb">Int</span><span class="hl sym">,</span><span class="hl kwb">Int</span><span class="hl sym">)</span>
+depth' m d <span class="hl sym">=</span>
+  <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">*</span>n<span class="hl sym">,</span>d<span class="hl sym">,</span>sumT d n <span class="hl num">0</span><span class="hl sym">)</span>
+  <span class="hl kwa">where</span>
+    n <span class="hl sym">=</span> <span class="hl num">1</span> `shiftL` <span class="hl sym">(</span>m <span class="hl sym">-</span> d <span class="hl sym">+</span> minN<span class="hl sym">)</span>
+
+<span class="hl slc">-- allocate and check lots of trees</span>
+sumT <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+sumT d <span class="hl num">0</span> t <span class="hl sym">=</span> t
+sumT  d i t <span class="hl sym">=</span> sumT d <span class="hl sym">(</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) (</span>t <span class="hl sym">+</span> a <span class="hl sym">+</span> b<span class="hl sym">)</span>
+  <span class="hl kwa">where</span> a <span class="hl sym">=</span> check <span class="hl sym">(</span>make i    d<span class="hl sym">)</span>
+        b <span class="hl sym">=</span> check <span class="hl sym">(</span>make <span class="hl sym">(-</span>i<span class="hl sym">)</span> d<span class="hl sym">)</span>
+
+<span class="hl slc">-- traverse the tree, counting up the nodes</span>
+check <span class="hl sym">::</span> Tree <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+check Nil          <span class="hl sym">=</span> <span class="hl num">0</span>
+check <span class="hl sym">(</span>Node i l r<span class="hl sym">) =</span> i <span class="hl sym">+</span> check l <span class="hl sym">-</span> check r
+
+<span class="hl slc">-- build a tree</span>
+make <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Tree
+make i <span class="hl num">0</span> <span class="hl sym">=</span> Node i Nil Nil
+make i d <span class="hl sym">=</span> Node i <span class="hl sym">(</span>make <span class="hl sym">(</span>i2<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> d2<span class="hl sym">) (</span>make i2 d2<span class="hl sym">)</span>
+  <span class="hl kwa">where</span> i2 <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">*</span>i<span class="hl sym">;</span> d2 <span class="hl sym">=</span> d<span class="hl sym">-</span><span class="hl num">1</span>

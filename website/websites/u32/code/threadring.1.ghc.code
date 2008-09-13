@@ -1,0 +1,50 @@
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- Contributed by Jed Brown with improvements by Spencer Janssen and Don Stewart</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- 503 threads are created with forkOnIO, with each thread</span>
+<span class="hl slc">-- creating one synchronised mutable variable (MVar) shared with the</span>
+<span class="hl slc">-- next thread in the ring. The last thread created returns an MVar to</span>
+<span class="hl slc">-- share with the first thread. Each thread reads from the MVar to its</span>
+<span class="hl slc">-- left, and writes to the MVar to its right.</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Each thread then waits on a token to be passed from its neighbour.</span>
+<span class="hl slc">-- Tokens are then passed around the threads via the MVar chain N times,</span>
+<span class="hl slc">-- and the thread id of the final thread to receive a token is printed.</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- More information on Haskell concurrency and parallelism:</span>
+<span class="hl slc">--   http://www.haskell.org/ghc/dist/current/docs/users_guide/lang-parallel.html</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- SMP parallelisation strategy is to partition the ring equally over each capability.</span>
+<span class="hl slc">--</span>
+
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> Control.Concurrent
+<span class="hl kwa">import</span> System.Environment
+<span class="hl kwa">import</span> GHC.Conc
+
+ring <span class="hl sym">=</span> <span class="hl num">503</span>
+
+new l i <span class="hl sym">=</span> <span class="hl kwa">do</span>
+  r <span class="hl sym">&lt;-</span> newEmptyMVar
+  forkOnIO n <span class="hl sym">(</span>thread i l r<span class="hl sym">)</span>
+  return r
+ <span class="hl kwa">where</span>
+  n <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> <span class="hl num">125</span>   <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> <span class="hl num">250</span>   <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> <span class="hl num">375</span>   <span class="hl sym">=</span> <span class="hl num">2</span>
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl num">3</span>
+
+
+thread <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> MVar <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> MVar <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+thread i l r <span class="hl sym">=</span> go
+  <span class="hl kwa">where</span> go <span class="hl sym">=</span> <span class="hl kwa">do</span>
+          m <span class="hl sym">&lt;-</span> takeMVar l
+          when <span class="hl sym">(</span>m <span class="hl sym">==</span> <span class="hl num">1</span><span class="hl sym">) (</span>print i<span class="hl sym">)</span>
+          putMVar r $<span class="hl sym">!</span> m <span class="hl sym">-</span> <span class="hl num">1</span>
+          when <span class="hl sym">(</span>m <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> go
+
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+  a <span class="hl sym">&lt;-</span> newMVar . read . head <span class="hl sym">=&lt;&lt;</span> getArgs
+  z <span class="hl sym">&lt;-</span> foldM new a <span class="hl sym">[</span><span class="hl num">2</span>..ring<span class="hl sym">]</span>
+  thread <span class="hl num">1</span> z a

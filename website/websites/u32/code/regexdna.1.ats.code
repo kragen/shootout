@@ -1,0 +1,334 @@
+<span class="hl com">(*</span>
+<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** http://shootout.alioth.debian.org/</span>
+<span class="hl com">** contributed by Hongwei Xi</span>
+<span class="hl com">**</span>
+<span class="hl com">** regex-dna benchmark using PCRE</span>
+<span class="hl com">**</span>
+<span class="hl com">** compilation command:</span>
+<span class="hl com">**   atscc -O3 -fomit-frame-pointer -o regex-dna regex-dna.dats -lpcre</span>
+<span class="hl com">*)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>^
+
+<span class="hl dir">#include &lt;pcre.h&gt;</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload _<span class="hl com">(*anonymous*)</span> <span class="hl sym">=</span> <span class="hl str">&quot;prelude/DATS/array.dats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> malloc_atm <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">}</span>
+  <span class="hl sym">(</span>n<span class="hl sym">:</span> int n<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> ptr l<span class="hl sym">) =</span> <span class="hl str">&quot;malloc_atm&quot;</span>
+
+<span class="hl kwa">extern fun</span> free_atm <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;free_atm&quot;</span>
+
+<span class="hl sym">%{</span>^
+
+static inline
+ats_ptr_type malloc_atm <span class="hl sym">(</span>ats_int_type n<span class="hl sym">) {</span>
+  ats_ptr_type p <span class="hl sym">=</span> malloc <span class="hl sym">(</span>n<span class="hl sym">) ;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(!</span>p<span class="hl sym">) {</span>
+    fprintf <span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;Exit: [malloc_atm] failed.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">) ;</span> exit <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) ;</span>
+  <span class="hl sym">}</span>
+  return p <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_void_type free_atm <span class="hl sym">(</span>ats_ptr_type p<span class="hl sym">) {</span> free <span class="hl sym">(</span>p<span class="hl sym">) ;</span> return <span class="hl sym">; }</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">viewdef</span> block_v <span class="hl sym">(</span>sz<span class="hl sym">:</span>int<span class="hl sym">,</span> l<span class="hl sym">:</span>addr<span class="hl sym">) =</span> bytes_v <span class="hl sym">(</span>sz<span class="hl sym">,</span> l<span class="hl sym">)</span>
+<span class="hl kwa">dataviewtype</span> blocklst <span class="hl sym">(</span>int<span class="hl sym">) =</span>
+  <span class="hl sym">| {</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>sz<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span> blocklst_cons <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">of</span>
+      <span class="hl sym">(</span>block_v <span class="hl sym">(</span>sz<span class="hl sym">,</span> l<span class="hl sym">) |</span> int sz<span class="hl sym">,</span> ptr l<span class="hl sym">,</span> blocklst n<span class="hl sym">)</span>
+  <span class="hl sym">|</span> blocklst_nil <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">viewtypedef</span> blocklst <span class="hl sym">= [</span>n<span class="hl sym">:</span>nat<span class="hl sym">]</span> blocklst <span class="hl sym">(</span>n<span class="hl sym">)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl com">(*</span>
+<span class="hl com">extern typedef &quot;blocklst_cons_pstruct&quot; =</span>
+<span class="hl com">  blocklst_cons_pstruct (void | int, ptr, blocklst)</span>
+<span class="hl com">*)</span>
+
+<span class="hl sym">%{</span>^
+<span class="hl kwa">typedef struct</span> <span class="hl sym">{</span>
+ats_int_type atslab_0 <span class="hl sym">;</span>
+ats_ptr_type atslab_1 <span class="hl sym">;</span>
+ats_ptr_type atslab_2 <span class="hl sym">;</span>
+<span class="hl sym">} *</span>blocklst_cons_pstruct <span class="hl sym">;</span>
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> fread_stdin_block <span class="hl sym">{</span>sz<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>block_v <span class="hl sym">(</span>sz<span class="hl sym">,</span> l<span class="hl sym">) |</span> sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> natLte sz
+  <span class="hl sym">=</span> <span class="hl str">&quot;fread_stdin_block&quot;</span>
+
+<span class="hl sym">%{</span>$
+
+ats_int_type
+fread_stdin_block <span class="hl sym">(</span>ats_int_type sz0<span class="hl sym">,</span> ats_ptr_type p0<span class="hl sym">) {</span>
+  char <span class="hl sym">*</span>p <span class="hl sym">;</span> int nread<span class="hl sym">,</span> sz <span class="hl sym">;</span>
+  p <span class="hl sym">=</span> p0<span class="hl sym">;</span> sz <span class="hl sym">=</span> sz0 <span class="hl sym">;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>sz <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+    nread <span class="hl sym">=</span> fread <span class="hl sym">(</span>p<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> sz<span class="hl sym">,</span> stdin<span class="hl sym">) ;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>nread <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span> p <span class="hl sym">+=</span> nread <span class="hl sym">;</span> sz <span class="hl sym">-=</span> nread <span class="hl sym">;</span> <span class="hl kwa">continue</span> <span class="hl sym">; }</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>feof <span class="hl sym">(</span>stdin<span class="hl sym">))</span> <span class="hl kwa">break</span> <span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  return <span class="hl sym">(</span>sz0 <span class="hl sym">-</span> sz<span class="hl sym">) ;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">fn</span> fread_stdin_blocklst <span class="hl sym">{</span>sz<span class="hl sym">:</span>nat<span class="hl sym">}</span>
+  <span class="hl sym">(</span>sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> tot<span class="hl sym">: &amp;</span>int<span class="hl sym">):</span> blocklst <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">fun</span> loop <span class="hl sym">{</span>tot<span class="hl sym">:</span> addr<span class="hl sym">} (</span>
+      pf_tot<span class="hl sym">: !</span>int &#64; tot <span class="hl sym">|</span>
+      sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> p_tot<span class="hl sym">:</span> ptr tot<span class="hl sym">,</span> res<span class="hl sym">: &amp;</span>blocklst? <span class="hl sym">&gt;&gt;</span> blocklst
+    <span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> <span class="hl sym">(</span>pf <span class="hl sym">|</span> p<span class="hl sym">) =</span> malloc_atm <span class="hl sym">(</span>sz<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> n <span class="hl sym">=</span> fread_stdin_block <span class="hl sym">(</span>pf <span class="hl sym">|</span> sz<span class="hl sym">,</span> p<span class="hl sym">);</span> <span class="hl kwa">val</span> <span class="hl sym">() = !</span>p_tot <span class="hl sym">:= !</span>p_tot <span class="hl sym">+</span> n
+    <span class="hl kwa">val</span> <span class="hl sym">() = (</span>res <span class="hl sym">:=</span> blocklst_cons <span class="hl sym">{</span><span class="hl num">0</span><span class="hl sym">} (</span>pf <span class="hl sym">|</span> sz<span class="hl sym">,</span> p<span class="hl sym">,</span> ?<span class="hl sym">))</span>
+    <span class="hl kwa">val</span><span class="hl sym">+</span> blocklst_cons <span class="hl sym">(</span>_ <span class="hl sym">|</span> _<span class="hl sym">,</span> _<span class="hl sym">, !</span>res1<span class="hl sym">) =</span> res
+  <span class="hl kwa">in</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&lt;</span> sz <span class="hl kwa">then begin</span>
+      <span class="hl sym">!</span>res1 <span class="hl sym">:=</span> blocklst_nil <span class="hl sym">();</span> fold&#64; res
+    <span class="hl kwa">end else begin</span>
+      loop <span class="hl sym">(</span>pf_tot <span class="hl sym">|</span> sz<span class="hl sym">,</span> p_tot<span class="hl sym">, !</span>res1<span class="hl sym">);</span> fold&#64; res
+    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>loop<span class="hl sym">]</span>
+  <span class="hl kwa">var</span> res<span class="hl sym">:</span> blocklst<span class="hl sym">;</span> <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop <span class="hl sym">(</span>view&#64; tot <span class="hl sym">|</span> sz<span class="hl sym">, &amp;</span>tot<span class="hl sym">,</span> res<span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  res
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fread_stdin_blocklst<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> blocklst_concat_and_free
+  <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>n<span class="hl sym">:</span> int n<span class="hl sym">,</span> blks<span class="hl sym">:</span> blocklst<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> ptr l<span class="hl sym">)</span>
+  <span class="hl sym">=</span> <span class="hl str">&quot;blocklst_concat_and_free&quot;</span>
+
+<span class="hl sym">%{</span>$
+
+ats_ptr_type
+blocklst_concat_and_free
+  <span class="hl sym">(</span>ats_int_type tot<span class="hl sym">,</span> ats_ptr_type blks<span class="hl sym">) {</span>
+  char <span class="hl sym">*</span>res0<span class="hl sym">, *</span>res<span class="hl sym">, *</span>p_blk <span class="hl sym">;</span>
+  int lft<span class="hl sym">,</span> sz <span class="hl sym">;</span> blocklst_cons_pstruct blks_nxt <span class="hl sym">;</span>
+
+  lft <span class="hl sym">=</span> tot <span class="hl sym">;</span> res0 <span class="hl sym">=</span> res <span class="hl sym">=</span> malloc_atm <span class="hl sym">(</span>tot<span class="hl sym">) ;</span>
+
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>blks<span class="hl sym">) {</span>
+    sz <span class="hl sym">= ((</span>blocklst_cons_pstruct<span class="hl sym">)</span>blks<span class="hl sym">)-&gt;</span>atslab_0 <span class="hl sym">;</span>
+    p_blk <span class="hl sym">= ((</span>blocklst_cons_pstruct<span class="hl sym">)</span>blks<span class="hl sym">)-&gt;</span>atslab_1 <span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>sz <span class="hl sym">&lt;</span> lft<span class="hl sym">) {</span>
+      memcpy <span class="hl sym">(</span>res<span class="hl sym">,</span> p_blk<span class="hl sym">,</span> sz<span class="hl sym">) ;</span>
+    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+      memcpy <span class="hl sym">(</span>res<span class="hl sym">,</span> p_blk<span class="hl sym">,</span> lft<span class="hl sym">) ;</span> lft <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> <span class="hl kwa">break</span> <span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+    res <span class="hl sym">+=</span> sz <span class="hl sym">;</span> lft <span class="hl sym">-=</span> sz <span class="hl sym">;</span>
+    blks_nxt <span class="hl sym">= ((</span>blocklst_cons_pstruct<span class="hl sym">)</span>blks<span class="hl sym">)-&gt;</span>atslab_2 <span class="hl sym">;</span>
+    free_atm <span class="hl sym">(</span>p_blk<span class="hl sym">) ;</span> ATS_FREE <span class="hl sym">(</span>blks<span class="hl sym">) ;</span>
+    blks <span class="hl sym">=</span> blks_nxt <span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  return res0 <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>$
+
+ats_int_type count_pattern_match
+  <span class="hl sym">(</span>ats_int_type nsrc<span class="hl sym">,</span> ats_ptr_type src<span class="hl sym">,</span> ats_ptr_type pat<span class="hl sym">) {</span>
+  int count <span class="hl sym">;</span>
+  pcre <span class="hl sym">*</span>re<span class="hl sym">;</span> pcre_extra <span class="hl sym">*</span>re_ex <span class="hl sym">;</span> const char <span class="hl sym">*</span>re_e <span class="hl sym">;</span>
+  int err<span class="hl sym">,</span> re_eo<span class="hl sym">,</span> m<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> pos <span class="hl sym">;</span>
+
+  re <span class="hl sym">=</span> pcre_compile
+    <span class="hl sym">((</span>char*)pat<span class="hl sym">,</span> PCRE_CASELESS<span class="hl sym">, &amp;</span>re_e<span class="hl sym">, &amp;</span>re_eo<span class="hl sym">,</span> NULL<span class="hl sym">) ;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(!</span>re<span class="hl sym">)</span> exit <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) ;</span>
+  re_ex <span class="hl sym">=</span> pcre_study <span class="hl sym">(</span>re<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, &amp;</span>re_e<span class="hl sym">);</span>
+
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> pos <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">; ; ) {</span>
+    err <span class="hl sym">=</span> pcre_exec <span class="hl sym">(</span>re<span class="hl sym">,</span> re_ex<span class="hl sym">, (</span>char*)src<span class="hl sym">,</span> nsrc<span class="hl sym">,</span> pos<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> m<span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">) ;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>err <span class="hl sym">&lt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">break</span> <span class="hl sym">;</span> count <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">;</span> pos <span class="hl sym">=</span> m<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ;</span>
+  <span class="hl sym">}</span>
+
+  return count <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> count_pattern_match <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> pat<span class="hl sym">:</span> string<span class="hl sym">):</span> int
+  <span class="hl sym">=</span> <span class="hl str">&quot;count_pattern_match&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define variants_length 9</span>
+<span class="hl kwa">val</span> variants<span class="hl sym">:</span> array <span class="hl sym">(</span>string<span class="hl sym">,</span> variants_length<span class="hl sym">) =</span> array_make_arraysize &#64;<span class="hl sym">[</span>string<span class="hl sym">][</span>
+  <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+<span class="hl sym">]</span>
+
+<span class="hl kwa">fun</span> count_loop <span class="hl sym">{</span>i<span class="hl sym">:</span>nat<span class="hl sym">} {</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">):</span> void <span class="hl sym">=</span>
+  <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> variants_length <span class="hl kwa">then let</span>
+    <span class="hl kwa">val</span> pat <span class="hl sym">=</span> variants<span class="hl sym">[</span>i<span class="hl sym">]</span>
+    <span class="hl kwa">val</span> cnt <span class="hl sym">=</span> count_pattern_match <span class="hl sym">(</span>pf <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">,</span> pat<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() = (</span>print pat <span class="hl sym">;</span> print ' '<span class="hl sym">;</span> print cnt <span class="hl sym">;</span> print_newline <span class="hl sym">())</span>
+  <span class="hl kwa">in</span>
+    count_loop <span class="hl sym">(</span>pf <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">,</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">datatype</span> seglst <span class="hl sym">(</span>int<span class="hl sym">) =</span>
+  <span class="hl sym">| {</span>n<span class="hl sym">:</span>nat<span class="hl sym">}</span> seglst_cons <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">of</span> <span class="hl sym">(</span>int<span class="hl com">(*beg*)</span><span class="hl sym">,</span> int<span class="hl com">(*len*)</span><span class="hl sym">,</span> seglst n<span class="hl sym">)</span>
+  <span class="hl sym">|</span> seglst_nil <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">typedef</span> seglst0 <span class="hl sym">=</span> seglst <span class="hl num">0</span>
+<span class="hl kwa">typedef</span> seglst <span class="hl sym">= [</span>n<span class="hl sym">:</span>nat<span class="hl sym">]</span> seglst <span class="hl sym">(</span>n<span class="hl sym">)</span>
+
+<span class="hl kwa">extern typedef</span> <span class="hl str">&quot;seglst_cons_pstruct&quot;</span> <span class="hl sym">=</span>
+  seglst_cons_pstruct <span class="hl sym">(</span>int<span class="hl sym">,</span> int<span class="hl sym">,</span> seglst<span class="hl sym">)</span>
+
+<span class="hl kwa">extern fun</span> seglst_cons_make
+  <span class="hl sym">(</span>beg<span class="hl sym">:</span> int<span class="hl sym">,</span> len<span class="hl sym">:</span> int<span class="hl sym">):</span> seglst_cons_pstruct <span class="hl sym">(</span>int<span class="hl sym">,</span> int<span class="hl sym">,</span> seglst0?<span class="hl sym">)</span>
+  <span class="hl sym">=</span> <span class="hl str">&quot;seglst_cons_make&quot;</span>
+
+<span class="hl kwa">implement</span> seglst_cons_make <span class="hl sym">(</span>beg<span class="hl sym">,</span> len<span class="hl sym">) =</span> seglst_cons <span class="hl sym">{</span><span class="hl num">0</span><span class="hl sym">} (</span>beg<span class="hl sym">,</span> len<span class="hl sym">,</span> ?<span class="hl sym">)</span>
+
+<span class="hl kwa">extern typedef</span> <span class="hl str">&quot;int_ptr_type&quot;</span> <span class="hl sym">=</span> &#64;<span class="hl sym">(</span>void <span class="hl sym">|</span> int<span class="hl sym">,</span> ptr<span class="hl sym">)</span>
+
+<span class="hl sym">%{</span>$
+
+ats_void_type subst_copy <span class="hl sym">(</span>
+  char <span class="hl sym">*</span>dst<span class="hl sym">,</span> char <span class="hl sym">*</span>src<span class="hl sym">,</span> int nsrc<span class="hl sym">,</span> seglst_cons_pstruct sgs<span class="hl sym">,</span> char <span class="hl sym">*</span>sub<span class="hl sym">,</span> int nsub
+<span class="hl sym">) {</span>
+  int ofs<span class="hl sym">,</span> beg<span class="hl sym">,</span> len <span class="hl sym">;</span> seglst_cons_pstruct sgs_nxt <span class="hl sym">;</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>ofs <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">; ; ) {</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>sgs<span class="hl sym">)</span> <span class="hl kwa">break</span> <span class="hl sym">;</span>
+    beg <span class="hl sym">=</span> sgs<span class="hl sym">-&gt;</span>atslab_0 <span class="hl sym">;</span> len <span class="hl sym">=</span> beg <span class="hl sym">-</span> ofs <span class="hl sym">;</span>
+    memcpy <span class="hl sym">(</span>dst<span class="hl sym">,</span> src<span class="hl sym">,</span> len<span class="hl sym">) ;</span> dst <span class="hl sym">+=</span> len <span class="hl sym">;</span> src <span class="hl sym">+=</span> len <span class="hl sym">;</span> ofs <span class="hl sym">=</span> beg <span class="hl sym">;</span>
+    len <span class="hl sym">=</span> sgs<span class="hl sym">-&gt;</span>atslab_1 <span class="hl sym">;</span>
+    memcpy <span class="hl sym">(</span>dst<span class="hl sym">,</span> sub<span class="hl sym">,</span> nsub<span class="hl sym">) ;</span> dst <span class="hl sym">+=</span> nsub <span class="hl sym">;</span> src <span class="hl sym">+=</span> len <span class="hl sym">;</span> ofs <span class="hl sym">+=</span> len <span class="hl sym">;</span>
+    sgs_nxt <span class="hl sym">=</span> sgs<span class="hl sym">-&gt;</span>atslab_2 <span class="hl sym">;</span> ATS_FREE <span class="hl sym">(</span>sgs<span class="hl sym">);</span> sgs <span class="hl sym">=</span> sgs_nxt <span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  len <span class="hl sym">=</span> nsrc <span class="hl sym">-</span> ofs <span class="hl sym">;</span>  memcpy <span class="hl sym">(</span>dst<span class="hl sym">,</span> src<span class="hl sym">,</span> len<span class="hl sym">) ;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+int_ptr_type subst_pattern_string
+  <span class="hl sym">(</span>ats_int_type nsrc<span class="hl sym">,</span> ats_ptr_type src<span class="hl sym">,</span> ats_ptr_type pat<span class="hl sym">,</span> ats_ptr_type sub<span class="hl sym">) {</span>
+  char <span class="hl sym">*</span>dst <span class="hl sym">;</span> int ndst<span class="hl sym">,</span> nsub <span class="hl sym">;</span> int beg<span class="hl sym">,</span> len<span class="hl sym">,</span> nxt <span class="hl sym">;</span>
+  pcre <span class="hl sym">*</span>re<span class="hl sym">;</span> pcre_extra <span class="hl sym">*</span>re_ex <span class="hl sym">;</span> const char <span class="hl sym">*</span>re_e <span class="hl sym">;</span>
+  int err<span class="hl sym">,</span> re_eo<span class="hl sym">,</span> m<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> pos <span class="hl sym">;</span>
+  seglst_cons_pstruct sgs0<span class="hl sym">,</span> sgs<span class="hl sym">, *</span>sgs_ptr <span class="hl sym">;</span>
+  int_ptr_type ans <span class="hl sym">;</span>
+
+  ndst <span class="hl sym">=</span> nsrc <span class="hl sym">;</span> nsub <span class="hl sym">=</span> strlen <span class="hl sym">((</span>char*)sub<span class="hl sym">) ;</span>
+  re <span class="hl sym">=</span> pcre_compile
+    <span class="hl sym">((</span>char*)pat<span class="hl sym">,</span> PCRE_CASELESS<span class="hl sym">, &amp;</span>re_e<span class="hl sym">, &amp;</span>re_eo<span class="hl sym">,</span> NULL<span class="hl sym">) ;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(!</span>re<span class="hl sym">)</span> exit <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) ;</span>
+  re_ex <span class="hl sym">=</span> pcre_study <span class="hl sym">(</span>re<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, &amp;</span>re_e<span class="hl sym">);</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>pos <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> sgs_ptr <span class="hl sym">= &amp;</span>sgs0 <span class="hl sym">; ; ) {</span>
+    err <span class="hl sym">=</span> pcre_exec <span class="hl sym">(</span>re<span class="hl sym">,</span> re_ex<span class="hl sym">, (</span>char*)src<span class="hl sym">,</span> nsrc<span class="hl sym">,</span> pos<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> m<span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">) ;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>err <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+      beg <span class="hl sym">=</span> m<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ;</span> pos <span class="hl sym">=</span> m<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ;</span>
+      len <span class="hl sym">=</span> pos <span class="hl sym">-</span> beg <span class="hl sym">;</span> ndst <span class="hl sym">-=</span> len <span class="hl sym">;</span> ndst <span class="hl sym">+=</span> nsub <span class="hl sym">;</span>
+      sgs <span class="hl sym">= (</span>seglst_cons_pstruct<span class="hl sym">)</span>seglst_cons_make <span class="hl sym">(</span>beg<span class="hl sym">,</span> len<span class="hl sym">) ;</span>
+      <span class="hl sym">*</span>sgs_ptr <span class="hl sym">=</span> sgs <span class="hl sym">;</span> sgs_ptr <span class="hl sym">= (</span>seglst_cons_pstruct*)<span class="hl sym">&amp;(</span>sgs<span class="hl sym">-&gt;</span>atslab_2<span class="hl sym">) ;</span>
+    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+     <span class="hl sym">*</span>sgs_ptr <span class="hl sym">= (</span>seglst_cons_pstruct<span class="hl sym">)</span><span class="hl num">0</span> <span class="hl sym">;</span> <span class="hl kwa">break</span> <span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">} //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">for</span><span class="hl sym">]</span>
+  dst <span class="hl sym">=</span> malloc_atm <span class="hl sym">(</span>ndst<span class="hl sym">) ;</span>
+  ans<span class="hl sym">.</span>atslab_1 <span class="hl sym">=</span> ndst <span class="hl sym">;</span> ans<span class="hl sym">.</span>atslab_2 <span class="hl sym">=</span> dst <span class="hl sym">;</span>
+  subst_copy <span class="hl sym">(</span>dst<span class="hl sym">,</span> src<span class="hl sym">,</span> nsrc<span class="hl sym">,</span> sgs0<span class="hl sym">,</span> sub<span class="hl sym">,</span> nsub<span class="hl sym">) ;</span>
+  return ans <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> subst_pattern_string <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> pat<span class="hl sym">:</span> string<span class="hl sym">,</span> sub<span class="hl sym">:</span> string<span class="hl sym">)</span>
+  <span class="hl sym">: [</span>n<span class="hl sym">:</span>nat<span class="hl sym">] [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> int n<span class="hl sym">,</span> ptr l<span class="hl sym">)</span>
+  <span class="hl sym">=</span> <span class="hl str">&quot;subst_pattern_string&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define subst_length 22</span>
+<span class="hl kwa">val</span> subst<span class="hl sym">:</span> array <span class="hl sym">(</span>string<span class="hl sym">,</span> subst_length<span class="hl sym">) =</span> array_make_arraysize &#64;<span class="hl sym">[</span>string<span class="hl sym">][</span>
+  <span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;K&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;M&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;N&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;R&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;S&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span>
+<span class="hl sym">,</span> <span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span>
+<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">fun</span> subst_loop <span class="hl sym">{</span>i<span class="hl sym">:</span>nat<span class="hl sym">} {</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">):</span> int <span class="hl sym">=</span>
+  <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> subst_length <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">then let</span>
+    <span class="hl kwa">val</span> pat <span class="hl sym">=</span> subst<span class="hl sym">[</span>i<span class="hl sym">];</span> <span class="hl kwa">val</span> sub <span class="hl sym">=</span> subst<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]</span>
+    <span class="hl kwa">val</span> <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">) =</span> subst_pattern_string <span class="hl sym">(</span>pf <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">,</span> pat<span class="hl sym">,</span> sub<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> free_atm <span class="hl sym">(</span>pf <span class="hl sym">|</span> p<span class="hl sym">)</span>
+  <span class="hl kwa">in</span>
+    subst_loop <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">,</span> i <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">)</span>
+  <span class="hl kwa">end else begin</span>
+    <span class="hl kwa">let val</span> <span class="hl sym">() =</span> free_atm <span class="hl sym">(</span>pf <span class="hl sym">|</span> p<span class="hl sym">)</span> <span class="hl kwa">in</span> n <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define BLOCKSIZE 0x10000 // 0x4000000</span>
+
+<span class="hl kwa">implement</span> main <span class="hl sym">() =</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">var</span> n0<span class="hl sym">:</span> int <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl kwa">val</span> blks <span class="hl sym">=</span> fread_stdin_blocklst <span class="hl sym">(</span>BLOCKSIZE<span class="hl sym">,</span> n0<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> n0 <span class="hl sym">=</span> int1_of_int <span class="hl sym">(</span>n0<span class="hl sym">);</span> <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert <span class="hl sym">(</span>n0 <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>pf_bytes <span class="hl sym">|</span> p0<span class="hl sym">) =</span> blocklst_concat_and_free <span class="hl sym">(</span>n0<span class="hl sym">,</span> blks<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>pf1_bytes <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">) =</span>
+    subst_pattern_string <span class="hl sym">(</span>pf_bytes <span class="hl sym">|</span> n0<span class="hl sym">,</span> p0<span class="hl sym">,</span> <span class="hl str">&quot;&gt;.*|</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> free_atm <span class="hl sym">(</span>pf_bytes <span class="hl sym">|</span> p0<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> count_loop <span class="hl sym">(</span>pf1_bytes <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> n_last <span class="hl sym">=</span> subst_loop <span class="hl sym">(</span>pf1_bytes <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  printf <span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%i</span><span class="hl esc">\n</span><span class="hl str">%i</span><span class="hl esc">\n</span><span class="hl str">%i</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>n0<span class="hl sym">,</span> n1<span class="hl sym">,</span> n_last<span class="hl sym">))</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>main<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl com">(* end of [regex-dna.dats] *)</span>

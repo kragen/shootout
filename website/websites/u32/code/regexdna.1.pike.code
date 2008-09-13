@@ -1,0 +1,126 @@
+<span class="hl slc">// ---------------------------------------------------------------------</span>
+<span class="hl slc">// The Great Computer Language Shootout</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Requires that the PCRE [Perl Compatible Regular Expression] library</span>
+<span class="hl slc">// be installed [Pike needs to be rebuilt after this is installed].</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Also, makes use of code from:</span>
+<span class="hl slc">//</span>
+<span class="hl slc">//   http://buoy.riverweb.com:8080/viewrep/cvs/pike_modules/Public_Web_Wiki/module.pmod.in/module.pmod</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// to approximate the expected [but not currently implemented] functionality</span>
+<span class="hl slc">// of 'Regexp.split'. Many thanks to Bill Welliver for suggesting this</span>
+<span class="hl slc">// approach.</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Contributed by Anthony Borla</span>
+<span class="hl slc">// ---------------------------------------------------------------------</span>
+
+<span class="hl slc">//</span>
+<span class="hl slc">// Extracted from 'pmod' module</span>
+<span class="hl slc">//</span>
+class BaseRule
+<span class="hl sym">{</span>
+  <span class="hl kwb">constant</span> type <span class="hl sym">=</span> <span class="hl str">&quot;BaseRule&quot;</span><span class="hl sym">;</span>
+  <span class="hl kwb">static object</span> regexp<span class="hl sym">;</span>
+  <span class="hl kwb">static function</span> split_fun<span class="hl sym">;</span>
+  <span class="hl kwb">int</span> max_iterations <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">;</span>
+
+  <span class="hl kwb">string</span> <span class="hl kwd">_sprintf</span><span class="hl sym">(</span><span class="hl kwb">mixed</span> ... args<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    return <span class="hl kwa">sprintf</span><span class="hl sym">(</span><span class="hl str">&quot;%s(%s)&quot;</span><span class="hl sym">,</span> type<span class="hl sym">,</span> regexp<span class="hl sym">-&gt;</span>pattern<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwb">void</span> <span class="hl kwd">create</span><span class="hl sym">(</span><span class="hl kwb">string</span> match<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    regexp <span class="hl sym">=</span> <span class="hl kwd">_Regexp_PCRE</span><span class="hl sym">(</span>match<span class="hl sym">,</span> Regexp.PCRE.OPTION.MULTILINE<span class="hl sym">);</span>
+    split_fun <span class="hl sym">=</span> regexp<span class="hl sym">-&gt;</span>split<span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwb">array</span> <span class="hl kwa">replace</span><span class="hl sym">(</span><span class="hl kwb">string</span> subject<span class="hl sym">,</span><span class="hl kwb">string</span><span class="hl sym">|</span><span class="hl kwb">function</span> with<span class="hl sym">,</span> <span class="hl kwb">mixed</span><span class="hl sym">|</span><span class="hl kwb">void</span> ... args<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">array</span> res <span class="hl sym">= ({});</span>
+
+    <span class="hl kwd">for</span> <span class="hl sym">(;;)</span>
+    <span class="hl sym">{</span>
+      <span class="hl kwb">array</span> substrings <span class="hl sym">= ({});</span>
+      <span class="hl kwb">array</span><span class="hl sym">(</span><span class="hl kwb">int</span><span class="hl sym">)|</span><span class="hl kwb">int</span> v<span class="hl sym">=</span>regexp<span class="hl sym">-&gt;</span><span class="hl kwd">exec</span><span class="hl sym">(</span>subject<span class="hl sym">,</span>i<span class="hl sym">);</span>
+
+      <span class="hl kwd">if</span> <span class="hl sym">(</span><span class="hl kwa">intp</span><span class="hl sym">(</span>v<span class="hl sym">) &amp;&amp; !</span>regexp<span class="hl sym">-&gt;</span><span class="hl kwd">handle_exec_error</span><span class="hl sym">([</span><span class="hl kwb">int</span><span class="hl sym">]</span>v<span class="hl sym">))</span> break<span class="hl sym">;</span>
+
+      <span class="hl kwd">if</span> <span class="hl sym">(</span>v<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]&gt;</span>i<span class="hl sym">)</span> res<span class="hl sym">+=({</span>subject<span class="hl sym">[</span>i..v<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]-</span><span class="hl num">1</span><span class="hl sym">]});</span>
+
+      <span class="hl kwd">if</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>v<span class="hl sym">)&gt;</span><span class="hl num">2</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> c <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">;</span>
+        do
+        <span class="hl sym">{</span>
+          substrings <span class="hl sym">+= ({</span> subject<span class="hl sym">[</span>v<span class="hl sym">[</span>c<span class="hl sym">]</span>..<span class="hl sym">(</span>v<span class="hl sym">[</span>c<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]-</span><span class="hl num">1</span><span class="hl sym">)] });</span>
+          c<span class="hl sym">+=</span><span class="hl num">2</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwd">while</span><span class="hl sym">(</span>c<span class="hl sym">&lt;= (</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>v<span class="hl sym">)-</span><span class="hl num">2</span><span class="hl sym">));</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl kwd">if</span> <span class="hl sym">(</span><span class="hl kwa">stringp</span><span class="hl sym">(</span>with<span class="hl sym">))</span> res<span class="hl sym">+=({</span>with<span class="hl sym">});</span>
+      else <span class="hl sym">{</span> <span class="hl kwb">array</span> o <span class="hl sym">=</span> <span class="hl kwd">with</span><span class="hl sym">(</span>subject<span class="hl sym">[</span>v<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>..v<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]-</span><span class="hl num">1</span><span class="hl sym">],</span> substrings<span class="hl sym">,</span> &#64;args<span class="hl sym">);</span> res<span class="hl sym">+=</span>o<span class="hl sym">; }</span>
+
+      i<span class="hl sym">=</span>v<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+    <span class="hl sym">}</span>
+
+    res<span class="hl sym">+=({</span>subject<span class="hl sym">[</span>i..<span class="hl sym">]});</span>
+    return res<span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// --------------------------------</span>
+
+<span class="hl kwb">constant</span> VARIANTS <span class="hl sym">= ({</span>
+  <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="hl sym">});</span>
+
+<span class="hl kwb">constant</span> IUBS <span class="hl sym">= ([</span>
+  <span class="hl str">&quot;B&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;D&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;H&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;K&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;M&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;N&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;R&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;S&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;V&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;W&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;Y&quot;</span><span class="hl sym">:</span><span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">]);</span>
+
+<span class="hl slc">// --------------------------------</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+  <span class="hl slc">// Read input data into string and record its length</span>
+  <span class="hl kwb">string</span> seq <span class="hl sym">=</span> Stdio.stdin<span class="hl sym">-&gt;</span><span class="hl kwd">read</span><span class="hl sym">();</span> <span class="hl kwb">int</span> initial_length <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>seq<span class="hl sym">);</span>
+
+  <span class="hl slc">// Remove all newline and segment divider line occurrences</span>
+  seq <span class="hl sym">=</span> Regexp.<span class="hl kwa">replace</span><span class="hl sym">(</span><span class="hl str">&quot;(&gt;.*</span><span class="hl esc">\n</span><span class="hl str">)|(</span><span class="hl esc">\n</span><span class="hl str">)&quot;</span><span class="hl sym">,</span> seq<span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">);</span> <span class="hl kwb">int</span> code_length <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>seq<span class="hl sym">);</span>
+
+  <span class="hl slc">// Perform regexp counts</span>
+  <span class="hl kwd">foreach</span><span class="hl sym">(</span>VARIANTS<span class="hl sym">,</span> <span class="hl kwb">string</span> var<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    <span class="hl slc">// 'Regexp.split' version would probably look like this:</span>
+    <span class="hl slc">//</span>
+    <span class="hl slc">// int number_of_matches; string pattern = &quot;(?i)&quot; + var;</span>
+    <span class="hl slc">//</span>
+    <span class="hl slc">// if (array(string) matches = Regexp.split(pattern, seq))</span>
+    <span class="hl slc">//   number_of_matches = sizeof(matches);</span>
+    <span class="hl slc">//</span>
+
+    <span class="hl slc">// 'pmod' module version</span>
+    <span class="hl kwb">int</span> number_of_matches <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwd">BaseRule</span><span class="hl sym">(</span><span class="hl str">&quot;(?i)&quot;</span> <span class="hl sym">+</span> var<span class="hl sym">)-&gt;</span><span class="hl kwa">replace</span><span class="hl sym">(</span>seq<span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">)) /</span> <span class="hl num">2</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">write</span><span class="hl sym">(</span><span class="hl str">&quot;%s %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> var<span class="hl sym">,</span> number_of_matches<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl slc">// Perform replacements</span>
+  <span class="hl kwd">foreach</span><span class="hl sym">(</span><span class="hl kwa">indices</span><span class="hl sym">(</span>IUBS<span class="hl sym">),</span> <span class="hl kwb">string</span> key<span class="hl sym">)</span>
+  <span class="hl sym">{</span>
+    seq <span class="hl sym">=</span> Regexp.<span class="hl kwa">replace</span><span class="hl sym">(</span>key<span class="hl sym">,</span> seq<span class="hl sym">,</span> IUBS<span class="hl sym">[</span>key<span class="hl sym">]);</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl slc">// Print statistics</span>
+  <span class="hl kwa">write</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> initial_length<span class="hl sym">,</span> code_length<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>seq<span class="hl sym">));</span>
+
+  return <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
