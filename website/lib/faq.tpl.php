@@ -300,6 +300,14 @@ The system is going down for system halt NOW!
 <p>We use <a href="http://www.andre-simon.de/">Andre Simon's highlight</a> to convert program source code to XHTML, please contribute better language definition files.</p>
 </dd>
 
+<dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
+<dd><p><strong>Yes!</strong></p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout login</p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/nanobench</p>
+<p><em>and for the source code of the contributed programs</em></p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/bench</p>
+</dd>
+
 <dt>&nbsp;</dt>
 <dd><p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
 <p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
@@ -439,7 +447,6 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
 <dd><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Computer Language Benchmarks Game project page on Alioth GForge at Debian.org">Alioth&nbsp;GForge Debian.org</a>.</p>
 <p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the GComputer Language Benchmarks Game CVS tree">browse the CVS tree</a>.</p>
-<p>Build dependencies include <a href="http://search.cpan.org/~mjh/GTop-0.16/GTop.pod">GTop</a> and <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl">BSD::Resource</a> </p>
 </dd>
 </dl>
 </dd>
