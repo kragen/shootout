@@ -19,7 +19,7 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a benchmark. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Rules">the benchmark rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
+<p>Choose a programming language. Choose a current Ubuntu benchmark. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Rules">the benchmark rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
@@ -74,6 +74,12 @@
 <p>Dalmatian's tail was banging on the ground. Dalmatian panted and between breaths said "Look at that beautiful mountain, let's race to the top!" </p>
 </dd>
 
+
+<dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' ~ CPU Load mean?</a></dt>
+<dd><p>When the program was being measured: the first core was not-idle about 27% of the time, the second core was not-idle about 34% of the time, the third core was not-idle about 28% of the time, the fourth core was not-idle about 67% of the time.</p>
+<p>When <em>all the programs</em> show ~CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core - the fourth core (rather than being allowed to use any or all of the CPU cores).</p>
+</dd>
+
 <dt><a href="#whatlanguage" name="whatlanguage">What language was used to write each initial benchmark program?</a></dt>
 <dd><p>Different benchmark programs, different authors - different languages.</p>
 <p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos; Haskell for pidigits; Erlang for thread-ring. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
@@ -87,10 +93,6 @@
 <dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
 </dd>
 
-<dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' ~ CPU Load mean?</a></dt>
-<dd><p>When the program was being measured: the first core was not-idle about 27% of the time, the second core was not-idle about 34% of the time, the third core was not-idle about 28% of the time, the fourth core was not-idle about 67% of the time.</p>
-<p>When <em>all the programs</em> show ~CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core - the fourth core (rather than being allowed to use any or all of the CPU cores).</p>
-</dd>
 
 </dl>
 </dd>
