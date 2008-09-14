@@ -19,7 +19,7 @@
 
 <dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
 <dd>
-<p>Choose a programming language. Choose a current Ubuntu benchmark. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Rules">the benchmark rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
+<p>Look at what we show for Ubuntu&#8482; Intel&#174; Q6600&#174; quad-core. Choose one of those programming languages. Choose one of those benchmarks. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Rules">the benchmark rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
