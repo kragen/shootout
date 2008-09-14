@@ -301,7 +301,7 @@ The system is going down for system halt NOW!
 </dd>
 
 <dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
-<dd><p><strong>Yes!</strong></p>
+<dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license"">Read the license!</a></p>
 <p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout login</p>
 <p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/nanobench</p>
 <p><em>and for the source code of the contributed programs</em></p>
