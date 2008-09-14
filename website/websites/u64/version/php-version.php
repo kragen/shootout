@@ -1,1 +1,1 @@
-<p>PHP 5.2.4-2ubuntu5.3 with Suhosin-Patch 0.9.6.2 (cli) (built: Jul 23 2008 06:46:18)</p>
+<p>PHP 5.2.6 (cli) (built: Sep 13 2008 12:20:11)</p>
