@@ -1,0 +1,182 @@
+<span class="hl com">/*</span>
+<span class="hl com">* The Computer Language Benchmarks Game</span>
+<span class="hl com">* http://shootout.alioth.debian.org</span>
+<span class="hl com">*</span>
+<span class="hl com">* Contributed by Paul Kitchin</span>
+<span class="hl com">* contributed by Bob W</span>
+<span class="hl com">* OpenMP by The Anh Tran</span>
+<span class="hl com">* Compile: g++ -O3 -fomit-frame-pointer -mtune=native -msse2 reverse.cpp -o reverse -fopenmp</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;omp.h&gt;</span>
+
+<span class="hl dir">#define Z16</span>     <span class="hl dstr">&quot;\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0&quot;</span><span class="hl dir"></span>
+<span class="hl dir">#define V32</span>     <span class="hl dstr">&quot;\0TVGH\0\0CD\0\0M\0KN\0\0\0YSA\0BW\0R\0\0\0\0\0\0&quot;</span><span class="hl dir"></span>
+<span class="hl dir">#define VALL    Z16 Z16 Z16 Z16 V32 V32 Z16 Z16 Z16 Z16 Z16 Z16 Z16 Z16</span>
+
+<span class="hl slc">// char conversion table</span>
+<span class="hl kwb">const char</span> complement_table<span class="hl sym">[] =</span> VALL<span class="hl sym">;</span>
+
+<span class="hl kwc">template</span><span class="hl sym">&lt;</span>typename T<span class="hl sym">&gt;</span>
+T <span class="hl kwd">min</span><span class="hl sym">(</span>T v1<span class="hl sym">,</span> T v2<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	<span class="hl slc">// brand prediction</span>
+	<span class="hl kwa">if</span> <span class="hl sym">(</span>v2 <span class="hl sym">&lt;=</span> v1<span class="hl sym">)</span>
+		<span class="hl kwa">return</span> v2<span class="hl sym">;</span>
+	<span class="hl kwa">return</span> v1<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">struct</span> Chunk
+<span class="hl sym">{</span>
+	<span class="hl kwb">char</span><span class="hl sym">*</span> header<span class="hl sym">;</span>
+	<span class="hl kwb">long</span> header_len<span class="hl sym">;</span>
+
+	<span class="hl kwb">char</span><span class="hl sym">*</span> data<span class="hl sym">;</span>
+	<span class="hl kwb">long</span> data_len<span class="hl sym">;</span>
+
+	Chunk<span class="hl sym">*</span> next<span class="hl sym">;</span>
+	Chunk<span class="hl sym">*</span> previous<span class="hl sym">;</span>
+
+	<span class="hl kwd">Chunk</span><span class="hl sym">(</span>Chunk<span class="hl sym">*</span> pre<span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		header <span class="hl sym">=</span> data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		header_len <span class="hl sym">=</span> data_len <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		next <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		previous <span class="hl sym">=</span> pre<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">long</span> <span class="hl kwd">GetInputSize</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+	<span class="hl kwb">long</span> fsz <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">);</span>
+
+	<span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_END<span class="hl sym">);</span>
+	fsz <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">) -</span> fsz<span class="hl sym">;</span>
+
+	<span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_SET<span class="hl sym">);</span>
+	<span class="hl kwa">return</span> fsz<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">char</span><span class="hl sym">*</span> <span class="hl kwd">ReadInput</span><span class="hl sym">(</span><span class="hl kwb">long</span> size<span class="hl sym">,</span> Chunk<span class="hl sym">* &amp;</span>datamarker<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	Chunk<span class="hl sym">*</span> current_marker <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+	<span class="hl kwb">char</span><span class="hl sym">*</span> inp_buf <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">char</span><span class="hl sym">[</span>size<span class="hl sym">];</span>
+	<span class="hl kwb">char</span><span class="hl sym">*</span> cur_pos <span class="hl sym">=</span> inp_buf<span class="hl sym">;</span>
+	<span class="hl kwb">long</span> remainbytes <span class="hl sym">=</span> size <span class="hl sym">- (</span>cur_pos <span class="hl sym">-</span> inp_buf<span class="hl sym">);</span>
+
+	<span class="hl slc">// read line-by-line, according to game rule. Should be replaced by fread()</span>
+	<span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets_unlocked</span><span class="hl sym">(</span>cur_pos<span class="hl sym">,</span> remainbytes<span class="hl sym">,</span> stdin<span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwb">long</span> len <span class="hl sym">=</span> <span class="hl kwd">__builtin_strlen</span><span class="hl sym">(</span>cur_pos<span class="hl sym">);</span>
+
+		<span class="hl kwa">if</span> <span class="hl sym">(</span>cur_pos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			current_marker<span class="hl sym">-&gt;</span>data_len <span class="hl sym">+=</span> len <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+			cur_pos <span class="hl sym">+=</span> len <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+			remainbytes <span class="hl sym">-=</span> len <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+		<span class="hl kwa">else</span>
+		<span class="hl sym">{</span>
+			Chunk<span class="hl sym">*</span> newmarker <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Chunk</span><span class="hl sym">(</span>current_marker<span class="hl sym">);</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>current_marker <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+				current_marker<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> newmarker<span class="hl sym">;</span>
+			<span class="hl kwa">else</span>
+				datamarker <span class="hl sym">=</span> newmarker<span class="hl sym">;</span>
+			current_marker <span class="hl sym">=</span> newmarker<span class="hl sym">;</span>
+
+			current_marker<span class="hl sym">-&gt;</span>header <span class="hl sym">=</span> cur_pos<span class="hl sym">;</span>
+			current_marker<span class="hl sym">-&gt;</span>header_len <span class="hl sym">=</span> len<span class="hl sym">;</span>
+			current_marker<span class="hl sym">-&gt;</span>data <span class="hl sym">=</span> cur_pos <span class="hl sym">+</span> len<span class="hl sym">;</span>
+
+			cur_pos <span class="hl sym">+=</span> len<span class="hl sym">;</span>
+			remainbytes <span class="hl sym">-=</span> len<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">return</span> inp_buf<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">PrintOutput</span><span class="hl sym">(</span><span class="hl kwb">const</span> Chunk<span class="hl sym">*</span> marker<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	<span class="hl kwa">while</span> <span class="hl sym">(</span>marker <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwd">fwrite_unlocked</span><span class="hl sym">(</span>marker<span class="hl sym">-&gt;</span>header<span class="hl sym">,</span> marker<span class="hl sym">-&gt;</span>header_len<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+
+		<span class="hl kwb">int</span> bytetoprint <span class="hl sym">=</span> <span class="hl kwd">min</span><span class="hl sym">(</span>marker<span class="hl sym">-&gt;</span>data_len<span class="hl sym">,</span> <span class="hl num">60L</span><span class="hl sym">);</span>
+		<span class="hl kwb">char</span><span class="hl sym">*</span> current_position <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+
+		<span class="hl kwa">while</span> <span class="hl sym">(</span>bytetoprint <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			<span class="hl kwd">fwrite_unlocked</span><span class="hl sym">(</span>current_position<span class="hl sym">,</span> bytetoprint<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+			<span class="hl kwd">fputc_unlocked</span><span class="hl sym">(</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+
+			current_position <span class="hl sym">+=</span> bytetoprint<span class="hl sym">;</span>
+			bytetoprint <span class="hl sym">=</span> <span class="hl kwd">min</span><span class="hl sym">(</span>marker<span class="hl sym">-&gt;</span>data_len <span class="hl sym">- (</span>current_position <span class="hl sym">-</span> marker<span class="hl sym">-&gt;</span>data<span class="hl sym">),</span> <span class="hl num">60L</span><span class="hl sym">);</span>
+		<span class="hl sym">}</span>
+
+		marker <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">ReverseGame</span><span class="hl sym">(</span>Chunk<span class="hl sym">*</span> marker<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	<span class="hl dir">#pragma omp parallel default(shared)</span>
+	<span class="hl sym">{</span>
+		Chunk <span class="hl sym">*</span>m <span class="hl sym">=</span> marker<span class="hl sym">;</span>
+		<span class="hl kwa">while</span> <span class="hl sym">(</span>m <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			<span class="hl kwb">long</span> half <span class="hl sym">=</span> m<span class="hl sym">-&gt;</span>data_len<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">;</span>
+
+			<span class="hl dir">#pragma omp for schedule(static) nowait</span>
+			<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">long</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> half<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+			<span class="hl sym">{</span>
+				<span class="hl kwb">char</span><span class="hl sym">*</span> c1 <span class="hl sym">=</span> m<span class="hl sym">-&gt;</span>data <span class="hl sym">+</span> i<span class="hl sym">;</span>
+				<span class="hl kwb">char</span><span class="hl sym">*</span> c2 <span class="hl sym">=</span> m<span class="hl sym">-&gt;</span>data <span class="hl sym">+ (</span>m<span class="hl sym">-&gt;</span>data_len <span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">-</span>i<span class="hl sym">);</span>
+
+				<span class="hl kwb">const char</span> rc1 <span class="hl sym">=</span> complement_table<span class="hl sym">[ *</span>c1 <span class="hl sym">];</span>
+				<span class="hl kwb">const char</span> rc2 <span class="hl sym">=</span> complement_table<span class="hl sym">[ *</span>c2 <span class="hl sym">];</span>
+
+				<span class="hl sym">*</span>c1 <span class="hl sym">=</span> rc2<span class="hl sym">;</span>
+				<span class="hl sym">*</span>c2 <span class="hl sym">=</span> rc1<span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+
+			<span class="hl dir">#pragma omp single nowait</span>
+			<span class="hl sym">{</span>
+				<span class="hl slc">// if datalen is odd</span>
+				<span class="hl kwa">if</span> <span class="hl sym">((</span>half <span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">) &lt;</span> m<span class="hl sym">-&gt;</span>data_len<span class="hl sym">)</span>
+				<span class="hl sym">{</span>
+					<span class="hl kwb">char</span> c <span class="hl sym">=</span> m<span class="hl sym">-&gt;</span>data<span class="hl sym">[</span>half <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
+					m<span class="hl sym">-&gt;</span>data<span class="hl sym">[</span>half <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">] =</span> complement_table<span class="hl sym">[</span>c<span class="hl sym">];</span>
+				<span class="hl sym">}</span>
+			<span class="hl sym">}</span>
+
+			m <span class="hl sym">=</span> m<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">()</span>
+<span class="hl sym">{</span>
+	<span class="hl kwb">long</span> filesize <span class="hl sym">=</span> <span class="hl kwd">GetInputSize</span> <span class="hl sym">();</span>
+
+	Chunk<span class="hl sym">*</span> marker <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+	<span class="hl kwb">char</span><span class="hl sym">*</span> buffer <span class="hl sym">=</span> <span class="hl kwd">ReadInput</span> <span class="hl sym">(</span>filesize<span class="hl sym">,</span> marker<span class="hl sym">);</span>
+
+	<span class="hl kwd">ReverseGame</span><span class="hl sym">(</span>marker<span class="hl sym">);</span>
+
+	<span class="hl kwd">PrintOutput</span><span class="hl sym">(</span>marker<span class="hl sym">);</span>
+
+	<span class="hl kwa">delete</span> <span class="hl sym">[]</span>buffer<span class="hl sym">;</span>
+	<span class="hl kwa">while</span> <span class="hl sym">(</span>marker <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		Chunk<span class="hl sym">*</span> m <span class="hl sym">=</span> marker<span class="hl sym">;</span>
+		marker <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+		<span class="hl kwa">delete</span> m<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
