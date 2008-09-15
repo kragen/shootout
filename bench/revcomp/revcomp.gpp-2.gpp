@@ -1,0 +1,182 @@
+/*
+* The Computer Language Benchmarks Game
+* http://shootout.alioth.debian.org
+*
+* Contributed by Paul Kitchin
+* contributed by Bob W
+* OpenMP by The Anh Tran
+* Compile: g++ -O3 -fomit-frame-pointer -mtune=native -msse2 reverse.cpp -o reverse -fopenmp
+*/
+
+#include <stdio.h>
+#include <omp.h>
+
+#define Z16     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+#define V32     "\0TVGH\0\0CD\0\0M\0KN\0\0\0YSA\0BW\0R\0\0\0\0\0\0"
+#define VALL    Z16 Z16 Z16 Z16 V32 V32 Z16 Z16 Z16 Z16 Z16 Z16 Z16 Z16
+
+// char conversion table
+const char complement_table[] = VALL;
+
+template<typename T>
+T min(T v1, T v2)
+{
+	// brand prediction
+	if (v2 <= v1)
+		return v2;
+	return v1;
+}
+
+struct Chunk
+{
+	char* header;
+	long header_len;
+	
+	char* data;
+	long data_len;
+	
+	Chunk* next;
+	Chunk* previous;
+
+	Chunk(Chunk* pre)
+	{
+		header = data = 0;
+		header_len = data_len = 0;
+		next = 0;
+		previous = pre;
+	}
+};
+
+long GetInputSize()
+{
+	long fsz = ftell(stdin);
+
+	fseek(stdin, 0, SEEK_END);
+	fsz = ftell(stdin) - fsz;
+
+	fseek(stdin, 0, SEEK_SET);
+	return fsz;
+}
+
+char* ReadInput(long size, Chunk* &datamarker)
+{
+	Chunk* current_marker = 0;
+
+	char* inp_buf = new char[size];
+	char* cur_pos = inp_buf;
+	long remainbytes = size - (cur_pos - inp_buf);
+
+	// read line-by-line, according to game rule. Should be replaced by fread()
+	while (fgets_unlocked(cur_pos, remainbytes, stdin) != 0)
+	{
+		long len = __builtin_strlen(cur_pos);
+
+		if (cur_pos[0] != '>')
+		{
+			current_marker->data_len += len -1;
+
+			cur_pos += len -1;
+			remainbytes -= len -1;
+		}
+		else
+		{
+			Chunk* newmarker = new Chunk(current_marker);
+			if (current_marker != 0)
+				current_marker->next = newmarker;
+			else
+				datamarker = newmarker;
+			current_marker = newmarker;
+
+			current_marker->header = cur_pos;
+			current_marker->header_len = len;
+			current_marker->data = cur_pos + len;
+
+			cur_pos += len;
+			remainbytes -= len;
+		}
+	}
+
+	return inp_buf;
+}
+
+void PrintOutput(const Chunk* marker)
+{
+	while (marker != 0)
+	{
+		fwrite_unlocked(marker->header, marker->header_len, 1, stdout);
+
+		int bytetoprint = min(marker->data_len, 60L);
+		char* current_position = marker->data;
+
+		while (bytetoprint > 0)
+		{
+			fwrite_unlocked(current_position, bytetoprint, 1, stdout);
+			fputc_unlocked('\n', stdout);
+
+			current_position += bytetoprint;
+			bytetoprint = min(marker->data_len - (current_position - marker->data), 60L);
+		}
+
+		marker = marker->next;
+	}
+}
+
+void ReverseGame(Chunk* marker)
+{
+	#pragma omp parallel default(shared)
+	{
+		Chunk *m = marker;
+		while (m != 0)
+		{
+			long half = m->data_len/2;
+
+			#pragma omp for schedule(static) nowait
+			for (long i = 0; i < half; i++)
+			{
+				char* c1 = m->data + i;
+				char* c2 = m->data + (m->data_len -1 -i);
+				
+				const char rc1 = complement_table[ *c1 ];
+				const char rc2 = complement_table[ *c2 ];
+
+				*c1 = rc2;
+				*c2 = rc1;
+			}
+
+			#pragma omp single nowait
+			{
+				// if datalen is odd
+				if ((half *2) < m->data_len)
+				{
+					char c = m->data[half +1];
+					m->data[half +1] = complement_table[c];
+				}
+			}
+
+			m = m->next;
+		}
+	}
+}
+
+int main () 
+{
+	long filesize = GetInputSize ();
+	
+	Chunk* marker = 0;
+	char* buffer = ReadInput (filesize, marker);
+
+	ReverseGame(marker);
+
+	PrintOutput(marker);
+
+	delete []buffer;
+	while (marker != 0)
+	{
+		Chunk* m = marker;
+		marker = marker->next;
+		delete m;
+	}
+
+	return 0;
+}
+
