@@ -8,8 +8,6 @@
 **   atscc -O3 knucleotide.dats -o knucleotide -D_ATS_GCATS
 *)
 
-(*  SPLITFILE=knucleotide.dats *)
-
 (* ****** ****** *)
 
 staload "libc/SATS/stdio.sats"
@@ -17,257 +15,7 @@ staload "libc/SATS/stdio.sats"
 (* ****** ****** *)
 
 // The hashtable implementation is based on linear-probing
-#include "symtbl.dats"
-
-(* ****** ****** *)
-
-extern fun dna_count {n,k:nat | k <= n}
-  (tbl: symtbl_t, n: int n, k: int k) : symtbl_t = "dna_count"
-
-// a linear datatype
-dataviewtype frqlst = FRQLSTnil | FRQLSTcons of (symbol_t, float, frqlst)
-
-// linear append
-fun frqlst_append
-  (xs0: &frqlst >> frqlst, ys: frqlst): void = begin case xs0 of
-  | FRQLSTcons (k, f, !xs) => (frqlst_append (!xs, ys); fold@ xs0)
-  | ~FRQLSTnil () => (xs0 := ys)
-end // end of [frqlst_append]
-
-// quick sort
-fun qsort (xs: frqlst): frqlst = begin case+ xs of
-  | FRQLSTcons (!k1_r, !f1_r, !xs1_r) => let
-      val k1 = !k1_r and f1 = !f1_r and xs1 = !xs1_r
-    in
-      partition (
-        view@ (!k1_r), view@ (!f1_r), view@ (!xs1_r)
-      | xs, xs1_r, k1, f1, xs1, FRQLSTnil (), FRQLSTnil ()
-      ) // end of [partition]
-    end
-  | FRQLSTnil () => (fold@ xs; xs)
-end // end of [qsort]
-
-and partition {l00,l01,l1:addr}
-  (pf00: symbol_t @ l00, pf01: float @ l01, pf1: frqlst? @ l1 |
-   node: FRQLSTcons_unfold (l00, l01, l1), node1: ptr l1,
-   k0: symbol_t, f0: float, xs: frqlst, l: frqlst, r: frqlst)
-  : frqlst = begin case+ xs of
-  | FRQLSTcons (k1, f1, !xs1_r) =>
-    let val xs1 = !xs1_r in
-      if compare (f1, f0) >= 0 then begin
-        !xs1_r := l; fold@ xs;
-        partition (pf00, pf01, pf1 | node, node1, k0, f0, xs1, xs, r)
-      end else begin
-        !xs1_r := r; fold@ xs;
-        partition (pf00, pf01, pf1 | node, node1, k0, f0, xs1, l, xs)
-      end
-    end
-  | ~FRQLSTnil () =>
-    let var l = qsort l and r = qsort r in
-      !node1 := r; fold@ node; frqlst_append (l, node); l
-    end
-end // end of [partition]
-
-// print and free
-fun print_frqlst
-  (dna: dna_t, kfs: frqlst): void = begin case+ kfs of
-  | ~FRQLSTcons (k, f, kfs) => begin
-      print_symbol (dna, k); printf (" %.3f\n", @(double_of f));
-      print_frqlst (dna, kfs)
-    end
-  | ~FRQLSTnil () => ()
-end // end of [print_frqlst]
-
-fn write_frequencies {n,k:nat | k <= n}
-  (tbl: symtbl_t, n: int n, k: int k): void = let
-  val tbl = dna_count (tbl, n, k)
-  var total: int = (0: int)
-  fn f (k: symbol_t, cnt: int, res: &int):<cloptr> void = (res := res + cnt)
-  val () = symtbl_fold {int} (tbl, f, total)
-  val ftotal = float_of total
-  var frqs: frqlst = FRQLSTnil ()
-  fn f (k: symbol_t, cnt: int, res: &frqlst):<cloptr> void =
-    let val fval = (float_of 100) * float_of cnt / ftotal in
-      res := FRQLSTcons (k, fval, res)
-    end
-  val () = symtbl_fold {frqlst} (tbl, f, frqs)
-in
-  print_frqlst (symtbl_dna tbl, qsort frqs)
-end // end of [write_frequencies]
-
-(* ****** ****** *)
-
-fn write_count {n,k:nat}
-  (tbl: symtbl_t, n: int n, seq: string k): void = let
-  val k = length seq
-  val () = assert (k <= n)
-  val tbl = dna_count (tbl, n, k)
-  val cnt = symtbl_search (tbl, seq)
-in
-  printf ("%d\t%s\n", @(cnt, seq))
-end // end of [write_count]
-
-(* ****** ****** *)
-
-typedef string_int = [n:nat] (string n, int n)
-
-extern fun getline (): string
-extern fun getrest (): string_int
-
-dataviewtype charlst (int) =
-  | charlst_nil (0)
-  | {n:nat} charlst_cons (n+1) of (char, charlst n)
-
-#define nil charlst_nil
-#define cons charlst_cons
-#define :: charlst_cons
-
-extern fun charlst_is_nil {n:nat} (cs: &charlst n): bool (n == 0) =
-  "charlst_is_nil"
-
-implement charlst_is_nil (cs) = case+ cs of
-  | nil () => (fold@ cs; true) | cons (c, !cs_r) => (fold@ cs; false)
-
-extern fun
-charlst_uncons {n:pos} (cs: &charlst n >> charlst (n-1)): char =
-  "charlst_uncons"
-
-implement charlst_uncons (cs) =
-  let val ~(c :: cs_r) = cs in cs := cs_r; c end
-
-extern fun
-string_make_charlst_int {n:nat} (cs: charlst n, n: int n): string n =
-  "string_make_charlst_int"
-
-#define i2c char_of_int
-
-implement getline () = let
-  fun loop {n:nat} (cs: charlst n, n: int n): string =
-    let val i = getchar () in
-      if i >= 0 then let
-        val c = i2c i
-      in
-        if c <> '\n' then loop (charlst_cons (c, cs), n+1)
-        else string_make_charlst_int (cs, n)
-      end else begin
-        string_make_charlst_int (cs, n)
-      end
-   end // end of [loop]
-in
-  loop (charlst_nil (), 0)
-end // end of [getline]
-
-implement getrest () = let
-  fun loop {n:nat} (cs: charlst n, n: int n): string_int =
-    let val i = getchar () in
-      if i >= 0 then let
-        val c = i2c i
-      in
-        if c <> '\n' then
-          loop (charlst_cons (char_toupper c, cs), n+1)
-        else loop (cs, n)
-      end else begin
-        @(string_make_charlst_int (cs, n), n)
-      end
-    end // end of [let]
-in
-  loop (charlst_nil (), 0)
-end // end of [getrest]
-
-(* ****** ****** *)
-
-extern fun dna_of_string (s: string): dna_t = "dna_of_string"
-extern fun is_three (s: string): bool = "is_three"
-
-%{$
-
-ats_ptr_type dna_of_string (ats_string_type s) { return s ; }
-
-ats_bool_type is_three (ats_ptr_type s0) {
-  char *s = (char*) s0 ;
-
-  if (*s != '>') return ats_false_bool ; ++s ;
-  if (*s != 'T') return ats_false_bool ; ++s ;
-  if (*s != 'H') return ats_false_bool ; ++s ;
-  if (*s != 'R') return ats_false_bool ; ++s ;
-  if (*s != 'E') return ats_false_bool ; ++s ;
-  if (*s != 'E') return ats_false_bool ;
-  return ats_true_bool ;
-}
-
-%}
-
-implement main (argc, argv) = let
-
-fun dna_three_get (): string_int = let
-  val s = getline ()
-in
-  if s <> "" then
-    if is_three (s) then getrest () else dna_three_get ()
-  else begin
-    exit_errmsg {string_int} (1, "[dna_three_get] failed.\n")
-  end
-end // end of [dna_three_get]
-
-val (dna_three, n) = dna_three_get ()
-val dna_three = dna_of_string dna_three
-val dna_table = symtbl_make (dna_three, 0x1000)
-val () = assert (n >= 2)
-
-in
-
-write_frequencies (dna_table, n, 1) ;
-print_newline () ;
-
-write_frequencies (dna_table, n, 2) ;
-print_newline () ;
-
-write_count (dna_table, n, "GGT") ;
-write_count (dna_table, n, "GGTA") ;
-write_count (dna_table, n, "GGTATT") ;
-write_count (dna_table, n, "GGTATTTTAATT") ;
-write_count (dna_table, n, "GGTATTTTAATTTATAGT") ;
-
-end
-
-(* ****** ****** *)
-
-%{$
-
-ats_ptr_type
-dna_count (ats_ptr_type tbl, ats_int_type n, ats_int_type k) {
-  symbol_t sym ; int i, nk = n - k ;
-
-  symtbl_clear (tbl) ;
-  i = 0 ; 
-  while (i <= nk) {
-    ++i ; sym.beg = i ; sym.len= k ;
-    symtbl_insert (tbl, sym, 0) ;
-  }
-  return tbl ;
-}
-
-ats_ptr_type
-string_make_charlst_int (ats_ptr_type cs, const ats_int_type n) {
-  char *s0, *s;
-  s0 = ats_malloc_gc(n+1) ;
-  s = s0 + n ; *s = '\0' ; --s ;
-  while (!charlst_is_nil(&cs)) { *s = charlst_uncons(&cs) ; --s ; }
-  return s0 ;
-}
-
-%}
-
-(* ****** ****** *)
-
-(* end of [k-nucleotide.dats] *)
-
-(*  SPLITFILE=symtbl.dats *)
-
-// Time: August 2007
-// Author: Hongwei Xi
-
-// The hashtable implementation is based on linear-probing
+// #include "symtbl.dats"
 
 (* ****** ****** *)
 
@@ -667,3 +415,249 @@ end
 (* ****** ****** *)
 
 (* end of [symtbl.dats] *)
+
+
+(* ****** ****** *)
+
+extern fun dna_count {n,k:nat | k <= n}
+  (tbl: symtbl_t, n: int n, k: int k) : symtbl_t = "dna_count"
+
+// a linear datatype
+dataviewtype frqlst = FRQLSTnil | FRQLSTcons of (symbol_t, float, frqlst)
+
+// linear append
+fun frqlst_append
+  (xs0: &frqlst >> frqlst, ys: frqlst): void = begin case xs0 of
+  | FRQLSTcons (k, f, !xs) => (frqlst_append (!xs, ys); fold@ xs0)
+  | ~FRQLSTnil () => (xs0 := ys)
+end // end of [frqlst_append]
+
+// quick sort
+fun qsort (xs: frqlst): frqlst = begin case+ xs of
+  | FRQLSTcons (!k1_r, !f1_r, !xs1_r) => let
+      val k1 = !k1_r and f1 = !f1_r and xs1 = !xs1_r
+    in
+      partition (
+        view@ (!k1_r), view@ (!f1_r), view@ (!xs1_r)
+      | xs, xs1_r, k1, f1, xs1, FRQLSTnil (), FRQLSTnil ()
+      ) // end of [partition]
+    end
+  | FRQLSTnil () => (fold@ xs; xs)
+end // end of [qsort]
+
+and partition {l00,l01,l1:addr}
+  (pf00: symbol_t @ l00, pf01: float @ l01, pf1: frqlst? @ l1 |
+   node: FRQLSTcons_unfold (l00, l01, l1), node1: ptr l1,
+   k0: symbol_t, f0: float, xs: frqlst, l: frqlst, r: frqlst)
+  : frqlst = begin case+ xs of
+  | FRQLSTcons (k1, f1, !xs1_r) =>
+    let val xs1 = !xs1_r in
+      if compare (f1, f0) >= 0 then begin
+        !xs1_r := l; fold@ xs;
+        partition (pf00, pf01, pf1 | node, node1, k0, f0, xs1, xs, r)
+      end else begin
+        !xs1_r := r; fold@ xs;
+        partition (pf00, pf01, pf1 | node, node1, k0, f0, xs1, l, xs)
+      end
+    end
+  | ~FRQLSTnil () =>
+    let var l = qsort l and r = qsort r in
+      !node1 := r; fold@ node; frqlst_append (l, node); l
+    end
+end // end of [partition]
+
+// print and free
+fun print_frqlst
+  (dna: dna_t, kfs: frqlst): void = begin case+ kfs of
+  | ~FRQLSTcons (k, f, kfs) => begin
+      print_symbol (dna, k); printf (" %.3f\n", @(double_of f));
+      print_frqlst (dna, kfs)
+    end
+  | ~FRQLSTnil () => ()
+end // end of [print_frqlst]
+
+fn write_frequencies {n,k:nat | k <= n}
+  (tbl: symtbl_t, n: int n, k: int k): void = let
+  val tbl = dna_count (tbl, n, k)
+  var total: int = (0: int)
+  fn f (k: symbol_t, cnt: int, res: &int):<cloptr> void = (res := res + cnt)
+  val () = symtbl_fold {int} (tbl, f, total)
+  val ftotal = float_of total
+  var frqs: frqlst = FRQLSTnil ()
+  fn f (k: symbol_t, cnt: int, res: &frqlst):<cloptr> void =
+    let val fval = (float_of 100) * float_of cnt / ftotal in
+      res := FRQLSTcons (k, fval, res)
+    end
+  val () = symtbl_fold {frqlst} (tbl, f, frqs)
+in
+  print_frqlst (symtbl_dna tbl, qsort frqs)
+end // end of [write_frequencies]
+
+(* ****** ****** *)
+
+fn write_count {n,k:nat}
+  (tbl: symtbl_t, n: int n, seq: string k): void = let
+  val k = length seq
+  val () = assert (k <= n)
+  val tbl = dna_count (tbl, n, k)
+  val cnt = symtbl_search (tbl, seq)
+in
+  printf ("%d\t%s\n", @(cnt, seq))
+end // end of [write_count]
+
+(* ****** ****** *)
+
+typedef string_int = [n:nat] (string n, int n)
+
+extern fun getline (): string
+extern fun getrest (): string_int
+
+dataviewtype charlst (int) =
+  | charlst_nil (0)
+  | {n:nat} charlst_cons (n+1) of (char, charlst n)
+
+#define nil charlst_nil
+#define cons charlst_cons
+#define :: charlst_cons
+
+extern fun charlst_is_nil {n:nat} (cs: &charlst n): bool (n == 0) =
+  "charlst_is_nil"
+
+implement charlst_is_nil (cs) = case+ cs of
+  | nil () => (fold@ cs; true) | cons (c, !cs_r) => (fold@ cs; false)
+
+extern fun
+charlst_uncons {n:pos} (cs: &charlst n >> charlst (n-1)): char =
+  "charlst_uncons"
+
+implement charlst_uncons (cs) =
+  let val ~(c :: cs_r) = cs in cs := cs_r; c end
+
+extern fun
+string_make_charlst_int {n:nat} (cs: charlst n, n: int n): string n =
+  "string_make_charlst_int"
+
+#define i2c char_of_int
+
+implement getline () = let
+  fun loop {n:nat} (cs: charlst n, n: int n): string =
+    let val i = getchar () in
+      if i >= 0 then let
+        val c = i2c i
+      in
+        if c <> '\n' then loop (charlst_cons (c, cs), n+1)
+        else string_make_charlst_int (cs, n)
+      end else begin
+        string_make_charlst_int (cs, n)
+      end
+   end // end of [loop]
+in
+  loop (charlst_nil (), 0)
+end // end of [getline]
+
+implement getrest () = let
+  fun loop {n:nat} (cs: charlst n, n: int n): string_int =
+    let val i = getchar () in
+      if i >= 0 then let
+        val c = i2c i
+      in
+        if c <> '\n' then
+          loop (charlst_cons (char_toupper c, cs), n+1)
+        else loop (cs, n)
+      end else begin
+        @(string_make_charlst_int (cs, n), n)
+      end
+    end // end of [let]
+in
+  loop (charlst_nil (), 0)
+end // end of [getrest]
+
+(* ****** ****** *)
+
+extern fun dna_of_string (s: string): dna_t = "dna_of_string"
+extern fun is_three (s: string): bool = "is_three"
+
+%{$
+
+ats_ptr_type dna_of_string (ats_string_type s) { return s ; }
+
+ats_bool_type is_three (ats_ptr_type s0) {
+  char *s = (char*) s0 ;
+
+  if (*s != '>') return ats_false_bool ; ++s ;
+  if (*s != 'T') return ats_false_bool ; ++s ;
+  if (*s != 'H') return ats_false_bool ; ++s ;
+  if (*s != 'R') return ats_false_bool ; ++s ;
+  if (*s != 'E') return ats_false_bool ; ++s ;
+  if (*s != 'E') return ats_false_bool ;
+  return ats_true_bool ;
+}
+
+%}
+
+implement main (argc, argv) = let
+
+fun dna_three_get (): string_int = let
+  val s = getline ()
+in
+  if s <> "" then
+    if is_three (s) then getrest () else dna_three_get ()
+  else begin
+    exit_errmsg {string_int} (1, "[dna_three_get] failed.\n")
+  end
+end // end of [dna_three_get]
+
+val () = gc_chunk_count_limit_max_set (~1) // no max
+  
+val (dna_three, n) = dna_three_get ()
+val dna_three = dna_of_string dna_three
+val dna_table = symtbl_make (dna_three, 0x1000)
+val () = assert (n >= 2)
+
+in
+
+write_frequencies (dna_table, n, 1) ;
+print_newline () ;
+
+write_frequencies (dna_table, n, 2) ;
+print_newline () ;
+
+write_count (dna_table, n, "GGT") ;
+write_count (dna_table, n, "GGTA") ;
+write_count (dna_table, n, "GGTATT") ;
+write_count (dna_table, n, "GGTATTTTAATT") ;
+write_count (dna_table, n, "GGTATTTTAATTTATAGT") ;
+
+end
+
+(* ****** ****** *)
+
+%{$
+
+ats_ptr_type
+dna_count (ats_ptr_type tbl, ats_int_type n, ats_int_type k) {
+  symbol_t sym ; int i, nk = n - k ;
+
+  symtbl_clear (tbl) ;
+  i = 0 ; 
+  while (i <= nk) {
+    ++i ; sym.beg = i ; sym.len= k ;
+    symtbl_insert (tbl, sym, 0) ;
+  }
+  return tbl ;
+}
+
+ats_ptr_type
+string_make_charlst_int (ats_ptr_type cs, const ats_int_type n) {
+  char *s0, *s;
+  s0 = ats_malloc_gc(n+1) ;
+  s = s0 + n ; *s = '\0' ; --s ;
+  while (!charlst_is_nil(&cs)) { *s = charlst_uncons(&cs) ; --s ; }
+  return s0 ;
+}
+
+%}
+
+(* ****** ****** *)
+
+(* end of [k-nucleotide.dats] *)
