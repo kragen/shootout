@@ -25,12 +25,12 @@
 
 <dt><a href="#oneone" name="oneone"><strong>How do I compare language implementations?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="benchmark.php?test=all&lang=oz&lang2=hipe"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
+<p>Compare them directly <a href="benchmark.php?test=all&lang=ats&lang2=gcc"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
 </dd>
 
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 programs?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="fulldata.php?test=binarytrees&p1=oz-0&p2=hipe-0&p3=python-3&p4=oz-0"><strong>side-by-side</strong> for all the data points</a>.</p>
+<p>Compare them directly <a href="fulldata.php?test=threadring&p1=ghc-2&p2=scala-1&p3=hipe-1&p4=mzscheme-1"><strong>side-by-side</strong> for all the data points</a>.</p>
 </dd>
 
 <dt><a href="#datasets" name="datasets"><strong>Why is the program better on ...?</strong></a></dt>
