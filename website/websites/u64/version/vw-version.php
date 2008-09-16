@@ -1,1 +1,1 @@
-<p>VisualWorks(R) 7.6 Feb 14 2008</p>
+<p>VisualWorks,Release 7.6 of March 3, 2008</p>
