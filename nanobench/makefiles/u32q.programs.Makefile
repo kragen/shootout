@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.13 2008-09-15 03:45:38 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.14 2008-09-17 17:55:22 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -14,7 +14,7 @@
 
 SPLITFILE := $(NANO_BIN)/split_file.bash
 
-COPTS := -O3 -fomit-frame-pointer
+COPTS := -O3 -fomit-frame-pointer -march=native
 
 
 ############################################################
@@ -564,7 +564,7 @@ SBCL_TRACE :=
 	-@mv $< $@
 
 %.mercury_run: %.m $(MMC)
-	-$(MMC) $(MMCOPTS) $< -o $@
+	-$(MMC) --grade hlc.gc --cflags "$(COPTS)" $< -o $@
 
 
 ########################################
