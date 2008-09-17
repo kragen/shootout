@@ -1,0 +1,439 @@
+// The Computer Language Benchmarks Game
+// http://shootout.alioth.debian.org/
+//
+// Contributed by Shyamal Prasad
+// Modified by Paul Kitchin
+// OpenMP by The Anh Tran
+
+
+#include <iostream>
+#include <boost/regex.hpp>
+#include <omp.h>
+
+// A naive linked list. Each node represents a DNA
+struct Chunk
+{
+	char* data;
+	size_t data_len;
+	size_t max_size;
+
+	Chunk* next;
+	Chunk* previous;
+
+	Chunk(Chunk* pre, size_t hintsize)
+	{
+		max_size = hintsize;
+		data = (char*)malloc(hintsize);
+
+		data_len = 0;
+		next = 0;
+		previous = pre;
+	}
+	~Chunk()
+	{
+		free(data);
+	}
+};
+
+// Readonly iterator, represent all linked list nodes as a flat array
+class readonly_iterator : public std::iterator<std::bidirectional_iterator_tag, char>
+{
+	Chunk*	chunk;	// current DNA 
+	char*	data;	// current position inside DNA
+	bool	wrap;	// allow jump to previous/next DNA?
+
+public:
+	readonly_iterator()	
+	{
+		chunk	= 0;
+		data	= 0;
+		wrap	= false;
+	}
+	readonly_iterator(Chunk* c, bool wrap_next_chunk = true)
+	{
+		chunk = c;
+		if (c != 0)
+			data = c->data;
+		else
+			data = 0;
+		
+		wrap = wrap_next_chunk;
+	}
+
+	bool operator == (const readonly_iterator& rhs) const
+	{
+		return (chunk == rhs.chunk) 
+			&& (data == rhs.data);
+	}
+
+	bool operator != (const readonly_iterator& rhs) const
+	{
+		return !(*this == rhs);
+	}
+
+	const readonly_iterator& operator++()
+	{
+		// reach the end of DNA chunk
+		if (++data >= chunk->data + chunk->data_len)
+		{
+			if (wrap)
+			{
+				chunk = chunk->next;
+				if (chunk != 0)
+					data = chunk->data;
+				else
+					data = 0;
+			}
+			else
+			{
+				chunk = 0;
+				data = 0;
+			}
+		}
+
+		return *this;
+	}
+
+	const readonly_iterator& operator--()
+	{
+		// reach the position before DNA chunk
+		if (--data < chunk->data)
+		{
+			if (wrap)
+			{
+				chunk = chunk->previous;
+				if (chunk != 0)
+					data = chunk->data + chunk->data_len -1;
+				else
+					data = 0;
+			}
+			else
+			{
+				chunk = 0;
+				data = 0;
+			}
+		}
+		return *this;
+	}
+
+	char operator*()
+	{
+		return *data;
+	}
+};
+
+// An extremely crude reimplementation of SGI STL rope<T, v>
+class Rope 
+{
+protected:
+	// how many bytes to malloc at 1st time. Should large enough to avoid realloc
+	size_t hint_size;	
+	size_t dna_count;	// how many DNA chunk in whole sequences
+
+	Chunk* dna_segment;	// pointer to first DNA chunk
+	Chunk* current_segment;
+
+public:
+
+	// this iterator directly modify DNA data
+	class modify_iterator : public std::iterator<std::bidirectional_iterator_tag, char>
+	{
+		Rope* rp;	// container
+		Chunk* current_dna;
+	
+	public:
+		modify_iterator(Rope* r, Chunk* nc)
+		{
+			rp = r;
+			current_dna = nc;
+		}
+
+		// in order to achieve data parallelism - in "regex_replace", 
+		// i have to split whole sequence into many DNA chunks. 
+		// Regex_replace pattern will notify the begin of each DNA chunk 
+		// by writing '\x01' character
+		modify_iterator& operator++()
+		{
+			Chunk* c = current_dna;
+
+			// normal data
+			if (c->data[c->data_len] > 2)
+			{
+				c->data_len++;
+
+				if (c->data_len >= c->max_size)
+				{
+					c->max_size *= 2;
+					c->data = (char*)realloc(c->data, c->max_size);
+				}
+			}
+			else // '\x01' char -> must alloc new chunk
+			{
+				c->data[c->data_len] = 0; // zero terminate
+
+				if (c->data_len > 0)
+				{
+					current_dna = rp->NewDNA (); // alloc new
+				}
+			}
+
+			return *this;
+		}
+
+		char& operator*()
+		{
+			Chunk* c = current_dna;
+			return c->data[c->data_len];
+		}
+	}; // end modify_iterator
+
+	Chunk* NewDNA()
+	{
+		Chunk* nc = new Chunk(current_segment, hint_size);
+		dna_count++;
+
+		if (current_segment != 0)
+			current_segment->next = nc;
+		else
+			dna_segment = nc;
+
+		current_segment = nc;
+		return nc;
+	}
+
+	// return a modify_iterator at DNA chunk Nth.
+	// reset_pointer = true means we're going to change at chunk[0]
+	// reset_pointer = false means append
+	modify_iterator get_modify_ite(size_t dna = size_t(-1), bool reset_pointer = false)
+	{
+		if (dna == size_t(-1))
+			return modify_iterator(this, NewDNA ());
+		else
+		{
+			Chunk* c = dna_segment;
+			for (size_t i = 0; i < dna_count; i++)
+			{
+				if (i == (size_t)dna)
+				{
+					if (reset_pointer)
+						c->data_len = 0;
+					return modify_iterator(this, c);
+				}
+				c = c->next;
+			}
+			
+			return modify_iterator(0, 0);
+		}
+	}
+
+	// return readonly iterator of DNA Nth
+	readonly_iterator get_readonly_ite(size_t n) const
+	{
+		Chunk* c = dna_segment;
+		for (size_t i = 0; i < dna_count; i++)
+		{
+			if (i == n)
+				return readonly_iterator(c, false);
+			c = c->next;
+		}
+
+		return readonly_iterator(0);
+	}
+
+	// return readonly iterator of DNA 0
+	readonly_iterator begin() const
+	{
+		return readonly_iterator(dna_segment);
+	}
+
+	readonly_iterator end() const
+	{
+		return readonly_iterator();
+	}
+
+	Rope(size_t sz)
+	{
+		current_segment = dna_segment = 0;
+		hint_size = sz;
+		dna_count = 0;
+	}
+
+	Rope(const Rope &r) 
+	{
+		current_segment = dna_segment = 0;
+		hint_size = r.hint_size;
+		dna_count = 0;
+		for (size_t i = 0; i < r.dna_count; i++)
+			NewDNA ();
+	}
+
+	~Rope()
+	{
+		while (dna_segment != 0)
+		{
+			Chunk* m = dna_segment;
+			dna_segment = dna_segment->next;
+			delete m;
+		}
+	}
+
+	size_t GetDnaCount()
+	{
+		return dna_count;
+	}
+
+	size_t GetLength()
+	{
+		size_t total_char = 0;
+		Chunk* c = dna_segment;
+		
+		while (c != 0)
+		{
+			total_char += c->data_len;
+			c = c->next;
+		}
+
+		return total_char;
+	}
+};
+
+
+// read all redirected data from stdin
+char* ReadInput(size_t &size)
+{
+	size = ftell(stdin);
+	fseek(stdin, 0, SEEK_END);
+	size = ftell(stdin) - size + (4*1024);
+	fseek(stdin, 0, SEEK_SET);
+
+	char* inp_buf = (char*)malloc(size);
+	size = fread(inp_buf, 1, size, stdin);
+	
+	// ensure null terminate
+	inp_buf[size] = 0;
+	return inp_buf;
+}
+
+
+Rope* StripHeaderAndNewline(char* data, size_t size)
+{
+	Rope* r = new Rope(size /2);
+	boost::regex const strip("(>[^\\n]*\\n)|(\\n)");
+
+	regex_replace(r->get_modify_ite(), data, data +size, strip, 
+		"?1\x01:", // if matched dna description, write '\x01' to notify
+		boost::match_default|boost::format_all);
+
+	return r;
+}
+
+void PrintPatternCount(const Rope* data)
+{
+	static char const * patterns[] = {
+		"agggtaaa|tttaccct",
+		"[cgt]gggtaaa|tttaccc[acg]",
+		"a[act]ggtaaa|tttacc[agt]t",
+		"ag[act]gtaaa|tttac[agt]ct",
+		"agg[act]taaa|ttta[agt]cct",
+		"aggg[acg]aaa|ttt[cgt]ccct",
+		"agggt[cgt]aa|tt[acg]accct",
+		"agggta[cgt]a|t[acg]taccct",
+		"agggtaa[cgt]|[acg]ttaccct"
+	};
+	const size_t psz = sizeof(patterns) / sizeof(patterns[0]);
+	size_t count[psz] = {0};
+
+	#pragma omp parallel for default(shared) schedule(static) 
+	for (size_t i = 0; i < psz; ++i)
+	{
+		const boost::regex rpat(patterns[i]);
+		typedef boost::regex_iterator< readonly_iterator > match_iterator;
+
+		count[i] = std::distance(match_iterator(data->begin(), data->end(), rpat), match_iterator());
+	}
+
+	for (size_t i = 0; i < psz; ++i)
+		std::cout << patterns[i] << ' ' << count[i] << std::endl;
+}
+
+Rope* Replace_8mers(Rope *data)
+{
+	typedef std::pair< char const *, char const * > mpair;
+	static const mpair alternatives[] = 
+	{
+		mpair("B", "(c|g|t)"), mpair("D", "(a|g|t)"), mpair("H", "(a|c|t)"),
+		mpair("K", "(g|t)"), mpair("M", "(a|c)"), mpair("N", "(a|c|g|t)"),
+		mpair("R", "(a|g)"), mpair("S", "(c|t)"), mpair("V", "(a|c|g)"),
+		mpair("W", "(a|t)"), mpair("Y", "(c|t)")
+	};
+	const size_t asz = sizeof(alternatives)/sizeof(alternatives[0]);
+
+	// create a new space for replaced chars
+	Rope* newdata = new Rope(*data);
+	size_t ndna = data->GetDnaCount();
+
+	#pragma omp parallel for default(shared) schedule(static) 
+	for (size_t d = 0; d < ndna; ++d)
+	{
+		Rope* n1 = data;	// source to replace
+		Rope* n2 = newdata; // destination
+		
+		for (size_t i = 0; i < asz; ++i)
+		{
+			regex_replace(n2->get_modify_ite(d, true), 	// modify iterator, at chunk[0]
+				n1->get_readonly_ite(d), readonly_iterator(), 
+				boost::regex(alternatives[i].first), 
+				alternatives[i].second);
+
+			// exchange buffer, because we replaces dna data 11 times
+			Rope* n3 = n1;
+			n1 = n2;
+			n2 = n3;
+		}
+	}
+
+	// who is the final buffer?
+	if ((asz & 1) != 0)
+	{
+		delete data;
+		return newdata;
+	}
+	else
+	{
+		delete newdata;
+		return data;
+	}
+}
+
+int main()
+{
+	// read all of a redirected FASTA format file from stdin, and record the sequence length
+	size_t initial_length = 0;
+	char* data = ReadInput (initial_length);
+	
+	// use the same simple regex pattern match-replace to remove FASTA sequence descriptions 
+	// and all linefeed characters, and record the sequence length
+	Rope* dna = StripHeaderAndNewline (data, initial_length);
+	std::size_t strip_length = dna->GetLength();
+	free(data);
+
+	// use the same simple regex patterns, representing DNA 8-mers and their reverse complement 
+	// (with a wildcard in one position), and (one pattern at a time) 
+	// count matches in the redirected file
+	// write the regex pattern and count
+	PrintPatternCount(dna);
+
+	// use the same simple regex patterns to make IUB code alternatives explicit, 
+	// and (one pattern at a time) match-replace the pattern in the redirect file, 
+	// and record the sequence length
+	dna = Replace_8mers (dna);
+	std::size_t replace_8m_length = dna->GetLength();
+
+	// write the 3 recorded sequence lengths
+	std::cout << std::endl
+		<< initial_length		<< std::endl 
+		<< strip_length		<< std::endl
+		<< replace_8m_length	<< std::endl;
+
+	delete dna;
+}
