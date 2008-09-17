@@ -1,0 +1,439 @@
+<span class="hl slc">// The Computer Language Benchmarks Game</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Contributed by Shyamal Prasad</span>
+<span class="hl slc">// Modified by Paul Kitchin</span>
+<span class="hl slc">// OpenMP by The Anh Tran</span>
+
+
+<span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;boost/regex.hpp&gt;</span>
+<span class="hl dir">#include &lt;omp.h&gt;</span>
+
+<span class="hl slc">// A naive linked list. Each node represents a DNA</span>
+<span class="hl kwb">struct</span> Chunk
+<span class="hl sym">{</span>
+	<span class="hl kwb">char</span><span class="hl sym">*</span> data<span class="hl sym">;</span>
+	<span class="hl kwb">size_t</span> data_len<span class="hl sym">;</span>
+	<span class="hl kwb">size_t</span> max_size<span class="hl sym">;</span>
+
+	Chunk<span class="hl sym">*</span> next<span class="hl sym">;</span>
+	Chunk<span class="hl sym">*</span> previous<span class="hl sym">;</span>
+
+	<span class="hl kwd">Chunk</span><span class="hl sym">(</span>Chunk<span class="hl sym">*</span> pre<span class="hl sym">,</span> <span class="hl kwb">size_t</span> hintsize<span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		max_size <span class="hl sym">=</span> hintsize<span class="hl sym">;</span>
+		data <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>hintsize<span class="hl sym">);</span>
+
+		data_len <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		next <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		previous <span class="hl sym">=</span> pre<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+	<span class="hl sym">~</span><span class="hl kwd">Chunk</span><span class="hl sym">()</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwd">free</span><span class="hl sym">(</span>data<span class="hl sym">);</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl slc">// Readonly iterator, represent all linked list nodes as a flat array</span>
+<span class="hl kwc">class</span> readonly_iterator <span class="hl sym">:</span> <span class="hl kwc">public</span> std<span class="hl sym">::</span>iterator<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>bidirectional_iterator_tag<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">&gt;</span>
+<span class="hl sym">{</span>
+	Chunk<span class="hl sym">*</span>	chunk<span class="hl sym">;</span>	<span class="hl slc">// current DNA</span>
+	<span class="hl kwb">char</span><span class="hl sym">*</span>	data<span class="hl sym">;</span>	<span class="hl slc">// current position inside DNA</span>
+	<span class="hl kwb">bool</span>	wrap<span class="hl sym">;</span>	<span class="hl slc">// allow jump to previous/next DNA?</span>
+
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+	<span class="hl kwd">readonly_iterator</span><span class="hl sym">()</span>
+	<span class="hl sym">{</span>
+		chunk	<span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		data	<span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		wrap	<span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwd">readonly_iterator</span><span class="hl sym">(</span>Chunk<span class="hl sym">*</span> c<span class="hl sym">,</span> <span class="hl kwb">bool</span> wrap_next_chunk <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		chunk <span class="hl sym">=</span> c<span class="hl sym">;</span>
+		<span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+			data <span class="hl sym">=</span> c<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+		<span class="hl kwa">else</span>
+			data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+		wrap <span class="hl sym">=</span> wrap_next_chunk<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">bool</span> <span class="hl kwc">operator</span> <span class="hl sym">== (</span><span class="hl kwb">const</span> readonly_iterator<span class="hl sym">&amp;</span> rhs<span class="hl sym">)</span> <span class="hl kwb">const</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">return</span> <span class="hl sym">(</span>chunk <span class="hl sym">==</span> rhs<span class="hl sym">.</span>chunk<span class="hl sym">)</span>
+			<span class="hl sym">&amp;&amp; (</span>data <span class="hl sym">==</span> rhs<span class="hl sym">.</span>data<span class="hl sym">);</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">bool</span> <span class="hl kwc">operator</span> <span class="hl sym">!= (</span><span class="hl kwb">const</span> readonly_iterator<span class="hl sym">&amp;</span> rhs<span class="hl sym">)</span> <span class="hl kwb">const</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">return</span> <span class="hl sym">!(*</span><span class="hl kwa">this</span> <span class="hl sym">==</span> rhs<span class="hl sym">);</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">const</span> readonly_iterator<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">++()</span>
+	<span class="hl sym">{</span>
+		<span class="hl slc">// reach the end of DNA chunk</span>
+		<span class="hl kwa">if</span> <span class="hl sym">(++</span>data <span class="hl sym">&gt;=</span> chunk<span class="hl sym">-&gt;</span>data <span class="hl sym">+</span> chunk<span class="hl sym">-&gt;</span>data_len<span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>wrap<span class="hl sym">)</span>
+			<span class="hl sym">{</span>
+				chunk <span class="hl sym">=</span> chunk<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+				<span class="hl kwa">if</span> <span class="hl sym">(</span>chunk <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+					data <span class="hl sym">=</span> chunk<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+				<span class="hl kwa">else</span>
+					data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+			<span class="hl kwa">else</span>
+			<span class="hl sym">{</span>
+				chunk <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+				data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+		<span class="hl sym">}</span>
+
+		<span class="hl kwa">return</span> <span class="hl sym">*</span><span class="hl kwa">this</span><span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">const</span> readonly_iterator<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">--()</span>
+	<span class="hl sym">{</span>
+		<span class="hl slc">// reach the position before DNA chunk</span>
+		<span class="hl kwa">if</span> <span class="hl sym">(--</span>data <span class="hl sym">&lt;</span> chunk<span class="hl sym">-&gt;</span>data<span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>wrap<span class="hl sym">)</span>
+			<span class="hl sym">{</span>
+				chunk <span class="hl sym">=</span> chunk<span class="hl sym">-&gt;</span>previous<span class="hl sym">;</span>
+				<span class="hl kwa">if</span> <span class="hl sym">(</span>chunk <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+					data <span class="hl sym">=</span> chunk<span class="hl sym">-&gt;</span>data <span class="hl sym">+</span> chunk<span class="hl sym">-&gt;</span>data_len <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+				<span class="hl kwa">else</span>
+					data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+			<span class="hl kwa">else</span>
+			<span class="hl sym">{</span>
+				chunk <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+				data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+		<span class="hl sym">}</span>
+		<span class="hl kwa">return</span> <span class="hl sym">*</span><span class="hl kwa">this</span><span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">char</span> <span class="hl kwc">operator</span><span class="hl sym">*()</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">return</span> <span class="hl sym">*</span>data<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl slc">// An extremely crude reimplementation of SGI STL rope&lt;T, v&gt;</span>
+<span class="hl kwc">class</span> Rope
+<span class="hl sym">{</span>
+<span class="hl kwc">protected</span><span class="hl sym">:</span>
+	<span class="hl slc">// how many bytes to malloc at 1st time. Should large enough to avoid realloc</span>
+	<span class="hl kwb">size_t</span> hint_size<span class="hl sym">;</span>
+	<span class="hl kwb">size_t</span> dna_count<span class="hl sym">;</span>	<span class="hl slc">// how many DNA chunk in whole sequences</span>
+
+	Chunk<span class="hl sym">*</span> dna_segment<span class="hl sym">;</span>	<span class="hl slc">// pointer to first DNA chunk</span>
+	Chunk<span class="hl sym">*</span> current_segment<span class="hl sym">;</span>
+
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+
+	<span class="hl slc">// this iterator directly modify DNA data</span>
+	<span class="hl kwc">class</span> modify_iterator <span class="hl sym">:</span> <span class="hl kwc">public</span> std<span class="hl sym">::</span>iterator<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>bidirectional_iterator_tag<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">&gt;</span>
+	<span class="hl sym">{</span>
+		Rope<span class="hl sym">*</span> rp<span class="hl sym">;</span>	<span class="hl slc">// container</span>
+		Chunk<span class="hl sym">*</span> current_dna<span class="hl sym">;</span>
+
+	<span class="hl kwc">public</span><span class="hl sym">:</span>
+		<span class="hl kwd">modify_iterator</span><span class="hl sym">(</span>Rope<span class="hl sym">*</span> r<span class="hl sym">,</span> Chunk<span class="hl sym">*</span> nc<span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			rp <span class="hl sym">=</span> r<span class="hl sym">;</span>
+			current_dna <span class="hl sym">=</span> nc<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+
+		<span class="hl slc">// in order to achieve data parallelism - in &quot;regex_replace&quot;,</span>
+		<span class="hl slc">// i have to split whole sequence into many DNA chunks.</span>
+		<span class="hl slc">// Regex_replace pattern will notify the begin of each DNA chunk</span>
+		<span class="hl slc">// by writing '\x01' character</span>
+		modify_iterator<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">++()</span>
+		<span class="hl sym">{</span>
+			Chunk<span class="hl sym">*</span> c <span class="hl sym">=</span> current_dna<span class="hl sym">;</span>
+
+			<span class="hl slc">// normal data</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>data<span class="hl sym">[</span>c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">] &gt;</span> <span class="hl num">2</span><span class="hl sym">)</span>
+			<span class="hl sym">{</span>
+				c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">++;</span>
+
+				<span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>data_len <span class="hl sym">&gt;=</span> c<span class="hl sym">-&gt;</span>max_size<span class="hl sym">)</span>
+				<span class="hl sym">{</span>
+					c<span class="hl sym">-&gt;</span>max_size <span class="hl sym">*=</span> <span class="hl num">2</span><span class="hl sym">;</span>
+					c<span class="hl sym">-&gt;</span>data <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">realloc</span><span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>data<span class="hl sym">,</span> c<span class="hl sym">-&gt;</span>max_size<span class="hl sym">);</span>
+				<span class="hl sym">}</span>
+			<span class="hl sym">}</span>
+			<span class="hl kwa">else</span> <span class="hl slc">// '\x01' char -&gt; must alloc new chunk</span>
+			<span class="hl sym">{</span>
+				c<span class="hl sym">-&gt;</span>data<span class="hl sym">[</span>c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span> <span class="hl slc">// zero terminate</span>
+
+				<span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>data_len <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+				<span class="hl sym">{</span>
+					current_dna <span class="hl sym">=</span> rp<span class="hl sym">-&gt;</span><span class="hl kwd">NewDNA</span> <span class="hl sym">();</span> <span class="hl slc">// alloc new</span>
+				<span class="hl sym">}</span>
+			<span class="hl sym">}</span>
+
+			<span class="hl kwa">return</span> <span class="hl sym">*</span><span class="hl kwa">this</span><span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+
+		<span class="hl kwb">char</span><span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">*()</span>
+		<span class="hl sym">{</span>
+			Chunk<span class="hl sym">*</span> c <span class="hl sym">=</span> current_dna<span class="hl sym">;</span>
+			<span class="hl kwa">return</span> c<span class="hl sym">-&gt;</span>data<span class="hl sym">[</span>c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">];</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">};</span> <span class="hl slc">// end modify_iterator</span>
+
+	Chunk<span class="hl sym">*</span> <span class="hl kwd">NewDNA</span><span class="hl sym">()</span>
+	<span class="hl sym">{</span>
+		Chunk<span class="hl sym">*</span> nc <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Chunk</span><span class="hl sym">(</span>current_segment<span class="hl sym">,</span> hint_size<span class="hl sym">);</span>
+		dna_count<span class="hl sym">++;</span>
+
+		<span class="hl kwa">if</span> <span class="hl sym">(</span>current_segment <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+			current_segment<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> nc<span class="hl sym">;</span>
+		<span class="hl kwa">else</span>
+			dna_segment <span class="hl sym">=</span> nc<span class="hl sym">;</span>
+
+		current_segment <span class="hl sym">=</span> nc<span class="hl sym">;</span>
+		<span class="hl kwa">return</span> nc<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl slc">// return a modify_iterator at DNA chunk Nth.</span>
+	<span class="hl slc">// reset_pointer = true means we're going to change at chunk[0]</span>
+	<span class="hl slc">// reset_pointer = false means append</span>
+	modify_iterator <span class="hl kwd">get_modify_ite</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> dna <span class="hl sym">=</span> <span class="hl kwb">size_t</span><span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">),</span> <span class="hl kwb">bool</span> reset_pointer <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">if</span> <span class="hl sym">(</span>dna <span class="hl sym">==</span> <span class="hl kwb">size_t</span><span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">))</span>
+			<span class="hl kwa">return</span> <span class="hl kwd">modify_iterator</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">,</span> <span class="hl kwd">NewDNA</span> <span class="hl sym">());</span>
+		<span class="hl kwa">else</span>
+		<span class="hl sym">{</span>
+			Chunk<span class="hl sym">*</span> c <span class="hl sym">=</span> dna_segment<span class="hl sym">;</span>
+			<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> dna_count<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+			<span class="hl sym">{</span>
+				<span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">== (</span><span class="hl kwb">size_t</span><span class="hl sym">)</span>dna<span class="hl sym">)</span>
+				<span class="hl sym">{</span>
+					<span class="hl kwa">if</span> <span class="hl sym">(</span>reset_pointer<span class="hl sym">)</span>
+						c<span class="hl sym">-&gt;</span>data_len <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+					<span class="hl kwa">return</span> <span class="hl kwd">modify_iterator</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">,</span> c<span class="hl sym">);</span>
+				<span class="hl sym">}</span>
+				c <span class="hl sym">=</span> c<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+			<span class="hl sym">}</span>
+
+			<span class="hl kwa">return</span> <span class="hl kwd">modify_iterator</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl slc">// return readonly iterator of DNA Nth</span>
+	readonly_iterator <span class="hl kwd">get_readonly_ite</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> n<span class="hl sym">)</span> <span class="hl kwb">const</span>
+	<span class="hl sym">{</span>
+		Chunk<span class="hl sym">*</span> c <span class="hl sym">=</span> dna_segment<span class="hl sym">;</span>
+		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> dna_count<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+		<span class="hl sym">{</span>
+			<span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">==</span> n<span class="hl sym">)</span>
+				<span class="hl kwa">return</span> <span class="hl kwd">readonly_iterator</span><span class="hl sym">(</span>c<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">);</span>
+			c <span class="hl sym">=</span> c<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+
+		<span class="hl kwa">return</span> <span class="hl kwd">readonly_iterator</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl slc">// return readonly iterator of DNA 0</span>
+	readonly_iterator <span class="hl kwd">begin</span><span class="hl sym">()</span> <span class="hl kwb">const</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">return</span> <span class="hl kwd">readonly_iterator</span><span class="hl sym">(</span>dna_segment<span class="hl sym">);</span>
+	<span class="hl sym">}</span>
+
+	readonly_iterator <span class="hl kwd">end</span><span class="hl sym">()</span> <span class="hl kwb">const</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">return</span> <span class="hl kwd">readonly_iterator</span><span class="hl sym">();</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwd">Rope</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> sz<span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		current_segment <span class="hl sym">=</span> dna_segment <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		hint_size <span class="hl sym">=</span> sz<span class="hl sym">;</span>
+		dna_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwd">Rope</span><span class="hl sym">(</span><span class="hl kwb">const</span> Rope <span class="hl sym">&amp;</span>r<span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		current_segment <span class="hl sym">=</span> dna_segment <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		hint_size <span class="hl sym">=</span> r<span class="hl sym">.</span>hint_size<span class="hl sym">;</span>
+		dna_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> r<span class="hl sym">.</span>dna_count<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+			<span class="hl kwd">NewDNA</span> <span class="hl sym">();</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl sym">~</span><span class="hl kwd">Rope</span><span class="hl sym">()</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">while</span> <span class="hl sym">(</span>dna_segment <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			Chunk<span class="hl sym">*</span> m <span class="hl sym">=</span> dna_segment<span class="hl sym">;</span>
+			dna_segment <span class="hl sym">=</span> dna_segment<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+			<span class="hl kwa">delete</span> m<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">size_t</span> <span class="hl kwd">GetDnaCount</span><span class="hl sym">()</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">return</span> dna_count<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwb">size_t</span> <span class="hl kwd">GetLength</span><span class="hl sym">()</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwb">size_t</span> total_char <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+		Chunk<span class="hl sym">*</span> c <span class="hl sym">=</span> dna_segment<span class="hl sym">;</span>
+
+		<span class="hl kwa">while</span> <span class="hl sym">(</span>c <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			total_char <span class="hl sym">+=</span> c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+			c <span class="hl sym">=</span> c<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+
+		<span class="hl kwa">return</span> total_char<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl slc">// read all redirected data from stdin</span>
+<span class="hl kwb">char</span><span class="hl sym">*</span> <span class="hl kwd">ReadInput</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> <span class="hl sym">&amp;</span>size<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	size <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">);</span>
+	<span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_END<span class="hl sym">);</span>
+	size <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">) -</span> size <span class="hl sym">+ (</span><span class="hl num">4</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">);</span>
+	<span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_SET<span class="hl sym">);</span>
+
+	<span class="hl kwb">char</span><span class="hl sym">*</span> inp_buf <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>size<span class="hl sym">);</span>
+	size <span class="hl sym">=</span> <span class="hl kwd">fread</span><span class="hl sym">(</span>inp_buf<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> size<span class="hl sym">,</span> stdin<span class="hl sym">);</span>
+
+	<span class="hl slc">// ensure null terminate</span>
+	inp_buf<span class="hl sym">[</span>size<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+	<span class="hl kwa">return</span> inp_buf<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+Rope<span class="hl sym">*</span> <span class="hl kwd">StripHeaderAndNewline</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">*</span> data<span class="hl sym">,</span> <span class="hl kwb">size_t</span> size<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	Rope<span class="hl sym">*</span> r <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Rope</span><span class="hl sym">(</span>size <span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">);</span>
+	boost<span class="hl sym">::</span>regex <span class="hl kwb">const</span> <span class="hl kwd">strip</span><span class="hl sym">(</span><span class="hl str">&quot;(&gt;[^</span><span class="hl esc">\\</span><span class="hl str">n]*</span><span class="hl esc">\\</span><span class="hl str">n)|(</span><span class="hl esc">\\</span><span class="hl str">n)&quot;</span><span class="hl sym">);</span>
+
+	<span class="hl kwd">regex_replace</span><span class="hl sym">(</span>r<span class="hl sym">-&gt;</span><span class="hl kwd">get_modify_ite</span><span class="hl sym">(),</span> data<span class="hl sym">,</span> data <span class="hl sym">+</span>size<span class="hl sym">,</span> strip<span class="hl sym">,</span>
+		<span class="hl str">&quot;?1</span><span class="hl esc">\x01</span><span class="hl str">:&quot;</span><span class="hl sym">,</span> <span class="hl slc">// if matched dna description, write '\x01' to notify</span>
+		boost<span class="hl sym">::</span>match_default<span class="hl sym">|</span>boost<span class="hl sym">::</span>format_all<span class="hl sym">);</span>
+
+	<span class="hl kwa">return</span> r<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">PrintPatternCount</span><span class="hl sym">(</span><span class="hl kwb">const</span> Rope<span class="hl sym">*</span> data<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	<span class="hl kwb">static char const</span> <span class="hl sym">*</span> patterns<span class="hl sym">[] = {</span>
+		<span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+		<span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+	<span class="hl sym">};</span>
+	<span class="hl kwb">const size_t</span> psz <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>patterns<span class="hl sym">) /</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>patterns<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+	<span class="hl kwb">size_t</span> count<span class="hl sym">[</span>psz<span class="hl sym">] = {</span><span class="hl num">0</span><span class="hl sym">};</span>
+
+	<span class="hl dir">#pragma omp parallel for default(shared) schedule(static)</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> psz<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwb">const</span> boost<span class="hl sym">::</span>regex <span class="hl kwd">rpat</span><span class="hl sym">(</span>patterns<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+		<span class="hl kwc">typedef</span> boost<span class="hl sym">::</span>regex_iterator<span class="hl sym">&lt;</span> readonly_iterator <span class="hl sym">&gt;</span> match_iterator<span class="hl sym">;</span>
+
+		count<span class="hl sym">[</span>i<span class="hl sym">] =</span> std<span class="hl sym">::</span><span class="hl kwd">distance</span><span class="hl sym">(</span><span class="hl kwd">match_iterator</span><span class="hl sym">(</span>data<span class="hl sym">-&gt;</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> data<span class="hl sym">-&gt;</span><span class="hl kwd">end</span><span class="hl sym">(),</span> rpat<span class="hl sym">),</span> <span class="hl kwd">match_iterator</span><span class="hl sym">());</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> psz<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+		std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> patterns<span class="hl sym">[</span>i<span class="hl sym">] &lt;&lt;</span> <span class="hl str">' '</span> <span class="hl sym">&lt;&lt;</span> count<span class="hl sym">[</span>i<span class="hl sym">] &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+Rope<span class="hl sym">*</span> <span class="hl kwd">Replace_8mers</span><span class="hl sym">(</span>Rope <span class="hl sym">*</span>data<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+	<span class="hl kwc">typedef</span> std<span class="hl sym">::</span>pair<span class="hl sym">&lt;</span> <span class="hl kwb">char const</span> <span class="hl sym">*,</span> <span class="hl kwb">char const</span> <span class="hl sym">* &gt;</span> mpair<span class="hl sym">;</span>
+	<span class="hl kwb">static const</span> mpair alternatives<span class="hl sym">[] =</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">),</span>
+		<span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;K&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;M&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;N&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">),</span>
+		<span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;R&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;S&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">),</span>
+		<span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">),</span> <span class="hl kwd">mpair</span><span class="hl sym">(</span><span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">)</span>
+	<span class="hl sym">};</span>
+	<span class="hl kwb">const size_t</span> asz <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>alternatives<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>alternatives<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+
+	<span class="hl slc">// create a new space for replaced chars</span>
+	Rope<span class="hl sym">*</span> newdata <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Rope</span><span class="hl sym">(*</span>data<span class="hl sym">);</span>
+	<span class="hl kwb">size_t</span> ndna <span class="hl sym">=</span> data<span class="hl sym">-&gt;</span><span class="hl kwd">GetDnaCount</span><span class="hl sym">();</span>
+
+	<span class="hl dir">#pragma omp parallel for default(shared) schedule(static)</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> d <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> d <span class="hl sym">&lt;</span> ndna<span class="hl sym">; ++</span>d<span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		Rope<span class="hl sym">*</span> n1 <span class="hl sym">=</span> data<span class="hl sym">;</span>	<span class="hl slc">// source to replace</span>
+		Rope<span class="hl sym">*</span> n2 <span class="hl sym">=</span> newdata<span class="hl sym">;</span> <span class="hl slc">// destination</span>
+
+		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> asz<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+		<span class="hl sym">{</span>
+			<span class="hl kwd">regex_replace</span><span class="hl sym">(</span>n2<span class="hl sym">-&gt;</span><span class="hl kwd">get_modify_ite</span><span class="hl sym">(</span>d<span class="hl sym">,</span> <span class="hl kwa">true</span><span class="hl sym">),</span> 	<span class="hl slc">// modify iterator, at chunk[0]</span>
+				n1<span class="hl sym">-&gt;</span><span class="hl kwd">get_readonly_ite</span><span class="hl sym">(</span>d<span class="hl sym">),</span> <span class="hl kwd">readonly_iterator</span><span class="hl sym">(),</span>
+				boost<span class="hl sym">::</span><span class="hl kwd">regex</span><span class="hl sym">(</span>alternatives<span class="hl sym">[</span>i<span class="hl sym">].</span>first<span class="hl sym">),</span>
+				alternatives<span class="hl sym">[</span>i<span class="hl sym">].</span>second<span class="hl sym">);</span>
+
+			<span class="hl slc">// exchange buffer, because we replaces dna data 11 times</span>
+			Rope<span class="hl sym">*</span> n3 <span class="hl sym">=</span> n1<span class="hl sym">;</span>
+			n1 <span class="hl sym">=</span> n2<span class="hl sym">;</span>
+			n2 <span class="hl sym">=</span> n3<span class="hl sym">;</span>
+		<span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl slc">// who is the final buffer?</span>
+	<span class="hl kwa">if</span> <span class="hl sym">((</span>asz <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">delete</span> data<span class="hl sym">;</span>
+		<span class="hl kwa">return</span> newdata<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">else</span>
+	<span class="hl sym">{</span>
+		<span class="hl kwa">delete</span> newdata<span class="hl sym">;</span>
+		<span class="hl kwa">return</span> data<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+	<span class="hl slc">// read all of a redirected FASTA format file from stdin, and record the sequence length</span>
+	<span class="hl kwb">size_t</span> initial_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+	<span class="hl kwb">char</span><span class="hl sym">*</span> data <span class="hl sym">=</span> <span class="hl kwd">ReadInput</span> <span class="hl sym">(</span>initial_length<span class="hl sym">);</span>
+
+	<span class="hl slc">// use the same simple regex pattern match-replace to remove FASTA sequence descriptions</span>
+	<span class="hl slc">// and all linefeed characters, and record the sequence length</span>
+	Rope<span class="hl sym">*</span> dna <span class="hl sym">=</span> <span class="hl kwd">StripHeaderAndNewline</span> <span class="hl sym">(</span>data<span class="hl sym">,</span> initial_length<span class="hl sym">);</span>
+	std<span class="hl sym">::</span><span class="hl kwb">size_t</span> strip_length <span class="hl sym">=</span> dna<span class="hl sym">-&gt;</span><span class="hl kwd">GetLength</span><span class="hl sym">();</span>
+	<span class="hl kwd">free</span><span class="hl sym">(</span>data<span class="hl sym">);</span>
+
+	<span class="hl slc">// use the same simple regex patterns, representing DNA 8-mers and their reverse complement</span>
+	<span class="hl slc">// (with a wildcard in one position), and (one pattern at a time)</span>
+	<span class="hl slc">// count matches in the redirected file</span>
+	<span class="hl slc">// write the regex pattern and count</span>
+	<span class="hl kwd">PrintPatternCount</span><span class="hl sym">(</span>dna<span class="hl sym">);</span>
+
+	<span class="hl slc">// use the same simple regex patterns to make IUB code alternatives explicit,</span>
+	<span class="hl slc">// and (one pattern at a time) match-replace the pattern in the redirect file,</span>
+	<span class="hl slc">// and record the sequence length</span>
+	dna <span class="hl sym">=</span> <span class="hl kwd">Replace_8mers</span> <span class="hl sym">(</span>dna<span class="hl sym">);</span>
+	std<span class="hl sym">::</span><span class="hl kwb">size_t</span> replace_8m_length <span class="hl sym">=</span> dna<span class="hl sym">-&gt;</span><span class="hl kwd">GetLength</span><span class="hl sym">();</span>
+
+	<span class="hl slc">// write the 3 recorded sequence lengths</span>
+	std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl
+		<span class="hl sym">&lt;&lt;</span> initial_length		<span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl
+		<span class="hl sym">&lt;&lt;</span> strip_length		<span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl
+		<span class="hl sym">&lt;&lt;</span> replace_8m_length	<span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+
+	<span class="hl kwa">delete</span> dna<span class="hl sym">;</span>
+<span class="hl sym">}</span>

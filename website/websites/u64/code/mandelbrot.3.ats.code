@@ -1,0 +1,389 @@
+<span class="hl com">(*</span>
+<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** http://shootout.alioth.debian.org/</span>
+<span class="hl com">**</span>
+<span class="hl com">** contributed by Hongwei Xi</span>
+<span class="hl com">**</span>
+<span class="hl com">** compilation command:</span>
+<span class="hl com">	atscc -D_ATS_MULTITHREAD -O3 -fomit-frame-pointer -D_ISOC9X_SOURCE -mfpmath=sse -msse2 -o mandelbrot_simd_smp mandelbrot_simd_smp.dats -lpthread</span>
+<span class="hl com">**</span>
+<span class="hl com">*)</span>
+
+<span class="hl sym">%{</span>^
+
+<span class="hl sym">//</span> vector <span class="hl kwa">of</span> two doubles
+<span class="hl kwa">typedef</span> double v2df __attribute__ <span class="hl sym">((</span>vector_size<span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">))) ;</span>
+<span class="hl kwa">typedef</span> v2df ats_v2df_type <span class="hl sym">;</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+abst&#64;ype v2df <span class="hl sym">=</span> $extype <span class="hl str">&quot;ats_v2df_type&quot;</span>
+
+<span class="hl dir">#define TIMES 50</span>
+<span class="hl dir">#define LIMIT 2.0; #define LIMIT2 (LIMIT * LIMIT)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>^
+
+ats_v2df_type ats_zero_v2df <span class="hl sym">= {</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span> <span class="hl sym">} ;</span>
+
+ats_v2df_type
+ats_v2df_make
+  <span class="hl sym">(</span>ats_double_type d0<span class="hl sym">,</span> ats_double_type d1<span class="hl sym">) {</span>
+  v2df dd <span class="hl sym">;</span>
+  <span class="hl sym">((</span>double*)<span class="hl sym">&amp;</span>dd<span class="hl sym">)[</span><span class="hl num">0</span><span class="hl sym">] =</span> d0 <span class="hl sym">; ((</span>double*)<span class="hl sym">&amp;</span>dd<span class="hl sym">)[</span><span class="hl num">1</span><span class="hl sym">] =</span> d1 <span class="hl sym">;</span>
+  return dd <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_double_type
+ats_v2df_fst <span class="hl sym">(</span>ats_v2df_type dd<span class="hl sym">) {</span> return <span class="hl sym">((</span>double*)<span class="hl sym">&amp;</span>dd<span class="hl sym">)[</span><span class="hl num">0</span><span class="hl sym">] ; }</span>
+
+static inline
+ats_double_type
+ats_v2df_snd <span class="hl sym">(</span>ats_v2df_type dd<span class="hl sym">) {</span> return <span class="hl sym">((</span>double*)<span class="hl sym">&amp;</span>dd<span class="hl sym">)[</span><span class="hl num">1</span><span class="hl sym">] ; }</span>
+
+static inline
+ats_v2df_type
+ats_dbl_v2df <span class="hl sym">(</span>ats_v2df_type dd<span class="hl sym">) {</span> return <span class="hl sym">(</span>dd <span class="hl sym">+</span> dd<span class="hl sym">) ; }</span>
+
+static inline
+ats_v2df_type
+ats_add_v2df_v2df <span class="hl sym">(</span>ats_v2df_type dd1<span class="hl sym">,</span> ats_v2df_type dd2<span class="hl sym">) {</span>
+  return <span class="hl sym">(</span>dd1 <span class="hl sym">+</span> dd2<span class="hl sym">) ;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_v2df_type
+ats_sub_v2df_v2df <span class="hl sym">(</span>ats_v2df_type dd1<span class="hl sym">,</span> ats_v2df_type dd2<span class="hl sym">) {</span>
+  return <span class="hl sym">(</span>dd1 <span class="hl sym">-</span> dd2<span class="hl sym">) ;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_v2df_type
+ats_mul_v2df_v2df <span class="hl sym">(</span>ats_v2df_type dd1<span class="hl sym">,</span> ats_v2df_type dd2<span class="hl sym">) {</span>
+  return <span class="hl sym">(</span>dd1 <span class="hl sym">*</span> dd2<span class="hl sym">) ;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">extern val</span> zero_v2df<span class="hl sym">:</span> v2df <span class="hl sym">=</span> <span class="hl str">&quot;ats_zero_v2df&quot;</span>
+
+<span class="hl kwa">extern fun</span> v2df_make <span class="hl sym">(</span>d0<span class="hl sym">:</span> double<span class="hl sym">,</span> d1<span class="hl sym">:</span> double<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl str">&quot;ats_v2df_make&quot;</span>
+
+<span class="hl kwa">extern fun</span> v2df_fst <span class="hl sym">(</span>dd<span class="hl sym">:</span> v2df<span class="hl sym">):</span> double <span class="hl sym">=</span> <span class="hl str">&quot;ats_v2df_fst&quot;</span>
+<span class="hl kwa">extern fun</span> v2df_snd <span class="hl sym">(</span>dd<span class="hl sym">:</span> v2df<span class="hl sym">):</span> double <span class="hl sym">=</span> <span class="hl str">&quot;ats_v2df_snd&quot;</span>
+
+<span class="hl kwa">extern fun</span> dbl_v2df <span class="hl sym">(</span>_<span class="hl sym">:</span> v2df<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl str">&quot;ats_dbl_v2df&quot;</span>
+<span class="hl kwa">extern fun</span> add_v2df_v2df <span class="hl sym">(</span>_<span class="hl sym">:</span> v2df<span class="hl sym">,</span> _<span class="hl sym">:</span> v2df<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl str">&quot;ats_add_v2df_v2df&quot;</span>
+<span class="hl kwa">extern fun</span> sub_v2df_v2df <span class="hl sym">(</span>_<span class="hl sym">:</span> v2df<span class="hl sym">,</span> _<span class="hl sym">:</span> v2df<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl str">&quot;ats_sub_v2df_v2df&quot;</span>
+<span class="hl kwa">extern fun</span> mul_v2df_v2df <span class="hl sym">(</span>_<span class="hl sym">:</span> v2df<span class="hl sym">,</span> _<span class="hl sym">:</span> v2df<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl str">&quot;ats_mul_v2df_v2df&quot;</span>
+<span class="hl kwa">overload</span> <span class="hl sym">+</span> <span class="hl kwa">with</span> add_v2df_v2df
+<span class="hl kwa">overload</span> <span class="hl sym">-</span> <span class="hl kwa">with</span> sub_v2df_v2df
+<span class="hl kwa">overload</span> <span class="hl sym">*</span> <span class="hl kwa">with</span> mul_v2df_v2df
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>^
+
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+
+static pthread_mutex_t mutex_fin <span class="hl sym">=</span> PTHREAD_MUTEX_INITIALIZER<span class="hl sym">;</span>
+
+static inline
+ats_void_type finlock_acquire <span class="hl sym">() {</span>
+  pthread_mutex_lock <span class="hl sym">(&amp;</span>mutex_fin<span class="hl sym">) ;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+static the_nticket <span class="hl sym">;</span>
+static the_nthread <span class="hl sym">;</span>
+static pthread_mutex_t mutex_nticket <span class="hl sym">=</span> PTHREAD_MUTEX_INITIALIZER<span class="hl sym">;</span>
+static pthread_mutex_t mutex_nthread <span class="hl sym">=</span> PTHREAD_MUTEX_INITIALIZER<span class="hl sym">;</span>
+
+static inline
+ats_void_type thread_v_return <span class="hl sym">() {</span>
+  int n <span class="hl sym">;</span>
+  pthread_mutex_lock <span class="hl sym">(&amp;</span>mutex_nthread<span class="hl sym">) ;</span>
+  n <span class="hl sym">=</span> the_nthread <span class="hl sym">;</span> the_nthread <span class="hl sym">=</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  pthread_mutex_unlock <span class="hl sym">(&amp;</span>mutex_nthread<span class="hl sym">) ;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">==</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+    pthread_mutex_unlock <span class="hl sym">(&amp;</span>mutex_fin<span class="hl sym">) ; //</span> conditional wait?
+  <span class="hl sym">} //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+  return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+ats_int_type nticket_get <span class="hl sym">() {</span>
+  int n <span class="hl sym">;</span>
+  pthread_mutex_lock <span class="hl sym">(&amp;</span>mutex_nticket<span class="hl sym">) ;</span>
+  n <span class="hl sym">=</span> the_nticket <span class="hl sym">;</span> the_nticket <span class="hl sym">=</span> n <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">;</span>
+  pthread_mutex_unlock <span class="hl sym">(&amp;</span>mutex_nticket<span class="hl sym">) ;</span>
+  return n <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_void_type mandelbrot_init <span class="hl sym">(</span>ats_int_type n<span class="hl sym">) {</span>
+  the_nthread <span class="hl sym">=</span> n <span class="hl sym">;</span> pthread_mutex_lock <span class="hl sym">(&amp;</span>mutex_fin<span class="hl sym">) ;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">absview</span> thread_v
+<span class="hl kwa">absview</span> nthread_v <span class="hl sym">(</span>int<span class="hl sym">)</span>
+
+<span class="hl kwa">extern fun</span> thread_v_return
+  <span class="hl sym">(</span>pf<span class="hl sym">:</span> thread_v <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;thread_v_return&quot;</span>
+
+<span class="hl kwa">extern prfun</span> nthread_v_take <span class="hl sym">{</span>n<span class="hl sym">:</span>pos<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>nthread_v n <span class="hl sym">&gt;&gt;</span> nthread_v <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)):</span> thread_v
+
+<span class="hl kwa">extern prfun</span> nthread_v_elim <span class="hl sym">(</span>pf<span class="hl sym">:</span> nthread_v <span class="hl num">0</span><span class="hl sym">):&lt;&gt;</span> void
+
+<span class="hl kwa">extern fun</span> nticket_get
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>thread_v <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl str">&quot;nticket_get&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">// [!</span>ref<span class="hl sym">]</span> prevents it from being called <span class="hl kwa">in</span> a thread
+<span class="hl kwa">extern fun</span> mandelbrot_init <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>n<span class="hl sym">:</span> int n<span class="hl sym">):&lt;!</span>ref<span class="hl sym">&gt; (</span>nthread_v n <span class="hl sym">|</span> void<span class="hl sym">)</span>
+  <span class="hl sym">=</span> <span class="hl str">&quot;mandelbrot_init&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define i2d double_of_int</span>
+
+<span class="hl sym">%{</span>^
+
+static inline
+ats_ptr_type bytearr_malloc <span class="hl sym">(</span>ats_int_type sz<span class="hl sym">) {</span>
+  void <span class="hl sym">*</span>p <span class="hl sym">=</span> malloc <span class="hl sym">(</span>sz<span class="hl sym">) ;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(!</span>p<span class="hl sym">) {</span>
+    fprintf <span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;Exit: [malloc] failed.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span> exit <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) ;</span>
+  <span class="hl sym">}</span>
+  return p <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_void_type bytearr_free <span class="hl sym">(</span>ats_ptr_type p<span class="hl sym">) {</span> free <span class="hl sym">(</span>p<span class="hl sym">);</span> return <span class="hl sym">; }</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">absviewtype</span> bytearr
+<span class="hl kwa">extern fun</span> bytearr_make <span class="hl sym">(</span>sz<span class="hl sym">:</span> int<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>bytearr &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">) =</span>
+  <span class="hl str">&quot;bytearr_malloc&quot;</span>
+<span class="hl kwa">extern fun</span> bytearr_free <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>pf<span class="hl sym">:</span> bytearr &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span>
+  <span class="hl str">&quot;bytearr_free&quot;</span>
+
+<span class="hl sym">%{</span>^
+
+static inline
+ats_void_type
+bytearr_set <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">,</span> ats_int_type i<span class="hl sym">,</span> ats_byte_type b<span class="hl sym">) {</span>
+  <span class="hl sym">((</span>ats_byte_type*)A<span class="hl sym">)[</span>i<span class="hl sym">] =</span> b <span class="hl sym">;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+static inline
+ats_void_type
+bytearr_output <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">,</span> ats_int_type sz<span class="hl sym">) {</span>
+  int n<span class="hl sym">,</span> lft <span class="hl sym">;</span>
+  lft <span class="hl sym">=</span> sz <span class="hl sym">;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>lft <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+    n <span class="hl sym">=</span> fwrite <span class="hl sym">(</span>A<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> lft<span class="hl sym">,</span> stdout<span class="hl sym">) ;</span> lft <span class="hl sym">-=</span> n <span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  return <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">extern fun</span> bytearr_set <span class="hl sym">(</span>A<span class="hl sym">: &amp;</span>bytearr<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">,</span> b<span class="hl sym">:</span> byte<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;bytearr_set&quot;</span>
+<span class="hl kwa">overload</span> <span class="hl sym">[]</span> <span class="hl kwa">with</span> bytearr_set
+
+<span class="hl kwa">extern fun</span> bytearr_output <span class="hl sym">(</span>A<span class="hl sym">: &amp;</span>bytearr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;bytearr_output&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define NTHREAD 16</span>
+
+<span class="hl kwa">fn</span> mandelbrot <span class="hl sym">(</span>h<span class="hl sym">:</span> int<span class="hl sym">,</span> w<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+
+<span class="hl kwa">val</span> w8 <span class="hl sym">= (</span>w <span class="hl sym">+</span> <span class="hl num">7</span><span class="hl sym">) &gt;&gt;</span> <span class="hl num">3</span>
+<span class="hl kwa">val</span> sz <span class="hl sym">=</span> h <span class="hl sym">*</span> w8
+<span class="hl kwa">val</span> <span class="hl sym">[</span>l0<span class="hl sym">:</span>addr<span class="hl sym">] (</span>pf0_A <span class="hl sym">|</span> p_A<span class="hl sym">) =</span> bytearr_make <span class="hl sym">(</span>sz<span class="hl sym">)</span>
+<span class="hl kwa">val</span> h_r <span class="hl sym">=</span> <span class="hl num">1.0</span> <span class="hl sym">/ (</span>i2d h<span class="hl sym">)</span> <span class="hl kwa">and</span> w_r <span class="hl sym">=</span> <span class="hl num">1.0</span> <span class="hl sym">/ (</span>i2d w<span class="hl sym">)</span>
+<span class="hl kwa">val</span> <span class="hl sym">(</span>pf_nthread <span class="hl sym">| ()) =</span> mandelbrot_init <span class="hl sym">(</span>NTHREAD<span class="hl sym">)</span>
+
+<span class="hl kwa">fun</span> test <span class="hl sym">(</span>h_r<span class="hl sym">:</span> double<span class="hl sym">,</span> w_r<span class="hl sym">:</span> double<span class="hl sym">,</span> x<span class="hl sym">:</span> int<span class="hl sym">,</span> y<span class="hl sym">:</span> int<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> x2 <span class="hl sym">=</span> i2d <span class="hl sym">(</span>x <span class="hl sym">&lt;&lt;</span> <span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> Cr0 <span class="hl sym">=</span> x2 <span class="hl sym">*</span> w_r <span class="hl sym">-</span> <span class="hl num">1.5</span>
+  <span class="hl kwa">val</span> Cr1 <span class="hl sym">= (</span>x2 <span class="hl sym">+</span> <span class="hl num">2.0</span><span class="hl sym">) *</span> w_r <span class="hl sym">-</span> <span class="hl num">1.5</span>
+  <span class="hl kwa">val</span> y2 <span class="hl sym">=</span> i2d <span class="hl sym">(</span>y <span class="hl sym">&lt;&lt;</span> <span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> Ci0 <span class="hl sym">=</span> y2 <span class="hl sym">*</span> h_r <span class="hl sym">-</span> <span class="hl num">1.0</span>
+  <span class="hl kwa">val</span> Ci1 <span class="hl sym">=</span> Ci0
+  <span class="hl kwa">val</span> Crv <span class="hl sym">=</span> v2df_make <span class="hl sym">(</span>Cr0<span class="hl sym">,</span> Cr1<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> Civ <span class="hl sym">=</span> v2df_make <span class="hl sym">(</span>Ci0<span class="hl sym">,</span> Ci1<span class="hl sym">)</span>
+
+  <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>
+      eo<span class="hl sym">:</span> int
+    <span class="hl sym">,</span> Cr<span class="hl sym">:</span> double<span class="hl sym">,</span> Ci<span class="hl sym">:</span> double<span class="hl sym">,</span> Zr<span class="hl sym">:</span> double<span class="hl sym">,</span> Zi<span class="hl sym">:</span> double
+    <span class="hl sym">,</span> times<span class="hl sym">:</span> int
+    <span class="hl sym">) :&lt;</span>fun1<span class="hl sym">&gt;</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> Tr <span class="hl sym">=</span> Zr <span class="hl sym">*</span> Zr <span class="hl kwa">and</span> Ti <span class="hl sym">=</span> Zi <span class="hl sym">*</span> Zi<span class="hl sym">;</span> <span class="hl kwa">val</span> Tri <span class="hl sym">=</span> Tr <span class="hl sym">+</span> Ti
+  <span class="hl kwa">in</span>
+    <span class="hl kwa">case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
+    <span class="hl sym">|</span> _ <span class="hl kwa">when</span> Tri <span class="hl sym">&lt;=</span> LIMIT2 <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
+        <span class="hl kwa">if</span> times <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> eo <span class="hl kwa">else let</span>
+          <span class="hl kwa">val</span> Zr_new <span class="hl sym">=</span> Tr <span class="hl sym">-</span> Ti <span class="hl sym">+</span> Cr<span class="hl sym">;</span> <span class="hl kwa">val</span> Zi_new <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">* (</span>Zr <span class="hl sym">*</span> Zi<span class="hl sym">) +</span> Ci
+        <span class="hl kwa">in</span>
+          loop <span class="hl sym">(</span>eo<span class="hl sym">,</span> Cr<span class="hl sym">,</span> Ci<span class="hl sym">,</span> Zr_new<span class="hl sym">,</span> Zi_new<span class="hl sym">,</span> times<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+      <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_ <span class="hl kwa">when</span> <span class="hl sym">...]</span>
+    <span class="hl sym">|</span> _ <span class="hl sym">=&gt;</span> <span class="hl num">0</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>loop<span class="hl sym">]</span>
+
+  <span class="hl kwa">fun</span> loopv
+    <span class="hl sym">(</span>Zrv<span class="hl sym">:</span> v2df<span class="hl sym">,</span> Ziv<span class="hl sym">:</span> v2df<span class="hl sym">,</span> times<span class="hl sym">:</span> int<span class="hl sym">):&lt;</span>cloref1<span class="hl sym">&gt;</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> Trv <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Zrv <span class="hl kwa">and</span> Tiv <span class="hl sym">=</span> Ziv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span> <span class="hl kwa">val</span> Triv <span class="hl sym">=</span> Trv <span class="hl sym">+</span> Tiv
+    <span class="hl kwa">val</span> Tri0 <span class="hl sym">=</span> v2df_fst <span class="hl sym">(</span>Triv<span class="hl sym">)</span> <span class="hl kwa">and</span> Tri1 <span class="hl sym">=</span> v2df_snd <span class="hl sym">(</span>Triv<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> Zrv_new <span class="hl sym">=</span> Trv <span class="hl sym">-</span> Tiv <span class="hl sym">+</span> Crv<span class="hl sym">;</span> <span class="hl kwa">val</span> Ziv_new <span class="hl sym">=</span> dbl_v2df <span class="hl sym">(</span>Zrv <span class="hl sym">*</span> Ziv<span class="hl sym">) +</span> Civ
+  <span class="hl kwa">in</span>
+    <span class="hl kwa">case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
+    <span class="hl sym">|</span> _ <span class="hl kwa">when</span> Tri0 <span class="hl sym">&lt;=</span> LIMIT2 <span class="hl sym">=&gt;</span> <span class="hl kwa">begin case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
+      <span class="hl sym">|</span> _ <span class="hl kwa">when</span> Tri1 <span class="hl sym">&lt;=</span> LIMIT2 <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
+          <span class="hl kwa">if</span> times <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl num">0x3</span> <span class="hl kwa">else</span> loopv <span class="hl sym">(</span>Zrv_new<span class="hl sym">,</span> Ziv_new<span class="hl sym">,</span> times<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_ <span class="hl kwa">when</span> <span class="hl sym">...]</span>
+      <span class="hl sym">|</span> _ <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
+          <span class="hl kwa">if</span> times <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl num">0x2</span> <span class="hl kwa">else let</span>
+            <span class="hl kwa">val</span> Zr0_new <span class="hl sym">=</span> v2df_fst <span class="hl sym">(</span>Zrv_new<span class="hl sym">)</span> <span class="hl kwa">and</span> Zi0_new <span class="hl sym">=</span> v2df_fst <span class="hl sym">(</span>Ziv_new<span class="hl sym">)</span>
+          <span class="hl kwa">in</span>
+            loop <span class="hl sym">(</span><span class="hl num">0x2</span><span class="hl com">(*eo*)</span><span class="hl sym">,</span> Cr0<span class="hl sym">,</span> Ci0<span class="hl sym">,</span> Zr0_new<span class="hl sym">,</span> Zi0_new<span class="hl sym">,</span> times<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+          <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+        <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_<span class="hl sym">]</span>
+      <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_ <span class="hl kwa">when</span> <span class="hl sym">...]</span>
+    <span class="hl sym">|</span> _ <span class="hl sym">=&gt;</span> <span class="hl kwa">begin case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
+      <span class="hl sym">|</span> _ <span class="hl kwa">when</span> Tri1 <span class="hl sym">&lt;=</span> LIMIT2 <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
+          <span class="hl kwa">if</span> times <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl num">0x1</span> <span class="hl kwa">else let</span>
+            <span class="hl kwa">val</span> Zr1_new <span class="hl sym">=</span> v2df_snd <span class="hl sym">(</span>Zrv_new<span class="hl sym">)</span> <span class="hl kwa">and</span> Zi1_new <span class="hl sym">=</span> v2df_snd <span class="hl sym">(</span>Ziv_new<span class="hl sym">)</span>
+          <span class="hl kwa">in</span>
+            loop <span class="hl sym">(</span><span class="hl num">0x1</span><span class="hl com">(*eo*)</span><span class="hl sym">,</span> Cr1<span class="hl sym">,</span> Ci1<span class="hl sym">,</span> Zr1_new<span class="hl sym">,</span> Zi1_new<span class="hl sym">,</span> times<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+          <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+        <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_ <span class="hl kwa">when</span> <span class="hl sym">...]</span>
+      <span class="hl sym">|</span> _ <span class="hl sym">=&gt;</span> <span class="hl num">0x0</span> <span class="hl sym">//</span> return value
+      <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_<span class="hl sym">]</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>loopv<span class="hl sym">]</span>
+<span class="hl kwa">in</span>
+  loopv <span class="hl sym">(</span>zero_v2df<span class="hl sym">,</span> zero_v2df<span class="hl sym">,</span> TIMES<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>test<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define i2b byte_of_int</span>
+
+<span class="hl kwa">fun</span> output_one
+  <span class="hl sym">(</span>h<span class="hl sym">:</span> int<span class="hl sym">,</span> w<span class="hl sym">:</span> int<span class="hl sym">,</span> h_r<span class="hl sym">:</span> double<span class="hl sym">,</span> w_r<span class="hl sym">:</span> double<span class="hl sym">,</span> A<span class="hl sym">: &amp;</span>bytearr<span class="hl sym">,</span> x<span class="hl sym">:</span> int<span class="hl sym">,</span> y<span class="hl sym">:</span> int<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">,</span> b<span class="hl sym">:</span> byte<span class="hl sym">,</span> n<span class="hl sym">:</span> natLte <span class="hl num">8</span><span class="hl sym">)</span>
+  <span class="hl sym">:</span> void <span class="hl sym">=</span> <span class="hl kwa">begin</span>
+  <span class="hl kwa">if</span> x <span class="hl sym">&lt;</span> w <span class="hl kwa">then let</span>
+    <span class="hl kwa">val</span> res <span class="hl sym">=</span> test <span class="hl sym">(</span>h_r<span class="hl sym">,</span> w_r<span class="hl sym">,</span> x<span class="hl sym">,</span> y<span class="hl sym">);</span> <span class="hl kwa">val</span> res <span class="hl sym">=</span> i2b res
+  <span class="hl kwa">in</span>
+    <span class="hl kwa">case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
+    <span class="hl sym">|</span> _ <span class="hl kwa">when</span> n <span class="hl sym">&gt;=</span> <span class="hl num">2</span> <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
+        output_one <span class="hl sym">(</span>h<span class="hl sym">,</span> w<span class="hl sym">,</span> h_r<span class="hl sym">,</span> w_r<span class="hl sym">,</span> A<span class="hl sym">,</span> x <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">,</span> y<span class="hl sym">,</span> i<span class="hl sym">, (</span>b <span class="hl sym">&lt;&lt;</span> <span class="hl num">2</span><span class="hl sym">) +</span> res<span class="hl sym">,</span> n <span class="hl sym">-</span> <span class="hl num">2</span><span class="hl sym">)</span>
+      <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_ <span class="hl kwa">when</span> <span class="hl sym">...]</span>
+    <span class="hl sym">|</span> _ <span class="hl com">(*n=0*)</span> <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
+        A<span class="hl sym">[</span>i<span class="hl sym">] :=</span> b<span class="hl sym">;</span> output_one <span class="hl sym">(</span>h<span class="hl sym">,</span> w<span class="hl sym">,</span> h_r<span class="hl sym">,</span> w_r<span class="hl sym">,</span> A<span class="hl sym">,</span> x <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">,</span> y<span class="hl sym">,</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> res<span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">)</span>
+      <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_<span class="hl sym">]</span>
+  <span class="hl kwa">end else begin</span>
+    A<span class="hl sym">[</span>i<span class="hl sym">] := (</span>b <span class="hl sym">&lt;&lt;</span> n<span class="hl sym">)</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>output_one<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl com">(*</span>
+<span class="hl com">val () = output_all (!p_A, 0, 0) where {</span>
+<span class="hl com">  fun output_all (A: &amp;bytearr, y: int, i: int):&lt;cloref1&gt; void =</span>
+<span class="hl com">    if y &lt; h then begin</span>
+<span class="hl com">      output_one (A, 0, y, i, i2b 0, 8); output_all (A, y + 1, i + w8)</span>
+<span class="hl com">    end</span>
+<span class="hl com">} // end of [where]</span>
+<span class="hl com">*)</span>
+
+<span class="hl kwa">fun</span> output_worker <span class="hl sym">(</span>
+    pf_thread<span class="hl sym">:</span> thread_v<span class="hl sym">,</span> pf_A<span class="hl sym">:</span> bytearr &#64; l0
+  <span class="hl sym">|</span> h<span class="hl sym">:</span> int<span class="hl sym">,</span> w<span class="hl sym">:</span> int<span class="hl sym">,</span> h_r<span class="hl sym">:</span> double<span class="hl sym">,</span> w_r<span class="hl sym">:</span> double<span class="hl sym">,</span> w8<span class="hl sym">:</span> int<span class="hl sym">,</span> p_A<span class="hl sym">:</span> ptr l0
+  <span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">extern prfun</span> bytearr_v_elim <span class="hl sym">(</span>pf_A<span class="hl sym">:</span> bytearr &#64; l0<span class="hl sym">):</span> void
+  <span class="hl kwa">val</span> y <span class="hl sym">=</span> nticket_get <span class="hl sym">(</span>pf_thread <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  <span class="hl kwa">case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
+  <span class="hl sym">|</span> _ <span class="hl kwa">when</span> y <span class="hl sym">&lt;</span> h <span class="hl sym">=&gt;</span> <span class="hl kwa">let</span>
+      <span class="hl kwa">val</span> i <span class="hl sym">=</span> y <span class="hl sym">*</span> w8
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> output_one <span class="hl sym">(</span>h<span class="hl sym">,</span> w<span class="hl sym">,</span> h_r<span class="hl sym">,</span> w_r<span class="hl sym">, !</span>p_A<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> y<span class="hl sym">,</span> i<span class="hl sym">,</span> i2b <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">8</span><span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      output_worker <span class="hl sym">(</span>pf_thread<span class="hl sym">,</span> pf_A <span class="hl sym">|</span> h<span class="hl sym">,</span> w<span class="hl sym">,</span> h_r<span class="hl sym">,</span> w_r<span class="hl sym">,</span> w8<span class="hl sym">,</span> p_A<span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+  <span class="hl sym">|</span> _ <span class="hl com">(* y &gt;= h *)</span> <span class="hl sym">=&gt;</span> <span class="hl kwa">let</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">() =</span> bytearr_v_elim <span class="hl sym">(</span>pf_A<span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      thread_v_return <span class="hl sym">(</span>pf_thread <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>output_worker<span class="hl sym">]</span>
+
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> output_all <span class="hl sym">(</span>pf_nthread<span class="hl sym">,</span> pf0_A <span class="hl sym">|</span> NTHREAD<span class="hl sym">)</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+  <span class="hl kwa">fun</span> output_all <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">}</span>
+    <span class="hl sym">(</span>pf_nthread<span class="hl sym">:</span> nthread_v n<span class="hl sym">,</span> pf0_A<span class="hl sym">: !</span>bytearr &#64; l0 <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">)</span>
+    <span class="hl sym">:&lt;</span>cloptr1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span> <span class="hl kwa">begin</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then let</span>
+      <span class="hl kwa">prval</span> pf_thread <span class="hl sym">=</span> nthread_v_take <span class="hl sym">(</span>pf_nthread<span class="hl sym">)</span>
+      <span class="hl kwa">prval</span> pf_A <span class="hl sym">=</span> bytearr_v_copy <span class="hl sym">(</span>pf0_A<span class="hl sym">)</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+        <span class="hl kwa">extern prfun</span> bytearr_v_copy <span class="hl sym">(</span>pf0_A<span class="hl sym">: !</span>bytearr &#64; l0<span class="hl sym">):</span> bytearr &#64; l0
+      <span class="hl sym">}</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> pthread_create_detached_cloptr <span class="hl sym">(</span>
+         <span class="hl kwa">lam</span> <span class="hl sym">() =&lt;</span>lin<span class="hl sym">,</span>cloptr1<span class="hl sym">&gt;</span> output_worker <span class="hl sym">(</span>pf_thread<span class="hl sym">,</span> pf_A <span class="hl sym">|</span> h<span class="hl sym">,</span> w<span class="hl sym">,</span> h_r<span class="hl sym">,</span> w_r<span class="hl sym">,</span> w8<span class="hl sym">,</span> p_A<span class="hl sym">)</span>
+      <span class="hl sym">) //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>pthread_create_detached_cloptr<span class="hl sym">]</span>
+    <span class="hl kwa">in</span>
+      output_all <span class="hl sym">(</span>pf_nthread<span class="hl sym">,</span> pf0_A <span class="hl sym">|</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">end else begin</span>
+      <span class="hl kwa">let prval</span> <span class="hl sym">() =</span> nthread_v_elim <span class="hl sym">(</span>pf_nthread<span class="hl sym">)</span> <span class="hl kwa">in</span> <span class="hl sym">()</span> <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>output_all<span class="hl sym">]</span>
+<span class="hl sym">} //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>output_all<span class="hl sym">]</span>
+
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> finlock_acquire <span class="hl sym">()</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+  <span class="hl kwa">extern fun</span> finlock_acquire <span class="hl sym">():</span> void <span class="hl sym">=</span> <span class="hl str">&quot;finlock_acquire&quot;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">begin</span>
+  printf <span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%i %i</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>h<span class="hl sym">,</span> w<span class="hl sym">));</span> bytearr_output <span class="hl sym">(!</span>p_A<span class="hl sym">,</span> sz<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">val</span> <span class="hl sym">() =</span> bytearr_free <span class="hl sym">(</span>pf0_A <span class="hl sym">|</span> p_A<span class="hl sym">)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">in</span>
+
+<span class="hl sym">//</span> empty
+
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>mandelbrot<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">implement</span> main <span class="hl sym">(</span>argc<span class="hl sym">,</span> argv<span class="hl sym">) =</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg_bool1
+    <span class="hl sym">(</span>argc <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl str">&quot;Exit: wrong command format!</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> i <span class="hl sym">=</span> int1_of_string argv<span class="hl sym">.[</span><span class="hl num">1</span><span class="hl sym">]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg_bool1
+    <span class="hl sym">(</span>i <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl str">&quot;The input integer needs to be at least 2.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  mandelbrot <span class="hl sym">(</span>i<span class="hl sym">,</span> i<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>main<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl com">(* end of [mandelbrot_simd.dats] *)</span>
