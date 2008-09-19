@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.14 2008-09-17 17:55:22 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.15 2008-09-19 16:38:54 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -565,7 +565,7 @@ SBCL_TRACE :=
 
 %.mercury_run: %.m $(MMC)
 	-$(MMC) --grade hlc.gc --cflags "$(COPTS)" $< -o $@
-
+#	-$(MMC) --grade asm_fast.gc $< -o $@
 
 ########################################
 # scala
