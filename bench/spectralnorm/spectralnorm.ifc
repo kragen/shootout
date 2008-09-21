@@ -1,0 +1,111 @@
+! TheComputer Language Benchmarks Game
+!   http://shootout.alioth.debian.org/
+!
+! contributed by Steve Decker based on the version by Simon Geard
+! September 2008, Simon Geard, Added OpenMP directives
+!
+! compilation:
+!   g95 -O1 -fomit-frame-pointer -funroll-loops spectral_norm.f90
+!   ifort -ipo -O3 -openmp spectral_norm.f90
+!   gfortran -O3 -openmp spectral_norm.f90 (not tested)
+
+module norm_subs
+  implicit none
+
+  public :: MultiplyAtAv
+  public :: dp
+
+  private
+  integer, parameter :: dp = selected_real_kind(12)
+
+contains
+
+  ! Multiply v by A
+  pure function MultiplyAv(v) result (Av)
+    real(dp), dimension(:), intent(in) :: v
+    real(dp), dimension(size(v))       :: Av
+    real(dp) :: r
+    integer :: n, i, j
+
+    n = size(v)
+    !$omp parallel do shared(Av, v, n) private(i, j, r)
+    do i = 1, n
+       r = 0.0d0
+       do j = 1, n
+          r = r + A() * v(j)
+       end do
+       Av(i) = r
+    end do
+    !omp end parallel do
+
+  contains
+    pure real(dp) function A
+      ! Return element i,j of infinite matrix A
+      a = 1.d0 / ((i+j-2) * (i+j-1)/2 + i)
+    end function A
+  end function MultiplyAv
+       
+  ! Multiply v by A transpose
+  pure function MultiplyAtv(v) result (Atv)
+    real(dp), dimension(:), intent(in) :: v
+    real(dp), dimension(size(v))       :: Atv
+
+    real(dp) :: r
+    integer :: n, i, j
+
+    n = size(v)
+    Atv = 0.d0
+    !$omp parallel do shared(Atv, v, n) private(i, j, r)
+    do i = 1, n
+       r = 0.0d0
+       do j = 1, n
+          r = r + AT() * v(j)
+       end do
+       Atv(i) = r
+    end do
+    !omp end parallel do
+
+  contains
+    pure real(dp) function AT
+      ! Return element j,i of infinite matrix A
+      AT = 1.d0 / ((i+j-2) * (i+j-1)/2 + j)
+    end function AT
+  end function MultiplyAtv
+
+  ! Multiply v by A and then by A transpose
+  pure function MultiplyAtAv(v) result (AtAv)
+    real(dp), dimension(:), intent(in) :: v
+    real(dp), dimension(size(v))       :: AtAv
+    
+    AtAv = MultiplyAtv(MultiplyAv(v))
+  end function MultiplyAtAv
+end module norm_subs
+
+program spectral_norm
+  use norm_subs
+  implicit none
+
+  real(dp), dimension(:), allocatable :: u, v
+  integer          :: i, n
+  character(len=6) :: argv
+
+  integer, external :: omp_get_num_procs
+
+  ! By default the number of threads should be set to the number of processors
+  ! but the number can be controlled with one of the folowing
+  ! export OMP_NUM_THREADS=4
+  ! call omp_set_num_threads(omp_get_num_procs())
+
+  call get_command_argument(1, argv)
+  read(argv, *) n
+
+  allocate(u(n), v(n))
+  u = 1.d0
+  do i = 1, 10
+     v = MultiplyAtAv(u)
+     u = MultiplyAtAv(v)
+  end do
+
+  write(*, "(f0.9)") sqrt(dot_product(u,v) / dot_product(v,v))
+  deallocate(u, v)
+end program spectral_norm
