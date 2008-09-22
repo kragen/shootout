@@ -1,0 +1,314 @@
+<span class="hl slc">! The Computer Language Shootout Benchmarks</span>
+<span class="hl slc">! http://shootout.alioth.debian.org/</span>
+<span class="hl slc">!</span>
+<span class="hl slc">! $Id: regexdna.1.ifc.code,v 1.1 2008-09-22 18:43:06 igouy-guest Exp $</span>
+<span class="hl slc">!</span>
+<span class="hl slc">! contributed by Steve Decker</span>
+<span class="hl slc">! main program based on the Python version by Dominique Wahli</span>
+<span class="hl slc">! compilation:</span>
+<span class="hl slc">!    g95 -O1 -funroll-loops -fomit-frame-pointer regex.f90</span>
+<span class="hl slc">!    ifort -O3 regex.f90</span>
+
+<span class="hl kwa">module</span> string_mod
+  <span class="hl kwa">implicit none</span>
+
+  <span class="hl kwa">interface</span> indx
+     <span class="hl kwa">module</span> procedure indexC
+     <span class="hl kwa">module</span> procedure indexArr
+  <span class="hl kwa">end interface</span>
+
+<span class="hl kwa">contains</span>
+
+  pure <span class="hl kwa">function</span> <span class="hl kwd">tolower</span><span class="hl sym">(</span>line<span class="hl sym">)</span>
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=*),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> line
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span><span class="hl kwd">len</span><span class="hl sym">(</span>line<span class="hl sym">)) ::</span> tolower
+
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span><span class="hl num">122</span><span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> Table <span class="hl sym">=</span> <span class="hl kwd">repeat</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> <span class="hl num">61</span><span class="hl sym">) //  &amp;</span>
+         <span class="hl str">&quot;&gt;  abcdefghijklmnopqrstuvwxyz&quot;</span> <span class="hl sym">//</span> <span class="hl kwd">repeat</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) //  &amp;</span>
+         <span class="hl str">&quot;abcdefghijklmnopqrstuvwxyz&quot;</span>
+
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> i
+
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl kwd">len</span><span class="hl sym">(</span>line<span class="hl sym">)</span>
+       <span class="hl kwd">tolower</span><span class="hl sym">(</span>i<span class="hl sym">:</span>i<span class="hl sym">) =</span> <span class="hl kwd">Table</span><span class="hl sym">(</span><span class="hl kwd">iachar</span><span class="hl sym">(</span><span class="hl kwd">line</span><span class="hl sym">(</span>i<span class="hl sym">:</span>i<span class="hl sym">)):</span><span class="hl kwd">iachar</span><span class="hl sym">(</span><span class="hl kwd">line</span><span class="hl sym">(</span>i<span class="hl sym">:</span>i<span class="hl sym">)))</span>
+    <span class="hl kwa">end do</span>
+  <span class="hl kwa">end function</span> tolower
+
+  pure <span class="hl kwb">integer</span> <span class="hl kwa">function</span> <span class="hl kwd">indexC</span><span class="hl sym">(</span>string<span class="hl sym">,</span> <span class="hl kwa">find</span><span class="hl sym">)</span>
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> string
+    <span class="hl kwb">character</span><span class="hl sym">,</span>               <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> <span class="hl kwa">find</span>
+
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> i
+
+    indexC <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl kwd">size</span><span class="hl sym">(</span>string<span class="hl sym">)</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">string</span><span class="hl sym">(</span>i<span class="hl sym">) ==</span> <span class="hl kwa">find</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+          indexC <span class="hl sym">=</span> i
+          exit
+       <span class="hl kwa">end if</span>
+    <span class="hl kwa">end do</span>
+  <span class="hl kwa">end function</span> indexC
+
+  <span class="hl slc">! The Boyer-Moore method</span>
+  pure <span class="hl kwb">integer</span> <span class="hl kwa">function</span> <span class="hl kwd">indexArr</span><span class="hl sym">(</span>y<span class="hl sym">,</span> x<span class="hl sym">)</span>
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> y<span class="hl sym">,</span> x
+
+    <span class="hl kwb">integer</span><span class="hl sym">,</span>   <span class="hl kwa">dimension</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">:</span><span class="hl num">127</span><span class="hl sym">)   ::</span> bmbc
+    <span class="hl kwb">integer</span><span class="hl sym">,</span>   <span class="hl kwa">dimension</span><span class="hl sym">(</span><span class="hl kwd">size</span><span class="hl sym">(</span>x<span class="hl sym">)) ::</span> bmgs
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(</span><span class="hl kwd">size</span><span class="hl sym">(</span>x<span class="hl sym">)) ::</span> string
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> ysize<span class="hl sym">,</span> xsize<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> k
+
+    ysize <span class="hl sym">=</span> <span class="hl kwd">size</span><span class="hl sym">(</span>y<span class="hl sym">)</span>
+    xsize <span class="hl sym">=</span> <span class="hl kwd">size</span><span class="hl sym">(</span>x<span class="hl sym">)</span>
+
+    bmbc <span class="hl sym">=</span> xsize
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> xsize<span class="hl sym">-</span><span class="hl num">1</span>
+       <span class="hl kwd">bmbc</span><span class="hl sym">(</span><span class="hl kwd">iachar</span><span class="hl sym">(</span><span class="hl kwd">x</span><span class="hl sym">(</span>i<span class="hl sym">))) =</span> xsize <span class="hl sym">-</span> i
+    <span class="hl kwa">end do</span>
+
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> xsize
+       <span class="hl kwa">do</span> j <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> i
+          <span class="hl kwd">string</span><span class="hl sym">(</span>j<span class="hl sym">) =</span> <span class="hl kwd">x</span><span class="hl sym">(</span>xsize<span class="hl sym">-</span>i<span class="hl sym">+</span>j<span class="hl sym">)</span>
+       <span class="hl kwa">end do</span>
+       <span class="hl kwa">do</span> j <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> xsize
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>j <span class="hl sym">==</span> xsize<span class="hl sym">)</span> exit
+          k <span class="hl sym">=</span> i <span class="hl sym">+</span> j <span class="hl sym">-</span> <span class="hl num">1</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>xsize<span class="hl sym">-</span>k <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+             <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">string</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) ==</span> <span class="hl kwd">x</span><span class="hl sym">(</span>xsize<span class="hl sym">-</span>k<span class="hl sym">))</span> cycle
+          <span class="hl kwa">end if</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">all</span><span class="hl sym">(</span><span class="hl kwd">string</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">+</span><span class="hl kwd">max</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>k<span class="hl sym">-</span>xsize<span class="hl sym">):</span>i<span class="hl sym">) ==</span> <span class="hl kwd">x</span><span class="hl sym">(</span><span class="hl kwd">max</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span>xsize<span class="hl sym">-</span>k<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">):</span>xsize<span class="hl sym">-</span>j<span class="hl sym">)))</span> exit
+       <span class="hl kwa">end do</span>
+       <span class="hl kwd">bmgs</span><span class="hl sym">(</span>xsize<span class="hl sym">-</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) =</span> j
+    <span class="hl kwa">end do</span>
+
+    indexArr <span class="hl sym">=</span> <span class="hl num">0</span>
+    j <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl kwa">do</span>
+       <span class="hl kwa">do</span> i <span class="hl sym">=</span> xsize<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">, -</span><span class="hl num">1</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">x</span><span class="hl sym">(</span>i<span class="hl sym">) /=</span> <span class="hl kwd">y</span><span class="hl sym">(</span>i<span class="hl sym">+</span>j<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span> exit
+       <span class="hl kwa">end do</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+          indexArr <span class="hl sym">=</span> j
+          exit
+       <span class="hl kwa">end if</span>
+       j <span class="hl sym">=</span> j <span class="hl sym">+</span> <span class="hl kwd">max</span><span class="hl sym">(</span><span class="hl kwd">bmgs</span><span class="hl sym">(</span>i<span class="hl sym">),</span> <span class="hl kwd">bmbc</span><span class="hl sym">(</span><span class="hl kwd">iachar</span><span class="hl sym">(</span><span class="hl kwd">y</span><span class="hl sym">(</span>i<span class="hl sym">+</span>j<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))) -</span> xsize <span class="hl sym">+</span> i<span class="hl sym">)</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>j <span class="hl sym">&gt;</span> ysize <span class="hl sym">-</span> xsize <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> exit
+    <span class="hl kwa">end do</span>
+  <span class="hl kwa">end function</span> indexArr
+<span class="hl kwa">end module</span> string_mod
+
+<span class="hl kwa">module</span> regex_subs
+  <span class="hl kwa">use</span> string_mod
+  <span class="hl kwa">implicit none</span>
+
+  <span class="hl kwb">integer</span><span class="hl sym">,</span>   <span class="hl kwa">parameter</span> <span class="hl sym">::</span> MaxCharLen <span class="hl sym">=</span> <span class="hl num">8</span>
+  <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> NewLine <span class="hl sym">=</span> <span class="hl kwd">achar</span><span class="hl sym">(</span><span class="hl num">10</span><span class="hl sym">)</span>
+
+<span class="hl kwa">contains</span>
+
+  pure <span class="hl kwa">subroutine</span> <span class="hl kwd">sub</span><span class="hl sym">(</span>pattern<span class="hl sym">,</span> replacement<span class="hl sym">,</span> string<span class="hl sym">,</span> length<span class="hl sym">)</span>
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=*),</span>        <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">)    ::</span> pattern<span class="hl sym">,</span> replacement
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>inout<span class="hl sym">) ::</span> string
+    <span class="hl kwb">integer</span><span class="hl sym">,</span>                 <span class="hl kwd">intent</span><span class="hl sym">(</span>inout<span class="hl sym">) ::</span> length
+
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=*),</span>        <span class="hl kwa">parameter</span> <span class="hl sym">::</span> Separator <span class="hl sym">=</span> <span class="hl str">&quot;|&quot;</span><span class="hl sym">,</span> Star <span class="hl sym">=</span> <span class="hl str">&quot;.*&quot;</span>
+
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> allocatable <span class="hl sym">::</span> rep<span class="hl sym">,</span> p1a<span class="hl sym">,</span> p2a
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) ::</span> null
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> head<span class="hl sym">,</span> tail<span class="hl sym">,</span> pos<span class="hl sym">,</span> ind1<span class="hl sym">,</span> ind2
+    <span class="hl kwb">logical</span> <span class="hl sym">::</span> done
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span>MaxCharLen<span class="hl sym">) ::</span> p1<span class="hl sym">,</span> p2
+
+    head <span class="hl sym">=</span> <span class="hl num">1</span>
+    done <span class="hl sym">= .</span>false<span class="hl sym">.</span>
+    p1 <span class="hl sym">=</span> <span class="hl kwd">repeat</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> MaxCharLen<span class="hl sym">)</span>
+    p2 <span class="hl sym">=</span> <span class="hl kwd">repeat</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> MaxCharLen<span class="hl sym">)</span>
+    <span class="hl kwa">do</span>
+       tail <span class="hl sym">=</span> <span class="hl kwd">index</span><span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:),</span> Separator<span class="hl sym">) -</span> <span class="hl num">1</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>tail <span class="hl sym">== -</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+          tail <span class="hl sym">=</span> <span class="hl kwd">len</span><span class="hl sym">(</span>pattern<span class="hl sym">)</span>
+          done <span class="hl sym">= .</span>true<span class="hl sym">.</span>
+       <span class="hl kwa">end if</span>
+       pos <span class="hl sym">=</span> <span class="hl kwd">index</span><span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:</span>tail<span class="hl sym">),</span> Star<span class="hl sym">) -</span> <span class="hl num">1</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>pos <span class="hl sym">== -</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:</span>tail<span class="hl sym">) ==</span> <span class="hl str">&quot;(\n)&quot;</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+             <span class="hl kwa">call</span> <span class="hl kwd">find_replace_all</span><span class="hl sym">(</span>string<span class="hl sym">,</span> length<span class="hl sym">,</span> NewLine<span class="hl sym">,</span> null<span class="hl sym">)</span>
+          <span class="hl kwa">else</span>
+             <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">rep</span><span class="hl sym">(</span><span class="hl kwd">len_trim</span><span class="hl sym">(</span>replacement<span class="hl sym">)))</span>
+             rep <span class="hl sym">=</span> <span class="hl kwd">transfer</span><span class="hl sym">(</span><span class="hl kwd">trim</span><span class="hl sym">(</span>replacement<span class="hl sym">),</span> rep<span class="hl sym">)</span>
+             <span class="hl kwa">call</span> <span class="hl kwd">find_replace_all</span><span class="hl sym">(</span>string<span class="hl sym">,</span> length<span class="hl sym">,</span> <span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:</span>head<span class="hl sym">),</span> rep<span class="hl sym">)</span>
+             <span class="hl kwd">deallocate</span><span class="hl sym">(</span>rep<span class="hl sym">)</span>
+          <span class="hl kwa">end if</span>
+       <span class="hl kwa">else</span>
+          <span class="hl kwa">call</span> <span class="hl kwd">process_star</span><span class="hl sym">(</span>p1<span class="hl sym">,</span> head<span class="hl sym">,</span> pos<span class="hl sym">)</span>
+          <span class="hl kwa">call</span> <span class="hl kwd">process_star</span><span class="hl sym">(</span>p2<span class="hl sym">,</span> pos<span class="hl sym">+</span><span class="hl kwd">len</span><span class="hl sym">(</span>Star<span class="hl sym">)+</span><span class="hl num">1</span><span class="hl sym">,</span> tail<span class="hl sym">)</span>
+          <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">p1a</span><span class="hl sym">(</span><span class="hl kwd">len_trim</span><span class="hl sym">(</span>p1<span class="hl sym">)),</span> <span class="hl kwd">p2a</span><span class="hl sym">(</span><span class="hl kwd">len_trim</span><span class="hl sym">(</span>p2<span class="hl sym">)))</span>
+          p1a <span class="hl sym">=</span> <span class="hl kwd">transfer</span><span class="hl sym">(</span><span class="hl kwd">trim</span><span class="hl sym">(</span>p1<span class="hl sym">),</span> p1a<span class="hl sym">)</span>
+          p2a <span class="hl sym">=</span> <span class="hl kwd">transfer</span><span class="hl sym">(</span><span class="hl kwd">trim</span><span class="hl sym">(</span>p2<span class="hl sym">),</span> p2a<span class="hl sym">)</span>
+          <span class="hl kwa">do</span>
+             ind1 <span class="hl sym">=</span> <span class="hl kwd">indx</span><span class="hl sym">(</span><span class="hl kwd">string</span><span class="hl sym">(:</span>length<span class="hl sym">),</span> p1a<span class="hl sym">)</span>
+             <span class="hl kwa">if</span> <span class="hl sym">(</span>ind1 <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span> exit
+             ind2 <span class="hl sym">=</span> <span class="hl kwd">indx</span><span class="hl sym">(</span><span class="hl kwd">string</span><span class="hl sym">(</span>ind1<span class="hl sym">:</span>length<span class="hl sym">),</span> p2a<span class="hl sym">) +</span> ind1
+             <span class="hl kwa">if</span> <span class="hl sym">(</span>ind2 <span class="hl sym">==</span> ind1<span class="hl sym">)</span> exit
+             <span class="hl kwd">string</span><span class="hl sym">(</span>ind1<span class="hl sym">:</span>length<span class="hl sym">) =</span> <span class="hl kwd">string</span><span class="hl sym">(</span>ind2<span class="hl sym">:</span>ind2<span class="hl sym">+</span>length<span class="hl sym">-</span>ind1<span class="hl sym">)</span>
+             length <span class="hl sym">=</span> length <span class="hl sym">- (</span>ind2<span class="hl sym">-</span>ind1<span class="hl sym">)</span>
+          <span class="hl kwa">end do</span>
+       <span class="hl kwa">end if</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>done<span class="hl sym">)</span> exit
+       head <span class="hl sym">=</span> tail <span class="hl sym">+</span> <span class="hl num">2</span>
+    <span class="hl kwa">end do</span>
+
+  <span class="hl kwa">contains</span>
+
+    pure <span class="hl kwa">subroutine</span> <span class="hl kwd">process_star</span><span class="hl sym">(</span>p<span class="hl sym">,</span> a<span class="hl sym">,</span> b<span class="hl sym">)</span>
+      <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=*),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>inout<span class="hl sym">) ::</span> p
+      <span class="hl kwb">integer</span><span class="hl sym">,</span>          <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">)    ::</span> a<span class="hl sym">,</span> b
+
+      <span class="hl kwb">integer</span> <span class="hl sym">::</span> i<span class="hl sym">,</span> j
+
+      j <span class="hl sym">=</span> <span class="hl num">1</span>
+      <span class="hl kwa">do</span> i <span class="hl sym">=</span> a<span class="hl sym">,</span> b
+         <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>i<span class="hl sym">:</span>i<span class="hl sym">) /=</span> <span class="hl str">&quot;(&quot;</span> <span class="hl sym">.</span>and<span class="hl sym">.</span> <span class="hl kwd">pattern</span><span class="hl sym">(</span>i<span class="hl sym">:</span>i<span class="hl sym">) /=</span> <span class="hl str">&quot;)&quot;</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+            <span class="hl kwd">p</span><span class="hl sym">(</span>j<span class="hl sym">:</span>j<span class="hl sym">) =</span> <span class="hl kwd">pattern</span><span class="hl sym">(</span>i<span class="hl sym">:</span>i<span class="hl sym">)</span>
+            j <span class="hl sym">=</span> j <span class="hl sym">+</span> <span class="hl num">1</span>
+         <span class="hl kwa">end if</span>
+      <span class="hl kwa">end do</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>p <span class="hl sym">==</span> <span class="hl str">&quot;\n&quot;</span><span class="hl sym">)</span> p <span class="hl sym">=</span> NewLine
+    <span class="hl kwa">end subroutine</span> process_star
+  <span class="hl kwa">end subroutine</span> sub
+
+  pure <span class="hl kwb">integer</span> <span class="hl kwa">function</span> <span class="hl kwd">num_matches</span><span class="hl sym">(</span>pattern<span class="hl sym">,</span> string<span class="hl sym">,</span> length<span class="hl sym">)</span>
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=*),</span>        <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> pattern
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> string
+    <span class="hl kwb">integer</span><span class="hl sym">,</span>                 <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> length
+
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=*),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> Separator <span class="hl sym">=</span> <span class="hl str">&quot;|&quot;</span>
+
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> allocatable <span class="hl sym">::</span> findArr
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> head<span class="hl sym">,</span> tail<span class="hl sym">,</span> lb<span class="hl sym">,</span> rb<span class="hl sym">,</span> i<span class="hl sym">,</span> ind1<span class="hl sym">,</span> ind2
+    <span class="hl kwb">logical</span> <span class="hl sym">::</span> done
+    <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span>MaxCharLen<span class="hl sym">) ::</span> finds
+
+    num_matches <span class="hl sym">=</span> <span class="hl num">0</span>
+    head <span class="hl sym">=</span> <span class="hl num">1</span>
+    done <span class="hl sym">= .</span>false<span class="hl sym">.</span>
+    <span class="hl kwa">do</span>
+       tail <span class="hl sym">=</span> <span class="hl kwd">index</span><span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:),</span> Separator<span class="hl sym">) -</span> <span class="hl num">1</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>tail <span class="hl sym">== -</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+          tail <span class="hl sym">=</span> <span class="hl kwd">len</span><span class="hl sym">(</span>pattern<span class="hl sym">)</span>
+          done <span class="hl sym">= .</span>true<span class="hl sym">.</span>
+       <span class="hl kwa">end if</span>
+       lb <span class="hl sym">=</span> <span class="hl kwd">index</span><span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:</span>tail<span class="hl sym">),</span> <span class="hl str">&quot;[&quot;</span><span class="hl sym">)</span>
+       rb <span class="hl sym">=</span> <span class="hl kwd">index</span><span class="hl sym">(</span><span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:</span>tail<span class="hl sym">),</span> <span class="hl str">&quot;]&quot;</span><span class="hl sym">)</span>
+       <span class="hl kwd">finds</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">:</span>lb<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) =</span> <span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">:</span>head<span class="hl sym">+</span>lb<span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">)</span>
+       <span class="hl kwd">finds</span><span class="hl sym">(</span>lb<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">:) =</span> <span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">+</span>rb<span class="hl sym">:</span>tail<span class="hl sym">)</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>lb <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span> rb <span class="hl sym">=</span> <span class="hl num">2</span>
+       <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> rb<span class="hl sym">-</span>lb<span class="hl sym">-</span><span class="hl num">1</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>lb <span class="hl sym">/=</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwd">finds</span><span class="hl sym">(</span>lb<span class="hl sym">:</span>lb<span class="hl sym">) =</span> <span class="hl kwd">pattern</span><span class="hl sym">(</span>head<span class="hl sym">+</span>lb<span class="hl sym">+</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">:</span>head<span class="hl sym">+</span>lb<span class="hl sym">+</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+          <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">findArr</span><span class="hl sym">(</span><span class="hl kwd">len_trim</span><span class="hl sym">(</span>finds<span class="hl sym">)))</span>
+          findArr <span class="hl sym">=</span> <span class="hl kwd">transfer</span><span class="hl sym">(</span><span class="hl kwd">finds</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">:</span><span class="hl kwd">len_trim</span><span class="hl sym">(</span>finds<span class="hl sym">)),</span> findArr<span class="hl sym">)</span>
+          ind1 <span class="hl sym">=</span> <span class="hl num">1</span>
+          <span class="hl kwa">do</span>
+             ind2 <span class="hl sym">=</span> <span class="hl kwd">indx</span><span class="hl sym">(</span><span class="hl kwd">string</span><span class="hl sym">(</span>ind1<span class="hl sym">:</span>length<span class="hl sym">),</span> findArr<span class="hl sym">)</span>
+             <span class="hl kwa">if</span> <span class="hl sym">(</span>ind2 <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span> exit
+             num_matches <span class="hl sym">=</span> num_matches <span class="hl sym">+</span> <span class="hl num">1</span>
+             ind1 <span class="hl sym">=</span> ind1 <span class="hl sym">+</span> ind2
+          <span class="hl kwa">end do</span>
+          <span class="hl kwd">deallocate</span><span class="hl sym">(</span>findArr<span class="hl sym">)</span>
+       <span class="hl kwa">end do</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>done<span class="hl sym">)</span> exit
+       head <span class="hl sym">=</span> tail <span class="hl sym">+</span> <span class="hl num">2</span>
+    <span class="hl kwa">end do</span>
+  <span class="hl kwa">end function</span> num_matches
+
+  pure <span class="hl kwa">subroutine</span> <span class="hl kwd">find_replace_all</span><span class="hl sym">(</span>string<span class="hl sym">,</span> length<span class="hl sym">,</span> <span class="hl kwa">find</span><span class="hl sym">,</span> rep<span class="hl sym">)</span>
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>inout<span class="hl sym">) ::</span> string
+    <span class="hl kwb">integer</span><span class="hl sym">,</span>                 <span class="hl kwd">intent</span><span class="hl sym">(</span>inout<span class="hl sym">) ::</span> length
+    <span class="hl kwb">character</span><span class="hl sym">,</span>               <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">)    ::</span> <span class="hl kwa">find</span>
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">)    ::</span> rep
+
+    <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(</span><span class="hl kwd">size</span><span class="hl sym">(</span>string<span class="hl sym">)) ::</span> orig
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> lenrep<span class="hl sym">,</span> sprev<span class="hl sym">,</span> oprev<span class="hl sym">,</span> ocur<span class="hl sym">,</span> scur
+
+    lenrep <span class="hl sym">=</span> <span class="hl kwd">size</span><span class="hl sym">(</span>rep<span class="hl sym">)</span>
+    sprev <span class="hl sym">=</span> <span class="hl num">0</span>
+    oprev <span class="hl sym">=</span> <span class="hl num">1</span>
+    orig <span class="hl sym">=</span> string
+    <span class="hl kwa">do</span>
+       ocur <span class="hl sym">=</span> <span class="hl kwd">indx</span><span class="hl sym">(</span><span class="hl kwd">orig</span><span class="hl sym">(</span>oprev<span class="hl sym">:</span>length<span class="hl sym">),</span> <span class="hl kwa">find</span><span class="hl sym">) +</span> oprev <span class="hl sym">-</span> <span class="hl num">1</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>ocur <span class="hl sym">==</span> oprev <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> exit
+       scur <span class="hl sym">=</span> sprev <span class="hl sym">+</span> ocur <span class="hl sym">-</span> oprev
+       <span class="hl kwd">string</span><span class="hl sym">(</span>sprev<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">:</span>scur<span class="hl sym">) =</span> <span class="hl kwd">orig</span><span class="hl sym">(</span>oprev<span class="hl sym">:</span>ocur<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+       sprev <span class="hl sym">=</span> scur <span class="hl sym">+</span> lenrep
+       <span class="hl kwd">string</span><span class="hl sym">(</span>scur<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">:</span>sprev<span class="hl sym">) =</span> rep
+       oprev <span class="hl sym">=</span> ocur <span class="hl sym">+</span> <span class="hl num">1</span>
+    <span class="hl kwa">end do</span>
+    ocur <span class="hl sym">=</span> length <span class="hl sym">+</span> <span class="hl num">1</span>
+    scur <span class="hl sym">=</span> sprev <span class="hl sym">+</span> ocur <span class="hl sym">-</span> oprev
+    <span class="hl kwd">string</span><span class="hl sym">(</span>sprev<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">:</span>scur<span class="hl sym">) =</span> <span class="hl kwd">orig</span><span class="hl sym">(</span>oprev<span class="hl sym">:</span>ocur<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+    length <span class="hl sym">=</span> scur
+  <span class="hl kwa">end subroutine</span> find_replace_all
+<span class="hl kwa">end module</span> regex_subs
+
+<span class="hl kwa">program</span> regex
+  <span class="hl kwa">use</span> regex_subs
+  <span class="hl kwa">implicit none</span>
+
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> NumVariants <span class="hl sym">=</span> <span class="hl num">9</span><span class="hl sym">,</span> NumSubsts <span class="hl sym">=</span> <span class="hl num">11</span><span class="hl sym">,</span> InitBufSize <span class="hl sym">=</span> <span class="hl num">53248</span><span class="hl sym">,</span> LineLen <span class="hl sym">=</span> <span class="hl num">60</span>
+  <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span><span class="hl num">25</span><span class="hl sym">),</span> <span class="hl kwa">dimension</span><span class="hl sym">(</span>NumVariants<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> Variants <span class="hl sym">= (/  &amp;</span>
+       <span class="hl str">&quot;agggtaaa|tttaccct        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span> <span class="hl sym">/)</span>
+  <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span><span class="hl num">9</span><span class="hl sym">),</span> <span class="hl kwa">dimension</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span>NumSubsts<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> Subst <span class="hl sym">=</span> <span class="hl kwd">reshape</span><span class="hl sym">( (/  &amp;</span>
+       <span class="hl str">&quot;b        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)  &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;d        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)  &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;h        &quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;(a|c|t)  &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;k        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)    &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;m        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)    &quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;n        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;r        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)    &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;s        &quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;(c|g)    &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;v        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)  &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;w        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)    &quot;</span><span class="hl sym">,  &amp;</span>
+       <span class="hl str">&quot;y        &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)    &quot;</span> <span class="hl sym">/), (/</span> <span class="hl num">2</span><span class="hl sym">,</span> NumSubsts <span class="hl sym">/) )</span>
+
+  <span class="hl kwb">character</span><span class="hl sym">,</span> <span class="hl kwa">dimension</span><span class="hl sym">(:),</span> allocatable <span class="hl sym">::</span> seq<span class="hl sym">,</span> temp
+  <span class="hl kwb">integer</span>                <span class="hl sym">::</span> stat<span class="hl sym">,</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> ilen<span class="hl sym">,</span> clen
+  <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span>LineLen<span class="hl sym">) ::</span> line
+
+  <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">seq</span><span class="hl sym">(</span>InitBufSize<span class="hl sym">))</span>
+  seq <span class="hl sym">=</span> <span class="hl str">&quot; &quot;</span>
+  <span class="hl kwa">do</span>
+     i <span class="hl sym">=</span> j <span class="hl sym">+</span> <span class="hl num">1</span>
+     <span class="hl kwa">read</span> <span class="hl sym">(*,</span> <span class="hl str">&quot;(a)&quot;</span><span class="hl sym">,</span> iostat<span class="hl sym">=</span>stat<span class="hl sym">)</span> line
+     <span class="hl kwa">if</span> <span class="hl sym">(</span>stat <span class="hl sym">/=</span> <span class="hl num">0</span><span class="hl sym">)</span> exit
+     j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl kwd">len_trim</span><span class="hl sym">(</span>line<span class="hl sym">)</span>
+     <span class="hl kwa">if</span> <span class="hl sym">(</span>j <span class="hl sym">&gt;</span> <span class="hl kwd">size</span><span class="hl sym">(</span>seq<span class="hl sym">))</span> <span class="hl kwa">then</span>
+        <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">temp</span><span class="hl sym">(</span><span class="hl kwd">size</span><span class="hl sym">(</span>seq<span class="hl sym">)))</span>
+        temp <span class="hl sym">=</span> seq
+        <span class="hl kwd">deallocate</span><span class="hl sym">(</span>seq<span class="hl sym">)</span>
+        <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">seq</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">*</span><span class="hl kwd">size</span><span class="hl sym">(</span>temp<span class="hl sym">)))</span>
+        <span class="hl kwd">seq</span><span class="hl sym">(:</span><span class="hl kwd">size</span><span class="hl sym">(</span>temp<span class="hl sym">)) =</span> temp
+        <span class="hl kwd">seq</span><span class="hl sym">(</span><span class="hl kwd">size</span><span class="hl sym">(</span>temp<span class="hl sym">)+</span><span class="hl num">1</span><span class="hl sym">:) =</span> <span class="hl str">&quot; &quot;</span>
+        <span class="hl kwd">deallocate</span><span class="hl sym">(</span>temp<span class="hl sym">)</span>
+     <span class="hl kwa">end if</span>
+     <span class="hl kwd">seq</span><span class="hl sym">(</span>i<span class="hl sym">:</span>j<span class="hl sym">) =</span> <span class="hl kwd">transfer</span><span class="hl sym">(</span><span class="hl kwd">trim</span><span class="hl sym">(</span><span class="hl kwd">tolower</span><span class="hl sym">(</span>line<span class="hl sym">))//</span>NewLine<span class="hl sym">,</span> seq<span class="hl sym">)</span>
+  <span class="hl kwa">end do</span>
+  <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">temp</span><span class="hl sym">(</span><span class="hl kwd">nint</span><span class="hl sym">(</span><span class="hl num">1.35</span><span class="hl sym">*</span>j<span class="hl sym">)))</span>
+  <span class="hl kwd">temp</span><span class="hl sym">(:</span>j<span class="hl sym">) =</span> <span class="hl kwd">seq</span><span class="hl sym">(:</span>j<span class="hl sym">)</span>
+  <span class="hl kwd">temp</span><span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">:) =</span> <span class="hl str">&quot; &quot;</span>
+  <span class="hl kwd">deallocate</span><span class="hl sym">(</span>seq<span class="hl sym">)</span>
+  <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">seq</span><span class="hl sym">(</span><span class="hl kwd">size</span><span class="hl sym">(</span>temp<span class="hl sym">)))</span>
+  seq <span class="hl sym">=</span> temp
+  <span class="hl kwd">deallocate</span><span class="hl sym">(</span>temp<span class="hl sym">)</span>
+  ilen <span class="hl sym">=</span> j
+
+  <span class="hl kwa">call</span> <span class="hl kwd">sub</span><span class="hl sym">(</span><span class="hl str">&quot;(&gt;.*\n)|(\n)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">,</span> seq<span class="hl sym">,</span> j<span class="hl sym">)</span>
+  clen <span class="hl sym">=</span> j
+
+  <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> NumVariants
+     <span class="hl kwa">write</span> <span class="hl sym">(*,</span> <span class="hl str">&quot;(a,1x,i0)&quot;</span><span class="hl sym">)</span> <span class="hl kwd">trim</span><span class="hl sym">(</span><span class="hl kwd">Variants</span><span class="hl sym">(</span>i<span class="hl sym">)),</span> <span class="hl kwd">num_matches</span><span class="hl sym">(</span><span class="hl kwd">trim</span><span class="hl sym">(</span><span class="hl kwd">Variants</span><span class="hl sym">(</span>i<span class="hl sym">)),</span> seq<span class="hl sym">,</span> j<span class="hl sym">)</span>
+  <span class="hl kwa">end do</span>
+
+  <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> NumSubsts
+     <span class="hl kwa">call</span> <span class="hl kwd">sub</span><span class="hl sym">(</span><span class="hl kwd">Subst</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span>i<span class="hl sym">),</span> <span class="hl kwd">Subst</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span>i<span class="hl sym">),</span> seq<span class="hl sym">,</span> j<span class="hl sym">)</span>
+  <span class="hl kwa">end do</span>
+
+  <span class="hl kwa">write</span> <span class="hl sym">(*,</span> <span class="hl str">'(3(/i0))'</span><span class="hl sym">)</span> ilen<span class="hl sym">,</span> clen<span class="hl sym">,</span> j
+<span class="hl kwa">end program</span> regex
