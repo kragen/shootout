@@ -1,0 +1,107 @@
+<span class="hl com">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hl com">{-# OPTIONS -O2 -funbox-strict-fields -fvia-C -optc-O2 -fexcess-precision #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Spencer Janssen, Trevor McCort, Christophe Poucet and Don Stewart</span>
+<span class="hl slc">-- Parallelised by Tim Newsham</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Must be compiled with the -fexcess-precision flag as a pragma. GHC</span>
+<span class="hl slc">-- currently doesn't recognise the -fexcess-precision flag on the command</span>
+<span class="hl slc">-- line (!).</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The following flags are suggested when compiling:</span>
+<span class="hl slc">--</span>
+<span class="hl slc">--      ghc -optc-march=pentium4 -optc-mfpmath=sse -optc-msse2 -threaded --make</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Run with -N6 on a quad core (more capabilities to hide latency)</span>
+<span class="hl slc">--</span>
+<span class="hl slc">--      $ time ./A 6400 +RTS -N6</span>
+<span class="hl slc">--</span>
+
+<span class="hl kwa">import</span> System
+<span class="hl kwa">import</span> System.IO
+<span class="hl kwa">import</span> Foreign
+<span class="hl kwa">import</span> Foreign.Marshal.Array
+<span class="hl kwa">import</span> Control.Concurrent
+<span class="hl kwa">import</span> Control.Concurrent.MVar
+<span class="hl kwa">import</span> Control.Concurrent.Chan
+<span class="hl kwa">import</span> Control.Monad
+
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl slc">-- width in pixels</span>
+    w <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
+        <span class="hl slc">-- width in bytes</span>
+    <span class="hl kwa">let</span> n      <span class="hl sym">=</span> w `div` <span class="hl num">8</span>
+        <span class="hl slc">-- width of a pixel in the complex plane</span>
+        m  <span class="hl sym">=</span> <span class="hl num">2</span> <span class="hl sym">/</span> fromIntegral w
+        coords <span class="hl sym">= [</span>T <span class="hl num">1 0</span> y <span class="hl sym">(</span>fromIntegral y <span class="hl sym">*</span> m <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) |</span> y <span class="hl sym">&lt;- [</span><span class="hl num">0</span>..w<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]]</span>
+    q <span class="hl sym">&lt;-</span> newChan
+    replies <span class="hl sym">&lt;-</span> replicateM w newEmptyMVar
+    mapM_ <span class="hl sym">(</span>writeChan q<span class="hl sym">)</span> $ zip coords replies
+    replicateM_ <span class="hl num">4</span> . forkIO $ worker q w m n
+
+    putStrLn <span class="hl sym">(</span><span class="hl str">&quot;P4\n&quot;</span><span class="hl sym">++</span>show w<span class="hl sym">++</span><span class="hl str">&quot; &quot;</span><span class="hl sym">++</span>show w<span class="hl sym">)</span>
+    mapM_ <span class="hl sym">(</span>takeMVar <span class="hl sym">&gt;=&gt;</span> \b <span class="hl sym">-&gt;</span> hPutBuf stdout b n<span class="hl sym">)</span> replies
+
+<span class="hl slc">-- Worker computes one line of the image and sends it to the master</span>
+<span class="hl slc">-- q - work queue</span>
+<span class="hl slc">-- w - width in pixels</span>
+<span class="hl slc">-- m - width of a pixel in the complex plane</span>
+<span class="hl slc">-- n - width in bytes</span>
+worker q w m n <span class="hl sym">=</span> forever <span class="hl sym">(</span><span class="hl kwa">do</span>
+    <span class="hl sym">(</span>coord<span class="hl sym">,</span> reply<span class="hl sym">) &lt;-</span> readChan q
+    p <span class="hl sym">&lt;-</span> mallocArray0 n
+    unfold <span class="hl sym">(</span>next_x w m n<span class="hl sym">)</span> p coord
+    putMVar reply p<span class="hl sym">)</span>
+
+<span class="hl slc">-- f - takes coordinates and returns Nothing if done</span>
+<span class="hl slc">--     or the next byte of the bitmap otherwise.</span>
+<span class="hl slc">-- ptr - buffer to write to</span>
+<span class="hl slc">-- x0 - initial coordinates</span>
+unfold <span class="hl sym">:: (</span>T <span class="hl sym">-&gt;</span> Maybe <span class="hl sym">(</span>Word8<span class="hl sym">,</span>T<span class="hl sym">)) -&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> T <span class="hl sym">-&gt;</span> IO <span class="hl sym">(</span>Ptr Word8<span class="hl sym">)</span>
+unfold <span class="hl sym">!</span>f <span class="hl sym">!</span>ptr <span class="hl sym">!</span>x0 <span class="hl sym">=</span> go ptr x0
+  <span class="hl kwa">where</span>
+    <span class="hl slc">-- p - pointer into the buffer</span>
+    <span class="hl slc">-- x - coordinates</span>
+    go <span class="hl sym">!</span>p <span class="hl sym">!</span>x <span class="hl sym">=</span> <span class="hl kwa">case</span> f x <span class="hl kwa">of</span>
+        Just <span class="hl sym">(</span>w<span class="hl sym">,</span>y<span class="hl sym">)          -&gt;</span> poke p w <span class="hl sym">&gt;&gt;</span> go <span class="hl sym">(</span>p `plusPtr` <span class="hl num">1</span><span class="hl sym">)</span> y
+        Nothing             <span class="hl sym">-&gt;</span> return ptr
+
+<span class="hl slc">-- T bs x y ci</span>
+<span class="hl slc">--    bx - x position in bytes</span>
+<span class="hl slc">--    x  - x position in pixels</span>
+<span class="hl slc">--    y  - y position in pixels</span>
+<span class="hl slc">--    ci - y position in complex plane</span>
+<span class="hl kwa">data</span> T <span class="hl sym">=</span> T <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!</span><span class="hl kwb">Int</span> <span class="hl sym">!</span><span class="hl kwb">Double</span>
+
+<span class="hl slc">-- w - image width in pixels</span>
+<span class="hl slc">-- iw - pixel width in the complex plane</span>
+<span class="hl slc">-- bw - image width in bytes</span>
+next_x <span class="hl sym">!</span>w <span class="hl sym">!</span>iw <span class="hl sym">!</span>bw <span class="hl sym">(</span>T bx x y ci<span class="hl sym">)</span>
+    <span class="hl sym">|</span> bx <span class="hl sym">==</span> bw  <span class="hl sym">=</span> Nothing
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> Just <span class="hl sym">(</span>loop_x w x <span class="hl num">8</span> iw ci <span class="hl num">0</span><span class="hl sym">,</span> T <span class="hl sym">(</span>bx<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>x<span class="hl sym">+</span><span class="hl num">8</span><span class="hl sym">)</span> y ci<span class="hl sym">)</span>
+
+<span class="hl slc">-- w - image width in pixels</span>
+<span class="hl slc">-- x - current x coordinate in pixels</span>
+<span class="hl slc">-- n - bit positition from 8 to 0</span>
+<span class="hl slc">-- iw - pixel width in the complex plane</span>
+<span class="hl slc">-- ci - current y coordinate in complex plane</span>
+<span class="hl slc">-- b - accumulated bit value.</span>
+loop_x <span class="hl sym">!</span>w <span class="hl sym">!</span>x <span class="hl sym">!</span>n <span class="hl sym">!</span>iw <span class="hl sym">!</span>ci <span class="hl sym">!</span>b
+    <span class="hl sym">|</span> x <span class="hl sym">&lt;</span> w <span class="hl sym">=</span> if n <span class="hl sym">==</span> <span class="hl num">0</span>
+                    <span class="hl kwa">then</span> b
+                    <span class="hl kwa">else</span> loop_x w <span class="hl sym">(</span>x<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> iw ci <span class="hl sym">(</span>b<span class="hl sym">+</span>b<span class="hl sym">+</span>v<span class="hl sym">)</span>
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> b `shiftL` n
+  <span class="hl kwa">where</span>
+    v <span class="hl sym">=</span> fractal <span class="hl num">0 0</span> <span class="hl sym">(</span>fromIntegral x <span class="hl sym">*</span> iw <span class="hl sym">-</span> <span class="hl num">1.5</span><span class="hl sym">)</span> ci <span class="hl num">50</span>
+
+<span class="hl slc">-- julia function (r :+ i) (cr :+ ci) with max iterations k.</span>
+fractal <span class="hl sym">::</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Double</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Word8
+fractal <span class="hl sym">!</span>r <span class="hl sym">!</span>i <span class="hl sym">!</span>cr <span class="hl sym">!</span>ci <span class="hl sym">!</span>k
+    <span class="hl sym">|</span> r2 <span class="hl sym">+</span> i2 <span class="hl sym">&gt;</span> <span class="hl num">4</span> <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl sym">|</span> k <span class="hl sym">==</span> <span class="hl num">0</span>      <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl sym">|</span> otherwise   <span class="hl sym">=</span> fractal <span class="hl sym">(</span>r2<span class="hl sym">-</span>i2<span class="hl sym">+</span>cr<span class="hl sym">) ((</span>r<span class="hl sym">+</span>r<span class="hl sym">)*</span>i<span class="hl sym">+</span>ci<span class="hl sym">)</span> cr ci <span class="hl sym">(</span>k<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">where</span>
+    <span class="hl sym">(!</span>r2<span class="hl sym">,!</span>i2<span class="hl sym">) = (</span>r<span class="hl sym">*</span>r<span class="hl sym">,</span>i<span class="hl sym">*</span>i<span class="hl sym">)</span>
