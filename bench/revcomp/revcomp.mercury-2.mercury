@@ -1,0 +1,163 @@
+% The Computer Language Benchmarks Game
+% http://shootout.alioth.debian.org/
+%
+% contributed by Glendon Holst
+
+
+:- module revcomp.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+
+
+:- implementation.
+
+:- import_module solutions.
+:- import_module array.
+:- import_module list.
+:- import_module assoc_list.
+:- import_module pair.
+:- import_module int.
+:- import_module bool.
+:- import_module char.
+:- import_module string.
+:- import_module exception.
+
+
+
+
+main(!IO) :-
+   create_translation_table(TranslationTable),
+   process_sequence(TranslationTable, 0, array.init(82, ' '), !IO).
+
+
+
+:- pred create_translation_table(array(char)::out) is det.
+
+create_translation_table(TT) :-
+   TT_AL = [ 'A'-'T', 'C'-'G', 'B'-'V', 'D'-'H', 'K'-'M', 'R'-'Y'],
+   init_translation_table(TT_AL, array.init(256, ' '), TT).
+ 
+
+
+:- pred init_translation_table(assoc_list(char, char)::in, 
+   array(char)::array_di, array(char)::array_uo) is det.
+
+init_translation_table(TT_AL, TT0, TT) :-
+   init_translation_table_1(array.size(TT0) - 1, TT0, TT1),
+   init_translation_table_2(TT_AL, TT1, TT).
+
+
+
+
+:- pred init_translation_table_1(int::in, 
+   array(char)::array_di, array(char)::array_uo) is det.
+
+init_translation_table_1(N, TT0, TT) :-
+(
+   N > 0 ->
+   TT1 = TT0 ^ elem(N) := char.to_upper(char.det_from_int(N)),
+   init_translation_table_1(N - 1, TT1, TT)
+;
+   TT = TT0 ^ elem(0) := char.det_from_int(0)
+).
+
+
+
+:- pred init_translation_table_2(assoc_list(char, char)::in, 
+   array(char)::array_di, array(char)::array_uo) is det.
+
+init_translation_table_2(TT_AL, TT0, TT) :-
+(
+   TT_AL = [K-V | TT_ALs] ->
+   TT1 = TT0 ^ elem(char.to_int(K)) := V,
+   TT2 = TT1 ^ elem(char.to_int(char.to_lower(K))) := V,
+   TT3 = TT2 ^ elem(char.to_int(V)) := K,
+   TT4 = TT3 ^ elem(char.to_int(char.to_lower(V))) := K,
+   init_translation_table_2(TT_ALs, TT4, TT)
+;
+   TT = TT0
+).
+
+
+
+:- pred process_sequence(array(char)::in, int::in, array(char)::array_di, io::di, io::uo) is det.
+
+process_sequence(TTable, Buff0Len, Buff0, !IO) :-
+   io.read_line_as_string(IOResult, !IO),
+( 
+   IOResult = ok(LineIn) ->
+   (
+      Line = string.chomp(LineIn),
+      LineLen = string.length(Line),
+      (
+         LineLen > 0 ->
+         (
+            Line ^ unsafe_elem(0) = ('>') ->
+            (
+               Buff0Len > 0 -> 
+               print_reversed(Buff0Len - 1, Buff0, 0, !IO),
+               io.flush_output(!IO)
+            ; 
+               true
+            ),
+            io.write_string(Line, !IO), io.nl(!IO),
+            process_sequence(TTable, 0, Buff0, !IO)
+         ;
+            NewBuffLen = Buff0Len + LineLen,
+            (
+               NewBuffLen > array.size(Buff0) ->
+                  Buff1 = array.resize(Buff0, 2 * NewBuffLen , ' ')         
+               ;
+                  Buff1 = Buff0
+            ),
+            translate(TTable, Line, 0, LineLen, Buff1, Buff0Len, Buff),
+            process_sequence(TTable, NewBuffLen, Buff, !IO)            
+         )
+      ;
+            process_sequence(TTable, Buff0Len, Buff0, !IO)
+      )
+   )
+;
+   (
+      Buff0Len > 0 -> 
+      print_reversed(Buff0Len - 1, Buff0, 0, !IO),
+      io.flush_output(!IO)
+   ; 
+      true
+   )
+).
+
+
+
+:- pred translate(array(char)::in, string::in, int::in, int::in, 
+   array(char)::array_di, int::in, array(char)::array_uo) is det.
+
+translate(TTable, Line, Idx, Len, Buff0, BIdx, Buff) :-
+(
+   Idx < Len ->
+   TC = (TTable ^ elem(char.to_int(Line ^ unsafe_elem(Idx)))),
+   Buff1 = (Buff0 ^ elem(BIdx) := TC),
+   translate(TTable, Line, Idx + 1, Len, Buff1, BIdx + 1, Buff)
+;
+   Buff = Buff0
+).
+
+
+
+:- pred print_reversed(int::in, array(char)::in, int::in, io::di, io::uo) is det.
+
+print_reversed(Idx, Buff, CPos0, !IO) :-
+(
+   Idx >= 0 ->
+   C = Buff ^ elem(Idx),
+   (CPos0 = 60 -> io.nl(!IO), CPos = 1 ; CPos = CPos0 + 1),
+   io.write_char(C, !IO), 
+   print_reversed(Idx - 1, Buff, CPos, !IO)
+;
+   io.nl(!IO)
+).
+
+
