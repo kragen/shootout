@@ -1,0 +1,142 @@
+/*
+ * The Computer Lannguage Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ *
+ * Originial c version contributed by Heiner Marxen
+ * slightly adapted by Marc Halbruegge
+ * OpenMP parallelize by The Anh Tran
+ */
+
+
+#include <omp.h>
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+
+int fannkuch(int n, std::ostream &o) 
+{
+   if (n < 1) return 0;
+
+   std::vector<int> permutation(n);
+   std::vector<int> count(n);
+   int flipsMax[4] = {0};
+
+   // initial permu
+   for (int i =0; i < n; ++i) 
+      permutation[i] = i;
+
+   int   numPermutationsPrinted = 1;
+   for (int i = 0; i < n; ++i) 
+      o << (1 + permutation[i]);
+   o << std::endl;
+
+   int   r = n;
+   for ( ; r != 1; --r) 
+      count[r-1] = r;
+
+   // loop termination var
+   bool repeat = true;
+   #pragma omp parallel default(shared)
+   {
+      // perm vector private of each thread
+      std::vector<int> permForFlipping(n);
+      for (int i = 0; i < n; i++)
+         permForFlipping[i] = permutation[i];
+      // flipmax of each thread
+      int myflipmax = 0;
+
+      while (repeat)
+      {
+         if ((permForFlipping[0] !=0) && (permForFlipping[n-1] != (n-1))) 
+         {
+            // cache perm[0]
+            int k = permForFlipping[0];
+            int flips = 0, tmp;
+            do 
+            {
+               // flip N number, and count until perm[0] == 1
+               for (int i=1, j=k-1; i<j; ++i, --j) 
+               {
+                  tmp = permForFlipping[i];
+                  permForFlipping[i] = permForFlipping[j];
+                  permForFlipping[j] = tmp;
+               }
+
+               tmp = permForFlipping[k];
+               permForFlipping[k] = k;
+               k = tmp;
+
+               ++flips;
+            } while (k != 0);
+
+            // update each thread max flipcount
+            if (myflipmax < flips) 
+               myflipmax = flips;
+         }
+
+         #pragma omp critical
+         {
+            while (repeat)
+            {
+               // reach N! permut, terminate
+               if (__builtin_expect(r == n, false) )
+               {
+                  repeat = false;
+                  break;
+               }
+
+               // rotate down perm[0..r] by one
+               int perm0 = permutation[0];
+               for (int i=0; i<r; ++i) 
+                  permutation[i] = permutation[i+1];
+               permutation[r] = perm0;
+            
+               if (--count[r] > 0) 
+               {
+                  // copy this permut to thread private var
+                  for (int i = 0; i < n; i++)
+                     permForFlipping[i] = permutation[i];
+
+                  // print first 30 permut
+                  if (__builtin_expect(numPermutationsPrinted++ < 30, false) )
+                  {
+                     for (int i = 0; i < n; ++i) 
+                        o << (1 + permutation[i]);
+                     o << std::endl;
+                  }
+
+                  for ( ; r != 1; --r) 
+                     count[r-1] = r;
+               
+                  break;
+               }
+
+               ++r;
+            } // end while (repeat) inner
+         } // end omp critical section
+      } // end while (repeat) outer
+
+      flipsMax[omp_get_thread_num()] = myflipmax;
+   } // end parallel region
+
+   int fmx = 0;
+   for (size_t i = 0; i < sizeof(flipsMax)/sizeof(flipsMax[0]); i++)
+   {
+      if (fmx < flipsMax[i])
+         fmx = flipsMax[i];
+   }
+   return fmx;
+}
+
+
+int main(int argc, const char **argv) 
+{
+   int   n = (argc == 2) ? atoi(argv[1]) : 7;
+
+   std::cout << "Pfannkuchen(" << n << ") = "
+      << fannkuch(n, std::cout) << std::endl;
+
+   return 0;
+}
