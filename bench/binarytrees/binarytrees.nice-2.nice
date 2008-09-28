@@ -1,0 +1,81 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+   contributed by Isaac Gouy
+*/
+
+class TreeNode {
+   ?TreeNode left = null; 
+   ?TreeNode right = null;
+   int item; 
+}
+
+?TreeNode makeTree(int i, int depth) = 
+   depth == 0 
+      ? new TreeNode(item: i)
+      : new TreeNode(
+         left: makeTree(2*i-1, depth-1),
+         right: makeTree(2*i, depth-1), 
+         item: i);
+
+int check(?TreeNode tree) = 
+   tree == null ? 0 : tree.item + check(tree.left) - check(tree.right);
+
+(int,int,int) treeChecksum((int iterations, int depth)){
+   var sum = 0;
+   for (int i=1; i<=iterations; i++)
+      sum += makeTree(i,depth).check + makeTree(-i,depth).check;
+   return (iterations,depth,sum);
+}
+
+
+class Worker extends Thread {
+   List<(int,int)> work;
+   LinkedList<(int,int,int)> results = new LinkedList();
+
+   override void run() {
+      for (w : work)
+         results.add (treeChecksum(w));
+   }
+}
+
+
+
+let int minDepth = 4;
+
+void main(String[] args){
+   let n = Integer.parseInt(args[0]);
+   let maxDepth = Math.max(minDepth + 2, n);
+
+   let LinkedList<(int,int)> worklist = new LinkedList();
+
+   for (int depth=minDepth; depth<=maxDepth; depth+=2){
+      let iterations = 1 << (maxDepth - depth + minDepth);
+      worklist.add( (iterations,depth) );
+   }
+   
+
+   let stretchDepth = maxDepth + 1;
+
+   print("stretch tree", stretchDepth, makeTree(0,stretchDepth).check);   
+   let longLivedTree = makeTree(0,maxDepth);
+
+   let shareSize = worklist.size() / 2;
+   let shares = [ worklist.slice(to:shareSize), worklist.slice(from:shareSize+1)];
+
+   let workers = shares.map(List<(int,int)> w =>  new Worker(work:w));
+   for (w : workers) w.start(); 
+   for (w : workers) w.join(); 
+
+   for (w : workers)
+      for (r : w.results) print(r);
+
+   print("long lived tree", maxDepth, longLivedTree.check);
+}
+
+
+
+void print(String name, int depth, int check) =
+   println(name + " of depth " + depth + "\t check: " + check);
+
+void print((int iterations, int depth, int check)) =
+   print(iterations*2 + "\t trees", depth, check);
