@@ -9,17 +9,17 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public final class mandelbrotmt1 {
+public final class mandelbrot {
     public static void main(String[] args) throws Exception {
         int size = args.length >= 1 ? Integer.parseInt(args[0]) : 1024;
-        new mandelbrotmt1(size).compute();
+        new mandelbrot(size).compute();
     }
 
     private final int size;
     private final double fac;
     private final int nThreads;
 
-    public mandelbrotmt1(int size) {
+    public mandelbrot(int size) {
         this.size = size;
         fac = 2.0 / size;
         nThreads = Runtime.getRuntime().availableProcessors();
