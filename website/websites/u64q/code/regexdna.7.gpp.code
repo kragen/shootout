@@ -1,0 +1,401 @@
+<span class="hl slc">// The Computer Language Benchmarks Game</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">//</span>
+<span class="hl slc">// Contributed by Shyamal Prasad</span>
+<span class="hl slc">// Modified by Paul Kitchin</span>
+<span class="hl slc">// OpenMP by The Anh Tran</span>
+
+
+<span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;vector&gt;</span>
+<span class="hl dir">#include &lt;sys/mman.h&gt;</span>
+
+<span class="hl slc">// need -fopenmp flag</span>
+<span class="hl dir">#include &lt;omp.h&gt;</span>
+<span class="hl slc">// doesn't need any lib to link, header files are enough</span>
+<span class="hl dir">#include &lt;boost/xpressive/xpressive.hpp&gt;</span>
+<span class="hl kwa">using namespace</span> boost<span class="hl sym">::</span>xpressive<span class="hl sym">;</span>
+
+<span class="hl slc">// This struct encapsules a line of data</span>
+<span class="hl kwb">struct</span> Chunk
+<span class="hl sym">{</span>
+   <span class="hl kwb">static const int</span> MAX_LEN <span class="hl sym">=</span> <span class="hl num">256</span><span class="hl sym">;</span>
+
+   <span class="hl kwb">char</span> data<span class="hl sym">[</span>MAX_LEN<span class="hl sym">];</span>
+   <span class="hl kwb">size_t</span> data_len<span class="hl sym">;</span>
+
+   <span class="hl slc">// pointer to prev/next line, for linear browsing operation</span>
+   Chunk<span class="hl sym">*</span> prev<span class="hl sym">;</span>
+   Chunk<span class="hl sym">*</span> next<span class="hl sym">;</span>
+
+   <span class="hl kwd">Chunk</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      data_len <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      prev <span class="hl sym">=</span> next <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>Chunk<span class="hl sym">*&gt;</span> Sequence<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;</span> Dna<span class="hl sym">;</span>
+<span class="hl kwb">int</span> NTHREADS <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+<span class="hl slc">// This struct represents a linear char array, for searching patterns</span>
+<span class="hl slc">// If inc/dev step surpasses a data line, it'll wrap to prev/next line</span>
+<span class="hl kwb">struct</span> linear_iterator <span class="hl sym">:</span> <span class="hl kwc">public</span> std<span class="hl sym">::</span>iterator<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>bidirectional_iterator_tag<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">&gt;</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">const char</span>   <span class="hl sym">*</span>pdata<span class="hl sym">, *</span>pbegin<span class="hl sym">, *</span>pend<span class="hl sym">;</span>
+   <span class="hl kwb">const</span> Chunk<span class="hl sym">*</span>   dataline<span class="hl sym">;</span>
+
+   <span class="hl kwd">linear_iterator</span><span class="hl sym">() :</span> <span class="hl kwd">pdata</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span> <span class="hl kwd">pbegin</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span> <span class="hl kwd">pend</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span> <span class="hl kwd">dataline</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+   <span class="hl sym">{   }</span>
+
+   <span class="hl kwd">linear_iterator</span><span class="hl sym">(</span><span class="hl kwb">const</span> Sequence<span class="hl sym">&amp;</span> seq<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      dataline <span class="hl sym">=</span> seq<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>dataline <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         pbegin <span class="hl sym">=</span> dataline<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+         pend <span class="hl sym">=</span> pbegin <span class="hl sym">+</span> dataline<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+         pdata <span class="hl sym">=</span> pbegin<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+         pbegin <span class="hl sym">=</span> pend <span class="hl sym">=</span> pdata <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">linear_iterator</span><span class="hl sym">(</span><span class="hl kwb">const</span> Chunk<span class="hl sym">*</span> ch<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      dataline <span class="hl sym">=</span> ch<span class="hl sym">;</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>dataline <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         pbegin <span class="hl sym">=</span> dataline<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+         pend <span class="hl sym">=</span> pbegin <span class="hl sym">+</span> dataline<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+         pdata <span class="hl sym">=</span> pbegin<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+         pbegin <span class="hl sym">=</span> pend <span class="hl sym">=</span> pdata <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwc">inline</span> <span class="hl kwb">bool</span> <span class="hl kwc">operator</span> <span class="hl sym">== (</span><span class="hl kwb">const</span> linear_iterator<span class="hl sym">&amp;</span> rhs<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl sym">(</span>pdata <span class="hl sym">==</span> rhs<span class="hl sym">.</span>pdata<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwc">inline</span> <span class="hl kwb">bool</span> <span class="hl kwc">operator</span> <span class="hl sym">!= (</span><span class="hl kwb">const</span> linear_iterator<span class="hl sym">&amp;</span> rhs<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl sym">!(*</span><span class="hl kwa">this</span> <span class="hl sym">==</span> rhs<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwc">inline</span> linear_iterator<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span> <span class="hl sym">++()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(++</span>pdata <span class="hl sym">&gt;=</span> pend<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">))</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>dataline<span class="hl sym">-&gt;</span>next <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            dataline <span class="hl sym">=</span> dataline<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+            pbegin <span class="hl sym">=</span> dataline<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+            pend <span class="hl sym">=</span> pbegin <span class="hl sym">+</span> dataline<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+            pdata <span class="hl sym">=</span> pbegin<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">else</span>
+            pbegin <span class="hl sym">=</span> pend <span class="hl sym">=</span> pdata <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">return</span> <span class="hl sym">(*</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwc">inline</span> linear_iterator<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span> <span class="hl sym">--()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>pdata <span class="hl sym">&lt;=</span> pbegin<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">))</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>dataline<span class="hl sym">-&gt;</span>prev <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>pdata <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+               dataline <span class="hl sym">=</span> dataline<span class="hl sym">-&gt;</span>prev<span class="hl sym">;</span>
+            pbegin <span class="hl sym">=</span> dataline<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+            pend <span class="hl sym">=</span> pbegin <span class="hl sym">+</span> dataline<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+            pdata <span class="hl sym">=</span> pend <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">else</span>
+            pbegin <span class="hl sym">=</span> pend <span class="hl sym">=</span> pdata <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+         <span class="hl sym">--</span>pdata<span class="hl sym">;</span>
+      <span class="hl kwa">return</span> <span class="hl sym">(*</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwc">inline</span> <span class="hl kwb">char</span> <span class="hl kwc">operator</span><span class="hl sym">*()</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl sym">*</span>pdata<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl slc">// read all redirected data from stdin</span>
+<span class="hl slc">// Strip headers &amp; newline</span>
+Sequence<span class="hl sym">*</span> <span class="hl kwd">ReadInput</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> <span class="hl sym">&amp;</span>size<span class="hl sym">,</span> <span class="hl kwb">size_t</span> <span class="hl sym">&amp;</span>szstrip<span class="hl sym">,</span> Chunk<span class="hl sym">* &amp;</span>memblk<span class="hl sym">,</span> Dna <span class="hl sym">&amp;</span>dna<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// get initial input size</span>
+   size <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">);</span>
+   <span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_END<span class="hl sym">);</span>
+   size <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">) -</span> size<span class="hl sym">;</span>
+   <span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_SET<span class="hl sym">);</span>
+
+   <span class="hl slc">// map input file to process space</span>
+   <span class="hl kwb">char</span><span class="hl sym">*</span> pdata <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">mmap</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> size<span class="hl sym">,</span> PROT_READ<span class="hl sym">,</span> MAP_PRIVATE<span class="hl sym">|</span>MAP_POPULATE<span class="hl sym">,</span> <span class="hl kwd">fileno</span><span class="hl sym">(</span>stdin<span class="hl sym">),</span> <span class="hl num">0</span><span class="hl sym">);</span>
+
+   <span class="hl slc">// an array to store data line markers</span>
+   Sequence<span class="hl sym">*</span> seq <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Sequence</span><span class="hl sym">();</span>
+
+   <span class="hl slc">// predict ndataline = size / 60</span>
+   <span class="hl kwb">size_t</span> alloc_sz <span class="hl sym">=</span> size <span class="hl sym">/</span> <span class="hl num">60</span> <span class="hl sym">+</span> <span class="hl num">8</span><span class="hl sym">;</span>
+   seq<span class="hl sym">-&gt;</span><span class="hl kwd">reserve</span> <span class="hl sym">(</span>alloc_sz<span class="hl sym">);</span>
+
+   <span class="hl slc">// Pre-alloc whole storage space: maximum of nline * sizeof(Chunk) OR size * 1.5</span>
+   alloc_sz <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">max</span><span class="hl sym">(</span> alloc_sz <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>Chunk<span class="hl sym">),</span> size <span class="hl sym">+ (</span>size <span class="hl sym">&gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) );</span>
+   memblk <span class="hl sym">= (</span>Chunk<span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span> alloc_sz <span class="hl sym">);</span>
+
+   <span class="hl slc">// Game rule: &quot;&gt;[^\n]*\n | \n&quot;</span>
+   cregex <span class="hl kwd">strip</span><span class="hl sym">( (</span><span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'&gt;'</span><span class="hl sym">) &gt;&gt; *(~</span>_n<span class="hl sym">) &gt;&gt;</span> _n<span class="hl sym">) | (</span>s1 <span class="hl sym">=</span> _n<span class="hl sym">) );</span>
+   cmatch mtrs<span class="hl sym">;</span>
+
+   <span class="hl slc">// alloc ~800k data lines is costly -&gt; use placement new</span>
+   Chunk<span class="hl sym">*</span> index <span class="hl sym">=</span> memblk<span class="hl sym">;</span>
+   Chunk<span class="hl sym">*</span> c1 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl sym">(</span>index<span class="hl sym">)</span> <span class="hl kwd">Chunk</span><span class="hl sym">();</span>
+   <span class="hl sym">++</span>index<span class="hl sym">;</span>
+
+   <span class="hl kwb">const char</span><span class="hl sym">*</span> psrc <span class="hl sym">=</span> pdata<span class="hl sym">;</span>
+   <span class="hl kwb">const char</span><span class="hl sym">*</span> pend <span class="hl sym">=</span> pdata <span class="hl sym">+</span> size<span class="hl sym">;</span>
+   szstrip <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> current_line <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">while</span> <span class="hl sym">(</span> <span class="hl kwd">regex_search</span><span class="hl sym">((</span><span class="hl kwb">const char</span><span class="hl sym">*)</span>psrc<span class="hl sym">, (</span><span class="hl kwb">const char</span><span class="hl sym">*)</span>pend<span class="hl sym">,</span> mtrs<span class="hl sym">,</span> strip<span class="hl sym">) )</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>mtrs<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">].</span>matched<span class="hl sym">)</span>   <span class="hl slc">// normal data line</span>
+      <span class="hl sym">{</span>
+         c1<span class="hl sym">-&gt;</span>data_len <span class="hl sym">=</span> mtrs<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>first <span class="hl sym">-</span> psrc<span class="hl sym">;</span>
+         <span class="hl kwd">memcpy</span><span class="hl sym">(</span>c1<span class="hl sym">-&gt;</span>data<span class="hl sym">,</span> psrc<span class="hl sym">,</span> c1<span class="hl sym">-&gt;</span>data_len<span class="hl sym">);</span>
+         szstrip <span class="hl sym">+=</span> c1<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+         seq<span class="hl sym">-&gt;</span><span class="hl kwd">push_back</span> <span class="hl sym">(</span>c1<span class="hl sym">);</span>
+
+         Chunk<span class="hl sym">*</span> c2 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl sym">(</span>index<span class="hl sym">)</span> <span class="hl kwd">Chunk</span><span class="hl sym">();</span>
+         <span class="hl sym">++</span>index<span class="hl sym">;</span>
+
+         c2<span class="hl sym">-&gt;</span>prev <span class="hl sym">=</span> c1<span class="hl sym">;</span>
+         c1<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> c2<span class="hl sym">;</span>
+         c1 <span class="hl sym">=</span> c2<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>      <span class="hl slc">// header data line</span>
+         dna<span class="hl sym">.</span><span class="hl kwd">push_back</span><span class="hl sym">(</span>current_line<span class="hl sym">);</span>
+
+      current_line<span class="hl sym">++;</span>
+      psrc <span class="hl sym">=</span> mtrs<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>second<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>c1<span class="hl sym">-&gt;</span>prev <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      c1<span class="hl sym">-&gt;</span>prev<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwd">munmap</span><span class="hl sym">(</span>pdata<span class="hl sym">,</span> size<span class="hl sym">);</span>
+   <span class="hl kwa">return</span> seq<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">void</span> <span class="hl kwd">PrintPatternsMatch</span><span class="hl sym">(</span><span class="hl kwb">const</span> Sequence <span class="hl sym">&amp;</span> seq<span class="hl sym">,</span> <span class="hl kwb">const</span> Dna<span class="hl sym">&amp;</span> dna<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">const char</span><span class="hl sym">*</span> patterns<span class="hl sym">[] = {</span>
+      <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+   <span class="hl sym">};</span>
+   <span class="hl kwb">const int</span> npt <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>patterns<span class="hl sym">) /</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>patterns<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+   <span class="hl kwb">size_t</span> count_match<span class="hl sym">[</span>npt<span class="hl sym">] = {</span><span class="hl num">0</span><span class="hl sym">};</span>
+
+   <span class="hl slc">// we have 9 search patterns -&gt; unbalance task</span>
+   <span class="hl slc">// Strategy: there are 2 steps</span>
+   <span class="hl slc">//   first:      divide work by worksize, which is multiples of NTHREADS. (If Alioth create 3 cores benchmarks someday)</span>
+   <span class="hl slc">//   second:   divide work by numbers of dna (also equal header lines encountered in StripHeader() )</span>
+   <span class="hl slc">// If running in single thread mode, no need to do second step</span>
+   <span class="hl kwb">int</span> work_sz <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">while</span> <span class="hl sym">( (</span>work_sz <span class="hl sym">+</span> NTHREADS<span class="hl sym">) &lt;=</span> npt<span class="hl sym">)</span>
+      work_sz <span class="hl sym">+=</span> NTHREADS<span class="hl sym">;</span>
+
+   <span class="hl slc">// Spawn N threads</span>
+   <span class="hl dir">#pragma omp parallel default(shared) num_threads(NTHREADS)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwc">typedef</span> basic_regex<span class="hl sym">&lt;</span>linear_iterator<span class="hl sym">&gt;</span> reg_li<span class="hl sym">;</span>
+      <span class="hl kwc">typedef</span> regex_iterator<span class="hl sym">&lt;</span>linear_iterator<span class="hl sym">&gt;</span> match_iterator<span class="hl sym">;</span>
+
+      <span class="hl slc">// Parallel search, work is divided by search patterns</span>
+       <span class="hl dir">#pragma omp for schedule(dynamic, 1) nowait</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> work_sz<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         reg_li <span class="hl kwb">const</span> <span class="hl sym">&amp;</span><span class="hl kwd">search_ptn</span><span class="hl sym">(</span> reg_li<span class="hl sym">::</span><span class="hl kwd">compile</span><span class="hl sym">(</span>patterns<span class="hl sym">[</span>i<span class="hl sym">],</span> regex_constants<span class="hl sym">::</span>nosubs<span class="hl sym">|</span>regex_constants<span class="hl sym">::</span>optimize<span class="hl sym">) );</span>
+         linear_iterator <span class="hl kwd">seq_ite</span><span class="hl sym">(</span>seq<span class="hl sym">),</span> seq_end<span class="hl sym">;</span>
+
+         match_iterator <span class="hl kwd">mi</span><span class="hl sym">(</span>seq_ite<span class="hl sym">,</span> seq_end<span class="hl sym">,</span> search_ptn<span class="hl sym">);</span>
+         match_iterator me<span class="hl sym">;</span>
+
+         <span class="hl kwb">size_t</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+         <span class="hl kwa">while</span> <span class="hl sym">(</span>mi <span class="hl sym">!=</span> me<span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl sym">++</span>count<span class="hl sym">;</span>
+            <span class="hl sym">++</span>mi<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl slc">// safe to modify share var here, because each thread access different index</span>
+         count_match<span class="hl sym">[</span>i<span class="hl sym">] =</span> count<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl slc">// foreach search patterns remain</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> work_sz<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> npt<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      <span class="hl sym">{</span>
+         reg_li <span class="hl kwb">const</span> <span class="hl sym">&amp;</span><span class="hl kwd">search_ptn</span><span class="hl sym">(</span> reg_li<span class="hl sym">::</span><span class="hl kwd">compile</span><span class="hl sym">(</span>patterns<span class="hl sym">[</span>i<span class="hl sym">],</span> regex_constants<span class="hl sym">::</span>nosubs<span class="hl sym">|</span>regex_constants<span class="hl sym">::</span>optimize<span class="hl sym">) );</span>
+
+         <span class="hl dir">#pragma omp for schedule(dynamic, 1) nowait</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> d <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> d <span class="hl sym">&lt;</span> dna<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">();</span> d<span class="hl sym">++)</span>
+         <span class="hl sym">{</span>
+            linear_iterator <span class="hl kwd">seq_ite</span><span class="hl sym">(</span> seq<span class="hl sym">[</span> dna<span class="hl sym">[</span>d<span class="hl sym">] ] );</span>
+            linear_iterator seq_end<span class="hl sym">;</span>
+
+            <span class="hl slc">// set end_iterator to the end of each dna (aka next header line)</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>d <span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">&lt;</span> dna<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">())</span>
+               seq_end <span class="hl sym">=</span> <span class="hl kwd">linear_iterator</span><span class="hl sym">(</span> seq<span class="hl sym">[</span> dna<span class="hl sym">[</span>d<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">] ] );</span>
+
+            match_iterator <span class="hl kwd">mi</span><span class="hl sym">(</span>seq_ite<span class="hl sym">,</span> seq_end<span class="hl sym">,</span> search_ptn<span class="hl sym">);</span>
+            match_iterator me<span class="hl sym">;</span>
+
+            <span class="hl kwb">size_t</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl kwa">while</span> <span class="hl sym">(</span>mi <span class="hl sym">!=</span> me<span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+               <span class="hl sym">++</span>count<span class="hl sym">;</span>
+               <span class="hl sym">++</span>mi<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+
+            <span class="hl dir">#pragma omp atomic</span>
+            count_match<span class="hl sym">[</span>i<span class="hl sym">] +=</span> count<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>   <span class="hl slc">// end parallel region</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> npt<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> patterns<span class="hl sym">[</span>i<span class="hl sym">] &lt;&lt;</span> <span class="hl str">' '</span> <span class="hl sym">&lt;&lt;</span> count_match<span class="hl sym">[</span>i<span class="hl sym">] &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">size_t</span> <span class="hl kwd">Replace_8mers</span><span class="hl sym">(</span>Sequence <span class="hl sym">&amp;</span>seq<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">const</span> cregex search_reg<span class="hl sym">[] =</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'B'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'D'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'H'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'K'</span><span class="hl sym">),</span>
+      <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'M'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'N'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'R'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'S'</span><span class="hl sym">),</span>
+      <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'V'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'W'</span><span class="hl sym">),</span>   <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">'Y'</span><span class="hl sym">)</span>
+   <span class="hl sym">};</span>
+   <span class="hl kwb">const char</span><span class="hl sym">*</span> replace_ptn<span class="hl sym">[] =</span>
+   <span class="hl sym">{</span>
+      <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;(c|t)&quot;</span>
+   <span class="hl sym">};</span>
+   <span class="hl kwb">const size_t</span> n_search_ptn <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>replace_ptn<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>replace_ptn<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+   <span class="hl kwb">const size_t</span> replace_ptn_len<span class="hl sym">[] =</span>
+   <span class="hl sym">{</span>
+      <span class="hl num">7</span><span class="hl sym">,</span>   <span class="hl num">7</span><span class="hl sym">,</span>   <span class="hl num">7</span><span class="hl sym">,</span>   <span class="hl num">5</span><span class="hl sym">,</span>
+      <span class="hl num">5</span><span class="hl sym">,</span>   <span class="hl num">9</span><span class="hl sym">,</span>   <span class="hl num">5</span><span class="hl sym">,</span>   <span class="hl num">5</span><span class="hl sym">,</span>
+      <span class="hl num">7</span><span class="hl sym">,</span>   <span class="hl num">5</span><span class="hl sym">,</span>   <span class="hl num">5</span>
+   <span class="hl sym">};</span>
+
+   <span class="hl kwb">size_t</span> new_seq_size <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> nline <span class="hl sym">=</span> <span class="hl kwa">static_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;(</span>seq<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">());</span>
+
+   <span class="hl dir">#pragma omp parallel default(shared) reduction(+:new_seq_size) num_threads(NTHREADS)</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> ptn_idx <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ptn_idx <span class="hl sym">&lt;</span> n_search_ptn<span class="hl sym">; ++</span>ptn_idx<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      cregex <span class="hl kwb">const</span> <span class="hl sym">&amp;</span><span class="hl kwd">search_ptn</span> <span class="hl sym">(</span>search_reg<span class="hl sym">[</span>ptn_idx<span class="hl sym">]);</span>
+      cmatch mt<span class="hl sym">;</span>
+      <span class="hl kwb">char</span> tmpbuf<span class="hl sym">[</span>Chunk<span class="hl sym">::</span>MAX_LEN<span class="hl sym">];</span>
+
+      <span class="hl slc">// Parallel replace, work is divided by lines, there are ~800k lines</span>
+      <span class="hl dir">#pragma omp for schedule(dynamic, nline &gt;&gt; 10)</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> ln <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ln <span class="hl sym">&lt;</span> nline<span class="hl sym">; ++</span>ln<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         Chunk<span class="hl sym">*</span> c <span class="hl sym">=</span> seq<span class="hl sym">[</span>ln<span class="hl sym">];</span>
+         <span class="hl kwb">size_t</span> deslen <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+         <span class="hl kwb">const char</span><span class="hl sym">*</span> psrc <span class="hl sym">=</span> c<span class="hl sym">-&gt;</span>data<span class="hl sym">;</span>
+         <span class="hl kwb">const char</span><span class="hl sym">*</span> psrc_end <span class="hl sym">=</span> c<span class="hl sym">-&gt;</span>data <span class="hl sym">+</span> c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+
+         <span class="hl kwb">bool</span> changed <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+         <span class="hl kwa">while</span> <span class="hl sym">(</span> <span class="hl kwd">regex_search</span><span class="hl sym">(</span>psrc<span class="hl sym">,</span> psrc_end<span class="hl sym">,</span> mt<span class="hl sym">,</span> search_ptn<span class="hl sym">) )</span>
+         <span class="hl sym">{</span>
+            <span class="hl slc">// copy [prefix - first char matched)</span>
+            <span class="hl kwb">size_t</span> prefix <span class="hl sym">=</span> mt<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>first <span class="hl sym">-</span> psrc<span class="hl sym">;</span>
+            <span class="hl kwd">memcpy</span><span class="hl sym">(</span>tmpbuf <span class="hl sym">+</span> deslen<span class="hl sym">,</span> psrc<span class="hl sym">,</span> prefix<span class="hl sym">);</span>
+            deslen <span class="hl sym">+=</span> prefix<span class="hl sym">;</span>
+
+            <span class="hl slc">// copy [replace_pattern]</span>
+            <span class="hl kwd">memcpy</span><span class="hl sym">(</span>tmpbuf <span class="hl sym">+</span> deslen<span class="hl sym">,</span> replace_ptn<span class="hl sym">[</span>ptn_idx<span class="hl sym">],</span> replace_ptn_len<span class="hl sym">[</span>ptn_idx<span class="hl sym">]);</span>
+            deslen <span class="hl sym">+=</span> replace_ptn_len<span class="hl sym">[</span>ptn_idx<span class="hl sym">];</span>
+
+            <span class="hl slc">// set pointer to next search position</span>
+            psrc <span class="hl sym">=</span> mt<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>second<span class="hl sym">;</span>
+            changed <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>changed<span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl slc">// copy [last char matched - end line)</span>
+            <span class="hl kwb">size_t</span> suffix <span class="hl sym">=</span> psrc_end <span class="hl sym">-</span> psrc<span class="hl sym">;</span>
+            <span class="hl kwd">memcpy</span><span class="hl sym">(</span>tmpbuf <span class="hl sym">+</span> deslen<span class="hl sym">,</span> psrc<span class="hl sym">,</span> suffix<span class="hl sym">);</span>
+            deslen <span class="hl sym">+=</span> suffix<span class="hl sym">;</span>
+
+            <span class="hl slc">// replace existing data line</span>
+            <span class="hl kwd">memcpy</span><span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>data<span class="hl sym">,</span> tmpbuf<span class="hl sym">,</span> deslen<span class="hl sym">);</span>
+            c<span class="hl sym">-&gt;</span>data_len <span class="hl sym">=</span> deslen<span class="hl sym">;</span>
+            c<span class="hl sym">-&gt;</span>data<span class="hl sym">[</span>deslen<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+
+         <span class="hl slc">// if this is the last replace pattern, update replaced sequence length</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> ptn_idx <span class="hl sym">== (</span>n_search_ptn<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) )</span>
+            new_seq_size <span class="hl sym">+=</span> c<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// update new sequence size</span>
+   <span class="hl kwa">return</span> new_seq_size<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">();</span>
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   NTHREADS <span class="hl sym">=</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">();</span>
+
+   Dna dna<span class="hl sym">;</span>
+   Chunk<span class="hl sym">*</span> memblk <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span> initial_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> strip_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   Sequence<span class="hl sym">*</span> seq <span class="hl sym">=</span> <span class="hl kwd">ReadInput</span> <span class="hl sym">(</span>initial_length<span class="hl sym">,</span> strip_length<span class="hl sym">,</span> memblk<span class="hl sym">,</span> dna<span class="hl sym">);</span>
+   <span class="hl kwd">PrintPatternsMatch</span><span class="hl sym">(*</span>seq<span class="hl sym">,</span> dna<span class="hl sym">);</span>
+   std<span class="hl sym">::</span><span class="hl kwb">size_t</span> replace_8m_length <span class="hl sym">=</span> <span class="hl kwd">Replace_8mers</span> <span class="hl sym">(*</span>seq<span class="hl sym">);</span>
+
+   std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl
+      <span class="hl sym">&lt;&lt;</span> initial_length      <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl
+      <span class="hl sym">&lt;&lt;</span> strip_length      <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl
+      <span class="hl sym">&lt;&lt;</span> replace_8m_length   <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+
+   <span class="hl kwd">free</span><span class="hl sym">(</span>memblk<span class="hl sym">);</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         count<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
