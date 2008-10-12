@@ -1,0 +1,196 @@
+/* The Computer Language Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Jon Harrop
+ * Modified by Alex Mizrahi
+ * modified by The Anh Tran
+*/
+
+// next define is for redirecting pthread_create to GC_pthread_create
+#define GC_PTHREADS
+#include <gc_cpp.h>
+#include <iostream>
+
+// OMP lib has [malloc, pthread_create...] buried deep inside its compiled .SO files.
+// GC uses macro to redirect those functions to its customized functions.
+// OMP + GC -> disaster
+// If you want a OMP + GC combination, you'll have to recompile OpenMP with redirect malloc, from scratch
+//#include <omp.h>
+
+
+struct Node
+{
+   Node *l, *r;
+   int i;
+
+   Node(int i2) : l(0), r(0), i(i2) 
+   {   }
+   Node(Node *l2, int i2, Node *r2) : l(l2), r(r2), i(i2) 
+   {   }
+
+   //~Node()    { if (l) delete l;  if (r) delete r;  }
+
+   int check() const 
+   {
+      if (l != 0)
+         return l->check() + i - r->check();
+      else 
+         return i;
+   }
+};
+
+static inline
+Node *make(int i, int d)
+{
+   if (d > 0) 
+      return new (GC) Node( make(2*i-1, d-1), i, make(2*i, d-1) );
+
+   return new (GC) Node(i);
+}
+
+// parameters passing to each working thread
+struct Info
+{
+   int          *current_depth;
+   int         min_depth;
+   int         max_depth;
+   char      *outputstr;
+
+   pthread_t      ht;
+   pthread_spinlock_t* lock;   
+};
+
+const size_t LINE_SIZE = 64;
+void* ThreadRun(void* p)
+{
+   Info inf = *((Info*)p);
+   
+   while (true)
+   {
+      // fetch works
+      pthread_spin_lock(inf.lock);
+      int d = *(inf.current_depth);
+      if (d <= inf.max_depth)
+         *(inf.current_depth) += 2;
+      pthread_spin_unlock(inf.lock);
+
+      // alloc many trees
+      if (d <= inf.max_depth)
+      {
+         int iterations = 1 << (inf.max_depth - d + inf.min_depth);
+         int c=0;
+
+         for (int i = 1; i <= iterations; ++i) 
+         {
+            Node *a = make(i, d);
+            Node *b = make(-i, d);
+            c += a->check() + b->check();
+            //delete a;   delete b;
+         }
+
+         sprintf(inf.outputstr + LINE_SIZE * d, "%d\t trees of depth %d\t check: %d\n", (2 * iterations), d, c);
+      }
+      else
+         return 0;
+   }      
+   return 0;
+}
+
+
+void MT_AllocTree(int threadcount, int min_depth, int max_depth)
+{
+   char * outputstr = (char*)GC_malloc_atomic(LINE_SIZE * (max_depth+2) * sizeof(char));
+   Info *inf = (Info*)GC_malloc_atomic(threadcount * sizeof(Info));
+
+   // atomic checking & changing current_depth, access from many threads
+   pthread_spinlock_t   lock;
+   pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE);
+
+   int current_depth = min_depth;
+
+   // spawn N threads
+   for (int t = 0; t < threadcount; t++)
+   {
+      inf[t].current_depth   = &current_depth;
+      inf[t].min_depth   = min_depth;
+      inf[t].max_depth   = max_depth;
+      inf[t].outputstr      = outputstr;
+      inf[t].lock         = &lock;
+
+      pthread_create(&(inf[t].ht), 0, ThreadRun, (void*)(inf +t));
+   }
+
+   // waiting
+   for (int t = 0; t < threadcount; t++)
+      pthread_join(inf[t].ht, 0);
+
+   for (int d = min_depth; d <= max_depth; d+=2) 
+      std::cout << outputstr + (d * LINE_SIZE);
+
+   pthread_spin_destroy(&lock);
+}
+
+int GetThreadCount();
+int main(int argc, char *argv[]) 
+{
+   GC_INIT();
+
+   int min_depth = 4;
+   int max_depth = std::max(min_depth +2, (argc == 2 ? atoi(argv[1]) : 10));
+   int stretch_depth = max_depth +1;
+
+   {
+      Node *c = make(0, stretch_depth);
+      std::cout   << "stretch tree of depth " << stretch_depth << "\t "
+            << "check: " << c->check() << std::endl;
+      //delete c;
+   }
+
+   Node *long_lived_tree = make(0, max_depth);
+
+   int threadcount = GetThreadCount();
+   if (threadcount > 1)
+      MT_AllocTree(threadcount, min_depth, max_depth);
+   else
+   {
+      for (int d = min_depth; d <= max_depth; d+=2) 
+      {
+         int iterations = 1 << (max_depth - d + min_depth);
+         int c=0;
+
+         for (int i = 1; i <= iterations; ++i) 
+         {
+            Node *a = make(i, d);
+            Node *b = make(-i, d);
+            c += a->check() + b->check();
+            //delete a;   delete b;
+         }
+
+         std::cout << (2*iterations) << "\t trees of depth " << d << "\t "
+               << "check: " << c << std::endl;
+      }
+   }
+
+   std::cout << "long lived tree of depth " << max_depth << "\t "
+         << "check: " << (long_lived_tree->check()) << "\n";
+
+   //delete long_lived_tree;
+   return 0;
+}
+
+int GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 4; i++)
+   {
+      if (CPU_ISSET(i, &cs))
+         count++;
+   }
+   return count;
+}
+
+
