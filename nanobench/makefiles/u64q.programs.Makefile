@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.20 2008-10-05 21:32:38 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.21 2008-10-15 18:51:23 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -66,7 +66,7 @@ GCCOPTS := -pipe -Wall $(COPTS) $(GCCOPTS)
 
 %.gpp_run: %.c++
 	-$(GXX) -c -pipe $(COPTS) $(GXXOPTS) $< -o $<.o &&  \
-        $(GXX) $<.o -o $@ -L/usr/lib $(GXXLDOPTS) 
+        $(GXX) $<.o -o $@ $(GXXLDOPTS) 
 
 
 ########################################
