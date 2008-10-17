@@ -68,11 +68,9 @@ $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2);
    $vscale = CHART_VSCALE;
    $hscale = 15;
 
-   //$ts = 28;
-   $ts = 48;
+   $ts = 62;
    $t = $ts+13;
    $v1 = $w2/$hscale;
-   //$b = $h-68;
    $b = $h-36;
 
    $ysec = $t+7;
@@ -182,6 +180,9 @@ ImageString($im, 3, $o-$v1*9+8+5-24, 4, 'better Time', $black);
 
 ImageFilledRectangle($im, $o-$v1*9+74, 10, $o-$v1*9+8+74, 10+$hmem, $black);
 ImageString($im, 3, $o-$v1*9+8+5+74, 4, 'better Memory Use', $black);
+
+
+ImageString($im, 3, $o-56, $ts-38, 'bigger is better', $black);
 
 
 ImageInterlace($im,1);
