@@ -14,14 +14,16 @@ class SpectralNorm
    {
       int n = 100;
       if (args.Length > 0) 
-         n = Int32.Parse(args[0]);
+            n = Int32.Parse(args[0]);
 
       Console.WriteLine("{0:f9}", RunGame(n));
    }
 
     private static int GetThreadCount()
     {
-        int affinity = System.Diagnostics.Process.GetCurrentProcess().ProcessorAffinity.ToInt32();
+    /*   // Affinity is always zero in Mono.net .....
+       System.Diagnostics.Process p = System.Diagnostics.Process.GetCurrentProcess();
+        int affinity = (int)p.ProcessorAffinity;
         
         int count = 0;
         for (int i = 0; i < 8; i++)
@@ -31,6 +33,8 @@ class SpectralNorm
         }
         
         return count;
+        */
+      return Environment.ProcessorCount;
     }
 
     private static double RunGame(int n)
@@ -61,21 +65,15 @@ class SpectralNorm
             int r2 = (i < (nthread - 1)) ? r1 + chunk : n;
 
             apx[i] = new Approximate(u, v, tmp, r1, r2);
-            if (nthread > 1)
-            {
-                threads[i] = new Thread(new ThreadStart(apx[i].Evaluate));
-                threads[i].Start();
-            }
-            else
-                apx[i].EvaluateSingleThread();
+            threads[i] = new Thread(new ThreadStart(apx[i].Evaluate));
+            threads[i].Start();
         }
 
       // collect results
         double vBv = 0, vv = 0;
         for (int i = 0; i < nthread; i++)
         {
-            if (threads[i] != null)
-                threads[i].Join();
+            threads[i].Join();
             
             vBv += apx[i].m_vBv;
             vv += apx[i].m_vv;
@@ -123,22 +121,7 @@ class SpectralNorm
             }
         }
 
-        public void EvaluateSingleThread()
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                MultiplyAtAv_ST(m_u, m_tmp, m_v);
-                MultiplyAtAv_ST(m_v, m_tmp, m_u);
-            }
-
-            for (int i = m_range_begin; i < m_range_end; i++)
-            {
-                m_vBv += m_u[i] * m_v[i];
-                m_vv += m_v[i] * m_v[i];
-            }
-        }
-
-        /* return element i,j of infinite matrix A */
+         /* return element i,j of infinite matrix A */
         private static double eval_A(int i, int j)
         {
             int div = (((i + j) * (i + j + 1) >> 1) + i + 1);
@@ -169,12 +152,6 @@ class SpectralNorm
             }
         }
 
-        private void MultiplyAtAv_ST(double[] v, double[] tmp, double[] AtAv)
-        {
-            MultiplyAv(v, tmp);
-            MultiplyAtv(tmp, AtAv);
-        }
-
         /* multiply vector v by matrix A and then by matrix A transposed */
         private void MultiplyAtAv(double[] v, double[] tmp, double[] AtAv)
         {
@@ -190,11 +167,12 @@ class SpectralNorm
         {
             Interlocked.Decrement(ref barrier);
 
-            int spin = 1;
+            //int spin = 1;
             while ((0 < barrier) && (barrier < nthread)) // terminate condition
             {
-                Thread.SpinWait(spin);
-                spin += spin;
+                //Thread.SpinWait(spin);
+                //spin += spin;
+                Thread.Sleep(0);
             }
 
          // reset barrier value
