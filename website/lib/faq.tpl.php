@@ -80,7 +80,8 @@
    title=""
    width="300" height="300"
  /></p>
-<ul>from the top, 3 benchmarks at a time
+<p>From the top, 3 benchmarks at a time:</p>
+<ul>
 <li>memory use was the same; BBB was 5 times faster than AAA</li>
 <li>BBB used 5 times less memory than AAA; measured time was the same</li>
 <li>memory use was the same; AAA was 10 times faster than BBB</li>
