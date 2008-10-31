@@ -87,6 +87,7 @@
 <li>AAA used 5 times less memory than BBB; BBB was 5 times faster than AAA</li>
 <li>AAA used 5 times less memory than BBB; AAA was 10 times faster than BBB</li>
 </ul>
+<p>Measurements more than 15 times better will be off-the-chart - check the numbers in the table.</p>
 </dd>
 
 <dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' ~ CPU Load mean?</a></dt>
