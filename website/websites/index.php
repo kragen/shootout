@@ -18,14 +18,12 @@ $U64 = filemtime('./u64/data/data.csv');
 
 <title>The Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="./benchmark.css" />
-<link href="./feeds/rss.xml" rel="alternate" type="application/rss+xml" title="Computer Language Shootout" />
 <link rel="shortcut icon" href="./favicon.ico" />
 </head>
 
 <body id="core">
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a></h1></td><td><h4><a href="./u32q/faq.php">Read the FAQ!</a></h4></td><td>&nbsp;</td>
-<td><a href="./feeds/rss.xml"><img src="./orangexml.gif" alt="Really Simple Syndication" title="Really Simple Syndication" /></a></td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a></h1></td><td><h4><a href="./u32q/faq.php">Read the FAQ!</a></h4></td>
 </tr></table>
 
 <div id="home">
