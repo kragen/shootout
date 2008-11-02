@@ -2,32 +2,32 @@
 # http://shootout.alioth.debian.org/
 #
 # contributed by Serhiy Boiko
+# modified by Isaac Gouy
 
 
-require 'thread'
 THREAD_NUM = 503
 number = ARGV.first.to_i
 
 threads = []
 for i in 1..THREAD_NUM
-	threads << Thread.new(i) do |thr_num|
-		while true
-			Thread.stop
-			if number > 0
-				number -= 1
-			else
-				puts thr_num
-				exit 0
-			end
-		end
-	end
+   threads << Thread.new(i) do |thr_num|
+      while true
+         Thread.stop
+         if number > 0
+            number -= 1
+         else
+            puts thr_num
+            exit 0
+         end
+      end
+   end
 end
 
 prev_thread = threads.last
 while true
-	for thread in threads
-		Thread.pass until prev_thread.stop?
-		thread.run
-		prev_thread = thread
-	end
+   for thread in threads
+      Thread.pass until prev_thread.stop?
+      thread.run
+      prev_thread = thread
+   end
 end
