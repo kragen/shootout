@@ -108,10 +108,10 @@ ImageString($im, 3, $o-$v1*14,$ts-16, $label, $black);
 ImageString($im, 2, $o -2, $ts, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $ts, '5x', $white);
 ImageString($im, 2, $o-$v1*9 -8, $ts, '10x', $white);
-ImageString($im, 2, $o-$v1*14 -6, $ts, '15x', $white);
+ImageString($im, 2, $o-$v1*14 -6, $ts, '>15x', $white);
 ImageString($im, 2, $o+$v1*4 -6, $ts, '5x', $white);
 ImageString($im, 2, $o+$v1*9 -8, $ts, '10x', $white);
-ImageString($im, 2, $o+$v1*14 -12, $ts, '15x', $white);
+ImageString($im, 2, $o+$v1*14 -16, $ts, '>15x', $white);
 
 ImageLine($im, $o-$v1*14, $t+5, $o+$v1*14, $t+5, $white);
 ImageLine($im, $o-$v1*14, $b-5, $o+$v1*14, $b-5, $white);
@@ -134,7 +134,7 @@ foreach($Tests as $Row){
          $wsec = $v[N_FULLCPU];   
          if ($wsec < 1){ 
             if ($wsec==0){ $wsec = 0.0001; }      
-            $wsec = min( (1/$wsec)*$v1, $w2) - $v1; 
+            $wsec = min( (1/$wsec)*$v1, $w2) - $v1;
             ImageFilledRectangle($im, $o, $ysec, $o+$wsec, $ysec+$hsec, $white);
          }            
          else { 
@@ -165,10 +165,10 @@ foreach($Tests as $Row){
 ImageString($im, 2, $o -2, $b, '1', $white);
 ImageString($im, 2, $o-$v1*4 -6, $b, '5x', $white);
 ImageString($im, 2, $o-$v1*9 -8, $b, '10x', $white);
-ImageString($im, 2, $o-$v1*14 -6, $b, '15x', $white);
+ImageString($im, 2, $o-$v1*14 -6, $b, '>15x', $white);
 ImageString($im, 2, $o+$v1*4 -6, $b, '5x', $white);
 ImageString($im, 2, $o+$v1*9 -8, $b, '10x', $white);
-ImageString($im, 2, $o+$v1*14 -12, $b, '15x', $white);
+ImageString($im, 2, $o+$v1*14 -16, $b, '>15x', $white);
 
 // LEGEND
 
