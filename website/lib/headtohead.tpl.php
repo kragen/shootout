@@ -29,8 +29,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
  /></p>
 
 
-<h3><a href="#ratio" name="ratio">&nbsp;How many times better?</a></h3>
-<p>How many times <em>faster or smaller</em> are the <strong><?=$LangName;?></strong> programs than the corresponding <?=$LangName2;?> programs?</p>
+<p><a href="#ratio" name="ratio">How many times</a> <em>faster or smaller</em> are the <strong><?=$LangName;?></strong> programs than the corresponding <?=$LangName2;?> programs?</p>
 
 
 <table>
