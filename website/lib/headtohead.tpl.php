@@ -29,13 +29,13 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
  /></p>
 
 
-<p><a href="#ratio" name="ratio">How many times</a> <em>faster or smaller</em> are the <strong><?=$LangName;?></strong> programs than the corresponding <?=$LangName2;?> programs?</p>
+<p>How many times <em>faster or smaller</em> are the <strong><?=$LangName;?></strong> programs than the corresponding <?=$LangName2;?> programs?</p>
 
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><?=$LangName;?> <em>x&nbsp;times</em>&nbsp;better <span class="num2"><br/>~ <?=$LangName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th></tr>
+<tr><th colspan="5"><?=$LangName;?> <a href="#ratio" name="ratio"><em>x&nbsp;times</em>&nbsp;better</a> <span class="num2"><br/>~ <?=$LangName2;?> <em>x&nbsp;times</em>&nbsp;better</span></th></tr>
 
 <tr>
 <th>Program &amp; Logs</th>
