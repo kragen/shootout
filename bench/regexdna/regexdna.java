@@ -4,7 +4,6 @@
    contributed by The Anh Tran
  */
 
-package regdna;
 
 import java.io.*;
 import java.util.concurrent.*;
@@ -13,7 +12,7 @@ import java.util.regex.*;
 import java.util.*;
 
 
-public class regdna
+public class regexdna
 {
     // source data is duplicated into 2 arrays
     static ArrayList<StringBuilder> source_as_segments = new ArrayList<StringBuilder>();;
@@ -25,7 +24,6 @@ public class regdna
     {
         try
         {
-            //BufferedReader reader = new BufferedReader (new FileReader("/mnt/dl/c/fasta/fa50k.txt"));
             BufferedReader reader = new BufferedReader (new InputStreamReader (System.in, "US-ASCII"));
             
             char[] buf = new char[64 *1024];

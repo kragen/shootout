@@ -3,14 +3,13 @@
  
    contributed by The Anh Tran
  */
-package knu;
 
 import java.util.*;
 import java.io.*;
 import java.text.*;
 import java.util.concurrent.atomic.*;
 
-public class knu
+public class knucleotide
 {
     public static void main (String[] args)
     {
@@ -81,7 +80,6 @@ public class knu
     {
         try
         {
-            //BufferedReader reader = new BufferedReader (new FileReader("/mnt/dl/c/fasta/fa50k.txt"));
             BufferedReader reader = new BufferedReader (new InputStreamReader (System.in, "US-ASCII"));
             
             String s = null;
