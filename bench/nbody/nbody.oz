@@ -1,11 +1,11 @@
-% The Computer Language Shootout
+% The Computer Language Benchmarks Game 
 % http://shootout.alioth.debian.org/    
 % contributed by Isaac Gouy
 
 functor
 import
    System Application 
-   S at '../../Include/oz/shootout.ozf'   
+   S at 'Include/oz/shootout.ozf'   
 
 define
    Pi = 3.141592653589793
