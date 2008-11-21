@@ -1,0 +1,103 @@
+%   The Computer Language Benchmarks Game
+%   http://shootout.alioth.debian.org/
+
+%   contributed by Mats Cronqvist
+%   parallelized by Fredrik Svahn
+
+-module(fannkuch).
+
+-export([main/1]).
+% -compile( [ native, { hipe, o3 } ] ).
+
+main([Arg]) ->
+    register(server, self()),
+    N = list_to_integer(Arg),
+    Pids = lists:map( fun(R)-> spawn(fun()-> worker(N, R) end) end, 
+		      lists:seq(0,N-1) ),
+    put(print, 30),
+    Print = fun(Data)-> 
+		      case get(print) of
+			  0 -> throw(done);
+			  P -> flush(Data), put(print,P-1)
+		      end, 
+		      Data
+	      end,
+    catch perm(Print, N, init(N)),
+    AllValues = [ receive Max -> Max end || _Pid <- Pids ],
+    io:fwrite("Pfannkuchen(~p) = ~p~n", [ N, lists:max(AllValues) ]),
+    erlang:halt(0).
+
+worker(N, Rotations)->
+    put(max,0),
+    Kuch = fun(Data) -> 
+		   case get(max) < (K = kuch(Data,0)) of
+		       true -> put(max, K);
+		       false -> ok
+		   end,
+		   Data
+	   end,
+    perm(Kuch, N-1, init(N, Rotations)),
+    server ! get(max).
+
+%% perm and prot generates the permutations in the right order and
+%% calls the supplied fun for each one
+perm(F,1,Data)-> F(Data);
+perm(F,3,Data)-> F(flip(1,F(flip(2,F(flip(1,F(flip(2,F(flip(1,F(Data)))))))))));
+perm(F,N,Data)-> prot(F,N,N,Data).
+
+prot(_F,_N,0,Data) -> Data;
+prot(F,N,M,Data) -> perm(F,N-1,Data), prot(F,N,M-1,rotate(N,Data)).
+
+%% primitives for our data model
+%%
+%% init(Length) - create new struct
+%% init(Length, R) - create new struct, rotated R times
+%% kuch(Data, N) - the actual flipping function. returns number of flips
+%% reverse(N, Data) - reverse first N elements
+%% rotate(N, Data) - rotate first N elements
+%% flip(N, Data) - exchange N:th and N+1:th element
+%% flush(Data) - flush to screen
+
+init(N) -> lists:seq(1,N).
+
+init(N, R) -> init(N, init(N), R).
+init(_N, Data, 0) -> Data;
+init(N, Data, R) -> init(N, rotate(N, Data), R-1).
+
+kuch([1 | _ ], N) -> N;
+kuch([M | _ ] = Data, N) -> kuch(reverse(M,Data),N+1).
+
+reverse(2,[H1,H2|L]) ->
+    [H2,H1|L];
+reverse(3,[H1,H2,H3|L]) ->
+    [H3,H2,H1|L];
+reverse(4,[H1,H2,H3,H4|L]) ->
+    [H4,H3,H2,H1|L];
+reverse(5,[H1,H2,H3,H4,H5|L]) ->
+    [H5,H4,H3,H2,H1|L];
+reverse(6,[H1,H2,H3,H4,H5,H6|L]) ->
+    [H6,H5,H4,H3,H2,H1|L];
+reverse(7,[H1,H2,H3,H4,H5,H6,H7|L]) ->
+    [H7,H6,H5,H4,H3,H2,H1|L];
+reverse(8,[H1,H2,H3,H4,H5,H6,H7,H8|L]) ->
+    [H8,H7,H6,H5,H4,H3,H2,H1|L];
+reverse(9,[H1,H2,H3,H4,H5,H6,H7,H8,H9|L]) ->
+    [H9,H8,H7,H6,H5,H4,H3,H2,H1|L];
+reverse(10,[H1,H2,H3,H4,H5,H6,H7,H8,H9,H0|L]) ->
+    [H0,H9,H8,H7,H6,H5,H4,H3,H2,H1|L];
+reverse(M,L) ->
+    {H,T} = lists:split(M,L),
+    lists:reverse(H)++T.
+
+rotate(0, Data) -> Data;
+rotate(4,[H1,H2,H3,H4|T]) -> [H2,H3,H4,H1|T];
+rotate(5,[H1,H2,H3,H4,H5|T]) -> [H2,H3,H4,H5,H1|T];
+rotate(N,L) -> {[H|Hs],Ts} = lists:split(N,L), Hs++[H|Ts].
+
+flip(1,[H1,H2|T]) -> [H2,H1|T];
+flip(2,[H,H1,H2|T]) -> [H,H2,H1|T].
+
+flush(Data) ->
+    lists:foreach(fun(I)->io:fwrite("~p",[I]) end, Data),
+    io:fwrite("~n").
+
