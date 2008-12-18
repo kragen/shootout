@@ -1,0 +1,55 @@
+%% The Computer Language Benchmarks Game
+%% http://shootout.alioth.debian.org/
+%% Contributed by Fredrik Svahn
+
+%-compile( [ native, { hipe, o3 } ] ).
+
+-module(mandelbrot).
+-export([main/1]).
+-define(LIM_SQR, 4.0).
+-define(ITER, 50).
+-define(SR, -1.5).
+-define(SI, -1).
+
+main([Arg]) ->
+    N = list_to_integer(Arg), HalfN = (N-1) div 2,
+    io:put_chars(["P4\n", Arg, " ", Arg, "\n"]),
+
+    %% Spawn one process per row in upper half
+    Row = fun(Y)-> spawn(fun()-> row(N-2, ?SI+Y*2/N, N, []) end) end,
+    HalfPids = lists:map(Row, lists:seq(0, HalfN)),
+
+    %% Lower half is mirror image of upper half, no need to recalculate
+    %% just ask the pids in upper half to print buffer again
+    MiddlePid = if N rem 2 == 0 -> [Row(HalfN + 1)]; true -> [] end,
+    AllPids = HalfPids ++ MiddlePid ++ lists:reverse(tl(HalfPids)),
+
+    %% Pass token around to make sure printouts are in the right order
+    hd(AllPids) ! tl(AllPids) ++ [ self() ],
+    receive _Token -> halt(0) end.
+
+%% Calculate one row and output results when asked
+row(-1, Y2, N, Bits) ->
+    receive Pids ->
+	    put_chars(Bits, []),
+	    hd(Pids) ! tl(Pids),
+	    row(-1, Y2, N, Bits)
+    end;
+
+row(X, Y2, N, Bits) ->
+    row(X-1, Y2, N, [ m(?ITER-1, ?SR+X*2/N, Y2, ?SR+X*2/N, Y2) | Bits]).
+
+%% Mandelbrot algorithm
+m(Iter,R,I,CR,CI) ->
+    case R*R+I*I =< ?LIM_SQR of 
+	true when Iter > 0 -> m(Iter-1,R*R-I*I+CR, (R+R)*I+CI, CR, CI);
+	false -> 0;
+	_  -> 1
+    end.
+
+%% Print one row, character by character
+put_chars([], Bytes) -> io:put_chars(lists:reverse(Bytes));
+put_chars([B1, B2, B3, B4, B5, B6, B7, B8 | RemBytes], Bytes) ->
+    put_chars(RemBytes, [<<B1:1,B2:1,B3:1,B4:1,B5:1,B6:1,B7:1,B8:1>> | Bytes]);
+put_chars(RemBytes, Bytes) ->
+    put_chars(RemBytes++[0], Bytes).
