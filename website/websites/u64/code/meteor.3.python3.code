@@ -1,0 +1,143 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># contributed by Daniel Nanz, 2008-08-21</span>
+<span class="hl slc"># 2to3</span>
+
+<span class="hl kwa">import</span> sys
+<span class="hl kwa">from</span> bisect <span class="hl kwa">import</span> bisect
+
+w<span class="hl sym">,</span> h <span class="hl sym">=</span> <span class="hl num">5</span><span class="hl sym">,</span> <span class="hl num">10</span>
+dir_no <span class="hl sym">=</span> <span class="hl num">6</span>
+S<span class="hl sym">,</span> E <span class="hl sym">=</span> w <span class="hl sym">*</span> h<span class="hl sym">,</span> <span class="hl num">2</span>
+SE <span class="hl sym">=</span> S <span class="hl sym">+ (</span>E <span class="hl sym">/</span> <span class="hl num">2</span><span class="hl sym">)</span>
+SW <span class="hl sym">=</span> SE <span class="hl sym">-</span> E
+W<span class="hl sym">,</span> NW<span class="hl sym">,</span> NE <span class="hl sym">= -</span>E<span class="hl sym">, -</span>SE<span class="hl sym">, -</span>SW
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">rotate</span><span class="hl sym">(</span>ido<span class="hl sym">,</span> rd<span class="hl sym">={</span>E<span class="hl sym">:</span> NE<span class="hl sym">,</span> NE<span class="hl sym">:</span> NW<span class="hl sym">,</span> NW<span class="hl sym">:</span> W<span class="hl sym">,</span> W<span class="hl sym">:</span> SW<span class="hl sym">,</span> SW<span class="hl sym">:</span> SE<span class="hl sym">,</span> SE<span class="hl sym">:</span> E<span class="hl sym">}):</span>
+    <span class="hl kwa">return</span> <span class="hl sym">[</span>rd<span class="hl sym">[</span>o<span class="hl sym">]</span> <span class="hl kwa">for</span> o <span class="hl kwa">in</span> ido<span class="hl sym">]</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">flip</span><span class="hl sym">(</span>ido<span class="hl sym">,</span> fd<span class="hl sym">={</span>E<span class="hl sym">:</span> E<span class="hl sym">,</span> NE<span class="hl sym">:</span> SE<span class="hl sym">,</span> NW<span class="hl sym">:</span> SW<span class="hl sym">,</span> W<span class="hl sym">:</span> W<span class="hl sym">,</span> SW<span class="hl sym">:</span> NW<span class="hl sym">,</span> SE<span class="hl sym">:</span> NE<span class="hl sym">}):</span>
+    <span class="hl kwa">return</span> <span class="hl sym">[</span>fd<span class="hl sym">[</span>o<span class="hl sym">]</span> <span class="hl kwa">for</span> o <span class="hl kwa">in</span> ido<span class="hl sym">]</span>
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">permute</span><span class="hl sym">(</span>ido<span class="hl sym">,</span> r_ido<span class="hl sym">,</span> rotate<span class="hl sym">=</span>rotate<span class="hl sym">,</span> flip<span class="hl sym">=</span>flip<span class="hl sym">):</span>
+
+    ps <span class="hl sym">= [</span>ido<span class="hl sym">]</span>
+    <span class="hl kwa">for</span> r <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>dir_no <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">):</span>
+        ps<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwd">rotate</span><span class="hl sym">(</span>ps<span class="hl sym">[-</span><span class="hl num">1</span><span class="hl sym">]))</span>
+        <span class="hl kwa">if</span> ido <span class="hl sym">==</span> r_ido<span class="hl sym">:</span>                 <span class="hl slc"># C2-symmetry</span>
+            ps <span class="hl sym">=</span> ps<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">:</span>dir_no<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">]</span>
+    <span class="hl kwa">for</span> pp <span class="hl kwa">in</span> ps<span class="hl sym">[:]:</span>
+        ps<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwd">flip</span><span class="hl sym">(</span>pp<span class="hl sym">))</span>
+    <span class="hl kwa">return</span> ps
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">convert</span><span class="hl sym">(</span>ido<span class="hl sym">):</span>
+    <span class="hl str">'''incremental direction offsets -&gt; &quot;coordinate offsets&quot; '''</span>
+    out <span class="hl sym">= [</span><span class="hl num">0</span><span class="hl sym">]</span>
+    <span class="hl kwa">for</span> o <span class="hl kwa">in</span> ido<span class="hl sym">:</span>
+        out<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>out<span class="hl sym">[-</span><span class="hl num">1</span><span class="hl sym">] +</span> o<span class="hl sym">)</span>
+    <span class="hl kwa">return</span> <span class="hl kwb">list</span><span class="hl sym">(</span><span class="hl kwb">set</span><span class="hl sym">(</span>out<span class="hl sym">))</span>
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">get_footprints</span><span class="hl sym">(</span>board<span class="hl sym">,</span> cti<span class="hl sym">,</span> pieces<span class="hl sym">):</span>
+
+    fps <span class="hl sym">= [[[]</span> <span class="hl kwa">for</span> p <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl kwb">len</span><span class="hl sym">(</span>pieces<span class="hl sym">))]</span> <span class="hl kwa">for</span> ci <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl kwb">len</span><span class="hl sym">(</span>board<span class="hl sym">))]</span>
+    <span class="hl kwa">for</span> c <span class="hl kwa">in</span> board<span class="hl sym">:</span>
+        <span class="hl kwa">for</span> pi<span class="hl sym">,</span> p <span class="hl kwa">in</span> <span class="hl kwb">enumerate</span><span class="hl sym">(</span>pieces<span class="hl sym">):</span>
+            <span class="hl kwa">for</span> pp <span class="hl kwa">in</span> p<span class="hl sym">:</span>
+                fp <span class="hl sym">=</span> <span class="hl kwb">frozenset</span><span class="hl sym">(</span>cti<span class="hl sym">[</span>c <span class="hl sym">+</span> o<span class="hl sym">]</span> <span class="hl kwa">for</span> o <span class="hl kwa">in</span> pp <span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">+</span> o<span class="hl sym">)</span> <span class="hl kwa">in</span> cti<span class="hl sym">)</span>
+                <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>fp<span class="hl sym">) ==</span> <span class="hl num">5</span><span class="hl sym">:</span>
+                    fps<span class="hl sym">[</span><span class="hl kwb">min</span><span class="hl sym">(</span>fp<span class="hl sym">)][</span>pi<span class="hl sym">].</span><span class="hl kwd">append</span><span class="hl sym">(</span>fp<span class="hl sym">)</span>
+    <span class="hl kwa">return</span> fps
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">get_senh</span><span class="hl sym">(</span>board<span class="hl sym">,</span> cti<span class="hl sym">):</span>
+    <span class="hl str">'''-&gt; south-east neighborhood'''</span>
+    se_nh <span class="hl sym">= []</span>
+    nh <span class="hl sym">= [</span>E<span class="hl sym">,</span> SW<span class="hl sym">,</span> SE<span class="hl sym">]</span>
+    <span class="hl kwa">for</span> c <span class="hl kwa">in</span> board<span class="hl sym">:</span>
+        se_nh<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwb">frozenset</span><span class="hl sym">(</span>cti<span class="hl sym">[</span>c <span class="hl sym">+</span> o<span class="hl sym">]</span> <span class="hl kwa">for</span> o <span class="hl kwa">in</span> nh <span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">+</span> o<span class="hl sym">)</span> <span class="hl kwa">in</span> cti<span class="hl sym">))</span>
+    <span class="hl kwa">return</span> se_nh
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">get_puzzle</span><span class="hl sym">(</span>w<span class="hl sym">=</span>w<span class="hl sym">,</span> h<span class="hl sym">=</span>h<span class="hl sym">):</span>
+
+    board <span class="hl sym">= [</span>E<span class="hl sym">*</span>x <span class="hl sym">+</span> S<span class="hl sym">*</span>y <span class="hl sym">+ (</span>y<span class="hl sym">%</span><span class="hl num">2</span><span class="hl sym">)</span> <span class="hl kwa">for</span> y <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>h<span class="hl sym">)</span> <span class="hl kwa">for</span> x <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>w<span class="hl sym">)]</span>
+    cti <span class="hl sym">=</span> <span class="hl kwb">dict</span><span class="hl sym">((</span>board<span class="hl sym">[</span>i<span class="hl sym">],</span> i<span class="hl sym">)</span> <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl kwb">len</span><span class="hl sym">(</span>board<span class="hl sym">)))</span>
+
+    idos <span class="hl sym">= [[</span>E<span class="hl sym">,</span> E<span class="hl sym">,</span> E<span class="hl sym">,</span> SE<span class="hl sym">],</span>         <span class="hl slc"># incremental direction offsets</span>
+            <span class="hl sym">[</span>SE<span class="hl sym">,</span> SW<span class="hl sym">,</span> W<span class="hl sym">,</span> SW<span class="hl sym">],</span>
+            <span class="hl sym">[</span>W<span class="hl sym">,</span> W<span class="hl sym">,</span> SW<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+            <span class="hl sym">[</span>E<span class="hl sym">,</span> E<span class="hl sym">,</span> SW<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+            <span class="hl sym">[</span>NW<span class="hl sym">,</span> W<span class="hl sym">,</span> NW<span class="hl sym">,</span> SE<span class="hl sym">,</span> SW<span class="hl sym">],</span>
+            <span class="hl sym">[</span>E<span class="hl sym">,</span> E<span class="hl sym">,</span> NE<span class="hl sym">,</span> W<span class="hl sym">],</span>
+            <span class="hl sym">[</span>NW<span class="hl sym">,</span> NE<span class="hl sym">,</span> NE<span class="hl sym">,</span> W<span class="hl sym">],</span>
+            <span class="hl sym">[</span>NE<span class="hl sym">,</span> SE<span class="hl sym">,</span> E<span class="hl sym">,</span> NE<span class="hl sym">],</span>
+            <span class="hl sym">[</span>SE<span class="hl sym">,</span> SE<span class="hl sym">,</span> E<span class="hl sym">,</span> SE<span class="hl sym">],</span>
+            <span class="hl sym">[</span>E<span class="hl sym">,</span> NW<span class="hl sym">,</span> NW<span class="hl sym">,</span> NW<span class="hl sym">]]</span>
+
+    perms <span class="hl sym">= (</span><span class="hl kwd">permute</span><span class="hl sym">(</span>p<span class="hl sym">,</span> idos<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">])</span> <span class="hl kwa">for</span> p <span class="hl kwa">in</span> idos<span class="hl sym">)</span>    <span class="hl slc"># restrict piece 4</span>
+    pieces <span class="hl sym">= [[</span><span class="hl kwd">convert</span><span class="hl sym">(</span>pp<span class="hl sym">)</span> <span class="hl kwa">for</span> pp <span class="hl kwa">in</span> p<span class="hl sym">]</span> <span class="hl kwa">for</span> p <span class="hl kwa">in</span> perms<span class="hl sym">]</span>
+    <span class="hl kwa">return</span> <span class="hl sym">(</span>board<span class="hl sym">,</span> cti<span class="hl sym">,</span> pieces<span class="hl sym">)</span>
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">print_board</span><span class="hl sym">(</span>board<span class="hl sym">,</span> w<span class="hl sym">=</span>w<span class="hl sym">,</span> h<span class="hl sym">=</span>h<span class="hl sym">):</span>
+
+    <span class="hl kwa">for</span> y <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>h<span class="hl sym">):</span>
+        <span class="hl kwa">for</span> x <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>w<span class="hl sym">):</span>
+            <span class="hl kwa">print</span><span class="hl sym">(</span>board<span class="hl sym">[</span>x <span class="hl sym">+</span> y <span class="hl sym">*</span> w<span class="hl sym">],</span> end<span class="hl sym">=</span><span class="hl str">' '</span><span class="hl sym">)</span>
+        <span class="hl kwa">print</span><span class="hl sym">(</span><span class="hl str">''</span><span class="hl sym">)</span>
+        <span class="hl kwa">if</span> y <span class="hl sym">%</span> <span class="hl num">2</span> <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">:</span>
+            <span class="hl kwa">print</span><span class="hl sym">(</span><span class="hl str">''</span><span class="hl sym">,</span> end<span class="hl sym">=</span><span class="hl str">' '</span><span class="hl sym">)</span>
+    <span class="hl kwa">print</span><span class="hl sym">()</span>
+
+
+board<span class="hl sym">,</span> cti<span class="hl sym">,</span> pieces <span class="hl sym">=</span> <span class="hl kwd">get_puzzle</span><span class="hl sym">()</span>
+fps <span class="hl sym">=</span> <span class="hl kwd">get_footprints</span><span class="hl sym">(</span>board<span class="hl sym">,</span> cti<span class="hl sym">,</span> pieces<span class="hl sym">)</span>
+se_nh <span class="hl sym">=</span> <span class="hl kwd">get_senh</span><span class="hl sym">(</span>board<span class="hl sym">,</span> cti<span class="hl sym">)</span>
+
+
+<span class="hl kwa">def</span> <span class="hl kwd">solve</span><span class="hl sym">(</span>n<span class="hl sym">,</span> i_min<span class="hl sym">,</span> free<span class="hl sym">,</span> curr_board<span class="hl sym">,</span> pieces_left<span class="hl sym">,</span> solutions<span class="hl sym">,</span>
+          fps<span class="hl sym">=</span>fps<span class="hl sym">,</span> se_nh<span class="hl sym">=</span>se_nh<span class="hl sym">,</span> bisect<span class="hl sym">=</span>bisect<span class="hl sym">):</span>
+
+    fp_i_cands <span class="hl sym">=</span> fps<span class="hl sym">[</span>i_min<span class="hl sym">]</span>
+    <span class="hl kwa">for</span> p <span class="hl kwa">in</span> pieces_left<span class="hl sym">:</span>
+        fp_cands <span class="hl sym">=</span> fp_i_cands<span class="hl sym">[</span>p<span class="hl sym">]</span>
+        <span class="hl kwa">for</span> fp <span class="hl kwa">in</span> fp_cands<span class="hl sym">:</span>
+            <span class="hl kwa">if</span> fp <span class="hl sym">&lt;=</span> free<span class="hl sym">:</span>
+                n_curr_board <span class="hl sym">=</span> curr_board<span class="hl sym">[:]</span>
+                <span class="hl kwa">for</span> ci <span class="hl kwa">in</span> fp<span class="hl sym">:</span>
+                    n_curr_board<span class="hl sym">[</span>ci<span class="hl sym">] =</span> p
+                <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>pieces_left<span class="hl sym">) &gt;</span> <span class="hl num">1</span><span class="hl sym">:</span>
+                    n_free <span class="hl sym">=</span> free <span class="hl sym">-</span> fp
+                    n_i_min <span class="hl sym">=</span> <span class="hl kwb">min</span><span class="hl sym">(</span>n_free<span class="hl sym">)</span>
+                    <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>n_free <span class="hl sym">&amp;</span> se_nh<span class="hl sym">[</span>n_i_min<span class="hl sym">]) &gt;</span> <span class="hl num">0</span><span class="hl sym">:</span>
+                        n_pieces_left <span class="hl sym">=</span> pieces_left<span class="hl sym">[:]</span>
+                        n_pieces_left<span class="hl sym">.</span><span class="hl kwd">remove</span><span class="hl sym">(</span>p<span class="hl sym">)</span>
+                        <span class="hl kwd">solve</span><span class="hl sym">(</span>n<span class="hl sym">,</span> n_i_min<span class="hl sym">,</span> n_free<span class="hl sym">,</span> n_curr_board<span class="hl sym">,</span>
+                              n_pieces_left<span class="hl sym">,</span> solutions<span class="hl sym">)</span>
+                <span class="hl kwa">else</span><span class="hl sym">:</span>
+                    s <span class="hl sym">=</span> <span class="hl str">''</span><span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">(</span><span class="hl kwb">map</span><span class="hl sym">(</span><span class="hl kwb">str</span><span class="hl sym">,</span> n_curr_board<span class="hl sym">))</span>
+                    solutions<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span><span class="hl kwd">bisect</span><span class="hl sym">(</span>solutions<span class="hl sym">,</span> s<span class="hl sym">),</span> s<span class="hl sym">)</span>
+                    rs <span class="hl sym">=</span> s<span class="hl sym">[::-</span><span class="hl num">1</span><span class="hl sym">]</span>
+                    solutions<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span><span class="hl kwd">bisect</span><span class="hl sym">(</span>solutions<span class="hl sym">,</span> rs<span class="hl sym">),</span> rs<span class="hl sym">)</span>
+                    <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>solutions<span class="hl sym">) &gt;=</span> n<span class="hl sym">:</span>
+                        <span class="hl kwa">return</span>
+        <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>solutions<span class="hl sym">) &gt;=</span> n<span class="hl sym">:</span>
+            <span class="hl kwa">return</span>
+    <span class="hl kwa">return</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">main</span><span class="hl sym">(</span>n<span class="hl sym">):</span>
+
+    free <span class="hl sym">=</span> <span class="hl kwb">frozenset</span><span class="hl sym">(</span><span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl kwb">len</span><span class="hl sym">(</span>board<span class="hl sym">)))</span>
+    curr_board <span class="hl sym">= [-</span><span class="hl num">1</span><span class="hl sym">] *</span> <span class="hl kwb">len</span><span class="hl sym">(</span>board<span class="hl sym">)</span>
+    pieces_left <span class="hl sym">=</span> <span class="hl kwb">list</span><span class="hl sym">(</span><span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl kwb">len</span><span class="hl sym">(</span>pieces<span class="hl sym">)))</span>
+    solutions <span class="hl sym">= []</span>
+    <span class="hl kwd">solve</span><span class="hl sym">(</span>n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> free<span class="hl sym">,</span> curr_board<span class="hl sym">,</span> pieces_left<span class="hl sym">,</span> solutions<span class="hl sym">)</span>
+    <span class="hl kwa">print</span><span class="hl sym">(</span><span class="hl kwb">len</span><span class="hl sym">(</span>solutions<span class="hl sym">),</span>  <span class="hl str">'solutions found</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">, -</span><span class="hl num">1</span><span class="hl sym">):</span> <span class="hl kwd">print_board</span><span class="hl sym">(</span>solutions<span class="hl sym">[</span>i<span class="hl sym">])</span>
+
+<span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span><span class="hl sym">(</span>sys<span class="hl sym">.</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]))</span>
