@@ -504,6 +504,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
+<li>training a classifier - <a href="http://blog.chrislowis.co.uk/2009/01/04/identify-programming-languages-with-source-classifier.html">Identify Programming Languages with SourceClassifier</a></li>
 <li>more comparisons - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
 <li>performance testing - <a href="http://dromaeo.com/">Mozilla JavaScript performance testing</a></li>
 <li>lighthearted asides - <a href="http://research.microsoft.com/~simonpj/papers/history-of-haskell/history.pdf">A History of Haskell: Being Lazy With Class (pdf)</a></li>
