@@ -324,6 +324,19 @@ The system is going down for system halt NOW!
 <p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/bench</p>
 </dd>
 
+
+<dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
+<dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license"">Read the license!</a></p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout login</p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u32/data</p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u32q/data</p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u64/data</p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u64q/data</p>
+<p>data.csv & ndata.csv are the data files shown on "The Computer Language Benchmarks Game" website (they only have the fastest measurements from repeated runs); and a bzipped *-bulkdata.csv which contains ALL the measurements for programs which did not fail - so that's probably what you'll want to look at. Remember to exclude the  <a href="faq.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> listed in exclude.csv</p>
+<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/desc/exclude.csv</p>
+</dd>
+
+
 <dt>&nbsp;</dt>
 <dd><p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
 <p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
