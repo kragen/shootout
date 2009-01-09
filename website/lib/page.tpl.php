@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2006 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 <?      echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
@@ -18,8 +18,7 @@
 
 <body id="<?=SITE_NAME;?>">
 <table class="banner"><tr>
-<td><h1><a href="index.php"><?=$BannerTitle;?></a></h1></td>
-<td><h4><a href="faq.php"><?=$FaqTitle;?></a></h4></td>
+<td><h1><a href="index.php"><?=$BannerTitle;?></a> (<a href="faq.php"><?=$FaqTitle;?></a>)</h1></td>
 </tr></table>
 
 <div id="<?=$PageId;?>"> 

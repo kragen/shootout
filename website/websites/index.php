@@ -23,7 +23,7 @@ $U64 = filemtime('./u64/data/data.csv');
 
 <body id="core">
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a></h1></td><td><h4><a href="./u32q/faq.php">Read the FAQ!</a></h4></td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a> (<a href="./u32q/faq.php">Read the FAQ!</a>)</h1></td>
 </tr></table>
 
 <div id="home">
