@@ -37,7 +37,7 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 define('SITE_NAME', 'u64q');
 define('SITE_TITLE','x64 Ubuntu : Intel&#174; Q6600&#174; Computer Language Benchmarks Game');
 define('BANNER_TITLE','x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;<br/>Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game&nbsp;');
-define('FAQ_TITLE','Read the FAQ!');
+define('FAQ_TITLE','Read&nbsp;the&nbsp;FAQ!');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');
