@@ -138,9 +138,9 @@
 <dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>time?</strong></a></dt>
 <dd><p>The measurement techniques have changed a little:
 <ul>
-<li>For the newer measurements (Ubuntu Q6600) each program was run as a child-process of a Python script using Popen. The script child-process usr+sys rusage time was taken using os.wait3, and time was taken before forking the child-process and after the child-process exits, using time.time().</li>
+<li>For the current measurements (Ubuntu Q6600) each program was run as a child-process of a Python script using Popen. The script child-process usr+sys rusage time was taken using os.wait3, and time was taken before forking the child-process and after the child-process exits, using time.time().</li>
 <li>
-For the older measurements (Gentoo Pentium 4 and Debian Sempron) each program was run as a child-process of a Perl script. The script child-process usr+sys time was taken before forking the child-process and after the child-process exits, using <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>[2,3].
+For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was run as a child-process of a Perl script. The script child-process usr+sys time was taken before forking the child-process and after the child-process exits, using <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>[2,3].
 </li>
 </ul></p>
 
@@ -167,13 +167,13 @@ For the older measurements (Gentoo Pentium 4 and Debian Sempron) each program wa
 <dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
 <dd>
 <p>We use a quad-core 2.4Ghz Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine with 4GB of RAM and 250GB SATA II disk drive.</p>
-<p>We use a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512MB of RAM and 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and 80GB IDE disk drive.</p>
+<p>The old measurements used a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512MB of RAM and 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and 80GB IDE disk drive.</p>
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
 <p>We use <strong>Ubuntu&#8482; 8.04 Linux</strong> Kernel 2.6.24-19-generic</p><dd>
 
-<p>We use <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
+<p>The old measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
 
 
