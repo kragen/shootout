@@ -4,6 +4,7 @@
 // Original C contributed by Sebastien Loisel
 // Conversion to C++ by Jon Harrop
 // OpenMP parallelize by The Anh Tran
+// Add SSE by The Anh Tran
 
 // Fastest with this flag: -Os
 // g++ -pipe -Os -fomit-frame-pointer -march=native -fopenmp -mfpmath=sse -msse2 ./spec.c++ -o ./spec.run
@@ -14,27 +15,32 @@
 #include <sched.h>
 #include <omp.h>
 
-using namespace std;
+// define SIMD data type. 2 doubles encapsulated in one XMM register
 typedef double v2dt __attribute__((vector_size(16)));
 
+// We can easily access 1st/2nd double value, inside XMM register, by this union
 union v2du
 {
 	v2dt		xmm;
 	double		mem[2];
 };
 
+// parameter for evaluate functions
 struct Param
 {
-	double* u;
-	double* tmp;
-	double* v;
+	double* u;		// source vector
+	double* tmp;	// temporary
+	double* v;		// destination vector
 	
-	int N;
-	int N2;
-	int r_begin;
+	int N;			// source/destination vector length
+	int N2;			// = N/2
+
+	int r_begin;	// working range of each thread
 	int r_end;
 };
 
+// Input: i, j
+// Return: 1.0 / (i + j) * (i + j +1) / 2 + i + 1;
 static
 double eval_A(int i, int j)
 {
@@ -45,6 +51,13 @@ double eval_A(int i, int j)
 	return 1.0 / d;
 }
 
+// Input: i, j
+// Return type: 2 doubles in xmm register [double1, double2]
+//	with
+//		double1 = 1.0 / (i + j) * (i + j +1) / 2 + i + 1;
+//		double2 = 1.0 / (i+1 + j) * (i+1 + j +1) / 2 + i+1 + 1;
+//	Or	double2 = 1.0 / (i + j+1) * (i + j+1 +1) / 2 + i + 1;
+//	depend on template parameter 'inc_i'
 template <bool inc_i>
 static
 v2dt eval_A_sse(int i, int j)
@@ -63,24 +76,27 @@ v2dt eval_A_sse(int i, int j)
 }
 
 
-
+// This function is called by many threads
 static
 void eval_A_times_u (Param const &p)
 {
+	// alias of source vector
 	v2dt const * pU = (v2dt const*)p.u;
 	v2du sum;
 	
 	for (int i = p.r_begin, ie = p.r_end; i < ie; i++)
 	{
-		sum.xmm ^= sum.xmm;
+		sum.xmm ^= sum.xmm; // sum.xmm = {0, 0}
 
+		// since xmm = 2 doubles. This loop run from [0 .. N/2)
 		int j;
 		for (j = 0; j < p.N2; j++)
 			sum.xmm += pU[j] * eval_A_sse <false> (i, j*2);
 
+		// write result
 		p.tmp[i] = sum.mem[0] + sum.mem[1];
 
-		// odd size array, *should be never*
+		// If source vector is odd size. This should be called <= 1 time
 		for (j = j*2; __builtin_expect(j < p.N, false); j++) 
 			p.tmp[i] += eval_A(i, j) * p.u[j];
 		
@@ -95,7 +111,7 @@ void eval_At_times_u(Param const &p)
 	
 	for (int i = p.r_begin, ie = p.r_end; i < ie; i++)
 	{
-		sum.xmm ^= sum.xmm;
+		sum.xmm ^= sum.xmm; // sum.xmm = {0, 0}
 
 		int j;
 		for (j = 0; j < p.N2; j++)
@@ -103,12 +119,15 @@ void eval_At_times_u(Param const &p)
 
 		p.v[i] = sum.mem[0] + sum.mem[1];
 
-		// odd size array, *should be never*
+		// odd size array
 		for (j = j*2; __builtin_expect(j < p.N, false); j++) 
 			p.v[i] += eval_A( j, i ) * p.tmp[j];
 	}
 }
 
+// Called by N threads.
+// Each thread modifies its portion in destination vector
+// -> barrier needed to sync access
 static
 void eval_AtA_times_u(Param const &p)
 {
@@ -119,6 +138,8 @@ void eval_AtA_times_u(Param const &p)
 	#pragma omp barrier
 }
 
+// Shootout bench uses affinity to emulate single core processor.
+// This function search for appropriate number of threads to spawn
 static
 int GetThreadCount()
 {
@@ -138,6 +159,7 @@ int GetThreadCount()
 static
 double spectral_game(int N)
 {
+	// Align 64 byte for L2 cache line
 	__attribute__((aligned(64))) double u[N];
 	__attribute__((aligned(64))) double tmp[N];
 	__attribute__((aligned(64))) double v[N];
@@ -168,12 +190,12 @@ double spectral_game(int N)
 
 		for (int ite = 0; ite < 10; ite++)
 		{
-			my_param.u = u;
-			my_param.v = v;
+			my_param.u = u;	// source vec is u
+			my_param.v = v;	// destination vec is v
 			eval_AtA_times_u(my_param);
 
-			my_param.u = v;
-			my_param.v = u;
+			my_param.u = v; // source is v
+			my_param.v = u; // desti is u
 			eval_AtA_times_u(my_param);
 		}
 
