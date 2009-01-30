@@ -517,16 +517,15 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
-<li>edge cases - <a href="http://ulf.wiger.net/weblog/wp-content/uploads/2009/01/damp09-erlang-multicore.pdf">Erlang Programming
-for Multi-core (pdf)</a> "runs slower the more cores you throw at it" p22</li>
+<li>edge cases - <a href="http://ulf.wiger.net/weblog/wp-content/uploads/2009/01/damp09-erlang-multicore.pdf">"runs slower the more cores you throw at it" p22 (pdf)</a></li>
 <li>training a classifier - <a href="http://blog.chrislowis.co.uk/2009/01/04/identify-programming-languages-with-source-classifier.html">Identify Programming Languages with SourceClassifier</a></li>
 <li>more comparisons - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
 <li>performance testing - <a href="http://dromaeo.com/">Mozilla JavaScript performance testing</a></li>
 <li>lighthearted asides - <a href="http://research.microsoft.com/~simonpj/papers/history-of-haskell/history.pdf">A History of Haskell: Being Lazy With Class (pdf)</a></li>
-<li>diagnostics - <a href="http://smalltalk.gnu.org/project/issue/200">awful memory usage with lots of big objects</a></li>
+<li>diagnostics - <a href="http://smalltalk.gnu.org/project/issue/200">"awful memory usage with lots of big objects"</a></li>
 <li>dispelling myths - <a href="http://ftp.openvms.compaq.com/openvms/journal/v10/openvms_journal.pdf">Java and OpenVMS: Myths and realities (pdf)</a></li>
 <li>gaining perspective - <a href="http://openquark.org/svn/openquark/tags/1.4.0_0/OpenQuark/docs/CAL%20and%20the%20Computer%20Language%20Shootout%20Benchmarks.pdf">CAL and the Computer Language Benchmarks Game (pdf)</a></li>
-<li>nostalgia - <a href="http://upsilon.cc/~zack/teaching/0607/labsomfosset/ocaml_hot.pdf">Introduction to HOT languages (pdf)</a> "we will show you 2004 data"</li>
+<li>nostalgia - <a href="http://upsilon.cc/~zack/teaching/0607/labsomfosset/ocaml_hot.pdf">"we will show you 2004 data" (pdf)</a></li>
 <li>even <a href="http://java.sys-con.com/read/358792.htm">learning a little about some uncommon programming languages</a>.</li>
 </ul>
 </dd>
