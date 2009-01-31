@@ -39,16 +39,16 @@ int count_flip(VT (&perm_flip)[n])
       v0 = tmp;
 
       flip_count++;
-   } while (v0 != 0); // first element == '1' ?
+   } while (v0 != 0); // stop when first element == '1' (no more flip)
 
    return flip_count;
 }
 
 // Return next permut, by rotating elements [0 - position] one 'step'
-// next_perm('1234', 2) -> '2314'
+// next_perm('12345', 2) -> '23145'
 template <typename VT, int n>
 static
-void next_perm(VT (&permutation)[n], int position)
+void next_permutation(VT (&permutation)[n], int position)
 {
    VT perm0 = permutation[0];
 
@@ -57,35 +57,37 @@ void next_perm(VT (&permutation)[n], int position)
    permutation[position] = perm0;
 }
 
-// In order to divide tasks 'equally' for many threads, permut generation 
-// strategy is different than original single thread.
+// To divide tasks 'equally' for many threads, 
+// permut generation strategy is different than that of original single thread.
 // this function will 'correctly' print first 30 permutations
 template <typename VT, int n>
 static
-void print_30_permut()
+void print_30_permutation()
 {
    // declare and initialize
+   // print original perm '123456...'
    VT permutation[n];
    for ( int i = 0; i < n; i++ )
+   {
       permutation[i] = (VT)i;
+      printf("%d", (1 + i));
+   }
 
+   printf("\n");
+   int numPermutationsPrinted = 1;
+
+   // initialize counter
    VT perm_remain[n];
    for ( int i = 1; i <= n; i++ )
       perm_remain[i -1] = (VT)i;
 
-   // print original perm '123456...'
-   for (int i = 0; i < n; ++i)
-      printf("%d", (1 + i));
-   printf("\n");
-   
-   int numPermutationsPrinted = 1;
    for ( int pos_right = 2; pos_right <= n; pos_right++ )
    {
       int pos_left = pos_right -1;
-      do
+      while (pos_left < pos_right)
       {
          // rotate down perm[0..prev] by one
-         next_perm(permutation, pos_left);
+         next_permutation(permutation, pos_left);
 
          if (--perm_remain[pos_left] > 0)
          {
@@ -94,17 +96,20 @@ void print_30_permut()
                for (int i = 0; i < n; ++i)
                   printf("%d", int(1 + permutation[i]));
                printf("\n");
-            }
+               }
+            else
+               return;
 
             for ( ; pos_left != 1; --pos_left)
                perm_remain[pos_left -1] = pos_left;
          }
          else
             ++pos_left;
-      } while (pos_left < pos_right);
+      }
    }
 }
 
+// Detect single/multithread benchmark
 static
 int GetThreadCount()
 {
@@ -121,6 +126,7 @@ int GetThreadCount()
    return count;
 }
 
+
 template <int n>
 static
 int fannkuch(int n_perm)
@@ -129,38 +135,41 @@ int fannkuch(int n_perm)
       return fannkuch<n -1>(n_perm);
 
    typedef int VT;
-   int flip_max_arr[n] = {0};   // hold flip_count result for each thread
+   int flip_max_arr[n] = {0}; // hold flip_count result for each swapping index
 
    #pragma omp parallel default(shared) num_threads(GetThreadCount())
    {
       #pragma omp single nowait
-      print_30_permut<VT, n>();
+      print_30_permutation<VT, n>();
 
-      VT permutation[n];
-      VT perm_flip[n];
-      int perm_remain[n];
-         
+      VT   permutation   [n];   // main array
+      VT   perm_flip   [n];   // 2nd array, for counting flip times
+      int   perm_remain   [n];   // 3rd array, holding permut counter
+
+      // element at the last index take most of the time
+      // -> task division: each swap(element i, last element) is a flipping run sub-task
       #pragma omp for schedule(dynamic, 1) nowait
       for ( int pos_right = 0; pos_right < n -1; pos_right++ )
       {
-         int flip_max = 0;
+         int flip_max = 0; // flip count of this sub-task
 
+         // value init
          for ( int i = 0; i < n -1; i++ )
             permutation[i] = VT(i);
 
-         // element at the last index take most of the time
-         // -> task division: each swap(element i, last element) is a flipping run
+         // manually swap element i and last element 
          permutation[pos_right] = VT(n -1);
          permutation[n -1] = VT(pos_right);
 
+         // counter init
          for ( int i = 1; i <= n; i++ )
             perm_remain[i -1] = i;
 
          int pos_left = n -2;
-         while (pos_left < n -1)   // since we manually swap(i, last_element) => exclude last element
+         while (pos_left < n -1) // manually swap(i, last_element) => exclude last element
          {
             // rotate down perm[0..r] by one
-            next_perm(permutation, pos_left);
+            next_permutation(permutation, pos_left);
 
             if (--perm_remain[pos_left] > 0)
             {
@@ -179,7 +188,7 @@ int fannkuch(int n_perm)
                pos_left++;
          }
 
-         // update max_flip foreach flipping position
+         // update max_flip counter for each flipping sub-task
          flip_max_arr[pos_right] = flip_max;
       } // end parallel foreach position
    } // end parallel region
@@ -191,14 +200,16 @@ int fannkuch(int n_perm)
    return m;
 }
 
+
 // Specialized to stop compilation
 template <>
 static
 int fannkuch<2>(int)
 {
-   print_30_permut<int, 2>();
+   print_30_permutation<int, 2>();
    return 1;
 }
+
 
 int main(int argc, const char **argv)
 {
@@ -207,5 +218,4 @@ int main(int argc, const char **argv)
    printf("Pfannkuchen(%d) = %d\n", n, fannkuch<32>(n));
    return 0;
 }
-
 
