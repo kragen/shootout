@@ -132,9 +132,9 @@ foreach($Accepted as $d){
       $e = '&nbsp;';
       $ld = '&nbsp;';
    } else { 
-      $fc = number_format($fullcpu,2);
+      $fc = PTime($fullcpu);
       if ($d[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$d[DATA_MEMORY]); }
-      $e = ElapsedTime($d);
+      $e = PTime($d[DATA_ELAPSED]);
       $ld = CpuLoad($d);
 
    }
