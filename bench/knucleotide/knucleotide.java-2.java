@@ -9,7 +9,7 @@ import java.io.*;
 import java.text.*;
 import java.util.concurrent.atomic.*;
 
-public class knucleotide
+public final class knucleotide
 {
     public static void main (String[] args)
     {
@@ -127,7 +127,7 @@ public class knucleotide
             
             hash = 0;
             for (char c : key)
-                hash = hash * 131 + c;
+                hash = hash * 31 + c;
         }
 
         public int hashCode()
@@ -192,7 +192,7 @@ public class knucleotide
         for (Key k : result)
             sb.append(String.format("%s %.3f\n", 
                 String.valueOf(k.key).toUpperCase(), 
-                (float)(k.count * 100) / totalchar)  );
+                (float)(k.count) * 100.0f / totalchar)  );
         
         return sb.toString();
     }
