@@ -166,7 +166,7 @@ foreach($Langs as $k => $v){
          $gz = $d[DATA_GZ];
 
          if ($d[DATA_STATUS]==PROGRAM_TIMEOUT){
-            $ratio = ''; $e = ElapsedTime($d);
+            $ratio = ''; $e = PTime($d[DATA_ELAPSED]);
          } else { $ratio = ''; $e = ''; }
 
 
