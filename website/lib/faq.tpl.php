@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 <p>This FAQ is short. You can read it really quickly.</p>
@@ -37,7 +37,7 @@
 <dd>
 <p>That might be an interesting question <em>if</em> it's asked about the different measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine.</p>
 <p>However, if the question is asked about about different test machines then as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
-<p><em>Caveat Emptor!</em> Check the source code!</p>
+<p><em>Caveat Lector!</em> Check the source code!</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
