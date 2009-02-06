@@ -1,0 +1,332 @@
+<span class="hl com">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hl com">{-# OPTIONS_GHC -O2 #-}</span>
+
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- contributed by Stephen Blackheath (with some bits taken from Don Stewart's</span>
+<span class="hl slc">--     version), v1.2</span>
+
+<span class="hl kwa">import</span> Text.Printf
+<span class="hl kwa">import</span> Data.ByteString.Internal
+<span class="hl kwa">import qualified</span> Data.ByteString.Char8 <span class="hl kwa">as</span> S
+<span class="hl kwa">import</span> Control.Applicative
+<span class="hl kwa">import</span> Control.Monad
+<span class="hl kwa">import</span> Control.Concurrent
+<span class="hl kwa">import</span> Foreign.Storable
+<span class="hl kwa">import</span> Foreign.Marshal.Alloc
+<span class="hl kwa">import</span> Foreign.Marshal.Array
+<span class="hl kwa">import</span> Foreign.Ptr
+<span class="hl kwa">import</span> Foreign.ForeignPtr
+<span class="hl kwa">import</span> Data.Word
+<span class="hl kwa">import</span> Data.Bits
+<span class="hl kwa">import</span> Data.<span class="hl kwb">Char</span>
+<span class="hl kwa">import</span> Data.List
+<span class="hl kwa">import</span> Data.Maybe
+<span class="hl kwa">import</span> Data.IORef
+<span class="hl kwa">import</span> GHC.Exts
+
+
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    genome <span class="hl sym">&lt;-</span> extract <span class="hl sym">(</span>S.pack <span class="hl str">&quot;&gt;TH&quot;</span><span class="hl sym">)</span>
+    <span class="hl kwa">let</span> actions <span class="hl sym">= [</span>
+                <span class="hl kwa">do</span>
+                    a <span class="hl sym">&lt;-</span> printFreqsBySize genome <span class="hl num">1</span>
+                    b <span class="hl sym">&lt;-</span> printFreqsBySize genome <span class="hl num">2</span>
+                    return $ a <span class="hl sym">++</span> b
+            <span class="hl sym">] ++</span> map <span class="hl sym">(</span>printFreqsSpecific genome<span class="hl sym">)</span> specificSeqs
+    output <span class="hl sym">&lt;-</span> concat <span class="hl sym">&lt;</span>$<span class="hl sym">&gt;</span> parallel actions
+    forM_ output putStrLn
+
+<span class="hl slc">-- Drop in replacement for sequence</span>
+parallel <span class="hl sym">:: [</span>IO a<span class="hl sym">] -&gt;</span> IO <span class="hl sym">[</span>a<span class="hl sym">]</span>
+parallel actions <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    vars <span class="hl sym">&lt;-</span> forM actions $ \action <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+        var <span class="hl sym">&lt;-</span> newEmptyMVar
+        forkIO $ <span class="hl kwa">do</span>
+            answer <span class="hl sym">&lt;-</span> action
+            putMVar var answer
+        return var
+    forM vars takeMVar
+
+specificSeqs <span class="hl sym">=</span> map S.pack <span class="hl sym">[</span>
+    <span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">]</span>
+
+extract p <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    s <span class="hl sym">&lt;-</span> S.getContents
+    <span class="hl kwa">let</span> <span class="hl sym">(</span>_<span class="hl sym">,</span> rem<span class="hl sym">)  =</span> S.breakSubstring p s
+    return $<span class="hl sym">!</span> S.map toUpper             <span class="hl slc">-- array fusion!</span>
+            . S.filter    <span class="hl sym">((/=)</span> '\n'<span class="hl sym">)</span>
+            . S.dropWhile <span class="hl sym">((/=)</span> '\n'<span class="hl sym">)</span> $ rem
+
+printFreqsBySize <span class="hl sym">::</span> S.ByteString <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">[</span>String<span class="hl sym">]</span>
+printFreqsBySize genome keySize <span class="hl sym">=</span> <span class="hl kwa">do</span>
+        ht0 <span class="hl sym">&lt;-</span> htNew keySize
+        ht <span class="hl sym">&lt;-</span> hashGenome genome keySize ht0
+        l <span class="hl sym">&lt;-</span> htToList ht
+        htFree ht
+        return $ map draw <span class="hl sym">(</span>sortBy sortRule l<span class="hl sym">) ++ [</span><span class="hl str">&quot;&quot;</span><span class="hl sym">]</span>
+    <span class="hl kwa">where</span>
+        genomeLen <span class="hl sym">=</span> S.length genome
+        draw <span class="hl sym">:: (</span>S.ByteString<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">) -&gt;</span> String
+        draw <span class="hl sym">(</span>key<span class="hl sym">,</span> count<span class="hl sym">) =</span> printf <span class="hl str">&quot;%s %.3f&quot;</span> <span class="hl sym">(</span>S.unpack key<span class="hl sym">)</span> pct
+            <span class="hl kwa">where</span> pct   <span class="hl sym">= (</span><span class="hl num">100</span> <span class="hl sym">* (</span>fromIntegral count<span class="hl sym">) /</span> total<span class="hl sym">) ::</span> <span class="hl kwb">Double</span>
+                  total <span class="hl sym">=</span> fromIntegral <span class="hl sym">(</span>genomeLen <span class="hl sym">-</span> keySize <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+
+printFreqsSpecific <span class="hl sym">::</span> S.ByteString <span class="hl sym">-&gt;</span> S.ByteString <span class="hl sym">-&gt;</span> IO <span class="hl sym">[</span>String<span class="hl sym">]</span>
+printFreqsSpecific genome seq <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">let</span> keySize <span class="hl sym">=</span> S.length seq
+        genomeLen <span class="hl sym">=</span> S.length genome
+    ht0 <span class="hl sym">&lt;-</span> htNew keySize
+    ht <span class="hl sym">&lt;-</span> hashGenome genome keySize ht0
+    <span class="hl kwa">let</span> <span class="hl sym">(</span>fp<span class="hl sym">,</span> offset<span class="hl sym">,</span> len<span class="hl sym">) =</span> toForeignPtr seq
+    count <span class="hl sym">&lt;-</span> withForeignPtr fp $ \p_ <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+        htGet ht <span class="hl sym">(</span>p_ `plusPtr` offset<span class="hl sym">)</span>
+    htFree ht
+    return <span class="hl sym">[</span>show count <span class="hl sym">++ (</span>'\t' <span class="hl sym">:</span> S.unpack seq<span class="hl sym">)]</span>
+
+hashGenome <span class="hl sym">::</span> S.ByteString
+           <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+           <span class="hl sym">-&gt;</span> Hashtable
+           <span class="hl sym">-&gt;</span> IO Hashtable
+<span class="hl com">{-# INLINE hashGenome #-}</span>
+hashGenome genome keySize ht <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">let</span> <span class="hl sym">(</span>fp<span class="hl sym">,</span> offset<span class="hl sym">,</span> len<span class="hl sym">) =</span> toForeignPtr genome
+    withForeignPtr fp $ \p_ <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+        <span class="hl kwa">let</span> p <span class="hl sym">=</span> p_ `plusPtr` offset
+            loop ht idx <span class="hl sym">=</span> <span class="hl kwa">do</span>
+                <span class="hl kwa">let</span> key <span class="hl sym">=</span> p `plusPtr` idx
+                htInc ht key
+            endIdx <span class="hl sym">=</span> len <span class="hl sym">-</span> keySize <span class="hl sym">+</span> <span class="hl num">1</span>
+            foldMe i ht <span class="hl sym">|</span> i <span class="hl sym">==</span> endIdx <span class="hl sym">=</span> return ht
+            foldMe i ht <span class="hl sym">=</span> loop ht i <span class="hl sym">&gt;&gt;=</span> foldMe <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+        foldMe <span class="hl num">0</span> ht
+
+sortRule <span class="hl sym">:: (</span>S.ByteString<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">) -&gt; (</span>S.ByteString<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">) -&gt;</span> Ordering
+sortRule <span class="hl sym">(</span>a1<span class="hl sym">,</span> b1<span class="hl sym">) (</span>a2<span class="hl sym">,</span> b2<span class="hl sym">) =</span>
+    <span class="hl kwa">case</span> compare b2 b1 <span class="hl kwa">of</span>
+        EQ <span class="hl sym">-&gt;</span> compare a1 a2
+        x  <span class="hl sym">-&gt;</span> x
+
+<span class="hl slc">------ Hash table implementation ----------------------------------------------</span>
+
+<span class="hl slc">-- Note: Hash tables are not generally used in functional languages, so there</span>
+<span class="hl slc">-- are no available library implementations for Haskell.  This benchmark</span>
+<span class="hl slc">-- requires a hash table.  This is why I have implemented the hash table here.</span>
+
+htNew <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO Hashtable
+htNew <span class="hl sym">=</span> htNew' <span class="hl sym">(</span>head primes<span class="hl sym">)</span>
+
+htNew' <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO Hashtable
+htNew' slots ksz <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">let</span> ssz <span class="hl sym">=</span> spineSize ksz slots
+    sp <span class="hl sym">&lt;-</span> mallocBytes ssz
+    memset sp <span class="hl num">0</span> <span class="hl sym">(</span>fromIntegral ssz<span class="hl sym">)</span>
+    return $ Hashtable {
+            keySize   <span class="hl sym">=</span> ksz<span class="hl sym">,</span>
+            noOfSlots <span class="hl sym">=</span> slots<span class="hl sym">,</span>
+            spine     <span class="hl sym">=</span> sp
+        }
+
+primes <span class="hl sym">= [</span> <span class="hl num">1543</span><span class="hl sym">,</span>     <span class="hl num">3079</span><span class="hl sym">,</span>      <span class="hl num">6151</span><span class="hl sym">,</span>      <span class="hl num">12289</span><span class="hl sym">,</span>     <span class="hl num">24593</span><span class="hl sym">,</span>
+           <span class="hl num">49157</span><span class="hl sym">,</span>    <span class="hl num">98317</span><span class="hl sym">,</span>     <span class="hl num">196613</span><span class="hl sym">,</span>    <span class="hl num">93241</span><span class="hl sym">,</span>     <span class="hl num">786433</span><span class="hl sym">,</span>
+           <span class="hl num">1572869</span><span class="hl sym">,</span>  <span class="hl num">3145739</span><span class="hl sym">,</span>   <span class="hl num">6291469</span><span class="hl sym">,</span>   <span class="hl num">12582917</span><span class="hl sym">,</span>  <span class="hl num">25165843</span><span class="hl sym">,</span>
+           <span class="hl num">50331653</span><span class="hl sym">,</span> <span class="hl num">100663319</span><span class="hl sym">,</span> <span class="hl num">201326611</span><span class="hl sym">,</span> <span class="hl num">402653189</span><span class="hl sym">,</span> <span class="hl num">805306457</span> <span class="hl sym">]</span>
+
+htFree <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+htFree ht <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    htTraverse ht $ \isSpine <span class="hl sym">(</span>Entry ePtr<span class="hl sym">) -&gt;</span> when <span class="hl sym">(</span>not isSpine<span class="hl sym">)</span> $ free ePtr
+    free <span class="hl sym">(</span>spine ht<span class="hl sym">)</span>
+
+htGet <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Int</span>
+htGet ht key <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    hash <span class="hl sym">&lt;-</span> calcHash ht key
+    htPayload ht hash key <span class="hl sym">&gt;&gt;=</span> peek
+
+htInc <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO Hashtable
+<span class="hl com">{-# INLINE htInc #-}</span>
+htInc <span class="hl sym">!</span>ht <span class="hl sym">!</span>key <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    hash <span class="hl sym">&lt;-</span> calcHash ht key
+    pPayload <span class="hl sym">&lt;-</span> htPayload ht hash key
+    value <span class="hl sym">&lt;-</span> peek pPayload
+    poke pPayload <span class="hl sym">(</span>value<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+    if value <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp; (</span>hash .<span class="hl sym">&amp;</span>. <span class="hl num">0x7f</span><span class="hl sym">) ==</span> <span class="hl num">0</span>
+        <span class="hl kwa">then</span> checkGrow ht
+        <span class="hl kwa">else</span> return ht
+
+htPut_ <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+<span class="hl com">{-# INLINE htPut_ #-}</span>
+htPut_ <span class="hl sym">!</span>ht <span class="hl sym">!</span>key <span class="hl sym">!</span>value <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    hash <span class="hl sym">&lt;-</span> calcHash ht key
+    pPayload <span class="hl sym">&lt;-</span> htPayload ht hash key
+    poke pPayload value
+
+checkGrow <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> IO Hashtable
+checkGrow ht <span class="hl sym">=</span> <span class="hl kwa">do</span>
+        <span class="hl kwa">let</span> pTotal <span class="hl sym">=</span> totalEntriesOf ht
+            slots <span class="hl sym">=</span> noOfSlots ht
+        total <span class="hl sym">&lt;- (</span><span class="hl num">0x200</span><span class="hl sym">+) &lt;</span>$<span class="hl sym">&gt;</span> peek pTotal
+        poke pTotal total
+        if total <span class="hl sym">&gt;=</span> slots
+            <span class="hl kwa">then do</span>
+                <span class="hl kwa">let</span> newSlots <span class="hl sym">=</span> head $ dropWhile <span class="hl sym">(&lt;=</span> slots<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">)</span> primes
+                ht' <span class="hl sym">&lt;-</span> htNew' newSlots <span class="hl sym">(</span>keySize ht<span class="hl sym">)</span>
+                htTraverse ht $ \_ <span class="hl sym">-&gt;</span> reinsert ht' <span class="hl slc">-- re-insert all the elts</span>
+                htFree ht
+                poke <span class="hl sym">(</span>totalEntriesOf ht'<span class="hl sym">)</span> total <span class="hl slc">-- copy the total entry count</span>
+                return ht'
+            <span class="hl kwa">else</span> return ht
+    <span class="hl kwa">where</span>
+        reinsert <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Entry <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+        reinsert ht entry <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            value <span class="hl sym">&lt;-</span> peek <span class="hl sym">(</span>payloadOf entry<span class="hl sym">)</span>
+            htPut_ ht <span class="hl sym">(</span>keyOf entry<span class="hl sym">)</span> value
+
+htToList <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> IO <span class="hl sym">[(</span>S.ByteString<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">)]</span>
+htToList ht <span class="hl sym">=</span>
+    htMap <span class="hl sym">(</span>\entry <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+        keyStr <span class="hl sym">&lt;-</span> keyString ht <span class="hl sym">(</span>keyOf entry<span class="hl sym">)</span>
+        payload <span class="hl sym">&lt;-</span> peek <span class="hl sym">(</span>payloadOf entry<span class="hl sym">)</span>
+        return <span class="hl sym">(</span>keyStr<span class="hl sym">,</span> payload<span class="hl sym">))</span> ht
+
+htMap <span class="hl sym">:: (</span>Entry <span class="hl sym">-&gt;</span> IO a<span class="hl sym">) -&gt;</span> Hashtable <span class="hl sym">-&gt;</span> IO <span class="hl sym">[</span>a<span class="hl sym">]</span>
+htMap f ht <span class="hl sym">=</span> mapM f <span class="hl sym">=&lt;&lt;</span> htEntries ht
+
+keyString <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO S.ByteString
+keyString ht key <span class="hl sym">=</span> S.pack . map w2c <span class="hl sym">&lt;</span>$<span class="hl sym">&gt;</span> peekArray <span class="hl sym">(</span>keySize ht<span class="hl sym">)</span> key
+
+isEmptySlot <span class="hl sym">::</span> Entry <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Bool</span>
+<span class="hl com">{-# INLINE isEmptySlot #-}</span>
+isEmptySlot entry <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    ch <span class="hl sym">&lt;-</span> peek $ keyOf entry
+    return $ ch <span class="hl sym">==</span> <span class="hl num">0</span>
+
+htEntries <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> IO <span class="hl sym">[</span>Entry<span class="hl sym">]</span>
+htEntries ht <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    es <span class="hl sym">&lt;-</span> newIORef <span class="hl sym">[]</span>
+    htTraverse ht $ \_ entry <span class="hl sym">-&gt;</span> modifyIORef es $ \l <span class="hl sym">-&gt;</span> entry<span class="hl sym">:</span>l
+    readIORef es
+
+htTraverse <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt; (</span><span class="hl kwb">Bool</span> <span class="hl sym">-&gt;</span> Entry <span class="hl sym">-&gt;</span> IO <span class="hl sym">()) -&gt;</span> IO <span class="hl sym">()</span>
+htTraverse ht f <span class="hl sym">=</span> he <span class="hl num">0</span>
+    <span class="hl kwa">where</span>
+        slots <span class="hl sym">=</span> noOfSlots ht
+        he i <span class="hl sym">|</span> i <span class="hl sym">==</span> slots <span class="hl sym">=</span> return <span class="hl sym">()</span>
+        he i <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            <span class="hl kwa">let</span> entry <span class="hl sym">=</span> indexEntry ht i
+            empty <span class="hl sym">&lt;-</span> isEmptySlot entry
+            if empty
+                <span class="hl kwa">then</span> he <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+                <span class="hl kwa">else</span> links <span class="hl kwa">True</span> i entry
+        links isSpine i entry <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            next <span class="hl sym">&lt;-</span> peek $ nextPtrOf entry
+            f isSpine entry
+            if next <span class="hl sym">==</span> nullPtr
+                <span class="hl kwa">then</span> he <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+                <span class="hl kwa">else</span> links <span class="hl kwa">False</span> i <span class="hl sym">(</span>Entry next<span class="hl sym">)</span>
+
+<span class="hl kwa">data</span> Hashtable <span class="hl sym">=</span> Hashtable {
+        keySize   <span class="hl sym">::</span> <span class="hl kwb">Int</span><span class="hl sym">,</span>
+        noOfSlots <span class="hl sym">::</span> <span class="hl kwb">Int</span><span class="hl sym">,</span>
+        spine     <span class="hl sym">::</span> Ptr Word8
+    }
+
+wordSize <span class="hl sym">::</span> <span class="hl kwb">Int</span>
+wordSize <span class="hl sym">=</span> max <span class="hl sym">(</span>sizeOf <span class="hl sym">(</span>nullPtr <span class="hl sym">::</span> Ptr Word8<span class="hl sym">)) (</span>sizeOf <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">::</span> <span class="hl kwb">Int</span><span class="hl sym">))</span>
+
+<span class="hl slc">-- Round up to word size</span>
+roundUp <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+<span class="hl com">{-# INLINE roundUp #-}</span>
+roundUp <span class="hl sym">!</span>i <span class="hl sym">= (</span>i <span class="hl sym">+</span> wordSize <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> .<span class="hl sym">&amp;</span>. complement <span class="hl sym">(</span>wordSize <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+
+slotSize <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+<span class="hl com">{-# INLINE slotSize #-}</span>
+slotSize <span class="hl sym">!</span>ksz <span class="hl sym">=</span> roundUp ksz <span class="hl sym">+</span> wordSize <span class="hl sym">*</span> <span class="hl num">2</span>
+
+spineSize <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span>
+spineSize ksz slots <span class="hl sym">=</span> slots <span class="hl sym">*</span> slotSize ksz <span class="hl sym">+</span> wordSize
+
+calcHash <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Int</span>
+<span class="hl com">{-# INLINE calcHash #-}</span>
+calcHash <span class="hl sym">!</span>ht <span class="hl sym">!</span>key <span class="hl sym">= (</span>`mod` noOfSlots ht<span class="hl sym">) &lt;</span>$<span class="hl sym">&gt;</span> ch <span class="hl num">0 0</span>
+    <span class="hl kwa">where</span>
+        ksz <span class="hl sym">=</span> keySize ht
+        ch <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Int</span>
+        ch <span class="hl sym">!</span>i <span class="hl sym">!</span>acc <span class="hl sym">|</span> i <span class="hl sym">==</span> ksz <span class="hl sym">=</span> return acc
+        ch <span class="hl sym">!</span>i <span class="hl sym">!</span>acc <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            c <span class="hl sym">&lt;-</span> peek <span class="hl sym">(</span>key `plusPtr` i<span class="hl sym">)</span>
+            ch <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>acc <span class="hl sym">*</span> <span class="hl num">131</span> <span class="hl sym">+</span> fromIntegral <span class="hl sym">(</span>c<span class="hl sym">::</span>Word8<span class="hl sym">))</span>
+
+<span class="hl kwa">newtype</span> Entry <span class="hl sym">=</span> Entry <span class="hl sym">(</span>Ptr Word8<span class="hl sym">)</span>
+
+<span class="hl slc">-- Count of the total number of hash table entries</span>
+totalEntriesOf <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Int</span>
+<span class="hl com">{-# INLINE totalEntriesOf #-}</span>
+totalEntriesOf ht <span class="hl sym">=</span> castPtr $ spine ht
+
+indexEntry <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Entry
+<span class="hl com">{-# INLINE indexEntry #-}</span>
+indexEntry <span class="hl sym">!</span>ht <span class="hl sym">!</span>hash <span class="hl sym">=</span>
+    <span class="hl kwa">let</span> hOffset <span class="hl sym">=</span> wordSize <span class="hl sym">+</span> hash <span class="hl sym">*</span> slotSize <span class="hl sym">(</span>keySize ht<span class="hl sym">)</span>
+    <span class="hl kwa">in</span>  Entry $ spine ht `plusPtr` hOffset
+
+entryMatches <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Entry <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl kwb">Bool</span>
+<span class="hl com">{-# INLINE entryMatches #-}</span>
+entryMatches <span class="hl sym">!</span>ht <span class="hl sym">!</span>entry <span class="hl sym">!</span>key <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">let</span> eKey <span class="hl sym">=</span> keyOf entry
+    c <span class="hl sym">&lt;-</span> memcmp key eKey <span class="hl sym">(</span>fromIntegral $ keySize ht<span class="hl sym">)</span>
+    if c <span class="hl sym">==</span> <span class="hl num">0</span>
+        <span class="hl kwa">then</span> return <span class="hl kwa">True</span>
+        <span class="hl kwa">else do</span>
+            empty <span class="hl sym">&lt;-</span> isEmptySlot entry
+            if empty
+                <span class="hl kwa">then do</span>
+                    memcpy eKey key <span class="hl sym">(</span>fromIntegral $ keySize ht<span class="hl sym">)</span>  <span class="hl slc">-- ick</span>
+                    return <span class="hl kwa">True</span>
+                <span class="hl kwa">else</span>
+                    return <span class="hl kwa">False</span>
+
+nextPtrOf <span class="hl sym">::</span> Entry <span class="hl sym">-&gt;</span> Ptr <span class="hl sym">(</span>Ptr Word8<span class="hl sym">)</span>
+<span class="hl com">{-# INLINE nextPtrOf #-}</span>
+nextPtrOf <span class="hl sym">!(</span>Entry ePtr<span class="hl sym">) =</span> castPtr $ ePtr
+
+payloadOf <span class="hl sym">::</span> Entry <span class="hl sym">-&gt;</span> Ptr <span class="hl kwb">Int</span>
+<span class="hl com">{-# INLINE payloadOf #-}</span>
+payloadOf <span class="hl sym">!(</span>Entry ePtr<span class="hl sym">) =</span> castPtr $ ePtr `plusPtr` wordSize
+
+keyOf <span class="hl sym">::</span> Entry <span class="hl sym">-&gt;</span> Ptr Word8
+<span class="hl com">{-# INLINE keyOf #-}</span>
+keyOf <span class="hl sym">!(</span>Entry ePtr<span class="hl sym">) =</span> ePtr `plusPtr` <span class="hl sym">(</span>wordSize<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">)</span>
+
+allocEntry <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO Entry
+allocEntry <span class="hl sym">!</span>ht <span class="hl sym">!</span>key <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">let</span> esz <span class="hl sym">=</span> slotSize $ keySize ht
+    ePtr <span class="hl sym">&lt;-</span> mallocBytes esz
+    memset ePtr <span class="hl num">0</span> <span class="hl sym">(</span>fromIntegral esz<span class="hl sym">)</span>
+    <span class="hl kwa">let</span> entry <span class="hl sym">=</span> Entry ePtr
+    memcpy <span class="hl sym">(</span>keyOf entry<span class="hl sym">)</span> key <span class="hl sym">(</span>fromIntegral $ keySize ht<span class="hl sym">)</span>
+    return entry
+
+htPayload <span class="hl sym">::</span> Hashtable <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl sym">(</span>Ptr <span class="hl kwb">Int</span><span class="hl sym">)</span>
+<span class="hl com">{-# INLINE htPayload #-}</span>
+htPayload <span class="hl sym">!</span>ht <span class="hl sym">!</span>hash <span class="hl sym">!</span>key <span class="hl sym">=</span> <span class="hl kwa">do</span>
+        entry <span class="hl sym">&lt;-</span> findEntry <span class="hl sym">(</span>indexEntry ht hash<span class="hl sym">)</span>
+        return $ payloadOf entry
+    <span class="hl kwa">where</span>
+        findEntry <span class="hl sym">::</span> Entry <span class="hl sym">-&gt;</span> IO Entry
+        findEntry <span class="hl sym">!</span>entry <span class="hl sym">=</span> <span class="hl kwa">do</span>
+            match <span class="hl sym">&lt;-</span> entryMatches ht entry key
+            if match
+                <span class="hl kwa">then</span>
+                    return entry
+                <span class="hl kwa">else do</span>
+                    <span class="hl kwa">let</span> pNext <span class="hl sym">=</span> nextPtrOf entry
+                    next <span class="hl sym">&lt;-</span> peek pNext
+                    if next <span class="hl sym">==</span> nullPtr
+                        <span class="hl kwa">then do</span>
+                            newEntry<span class="hl sym">&#64;(</span>Entry ePtr<span class="hl sym">) &lt;-</span> allocEntry ht key
+                            poke pNext ePtr
+                            return newEntry
+                        <span class="hl kwa">else</span>
+                            findEntry <span class="hl sym">(</span>Entry next<span class="hl sym">)</span>
+
