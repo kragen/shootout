@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); 
@@ -28,7 +28,21 @@ foreach($Accepted as $d){
       $NString = 'N='.number_format($testValue);
       break; }
 }
+
+// BEWARE - Hard coded values - BEWARE
+
+if ($TestName=='fasta'||$TestName=='k-nucleotide'||
+      $TestName=='reverse-complement'||$TestName=='regex-dna'){
+   if ($d[DATA_TESTVALUE] == 25000000) { $NString = '~240MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 2500000) { $NString = '~24MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 5000000) { $NString = '~50MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 1000000) { $NString = '~10MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 500000) { $NString = '~5MB '.$NString; }
+   }
+
 if ($TestName=='startup'){ $NString = ''; }
+
+
 
 ?>
 
