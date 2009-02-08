@@ -37,7 +37,7 @@
 <dd>
 <p>That might be an interesting question <em>if</em> it's asked about the different measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine.</p>
 <p>However, if the question is asked about about different test machines then as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
-<p><em>Caveat Lector!</em> Check the source code!</p>
+<p><em>Caveat lector!</em> Check the source code!</p>
 </dd>
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
@@ -324,17 +324,6 @@ The system is going down for system halt NOW!
 <p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/bench</p>
 </dd>
 
-
-<dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
-<dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license"">Read the license!</a></p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout login</p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u32/data</p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u32q/data</p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u64/data</p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/websites/u64q/data</p>
-<p>data.csv & ndata.csv are the data files shown on "The Computer Language Benchmarks Game" website (they only have the fastest measurements from repeated runs); and a bzipped *-bulkdata.csv which contains ALL the measurements for programs which did not fail - so that's probably what you'll want to look at. Remember to exclude the  <a href="faq.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> listed in exclude.csv</p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/website/desc/exclude.csv</p>
-</dd>
 
 
 <dt>&nbsp;</dt>
