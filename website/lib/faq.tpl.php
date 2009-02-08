@@ -325,6 +325,12 @@ The system is going down for system halt NOW!
 </dd>
 
 
+<dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
+<dd><p>Yes, in principle.</p>
+<p>In practice, the data.csv & ndata.csv & bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out before the measurements are displayed - that provides considerable flexibility for the website, but makes it difficult to use the data files standalone.</p>
+</dd>
+
+
 
 <dt>&nbsp;</dt>
 <dd><p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
