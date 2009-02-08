@@ -25,12 +25,12 @@
 
 <dt><a href="#oneone" name="oneone"><strong>How do I compare language implementations?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="benchmark.php?test=all&lang=ats&lang2=gcc"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
+<p>Compare them directly <a href="benchmark.php?test=all&lang=gpp&lang2=java"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
 </dd>
 
-<dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 programs?</strong></a></dt>
+<dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 or 4 programs?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="fulldata.php?test=threadring&p1=ghc-2&p2=scala-1&p3=hipe-1&p4=mzscheme-1"><strong>side-by-side</strong> for all the data points</a>.</p>
+<p>Compare them directly <a href="fulldata.php?test=fannkuch&p1=java-1&p2=gcc-1&p3=php-1&p4=perl-1"><strong>side-by-side</strong> for all the data points</a>.</p>
 </dd>
 
 <dt><a href="#datasets" name="datasets"><strong>Why is the program better on ...?</strong></a></dt>
