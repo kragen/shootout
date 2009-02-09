@@ -1,0 +1,219 @@
+<span class="hl com">/*</span>
+<span class="hl com">* The Computer Language Benchmarks Game</span>
+<span class="hl com">* http://shootout.alioth.debian.org</span>
+<span class="hl com">*</span>
+<span class="hl com">* Contributed by Paul Kitchin</span>
+<span class="hl com">* contributed by Bob W</span>
+<span class="hl com">* OpenMP by The Anh Tran</span>
+<span class="hl com">* Compile: g++ -O3 -fomit-frame-pointer -mtune=native -msse2 reverse.cpp -o reverse -fopenmp</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;omp.h&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+<span class="hl dir">#include &lt;cstdio&gt;</span>
+<span class="hl dir">#include &lt;cstdlib&gt;</span>
+<span class="hl dir">#include &lt;memory&gt;</span>
+
+
+<span class="hl dir">#define Z4      0, 0, 0, 0</span>
+<span class="hl dir">#define Z16     Z4, Z4, Z4, Z4</span>
+<span class="hl dir">#define Z64     Z16, Z16, Z16, Z16</span>
+
+<span class="hl dir">#define V32     0,</span> <span class="hl dstr">'T'</span><span class="hl dir">,</span> <span class="hl dstr">'V'</span><span class="hl dir">,</span> <span class="hl dstr">'G'</span><span class="hl dir">,</span>   <span class="hl dstr">'H'</span><span class="hl dir">, 0, 0,</span> <span class="hl dstr">'C'</span><span class="hl dir">,      \</span>
+<span class="hl dir"></span>            <span class="hl dstr">'D'</span><span class="hl dir">, 0, 0,</span> <span class="hl dstr">'M'</span><span class="hl dir">,      0,</span> <span class="hl dstr">'K'</span><span class="hl dir">,</span> <span class="hl dstr">'N'</span><span class="hl dir">, 0,      \</span>
+<span class="hl dir">            0, 0,</span> <span class="hl dstr">'Y'</span><span class="hl dir">,</span> <span class="hl dstr">'S'</span><span class="hl dir">,</span>      <span class="hl dstr">'A'</span><span class="hl dir">, 0,</span> <span class="hl dstr">'B'</span><span class="hl dir">,</span> <span class="hl dstr">'W'</span><span class="hl dir">,   \</span>
+<span class="hl dir">            0,</span> <span class="hl dstr">'R'</span><span class="hl dir">, 0, 0,      Z4</span>
+
+<span class="hl dir">#define V256    Z64, V32, V32, Z64, Z64</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned int</span> uint<span class="hl sym">;</span>
+<span class="hl slc">// char conversion table</span>
+<span class="hl kwb">static</span> uint <span class="hl kwb">const</span> complement_table<span class="hl sym">[] = {</span>V256<span class="hl sym">};</span>
+<span class="hl kwb">static int const</span> LINE_SIZE <span class="hl sym">=</span> <span class="hl num">60</span><span class="hl sym">;</span>
+
+<span class="hl kwb">struct</span> DNA_Marker
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> header_offset<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> header_len<span class="hl sym">;</span>
+
+   <span class="hl kwb">int</span> data_offset<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> data_len<span class="hl sym">;</span>
+
+   DNA_Marker<span class="hl sym">*</span> next<span class="hl sym">;</span>
+   DNA_Marker<span class="hl sym">*</span> previous<span class="hl sym">;</span>
+
+   <span class="hl kwb">static int</span> total_dna<span class="hl sym">;</span>
+
+   <span class="hl kwd">DNA_Marker</span><span class="hl sym">(</span>DNA_Marker<span class="hl sym">*</span> prev<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">memset</span> <span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span><span class="hl kwa">this</span><span class="hl sym">));</span>
+      previous <span class="hl sym">=</span> prev<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl sym">~</span><span class="hl kwd">DNA_Marker</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> next <span class="hl sym">!=</span> <span class="hl num">0</span> <span class="hl sym">)</span>
+         <span class="hl kwa">delete</span> next<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+<span class="hl kwb">int</span> DNA_Marker<span class="hl sym">::</span>total_dna <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">long</span> <span class="hl kwd">GetInputSize</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">long</span> fsz <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">);</span>
+   <span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_END<span class="hl sym">);</span>
+   fsz <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">) -</span> fsz<span class="hl sym">;</span>
+   <span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_SET<span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> fsz<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">void</span> <span class="hl kwd">ReadInput</span><span class="hl sym">(</span>DNA_Marker<span class="hl sym">* &amp;</span>datamarker<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">* &amp;</span>input_buf<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">* &amp;</span>output_buf<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// retrieve input size</span>
+   <span class="hl kwb">long</span> input_size <span class="hl sym">=</span> <span class="hl kwd">GetInputSize</span> <span class="hl sym">();</span>
+   DNA_Marker<span class="hl sym">*</span> current_marker <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   DNA_Marker<span class="hl sym">::</span>total_dna <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl slc">// alloc storage</span>
+   input_buf <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>input_size<span class="hl sym">);</span>
+   output_buf <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>input_size<span class="hl sym">);</span>
+
+   <span class="hl kwb">char</span><span class="hl sym">*</span> current_position <span class="hl sym">=</span> input_buf<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> remain_bytes <span class="hl sym">=</span> input_size<span class="hl sym">;</span>
+
+   <span class="hl slc">// read line-by-line, according to game rule</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets_unlocked</span><span class="hl sym">(</span>current_position<span class="hl sym">,</span> remain_bytes<span class="hl sym">,</span> stdin<span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> len <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>current_position<span class="hl sym">);</span>
+
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>current_position<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span> <span class="hl slc">// this is data line</span>
+      <span class="hl sym">{</span>
+         len <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl slc">// exclude '\n'</span>
+         <span class="hl slc">// update appended data length</span>
+         current_position <span class="hl sym">+=</span> len<span class="hl sym">;</span>
+         current_marker<span class="hl sym">-&gt;</span>data_len <span class="hl sym">+=</span> len<span class="hl sym">;</span>
+         remain_bytes <span class="hl sym">-=</span> len<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span> <span class="hl slc">// this is DNA header description line</span>
+      <span class="hl sym">{</span>
+         DNA_Marker<span class="hl sym">*</span> new_marker <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">DNA_Marker</span><span class="hl sym">(</span>current_marker<span class="hl sym">);</span>
+         DNA_Marker<span class="hl sym">::</span>total_dna<span class="hl sym">++;</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>current_marker <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+            current_marker<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> new_marker<span class="hl sym">;</span>
+         <span class="hl kwa">else</span>
+            datamarker <span class="hl sym">=</span> new_marker<span class="hl sym">;</span>
+         current_marker <span class="hl sym">=</span> new_marker<span class="hl sym">;</span>
+
+         current_marker<span class="hl sym">-&gt;</span>header_offset <span class="hl sym">=</span> current_position <span class="hl sym">-</span> input_buf<span class="hl sym">;</span>
+         current_marker<span class="hl sym">-&gt;</span>header_len <span class="hl sym">=</span> len<span class="hl sym">;</span>
+         <span class="hl kwd">memcpy</span><span class="hl sym">(</span>output_buf <span class="hl sym">+</span> current_marker<span class="hl sym">-&gt;</span>header_offset<span class="hl sym">,</span> current_position<span class="hl sym">,</span> len<span class="hl sym">);</span>
+
+         current_marker<span class="hl sym">-&gt;</span>data_offset <span class="hl sym">=</span> current_marker<span class="hl sym">-&gt;</span>header_offset <span class="hl sym">+</span> len<span class="hl sym">;</span>
+
+         current_position <span class="hl sym">+=</span> len<span class="hl sym">;</span>
+         remain_bytes <span class="hl sym">-=</span> len<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">void</span> <span class="hl kwd">PrintOutput</span><span class="hl sym">(</span>DNA_Marker <span class="hl kwb">const</span> <span class="hl sym">*</span> marker<span class="hl sym">,</span> <span class="hl kwb">char const</span> <span class="hl sym">*</span> <span class="hl kwb">const</span> output_buffer<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span>marker <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// write DNA header</span>
+      <span class="hl kwd">fwrite_unlocked</span><span class="hl sym">(</span>output_buffer <span class="hl sym">+</span> marker<span class="hl sym">-&gt;</span>header_offset<span class="hl sym">,</span> marker<span class="hl sym">-&gt;</span>header_len<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+
+      <span class="hl kwb">char const</span> <span class="hl sym">*</span> current_position <span class="hl sym">=</span> output_buffer <span class="hl sym">+</span> marker<span class="hl sym">-&gt;</span>data_offset<span class="hl sym">;</span>
+      <span class="hl kwb">int</span> bytes_remain <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+      <span class="hl kwb">int</span> bytes_to_print <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">min</span><span class="hl sym">(</span>LINE_SIZE<span class="hl sym">,</span> bytes_remain<span class="hl sym">);</span>
+
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>bytes_to_print <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwd">fwrite_unlocked</span><span class="hl sym">(</span>current_position<span class="hl sym">,</span> bytes_to_print<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+         <span class="hl kwd">fputc_unlocked</span><span class="hl sym">(</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+
+         current_position <span class="hl sym">+=</span> bytes_to_print<span class="hl sym">;</span>
+         bytes_remain <span class="hl sym">-=</span> bytes_to_print<span class="hl sym">;</span>
+         bytes_to_print <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">min</span><span class="hl sym">(</span>LINE_SIZE<span class="hl sym">,</span> bytes_remain<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+
+      marker <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">8</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         count<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">void</span> <span class="hl kwd">ReverseGame</span><span class="hl sym">(</span>DNA_Marker <span class="hl kwb">const</span> <span class="hl sym">*</span> <span class="hl kwb">const</span> dna_marker<span class="hl sym">,</span> <span class="hl kwb">char const</span> <span class="hl sym">*</span> <span class="hl kwb">const</span> input_buf<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> <span class="hl kwb">const</span> output_buf<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// Spawn N threads</span>
+   <span class="hl dir">#pragma omp parallel default(shared) num_threads(GetThreadCount())</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int const</span> nthreads <span class="hl sym">=</span> <span class="hl kwd">omp_get_num_threads</span><span class="hl sym">();</span>
+      <span class="hl kwb">int const</span> thread_id <span class="hl sym">=</span> <span class="hl kwd">omp_get_thread_num</span><span class="hl sym">();</span>
+
+      <span class="hl slc">// iterate DNA entries</span>
+      DNA_Marker <span class="hl kwb">const</span> <span class="hl sym">*</span> marker <span class="hl sym">=</span> dna_marker<span class="hl sym">;</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>marker <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">int const</span> chunk <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>data_len <span class="hl sym">/</span> nthreads<span class="hl sym">;</span>
+
+         <span class="hl slc">// calculate each thread chunk</span>
+         <span class="hl kwb">int const</span> r_begin <span class="hl sym">=</span> thread_id <span class="hl sym">*</span> chunk<span class="hl sym">;</span>
+         <span class="hl kwb">int const</span> r_end <span class="hl sym">= (</span>thread_id <span class="hl sym">&lt; (</span>nthreads <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span> ? <span class="hl sym">(</span>r_begin <span class="hl sym">+</span> chunk<span class="hl sym">) :</span> marker<span class="hl sym">-&gt;</span>data_len<span class="hl sym">;</span>
+
+         <span class="hl slc">//char const * src_offset = input_buf + marker-&gt;data_offset + marker-&gt;data_len -1;</span>
+         <span class="hl slc">//char * des_offset = output_buf + marker-&gt;data_offset;</span>
+         <span class="hl kwb">int</span> src_offset <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>data_offset <span class="hl sym">+</span> marker<span class="hl sym">-&gt;</span>data_len <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwb">int</span> des_offset <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>data_offset<span class="hl sym">;</span>
+
+         <span class="hl slc">// copy reverse - complement char from source buffer to des buffer</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> r_begin<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> r_end<span class="hl sym">;</span> i<span class="hl sym">++,</span> src_offset<span class="hl sym">--,</span> des_offset<span class="hl sym">++)</span>
+         <span class="hl sym">{</span>
+            uint c <span class="hl sym">=</span> input_buf<span class="hl sym">[</span>src_offset<span class="hl sym">];</span>
+            c <span class="hl sym">=</span> complement_table<span class="hl sym">[</span>c<span class="hl sym">];</span>
+            output_buf<span class="hl sym">[</span>des_offset<span class="hl sym">] = (</span><span class="hl kwb">char</span><span class="hl sym">)</span>c<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+
+         marker <span class="hl sym">=</span> marker<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   DNA_Marker<span class="hl sym">*</span> marker <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">char</span> <span class="hl sym">*</span>input_data <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">, *</span>output_data <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwd">ReadInput</span> <span class="hl sym">(</span>marker<span class="hl sym">,</span> input_data<span class="hl sym">,</span> output_data<span class="hl sym">);</span>
+   <span class="hl kwd">ReverseGame</span><span class="hl sym">(</span>marker<span class="hl sym">,</span> input_data<span class="hl sym">,</span> output_data<span class="hl sym">);</span>
+   <span class="hl kwd">PrintOutput</span><span class="hl sym">(</span>marker<span class="hl sym">,</span> output_data<span class="hl sym">);</span>
+
+   <span class="hl kwd">free</span><span class="hl sym">(</span>input_data<span class="hl sym">);</span>
+   <span class="hl kwd">free</span><span class="hl sym">(</span>output_data<span class="hl sym">);</span>
+   <span class="hl kwa">delete</span> marker<span class="hl sym">;</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+

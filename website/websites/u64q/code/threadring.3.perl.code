@@ -1,0 +1,77 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc">#   http://shootout.alioth.debian.org/</span>
+<span class="hl slc">#  contributed by Peter Corlett</span>
+
+<span class="hl slc"># This is really more a classic fork() and Unix IPC implementation, but it</span>
+<span class="hl slc"># uses threads purely to satisfy the rules of the game. This makes it quite</span>
+<span class="hl slc"># nippy as it doesn't have to worry about any sort of locking because we</span>
+<span class="hl slc"># essentially have 503 independent processes that just happen to share an</span>
+<span class="hl slc"># address space.</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># Almost all of the time appears to be consumed by the thread library doing</span>
+<span class="hl slc"># all the deep copying required to create a clone and then tearing it down</span>
+<span class="hl slc"># afterwards. A fork() implementation is thus likely to be very fast as it'd</span>
+<span class="hl slc"># use copy-on-write pages in the kernel.</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># As a minor aside, IO::Pipe wasn't used here because it expects one to fork()</span>
+<span class="hl slc"># and use -&gt;reader and -&gt;writer in different processes to set which side of</span>
+<span class="hl slc"># the pipe the IO::Pipe object will now refer to.</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># It requires at least perl 5.10.0, although it could be easily rewritten to</span>
+<span class="hl slc"># use an earlier version.</span>
+
+<span class="hl kwa">use</span> <span class="hl num">5.010</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> <span class="hl kwd">warnings</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> <span class="hl kwd">strict</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> <span class="hl kwd">threads</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> IO<span class="hl sym">::</span><span class="hl kwd">Handle</span><span class="hl sym">;</span> <span class="hl slc"># for autoflush</span>
+
+<span class="hl kwa">use</span> constant THREADS <span class="hl sym">=&gt;</span> <span class="hl num">503</span><span class="hl sym">;</span>
+<span class="hl slc"># stack size may need tuning for your arch, default of 8MB is likely to not</span>
+<span class="hl slc"># work well on 32 bit systems or those with limited memory.</span>
+<span class="hl kwa">use</span> constant THREAD_STACK_SIZE <span class="hl sym">=&gt;</span> <span class="hl num">512</span> <span class="hl sym">*</span> <span class="hl num">1024</span><span class="hl sym">;</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">$passes</span> <span class="hl sym">=</span> <span class="hl kwd">shift</span><span class="hl sym">;</span>
+die <span class="hl str">&quot;Usage: $0 [passes]</span><span class="hl esc">\n</span><span class="hl str">&quot;</span>
+  <span class="hl kwa">unless</span> defined <span class="hl kwb">$passes</span> <span class="hl sym">&amp;&amp;</span> <span class="hl kwd">int</span><span class="hl sym">(</span><span class="hl kwb">$passes</span><span class="hl sym">) &gt;</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl kwb">$passes</span> <span class="hl sym">=</span> <span class="hl kwd">int</span><span class="hl sym">(</span><span class="hl kwb">$passes</span><span class="hl sym">);</span>
+
+<span class="hl kwc">my</span><span class="hl sym">(</span><span class="hl kwb">&#64;pipes</span><span class="hl sym">,</span> <span class="hl kwb">&#64;threads</span><span class="hl sym">);</span>
+
+<span class="hl kwb">&#64;pipes</span> <span class="hl sym">=</span> map <span class="hl sym">{</span>
+  pipe <span class="hl kwc">my</span><span class="hl sym">(</span><span class="hl kwb">$r</span><span class="hl sym">,</span> <span class="hl kwb">$w</span><span class="hl sym">)</span> <span class="hl kwa">or</span> die <span class="hl str">&quot;pipe() failed&quot;</span><span class="hl sym">;</span>
+  <span class="hl sym">{</span> read <span class="hl sym">=&gt;</span> <span class="hl kwb">$r</span><span class="hl sym">,</span> write <span class="hl sym">=&gt;</span> <span class="hl kwb">$w</span> <span class="hl sym">}</span>
+<span class="hl sym">} (</span><span class="hl num">0</span> <span class="hl sym">..</span> THREADS<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">);</span>
+
+<span class="hl kwb">&#64;threads</span> <span class="hl sym">=</span> map <span class="hl sym">{</span>
+  <span class="hl kwc">my</span> <span class="hl kwb">$in</span> <span class="hl sym">=</span> <span class="hl kwb">$pipes</span><span class="hl sym">[</span><span class="hl kwb">$_</span><span class="hl sym">]{</span>read<span class="hl sym">};</span>
+  <span class="hl kwb">$in</span><span class="hl sym">-&gt;</span><span class="hl kwd">autoflush</span><span class="hl sym">;</span>
+  <span class="hl kwc">my</span> <span class="hl kwb">$out</span> <span class="hl sym">=</span> <span class="hl kwb">$pipes</span><span class="hl sym">[(</span><span class="hl kwb">$_</span> <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">) %</span> THREADS<span class="hl sym">]{</span>write<span class="hl sym">};</span>
+  <span class="hl kwb">$out</span><span class="hl sym">-&gt;</span><span class="hl kwd">autoflush</span><span class="hl sym">;</span>
+  <span class="hl kwc">my</span> <span class="hl kwb">$thread_id</span> <span class="hl sym">=</span> <span class="hl kwb">$_</span> <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  threads<span class="hl sym">-&gt;</span>create
+    <span class="hl sym">({</span> stack_size <span class="hl sym">=&gt;</span> THREAD_STACK_SIZE<span class="hl sym">, },</span>
+     <span class="hl kwa">sub</span> <span class="hl sym">{</span>	     <span class="hl slc"># $in, $out and $thread_id are captured in this closure</span>
+       <span class="hl kwa">while</span><span class="hl sym">(</span><span class="hl kwc">my</span> <span class="hl kwb">$msg</span> <span class="hl sym">= &lt;</span><span class="hl kwb">$in</span><span class="hl sym">&gt;) {</span> <span class="hl slc"># receive message</span>
+	 chomp <span class="hl kwb">$msg</span><span class="hl sym">;</span>
+	 <span class="hl kwa">if</span><span class="hl sym">(</span><span class="hl kwb">$msg</span> <span class="hl kwa">eq</span> <span class="hl str">'EXIT'</span><span class="hl sym">) {</span>	<span class="hl slc"># asked to exit</span>
+	   <span class="hl kwa">last</span><span class="hl sym">;</span>
+	 <span class="hl sym">}</span> <span class="hl kwa">elsif</span><span class="hl sym">(</span><span class="hl kwb">$msg</span> <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>	<span class="hl slc"># still work to do</span>
+	   say <span class="hl kwb">$out</span> <span class="hl sym">--</span><span class="hl kwb">$msg</span><span class="hl sym">;</span>	<span class="hl slc"># send message</span>
+	 <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>		<span class="hl slc"># no more work to do</span>
+	   say <span class="hl kwb">$thread_id</span><span class="hl sym">;</span>	<span class="hl slc"># output result</span>
+	   <span class="hl slc"># tell all threads to exit</span>
+	   say <span class="hl kwb">$_</span> <span class="hl str">'EXIT'</span> <span class="hl kwa">foreach</span> map <span class="hl sym">{</span> <span class="hl kwb">$_</span><span class="hl sym">-&gt;{</span>write<span class="hl sym">} }</span> <span class="hl kwb">&#64;pipes</span><span class="hl sym">;</span>
+	   <span class="hl kwa">last</span><span class="hl sym">;</span>
+	 <span class="hl sym">}</span>
+       <span class="hl sym">}</span>
+     <span class="hl sym">});</span>
+<span class="hl sym">} (</span><span class="hl num">0</span> <span class="hl sym">..</span> THREADS<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">);</span>
+
+<span class="hl slc"># inject initial message</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$start_fh</span> <span class="hl sym">=</span> <span class="hl kwb">$pipes</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]{</span>write<span class="hl sym">};</span>
+say <span class="hl kwb">$start_fh $passes</span><span class="hl sym">;</span>
+
+<span class="hl slc"># collect exited threads</span>
+<span class="hl kwb">$_</span><span class="hl sym">-&gt;</span>join <span class="hl kwa">foreach</span> <span class="hl kwb">&#64;threads</span><span class="hl sym">;</span>
+
