@@ -10,7 +10,7 @@
 
 <p>You choose the language implementations for robust <a href="#about">Box and Whiskers statistics</a> of <em>program time</em> measurements on the default benchmarks!</p>
 
-<p><br/><img src="chartbox.php?
+<p><img src="chartbox.php?
       <?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
    alt=""
    title=""
