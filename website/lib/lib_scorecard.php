@@ -43,7 +43,7 @@ function Weights($Tests, $Action, $Vars){
 
 function SelectedLangs($Langs, $Action, $Vars){
    $w = array(); $wd = array();
-   $max = 19; $count = 0;
+   $max = 15; $count = 0;
    foreach($Langs as $lang){
       $link = $lang[LANG_LINK];
       if (isset($Vars[$link])){ $w[$link] = 1; $count++; }

@@ -30,7 +30,7 @@ if (isset($HTTP_GET_VARS['a'])
 
 
 // CHART /////////////////////////////////////////////////////
-   $w = 600;
+   $w = 480;
    $h = 300;
 
    $boxspace = 8;
@@ -42,8 +42,8 @@ if (isset($HTTP_GET_VARS['a'])
    $boxw = 20;
    $boxo = 10;
    $whisk = floor(($boxw - $boxo)/2);
-   $maxboxes= 19;
-   
+   $maxboxes= 15;
+
    define('STAT_XLOWER',0);
    define('STAT_LOWER',1);
    define('STAT_MEDIAN',2);
@@ -62,11 +62,11 @@ $charwidth = 7.0; // for size 3
 
 
 // BACKGROUND TEXT LAYER
-$x = $xo;
+$x = $xo-7;
 $count = 0;
 foreach($A as $k){
    $watermark = str_repeat($k,15);
-   ImageStringUp($im, 3, $x-3, $h+17, $watermark, $mgray);
+   ImageStringUp($im, 3, $x, $h+17, $watermark, $mgray);
    $x = $x + $boxw + $boxspace;
    if ($count == $maxboxes){ break; } else { $count++;  }
 }
@@ -74,7 +74,7 @@ foreach($A as $k){
 // BOXES
 $n = sizeof($D);
 if ($n%5 == 0){
-   $x = $xo;
+   $x = $xo-4;
    $count = 0;
    for ($i=0; $i<$n; $i+=5){
       $xlower = $h-($yo+$D[$i+STAT_XLOWER]*$yscale);
@@ -108,7 +108,7 @@ ImageStringUp($im, 3, 5, $h-33, $label, $black);
 
 // MEDIAN and WHISKERS
 if ($n%5 == 0){
-   $x = $xo;
+   $x = $xo-4;
    $count = 0;
    for ($i=0; $i<$n; $i+=5){
       $xlower = $h-($yo+$D[$i+STAT_XLOWER]*$yscale);

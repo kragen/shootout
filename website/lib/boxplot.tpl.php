@@ -14,7 +14,7 @@
       <?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
    alt=""
    title=""
-   width="600" height="300"
+   width="480" height="300"
  /></p>
 
 <form method="get" action="benchmark.php">
