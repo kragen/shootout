@@ -1,12 +1,10 @@
-<?   // Copyright (c) Isaac Gouy 2004-2007 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 <?
 if (LANGS_PHRASE){ $LangsPhrase = LANGS_PHRASE; } else { $LangsPhrase = ''; }
 if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 ?>
 
 <?=$Intro;?>
-
-<p class="score"><a href="#play" name="play"><strong>&nbsp;For Fun:</strong></a> <span class="smaller">Create your own Ranking!</span></p>
 <? MkScorecardMenuForm("fullcpu"); ?>
 
 
@@ -44,7 +42,7 @@ if (SITE_NAME == 'debian'){
 <?
    $Tests = array_values($Tests);
    $i = 0;
-   $testsSize = sizeof($Tests); 
+   $testsSize = sizeof($Tests);
 
    $Langs = array_values($Langs);
    $j = 0;
@@ -142,7 +140,7 @@ if (SITE_NAME == 'debian'){
                $TestLink = $t[TEST_LINK];
                $TestName = $t[TEST_NAME];
                $TestTag = $t[TEST_TAG];
-               printf('<td class="test"><dl><dt><a href="benchmark.php?test=%s&amp;lang=all">%s</a></dt><dd>%s</dd></dl></td>', $TestLink,$TestName,$TestTag);  
+               printf('<td class="test"><dl><dt><a href="benchmark.php?test=%s&amp;lang=all">%s</a></dt><dd>%s</dd></dl></td>', $TestLink,$TestName,$TestTag);
                $i++;  
             } 
          }
@@ -160,6 +158,9 @@ if (SITE_NAME == 'debian'){
 
 ?>
 </table>
+
+
+
 
 
 

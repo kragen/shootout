@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -135,7 +135,6 @@ for ($i=0; $i<sizeof($Selected); $i++){
 }
 
 
-ImageInterlace($im,1);
 ImagePNG($im);
 ImageDestroy($im); 
 ?> 

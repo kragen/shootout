@@ -110,7 +110,7 @@ foreach($Accepted as $d){
       $better[$k] = TRUE;
       // Sort according to current sort criteria, bold the sort-column
       if ($Sort=='fullcpu'){
-         $CPU = ' class="sort"';    
+         $CPU = ' class="sort"';
       } elseif ($Sort=='kb'){ 
          $MEM = ' class="sort"';
       } elseif ($Sort=='elapsed'){

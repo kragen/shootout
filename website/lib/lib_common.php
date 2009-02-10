@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
@@ -15,9 +15,10 @@ define('LANG_NAME',2);
 define('LANG_FULL',3);
 define('LANG_HTML',4);
 define('LANG_TAG',5);
-define('LANG_DATE',6);   
-define('LANG_COMPARE',7);     
-define('LANG_SPECIALURL',8); 
+define('LANG_DATE',6);  
+define('LANG_SELECT',7);
+define('LANG_COMPARE',8);
+define('LANG_SPECIALURL',9);
 
 define('DATA_TEST',0);
 define('DATA_LANG',1);
@@ -87,6 +88,12 @@ define('SCORE_TESTS',2);
 
 define('NAME_LEN',16);
 define('PRG_ID_LEN',NAME_LEN+2);
+
+define('STAT_XLOWER',0);
+define('STAT_LOWER',1);
+define('STAT_MEDIAN',2);
+define('STAT_UPPER',3);
+define('STAT_XUPPER',4);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -433,21 +440,24 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
    }
    echo '</select>', "\n";
    echo '<input type="submit" value="Show" />', "\n";
-   echo '</p></form>', "\n";
+   echo '</p><input type="hidden" name="box" value="1" /></form>', "\n";
 }
 
 
 function MkScorecardMenuForm($Sort){
-   echo '<form class="score" method="get" action="benchmark.php">', "\n";
-   echo '<p><select name="test">', "\n";
-   echo '<option selected="selected" value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
+   echo '<p class="fun"><strong>&nbsp;For Fun:</strong>', "\n";
+   echo '<a href="benchmark.php?test=all&amp;lang=all">', "\n";
+   echo '<span class="smaller">Create your own Ranking!</span></a></p>', "\n";
+   echo '<form method="get" action="benchmark.php">', "\n";
+   echo '<p class="score"><select name="test">', "\n";
+   echo '<br/><option selected="selected" value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
    echo '</select>', "\n";
 
    echo '<select name="lang">', "\n";
    echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
    echo '</select>', "\n";
-   echo '<input type="submit" value="Show" title="Create your own Ranking"/>', "\n"; 
-   echo '</p><br/></form>', "\n";
+   echo '<input type="submit" value="Show" title="Create your own Ranking"/>', "\n";
+   echo '</p><input type="hidden" name="box" value="1" /><br/></form>', "\n";
 }
 
 
@@ -487,6 +497,19 @@ function HttpVarsEncodeArray($a){
    foreach($a as $v){ $d[] = intval(sprintf('%d',$v*10)); }
    $s = implode('o',$d);
    return $s;
+}
+
+function HttpVarsEncodeStats($aa){
+   $a = array();
+   foreach($aa as $stats){ $a = array_merge($a,$stats); }
+   foreach($a as $each){ $d[] = intval(sprintf('%d',$each*100)); }
+   $s = implode('o',$d);
+   return $s;
+}
+
+function HttpVarsEncodeLabels($a){
+   $s = implode(',',$a);
+   return rawurlencode($s);
 }
 
 

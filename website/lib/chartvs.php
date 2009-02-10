@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -185,7 +185,6 @@ ImageString($im, 3, $o-$v1*9+8+5+74, 4, 'better Memory Use', $black);
 ImageString($im, 3, $o-56, $ts-38, 'bigger is better', $black);
 
 
-ImageInterlace($im,1);
 ImagePNG($im);
 ImageDestroy($im);
 ?> 

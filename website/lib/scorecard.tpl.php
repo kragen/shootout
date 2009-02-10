@@ -73,7 +73,7 @@ foreach($score as $k => $v){
 </tr>
 
 <tr><th>benchmark</th><th>weight</th></tr>
-<?  
+<?
 foreach($Tests as $t){
    $Link = $t[TEST_LINK];
    $Name = $t[TEST_NAME];

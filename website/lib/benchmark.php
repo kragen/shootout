@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -19,7 +19,7 @@ uasort($Langs, 'CompareLangName');
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
-   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
+   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all' || $X == 'fun')){ $T = $X; }
 }
 if (!isset($T)){ $T = 'nbody'; }
 
@@ -27,7 +27,7 @@ if (!isset($T)){ $T = 'nbody'; }
 if (isset($HTTP_GET_VARS['lang'])
       && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang'];
-   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all')){ $L = $X; }
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all' || $X == 'fun')){ $L = $X; }
 }
 if (!isset($L)){ $L = 'all'; }
 
@@ -39,6 +39,7 @@ if (isset($HTTP_GET_VARS['lang2'])
 }
 if (!isset($L2)){
    if ($L=='all'){ $L2 = $L; }
+   elseif ($L=='fun'){ $L2 = $L; }
    else { $L2 = $Langs[$L][LANG_COMPARE]; }
 }
 
@@ -50,40 +51,83 @@ if (isset($HTTP_GET_VARS['id']) && strlen($HTTP_GET_VARS['id']) == 1){
 if (!isset($I)){ $I = -1; }
 
 
+if (isset($HTTP_GET_VARS['calc'])
+      && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
+   $X = $HTTP_GET_VARS['calc'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'reset')){ $Action = $X; }
+}
+if (!isset($Action)){ $Action = 'calculate'; }
+
+
+if (isset($HTTP_GET_VARS['box'])
+      && strlen($HTTP_GET_VARS['box']) && (strlen($HTTP_GET_VARS['box']) <= 1)){
+   $X = $HTTP_GET_VARS['box'];
+   if (ereg("^[0-9]$",$X) && ($X == 1)){ $Box = $X; }
+}
+if (!isset($Box)){ $Box = 0; }
+
+
 $MetaKeywords = '';
 
 // PAGES ///////////////////////////////////////////////////
-// There are 4 kinds of test/lang combination
+// There are 6 kinds of test/lang combination
 // - all tests all languages - Scorecard
-// - all tests one language  - Head to Head | Ranking
+// - all tests all languages box 1 - Boxplot Summary
+// - all tests two languages  - Head to Head
 // - one test all languages  - Benchmark
+// - all tests one language  - Language data
 // - one test one language   - Program
 
 $Page = & new Template(LIB_PATH);
 $Body = & new Template(LIB_PATH);
 
 if ($T=='all'){
-   if ($L=='all'){    // Scorecard
-      $PageId = 'scorecard';
-      $S = 'mean';
+   if ($L=='all'){    
 
-      require_once(LIB_PATH.'lib_scorecard.php');
+      if ($Box){    // Boxplot Summary
+         $S = '';
+         $PageId = 'boxplot';
 
-      if (isset($HTTP_GET_VARS['calc'])
-            && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
-         $X = $HTTP_GET_VARS['calc'];
-         if (ereg("^[a-z]+$",$X) && ($X == 'reset')){ $Action = $X; }
+         require_once(LIB_PATH.'lib_scorecard.php');
+
+         if (isset($HTTP_GET_VARS['d'])
+               && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
+            $X = $HTTP_GET_VARS['d'];
+            if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
+         }
+         if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
+
+         $Title = 'Boxplot Summary';
+         $TemplateName = 'boxplot.tpl.php';
+         $About = & new Template(ABOUT_PATH);
+         $AboutTemplateName = 'boxplot-about.tpl.php';
+         $Plot = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
+         if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
+         $Body->set('DataSet', $DataSet);
+         $Body->set('Plot', $Plot);
+         $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $Plot));
+         $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
+         $Body->set('Title', $Title);
+         
+
+
+      }  else {
+        // Scorecard
+         $PageId = 'scorecard';
+         $S = 'mean';
+
+         require_once(LIB_PATH.'lib_scorecard.php');
+
+         $Title = 'Create your own Ranking';
+         $TemplateName = 'scorecard.tpl.php';
+         $About = & new Template(ABOUT_PATH);
+         $AboutTemplateName = 'scorecard-about.tpl.php';
+         $W = Weights($Tests, $Action, $HTTP_GET_VARS);
+         $Body->set('W', $W);
+         $Body->set('Data', WeightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $W));
+         $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
       }
-      if (!isset($Action)){ $Action = 'calculate'; }
 
-      $Title = 'Create your own Ranking';
-      $TemplateName = 'scorecard.tpl.php';
-      $About = & new Template(ABOUT_PATH);
-      $AboutTemplateName = 'scorecard-about.tpl.php';
-      $W = Weights($Tests, $Action, $HTTP_GET_VARS);
-      $Body->set('W', $W);
-      $Body->set('Data', WeightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $W));
-      $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 
 
    } else {           // Head to Head
@@ -123,11 +167,12 @@ if ($T=='all'){
       $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
       }
 
+
+
    } elseif ($L=='all'){ // Benchmark
    
       $PageId = 'benchmark';
 
-      
       if (isset($HTTP_GET_VARS['sort'])
             && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
          $X = $HTTP_GET_VARS['sort'];
@@ -144,6 +189,7 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+
 
 
    } else {              // Program
@@ -172,7 +218,6 @@ if ($T=='all'){
       $Body->set('Id', $I);
       $Body->set('Title', $Title);
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-
 }
 
 

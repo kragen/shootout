@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -120,7 +120,6 @@ ImageFilledRectangle($im, 2, $kbTop, $wsec+80, $kbTop+13, $bgray);
 ImageFilledRectangle($im, 6, $kbTop+2, $wmem+6, $kbTop+10, $black);
 ImageString($im, 3, 20, $kbTop, 'Memory KB', $black);
 
-ImageInterlace($im,1);
 ImagePNG($im);
 ImageDestroy($im);
 ?>
