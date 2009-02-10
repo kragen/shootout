@@ -22,12 +22,12 @@ if (isset($HTTP_GET_VARS['d'])
    $v3 = 20;
    $v4 = 40;
 
-   $w = 600;
+   $w = 480;
    $h = 150;
-   $wratio = 5;
+   $wratio = 3;
    $vscale = 48;
    $xratio = 7;
-   $width = 9;
+   $width = 6;
    $minratio = 1;
 
 

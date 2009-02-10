@@ -37,14 +37,14 @@ list($Accepted) = FilterAndSortData($Langs,$Data,$S,$Excl);
 
 // CHART /////////////////////////////////////////////////////
 
-   $w = 600;
+   $w = 480;
    $h = 150;
-   $wsec = 5;
-   $wmem = 1;
+   $wsec = 3;
+   $wmem = 0;
    $vscale = CHART_VSCALE;
    $xsec = 7;
    $xmem = 6;
-   $width = 9;
+   $width = 6;
    $minsec = -1;
    $minmem = -1;
 

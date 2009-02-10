@@ -13,7 +13,7 @@
 
 
 <p><br/><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($ratio);?>"
-   width="600" height="150" alt=""
+   width="480" height="150" alt=""
  /></p>
 
 
