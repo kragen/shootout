@@ -20,7 +20,7 @@ if (isset($HTTP_GET_VARS['d'])
    $w = 480;
    $h = 150;
    
-   $xo = 42;
+   $xo = 65;
    $yo = 8;
 
    $yscale = 64;
@@ -36,7 +36,7 @@ $bgray = ImageColorAllocate($im,204,204,204);
 $gray = ImageColorAllocate($im,221,221,221);
 
 // BARS
-$x = $xo+$charwidth2;;
+$x = $xo;
 foreach($D as $v){
    $y = $h-($yo+ log10($v)*$yscale);
    ImageFilledRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
@@ -47,15 +47,16 @@ foreach($D as $v){
 for ($i=0; $i<9; $i++){
    if ($i==1||$i==5){ continue; }
    $y = $h-($yo+($i/4.0)*$yscale);
-   ImageLine($im, $xo, $y, $w, $y, $gray);
+   ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
    $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
    $x = strlen($label)*$charwidth2;
-   ImageString($im, 2, $xo-$x+6, $y-13, $label, $white);
+   ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
 
 // AXIS LEGEND
-ImageStringUp($im, 2, 5, $h-$yo, 'weighted geometric mean', $black);
+ImageStringUp($im, 2, 3, $h-$yo, 'log10 weighted', $black);
+ImageStringUp($im, 2, 15, $h-$yo, 'geometric mean ratio', $black);
 
 ImageInterlace($im,1);
 ImagePng($im);

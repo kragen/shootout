@@ -25,7 +25,7 @@
 <tr>
 <th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
 <th>language</th>
-<th>mean</th>
+<th>GM</th>
 <th>missing</th>
 </tr>
 
