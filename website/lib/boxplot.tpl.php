@@ -23,10 +23,10 @@
 
 <table>
 <colgroup span="3" class="txt"></colgroup>
-<colgroup span="5" class="num"></colgroup>
+<colgroup span="7" class="num"></colgroup>
 <tr class="score">
 <td colspan="3"><? MkDataSetMenu($DataSet); ?></td>
-<td colspan="5" class="num">
+<td colspan="7" class="num">
 <input type="submit" name="calc" value="calculate" />
 <input type="submit" name="calc" value="reset" />
 </td>
@@ -67,7 +67,7 @@ foreach($score as $k => $v){
 ?>
 
 <tr class="score">
-<td colspan="8" class="num">
+<td colspan="10" class="num">
 <input type="submit" name="calc" value="calculate" />
 <input type="submit" name="calc" value="reset" />
 </td>
