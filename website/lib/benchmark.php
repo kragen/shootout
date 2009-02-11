@@ -100,6 +100,8 @@ if ($T=='all'){
          require_once(LIB_PATH.'lib_scorecard.php');
 
          $Title = 'Boxplot Summary';
+         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; }
+         $Body->set('Title', $Title);
          $TemplateName = 'boxplot.tpl.php';
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'boxplot-about.tpl.php';
@@ -109,8 +111,7 @@ if ($T=='all'){
          $Body->set('Plot', $Plot);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $Plot));
          $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
-         $Body->set('Title', $Title);
-         
+
 
 
       }  else {
@@ -121,6 +122,8 @@ if ($T=='all'){
          require_once(LIB_PATH.'lib_scorecard.php');
 
          $Title = 'Create your own Ranking';
+         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; }
+         $Body->set('Title', $Title);
          $TemplateName = 'scorecard.tpl.php';
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'scorecard-about.tpl.php';
