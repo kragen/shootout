@@ -356,7 +356,7 @@ function FilterAndSortData($langs,$data,&$sort,&$Excl){
       usort($Special, 'CompareMemoryUse');
    } elseif ($sort=='gz'){
       usort($Accepted, 'CompareGz');
-      usort($Special, 'CompareGz'); 
+      usort($Special, 'CompareGz');
    } elseif ($sort=='elapsed'){
       usort($Accepted, 'CompareElapsed');
       usort($Special, 'CompareElapsed');
@@ -381,8 +381,10 @@ function TimeMemoryRatios(&$Accepted,$sort){
    $timeratio = array();
    $memratio = array();
    foreach($Accepted as $d){
-     $timeratio[] = $d[$DTIME]/$mintime;
-     $memratio[] = $d[DATA_MEMORY]/$minmem;
+     if ($mintime==0){ $timeratio[] = 1.0; }
+     else { $timeratio[] = $d[$DTIME]/$mintime; }
+     if ($minmem==0){ $memratio[] = 1.0; }
+     else { $memratio[] = $d[DATA_MEMORY]/$minmem; }
    }
    return array($timeratio,$memratio);
 }
