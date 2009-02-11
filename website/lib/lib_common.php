@@ -378,12 +378,19 @@ function TimeMemoryRatios(&$Accepted,$sort){
          $minmem = $d[DATA_MEMORY];
       }
    }
+   
+   // memory use measurement can fail, so accomodate strange data 
+   $lowest = 200.0;
+   if ($minmem<$lowest){ $minmem = $lowest; }
+
    $timeratio = array();
    $memratio = array();
    foreach($Accepted as $d){
      if ($mintime==0){ $timeratio[] = 1.0; }
      else { $timeratio[] = $d[$DTIME]/$mintime; }
-     if ($minmem==0){ $memratio[] = 1.0; }
+     
+     // memory use measurement can fail, so accomodate strange data
+     if ($d[DATA_MEMORY]<$lowest){ $memratio[] = 1.0; }
      else { $memratio[] = $d[DATA_MEMORY]/$minmem; }
    }
    return array($timeratio,$memratio);
