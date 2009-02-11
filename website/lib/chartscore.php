@@ -9,65 +9,53 @@ if (isset($HTTP_GET_VARS['d'])
    $X = $HTTP_GET_VARS['d'];
    if (ereg("^[0-9o]+$",$X)){
       foreach(explode('o',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 5)){ $D[] = intval($v); }
+         if (strlen($v) && (strlen($v) <= 5)){ $D[] = doubleval($v)/10.0; }
       }
    }
 }
 
-
 // CHART //////////////////////////////////////////////////
 
-   $v1 = 2;
-   $v2 = 10;
-   $v3 = 20;
-   $v4 = 40;
-
+   $barspace = 2;
    $w = 480;
    $h = 150;
-   $wratio = 3;
-   $vscale = 48;
-   $xratio = 7;
-   $width = 6;
-   $minratio = 1;
+   
+   $xo = 42;
+   $yo = 8;
+
+   $yscale = 64;
+   $barw = 3;
+   $charwidth2 = 6.0; // for size 2
 
 
 $im = ImageCreate($w,$h);
-
 ImageColorAllocate($im,204,204,204);
-
 $white = ImageColorAllocate($im,255,255,255);
 $black = ImageColorAllocate($im,0,0,0);
 $bgray = ImageColorAllocate($im,204,204,204);
-
-// GRIDLINES
 $gray = ImageColorAllocate($im,221,221,221);
-$h1 = $h - (($v1 / $vscale) * $h);
-$h2 = $h - (($v2 / $vscale) * $h);
-$h3 = $h - (($v3 / $vscale) * $h);
-$h4 = $h - (($v4 / $vscale) * $h);
-ImageLine($im, 0, $h1, $w, $h1, $gray);
-ImageLine($im, 0, $h2, $w, $h2, $gray);
-ImageLine($im, 0, $h3, $w, $h3, $gray);
-ImageLine($im, 0, $h4, $w, $h4, $gray);
 
-
+// BARS
+$x = $xo+$charwidth2;;
 foreach($D as $v){
-   $hratio = min( ($v/10.0)*($h/$vscale), $h);
-   ImageFilledRectangle($im, $xratio, $h-$hratio, $xratio+$wratio, $h, $white);
-   $xratio = $xratio + $width;
+   $y = $h-($yo+ log10($v)*$yscale);
+   ImageFilledRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
+   $x = $x + $barw + $barspace;
 }
 
+// GRID
+for ($i=0; $i<9; $i++){
+   if ($i==1||$i==5){ continue; }
+   $y = $h-($yo+($i/4.0)*$yscale);
+   ImageLine($im, $xo, $y, $w, $y, $gray);
 
-// GRIDLINE LABELS
-ImageString($im, 2, 6, $h1-14, $v1.'x', $white);
-ImageString($im, 2, 6, $h2-14, $v2.'x', $white);
-ImageString($im, 2, 6, $h3-14, $v3.'x', $white);
-ImageString($im, 2, 6, $h4-14, $v4.'x', $white);
+   $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
+   $x = strlen($label)*$charwidth2;
+   ImageString($im, 2, $xo-$x+6, $y-13, $label, $white);
+}
 
-ImageString($im, 2, $w-26, $h1-14, $v1.'x', $white);
-ImageString($im, 2, $w-26, $h2-14, $v2.'x', $white);
-ImageString($im, 2, $w-26, $h3-14, $v3.'x', $white);
-ImageString($im, 2, $w-26, $h4-14, $v4.'x', $white);
+// AXIS LEGEND
+ImageStringUp($im, 2, 5, $h-$yo, 'weighted geometric mean', $black);
 
 ImageInterlace($im,1);
 ImagePng($im);
