@@ -42,13 +42,17 @@ if (isset($HTTP_GET_VARS['a'])
    $boxw = 20;
    $boxo = 10;
    $whisk = floor(($boxw - $boxo)/2);
+   $outlier = 5;
    $maxboxes= 15;
 
-   define('STAT_XLOWER',0);
-   define('STAT_LOWER',1);
-   define('STAT_MEDIAN',2);
-   define('STAT_UPPER',3);
-   define('STAT_XUPPER',4);
+   define('STATS_SIZE',7);
+   define('STAT_MIN',0);
+   define('STAT_XLOWER',1);
+   define('STAT_LOWER',2);
+   define('STAT_MEDIAN',3);
+   define('STAT_UPPER',4);
+   define('STAT_XUPPER',5);
+   define('STAT_MAX',6);
 
 $im = ImageCreate($w,$h);
 ImageColorAllocate($im,204,204,204);
@@ -58,11 +62,10 @@ $black = ImageColorAllocate($im,0,0,0);
 $bgray = ImageColorAllocate($im,204,204,204);
 $mgray = ImageColorAllocate($im,165,165,165);
 $gray = ImageColorAllocate($im,221,221,221);
-$charwidth = 7.0; // for size 3
-
+$charwidth = 6.0; // for size 2
 
 // BACKGROUND TEXT LAYER
-$x = $xo-7;
+$x = $xo-$charwidth;
 $count = 0;
 foreach($A as $k){
    $watermark = str_repeat($k,15);
@@ -73,10 +76,10 @@ foreach($A as $k){
 
 // BOXES
 $n = sizeof($D);
-if ($n%5 == 0){
+if ($n%STATS_SIZE == 0){
    $x = $xo-4;
    $count = 0;
-   for ($i=0; $i<$n; $i+=5){
+   for ($i=0; $i<$n; $i+=STATS_SIZE){
       $xlower = $h-($yo+$D[$i+STAT_XLOWER]*$yscale);
       $lower = $h-($yo+$D[$i+STAT_LOWER]*$yscale);
       $upper = $h-($yo+$D[$i+STAT_UPPER]*$yscale);
@@ -92,7 +95,7 @@ if ($n%5 == 0){
 }
 
 // GRID
-for ($i=0; $i<8; $i++){
+for ($i=0; $i<9; $i++){
    $y = $h-($yo+$i*$yscale);
 //   ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
@@ -101,8 +104,8 @@ for ($i=0; $i<8; $i++){
    $x = strlen($label)*7.0;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
-for ($i=0; $i<16; $i++){
-   if ($i==1||$i==5||$i==9||$i==13){ continue; }
+for ($i=0; $i<20; $i++){
+   if ($i==1||$i==5||$i==9||$i==13||$i==17){ continue; }
    $y = $h-($yo+($i/2.0)*$yscale);
    ImageLine($im, $xo-15, $y, $w, $y, $gray);
 }
@@ -112,10 +115,11 @@ $label = '"hemibels" 2 * log10 time/fastest ratio';
 ImageStringUp($im, 2, 5, $h-$yo-24, $label, $black);
 
 // MEDIAN and WHISKERS
-if ($n%5 == 0){
+$n = sizeof($D);
+if ($n%STATS_SIZE == 0){
    $x = $xo-4;
    $count = 0;
-   for ($i=0; $i<$n; $i+=5){
+   for ($i=0; $i<$n; $i+=STATS_SIZE){
       $xlower = $h-($yo+$D[$i+STAT_XLOWER]*$yscale);
       $median = $h-($yo+$D[$i+STAT_MEDIAN]*$yscale);
       $xupper = $h-($yo+$D[$i+STAT_XUPPER]*$yscale);
@@ -124,8 +128,21 @@ if ($n%5 == 0){
       ImageLine($im, $x+$whisk, $xupper, $x+$boxw-$whisk, $xupper, $white);
       ImageFilledRectangle($im, $x, $median-1, $x+$boxw, $median, $black);
 
+      if ($D[$i+STAT_MIN] < $D[$i+STAT_XLOWER]){
+         $y = $h-($yo+$D[$i+STAT_MIN]*$yscale);
+         ImageLine($im, $x+$whisk, $y, $x+$boxw-$whisk, $y, $white);
+         ImageLine($im, $x+$boxo, $y-5, $x+$boxo, $y, $white);
+         ImageLine($im, $x+$boxo+1, $y-5, $x+$boxo+1, $y, $white);
+      }
+      if ($D[$i+STAT_MAX] > $D[$i+STAT_XUPPER]){
+         $y = $h-($yo+$D[$i+STAT_MAX]*$yscale);
+         ImageLine($im, $x+$whisk, $y, $x+$boxw-$whisk, $y, $white);
+         ImageLine($im, $x+$boxo, $y, $x+$boxo, $y+5, $white);
+         ImageLine($im, $x+$boxo+1, $y, $x+$boxo+1, $y+5, $white);
+      }
+
       $x = $x + $boxw + $boxspace;
-      if ($count == $maxboxes){ break; } else { $count++;  }
+      if ($count == $maxboxes){ break; } else { $count++; }
    }
 }
 

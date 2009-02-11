@@ -296,8 +296,8 @@ function Percentiles($a){
    $maxwhisker = ($upper - $lower) * 1.5;
    $xlower = ($lower - $maxwhisker < $a[0]) ? $a[0]: $lower - $maxwhisker;
    $xupper = ($upper + $maxwhisker > $a[$n-1]) ? $a[$n-1] : $upper + $maxwhisker;
-   // what about outliers?
-   return array($xlower,$lower,$median,$upper,$xupper);
+
+   return array($a[0],$xlower,$lower,$median,$upper,$xupper,$a[$n-1]);
 }
 
 

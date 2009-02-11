@@ -89,11 +89,13 @@ define('SCORE_TESTS',2);
 define('NAME_LEN',16);
 define('PRG_ID_LEN',NAME_LEN+2);
 
-define('STAT_XLOWER',0);
-define('STAT_LOWER',1);
-define('STAT_MEDIAN',2);
-define('STAT_UPPER',3);
-define('STAT_XUPPER',4);
+define('STAT_MIN',0);
+define('STAT_XLOWER',1);
+define('STAT_LOWER',2);
+define('STAT_MEDIAN',3);
+define('STAT_UPPER',4);
+define('STAT_XUPPER',5);
+define('STAT_MAX',6);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -379,7 +381,7 @@ function TimeMemoryRatios(&$Accepted,$sort){
       }
    }
    
-   // memory use measurement can fail, so accomodate strange data 
+   // memory use measurement can fail, so accomodate strange data
    $lowest = 200.0;
    if ($minmem<$lowest){ $minmem = $lowest; }
 

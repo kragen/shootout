@@ -36,11 +36,13 @@
 <th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
 <th>&nbsp;</th>
 <th>language</th>
+<th>&nbsp;|-</th>
 <th>&nbsp;|---</th>
 <th>&nbsp;25%</th>
 <th>median</th>
 <th>&nbsp;75%</th>
 <th>&nbsp;---|</th>
+<th>&nbsp;-|</th>
 </tr>
 
 
@@ -57,8 +59,9 @@ foreach($score as $k => $v){
    printf('<td class="score"><p><input type="checkbox" name="%s" "%s" /></p></td>', $k, $checked); echo "\n";
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>',
       $k,$k,$HtmlName); echo "\n";
-   printf('<td>%0.2f</td><td>%0.2f</td><td class="sort">%0.2f</td><td>%0.2f</td><td>%0.2f</td>',
-      $v[STAT_XLOWER], $v[STAT_LOWER], $v[STAT_MEDIAN], $v[STAT_UPPER], $v[STAT_XUPPER]); echo "\n";
+   printf('<td>%0.2f</td><td>%0.2f</td><td>%0.2f</td><td class="sort">%0.2f</td><td>%0.2f</td><td>%0.2f</td><td>%0.2f</td>',
+      $v[STAT_MIN], $v[STAT_XLOWER], $v[STAT_LOWER], $v[STAT_MEDIAN],
+      $v[STAT_UPPER], $v[STAT_XUPPER], $v[STAT_MAX]); echo "\n";
    echo "</tr>\n";
 }
 ?>
