@@ -54,10 +54,10 @@ foreach($score as $k => $v){
 <table>
 <colgroup span="2" class="txt"></colgroup>
 <tr><td colspan="2"><? MkDataSetMenu($DataSet); ?></td></tr>
-<tr>
-<td><input type="submit" name="calc" value="calculate" /></td>
-<td><input type="submit" name="calc" value="reset" /></td>
-</tr>
+<tr><td colspan="2" class="num">
+<input type="submit" name="calc" value="calculate" />
+<input type="submit" name="calc" value="reset" />
+</td></tr>
 
 <tr><th colspan="2">multipliers</th></tr>
 <tr>
@@ -87,10 +87,10 @@ foreach($Tests as $t){
 }
 ?>
 
-<tr>
-<td><p><input type="submit" name="calc" value="calculate" /></p></td>
-<td><p><input type="submit" name="calc" value="reset" /></p></td>
-</tr>
+<tr><td colspan="2" class="num">
+<input type="submit" name="calc" value="calculate" />
+<input type="submit" name="calc" value="reset" />
+</td></tr>
 </table>
 </form>
 
