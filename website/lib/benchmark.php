@@ -67,6 +67,15 @@ if (isset($HTTP_GET_VARS['box'])
 if (!isset($Box)){ $Box = 0; }
 
 
+if (isset($HTTP_GET_VARS['d'])
+      && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
+   $X = $HTTP_GET_VARS['d'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
+}
+if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
+
+
+
 $MetaKeywords = '';
 
 // PAGES ///////////////////////////////////////////////////
@@ -89,13 +98,6 @@ if ($T=='all'){
          $PageId = 'boxplot';
 
          require_once(LIB_PATH.'lib_scorecard.php');
-
-         if (isset($HTTP_GET_VARS['d'])
-               && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
-            $X = $HTTP_GET_VARS['d'];
-            if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
-         }
-         if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
 
          $Title = 'Boxplot Summary';
          $TemplateName = 'boxplot.tpl.php';
@@ -123,8 +125,9 @@ if ($T=='all'){
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'scorecard-about.tpl.php';
          $W = Weights($Tests, $Action, $HTTP_GET_VARS);
+         $Body->set('DataSet', $DataSet);
          $Body->set('W', $W);
-         $Body->set('Data', WeightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $W));
+         $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
          $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
       }
 

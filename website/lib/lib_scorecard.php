@@ -57,14 +57,13 @@ function SelectedLangs($Langs, $Action, $Vars){
 
 // Data filtering and summary ///////////////////////////////////////////
 
-
-function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TRUE){
+function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TRUE){
+   // expect to encounter more than one DATA_TESTVALUE for each test 
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
-   // assume no values larger than 1,000,000
    $mins = array();
-   foreach($Tests as $k => $v){ $mins[$k] = array(1000000,1000000,1000000); }
+   foreach($Tests as $k => $v){ $mins[$k] = array(); }
 
    $data = array();
    $timeout = array();
@@ -76,6 +75,7 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
       $lang = $row[DATA_LANG];
       settype($row[DATA_ID],'integer');
       $id = $row[DATA_ID];
+      $testvalue = $row[DATA_TESTVALUE];
       $key = $test.$lang.strval($id);
 
       // accumulate all acceptable datarows, exclude duplicates
@@ -91,20 +91,37 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
             }
 
             if ($row[DATA_STATUS] == 0 && (
-                  ($row[DATA_TIME] > 0 && (!isset($data[$lang][$test]) ||
-                     $row[DATA_TIME] < $data[$lang][$test][DATA_TIME])))){
+                  ($row[DATA_TIME] > 0 && (!isset($data[$lang][$test][$testvalue]) ||
+                     $row[DATA_TIME] < $data[$lang][$test][$testvalue][DATA_TIME])))){
 
-               $data[$lang][$test] = $row;
-
-               $mt = &$mins[$test];
-               if (($row[DATA_TIME] < $mt[CPU_MIN]) && $row[DATA_TIME] > 0.0){
-                  $mt[CPU_MIN] = $row[DATA_TIME];
+               $data[$lang][$test][$testvalue] = $row;
+               
+               if ($row[DATA_TIME] > 0.0){
+                  if (!isset($mins[$test][$testvalue][CPU_MIN])){
+                     $mins[$test][$testvalue][CPU_MIN] = $row[DATA_TIME];
+                  } else {
+                     if ($row[DATA_TIME] < $mins[$test][$testvalue][CPU_MIN]){
+                        $mins[$test][$testvalue][CPU_MIN] = $row[DATA_TIME];
+                     }
+                  }
                }
-               if (($row[DATA_MEMORY] < $mt[MEM_MIN]) && $row[DATA_MEMORY] > 0){
-                  $mt[MEM_MIN] = $row[DATA_MEMORY];
+               if ($row[DATA_MEMORY] > 0.0){
+                  if (!isset($mins[$test][$testvalue][MEM_MIN])){
+                     $mins[$test][$testvalue][MEM_MIN] = $row[DATA_MEMORY];
+                  } else {
+                     if ($row[DATA_MEMORY] < $mins[$test][$testvalue][MEM_MIN]){
+                        $mins[$test][$testvalue][MEM_MIN] = $row[DATA_MEMORY];
+                     }
+                  }
                }
-               if (($row[DATA_GZ] < $mt[GZ_MIN]) && $row[DATA_GZ] > 0){
-                  $mt[GZ_MIN] = $row[DATA_GZ];
+               if ($row[DATA_GZ] > 0.0){
+                 if (!isset($mins[$test][$testvalue][GZ_MIN])){
+                     $mins[$test][$testvalue][GZ_MIN] = $row[DATA_GZ];
+                  } else {
+                     if ($row[DATA_GZ] < $mins[$test][$testvalue][GZ_MIN]){
+                        $mins[$test][$testvalue][GZ_MIN] = $row[DATA_GZ];
+                     }
+                  }
                }
             }
 
@@ -112,49 +129,56 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
    }
    @fclose($f);
 
+   
+   /*
+   When there are multiple N values this doesn't seem quite right - we might
+   have taken times from different programs for different N values for the
+   same language implementation - but it's completely negligible.
+   */
+
    $score = array();
    foreach($data as $k => $test){
-//      if ((!isset($timeout[$k]) || ($timeout[$k] < 5)) && (sizeof($test) > 9)){
       if (sizeof($test)/sizeof($Tests) > 0.5){
 
          $s = 0.0; $ws = 0.0; $include = 0.0;
-         foreach($test as $t => $v){
-            $mt = &$mins[$t];
+         foreach($test as $t => $testvalues){
+            foreach($testvalues as $tv => $v){
 
-            $w1 = $W[$t] * $W['xfullcpu'];
-            $w2 = $W[$t] * $W['xmem'];
-            $w3 = $W[$t] * $W['xloc'];
+               $w1 = $W[$t] * $W['xfullcpu'];
+               $w2 = $W[$t] * $W['xmem'];
+               $w3 = $W[$t] * $W['xloc'];
 
-            if ($w1>0){
-              $val = $v[DATA_TIME];
-              if ($val > 0){
-                 $s += log($val/$mt[CPU_MIN])*$w1;
-                 $ws += $w1;
-                 $include += $val;
-              }
-            }
-            if ($w2>0){
-              $val = $v[DATA_MEMORY];
-              if ($val > 0){
-                 $s += log($val/$mt[MEM_MIN])*$w2;
-                 $ws += $w2;
-                 $include += $val;
-              }
-            }
-            if ($w3>0){
-              $val = $v[DATA_GZ];
-              if ($val > 0){
-                 $s += log($val/$mt[GZ_MIN])*$w3;
-                 $ws += $w3;
-                 $include += $val;
-              }
+               if ($w1>0){
+                 $val = $v[DATA_TIME];
+                 if ($val > 0){
+                    $s += log($val/$mins[$t][$tv][CPU_MIN])*$w1;
+                    $ws += $w1;
+                    $include += $val;
+                 }
+               }
+               if ($w2>0){
+                 $val = $v[DATA_MEMORY];
+                 if ($val > 0){
+                    $s += log($val/$mins[$t][$tv][MEM_MIN])*$w2;
+                    $ws += $w2;
+                    $include += $val;
+                 }
+               }
+               if ($w3>0){
+                 $val = $v[DATA_GZ];
+                 if ($val > 0){
+                    $s += log($val/$mins[$t][$tv][GZ_MIN])*$w3;
+                    $ws += $w3;
+                    $include += $val;
+                 }
+               }
             }
          }
          if ($ws == 0.0){ $ws = 1.0; }
          if ($include > 0){ $score[$k] = array(1.0,exp($s/$ws),sizeof($Tests)-sizeof($test)); }
+
       }
    }
-
    uasort($score, 'CompareMeanScore');
    $ratio = array();
    foreach($score as $k => $v){
@@ -165,6 +189,7 @@ function WeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TR
    }
 
    return array($score,$ratio);
+
 }
 
 
@@ -216,9 +241,11 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$Plot,$HasH
    @fclose($f);
    
    
-   // when there are multiple N values this isn't quite right
-   // we might have taken times from different programs
-   // for different N values for the same language implementation
+   /*
+   When there are multiple N values this doesn't seem quite right - we might
+   have taken times from different programs for different N values for the
+   same language implementation - but it's completely negligible.
+   */
 
    $score = array();
    foreach($data as $k => $test){

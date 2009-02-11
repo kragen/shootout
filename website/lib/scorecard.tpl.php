@@ -53,6 +53,7 @@ foreach($score as $k => $v){
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
+<tr><td colspan="2"><? MkDataSetMenu($DataSet); ?></td></tr>
 <tr>
 <td><input type="submit" name="calc" value="calculate" /></td>
 <td><input type="submit" name="calc" value="reset" /></td>
