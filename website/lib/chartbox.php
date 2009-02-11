@@ -94,17 +94,22 @@ if ($n%5 == 0){
 // GRID
 for ($i=0; $i<8; $i++){
    $y = $h-($yo+$i*$yscale);
-   ImageLine($im, $xo-15, $h-($yo+$i*$yscale), $w, $y, $gray);
-   if ($i>0){ ImageString($im, 2, $xo-15, $y, strval($i), $black); }
+//   ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
+   if ($i>0){ ImageString($im, 2, $xo-15, $y, strval($i), $black); }
    $label = strval( floor(pow(10.0,$i/2.0)) ).'x';
    $x = strlen($label)*7.0;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
+for ($i=0; $i<15; $i++){
+   if ($i==1||$i==5||$i==9||$i==13){ continue; }
+   $y = $h-($yo+($i/2.0)*$yscale);
+   ImageLine($im, $xo-15, $y, $w, $y, $gray);
+}
 
 // AXIS LEGEND
-$label = '"hemibels" 2 * log10 time/fastest';
-ImageStringUp($im, 3, 5, $h-33, $label, $black);
+$label = '"hemibels" 2 * log10 time/fastest ratio';
+ImageStringUp($im, 2, 5, $h-$yo-24, $label, $black);
 
 // MEDIAN and WHISKERS
 if ($n%5 == 0){
