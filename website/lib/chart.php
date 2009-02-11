@@ -3,123 +3,85 @@ header("Content-type: image/png");
 
 // Copyright (c) Isaac Gouy 2004-2009
 
-// LIBRARIES ////////////////////////////////////////////////
-
-require_once(LIB_PATH.'lib_common.php');      
-
 // DATA ////////////////////////////////////////////////////
 
-list($Incl,$Excl) = ReadIncludeExclude();
-$Langs = ReadUniqueArrays('lang.csv',$Incl);
-$Tests = ReadUniqueArrays('test.csv',$Incl);
-
-if (isset($HTTP_GET_VARS['test'])
-      && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
-   $X = $HTTP_GET_VARS['test'];
-   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all')){ $T = $X; }
-}
-if (!isset($T)){ $T = 'nbody'; }
-
-
-if (isset($HTTP_GET_VARS['sort'])
-      && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
-   $X = $HTTP_GET_VARS['sort'];
-   if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz' || $X == 'elapsed')){ $S = $X; }
-}
-if (!isset($S)){ $S = 'elapsed'; }
-
-
-// FILTER & SORT DATA ////////////////////////////////////////
-
-$Data = ReadSelectedDataArrays(DATA_PATH.'data.csv',$T,$Incl);
-list($Accepted) = FilterAndSortData($Langs,$Data,$S,$Excl);
-
-
-// CHART /////////////////////////////////////////////////////
-
-   $w = 480;
-   $h = 150;
-   $wsec = 3;
-   $wmem = 0;
-   $vscale = CHART_VSCALE;
-   $xsec = 7;
-   $xmem = 6;
-   $width = 6;
-   $minsec = -1;
-   $minmem = -1;
-
-// FIND THE MINIMUM VALUES
-// VALUES WILL BE SCALED SO $hscale TIMES THE MINIMUM WILL FIT THE IMAGE HEIGHT
-
-   foreach($Accepted as $v){   
-      if (($minsec == -1) && ($v[DATA_FULLCPU] > 0.0)){ $minsec = $v[DATA_FULLCPU]; }
-      elseif (($v[DATA_FULLCPU] > 0.0) && ($v[DATA_FULLCPU] < $minsec)){ $minsec = $v[DATA_FULLCPU]; }
-             
-      if (($minmem == -1) && ($v[DATA_MEMORY] > 0.0)){ $minmem = $v[DATA_MEMORY]; }
-      elseif (($v[DATA_MEMORY] > 0.0) && ($v[DATA_MEMORY] < $minmem)){ $minmem = $v[DATA_MEMORY]; }
+$D = array();
+if (isset($HTTP_GET_VARS['d'])
+      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 512))){
+   $X = $HTTP_GET_VARS['d'];
+   if (ereg("^[0-9o]+$",$X)){
+      foreach(explode('o',$X) as $v){
+         if (strlen($v) && (strlen($v) <= 8)){ $D[] = doubleval($v)/10.0; }
+      }
    }
+}
 
-if ($minsec < 0.01){ $minsec = 0.01; }
-if ($minmem < 100){ $minmem = 100; }
+$M = array();
+if (isset($HTTP_GET_VARS['m'])
+      && (strlen($HTTP_GET_VARS['m']) && (strlen($HTTP_GET_VARS['m']) <= 512))){
+   $X = $HTTP_GET_VARS['m'];
+   if (ereg("^[0-9o]+$",$X)){
+      foreach(explode('o',$X) as $v){
+         if (strlen($v) && (strlen($v) <= 8)){ $M[] = doubleval($v)/10.0; }
+      }
+   }
+}
+
+// CHART //////////////////////////////////////////////////
+
+   $barspace = 3;
+   $w = 480;
+   $h = 225;
+
+   $xo = 65;
+   $yo = 8;
+
+   $yscale = 64;
+   $barw = 3;
+   $barmw = 0;
+   $charwidth2 = 6.0; // for size 2
+
 
 $im = ImageCreate($w,$h);
 ImageColorAllocate($im,204,204,204);
-
 $white = ImageColorAllocate($im,255,255,255);
 $black = ImageColorAllocate($im,0,0,0);
 $bgray = ImageColorAllocate($im,204,204,204);
-
-
-// GRIDLINES
-
 $gray = ImageColorAllocate($im,221,221,221);
-$h1 = $h - ((CHART_V1 / $vscale) * $h);
-$h2 = $h - ((CHART_V2 / $vscale) * $h);
-$h3 = $h - ((CHART_V3 / $vscale) * $h);
-ImageLine($im, 0, $h1, $w, $h1, $gray);
-ImageLine($im, 0, $h2, $w, $h2, $gray);
-ImageLine($im, 0, $h3, $w, $h3, $gray);
 
+// BARS
+$x = $xo;
+foreach($D as $v){
+   $y = $h-($yo+ log10($v)*$yscale);
+   ImageFilledRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
+   $x = $x + $barw + $barspace;
+}
+$x = $xo;
+foreach($M as $v){
+   $y = $h-($yo+ log10($v)*$yscale);
+   ImageFilledRectangle($im, $x, $y, $x+$barmw, $h-$yo, $black);
+   $x = $x + $barmw + $barw + $barspace;
+}
 
-// CHART BARS
+// GRID
+for ($i=0; $i<13; $i++){
+   if ($i==1||$i==5||$i==9){ continue; }
+   $y = $h-($yo+($i/4.0)*$yscale);
+   ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
-   foreach($Accepted as $v){
-      $hsec = min( ($v[DATA_FULLCPU]/$minsec)*($h/$vscale), $h);
-      $hmem = min( ($v[DATA_MEMORY]/$minmem)*($h/$vscale), $h);
+   $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
+   $x = strlen($label)*$charwidth2;
+   ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
+}
 
-      ImageFilledRectangle($im, $xsec, $h-$hsec, $xsec+$wsec, $h, $white);
-      ImageFilledRectangle($im, $xmem, $h-$hmem, $xmem+$wmem, $h, $black);
+// AXIS LEGEND
+ImageStringUp($im, 2, 5, $h-20, 'log10 secs ratio', $black);
+ImageFilledRectangle($im, 11, $h-16, 11+$barw, $h-6, $white);
 
-      $xsec = $xsec + $width;
-      $xmem = $xmem + $width;
-   }
+ImageStringUp($im, 2, 5, $h-138, 'log10 KB ratio', $black);
+ImageFilledRectangle($im, 12, $h-134, 12+$barmw, $h-124, $black);
 
-
-// GRIDLINES & GRIDLINE LABELS
-
-ImageString($im, 2, 6, $h1-14, CHART_V1.'x', $white);
-ImageString($im, 2, 6, $h2-14, CHART_V2.'x', $white);
-if (CHART_V2 != CHART_V3){ ImageString($im, 2, 6, $h3+4, CHART_V3.'x', $white); }
-
-ImageString($im, 2, $w-26, $h1-14, CHART_V1.'x', $white);
-ImageString($im, 2, $w-26, $h2-14, CHART_V2.'x', $white);
-ImageString($im, 2, $w-26, $h3-14, CHART_V3.'x', $white);
-
-
-// LEGEND - SHOW SORT ORDER BY PUTTING SORT CRITERIA AT TOP OF LEGEND
-
-if ($S=='kb'){
-   $kbTop = $h-148; $cpuTop = $h-135; }
-else {
-   $kbTop = $h-135; $cpuTop = $h-148; }
-
-ImageFilledRectangle($im, 2, $cpuTop, $wsec+105, $cpuTop+13, $bgray);
-ImageFilledRectangle($im, 6, $cpuTop+2, $wsec+6, $cpuTop+10, $white);
-ImageString($im, 3, 20, $cpuTop, 'CPU secs', $black);
-ImageFilledRectangle($im, 2, $kbTop, $wsec+80, $kbTop+13, $bgray);
-ImageFilledRectangle($im, 6, $kbTop+2, $wmem+6, $kbTop+10, $black);
-ImageString($im, 3, 20, $kbTop, 'Memory KB', $black);
-
-ImagePNG($im);
+ImageInterlace($im,1);
+ImagePng($im);
 ImageDestroy($im);
 ?>

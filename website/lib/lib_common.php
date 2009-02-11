@@ -366,6 +366,27 @@ function FilterAndSortData($langs,$data,&$sort,&$Excl){
 }
 
 
+function TimeMemoryRatios(&$Accepted,$sort){
+   if ($sort=='fullcpu'){ $DTIME = DATA_FULLCPU; }
+   else { $DTIME = DATA_TIME; }
+
+   foreach($Accepted as $d){
+      if (!isset($mintime)||$d[$DTIME] < $mintime){
+         $mintime = $d[$DTIME];
+      }
+      if (!isset($minmem)||$d[DATA_MEMORY] < $minmem){
+         $minmem = $d[DATA_MEMORY];
+      }
+   }
+   $timeratio = array();
+   $memratio = array();
+   foreach($Accepted as $d){
+     $timeratio[] = $d[$DTIME]/$mintime;
+     $memratio[] = $d[DATA_MEMORY]/$minmem;
+   }
+   return array($timeratio,$memratio);
+}
+
 
 function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
@@ -474,7 +495,7 @@ function HtmlFragment($FileName){
 
 
 function PFx($d){
-   if ($d>9.9){ return number_format($d); }   
+   if ($d>9.9){ return number_format($d); }
    elseif ($d>0.0){ return number_format($d,1); }
    else { return "&nbsp;"; }
 }

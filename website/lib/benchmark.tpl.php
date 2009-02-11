@@ -41,9 +41,6 @@ if ($TestName=='fasta'||$TestName=='k-nucleotide'||
    }
 
 if ($TestName=='startup'){ $NString = ''; }
-
-
-
 ?>
 
 
@@ -53,10 +50,12 @@ if ($TestName=='startup'){ $NString = ''; }
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
 </p>
 
-<p><img src="chart.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=<?=$Sort;?>"
+<? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
+
+<p><img src="chart.php?<?='d='.HttpVarsEncodeArray($dtime);?>&amp;<?='m='.HttpVarsEncodeArray($dmem);?>"
    alt=""
    title="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
-   width="480" height="150"
+   width="480" height="225"
  /></p>
 
 <table>

@@ -101,7 +101,7 @@ for ($i=0; $i<8; $i++){
    $x = strlen($label)*7.0;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
-for ($i=0; $i<15; $i++){
+for ($i=0; $i<16; $i++){
    if ($i==1||$i==5||$i==9||$i==13){ continue; }
    $y = $h-($yo+($i/2.0)*$yscale);
    ImageLine($im, $xo-15, $y, $w, $y, $gray);

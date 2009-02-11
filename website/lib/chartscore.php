@@ -1,6 +1,8 @@
 <?
 header("Content-type: image/png");
 
+// Copyright (c) Isaac Gouy 2004-2009
+
 // DATA ////////////////////////////////////////////////////
 
 $D = array();
@@ -18,7 +20,7 @@ if (isset($HTTP_GET_VARS['d'])
 
    $barspace = 3;
    $w = 480;
-   $h = 150;
+   $h = 225;
    
    $xo = 65;
    $yo = 8;
@@ -44,8 +46,8 @@ foreach($D as $v){
 }
 
 // GRID
-for ($i=0; $i<9; $i++){
-   if ($i==1||$i==5){ continue; }
+for ($i=0; $i<13; $i++){
+   if ($i==1||$i==5||$i==9){ continue; }
    $y = $h-($yo+($i/4.0)*$yscale);
    ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
@@ -55,8 +57,7 @@ for ($i=0; $i<9; $i++){
 }
 
 // AXIS LEGEND
-ImageStringUp($im, 2, 3, $h-$yo, 'log10 weighted', $black);
-ImageStringUp($im, 2, 15, $h-$yo, 'geometric mean ratio', $black);
+ImageStringUp($im, 2, 5, $h-$yo-2, 'log10 weighted geometric mean ratio', $black);
 
 ImageInterlace($im,1);
 ImagePng($im);
