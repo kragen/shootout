@@ -21,6 +21,7 @@ $A = array();
 if (isset($HTTP_GET_VARS['a'])
       && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 512))){
    $X = rawurldecode($HTTP_GET_VARS['a']);
+   // how to check language implementation name strings?   
    //if (ereg("^[a-z0-9,]+$",$X)){
       foreach(explode(',',$X) as $v){
          if (strlen($v) && (strlen($v) <= 32)){ $A[] = $v; }

@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
-<h3><a href="#faster" name="faster">&nbsp;"For every complex problem</a> there is an answer that is clear, simple, and wrong." H. L. Mencken</h3>
+<h3><a href="#faster" name="faster">"For every complex problem</a> there is an answer that is clear, simple, and wrong." &nbsp;H.&nbsp;L.&nbsp;Mencken</h3>
 
 
 <? 

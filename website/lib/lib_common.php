@@ -556,6 +556,7 @@ function HttpVarsEncodeLabels($a){
 function HttpVarsEncodeHeadToHead(&$Tests,&$Data){
    $a = array();
    foreach($Tests as $Row){
+      if (($Row[TEST_WEIGHT]<=0)){ continue; }
       if (isset($Data[$Row[TEST_LINK]])){
          $v = $Data[$Row[TEST_LINK]];
 

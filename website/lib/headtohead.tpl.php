@@ -47,6 +47,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <?
 foreach($Tests as $Row){
+   if (($Row[TEST_WEIGHT]<=0)){ continue; }
    printf('<tr>'); echo "\n";
    $Link = $Row[TEST_LINK];
    $Name = $Row[TEST_NAME];

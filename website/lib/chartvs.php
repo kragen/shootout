@@ -18,8 +18,9 @@ if (isset($HTTP_GET_VARS['d'])
 
 $A = array();
 if (isset($HTTP_GET_VARS['a'])
-      && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 512))){
+      && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 72))){
    $X = rawurldecode($HTTP_GET_VARS['a']);
+   // how to check language implementation name strings?
    //if (ereg("^[a-z0-9,]+$",$X)){
       foreach(explode(',',$X) as $v){
          if (strlen($v) && (strlen($v) <= 32)){ $A[] = $v; }
@@ -37,7 +38,7 @@ if (isset($HTTP_GET_VARS['a'])
    $yo = 150;
 
    $yscale = 54;
-   $barw = 3;
+   $barw = 4;
    $barmw = 0;
    $charwidth2 = 6.0; // for size 2
    $charwidth3 = 7.0; // for size 2
@@ -57,7 +58,7 @@ $mgray = ImageColorAllocate($im,165,165,165);
 $gray = ImageColorAllocate($im,221,221,221);
 
 // BARS
-$gap = 18;
+$gap = 16;
 $n = sizeof($D);
 if ($n%DATA_SIZE == 0){
    $x = $xo;
@@ -66,7 +67,7 @@ if ($n%DATA_SIZE == 0){
       if ($v < 1.0){
          if ($v == 0){ $v = 1.0; }
          $y = $yo+ log10(1.0/$v)*$yscale;
-         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw, $y, $mgray);
+         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw-1, $y, $mgray);
       } else {
          $y = $h-($yo+ log10($v)*$yscale);
          ImageFilledRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
@@ -81,14 +82,14 @@ if ($n%DATA_SIZE == 0){
       if ($v < 1.0){
          if ($v == 0){ $v = 1.0; }
          $y = $yo+ log10(1.0/$v)*$yscale;
-         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw, $y, $mgray);
+         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw-1, $y, $mgray);
       } else {
          $y = $h-($yo+ log10($v)*$yscale);
          ImageFilledRectangle($im, $x, $y, $x+$barmw, $h-$yo, $black);
       }
       $x = $x + $barw + $barspace;
    }
-   $aftermem = $x;   
+   $aftermem = $x;
 
    $x = $x+$gap;
    for ($i=0; $i<$n; $i+=DATA_SIZE){
@@ -96,7 +97,7 @@ if ($n%DATA_SIZE == 0){
       if ($v < 1.0){
          if ($v == 0){ $v = 1.0; }
          $y = $yo+ log10(1.0/$v)*$yscale;
-         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw, $y, $mgray);
+         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw-1, $y, $mgray);
       } else {
          $y = $h-($yo+ log10($v)*$yscale);
          ImageRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
@@ -158,9 +159,11 @@ $x = $w-5-strlen($label)*$charwidth3;
 ImageString($im, 3, $x, 2, $label, $black);
 $label = 'vs '.$A[1];
 $x = $w-5-strlen($label)*$charwidth3;
-//ImageString($im, 3, $x, $h-28, $label, $black);
 ImageString($im, 3, $x, $h-15, $label, $black);
 
+//ImageString($im, 4, 100, $h-200, SITE_NAME, $black);
+
+ImageInterlace($im,1);
 ImagePng($im);
 ImageDestroy($im);
 ?>
