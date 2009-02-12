@@ -2,7 +2,7 @@
 
 <p><a href="http://www.lcgceurope.com/lcgceurope/data/articlestandard/lcgceurope/132005/152912/article.pdf"><strong>"Visual Presentation of Data by Means of Box Plots" (pdf)</strong></a></p>
 
-<p>Note: outliers are not shown.</p>
+<p>Note: only the smallest and largest outliers are shown.</p>
 
 <p>Thanks to M. Edward (Ed) Borasky for "hemibel" enthusiasm.</p>
 
