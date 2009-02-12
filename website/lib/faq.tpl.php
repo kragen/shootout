@@ -23,14 +23,20 @@
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
-<dt><a href="#oneone" name="oneone"><strong>How do I compare language implementations?</strong></a></dt>
+<dt><a href="#oneone" name="oneone"><strong>How do I compare 2 language implementations?</strong></a></dt>
 <dd>
 <p>Compare them directly <a href="benchmark.php?test=all&lang=gpp&lang2=java"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
 </dd>
 
+
+<dt><a href="#several" name="several"><strong>How do I compare 3 or 4 or more language implementations?</strong></a></dt>
+<dd>
+<p>Compare the <a href="benchmark.php?test=all&lang=all&d=data&calc=calculate&gpp=on&gcc=on&java=on&javaxint=on&jruby=on&box=1"><strong>boxplot summary</strong> of measurements for just those language implementations</a>.</p>
+</dd>
+
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 or 4 programs?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="fulldata.php?test=fannkuch&p1=java-1&p2=gcc-1&p3=php-1&p4=perl-1"><strong>side-by-side</strong> for all the data points</a>.</p>
+<p>Compare them directly <a href="fulldata.php?test=fannkuch&p1=java-1&p2=gcc-1&p3=php-1&p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
 </dd>
 
 <dt><a href="#datasets" name="datasets"><strong>Why is the program better on ...?</strong></a></dt>
