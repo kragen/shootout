@@ -2,6 +2,9 @@
 <?
 if (LANGS_PHRASE){ $LangsPhrase = LANGS_PHRASE; } else { $LangsPhrase = ''; }
 if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
+
+   list($labels,$stats) = $Data;
+   unset($Data); 
 ?>
 
 <?=$Intro;?>
@@ -9,6 +12,14 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 
 <p>It can be fun to watch the Benchmarks Game but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p>
+
+
+<p class="img"><img src="charttests.php?
+      <?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
+   alt=""
+   title=""
+   width="480" height="300"
+ /></p>
 
 <?
 if (SITE_NAME == 'debian'){

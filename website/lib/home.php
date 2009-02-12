@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -15,7 +15,8 @@ $Tests = ReadUniqueArrays('test.csv',$Incl);
 $Langs = ReadUniqueArrays('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
-// TEMPLATE VARS /////////////////////////////////////////// 
+
+// TEMPLATE VARS ///////////////////////////////////////////
 
 $Page = & new Template(LIB_PATH);  
 $Page->set('PageTitle', SITE_TITLE);
@@ -28,12 +29,14 @@ $Body->set('Langs', $Langs);
 
 if (SITE_NAME == 'contests'){
    $Body->set('AboutName', 'The Language Shootout Contests');
-   $Body->set('Headline', 'Programmer and language contests');   
+   $Body->set('Headline', 'Programmer and language contests');
 } else {
    $Body->set('AboutName', 'The Language Shootout Benchmarks');
    $Body->set('Headline', 'Benchmarking programming languages?');   
 }
 $Body->set('Measured', filemtime(DATA_PATH.'data.csv'));
+
+$Body->set('Data', TestData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl));
 
 $Intro = & new Template(ABOUT_PATH);
 $Body->set('Intro', $Intro->fetch(SITE_NAME.SEPARATOR.'intro.about'));

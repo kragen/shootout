@@ -96,6 +96,7 @@ define('STAT_MEDIAN',3);
 define('STAT_UPPER',4);
 define('STAT_XUPPER',5);
 define('STAT_MAX',6);
+define('STAT_N',7);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -198,6 +199,101 @@ function SplitByTestValue(&$data){
    return array($largest,$others);
 }
 
+
+function TestData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+   // expect NOT to encounter more than one DATA_TESTVALUE for each test
+   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
+   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+
+   $data = array();
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }
+
+      $test = $row[DATA_TEST];
+      $lang = $row[DATA_LANG];
+      settype($row[DATA_ID],'integer');
+      $id = $row[DATA_ID];
+      $key = $test.$lang.strval($id);
+
+      // accumulate all acceptable datarows, exclude duplicates
+
+      if (isset($Incl[$test]) && isset($Incl[$lang]) && isset($Langs[$lang]) &&
+               ($Tests[$test][TEST_WEIGHT]>0) &&
+                  !isset($Excl[$key])){
+
+            if ($row[DATA_STATUS] == 0 && (
+                  ($row[DATA_FULLCPU] > 0 && (!isset($data[$lang][$test]) ||
+                     $row[DATA_FULLCPU] < $data[$lang][$test])))){
+
+               $data[$lang][$test] = $row[DATA_FULLCPU];
+            }
+      }
+   }
+   @fclose($f);
+
+   /*
+   When there are multiple N values this doesn't seem quite right - we might
+   have taken times from different programs for different N values for the
+   same language implementation - but it's completely negligible.
+   */
+
+   $a = array();
+   // preserve ordering of $Tests
+   foreach($Tests as $k => $v){
+      if (($v[TEST_WEIGHT]<=0)){ continue; }
+      $a[$k] = array();
+   }
+   foreach($data as $lang => $testvalues){
+      foreach($testvalues as $t => $v){
+         if ($v > 0.0){
+            $a[$t][] = log10($v)*2.0;
+         }
+      }
+   }
+
+   foreach($Tests as $k => $v){
+      if (($v[TEST_WEIGHT]<=0)){ continue; }
+      $a[$k] = Percentiles($a[$k]);
+   }
+
+   $labels = array();
+   $stats = array();
+   foreach($a as $k => $v){
+      $labels[] = ' '.$Tests[$k][TEST_NAME];
+      $stats[] = $v;
+   }
+   return array($labels,$stats);
+}
+
+
+
+function Percentiles($a){
+   sort($a);
+   $n = sizeof($a);
+   $mid = floor($n / 2);
+   if ($n % 2 != 0){
+      $median = $a[$mid];
+      $lower = Median( array_slice($a,0,$mid+1) ); // include median in both quartiles
+      $upper = Median( array_slice($a,$mid) );
+   } else {
+      $median = ($a[$mid-1] + $a[$mid]) / 2.0;
+      $lower = Median( array_slice($a,0,$mid) );
+      $upper = Median( array_slice($a,$mid) );
+   }
+   $maxwhisker = ($upper - $lower) * 1.5;
+   $xlower = ($lower - $maxwhisker < $a[0]) ? $a[0]: $lower - $maxwhisker;
+   $xupper = ($upper + $maxwhisker > $a[$n-1]) ? $a[$n-1] : $upper + $maxwhisker;
+
+   return array($a[0],$xlower,$lower,$median,$upper,$xupper,$a[$n-1],$n);
+}
+
+
+function Median($a){
+   $n = sizeof($a);
+   $mid = floor($n / 2);
+   return ($n % 2 != 0) ? $a[$mid] : ($a[$mid-1] + $a[$mid]) / 2.0;
+}
 
 
 function CompareTestCpuTime($a, $b){
@@ -540,7 +636,7 @@ function HttpVarsEncodeArray($a){
 function HttpVarsEncodeStats($aa){
    $a = array(); $d = array();
    foreach($aa as $stats){ $a = array_merge($a,$stats); }
-   foreach($a as $each){ $d[] = intval(sprintf('%d',$each*100)); }
+   foreach($a as $each){ $d[] = intval(sprintf('%d',($each+1)*100)); } // avoid negatives
    $s = implode('o',$d);
    return $s;
 }

@@ -279,35 +279,6 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$Plot,$HasH
 }
 
 
-
-function Percentiles($a){
-   sort($a);
-   $n = sizeof($a);
-   $mid = floor($n / 2);
-   if ($n % 2 != 0){
-      $median = $a[$mid];
-      $lower = Median( array_slice($a,0,$mid+1) ); // include median in both quartiles
-      $upper = Median( array_slice($a,$mid) );
-   } else {
-      $median = ($a[$mid-1] + $a[$mid]) / 2.0;
-      $lower = Median( array_slice($a,0,$mid) );
-      $upper = Median( array_slice($a,$mid) );
-   }
-   $maxwhisker = ($upper - $lower) * 1.5;
-   $xlower = ($lower - $maxwhisker < $a[0]) ? $a[0]: $lower - $maxwhisker;
-   $xupper = ($upper + $maxwhisker > $a[$n-1]) ? $a[$n-1] : $upper + $maxwhisker;
-
-   return array($a[0],$xlower,$lower,$median,$upper,$xupper,$a[$n-1]);
-}
-
-
-function Median($a){
-   $n = sizeof($a);
-   $mid = floor($n / 2);
-   return ($n % 2 != 0) ? $a[$mid] : ($a[$mid-1] + $a[$mid]) / 2.0;
-}
-
-
 function CompareMeanScore($a, $b){
    if ($a[SCORE_MEAN] == $b[SCORE_MEAN]) return 0;
    return  ($a[SCORE_MEAN] < $b[SCORE_MEAN]) ? -1 : 1;
