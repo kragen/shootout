@@ -511,6 +511,8 @@ function PFx($d){
    else { return "&nbsp;"; }
 }
 
+
+
 function PTime($d){
    if ($d <= 0.0){ return ''; }
    if ($d<300.0){ return number_format($d,2); }
@@ -525,23 +527,51 @@ function PTime($d){
    }
 }
 
+
+
 function HttpVarsEncodeArray($a){
    foreach($a as $v){ $d[] = intval(sprintf('%d',$v*10)); }
    $s = implode('o',$d);
    return $s;
 }
 
+
+
 function HttpVarsEncodeStats($aa){
-   $a = array();
+   $a = array(); $d = array();
    foreach($aa as $stats){ $a = array_merge($a,$stats); }
    foreach($a as $each){ $d[] = intval(sprintf('%d',$each*100)); }
    $s = implode('o',$d);
    return $s;
 }
 
+
+
 function HttpVarsEncodeLabels($a){
    $s = implode(',',$a);
    return rawurlencode($s);
+}
+
+
+function HttpVarsEncodeHeadToHead(&$Tests,&$Data){
+   $a = array();
+   foreach($Tests as $Row){
+      if (isset($Data[$Row[TEST_LINK]])){
+         $v = $Data[$Row[TEST_LINK]];
+
+         $a[] = intval(sprintf('%d',$v[N_FULLCPU]*100000.0));
+         
+         if ($Row[TEST_NAME]=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
+         $a[] = intval(sprintf('%d',$kb*100000.0));
+         
+         $a[] = intval(sprintf('%d',$v[N_GZ]*100000.0));
+
+      } else {
+         $a[] = 100000.0; $a[] = 100000.0; $a[] = 100000.0;
+      }
+   }
+   $s = implode('o',$a);
+   return $s;
 }
 
 

@@ -44,7 +44,7 @@ if ($TestName=='startup'){ $NString = ''; }
 ?>
 
 
-<h2><a href="#bench" name="bench"><?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
+<h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
 <p>Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.
 <?=$TestTag;?> <?=$NString;?>&nbsp;(Check that Error or Timeout happened at other values of N with <a href="fulldata.php?test=<?=$SelectedTest;?>&amp;p1=<?=$P1;?>&amp;p2=<?=$P2;?>&amp;p3=<?=$P3;?>&amp;p4=<?=$P4;?>"
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestName;?> full data</a>).
@@ -54,7 +54,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 
 <p><img src="chart.php?<?='d='.HttpVarsEncodeArray($dtime);?>&amp;<?='m='.HttpVarsEncodeArray($dmem);?>"
    alt=""
-   title="<?=SortName($Sort);?> chart for the <?=$TestName;?> performance benchmark"
+   title="Program time and memory use chart for the <?=$TestName;?> performance benchmark"
    width="480" height="225"
  /></p>
 

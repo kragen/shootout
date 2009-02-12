@@ -74,22 +74,6 @@
 <p>Dalmatian's tail was banging on the ground. Dalmatian panted and between breaths said "Look at that beautiful mountain, let's race to the top!" </p>
 </dd>
 
-<dt><a href="#mirrorcharts" name="mirrorcharts">What do those <strong>mirror charts</strong> mean?</a></dt>
-<dd><p class="img"><img src="<?=IMAGE_PATH;?>mirror.png"
-   alt=""
-   title=""
-   width="300" height="300"
- /></p>
-<p>From the top, 3 benchmarks at a time:</p>
-<ul>
-<li>memory use was the same; BBB was 5 times faster than AAA</li>
-<li>BBB used 5 times less memory than AAA; measured time was the same</li>
-<li>memory use was the same; AAA was 10 times faster than BBB</li>
-<li>AAA used 5 times less memory than BBB; BBB was 5 times faster than AAA</li>
-<li>AAA used 5 times less memory than BBB; AAA was 10 times faster than BBB</li>
-</ul>
-<p>Measurements more than 15 times better will be off-the-chart - check the numbers in the table.</p>
-</dd>
 
 <dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' ~ CPU Load mean?</a></dt>
 <dd><p>When the program was being measured: the first core was not-idle about 27% of the time, the second core was not-idle about 34% of the time, the third core was not-idle about 28% of the time, the fourth core was not-idle about 67% of the time.</p>

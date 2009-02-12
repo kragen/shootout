@@ -19,13 +19,13 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
 <h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better?</a></h2>
-<p>For each of one our benchmarks, a white bar shows which language implementation had the better time, and a black bar <a href="faq.php#mirrorcharts"><strong>shows which had the better</strong></a> memory use.</p>
+<p>For each of one our benchmarks, a white bar shows when it had the better time, a black bar shows when it had the better memory use, and a white outline bar shows when it had smaller program source code.</p>
 
 
-<p class="img"><img src="chartvs.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;lang2=<?=$SelectedLang2;?>"
+<p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$Tests,&$Data);?>&amp;<?='a='.HttpVarsEncodeLabels(array($LangName,$LangName2));?>"
    alt=""
-   title="Are the <?=$LangName;?> programs better or are the the <?=$LangName2;?> programs better?"
-   width="300" height="300"
+   title="Are the <?=$LangName;?> programs better than the <?=$LangName2;?> programs?"
+   width="480" height="300"
  /></p>
 
 
@@ -45,14 +45,14 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <th>Reduced N</th>
 </tr>
 
-<? 
+<?
 foreach($Tests as $Row){
    printf('<tr>'); echo "\n";
    $Link = $Row[TEST_LINK];
    $Name = $Row[TEST_NAME];
 
    if (isset($Data[$Link])){
-      $v = $Data[$Link];     
+      $v = $Data[$Link];
 
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Name);
@@ -65,7 +65,7 @@ foreach($Tests as $Row){
          if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }                       
 
          printf('%s%s%s%s', 
-            PF($v[N_FULLCPU]), PF($kb), PF($v[N_GZ]), $n);                   
+            PF($v[N_FULLCPU]), PF($kb), PF($v[N_GZ]), $n);
 
       } else {
          if ($v[N_LINES] == NO_COMPARISON){
