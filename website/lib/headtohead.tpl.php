@@ -19,7 +19,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
 <h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better?</a></h2>
-<p>For each of one our benchmarks, a white bar shows when it had the better time, a black bar shows when it had the better memory use, and a white outline bar shows when it had smaller program source code.</p>
+<p>For each one of our benchmarks, a white bar shows when it had the better time, a black bar shows when it had the better memory use, and a white outline bar shows when it had smaller program source code.</p>
 
 
 <p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$Tests,&$Data);?>&amp;<?='a='.HttpVarsEncodeLabels(array($LangName,$LangName2));?>"
