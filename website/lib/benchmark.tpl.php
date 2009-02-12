@@ -54,7 +54,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 
 <p><img src="chart.php?<?='d='.HttpVarsEncodeArray($dtime);?>&amp;<?='m='.HttpVarsEncodeArray($dmem);?>"
    alt=""
-   title="Program time and memory use chart for the <?=$TestName;?> performance benchmark"
+   title=""
    width="480" height="225"
  /></p>
 

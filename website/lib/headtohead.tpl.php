@@ -24,7 +24,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$Tests,&$Data);?>&amp;<?='a='.HttpVarsEncodeLabels(array($LangName,$LangName2));?>"
    alt=""
-   title="Are the <?=$LangName;?> programs better than the <?=$LangName2;?> programs?"
+   title=""
    width="480" height="300"
  /></p>
 
