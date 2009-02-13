@@ -3,6 +3,11 @@ header("Content-type: image/png");
 
 // Copyright (c) Isaac Gouy 2004-2009
 
+require_once(LIB_PATH.'lib_whitelist.php');
+
+list($in,$ex) = WhiteListInEx();
+$WhiteListLangs = WhiteListUnique('lang.csv',$in);
+
 // DATA ////////////////////////////////////////////////////
 
 $D = array();
@@ -16,16 +21,25 @@ if (isset($HTTP_GET_VARS['d'])
    }
 }
 
-$A = array();
+$A = array("","");
 if (isset($HTTP_GET_VARS['a'])
       && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 72))){
-   $X = rawurldecode($HTTP_GET_VARS['a']);
-   // how to check language implementation name strings?
-   //if (ereg("^[a-z0-9,]+$",$X)){
-      foreach(explode(',',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 32)){ $A[] = $v; }
+   $X = $HTTP_GET_VARS['a'];
+   if (ereg("^[a-z0-9O]+$",$X)){
+      foreach(explode('O',$X) as $i => $v){
+         if (strlen($v) && (strlen($v) <= 32) &&
+            (isset($WhiteListLangs[$v]))){ $A[$i] = $WhiteListLangs[$v][LANG_FULL]; }
       }
-   //}
+   }
+}
+
+$Mark = '';
+if (isset($HTTP_GET_VARS['mark'])
+      && (strlen($HTTP_GET_VARS['mark']) && (strlen($HTTP_GET_VARS['mark']) <= 24))){
+   $X = rawurldecode($HTTP_GET_VARS['mark']);
+   if (ereg("^[ a-zA-Z0-9]+$",$X)){
+      $Mark = $X;
+   }
 }
 
 // CHART //////////////////////////////////////////////////
@@ -146,11 +160,11 @@ ImageFilledRectangle($im, 11, $h-50, 11+$barw, $h-40, $white);
 ImageStringUp($im, 2, 5, $h-172, 'log10 KB ratio', $black);
 ImageFilledRectangle($im, 12, $h-168, 12+$barmw, $h-158, $black);
 
-ImageStringUp($im, 2, $w-20, $h-54, 'log10 gz ratio', $black);
-ImageRectangle($im, $w-20+6, $h-50, $w-20+6+$barw, $h-40, $white);
+ImageStringUp($im, 2, $w-20, $h-148, 'log10 gz ratio', $black);
+ImageRectangle($im, $w-20+6, $h-144, $w-20+6+$barw, $h-134, $white);
 
-ImageStringUp($im, 2, $w-20, $h-172, 'worse', $black);
-ImageFilledRectangle($im, $w-20+6, $h-168, $w-20+6+$barw, $h-158, $mgray);
+ImageStringUp($im, 2, $w-20, $h-94, 'worse', $black);
+ImageFilledRectangle($im, $w-20+6, $h-90, $w-20+6+$barw, $h-80, $mgray);
 
 
 // LEGEND
@@ -159,9 +173,14 @@ $x = $w-5-strlen($label)*$charwidth3;
 ImageString($im, 3, $x, 2, $label, $black);
 $label = 'vs '.$A[1];
 $x = $w-5-strlen($label)*$charwidth3;
-ImageString($im, 3, $x, $h-15, $label, $black);
+ImageString($im, 3, $x, $h-43, $label, $black);
 
-//ImageString($im, 4, 100, $h-200, SITE_NAME, $black);
+// NOTICE
+$x = $w-5-strlen($Mark)*$charwidth2;
+ImageString($im, 2, $x, $h-29, $Mark, $white);
+$label = 'The Computer Language Benchmarks Game';
+$x = $w-5-strlen($label)*$charwidth2;
+ImageString($im, 2, $x, $h-15, $label, $white);
 
 ImageInterlace($im,1);
 ImagePng($im);

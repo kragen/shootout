@@ -3,23 +3,6 @@
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
-define('TEST_LINK',0);
-define('TEST_NAME',1);
-define('TEST_TAG',2);
-define('TEST_WEIGHT',3);
-define('TEST_DATE',4);         
-
-define('LANG_LINK',0);
-define('LANG_FAMILY',1);
-define('LANG_NAME',2);
-define('LANG_FULL',3);
-define('LANG_HTML',4);
-define('LANG_TAG',5);
-define('LANG_DATE',6);  
-define('LANG_SELECT',7);
-define('LANG_COMPARE',8);
-define('LANG_SPECIALURL',9);
-
 define('DATA_TEST',0);
 define('DATA_LANG',1);
 define('DATA_ID',2);
@@ -40,26 +23,6 @@ if (SITE_NAME == 'debian' || SITE_NAME == 'gp4'){
 }
 
 
-define('INCL_LINK',0);
-define('INCL_NAME',1);
-
-define('EXCL_USE',0);
-define('EXCL_TEST',1);
-define('EXCL_LANG',2);
-define('EXCL_ID',3);
-
-
-// CONSTANTS ///////////////////////////////////////////////////
-
-define('EXCLUDED','X');
-define('PROGRAM_TIMEOUT',-1);
-define('PROGRAM_ERROR',-2);
-define('PROGRAM_SPECIAL','-3');
-define('PROGRAM_EXCLUDED',-4);
-define('LANGUAGE_EXCLUDED',-5);
-define('NO_COMPARISON',-6);
-define('NO_PROGRAM_OUTPUT',-7);
-
 define('N_TEST',0);
 define('N_LANG',1);
 define('N_ID',2);
@@ -77,7 +40,6 @@ define('N_LINES',8);
 define('N_GZ',9);
 define('N_EXCLUDE',10);
 
-
 define('CPU_MIN',0);
 define('MEM_MIN',1);
 define('GZ_MIN',2);
@@ -86,95 +48,26 @@ define('SCORE_RATIO',0);
 define('SCORE_MEAN',1);
 define('SCORE_TESTS',2);
 
+
+// CONSTANTS ///////////////////////////////////////////////////
+
+define('EXCLUDED','X');
+define('PROGRAM_TIMEOUT',-1);
+define('PROGRAM_ERROR',-2);
+define('PROGRAM_SPECIAL','-3');
+define('PROGRAM_EXCLUDED',-4);
+define('LANGUAGE_EXCLUDED',-5);
+define('NO_COMPARISON',-6);
+define('NO_PROGRAM_OUTPUT',-7);
+
 define('NAME_LEN',16);
 define('PRG_ID_LEN',NAME_LEN+2);
-
-define('STAT_MIN',0);
-define('STAT_XLOWER',1);
-define('STAT_LOWER',2);
-define('STAT_MEDIAN',3);
-define('STAT_UPPER',4);
-define('STAT_XUPPER',5);
-define('STAT_MAX',6);
-define('STAT_N',7);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
 function GetMicroTime(){
    $t = explode(" ", microtime());
    return doubleval($t[1]) + doubleval($t[0]);
-}
-
-function ReadIncludeExclude(){
-   $incl = array();
-   $f = @fopen('./include.csv','r') or die('Cannot open ./include.csv');
-   $row = @fgetcsv($f,1024,','); // heading row
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      if (isset($row[INCL_LINK]{0})){ $incl[ $row[INCL_LINK] ] = 0; }                   
-   }
-   @fclose($f);
-   
-   $excl = array();
-   $f = @fopen(DESC_PATH.'/exclude.csv','r') or die('Cannot open '.DESC_PATH.'/exclude.csv');
-   $row = @fgetcsv($f,1024,','); // heading row
-
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      if (isset($row[EXCL_TEST]{0})){           
-         if (!isset($row[EXCL_ID])){ $row[EXCL_ID] = 1; }
-         $key = $row[EXCL_TEST].$row[EXCL_LANG].strval($row[EXCL_ID]);
-         $excl[$key] = $row;
-      }
-   }
-   @fclose($f);
-
-   return array($incl,$excl);
-}
-
-
-
-function ReadUniqueArrays($FileName,$Incl,$HasHeading=TRUE){
-   if (file_exists('./'.$FileName)){
-      $f = @fopen('./'.$FileName,'r') or die('Cannot open '.$FileName);
-   } else {
-      $f = @fopen(DESC_PATH.$FileName,'r') or die('Cannot open '.$FileName);
-   }
-
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-     
-//######## Hardcoded assumption that $row[0] is a link name
-      if (isset( $Incl[$row[0]] )){ $rows[ $row[0] ] = $row; }      
-   }
-   @fclose($f);
-   return $rows;
-}
-
-
-function ReadSelectedDataArrays($FileName,$Value,$Incl,$HasHeading=TRUE){
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-   $rows = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      if ( isset($row[DATA_LANG]) && ($row[DATA_TEST]==$Value) ){                  
-         settype($row[DATA_ID],'integer');
-         if (isset($rows[$row[DATA_LANG]])){
-            array_push( $rows[$row[DATA_LANG]], $row);
-         } else {
-            $rows[$row[DATA_LANG]] = array($row);
-         }
-      }
-   }
-   @fclose($f);      
-   return $rows;
 }
 
 
@@ -260,7 +153,7 @@ function TestData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    $labels = array();
    $stats = array();
    foreach($a as $k => $v){
-      $labels[] = ' '.$Tests[$k][TEST_NAME];
+      $labels[] = $k;
       $stats[] = $v;
    }
    return array($labels,$stats);
@@ -627,8 +520,9 @@ function HttpVarsEncodeStats($aa){
 
 
 function HttpVarsEncodeLabels($a){
-   $s = implode(',',$a);
-   return rawurlencode($s);
+   $s = implode('O',$a);
+   //return rawurlencode($s);
+   return $s;
 }
 
 
@@ -654,6 +548,20 @@ function HttpVarsEncodeHeadToHead(&$Tests,&$Data){
    return $s;
 }
 
+function MarkTime(){
+   if (SITE_NAME == 'debian'){
+      $Mark = 'late 2007';
+      $DataTime = '';
+   } elseif (SITE_NAME == 'gp4'){
+      $Mark = 'mid 2008';
+      $DataTime = '';
+   } else {
+      $mtime = filemtime(DATA_PATH.'data.csv');
+      $Mark = gmdate("d M Y", $mtime);
+      $DataTime = ' '.gmdate("g:i a", $mtime).'  GMT';
+   }
+   return array($Mark,$DataTime);
+}
 
 function StatusMessage($i){
    if ($i==0){ $m = ''; }

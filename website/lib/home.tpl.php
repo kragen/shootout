@@ -15,26 +15,16 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 
 <p class="img"><img src="charttests.php?
-      <?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
+      <?='d='.HttpVarsEncodeStats($stats);?>&amp;
+      <?='mark='.rawurlencode($Mark);?>&amp;
+      <?='a='.HttpVarsEncodeLabels($labels);?>"
    alt=""
    title=""
    width="480" height="300"
  /></p>
 
-<?
-if (SITE_NAME == 'debian'){
-   $DataDate = 'late 2007';
-   $DataTime = '';
-} elseif (SITE_NAME == 'gp4'){
-   $DataDate = 'mid 2008';
-   $DataTime = '';
-} else {
-   $DataDate = gmdate("d M Y, l,", $Measured);
-   $DataTime = ' '.gmdate("g:i a", $Measured).'  GMT';
-}
-?>
 
-<p class="timestamp">Most recent measurement: <strong><?=$DataDate;?></strong><?=$DataTime;?></p>
+<p class="timestamp">Most recent measurement: <strong><?=$Mark;?></strong><?=$MTime;?></p>
 
 
 <table class="layout">

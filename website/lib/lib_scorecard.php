@@ -269,9 +269,8 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$Plot,$HasH
    $labels = array();
    $stats = array();
    foreach($score as $k => $test){
-      $label = ' '.$Langs[$k][LANG_FULL];
       if (isset($Plot[$k])){
-         $labels[] = $label;
+         $labels[] = $k;
          $stats[] = $test;
       }
    }

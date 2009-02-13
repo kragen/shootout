@@ -1,21 +1,22 @@
 <?php
 
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
+require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_common.php'); 
 require_once(LIB); 
 require_once(LIB_PATH.'lib_fulldata.php');
 
 // DATA ///////////////////////////////////////////
 
-list($Incl,$Excl) = ReadIncludeExclude();
+list($Incl,$Excl) = WhiteListInEx();
 
-$Tests = ReadUniqueArrays('test.csv',$Incl);
+$Tests = WhiteListUnique('test.csv',$Incl);
 uasort($Tests, 'CompareTestName');
 
-$Langs = ReadUniqueArrays('lang.csv',$Incl);
+$Langs = WhiteListUnique('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
 
@@ -84,7 +85,7 @@ $TemplateName = 'fulldata.tpl.php';
 $AboutTemplateName = 'fulldata-about.tpl.php'; 
 if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
-$Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'ndata.csv', $T, $Incl) );
+$Body->set('Data', WhiteListSelected(DATA_PATH.'ndata.csv', $T, $Incl) );
 
 
 // TEMPLATE VARS ////////////////////////////////////////////////

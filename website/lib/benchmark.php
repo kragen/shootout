@@ -3,17 +3,21 @@
 
 // LIBRARIES ////////////////////////////////////////////////
 
+require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
 
 // DATA ///////////////////////////////////////////
 
-list($Incl,$Excl) = ReadIncludeExclude();
-$Tests = ReadUniqueArrays('test.csv',$Incl);
+list($Incl,$Excl) = WhiteListInEx();
+$Tests = WhiteListUnique('test.csv',$Incl);
 uasort($Tests, 'CompareTestName');
 
-$Langs = ReadUniqueArrays('lang.csv',$Incl);
+$Langs = WhiteListUnique('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
+
+list ($mark,$mtime)= MarkTime();
+$mark = $mark.' '.SITE_NAME;
 
 
 if (isset($HTTP_GET_VARS['test'])
@@ -100,7 +104,7 @@ if ($T=='all'){
          require_once(LIB_PATH.'lib_scorecard.php');
 
          $Title = 'Boxplot Summary';
-         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; }
+         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'boxplot.tpl.php';
          $About = & new Template(ABOUT_PATH);
@@ -193,7 +197,7 @@ if ($T=='all'){
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-      $Body->set('Data', ReadSelectedDataArrays(DATA_PATH.'data.csv', $T, $Incl) );
+      $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 
 
@@ -241,6 +245,8 @@ $Body->set('SelectedLang', $L);
 $Body->set('SelectedLang2', $L2);
 $Body->set('Sort', $S);
 $Body->set('Excl', $Excl);
+$Body->set('Mark', $mark);
+$Body->set('MTime', $mtime);
 
 $About->set('SelectedTest', $T);
 $About->set('SelectedLang', $L);

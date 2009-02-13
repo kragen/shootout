@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005-2008
+// Copyright (c) Isaac Gouy 2005-2009
 
 // FUNCTIONS ///////////////////////////////////////////////////
 

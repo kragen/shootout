@@ -11,7 +11,9 @@
 <p>You choose the language implementations for robust <a href="#about">Box and Whiskers statistics</a> of <em>program time</em> measurements on the default benchmarks!</p>
 
 <p><img src="chartbox.php?
-      <?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
+      <?='d='.HttpVarsEncodeStats($stats);?>&amp;
+      <?='mark='.rawurlencode($Mark);?>&amp;
+      <?='a='.HttpVarsEncodeLabels($labels);?>"
    alt=""
    title=""
    width="480" height="300"

@@ -1,8 +1,13 @@
 <?
 header("Content-type: image/png");
-
 // Copyright (c) Isaac Gouy 2009
 
+// LIBRARIES ////////////////////////////////////////////////
+
+require_once(LIB_PATH.'lib_whitelist.php');
+
+list($in,$ex) = WhiteListInEx();
+$WhiteListTests = WhiteListUnique('test.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
@@ -20,14 +25,24 @@ if (isset($HTTP_GET_VARS['d'])
 $A = array();
 if (isset($HTTP_GET_VARS['a'])
       && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 512))){
-   $X = rawurldecode($HTTP_GET_VARS['a']);
-   // how to check benchmark name strings?
-   //if (ereg("^[a-z0-9,]+$",$X)){
-      foreach(explode(',',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 32)){ $A[] = $v; }
+   $X = $HTTP_GET_VARS['a'];
+   if (ereg("^[a-zO]+$",$X)){
+      foreach(explode('O',$X) as $v){
+         if (strlen($v) && (strlen($v) <= 32) &&
+            (isset($WhiteListTests[$v]))){ $A[] = ' '.$WhiteListTests[$v][TEST_NAME]; }
       }
-   //}
+   }
 }
+
+$Mark = '';
+if (isset($HTTP_GET_VARS['mark'])
+      && (strlen($HTTP_GET_VARS['mark']) && (strlen($HTTP_GET_VARS['mark']) <= 24))){
+   $X = rawurldecode($HTTP_GET_VARS['mark']);
+   if (ereg("^[ a-zA-Z0-9]+$",$X)){
+      $Mark = $X;
+   }
+}
+
 
 
 // CHART /////////////////////////////////////////////////////
@@ -45,24 +60,13 @@ if (isset($HTTP_GET_VARS['a'])
    $outlier = 5;
    $maxboxes = 17;
    
-   define('STATS_SIZE',8);
-   define('STAT_MIN',0);
-   define('STAT_XLOWER',1);
-   define('STAT_LOWER',2);
-   define('STAT_MEDIAN',3);
-   define('STAT_UPPER',4);
-   define('STAT_XUPPER',5);
-   define('STAT_MAX',6);
-   define('STATS_N',7);
-
 // SPACE OUT BARS ACROSS WIDTH
    $boxspace = 4;
    $n = sizeof($D)/STATS_SIZE;
-   if (sizeof($A)==$n){
-      $i = 1;
-      while ($n*($boxw+$i) <= $w-$xo){ $i++; }
-      $boxspace = $i-1;
-   }
+   $i = 1;
+   while ($n*($boxw+$i) <= $w-$xo){ $i++; }
+   $boxspace = $i-1;
+
 
 $im = ImageCreate($w,$h);
 ImageColorAllocate($im,204,204,204);
@@ -161,7 +165,16 @@ if ($n%STATS_SIZE == 0){
    }
 }
 
+// NOTICE
+$x = $w-5-strlen($Mark)*$charwidth2;
+ImageString($im, 2, $x, $h-29, $Mark, $white);
+$label = 'The Computer Language Benchmarks Game';
+$x = $w-5-strlen($label)*$charwidth2;
+ImageString($im, 2, $x, $h-15, $label, $white);
+
+//ImageString($im, 5, $x, $h-15, strval(sizeof($WhiteListTests)), $black);
+
 ImageInterlace($im,1);
 ImagePNG($im);
 ImageDestroy($im);
-?> 
+?>

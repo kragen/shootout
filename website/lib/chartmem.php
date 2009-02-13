@@ -5,15 +5,16 @@ header("Content-type: image/png");
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(LIB_PATH.'lib_common.php'); 
+require_once(LIB_PATH.'lib_whitelist.php');
+require_once(LIB_PATH.'lib_common.php');
 require_once(LIB_PATH.'lib_fulldata.php');
 
 
 // DATA ////////////////////////////////////////////////////
 
-list($Incl,$Excl) = ReadIncludeExclude();
-$Langs = ReadUniqueArrays('lang.csv',$Incl);
-$Tests = ReadUniqueArrays('test.csv',$Incl);
+list($Incl,$Excl) = WhiteListInEx();
+$Langs = WhiteListUnique('lang.csv',$Incl);
+$Tests = WhiteListUnique('test.csv',$Incl);
 
 
 if (isset($HTTP_GET_VARS['test'])
@@ -70,7 +71,7 @@ if (!isset($P4)){ $P4 = '-0'; }
 
 // FILTER & SORT DATA ////////////////////////////////////////
 
-$nd = ReadSelectedDataArrays(DATA_PATH.'ndata.csv',$T,$Incl);
+$nd = WhiteListSelected(DATA_PATH.'ndata.csv',$T,$Incl);
 $p = array($P1,$P2,$P3,$P4);
 list($NData,$Selected,$TestValues) = ComparisonData($Langs,$nd,$p,$Excl);
 usort($Selected,'CompareMaxMemory');
