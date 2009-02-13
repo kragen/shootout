@@ -160,9 +160,22 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       unset($comparable[$L1]); 
       unset($comparable[$L2]);
       unset($errorRowL1);
-      $i = $j;               
+      $i = $j;
    }
-   return $NData;     
+   uasort($NData,'CompareTimeRatio');
+   return $NData;
+}
+
+
+function CompareTimeRatio($b, $a){
+   if ($a[N_FULLCPU] == $b[N_FULLCPU]){
+      if ($a[N_MEMORY] == $b[N_MEMORY]){
+         if ($a[N_GZ] == $b[N_GZ]){ return 0; }
+         else { return ($a[N_GZ] < $b[N_GZ]) ? -1 : 1; }
+      }
+      else { return ($a[N_MEMORY] < $b[N_MEMORY]) ? -1 : 1; }
+   }
+   return  ($a[N_FULLCPU] < $b[N_FULLCPU]) ? -1 : 1;
 }
 
 

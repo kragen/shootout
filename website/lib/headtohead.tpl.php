@@ -1,6 +1,15 @@
 <?   // Copyright (c) Isaac Gouy 2004-2008 ?>
 
-<? 
+
+<?
+// sort by x times faster than ratio
+$SortedTests = array();
+$reorder = array();
+foreach($Data as $k => $v){ $SortedTests[$k] = $Tests[$k]; }
+foreach($Tests as $k => $v){ 
+   if (!isset($SortedTests[$k])){ $SortedTests[] = $Tests[$k]; }
+}
+
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
@@ -22,7 +31,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <p>For each one of our benchmarks, a white bar shows when it had the better time, a black bar shows when it had the better memory use, and a white outline bar shows when it had smaller program source code.</p>
 
 
-<p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$Tests,&$Data);?>&amp;<?='a='.HttpVarsEncodeLabels(array($LangName,$LangName2));?>"
+<p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$SortedTests,&$Data);?>&amp;<?='a='.HttpVarsEncodeLabels(array($LangName,$LangName2));?>"
    alt=""
    title=""
    width="480" height="300"
@@ -46,7 +55,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 </tr>
 
 <?
-foreach($Tests as $Row){
+foreach($SortedTests as $Row){
    if (($Row[TEST_WEIGHT]<=0)){ continue; }
    printf('<tr>'); echo "\n";
    $Link = $Row[TEST_LINK];
@@ -57,15 +66,15 @@ foreach($Tests as $Row){
 
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Name);
-                
+
       if ($v[N_LINES] >= 0){
       
          if ($v[N_N]==0){ $n = '<td></td>'; } 
          else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }
 
-         if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }                       
+         if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
 
-         printf('%s%s%s%s', 
+         printf('%s%s%s%s',
             PF($v[N_FULLCPU]), PF($kb), PF($v[N_GZ]), $n);
 
       } else {
