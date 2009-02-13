@@ -25,7 +25,7 @@ $Page->set('PageTitle', SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
 
-$Body = & new Template(LIB_PATH); 
+$Body = & new Template(LIB_PATH);
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 
