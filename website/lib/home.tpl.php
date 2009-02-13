@@ -4,14 +4,14 @@ if (LANGS_PHRASE){ $LangsPhrase = LANGS_PHRASE; } else { $LangsPhrase = ''; }
 if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
    list($labels,$stats) = $Data;
-   unset($Data); 
+   unset($Data);
 ?>
 
-<?=$Intro;?>
-<? MkScorecardMenuForm("fullcpu"); ?>
+<? MkMenuForm($Tests,'all',$Langs,'all','fullcpu'); ?>
 
+<h3><a href="#benchmarks" name="benchmarks">&nbsp;Benchmarks & Language Implementations</a></h3>
 
-<p>It can be fun to watch the Benchmarks Game but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p>
+<p>It can be fun to watch the Benchmarks Game and fun to <a href="benchmark.php?test=all&amp;lang=all">create your own ranking</a> but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p><?=$Intro;?>
 
 
 <p class="img"><img src="charttests.php?

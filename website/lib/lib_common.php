@@ -572,23 +572,6 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 }
 
 
-function MkScorecardMenuForm($Sort){
-   echo '<p class="fun"><strong>&nbsp;For Fun:</strong>', "\n";
-   echo '<a href="benchmark.php?test=all&amp;lang=all">', "\n";
-   echo '<span class="smaller">Create your own Ranking!</span></a></p>', "\n";
-   echo '<form method="get" action="benchmark.php">', "\n";
-   echo '<p class="score"><select name="test">', "\n";
-   echo '<br/><option selected="selected" value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
-   echo '</select>', "\n";
-
-   echo '<select name="lang">', "\n";
-   echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
-   echo '</select>', "\n";
-   echo '<input type="submit" value="Show" title="Create your own Ranking"/>', "\n";
-   echo '</p><input type="hidden" name="box" value="1" /><br/></form>', "\n";
-}
-
-
 function HtmlFragment($FileName){
    $html = '<p>&nbsp;</p>';
    if (is_readable($FileName)){
