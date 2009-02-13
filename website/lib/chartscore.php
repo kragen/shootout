@@ -16,6 +16,16 @@ if (isset($HTTP_GET_VARS['d'])
    }
 }
 
+$Mark = '';
+if (isset($HTTP_GET_VARS['mark'])
+      && (strlen($HTTP_GET_VARS['mark']) && (strlen($HTTP_GET_VARS['mark']) <= 24))){
+   $X = rawurldecode($HTTP_GET_VARS['mark']);
+   if (ereg("^[ a-zA-Z0-9]+$",$X)){
+      $Mark = $X;
+   }
+}
+
+
 // CHART //////////////////////////////////////////////////
 
    $barspace = 3;
@@ -23,7 +33,7 @@ if (isset($HTTP_GET_VARS['d'])
    $h = 225;
    
    $xo = 65;
-   $yo = 8;
+   $yo = 16;
 
    $yscale = 64;
    $barw = 3;
@@ -57,7 +67,13 @@ for ($i=0; $i<13; $i++){
 }
 
 // AXIS LEGEND
-ImageStringUp($im, 2, 5, $h-$yo-2, 'log10 weighted geometric mean ratio', $black);
+ImageStringUp($im, 2, 5, $h-$yo-2+8, 'log10 weighted geometric mean ratio', $black);
+
+// NOTICE
+$label = $Mark.' The Computer Language Benchmarks Game';
+$x = $w-5-strlen($label)*$charwidth2;
+ImageString($im, 2, $x, $h-15, $label, $white);
+
 
 ImageInterlace($im,1);
 ImagePng($im);

@@ -27,6 +27,16 @@ if (isset($HTTP_GET_VARS['m'])
    }
 }
 
+$Mark = '';
+if (isset($HTTP_GET_VARS['mark'])
+      && (strlen($HTTP_GET_VARS['mark']) && (strlen($HTTP_GET_VARS['mark']) <= 24))){
+   $X = rawurldecode($HTTP_GET_VARS['mark']);
+   if (ereg("^[ a-zA-Z0-9]+$",$X)){
+      $Mark = $X;
+   }
+}
+
+
 // CHART //////////////////////////////////////////////////
 
    $barspace = 3;
@@ -34,7 +44,7 @@ if (isset($HTTP_GET_VARS['m'])
    $h = 225;
 
    $xo = 65;
-   $yo = 8;
+   $yo = 16;
 
    $yscale = 64;
    $barw = 3;
@@ -80,6 +90,13 @@ ImageFilledRectangle($im, 11, $h-16, 11+$barw, $h-6, $white);
 
 ImageStringUp($im, 2, 5, $h-138, 'log10 KB ratio', $black);
 ImageFilledRectangle($im, 12, $h-134, 12+$barmw, $h-124, $black);
+
+
+// NOTICE
+$label = $Mark.' The Computer Language Benchmarks Game';
+$x = $w-5-strlen($label)*$charwidth2;
+ImageString($im, 2, $x, $h-15, $label, $white);
+
 
 ImageInterlace($im,1);
 ImagePng($im);
