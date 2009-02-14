@@ -154,18 +154,24 @@ if (isset($aftermem)){
 
 
 // AXIS LEGEND
-ImageStringUp($im, 2, 5, $h-54, 'log10 secs ratio', $black);
-ImageFilledRectangle($im, 11, $h-50, 11+$barw, $h-40, $white);
+$labela = 'log10 secs ratio';
+$labelb = 'log10 KB ratio';
+$y = ($h-strlen($labela.$labelb)*$charwidth2 -14)/2;
+ImageStringUp($im, 2, 5, $h-$y-4, $labela, $black);
+ImageFilledRectangle($im, 11, $h-$y, 11+$barw, $h-$y+12, $white);
+$y = $y + strlen($labela)*$charwidth2 + 22;
+ImageStringUp($im, 2, 5, $h-$y-4, $labelb, $black);
+ImageFilledRectangle($im, 12, $h-$y, 12+$barmw, $h-$y+10, $black);
 
-ImageStringUp($im, 2, 5, $h-172, 'log10 KB ratio', $black);
-ImageFilledRectangle($im, 12, $h-168, 12+$barmw, $h-158, $black);
 
-ImageStringUp($im, 2, $w-20, $h-148, 'log10 gz ratio', $black);
-ImageRectangle($im, $w-20+6, $h-144, $w-20+6+$barw, $h-134, $white);
-
-ImageStringUp($im, 2, $w-20, $h-94, 'worse', $black);
-ImageFilledRectangle($im, $w-20+6, $h-90, $w-20+6+$barw, $h-80, $mgray);
-
+$labela = 'worse';
+$labelb = 'log10 gz ratio';
+$y = ($h-strlen($labela.$labelb)*$charwidth2 -14)/2;
+ImageStringUp($im, 2, $w-20, $h-$y-4, $labela, $black);
+ImageFilledRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $mgray);
+$y = $y + strlen($labela)*$charwidth2 + 22;
+ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
+ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
 // LEGEND
 $label = $A[0].' better';
