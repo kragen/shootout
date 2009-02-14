@@ -173,12 +173,10 @@ $x = $w-5-strlen($label)*$charwidth3;
 ImageString($im, 3, $x, 2, $label, $black);
 $label = 'vs '.$A[1];
 $x = $w-5-strlen($label)*$charwidth3;
-ImageString($im, 3, $x, $h-43, $label, $black);
+ImageString($im, 3, $x, $h-29, $label, $black);
 
 // NOTICE
-$x = $w-5-strlen($Mark)*$charwidth2;
-ImageString($im, 2, $x, $h-29, $Mark, $white);
-$label = 'The Computer Language Benchmarks Game';
+$label = $Mark.' The Computer Language Benchmarks Game';
 $x = $w-5-strlen($label)*$charwidth2;
 ImageString($im, 2, $x, $h-15, $label, $white);
 
