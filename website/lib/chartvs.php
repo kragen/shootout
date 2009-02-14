@@ -129,7 +129,7 @@ for ($i=0; $i<11; $i++){
    $y = $h-($yo+($i/4.0)*$yscale);
    ImageLine($im, $xo-15, $y, $lastx, $y, $gray);
 
-   $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
+   $label = strval( floor(pow(10.0,$i/4.0)) );
    $x = strlen($label)*$charwidth2;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
@@ -139,9 +139,9 @@ for ($i=0; $i<11; $i++){
    $y = $h-($yo-($i/4.0)*$yscale);
    ImageLine($im, $xo-15, $y, $lastx, $y, $gray);
 
-   $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
+   $label = strval( floor(pow(10.0,$i/4.0)) );
    $x = strlen($label)*$charwidth2;
-   ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
+   ImageString($im, 2, $xo-$x-6, $y-13, $label, $mgray);
 }
 
 // GRID GAPS
@@ -190,7 +190,7 @@ ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
 ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
 // LEGEND
-$label = $A[0].' better vs '.$A[1];
+$label = $A[0].' / '.$A[1];
 $x = $w-5-strlen($label)*$charwidth3;
 ImageString($im, 3, $x, 2, $label, $black);
 

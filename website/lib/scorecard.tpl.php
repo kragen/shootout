@@ -23,7 +23,7 @@
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="2" class="num"></colgroup>
 <tr>
-<th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
 <th>language</th>
 <th>GM</th>
 <th>missing</th>

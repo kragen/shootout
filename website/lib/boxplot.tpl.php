@@ -32,7 +32,7 @@
 </tr>
 
 <tr>
-<th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
 <th>&nbsp;</th>
 <th>language</th>
 <th>&nbsp;|-</th>

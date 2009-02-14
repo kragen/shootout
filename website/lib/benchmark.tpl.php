@@ -83,7 +83,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 </tr>
 
 <tr>
-<th>&nbsp;&nbsp;x&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
 <th>Program &amp; Logs</th>
 <th>CPU&nbsp;secs</th>
 <th>Memory&nbsp;KB</th>
