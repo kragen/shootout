@@ -99,6 +99,17 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 
 <?php // Don't use library functions, define what we need here
 
+define('LANG_LINK',0);
+define('LANG_FAMILY',1);
+define('LANG_NAME',2);
+define('LANG_FULL',3);
+define('LANG_HTML',4);
+define('LANG_TAG',5);
+define('LANG_DATE',6);
+define('LANG_SELECT',7);
+define('LANG_COMPARE',8);
+define('LANG_SPECIALURL',9);
+
 function ReadA($FileName){
    $f = @fopen($FileName,'r') or die('Cannot open '.$FileName);
    $row = @fgetcsv($f,1024,',');
@@ -123,15 +134,15 @@ function Keys($sites){
 }
 
 function CompareLangName($a, $b){
-   if (isset($a[3]) && isset($b[3])){
-      return strcasecmp($a[3],$b[3]);
+   if (isset($a[LANG_FULL]) && isset($b[LANG_FULL])){
+      return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
    } else {
       return 0;
    }
 }
 
 function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
-   $link = $a[0];
+   $link = $a[LANG_LINK];
    $notShown = $notShown0;
    $showTag = TRUE;
    foreach($sites as $keys){
@@ -139,7 +150,7 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
          $notShown = FALSE;
          $notShownYet =$showTag;
          if ($showTag) {
-            $tag = $a[5];
+            $tag = $a[LANG_TAG];
             $showTag = FALSE;
          } else { $tag = ''; }
 
@@ -150,12 +161,12 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
             if ($site == 'debian'){ $arch = '<em>Debian</em>'; }
             elseif ($site == 'gp4'){ $arch = '<em>Gentoo</em>'; }
 
-            if (isset($a[8]) && !empty($a[8])){ // special_url
+            if (isset($a[LANG_SPECIALURL]) && !empty($a[LANG_SPECIALURL])){ // special_url
                 printf('<p><a href="./%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
-                   $site, $a[8], $a[4], $tag, $arch);
+                   $site, $a[LANG_SPECIALURL], $a[LANG_HTML], $tag, $arch);
             } else {
                 printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
-                   $site, $link, $a[4], $tag, $arch);
+                   $site, $link, $a[LANG_HTML], $tag, $arch);
             }
 
          }
