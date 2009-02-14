@@ -97,18 +97,11 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 
 <h5><br/>Programming language measurements A to Z</h5><br/>
 
-<?php // Don't use library functions, define what we need here
+<?php
 
-define('LANG_LINK',0);
-define('LANG_FAMILY',1);
-define('LANG_NAME',2);
-define('LANG_FULL',3);
-define('LANG_HTML',4);
-define('LANG_TAG',5);
-define('LANG_DATE',6);
-define('LANG_SELECT',7);
-define('LANG_COMPARE',8);
-define('LANG_SPECIALURL',9);
+require_once('../lib/lib_whitelist.php');
+
+// Don't use library functions, define what we need here
 
 function ReadA($FileName){
    $f = @fopen($FileName,'r') or die('Cannot open '.$FileName);
