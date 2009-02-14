@@ -70,8 +70,7 @@ function GetMicroTime(){
    return doubleval($t[1]) + doubleval($t[0]);
 }
 
-
-function SplitByTestValue(&$data){
+/*function SplitByTestValue(&$data){
    $splitdata = array();
    foreach($data as $d){
       if (isset($splitdata[ $d[DATA_TESTVALUE] ])){
@@ -91,7 +90,7 @@ function SplitByTestValue(&$data){
    }
    return array($largest,$others);
 }
-
+*/
 
 function TestData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    // expect NOT to encounter more than one DATA_TESTVALUE for each test
@@ -188,7 +187,7 @@ function Median($a){
    return ($n % 2 != 0) ? $a[$mid] : ($a[$mid-1] + $a[$mid]) / 2.0;
 }
 
-
+/*
 function CompareTestCpuTime($a, $b){
    if ($a[DATA_TEST] == $b[DATA_TEST]){
       if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
@@ -202,7 +201,7 @@ function CompareTestCpuTime($a, $b){
    }
    return  ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;
 }
-
+*/
 
 function CompareFullCpuTime($a, $b){
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
@@ -257,42 +256,14 @@ function CompareTestName($a, $b){
    return strcasecmp($a[TEST_NAME],$b[TEST_NAME]);
 }
 
-function CompareTestValue($a, $b){
-   if ($a[DATA_LANG] == $b[DATA_LANG]){
-      if ($a[DATA_ID] == $b[DATA_ID]){
-         if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
-         return ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
-      }
-      else {
-         return ($a[DATA_ID] < $b[DATA_ID]) ? -1 : 1;      
-      }
-   }
-   else {
-      return ($a[DATA_LANG] < $b[DATA_LANG]) ? -1 : 1;      
-   }   
-}
-
-function CompareTestValue2($a, $b){
-   if ($a[DATA_TEST] == $b[DATA_TEST]){
-         if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
-         return ($a[DATA_TESTVALUE] > $b[DATA_TESTVALUE]) ? -1 : 1;
-   }
-   else {
-      return ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;      
-   }
-}
-
-
-function CompareNName($a, $b){
-   return strcasecmp($a[N_FULL],$b[N_FULL]);
-}
-
+/*
 function SortName($sort){
    if ($sort=='fullcpu'){ return 'Full CPU Time'; }
    elseif ($sort=='gz'){ return 'GZ Compressed Source'; }
    elseif ($sort=='elapsed'){ return 'Elapsed Time'; }
    else { return 'Memory use'; }
 }
+*/
 
 function IdName($id){
    if ($id>1){ return ' #'.$id; } else { return ''; }

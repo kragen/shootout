@@ -50,16 +50,16 @@ if (isset($HTTP_GET_VARS['mark'])
    $h = 300;
 
    $xo = 65;
-   $yo = 64;
+   $yo = 68;
 
-   $yscale = 27;
+   $yscale = 26;
 
    $boxw = 20;
    $boxo = 10;
    $whisk = floor(($boxw - $boxo)/2);
    $outlier = 5;
    $maxboxes = 17;
-   
+
 // SPACE OUT BARS ACROSS WIDTH
    $boxspace = 4;
    $n = sizeof($D)/STATS_SIZE;
@@ -84,7 +84,7 @@ $x = $xo-$charwidth2;
 $count = 0;
 foreach($A as $k){
    $watermark = str_repeat($k,15);
-   ImageStringUp($im, 3, $x, $h+17, $watermark, $mgray);
+   ImageStringUp($im, 3, $x, $h-12, $watermark, $mgray);
    $x = $x + $boxw + $boxspace;
    if ($count == $maxboxes){ break; } else { $count++;  }
 }
@@ -122,7 +122,7 @@ for ($i=-1; $i<0; $i++){
    $x = strlen($label)*$charwidth2;
    ImageString($im, 2, $xo-$x-$charwidth2, $y-13, $label, $white);
 }
-for ($i=-4; $i<18; $i++){
+for ($i=-4; $i<17; $i++){
    if ($i==-3||$i==1||$i==5||$i==9||$i==13||$i==17){ continue; }
    $y = $h-($yo+($i/2.0)*$yscale);
    ImageLine($im, $xo-15, $y, $w, $y, $gray);
@@ -166,13 +166,9 @@ if ($n%STATS_SIZE == 0){
 }
 
 // NOTICE
-$x = $w-5-strlen($Mark)*$charwidth2;
-ImageString($im, 2, $x, $h-29, $Mark, $white);
-$label = 'The Computer Language Benchmarks Game';
+$label = $Mark.' The Computer Language Benchmarks Game';
 $x = $w-5-strlen($label)*$charwidth2;
 ImageString($im, 2, $x, $h-15, $label, $white);
-
-//ImageString($im, 5, $x, $h-15, strval(sizeof($WhiteListTests)), $black);
 
 ImageInterlace($im,1);
 ImagePNG($im);

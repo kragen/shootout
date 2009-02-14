@@ -20,7 +20,7 @@ function ComparisonData($langs,$data,$p,&$Excl){
    foreach($Accepted as $d){
       if (($lang != $d[DATA_LANG])||($id != $d[DATA_ID])){
          $lang = $d[DATA_LANG];
-         $id = $d[DATA_ID]; 
+         $id = $d[DATA_ID];
 
          $NData[] = array(
               ''
@@ -89,6 +89,27 @@ function ComparisonData($langs,$data,$p,&$Excl){
    sort($TestValues);
    
    return array(&$NData,&$Selected,$TestValues);
+}
+
+
+function CompareNName($a, $b){
+   return strcasecmp($a[N_FULL],$b[N_FULL]);
+}
+
+
+function CompareTestValue($a, $b){
+   if ($a[DATA_LANG] == $b[DATA_LANG]){
+      if ($a[DATA_ID] == $b[DATA_ID]){
+         if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
+         return ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
+      }
+      else {
+         return ($a[DATA_ID] < $b[DATA_ID]) ? -1 : 1;      
+      }
+   }
+   else {
+      return ($a[DATA_LANG] < $b[DATA_LANG]) ? -1 : 1;      
+   }   
 }
 
 

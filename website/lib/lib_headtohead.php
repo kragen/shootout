@@ -157,7 +157,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
               
       }
 
-      unset($comparable[$L1]); 
+      unset($comparable[$L1]);
       unset($comparable[$L2]);
       unset($errorRowL1);
       $i = $j;
@@ -176,6 +176,17 @@ function CompareTimeRatio($b, $a){
       else { return ($a[N_MEMORY] < $b[N_MEMORY]) ? -1 : 1; }
    }
    return  ($a[N_FULLCPU] < $b[N_FULLCPU]) ? -1 : 1;
+}
+
+
+function CompareTestValue2($a, $b){
+   if ($a[DATA_TEST] == $b[DATA_TEST]){
+         if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
+         return ($a[DATA_TESTVALUE] > $b[DATA_TESTVALUE]) ? -1 : 1;
+   }
+   else {
+      return ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;      
+   }
 }
 
 
