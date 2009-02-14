@@ -129,10 +129,13 @@ for ($i=-4; $i<17; $i++){
 }
 
 // AXIS LEGEND
-$label = 'log10 program sys+usr secs by benchmark';
+$label = 'program sys + usr';
 $y = ($h-strlen($label)*$charwidth2)/2;
 ImageStringUp($im, 2, 5, $h-$y, $label, $black);
-ImageString($im, 2, $xo-4, $h-15, 'benchmarks', $black);
+
+$label = 'benchmark';
+$x = ($w-strlen($label)*$charwidth2)/2;
+ImageString($im, 2, $x, $h-15, $label, $black);
 
 // MEDIAN and WHISKERS
 $n = sizeof($D);
@@ -166,10 +169,16 @@ if ($n%STATS_SIZE == 0){
    }
 }
 
+
+// TITLE
+$label = 'Program Run Time - Median and Quartiles - by Benchmark';
+$x = $w-5-strlen($label)*$charwidth3;
+ImageString($im, 3, $x, 2, $label, $black);
+
 // NOTICE
-$label = $Mark.' The Computer Language Benchmarks Game';
+$label = $Mark;
 $x = $w-5-strlen($label)*$charwidth2;
-ImageString($im, 2, $x, $h-15, $label, $white);
+ImageString($im, 2, $x, 16, $label, $white);
 
 ImageInterlace($im,1);
 ImagePNG($im);

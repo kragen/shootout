@@ -152,11 +152,27 @@ if (isset($aftermem)){
    ImageFilledRectangle($im, $aftermem, 0, $aftermem+$gap-1, $h, $bgray);
 }
 
+// X AXIS LEGEND
+if (isset($aftercpu)){
+   $axisw = $aftercpu-$xo;
+   $label = 'faster';
+   $x = ($axisw-strlen($label)*$charwidth2)/2;
+   ImageString($im, 2, $xo+$x, $h-15, $label, $black);
 
-// AXIS LEGEND
-$labela = 'log10 secs ratio';
-$labelb = 'log10 KB ratio';
+   $label = 'smaller';
+   $x = ($axisw-strlen($label)*$charwidth2)/2;
+   ImageString($im, 2, $aftercpu+$gap+$x, $h-15, $label, $black);
+
+   $label = 'smaller';
+   $x = ($axisw-strlen($label)*$charwidth2)/2;
+   ImageString($im, 2, $aftermem+$gap+$x, $h-15, $label, $black);
+}
+
+// Y AXIS LEGEND
+$labela = 'Time';
+$labelb = 'Memory';
 $y = ($h-strlen($labela.$labelb)*$charwidth2 -14)/2;
+$y0 = $y;
 ImageStringUp($im, 2, 5, $h-$y-4, $labela, $black);
 ImageFilledRectangle($im, 11, $h-$y, 11+$barw, $h-$y+12, $white);
 $y = $y + strlen($labela)*$charwidth2 + 22;
@@ -165,26 +181,23 @@ ImageFilledRectangle($im, 12, $h-$y, 12+$barmw, $h-$y+10, $black);
 
 
 $labela = 'worse';
-$labelb = 'log10 gz ratio';
-$y = ($h-strlen($labela.$labelb)*$charwidth2 -14)/2;
+$labelb = 'Source size';
+$y = $y0;
 ImageStringUp($im, 2, $w-20, $h-$y-4, $labela, $black);
-ImageFilledRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $mgray);
+ImageFilledRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+12, $mgray);
 $y = $y + strlen($labela)*$charwidth2 + 22;
 ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
 ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
 // LEGEND
-$label = $A[0].' better';
+$label = $A[0].' better vs '.$A[1];
 $x = $w-5-strlen($label)*$charwidth3;
 ImageString($im, 3, $x, 2, $label, $black);
-$label = 'vs '.$A[1];
-$x = $w-5-strlen($label)*$charwidth3;
-ImageString($im, 3, $x, $h-29, $label, $black);
 
 // NOTICE
-$label = $Mark.' The Computer Language Benchmarks Game';
+$label = $Mark;
 $x = $w-5-strlen($label)*$charwidth2;
-ImageString($im, 2, $x, $h-15, $label, $white);
+ImageString($im, 2, $x, 16, $label, $white);
 
 ImageInterlace($im,1);
 ImagePng($im);

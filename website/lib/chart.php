@@ -50,7 +50,7 @@ if (isset($HTTP_GET_VARS['mark'])
    $barw = 3;
    $barmw = 0;
    $charwidth2 = 6.0; // for size 2
-
+   $charwidth3 = 7.0; // for size 3
 
 $im = ImageCreate($w,$h);
 ImageColorAllocate($im,204,204,204);
@@ -79,25 +79,40 @@ for ($i=0; $i<13; $i++){
    $y = $h-($yo+($i/4.0)*$yscale);
    ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
-   $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
+   $label = strval( floor(pow(10.0,$i/4.0)) );
    $x = strlen($label)*$charwidth2;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
 
-// AXIS LEGEND
-ImageStringUp($im, 2, 5, $h-20, 'log10 secs ratio', $black);
-ImageFilledRectangle($im, 11, $h-16, 11+$barw, $h-6, $white);
 
-ImageStringUp($im, 2, 5, $h-138, 'log10 KB ratio', $black);
-ImageFilledRectangle($im, 12, $h-134, 12+$barmw, $h-124, $black); 
+// Y AXIS LEGEND
+$label = 'ratio to best';
+ImageStringUp($im, 2, 5, $h-$yo, $label, $black);
+$y = $yo + strlen($label)*$charwidth2 + 16;
 
-ImageString($im, 2, $xo-4, $h-15, 'programs', $black);
+$label = 'Time';
+ImageStringUp($im, 2, 5, $h-$y-16, $label, $black);
+ImageFilledRectangle($im, 11, $h-$y-10, 11+$barw, $h-$y, $white);
+$y = $y + strlen($label)*$charwidth2 + 24;
 
+$label = 'Memory';
+ImageStringUp($im, 2, 5, $h-$y-16, $label, $black);
+ImageFilledRectangle($im, 12, $h-$y-10, 12+$barmw, $h-$y, $black);
+
+$label = 'program';
+$x = ($w-strlen($label)*$charwidth2)/2;
+ImageString($im, 2, $x, $h-15, $label, $black);
+
+
+// TITLE
+$label = 'Normalized Program Run Time and Memory';
+$x = $w-5-strlen($label)*$charwidth3;
+ImageString($im, 3, $x, 2, $label, $black);
 
 // NOTICE
-$label = $Mark.' The Computer Language Benchmarks Game';
+$label = $Mark;
 $x = $w-5-strlen($label)*$charwidth2;
-ImageString($im, 2, $x, $h-15, $label, $white);
+ImageString($im, 2, $x, 16, $label, $white);
 
 
 ImageInterlace($im,1);

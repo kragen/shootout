@@ -38,7 +38,7 @@ if (isset($HTTP_GET_VARS['mark'])
    $yscale = 64;
    $barw = 3;
    $charwidth2 = 6.0; // for size 2
-
+   $charwidth3 = 7.0; // for size 3
 
 $im = ImageCreate($w,$h);
 ImageColorAllocate($im,204,204,204);
@@ -56,24 +56,34 @@ foreach($D as $v){
 }
 
 // GRID
-for ($i=0; $i<13; $i++){
+for ($i=0; $i<11; $i++){
    if ($i==1||$i==5||$i==9){ continue; }
    $y = $h-($yo+($i/4.0)*$yscale);
    ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
-   $label = strval( floor(pow(10.0,$i/4.0)) ).'x';
+   $label = strval( floor(pow(10.0,$i/4.0)) );
    $x = strlen($label)*$charwidth2;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
 
 // AXIS LEGEND
-ImageStringUp($im, 2, 5, $h-$yo-2+8, 'log10 weighted geometric mean ratio', $black);
-ImageString($im, 2, $xo-4, $h-15, 'languages', $black);
+$label = 'ratio to best';
+$y = ($h-strlen($label)*$charwidth2)/2;
+ImageStringUp($im, 2, 5, $h-$y, $label, $black);
+
+$label = 'language implementation';
+$x = ($w-strlen($label)*$charwidth2)/2;
+ImageString($im, 2, $x, $h-15, $label, $black);
+
+// TITLE
+$label = 'Weighted Geometric Mean of normalized Time, Memory and Source size';
+$x = $w-5-strlen($label)*$charwidth3;
+ImageString($im, 3, $x, 2, $label, $black);
 
 // NOTICE
-$label = $Mark.' The Computer Language Benchmarks Game';
+$label = $Mark;
 $x = $w-5-strlen($label)*$charwidth2;
-ImageString($im, 2, $x, $h-15, $label, $white);
+ImageString($im, 2, $x, 16, $label, $white);
 
 
 ImageInterlace($im,1);
