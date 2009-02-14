@@ -68,6 +68,7 @@ for ($i=0; $i<13; $i++){
 
 // AXIS LEGEND
 ImageStringUp($im, 2, 5, $h-$yo-2+8, 'log10 weighted geometric mean ratio', $black);
+ImageString($im, 2, $xo-4, $h-15, 'languages', $black);
 
 // NOTICE
 $label = $Mark.' The Computer Language Benchmarks Game';

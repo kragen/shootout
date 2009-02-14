@@ -89,7 +89,9 @@ ImageStringUp($im, 2, 5, $h-20, 'log10 secs ratio', $black);
 ImageFilledRectangle($im, 11, $h-16, 11+$barw, $h-6, $white);
 
 ImageStringUp($im, 2, 5, $h-138, 'log10 KB ratio', $black);
-ImageFilledRectangle($im, 12, $h-134, 12+$barmw, $h-124, $black);
+ImageFilledRectangle($im, 12, $h-134, 12+$barmw, $h-124, $black); 
+
+ImageString($im, 2, $xo-4, $h-15, 'programs', $black);
 
 
 // NOTICE

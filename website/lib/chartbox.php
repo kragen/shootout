@@ -108,7 +108,7 @@ for ($i=0; $i<9; $i++){
    $y = $h-($yo+$i*$yscale);
 //   ImageLine($im, $xo-15, $y, $w, $y, $gray);
 
-   if ($i>0){ ImageString($im, 2, $xo-15, $y, strval($i), $black); }
+   if ($i>0){ ImageString($im, 2, $xo-15, $y, strval($i), $white); }
    $label = strval( floor(pow(10.0,$i/2.0)) ).'x';
    $x = strlen($label)*$charwidth3;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
@@ -123,6 +123,7 @@ for ($i=0; $i<15; $i++){
 $label = '"hemibels" 2 * log10 time/fastest by language';
 $y = ($h-strlen($label)*$charwidth2)/2;
 ImageStringUp($im, 2, 5, $h-$y, $label, $black);
+ImageString($im, 2, $xo-4, $h-15, 'languages', $black);
 
 // MEDIAN and WHISKERS
 $n = sizeof($D);

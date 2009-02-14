@@ -132,6 +132,7 @@ for ($i=-4; $i<17; $i++){
 $label = 'log10 program sys+usr secs by benchmark';
 $y = ($h-strlen($label)*$charwidth2)/2;
 ImageStringUp($im, 2, 5, $h-$y, $label, $black);
+ImageString($im, 2, $xo-4, $h-15, 'benchmarks', $black);
 
 // MEDIAN and WHISKERS
 $n = sizeof($D);
