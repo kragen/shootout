@@ -31,7 +31,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <p>For each one of our benchmarks, a white bar shows when it had the better time, a black bar shows when it had the better memory use, and a white outline bar shows when it had smaller program source code.</p>
 
 
-<p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$SortedTests,&$Data);?>&amp;<?='m='.rawurlencode($Mark.' n');?>&amp;<?='a='.HttpVarsEncodeLabels(array($SelectedLang,$SelectedLang2));?>"
+<p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$SortedTests,&$Data);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
    title=""
    width="480" height="300"

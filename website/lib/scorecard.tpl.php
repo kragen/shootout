@@ -12,7 +12,7 @@
 <p>What <strong>fun!</strong> Can you manipulate the multipliers and weights to make your favourite language <a href="#about">the best</a> programming language in the Benchmarks Game?</p>
 
 
-<p><img src="chartscore.php?<?='g='.HttpVarsEncodeArray($ratio);?>&amp;<?='m='.rawurlencode($Mark);?>"
+<p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>"
    width="480" height="225" alt=""
  /></p>
 

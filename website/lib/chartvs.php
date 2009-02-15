@@ -13,6 +13,10 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
+
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($LangName,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
+
 $D = array();
 if (isset($HTTP_GET_VARS['d'])
       && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 512))){
@@ -24,19 +28,6 @@ if (isset($HTTP_GET_VARS['d'])
    }
 }
 
-$A = array("","");
-if (isset($HTTP_GET_VARS['a'])
-      && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 72))){
-   $X = $HTTP_GET_VARS['a'];
-   if (ereg("^[a-z0-9O]+$",$X)){
-      foreach(explode('O',$X) as $i => $v){
-         if (strlen($v) && (strlen($v) <= 32) &&
-            (isset($WhiteListLangs[$v]))){ $A[$i] = $WhiteListLangs[$v][LANG_FULL]; }
-      }
-   }
-}
-
-list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 
 // CHART //////////////////////////////////////////////////
 
@@ -179,7 +170,7 @@ ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
 ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
 if ($valid){
-   chartTitle($im,$w,$black,$A[0].' / '.$A[1]);
+   chartTitle($im,$w,$black,$LangName[0].' / '.$LangName[1]);
    chartNotice($im,$w,$white,$Mark);
 }
 

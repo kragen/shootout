@@ -14,21 +14,9 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
-
-$A = array();
-if (isset($HTTP_GET_VARS['a'])
-      && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 512))){
-   $X = $HTTP_GET_VARS['a'];
-   if (ereg("^[a-z0-9O]+$",$X)){
-      foreach(explode('O',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 24) &&
-            (isset($WhiteListLangs[$v]))){ $A[] = ' '.$WhiteListLangs[$v][LANG_FULL]; }
-      }
-   }
-}
-
-$D = ValidDataLog10($HTTP_GET_VARS);
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($BackText,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
+list ($Stats,$valid) = ValidStats($HTTP_GET_VARS,'s',$valid);
 
 
 // CHART /////////////////////////////////////////////////////
@@ -50,18 +38,23 @@ list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 $im = ImageCreate($w,$h);
 list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
 
-chartBackground($im,$xo-CHAR_WIDTH_2,$h-12,$h-40,$mgray,$boxw+$boxspace,$maxboxes,$A);
-chartBoxes($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,0,$D);
+if ($valid){
+   chartBackground($im,$xo-CHAR_WIDTH_2,$h-12,$h-40,$mgray,$boxw+$boxspace,$maxboxes,$BackText);
+   chartBoxes($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,0,$Stats);
+}
 
 // GRID
 yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,0,log10axis(axis3000()));
 yAxisLegend($im,$yo,$w,$h,$black,'ratio to best');
 xAxisLegend($im,$xo,$w,$h,$black,'language implementation');
 
-chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$black,0,$D);
+if ($valid){
+   chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$black,0,$Stats);
+}
 
 chartTitle($im,$w,$black,
    'Normalized Program Run Time - Median and Quartiles - by Language');
+
 if ($valid){
    chartNotice($im,$w,$white,$Mark);
 }

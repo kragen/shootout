@@ -12,8 +12,8 @@ require_once(LIB_PATH.'lib_chart.php');
 // DATA ////////////////////////////////////////////////////
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
-list ($Time,$valid) = ValidArrayLog10($HTTP_GET_VARS,'t',$valid);
-list ($KB,$valid) = ValidArrayLog10($HTTP_GET_VARS,'k',$valid);
+list ($Time,$valid) = ValidLog10($HTTP_GET_VARS,'t',$valid);
+list ($KB,$valid) = ValidLog10($HTTP_GET_VARS,'k',$valid);
 
 
 // CHART //////////////////////////////////////////////////

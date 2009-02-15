@@ -52,7 +52,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
 
-<p><img src="chart.php?<?='t='.HttpVarsEncodeArray($dtime);?>&amp;<?='m='.rawurlencode($Mark);?>&amp;<?='k='.HttpVarsEncodeArray($dmem);?>"
+<p><img src="chart.php?<?='t='.Encode($dtime);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='k='.Encode($dmem);?>"
    alt=""
    title=""
    width="480" height="225"

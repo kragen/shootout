@@ -427,34 +427,31 @@ function PTime($d){
 }
 
 
+function Encode($x){
+   if (is_string($x)){  // simple string
+      $s = $x;
+   } elseif (is_array($x)){
+      if (sizeof($x)>0){
+         if (is_double($x[0])){ // single array of doubles
+            foreach($x as $v){ $d[] = intval(sprintf('%d',$v*10)); }
+            $x = $d;
+         } elseif (is_string($x[0])){ // single array of strings
 
-function HttpVarsEncodeArray($a){
-   foreach($a as $v){ $d[] = intval(sprintf('%d',$v*10)); }
-   $s = implode('o',$d);
-   $ob = rawurlencode(base64_encode(gzcompress($s,9)));
-   return $ob;
-}
-
-
-
-function HttpVarsEncodeStats($aa){
-   $a = array(); $d = array();
-   foreach($aa as $stats){ $a = array_merge($a,$stats); }
-   foreach($a as $each){
-      // avoid negative values from log10 0.01 etc
-      $v = $each<0.01 ? 0.01 : $each;
-      $d[] = intval(sprintf('%d',(log10($v)+3.0)*10000.0));
+         } elseif (is_array($x[0])){ // array of array of doubles
+            $matrix = array();
+            foreach($x as $each){ $matrix = array_merge($matrix,$each); }
+            foreach($matrix as $each){
+               // truncate at 0.01
+               $v = $each<0.01 ? 0.01 : $each;
+               // shift to avoid negative values from log10 0.01 etc
+               $d[] = intval(sprintf('%d',(log10($v)+3.0)*10000.0));
+            }
+            $x = $d;
+         }
+      }
+      $s = implode('O',$x);
    }
-   $s = implode('o',$d);
-   return $s;
-}
-
-
-
-function HttpVarsEncodeLabels($a){
-   $s = implode('O',$a);
-   //return rawurlencode($s);
-   return $s;
+   return rawurlencode(base64_encode(gzcompress($s,9)));
 }
 
 

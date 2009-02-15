@@ -12,7 +12,7 @@ require_once(LIB_PATH.'lib_chart.php');
 // DATA ////////////////////////////////////////////////////
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
-list ($GeometricMean,$valid) = ValidArrayLog10($HTTP_GET_VARS,'g',$valid);
+list ($GeometricMean,$valid) = ValidLog10($HTTP_GET_VARS,'g',$valid);
 
 
 // CHART /////////////////////////////////////////////////////

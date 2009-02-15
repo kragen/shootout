@@ -116,49 +116,56 @@ function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
    // VALIDATION
 
 function ValidMark(&$H,$valid=FALSE){
-   $bounds = 18;
+   $bounds = 64;
    $mark = '';
    if ($valid){
       $valid = FALSE;
       if (isset($H['m']) && strlen($H['m']) && strlen($H['m']) <= $bounds){
-         $X = rawurldecode($H['m']);
-         if (ereg("^[ a-zA-Z0-9]+$",$X)){ $mark = $X; $valid = TRUE; }
+         $X = base64_decode( rawurldecode($H['m']) );
+         $X = @gzuncompress($X,$bounds); // returns FALSE on error
+         if ($X && ereg("^[ a-zA-Z0-9]+$",$X)){ $mark = $X; $valid = TRUE; }
       }
    }
    return array($mark,$valid);
 }
 
 
-function ValidDataLog10(&$H){
+function ValidStats(&$H,$V,$valid=FALSE){
+   $bounds = 1024;
    $d = array();
-   if (isset($H['d'])
-         && (strlen($H['d']) && (strlen($H['d']) <= 1024))){
-      $X = $H['d'];
-      if (ereg("^[0-9o]+$",$X)){
-         foreach(explode('o',$X) as $v){
-            if (strlen($v) && (strlen($v) <= 6)){
-               // subtract the 3.0 added to avoid negatives from log10 0.01 etc
-               $d[] = (doubleval($v)/10000.0)-3.0;
+   if ($valid){
+      $valid = FALSE;
+      if (isset($H[$V]) && strlen($H[$V]) && strlen($H[$V]) <= $bounds){
+         $X = base64_decode( rawurldecode($H[$V]) );
+         $X = @gzuncompress($X,$bounds); // returns FALSE on error
+
+         if ($X && ereg("^[0-9O]+$",$X)){
+            foreach(explode('O',$X) as $v){
+               if (strlen($v) && (strlen($v) <= 6)){
+                  // unshift -3.0
+                  $d[] = (doubleval($v)/10000.0)-3.0;
+               } else { break 3; }
             }
+            if ((sizeof($d)%STATS_SIZE) == 0){ $valid = TRUE;
+            } else { $d = array(); }
          }
       }
    }
-   return $d;
+   return array($d,$valid);
 }
 
 
-function ValidArrayLog10(&$H,$V,$valid=FALSE){
+function ValidLog10(&$H,$V,$valid=FALSE){
    $bounds = 512;
    $d = array();
    if ($valid){
       $valid = FALSE;
       if (isset($H[$V]) && strlen($H[$V]) && strlen($H[$V]) <= $bounds){
-         $X = rawurldecode($H[$V]);
-         $X = base64_decode($X);
-         $X = gzuncompress($X,$bounds);
-   
-         if (ereg("^[0-9o]+$",$X)){
-            foreach(explode('o',$X) as $v){
+         $X = base64_decode( rawurldecode($H[$V]) );
+         $X = @gzuncompress($X,$bounds); // returns FALSE on error
+
+         if ($X && ereg("^[0-9O]+$",$X)){
+            foreach(explode('O',$X) as $v){
                if (strlen($v) && (strlen($v) <= 5)){
                   $d[] = log10(doubleval($v)/10.0);
                } else { break 3; }
@@ -170,5 +177,37 @@ function ValidArrayLog10(&$H,$V,$valid=FALSE){
    return array($d,$valid);
 }
 
+
+
+function ValidLangs(&$H,&$Langs,$valid=FALSE){
+   return ValidWhiteList($H,$Langs,"^[a-z0-9O]+$",24,LANG_FULL,$valid);
+}
+
+function ValidTests(&$H,&$Tests,$valid=FALSE){
+   return ValidWhiteList($H,$Tests,"^[a-zO]+$",32,TEST_NAME,$valid);
+}
+
+// private
+function ValidWhiteList(&$H,&$WhiteList,$regex,$size,$index,$valid){
+   $bounds = 512;
+   $d = array();
+   if ($valid){
+      $valid = FALSE;
+      if (isset($H['w']) && strlen($H['w']) && strlen($H['w']) <= $bounds){
+         $X = base64_decode( rawurldecode($H['w']) );
+         $X = @gzuncompress($X,$bounds); // returns FALSE on error
+
+         if ($X && ereg($regex,$X)){
+            foreach(explode('O',$X) as $v){
+               if (strlen($v) && (strlen($v) <= $size) && isset($WhiteList[$v])){
+                  $d[] = $WhiteList[$v][$index];
+               } else { break 3; }
+            }
+            $valid = TRUE;
+         }
+      }
+   }
+   return array($d,$valid);
+}
 
 ?>

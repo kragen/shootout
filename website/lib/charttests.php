@@ -12,21 +12,9 @@ $WhiteListTests = WhiteListUnique('test.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
-$D = ValidDataLog10($HTTP_GET_VARS);
-
-$A = array();
-if (isset($HTTP_GET_VARS['a'])
-      && (strlen($HTTP_GET_VARS['a']) && (strlen($HTTP_GET_VARS['a']) <= 512))){
-   $X = $HTTP_GET_VARS['a'];
-   if (ereg("^[a-zO]+$",$X)){
-      foreach(explode('O',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 32) &&
-            (isset($WhiteListTests[$v]))){ $A[] = ' '.$WhiteListTests[$v][TEST_NAME]; }
-      }
-   }
-}
-
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($BackText,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
+list ($Stats,$valid) = ValidStats($HTTP_GET_VARS,'s',$valid);
 
 
 // CHART /////////////////////////////////////////////////////
@@ -46,26 +34,32 @@ list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 
    $yshift = 1;
 
+if ($valid){
 // SPACE OUT BARS ACROSS WIDTH
    $boxspace = 4;
-   if (sizeof($D)>0){
-      $n = sizeof($D)/STATS_SIZE;
+   if (sizeof($Stats)>0){
+      $n = sizeof($Stats)/STATS_SIZE;
       $i = 1;
       while ($n*($boxw+$i) <= $w-$xo){ $i++; }
       $boxspace = $i-1;
    }
+}
 
 $im = ImageCreate($w,$h);
 list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
 
-chartBackground($im,$xo-CHAR_WIDTH_2,$h-12,$h-42,$mgray,$boxw+$boxspace,$maxboxes,$A);
-chartBoxes($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,1,$D);
+if ($valid){
+   chartBackground($im,$xo-CHAR_WIDTH_2,$h-12,$h-42,$mgray,$boxw+$boxspace,$maxboxes,$BackText);
+   chartBoxes($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,1,$Stats);
+}
 
 yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,$yshift,log10axis(axisT()));
 yAxisLegend($im,-64,$w,$h,$black,'program sys + usr');
 xAxisLegend($im,$xo,$w,$h,$black,'benchmark');
 
-chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$black,1,$D);
+if ($valid){
+   chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$black,1,$Stats);
+}
 
 chartTitle($im,$w,$black,
    'Program Run Time - Median and Quartiles - by Benchmark');

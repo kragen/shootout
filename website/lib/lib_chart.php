@@ -96,6 +96,7 @@ function chartBackground(&$im,$xo,$yo,$h,$labelcol,$inc,$max,&$a){
    $count = 0;
    $need = floor($h/CHAR_WIDTH_3);
    foreach($a as $s){
+      $s = ' '.$s;
       $needrepeat = floor($need/strlen($s))+1;
       $label = substr( str_repeat($s,$needrepeat), 0, $need);
       ImageStringUp($im, 3, $x, $yo, $label, $labelcol);
@@ -115,7 +116,6 @@ function chartBars(&$im,$xo,$yo,$scale,$barcol,$barw,$inc,$dshift,&$d){
       $x = $x + $barw + $inc;
    }
 }
-
 
 function chartBoxes(&$im,$xo,$yo,$h,$scale,$boxcol,$boxw,$inc,$boxo,$max,$dshift,&$d){
    $n = sizeof($d);
@@ -139,7 +139,6 @@ function chartBoxes(&$im,$xo,$yo,$h,$scale,$boxcol,$boxw,$inc,$boxo,$max,$dshift
       }
    }
 }
-
 
 function chartWhiskers(&$im,$xo,$yo,$h,$scale,$boxcol,$boxw,$inc,$boxo,$max,$mcol,$dshift,&$d){
    $n = sizeof($d);
