@@ -4,7 +4,7 @@
 <h2><a href="#boxplot" name="boxplot">&nbsp;<?=$Title;?></a></h2>
 
 <?
-   list($score,$labels,$stats) = $Data;
+   list($score,$labels,$stats,$selected) = $Data;
    unset($Data);
 ?>
 
@@ -21,10 +21,10 @@
 <input type="hidden" name="lang" value="all" />
 
 <table>
-<colgroup span="3" class="txt"></colgroup>
+<colgroup span="2" class="txt"></colgroup>
 <colgroup span="7" class="num"></colgroup>
 <tr class="score">
-<td colspan="3"><? MkDataSetMenu($DataSet); ?></td>
+<td colspan="2"><? MkDataSetMenu($DataSet); ?></td>
 <td colspan="7" class="num">
 <input type="submit" name="calc" value="calculate" />
 <input type="submit" name="calc" value="reset" />
@@ -32,7 +32,6 @@
 </tr>
 
 <tr>
-<th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
 <th>&nbsp;</th>
 <th>language</th>
 <th>&nbsp;|-</th>
@@ -51,10 +50,9 @@ foreach($score as $k => $v){
    $HtmlName = $Langs[$k][LANG_HTML];
 
    $checked = "";
-   if (isset($Plot[$k])){ $checked = 'checked="checked"'; }
+   if (isset($selected[$k])){ $checked = 'checked="checked"'; }
 
    printf('<tr>');
-   printf('<td>%s</td>', PFx(pow(10.0,$v[STAT_MEDIAN]/2.0))); echo "\n";
    printf('<td class="score"><p><input type="checkbox" name="%s" "%s" /></p></td>', $k, $checked); echo "\n";
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>',
       $k,$k,$HtmlName); echo "\n";
@@ -66,7 +64,7 @@ foreach($score as $k => $v){
 ?>
 
 <tr class="score">
-<td colspan="10" class="num">
+<td colspan="9" class="num">
 <input type="submit" name="calc" value="calculate" />
 <input type="submit" name="calc" value="reset" />
 </td>

@@ -112,4 +112,38 @@ function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
    return $rows;
 }
 
+
+   // VALIDATION
+
+function ValidMark(&$H){
+   $Mark = '';
+   if (isset($H['mark'])
+         && (strlen($H['mark']) && (strlen($H['mark']) <= 16))){
+      $X = rawurldecode($H['mark']);
+      if (ereg("^[ a-zA-Z0-9]+$",$X)){
+         $Mark = $X;
+      }
+   }
+   return $Mark;
+}
+
+
+function ValidDataLog10(&$H){
+   $d = array();
+   if (isset($H['d'])
+         && (strlen($H['d']) && (strlen($H['d']) <= 1024))){
+      $X = $H['d'];
+      if (ereg("^[0-9o]+$",$X)){
+         foreach(explode('o',$X) as $v){
+            if (strlen($v) && (strlen($v) <= 6)){
+               // subtract the 3.0 added to avoid negatives from log10 0.01 etc
+               $d[] = (doubleval($v)/10000.0)-3.0;
+            }
+         }
+      }
+   }
+   return $d;
+}
+
+
 ?>

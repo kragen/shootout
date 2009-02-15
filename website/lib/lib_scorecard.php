@@ -43,14 +43,12 @@ function Weights($Tests, $Action, $Vars){
 
 function SelectedLangs($Langs, $Action, $Vars){
    $w = array(); $wd = array();
-   $max = 15; $count = 0;
    foreach($Langs as $lang){
       $link = $lang[LANG_LINK];
-      if (isset($Vars[$link])){ $w[$link] = 1; $count++; }
+      if (isset($Vars[$link])){ $w[$link] = 1; }
       if ($lang[LANG_SELECT]){ $wd[$link] = 1; }
-      if ($count == $max){ break; }
    }
-   if ($Action=='reset'||sizeof($w)==0){ $w = $wd; }
+   if ($Action=='reset'||sizeof($w)<=0){ $w = $wd; }
    return $w;
 }
 
@@ -194,7 +192,7 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
 
 
 
-function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$Plot,$HasHeading=TRUE){
+function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
    // expect to encounter more than one DATA_TESTVALUE for each test 
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
@@ -256,7 +254,7 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$Plot,$HasH
             foreach($testvalues as $tv => $v){
                $val = $v[DATA_TIME];
                if ($val > 0){
-                  $s[] = log10($val/$mins[$t][$tv])*2.0;
+                  $s[] = $val/$mins[$t][$tv];
                   $include += $val;
                }
             }
@@ -268,13 +266,18 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$Plot,$HasH
 
    $labels = array();
    $stats = array();
+   $allowed = array();
+   $count = 0; $max = 15;
    foreach($score as $k => $test){
-      if (isset($Plot[$k])){
+      if (isset($SLangs[$k])){
          $labels[] = $k;
          $stats[] = $test;
+         $allowed[$k] = 1;
+         $count++;
       }
+      if ($count == $max){ break; }
    }
-   return array($score,$labels,$stats);
+   return array($score,$labels,$stats,$allowed);
 }
 
 

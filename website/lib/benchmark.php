@@ -109,11 +109,10 @@ if ($T=='all'){
          $TemplateName = 'boxplot.tpl.php';
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'boxplot-about.tpl.php';
-         $Plot = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
+         $SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
          if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
          $Body->set('DataSet', $DataSet);
-         $Body->set('Plot', $Plot);
-         $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $Plot));
+         $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 
 

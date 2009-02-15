@@ -3,7 +3,10 @@ header("Content-type: image/png");
 
 // Copyright (c) Isaac Gouy 2004-2009
 
+// LIBRARIES ////////////////////////////////////////////////
+
 require_once(LIB_PATH.'lib_whitelist.php');
+require_once(LIB_PATH.'lib_chart.php');
 
 list($in,$ex) = WhiteListInEx();
 $WhiteListLangs = WhiteListUnique('lang.csv',$in);
@@ -33,14 +36,7 @@ if (isset($HTTP_GET_VARS['a'])
    }
 }
 
-$Mark = '';
-if (isset($HTTP_GET_VARS['mark'])
-      && (strlen($HTTP_GET_VARS['mark']) && (strlen($HTTP_GET_VARS['mark']) <= 24))){
-   $X = rawurldecode($HTTP_GET_VARS['mark']);
-   if (ereg("^[ a-zA-Z0-9]+$",$X)){
-      $Mark = $X;
-   }
-}
+$Mark = ValidMark($HTTP_GET_VARS);
 
 // CHART //////////////////////////////////////////////////
 
@@ -54,8 +50,6 @@ if (isset($HTTP_GET_VARS['mark'])
    $yscale = 54;
    $barw = 4;
    $barmw = 0;
-   $charwidth2 = 6.0; // for size 2
-   $charwidth3 = 7.0; // for size 2
 
    define('DATA_SIZE',3);
    define('DATA_CPU',0);
@@ -64,12 +58,7 @@ if (isset($HTTP_GET_VARS['mark'])
 
 
 $im = ImageCreate($w,$h);
-ImageColorAllocate($im,204,204,204);
-$white = ImageColorAllocate($im,255,255,255);
-$black = ImageColorAllocate($im,0,0,0);
-$bgray = ImageColorAllocate($im,204,204,204);
-$mgray = ImageColorAllocate($im,165,165,165);
-$gray = ImageColorAllocate($im,221,221,221);
+list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
 
 // BARS
 $gap = 16;
@@ -130,7 +119,7 @@ for ($i=0; $i<11; $i++){
    ImageLine($im, $xo-15, $y, $lastx, $y, $gray);
 
    $label = strval( floor(pow(10.0,$i/4.0)) );
-   $x = strlen($label)*$charwidth2;
+   $x = strlen($label)*CHAR_WIDTH_2;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
 }
 // LOWER GRID
@@ -140,7 +129,7 @@ for ($i=0; $i<11; $i++){
    ImageLine($im, $xo-15, $y, $lastx, $y, $gray);
 
    $label = strval( floor(pow(10.0,$i/4.0)) );
-   $x = strlen($label)*$charwidth2;
+   $x = strlen($label)*CHAR_WIDTH_2;
    ImageString($im, 2, $xo-$x-6, $y-13, $label, $mgray);
 }
 
@@ -156,26 +145,26 @@ if (isset($aftermem)){
 if (isset($aftercpu)){
    $axisw = $aftercpu-$xo;
    $label = 'faster';
-   $x = ($axisw-strlen($label)*$charwidth2)/2;
+   $x = ($axisw-strlen($label)*CHAR_WIDTH_2)/2;
    ImageString($im, 2, $xo+$x, $h-15, $label, $black);
 
    $label = 'smaller';
-   $x = ($axisw-strlen($label)*$charwidth2)/2;
+   $x = ($axisw-strlen($label)*CHAR_WIDTH_2)/2;
    ImageString($im, 2, $aftercpu+$gap+$x, $h-15, $label, $black);
 
    $label = 'smaller';
-   $x = ($axisw-strlen($label)*$charwidth2)/2;
+   $x = ($axisw-strlen($label)*CHAR_WIDTH_2)/2;
    ImageString($im, 2, $aftermem+$gap+$x, $h-15, $label, $black);
 }
 
 // Y AXIS LEGEND
 $labela = 'Time';
 $labelb = 'Memory';
-$y = ($h-strlen($labela.$labelb)*$charwidth2 -14)/2;
+$y = ($h-strlen($labela.$labelb)*CHAR_WIDTH_2 -14)/2;
 $y0 = $y;
 ImageStringUp($im, 2, 5, $h-$y-4, $labela, $black);
 ImageFilledRectangle($im, 11, $h-$y, 11+$barw, $h-$y+12, $white);
-$y = $y + strlen($labela)*$charwidth2 + 22;
+$y = $y + strlen($labela)*CHAR_WIDTH_2 + 22;
 ImageStringUp($im, 2, 5, $h-$y-4, $labelb, $black);
 ImageFilledRectangle($im, 12, $h-$y, 12+$barmw, $h-$y+10, $black);
 
@@ -185,19 +174,13 @@ $labelb = 'Source size';
 $y = $y0;
 ImageStringUp($im, 2, $w-20, $h-$y-4, $labela, $black);
 ImageFilledRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+12, $mgray);
-$y = $y + strlen($labela)*$charwidth2 + 22;
+$y = $y + strlen($labela)*CHAR_WIDTH_2 + 22;
 ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
 ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
-// LEGEND
-$label = $A[0].' / '.$A[1];
-$x = $w-5-strlen($label)*$charwidth3;
-ImageString($im, 3, $x, 2, $label, $black);
 
-// NOTICE
-$label = $Mark;
-$x = $w-5-strlen($label)*$charwidth2;
-ImageString($im, 2, $x, 16, $label, $white);
+chartTitle($im,$w,$black,$A[0].' / '.$A[1]);
+chartNotice($im,$w,$white,$Mark);
 
 ImageInterlace($im,1);
 ImagePng($im);

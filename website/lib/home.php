@@ -16,7 +16,6 @@ $Langs = WhiteListUnique('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
 list ($mark,$mtime)= MarkTime();
-$mark = $mark.' '.SITE_NAME;
 
 // TEMPLATE VARS ///////////////////////////////////////////
 

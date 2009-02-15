@@ -70,27 +70,6 @@ function GetMicroTime(){
    return doubleval($t[1]) + doubleval($t[0]);
 }
 
-/*function SplitByTestValue(&$data){
-   $splitdata = array();
-   foreach($data as $d){
-      if (isset($splitdata[ $d[DATA_TESTVALUE] ])){
-         $splitdata[ $d[DATA_TESTVALUE] ][] = $d;
-      } else {
-         $splitdata[ $d[DATA_TESTVALUE] ] = array($d);
-      }
-   }
-   krsort($splitdata);
-   $ks = array_keys($splitdata);
-   $k = array_shift($ks);
-   $largest = $splitdata[ $k ];
-   unset( $splitdata[ $k ] );
-   $others = array();
-   foreach ($splitdata as $k => $v){
-      $others = array_merge($others,$v);
-   }
-   return array($largest,$others);
-}
-*/
 
 function TestData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    // expect NOT to encounter more than one DATA_TESTVALUE for each test
@@ -139,7 +118,7 @@ function TestData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    foreach($data as $lang => $testvalues){
       foreach($testvalues as $t => $v){
          if ($v > 0.0){
-            $a[$t][] = log10($v)*2.0;
+            $a[$t][] = $v;
          }
       }
    }
@@ -187,21 +166,6 @@ function Median($a){
    return ($n % 2 != 0) ? $a[$mid] : ($a[$mid-1] + $a[$mid]) / 2.0;
 }
 
-/*
-function CompareTestCpuTime($a, $b){
-   if ($a[DATA_TEST] == $b[DATA_TEST]){
-      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
-         if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ 
-            if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
-            else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
-         }
-         else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
-      }
-      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
-   }
-   return  ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;
-}
-*/
 
 function CompareFullCpuTime($a, $b){
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
@@ -256,14 +220,6 @@ function CompareTestName($a, $b){
    return strcasecmp($a[TEST_NAME],$b[TEST_NAME]);
 }
 
-/*
-function SortName($sort){
-   if ($sort=='fullcpu'){ return 'Full CPU Time'; }
-   elseif ($sort=='gz'){ return 'GZ Compressed Source'; }
-   elseif ($sort=='elapsed'){ return 'Elapsed Time'; }
-   else { return 'Memory use'; }
-}
-*/
 
 function IdName($id){
    if ($id>1){ return ' #'.$id; } else { return ''; }
@@ -291,22 +247,22 @@ function FilterAndSortData($langs,$data,&$sort,&$Excl){
    // Each value is itself an array of one or more data records
 
    foreach($data as $ar){
-      foreach($ar as $d){  
-         $x = ExcludeData($d,$langs,$Excl);         
+      foreach($ar as $d){
+         $x = ExcludeData($d,$langs,$Excl);
          if ($x==PROGRAM_SPECIAL){ 
             $Special[] = $d;
-         } elseif ($x==PROGRAM_EXCLUDED) { 
+         } elseif ($x==PROGRAM_EXCLUDED) {
 
          } elseif ($x) {
             $Rejected[] = $d;
-         } else {
+         } elseif ($d[DATA_TIME]>0.0) {
             $Accepted[] = $d;
          }
       }         
    }
    
    // hack for old data which doesn't have Elapsed times only CPU times
-   if ($sort=='elapsed' && sizeof($Accepted)>0 && $Accepted[0][DATA_ELAPSED]== 0.0){
+   if ($sort=='elapsed' && (SITE_NAME=='debian'||SITE_NAME=='gp4')){
       $sort = 'fullcpu';
    }
 
@@ -314,7 +270,7 @@ function FilterAndSortData($langs,$data,&$sort,&$Excl){
       usort($Accepted, 'CompareFullCpuTime');
       usort($Special, 'CompareFullCpuTime');
    } elseif ($sort=='kb'){
-      usort($Accepted, 'CompareMemoryUse'); 
+      usort($Accepted, 'CompareMemoryUse');
       usort($Special, 'CompareMemoryUse');
    } elseif ($sort=='gz'){
       usort($Accepted, 'CompareGz');
@@ -483,7 +439,11 @@ function HttpVarsEncodeArray($a){
 function HttpVarsEncodeStats($aa){
    $a = array(); $d = array();
    foreach($aa as $stats){ $a = array_merge($a,$stats); }
-   foreach($a as $each){ $d[] = intval(sprintf('%d',($each+1)*100)); } // avoid negatives
+   foreach($a as $each){
+      // avoid negative values from log10 0.01 etc
+      $v = $each<0.01 ? 0.01 : $each;
+      $d[] = intval(sprintf('%d',(log10($v)+3.0)*10000.0));
+   }
    $s = implode('o',$d);
    return $s;
 }
@@ -508,7 +468,7 @@ function HttpVarsEncodeHeadToHead(&$Tests,&$Data){
          
          if ($Row[TEST_NAME]=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
          $a[] = intval(sprintf('%d',$kb*100000.0));
-         
+
          $a[] = intval(sprintf('%d',$v[N_GZ]*100000.0));
 
       } else {
