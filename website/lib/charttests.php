@@ -62,10 +62,13 @@ if (isset($HTTP_GET_VARS['mark'])
 
 // SPACE OUT BARS ACROSS WIDTH
    $boxspace = 4;
-   $n = sizeof($D)/STATS_SIZE;
-   $i = 1;
-   while ($n*($boxw+$i) <= $w-$xo){ $i++; }
-   $boxspace = $i-1;
+   if (sizeof($D)>0){
+      $n = sizeof($D)/STATS_SIZE;
+      $i = 1;
+      while ($n*($boxw+$i) <= $w-$xo){ $i++; }
+      $boxspace = $i-1;
+   }
+
 
 
 $im = ImageCreate($w,$h);
