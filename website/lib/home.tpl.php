@@ -18,7 +18,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <p>It can be fun to watch the Benchmarks Game and fun to <a href="benchmark.php?test=all&amp;lang=all">create your own ranking</a> but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p><?=$Intro;?>
 
 
-<p class="img"><img src="charttests.php?<?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='mark='.rawurlencode($Mark.' '.SITE_NAME);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
+<p class="img"><img src="charttests.php?<?='d='.HttpVarsEncodeStats($stats);?>&amp;<?='m='.rawurlencode($Mark.' '.SITE_NAME);?>&amp;<?='a='.HttpVarsEncodeLabels($labels);?>"
    alt=""
    title=""
    width="480" height="300"

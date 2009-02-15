@@ -11,18 +11,9 @@ require_once(LIB_PATH.'lib_chart.php');
 
 // DATA ////////////////////////////////////////////////////
 
-$D = array();
-if (isset($HTTP_GET_VARS['d'])
-      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 512))){
-   $X = $HTTP_GET_VARS['d'];
-   if (ereg("^[0-9o]+$",$X)){
-      foreach(explode('o',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 5)){ $D[] = log10(doubleval($v)/10.0); }
-      }
-   }
-}
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($GeometricMean,$valid) = ValidArrayLog10($HTTP_GET_VARS,'g',$valid);
 
-$Mark = ValidMark($HTTP_GET_VARS);
 
 // CHART /////////////////////////////////////////////////////
 
@@ -36,19 +27,22 @@ $Mark = ValidMark($HTTP_GET_VARS);
    $yscale = 84;
    $barw = 3;
 
-
 $im = ImageCreate($w,$h);
 list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
 
-chartBars($im,$xo,$h-$yo,$yscale,$white,$barw,$barspace,0,$D);
+if ($valid){
+   chartBars($im,$xo,$h-$yo,$yscale,$white,$barw,$barspace,0,$GeometricMean);
+}
 
 yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,0,log10axis(axis100()));
 yAxisLegend($im,$yo,$w,$h,$black,'ratio to best');
 xAxisLegend($im,$xo,$w,$h,$black,'language implementation');
 chartTitle($im,$w,$black,
    'Weighted Geometric Mean of normalized Time, Memory and Source size');
-chartNotice($im,$w,$white,$Mark);
 
+if ($valid){
+   chartNotice($im,$w,$white,$Mark);
+}
 
 ImageInterlace($im,1);
 ImagePNG($im);

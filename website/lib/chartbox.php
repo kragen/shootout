@@ -28,7 +28,7 @@ if (isset($HTTP_GET_VARS['a'])
 }
 
 $D = ValidDataLog10($HTTP_GET_VARS);
-$Mark = ValidMark($HTTP_GET_VARS);
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 
 
 // CHART /////////////////////////////////////////////////////
@@ -62,8 +62,9 @@ chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$bla
 
 chartTitle($im,$w,$black,
    'Normalized Program Run Time - Median and Quartiles - by Language');
-
-chartNotice($im,$w,$white,$Mark);
+if ($valid){
+   chartNotice($im,$w,$white,$Mark);
+}
 
 
 ImageInterlace($im,1);

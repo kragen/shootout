@@ -4,7 +4,7 @@
 <h3><a href="#faster" name="faster">"For every complex problem</a> there is an answer that is clear, simple, and wrong." &nbsp;H.&nbsp;L.&nbsp;Mencken</h3>
 
 
-<? 
+<?
    list($score,$ratio) = $Data;
    unset($Data);
 ?>
@@ -12,7 +12,7 @@
 <p>What <strong>fun!</strong> Can you manipulate the multipliers and weights to make your favourite language <a href="#about">the best</a> programming language in the Benchmarks Game?</p>
 
 
-<p><img src="chartscore.php?<?='d='.HttpVarsEncodeArray($ratio);?>&amp;<?='mark='.rawurlencode($Mark);?>"
+<p><img src="chartscore.php?<?='g='.HttpVarsEncodeArray($ratio);?>&amp;<?='m='.rawurlencode($Mark);?>"
    width="480" height="225" alt=""
  /></p>
 

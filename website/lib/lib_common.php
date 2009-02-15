@@ -431,7 +431,8 @@ function PTime($d){
 function HttpVarsEncodeArray($a){
    foreach($a as $v){ $d[] = intval(sprintf('%d',$v*10)); }
    $s = implode('o',$d);
-   return $s;
+   $ob = rawurlencode(base64_encode(gzcompress($s,9)));
+   return $ob;
 }
 
 

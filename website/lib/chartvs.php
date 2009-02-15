@@ -36,7 +36,7 @@ if (isset($HTTP_GET_VARS['a'])
    }
 }
 
-$Mark = ValidMark($HTTP_GET_VARS);
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 
 // CHART //////////////////////////////////////////////////
 
@@ -178,9 +178,10 @@ $y = $y + strlen($labela)*CHAR_WIDTH_2 + 22;
 ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
 ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
-
-chartTitle($im,$w,$black,$A[0].' / '.$A[1]);
-chartNotice($im,$w,$white,$Mark);
+if ($valid){
+   chartTitle($im,$w,$black,$A[0].' / '.$A[1]);
+   chartNotice($im,$w,$white,$Mark);
+}
 
 ImageInterlace($im,1);
 ImagePng($im);

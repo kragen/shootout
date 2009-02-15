@@ -26,7 +26,7 @@ if (isset($HTTP_GET_VARS['a'])
    }
 }
 
-$Mark = ValidMark($HTTP_GET_VARS);
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 
 
 // CHART /////////////////////////////////////////////////////
@@ -69,8 +69,10 @@ chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$bla
 
 chartTitle($im,$w,$black,
    'Program Run Time - Median and Quartiles - by Benchmark');
-   
-chartNotice($im,$w,$white,$Mark);
+
+if ($valid){
+   chartNotice($im,$w,$white,$Mark);
+}
 
 ImageInterlace($im,1);
 ImagePNG($im);

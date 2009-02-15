@@ -115,16 +115,17 @@ function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
 
    // VALIDATION
 
-function ValidMark(&$H){
-   $Mark = '';
-   if (isset($H['mark'])
-         && (strlen($H['mark']) && (strlen($H['mark']) <= 16))){
-      $X = rawurldecode($H['mark']);
-      if (ereg("^[ a-zA-Z0-9]+$",$X)){
-         $Mark = $X;
+function ValidMark(&$H,$valid=FALSE){
+   $bounds = 18;
+   $mark = '';
+   if ($valid){
+      $valid = FALSE;
+      if (isset($H['m']) && strlen($H['m']) && strlen($H['m']) <= $bounds){
+         $X = rawurldecode($H['m']);
+         if (ereg("^[ a-zA-Z0-9]+$",$X)){ $mark = $X; $valid = TRUE; }
       }
    }
-   return $Mark;
+   return array($mark,$valid);
 }
 
 
@@ -143,6 +144,30 @@ function ValidDataLog10(&$H){
       }
    }
    return $d;
+}
+
+
+function ValidArrayLog10(&$H,$V,$valid=FALSE){
+   $bounds = 512;
+   $d = array();
+   if ($valid){
+      $valid = FALSE;
+      if (isset($H[$V]) && strlen($H[$V]) && strlen($H[$V]) <= $bounds){
+         $X = rawurldecode($H[$V]);
+         $X = base64_decode($X);
+         $X = gzuncompress($X,$bounds);
+   
+         if (ereg("^[0-9o]+$",$X)){
+            foreach(explode('o',$X) as $v){
+               if (strlen($v) && (strlen($v) <= 5)){
+                  $d[] = log10(doubleval($v)/10.0);
+               } else { break 3; }
+            }
+            $valid = TRUE;
+         }
+      }
+   }
+   return array($d,$valid);
 }
 
 

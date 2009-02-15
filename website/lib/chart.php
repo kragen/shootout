@@ -11,29 +11,10 @@ require_once(LIB_PATH.'lib_chart.php');
 
 // DATA ////////////////////////////////////////////////////
 
-$D = array();
-if (isset($HTTP_GET_VARS['d'])
-      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 512))){
-   $X = $HTTP_GET_VARS['d'];
-   if (ereg("^[0-9o]+$",$X)){
-      foreach(explode('o',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 8)){ $D[] = log10(doubleval($v)/10.0); }
-      }
-   }
-}
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($Time,$valid) = ValidArrayLog10($HTTP_GET_VARS,'t',$valid);
+list ($KB,$valid) = ValidArrayLog10($HTTP_GET_VARS,'k',$valid);
 
-$M = array();
-if (isset($HTTP_GET_VARS['m'])
-      && (strlen($HTTP_GET_VARS['m']) && (strlen($HTTP_GET_VARS['m']) <= 512))){
-   $X = $HTTP_GET_VARS['m'];
-   if (ereg("^[0-9o]+$",$X)){
-      foreach(explode('o',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 8)){ $M[] = log10(doubleval($v)/10.0); }
-      }
-   }
-}
-
-$Mark = ValidMark($HTTP_GET_VARS);
 
 // CHART //////////////////////////////////////////////////
 
@@ -51,8 +32,10 @@ $Mark = ValidMark($HTTP_GET_VARS);
 $im = ImageCreate($w,$h);
 list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
 
-chartBars($im,$xo,$h-$yo,$yscale,$white,$barw,$barspace,0,$D);
-chartBars($im,$xo,$h-$yo,$yscale,$black,$barmw,$barw+$barspace,0,$M);
+if ($valid){
+   chartBars($im,$xo,$h-$yo,$yscale,$white,$barw,$barspace,0,$Time);
+   chartBars($im,$xo,$h-$yo,$yscale,$black,$barmw,$barw+$barspace,0,$KB);
+}
 
 yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,0,log10axis(axis1000()));
 
@@ -72,8 +55,9 @@ ImageFilledRectangle($im, 12, $h-$y-10, 12+$barmw, $h-$y, $black);
 
 xAxisLegend($im,$xo,$w,$h,$black,'program');
 chartTitle($im,$w,$black,'Normalized Program Run Time and Memory');
-chartNotice($im,$w,$white,$Mark);
-
+if ($valid){
+   chartNotice($im,$w,$white,$Mark);
+}
 
 ImageInterlace($im,1);
 ImagePng($im);
