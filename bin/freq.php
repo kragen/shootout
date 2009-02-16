@@ -6,7 +6,7 @@
 // CONSTANTS ////////////////////////////////////////////////
 
 define('HTTP_DIR', 'I:/Abyss Web Server/htdocs/websites');
-$Sites = array('debian','gp4','u32q');
+$Sites = array('gp4','debian','u32q');
 
 // FUNCTIONS ///////////////////////////////////////////
 
@@ -41,7 +41,7 @@ function extractLogDates($site){
          if ($found){
             $sum++;
             $mth = month($match[1]);
-            $yr = intval($match[2]);
+            $yr = intval($match[2]);     
             if (!isset($freq[$yr][$mth][$site])){
                $freq[$yr][$mth][$site] = 0;
             } else {
@@ -53,16 +53,23 @@ function extractLogDates($site){
             or die("Couldn't close $each");
       }
    }
+   closedir($h);
 
    $a = array();
    foreach ($freq as $yr => $mths)
       foreach ($mths as $mth => $counts)
-         if (isset($counts[$site]))
+         if (isset($counts[$site]) && $counts[$site]>0){
             $a[] = array($yr,$mth,$site,$counts[$site]/$sum);
+         }
 
-   closedir($h);
-   
    usort($a,'CompareYearMonth');
+   
+   $cumulative = 0.0;
+   for ($k=0; $k<sizeof($a); $k++){
+      $cumulative += $a[$k][3];
+      $a[$k][3] = $cumulative;
+   }
+
    return $a;
 }
 
@@ -108,17 +115,31 @@ function CompareYearMonth($a,$b){
    else { return ($a[0]<$b[0]) ? -1 : 1; }
 }
 
+function YrMth(&$p){
+   return $p[0]*12+$p[1];
+}
 
 
 // MAIN ////////////////////////////////////////////////
 
-
+$p = array();
 foreach ($Sites as $each){
-   $percentages[] = extractLogDates($each);
+   $p = array_merge($p,extractLogDates($each));
 }
 
+// find first and last measurement batch in time
+for ($k=0; $k<sizeof($p); $k++){
+   if (!isset($firstYrMth)) $firstYrMth = YrMth($p[$k]);
+   $first = min($firstYrMth,YrMth($p[$k]));
+   if (!isset($lastYrMth)) $lastYrMth = YrMth($p[$k]);
+   $last = max($lastYrMth,YrMth($p[$k]));
+}
 
+// left shift first measurement batch to time zero
+for ($k=0; $k<sizeof($p); $k++){
+   $p[$k][1] = YrMth($p[$k]) - $firstYrMth;
+   printf("%s,%s,%s,%0.2f\n", $p[$k][0], $p[$k][1], $p[$k][2], $p[$k][3]);
+}
 
-print_r($percentages);
 
 
