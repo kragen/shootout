@@ -59,7 +59,7 @@ function WhiteListInEx(){
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
-      if (isset($row[EXCL_TEST]{0})){           
+      if (isset($row[EXCL_TEST]{0})){
          if (!isset($row[EXCL_ID])){ $row[EXCL_ID] = 1; }
          $key = $row[EXCL_TEST].$row[EXCL_LANG].strval($row[EXCL_ID]);
          $excl[$key] = $row;
@@ -144,7 +144,10 @@ function ValidStats(&$H,$V,$valid=FALSE){
                if (strlen($v) && (strlen($v) <= 6)){
                   // unshift -3.0
                   $d[] = (doubleval($v)/10000.0)-3.0;
-               } else { break 3; }
+               } else {
+                  $d = array(); 
+                  break;
+               }
             }
             if ((sizeof($d)%STATS_SIZE) == 0){ $valid = TRUE;
             } else { $d = array(); }
@@ -166,9 +169,12 @@ function ValidLog10(&$H,$V,$valid=FALSE){
 
          if ($X && ereg("^[0-9O]+$",$X)){
             foreach(explode('O',$X) as $v){
-               if (strlen($v) && (strlen($v) <= 5)){
+               if (strlen($v) && strlen($v)<=7){
                   $d[] = log10(doubleval($v)/10.0);
-               } else { break 3; }
+               } else { 
+                  $d = array(); 
+                  break;
+               }
             }
             $valid = TRUE;
          }
@@ -201,7 +207,10 @@ function ValidWhiteList(&$H,&$WhiteList,$regex,$size,$index,$valid){
             foreach(explode('O',$X) as $v){
                if (strlen($v) && (strlen($v) <= $size) && isset($WhiteList[$v])){
                   $d[] = $WhiteList[$v][$index];
-               } else { break 3; }
+               } else {
+                  $d = array(); 
+                  break;
+               }
             }
             $valid = TRUE;
          }
