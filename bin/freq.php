@@ -11,7 +11,7 @@ $Sites = array('debian','gp4','u32q');
 // FUNCTIONS ///////////////////////////////////////////
 
 
-function extractLogDates($site,&$percentages){
+function extractLogDates($site){
    $d = HTTP_DIR.'/'.$site.'/code';
    $h = opendir($d)
       or die("Couldn't open $d");
@@ -24,7 +24,7 @@ function extractLogDates($site,&$percentages){
    }
    
    $sitelist = includes($site);
-
+   $freq = array();
    $sum = 0.0;
    foreach ($fs as $each){
       $parts = explode(".",$each);
@@ -42,10 +42,10 @@ function extractLogDates($site,&$percentages){
             $sum++;
             $mth = month($match[1]);
             $yr = intval($match[2]);
-            if (!isset($percentages[$yr][$mth][$site])){
-               $percentages[$yr][$mth][$site] = 0;
+            if (!isset($freq[$yr][$mth][$site])){
+               $freq[$yr][$mth][$site] = 0;
             } else {
-               $percentages[$yr][$mth][$site] += 1;
+               $freq[$yr][$mth][$site] += 1;
             }
          }
 
@@ -54,12 +54,16 @@ function extractLogDates($site,&$percentages){
       }
    }
 
-   foreach ($percentages as $yr => $mths)
+   $a = array();
+   foreach ($freq as $yr => $mths)
       foreach ($mths as $mth => $counts)
          if (isset($counts[$site]))
-            printf("%d,%d,%s,%0.2f\n",$yr,$mth,$site,$counts[$site]/$sum);
+            $a[] = array($yr,$mth,$site,$counts[$site]/$sum);
 
    closedir($h);
+   
+   usort($a,'CompareYearMonth');
+   return $a;
 }
 
 
@@ -96,11 +100,25 @@ function includes($site){
    return $a;
 }
 
+function CompareYearMonth($a,$b){
+   if ($a[0]==$b[0]){
+      if ($a[1]==$b[1]){ return 0; }
+      else { return ($a[1]<$b[1]) ? -1 : 1; }
+   }
+   else { return ($a[0]<$b[0]) ? -1 : 1; }
+}
+
 
 
 // MAIN ////////////////////////////////////////////////
 
-$percentages = array();
+
 foreach ($Sites as $each){
-   extractLogDates($each,$freq);
+   $percentages[] = extractLogDates($each);
 }
+
+
+
+print_r($percentages);
+
+
