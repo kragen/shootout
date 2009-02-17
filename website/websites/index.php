@@ -95,6 +95,13 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 </table>
 
 
+<p><img src="./fresh.png"
+   alt=""
+   title=""
+   width="480" height="225"
+ /></p>
+
+
 <h5><br/>Programming language measurements A to Z</h5><br/>
 
 <?php
