@@ -98,7 +98,7 @@ href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</
 <p><img src="./fresh.png"
    alt=""
    title=""
-   width="480" height="225"
+   width="400" height="225"
  /></p>
 
 
