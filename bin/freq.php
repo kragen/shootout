@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?
-// Copyright (c) Isaac Gouy 2009
 
+// Copyright (c) Isaac Gouy 2009
 
 // CONSTANTS ////////////////////////////////////////////////
 
@@ -119,26 +119,28 @@ function YrMth(&$p){
    return $p[0]*12+$p[1];
 }
 
-
 // MAIN ////////////////////////////////////////////////
 
 $p = array();
 foreach ($Sites as $each){
-   $p = array_merge($p,extractLogDates($each));
+   $tmp = extractLogDates($each);
+   
+   // find first and last measurement batch in time
+   foreach ($tmp as $each){
+      if (!isset($firstYrMth)) $firstYrMth = YrMth($each);
+      $first = min($firstYrMth,YrMth($each));
+      if (!isset($lastYrMth)) $lastYrMth = YrMth($each);
+      $last = max($lastYrMth,YrMth($each));
+   }
+   $p[] = $tmp;
 }
 
-// find first and last measurement batch in time
-for ($k=0; $k<sizeof($p); $k++){
-   if (!isset($firstYrMth)) $firstYrMth = YrMth($p[$k]);
-   $first = min($firstYrMth,YrMth($p[$k]));
-   if (!isset($lastYrMth)) $lastYrMth = YrMth($p[$k]);
-   $last = max($lastYrMth,YrMth($p[$k]));
-}
-
-// left shift first measurement batch to time zero
-for ($k=0; $k<sizeof($p); $k++){
-   $p[$k][1] = YrMth($p[$k]) - $firstYrMth;
-   printf("%s,%s,%s,%0.2f\n", $p[$k][0], $p[$k][1], $p[$k][2], $p[$k][3]);
+for ($i=0; $i<sizeof($p); $i++){
+   // left shift measurement batches to time zero
+   for ($k=0; $k<sizeof($p[$i]); $k++){
+      $p[$i][$k][1] = YrMth($p[$i][$k]) - $firstYrMth;
+      printf("%s,%s,%s,%0.2f\n", $p[$i][$k][0], $p[$i][$k][1], $p[$i][$k][2], $p[$i][$k][3]);
+   }
 }
 
 
