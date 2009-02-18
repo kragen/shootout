@@ -1,15 +1,11 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
+<?
+   list($data,$sTests,$ratios) = $Data;
+   unset($Data);
+?>
 
 <?
-// sort by x times faster than ratio
-$SortedTests = array();
-$reorder = array();
-foreach($Data as $k => $v){ $SortedTests[$k] = $Tests[$k]; }
-foreach($Tests as $k => $v){ 
-   if (!isset($SortedTests[$k])){ $SortedTests[] = $Tests[$k]; }
-}
-
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
@@ -28,10 +24,10 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
 <h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better?</a></h2>
-<p>For each one of our benchmarks, a white bar shows when it had the better time, a black bar shows when it had the better memory use, and a white outline bar shows when it had smaller program source code.</p>
+<p>For each one of our benchmarks, a dark gray bar shows when it had the better time, a thin black bar shows when it had the better memory use, and a white outline bar shows when it had smaller source code size.</p>
 
 
-<p><img src="chartvs.php?<?='d='.HttpVarsEncodeHeadToHead(&$SortedTests,&$Data);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
+<p><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
    title=""
    width="480" height="300"
@@ -55,14 +51,14 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 </tr>
 
 <?
-foreach($SortedTests as $Row){
+foreach($sTests as $Row){
    if (($Row[TEST_WEIGHT]<=0)){ continue; }
    printf('<tr>'); echo "\n";
    $Link = $Row[TEST_LINK];
    $Name = $Row[TEST_NAME];
 
-   if (isset($Data[$Link])){
-      $v = $Data[$Link];
+   if (isset($data[$Link])){
+      $v = $data[$Link];
 
       printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
          $Link, $SelectedLang, $v[N_ID], $Name);

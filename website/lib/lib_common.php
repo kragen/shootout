@@ -432,19 +432,18 @@ function Encode($x){
       $s = $x;
    } elseif (is_array($x)){
       if (sizeof($x)>0){
-         if (is_double($x[0])){ // single array of doubles
-            foreach($x as $v){ $d[] = intval(sprintf('%d',$v*10)); }
-            $x = $d;
-         } elseif (is_string($x[0])){ // single array of strings
-
+         $matrix = array();
+         if (is_numeric($x[0])){ // single array of doubles
+            $matrix = &$x;
          } elseif (is_array($x[0])){ // array of array of doubles
-            $matrix = array();
             foreach($x as $each){ $matrix = array_merge($matrix,$each); }
-            foreach($matrix as $each){
-               // truncate at 0.01
-               $v = $each<0.01 ? 0.01 : $each;
-               // shift to avoid negative values from log10 0.01 etc
-               $d[] = intval(sprintf('%d',(log10($v)+3.0)*10000.0));
+         }
+         if (sizeof($matrix)>0){
+            $shift = 5;
+            $rescale = 1000.0;
+            foreach($matrix as $v){
+               //$v = $each<0.01 ? 0.01 : $each;
+               $d[] = intval(sprintf('%d',(log10($v)+$shift)*$rescale));
             }
             $x = $d;
          }
@@ -454,28 +453,6 @@ function Encode($x){
    return rawurlencode(base64_encode(gzcompress($s,9)));
 }
 
-
-function HttpVarsEncodeHeadToHead(&$Tests,&$Data){
-   $a = array();
-   foreach($Tests as $Row){
-      if (($Row[TEST_WEIGHT]<=0)){ continue; }
-      if (isset($Data[$Row[TEST_LINK]])){
-         $v = $Data[$Row[TEST_LINK]];
-
-         $a[] = intval(sprintf('%d',$v[N_FULLCPU]*100000.0));
-         
-         if ($Row[TEST_NAME]=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
-         $a[] = intval(sprintf('%d',$kb*100000.0));
-
-         $a[] = intval(sprintf('%d',$v[N_GZ]*100000.0));
-
-      } else {
-         $a[] = 100000.0; $a[] = 100000.0; $a[] = 100000.0;
-      }
-   }
-   $s = implode('o',$a);
-   return $s;
-}
 
 function MarkTime(){
    if (SITE_NAME == 'debian'){

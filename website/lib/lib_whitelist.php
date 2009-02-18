@@ -99,7 +99,7 @@ function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
-      if ( isset($row[DATA_LANG]) && ($row[DATA_TEST]==$Value) ){                  
+      if ( isset($row[DATA_LANG]) && ($row[DATA_TEST]==$Value) ){
          settype($row[DATA_ID],'integer');
          if (isset($rows[$row[DATA_LANG]])){
             array_push( $rows[$row[DATA_LANG]], $row);
@@ -129,8 +129,9 @@ function ValidMark(&$H,$valid=FALSE){
    return array($mark,$valid);
 }
 
-
-function ValidStats(&$H,$V,$valid=FALSE){
+function ValidMatrix(&$H,$V,$size,$valid=FALSE){
+   $shift = 5;
+   $rescale = 1000.0;
    $bounds = 1024;
    $d = array();
    if ($valid){
@@ -141,48 +142,20 @@ function ValidStats(&$H,$V,$valid=FALSE){
 
          if ($X && ereg("^[0-9O]+$",$X)){
             foreach(explode('O',$X) as $v){
-               if (strlen($v) && (strlen($v) <= 6)){
-                  // unshift -3.0
-                  $d[] = (doubleval($v)/10000.0)-3.0;
+               if (strlen($v) && (strlen($v) <= 10) && is_numeric($v)){
+                  $d[] = pow(10.0,(doubleval($v)/$rescale-$shift));
                } else {
-                  $d = array(); 
+                  $d = array();
                   break;
                }
             }
-            if ((sizeof($d)%STATS_SIZE) == 0){ $valid = TRUE;
+            if ((sizeof($d)%$size) == 0){ $valid = TRUE;
             } else { $d = array(); }
          }
       }
    }
    return array($d,$valid);
 }
-
-
-function ValidLog10(&$H,$V,$valid=FALSE){
-   $bounds = 512;
-   $d = array();
-   if ($valid){
-      $valid = FALSE;
-      if (isset($H[$V]) && strlen($H[$V]) && strlen($H[$V]) <= $bounds){
-         $X = base64_decode( rawurldecode($H[$V]) );
-         $X = @gzuncompress($X,$bounds); // returns FALSE on error
-
-         if ($X && ereg("^[0-9O]+$",$X)){
-            foreach(explode('O',$X) as $v){
-               if (strlen($v) && strlen($v)<=7){
-                  $d[] = log10(doubleval($v)/10.0);
-               } else { 
-                  $d = array(); 
-                  break;
-               }
-            }
-            $valid = TRUE;
-         }
-      }
-   }
-   return array($d,$valid);
-}
-
 
 
 function ValidLangs(&$H,&$Langs,$valid=FALSE){

@@ -16,18 +16,18 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($BackText,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
-list ($Stats,$valid) = ValidStats($HTTP_GET_VARS,'s',$valid);
-
+list ($Stats,$valid) = ValidMatrix($HTTP_GET_VARS,'s',STATS_SIZE,$valid);
+for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
 
 // CHART /////////////////////////////////////////////////////
    $w = 480;
    $h = 300;
 
    $boxspace = 8;
-   $xo = 65;
+   $xo = 48;
    $yo = 16;
 
-   $yscale = 72;
+   $yscale = 76;
 
    $boxw = 20;
    $boxo = 10;
@@ -36,28 +36,24 @@ list ($Stats,$valid) = ValidStats($HTTP_GET_VARS,'s',$valid);
    $maxboxes= 15;
 
 $im = ImageCreate($w,$h);
-list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
-
-if ($valid){
-   chartBackground($im,$xo-CHAR_WIDTH_2,$h-12,$h-40,$mgray,$boxw+$boxspace,$maxboxes,$BackText);
-   chartBoxes($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,0,$Stats);
-}
+$c = chartColors($im);
 
 // GRID
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,0,log10axis(axis3000()));
-yAxisLegend($im,$yo,$w,$h,$black,'ratio to best');
-xAxisLegend($im,$xo,$w,$h,$black,'language implementation');
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis3000()));
+yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
+xAxisLegend($im,$xo,$w,$h,$c,'language implementation');
 
 if ($valid){
-   chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$black,0,$Stats);
+   chartBackground($im,$xo,$h-12,$h-27,$c,$boxw+$boxspace,$maxboxes,$BackText);
+   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,0,$Stats);
+   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,0,$Stats);
+   chartNotice($im,$w,$h,$c,$Mark);
 }
 
-chartTitle($im,$w,$black,
-   'Normalized Program Run Time - Median and Quartiles - by Language');
+chartTitle($im,$xo,$w,$c,
+   'Normalized Program Run Time - Median and Quartiles');
 
-if ($valid){
-   chartNotice($im,$w,$white,$Mark);
-}
+
 
 
 ImageInterlace($im,1);

@@ -12,9 +12,12 @@ require_once(LIB_PATH.'lib_chart.php');
 // DATA ////////////////////////////////////////////////////
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
-list ($Time,$valid) = ValidLog10($HTTP_GET_VARS,'t',$valid);
-list ($KB,$valid) = ValidLog10($HTTP_GET_VARS,'k',$valid);
 
+list ($Time,$valid) = ValidMatrix($HTTP_GET_VARS,'t',1,$valid);
+for ($i=0;$i<sizeof($Time);$i++) $Time[$i] = log10($Time[$i]);
+
+list ($KB,$valid) = ValidMatrix($HTTP_GET_VARS,'k',1,$valid);
+for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
 
 // CHART //////////////////////////////////////////////////
 
@@ -22,42 +25,41 @@ list ($KB,$valid) = ValidLog10($HTTP_GET_VARS,'k',$valid);
    $w = 480;
    $h = 225;
 
-   $xo = 65;
+   $xo = 48;
    $yo = 16;
 
-   $yscale = 54;
+   $yscale = 64;
    $barw = 3;
    $barmw = 0;
 
 $im = ImageCreate($w,$h);
-list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
+$c = chartColors($im);
+              
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis1000()));
 
 if ($valid){
-   chartBars($im,$xo,$h-$yo,$yscale,$white,$barw,$barspace,0,$Time);
-   chartBars($im,$xo,$h-$yo,$yscale,$black,$barmw,$barw+$barspace,0,$KB);
+   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,0,$Time);
+   chartBars($im,$xo,$h-$yo,$yscale,$c,'black',$barmw,$barw+$barspace,0,$KB);
+   chartNotice($im,$w,$h,$c,$Mark);
 }
-
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,0,log10axis(axis1000()));
 
 // Y AXIS LEGEND
 $label = 'ratio to best';
-ImageStringUp($im, 2, 5, $h-$yo, $label, $black);
+ImageStringUp($im, 2, 5, $h-$yo, $label, $c['black']);
 $y = $yo + strlen($label)*CHAR_WIDTH_2 + 16;
 
 $label = 'Time';
-ImageStringUp($im, 2, 5, $h-$y-16, $label, $black);
-ImageFilledRectangle($im, 11, $h-$y-10, 11+$barw, $h-$y, $white);
-$y = $y + strlen($label)*CHAR_WIDTH_2 + 24;
+ImageStringUp($im, 2, 5, $h-$y-8, $label, $c['black']);
+ImageFilledRectangle($im, 11, $h-$y-4, 11+$barw, $h-$y+6, $c['gray']);
+$y = $y + strlen($label)*CHAR_WIDTH_2 + 18;
 
 $label = 'Memory';
-ImageStringUp($im, 2, 5, $h-$y-16, $label, $black);
-ImageFilledRectangle($im, 12, $h-$y-10, 12+$barmw, $h-$y, $black);
+ImageStringUp($im, 2, 5, $h-$y-8, $label, $c['black']);
+ImageFilledRectangle($im, 12, $h-$y-4, 12+$barmw, $h-$y+6, $c['black']);
 
-xAxisLegend($im,$xo,$w,$h,$black,'program');
-chartTitle($im,$w,$black,'Normalized Program Run Time and Memory');
-if ($valid){
-   chartNotice($im,$w,$white,$Mark);
-}
+xAxisLegend($im,$xo,$w,$h,$c,'program');
+chartTitle($im,$xo,$w,$c,'Normalized Program Run Time and Memory');
+
 
 ImageInterlace($im,1);
 ImagePng($im);

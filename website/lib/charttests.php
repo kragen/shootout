@@ -14,25 +14,24 @@ $WhiteListTests = WhiteListUnique('test.csv',$in);
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($BackText,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
-list ($Stats,$valid) = ValidStats($HTTP_GET_VARS,'s',$valid);
+list ($Stats,$valid) = ValidMatrix($HTTP_GET_VARS,'s',STATS_SIZE,$valid);
+for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
 
 
 // CHART /////////////////////////////////////////////////////
    $w = 480;
    $h = 300;
 
-   $xo = 65;
+   $xo = 48;
    $yo = 16;
 
-   $yscale = 48;
+   $yscale = 51;
 
    $boxw = 20;
    $boxo = 10;
    $whisk = floor(($boxw - $boxo)/2);
    $outlier = 5;
    $maxboxes = 17;
-
-   $yshift = 1;
 
 if ($valid){
 // SPACE OUT BARS ACROSS WIDTH
@@ -46,27 +45,24 @@ if ($valid){
 }
 
 $im = ImageCreate($w,$h);
-list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
+$c = chartColors($im);
+
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,-1,log10axis(axisT()));
+xAxisLegend($im,$xo,$w,$h,$c,'benchmark');
+
+$label = 'program sys + usr';
+ImageStringUp($im, 2, 0, $h-72, $label, $c['black']);
+
 
 if ($valid){
-   chartBackground($im,$xo-CHAR_WIDTH_2,$h-12,$h-42,$mgray,$boxw+$boxspace,$maxboxes,$BackText);
-   chartBoxes($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,1,$Stats);
+   chartBackground($im,$xo,$h-12,$h-15,$c,$boxw+$boxspace,$maxboxes,$BackText);
+   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,1,$Stats);
+   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,1,$Stats);
+   chartNotice($im,$w,$h,$c,$Mark);
 }
 
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,$yshift,log10axis(axisT()));
-yAxisLegend($im,-64,$w,$h,$black,'program sys + usr');
-xAxisLegend($im,$xo,$w,$h,$black,'benchmark');
-
-if ($valid){
-   chartWhiskers($im,$xo,$yo,$h,$yscale,$white,$boxw,$boxspace,$boxo,$maxboxes,$black,1,$Stats);
-}
-
-chartTitle($im,$w,$black,
+chartTitle($im,$xo,$w,$c,
    'Program Run Time - Median and Quartiles - by Benchmark');
-
-if ($valid){
-   chartNotice($im,$w,$white,$Mark);
-}
 
 ImageInterlace($im,1);
 ImagePNG($im);

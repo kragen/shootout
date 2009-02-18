@@ -163,7 +163,7 @@ if ($T=='all'){
 
       if ($L!=$L2){
          $TemplateName = 'headtohead.tpl.php';
-         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
+         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
       } else {
         $TemplateName = 'language.tpl.php';

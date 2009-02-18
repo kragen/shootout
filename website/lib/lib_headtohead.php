@@ -5,7 +5,7 @@
 
 
 
-function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
+function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    // Simple filter on file rows
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
@@ -13,7 +13,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
-      
+
       $lang = $row[DATA_LANG];                                  
       if ($lang==$L1 || $lang==$L2){  $rows[] = $row;}
    }
@@ -140,7 +140,7 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       elseif (!$isSameTest && isset($errorRowL1)){
          $e = $errorRowL1;    
          $exclude = ExcludeData($e,$Langs,$Excl);        
-         
+
          $NData[$e[DATA_TEST]] = array(
               $e[DATA_TEST]         
             , $e[DATA_LANG]
@@ -163,11 +163,35 @@ function HeadToHeadData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE
       $i = $j;
    }
    uasort($NData,'CompareTimeRatio');
-   return $NData;
+   
+   
+   // sort by x times faster than ratio
+   $SortedTests = array();
+   $reorder = array();
+   foreach($NData as $k => $v){ $SortedTests[$k] = $Tests[$k]; }
+   foreach($Tests as $k => $v){ 
+      if (!isset($SortedTests[$k])){ $SortedTests[$k] = $Tests[$k]; }
+   }
+
+   // extract minimum values for chart
+   $ratios = array();
+   foreach($Tests as $Row){
+      if (($Row[TEST_WEIGHT]<=0)){ continue; }
+      if (isset($NData[$Row[TEST_LINK]])){
+         $v = $NData[$Row[TEST_LINK]];
+         $ratios[] = $v[N_FULLCPU];
+         $ratios[] = $v[N_MEMORY];
+         $ratios[] = $v[N_GZ];
+      } else {
+         $ratios[] = 1.0; $ratios[] = 1.0; $ratios[] = 1.0;
+      }
+   }
+
+   return array($NData,$SortedTests,$ratios);
 }
 
 
-function CompareTimeRatio($b, $a){
+function CompareTimeRatio($a, $b){
    if ($a[N_FULLCPU] == $b[N_FULLCPU]){
       if ($a[N_MEMORY] == $b[N_MEMORY]){
          if ($a[N_GZ] == $b[N_GZ]){ return 0; }

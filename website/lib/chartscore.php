@@ -12,7 +12,9 @@ require_once(LIB_PATH.'lib_chart.php');
 // DATA ////////////////////////////////////////////////////
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
-list ($GeometricMean,$valid) = ValidLog10($HTTP_GET_VARS,'g',$valid);
+
+list ($Values,$valid) = ValidMatrix($HTTP_GET_VARS,'g',1,$valid);
+for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
 
 
 // CHART /////////////////////////////////////////////////////
@@ -21,28 +23,26 @@ list ($GeometricMean,$valid) = ValidLog10($HTTP_GET_VARS,'g',$valid);
    $w = 480;
    $h = 225;
 
-   $xo = 65;
+   $xo = 48;
    $yo = 16;
 
-   $yscale = 84;
+   $yscale = 96;
    $barw = 3;
 
 $im = ImageCreate($w,$h);
-list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
+$c = chartColors($im);
+
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis100()));
 
 if ($valid){
-   chartBars($im,$xo,$h-$yo,$yscale,$white,$barw,$barspace,0,$GeometricMean);
+   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,0,$Values);
+   chartNotice($im,$w,$h,$c,$Mark);
 }
+yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
+xAxisLegend($im,$xo,$w,$h,$c,'language implementation');
+chartTitle($im,$xo,$w,$c,
+   'Weighted Geometric Mean of normalized Time, Memory and Size');
 
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$white,$gray,0,log10axis(axis100()));
-yAxisLegend($im,$yo,$w,$h,$black,'ratio to best');
-xAxisLegend($im,$xo,$w,$h,$black,'language implementation');
-chartTitle($im,$w,$black,
-   'Weighted Geometric Mean of normalized Time, Memory and Source size');
-
-if ($valid){
-   chartNotice($im,$w,$white,$Mark);
-}
 
 ImageInterlace($im,1);
 ImagePNG($im);

@@ -13,21 +13,32 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
-
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($LangName,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
 
-$D = array();
-if (isset($HTTP_GET_VARS['d'])
-      && (strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 512))){
-   $X = $HTTP_GET_VARS['d'];
-   if (ereg("^[0-9o]+$",$X)){
-      foreach(explode('o',$X) as $v){
-         if (strlen($v) && (strlen($v) <= 12)){ $D[] = doubleval($v)/100000.0; }
-      }
+define('RATIOS_SIZE',3);
+define('RATIOS_SECS',0);
+define('RATIOS_KB',1);
+define('RATIOS_GZ',2);
+list ($Matrix,$valid) = ValidMatrix($HTTP_GET_VARS,'r',RATIOS_SIZE,$valid);
+
+$secs = array();
+$kb = array();
+$gz = array();
+
+$n = sizeof($Matrix);
+if ($n%RATIOS_SIZE == 0){
+   for ($i=0; $i<$n; $i+=RATIOS_SIZE){
+      $secs[] = log10($Matrix[$i+RATIOS_SECS]);
+      $kb[] = log10($Matrix[$i+RATIOS_KB]);
+      $gz[] = log10($Matrix[$i+RATIOS_GZ]);
    }
 }
-
+unset($Matrix);
+sort($secs);
+sort($kb);
+sort($gz);
+$n = sizeof($secs);
 
 // CHART //////////////////////////////////////////////////
 
@@ -35,118 +46,55 @@ if (isset($HTTP_GET_VARS['d'])
    $w = 480;
    $h = 300;
 
-   $xo = 65;
+   $xo = 48;
    $yo = 150;
 
-   $yscale = 54;
-   $barw = 4;
+   $yscale = 44.0;
+   $barw = 5;
    $barmw = 0;
 
-   define('DATA_SIZE',3);
-   define('DATA_CPU',0);
-   define('DATA_MEM',1);
-   define('DATA_GZ',2);
+   $gap = 20;
 
 
 $im = ImageCreate($w,$h);
-list($white,$black,$gray,$bgray,$mgray) = chartColors($im);
+$c = chartColors($im);
 
-// BARS
-$gap = 16;
-$n = sizeof($D);
-if ($n%DATA_SIZE == 0){
+$yaxis = log10axis(axis3_10());
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,$yaxis);
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,$yaxis,'down');
+
+if ($valid){
    $x = $xo;
-   for ($i=0; $i<$n; $i+=DATA_SIZE){
-      $v = $D[$i+DATA_CPU];
-      if ($v < 1.0){
-         if ($v == 0){ $v = 1.0; }
-         $y = $yo+ log10(1.0/$v)*$yscale;
-         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw-1, $y, $mgray);
-      } else {
-         $y = $h-($yo+ log10($v)*$yscale);
-         ImageFilledRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
-      }
-      $x = $x + $barw + $barspace;
-   }
-   $aftercpu = $x;
+   $x1 = $x;
+   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,0,$secs);
+   
+   $label = 'Time';
+   $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
+   ImageString($im, 2, $z, $h-30, $label, $c['black']);
 
-   $x = $x+$gap;
-   for ($i=0; $i<$n; $i+=DATA_SIZE){
-      $v = $D[$i+DATA_MEM];
-      if ($v < 1.0){
-         if ($v == 0){ $v = 1.0; }
-         $y = $yo+ log10(1.0/$v)*$yscale;
-         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw-1, $y, $mgray);
-      } else {
-         $y = $h-($yo+ log10($v)*$yscale);
-         ImageFilledRectangle($im, $x, $y, $x+$barmw, $h-$yo, $black);
-      }
-      $x = $x + $barw + $barspace;
-   }
-   $aftermem = $x;
+   $x += $gap;
+   $x1 = $x;
+   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'black',$barmw,4+$barspace,0,$kb);
 
-   $x = $x+$gap;
-   for ($i=0; $i<$n; $i+=DATA_SIZE){
-      $v = $D[$i+DATA_GZ];
-      if ($v < 1.0){
-         if ($v == 0){ $v = 1.0; }
-         $y = $yo+ log10(1.0/$v)*$yscale;
-         ImageFilledRectangle($im, $x, $h-$yo, $x+$barw-1, $y, $mgray);
-      } else {
-         $y = $h-($yo+ log10($v)*$yscale);
-         ImageRectangle($im, $x, $y, $x+$barw, $h-$yo, $white);
-      }
-      $x = $x + $barw + $barspace;
-   }
-   $aftergz = $x;
+   $label = 'Memory Use';
+   $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
+   ImageString($im, 2, $z, $h-30, $label, $c['black']);
+
+   $x += $gap;
+   $x1 = $x;
+   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,0,$gz,FALSE);
+
+   $label = 'Source Size';
+   $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
+   ImageString($im, 2, $z, $h-30, $label, $c['black']);
+
+   chartNotice($im,$w,$h,$c,$Mark);
 }
 
+yAxisLegend($im,15,$w,$h,$c,'worse ratio       better ratio');
 
-// UPPER GRID
-$lastx = (isset($aftergz)) ? $aftergz : $w;
-for ($i=0; $i<11; $i++){
-   if ($i==1||$i==5||$i==9){ continue; }
-   $y = $h-($yo+($i/4.0)*$yscale);
-   ImageLine($im, $xo-15, $y, $lastx, $y, $gray);
 
-   $label = strval( floor(pow(10.0,$i/4.0)) );
-   $x = strlen($label)*CHAR_WIDTH_2;
-   ImageString($im, 2, $xo-$x-6, $y-13, $label, $white);
-}
-// LOWER GRID
-for ($i=0; $i<11; $i++){
-   if ($i==0||$i==1||$i==5||$i==9){ continue; }
-   $y = $h-($yo-($i/4.0)*$yscale);
-   ImageLine($im, $xo-15, $y, $lastx, $y, $gray);
-
-   $label = strval( floor(pow(10.0,$i/4.0)) );
-   $x = strlen($label)*CHAR_WIDTH_2;
-   ImageString($im, 2, $xo-$x-6, $y-13, $label, $mgray);
-}
-
-// GRID GAPS
-if (isset($aftercpu)){
-   ImageFilledRectangle($im, $aftercpu, 0, $aftercpu+$gap-1, $h, $bgray);
-}
-if (isset($aftermem)){
-   ImageFilledRectangle($im, $aftermem, 0, $aftermem+$gap-1, $h, $bgray);
-}
-
-// X AXIS LEGEND
-if (isset($aftercpu)){
-   $axisw = $aftercpu-$xo;
-   $label = 'faster';
-   $x = ($axisw-strlen($label)*CHAR_WIDTH_2)/2;
-   ImageString($im, 2, $xo+$x, $h-15, $label, $black);
-
-   $label = 'smaller';
-   $x = ($axisw-strlen($label)*CHAR_WIDTH_2)/2;
-   ImageString($im, 2, $aftercpu+$gap+$x, $h-15, $label, $black);
-
-   $label = 'smaller';
-   $x = ($axisw-strlen($label)*CHAR_WIDTH_2)/2;
-   ImageString($im, 2, $aftermem+$gap+$x, $h-15, $label, $black);
-}
+/*
 
 // Y AXIS LEGEND
 $labela = 'Time';
@@ -169,9 +117,13 @@ $y = $y + strlen($labela)*CHAR_WIDTH_2 + 22;
 ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
 ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
+
+
+ */
+
 if ($valid){
-   chartTitle($im,$w,$black,$LangName[0].' / '.$LangName[1]);
-   chartNotice($im,$w,$white,$Mark);
+   chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
+   chartNotice($im,$w,$h,$c,$Mark);
 }
 
 ImageInterlace($im,1);
