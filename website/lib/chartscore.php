@@ -26,13 +26,13 @@ for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
    $xo = 48;
    $yo = 16;
 
-   $yscale = 96;
+   $yscale = 64;
    $barw = 3;
 
 $im = ImageCreate($w,$h);
 $c = chartColors($im);
 
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis100()));
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis1000()));
 
 if ($valid){
    chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,0,$Values);
