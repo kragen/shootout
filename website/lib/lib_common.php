@@ -440,10 +440,10 @@ function Encode($x){
          }
          if (sizeof($matrix)>0){
             $shift = 5;
-            $rescale = 1000.0;
+            $rescale = 100000.0;
             foreach($matrix as $v){
-               //$v = $each<0.01 ? 0.01 : $each;
-               $d[] = intval(sprintf('%d',(log10($v)+$shift)*$rescale));
+               $z = $v < 0.00001 ? 0.00001 : $v;
+               $d[] = intval(sprintf('%d',(log10($z)+$shift)*$rescale));
             }
             $x = $d;
          }

@@ -183,7 +183,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          $ratios[] = $v[N_MEMORY];
          $ratios[] = $v[N_GZ];
       } else {
-         $ratios[] = 1.0; $ratios[] = 1.0; $ratios[] = 1.0;
+         $ratios[] = 0.0001; $ratios[] = 0.0001; $ratios[] = 0.0001;
       }
    }
 

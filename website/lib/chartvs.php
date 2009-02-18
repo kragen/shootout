@@ -93,34 +93,6 @@ if ($valid){
 
 yAxisLegend($im,15,$w,$h,$c,'worse ratio       better ratio');
 
-
-/*
-
-// Y AXIS LEGEND
-$labela = 'Time';
-$labelb = 'Memory';
-$y = ($h-strlen($labela.$labelb)*CHAR_WIDTH_2 -14)/2;
-$y0 = $y;
-ImageStringUp($im, 2, 5, $h-$y-4, $labela, $black);
-ImageFilledRectangle($im, 11, $h-$y, 11+$barw, $h-$y+12, $white);
-$y = $y + strlen($labela)*CHAR_WIDTH_2 + 22;
-ImageStringUp($im, 2, 5, $h-$y-4, $labelb, $black);
-ImageFilledRectangle($im, 12, $h-$y, 12+$barmw, $h-$y+10, $black);
-
-
-$labela = 'worse';
-$labelb = 'Source size';
-$y = $y0;
-ImageStringUp($im, 2, $w-20, $h-$y-4, $labela, $black);
-ImageFilledRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+12, $mgray);
-$y = $y + strlen($labela)*CHAR_WIDTH_2 + 22;
-ImageStringUp($im, 2, $w-20, $h-$y-4, $labelb, $black);
-ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
-
-
-
- */
-
 if ($valid0){
    chartNotice($im,$w,$h,$c,$Mark);
 }

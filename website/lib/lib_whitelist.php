@@ -131,7 +131,7 @@ function ValidMark(&$H,$valid=FALSE){
 
 function ValidMatrix(&$H,$V,$size,$valid=FALSE){
    $shift = 5;
-   $rescale = 1000.0;
+   $rescale = 100000.0;
    $bounds = 1024;
    $d = array();
    if ($valid){
