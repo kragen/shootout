@@ -13,14 +13,14 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
-list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
-list ($LangName,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
+list ($Mark,$valid0) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($LangName,$valid1) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,TRUE);
 
 define('RATIOS_SIZE',3);
 define('RATIOS_SECS',0);
 define('RATIOS_KB',1);
 define('RATIOS_GZ',2);
-list ($Matrix,$valid) = ValidMatrix($HTTP_GET_VARS,'r',RATIOS_SIZE,$valid);
+list ($Matrix,$valid) = ValidMatrix($HTTP_GET_VARS,'r',RATIOS_SIZE,TRUE);
 
 $secs = array();
 $kb = array();
@@ -67,7 +67,7 @@ if ($valid){
    $x = $xo;
    $x1 = $x;
    $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,0,$secs);
-   
+
    $label = 'Time';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($im, 2, $z, $h-30, $label, $c['black']);
@@ -121,9 +121,12 @@ ImageRectangle($im, $w-20+6, $h-$y, $w-20+6+$barw, $h-$y+10, $white);
 
  */
 
-if ($valid){
-   chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
+if ($valid0){
    chartNotice($im,$w,$h,$c,$Mark);
+}
+
+if ($valid1){
+   chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
 }
 
 ImageInterlace($im,1);
