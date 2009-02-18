@@ -439,11 +439,9 @@ function Encode($x){
             foreach($x as $each){ $matrix = array_merge($matrix,$each); }
          }
          if (sizeof($matrix)>0){
-            $shift = 5;
-            $rescale = 100000.0;
             foreach($matrix as $v){
-               $z = $v < 0.00001 ? 0.00001 : $v;
-               $d[] = intval(sprintf('%d',(log10($z)+$shift)*$rescale));
+               $z = $v < NO_VALUE ? NO_VALUE : $v;
+               $d[] = intval(sprintf('%d',(log10($z)+VALUE_SHIFT)*VALUE_RESCALE));
             }
             $x = $d;
          }

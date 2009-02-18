@@ -38,6 +38,11 @@ define('STAT_XUPPER',5);
 define('STAT_MAX',6);
 define('STATS_N',7);
 
+// MEASUREMENT_RESCALE has to be big enough to rescale NO_MEASUREMENT
+// so the NO_MEASUREMENT information is passed to charts
+define('NO_VALUE',0.00001);
+define('VALUE_RESCALE',100000.0);
+define('VALUE_SHIFT',5);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -131,7 +136,6 @@ function ValidMark(&$H,$valid=FALSE){
 
 function ValidMatrix(&$H,$V,$size,$valid=FALSE){
    $shift = 5;
-   $rescale = 100000.0;
    $bounds = 1024;
    $d = array();
    if ($valid){
@@ -143,7 +147,7 @@ function ValidMatrix(&$H,$V,$size,$valid=FALSE){
          if ($X && ereg("^[0-9O]+$",$X)){
             foreach(explode('O',$X) as $v){
                if (strlen($v) && (strlen($v) <= 10) && is_numeric($v)){
-                  $d[] = pow(10.0,(doubleval($v)/$rescale-$shift));
+                  $d[] = pow(10.0,(doubleval($v)/VALUE_RESCALE-VALUE_SHIFT));
                } else {
                   $d = array();
                   break;
