@@ -13,14 +13,14 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
-list ($Mark,$valid0) = ValidMark($HTTP_GET_VARS,TRUE);
-list ($LangName,$valid1) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,TRUE);
+list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($LangName,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
 
 define('RATIOS_SIZE',3);
 define('RATIOS_SECS',0);
 define('RATIOS_KB',1);
 define('RATIOS_GZ',2);
-list ($Matrix,$valid) = ValidMatrix($HTTP_GET_VARS,'r',RATIOS_SIZE,TRUE);
+list ($Matrix,$valid) = ValidMatrix($HTTP_GET_VARS,'r',RATIOS_SIZE,$valid);
 
 $secs = array();
 $kb = array();
@@ -88,18 +88,11 @@ if ($valid){
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($im, 2, $z, $h-30, $label, $c['black']);
 
+   chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
    chartNotice($im,$w,$h,$c,$Mark);
 }
 
 yAxisLegend($im,15,$w,$h,$c,'worse ratio       better ratio');
-
-if ($valid0){
-   chartNotice($im,$w,$h,$c,$Mark);
-}
-
-if ($valid1){
-   chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
-}
 
 ImageInterlace($im,1);
 ImagePng($im);
