@@ -41,7 +41,9 @@ function ComparisonData($langs,$data,$p,&$Excl){
       $NData[$i][N_FULLCPU][] = $d[DATA_TIME];
       $NData[$i][N_MEMORY][] = $d[DATA_MEMORY];
       $TestValues[ $d[DATA_TESTVALUE] ] = $d[DATA_TESTVALUE];
-   }  
+   }
+
+
 
 // SUB-SELECT DATA FOR SPECIFIC PROGRAMS
 
@@ -53,41 +55,49 @@ function ComparisonData($langs,$data,$p,&$Excl){
    }
 
    $Selected = array();
+   $i = sizeof($TestValues)-1;
    foreach($NData as $d){
-      if ((($plang[0]==$d[N_LANG])&&($pid[0]==$d[N_ID])) ||
-          (($plang[1]==$d[N_LANG])&&($pid[1]==$d[N_ID])) ||
-          (($plang[2]==$d[N_LANG])&&($pid[2]==$d[N_ID])) ||
-          (($plang[3]==$d[N_LANG])&&($pid[3]==$d[N_ID]))){
-         $Selected[] = $d;
+      if (($plang[0]==$d[N_LANG])&&($pid[0]==$d[N_ID])) $Selected[0] = $d;
+      elseif (($plang[1]==$d[N_LANG])&&($pid[1]==$d[N_ID])) $Selected[1] = $d;
+      elseif (($plang[2]==$d[N_LANG])&&($pid[2]==$d[N_ID])) $Selected[2] = $d;
+      elseif (($plang[3]==$d[N_LANG])&&($pid[3]==$d[N_ID])) $Selected[3] = $d;
+
+      // later convert $Selected to ratios against these minima
+      if (isset($d[N_FULLCPU][$i])&&(!isset($mintime)||$d[N_FULLCPU][$i]<$mintime[N_FULLCPU][$i])){
+         $mintime = $d;
+      }
+      if (isset($d[N_MEMORY][$i])&&(!isset($minmem)||$d[N_MEMORY][$i]<$minmem[N_MEMORY][$i])){
+         $minmem = $d;
       }
    }
 
-
 // MAX AND NAME FOR SPECIFIC PROGRAMS
-   for ($i=0; $i<sizeof($Selected); $i++){
+   foreach ($Selected as $i => $v){
       $d = $Selected[$i];
       $lang = $d[N_LANG];
-      $id = $d[N_ID]; 
+      $id = $d[N_ID];
 
       if (strlen($langs[$lang][LANG_NAME])>0){
          $Selected[$i][N_NAME] = $langs[$lang][LANG_NAME].IdName($id); }
       else {
-         $Selected[$i][N_NAME] = $langs[$lang][LANG_FAMILY].IdName($id); } 
-         
-      foreach($d[N_FULLCPU] as $v){
-         if ($Selected[$i][N_CPU_MAX]<$v){ $Selected[$i][N_CPU_MAX] = $v; }
-      }
+         $Selected[$i][N_NAME] = $langs[$lang][LANG_FAMILY].IdName($id); }
 
-      foreach($d[N_MEMORY] as $v){
-         if ($Selected[$i][N_MEMORY_MAX]<$v){ $Selected[$i][N_MEMORY_MAX] = $v; }
-      }
+      // convert measurements into "ratios to best"
+      foreach($d[N_FULLCPU] as $k => $v)
+         if (isset($mintime[N_FULLCPU][$k]))
+            $Selected[$i][N_FULLCPU][$k] = $v / $mintime[N_FULLCPU][$k];
 
-// USE SAME COLOR FOR PROGRAM IN EVERY CHART
-      $Selected[$i][N_COLOR] = $i;
+      foreach($d[N_MEMORY] as $k => $v)
+         if (isset($minmem[N_MEMORY][$k]))
+            // use default value to avoid bad data divide by zero
+            $Selected[$i][N_MEMORY][$k] =
+               ($minmem[N_MEMORY][$k]<200.0) ? $v / 200.0 : $v / $minmem[N_MEMORY][$k];
+
    }
+
    uasort($NData,'CompareNName');
    sort($TestValues);
-   
+
    return array(&$NData,&$Selected,$TestValues);
 }
 
@@ -114,7 +124,9 @@ function CompareTestValue($a, $b){
 
 
 function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,$Sort){
-   echo '<form method="get" action="fulldata.php">', "\n";
+   echo '<p><strong>Choose</strong> programs for side-by-side comparison:</p>', "\n";
+   echo '<form method="get" action="fulldata.php"><p>', "\n";
+   /*
    echo '<p><select name="test">', "\n";
 
    foreach($Tests as $Row){
@@ -128,7 +140,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
    echo '</select></p>', "\n";    
-   
+   */
      
 // NASTY HACK      
 // ADD DUMMY VALUES TO PRESERVE SELECTION IN DROP-DOWN MENUS 
@@ -158,8 +170,6 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       $Data[] = array($a, $b, '', $c[LANG_FULL].$d, $c[LANG_FULL].$d);
    }
 
-        
-   echo '<p class="h"><strong>Choose</strong> programs for side-by-side comparison: <br />', "\n";    
    echo '<select name="p1">', "\n";
 
    $first = 1;
@@ -206,7 +216,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
 
    echo '</select>', "\n";
    echo '<select name="p4">', "\n";
-   
+
    $first = 1;   
    foreach($Data as $Row){
       $Link = $Row[N_LANG].'-'.$Row[N_ID];

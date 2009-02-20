@@ -23,9 +23,7 @@ for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
    $h = 300;
 
    $xo = 48;
-   $yo = 16;
-
-   $yscale = 51;
+   $yo = MARGIN;
 
    $boxw = 20;
    $boxo = 10;
@@ -47,19 +45,23 @@ if ($valid){
 $im = ImageCreate($w,$h);
 $c = chartColors($im);
 
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,-1,log10axis(axisT()));
+$yaxis = log10axis(axisT());
+list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
+
 xAxisLegend($im,$xo,$w,$h,$c,'benchmark');
 
 $label = 'program sys + usr';
 ImageStringUp($im, 2, 0, $h-72, $label, $c['black']);
 
-
 if ($valid){
    chartBackground($im,$xo,$h-12,$h-15,$c,$boxw+$boxspace,$maxboxes,$BackText);
-   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,1,$Stats);
-   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,1,$Stats);
+   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,abs($yshift),$Stats);
+   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,abs($yshift),$Stats);
    chartNotice($im,$w,$h,$c,$Mark);
 }
+
+chartFrame($im,$xo,$yo,$w,$h,$c);
 
 chartTitle($im,$xo,$w,$c,
    'Program Run Time - Median and Quartiles - by Benchmark');

@@ -5,20 +5,20 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort);
 $Row = $Tests[$SelectedTest];
 $TestName = $Row[TEST_NAME];
 $TestTag = $Row[TEST_TAG];
+$TestLink = $Row[TEST_LINK];
 
 list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl);
 
-if (sizeof($Accepted)>0){ $P1 = $Accepted[0][DATA_LANG].'-'.$Accepted[0][DATA_ID]; }
+$first = 0;
+$last = sizeof($Accepted)-1;
+if (sizeof($Accepted)>=$first){ $P1 = $Accepted[$first][DATA_LANG].'-'.$Accepted[$first][DATA_ID]; }
 else { $P1 = ''; }
 
-if (sizeof($Accepted)>1){ $P2 = $Accepted[1][DATA_LANG].'-'.$Accepted[1][DATA_ID]; }
+if (sizeof($Accepted)>=$last){ $P2 = $Accepted[$last][DATA_LANG].'-'.$Accepted[$last][DATA_ID]; }
 else { $P2 = ''; }
 
-if (sizeof($Accepted)>2){ $P3 = $Accepted[2][DATA_LANG].'-'.$Accepted[2][DATA_ID]; }
-else { $P3 = ''; }
-
-if (sizeof($Accepted)>3){ $P4 = $Accepted[3][DATA_LANG].'-'.$Accepted[3][DATA_ID]; }
-else { $P4 = ''; }
+$P3 = $P1;
+$P4 = $P2;
 
 $NString = 'N=?';
 $testValue = 1;
@@ -52,7 +52,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
 
-<p><img src="chart.php?<?='t='.Encode($dtime);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='k='.Encode($dmem);?>"
+<p><img src="chart.php?<?='t='.Encode($dtime);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='k='.Encode($dmem);?>&amp;<?='ww='.Encode($TestLink);?>"
    alt=""
    title=""
    width="480" height="225"

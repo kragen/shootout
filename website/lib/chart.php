@@ -8,10 +8,14 @@ header("Content-type: image/png");
 require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_chart.php');
 
+list($in,$ex) = WhiteListInEx();
+$WhiteListTests = WhiteListUnique('test.csv',$in);
+
 
 // DATA ////////////////////////////////////////////////////
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($Test,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
 
 list ($Time,$valid) = ValidMatrix($HTTP_GET_VARS,'t',1,$valid);
 for ($i=0;$i<sizeof($Time);$i++) $Time[$i] = log10($Time[$i]);
@@ -26,22 +30,29 @@ for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
    $h = 225;
 
    $xo = 48;
-   $yo = 16;
+   $yo = MARGIN;
 
-   $yscale = 64;
+   $yshift = 0;
+   $yscale = ($h-2*$yo)/(log10(1000)-$yshift);
+
    $barw = 3;
    $barmw = 0;
 
 $im = ImageCreate($w,$h);
 $c = chartColors($im);
-              
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis1000()));
+
+$yaxis = log10axis(axis1000());
+list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
 
 if ($valid){
-   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,0,$Time);
-   chartBars($im,$xo,$h-$yo,$yscale,$c,'black',$barmw,$barw+$barspace,0,$KB);
+   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,$yshift,$Time);
+   chartBars($im,$xo,$h-$yo,$yscale,$c,'black',$barmw,$barw+$barspace,$yshift,$KB);
    chartNotice($im,$w,$h,$c,$Mark);
+   xAxisLegend($im,$xo,$w,$h,$c,$Test[0].' programs');
 }
+
+chartFrame($im,$xo,$yo,$w,$h,$c);
 
 // Y AXIS LEGEND
 $label = 'ratio to best';
@@ -57,8 +68,7 @@ $label = 'Memory';
 ImageStringUp($im, 2, 5, $h-$y-8, $label, $c['black']);
 ImageFilledRectangle($im, 12, $h-$y-4, 12+$barmw, $h-$y+6, $c['black']);
 
-xAxisLegend($im,$xo,$w,$h,$c,'program');
-chartTitle($im,$xo,$w,$c,'Normalized Program Run Time and Memory');
+chartTitle($im,$xo,$w,$c,'Normalized Program Run Time and Memory Use');
 
 
 ImageInterlace($im,1);

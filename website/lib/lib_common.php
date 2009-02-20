@@ -427,31 +427,6 @@ function PTime($d){
 }
 
 
-function Encode($x){
-   if (is_string($x)){  // simple string
-      $s = $x;
-   } elseif (is_array($x)){
-      if (sizeof($x)>0){
-         $matrix = array();
-         if (is_numeric($x[0])){ // single array of doubles
-            $matrix = &$x;
-         } elseif (is_array($x[0])){ // array of array of doubles
-            foreach($x as $each){ $matrix = array_merge($matrix,$each); }
-         }
-         if (sizeof($matrix)>0){
-            foreach($matrix as $v){
-               $z = $v < NO_VALUE ? NO_VALUE : $v;
-               $d[] = intval(sprintf('%d',(log10($z)+VALUE_SHIFT)*VALUE_RESCALE));
-            }
-            $x = $d;
-         }
-      }
-      $s = implode('O',$x);
-   }
-   return rawurlencode(base64_encode(gzcompress($s,9)));
-}
-
-
 function MarkTime(){
    if (SITE_NAME == 'debian'){
       $Mark = 'late 2007';

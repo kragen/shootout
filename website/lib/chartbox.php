@@ -25,9 +25,7 @@ for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
 
    $boxspace = 8;
    $xo = 48;
-   $yo = 16;
-
-   $yscale = 76;
+   $yo = MARGIN;
 
    $boxw = 20;
    $boxo = 10;
@@ -39,22 +37,25 @@ $im = ImageCreate($w,$h);
 $c = chartColors($im);
 
 // GRID
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis3000()));
+
+$yaxis = log10axis(axis3000());
+list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
+
 yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
 xAxisLegend($im,$xo,$w,$h,$c,'language implementation');
 
 if ($valid){
    chartBackground($im,$xo,$h-12,$h-27,$c,$boxw+$boxspace,$maxboxes,$BackText);
-   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,0,$Stats);
-   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,0,$Stats);
+   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,$yshift,$Stats);
+   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,$yshift,$Stats);
    chartNotice($im,$w,$h,$c,$Mark);
 }
 
+chartFrame($im,$xo,$yo,$w,$h,$c);
+
 chartTitle($im,$xo,$w,$c,
    'Normalized Program Run Time - Median and Quartiles');
-
-
-
 
 ImageInterlace($im,1);
 ImagePNG($im);

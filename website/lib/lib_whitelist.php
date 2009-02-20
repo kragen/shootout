@@ -120,6 +120,32 @@ function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
 
    // VALIDATION
 
+function Encode($x){
+   $s = "";
+   if (is_string($x)){  // simple string
+      $s = $x;
+   } elseif (is_array($x)){
+      if (sizeof($x)>0){
+         $matrix = array();
+         if (is_numeric($x[0])){ // single array of doubles
+            $matrix = &$x;
+         } elseif (is_array($x[0])){ // array of array of doubles
+            foreach($x as $each){ $matrix = array_merge($matrix,$each); }
+         }
+         if (sizeof($matrix)>0){
+            foreach($matrix as $v){
+               $z = $v <= NO_VALUE ? NO_VALUE : $v;
+               $d[] = intval(sprintf('%d',(log10($z)+VALUE_SHIFT)*VALUE_RESCALE));
+            }
+            $x = $d;
+         }
+      }     
+      $s = implode('O',$x);
+   }
+   return rawurlencode(base64_encode(gzcompress($s,9)));
+}
+
+
 function ValidMark(&$H,$valid=FALSE){
    $bounds = 64;
    $mark = '';
@@ -134,8 +160,8 @@ function ValidMark(&$H,$valid=FALSE){
    return array($mark,$valid);
 }
 
+
 function ValidMatrix(&$H,$V,$size,$valid=FALSE){
-   $shift = 5;
    $bounds = 1024;
    $d = array();
    if ($valid){
@@ -147,7 +173,7 @@ function ValidMatrix(&$H,$V,$size,$valid=FALSE){
          if ($X && ereg("^[0-9O]+$",$X)){
             foreach(explode('O',$X) as $v){
                if (strlen($v) && (strlen($v) <= 10) && is_numeric($v)){
-                  $d[] = pow(10.0,(doubleval($v)/VALUE_RESCALE-VALUE_SHIFT));
+                  $d[] = pow(10.0,(doubleval($v)/VALUE_RESCALE - VALUE_SHIFT));
                } else {
                   $d = array();
                   break;
@@ -163,21 +189,21 @@ function ValidMatrix(&$H,$V,$size,$valid=FALSE){
 
 
 function ValidLangs(&$H,&$Langs,$valid=FALSE){
-   return ValidWhiteList($H,$Langs,"^[a-z0-9O]+$",24,LANG_FULL,$valid);
+   return ValidWhiteList($H,'w',$Langs,"^[a-z0-9O]+$",24,LANG_FULL,$valid);
 }
 
 function ValidTests(&$H,&$Tests,$valid=FALSE){
-   return ValidWhiteList($H,$Tests,"^[a-zO]+$",32,TEST_NAME,$valid);
+   return ValidWhiteList($H,'ww',$Tests,"^[a-zO]+$",32,TEST_NAME,$valid);
 }
 
 // private
-function ValidWhiteList(&$H,&$WhiteList,$regex,$size,$index,$valid){
+function ValidWhiteList(&$H,$V,&$WhiteList,$regex,$size,$index,$valid){
    $bounds = 512;
    $d = array();
    if ($valid){
       $valid = FALSE;
-      if (isset($H['w']) && strlen($H['w']) && strlen($H['w']) <= $bounds){
-         $X = base64_decode( rawurldecode($H['w']) );
+      if (isset($H[$V]) && strlen($H[$V]) && strlen($H[$V]) <= $bounds){
+         $X = base64_decode( rawurldecode($H[$V]) );
          $X = @gzuncompress($X,$bounds); // returns FALSE on error
 
          if ($X && ereg($regex,$X)){
@@ -185,7 +211,7 @@ function ValidWhiteList(&$H,&$WhiteList,$regex,$size,$index,$valid){
                if (strlen($v) && (strlen($v) <= $size) && isset($WhiteList[$v])){
                   $d[] = $WhiteList[$v][$index];
                } else {
-                  $d = array(); 
+                  $d = array();
                   break;
                }
             }

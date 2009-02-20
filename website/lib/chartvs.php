@@ -47,9 +47,8 @@ $n = sizeof($secs);
    $h = 300;
 
    $xo = 48;
-   $yo = 150;
+   $yo = $h/2;
 
-   $yscale = 44.0;
    $barw = 5;
    $barmw = 0;
 
@@ -60,13 +59,15 @@ $im = ImageCreate($w,$h);
 $c = chartColors($im);
 
 $yaxis = log10axis(axis3_10());
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,$yaxis,'down');
+$yshift = 0;
+$yscale = 45.0;
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis,'down');
 
 if ($valid){
    $x = $xo;
    $x1 = $x;
-   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,0,$secs);
+   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,$yshift,$secs);
 
    $label = 'Time';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
@@ -74,7 +75,7 @@ if ($valid){
 
    $x += $gap;
    $x1 = $x;
-   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'black',$barmw,4+$barspace,0,$kb);
+   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'black',$barmw,4+$barspace,$yshift,$kb);
 
    $label = 'Memory Use';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
@@ -82,7 +83,7 @@ if ($valid){
 
    $x += $gap;
    $x1 = $x;
-   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,0,$gz,FALSE);
+   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,$yshift,$gz,FALSE);
 
    $label = 'Source Size';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
@@ -91,6 +92,8 @@ if ($valid){
    chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
    chartNotice($im,$w,$h,$c,$Mark);
 }
+
+chartFrame($im,$xo,$yo,$w,$h,$c);
 
 yAxisLegend($im,15,$w,$h,$c,'worse ratio       better ratio');
 

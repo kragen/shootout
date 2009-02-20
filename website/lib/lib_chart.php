@@ -5,7 +5,8 @@
 
 define('CHAR_WIDTH_2',6.0);
 define('CHAR_WIDTH_3',7.0);
-define('MARGIN',15);
+define('MARGIN',16);
+define('BETWEEN_GRID',10);
 
 
 // FUNCTIONS ///////////////////////////////////////////////////
@@ -18,11 +19,10 @@ function chartColors(&$im){
    $c['gray'] = ImageColorAllocate($im,204,204,204);
    $c['dkgray'] = ImageColorAllocate($im,145,145,145);
    $c['black'] = ImageColorAllocate($im,0,0,0);
-   $c['debian'] = ImageColorAllocate($im,0,0,128);
-   $c['gp4'] = ImageColorAllocate($im,123,89,222);
-   $c['u32'] = ImageColorAllocate($im,255,181,21);
-   $c['u32q'] = ImageColorAllocate($im,255,99,9);
-   $c['u64'] = ImageColorAllocate($im,201,0,22);
+   $c['dodgerblue'] = ImageColorAllocate($im,30,144,255);
+   $c['goldenrod'] = ImageColorAllocate($im,218,165,32);
+   $c['mediumvioletred'] = ImageColorAllocate($im,199,21,133);
+   $c['yellowgreen'] = ImageColorAllocate($im,154,205,50 );
    return $c;
 }
 
@@ -57,6 +57,17 @@ function axis3_10(){
       );
 }
 
+function axis03000(){
+   return array(
+      array(0.1,"0.1"), array(0.3,"0.3"), array(0.5,"0.5"),
+      //array(0.3,"0.3"), array(0.5,"0.5"),
+      array(1,"1"), array(3,"3"), array(5,"5"),
+      array(10,"10"), array(30,"30"), array(50,"50"),
+      array(100,"100"), array(300,"300"), array(500,"500"),
+      array(1000,"1000"), array(3000,"3000")
+      );
+}
+
 
 function log10axis(&$a){
    $log10a = array();
@@ -64,13 +75,6 @@ function log10axis(&$a){
    return $log10a;
 }
 
-function axis10s(){
-   return array(
-      array(0,"0"), array(10,"10"), array(20,"20"), array(30,"30"),array(40,"40"),
-      array(50,"50"), array(60,"60"), array(70,"70"), array(80,"80"),array(90,"90"),
-      array(100,"100")
-      );
-}
 
 function axisPercent(&$a){
    $p = array();
@@ -89,15 +93,24 @@ function axisT(){
 }
 
 
+function scaleAndShift($o,$size,&$axis){
+   $shift = $axis[0][0];
+   $max = $axis[sizeof($axis)-1][0];
+   $valuerange = ($shift<0) ? abs($max-$shift) : $max-$shift;
+   $scale = ($size-2*$o)/$valuerange;
+   return array($scale,$shift);
+}
+
+
    // AXIS LABEL & GRIDLINE FUNCTIONS
 
 
 function xAxisGrid(&$im,$xo,$yo,$w,$h,$xscale,$yscale,&$c,$ashift,$a){
-   $y = $h - $yo - 100.0*$yscale + $ashift*$yscale;
+   //$y = $h - 2*$yo - 100.0*$yscale + $ashift*$yscale;
    foreach($a as $v){
       $x = $xo + $v[0]*$xscale + $ashift*$xscale;
       ImageStringUp($im, 3, $x, $h-$yo-6, $v[1], $c['dkgray']);
-      ImageLine($im, $x, $h-$yo, $x, $y, $c['ltgray']);
+      ImageLine($im, $x, $h-$yo, $x, $yo, $c['ltgray']);
    }
 }
 
@@ -107,12 +120,11 @@ function yAxisGrid(&$im,$xo,$yo,$w,$h,$scale,&$c,$ashift,$a,$up=''){
       $y = $h - $yo - $dir*($v[0]*$scale - $ashift*$scale);
       if (!isset($firsty)){ $firsty = $y; }
       $x = strlen($v[1])*CHAR_WIDTH_2;
-      ImageString($im, 2, $xo-$x-6, $y-7, $v[1], $c['dkgray']);
-      ImageLine($im, $xo-CHAR_WIDTH_2, $y, $w-1, $y, $c['ltgray']);
-   }
-   if (isset($firsty)){
-      ImageLine($im, $xo, $firsty, $xo, $y, $c['dkgray']);
-      ImageLine($im, $w-1, $firsty, $w-1, $y, $c['gray']);
+      if (!isset($prev)||abs($prev-$y)>BETWEEN_GRID){ // arbitrary spacing
+         ImageString($im, 2, $xo-$x-6, $y-7, $v[1], $c['dkgray']);
+         ImageLine($im, $xo-CHAR_WIDTH_2, $y, $w-1, $y, $c['ltgray']);
+         $prev = $y;
+      }
    }
 }
 
@@ -133,6 +145,7 @@ function chartTitle(&$im,$xo,$w,&$c,$label){
 function chartNotice(&$im,$w,$h,&$c,$label){
    $x = $w - strlen($label)*CHAR_WIDTH_2;
    ImageString($im, 2, $x, $h-15, $label, $c['dkgray']);
+   return $x;
 }
 
 function xAxisLegend(&$im,$xo,$w,$h,&$c,$label){
@@ -160,6 +173,11 @@ function chartBackground(&$im,$xo,$yo,$h,&$c,$inc,$max,&$a){
    }
 }
 
+function chartFrame(&$im,$xo,$yo,$w,$h,&$c){
+   ImageLine($im, $xo, MARGIN, $xo, $h-MARGIN, $c['dkgray']); // y-axis
+   ImageLine($im, $w-1, MARGIN, $w-1, $h-MARGIN, $c['gray']);
+   ImageLine($im, $xo, $h-$yo, $w-1, $h-$yo, $c['dkgray']); // x-axis
+}
 
    // CONTENT
 
@@ -170,11 +188,12 @@ function chartBars(&$im,$xo,$yo,$scale,&$c,$barc,$barw,$inc,$dshift,&$d,$filled=
          $y1 = $yo - $v*$scale;
          $y2 = $yo;
          if ($v < 0){ $tmp = $y1; $y1 = $y2; $y2 = $tmp; }
-         if ($filled)
+         if ($filled){
             ImageFilledRectangle($im, $x, $y1, $x+$barw, $y2, $c[$barc]);
-         else
+         } else {
             ImageFilledRectangle($im, $x, $y1, $x+$barw, $y2, $c['white']);
             ImageRectangle($im, $x, $y1, $x+$barw, $y2, $c[$barc]);
+         }
       }
       $x += $barw + $inc;
    }
@@ -189,7 +208,6 @@ function chartBoxes(&$im,$xo,$yo,$h,$scale,&$c,$boxw,$inc,$boxo,$max,$dshift,&$d
       $ys = $dshift*$scale;
       $count = 0;
       for ($i=0; $i<$n; $i+=STATS_SIZE){
-
          $xlower = $h-($yo + $d[$i+STAT_XLOWER]*$scale + $ys);
          $lower = $h-($yo + $d[$i+STAT_LOWER]*$scale + $ys);
          $upper = $h-($yo + $d[$i+STAT_UPPER]*$scale + $ys);
@@ -240,5 +258,35 @@ function chartWhiskers(&$im,$xo,$yo,$h,$scale,&$c,$boxw,$inc,$boxo,$max,$dshift,
       }
    }
 }
+
+
+function chartLines(&$im,$xo,$yo,$h,$xscale,$yscale,&$c,$linec,$xshift,&$xs,$ashift,&$ys){
+   $x2 = $xo;
+   $y2 = $yo;
+   for ($i=0;$i<sizeof($ys);$i++){
+     if ($ys[$i] > log10(NO_VALUE)){ // no measurement was made LOG10 TOO SPECIFIC
+
+         if (!isset($prevx)){
+            $prevx = $xo + ($xs[$i]*$xscale + $xshift*$xscale);
+            $prevy = $h - $yo - ($ys[$i]-$ashift)*$yscale;
+            ImageFilledRectangle($im, $prevx-1, $prevy-3, $prevx+3, $prevy+1, $c[$linec]);
+         } else {
+            $x1 = $prevx;
+            $y1 = $prevy;
+
+            $x2 = $xo + ($xs[$i]*$xscale + $xshift*$xscale);
+            $y2 = $h - $yo - ($ys[$i]-$ashift)*$yscale;
+
+            $prevx = $x2;
+            $prevy = $y2;
+
+            ImageLine($im, $x1-1, $y1-1, $x2-1, $y2-1, $c[$linec]);
+            ImageFilledRectangle($im, $prevx-1, $prevy-3, $prevx+3, $prevy+1, $c[$linec]);
+         }
+      }
+   }
+   return $prevy;
+}
+
 
 ?>

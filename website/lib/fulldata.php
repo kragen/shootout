@@ -19,6 +19,9 @@ uasort($Tests, 'CompareTestName');
 $Langs = WhiteListUnique('lang.csv',$Incl);
 uasort($Langs, 'CompareLangName');
 
+list ($mark,$mtime)= MarkTime();
+$mark = $mark.' '.SITE_NAME;
+
 
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
@@ -99,6 +102,7 @@ $Body->set('SelectedTest', $T);
 $Body->set('Langs', $Langs);
 
 $Body->set('Excl', $Excl);
+$Body->set('Mark', $mark);
 
 $Body->set('P1', $P1);
 $Body->set('P2', $P2);

@@ -24,20 +24,23 @@ for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
    $h = 225;
 
    $xo = 48;
-   $yo = 16;
+   $yo = MARGIN;
 
-   $yscale = 64;
    $barw = 3;
 
 $im = ImageCreate($w,$h);
 $c = chartColors($im);
 
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,0,log10axis(axis1000()));
+$yaxis = log10axis(axis1000());
+list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
+yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
 
 if ($valid){
-   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,0,$Values);
+   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,$yshift,$Values);
    chartNotice($im,$w,$h,$c,$Mark);
 }
+
+chartFrame($im,$xo,$yo,$w,$h,$c);
 yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
 xAxisLegend($im,$xo,$w,$h,$c,'language implementation');
 chartTitle($im,$xo,$w,$c,
