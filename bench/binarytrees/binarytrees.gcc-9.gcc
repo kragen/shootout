@@ -1,0 +1,152 @@
+/* The Computer Language Shootout Benchmarks
+   http://shootout.alioth.debian.org/
+
+   contributed by Kevin Carson
+   modified by Cédric Krier
+   compilation:
+       gcc -O3 -fomit-frame-pointer -funroll-loops -static binary-trees.c
+       icc -O3 -ip -unroll -static binary-trees.c
+*/
+
+#include <malloc.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+
+typedef struct tn {
+    struct tn*    left;
+    struct tn*    right;
+    long          item;
+} treeNode;
+
+typedef struct pt {
+    treeNode*     pool;
+    treeNode*     new;
+} poolTree;
+
+
+treeNode* NewTreeNode(treeNode* left, treeNode* right, long item, poolTree* pool)
+{
+    treeNode* new = pool->new++;
+
+    new->left = left;
+    new->right = right;
+    new->item = item;
+
+    return new;
+} /* NewTreeNode() */
+
+
+long ItemCheck(treeNode* tree)
+{
+    long result;
+    if (tree->left == NULL)
+        result = tree->item;
+    else
+        result = tree->item + ItemCheck(tree->left) - ItemCheck(tree->right);
+    return result;
+} /* ItemCheck() */
+
+
+treeNode* BottomUpTree(long item, unsigned depth, poolTree* pool)
+{
+    if (depth > 0)
+        return NewTreeNode
+        (
+            BottomUpTree(2 * item - 1, depth - 1, pool),
+            BottomUpTree(2 * item, depth - 1, pool),
+            item,
+            pool
+        );
+    else
+        return NewTreeNode(NULL, NULL, item, pool);
+} /* BottomUpTree() */
+
+
+poolTree* NewPoolTree(long size)
+{
+    poolTree* new;
+
+    new = (poolTree*)malloc(sizeof(poolTree));
+
+    new->pool = (treeNode*)malloc(size * sizeof(treeNode));
+    new->new = new->pool;
+
+   return new;
+} /* NewPoolTree() */
+
+
+void DeletePoolTree(poolTree* pool)
+{
+    free(pool->pool);
+    free(pool);
+} /* DeletePoolTree() */
+
+
+int main(int argc, char* argv[])
+{
+    unsigned   N, depth, minDepth, maxDepth, stretchDepth;
+    treeNode   *stretchTree, *longLivedTree;
+    poolTree   *pool;
+
+    N = atol(argv[1]);
+
+    minDepth = 4;
+
+    if ((minDepth + 2) > N)
+        maxDepth = minDepth + 2;
+    else
+        maxDepth = N;
+
+    stretchDepth = maxDepth + 1;
+
+    pool = NewPoolTree((1 << (stretchDepth + 1)) -1);
+    stretchTree = BottomUpTree(0, stretchDepth, pool);
+    printf
+    (
+        "stretch tree of depth %u\t check: %li\n",
+        stretchDepth,
+        ItemCheck(stretchTree)
+    );
+    DeletePoolTree(pool);
+
+    pool = NewPoolTree((1 << (maxDepth + 1)) -1);
+    longLivedTree = BottomUpTree(0, maxDepth, pool);
+
+    for (depth = minDepth; depth <= maxDepth; depth += 2)
+    {
+        long    i, iterations, check;
+
+        iterations = 1 << (maxDepth - depth + minDepth);
+
+        check = 0;
+
+        for (i = 1; i <= iterations; i++)
+        {
+            pool = NewPoolTree((1 << (depth + 1)) -1);
+            check += ItemCheck(BottomUpTree(i, depth, pool));
+            DeletePoolTree(pool);
+            pool = NewPoolTree((1 << (depth + 1)) -1);
+            check += ItemCheck(BottomUpTree(-i, depth, pool));
+            DeletePoolTree(pool);
+        } /* for(i = 1...) */
+
+        printf
+        (
+            "%li\t trees of depth %u\t check: %li\n",
+            iterations * 2,
+            depth,
+            check
+        );
+    } /* for(depth = minDepth...) */
+
+    printf
+    (
+        "long lived tree of depth %u\t check: %li\n",
+        maxDepth,
+        ItemCheck(longLivedTree)
+    );
+
+    return 0;
+} /* main() */
+

@@ -1,0 +1,214 @@
+/*
+ * The Computer Language Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Diogo Sousa (aka orium)
+ * Added memory pool to improve node allocation
+ */
+
+/* Compile with: gcc -Wall -pipe -O3 -lpthread -fomit-frame-pointer   \
+ * -march=native btrees.c -o btrees
+ */
+
+#define _GNU_SOURCE
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define max(x,y) (((x) > (y)) ? (x) : (y))
+#define get_size_by_depth(depth) ((1<<((depth)+1))-1)
+
+struct computed
+{
+   int trees;
+   int depth;
+   int check;
+};
+
+struct tree_node
+{
+   int item;
+   
+   struct tree_node *left;   
+   struct tree_node *right;
+};
+
+struct pool
+{
+   struct tree_node *pool;
+   struct tree_node *first_free;
+};
+
+struct args
+{
+   int max_depth;
+   struct tree_node **long_lived_tree;
+   struct pool **long_lived_tree_pool;
+   struct computed *computed;
+   int stretch_depth;
+};
+
+struct pool *
+pool_new(size_t size)
+{
+   struct pool *pool;
+
+   pool=malloc(sizeof(*pool));
+   pool->pool=malloc(sizeof(*pool->pool)*size);
+   pool->first_free=pool->pool;
+
+   return pool;
+}
+
+#define pool_new_node(p) ((p)->first_free++)
+
+void
+pool_free(struct pool *pool)
+{
+   free(pool->pool);
+   free(pool);
+}
+
+inline struct tree_node *
+make_tree_node(int item, struct tree_node *left, struct tree_node *right,
+          struct pool *pool)
+{
+   struct tree_node *node;
+   
+   node=pool_new_node(pool);
+   
+   node->item=item;
+   node->left=left;
+   node->right=right;
+   
+   return node;
+}
+
+struct tree_node *
+make_tree(int item, int depth, struct pool *pool)
+{
+   if (!depth)
+      return make_tree_node(item,NULL,NULL,pool);
+   else
+      return make_tree_node(item,
+                  make_tree((item<<1)-1,depth-1,pool),
+                  make_tree(item<<1,depth-1,pool),pool);
+}
+
+int
+check_tree(struct tree_node *node)
+{
+   if (node->left == NULL)
+      return node->item;
+   else
+      return node->item+check_tree(node->left)
+         -check_tree(node->right);
+}
+
+int
+check_tree_and_free(struct tree_node *node, struct pool *pool)
+{
+   int r;
+
+   r=check_tree(node);
+   pool_free(pool);
+
+   return r;
+}
+
+void
+build_long_lived_tree(struct args *args)
+{
+   *args->long_lived_tree_pool=pool_new(get_size_by_depth(args->max_depth));
+   *args->long_lived_tree=make_tree(0,args->max_depth,
+                *args->long_lived_tree_pool);   
+}
+
+void
+compute_stretch_tree(struct args *args)
+{
+   struct pool *pool=pool_new(get_size_by_depth(args->stretch_depth));
+
+   args->computed[0].trees=-1;
+   args->computed[0].depth=args->stretch_depth;
+   args->computed[0].check
+      =check_tree_and_free(make_tree(0,args->stretch_depth,pool),
+                 pool);
+}
+
+int
+computed_trees_checks(int depth, int end)
+{
+   struct pool *pool1;
+   struct pool *pool2;
+   int size=get_size_by_depth(depth);
+   int i;
+   int check=0;
+   
+   for (i=1; i <= end; i++)
+   {
+      pool1=pool_new(size);
+      pool2=pool_new(size);
+
+      check+=check_tree(make_tree(i,depth,pool1))
+         +check_tree(make_tree(-i,depth,pool2));
+
+      pool_free(pool1);
+      pool_free(pool2);
+   }
+   
+   return check;
+}
+
+void
+print_computed_data(struct computed *computed, size_t size)
+{
+   int i;
+   
+   printf("stretch tree of depth %d\t check: %d\n",computed[0].depth,
+          computed[0].check);
+   
+   for (i=1; i < size; i++)
+      printf("%d\t trees of depth %d\t check: %d\n",
+             computed[i].trees,computed[i].depth,computed[i].check);
+}
+
+int
+main(int argc, char **argv)
+{
+   struct tree_node *long_lived_tree;
+   struct pool *long_lived_tree_pool;
+   int min_depth=4;
+   int max_depth=max(min_depth+1, (argc >= 2) ? atoi(argv[1]) : 20);
+   int stretch_depth=max_depth+1;
+   int i;
+   int c;
+   int its=1<<max_depth;
+   struct computed computed[(stretch_depth-min_depth)/2
+             +(stretch_depth-min_depth)%2+1];
+   struct args args;
+   
+   args.max_depth=max_depth;
+   args.long_lived_tree=&long_lived_tree;
+   args.computed=computed;
+   args.stretch_depth=stretch_depth;
+   args.long_lived_tree_pool=&long_lived_tree_pool;
+   
+   build_long_lived_tree(&args);
+   compute_stretch_tree(&args);
+
+   for (i=min_depth, c=1; i < stretch_depth; i+=2, c++)
+   {
+      computed[c].check=computed_trees_checks(i,its);
+      computed[c].trees=its<<1;
+      computed[c].depth=i;
+
+      its>>=2;
+   }
+   
+   print_computed_data(computed,sizeof(computed)/sizeof(*computed));
+   printf("long lived tree of depth %d\t check: %d\n",max_depth,
+          check_tree_and_free(long_lived_tree,long_lived_tree_pool));
+   
+   return 0;
+}
