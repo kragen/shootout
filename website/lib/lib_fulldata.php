@@ -124,8 +124,9 @@ function CompareTestValue($a, $b){
 
 
 function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,$Sort){
-   echo '<p><strong>Choose</strong> programs for side-by-side comparison:</p>', "\n";
-   echo '<form method="get" action="fulldata.php"><p>', "\n";
+   echo '<p><strong>Choose</strong> programs for side-by-side comparison:</p>';
+   echo '<form method="get" action="fulldata.php">';
+   printf('<input type="hidden" name="test" value="%s" /><p>', $SelectedTest);
    /*
    echo '<p><select name="test">', "\n";
 
@@ -229,9 +230,7 @@ function MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$Data,$p1,$p2,$p3,$p4,
       }
       printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
    }
-   echo '</select>', "\n";
-   echo '<input type="submit" value="Show" />', "\n";
-   echo '</p></form>', "\n";
+   echo '</select><input type="submit" value="Show" /></p></form>';
 }
 
 
