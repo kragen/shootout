@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.24 2009-02-08 19:25:03 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.25 2009-02-21 21:34:16 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -365,7 +365,7 @@ SBCL_TRACE :=
               "    (lambda (c) (abort c)))) " \
               "    (load (compile-file \"$$MAIN\" $(SBCL_TRACE))))" \
               "(save-lisp-and-die \"sbcl.core\" :purify t)") >> $$COMPILE ; \
-	echo "SBCL built with: $(SBCL) --userinit /dev/null -batch -eval '(load \"$$COMPILE\")'" ; \
+	echo "SBCL built with: $(SBCL) --userinit /dev/null --batch --eval '(load \"$$COMPILE\")'" ; \
 	echo "### START $$COMPILE" ; cat $$COMPILE ; echo "### END $$COMPILE" ; echo ; \
 	$(SBCL) --noinform --userinit /dev/null --load $$COMPILE; \
 	echo "(main) (quit)" >> $@
