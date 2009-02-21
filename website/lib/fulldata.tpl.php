@@ -52,7 +52,7 @@ for($k=0;$k<sizeof($p);$k++){
 
 <? MkComparisonMenuForm($Langs,$Tests,$SelectedTest,$NData,$P1,$P2,$P3,$P4,"fullcpu"); ?>
 
-<h2><a href="#chart" name="chart">&nbsp;<?=$TestName;?> full data - Time secs</a></h2>
+<h2><a href="#chart" name="chart">&nbsp;<?=$TestName;?> - Time and Memory Use as workload N increases</a></h2>
 
 <p><br/><img src="chartfull.php?<?='v='.Encode($rows);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($SelectedLangs);?>&amp;<?='ww='.Encode($SelectedTest);?>"
    alt=""

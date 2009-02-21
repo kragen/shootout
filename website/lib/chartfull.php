@@ -29,7 +29,20 @@ if ($valid){
 
    // first row is the TEST VALUE sizes
    $testvalue = array_shift($values);
-   foreach ($testvalue as $k => $v) $testvalue[$k] = round($v);
+   // fix rounding errors back to large integers
+   foreach ($testvalue as $k => $v){
+      if ($v > 1000){
+         $divisor = pow(10,floor(log10($v))-1);
+         $z = round($v/$divisor)*$divisor;
+      } else {
+         $z = $v;
+      }
+      $testvalue[$k] = $z;
+   }
+
+
+
+
    foreach ($testvalue as $k => $v) $testvalueaxis[] = array($v,"");
 
    // first third program ids, second third time, third third memory use
@@ -115,6 +128,7 @@ if ($valid){
 
    $label = "";
    foreach ($testvalue as $each)
+     //$label = $label.' N='.strval($each);
      $label = $label.' N='.number_format($each);
    $label = $Test[0].$label;
    xAxisLegend($im,$xo,$x,$h,$c,$label);
@@ -122,7 +136,7 @@ if ($valid){
 
 chartFrame($im,$xo,$yo,$w,$h,$c);
 yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
-chartTitle($im,$xo,$w,$c,'Normalized Run Times and Memory Use as N increases');
+chartTitle($im,$xo,$w,$c,'Normalized Run Times and Memory Use as workload N increases');
 
 ImageInterlace($im,1);
 ImagePng($im);
