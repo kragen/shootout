@@ -21,4 +21,4 @@ caller does not know whether another chameneos is already present or not, neithe
 
 <p>The chameneos benchmark is an adaptation of <a href="http://cedric.cnam.fr/PUBLIS/RC474.pdf">"Chameneos, a Concurrency Game for Java, Ada and Others"</a> 100KB pdf (which includes example implementations in Java, Ada and C).</p>
 
-<p>Programs may use kernel threads, lightweight threads&#8230; <strong>cooperative threads&#8230; and other programs with custom schedulers will be listed as interesting alternative implementations</strong>. Briefly say what concurrency technique is used in the program header comment.</p>
+<p>Programs may use kernel threads, lightweight threads; but <strong>coroutines, cooperative threads and other programs with custom schedulers will be listed as interesting alternative implementations</strong>. Briefly say what concurrency technique is used in the program header comment.</p>
