@@ -41,8 +41,6 @@ if ($valid){
    }
 
 
-
-
    foreach ($testvalue as $k => $v) $testvalueaxis[] = array($v,"");
 
    // first third program ids, second third time, third third memory use
@@ -81,64 +79,65 @@ if ($valid){
    $xshift = -1 * $axis[$before][0];
 }
 
-$im = ImageCreate($w,$h);
-$c = chartColors($im);
 
-//ImageString($im, 2, 100, 100, strval(($valid)?"valid":"not"), $c['black']);
 
-$yaxis = log10axis(axis03000());
-list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
+$chart = new LineChart($w,$h,log10axis(axis03000()),$xo);
+$chart->xshift = $xshift;
+$chart->xscale = $xscale;
+$chart->yAxisGrid();
 
 if ($valid){
-   $colours = array('dodgerblue','goldenrod','mediumvioletred','yellowgreen');
-
+   $colours = array(DODGER_BLUE,GOLDENROD,MEDIUM_VIOLET_RED,YELLOW_GREEN);
+   
    // TIME PANEL
    $x = $xo;
    for ($i=0; $i<sizeof($vs1); $i++)
-      chartLines($im,$x,$yo,$h,$xscale,$yscale,$c,$colours[$i],$xshift,$testvalue,$yshift,$vs1[$i]);
-
+      //chartLines($im,$x,$yo,$h,$xscale,$yscale,$c,$colours[$i],$xshift,$testvalue,$yshift,$vs1[$i]);
+      $chart->lines($xo,$colours[$i],$testvalue,$vs1[$i]);
+      
    $label = 'Time';
    $z = $x + (($w-$xo)/3 -strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($im, 2, $z, $h-30, $label, $c['black']);
+   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
+
+   // MEMORY USE PANEL
 
    $x += $gap + ($w-$xo)/3;
    for ($i=0; $i<sizeof($vs2); $i++)
-      $y[] = chartLines($im,$x,$yo,$h,$xscale,$yscale,$c,$colours[$i],$xshift,$testvalue,$yshift,$vs2[$i]);
-
+      $y[] = $chart->lines($x,$colours[$i],$testvalue,$vs2[$i]);
 
    $label = 'Memory Use';
    $z = $x + (($w-$xo)/3 -strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($im, 2, $z, $h-30, $label, $c['black']);
-
+   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
+   
+   // PROGRAM NAME PANEL
+   
    $x += ($w-$xo)/3;
    for ($i=0; $i<sizeof($y); $i++){
       // $id[$i] duplicates the same id value for each TEST VALUE
       $label = ($id[$i][0]>1) ? ' #'.strval($id[$i][0]) : '';
       $label = $LangNames[$i].$label;
-      ImageString($im, 2, $x+6, $y[$i]-7, $label, $c[$colours[$i]]);
+      ImageString($chart->im, 2, $x+6, $y[$i]-7, $label, $chart->colour[$colours[$i]]);
    }
 
    $label = 'Program';
    $z = $x + (($w-$xo)/3 -strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($im, 2, $z, $h-30, $label, $c['black']);
+   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
 
 
-   $x = chartNotice($im,$w,$h,$c,$Mark);
+   $x = $chart->notice($Mark);
+
+   //  X AXIS LEGEND
 
    $label = "";
    foreach ($testvalue as $each)
-     //$label = $label.' N='.strval($each);
      $label = $label.' N='.number_format($each);
    $label = $Test[0].$label;
-   xAxisLegend($im,$xo,$x,$h,$c,$label);
+   $chart->xAxisLegend($x,$h,$label);
 }
 
-chartFrame($im,$xo,$yo,$w,$h,$c);
-yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
-chartTitle($im,$xo,$w,$c,'Normalized Run Times and Memory Use as workload N increases');
+$chart->title('Normalized Run Times and Memory Use as workload N increases');
+$chart->yAxisLegend($w,$h,'ratio to best');
+$chart->frame();
+$chart->complete();
 
-ImageInterlace($im,1);
-ImagePng($im);
-ImageDestroy($im);
 ?>

@@ -55,49 +55,43 @@ $n = sizeof($secs);
    $gap = 20;
 
 
-$im = ImageCreate($w,$h);
-$c = chartColors($im);
-
-$yaxis = log10axis(axis3_10());
-$yshift = 0;
-$yscale = 45.0;
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis,'down');
+$chart = new BarChart($w,$h,log10axis(axis3_10()),$xo,$yo);
+$chart->yshift = 0.0;
+$chart->yscale = 45.0;
+$chart->yAxisGrid();
+$chart->yAxisGrid('down');
 
 if ($valid){
    $x = $xo;
    $x1 = $x;
-   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,$yshift,$secs);
+   $x = $chart->bars($x,$barw,$barspace,DARK_GRAY,$secs);
 
    $label = 'Time';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($im, 2, $z, $h-30, $label, $c['black']);
-
+   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
+   
    $x += $gap;
    $x1 = $x;
-   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'black',$barmw,4+$barspace,$yshift,$kb);
-
+   $x = $chart->bars($x,$barmw,4+$barspace,BLACK,$kb);
+   
    $label = 'Memory Use';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($im, 2, $z, $h-30, $label, $c['black']);
-
+   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
+   
    $x += $gap;
    $x1 = $x;
-   $x = chartBars($im,$x,$h-$yo,$yscale,$c,'dkgray',$barw,$barspace,$yshift,$gz,FALSE);
+   $x = $chart->bars($x,$barw,$barspace,DARK_GRAY,$gz,FALSE);
 
    $label = 'Source Size';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($im, 2, $z, $h-30, $label, $c['black']);
+   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
 
-   chartTitle($im,$xo,$w,$c,$LangName[0].' worse-to-better compared to '.$LangName[1]);
-   chartNotice($im,$w,$h,$c,$Mark);
+   $chart->title($LangName[0].' worse-to-better compared to '.$LangName[1]);
+   $chart->notice($Mark);
 }
 
-chartFrame($im,$xo,$yo,$w,$h,$c);
+$chart->yAxisLegend($w,$h,'worse ratio       better ratio',15);
+$chart->frame();
+$chart->complete();
 
-yAxisLegend($im,15,$w,$h,$c,'worse ratio       better ratio');
-
-ImageInterlace($im,1);
-ImagePng($im);
-ImageDestroy($im);
 ?>

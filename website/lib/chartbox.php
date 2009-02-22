@@ -27,37 +27,27 @@ for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
    $xo = 48;
    $yo = MARGIN;
 
-   $boxw = 20;
+   $boxwidth = 20;
    $boxo = 10;
-   $whisk = floor(($boxw - $boxo)/2);
+   $whisk = floor(($boxwidth - $boxo)/2);
    $outlier = 5;
    $maxboxes= 15;
 
-$im = ImageCreate($w,$h);
-$c = chartColors($im);
 
-// GRID
 
-$yaxis = log10axis(axis3000());
-list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
-
-yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
-xAxisLegend($im,$xo,$w,$h,$c,'language implementation');
+$chart = new BoxChart($w,$h,log10axis(axis3000()),$xo);
+$chart->yAxisGrid();
 
 if ($valid){
-   chartBackground($im,$xo,$h-12,$h-27,$c,$boxw+$boxspace,$maxboxes,$BackText);
-   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,$yshift,$Stats);
-   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,$yshift,$Stats);
-   chartNotice($im,$w,$h,$c,$Mark);
+   $chart->backgroundText($boxwidth+$boxspace,$maxboxes,$BackText);
+   $chart->boxAndWhiskers($boxwidth,$boxspace,$boxo,$maxboxes,$Stats);  
+   $chart->notice($Mark);
 }
 
-chartFrame($im,$xo,$yo,$w,$h,$c);
+$chart->xAxisLegend($w,$h,'language implementation');
+$chart->yAxisLegend($w,$h,'ratio to best');
+$chart->title('Normalized Program Run Time - Median and Quartiles');
+$chart->frame();
+$chart->complete();
 
-chartTitle($im,$xo,$w,$c,
-   'Normalized Program Run Time - Median and Quartiles');
-
-ImageInterlace($im,1);
-ImagePNG($im);
-ImageDestroy($im);
 ?>

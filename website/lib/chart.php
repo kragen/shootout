@@ -37,41 +37,37 @@ for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
 
    $barw = 3;
    $barmw = 0;
-
-$im = ImageCreate($w,$h);
-$c = chartColors($im);
-
-$yaxis = log10axis(axis1000());
-list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
+   
+   
+$chart = new BarChart($w,$h,log10axis(axis1000()),$xo);
+$chart->yAxisGrid();
 
 if ($valid){
-   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,$yshift,$Time);
-   chartBars($im,$xo,$h-$yo,$yscale,$c,'black',$barmw,$barw+$barspace,$yshift,$KB);
-   chartNotice($im,$w,$h,$c,$Mark);
-   xAxisLegend($im,$xo,$w,$h,$c,$Test[0].' programs');
+   $chart->bars($xo,$barw,$barspace,GRAY,$Time);
+   $chart->bars($xo,$barmw,$barw+$barspace,BLACK,$KB);
+   $chart->notice($Mark);
+   $chart->xAxisLegend($w,$h,$Test[0].' programs');
 }
 
-chartFrame($im,$xo,$yo,$w,$h,$c);
 
 // Y AXIS LEGEND
+
 $label = 'ratio to best';
-ImageStringUp($im, 2, 5, $h-$yo, $label, $c['black']);
+ImageStringUp($chart->im, 2, 5, $h-$yo, $label, $chart->colour[BLACK]);
 $y = $yo + strlen($label)*CHAR_WIDTH_2 + 16;
 
 $label = 'Time';
-ImageStringUp($im, 2, 5, $h-$y-8, $label, $c['black']);
-ImageFilledRectangle($im, 11, $h-$y-4, 11+$barw, $h-$y+6, $c['gray']);
+ImageStringUp($chart->im, 2, 5, $h-$y-8, $label, $chart->colour[BLACK]);
+ImageFilledRectangle($chart->im, 11, $h-$y-4, 11+$barw, $h-$y+6, $chart->colour[GRAY]);
 $y = $y + strlen($label)*CHAR_WIDTH_2 + 18;
 
 $label = 'Memory';
-ImageStringUp($im, 2, 5, $h-$y-8, $label, $c['black']);
-ImageFilledRectangle($im, 12, $h-$y-4, 12+$barmw, $h-$y+6, $c['black']);
-
-chartTitle($im,$xo,$w,$c,'Normalized Program Run Time and Memory Use');
+ImageStringUp($chart->im, 2, 5, $h-$y-8, $label, $chart->colour[BLACK]);
+ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+6, $chart->colour[BLACK]);
 
 
-ImageInterlace($im,1);
-ImagePng($im);
-ImageDestroy($im);
+$chart->title('Normalized Program Run Time and Memory Use');
+$chart->frame();
+$chart->complete();
+
 ?>

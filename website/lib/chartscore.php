@@ -28,26 +28,18 @@ for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
 
    $barw = 3;
 
-$im = ImageCreate($w,$h);
-$c = chartColors($im);
-
-$yaxis = log10axis(axis1000());
-list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
+$chart = new BarChart($w,$h,log10axis(axis1000()),$xo);
+$chart->yAxisGrid();
 
 if ($valid){
-   chartBars($im,$xo,$h-$yo,$yscale,$c,'gray',$barw,$barspace,$yshift,$Values);
-   chartNotice($im,$w,$h,$c,$Mark);
+   $chart->bars($xo,$barw,$barspace,GRAY,$Values);
+   $chart->notice($Mark);
 }
 
-chartFrame($im,$xo,$yo,$w,$h,$c);
-yAxisLegend($im,$yo,$w,$h,$c,'ratio to best');
-xAxisLegend($im,$xo,$w,$h,$c,'language implementation');
-chartTitle($im,$xo,$w,$c,
-   'Weighted Geometric Mean of normalized Time, Memory and Size');
+$chart->xAxisLegend($w,$h,'language implementation');
+$chart->yAxisLegend($w,$h,'ratio to best');
+$chart->title('Weighted Geometric Mean of normalized Time, Memory and Size');
+$chart->frame();
+$chart->complete();
 
-
-ImageInterlace($im,1);
-ImagePNG($im);
-ImageDestroy($im);
 ?>

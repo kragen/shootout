@@ -25,11 +25,12 @@ for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
    $xo = 48;
    $yo = MARGIN;
 
-   $boxw = 20;
+   $boxwidth = 20;
    $boxo = 10;
-   $whisk = floor(($boxw - $boxo)/2);
+   $whisk = floor(($boxwidth - $boxo)/2);
    $outlier = 5;
    $maxboxes = 17;
+
 
 if ($valid){
 // SPACE OUT BARS ACROSS WIDTH
@@ -37,36 +38,24 @@ if ($valid){
    if (sizeof($Stats)>0){
       $n = sizeof($Stats)/STATS_SIZE;
       $i = 1;
-      while ($n*($boxw+$i) <= $w-$xo){ $i++; }
+      while ($n*($boxwidth+$i) <= $w-$xo){ $i++; }
       $boxspace = $i-1;
    }
 }
 
-$im = ImageCreate($w,$h);
-$c = chartColors($im);
 
-$yaxis = log10axis(axisT());
-list($yscale,$yshift) = scaleAndShift($yo,$h,$yaxis);
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$c,$yshift,$yaxis);
-
-xAxisLegend($im,$xo,$w,$h,$c,'benchmark');
-
-$label = 'program sys + usr';
-ImageStringUp($im, 2, 0, $h-72, $label, $c['black']);
+$chart = new BoxChart($w,$h,log10axis(axisT()),$xo);
+$chart->yAxisGrid();
 
 if ($valid){
-   chartBackground($im,$xo,$h-12,$h-15,$c,$boxw+$boxspace,$maxboxes,$BackText);
-   chartBoxes($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,abs($yshift),$Stats);
-   chartWhiskers($im,$xo,$yo,$h,$yscale,$c,$boxw,$boxspace,$boxo,$maxboxes,abs($yshift),$Stats);
-   chartNotice($im,$w,$h,$c,$Mark);
+   $chart->backgroundText($boxwidth+$boxspace,$maxboxes,$BackText);
+   $chart->boxAndWhiskers($boxwidth,$boxspace,$boxo,$maxboxes,$Stats);    
+   $chart->notice($Mark);
 }
 
-chartFrame($im,$xo,$yo,$w,$h,$c);
-
-chartTitle($im,$xo,$w,$c,
-   'Program Run Time - Median and Quartiles - by Benchmark');
-
-ImageInterlace($im,1);
-ImagePNG($im);
-ImageDestroy($im);
+$chart->yAxisLegend($w,$h,'program sys + usr',-64);
+$chart->xAxisLegend($w,$h,'benchmark');
+$chart->title('Program Run Time - Median and Quartiles - by Benchmark');
+$chart->frame();
+$chart->complete();
 ?>
