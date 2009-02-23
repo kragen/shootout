@@ -59,99 +59,32 @@ $d = array(
         )
        ,array(
   array(2008,33,'u32q',0.00)
- ,array(2008,34,'u32q',0.36)
- ,array(2008,35,'u32q',0.44)
- ,array(2008,36,'u32q',0.50)
- ,array(2008,37,'u32q',0.57)
- ,array(2009,38,'u32q',0.84)
+ ,array(2008,34,'u32q',0.35)
+ ,array(2008,35,'u32q',0.43)
+ ,array(2008,36,'u32q',0.48)
+ ,array(2008,37,'u32q',0.55)
+ ,array(2009,38,'u32q',0.81)
  ,array(2009,39,'u32q',0.99)
        ) );
        
-       
-function axisYrMth(){
-   return array(
-      array(2,"2006"), array(14,"2007"),
-      array(26,"2008"), array(38,"2009"), 
-      array(50,"2010"), array(62,"2011")
-      );
-}
-
-
-/*
-function chartSteps(&$im,$xo,$yo,$h,$xscale,$yscale,$linecol,&$d){
-   $x = $xo;
-   $y = $h - $yo;
-   foreach($d as $p){
-      if (!isset($prev)){
-         $prev = $p;
-      } else {
-         $x1 = $x + $prev[1]*$xscale;
-         $y1 = $y - 100.0*$prev[3]*$yscale;
-
-         $x3 = $x + $p[1]*$xscale;
-         $y3 = $y - 100.0*$p[3]*$yscale;
-
-         $x2 = $x3;
-         $y2 = $y1;
-
-         ImageFilledRectangle($im, $x1, $y1-1, $x2+1, $y2, $linecol);
-         ImageFilledRectangle($im, $x3, $y3-1, $x2+1, $y2, $linecol);
-
-         $prev = $p;
-      }
-   }
-   $x1 = $x + $prev[1]*$xscale + 1.0*$xscale;
-   ImageFilledRectangle($im, $x3, $y3-1, $x1, $y3, $linecol);
-}
-*/
 
 
 // CHART /////////////////////////////////////////////////////
-   $w = 400;
-   $h = 225;
 
-   $boxspace = 8;
-   $xo = 65;
-   $yo = 16;
+$chart = new StepChart();
 
-   $xscale = 6.0;
-   $yscale = 1.7;
+$chart->yscale = 1.7;
+$chart->yAxis(axisPercent(axis10()));
+$chart->xAxis(axisYrMth(),6.0);
 
-   $boxw = 20;
-   $boxo = 10;
-   $whisk = floor(($boxw - $boxo)/2);
-   $outlier = 5;
-   $maxboxes= 15;
+$chart->steps(GP4,$d[0]);
+$chart->steps(DEBIAN,$d[1]);
+$chart->steps(U32Q,$d[2]);
 
-$im = ImageCreate($w,$h);
+$chart->title('Cumulative Percentage of Current Measurements by Month');
+$chart->xAxisLegend('month');
+$chart->yAxisLegend('cumulative percentage');
+$chart->frame();
+$chart->complete();
 
-ImageColorAllocate($im,255,255,255);
-$white = ImageColorAllocate($im,255,255,255);
-$black = ImageColorAllocate($im,0,0,0);
-$gray = ImageColorAllocate($im,221,221,221);
-$bgray = ImageColorAllocate($im,185,185,185);
-$mgray = ImageColorAllocate($im,145,145,145);
-
-$debian = ImageColorAllocate($im,0,0,128);
-$gp4 = ImageColorAllocate($im,123,89,222);
-$u32q = ImageColorAllocate($im,255,99,9);
-
-
-// GRID
-yAxisGrid($im,$xo,$yo,$w,$h,$yscale,$bgray,$gray,0,axisPercent(axis10s()));
-xAxisGrid($im,$xo,$yo,$w,$h,$xscale,$yscale,$bgray,$gray,0,axisYrMth());
-
-chartSteps(&$im,$xo,$yo,$h,$xscale,$yscale,$gp4,$d[0]);
-chartSteps(&$im,$xo,$yo,$h,$xscale,$yscale,$debian,$d[1]);
-chartSteps(&$im,$xo,$yo,$h,$xscale,$yscale,$u32q,$d[2]);
-
-yAxisLegend($im,$yo,$w,$h,$black,'cumulative percentage');
-xAxisLegend($im,$xo,$w,$h,$black,'month');
-
-// TITLE
-ImageString($im, 3, 0, 2, 'Cumulative Percentage of Current Measurements by Month', $black);
-
-ImageInterlace($im,1);
-ImagePNG($im);
-ImageDestroy($im);
 ?>

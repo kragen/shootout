@@ -17,6 +17,9 @@ define('DODGER_BLUE',5);
 define('GOLDENROD',6);
 define('MEDIUM_VIOLET_RED',7);
 define('YELLOW_GREEN',8);
+define('DEBIAN',9);
+define('GP4',10);
+define('U32Q',11);
 
 define('MIRROR_AXIS',0);
 
@@ -75,6 +78,9 @@ class Chart {
       $this->colour[GOLDENROD] = ImageColorAllocate($this->im,218,165,32);
       $this->colour[MEDIUM_VIOLET_RED] = ImageColorAllocate($this->im,199,21,133);
       $this->colour[YELLOW_GREEN] = ImageColorAllocate($this->im,154,205,50 );
+      $this->colour[DEBIAN] = ImageColorAllocate($this->im,0,0,128);
+      $this->colour[GP4] = ImageColorAllocate($this->im,123,89,222);
+      $this->colour[U32Q] = ImageColorAllocate($this->im,255,99,9);
    }
 
    function frame(){
@@ -143,6 +149,17 @@ class Chart {
          }
       }
    }
+   
+   function xAxis(&$xaxis,$scale,$shift=null){
+      $this->xaxis = $xaxis;
+      $this->xscale = $scale;
+      if (isset($shift)){ $this->xshift = $shift; } else { $this->xshift = 0; }
+      foreach($this->xaxis as $v){
+         $x = $this->xo + ($v[0] * $this->xscale - $this->xshift * $this->xscale);
+         ImageStringUp($this->im, 3, $x, $this->h - $this->yo - 0.5*CHAR_WIDTH_3, $v[1], $this->colour[LIGHT_GRAY]);
+         ImageLine($this->im, $x, $this->h - $this->yo, $x, $this->yo, $this->colour[LIGHT_GRAY]);
+      }
+   }
 
 }
 
@@ -153,7 +170,7 @@ class Chart {
 // assume vertical box
 
 class BoxChart extends Chart {
-   
+
    var $boxwidth,$boxspace;
 
    function BoxChart(){
@@ -336,7 +353,59 @@ class LineChart extends Chart {
 }
 
 
+// STEPCHART CLASS ///////////////////////////////////////////////////
+
+
+class StepChart extends Chart {
+   
+   function defaultWidth(){
+      return 400;
+   }
+   
+   function defaultHeight(){
+      return 225;
+   }
+   
+   function steps($linecolour,&$d){
+      $x = $this->xo;
+      $y = $this->h - $this->yo;
+      foreach($d as $p){
+         if (!isset($prev)){
+            $prev = $p;
+         } else {
+            $x1 = $x + $prev[1] * $this->xscale;
+            $y1 = $y - 100.0*$prev[3] * $this->yscale;
+
+            $x3 = $x + $p[1] * $this->xscale;
+            $y3 = $y - 100.0*$p[3] * $this->yscale;
+   
+            $x2 = $x3;
+            $y2 = $y1;
+
+            ImageFilledRectangle($this->im, $x1, $y1-1, $x2+1, $y2, $this->colour[$linecolour]);
+            ImageFilledRectangle($this->im, $x3, $y3-1, $x2+1, $y2, $this->colour[$linecolour]);
+   
+            $prev = $p;
+         }
+      }
+      $x1 = $x + $prev[1] * $this->xscale + 1.0 * $this->xscale;
+      ImageFilledRectangle($this->im, $x3, $y3-1, $x1, $y3, $this->colour[$linecolour]);
+   }
+
+}
+
+
 // AXIS DEFINITIONS ///////////////////////////////////////////////////
+
+
+function axis10(){
+   return array(
+      array(0,"0"), array(10,"10"), array(20,"20"),  array(30,"30"),  array(40,"40"),
+      array(50,"50"), array(60,"60"), array(70,"70"),  array(80,"80"),  array(90,"90"),
+      array(100,"100")
+      );
+}
+
 
 function axis100(){
    return array(
@@ -400,5 +469,14 @@ function axisT(){
       array(3600,"1h"), array(10800,"3h"), array(18000,"5h")
       );
 }
+
+function axisYrMth(){
+   return array(
+      array(2,"2006"), array(14,"2007"),
+      array(26,"2008"), array(38,"2009"),
+      array(50,"2010"), array(62,"2011")
+      );
+}
+
 
 ?>
