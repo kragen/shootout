@@ -63,55 +63,49 @@ if ($valid){
 
 // CHART //////////////////////////////////////////////////
 
-   $w = 480;
-   $h = 300;
-   $xo = 48;
-   $yo = MARGIN;
-   $gap = MARGIN;
+$chart = new LineChart();
+$chart->yAxis(log10axis(axis03000()));
 
 if ($valid){
    // RESCALE X-AXIS - ASSUME INCREASING VALUES
+   $panelWidth = ($chart->w - $chart->xo)/3;
+
    $axis = $testvalueaxis;
    $before = 0;
    $after = sizeof($axis)-1;
-   $xscale = 15;
-   $xscale = (($w-$xo)/3)/($axis[$after][0] - $axis[$before][0]);
+   $xscale = $panelWidth / ($axis[$after][0] - $axis[$before][0]);
    $xshift = -1 * $axis[$before][0];
-}
 
+   $chart->xshift = $xshift;
+   $chart->xscale = $xscale;
+   $chart->xaxis = $testvalueaxis;
 
-
-$chart = new LineChart($w,$h,log10axis(axis03000()),$xo);
-$chart->xshift = $xshift;
-$chart->xscale = $xscale;
-$chart->yAxisGrid();
-
-if ($valid){
    $colours = array(DODGER_BLUE,GOLDENROD,MEDIUM_VIOLET_RED,YELLOW_GREEN);
-   
+
    // TIME PANEL
-   $x = $xo;
+   $x = $chart->xo;
    for ($i=0; $i<sizeof($vs1); $i++)
-      //chartLines($im,$x,$yo,$h,$xscale,$yscale,$c,$colours[$i],$xshift,$testvalue,$yshift,$vs1[$i]);
-      $chart->lines($xo,$colours[$i],$testvalue,$vs1[$i]);
-      
+      $chart->lines($colours[$i],$testvalue,$vs1[$i]);
+
    $label = 'Time';
-   $z = $x + (($w-$xo)/3 -strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
+   $z = $x + ($panelWidth - strlen($label)*CHAR_WIDTH_2)/2.0;
+   ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
 
    // MEMORY USE PANEL
 
-   $x += $gap + ($w-$xo)/3;
+   $x += 20 + $panelWidth;
+   $chart->xo = $x;
    for ($i=0; $i<sizeof($vs2); $i++)
-      $y[] = $chart->lines($x,$colours[$i],$testvalue,$vs2[$i]);
+      $y[] = $chart->lines($colours[$i],$testvalue,$vs2[$i]);
 
    $label = 'Memory Use';
-   $z = $x + (($w-$xo)/3 -strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
-   
+   $z = $x + ($panelWidth -strlen($label)*CHAR_WIDTH_2)/2.0;
+   ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+
    // PROGRAM NAME PANEL
-   
-   $x += ($w-$xo)/3;
+
+   $x += $panelWidth;
+   $chart->xo = $x;
    for ($i=0; $i<sizeof($y); $i++){
       // $id[$i] duplicates the same id value for each TEST VALUE
       $label = ($id[$i][0]>1) ? ' #'.strval($id[$i][0]) : '';
@@ -120,9 +114,10 @@ if ($valid){
    }
 
    $label = 'Program';
-   $z = $x + (($w-$xo)/3 -strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
-
+   $z = $x + ($panelWidth - strlen($label)*CHAR_WIDTH_2)/2.0;
+   ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   
+   $chart->xo = $chart->defaultOriginX();
 
    $x = $chart->notice($Mark);
 
@@ -132,11 +127,11 @@ if ($valid){
    foreach ($testvalue as $each)
      $label = $label.' N='.number_format($each);
    $label = $Test[0].$label;
-   $chart->xAxisLegend($x,$h,$label);
+   $chart->xAxisLegend($label,$x);
 }
 
 $chart->title('Normalized Run Times and Memory Use as workload N increases');
-$chart->yAxisLegend($w,$h,'ratio to best');
+$chart->yAxisLegend('ratio to best');
 $chart->frame();
 $chart->complete();
 

@@ -19,25 +19,16 @@ for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
 
 // CHART /////////////////////////////////////////////////////
 
-   $barspace = 3;
-   $w = 480;
-   $h = 225;
-
-   $xo = 48;
-   $yo = MARGIN;
-
-   $barw = 3;
-
-$chart = new BarChart($w,$h,log10axis(axis1000()),$xo);
-$chart->yAxisGrid();
+$chart = new BarChart();
+$chart->yAxis(log10axis(axis1000()));
 
 if ($valid){
-   $chart->bars($xo,$barw,$barspace,GRAY,$Values);
+   $chart->bars(GRAY,$Values);
    $chart->notice($Mark);
 }
 
-$chart->xAxisLegend($w,$h,'language implementation');
-$chart->yAxisLegend($w,$h,'ratio to best');
+$chart->xAxisLegend('language implementation');
+$chart->yAxisLegend('ratio to best');
 $chart->title('Weighted Geometric Mean of normalized Time, Memory and Size');
 $chart->frame();
 $chart->complete();

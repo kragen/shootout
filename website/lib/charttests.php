@@ -19,43 +19,21 @@ for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
 
 
 // CHART /////////////////////////////////////////////////////
-   $w = 480;
-   $h = 300;
 
-   $xo = 48;
-   $yo = MARGIN;
-
-   $boxwidth = 20;
-   $boxo = 10;
-   $whisk = floor(($boxwidth - $boxo)/2);
-   $outlier = 5;
-   $maxboxes = 17;
-
+$chart = new BoxChart();
+$chart->yAxis(log10axis(axisT()));
 
 if ($valid){
-// SPACE OUT BARS ACROSS WIDTH
-   $boxspace = 4;
-   if (sizeof($Stats)>0){
-      $n = sizeof($Stats)/STATS_SIZE;
-      $i = 1;
-      while ($n*($boxwidth+$i) <= $w-$xo){ $i++; }
-      $boxspace = $i-1;
-   }
-}
-
-
-$chart = new BoxChart($w,$h,log10axis(axisT()),$xo);
-$chart->yAxisGrid();
-
-if ($valid){
-   $chart->backgroundText($boxwidth+$boxspace,$maxboxes,$BackText);
-   $chart->boxAndWhiskers($boxwidth,$boxspace,$boxo,$maxboxes,$Stats);    
+   $chart->autoBoxspace($Stats);
+   $chart->backgroundText($BackText);
+   $chart->boxAndWhiskers($Stats);
    $chart->notice($Mark);
 }
 
-$chart->yAxisLegend($w,$h,'program sys + usr',-64);
-$chart->xAxisLegend($w,$h,'benchmark');
+$chart->yAxisLegend('program sys + usr',224);
+$chart->xAxisLegend('benchmark');
 $chart->title('Program Run Time - Median and Quartiles - by Benchmark');
 $chart->frame();
 $chart->complete();
+
 ?>

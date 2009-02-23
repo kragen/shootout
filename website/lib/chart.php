@@ -32,21 +32,20 @@ for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
    $xo = 48;
    $yo = MARGIN;
 
-   $yshift = 0;
-   $yscale = ($h-2*$yo)/(log10(1000)-$yshift);
-
    $barw = 3;
    $barmw = 0;
-   
-   
-$chart = new BarChart($w,$h,log10axis(axis1000()),$xo);
-$chart->yAxisGrid();
+
+
+$chart = new BarChart();
+$chart->yAxis(log10axis(axis1000()));
 
 if ($valid){
-   $chart->bars($xo,$barw,$barspace,GRAY,$Time);
-   $chart->bars($xo,$barmw,$barw+$barspace,BLACK,$KB);
+   $chart->bars(GRAY,$Time);
+   $chart->barspace = $chart->barwidth + $chart->barspace;
+   $chart->barwidth = 0;
+   $chart->bars(BLACK,$KB);
    $chart->notice($Mark);
-   $chart->xAxisLegend($w,$h,$Test[0].' programs');
+   $chart->xAxisLegend($Test[0].' programs');
 }
 
 

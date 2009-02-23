@@ -42,56 +42,59 @@ $n = sizeof($secs);
 
 // CHART //////////////////////////////////////////////////
 
-   $barspace = 3;
-   $w = 480;
-   $h = 300;
-
-   $xo = 48;
-   $yo = $h/2;
-
-   $barw = 5;
-   $barmw = 0;
-
-   $gap = 20;
-
-
-$chart = new BarChart($w,$h,log10axis(axis3_10()),$xo,$yo);
-$chart->yshift = 0.0;
-$chart->yscale = 45.0;
-$chart->yAxisGrid();
-$chart->yAxisGrid('down');
+$chart = new ComparisonChart();
+$chart->yo = $chart->h / 2;
+$scale = 45.0;
+$shift = 0.0;
+$chart->yAxis(log10axis(axis3_10()), $scale, $shift);
+$chart->yAxis(log10axis(axis3_10()), $scale, $shift, MIRROR_AXIS);
 
 if ($valid){
-   $x = $xo;
+
+   // TIME PANEL
+
+   $x = $chart->xo;
    $x1 = $x;
-   $x = $chart->bars($x,$barw,$barspace,DARK_GRAY,$secs);
+   $chart->barwidth = 5;
+   $x = $chart->bars(DARK_GRAY,$secs);
 
    $label = 'Time';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
-   
-   $x += $gap;
+   ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+
+   // MEMORY USE PANEL
+
+   $x += 20;
    $x1 = $x;
-   $x = $chart->bars($x,$barmw,4+$barspace,BLACK,$kb);
-   
+   $chart->xo = $x;
+   $chart->barspace = 4 + $chart->barspace;
+   $chart->barwidth = 0;
+   $x = $chart->bars(BLACK,$kb);
+
    $label = 'Memory Use';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
-   
-   $x += $gap;
+   ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+
+   // SOURCE SIZE PANEL
+
+   $x += 20;
    $x1 = $x;
-   $x = $chart->bars($x,$barw,$barspace,DARK_GRAY,$gz,FALSE);
+   $chart->xo = $x;
+   $chart->barspace = 3;
+   $chart->barwidth = 5;
+   $x = $chart->bars(DARK_GRAY,$gz,FALSE);
 
    $label = 'Source Size';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
-   ImageString($chart->im, 2, $z, $h-30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
 
+   $chart->xo = $chart->defaultOriginX();
    $chart->title($LangName[0].' worse-to-better compared to '.$LangName[1]);
    $chart->notice($Mark);
 }
 
-$chart->yAxisLegend($w,$h,'worse ratio       better ratio',15);
 $chart->frame();
+$chart->yAxisLegend('worse ratio       better ratio',$chart->h / 2);
 $chart->complete();
 
 ?>

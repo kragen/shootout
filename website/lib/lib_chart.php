@@ -6,7 +6,6 @@
 define('CHAR_WIDTH_2',6.0);
 define('CHAR_WIDTH_3',7.0);
 define('MARGIN',16);
-define('BETWEEN_GRID',10);
 define('SPACE_BETWEEN_GRIDLINES',10);
 
 define('WHITE',0);
@@ -19,7 +18,7 @@ define('GOLDENROD',6);
 define('MEDIUM_VIOLET_RED',7);
 define('YELLOW_GREEN',8);
 
-
+define('MIRROR_AXIS',0);
 
 // CHART CLASS ///////////////////////////////////////////////////
 
@@ -29,19 +28,34 @@ class Chart {
    var $xo,$xscale,$xshift,$xaxis;
    var $yo,$yscale,$yshift,$yaxis;
 
-   function Chart($width,$height,&$yaxis,$xorigin=MARGIN,$yorigin=MARGIN){
-      $this->w = $width;
-      $this->h = $height;
 
-      $this->im = ImageCreate($width,$height);
+   function Chart(){
+      $this->w = $this->defaultWidth();
+      $this->h = $this->defaultHeight();
+
+      $this->im = ImageCreate($this->w,$this->h);
       ImageColorAllocate($this->im,255,255,255);
       $this->initializeColours();
-      
-      $this->xo = $xorigin;
-      $this->yo = $yorigin;
-      $this->yaxis = $yaxis;
-      
-      $this->shiftAndScaling();
+
+      // chart origin may be temporarily reset to create multiple panels
+      $this->xo = $this->defaultOriginX();
+      $this->yo = $this->defaultOriginY();
+   }
+
+   function defaultWidth(){
+      return 480;
+   }
+   
+   function defaultHeight(){
+      return 300;
+   }
+   
+   function defaultOriginX(){
+      return 48;
+   }
+
+   function defaultOriginY(){
+      return MARGIN;
    }
 
    function complete(){
@@ -86,18 +100,19 @@ class Chart {
       return $x;
    }
 
-   function xAxisLegend($w,$h,$label){
-      $x = ($w - $this->xo - strlen($label)*CHAR_WIDTH_2)/2.0;
-      ImageString($this->im, 2, $x + $this->xo, $h-15, $label, $this->colour[BLACK]);
+   function xAxisLegend($label,$size=null){
+      if (!isset($size)){ $size = $this->w; }
+      $x = ($size - $this->xo - strlen($label)*CHAR_WIDTH_2)/2.0;
+      ImageString($this->im, 2, $x + $this->xo, $this->h - 15, $label, $this->colour[BLACK]);
    }
 
-   function yAxisLegend($w,$h,$label,$yo=null){
-      if (!isset($yo)){ $yo = $this->yo; }
-      $y = ($h - $yo - strlen($label)*CHAR_WIDTH_2)/2.0;
-      ImageStringUp($this->im, 2, 5, $h - $y - $yo, $label, $this->colour[BLACK]);
+   function yAxisLegend($label,$size=null){
+      if (!isset($size)){ $size = $this->h; }
+      $y = ($size - $this->yo - strlen($label)*CHAR_WIDTH_2)/2.0;
+      ImageStringUp($this->im, 2, 5, $this->h - $y - $this->yo, $label, $this->colour[BLACK]);
    }
 
-   function shiftAndScaling(){
+   function shiftAndScale(){
       if (isset($this->yaxis)){
          $this->yshift = $this->yaxis[0][0];
          $max = $this->yaxis[ sizeof($this->yaxis) - 1][0];
@@ -106,8 +121,17 @@ class Chart {
       }
    }
 
-   function yAxisGrid($up=''){
-      if ($up=='down'){ $dir = -1.0; } else { $dir = 1.0; }
+   function yAxis(&$yaxis,$scale=null,$shift=null,$axistype=null){
+      $this->yaxis = $yaxis;
+
+      if (isset($scale)){
+         $this->yscale = $scale;
+         $this->yshift = $shift;
+      } else {
+         $this->shiftAndScale();
+      }
+      if (isset($axistype)){ $dir = -1.0; } else { $dir = 1.0; }
+
       foreach($this->yaxis as $v){
          $y = $this->h - $this->yo - $dir*($v[0] * $this->yscale - $this->yshift * $this->yscale);
          if (!isset($firsty)){ $firsty = $y; }
@@ -119,21 +143,6 @@ class Chart {
          }
       }
    }
-   
-   function backgroundText($inc,$max,&$a){
-      $x = $this->xo + 4;
-      $count = 0;
-      $need = floor(($this->h - 15) /CHAR_WIDTH_3)-1;
-      foreach($a as $s){
-         $s = ' '.$s;
-         $needrepeat = floor($need/strlen($s))+1;
-         $label = substr( str_repeat($s,$needrepeat), 0, $need);
-         ImageStringUp($this->im, 3, $x, $this->h - 12, $label, $this->colour[LIGHT_GRAY]);
-         $x = $x + $inc;
-         if ($count == $max){ break; } else { $count++; }
-      }
-   }
-   
 
 }
 
@@ -144,13 +153,23 @@ class Chart {
 // assume vertical box
 
 class BoxChart extends Chart {
+   
+   var $boxwidth,$boxspace;
 
-   function boxAndWhiskers($boxw,$inc,$boxo,$max,&$d){
-      $this->boxes($boxw,$inc,$boxo,$max,$d);
-      $this->whiskers($boxw,$inc,$boxo,$max,$d);
+   function BoxChart(){
+      Chart::Chart();
+      $this->boxwidth = 20;
+      $this->boxspace = 8;
+      $this->boxmiddle = 10;
+      $this->maxboxes = 15;
    }
 
-   function boxes($boxw,$inc,$boxo,$max,&$d){
+   function boxAndWhiskers(&$d){
+      $this->boxes($d);
+      $this->whiskers($d);
+   }
+
+   function boxes(&$d){
       $n = sizeof($d);
       if ($n % STATS_SIZE == 0){
          $x = $this->xo + 4;
@@ -162,51 +181,75 @@ class BoxChart extends Chart {
             $upper = $this->h - ($this->yo  + $d[$i+STAT_UPPER] * $this->yscale + $ys);
             $xupper = $this->h - ($this->yo  + $d[$i+STAT_XUPPER] * $this->yscale + $ys);
 
-            ImageLine($this->im, $x+$boxo, $xlower, $x+$boxo, $xupper, $this->colour[DARK_GRAY]);
-            ImageLine($this->im, $x+$boxo+1, $xlower, $x+$boxo+1, $xupper, $this->colour[DARK_GRAY]);
-            ImageFilledRectangle($this->im, $x, $upper, $x+$boxw, $lower, $this->colour[WHITE]);
-            ImageRectangle($this->im, $x, $upper, $x+$boxw, $lower, $this->colour[DARK_GRAY]);
+            ImageLine($this->im, $x+$this->boxmiddle, $xlower, $x+$this->boxmiddle, $xupper, $this->colour[DARK_GRAY]);
+            ImageLine($this->im, $x+$this->boxmiddle+1, $xlower, $x+$this->boxmiddle+1, $xupper, $this->colour[DARK_GRAY]);
+            ImageFilledRectangle($this->im, $x, $upper, $x+$this->boxwidth, $lower, $this->colour[WHITE]);
+            ImageRectangle($this->im, $x, $upper, $x+$this->boxwidth, $lower, $this->colour[DARK_GRAY]);
 
-            $x = $x + $boxw + $inc;
-            if ($count == $max){ break; } else { $count++;  }
+            $x = $x + $this->boxwidth + $this->boxspace;
+            if ($count == $this->maxboxes){ break; } else { $count++;  }
          }
       }
    }
 
-   function whiskers($boxw,$inc,$boxo,$max,&$d){
+   function whiskers(&$d){
       $n = sizeof($d);
       if ($n%STATS_SIZE == 0){
          $x = $this->xo + 4;
          $ys = abs($this->yshift) * $this->yscale;
          $count = 0;
-         $whisk = floor(($boxw - $boxo)/2);
+         $whisk = floor(($this->boxwidth - $this->boxmiddle)/2);
          for ($i=0; $i<$n; $i+=STATS_SIZE){
             $xlower = $this->h - ($this->yo + $d[$i+STAT_XLOWER] * $this->yscale + $ys);
             $median = $this->h - ($this->yo + $d[$i+STAT_MEDIAN] * $this->yscale + $ys);
             $xupper = $this->h - ($this->yo + $d[$i+STAT_XUPPER] * $this->yscale + $ys);
-            ImageLine($this->im, $x+$whisk, $xlower, $x+$boxw-$whisk, $xlower, $this->colour[DARK_GRAY]);
-            ImageLine($this->im, $x+$whisk, $xupper, $x+$boxw-$whisk, $xupper, $this->colour[DARK_GRAY]);
+            ImageLine($this->im, $x+$whisk, $xlower, $x+$this->boxwidth-$whisk, $xlower, $this->colour[DARK_GRAY]);
+            ImageLine($this->im, $x+$whisk, $xupper, $x+$this->boxwidth-$whisk, $xupper, $this->colour[DARK_GRAY]);
 
             if ($d[$i+STAT_MIN] < $d[$i+STAT_XLOWER]){
                $y = $this->h - ($this->yo + $d[$i+STAT_MIN] * $this->yscale + $ys);
-               ImageLine($this->im, $x+$whisk, $y, $x+$boxw-$whisk, $y, $this->colour[DARK_GRAY]);
-               ImageLine($this->im, $x+$boxo, $y-5, $x+$boxo, $y, $this->colour[DARK_GRAY]);
-               ImageLine($this->im, $x+$boxo+1, $y-5, $x+$boxo+1, $y, $this->colour[DARK_GRAY]);
+               ImageLine($this->im, $x+$whisk, $y, $x+$this->boxwidth-$whisk, $y, $this->colour[DARK_GRAY]);
+               ImageLine($this->im, $x+$this->boxmiddle, $y-5, $x+$this->boxmiddle, $y, $this->colour[DARK_GRAY]);
+               ImageLine($this->im, $x+$this->boxmiddle+1, $y-5, $x+$this->boxmiddle+1, $y, $this->colour[DARK_GRAY]);
             }
             if ($d[$i+STAT_MAX] > $d[$i+STAT_XUPPER]){
                $y = $this->h -($this->yo + $d[$i+STAT_MAX] * $this->yscale + $ys);
-               ImageLine($this->im, $x+$whisk, $y, $x+$boxw-$whisk, $y, $this->colour[DARK_GRAY]);
-               ImageLine($this->im, $x+$boxo, $y, $x+$boxo, $y+5, $this->colour[DARK_GRAY]);
-               ImageLine($this->im, $x+$boxo+1, $y, $x+$boxo+1, $y+5, $this->colour[DARK_GRAY]);
+               ImageLine($this->im, $x+$whisk, $y, $x+$this->boxwidth-$whisk, $y, $this->colour[DARK_GRAY]);
+               ImageLine($this->im, $x+$this->boxmiddle, $y, $x+$this->boxmiddle, $y+5, $this->colour[DARK_GRAY]);
+               ImageLine($this->im, $x+$this->boxmiddle+1, $y, $x+$this->boxmiddle+1, $y+5, $this->colour[DARK_GRAY]);
             }
 
-            ImageFilledRectangle($this->im, $x, $median-1, $x+$boxw, $median, $this->colour[BLACK]);
+            ImageFilledRectangle($this->im, $x, $median-1, $x+$this->boxwidth, $median, $this->colour[BLACK]);
 
-            $x = $x + $boxw + $inc;
-            if ($count == $max){ break; } else { $count++;  }
+            $x = $x + $this->boxwidth + $this->boxspace;
+            if ($count == $this->maxboxes){ break; } else { $count++;  }
          }
       }
-   }   
+   }
+   
+   function backgroundText(&$a){
+      $x = $this->xo + 2;
+      $count = 0;
+      $need = floor(($this->h - 15) /CHAR_WIDTH_3)-1;
+      foreach($a as $s){
+         $s = ' '.$s;
+         $needrepeat = floor($need/strlen($s))+1;
+         $label = substr( str_repeat($s,$needrepeat), 0, $need);
+         ImageStringUp($this->im, 3, $x, $this->h - 12, $label, $this->colour[LIGHT_GRAY]);
+         $x = $x + $this->boxwidth + $this->boxspace;
+         if ($count == $this->maxboxes){ break; } else { $count++; }
+      }
+   }
+
+   function autoBoxspace(&$a){
+      $boxspace = 4;
+      if (sizeof($a)>0){
+         $n = sizeof($a)/STATS_SIZE;
+         $i = 1;
+         while ($n * ($this->boxwidth + $i) <= $this->w - $this->xo){ $i++; }
+         $this->boxspace = $i-1;
+      }
+   }
 
 }
 
@@ -216,50 +259,67 @@ class BoxChart extends Chart {
 // assume vertical bar
 
 class BarChart extends Chart {
-   
-   function bars($xo,$barwidth,$inc,$barcolour,&$d,$filled=TRUE){
-      $x = $xo;
+   var $barwidth,$barspace;
+
+   function BarChart(){
+      Chart::Chart();
+      $this->barwidth = 3;
+      $this->barspace = 3;
+   }
+
+   function defaultHeight(){
+      return 225;
+   }
+
+   function bars($barcolour,&$d,$filled=TRUE){
+      $x = $this->xo;
       foreach($d as $v){
          if ($v > -4){ // no measurement was made
             $y1 = $this->h - $this->yo - $v * $this->yscale;
             $y2 = $this->h - $this->yo;
             if ($v < 0){ $tmp = $y1; $y1 = $y2; $y2 = $tmp; }
             if ($filled){
-               ImageFilledRectangle($this->im, $x, $y1, $x + $barwidth, $y2, $this->colour[$barcolour]);
+               ImageFilledRectangle($this->im, $x, $y1, $x + $this->barwidth, $y2, $this->colour[$barcolour]);
             } else {
-               ImageFilledRectangle($this->im, $x, $y1, $x + $barwidth, $y2, $this->colour[WHITE]);
-               ImageRectangle($this->im, $x, $y1, $x + $barwidth, $y2, $this->colour[$barcolour]);
+               ImageFilledRectangle($this->im, $x, $y1, $x + $this->barwidth, $y2, $this->colour[WHITE]);
+               ImageRectangle($this->im, $x, $y1, $x + $this->barwidth, $y2, $this->colour[$barcolour]);
             }
          }
-         $x += $barwidth + $inc;
+         $x += $this->barwidth + $this->barspace;
       }
       return $x;
    }
-
 }
 
+
+class ComparisonChart extends BarChart {
+
+   function defaultHeight(){
+      return Chart::defaultHeight();
+   }
+}
 
 // LINECHART CLASS ///////////////////////////////////////////////////
 
 // assume horizontal lines
 
 class LineChart extends Chart {
-   
-   function lines($xo,$linecolour,&$xs,&$ys){
-      $x2 = $xo;
+
+   function lines($linecolour,&$xs,&$ys){
+      $x2 = $this->xo;
       $y2 = $this->yo;
       for ($i=0;$i<sizeof($ys);$i++){
         if ($ys[$i] > log10(NO_VALUE)){ // no measurement was made - LOG10 TOO SPECIFIC
 
             if (!isset($prevx)){
-               $prevx = $xo + ($xs[$i] * $this->xscale + $this->xshift * $this->xscale);
+               $prevx = $this->xo + ($xs[$i] * $this->xscale + $this->xshift * $this->xscale);
                $prevy = $this->h - $this->yo - ($ys[$i] - $this->yshift)* $this->yscale;
                ImageFilledRectangle($this->im, $prevx-1, $prevy-3, $prevx+3, $prevy+1, $this->colour[$linecolour]);
             } else {
                $x1 = $prevx;
                $y1 = $prevy;
 
-               $x2 = $xo + ($xs[$i] * $this->xscale + $this->xshift * $this->xscale);
+               $x2 = $this->xo + ($xs[$i] * $this->xscale + $this->xshift * $this->xscale);
                $y2 = $this->h - $this->yo - ($ys[$i] - $this->yshift) * $this->yscale;
 
                $prevx = $x2;
