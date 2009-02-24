@@ -23,7 +23,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better?</a></h2>
+<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs better or worse?</a></h2>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
@@ -32,13 +32,10 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
  /></p>
 
 
-<p>How many times <em>worse or better</em> are the <strong><?=$LangName;?></strong> programs than the corresponding <?=$LangName2;?> programs?</p>
-
-
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><a href="#ratio" name="ratio"><span class="num2">~&nbsp;<em>x&nbsp;times</em>&nbsp;worse&nbsp;than&nbsp;<?=$LangName2;?></span></a><br/><?=$LangName;?>&nbsp;<em>x&nbsp;times</em>&nbsp;better</th></tr>
+<tr><th colspan="5"><a href="#ratio" name="ratio"><?=$LangName;?>&nbsp;/&nbsp;<?=$LangName2;?></th></tr>
 
 <tr>
 <th>Program&nbsp;&amp;&nbsp;Logs</th>

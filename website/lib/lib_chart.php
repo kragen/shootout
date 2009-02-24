@@ -436,6 +436,13 @@ function axis3_10(){
       );
 }
 
+function axis3_10_Mirror(){
+   return array(
+      array(1,""), array(3,"1/3"), array(10,"1/10"), array(30,"1/30"),
+      array(100,"1/100"), array(300,"1/300"), array(1000,"1/1000")
+      );
+}
+
 function axis03000(){
    return array(
       array(0.1,"0.1"), array(0.3,"0.3"), array(0.5,"0.5"),

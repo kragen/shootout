@@ -47,7 +47,7 @@ $chart->yo = $chart->h / 2;
 $scale = 45.0;
 $shift = 0.0;
 $chart->yAxis(log10axis(axis3_10()), $scale, $shift);
-$chart->yAxis(log10axis(axis3_10()), $scale, $shift, MIRROR_AXIS);
+$chart->yAxis(log10axis(axis3_10_Mirror()), $scale, $shift, MIRROR_AXIS);
 
 if ($valid){
 
@@ -89,12 +89,12 @@ if ($valid){
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
 
    $chart->xo = $chart->defaultOriginX();
-   $chart->title($LangName[0].' worse-to-better compared to '.$LangName[1]);
+   $chart->title('better-to-worse '.$LangName[0].' / '.$LangName[1]);
    $chart->notice($Mark);
 }
 
 $chart->frame();
-$chart->yAxisLegend('worse ratio       better ratio',$chart->h / 2);
+$chart->yAxisLegend('ratio',$chart->h / 2);
 $chart->complete();
 
 ?>

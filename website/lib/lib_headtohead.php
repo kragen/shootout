@@ -98,9 +98,9 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
             $cpu = 1; 
             $gz = 1;
 
-            if ($r1[DATA_TIME]>0){ $full = $r2[DATA_TIME] / $r1[DATA_TIME]; }
-            if ($r1[DATA_MEMORY]>0){ $mem = $r2[DATA_MEMORY] / $r1[DATA_MEMORY]; }
-            if ($r1[DATA_GZ]>0){ $gz = $r2[DATA_GZ] / $r1[DATA_GZ]; }
+            if ($r1[DATA_TIME]>0){ $full = $r1[DATA_TIME] / $r2[DATA_TIME]; }
+            if ($r1[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
+            if ($r1[DATA_GZ]>0){ $gz = $r1[DATA_GZ] / $r2[DATA_GZ]; }
                                  
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]
@@ -266,18 +266,23 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 
 function PF($d){
-   if ($d>14.99){ return '<td class="num5">'.number_format($d).'</td>'; } 
-   elseif ($d>1.001){ return '<td class="num4">'.number_format($d,1).'</td>'; } 
-   elseif ($d>0.999){ return '<td>&nbsp;</td>'; }
+   if ($d>14.99){ return '<td class="num1">'.number_format(round($d)).'</td>'; }
+   elseif ($d>1.1){ return '<td class="num2">'.number_format(round($d)).'</td>'; }
+   elseif ($d>1.01){ return '<td class="num2">1</td>'; }
    else {
       if ($d>0){
          $i = 1.0 / $d;
-            if ($i>14.99){ return '<td class="num1">~'.number_format($i).'</td>'; }
-            elseif ($i>1.001){ return '<td class="num2">~'.number_format($i,1).'</td>'; }
-            else { return '<td>&nbsp;</td>'; }
+            if ($i>14.99){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
+            elseif ($i>1.1){ return '<td class="num4"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
+            elseif ($i>1.01){ return '<td class="num4"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
+            else { return '<td class="num2">-</td>'; }
       } else { return '<td>&nbsp;</td>'; }
    }
 }
+
+
+
+
 
 function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    // Simple filter on file rows
