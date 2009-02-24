@@ -197,6 +197,6 @@ foreach($Langs as $a){
 
 </div>
 
-<? $virtual_page="home"; include_once("analyticstracking.php") ?>
+<? include_once("analyticstracking.php") ?>
 </body>
 </html>
