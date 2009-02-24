@@ -222,7 +222,7 @@ function CompareTestName($a, $b){
 
 
 function IdName($id){
-   if ($id>1){ return ' #'.$id; } else { return ''; }
+   if ($id>1){ return '&nbsp;#'.$id; } else { return ''; }
 }
 
 
