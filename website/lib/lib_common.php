@@ -418,11 +418,11 @@ function PTime($d){
    elseif ($d<3600.0){
      $m = floor($d/60); $s = $d-($m*60); $ss = number_format($s,0);
      if (strlen($ss)<2) { $ss = "0".$ss; }
-     return number_format($m,0)." min"; }
+     return number_format($m,0)."&nbsp;min"; }
    else {
      $h = floor($d/3600); $m = floor(($d-($h*3600))/60);
      $mm = number_format($m,0); if (strlen($mm)<2) { $mm = "0".$mm; }
-     return number_format($h,0)."h ".$mm." min";
+     return number_format($h,0)."h&nbsp;".$mm."&nbsp;min";
    }
 }
 
