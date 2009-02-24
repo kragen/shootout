@@ -49,11 +49,11 @@ foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
 
-   $checked = "";
+   $checked = '';
    if (isset($selected[$k])){ $checked = 'checked="checked"'; }
 
    printf('<tr>');
-   printf('<td class="score"><p><input type="checkbox" name="%s" "%s" /></p></td>', $k, $checked); echo "\n";
+   printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', $k, $checked); echo "\n";
    printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>',
       $k,$k,$HtmlName); echo "\n";
    printf('<td>%0.2f</td><td>%0.2f</td><td>%0.2f</td><td class="sort">%0.2f</td><td>%0.2f</td><td>%0.2f</td><td>%0.2f</td>',
