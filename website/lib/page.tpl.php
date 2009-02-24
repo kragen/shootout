@@ -31,6 +31,6 @@
 </p>
 </div>
 
-<? $virtual_page=$PageTitle; include_once(IMAGE_PATH.'analyticstracking.php') ?>
+<? include_once(IMAGE_PATH.'analyticstracking.php'); ?>
 </body>
 </html>
