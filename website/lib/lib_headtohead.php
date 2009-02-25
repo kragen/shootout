@@ -98,9 +98,9 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
             $cpu = 1; 
             $gz = 1;
 
-            if ($r1[DATA_TIME]>0){ $full = $r1[DATA_TIME] / $r2[DATA_TIME]; }
-            if ($r1[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
-            if ($r1[DATA_GZ]>0){ $gz = $r1[DATA_GZ] / $r2[DATA_GZ]; }
+            if ($r2[DATA_TIME]>0){ $full = $r1[DATA_TIME] / $r2[DATA_TIME]; }
+            if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
+            if ($r2[DATA_GZ]>0){ $gz = $r1[DATA_GZ] / $r2[DATA_GZ]; }
                                  
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]
