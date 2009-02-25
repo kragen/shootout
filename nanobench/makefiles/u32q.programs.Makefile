@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.20 2009-02-22 00:20:25 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.21 2009-02-25 23:02:38 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -14,7 +14,7 @@
 
 SPLITFILE := $(NANO_BIN)/split_file.bash
 
-COPTS := -O3 -fomit-frame-pointer -march=native
+COPTS := -O3 -fomit-frame-pointer
 
 
 ############################################################
