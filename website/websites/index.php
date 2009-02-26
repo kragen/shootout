@@ -1,9 +1,5 @@
 <?php
-echo '<?xml version="1.0" encoding="iso-8859-1" ?>';      
-$U64Q = filemtime('./u64q/data/data.csv');
-$U32Q = filemtime('./u32q/data/data.csv');
-$U32 = filemtime('./u32/data/data.csv');
-?>
+echo '<?xml version="1.0" encoding="iso-8859-1" ?>'; ?>
 
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
@@ -33,18 +29,33 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 
+<h5><a href="./u32q/" title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements.">Time, Memory Use and Source Size measurements</a></h5>
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32q/"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
+<h3><span class="u32q">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
 
+
+
+<h5><br/>Programming language measurements A to Z</h5><br/>
+
+<?php
+
+/*
 <p><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./u32q/"><img src="./fresh.png"
    alt=""
    title=""
    width="400" height="225"
  /></a></p>
+*/
 
-
-<h5><br/>Programming language measurements A to Z</h5><br/>
-
-<?php
 
 require_once('../lib/lib_whitelist.php');
 
@@ -128,60 +139,6 @@ foreach($Langs as $a){
    if ($notShown){ PrintIncludedLanguages($debian,$a,$notShown); }
 }
 ?>
-
-
-<h5><br/>Programming language measurements by OS and CPU</h5><br/>
-
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32q/"><? printf('%s', gmdate("d M Y", $U32Q)) ?></a></p>
-<h3><span class="u32q">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64q/"><? printf('%s', gmdate("d M Y", $U64Q)) ?></a></p>
-<h3><span class="u64q">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", $U32)) ?></a></p>
-<h3><span class="u32">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./gp4/">mid 2008</a></p>
-<h3><span class="gp4">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
-</td>
-<td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./debian/">late 2007</a></p>
-<h3><span class="debian">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
 
 
 
