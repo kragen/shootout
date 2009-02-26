@@ -6,7 +6,8 @@
 // CONSTANTS ////////////////////////////////////////////////
 
 define('HTTP_DIR', 'I:/Abyss Web Server/htdocs/websites');
-$Sites = array('gp4','debian','u32q');
+//$Sites = array('gp4','debian','u32q');
+$Sites = array('u32q');
 
 // FUNCTIONS ///////////////////////////////////////////
 
