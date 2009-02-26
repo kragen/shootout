@@ -132,16 +132,7 @@ foreach($Langs as $a){
 
 <h5><br/>Programming language measurements by OS and CPU</h5><br/>
 
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", $U32)) ?></a></p>
-<h3><span class="u32">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
+
 <table class="layout">
 <tr class="test">
 <td>
@@ -159,6 +150,16 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <h3><span class="u64q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", $U32)) ?></a></p>
+<h3><span class="u32">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
