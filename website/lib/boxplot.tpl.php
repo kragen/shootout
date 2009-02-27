@@ -17,8 +17,7 @@
  /></p>
 
 <form method="get" action="benchmark.php">
-<input type="hidden" name="test" value="all" />
-<input type="hidden" name="lang" value="all" />
+<p><input type="hidden" name="test" value="all" /><input type="hidden" name="lang" value="all" /></p>
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
@@ -70,7 +69,7 @@ foreach($score as $k => $v){
 </td>
 </tr>
 </table>
-<input type="hidden" name="box" value="1" />
+<p><input type="hidden" name="box" value="1" /></p>
 </form>
 
 
