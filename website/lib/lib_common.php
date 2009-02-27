@@ -60,8 +60,6 @@ define('LANGUAGE_EXCLUDED',-5);
 define('NO_COMPARISON',-6);
 define('NO_PROGRAM_OUTPUT',-7);
 
-define('NAME_LEN',16);
-define('PRG_ID_LEN',NAME_LEN+2);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
@@ -392,25 +390,11 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 }
 
 
-function HtmlFragment($FileName){
-   $html = '<p>&nbsp;</p>';
-   if (is_readable($FileName)){
-      $f = fopen($FileName,'r');
-      $fs = filesize($FileName);
-      if ($fs > 0){ $html = fread($f,$fs); }
-      fclose($f);
-   }
-   return $html;
-}
-
-
 function PFx($d){
    if ($d>9.9){ return number_format($d); }
    elseif ($d>0.0){ return number_format($d,1); }
    else { return "&nbsp;"; }
 }
-
-
 
 function PTime($d){
    if ($d <= 0.0){ return ''; }

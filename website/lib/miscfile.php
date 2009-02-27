@@ -1,9 +1,9 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(LIB_PATH.'lib_common.php');
+require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB); 
 
 // DATA ///////////////////////////////////////////

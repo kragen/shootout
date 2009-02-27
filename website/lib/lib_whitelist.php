@@ -44,6 +44,9 @@ define('NO_VALUE',0.00001);
 define('VALUE_RESCALE',100000.0);
 define('VALUE_SHIFT',5);
 
+define('NAME_LEN',16);
+define('PRG_ID_LEN',NAME_LEN+2);
+
 // FUNCTIONS ///////////////////////////////////////////////////
 
 function WhiteListInEx(){

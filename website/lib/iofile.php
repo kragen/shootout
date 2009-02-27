@@ -1,15 +1,15 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2008
+// Copyright (c) Isaac Gouy 2004-2009
 
 // LIBRARIES ////////////////////////////////////////////////
 
-require_once(LIB_PATH.'lib_common.php');  
+require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB); 
 
 // DATA ///////////////////////////////////////////
 
-list($Incl,$Excl) = ReadIncludeExclude();
-$Tests = ReadUniqueArrays('test.csv',$Incl);
+list($Incl,$Excl) = WhiteListInEx();
+$Tests = WhiteListUnique('test.csv',$Incl);
 
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
@@ -26,13 +26,6 @@ if (isset($HTTP_GET_VARS['file'])
 }
 if (!isset($F)){ $F = 'output'; }
 
-/*
-if (isset($HTTP_GET_VARS['ext'])
-      && strlen($HTTP_GET_VARS['ext']) && (strlen($HTTP_GET_VARS['ext']) <= 3)){
-   $X = $HTTP_GET_VARS['ext'];
-   if (ereg("^[a-z]+$",$X)){ $E = $X; }
-}
-*/
 if (!isset($E)){ $E = 'txt'; }
 
 
@@ -40,8 +33,20 @@ $TestName = $Tests[$T][TEST_NAME];
 
 if ($F == 'input'){ $Title = $TestName.' input file'; } 
 elseif ($F == 'output'){ $Title = $TestName.' output file'; }
-//elseif ($F == 'dict') { $Title = $TestName.' Usr.Dict.Words file'; }
 else { $Title = $TestName; }
+
+
+function HtmlFragment($FileName){
+   $html = '<p>&nbsp;</p>';
+   if (is_readable($FileName)){
+      $f = fopen($FileName,'r');
+      $fs = filesize($FileName);
+      if ($fs > 0){ $html = fread($f,$fs); }
+      fclose($f);
+   }
+   return $html;
+}
+
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
