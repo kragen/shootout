@@ -35,7 +35,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></th></tr>
+<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></th></a></tr>
 
 <tr>
 <th>Program&nbsp;&amp;&nbsp;Logs</th>
@@ -82,7 +82,7 @@ foreach($nocomparison as $tr){
 }
 
 foreach($failed as $tr){
-      printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td>',
+      printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[0],$tr[1],$tr[2],$tr[3],$tr[4]);
 }
 
