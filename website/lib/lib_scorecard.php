@@ -311,6 +311,7 @@ function MkDataSetMenu($DataSet){
       $dataSelected); echo "\n";
    printf('<option value="ndata" %s>full data - smaller and largest N</option>',
       $ndataSelected); echo "\n";
+   echo '</select>', "\n";
 }
 
 
