@@ -7,7 +7,7 @@ a<sub>13</sub>=1/4, a<sub>22</sub>=1/5, a<sub>31</sub>=1/6, <em>etc</em></p>
 
 <p>Each program <strong>must</strong> implement 4 separate functions / procedures / methods like the <a href="benchmark.php?test=spectralnorm&amp;lang=csharp&amp;sort=<?=$Sort;?>">C# program</a>.</p>
 
-<p>For more information see challenge #3 in Eric W. Weisstein, "Hundred-Dollar, Hundred-Digit Challenge Problems" and "Spectral Norm"
+<p>For more information see challenge #3 in Eric W. Weisstein, "Hundred-Dollar, Hundred-Digit Challenge Problems" and "Spectral Norm".</p>
 <p>From <a href="http://mathworld.wolfram.com"><i>MathWorld</i></a>--A Wolfram Web Resource.<br />
 <a href="http://mathworld.wolfram.com/Hundred-DollarHundred-DigitChallengeProblems.html">http://mathworld.wolfram.com/Hundred-DollarHundred-DigitChallengeProblems.html</a><br />
 <a href="http://mathworld.wolfram.com/SpectralNorm.html">http://mathworld.wolfram.com/SpectralNorm.html</a>
