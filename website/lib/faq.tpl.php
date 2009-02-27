@@ -25,18 +25,18 @@
 
 <dt><a href="#oneone" name="oneone"><strong>How do I compare 2 language implementations?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="benchmark.php?test=all&lang=gpp&lang2=java"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
+<p>Compare them directly <a href="benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
 </dd>
 
 
 <dt><a href="#several" name="several"><strong>How do I compare 3 or 4 or more language implementations?</strong></a></dt>
 <dd>
-<p>Compare the <a href="benchmark.php?test=all&lang=all&d=data&calc=calculate&gpp=on&gcc=on&java=on&javaxint=on&jruby=on&box=1"><strong>boxplot summary</strong> of measurements for just those language implementations</a>.</p>
+<p>Compare the <a href="benchmark.php?test=all&amp;lang=all&amp;d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on&amp;box=1"><strong>boxplot summary</strong> of measurements for just those language implementations</a>.</p>
 </dd>
 
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 or 4 programs?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="fulldata.php?test=fannkuch&p1=java-1&p2=gcc-1&p3=php-1&p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
+<p>Compare them directly <a href="fulldata.php?test=fannkuch&amp;p1=java-1&amp;p2=gcc-1&amp;p3=php-1&amp;p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
 </dd>
 
 <dt><a href="#datasets" name="datasets"><strong>Why is the program better on ...?</strong></a></dt>
@@ -397,7 +397,7 @@ The system is going down for system halt NOW!
 
 <dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
 <dd><p>Yes, in principle.</p>
-<p>In practice, the data.csv & ndata.csv & bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out before the measurements are displayed - that provides considerable flexibility for the website, but makes it difficult to use the data files standalone.</p>
+<p>In practice, the data.csv &amp; ndata.csv &amp; bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out before the measurements are displayed - that provides considerable flexibility for the website, but makes it difficult to use the data files standalone.</p>
 </dd>
 
 
@@ -525,17 +525,17 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
 <dd>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=recursive&p1=ooc-0&p2=se-0&p3=gcc-0&p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=recursive&amp;p1=ooc-0&amp;p2=se-0&amp;p3=gcc-0&amp;p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </dd>
 
 <dt><a href="#version" name="version">Where can I see which language version was used?</a></dt>
-<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&lang=gcc&lang2=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
+<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
 </dd>
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
 <dd><p>You can see the build commands and runtime commands on each program page in the 
-<a href="benchmark.php?test=recursive&lang=gcc&id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<a href="benchmark.php?test=recursive&amp;lang=gcc&amp;id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </dd>
 
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
@@ -558,7 +558,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
  differences were simply better algorithms.</p>
 <p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
  we should think of <em>same thing</em> (same result) tests as <strong>contests</strong>.</p>
-<p>At present, we show just one contest - <a href="benchmark.php?test=meteor&lang=all">meteor-contest</a>.</p>
+<p>At present, we show just one contest - <a href="benchmark.php?test=meteor&amp;lang=all">meteor-contest</a>.</p>
 </dd>
 
 <dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
