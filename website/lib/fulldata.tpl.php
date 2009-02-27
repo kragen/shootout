@@ -108,6 +108,7 @@ foreach($NData as $row){
          printf('<td>&nbsp;</td>');
       }
    }
+   printf('</tr>'); echo "\n";
 }
 ?>
 </table>
