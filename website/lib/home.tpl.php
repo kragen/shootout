@@ -13,7 +13,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
    MkMenuForm($sTests,'all',$Langs,'all','fullcpu');
 ?>
 
-<h3><a href="#benchmarks" name="benchmarks">&nbsp;Benchmarks & Language Implementations</a></h3>
+<h3><a href="#benchmarks" name="benchmarks">&nbsp;Benchmarks &amp; Language Implementations</a></h3>
 
 <p>It can be fun to watch the Benchmarks Game and fun to <a href="benchmark.php?test=all&amp;lang=all">create your own ranking</a> but like other games <a href="faq.php#play">it's more fun to <strong>play!</strong></a></p>
 
