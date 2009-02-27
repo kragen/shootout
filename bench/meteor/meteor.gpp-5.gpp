@@ -1,27 +1,28 @@
 // The Computer Language Benchmarks Game
 // http://shootout.alioth.debian.org/
-// contributed by Ben St. John 
+// contributed by Ben St. John
 // some ideas taken from Kevin Barnes' implementation
 /* A few key optimizations:
-   - pre-calcing of all possible orientations of each piece
-   - pre-calcing of which orientations are possible in each board position
-   - fast calculation of boards with bad islands (which are unsolveable)
-   - pre-calc of some boards (by top three lines) which *always* have bad islands
-   - using only 32-bit boards representations (plus row offset)
-   - improvement since #4 -- no caching of top three lines for other reasons
-   - not using STL vector -- it noticeably slow things down
-   - rotating each found solution, so only half need to be calculated -- done by removing
-     half the rotations of one piece (SKIP_PIECE) chosen as the one with the most valid positions
-     on the board, so only half the solution space is searched
+- pre-calcing of all possible orientations of each piece
+- pre-calcing of which orientations are possible in each board position
+- fast calculation of boards with bad islands (which are unsolveable)
+- pre-calc of some boards (by top three lines) which *always* have bad islands
+- using only 32-bit boards representations (plus row offset)
+- improvement since #4 -- no caching of top three lines for other reasons
+- not using STL vector -- it noticeably slow things down
+- rotating each found solution, so only half need to be calculated -- done by removing
+half the rotations of one piece (SKIP_PIECE) chosen as the one with the most valid positions
+on the board, so only half the solution space is searched
 
- For size, most seems to come from the standard libs.
- I'm tempted to get rid of string, and maybe use cstdio.
+For size, most seems to come from the standard libs.
+I'm tempted to get rid of string, and maybe use cstdio.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
+#include <string>
+#include <memory.h>
 
 using namespace std;
 
@@ -63,15 +64,15 @@ struct Soln {
 
    Soln(int fillVal);
    Soln() : m_synched(false), m_nPiece(0) {}
-   
+
    struct SPiece {
       BitVec vec;
       short iPiece;
       short row;
       SPiece() {}
-      SPiece(BitVec avec, TUInt32 apiece, TUInt32 arow) : 
-         vec(avec), iPiece(short(apiece)), row(short(arow))
-         {}
+      SPiece(BitVec avec, TUInt32 apiece, TUInt32 arow) :
+      vec(avec), iPiece(short(apiece)), row(short(arow))
+      {}
    };
    SPiece m_pieces[N_PIECE_TYPE];
    TUInt32 m_nPiece;
@@ -86,10 +87,10 @@ struct Board {
       (1 << 20) | (1 << 25) | (1 << 30);
    static const BitVec R_EDGE_MASK = L_EDGE_MASK << 4;
    static const BitVec TOP_ROW = (1 << N_COL) - 1;
-   static const TUInt32 TWO_ROWS = 2 * N_COL; 
+   static const TUInt32 TWO_ROWS = 2 * N_COL;
    static const BitVec TOP_2_ROWS = (1 << TWO_ROWS) - 1;
 
-   static const BitVec ROW_0_MASK = 
+   static const BitVec ROW_0_MASK =
       TOP_ROW | (TOP_ROW << 10) | (TOP_ROW << 20) | (TOP_ROW << 30);
    static const BitVec ROW_1_MASK = ROW_0_MASK << 5;
    static const BitVec BOARD_MASK = (1 << 30) - 1;
@@ -159,7 +160,7 @@ static IslandInfo g_islandInfo[MAX_ISLAND_OFFSET] = {0};
 
 //------------------------------------
 Soln::Soln(int fillVal) :
-   m_nPiece(0) {
+m_nPiece(0) {
    fill(fillVal);
 }
 
@@ -179,7 +180,7 @@ string Soln::toString(void) const {
          result += ' ';
       }
       result += '\n';
-      
+
       // indent every second line
       if (y % 2 == 0)
          result += " ";
@@ -205,7 +206,7 @@ void Soln::setCells(void) {
                nNewCells++;
             }
             vec >>= 1;
-         }
+       }
          if (nNewCells == Piece::N_ELEM)
             break;
       }
@@ -217,7 +218,7 @@ bool Soln::lessThan(Soln & r) {
    if (m_pieces[0].iPiece != r.m_pieces[0].iPiece) {
       return m_pieces[0].iPiece < r.m_pieces[0].iPiece;
    }
-   
+
    setCells();
    r.setCells();
 
@@ -230,7 +231,7 @@ bool Soln::lessThan(Soln & r) {
             return (lval < rval);
       }
    }
-   
+
    return false; // solutions are equal
 }
 
@@ -288,7 +289,7 @@ TUInt32 getFirstOne(BitVec v, TUInt32 startPos = 0) {
          mask <<= 8; iPos += 8;
          if ((mask & v) == 0) {
             mask <<= 8; iPos += 8;
-         }
+       }
       }
    }
 
@@ -296,7 +297,7 @@ TUInt32 getFirstOne(BitVec v, TUInt32 startPos = 0) {
    TUInt32 resultLow = result & 0x0f;
    if (resultLow != 0)
       iPos += s_firstOne[resultLow];
-   else 
+   else
       iPos += 4 + s_firstOne[result >> 4];
 
    return iPos;
@@ -312,7 +313,7 @@ void Piece::setCoordList(BitVec vec, TPts & pts) {
             pts[iPt][Y] = y;
 
             iPt++;
-         }
+       }
          mask <<= 1;
       }
    }
@@ -328,7 +329,7 @@ BitVec Piece::toBitVector(const TPts & pts) {
       int pos = Board::getIndex(x, y);
       result |= (1 << pos);
    }
-   
+
    return result;
 }
 
@@ -360,7 +361,7 @@ int Piece::shiftToX0(TPts & pts, Instance & instance, int offsetRow)
          xMax = x;
    }
 
-   // I'm dying for a 'foreach' here 
+   // I'm dying for a 'foreach' here
    int offset = N_ELEM;
    for (iPt = 0; iPt < N_ELEM; iPt++) {
       int & rx = pts[iPt][X];
@@ -386,7 +387,7 @@ void Piece::setOkPos(TUInt32 isOdd, int w, int h) {
    for (int y = isOdd; y < N_ROW - h; y+=2, posMask <<= N_COL) {
       if (p.m_offset)
          posMask <<= p.m_offset;
-   
+
       for (int xPos = 0; xPos < N_COL - p.m_offset; xPos++, posMask <<= 1) {
          // check if the new position is on the board
          if (xPos >= N_COL - w)
@@ -487,7 +488,7 @@ void Piece::genAllOrientations(void) {
 
                mask <<= 1;
             }
-         }
+       }
       }
    }
 }
@@ -500,8 +501,8 @@ inline const Piece::Instance & Piece::getPiece(TUInt32 iPiece, TUInt32 iOrient, 
 // ------------------------------------
 
 Board::Board() :
-   m_curSoln(Soln::NO_PIECE), m_minSoln(N_PIECE_TYPE),
-   m_maxSoln(Soln::NO_PIECE), m_nSoln(0)
+m_curSoln(Soln::NO_PIECE), m_minSoln(N_PIECE_TYPE),
+m_maxSoln(Soln::NO_PIECE), m_nSoln(0)
 {}
 
 TUInt32 g_flip[] = {
@@ -514,7 +515,7 @@ TUInt32 g_flip[] = {
 
 inline TUInt32 flipTwoRows(TUInt32 bits) {
    TUInt32 flipped = g_flip[bits >> N_COL] << N_COL;
-   return (flipped | g_flip[bits & Board::TOP_ROW]);   
+   return (flipped | g_flip[bits & Board::TOP_ROW]);
 }
 
 void Board::calcAlwaysBad(void) {
@@ -531,7 +532,7 @@ void Board::calcAlwaysBad(void) {
 
             TUInt32 flipMask = getMask(g_flip[i]);
             flipped.alwaysBad[ODD] |= flipMask;
-         }
+       }
       }
    }
 }
@@ -769,3 +770,4 @@ int main(int argc, char * []) {
 
    return 0;
 }
+

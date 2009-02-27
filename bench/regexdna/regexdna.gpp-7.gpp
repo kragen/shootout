@@ -1,329 +1,234 @@
 // The Computer Language Benchmarks Game
 // http://shootout.alioth.debian.org/
 //
-// Contributed by Shyamal Prasad
-// Modified by Paul Kitchin
-// OpenMP by The Anh Tran
+// Contributed by The Anh Tran
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <vector>
+#include <omp.h>
+#include <memory.h>
+#include <sched.h>
 #include <sys/mman.h>
 
-// need -fopenmp flag
-#include <omp.h>
-// doesn't need any lib to link, header files are enough
+#include <iostream>
+#include <vector>
+
+#include <boost/shared_array.hpp>
 #include <boost/xpressive/xpressive.hpp>
+#include <boost/format.hpp>
+
 using namespace boost::xpressive;
 
+
+/*
+   Regex DNA benchmark focuses on regex engine performance.
+   It has 4 steps:
+      1.   read from input
+      2.   strip header and \n. This step is not parallel-able, b/c there hasn't
+         any struture information in read buffer to divide task among threads.
+      3.   Regex_search on entire buffer => store data as flat char array.
+      4.   Regex_replace on entire buffer => store each data line in a big enough struct
+         to avoid resizing 
+*/
+
 // This struct encapsules a line of data
-struct Chunk
+// data line read from input has length = 60
+// But we reserve 256 bytes to avoid resizing when regex_replace is called
+struct DataLine
 {
    static const int MAX_LEN = 256;
 
    char data[MAX_LEN];
    size_t data_len;
-   
-   // pointer to prev/next line, for linear browsing operation
-   Chunk* prev;
-   Chunk* next;
-
-   Chunk()
-   {
-      data_len = 0;
-      prev = next = 0;
-   }
 };
 
-typedef std::vector<Chunk*> Sequence;
-typedef std::vector<int> Dna;
-int NTHREADS = 1;
+// This class stores markers of [begin - end) of each DNA segment
+// Input data has 3 segments
+typedef std::vector< std::pair<size_t, size_t> > Segment_Markers;
 
-// This struct represents a linear char array, for searching patterns
-// If inc/dev step surpasses a data line, it'll wrap to prev/next line
-struct linear_iterator : public std::iterator<std::bidirectional_iterator_tag, char>
+
+// read all redirected data from stdin, then strip header line & '\n' char
+void ReadInput_StripHeader(   size_t &file_size,   size_t &strip_size,
+             boost::shared_array<DataLine> &lines_array, size_t &line_count, 
+             boost::shared_array<char> &flat_array, Segment_Markers &seg_marker)
 {
-   const char   *pdata, *pbegin, *pend;
-   const Chunk*   dataline;
-
-   linear_iterator() : pdata(0), pbegin(0), pend(0), dataline(0)
-   {   }
-
-   linear_iterator(const Sequence& seq)
-   {
-      dataline = seq[0];
-      if (dataline != 0)
-      {
-         pbegin = dataline->data;
-         pend = pbegin + dataline->data_len;
-         pdata = pbegin;
-      }
-      else
-         pbegin = pend = pdata = 0;
-   }
-
-   linear_iterator(const Chunk* ch)
-   {
-      dataline = ch;
-      if (dataline != 0)
-      {
-         pbegin = dataline->data;
-         pend = pbegin + dataline->data_len;
-         pdata = pbegin;
-      }
-      else
-         pbegin = pend = pdata = 0;
-   }
-
-   inline bool operator == (const linear_iterator& rhs) const
-   {
-      return (pdata == rhs.pdata);
-   }
-   inline bool operator != (const linear_iterator& rhs) const
-   {
-      return !(*this == rhs);
-   }
-   inline linear_iterator& operator ++()
-   {
-      if (__builtin_expect(++pdata >= pend, false))
-      {
-         if (dataline->next != 0)
-         {
-            dataline = dataline->next;
-            pbegin = dataline->data;
-            pend = pbegin + dataline->data_len;
-            pdata = pbegin;
-         }
-         else
-            pbegin = pend = pdata = 0;
-      }
-      return (*this);
-   }
-   inline linear_iterator& operator --()
-   {
-      if (__builtin_expect(pdata <= pbegin, false))
-      {
-         if (dataline->prev != 0)
-         {
-            if (pdata != 0)
-               dataline = dataline->prev;
-            pbegin = dataline->data;
-            pend = pbegin + dataline->data_len;
-            pdata = pend -1;
-         }
-         else
-            pbegin = pend = pdata = 0;
-      }
-      else
-         --pdata;
-      return (*this);
-   }
-   inline char operator*() const
-   {
-      return *pdata;
-   }
-};
-
-
-// read all redirected data from stdin
-// Strip headers & newline
-Sequence* ReadInput(size_t &size, size_t &szstrip, Chunk* &memblk, Dna &dna)
-{
-   // get initial input size
-   size = ftell(stdin);
+   // get input size
+   file_size = ftell(stdin);
    fseek(stdin, 0, SEEK_END);
-   size = ftell(stdin) - size;
+   file_size = ftell(stdin) - file_size;
    fseek(stdin, 0, SEEK_SET);
 
    // map input file to process space
-   char* pdata = (char*)mmap(0, size, PROT_READ, MAP_PRIVATE|MAP_POPULATE, fileno(stdin), 0);
+   char* p_input_buffer = (char*)mmap(0, file_size, PROT_READ, MAP_PRIVATE|MAP_POPULATE, fileno(stdin), 0);
 
-   // an array to store data line markers
-   Sequence* seq = new Sequence();
+   // Alloc flat array storage space
+   flat_array = boost::shared_array<char>(new char[file_size]);
+   char* p_flat_array = flat_array.get();
 
-   // predict ndataline = size / 60
-   size_t alloc_sz = size / 60 + 8;
-   seq->reserve (alloc_sz);
+   // Predict ndataline
+   size_t nlines = file_size / 60 + 8;
+   // Alloc dataline storage space
+   lines_array = boost::shared_array<DataLine>(new DataLine[nlines]);
+   DataLine* p_lines_array = lines_array.get();
 
-   // Pre-alloc whole storage space: maximum of nline * sizeof(Chunk) OR size * 1.5
-   alloc_sz = std::max( alloc_sz * sizeof(Chunk), size + (size >> 1) );
-   memblk = (Chunk*)malloc( alloc_sz );
 
-   // Game rule: ">[^\n]*\n | \n"
-   cregex strip( (as_xpr('>') >> *(~_n) >> _n) | (s1 = _n) );
-   cmatch mtrs;
+   // Rule: Strip pattern: ">[^\n]*\n | \n"
+   cregex strip_ptn( (as_xpr('>') >> *(~_n) >> _n) | (s1 = _n) );
+   cmatch match_result;
 
-   // alloc ~800k data lines is costly -> use placement new
-   Chunk* index = memblk;
-   Chunk* c1 = new (index) Chunk();
-   ++index;
 
-   const char* psrc = pdata;
-   const char* pend = pdata + size;
-   szstrip = 0;
-   int current_line = 0;
+   const char* psrc = p_input_buffer;
+   const char* pend = p_input_buffer + file_size;
 
-   while ( regex_search((const char*)psrc, (const char*)pend, mtrs, strip) )
+   size_t segment_begin =0, segment_end =0;
+
+   strip_size = 0;
+   line_count = 0;
+
+   while ( boost::xpressive::regex_search((const char*)psrc, (const char*)pend, match_result, strip_ptn) )
    {
-      if (mtrs[1].matched)   // normal data line
+      if (match_result[1].matched)   // normal data line
       {
-         c1->data_len = mtrs[0].first - psrc;
-         memcpy(c1->data, psrc, c1->data_len);
-         szstrip += c1->data_len;
-         seq->push_back (c1);
-
-         Chunk* c2 = new (index) Chunk();
-         ++index;
-
-         c2->prev = c1;
-         c1->next = c2;
-         c1 = c2;
+         size_t len = match_result[0].first - psrc;
+         
+         // copy to DataLine
+         memcpy(p_lines_array[line_count].data, psrc, len);
+         p_lines_array[line_count].data_len = len;
+         line_count++;
+         
+         // copy to simple - flat array
+         memcpy(p_flat_array + segment_end, psrc, len);
+         segment_end += len;
+         
+         strip_size += len;
       }
       else      // header data line
-         dna.push_back(current_line);
+      {
+         if (segment_end > 0)
+         {
+            seg_marker.push_back (std::pair<size_t, size_t>(segment_begin, segment_end));
+            segment_begin = segment_end;
+         }
+      }
 
-      current_line++;
-      psrc = mtrs[0].second;
+      psrc = match_result[0].second;
    }
 
-   if (c1->prev != 0)
-      c1->prev->next = 0;
+   if (segment_begin < segment_end)
+      seg_marker.push_back (std::pair<size_t, size_t>(segment_begin, segment_end));
 
-   munmap(pdata, size);
-   return seq;
+   munmap(p_input_buffer, file_size);
 }
 
 
-void PrintPatternsMatch(const Sequence & seq, const Dna& dna)
+void CountPatternsMatch(boost::shared_array<char> const flat_array, 
+                  Segment_Markers const &seg_marker,
+                  std::string &result)
 {
-   const char* patterns[] = {
-      "agggtaaa|tttaccct",
-      "[cgt]gggtaaa|tttaccc[acg]",
-      "a[act]ggtaaa|tttacc[agt]t",
-      "ag[act]gtaaa|tttac[agt]ct",
-      "agg[act]taaa|ttta[agt]cct",
-      "aggg[acg]aaa|ttt[cgt]ccct",
-      "agggt[cgt]aa|tt[acg]accct",
-      "agggta[cgt]a|t[acg]taccct",
-      "agggtaa[cgt]|[acg]ttaccct"
-   };
-   const int npt = sizeof(patterns) / sizeof(patterns[0]);
-   size_t count_match[npt] = {0};
-
-   // we have 9 search patterns -> unbalance task
-   // Strategy: there are 2 steps
-   //   first:      divide work by worksize, which is multiples of NTHREADS. (If Alioth create 3 cores benchmarks someday)
-   //   second:   divide work by numbers of dna (also equal header lines encountered in StripHeader() ) 
-   // If running in single thread mode, no need to do second step
-   int work_sz = 0;
-   while ( (work_sz + NTHREADS) <= npt)
-      work_sz += NTHREADS;
-
-   // Spawn N threads
-   #pragma omp parallel default(shared) num_threads(NTHREADS)
+   static char const* patterns[] = 
    {
-      typedef basic_regex<linear_iterator> reg_li;
-      typedef regex_iterator<linear_iterator> match_iterator;
+      ("agggtaaa|tttaccct"),
+      ("[cgt]gggtaaa|tttaccc[acg]"),
+      ("a[act]ggtaaa|tttacc[agt]t"),
+      ("ag[act]gtaaa|tttac[agt]ct"),
+      ("agg[act]taaa|ttta[agt]cct"),
+      ("aggg[acg]aaa|ttt[cgt]ccct"),
+      ("agggt[cgt]aa|tt[acg]accct"),
+      ("agggta[cgt]a|t[acg]taccct"),
+      ("agggtaa[cgt]|[acg]ttaccct")
+   };
+   static const size_t npatttern = sizeof(patterns) / sizeof(patterns[0]);
+   
+   // element X in this array, counts how many matched so far, of pattern X
+   static size_t matched_count[npatttern] = {0};
+   // element X in this array, stores dna segments, which is processed with pattern X
+   static size_t segment_processed[npatttern] = {0};
 
-      // Parallel search, work is divided by search patterns
-       #pragma omp for schedule(dynamic, 1) nowait
-      for (int i = 0; i < work_sz; ++i)
+   for (size_t ipt = 0; ipt < npatttern; ++ipt)
+   {
+      cregex const &search_ptn(cregex::compile(patterns[ipt], regex_constants::nosubs|regex_constants::optimize));
+
+      size_t job = 0;
+      size_t seg_size = seg_marker.size ();
+      
+      // Parallel search, work is divided by dna segments
+      while ((job = __sync_fetch_and_add(&segment_processed[ipt], 1)) < seg_size)
       {
-         reg_li const &search_ptn( reg_li::compile(patterns[i], regex_constants::nosubs|regex_constants::optimize) );
-         linear_iterator seq_ite(seq), seq_end;
+         char const *pbegin   = flat_array.get() + seg_marker[job].first;
+         char const *pend   = flat_array.get() + seg_marker[job].second;
 
-         match_iterator mi(seq_ite, seq_end, search_ptn);
-         match_iterator me;
-
-         size_t count = 0;
-         while (mi != me)
-         {
-            ++count;
-            ++mi;
-         }
-         // safe to modify share var here, because each thread access different index
-         count_match[i] = count;
+         cregex_iterator ite(pbegin, pend, search_ptn), ite_end;
+         // while (ite != ite_end) ++count;
+         size_t count = std::distance (ite, ite_end);
+         
+         #pragma omp atomic
+         matched_count[ipt] += count;
       }
+   }
 
-      // foreach search patterns remain
-      for (int i = work_sz; i < npt; i++)
+   // we want the last thread, reaching this code block, to print result
+   static size_t thread_passed = 0;
+   if (__sync_add_and_fetch(&thread_passed, 1) == omp_get_num_threads())
+   {
+      boost::format fmt("%1% %2%\n");
+      for (size_t i = 0; i < npatttern; ++i)
       {
-         reg_li const &search_ptn( reg_li::compile(patterns[i], regex_constants::nosubs|regex_constants::optimize) );
-
-         #pragma omp for schedule(dynamic, 1) nowait
-         for (size_t d = 0; d < dna.size(); d++)
-         {
-            linear_iterator seq_ite( seq[ dna[d] ] );
-            linear_iterator seq_end;
-
-            // set end_iterator to the end of each dna (aka next header line)
-            if (d +1 < dna.size())
-               seq_end = linear_iterator( seq[ dna[d+1] ] );
-
-            match_iterator mi(seq_ite, seq_end, search_ptn);
-            match_iterator me;
-
-            size_t count = 0;
-            while (mi != me)
-            {
-               ++count;
-               ++mi;
-            }
-
-            #pragma omp atomic
-            count_match[i] += count;
-         }
+         fmt % patterns[i] % matched_count[i];
+         result += fmt.str();
+         fmt.clear();
       }
-   }   // end parallel region
-
-   for (int i = 0; i < npt; ++i)
-      std::cout << patterns[i] << ' ' << count_match[i] << std::endl;
+      thread_passed = 0;
+   }
 }
 
-size_t Replace_8mers(Sequence &seq)
+
+void Replace_Patterns(boost::shared_array<DataLine> const lines_array, size_t line_count, size_t &replace_len)
 {
-   const cregex search_reg[] = 
+   // static variables here are shared among N threads
+   static const cregex search_reg[] = 
    {   
       as_xpr('B'),   as_xpr('D'),   as_xpr('H'),   as_xpr('K'),   
       as_xpr('M'),   as_xpr('N'),   as_xpr('R'),   as_xpr('S'),   
       as_xpr('V'),   as_xpr('W'),   as_xpr('Y')
    };
-   const char* replace_ptn[] =
+   static const char* replace_ptn[] =
    {
-      "(c|g|t)",   "(a|g|t)",   "(a|c|t)",   "(g|t)",   
+      "(c|g|t)",   "(a|g|t)",      "(a|c|t)",   "(g|t)",   
       "(a|c)",   "(a|c|g|t)",   "(a|g)",   "(c|t)",   
-      "(a|c|g)",   "(a|t)",   "(c|t)"
+      "(a|c|g)",   "(a|t)",      "(c|t)"
    };
-   const size_t n_search_ptn = sizeof(replace_ptn)/sizeof(replace_ptn[0]);
-   const size_t replace_ptn_len[] = 
+
+   static const size_t n_search_ptn = sizeof(replace_ptn)/sizeof(replace_ptn[0]);
+   static const size_t replace_ptn_len[] = 
    {
       7,   7,   7,   5,   
       5,   9,   5,   5,   
       7,   5,   5
    };
 
-   size_t new_seq_size = 0;
-   int nline = static_cast<int>(seq.size());
+   // element X in this array, stores datalines, which is processed with pattern X
+   // Ex: line_processed[2] = 3 means there are 3 data lines that has been processed with pattern 'H'
+   static size_t line_processed[n_search_ptn] = {0};
 
-   #pragma omp parallel default(shared) reduction(+:new_seq_size) num_threads(NTHREADS)
+   // for each replace pattern
    for (size_t ptn_idx = 0; ptn_idx < n_search_ptn; ++ptn_idx)
    {
       cregex const &search_ptn (search_reg[ptn_idx]);
       cmatch mt;
-      char tmpbuf[Chunk::MAX_LEN];
+      char tmpbuf[DataLine::MAX_LEN];
 
-      // Parallel replace, work is divided by lines, there are ~800k lines
-      #pragma omp for schedule(dynamic, nline >> 10)
-      for (int ln = 0; ln < nline; ++ln)
+      // Fetch line hasn't been processed
+      // This is parallel replace, work is divided by lines
+      size_t job;
+      while ((job = __sync_fetch_and_add(&line_processed[ptn_idx], 1)) <  line_count)
       {
-         Chunk* c = seq[ln];
+         DataLine &dataline = lines_array[job];
          size_t deslen = 0;
 
-         const char* psrc = c->data;
-         const char* psrc_end = c->data + c->data_len;
+         const char* psrc = dataline.data;
+         const char* psrc_end = dataline.data + dataline.data_len;
 
+         // regex_replace can be used here instead. 
+         // But input data has about 1/3 lines which aren't matched => no need to be copied out.
+         // => manually search, replace is prefered 
          bool changed = false;
          while ( regex_search(psrc, psrc_end, mt, search_ptn) )
          {
@@ -349,43 +254,22 @@ size_t Replace_8mers(Sequence &seq)
             deslen += suffix;
 
             // replace existing data line
-            memcpy(c->data, tmpbuf, deslen);
-            c->data_len = deslen;
-            c->data[deslen] = 0;
+            memcpy(dataline.data, tmpbuf, deslen);
+            dataline.data_len = deslen;
          }
 
          // if this is the last replace pattern, update replaced sequence length
          if ( ptn_idx == (n_search_ptn-1) )
-            new_seq_size += c->data_len;
+         {
+            #pragma omp atomic
+            replace_len += dataline.data_len;
+         }
       }
    }
-
-   // update new sequence size
-   return new_seq_size;
 }
 
-int GetThreadCount();
-int main()
-{
-   NTHREADS = GetThreadCount();
-
-   Dna dna;
-   Chunk* memblk = 0;
-   size_t initial_length = 0, strip_length = 0;
-
-   Sequence* seq = ReadInput (initial_length, strip_length, memblk, dna);
-   PrintPatternsMatch(*seq, dna);
-   std::size_t replace_8m_length = Replace_8mers (*seq);
-
-   std::cout << std::endl
-      << initial_length      << std::endl
-      << strip_length      << std::endl
-      << replace_8m_length   << std::endl;
-
-   free(memblk);
-   return 0;
-}
-
+// Detect single - multi thread benchmark
+static
 int GetThreadCount()
 {
    cpu_set_t cs;
@@ -393,11 +277,43 @@ int GetThreadCount()
    sched_getaffinity(0, sizeof(cs), &cs);
 
    int count = 0;
-   for (int i = 0; i < 4; i++)
+   for (int i = 0; i < 16; i++)
    {
       if (CPU_ISSET(i, &cs))
          count++;
    }
    return count;
 }
+
+int main()
+{
+   size_t initial_length = 0;
+   size_t striped_length = 0;
+   size_t replace_length = 0;
+   
+   boost::shared_array<DataLine> data_as_lines;
+   size_t line_count = 0;
+   
+   boost::shared_array<char> data_as_flat_array;
+   Segment_Markers seg_markers; 
+   
+   ReadInput_StripHeader (initial_length, striped_length, data_as_lines, line_count, data_as_flat_array, seg_markers);
+
+   // search dna result
+   std::string match_result;
+
+   // spawn N threads
+   #pragma omp parallel default(shared) num_threads(GetThreadCount())
+   {
+      CountPatternsMatch(data_as_flat_array, seg_markers, match_result);
+      Replace_Patterns (data_as_lines, line_count, replace_length);
+   }
+
+   std::cout   << match_result      << std::endl
+            << initial_length   << std::endl
+            << striped_length   << std::endl
+            << replace_length   << std::endl;
+
+}
+
 

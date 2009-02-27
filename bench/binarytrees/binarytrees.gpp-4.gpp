@@ -13,15 +13,15 @@ It is slower than manual malloc/free (~2x times), and has mutex lock on every fu
 Using this version on smp system is NOT recommended.
 
 Please download lastest libgc v7.1 (May 2008) tarball from its site.
-I assume that you untar libgc source to this directory:      /home/game/binary/gc/
-And you will put compiled headers, libgc.a, libgc.so ... in:   /usr/local/lib/
+I assume that you untar libgc source to this directory:      ~/game/binary/gc/
+And you will put compiled headers, libgc.a, libgc.so ... in:   /usr/local/gc/
 
 Compile libgc:
-   cd /home/game/binary/gc/
+   cd ~/game/binary/gc/
    CPPFLAGS="-DGC_USE_LD_WRAP -DUSE_I686_PREFETCH -DUSE_COMPILER_TLS"
    export CPPFLAGS
    make clean
-    ./configure --prefix=/usr/local/lib --enable-threads=posix --enable-thread-local-alloc --enable-parallel-mark --enable-cplusplus --enable-large-config
+    ./configure --prefix=/usr/local/gc --enable-threads=posix --enable-thread-local-alloc --enable-parallel-mark --enable-cplusplus --enable-large-config
    make
    make install   // may need 'sudo' for writing permission
 
@@ -30,19 +30,27 @@ Flags explanation:
    USE_I686_PREFETCH   :   allow prefetch instruction during mark / sweep / ...
    --enable-large-config   :   optimize for programs having allocated heap's size > 64MB.
    remain flags         :   optimize GC for multithread programs
+
+Compile this file:
+   g++ -O3 -Wall -fomit-frame-pointer -march=native -fopenmp -static ./bintree.cpp -o ./bintree -I/usr/local/gc/include/ -L/usr/local/gc/lib/ -lgccpp -lgc -lboost
+   -Wl,--wrap -Wl,pthread_create -Wl,--wrap -Wl,pthread_join -Wl,--wrap -Wl,pthread_detach -Wl,--wrap -Wl,pthread_sigmask
+
+With -static flag, every needed functions will be static linked to ELF binary.
+GC_USE_LD_WRAP and those lengthy linking flags will redirect 4 "GC important" functions to their wrappers.
+Without -static, libgomp.so will create threads, malloc... on its own -> incompatible with GC.
 */
 
+//#define GC_THREADS
 #define GC_USE_LD_WRAP
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <gc_cpp.h>
 
 #include <iostream>
 #include <omp.h>
+#include <sched.h>
 
-size_t   LINE_SIZE = 64;
-size_t   NTHREADS = 4;
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+
 
 // Inherit operator new (UseGC) from gc class
 struct Node : public gc
@@ -66,7 +74,7 @@ struct Node : public gc
    }
 };
 
-inline
+static inline
 Node* make(int value, int depth)
 {
    if (depth > 0) 
@@ -77,12 +85,33 @@ Node* make(int value, int depth)
    return new Node(value);
 }
 
+static
+int GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 16; i++)
+   {
+      if (CPU_ISSET(i, &cs))
+         count++;
+   }
+   return count;
+}
+
+const size_t   LINE_SIZE = 64;
+
+static
 void MT_AllocTree(int min_depth, int max_depth)
 {
    // buffer to store output result of each thread
-   char * outputstr = (char*)GC_malloc_atomic(LINE_SIZE * (max_depth +1) * sizeof(char));
+   boost::format* output[max_depth +1];
+   for (int d = min_depth; d <= max_depth; d += 2)
+      output[d] = new (GC) boost::format("%1%\t trees of depth %2%\t check: %3%\n");
 
-   #pragma omp parallel for default(shared) num_threads(NTHREADS) schedule(dynamic, 1)
+   #pragma omp parallel for default(shared) num_threads(GetThreadCount()) schedule(dynamic, 1)
    for (int d = min_depth; d <= max_depth; d += 2) 
    {
       int iterations = 1 << (max_depth - d + min_depth);
@@ -96,54 +125,49 @@ void MT_AllocTree(int min_depth, int max_depth)
          //delete a;   delete b;
       }
 
-      sprintf(outputstr + LINE_SIZE * d, "%d\t trees of depth %d\t check: %d\n", (2 * iterations), d, chk);
+      (*output[d]) % (2 * iterations) % d % chk;
    }
 
    // print all results
    for (int d = min_depth; d <= max_depth; d += 2) 
-      printf("%s", outputstr + (d * LINE_SIZE) );
+      std::cout << (*output[d]);
 }
 
-int GetThreadCount()
-{
-   cpu_set_t cs;
-   CPU_ZERO(&cs);
-   sched_getaffinity(0, sizeof(cs), &cs);
-
-   int count = 0;
-   for (int i = 0; i < 8; i++)
-   {
-      if (CPU_ISSET(i, &cs))
-         count++;
-   }
-   return count;
-}
 
 int main(int argc, char *argv[]) 
 {
    GC_INIT();
-   NTHREADS = GetThreadCount();
+   
+   int arg_depth = 10;
+   if (argc >= 2)
+      arg_depth = boost::lexical_cast<int>(argv[1]);
 
    int min_depth = 4;
-   int max_depth = std::max(min_depth +2, (argc == 2 ? atoi(argv[1]) : 10));
+   int max_depth = std::max(min_depth +2, arg_depth);
    int stretch_depth = max_depth +1;
 
-   // Alloc stretch tree
-   Node *c = make(0, stretch_depth);
-   std::cout   << "stretch tree of depth " << stretch_depth << "\t "
-         << "check: " << c->check() << std::endl;
-   //delete c;
+   // Alloc stretch tree, then free it
+   {
+      Node *c = make(0, stretch_depth);
+      std::cout   << "stretch tree of depth " << stretch_depth << "\t "
+            << "check: " << c->check() << std::endl;
+      //delete c;
+   }
+   
+   {
+      // Alloc long_lived_tree
+      Node *long_lived_tree = make(0, max_depth);
 
-   // Alloc long_lived_tree
-   Node *long_lived_tree = make(0, max_depth);
+      // Alloc many small trees
+      MT_AllocTree(min_depth, max_depth);
 
-   // Alloc many small trees
-   MT_AllocTree(min_depth, max_depth);
-   std::cout << "long lived tree of depth " << max_depth << "\t "
-         << "check: " << (long_lived_tree->check()) << "\n";
+      // Check long_lived_tree
+      std::cout << "long lived tree of depth " << max_depth << "\t "
+            << "check: " << (long_lived_tree->check()) << "\n";
 
-   //delete long_lived_tree;
+      //delete long_lived_tree;
+   }
+   
    return 0;
 }
-
 

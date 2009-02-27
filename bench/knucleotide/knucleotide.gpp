@@ -1,14 +1,16 @@
-// The Computer Language Shootout
+// The Computer Language Benchmarks Game
 // http://shootout.alioth.debian.org/
 // Contributed by Paul Kitchin
 // OpenMP by The Anh Tran
 
 #include <omp.h>
-#include <stdio.h>
-
+#include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <set>
 #include <vector>
+#include <algorithm>
+#include <sched.h>
 
 template < std::size_t size >
 struct hasher
@@ -16,7 +18,7 @@ struct hasher
    static std::size_t const length = size;
    static char const * string(char const * string, char* tmp)
    {
-      std::strncpy(tmp, string, size);
+      strncpy(tmp, string, size);
       return tmp;
    }
 
@@ -126,7 +128,7 @@ void write_frequencies(std::vector< char > const & input, char* output)
       char tmpbuf[32] = {0};
       printedchar += sprintf(   output +printedchar, "%s %0.3f\n",
                      hasher::string(i->key_, tmpbuf),
-                     (sum ? double(100 * i->value_) / sum : 0.0)   );
+                     (sum ? double(i->value_) * 100.0 / sum : 0.0)   );
    }
 
    strcpy(output + printedchar, "\n");
@@ -146,15 +148,32 @@ void write_count(std::vector< char > const & input, char const * string, char* o
    sprintf(output, "%u\t%s\n", (unsigned int)(frequencies[string]), string);
 }
 
+static
 char to_upper(char c)
 {
    return char(std::toupper(c));
 }
 
+static
+int GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 16; i++)
+   {
+      if (CPU_ISSET(i, &cs))
+         count++;
+   }
+   return count;
+}
+
 int main()
 {
    std::vector< char > input;
-   input.reserve(32*1024*1024); // 32MB
+   input.reserve(256*1024*1024); // 256MB
 
    char buffer[4096];
 
@@ -171,22 +190,22 @@ int main()
    std::transform(input.begin(), input.end(), input.begin(), to_upper);
 
    char output[7][256];
-   #pragma omp parallel sections default(shared)
+   #pragma omp parallel sections num_threads(GetThreadCount()) default(shared)
    {
       #pragma omp section
-      write_frequencies< hasher< 1 > >(input, output[0] );
-      #pragma omp section
-      write_frequencies< hasher< 2 > >(input, output[1] );
-      #pragma omp section
-      write_count< hasher< 3 > >(input, "GGT", output[2] );
-      #pragma omp section
-      write_count< hasher< 4 > >(input, "GGTA", output[3] );
-      #pragma omp section
-      write_count< hasher< 6 > >(input, "GGTATT", output[4] );
+      write_count< hasher< 18 > >(input, "GGTATTTTAATTTATAGT", output[6] );
       #pragma omp section
       write_count< hasher< 12 > >(input, "GGTATTTTAATT", output[5] );
       #pragma omp section
-      write_count< hasher< 18 > >(input, "GGTATTTTAATTTATAGT", output[6] );
+      write_count< hasher< 6 > >(input, "GGTATT", output[4] );
+      #pragma omp section
+      write_count< hasher< 4 > >(input, "GGTA", output[3] );
+      #pragma omp section
+      write_count< hasher< 3 > >(input, "GGT", output[2] );
+      #pragma omp section
+      write_frequencies< hasher< 2 > >(input, output[1] );
+      #pragma omp section
+      write_frequencies< hasher< 1 > >(input, output[0] );
    }
 
    for ( int i = 0; i < 7; i++ )

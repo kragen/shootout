@@ -1,17 +1,15 @@
 /* The Computer Language Benchmarks Game
-   http://shootout.alioth.debian.org/
+http://shootout.alioth.debian.org/
 
-   Based on C contribution by Alex Burlyga
-   Further tweaking by The Anh Tran
+Based on C contribution by Alex Burlyga
+Further tweaking by The Anh Tran
 */
 
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <pthread.h>
-
-
-// Synchronization primitive for single core policy
+#include <boost/lexical_cast.hpp>
 
 //#define   MP_LTYPE      pthread_mutex_t
 #define   MP_LTYPE      pthread_spinlock_t
@@ -19,79 +17,65 @@
 //#define CR_LTYPE      pthread_mutex_t
 //#define CR_LTYPE      pthread_spinlock_t
 #define CR_LTYPE      void
-#define _VOID_LOCK_
 
 
 template <typename T1 = void>
 class CLock
 {
 public:
-   CLock()   {   }
+   CLock()      {   }
    ~CLock()   {   }
 
    void Wait()   {   }
    void Signal()   {   }
-   bool TryLock()   {   return true;   } 
-   bool Lock()   {   return true;   } 
+   bool TryLock()   {   return true;   }
+
+   bool Lock()      {   return true;   }
    void Unlock()   {   }
 };
 
-template <>
-class CLock<pthread_mutex_t>
-{
-public:
-   pthread_mutex_t   mlock;
-
-   CLock()   {   pthread_mutex_init(&mlock, 0);      }
-   ~CLock()   {   pthread_mutex_destroy(&mlock);      }
-
-   void Wait()   {   Lock();   }
-   void Signal()   {   Unlock();   }
-
-   bool Lock()   {   return 0 == pthread_mutex_lock(&mlock);   }
-   void Unlock()   {   pthread_mutex_unlock(&mlock);   }
-};
 
 template <>
 class CLock<pthread_spinlock_t>
 {
-public:
+private:
    pthread_spinlock_t   mlock;
 
-   CLock()   {   pthread_spin_init(&mlock, PTHREAD_PROCESS_PRIVATE);   }
+public:
+   CLock()      {   pthread_spin_init(&mlock, PTHREAD_PROCESS_PRIVATE);   }
    ~CLock()   {   pthread_spin_destroy(&mlock);      }
 
-   void Wait()   {   Lock();   }
+   void Wait()      {   Lock();   }
    void Signal()   {   Unlock();   }
 
    void Unlock()   {   pthread_spin_unlock(&mlock);   }
    bool Lock()
-   {   
-      while (pthread_spin_trylock(&mlock) != 0)   
-         sched_yield();   
-      return true;   
+   {
+      while (pthread_spin_trylock(&mlock) != 0)
+         sched_yield();
+      return true;
    }
 };
 
 
-enum Color 
+enum Color
 {
-   blue      = 0,
+   blue   = 0,
    red      = 1,
    yellow   = 2,
    Invalid   = 3
 };
 
 const char*   ColorName[]   = {"blue", "red", "yellow"};
-const int      STACK_SIZE   = 16*1024;
+const int   STACK_SIZE   = 16*1024;
 
-
-Color ColorCompliment(Color c1, Color c2) 
+static
+Color ColorCompliment(Color c1, Color c2)
 {
-   switch (c1) 
+   switch (c1)
    {
    case blue:
-      switch (c2) 
+      switch (c2)
       {
       case blue:
          return blue;
@@ -103,7 +87,7 @@ Color ColorCompliment(Color c1, Color c2)
          goto errlb;
       }
    case red:
-      switch (c2) 
+      switch (c2)
       {
       case blue:
          return yellow;
@@ -115,7 +99,7 @@ Color ColorCompliment(Color c1, Color c2)
          goto errlb;
       }
    case yellow:
-      switch (c2) 
+      switch (c2)
       {
       case blue:
          return red;
@@ -130,12 +114,12 @@ Color ColorCompliment(Color c1, Color c2)
       break;
    }
 
-errlb:   
+errlb:
    printf("Invalid color\n");
    exit( 1 );
 }
 
-
+static
 char* SpellNumber(int n, char* outbuf)
 {
    const char* NUMBERS[] =
@@ -145,7 +129,7 @@ char* SpellNumber(int n, char* outbuf)
    };
 
    char tmp[64];
-    int ichar = sprintf(tmp, "%d", n);
+   int ichar = sprintf(tmp, "%d", n);
 
    int ochar = 0;
    for (int i = 0; i < ichar; i++)
@@ -156,13 +140,13 @@ char* SpellNumber(int n, char* outbuf)
 
 
 class Creature;
-class MeetingPlace 
+class MeetingPlace
 {
 protected:
    CLock<MP_LTYPE>   mp_lock;
 
-   int             meetings_left;
-   Creature*         waiting_creature;
+   int         meetings_left;
+   Creature*   waiting_creature;
 
 public:
    MeetingPlace(int N)
@@ -178,20 +162,20 @@ public:
 class Creature
 {
 protected:
-   pthread_t         ht;
-   pthread_attr_t      stack_att;
+   pthread_t      ht;
+   pthread_attr_t   stack_att;
    CLock<CR_LTYPE>   cr_lock;
 
    MeetingPlace*   place;
-   int         count;
-   int         samecount;
+   int      count;
+   int      samecount;
 
    Color   color;
    int      id;
    bool   met;
 
 public:
-   Creature() 
+   Creature()
    {
       count   = samecount = 0;
       id      = 0;
@@ -204,12 +188,13 @@ public:
    void Start( MeetingPlace* mp, Color c )
    {
       place   = mp;
-      color      = c;
+      color   = c;
 
       pthread_create( &ht, &stack_att, &Creature::ThreadRun, (void*)this );
    }
 
-   static void* ThreadRun(void* param)
+   static 
+   void* ThreadRun(void* param)
    {
       ((Creature*)param)->Run();
       return 0;
@@ -220,20 +205,15 @@ public:
       id = pthread_self();
       cr_lock.Lock();
 
-      while (true) 
+      while (true)
       {
          met = false;
 
          if ( place->Meet( this ) )
          {
             count++;
-#ifdef _VOID_LOCK_
             while (met == false)
                sched_yield();
-#else
-            if (met == false)
-               cr_lock.Wait();
-#endif
          }
          else
             break;
@@ -244,7 +224,7 @@ public:
 
    void Meet(Creature* other)
    {
-      if (__builtin_expect(id == other->id, 0)) 
+      if (__builtin_expect(id == other->id, 0))
       {
          samecount++;
          other->samecount++;
@@ -252,18 +232,18 @@ public:
 
       Color newcolor   = ColorCompliment( color, other->color );
       other->color   = color   = newcolor;
-      other->met   = met   = true;
+      other->met      = met   = true;
 
       other->cr_lock.Signal();
    }
 
-   void GetMeetingTimes(int &total, int &same) 
-   {   
-      total   = count;   
-      same = samecount;
+   void GetMeetingTimes(int &total, int &same) const
+   {
+      total   = count;
+      same   = samecount;
    }
 
-   void Wait()
+   void Wait() const
    {   pthread_join( ht, 0 );   }
 };
 
@@ -283,7 +263,7 @@ bool MeetingPlace::Meet( Creature* currrent_creature )
       {
          waiting_creature = currrent_creature;
          mp_lock.Unlock();
-      } 
+      }
       else // second arrive
       {
          // store pointer to first creature
@@ -300,14 +280,15 @@ bool MeetingPlace::Meet( Creature* currrent_creature )
       }
 
       return true;
-   } 
+   }
 
    mp_lock.Unlock();
    return false;
 }
-   
 
-void RunGame(int n, int ncolor, const Color* cl) 
+template <int ncolor>
+static
+void RunGame(int n, Color const (&color)[ncolor])
 {
    MeetingPlace   place(n);
    Creature      cr[ncolor];
@@ -315,21 +296,21 @@ void RunGame(int n, int ncolor, const Color* cl)
    // print initial color of each creature
    for (int i = 0; i < ncolor; i++)
    {
-      printf( "%s ", ColorName[ cl[i] ] );
-      cr[i].Start( &place, cl[i] );
+      printf( "%s ", ColorName[ color[i] ] );
+      cr[i].Start( &place, color[i] );
    }
 
    printf("\n");
 
    // wait for them to meet
-   for (int i = 0; i < ncolor; i++) 
+   for (int i = 0; i < ncolor; i++)
       cr[i].Wait();
 
    int total = 0;
    char str[256];
 
    // print meeting times of each creature
-   for (int i = 0; i < ncolor; i++) 
+   for (int i = 0; i < ncolor; i++)
    {
       int count, same;
       cr[i].GetMeetingTimes(count, same);
@@ -343,35 +324,43 @@ void RunGame(int n, int ncolor, const Color* cl)
    printf("%s\n\n", SpellNumber(total, str) );
 }
 
-
-void PrintColors() 
+static
+void PrintColors()
 {
    for (int c1 = blue; c1 <= yellow; c1++)
    {
       for (int c2 = blue; c2 <= yellow; c2++)
       {
-         printf ( "%s + %s -> %s\n", 
-            ColorName[c1], 
-            ColorName[c2], 
+         printf ( "%s + %s -> %s\n",
+            ColorName[c1],
+            ColorName[c2],
             ColorName[ ColorCompliment( (Color)c1, (Color)c2 ) ]      );
       }
    }
+   printf("\n");
 }
 
 
-int main(char argc, char** argv) 
+int main(int argc, char** argv)
 {
-   int n = (argc == 2) ? atoi(argv[1]) : 600;
+   sched_param priority;
+   priority.sched_priority = 1;
+   if (sched_setscheduler(0, SCHED_RR, &priority) != 0)
+   {
+      // meeting times will largely vary
+   }
+   
+   int n = (argc >= 2) ? boost::lexical_cast<int>(argv[1]) : 600;
 
    PrintColors();
-   printf("\n");
-   
-   const Color r1[] = {   blue, red, yellow   };
-   const Color r2[] = {   blue, red, yellow, 
-            red, yellow, blue, 
-            red, yellow, red, blue   };
 
-   RunGame( n, sizeof(r1) / sizeof(r1[0]), r1 );
-   RunGame( n, sizeof(r2) / sizeof(r2[0]), r2 );
+   const Color r1[] = {   blue, red, yellow   };
+   const Color r2[] = {   blue, red, yellow,
+      red, yellow, blue,
+      red, yellow, red, blue   };
+
+   RunGame( n, r1 );
+   RunGame( n, r2 );
 }
+
 

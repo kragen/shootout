@@ -2,47 +2,58 @@
  * The Computer Language Benchmarks Game
  * http://shootout.alioth.debian.org/
  * Contributed by Premysl Hruby
- * convert to C++ by dualamd
+ * convert to C++ by The Anh Tran
  */
 
-#include <stdio.h>
 #include <pthread.h>
-#include <stdlib.h>
+#include <sched.h>
+#include <cstdio>
+#include <cstdlib>
 
 typedef unsigned int uint;
+
 const uint NUM_THREADS   = 503;
-const uint STACK_SIZE = 16*1024;
+const uint STACK_SIZE   = 16*1024;
 
 
 int   token  = -1;
 
-pthread_mutex_t   mutex [NUM_THREADS];
-char   stacks [NUM_THREADS] [STACK_SIZE];
+pthread_mutex_t      mutex   [NUM_THREADS];
+pthread_t         threadid[NUM_THREADS];
+char            stacks   [NUM_THREADS][4*1024];
+
+int cpu_core = 1;
 
 
+static
 __attribute__((nothrow, noreturn)) 
 void* thread_func( void *num )
 {
-   int thisnode   = (int)num;
-   int nextnode   = ( thisnode + 1 ) % NUM_THREADS;
+   size_t thisnode      = reinterpret_cast<size_t>(num);
+   int nextnode      = ( thisnode + 1 ) % NUM_THREADS;
+   int nextnodenuma   = ( thisnode + cpu_core ) % NUM_THREADS;
+
+   pthread_mutex_t   *mutex_this_node = mutex + thisnode;
+   pthread_mutex_t   *mutex_next_node = mutex + nextnode;
+   char         *stack_next_node = stacks[nextnodenuma];
 
    while (true) 
    {
-      pthread_mutex_lock( &(mutex[ thisnode ]) );
+      pthread_mutex_lock( mutex_this_node );
 
       __builtin_prefetch(&token, 1, 3); // going to write to token, use very frequently
-      __builtin_prefetch(&(mutex[ nextnode ]), 1, 1); // going to change nextnode mutex, not frequently
+      __builtin_prefetch( mutex_next_node, 1, 1); // going to change nextnode mutex, not frequently
 
       if ( token > 0 ) 
       {
-         token--;
+         __builtin_prefetch( stack_next_node, 0, 1);// going to read nextnode stack, not frequently
 
-         __builtin_prefetch( &(stacks[nextnode]), 0, 1);// going to read nextnode stack, not frequently
-         pthread_mutex_unlock( &(mutex[ nextnode ]) );
+         token--;
+         pthread_mutex_unlock( mutex_next_node );
       }
       else 
       {
-          printf( "%d\n", thisnode +1 );
+          printf( "%d\n", static_cast<int>(thisnode +1) );
           exit(0);
       }
    }
@@ -51,6 +62,22 @@ void* thread_func( void *num )
 }
 
 
+static
+int GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 16; i++)
+   {
+      if (CPU_ISSET(i, &cs))
+         count++;
+   }
+   return count;
+}
+
 int main(int argc, char** args)
 {
    if (argc != 2)
@@ -58,31 +85,32 @@ int main(int argc, char** args)
    else
       token = atoi(args[1]);
 
-
+   cpu_core = GetThreadCount();
+   
    pthread_attr_t stack_attr;
    pthread_attr_init(&stack_attr);
-
-   pthread_t cthread;
 
    for (uint i = 0; i < NUM_THREADS; i++) 
    {
       // init mutex objects
-      pthread_mutex_init( &(mutex[ i ]), 0);
-      pthread_mutex_lock( &(mutex[ i ]) );
+      pthread_mutex_init( &(mutex[i]), 0);
+      pthread_mutex_lock( &(mutex[i]) );
 
       // manual set stack space & stack size for each thread
+      // to reduce memory usage
       pthread_attr_setstack( &stack_attr, &(stacks[i]), STACK_SIZE );
 
       // create thread using specified stackspace
-      pthread_create( &cthread, &stack_attr, &thread_func, (void*)i );
+      pthread_create( &(threadid[i]), &stack_attr, &thread_func, reinterpret_cast<void*>(i) );
    }
 
    // start game
    pthread_mutex_unlock( &(mutex[0]) );
 
    // wait for result
-   pthread_join( cthread, 0 );
+   pthread_join( threadid[0], 0 );
 
    return 1;
 }
+//-------------------------------------------------------------------------------
 
