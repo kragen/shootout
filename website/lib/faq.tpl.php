@@ -206,13 +206,13 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>time?</strong></a></dt>
-<dd><p>The measurement techniques have changed a little:
+<dd><p>The measurement techniques have changed a little:</p>
 <ul>
 <li>For the current measurements (Ubuntu Q6600) each program was run as a child-process of a Python script using Popen. The script child-process usr+sys rusage time was taken using os.wait3, and time was taken before forking the child-process and after the child-process exits, using time.time().</li>
 <li>
 For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was run as a child-process of a Perl script. The script child-process usr+sys time was taken before forking the child-process and after the child-process exits, using <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>[2,3].
 </li>
-</ul></p>
+</ul>
 
 <p><strong>Time measurements include program startup time.</strong></p>
 </dd>
@@ -241,7 +241,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<p>We use <strong>Ubuntu&#8482; 8.04 Linux</strong> Kernel 2.6.24-19-generic</p><dd>
+<dd><p>We use <strong>Ubuntu&#8482; 8.04 Linux</strong> Kernel 2.6.24-19-generic</p>
 
 <p>The old measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
@@ -387,7 +387,7 @@ The system is going down for system halt NOW!
 </dd>
 
 <dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
-<dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license"">Read the license!</a></p>
+<dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license">Read the license!</a></p>
 <p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout login</p>
 <p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/nanobench</p>
 <p><em>and for the source code of the contributed programs</em></p>
