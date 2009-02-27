@@ -48,8 +48,7 @@ foreach($score as $k => $v){
 </td><td>
 
 <form class="score" method="get" action="benchmark.php">
-<input type="hidden" name="test" value="all" />
-<input type="hidden" name="lang" value="all" />
+<p><input type="hidden" name="test" value="all" /><input type="hidden" name="lang" value="all" /></p>
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
