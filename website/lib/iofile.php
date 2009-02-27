@@ -36,18 +36,6 @@ elseif ($F == 'output'){ $Title = $TestName.' output file'; }
 else { $Title = $TestName; }
 
 
-function HtmlFragment($FileName){
-   $html = '<p>&nbsp;</p>';
-   if (is_readable($FileName)){
-      $f = fopen($FileName,'r');
-      $fs = filesize($FileName);
-      if ($fs > 0){ $html = fread($f,$fs); }
-      fclose($f);
-   }
-   return $html;
-}
-
-
 // TEMPLATE VARS ////////////////////////////////////////////////
 
 $Page = & new Template(LIB_PATH);

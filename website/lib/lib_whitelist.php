@@ -225,4 +225,16 @@ function ValidWhiteList(&$H,$V,&$WhiteList,$regex,$size,$index,$valid){
    return array($d,$valid);
 }
 
+
+function HtmlFragment($FileName){
+   $html = '<p>&nbsp;</p>';
+   if (is_readable($FileName)){
+      $f = fopen($FileName,'r');
+      $fs = filesize($FileName);
+      if ($fs > 0){ $html = fread($f,$fs); }
+      fclose($f);
+   }
+   return $html;
+}
+
 ?>
