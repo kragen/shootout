@@ -252,7 +252,7 @@ class BoxChart extends Chart {
          $s = ' '.$s;
          $needrepeat = floor($need/strlen($s))+1;
          $label = substr( str_repeat($s,$needrepeat), 0, $need);
-         ImageStringUp($this->im, 3, $x, $this->h - 12, $label, $this->colour[LIGHT_GRAY]);
+         ImageStringUp($this->im, 3, $x, $this->h - 12, $label, $this->colour[GRAY]);
          $x = $x + $this->boxwidth + $this->boxspace;
          if ($count == $this->maxboxes){ break; } else { $count++; }
       }

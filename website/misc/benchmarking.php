@@ -50,6 +50,12 @@ only those optimizations were allowed to be incorporated into a compiler that ac
 that the intrinsic cost of the new code addition was fully compensated." <br/>"Oberon: The Overlooked Jewel" Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
 </dd>
+
+<dt><a href="#overall" name="overall">Overall Performance</a></dt>
+<dd>
+<p><a href="http://talks.php.net/show/drupal08/7">PHP is rarely the bottleneck (HTML slides)</a></p>
+</dd>
+
 </dl>
 </dd>
 
