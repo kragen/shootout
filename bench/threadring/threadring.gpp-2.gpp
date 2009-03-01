@@ -16,38 +16,28 @@ const uint NUM_THREADS   = 503;
 const uint STACK_SIZE   = 16*1024;
 
 
-int   token  = -1;
+int   token;
 
 pthread_mutex_t      mutex   [NUM_THREADS];
 pthread_t         threadid[NUM_THREADS];
-char            stacks   [NUM_THREADS][4*1024];
-
-int cpu_core = 1;
+char            stacks   [NUM_THREADS][STACK_SIZE];
 
 
 static
-__attribute__((nothrow, noreturn)) 
 void* thread_func( void *num )
 {
    size_t thisnode      = reinterpret_cast<size_t>(num);
    int nextnode      = ( thisnode + 1 ) % NUM_THREADS;
-   int nextnodenuma   = ( thisnode + cpu_core ) % NUM_THREADS;
 
    pthread_mutex_t   *mutex_this_node = mutex + thisnode;
    pthread_mutex_t   *mutex_next_node = mutex + nextnode;
-   char         *stack_next_node = stacks[nextnodenuma];
 
    while (true) 
    {
       pthread_mutex_lock( mutex_this_node );
 
-      __builtin_prefetch(&token, 1, 3); // going to write to token, use very frequently
-      __builtin_prefetch( mutex_next_node, 1, 1); // going to change nextnode mutex, not frequently
-
       if ( token > 0 ) 
       {
-         __builtin_prefetch( stack_next_node, 0, 1);// going to read nextnode stack, not frequently
-
          token--;
          pthread_mutex_unlock( mutex_next_node );
       }
@@ -58,35 +48,17 @@ void* thread_func( void *num )
       }
    }
 
-   //return 0;
+   return 0;
 }
 
-
-static
-int GetThreadCount()
-{
-   cpu_set_t cs;
-   CPU_ZERO(&cs);
-   sched_getaffinity(0, sizeof(cs), &cs);
-
-   int count = 0;
-   for (int i = 0; i < 16; i++)
-   {
-      if (CPU_ISSET(i, &cs))
-         count++;
-   }
-   return count;
-}
 
 int main(int argc, char** args)
 {
-   if (argc != 2)
-      token = 1000; // test case
-   else
+   if (argc >= 2)
       token = atoi(args[1]);
+   else
+      token = 1000; // test case
 
-   cpu_core = GetThreadCount();
-   
    pthread_attr_t stack_attr;
    pthread_attr_init(&stack_attr);
 
@@ -112,5 +84,4 @@ int main(int argc, char** args)
 
    return 1;
 }
-//-------------------------------------------------------------------------------
 
