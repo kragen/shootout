@@ -16,38 +16,28 @@
 <span class="hl kwb">const</span> uint STACK_SIZE   <span class="hl sym">=</span> <span class="hl num">16</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">;</span>
 
 
-<span class="hl kwb">int</span>   token  <span class="hl sym">= -</span><span class="hl num">1</span><span class="hl sym">;</span>
+<span class="hl kwb">int</span>   token<span class="hl sym">;</span>
 
 pthread_mutex_t      mutex   <span class="hl sym">[</span>NUM_THREADS<span class="hl sym">];</span>
 pthread_t         threadid<span class="hl sym">[</span>NUM_THREADS<span class="hl sym">];</span>
-<span class="hl kwb">char</span>            stacks   <span class="hl sym">[</span>NUM_THREADS<span class="hl sym">][</span><span class="hl num">4</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">];</span>
-
-<span class="hl kwb">int</span> cpu_core <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+<span class="hl kwb">char</span>            stacks   <span class="hl sym">[</span>NUM_THREADS<span class="hl sym">][</span>STACK_SIZE<span class="hl sym">];</span>
 
 
 <span class="hl kwb">static</span>
-<span class="hl kwd">__attribute__</span><span class="hl sym">((</span>nothrow<span class="hl sym">,</span> noreturn<span class="hl sym">))</span>
 <span class="hl kwb">void</span><span class="hl sym">*</span> <span class="hl kwd">thread_func</span><span class="hl sym">(</span> <span class="hl kwb">void</span> <span class="hl sym">*</span>num <span class="hl sym">)</span>
 <span class="hl sym">{</span>
    <span class="hl kwb">size_t</span> thisnode      <span class="hl sym">=</span> <span class="hl kwa">reinterpret_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">size_t</span><span class="hl sym">&gt;(</span>num<span class="hl sym">);</span>
    <span class="hl kwb">int</span> nextnode      <span class="hl sym">= (</span> thisnode <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">) %</span> NUM_THREADS<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> nextnodenuma   <span class="hl sym">= (</span> thisnode <span class="hl sym">+</span> cpu_core <span class="hl sym">) %</span> NUM_THREADS<span class="hl sym">;</span>
 
    pthread_mutex_t   <span class="hl sym">*</span>mutex_this_node <span class="hl sym">=</span> mutex <span class="hl sym">+</span> thisnode<span class="hl sym">;</span>
    pthread_mutex_t   <span class="hl sym">*</span>mutex_next_node <span class="hl sym">=</span> mutex <span class="hl sym">+</span> nextnode<span class="hl sym">;</span>
-   <span class="hl kwb">char</span>         <span class="hl sym">*</span>stack_next_node <span class="hl sym">=</span> stacks<span class="hl sym">[</span>nextnodenuma<span class="hl sym">];</span>
 
    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span>
    <span class="hl sym">{</span>
       <span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">(</span> mutex_this_node <span class="hl sym">);</span>
 
-      <span class="hl kwd">__builtin_prefetch</span><span class="hl sym">(&amp;</span>token<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">);</span> <span class="hl slc">// going to write to token, use very frequently</span>
-      <span class="hl kwd">__builtin_prefetch</span><span class="hl sym">(</span> mutex_next_node<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span> <span class="hl slc">// going to change nextnode mutex, not frequently</span>
-
       <span class="hl kwa">if</span> <span class="hl sym">(</span> token <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">)</span>
       <span class="hl sym">{</span>
-         <span class="hl kwd">__builtin_prefetch</span><span class="hl sym">(</span> stack_next_node<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span><span class="hl slc">// going to read nextnode stack, not frequently</span>
-
          token<span class="hl sym">--;</span>
          <span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">(</span> mutex_next_node <span class="hl sym">);</span>
       <span class="hl sym">}</span>
@@ -58,34 +48,16 @@ pthread_t         threadid<span class="hl sym">[</span>NUM_THREADS<span class="h
       <span class="hl sym">}</span>
    <span class="hl sym">}</span>
 
-   <span class="hl slc">//return 0;</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-
-<span class="hl kwb">static</span>
-<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
-<span class="hl sym">{</span>
-   cpu_set_t cs<span class="hl sym">;</span>
-   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
-   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
-
-   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
-   <span class="hl sym">{</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
-         count<span class="hl sym">++;</span>
-   <span class="hl sym">}</span>
-   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
-<span class="hl sym">}</span>
 
 <span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">**</span> args<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">!=</span> <span class="hl num">2</span><span class="hl sym">)</span>
-      token <span class="hl sym">=</span> <span class="hl num">1000</span><span class="hl sym">;</span> <span class="hl slc">// test case</span>
-   <span class="hl kwa">else</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span>
       token <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
-
-   cpu_core <span class="hl sym">=</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">();</span>
+   <span class="hl kwa">else</span>
+      token <span class="hl sym">=</span> <span class="hl num">1000</span><span class="hl sym">;</span> <span class="hl slc">// test case</span>
 
    pthread_attr_t stack_attr<span class="hl sym">;</span>
    <span class="hl kwd">pthread_attr_init</span><span class="hl sym">(&amp;</span>stack_attr<span class="hl sym">);</span>
@@ -112,5 +84,4 @@ pthread_t         threadid<span class="hl sym">[</span>NUM_THREADS<span class="h
 
    <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
-<span class="hl slc">//-------------------------------------------------------------------------------</span>
 
