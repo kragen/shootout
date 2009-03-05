@@ -30,6 +30,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 
 <h5><a href="./u32q/" title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements.">Time, Memory Use and Source Size measurements</a></h5>
+
 <table class="layout">
 <tr class="test">
 <td>
@@ -41,6 +42,39 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 </tr>
 </table>
 
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64q/"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
+<h3><span class="u64q">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+
+
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64/"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
+<h3><span class="u64q">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
+<h3><span class="u32">
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
 
 
 <h5><br/>Programming language measurements A to Z</h5><br/>
