@@ -3,23 +3,26 @@
 <span class="hl slc">// contributed by Ben St. John</span>
 <span class="hl slc">// some ideas taken from Kevin Barnes' implementation</span>
 <span class="hl com">/* A few key optimizations:</span>
-<span class="hl com">   - pre-calcing of all possible orientations of each piece</span>
-<span class="hl com">   - pre-calcing of which orientations are possible in each board position</span>
-<span class="hl com">   - fast calculation of boards with bad islands (which are unsolveable)</span>
-<span class="hl com">   - pre-calc of some boards (by top three lines) which *always* have bad islands</span>
-<span class="hl com">   - using only 32-bit boards representations (plus row offset)</span>
-<span class="hl com">   - improvement since #4 -- no caching of top three lines for other reasons</span>
-<span class="hl com">   - not using STL vector -- it noticeably slow things down</span>
-<span class="hl com">   - rotating each found solution, so only half need to be calculated -- done by removing</span>
-<span class="hl com">     half the rotations of one piece (SKIP_PIECE) chosen as the one with the most valid positions</span>
-<span class="hl com">     on the board, so only half the solution space is searched</span>
+<span class="hl com">- pre-calcing of all possible orientations of each piece</span>
+<span class="hl com">- pre-calcing of which orientations are possible in each board position</span>
+<span class="hl com">- fast calculation of boards with bad islands (which are unsolveable)</span>
+<span class="hl com">- pre-calc of some boards (by top three lines) which *always* have bad islands</span>
+<span class="hl com">- using only 32-bit boards representations (plus row offset)</span>
+<span class="hl com">- improvement since #4 -- no caching of top three lines for other reasons</span>
+<span class="hl com">- not using STL vector -- it noticeably slow things down</span>
+<span class="hl com">- rotating each found solution, so only half need to be calculated -- done by removing</span>
+<span class="hl com">half the rotations of one piece (SKIP_PIECE) chosen as the one with the most valid positions</span>
+<span class="hl com">on the board, so only half the solution space is searched</span>
 <span class="hl com"></span>
-<span class="hl com"> For size, most seems to come from the standard libs.</span>
-<span class="hl com"> I'm tempted to get rid of string, and maybe use cstdio.</span>
+<span class="hl com">For size, most seems to come from the standard libs.</span>
+<span class="hl com">I'm tempted to get rid of string, and maybe use cstdio.</span>
 <span class="hl com">*/</span>
 
-<span class="hl dir">#include &lt;string&gt;</span>
+<span class="hl dir">#include &lt;cstdio&gt;</span>
+<span class="hl dir">#include &lt;cstdlib&gt;</span>
 <span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;string&gt;</span>
+<span class="hl dir">#include &lt;memory.h&gt;</span>
 
 <span class="hl kwa">using namespace</span> std<span class="hl sym">;</span>
 
@@ -68,8 +71,8 @@
       <span class="hl kwb">short</span> row<span class="hl sym">;</span>
       <span class="hl kwd">SPiece</span><span class="hl sym">() {}</span>
       <span class="hl kwd">SPiece</span><span class="hl sym">(</span>BitVec avec<span class="hl sym">,</span> TUInt32 apiece<span class="hl sym">,</span> TUInt32 arow<span class="hl sym">) :</span>
-         <span class="hl kwd">vec</span><span class="hl sym">(</span>avec<span class="hl sym">),</span> <span class="hl kwd">iPiece</span><span class="hl sym">(</span><span class="hl kwb">short</span><span class="hl sym">(</span>apiece<span class="hl sym">)),</span> <span class="hl kwd">row</span><span class="hl sym">(</span><span class="hl kwb">short</span><span class="hl sym">(</span>arow<span class="hl sym">))</span>
-         <span class="hl sym">{}</span>
+      <span class="hl kwd">vec</span><span class="hl sym">(</span>avec<span class="hl sym">),</span> <span class="hl kwd">iPiece</span><span class="hl sym">(</span><span class="hl kwb">short</span><span class="hl sym">(</span>apiece<span class="hl sym">)),</span> <span class="hl kwd">row</span><span class="hl sym">(</span><span class="hl kwb">short</span><span class="hl sym">(</span>arow<span class="hl sym">))</span>
+      <span class="hl sym">{}</span>
    <span class="hl sym">};</span>
    SPiece m_pieces<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">];</span>
    TUInt32 m_nPiece<span class="hl sym">;</span>
@@ -157,7 +160,7 @@
 
 <span class="hl slc">//------------------------------------</span>
 Soln<span class="hl sym">::</span><span class="hl kwd">Soln</span><span class="hl sym">(</span><span class="hl kwb">int</span> fillVal<span class="hl sym">) :</span>
-   <span class="hl kwd">m_nPiece</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) {</span>
+<span class="hl kwd">m_nPiece</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) {</span>
    <span class="hl kwd">fill</span><span class="hl sym">(</span>fillVal<span class="hl sym">);</span>
 <span class="hl sym">}</span>
 
@@ -203,7 +206,7 @@ string Soln<span class="hl sym">::</span><span class="hl kwd">toString</span><sp
                nNewCells<span class="hl sym">++;</span>
             <span class="hl sym">}</span>
             vec <span class="hl sym">&gt;&gt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
-         <span class="hl sym">}</span>
+       <span class="hl sym">}</span>
          <span class="hl kwa">if</span> <span class="hl sym">(</span>nNewCells <span class="hl sym">==</span> Piece<span class="hl sym">::</span>N_ELEM<span class="hl sym">)</span>
             <span class="hl kwa">break</span><span class="hl sym">;</span>
       <span class="hl sym">}</span>
@@ -286,7 +289,7 @@ TUInt32 <span class="hl kwd">getFirstOne</span><span class="hl sym">(</span>BitV
          mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">8</span><span class="hl sym">;</span> iPos <span class="hl sym">+=</span> <span class="hl num">8</span><span class="hl sym">;</span>
          <span class="hl kwa">if</span> <span class="hl sym">((</span>mask <span class="hl sym">&amp;</span> v<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
             mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">8</span><span class="hl sym">;</span> iPos <span class="hl sym">+=</span> <span class="hl num">8</span><span class="hl sym">;</span>
-         <span class="hl sym">}</span>
+       <span class="hl sym">}</span>
       <span class="hl sym">}</span>
    <span class="hl sym">}</span>
 
@@ -310,7 +313,7 @@ TUInt32 <span class="hl kwd">getFirstOne</span><span class="hl sym">(</span>BitV
             pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">] =</span> y<span class="hl sym">;</span>
 
             iPt<span class="hl sym">++;</span>
-         <span class="hl sym">}</span>
+       <span class="hl sym">}</span>
          mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
       <span class="hl sym">}</span>
    <span class="hl sym">}</span>
@@ -485,7 +488,7 @@ BitVec Piece<span class="hl sym">::</span><span class="hl kwd">toBitVector</span
 
                mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
             <span class="hl sym">}</span>
-         <span class="hl sym">}</span>
+       <span class="hl sym">}</span>
       <span class="hl sym">}</span>
    <span class="hl sym">}</span>
 <span class="hl sym">}</span>
@@ -498,8 +501,8 @@ BitVec Piece<span class="hl sym">::</span><span class="hl kwd">toBitVector</span
 <span class="hl slc">// ------------------------------------</span>
 
 Board<span class="hl sym">::</span><span class="hl kwd">Board</span><span class="hl sym">() :</span>
-   <span class="hl kwd">m_curSoln</span><span class="hl sym">(</span>Soln<span class="hl sym">::</span>NO_PIECE<span class="hl sym">),</span> <span class="hl kwd">m_minSoln</span><span class="hl sym">(</span>N_PIECE_TYPE<span class="hl sym">),</span>
-   <span class="hl kwd">m_maxSoln</span><span class="hl sym">(</span>Soln<span class="hl sym">::</span>NO_PIECE<span class="hl sym">),</span> <span class="hl kwd">m_nSoln</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwd">m_curSoln</span><span class="hl sym">(</span>Soln<span class="hl sym">::</span>NO_PIECE<span class="hl sym">),</span> <span class="hl kwd">m_minSoln</span><span class="hl sym">(</span>N_PIECE_TYPE<span class="hl sym">),</span>
+<span class="hl kwd">m_maxSoln</span><span class="hl sym">(</span>Soln<span class="hl sym">::</span>NO_PIECE<span class="hl sym">),</span> <span class="hl kwd">m_nSoln</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
 <span class="hl sym">{}</span>
 
 TUInt32 g_flip<span class="hl sym">[] = {</span>
@@ -529,7 +532,7 @@ TUInt32 g_flip<span class="hl sym">[] = {</span>
 
             TUInt32 flipMask <span class="hl sym">=</span> <span class="hl kwd">getMask</span><span class="hl sym">(</span>g_flip<span class="hl sym">[</span>i<span class="hl sym">]);</span>
             flipped<span class="hl sym">.</span>alwaysBad<span class="hl sym">[</span>ODD<span class="hl sym">] |=</span> flipMask<span class="hl sym">;</span>
-         <span class="hl sym">}</span>
+       <span class="hl sym">}</span>
       <span class="hl sym">}</span>
    <span class="hl sym">}</span>
 <span class="hl sym">}</span>
@@ -767,3 +770,4 @@ TUInt32 <span class="hl kwd">countOnes</span><span class="hl sym">(</span>BitVec
 
    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
+

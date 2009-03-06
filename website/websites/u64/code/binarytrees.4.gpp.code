@@ -13,15 +13,15 @@
 <span class="hl com">Using this version on smp system is NOT recommended.</span>
 <span class="hl com"></span>
 <span class="hl com">Please download lastest libgc v7.1 (May 2008) tarball from its site.</span>
-<span class="hl com">I assume that you untar libgc source to this directory:      /home/game/binary/gc/</span>
-<span class="hl com">And you will put compiled headers, libgc.a, libgc.so ... in:   /usr/local/lib/</span>
+<span class="hl com">I assume that you untar libgc source to this directory:      ~/game/binary/gc/</span>
+<span class="hl com">And you will put compiled headers, libgc.a, libgc.so ... in:   /usr/local/gc/</span>
 <span class="hl com"></span>
 <span class="hl com">Compile libgc:</span>
-<span class="hl com">   cd /home/game/binary/gc/</span>
+<span class="hl com">   cd ~/game/binary/gc/</span>
 <span class="hl com">   CPPFLAGS=&quot;-DGC_USE_LD_WRAP -DUSE_I686_PREFETCH -DUSE_COMPILER_TLS&quot;</span>
 <span class="hl com">   export CPPFLAGS</span>
 <span class="hl com">   make clean</span>
-<span class="hl com">    ./configure --prefix=/usr/local/lib --enable-threads=posix --enable-thread-local-alloc --enable-parallel-mark --enable-cplusplus --enable-large-config</span>
+<span class="hl com">    ./configure --prefix=/usr/local/gc --enable-threads=posix --enable-thread-local-alloc --enable-parallel-mark --enable-cplusplus --enable-large-config</span>
 <span class="hl com">   make</span>
 <span class="hl com">   make install   // may need 'sudo' for writing permission</span>
 <span class="hl com"></span>
@@ -30,16 +30,27 @@
 <span class="hl com">   USE_I686_PREFETCH   :   allow prefetch instruction during mark / sweep / ...</span>
 <span class="hl com">   --enable-large-config   :   optimize for programs having allocated heap's size &gt; 64MB.</span>
 <span class="hl com">   remain flags         :   optimize GC for multithread programs</span>
+<span class="hl com"></span>
+<span class="hl com">Compile this file:</span>
+<span class="hl com">   g++ -O3 -Wall -fomit-frame-pointer -march=native -fopenmp -static ./bintree.cpp -o ./bintree -I/usr/local/gc/include/ -L/usr/local/gc/lib/ -lgccpp -lgc -lboost</span>
+<span class="hl com">   -Wl,--wrap -Wl,pthread_create -Wl,--wrap -Wl,pthread_join -Wl,--wrap -Wl,pthread_detach -Wl,--wrap -Wl,pthread_sigmask</span>
+<span class="hl com"></span>
+<span class="hl com">With -static flag, every needed functions will be static linked to ELF binary.</span>
+<span class="hl com">GC_USE_LD_WRAP and those lengthy linking flags will redirect 4 &quot;GC important&quot; functions to their wrappers.</span>
+<span class="hl com">Without -static, libgomp.so will create threads, malloc... on its own -&gt; incompatible with GC.</span>
 <span class="hl com">*/</span>
 
+<span class="hl slc">//#define GC_THREADS</span>
 <span class="hl dir">#define GC_USE_LD_WRAP</span>
 <span class="hl dir">#include &lt;gc_cpp.h&gt;</span>
 
 <span class="hl dir">#include &lt;iostream&gt;</span>
 <span class="hl dir">#include &lt;omp.h&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
 
-<span class="hl kwb">size_t</span>   LINE_SIZE <span class="hl sym">=</span> <span class="hl num">64</span><span class="hl sym">;</span>
-<span class="hl kwb">size_t</span>   NTHREADS <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+<span class="hl dir">#include &lt;boost/lexical_cast.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/format.hpp&gt;</span>
+
 
 <span class="hl slc">// Inherit operator new (UseGC) from gc class</span>
 <span class="hl kwb">struct</span> Node <span class="hl sym">:</span> <span class="hl kwc">public</span> gc
@@ -63,7 +74,7 @@
    <span class="hl sym">}</span>
 <span class="hl sym">};</span>
 
-<span class="hl kwc">inline</span>
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span>
 Node<span class="hl sym">*</span> <span class="hl kwd">make</span><span class="hl sym">(</span><span class="hl kwb">int</span> value<span class="hl sym">,</span> <span class="hl kwb">int</span> depth<span class="hl sym">)</span>
 <span class="hl sym">{</span>
    <span class="hl kwa">if</span> <span class="hl sym">(</span>depth <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
@@ -74,12 +85,33 @@ Node<span class="hl sym">*</span> <span class="hl kwd">make</span><span class="h
    <span class="hl kwa">return new</span> <span class="hl kwd">Node</span><span class="hl sym">(</span>value<span class="hl sym">);</span>
 <span class="hl sym">}</span>
 
+<span class="hl kwb">static</span>
+<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         count<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">const size_t</span>   LINE_SIZE <span class="hl sym">=</span> <span class="hl num">64</span><span class="hl sym">;</span>
+
+<span class="hl kwb">static</span>
 <span class="hl kwb">void</span> <span class="hl kwd">MT_AllocTree</span><span class="hl sym">(</span><span class="hl kwb">int</span> min_depth<span class="hl sym">,</span> <span class="hl kwb">int</span> max_depth<span class="hl sym">)</span>
 <span class="hl sym">{</span>
    <span class="hl slc">// buffer to store output result of each thread</span>
-   <span class="hl kwb">char</span> <span class="hl sym">*</span> outputstr <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">GC_malloc_atomic</span><span class="hl sym">(</span>LINE_SIZE <span class="hl sym">* (</span>max_depth <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) *</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">));</span>
+   boost<span class="hl sym">::</span>format<span class="hl sym">*</span> output<span class="hl sym">[</span>max_depth <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> d <span class="hl sym">=</span> min_depth<span class="hl sym">;</span> d <span class="hl sym">&lt;=</span> max_depth<span class="hl sym">;</span> d <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+      output<span class="hl sym">[</span>d<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl sym">(</span>GC<span class="hl sym">)</span> boost<span class="hl sym">::</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;%1%</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %2%</span><span class="hl esc">\t</span> <span class="hl str">check: %3%</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
 
-   <span class="hl dir">#pragma omp parallel for default(shared) num_threads(NTHREADS) schedule(dynamic, 1)</span>
+   <span class="hl dir">#pragma omp parallel for default(shared) num_threads(GetThreadCount()) schedule(dynamic, 1)</span>
    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> d <span class="hl sym">=</span> min_depth<span class="hl sym">;</span> d <span class="hl sym">&lt;=</span> max_depth<span class="hl sym">;</span> d <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
    <span class="hl sym">{</span>
       <span class="hl kwb">int</span> iterations <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>max_depth <span class="hl sym">-</span> d <span class="hl sym">+</span> min_depth<span class="hl sym">);</span>
@@ -93,54 +125,49 @@ Node<span class="hl sym">*</span> <span class="hl kwd">make</span><span class="h
          <span class="hl slc">//delete a;   delete b;</span>
       <span class="hl sym">}</span>
 
-      <span class="hl kwd">sprintf</span><span class="hl sym">(</span>outputstr <span class="hl sym">+</span> LINE_SIZE <span class="hl sym">*</span> d<span class="hl sym">,</span> <span class="hl str">&quot;%d</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">, (</span><span class="hl num">2</span> <span class="hl sym">*</span> iterations<span class="hl sym">),</span> d<span class="hl sym">,</span> chk<span class="hl sym">);</span>
+      <span class="hl sym">(*</span>output<span class="hl sym">[</span>d<span class="hl sym">]) % (</span><span class="hl num">2</span> <span class="hl sym">*</span> iterations<span class="hl sym">) %</span> d <span class="hl sym">%</span> chk<span class="hl sym">;</span>
    <span class="hl sym">}</span>
 
    <span class="hl slc">// print all results</span>
    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> d <span class="hl sym">=</span> min_depth<span class="hl sym">;</span> d <span class="hl sym">&lt;=</span> max_depth<span class="hl sym">;</span> d <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
-      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s&quot;</span><span class="hl sym">,</span> outputstr <span class="hl sym">+ (</span>d <span class="hl sym">*</span> LINE_SIZE<span class="hl sym">) );</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt; (*</span>output<span class="hl sym">[</span>d<span class="hl sym">]);</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
-<span class="hl sym">{</span>
-   cpu_set_t cs<span class="hl sym">;</span>
-   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
-   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
-
-   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">8</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
-   <span class="hl sym">{</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
-         count<span class="hl sym">++;</span>
-   <span class="hl sym">}</span>
-   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
-<span class="hl sym">}</span>
 
 <span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>argv<span class="hl sym">[])</span>
 <span class="hl sym">{</span>
    <span class="hl kwd">GC_INIT</span><span class="hl sym">();</span>
-   NTHREADS <span class="hl sym">=</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">();</span>
+
+   <span class="hl kwb">int</span> arg_depth <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+      arg_depth <span class="hl sym">=</span> boost<span class="hl sym">::</span>lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
 
    <span class="hl kwb">int</span> min_depth <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
-   <span class="hl kwb">int</span> max_depth <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">max</span><span class="hl sym">(</span>min_depth <span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">, (</span>argc <span class="hl sym">==</span> <span class="hl num">2</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">10</span><span class="hl sym">));</span>
+   <span class="hl kwb">int</span> max_depth <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">max</span><span class="hl sym">(</span>min_depth <span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">,</span> arg_depth<span class="hl sym">);</span>
    <span class="hl kwb">int</span> stretch_depth <span class="hl sym">=</span> max_depth <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
 
-   <span class="hl slc">// Alloc stretch tree</span>
-   Node <span class="hl sym">*</span>c <span class="hl sym">=</span> <span class="hl kwd">make</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> stretch_depth<span class="hl sym">);</span>
-   std<span class="hl sym">::</span>cout   <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;stretch tree of depth &quot;</span> <span class="hl sym">&lt;&lt;</span> stretch_depth <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span> <span class="hl str">&quot;</span>
-         <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;check: &quot;</span> <span class="hl sym">&lt;&lt;</span> c<span class="hl sym">-&gt;</span><span class="hl kwd">check</span><span class="hl sym">() &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
-   <span class="hl slc">//delete c;</span>
+   <span class="hl slc">// Alloc stretch tree, then free it</span>
+   <span class="hl sym">{</span>
+      Node <span class="hl sym">*</span>c <span class="hl sym">=</span> <span class="hl kwd">make</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> stretch_depth<span class="hl sym">);</span>
+      std<span class="hl sym">::</span>cout   <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;stretch tree of depth &quot;</span> <span class="hl sym">&lt;&lt;</span> stretch_depth <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span> <span class="hl str">&quot;</span>
+            <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;check: &quot;</span> <span class="hl sym">&lt;&lt;</span> c<span class="hl sym">-&gt;</span><span class="hl kwd">check</span><span class="hl sym">() &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+      <span class="hl slc">//delete c;</span>
+   <span class="hl sym">}</span>
 
-   <span class="hl slc">// Alloc long_lived_tree</span>
-   Node <span class="hl sym">*</span>long_lived_tree <span class="hl sym">=</span> <span class="hl kwd">make</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> max_depth<span class="hl sym">);</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// Alloc long_lived_tree</span>
+      Node <span class="hl sym">*</span>long_lived_tree <span class="hl sym">=</span> <span class="hl kwd">make</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> max_depth<span class="hl sym">);</span>
 
-   <span class="hl slc">// Alloc many small trees</span>
-   <span class="hl kwd">MT_AllocTree</span><span class="hl sym">(</span>min_depth<span class="hl sym">,</span> max_depth<span class="hl sym">);</span>
-   std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;long lived tree of depth &quot;</span> <span class="hl sym">&lt;&lt;</span> max_depth <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span> <span class="hl str">&quot;</span>
-         <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;check: &quot;</span> <span class="hl sym">&lt;&lt; (</span>long_lived_tree<span class="hl sym">-&gt;</span><span class="hl kwd">check</span><span class="hl sym">()) &lt;&lt;</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+      <span class="hl slc">// Alloc many small trees</span>
+      <span class="hl kwd">MT_AllocTree</span><span class="hl sym">(</span>min_depth<span class="hl sym">,</span> max_depth<span class="hl sym">);</span>
 
-   <span class="hl slc">//delete long_lived_tree;</span>
+      <span class="hl slc">// Check long_lived_tree</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;long lived tree of depth &quot;</span> <span class="hl sym">&lt;&lt;</span> max_depth <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span> <span class="hl str">&quot;</span>
+            <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;check: &quot;</span> <span class="hl sym">&lt;&lt; (</span>long_lived_tree<span class="hl sym">-&gt;</span><span class="hl kwd">check</span><span class="hl sym">()) &lt;&lt;</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+
+      <span class="hl slc">//delete long_lived_tree;</span>
+   <span class="hl sym">}</span>
+
    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
-
 
