@@ -7,10 +7,11 @@ use warnings; use strict; use threads;
 
 use constant ITER     => 50;
 use constant LIMITSQR => 2.0 ** 2;
+use constant MAXPIXEL => 524288; # Maximum pixel buffer per thread
 
 my ($w, $h);
 $w = $h = shift || 80;
-my $threads = 4; # (workers; ideally matches number of processors)
+my $threads = 6; # Workers; ideally slightly overshoots number of processors
 
 # Generate pixel data for a single dot
 sub dot($$) {
@@ -31,24 +32,33 @@ sub dot($$) {
 sub lines($$) {
    map { my $y = $_;
       pack 'B*', pack 'C*', map dot($_, $y), 0..$w-1;
-   } $_[0]..$_[1];
+   } $_[0]..$_[1]
 }
 
-# Decide upon roughly equal batching of workload
+# Decide upon roughly equal batching of workload, within buffer limits
 $threads = $h if $threads > $h;
-my $each = $h / $threads;
+my $each = int($h / $threads);
+$each = int(MAXPIXEL / $w) if ($each * $w) > MAXPIXEL;
+$each = 1 if $each < 1;
+
+# Work as long as we have lines to spawn for or threads to collect from
+$| = 1;
+print "P4\n$w $h\n";
 my $y = 0;
 my @workers;
-# Spawn the workers to each work on a batch of lines
-for (1..$threads) {
-   my $y2 = $y + $each;
-   $y2 = $h if $_ == $threads;
-   push @workers, threads->create('lines', $y, $y2 - 1);
-   $y = $y2;
-}
-# Output the result of each worker, blocking for each to finish
-print "P4\n$w $h\n";
-foreach (@workers) {
-   print $_->join();
+while(@workers or ($y < $h)) {
+   # Create workers up to requirement
+   while((@workers < $threads) and ($y < $h)) {
+      my $y2 = $y + $each;
+      $y2 = $h if $y2 > $h;
+      push @workers, threads->create(sub {
+         undef @workers; # else we leak memory, hurrah.
+         lines($y, $y2 - 1);
+      });
+      $y = $y2;
+   }
+   # Block for result from the leading thread (to keep output in order)
+   my $next = shift @workers;
+   print $next->join();
 }
 
