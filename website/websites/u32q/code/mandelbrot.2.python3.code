@@ -1,36 +1,106 @@
 <span class="hl slc"># The Computer Language Benchmarks Game</span>
 <span class="hl slc"># http://shootout.alioth.debian.org/</span>
 <span class="hl slc">#</span>
-<span class="hl slc"># contributed by Heinrich Acker</span>
-<span class="hl slc"># 2to3</span>
+<span class="hl slc"># contributed by Tupteq</span>
+<span class="hl slc"># modified by Simon Descarpentries</span>
+<span class="hl slc"># modified for multi-core by Ahmad Syukri</span>
 
+<span class="hl kwa">import</span> multiprocessing <span class="hl kwa">as</span> mp
 <span class="hl kwa">import</span> sys
-<span class="hl kwa">import</span> numpy
 
-limit <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">.</span>
-size <span class="hl sym">=</span> <span class="hl kwb">int</span><span class="hl sym">(</span>sys<span class="hl sym">.</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span>
+<span class="hl kwa">def</span> <span class="hl kwd">writer</span><span class="hl sym">(</span>buff_queue<span class="hl sym">,</span>size<span class="hl sym">):</span>  <span class="hl slc">#i/o is slow, so leave it to only one worker</span>
+    <span class="hl kwa">from</span> array <span class="hl kwa">import</span> array
+    buff_pos <span class="hl sym">=</span> <span class="hl num">0</span>
+    buff <span class="hl sym">= []</span>
+    cout <span class="hl sym">=</span> sys<span class="hl sym">.</span>stdout<span class="hl sym">.</span><span class="hl kwb">buffer</span><span class="hl sym">.</span>write
+    <span class="hl kwa">while</span> <span class="hl num">1</span><span class="hl sym">:</span>
+        <span class="hl kwa">try</span><span class="hl sym">:</span>
+            buff<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>buff_queue<span class="hl sym">.</span><span class="hl kwd">get_nowait</span><span class="hl sym">())</span>
+        <span class="hl kwa">except</span><span class="hl sym">:</span>
+            <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>buff<span class="hl sym">):</span>
+                buff<span class="hl sym">.</span><span class="hl kwd">sort</span><span class="hl sym">()</span>
+                pos <span class="hl sym">=</span> <span class="hl kwb">len</span><span class="hl sym">(</span>buff<span class="hl sym">) -</span> <span class="hl num">1</span>
+                <span class="hl kwa">while</span> pos<span class="hl sym">&gt;</span><span class="hl num">0</span><span class="hl sym">:</span>
+                    <span class="hl kwa">if</span> buff<span class="hl sym">[</span>pos<span class="hl sym">][</span><span class="hl num">0</span><span class="hl sym">] ==</span> buff<span class="hl sym">[</span>pos<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">][</span><span class="hl num">1</span><span class="hl sym">]:</span>  <span class="hl slc">#connect contiguous segment</span>
+                        buff<span class="hl sym">[</span>pos<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] = (</span>buff<span class="hl sym">[</span>pos<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">][</span><span class="hl num">0</span><span class="hl sym">],</span>buff<span class="hl sym">[</span>pos<span class="hl sym">][</span><span class="hl num">1</span><span class="hl sym">],</span>buff<span class="hl sym">[</span>pos<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">][</span><span class="hl num">2</span><span class="hl sym">]+</span>buff<span class="hl sym">[</span>pos<span class="hl sym">][</span><span class="hl num">2</span><span class="hl sym">])</span>
+                        <span class="hl kwa">del</span><span class="hl sym">(</span>buff<span class="hl sym">[</span>pos<span class="hl sym">])</span>
+                    pos<span class="hl sym">-=</span><span class="hl num">1</span>
+                <span class="hl kwa">if</span> buff<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span><span class="hl num">0</span><span class="hl sym">]==</span>buff_pos<span class="hl sym">:</span>  <span class="hl slc"># write if segment is the next needed one</span>
+                    <span class="hl kwd">cout</span><span class="hl sym">(</span><span class="hl kwd">array</span><span class="hl sym">(</span><span class="hl str">'B'</span><span class="hl sym">,</span> buff<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span><span class="hl num">2</span><span class="hl sym">]).</span><span class="hl kwd">tostring</span><span class="hl sym">())</span>
+                    buff_pos <span class="hl sym">=</span> buff<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span><span class="hl num">1</span><span class="hl sym">]</span>
+                    <span class="hl kwa">del</span><span class="hl sym">(</span>buff<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">])</span>
 
-<span class="hl slc"># create an array of NxN complex constants</span>
-grid <span class="hl sym">=</span> numpy<span class="hl sym">.</span><span class="hl kwd">arange</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">./</span>size<span class="hl sym">)</span>
-c <span class="hl sym">= (</span>grid<span class="hl sym">-</span><span class="hl num">1.5</span><span class="hl sym">).</span><span class="hl kwd">reshape</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> size<span class="hl sym">).</span><span class="hl kwd">repeat</span><span class="hl sym">(</span>size<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">) +</span> \
-     <span class="hl num">1</span>j<span class="hl sym">*(</span>grid<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">).</span><span class="hl kwd">reshape</span><span class="hl sym">(</span>size<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">).</span><span class="hl kwd">repeat</span><span class="hl sym">(</span>size<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl kwa">if</span> buff_pos<span class="hl sym">&gt;=</span>size<span class="hl sym">:</span>
+                <span class="hl kwa">break</span>
 
-<span class="hl slc"># create NxN arrays for iteration and results</span>
-z <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">*</span>c
-mask <span class="hl sym">=</span> z<span class="hl sym">==</span><span class="hl num">0</span>
+<span class="hl kwa">def</span> <span class="hl kwd">worker</span><span class="hl sym">(</span>size<span class="hl sym">,</span> task_queue<span class="hl sym">,</span> buff_queue<span class="hl sym">):</span>
+    cout <span class="hl sym">=</span> sys<span class="hl sym">.</span>stdout<span class="hl sym">.</span><span class="hl kwb">buffer</span><span class="hl sym">.</span>write
+    fsize <span class="hl sym">=</span> <span class="hl kwb">float</span><span class="hl sym">(</span>size<span class="hl sym">)</span>
+    r_size <span class="hl sym">=</span> <span class="hl kwb">range</span><span class="hl sym">(</span>size<span class="hl sym">)</span>
+    r_iter <span class="hl sym">=</span> <span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl num">50</span><span class="hl sym">)</span>
+    local_abs <span class="hl sym">=</span> <span class="hl kwb">abs</span>
+    result <span class="hl sym">= []</span>
+    y<span class="hl sym">=</span>size  <span class="hl slc">#only to ensure task_head is initialized. not so pretty code</span>
+    <span class="hl kwa">while</span> <span class="hl num">1</span><span class="hl sym">:</span>
+        task <span class="hl sym">=</span> task_queue<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">()</span>
+        <span class="hl kwa">if</span> task <span class="hl kwa">is None</span><span class="hl sym">:</span>
+            <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>result<span class="hl sym">):</span>  <span class="hl slc"># push remaining segments</span>
+                buff_queue<span class="hl sym">.</span><span class="hl kwd">put</span><span class="hl sym">((</span>task_head<span class="hl sym">,</span>y<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span>result<span class="hl sym">))</span>
+            <span class="hl kwa">break</span>
+        <span class="hl kwa">elif</span> task<span class="hl sym">-</span>y<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">:</span>
+            <span class="hl kwa">if</span> <span class="hl kwb">len</span><span class="hl sym">(</span>result<span class="hl sym">):</span>      <span class="hl slc"># try to resume from previous segment unless broken</span>
+                buff_queue<span class="hl sym">.</span><span class="hl kwd">put</span><span class="hl sym">((</span>task_head<span class="hl sym">,</span>y<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span>result<span class="hl sym">))</span>
+            task_head <span class="hl sym">=</span> task
+            result <span class="hl sym">= []</span>
+        <span class="hl slc">#got new job</span>
+        y <span class="hl sym">=</span> task
+        bit_num <span class="hl sym">=</span> <span class="hl num">7</span>
+        byte_acc <span class="hl sym">=</span> <span class="hl num">0</span>
+        fy <span class="hl sym">=</span> <span class="hl num">2</span>j <span class="hl sym">*</span> y <span class="hl sym">/</span> fsize <span class="hl sym">-</span> <span class="hl num">1</span>j
+        <span class="hl kwa">for</span> x <span class="hl kwa">in</span> r_size<span class="hl sym">:</span>
+            z <span class="hl sym">=</span> <span class="hl num">0</span>j
+            c <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">. *</span> x <span class="hl sym">/</span> fsize <span class="hl sym">-</span> <span class="hl num">1.5</span> <span class="hl sym">+</span> fy
 
-<span class="hl slc"># compute the mandelbrot set vectorized</span>
-<span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl num">50</span><span class="hl sym">):</span>
-    z <span class="hl sym">=</span> mask <span class="hl sym">* (</span>z <span class="hl sym">*</span> z <span class="hl sym">+</span> c<span class="hl sym">)</span>
-    mask <span class="hl sym">=</span> numpy<span class="hl sym">.</span><span class="hl kwd">logical_and</span><span class="hl sym">(</span>mask<span class="hl sym">,</span> numpy<span class="hl sym">.</span><span class="hl kwb">abs</span><span class="hl sym">(</span>z<span class="hl sym">)&lt;</span>limit<span class="hl sym">)</span>
+            <span class="hl kwa">for</span> i <span class="hl kwa">in</span> r_iter<span class="hl sym">:</span>
+                z <span class="hl sym">=</span> z <span class="hl sym">*</span> z <span class="hl sym">+</span> c
+                <span class="hl kwa">if</span> <span class="hl kwd">local_abs</span><span class="hl sym">(</span>z<span class="hl sym">) &gt;=</span> <span class="hl num">2</span><span class="hl sym">.:</span> <span class="hl kwa">break</span>
+            <span class="hl kwa">else</span><span class="hl sym">:</span>
+                byte_acc <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> bit_num
 
-<span class="hl slc"># map the bool results to their binary value</span>
-mask <span class="hl sym">=</span> mask<span class="hl sym">.</span><span class="hl kwd">reshape</span><span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">8</span><span class="hl sym">).</span><span class="hl kwd">astype</span><span class="hl sym">(</span><span class="hl str">'uint8'</span><span class="hl sym">)</span>
-<span class="hl kwa">for</span> bit <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl num">8</span><span class="hl sym">):</span>
-    mask<span class="hl sym">[:,</span> <span class="hl num">7</span><span class="hl sym">-</span>bit<span class="hl sym">] *=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> bit
+            <span class="hl kwa">if</span> bit_num <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">:</span>
+                result<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>byte_acc<span class="hl sym">)</span>
+                bit_num <span class="hl sym">=</span> <span class="hl num">7</span>
+                byte_acc <span class="hl sym">=</span> <span class="hl num">0</span>
+            <span class="hl kwa">else</span><span class="hl sym">:</span>
+                bit_num <span class="hl sym">-=</span> <span class="hl num">1</span>
+        <span class="hl kwa">if</span> bit_num <span class="hl sym">!=</span> <span class="hl num">7</span><span class="hl sym">:</span>
+            result<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>byte_acc<span class="hl sym">)</span>
 
-<span class="hl slc"># pack the results into bytes</span>
-mask <span class="hl sym">=</span> mask<span class="hl sym">.</span><span class="hl kwb">sum</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl str">'uint8'</span><span class="hl sym">)</span>
+<span class="hl kwa">def</span> <span class="hl kwd">main</span><span class="hl sym">():</span>
+    size <span class="hl sym">=</span> <span class="hl kwb">int</span><span class="hl sym">(</span>sys<span class="hl sym">.</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span>
+    task_queue <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">Queue</span><span class="hl sym">()</span>
+    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>size<span class="hl sym">):</span>
+        task_queue<span class="hl sym">.</span><span class="hl kwd">put</span><span class="hl sym">(</span>i<span class="hl sym">)</span>
+    buff_queue <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">Queue</span><span class="hl sym">()</span>
+    num_proc <span class="hl sym">=</span> <span class="hl num">64</span>
+    proc <span class="hl sym">= []</span>
+    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>num_proc<span class="hl sym">):</span>
+        task_queue<span class="hl sym">.</span><span class="hl kwd">put</span><span class="hl sym">(</span><span class="hl kwa">None</span><span class="hl sym">)</span>
 
-<span class="hl slc"># write image data</span>
-sys<span class="hl sym">.</span>stdout<span class="hl sym">.</span><span class="hl kwd">write</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">%s&quot;</span> <span class="hl sym">% (</span>size<span class="hl sym">,</span> size<span class="hl sym">,</span> mask<span class="hl sym">.</span><span class="hl kwd">tostring</span><span class="hl sym">()))</span>
+    worker_args <span class="hl sym">= (</span>size<span class="hl sym">,</span> task_queue<span class="hl sym">,</span> buff_queue<span class="hl sym">)</span>
+
+    <span class="hl kwa">for</span> a <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>num_proc<span class="hl sym">):</span>
+        p <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">Process</span><span class="hl sym">(</span>target<span class="hl sym">=</span>worker<span class="hl sym">,</span> args<span class="hl sym">=</span>worker_args<span class="hl sym">)</span>
+        p<span class="hl sym">.</span><span class="hl kwd">start</span><span class="hl sym">()</span>
+        proc<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>p<span class="hl sym">)</span>
+    sys<span class="hl sym">.</span>stdout<span class="hl sym">.</span><span class="hl kwd">write</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span> <span class="hl sym">% (</span>size<span class="hl sym">,</span> size<span class="hl sym">))</span>
+    w <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">Process</span><span class="hl sym">(</span>target<span class="hl sym">=</span>writer<span class="hl sym">,</span> args<span class="hl sym">=(</span>buff_queue<span class="hl sym">,</span>size<span class="hl sym">))</span>
+    w<span class="hl sym">.</span><span class="hl kwd">start</span><span class="hl sym">()</span>
+    proc<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>w<span class="hl sym">)</span>
+
+    <span class="hl kwa">for</span> p <span class="hl kwa">in</span> proc<span class="hl sym">:</span>
+        p<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">()</span>
+
+<span class="hl kwa">if</span> __name__<span class="hl sym">==</span><span class="hl str">'__main__'</span><span class="hl sym">:</span>
+    <span class="hl kwd">main</span><span class="hl sym">()</span>
+

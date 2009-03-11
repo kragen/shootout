@@ -1,7 +1,7 @@
 ;;; The Computer Language Benchmarks Game
 ;;; http://shootout.alioth.debian.org/
 ;;;
-;;; Contributed by: Witali Kusnezow
+;;; Contributed by: Witali Kusnezow 2009-03-02
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require :asdf)
@@ -10,7 +10,7 @@
 #+sb-thread
 (progn
   (define-alien-routine sysconf long (name int))
-  (use-package  :sb-thread)))
+  (use-package :sb-thread)))
 
 (eval-when (:compile-toplevel)
 (setf cl-ppcre:*regex-char-code-limit* 128))
@@ -37,16 +37,30 @@
 #+sb-thread
 (progn
   (defconstant  +cpu-count+ (sysconf 84))
+  (defvar *mutex* (make-mutex))
+  (defvar *aux-mutex* (make-mutex))
+
   (defmacro bg  (&body body) `(make-thread (lambda () ,@body)))
-  (defparameter *semaphores* (loop repeat (length +regex-list+) collect (make-semaphore)))
-  (defparameter *semaphore* (make-semaphore)))
+  (defmacro join-all (&body body)
+	`(mapcar
+	  #'join-thread
+	  (loop for item in (list ,@body)
+		 append (if (consp item) item (list item))))))
 
-
-(defun join (strings &optional (size (reduce #'+ (mapcar #'length strings))))
+(defun read-all
+    (stream &aux (buf-size (* 1024 1024))
+     (size 0)
+     (buf-list
+      (loop
+         for buf = (make-string buf-size :element-type 'base-char)
+         for len = (read-sequence buf stream)
+         do (incf size len)
+         collect (if (< len buf-size) (subseq buf 0 len) buf)
+         while (= len buf-size))))
   (declare (type fixnum size))
   (loop with res-string = (make-string size :element-type 'base-char)
      with i of-type fixnum = 0
-     for str in strings
+     for str in buf-list
      do (setf (subseq res-string i) (the simple-base-string str))
      (incf i (length (the simple-base-string str)))
      finally (return res-string)))
@@ -120,26 +134,19 @@
         #+sb-thread
         (mapcar #'join-thread
                 (loop with len of-type fixnum = (length match)
-                   for range in (parts +cpu-count+ len)
+				   with parts-list  = (parts +cpu-count+ len)
+                   with current of-type fixnum = 0
+                   repeat +cpu-count+
                    collect
-                   (bg (replace-aux match replacement target-string result-string
-                                    :match-begin (car range) :match-end (cdr range)
-                                    :match-length len))))
+					 (bg (let (range)
+                           (with-mutex (*mutex*)
+                             (setf range (nth current parts-list))
+                             (incf current))
+                           (replace-aux match replacement target-string result-string
+                                        :match-begin (car range) :match-end (cdr range)
+                                        :match-length len)))))
         result-string)
       target-string))
-
-(defun read-all
-    (stream &aux (buf-size (* 1024 1024))
-     (size 0)
-     (buf-list
-      (loop
-         for buf = (make-string buf-size :element-type 'base-char)
-         for len = (read-sequence buf stream)
-         do (incf size len)
-         collect (if (< len buf-size) (subseq buf 0 len) buf)
-         while (= len buf-size))))
-  (declare (type fixnum size))
-  (join buf-list size))
 
 (defun main (&optional (stream *standard-input*)
              &aux (sequence (read-all stream))
@@ -148,33 +155,36 @@
   (setf sequence (replace-all ">[^\\n]*\\n|\\n" "" sequence))
 
   #-sb-thread
-  (loop for regex in +regex-list+ do
-       (format t "~a ~a~%" regex
-               (/ (length
-                   (cl-ppcre:all-matches regex sequence :element-type 'base-char)) 2)))
-
+  (progn
+    (loop for regex in +regex-list+ do
+         (format t "~a ~a~%" regex
+                 (/ (length
+                     (the list
+                       (cl-ppcre:all-matches regex sequence))) 2)))
+    (format t "~%~a~%~a~%" size (length sequence))
+    (loop for pair in +alternatives+ do
+         (setf sequence (replace-all  (car pair) (cadr pair) sequence )))
+    (format t "~a~%" (length sequence)))
   #+sb-thread
-  (let* ((threads
-          (loop for regex in +regex-list+
-             for idx of-type fixnum by 1
-             collect
-             (bg
-               (let ((reg regex) len)
-                 (wait-on-semaphore (nth idx *semaphores*))
-                 (setf len
-                       (/ (length
-                           (the list (cl-ppcre:all-matches reg sequence :element-type 'base-char))) 2))
-                 (signal-semaphore *semaphore*)
-                 (format nil "~a ~a" reg len))))))
-    (loop with active of-type fixnum = 0
-       for idx of-type fixnum by 1 repeat (length +regex-list+)
-       if (= active +cpu-count+)
-       do (wait-on-semaphore *semaphore*) (decf active)
-       do (incf active) (signal-semaphore (nth idx *semaphores*)))
-    (format t "~{~a~%~}" (mapcar #'join-thread threads)))
-
-  (format t "~%~a~%~a~%" size (length sequence))
-
-  (loop for pair in +alternatives+ do
-       (setf sequence (replace-all  (car pair) (cadr pair) sequence )))
-  (format t "~a~%" (length sequence)))
+  (let* ((len (length +regex-list+))
+         (result (make-list (1+ len))))
+    (join-all
+	 (loop with idx of-type fixnum = 0
+		repeat len
+		collect
+          (bg (let (reg cur)
+                (with-mutex (*aux-mutex*)
+                  (setf cur idx reg (nth cur +regex-list+))
+                  (incf idx))
+              (setf (nth cur result)
+                    (format nil "~a ~a" reg
+                            (/ (length
+                                (the list
+                                  (cl-ppcre:all-matches reg sequence))) 2))))))
+	 (bg (loop with seq = (copy-seq sequence)
+            for pair in +alternatives+ do
+              (setf seq (replace-all  (car pair) (cadr pair) seq ))
+            finally (setf (nth len result)
+                          (format nil "~%~a~%~a~%~a" size (length sequence) (length seq))))))
+    (format t "~{~a~%~}" result))
+  )
