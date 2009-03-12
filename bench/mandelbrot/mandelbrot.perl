@@ -3,6 +3,7 @@
 # implemented by Greg Buchholz
 # streamlined by Kalev Soikonen
 # parallelised by Philip Boulain
+# modified by Jerry D. Hedden
 use warnings; use strict; use threads;
 
 use constant ITER     => 50;
@@ -51,10 +52,7 @@ while(@workers or ($y < $h)) {
    while((@workers < $threads) and ($y < $h)) {
       my $y2 = $y + $each;
       $y2 = $h if $y2 > $h;
-      push @workers, threads->create(sub {
-         undef @workers; # else we leak memory, hurrah.
-         lines($y, $y2 - 1);
-      });
+      push(@workers, threads->create('lines', $y, $y2 - 1));
       $y = $y2;
    }
    # Block for result from the leading thread (to keep output in order)
