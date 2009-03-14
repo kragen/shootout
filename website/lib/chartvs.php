@@ -89,7 +89,7 @@ if ($valid){
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
 
    $chart->xo = $chart->defaultOriginX();
-   $chart->title($LangName[0].' / '.$LangName[1]);
+   $chart->title($LangName[0].' / '.$LangName[1].' better to worse');
    $chart->notice($Mark);
 }
 
