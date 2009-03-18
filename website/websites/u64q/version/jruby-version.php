@@ -1,1 +1,1 @@
-<p>jruby 1.1.6 (ruby 1.8.6 patchlevel 114) (2008-12-17 rev 8388) [amd64-java]</p>
+<p>jruby 1.2.0 (ruby 1.8.6 patchlevel 287) (2009-03-16 rev 9419) [amd64-java]</p>
