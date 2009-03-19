@@ -15,7 +15,7 @@
 <body id="<?=SITE_NAME;?>">
 
 <table class="banner"><tr>
-<td><h1><a href="index.php"><?=$BannerTitle;?></a>&nbsp;(<a href="faq.php"><?=$FaqTitle;?></a>)</h1></td>
+<td><h1><a href="../index.php"><?=$BannerTitle;?></a>&nbsp;(<a href="faq.php"><?=$FaqTitle;?></a>)</h1></td>
 </tr></table>
 
 <div id="nav">
