@@ -1,214 +1,188 @@
-<span class="hl com">/*</span>
-<span class="hl com"> * The Computer Language Benchmarks Game</span>
-<span class="hl com"> * http://shootout.alioth.debian.org/</span>
-<span class="hl com"> *</span>
-<span class="hl com"> * Contributed by Diogo Sousa (aka orium)</span>
-<span class="hl com"> * Added memory pool to improve node allocation</span>
-<span class="hl com"> */</span>
+<span class="hl com">/* The Computer Language Shootout Benchmarks</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   contributed by Kevin Carson</span>
+<span class="hl com">   based on code by Eckehard Berns</span>
+<span class="hl com">   modified by Cédric Krier</span>
+<span class="hl com">   compilation:</span>
+<span class="hl com">       gcc -O3 -fomit-frame-pointer -funroll-loops -static binarytrees.c -lpthread</span>
+<span class="hl com">       icc -O3 -ip -unroll -static binarytrees.c -lpthread</span>
+<span class="hl com">*/</span>
 
-<span class="hl com">/* Compile with: gcc -Wall -pipe -O3 -lpthread -fomit-frame-pointer   \</span>
-<span class="hl com"> * -march=native btrees.c -o btrees</span>
-<span class="hl com"> */</span>
-
-<span class="hl dir">#define _GNU_SOURCE</span>
-
+<span class="hl dir">#include &lt;malloc.h&gt;</span>
 <span class="hl dir">#include &lt;stdio.h&gt;</span>
 <span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
 
-<span class="hl dir">#define max(x,y) (((x) &gt; (y)) ? (x) : (y))</span>
-<span class="hl dir">#define get_size_by_depth(depth) ((1&lt;&lt;((depth)+1))-1)</span>
 
-<span class="hl kwb">struct</span> computed
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> tn <span class="hl sym">{</span>
+    <span class="hl kwb">struct</span> tn<span class="hl sym">*</span>    left<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> tn<span class="hl sym">*</span>    right<span class="hl sym">;</span>
+    <span class="hl kwb">long</span>          item<span class="hl sym">;</span>
+<span class="hl sym">}</span> treeNode<span class="hl sym">;</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> pt <span class="hl sym">{</span>
+    treeNode<span class="hl sym">*</span>     pool<span class="hl sym">;</span>
+    treeNode<span class="hl sym">*</span>     <span class="hl kwa">new</span><span class="hl sym">;</span>
+<span class="hl sym">}</span> poolTree<span class="hl sym">;</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> worker_args <span class="hl sym">{</span>
+    <span class="hl kwb">long</span> iter<span class="hl sym">,</span> check<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> depth<span class="hl sym">;</span>
+    pthread_t id<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>next<span class="hl sym">;</span>
+<span class="hl sym">}</span> worker_args<span class="hl sym">;</span>
+
+
+treeNode<span class="hl sym">*</span> <span class="hl kwd">NewTreeNode</span><span class="hl sym">(</span>treeNode<span class="hl sym">*</span> left<span class="hl sym">,</span> treeNode<span class="hl sym">*</span> right<span class="hl sym">,</span> <span class="hl kwb">long</span> item<span class="hl sym">,</span> poolTree<span class="hl sym">*</span> pool<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">int</span> trees<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> depth<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> check<span class="hl sym">;</span>
-<span class="hl sym">};</span>
+    treeNode<span class="hl sym">*</span> <span class="hl kwa">new</span> <span class="hl sym">=</span> pool<span class="hl sym">-&gt;</span><span class="hl kwa">new</span><span class="hl sym">++;</span>
 
-<span class="hl kwb">struct</span> tree_node
+    <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>left <span class="hl sym">=</span> left<span class="hl sym">;</span>
+    <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>right <span class="hl sym">=</span> right<span class="hl sym">;</span>
+    <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>item <span class="hl sym">=</span> item<span class="hl sym">;</span>
+
+    <span class="hl kwa">return new</span><span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl com">/* NewTreeNode() */</span>
+
+
+<span class="hl kwb">long</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>treeNode<span class="hl sym">*</span> tree<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">int</span> item<span class="hl sym">;</span>
+    <span class="hl kwb">long</span> result<span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left <span class="hl sym">==</span> NULL<span class="hl sym">)</span>
+        result <span class="hl sym">=</span> tree<span class="hl sym">-&gt;</span>item<span class="hl sym">;</span>
+    <span class="hl kwa">else</span>
+        result <span class="hl sym">=</span> tree<span class="hl sym">-&gt;</span>item <span class="hl sym">+</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left<span class="hl sym">) -</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>right<span class="hl sym">);</span>
+    <span class="hl kwa">return</span> result<span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl com">/* ItemCheck() */</span>
 
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>left<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>right<span class="hl sym">;</span>
-<span class="hl sym">};</span>
 
-<span class="hl kwb">struct</span> pool
+treeNode<span class="hl sym">*</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl kwb">long</span> item<span class="hl sym">,</span> <span class="hl kwb">unsigned</span> depth<span class="hl sym">,</span> poolTree<span class="hl sym">*</span> pool<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>pool<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>first_free<span class="hl sym">;</span>
-<span class="hl sym">};</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>depth <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+        <span class="hl kwa">return</span> NewTreeNode
+        <span class="hl sym">(</span>
+            <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> item <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> depth <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> pool<span class="hl sym">),</span>
+            <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> item<span class="hl sym">,</span> depth <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> pool<span class="hl sym">),</span>
+            item<span class="hl sym">,</span>
+            pool
+        <span class="hl sym">);</span>
+    <span class="hl kwa">else</span>
+        <span class="hl kwa">return</span> <span class="hl kwd">NewTreeNode</span><span class="hl sym">(</span>NULL<span class="hl sym">,</span> NULL<span class="hl sym">,</span> item<span class="hl sym">,</span> pool<span class="hl sym">);</span>
+<span class="hl sym">}</span> <span class="hl com">/* BottomUpTree() */</span>
 
-<span class="hl kwb">struct</span> args
+
+poolTree<span class="hl sym">*</span> <span class="hl kwd">NewPoolTree</span><span class="hl sym">(</span><span class="hl kwb">long</span> size<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">int</span> max_depth<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">**</span>long_lived_tree<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> pool <span class="hl sym">**</span>long_lived_tree_pool<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> computed <span class="hl sym">*</span>computed<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> stretch_depth<span class="hl sym">;</span>
-<span class="hl sym">};</span>
+    poolTree<span class="hl sym">*</span> <span class="hl kwa">new</span><span class="hl sym">;</span>
 
-<span class="hl kwb">struct</span> pool <span class="hl sym">*</span>
-<span class="hl kwd">pool_new</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> size<span class="hl sym">)</span>
+    <span class="hl kwa">new</span> <span class="hl sym">= (</span>poolTree<span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>poolTree<span class="hl sym">));</span>
+
+    <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>pool <span class="hl sym">= (</span>treeNode<span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>size <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>treeNode<span class="hl sym">));</span>
+    <span class="hl kwa">new</span><span class="hl sym">-&gt;</span><span class="hl kwa">new</span> <span class="hl sym">=</span> <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>pool<span class="hl sym">;</span>
+
+   <span class="hl kwa">return new</span><span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl com">/* NewPoolTree() */</span>
+
+
+<span class="hl kwb">void</span> <span class="hl kwd">DeletePoolTree</span><span class="hl sym">(</span>poolTree<span class="hl sym">*</span> pool<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool<span class="hl sym">;</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>pool<span class="hl sym">-&gt;</span>pool<span class="hl sym">);</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
+<span class="hl sym">}</span> <span class="hl com">/* DeletePoolTree() */</span>
 
-   pool<span class="hl sym">=</span><span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(*</span>pool<span class="hl sym">));</span>
-   pool<span class="hl sym">-&gt;</span>pool<span class="hl sym">=</span><span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(*</span>pool<span class="hl sym">-&gt;</span>pool<span class="hl sym">)*</span>size<span class="hl sym">);</span>
-   pool<span class="hl sym">-&gt;</span>first_free<span class="hl sym">=</span>pool<span class="hl sym">-&gt;</span>pool<span class="hl sym">;</span>
 
-   <span class="hl kwa">return</span> pool<span class="hl sym">;</span>
-<span class="hl sym">}</span>
-
-<span class="hl dir">#define pool_new_node(p) ((p)-&gt;first_free++)</span>
-
-<span class="hl kwb">void</span>
-<span class="hl kwd">pool_free</span><span class="hl sym">(</span><span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool<span class="hl sym">)</span>
+<span class="hl kwb">static void</span><span class="hl sym">*</span> <span class="hl kwd">CheckTree</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*</span> _args<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwd">free</span><span class="hl sym">(</span>pool<span class="hl sym">-&gt;</span>pool<span class="hl sym">);</span>
-   <span class="hl kwd">free</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
-<span class="hl sym">}</span>
+    worker_args <span class="hl sym">*</span>args <span class="hl sym">=</span> _args<span class="hl sym">;</span>
+    poolTree <span class="hl sym">*</span>pool<span class="hl sym">;</span>
+    <span class="hl kwb">long</span> i<span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> args<span class="hl sym">-&gt;</span>iter<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+    <span class="hl sym">{</span>
+        pool <span class="hl sym">=</span> <span class="hl kwd">NewPoolTree</span><span class="hl sym">((</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>args<span class="hl sym">-&gt;</span>depth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) -</span><span class="hl num">1</span><span class="hl sym">);</span>
+        args<span class="hl sym">-&gt;</span>check <span class="hl sym">+=</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span><span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span>i<span class="hl sym">,</span> args<span class="hl sym">-&gt;</span>depth<span class="hl sym">,</span> pool<span class="hl sym">));</span>
+        <span class="hl kwd">DeletePoolTree</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
+        pool <span class="hl sym">=</span> <span class="hl kwd">NewPoolTree</span><span class="hl sym">((</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>args<span class="hl sym">-&gt;</span>depth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) -</span><span class="hl num">1</span><span class="hl sym">);</span>
+        args<span class="hl sym">-&gt;</span>check <span class="hl sym">+=</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span><span class="hl kwd">BottomUpTree</span><span class="hl sym">(-</span>i<span class="hl sym">,</span> args<span class="hl sym">-&gt;</span>depth<span class="hl sym">,</span> pool<span class="hl sym">));</span>
+        <span class="hl kwd">DeletePoolTree</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
+    <span class="hl sym">}</span> <span class="hl com">/* for (i = 1...) */</span>
+    <span class="hl kwa">return</span> NULL<span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl com">/* CheckTree() */</span>
 
-<span class="hl kwc">inline</span> <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>
-<span class="hl kwd">make_tree_node</span><span class="hl sym">(</span><span class="hl kwb">int</span> item<span class="hl sym">,</span> <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>left<span class="hl sym">,</span> <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>right<span class="hl sym">,</span>
-          <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool<span class="hl sym">)</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> argv<span class="hl sym">[])</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>node<span class="hl sym">;</span>
+    <span class="hl kwb">unsigned</span>   N<span class="hl sym">,</span> depth<span class="hl sym">,</span> minDepth<span class="hl sym">,</span> maxDepth<span class="hl sym">,</span> stretchDepth<span class="hl sym">;</span>
+    treeNode   <span class="hl sym">*</span>stretchTree<span class="hl sym">, *</span>longLivedTree<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>args<span class="hl sym">, *</span>targs<span class="hl sym">, *</span>hargs<span class="hl sym">;</span>
+    poolTree <span class="hl sym">*</span>pool<span class="hl sym">;</span>
 
-   node<span class="hl sym">=</span><span class="hl kwd">pool_new_node</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
+    N <span class="hl sym">=</span> <span class="hl kwd">atol</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
 
-   node<span class="hl sym">-&gt;</span>item<span class="hl sym">=</span>item<span class="hl sym">;</span>
-   node<span class="hl sym">-&gt;</span>left<span class="hl sym">=</span>left<span class="hl sym">;</span>
-   node<span class="hl sym">-&gt;</span>right<span class="hl sym">=</span>right<span class="hl sym">;</span>
+    minDepth <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
 
-   <span class="hl kwa">return</span> node<span class="hl sym">;</span>
-<span class="hl sym">}</span>
+    <span class="hl kwa">if</span> <span class="hl sym">((</span>minDepth <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">) &gt;</span> N<span class="hl sym">)</span>
+        maxDepth <span class="hl sym">=</span> minDepth <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">;</span>
+    <span class="hl kwa">else</span>
+        maxDepth <span class="hl sym">=</span> N<span class="hl sym">;</span>
 
-<span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>
-<span class="hl kwd">make_tree</span><span class="hl sym">(</span><span class="hl kwb">int</span> item<span class="hl sym">,</span> <span class="hl kwb">int</span> depth<span class="hl sym">,</span> <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwa">if</span> <span class="hl sym">(!</span>depth<span class="hl sym">)</span>
-      <span class="hl kwa">return</span> <span class="hl kwd">make_tree_node</span><span class="hl sym">(</span>item<span class="hl sym">,</span>NULL<span class="hl sym">,</span>NULL<span class="hl sym">,</span>pool<span class="hl sym">);</span>
-   <span class="hl kwa">else</span>
-      <span class="hl kwa">return</span> <span class="hl kwd">make_tree_node</span><span class="hl sym">(</span>item<span class="hl sym">,</span>
-                  <span class="hl kwd">make_tree</span><span class="hl sym">((</span>item<span class="hl sym">&lt;&lt;</span><span class="hl num">1</span><span class="hl sym">)-</span><span class="hl num">1</span><span class="hl sym">,</span>depth<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span>pool<span class="hl sym">),</span>
-                  <span class="hl kwd">make_tree</span><span class="hl sym">(</span>item<span class="hl sym">&lt;&lt;</span><span class="hl num">1</span><span class="hl sym">,</span>depth<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span>pool<span class="hl sym">),</span>pool<span class="hl sym">);</span>
-<span class="hl sym">}</span>
+    stretchDepth <span class="hl sym">=</span> maxDepth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
 
-<span class="hl kwb">int</span>
-<span class="hl kwd">check_tree</span><span class="hl sym">(</span><span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>node<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwa">if</span> <span class="hl sym">(</span>node<span class="hl sym">-&gt;</span>left <span class="hl sym">==</span> NULL<span class="hl sym">)</span>
-      <span class="hl kwa">return</span> node<span class="hl sym">-&gt;</span>item<span class="hl sym">;</span>
-   <span class="hl kwa">else</span>
-      <span class="hl kwa">return</span> node<span class="hl sym">-&gt;</span>item<span class="hl sym">+</span><span class="hl kwd">check_tree</span><span class="hl sym">(</span>node<span class="hl sym">-&gt;</span>left<span class="hl sym">)</span>
-         <span class="hl sym">-</span><span class="hl kwd">check_tree</span><span class="hl sym">(</span>node<span class="hl sym">-&gt;</span>right<span class="hl sym">);</span>
-<span class="hl sym">}</span>
+    pool <span class="hl sym">=</span> <span class="hl kwd">NewPoolTree</span><span class="hl sym">((</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>stretchDepth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) -</span><span class="hl num">1</span><span class="hl sym">);</span>
+    stretchTree <span class="hl sym">=</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> stretchDepth<span class="hl sym">,</span> pool<span class="hl sym">);</span>
+    printf
+    <span class="hl sym">(</span>
+        <span class="hl str">&quot;stretch tree of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+        stretchDepth<span class="hl sym">,</span>
+        <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>stretchTree<span class="hl sym">)</span>
+    <span class="hl sym">);</span>
+    <span class="hl kwd">DeletePoolTree</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
 
-<span class="hl kwb">int</span>
-<span class="hl kwd">check_tree_and_free</span><span class="hl sym">(</span><span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>node<span class="hl sym">,</span> <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwb">int</span> r<span class="hl sym">;</span>
+    pool <span class="hl sym">=</span> <span class="hl kwd">NewPoolTree</span><span class="hl sym">((</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>maxDepth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) -</span><span class="hl num">1</span><span class="hl sym">);</span>
+    longLivedTree <span class="hl sym">=</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> maxDepth<span class="hl sym">,</span> pool<span class="hl sym">);</span>
 
-   r<span class="hl sym">=</span><span class="hl kwd">check_tree</span><span class="hl sym">(</span>node<span class="hl sym">);</span>
-   <span class="hl kwd">pool_free</span><span class="hl sym">(</span>pool<span class="hl sym">);</span>
+    hargs <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    targs <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>depth <span class="hl sym">=</span> minDepth<span class="hl sym">;</span> depth <span class="hl sym">&lt;=</span> maxDepth<span class="hl sym">;</span> depth <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        args <span class="hl sym">=</span> <span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">struct</span> worker_args<span class="hl sym">));</span>
+        args<span class="hl sym">-&gt;</span>iter <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>maxDepth <span class="hl sym">-</span> depth <span class="hl sym">+</span> minDepth<span class="hl sym">);</span>
+        args<span class="hl sym">-&gt;</span>depth <span class="hl sym">=</span> depth<span class="hl sym">;</span>
+        args<span class="hl sym">-&gt;</span>check <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        args<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
 
-   <span class="hl kwa">return</span> r<span class="hl sym">;</span>
-<span class="hl sym">}</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>targs <span class="hl sym">==</span> NULL<span class="hl sym">) {</span>
+            hargs <span class="hl sym">=</span> args<span class="hl sym">;</span>
+            targs <span class="hl sym">=</span> args<span class="hl sym">;</span>
+        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            targs<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> args<span class="hl sym">;</span>
+            targs <span class="hl sym">=</span> args<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
 
-<span class="hl kwb">void</span>
-<span class="hl kwd">build_long_lived_tree</span><span class="hl sym">(</span><span class="hl kwb">struct</span> args <span class="hl sym">*</span>args<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl sym">*</span>args<span class="hl sym">-&gt;</span>long_lived_tree_pool<span class="hl sym">=</span><span class="hl kwd">pool_new</span><span class="hl sym">(</span><span class="hl kwd">get_size_by_depth</span><span class="hl sym">(</span>args<span class="hl sym">-&gt;</span>max_depth<span class="hl sym">));</span>
-   <span class="hl sym">*</span>args<span class="hl sym">-&gt;</span>long_lived_tree<span class="hl sym">=</span><span class="hl kwd">make_tree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>args<span class="hl sym">-&gt;</span>max_depth<span class="hl sym">,</span>
-                <span class="hl sym">*</span>args<span class="hl sym">-&gt;</span>long_lived_tree_pool<span class="hl sym">);</span>
-<span class="hl sym">}</span>
+        <span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>args<span class="hl sym">-&gt;</span>id<span class="hl sym">,</span> NULL<span class="hl sym">,</span> CheckTree<span class="hl sym">,</span> args<span class="hl sym">);</span>
+    <span class="hl sym">}</span> <span class="hl com">/* for(depth = minDepth...) */</span>
 
-<span class="hl kwb">void</span>
-<span class="hl kwd">compute_stretch_tree</span><span class="hl sym">(</span><span class="hl kwb">struct</span> args <span class="hl sym">*</span>args<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool<span class="hl sym">=</span><span class="hl kwd">pool_new</span><span class="hl sym">(</span><span class="hl kwd">get_size_by_depth</span><span class="hl sym">(</span>args<span class="hl sym">-&gt;</span>stretch_depth<span class="hl sym">));</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>hargs <span class="hl sym">!=</span> NULL<span class="hl sym">) {</span>
+        args <span class="hl sym">=</span> hargs<span class="hl sym">;</span>
+        <span class="hl kwd">pthread_join</span><span class="hl sym">(</span>args<span class="hl sym">-&gt;</span>id<span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+        printf
+        <span class="hl sym">(</span>
+            <span class="hl str">&quot;%li</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+            args<span class="hl sym">-&gt;</span>iter <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">,</span>
+            args<span class="hl sym">-&gt;</span>depth<span class="hl sym">,</span>
+            args<span class="hl sym">-&gt;</span>check
+        <span class="hl sym">);</span>
+        hargs <span class="hl sym">=</span> args<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+        <span class="hl kwd">free</span><span class="hl sym">(</span>args<span class="hl sym">);</span>
+    <span class="hl sym">}</span> <span class="hl com">/* while (hargs != NULL) */</span>
 
-   args<span class="hl sym">-&gt;</span>computed<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>trees<span class="hl sym">=-</span><span class="hl num">1</span><span class="hl sym">;</span>
-   args<span class="hl sym">-&gt;</span>computed<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>depth<span class="hl sym">=</span>args<span class="hl sym">-&gt;</span>stretch_depth<span class="hl sym">;</span>
-   args<span class="hl sym">-&gt;</span>computed<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>check
-      <span class="hl sym">=</span><span class="hl kwd">check_tree_and_free</span><span class="hl sym">(</span><span class="hl kwd">make_tree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>args<span class="hl sym">-&gt;</span>stretch_depth<span class="hl sym">,</span>pool<span class="hl sym">),</span>
-                 pool<span class="hl sym">);</span>
-<span class="hl sym">}</span>
+    printf
+    <span class="hl sym">(</span>
+        <span class="hl str">&quot;long lived tree of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+        maxDepth<span class="hl sym">,</span>
+        <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>longLivedTree<span class="hl sym">)</span>
+    <span class="hl sym">);</span>
 
-<span class="hl kwb">int</span>
-<span class="hl kwd">computed_trees_checks</span><span class="hl sym">(</span><span class="hl kwb">int</span> depth<span class="hl sym">,</span> <span class="hl kwb">int</span> end<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool1<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>pool2<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> size<span class="hl sym">=</span><span class="hl kwd">get_size_by_depth</span><span class="hl sym">(</span>depth<span class="hl sym">);</span>
-   <span class="hl kwb">int</span> i<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> check<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl com">/* main() */</span>
 
-   <span class="hl kwa">for</span> <span class="hl sym">(</span>i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> end<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-   <span class="hl sym">{</span>
-      pool1<span class="hl sym">=</span><span class="hl kwd">pool_new</span><span class="hl sym">(</span>size<span class="hl sym">);</span>
-      pool2<span class="hl sym">=</span><span class="hl kwd">pool_new</span><span class="hl sym">(</span>size<span class="hl sym">);</span>
-
-      check<span class="hl sym">+=</span><span class="hl kwd">check_tree</span><span class="hl sym">(</span><span class="hl kwd">make_tree</span><span class="hl sym">(</span>i<span class="hl sym">,</span>depth<span class="hl sym">,</span>pool1<span class="hl sym">))</span>
-         <span class="hl sym">+</span><span class="hl kwd">check_tree</span><span class="hl sym">(</span><span class="hl kwd">make_tree</span><span class="hl sym">(-</span>i<span class="hl sym">,</span>depth<span class="hl sym">,</span>pool2<span class="hl sym">));</span>
-
-      <span class="hl kwd">pool_free</span><span class="hl sym">(</span>pool1<span class="hl sym">);</span>
-      <span class="hl kwd">pool_free</span><span class="hl sym">(</span>pool2<span class="hl sym">);</span>
-   <span class="hl sym">}</span>
-
-   <span class="hl kwa">return</span> check<span class="hl sym">;</span>
-<span class="hl sym">}</span>
-
-<span class="hl kwb">void</span>
-<span class="hl kwd">print_computed_data</span><span class="hl sym">(</span><span class="hl kwb">struct</span> computed <span class="hl sym">*</span>computed<span class="hl sym">,</span> <span class="hl kwb">size_t</span> size<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwb">int</span> i<span class="hl sym">;</span>
-
-   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;stretch tree of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>computed<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>depth<span class="hl sym">,</span>
-          computed<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>check<span class="hl sym">);</span>
-
-   <span class="hl kwa">for</span> <span class="hl sym">(</span>i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
-             computed<span class="hl sym">[</span>i<span class="hl sym">].</span>trees<span class="hl sym">,</span>computed<span class="hl sym">[</span>i<span class="hl sym">].</span>depth<span class="hl sym">,</span>computed<span class="hl sym">[</span>i<span class="hl sym">].</span>check<span class="hl sym">);</span>
-<span class="hl sym">}</span>
-
-<span class="hl kwb">int</span>
-<span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwb">struct</span> tree_node <span class="hl sym">*</span>long_lived_tree<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> pool <span class="hl sym">*</span>long_lived_tree_pool<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> min_depth<span class="hl sym">=</span><span class="hl num">4</span><span class="hl sym">;</span>
-   <span class="hl kwb">int</span> max_depth<span class="hl sym">=</span><span class="hl kwd">max</span><span class="hl sym">(</span>min_depth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">, (</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">20</span><span class="hl sym">);</span>
-   <span class="hl kwb">int</span> stretch_depth<span class="hl sym">=</span>max_depth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
-   <span class="hl kwb">int</span> i<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> c<span class="hl sym">;</span>
-   <span class="hl kwb">int</span> its<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">&lt;&lt;</span>max_depth<span class="hl sym">;</span>
-   <span class="hl kwb">struct</span> computed computed<span class="hl sym">[(</span>stretch_depth<span class="hl sym">-</span>min_depth<span class="hl sym">)/</span><span class="hl num">2</span>
-             <span class="hl sym">+(</span>stretch_depth<span class="hl sym">-</span>min_depth<span class="hl sym">)%</span><span class="hl num">2</span><span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
-   <span class="hl kwb">struct</span> args args<span class="hl sym">;</span>
-
-   args<span class="hl sym">.</span>max_depth<span class="hl sym">=</span>max_depth<span class="hl sym">;</span>
-   args<span class="hl sym">.</span>long_lived_tree<span class="hl sym">=&amp;</span>long_lived_tree<span class="hl sym">;</span>
-   args<span class="hl sym">.</span>computed<span class="hl sym">=</span>computed<span class="hl sym">;</span>
-   args<span class="hl sym">.</span>stretch_depth<span class="hl sym">=</span>stretch_depth<span class="hl sym">;</span>
-   args<span class="hl sym">.</span>long_lived_tree_pool<span class="hl sym">=&amp;</span>long_lived_tree_pool<span class="hl sym">;</span>
-
-   <span class="hl kwd">build_long_lived_tree</span><span class="hl sym">(&amp;</span>args<span class="hl sym">);</span>
-   <span class="hl kwd">compute_stretch_tree</span><span class="hl sym">(&amp;</span>args<span class="hl sym">);</span>
-
-   <span class="hl kwa">for</span> <span class="hl sym">(</span>i<span class="hl sym">=</span>min_depth<span class="hl sym">,</span> c<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> stretch_depth<span class="hl sym">;</span> i<span class="hl sym">+=</span><span class="hl num">2</span><span class="hl sym">,</span> c<span class="hl sym">++)</span>
-   <span class="hl sym">{</span>
-      computed<span class="hl sym">[</span>c<span class="hl sym">].</span>check<span class="hl sym">=</span><span class="hl kwd">computed_trees_checks</span><span class="hl sym">(</span>i<span class="hl sym">,</span>its<span class="hl sym">);</span>
-      computed<span class="hl sym">[</span>c<span class="hl sym">].</span>trees<span class="hl sym">=</span>its<span class="hl sym">&lt;&lt;</span><span class="hl num">1</span><span class="hl sym">;</span>
-      computed<span class="hl sym">[</span>c<span class="hl sym">].</span>depth<span class="hl sym">=</span>i<span class="hl sym">;</span>
-
-      its<span class="hl sym">&gt;&gt;=</span><span class="hl num">2</span><span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
-   <span class="hl kwd">print_computed_data</span><span class="hl sym">(</span>computed<span class="hl sym">,</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>computed<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(*</span>computed<span class="hl sym">));</span>
-   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;long lived tree of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>max_depth<span class="hl sym">,</span>
-          <span class="hl kwd">check_tree_and_free</span><span class="hl sym">(</span>long_lived_tree<span class="hl sym">,</span>long_lived_tree_pool<span class="hl sym">));</span>
-
-   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
-<span class="hl sym">}</span>

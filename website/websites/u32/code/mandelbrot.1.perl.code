@@ -1,0 +1,62 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc"># implemented by Greg Buchholz</span>
+<span class="hl slc"># streamlined by Kalev Soikonen</span>
+<span class="hl slc"># parallelised by Philip Boulain</span>
+<span class="hl slc"># modified by Jerry D. Hedden</span>
+<span class="hl kwa">use</span> <span class="hl kwd">warnings</span><span class="hl sym">;</span> <span class="hl kwa">use</span> <span class="hl kwd">strict</span><span class="hl sym">;</span> <span class="hl kwa">use</span> <span class="hl kwd">threads</span><span class="hl sym">;</span>
+
+<span class="hl kwa">use</span> constant ITER     <span class="hl sym">=&gt;</span> <span class="hl num">50</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> constant LIMITSQR <span class="hl sym">=&gt;</span> <span class="hl num">2.0</span> <span class="hl sym">**</span> <span class="hl num">2</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> constant MAXPIXEL <span class="hl sym">=&gt;</span> <span class="hl num">524288</span><span class="hl sym">;</span> <span class="hl slc"># Maximum pixel buffer per thread</span>
+
+<span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$w</span><span class="hl sym">,</span> <span class="hl kwb">$h</span><span class="hl sym">);</span>
+<span class="hl kwb">$w</span> <span class="hl sym">=</span> <span class="hl kwb">$h</span> <span class="hl sym">=</span> shift <span class="hl sym">||</span> <span class="hl num">80</span><span class="hl sym">;</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$threads</span> <span class="hl sym">=</span> <span class="hl num">6</span><span class="hl sym">;</span> <span class="hl slc"># Workers; ideally slightly overshoots number of processors</span>
+
+<span class="hl slc"># Generate pixel data for a single dot</span>
+<span class="hl kwa">sub</span> <span class="hl kwd">dot</span><span class="hl sym">($$) {</span>
+   <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$Zr</span><span class="hl sym">,</span> <span class="hl kwb">$Zi</span><span class="hl sym">,</span> <span class="hl kwb">$Tr</span><span class="hl sym">,</span> <span class="hl kwb">$Ti</span><span class="hl sym">) = (</span><span class="hl num">0.0</span><span class="hl sym">,</span><span class="hl num">0.0</span><span class="hl sym">,</span><span class="hl num">0.0</span><span class="hl sym">,</span><span class="hl num">0.0</span><span class="hl sym">);</span>
+   <span class="hl kwc">my</span> <span class="hl kwb">$i</span> <span class="hl sym">=</span> <span class="hl kwd">ITER</span><span class="hl sym">;</span>
+   <span class="hl kwc">my</span> <span class="hl kwb">$Cr</span> <span class="hl sym">=</span> <span class="hl num">2</span> <span class="hl sym">*</span> <span class="hl kwb">$_</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] /</span> <span class="hl kwb">$w</span> <span class="hl sym">-</span> <span class="hl num">1.5</span><span class="hl sym">;</span>
+   <span class="hl kwc">my</span> <span class="hl kwb">$Ci</span> <span class="hl sym">=</span> <span class="hl num">2</span> <span class="hl sym">*</span> <span class="hl kwb">$_</span><span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] /</span> <span class="hl kwb">$h</span> <span class="hl sym">-</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
+   <span class="hl sym">(</span>
+      <span class="hl kwb">$Zi</span> <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">*</span> <span class="hl kwb">$Zr</span> <span class="hl sym">*</span> <span class="hl kwb">$Zi</span> <span class="hl sym">+</span> <span class="hl kwb">$Ci</span><span class="hl sym">,</span>
+      <span class="hl kwb">$Zr</span> <span class="hl sym">=</span> <span class="hl kwb">$Tr</span> <span class="hl sym">-</span> <span class="hl kwb">$Ti</span> <span class="hl sym">+</span> <span class="hl kwb">$Cr</span><span class="hl sym">,</span>
+      <span class="hl kwb">$Ti</span> <span class="hl sym">=</span> <span class="hl kwb">$Zi</span> <span class="hl sym">*</span> <span class="hl kwb">$Zi</span><span class="hl sym">,</span>
+      <span class="hl kwb">$Tr</span> <span class="hl sym">=</span> <span class="hl kwb">$Zr</span> <span class="hl sym">*</span> <span class="hl kwb">$Zr</span>
+   <span class="hl sym">)</span> <span class="hl kwa">until</span> <span class="hl sym">(</span><span class="hl kwb">$Tr</span> <span class="hl sym">+</span> <span class="hl kwb">$Ti</span> <span class="hl sym">&gt;</span> LIMITSQR <span class="hl sym">|| !</span><span class="hl kwb">$i</span><span class="hl sym">--);</span>
+   <span class="hl kwa">return</span> <span class="hl sym">(</span><span class="hl kwb">$i</span> <span class="hl sym">== -</span><span class="hl num">1</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc"># Generate pixel data for range of lines, inclusive</span>
+<span class="hl kwa">sub</span> <span class="hl kwd">lines</span><span class="hl sym">($$) {</span>
+   map <span class="hl sym">{</span> <span class="hl kwc">my</span> <span class="hl kwb">$y</span> <span class="hl sym">=</span> <span class="hl kwb">$_</span><span class="hl sym">;</span>
+      pack <span class="hl str">'B*'</span><span class="hl sym">,</span> pack <span class="hl str">'C*'</span><span class="hl sym">,</span> map <span class="hl kwd">dot</span><span class="hl sym">(</span><span class="hl kwb">$_</span><span class="hl sym">,</span> <span class="hl kwb">$y</span><span class="hl sym">),</span> <span class="hl num">0</span><span class="hl sym">..</span><span class="hl kwb">$w</span><span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span> <span class="hl kwb">$_</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]..</span><span class="hl kwb">$_</span><span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc"># Decide upon roughly equal batching of workload, within buffer limits</span>
+<span class="hl kwb">$threads</span> <span class="hl sym">=</span> <span class="hl kwb">$h</span> <span class="hl kwa">if</span> <span class="hl kwb">$threads</span> <span class="hl sym">&gt;</span> <span class="hl kwb">$h</span><span class="hl sym">;</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$each</span> <span class="hl sym">=</span> <span class="hl kwd">int</span><span class="hl sym">(</span><span class="hl kwb">$h</span> <span class="hl sym">/</span> <span class="hl kwb">$threads</span><span class="hl sym">);</span>
+<span class="hl kwb">$each</span> <span class="hl sym">=</span> <span class="hl kwd">int</span><span class="hl sym">(</span>MAXPIXEL <span class="hl sym">/</span> <span class="hl kwb">$w</span><span class="hl sym">)</span> <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwb">$each</span> <span class="hl sym">*</span> <span class="hl kwb">$w</span><span class="hl sym">) &gt;</span> <span class="hl kwd">MAXPIXEL</span><span class="hl sym">;</span>
+<span class="hl kwb">$each</span> <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl kwa">if</span> <span class="hl kwb">$each</span> <span class="hl sym">&lt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+<span class="hl slc"># Work as long as we have lines to spawn for or threads to collect from</span>
+<span class="hl sym">$| =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+<span class="hl kwc">print</span> <span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">$w $h</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$y</span> <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl kwc">my</span> <span class="hl kwb">&#64;workers</span><span class="hl sym">;</span>
+<span class="hl kwa">while</span><span class="hl sym">(</span><span class="hl kwb">&#64;workers</span> <span class="hl kwa">or</span> <span class="hl sym">(</span><span class="hl kwb">$y</span> <span class="hl sym">&lt;</span> <span class="hl kwb">$h</span><span class="hl sym">)) {</span>
+   <span class="hl slc"># Create workers up to requirement</span>
+   <span class="hl kwa">while</span><span class="hl sym">((</span><span class="hl kwb">&#64;workers</span> <span class="hl sym">&lt;</span> <span class="hl kwb">$threads</span><span class="hl sym">)</span> <span class="hl kwa">and</span> <span class="hl sym">(</span><span class="hl kwb">$y</span> <span class="hl sym">&lt;</span> <span class="hl kwb">$h</span><span class="hl sym">)) {</span>
+      <span class="hl kwc">my</span> <span class="hl kwb">$y2</span> <span class="hl sym">=</span> <span class="hl kwb">$y</span> <span class="hl sym">+</span> <span class="hl kwb">$each</span><span class="hl sym">;</span>
+      <span class="hl kwb">$y2</span> <span class="hl sym">=</span> <span class="hl kwb">$h</span> <span class="hl kwa">if</span> <span class="hl kwb">$y2</span> <span class="hl sym">&gt;</span> <span class="hl kwb">$h</span><span class="hl sym">;</span>
+      <span class="hl kwd">push</span><span class="hl sym">(</span><span class="hl kwb">&#64;workers</span><span class="hl sym">,</span> threads<span class="hl sym">-&gt;</span><span class="hl kwd">create</span><span class="hl sym">(</span><span class="hl str">'lines'</span><span class="hl sym">,</span> <span class="hl kwb">$y</span><span class="hl sym">,</span> <span class="hl kwb">$y2</span> <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">));</span>
+      <span class="hl kwb">$y</span> <span class="hl sym">=</span> <span class="hl kwb">$y2</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl slc"># Block for result from the leading thread (to keep output in order)</span>
+   <span class="hl kwc">my</span> <span class="hl kwb">$next</span> <span class="hl sym">=</span> shift <span class="hl kwb">&#64;workers</span><span class="hl sym">;</span>
+   <span class="hl kwc">print</span> <span class="hl kwb">$next</span><span class="hl sym">-&gt;</span><span class="hl kwd">join</span><span class="hl sym">();</span>
+<span class="hl sym">}</span>
+

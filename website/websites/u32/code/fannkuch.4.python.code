@@ -1,0 +1,99 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># Unknown credits:</span>
+<span class="hl slc">#  Eckehard Berns, Heiner Marxen,</span>
+<span class="hl slc">#   Hongwei Xi (ATS)</span>
+<span class="hl slc"># Concurrency idea from Java code by The Anh Tran</span>
+<span class="hl slc"># Based on code by by Daniel Nanz</span>
+<span class="hl slc"># modified by Syukri (2009-03)</span>
+
+<span class="hl kwa">import</span> multiprocessing <span class="hl kwa">as</span> mp
+
+<span class="hl kwa">def</span> <span class="hl kwd">next_perm</span><span class="hl sym">(</span>permutation<span class="hl sym">,</span> position<span class="hl sym">):</span>
+    p0 <span class="hl sym">=</span> permutation<span class="hl sym">.</span><span class="hl kwd">pop</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+    permutation<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span>position<span class="hl sym">,</span> p0<span class="hl sym">)</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">get_flips</span><span class="hl sym">(</span>p<span class="hl sym">,</span> c<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">):</span>
+    k <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>
+    <span class="hl kwa">while</span> k <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">:</span>
+        p<span class="hl sym">[:</span>k<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">] =</span> p<span class="hl sym">[</span>k<span class="hl sym">::-</span><span class="hl num">1</span><span class="hl sym">]</span>
+        c <span class="hl sym">+=</span> <span class="hl num">1</span>
+        k <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>
+    <span class="hl kwa">return</span> c
+
+<span class="hl kwa">def</span> <span class="hl kwd">permutations</span><span class="hl sym">(</span>n<span class="hl sym">,</span> pos_right<span class="hl sym">):</span>
+    p <span class="hl sym">=</span> <span class="hl kwb">list</span><span class="hl sym">(</span><span class="hl kwb">range</span><span class="hl sym">(</span>n<span class="hl sym">))</span>
+    p<span class="hl sym">[</span>pos_right<span class="hl sym">] =</span> n<span class="hl sym">-</span><span class="hl num">1</span>
+    p<span class="hl sym">[</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] =</span> pos_right
+    c <span class="hl sym">=</span> <span class="hl kwb">list</span><span class="hl sym">(</span><span class="hl kwb">range</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> n <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">))</span>
+    p_insert <span class="hl sym">=</span> p<span class="hl sym">.</span>insert
+    r <span class="hl sym">=</span> n
+
+    <span class="hl kwa">yield</span> p<span class="hl sym">[:]</span>
+    <span class="hl kwa">while True</span><span class="hl sym">:</span>
+        <span class="hl kwa">while</span> r <span class="hl sym">&gt;</span> <span class="hl num">1</span><span class="hl sym">:</span>
+            c<span class="hl sym">[</span>r<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] =</span> r
+            r <span class="hl sym">-=</span> <span class="hl num">1</span>
+        <span class="hl kwa">while</span> r <span class="hl sym">&lt;</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">:</span>
+            p0 <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>
+            <span class="hl kwa">del</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>
+            <span class="hl kwd">p_insert</span><span class="hl sym">(</span>r<span class="hl sym">,</span> p0<span class="hl sym">)</span>
+            c<span class="hl sym">[</span>r<span class="hl sym">] -=</span> <span class="hl num">1</span>
+            <span class="hl kwa">if</span> c<span class="hl sym">[</span>r<span class="hl sym">] &gt;</span> <span class="hl num">0</span><span class="hl sym">:</span>
+                <span class="hl kwa">yield</span> p<span class="hl sym">[:]</span>
+                <span class="hl kwa">break</span>
+            r <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl kwa">else</span><span class="hl sym">:</span>
+            <span class="hl kwa">raise</span> <span class="hl kwc">StopIteration</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">worker</span><span class="hl sym">(</span><span class="hl kwb">id</span><span class="hl sym">,</span>n<span class="hl sym">,</span> remain_task<span class="hl sym">,</span> flip_max_arr<span class="hl sym">,</span> lock<span class="hl sym">):</span>
+    perm <span class="hl sym">=</span> <span class="hl kwb">list</span><span class="hl sym">(</span><span class="hl kwb">range</span><span class="hl sym">(</span>n<span class="hl sym">))</span>
+    pos_right <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">while</span> <span class="hl num">1</span><span class="hl sym">:</span>
+        <span class="hl kwa">if</span> lock<span class="hl sym">.</span><span class="hl kwd">acquire</span><span class="hl sym">():</span>
+            pos_right <span class="hl sym">=</span> remain_task<span class="hl sym">.</span>value
+            remain_task<span class="hl sym">.</span>value <span class="hl sym">+=</span> <span class="hl num">1</span>
+            lock<span class="hl sym">.</span><span class="hl kwd">release</span><span class="hl sym">()</span>
+        <span class="hl kwa">if</span> pos_right <span class="hl sym">&lt;</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">:</span>
+        <span class="hl slc">#Got new job, so start working</span>
+            <span class="hl kwa">for</span> p <span class="hl kwa">in</span> <span class="hl kwd">permutations</span><span class="hl sym">(</span>n<span class="hl sym">,</span> pos_right<span class="hl sym">):</span>
+                flips <span class="hl sym">=</span> <span class="hl kwd">get_flips</span><span class="hl sym">(</span>p<span class="hl sym">)</span>
+                <span class="hl kwa">if</span> flip_max_arr<span class="hl sym">[</span><span class="hl kwb">id</span><span class="hl sym">]&lt;</span>flips<span class="hl sym">:</span>
+                    flip_max_arr<span class="hl sym">[</span><span class="hl kwb">id</span><span class="hl sym">] =</span> flips
+        <span class="hl slc">#Job finished. Poll new tasks</span>
+        <span class="hl kwa">else</span><span class="hl sym">:</span>
+            <span class="hl kwa">break</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span>n<span class="hl sym">):</span>
+    lock <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">Lock</span><span class="hl sym">()</span>
+    proc <span class="hl sym">= []</span>
+    num_cpu <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">cpu_count</span><span class="hl sym">()</span>
+    remain_task <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">RawValue</span><span class="hl sym">(</span><span class="hl str">'i'</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">)</span>
+    flip_max_arr <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">RawArray</span><span class="hl sym">(</span><span class="hl str">'i'</span><span class="hl sym">,</span>num_cpu<span class="hl sym">)</span>  <span class="hl slc">#initiates a [0,0,...] for putting maximum flips</span>
+    <span class="hl kwa">for</span> x <span class="hl kwa">in</span> <span class="hl kwb">range</span><span class="hl sym">(</span>num_cpu<span class="hl sym">):</span>
+        pr <span class="hl sym">=</span> mp<span class="hl sym">.</span><span class="hl kwd">Process</span><span class="hl sym">(</span>target<span class="hl sym">=</span>worker<span class="hl sym">,</span>args<span class="hl sym">=(</span>x<span class="hl sym">,</span>n<span class="hl sym">,</span>remain_task<span class="hl sym">,</span>flip_max_arr<span class="hl sym">,</span>lock<span class="hl sym">))</span>
+        pr<span class="hl sym">.</span><span class="hl kwd">start</span><span class="hl sym">()</span>
+        proc<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>pr<span class="hl sym">)</span>
+    <span class="hl slc">#meanwhile, let's tell viewers first 30 (dummy) permutations</span>
+    count <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">for</span> p <span class="hl kwa">in</span> <span class="hl kwd">permutations</span><span class="hl sym">(</span>n<span class="hl sym">,</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">):</span>
+        <span class="hl kwa">print</span><span class="hl sym">(</span><span class="hl str">&quot;&quot;</span><span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">(</span><span class="hl kwb">str</span><span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">for</span> i <span class="hl kwa">in</span> p<span class="hl sym">))</span>
+        count <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl kwa">if</span> count <span class="hl sym">&gt;</span><span class="hl num">29</span><span class="hl sym">:</span>
+            <span class="hl kwa">break</span>
+    <span class="hl slc">#join all workers</span>
+    <span class="hl kwa">for</span> pr <span class="hl kwa">in</span> proc<span class="hl sym">:</span>
+        pr<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">()</span>
+    <span class="hl kwa">return</span> <span class="hl kwb">max</span><span class="hl sym">(</span>flip_max_arr<span class="hl sym">[:])</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">main</span><span class="hl sym">():</span>
+    <span class="hl kwa">from</span> sys <span class="hl kwa">import</span> argv
+    <span class="hl kwa">try</span><span class="hl sym">:</span>
+        n <span class="hl sym">=</span> <span class="hl kwb">int</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span>
+    <span class="hl kwa">except</span><span class="hl sym">:</span>
+        n <span class="hl sym">=</span> <span class="hl num">7</span>
+    <span class="hl kwa">print</span><span class="hl sym">(</span><span class="hl str">&quot;Pfannkuchen({0}) = {1}</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">.</span><span class="hl kwd">format</span><span class="hl sym">(</span>n<span class="hl sym">,</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span>n<span class="hl sym">)))</span>
+
+<span class="hl kwa">if</span> __name__<span class="hl sym">==</span><span class="hl str">'__main__'</span><span class="hl sym">:</span>
+    <span class="hl kwd">main</span><span class="hl sym">()</span>

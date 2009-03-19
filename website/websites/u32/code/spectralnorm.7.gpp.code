@@ -17,62 +17,57 @@
 
 <span class="hl slc">// define SIMD data type. 2 doubles encapsulated in one XMM register</span>
 <span class="hl kwc">typedef</span> <span class="hl kwb">double</span> v2dt <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)));</span>
-
-<span class="hl slc">// We can easily access 1st/2nd double value, inside XMM register, by this union</span>
-<span class="hl kwb">union</span> v2du
-<span class="hl sym">{</span>
-	v2dt		xmm<span class="hl sym">;</span>
-	<span class="hl kwb">double</span>		mem<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">];</span>
-<span class="hl sym">};</span>
+<span class="hl kwb">static const</span> v2dt v1 <span class="hl sym">= {</span><span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">};</span>
 
 <span class="hl slc">// parameter for evaluate functions</span>
 <span class="hl kwb">struct</span> Param
 <span class="hl sym">{</span>
-	<span class="hl kwb">double</span><span class="hl sym">*</span> u<span class="hl sym">;</span>		<span class="hl slc">// source vector</span>
-	<span class="hl kwb">double</span><span class="hl sym">*</span> tmp<span class="hl sym">;</span>	<span class="hl slc">// temporary</span>
-	<span class="hl kwb">double</span><span class="hl sym">*</span> v<span class="hl sym">;</span>		<span class="hl slc">// destination vector</span>
+   <span class="hl kwb">double</span><span class="hl sym">*</span> u<span class="hl sym">;</span>      <span class="hl slc">// source vector</span>
+   <span class="hl kwb">double</span><span class="hl sym">*</span> tmp<span class="hl sym">;</span>   <span class="hl slc">// temporary</span>
+   <span class="hl kwb">double</span><span class="hl sym">*</span> v<span class="hl sym">;</span>      <span class="hl slc">// destination vector</span>
 
-	<span class="hl kwb">int</span> N<span class="hl sym">;</span>			<span class="hl slc">// source/destination vector length</span>
-	<span class="hl kwb">int</span> N2<span class="hl sym">;</span>			<span class="hl slc">// = N/2</span>
+   <span class="hl kwb">int</span> N<span class="hl sym">;</span>         <span class="hl slc">// source/destination vector length</span>
+   <span class="hl kwb">int</span> N2<span class="hl sym">;</span>         <span class="hl slc">// = N/2</span>
 
-	<span class="hl kwb">int</span> r_begin<span class="hl sym">;</span>	<span class="hl slc">// working range of each thread</span>
-	<span class="hl kwb">int</span> r_end<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> r_begin<span class="hl sym">;</span>   <span class="hl slc">// working range of each thread</span>
+   <span class="hl kwb">int</span> r_end<span class="hl sym">;</span>
 <span class="hl sym">};</span>
 
-<span class="hl slc">// Input: i, j</span>
 <span class="hl slc">// Return: 1.0 / (i + j) * (i + j +1) / 2 + i + 1;</span>
 <span class="hl kwb">static</span>
 <span class="hl kwb">double</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-	<span class="hl slc">// 1.0 / (i + j) * (i + j +1) / 2 + i + 1;</span>
-	<span class="hl slc">// n * (n+1) is even number. Therefore, just (&gt;&gt; 1) for (/2)</span>
-	<span class="hl kwb">int</span> d <span class="hl sym">= (((</span>i<span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl slc">// 1.0 / (i + j) * (i + j +1) / 2 + i + 1;</span>
+   <span class="hl slc">// n * (n+1) is even number. Therefore, just (&gt;&gt; 1) for (/2)</span>
+   <span class="hl kwb">int</span> d <span class="hl sym">= (((</span>i<span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
 
-	<span class="hl kwa">return</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> d<span class="hl sym">;</span>
+   <span class="hl kwa">return</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> d<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-<span class="hl slc">// Input: i, j</span>
 <span class="hl slc">// Return type: 2 doubles in xmm register [double1, double2]</span>
-<span class="hl slc">//	with</span>
-<span class="hl slc">//		double1 = 1.0 / (i + j) * (i + j +1) / 2 + i + 1;</span>
-<span class="hl slc">//		double2 = 1.0 / (i+1 + j) * (i+1 + j +1) / 2 + i+1 + 1;</span>
-<span class="hl slc">//	Or	double2 = 1.0 / (i + j+1) * (i + j+1 +1) / 2 + i + 1;</span>
-<span class="hl slc">//	depend on template parameter 'inc_i'</span>
-<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">bool</span> inc_i<span class="hl sym">&gt;</span>
+<span class="hl slc">//      double1 = 1.0 / (i + j) * (i + j +1) / 2 + i + 1;</span>
+<span class="hl slc">//      double2 = 1.0 / (i+1 + j) * (i+1 + j +1) / 2 + i+1 + 1;</span>
 <span class="hl kwb">static</span>
-v2dt <span class="hl kwd">eval_A_sse</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
+v2dt <span class="hl kwd">eval_A_i</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-	<span class="hl kwb">int</span> d1 <span class="hl sym">= (((</span>i<span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> d1 <span class="hl sym">= (((</span>i<span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> d2 <span class="hl sym">= (((</span>i<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) + (</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) +</span><span class="hl num">1</span><span class="hl sym">;</span>
 
-	<span class="hl kwb">int</span> d2<span class="hl sym">;</span>
-	<span class="hl kwa">if</span> <span class="hl sym">(</span>inc_i<span class="hl sym">)</span>
-		d2 <span class="hl sym">= (((</span>i<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) + (</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) +</span><span class="hl num">1</span><span class="hl sym">;</span>
-	<span class="hl kwa">else</span>
-		d2 <span class="hl sym">= (((</span>i<span class="hl sym">+</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) * (</span>i<span class="hl sym">+</span> j<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   v2dt r <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+   <span class="hl kwa">return</span> v1 <span class="hl sym">/</span> r<span class="hl sym">;</span>
+<span class="hl sym">}</span>
 
-	v2dt <span class="hl kwb">const</span> v1 <span class="hl sym">= {</span><span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">};</span>
-	v2dt r <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
-	<span class="hl kwa">return</span> v1 <span class="hl sym">/</span> r<span class="hl sym">;</span>
+<span class="hl slc">// Return type: 2 doubles in xmm register [double1, double2]</span>
+<span class="hl slc">//      double1 = 1.0 / (i + j) * (i + j +1) / 2 + i + 1;</span>
+<span class="hl slc">//      double2 = 1.0 / (i + j+1) * (i + j+1 +1) / 2 + i + 1;</span>
+<span class="hl kwb">static</span>
+v2dt <span class="hl kwd">eval_A_j</span><span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">,</span> <span class="hl kwb">int</span> j<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> d1 <span class="hl sym">= (((</span>i<span class="hl sym">+</span>j<span class="hl sym">) * (</span>i<span class="hl sym">+</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> d2 <span class="hl sym">= (((</span>i<span class="hl sym">+</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) * (</span>i<span class="hl sym">+</span> j<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) +</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+   v2dt r <span class="hl sym">= {</span>d1<span class="hl sym">,</span> d2<span class="hl sym">};</span>
+   <span class="hl kwa">return</span> v1 <span class="hl sym">/</span> r<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
 
@@ -80,49 +75,53 @@ v2dt <span class="hl kwd">eval_A_sse</span><span class="hl sym">(</span><span cl
 <span class="hl kwb">static</span>
 <span class="hl kwb">void</span> <span class="hl kwd">eval_A_times_u</span> <span class="hl sym">(</span>Param <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>p<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-	<span class="hl slc">// alias of source vector</span>
-	v2dt <span class="hl kwb">const</span> <span class="hl sym">*</span> pU <span class="hl sym">= (</span>v2dt <span class="hl kwb">const</span><span class="hl sym">*)</span>p<span class="hl sym">.</span>u<span class="hl sym">;</span>
-	v2du sum<span class="hl sym">;</span>
+   <span class="hl slc">// alias of source vector</span>
+   v2dt <span class="hl kwb">const</span> <span class="hl sym">*</span> pU <span class="hl sym">= (</span>v2dt <span class="hl kwb">const</span><span class="hl sym">*)</span>p<span class="hl sym">.</span>u<span class="hl sym">;</span>
 
-	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> p<span class="hl sym">.</span>r_begin<span class="hl sym">,</span> ie <span class="hl sym">=</span> p<span class="hl sym">.</span>r_end<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ie<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-	<span class="hl sym">{</span>
-		sum<span class="hl sym">.</span>xmm ^<span class="hl sym">=</span> sum<span class="hl sym">.</span>xmm<span class="hl sym">;</span> <span class="hl slc">// sum.xmm = {0, 0}</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> p<span class="hl sym">.</span>r_begin<span class="hl sym">,</span> ie <span class="hl sym">=</span> p<span class="hl sym">.</span>r_end<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ie<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      v2dt sum <span class="hl sym">= {</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">};</span>
 
-		<span class="hl slc">// since xmm = 2 doubles. This loop run from [0 .. N/2)</span>
-		<span class="hl kwb">int</span> j<span class="hl sym">;</span>
-		<span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N2<span class="hl sym">;</span> j<span class="hl sym">++)</span>
-			sum<span class="hl sym">.</span>xmm <span class="hl sym">+=</span> pU<span class="hl sym">[</span>j<span class="hl sym">] *</span> eval_A_sse <span class="hl sym">&lt;</span><span class="hl kwa">false</span><span class="hl sym">&gt; (</span>i<span class="hl sym">,</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">);</span>
+      <span class="hl slc">// xmm = 2 doubles. This loop run from [0 .. N/2)</span>
+      <span class="hl kwb">int</span> j<span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N2<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+         sum <span class="hl sym">+=</span> pU<span class="hl sym">[</span>j<span class="hl sym">] *</span> <span class="hl kwd">eval_A_j</span><span class="hl sym">(</span>i<span class="hl sym">,</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">);</span>
 
-		<span class="hl slc">// write result</span>
-		p<span class="hl sym">.</span>tmp<span class="hl sym">[</span>i<span class="hl sym">] =</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+      <span class="hl slc">// write result</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">double</span><span class="hl sym">*</span> mem <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)(&amp;</span>sum<span class="hl sym">);</span>
+         p<span class="hl sym">.</span>tmp<span class="hl sym">[</span>i<span class="hl sym">] =</span> mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+      <span class="hl sym">}</span>
 
-		<span class="hl slc">// If source vector is odd size. This should be called &lt;= 1 time</span>
-		<span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">);</span> j<span class="hl sym">++)</span>
-			p<span class="hl sym">.</span>tmp<span class="hl sym">[</span>i<span class="hl sym">] +=</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span>i<span class="hl sym">,</span> j<span class="hl sym">) *</span> p<span class="hl sym">.</span>u<span class="hl sym">[</span>j<span class="hl sym">];</span>
+      <span class="hl slc">// If source vector is odd size. This should be called &lt;= 1 time</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">);</span> j<span class="hl sym">++)</span>
+         p<span class="hl sym">.</span>tmp<span class="hl sym">[</span>i<span class="hl sym">] +=</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span>i<span class="hl sym">,</span> j<span class="hl sym">) *</span> p<span class="hl sym">.</span>u<span class="hl sym">[</span>j<span class="hl sym">];</span>
 
-	<span class="hl sym">}</span>
+   <span class="hl sym">}</span>
 <span class="hl sym">}</span>
 
 <span class="hl kwb">static</span>
 <span class="hl kwb">void</span> <span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span>Param <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>p<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-	v2dt <span class="hl kwb">const</span> <span class="hl sym">*</span> pT <span class="hl sym">= (</span>v2dt <span class="hl kwb">const</span><span class="hl sym">*)</span>p<span class="hl sym">.</span>tmp<span class="hl sym">;</span>
-	v2du sum<span class="hl sym">;</span>
+   v2dt <span class="hl kwb">const</span> <span class="hl sym">*</span> pT <span class="hl sym">= (</span>v2dt <span class="hl kwb">const</span><span class="hl sym">*)</span>p<span class="hl sym">.</span>tmp<span class="hl sym">;</span>
 
-	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> p<span class="hl sym">.</span>r_begin<span class="hl sym">,</span> ie <span class="hl sym">=</span> p<span class="hl sym">.</span>r_end<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ie<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-	<span class="hl sym">{</span>
-		sum<span class="hl sym">.</span>xmm ^<span class="hl sym">=</span> sum<span class="hl sym">.</span>xmm<span class="hl sym">;</span> <span class="hl slc">// sum.xmm = {0, 0}</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> p<span class="hl sym">.</span>r_begin<span class="hl sym">,</span> ie <span class="hl sym">=</span> p<span class="hl sym">.</span>r_end<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ie<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      v2dt sum <span class="hl sym">= {</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">};</span>
 
-		<span class="hl kwb">int</span> j<span class="hl sym">;</span>
-		<span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N2<span class="hl sym">;</span> j<span class="hl sym">++)</span>
-			sum<span class="hl sym">.</span>xmm <span class="hl sym">+=</span> pT<span class="hl sym">[</span>j<span class="hl sym">] *</span> eval_A_sse <span class="hl sym">&lt;</span><span class="hl kwa">true</span><span class="hl sym">&gt; (</span>j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">,</span> i<span class="hl sym">);</span>
+      <span class="hl kwb">int</span> j<span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N2<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+         sum <span class="hl sym">+=</span> pT<span class="hl sym">[</span>j<span class="hl sym">] *</span> <span class="hl kwd">eval_A_i</span><span class="hl sym">(</span>j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">,</span> i<span class="hl sym">);</span>
 
-		p<span class="hl sym">.</span>v<span class="hl sym">[</span>i<span class="hl sym">] =</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> sum<span class="hl sym">.</span>mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">double</span><span class="hl sym">*</span> mem <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">*)(&amp;</span>sum<span class="hl sym">);</span>
+         p<span class="hl sym">.</span>v<span class="hl sym">[</span>i<span class="hl sym">] =</span> mem<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] +</span> mem<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+      <span class="hl sym">}</span>
 
-		<span class="hl slc">// odd size array</span>
-		<span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">);</span> j<span class="hl sym">++)</span>
-			p<span class="hl sym">.</span>v<span class="hl sym">[</span>i<span class="hl sym">] +=</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span> j<span class="hl sym">,</span> i <span class="hl sym">) *</span> p<span class="hl sym">.</span>tmp<span class="hl sym">[</span>j<span class="hl sym">];</span>
-	<span class="hl sym">}</span>
+      <span class="hl slc">// odd size array</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>N<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">);</span> j<span class="hl sym">++)</span>
+         p<span class="hl sym">.</span>v<span class="hl sym">[</span>i<span class="hl sym">] +=</span> <span class="hl kwd">eval_A</span><span class="hl sym">(</span> j<span class="hl sym">,</span> i <span class="hl sym">) *</span> p<span class="hl sym">.</span>tmp<span class="hl sym">[</span>j<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
 <span class="hl sym">}</span>
 
 <span class="hl slc">// Called by N threads.</span>
@@ -131,11 +130,11 @@ v2dt <span class="hl kwd">eval_A_sse</span><span class="hl sym">(</span><span cl
 <span class="hl kwb">static</span>
 <span class="hl kwb">void</span> <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>Param <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>p<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-	<span class="hl kwd">eval_A_times_u</span><span class="hl sym">(</span> p <span class="hl sym">);</span>
-	<span class="hl dir">#pragma omp barrier</span>
+   <span class="hl kwd">eval_A_times_u</span><span class="hl sym">(</span> p <span class="hl sym">);</span>
+   <span class="hl dir">#pragma omp barrier</span>
 
-	<span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span> p <span class="hl sym">);</span>
-	<span class="hl dir">#pragma omp barrier</span>
+   <span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span> p <span class="hl sym">);</span>
+   <span class="hl dir">#pragma omp barrier</span>
 <span class="hl sym">}</span>
 
 <span class="hl slc">// Shootout bench uses affinity to emulate single core processor.</span>
@@ -143,72 +142,72 @@ v2dt <span class="hl kwd">eval_A_sse</span><span class="hl sym">(</span><span cl
 <span class="hl kwb">static</span>
 <span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
 <span class="hl sym">{</span>
-	cpu_set_t cs<span class="hl sym">;</span>
-	<span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
-	<span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
 
-	<span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">8</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
-	<span class="hl sym">{</span>
-		<span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
-			count<span class="hl sym">++;</span>
-	<span class="hl sym">}</span>
-	<span class="hl kwa">return</span> count<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         count<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
 <span class="hl kwb">static</span>
 <span class="hl kwb">double</span> <span class="hl kwd">spectral_game</span><span class="hl sym">(</span><span class="hl kwb">int</span> N<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-	<span class="hl slc">// Align 64 byte for L2 cache line</span>
-	<span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> u<span class="hl sym">[</span>N<span class="hl sym">];</span>
-	<span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> tmp<span class="hl sym">[</span>N<span class="hl sym">];</span>
-	<span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> v<span class="hl sym">[</span>N<span class="hl sym">];</span>
+   <span class="hl slc">// Align 64 byte for L2 cache line</span>
+   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> u<span class="hl sym">[</span>N<span class="hl sym">];</span>
+   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> tmp<span class="hl sym">[</span>N<span class="hl sym">];</span>
+   <span class="hl kwd">__attribute__</span><span class="hl sym">((</span><span class="hl kwd">aligned</span><span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">)))</span> <span class="hl kwb">double</span> v<span class="hl sym">[</span>N<span class="hl sym">];</span>
 
-	<span class="hl kwb">double</span> vBv	<span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">;</span>
-	<span class="hl kwb">double</span> vv	<span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">;</span>
+   <span class="hl kwb">double</span> vBv   <span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">;</span>
+   <span class="hl kwb">double</span> vv   <span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">;</span>
 
-	<span class="hl dir">#pragma omp parallel default(shared) num_threads(GetThreadCount())</span>
-	<span class="hl sym">{</span>
-		<span class="hl dir">#pragma omp for schedule(static)</span>
-		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-			u<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
+   <span class="hl dir">#pragma omp parallel default(shared) num_threads(GetThreadCount())</span>
+   <span class="hl sym">{</span>
+      <span class="hl dir">#pragma omp for schedule(static)</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+         u<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
 
-		<span class="hl slc">// this block will be executed by NUM_THREADS</span>
-		<span class="hl slc">// variable declared in this block is private for each thread</span>
-		<span class="hl kwb">int</span> threadid	<span class="hl sym">=</span> <span class="hl kwd">omp_get_thread_num</span><span class="hl sym">();</span>
-		<span class="hl kwb">int</span> threadcount	<span class="hl sym">=</span> <span class="hl kwd">omp_get_num_threads</span><span class="hl sym">();</span>
-		<span class="hl kwb">int</span> chunk		<span class="hl sym">=</span> N <span class="hl sym">/</span> threadcount<span class="hl sym">;</span>
+      <span class="hl slc">// this block will be executed by NUM_THREADS</span>
+      <span class="hl slc">// variable declared in this block is private for each thread</span>
+      <span class="hl kwb">int</span> threadid   <span class="hl sym">=</span> <span class="hl kwd">omp_get_thread_num</span><span class="hl sym">();</span>
+      <span class="hl kwb">int</span> threadcount   <span class="hl sym">=</span> <span class="hl kwd">omp_get_num_threads</span><span class="hl sym">();</span>
+      <span class="hl kwb">int</span> chunk      <span class="hl sym">=</span> N <span class="hl sym">/</span> threadcount<span class="hl sym">;</span>
 
-		Param my_param<span class="hl sym">;</span>
-		my_param<span class="hl sym">.</span>tmp	<span class="hl sym">=</span> tmp<span class="hl sym">;</span>
-		my_param<span class="hl sym">.</span>N		<span class="hl sym">=</span> N<span class="hl sym">;</span>
-		my_param<span class="hl sym">.</span>N2		<span class="hl sym">=</span> N<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">;</span>
+      Param my_param<span class="hl sym">;</span>
+      my_param<span class="hl sym">.</span>tmp   <span class="hl sym">=</span> tmp<span class="hl sym">;</span>
+      my_param<span class="hl sym">.</span>N      <span class="hl sym">=</span> N<span class="hl sym">;</span>
+      my_param<span class="hl sym">.</span>N2      <span class="hl sym">=</span> N<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">;</span>
 
-		<span class="hl slc">// calculate each thread's working range [range1 .. range2) =&gt; static schedule here</span>
-		my_param<span class="hl sym">.</span>r_begin	<span class="hl sym">=</span> threadid <span class="hl sym">*</span> chunk<span class="hl sym">;</span>
-		my_param<span class="hl sym">.</span>r_end		<span class="hl sym">= (</span>threadid <span class="hl sym">&lt; (</span>threadcount <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span> ? <span class="hl sym">(</span>my_param<span class="hl sym">.</span>r_begin <span class="hl sym">+</span> chunk<span class="hl sym">) :</span> N<span class="hl sym">;</span>
+      <span class="hl slc">// calculate each thread's working range [range1 .. range2) =&gt; static schedule here</span>
+      my_param<span class="hl sym">.</span>r_begin   <span class="hl sym">=</span> threadid <span class="hl sym">*</span> chunk<span class="hl sym">;</span>
+      my_param<span class="hl sym">.</span>r_end      <span class="hl sym">= (</span>threadid <span class="hl sym">&lt; (</span>threadcount <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span> ? <span class="hl sym">(</span>my_param<span class="hl sym">.</span>r_begin <span class="hl sym">+</span> chunk<span class="hl sym">) :</span> N<span class="hl sym">;</span>
 
-		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> ite <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ite <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span> ite<span class="hl sym">++)</span>
-		<span class="hl sym">{</span>
-			my_param<span class="hl sym">.</span>u <span class="hl sym">=</span> u<span class="hl sym">;</span>	<span class="hl slc">// source vec is u</span>
-			my_param<span class="hl sym">.</span>v <span class="hl sym">=</span> v<span class="hl sym">;</span>	<span class="hl slc">// destination vec is v</span>
-			<span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>my_param<span class="hl sym">);</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> ite <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ite <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span> ite<span class="hl sym">++)</span>
+      <span class="hl sym">{</span>
+         my_param<span class="hl sym">.</span>u <span class="hl sym">=</span> u<span class="hl sym">;</span>   <span class="hl slc">// source vec is u</span>
+         my_param<span class="hl sym">.</span>v <span class="hl sym">=</span> v<span class="hl sym">;</span>   <span class="hl slc">// destination vec is v</span>
+         <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>my_param<span class="hl sym">);</span>
 
-			my_param<span class="hl sym">.</span>u <span class="hl sym">=</span> v<span class="hl sym">;</span> <span class="hl slc">// source is v</span>
-			my_param<span class="hl sym">.</span>v <span class="hl sym">=</span> u<span class="hl sym">;</span> <span class="hl slc">// desti is u</span>
-			<span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>my_param<span class="hl sym">);</span>
-		<span class="hl sym">}</span>
+         my_param<span class="hl sym">.</span>u <span class="hl sym">=</span> v<span class="hl sym">;</span> <span class="hl slc">// source is v</span>
+         my_param<span class="hl sym">.</span>v <span class="hl sym">=</span> u<span class="hl sym">;</span> <span class="hl slc">// desti is u</span>
+         <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>my_param<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
 
-		<span class="hl slc">// multi thread adding</span>
-		<span class="hl dir">#pragma omp for schedule(static) reduction( + : vBv, vv ) nowait</span>
-		<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-		<span class="hl sym">{</span>
-			vv	<span class="hl sym">+=</span> v<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">];</span>
-			vBv	<span class="hl sym">+=</span> u<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">];</span>
-		<span class="hl sym">}</span>
-	<span class="hl sym">}</span> <span class="hl slc">// end parallel region</span>
+      <span class="hl slc">// multi thread adding</span>
+      <span class="hl dir">#pragma omp for schedule(static) reduction( + : vBv, vv ) nowait</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      <span class="hl sym">{</span>
+         vv   <span class="hl sym">+=</span> v<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">];</span>
+         vBv   <span class="hl sym">+=</span> u<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">];</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span> <span class="hl slc">// end parallel region</span>
 
-	<span class="hl kwa">return</span> <span class="hl kwd">sqrt</span><span class="hl sym">(</span> vBv<span class="hl sym">/</span>vv <span class="hl sym">);</span>
+   <span class="hl kwa">return</span> <span class="hl kwd">sqrt</span><span class="hl sym">(</span> vBv<span class="hl sym">/</span>vv <span class="hl sym">);</span>
 <span class="hl sym">}</span>
 
 
