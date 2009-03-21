@@ -1,0 +1,90 @@
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- contributed by Mike Pall</span>
+<span class="hl slc">-- modified by Rob Kendrick &lt;rjek&#64;simtec.co.uk&gt; to be parallel</span>
+
+<span class="hl slc">-- called with the following arguments on the command line;</span>
+<span class="hl slc">-- 1: size of mandelbrot to generate</span>
+<span class="hl slc">-- 2: number of children to spawn (defaults to 6, which works well on 4-way)</span>
+<span class="hl slc">-- If this is a child, then there will be additional parameters;</span>
+<span class="hl slc">-- 3: start row</span>
+<span class="hl slc">-- 4: end row</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Children buffer up their output and emit it to stdout when</span>
+<span class="hl slc">-- finished, to avoid stalling due to a full pipe.</span>
+
+<span class="hl kwa">local</span> width <span class="hl sym">=</span> <span class="hl kwb">tonumber</span><span class="hl sym">(</span>arg <span class="hl kwa">and</span> arg<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span> <span class="hl kwa">or</span> <span class="hl num">100</span>
+<span class="hl kwa">local</span> children <span class="hl sym">=</span> <span class="hl kwb">tonumber</span><span class="hl sym">(</span>arg <span class="hl kwa">and</span> arg<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">])</span> <span class="hl kwa">or</span> <span class="hl num">6</span>
+<span class="hl kwa">local</span> srow <span class="hl sym">=</span> <span class="hl kwb">tonumber</span><span class="hl sym">(</span>arg <span class="hl kwa">and</span> arg<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">])</span>
+<span class="hl kwa">local</span> erow <span class="hl sym">=</span> <span class="hl kwb">tonumber</span><span class="hl sym">(</span>arg <span class="hl kwa">and</span> arg<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">])</span>
+
+<span class="hl kwa">local</span> height<span class="hl sym">,</span> wscale <span class="hl sym">=</span> width<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">/</span>width
+<span class="hl kwa">local</span> m<span class="hl sym">,</span> limit2 <span class="hl sym">=</span> <span class="hl num">50</span><span class="hl sym">,</span> <span class="hl num">4.0</span>
+<span class="hl kwa">local</span> <span class="hl kwb">write</span><span class="hl sym">,</span> char <span class="hl sym">=</span> io<span class="hl sym">.</span><span class="hl kwb">write</span><span class="hl sym">,</span> <span class="hl kwb">string</span><span class="hl sym">.</span>char
+
+<span class="hl kwa">if not</span> srow <span class="hl kwa">then</span>
+   <span class="hl slc">-- we are the parent process.  emit the header, and then spawn children</span>
+
+   <span class="hl kwa">local</span> workunit <span class="hl sym">=</span> math<span class="hl sym">.</span><span class="hl kwb">floor</span><span class="hl sym">(</span>width <span class="hl sym">/ (</span>children <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">))</span>
+   <span class="hl kwa">local</span> handles <span class="hl sym">= { }</span>
+
+   <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> width<span class="hl sym">,</span> <span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> height<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+
+   children <span class="hl sym">=</span> children <span class="hl sym">-</span> <span class="hl num">1</span>
+
+   <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> children <span class="hl kwa">do</span>
+      <span class="hl kwa">local</span> cs<span class="hl sym">,</span> ce
+
+      <span class="hl kwa">if</span> i <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+         cs <span class="hl sym">=</span> <span class="hl num">0</span>
+         ce <span class="hl sym">=</span> workunit
+      <span class="hl kwa">elseif</span> i <span class="hl sym">==</span> children <span class="hl kwa">then</span>
+         cs <span class="hl sym">= (</span>workunit <span class="hl sym">*</span> i<span class="hl sym">) +</span> <span class="hl num">1</span>
+         ce <span class="hl sym">=</span> width <span class="hl sym">-</span> <span class="hl num">1</span>
+      <span class="hl kwa">else</span>
+         cs <span class="hl sym">= (</span>workunit <span class="hl sym">*</span> i<span class="hl sym">) +</span> <span class="hl num">1</span>
+         ce <span class="hl sym">=</span> cs <span class="hl sym">+</span> workunit <span class="hl sym">-</span> <span class="hl num">1</span>
+      <span class="hl kwa">end</span>
+
+      handles<span class="hl sym">[</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">] =</span> io<span class="hl sym">.</span><span class="hl kwd">popen</span><span class="hl sym">((</span><span class="hl str">&quot;%s %d %d %d %d&quot;</span><span class="hl sym">):</span><span class="hl kwb">format</span><span class="hl sym">(</span>
+         arg<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> width<span class="hl sym">,</span> children <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> cs<span class="hl sym">,</span> ce<span class="hl sym">))</span>
+   <span class="hl kwa">end</span>
+
+   <span class="hl slc">-- collect answers, and emit</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> children <span class="hl kwa">do</span>
+      <span class="hl kwb">write</span><span class="hl sym">(</span>handles<span class="hl sym">[</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">]:</span><span class="hl kwb">read</span> <span class="hl str">&quot;*a&quot;</span><span class="hl sym">)</span>
+   <span class="hl kwa">end</span>
+
+<span class="hl kwa">else</span>
+   <span class="hl slc">-- we are a child process.  do the work allocated to us.</span>
+   <span class="hl kwa">local</span> obuff <span class="hl sym">= { }</span>
+   <span class="hl kwa">for</span> y<span class="hl sym">=</span>srow<span class="hl sym">,</span>erow <span class="hl kwa">do</span>
+     <span class="hl kwa">local</span> Ci <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">*</span>y <span class="hl sym">/</span> height <span class="hl sym">-</span> <span class="hl num">1</span>
+     <span class="hl kwa">for</span> xb<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,</span>width<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">8</span> <span class="hl kwa">do</span>
+      <span class="hl kwa">local</span> bits <span class="hl sym">=</span> <span class="hl num">0</span>
+      <span class="hl kwa">local</span> xbb <span class="hl sym">=</span> xb<span class="hl sym">+</span><span class="hl num">7</span>
+      <span class="hl kwa">for</span> x<span class="hl sym">=</span>xb<span class="hl sym">,</span>xbb <span class="hl sym">&lt;</span> width <span class="hl kwa">and</span> xbb <span class="hl kwa">or</span> width<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+        bits <span class="hl sym">=</span> bits <span class="hl sym">+</span> bits
+        <span class="hl kwa">local</span> Zr<span class="hl sym">,</span> Zi<span class="hl sym">,</span> Zrq<span class="hl sym">,</span> Ziq <span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span>
+        <span class="hl kwa">local</span> Cr <span class="hl sym">=</span> x <span class="hl sym">*</span> wscale <span class="hl sym">-</span> <span class="hl num">1.5</span>
+        <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">,</span>m <span class="hl kwa">do</span>
+         <span class="hl kwa">local</span> Zri <span class="hl sym">=</span> Zr<span class="hl sym">*</span>Zi
+         Zr <span class="hl sym">=</span> Zrq <span class="hl sym">-</span> Ziq <span class="hl sym">+</span> Cr
+         Zi <span class="hl sym">=</span> Zri <span class="hl sym">+</span> Zri <span class="hl sym">+</span> Ci
+         Zrq <span class="hl sym">=</span> Zr<span class="hl sym">*</span>Zr
+         Ziq <span class="hl sym">=</span> Zi<span class="hl sym">*</span>Zi
+         <span class="hl kwa">if</span> Zrq <span class="hl sym">+</span> Ziq <span class="hl sym">&gt;</span> limit2 <span class="hl kwa">then</span>
+           bits <span class="hl sym">=</span> bits <span class="hl sym">+</span> <span class="hl num">1</span>
+           <span class="hl kwa">break</span>
+         <span class="hl kwa">end</span>
+        <span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>
+      <span class="hl kwa">if</span> xbb <span class="hl sym">&gt;=</span> width <span class="hl kwa">then</span>
+        <span class="hl kwa">for</span> x<span class="hl sym">=</span>width<span class="hl sym">,</span>xbb <span class="hl kwa">do</span> bits <span class="hl sym">=</span> bits <span class="hl sym">+</span> bits <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>
+      obuff<span class="hl sym">[</span><span class="hl slc">#obuff + 1] = char(255 - bits)</span>
+     <span class="hl kwa">end</span>
+   <span class="hl kwa">end</span>
+
+   <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl kwb">table</span><span class="hl sym">.</span><span class="hl kwd">concat</span><span class="hl sym">(</span>obuff<span class="hl sym">))</span>
+<span class="hl kwa">end</span>
