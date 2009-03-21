@@ -1,0 +1,137 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+
+<span class="hl slc">#   contributed by Michael Barker</span>
+<span class="hl slc">#   based on a Java contribution by Luzius Meisser</span>
+<span class="hl slc">#   converted to C by dualamd</span>
+<span class="hl slc">#   converted to Ruby by Eugene Pimenov</span>
+
+<span class="hl kwa">require</span> <span class="hl str">'thread'</span>
+
+COLORS     <span class="hl sym">= [:</span>blue<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">, :</span>invalid<span class="hl sym">].</span>freeze
+COMPLIMENT <span class="hl sym">= {</span>
+  <span class="hl sym">:</span>blue <span class="hl sym">=&gt; {:</span>blue <span class="hl sym">=&gt; :</span>blue<span class="hl sym">, :</span>red <span class="hl sym">=&gt; :</span>yellow<span class="hl sym">, :</span>yellow <span class="hl sym">=&gt; :</span>red<span class="hl sym">}.</span>freeze<span class="hl sym">,</span>
+  <span class="hl sym">:</span>red <span class="hl sym">=&gt; {:</span>blue <span class="hl sym">=&gt; :</span>yellow<span class="hl sym">, :</span>red <span class="hl sym">=&gt; :</span>red<span class="hl sym">, :</span>yellow <span class="hl sym">=&gt; :</span>blue<span class="hl sym">}.</span>freeze<span class="hl sym">,</span>
+  <span class="hl sym">:</span>yellow <span class="hl sym">=&gt; {:</span>blue <span class="hl sym">=&gt; :</span>red<span class="hl sym">, :</span>red <span class="hl sym">=&gt; :</span>blue<span class="hl sym">, :</span>yellow <span class="hl sym">=&gt; :</span>yellow<span class="hl sym">}.</span>freeze
+<span class="hl sym">}.</span>freeze
+
+<span class="hl kwb">$creature_id</span> <span class="hl sym">=</span> <span class="hl num">0</span>
+
+NUMBERS <span class="hl sym">= %</span>w<span class="hl sym">{</span>zero one two three four five six seven eight nine<span class="hl sym">}.</span>freeze
+
+<span class="hl slc"># convert integer to number string: 1234 -&gt; &quot;one two three four&quot;</span>
+<span class="hl kwa">def</span> <span class="hl kwd">format_number</span><span class="hl sym">(</span>num<span class="hl sym">)</span>
+  out <span class="hl sym">= []</span>
+  <span class="hl kwa">begin</span>
+    out <span class="hl sym">&lt;&lt;</span> NUMBERS<span class="hl sym">[</span>num<span class="hl sym">%</span><span class="hl num">10</span><span class="hl sym">]</span>
+    num <span class="hl sym">/=</span> <span class="hl num">10</span>
+  <span class="hl kwa">end while</span> num <span class="hl sym">&gt;</span> <span class="hl num">0</span>
+  out<span class="hl sym">.</span>reverse<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">class</span> MeetingPlace
+  attr_reader <span class="hl sym">:</span>mutex
+  attr_accessor <span class="hl sym">:</span>meetings_left<span class="hl sym">, :</span>first_creature
+
+  <span class="hl kwa">def</span> <span class="hl kwd">initialize</span><span class="hl sym">(</span>meetings<span class="hl sym">)</span>
+    <span class="hl kwb">&#64;mutex</span> <span class="hl sym">=</span> Mutex<span class="hl sym">.</span>new
+    <span class="hl kwb">&#64;meetings_left</span> <span class="hl sym">=</span> meetings
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">class</span> Creature
+  attr_accessor <span class="hl sym">:</span>place<span class="hl sym">, :</span>thread<span class="hl sym">, :</span>count<span class="hl sym">, :</span>same_count<span class="hl sym">, :</span>color<span class="hl sym">, :</span>id<span class="hl sym">, :</span>two_met<span class="hl sym">, :</span>sameid
+
+  <span class="hl kwa">def</span> <span class="hl kwd">initialize</span><span class="hl sym">(</span>place<span class="hl sym">,</span> color<span class="hl sym">)</span>
+    <span class="hl kwb">&#64;place</span> <span class="hl sym">=</span> place
+    <span class="hl kwb">&#64;count</span> <span class="hl sym">=</span> <span class="hl kwb">&#64;same_count</span> <span class="hl sym">=</span> <span class="hl num">0</span>
+
+    <span class="hl kwb">&#64;id</span> <span class="hl sym">= (</span><span class="hl kwb">$creature_id</span> <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwb">&#64;color</span> <span class="hl sym">=</span> color
+    <span class="hl kwb">&#64;two_met</span> <span class="hl sym">=</span> <span class="hl kwc">FALSE</span>
+
+    <span class="hl kwb">&#64;thread</span> <span class="hl sym">=</span> Thread<span class="hl sym">.</span>new <span class="hl kwa">do</span>
+      <span class="hl kwa">loop do</span>
+        <span class="hl kwa">if</span> meet
+          Thread<span class="hl sym">.</span>pass <span class="hl kwa">while</span> <span class="hl kwb">&#64;two_met</span> <span class="hl sym">==</span> <span class="hl kwa">false</span>
+
+          <span class="hl kwb">&#64;same_count</span> <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl kwa">if</span> <span class="hl kwb">&#64;sameid</span>
+          <span class="hl kwb">&#64;count</span> <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl kwa">else</span>
+          <span class="hl kwa">break</span>
+        <span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  <span class="hl kwa">def</span> meet
+    <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>mutex<span class="hl sym">.</span>lock
+
+    <span class="hl kwa">if</span> <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>meetings_left <span class="hl sym">&gt;</span> <span class="hl num">0</span>
+      <span class="hl kwa">if</span> <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>first_creature
+        first <span class="hl sym">=</span> <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>first_creature
+        new_color <span class="hl sym">=</span> COMPLIMENT<span class="hl sym">[</span><span class="hl kwb">&#64;color</span><span class="hl sym">][</span>first<span class="hl sym">.</span>color<span class="hl sym">]</span>
+
+        <span class="hl kwb">&#64;sameid</span>  <span class="hl sym">=</span> first<span class="hl sym">.</span>sameid  <span class="hl sym">=</span> <span class="hl kwb">&#64;id</span> <span class="hl sym">==</span> first<span class="hl sym">.</span>id
+        <span class="hl kwb">&#64;color</span>   <span class="hl sym">=</span> first<span class="hl sym">.</span>color   <span class="hl sym">=</span> new_color
+        <span class="hl kwb">&#64;two_met</span> <span class="hl sym">=</span> first<span class="hl sym">.</span>two_met <span class="hl sym">=</span> <span class="hl kwa">true</span>
+
+        <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>first_creature <span class="hl sym">=</span> <span class="hl kwa">nil</span>
+        <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>meetings_left <span class="hl sym">-=</span> <span class="hl num">1</span>
+      <span class="hl kwa">else</span>
+        <span class="hl kwb">&#64;two_met</span> <span class="hl sym">=</span> <span class="hl kwa">false</span>
+        <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>first_creature <span class="hl sym">=</span> <span class="hl kwa">self</span>
+      <span class="hl kwa">end</span>
+      <span class="hl kwa">true</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwa">false</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">ensure</span>
+    <span class="hl kwb">&#64;place</span><span class="hl sym">.</span>mutex<span class="hl sym">.</span>unlock
+  <span class="hl kwa">end</span>
+
+  <span class="hl kwa">def</span> result
+    <span class="hl str">''</span> <span class="hl sym">&lt;&lt;</span> <span class="hl kwb">&#64;count</span><span class="hl sym">.</span>to_s <span class="hl sym">&lt;&lt;</span> <span class="hl str">' '</span> <span class="hl sym">&lt;&lt;</span> <span class="hl kwd">format_number</span><span class="hl sym">(</span><span class="hl kwb">&#64;same_count</span><span class="hl sym">)</span>
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">run_game</span><span class="hl sym">(</span>n_meeting<span class="hl sym">,</span> colors<span class="hl sym">)</span>
+  place <span class="hl sym">=</span> MeetingPlace<span class="hl sym">.</span><span class="hl kwd">new</span><span class="hl sym">(</span>n_meeting<span class="hl sym">)</span>
+
+  creatures <span class="hl sym">= []</span>
+  colors<span class="hl sym">.</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>color<span class="hl sym">|</span>
+    print color<span class="hl sym">,</span> <span class="hl str">&quot; &quot;</span>
+    creatures <span class="hl sym">&lt;&lt;</span> Creature<span class="hl sym">.</span><span class="hl kwd">new</span><span class="hl sym">(</span>place<span class="hl sym">,</span> color<span class="hl sym">)</span>
+  <span class="hl kwa">end</span>
+  puts
+
+  <span class="hl slc"># wait for them to meet</span>
+  creatures<span class="hl sym">.</span>each <span class="hl sym">{ |</span>c<span class="hl sym">|</span> c<span class="hl sym">.</span>thread<span class="hl sym">.</span>join<span class="hl sym">}</span>
+
+  total <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl slc"># print meeting times of each creature</span>
+  creatures<span class="hl sym">.</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>c<span class="hl sym">|</span>
+    puts c<span class="hl sym">.</span>result
+    total <span class="hl sym">+=</span> c<span class="hl sym">.</span>count
+  <span class="hl kwa">end</span>
+
+  <span class="hl slc"># print total meeting times, should be equal n_meeting</span>
+  print <span class="hl str">' '</span><span class="hl sym">,</span> <span class="hl kwd">format_number</span><span class="hl sym">(</span>total<span class="hl sym">),</span> <span class="hl str">&quot;</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">def</span> print_colors_table
+  <span class="hl sym">[:</span>blue<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">].</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>c1<span class="hl sym">|</span>
+    <span class="hl sym">[:</span>blue<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">].</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>c2<span class="hl sym">|</span>
+      puts <span class="hl str">&quot;#{c1} + #{c2} -&gt; #{COMPLIMENT[c1][c2]}&quot;</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+n <span class="hl sym">= (</span><span class="hl kwc">ARGV</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ||</span> <span class="hl num">600</span><span class="hl sym">).</span>to_i
+
+
+print_colors_table
+puts
+
+run_game n<span class="hl sym">, [:</span>blue<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">]</span>
+run_game n<span class="hl sym">, [:</span>blue<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">, :</span>blue<span class="hl sym">, :</span>red<span class="hl sym">, :</span>yellow<span class="hl sym">, :</span>red<span class="hl sym">, :</span>blue<span class="hl sym">]</span>
