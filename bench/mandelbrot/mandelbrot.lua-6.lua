@@ -1,7 +1,8 @@
 -- The Computer Language Benchmarks Game
 -- http://shootout.alioth.debian.org/
 -- contributed by Mike Pall
--- modified by Rob Kendrick <rjek@simtec.co.uk> to be parallel
+-- modified by Rob Kendrick to be parallel
+-- modified by Isaac Gouy
 
 -- called with the following arguments on the command line;
 -- 1: size of mandelbrot to generate
@@ -46,8 +47,8 @@ if not srow then
          ce = cs + workunit - 1
       end
       
-      handles[i + 1] = io.popen(("%s %d %d %d %d"):format(
-         arg[0], width, children + 1, cs, ce))
+      handles[i + 1] = io.popen(("%s %s %d %d %d %d"):format(
+         arg[-1], arg[0], width, children + 1, cs, ce))
    end
    
    -- collect answers, and emit
