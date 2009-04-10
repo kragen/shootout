@@ -6,7 +6,7 @@
 */
 
 ob_implicit_flush(1);
-ob_start(NULL, 8192);
+ob_start(NULL, 4096);
 
 
 $h = ($argc == 2) ? ((int)$argv[1]) : 600;
