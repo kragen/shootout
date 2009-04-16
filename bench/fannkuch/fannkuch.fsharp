@@ -1,0 +1,119 @@
+﻿(*
+ * The Computer Language Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ * Based on contribution of Isaac Gouy
+ * Based on contribution of Eckehard Berns
+ * Based on code by Heiner Marxen
+ * and the ATS version by Hongwei Xi
+ * converted to C# by The Anh Tran
+ * converted to F# by George Prekas
+ *)
+
+#light
+
+let print_list l =
+    Array.iter (printf "%d") l
+    printfn ""
+
+let rotate_array (array:_[]) count =
+    let a0 = array.[0]
+    for i in seq { 0..count-1 } do
+        array.[i] <- array.[i+1]
+    array.[count] <- a0
+    array
+
+let next_perm permutation position =
+    rotate_array (Array.copy permutation) position
+
+let mutable result = 0;
+let mutable seq_no = 0;
+
+let count_flip (perm:_[]) =
+    let flip (list:_[]) pos =
+        let rec flip_inner x y =
+            if x<y then
+                let tmp = list.[x]
+                list.[x] <- list.[y]
+                list.[y] <- tmp
+                flip_inner (x+1) (y-1)
+        flip_inner 0 (pos-1)
+        list
+    let rec count_flip_inner acc (perm:_[]) =
+        if perm.[0]=1 then
+            acc
+        else
+            count_flip_inner (acc+1) (flip perm perm.[0])
+    if perm.[0]<>1 && perm.[Array.length perm-1]<>Array.length perm then
+        count_flip_inner 0 (Array.copy perm)
+    else
+        0
+
+let go perm =
+    let x = count_flip perm
+    if x > result then result <- x
+
+exception StopPrinting
+
+let go2 perm =
+    if seq_no < 30 then
+        print_list perm
+        seq_no <- seq_no+1
+    else
+        raise StopPrinting
+    
+let rec perm_inner func = function
+    | (perm,x,_) when x<=0 -> ()
+    | (perm,x,1)           ->
+        perm_inner func (perm,x-1,x)
+    | (perm,x,count)       ->
+        perm_inner func (perm,x-1,x)
+        let perm2 = next_perm perm x
+        func perm2
+        perm_inner func (perm2, x,count-1)
+
+let part_of_permutation func n m =
+    let perm = [|1..n|]
+    let tmp = perm.[m-1]
+    perm.[m-1] <- perm.[n-1]
+    perm.[n-1] <- tmp
+    func perm
+    perm_inner func (perm,n-2,n-1)
+
+let worker_common n m =
+    part_of_permutation go n m
+
+let pworker n =
+    let worker_inner m =
+        async {
+            return worker_common n m
+        }
+    Async.Parallel [ for i in 1..n -> worker_inner i ]
+    |> Async.Run
+    |> Array.max
+
+let worker n =
+    seq { 1 .. n }
+    |> Seq.map (worker_common n)
+    |> Seq.max
+
+let permutation func n =
+    let perm = [|1..n|]
+    func perm
+    perm_inner func (perm,n-1,n)
+
+let print_30_permut n =
+    try
+        permutation go2 n
+    with StopPrinting ->
+        ()
+
+let fannkuch n =
+    print_30_permut n
+    pworker n
+    result
+
+[<EntryPoint>]
+let main(args) = 
+    let x = if args.Length > 0 then int args.[0] else 7
+    printfn "Pfannkuchen(%d) = %d" x (fannkuch x)
+    0
