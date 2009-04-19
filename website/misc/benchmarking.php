@@ -17,13 +17,13 @@ means that most programs are small and spend most of their time in I/O and nativ
 
 <dd><p>"Most likely, if the performance differences between the alternatives are large, a statistically rigorous method will not alter the overall picture nor affect the general conclusions obtained using prevalent methods. However, for relatively small performance differences (that are within the margin of experimental error) not using statistical rigor may lead to incorrect conclusions."</p>
 <ul>  
-  <li><p><a href="http://itkovian.net/base/files/papers/oopsla2007-georges-presentation.pdf">"Statistically Rigorous Java Performance Evaluation"</a> (pdf slides)</p></li>
+  <li><p><a href="http://itkovian.net/base/files/papers/oopsla2007-georges-presentation.pdf">Statistically Rigorous Java Performance Evaluation</a> (pdf slides)</p></li>
   <li><p><a href="http://buytaert.net/files/oopsla07-georges.pdf">Statistically Rigorous Java Performance Evaluation</a> (pdf paper)</p></li>
 </ul>
 
 <dd><p>We can learn <em>something</em> about a particular language implementation from benchmarking - if we already know a great deal about the implementation and carefully analyze the results:</p>
 <ul>  
-  <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">"Performing Lisp Analysis of the FANNKUCH Benchmark"</a> (55KB postscript)</p></li>
+  <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">Performing Lisp Analysis of the FANNKUCH Benchmark</a> (55KB postscript)</p></li>
   <li><p><a href="http://www-128.ibm.com/developerworks/java/library/j-jtp02225.html?ca=drs-j0805#4.0">Java theory and practice: Anatomy of a flawed microbenchmark. Is there any other kind?</a></p></li>
 </ul>
 <p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>
