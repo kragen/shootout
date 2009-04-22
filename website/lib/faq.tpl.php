@@ -405,16 +405,17 @@ The system is going down for system halt NOW!
 
 <dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
 <dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license">Read the license!</a></p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout login</p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/nanobench</p>
-<p><em>and for the source code of the contributed programs</em></p>
-<p>cvs -d :pserver:anonymous@cvs.alioth.debian.org:/cvsroot/shootout checkout shootout/bench</p>
+
+<p>"bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download</strong></a></p>
+
+<p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
+
 </dd>
 
 
 <dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
 <dd><p>Yes, in principle.</p>
-<p>In practice, the data.csv &amp; ndata.csv &amp; bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out before the measurements are displayed - that provides considerable flexibility for the website, but makes it difficult to use the data files standalone.</p>
+<p>But in practice, the data.csv &amp; ndata.csv &amp; bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out before the measurements are displayed - that provides considerable flexibility for the website, but makes it really difficult to use the data files standalone.</p>
 </dd>
 
 
