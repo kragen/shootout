@@ -404,9 +404,7 @@ The system is going down for system halt NOW!
 </dd>
 
 <dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
-<dd><p><strong>Yes!</strong> <a href="miscfile.php?file=rules&amp;title=Revised BSD license">Read the license!</a></p>
-
-<p>"bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download</strong></a></p>
+<dd><p><strong>Yes!</strong> The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download bencher</strong></a></p>
 
 <p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 
