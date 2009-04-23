@@ -392,6 +392,18 @@ The system is going down for system halt NOW!
 <dd>
 <dl>
 
+<dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
+<dd><p><strong>Yes!</strong> The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download bencher</strong></a></p>
+
+<p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
+
+</dd>
+
+<dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
+<dd><p>Yes, in principle.</p>
+<p>But in practice, the data.csv &amp; ndata.csv &amp; bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out by PHP scripts when the web pages are created from the data files - that provides considerable flexibility for the website, but unhappily makes it really difficult for you to use the data files standalone.</p>
+</dd>
+
 <dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
 <dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth ID</strong></a> and login.</p>
 <p>Ask questions or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
@@ -401,19 +413,6 @@ The system is going down for system halt NOW!
 <dd><p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Report a Bug</strong></a>.</p> 
 <p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Request</strong></a>.</p>
 <p>We use <a href="http://www.andre-simon.de/">Andre Simon's highlight</a> to convert program source code to XHTML, please contribute better language definition files.</p>
-</dd>
-
-<dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
-<dd><p><strong>Yes!</strong> The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download bencher</strong></a></p>
-
-<p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
-
-</dd>
-
-
-<dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
-<dd><p>Yes, in principle.</p>
-<p>But in practice, the data.csv &amp; ndata.csv &amp; bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out before the measurements are displayed - that provides considerable flexibility for the website, but makes it really difficult to use the data files standalone.</p>
 </dd>
 
 
