@@ -1,78 +1,124 @@
-<span class="hl slc">% The Computer Language Benchmarks Game</span>
-<span class="hl slc">% http://shootout.alioth.debian.org/</span>
-<span class="hl slc">% Contributed by: Sergei Matusevich 2008</span>
-<span class="hl slc">% Using pmap/2 from Luke Gorrie.</span>
+<span class="hl slc">%%</span>
+<span class="hl slc">%% The Computer Language Benchmarks Game</span>
+<span class="hl slc">%% http://shootout.alioth.debian.org/</span>
+<span class="hl slc">%%</span>
+<span class="hl slc">%% Based on the Python version by Dominique Wahli,</span>
+<span class="hl slc">%% and the Erlang version by Sergei Matusevich.</span>
+<span class="hl slc">%%</span>
+<span class="hl slc">%% contributed by Michael Pitidis</span>
+<span class="hl slc">%%</span>
+
+<span class="hl slc">%% This version uses the experimental PCRE module for Erlang,</span>
+<span class="hl slc">%% http://www.erlang.org/eeps/eep-0011.html</span>
+<span class="hl slc">%%</span>
+<span class="hl slc">%% Tested with Erlang R13A (erts-5.7) (HiPE CVS).</span>
+<span class="hl slc">%%</span>
+<span class="hl slc">%% The variant counts are computed in parallel, but a simple</span>
+<span class="hl slc">%% sequential version is provided for reference as well.</span>
+<span class="hl slc">%% Still, the major bottleneck is Erlang's IO from stdin (reading</span>
+<span class="hl slc">%% the file with file:read_file/1 is about twice as fast for me),</span>
+<span class="hl slc">%% and the first replacement, which cannot be parallelized(?).</span>
 
 <span class="hl sym">-</span><span class="hl kwa">module</span><span class="hl sym">(</span>regexdna<span class="hl sym">).</span>
 
+<span class="hl sym">-</span><span class="hl kwd">compile</span><span class="hl sym">([</span>native<span class="hl sym">, {</span>hipe<span class="hl sym">, [</span>o3<span class="hl sym">]},</span> inline<span class="hl sym">, {</span>inline_size<span class="hl sym">,</span> <span class="hl num">100</span><span class="hl sym">}]).</span>
+
+<span class="hl slc">%-compile(export_all).</span>
 <span class="hl sym">-</span><span class="hl kwa">export</span><span class="hl sym">([</span>main<span class="hl sym">/</span><span class="hl num">1</span><span class="hl sym">]).</span>
 
-<span class="hl sym">-</span><span class="hl kwa">define</span><span class="hl sym">(</span> VARIANTS<span class="hl sym">,</span>
-  <span class="hl sym">[</span> <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
-    <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span> <span class="hl sym">] ).</span>
+<span class="hl sym">-</span><span class="hl kwa">define</span><span class="hl sym">(</span>VARIANTS<span class="hl sym">, [</span>
+  <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+<span class="hl sym">] ).</span>
 
-<span class="hl kwd">pmap</span><span class="hl sym">(</span>F<span class="hl sym">,</span> L<span class="hl sym">) -&gt;</span>
-  Parent <span class="hl sym">=</span> <span class="hl kwb">self</span><span class="hl sym">(),</span>
-  <span class="hl sym">[</span> <span class="hl kwa">receive</span> <span class="hl sym">{</span>Pid<span class="hl sym">,</span> Result<span class="hl sym">} -&gt;</span> Result <span class="hl kwa">end</span>
-    <span class="hl sym">||</span> Pid <span class="hl sym">&lt;- [</span><span class="hl kwb">spawn</span><span class="hl sym">(</span><span class="hl kwa">fun</span><span class="hl sym">() -&gt;</span> Parent <span class="hl sym">! {</span><span class="hl kwb">self</span><span class="hl sym">(),</span> <span class="hl kwd">F</span><span class="hl sym">(</span>X<span class="hl sym">)}</span> <span class="hl kwa">end</span><span class="hl sym">) ||</span> X <span class="hl sym">&lt;-</span> L<span class="hl sym">] ].</span>
+<span class="hl sym">-</span><span class="hl kwa">define</span><span class="hl sym">(</span>SUBSTS<span class="hl sym">, [</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;K&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;M&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;R&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;S&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">},</span>
+  <span class="hl sym">{</span><span class="hl str">&quot;N&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">}</span>
+<span class="hl sym">] ).</span>
 
-<span class="hl kwd">read_lines</span><span class="hl sym">(</span>File<span class="hl sym">,</span> SzTotal<span class="hl sym">, [</span>Seg<span class="hl sym">|</span>Segz<span class="hl sym">]) -&gt;</span>
-  <span class="hl kwa">case</span> io<span class="hl sym">:</span><span class="hl kwd">get_line</span><span class="hl sym">(</span>File<span class="hl sym">,</span> <span class="hl str">''</span><span class="hl sym">)</span> <span class="hl kwa">of</span>
-    eof <span class="hl sym">-&gt; {</span>SzTotal<span class="hl sym">, [</span>Seg<span class="hl sym">|</span>Segz<span class="hl sym">]};</span>
-    Str <span class="hl sym">-&gt;</span>
-      Len <span class="hl sym">=</span> <span class="hl kwb">size</span><span class="hl sym">(</span>Str<span class="hl sym">),</span>
-      Eol <span class="hl sym">=</span> Len <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span>
-      <span class="hl kwd">read_lines</span><span class="hl sym">(</span> File<span class="hl sym">,</span> SzTotal <span class="hl sym">+</span> Len<span class="hl sym">,</span>
-        <span class="hl kwa">case</span> Str <span class="hl kwa">of</span>
-          <span class="hl sym">&lt;&lt;</span><span class="hl str">&quot;&gt;&quot;</span><span class="hl sym">,</span>_<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt;         -&gt;     [[],</span>Seg<span class="hl sym">|</span>Segz<span class="hl sym">];</span>
-          <span class="hl sym">&lt;&lt;</span>Trim<span class="hl sym">:</span>Eol<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span><span class="hl str">&quot;</span><span class="hl esc">\</span><span class="hl str">n&quot;</span><span class="hl sym">&gt;&gt; -&gt; [[</span>Trim<span class="hl sym">|</span>Seg<span class="hl sym">]|</span>Segz<span class="hl sym">];</span>
-          _                        <span class="hl sym">-&gt;  [[</span>Str<span class="hl sym">|</span>Seg<span class="hl sym">]|</span>Segz<span class="hl sym">]</span>
-        <span class="hl kwa">end</span> <span class="hl sym">)</span>
+<span class="hl kwd">main</span><span class="hl sym">([</span>_Arg<span class="hl sym">]) -&gt;</span>
+  io<span class="hl sym">:</span><span class="hl kwd">setopts</span><span class="hl sym">([</span><span class="hl kwb">binary</span><span class="hl sym">]),</span>
+  <span class="hl kwa">case</span> _Arg <span class="hl kwa">of</span>
+    <span class="hl str">&quot;seq&quot;</span> <span class="hl sym">-&gt;</span> <span class="hl kwd">run_sequential</span><span class="hl sym">();</span>
+    _ <span class="hl sym">-&gt;</span> <span class="hl kwd">run_parallel</span><span class="hl sym">()</span>
+  <span class="hl kwa">end</span><span class="hl sym">,</span>
+  <span class="hl kwb">halt</span><span class="hl sym">().</span>
+
+<span class="hl kwd">run_sequential</span><span class="hl sym">() -&gt;</span>
+  S1 <span class="hl sym">=</span> <span class="hl kwd">read_input</span><span class="hl sym">(&lt;&lt; &gt;&gt;),</span>
+  S2 <span class="hl sym">=</span> <span class="hl kwd">strip</span><span class="hl sym">(</span>S1<span class="hl sym">),</span>
+  S3 <span class="hl sym">=</span> <span class="hl kwd">substitute_variants</span><span class="hl sym">(</span>S2<span class="hl sym">),</span>
+  <span class="hl sym">[</span> <span class="hl kwd">print</span><span class="hl sym">(</span><span class="hl kwd">count_variants</span><span class="hl sym">(</span>S2<span class="hl sym">,</span> V<span class="hl sym">)) ||</span> V <span class="hl sym">&lt;- ?</span>VARIANTS <span class="hl sym">],</span>
+  <span class="hl kwd">print</span><span class="hl sym">(</span>empty<span class="hl sym">),</span>
+  <span class="hl sym">[</span> <span class="hl kwd">print</span><span class="hl sym">(</span><span class="hl kwd">bsize</span><span class="hl sym">(</span>S<span class="hl sym">)) ||</span> S <span class="hl sym">&lt;- [</span>S1<span class="hl sym">,</span> S2<span class="hl sym">,</span> S3<span class="hl sym">] ].</span>
+
+<span class="hl slc">%% Simple concurrent approach, run everything in parallel,</span>
+<span class="hl slc">%% collect the results, sort and print them.</span>
+<span class="hl kwd">run_parallel</span><span class="hl sym">() -&gt;</span>
+  <span class="hl kwb">register</span><span class="hl sym">(</span>collector<span class="hl sym">,</span> <span class="hl kwb">self</span><span class="hl sym">()),</span>
+  S1 <span class="hl sym">=</span> <span class="hl kwd">read_input</span><span class="hl sym">(&lt;&lt; &gt;&gt;),</span>
+  S2 <span class="hl sym">=</span> <span class="hl kwd">strip</span><span class="hl sym">(</span>S1<span class="hl sym">),</span>
+  Jobs <span class="hl sym">= [ {</span> <span class="hl kwa">fun</span> count_variants<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">, [</span>S2<span class="hl sym">,</span> V<span class="hl sym">] } ||</span> V <span class="hl sym">&lt;- ?</span>VARIANTS <span class="hl sym">]</span>
+      <span class="hl sym">++ [ {</span> <span class="hl kwa">fun</span><span class="hl sym">() -&gt;</span> empty <span class="hl kwa">end</span><span class="hl sym">, [] },</span>
+           <span class="hl sym">{</span> <span class="hl kwa">fun</span> bsize<span class="hl sym">/</span><span class="hl num">1</span><span class="hl sym">, [</span>S1<span class="hl sym">] },</span>
+           <span class="hl sym">{</span> <span class="hl kwa">fun</span> bsize<span class="hl sym">/</span><span class="hl num">1</span><span class="hl sym">, [</span>S2<span class="hl sym">]},</span>
+           <span class="hl sym">{</span> <span class="hl kwa">fun</span><span class="hl sym">(</span>S<span class="hl sym">) -&gt;</span> <span class="hl kwd">bsize</span><span class="hl sym">(</span><span class="hl kwd">substitute_variants</span><span class="hl sym">(</span>S<span class="hl sym">))</span> <span class="hl kwa">end</span><span class="hl sym">, [</span>S2<span class="hl sym">] } ],</span>
+  N <span class="hl sym">=</span> <span class="hl kwd">schedule</span><span class="hl sym">(</span>Jobs<span class="hl sym">),</span>
+  <span class="hl sym">[</span> <span class="hl kwd">print</span><span class="hl sym">(</span>R<span class="hl sym">) ||</span> R <span class="hl sym">&lt;-</span> <span class="hl kwd">collect</span><span class="hl sym">(</span>N<span class="hl sym">) ].</span>
+
+<span class="hl slc">%% Substitution helpers.</span>
+<span class="hl kwd">strip</span><span class="hl sym">(</span>S<span class="hl sym">) -&gt;</span> re<span class="hl sym">:</span><span class="hl kwd">replace</span><span class="hl sym">(</span>S<span class="hl sym">,</span> <span class="hl str">&quot;(&gt;.*</span><span class="hl esc">\</span><span class="hl str">n)|</span><span class="hl esc">\</span><span class="hl str">n&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">, [</span>global<span class="hl sym">]).</span>
+
+<span class="hl kwd">substitute_variants</span><span class="hl sym">(</span>S<span class="hl sym">) -&gt;</span> lists<span class="hl sym">:</span><span class="hl kwd">foldl</span><span class="hl sym">(</span><span class="hl kwa">fun</span> substitute_variant<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">,</span> S<span class="hl sym">, ?</span>SUBSTS<span class="hl sym">).</span>
+
+<span class="hl kwd">substitute_variant</span><span class="hl sym">({</span>What<span class="hl sym">,</span> With<span class="hl sym">},</span> Seq<span class="hl sym">) -&gt;</span> re<span class="hl sym">:</span><span class="hl kwd">replace</span><span class="hl sym">(</span>Seq<span class="hl sym">,</span> What<span class="hl sym">,</span> With<span class="hl sym">, [</span>global<span class="hl sym">]).</span>
+
+<span class="hl kwd">count_variants</span><span class="hl sym">(</span>Seq<span class="hl sym">,</span> Var<span class="hl sym">) -&gt;</span>
+  Len <span class="hl sym">=</span> <span class="hl kwa">case</span> re<span class="hl sym">:</span><span class="hl kwd">run</span><span class="hl sym">(</span>Seq<span class="hl sym">,</span> Var<span class="hl sym">, [</span>global<span class="hl sym">])</span> <span class="hl kwa">of</span>
+    <span class="hl sym">{</span>match<span class="hl sym">,</span> Matches<span class="hl sym">} -&gt;</span> <span class="hl kwb">length</span><span class="hl sym">(</span>Matches<span class="hl sym">);</span>
+    nomatch <span class="hl sym">-&gt;</span> <span class="hl num">0</span>
+  <span class="hl kwa">end</span><span class="hl sym">,</span>
+  <span class="hl sym">{</span>Var<span class="hl sym">,</span> Len<span class="hl sym">}.</span>
+
+<span class="hl slc">%% Parallel helpers.</span>
+<span class="hl kwd">schedule</span><span class="hl sym">(</span>Jobs<span class="hl sym">) -&gt;</span> lists<span class="hl sym">:</span><span class="hl kwd">foldl</span><span class="hl sym">(</span><span class="hl kwa">fun</span> new_job<span class="hl sym">/</span><span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> Jobs<span class="hl sym">).</span>
+
+<span class="hl kwd">new_job</span><span class="hl sym">({</span>Fun<span class="hl sym">,</span> Args<span class="hl sym">},</span> N<span class="hl sym">) -&gt;</span>
+  <span class="hl kwb">spawn</span><span class="hl sym">(</span><span class="hl kwa">fun</span><span class="hl sym">() -&gt;</span> collector <span class="hl sym">! {</span>N<span class="hl sym">,</span> <span class="hl kwb">apply</span><span class="hl sym">(</span>Fun<span class="hl sym">,</span> Args<span class="hl sym">)}</span> <span class="hl kwa">end</span><span class="hl sym">),</span>
+  N <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">.</span>
+
+<span class="hl kwd">collect</span><span class="hl sym">(</span>N<span class="hl sym">) -&gt;</span> <span class="hl kwd">collect</span><span class="hl sym">(</span>N<span class="hl sym">, []).</span>
+<span class="hl kwd">collect</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> Results<span class="hl sym">) -&gt; [</span> R <span class="hl sym">|| {</span>_<span class="hl sym">,</span> R<span class="hl sym">} &lt;-</span> lists<span class="hl sym">:</span><span class="hl kwd">keysort</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> Results<span class="hl sym">) ];</span>
+<span class="hl kwd">collect</span><span class="hl sym">(</span>N<span class="hl sym">,</span> Results<span class="hl sym">) -&gt;</span> <span class="hl kwa">receive</span> <span class="hl sym">{</span>K<span class="hl sym">,</span> R<span class="hl sym">} -&gt;</span> <span class="hl kwd">collect</span><span class="hl sym">(</span>N<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">, [{</span>K<span class="hl sym">,</span> R<span class="hl sym">} |</span> Results<span class="hl sym">])</span> <span class="hl kwa">end</span><span class="hl sym">.</span>
+
+<span class="hl slc">%% General helpers.</span>
+<span class="hl kwd">print</span><span class="hl sym">(</span> empty <span class="hl sym">) -&gt;</span> io<span class="hl sym">:</span><span class="hl kwd">nl</span><span class="hl sym">();</span>
+<span class="hl kwd">print</span><span class="hl sym">({</span> Var<span class="hl sym">,</span> Count <span class="hl sym">}) -&gt;</span> io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;~s ~p~n&quot;</span><span class="hl sym">, [</span>Var<span class="hl sym">,</span> Count<span class="hl sym">]);</span>
+<span class="hl kwd">print</span><span class="hl sym">(</span> Len <span class="hl sym">) -&gt;</span> io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;~p~n&quot;</span><span class="hl sym">, [</span>Len<span class="hl sym">]).</span>
+
+<span class="hl kwd">read_input</span><span class="hl sym">(</span>Buf<span class="hl sym">) -&gt;</span>
+  <span class="hl kwa">case</span> io<span class="hl sym">:</span><span class="hl kwd">get_line</span><span class="hl sym">(</span><span class="hl str">''</span><span class="hl sym">)</span> <span class="hl kwa">of</span>
+    eof <span class="hl sym">-&gt;</span> Buf<span class="hl sym">;</span>
+    <span class="hl slc">% Appending to binaries in this manner should be efficient, according to</span>
+    <span class="hl slc">% http://erlang.org/doc/efficiency_guide/binaryhandling.html#4</span>
+    Line <span class="hl sym">-&gt;</span> <span class="hl kwd">read_input</span><span class="hl sym">(&lt;&lt;</span> Buf<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> Line<span class="hl sym">/</span><span class="hl kwb">binary</span> <span class="hl sym">&gt;&gt;)</span>
   <span class="hl kwa">end</span><span class="hl sym">.</span>
 
-<span class="hl kwd">main</span><span class="hl sym">(</span>_<span class="hl sym">) -&gt;</span>
-  io<span class="hl sym">:</span><span class="hl kwd">setopts</span><span class="hl sym">(</span>standard_io<span class="hl sym">, [</span><span class="hl kwb">binary</span><span class="hl sym">]),</span>
-  <span class="hl sym">{</span>SzTotal<span class="hl sym">, [</span>SR1<span class="hl sym">,</span>SR2<span class="hl sym">,</span>SR3<span class="hl sym">|</span>_<span class="hl sym">]} =</span> <span class="hl kwd">read_lines</span><span class="hl sym">(</span>standard_io<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, [[]]),</span>
-  <span class="hl sym">[</span>B1<span class="hl sym">,</span>B2<span class="hl sym">,</span>B3<span class="hl sym">] =</span> <span class="hl kwd">pmap</span><span class="hl sym">(</span><span class="hl kwa">fun</span><span class="hl sym">(</span>S<span class="hl sym">) -&gt;</span> <span class="hl kwb">list_to_binary</span><span class="hl sym">(</span>lists<span class="hl sym">:</span><span class="hl kwd">reverse</span><span class="hl sym">(</span>S<span class="hl sym">))</span> <span class="hl kwa">end</span><span class="hl sym">, [</span>SR3<span class="hl sym">,</span>SR2<span class="hl sym">,</span>SR1<span class="hl sym">]),</span>
-  S2  <span class="hl sym">=</span> <span class="hl kwb">binary_to_list</span><span class="hl sym">(</span>B2<span class="hl sym">),</span>
-  S3  <span class="hl sym">=</span> <span class="hl kwb">binary_to_list</span><span class="hl sym">(</span>B3<span class="hl sym">),</span>
-  L2  <span class="hl sym">=</span> <span class="hl kwb">size</span><span class="hl sym">(</span>B2<span class="hl sym">),</span>
-  L13 <span class="hl sym">=</span> <span class="hl kwb">size</span><span class="hl sym">(</span>B1<span class="hl sym">) +</span> <span class="hl kwb">size</span><span class="hl sym">(</span>B3<span class="hl sym">),</span>
-  Pid <span class="hl sym">=</span> <span class="hl kwb">self</span><span class="hl sym">(),</span>
-  <span class="hl kwb">spawn</span><span class="hl sym">(</span> <span class="hl kwa">fun</span><span class="hl sym">() -&gt;</span>
-    Pid <span class="hl sym">!</span> <span class="hl kwb">length</span><span class="hl sym">(</span> lists<span class="hl sym">:</span><span class="hl kwd">flatmap</span><span class="hl sym">(</span>
-      <span class="hl kwa">fun</span><span class="hl sym">(</span>Ch<span class="hl sym">) -&gt;</span>
-        <span class="hl kwa">case</span> Ch <span class="hl kwa">of</span>
-          $B <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">;</span>
-          $D <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">;</span>
-          $H <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">;</span>
-          $K <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">;</span>
-          $M <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">;</span>
-          $N <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">;</span>
-          $R <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">;</span>
-          $S <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">;</span>
-          $V <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">;</span>
-          $W <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">;</span>
-          $Y <span class="hl sym">-&gt;</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">;</span>
-          XX <span class="hl sym">-&gt; [</span>XX<span class="hl sym">]</span>
-        <span class="hl kwa">end</span>
-      <span class="hl kwa">end</span><span class="hl sym">,</span> S2 <span class="hl sym">) )</span> <span class="hl kwa">end</span> <span class="hl sym">),</span>
-  Out <span class="hl sym">=</span> <span class="hl kwd">pmap</span><span class="hl sym">(</span>
-    <span class="hl kwa">fun</span><span class="hl sym">(</span>Re<span class="hl sym">) -&gt;</span>
-      <span class="hl sym">{</span>match<span class="hl sym">,</span> M2<span class="hl sym">} =</span> regexp<span class="hl sym">:</span><span class="hl kwd">matches</span><span class="hl sym">(</span>S2<span class="hl sym">,</span> Re<span class="hl sym">),</span>
-      <span class="hl sym">{</span>match<span class="hl sym">,</span> M3<span class="hl sym">} =</span> regexp<span class="hl sym">:</span><span class="hl kwd">matches</span><span class="hl sym">(</span>S3<span class="hl sym">,</span> Re<span class="hl sym">),</span>
-      <span class="hl sym">[</span>Re<span class="hl sym">,</span> <span class="hl kwb">length</span><span class="hl sym">(</span>M2<span class="hl sym">) +</span> <span class="hl kwb">length</span><span class="hl sym">(</span>M3<span class="hl sym">)]</span>
-    <span class="hl kwa">end</span><span class="hl sym">, ?</span>VARIANTS <span class="hl sym">),</span>
-  lists<span class="hl sym">:</span><span class="hl kwd">foreach</span><span class="hl sym">(</span><span class="hl kwa">fun</span><span class="hl sym">(</span>P<span class="hl sym">) -&gt;</span> io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;~s ~w~n&quot;</span><span class="hl sym">,</span> P<span class="hl sym">)</span> <span class="hl kwa">end</span><span class="hl sym">,</span> Out<span class="hl sym">),</span>
-  <span class="hl kwa">receive</span>
-    L2Sub <span class="hl sym">-&gt;</span> io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;~n~w~n~w~n~w~n&quot;</span><span class="hl sym">, [</span>SzTotal<span class="hl sym">,</span> L13 <span class="hl sym">+</span> L2<span class="hl sym">,</span> L13 <span class="hl sym">+</span> L2Sub<span class="hl sym">])</span>
-  <span class="hl kwa">end</span><span class="hl sym">,</span>
-  <span class="hl kwb">halt</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">).</span>
-
+<span class="hl kwd">bsize</span><span class="hl sym">(</span>B<span class="hl sym">)</span> <span class="hl kwa">when</span> <span class="hl kwd">is_list</span><span class="hl sym">(</span>B<span class="hl sym">)   -&gt;</span> <span class="hl kwb">size</span><span class="hl sym">(</span><span class="hl kwb">list_to_binary</span><span class="hl sym">(</span>B<span class="hl sym">));</span>
+<span class="hl kwd">bsize</span><span class="hl sym">(</span>B<span class="hl sym">)</span> <span class="hl kwa">when</span> <span class="hl kwd">is_binary</span><span class="hl sym">(</span>B<span class="hl sym">) -&gt;</span> <span class="hl kwb">size</span><span class="hl sym">(</span>B<span class="hl sym">).</span>
