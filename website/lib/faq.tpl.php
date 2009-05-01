@@ -392,17 +392,6 @@ The system is going down for system halt NOW!
 <dd>
 <dl>
 
-<dt><a href="#measurementscripts" name="measurementscripts">Can I use your <strong>measurement scripts?</strong></a></dt>
-<dd><p><strong>Yes!</strong> The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download bencher</strong></a></p>
-
-<p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
-
-</dd>
-
-<dt><a href="#measurements" name="measurements">Can I use your <strong>measurements?</strong></a></dt>
-<dd><p>Yes, in principle.</p>
-<p>But in practice, the data.csv &amp; ndata.csv &amp; bzipped *-bulkdata.csv data files contain out-of-date measurements and disallowed program measurements which are filtered out by PHP scripts when the web pages are created from the data files - that provides considerable flexibility for the website, but unhappily makes it really difficult for you to use the data files standalone.</p>
-</dd>
 
 <dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
 <dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth ID</strong></a> and login.</p>
@@ -586,6 +575,12 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <p>We have no ambition to measure every Python implementation or every Haskell implementation or every C implementation - that's a chore for all you Python enthusiasts and Haskell enthusiasts and C enthusiasts, a chore which might be straightforward if you <a href="faq.php#measurementscripts">use our measurement scripts</a>.</p>
 <p>We are unable to publish measurements for many commercial language implementations simply because their license conditions forbid it.</p>
 <p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
+</dd>
+
+<dt><a href="#measurementscripts" name="measurementscripts">Use our <strong>measurement scripts</strong> to make your own measurents!</a></dt>
+<dd><p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download bencher</strong></a></p>
+
+<p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 </dl>
 </dd>
