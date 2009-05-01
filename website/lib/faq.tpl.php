@@ -210,9 +210,9 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <ol>
 <li>Each program was run and measured at the smallest input value, program output redirected to a file and compared to expected output. As long as the output matched expected output, the program was then run and measured at the next larger input value until measurements had been made at every input value.</li>
 
-<li>If the program gave the expected output within an arbitrary cutoff time (now 60 seconds) the program was measured again repeatedly (now 6 times) with output redirected to /dev/null.</li>
+<li>If the program gave the expected output within an arbitrary cutoff time (now 120 seconds) the program was measured again repeatedly (now 6 times) with output redirected to /dev/null.</li>
 
-<li>If the program didn't give the expected output within an arbitrary timeout (usually one hour) the program was forced to quit. If measurements at a smaller input value had been successful within an arbitrary cutoff time (now 60 seconds), the program was measured again repeatedly (now 6 times) at that smaller input value, with output redirected to /dev/null.</li>
+<li>If the program didn't give the expected output within an arbitrary timeout (usually one hour) the program was forced to quit. If measurements at a smaller input value had been successful within an arbitrary cutoff time (now 120 seconds), the program was measured again repeatedly (now 6 times) at that smaller input value, with output redirected to /dev/null.</li>
 
 <li>The measurements shown on the website are either
 <ul><li>within the arbitrary cutoff - the lowest time and highest memory use from repeated measurements</li>

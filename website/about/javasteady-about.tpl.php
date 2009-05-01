@@ -1,5 +1,18 @@
 <?=$Version;?>
-<p>Home Page: <a href="http://java.sun.com/j2se/">http://java.sun.com/j2se/</a></p>
-<p>Download: <a href="http://java.sun.com/j2se/downloads/">http://java.sun.com/j2se/downloads/</a></p>
-<blockquote>"Remember how HotSpot works. It starts by running your program with an interpreter. When it discovers that some method is "hot" -- that is, executed a lot, either because it is called a lot or because it contains loops that loop a lot -- it sends that method off to be compiled. After that one of two things will happen, either the next time the method is called the compiled version will be invoked (instead of the interpreted version) or the currently long running loop will be replaced, while still running, with the compiled method. The latter is known as "on stack replacement" and exists in the 1.3/1.4 HotSpot based systems."</blockquote>
-<p><a href="http://java.sun.com/docs/hotspot/HotSpotFAQ.html#benchmarking_simple">Benchmarking the Java HotSpot VM</a></p>
+
+<p>The reported "*Java 6 steady state" program CPU secs and program Elapsed secs are <strong>approximate averages</strong>.</p>
+
+<p>Each program performs the same calculation 20 times, for example:</p>
+
+<pre>
+   <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwc">String</span><span class="hl sym">[]</span> args<span class="hl sym">){</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span><span class="hl num">19</span><span class="hl sym">; ++</span>i<span class="hl sym">)</span> binarytrees<span class="hl sym">.</span><span class="hl kwd">program_main</span><span class="hl sym">(</span>args<span class="hl sym">,</span>false<span class="hl sym">);</span>
+
+      binarytrees<span class="hl sym">.</span><span class="hl kwd">program_main</span><span class="hl sym">(</span>args<span class="hl sym">,</span>true<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+</pre>
+
+<p>The "*Java 6 steady state" program CPU secs and program Elapsed secs measurements are made in the same way as all the other time measurements, but before display they are divided by 20 to give <strong>approximate averages</strong>.</p>
+
+
+<p></p>
