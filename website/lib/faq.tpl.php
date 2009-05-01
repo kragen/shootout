@@ -252,7 +252,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </dd>
 
 <dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
-<dd><p>In these examples we measured elapsed time once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. The usual elapsed secs and CPU secs startup measurements are shown alongside for comparison.</p>
+<dd><p>In these examples we measured elapsed time once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. The usual startup measurements and "*Java 6 steady state" measurements are shown alongside for comparison.</p>
 
 
 <table>
@@ -268,7 +268,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <th>mean</th>
 <th>&#963;</th>
 <th>startup</th>
-<th>*steady&nbsp;state</th>
+<th>steady&nbsp;state</th>
 </tr>
 
 <tr>
