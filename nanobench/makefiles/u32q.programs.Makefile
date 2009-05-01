@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.21 2009-02-25 23:02:38 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.22 2009-05-01 00:19:33 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -322,6 +322,10 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 %.ibmjava_run: %.ibmjava $(IBMJDKRUN)
 	-mv $< $(TEST).java
 	-$(IBMJDKC) $(TEST).java
+
+%.javasteady_run: %.javasteady $(JDKRUN)
+	-mv $< $(TEST).java
+	-$(JDKC) $(TEST).java
 
 
 ########################################
