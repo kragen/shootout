@@ -300,7 +300,7 @@ The system is going down for system halt NOW!
 
 
 <dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
-<dd><p>In these examples we measured elapsed time (inside the programs) once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. </p>
+<dd><p>In these examples we measured elapsed time once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. The usual elapsed secs and CPU secs startup measurements are shown alongside for comparison.</p>
 
 
 <table>
@@ -311,11 +311,12 @@ The system is going down for system halt NOW!
 
 <tr>
 <th>&nbsp;</th>
-<th>mean</th>
+<th>mean (elapsed secs)</th>
 <th>&#963;</th>
-<th>mean</th>
+<th>mean (elapsed secs)</th>
 <th>&#963;</th>
-<th>&nbsp;</th>
+<th>(startup elapsed secs)</th>
+<th>(startup CPU secs)</th>
 </tr>
 
 <tr>
@@ -324,7 +325,8 @@ The system is going down for system halt NOW!
 <td>0.06</td>
 <td>3.97s</td>
 <td>0.03</td>
-<td>example CPU 15.76s</td>
+<td>&nbsp;&nbsp;4.07s</td>
+<td>&nbsp;&nbsp;15.90s</td>
 </tr>
 
 <tr>
@@ -333,7 +335,8 @@ The system is going down for system halt NOW!
 <td>0.04</td>
 <td>6.77s</td>
 <td>0.03</td>
-<td>example CPU 6.77s</td>
+<td>&nbsp;&nbsp;6.93s</td>
+<td>&nbsp;&nbsp;6.99s</td>
 </tr>
 
 <tr>
@@ -342,7 +345,8 @@ The system is going down for system halt NOW!
 <td>0.74</td>
 <td>10.24s</td>
 <td>0.18</td>
-<td>example CPU 40.41s</td>
+<td>&nbsp;&nbsp;11.10s</td>
+<td>&nbsp;&nbsp;43.58s</td>
 </tr>
 
 <tr>
@@ -351,7 +355,8 @@ The system is going down for system halt NOW!
 <td>0.58</td>
 <td>14.94s</td>
 <td>0.43</td>
-<td>example CPU 27.62s</td>
+<td>&nbsp;&nbsp;19.64s</td>
+<td>&nbsp;&nbsp;30.73s</td>
 </tr>
 
 <td>fannkuch&nbsp;&nbsp;</td>
@@ -359,7 +364,8 @@ The system is going down for system halt NOW!
 <td>1.31</td>
 <td>17.87s</td>
 <td>0.11</td>
-<td>example CPU 65.38s</td>
+<td>&nbsp;&nbsp;20.15s</td>
+<td>&nbsp;&nbsp;77.43s</td>
 </tr>
 
 <tr>
@@ -368,7 +374,8 @@ The system is going down for system halt NOW!
 <td>0.04</td>
 <td>24.06s</td>
 <td>0.96</td>
-<td>example CPU 23.88s</td>
+<td>&nbsp;&nbsp;23.88s</td>
+<td>&nbsp;&nbsp;23.87s</td>
 </tr>
 
 </table>
