@@ -71,15 +71,6 @@
 <p></p>
 <dl>
 
-<dd>
-<p><img src="<?=IMAGE_PATH;?>fresh.png"
-   alt=""
-   title=""
-   width="400" height="225"
- /></p>
-</dd>
-
-
 
 <dd>
 <table class="layout">
@@ -155,6 +146,15 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </tr>
 </table>
 </dd>
+
+<dd>
+<p><img src="<?=IMAGE_PATH;?>fresh.png"
+   alt=""
+   title=""
+   width="400" height="225"
+ /></p>
+</dd>
+
 
 
 </dl>
@@ -300,14 +300,12 @@ The system is going down for system halt NOW!
 
 
 <dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
-<dd><p>Sometimes Java programmers point out that JVM profiling and dynamic compilation will improve program performance when the same program is used again and again and again without shutting down the JVM. Sometimes other programmers don't believe that JVM profiling and dynamic compilation will have any effect on simple programs like those shown in the benchmarks game - let's take a look.</p>
-
-<p>In <strong><a href="miscfile.php?file=dynamic&amp;title=Java Dynamic Compilation">these examples</a></strong> we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 400 times; in the second case, we started the program once and measured the program again and again and again 400 times, without restarting the JVM. </p>
+<dd><p>In these examples we measured elapsed time (inside the programs) once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. </p>
 
 
 <table>
 <tr>
-<th colspan="3">&nbsp;started&nbsp;400&nbsp;times&nbsp;</th>
+<th colspan="3">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
 <th colspan="2">&nbsp;started&nbsp;once&nbsp;</th>
 </tr>
 
@@ -317,68 +315,71 @@ The system is going down for system halt NOW!
 <th>&#963;</th>
 <th>mean</th>
 <th>&#963;</th>
+<th>&nbsp;</th>
 </tr>
 
-<tr>
-<td>nsieve&nbsp;&nbsp;</td>
-<td>2.37</td>
-<td>&nbsp;&nbsp;0.05</td>
-<td>&nbsp;&nbsp;2.14</td>
-<td>&nbsp;&nbsp;0.01</td>
-</tr>
-<tr>
-<td>mandelbrot&nbsp;&nbsp;</td>
-<td>3.42</td>
-<td>&nbsp;&nbsp;0.01</td>
-<td>&nbsp;&nbsp;3.20</td>
-<td>&nbsp;&nbsp;0.01</td>
-</tr>
-<tr>
-<td>binary-trees&nbsp;&nbsp;</td>
-<td>6.37</td>
-<td>0.06</td>
-<td>5.66</td>
-<td>0.05</td>
-</tr>
-<tr>
-<td>nsievebits&nbsp;&nbsp;</td>
-<td>7.43</td>
-<td>0.28</td>
-<td>7.15</td>
-<td>0.08</td>
-</tr>
-<tr>
-<td>fannkuch&nbsp;&nbsp;</td>
-<td>11.66</td>
-<td>0.16</td>
-<td>11.13</td>
-<td>0.43</td>
-</tr>
-<tr>
-<td>nbody&nbsp;&nbsp;</td>
-<td>16.21</td>
-<td>0.05</td>
-<td>16.06</td>
-<td>0.34</td>
-</tr>
 <tr>
 <td>spectral-norm&nbsp;&nbsp;</td>
-<td>24.71</td>
-<td>0.02</td>
-<td>23.65</td>
-<td>0.05</td>
+<td>4.03s</td>
+<td>0.06</td>
+<td>3.97s</td>
+<td>0.03</td>
+<td>example CPU 15.76s</td>
 </tr>
+
+<tr>
+<td>pidigits&nbsp;&nbsp;</td>
+<td>6.83s</td>
+<td>0.04</td>
+<td>6.77s</td>
+<td>0.03</td>
+<td>example CPU 6.77s</td>
+</tr>
+
+<tr>
+<td>mandelbrot&nbsp;&nbsp;</td>
+<td>11.77s</td>
+<td>0.74</td>
+<td>10.24s</td>
+<td>0.18</td>
+<td>example CPU 40.41s</td>
+</tr>
+
+<tr>
+<td>binary-trees&nbsp;&nbsp;</td>
+<td>19.96s</td>
+<td>0.58</td>
+<td>14.94s</td>
+<td>0.43</td>
+<td>example CPU 27.62s</td>
+</tr>
+
+<td>fannkuch&nbsp;&nbsp;</td>
+<td>20.53s</td>
+<td>1.31</td>
+<td>17.87s</td>
+<td>0.11</td>
+<td>example CPU 65.38s</td>
+</tr>
+
+<tr>
+<td>nbody&nbsp;&nbsp;</td>
+<td>23.77s</td>
+<td>0.04</td>
+<td>24.06s</td>
+<td>0.96</td>
+<td>example CPU 23.88s</td>
+</tr>
+
 </table>
 
-<p>The costs of JVM profiling and dynamic compilation are always included in the first case; in the second case the first measurement shows the costs of partial interpretation and JVM profiling and dynamic compilation, but the next 399 measurements show the benefits without showing the costs. We can't just wish the costs away - Java bytecode does need to be loaded and profiled and compiled.</p>
 
-<p><img src="<?=IMAGE_PATH;?>jspectralnorm.png"
-   alt=""
-   title=""
-   width="450" height="150"
- /></p>
+<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make a difference in these examples.</p>
 
-<p>As part of performance analysis, those differences hint at how much is not accounted for and how little or how much we might still be able to achieve by writing better programs.</p>
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues with partial interpretation or at best on-stack-replacement. The opportunity to use the fully compiled methods only arises <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+
+<p>To highlight that mismatch, "*Java 6 steady state" approximate averages are <a href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=mandelbrot&lang=all">shown in the measurement tables alongside the usual measurements</a>.</p>
+
 </dd>
 
 </dl>
