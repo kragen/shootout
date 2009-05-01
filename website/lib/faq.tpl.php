@@ -257,8 +257,11 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <table>
 <tr>
-<th colspan="3">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
+<th>&nbsp;</th>
+<th colspan="2">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
 <th colspan="2">&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
+<th>&nbsp;</th>
+<th>&nbsp;</th>
 </tr>
 
 <tr>
