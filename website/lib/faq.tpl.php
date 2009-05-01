@@ -272,6 +272,16 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </tr>
 
 <tr>
+<td>meteor-contest&nbsp;&nbsp;</td>
+<td>0.25s</td>
+<td>0.03</td>
+<td>0.13s</td>
+<td>0.01</td>
+<td>0.30s</td>
+<td>0.13s</td>
+</tr>
+
+<tr>
 <td>spectral-norm&nbsp;&nbsp;</td>
 <td>4.03s</td>
 <td>0.06</td>
@@ -333,7 +343,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </table>
 
 
-<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
+<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples (with the exception of meteor-contest).</p>
 
 <p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
