@@ -251,6 +251,96 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=pentium4</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
 </dd>
 
+<dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
+<dd><p>In these examples we measured elapsed time once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. The usual elapsed secs and CPU secs startup measurements are shown alongside for comparison.</p>
+
+
+<table>
+<tr>
+<th colspan="3">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
+<th colspan="2">&nbsp;started&nbsp;once&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
+</tr>
+
+<tr>
+<th>&nbsp;</th>
+<th>mean</th>
+<th>&#963;</th>
+<th>mean</th>
+<th>&#963;</th>
+<th>startup</th>
+<th>*steady&nbsp;state</th>
+</tr>
+
+<tr>
+<td>spectral-norm&nbsp;&nbsp;</td>
+<td>4.03s</td>
+<td>0.06</td>
+<td>3.97s</td>
+<td>0.03</td>
+<td>4.07s</td>
+<td>4.11s</td>
+</tr>
+
+<tr>
+<td>pidigits&nbsp;&nbsp;</td>
+<td>6.83s</td>
+<td>0.04</td>
+<td>6.77s</td>
+<td>0.03</td>
+<td>6.93s</td>
+<td>6.76s</td>
+</tr>
+
+<tr>
+<td>mandelbrot&nbsp;&nbsp;</td>
+<td>11.77s</td>
+<td>0.74</td>
+<td>10.24s</td>
+<td>0.18</td>
+<td>11.10s</td>
+<td>10.15s</td>
+</tr>
+
+<tr>
+<td>binary-trees&nbsp;&nbsp;</td>
+<td>19.96s</td>
+<td>0.58</td>
+<td>14.94s</td>
+<td>0.43</td>
+<td>19.64s</td>
+<td>15.43s</td>
+</tr>
+
+<td>fannkuch&nbsp;&nbsp;</td>
+<td>20.53s</td>
+<td>1.31</td>
+<td>17.87s</td>
+<td>0.11</td>
+<td>20.15s</td>
+<td>17.96s</td>
+</tr>
+
+<tr>
+<td>nbody&nbsp;&nbsp;</td>
+<td>23.77s</td>
+<td>0.04</td>
+<td>24.06s</td>
+<td>0.96</td>
+<td>23.88s</td>
+<td>23.88s</td>
+</tr>
+
+</table>
+
+
+<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
+
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods only arises <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+
+<p>To highlight that mismatch, "*Java 6 steady state" approximate averages are shown in the measurement tables alongside the usual measurements.</p>
+
+</dd>
+
 <dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
 <dd>
 <p>We use a quad-core 2.4Ghz Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine with 4GB of RAM and 250GB SATA II disk drive.</p>
@@ -299,95 +389,7 @@ The system is going down for system halt NOW!
 </dd>
 
 
-<dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
-<dd><p>In these examples we measured elapsed time once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. The usual elapsed secs and CPU secs startup measurements are shown alongside for comparison.</p>
 
-
-<table>
-<tr>
-<th colspan="3">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
-<th colspan="2">&nbsp;started&nbsp;once&nbsp;</th>
-</tr>
-
-<tr>
-<th>&nbsp;</th>
-<th>mean (elapsed secs)</th>
-<th>&#963;</th>
-<th>mean (elapsed secs)</th>
-<th>&#963;</th>
-<th>(startup elapsed secs)</th>
-<th>(startup CPU secs)</th>
-</tr>
-
-<tr>
-<td>spectral-norm&nbsp;&nbsp;</td>
-<td>4.03s</td>
-<td>0.06</td>
-<td>3.97s</td>
-<td>0.03</td>
-<td>4.07s</td>
-<td>15.90s</td>
-</tr>
-
-<tr>
-<td>pidigits&nbsp;&nbsp;</td>
-<td>6.83s</td>
-<td>0.04</td>
-<td>6.77s</td>
-<td>0.03</td>
-<td>6.93s</td>
-<td>6.99s</td>
-</tr>
-
-<tr>
-<td>mandelbrot&nbsp;&nbsp;</td>
-<td>11.77s</td>
-<td>0.74</td>
-<td>10.24s</td>
-<td>0.18</td>
-<td>11.10s</td>
-<td>43.58s</td>
-</tr>
-
-<tr>
-<td>binary-trees&nbsp;&nbsp;</td>
-<td>19.96s</td>
-<td>0.58</td>
-<td>14.94s</td>
-<td>0.43</td>
-<td>19.64s</td>
-<td>30.73s</td>
-</tr>
-
-<td>fannkuch&nbsp;&nbsp;</td>
-<td>20.53s</td>
-<td>1.31</td>
-<td>17.87s</td>
-<td>0.11</td>
-<td>20.15s</td>
-<td>77.43s</td>
-</tr>
-
-<tr>
-<td>nbody&nbsp;&nbsp;</td>
-<td>23.77s</td>
-<td>0.04</td>
-<td>24.06s</td>
-<td>0.96</td>
-<td>23.88s</td>
-<td>23.87s</td>
-</tr>
-
-</table>
-
-
-<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
-
-<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods only arises <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
-
-<p>To highlight that mismatch, "*Java 6 steady state" approximate averages are <a href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=mandelbrot&lang=all">shown in the measurement tables alongside the usual measurements</a>.</p>
-
-</dd>
 
 </dl>
 </dd>
