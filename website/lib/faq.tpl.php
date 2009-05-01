@@ -325,8 +325,8 @@ The system is going down for system halt NOW!
 <td>0.06</td>
 <td>3.97s</td>
 <td>0.03</td>
-<td>&nbsp;&nbsp;4.07s</td>
-<td>&nbsp;&nbsp;15.90s</td>
+<td>4.07s</td>
+<td>15.90s</td>
 </tr>
 
 <tr>
@@ -335,8 +335,8 @@ The system is going down for system halt NOW!
 <td>0.04</td>
 <td>6.77s</td>
 <td>0.03</td>
-<td>&nbsp;&nbsp;6.93s</td>
-<td>&nbsp;&nbsp;6.99s</td>
+<td>6.93s</td>
+<td>6.99s</td>
 </tr>
 
 <tr>
@@ -345,8 +345,8 @@ The system is going down for system halt NOW!
 <td>0.74</td>
 <td>10.24s</td>
 <td>0.18</td>
-<td>&nbsp;&nbsp;11.10s</td>
-<td>&nbsp;&nbsp;43.58s</td>
+<td>11.10s</td>
+<td>43.58s</td>
 </tr>
 
 <tr>
@@ -355,8 +355,8 @@ The system is going down for system halt NOW!
 <td>0.58</td>
 <td>14.94s</td>
 <td>0.43</td>
-<td>&nbsp;&nbsp;19.64s</td>
-<td>&nbsp;&nbsp;30.73s</td>
+<td>19.64s</td>
+<td>30.73s</td>
 </tr>
 
 <td>fannkuch&nbsp;&nbsp;</td>
@@ -364,8 +364,8 @@ The system is going down for system halt NOW!
 <td>1.31</td>
 <td>17.87s</td>
 <td>0.11</td>
-<td>&nbsp;&nbsp;20.15s</td>
-<td>&nbsp;&nbsp;77.43s</td>
+<td>20.15s</td>
+<td>77.43s</td>
 </tr>
 
 <tr>
@@ -374,16 +374,16 @@ The system is going down for system halt NOW!
 <td>0.04</td>
 <td>24.06s</td>
 <td>0.96</td>
-<td>&nbsp;&nbsp;23.88s</td>
-<td>&nbsp;&nbsp;23.87s</td>
+<td>23.88s</td>
+<td>23.87s</td>
 </tr>
 
 </table>
 
 
-<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make a difference in these examples.</p>
+<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
 
-<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues with partial interpretation or at best on-stack-replacement. The opportunity to use the fully compiled methods only arises <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods only arises <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
 <p>To highlight that mismatch, "*Java 6 steady state" approximate averages are <a href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=mandelbrot&lang=all">shown in the measurement tables alongside the usual measurements</a>.</p>
 
