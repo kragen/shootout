@@ -251,14 +251,14 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=pentium4</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
 </dd>
 
-<dt><a href="#dynamic" name="dynamic">What about Java dynamic compilation?</a></dt>
-<dd><p>In these examples we measured elapsed time once the Java program had started on quadcore Q6600: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and measured the program again and again and again 66 times, without restarting the JVM; and then we discarded the first measurement leaving 65 data points. The usual startup measurements and "*Java 6 steady state" measurements are shown alongside for comparison.</p>
+<dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
+<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points. The usual startup measurements and the "*Java 6 steady state" approximations are shown alongside for comparison.</p>
 
 
 <table>
 <tr>
 <th colspan="3">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
-<th colspan="2">&nbsp;started&nbsp;once&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
+<th colspan="2">&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
 </tr>
 
 <tr>
@@ -268,7 +268,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <th>mean</th>
 <th>&#963;</th>
 <th>startup</th>
-<th>steady&nbsp;state</th>
+<th>approx.</th>
 </tr>
 
 <tr>
@@ -335,9 +335,9 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
 
-<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods only arises <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
-<p>To highlight that mismatch, "*Java 6 steady state" approximate averages are shown in the measurement tables alongside the usual measurements.</p>
+<p>To highlight that mismatch, "*Java 6 steady state" approximations are shown in the measurement tables alongside the usual measurements.</p>
 
 </dd>
 
