@@ -265,12 +265,12 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <th>&nbsp;</th>
-<th>mean</th>
-<th>&#963;</th>
-<th>mean</th>
-<th>&#963;</th>
-<th>startup</th>
-<th>approx.</th>
+<th class="num">mean</th>
+<th class="num">&#963;</th>
+<th class="num">mean</th>
+<th class="num">&#963;</th>
+<th class="num">startup</th>
+<th class="num">approx.</th>
 </tr>
 
 <tr>
@@ -345,9 +345,9 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </table>
 
 
-<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples (with the obvious exception of meteor-contest).</p>
+<p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
 
-<p>The larger differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the on-stack-replacement. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
 <p>To highlight that mismatch, "*Java 6 steady state" approximations are shown in the measurement tables alongside the usual measurements.</p>
 
