@@ -54,7 +54,7 @@ compilers were written in the languages they compiled, and that compilers are su
 pieces of software in their own right, this introduced a highly practical benchmark that directly
 contested a compiler's complexity against its performance. Under the self compilation speed benchmark,
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
-that the intrinsic cost of the new code addition was fully compensated." <br/>"Oberon: The Overlooked Jewel" Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
+that the intrinsic cost of the new code addition was fully compensated." <br/><a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf">"Oberon: The Overlooked Jewel"</a> (pdf) Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
 </dd>
 

@@ -1,6 +1,6 @@
 <?=$Version;?>
 
-<p>The reported "*Java 6 steady state" program CPU secs and program Elapsed secs are <strong>approximate averages</strong>.</p>
+<p>The reported "*Java 6 steady state" program CPU secs and program Elapsed secs are <strong>approximate averages</strong> - see <a href="faq.php#dynamic"><strong>FAQ: What about Java dynamic compilation?</strong></a></p>
 
 <p>Each program performs the same calculation 20 times, for example -</p>
 
