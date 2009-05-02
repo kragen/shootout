@@ -36,7 +36,7 @@
 
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 or 4 programs?</strong></a></dt>
 <dd>
-<p>Compare them directly <a href="fulldata.php?test=fannkuch&amp;p1=java-1&amp;p2=gcc-1&amp;p3=php-1&amp;p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
+<p>Compare them directly <a href="fulldata.php?test=fannkuch&amp;p1=java-1&amp;p2=gcc-1&amp;p3=php-3&amp;p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
 </dd>
 
 <dt><a href="#datasets" name="datasets"><strong>Why is the program better on ...?</strong></a></dt>
