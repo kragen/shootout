@@ -11,7 +11,7 @@
    <span class="hl sym">}</span>
 </pre>
 
-<p>The "*Java 6 steady state" program CPU secs and program Elapsed secs measurements are made in the same way as all the other time measurements, but before display they are divided by 20 to give <strong>approximate averages</strong> that minimize the influence of <a href="http://www.ibm.com/developerworks/java/library/j-jtp12214/index.html?S_TACT=105AGX02&S_CMP=EDU">mixed-mode method interpretation and on-stack-replacement</a>, for example -</p>
+<p>The "*Java 6 steady state" program CPU secs and program Elapsed secs measurements are made in the same way as all the other time measurements, but before display they are divided by 20 to give <strong>approximate averages</strong> that minimize the influence of <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#warmup">mixed-mode method interpretation and on-stack-replacement</a>, for example -</p>
 
 <pre>
 $ java -server -XX:+PrintCompilation -XX:-PrintGC binarytrees 20
