@@ -18,7 +18,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 
 <dd><p>"Generally, we can get accurate measurements for durations that are either very short (less than around 10 millisecond) or very long (greater than around 1 second), even on heavily loaded machines. Times between around 10 milliseconds and 1 second require special care to measure accurately."</p>
 <ul>  
-  <li><p> p631<a href="http://csapp.cs.cmu.edu/public/ch9-preview.pdf">Computer Systems: A Programmer's Perspective</a> (pdf)</p></li>
+  <li><p>p631 <a href="http://csapp.cs.cmu.edu/public/ch9-preview.pdf">Computer Systems: A Programmer's Perspective</a> (pdf)</p></li>
 </ul>
 
 
