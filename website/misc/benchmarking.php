@@ -15,13 +15,20 @@ means that most programs are small and spend most of their time in I/O and nativ
 
 <dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
 
-<dd><p>"Most likely, if the performance differences between the alternatives are large, a statistically rigorous method will not alter the overall picture nor affect the general conclusions obtained using prevalent methods. However, for relatively small performance differences (that are within the margin of experimental error) not using statistical rigor may lead to incorrect conclusions."</p>
+
+<dd><p>"Generally, we can get accurate measurements for durations that are either very short (less than around 10 millisecond) or very long (greater than around 1 second), even on heavily loaded machines. Times between around 10 milliseconds and 1 second require special care to measure accurately."</p>
+<ul>  
+  <li><p> p631<a href="http://csapp.cs.cmu.edu/public/ch9-preview.pdf">Computer Systems: A Programmer's Perspective</a> (pdf)</p></li>
+</ul>
+
+
+<p>"Most likely, if the performance differences between the alternatives are large, a statistically rigorous method will not alter the overall picture nor affect the general conclusions obtained using prevalent methods. However, for relatively small performance differences (that are within the margin of experimental error) not using statistical rigor may lead to incorrect conclusions." </p>
 <ul>  
   <li><p><a href="http://itkovian.net/base/files/papers/oopsla2007-georges-presentation.pdf">Statistically Rigorous Java Performance Evaluation</a> (pdf slides)</p></li>
   <li><p><a href="http://buytaert.net/files/oopsla07-georges.pdf">Statistically Rigorous Java Performance Evaluation</a> (pdf paper)</p></li>
 </ul>
 
-<dd><p>We can learn <em>something</em> about a particular language implementation from benchmarking - if we already know a great deal about the implementation and carefully analyze the results:</p>
+<p>We can learn <em>something</em> about a particular language implementation from benchmarking - if we already know a great deal about the implementation and carefully analyze the results:</p>
 <ul>  
   <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">Performing Lisp Analysis of the FANNKUCH Benchmark</a> (55KB postscript)</p></li>
   <li><p><a href="http://www-128.ibm.com/developerworks/java/library/j-jtp02225.html?ca=drs-j0805#4.0">Java theory and practice: Anatomy of a flawed microbenchmark. Is there any other kind?</a></p></li>
