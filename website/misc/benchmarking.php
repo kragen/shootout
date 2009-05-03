@@ -37,18 +37,17 @@ means that most programs are small and spend most of their time in I/O and nativ
 </ul>
 <p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>
 <ul>  
-  <li><p><a href="http://dacapobench.org/">The DaCapo Benchmark Suite</a></p></li>
   <li><p><a href="http://www.cse.unsw.edu.au/~dons/nobench.html">nobench performance comparisons between different Haskell systems</a></p></li>
   <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
   <li><p><a href="http://sbcl-test.boinkor.net/bench/">Version-to-version Steel Bank Common Lisp performance</a></p></li>
 </ul>
 <p>We should always question how useful a benchmark is for our specific purpose:</p>
 <ul>  
-  <li><p><a href="http://www-faculty.cs.uiuc.edu/~zilles/papers/health.pdf">Benchmark <tt>Health</tt> Considered Harmful</a></p></li>
+  <li><p><a href="http://www-faculty.cs.uiuc.edu/~zilles/papers/health.pdf">Benchmark <tt>Health</tt> Considered Harmful</a> (pdf)</p></li>
 </ul>
 <p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less often measured.</p>
 <ul>
-  <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a></p>
+  <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a> (pdf)</p>
 <p>Note: After reading the "Comparison Validity" section at the foot of pages 24-25, you might decide that it doesn't seem reasonable to compare <i>independently measured programming time</i> for one group of languages against <i>programming time reported by program authors</i> for another group of languages, <i>etc etc</i></p>
 </li>
 </ul>
@@ -63,7 +62,7 @@ compilers were written in the languages they compiled, and that compilers are su
 pieces of software in their own right, this introduced a highly practical benchmark that directly
 contested a compiler's complexity against its performance. Under the self compilation speed benchmark,
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
-that the intrinsic cost of the new code addition was fully compensated." <br/><a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf">"Oberon: The Overlooked Jewel"</a> (pdf) Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
+that the intrinsic cost of the new code addition was fully compensated." <br/><a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf">Oberon: The Overlooked Jewel</a> (pdf) Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
 </dd>
 
