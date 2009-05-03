@@ -64,7 +64,7 @@ contested a compiler's complexity against its performance. Under the self compil
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
 that the intrinsic cost of the new code addition was fully compensated." <br/><a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf">Oberon: The Overlooked Jewel</a> (pdf) Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
-<blockquote><p>"<strong>PHP is rarely the bottleneck</strong>" <br/><a href="http://talks.php.net/show/drupal08/7">Simple is Hard, DrupalCon 2008</a> (HTML slides) Rasmus Lerdorf</p></blockquote>
+<blockquote><p>"<strong>Overall Performance: PHP is rarely the bottleneck</strong>" <br/><a href="http://talks.php.net/show/drupal08/7">Simple is Hard, DrupalCon 2008</a> (HTML slides) Rasmus Lerdorf</p></blockquote>
 </dd>
 
 </dl>
