@@ -1,0 +1,103 @@
+<span class="hl com">(* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   Based on Ocaml contribution of</span>
+<span class="hl com">       Christophe Papazian (Decembre 2005)</span>
+<span class="hl com"></span>
+<span class="hl com">   Parallelized by Alfredos-Panagiotis Damkalis</span>
+<span class="hl com">       with the help of Jon Harrop's functions</span>
+<span class="hl com">*)</span>
+
+<span class="hl com">(* please compile with -unsafe to optimize speed *)</span>
+
+<span class="hl kwa">open</span> <span class="hl kwd">Array</span> <span class="hl kwa">open</span> <span class="hl kwd">Printf</span>
+
+
+<span class="hl kwa">let</span> threads_num <span class="hl sym">=</span> <span class="hl num">4</span>
+
+<span class="hl com">(* semi-standard function for process-based parallelism *)</span>
+<span class="hl kwa">let</span> invoke <span class="hl sym">(</span>f <span class="hl sym">:</span> <span class="hl kwb">'a</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">'b</span><span class="hl sym">)</span> x <span class="hl sym">:</span> <span class="hl kwb">unit</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">'b</span> <span class="hl sym">=</span>
+  <span class="hl kwa">let</span> input<span class="hl sym">,</span> output <span class="hl sym">=</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>pipe<span class="hl sym">()</span> <span class="hl kwa">in</span>
+  <span class="hl kwa">match</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>fork<span class="hl sym">()</span> <span class="hl kwa">with</span>
+  <span class="hl sym">| -</span><span class="hl num">1</span> <span class="hl sym">-&gt;</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>close input<span class="hl sym">;</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>close output<span class="hl sym">; (</span><span class="hl kwa">let</span> v <span class="hl sym">=</span> f x <span class="hl kwa">in fun</span> <span class="hl sym">() -&gt;</span> v<span class="hl sym">)</span>
+  <span class="hl sym">|</span> <span class="hl num">0</span> <span class="hl sym">-&gt;</span>
+      <span class="hl kwc">Unix</span><span class="hl sym">.</span>close input<span class="hl sym">;</span>
+      <span class="hl kwa">let</span> output <span class="hl sym">=</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>out_channel_of_descr output <span class="hl kwa">in</span>
+        <span class="hl kwc">Marshal</span><span class="hl sym">.</span>to_channel output <span class="hl sym">(</span><span class="hl kwa">try</span> `<span class="hl kwd">Res</span><span class="hl sym">(</span>f x<span class="hl sym">)</span> <span class="hl kwa">with</span> e <span class="hl sym">-&gt;</span> `<span class="hl kwd">Exn</span> e<span class="hl sym">) [];</span>
+        close_out output<span class="hl sym">;</span>
+        exit <span class="hl num">0</span>
+  <span class="hl sym">|</span> pid <span class="hl sym">-&gt;</span>
+      <span class="hl kwc">Unix</span><span class="hl sym">.</span>close output<span class="hl sym">;</span>
+      <span class="hl kwa">let</span> input <span class="hl sym">=</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>in_channel_of_descr input <span class="hl kwa">in fun</span> <span class="hl sym">() -&gt;</span>
+        <span class="hl kwa">let</span> v <span class="hl sym">=</span> <span class="hl kwc">Marshal</span><span class="hl sym">.</span>from_channel input <span class="hl kwa">in</span>
+        ignore <span class="hl sym">(</span><span class="hl kwc">Unix</span><span class="hl sym">.</span>waitpid <span class="hl sym">[]</span> pid<span class="hl sym">);</span>
+        close_in input<span class="hl sym">;</span>
+        <span class="hl kwa">match</span> v <span class="hl kwa">with</span> `<span class="hl kwd">Res</span> x <span class="hl sym">-&gt;</span> x <span class="hl sym">|</span> `<span class="hl kwd">Exn</span> e <span class="hl sym">-&gt;</span> raise e
+
+<span class="hl kwa">let</span> <span class="hl sym">( |&gt; )</span> x f <span class="hl sym">=</span> f x
+
+<span class="hl kwa">let</span> map_JonH <span class="hl sym">(</span>f <span class="hl sym">:</span> <span class="hl kwb">'a</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">'b</span><span class="hl sym">)</span> a <span class="hl sym">:</span> <span class="hl kwb">'b</span> array <span class="hl sym">=</span>
+  map <span class="hl sym">(</span>invoke f<span class="hl sym">)</span> a <span class="hl sym">|&gt;</span>
+    map <span class="hl sym">(</span><span class="hl kwa">fun</span> f <span class="hl sym">-&gt;</span> f<span class="hl sym">())</span>
+
+<span class="hl com">(*global variables*)</span>
+<span class="hl kwa">let</span> n <span class="hl sym">=</span> <span class="hl kwa">try if</span> length <span class="hl kwc">Sys</span><span class="hl sym">.</span>argv<span class="hl sym">&gt;</span><span class="hl num">1</span> <span class="hl kwa">then</span> int_of_string <span class="hl kwc">Sys</span><span class="hl sym">.</span>argv<span class="hl sym">.(</span><span class="hl num">1</span><span class="hl sym">)</span><span class="hl kwa">else</span> <span class="hl num">7</span>  <span class="hl kwa">with</span> _<span class="hl sym">-&gt;</span><span class="hl num">7</span>
+<span class="hl kwa">let</span> r <span class="hl sym">=</span> init<span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">)(</span><span class="hl kwa">fun</span> x <span class="hl sym">-&gt;</span> x<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">and</span> p<span class="hl sym">=</span>init n<span class="hl sym">((+)</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">and</span> s<span class="hl sym">=</span>create n <span class="hl num">0</span>
+
+<span class="hl kwa">let</span> init_f i <span class="hl sym">= (</span>i<span class="hl sym">,</span>create n i<span class="hl sym">,</span>create <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">)</span> i<span class="hl sym">)</span>
+<span class="hl kwa">let</span> parray <span class="hl sym">=</span> init threads_num <span class="hl sym">(</span>init_f<span class="hl sym">)</span>
+
+<span class="hl com">(*pretty printing function*)</span>
+<span class="hl kwa">let</span> q p <span class="hl sym">=</span> iter print_int p<span class="hl sym">;</span>print_newline<span class="hl sym">()</span>
+
+<span class="hl com">(*counting permutations*)</span>
+<span class="hl kwa">let rec</span> a n r <span class="hl sym">=</span> r<span class="hl sym">.(</span>n<span class="hl sym">)&lt;-(</span>r<span class="hl sym">.(</span>n<span class="hl sym">)+</span><span class="hl num">1</span><span class="hl sym">);</span>
+  <span class="hl kwa">if</span> r<span class="hl sym">.(</span>n<span class="hl sym">)=</span>n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">then</span> a <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> r
+  <span class="hl kwa">else</span> <span class="hl sym">(</span><span class="hl kwa">if</span> r<span class="hl sym">.(</span>n<span class="hl sym">)=</span>n <span class="hl kwa">then</span> r<span class="hl sym">.(</span>n<span class="hl sym">)&lt;-</span><span class="hl num">0</span><span class="hl sym">;</span>n<span class="hl sym">)</span>
+
+<span class="hl com">(*swapping arrays*)</span>
+<span class="hl kwa">let</span> w m p<span class="hl sym">=</span>
+  <span class="hl kwa">let rec</span> a i<span class="hl sym">=</span>i<span class="hl sym">=</span>n<span class="hl sym">||(</span>p<span class="hl sym">.(</span>i<span class="hl sym">)&lt;&gt;(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)&amp;&amp;</span>a<span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">))</span><span class="hl kwa">in</span>
+   <span class="hl kwa">if</span> a <span class="hl num">0</span>
+   <span class="hl kwa">then</span> <span class="hl sym">(</span><span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">to</span> n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span> s<span class="hl sym">.(</span>i<span class="hl sym">)&lt;-</span>p<span class="hl sym">.(</span>i<span class="hl sym">)</span><span class="hl kwa">done</span><span class="hl sym">;</span>
+         <span class="hl kwa">let rec</span> y m<span class="hl sym">=</span>
+          <span class="hl kwa">let</span> x<span class="hl sym">=</span>s<span class="hl sym">.(</span><span class="hl num">0</span><span class="hl sym">)-</span><span class="hl num">1</span>
+           <span class="hl kwa">in if</span> x<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">then</span> m
+              <span class="hl kwa">else</span> <span class="hl sym">(</span><span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">to</span><span class="hl sym">((</span>x<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">lsr</span> <span class="hl num">1</span><span class="hl sym">)</span><span class="hl kwa">do</span>
+                     <span class="hl kwa">let</span> t<span class="hl sym">=</span>s<span class="hl sym">.(</span>i<span class="hl sym">)</span><span class="hl kwa">in</span>
+                     <span class="hl kwa">let</span> o <span class="hl sym">=</span> x<span class="hl sym">-</span>i <span class="hl kwa">in</span>
+                       s<span class="hl sym">.(</span>i<span class="hl sym">)&lt;-</span>s<span class="hl sym">.(</span>o<span class="hl sym">);</span> s<span class="hl sym">.(</span>o<span class="hl sym">)&lt;-</span>t
+                    <span class="hl kwa">done</span><span class="hl sym">;</span>y<span class="hl sym">(</span>m<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">))</span>
+         <span class="hl kwa">in</span> y m<span class="hl sym">)</span>
+   <span class="hl kwa">else</span> <span class="hl num">0</span>
+
+<span class="hl com">(*building new permutations*)</span>
+<span class="hl kwa">let</span> x n p<span class="hl sym">=</span>
+  <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">1</span> <span class="hl kwa">to</span> n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do let</span> t<span class="hl sym">=</span>p<span class="hl sym">.(</span><span class="hl num">0</span><span class="hl sym">)</span><span class="hl kwa">in</span>
+  <span class="hl kwa">for</span> j<span class="hl sym">=</span><span class="hl num">0</span> <span class="hl kwa">to</span> i<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span> p<span class="hl sym">.(</span>j<span class="hl sym">)&lt;-</span>p<span class="hl sym">.(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">done</span><span class="hl sym">;</span> p<span class="hl sym">.(</span>i<span class="hl sym">)&lt;-</span>t <span class="hl kwa">done</span>
+
+<span class="hl com">(*jump &lt;threads_num-1&gt; permutations so the current thread</span>
+<span class="hl com">  check its part of permutations*)</span>
+<span class="hl kwa">let rec</span> inder i z p r <span class="hl sym">=</span> x i p<span class="hl sym">;</span>
+                        <span class="hl kwa">let</span> c <span class="hl sym">= (</span>a <span class="hl num">2</span> r<span class="hl sym">)</span> <span class="hl kwa">in</span>
+                          <span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">&lt;=</span>n<span class="hl sym">) &amp;&amp; (</span>z <span class="hl sym">&lt; (</span>threads_num<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span>
+                          <span class="hl kwa">then</span> <span class="hl sym">(</span>inder c <span class="hl sym">(</span>z<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> p r<span class="hl sym">)</span>
+                          <span class="hl kwa">else</span> <span class="hl sym">((</span>c<span class="hl sym">,</span>p<span class="hl sym">,</span>r<span class="hl sym">))</span>
+<span class="hl com">(*initialize starting permutation for each thread*)</span>
+<span class="hl kwa">let rec</span> initp i z<span class="hl sym">=</span> parray<span class="hl sym">.(</span>z<span class="hl sym">) &lt;- (</span>i<span class="hl sym">,</span>copy p<span class="hl sym">,</span>copy r<span class="hl sym">);</span> x i p<span class="hl sym">;</span>
+                   <span class="hl kwa">let</span> c <span class="hl sym">= (</span>a <span class="hl num">2</span> r<span class="hl sym">)</span> <span class="hl kwa">in</span>
+                       <span class="hl kwa">if</span> <span class="hl sym">(</span>c<span class="hl sym">&lt;=</span>n<span class="hl sym">) &amp;&amp; (</span>z <span class="hl sym">&lt; (</span>threads_num<span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">))</span>
+                       <span class="hl kwa">then</span> <span class="hl sym">(</span>initp c <span class="hl sym">(</span>z<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">))</span>
+                       <span class="hl kwa">else</span> parray<span class="hl sym">.(</span>z<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) &lt;- (</span>c<span class="hl sym">,</span>copy p<span class="hl sym">,</span>copy r<span class="hl sym">)</span>
+
+<span class="hl com">(* main *)</span>
+<span class="hl kwa">let</span> _ <span class="hl sym">=</span> <span class="hl kwa">let rec</span> f i m z<span class="hl sym">=</span> <span class="hl com">(* printing loop *)</span>
+          <span class="hl kwa">if</span> i <span class="hl sym">&lt;=</span>n <span class="hl sym">&amp;&amp;</span> z<span class="hl sym">&gt;</span><span class="hl num">0</span>
+          <span class="hl kwa">then</span><span class="hl sym">(</span>q p<span class="hl sym">;</span>x i p<span class="hl sym">;</span>f<span class="hl sym">(</span>a <span class="hl num">2</span> r<span class="hl sym">)(</span>max m<span class="hl sym">(</span>w <span class="hl num">0</span> p<span class="hl sym">))(</span>z<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span>
+          <span class="hl kwa">else</span> <span class="hl sym">(</span><span class="hl kwa">if</span> z<span class="hl sym">&gt;</span><span class="hl num">0</span>
+                <span class="hl kwa">then</span> <span class="hl sym">(</span>q p<span class="hl sym">;</span>m<span class="hl sym">)</span>
+                <span class="hl kwa">else</span> <span class="hl sym">(</span>initp i <span class="hl num">0</span><span class="hl sym">;</span> fold_left max m <span class="hl sym">(</span>map_JonH <span class="hl sym">(</span>g m<span class="hl sym">)</span> parray<span class="hl sym">)))</span> <span class="hl com">(*start threads*)</span>
+        <span class="hl kwa">and</span> g m <span class="hl sym">(</span>i<span class="hl sym">,</span>p<span class="hl sym">,</span>r<span class="hl sym">) =</span> <span class="hl kwa">if</span> i <span class="hl sym">&lt;=</span>n <span class="hl com">(* non printing loop *)</span>
+                          <span class="hl kwa">then</span><span class="hl sym">(</span>g <span class="hl sym">(</span>max m<span class="hl sym">(</span>w <span class="hl num">0</span> p<span class="hl sym">)) (</span>inder i <span class="hl num">0</span> p r<span class="hl sym">))</span>
+                          <span class="hl kwa">else</span> <span class="hl sym">(</span>m<span class="hl sym">)</span> <span class="hl kwa">in</span>
+printf <span class="hl str">&quot;Pfannkuchen(%i) = %i</span><span class="hl esc">\n</span><span class="hl str">&quot;</span> n <span class="hl sym">(</span>f <span class="hl sym">(</span>a <span class="hl num">2</span> r<span class="hl sym">)</span> <span class="hl num">0 30</span><span class="hl sym">)</span>
