@@ -66,8 +66,7 @@
 
 <dd>
 <p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine.</p>
-<p>It isn't worth asking why a program is better on a different test machine, because as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
-<p><em>Caveat lector!</em> Check the source code!</p>
+<p>It isn't worth asking why a program is better on a different test machine, because as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured). <em>Caveat lector!</em> Check the source code!</p>
 </dd>
 
 
