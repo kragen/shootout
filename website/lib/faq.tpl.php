@@ -42,12 +42,12 @@
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
 <dd>
 <p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
+<p><strong>Be curious</strong> - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
 </dd>
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
 <dd>
 <p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p>
-<p><strong>Be curious</strong> - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
 </dd>
 
 <dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
