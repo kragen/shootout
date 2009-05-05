@@ -41,8 +41,7 @@
 
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
 <dd>
-<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new.</p>
-<p><strong>Be curious</strong> - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
+<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
 </dd>
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
@@ -184,7 +183,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 
 <dt><a href="#whatlanguage" name="whatlanguage">What language was used to write each initial benchmark program?</a></dt>
 <dd><p>Different benchmark programs, different authors - different languages.</p>
-<p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos; Haskell for pidigits; Erlang for thread-ring. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
+<p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos-redux; Haskell for pidigits; Erlang for thread-ring. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
 </dd>
 
 <dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
