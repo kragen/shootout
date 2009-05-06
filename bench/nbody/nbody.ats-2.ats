@@ -8,153 +8,231 @@
 **   atscc -msse2 -mfpmath=sse -O3 n-body.dats -o n-body -lm
 *)
 
-staload _(*anonymous*) = "prelude/DATS/array.dats"
+(* ****** ****** *)
 
-staload M = "libc/SATS/math.sats"
+staload "libc/SATS/math.sats"
 
-typedef body = (
-  double, double, double, double, double, double, double
-)
+(* ****** ****** *)
 
-val sun = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
+typedef planet = @{
+  x= double, y= double, z= double
+, vx= double, vy= double, vz= double
+, mass= double
+} // end of [planet]
 
-val jupiter = (
-  4.84143144246472090,
- ~1.16032004402742839,
- ~1.03622044471123109e-1,
-  1.66007664274403694e-3,
-  7.69901118419740425e-3,
- ~6.90460016972063023e-5,
-  9.54791938424326609e-4
-)
+typedef planetarr (n:int) = @[planet][n]
 
-val saturn = (
-  8.34336671824457987,
-  4.12479856412430479,
- ~4.03523417114321381e-1,
- ~2.76742510726862411e-3,
-  4.99852801234917238e-3,
-  2.30417297573763929e-5,
-  2.85885980666130812e-4
-)
-
-val neptune = (
-  1.28943695621391310e+1,
- ~1.51111514016986312e+1,
- ~2.23307578892655734e-1,
-  2.96460137564761618e-3,
-  2.37847173959480950e-3,
- ~2.96589568540237556e-5,
-  4.36624404335156298e-5
-)
-
-val uranus = (
-  1.53796971148509165e+1,
- ~2.59193146099879641e+1,
-  1.79258772950371181e-1,
-  2.68067772490389322e-3,
-  1.62824170038242295e-3,
- ~9.51592254519715870e-5,
-  5.15138902046611451e-5
-)
-
-#define PI 3.1415926535898
-#define SOLAR_MASS (4.0 * PI * PI)
-#define DAYS_PER_YEAR 365.24
-
-typedef bodylst (n: int) = list (body, n)
-
-#define N 5; #define N1 (N - 1)
-
-macdef darray () = array_make_elt<double> (N, 0.0)
-val (x, y, z) = (darray (), darray (), darray ())
-val (vx, vy, vz) = (darray (), darray (), darray ())
-val m = darray ()
-
-val () = loop (0, theBodies) where {
-  #define DPY DAYS_PER_YEAR
-  val theBodies = '[sun, jupiter, saturn, neptune, uranus]
-  fun loop {i: nat} (i: int i, bs: bodylst (N-i)): void =
-    if i < N then let
-      val+ list_cons (b, bs) = bs
-    in
-      x[i] := b.0; y[i] := b.1; z[i] := b.2;
-      vx[i] := b.3 * DPY; vy[i] := b.4 * DPY; vz[i] := b.5 * DPY;
-      m[i] := b.6 * SOLAR_MASS;
-      loop (i+1, bs)
-    end
-}
-
-(* one step *)
+(* ****** ****** *)
 
 infix 0 += -=  // for similar C notation
 macdef += (x, d) = (,(x) := ,(x) + ,(d))
 macdef -= (x, d) = (,(x) := ,(x) - ,(d))
 
-fn advance (dt: double): void = let
-  fun pl {i:nat | i <= N } (dt: double, i: int i): void =
-    if i < N then begin
-      x[i] += dt*vx[i]; y[i] += dt*vy[i]; z[i] += dt*vz[i]; pl (dt, i+1)
-    end
-  fun vl {i,j:int | 0 <= i; i < j; j <= N}
-    (dt: double, i: int i, j: int j): void = case+ 0 of
-    | _ when i < N1 => if j < N then let
-        val dx = x[i] - x[j] and dy = y[i] - y[j] and dz = z[i] - z[j]
-        val dist2 = dx * dx + dy * dy + dz * dz
-        val dist = $M.sqrt (dist2); val mag = dt / (dist * dist2)
-        val mi = m[i] * mag and mj = m[j] * mag
-      in
-        vx[i] -= dx * mj; vy[i] -= dy * mj; vz[i] -= dz * mj; 
-        vx[j] += dx * mi; vy[j] += dy * mi; vz[j] += dz * mi;
-        vl (dt, i, j+1)
-      end else vl (dt, i+1, i+2)
-    | _ => pl (dt, 0)
-in
-  vl (dt, 0, 1)
-end
-
-(* calculate initial velocity for the sun *)
-fn offmoment (): void = let
-  #define M SOLAR_MASS
-  fun loop (i: natLte N, px: double, py: double, pz: double): void =
-    if i < N then let
-      val mi = m[i] in loop (i+1, px+vx[i]*mi, py+vy[i]*mi, pz+vz[i]*mi)
-    end else begin
-      vx[0] := ~px / M; vy[0] := ~py / M; vz[0] := ~pz / M
+fn advance {n:pos}
+  (bodies: &planetarr n, n: int n, dt: double):<> void = () where {
+  fun loop_inner
+    {l1:addr} {n2:nat} {l2:addr} .<n2>. (
+      pf1: !planet @ l1, pf2: !planetarr n2 @ l2
+    | p1: ptr l1, p2: ptr l2, n2: int n2, dt: double
+    ) :<> void =
+    if n2 > 0 then let
+      prval (pf21, pf22) = array_v_uncons {planet} (pf2)
+      val dx = p1->x - p2->x and dy = p1->y - p2->y and dz = p1->z - p2->z
+      val dist2 = dx * dx + dy * dy + dz * dz
+      val dist = sqrt (dist2)
+      val mag = dt / (dist * dist2)
+//
+      val mass = p2->mass
+      val () = p1->vx -= dx * mass * mag
+      val () = p1->vy -= dy * mass * mag
+      val () = p1->vz -= dz * mass * mag
+//
+      val mass = p1->mass
+      val () = p2->vx += dx * mass * mag
+      val () = p2->vy += dy * mass * mag
+      val () = p2->vz += dz * mass * mag
+//
+      val () = loop_inner (pf1, pf22 | p1, p2+sizeof<planet>, n2-1, dt)
+      prval () = pf2 := array_v_cons {planet} (pf21, pf22)
+    in
+      // empty
     end // end of [if]
-in
-  loop (1, 0.0, 0.0, 0.0)
-end
-
-fn energy (): double = let // mutual recursion
-  fn* l (i: natLt N, j: natLte N, e: double): double =
-    if j < N then let
-      val dx = x[i] - x[j] and dy = y[i] - y[j] and dz = z[i] - z[j]
-      val dist2 = dx * dx + dy * dy + dz * dz; val dist = $M.sqrt (dist2)
+  // end of [loop_inner]
+  fun loop_outer {n1:pos} {l1:addr} .<n1>. (
+      pf1: !planetarr n1 @ l1 | p1: ptr l1, n1: int n1, dt: double
+    ) :<> void =
+    if n1 >= 2 then let
+      prval (pf11, pf12) = array_v_uncons {planet} (pf1)
+      val p2 = p1+sizeof<planet> and n2 = n1-1
+      val () = loop_inner (pf11, pf12 | p1, p2, n2, dt)
+      val () = loop_outer (pf12 | p2, n2, dt)
+      prval () = pf1 := array_v_cons {planet} (pf11, pf12)
     in
-      l (i, j+1, e-m[i]*m[j]/dist)
-    end else l0 (i+1, e)
-
-  and l0 (i: natLte N, e: double): double =
-    if i < N then let
-      val vxi = vx[i] and vyi = vy[i] and vzi = vz[i]
+      // empty
+    end // end of [if]
+  // end of [loop_outer]
+  val () = loop_outer (view@ bodies | &bodies, n, dt)
+  fun loop {n1:nat} {l1:addr} .<n1>. (
+      pf1: !planetarr n1 @ l1 | p1: ptr l1, n1: int n1, dt: double
+    ) :<> void =
+    if n1 > 0 then let
+      prval (pf11, pf12) = array_v_uncons {planet} (pf1)
+      val () = p1->x += dt * p1->vx
+      val () = p1->y += dt * p1->vy
+      val () = p1->z += dt * p1->vz
+      val () = loop (pf12 | p1+sizeof<planet>, n1-1, dt)
+      prval () = pf1 := array_v_cons {planet} (pf11, pf12)
     in
-      l (i, i+1, e + 0.5*m[i]*(vxi*vxi+vyi*vyi+vzi*vzi))
-    end else e
-in
-  l0 (0, 0.0)
-end
+      // empty
+    end // end of [if]
+  // end of [loop]
+  val () = loop (view@ bodies | &bodies, n, dt)
+} // end of [advance]
 
-fun advances (i: Nat): void = if i > 0 then (advance 0.01; advances (i-1))
+fn energy {n:pos}
+  (bodies: &planetarr n, n: int n):<> double = e where {
+  fun loop_inner
+    {l1:addr} {n2:nat} {l2:addr} .<n2>. (
+      pf1: !planet @ l1, pf2: !planetarr n2 @ l2
+    | p1: ptr l1, p2: ptr l2, n2: int n2, e: &double
+    ) :<> void =
+    if n2 > 0 then let
+      prval (pf21, pf22) = array_v_uncons {planet} (pf2)
+      val dx = p1->x - p2->x
+      and dy = p1->y - p2->y
+      and dz = p1->z - p2->z
+      val dist = sqrt (dx * dx + dy * dy + dz * dz)
+      val () = e -= (p1->mass * p2->mass) / dist
+      val () = loop_inner (pf1, pf22 | p1, p2+sizeof<planet>, n2-1, e)
+      prval () = pf2 := array_v_cons {planet} (pf21, pf22)
+    in
+      // empty
+    end // end of [if]
+  // end of [loop_inner]
+  fun loop_outer {n1:nat} {l1:addr} .<n1>. (
+      pf1: !planetarr n1 @ l1 | p1: ptr l1, n1: int n1, e: &double
+    ) :<> void =
+    if n1 > 0 then let
+      prval (pf11, pf12) = array_v_uncons {planet} (pf1)
+      val vx = p1->vx and vy = p1->vy and vz = p1->vz
+      val () = e += 0.5 * p1->mass * (vx * vx + vy * vy + vz * vz)
+      val p2 = p1+sizeof<planet> and n2 = n1-1
+      val () = loop_inner (pf11, pf12 | p1, p2, n2, e)
+      val () = loop_outer (pf12 | p2, n2, e)
+      prval () = pf1 := array_v_cons {planet} (pf11, pf12)
+    in
+      // empty
+    end // end of [loop_outer]
+  // end of [loop_outer]
+  var e: double = 0.0
+  val () = loop_outer (view@ bodies | &bodies, n, e)
+} // end of [energy]
 
-implement main (argc, argv) = let
+(* ****** ****** *)
+
+#define PI 3.1415926535898
+#define SOLAR_MASS (4.0 * PI * PI)
+
+fn offmoment {n:pos}
+  (bodies: &planetarr n, n: int n):<> void = () where {
+  var px: double = 0.0 and py: double = 0.0 and pz: double = 0.0
+  var i: natLte (n) // uninitialized
+  val () = for* {i: nat | i <= n} .<n-i>. 
+    (i: int i) => (i := 0; i < n; i := i + 1) let
+    val mass = bodies.[i].mass
+    val () = px += bodies.[i].vx * mass
+    val () = py += bodies.[i].vy * mass
+    val () = pz += bodies.[i].vz * mass
+  in
+    // empty
+  end // end of [val]
+  val () = bodies.[0].vx := ~ px / SOLAR_MASS
+  val () = bodies.[0].vy := ~ py / SOLAR_MASS
+  val () = bodies.[0].vz := ~ pz / SOLAR_MASS
+} // end of [offset]
+
+(* ****** ****** *)
+
+#define N 5
+
+sta l_theBodies: addr
+extern prval pfbox_theBodies: vbox (planetarr(N) @ l_theBodies)
+val p_theBodies = $extval (ptr (l_theBodies), "&theBodies[0]")
+
+implement main (argc, argv) = () where {
   val () = assert (argc = 2)
   val n = int1_of (argv.[1]); val () = assert (n >= 2)
-in
-  offmoment();
-  printf ("%.9f\n", @(energy()));
-  advances n;
-  printf ("%.9f\n", @(energy()));
-end
+  prval vbox (pf_theBodies) = pfbox_theBodies
+  val () = offmoment (!p_theBodies, N)
+  val e_beg = energy (!p_theBodies, N)
+  val () = $effmask_ref (printf ("%.9f\n", @(e_beg)))
+  var i: int // unintialized ()
+  val dt = 0.01
+  val () = for (i := 0; i < n; i := i + 1) advance (!p_theBodies, N, dt)
+  val e_fin = energy (!p_theBodies, N)
+  val () = $effmask_ref (printf ("%.9f\n", @(e_fin)))
+} // end of [main]
 
-(* end of [n-body1.dats] *)
+(* ****** ****** *)
+
+// reuse some existing C code for initialization
+
+%{^ // put at the beginning
+
+#define PI 3.1415926535898
+#define SOLAR_MASS (4.0 * PI * PI)
+#define DAYS_PER_YEAR 365.24
+
+#define NBODY 5
+
+struct planet {
+  double x; double y; double z; double vx; double vy; double vz; double mass;
+} ;
+
+struct planet theBodies[NBODY] = {
+  { /* sun */
+    0, 0, 0, 0, 0, 0, SOLAR_MASS
+  }
+, { /* jupiter */
+    4.84143144246472090e+00,
+   -1.16032004402742839e+00,
+   -1.03622044471123109e-01,
+    1.66007664274403694e-03 * DAYS_PER_YEAR,
+    7.69901118419740425e-03 * DAYS_PER_YEAR,
+   -6.90460016972063023e-05 * DAYS_PER_YEAR,
+    9.54791938424326609e-04 * SOLAR_MASS
+  }
+, {  /* saturn */
+    8.34336671824457987e+00,
+    4.12479856412430479e+00,
+   -4.03523417114321381e-01,
+   -2.76742510726862411e-03 * DAYS_PER_YEAR,
+    4.99852801234917238e-03 * DAYS_PER_YEAR,
+    2.30417297573763929e-05 * DAYS_PER_YEAR,
+    2.85885980666130812e-04 * SOLAR_MASS
+  }
+, { /* uranus */
+    1.28943695621391310e+01,
+   -1.51111514016986312e+01,
+   -2.23307578892655734e-01,
+    2.96460137564761618e-03 * DAYS_PER_YEAR,
+    2.37847173959480950e-03 * DAYS_PER_YEAR,
+   -2.96589568540237556e-05 * DAYS_PER_YEAR,
+    4.36624404335156298e-05 * SOLAR_MASS
+  }
+, { /* neptune */
+    1.53796971148509165e+01,
+   -2.59193146099879641e+01,
+    1.79258772950371181e-01,
+    2.68067772490389322e-03 * DAYS_PER_YEAR,
+    1.62824170038242295e-03 * DAYS_PER_YEAR,
+   -9.51592254519715870e-05 * DAYS_PER_YEAR,
+    5.15138902046611451e-05 * SOLAR_MASS
+  }
+} ;
+
+%}
+
+(* ****** ****** *)
+
+(* end of [n-body2.dats] *)
