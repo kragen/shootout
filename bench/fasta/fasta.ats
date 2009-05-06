@@ -2,175 +2,168 @@
 ** The Computer Language Benchmarks Game
 ** http://shootout.alioth.debian.org/
 ** 
-** contributed by Hongwei Xi
+** contributed by Hongwei Xi 
 **
 ** compilation command:
-**   atscc -O3 fasta.dats -msse2 -mfpmath=sse -o fasta
+**   atscc -O3 fasta2.dats -msse2 -mfpmath=sse -o fasta2
 *)
 
+(* ****** ****** *)
+
 staload "libc/SATS/stdio.sats"
-staload "libc/SATS/stdlib.sats" // for [atoi]
 
-%{^
+(* ****** ****** *)
 
-static inline
-ats_void_type fwrite_substring_exn
-  (ats_ptr_type s, ats_int_type start, ats_int_type n, ats_ptr_type out)
-{
-  int res = fwrite(((char*)s)+start, 1, n, (FILE*)out) ;
-  if (res < n) ats_exit_errmsg (errno, "Exit: [fwrite] failed.\n") ;
-  return ;
-}
+typedef float = float; #define i2f float_of_int
 
-/* Random number generator (Shootout version) */
+// this is about 10% slower:
+// typedef float = double; #define i2f double_of_int
+
+(* ****** ****** *)
+
+local
 
 #define IM 139968
-#define IM_recip (1 / (double)IM)
 #define IA 3877
 #define IC 29573
 
-#undef IM_recip_is_allowed
+var state: int = 42
+val (pfbox | ()) = vbox_make_view_ptr {int} (view@ state | &state)
 
-static inline
-ats_double_type
-gen_random (ats_double_type max) {
-  static int state = 42 ;
-#ifdef IM_recip_is_allowed
-  return max * ((state = (state * IA + IC) % IM) * IM_recip) ;
-#else
-  return max * ((state = (state * IA + IC) % IM) / (double)IM) ;
-#endif
-}
+in // in of [local]
 
-%}
+fn random_gen
+  (max: float): float = let
+  prval vbox pf = pfbox
+  val () = state := (state * IA + IC) mod IM in (max * i2f state) / IM
+end // end of [random_gen]
 
-typedef amino = @{ c= char, p= double }
+end // end of [local]
 
-extern fun gen_random (max: double): double = "gen_random"
+(* ****** ****** *)
 
-fn make_cumulative {n:nat} {l:addr}
-  (pf: !(@[amino][n] @ l) | table: ptr l, n: int n): void = let
-  fun loop (
-      pf: !(@[amino][n] @ l)
-    | table: ptr l, n: int n, i: natLte n, prob: double
-  ) : void =
+typedef amino = @{ c= char, p= float }
+typedef aminoarr (n:int) = @[amino][n] // amino array of size n
+
+fn make_cumulative {n:nat}
+  (table: &aminoarr(n), n: size_t n): void = let
+  fun loop {i:nat | i <= n} .<n-i>. (
+      table: &aminoarr(n), n: size_t n, i: int i, prob: float
+    ) : void =
     if i < n then let
-      val prob = prob + !table.[i].p
-    in
-      !table.[i].p := prob; loop (pf | table, n, i+1, prob)
-    end
+      val prob = prob + table.[i].p in
+      table.[i].p := prob; loop (table, n, i+1, prob)
+    end // end of [if]
+  // end of [loop]
 in
-  loop (pf | table, n, 0, 0.0)
+  loop (table, n, 0, 0.0: float)
 end // end of [make_cumulative]
+
+(* ****** ****** *)
+
+extern fun fwrite_substring {m,p,n:nat | p + n <= m}
+  (str: string m, beg: size_t p, n: size_t n, out: FILEref): void
+  = "fasta_fwrite_substring"
+
+extern fun fputc (c: char, out: FILEref): void = "fasta_fputc"
+
+extern fun fwrite_byte {bsz,n:nat | n <= bsz}
+  (buf: &bytes (bsz), n: size_t n, out: FILEref):<> sizeLte n
+  = "fasta_fwrite_byte"
+
+(* ****** ****** *)
 
 #define WIDTH 60
 
-extern fun fwrite_substring_exn
-  {m,p,n:nat | p + n <= m} {l:addr}
-  (s: string m, start: int p, n: int n, file: &FILE w): void
-  = "fwrite_substring_exn"
-
-%{^
-
-static inline
-ats_void_type fasta_fputc
-  (ats_char_type c, ats_ptr_type out) {
-  fputc ((char)c, (FILE*)out) ; return ;
-}
-
-%}
-
-extern fun fputc {m:file_mode}
-  (pf: file_mode_lte (m, w) | c: char, out: &FILE m): void = "fasta_fputc"
-
-fn repeat_fasta {len:nat}
-  (file: &FILE w, s: string len, n: Nat): void = let
-  val len = length s
-  val () = assert (len >= WIDTH)
+fn repeat_fasta {len:nat} {n:nat}
+  (out: FILEref, str: string len, n: size_t n): void = let
+  macdef WIDTH_sz = size1_of_int1 (WIDTH)
+  val len = string1_length str; val () = assert (len >= WIDTH_sz)
   fun loop {n,pos:nat | pos <= len}
-    (file: &FILE w, n: int n, pos: int pos):<cloptr1> void =
-    if n > WIDTH then let
-      val left = len - pos
-    in
-      if left >= WIDTH then begin
-        fwrite_substring_exn (s, pos, WIDTH, file);
-        fputc (file_mode_lte_w_w | '\n', file);
-        loop (file, n-WIDTH, pos+WIDTH)
+    (out: FILEref, n: size_t n, pos: size_t pos):<cloref1> void =
+    if n > WIDTH_sz then let
+      val left = len - pos in
+      if left >= WIDTH_sz then begin
+        fwrite_substring (str, pos, WIDTH_sz, out); fputc ('\n', out);
+        loop (out, n - WIDTH_sz, pos + WIDTH_sz)
       end else begin
-        fwrite_substring_exn (s, pos, left, file);
-	fwrite_substring_exn (s, 0, WIDTH-left, file);
-        fputc (file_mode_lte_w_w | '\n', file);
-	loop(file, n-WIDTH, WIDTH-left)
-      end
+        fwrite_substring (str, pos, left, out);
+	fwrite_substring (str, 0, WIDTH_sz - left, out); fputc ('\n', out);
+	loop (out, n - WIDTH_sz, WIDTH_sz - left)
+      end // end of [if]
     end else let
-      val left = len - pos
-    in
+      val left = len - pos in
       if left >= n then begin
-        fwrite_substring_exn (s, pos, n, file);
-        fputc (file_mode_lte_w_w | '\n', file);
+        fwrite_substring (str, pos, n, out); fputc ('\n', out)
       end else begin
-        fwrite_substring_exn (s, pos, left, file);
-	fwrite_substring_exn (s, 0, n-left, file);
-        fputc (file_mode_lte_w_w | '\n', file);
-      end
-    end
+        fwrite_substring (str, pos, left, out);
+	fwrite_substring (str, 0, n-left, out); fputc ('\n', out)
+      end // end of [if]
+    end (* end of [if] *)
+  // end of [loop]
 in
-  loop (file, n, 0)
+  loop (out, n, 0)
 end // end of [repeat_fasta]
 
-//
-
-fun random_char {i,sz:nat | i <= sz} {l_tbl:addr}
-  (pf_tbl: !(@[amino][sz] @ l_tbl) |
-  tbl: ptr l_tbl, sz: int sz, prob: double, i: int i): char =
-  if i < sz then
-    if prob >= !tbl.[i].p then random_char (pf_tbl | tbl, sz, prob, i+1)
-    else !tbl.[i].c
-  else begin
-    exit_errmsg {char} (1, "Exit: [random_char] failed.\n")
-  end
+fun random_char {n:pos} {l:addr} (
+    pf_tbl: !aminoarr(n) @ l | p_tbl: ptr l, n: size_t n, prob: float
+  ) : char = let
+  prval (pf1, pf2) = array_v_uncons {amino} (pf_tbl)
+in
+  if prob >= p_tbl->p then let
+    prval () = __meta_info () where {
+      extern prfun __meta_info (): [n > 1] void // a piece of meta information
+    }
+    val ans = random_char (pf2 | p_tbl + sizeof<amino>, n - 1, prob)
+    prval () = pf_tbl := array_v_cons {amino} (pf1, pf2)
+  in
+    ans
+  end else let
+    val ans = p_tbl->c
+    prval () = pf_tbl := array_v_cons {amino} (pf1, pf2)
+  in
+    ans
+  end (* end of [if] *)
+end // end of [random_char]
 
 fun random_buf
-  {sz:nat} {i,len,bsz:nat | i <= len; len <= bsz} {l_tbl,l_buf:addr}
-  (pf_tbl: !(@[amino][sz] @ l_tbl), pf_buf: !(@[byte][bsz] @ l_buf) |
-   tbl: ptr l_tbl, buf: ptr l_buf, sz: int sz, len: int len, i: int i)
+  {n:pos} {i,len,bsz:nat | i <= len; len <= bsz}
+  (tbl: &aminoarr(n), buf: &bytes(bsz), n: size_t n, len: size_t len, i: size_t i)
   : void =
   if i < len then let
-    val c = random_char (pf_tbl | tbl, sz, gen_random 1.0, 0)
-    val () = buf[i] := byte_of_char c
+    val c = random_char (view@ tbl | &tbl, n, random_gen (1.0: float))
+    val () = buf.[i] := byte_of_char c
   in
-    random_buf (pf_tbl, pf_buf | tbl, buf, sz, len, i+1)
-  end
+    random_buf (tbl, buf, n, len, i+1)
+  end (* end of [if] *)
+// end of [random_buf]
 
-//
-
-fn ignore (x: int): void = ()
-
-//
-
-fn random_fasta {sz:nat} {l_tbl:addr}
-  (pf_tbl: !(@[amino][sz] @ l_tbl) |
-   file: &FILE w, tbl: ptr l_tbl, sz: int sz, n: Nat): void = let
-  fun loop {n:nat} {l_buf:addr} .<n>.
-    (pf_tbl: !(@[amino][sz] @ l_tbl), pf_buf: !(@[byte][WIDTH+1] @ l_buf) |
-     file: &FILE w, buf: ptr l_buf, n: int n):<cloptr1> void =
-    if (n > WIDTH) then begin
-      random_buf (pf_tbl, pf_buf | tbl, buf, sz, WIDTH, 0);
-      ignore (fwrite_byte (file_mode_lte_w_w, pf_buf | buf, WIDTH+1, file));
-      loop (pf_tbl, pf_buf | file, buf, n-WIDTH)
-    end else begin
-      random_buf (pf_tbl, pf_buf | tbl, buf, sz, n, 0);
-      ignore (fwrite_byte (file_mode_lte_w_w, pf_buf | buf, n, file));
-      fputc (file_mode_lte_w_w | '\n', file)
-    end
-  val () = make_cumulative (pf_tbl | tbl, sz)
-  val (pf_ngc, pf_buf | buf) = malloc_ngc (WIDTH+1)
-  val () = buf[WIDTH] := byte_of_char '\n'
-in
-  loop (pf_tbl, pf_buf | file, buf, n); free_ngc (pf_ngc, pf_buf | buf)
-end // end of [random_fasta]
-
-//
+fn random_fasta {n:pos} {len:nat} (
+    out: FILEref, tbl: &aminoarr(n), n: size_t n, len: size_t len
+  ) : void = () where {
+  macdef WIDTH_sz = size1_of_int1 (WIDTH)
+  fun loop {len:nat} .<len>. (
+      out: FILEref
+    , tbl: &aminoarr(n), buf: &bytes(WIDTH+1), n: size_t n, len: size_t len
+    ) : void =
+    if (len > WIDTH_sz) then let
+      val () = random_buf (tbl, buf, n, WIDTH_sz, 0)
+      val _(*int*) = fwrite_byte (buf, WIDTH_sz+1, out)
+    in
+      loop (out, tbl, buf, n, len-WIDTH_sz)
+    end else let
+      val () = random_buf (tbl, buf, n, len, 0)
+      val _(*int*) = fwrite_byte (buf, len, out)
+      val () = fputc ('\n', out)
+    in
+      // empty
+    end // end of [loop]
+  val () = make_cumulative (tbl, n)
+  var !p_buf with pf_buf = @[byte][WIDTH+1]()
+  prval () = pf_buf := bytes_v_of_b0ytes_v (pf_buf)
+  val () = p_buf->[WIDTH_sz] := byte_of_char '\n'
+  val () = loop (out, tbl, !p_buf, n, len)
+} // end of [random_fasta]
 
 val alu ="\
 GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG\
@@ -183,14 +176,12 @@ AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
 
 //
 
-implement main (argc, argv) = let
+implement main (argc, argv) = () where {
 
 val () = assert (argc = 2)
-val s = argv.[1]
-val n = atoi (s)
+val n = int1_of_string (argv.[1])
 val () = assert (n >= 0)
-val (pf_stdout | stdout) = stdout_get ()
-val @(pf_gc, pf_iub | iub, iub_sz) = @[amino][
+val @(pf_gc, pf_iub | p_iub, iub_sz) = $arrsz{amino}(
   @{c='a', p=0.27}
 , @{c='c', p=0.12}
 , @{c='g', p=0.12}
@@ -206,25 +197,52 @@ val @(pf_gc, pf_iub | iub, iub_sz) = @[amino][
 , @{c='V', p=0.02}
 , @{c='W', p=0.02}
 , @{c='Y', p=0.02}
-]
+) // end of [val]
 
-val @(pf_homo_gc, pf_homo | homo, homo_sz) = @[amino][
+val @(pf_homo_gc, pf_homo | p_homo, homo_sz) = $arrsz{amino}(
   @{c='a', p=0.3029549426680}
 , @{c='c', p=0.1979883004921}
 , @{c='g', p=0.1975473066391}
 , @{c='t', p=0.3015094502008}
-]
+) // end of [val]
 
-in
+#define i2sz size1_of_int1
+val () = fprint (stdout_ref, ">ONE Homo sapiens alu\n")
+val () = repeat_fasta (stdout_ref, alu, i2sz (2 * n))
+val () = fprint (stdout_ref, ">TWO IUB ambiguity codes\n")
+val () = random_fasta (stdout_ref, !p_iub, iub_sz, i2sz (3 * n))
+val () = array_ptr_free {amino} (pf_gc, pf_iub | p_iub)
+val () = fprint (stdout_ref, ">THREE Homo sapiens frequency\n")
+val () = random_fasta (stdout_ref, !p_homo, homo_sz, i2sz (n * 5))
+val () = array_ptr_free {amino} (pf_homo_gc, pf_homo | p_homo)
 
-fprint (file_mode_lte_w_w | !stdout, ">ONE Homo sapiens alu\n") ;
-repeat_fasta (!stdout, alu, n * 2) ;
-fprint (file_mode_lte_w_w | !stdout, ">TWO IUB ambiguity codes\n");
-random_fasta (pf_iub | !stdout, iub, iub_sz, n * 3) ;
-array_ptr_free {amino} (pf_gc, pf_iub | iub) ;
-fprint (file_mode_lte_w_w | !stdout, ">THREE Homo sapiens frequency\n");
-random_fasta (pf_homo | !stdout, homo, homo_sz, n * 5) ;
-array_ptr_free {amino} (pf_homo_gc, pf_homo | homo) ;
-stdout_view_set (pf_stdout | (*none*))
+} // end of [main]
 
-end
+(* ****** ****** *)
+
+%{^
+
+ats_void_type
+fasta_fwrite_substring (
+  ats_ptr_type str, ats_size_type beg
+, ats_size_type len, ats_ptr_type out
+) {
+  fwrite_unlocked(((char*)str)+beg, 1, len, (FILE*)out) ; return ;
+}
+
+ats_void_type
+fasta_fputc (ats_char_type c, ats_ptr_type out) {
+  fputc_unlocked ((char)c, (FILE*)out) ; return ;
+}
+
+ats_size_type
+fasta_fwrite_byte
+  (ats_ptr_type buf, ats_size_type n, ats_ptr_type fil) {
+  return fwrite_unlocked ((void*)buf, (size_t)1, (size_t)n, (FILE*)fil) ;
+}
+
+%}
+
+(* ****** ****** *)
+
+(* end of [fasta2.dats] *)

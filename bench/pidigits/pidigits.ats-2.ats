@@ -1,0 +1,141 @@
+(*
+** The Computer Language Benchmarks Game
+** http://shootout.alioth.debian.org/
+**
+** contributed by Hongwei Xi
+**
+** This code is a direct translation from a C submission by
+** Sean Bartell, which is based on the Scheme PLT #4 version
+**
+** compilation command:
+**   atscc -O3 -fomit-frame-pointer pidigits2.dats -o pidigits2 -lgmp
+*)
+
+(* ****** ****** *)
+
+staload "libc/SATS/gmp.sats"
+
+(* ****** ****** *)
+
+var tmp: mpz_vt with pf_tmp
+viewdef v_tmp = mpz_vt @ tmp
+val () = mpz_init (tmp)
+
+var acc: mpz_vt with pf_acc
+viewdef v_acc = mpz_vt @ acc
+val () = mpz_init_set (acc, 0)
+
+var num: mpz_vt with pf_num
+viewdef v_num = mpz_vt @ num
+val () = mpz_init_set (num, 1)
+
+var den: mpz_vt with pf_den
+viewdef v_den = mpz_vt @ den
+val () = mpz_init_set (den, 1)
+
+(* ****** ****** *)
+
+viewdef v_all = @(v_tmp, v_acc, v_num, v_den)
+prval pf_all = @(pf_tmp, pf_acc, pf_num, pf_den)
+prval pfbox_all =
+  vbox_make {v_all} (pf_all) where {
+  extern prfun vbox_make {v:view} (pf: v): vbox (v)
+} // end of [val]
+
+(* ****** ****** *)
+
+fn extract_digit (
+    pf_tmp: !v_tmp, pf_acc: !v_acc, pf_num: !v_num, pf_den: !v_den
+  | nth: uint
+  ) :<(*pure*)> uint = let
+  val () = begin
+    mpz_mul (tmp, num, nth); mpz_add (tmp, acc); mpz_tdiv_q (tmp, den)
+  end // end of [val]
+in
+  mpz_get_uint (tmp)
+end // end of [extract_digit]
+
+(* ****** ****** *)
+
+fn next_term (
+    pf_tmp: !v_tmp, pf_acc: !v_acc, pf_num: !v_num, pf_den: !v_den
+  | k: uint
+  ) :<(*pure*)> void = () where {
+  val y2 = k * 2U + 1U (* : uint *); val () = begin
+    mpz_addmul (acc, num, 2U); mpz_mul (acc, y2); mpz_mul (num, k); mpz_mul (den, y2)
+  end // end of [val]
+} // end of [next_term]
+
+(* ****** ****** *)
+
+fn eliminate_digit (
+    pf_acc: !v_acc, pf_num: !v_num, pf_den: !v_den | d: uint
+  ) :<(*pure*)> void = () where {
+  val () = begin
+    mpz_submul (acc, den, d); mpz_mul (acc, 10); mpz_mul (num, 10)
+  end // end of [val]
+} // end of [eliminate_digit]
+
+(* ****** ****** *)
+
+fn pidigits (
+    pf_tmp: !v_tmp, pf_acc: !v_acc, pf_num: !v_num, pf_den: !v_den
+  | n: int
+  ) : void = () where {
+  var i: int = 0 and m: int = 0
+  var d: uint with pf_d = 0U and k: uint with pf_k = 0U
+  val () = while (true) let
+    fun loop (
+        pf_tmp: !v_tmp, pf_acc: !v_acc, pf_num: !v_num, pf_den: !v_den
+      , pf_k: !uint @ k, pf_d: !uint @ d
+      | (*none*)
+      ) :<cloref1> void = let
+      val () = k := k + 1U
+      val () = next_term (pf_tmp, pf_acc, pf_num, pf_den | k)
+      val sgn = mpz_cmp (num, acc)
+    in
+      if sgn > 0 then loop
+        (pf_tmp, pf_acc, pf_num, pf_den, pf_k, pf_d | (*none*))
+      else let
+        val () =
+          d := extract_digit (pf_tmp, pf_acc, pf_num, pf_den | 3U)
+        // end of [val]
+        val d4 = extract_digit (pf_tmp, pf_acc, pf_num, pf_den | 4U)
+      in
+        if d <> d4 then loop
+          (pf_tmp, pf_acc, pf_num, pf_den, pf_k, pf_d | (*none*))
+        // end of [if]
+      end // end of [if]
+    end (* end of [loop] *)
+    val () = loop
+      (pf_tmp, pf_acc, pf_num, pf_den, pf_k, pf_d | (*none*))
+    // end of [val]
+    val () = print (char_of_uint (d + uint_of_char '0'))
+    val () = i := i + 1
+    val () = m := i mod 10
+    val () = if m = 0 then printf ("\t:%d\n", @(i))
+    val () = if (i >= n) then break
+    val () = eliminate_digit (pf_acc, pf_num, pf_den | d)
+  in
+    // empty
+  end // end of [val]
+  
+  val () = if (m > 0) then let
+    fun loop (i: int): void = if i > 0 then (print (' '); loop (i-1))
+  in
+    loop (10-m); printf ("\t:%d\n", @(n))
+  end // end of [val]
+} (* end of [pidigits] *)
+
+(* ****** ****** *)
+
+implement main (argc, argv) = let
+  val n = (if argc > 1 then int_of_string (argv.[1]) else 27): int
+  prval vbox pf_all = pfbox_all
+in
+  $effmask_ref (pidigits (pf_all.0, pf_all.1, pf_all.2, pf_all.3 | n))
+end // end of [main]
+  
+(* ****** ****** *)
+
+(* end of [pidigits2.dats] *)
