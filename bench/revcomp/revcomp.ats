@@ -5,141 +5,186 @@
 ** contributed by Hongwei Xi 
 **
 ** compilation command:
-**   atscc -O3 -fomit-frame-pointer revcomp.dats -o revcomp
-**)
+**   atscc -O3 -fomit-frame-pointer reverse-complement2.dats -o reverse-complement2
+*)
+
+(* ****** ****** *)
 
 staload "libc/SATS/stdio.sats"
 
-extern fun iub_comp (b: byte): byte = "iub_comp"
-extern fun iub_comp_build (): void = "iub_comp_build"
+(* ****** ****** *)
+
+sta l_iubcmpltarr: addr
+extern prval
+  pfbox_iubcmpltarr: vbox (bytes(BYTE_MAX+1) @ l_iubcmpltarr)
+val p_iubcmpltarr = $extval (ptr l_iubcmpltarr, "&iubcmpltarr[0]")
+
+fn iubcmplt_get (b: byte): byte = let
+  val i = int1_of_byte (b); prval vbox pf = pfbox_iubcmpltarr in
+  p_iubcmpltarr->[i]
+end // end of [iubcmplt_get]
+
+(* ****** ****** *)
 
 (* [reverse buf] reverse-complement the string [buf] in place. *)
-fn reverse_buf {pos,bsz:nat | pos <= bsz} {l_buf:addr} 
-  (pf: !bytes_v (bsz, l_buf) | buf: ptr l_buf, pos: int pos)
-  : void = let
-  fun rev {i:nat | i <= pos} .<pos-i>. (
-      pf: !bytes_v (bsz, l_buf) | i: int i, j: int (pos-i-1)
-    ) :<cloptr1> void = begin
-      if i < j then let
-        val bufi = buf[i]
-      in
-        buf[i] := iub_comp buf[j]; buf[j] := iub_comp bufi;
-        rev (pf | i+1, j-1)
-      end
-  end // end of [rev]
-in
-  rev (pf | 0, pos-1)
-end // end of [reverse_buf]
+fn reverse_buf {pos,bsz:nat | 0 < pos; pos <= bsz}
+  (buf: &bytes(bsz), pos: size_t pos): void = loop (buf, 0, pos-1) where {
+  fun loop {i:nat | i < pos} .<pos-i>.
+    (buf: &bytes(bsz), i: size_t i, j: size_t (pos-i-1)): void =
+    if i < j then let
+      val bufi = buf.[i] and bufj = buf.[j]
+      val () = buf.[i] := iubcmplt_get bufj and () = buf.[j] := iubcmplt_get bufi
+    in
+      loop (buf, i+1, j-1)
+    end (* end of [if] *)
+  // end of [loop]
+} // end of [reverse_buf]
 
-#define BUFSZ 1024
-#define WIDTH 60
+(* ****** ****** *)
+
 #define LINE 128
+#define BUFSZ 1024
 
-%{^
+#define WIDTH 60
+macdef WIDTH_sz = size1_of_int1 (WIDTH)
 
-static inline
-ats_void_type fasta_fputc
-  (ats_char_type c, ats_ptr_type out) {
-  fputc ((char)c, (FILE*)out) ; return ;
-}
+(* ****** ****** *)
 
-%}
+// *_unlocked I/O functions are used to implement these two:
+extern fun fputc (c: char, out: FILEref): void = "fasta_fputc"
+extern fun fwrite_byte {bsz,n:nat | n <= bsz} {l:addr}
+  (pf: !bytes (bsz) @ l | p: ptr l, n: size_t n, out: FILEref):<> sizeLte n
+  = "fasta_fwrite_byte"
 
-extern
-fun fwrite_buf {pos,len,bsz:nat | pos + len <= bsz} {l_buf:addr}
-  (pf_buf: !bytes_v (bsz, l_buf) |
-   buf: ptr l_buf, pos: int pos, len: int len, file: &FILE w)
-  : void = "fwrite_buf"
+// no proof is provided for the following two theoremsp
+extern prfun bytes_v_split {n,i:nat | i <= n}
+  {l:addr} (pf: bytes (n) @ l): @(bytes (i) @ l, bytes (n-i) @ l+i)
+extern prfun bytes_v_unsplit {n1,n2:nat}
+  {l:addr} (pf1: bytes(n1) @ l, pf2: bytes(n2) @ l+n1): bytes (n1+n2) @ l
 
-extern fun fputc {m:file_mode}
-  (pf: file_mode_lte (m, w) | c: char, out: &FILE m)
-  : void = "fasta_fputc"
+(* ****** ****** *)
 
-fn print_fasta {n,sz:nat | n <= sz} {l_buf:addr}
-  (pf_buf: !bytes_v (sz, l_buf) | buf: ptr l_buf, n: int n): void = let
-  fun pr {pos:nat | pos <= n}
-    (pf_buf: !bytes_v (sz, l_buf) |
-     file: &FILE w, pos: int pos, left: int (n-pos)):<cloptr1> void =
-    if left > WIDTH then begin
-      fwrite_buf (pf_buf | buf, pos, WIDTH, file);
-      fputc (file_mode_lte_w_w | '\n', file);
-      pr (pf_buf | file, pos+WIDTH, left-WIDTH)
-    end else begin
-      fwrite_buf (pf_buf | buf, pos, left, file);
-      fputc (file_mode_lte_w_w | '\n', file)
-    end
-  val (pf_stdout | stdout) = stdout_get ()
+fun fasta_print {n,sz:nat | n <= sz} {l:addr}
+  (pf: !bytes (sz) @ l | p: ptr l, n: size_t n): void =
+  if n > WIDTH_sz then let
+    val _ = fwrite_byte (pf | p, WIDTH_sz, stdout_ref)
+    val () = fputc ('\n', stdout_ref)
+    prval (pf1, pf2) = bytes_v_split {sz,WIDTH} (pf)
+    val () = fasta_print (pf2 | p + WIDTH_sz, n - WIDTH)
+    val () = pf := bytes_v_unsplit (pf1, pf2)
+  in
+    // empty
+  end else let
+    val _ = fwrite_byte (pf | p, n, stdout_ref)
+    val () = fputc ('\n', stdout_ref)
+  in
+    // empty
+  end // end of [if]    
+// end of [fasta_print]
+
+(* ****** ****** *)
+
+fn fwrite_buf
+  {pos,len,bsz:nat | pos + len <= bsz} {l_buf:addr} (
+    pf: !bytes (bsz) @ l_buf
+  | p_buf: ptr l_buf, pos: size_t pos, len: size_t len, file: FILEref
+  ) : void = () where {
+  prval (pf1, pf2) = bytes_v_split {bsz,pos} (pf)
+  val _ = fwrite_byte (pf2 | p_buf + pos, len, file)
+  prval () = pf := bytes_v_unsplit (pf1, pf2)
+} /* end of [fwrite_buf] */
+
+typedef sizeBtw (lb:int, ub:int) = [i:int | lb <= i; i < ub] size_t i
+
+fn fread_buf_line
+  {pos,len,bsz:nat | 0 < len; pos + len <= bsz} {l_buf:addr} (
+    pf: !bytes (bsz) @ l_buf
+  | p_buf: ptr l_buf, pos: size_t pos, len: int len, inp: &FILE r
+  ) : sizeBtw (pos, pos+len) = let
+  prval (pf1, pf2) = bytes_v_split {bsz,pos} (pf)
+  val p_beg = p_buf+pos
+  val () = fgets_exn (file_mode_lte_r_r, pf2 | p_beg, len, inp)
+  val n = strbuf_length (!p_beg)
+  val pos1 = pos + n
 in
-  pr (pf_buf | !stdout, 0, n); stdout_view_set (pf_stdout | (*none*))
-end // end of [print_fasta]
+  case+ 0 of
+  | _ when n > 0 => let
+      val c = strbuf_get_char_at (!p_beg, n-1)
+      prval pf2 = bytes_v_of_strbuf_v (pf2)
+      prval () = pf := bytes_v_unsplit (pf1, pf2)
+    in
+      if c = '\n' then pos1 - 1 else pos1
+    end // end of [_ when ...]
+  | _ => pos1 where {
+      prval pf2 = bytes_v_of_strbuf_v (pf2)
+      prval () = pf := bytes_v_unsplit (pf1, pf2)
+    } // end of [_]
+end (* end of [fread_buf_line] *)
 
-extern fun fread_buf_line
-  {pos,len,bsz:nat | pos + len <= bsz} {l_buf:addr}
-  (pf_buf: !bytes_v (bsz, l_buf) |
-   buf: ptr l_buf, pos: int pos, len: int len, file: &FILE r)
-  : [pos_new:int | pos <= pos_new; pos_new < pos+len] int pos_new
-  = "fread_buf_line"
-
-#define c2b byte_of_char
+(* ****** ****** *)
 
 implement main (argc, argv) = let
 
+macdef GT = byte_of_char '>' 
 fun loop {pos,bsz:nat | bsz > 0} {l_buf:addr} (
-    pf_ngc: free_ngc_v l_buf
-  , pf_buf: bytes_v (bsz, l_buf)
-  | inp: &FILE r, buf: ptr l_buf, bsz: int bsz, pos: int pos
+    pf_ngc: free_ngc_v (bsz, l_buf), pf_buf: bytes (bsz) @ l_buf
+  | inp: &FILE r, p_buf: ptr l_buf, bsz: size_t bsz, pos: size_t pos
   ) : void = begin
   if pos + LINE <= bsz then let
-    val pos_new = fread_buf_line (pf_buf | buf, pos, LINE, inp)
+    val pos_new = fread_buf_line (pf_buf | p_buf, pos, LINE, inp)
   in
-    if pos_new > pos then
-      if buf[pos] = c2b '>' then begin
-        if pos > 0 then begin
-          reverse_buf (pf_buf | buf, pos); print_fasta (pf_buf | buf, pos)
-        end;
-
-        let val (pf_stdout | stdout) = stdout_get () in
-          fwrite_buf (pf_buf | buf, pos, pos_new-pos, !stdout);
-          fputc (file_mode_lte_w_w | '\n', !stdout);
-          stdout_view_set (pf_stdout | (*none*))
-        end;
-
-        loop (pf_ngc, pf_buf | inp, buf, bsz, 0)
+    if pos_new > pos then begin
+      if p_buf->[pos] = GT then let
+        val () = if pos > 0 then let
+          val () = reverse_buf (!p_buf, pos) in fasta_print (pf_buf | p_buf, pos)
+        end // end of [val]
+        val () = fwrite_buf (pf_buf | p_buf, pos, pos_new-pos, stdout_ref)
+        val () = fputc ('\n', stdout_ref)
+      in
+        loop (pf_ngc, pf_buf | inp, p_buf, bsz, 0)
       end else begin
-        loop (pf_ngc, pf_buf | inp, buf, bsz, pos_new)
-      end
-    else begin
-      if pos > 0 then begin
-        reverse_buf (pf_buf | buf, pos);
-        print_fasta (pf_buf | buf, pos);
-        free_ngc (pf_ngc, pf_buf | buf)
-      end else begin
-        free_ngc (pf_ngc, pf_buf | buf)
-      end
-    end
+        loop (pf_ngc, pf_buf | inp, p_buf, bsz, pos_new)
+      end (* end of [if] *)
+    end else let
+      val () = if pos > 0 then let
+        val () = reverse_buf (!p_buf, pos)
+        val () = fasta_print (pf_buf | p_buf, pos);
+      in
+        // empty
+      end // end of [val]
+      val () = free_ngc (pf_ngc, pf_buf | p_buf)
+    in
+      // empty
+    end (* end of [if] *)
   end else let
     val bsz = bsz + bsz
-    val (pf_ngc, pf_buf | buf) = realloc_ngc (pf_ngc, pf_buf | buf, bsz)
+    val (pf_ngc, pf_buf | p_buf) = realloc_ngc (pf_ngc, pf_buf | p_buf, bsz)
+    prval pf_buf = bytes_v_of_b0ytes_v pf_buf
   in
-    loop (pf_ngc, pf_buf | inp, buf, bsz, pos)
-  end
-end // end of [loop]
+    loop (pf_ngc, pf_buf | inp, p_buf, bsz, pos)
+  end // end of [if]
+end (* end of [loop] *)
 
-val () = iub_comp_build ()
-val (pf_stdin | stdin) = stdin_get ()
-val (pf_ngc, pf_buf | buf) = malloc_ngc (BUFSZ)
+val () = iubcmpltarr_initialize () where {
+  extern fun iubcmpltarr_initialize (): void = "iubcmpltarr_initialize"
+}
+val (pf_ngc, pf_buf | p_buf) = malloc_ngc (BUFSZ)
+prval pf_buf = bytes_v_of_b0ytes_v pf_buf
+val (pf_stdin | p_stdin) = stdin_get ()
+val () = loop (pf_ngc, pf_buf | !p_stdin, p_buf, BUFSZ, 0)
+val () = stdin_view_set (pf_stdin | (*none*))
 
 in
-  loop (pf_ngc, pf_buf | !stdin, buf, BUFSZ, 0);
-  stdin_view_set (pf_stdin | (*none*))
+  // empty
 end // end of [main]
 
-//
+(* ****** ****** *)
 
 %{^
 
+// reuse some existing C code for initialization
+
 #include <errno.h>
-#include <limits.h>
 
 static unsigned char iubpairs[][2] = {
     {    'A',    'T'    },
@@ -148,64 +193,41 @@ static unsigned char iubpairs[][2] = {
     {    'D',    'H'    },
     {    'K',    'M'    },
     {    'R',    'Y'    },
-    {    '\0',   '\0'   }
-};
+    {    '\000',   '\000'   }
+} ;
 
-static unsigned char _iub_comp[1+UCHAR_MAX];
+#define BYTE_MAX 255
+static unsigned char iubcmpltarr[1+BYTE_MAX];
 
 static inline
-ats_void_type iub_comp_build () {
+ats_void_type iubcmpltarr_initialize () {
   int i;
-  for (i=0; i <= UCHAR_MAX; i++) {
-    _iub_comp[i] = (unsigned char) i;
+  for (i=0; i <= BYTE_MAX; i++) {
+    iubcmpltarr[i] = (unsigned char) i;
   }
   for (i=0; iubpairs[i][0] != '\0'; i++) {
-    _iub_comp[iubpairs[i][0]] = iubpairs[i][1];
-    _iub_comp[iubpairs[i][1]] = iubpairs[i][0];
-    _iub_comp[tolower (iubpairs[i][0])] = iubpairs[i][1];
-    _iub_comp[tolower (iubpairs[i][1])] = iubpairs[i][0];
+    iubcmpltarr[iubpairs[i][0]] = iubpairs[i][1];
+    iubcmpltarr[iubpairs[i][1]] = iubpairs[i][0];
+    iubcmpltarr[tolower(iubpairs[i][0])] = iubpairs[i][1];
+    iubcmpltarr[tolower(iubpairs[i][1])] = iubpairs[i][0];
   }
+} /* end of [iubcmpltarr_initialize] */
+
+// locked/unlocked: does it really matter?
+
+ats_void_type
+fasta_fputc (ats_char_type c, ats_ptr_type out) {
+  fputc_unlocked ((char)c, (FILE*)out) ; return ;
 }
 
-static inline
-ats_byte_type
-iub_comp (ats_byte_type b) { return _iub_comp[b] ; }
-
-ats_int_type fread_buf_line
-  (ats_ptr_type buf, ats_int_type pos, ats_int_type len, ats_ptr_type file)
-{
-  char *src, *res; int n;
-
-  src = (char *)buf+pos ;
-  res = fgets (src, (int)len, (FILE *)file) ;
-  if (!res) {
-    if (feof((FILE *)file)) return pos ;
-    else {
-      ats_exit_errmsg (errno, "Exit: [fread_buf_line] failed.\n") ;
-    }
-  }
-  n = strlen (src) ;
-  if (n>0) {
-    return src[n-1] == '\n' ? (pos+n-1) : (pos+n) ;
-  }
-  return pos ;
+ats_size_type
+fasta_fwrite_byte
+  (ats_ptr_type buf, ats_size_type n, ats_ptr_type fil) {
+  return fwrite_unlocked ((void*)buf, (size_t)1, (size_t)n, (FILE*)fil) ;
 }
-
-ats_void_type fwrite_buf 
-  (ats_ptr_type buf, ats_int_type pos, ats_int_type len, ats_ptr_type file)
-{
-  int n;
-  char *src ;
-  src = (char *)buf + pos ;
-  n = fwrite (src, 1, len, file);
-  if (n < len) {
-    ats_exit_errmsg (errno, "Exit: [fwrite_buf] failed.\n") ;
-  }
-  return ;
-}  
 
 %}
 
 (* ****** ****** *)
 
-(* end of [reverse-complement.dats] *)
+(* end of [reverse-complement2.dats] *)
