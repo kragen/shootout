@@ -125,7 +125,7 @@ if ($T=='all'){
          require_once(LIB_PATH.'lib_scorecard.php');
 
          $Title = 'Create your own Ranking';
-         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; }
+         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'scorecard.tpl.php';
          $About = & new Template(ABOUT_PATH);
