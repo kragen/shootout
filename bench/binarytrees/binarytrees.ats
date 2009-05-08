@@ -5,80 +5,70 @@
 ** contributed by Hongwei Xi
 **
 ** compilation command:
-**   atscc -O3 binary-trees.dats -o binary-trees -D_ATS_GCATS
+**   atscc -O3 binary-trees2.dats -o binary-trees2 -D_ATS_GCATS
 *)
+
+(* ****** ****** *)
+
+staload _(*anonymous*) = "prelude/DATS/reference.dats"
 
 (* ****** ****** *)
 
 dataviewtype tree (int) =
   Nil(0) | {n1,n2:two} Node(1) of (tree n1, int, tree n2)
+// end of [tree]
 
 viewtypedef Tree = [n:two] tree n
 
-fun make (d: int, i: int): Tree =
-  if d > 0 then
-    let val d1 = d-1 and i2 = i << 1 in      
-      Node (make (d1, i2 - 1), i, make (d1, i2))
-    end
-  else Node (Nil (), i, Nil ())
+fun tree_make (d: int, i: int): Tree =
+  if d > 0 then let
+    val d1 = d-1 and i2 = i << 1 in
+    Node (tree_make (d1, i2 - 1), i, tree_make (d1, i2))
+  end else Node (Nil (), i, Nil ())
+// end of [tree_make]
 
 fun check_and_free (t: Tree):<!ntm> int =  case+ t of
   | ~Node (tl, i, tr) => i + check_and_free tl - check_and_free tr
   | ~Nil () => 0
+// end of [check_and_free]
 
-fun check (t: !Tree):<!ntm> int =  case+ t of
-  | Node (!tl, i, !tr) =>
-    let val ans = i + check (!tl) - check (!tr) in (fold@ t; ans) end
+fun check (t: !Tree):<!ntm> int = case+ t of
+  | Node (!tl, i, !tr) => let
+      val ans = i + check (!tl) - check (!tr) in (fold@ t; ans)
+    end // end of [Node]
   | Nil () => (fold@ t; 0)
+// end of [check]
 
 fun check_ref (r: ref Tree): int = let
-  val (pf_box | p) = ref_get_view_ptr r
-  prval vbox pf = pf_box
-in
-  check !p     
+  val (vbox pf | p) = ref_get_view_ptr r in check !p     
 end // end of [check_ref]
 
-//
+(* ****** ****** *)
 
-val min_depth: Nat = 4
+#define MIN_DEPTH 4
 
 fn stretch (max_depth: Nat): void = let
    val stretch_depth = max_depth + 1
-   val t = make (stretch_depth, 0)
+   val t = tree_make (stretch_depth, 0)
    val c = check_and_free (t)
 in
    printf ("stretch tree of depth %i\t check: %i\n", @(stretch_depth, c));
 end // end of [stretch]
 
-extern typedef "Tree" = Tree
-extern fun ref_tree (t: Tree): ref Tree = "ref_tree"
-
-%{
-
-ats_ref_type ref_tree (ats_ptr_type t) {
-  Tree* r ;
-  r = ATS_MALLOC (sizeof(Tree)) ;
-  *r = (Tree)t ;
-  return r ;
-}
-
-%}
-
 fn long_lived_tree_make
   (max_depth: Nat): ref Tree = let
-  val t = make (max_depth, 0)
-  val t_r = ref_tree (t)
+  val t = tree_make (max_depth, 0); val t_r = ref<Tree> (t)
 in
   t_r
 end // end of [long_lived_tree_make]
 
 fun loop_depths (d: Nat, max_depth: Nat): void = begin
   if d <= max_depth then let
-    val n = 1 << (max_depth - d + min_depth)
-    fun loop (i: Nat, c: int):<cloptr1> int =
+    val n = 1 << (max_depth - d + MIN_DEPTH)
+    fun loop (i: Nat, c: int):<cloref1> int =
       if i < n then let
-        val t = make(d, i); val c1 = check_and_free t
-        val t = make(d, ~i); val c2 = check_and_free t
+        val t = tree_make(d,  i); val c1 = check_and_free t
+        val t = tree_make(d, ~i); val c2 = check_and_free t
       in
         loop (i+1, c + c1 + c2)
       end else c
@@ -95,15 +85,17 @@ implement main (argc, argv) = let
   val n = int1_of argv.[1]
   val () = assert_errmsg
     (n >= 0, "The input integer needs to be a natural number.\n")
+  // this simply means that no garbage collection can be triggered
+  // and memory allocation and deallocation must be handled manually
   val () = gc_chunk_count_limit_max_set (~1) // infinite
-  val max_depth = max (min_depth + 2, n)
+  val max_depth = max (MIN_DEPTH + 2, n)
   val () = stretch (max_depth)
   val long_lived_tree = long_lived_tree_make (max_depth)
 in
-  loop_depths (min_depth, max_depth);
+  loop_depths (MIN_DEPTH, max_depth);
   printf ("long lived tree of depth %i\t check: %i\n", @(max_depth, check_ref long_lived_tree))
 end // end of [main]
 
 (* ****** ****** *)
 
-(* end of [binary-tree.dats] *)
+(* end of [binary-tree2.dats] *)
