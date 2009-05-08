@@ -64,7 +64,7 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
    foreach($Tests as $k => $v){ $mins[$k] = array(); }
 
    $data = array();
-   $timeout = array();
+   //$timeout = array();
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
@@ -83,10 +83,10 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
                   !isset($Excl[$key])){
                     
             // this isn't quite correct doesn't take account of more than one program
-            if (PROGRAM_TIMEOUT == $row[DATA_STATUS]){
-               if (!isset($timeout[$lang])){ $timeout[$lang] = 1; }
-               else { $timeout[$lang]++; }
-            }
+            //if (PROGRAM_TIMEOUT == $row[DATA_STATUS]){
+               //if (!isset($timeout[$lang])){ $timeout[$lang] = 1; }
+               //else { $timeout[$lang]++; }
+            //}
 
             if ($row[DATA_STATUS] == 0 && (
                   ($row[DATA_TIME] > 0 && (!isset($data[$lang][$test][$testvalue]) ||
@@ -201,7 +201,7 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
    foreach($Tests as $k => $v){ $mins[$k] = array(); }
 
    $data = array();
-   $timeout = array();
+   //$timeout = array();
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
