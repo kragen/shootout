@@ -64,7 +64,7 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
    foreach($Tests as $k => $v){ $mins[$k] = array(); }
 
    $data = array();
-   //$timeout = array();
+
    while (!@feof ($f)){
       $row = @fgetcsv($f,1024,',');
       if (!is_array($row)){ continue; }
@@ -81,12 +81,6 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
       if (isset($Incl[$test]) && isset($Incl[$lang]) &&
                isset($Langs[$lang]) &&
                   !isset($Excl[$key])){
-                    
-            // this isn't quite correct doesn't take account of more than one program
-            //if (PROGRAM_TIMEOUT == $row[DATA_STATUS]){
-               //if (!isset($timeout[$lang])){ $timeout[$lang] = 1; }
-               //else { $timeout[$lang]++; }
-            //}
 
             if ($row[DATA_STATUS] == 0 && (
                   ($row[DATA_TIME] > 0 && (!isset($data[$lang][$test][$testvalue]) ||
@@ -216,7 +210,6 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
       // accumulate all acceptable datarows, exclude duplicates
 
       if (isset($Incl[$test]) && isset($Incl[$lang]) && isset($Langs[$lang]) &&
-               ($Tests[$test][TEST_WEIGHT]>0) &&
                   !isset($Excl[$key])){
 
             if ($row[DATA_STATUS] == 0 && (
@@ -251,11 +244,16 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
 
          $s = array(); $include = 0.0;
          foreach($test as $t => $testvalues){
-            foreach($testvalues as $tv => $v){
-               $val = $v[DATA_TIME];
-               if ($val > 0){
-                  $s[] = $val/$mins[$t][$tv];
-                  $include += $val;
+
+            // wait until now to filter so sizeof($test) is consistent with FullWeightedData
+            if ($Tests[$t][TEST_WEIGHT]>0){
+
+               foreach($testvalues as $tv => $v){
+                  $val = $v[DATA_TIME];
+                  if ($val > 0){
+                     $s[] = $val/$mins[$t][$tv];
+                     $include += $val;
+                  }
                }
             }
          }
