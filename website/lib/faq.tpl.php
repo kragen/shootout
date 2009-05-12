@@ -9,7 +9,7 @@
 <dd>
 <dl>
 <dd>
-<p>A game begun years ago. A game with many winners. A game with many players.</p>
+<p>A game begun years ago. A game with many players. A game with many winners.</p>
 </dd>
 
 <dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
