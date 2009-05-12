@@ -17,12 +17,6 @@
 <p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;time</a>, <a href="#memory">&darr;&nbsp;memory use</a> and <a href="#gzbytes">&darr;&nbsp;source code size</a>.</p>
 </dd>
 
-<dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
-<dd>
-<p>Look at what we show for Ubuntu&#8482; Intel&#174; Q6600&#174; quad-core. Choose one of those programming languages. Choose one of those benchmarks. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Game Rules">the benchmarks game rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
-<p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
-</dd>
-
 <dt><a href="#oneone" name="oneone"><strong>How do I compare 2 language implementations?</strong></a></dt>
 <dd>
 <p>Compare them directly <a href="benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
@@ -53,9 +47,15 @@
 <dd>
 <p>When the facts exceed our curiousity.</p>
 </dd>
-</dl>
+
+<dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
+<dd>
+<p>Look at what we show for Ubuntu&#8482; Intel&#174; Q6600&#174; quad-core. Choose one of those programming languages. Choose one of those benchmarks. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Game Rules">the benchmarks game rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
+<p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
+</dl>
+</dd>
 
 
 <dt><a href="#means" name="means">&nbsp;Where are the results?</a></dt>
