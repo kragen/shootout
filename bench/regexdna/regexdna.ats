@@ -6,7 +6,7 @@
 ** regex-dna benchmark using PCRE
 **
 ** compilation command:
-**   atscc -O3 -fomit-frame-pointer -o regex-dna regex-dna.dats -lpcre
+**   atscc -O3 -fomit-frame-pointer -o regex-dna2 regex-dna2.dats -lpcre
 *)
 
 (* ****** ****** *)
@@ -23,27 +23,26 @@ staload _(*anonymous*) = "prelude/DATS/array.dats"
 
 (* ****** ****** *)
 
-extern fun malloc_atm {n:nat}
-  (n: int n): [l:addr] @(bytes_v (n, l) | ptr l) = "malloc_atm"
+viewdef bytes_v (n:int, l:addr) = bytes n @ l
 
-extern fun free_atm {n:nat} {l:addr}
-  (pf: bytes_v (n, l) | p: ptr l): void = "free_atm"
+(* ****** ****** *)
 
 %{^
 
 static inline
-ats_ptr_type malloc_atm (ats_int_type n) {
-  ats_ptr_type p = malloc (n) ;
-  if (!p) {
-    fprintf (stderr, "Exit: [malloc_atm] failed.\n") ; exit (1) ;
-  }
-  return p ;
-}
+ats_ptr_type
+malloc_atm (ats_int_type n) { return malloc (n) ; }
 
 static inline
 ats_void_type free_atm (ats_ptr_type p) { free (p) ; return ; }
 
 %}
+
+extern fun malloc_atm {n:nat}
+  (n: int n): [l:addr] @(bytes_v (n, l) | ptr l) = "malloc_atm"
+
+extern fun free_atm {n:nat} {l:addr}
+  (pf: bytes_v (n, l) | p: ptr l): void = "free_atm"
 
 (* ****** ****** *)
 
@@ -56,18 +55,8 @@ viewtypedef blocklst = [n:nat] blocklst (n)
 
 (* ****** ****** *)
 
-(*
 extern typedef "blocklst_cons_pstruct" =
   blocklst_cons_pstruct (void | int, ptr, blocklst)
-*)
-
-%{^
-typedef struct {
-ats_int_type atslab_0 ;
-ats_ptr_type atslab_1 ;
-ats_ptr_type atslab_2 ;
-} *blocklst_cons_pstruct ;
-%}
 
 (* ****** ****** *)
 
@@ -78,7 +67,9 @@ extern fun fread_stdin_block {sz:nat} {l:addr}
 %{$
 
 ats_int_type
-fread_stdin_block (ats_int_type sz0, ats_ptr_type p0) {
+fread_stdin_block (
+  ats_int_type sz0, ats_ptr_type p0
+) {
   char *p ; int nread, sz ;
   p = p0; sz = sz0 ;
   while (sz > 0) {
@@ -87,7 +78,7 @@ fread_stdin_block (ats_int_type sz0, ats_ptr_type p0) {
     if (feof (stdin)) break ;
   }
   return (sz0 - sz) ;
-}
+} /* end of [fread_stdin_block] */
 
 %}
 
@@ -153,7 +144,8 @@ blocklst_concat_and_free
 
 %{$
 
-ats_int_type count_pattern_match
+ats_int_type
+count_pattern_match
   (ats_int_type nsrc, ats_ptr_type src, ats_ptr_type pat) {
   int count ;
   pcre *re; pcre_extra *re_ex ; const char *re_e ;
@@ -168,9 +160,8 @@ ats_int_type count_pattern_match
     err = pcre_exec (re, re_ex, (char*)src, nsrc, pos, 0, m, 3) ;
     if (err < 0) break ; count += 1 ; pos = m[1] ;
   }
-
   return count ;
-}
+} /* end of [count_pattern_match] */
 
 %}
 
@@ -183,7 +174,7 @@ extern fun count_pattern_match {n:nat} {l:addr}
 (* ****** ****** *)
 
 #define variants_length 9
-val variants: array (string, variants_length) = array_make_arraysize @[string][
+val variants: array (string, variants_length) = array_make_arraysize $arrsz{string}(
   "agggtaaa|tttaccct"
 , "[cgt]gggtaaa|tttaccc[acg]"
 , "a[act]ggtaaa|tttacc[agt]t"
@@ -193,7 +184,7 @@ val variants: array (string, variants_length) = array_make_arraysize @[string][
 , "agggt[cgt]aa|tt[acg]accct"
 , "agggta[cgt]a|t[acg]taccct"
 , "agggtaa[cgt]|[acg]ttaccct"
-]
+) // end of [variants]
 
 fun count_loop {i:nat} {n:nat} {l:addr}
   (pf: !bytes_v (n, l) | n: int n, p: ptr l, i: int i): void =
@@ -224,6 +215,8 @@ implement seglst_cons_make (beg, len) = seglst_cons {0} (beg, len, ?)
 
 extern typedef "int_ptr_type" = @(void | int, ptr)
 
+(* ****** ****** *)
+
 %{$
 
 ats_void_type subst_copy (
@@ -239,7 +232,7 @@ ats_void_type subst_copy (
     sgs_nxt = sgs->atslab_2 ; ATS_FREE (sgs); sgs = sgs_nxt ;
   }
   len = nsrc - ofs ;  memcpy (dst, src, len) ; return ;
-}
+} /* end of [subst_copy] */
 
 int_ptr_type subst_pattern_string
   (ats_int_type nsrc, ats_ptr_type src, ats_ptr_type pat, ats_ptr_type sub) {
@@ -269,11 +262,9 @@ int_ptr_type subst_pattern_string
   ans.atslab_1 = ndst ; ans.atslab_2 = dst ;
   subst_copy (dst, src, nsrc, sgs0, sub, nsub) ;
   return ans ;
-}
+} /* end of [subst_pattern_string] */
 
 %}
-
-(* ****** ****** *)
 
 extern fun subst_pattern_string {n:nat} {l:addr}
   (pf: !bytes_v (n, l) | n: int n, p: ptr l, pat: string, sub: string)
@@ -283,7 +274,7 @@ extern fun subst_pattern_string {n:nat} {l:addr}
 (* ****** ****** *)
 
 #define subst_length 22
-val subst: array (string, subst_length) = array_make_arraysize @[string][
+val subst: array (string, subst_length) = array_make_arraysize $arrsz{string}(
   "B", "(c|g|t)"
 , "D", "(a|g|t)"
 , "H", "(a|c|t)"
@@ -295,7 +286,7 @@ val subst: array (string, subst_length) = array_make_arraysize @[string][
 , "V", "(a|c|g)"
 , "W", "(a|t)"
 , "Y", "(c|t)"
-]
+) // end of [subst]
 
 (* ****** ****** *)
 
@@ -331,4 +322,4 @@ end // end of [main]
 
 (* ****** ****** *)
 
-(* end of [regex-dna.dats] *)
+(* end of [regex-dna2.dats] *)
