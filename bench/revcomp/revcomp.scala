@@ -5,7 +5,7 @@
 
 object revcomp extends java.io.ByteArrayOutputStream with Application {
    val cmp = Array.range(0, 128)
-   for ((a, b) <- "TAGCVHRMYKBDU" zip "ATCGBDYKRMVHA") {
+   for ((a, b) <- "TAGCVHRMYKBDU".toList.zip("ATCGBDYKRMVHA".toList)) {
       cmp(a) = b
       cmp(a + 32) = b
    }
