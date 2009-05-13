@@ -1,0 +1,1 @@
+<p><strong>BEWARE!</strong> There's something badly wrong about measurement of this program at N=25,000,000 on both Ubuntu x86 installs. The Ubuntu x64 measurement 5.3s is consistent with measurement using bash time.</p>
