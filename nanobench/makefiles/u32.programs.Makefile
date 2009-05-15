@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32.programs.Makefile,v 1.17 2009-05-01 19:03:00 igouy-guest Exp $
+# $Id: u32.programs.Makefile,v 1.18 2009-05-15 23:55:22 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -14,7 +14,7 @@
 
 SPLITFILE := $(NANO_BIN)/split_file.bash
 
-COPTS := -O3 -fomit-frame-pointer
+STD_COPTS := -O3 -fomit-frame-pointer -march=native
 
 
 
@@ -29,7 +29,7 @@ COPTS := -O3 -fomit-frame-pointer
 
 %.gnat_run: %.gnat
 	-$(GNATCHOP) -w $<
-	-$(GNATC) -gnatp $(COPTS) $(GNATOPTS) -f $(TEST).adb -o $@
+	-$(GNATC) -gnatp $(STD_COPTS) $(COPTS) $(GNATOPTS) -f $(TEST).adb -o $@
 
 
 ########################################
@@ -42,7 +42,7 @@ COPTS := -O3 -fomit-frame-pointer
 #	-@$(SPLITFILE) $(TEST).dats $(TEST).dats
 
 %.ats_run: %.dats $(ATS)
-	-$(ATS) $(ATSOPTS) -pipe -Wall $(COPTS) $(GCCOPTS) $(TEST).dats -o $@
+	-$(ATS) $(ATSOPTS) -pipe -Wall $(STD_COPTS) $(COPTS) $(TEST).dats -o $@
 
 
 ########################################
@@ -53,7 +53,7 @@ COPTS := -O3 -fomit-frame-pointer
 	-@mv $< $@
 
 %.gcc_run: %.c $(GCC)
-	-$(GCC) -pipe -Wall $(COPTS) $(GCCOPTS) $< -o $@
+	-$(GCC) -pipe -Wall $(STD_COPTS) $(GCCOPTS) $< -o $@
 
 
 ########################################
@@ -64,7 +64,7 @@ COPTS := -O3 -fomit-frame-pointer
 	-@mv $< $@
 
 %.gpp_run: %.c++
-	-$(GXX) -c -pipe $(COPTS) $(GXXOPTS) $< -o $<.o &&  \
+	-$(GXX) -c -pipe $(STD_COPTS) $(COPTS) $(GXXOPTS) $< -o $<.o &&  \
         $(GXX) $<.o -o $@ $(GXXLDOPTS) 
 
 
@@ -76,7 +76,7 @@ COPTS := -O3 -fomit-frame-pointer
 	-@mv $< $@
 
 %.cgpp_run: %.c
-	-$(GXX) -c -pipe $(COPTS) $(GXXOPTS) $< -o $<.o &&  \
+	-$(GXX) -c -pipe $(STD_COPTS) $(COPTS) $(GXXOPTS) $< -o $<.o &&  \
         $(GXX) $<.o -o $@ -L/usr/lib $(GXXLDOPTS) 
 
 
@@ -145,7 +145,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-$(SPLITFILE) $< $(TEST).e
 
 %.se_run: %.e
-	-$(EIFFELC) c -clean -boost -no_split $(COPTS) $(EIFFELOPTS) -o $@ $(TEST)
+	-$(EIFFELC) c -clean -boost -no_split $(STD_COPTS) $(COPTS) $(EIFFELOPTS) -o $@ $(TEST)
 
 
 ########################################
@@ -159,7 +159,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 
 %.lisaac_run: %.li
 	-$(LISAAC) -O -i20 $(TEST)
-	-$(GCC) $(COPTS) $(GCCOPTS) $(TEST).c -o $@
+	-$(GCC) $(STD_COPTS) $(COPTS) $(GCCOPTS) $(TEST).c -o $@
 
 
 ########################################
@@ -255,7 +255,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-@mv $< $@
 
 %.g95_run: %.f90
-	-$(G95) -pipe $(COPTS) $(G95OPTS) $< -o $@
+	-$(G95) -pipe $(STD_COPTS) $(COPTS) $(G95OPTS) $< -o $@
 
 
 ########################################
@@ -345,7 +345,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-@mv $< $@
 
 %.gcj_run: %.javagcj $(GCJ)
-	-$(GCJ) -x java $(COPTS) -fno-bounds-check -fno-store-check $(GCJOPTS) -o $@ --main=$(TEST) $<
+	-$(GCJ) -x java $(STD_COPTS) $(COPTS) -fno-bounds-check -fno-store-check $(GCJOPTS) -o $@ --main=$(TEST) $<
 
 
 ########################################
