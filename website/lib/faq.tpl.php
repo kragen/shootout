@@ -505,6 +505,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 <p>Before contributing programs</p>
 <ul>
 <li>read and accept the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
+<li><a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth ID</strong></a> and login.</li>
 </ul>
 
 <p>Follow these instructions <strong>step-by-step</strong></p>
