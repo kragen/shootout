@@ -23,7 +23,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;The <?=$LangName;?> programs compared</a></h2>
+<h2><a href="#title" name="title">&nbsp;The <?=$LangName;?> programs compared [smaller is better]</a></h2>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
