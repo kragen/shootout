@@ -431,8 +431,8 @@ function axis3000(){
 
 function axis3_10(){
    return array(
-      array(1,"1"), array(3,"3x"), array(10,"10x"), array(30,"30x"),
-      array(100,"100x"), array(300,"300x"), array(1000,"1000x")
+      array(1,"1"), array(3,"3"), array(10,"10"), array(30,"30"),
+      array(100,"100"), array(300,"300"), array(1000,"1000")
       );
 }
 
