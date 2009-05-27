@@ -1,0 +1,92 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">  http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">  contributed by Paolo Bonzini</span>
+<span class="hl com">  based on the C GNU gcc version by Sean Bartlett</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;gmp.h&gt;</span>
+
+<span class="hl kwb">static</span> mpz_t numer<span class="hl sym">,</span> accum<span class="hl sym">,</span> denom<span class="hl sym">,</span> tmp1<span class="hl sym">,</span> tmp2<span class="hl sym">;</span>
+
+<span class="hl kwb">static unsigned int</span> <span class="hl kwd">extract_digit</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">mpz_cmp</span><span class="hl sym">(</span>numer<span class="hl sym">,</span> accum<span class="hl sym">) &gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+  <span class="hl com">/* Compute (numer * 3 + accum) / denom */</span>
+  <span class="hl kwd">mpz_add</span><span class="hl sym">(</span>tmp1<span class="hl sym">,</span> numer<span class="hl sym">,</span> numer<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_add</span><span class="hl sym">(</span>tmp1<span class="hl sym">,</span> tmp1<span class="hl sym">,</span> numer<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_add</span><span class="hl sym">(</span>tmp1<span class="hl sym">,</span> tmp1<span class="hl sym">,</span> accum<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_fdiv_qr</span><span class="hl sym">(</span>tmp1<span class="hl sym">,</span> tmp2<span class="hl sym">,</span> tmp1<span class="hl sym">,</span> denom<span class="hl sym">);</span>
+
+  <span class="hl com">/* Now, if (numer * 4 + accum) % denom... */</span>
+  <span class="hl kwd">mpz_add</span><span class="hl sym">(</span>tmp2<span class="hl sym">,</span> tmp2<span class="hl sym">,</span> numer<span class="hl sym">);</span>
+
+  <span class="hl com">/* ... is normalized, then the two divisions have the same result.  */</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">mpz_cmp</span><span class="hl sym">(</span>tmp2<span class="hl sym">,</span> denom<span class="hl sym">) &gt;=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+  <span class="hl kwa">return</span> <span class="hl kwd">mpz_get_ui</span><span class="hl sym">(</span>tmp1<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">next_term</span><span class="hl sym">(</span><span class="hl kwb">unsigned int</span> k<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">unsigned int</span> y2 <span class="hl sym">=</span> k<span class="hl sym">*</span><span class="hl num">2</span> <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl kwd">mpz_add</span><span class="hl sym">(</span>accum<span class="hl sym">,</span> accum<span class="hl sym">,</span> numer<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_add</span><span class="hl sym">(</span>accum<span class="hl sym">,</span> accum<span class="hl sym">,</span> numer<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_mul_ui</span><span class="hl sym">(</span>accum<span class="hl sym">,</span> accum<span class="hl sym">,</span> y2<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_mul_ui</span><span class="hl sym">(</span>numer<span class="hl sym">,</span> numer<span class="hl sym">,</span> k<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_mul_ui</span><span class="hl sym">(</span>denom<span class="hl sym">,</span> denom<span class="hl sym">,</span> y2<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">eliminate_digit</span><span class="hl sym">(</span><span class="hl kwb">unsigned int</span> d<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwd">mpz_submul_ui</span><span class="hl sym">(</span>accum<span class="hl sym">,</span> denom<span class="hl sym">,</span> d<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_mul_ui</span><span class="hl sym">(</span>accum<span class="hl sym">,</span> accum<span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">);</span>
+  <span class="hl kwd">mpz_mul_ui</span><span class="hl sym">(</span>numer<span class="hl sym">,</span> numer<span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">pidigits</span><span class="hl sym">(</span><span class="hl kwb">unsigned int</span> n<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">unsigned int</span> d<span class="hl sym">,</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> k <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> m<span class="hl sym">;</span>
+  <span class="hl kwd">mpz_init</span><span class="hl sym">(</span>tmp1<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_init</span><span class="hl sym">(</span>tmp2<span class="hl sym">);</span>
+  <span class="hl kwd">mpz_init_set_ui</span><span class="hl sym">(</span>numer<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+  <span class="hl kwd">mpz_init_set_ui</span><span class="hl sym">(</span>accum<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+  <span class="hl kwd">mpz_init_set_ui</span><span class="hl sym">(</span>denom<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+
+  <span class="hl kwa">for</span><span class="hl sym">(;;)</span>
+  <span class="hl sym">{</span>
+    <span class="hl kwa">do</span> <span class="hl sym">{</span>
+      k<span class="hl sym">++;</span>
+      <span class="hl kwd">next_term</span><span class="hl sym">(</span>k<span class="hl sym">);</span>
+      d <span class="hl sym">=</span> <span class="hl kwd">extract_digit</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span> <span class="hl kwa">while</span><span class="hl sym">(</span>d <span class="hl sym">== -</span><span class="hl num">1</span><span class="hl sym">);</span>
+
+    <span class="hl kwd">putchar</span><span class="hl sym">(</span>d <span class="hl sym">+</span> <span class="hl str">'0'</span><span class="hl sym">);</span>
+
+    i<span class="hl sym">++;</span>
+    m <span class="hl sym">=</span> i<span class="hl sym">%</span><span class="hl num">10</span><span class="hl sym">;</span>
+    <span class="hl kwa">if</span><span class="hl sym">(</span>m <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">:%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> i<span class="hl sym">);</span>
+    <span class="hl kwa">if</span><span class="hl sym">(</span>i <span class="hl sym">&gt;=</span> n<span class="hl sym">)</span>
+      <span class="hl kwa">break</span><span class="hl sym">;</span>
+    <span class="hl kwd">eliminate_digit</span><span class="hl sym">(</span>d<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwa">if</span><span class="hl sym">(</span>m<span class="hl sym">) {</span>
+    m <span class="hl sym">=</span> <span class="hl num">10</span> <span class="hl sym">-</span> m<span class="hl sym">;</span>
+    <span class="hl kwa">while</span><span class="hl sym">(</span>m<span class="hl sym">--)</span>
+      <span class="hl kwd">putchar</span><span class="hl sym">(</span><span class="hl str">' '</span><span class="hl sym">);</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">:%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> n<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwd">pidigits</span><span class="hl sym">(</span>argc <span class="hl sym">&gt;</span> <span class="hl num">1</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">27</span><span class="hl sym">);</span>
+  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
