@@ -24,8 +24,8 @@
 
 <h5>Notes</h5>
 <ul>
-<li>the <tt>printSolutions()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=0">the Scala program</a> provides one example of how to print the solutions.</li>
-<li>the <tt>printBoardCellsAndNeighbours()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=0">the Scala program</a> provides an example of how to print <a href="http://shootout.alioth.debian.org/download/meteor-puzzleboard.txt">the puzzle board (Save Target As… Save Link As…)</a> to check that the board cells are joined up correctly.
+<li>the <tt>printSolutions()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=1">the Scala program</a> provides one example of how to print the solutions.</li>
+<li>the <tt>printBoardCellsAndNeighbours()</tt> method in <a href="benchmark.php?test=meteor&amp;lang=scala&amp;id=1">the Scala program</a> provides an example of how to print <a href="http://shootout.alioth.debian.org/download/meteor-puzzleboard.txt">the puzzle board (Save Target As… Save Link As…)</a> to check that the board cells are joined up correctly.
 <pre>
 
 cell    NW NE W  E  SW SE
