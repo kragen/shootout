@@ -3,7 +3,7 @@
 <p>You are expected to <strong>diff the output from your program N = 2098 against this </strong><a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output"><strong>output file</strong></a> <strong><em>before</em> you contribute your program.</strong></p>
 
 
-<p>The <a href="http://www-128.ibm.com/developerworks/java/library/j-javaopt/"><strong>Meteor Puzzle</strong></a> board is made up of 10 rows of 5 hexagonal Cells. There are 10 puzzle pieces to be placed on the board, we'll number them 0 to 9. Each puzzle piece is made up of 5 hexagonal Cells. As different algorithms may be used to generate the puzzle solutions, we require that the solutions be printed in a standard order and format. Here's one approach - working along each row left to right, and down the board from top to bottom, take the number of the piece placed in each cell on the board, and create a string from all 50 numbers, for example the smallest puzzle solution would be represented by </p><pre>00001222012661126155865558633348893448934747977799</pre>
+<p>The <a href="http://devve.com/tutorials/Server-Side-Coding/Java/optimize-java-app/page1.html"><strong>Meteor Puzzle</strong></a> board is made up of 10 rows of 5 hexagonal Cells. There are 10 puzzle pieces to be placed on the board, we'll number them 0 to 9. Each puzzle piece is made up of 5 hexagonal Cells. As different algorithms may be used to generate the puzzle solutions, we require that the solutions be printed in a standard order and format. Here's one approach - working along each row left to right, and down the board from top to bottom, take the number of the piece placed in each cell on the board, and create a string from all 50 numbers, for example the smallest puzzle solution would be represented by </p><pre>00001222012661126155865558633348893448934747977799</pre>
 <p>Print the smallest and largest Meteor Puzzle 50 character solution string in this format to mimic the hexagonal puzzle board:</p>
 
 <pre>0 0 0 0 1 
@@ -81,5 +81,5 @@ cell    NW NE W  E  SW SE
 49      44 -- 48 -- -- --
 </pre></li>
 </ul>
-<p><strong>The Meteor Puzzle and 3 Java puzzle solvers</strong> are described in <a href="http://www-128.ibm.com/developerworks/java/library/j-javaopt/"><strong>"Optimize your Java application's performance"</strong></a>.</p>
+<p><strong>The Meteor Puzzle and 3 Java puzzle solvers</strong> are described in <a href="http://www.dsc.ufcg.edu.br/~jacques/cursos/2004.2/gr/recursos/j-javaopt.pdf"><strong>"Optimize your Java application's performance"</strong> (pdf)</a>.</p>
 
