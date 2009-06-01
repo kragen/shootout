@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.27 2009-05-29 16:02:29 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.28 2009-06-01 15:46:05 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -403,7 +403,7 @@ SBCL_TRACE :=
 	-mv $< $@
 
 %.ocaml_run: %.ml
-	-$(OCAML) -noassert -unsafe $(OCAMLOPTS) $< -o $@
+	-$(OCAML) -noassert -unsafe -nodynlink -inline 100 $(OCAMLOPTS) $< -o $@
 
 
 ########################################
