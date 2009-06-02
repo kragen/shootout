@@ -5,4 +5,4 @@
 <p>Note: only the smallest and largest outliers are shown.</p>
 
 <p>What do you think about how this data could be analysed and presented?</p>
-<p><strong>Take the <a href="summarydata.php">Summary Data</a> and show what you can do!</strong></p>
+<p><strong>Take the <a href="summarydata.php?d=<?=$DataSet?>">Summary Data</a> and show what you can do!</strong></p>

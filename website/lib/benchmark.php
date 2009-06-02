@@ -109,6 +109,7 @@ if ($T=='all'){
          $TemplateName = 'boxplot.tpl.php';
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'boxplot-about.tpl.php';
+         $About->set('DataSet', $DataSet);
          $SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
          if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
          $Body->set('DataSet', $DataSet);
