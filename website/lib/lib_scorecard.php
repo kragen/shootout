@@ -290,6 +290,60 @@ function CompareMedian($a, $b){
 }
 
 
+function DataRows($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+   // expect to encounter more than one DATA_TESTVALUE for each test 
+   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
+   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+
+   $data = array();
+   //$timeout = array();
+   while (!@feof ($f)){
+      $row = @fgetcsv($f,1024,',');
+      if (!is_array($row)){ continue; }
+
+      $test = $row[DATA_TEST];
+      $lang = $row[DATA_LANG];
+      settype($row[DATA_ID],'integer');
+      $id = $row[DATA_ID];
+      $testvalue = $row[DATA_TESTVALUE];
+      $key = $test.$lang.strval($id);
+
+      // accumulate all acceptable datarows, exclude duplicates
+
+      if (isset($Incl[$test]) && isset($Incl[$lang]) && isset($Langs[$lang]) &&
+                  !isset($Excl[$key])){
+
+            if ($row[DATA_STATUS] == 0 && (
+                  ($row[DATA_TIME] > 0 && (!isset($data[$lang][$test][$testvalue]) ||
+                     $row[DATA_TIME] < $data[$lang][$test][$testvalue][DATA_TIME])))){
+
+               $data[$lang][$test][$testvalue] = $row;
+            }
+
+      }
+   }
+   @fclose($f);
+
+
+   $rows = array();
+   foreach($data as $k => $test){
+      foreach($test as $t => $testvalues){
+
+         // wait until now to filter so sizeof($test) is consistent with FullWeightedData
+         //if ($Tests[$t][TEST_WEIGHT]>0){
+
+            foreach($testvalues as $tv => $v){
+               $v[N_TEST] = $Tests[ $v[N_TEST] ][TEST_NAME];
+               $v[N_LANG] = $Langs[ $v[N_LANG] ][LANG_FULL];
+               $rows[] = $v;
+            }
+      }
+   }
+   return $rows;
+}
+
+
+
 // Formating ///////////////////////////////////////////
 
 function PBlank($d){
