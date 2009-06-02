@@ -564,7 +564,7 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 <dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
-<dd><p>You can see and analyse and present in your own imaginative ways the <a href="summarydata.php" title="summary data rows"><strong>Summary Data</strong></a> measurements.</p>
+<dd><p>You can see and analyse and present in your own imaginative ways the <a href="summarydata.php" title="summary data"><strong>Summary Data</strong></a> measurements.</p>
 </dd>
 
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
