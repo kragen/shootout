@@ -563,6 +563,10 @@ language, benchmark, your-name, date, (version)<br />
 <a href="benchmark.php?test=recursive&amp;lang=gcc&amp;id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </dd>
 
+<dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
+<dd><p>You can see and analyse and present in your own imaginative ways the <a href="summarydata.php" title="summary data rows"><strong>Summary Data</strong></a> measurements.</p>
+</dd>
+
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
 <dd><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Computer Language Benchmarks Game project page on Alioth FusionForge at Debian.org">Alioth&nbsp; FusionForge</a>.</p>
 <p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the GComputer Language Benchmarks Game CVS tree">browse the CVS tree</a>.</p>
