@@ -107,9 +107,7 @@ object regexdna
       println("%s %s".format(p, results get i))
   }
 
-  private val pat_search: Array[String] = 
-    "WYKMSRBDVHN".toArray map (c => new String(Array(c)))
-    
+  private val pat_search: Array[String] = "WYKMSRBDVHN".toArray map (_.toString)
   private val pat_replace = Array(
     "(a|t)", "(c|t)", "(g|t)", "(a|c)",
     "(c|g)", "(a|g)", "(c|g|t)", "(a|g|t)",
@@ -158,9 +156,9 @@ object regexdna
             true
           }
           while (doLine()) { }
-        }
-        
-        barrier.await
+          
+          barrier.await
+        }        
       }
     }
     

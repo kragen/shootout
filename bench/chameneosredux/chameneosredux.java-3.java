@@ -15,122 +15,136 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class chameneosredux {
 
-   static final int BLOCK = 100;
+    static final int BLOCK = 100;
 
-   /**
-    * @param args
-    */
-   public static void main(String[] args) {
-      int n = 6000000;
-      if (args.length > 0)
-         n = Integer.parseInt(args[0]);
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        printColours();
+        System.out.println();
 
-      try {
-         long now = System.currentTimeMillis();
-         run(n, Colour.blue, Colour.red, Colour.yellow);
-         run(n, Colour.blue, Colour.red, Colour.yellow, Colour.red,
-               Colour.yellow, Colour.blue, Colour.red, Colour.yellow,
-               Colour.red, Colour.blue);
-   
-         long after = System.currentTimeMillis();
-         System.out.format("Run time: %,dms\n", after - now);
-      } catch (InterruptedException ie) {
-         // ignore.
-      }
-   }
+        int n = 6000000;
+        if (args.length > 0)
+            n = Integer.parseInt(args[0]);
 
-   static void run(int n, Colour... colours) throws InterruptedException {
-      System.out.format("Run for %,d meetings\n", n);
-      meetings.set(n);
-      done = new Semaphore(-colours.length+2);
-      List<Creature> creatures = new ArrayList<Creature>();
-      int id = 1;
-      for (Colour c: colours) {
-         Creature creature = new Creature(id++, c);
-         creature.start();
-         creatures.add(creature);
-      }
-      done.acquire();
-      while (done.availablePermits() <= 0)
-         try {
-            meetingPlace.exchange(Colour.blue, 1, TimeUnit.MILLISECONDS);
-         } catch (TimeoutException e) {
-            // ignore.
-         }
-      for (Creature c: creatures)
-         System.out.println(c);
-   }
+        try {
+            run(n, Colour.blue, Colour.red, Colour.yellow);
+            run(n, Colour.blue, Colour.red, Colour.yellow, Colour.red,
+                    Colour.yellow, Colour.blue, Colour.red, Colour.yellow,
+                    Colour.red, Colour.blue);
+        } catch (InterruptedException ie) {
+        }
+    }
 
-   static Exchanger<Colour> meetingPlace = new Exchanger<Colour>();
-   static AtomicInteger meetings = new AtomicInteger();
-   static Semaphore done;
-   
-   static class Creature extends Thread {
-      private Colour colour;
-      private int count;
-      final private int id;
-      
-      Creature(int id, Colour colour) {
-         this.colour = colour;
-         this.id = id;
-      }
+    static void run(int n, Colour... colours) throws InterruptedException {
+        meetings.set(n * 2);  // we multiply by two, because we count down twice for each meeting
+        done = new Semaphore(-colours.length + 2);
+        List<Creature> creatures = new ArrayList<Creature>();
+        for (Colour c : colours) {
+            System.out.format(" %s", c);
+            Creature creature = new Creature(c);
+            creature.start();
+            creatures.add(creature);
+        }
+        System.out.println();
+        done.acquire();
+        while (done.availablePermits() <= 0)
+            try {
+                meetingPlace.exchange(Colour.blue, 1, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+            }
+        int total = 0;
+        for (Creature c : creatures) {
+            System.out.println(c);
+            total += c.count;
+        }
+        System.out.println(getNumber(total));
+        System.out.println();       
+    }
 
-      public String toString() {
-         return String.format("Creature %,d is %s, and performed %,d exchanges", id, colour, count);
-      }
-      
-      public void run() {
-         try {
-            while (meetings.getAndAdd(-BLOCK) >= 0) 
-               block();
-         } catch (InterruptedException ie) {
-            // ignore, exit.
-         } finally {
-            done.release();
-         }
-      }
+    static Exchanger<Colour> meetingPlace = new Exchanger<Colour>();
+    static AtomicInteger meetings = new AtomicInteger();
+    static Semaphore done;
 
-      private void block() throws InterruptedException {
-         for (int i = 0; i < BLOCK; i++)
-            colour = doCompliment(colour, meetingPlace.exchange(colour));
-         count += BLOCK;
-      }
+    static class Creature extends Thread {
+        private Colour colour;
+        private int count;
 
-   }
+        Creature(Colour colour) {
+            this.colour = colour;
+        }
 
-   enum Colour {
-      blue, red, yellow
-   }
+        public String toString() {
+            return String.format("%d%s", count, getNumber(0));
+        }
 
-   static Colour doCompliment(Colour c1, Colour c2) {
-      switch (c1) {
-      case blue:
-         switch (c2) {
-         case blue:
-            return Colour.blue;
-         case red:
-            return Colour.yellow;
-         case yellow:
-            return Colour.red;
-         }
-      case red:
-         switch (c2) {
-         case blue:
-            return Colour.yellow;
-         case red:
-            return Colour.red;
-         case yellow:
-            return Colour.blue;
-         }
-      default:
-         switch (c2) {
-         case blue:
-            return Colour.red;
-         case red:
-            return Colour.blue;
-         default:
-            return Colour.yellow;
-         }
-      }
-   }
+        public void run() {
+            try {
+                while (meetings.getAndAdd(-BLOCK) >= 0)
+                    block();
+            } catch (InterruptedException ie) {
+            } finally {
+                done.release();
+            }
+        }
+
+        private void block() throws InterruptedException {
+            for (int i = 0; i < BLOCK; i++) {
+                colour = doCompliment(colour, meetingPlace.exchange(colour));
+            }
+            count += BLOCK;
+        }
+    }
+
+    enum Colour { blue, red, yellow; }
+
+    static Colour doCompliment(Colour c1, Colour c2) {
+        switch (c1) {
+        case blue:
+            switch (c2) {
+            case blue:
+                return Colour.blue;
+            case red:
+                return Colour.yellow;
+            case yellow:
+                return Colour.red;
+            }
+        case red:
+            switch (c2) {
+            case blue:
+                return Colour.yellow;
+            case red:
+                return Colour.red;
+            case yellow:
+                return Colour.blue;
+            }
+        default:
+            switch (c2) {
+            case blue:
+                return Colour.red;
+            case red:
+                return Colour.blue;
+            default:
+                return Colour.yellow;
+            }
+        }
+    }
+
+    private static void printColours() {
+        for (Colour a : Colour.values())
+            for (Colour b : Colour.values())
+                System.out.format("%s + %s -> %s\n", a, b, doCompliment(a, b));
+    }
+
+    private static final String[] NUMBERS = { "zero", "one", "two", "three",
+            "four", "five", "six", "seven", "eight", "nine" };
+
+    private static String getNumber(int n) {
+        String ret = " " + n;
+        for (char i = '0'; i <= '9'; i++)
+            ret = ret.replaceAll(""+i, NUMBERS[i-'0']+' ');
+        return ret;
+    }
+
 }
