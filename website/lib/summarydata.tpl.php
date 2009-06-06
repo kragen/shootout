@@ -12,7 +12,7 @@ if (isset($Data)){
    }
    echo "</pre>";
 } else {
-   echo "<p><strong>Please use current data.</strong></p>";
+   echo "<p><br/><strong>&nbsp;Please use current data.</strong></p>";
 }
 ?>
 
