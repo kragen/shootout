@@ -89,15 +89,20 @@ class Chart {
       ImageLine($this->im, $this->xo, $this->h - $this->yo, $this->w -1, $this->h - $this->yo, $this->colour[DARK_GRAY]); // x-axis
    }
    
+
    function title($label){
+      $this->title_($label,3,CHAR_WIDTH_3);
+   }
+
+   function title_($label,$textsize,$charwidth){
       $width = $this->w - $this->xo;
-      $inset = ($width - strlen($label)*CHAR_WIDTH_3)/2.0;
+      $inset = ($width - strlen($label)*$charwidth)/2.0;
       if ($inset < 0){
-         $x = $this->w - strlen($label)*CHAR_WIDTH_3;
+         $x = $this->w - strlen($label)*$charwidth;
       } else {
          $x = $this->xo + $inset;
       }
-      ImageString($this->im, 3, $x, 0, $label, $this->colour[BLACK]);
+      ImageString($this->im, $textsize, $x, 0, $label, $this->colour[BLACK]);
    }
 
    function notice($label){
@@ -111,7 +116,7 @@ class Chart {
       $x = ($size - $this->xo - strlen($label)*CHAR_WIDTH_2)/2.0;
       ImageString($this->im, 2, $x + $this->xo, $this->h - 15, $label, $this->colour[BLACK]);
    }
-
+   
    function yAxisLegend($label,$size=null){
       if (!isset($size)){ $size = $this->h; }
       $y = ($size - $this->yo - strlen($label)*CHAR_WIDTH_2)/2.0;
@@ -155,7 +160,7 @@ class Chart {
       $this->xscale = $scale;
       if (isset($shift)){ $this->xshift = $shift; } else { $this->xshift = 0; }
       foreach($this->xaxis as $v){
-         $x = $this->xo + ($v[0] * $this->xscale - $this->xshift * $this->xscale);
+         $x = $this->xo + ($v[0] * $this->xscale + $this->xshift * $this->xscale);
          ImageStringUp($this->im, 3, $x, $this->h - $this->yo - 0.5*CHAR_WIDTH_3, $v[1], $this->colour[LIGHT_GRAY]);
          ImageLine($this->im, $x, $this->h - $this->yo, $x, $this->yo, $this->colour[LIGHT_GRAY]);
       }
@@ -395,6 +400,43 @@ class StepChart extends Chart {
 }
 
 
+// SHAPECHART CLASS ///////////////////////////////////////////////////
+
+
+class ShapeChart extends Chart {
+   
+   // individual points and lines from centroid to those points
+   
+   function defaultWidth(){
+      return 150;
+   }
+
+   function defaultHeight(){
+      return 120;
+   }
+   
+   function shapes(&$d,&$c){
+      $n = sizeof($d);
+      if ($n % 2 == 0){
+         $xs = $this->xshift * $this->xscale;
+         $ys = $this->yshift * $this->yscale;
+         $cx = $this->xo + $c[0] * $this->xscale + $xs;
+         $cy = $this->h - ($this->yo + $c[1] * $this->yscale + $ys);
+         for ($i=0; $i<$n; $i+=2){
+            $x1 = $this->xo + $d[$i] * $this->xscale + $xs;
+            $y1 = $this->h - ($this->yo + $d[$i+1] * $this->yscale + $ys);
+            ImageLine($this->im, $cx, $cy, $x1, $y1, $this->colour[DARK_GRAY]);
+         }
+         for ($i=0; $i<$n; $i+=2){
+            $x1 = $this->xo + $d[$i] * $this->xscale + $xs;
+            $y1 = $this->h - ($this->yo + $d[$i+1] * $this->yscale + $ys);
+            ImageFilledRectangle($this->im, $x1-2, $y1-2, $x1+2, $y1+2, $this->colour[BLACK]);
+         }
+      }
+   }
+}
+
+
 // AXIS DEFINITIONS ///////////////////////////////////////////////////
 
 
@@ -443,6 +485,13 @@ function axis3_10_Mirror(){
       );
 }
 
+function axis3_5_10(){
+   return array(
+      array(1,""), array(3,"3"), array(5,""), array(10,"10"), array(30,"30"),
+      array(50,""), array(100,"100"), array(300,"300"), array(500,""), array(1000,"1000")
+      );
+}
+
 function axis03000(){
    return array(
       array(0.1,"0.1"), array(0.3,"0.3"), array(0.5,"0.5"),
@@ -482,6 +531,14 @@ function axisYrMth(){
       array(2,"2006"), array(14,"2007"),
       array(26,"2008"), array(38,"2009"),
       array(50,"2010"), array(62,"2011")
+      );
+}
+
+function axisOneTen(){
+   return array(
+      array(1,"1"), array(2,"2"),
+      array(3,"3"), array(5,"5"),
+      array(10,"10")
       );
 }
 

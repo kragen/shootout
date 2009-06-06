@@ -6,7 +6,7 @@ function Weights($Tests, $Action, $Vars){
    $w = array(); $wd = array();
    foreach($Tests as $t){
       $link = $t[TEST_LINK];
-      
+
       if (isset($Vars[$link]) && (strlen($Vars[$link]) == 1)
             && (ereg("^[0-9]$",$Vars[$link]))){ $x = intval($Vars[$link]); }
       else { $x = intval($t[TEST_WEIGHT]); }
@@ -55,8 +55,8 @@ function SelectedLangs($Langs, $Action, $Vars){
 
 // Data filtering and summary ///////////////////////////////////////////
 
-function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TRUE){
-   // expect to encounter more than one DATA_TESTVALUE for each test 
+function ValidRowsAndMins($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+   // expect to encounter more than one DATA_TESTVALUE for each test
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
@@ -120,8 +120,14 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
       }
    }
    @fclose($f);
+   return array($data,$mins);
+}
 
-   
+
+
+function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TRUE){
+   list($data,$mins) = ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading);
+
    /*
    When there are multiple N values this doesn't seem quite right - we might
    have taken times from different programs for different N values for the
@@ -181,13 +187,63 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
    }
 
    return array($score,$ratio);
+}
 
+
+
+function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+   list($data,$mins) = ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading);
+
+   /*
+   When there are multiple N values this doesn't seem quite right - we might
+   have taken times from different programs for different N values for the
+   same language implementation - but it's completely negligible.
+   */
+
+   $shapes = array(); $medians = array(); $include = 0;
+
+   foreach($data as $k => $test){
+      if (sizeof($test)/sizeof($Tests) > 0.5){
+
+         $points = array(); $xs = array(); $ys = array();
+         unset($minpoint);
+         foreach($test as $t => $testvalues){
+
+            // wait until now to filter so sizeof($test) is consistent with FullWeightedData
+            if ($Tests[$t][TEST_WEIGHT]>0){
+
+               // normalized source code size on X, normalized measured time on Y
+               foreach($testvalues as $tv => $v){
+                  $x = $v[DATA_GZ]/$mins[$t][$tv][GZ_MIN];
+                  $y = $v[DATA_TIME]/$mins[$t][$tv][CPU_MIN];
+
+                  if ($v[DATA_TIME] > 0){
+                     $points[] = array($x,$y);
+                     $xs[] = $x; // collect for k-median
+                     $ys[] = $y; // collect for k-median
+                     $include++;
+                  }
+               }
+            }
+         }
+
+         if ($include > 0){
+            $shapes[$k] = $points;
+            sort($xs);
+            $xm = Median($xs);
+            sort($ys);
+            $ym = Median($ys);
+            $medians[$k] = array($xm,$ym); // k-median
+         }
+      }
+   }
+   return array($shapes,$medians);
 }
 
 
 
 function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
-   // expect to encounter more than one DATA_TESTVALUE for each test 
+   // expect to encounter more than one DATA_TESTVALUE for each test
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
@@ -226,11 +282,10 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
                   }
                }
             }
-
       }
    }
    @fclose($f);
-   
+
    
    /*
    When there are multiple N values this doesn't seem quite right - we might
@@ -289,9 +344,13 @@ function CompareMedian($a, $b){
    return  ($a[STAT_MEDIAN] < $b[STAT_MEDIAN]) ? -1 : 1;
 }
 
+function CompareTheta($a, $b){
+   if ($a[2] == $b[2]) return 0;
+   return  ($a[2] < $b[2]) ? -1 : 1;
+}
 
 function DataRows($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
-   // expect to encounter more than one DATA_TESTVALUE for each test 
+   // expect to encounter more than one DATA_TESTVALUE for each test
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
@@ -343,7 +402,6 @@ function DataRows($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
 }
 
 
-
 // Formating ///////////////////////////////////////////
 
 function PBlank($d){
@@ -355,7 +413,7 @@ function PBlank($d){
 function MkDataSetMenu($DataSet){
    $dataSelected = "";
    $ndataSelected = "";
-   if ($DataSet=='data'){ $dataSelected = 'selected="selected"'; } 
+   if ($DataSet=='data'){ $dataSelected = 'selected="selected"'; }
    else { $ndataSelected = 'selected="selected"'; }
 
    echo '<select name="d">', "\n";
