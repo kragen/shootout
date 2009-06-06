@@ -40,7 +40,7 @@ $PageId = 'summarydata';
 $Title = 'Summary Data';
 $TemplateName = 'summarydata.tpl.php';
 
-if ((SITE_NAME != 'debian' && SITE_NAME != 'gp4'){
+if (SITE_NAME != 'debian' && SITE_NAME != 'gp4'){
    if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
    $Body->set('DataSet', $DataSet);
    $Body->set('Data', DataRows(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
@@ -54,7 +54,6 @@ $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
-$Body->set('Mark', $mark);
 $Body->set('Mark', $mark);
 
 $Page->set('PageBody', $Body->fetch($TemplateName));

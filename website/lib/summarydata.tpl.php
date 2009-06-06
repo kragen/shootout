@@ -2,17 +2,18 @@
 
 <h2>&nbsp;<?= $Title." [".$Mark."]" ?></h2>
 
-<pre>
+
 <?
-echo "\n";
+
 if (isset($Data)){
-   echo "name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s) [", $Mark, "]\n";
+   echo "<pre>name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s) [", $Mark, "]\n";
    foreach($Data as $d){
       echo implode(',', $d), "\n";
    }
+   echo "</pre>";
 } else {
-   echo "Please look at the current data instead.\n";
+   echo "<p><strong>Please use current data.</strong></p>";
 }
 ?>
-</pre>
+
 
