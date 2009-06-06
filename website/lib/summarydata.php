@@ -38,12 +38,14 @@ require_once(LIB_PATH.'lib_scorecard.php');
 
 $PageId = 'summarydata';
 $Title = 'Summary Data';
-if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
-$Body->set('Title', $Title);
 $TemplateName = 'summarydata.tpl.php';
 
-$Body->set('DataSet', $DataSet);
-$Body->set('Data', DataRows(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
+if ((SITE_NAME != 'debian' && SITE_NAME != 'gp4'){
+   if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
+   $Body->set('DataSet', $DataSet);
+   $Body->set('Data', DataRows(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
+}
+$Body->set('Title', $Title);
 $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 
 
@@ -52,6 +54,7 @@ $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
+$Body->set('Mark', $mark);
 $Body->set('Mark', $mark);
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
