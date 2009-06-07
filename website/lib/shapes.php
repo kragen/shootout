@@ -37,8 +37,8 @@ $Body = & new Template(LIB_PATH);
 require_once(LIB_PATH.'lib_scorecard.php');
 
 $PageId = 'shapes';
-$Title = 'Shapes';
-if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
+$Title = 'Shapes: Program Run Time by Source Code Size';
+if ($DataSet == 'ndata'){ $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'shapes.tpl.php';
 

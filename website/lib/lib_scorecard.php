@@ -203,7 +203,8 @@ function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE
    $shapes = array(); $medians = array(); $include = 0;
 
    foreach($data as $k => $test){
-      if (sizeof($test)/sizeof($Tests) > 0.5){
+      // javasteady source code includes an extra loop
+      if ((sizeof($test)/sizeof($Tests) > 0.5) && $k != 'javasteady'){
 
          $points = array(); $xs = array(); $ys = array();
          unset($minpoint);
