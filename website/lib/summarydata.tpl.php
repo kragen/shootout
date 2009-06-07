@@ -6,13 +6,13 @@
 <?
 
 if (isset($Data)){
-   echo "<pre>name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s) [", $Mark, "]\n";
+   echo '<pre>name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s) [', $Mark, "]\n";
    foreach($Data as $d){
       echo implode(',', $d), "\n";
    }
-   echo "</pre>";
+   echo '</pre>';
 } else {
-   echo "<p><br/><strong>&nbsp;Please use current data.</strong></p>";
+   echo '<p><br/><strong>&nbsp;Please choose <a href="faq.php#means">up-to-date measurements</a>.</strong></p>';
 }
 ?>
 

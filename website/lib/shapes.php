@@ -41,12 +41,13 @@ $Title = 'Shapes: Source Code Size and Run Time';
 if ($DataSet == 'ndata'){ $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'shapes.tpl.php';
-$About = & new Template(ABOUT_PROGRAMS_PATH);
+$About = & new Template(ABOUT_PATH);
 $AboutTemplateName = 'shapes-about.tpl.php';
-if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-
-$Body->set('DataSet', $DataSet);
-$Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
+if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
+if (SITE_NAME != 'debian' && SITE_NAME != 'gp4'){
+   $Body->set('DataSet', $DataSet);
+   $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
+}
 $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 
 
