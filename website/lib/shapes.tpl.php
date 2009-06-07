@@ -85,7 +85,7 @@ if (isset($Data)){
 
 
 <h2><a href="#shapes" name="shapes">&nbsp;<?=$Title;?>&nbsp;[<?=$Mark;?>]</a></h2>
-<p>Normalized measurements of source code size and run time give shape to each language implementation and position the programs in a broader context.</p>
+<p>Normalized measurements of source code size and run time give shape to each language implementation and position the programs in a broader context. Smaller is better.</p>
 
 <?
 if (isset($Data)){
