@@ -42,7 +42,7 @@ if ($DataSet == 'ndata'){ $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'shapes.tpl.php';
 $About = & new Template(ABOUT_PROGRAMS_PATH);
-$AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php';
+$AboutTemplateName = 'shapes-about.tpl.php';
 if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
 $Body->set('DataSet', $DataSet);
