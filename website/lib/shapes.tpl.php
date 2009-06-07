@@ -84,7 +84,7 @@ $j = ($j > $i) ? $j : $i;
 
 
 <h2><a href="#shapes" name="shapes">&nbsp;<?=$Title;?>&nbsp;[<?=$Mark;?>]</a></h2>
-<p>Note: Tiny changes are enough to move from one column to the next.</p>
+<p>Normalized measurements of source code size and run time give to each language implementation, and fit into a broader context.</p>
 
 <table>
 <?

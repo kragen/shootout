@@ -220,8 +220,8 @@ function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE
 
                   if ($v[DATA_TIME] > 0){
                      $points[] = array($x,$y);
-                     $xs[] = $x; // collect for k-median
-                     $ys[] = $y; // collect for k-median
+                     $xs[] = $x; // collect for median
+                     $ys[] = $y; // collect for median
                      $include++;
                   }
                }
@@ -234,7 +234,7 @@ function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE
             $xm = Median($xs);
             sort($ys);
             $ym = Median($ys);
-            $medians[$k] = array($xm,$ym); // k-median
+            $medians[$k] = array($xm,$ym); // median
          }
       }
    }
@@ -343,11 +343,6 @@ function CompareMeanScore($a, $b){
 function CompareMedian($a, $b){
    if ($a[STAT_MEDIAN] == $b[STAT_MEDIAN]) return 0;
    return  ($a[STAT_MEDIAN] < $b[STAT_MEDIAN]) ? -1 : 1;
-}
-
-function CompareTheta($a, $b){
-   if ($a[2] == $b[2]) return 0;
-   return  ($a[2] < $b[2]) ? -1 : 1;
 }
 
 function DataRows($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
