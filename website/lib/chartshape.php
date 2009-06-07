@@ -42,7 +42,7 @@ if ($valid){
    $chart->title_($LangName[0],2,CHAR_WIDTH_2);
    $chart->shapes($Shapes,$Centers);
 
-   $label = 'concise';
+   $label = 'small';
    ImageString($chart->im, 2, $xo, $h-$yo+4, $label, $chart->colour[DARK_GRAY]);
    $label = 'fast';
    ImageStringUp($chart->im, 2, 30, $h, $label, $chart->colour[DARK_GRAY]);

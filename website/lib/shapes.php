@@ -41,6 +41,9 @@ $Title = 'Shapes: Source Code Size and Run Time';
 if ($DataSet == 'ndata'){ $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'shapes.tpl.php';
+$About = & new Template(ABOUT_PROGRAMS_PATH);
+$AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php';
+if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 
 $Body->set('DataSet', $DataSet);
 $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
@@ -53,6 +56,7 @@ $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Body->set('Mark', $mark);
+$Body->set('About', $About->fetch($AboutTemplateName));
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
