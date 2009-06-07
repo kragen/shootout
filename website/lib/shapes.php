@@ -47,7 +47,7 @@ if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName =
 
 $Body->set('DataSet', $DataSet);
 $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
-$metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+$metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 
 
 // TEMPLATE VARS ////////////////////////////////////////////////
