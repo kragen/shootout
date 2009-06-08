@@ -2,8 +2,6 @@
 
 
 <?
-if (isset($Data)){
-
    function CompareTime($b, $a){
       if ($a[1] == $b[1]) return 0;
       return  ($a[1] < $b[1]) ? -1 : 1;
@@ -67,19 +65,23 @@ if (isset($Data)){
          $rows[2][$r] = $k;
          $i = $r + 1;
       }
-   }
-   $j = ($j > $i) ? $j : $i;
+}
+$j = ($j > $i) ? $j : $i;
    
-   // fourth column
-   $i = 0;
-   foreach($Centers as $k => $c){
-      if ($c[0] >= 2.3){
-         $r = rowmatch($i,$j,$c[1],$rows,$Centers);
-         $rows[3][$r] = $k;
-         $i = $r + 1;
-      }
+// fourth column
+$i = 0;
+foreach($Centers as $k => $c){
+   if ($c[0] >= 2.3){
+      $r = rowmatch($i,$j,$c[1],$rows,$Centers);
+      $rows[3][$r] = $k;
+      $i = $r + 1;
    }
-   $j = ($j > $i) ? $j : $i;
+}
+$j = ($j > $i) ? $j : $i;
+
+
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a>.</strong><br/></p>');
 }
 ?>
 
@@ -88,12 +90,6 @@ if (isset($Data)){
 <p>Normalized measurements of source code size and run time give shape to each language implementation and position the programs in a broader context. Smaller is better.</p>
 
 <?
-if (SITE_NAME == 'gp4'){
-   printf('<p><strong>&nbsp;Please choose <a href="faq.php#means">up-to-date measurements</a>.</strong><br/></p>');
-}
-
-
-if (isset($Data)){
    printf('<table>');
    
    for ($row=0; $row<$j; $row++){
@@ -112,9 +108,6 @@ if (isset($Data)){
       printf('</tr>');
    }
    printf('</table>');
-} else {
-   echo '<p><br/><strong>&nbsp;Please choose <a href="faq.php#means">up-to-date measurements</a>.</strong></p>';
-}
 ?>
 
 <h3><a href="#about" name="about">&nbsp;about <?=$Title;?></a></h3>
