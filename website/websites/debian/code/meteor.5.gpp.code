@@ -1,0 +1,769 @@
+<span class="hl slc">// The Computer Language Benchmarks Game</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">// contributed by Ben St. John</span>
+<span class="hl slc">// some ideas taken from Kevin Barnes' implementation</span>
+<span class="hl com">/* A few key optimizations:</span>
+<span class="hl com">   - pre-calcing of all possible orientations of each piece</span>
+<span class="hl com">   - pre-calcing of which orientations are possible in each board position</span>
+<span class="hl com">   - fast calculation of boards with bad islands (which are unsolveable)</span>
+<span class="hl com">   - pre-calc of some boards (by top three lines) which *always* have bad islands</span>
+<span class="hl com">   - using only 32-bit boards representations (plus row offset)</span>
+<span class="hl com">   - improvement since #4 -- no caching of top three lines for other reasons</span>
+<span class="hl com">   - not using STL vector -- it noticeably slow things down</span>
+<span class="hl com">   - rotating each found solution, so only half need to be calculated -- done by removing</span>
+<span class="hl com">     half the rotations of one piece (SKIP_PIECE) chosen as the one with the most valid positions</span>
+<span class="hl com">     on the board, so only half the solution space is searched</span>
+<span class="hl com"></span>
+<span class="hl com"> For size, most seems to come from the standard libs.</span>
+<span class="hl com"> I'm tempted to get rid of string, and maybe use cstdio.</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;string&gt;</span>
+<span class="hl dir">#include &lt;iostream&gt;</span>
+
+<span class="hl kwa">using namespace</span> std<span class="hl sym">;</span>
+
+<span class="hl dir">#define getMask(iPos) (1 &lt;&lt; (iPos))</span>
+
+<span class="hl kwb">enum</span> <span class="hl sym">{</span>X<span class="hl sym">,</span> Y<span class="hl sym">,</span> N_DIM<span class="hl sym">};</span>
+<span class="hl kwb">enum</span> <span class="hl sym">{</span>EVEN<span class="hl sym">,</span> ODD<span class="hl sym">,</span> N_PARITY<span class="hl sym">};</span>
+<span class="hl kwb">enum</span> <span class="hl sym">{</span>GOOD<span class="hl sym">,</span> BAD<span class="hl sym">,</span> ALWAYS_BAD<span class="hl sym">};</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned int</span> TUInt32<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned long long</span> TUInt64<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">signed char</span> TInt8<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> TUInt32 BitVec<span class="hl sym">;</span>
+
+<span class="hl kwb">static const int</span> N_COL <span class="hl sym">=</span> <span class="hl num">5</span><span class="hl sym">;</span>
+<span class="hl kwb">static const int</span> N_ROW <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">;</span>
+<span class="hl kwb">static const int</span> N_CELL <span class="hl sym">=</span> N_COL <span class="hl sym">*</span> N_ROW<span class="hl sym">;</span>
+<span class="hl kwb">static const int</span> N_PIECE_TYPE <span class="hl sym">=</span> <span class="hl num">10</span><span class="hl sym">;</span>
+
+<span class="hl kwb">struct</span> Piece<span class="hl sym">;</span>
+
+<span class="hl kwb">struct</span> Soln <span class="hl sym">{</span>
+   <span class="hl kwb">static const int</span> NO_PIECE <span class="hl sym">= -</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">setCells</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">);</span>
+   <span class="hl kwb">bool</span> <span class="hl kwd">lessThan</span><span class="hl sym">(</span>Soln <span class="hl sym">&amp;</span> r<span class="hl sym">);</span>
+   string <span class="hl kwd">toString</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">)</span> <span class="hl kwb">const</span><span class="hl sym">;</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">fill</span><span class="hl sym">(</span><span class="hl kwb">int</span> val<span class="hl sym">);</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">spin</span><span class="hl sym">(</span>Soln <span class="hl sym">&amp;</span> spun<span class="hl sym">);</span>
+
+   <span class="hl kwb">bool</span> <span class="hl kwd">isEmpty</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">) {</span><span class="hl kwa">return</span> <span class="hl sym">(</span>m_nPiece <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">);}</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">popPiece</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">) {</span>m_nPiece<span class="hl sym">--;</span> m_synched <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;}</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">pushPiece</span><span class="hl sym">(</span>BitVec vec<span class="hl sym">,</span> <span class="hl kwb">int</span> iPiece<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">) {</span>
+      SPiece <span class="hl sym">&amp;</span> p <span class="hl sym">=</span> m_pieces<span class="hl sym">[</span>m_nPiece<span class="hl sym">++];</span>
+      p<span class="hl sym">.</span>vec <span class="hl sym">=</span> vec<span class="hl sym">;</span>
+      p<span class="hl sym">.</span>iPiece <span class="hl sym">= (</span><span class="hl kwb">short</span><span class="hl sym">)</span>iPiece<span class="hl sym">;</span>
+      p<span class="hl sym">.</span>row <span class="hl sym">= (</span><span class="hl kwb">short</span><span class="hl sym">)</span>row<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">Soln</span><span class="hl sym">(</span><span class="hl kwb">int</span> fillVal<span class="hl sym">);</span>
+   <span class="hl kwd">Soln</span><span class="hl sym">() :</span> <span class="hl kwd">m_synched</span><span class="hl sym">(</span><span class="hl kwa">false</span><span class="hl sym">),</span> <span class="hl kwd">m_nPiece</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) {}</span>
+
+   <span class="hl kwb">struct</span> SPiece <span class="hl sym">{</span>
+      BitVec vec<span class="hl sym">;</span>
+      <span class="hl kwb">short</span> iPiece<span class="hl sym">;</span>
+      <span class="hl kwb">short</span> row<span class="hl sym">;</span>
+      <span class="hl kwd">SPiece</span><span class="hl sym">() {}</span>
+      <span class="hl kwd">SPiece</span><span class="hl sym">(</span>BitVec avec<span class="hl sym">,</span> TUInt32 apiece<span class="hl sym">,</span> TUInt32 arow<span class="hl sym">) :</span>
+         <span class="hl kwd">vec</span><span class="hl sym">(</span>avec<span class="hl sym">),</span> <span class="hl kwd">iPiece</span><span class="hl sym">(</span><span class="hl kwb">short</span><span class="hl sym">(</span>apiece<span class="hl sym">)),</span> <span class="hl kwd">row</span><span class="hl sym">(</span><span class="hl kwb">short</span><span class="hl sym">(</span>arow<span class="hl sym">))</span>
+         <span class="hl sym">{}</span>
+   <span class="hl sym">};</span>
+   SPiece m_pieces<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">];</span>
+   TUInt32 m_nPiece<span class="hl sym">;</span>
+   TInt8 m_cells<span class="hl sym">[</span>N_ROW<span class="hl sym">][</span>N_COL<span class="hl sym">];</span>
+   <span class="hl kwb">bool</span> m_synched<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl slc">//------------------------------------</span>
+<span class="hl kwb">struct</span> Board <span class="hl sym">{</span>
+   <span class="hl kwb">static const</span> BitVec L_EDGE_MASK <span class="hl sym">=</span>
+      <span class="hl sym">(</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span>  <span class="hl num">0</span><span class="hl sym">) | (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span>  <span class="hl num">5</span><span class="hl sym">) | (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> <span class="hl num">10</span><span class="hl sym">) | (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> <span class="hl num">15</span><span class="hl sym">) |</span>
+      <span class="hl sym">(</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> <span class="hl num">20</span><span class="hl sym">) | (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> <span class="hl num">25</span><span class="hl sym">) | (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> <span class="hl num">30</span><span class="hl sym">);</span>
+   <span class="hl kwb">static const</span> BitVec R_EDGE_MASK <span class="hl sym">=</span> L_EDGE_MASK <span class="hl sym">&lt;&lt;</span> <span class="hl num">4</span><span class="hl sym">;</span>
+   <span class="hl kwb">static const</span> BitVec TOP_ROW <span class="hl sym">= (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> N_COL<span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">static const</span> TUInt32 TWO_ROWS <span class="hl sym">=</span> <span class="hl num">2</span> <span class="hl sym">*</span> N_COL<span class="hl sym">;</span>
+   <span class="hl kwb">static const</span> BitVec TOP_2_ROWS <span class="hl sym">= (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> TWO_ROWS<span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+   <span class="hl kwb">static const</span> BitVec ROW_0_MASK <span class="hl sym">=</span>
+      TOP_ROW <span class="hl sym">| (</span>TOP_ROW <span class="hl sym">&lt;&lt;</span> <span class="hl num">10</span><span class="hl sym">) | (</span>TOP_ROW <span class="hl sym">&lt;&lt;</span> <span class="hl num">20</span><span class="hl sym">) | (</span>TOP_ROW <span class="hl sym">&lt;&lt;</span> <span class="hl num">30</span><span class="hl sym">);</span>
+   <span class="hl kwb">static const</span> BitVec ROW_1_MASK <span class="hl sym">=</span> ROW_0_MASK <span class="hl sym">&lt;&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span>
+   <span class="hl kwb">static const</span> BitVec BOARD_MASK <span class="hl sym">= (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> <span class="hl num">30</span><span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+   <span class="hl kwd">Board</span><span class="hl sym">();</span>
+
+   <span class="hl kwb">static</span> TUInt32 <span class="hl kwd">getIndex</span><span class="hl sym">(</span>TUInt32 x<span class="hl sym">,</span> TUInt32 y<span class="hl sym">) {</span> <span class="hl kwa">return</span> y <span class="hl sym">*</span> N_COL <span class="hl sym">+</span> x<span class="hl sym">; }</span>
+   <span class="hl kwb">static bool</span> <span class="hl kwd">badRegion</span><span class="hl sym">(</span>BitVec <span class="hl sym">&amp;</span> toFill<span class="hl sym">,</span> BitVec rNew<span class="hl sym">);</span>
+   <span class="hl kwb">static int</span> <span class="hl kwd">hasBadIslands</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">);</span>
+   <span class="hl kwb">static int</span> <span class="hl kwd">calcBadIslands</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">);</span>
+   <span class="hl kwb">static bool</span> <span class="hl kwd">hasBadIslandsSingle</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">);</span>
+   <span class="hl kwb">static void</span> <span class="hl kwd">calcAlwaysBad</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">);</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">genAllSolutions</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> TUInt32 placedPieces<span class="hl sym">,</span> TUInt32 iNextFill<span class="hl sym">);</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">recordSolution</span><span class="hl sym">(</span>Soln <span class="hl sym">&amp;</span> s<span class="hl sym">);</span>
+
+   Soln m_curSoln<span class="hl sym">;</span>
+   Soln m_minSoln<span class="hl sym">;</span>
+   Soln m_maxSoln<span class="hl sym">;</span>
+   TUInt32 m_nSoln<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl slc">//------------------------------------</span>
+
+<span class="hl kwb">struct</span> Piece <span class="hl sym">{</span>
+   <span class="hl kwb">struct</span> Instance <span class="hl sym">{</span>
+      TUInt64 m_allowed<span class="hl sym">;</span>
+      BitVec m_vec<span class="hl sym">;</span>
+      <span class="hl kwb">int</span> m_offset<span class="hl sym">;</span>
+   <span class="hl sym">};</span>
+
+   <span class="hl kwb">static const int</span> N_ELEM <span class="hl sym">=</span> <span class="hl num">5</span><span class="hl sym">;</span>
+   <span class="hl kwb">static const int</span> N_ORIENT <span class="hl sym">=</span> <span class="hl num">12</span><span class="hl sym">;</span>
+   <span class="hl kwb">static const int</span> ALL_PIECE_MASK <span class="hl sym">= (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> N_PIECE_TYPE<span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwb">static const</span> TUInt32 SKIP_PIECE <span class="hl sym">=</span> <span class="hl num">5</span><span class="hl sym">;</span> <span class="hl slc">// it's magic!</span>
+
+   <span class="hl kwc">typedef</span> <span class="hl kwb">int</span> TPts<span class="hl sym">[</span>N_ELEM<span class="hl sym">][</span>N_DIM<span class="hl sym">];</span>
+
+   <span class="hl kwb">static const</span> BitVec BaseVecs<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">];</span>
+   <span class="hl kwb">static</span> Piece s_basePiece<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">][</span>N_ORIENT<span class="hl sym">];</span>
+
+   <span class="hl kwb">static const</span> Instance <span class="hl sym">&amp;</span> <span class="hl kwd">getPiece</span><span class="hl sym">(</span>TUInt32 iPiece<span class="hl sym">,</span> TUInt32 iOrient<span class="hl sym">,</span> TUInt32 iParity<span class="hl sym">);</span>
+   <span class="hl kwb">static</span> BitVec <span class="hl kwd">toBitVector</span><span class="hl sym">(</span><span class="hl kwb">const</span> TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">);</span>
+   <span class="hl kwb">static void</span> <span class="hl kwd">genOrientation</span><span class="hl sym">(</span>BitVec vec<span class="hl sym">,</span> TUInt32 iOrient<span class="hl sym">,</span> Piece <span class="hl sym">&amp;</span> target<span class="hl sym">);</span>
+   <span class="hl kwb">static void</span> <span class="hl kwd">setCoordList</span><span class="hl sym">(</span>BitVec vec<span class="hl sym">,</span> TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">);</span>
+   <span class="hl kwb">static void</span> <span class="hl kwd">shiftUpLines</span><span class="hl sym">(</span>TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">,</span> <span class="hl kwb">int</span> shift<span class="hl sym">);</span>
+   <span class="hl kwb">static int</span> <span class="hl kwd">shiftToX0</span><span class="hl sym">(</span>TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">,</span> Instance <span class="hl sym">&amp;</span> instance<span class="hl sym">,</span> <span class="hl kwb">int</span> offsetRow<span class="hl sym">);</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">setOkPos</span><span class="hl sym">(</span>TUInt32 isOdd<span class="hl sym">,</span> <span class="hl kwb">int</span> w<span class="hl sym">,</span> <span class="hl kwb">int</span> h<span class="hl sym">);</span>
+   <span class="hl kwb">static void</span> <span class="hl kwd">genAllOrientations</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">);</span>
+
+   Instance m_instance<span class="hl sym">[</span>N_PARITY<span class="hl sym">];</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">struct</span> OkPieces <span class="hl sym">{</span>
+   TInt8 nPieces<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">];</span>
+   TUInt32 pieceVec<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">][</span>Piece<span class="hl sym">::</span>N_ORIENT<span class="hl sym">];</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">static</span> OkPieces g_okPieces<span class="hl sym">[</span>N_ROW<span class="hl sym">][</span>N_COL<span class="hl sym">] = {{</span><span class="hl num">0</span><span class="hl sym">}};</span>
+
+<span class="hl dir">#define MAX_ISLAND_OFFSET 1024</span>
+<span class="hl kwb">struct</span> IslandInfo <span class="hl sym">{</span>
+   TUInt32 alwaysBad<span class="hl sym">[</span>N_PARITY<span class="hl sym">];</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">static</span> IslandInfo g_islandInfo<span class="hl sym">[</span>MAX_ISLAND_OFFSET<span class="hl sym">] = {</span><span class="hl num">0</span><span class="hl sym">};</span>
+
+<span class="hl slc">//------------------------------------</span>
+Soln<span class="hl sym">::</span><span class="hl kwd">Soln</span><span class="hl sym">(</span><span class="hl kwb">int</span> fillVal<span class="hl sym">) :</span>
+   <span class="hl kwd">m_nPiece</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) {</span>
+   <span class="hl kwd">fill</span><span class="hl sym">(</span>fillVal<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Soln<span class="hl sym">::</span><span class="hl kwd">fill</span><span class="hl sym">(</span><span class="hl kwb">int</span> val<span class="hl sym">) {</span>
+   m_synched <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+   <span class="hl kwd">memset</span><span class="hl sym">(</span>m_cells<span class="hl sym">,</span> val<span class="hl sym">,</span> N_CELL<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+string Soln<span class="hl sym">::</span><span class="hl kwd">toString</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">)</span> <span class="hl kwb">const</span> <span class="hl sym">{</span>
+   string result<span class="hl sym">;</span>
+   result<span class="hl sym">.</span><span class="hl kwd">reserve</span><span class="hl sym">(</span>N_CELL <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N_ROW<span class="hl sym">;</span> y<span class="hl sym">++) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> N_COL<span class="hl sym">;</span> x<span class="hl sym">++) {</span>
+         <span class="hl kwb">int</span> val <span class="hl sym">=</span> m_cells<span class="hl sym">[</span>y<span class="hl sym">][</span>x<span class="hl sym">];</span>
+         result <span class="hl sym">+= ((</span>val <span class="hl sym">==</span> NO_PIECE<span class="hl sym">)</span> ? <span class="hl str">'.'</span> <span class="hl sym">:</span> <span class="hl kwb">char</span><span class="hl sym">(</span><span class="hl str">'0'</span> <span class="hl sym">+</span> val<span class="hl sym">));</span>
+         result <span class="hl sym">+=</span> <span class="hl str">' '</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      result <span class="hl sym">+=</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">;</span>
+
+      <span class="hl slc">// indent every second line</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>y <span class="hl sym">%</span> <span class="hl num">2</span> <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         result <span class="hl sym">+=</span> <span class="hl str">&quot; &quot;</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> result<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Soln<span class="hl sym">::</span><span class="hl kwd">setCells</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">) {</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>m_synched<span class="hl sym">)</span>
+      <span class="hl kwa">return</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>TUInt32 iPiece <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPiece <span class="hl sym">&lt;</span> m_nPiece<span class="hl sym">;</span> iPiece<span class="hl sym">++) {</span>
+      <span class="hl kwb">const</span> SPiece <span class="hl sym">&amp;</span> p <span class="hl sym">=</span> m_pieces<span class="hl sym">[</span>iPiece<span class="hl sym">];</span>
+      BitVec vec <span class="hl sym">=</span> p<span class="hl sym">.</span>vec<span class="hl sym">;</span>
+      TInt8 pID <span class="hl sym">= (</span>TInt8<span class="hl sym">)</span>p<span class="hl sym">.</span>iPiece<span class="hl sym">;</span>
+      <span class="hl kwb">int</span> rowOffset <span class="hl sym">=</span> p<span class="hl sym">.</span>row<span class="hl sym">;</span>
+
+      <span class="hl kwb">int</span> nNewCells <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> rowOffset<span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N_ROW<span class="hl sym">;</span> y<span class="hl sym">++) {</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> N_COL<span class="hl sym">;</span> x<span class="hl sym">++) {</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>vec <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+               m_cells<span class="hl sym">[</span>y<span class="hl sym">][</span>x<span class="hl sym">] =</span> pID<span class="hl sym">;</span>
+               nNewCells<span class="hl sym">++;</span>
+            <span class="hl sym">}</span>
+            vec <span class="hl sym">&gt;&gt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>nNewCells <span class="hl sym">==</span> Piece<span class="hl sym">::</span>N_ELEM<span class="hl sym">)</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   m_synched <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">bool</span> Soln<span class="hl sym">::</span><span class="hl kwd">lessThan</span><span class="hl sym">(</span>Soln <span class="hl sym">&amp;</span> r<span class="hl sym">) {</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>m_pieces<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>iPiece <span class="hl sym">!=</span> r<span class="hl sym">.</span>m_pieces<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>iPiece<span class="hl sym">) {</span>
+      <span class="hl kwa">return</span> m_pieces<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>iPiece <span class="hl sym">&lt;</span> r<span class="hl sym">.</span>m_pieces<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>iPiece<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">setCells</span><span class="hl sym">();</span>
+   r<span class="hl sym">.</span><span class="hl kwd">setCells</span><span class="hl sym">();</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N_ROW<span class="hl sym">;</span> y<span class="hl sym">++) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> N_COL<span class="hl sym">;</span> x<span class="hl sym">++) {</span>
+         <span class="hl kwb">int</span> lval <span class="hl sym">=</span> m_cells<span class="hl sym">[</span>y<span class="hl sym">][</span>x<span class="hl sym">];</span>
+         <span class="hl kwb">int</span> rval <span class="hl sym">=</span> r<span class="hl sym">.</span>m_cells<span class="hl sym">[</span>y<span class="hl sym">][</span>x<span class="hl sym">];</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>lval <span class="hl sym">!=</span> rval<span class="hl sym">)</span>
+            <span class="hl kwa">return</span> <span class="hl sym">(</span>lval <span class="hl sym">&lt;</span> rval<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return false</span><span class="hl sym">;</span> <span class="hl slc">// solutions are equal</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Soln<span class="hl sym">::</span><span class="hl kwd">spin</span><span class="hl sym">(</span>Soln <span class="hl sym">&amp;</span> spun<span class="hl sym">) {</span>
+   <span class="hl kwd">setCells</span><span class="hl sym">();</span>
+
+   <span class="hl slc">// swap cells</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N_ROW<span class="hl sym">;</span> y<span class="hl sym">++) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> N_COL<span class="hl sym">;</span> x<span class="hl sym">++) {</span>
+         TInt8 flipped <span class="hl sym">=</span> m_cells<span class="hl sym">[</span>N_ROW <span class="hl sym">-</span> y <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">][</span>N_COL <span class="hl sym">-</span> x <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">];</span>
+         spun<span class="hl sym">.</span>m_cells<span class="hl sym">[</span>y<span class="hl sym">][</span>x<span class="hl sym">] =</span> flipped<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// swap first and last pieces (the rest aren't used)</span>
+   spun<span class="hl sym">.</span>m_pieces<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>iPiece <span class="hl sym">=</span> m_pieces<span class="hl sym">[</span>N_PIECE_TYPE <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">].</span>iPiece<span class="hl sym">;</span>
+   spun<span class="hl sym">.</span>m_synched <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">//------------------------------------</span>
+
+Piece Piece<span class="hl sym">::</span>s_basePiece<span class="hl sym">[</span>N_PIECE_TYPE<span class="hl sym">][</span>N_ORIENT<span class="hl sym">];</span>
+
+<span class="hl kwb">const</span> BitVec Piece<span class="hl sym">::</span>BaseVecs<span class="hl sym">[] = {</span>
+   <span class="hl num">0x10f</span><span class="hl sym">,</span> <span class="hl num">0x0cb</span><span class="hl sym">,</span> <span class="hl num">0x1087</span><span class="hl sym">,</span> <span class="hl num">0x427</span><span class="hl sym">,</span> <span class="hl num">0x465</span><span class="hl sym">,</span>
+   <span class="hl num">0x0c7</span><span class="hl sym">,</span> <span class="hl num">0x8423</span><span class="hl sym">,</span> <span class="hl num">0x0a7</span><span class="hl sym">,</span> <span class="hl num">0x187</span><span class="hl sym">,</span> <span class="hl num">0x08f</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">floor</span><span class="hl sym">(</span><span class="hl kwb">int</span> top<span class="hl sym">,</span> <span class="hl kwb">int</span> bot<span class="hl sym">) {</span>
+   <span class="hl kwb">int</span> toZero <span class="hl sym">=</span> top <span class="hl sym">/</span> bot<span class="hl sym">;</span>
+   <span class="hl slc">// negative numbers should be rounded down, not towards zero</span>
+   <span class="hl kwa">if</span> <span class="hl sym">((</span>toZero <span class="hl sym">*</span> bot <span class="hl sym">!=</span> top<span class="hl sym">) &amp;&amp; ((</span>top <span class="hl sym">&lt;</span> <span class="hl num">0</span><span class="hl sym">) != (</span>bot <span class="hl sym">&lt;=</span> <span class="hl num">0</span><span class="hl sym">)))</span>
+      toZero<span class="hl sym">--;</span>
+
+   <span class="hl kwa">return</span> toZero<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">const</span> TUInt32 s_firstOne<span class="hl sym">[</span><span class="hl num">32</span><span class="hl sym">] = {</span>
+   <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>   <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>
+   <span class="hl num">3</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>   <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>
+
+   <span class="hl num">4</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>   <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>
+   <span class="hl num">3</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>   <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span>
+<span class="hl sym">};</span>
+
+TUInt32 <span class="hl kwd">getFirstOne</span><span class="hl sym">(</span>BitVec v<span class="hl sym">,</span> TUInt32 startPos <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>v <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   TUInt32 iPos <span class="hl sym">=</span> startPos<span class="hl sym">;</span>
+   BitVec mask <span class="hl sym">=</span> <span class="hl num">0xff</span> <span class="hl sym">&lt;&lt;</span> startPos<span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">((</span>mask <span class="hl sym">&amp;</span> v<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+      mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">8</span><span class="hl sym">;</span> iPos <span class="hl sym">+=</span> <span class="hl num">8</span><span class="hl sym">;</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>mask <span class="hl sym">&amp;</span> v<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+         mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">8</span><span class="hl sym">;</span> iPos <span class="hl sym">+=</span> <span class="hl num">8</span><span class="hl sym">;</span>
+         <span class="hl kwa">if</span> <span class="hl sym">((</span>mask <span class="hl sym">&amp;</span> v<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+            mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">8</span><span class="hl sym">;</span> iPos <span class="hl sym">+=</span> <span class="hl num">8</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   TUInt32 result <span class="hl sym">=</span> <span class="hl kwd">TUInt32</span><span class="hl sym">((</span>mask <span class="hl sym">&amp;</span> v<span class="hl sym">) &gt;&gt;</span> iPos<span class="hl sym">);</span>
+   TUInt32 resultLow <span class="hl sym">=</span> result <span class="hl sym">&amp;</span> <span class="hl num">0x0f</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>resultLow <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      iPos <span class="hl sym">+=</span> s_firstOne<span class="hl sym">[</span>resultLow<span class="hl sym">];</span>
+   <span class="hl kwa">else</span>
+      iPos <span class="hl sym">+=</span> <span class="hl num">4</span> <span class="hl sym">+</span> s_firstOne<span class="hl sym">[</span>result <span class="hl sym">&gt;&gt;</span> <span class="hl num">4</span><span class="hl sym">];</span>
+
+   <span class="hl kwa">return</span> iPos<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Piece<span class="hl sym">::</span><span class="hl kwd">setCoordList</span><span class="hl sym">(</span>BitVec vec<span class="hl sym">,</span> TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">) {</span>
+   <span class="hl kwb">int</span> iPt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   BitVec mask <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N_ROW<span class="hl sym">;</span> y<span class="hl sym">++) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> N_COL<span class="hl sym">;</span> x<span class="hl sym">++) {</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>mask <span class="hl sym">&amp;</span> vec<span class="hl sym">) {</span>
+            pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">] =</span> x<span class="hl sym">;</span>
+            pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">] =</span> y<span class="hl sym">;</span>
+
+            iPt<span class="hl sym">++;</span>
+         <span class="hl sym">}</span>
+         mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+BitVec Piece<span class="hl sym">::</span><span class="hl kwd">toBitVector</span><span class="hl sym">(</span><span class="hl kwb">const</span> TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">) {</span>
+   <span class="hl kwb">int</span> y<span class="hl sym">,</span> x<span class="hl sym">;</span>
+   BitVec result <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iPt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++) {</span>
+      x <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">];</span>
+      y <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+
+      <span class="hl kwb">int</span> pos <span class="hl sym">=</span> Board<span class="hl sym">::</span><span class="hl kwd">getIndex</span><span class="hl sym">(</span>x<span class="hl sym">,</span> y<span class="hl sym">);</span>
+      result <span class="hl sym">|= (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> pos<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> result<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Piece<span class="hl sym">::</span><span class="hl kwd">shiftUpLines</span><span class="hl sym">(</span>TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">,</span> <span class="hl kwb">int</span> shift<span class="hl sym">) {</span>
+   <span class="hl slc">// vertical shifts have a twist</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iPt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++) {</span>
+      <span class="hl kwb">int</span> <span class="hl sym">&amp;</span> rx <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">];</span>
+      <span class="hl kwb">int</span> <span class="hl sym">&amp;</span> ry <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>ry <span class="hl sym">&amp;</span> shift <span class="hl sym">&amp;</span> <span class="hl num">0x1</span><span class="hl sym">)</span>
+         rx<span class="hl sym">++;</span>
+      ry <span class="hl sym">-=</span> shift<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> Piece<span class="hl sym">::</span><span class="hl kwd">shiftToX0</span><span class="hl sym">(</span>TPts <span class="hl sym">&amp;</span> pts<span class="hl sym">,</span> Instance <span class="hl sym">&amp;</span> instance<span class="hl sym">,</span> <span class="hl kwb">int</span> offsetRow<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// .. determine shift</span>
+   <span class="hl kwb">int</span> x<span class="hl sym">,</span> y<span class="hl sym">,</span> iPt<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> xMin <span class="hl sym">=</span> pts<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>X<span class="hl sym">];</span>
+   <span class="hl kwb">int</span> xMax <span class="hl sym">=</span> xMin<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>iPt <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++) {</span>
+      x <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">];</span>
+      y <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>x <span class="hl sym">&lt;</span> xMin<span class="hl sym">)</span>
+         xMin <span class="hl sym">=</span> x<span class="hl sym">;</span>
+      <span class="hl kwa">else if</span> <span class="hl sym">(</span>x <span class="hl sym">&gt;</span> xMax<span class="hl sym">)</span>
+         xMax <span class="hl sym">=</span> x<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// I'm dying for a 'foreach' here</span>
+   <span class="hl kwb">int</span> offset <span class="hl sym">=</span> N_ELEM<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>iPt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++) {</span>
+      <span class="hl kwb">int</span> <span class="hl sym">&amp;</span> rx <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">];</span>
+      <span class="hl kwb">int</span> <span class="hl sym">&amp;</span> ry <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+
+      rx <span class="hl sym">-=</span> xMin<span class="hl sym">;</span>
+
+      <span class="hl slc">// check offset -- leftmost cell on top line</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>ry <span class="hl sym">==</span> offsetRow<span class="hl sym">) &amp;&amp; (</span>rx <span class="hl sym">&lt;</span> offset<span class="hl sym">))</span>
+         offset <span class="hl sym">=</span> rx<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   instance<span class="hl sym">.</span>m_offset <span class="hl sym">=</span> offset<span class="hl sym">;</span>
+   instance<span class="hl sym">.</span>m_vec <span class="hl sym">=</span> <span class="hl kwd">toBitVector</span><span class="hl sym">(</span>pts<span class="hl sym">);</span>
+   <span class="hl kwa">return</span> xMax <span class="hl sym">-</span> xMin<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Piece<span class="hl sym">::</span><span class="hl kwd">setOkPos</span><span class="hl sym">(</span>TUInt32 isOdd<span class="hl sym">,</span> <span class="hl kwb">int</span> w<span class="hl sym">,</span> <span class="hl kwb">int</span> h<span class="hl sym">) {</span>
+   Instance <span class="hl sym">&amp;</span> p <span class="hl sym">=</span> m_instance<span class="hl sym">[</span>isOdd<span class="hl sym">];</span>
+   TUInt64 <span class="hl sym">&amp;</span> allowed <span class="hl sym">=</span> p<span class="hl sym">.</span>m_allowed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   TUInt64 posMask <span class="hl sym">=</span> <span class="hl num">1L</span>L <span class="hl sym">&lt;&lt; (</span>isOdd <span class="hl sym">*</span> N_COL<span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> isOdd<span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N_ROW <span class="hl sym">-</span> h<span class="hl sym">;</span> y<span class="hl sym">+=</span><span class="hl num">2</span><span class="hl sym">,</span> posMask <span class="hl sym">&lt;&lt;=</span> N_COL<span class="hl sym">) {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>p<span class="hl sym">.</span>m_offset<span class="hl sym">)</span>
+         posMask <span class="hl sym">&lt;&lt;=</span> p<span class="hl sym">.</span>m_offset<span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> xPos <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> xPos <span class="hl sym">&lt;</span> N_COL <span class="hl sym">-</span> p<span class="hl sym">.</span>m_offset<span class="hl sym">;</span> xPos<span class="hl sym">++,</span> posMask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+         <span class="hl slc">// check if the new position is on the board</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>xPos <span class="hl sym">&gt;=</span> N_COL <span class="hl sym">-</span> w<span class="hl sym">)</span>
+            <span class="hl kwa">continue</span><span class="hl sym">;</span>
+
+         <span class="hl slc">// move it to the desired location</span>
+         BitVec pieceVec <span class="hl sym">=</span> p<span class="hl sym">.</span>m_vec <span class="hl sym">&lt;&lt;</span> xPos<span class="hl sym">;</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>Board<span class="hl sym">::</span><span class="hl kwd">hasBadIslandsSingle</span><span class="hl sym">(</span>pieceVec<span class="hl sym">,</span> y<span class="hl sym">))</span>
+            <span class="hl kwa">continue</span><span class="hl sym">;</span>
+
+         <span class="hl slc">// position is allowed</span>
+         allowed <span class="hl sym">|=</span> posMask<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Piece<span class="hl sym">::</span><span class="hl kwd">genOrientation</span><span class="hl sym">(</span>BitVec vec<span class="hl sym">,</span> TUInt32 iOrient<span class="hl sym">,</span> Piece <span class="hl sym">&amp;</span> target<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// get (x,y) coordinates</span>
+   TPts pts<span class="hl sym">;</span>
+   <span class="hl kwd">setCoordList</span><span class="hl sym">(</span>vec<span class="hl sym">,</span> pts<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> y<span class="hl sym">,</span> x<span class="hl sym">,</span> iPt<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> rot <span class="hl sym">=</span> iOrient <span class="hl sym">%</span> <span class="hl num">6</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> flip <span class="hl sym">=</span> iOrient <span class="hl sym">&gt;=</span> <span class="hl num">6</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>flip<span class="hl sym">) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>iPt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++)</span>
+         pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">] = -</span>pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// rotate as necessary</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span>rot<span class="hl sym">--) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>iPt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++) {</span>
+         x <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">];</span>
+         y <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+
+         <span class="hl slc">// I just worked this out by hand. Took a while.</span>
+         <span class="hl kwb">int</span> xNew <span class="hl sym">=</span> <span class="hl kwd">floor</span><span class="hl sym">((</span><span class="hl num">2</span> <span class="hl sym">*</span> x <span class="hl sym">-</span> <span class="hl num">3</span> <span class="hl sym">*</span> y <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">),</span> <span class="hl num">4</span><span class="hl sym">);</span>
+         <span class="hl kwb">int</span> yNew <span class="hl sym">=</span> <span class="hl kwd">floor</span><span class="hl sym">((</span><span class="hl num">2</span> <span class="hl sym">*</span> x <span class="hl sym">+</span> y <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">),</span> <span class="hl num">2</span><span class="hl sym">);</span>
+         pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>X<span class="hl sym">] =</span> xNew<span class="hl sym">;</span>
+         pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">] =</span> yNew<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// determine vertical shift</span>
+   <span class="hl kwb">int</span> yMin <span class="hl sym">=</span> pts<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>Y<span class="hl sym">];</span>
+   <span class="hl kwb">int</span> yMax <span class="hl sym">=</span> yMin<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>iPt <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> iPt <span class="hl sym">&lt;</span> N_ELEM<span class="hl sym">;</span> iPt<span class="hl sym">++) {</span>
+      y <span class="hl sym">=</span> pts<span class="hl sym">[</span>iPt<span class="hl sym">][</span>Y<span class="hl sym">];</span>
+
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>y <span class="hl sym">&lt;</span> yMin<span class="hl sym">)</span>
+         yMin <span class="hl sym">=</span> y<span class="hl sym">;</span>
+      <span class="hl kwa">else if</span> <span class="hl sym">(</span>y <span class="hl sym">&gt;</span> yMax<span class="hl sym">)</span>
+         yMax <span class="hl sym">=</span> y<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwb">int</span> h <span class="hl sym">=</span> yMax <span class="hl sym">-</span> yMin<span class="hl sym">;</span>
+   Instance <span class="hl sym">&amp;</span> even <span class="hl sym">=</span> target<span class="hl sym">.</span>m_instance<span class="hl sym">[</span>EVEN<span class="hl sym">];</span>
+   Instance <span class="hl sym">&amp;</span> odd <span class="hl sym">=</span> target<span class="hl sym">.</span>m_instance<span class="hl sym">[</span>ODD<span class="hl sym">];</span>
+
+   <span class="hl kwd">shiftUpLines</span><span class="hl sym">(</span>pts<span class="hl sym">,</span> yMin<span class="hl sym">);</span>
+   <span class="hl kwb">int</span> w <span class="hl sym">=</span> <span class="hl kwd">shiftToX0</span><span class="hl sym">(</span>pts<span class="hl sym">,</span> even<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+   target<span class="hl sym">.</span><span class="hl kwd">setOkPos</span><span class="hl sym">(</span>EVEN<span class="hl sym">,</span> w<span class="hl sym">,</span> h<span class="hl sym">);</span>
+   even<span class="hl sym">.</span>m_vec <span class="hl sym">&gt;&gt;=</span> even<span class="hl sym">.</span>m_offset<span class="hl sym">;</span>
+
+   <span class="hl slc">// shift down one line</span>
+   <span class="hl kwd">shiftUpLines</span><span class="hl sym">(</span>pts<span class="hl sym">, -</span><span class="hl num">1</span><span class="hl sym">);</span>
+   w <span class="hl sym">=</span> <span class="hl kwd">shiftToX0</span><span class="hl sym">(</span>pts<span class="hl sym">,</span> odd<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+   <span class="hl slc">// shift the bitmask back one line</span>
+   odd<span class="hl sym">.</span>m_vec <span class="hl sym">&gt;&gt;=</span> N_COL<span class="hl sym">;</span>
+   target<span class="hl sym">.</span><span class="hl kwd">setOkPos</span><span class="hl sym">(</span>ODD<span class="hl sym">,</span> w<span class="hl sym">,</span> h<span class="hl sym">);</span>
+   odd<span class="hl sym">.</span>m_vec <span class="hl sym">&gt;&gt;=</span> odd<span class="hl sym">.</span>m_offset<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Piece<span class="hl sym">::</span><span class="hl kwd">genAllOrientations</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">) {</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iPiece <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPiece <span class="hl sym">&lt;</span> N_PIECE_TYPE<span class="hl sym">;</span> iPiece<span class="hl sym">++) {</span>
+      BitVec refPiece <span class="hl sym">=</span> BaseVecs<span class="hl sym">[</span>iPiece<span class="hl sym">];</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iOrient <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iOrient <span class="hl sym">&lt;</span> N_ORIENT<span class="hl sym">;</span> iOrient<span class="hl sym">++) {</span>
+         Piece <span class="hl sym">&amp;</span> p <span class="hl sym">=</span> s_basePiece<span class="hl sym">[</span>iPiece<span class="hl sym">][</span>iOrient<span class="hl sym">];</span>
+         <span class="hl kwd">genOrientation</span><span class="hl sym">(</span>refPiece<span class="hl sym">,</span> iOrient<span class="hl sym">,</span> p<span class="hl sym">);</span>
+         <span class="hl kwa">if</span> <span class="hl sym">((</span>iPiece <span class="hl sym">==</span> SKIP_PIECE<span class="hl sym">) &amp;&amp; ((</span>iOrient <span class="hl sym">/</span> <span class="hl num">3</span><span class="hl sym">) &amp;</span> <span class="hl num">1</span><span class="hl sym">))</span>
+            p<span class="hl sym">.</span>m_instance<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>m_allowed <span class="hl sym">=</span> p<span class="hl sym">.</span>m_instance<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">].</span>m_allowed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iPiece <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iPiece <span class="hl sym">&lt;</span> N_PIECE_TYPE<span class="hl sym">;</span> iPiece<span class="hl sym">++) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iOrient <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iOrient <span class="hl sym">&lt;</span> N_ORIENT<span class="hl sym">;</span> iOrient<span class="hl sym">++) {</span>
+         TUInt64 mask <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iRow <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iRow <span class="hl sym">&lt;</span> N_ROW<span class="hl sym">;</span> iRow<span class="hl sym">++) {</span>
+            <span class="hl kwb">const</span> Instance <span class="hl sym">&amp;</span> p <span class="hl sym">=</span> <span class="hl kwd">getPiece</span><span class="hl sym">(</span>iPiece<span class="hl sym">,</span> iOrient<span class="hl sym">, (</span>iRow <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">));</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iCol <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iCol <span class="hl sym">&lt;</span> N_COL<span class="hl sym">;</span> iCol<span class="hl sym">++) {</span>
+               OkPieces <span class="hl sym">&amp;</span> allowed <span class="hl sym">=</span> g_okPieces<span class="hl sym">[</span>iRow<span class="hl sym">][</span>iCol<span class="hl sym">];</span>
+               <span class="hl kwa">if</span> <span class="hl sym">(</span>p<span class="hl sym">.</span>m_allowed <span class="hl sym">&amp;</span> mask<span class="hl sym">) {</span>
+                  TInt8 <span class="hl sym">&amp;</span> nPiece <span class="hl sym">=</span> allowed<span class="hl sym">.</span>nPieces<span class="hl sym">[</span>iPiece<span class="hl sym">];</span>
+                  allowed<span class="hl sym">.</span>pieceVec<span class="hl sym">[</span>iPiece<span class="hl sym">][</span>nPiece<span class="hl sym">] =</span> p<span class="hl sym">.</span>m_vec <span class="hl sym">&lt;&lt;</span> iCol<span class="hl sym">;</span>
+                  nPiece<span class="hl sym">++;</span>
+               <span class="hl sym">}</span>
+
+               mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwc">inline</span> <span class="hl kwb">const</span> Piece<span class="hl sym">::</span>Instance <span class="hl sym">&amp;</span> Piece<span class="hl sym">::</span><span class="hl kwd">getPiece</span><span class="hl sym">(</span>TUInt32 iPiece<span class="hl sym">,</span> TUInt32 iOrient<span class="hl sym">,</span> TUInt32 iParity<span class="hl sym">) {</span>
+   <span class="hl kwa">return</span> s_basePiece<span class="hl sym">[</span>iPiece<span class="hl sym">][</span>iOrient<span class="hl sym">].</span>m_instance<span class="hl sym">[</span>iParity<span class="hl sym">];</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// ------------------------------------</span>
+
+Board<span class="hl sym">::</span><span class="hl kwd">Board</span><span class="hl sym">() :</span>
+   <span class="hl kwd">m_curSoln</span><span class="hl sym">(</span>Soln<span class="hl sym">::</span>NO_PIECE<span class="hl sym">),</span> <span class="hl kwd">m_minSoln</span><span class="hl sym">(</span>N_PIECE_TYPE<span class="hl sym">),</span>
+   <span class="hl kwd">m_maxSoln</span><span class="hl sym">(</span>Soln<span class="hl sym">::</span>NO_PIECE<span class="hl sym">),</span> <span class="hl kwd">m_nSoln</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl sym">{}</span>
+
+TUInt32 g_flip<span class="hl sym">[] = {</span>
+   <span class="hl num">0x00</span><span class="hl sym">,</span> <span class="hl num">0x10</span><span class="hl sym">,</span> <span class="hl num">0x08</span><span class="hl sym">,</span> <span class="hl num">0x18</span><span class="hl sym">,</span> <span class="hl num">0x04</span><span class="hl sym">,</span> <span class="hl num">0x14</span><span class="hl sym">,</span> <span class="hl num">0x0c</span><span class="hl sym">,</span> <span class="hl num">0x1c</span><span class="hl sym">,</span>
+   <span class="hl num">0x02</span><span class="hl sym">,</span> <span class="hl num">0x12</span><span class="hl sym">,</span> <span class="hl num">0x0a</span><span class="hl sym">,</span> <span class="hl num">0x1a</span><span class="hl sym">,</span> <span class="hl num">0x06</span><span class="hl sym">,</span> <span class="hl num">0x16</span><span class="hl sym">,</span> <span class="hl num">0x0e</span><span class="hl sym">,</span> <span class="hl num">0x1e</span><span class="hl sym">,</span>
+
+   <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x11</span><span class="hl sym">,</span> <span class="hl num">0x09</span><span class="hl sym">,</span> <span class="hl num">0x19</span><span class="hl sym">,</span> <span class="hl num">0x05</span><span class="hl sym">,</span> <span class="hl num">0x15</span><span class="hl sym">,</span> <span class="hl num">0x0d</span><span class="hl sym">,</span> <span class="hl num">0x1d</span><span class="hl sym">,</span>
+   <span class="hl num">0x03</span><span class="hl sym">,</span> <span class="hl num">0x13</span><span class="hl sym">,</span> <span class="hl num">0x0b</span><span class="hl sym">,</span> <span class="hl num">0x1b</span><span class="hl sym">,</span> <span class="hl num">0x07</span><span class="hl sym">,</span> <span class="hl num">0x17</span><span class="hl sym">,</span> <span class="hl num">0x0f</span><span class="hl sym">,</span> <span class="hl num">0x1f</span><span class="hl sym">,</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">inline</span> TUInt32 <span class="hl kwd">flipTwoRows</span><span class="hl sym">(</span>TUInt32 bits<span class="hl sym">) {</span>
+   TUInt32 flipped <span class="hl sym">=</span> g_flip<span class="hl sym">[</span>bits <span class="hl sym">&gt;&gt;</span> N_COL<span class="hl sym">] &lt;&lt;</span> N_COL<span class="hl sym">;</span>
+   <span class="hl kwa">return</span> <span class="hl sym">(</span>flipped <span class="hl sym">|</span> g_flip<span class="hl sym">[</span>bits <span class="hl sym">&amp;</span> Board<span class="hl sym">::</span>TOP_ROW<span class="hl sym">]);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Board<span class="hl sym">::</span><span class="hl kwd">calcAlwaysBad</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">) {</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>TUInt32 iWord <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> iWord <span class="hl sym">&lt;</span> MAX_ISLAND_OFFSET<span class="hl sym">;</span> iWord<span class="hl sym">++) {</span>
+      IslandInfo <span class="hl sym">&amp;</span> isleInfo <span class="hl sym">=</span> g_islandInfo<span class="hl sym">[</span>iWord<span class="hl sym">];</span>
+      IslandInfo <span class="hl sym">&amp;</span> flipped <span class="hl sym">=</span> g_islandInfo<span class="hl sym">[</span><span class="hl kwd">flipTwoRows</span><span class="hl sym">(</span>iWord<span class="hl sym">)];</span>
+
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>TUInt32 i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> mask <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">32</span><span class="hl sym">;</span> i<span class="hl sym">++,</span> mask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+         TUInt32 boardVec <span class="hl sym">= (</span>i <span class="hl sym">&lt;&lt;</span> TWO_ROWS<span class="hl sym">) |</span> iWord<span class="hl sym">;</span>
+
+         <span class="hl kwb">int</span> hasBad <span class="hl sym">=</span> <span class="hl kwd">calcBadIslands</span><span class="hl sym">(</span>boardVec<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>hasBad <span class="hl sym">==</span> ALWAYS_BAD<span class="hl sym">) {</span>
+            isleInfo<span class="hl sym">.</span>alwaysBad<span class="hl sym">[</span>EVEN<span class="hl sym">] |=</span> mask<span class="hl sym">;</span>
+
+            TUInt32 flipMask <span class="hl sym">=</span> <span class="hl kwd">getMask</span><span class="hl sym">(</span>g_flip<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+            flipped<span class="hl sym">.</span>alwaysBad<span class="hl sym">[</span>ODD<span class="hl sym">] |=</span> flipMask<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">bool</span> Board<span class="hl sym">::</span><span class="hl kwd">hasBadIslandsSingle</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   BitVec toFill <span class="hl sym">= ~</span>boardVec<span class="hl sym">;</span>
+   <span class="hl kwb">bool</span> isOdd <span class="hl sym">= (</span>row <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">);</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>isOdd<span class="hl sym">) {</span>
+      row<span class="hl sym">--;</span>
+      toFill <span class="hl sym">&lt;&lt;=</span> N_COL<span class="hl sym">;</span> <span class="hl slc">// shift to even aligned</span>
+      toFill <span class="hl sym">|=</span> TOP_ROW<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   BitVec startRegion <span class="hl sym">=</span> TOP_ROW<span class="hl sym">;</span>
+   BitVec lastRow <span class="hl sym">=</span> TOP_ROW <span class="hl sym">&lt;&lt; (</span><span class="hl num">5</span> <span class="hl sym">*</span> N_COL<span class="hl sym">);</span>
+   BitVec boardMask <span class="hl sym">=</span> BOARD_MASK<span class="hl sym">;</span> <span class="hl slc">// all but the first two bits</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>row <span class="hl sym">&gt;=</span> <span class="hl num">4</span><span class="hl sym">)</span>
+      boardMask <span class="hl sym">&gt;&gt;= ((</span>row <span class="hl sym">-</span> <span class="hl num">4</span><span class="hl sym">) *</span> N_COL<span class="hl sym">);</span>
+   <span class="hl kwa">else if</span> <span class="hl sym">(</span>isOdd <span class="hl sym">|| (</span>row <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">))</span>
+      startRegion <span class="hl sym">=</span> lastRow<span class="hl sym">;</span>
+
+   toFill <span class="hl sym">&amp;=</span> boardMask<span class="hl sym">;</span>
+   startRegion <span class="hl sym">&amp;=</span> toFill<span class="hl sym">;</span>
+
+   <span class="hl kwa">while</span> <span class="hl sym">(</span>toFill<span class="hl sym">)    {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">badRegion</span><span class="hl sym">(</span>toFill<span class="hl sym">,</span> startRegion<span class="hl sym">))</span>
+         <span class="hl kwa">return true</span><span class="hl sym">;</span>
+      <span class="hl kwb">int</span> iPos <span class="hl sym">=</span> <span class="hl kwd">getFirstOne</span><span class="hl sym">(</span>toFill<span class="hl sym">);</span>
+      startRegion <span class="hl sym">=</span> <span class="hl kwd">getMask</span><span class="hl sym">(</span>iPos<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return false</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Board<span class="hl sym">::</span><span class="hl kwd">recordSolution</span><span class="hl sym">(</span>Soln <span class="hl sym">&amp;</span> s<span class="hl sym">) {</span>
+   m_nSoln <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">;</span> <span class="hl slc">// add solution and its rotation</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>m_minSoln<span class="hl sym">.</span><span class="hl kwd">isEmpty</span><span class="hl sym">()) {</span>
+      m_minSoln <span class="hl sym">=</span> m_maxSoln <span class="hl sym">=</span> s<span class="hl sym">;</span>
+      <span class="hl kwa">return</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>s<span class="hl sym">.</span><span class="hl kwd">lessThan</span><span class="hl sym">(</span>m_minSoln<span class="hl sym">))</span>
+      m_minSoln <span class="hl sym">=</span> s<span class="hl sym">;</span>
+   <span class="hl kwa">else if</span> <span class="hl sym">(</span>m_maxSoln<span class="hl sym">.</span><span class="hl kwd">lessThan</span><span class="hl sym">(</span>s<span class="hl sym">))</span>
+      m_maxSoln <span class="hl sym">=</span> s<span class="hl sym">;</span>
+
+   Soln spun<span class="hl sym">;</span>
+   s<span class="hl sym">.</span><span class="hl kwd">spin</span><span class="hl sym">(</span>spun<span class="hl sym">);</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>spun<span class="hl sym">.</span><span class="hl kwd">lessThan</span><span class="hl sym">(</span>m_minSoln<span class="hl sym">))</span>
+      m_minSoln <span class="hl sym">=</span> spun<span class="hl sym">;</span>
+   <span class="hl kwa">else if</span> <span class="hl sym">(</span>m_maxSoln<span class="hl sym">.</span><span class="hl kwd">lessThan</span><span class="hl sym">(</span>spun<span class="hl sym">))</span>
+      m_maxSoln <span class="hl sym">=</span> spun<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+TUInt32 <span class="hl kwd">countOnes</span><span class="hl sym">(</span>BitVec v<span class="hl sym">) {</span>
+   TUInt32 n <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span>v<span class="hl sym">) {</span>
+      n<span class="hl sym">++;</span>
+      v <span class="hl sym">=</span> v <span class="hl sym">&amp; (</span>v <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> n<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">bool</span> Board<span class="hl sym">::</span><span class="hl kwd">badRegion</span><span class="hl sym">(</span>BitVec <span class="hl sym">&amp;</span> toFill<span class="hl sym">,</span> BitVec rNew<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// grow empty region, until it doesn't change any more</span>
+   BitVec region<span class="hl sym">;</span>
+   <span class="hl kwa">do</span> <span class="hl sym">{</span>
+      region <span class="hl sym">=</span> rNew<span class="hl sym">;</span>
+
+      <span class="hl slc">// simple grow up/down</span>
+      rNew <span class="hl sym">|= (</span>region <span class="hl sym">&gt;&gt;</span> N_COL<span class="hl sym">);</span>
+      rNew <span class="hl sym">|= (</span>region <span class="hl sym">&lt;&lt;</span> N_COL<span class="hl sym">);</span>
+
+      <span class="hl slc">// grow right/left</span>
+      rNew <span class="hl sym">|= (</span>region <span class="hl sym">&amp; ~</span>L_EDGE_MASK<span class="hl sym">) &gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      rNew <span class="hl sym">|= (</span>region <span class="hl sym">&amp; ~</span>R_EDGE_MASK<span class="hl sym">) &lt;&lt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+      <span class="hl slc">// tricky growth</span>
+      BitVec evenRegion <span class="hl sym">=</span> region <span class="hl sym">&amp; (</span>ROW_0_MASK <span class="hl sym">&amp; ~</span>L_EDGE_MASK<span class="hl sym">);</span>
+      rNew <span class="hl sym">|=</span> evenRegion <span class="hl sym">&gt;&gt; (</span>N_COL <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+      rNew <span class="hl sym">|=</span> evenRegion <span class="hl sym">&lt;&lt; (</span>N_COL <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+      BitVec oddRegion <span class="hl sym">=</span> region <span class="hl sym">&amp; (</span>ROW_1_MASK <span class="hl sym">&amp; ~</span>R_EDGE_MASK<span class="hl sym">);</span>
+      rNew <span class="hl sym">|=</span> oddRegion <span class="hl sym">&gt;&gt; (</span>N_COL <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+      rNew <span class="hl sym">|=</span> oddRegion <span class="hl sym">&lt;&lt; (</span>N_COL <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+
+      <span class="hl slc">// clamp against existing pieces</span>
+      rNew <span class="hl sym">&amp;=</span> toFill<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">while</span> <span class="hl sym">((</span>rNew <span class="hl sym">!=</span> toFill<span class="hl sym">) &amp;&amp; (</span>rNew <span class="hl sym">!=</span> region<span class="hl sym">));</span>
+
+   <span class="hl slc">// subtract empty region from board</span>
+   toFill ^<span class="hl sym">=</span> rNew<span class="hl sym">;</span>
+
+   TUInt32 nCells <span class="hl sym">=</span> <span class="hl kwd">countOnes</span><span class="hl sym">(</span>toFill<span class="hl sym">);</span>
+   <span class="hl kwa">return</span> <span class="hl sym">(</span>nCells <span class="hl sym">%</span> Piece<span class="hl sym">::</span>N_ELEM <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span> TUInt32 g_firstRegion<span class="hl sym">[] = {</span>
+   <span class="hl num">0x00</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x02</span><span class="hl sym">,</span> <span class="hl num">0x03</span><span class="hl sym">,</span>   <span class="hl num">0x04</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x06</span><span class="hl sym">,</span> <span class="hl num">0x07</span><span class="hl sym">,</span>
+   <span class="hl num">0x08</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x02</span><span class="hl sym">,</span> <span class="hl num">0x03</span><span class="hl sym">,</span>   <span class="hl num">0x0c</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x0e</span><span class="hl sym">,</span> <span class="hl num">0x0f</span><span class="hl sym">,</span>
+
+   <span class="hl num">0x10</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x02</span><span class="hl sym">,</span> <span class="hl num">0x03</span><span class="hl sym">,</span>   <span class="hl num">0x04</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x06</span><span class="hl sym">,</span> <span class="hl num">0x07</span><span class="hl sym">,</span>
+   <span class="hl num">0x18</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x02</span><span class="hl sym">,</span> <span class="hl num">0x03</span><span class="hl sym">,</span>   <span class="hl num">0x1c</span><span class="hl sym">,</span> <span class="hl num">0x01</span><span class="hl sym">,</span> <span class="hl num">0x1e</span><span class="hl sym">,</span> <span class="hl num">0x1f</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">int</span> Board<span class="hl sym">::</span><span class="hl kwd">calcBadIslands</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   BitVec toFill <span class="hl sym">= ~</span>boardVec<span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>row <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+      row<span class="hl sym">--;</span>
+      toFill <span class="hl sym">&lt;&lt;=</span> N_COL<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   BitVec boardMask <span class="hl sym">=</span> BOARD_MASK<span class="hl sym">;</span> <span class="hl slc">// all but the first two bits</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>row <span class="hl sym">&gt;</span> <span class="hl num">4</span><span class="hl sym">) {</span>
+      <span class="hl kwb">int</span> boardMaskShift <span class="hl sym">= (</span>row <span class="hl sym">-</span> <span class="hl num">4</span><span class="hl sym">) *</span> N_COL<span class="hl sym">;</span>
+      boardMask <span class="hl sym">&gt;&gt;=</span> boardMaskShift<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   toFill <span class="hl sym">&amp;=</span> boardMask<span class="hl sym">;</span>
+
+   <span class="hl slc">// a little pre-work to speed things up</span>
+   BitVec bottom <span class="hl sym">= (</span>TOP_ROW <span class="hl sym">&lt;&lt; (</span><span class="hl num">5</span> <span class="hl sym">*</span> N_COL<span class="hl sym">));</span>
+   <span class="hl kwb">bool</span> filled <span class="hl sym">= ((</span>bottom <span class="hl sym">&amp;</span> toFill<span class="hl sym">) ==</span> bottom<span class="hl sym">);</span>
+   <span class="hl kwa">while</span> <span class="hl sym">((</span>bottom <span class="hl sym">&amp;</span> toFill<span class="hl sym">) ==</span> bottom<span class="hl sym">) {</span>
+      toFill ^<span class="hl sym">=</span> bottom<span class="hl sym">;</span>
+      bottom <span class="hl sym">&gt;&gt;=</span> N_COL<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   BitVec startRegion<span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>filled <span class="hl sym">|| (</span>row <span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">))</span>
+      startRegion <span class="hl sym">=</span> bottom <span class="hl sym">&amp;</span> toFill<span class="hl sym">;</span>
+   <span class="hl kwa">else</span> <span class="hl sym">{</span>
+      startRegion <span class="hl sym">=</span> g_firstRegion<span class="hl sym">[</span>toFill <span class="hl sym">&amp;</span> TOP_ROW<span class="hl sym">];</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>startRegion <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)  {</span>
+         startRegion <span class="hl sym">= (</span>toFill <span class="hl sym">&gt;&gt;</span> N_COL<span class="hl sym">) &amp;</span> TOP_ROW<span class="hl sym">;</span>
+         startRegion <span class="hl sym">=</span> g_firstRegion<span class="hl sym">[</span>startRegion<span class="hl sym">];</span>
+         startRegion <span class="hl sym">&lt;&lt;=</span> N_COL<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      startRegion <span class="hl sym">|= (</span>startRegion <span class="hl sym">&lt;&lt;</span> N_COL<span class="hl sym">) &amp;</span> toFill<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">do</span> <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">badRegion</span><span class="hl sym">(</span>toFill<span class="hl sym">,</span> startRegion<span class="hl sym">))</span>
+         <span class="hl kwa">return</span> ALWAYS_BAD<span class="hl sym">;</span>
+      <span class="hl kwb">int</span> iPos <span class="hl sym">=</span> <span class="hl kwd">getFirstOne</span><span class="hl sym">(</span>toFill<span class="hl sym">);</span>
+      startRegion <span class="hl sym">=</span> <span class="hl kwd">getMask</span><span class="hl sym">(</span>iPos<span class="hl sym">);</span>
+   <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>toFill<span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> GOOD<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> Board<span class="hl sym">::</span><span class="hl kwd">hasBadIslands</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> <span class="hl kwb">int</span> row<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// skip over any filled rows</span>
+   <span class="hl kwa">while</span> <span class="hl sym">((</span>boardVec <span class="hl sym">&amp;</span> TOP_ROW<span class="hl sym">) ==</span> TOP_ROW<span class="hl sym">) {</span>
+      boardVec <span class="hl sym">&gt;&gt;=</span> N_COL<span class="hl sym">;</span>
+      row<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+
+   TUInt32 iInfo <span class="hl sym">=</span> boardVec <span class="hl sym">&amp;</span> TOP_2_ROWS<span class="hl sym">;</span>
+   IslandInfo <span class="hl sym">&amp;</span> info <span class="hl sym">=</span> g_islandInfo<span class="hl sym">[</span>iInfo<span class="hl sym">];</span>
+
+   TUInt32 thirdRow <span class="hl sym">= (</span>boardVec <span class="hl sym">&gt;&gt;</span> TWO_ROWS<span class="hl sym">) &amp;</span> TOP_ROW<span class="hl sym">;</span>
+   TUInt32 mask <span class="hl sym">=</span> <span class="hl kwd">getMask</span><span class="hl sym">(</span>thirdRow<span class="hl sym">);</span>
+   TUInt32 isOdd <span class="hl sym">=</span> row <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   TUInt32 <span class="hl sym">&amp;</span> alwaysBad <span class="hl sym">=</span> info<span class="hl sym">.</span>alwaysBad<span class="hl sym">[</span>isOdd<span class="hl sym">];</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>alwaysBad <span class="hl sym">&amp;</span> mask<span class="hl sym">)</span>
+      <span class="hl kwa">return</span> ALWAYS_BAD<span class="hl sym">;</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>boardVec <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl kwa">return</span> GOOD<span class="hl sym">;</span>
+
+   <span class="hl kwa">return</span> <span class="hl kwd">calcBadIslands</span><span class="hl sym">(</span>boardVec<span class="hl sym">,</span> row<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> Board<span class="hl sym">::</span><span class="hl kwd">genAllSolutions</span><span class="hl sym">(</span>BitVec boardVec<span class="hl sym">,</span> TUInt32 placedPieces<span class="hl sym">,</span> TUInt32 row<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">while</span> <span class="hl sym">((</span>boardVec <span class="hl sym">&amp;</span> TOP_ROW<span class="hl sym">) ==</span> TOP_ROW<span class="hl sym">) {</span>
+      boardVec <span class="hl sym">&gt;&gt;=</span> N_COL<span class="hl sym">;</span>
+      row<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   TUInt32 iNextFill <span class="hl sym">=</span> s_firstOne<span class="hl sym">[~</span>boardVec <span class="hl sym">&amp;</span> TOP_ROW<span class="hl sym">];</span>
+   <span class="hl kwb">const</span> OkPieces <span class="hl sym">&amp;</span> allowed <span class="hl sym">=</span> g_okPieces<span class="hl sym">[</span>row<span class="hl sym">][</span>iNextFill<span class="hl sym">];</span>
+
+   <span class="hl kwb">int</span> iPiece <span class="hl sym">=</span> <span class="hl kwd">getFirstOne</span><span class="hl sym">(~</span>placedPieces<span class="hl sym">);</span>
+   <span class="hl kwb">int</span> pieceMask <span class="hl sym">=</span> <span class="hl kwd">getMask</span><span class="hl sym">(</span>iPiece<span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(;</span> iPiece <span class="hl sym">&lt;</span> N_PIECE_TYPE<span class="hl sym">;</span> iPiece<span class="hl sym">++,</span> pieceMask <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// skip if we've already used this piece</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>pieceMask <span class="hl sym">&amp;</span> placedPieces<span class="hl sym">)</span>
+         <span class="hl kwa">continue</span><span class="hl sym">;</span>
+
+      placedPieces <span class="hl sym">|=</span> pieceMask<span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> iOrient <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> iOrient <span class="hl sym">&lt;</span> allowed<span class="hl sym">.</span>nPieces<span class="hl sym">[</span>iPiece<span class="hl sym">];</span> iOrient<span class="hl sym">++) {</span>
+         BitVec pieceVec <span class="hl sym">=</span> allowed<span class="hl sym">.</span>pieceVec<span class="hl sym">[</span>iPiece<span class="hl sym">][</span>iOrient<span class="hl sym">];</span>
+
+         <span class="hl slc">// check if piece conflicts with other pieces</span>
+         <span class="hl kwa">if</span> <span class="hl sym">((</span>pieceVec <span class="hl sym">&amp;</span> boardVec<span class="hl sym">) ||</span> <span class="hl kwd">hasBadIslands</span><span class="hl sym">(</span>boardVec <span class="hl sym">|</span> pieceVec<span class="hl sym">,</span> row<span class="hl sym">))</span>
+            <span class="hl kwa">continue</span><span class="hl sym">;</span>
+
+         m_curSoln<span class="hl sym">.</span><span class="hl kwd">pushPiece</span><span class="hl sym">(</span>pieceVec<span class="hl sym">,</span> iPiece<span class="hl sym">,</span> row<span class="hl sym">);</span>
+
+         <span class="hl slc">// recur or record solution</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>placedPieces <span class="hl sym">!=</span> Piece<span class="hl sym">::</span>ALL_PIECE_MASK<span class="hl sym">)</span>
+            <span class="hl kwd">genAllSolutions</span><span class="hl sym">(</span>boardVec <span class="hl sym">|</span> pieceVec<span class="hl sym">,</span> placedPieces<span class="hl sym">,</span> row<span class="hl sym">);</span>
+         <span class="hl kwa">else</span>
+            <span class="hl kwd">recordSolution</span><span class="hl sym">(</span>m_curSoln<span class="hl sym">);</span>
+
+         <span class="hl slc">// remove the piece before continuing with a new piece</span>
+         m_curSoln<span class="hl sym">.</span><span class="hl kwd">popPiece</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+
+      placedPieces ^<span class="hl sym">=</span> pieceMask<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">* []) {</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;</span> <span class="hl num">2</span><span class="hl sym">)</span>
+      <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl slc">// spec says this is an error</span>
+
+   Board b<span class="hl sym">;</span>
+   Piece<span class="hl sym">::</span><span class="hl kwd">genAllOrientations</span><span class="hl sym">();</span>
+   Board<span class="hl sym">::</span><span class="hl kwd">calcAlwaysBad</span><span class="hl sym">();</span>
+   b<span class="hl sym">.</span><span class="hl kwd">genAllSolutions</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+   cout <span class="hl sym">&lt;&lt;</span> b<span class="hl sym">.</span>m_nSoln <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot; solutions found</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+   cout <span class="hl sym">&lt;&lt;</span> b<span class="hl sym">.</span>m_minSoln<span class="hl sym">.</span><span class="hl kwd">toString</span><span class="hl sym">() &lt;&lt;</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">;</span>
+   cout <span class="hl sym">&lt;&lt;</span> b<span class="hl sym">.</span>m_maxSoln<span class="hl sym">.</span><span class="hl kwd">toString</span><span class="hl sym">() &lt;&lt;</span> endl<span class="hl sym">;</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>

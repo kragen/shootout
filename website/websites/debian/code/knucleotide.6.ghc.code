@@ -1,0 +1,93 @@
+<span class="hl com">{-# OPTIONS -fbang-patterns #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Shootout</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Chris Kuklewicz and Don Stewart</span>
+<span class="hl slc">--</span>
+
+<span class="hl kwa">import</span> <span class="hl kwb">Char</span>
+<span class="hl kwa">import</span> Foreign
+<span class="hl kwa">import</span> List
+<span class="hl kwa">import</span> Maybe
+<span class="hl kwa">import</span> Text.Printf
+<span class="hl kwa">import</span> GHC.Exts
+<span class="hl kwa">import</span> GHC.<span class="hl kwb">Int</span>
+<span class="hl kwa">import</span> GHC.IOBase
+<span class="hl kwa">import</span> Data.ByteString.Base
+<span class="hl kwa">import qualified</span> Data.ByteString.Char8 <span class="hl kwa">as</span> S
+<span class="hl kwa">import qualified</span> Data.HashTable <span class="hl kwa">as</span> T
+
+main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    <span class="hl sym">(</span>PS fp o l<span class="hl sym">) &lt;-</span> get <span class="hl sym">(</span>S.pack <span class="hl str">&quot;&gt;TH&quot;</span><span class="hl sym">)</span>
+    withForeignPtr fp $ \p <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+        <span class="hl kwa">let</span> sec <span class="hl sym">= (</span>l<span class="hl sym">,</span> p `plusPtr` o<span class="hl sym">)</span>
+        mapM_ <span class="hl sym">(</span>writeFreqs sec<span class="hl sym">) [</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">2</span><span class="hl sym">]</span>
+        mapM_ <span class="hl sym">(</span>writeFrame sec<span class="hl sym">) =&lt;&lt;</span> mapM toseq strs
+
+strs <span class="hl sym">= [</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">]</span>
+
+get p <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    s <span class="hl sym">&lt;-</span> S.getContents
+    <span class="hl kwa">let</span> Just n <span class="hl sym">=</span> S.findSubstring p s
+    return $<span class="hl sym">!</span> S.map toUpper             <span class="hl slc">-- array fusion!</span>
+            . S.filter    <span class="hl sym">((/=)</span> '\n'<span class="hl sym">)</span>
+            . S.dropWhile <span class="hl sym">((/=)</span> '\n'<span class="hl sym">)</span>
+            . S.copy
+            . S.drop n $ s
+
+count <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> Hash <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+count s <span class="hl sym">!</span>p n <span class="hl sym">!</span>h <span class="hl sym">=</span> mapM_ <span class="hl sym">(</span>inc . plusPtr p<span class="hl sym">) [</span><span class="hl num">0</span>..s<span class="hl sym">-</span>n<span class="hl sym">]</span>
+  <span class="hl kwa">where</span>
+    inc <span class="hl sym">!</span>k <span class="hl sym">=</span> <span class="hl kwa">do</span>
+        mold <span class="hl sym">&lt;-</span> T.lookup h k
+        <span class="hl kwa">case</span> mold <span class="hl kwa">of</span>
+            Nothing <span class="hl sym">-&gt;</span> T.insert h k <span class="hl num">1</span>
+            Just n  <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span> T.update h k $<span class="hl sym">!</span> n<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">;</span> return <span class="hl sym">()</span>
+
+writeFreqs <span class="hl sym">(</span>size<span class="hl sym">,</span>p<span class="hl sym">)</span> n <span class="hl sym">=</span> <span class="hl kwa">do</span>
+    h   <span class="hl sym">&lt;-</span> newH n
+    count size p n h
+    mapM_ draw . sortBy kf <span class="hl sym">=&lt;&lt;</span> T.toList h
+    putChar '\n'
+  <span class="hl kwa">where</span>
+    draw <span class="hl sym">(</span>p<span class="hl sym">,</span>f<span class="hl sym">) =</span> printf <span class="hl str">&quot;%s %.3f\n&quot;</span> <span class="hl sym">(</span>ppr n p<span class="hl sym">)</span> pct
+        <span class="hl kwa">where</span> pct   <span class="hl sym">= (</span><span class="hl num">100</span> <span class="hl sym">* (</span>fromIntegral f<span class="hl sym">) /</span> total<span class="hl sym">) ::</span> <span class="hl kwb">Double</span>
+              total <span class="hl sym">=</span> fromIntegral <span class="hl sym">(</span>size <span class="hl sym">-</span> n <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+
+    kf <span class="hl sym">(</span>k<span class="hl sym">,</span>x<span class="hl sym">) (</span>j<span class="hl sym">,</span>y<span class="hl sym">) =</span> <span class="hl kwa">case</span> compare y x <span class="hl kwa">of</span>
+          EQ <span class="hl sym">-&gt;</span> compare <span class="hl sym">(</span>ppr n k<span class="hl sym">) (</span>ppr n j<span class="hl sym">);</span> x  <span class="hl sym">-&gt;</span> x
+
+writeFrame <span class="hl sym">(</span>size<span class="hl sym">,</span>p<span class="hl sym">) (</span>n<span class="hl sym">,</span>k<span class="hl sym">) =</span> <span class="hl kwa">do</span>
+  h <span class="hl sym">&lt;-</span> newH n
+  count size p n h
+  v <span class="hl sym">&lt;-</span> T.lookup h k
+  putStrLn $ <span class="hl sym">(</span>show $ fromMaybe <span class="hl num">0</span> v<span class="hl sym">) ++ (</span>'\t' <span class="hl sym">:</span> ppr n k<span class="hl sym">)</span>
+
+toseq s <span class="hl sym">=</span> fmap <span class="hl sym">((,) (</span>length s<span class="hl sym">)) (</span>newArray0 <span class="hl num">0</span> <span class="hl sym">(</span>map c2w s<span class="hl sym">))</span>
+ppr n p <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>map w2c `fmap` peekArray n p<span class="hl sym">)</span>
+
+<span class="hl slc">------------------------------------------------------------------------</span>
+
+<span class="hl kwa">type</span> Hash <span class="hl sym">=</span> T.HashTable <span class="hl sym">(</span>Ptr Word8<span class="hl sym">)</span> <span class="hl kwb">Int</span>
+
+newH <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO Hash
+newH n <span class="hl sym">=</span> T.new <span class="hl sym">(</span>eq n<span class="hl sym">) (</span>hash n<span class="hl sym">)</span>
+
+hash n <span class="hl sym">(</span>Ptr p<span class="hl sym">) =</span> inlinePerformIO $ IO $ go n <span class="hl num">0</span># p
+  <span class="hl kwa">where</span>
+    go <span class="hl sym">!</span>n acc p s
+        <span class="hl sym">|</span> n <span class="hl sym">==</span> <span class="hl num">0</span>    <span class="hl sym">= (</span># s<span class="hl sym">,</span> I32# acc #<span class="hl sym">)</span>
+        <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl kwa">case</span> readInt8OffAddr# p <span class="hl num">0</span># s <span class="hl kwa">of</span>
+                <span class="hl sym">(</span># s<span class="hl sym">,</span> i #<span class="hl sym">) -&gt;</span> go <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) (</span><span class="hl num">5</span># <span class="hl sym">*</span># acc <span class="hl sym">+</span># i<span class="hl sym">) (</span>plusAddr# p <span class="hl num">1</span>#<span class="hl sym">)</span> s
+
+<span class="hl slc">-- Faster than a memcmp!</span>
+eq <span class="hl sym">!</span>n <span class="hl sym">(</span>Ptr p<span class="hl sym">) (</span>Ptr q<span class="hl sym">) =</span> inlinePerformIO $ IO $ go n p q
+  <span class="hl kwa">where</span>
+    go <span class="hl sym">!</span>n p q s
+        <span class="hl sym">|</span> n <span class="hl sym">==</span> <span class="hl num">0</span>    <span class="hl sym">= (</span># s <span class="hl sym">,</span> <span class="hl kwa">True</span> #<span class="hl sym">)</span>
+        <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> <span class="hl kwa">case</span> readInt8OffAddr# p <span class="hl num">0</span># s <span class="hl kwa">of</span>
+                <span class="hl sym">(</span># s<span class="hl sym">,</span> a #<span class="hl sym">) -&gt;</span> <span class="hl kwa">case</span> readInt8OffAddr# q <span class="hl num">0</span># s <span class="hl kwa">of</span>
+                    <span class="hl sym">(</span># s<span class="hl sym">,</span> b #<span class="hl sym">) |</span> a <span class="hl sym">/=</span># b   <span class="hl sym">-&gt; (</span># s<span class="hl sym">,</span> <span class="hl kwa">False</span> #<span class="hl sym">)</span>
+                               <span class="hl sym">|</span> otherwise <span class="hl sym">-&gt;</span> go <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) (</span>plusAddr# p <span class="hl num">1</span>#<span class="hl sym">) (</span>plusAddr# q <span class="hl num">1</span>#<span class="hl sym">)</span> s
+
