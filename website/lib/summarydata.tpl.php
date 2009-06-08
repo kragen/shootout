@@ -4,6 +4,9 @@
 
 
 <?
+if (SITE_NAME == 'gp4'){
+   printf('<p><strong>&nbsp;Please choose <a href="faq.php#means">up-to-date measurements</a>.</strong><br/></p>');
+}
 
 if (isset($Data)){
    echo '<pre>name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s) [', $Mark, "]\n";

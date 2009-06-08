@@ -88,6 +88,11 @@ if (isset($Data)){
 <p>Normalized measurements of source code size and run time give shape to each language implementation and position the programs in a broader context. Smaller is better.</p>
 
 <?
+if (SITE_NAME == 'gp4'){
+   printf('<p><strong>&nbsp;Please choose <a href="faq.php#means">up-to-date measurements</a>.</strong><br/></p>');
+}
+
+
 if (isset($Data)){
    printf('<table>');
    
