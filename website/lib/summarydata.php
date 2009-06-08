@@ -39,12 +39,9 @@ require_once(LIB_PATH.'lib_scorecard.php');
 $PageId = 'summarydata';
 $Title = 'Summary Data';
 $TemplateName = 'summarydata.tpl.php';
-
-if (SITE_NAME != 'debian' && SITE_NAME != 'gp4'){
-   if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
-   $Body->set('DataSet', $DataSet);
-   $Body->set('Data', DataRows(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
-}
+if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
+$Body->set('DataSet', $DataSet);
+$Body->set('Data', DataRows(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
 $Body->set('Title', $Title);
 $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 

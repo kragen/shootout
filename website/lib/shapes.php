@@ -44,10 +44,8 @@ $TemplateName = 'shapes.tpl.php';
 $About = & new Template(ABOUT_PATH);
 $AboutTemplateName = 'shapes-about.tpl.php';
 if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-if (SITE_NAME != 'debian'){
-   $Body->set('DataSet', $DataSet);
-   $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
-}
+$Body->set('DataSet', $DataSet);
+$Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
 $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 
 

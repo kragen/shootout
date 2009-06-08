@@ -81,7 +81,7 @@ $j = ($j > $i) ? $j : $i;
 
 
 if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
-   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a>.</strong><br/></p>');
+   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a>!</strong><br/></p>');
 }
 ?>
 
