@@ -4,5 +4,7 @@
 
 <p>(Note: only the smallest and largest outliers are shown.)</p>
 
-<p>What do you think about how this data could be analysed and presented?</p>
-<p><strong>Take the <a href="summarydata.php?d=<?=$DataSet?>">Summary Data</a> and show what you can do!</strong></p>
+
+<p></br><strong>There are other ways to analyse and present this data:</strong></p>
+
+<p><a href="shapes.php">Interpret scatter plot shapes</a> or <a href="benchmark.php?test=all&amp;lang=all">create your own ranking</a> or <a href="summarydata.php?d=<?=$DataSet?>">take the Summary Data</a> and create your own analysis!</p>
