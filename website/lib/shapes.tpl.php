@@ -10,74 +10,89 @@
    list($Shapes,$Centers) = $Data;
    uasort($Centers,'CompareTime');
 
-   define('NCOLS',4);
-   $rows = array();
-   
-   /*
-      Match the median time to a median time already assigned
-      in rows - use the same row if possible.
+   $bounds = array(0.0,1.3,1.8,2.3,1000.0);
+   define('NCOLS',sizeof($bounds)-1);
+
+   /* Match the median time to a median time already assigned
+      in cols - use the same row if possible.
    */
 
-   function rowmatch($start,$stop,$y,&$rows,&$Centers){
-      $matchrow = $start;
+   function rowmatch($start,$stop,$k,&$cols,&$Centers){
+      $rowmatch = $start;
+      $y = $Centers[$k][1];
       for ($col=0; $col<NCOLS; $col++){
-         for ($j=$start; $j<$stop; $j++){
-            if (isset($rows[$col][$j])){
-               $k0 = $rows[$col][$j];
-               $diff = abs($Centers[$k0][1] - $y);
-               if (!isset($match)||($diff < $match)){
-                  $match = $diff; $matchrow = $j;
+         for ($r=$start; $r<$stop; $r++){
+            if (isset($cols[$col][$r])){
+               $k0 = $cols[$col][$r];
+               if ($k0 != $k){
+                  $diff = abs($Centers[$k0][1] - $y);
+                  if (!isset($match)||($diff < $match)){
+                     $match = $diff; $rowmatch = $r;
+                  }
                }
             }
          }
       }
-      return $matchrow;
+      return $rowmatch;
    }
-   
-   /*
-      Assign each language implementation to a source code size column
+
+   /* Assign each language implementation to a source code size column
       based on arbitrary source code size.
    */
-   
-   // first column
-   $i = 0;
-   foreach($Centers as $k => $c){
-      if ($c[0] < 1.3){ $rows[0][$i] = $k; $i++; }
-   }
-   $j = $i;
-   
-   // second column
-   $i = 0;
-   foreach($Centers as $k => $c){
-      if ($c[0] >= 1.3 && $c[0] < 1.8){
-         $r = rowmatch($i,$j,$c[1],$rows,$Centers);
-         $rows[1][$r] = $k;
-         $i = $r + 1;
+
+   function leftToRight(&$bounds,&$Centers){
+      $cols = array();
+      for ($col=0;$col<NCOLS;$col++){
+         $b0 = $bounds[$col]; $b1 = $bounds[$col+1];
+         $i = 0;
+         if ($col==0){
+            foreach($Centers as $k => $c){
+               if ($c[0] < $b1){ $cols[$col][$i] = $k; $i++; }
+            }
+            $n = $i;
+         } else {
+            foreach($Centers as $k => $c){
+               if ($c[0] >= $b0 && $c[0] < $b1){
+                  $r = rowmatch($i,$n,$k,$cols,$Centers);
+                  $cols[$col][$r] = $k;
+                  $i = $r + 1;
+               }
+            }
+            $n = ($n > $i) ? $n : $i;
+         }
       }
+      return array($n,$cols);
    }
-   $j = ($j > $i) ? $j : $i;
-   
-   // third column
-   $i = 0;
-   foreach($Centers as $k => $c){
-      if ($c[0] >= 1.8 && $c[0] < 2.3){
-         $r = rowmatch($i,$j,$c[1],$rows,$Centers);
-         $rows[2][$r] = $k;
-         $i = $r + 1;
+
+   function finetune($n,&$cols0,&$Centers){
+      $colrow = array();
+      foreach($cols0 as $c => $a){
+         foreach($a as $r => $k){
+            $colrow[$k] = array($c,$r);
+         }
       }
-}
-$j = ($j > $i) ? $j : $i;
-   
-// fourth column
-$i = 0;
-foreach($Centers as $k => $c){
-   if ($c[0] >= 2.3){
-      $r = rowmatch($i,$j,$c[1],$rows,$Centers);
-      $rows[3][$r] = $k;
-      $i = $r + 1;
+
+      $cols = array();
+      $edge = sizeof($cols0)-1;
+      $keys = array_keys(array_reverse($Centers));
+
+      foreach($keys as $k){
+         $cr = $colrow[$k];
+         $col = $cr[0];
+         if ($col==$edge){
+            $cols[$col][ $cr[1] ] = $k;
+         } else {
+            $r = rowmatch($cr[1],$n,$k,$cols0,$Centers);
+            while ($r > $cr[1] && isset($cols[$col][$r])){ $r--; }
+            $cols[$col][$r] = $k;
+         }
+      }
+      return $cols;
    }
-}
-$j = ($j > $i) ? $j : $i;
+
+
+   list($n,$cols) = leftToRight($bounds,$Centers);
+   $cols = finetune($n,$cols,$Centers);
 
 
 if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
@@ -87,7 +102,7 @@ if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
 
 
 <h2><a href="#shapes" name="shapes">&nbsp;<?=$Title;?>&nbsp;[<?=$Mark;?>]</a></h2>
-<p>Normalized measurements of source code size and run time give shape to each language implementation and position the programs in a broader context. Smaller is better.</p>
+<p>Normalized measurements of source code size and run time give shape to each language implementation and position the programs in a broader context. From concise at the left to less-concise at the right, from slower at the top to faster at the bottom - smaller is better.</p>
 
 <?
    printf('<table>');
@@ -96,8 +111,8 @@ if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
       printf('<tr>');
       for ($col=0; $col<NCOLS; $col++){
          printf('<td>&nbsp;');
-         if (isset($rows[$col][$row])){
-            $k = $rows[$col][$row];
+         if (isset($cols[$col][$row])){
+            $k = $cols[$col][$row];
             printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" width="150" height="120" />',
                Encode($k), Encode($Shapes[$k]), Encode($Centers[$k]) );
          } else {
