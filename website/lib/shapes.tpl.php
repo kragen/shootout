@@ -107,7 +107,7 @@ if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
 <?
    printf('<table>');
    
-   for ($row=0; $row<$j; $row++){
+   for ($row=0; $row<$n; $row++){
       printf('<tr>');
       for ($col=0; $col<NCOLS; $col++){
          printf('<td>&nbsp;');
