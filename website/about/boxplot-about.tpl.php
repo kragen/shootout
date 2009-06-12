@@ -7,4 +7,4 @@
 
 <p></br><strong>There are other ways to analyse and present this data:</strong></p>
 
-<p><a href="shapes.php">Interpret scatter plot shapes</a> or <a href="benchmark.php?test=all&amp;lang=all">create your own ranking</a> or <a href="summarydata.php?d=<?=$DataSet?>">take the Summary Data</a> and create your own analysis!</p>
+<p><a href="shapes.php?d=<?=$DataSet?>">Interpret scatter plot shapes</a> or <a href="benchmark.php?test=all&amp;lang=all&amp;d=<?=$DataSet?>">create your own ranking</a> or <a href="summarydata.php?d=<?=$DataSet?>">take the Summary Data</a> and create your own analysis!</p>
