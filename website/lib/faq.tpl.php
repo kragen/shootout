@@ -567,15 +567,11 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <ul>
 <li><a
-href="summarydata.php?d=data">data&nbsp;for&nbsp;largest&nbsp;N</a></li>
+href="summarydata.php?d=data"><strong>summary data</strong> for largest N</a></li>
 <li><a
-href="summarydata.php?d=ndata">full&nbsp;data&nbsp;-&nbsp;smaller&nbsp;and&nbsp;largest&nbsp;N</a></li>
+href="summarydata.php?d=ndata"><strong>full summary data</strong> - smaller and largest N</a></li>
 </ul>
 </dd>
-
-
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="../u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a>
 
 
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
