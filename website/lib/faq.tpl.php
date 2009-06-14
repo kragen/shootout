@@ -564,8 +564,19 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 <dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
-<dd><p>You can see and analyse and present in your own imaginative ways the <a href="summarydata.php" title="summary data"><strong>Summary Data</strong></a> measurements.</p>
+<dd>
+<ul>
+<li><a
+href="summarydata.php?d=data">data&nbsp;for&nbsp;largest&nbsp;N</a></li>
+<li><a
+href="summarydata.php?d=ndata">full&nbsp;data&nbsp;-&nbsp;smaller&nbsp;and&nbsp;largest&nbsp;N</a></li>
+</ul>
 </dd>
+
+
+<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+href="../u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a>
+
 
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
 <dd><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Computer Language Benchmarks Game project page on Alioth FusionForge at Debian.org">Alioth&nbsp; FusionForge</a>.</p>
