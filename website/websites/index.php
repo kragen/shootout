@@ -29,7 +29,7 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 
-<h5><a href="./u32q/" title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements.">Programming Language Performance and Size comparisons</a></h5><br/>
+<h5><a href="./u32q/" title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements.">Programming language performance comparisons</a></h5><br/>
 
 
 <table class="layout">
