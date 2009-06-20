@@ -8,7 +8,7 @@
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="benchmarking fast faster programming language benchmark performance benchmarks shootout program faster language compare comparison benchmarks game" />
+<meta name="keywords" content="benchmarking fast faster programming language performance comparison benchmarks game shootout" />
 <meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Benchmarks Game</title>
@@ -29,13 +29,13 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 
-<h5><a href="./u32q/" title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements.">Programming language performance comparisons</a></h5><br/>
+<h5><a href="./u32q/" title="32 bit quad-core programming language performance comparisons.">Programming language performance comparisons</a></h5><br/>
 
 
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32q/"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="32 bit quad-core programming language performance comparisons." href="./u32q/"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
 <h3><span class="u32q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
@@ -46,7 +46,7 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64q/"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="64 bit quad-core programming language performance comparisons." href="./u64q/"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
@@ -58,7 +58,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u64/"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="64 bit one core programming language performance comparisons." href="./u64/"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
@@ -69,7 +69,7 @@ href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#1
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="./u32/"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="32 bit one core programming language performance comparisons." href="./u32/"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
 <h3><span class="u32">
 <a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
 href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
