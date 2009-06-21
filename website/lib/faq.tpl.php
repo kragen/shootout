@@ -522,7 +522,7 @@ language, benchmark, your-name, date, (version)<br />
 </ol>
 
 <p>Now <strong>start from the bottom</strong> of the
-   <a href="http://alioth.debian.org/tracker/?atid=411646&amp;group_id=30402&amp;func=browse"  title="Play the Benchmarks Game - Submit New">
+   <a href="https://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"  title="Play the Benchmarks Game - Submit New">
    <strong>"Play the Benchmarks Game" Submit-New</strong></a> form and work your way up.
 </p>
 </dd>
