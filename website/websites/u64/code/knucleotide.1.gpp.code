@@ -1,160 +1,218 @@
 <span class="hl slc">// The Computer Language Benchmarks Game</span>
 <span class="hl slc">// http://shootout.alioth.debian.org/</span>
-<span class="hl slc">// Contributed by Paul Kitchin</span>
-<span class="hl slc">// OpenMP by The Anh Tran</span>
+
+<span class="hl slc">// Contributed by The Anh Tran</span>
 
 <span class="hl dir">#include &lt;omp.h&gt;</span>
-<span class="hl dir">#include &lt;cstdio&gt;</span>
-<span class="hl dir">#include &lt;cstring&gt;</span>
-<span class="hl dir">#include &lt;iostream&gt;</span>
-<span class="hl dir">#include &lt;set&gt;</span>
-<span class="hl dir">#include &lt;vector&gt;</span>
-<span class="hl dir">#include &lt;algorithm&gt;</span>
 <span class="hl dir">#include &lt;sched.h&gt;</span>
 
-<span class="hl kwc">template</span> <span class="hl sym">&lt;</span> std<span class="hl sym">::</span><span class="hl kwb">size_t</span> size <span class="hl sym">&gt;</span>
-<span class="hl kwb">struct</span> hasher
+<span class="hl dir">#include &lt;algorithm&gt;</span>
+<span class="hl dir">#include &lt;vector&gt;</span>
+<span class="hl dir">#include &lt;iostream&gt;</span>
+
+<span class="hl slc">//#include &lt;ext/hash_map&gt;</span>
+<span class="hl slc">//#include &lt;boost/unordered_map.hpp&gt;</span>
+<span class="hl dir">#include &lt;ext/pb_ds/assoc_container.hpp&gt;</span>
+<span class="hl dir">#include &lt;ext/pb_ds/hash_policy.hpp&gt;</span>
+
+<span class="hl dir">#include &lt;boost/algorithm/string/case_conv.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/lambda/lambda.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/lambda/bind.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/format.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/foreach.hpp&gt;</span>
+<span class="hl dir">#define foreach BOOST_FOREACH</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned int</span>   uint<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned short</span>   ushort<span class="hl sym">;</span>
+
+
+<span class="hl slc">// Hash_table key type, with key's length = reading_frame_size</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> size<span class="hl sym">&gt;</span>
+<span class="hl kwb">struct</span> hash_key
 <span class="hl sym">{</span>
-   <span class="hl kwb">static</span> std<span class="hl sym">::</span><span class="hl kwb">size_t const</span> length <span class="hl sym">=</span> size<span class="hl sym">;</span>
-   <span class="hl kwb">static char const</span> <span class="hl sym">*</span> <span class="hl kwd">string</span><span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span> string<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> tmp<span class="hl sym">)</span>
+   uint   hash_val<span class="hl sym">;</span>
+   <span class="hl kwb">char</span>   key<span class="hl sym">[</span>size <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
+
+   <span class="hl kwd">hash_key</span><span class="hl sym">()</span>
    <span class="hl sym">{</span>
-      <span class="hl kwd">strncpy</span><span class="hl sym">(</span>tmp<span class="hl sym">,</span> string<span class="hl sym">,</span> size<span class="hl sym">);</span>
-      <span class="hl kwa">return</span> tmp<span class="hl sym">;</span>
+      <span class="hl kwd">memset</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span><span class="hl kwa">this</span><span class="hl sym">));</span>
    <span class="hl sym">}</span>
 
-   std<span class="hl sym">::</span><span class="hl kwb">size_t</span> <span class="hl kwd">hash</span><span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span> string<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl kwd">hash_key</span><span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span> str<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      std<span class="hl sym">::</span><span class="hl kwb">size_t</span> h <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-      <span class="hl kwa">for</span> <span class="hl sym">(</span>std<span class="hl sym">::</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-         h <span class="hl sym">= (</span>h <span class="hl sym">*</span> <span class="hl num">4</span><span class="hl sym">) + ((</span>string<span class="hl sym">[</span>i<span class="hl sym">] &amp;</span> <span class="hl num">0x6</span><span class="hl sym">) /</span> <span class="hl num">2</span><span class="hl sym">);</span>
-
-      <span class="hl kwa">return</span> h<span class="hl sym">;</span>
+      <span class="hl kwd">ReHash</span> <span class="hl sym">(</span>str<span class="hl sym">);</span>
    <span class="hl sym">}</span>
 
-   <span class="hl kwb">bool</span> <span class="hl kwd">equal</span><span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span> lhs<span class="hl sym">,</span> <span class="hl kwb">char const</span> <span class="hl sym">*</span> rhs<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">ReHash</span><span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span>str<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      <span class="hl kwa">return</span> std<span class="hl sym">::</span><span class="hl kwd">strncmp</span><span class="hl sym">(</span>lhs<span class="hl sym">,</span> rhs<span class="hl sym">,</span> size<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl slc">// naive hashing algorithm.</span>
+      hash_val <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         key<span class="hl sym">[</span>i<span class="hl sym">] =</span> str<span class="hl sym">[</span>i<span class="hl sym">];</span>
+         hash_val <span class="hl sym">= (</span>hash_val <span class="hl sym">*</span> <span class="hl num">5</span><span class="hl sym">) +</span> str<span class="hl sym">[</span>i<span class="hl sym">];</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// Hash functor Hash&lt;HKey_Type&gt;</span>
+   uint <span class="hl kwc">operator</span><span class="hl sym">() (</span><span class="hl kwb">const</span> hash_key <span class="hl sym">&amp;</span>k<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> k<span class="hl sym">.</span>hash_val<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// Comparison functor equal_to&lt;HKey_Type&gt;(Left, Right)</span>
+   <span class="hl kwb">bool</span> <span class="hl kwc">operator</span><span class="hl sym">() (</span><span class="hl kwb">const</span> hash_key <span class="hl sym">&amp;</span>k1<span class="hl sym">,</span> <span class="hl kwb">const</span> hash_key <span class="hl sym">&amp;</span>k2<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>k1<span class="hl sym">.</span>hash_val <span class="hl sym">==</span> k2<span class="hl sym">.</span>hash_val<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span> <span class="hl kwd">__builtin_expect</span><span class="hl sym">((</span>k1<span class="hl sym">.</span>key<span class="hl sym">[</span>i<span class="hl sym">] !=</span> k2<span class="hl sym">.</span>key<span class="hl sym">[</span>i<span class="hl sym">]),</span> <span class="hl kwa">false</span><span class="hl sym">) )</span>
+               <span class="hl kwa">return false</span><span class="hl sym">;</span>   <span class="hl slc">// collision</span>
+
+         <span class="hl kwa">return true</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl kwa">return false</span><span class="hl sym">;</span>
    <span class="hl sym">}</span>
 <span class="hl sym">};</span>
 
-<span class="hl kwc">template</span> <span class="hl sym">&lt;</span> typename key<span class="hl sym">,</span> typename value<span class="hl sym">,</span> typename hash_traits <span class="hl sym">&gt;</span>
-<span class="hl kwc">class</span> hashtable <span class="hl sym">:</span> <span class="hl kwc">private</span> hash_traits
+<span class="hl slc">// Game's rule: function to update hashtable</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> hash_len<span class="hl sym">,</span> typename Input_Type<span class="hl sym">,</span> typename HTable_Type<span class="hl sym">&gt;</span>
+<span class="hl kwb">void</span> <span class="hl kwd">calculate_frequency</span><span class="hl sym">(</span>Input_Type <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>input<span class="hl sym">,</span> HTable_Type<span class="hl sym">&amp;</span> hash_table<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-<span class="hl kwc">public</span><span class="hl sym">:</span>
+   typename Input_Type<span class="hl sym">::</span>const_pointer it   <span class="hl sym">= &amp;(</span>input<span class="hl sym">.</span><span class="hl kwd">front</span><span class="hl sym">());</span>
+   typename Input_Type<span class="hl sym">::</span>const_pointer end   <span class="hl sym">= &amp;(</span>input<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">()) -</span> hash_len <span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">;</span>
 
-   <span class="hl kwb">struct</span> entry
+   typename HTable_Type<span class="hl sym">::</span>key_type key<span class="hl sym">;</span>
+
+   <span class="hl kwb">int const</span> threadcount   <span class="hl sym">=</span> <span class="hl kwd">omp_get_num_threads</span> <span class="hl sym">();</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>threadcount <span class="hl sym">&gt;</span> <span class="hl num">1</span><span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      key key_<span class="hl sym">;</span>
-      value value_<span class="hl sym">;</span>
-      entry <span class="hl sym">*</span> next_<span class="hl sym">;</span>
+      <span class="hl kwb">int const</span> threadid   <span class="hl sym">=</span> <span class="hl kwd">omp_get_thread_num</span> <span class="hl sym">();</span>
+      <span class="hl kwb">int const</span> chunk      <span class="hl sym">= (</span>input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() -</span> hash_len <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> threadcount<span class="hl sym">;</span>
 
-      <span class="hl kwd">entry</span><span class="hl sym">()   :</span> <span class="hl kwd">key_</span><span class="hl sym">(</span><span class="hl kwd">key</span><span class="hl sym">()),</span> <span class="hl kwd">value_</span><span class="hl sym">(</span><span class="hl kwd">value</span><span class="hl sym">()),</span>   <span class="hl kwd">next_</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
-      <span class="hl sym">{   }</span>
+      <span class="hl kwb">int const</span> rbegin   <span class="hl sym">=</span> threadid <span class="hl sym">*</span> chunk<span class="hl sym">;</span>
+      <span class="hl kwb">int const</span> rend      <span class="hl sym">=</span> rbegin <span class="hl sym">+</span> chunk<span class="hl sym">;</span>
 
-      <span class="hl kwd">entry</span><span class="hl sym">(</span>key key_<span class="hl sym">)   :</span> <span class="hl kwd">key_</span><span class="hl sym">(</span>key_<span class="hl sym">),</span> <span class="hl kwd">value_</span><span class="hl sym">(</span><span class="hl kwd">value</span><span class="hl sym">()),</span> <span class="hl kwd">next_</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
-      <span class="hl sym">{   }</span>
-
-      <span class="hl kwb">bool</span> <span class="hl kwc">operator</span><span class="hl sym">&lt;(</span>entry <span class="hl kwb">const</span> <span class="hl sym">&amp;</span> entry<span class="hl sym">)</span> <span class="hl kwb">const</span>
-      <span class="hl sym">{</span>
-         <span class="hl kwa">return</span> value_ <span class="hl sym">&gt;</span> entry<span class="hl sym">.</span>value_<span class="hl sym">;</span>
-      <span class="hl sym">}</span>
-   <span class="hl sym">};</span>
-
-   <span class="hl kwd">hashtable</span><span class="hl sym">(</span>std<span class="hl sym">::</span><span class="hl kwb">size_t</span> size<span class="hl sym">)   :</span> <span class="hl kwd">size_</span><span class="hl sym">(</span><span class="hl kwd">power_of_two</span><span class="hl sym">(</span>size<span class="hl sym">)),</span> <span class="hl kwd">table_</span><span class="hl sym">(</span>size_<span class="hl sym">)</span>
-   <span class="hl sym">{   }</span>
-
-   value <span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">[](</span>key lookup_key<span class="hl sym">)</span>
-   <span class="hl sym">{</span>
-      entry <span class="hl sym">*</span> node <span class="hl sym">= &amp;</span>table_<span class="hl sym">[</span><span class="hl kwd">hash</span><span class="hl sym">(</span>lookup_key<span class="hl sym">) &amp; (</span>size_ <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)];</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>node<span class="hl sym">-&gt;</span>key_<span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-         <span class="hl kwa">while</span> <span class="hl sym">(!</span><span class="hl kwd">equal</span><span class="hl sym">(</span>lookup_key<span class="hl sym">,</span> node<span class="hl sym">-&gt;</span>key_<span class="hl sym">) &amp;&amp;</span> node<span class="hl sym">-&gt;</span>next_<span class="hl sym">)</span>
-            node <span class="hl sym">=</span> node<span class="hl sym">-&gt;</span>next_<span class="hl sym">;</span>
-
-         <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">equal</span><span class="hl sym">(</span>lookup_key<span class="hl sym">,</span> node<span class="hl sym">-&gt;</span>key_<span class="hl sym">))</span>
-            <span class="hl kwa">return</span> node<span class="hl sym">-&gt;</span>value_<span class="hl sym">;</span>
-
-         node<span class="hl sym">-&gt;</span>next_ <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">entry</span><span class="hl sym">(</span><span class="hl kwd">value</span><span class="hl sym">());</span>
-         node <span class="hl sym">=</span> node<span class="hl sym">-&gt;</span>next_<span class="hl sym">;</span>
-      <span class="hl sym">}</span>
-      node<span class="hl sym">-&gt;</span>key_ <span class="hl sym">=</span> lookup_key<span class="hl sym">;</span>
-      <span class="hl kwa">return</span> node<span class="hl sym">-&gt;</span>value_<span class="hl sym">;</span>
+      <span class="hl slc">// Task handout. Each thread hashes a range, with range size = chunk</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>threadid <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) &lt;</span> threadcount<span class="hl sym">)</span>
+         end   <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">min</span><span class="hl sym">(</span> it <span class="hl sym">+</span> rend<span class="hl sym">,</span> end <span class="hl sym">);</span>
+      it <span class="hl sym">+=</span> rbegin<span class="hl sym">;</span>
    <span class="hl sym">}</span>
 
-   <span class="hl kwc">typedef</span> typename std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> entry <span class="hl sym">&gt;::</span>const_iterator const_iterator<span class="hl sym">;</span>
-
-   const_iterator <span class="hl kwd">begin</span><span class="hl sym">()</span> <span class="hl kwb">const</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(;</span> it <span class="hl sym">&lt;</span> end<span class="hl sym">; ++</span>it<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      <span class="hl kwa">return</span> table_<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">();</span>
+      key<span class="hl sym">.</span><span class="hl kwd">ReHash</span><span class="hl sym">(</span>it<span class="hl sym">);</span>
+      <span class="hl sym">++(</span>hash_table<span class="hl sym">[</span>key<span class="hl sym">]);</span>
    <span class="hl sym">}</span>
-
-   const_iterator <span class="hl kwd">end</span><span class="hl sym">()</span> <span class="hl kwb">const</span>
-   <span class="hl sym">{</span>
-      <span class="hl kwa">return</span> table_<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">();</span>
-   <span class="hl sym">}</span>
-
-<span class="hl kwc">private</span><span class="hl sym">:</span>
-   std<span class="hl sym">::</span><span class="hl kwb">size_t</span> size_<span class="hl sym">;</span>
-   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> entry <span class="hl sym">&gt;</span> table_<span class="hl sym">;</span>
-
-   std<span class="hl sym">::</span><span class="hl kwb">size_t</span> <span class="hl kwd">power_of_two</span><span class="hl sym">(</span>std<span class="hl sym">::</span><span class="hl kwb">size_t</span> lower_bound<span class="hl sym">)</span>
-   <span class="hl sym">{</span>
-      <span class="hl kwa">for</span> <span class="hl sym">(</span>std<span class="hl sym">::</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">64</span> <span class="hl sym">*</span> <span class="hl num">1024</span><span class="hl sym">;</span> i <span class="hl sym">*=</span> <span class="hl num">2</span><span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-         <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">&gt;=</span> lower_bound<span class="hl sym">)</span>
-            <span class="hl kwa">return</span> i<span class="hl sym">;</span>
-      <span class="hl sym">}</span>
-      <span class="hl kwa">return</span> <span class="hl num">1024</span> <span class="hl sym">*</span> <span class="hl num">64</span><span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-<span class="hl sym">};</span>
-
-<span class="hl kwc">template</span> <span class="hl sym">&lt;</span> typename hasher <span class="hl sym">&gt;</span>
-<span class="hl kwb">void</span> <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span>std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> <span class="hl kwb">char</span> <span class="hl sym">&gt;</span> <span class="hl kwb">const</span> <span class="hl sym">&amp;</span> input<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> output<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwc">typedef</span> hashtable<span class="hl sym">&lt;</span> <span class="hl kwb">char const</span> <span class="hl sym">*,</span> std<span class="hl sym">::</span><span class="hl kwb">size_t</span><span class="hl sym">,</span> hasher <span class="hl sym">&gt;</span> frequency_table<span class="hl sym">;</span>
-   <span class="hl kwc">typedef</span> typename std<span class="hl sym">::</span>set<span class="hl sym">&lt;</span> typename frequency_table<span class="hl sym">::</span>entry <span class="hl sym">&gt;::</span>const_iterator sc_ite<span class="hl sym">;</span>
-
-   std<span class="hl sym">::</span><span class="hl kwb">size_t</span> sum <span class="hl sym">=</span> input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() +</span> <span class="hl num">1</span> <span class="hl sym">-</span> hasher<span class="hl sym">::</span>length<span class="hl sym">;</span>
-
-   frequency_table <span class="hl kwd">frequencies</span><span class="hl sym">(</span>std<span class="hl sym">::</span>min<span class="hl sym">&lt;</span> std<span class="hl sym">::</span><span class="hl kwb">size_t</span> <span class="hl sym">&gt;(</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>hasher<span class="hl sym">::</span>length <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">),</span> sum<span class="hl sym">));</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> i_end <span class="hl sym">=</span> input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() +</span> <span class="hl num">1</span> <span class="hl sym">-</span> hasher<span class="hl sym">::</span>length<span class="hl sym">;</span> i <span class="hl sym">!=</span> i_end<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-      <span class="hl sym">++</span>frequencies<span class="hl sym">[ &amp;</span>input<span class="hl sym">[</span>i<span class="hl sym">] ];</span>
-
-   std<span class="hl sym">::</span>set<span class="hl sym">&lt;</span> typename frequency_table<span class="hl sym">::</span>entry <span class="hl sym">&gt;</span> <span class="hl kwd">ordered_entries</span><span class="hl sym">(</span>frequencies<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> frequencies<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">());</span>
-
-   <span class="hl kwb">size_t</span> printedchar <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span>   sc_ite i <span class="hl sym">=</span> ordered_entries<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> i_end <span class="hl sym">=</span> ordered_entries<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">();</span> i <span class="hl sym">!=</span> i_end<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-   <span class="hl sym">{</span>
-      <span class="hl kwb">char</span> tmpbuf<span class="hl sym">[</span><span class="hl num">32</span><span class="hl sym">] = {</span><span class="hl num">0</span><span class="hl sym">};</span>
-      printedchar <span class="hl sym">+=</span> <span class="hl kwd">sprintf</span><span class="hl sym">(</span>   output <span class="hl sym">+</span>printedchar<span class="hl sym">,</span> <span class="hl str">&quot;%s %0.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
-                     hasher<span class="hl sym">::</span><span class="hl kwd">string</span><span class="hl sym">(</span>i<span class="hl sym">-&gt;</span>key_<span class="hl sym">,</span> tmpbuf<span class="hl sym">),</span>
-                     <span class="hl sym">(</span>sum ? <span class="hl kwb">double</span><span class="hl sym">(</span>i<span class="hl sym">-&gt;</span>value_<span class="hl sym">) *</span> <span class="hl num">100.0</span> <span class="hl sym">/</span> sum <span class="hl sym">:</span> <span class="hl num">0.0</span><span class="hl sym">)   );</span>
-   <span class="hl sym">}</span>
-
-   <span class="hl kwd">strcpy</span><span class="hl sym">(</span>output <span class="hl sym">+</span> printedchar<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwc">template</span> <span class="hl sym">&lt;</span> typename hasher <span class="hl sym">&gt;</span>
-<span class="hl kwb">void</span> <span class="hl kwd">write_count</span><span class="hl sym">(</span>std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> <span class="hl kwb">char</span> <span class="hl sym">&gt;</span> <span class="hl kwb">const</span> <span class="hl sym">&amp;</span> input<span class="hl sym">,</span> <span class="hl kwb">char const</span> <span class="hl sym">*</span> string<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> output<span class="hl sym">)</span>
+
+<span class="hl slc">// Build a hash_table, count all key with hash_len = 1, 2</span>
+<span class="hl slc">// write the code and percentage frequency</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> hash_len<span class="hl sym">,</span> typename Input_Type<span class="hl sym">&gt;</span>
+<span class="hl kwb">void</span> <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span>Input_Type <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>input<span class="hl sym">,</span> std<span class="hl sym">::</span>string <span class="hl sym">&amp;</span>output<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwc">typedef</span> hashtable<span class="hl sym">&lt;</span> <span class="hl kwb">char const</span> <span class="hl sym">*,</span> std<span class="hl sym">::</span><span class="hl kwb">size_t</span><span class="hl sym">,</span> hasher <span class="hl sym">&gt;</span> frequency_table<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> hash_key<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;</span>         HKey_Type<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>pair<span class="hl sym">&lt;</span>HKey_Type<span class="hl sym">,</span> uint<span class="hl sym">&gt;</span>   HValue_Type<span class="hl sym">;</span>
 
-   std<span class="hl sym">::</span><span class="hl kwb">size_t</span> sum <span class="hl sym">=</span> input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() +</span> <span class="hl num">1</span> <span class="hl sym">-</span> hasher<span class="hl sym">::</span>length<span class="hl sym">;</span>
+   <span class="hl slc">//typedef __gnu_cxx::hash_map &lt;</span>
+   <span class="hl slc">//typedef boost::unordered_map &lt;</span>
+   <span class="hl kwc">typedef</span> __gnu_pbds<span class="hl sym">::</span>cc_hash_table   <span class="hl sym">&lt;</span>
+                                 HKey_Type<span class="hl sym">,</span>   <span class="hl slc">// key type</span>
+                                 uint<span class="hl sym">,</span>      <span class="hl slc">// map type</span>
+                                 HKey_Type<span class="hl sym">,</span>   <span class="hl slc">// hash functor</span>
+                                 HKey_Type   <span class="hl slc">// equal_to functor</span>
+                              <span class="hl sym">&gt;</span>    HTable_Type<span class="hl sym">;</span>
 
-   frequency_table <span class="hl kwd">frequencies</span><span class="hl sym">(</span>std<span class="hl sym">::</span>min<span class="hl sym">&lt;</span><span class="hl kwb">size_t</span><span class="hl sym">&gt;(</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>min<span class="hl sym">&lt;</span><span class="hl kwb">size_t</span><span class="hl sym">&gt;(</span><span class="hl num">30</span><span class="hl sym">,</span> hasher<span class="hl sym">::</span>length <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">),</span> sum<span class="hl sym">));</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> i_end <span class="hl sym">=</span> input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() +</span> <span class="hl num">1</span> <span class="hl sym">-</span> hasher<span class="hl sym">::</span>length<span class="hl sym">;</span> i <span class="hl sym">!=</span> i_end<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-      <span class="hl sym">++</span>frequencies<span class="hl sym">[ &amp;</span>input<span class="hl sym">[</span>i<span class="hl sym">] ];</span>
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>HValue_Type<span class="hl sym">&gt;</span>    List_Type<span class="hl sym">;</span>
 
-   <span class="hl kwd">sprintf</span><span class="hl sym">(</span>output<span class="hl sym">,</span> <span class="hl str">&quot;%u</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">, (</span><span class="hl kwb">unsigned int</span><span class="hl sym">)(</span>frequencies<span class="hl sym">[</span>string<span class="hl sym">]),</span> string<span class="hl sym">);</span>
+   <span class="hl kwb">static</span> HTable_Type hash_table<span class="hl sym">;</span>   <span class="hl slc">// private for each function&lt;hash_len&gt;()</span>
+   HTable_Type local_table<span class="hl sym">;</span>      <span class="hl slc">// private for each thread</span>
+
+   <span class="hl slc">// parallel hashing. Each thread updates its own hash_table.</span>
+   calculate_frequency<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> local_table<span class="hl sym">);</span>
+
+   <span class="hl slc">// merge thread local results to main hash_table</span>
+   <span class="hl dir">#pragma omp critical</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">foreach</span> <span class="hl sym">(</span>typename HTable_Type<span class="hl sym">::</span>value_type <span class="hl kwb">const</span> <span class="hl sym">&amp;</span> e<span class="hl sym">,</span> local_table<span class="hl sym">)</span>
+         hash_table<span class="hl sym">[</span>e<span class="hl sym">.</span>first<span class="hl sym">] +=</span> e<span class="hl sym">.</span>second<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// we want the last thread, reaching this code block, to process result</span>
+   <span class="hl kwb">static size_t</span> thread_passed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__sync_add_and_fetch</span><span class="hl sym">(&amp;</span>thread_passed<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">) ==</span> <span class="hl kwa">static_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">size_t</span><span class="hl sym">&gt;(</span><span class="hl kwd">omp_get_num_threads</span><span class="hl sym">()))</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// Copy results from hash_table to list</span>
+      List_Type <span class="hl kwd">order_tbl</span><span class="hl sym">(</span>hash_table<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> hash_table<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">());</span>
+
+      <span class="hl slc">// Sort with descending frequency</span>
+      <span class="hl kwa">using namespace</span> boost<span class="hl sym">::</span>lambda<span class="hl sym">;</span>
+      std<span class="hl sym">::</span><span class="hl kwd">sort</span><span class="hl sym">(</span>   order_tbl<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> order_tbl<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span>
+         <span class="hl sym">( !(</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>HValue_Type<span class="hl sym">::</span>second<span class="hl sym">,</span> _1<span class="hl sym">) &lt;</span> <span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>HValue_Type<span class="hl sym">::</span>second<span class="hl sym">,</span> _2<span class="hl sym">)) )   );</span>
+
+      <span class="hl kwb">float const</span> total_char <span class="hl sym">=</span> <span class="hl kwa">static_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">float</span><span class="hl sym">&gt;(</span>input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() -</span> hash_len <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span>
+      boost<span class="hl sym">::</span>format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%|1$s| %|2$0.3f|</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+
+      <span class="hl kwd">foreach</span><span class="hl sym">(</span>typename List_Type<span class="hl sym">::</span>value_type <span class="hl sym">&amp;</span>e<span class="hl sym">,</span> order_tbl<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         e<span class="hl sym">.</span>first<span class="hl sym">.</span>key<span class="hl sym">[</span>hash_len<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span> <span class="hl slc">// ensure proper null terminated</span>
+         boost<span class="hl sym">::</span><span class="hl kwd">to_upper</span><span class="hl sym">(</span>e<span class="hl sym">.</span>first<span class="hl sym">.</span>key<span class="hl sym">);</span>
+
+         <span class="hl kwb">float</span> percent <span class="hl sym">=</span> <span class="hl kwa">static_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">float</span><span class="hl sym">&gt;(</span>e<span class="hl sym">.</span>second<span class="hl sym">) *</span> <span class="hl num">100.0</span>f <span class="hl sym">/</span> total_char<span class="hl sym">;</span>
+         fmt <span class="hl sym">%</span> e<span class="hl sym">.</span>first<span class="hl sym">.</span>key <span class="hl sym">%</span> percent<span class="hl sym">;</span>
+
+         output <span class="hl sym">+=</span> fmt<span class="hl sym">.</span><span class="hl kwd">str</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+
+      output <span class="hl sym">+=</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+      thread_passed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwb">static</span>
-<span class="hl kwb">char</span> <span class="hl kwd">to_upper</span><span class="hl sym">(</span><span class="hl kwb">char</span> c<span class="hl sym">)</span>
+<span class="hl slc">// Build a hash_table, count all key with hash_len = 3, 4, 6, 12, 18</span>
+<span class="hl slc">// Then print a specific sequence's count</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> hash_len<span class="hl sym">,</span> typename Input_Type<span class="hl sym">&gt;</span>
+<span class="hl kwb">void</span> <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span>Input_Type <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>input<span class="hl sym">,</span> std<span class="hl sym">::</span>string <span class="hl sym">&amp;</span>output<span class="hl sym">,</span> <span class="hl kwb">char const</span> <span class="hl sym">*</span>specific<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwa">return</span> <span class="hl kwb">char</span><span class="hl sym">(</span>std<span class="hl sym">::</span><span class="hl kwd">toupper</span><span class="hl sym">(</span>c<span class="hl sym">));</span>
+   <span class="hl kwc">typedef</span> hash_key<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;</span>      HKey_Type<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> __gnu_pbds<span class="hl sym">::</span>cc_hash_table   <span class="hl sym">&lt;</span>
+                                 HKey_Type<span class="hl sym">,</span>   <span class="hl slc">// key type</span>
+                                 uint<span class="hl sym">,</span>      <span class="hl slc">// map type</span>
+                                 HKey_Type<span class="hl sym">,</span>   <span class="hl slc">// hash functor</span>
+                                 HKey_Type   <span class="hl slc">// equal_to functor</span>
+                              <span class="hl sym">&gt;</span>    HTable_Type<span class="hl sym">;</span>
+
+   HTable_Type local_table<span class="hl sym">;</span>   <span class="hl slc">// private for each thread</span>
+   calculate_frequency<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> local_table<span class="hl sym">);</span>   <span class="hl slc">// parallel hash</span>
+
+   <span class="hl slc">// Build hash key for searching</span>
+   HKey_Type <span class="hl kwd">printkey</span><span class="hl sym">(</span>specific<span class="hl sym">);</span>
+
+   <span class="hl slc">// count how many matched for specific sequence</span>
+   <span class="hl kwb">static</span> uint total_matched <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   uint matched <span class="hl sym">=</span> local_table<span class="hl sym">[</span>printkey<span class="hl sym">];</span> <span class="hl slc">// parallel look up</span>
+
+   <span class="hl dir">#pragma omp atomic</span>
+   total_matched <span class="hl sym">+=</span> matched<span class="hl sym">;</span>
+
+   <span class="hl slc">// The last thread, reaching this code block, will print result</span>
+   <span class="hl kwb">static size_t</span> thread_passed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__sync_add_and_fetch</span><span class="hl sym">(&amp;</span>thread_passed<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">) ==</span> <span class="hl kwa">static_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">size_t</span><span class="hl sym">&gt;(</span><span class="hl kwd">omp_get_num_threads</span><span class="hl sym">()))</span>
+   <span class="hl sym">{</span>
+      printkey<span class="hl sym">.</span>key<span class="hl sym">[</span>hash_len<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span> <span class="hl slc">// null terminated</span>
+      boost<span class="hl sym">::</span><span class="hl kwd">to_upper</span><span class="hl sym">(</span>printkey<span class="hl sym">.</span>key<span class="hl sym">);</span>
+
+      boost<span class="hl sym">::</span>format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%1%</span><span class="hl esc">\t</span><span class="hl str">%2%</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+      fmt <span class="hl sym">%</span> total_matched <span class="hl sym">%</span> printkey<span class="hl sym">.</span>key<span class="hl sym">;</span>
+      output <span class="hl sym">=</span> fmt<span class="hl sym">.</span><span class="hl kwd">str</span> <span class="hl sym">();</span>
+
+      thread_passed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwb">static</span>
 <span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
 <span class="hl sym">{</span>
    cpu_set_t cs<span class="hl sym">;</span>
@@ -162,52 +220,51 @@
    <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
 
    <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">; ++</span>i<span class="hl sym">)</span>
    <span class="hl sym">{</span>
       <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
-         count<span class="hl sym">++;</span>
+         <span class="hl sym">++</span>count<span class="hl sym">;</span>
    <span class="hl sym">}</span>
    <span class="hl kwa">return</span> count<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
 <span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">()</span>
 <span class="hl sym">{</span>
-   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> <span class="hl kwb">char</span> <span class="hl sym">&gt;</span> input<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">char</span><span class="hl sym">&gt;</span> Input_Type<span class="hl sym">;</span>
+   Input_Type input<span class="hl sym">;</span>
    input<span class="hl sym">.</span><span class="hl kwd">reserve</span><span class="hl sym">(</span><span class="hl num">256</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">);</span> <span class="hl slc">// 256MB</span>
 
-   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">4096</span><span class="hl sym">];</span>
+   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">128</span><span class="hl sym">];</span>
 
-   <span class="hl slc">// Rule: line-by-line</span>
-   <span class="hl kwa">while</span> <span class="hl sym">(</span>std<span class="hl sym">::</span>cin<span class="hl sym">.</span><span class="hl kwd">getline</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl num">4096</span><span class="hl sym">) &amp;&amp;</span> std<span class="hl sym">::</span><span class="hl kwd">strncmp</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">)</span>
-   <span class="hl sym">{   }</span>
-
-   <span class="hl kwa">while</span> <span class="hl sym">(</span>std<span class="hl sym">::</span>cin<span class="hl sym">.</span><span class="hl kwd">getline</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl num">4096</span><span class="hl sym">) &amp;&amp;</span> buffer<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span>
+   <span class="hl slc">// rule: read line-by-line</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
    <span class="hl sym">{</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span> <span class="hl str">';'</span><span class="hl sym">)</span>
-         input<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span>input<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span> buffer<span class="hl sym">,</span> buffer <span class="hl sym">+</span> std<span class="hl sym">::</span>cin<span class="hl sym">.</span><span class="hl kwd">gcount</span><span class="hl sym">() -</span> <span class="hl num">1</span><span class="hl sym">);</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span><span class="hl kwd">strncmp</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl kwa">break</span><span class="hl sym">;</span>
    <span class="hl sym">}</span>
 
-   std<span class="hl sym">::</span><span class="hl kwd">transform</span><span class="hl sym">(</span>input<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> input<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span> input<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> to_upper<span class="hl sym">);</span>
-
-   <span class="hl kwb">char</span> output<span class="hl sym">[</span><span class="hl num">7</span><span class="hl sym">][</span><span class="hl num">256</span><span class="hl sym">];</span>
-   <span class="hl dir">#pragma omp parallel sections num_threads(GetThreadCount()) default(shared)</span>
+   std<span class="hl sym">::</span>back_insert_iterator<span class="hl sym">&lt;</span>Input_Type<span class="hl sym">&gt;</span> <span class="hl kwd">back_ite</span> <span class="hl sym">(</span> input <span class="hl sym">);</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
    <span class="hl sym">{</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_count<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">18</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">6</span><span class="hl sym">] );</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_count<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">12</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">5</span><span class="hl sym">] );</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_count<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">6</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> <span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">] );</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_count<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">4</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> <span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">] );</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_count<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">3</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> <span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] );</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_frequencies<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">2</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] );</span>
-      <span class="hl dir">#pragma omp section</span>
-      write_frequencies<span class="hl sym">&lt;</span> hasher<span class="hl sym">&lt;</span> <span class="hl num">1</span> <span class="hl sym">&gt; &gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] );</span>
+      <span class="hl kwb">size_t</span> sz <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>buffer<span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span>sz <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+         <span class="hl sym">--</span>sz<span class="hl sym">;</span>
+
+      std<span class="hl sym">::</span><span class="hl kwd">copy</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> buffer <span class="hl sym">+</span> sz<span class="hl sym">,</span> back_ite<span class="hl sym">);</span>
    <span class="hl sym">}</span>
 
-   <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">7</span><span class="hl sym">;</span> i<span class="hl sym">++ )</span>
-      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+   std<span class="hl sym">::</span>string output<span class="hl sym">[</span><span class="hl num">7</span><span class="hl sym">];</span>
+   <span class="hl dir">#pragma omp parallel num_threads(GetThreadCount()) default(shared)</span>
+   <span class="hl sym">{</span>
+      write_frequencies<span class="hl sym">&lt;</span><span class="hl num">18</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">6</span><span class="hl sym">],</span> <span class="hl str">&quot;ggtattttaatttatagt&quot;</span> <span class="hl sym">);</span>
+      write_frequencies<span class="hl sym">&lt;</span><span class="hl num">12</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">5</span><span class="hl sym">],</span> <span class="hl str">&quot;ggtattttaatt&quot;</span> <span class="hl sym">);</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">6</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">],</span> <span class="hl str">&quot;ggtatt&quot;</span> <span class="hl sym">);</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> <span class="hl str">&quot;ggta&quot;</span> <span class="hl sym">);</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">3</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> <span class="hl str">&quot;ggt&quot;</span> <span class="hl sym">);</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">2</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] );</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">1</span><span class="hl sym">&gt;(</span> input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] );</span>
+   <span class="hl sym">}</span>
+
+   std<span class="hl sym">::</span><span class="hl kwd">for_each</span><span class="hl sym">(&amp;(</span>output<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]), &amp;(</span>output<span class="hl sym">[</span><span class="hl num">7</span><span class="hl sym">]),</span> std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> boost<span class="hl sym">::</span>lambda<span class="hl sym">::</span>_1<span class="hl sym">);</span>
 <span class="hl sym">}</span>
+

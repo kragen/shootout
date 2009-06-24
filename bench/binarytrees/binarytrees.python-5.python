@@ -1,0 +1,90 @@
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+#
+# contributed by Antoine Pitrou
+# modified by Dominique Wahli and Daniel Nanz
+
+from __future__ import print_function
+
+import sys
+import multiprocessing as mp
+
+
+def make_tree(i, d):
+    
+    if d > 0:
+        i2 = i + i
+        d -= 1
+        return (i, make_tree(i2 - 1, d), make_tree(i2, d))
+    else:
+        return (i, None, None)
+
+
+def check_tree(n):
+
+    (i, l, r) = n
+    if l is None:
+        return i
+    else:
+        return i + check_tree(l) - check_tree(r)
+
+
+def make_and_check(dep_iter, cs=0, make=make_tree, check=check_tree):
+
+    d, iters = dep_iter
+    for i in range(1, iters + 1):
+        cs += check(make(i, d))
+        cs += check(make(-i, d))
+    return cs
+
+
+def mp_chunkmap_worker(f, args_chunk, l, h, res):
+    res[l:h] = list(map(f, args_chunk))
+
+
+def mp_chunkmap(f, arglist, mp_chunkmap_worker=mp_chunkmap_worker,
+                cpu_count=mp.cpu_count(), l=0):
+
+    taskno = len(arglist)
+    (tasks_per_process, t_rest) = divmod(taskno, cpu_count)
+    h = tasks_per_process + t_rest
+    results = mp.Array('i', range(taskno))
+    processes = []
+    for p in range(cpu_count):
+        args_chunk = (f, arglist[l:h], l, h, results)
+        proc = mp.Process(target=mp_chunkmap_worker, args=args_chunk)
+        proc.start()
+        processes.append(proc)
+        l = h
+        h = l + tasks_per_process
+    for proc in processes:
+        proc.join()
+    return results[:]
+    
+
+def main(n, min_d=4, make=make_tree, check=check_tree):
+    
+    max_d = max(min_d + 2, n)
+    stretch_d = max_d + 1
+    out = []
+    msg = ['stretch tree of depth %d\t check: %d',
+           '%d\t trees of depth %d\t check: %d',
+           'long lived tree of depth %d\t check: %d']
+    
+    out.append(msg[0] % (stretch_d, check(make(0, stretch_d))))
+    long_lived_tree = make(0, max_d)
+    
+    mmd = max_d + min_d
+    d_iters = []
+    for d in range(min_d, stretch_d, 2):
+        d_iters.append((d, 2 ** (mmd - d)))
+    results = mp_chunkmap(make_and_check, d_iters)
+    for ind, (d, i) in enumerate(d_iters):
+        out.append(msg[1] % (2 * i, d, results[ind]))
+ 
+    out.append(msg[2] % (max_d, check(long_lived_tree)))
+    return('\n'.join(out))
+
+
+if __name__ == '__main__':
+    print(main(int(sys.argv[1])))
