@@ -1,1 +1,1 @@
-<p>Python 3.1rc1</p>
+<p>Python 3.1</p>
