@@ -1,0 +1,526 @@
+// The Computer Language Benchmarks Game
+// http://shootout.alioth.debian.org/
+// Contributed by Jeroen Dirks
+// Based on a submission by The Anh Tran
+// Changes:
+// Used own hash table implementation
+// Keys do not need to store the actual string array but can do with a pointer
+// Hashing is more efficient if the original data is converted to array
+// of values 0,1,2,3 a very simple hash function with low collissions it
+// then easier to construct.
+
+#include <omp.h>
+#include <sched.h>
+#include <cstdio>
+
+#include <algorithm>
+#include <vector>
+
+#ifndef JdHashMap_h
+#define JdHashMap_h
+
+#include <vector>
+#include <iostream>
+#include <cstring>
+
+template<class Key, class Value>
+class JdHashMapEntry
+{
+public:
+   JdHashMapEntry( const Key& rKey, const Value& rValue )
+      :mKey( rKey ),
+      mValue( rValue )
+   {
+      mHash = hashFn( rKey );
+   }
+   JdHashMapEntry( const JdHashMapEntry<Key, Value>& rEntry )
+      :mKey( rEntry.mKey ),
+      mValue( rEntry.mValue ),
+      mHash( rEntry.mHash )
+   {}
+   JdHashMapEntry& operator=( const JdHashMapEntry<Key, Value>& rEntry )
+   {
+      if ( this != &rEntry )
+      {
+         mKey = rEntry.mKey;
+         mValue = rEntry.mValue;
+         mHash = rEntry.mHash;
+      }
+      return *this;
+   }
+   ~JdHashMapEntry() {}
+   Key mKey;
+   Value mValue;
+   unsigned int mHash;
+};
+
+
+template<class Key, class Value>
+class JdHashMap
+{
+public:
+   typedef Key key_type;
+   JdHashMap()
+   {
+      mMapSize = 16;
+      mHashMap.resize( mMapSize );
+      memset( &mHashMap[0], -1, mMapSize * sizeof(int) );   
+   }
+   void insert( const Key& rKey, const Value& rValue )
+   {
+      JdHashMapEntry<Key, Value> e( rKey, rValue );
+      mEntryMap.push_back( e );
+      size_t size = mEntryMap.size();
+      if ( 2 * size > mHashMap.size() )
+      {
+         // resize hashMap
+         size_t mapSize = 5 * size;
+         mHashMap.resize( mapSize );
+         mMapSize = mapSize;
+         memset( &mHashMap[0], -1, mapSize * sizeof(int) );
+         for ( size_t i = 0; i < mEntryMap.size(); ++i )
+         {
+            size_t hash = mEntryMap[i].mHash % mapSize;
+            for(;;)
+            {
+               if( mHashMap[hash] < 0 )
+               {
+                  mHashMap[hash] = (int)i;
+                  break;
+               }
+               ++hash;
+               if ( hash == mapSize ) hash = 0;
+            }
+         }
+      }
+      else
+      {
+         size_t mapSize = mHashMap.size();
+         size_t hash = mEntryMap.back().mHash % mapSize;
+         for(;;)
+         {
+            if( mHashMap[hash] < 0 )
+            {
+               mHashMap[hash] = (int) mEntryMap.size() - 1;
+               break;
+            }
+            ++hash;
+            if ( hash == mapSize ) hash = 0;
+         }
+      }
+   }
+   void remove( const Key& rKey )
+   {
+      size_t hash;
+      int index = findIndex( rKey, &hash );
+      if ( index == -1 ) return; // nothing to remove
+      
+      mHashMap[hash] = -2; // mark hole
+      
+      findIndex( mEntryMap.back().mKey, &hash );      
+      mHashMap[hash] = index;      
+
+      mEntryMap[index] = mEntryMap.back();
+      mEntryMap.pop_back();
+   }
+   bool contains( const Key& rKey ) const
+   {
+      return pFind( rKey ) != NULL;
+   }
+   Value* pFind( const Key& rKey ) const
+   {
+      int index = findIndex( rKey );
+      if ( index == -1 )
+         return 0;
+      return (Value*)&mEntryMap[index].mValue;
+   }
+   void copy_out( std::vector< std::pair<Key,Value> >& rDest ) const
+   {
+      rDest.clear();
+      rDest.reserve(mEntryMap.size());
+      for ( typename EntryMap::const_iterator i = mEntryMap.begin(); i != mEntryMap.end(); ++i )
+      {
+          rDest.push_back( std::pair<Key,Value>( (*i).mKey, (*i).mValue ) );
+      }
+   }
+   Value operator[]( const Key& rKey ) const
+   {
+      return mEntryMap[findIndex(rKey)].mValue;
+   }
+   Value& operator[]( const Key& rKey )
+   {
+      int index = findIndex(rKey);
+      if ( index == -1 )
+      {
+         insert( rKey, Value() );
+         return mEntryMap.back().mValue;
+      }
+      else
+      {
+         return mEntryMap[index].mValue;
+      }
+   }
+private:
+   int findIndex( const Key& rKey, size_t* pHashIndex = 0 ) const
+   {
+      unsigned int fullHash = hashFn( rKey );
+      unsigned int hash = fullHash % mMapSize;
+      unsigned int startHash = hash;
+      for(;;)
+      {
+         int index = mHashMap[hash];
+         if ( index == -1 )
+         {
+            return -1;
+         }
+         if ( index >= 0 )
+         {
+            const JdHashMapEntry<Key, Value>& rE = mEntryMap[index];
+            if ( rE.mHash == fullHash )
+            {
+               if ( rE.mKey == rKey )
+               {
+                  // we allow changable value
+                  if ( pHashIndex )
+                  {
+                     *pHashIndex = hash;
+                  }
+                  return index;
+               }
+            }
+         }
+         ++hash;
+         if ( hash == mMapSize ) hash = 0;
+         /**
+          * The hash map may degenerate to all -2 in the empty slots after lots of adding and removing.
+          * in that case find may just loop around. So we want to break.
+             */
+         if ( hash == startHash )
+         {
+            return -1;
+         }
+      }
+   }
+   typedef std::vector<JdHashMapEntry<Key, Value> > EntryMap;
+   EntryMap mEntryMap;
+   std::vector<int> mHashMap;
+   size_t mMapSize;
+};
+
+#endif // JdHashMap_h
+
+
+typedef unsigned int uint;
+
+/*
+ * Can the switch at runtime here be removed with a template meta programming trick? 
+ */
+template <int size>
+inline uint hashfn( const char* pStr )
+{
+   uint result = *pStr;
+   ++pStr;
+   switch ( size )
+   {
+   case 18:
+   case 17:
+   case 16:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 15:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 14:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 13:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 12:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 11:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 10:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 9:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 8:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 7:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 6:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 5:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 4:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 3:
+      result *= 4;
+      result += *pStr;
+      ++pStr;
+   case 2:
+      result *= 4;
+      result += *pStr;
+   }
+   return result;
+}
+
+
+// Hashtable key, with key's size is equal to reading_frame_size
+template <int size>
+struct hash_key
+{
+   uint   hash_val;
+   const char* pKey; // we actually do not need an owned string
+
+   hash_key(){}
+   hash_key(const char * str)
+   {
+      ReHash(str);
+   }
+
+   inline void ReHash(char const * str)
+   {
+      pKey = str;
+     hash_val = hashfn<size>( str );
+   }
+
+   bool operator==( const hash_key<size>& rKey ) const
+   {
+      return memcmp(pKey, rKey.pKey, size) == 0;
+   }
+   inline uint operator() (const hash_key &k) const
+   {
+      return k.hash_val;
+   }
+};
+
+template <int size>
+inline uint hashFn(const hash_key<size>& rKey)
+{
+   return rKey.hash_val;
+}
+
+
+template <int hash_len, typename INPUT, typename HTBL>
+static inline
+void calculate_frequency(INPUT const &input, HTBL& hash_table)
+{
+   char const* it = &(input[0]);
+   char const* end = it + input.size() - hash_len +1;
+   typename HTBL::key_type key;
+
+   for (; it != end; it++)
+   {
+      key.ReHash(it);
+      ++(hash_table[key]);
+   }
+}
+
+template<typename T>
+bool decrease_pred(const T &left, const T &right)
+{
+   return !(left.second < right.second);
+}
+
+char todna( char c )
+{
+   switch( c )
+   {
+      case 0:
+         return 'A';
+      case 1:
+         return 'C';
+      case 2:
+         return 'G';
+      case 3:
+         return 'T';
+   }
+   return c;
+}
+
+template <int hash_len, typename INPUT, size_t out_len>
+static
+void write_frequencies(INPUT const &input,  char (&output)[out_len])
+{
+   typedef hash_key<hash_len> KEY;
+   typedef JdHashMap<KEY, uint> HTBL;
+
+   // Build hash table
+   HTBL hash_table;
+   calculate_frequency<hash_len>(input, hash_table);
+
+   typedef std::pair<KEY, uint> ELEMENT;
+   typedef std::vector< ELEMENT > KTBL;
+
+   // Copy result from hashtable to vector
+   KTBL order_tbl;
+   hash_table.copy_out(order_tbl);
+   // Sort with descending frequency
+   std::sort(order_tbl.begin(), order_tbl.end(), decrease_pred<ELEMENT> );
+
+   size_t printedchar = 0;
+   float totalchar = float(input.size() - hash_len +1);
+
+   for ( typename KTBL::iterator iter = order_tbl.begin(); iter != order_tbl.end(); ++iter )
+   {
+     ELEMENT& i = *iter;
+     std::string key( i.first.pKey, hash_len );
+      std::transform(&key.c_str()[0], &key.c_str()[hash_len], (char*)&key.c_str()[0], todna );
+
+      printedchar += sprintf(   output +printedchar, "%s %0.3f\n",
+         key.c_str(), float(i.second) * 100.0f / totalchar   );
+   }
+
+   memcpy(output + printedchar, "\n", 2);
+}
+
+// Build a hashtable, count all key with hash_len = reading_frame_size
+// Then print a specific sequence's count
+template <int hash_len, typename INPUT, size_t out_len>
+static
+void write_frequencies(INPUT const &input,  char (&output)[out_len], const char* specific)
+{
+   typedef hash_key<hash_len> KEY;
+   typedef JdHashMap<KEY, uint> HTBL;
+
+   // build hash table
+   HTBL hash_table;
+   calculate_frequency<hash_len>(input, hash_table);
+
+   // lookup specific frame
+   size_t slen = strlen(specific);
+   char buffer[20];
+   for ( size_t i = 0; i < slen; ++i )
+   {
+      switch( specific[i] )
+      {
+         case 'a':
+            buffer[i] = 0;
+            break;
+         case 'c':
+                buffer[i] = 1;
+            break;
+         case 'g':
+            buffer[i] = 2;
+            break;
+         case 't':
+            buffer[i] = 3;
+            break;
+      }
+   }
+
+   KEY printkey(buffer);
+   uint count = hash_table[printkey];
+
+   std::string key( printkey.pKey, hash_len );
+   std::transform(&key.c_str()[0], &key.c_str()[hash_len], (char*)&key.c_str()[0], todna);
+
+   sprintf(output, "%d\t%s\n", count, key.c_str());
+}
+
+static
+int GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 16; i++)
+   {
+      if (CPU_ISSET(i, &cs))
+         count++;
+   }
+   return count;
+}
+
+int main()
+{
+   std::vector< char > input;
+   input.reserve(256*1024*1024); // 256MB
+
+   char buffer[128];
+   while (fgets(buffer, sizeof(buffer), stdin))
+   {
+      if(strncmp(buffer, ">THREE", 6) == 0)
+         break;
+   }
+   // rule: read line-by-line
+   while (fgets(buffer, sizeof(buffer), stdin))
+   {
+      size_t sz = strlen(buffer);
+      if (buffer[sz -1] == '\n')
+         sz = sz -1;
+
+     // compress to values 0,1,2,3
+     for ( size_t i = 0; i < sz; ++i )
+     {
+      switch( buffer[i] )
+      {
+         case 'a':
+         case 'A':
+            buffer[i] = 0;
+            break;
+         case 'c':
+         case 'C':
+                buffer[i] = 1;
+            break;
+         case 'g':
+         case 'G':
+            buffer[i] = 2;
+            break;
+         case 't':
+         case 'T':
+            buffer[i] = 3;
+            break;
+      }
+     }
+      input.insert(input.end(), buffer, buffer + sz);
+   }
+
+   char output[7][256];
+   #pragma omp parallel sections num_threads(GetThreadCount()) default(shared)
+   {
+      #pragma omp section
+      write_frequencies<18>(input, output[6], "ggtattttaatttatagt" );
+      #pragma omp section
+      write_frequencies<12>(input, output[5], "ggtattttaatt" );
+      #pragma omp section
+      write_frequencies< 6>(input, output[4], "ggtatt" );
+      #pragma omp section
+      write_frequencies< 4>(input, output[3], "ggta" );
+      #pragma omp section
+      write_frequencies< 3>(input, output[2], "ggt" );
+      #pragma omp section
+      write_frequencies< 2>(input, output[1] );
+      #pragma omp section
+      write_frequencies< 1>(input, output[0] );
+   }
+
+   for ( int i = 0; i < 7; i++ )
+      printf("%s", output[i]);
+}
+
