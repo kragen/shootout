@@ -1,140 +1,267 @@
-<span class="hl com">/* The Computer Language Shootout Benchmarks</span>
-<span class="hl com">http://shootout.alioth.debian.org/</span>
-<span class="hl com"></span>
-<span class="hl com">contributed by Benoit Hudson based on a contribution of Kevin Carson</span>
-<span class="hl com">compilation:</span>
-<span class="hl com">gcc -O3 -fomit-frame-pointer binary-trees-2.c</span>
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Contributed by Cedric Bail</span>
 <span class="hl com"> */</span>
 
+<span class="hl dir">#define _GNU_SOURCE</span>
 <span class="hl dir">#include &lt;stdlib.h&gt;</span>
 <span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+<span class="hl dir">#include &lt;glib.h&gt;</span>
+<span class="hl dir">#include &lt;string.h&gt;</span>
 
-<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> tn <span class="hl sym">{</span>
-  <span class="hl kwb">struct</span> tn<span class="hl sym">*</span>    left<span class="hl sym">;</span>
-  <span class="hl kwb">struct</span> tn<span class="hl sym">*</span>    right<span class="hl sym">;</span>
-  <span class="hl kwb">long</span>          item<span class="hl sym">;</span>
-<span class="hl sym">}</span> treeNode<span class="hl sym">;</span>
-
-<span class="hl kwb">static</span> treeNode <span class="hl sym">*</span>freelist <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-
-treeNode<span class="hl sym">*</span> <span class="hl kwd">NewTreeNode</span><span class="hl sym">(</span>treeNode<span class="hl sym">*</span> left<span class="hl sym">,</span> treeNode<span class="hl sym">*</span> right<span class="hl sym">,</span> <span class="hl kwb">long</span> item<span class="hl sym">)</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> node
 <span class="hl sym">{</span>
-  treeNode<span class="hl sym">*</span>    <span class="hl kwa">new</span><span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> node <span class="hl sym">*</span>left<span class="hl sym">, *</span>right<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> item<span class="hl sym">;</span>
+<span class="hl sym">}</span> node<span class="hl sym">;</span>
 
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>NULL <span class="hl sym">==</span> freelist<span class="hl sym">) {</span>
-    <span class="hl kwa">new</span> <span class="hl sym">= (</span>treeNode<span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>treeNode<span class="hl sym">));</span>
-  <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
-    <span class="hl kwa">new</span> <span class="hl sym">=</span> freelist<span class="hl sym">;</span>
-    freelist <span class="hl sym">=</span> freelist <span class="hl sym">-&gt;</span> left<span class="hl sym">;</span>
-  <span class="hl sym">}</span>
+<span class="hl dir">#define MAX_ELM (8192 / sizeof (node))</span>
 
-  <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>left <span class="hl sym">=</span> left<span class="hl sym">;</span>
-  <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>right <span class="hl sym">=</span> right<span class="hl sym">;</span>
-  <span class="hl kwa">new</span><span class="hl sym">-&gt;</span>item <span class="hl sym">=</span> item<span class="hl sym">;</span>
-
-  <span class="hl kwa">return new</span><span class="hl sym">;</span>
-<span class="hl sym">}</span> <span class="hl com">/* NewTreeNode() */</span>
-
-
-<span class="hl kwb">long</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>treeNode<span class="hl sym">*</span> tree<span class="hl sym">)</span>
+<span class="hl kwb">static</span> node <span class="hl sym">*</span>
+<span class="hl kwd">new_node</span><span class="hl sym">(</span>node <span class="hl sym">*</span>left<span class="hl sym">,</span> node <span class="hl sym">*</span>right<span class="hl sym">,</span> <span class="hl kwb">long</span> item<span class="hl sym">,</span> GTrashStack <span class="hl sym">**</span>mp<span class="hl sym">,</span> GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left <span class="hl sym">==</span> NULL<span class="hl sym">)</span>
-    <span class="hl kwa">return</span> tree<span class="hl sym">-&gt;</span>item<span class="hl sym">;</span>
-  <span class="hl kwa">else</span>
-    <span class="hl kwa">return</span> tree<span class="hl sym">-&gt;</span>item <span class="hl sym">+</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left<span class="hl sym">) -</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>right<span class="hl sym">);</span>
-<span class="hl sym">}</span> <span class="hl com">/* ItemCheck() */</span>
+   node <span class="hl sym">*</span>ret<span class="hl sym">;</span>
 
+   ret <span class="hl sym">=</span> <span class="hl kwd">g_trash_stack_pop</span><span class="hl sym">(</span>mp<span class="hl sym">);</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(!</span>ret<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwb">int</span> i<span class="hl sym">;</span>
 
-treeNode<span class="hl sym">*</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl kwb">long</span> item<span class="hl sym">,</span> <span class="hl kwb">unsigned</span> depth<span class="hl sym">)</span>
+	ret <span class="hl sym">=</span> <span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span> <span class="hl sym">(</span>node<span class="hl sym">) *</span> MAX_ELM<span class="hl sym">);</span>
+
+	<span class="hl kwd">g_ptr_array_add</span><span class="hl sym">(</span>roots<span class="hl sym">,</span> ret<span class="hl sym">);</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> MAX_ELM<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+	  <span class="hl kwd">g_trash_stack_push</span><span class="hl sym">(</span>mp<span class="hl sym">,</span> ret <span class="hl sym">+</span> i<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+
+   ret<span class="hl sym">-&gt;</span>left <span class="hl sym">=</span> left<span class="hl sym">;</span>
+   ret<span class="hl sym">-&gt;</span>right <span class="hl sym">=</span> right<span class="hl sym">;</span>
+   ret<span class="hl sym">-&gt;</span>item <span class="hl sym">=</span> item<span class="hl sym">;</span>
+
+   <span class="hl kwa">return</span> ret<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static long</span>
+<span class="hl kwd">item_check</span><span class="hl sym">(</span>node <span class="hl sym">*</span>tree<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>depth <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
-    <span class="hl kwa">return</span> NewTreeNode
-      <span class="hl sym">(</span>
-       <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> item <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> depth <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">),</span>
-       <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> item<span class="hl sym">,</span> depth <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">),</span>
-       item
-      <span class="hl sym">);</span>
-  <span class="hl kwa">else</span>
-    <span class="hl kwa">return</span> <span class="hl kwd">NewTreeNode</span><span class="hl sym">(</span>NULL<span class="hl sym">,</span> NULL<span class="hl sym">,</span> item<span class="hl sym">);</span>
-<span class="hl sym">}</span> <span class="hl com">/* BottomUpTree() */</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left <span class="hl sym">==</span> NULL<span class="hl sym">)</span> <span class="hl kwa">return</span> tree<span class="hl sym">-&gt;</span>item<span class="hl sym">;</span>
+   <span class="hl kwa">else</span>
+     <span class="hl kwa">return</span> tree<span class="hl sym">-&gt;</span>item <span class="hl sym">+</span> <span class="hl kwd">item_check</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left<span class="hl sym">) -</span> <span class="hl kwd">item_check</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>right<span class="hl sym">);</span>
+<span class="hl sym">}</span>
 
-
-<span class="hl kwb">void</span> <span class="hl kwd">DeleteTree</span><span class="hl sym">(</span>treeNode<span class="hl sym">*</span> tree<span class="hl sym">)</span>
+<span class="hl kwb">static</span> node <span class="hl sym">*</span>
+<span class="hl kwd">bottom_up_tree</span><span class="hl sym">(</span><span class="hl kwb">long</span> item<span class="hl sym">,</span> <span class="hl kwb">int</span> depth<span class="hl sym">,</span> GTrashStack <span class="hl sym">**</span>mp<span class="hl sym">,</span> GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left <span class="hl sym">!=</span> NULL<span class="hl sym">)</span>
-  <span class="hl sym">{</span>
-    <span class="hl kwd">DeleteTree</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left<span class="hl sym">);</span>
-    <span class="hl kwd">DeleteTree</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>right<span class="hl sym">);</span>
-  <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>depth <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+     <span class="hl kwa">return</span> <span class="hl kwd">new_node</span><span class="hl sym">(</span><span class="hl kwd">bottom_up_tree</span><span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> item <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> depth <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> mp<span class="hl sym">,</span> roots<span class="hl sym">),</span>
+		     <span class="hl kwd">bottom_up_tree</span><span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> item<span class="hl sym">,</span> depth <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> mp<span class="hl sym">,</span> roots<span class="hl sym">),</span>
+		     item<span class="hl sym">,</span> mp<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwa">else</span>
+     <span class="hl kwa">return</span> <span class="hl kwd">new_node</span><span class="hl sym">(</span>NULL<span class="hl sym">,</span> NULL<span class="hl sym">,</span> item<span class="hl sym">,</span> mp<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+<span class="hl sym">}</span>
 
-  tree <span class="hl sym">-&gt;</span> left <span class="hl sym">=</span> freelist<span class="hl sym">;</span>
-  freelist <span class="hl sym">=</span> tree<span class="hl sym">;</span>
-<span class="hl sym">}</span> <span class="hl com">/* DeleteTree() */</span>
-
-
-<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> argv<span class="hl sym">[])</span>
+<span class="hl kwb">static void</span>
+<span class="hl kwd">delete_tree</span><span class="hl sym">(</span>node <span class="hl sym">*</span>tree<span class="hl sym">,</span> GTrashStack <span class="hl sym">**</span>mp<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwb">unsigned</span>   N<span class="hl sym">,</span> depth<span class="hl sym">,</span> minDepth<span class="hl sym">,</span> maxDepth<span class="hl sym">,</span> stretchDepth<span class="hl sym">;</span>
-  treeNode   <span class="hl sym">*</span>stretchTree<span class="hl sym">, *</span>longLivedTree<span class="hl sym">, *</span>tempTree<span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left <span class="hl sym">!=</span> NULL<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwd">delete_tree</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>left<span class="hl sym">,</span> mp<span class="hl sym">);</span>
+	<span class="hl kwd">delete_tree</span><span class="hl sym">(</span>tree<span class="hl sym">-&gt;</span>right<span class="hl sym">,</span> mp<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
 
-  N <span class="hl sym">=</span> <span class="hl kwd">atol</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+   <span class="hl kwd">g_trash_stack_push</span><span class="hl sym">(</span>mp<span class="hl sym">,</span> tree<span class="hl sym">);</span>
+<span class="hl sym">}</span>
 
-  minDepth <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+<span class="hl kwb">struct</span> worker_args
+<span class="hl sym">{</span>
+   <span class="hl kwb">long</span> iter<span class="hl sym">,</span> check<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> depth<span class="hl sym">;</span>
 
-  <span class="hl kwa">if</span> <span class="hl sym">((</span>minDepth <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">) &gt;</span> N<span class="hl sym">)</span>
-    maxDepth <span class="hl sym">=</span> minDepth <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">;</span>
-  <span class="hl kwa">else</span>
-    maxDepth <span class="hl sym">=</span> N<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>next<span class="hl sym">;</span>
+<span class="hl sym">};</span>
 
-  stretchDepth <span class="hl sym">=</span> maxDepth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+<span class="hl kwb">struct</span> worker_mempool
+<span class="hl sym">{</span>
+   GTrashStack <span class="hl sym">*</span>mp<span class="hl sym">;</span>
+   GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">;</span>
+   pthread_t id<span class="hl sym">;</span>
+<span class="hl sym">};</span>
 
-  stretchTree <span class="hl sym">=</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> stretchDepth<span class="hl sym">);</span>
-  printf
-    <span class="hl sym">(</span>
-     <span class="hl str">&quot;stretch tree of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
-     stretchDepth<span class="hl sym">,</span>
-     <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>stretchTree<span class="hl sym">)</span>
-    <span class="hl sym">);</span>
+<span class="hl kwb">static struct</span> worker_args <span class="hl sym">*</span>gargs <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+<span class="hl kwb">static struct</span> worker_args <span class="hl sym">*</span>rargs <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+<span class="hl kwb">static</span> pthread_mutex_t mutex <span class="hl sym">=</span> PTHREAD_MUTEX_INITIALIZER<span class="hl sym">;</span>
 
-  <span class="hl kwd">DeleteTree</span><span class="hl sym">(</span>stretchTree<span class="hl sym">);</span>
+<span class="hl kwb">static void</span> <span class="hl sym">*</span>
+<span class="hl kwd">check_tree_of_depth</span><span class="hl sym">(</span><span class="hl kwb">void</span> <span class="hl sym">*</span>mempool<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>args<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>prev<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>over<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> worker_mempool <span class="hl sym">*</span>wm <span class="hl sym">=</span> mempool<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> i<span class="hl sym">,</span> iter<span class="hl sym">,</span> check<span class="hl sym">,</span> depth<span class="hl sym">;</span>
+   node <span class="hl sym">*</span>tmp<span class="hl sym">;</span>
 
-  longLivedTree <span class="hl sym">=</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> maxDepth<span class="hl sym">);</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span>gargs<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">(&amp;</span>mutex<span class="hl sym">);</span>
 
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>depth <span class="hl sym">=</span> minDepth<span class="hl sym">;</span> depth <span class="hl sym">&lt;=</span> maxDepth<span class="hl sym">;</span> depth <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
-  <span class="hl sym">{</span>
-    <span class="hl kwb">long</span>    i<span class="hl sym">,</span> iterations<span class="hl sym">,</span> check<span class="hl sym">;</span>
+	<span class="hl kwa">if</span> <span class="hl sym">(!</span>gargs<span class="hl sym">)</span> <span class="hl kwa">break</span><span class="hl sym">;</span>
 
-    iterations <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>maxDepth <span class="hl sym">-</span> depth <span class="hl sym">+</span> minDepth<span class="hl sym">);</span>
+	args <span class="hl sym">=</span> gargs<span class="hl sym">;</span>
+	gargs <span class="hl sym">=</span> gargs<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
 
-    check <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+	<span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">(&amp;</span>mutex<span class="hl sym">);</span>
 
-    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> iterations<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-    <span class="hl sym">{</span>
-      tempTree <span class="hl sym">=</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(</span>i<span class="hl sym">,</span> depth<span class="hl sym">);</span>
-      check <span class="hl sym">+=</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>tempTree<span class="hl sym">);</span>
-      <span class="hl kwd">DeleteTree</span><span class="hl sym">(</span>tempTree<span class="hl sym">);</span>
+	iter <span class="hl sym">=</span> args<span class="hl sym">-&gt;</span>iter<span class="hl sym">;</span>
+	depth <span class="hl sym">=</span> args<span class="hl sym">-&gt;</span>depth<span class="hl sym">;</span>
 
-      tempTree <span class="hl sym">=</span> <span class="hl kwd">BottomUpTree</span><span class="hl sym">(-</span>i<span class="hl sym">,</span> depth<span class="hl sym">);</span>
-      check <span class="hl sym">+=</span> <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>tempTree<span class="hl sym">);</span>
-      <span class="hl kwd">DeleteTree</span><span class="hl sym">(</span>tempTree<span class="hl sym">);</span>
-    <span class="hl sym">}</span> <span class="hl com">/* for(i = 1...) */</span>
+	check <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
 
-    printf
-      <span class="hl sym">(</span>
-       <span class="hl str">&quot;%li</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
-       iterations <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">,</span>
-       depth<span class="hl sym">,</span>
-       check
-      <span class="hl sym">);</span>
-  <span class="hl sym">}</span> <span class="hl com">/* for(depth = minDepth...) */</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> iter<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+	  <span class="hl sym">{</span>
+	     tmp <span class="hl sym">=</span> <span class="hl kwd">bottom_up_tree</span><span class="hl sym">(</span>i<span class="hl sym">,</span> depth<span class="hl sym">, &amp;</span>wm<span class="hl sym">-&gt;</span>mp<span class="hl sym">,</span> wm<span class="hl sym">-&gt;</span>roots<span class="hl sym">);</span>
+	     check <span class="hl sym">+=</span> <span class="hl kwd">item_check</span><span class="hl sym">(</span>tmp<span class="hl sym">);</span>
+	     <span class="hl kwd">delete_tree</span><span class="hl sym">(</span>tmp<span class="hl sym">, &amp;</span>wm<span class="hl sym">-&gt;</span>mp<span class="hl sym">);</span>
 
-  printf
-    <span class="hl sym">(</span>
-     <span class="hl str">&quot;long lived tree of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
-     maxDepth<span class="hl sym">,</span>
-     <span class="hl kwd">ItemCheck</span><span class="hl sym">(</span>longLivedTree<span class="hl sym">)</span>
-    <span class="hl sym">);</span>
+	     tmp <span class="hl sym">=</span> <span class="hl kwd">bottom_up_tree</span><span class="hl sym">(-</span>i<span class="hl sym">,</span> depth<span class="hl sym">, &amp;</span>wm<span class="hl sym">-&gt;</span>mp<span class="hl sym">,</span> wm<span class="hl sym">-&gt;</span>roots<span class="hl sym">);</span>
+	     check <span class="hl sym">+=</span> <span class="hl kwd">item_check</span><span class="hl sym">(</span>tmp<span class="hl sym">);</span>
+	     <span class="hl kwd">delete_tree</span><span class="hl sym">(</span>tmp<span class="hl sym">, &amp;</span>wm<span class="hl sym">-&gt;</span>mp<span class="hl sym">);</span>
+	  <span class="hl sym">}</span>
 
-  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
-<span class="hl sym">}</span> <span class="hl com">/* main() */</span>
+	args<span class="hl sym">-&gt;</span>check <span class="hl sym">=</span> check<span class="hl sym">;</span>
 
+	<span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">(&amp;</span>mutex<span class="hl sym">);</span>
+
+	prev <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+	over <span class="hl sym">=</span> rargs<span class="hl sym">;</span>
+
+	<span class="hl kwa">while</span> <span class="hl sym">(</span>over <span class="hl sym">&amp;&amp;</span> over<span class="hl sym">-&gt;</span>depth <span class="hl sym">&lt;</span> args<span class="hl sym">-&gt;</span>depth<span class="hl sym">)</span>
+	  <span class="hl sym">{</span>
+	     prev <span class="hl sym">=</span> over<span class="hl sym">;</span>
+	     over <span class="hl sym">=</span> over<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+	  <span class="hl sym">}</span>
+
+	<span class="hl kwa">if</span> <span class="hl sym">(!</span>prev<span class="hl sym">)</span>
+	  <span class="hl sym">{</span>
+	     args<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> rargs<span class="hl sym">;</span>
+	     rargs <span class="hl sym">=</span> args<span class="hl sym">;</span>
+	  <span class="hl sym">}</span>
+	<span class="hl kwa">else</span>
+	  <span class="hl sym">{</span>
+	     args<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> over<span class="hl sym">;</span>
+	     prev<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> args<span class="hl sym">;</span>
+	  <span class="hl sym">}</span>
+
+	<span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">(&amp;</span>mutex<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> NULL<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">8</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+	  count<span class="hl sym">++;</span>
+     <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> ac<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>av<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   node <span class="hl sym">*</span>stretch<span class="hl sym">, *</span>longlived<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> worker_args <span class="hl sym">*</span>args<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> worker_mempool <span class="hl sym">*</span>mps<span class="hl sym">;</span>
+   node <span class="hl sym">*</span>tmp<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> n<span class="hl sym">,</span> depth<span class="hl sym">,</span> mindepth<span class="hl sym">,</span> maxdepth<span class="hl sym">,</span> stretchdepth<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> id_count<span class="hl sym">,</span> j<span class="hl sym">;</span>
+
+   GTrashStack <span class="hl sym">*</span>array <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+   GPtrArray <span class="hl sym">*</span>roots <span class="hl sym">=</span> <span class="hl kwd">g_ptr_array_new</span><span class="hl sym">();</span>
+
+   n <span class="hl sym">=</span> ac <span class="hl sym">&gt;</span> <span class="hl num">1</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>av<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">10</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&lt;</span> <span class="hl num">1</span><span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;Wrong argument.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+	<span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+
+   mindepth <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+   maxdepth <span class="hl sym">=</span> mindepth <span class="hl sym">+</span> <span class="hl num">2</span> <span class="hl sym">&gt;</span> n ? mindepth <span class="hl sym">+</span> <span class="hl num">2</span> <span class="hl sym">:</span> n<span class="hl sym">;</span>
+   stretchdepth <span class="hl sym">=</span> maxdepth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+   stretch <span class="hl sym">=</span> <span class="hl kwd">bottom_up_tree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> stretchdepth<span class="hl sym">, &amp;</span>array<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;stretch tree of depth %u</span><span class="hl esc">\t</span> <span class="hl str">check: %li</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> stretchdepth<span class="hl sym">,</span>
+	  <span class="hl kwd">item_check</span><span class="hl sym">(</span>stretch<span class="hl sym">));</span>
+
+   <span class="hl kwd">delete_tree</span><span class="hl sym">(</span>stretch<span class="hl sym">, &amp;</span>array<span class="hl sym">);</span>
+
+   longlived <span class="hl sym">=</span> <span class="hl kwd">bottom_up_tree</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> maxdepth<span class="hl sym">, &amp;</span>array<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>depth <span class="hl sym">=</span> mindepth<span class="hl sym">;</span> depth <span class="hl sym">&lt;=</span> maxdepth<span class="hl sym">;</span> depth <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	args <span class="hl sym">=</span> <span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">struct</span> worker_args<span class="hl sym">));</span>
+	args<span class="hl sym">-&gt;</span>iter <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>maxdepth <span class="hl sym">-</span> depth <span class="hl sym">+</span> mindepth<span class="hl sym">);</span>
+	args<span class="hl sym">-&gt;</span>depth <span class="hl sym">=</span> depth<span class="hl sym">;</span>
+	args<span class="hl sym">-&gt;</span>next <span class="hl sym">=</span> gargs<span class="hl sym">;</span>
+
+	gargs <span class="hl sym">=</span> args<span class="hl sym">;</span>
+     <span class="hl sym">}</span>
+
+   id_count <span class="hl sym">=</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">();</span>
+   mps <span class="hl sym">=</span> <span class="hl kwd">alloca</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span> <span class="hl sym">(</span><span class="hl kwb">struct</span> worker_mempool<span class="hl sym">) *</span> id_count<span class="hl sym">);</span>
+   <span class="hl kwd">memset</span><span class="hl sym">(</span>mps<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span><span class="hl kwb">struct</span> worker_mempool<span class="hl sym">) *</span> id_count<span class="hl sym">);</span>
+
+   <span class="hl kwa">while</span> <span class="hl sym">((</span>tmp <span class="hl sym">=</span> <span class="hl kwd">g_trash_stack_pop</span><span class="hl sym">(&amp;</span>array<span class="hl sym">)))</span>
+     <span class="hl kwd">g_trash_stack_push</span><span class="hl sym">(&amp;</span>mps<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>mp<span class="hl sym">,</span> tmp<span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> id_count<span class="hl sym">; ++</span>j<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	mps<span class="hl sym">[</span>j<span class="hl sym">].</span>roots <span class="hl sym">=</span> <span class="hl kwd">g_ptr_array_new</span><span class="hl sym">();</span>
+	<span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>mps<span class="hl sym">[</span>j<span class="hl sym">].</span>id<span class="hl sym">,</span> NULL<span class="hl sym">,</span> check_tree_of_depth<span class="hl sym">, &amp;</span>mps<span class="hl sym">[</span>j<span class="hl sym">]);</span>
+     <span class="hl sym">}</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> id_count<span class="hl sym">; ++</span>j<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwd">pthread_join</span><span class="hl sym">(</span>mps<span class="hl sym">[</span>j<span class="hl sym">].</span>id<span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+
+	<span class="hl kwd">g_ptr_array_foreach</span><span class="hl sym">(</span>mps<span class="hl sym">[</span>j<span class="hl sym">].</span>roots<span class="hl sym">,</span> free<span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+	<span class="hl kwd">g_ptr_array_free</span><span class="hl sym">(</span>mps<span class="hl sym">[</span>j<span class="hl sym">].</span>roots<span class="hl sym">,</span> TRUE<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+
+   <span class="hl kwa">while</span> <span class="hl sym">(</span>rargs<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	args <span class="hl sym">=</span> rargs<span class="hl sym">;</span>
+
+	<span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%ld</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %ld</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+	       args<span class="hl sym">-&gt;</span>iter <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">,</span> args<span class="hl sym">-&gt;</span>depth<span class="hl sym">,</span> args<span class="hl sym">-&gt;</span>check<span class="hl sym">);</span>
+
+	rargs <span class="hl sym">=</span> args<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+	<span class="hl kwd">free</span><span class="hl sym">(</span>args<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;long lived tree of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %ld</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> maxdepth<span class="hl sym">,</span>
+	  <span class="hl kwd">item_check</span><span class="hl sym">(</span>longlived<span class="hl sym">));</span>
+
+   <span class="hl com">/* not in original C version: */</span>
+   <span class="hl kwd">delete_tree</span><span class="hl sym">(</span>longlived<span class="hl sym">, &amp;</span>array<span class="hl sym">);</span>
+
+   <span class="hl kwd">g_ptr_array_foreach</span><span class="hl sym">(</span>roots<span class="hl sym">,</span> free<span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+   <span class="hl kwd">g_ptr_array_free</span><span class="hl sym">(</span>roots<span class="hl sym">,</span> TRUE<span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>

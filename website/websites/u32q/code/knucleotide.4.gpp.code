@@ -1,0 +1,526 @@
+<span class="hl slc">// The Computer Language Benchmarks Game</span>
+<span class="hl slc">// http://shootout.alioth.debian.org/</span>
+<span class="hl slc">// Contributed by Jeroen Dirks</span>
+<span class="hl slc">// Based on a submission by The Anh Tran</span>
+<span class="hl slc">// Changes:</span>
+<span class="hl slc">// Used own hash table implementation</span>
+<span class="hl slc">// Keys do not need to store the actual string array but can do with a pointer</span>
+<span class="hl slc">// Hashing is more efficient if the original data is converted to array</span>
+<span class="hl slc">// of values 0,1,2,3 a very simple hash function with low collissions it</span>
+<span class="hl slc">// then easier to construct.</span>
+
+<span class="hl dir">#include &lt;omp.h&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+<span class="hl dir">#include &lt;cstdio&gt;</span>
+
+<span class="hl dir">#include &lt;algorithm&gt;</span>
+<span class="hl dir">#include &lt;vector&gt;</span>
+
+<span class="hl dir">#ifndef JdHashMap_h</span>
+<span class="hl dir">#define JdHashMap_h</span>
+
+<span class="hl dir">#include &lt;vector&gt;</span>
+<span class="hl dir">#include &lt;iostream&gt;</span>
+<span class="hl dir">#include &lt;cstring&gt;</span>
+
+<span class="hl kwc">template</span><span class="hl sym">&lt;</span><span class="hl kwc">class</span> Key<span class="hl sym">,</span> <span class="hl kwc">class</span> Value<span class="hl sym">&gt;</span>
+<span class="hl kwc">class</span> JdHashMapEntry
+<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   <span class="hl kwd">JdHashMapEntry</span><span class="hl sym">(</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey<span class="hl sym">,</span> <span class="hl kwb">const</span> Value<span class="hl sym">&amp;</span> rValue <span class="hl sym">)</span>
+      <span class="hl sym">:</span><span class="hl kwd">mKey</span><span class="hl sym">(</span> rKey <span class="hl sym">),</span>
+      <span class="hl kwd">mValue</span><span class="hl sym">(</span> rValue <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      mHash <span class="hl sym">=</span> <span class="hl kwd">hashFn</span><span class="hl sym">(</span> rKey <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwd">JdHashMapEntry</span><span class="hl sym">(</span> <span class="hl kwb">const</span> JdHashMapEntry<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span> Value<span class="hl sym">&gt;&amp;</span> rEntry <span class="hl sym">)</span>
+      <span class="hl sym">:</span><span class="hl kwd">mKey</span><span class="hl sym">(</span> rEntry<span class="hl sym">.</span>mKey <span class="hl sym">),</span>
+      <span class="hl kwd">mValue</span><span class="hl sym">(</span> rEntry<span class="hl sym">.</span>mValue <span class="hl sym">),</span>
+      <span class="hl kwd">mHash</span><span class="hl sym">(</span> rEntry<span class="hl sym">.</span>mHash <span class="hl sym">)</span>
+   <span class="hl sym">{}</span>
+   JdHashMapEntry<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">=(</span> <span class="hl kwb">const</span> JdHashMapEntry<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span> Value<span class="hl sym">&gt;&amp;</span> rEntry <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> <span class="hl kwa">this</span> <span class="hl sym">!= &amp;</span>rEntry <span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         mKey <span class="hl sym">=</span> rEntry<span class="hl sym">.</span>mKey<span class="hl sym">;</span>
+         mValue <span class="hl sym">=</span> rEntry<span class="hl sym">.</span>mValue<span class="hl sym">;</span>
+         mHash <span class="hl sym">=</span> rEntry<span class="hl sym">.</span>mHash<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">return</span> <span class="hl sym">*</span><span class="hl kwa">this</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl sym">~</span><span class="hl kwd">JdHashMapEntry</span><span class="hl sym">() {}</span>
+   Key mKey<span class="hl sym">;</span>
+   Value mValue<span class="hl sym">;</span>
+   <span class="hl kwb">unsigned int</span> mHash<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl kwc">template</span><span class="hl sym">&lt;</span><span class="hl kwc">class</span> Key<span class="hl sym">,</span> <span class="hl kwc">class</span> Value<span class="hl sym">&gt;</span>
+<span class="hl kwc">class</span> JdHashMap
+<span class="hl sym">{</span>
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   <span class="hl kwc">typedef</span> Key key_type<span class="hl sym">;</span>
+   <span class="hl kwd">JdHashMap</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      mMapSize <span class="hl sym">=</span> <span class="hl num">16</span><span class="hl sym">;</span>
+      mHashMap<span class="hl sym">.</span><span class="hl kwd">resize</span><span class="hl sym">(</span> mMapSize <span class="hl sym">);</span>
+      <span class="hl kwd">memset</span><span class="hl sym">( &amp;</span>mHashMap<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], -</span><span class="hl num">1</span><span class="hl sym">,</span> mMapSize <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">int</span><span class="hl sym">) );</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">insert</span><span class="hl sym">(</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey<span class="hl sym">,</span> <span class="hl kwb">const</span> Value<span class="hl sym">&amp;</span> rValue <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      JdHashMapEntry<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span> Value<span class="hl sym">&gt;</span> <span class="hl kwd">e</span><span class="hl sym">(</span> rKey<span class="hl sym">,</span> rValue <span class="hl sym">);</span>
+      mEntryMap<span class="hl sym">.</span><span class="hl kwd">push_back</span><span class="hl sym">(</span> e <span class="hl sym">);</span>
+      <span class="hl kwb">size_t</span> size <span class="hl sym">=</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">();</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> <span class="hl num">2</span> <span class="hl sym">*</span> size <span class="hl sym">&gt;</span> mHashMap<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() )</span>
+      <span class="hl sym">{</span>
+         <span class="hl slc">// resize hashMap</span>
+         <span class="hl kwb">size_t</span> mapSize <span class="hl sym">=</span> <span class="hl num">5</span> <span class="hl sym">*</span> size<span class="hl sym">;</span>
+         mHashMap<span class="hl sym">.</span><span class="hl kwd">resize</span><span class="hl sym">(</span> mapSize <span class="hl sym">);</span>
+         mMapSize <span class="hl sym">=</span> mapSize<span class="hl sym">;</span>
+         <span class="hl kwd">memset</span><span class="hl sym">( &amp;</span>mHashMap<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], -</span><span class="hl num">1</span><span class="hl sym">,</span> mapSize <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">int</span><span class="hl sym">) );</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">(); ++</span>i <span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwb">size_t</span> hash <span class="hl sym">=</span> mEntryMap<span class="hl sym">[</span>i<span class="hl sym">].</span>mHash <span class="hl sym">%</span> mapSize<span class="hl sym">;</span>
+            <span class="hl kwa">for</span><span class="hl sym">(;;)</span>
+            <span class="hl sym">{</span>
+               <span class="hl kwa">if</span><span class="hl sym">(</span> mHashMap<span class="hl sym">[</span>hash<span class="hl sym">] &lt;</span> <span class="hl num">0</span> <span class="hl sym">)</span>
+               <span class="hl sym">{</span>
+                  mHashMap<span class="hl sym">[</span>hash<span class="hl sym">] = (</span><span class="hl kwb">int</span><span class="hl sym">)</span>i<span class="hl sym">;</span>
+                  <span class="hl kwa">break</span><span class="hl sym">;</span>
+               <span class="hl sym">}</span>
+               <span class="hl sym">++</span>hash<span class="hl sym">;</span>
+               <span class="hl kwa">if</span> <span class="hl sym">(</span> hash <span class="hl sym">==</span> mapSize <span class="hl sym">)</span> hash <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">size_t</span> mapSize <span class="hl sym">=</span> mHashMap<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">();</span>
+         <span class="hl kwb">size_t</span> hash <span class="hl sym">=</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">().</span>mHash <span class="hl sym">%</span> mapSize<span class="hl sym">;</span>
+         <span class="hl kwa">for</span><span class="hl sym">(;;)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwa">if</span><span class="hl sym">(</span> mHashMap<span class="hl sym">[</span>hash<span class="hl sym">] &lt;</span> <span class="hl num">0</span> <span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+               mHashMap<span class="hl sym">[</span>hash<span class="hl sym">] = (</span><span class="hl kwb">int</span><span class="hl sym">)</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+               <span class="hl kwa">break</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+            <span class="hl sym">++</span>hash<span class="hl sym">;</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span> hash <span class="hl sym">==</span> mapSize <span class="hl sym">)</span> hash <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">remove</span><span class="hl sym">(</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">size_t</span> hash<span class="hl sym">;</span>
+      <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl kwd">findIndex</span><span class="hl sym">(</span> rKey<span class="hl sym">, &amp;</span>hash <span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> index <span class="hl sym">== -</span><span class="hl num">1</span> <span class="hl sym">)</span> <span class="hl kwa">return</span><span class="hl sym">;</span> <span class="hl slc">// nothing to remove</span>
+
+      mHashMap<span class="hl sym">[</span>hash<span class="hl sym">] = -</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl slc">// mark hole</span>
+
+      <span class="hl kwd">findIndex</span><span class="hl sym">(</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">().</span>mKey<span class="hl sym">, &amp;</span>hash <span class="hl sym">);</span>
+      mHashMap<span class="hl sym">[</span>hash<span class="hl sym">] =</span> index<span class="hl sym">;</span>
+
+      mEntryMap<span class="hl sym">[</span>index<span class="hl sym">] =</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">();</span>
+      mEntryMap<span class="hl sym">.</span><span class="hl kwd">pop_back</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwb">bool</span> <span class="hl kwd">contains</span><span class="hl sym">(</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey <span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl kwd">pFind</span><span class="hl sym">(</span> rKey <span class="hl sym">) !=</span> NULL<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   Value<span class="hl sym">*</span> <span class="hl kwd">pFind</span><span class="hl sym">(</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey <span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl kwd">findIndex</span><span class="hl sym">(</span> rKey <span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> index <span class="hl sym">== -</span><span class="hl num">1</span> <span class="hl sym">)</span>
+         <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> <span class="hl sym">(</span>Value<span class="hl sym">*)&amp;</span>mEntryMap<span class="hl sym">[</span>index<span class="hl sym">].</span>mValue<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwb">void</span> <span class="hl kwd">copy_out</span><span class="hl sym">(</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> std<span class="hl sym">::</span>pair<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span>Value<span class="hl sym">&gt; &gt;&amp;</span> rDest <span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      rDest<span class="hl sym">.</span><span class="hl kwd">clear</span><span class="hl sym">();</span>
+      rDest<span class="hl sym">.</span><span class="hl kwd">reserve</span><span class="hl sym">(</span>mEntryMap<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">());</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span> typename EntryMap<span class="hl sym">::</span>const_iterator i <span class="hl sym">=</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">();</span> i <span class="hl sym">!=</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(); ++</span>i <span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+          rDest<span class="hl sym">.</span><span class="hl kwd">push_back</span><span class="hl sym">(</span> std<span class="hl sym">::</span>pair<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span>Value<span class="hl sym">&gt;( (*</span>i<span class="hl sym">).</span>mKey<span class="hl sym">, (*</span>i<span class="hl sym">).</span>mValue <span class="hl sym">) );</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   Value <span class="hl kwc">operator</span><span class="hl sym">[](</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey <span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> mEntryMap<span class="hl sym">[</span><span class="hl kwd">findIndex</span><span class="hl sym">(</span>rKey<span class="hl sym">)].</span>mValue<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   Value<span class="hl sym">&amp;</span> <span class="hl kwc">operator</span><span class="hl sym">[](</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl kwd">findIndex</span><span class="hl sym">(</span>rKey<span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> index <span class="hl sym">== -</span><span class="hl num">1</span> <span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwd">insert</span><span class="hl sym">(</span> rKey<span class="hl sym">,</span> <span class="hl kwd">Value</span><span class="hl sym">() );</span>
+         <span class="hl kwa">return</span> mEntryMap<span class="hl sym">.</span><span class="hl kwd">back</span><span class="hl sym">().</span>mValue<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> mEntryMap<span class="hl sym">[</span>index<span class="hl sym">].</span>mValue<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl kwc">private</span><span class="hl sym">:</span>
+   <span class="hl kwb">int</span> <span class="hl kwd">findIndex</span><span class="hl sym">(</span> <span class="hl kwb">const</span> Key<span class="hl sym">&amp;</span> rKey<span class="hl sym">,</span> <span class="hl kwb">size_t</span><span class="hl sym">*</span> pHashIndex <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">unsigned int</span> fullHash <span class="hl sym">=</span> <span class="hl kwd">hashFn</span><span class="hl sym">(</span> rKey <span class="hl sym">);</span>
+      <span class="hl kwb">unsigned int</span> hash <span class="hl sym">=</span> fullHash <span class="hl sym">%</span> mMapSize<span class="hl sym">;</span>
+      <span class="hl kwb">unsigned int</span> startHash <span class="hl sym">=</span> hash<span class="hl sym">;</span>
+      <span class="hl kwa">for</span><span class="hl sym">(;;)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">int</span> index <span class="hl sym">=</span> mHashMap<span class="hl sym">[</span>hash<span class="hl sym">];</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> index <span class="hl sym">== -</span><span class="hl num">1</span> <span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> index <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwb">const</span> JdHashMapEntry<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span> Value<span class="hl sym">&gt;&amp;</span> rE <span class="hl sym">=</span> mEntryMap<span class="hl sym">[</span>index<span class="hl sym">];</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span> rE<span class="hl sym">.</span>mHash <span class="hl sym">==</span> fullHash <span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+               <span class="hl kwa">if</span> <span class="hl sym">(</span> rE<span class="hl sym">.</span>mKey <span class="hl sym">==</span> rKey <span class="hl sym">)</span>
+               <span class="hl sym">{</span>
+                  <span class="hl slc">// we allow changable value</span>
+                  <span class="hl kwa">if</span> <span class="hl sym">(</span> pHashIndex <span class="hl sym">)</span>
+                  <span class="hl sym">{</span>
+                     <span class="hl sym">*</span>pHashIndex <span class="hl sym">=</span> hash<span class="hl sym">;</span>
+                  <span class="hl sym">}</span>
+                  <span class="hl kwa">return</span> index<span class="hl sym">;</span>
+               <span class="hl sym">}</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+         <span class="hl sym">++</span>hash<span class="hl sym">;</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> hash <span class="hl sym">==</span> mMapSize <span class="hl sym">)</span> hash <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+         <span class="hl com">/**</span>
+<span class="hl com">          * The hash map may degenerate to all -2 in the empty slots after lots of adding and removing.</span>
+<span class="hl com">          * in that case find may just loop around. So we want to break.</span>
+<span class="hl com">             */</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span> hash <span class="hl sym">==</span> startHash <span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>JdHashMapEntry<span class="hl sym">&lt;</span>Key<span class="hl sym">,</span> Value<span class="hl sym">&gt; &gt;</span> EntryMap<span class="hl sym">;</span>
+   EntryMap mEntryMap<span class="hl sym">;</span>
+   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;</span> mHashMap<span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span> mMapSize<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl dir">#endif</span> <span class="hl slc">// JdHashMap_h</span>
+<span class="hl dir"></span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned int</span> uint<span class="hl sym">;</span>
+
+<span class="hl com">/*</span>
+<span class="hl com"> * Can the switch at runtime here be removed with a template meta programming trick?</span>
+<span class="hl com"> */</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> size<span class="hl sym">&gt;</span>
+<span class="hl kwc">inline</span> uint <span class="hl kwd">hashfn</span><span class="hl sym">(</span> <span class="hl kwb">const char</span><span class="hl sym">*</span> pStr <span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   uint result <span class="hl sym">= *</span>pStr<span class="hl sym">;</span>
+   <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">switch</span> <span class="hl sym">(</span> size <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+   <span class="hl kwa">case</span> <span class="hl num">18</span><span class="hl sym">:</span>
+   <span class="hl kwa">case</span> <span class="hl num">17</span><span class="hl sym">:</span>
+   <span class="hl kwa">case</span> <span class="hl num">16</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">15</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">14</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">13</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">12</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">11</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">10</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">9</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">8</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">7</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">6</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">5</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">4</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">3</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+      <span class="hl sym">++</span>pStr<span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl num">2</span><span class="hl sym">:</span>
+      result <span class="hl sym">*=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      result <span class="hl sym">+= *</span>pStr<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> result<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl slc">// Hashtable key, with key's size is equal to reading_frame_size</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> size<span class="hl sym">&gt;</span>
+<span class="hl kwb">struct</span> hash_key
+<span class="hl sym">{</span>
+   uint   hash_val<span class="hl sym">;</span>
+   <span class="hl kwb">const char</span><span class="hl sym">*</span> pKey<span class="hl sym">;</span> <span class="hl slc">// we actually do not need an owned string</span>
+
+   <span class="hl kwd">hash_key</span><span class="hl sym">(){}</span>
+   <span class="hl kwd">hash_key</span><span class="hl sym">(</span><span class="hl kwb">const char</span> <span class="hl sym">*</span> str<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">ReHash</span><span class="hl sym">(</span>str<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">ReHash</span><span class="hl sym">(</span><span class="hl kwb">char const</span> <span class="hl sym">*</span> str<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      pKey <span class="hl sym">=</span> str<span class="hl sym">;</span>
+     hash_val <span class="hl sym">=</span> hashfn<span class="hl sym">&lt;</span>size<span class="hl sym">&gt;(</span> str <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">bool</span> <span class="hl kwc">operator</span><span class="hl sym">==(</span> <span class="hl kwb">const</span> hash_key<span class="hl sym">&lt;</span>size<span class="hl sym">&gt;&amp;</span> rKey <span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl kwd">memcmp</span><span class="hl sym">(</span>pKey<span class="hl sym">,</span> rKey<span class="hl sym">.</span>pKey<span class="hl sym">,</span> size<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwc">inline</span> uint <span class="hl kwc">operator</span><span class="hl sym">() (</span><span class="hl kwb">const</span> hash_key <span class="hl sym">&amp;</span>k<span class="hl sym">)</span> <span class="hl kwb">const</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> k<span class="hl sym">.</span>hash_val<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> size<span class="hl sym">&gt;</span>
+<span class="hl kwc">inline</span> uint <span class="hl kwd">hashFn</span><span class="hl sym">(</span><span class="hl kwb">const</span> hash_key<span class="hl sym">&lt;</span>size<span class="hl sym">&gt;&amp;</span> rKey<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">return</span> rKey<span class="hl sym">.</span>hash_val<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> hash_len<span class="hl sym">,</span> typename INPUT<span class="hl sym">,</span> typename HTBL<span class="hl sym">&gt;</span>
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span>
+<span class="hl kwb">void</span> <span class="hl kwd">calculate_frequency</span><span class="hl sym">(</span>INPUT <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>input<span class="hl sym">,</span> HTBL<span class="hl sym">&amp;</span> hash_table<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">char const</span><span class="hl sym">*</span> it <span class="hl sym">= &amp;(</span>input<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+   <span class="hl kwb">char const</span><span class="hl sym">*</span> end <span class="hl sym">=</span> it <span class="hl sym">+</span> input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() -</span> hash_len <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   typename HTBL<span class="hl sym">::</span>key_type key<span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(;</span> it <span class="hl sym">!=</span> end<span class="hl sym">;</span> it<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      key<span class="hl sym">.</span><span class="hl kwd">ReHash</span><span class="hl sym">(</span>it<span class="hl sym">);</span>
+      <span class="hl sym">++(</span>hash_table<span class="hl sym">[</span>key<span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwc">template</span><span class="hl sym">&lt;</span>typename T<span class="hl sym">&gt;</span>
+<span class="hl kwb">bool</span> <span class="hl kwd">decrease_pred</span><span class="hl sym">(</span><span class="hl kwb">const</span> T <span class="hl sym">&amp;</span>left<span class="hl sym">,</span> <span class="hl kwb">const</span> T <span class="hl sym">&amp;</span>right<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">return</span> <span class="hl sym">!(</span>left<span class="hl sym">.</span>second <span class="hl sym">&lt;</span> right<span class="hl sym">.</span>second<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">char</span> <span class="hl kwd">todna</span><span class="hl sym">(</span> <span class="hl kwb">char</span> c <span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">switch</span><span class="hl sym">(</span> c <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> <span class="hl num">0</span><span class="hl sym">:</span>
+         <span class="hl kwa">return</span> <span class="hl str">'A'</span><span class="hl sym">;</span>
+      <span class="hl kwa">case</span> <span class="hl num">1</span><span class="hl sym">:</span>
+         <span class="hl kwa">return</span> <span class="hl str">'C'</span><span class="hl sym">;</span>
+      <span class="hl kwa">case</span> <span class="hl num">2</span><span class="hl sym">:</span>
+         <span class="hl kwa">return</span> <span class="hl str">'G'</span><span class="hl sym">;</span>
+      <span class="hl kwa">case</span> <span class="hl num">3</span><span class="hl sym">:</span>
+         <span class="hl kwa">return</span> <span class="hl str">'T'</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> c<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> hash_len<span class="hl sym">,</span> typename INPUT<span class="hl sym">,</span> <span class="hl kwb">size_t</span> out_len<span class="hl sym">&gt;</span>
+<span class="hl kwb">static</span>
+<span class="hl kwb">void</span> <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span>INPUT <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>input<span class="hl sym">,</span>  <span class="hl kwb">char</span> <span class="hl sym">(&amp;</span>output<span class="hl sym">)[</span>out_len<span class="hl sym">])</span>
+<span class="hl sym">{</span>
+   <span class="hl kwc">typedef</span> hash_key<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;</span> KEY<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> JdHashMap<span class="hl sym">&lt;</span>KEY<span class="hl sym">,</span> uint<span class="hl sym">&gt;</span> HTBL<span class="hl sym">;</span>
+
+   <span class="hl slc">// Build hash table</span>
+   HTBL hash_table<span class="hl sym">;</span>
+   calculate_frequency<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> hash_table<span class="hl sym">);</span>
+
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>pair<span class="hl sym">&lt;</span>KEY<span class="hl sym">,</span> uint<span class="hl sym">&gt;</span> ELEMENT<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> ELEMENT <span class="hl sym">&gt;</span> KTBL<span class="hl sym">;</span>
+
+   <span class="hl slc">// Copy result from hashtable to vector</span>
+   KTBL order_tbl<span class="hl sym">;</span>
+   hash_table<span class="hl sym">.</span><span class="hl kwd">copy_out</span><span class="hl sym">(</span>order_tbl<span class="hl sym">);</span>
+   <span class="hl slc">// Sort with descending frequency</span>
+   std<span class="hl sym">::</span><span class="hl kwd">sort</span><span class="hl sym">(</span>order_tbl<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> order_tbl<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span> decrease_pred<span class="hl sym">&lt;</span>ELEMENT<span class="hl sym">&gt; );</span>
+
+   <span class="hl kwb">size_t</span> printedchar <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">float</span> totalchar <span class="hl sym">=</span> <span class="hl kwb">float</span><span class="hl sym">(</span>input<span class="hl sym">.</span><span class="hl kwd">size</span><span class="hl sym">() -</span> hash_len <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span> typename KTBL<span class="hl sym">::</span>iterator iter <span class="hl sym">=</span> order_tbl<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">();</span> iter <span class="hl sym">!=</span> order_tbl<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(); ++</span>iter <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+     ELEMENT<span class="hl sym">&amp;</span> i <span class="hl sym">= *</span>iter<span class="hl sym">;</span>
+     std<span class="hl sym">::</span>string <span class="hl kwd">key</span><span class="hl sym">(</span> i<span class="hl sym">.</span>first<span class="hl sym">.</span>pKey<span class="hl sym">,</span> hash_len <span class="hl sym">);</span>
+      std<span class="hl sym">::</span><span class="hl kwd">transform</span><span class="hl sym">(&amp;</span>key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">()[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">()[</span>hash_len<span class="hl sym">], (</span><span class="hl kwb">char</span><span class="hl sym">*)&amp;</span>key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">()[</span><span class="hl num">0</span><span class="hl sym">],</span> todna <span class="hl sym">);</span>
+
+      printedchar <span class="hl sym">+=</span> <span class="hl kwd">sprintf</span><span class="hl sym">(</span>   output <span class="hl sym">+</span>printedchar<span class="hl sym">,</span> <span class="hl str">&quot;%s %0.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+         key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">(),</span> <span class="hl kwb">float</span><span class="hl sym">(</span>i<span class="hl sym">.</span>second<span class="hl sym">) *</span> <span class="hl num">100.0</span>f <span class="hl sym">/</span> totalchar   <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">memcpy</span><span class="hl sym">(</span>output <span class="hl sym">+</span> printedchar<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// Build a hashtable, count all key with hash_len = reading_frame_size</span>
+<span class="hl slc">// Then print a specific sequence's count</span>
+<span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> hash_len<span class="hl sym">,</span> typename INPUT<span class="hl sym">,</span> <span class="hl kwb">size_t</span> out_len<span class="hl sym">&gt;</span>
+<span class="hl kwb">static</span>
+<span class="hl kwb">void</span> <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span>INPUT <span class="hl kwb">const</span> <span class="hl sym">&amp;</span>input<span class="hl sym">,</span>  <span class="hl kwb">char</span> <span class="hl sym">(&amp;</span>output<span class="hl sym">)[</span>out_len<span class="hl sym">],</span> <span class="hl kwb">const char</span><span class="hl sym">*</span> specific<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwc">typedef</span> hash_key<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;</span> KEY<span class="hl sym">;</span>
+   <span class="hl kwc">typedef</span> JdHashMap<span class="hl sym">&lt;</span>KEY<span class="hl sym">,</span> uint<span class="hl sym">&gt;</span> HTBL<span class="hl sym">;</span>
+
+   <span class="hl slc">// build hash table</span>
+   HTBL hash_table<span class="hl sym">;</span>
+   calculate_frequency<span class="hl sym">&lt;</span>hash_len<span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> hash_table<span class="hl sym">);</span>
+
+   <span class="hl slc">// lookup specific frame</span>
+   <span class="hl kwb">size_t</span> slen <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>specific<span class="hl sym">);</span>
+   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">20</span><span class="hl sym">];</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> slen<span class="hl sym">; ++</span>i <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">switch</span><span class="hl sym">(</span> specific<span class="hl sym">[</span>i<span class="hl sym">] )</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">case</span> <span class="hl str">'a'</span><span class="hl sym">:</span>
+            buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+         <span class="hl kwa">case</span> <span class="hl str">'c'</span><span class="hl sym">:</span>
+                buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+         <span class="hl kwa">case</span> <span class="hl str">'g'</span><span class="hl sym">:</span>
+            buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">2</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+         <span class="hl kwa">case</span> <span class="hl str">'t'</span><span class="hl sym">:</span>
+            buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">3</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   KEY <span class="hl kwd">printkey</span><span class="hl sym">(</span>buffer<span class="hl sym">);</span>
+   uint count <span class="hl sym">=</span> hash_table<span class="hl sym">[</span>printkey<span class="hl sym">];</span>
+
+   std<span class="hl sym">::</span>string <span class="hl kwd">key</span><span class="hl sym">(</span> printkey<span class="hl sym">.</span>pKey<span class="hl sym">,</span> hash_len <span class="hl sym">);</span>
+   std<span class="hl sym">::</span><span class="hl kwd">transform</span><span class="hl sym">(&amp;</span>key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">()[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">()[</span>hash_len<span class="hl sym">], (</span><span class="hl kwb">char</span><span class="hl sym">*)&amp;</span>key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">()[</span><span class="hl num">0</span><span class="hl sym">],</span> todna<span class="hl sym">);</span>
+
+   <span class="hl kwd">sprintf</span><span class="hl sym">(</span>output<span class="hl sym">,</span> <span class="hl str">&quot;%d</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> count<span class="hl sym">,</span> key<span class="hl sym">.</span><span class="hl kwd">c_str</span><span class="hl sym">());</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">int</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         count<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span> <span class="hl kwb">char</span> <span class="hl sym">&gt;</span> input<span class="hl sym">;</span>
+   input<span class="hl sym">.</span><span class="hl kwd">reserve</span><span class="hl sym">(</span><span class="hl num">256</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">);</span> <span class="hl slc">// 256MB</span>
+
+   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">128</span><span class="hl sym">];</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span><span class="hl sym">(</span><span class="hl kwd">strncmp</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl kwa">break</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl slc">// rule: read line-by-line</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">size_t</span> sz <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>buffer<span class="hl sym">);</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span>sz <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+         sz <span class="hl sym">=</span> sz <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+     <span class="hl slc">// compress to values 0,1,2,3</span>
+     <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> sz<span class="hl sym">; ++</span>i <span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+      <span class="hl kwa">switch</span><span class="hl sym">(</span> buffer<span class="hl sym">[</span>i<span class="hl sym">] )</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">case</span> <span class="hl str">'a'</span><span class="hl sym">:</span>
+         <span class="hl kwa">case</span> <span class="hl str">'A'</span><span class="hl sym">:</span>
+            buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+         <span class="hl kwa">case</span> <span class="hl str">'c'</span><span class="hl sym">:</span>
+         <span class="hl kwa">case</span> <span class="hl str">'C'</span><span class="hl sym">:</span>
+                buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+         <span class="hl kwa">case</span> <span class="hl str">'g'</span><span class="hl sym">:</span>
+         <span class="hl kwa">case</span> <span class="hl str">'G'</span><span class="hl sym">:</span>
+            buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">2</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+         <span class="hl kwa">case</span> <span class="hl str">'t'</span><span class="hl sym">:</span>
+         <span class="hl kwa">case</span> <span class="hl str">'T'</span><span class="hl sym">:</span>
+            buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">3</span><span class="hl sym">;</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+     <span class="hl sym">}</span>
+      input<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span>input<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span> buffer<span class="hl sym">,</span> buffer <span class="hl sym">+</span> sz<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">char</span> output<span class="hl sym">[</span><span class="hl num">7</span><span class="hl sym">][</span><span class="hl num">256</span><span class="hl sym">];</span>
+   <span class="hl dir">#pragma omp parallel sections num_threads(GetThreadCount()) default(shared)</span>
+   <span class="hl sym">{</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span><span class="hl num">18</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">6</span><span class="hl sym">],</span> <span class="hl str">&quot;ggtattttaatttatagt&quot;</span> <span class="hl sym">);</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span><span class="hl num">12</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">5</span><span class="hl sym">],</span> <span class="hl str">&quot;ggtattttaatt&quot;</span> <span class="hl sym">);</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">6</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">],</span> <span class="hl str">&quot;ggtatt&quot;</span> <span class="hl sym">);</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> <span class="hl str">&quot;ggta&quot;</span> <span class="hl sym">);</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">3</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> <span class="hl str">&quot;ggt&quot;</span> <span class="hl sym">);</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">2</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] );</span>
+      <span class="hl dir">#pragma omp section</span>
+      write_frequencies<span class="hl sym">&lt;</span> <span class="hl num">1</span><span class="hl sym">&gt;(</span>input<span class="hl sym">,</span> output<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] );</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">7</span><span class="hl sym">;</span> i<span class="hl sym">++ )</span>
+      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s&quot;</span><span class="hl sym">,</span> output<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+<span class="hl sym">}</span>
+
