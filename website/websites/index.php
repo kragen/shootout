@@ -174,8 +174,8 @@ $debian = Keys( array( 'debian' ));
 foreach($Langs as $a){
    $notShown = PrintIncludedLanguages($ubuntu,$a,TRUE);
    if ($notShown){ $notShown = PrintIncludedLanguages($u32,$a,$notShown); }
-   if ($notShown){ $notShown = PrintIncludedLanguages($gentoo,$a,$notShown); }
-   if ($notShown){ PrintIncludedLanguages($debian,$a,$notShown); }
+//   if ($notShown){ $notShown = PrintIncludedLanguages($gentoo,$a,$notShown); }
+//   if ($notShown){ PrintIncludedLanguages($debian,$a,$notShown); }
 }
 ?>
 
