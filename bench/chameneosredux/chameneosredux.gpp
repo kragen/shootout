@@ -1,0 +1,320 @@
+/* The Computer Language Benchmarks Game
+http://shootout.alioth.debian.org/
+
+Based on C contribution by Alex Burlyga
+Further tweaking by The Anh Tran
+*/
+
+
+#include <iostream>
+#include <string>
+
+#include <cstdlib>
+#include <cstdio>
+#include <memory.h>
+
+#include <pthread.h>
+#include <sched.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+
+using namespace std;
+using namespace boost;
+
+
+int const   STACK_SIZE = 16*1024;
+char      stacks[16][STACK_SIZE];
+bool      multi_core;
+
+
+enum COLOR
+{
+   BLUE   = 0,
+   RED      = 1,
+   YELLOW   = 2
+};
+
+char const * const ColorName[]   = {"blue", "red", "yellow"};
+
+
+COLOR 
+ColorCompliment(COLOR c1, COLOR c2)
+{
+   switch (c1)
+   {
+   case BLUE:
+      switch (c2)
+      {
+      case BLUE:      return BLUE;
+      case RED:      return YELLOW;
+      case YELLOW:   return RED;
+      }
+
+   case RED:
+      switch (c2)
+      {
+      case BLUE:      return YELLOW;
+      case RED:      return RED;
+      case YELLOW:   return BLUE;
+      }
+
+   case YELLOW:
+      switch (c2)
+      {
+      case BLUE:      return RED;
+      case RED:      return BLUE;
+      case YELLOW:   return YELLOW;
+      }
+   }
+
+   cerr << "Invalid color\n";
+   return BLUE;
+}
+
+
+string
+SpellNumber(int n)
+{
+   char const* const NumberStr[] = {" zero"," one"," two"," three"," four"," five"," six"," seven"," eight"," nine"};
+   string num;
+   
+   while ( n >= 10 )
+   {
+      int m = n % 10;
+      n /= 10;
+      
+      num = NumberStr[m] + num;
+   }
+
+   num = NumberStr[n] + num;
+
+   return num;
+}
+
+
+
+struct Creature;
+struct MeetingPlace
+{
+   int   volatile   _meetings_left;
+   Creature*      _creature_waiting;
+
+
+   MeetingPlace(int N) :   
+      _meetings_left(N), 
+      _creature_waiting(0)
+   {   }
+
+   bool GotoMeet( Creature* cr );
+};
+
+
+struct Creature
+{
+   MeetingPlace*      _place;
+   COLOR            _color;
+
+   int               _count;
+   int               _same_count;
+
+   int               _id;
+   bool volatile      _met;
+
+   pthread_t         _hthread;
+
+
+   Creature()
+   {
+      memset(this, 0, sizeof(*this));
+   }
+
+   void Start( MeetingPlace* mp, COLOR color, void* stack )
+   {
+      _place   = mp;
+      _color   = color;
+
+      pthread_attr_t   stack_att;
+
+      pthread_attr_init( &stack_att );
+      pthread_attr_setstack( &stack_att, stack, STACK_SIZE );
+
+      pthread_create( &_hthread, &stack_att, &Creature::ThreadRun, reinterpret_cast<void*>(this) );
+   }
+
+   static 
+   void* 
+   ThreadRun(void* param)
+   {
+      (reinterpret_cast<Creature*>(param))->Run();
+      return 0;
+   }
+
+   void 
+   Run()
+   {
+      _id = pthread_self();
+
+      while (true)
+      {
+         _met = false;
+
+         if ( _place->GotoMeet( this ) )
+         {
+            while (_met == false)
+            {
+               if (!multi_core)
+                  sched_yield();
+            }
+         }
+         else
+            break;
+      }
+   }
+
+   void 
+   Meet(Creature &other)
+   {
+      ++_count;
+      ++other._count;
+
+      if (__builtin_expect(_id == other._id, false))
+      {
+         ++_same_count;
+         ++other._same_count;
+      }
+
+      COLOR new_color   = ColorCompliment( _color, other._color );
+      other._color   = _color   = new_color;
+      other._met      = _met      = true;
+   }
+
+};
+
+bool 
+MeetingPlace::GotoMeet( Creature* cr )
+{
+   while (true)
+   {
+      // store pointer to first creature
+      Creature* first = reinterpret_cast<Creature*>(__sync_val_compare_and_swap(&_creature_waiting, 0, cr));
+      
+      if (first == 0)   // first arrive
+         return _meetings_left > 0;
+      else   // second arrive
+      {
+         if (__sync_bool_compare_and_swap(&_creature_waiting, first, 0))
+         {
+            if (__sync_fetch_and_sub(&_meetings_left, 1) > 0)
+            {
+               // 2 creatures meeting each other
+               cr->Meet(*first);
+               return true;
+            }
+            else
+               return false;
+         }
+      }
+   }
+}
+
+
+template <int ncolor>
+void 
+RunGame(int n, COLOR const (&color)[ncolor])
+{
+   MeetingPlace   place(n);
+   Creature      cr[ncolor];
+
+   format fmt("%1% ");
+   
+   // print initial color of each creature
+   for (int i = 0; i < ncolor; ++i)
+   {
+      cout << (fmt % ColorName[color[i]] );
+      cr[i].Start( &place, color[i], stacks[i] );
+   }
+
+   cout << endl;
+
+
+   // wait for them to meet
+   for (int i = 0; i < ncolor; i++)
+      pthread_join( cr[i]._hthread, 0 );
+
+
+   int total = 0;
+
+   fmt = format("%1%%2%\n");
+   // print meeting times of each creature
+   for (int i = 0; i < ncolor; i++)
+   {
+      cout << (fmt % cr[i]._count % SpellNumber(cr[i]._same_count));
+      total += cr[i]._count;
+   }
+
+   // print total meeting times
+   fmt = format("%1%\n\n");
+   cout << (fmt % SpellNumber(total));
+}
+
+void 
+PrintColors()
+{
+   format fmt("%1% + %2% -> %3%\n");
+   
+   for (int c1 = BLUE; c1 <= YELLOW; ++c1)
+   {
+      for (int c2 = BLUE; c2 <= YELLOW; ++c2)
+      {
+         cout << (fmt 
+                  % ColorName[c1] 
+                  % ColorName[c2] 
+                  % ColorName[ColorCompliment( (COLOR)c1, (COLOR)c2 )]  );
+      }
+   }
+
+   cout << endl;
+}
+
+
+int 
+GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 16; ++i)
+   {
+      if (CPU_ISSET(i, &cs))
+         ++count;
+   }
+   return count;
+}
+
+
+int 
+main(int argc, char** argv)
+{
+   sched_param pri;
+   pri.sched_priority = 1;
+   if (sched_setscheduler(0, SCHED_RR, &pri) != 0)
+   {
+      // meeting times will largely vary
+   }
+   
+   PrintColors();
+   multi_core = GetThreadCount() > 1;
+
+   COLOR const r1[] = {   BLUE, RED, YELLOW   };
+   COLOR const r2[] = {   BLUE, RED, YELLOW, RED, YELLOW, BLUE, RED, YELLOW, RED, BLUE   };
+   
+   int n = (argc >= 2) ? lexical_cast<int>(argv[1]) : 600;
+   RunGame( n, r1 );
+   RunGame( n, r2 );
+   
+   return 0;
+}
+
