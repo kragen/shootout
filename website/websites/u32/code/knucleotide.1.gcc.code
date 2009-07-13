@@ -1,173 +1,206 @@
 <span class="hl com">/* The Computer Language Benchmarks Game</span>
-<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com">      http://shootout.alioth.debian.org/</span>
 <span class="hl com"></span>
-<span class="hl com">   Contributed by Josh Goldfoot</span>
-<span class="hl com">   to compile, use gcc -O3</span>
-<span class="hl com"></span>
-<span class="hl com">   This revision uses &quot;simple_hash.h,&quot; available from</span>
-<span class="hl com">   http://alioth.debian.org/plugins/scmcvs/cvsweb.php/shootout/bench/Include/?cvsroot=shootout</span>
-<span class="hl com"></span>
+<span class="hl com">         Contributed by Josh Goldfoot</span>
+<span class="hl com">	 Modified by Cedric Bail</span>
 <span class="hl com">*/</span>
+
 <span class="hl dir">#include &lt;stdio.h&gt;</span>
 <span class="hl dir">#include &lt;string.h&gt;</span>
 <span class="hl dir">#include &lt;ctype.h&gt;</span>
 <span class="hl dir">#include &lt;stdlib.h&gt;</span>
-<span class="hl dir">#include</span> <span class="hl dstr">&quot;../../Include/simple_hash.h&quot;</span><span class="hl dir"></span>
+<span class="hl dir">#include &lt;glib.h&gt;</span>
 
-<span class="hl kwb">long</span>
-<span class="hl kwd">hash_table_size</span> <span class="hl sym">(</span><span class="hl kwb">int</span> fl<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">)</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> stat_s stat_t<span class="hl sym">;</span>
+<span class="hl kwb">struct</span> stat_s
 <span class="hl sym">{</span>
-  <span class="hl kwb">long</span> maxsize1<span class="hl sym">,</span> maxsize2<span class="hl sym">;</span>
+   <span class="hl kwb">const</span> gchar <span class="hl sym">*</span>key<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> stat<span class="hl sym">;</span>
+<span class="hl sym">};</span>
 
-  maxsize1 <span class="hl sym">=</span> buflen <span class="hl sym">-</span> fl<span class="hl sym">;</span>
-  maxsize2 <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
-  <span class="hl kwa">while</span> <span class="hl sym">(--</span>fl <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> maxsize2 <span class="hl sym">&lt;</span> maxsize1<span class="hl sym">)</span>
-    maxsize2 <span class="hl sym">=</span> maxsize2 <span class="hl sym">*</span> <span class="hl num">4</span><span class="hl sym">;</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>maxsize1 <span class="hl sym">&lt;</span> maxsize2<span class="hl sym">)</span>
-    <span class="hl kwa">return</span> maxsize1<span class="hl sym">;</span>
-  <span class="hl kwa">return</span> maxsize2<span class="hl sym">;</span>
+<span class="hl dir">#define MAX_ELM (8192 / sizeof (stat_t))</span>
+
+<span class="hl kwb">static int</span>
+<span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span><span class="hl kwb">int</span> fl<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>buffer<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">,</span>
+		      GHashTable <span class="hl sym">*</span>ht<span class="hl sym">,</span> GTrashStack <span class="hl sym">**</span>ts<span class="hl sym">,</span> GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">,</span> GStringChunk <span class="hl sym">*</span>sc<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   gchar <span class="hl sym">*</span>key<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> i<span class="hl sym">;</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>fl <span class="hl sym">&gt;</span> buflen<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>fl <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> buflen <span class="hl sym">-</span> fl <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwb">char</span> nulled<span class="hl sym">;</span>
+	stat_t <span class="hl sym">*</span>stat<span class="hl sym">;</span>
+
+	nulled <span class="hl sym">=</span> buffer<span class="hl sym">[</span>i <span class="hl sym">+</span> fl<span class="hl sym">];</span>
+	buffer<span class="hl sym">[</span>i <span class="hl sym">+</span> fl<span class="hl sym">] =</span> <span class="hl str">'\0'</span><span class="hl sym">;</span>
+
+	key <span class="hl sym">=</span> <span class="hl kwd">g_string_chunk_insert_const</span><span class="hl sym">(</span>sc<span class="hl sym">,</span> buffer <span class="hl sym">+</span> i<span class="hl sym">);</span>
+
+	stat <span class="hl sym">=</span> <span class="hl kwd">g_hash_table_lookup</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> key<span class="hl sym">);</span>
+	<span class="hl kwa">if</span> <span class="hl sym">(!</span>stat<span class="hl sym">)</span>
+	  <span class="hl sym">{</span>
+	     stat <span class="hl sym">=</span> <span class="hl kwd">g_trash_stack_pop</span><span class="hl sym">(</span>ts<span class="hl sym">);</span>
+	     <span class="hl kwa">if</span> <span class="hl sym">(!</span>stat<span class="hl sym">)</span>
+	       <span class="hl sym">{</span>
+		  <span class="hl kwb">int</span> j<span class="hl sym">;</span>
+
+		  stat <span class="hl sym">=</span> <span class="hl kwd">malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span> <span class="hl sym">(</span>stat_t<span class="hl sym">) *</span> MAX_ELM<span class="hl sym">);</span>
+		  <span class="hl kwd">g_ptr_array_add</span><span class="hl sym">(</span>roots<span class="hl sym">,</span> stat<span class="hl sym">);</span>
+
+		  <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> MAX_ELM<span class="hl sym">; ++</span>j<span class="hl sym">)</span>
+		    <span class="hl kwd">g_trash_stack_push</span><span class="hl sym">(</span>ts<span class="hl sym">,</span> stat <span class="hl sym">+</span> j<span class="hl sym">);</span>
+	       <span class="hl sym">}</span>
+	     stat<span class="hl sym">-&gt;</span>stat <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+	     stat<span class="hl sym">-&gt;</span>key <span class="hl sym">=</span> key<span class="hl sym">;</span>
+
+	     <span class="hl kwd">g_hash_table_insert</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> key<span class="hl sym">,</span> stat<span class="hl sym">);</span>
+	  <span class="hl sym">}</span>
+	<span class="hl kwa">else</span>
+	  stat<span class="hl sym">-&gt;</span>stat<span class="hl sym">++;</span>
+
+	buffer<span class="hl sym">[</span>i <span class="hl sym">+</span> fl<span class="hl sym">] =</span> nulled<span class="hl sym">;</span>
+     <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> buflen <span class="hl sym">-</span> fl <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwb">struct</span> ht_ht <span class="hl sym">*</span>
-<span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span><span class="hl kwb">int</span> fl<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>buffer<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">)</span>
+<span class="hl kwb">static int</span>
+<span class="hl kwd">cmp_func</span><span class="hl sym">(</span>gconstpointer a<span class="hl sym">,</span> gconstpointer b<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwb">struct</span> ht_ht <span class="hl sym">*</span>ht<span class="hl sym">;</span>
-  <span class="hl kwb">char</span> <span class="hl sym">*</span>reader<span class="hl sym">;</span>
-  <span class="hl kwb">long</span> i<span class="hl sym">;</span>
-  <span class="hl kwb">char</span> nulled<span class="hl sym">;</span>
+   <span class="hl kwb">const</span> stat_t <span class="hl sym">*</span>left <span class="hl sym">=</span> a<span class="hl sym">;</span>
+   <span class="hl kwb">const</span> stat_t <span class="hl sym">*</span>right <span class="hl sym">=</span> b<span class="hl sym">;</span>
 
-  <span class="hl kwa">if</span> <span class="hl sym">(</span>fl <span class="hl sym">&gt;</span> buflen<span class="hl sym">)</span>
-    <span class="hl kwa">return</span> NULL<span class="hl sym">;</span>
-
-  ht <span class="hl sym">=</span> <span class="hl kwd">ht_create</span> <span class="hl sym">(</span><span class="hl kwd">hash_table_size</span> <span class="hl sym">(</span>fl<span class="hl sym">,</span> buflen<span class="hl sym">));</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> buflen <span class="hl sym">-</span> fl <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
-    <span class="hl sym">{</span>
-      reader <span class="hl sym">= &amp;(</span>buffer<span class="hl sym">[</span>i<span class="hl sym">]);</span>
-      nulled <span class="hl sym">=</span> reader<span class="hl sym">[</span>fl<span class="hl sym">];</span>
-      reader<span class="hl sym">[</span>fl<span class="hl sym">] =</span> <span class="hl num">0x00</span><span class="hl sym">;</span>
-      <span class="hl kwd">ht_find_new</span> <span class="hl sym">(</span>ht<span class="hl sym">,</span> reader<span class="hl sym">)-&gt;</span>val<span class="hl sym">++;</span>
-      reader<span class="hl sym">[</span>fl<span class="hl sym">] =</span> nulled<span class="hl sym">;</span>
-    <span class="hl sym">}</span>
-  <span class="hl kwa">return</span> ht<span class="hl sym">;</span>
+   <span class="hl kwa">return</span> right<span class="hl sym">-&gt;</span>stat <span class="hl sym">-</span> left<span class="hl sym">-&gt;</span>stat<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> ssorter
+<span class="hl kwb">static void</span>
+<span class="hl kwd">sorted_list</span><span class="hl sym">(</span>gpointer key<span class="hl sym">,</span> gpointer value<span class="hl sym">,</span> gpointer user_data<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwb">char</span> <span class="hl sym">*</span>string<span class="hl sym">;</span>
-  <span class="hl kwb">int</span> num<span class="hl sym">;</span>
-<span class="hl sym">}</span> sorter<span class="hl sym">;</span>
+   stat_t <span class="hl sym">*</span>data <span class="hl sym">=</span> value<span class="hl sym">;</span>
+   GList <span class="hl sym">**</span>lst <span class="hl sym">=</span> user_data<span class="hl sym">;</span>
+
+   <span class="hl sym">*</span>lst <span class="hl sym">=</span> <span class="hl kwd">g_list_insert_sorted</span><span class="hl sym">(*</span>lst<span class="hl sym">,</span> data<span class="hl sym">,</span> cmp_func<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span>
+<span class="hl kwd">display_stat</span><span class="hl sym">(</span>gpointer data<span class="hl sym">,</span> gpointer user_data<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">long</span> <span class="hl sym">*</span>total <span class="hl sym">=</span> user_data<span class="hl sym">;</span>
+   stat_t <span class="hl sym">*</span>st <span class="hl sym">=</span> data<span class="hl sym">;</span>
+
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> st<span class="hl sym">-&gt;</span>key<span class="hl sym">,</span> <span class="hl num">100</span> <span class="hl sym">* (</span><span class="hl kwb">float</span><span class="hl sym">)</span> st<span class="hl sym">-&gt;</span>stat <span class="hl sym">/ *</span>total<span class="hl sym">);</span>
+<span class="hl sym">}</span>
 
 <span class="hl kwb">void</span>
-<span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl kwb">int</span> fl<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>buffer<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">)</span>
+<span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl kwb">int</span> fl<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>buffer<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">,</span> GTrashStack <span class="hl sym">**</span>ts<span class="hl sym">,</span> GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwb">struct</span> ht_ht <span class="hl sym">*</span>ht<span class="hl sym">;</span>
-  <span class="hl kwb">long</span> total<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> size<span class="hl sym">;</span>
-  <span class="hl kwb">struct</span> ht_node <span class="hl sym">*</span>nd<span class="hl sym">;</span>
-  sorter <span class="hl sym">*</span>s<span class="hl sym">;</span>
-  sorter tmp<span class="hl sym">;</span>
+   GStringChunk <span class="hl sym">*</span>sc<span class="hl sym">;</span>
+   GHashTable <span class="hl sym">*</span>ht<span class="hl sym">;</span>
+   GList <span class="hl sym">*</span>lst<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> total<span class="hl sym">;</span>
 
-  ht <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span>fl<span class="hl sym">,</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">);</span>
-  total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-  size <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>nd <span class="hl sym">=</span> <span class="hl kwd">ht_first</span> <span class="hl sym">(</span>ht<span class="hl sym">);</span> nd <span class="hl sym">!=</span> NULL<span class="hl sym">;</span> nd <span class="hl sym">=</span> <span class="hl kwd">ht_next</span> <span class="hl sym">(</span>ht<span class="hl sym">))</span>
-    <span class="hl sym">{</span>
-      total <span class="hl sym">=</span> total <span class="hl sym">+</span> nd<span class="hl sym">-&gt;</span>val<span class="hl sym">;</span>
-      size<span class="hl sym">++;</span>
-    <span class="hl sym">}</span>
-  s <span class="hl sym">=</span> <span class="hl kwd">calloc</span> <span class="hl sym">(</span>size<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span>sorter<span class="hl sym">));</span>
-  i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>nd <span class="hl sym">=</span> <span class="hl kwd">ht_first</span> <span class="hl sym">(</span>ht<span class="hl sym">);</span> nd <span class="hl sym">!=</span> NULL<span class="hl sym">;</span> nd <span class="hl sym">=</span> <span class="hl kwd">ht_next</span> <span class="hl sym">(</span>ht<span class="hl sym">))</span>
-    <span class="hl sym">{</span>
-      s<span class="hl sym">[</span>i<span class="hl sym">].</span>string <span class="hl sym">=</span> nd<span class="hl sym">-&gt;</span>key<span class="hl sym">;</span>
-      s<span class="hl sym">[</span>i<span class="hl sym">++].</span>num <span class="hl sym">=</span> nd<span class="hl sym">-&gt;</span>val<span class="hl sym">;</span>
-    <span class="hl sym">}</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
-    <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> size<span class="hl sym">;</span> j<span class="hl sym">++)</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>s<span class="hl sym">[</span>i<span class="hl sym">].</span>num <span class="hl sym">&lt;</span> s<span class="hl sym">[</span>j<span class="hl sym">].</span>num<span class="hl sym">)</span>
-	<span class="hl sym">{</span>
-	  <span class="hl kwd">memcpy</span> <span class="hl sym">(&amp;</span>tmp<span class="hl sym">, &amp;(</span>s<span class="hl sym">[</span>i<span class="hl sym">]),</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span>sorter<span class="hl sym">));</span>
-	  <span class="hl kwd">memcpy</span> <span class="hl sym">(&amp;(</span>s<span class="hl sym">[</span>i<span class="hl sym">]), &amp;(</span>s<span class="hl sym">[</span>j<span class="hl sym">]),</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span>sorter<span class="hl sym">));</span>
-	  <span class="hl kwd">memcpy</span> <span class="hl sym">(&amp;(</span>s<span class="hl sym">[</span>j<span class="hl sym">]), &amp;</span>tmp<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span>sorter<span class="hl sym">));</span>
-	<span class="hl sym">}</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-    <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">[</span>i<span class="hl sym">].</span>string<span class="hl sym">,</span> <span class="hl num">100</span> <span class="hl sym">* (</span><span class="hl kwb">float</span><span class="hl sym">)</span> s<span class="hl sym">[</span>i<span class="hl sym">].</span>num <span class="hl sym">/</span> total<span class="hl sym">);</span>
-  <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
-  <span class="hl kwd">ht_destroy</span> <span class="hl sym">(</span>ht<span class="hl sym">);</span>
-  <span class="hl kwd">free</span> <span class="hl sym">(</span>s<span class="hl sym">);</span>
+   ht <span class="hl sym">=</span> <span class="hl kwd">g_hash_table_new_full</span><span class="hl sym">(</span>g_str_hash<span class="hl sym">,</span> g_str_equal<span class="hl sym">,</span> NULL <span class="hl com">/* free key */</span><span class="hl sym">,</span> NULL <span class="hl com">/* free value */</span><span class="hl sym">);</span>
+   sc <span class="hl sym">=</span> <span class="hl kwd">g_string_chunk_new</span><span class="hl sym">(</span>buflen<span class="hl sym">);</span>
+   lst <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+   total <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span>fl<span class="hl sym">,</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">,</span> ht<span class="hl sym">,</span> ts<span class="hl sym">,</span> roots<span class="hl sym">,</span> sc<span class="hl sym">);</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(!</span>total<span class="hl sym">)</span> <span class="hl kwa">goto</span> on_error<span class="hl sym">;</span>
+
+   <span class="hl kwd">g_hash_table_foreach</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> sorted_list<span class="hl sym">, &amp;</span>lst<span class="hl sym">);</span>
+   <span class="hl kwd">g_list_foreach</span><span class="hl sym">(</span>lst<span class="hl sym">,</span> display_stat<span class="hl sym">, &amp;</span>total<span class="hl sym">);</span>
+   <span class="hl kwd">g_list_free</span><span class="hl sym">(</span>lst<span class="hl sym">);</span>
+
+ on_error<span class="hl sym">:</span>
+   <span class="hl kwd">g_hash_table_destroy</span><span class="hl sym">(</span>ht<span class="hl sym">);</span>
+   <span class="hl kwd">g_string_chunk_free</span><span class="hl sym">(</span>sc<span class="hl sym">);</span>
 <span class="hl sym">}</span>
 
 <span class="hl kwb">void</span>
-<span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl kwb">char</span> <span class="hl sym">*</span>searchFor<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>buffer<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">)</span>
+<span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl kwb">char</span> <span class="hl sym">*</span>searchFor<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>buffer<span class="hl sym">,</span> <span class="hl kwb">long</span> buflen<span class="hl sym">,</span> GTrashStack <span class="hl sym">**</span>ts<span class="hl sym">,</span> GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-  <span class="hl kwb">struct</span> ht_ht <span class="hl sym">*</span>ht<span class="hl sym">;</span>
+   GStringChunk <span class="hl sym">*</span>sc<span class="hl sym">;</span>
+   GHashTable <span class="hl sym">*</span>ht<span class="hl sym">;</span>
+   stat_t <span class="hl sym">*</span>result<span class="hl sym">;</span>
+   GList <span class="hl sym">*</span>lst<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> total<span class="hl sym">;</span>
+   <span class="hl kwb">long</span> fl<span class="hl sym">;</span>
 
-  ht <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span><span class="hl kwd">strlen</span> <span class="hl sym">(</span>searchFor<span class="hl sym">),</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">);</span>
-  <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">ht_find_new</span> <span class="hl sym">(</span>ht<span class="hl sym">,</span> searchFor<span class="hl sym">)-&gt;</span>val<span class="hl sym">,</span> searchFor<span class="hl sym">);</span>
-  <span class="hl kwd">ht_destroy</span> <span class="hl sym">(</span>ht<span class="hl sym">);</span>
+   fl <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>searchFor<span class="hl sym">);</span>
+
+   ht <span class="hl sym">=</span> <span class="hl kwd">g_hash_table_new_full</span><span class="hl sym">(</span>g_str_hash<span class="hl sym">,</span> g_str_equal<span class="hl sym">,</span> NULL <span class="hl com">/* free key */</span><span class="hl sym">,</span> NULL <span class="hl com">/* free value */</span><span class="hl sym">);</span>
+   sc <span class="hl sym">=</span> <span class="hl kwd">g_string_chunk_new</span><span class="hl sym">(</span>buflen<span class="hl sym">);</span>
+   lst <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+   result <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+   total <span class="hl sym">=</span> <span class="hl kwd">generate_frequencies</span> <span class="hl sym">(</span>fl<span class="hl sym">,</span> buffer<span class="hl sym">,</span> buflen<span class="hl sym">,</span> ht<span class="hl sym">,</span> ts<span class="hl sym">,</span> roots<span class="hl sym">,</span> sc<span class="hl sym">);</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(!</span>total<span class="hl sym">)</span> <span class="hl kwa">goto</span> on_error<span class="hl sym">;</span>
+
+   result <span class="hl sym">=</span> <span class="hl kwd">g_hash_table_lookup</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> searchFor<span class="hl sym">);</span>
+
+ on_error<span class="hl sym">:</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%ld</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> result ? result<span class="hl sym">-&gt;</span>stat <span class="hl sym">:</span> <span class="hl num">0</span><span class="hl sym">,</span> searchFor<span class="hl sym">);</span>
+
+   <span class="hl kwd">g_hash_table_destroy</span><span class="hl sym">(</span>ht<span class="hl sym">);</span>
+   <span class="hl kwd">g_string_chunk_free</span><span class="hl sym">(</span>sc<span class="hl sym">);</span>
 <span class="hl sym">}</span>
 
 <span class="hl kwb">int</span>
 <span class="hl kwd">main</span> <span class="hl sym">()</span>
 <span class="hl sym">{</span>
-  <span class="hl kwb">char</span> c<span class="hl sym">;</span>
-  <span class="hl kwb">char</span> <span class="hl sym">*</span>line<span class="hl sym">, *</span>buffer<span class="hl sym">, *</span>tmp<span class="hl sym">, *</span>x<span class="hl sym">;</span>
-  <span class="hl kwb">int</span> i<span class="hl sym">,</span> linelen<span class="hl sym">,</span> nothree<span class="hl sym">;</span>
-  <span class="hl kwb">long</span> buflen<span class="hl sym">,</span> seqlen<span class="hl sym">;</span>
+   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">4096</span><span class="hl sym">];</span>
+   GTrashStack <span class="hl sym">*</span>ts<span class="hl sym">;</span>
+   GPtrArray <span class="hl sym">*</span>roots<span class="hl sym">;</span>
+   GString <span class="hl sym">*</span>stuff<span class="hl sym">;</span>
+   gchar <span class="hl sym">*</span>s<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> len<span class="hl sym">;</span>
 
-  line <span class="hl sym">=</span> <span class="hl kwd">malloc</span> <span class="hl sym">(</span><span class="hl num">256</span><span class="hl sym">);</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(!</span>line<span class="hl sym">)</span>
-    <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
-  seqlen <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-  nothree <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   roots <span class="hl sym">=</span> <span class="hl kwd">g_ptr_array_new</span><span class="hl sym">();</span>
+   ts <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
 
-  <span class="hl kwa">while</span> <span class="hl sym">(</span>nothree <span class="hl sym">&amp;&amp;</span> <span class="hl kwd">fgets</span> <span class="hl sym">(</span>line<span class="hl sym">,</span> <span class="hl num">255</span><span class="hl sym">,</span> stdin<span class="hl sym">))</span>
-    <span class="hl kwa">if</span> <span class="hl sym">(</span>line<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ==</span> <span class="hl str">'&gt;'</span> <span class="hl sym">&amp;&amp;</span> line<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'T'</span> <span class="hl sym">&amp;&amp;</span> line<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] ==</span> <span class="hl str">'H'</span><span class="hl sym">)</span>
-      nothree <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-  <span class="hl kwd">free</span> <span class="hl sym">(</span>line<span class="hl sym">);</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
+     <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">strncmp</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+       <span class="hl kwa">break</span><span class="hl sym">;</span>
 
-  buflen <span class="hl sym">=</span> <span class="hl num">10240</span><span class="hl sym">;</span>
-  buffer <span class="hl sym">=</span> <span class="hl kwd">malloc</span> <span class="hl sym">(</span>buflen <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(!</span>buffer<span class="hl sym">)</span>
-    <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
-  x <span class="hl sym">=</span> buffer<span class="hl sym">;</span>
+   stuff <span class="hl sym">=</span> <span class="hl kwd">g_string_new</span><span class="hl sym">(</span>NULL<span class="hl sym">);</span>
 
-  <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span> <span class="hl sym">(</span>x<span class="hl sym">,</span> <span class="hl num">255</span><span class="hl sym">,</span> stdin<span class="hl sym">))</span>
-    <span class="hl sym">{</span>
-      linelen <span class="hl sym">=</span> <span class="hl kwd">strlen</span> <span class="hl sym">(</span>x<span class="hl sym">);</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>linelen<span class="hl sym">)</span>
-	<span class="hl sym">{</span>
-	  <span class="hl kwa">if</span> <span class="hl sym">(</span>x<span class="hl sym">[</span>linelen <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
-	    linelen<span class="hl sym">--;</span>
-	  c <span class="hl sym">=</span> x<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
-	  <span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">==</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span>
-	    <span class="hl kwa">break</span><span class="hl sym">;</span>
-	  <span class="hl kwa">else if</span> <span class="hl sym">(</span>c <span class="hl sym">!=</span> <span class="hl str">';'</span><span class="hl sym">)</span>
-	    <span class="hl sym">{</span>
-	      seqlen <span class="hl sym">=</span> seqlen <span class="hl sym">+</span> linelen<span class="hl sym">;</span>
-	      <span class="hl kwa">if</span> <span class="hl sym">(</span>seqlen <span class="hl sym">+</span> <span class="hl num">512</span> <span class="hl sym">&gt;=</span> buflen<span class="hl sym">)</span>
-		<span class="hl sym">{</span>
-		  buflen <span class="hl sym">=</span> buflen <span class="hl sym">+</span> <span class="hl num">10240</span><span class="hl sym">;</span>
-		  tmp <span class="hl sym">=</span> <span class="hl kwd">realloc</span> <span class="hl sym">(</span>buffer<span class="hl sym">,</span> buflen <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
-		  <span class="hl kwa">if</span> <span class="hl sym">(</span>tmp <span class="hl sym">==</span> NULL<span class="hl sym">)</span>
-		    <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
-		  buffer <span class="hl sym">=</span> tmp<span class="hl sym">;</span>
-		  x <span class="hl sym">= &amp;(</span>buffer<span class="hl sym">[</span>seqlen<span class="hl sym">]);</span>
-		<span class="hl sym">}</span>
-	      <span class="hl kwa">else</span>
-		x <span class="hl sym">= &amp;(</span>x<span class="hl sym">[</span>linelen<span class="hl sym">]);</span>
-	      x<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
-	    <span class="hl sym">}</span>
-	<span class="hl sym">}</span>
-    <span class="hl sym">}</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> seqlen<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-    buffer<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwd">toupper</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span>i<span class="hl sym">]);</span>
-  <span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">write_frequencies</span> <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">write_count</span> <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">,</span> buffer<span class="hl sym">,</span> seqlen<span class="hl sym">);</span>
-  <span class="hl kwd">free</span> <span class="hl sym">(</span>buffer<span class="hl sym">);</span>
-  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> <span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
+     <span class="hl sym">{</span>
+	<span class="hl kwb">size_t</span> sz<span class="hl sym">;</span>
+
+	<span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ==</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span>
+	  <span class="hl kwa">break</span><span class="hl sym">;</span>
+
+	sz <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>buffer<span class="hl sym">);</span>
+	<span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span>sz <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+	  <span class="hl sym">--</span>sz<span class="hl sym">;</span>
+
+	stuff <span class="hl sym">=</span> <span class="hl kwd">g_string_append_len</span><span class="hl sym">(</span>stuff<span class="hl sym">,</span> buffer<span class="hl sym">,</span> sz<span class="hl sym">);</span>
+     <span class="hl sym">}</span>
+
+   stuff <span class="hl sym">=</span> <span class="hl kwd">g_string_ascii_up</span><span class="hl sym">(</span>stuff<span class="hl sym">);</span>
+   len <span class="hl sym">=</span> stuff<span class="hl sym">-&gt;</span>len<span class="hl sym">;</span>
+   s <span class="hl sym">=</span> <span class="hl kwd">g_string_free</span><span class="hl sym">(</span>stuff<span class="hl sym">,</span> FALSE<span class="hl sym">);</span>
+
+   <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">write_frequencies</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+   <span class="hl kwd">write_count</span><span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> len<span class="hl sym">, &amp;</span>ts<span class="hl sym">,</span> roots<span class="hl sym">);</span>
+
+   <span class="hl kwd">free</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+   <span class="hl kwd">g_ptr_array_foreach</span><span class="hl sym">(</span>roots<span class="hl sym">,</span> free<span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+   <span class="hl kwd">g_ptr_array_free</span><span class="hl sym">(</span>roots<span class="hl sym">,</span> TRUE<span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
