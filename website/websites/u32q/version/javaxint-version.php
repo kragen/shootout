@@ -1,4 +1,4 @@
-<p>java version "1.6.0_13"<br/>
-Java(TM) SE Runtime Environment (build 1.6.0_13-b03)<br/>
-Java HotSpot(TM) Server VM (build 11.3-b02, interpreted mode)
+<p>java version "1.6.0_14"<br/>
+Java(TM) SE Runtime Environment (build 1.6.0_14-b08)<br/>
+Java HotSpot(TM) Server VM (build 14.0-b16, interpreted mode)
 </p>
