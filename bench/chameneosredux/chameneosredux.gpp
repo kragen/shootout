@@ -2,7 +2,8 @@
 http://shootout.alioth.debian.org/
 
 Based on C contribution by Alex Burlyga
-Further tweaking by The Anh Tran
+Based on Java contribution by Michael Barker
+Contributed by The Anh Tran
 */
 
 
@@ -11,6 +12,7 @@ Further tweaking by The Anh Tran
 
 #include <cstdlib>
 #include <cstdio>
+#include <cmath>
 #include <memory.h>
 
 #include <pthread.h>
@@ -76,7 +78,11 @@ ColorCompliment(COLOR c1, COLOR c2)
 string
 SpellNumber(int n)
 {
-   char const* const NumberStr[] = {" zero"," one"," two"," three"," four"," five"," six"," seven"," eight"," nine"};
+   static char const* const NumberStr[] = 
+   {
+      "zero ", "one ", "two ", "three ", "four ",
+      "five ", "six ", "seven ", "eight ", "nine "
+   };
    string num;
    
    while ( n >= 10 )
@@ -88,7 +94,6 @@ SpellNumber(int n)
    }
 
    num = NumberStr[n] + num;
-
    return num;
 }
 
@@ -101,8 +106,8 @@ struct MeetingPlace
    Creature*      _creature_waiting;
 
 
-   MeetingPlace(int N) :   
-      _meetings_left(N), 
+   MeetingPlace(int N) 
+   :   _meetings_left(N), 
       _creature_waiting(0)
    {   }
 
@@ -112,16 +117,16 @@ struct MeetingPlace
 
 struct Creature
 {
-   MeetingPlace*      _place;
+   MeetingPlace *      _place;
    COLOR            _color;
 
    int               _count;
    int               _same_count;
-
-   int               _id;
    bool volatile      _met;
 
+   int               _id;
    pthread_t         _hthread;
+   double            _dummy;
 
 
    Creature()
@@ -129,7 +134,8 @@ struct Creature
       memset(this, 0, sizeof(*this));
    }
 
-   void Start( MeetingPlace* mp, COLOR color, void* stack )
+   void 
+   Start( MeetingPlace * mp, COLOR color, void* stack )
    {
       _place   = mp;
       _color   = color;
@@ -153,7 +159,7 @@ struct Creature
    void 
    Run()
    {
-      _id = pthread_self();
+      _dummy = _id = pthread_self();
 
       while (true)
       {
@@ -161,23 +167,24 @@ struct Creature
 
          if ( _place->GotoMeet( this ) )
          {
-            while (_met == false)
+            ++_count;
+            
+            while ((_met == false) && (_place->_meetings_left > 0))
             {
-               if (!multi_core)
+               if (multi_core)
+                  ++_dummy;
+               else
                   sched_yield();
             }
          }
          else
-            break;
+            return;
       }
    }
 
    void 
    Meet(Creature &other)
    {
-      ++_count;
-      ++other._count;
-
       if (__builtin_expect(_id == other._id, false))
       {
          ++_same_count;
@@ -200,7 +207,7 @@ MeetingPlace::GotoMeet( Creature* cr )
       Creature* first = reinterpret_cast<Creature*>(__sync_val_compare_and_swap(&_creature_waiting, 0, cr));
       
       if (first == 0)   // first arrive
-         return _meetings_left > 0;
+         return (_meetings_left > 0);
       else   // second arrive
       {
          if (__sync_bool_compare_and_swap(&_creature_waiting, first, 0))
@@ -227,7 +234,6 @@ RunGame(int n, COLOR const (&color)[ncolor])
    Creature      cr[ncolor];
 
    format fmt("%1% ");
-   
    // print initial color of each creature
    for (int i = 0; i < ncolor; ++i)
    {
@@ -244,17 +250,16 @@ RunGame(int n, COLOR const (&color)[ncolor])
 
 
    int total = 0;
-
-   fmt = format("%1%%2%\n");
+   fmt = format("%1% %2%\n");
    // print meeting times of each creature
    for (int i = 0; i < ncolor; i++)
    {
-      cout << (fmt % cr[i]._count % SpellNumber(cr[i]._same_count));
       total += cr[i]._count;
+      cout << (fmt % cr[i]._count % SpellNumber(cr[i]._same_count));
    }
 
    // print total meeting times
-   fmt = format("%1%\n\n");
+   fmt = format(" %1%\n\n");
    cout << (fmt % SpellNumber(total));
 }
 

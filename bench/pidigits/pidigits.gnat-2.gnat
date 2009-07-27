@@ -1,0 +1,186 @@
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org
+--  Calculate digits of pi using the Unbounded Spigot Algorithm (step-by-step)
+--
+--  contributed by Paolo Bonzini & Sean Bartlett
+--  modified by Michael Mellor
+
+with Ada.Text_IO;                       use Ada.Text_IO;
+with Ada.Integer_Text_IO;               use Ada.Integer_Text_IO;
+with Ada.Command_Line;                  use Ada.Command_Line;
+with Ada.Calendar;                      use Ada.Calendar;
+
+with GMP_mini_bindings;                 use GMP_mini_bindings;
+with Interfaces.C;
+
+procedure pidigits is
+
+  procedure Print_pi_digits(num_digits: Integer) is
+
+    use Interfaces.C;
+
+    numer, accum, denom, tmp1, tmp2: mpz_t;
+
+    function Extract_digit return Interfaces.C.int is
+    begin
+      if mpz_cmp(numer, accum) > 0 then
+        return -1;
+      end if;
+
+      -- Compute (numer * 3 + accum) / denom
+      mpz_mul_2exp(tmp1, numer, 1);
+      mpz_add(tmp1, tmp1, numer);
+      mpz_add(tmp1, tmp1, accum);
+      mpz_fdiv_qr(tmp1, tmp2, tmp1, denom);
+
+      -- Now, if (numer * 4 + accum) % denom...
+      mpz_add(tmp2, tmp2, numer);
+
+      -- ... is normalized, then the two divisions have the same result.
+      if mpz_cmp(tmp2, denom) >= 0 then
+        return -1;
+      end if;
+
+      return Interfaces.C.int(mpz_get_ui(tmp1));
+    end Extract_digit;
+
+    k: Interfaces.C.unsigned;
+
+    procedure Next_term is
+      y2: constant Interfaces.C.unsigned:= k*2 + 1;
+    begin
+      mpz_mul_2exp(tmp1, numer, 1);
+      mpz_add(accum, accum, tmp1);
+      mpz_mul_ui(accum, accum, y2);
+      mpz_mul_ui(numer, numer, k);
+      mpz_mul_ui(denom, denom, y2);
+    end Next_term;
+
+    d: Interfaces.C.int;
+
+    procedure Eliminate_digit is
+    begin
+      mpz_submul_ui(accum, denom, Interfaces.C.unsigned(d));
+      mpz_mul_ui(accum, accum, 10);
+      mpz_mul_ui(numer, numer, 10);
+    end Eliminate_digit;
+
+    i, c: Integer:= 0;
+    line: String(1 ..10);
+
+  begin
+    k := 0;
+    mpz_init(tmp1);
+    mpz_init(tmp2);
+    mpz_init_set_ui(numer, 1);
+    mpz_init_set_ui(accum, 0);
+    mpz_init_set_ui(denom, 1);
+    --
+    loop
+      loop
+        k:= k + 1;
+        Next_term;
+        d:= Extract_digit;
+        exit when d /= -1;
+      end loop;
+      c:= c + 1;
+      line(c) := Character'Val(Character'Pos('0')+d);
+      i:= i + 1;
+      if c = 10 then
+        Put(line & ASCII.HT & ':');
+        Put(i,0); New_Line;
+        c:= 0;
+      end if;
+      exit when i >= num_digits;
+      Eliminate_digit;
+    end loop;
+
+    if c/=0 then
+      Put(line(1..c));
+      for i in c+1..10 loop
+        Put(' ');
+      end loop;
+      Put(ASCII.HT & ':');
+      Put(i,0);
+      New_Line;
+    end if;
+  end Print_pi_digits;
+
+  n: Integer;
+
+  t0,t1: Time;
+  timing: constant Boolean:= False;
+
+begin
+  n:= 2_500;
+  if Argument_Count=1 then
+    n:= Integer'Value(Argument(1));
+  end if;
+  if timing then
+    t0:= Clock;
+  end if;
+  Print_pi_digits(n);
+  if timing then
+    t1:= Clock;
+    Put("Time in seconds: " & Duration'Image(t1-t0) & " [press return]");
+    Skip_Line;
+  end if;
+end pidigits;
+with Interfaces.C;
+
+package GMP_mini_bindings is
+
+  pragma Linker_Options("-lgmp");
+
+  -- types
+
+  type mp_limb_t is new Interfaces.C.unsigned;
+  type mp_ptr is access mp_limb_t;
+
+  type mpz_t is record
+    mp_alloc, mp_size : Interfaces.C.int;
+    mp_d    : mp_ptr;
+  end record;
+
+  -- initialization and input from integer
+
+  procedure mpz_init (Dest: out mpz_t);
+  pragma Import(C, mpz_init, "__gmpz_init");
+
+  procedure mpz_init_set_ui (Dest: out mpz_t; Src: in Interfaces.C.unsigned);
+  pragma Import(C, mpz_init_set_ui, "__gmpz_init_set_ui");
+
+  -- comparisons
+
+  function mpz_cmp (Op1, Op2 : mpz_t) return Interfaces.C.int;
+  pragma Import (C, mpz_cmp, "__gmpz_cmp");
+
+  -- +, -, *, /
+
+  procedure mpz_add (Dest: out mpz_t; Src1, Src2: in mpz_t);
+  pragma Import(C, mpz_add, "__gmpz_add");
+
+  procedure mpz_submul_ui (Dest: out mpz_t; Src1: in mpz_t; Src2: in Interfaces.C.unsigned);
+  pragma Import(C, mpz_submul_ui, "__gmpz_submul_ui");
+
+  procedure mpz_mul_ui (Dest: out mpz_t; Src1: in mpz_t; Src2: in Interfaces.C.unsigned);
+  pragma Import(C, mpz_mul_ui, "__gmpz_mul_ui");
+
+  procedure mpz_mul_si (Dest: out mpz_t; Src1: in mpz_t; Src2: in Interfaces.C.int);
+  pragma Import(C, mpz_mul_si, "__gmpz_mul_si");
+
+  procedure mpz_mul_2exp (Dest: out mpz_t; Src: in mpz_t; Exponent: in Interfaces.C.unsigned);
+  pragma Import(C, mpz_mul_2exp, "__gmpz_mul_2exp");
+
+  procedure mpz_tdiv_q (Dest: out mpz_t; Src1, Src2: in mpz_t);
+  pragma Import(C, mpz_tdiv_q, "__gmpz_tdiv_q");
+
+  procedure mpz_fdiv_qr (Q, R: out mpz_t; Num, Den: in mpz_t);
+  pragma Import(C, mpz_fdiv_qr, "__gmpz_fdiv_qr");
+
+  -- output to integer
+
+  function  mpz_get_ui (Src: in mpz_t) return Interfaces.C.unsigned;
+  pragma Import(C, mpz_get_ui, "__gmpz_get_ui");
+
+end GMP_mini_bindings;
