@@ -21,7 +21,7 @@
 <p>Note: the tree should have tree-nodes all the way down, replacing the bottom nodes by some other value is not acceptable; and the bottom nodes should be at depth 0.</p>
 <p>Note: these programs are being measured with <em>the default initial heap size</em> - the measurements may be very different with a larger initial heap size or GC tuning.</p>
 
-<p>Programs that use <strong>custom memory pool or free list implementations will be listed as interesting alternative implementations</strong>.</p>
+<p><strong>Please don't implement your own custom <em>memory pool</em> or <em>free list</em></strong>.</p>
 <br />
 
 <p>The binary-trees benchmark is a simplistic adaptation of <a href="http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_bench/applet/GCBench.java">Hans Boehm's GCBench</a>,
