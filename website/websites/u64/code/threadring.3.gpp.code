@@ -1,0 +1,77 @@
+<span class="hl com">/*</span>
+<span class="hl com">* The Computer Language Benchmarks Game</span>
+<span class="hl com">* http://shootout.alioth.debian.org/</span>
+<span class="hl com">* Contributed by The Anh Tran</span>
+<span class="hl com">*/</span>
+
+
+<span class="hl dir">#include &lt;iostream&gt;</span>
+
+<span class="hl dir">#include &lt;boost/lexical_cast.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/scoped_ptr.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/bind.hpp&gt;</span>
+
+<span class="hl slc">// Use threadpool library written by Philipp Henkel.</span>
+<span class="hl dir">#include</span> <span class="hl dstr">&quot;threadpool/boost/threadpool.hpp&quot;</span><span class="hl dir"></span>
+
+
+<span class="hl kwb">struct</span> Node
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span>      _token<span class="hl sym">;</span>
+   Node<span class="hl sym">*</span>   _next_node<span class="hl sym">;</span>
+   <span class="hl kwb">int</span>      _node_id<span class="hl sym">;</span>
+
+   <span class="hl kwb">void</span>   <span class="hl kwd">PassToken</span><span class="hl sym">();</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl kwb">int const</span>   NUM_THREADS <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+Node      nodes<span class="hl sym">[</span>NUM_THREADS<span class="hl sym">];</span>
+
+boost<span class="hl sym">::</span>scoped_ptr<span class="hl sym">&lt;</span>boost<span class="hl sym">::</span>threadpool<span class="hl sym">::</span>pool<span class="hl sym">&gt;</span> p_threadpool<span class="hl sym">;</span>
+
+
+<span class="hl kwb">void</span>
+Node<span class="hl sym">::</span><span class="hl kwd">PassToken</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>_token <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// pass the token from thread to thread N times</span>
+      _next_node<span class="hl sym">-&gt;</span>_token <span class="hl sym">=</span> _token <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      p_threadpool<span class="hl sym">-&gt;</span><span class="hl kwd">schedule</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Node<span class="hl sym">::</span>PassToken<span class="hl sym">,</span> _next_node<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">else</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// print the name of the last thread (1 to 503) to take the token</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> _node_id <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">**</span> args<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// create 503 threads</span>
+   p_threadpool<span class="hl sym">.</span><span class="hl kwd">reset</span><span class="hl sym">(</span><span class="hl kwa">new</span> boost<span class="hl sym">::</span>threadpool<span class="hl sym">::</span><span class="hl kwd">pool</span><span class="hl sym">(</span>NUM_THREADS<span class="hl sym">));</span>
+
+   <span class="hl slc">// link nodes together</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt; (</span>NUM_THREADS <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">); ++</span>i <span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      nodes<span class="hl sym">[</span>i<span class="hl sym">].</span>_node_id <span class="hl sym">=</span> i <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+      nodes<span class="hl sym">[</span>i<span class="hl sym">].</span>_next_node <span class="hl sym">= &amp;(</span>nodes<span class="hl sym">[</span>i <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// link node 503 to node 1</span>
+   nodes<span class="hl sym">[</span>NUM_THREADS <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">].</span>_next_node <span class="hl sym">= &amp;(</span>nodes<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+   nodes<span class="hl sym">[</span>NUM_THREADS <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">].</span>_node_id <span class="hl sym">=</span> NUM_THREADS<span class="hl sym">;</span>
+
+
+   <span class="hl slc">// pass a token to thread 1</span>
+   nodes<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>_token <span class="hl sym">= (</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span> ? boost<span class="hl sym">::</span>lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;(</span>args<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">1000</span><span class="hl sym">;</span>
+   p_threadpool<span class="hl sym">-&gt;</span><span class="hl kwd">schedule</span><span class="hl sym">(</span> boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Node<span class="hl sym">::</span>PassToken<span class="hl sym">, &amp;(</span>nodes<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">])) );</span>
+
+
+   p_threadpool<span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
