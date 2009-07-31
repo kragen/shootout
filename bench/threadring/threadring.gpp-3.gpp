@@ -1,0 +1,77 @@
+/*
+* The Computer Language Benchmarks Game
+* http://shootout.alioth.debian.org/
+* Contributed by The Anh Tran
+*/
+
+
+#include <iostream>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
+
+// Use threadpool library written by Philipp Henkel.
+#include "threadpool/boost/threadpool.hpp"
+
+
+struct Node
+{
+   int      _token;
+   Node*   _next_node;
+   int      _node_id;
+
+   void   PassToken();
+};
+
+
+int const   NUM_THREADS = 503;
+Node      nodes[NUM_THREADS];
+
+boost::scoped_ptr<boost::threadpool::pool> p_threadpool;
+
+
+void 
+Node::PassToken()
+{
+   if (_token > 0) 
+   {
+      // pass the token from thread to thread N times
+      _next_node->_token = _token - 1;
+      p_threadpool->schedule(boost::bind(&Node::PassToken, _next_node));
+   }
+   else 
+   {
+      // print the name of the last thread (1 to 503) to take the token
+      std::cout << _node_id << std::endl;
+   }
+}
+
+
+int 
+main(int argc, char** args)
+{
+   // create 503 threads
+   p_threadpool.reset(new boost::threadpool::pool(NUM_THREADS));
+
+   // link nodes together
+   for ( int i = 0; i < (NUM_THREADS -1); ++i )
+   {
+      nodes[i]._node_id = i +1;
+      nodes[i]._next_node = &(nodes[i +1]);
+   }
+
+   // link node 503 to node 1
+   nodes[NUM_THREADS -1]._next_node = &(nodes[0]);
+   nodes[NUM_THREADS -1]._node_id = NUM_THREADS;
+
+
+   // pass a token to thread 1
+   nodes[0]._token = (argc >= 2) ? boost::lexical_cast<int>(args[1]) : 1000;
+   p_threadpool->schedule( boost::bind(&Node::PassToken, &(nodes[0])) );
+
+
+   p_threadpool->wait();
+   return 0;
+}
+
