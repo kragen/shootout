@@ -8,8 +8,8 @@
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="benchmarking fast faster programming language performance comparison benchmarks game shootout" />
-<meta name="description" content="Compare programming language performance on a few dozen flawed benchmarks and contribute faster more elegant programs." />
+<meta name="keywords" content="benchmarking fast faster fastest programming language performance comparison benchmarks game shootout" />
+<meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="./benchmark.css" />
@@ -29,7 +29,7 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 
-<h5><a href="./u32q/" title="32 bit quad-core programming language performance comparisons.">Programming language performance comparisons</a></h5><br/>
+<h5><a href="./u32q/" title="">Fastest programs in each programming language</a></h5><br/>
 
 
 <table class="layout">
