@@ -8,7 +8,7 @@
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="benchmarking fast faster fastest programming language performance comparison benchmarks game shootout" />
+<meta name="keywords" content="benchmarking fastest fast faster programming language performance comparison benchmarks game shootout" />
 <meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Benchmarks Game</title>
