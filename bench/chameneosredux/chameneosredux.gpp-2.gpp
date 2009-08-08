@@ -1,40 +1,49 @@
-/* The Computer Language Benchmarks Game
-http://shootout.alioth.debian.org/
+/*   The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
 
-Based on C contribution by Alex Burlyga
-Based on Java contribution by Michael Barker
-Contributed by The Anh Tran
+   Based on C contribution by Alex Burlyga
+   Based on Java contribution by Michael Barker
+   Contributed by The Anh Tran
 
-   Each chameneous creature is a standard OS's thread.
-   Thread scheduling is OS scheduler.
-   Data exchange mechanism is x86 atomic ops.
+   Concurrency technique: 
+   1.   The threadpool is created with 1 or 4 kernel threads - depends on benchmark u32/u32q/u64/u64q.
+   2.   3 (or 10) creatures are queues into threadpool.
+   3.   The 1st creature reaching meeting_place will become inactive.
+   4.   The 2nd creature reaching meeting_place will do the color compliment, 
+      then set 1st creature's state to active.
+   5.   Creature insides meeting_place use spinwait + atomic instruction to change meeting_place's state.
 */
 
 
 #include <iostream>
 #include <string>
 
-#include <cstdlib>
-#include <cstdio>
 #include <cmath>
 #include <memory.h>
 
-#include <pthread.h>
 #include <sched.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
+#include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
+
+// Use threadpool library written by Philipp Henkel.
+#include "threadpool/boost/threadpool.hpp"
+
 
 using namespace std;
 using namespace boost;
 
+scoped_ptr<threadpool::pool>      tpool;
 
-int const   STACK_SIZE = 16*1024;
-char      stacks[16][STACK_SIZE];
-bool      multi_core;
+enum COLOR
+{
+   BLUE   = 0,
+   RED      = 1,
+   YELLOW   = 2
+};
 
-
-enum COLOR {   BLUE   = 0,   RED      = 1,   YELLOW   = 2   };
 char const * const ColorName[]   = {"blue", "red", "yellow"};
 
 
@@ -102,10 +111,11 @@ struct MeetingPlace
 {
    int   volatile   _meetings_left;
    Creature*      _creature_waiting;
-
-
-   MeetingPlace(int N) :   _meetings_left(N),    _creature_waiting(0)   {   }
    
+
+   MeetingPlace(int N) : _meetings_left(N), _creature_waiting(0)
+   {   }
+
    bool GotoMeet( Creature* cr1, Creature* &cr2 );
 };
 
@@ -117,61 +127,45 @@ struct Creature
 
    int               _count;
    int               _same_count;
-   bool volatile      _met;
 
    int               _id;
-   pthread_t         _hthread;
    double            _dummy;
 
 
-   Creature()   {   memset(this, 0, sizeof(*this));   }
+   Creature()
+   {
+      memset(this, 0, sizeof(*this));
+   }
 
+   // Put to threadpool, ready for running
+   void EnQueue() 
+   {
+      tpool->schedule(bind(&Creature::Run, this));
+   }
+   
    void 
-   Start( MeetingPlace * mp, COLOR color, void* stack )
+   Start( MeetingPlace * mp, COLOR color)
    {
       _place   = mp;
       _color   = color;
-
-      pthread_attr_t   stack_att;
-
-      pthread_attr_init( &stack_att );
-      pthread_attr_setstack( &stack_att, stack, STACK_SIZE );
-
-      pthread_create( &_hthread, &stack_att, &Creature::ThreadRun, reinterpret_cast<void*>(this) );
-   }
-
-   static 
-   void* 
-   ThreadRun(void* param)
-   {
-      (reinterpret_cast<Creature*>(param))->Run();
-      return 0;
+      _dummy = _id = reinterpret_cast<int>(this);
+      
+      EnQueue();
    }
 
    void 
    Run()
    {
-      _dummy = _id = pthread_self();
-
-      while (true)
+      while (true) 
       {
-         _met = false;
          Creature* other = 0;
-
+         
          if (_place->GotoMeet(this, other))
          {
             if (other != 0)   // 2nd arrive, go to meet the 2nd creature
                Meet(*other);   
-            else          // me is the 1st creature, have to wait
-            {
-               while ((_met == false) && (_place->_meetings_left > 0))
-               {
-                  if (multi_core)
-                     ++_dummy;
-                  else
-                     sched_yield();
-               }
-            }
+            else // me is the 1st creature, have to wait -> yield execution
+               return;
          }
          else
             return;
@@ -192,7 +186,8 @@ struct Creature
 
       COLOR new_color   = ColorCompliment( _color, other._color );
       other._color   = _color   = new_color;
-      other._met      = _met      = true;
+      
+      other.EnQueue(); // 1st creature is inactive -> put it into active queue
    }
 
 };
@@ -230,25 +225,25 @@ RunGame(int n, COLOR const (&color)[ncolor])
 {
    MeetingPlace   place(n);
    Creature      cr[ncolor];
-
+   
    format fmt("%1% ");
    // print initial color of each creature
    for (int i = 0; i < ncolor; ++i)
    {
       cout << (fmt % ColorName[color[i]] );
-      cr[i].Start( &place, color[i], stacks[i] );
+      cr[i].Start( &place, color[i] );
    }
 
    cout << endl;
 
 
    // wait for them to meet
-   for (int i = 0; i < ncolor; i++)
-      pthread_join( cr[i]._hthread, 0 );
+   tpool->wait();
 
 
    int total = 0;
    fmt = format("%1% %2%\n");
+
    // print meeting times of each creature
    for (int i = 0; i < ncolor; i++)
    {
@@ -301,15 +296,12 @@ GetThreadCount()
 int 
 main(int argc, char** argv)
 {
-   sched_param pri;
-   pri.sched_priority = 1;
-   if (sched_setscheduler(0, SCHED_RR, &pri) != 0)
-   {
-      // meeting times will largely vary
-   }
-   
    PrintColors();
-   multi_core = GetThreadCount() > 1;
+   
+   // Spawn N threads; ie: 1 or 4, depends on benchmark
+   int nc = (argc >= 3) ? lexical_cast<int>(argv[2]) : GetThreadCount();
+   tpool.reset(new boost::threadpool::pool(nc));
+
 
    COLOR const r1[] = {   BLUE, RED, YELLOW   };
    COLOR const r2[] = {   BLUE, RED, YELLOW, RED, YELLOW, BLUE, RED, YELLOW, RED, BLUE   };
