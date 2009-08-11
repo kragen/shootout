@@ -74,9 +74,9 @@
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="../u32q/"><? printf('%s', gmdate("d M Y", filemtime('../u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="../u32q/"><? printf('%s', gmdate("d M Y", filemtime('../u32q/data/data.csv'))) ?></a></p>
 <h3><span class="u32q">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+<a title="Fastest in each programming language, 32 bit Ubuntu."
 href="../u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
@@ -88,9 +88,9 @@ href="../u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbs
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="../u64q/"><? printf('%s', gmdate("d M Y", filemtime('../u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="../u64q/"><? printf('%s', gmdate("d M Y", filemtime('../u64q/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+<a title="Fastest in each programming language, 64 bit Ubuntu."
 href="../u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
@@ -101,9 +101,9 @@ href="../u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="../u64/"><? printf('%s', gmdate("d M Y", filemtime('../u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="../u64/"><? printf('%s', gmdate("d M Y", filemtime('../u64/data/data.csv'))) ?></a></p>
 <h3><span class="u64">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu."
 href="../u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
@@ -115,9 +115,9 @@ href="../u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="../u32/"><? printf('%s', gmdate("d M Y", filemtime('../u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="../u32/"><? printf('%s', gmdate("d M Y", filemtime('../u32/data/data.csv'))) ?></a></p>
 <h3><span class="u32">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu."
 href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
@@ -130,15 +130,15 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="../gp4/">mid 2008</a></p>
+<p class="timestamp"><a title="" href="../gp4/">mid 2008</a></p>
 <h3><span class="gp4">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+<a title=""
 href="../gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements." href="../debian/">late 2007</a></p>
+<p class="timestamp"><a title="" href="../debian/">late 2007</a></p>
 <h3><span class="debian">
-<a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
+<a title=""
 href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
