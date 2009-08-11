@@ -6,6 +6,10 @@
 <?
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);
+
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a>!</strong><br/></p>');
+}
 ?>
 
 <p>You choose the language implementations for robust <a href="#about">Box and Whiskers statistics</a> of <em>program time</em> measurements on the default benchmarks!</p>
