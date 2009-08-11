@@ -1,6 +1,12 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
-<? MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); ?>
+<? 
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a> instead of these!</strong><br/></p>');
+}
+MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
+?>
+
 <h3><a href="#faster" name="faster">"For every complex problem</a> there is an answer that is clear, simple, and wrong." &nbsp;H.&nbsp;L.&nbsp;Mencken</h3>
 
 

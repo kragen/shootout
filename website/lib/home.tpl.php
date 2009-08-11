@@ -7,7 +7,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
    unset($Data);
 
 if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
-   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a>!</strong><br/></p>');
+   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a> instead of these!</strong><br/></p>');
 }
 ?>
 
