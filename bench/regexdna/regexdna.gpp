@@ -16,55 +16,62 @@
 #include <boost/scoped_array.hpp>
 #include <boost/xpressive/xpressive.hpp>
 
+
 using namespace boost::xpressive;
+namespace bx = boost::xpressive;
+using namespace std;
 
+typedef char         Char_T;
+typedef Char_T const*   PChar_T;
+typedef vector<Char_T>   Data_T;
 
-typedef std::vector<char>                  Input_Type;
+typedef Data_T::const_iterator         CIte_Data_T;
+typedef back_insert_iterator<Data_T>   OIte_Data_T;
 
-typedef Input_Type::iterator               Ite_Type;
-typedef Input_Type::const_iterator            CIte_Type;
-typedef std::back_insert_iterator<Input_Type>   OIte_Type;
+typedef basic_regex<CIte_Data_T>      Regex_Data_T;
 
-typedef basic_regex<CIte_Type>               Regex_Type;
 
 
 // read all redirected data from stdin
 // strip DNA headers and newline characters
-void ReadInput_StripHeader(   size_t &file_size, size_t &strip_size, Input_Type &output )
+size_t 
+ReadInput_StripHeader(   size_t &file_size, Data_T &output )
 {
    // get input size
-   file_size = std::ftell(stdin);
-   std::fseek(stdin, 0, SEEK_END);
-   file_size = std::ftell(stdin) - file_size;
-   std::fseek(stdin, 0, SEEK_SET);
+   file_size = ftell(stdin);
+   fseek(stdin, 0, SEEK_END);
+   file_size = ftell(stdin) - file_size;
+   fseek(stdin, 0, SEEK_SET);
+   file_size /= sizeof(Char_T);
 
 
    // load content into memory
-   boost::scoped_array<char> p_input_buffer(new char[file_size +1]);
+   boost::scoped_array<Char_T> p_src(new Char_T[file_size +1]);
    {
-      size_t sz = std::fread(p_input_buffer.get(), 1, file_size, stdin);
+      size_t sz = fread(p_src.get(), sizeof(Char_T), file_size, stdin);
       assert(sz == file_size);
-      // null terminate string
-      p_input_buffer[file_size] = 0;
+      p_src[file_size] = 0;
    }
 
+   
+   PChar_T p_src_beg = p_src.get();
+   PChar_T p_src_end = p_src_beg + file_size;
+   output.reserve (file_size);
 
-   // Rule: Strip pattern: ">.*\n | \n"
-   cregex const& search_ptn_regex( as_xpr('>') >> *(~_n) >> _n | _n );
+   regex_replace (   OIte_Data_T(output), 
+               p_src_beg, p_src_end, 
+               basic_regex<PChar_T>( as_xpr('>') >> *(~_n) >> _n | _n ), // ">.*\n | \n"
+               ""); 
 
-   char const * p_src_beg = p_input_buffer.get();
-   char const * p_src_end = p_src_beg + file_size;
-
-   OIte_Type output_ite(output);
-   regex_replace (output_ite, p_src_beg, p_src_end, search_ptn_regex, "");
-
-   strip_size = output.size();
+   return output.size();
 }
 
 
-void Count_Patterns(Input_Type const& input, std::string& result)
+
+void 
+Count_Patterns(Data_T const& input, string& result)
 {
-   static char const* search_ptn[] = 
+   static PChar_T ptns[] = 
    {
       "agggtaaa|tttaccct",
       "[cgt]gggtaaa|tttaccc[acg]",
@@ -76,28 +83,28 @@ void Count_Patterns(Input_Type const& input, std::string& result)
       "agggta[cgt]a|t[acg]taccct",
       "agggtaa[cgt]|[acg]ttaccct"
    };
-   static int const n_search_ptn = sizeof(search_ptn) / sizeof(search_ptn[0]);
-   static size_t match_count[n_search_ptn] = {0};
+   static int const n_ptns = sizeof(ptns) / sizeof(ptns[0]);
+   static size_t counters[n_ptns] = {0};
 
 
    #pragma omp for schedule(dynamic, 1) nowait
-   for (int i = 0; i < n_search_ptn; ++i)
+   for (int i = 0; i < n_ptns; ++i)
    {
-      // runtime compile regex
-      Regex_Type const& search_ptn_regex(Regex_Type::compile(search_ptn[i], regex_constants::nosubs|regex_constants::optimize));
+      typedef regex_iterator<CIte_Data_T> RI_T;
 
-      regex_iterator<CIte_Type> ite(input.begin (), input.end(), search_ptn_regex), ite_end;
-      match_count[i] = std::distance (ite, ite_end);
+      // dynamic regex
+      Regex_Data_T const& regex(Regex_Data_T::compile(ptns[i], regex_constants::nosubs|regex_constants::optimize));
+      counters[i] = distance(   RI_T(input.begin(), input.end(), regex), RI_T()   );
    }
 
    // we want the last thread, reaching this code block, to print result
-   static int thread_passed = 0;
-   if (__sync_add_and_fetch(&thread_passed, 1) == omp_get_num_threads())
+   static size_t thread_passed = 0;
+   if (__sync_add_and_fetch(&thread_passed, 1) == static_cast<size_t>(omp_get_num_threads()))
    {
       boost::format format("%1% %2%\n");
-      for (int i = 0; i < n_search_ptn; ++i)
+      for (int i = 0; i < n_ptns; ++i)
       {
-         format % search_ptn[i] % match_count[i];
+         format % ptns[i] % counters[i];
          result += format.str();
       }
       thread_passed = 0;
@@ -105,74 +112,70 @@ void Count_Patterns(Input_Type const& input, std::string& result)
 }
 
 
-typedef std::pair<char const*, char const*> IUB;
-IUB iub_table[] = 
+struct IUB
 {
-   IUB("(c|g|t)",   0),
-   IUB("(a|g|t)",   0),
-   IUB("(a|c|t)",   0),
-   IUB("(g|t)",   0),
-   IUB("(a|c)",   0),
-   IUB("(a|c|g|t)", 0),
-   IUB("(a|g)",   0),
-   IUB("(c|t)",   0),
-   IUB("(a|c|g)",   0),
-   IUB("(a|t)",   0),
-   IUB("(c|t)",   0)   
+   PChar_T   iub;
+   int      len;
+};
+
+IUB const iub_table[] = 
+{
+   {0}, 
+   {"(c|g|t)",   7}, 
+   {0}, 
+   {"(a|g|t)",   7}, 
+   {0}, {0}, {0}, 
+   {"(a|c|t)",   7}, 
+   {0}, {0}, 
+   {"(g|t)",   5}, 
+   {0}, 
+   {"(a|c)",   5}, 
+   {"(a|c|g|t)",   9}, 
+   {0}, {0}, {0}, 
+   {"(a|g)",   5}, 
+   {"(c|t)",   5}, 
+   {0}, {0}, 
+   {"(a|c|g)",   7}, 
+   {"(a|t)",   5}, 
+   {0}, 
+   {"(c|t)",   5}
 };
 int const n_iub = sizeof(iub_table)/sizeof(iub_table[0]);
 
-struct RegexFormatter
+
+struct Formatter
 {
    template<typename Match, typename Out>
-   Out operator()(Match const &match, Out out) const
+   Out 
+   operator()(Match const &m, Out o) const
    {
-      int i;
-      switch ( *(match[0].first) )
-      {
-      case 'B':   i = 0;   break;
-      case 'D':   i = 1;   break;
-      case 'H':   i = 2;   break;
-      case 'K':   i = 3;   break;
-      case 'M':   i = 4;   break;
-      case 'N':   i = 5;   break;
-      case 'R':   i = 6;   break;
-      case 'S':   i = 7;   break;
-      case 'V':   i = 8;   break;
-      case 'W':   i = 9;   break;
-      case 'Y':   i = 10;   break;
-      default:   assert(false);
-      }
-      
-      return std::copy(iub_table[i].first, iub_table[i].second, out);
+      IUB const &i (iub_table[ *m[0].first - 'A' ]);
+      return copy(i.iub, i.iub + i.len, o);
    }
 };
 
-void Replace_Patterns(Input_Type const& input, size_t &replace_len)
+
+void Replace_Patterns(Data_T const& input, size_t &replace_len)
 {
    #pragma omp single nowait
    {
-      // "[BDHKMNRSVWY]"   // copy idea from Java#4 & Perl#4
-      Regex_Type const&   search_ptn_regex( (set = 'B','D','H','K','M','N','R','S','V','W','Y') );
-      RegexFormatter      formatter;
+      Data_T         output;
+      output.reserve   (input.size());
 
-      Input_Type         replacement;
-      OIte_Type         back_ite(replacement);
+      regex_replace(   OIte_Data_T(output), 
+                  input.begin(), input.end(), 
+                  Regex_Data_T( (bx::set='B','D','H','K','M','N','R','S','V','W','Y') ), // "[BDHKMNRSVWY]"
+                  Formatter());
 
-      // set pointer to the end of replacement string
-      for ( int i = 0; i < n_iub; ++i )
-         iub_table[i].second = iub_table[i].first + std::strlen(iub_table[i].first);
-
-      regex_replace(back_ite, input.begin(), input.end(), search_ptn_regex, formatter);
-      replace_len = replacement.size();
+      replace_len = output.size();
    }
 }
 
 
 
 // Detect single - multi thread benchmark
-static
-int GetThreadCount()
+int 
+GetThreadCount()
 {
    cpu_set_t cs;
    CPU_ZERO(&cs);
@@ -188,15 +191,16 @@ int GetThreadCount()
 }
 
 
-int main()
+int 
+main()
 {
    size_t initial_length = 0;
    size_t striped_length = 0;
    size_t replace_length = 0;
    
-   Input_Type input;
+   Data_T input;
    
-   ReadInput_StripHeader (initial_length, striped_length, input);
+   striped_length = ReadInput_StripHeader (initial_length, input);
 
    std::string match_result;
    #pragma omp parallel default(shared) num_threads(GetThreadCount())

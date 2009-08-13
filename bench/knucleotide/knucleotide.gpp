@@ -1,6 +1,7 @@
-// The Computer Language Shootout
+// The Computer Language Benchmarks Game
 // http://shootout.alioth.debian.org/
 
+// Copy task division idea from Java entry, contributed by James McIlree
 // Contributed by The Anh Tran
 
 #include <omp.h>
@@ -9,6 +10,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 //#include <ext/hash_map>
 //#include <boost/unordered_map.hpp>
@@ -36,15 +38,9 @@ struct Key_T
    uint   hash_value;
    char   key[frm_sz +1];
 
-   Key_T()
-   {
-      memset(this, 0, sizeof(*this));
-   }
-
-   Key_T(char const * str)
-   {
-      ReHash (str);
-   }
+   Key_T()             {   memset(this, 0, sizeof(*this));      }
+   Key_T(Key_T const& k)   {   memcpy(this, &k, sizeof(*this));   }
+   Key_T(char const * str)   {   ReHash (str);   }
 
    void 
    ReHash(char const *str)
@@ -59,76 +55,78 @@ struct Key_T
       }
    }
 
+
    // Hash functor Hash<HKey_T>
    uint 
-   operator() (const Key_T &k) const
-   {
-      return k.hash_value;
-   }
+   operator() (const Key_T &k) const   {   return k.hash_value;   }
+
 
    // Comparison functor equal_to<HKey_T>(Left, Right)
    bool 
    operator() (const Key_T &k1, const Key_T &k2) const
    {
-      // with zero collision, we can safely do this:
-      return (k1.hash_value == k2.hash_value);
-
-      /*if (k1.hash_value == k2.hash_value)
+      if (k1.hash_value == k2.hash_value)
       {
          for (int i = 0; i < frm_sz; ++i)
+         {
             if ( __builtin_expect((k1.key[i] != k2.key[i]), false) )
-               return false;   // collision
-
+            {
+               //++collision;
+               return false;   
+            }
+         }
          return true;
       }
-
-      return false;   */
+      return false;
    }
-} __attribute__ ((aligned(4)));
+};
 
 
 // Game's rule: function to update hashtable
-template <int hash_len, typename Input_T, typename HTable_T>
+template <int hash_len, bool MT, typename Input_T, typename HTable_T>
 void 
 calculate_frequency(Input_T const &input, HTable_T& hash_table)
 {
-   int   const char_total = static_cast<int>(input.size() - hash_len +1);
+   hash_table.clear();
+   int   const total_length = static_cast<int>(input.size() - hash_len +1);
 
    typedef typename Input_T::const_pointer   Ite_T;
-   Ite_T   ite_beg      = &(input[0]);
-   Ite_T   ite_end      = ite_beg + char_total;
+   Ite_T const   ite_beg   = &(input[0]);
+   Ite_T const   ite_end   = &(input[0]) + total_length;
 
    typename HTable_T::key_type key;
 
-   hash_table.clear();
-   int threadcount   = omp_get_num_threads ();
-   
-   if (threadcount > 1)
+   if (MT)
    {
-      int chunk = std::max(512, std::min(512*1024, char_total / threadcount / 256));
-      
-      static int char_done = 0;
-      int index;
+      static int char_done[hash_len] = {0};
+      int const chunk_sz = std::max(512, std::min(1024*1024, total_length / omp_get_num_threads() / 128));
+      int ichunk;
 
-      // Fetch task. Each thread hashes a block, which block size = chunk
-      while ( (index = __sync_fetch_and_add(&char_done, chunk)) < char_total )
+      for(int offset = 0; offset < hash_len; ++offset)
       {
-         Ite_T ite   = ite_beg + index;
-         Ite_T end   = std::min(ite + chunk, ite_end);
-
-         for (; ite < end; ++ite)
+         // Fetch task. Each thread hashes a block, which block size = chunk
+         while ( (ichunk = __sync_fetch_and_add(char_done + offset, chunk_sz)) < total_length )
          {
-            key.ReHash(ite);
-            ++(hash_table[key]);
+            Ite_T ite   = ite_beg + ichunk + offset;
+            Ite_T end   = std::min(ite_beg + ichunk + chunk_sz, ite_end);
+         
+            for (; ite < end; ite += hash_len)
+            {
+               key.ReHash(ite);
+               ++(hash_table[key]);
+            }
          }
       }
    }
    else
    {
-      for (; ite_beg < ite_end; ++ite_beg)
+      for(int offset = 0; offset < hash_len; ++offset)
       {
-         key.ReHash(ite_beg);
-         ++(hash_table[key]);
+         for (Ite_T index = ite_beg + offset; index < ite_end; index += hash_len)
+         {
+            key.ReHash(index);
+            ++(hash_table[key]);
+         }
       }
    }
 }
@@ -138,7 +136,7 @@ calculate_frequency(Input_T const &input, HTable_T& hash_table)
 // write the code and percentage frequency
 template <int hash_len, typename Input_T>
 void 
-write_frequencies(Input_T const &input, std::string &output)
+write_frequencies(Input_T const &input, std::ostream &output)
 {
    typedef Key_T<hash_len>         HKey_T;
 
@@ -155,10 +153,13 @@ write_frequencies(Input_T const &input, std::string &output)
    static HTable_T hash_table[MAX_CORE];
 
    // parallel hashing. Each thread updates its own hash_table.
-   calculate_frequency<hash_len>(input, hash_table[omp_get_thread_num()]);
+   if (omp_get_num_threads() > 1)
+      calculate_frequency<hash_len, true>(input, hash_table[omp_get_thread_num()]);
+   else
+      calculate_frequency<hash_len, false>(input, hash_table[omp_get_thread_num()]);
 
 
-   // we want the last thread, reaching this code block, to process result
+   // only the last thread, reaching this code block, to process result
    static int thread_passed = 0;
    if (__sync_add_and_fetch(&thread_passed, 1) == omp_get_num_threads())
    {
@@ -196,10 +197,10 @@ write_frequencies(Input_T const &input, std::string &output)
          float percent = static_cast<float>(e.second) * 100.0f / total_char;
          fmt % e.first.key % percent;
 
-         output += fmt.str();
+         output << fmt;
       }
 
-      output += "\n";
+      output << std::endl;
       thread_passed = 0;
    }
 }
@@ -209,7 +210,7 @@ write_frequencies(Input_T const &input, std::string &output)
 // Then print a specific sequence's count
 template <int hash_len, typename Input_T>
 void 
-write_frequencies(Input_T const &input, std::string &output, char const *specific)
+write_frequencies(Input_T const &input, std::ostream &output, char const *specific)
 {
    typedef Key_T<hash_len>      HKey_T;
    typedef __gnu_pbds::cc_hash_table   <
@@ -220,7 +221,10 @@ write_frequencies(Input_T const &input, std::string &output, char const *specifi
                               >    HTable_T;
 
    HTable_T local_table;   // private for each thread
-   calculate_frequency<hash_len>(input, local_table);   // parallel hash
+   if (omp_get_num_threads() > 1)
+      calculate_frequency<hash_len, true>(input, local_table);   // parallel hash
+   else
+      calculate_frequency<hash_len, false>(input, local_table);   // parallel hash
 
    // Build hash key for searching
    HKey_T printkey(specific);
@@ -244,7 +248,7 @@ write_frequencies(Input_T const &input, std::string &output, char const *specifi
 
       boost::format fmt("%1%\t%2%\n");
       fmt % total_matched % printkey.key;
-      output = fmt.str ();
+      output << fmt;
 
       thread_passed = 0;
       total_matched = 0;
@@ -274,7 +278,7 @@ main()
    Input_T input;
    input.reserve(256*1024*1024); // 256MB
 
-   char buffer[128];
+   char buffer[64];
 
    // rule: read line-by-line
    while (fgets(buffer, sizeof(buffer), stdin))
@@ -293,7 +297,7 @@ main()
       std::copy(buffer, buffer + sz, back_ite);
    }
 
-   std::string output[7];
+   std::ostringstream output[7];
    #pragma omp parallel num_threads(GetThreadCount()) default(shared)
    {
       write_frequencies<18>( input, output[6], "ggtattttaatttatagt" );
@@ -305,7 +309,9 @@ main()
       write_frequencies< 1>( input, output[0] );
    }
 
-   std::for_each(&(output[0]), &(output[7]), std::cout << boost::lambda::_1);
+   foreach(std::ostringstream const& s, output)
+      std::cout << s.str();
+      
    return 0;
 }
 
