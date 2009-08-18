@@ -545,12 +545,12 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#previous" name="previous">Where can I see previous programs?</a></dt>
 <dd>
 <p>Periodically we go through and remove slower programs from the website (if there's a faster program for the same language implementation). <strong>We don't remove those programs from the "Play the Benchmarks Game" tracker.</strong></p>
-<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=411646&amp;group_id=30402&amp;func=browse"><strong>Play the Benchmarks Game tracker items</strong></a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
+<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"><strong>Play the Benchmarks Game tracker items</strong></a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
 </dd>
 
 <dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
 <dd>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=recursive&amp;p1=ooc-0&amp;p2=se-0&amp;p3=gcc-0&amp;p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=nbody&amp;p1=ooc-0&amp;p2=se-0&amp;p3=gcc-0&amp;p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </dd>
 
