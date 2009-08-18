@@ -560,7 +560,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
 <dd><p>You can see the build commands and runtime commands on each program page in the 
-<a href="benchmark.php?test=recursive&amp;lang=gcc&amp;id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<a href="benchmark.php?test=nbody&amp;lang=gcc&amp;id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </dd>
 
 <dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
