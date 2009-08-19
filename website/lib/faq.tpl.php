@@ -550,7 +550,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
 <dd>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=nbody&amp;p1=ooc-0&amp;p2=se-0&amp;p3=gcc-0&amp;p4=gpp-0" title="full data"><strong>full data page</strong></a>.</p>
+<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=nbody&amp;p1=ooc-1&amp;p2=se-1&amp;p3=gcc-1&amp;p4=gpp-1" title="full data"><strong>full data page</strong></a>.</p>
 <p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
 </dd>
 
@@ -560,7 +560,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
 <dd><p>You can see the build commands and runtime commands on each program page in the 
-<a href="benchmark.php?test=nbody&amp;lang=gcc&amp;id=0#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<a href="benchmark.php?test=nbody&amp;lang=gcc&amp;id=1#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
 </dd>
 
 <dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
