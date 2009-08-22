@@ -9,6 +9,9 @@
 ;;;  * simplified structure of leaf nodes
 ;;;  * optimize GC usage
 ;;;  * optimize all functions
+;;;
+;;; modified by Witali Kusnezow 2009-08-20
+;;;  * remove GC hacks to satisfy new versions of the sbcl
 
 ;;; Node is either (DATA) (for leaf nodes) or an improper list (DATA LEFT . RIGHT)
 
@@ -19,8 +22,8 @@
             (depth-1 (1- depth)))
         (declare (fixnum item2 depth-1))
         (cons item
-              (cons (build-btree (the fixnum (1- item2)) depth-1)
-                    (build-btree item2 depth-1))))))
+				(cons (build-btree (the fixnum (1- item2)) depth-1) 
+					  (build-btree item2 depth-1))))))
 
 (defun check-node (node)
   (declare (values fixnum))
@@ -37,14 +40,12 @@
   (loop for d of-type fixnum from min-depth by 2 upto max-depth do
        (loop with iterations of-type fixnum = (ash 1 (+ max-depth min-depth (- d)))
           for i of-type fixnum from 1 upto iterations
-          do (gc-on)(gc-off)
           sum (+ (the fixnum (check-node (build-btree i d)))
                  (the fixnum (check-node (build-btree (- i) d))))
           into result of-type fixnum
           finally
             (format t "~D	 trees of depth ~D	 check: ~D~%"
-                    (the fixnum (+ iterations iterations )) d result)
-            (gc-on))))
+                    (the fixnum (+ iterations iterations )) d result))))
 
 (defun main (&optional (n (parse-integer
                            (or (car (last #+sbcl sb-ext:*posix-argv*
@@ -54,6 +55,6 @@
   (declare (type (integer 0 255) n))
   (format t "stretch tree of depth ~D	 check: ~D~%" (1+ n) (check-node (build-btree 0 (1+ n))))
   (let ((*print-pretty* nil) (long-lived-tree (build-btree 0 n)))
-    (sb-ext:purify)
+    (purify)
     (loop-depths n)
     (format t "long lived tree of depth ~D	 check: ~D~%" n (check-node long-lived-tree))))
