@@ -1,0 +1,216 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   contributed by Ryan Flynn</span>
+<span class="hl com"></span>
+<span class="hl com">   process-based concurrency via fork()</span>
+<span class="hl com">   IPC via pipe()/read()/write()</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;stdbool.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;string.h&gt;</span>
+<span class="hl dir">#include &lt;sys/select.h&gt;</span>
+<span class="hl dir">#include &lt;sys/types.h&gt;</span>
+<span class="hl dir">#include &lt;sys/wait.h&gt;</span>
+<span class="hl dir">#include &lt;unistd.h&gt;</span>
+
+<span class="hl kwb">enum</span> Color <span class="hl sym">{</span>
+  blue<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow<span class="hl sym">,</span> COLOR_CNT
+<span class="hl sym">};</span>
+
+<span class="hl kwb">static const char</span><span class="hl sym">*</span> ColorName<span class="hl sym">[</span>COLOR_CNT<span class="hl sym">] = {</span>
+  <span class="hl str">&quot;blue&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;red&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;yellow&quot;</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">static const enum</span> Color Compliment<span class="hl sym">[</span>COLOR_CNT<span class="hl sym">][</span>COLOR_CNT<span class="hl sym">] = {</span>
+               <span class="hl com">/* blue    red     yellow */</span>
+  <span class="hl com">/* blue   */</span> <span class="hl sym">{</span>  blue<span class="hl sym">,</span>   yellow<span class="hl sym">,</span> red    <span class="hl sym">},</span>
+  <span class="hl com">/* red    */</span> <span class="hl sym">{</span>  yellow<span class="hl sym">,</span> red<span class="hl sym">,</span>    blue   <span class="hl sym">},</span>
+  <span class="hl com">/* yellow */</span> <span class="hl sym">{</span>  red<span class="hl sym">,</span>    blue<span class="hl sym">,</span>   yellow <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">static char</span> <span class="hl sym">*</span> <span class="hl kwd">formatNumber</span><span class="hl sym">(</span><span class="hl kwb">unsigned</span> n<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>outbuf<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">static const char</span> <span class="hl sym">*</span>Digits<span class="hl sym">[] = {</span>
+    <span class="hl str">&quot;zero &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;one &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;two &quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot;three &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;four &quot;</span><span class="hl sym">,</span>
+    <span class="hl str">&quot;five &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;six &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;seven &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;eight &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;nine &quot;</span>
+  <span class="hl sym">};</span>
+  <span class="hl kwb">char</span> tmp<span class="hl sym">[</span><span class="hl num">64</span><span class="hl sym">], *</span>t <span class="hl sym">=</span> tmp<span class="hl sym">;</span>
+  <span class="hl kwd">sprintf</span><span class="hl sym">(</span>tmp<span class="hl sym">,</span> <span class="hl str">&quot;%u&quot;</span><span class="hl sym">,</span> n<span class="hl sym">);</span>
+  <span class="hl sym">*</span>outbuf <span class="hl sym">=</span> <span class="hl str">'\0'</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(*</span>t<span class="hl sym">)</span>
+    <span class="hl kwd">strcat</span><span class="hl sym">(</span>outbuf<span class="hl sym">,</span> Digits<span class="hl sym">[*</span>t<span class="hl sym">++ -</span> <span class="hl str">'0'</span><span class="hl sym">]);</span>
+  outbuf<span class="hl sym">[</span><span class="hl kwd">strlen</span><span class="hl sym">(</span>outbuf<span class="hl sym">)-</span><span class="hl num">1</span><span class="hl sym">] =</span> <span class="hl str">'\0'</span><span class="hl sym">;</span>
+  <span class="hl kwa">return</span> outbuf<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">printColors</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">enum</span> Color x <span class="hl sym">=</span> blue<span class="hl sym">;</span> x <span class="hl sym">&lt;=</span> yellow<span class="hl sym">;</span> x<span class="hl sym">++)</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">enum</span> Color y <span class="hl sym">=</span> blue<span class="hl sym">;</span> y <span class="hl sym">&lt;=</span> yellow<span class="hl sym">;</span> y<span class="hl sym">++)</span>
+      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s + %s -&gt; %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+        ColorName<span class="hl sym">[</span>x<span class="hl sym">],</span> ColorName<span class="hl sym">[</span>y<span class="hl sym">],</span> ColorName<span class="hl sym">[</span>Compliment<span class="hl sym">[</span>x<span class="hl sym">][</span>y<span class="hl sym">]]);</span>
+  <span class="hl kwd">fputc</span><span class="hl sym">(</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">struct</span> Creature
+<span class="hl sym">{</span>
+  <span class="hl kwb">struct</span> Meet <span class="hl sym">{</span>
+    <span class="hl kwb">unsigned</span>   id<span class="hl sym">:</span><span class="hl num">12</span><span class="hl sym">,</span>
+               two_met<span class="hl sym">:</span><span class="hl num">1</span><span class="hl sym">,</span>
+               same_id<span class="hl sym">:</span><span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl kwb">enum</span> Color color<span class="hl sym">;</span>
+    <span class="hl kwb">unsigned</span>   cnt<span class="hl sym">,</span>
+               sameCnt<span class="hl sym">;</span>
+  <span class="hl sym">}</span> meet<span class="hl sym">;</span>
+  <span class="hl kwb">int</span>          from<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> <span class="hl com">/* from[0]: creature read</span>
+<span class="hl com">                         * from[1]: master write */</span>
+               to<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">];</span>   <span class="hl com">/*   to[0]: master read</span>
+<span class="hl com">                         *   to[1]: creature write */</span>
+<span class="hl sym">};</span>
+
+<span class="hl com">/* format meeting times of each creature to string */</span>
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">char</span> <span class="hl sym">*</span> <span class="hl kwd">Creature_getResult</span><span class="hl sym">(</span><span class="hl kwb">const struct</span> Creature <span class="hl sym">*</span>cr<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">*</span>str<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwd">formatNumber</span><span class="hl sym">(</span>cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>sameCnt<span class="hl sym">,</span>
+    str <span class="hl sym">+</span> <span class="hl kwd">sprintf</span><span class="hl sym">(</span>str<span class="hl sym">,</span> <span class="hl str">&quot;%u &quot;</span><span class="hl sym">,</span> cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>cnt<span class="hl sym">));</span>
+  <span class="hl kwa">return</span> str<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">const char</span> <span class="hl sym">*</span> <span class="hl kwd">Creature_init</span><span class="hl sym">(</span><span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>cr<span class="hl sym">,</span>
+                                         <span class="hl kwb">const enum</span> Color color<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">static int</span> CreatureID <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>cnt <span class="hl sym">=</span> cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>sameCnt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>id <span class="hl sym">= ++</span>CreatureID<span class="hl sym">;</span>
+  cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>color <span class="hl sym">=</span> color<span class="hl sym">;</span>
+  cr<span class="hl sym">-&gt;</span>meet<span class="hl sym">.</span>two_met <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+  <span class="hl kwd">pipe</span><span class="hl sym">(</span>cr<span class="hl sym">-&gt;</span>from<span class="hl sym">);</span>
+  <span class="hl kwd">pipe</span><span class="hl sym">(</span>cr<span class="hl sym">-&gt;</span>to<span class="hl sym">);</span>
+  <span class="hl kwa">return</span> ColorName<span class="hl sym">[</span>color<span class="hl sym">];</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* merge transient meeting results with creature state */</span>
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">Meet_merge</span><span class="hl sym">(</span><span class="hl kwb">const struct</span> Meet <span class="hl sym">*</span>src<span class="hl sym">,</span> <span class="hl kwb">struct</span> Meet <span class="hl sym">*</span>dst<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  dst<span class="hl sym">-&gt;</span>color <span class="hl sym">=</span> src<span class="hl sym">-&gt;</span>color<span class="hl sym">;</span>
+  dst<span class="hl sym">-&gt;</span>cnt<span class="hl sym">++;</span>
+  dst<span class="hl sym">-&gt;</span>two_met <span class="hl sym">|=</span> src<span class="hl sym">-&gt;</span>two_met<span class="hl sym">;</span>
+  dst<span class="hl sym">-&gt;</span>same_id <span class="hl sym">|=</span> src<span class="hl sym">-&gt;</span>same_id<span class="hl sym">;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>src<span class="hl sym">-&gt;</span>same_id<span class="hl sym">)</span>
+    dst<span class="hl sym">-&gt;</span>sameCnt<span class="hl sym">++;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">runCreature</span><span class="hl sym">(</span><span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>c<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">struct</span> Meet m<span class="hl sym">;</span>
+  <span class="hl kwa">do</span> <span class="hl sym">{</span>
+    <span class="hl kwd">write</span><span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>to<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">], &amp;</span>c<span class="hl sym">-&gt;</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> m<span class="hl sym">);</span> <span class="hl com">/* request meeting  */</span>
+    <span class="hl kwd">read</span><span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>from<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>m<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> m<span class="hl sym">);</span>      <span class="hl com">/* meeting result   */</span>
+    <span class="hl kwd">Meet_merge</span><span class="hl sym">(&amp;</span>m<span class="hl sym">, &amp;</span>c<span class="hl sym">-&gt;</span>meet<span class="hl sym">);</span>            <span class="hl com">/* update state     */</span>
+  <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>m<span class="hl sym">.</span>two_met<span class="hl sym">);</span>
+  <span class="hl kwd">write</span><span class="hl sym">(</span>c<span class="hl sym">-&gt;</span>to<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">], &amp;</span>c<span class="hl sym">-&gt;</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> m<span class="hl sym">);</span>   <span class="hl com">/* send final state */</span>
+  <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">meet</span><span class="hl sym">(</span><span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>c0<span class="hl sym">,</span> <span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>c1<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">struct</span> Meet <span class="hl sym">*</span>m0 <span class="hl sym">= &amp;</span>c0<span class="hl sym">-&gt;</span>meet<span class="hl sym">,</span>
+              <span class="hl sym">*</span>m1 <span class="hl sym">= &amp;</span>c1<span class="hl sym">-&gt;</span>meet<span class="hl sym">;</span>
+  m0<span class="hl sym">-&gt;</span>cnt <span class="hl sym">=</span> m1<span class="hl sym">-&gt;</span>cnt <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  m0<span class="hl sym">-&gt;</span>color <span class="hl sym">=</span> m1<span class="hl sym">-&gt;</span>color <span class="hl sym">=</span> Compliment<span class="hl sym">[</span>m0<span class="hl sym">-&gt;</span>color<span class="hl sym">][</span>m1<span class="hl sym">-&gt;</span>color<span class="hl sym">];</span>
+  m0<span class="hl sym">-&gt;</span>two_met <span class="hl sym">=</span> m1<span class="hl sym">-&gt;</span>two_met <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
+  m0<span class="hl sym">-&gt;</span>same_id <span class="hl sym">=</span> m1<span class="hl sym">-&gt;</span>same_id <span class="hl sym">=</span> m0<span class="hl sym">-&gt;</span>id <span class="hl sym">==</span> m1<span class="hl sym">-&gt;</span>id<span class="hl sym">;</span>
+  <span class="hl kwd">write</span><span class="hl sym">(</span>c0<span class="hl sym">-&gt;</span>from<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">], &amp;</span>c0<span class="hl sym">-&gt;</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> c0<span class="hl sym">-&gt;</span>meet<span class="hl sym">);</span>
+  <span class="hl kwd">write</span><span class="hl sym">(</span>c1<span class="hl sym">-&gt;</span>from<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">], &amp;</span>c1<span class="hl sym">-&gt;</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> c1<span class="hl sym">-&gt;</span>meet<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">doneMeetings</span><span class="hl sym">(</span><span class="hl kwb">const int</span> n<span class="hl sym">,</span> <span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>c<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl com">/* game's over, collect final state and reap creatures */</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+    c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">.</span>two_met <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
+    <span class="hl kwd">write</span><span class="hl sym">(</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>from<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">], &amp;</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> _<span class="hl sym">,</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+    <span class="hl kwd">read</span><span class="hl sym">(</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>to<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">);</span>
+    <span class="hl kwd">wait</span><span class="hl sym">(&amp;</span>_<span class="hl sym">);</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">doMeetings</span><span class="hl sym">(</span><span class="hl kwb">int</span> meetings<span class="hl sym">,</span> <span class="hl kwb">const int</span> n<span class="hl sym">,</span> <span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>c<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">const int</span> maxfd <span class="hl sym">=</span> c<span class="hl sym">[</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">].</span>to<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+  <span class="hl kwb">int</span> i<span class="hl sym">,</span> metcnt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>meetings<span class="hl sym">) {</span>
+    <span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>met<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">];</span>
+    fd_set rd<span class="hl sym">;</span>
+    <span class="hl kwd">FD_ZERO</span><span class="hl sym">(&amp;</span>rd<span class="hl sym">);</span>
+    <span class="hl com">/* monitor creatures' meeting requests */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(!</span>metcnt <span class="hl sym">||</span> met<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span> c<span class="hl sym">+</span>i<span class="hl sym">)</span>
+        <span class="hl kwd">FD_SET</span><span class="hl sym">(</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>to<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>rd<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">select</span><span class="hl sym">(</span>maxfd<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">, &amp;</span>rd<span class="hl sym">,</span> NULL<span class="hl sym">,</span> NULL<span class="hl sym">,</span> NULL<span class="hl sym">) &lt;=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl kwa">continue</span><span class="hl sym">;</span>
+    <span class="hl com">/* meet() any two willing creatures */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(!</span><span class="hl kwd">FD_ISSET</span><span class="hl sym">(</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>to<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>rd<span class="hl sym">))</span>
+        <span class="hl kwa">continue</span><span class="hl sym">;</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">read</span><span class="hl sym">(</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>to<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], &amp;</span>c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">) &gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        met<span class="hl sym">[</span>metcnt<span class="hl sym">++] =</span> c<span class="hl sym">+</span>i<span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>metcnt <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">) {</span>
+          <span class="hl kwd">meet</span><span class="hl sym">(</span>met<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> met<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+          metcnt <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(--</span>meetings <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwd">doneMeetings</span><span class="hl sym">(</span>n<span class="hl sym">,</span> c<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* print per creature and total meet count */</span>
+<span class="hl kwb">static</span> <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">printResults</span><span class="hl sym">(</span><span class="hl kwb">const unsigned</span> n<span class="hl sym">,</span> <span class="hl kwb">const struct</span> Creature <span class="hl sym">*</span>c<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">char</span> str<span class="hl sym">[</span><span class="hl num">256</span><span class="hl sym">];</span>
+  <span class="hl kwb">unsigned</span> total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">unsigned</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> total <span class="hl sym">+=</span> c<span class="hl sym">[</span>i<span class="hl sym">].</span>meet<span class="hl sym">.</span>cnt<span class="hl sym">,</span> i<span class="hl sym">++)</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">Creature_getResult</span><span class="hl sym">(</span>c<span class="hl sym">+</span>i<span class="hl sym">,</span> str<span class="hl sym">));</span>
+  <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot; %s</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">formatNumber</span><span class="hl sym">(</span>total<span class="hl sym">,</span> str<span class="hl sym">));</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">initGame</span><span class="hl sym">(</span><span class="hl kwb">int</span> meetings<span class="hl sym">,</span> <span class="hl kwb">const unsigned</span> n<span class="hl sym">,</span> <span class="hl kwb">const enum</span> Color <span class="hl sym">*</span>color<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">unsigned</span> i<span class="hl sym">;</span>
+  <span class="hl kwb">struct</span> Creature <span class="hl sym">*</span>c <span class="hl sym">=</span> <span class="hl kwd">calloc</span><span class="hl sym">(</span>n<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> <span class="hl sym">*</span>c<span class="hl sym">);</span>
+  <span class="hl com">/* initial creature color */</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s &quot;</span><span class="hl sym">,</span> <span class="hl kwd">Creature_init</span><span class="hl sym">(</span>c<span class="hl sym">+</span>i<span class="hl sym">,</span> color<span class="hl sym">[</span>i<span class="hl sym">]));</span>
+  <span class="hl kwd">fputc</span><span class="hl sym">(</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+  <span class="hl com">/* launch creatures */</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> <span class="hl kwd">fork</span><span class="hl sym">())</span>
+      <span class="hl kwd">runCreature</span><span class="hl sym">(</span>c<span class="hl sym">+</span>i<span class="hl sym">);</span>
+  <span class="hl kwd">doMeetings</span><span class="hl sym">(</span>meetings<span class="hl sym">,</span> n<span class="hl sym">,</span> c<span class="hl sym">);</span>
+  <span class="hl kwd">printResults</span><span class="hl sym">(</span>n<span class="hl sym">,</span> c<span class="hl sym">);</span>
+  <span class="hl kwd">free</span><span class="hl sym">(</span>c<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">*</span> argv<span class="hl sym">[])</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">const enum</span> Color r<span class="hl sym">[] = {</span>
+   blue<span class="hl sym">,</span> red<span class="hl sym">,</span>    yellow<span class="hl sym">,</span>
+   red<span class="hl sym">,</span>  yellow<span class="hl sym">,</span> blue<span class="hl sym">,</span>
+   red<span class="hl sym">,</span>  yellow<span class="hl sym">,</span> red<span class="hl sym">,</span>
+   blue
+  <span class="hl sym">};</span>
+  <span class="hl kwb">int</span> n <span class="hl sym">= (</span>argc <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">600</span><span class="hl sym">;</span>
+  <span class="hl kwd">printColors</span><span class="hl sym">();</span>
+  <span class="hl kwd">initGame</span><span class="hl sym">(</span>n<span class="hl sym">,</span> <span class="hl num">3u</span><span class="hl sym">,</span> r<span class="hl sym">);</span>
+  <span class="hl kwd">initGame</span><span class="hl sym">(</span>n<span class="hl sym">,</span> <span class="hl kwa">sizeof</span> r <span class="hl sym">/</span> <span class="hl kwa">sizeof</span> r<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> r<span class="hl sym">);</span>
+  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
