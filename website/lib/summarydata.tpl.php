@@ -2,7 +2,7 @@
 
 <?
 if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
-   printf('<p><strong>&nbsp;Please choose the <a href="faq.php#means">up-to-date measurements</a> instead of these!</strong><br/></p>');
+   printf('<p><strong>&nbsp;PLEASE CHOOSE THE <a href="faq.php#means">UP-TO-DATE MEASUREMENTS</a> INSTEAD OF THESE!</strong><br/></p>');
 }
 ?>
 
