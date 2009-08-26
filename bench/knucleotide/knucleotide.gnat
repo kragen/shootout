@@ -1,443 +1,511 @@
--------------------------------------------------------------------------------
---  The Computer Language Shootout http://shootout.alioth.debian.org/
+--
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org/
 --
 --  Contributed by Martin Krischik
--------------------------------------------------------------------------------
+--  Modified by Georg Bauhaus and Jonathan Parker
 
-pragma Ada_95;
 
---  Standart set of performance improving pragmas as suggested by the GNAT users manual.
-pragma Restrictions (Max_Asynchronous_Select_Nesting => 0);
-pragma Restrictions (No_Abort_Statements);
-pragma Restrictions (No_Finalization);
-
-with Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.Integer_Text_IO;
-with Ada.IO_Exceptions;
 with Ada.Float_Text_IO;
-with Ada.Strings.Bounded;
 with Ada.Text_IO;
 
---  The shootout is using an old Ada 95 compiler so only the GNAT hash tables and sort are
---  available. As soon as the new Ada 2005 compiler is available we can use Ada.Containers which
---  are more high level and should reduce the LOC significantly and make the programm more
---  "plain vanilla".
+with String_Fragments;
+with Data_Input;
 with GNAT.Heap_Sort_G;
 with GNAT.HTable;
 
 procedure KNucleotide is
-   subtype Frequencies is Integer range 1 .. 18;
 
-   package Fragments is new Ada.Strings.Bounded.Generic_Bounded_Length (Frequencies'Last);
+   subtype Fragment_Lengths is Integer range 1 .. 18;
 
-   use type Fragments.Bounded_String;
-
-   subtype Fragment is Fragments.Bounded_String;
-
-   ----------------------------------------------------------------------------
    --
-   --  Read data from Standart_Input and return the section THREE as String
+   --  Calculate and write data - either a percentage for all fragments found
+   --  or - when Nucleotide_Fragment is given - the count for that fragment.
    --
-   function Read return String;
+   generic
+      with package Fragments is new String_Fragments(<>);
+   package Work is
 
-   ----------------------------------------------------------------------------
-   --
-   --  Calculate and write data - either a percentage for all fragments found or - when
-   --  Nucleotide_Fragment is given - the count for that fragment.
-   --
-   procedure Write
-     (Nucleotide_Length   : in Frequencies;
-      Nucleotide_Fragment : in Fragment := Fragments.Null_Bounded_String);
+      procedure Write
+        (Nucleotide_Length   : in Fragment_Lengths;
+         Nucleotide_Fragment : in Fragments.Fragment := Fragments.Null_Fragment);
+   end Work;
 
-   ----------------------------------------------------------------------------
-   --
-   --  List of fragments to be analyzed for this test
-   --
-   Fragment_3  : constant Fragment := Fragments.To_Bounded_String ("GGT");
-   Fragment_4  : constant Fragment := Fragments.To_Bounded_String ("GGTA");
-   Fragment_6  : constant Fragment := Fragments.To_Bounded_String ("GGTATT");
-   Fragment_12 : constant Fragment := Fragments.To_Bounded_String ("GGTATTTTAATT");
-   Fragment_18 : constant Fragment := Fragments.To_Bounded_String ("GGTATTTTAATTTATAGT");
-
-   ----------------------------------------------------------------------------
-   --
-   --  Read data from Standart_Input and return the section THREE as String
-   --
-   function Read return String is
-      -------------------------------------------------------------------------
-      --
-      --  Skip data on Standart_Input until ">THREE" is found
-      --
-      procedure Skip_To_Section;
-
-      -------------------------------------------------------------------------
-      --
-      --  Read next data section - until EOF oder a line beginning with > is found
-      --
-      function Read_Section return String;
-
-      pragma Inline (Read_Section);
-      pragma Inline (Skip_To_Section);
-
-      Section_Marker : constant Character := '>';
-      Section        : constant String    := Section_Marker & "THREE";
-
-      -------------------------------------------------------------------------
-      --
-      --  Read next data section - until EOF oder a line beginning with > is found.
-      --
-      function Read_Section return String is
-         --
-         --  We are using a recursive read function which won't need any heap storage. For
-         --  fairness sake we use the same initial buffer size as the C demo.
-         --
-         Buffer     : String (1 .. 10240);
-         Read_First : Natural := Buffer'First;
-         Read_Last  : Natural := Buffer'First;
-      begin
-         loop
-            Ada.Text_IO.Get_Line
-              (Item => Buffer (Read_First .. Buffer'Last),
-               Last => Read_Last);
-            exit when Buffer (Read_First) = Section_Marker;
-            if Read_Last = Buffer'Last then
-               return Buffer & Read_Section;
-            end if;
-            Read_First := Read_Last + 1;
-         end loop;
-         return Buffer (1 .. Read_Last);
-      exception
-         when Ada.IO_Exceptions.End_Error =>
-            return Buffer (1 .. Read_Last);
-      end Read_Section;
-
-      ------------------------------------------------------------------------
-      --
-      --  Skip data on Standart_Input until ">THREE" is found
-      --
-      procedure Skip_To_Section is
-         --
-         --  The line lenght of the test data is 60 character. Note: Get_Line would survive
-         --  longer lines as well - they would just be read in two parts.
-         --
-         Line      : String (1 .. 60);
-         Read_Last : Natural;
-      begin
-         loop
-            Ada.Text_IO.Get_Line (Item => Line, Last => Read_Last);
-            exit when Line (1 .. 6) = Section;
-         end loop;
-      end Skip_To_Section;
-
-   begin
-      Skip_To_Section;
-      return Ada.Characters.Handling.To_Upper (Read_Section);
-   end Read;
-
-   ---------------------------------------------------------------------------
    --
    --  Data read as single String
    --
-   Buffer : constant String := Read;
+   Buffer : constant String := Data_Input.Read;
 
-   ----------------------------------------------------------------------------
-   --
-   --  Calculate and write data - either a percentage for all fragments found or - when
-   --  Nucleotide_Fragment is given - the count for that fragment.
-   --
-   procedure Write
-     (Nucleotide_Length   : in Frequencies;
-      Nucleotide_Fragment : in Fragment := Fragments.Null_Bounded_String)
-   is
-      ------------------------------------------------------------------------
+   package body Work is
+
+      ---------------------
+      -- procedure Write --
+      ---------------------
+
+      --  Procedure knucleotide.adb calls Write in order to calculate and
+      --  write data - either a percentage for all fragments found or - when
+      --  Nucleotide_Fragment is given - the count for that fragment.
       --
-      --  The Calculator package calculates the nucleotide frequencies and keeps the result
-      --  inside a hash table as requested by the shootout rules.
-      --
-      package Calculator is
-         ---------------------------------------------------------------------
-         --
-         --  Elements used to store inside hash table
-         --
-         type Element_Type is private;
-         type Element_Access is access Element_Type;
-         for Element_Access'Storage_Size use 16#60_00_00#;
+      procedure Write
+        (Nucleotide_Length   : in Fragment_Lengths;
+         Nucleotide_Fragment : in Fragments.Fragment := Fragments.Null_Fragment)
+      is
+         use Fragments;
 
-         ---------------------------------------------------------------------
-         --
-         --  Calculate the calculates the nucleotide frequencies
-         --
-         procedure Calculate_Frequencies (Length : Frequencies);
+         ------------------------
+         -- package Calculator --
+         ------------------------
 
-         ---------------------------------------------------------------------
-         --
-         --  Get the count for the given nucleotide fragment
-         --
-         function Get (Nucleotide_Fragment : Fragment) return Natural;
+         --  Package is an interface to GNAT's simple hash table: GNAT.HTable.
+         --  The package calculates nucleotide Fragment_Lengths and keeps the
+         --  result inside the table as requested by the shootout rules.
 
-         ---------------------------------------------------------------------
-         --
-         --  Start to iterate over all element of hash table
-         --
-         function Get_First return Element_Access;
+         package Calculator is
 
-         ---------------------------------------------------------------------
-         --
-         --  Continue itereation over the hash table
-         --
-         function Get_Next return Element_Access;
+            --  Elements used to store inside hash table:
 
-         ---------------------------------------------------------------------
-         --
-         --  Get count for element
-         --
-         function Count (Element : Element_Access) return Natural;
+            type Element_Type is private;
+            type Element_Access is access Element_Type;
+            for Element_Access'Storage_Size use 16#60_00_01#;
 
-         ---------------------------------------------------------------------
-         --
-         --  Get key for element
-         --
-         function Key (Element : Element_Access) return Fragment;
+            --  Calculate Fragment_Lengths of occurence of the nucleotides:
 
-         ---------------------------------------------------------------------
-         --
-         --  Get total count over all elements - as well as the count of elements
-         --
-         procedure Get_Total (Total : out Natural; Count : out Natural);
+            procedure Get_Frequencies (Length : Fragment_Lengths);
 
-         pragma Inline (Calculate_Frequencies);
-         pragma Inline (Get);
-         pragma Inline (Get_First);
-         pragma Inline (Get_Next);
-         pragma Inline (Count);
-         pragma Inline (Key);
-         pragma Inline (Get_Total);
-      private
-         ---------------------------------------------------------------------
-         --
-         --  Elements used to store inside hash table.
-         --
-         type Element_Type is record
-            Count : Natural        := 0;
-            Key   : Fragment       := Fragments.Null_Bounded_String;
-            Next  : Element_Access := null;
-         end record;
-      end Calculator;
+            --  Get the count for the given nucleotide fragment:
 
-      package body Calculator is
-         type Hash_Type is range 0 .. 2 ** 16;
+            function Get (Nucleotide_Fragment : Fragment) return Natural;
 
-         function Hash (Key : Fragment) return Hash_Type;
-         procedure Set_Next (E : Element_Access; Next : Element_Access);
-         function Next (E : Element_Access) return Element_Access;
-         function Get_Key (E : Element_Access) return Fragment;
+            --  Start to iterate over all element of hash table:
 
-         pragma Inline (Hash);
-         pragma Inline (Set_Next);
-         pragma Inline (Next);
-         pragma Inline (Get_Key);
+            function Get_First return Element_Access;
 
-         package Table is new GNAT.HTable.Static_HTable (
-            Header_Num => Hash_Type,
-            Element => Element_Type,
-            Elmt_Ptr => Element_Access,
-            Null_Ptr => null,
-            Key => Fragment,
-            Hash => Hash,
-            Equal => Fragments. "=",
-            Set_Next => Set_Next,
-            Next => Next,
-            Get_Key => Get_Key);
+            --  Continue iteration over the hash table:
 
-         function Hash_Function is new GNAT.HTable.Hash (Header_Num => Hash_Type);
+            function Get_Next return Element_Access;
 
-         ---------------------------------------------------------------------
-         --
-         --  Calculate the calculates the nucleotide frequencies
-         --
-         procedure Calculate_Frequencies (Length : Frequencies) is
-         begin
-            Table.Reset;
-            for I in  1 .. Buffer'Last - Integer (Length) + 1 loop
-               declare
-                  Key     : constant Fragment       :=
-                     Fragments.To_Bounded_String (Buffer (I .. I + Length - 1));
-                  Element : constant Element_Access := Table.Get (Key);
-               begin
-                  if Element /= null then
-                     Element.all.Count := Natural'Succ (Element.all.Count);
-                  else
-                     Table.Set (new Element_Type'(Count => 1, Key => Key, Next => null));
-                  end if;
-               end;
-            end loop;
-            return;
-         end Calculate_Frequencies;
+            --  Get count for element:
 
-         ---------------------------------------------------------------------
-         --
-         --  Get count for element
-         --
-         function Count (Element : Element_Access) return Natural is
-         begin
-            return Element.all.Count;
-         end Count;
+            function Count (Element : Element_Access) return Natural;
 
-         ---------------------------------------------------------------------
-         --
-         --  Get the count for the given nucleotide fragment
-         --
-         function Get (Nucleotide_Fragment : Fragment) return Natural is
-            The_Element : constant Element_Access := Table.Get (Nucleotide_Fragment);
-         begin
-            if The_Element /= null then
-               return The_Element.all.Count;
-            else
-               return 0;
-            end if;
-         end Get;
+            --  Get key for element:
 
-         ---------------------------------------------------------------------
-         --
-         --  Start to iterate over all element of hash table
-         --
-         function Get_First return Element_Access is
-         begin
-            return Table.Get_First;
-         end Get_First;
+            function Key (Element : Element_Access) return Fragment;
 
-         ---------------------------------------------------------------------
-         --
-         --  Get key for element
-         --
-         function Get_Key (E : Element_Access) return Fragment is
-         begin
-            return E.all.Key;
-         end Get_Key;
+            --  Get total count over all elements - as well as the count of
+            --  elements:
 
-         ---------------------------------------------------------------------
-         --
-         --  Continue itereation over the hash table
-         --
-         function Get_Next return Element_Access is
-         begin
-            return Table.Get_Next;
-         end Get_Next;
+            procedure Get_Total (Total : out Natural; Count : out Natural);
 
-         ---------------------------------------------------------------------
-         --
-         --  Get total count over all elements - as well as the count of elements
-         --
-         procedure Get_Total (Total : out Natural; Count : out Natural) is
-            The_Element : Element_Access := Table.Get_First;
-         begin
-            Total := 0;
-            Count := 0;
-            while The_Element /= null loop
-               Total       := Total + The_Element.all.Count;
-               Count       := Count + 1;
-               The_Element := Table.Get_Next;
-            end loop;
-         end Get_Total;
+         private
 
-         function Hash (Key : Fragment) return Hash_Type is
-         begin
-            return Hash_Function (Fragments.To_String (Key));
-         end Hash;
+            type Element_Type is record
+               Count : Natural        := 0;
+               Key   : Fragment       := Null_Fragment;
+               Next  : Element_Access := null;
+            end record;
 
-         ---------------------------------------------------------------------
-         --
-         --  Get key for element
-         --
-         function Key (Element : in Element_Access) return Fragment is
-         begin
-            return Element.all.Key;
-         end Key;
+         end Calculator;
 
-         function Next (E : Element_Access) return Element_Access is
-         begin
-            return E.all.Next;
-         end Next;
+         -----------------------------
+         -- package body Calculator --
+         -----------------------------
 
-         procedure Set_Next (E : Element_Access; Next : Element_Access) is
-         begin
-            E.all.Next := Next;
-         end Set_Next;
-      end Calculator;
+         package body Calculator is
 
-   begin
-      Calculator.Calculate_Frequencies (Nucleotide_Length);
+            Table_Size : constant Integer :=  2 ** Integer'Min (Fragment'Last * 4, 17);
 
-      if Nucleotide_Fragment = Fragments.Null_Bounded_String then
-         Calculate_Total : declare
-            Count : Natural;
-            Total : Natural;
-         begin
-            Calculator.Get_Total (Total => Total, Count => Count);
+            subtype Hash_Type is Integer range 0 .. Table_Size - 1;
 
-            Get_Sort_Put : declare
-               Data : array (0 .. Count) of Calculator.Element_Access;
+            function Hash (Key : Fragment) return Hash_Type;
+            procedure Set_Next (E : Element_Access; Next : Element_Access);
+            function Next (E : Element_Access) return Element_Access;
+            function Get_Key (E : Element_Access) return Fragment;
 
-               procedure Move (From : Natural; To : Natural);
-               function Less_Then (Op1, Op2 : Natural) return Boolean;
+            pragma Inline (Hash, Set_Next, Next, Get_Key);
 
-               pragma Inline (Move);
-               pragma Inline (Less_Then);
+            package Table is new GNAT.HTable.Static_HTable
+              (Header_Num => Hash_Type,
+               Element    => Element_Type,
+               Elmt_Ptr   => Element_Access,
+               Null_Ptr   => null,
+               Key        => Fragment,
+               Hash       => Hash,
+               Equal      => Fragments."=",
+               Set_Next   => Set_Next,
+               Next       => Next,
+               Get_Key    => Get_Key);
 
-               package Heap_Sort is new GNAT.Heap_Sort_G (Move => Move, Lt => Less_Then);
-
-               function Less_Then (Op1, Op2 : Natural) return Boolean is
-               begin
-                  return Calculator.Count (Data (Op1)) > Calculator.Count (Data (Op2));
-               end Less_Then;
-
-               procedure Move (From : Natural; To : Natural) is
-               begin
-                  Data (To) := Data (From);
-               end Move;
+            function Hash (Key : Fragment) return Hash_Type is
+               type Uns_32 is mod 2**32;
+               H : Uns_32 := 0;
+               pragma Assert (Hash_Type'First = 0);
             begin
-               Data (0) := null;
-               Data (1) := Calculator.Get_First;
-
-               for I in  2 .. Data'Last loop
-                  Data (I) := Calculator.Get_Next;
+               for J in Key'Range loop
+                  H := Character'Pos (Key (J)) + H * 2**6 + H * 2**16 - H;
                end loop;
+               return Hash_Type'Base (H mod Uns_32(Hash_Type'Last + 1));
+            end Hash;
 
-               Heap_Sort.Sort (Data'Last);
+            --
+            --  Calculate the nucleotide Frequencies:
+            --
+            procedure Get_Frequencies (Length : Fragment_Lengths) is
+            begin
+               for I in  1 .. Buffer'Last - Length + 1 loop
+                  declare
+                     Key : String renames Buffer(I .. I + Length - 1);
+                     Element : constant Element_Access := Table.Get (Key);
+                  begin
+                     if Element /= null then
+                        Element.all.Count := Natural'Succ (Element.all.Count);
+                     else
+                        Table.Set (new Element_Type'(Count => 1,
+                                                     Key   => Key,
+                                                     Next  => null));
+                     end if;
+                  end;
+               end loop;
+               return;
+            end Get_Frequencies;
 
-               for I in  1 .. Data'Last loop
-                  Ada.Text_IO.Put (Fragments.To_String (Calculator.Key (Data (I))));
-                  Ada.Text_IO.Put (Ada.Characters.Latin_1.Space);
-                  Ada.Float_Text_IO.Put
-                    (Item => 100.0 * Float (Calculator.Count (Data (I))) / Float (Total),
-                     Fore => 1,
-                     Aft  => 3,
-                     Exp  => 0);
+
+            function Count (Element : Element_Access) return Natural is
+            begin
+               return Element.all.Count;
+            end Count;
+
+
+            function Get (Nucleotide_Fragment : Fragment) return Natural is
+               The_Element : constant Element_Access :=
+                 Table.Get (Nucleotide_Fragment);
+            begin
+               if The_Element /= null then
+                  return The_Element.all.Count;
+               else
+                  return 0;
+               end if;
+            end Get;
+
+
+            function Get_First return Element_Access is
+            begin
+               return Table.Get_First;
+            end Get_First;
+
+
+            function Get_Key (E : Element_Access) return Fragment is
+            begin
+               return E.all.Key;
+            end Get_Key;
+
+
+            function Get_Next return Element_Access is
+            begin
+               return Table.Get_Next;
+            end Get_Next;
+
+
+            procedure Get_Total (Total : out Natural; Count : out Natural) is
+               The_Element : Element_Access := Table.Get_First;
+            begin
+               Total := 0;
+               Count := 0;
+               while The_Element /= null loop
+                  Total       := Total + The_Element.all.Count;
+                  Count       := Count + 1;
+                  The_Element := Table.Get_Next;
+               end loop;
+            end Get_Total;
+
+
+            function Key (Element : in Element_Access) return Fragment is
+            begin
+               return Element.all.Key;
+            end Key;
+
+
+            function Next (E : Element_Access) return Element_Access is
+            begin
+               return E.all.Next;
+            end Next;
+
+
+            procedure Set_Next (E : Element_Access; Next : Element_Access) is
+            begin
+               E.all.Next := Next;
+            end Set_Next;
+
+         end Calculator;
+
+      begin --  Write
+
+         Calculator.Get_Frequencies (Nucleotide_Length);
+
+         if Nucleotide_Fragment = Fragments.Null_Fragment then
+            Calculate_Total : declare
+               Count : Natural;
+               Total : Natural;
+            begin
+               Calculator.Get_Total (Total => Total, Count => Count);
+
+               Get_Sort_Put : declare
+                  Data : array (0 .. Count) of Calculator.Element_Access;
+
+                  function Less_Then (Op1, Op2 : Natural) return Boolean is
+                  begin
+                     return
+                       Calculator.Count (Data (Op1))
+                       >
+                       Calculator.Count (Data (Op2));
+                  end Less_Then;
+
+
+                  procedure Move (From : Natural; To : Natural) is
+                  begin
+                     Data (To) := Data (From);
+                  end Move;
+
+                  package Heap_Sort is new GNAT.Heap_Sort_G
+                    (Move => Move,
+                     Lt   => Less_Then);
+
+               begin  -- Get_Sort_Put
+                  Data (0) := null;
+                  Data (1) := Calculator.Get_First;
+
+                  for I in  2 .. Data'Last loop
+                     Data (I) := Calculator.Get_Next;
+                  end loop;
+
+                  Heap_Sort.Sort (Data'Last);
+
+                  for I in  1 .. Data'Last loop
+                     Ada.Text_IO.Put (Calculator.Key (Data (I)) & ' ');
+                     Ada.Float_Text_IO.Put
+                       (Item => (100.0
+                                   * Float (Calculator.Count (Data (I)))
+                                   / Float (Total)),
+                        Fore => 1,
+                        Aft  => 3,
+                        Exp  => 0);
+                     Ada.Text_IO.New_Line;
+                  end loop;
                   Ada.Text_IO.New_Line;
-               end loop;
-               Ada.Text_IO.New_Line;
-            end Get_Sort_Put;
-         end Calculate_Total;
-      else
-         Ada.Integer_Text_IO.Put (Item => Calculator.Get (Nucleotide_Fragment), Width => 1);
-         Ada.Text_IO.Put (Ada.Characters.Latin_1.HT);
-         Ada.Text_IO.Put_Line (Fragments.To_String (Nucleotide_Fragment));
-      end if;
-      return;
-   end Write;
+               end Get_Sort_Put;
+            end Calculate_Total;
+         else
+            Ada.Integer_Text_IO.Put
+              (Item  => Calculator.Get (Nucleotide_Fragment),
+               Width => 1);
+            Ada.Text_IO.Put (Ada.Characters.Latin_1.HT);
+            Ada.Text_IO.Put_Line (Nucleotide_Fragment);
+         end if;
+      end Write;
+
+   end Work;
+
+
+   package Fragments_1 is new String_Fragments (1);
+   package Fragments_2 is new String_Fragments (2);
+   package Fragments_3 is new String_Fragments (3);
+   package Fragments_4 is new String_Fragments (4);
+   package Fragments_6 is new String_Fragments (6);
+   package Fragments_12 is new String_Fragments (12);
+   package Fragments_18 is new String_Fragments (18);
+
+   --
+   --
+   --  List of fragments to be analyzed for this test
+   --
+   Fragment_3  : constant Fragments_3.Fragment := Fragments_3.To_Fragment ("GGT");
+   Fragment_4  : constant Fragments_4.Fragment := Fragments_4.To_Fragment ("GGTA");
+   Fragment_6  : constant Fragments_6.Fragment := Fragments_6.To_Fragment ("GGTATT");
+   Fragment_12 : constant Fragments_12.Fragment := Fragments_12.To_Fragment ("GGTATTTTAATT");
+   Fragment_18 : constant Fragments_18.Fragment := Fragments_18.To_Fragment ("GGTATTTTAATTTATAGT");
+
+   package Work_On_1 is new Work (Fragments_1);
+   package Work_On_2 is new Work (Fragments_2);
+   package Work_On_3 is new Work (Fragments_3);
+   package Work_On_4 is new Work (Fragments_4);
+   package Work_On_6 is new Work (Fragments_6);
+   package Work_On_12 is new Work (Fragments_12);
+   package Work_On_18 is new Work (Fragments_18);
 
 begin
-   Write (1);
-   Write (2);
-   Write (Fragments.Length (Fragment_3), Fragment_3);
-   Write (Fragments.Length (Fragment_4), Fragment_4);
-   Write (Fragments.Length (Fragment_6), Fragment_6);
-   Write (Fragments.Length (Fragment_12), Fragment_12);
-   Write (Fragments.Length (Fragment_18), Fragment_18);
-   return;
+   Work_On_1.Write (1);
+   Work_On_2.Write (2);
+   Work_On_3.Write (Fragment_3'Length, Fragment_3);
+   Work_On_4.Write (Fragment_4'Length, Fragment_4);
+   Work_On_6.Write (Fragment_6'Length, Fragment_6);
+   Work_On_12.Write (Fragment_12'Length, Fragment_12);
+   Work_On_18.Write (Fragment_18'Length, Fragment_18);
 end KNucleotide;
 
--------------------------------------------------------------------------------
---   vim: textwidth=0 nowrap tabstop=8 shiftwidth=3 softtabstop=3 expandtab vim: filetype=ada
---   encoding=latin1 fileformat=unix
+
+
+generic
+   Max_String_Length : Positive;
+package String_Fragments is
+
+   subtype Fragment is String (1 .. Max_String_Length);
+
+   function To_Fragment (Source : String) return Fragment;
+   function Null_Fragment return Fragment;
+   function "=" (Left, Right: Fragment) return Boolean;
+
+end String_Fragments;
+
+
+with Ada.Unchecked_Conversion;
+
+package body String_Fragments is
+
+   Bytes_Per_Word : constant := 8;    -- 4 good, even on 64-bit archs.
+   type Uns is mod 2**(8 * Bytes_Per_Word);
+   for Uns'Size use 8 * Bytes_Per_Word;
+   subtype Str is String (1 .. Bytes_Per_Word);
+
+   function Null_Fragment return Fragment is
+   begin
+      return Fragment'(1 .. Max_String_Length => '*');
+   end Null_Fragment;
+
+
+   function To_Uns is new Ada.Unchecked_Conversion (Str, Uns);
+
+   function "=" (Left, Right: Fragment) return Boolean is
+      Strt : Integer := 1;
+      Fnsh : Integer := Bytes_Per_Word;
+      Last : constant Integer := Left'Last;
+   begin
+      if Last /= Right'Last then
+         return False;
+      end if;
+
+      loop
+         exit when Fnsh > Last;
+         if To_Uns (Left(Strt..Fnsh)) /= To_Uns (Right(Strt..Fnsh)) then
+            return False;
+         end if;
+         Strt := Strt + Bytes_Per_Word;
+         Fnsh := Fnsh + Bytes_Per_Word;
+      end loop;
+
+      for I in Strt .. Last loop
+         if Left(I) /= Right(I) then
+            return False;
+         end if;
+      end loop;
+      return True;
+   end "=";
+
+
+   function To_Fragment (Source : String) return Fragment is
+      Result: Fragment;
+   begin
+      if Source'Length > Max_String_Length then
+         raise Constraint_Error;
+      end if;
+      Result (1 .. Source'Length) := Source;
+      return Result;
+   end To_Fragment;
+
+end String_Fragments;
+
+
+
+package Data_Input is
+   --
+   --  Read data from Standard_Input and return section THREE as String
+   --
+   function Read return String;
+
+end Data_Input;
+
+with Ada.Strings.Maps.Constants;
+with Ada.IO_Exceptions;
+with Ada.Strings.Unbounded;
+with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
+
+package body Data_Input is
+
+   use Ada.Strings;
+   Data_Buffer : Unbounded.Unbounded_String := Unbounded.Null_Unbounded_String;
+
+   Section_Marker : constant Character := '>';
+   Section        : constant String    := Section_Marker & "THREE";
+
+
+   --  Read next data section - until EOF oder a line beginning with > is
+   --  found:
+
+   procedure Read_Section;
+
+
+   type String_Access is access String;
+   procedure Free is new Ada.Unchecked_Deallocation (String, String_Access);
+
+   procedure Read_Section is
+      Buffer     : String_Access;
+      Read_First : Natural;
+      Read_Last  : Natural;
+   begin
+      Buffer := new String (1 .. 1024 * 1024 * 16);
+      loop
+         Read_First := Buffer'First;
+         Read_Last  := Buffer'First;
+         FILL_BUFFER: loop
+            Ada.Text_IO.Get_Line
+              (Item => Buffer (Read_First .. Buffer'Last),
+               Last => Read_Last);
+            exit FILL_BUFFER when Buffer (Read_First) = Section_Marker;
+            if Read_Last = Buffer'Last then
+               Unbounded.Append (Data_Buffer, New_Item => Buffer.all);
+               exit FILL_BUFFER;
+            end if;
+            Read_First := Read_Last + 1;
+         end loop FILL_BUFFER;
+      end loop;
+      Unbounded.Append (Data_Buffer, Buffer (1 .. Read_Last));
+      Free (Buffer);
+   exception
+      when Ada.IO_Exceptions.End_Error =>
+         Unbounded.Append (Data_Buffer, Buffer (1 .. Read_Last));
+         Free (Buffer);
+   end Read_Section;
+
+
+   --  Skip data on Standard_Input until ">THREE" is found
+   --
+   procedure Skip_To_Section is
+      --
+      --  The line length of the test data is 60 character. Get_Line would
+      --  survive longer lines as well - they would just be read in two parts.
+      --
+      Line      : String (1 .. 60);
+      Read_Last : Natural;
+   begin
+      loop
+         Ada.Text_IO.Get_Line (Item => Line, Last => Read_Last);
+         exit when Line (1 .. 6) = Section;
+      end loop;
+   end Skip_To_Section;
+
+
+   function Read return String is
+   begin
+      Skip_To_Section;
+      Read_Section;
+
+      Unbounded.Translate
+        (Source => Data_Buffer,
+         Mapping => Maps.Constants.Upper_Case_Map);
+
+      return Unbounded.To_String (Data_Buffer);
+   end Read;
+
+end Data_Input;
