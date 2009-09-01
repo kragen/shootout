@@ -1,0 +1,180 @@
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org
+--
+-- contributed by Pascal Obry on 2005/04/07
+-- modified by Gautier de Montmollin,
+--                     Georg Bauhaus, Jonathan Parker,
+--                 and comp.lang.ada in Summer 2009
+
+package Fasta_Pck is
+
+   type Real is new Long_Float;
+
+   type Aminoacid is record
+      C : Character;
+      P : Real;
+   end record;
+
+   type Aminoacid_Set is array (Positive range <>) of Aminoacid;
+
+   procedure Make_Cumulative (Gene_List : in out Aminoacid_Set);
+
+   function Select_Random (Gene_List : in Aminoacid_Set) return Character;
+
+   procedure Make_Random_Fasta
+     (Id, Desc : in String; Gene_List : in Aminoacid_Set; N : in Positive);
+
+   procedure Make_Repeat_Fasta (Id, Desc, S : in String; N : in Positive);
+
+private
+   pragma Inline (Select_Random);
+end Fasta_Pck;
+
+with Ada.Streams.Stream_IO;  use Ada.Streams;
+with Unchecked_Conversion;
+
+package body Fasta_Pck is
+
+   Line_Length : constant := 60;
+
+   type Uns_32 is mod 2**32;
+
+   Last        : Uns_32 := 42;
+
+   function Gen_Random (Max : in Real) return Real;
+   pragma Inline (Gen_Random);
+
+   function Gen_Random (Max : in Real) return Real is
+      IM : constant := 139_968;
+      IA : constant :=   3_877;
+      IC : constant :=  29_573;
+   begin
+      Last := (Last * IA + IC) mod IM;
+      return (Max * Real (Last)) * (1.0 / Real (IM));
+   end Gen_Random;
+
+   procedure Make_Cumulative (Gene_List : in out Aminoacid_Set) is
+      C : Real := Gene_List (Gene_List'First).P;
+   begin
+      for K in Gene_List'First + 1 .. Gene_List'Last loop
+         C := C + Gene_List (K).P;
+         Gene_List (K).P := C;
+      end loop;
+   end Make_Cumulative;
+
+   function Select_Random (Gene_List : in Aminoacid_Set) return Character is
+      R         : constant Real := Gen_Random (1.0);
+      I, Lo, Hi : Integer;
+   begin
+      if R < Gene_List (Gene_List'First).P then
+         return Gene_List (Gene_List'First).C;
+      end if;
+
+      Lo := 0;
+      Hi := Gene_List'Last;
+
+      while Hi > Lo + 1 loop
+         I := (Hi + Lo) / 2;
+         if R < Gene_List (I).P then
+            Hi := I;
+         else
+            Lo := I;
+         end if;
+      end loop;
+
+      return Gene_List (Hi).C;
+   end Select_Random;
+
+
+   Stdout : Stream_IO.File_Type;
+
+   procedure Print (Item : String) is
+      subtype Index is Stream_Element_Offset range
+        Stream_Element_Offset(Item'First)
+        .. Stream_Element_Offset(Item'Last + 1);
+      subtype XString is String (Item'First .. Item'Last + 1);
+      subtype XBytes is Stream_Element_Array (Index);
+      function To_Bytes is new Unchecked_Conversion
+        (Source => XString,
+         Target => XBytes);
+   begin
+      Stream_IO.Write (Stdout, To_Bytes (Item & ASCII.LF));
+   end Print;
+
+   procedure Make_Random_Fasta
+     (Id, Desc : in String; Gene_List : in Aminoacid_Set; N : in Positive)
+   is
+      Todo : Integer := N;
+      M    : Integer;
+      Pick : String (1 .. Line_Length);
+   begin
+      Print (">" & Id & ' ' & Desc);
+
+      while Todo > 0 loop
+         M := Natural'Min (Todo, Line_Length);
+
+         for K in 1 .. M loop
+            Pick (K) := Select_Random (Gene_List);
+         end loop;
+
+         Print (Pick (1 .. M));
+         Todo := Todo - Line_Length;
+      end loop;
+   end Make_Random_Fasta;
+
+   procedure Make_Repeat_Fasta (Id, Desc, S : in String; N : in Positive) is
+      Todo : Integer := N;
+      K    : Positive := S'First;
+      S_App: constant String := S & S(S'First .. S'First + Line_Length);
+   begin
+      Print (">" & Id & ' ' & Desc);
+
+      while Todo > 0 loop
+         Print (S_App (K .. K + Integer'Min(Todo, Line_Length) - 1));
+         K := K + Line_Length;
+         if K > S'Last then -- we are on the extra characters
+           K:= K - S'Length;
+         end if;
+         Todo := Todo - Line_Length;
+      end loop;
+
+   end Make_Repeat_Fasta;
+
+begin
+   Stream_IO.Open (Stdout,
+                   Mode => Stream_IO.Out_File,
+                   Name => "/dev/stdout");
+end Fasta_Pck;
+
+with Ada.Command_Line; use Ada.Command_Line;
+with Fasta_Pck;        use Fasta_Pck;
+
+procedure Fasta is
+   Homosapiens : Aminoacid_Set :=
+                   (('a', 0.3029549426680), ('c', 0.1979883004921),
+                    ('g', 0.1975473066391), ('t', 0.3015094502008));
+   Iub         : Aminoacid_Set :=
+                   (('a', 0.27), ('c', 0.12), ('g', 0.12), ('t', 0.27),
+                    ('B', 0.02), ('D', 0.02), ('H', 0.02), ('K', 0.02),
+                    ('M', 0.02), ('N', 0.02), ('R', 0.02), ('S', 0.02),
+                    ('V', 0.02), ('W', 0.02), ('Y', 0.02));
+   Alu         : constant String :=
+                    "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" &
+                    "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" &
+                    "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" &
+                    "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" &
+                    "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" &
+                    "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" &
+                    "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
+
+   N           : constant Positive := Positive'Value (Argument (1));
+
+begin
+   Make_Cumulative (Iub);
+   Make_Cumulative (Homosapiens);
+
+   Make_Repeat_Fasta ("ONE", "Homo sapiens alu", alu, N * 2);
+   Make_Random_Fasta ("TWO", "IUB ambiguity codes", Iub, N * 3);
+   Make_Random_Fasta
+     ("THREE", "Homo sapiens frequency", Homosapiens, N * 5);
+end Fasta;
