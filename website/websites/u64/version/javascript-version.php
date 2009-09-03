@@ -1,1 +1,1 @@
-<p>version 180, built on Sep  2 2009 at 17:07:42</p>
+<p>JavaScript-C 1.8.0 pre-release 1 2007-10-03</p>
