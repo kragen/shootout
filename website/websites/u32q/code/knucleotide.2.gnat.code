@@ -1,429 +1,719 @@
-<span class="hl slc">-------------------------------------------------------------------------------</span>
 <span class="hl slc">--  The Computer Language Benchmarks Game</span>
 <span class="hl slc">--  http://shootout.alioth.debian.org/</span>
 <span class="hl slc">--</span>
 <span class="hl slc">--  Contributed by Martin Krischik</span>
-<span class="hl slc">-------------------------------------------------------------------------------</span>
+<span class="hl slc">--  Modified by Georg Bauhaus and Jonathan Parker</span>
 
-<span class="hl kwa">pragma</span> Ada_2005<span class="hl sym">;</span>
-
-<span class="hl slc">--  Standart set of performance improving pragmas as suggested by the GNAT users manual.</span>
-<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Asynchronous_Select_Nesting <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
 <span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Abort_Statements<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Asynchronous_Select_Nesting <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
 
-<span class="hl kwa">with</span> Ada.Characters.Handling<span class="hl sym">;</span>
 <span class="hl kwa">with</span> Ada.Characters.Latin_1<span class="hl sym">;</span>
-<span class="hl kwa">with</span> Ada.Containers.Generic_Constrained_Array_Sort<span class="hl sym">;</span>
-<span class="hl kwa">with</span> Ada.Containers.Hashed_Maps<span class="hl sym">;</span>
-<span class="hl kwa">with</span> Ada.Float_Text_IO<span class="hl sym">;</span>
-<span class="hl kwa">with</span> Ada.IO_Exceptions<span class="hl sym">;</span>
 <span class="hl kwa">with</span> Ada.Integer_Text_IO<span class="hl sym">;</span>
-<span class="hl kwa">with</span> Ada.Strings.Bounded<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada.Float_Text_IO<span class="hl sym">;</span>
 <span class="hl kwa">with</span> Ada.Text_IO<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada.Exceptions<span class="hl sym">;</span>
 
-<span class="hl kwa">procedure</span> KNucleotide_3 <span class="hl kwa">is</span>
-   <span class="hl slc">--  Appox. gain 0.3s for N=250.000 - that realy proves that runtime checks are bad for you</span>
-   <span class="hl slc">--  ;-).</span>
-   <span class="hl kwa">pragma</span> Suppress <span class="hl sym">(</span>All_Checks<span class="hl sym">);</span>
+<span class="hl kwa">with</span> String_Fragments<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Data_Input<span class="hl sym">;</span>
+<span class="hl kwa">with</span> GNAT.Heap_Sort_G<span class="hl sym">;</span>
+<span class="hl kwa">with</span> GNAT.HTable<span class="hl sym">;</span>
 
-   <span class="hl kwa">subtype</span> Frequencies <span class="hl kwa">is</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">1</span> .. <span class="hl num">18</span><span class="hl sym">;</span>
+<span class="hl kwa">procedure</span> KNucleotide <span class="hl kwa">is</span>
 
-   <span class="hl kwa">package</span> Fragments <span class="hl kwa">is new</span> Ada.Strings.Bounded.Generic_Bounded_Length <span class="hl sym">(</span>Frequencies<span class="hl sym">'</span>Last<span class="hl sym">);</span>
+   <span class="hl kwa">subtype</span> Fragment_Lengths <span class="hl kwa">is</span> <span class="hl kwb">Integer</span> <span class="hl kwa">range</span> <span class="hl num">1</span> .. <span class="hl num">18</span><span class="hl sym">;</span>
 
-   <span class="hl kwa">use type</span> Fragments.Bounded_String<span class="hl sym">;</span>
+   <span class="hl slc">--  Data read as single String:</span>
 
-   <span class="hl kwa">subtype</span> Fragment <span class="hl kwa">is</span> Fragments.Bounded_String<span class="hl sym">;</span>
+   Buffer <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Data_Input.Read<span class="hl sym">;</span>
 
-   <span class="hl kwa">package</span> Reader <span class="hl kwa">is</span>
-      <span class="hl slc">----------------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Read data from Standart_Input and return the section THREE as String</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Read <span class="hl kwa">return</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Read<span class="hl sym">);</span>
-   <span class="hl kwa">end</span> Reader<span class="hl sym">;</span>
+   <span class="hl slc">--  Calculate and write data - either a percentage for all fragments found</span>
+   <span class="hl slc">--  or - when Nucleotide_Fragment is given - the count for that fragment.</span>
 
-   <span class="hl slc">------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  The Calculator package calculates the nucleotide frequencies and keeps the result inside</span>
-   <span class="hl slc">--  a hash table as requested by the shootout rules.</span>
-   <span class="hl slc">--</span>
-   <span class="hl kwa">package</span> Calculator <span class="hl kwa">is</span>
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Elements used to store inside hash table</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">type</span> Element_Type <span class="hl kwa">is private</span><span class="hl sym">;</span>
-      <span class="hl kwa">type</span> Element_Array <span class="hl kwa">is array</span> <span class="hl sym">(</span><span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl sym">&lt;&gt;)</span> <span class="hl kwa">of</span> Element_Type<span class="hl sym">;</span>
+   <span class="hl kwa">generic</span>
+      <span class="hl kwa">with package</span> Fragments <span class="hl kwa">is new</span> String_Fragments<span class="hl sym">(&lt;&gt;);</span>
+   <span class="hl kwa">package</span> Work <span class="hl kwa">is</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Calculate the calculates the nucleotide frequencies</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">procedure</span> Calculate_Frequencies <span class="hl sym">(</span>Length <span class="hl sym">:</span> <span class="hl kwa">in</span> Frequencies<span class="hl sym">);</span>
+      <span class="hl kwa">procedure</span> Write
+        <span class="hl sym">(</span>Nucleotide_Length   <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment_Lengths<span class="hl sym">;</span>
+         Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragments.Fragment <span class="hl sym">:=</span> Fragments.Null_Fragment<span class="hl sym">);</span>
 
-      <span class="hl kwa">function</span> Hash <span class="hl sym">(</span>Key <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> Ada.Containers.Hash_Type<span class="hl sym">;</span>
+      <span class="hl kwa">task</span> Writer <span class="hl kwa">is</span>
+         <span class="hl slc">--</span>
+         <span class="hl slc">--  Performs `Write` calls</span>
+         <span class="hl slc">--</span>
+         <span class="hl kwa">pragma</span> Storage_Size <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">24</span><span class="hl sym">);</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Calculate the calculates the nucleotide frequencies</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Get <span class="hl sym">(</span>Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+         <span class="hl kwa">entry</span> Set <span class="hl sym">(</span>Nucleotide_Length   <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment_Lengths<span class="hl sym">;</span>
+                    Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragments.Fragment <span class="hl sym">:=</span> Fragments.Null_Fragment<span class="hl sym">);</span>
+      <span class="hl kwa">end</span> Writer<span class="hl sym">;</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Get count for element</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Key <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Work<span class="hl sym">;</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Get count for element</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Count <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Get total count over all elements - as well as the count of elements</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">procedure</span> Get_Total <span class="hl sym">(</span>Total <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> Count <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">);</span>
-      <span class="hl kwa">function</span> Get_Array <span class="hl sym">(</span>Count <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">return</span> Element_Array<span class="hl sym">;</span>
-      <span class="hl kwa">function</span> <span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">(</span>Left <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">;</span> Right <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
 
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span><span class="hl str">&quot;&gt;&quot;</span><span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Calculate_Frequencies<span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Count<span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Get<span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Get_Total<span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Hash<span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Key<span class="hl sym">);</span>
+   <span class="hl kwa">type</span> Order <span class="hl kwa">is array</span> <span class="hl sym">(</span>Fragment_Lengths<span class="hl sym">)</span> <span class="hl kwa">of</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">protected</span> Printer <span class="hl kwa">is</span>
+      <span class="hl slc">--</span>
+      <span class="hl slc">--  Serializes access to output</span>
+      <span class="hl slc">--</span>
+      <span class="hl kwa">entry</span> Seize <span class="hl sym">(</span>Fragment_Lengths<span class="hl sym">);</span>
+      <span class="hl kwa">procedure</span> Release <span class="hl sym">(</span>L <span class="hl sym">:</span> Fragment_Lengths<span class="hl sym">);</span>
+
    <span class="hl kwa">private</span>
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Elements used to store inside hash table.</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">type</span> Element_Type <span class="hl kwa">is record</span>
-         Count <span class="hl sym">:</span> <span class="hl kwb">Natural</span>  <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         Key   <span class="hl sym">:</span> Fragment <span class="hl sym">:=</span> Fragments.Null_Bounded_String<span class="hl sym">;</span>
-      <span class="hl kwa">end record</span><span class="hl sym">;</span>
-   <span class="hl kwa">end</span> Calculator<span class="hl sym">;</span>
+      Done <span class="hl sym">:</span> Order <span class="hl sym">:=</span>
+        <span class="hl sym">(</span><span class="hl num">1</span> <span class="hl sym">|</span> <span class="hl num">2</span> <span class="hl sym">|</span> <span class="hl num">3</span> <span class="hl sym">|</span> <span class="hl num">4</span> <span class="hl sym">|</span> <span class="hl num">6</span> <span class="hl sym">|</span> <span class="hl num">12</span> <span class="hl sym">|</span> <span class="hl num">18</span> <span class="hl sym">=&gt;</span> False<span class="hl sym">,</span>
+         <span class="hl kwa">others</span> <span class="hl sym">=&gt;</span> True<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Printer<span class="hl sym">;</span>
 
-   <span class="hl slc">----------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  Calculate and write data - either a percentage for all fragments found or - when</span>
-   <span class="hl slc">--  Nucleotide_Fragment is given - the count for that fragment.</span>
-   <span class="hl slc">--</span>
-   <span class="hl kwa">procedure</span> Write <span class="hl sym">(</span>Nucleotide_Length <span class="hl sym">:</span> <span class="hl kwa">in</span> Frequencies<span class="hl sym">);</span>
-   <span class="hl kwa">procedure</span> Write <span class="hl sym">(</span>Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">);</span>
+   <span class="hl kwa">protected body</span> Printer <span class="hl kwa">is</span>
 
-   <span class="hl slc">----------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  List of fragments to be analyzed for this test</span>
-   <span class="hl slc">--</span>
-   Fragment_3  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragment <span class="hl sym">:=</span> Fragments.To_Bounded_String <span class="hl sym">(</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">);</span>
-   Fragment_4  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragment <span class="hl sym">:=</span> Fragments.To_Bounded_String <span class="hl sym">(</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">);</span>
-   Fragment_6  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragment <span class="hl sym">:=</span> Fragments.To_Bounded_String <span class="hl sym">(</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">);</span>
-   Fragment_12 <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragment <span class="hl sym">:=</span> Fragments.To_Bounded_String <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">);</span>
-   Fragment_18 <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragment <span class="hl sym">:=</span> Fragments.To_Bounded_String <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">);</span>
+      <span class="hl slc">--  Use families' entry indexes to find that output of preceding</span>
+      <span class="hl slc">--  `Write`s has already been produced thus ordering the tasks's results.</span>
 
-   <span class="hl kwa">package body</span> Reader <span class="hl kwa">is</span>
-      <span class="hl slc">-------------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Skip data on Standart_Input until &quot;&gt;THREE&quot; is found</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">procedure</span> Skip_To_Section<span class="hl sym">;</span>
-
-      <span class="hl slc">-------------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Read next data section - until EOF oder a line beginning with &gt; is found</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Read_Section <span class="hl kwa">return</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
-
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Read_Section<span class="hl sym">);</span>
-      <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Skip_To_Section<span class="hl sym">);</span>
-
-      Section_Marker <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Character</span> <span class="hl sym">:= '&gt;';</span>
-      Section        <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span>    <span class="hl sym">:=</span> Section_Marker <span class="hl sym">&amp;</span> <span class="hl str">&quot;THREE&quot;</span><span class="hl sym">;</span>
-
-      <span class="hl kwa">function</span> Read <span class="hl kwa">return</span> <span class="hl kwb">String</span> <span class="hl kwa">is</span>
+      <span class="hl kwa">entry</span> Seize <span class="hl sym">(</span><span class="hl kwa">for</span> L <span class="hl kwa">in</span> Fragment_Lengths<span class="hl sym">)</span>
+      <span class="hl kwa">when</span> Done <span class="hl sym">(</span><span class="hl num">1</span> .. Fragment_Lengths<span class="hl sym">'</span>Pred<span class="hl sym">(</span>L<span class="hl sym">)) = (</span><span class="hl num">1</span> .. Fragment_Lengths<span class="hl sym">'</span>Pred<span class="hl sym">(</span>L<span class="hl sym">) =&gt;</span> True<span class="hl sym">)</span> <span class="hl kwa">is</span>
       <span class="hl kwa">begin</span>
-         Skip_To_Section<span class="hl sym">;</span>
-         <span class="hl kwa">return</span> Ada.Characters.Handling.To_Upper <span class="hl sym">(</span>Read_Section<span class="hl sym">);</span>
-      <span class="hl kwa">end</span> Read<span class="hl sym">;</span>
+         <span class="hl kwa">null</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Seize<span class="hl sym">;</span>
 
-      <span class="hl slc">-------------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Read next data section - until EOF oder a line beginning with &gt; is found</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Read_Section <span class="hl kwa">return</span> <span class="hl kwb">String</span> <span class="hl kwa">is</span>
-         Buffer     <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">10240</span><span class="hl sym">);</span>
-         Read_First <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Buffer<span class="hl sym">'</span>First<span class="hl sym">;</span>
-         Read_Last  <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Buffer<span class="hl sym">'</span>First<span class="hl sym">;</span>
+      <span class="hl kwa">procedure</span> Release <span class="hl sym">(</span>L <span class="hl sym">:</span> Fragment_Lengths<span class="hl sym">)</span> <span class="hl kwa">is</span>
       <span class="hl kwa">begin</span>
-         <span class="hl kwa">loop</span>
-            Ada.Text_IO.Get_Line
-              <span class="hl sym">(</span>Item <span class="hl sym">=&gt;</span> Buffer <span class="hl sym">(</span>Read_First .. Buffer<span class="hl sym">'</span>Last<span class="hl sym">),</span>
-               Last <span class="hl sym">=&gt;</span> Read_Last<span class="hl sym">);</span>
-            <span class="hl kwa">exit when</span> Buffer <span class="hl sym">(</span>Read_First<span class="hl sym">) =</span> Section_Marker<span class="hl sym">;</span>
-            <span class="hl kwa">if</span> Read_Last <span class="hl sym">=</span> Buffer<span class="hl sym">'</span>Last <span class="hl kwa">then</span>
-               <span class="hl kwa">return</span> Buffer <span class="hl sym">&amp;</span> Read_Section<span class="hl sym">;</span>
-            <span class="hl kwa">end if</span><span class="hl sym">;</span>
-            Read_First <span class="hl sym">:=</span> Read_Last <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
-         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
-         <span class="hl kwa">return</span> Buffer <span class="hl sym">(</span><span class="hl num">1</span> .. Read_Last<span class="hl sym">);</span>
-      <span class="hl kwa">exception</span>
-         <span class="hl kwa">when</span> Ada.IO_Exceptions.End_Error <span class="hl sym">=&gt;</span>
-            <span class="hl kwa">return</span> Buffer <span class="hl sym">(</span><span class="hl num">1</span> .. Read_Last<span class="hl sym">);</span>
-      <span class="hl kwa">end</span> Read_Section<span class="hl sym">;</span>
+         Done <span class="hl sym">(</span>L<span class="hl sym">) :=</span> True<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Release<span class="hl sym">;</span>
 
-      <span class="hl slc">-------------------------------------------------------------------------</span>
+   <span class="hl kwa">end</span> Printer<span class="hl sym">;</span>
+
+   <span class="hl kwa">package body</span> Work <span class="hl kwa">is</span>
+
+      <span class="hl slc">---------------------</span>
+      <span class="hl slc">-- procedure Write --</span>
+      <span class="hl slc">---------------------</span>
+
+      <span class="hl slc">--  Procedure KNucleotide's tasks call Write in order to calculate and</span>
+      <span class="hl slc">--  write data - either a percentage for all fragments found or - when</span>
+      <span class="hl slc">--  Nucleotide_Fragment is given - the count for that fragment.</span>
       <span class="hl slc">--</span>
-      <span class="hl slc">--  Skip data on Standart_Input until &quot;&gt;THREE&quot; is found</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">procedure</span> Skip_To_Section <span class="hl kwa">is</span>
-         <span class="hl slc">--</span>
-         <span class="hl slc">--  The line lenght of the test data is 60 character. Note: Get_Line would survive</span>
-         <span class="hl slc">--  longer lines as well - they would just be read in two parts.</span>
-         <span class="hl slc">--</span>
-         Line      <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">60</span><span class="hl sym">);</span>
-         Read_Last <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
-      <span class="hl kwa">begin</span>
-         <span class="hl kwa">loop</span>
-            Ada.Text_IO.Get_Line <span class="hl sym">(</span>Item <span class="hl sym">=&gt;</span> Line<span class="hl sym">,</span> Last <span class="hl sym">=&gt;</span> Read_Last<span class="hl sym">);</span>
-            <span class="hl kwa">exit when</span> Line <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">6</span><span class="hl sym">) =</span> Section<span class="hl sym">;</span>
-         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Skip_To_Section<span class="hl sym">;</span>
-   <span class="hl kwa">end</span> Reader<span class="hl sym">;</span>
+      <span class="hl kwa">procedure</span> Write
+        <span class="hl sym">(</span>Nucleotide_Length   <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment_Lengths<span class="hl sym">;</span>
+         Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragments.Fragment <span class="hl sym">:=</span> Fragments.Null_Fragment<span class="hl sym">)</span>
+      <span class="hl kwa">is</span>
+         <span class="hl kwa">use</span> Fragments<span class="hl sym">;</span>
 
-   <span class="hl slc">---------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  Data read as single String</span>
-   <span class="hl slc">--</span>
-   Buffer <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Reader.Read<span class="hl sym">;</span>
+         <span class="hl slc">--  Package is an interface to GNAT's simple hash table: GNAT.HTable.</span>
+         <span class="hl slc">--  The package calculates nucleotide Fragment_Lengths and keeps the</span>
+         <span class="hl slc">--  result inside a hash table as requested by the shootout rules.</span>
 
-   <span class="hl slc">------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  The Calculator package calculates the nucleotide frequencies and keeps the result inside</span>
-   <span class="hl slc">--  a hash table as requested by the shootout rules.</span>
-   <span class="hl slc">--</span>
-   <span class="hl kwa">package body</span> Calculator <span class="hl kwa">is</span>
+         <span class="hl kwa">package</span> Calculator <span class="hl kwa">is</span>
 
-      <span class="hl kwa">procedure</span> Increment <span class="hl sym">(</span>Key <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">;</span> Element <span class="hl sym">:</span> <span class="hl kwa">in out</span> Element_Type<span class="hl sym">);</span>
+            <span class="hl slc">--  Elements used to store inside hash table:</span>
 
-      <span class="hl kwa">package</span> Element_Maps <span class="hl kwa">is new</span> Ada.Containers.Hashed_Maps <span class="hl sym">(</span>
-         Key_Type <span class="hl sym">=&gt;</span> Fragment<span class="hl sym">,</span>
-         Element_Type <span class="hl sym">=&gt;</span> Element_Type<span class="hl sym">,</span>
-         Hash <span class="hl sym">=&gt;</span> Hash<span class="hl sym">,</span>
-         Equivalent_Keys <span class="hl sym">=&gt;</span> <span class="hl str">&quot;=&quot;</span><span class="hl sym">,</span>
-         <span class="hl str">&quot;=&quot;</span> <span class="hl sym">=&gt;</span> Calculator. <span class="hl str">&quot;=&quot;</span><span class="hl sym">);</span>
+            <span class="hl kwa">type</span> Element_Type <span class="hl kwa">is private</span><span class="hl sym">;</span>
+            <span class="hl kwa">type</span> Element_Access <span class="hl kwa">is access</span> Element_Type<span class="hl sym">;</span>
+            <span class="hl kwa">for</span> Element_Access<span class="hl sym">'</span>Storage_Size <span class="hl kwa">use</span> <span class="hl num">16</span>#<span class="hl num">60</span>_00_01#<span class="hl sym">;</span>
 
-      Table <span class="hl sym">:</span> Element_Maps.Map<span class="hl sym">;</span>
 
-      <span class="hl kwa">function</span> <span class="hl str">&quot;&gt;&quot;</span> <span class="hl sym">(</span>Left <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">;</span> Right <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Boolean</span> <span class="hl kwa">is</span>
-      <span class="hl kwa">begin</span>
-         <span class="hl kwa">return</span> Left.Count <span class="hl sym">&gt;</span> Right.Count<span class="hl sym">;</span>
-      <span class="hl kwa">end</span> <span class="hl str">&quot;&gt;&quot;</span><span class="hl sym">;</span>
+            <span class="hl slc">--  Calculate Fragment_Lengths of occurence of the nucleotides:</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Calculate the calculates the nucleotide frequencies</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">procedure</span> Calculate_Frequencies <span class="hl sym">(</span>Length <span class="hl sym">:</span> Frequencies<span class="hl sym">)</span> <span class="hl kwa">is</span>
+            <span class="hl kwa">procedure</span> Get_Frequencies <span class="hl sym">(</span>Length <span class="hl sym">:</span> Fragment_Lengths<span class="hl sym">);</span>
 
-      <span class="hl kwa">begin</span>
-         Table.Clear<span class="hl sym">;</span>
-         Table.Reserve_Capacity <span class="hl sym">(</span>Ada.Containers.Count_Type <span class="hl sym">(</span><span class="hl num">4</span> <span class="hl sym">**</span> Length<span class="hl sym">));</span>
-         <span class="hl kwa">for</span> I <span class="hl kwa">in</span> <span class="hl num">1</span> .. Buffer<span class="hl sym">'</span>Last <span class="hl sym">-</span> <span class="hl kwb">Integer</span> <span class="hl sym">(</span>Length<span class="hl sym">) +</span> <span class="hl num">1</span> <span class="hl kwa">loop</span>
-            <span class="hl kwa">declare</span>
-               <span class="hl kwa">use type</span> Element_Maps.Cursor<span class="hl sym">;</span>
+            <span class="hl slc">--  Get the count for the given nucleotide fragment:</span>
 
-               Key     <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragment            <span class="hl sym">:=</span>
-                  Fragments.To_Bounded_String <span class="hl sym">(</span>Buffer <span class="hl sym">(</span>I .. I <span class="hl sym">+</span> <span class="hl kwb">Integer</span> <span class="hl sym">(</span>Length<span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">));</span>
-               Element <span class="hl sym">:</span> <span class="hl kwa">constant</span> Element_Maps.Cursor <span class="hl sym">:=</span> Table.Find <span class="hl sym">(</span>Key<span class="hl sym">);</span>
+            <span class="hl kwa">function</span> Number_Counted <span class="hl sym">(</span>Nucleotide_Fragment <span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+
+            <span class="hl slc">--  Start to iterate over all elements of hash table:</span>
+
+            <span class="hl kwa">function</span> Get_First <span class="hl kwa">return</span> Element_Access<span class="hl sym">;</span>
+
+            <span class="hl slc">--  Continue itereation over the hash table:</span>
+
+            <span class="hl kwa">function</span> Get_Next <span class="hl kwa">return</span> Element_Access<span class="hl sym">;</span>
+
+            <span class="hl slc">--  Key and value when computed:</span>
+
+            <span class="hl kwa">function</span> Count_Of <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">not null</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+            <span class="hl kwa">function</span> Fragment_Of <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">not null</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment<span class="hl sym">;</span>
+
+            <span class="hl slc">--  Get total count over all elements - as well as the count of</span>
+            <span class="hl slc">--  elements:</span>
+
+            <span class="hl kwa">procedure</span> Get_Totals <span class="hl sym">(</span>Total <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> Count <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">);</span>
+
+         <span class="hl kwa">private</span>
+            <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Count_of<span class="hl sym">,</span> Fragment_Of<span class="hl sym">);</span>
+
+            <span class="hl kwa">type</span> Element_Type <span class="hl kwa">is record</span>
+               Count <span class="hl sym">:</span> <span class="hl kwb">Natural</span>        <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+               Key   <span class="hl sym">:</span> Fragment       <span class="hl sym">:=</span> Fragments.Null_Fragment<span class="hl sym">;</span>
+               Next  <span class="hl sym">:</span> Element_Access <span class="hl sym">:=</span> <span class="hl kwa">null</span><span class="hl sym">;</span>
+            <span class="hl kwa">end record</span><span class="hl sym">;</span>
+         <span class="hl kwa">end</span> Calculator<span class="hl sym">;</span>
+
+         <span class="hl kwa">package body</span> Calculator <span class="hl kwa">is</span>
+
+            Log_Table_Size <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">'</span>Min <span class="hl sym">(</span>Fragment<span class="hl sym">'</span>Last<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">+</span><span class="hl num">4</span><span class="hl sym">,</span> <span class="hl num">17</span><span class="hl sym">);</span>
+            Table_Size     <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">2</span> <span class="hl sym">**</span> Log_Table_Size<span class="hl sym">;</span>
+
+            <span class="hl kwa">subtype</span> Hash_Type <span class="hl kwa">is</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Table_Size <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+            <span class="hl kwa">function</span> Hash <span class="hl sym">(</span>Key <span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> Hash_Type<span class="hl sym">;</span>
+            <span class="hl kwa">procedure</span> Set_Next <span class="hl sym">(</span>E <span class="hl sym">:</span> Element_Access<span class="hl sym">;</span> Next <span class="hl sym">:</span> Element_Access<span class="hl sym">);</span>
+            <span class="hl kwa">function</span> Next <span class="hl sym">(</span>E <span class="hl sym">:</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> Element_Access<span class="hl sym">;</span>
+            <span class="hl kwa">function</span> Get_Key <span class="hl sym">(</span>E <span class="hl sym">:</span> <span class="hl kwa">not null</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment<span class="hl sym">;</span>
+
+            <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Hash<span class="hl sym">,</span> Set_Next<span class="hl sym">,</span> Next<span class="hl sym">,</span> Get_Key<span class="hl sym">);</span>
+
+            <span class="hl kwa">package</span> Table <span class="hl kwa">is new</span> GNAT.HTable.Static_HTable
+              <span class="hl sym">(</span>Header_Num <span class="hl sym">=&gt;</span> Hash_Type<span class="hl sym">,</span>
+               Element    <span class="hl sym">=&gt;</span> Element_Type<span class="hl sym">,</span>
+               Elmt_Ptr   <span class="hl sym">=&gt;</span> Element_Access<span class="hl sym">,</span>
+               Null_Ptr   <span class="hl sym">=&gt;</span> <span class="hl kwa">null</span><span class="hl sym">,</span>
+               Key        <span class="hl sym">=&gt;</span> Fragment<span class="hl sym">,</span>
+               Hash       <span class="hl sym">=&gt;</span> Hash<span class="hl sym">,</span>
+               Equal      <span class="hl sym">=&gt;</span> Fragments.<span class="hl str">&quot;=&quot;</span><span class="hl sym">,</span>
+               Set_Next   <span class="hl sym">=&gt;</span> Set_Next<span class="hl sym">,</span>
+               Next       <span class="hl sym">=&gt;</span> Next<span class="hl sym">,</span>
+               Get_Key    <span class="hl sym">=&gt;</span> Get_Key<span class="hl sym">);</span>
+
+
+            <span class="hl kwa">function</span> Hash <span class="hl sym">(</span>Key <span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> Hash_Type <span class="hl kwa">is</span>
+               <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>Hash_Type<span class="hl sym">'</span>First <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">);</span>
+               <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>Hash_Type<span class="hl sym">'</span>Last  <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">**</span>Log_Table_Size <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+               <span class="hl kwa">type</span> Uns_32 <span class="hl kwa">is mod</span> <span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">32</span><span class="hl sym">;</span>
+               H <span class="hl sym">:</span> Uns_32 <span class="hl sym">:=</span> <span class="hl kwb">Character</span><span class="hl sym">'</span>Pos <span class="hl sym">(</span>Key <span class="hl sym">(</span>Key<span class="hl sym">'</span>First<span class="hl sym">));</span>
             <span class="hl kwa">begin</span>
-               <span class="hl kwa">if</span> Element <span class="hl sym">/=</span> Element_Maps.No_Element <span class="hl kwa">then</span>
-                  Table.Update_Element <span class="hl sym">(</span>Position <span class="hl sym">=&gt;</span> Element<span class="hl sym">,</span> Process <span class="hl sym">=&gt;</span> Increment<span class="hl sym">'</span><span class="hl kwa">Access</span><span class="hl sym">);</span>
+               <span class="hl kwa">for</span> J <span class="hl kwa">in</span> Key<span class="hl sym">'</span>First <span class="hl sym">+</span> <span class="hl num">1</span> .. Key<span class="hl sym">'</span>Last <span class="hl kwa">loop</span>
+                  H <span class="hl sym">:=</span> <span class="hl kwb">Character</span><span class="hl sym">'</span>Pos <span class="hl sym">(</span>Key <span class="hl sym">(</span>J<span class="hl sym">)) +</span> H <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">3</span> <span class="hl sym">+</span> H<span class="hl sym">;</span>
+               <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+               H <span class="hl sym">:= (</span>H <span class="hl sym">/</span> <span class="hl num">2</span><span class="hl sym">**</span>Log_Table_Size<span class="hl sym">)</span> <span class="hl kwa">xor</span> H<span class="hl sym">;</span>
+               <span class="hl kwa">return</span> Hash_Type<span class="hl sym">'</span>Base <span class="hl sym">(</span>H <span class="hl kwa">mod</span> <span class="hl num">2</span><span class="hl sym">**</span>Log_Table_Size<span class="hl sym">);</span>
+            <span class="hl kwa">end</span> Hash<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">procedure</span> Get_Frequencies <span class="hl sym">(</span>Length <span class="hl sym">:</span> Fragment_Lengths<span class="hl sym">)</span> <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">for</span> I <span class="hl kwa">in</span>  <span class="hl num">1</span> .. Buffer<span class="hl sym">'</span>Last <span class="hl sym">-</span> Length <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl kwa">loop</span>
+                  <span class="hl kwa">declare</span>
+                     Key <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl kwa">renames</span> Buffer<span class="hl sym">(</span>I .. I <span class="hl sym">+</span> Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+                     Element <span class="hl sym">:</span> <span class="hl kwa">constant</span> Element_Access <span class="hl sym">:=</span> Table.Get <span class="hl sym">(</span>Key<span class="hl sym">);</span>
+                  <span class="hl kwa">begin</span>
+                     <span class="hl kwa">if</span> Element <span class="hl sym">/=</span> <span class="hl kwa">null then</span>
+                        Element.<span class="hl kwa">all</span>.Count <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">'</span>Succ <span class="hl sym">(</span>Element.<span class="hl kwa">all</span>.Count<span class="hl sym">);</span>
+                     <span class="hl kwa">else</span>
+                        Table.Set <span class="hl sym">(</span><span class="hl kwa">new</span> Element_Type<span class="hl sym">'(</span>Count <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">,</span>
+                                                     Key <span class="hl sym">=&gt;</span> Key<span class="hl sym">,</span>
+                                                     Next <span class="hl sym">=&gt;</span> <span class="hl kwa">null</span><span class="hl sym">));</span>
+                     <span class="hl kwa">end if</span><span class="hl sym">;</span>
+                  <span class="hl kwa">end</span><span class="hl sym">;</span>
+               <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+               <span class="hl kwa">return</span><span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Get_Frequencies<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">function</span> Count_Of <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">not null</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span> <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">return</span> Element.<span class="hl kwa">all</span>.Count<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Count_Of<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">function</span> Number_Counted <span class="hl sym">(</span>Nucleotide_Fragment <span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span> <span class="hl kwa">is</span>
+               The_Element <span class="hl sym">:</span> <span class="hl kwa">constant</span> Element_Access <span class="hl sym">:=</span> Table.Get <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">);</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">if</span> The_Element <span class="hl sym">/=</span> <span class="hl kwa">null then</span>
+                  <span class="hl kwa">return</span> The_Element.<span class="hl kwa">all</span>.Count<span class="hl sym">;</span>
                <span class="hl kwa">else</span>
-                  Table.Insert
-                    <span class="hl sym">(</span>Key      <span class="hl sym">=&gt;</span> Key<span class="hl sym">,</span>
-                     New_Item <span class="hl sym">=&gt;</span> Element_Type<span class="hl sym">'(</span>Count <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">,</span> Key <span class="hl sym">=&gt;</span> Key<span class="hl sym">));</span>
+                  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
                <span class="hl kwa">end if</span><span class="hl sym">;</span>
-            <span class="hl kwa">end</span><span class="hl sym">;</span>
-         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
-         <span class="hl kwa">return</span><span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Calculate_Frequencies<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Number_Counted<span class="hl sym">;</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Get count for element</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Count <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span> <span class="hl kwa">is</span>
-      <span class="hl kwa">begin</span>
-         <span class="hl kwa">return</span> Element.Count<span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Count<span class="hl sym">;</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Calculate the calculates the nucleotide frequencies</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Get <span class="hl sym">(</span>Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Natural</span> <span class="hl kwa">is</span>
-         <span class="hl kwa">use type</span> Element_Maps.Cursor<span class="hl sym">;</span>
-         The_Element <span class="hl sym">:</span> <span class="hl kwa">constant</span> Element_Maps.Cursor <span class="hl sym">:=</span> Table.Find <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">);</span>
-      <span class="hl kwa">begin</span>
-         <span class="hl kwa">if</span> The_Element <span class="hl sym">/=</span> Element_Maps.No_Element <span class="hl kwa">then</span>
-            <span class="hl kwa">return</span> Element_Maps.Element <span class="hl sym">(</span>The_Element<span class="hl sym">)</span>.Count<span class="hl sym">;</span>
+            <span class="hl kwa">function</span> Get_First <span class="hl kwa">return</span> Element_Access <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">return</span> Table.Get_First<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Get_First<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">function</span> Get_Key <span class="hl sym">(</span>E <span class="hl sym">:</span> <span class="hl kwa">not null</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">return</span> E.<span class="hl kwa">all</span>.Key<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Get_Key<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">function</span> Get_Next <span class="hl kwa">return</span> Element_Access <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">return</span> Table.Get_Next<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Get_Next<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">procedure</span> Get_Totals <span class="hl sym">(</span>Total <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> Count <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+               The_Element <span class="hl sym">:</span> Element_Access <span class="hl sym">:=</span> Table.Get_First<span class="hl sym">;</span>
+            <span class="hl kwa">begin</span>
+               Total <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+               Count <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+               <span class="hl kwa">while</span> The_Element <span class="hl sym">/=</span> <span class="hl kwa">null loop</span>
+                  Total       <span class="hl sym">:=</span> Total <span class="hl sym">+</span> The_Element.<span class="hl kwa">all</span>.Count<span class="hl sym">;</span>
+                  Count       <span class="hl sym">:=</span> Count <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                  The_Element <span class="hl sym">:=</span> Table.Get_Next<span class="hl sym">;</span>
+               <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Get_Totals<span class="hl sym">;</span>
+
+
+            <span class="hl kwa">function</span> Fragment_Of <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">not null</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">return</span> Element.<span class="hl kwa">all</span>.Key<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Fragment_Of<span class="hl sym">;</span>
+
+            <span class="hl kwa">function</span> Next <span class="hl sym">(</span>E <span class="hl sym">:</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">return</span> Element_Access <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               <span class="hl kwa">return</span> E.<span class="hl kwa">all</span>.Next<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Next<span class="hl sym">;</span>
+
+            <span class="hl kwa">procedure</span> Set_Next <span class="hl sym">(</span>E <span class="hl sym">:</span> Element_Access<span class="hl sym">;</span> Next <span class="hl sym">:</span> Element_Access<span class="hl sym">)</span> <span class="hl kwa">is</span>
+            <span class="hl kwa">begin</span>
+               E.<span class="hl kwa">all</span>.Next <span class="hl sym">:=</span> Next<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Set_Next<span class="hl sym">;</span>
+
+         <span class="hl kwa">end</span> Calculator<span class="hl sym">;</span>
+
+      <span class="hl kwa">begin</span> <span class="hl slc">--  Write</span>
+
+         Calculator.Get_Frequencies <span class="hl sym">(</span>Nucleotide_Length<span class="hl sym">);</span>
+
+         <span class="hl kwa">if</span> Nucleotide_Fragment <span class="hl sym">=</span> Fragments.Null_Fragment <span class="hl kwa">then</span>
+            Calculate_Total <span class="hl sym">:</span> <span class="hl kwa">declare</span>
+               Num_Table_Entries <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+               Sum_Of_Counts     <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+            <span class="hl kwa">begin</span>
+               Calculator.Get_Totals
+                 <span class="hl sym">(</span>Total <span class="hl sym">=&gt;</span> Sum_Of_Counts<span class="hl sym">,</span>
+                  Count <span class="hl sym">=&gt;</span> Num_Table_Entries<span class="hl sym">);</span>
+
+               Get_Sort_Put <span class="hl sym">:</span> <span class="hl kwa">declare</span>
+                  Data <span class="hl sym">:</span> <span class="hl kwa">array</span> <span class="hl sym">(</span><span class="hl num">0</span> .. Num_Table_Entries<span class="hl sym">)</span> <span class="hl kwa">of</span> Calculator.Element_Access<span class="hl sym">;</span>
+
+                  <span class="hl slc">--  heap sort subprograms</span>
+                  <span class="hl kwa">procedure</span> Move <span class="hl sym">(</span>From <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> To <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">);</span>
+                  <span class="hl kwa">function</span> Less_Then <span class="hl sym">(</span>Op1<span class="hl sym">,</span> Op2 <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+
+                  <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Move<span class="hl sym">,</span> Less_Then<span class="hl sym">);</span>
+
+                  <span class="hl kwa">function</span> Less_Then <span class="hl sym">(</span>Op1<span class="hl sym">,</span> Op2 <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Boolean</span> <span class="hl kwa">is</span>
+                  <span class="hl kwa">begin</span>
+                     <span class="hl kwa">return</span>
+                       Calculator.Count_Of <span class="hl sym">(</span>Data <span class="hl sym">(</span>Op1<span class="hl sym">))</span>
+                       <span class="hl sym">&gt;</span>
+                       Calculator.Count_Of <span class="hl sym">(</span>Data <span class="hl sym">(</span>Op2<span class="hl sym">));</span>
+                  <span class="hl kwa">end</span> Less_Then<span class="hl sym">;</span>
+
+                  <span class="hl kwa">procedure</span> Move <span class="hl sym">(</span>From <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> To <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+                  <span class="hl kwa">begin</span>
+                     Data <span class="hl sym">(</span>To<span class="hl sym">) :=</span> Data <span class="hl sym">(</span>From<span class="hl sym">);</span>
+                  <span class="hl kwa">end</span> Move<span class="hl sym">;</span>
+
+                  <span class="hl kwa">package</span> Heap_Sort <span class="hl kwa">is new</span> GNAT.Heap_Sort_G
+                    <span class="hl sym">(</span>Move <span class="hl sym">=&gt;</span> Move<span class="hl sym">,</span>
+                     Lt   <span class="hl sym">=&gt;</span> Less_Then<span class="hl sym">);</span>
+
+               <span class="hl kwa">begin</span>  <span class="hl slc">-- Get_Sort_Put</span>
+                  Data <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) :=</span> <span class="hl kwa">null</span><span class="hl sym">;</span>
+                  Data <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) :=</span> Calculator.Get_First<span class="hl sym">;</span>
+
+                  <span class="hl kwa">for</span> I <span class="hl kwa">in</span>  <span class="hl num">2</span> .. Data<span class="hl sym">'</span>Last <span class="hl kwa">loop</span>
+                     Data <span class="hl sym">(</span>I<span class="hl sym">) :=</span> Calculator.Get_Next<span class="hl sym">;</span>
+                  <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+                  Heap_Sort.Sort <span class="hl sym">(</span>Data<span class="hl sym">'</span>Last<span class="hl sym">);</span>
+
+                  Printer.Seize <span class="hl sym">(</span>Nucleotide_Length<span class="hl sym">);</span>
+                  <span class="hl kwa">for</span> I <span class="hl kwa">in</span>  <span class="hl num">1</span> .. Data<span class="hl sym">'</span>Last <span class="hl kwa">loop</span>
+                     Ada.Text_IO.Put <span class="hl sym">(</span>Calculator.Fragment_Of <span class="hl sym">(</span>Data <span class="hl sym">(</span>I<span class="hl sym">)) &amp; ' ');</span>
+                     Ada.Float_Text_IO.Put
+                       <span class="hl sym">(</span>Item <span class="hl sym">=&gt; (</span><span class="hl num">100.0</span>
+                                   <span class="hl sym">*</span> <span class="hl kwb">Float</span> <span class="hl sym">(</span>Calculator.Count_Of <span class="hl sym">(</span>Data <span class="hl sym">(</span>I<span class="hl sym">)))</span>
+                                   <span class="hl sym">/</span> <span class="hl kwb">Float</span> <span class="hl sym">(</span>Sum_Of_Counts<span class="hl sym">)),</span>
+                        Fore <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">,</span>
+                        Aft  <span class="hl sym">=&gt;</span> <span class="hl num">3</span><span class="hl sym">,</span>
+                        Exp  <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+                     Ada.Text_IO.New_Line<span class="hl sym">;</span>
+                  <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+                  Ada.Text_IO.New_Line<span class="hl sym">;</span>
+                  Printer.Release <span class="hl sym">(</span>Nucleotide_Length<span class="hl sym">);</span>
+               <span class="hl kwa">end</span> Get_Sort_Put<span class="hl sym">;</span>
+            <span class="hl kwa">end</span> Calculate_Total<span class="hl sym">;</span>
          <span class="hl kwa">else</span>
-            <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            Printer.Seize <span class="hl sym">(</span>Nucleotide_Length<span class="hl sym">);</span>
+            Ada.Integer_Text_IO.Put
+              <span class="hl sym">(</span>Item <span class="hl sym">=&gt;</span> Calculator.Number_Counted <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">),</span>
+               Width <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">);</span>
+            Ada.Text_IO.Put <span class="hl sym">(</span>Ada.Characters.Latin_1.HT<span class="hl sym">);</span>
+            Ada.Text_IO.Put_Line <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">);</span>
+            Printer.Release <span class="hl sym">(</span>Nucleotide_Length<span class="hl sym">);</span>
          <span class="hl kwa">end if</span><span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Get<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Write<span class="hl sym">;</span>
 
-      <span class="hl kwa">function</span> Get_Array <span class="hl sym">(</span>Count <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">return</span> Element_Array <span class="hl kwa">is</span>
-         <span class="hl kwa">subtype</span> Retval_Index <span class="hl kwa">is</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">1</span> .. Count<span class="hl sym">;</span>
-         <span class="hl kwa">subtype</span> Retval_Type <span class="hl kwa">is</span> Element_Array <span class="hl sym">(</span>Retval_Index<span class="hl sym">);</span>
-         Retval <span class="hl sym">:</span> Retval_Type<span class="hl sym">;</span>
+      <span class="hl kwa">task body</span> Writer <span class="hl kwa">is</span>
+         Current_Length   <span class="hl sym">:</span> Fragment_Lengths<span class="hl sym">;</span>
+         Current_Fragment <span class="hl sym">:</span> Fragments.Fragment<span class="hl sym">;</span>
 
-         <span class="hl kwa">use type</span> Calculator.Element_Type<span class="hl sym">;</span>
-
-         <span class="hl kwa">procedure</span> Sort <span class="hl kwa">is new</span> Ada.Containers.Generic_Constrained_Array_Sort <span class="hl sym">(</span>
-            Index_Type <span class="hl sym">=&gt;</span> Retval_Index<span class="hl sym">,</span>
-            Element_Type <span class="hl sym">=&gt;</span> Element_Type<span class="hl sym">,</span>
-            Array_Type <span class="hl sym">=&gt;</span> Retval_Type<span class="hl sym">,</span>
-            <span class="hl str">&quot;&lt;&quot;</span> <span class="hl sym">=&gt;</span> <span class="hl str">&quot;&gt;&quot;</span><span class="hl sym">);</span>
-
-         The_Element <span class="hl sym">:</span> Element_Maps.Cursor <span class="hl sym">:=</span> Table.First<span class="hl sym">;</span>
+         <span class="hl kwa">use</span> Fragments<span class="hl sym">;</span>
       <span class="hl kwa">begin</span>
-         <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Retval<span class="hl sym">'</span><span class="hl kwa">Range loop</span>
-            Retval <span class="hl sym">(</span>I<span class="hl sym">) :=</span> Element_Maps.Element <span class="hl sym">(</span>The_Element<span class="hl sym">);</span>
-            Element_Maps.Next <span class="hl sym">(</span>The_Element<span class="hl sym">);</span>
+         <span class="hl kwa">loop</span>
+            <span class="hl slc">--</span>
+            <span class="hl slc">--  perform a `Write` with parameters `Set` or terminate</span>
+            <span class="hl slc">--</span>
+            <span class="hl kwa">select</span>
+               <span class="hl kwa">accept</span> Set <span class="hl sym">(</span>Nucleotide_Length   <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment_Lengths<span class="hl sym">;</span>
+                           Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment <span class="hl sym">:=</span> Null_Fragment<span class="hl sym">)</span>
+               <span class="hl kwa">do</span>
+                  Current_Length   <span class="hl sym">:=</span> Nucleotide_Length<span class="hl sym">;</span>
+                  Current_Fragment <span class="hl sym">:=</span> Nucleotide_Fragment<span class="hl sym">;</span>
+               <span class="hl kwa">end</span> Set<span class="hl sym">;</span>
+               Write <span class="hl sym">(</span>Current_Length<span class="hl sym">,</span> Current_Fragment<span class="hl sym">);</span>
+            <span class="hl kwa">or</span>
+               <span class="hl kwa">terminate</span><span class="hl sym">;</span>
+            <span class="hl kwa">end select</span><span class="hl sym">;</span>
          <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">exception</span>
+         <span class="hl kwa">when</span> E <span class="hl sym">:</span> <span class="hl kwa">others</span> <span class="hl sym">=&gt;</span>
+            Ada.Text_IO.Put_Line<span class="hl sym">(</span>Ada.Text_IO.Current_Error<span class="hl sym">,</span>
+              Ada.Exceptions.Exception_Information<span class="hl sym">(</span>E<span class="hl sym">));</span>
+      <span class="hl kwa">end</span> Writer<span class="hl sym">;</span>
 
-         Sort <span class="hl sym">(</span>Retval<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Work<span class="hl sym">;</span>
 
-         <span class="hl kwa">return</span> Retval<span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Get_Array<span class="hl sym">;</span>
 
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Get total count over all elements - as well as the count of elements</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">procedure</span> Get_Total <span class="hl sym">(</span>Total <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> Count <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
-         <span class="hl kwa">use type</span> Element_Maps.Cursor<span class="hl sym">;</span>
-         The_Element <span class="hl sym">:</span> Element_Maps.Cursor <span class="hl sym">:=</span> Table.First<span class="hl sym">;</span>
-      <span class="hl kwa">begin</span>
-         Total <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         Count <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         <span class="hl kwa">while</span> The_Element <span class="hl sym">/=</span> Element_Maps.No_Element <span class="hl kwa">loop</span>
-            Total <span class="hl sym">:=</span> Total <span class="hl sym">+</span> Element_Maps.Element <span class="hl sym">(</span>The_Element<span class="hl sym">)</span>.Count<span class="hl sym">;</span>
-            Count <span class="hl sym">:=</span> Count <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
-            Element_Maps.Next <span class="hl sym">(</span>The_Element<span class="hl sym">);</span>
-         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Get_Total<span class="hl sym">;</span>
+   <span class="hl kwa">package</span> Fragments_1 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Fragments_2 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Fragments_3 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Fragments_4 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">4</span><span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Fragments_6 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">6</span><span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Fragments_12 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">12</span><span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Fragments_18 <span class="hl kwa">is new</span> String_Fragments <span class="hl sym">(</span><span class="hl num">18</span><span class="hl sym">);</span>
 
-      <span class="hl kwa">function</span> Hash <span class="hl sym">(</span>Key <span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> Ada.Containers.Hash_Type <span class="hl kwa">is</span>
-         <span class="hl kwa">use type</span> Ada.Containers.Hash_Type<span class="hl sym">;</span>
+   <span class="hl slc">--  List of fragments to be analyzed for this test:</span>
 
-         <span class="hl kwa">function</span> Rotate_Left
-           <span class="hl sym">(</span>Value  <span class="hl sym">:</span> Ada.Containers.Hash_Type<span class="hl sym">;</span>
-            Amount <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span>
-            <span class="hl kwa">return</span>   Ada.Containers.Hash_Type<span class="hl sym">;</span>
-         <span class="hl kwa">pragma</span> Import <span class="hl sym">(</span>Intrinsic<span class="hl sym">,</span> Rotate_Left<span class="hl sym">);</span>
+   Fragment_3  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragments_3.Fragment <span class="hl sym">:=</span> Fragments_3.To_Fragment <span class="hl sym">(</span><span class="hl str">&quot;GGT&quot;</span><span class="hl sym">);</span>
+   Fragment_4  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragments_4.Fragment <span class="hl sym">:=</span> Fragments_4.To_Fragment <span class="hl sym">(</span><span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">);</span>
+   Fragment_6  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragments_6.Fragment <span class="hl sym">:=</span> Fragments_6.To_Fragment <span class="hl sym">(</span><span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">);</span>
+   Fragment_12 <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragments_12.Fragment <span class="hl sym">:=</span> Fragments_12.To_Fragment <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">);</span>
+   Fragment_18 <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fragments_18.Fragment <span class="hl sym">:=</span> Fragments_18.To_Fragment <span class="hl sym">(</span><span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">);</span>
 
-         Hash_Value <span class="hl sym">:</span> Ada.Containers.Hash_Type<span class="hl sym">;</span>
-
-      <span class="hl kwa">begin</span>
-         Hash_Value <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         <span class="hl kwa">for</span> J <span class="hl kwa">in</span> <span class="hl num">1</span> .. Fragments.Length <span class="hl sym">(</span>Key<span class="hl sym">)</span> <span class="hl kwa">loop</span>
-            Hash_Value <span class="hl sym">:=</span> Rotate_Left <span class="hl sym">(</span>Hash_Value<span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">) +</span>
-                          <span class="hl kwb">Character</span><span class="hl sym">'</span>Pos <span class="hl sym">(</span>Fragments.Element <span class="hl sym">(</span>Key<span class="hl sym">,</span> J<span class="hl sym">));</span>
-         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
-
-         <span class="hl kwa">return</span> Hash_Value<span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Hash<span class="hl sym">;</span>
-
-      <span class="hl kwa">procedure</span> Increment <span class="hl sym">(</span>Key <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">;</span> Element <span class="hl sym">:</span> <span class="hl kwa">in out</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">is</span>
-         <span class="hl kwa">pragma</span> Unreferenced <span class="hl sym">(</span>Key<span class="hl sym">);</span>
-      <span class="hl kwa">begin</span>
-         Element.Count <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">'</span>Succ <span class="hl sym">(</span>Element.Count<span class="hl sym">);</span>
-      <span class="hl kwa">end</span> Increment<span class="hl sym">;</span>
-
-      <span class="hl slc">---------------------------------------------------------------------</span>
-      <span class="hl slc">--</span>
-      <span class="hl slc">--  Get count for element</span>
-      <span class="hl slc">--</span>
-      <span class="hl kwa">function</span> Key <span class="hl sym">(</span>Element <span class="hl sym">:</span> <span class="hl kwa">in</span> Element_Type<span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment <span class="hl kwa">is</span>
-      <span class="hl kwa">begin</span>
-         <span class="hl kwa">return</span> Element.Key<span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Key<span class="hl sym">;</span>
-
-   <span class="hl kwa">end</span> Calculator<span class="hl sym">;</span>
-
-   <span class="hl slc">----------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  Calculate and write data - either a percentage for all fragments found or - when</span>
-   <span class="hl slc">--  Nucleotide_Fragment is given - the count for that fragment.</span>
-   <span class="hl slc">--</span>
-   <span class="hl kwa">procedure</span> Write <span class="hl sym">(</span>Nucleotide_Length <span class="hl sym">:</span> <span class="hl kwa">in</span> Frequencies<span class="hl sym">)</span> <span class="hl kwa">is</span>
-   <span class="hl kwa">begin</span>
-      Calculator.Calculate_Frequencies <span class="hl sym">(</span>Nucleotide_Length<span class="hl sym">);</span>
-
-      Calculate_Total <span class="hl sym">:</span> <span class="hl kwa">declare</span>
-         Count <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
-         Total <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
-      <span class="hl kwa">begin</span>
-         Calculator.Get_Total <span class="hl sym">(</span>Total <span class="hl sym">=&gt;</span> Total<span class="hl sym">,</span> Count <span class="hl sym">=&gt;</span> Count<span class="hl sym">);</span>
-
-         Get_Sort_Put <span class="hl sym">:</span> <span class="hl kwa">declare</span>
-            Data <span class="hl sym">:</span> <span class="hl kwa">constant</span> Calculator.Element_Array <span class="hl sym">:=</span> Calculator.Get_Array <span class="hl sym">(</span>Count<span class="hl sym">);</span>
-         <span class="hl kwa">begin</span>
-            <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Data<span class="hl sym">'</span><span class="hl kwa">Range loop</span>
-               Ada.Text_IO.Put <span class="hl sym">(</span>Fragments.To_String <span class="hl sym">(</span>Calculator.Key <span class="hl sym">(</span>Data <span class="hl sym">(</span>I<span class="hl sym">))));</span>
-               Ada.Text_IO.Put <span class="hl sym">(</span>Ada.Characters.Latin_1.Space<span class="hl sym">);</span>
-               Ada.Float_Text_IO.Put
-                 <span class="hl sym">(</span>Item <span class="hl sym">=&gt;</span> <span class="hl num">100.0</span> <span class="hl sym">*</span> <span class="hl kwb">Float</span> <span class="hl sym">(</span>Calculator.Count <span class="hl sym">(</span>Data <span class="hl sym">(</span>I<span class="hl sym">))) /</span> <span class="hl kwb">Float</span> <span class="hl sym">(</span>Total<span class="hl sym">),</span>
-                  Fore <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">,</span>
-                  Aft  <span class="hl sym">=&gt;</span> <span class="hl num">3</span><span class="hl sym">,</span>
-                  Exp  <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
-               Ada.Text_IO.New_Line<span class="hl sym">;</span>
-            <span class="hl kwa">end loop</span><span class="hl sym">;</span>
-            Ada.Text_IO.New_Line<span class="hl sym">;</span>
-         <span class="hl kwa">end</span> Get_Sort_Put<span class="hl sym">;</span>
-      <span class="hl kwa">end</span> Calculate_Total<span class="hl sym">;</span>
-
-      <span class="hl kwa">return</span><span class="hl sym">;</span>
-   <span class="hl kwa">end</span> Write<span class="hl sym">;</span>
-
-   <span class="hl slc">----------------------------------------------------------------------------</span>
-   <span class="hl slc">--</span>
-   <span class="hl slc">--  Calculate and write data - either a percentage for all fragments found or - when</span>
-   <span class="hl slc">--  Nucleotide_Fragment is given - the count for that fragment.</span>
-   <span class="hl slc">--</span>
-   <span class="hl kwa">procedure</span> Write <span class="hl sym">(</span>Nucleotide_Fragment <span class="hl sym">:</span> <span class="hl kwa">in</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">is</span>
-   <span class="hl kwa">begin</span>
-      Calculator.Calculate_Frequencies <span class="hl sym">(</span>Fragments.Length <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">));</span>
-      Ada.Integer_Text_IO.Put <span class="hl sym">(</span>Item <span class="hl sym">=&gt;</span> Calculator.Get <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">),</span> Width <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">);</span>
-      Ada.Text_IO.Put <span class="hl sym">(</span>Ada.Characters.Latin_1.HT<span class="hl sym">);</span>
-      Ada.Text_IO.Put_Line <span class="hl sym">(</span>Fragments.To_String <span class="hl sym">(</span>Nucleotide_Fragment<span class="hl sym">));</span>
-      <span class="hl kwa">return</span><span class="hl sym">;</span>
-   <span class="hl kwa">end</span> Write<span class="hl sym">;</span>
+   <span class="hl kwa">package</span> Work_On_1 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_1<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Work_On_2 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_2<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Work_On_3 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_3<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Work_On_4 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_4<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Work_On_6 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_6<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Work_On_12 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_12<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> Work_On_18 <span class="hl kwa">is new</span> Work <span class="hl sym">(</span>Fragments_18<span class="hl sym">);</span>
 
 <span class="hl kwa">begin</span>
-   Write <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
-   Write <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">);</span>
-   Write <span class="hl sym">(</span>Fragment_3<span class="hl sym">);</span>
-   Write <span class="hl sym">(</span>Fragment_4<span class="hl sym">);</span>
-   Write <span class="hl sym">(</span>Fragment_6<span class="hl sym">);</span>
-   Write <span class="hl sym">(</span>Fragment_12<span class="hl sym">);</span>
-   Write <span class="hl sym">(</span>Fragment_18<span class="hl sym">);</span>
-   <span class="hl kwa">return</span><span class="hl sym">;</span>
-<span class="hl kwa">end</span> KNucleotide_3<span class="hl sym">;</span>
+   Work_On_1.Writer.Set <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+   Work_On_12.Writer.Set <span class="hl sym">(</span>Fragment_12<span class="hl sym">'</span>Length<span class="hl sym">,</span> Fragment_12<span class="hl sym">);</span>
+   Work_On_18.Writer.Set <span class="hl sym">(</span>Fragment_18<span class="hl sym">'</span>Length<span class="hl sym">,</span> Fragment_18<span class="hl sym">);</span>
+   Work_On_6.Writer.Set <span class="hl sym">(</span>Fragment_6<span class="hl sym">'</span>Length<span class="hl sym">,</span> Fragment_6<span class="hl sym">);</span>
+   Work_On_2.Writer.Set <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">);</span>
+   Work_On_4.Writer.Set <span class="hl sym">(</span>Fragment_4<span class="hl sym">'</span>Length<span class="hl sym">,</span> Fragment_4<span class="hl sym">);</span>
+   Work_On_3.Writer.Set <span class="hl sym">(</span>Fragment_3<span class="hl sym">'</span>Length<span class="hl sym">,</span> Fragment_3<span class="hl sym">);</span>
+<span class="hl kwa">end</span> KNucleotide<span class="hl sym">;</span>
 
-<span class="hl slc">----------------------------------------------------------------------------</span>
-<span class="hl slc">--  $Author: igouy-guest $</span>
-<span class="hl slc">--</span>
-<span class="hl slc">--  $Revision: 1.17 $</span>
-<span class="hl slc">--  $Date: 2009-07-21 00:14:14 $</span>
-<span class="hl slc">--</span>
-<span class="hl slc">--  $Id: knucleotide.2.gnat.code,v 1.17 2009-07-21 00:14:14 igouy-guest Exp $</span>
-<span class="hl slc">--  $HeadURL: http://wikibook-ada.svn.sourceforge.net/svnroot/wikibook-ada/trunk/demos/Source/Language_Shootout/knucleotide_3.adb $</span>
-<span class="hl slc">-------------------------------------------------------------------------------</span>
-<span class="hl slc">--   vim: textwidth=0 nowrap tabstop=8 shiftwidth=3 softtabstop=3 expandtab filetype=ada vim:</span>
-<span class="hl slc">--   fileencoding=latin1 fileformat=unix</span>
+
+
+<span class="hl kwa">generic</span>
+   Max_String_Length <span class="hl sym">:</span> <span class="hl kwb">Positive</span><span class="hl sym">;</span>
+<span class="hl kwa">package</span> String_Fragments <span class="hl kwa">is</span>
+
+   <span class="hl kwa">subtype</span> Fragment <span class="hl kwa">is</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Max_String_Length<span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> To_Fragment <span class="hl sym">(</span>Source <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment<span class="hl sym">;</span>
+   <span class="hl kwa">function</span> Null_Fragment <span class="hl kwa">return</span> Fragment<span class="hl sym">;</span>
+   <span class="hl kwa">function</span> <span class="hl str">&quot;=&quot;</span> <span class="hl sym">(</span>Left<span class="hl sym">,</span> Right<span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> String_Fragments<span class="hl sym">;</span>
+
+
+<span class="hl kwa">with</span> Ada.Unchecked_Conversion<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> String_Fragments <span class="hl kwa">is</span>
+
+   Bytes_Per_Word <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+   <span class="hl kwa">type</span> Uns <span class="hl kwa">is mod</span> <span class="hl num">2</span><span class="hl sym">**(</span><span class="hl num">8</span> <span class="hl sym">*</span> Bytes_Per_Word<span class="hl sym">);</span>
+   <span class="hl kwa">for</span> Uns<span class="hl sym">'</span>Size <span class="hl kwa">use</span> <span class="hl num">8</span> <span class="hl sym">*</span> Bytes_Per_Word<span class="hl sym">;</span>
+   <span class="hl kwa">subtype</span> Str <span class="hl kwa">is</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Bytes_Per_Word<span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> Null_Fragment <span class="hl kwa">return</span> Fragment <span class="hl kwa">is</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">return</span> Fragment<span class="hl sym">'(</span><span class="hl num">1</span> .. Max_String_Length <span class="hl sym">=&gt; '*');</span>
+   <span class="hl kwa">end</span> Null_Fragment<span class="hl sym">;</span>
+
+
+   <span class="hl kwa">function</span> To_Uns <span class="hl kwa">is new</span> Ada.Unchecked_Conversion <span class="hl sym">(</span>Str<span class="hl sym">,</span> Uns<span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> <span class="hl str">&quot;=&quot;</span> <span class="hl sym">(</span>Left<span class="hl sym">,</span> Right<span class="hl sym">:</span> Fragment<span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">Boolean</span> <span class="hl kwa">is</span>
+      Strt <span class="hl sym">:</span> <span class="hl kwb">Integer</span> <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      Fnsh <span class="hl sym">:</span> <span class="hl kwb">Integer</span> <span class="hl sym">:=</span> Bytes_Per_Word<span class="hl sym">;</span>
+      Last <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Integer</span> <span class="hl sym">:=</span> Left<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">if</span> Last <span class="hl sym">/=</span> Right<span class="hl sym">'</span>Last <span class="hl kwa">then</span>
+         <span class="hl kwa">return</span> False<span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">loop</span>
+         <span class="hl kwa">exit when</span> Fnsh <span class="hl sym">&gt;</span> Last<span class="hl sym">;</span>
+         <span class="hl kwa">if</span> To_Uns <span class="hl sym">(</span>Left<span class="hl sym">(</span>Strt..Fnsh<span class="hl sym">)) /=</span> To_Uns <span class="hl sym">(</span>Right<span class="hl sym">(</span>Strt..Fnsh<span class="hl sym">))</span> <span class="hl kwa">then</span>
+            <span class="hl kwa">return</span> False<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         Strt <span class="hl sym">:=</span> Strt <span class="hl sym">+</span> Bytes_Per_Word<span class="hl sym">;</span>
+         Fnsh <span class="hl sym">:=</span> Fnsh <span class="hl sym">+</span> Bytes_Per_Word<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Strt .. Last <span class="hl kwa">loop</span>
+         <span class="hl kwa">if</span> Left<span class="hl sym">(</span>I<span class="hl sym">) /=</span> Right<span class="hl sym">(</span>I<span class="hl sym">)</span> <span class="hl kwa">then</span>
+            <span class="hl kwa">return</span> False<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> True<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> <span class="hl str">&quot;=&quot;</span><span class="hl sym">;</span>
+
+
+   <span class="hl kwa">function</span> To_Fragment <span class="hl sym">(</span>Source <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">)</span> <span class="hl kwa">return</span> Fragment <span class="hl kwa">is</span>
+      Result <span class="hl sym">:</span> Fragment<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">if</span> Source<span class="hl sym">'</span>Length <span class="hl sym">/=</span> Max_String_Length <span class="hl kwa">then</span>
+         <span class="hl kwa">raise</span> Constraint_Error<span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      Result <span class="hl sym">(</span><span class="hl num">1</span> .. Source<span class="hl sym">'</span>Length<span class="hl sym">) :=</span> Source<span class="hl sym">;</span>
+      <span class="hl kwa">return</span> Result<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> To_Fragment<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> String_Fragments<span class="hl sym">;</span>
+
+
+<span class="hl slc">----------------</span>
+<span class="hl slc">-- data input --</span>
+<span class="hl slc">----------------</span>
+
+<span class="hl kwa">package</span> Data_Input <span class="hl kwa">is</span>
+
+   <span class="hl slc">--  Read data from Standard_Input and return section THREE as String:</span>
+
+   <span class="hl kwa">function</span> Read <span class="hl kwa">return</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Data_Input<span class="hl sym">;</span>
+
+<span class="hl kwa">with</span> Ada.Strings.Maps.Constants<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada.IO_Exceptions<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada.Strings.Unbounded<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Line_IO<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada.Unchecked_Deallocation<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> Data_Input <span class="hl kwa">is</span>
+
+   <span class="hl kwa">use</span> Ada.Strings<span class="hl sym">;</span>
+   UnixLF <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> <span class="hl kwb">String</span><span class="hl sym">'(</span><span class="hl num">1</span> <span class="hl sym">=&gt;</span> ASCII.LF<span class="hl sym">);</span>
+   <span class="hl kwa">package</span> LIO <span class="hl kwa">is new</span> Line_IO <span class="hl sym">(</span>UnixLF<span class="hl sym">);</span>
+
+   Data_Buffer <span class="hl sym">:</span> Unbounded.Unbounded_String <span class="hl sym">:=</span> Unbounded.Null_Unbounded_String<span class="hl sym">;</span>
+
+   Section_Marker <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Character</span> <span class="hl sym">:= '&gt;';</span>
+   Section        <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span>    <span class="hl sym">:=</span> Section_Marker <span class="hl sym">&amp;</span> <span class="hl str">&quot;THREE&quot;</span><span class="hl sym">;</span>
+
+   <span class="hl slc">--  Read next data section - until EOF oder a line beginning with &gt; is found.</span>
+
+   <span class="hl kwa">type</span> String_Access <span class="hl kwa">is access</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+   <span class="hl kwa">procedure</span> Free <span class="hl kwa">is new</span> Ada.Unchecked_Deallocation <span class="hl sym">(</span><span class="hl kwb">String</span><span class="hl sym">,</span> String_Access<span class="hl sym">);</span>
+
+   <span class="hl kwa">procedure</span> Read_Section <span class="hl kwa">is</span>
+      Buffer     <span class="hl sym">:</span> String_Access<span class="hl sym">;</span>
+      Read_First <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Read_Last  <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      Buffer <span class="hl sym">:=</span> <span class="hl kwa">new</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">1024</span> <span class="hl sym">*</span> <span class="hl num">1024</span> <span class="hl sym">*</span> <span class="hl num">16</span><span class="hl sym">);</span>
+      Get_Data <span class="hl sym">:</span> <span class="hl kwa">loop</span>
+         Read_First <span class="hl sym">:=</span> Buffer<span class="hl sym">'</span>First<span class="hl sym">;</span>
+         Read_Last  <span class="hl sym">:=</span> Buffer<span class="hl sym">'</span>First <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl slc">-- fill Buffer and append to Data_Buffer when filled</span>
+         <span class="hl kwa">loop</span>
+            <span class="hl kwa">declare</span>
+               Line <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl kwa">renames</span> LIO.Get_Line<span class="hl sym">;</span>
+            <span class="hl kwa">begin</span>
+               Read_Last <span class="hl sym">:=</span> Read_First <span class="hl sym">+</span> Line<span class="hl sym">'</span>Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+               <span class="hl kwa">if</span> Read_Last <span class="hl sym">&gt;=</span> Buffer<span class="hl sym">'</span>Last <span class="hl kwa">then</span>
+                  Unbounded.Append
+                    <span class="hl sym">(</span>Data_Buffer<span class="hl sym">,</span> New_Item <span class="hl sym">=&gt;</span> Buffer<span class="hl sym">(</span><span class="hl num">1</span> .. Read_First <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">));</span>
+                  Unbounded.Append <span class="hl sym">(</span>Data_Buffer<span class="hl sym">,</span> New_Item <span class="hl sym">=&gt;</span> Line<span class="hl sym">);</span>
+                  <span class="hl kwa">exit</span><span class="hl sym">;</span>
+               <span class="hl kwa">end if</span><span class="hl sym">;</span>
+               Buffer <span class="hl sym">(</span>Read_First .. Read_Last<span class="hl sym">) :=</span> Line<span class="hl sym">;</span>
+            <span class="hl kwa">end</span><span class="hl sym">;</span>
+            <span class="hl kwa">exit</span> Get_Data <span class="hl kwa">when</span> Buffer <span class="hl sym">(</span>Read_First<span class="hl sym">) =</span> Section_Marker<span class="hl sym">;</span>
+            Read_First <span class="hl sym">:=</span> Read_Last <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span> Get_Data<span class="hl sym">;</span>
+      Unbounded.Append <span class="hl sym">(</span>Data_Buffer<span class="hl sym">,</span> Buffer <span class="hl sym">(</span><span class="hl num">1</span> .. Read_Last<span class="hl sym">));</span>
+      Free <span class="hl sym">(</span>Buffer<span class="hl sym">);</span>
+   <span class="hl kwa">exception</span>
+      <span class="hl kwa">when</span> Ada.IO_Exceptions.End_Error <span class="hl sym">=&gt;</span>
+         Unbounded.Append <span class="hl sym">(</span>Data_Buffer<span class="hl sym">,</span> Buffer <span class="hl sym">(</span><span class="hl num">1</span> .. Read_Last<span class="hl sym">));</span>
+         Free <span class="hl sym">(</span>Buffer<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Read_Section<span class="hl sym">;</span>
+
+
+   <span class="hl slc">--  Skip data on Standard_Input until &quot;&gt;THREE&quot; is found</span>
+
+   <span class="hl kwa">procedure</span> Skip_To_Section <span class="hl kwa">is</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">loop</span>
+         <span class="hl kwa">declare</span>
+            Line <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> LIO.Get_Line<span class="hl sym">;</span>
+         <span class="hl kwa">begin</span>
+            <span class="hl kwa">exit when</span> Line<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) =</span> Section<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span>
+              <span class="hl kwa">and then</span> Line<span class="hl sym">(</span>Section<span class="hl sym">'</span><span class="hl kwa">Range</span><span class="hl sym">) =</span> Section<span class="hl sym">;</span>
+         <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Skip_To_Section<span class="hl sym">;</span>
+
+
+   <span class="hl kwa">function</span> Read <span class="hl kwa">return</span> <span class="hl kwb">String</span> <span class="hl kwa">is</span>
+   <span class="hl kwa">begin</span>
+      Skip_To_Section<span class="hl sym">;</span>
+      Read_Section<span class="hl sym">;</span>
+
+      Unbounded.Translate
+        <span class="hl sym">(</span>Source <span class="hl sym">=&gt;</span> Data_Buffer<span class="hl sym">,</span>
+         Mapping <span class="hl sym">=&gt;</span> Maps.Constants.Upper_Case_Map<span class="hl sym">);</span>
+
+      <span class="hl kwa">return</span> Unbounded.To_String <span class="hl sym">(</span>Data_Buffer<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Read<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Data_Input<span class="hl sym">;</span>
+
+<span class="hl slc">---------------------------</span>
+<span class="hl slc">--  Stream I/O of lines --</span>
+<span class="hl slc">---------------------------</span>
+<span class="hl kwa">generic</span>
+   Separator_Sequence <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">String</span><span class="hl sym">;</span>  <span class="hl slc">--  ends a line</span>
+<span class="hl kwa">package</span> Line_IO <span class="hl kwa">is</span>
+
+   <span class="hl kwa">pragma</span> Elaborate_Body<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Put_Line <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">)</span> <span class="hl kwa">is null</span><span class="hl sym">;</span>
+   <span class="hl slc">-- not used in this program</span>
+
+   <span class="hl kwa">function</span> Get_Line <span class="hl kwa">return</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Line_IO<span class="hl sym">;</span>
+
+
+<span class="hl kwa">with</span> Ada.Streams.Stream_IO<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> Line_IO <span class="hl kwa">is</span>
+
+   <span class="hl kwa">use</span> Ada.Streams<span class="hl sym">;</span>
+
+   Stdin <span class="hl sym">:</span> Stream_IO.File_Type<span class="hl sym">;</span>
+
+   <span class="hl slc">-- Types etc., status variables, and the buffer.</span>
+
+   BUFSIZ<span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">8</span>_192<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Assert<span class="hl sym">(</span><span class="hl kwb">Character</span><span class="hl sym">'</span>Size <span class="hl sym">=</span> Stream_Element<span class="hl sym">'</span>Size<span class="hl sym">);</span>
+
+   SL <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Separator_Sequence<span class="hl sym">'</span>Length<span class="hl sym">;</span>
+
+   <span class="hl kwa">subtype</span> Extended_Buffer_Index <span class="hl kwa">is</span> <span class="hl kwb">Positive</span> <span class="hl kwa">range</span> <span class="hl num">1</span> .. BUFSIZ <span class="hl sym">+</span> SL<span class="hl sym">;</span>
+   <span class="hl kwa">subtype</span> Buffer_Index <span class="hl kwa">is</span> Extended_Buffer_Index
+     <span class="hl kwa">range</span> Extended_Buffer_Index<span class="hl sym">'</span>First .. Extended_Buffer_Index<span class="hl sym">'</span>Last <span class="hl sym">-</span> SL<span class="hl sym">;</span>
+   <span class="hl kwa">subtype</span> Extended_Bytes_Index <span class="hl kwa">is</span> Stream_Element_Offset
+     <span class="hl kwa">range</span> <span class="hl num">1</span> .. Stream_Element_Offset<span class="hl sym">(</span>Extended_Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">);</span>
+   <span class="hl kwa">subtype</span> Bytes_Index <span class="hl kwa">is</span> Extended_Bytes_Index
+     <span class="hl kwa">range</span> Extended_Bytes_Index<span class="hl sym">'</span>First
+     .. <span class="hl sym">(</span>Extended_Bytes_Index<span class="hl sym">'</span>Last <span class="hl sym">-</span> Stream_Element_Offset<span class="hl sym">(</span>SL<span class="hl sym">));</span>
+
+   <span class="hl kwa">subtype</span> Buffer_Data <span class="hl kwa">is</span> <span class="hl kwb">String</span><span class="hl sym">(</span>Extended_Buffer_Index<span class="hl sym">);</span>
+   <span class="hl kwa">subtype</span> Buffer_Bytes <span class="hl kwa">is</span> Stream_Element_Array<span class="hl sym">(</span>Extended_Bytes_Index<span class="hl sym">);</span>
+
+   Buffer <span class="hl sym">:</span> Buffer_Data<span class="hl sym">;</span>
+   Bytes  <span class="hl sym">:</span> Buffer_Bytes<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> Bytes<span class="hl sym">'</span>Address <span class="hl kwa">use</span> Buffer<span class="hl sym">'</span>Address<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Import <span class="hl sym">(</span>Ada<span class="hl sym">,</span> Bytes<span class="hl sym">);</span>
+
+   <span class="hl slc">-- start of next substring and last valid character in buffer</span>
+   Position <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Extended_Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   Last     <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   End_Of_Input <span class="hl sym">:</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">function</span> Get_Line <span class="hl kwa">return</span> <span class="hl kwb">String</span> <span class="hl kwa">is</span>
+
+      <span class="hl kwa">procedure</span> Reload <span class="hl kwa">is</span>
+         <span class="hl slc">--  fill Buffer with bytes available</span>
+         Last_Filled <span class="hl sym">:</span> Stream_Element_Offset<span class="hl sym">;</span>
+      <span class="hl kwa">begin</span>
+         <span class="hl kwa">if</span> Last <span class="hl sym">&lt;</span> Buffer_Index<span class="hl sym">'</span>Last <span class="hl kwa">then</span>
+            <span class="hl kwa">raise</span> Stream_IO.End_Error<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         Stream_IO.Read<span class="hl sym">(</span>Stdin<span class="hl sym">,</span>
+           Item <span class="hl sym">=&gt;</span> Bytes<span class="hl sym">(</span>Bytes_Index<span class="hl sym">),</span>
+           Last <span class="hl sym">=&gt;</span> Last_Filled<span class="hl sym">);</span>
+         Last <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">(</span>Last_Filled<span class="hl sym">);</span>
+         Position <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         Buffer<span class="hl sym">(</span>Last <span class="hl sym">+</span> <span class="hl num">1</span> .. Last <span class="hl sym">+</span> SL<span class="hl sym">) :=</span> Separator_Sequence<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Reload<span class="hl sym">;</span>
+
+
+      <span class="hl kwa">function</span> Separator_Position <span class="hl kwa">return</span> <span class="hl kwb">Natural</span> <span class="hl kwa">is</span>
+         <span class="hl slc">--   index of next Separator_Sequence (may be sentinel)</span>
+         <span class="hl kwa">pragma</span> Inline<span class="hl sym">(</span>Separator_Position<span class="hl sym">);</span>
+         K <span class="hl sym">:</span> Extended_Buffer_Index <span class="hl sym">:=</span> Position<span class="hl sym">;</span>
+      <span class="hl kwa">begin</span>
+         <span class="hl kwa">while</span> Buffer<span class="hl sym">(</span>K<span class="hl sym">) /=</span> Separator_Sequence<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">loop</span>
+            K <span class="hl sym">:=</span> K <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+         <span class="hl kwa">return</span> K<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Separator_Position<span class="hl sym">;</span>
+
+
+      Next_Separator <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Extended_Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>  <span class="hl slc">-- Get_Line</span>
+
+      <span class="hl kwa">if</span> End_Of_Input <span class="hl kwa">then</span>
+         <span class="hl kwa">raise</span> Stream_IO.End_Error<span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      Next_Separator <span class="hl sym">:=</span> Separator_Position<span class="hl sym">;</span>
+
+      <span class="hl kwa">if</span> Next_Separator <span class="hl sym">&gt;</span> Last <span class="hl kwa">then</span>
+         <span class="hl kwa">declare</span>
+            Result <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Buffer<span class="hl sym">(</span>Position .. Last<span class="hl sym">);</span>
+            <span class="hl kwa">subtype</span> XString <span class="hl kwa">is</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Last <span class="hl sym">-</span> Position <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+         <span class="hl kwa">begin</span>
+            <span class="hl kwa">begin</span>
+               Reload<span class="hl sym">;</span>
+               <span class="hl kwa">return</span> XString<span class="hl sym">(</span>Result<span class="hl sym">) &amp;</span> Get_Line<span class="hl sym">;</span>
+            <span class="hl kwa">exception</span>
+               <span class="hl kwa">when</span> Stream_IO.End_Error <span class="hl sym">=&gt;</span>
+                  End_Of_Input <span class="hl sym">:=</span> True<span class="hl sym">;</span>
+                  <span class="hl kwa">return</span> XString<span class="hl sym">(</span>Result<span class="hl sym">);</span>
+            <span class="hl kwa">end</span><span class="hl sym">;</span>
+         <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl kwa">else</span>
+         <span class="hl kwa">declare</span>
+            Result <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl kwa">renames</span> Buffer<span class="hl sym">(</span>Position .. Next_Separator <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+            <span class="hl kwa">subtype</span> XString <span class="hl kwa">is</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Next_Separator <span class="hl sym">-</span> Position<span class="hl sym">);</span>
+         <span class="hl kwa">begin</span>
+            Position <span class="hl sym">:=</span> Next_Separator <span class="hl sym">+</span> SL<span class="hl sym">;</span>
+            <span class="hl kwa">return</span> XString <span class="hl sym">(</span>Result<span class="hl sym">);</span>
+         <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">raise</span> Program_Error<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Get_Line<span class="hl sym">;</span>
+
+
+<span class="hl kwa">begin</span>
+   Stream_IO.Open <span class="hl sym">(</span>Stdin<span class="hl sym">,</span>
+     Mode <span class="hl sym">=&gt;</span> Stream_IO.In_File<span class="hl sym">,</span>
+     Name <span class="hl sym">=&gt;</span> <span class="hl str">&quot;/dev/stdin&quot;</span><span class="hl sym">);</span>
+
+   Buffer<span class="hl sym">(</span>Buffer_Index<span class="hl sym">'</span>Last <span class="hl sym">+</span> <span class="hl num">1</span> .. Buffer<span class="hl sym">'</span>Last<span class="hl sym">) :=</span> Separator_Sequence<span class="hl sym">;</span>
+   Position <span class="hl sym">:=</span> Buffer_Index<span class="hl sym">'</span>Last <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   Last <span class="hl sym">:=</span> Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   End_Of_Input <span class="hl sym">:=</span> False<span class="hl sym">;</span>
+<span class="hl kwa">end</span> Line_IO<span class="hl sym">;</span>
