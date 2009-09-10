@@ -1,0 +1,459 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">http://shootout.alioth.debian.org/</span>
+<span class="hl com">Contributed by Dmitry Vyukov</span>
+<span class="hl com"></span>
+<span class="hl com">Kernel thread is created for each chameneous.</span>
+<span class="hl com">Atomic compare-and-swap primitive is used</span>
+<span class="hl com">for meeting place state manipulation.</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#define _GNU_SOURCE</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;malloc.h&gt;</span>
+<span class="hl dir">#include &lt;string.h&gt;</span>
+<span class="hl dir">#include &lt;assert.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdint.h&gt;</span>
+<span class="hl dir">#include &lt;sys/time.h&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+
+<span class="hl dir">#define CPUINFO_FILENAME</span> <span class="hl dstr">&quot;/proc/cpuinfo&quot;</span><span class="hl dir"></span>
+
+<span class="hl dir">#define CL_SIZE 64</span>
+
+<span class="hl kwb">void</span><span class="hl sym">*</span> <span class="hl kwd">cache_aligned_malloc</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> sz<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span>                       mem<span class="hl sym">;</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span>                       res<span class="hl sym">;</span>
+    <span class="hl kwb">void</span><span class="hl sym">**</span>                      pos<span class="hl sym">;</span>
+
+    mem <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span>sz <span class="hl sym">+</span> <span class="hl num">2</span> <span class="hl sym">*</span> CL_SIZE<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>mem <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    res <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)((</span><span class="hl kwb">uintptr_t</span><span class="hl sym">)(</span>mem <span class="hl sym">+</span> CL_SIZE<span class="hl sym">) &amp; ~(</span>CL_SIZE <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">));</span>
+    pos <span class="hl sym">= (</span><span class="hl kwb">void</span><span class="hl sym">**)(</span>res <span class="hl sym">-</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*));</span>
+    pos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> mem<span class="hl sym">;</span>
+    <span class="hl kwa">return</span> res<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">cache_aligned_free</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*</span> res<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">void</span><span class="hl sym">*</span>                       mem<span class="hl sym">;</span>
+    <span class="hl kwb">void</span><span class="hl sym">**</span>                      pos<span class="hl sym">;</span>
+
+    <span class="hl kwd">assert</span><span class="hl sym">(((</span><span class="hl kwb">uintptr_t</span><span class="hl sym">)</span>res <span class="hl sym">&amp; (</span>CL_SIZE <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    pos <span class="hl sym">= (</span><span class="hl kwb">void</span><span class="hl sym">**)((</span><span class="hl kwb">char</span><span class="hl sym">*)</span>res <span class="hl sym">-</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*));</span>
+    mem <span class="hl sym">=</span> pos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>mem<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">enum</span> color_t
+<span class="hl sym">{</span>
+    color_blue<span class="hl sym">,</span>
+    color_red<span class="hl sym">,</span>
+    color_yellow<span class="hl sym">,</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">char const</span><span class="hl sym">*</span> color_names<span class="hl sym">[] = {</span><span class="hl str">&quot;blue&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;red&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;yellow&quot;</span><span class="hl sym">};</span>
+
+<span class="hl kwb">enum</span> color_t <span class="hl kwd">color_complement</span><span class="hl sym">(</span><span class="hl kwb">enum</span> color_t c1<span class="hl sym">,</span> <span class="hl kwb">enum</span> color_t c2<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c1<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+   <span class="hl kwa">case</span> color_blue<span class="hl sym">:</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> color_blue<span class="hl sym">:</span>      <span class="hl kwa">return</span> color_blue<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> color_red<span class="hl sym">:</span>       <span class="hl kwa">return</span> color_yellow<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> color_yellow<span class="hl sym">:</span>    <span class="hl kwa">return</span> color_red<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> color_red<span class="hl sym">:</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> color_blue<span class="hl sym">:</span>      <span class="hl kwa">return</span> color_yellow<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> color_red<span class="hl sym">:</span>       <span class="hl kwa">return</span> color_red<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> color_yellow<span class="hl sym">:</span>    <span class="hl kwa">return</span> color_blue<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> color_yellow<span class="hl sym">:</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> color_blue<span class="hl sym">:</span>      <span class="hl kwa">return</span> color_red<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> color_red<span class="hl sym">:</span>       <span class="hl kwa">return</span> color_blue<span class="hl sym">;</span>
+      <span class="hl kwa">case</span> color_yellow<span class="hl sym">:</span>    <span class="hl kwa">return</span> color_yellow<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">print_colors</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">enum</span> color_t                c1<span class="hl sym">;</span>
+    <span class="hl kwb">enum</span> color_t                c2<span class="hl sym">;</span>
+    <span class="hl kwb">enum</span> color_t                c3<span class="hl sym">;</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>c1 <span class="hl sym">=</span> color_blue<span class="hl sym">;</span> c1 <span class="hl sym">&lt;=</span> color_yellow<span class="hl sym">;</span> c1 <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span>c2 <span class="hl sym">=</span> color_blue<span class="hl sym">;</span> c2 <span class="hl sym">&lt;=</span> color_yellow<span class="hl sym">;</span> c2 <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl sym">{</span>
+            c3 <span class="hl sym">=</span> <span class="hl kwd">color_complement</span><span class="hl sym">(</span>c1<span class="hl sym">,</span> c2<span class="hl sym">);</span>
+            <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s + %s -&gt; %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+                color_names<span class="hl sym">[</span>c1<span class="hl sym">],</span> color_names<span class="hl sym">[</span>c2<span class="hl sym">],</span> color_names<span class="hl sym">[</span>c3<span class="hl sym">]);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">char const</span><span class="hl sym">*</span> <span class="hl kwd">spell_number</span><span class="hl sym">(</span><span class="hl kwb">size_t</span> n<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">static char</span>                 buf <span class="hl sym">[</span><span class="hl num">128</span><span class="hl sym">];</span>
+    <span class="hl kwb">static char const</span><span class="hl sym">*</span>          numbers <span class="hl sym">[] = {</span>
+        <span class="hl str">&quot; zero&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; one&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; two&quot;</span><span class="hl sym">,</span>   <span class="hl str">&quot; three&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; four&quot;</span><span class="hl sym">,</span>
+        <span class="hl str">&quot; five&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; six&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; seven&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; eight&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot; nine&quot;</span><span class="hl sym">};</span>
+
+    <span class="hl kwb">size_t</span>                      tokens <span class="hl sym">[</span><span class="hl num">32</span><span class="hl sym">];</span>
+    <span class="hl kwb">size_t</span>                      token_count<span class="hl sym">;</span>
+    <span class="hl kwb">char const</span><span class="hl sym">*</span>                 tok<span class="hl sym">;</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span>                       pos<span class="hl sym">;</span>
+
+    token_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">do</span>
+    <span class="hl sym">{</span>
+        tokens<span class="hl sym">[</span>token_count<span class="hl sym">] =</span> n <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
+        token_count <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        n <span class="hl sym">/=</span> <span class="hl num">10</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>n<span class="hl sym">);</span>
+
+    pos <span class="hl sym">=</span> buf<span class="hl sym">;</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>token_count<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        token_count <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        tok <span class="hl sym">=</span> numbers<span class="hl sym">[</span>tokens<span class="hl sym">[</span>token_count<span class="hl sym">]];</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>tok<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">])</span>
+            pos<span class="hl sym">++[</span><span class="hl num">0</span><span class="hl sym">] =</span> tok<span class="hl sym">++[</span><span class="hl num">0</span><span class="hl sym">];</span>
+    <span class="hl sym">}</span>
+    pos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">return</span> buf<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">struct</span> meeting_place_t
+<span class="hl sym">{</span>
+    <span class="hl kwb">uintptr_t</span> <span class="hl kwc">volatile</span>          state<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl dir">#define CHAMENEOS_IDX_MASK      0xFF</span>
+<span class="hl dir">#define MEET_COUNT_SHIFT        8</span>
+
+<span class="hl kwb">struct</span> chameneos_t
+<span class="hl sym">{</span>
+    <span class="hl kwb">enum</span> color_t                color<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      meet_count<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      meet_same_count<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> <span class="hl kwc">volatile</span>                meeting_completed<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">*</span>     place<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">**</span>        chameneos<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      id<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         is_smp<span class="hl sym">;</span>
+    pthread_t                   thread<span class="hl sym">;</span>
+    pthread_attr_t              thread_attr<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">void</span><span class="hl sym">*</span> <span class="hl kwd">chameneos_func</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*</span> ctx<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">*</span>         chameneos<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">**</span>        chameneoses<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">*</span>         peer<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      my_id<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      is_same<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      spin_count<span class="hl sym">;</span>
+    <span class="hl kwb">uintptr_t</span> <span class="hl kwc">volatile</span><span class="hl sym">*</span>         state_p<span class="hl sym">;</span>
+    <span class="hl kwb">uintptr_t</span>                   state<span class="hl sym">;</span>
+    <span class="hl kwb">uintptr_t</span>                   peer_idx<span class="hl sym">;</span>
+    <span class="hl kwb">uintptr_t</span>                   xchg<span class="hl sym">;</span>
+    <span class="hl kwb">uintptr_t</span>                   prev<span class="hl sym">;</span>
+    <span class="hl kwb">enum</span> color_t                new_color<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         is_smp<span class="hl sym">;</span>
+
+    chameneos <span class="hl sym">= (</span><span class="hl kwb">struct</span> chameneos_t<span class="hl sym">*)</span>ctx<span class="hl sym">;</span>
+    chameneoses <span class="hl sym">=</span> chameneos<span class="hl sym">-&gt;</span>chameneos<span class="hl sym">;</span>
+    state_p <span class="hl sym">= &amp;</span>chameneos<span class="hl sym">-&gt;</span>place<span class="hl sym">-&gt;</span>state<span class="hl sym">;</span>
+    my_id <span class="hl sym">=</span> chameneos<span class="hl sym">-&gt;</span>id<span class="hl sym">;</span>
+    is_smp <span class="hl sym">=</span> chameneos<span class="hl sym">-&gt;</span>is_smp<span class="hl sym">;</span>
+
+    state <span class="hl sym">=</span> state_p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(;;)</span>
+    <span class="hl sym">{</span>
+        peer_idx <span class="hl sym">=</span> state <span class="hl sym">&amp;</span> CHAMENEOS_IDX_MASK<span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>peer_idx<span class="hl sym">)</span>
+            xchg <span class="hl sym">=</span> state <span class="hl sym">-</span> peer_idx <span class="hl sym">- (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> MEET_COUNT_SHIFT<span class="hl sym">);</span>
+        <span class="hl kwa">else if</span> <span class="hl sym">(</span>state<span class="hl sym">)</span>
+            xchg <span class="hl sym">=</span> state <span class="hl sym">|</span> my_id<span class="hl sym">;</span>
+        <span class="hl kwa">else</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+        prev <span class="hl sym">=</span> <span class="hl kwd">__sync_val_compare_and_swap</span><span class="hl sym">(</span>state_p<span class="hl sym">,</span> state<span class="hl sym">,</span> xchg<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>prev <span class="hl sym">==</span> state<span class="hl sym">)</span>
+        <span class="hl sym">{</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>peer_idx<span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+                is_same <span class="hl sym">= (</span>peer_idx <span class="hl sym">==</span> my_id<span class="hl sym">);</span>
+                peer <span class="hl sym">=</span> chameneoses<span class="hl sym">[</span>peer_idx <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">];</span>
+                new_color <span class="hl sym">=</span> <span class="hl kwd">color_complement</span><span class="hl sym">(</span>chameneos<span class="hl sym">-&gt;</span>color<span class="hl sym">,</span> peer<span class="hl sym">-&gt;</span>color<span class="hl sym">);</span>
+                peer<span class="hl sym">-&gt;</span>color <span class="hl sym">=</span> new_color<span class="hl sym">;</span>
+                peer<span class="hl sym">-&gt;</span>meet_count <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                peer<span class="hl sym">-&gt;</span>meet_same_count <span class="hl sym">+=</span> is_same<span class="hl sym">;</span>
+                peer<span class="hl sym">-&gt;</span>meeting_completed <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                chameneos<span class="hl sym">-&gt;</span>color <span class="hl sym">=</span> new_color<span class="hl sym">;</span>
+                chameneos<span class="hl sym">-&gt;</span>meet_count <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                chameneos<span class="hl sym">-&gt;</span>meet_same_count <span class="hl sym">+=</span> is_same<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+            <span class="hl kwa">else</span>
+            <span class="hl sym">{</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>is_smp<span class="hl sym">)</span>
+                <span class="hl sym">{</span>
+                    spin_count <span class="hl sym">=</span> <span class="hl num">20000</span><span class="hl sym">;</span>
+                    <span class="hl kwa">while</span> <span class="hl sym">(</span>chameneos<span class="hl sym">-&gt;</span>meeting_completed <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+                    <span class="hl sym">{</span>
+                        <span class="hl kwa">if</span> <span class="hl sym">(</span>spin_count<span class="hl sym">)</span>
+                            spin_count <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                        <span class="hl kwa">else</span>
+                            <span class="hl kwd">sched_yield</span><span class="hl sym">();</span>
+                    <span class="hl sym">}</span>
+                <span class="hl sym">}</span>
+                <span class="hl kwa">else</span>
+                <span class="hl sym">{</span>
+                    <span class="hl kwa">while</span> <span class="hl sym">(</span>chameneos<span class="hl sym">-&gt;</span>meeting_completed <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+                    <span class="hl sym">{</span>
+                        <span class="hl kwd">sched_yield</span><span class="hl sym">();</span>
+                    <span class="hl sym">}</span>
+                <span class="hl sym">}</span>
+                chameneos<span class="hl sym">-&gt;</span>meeting_completed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+                state <span class="hl sym">=</span> state_p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">else</span>
+        <span class="hl sym">{</span>
+            state <span class="hl sym">=</span> prev<span class="hl sym">;</span>
+
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">get_affinity</span><span class="hl sym">(</span><span class="hl kwb">int</span><span class="hl sym">*</span> is_smp<span class="hl sym">,</span> cpu_set_t<span class="hl sym">*</span> affinity1<span class="hl sym">,</span> cpu_set_t<span class="hl sym">*</span> affinity2<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    cpu_set_t                   active_cpus<span class="hl sym">;</span>
+    <span class="hl kwb">FILE</span><span class="hl sym">*</span>                       f<span class="hl sym">;</span>
+    <span class="hl kwb">char</span>                        buf <span class="hl sym">[</span><span class="hl num">2048</span><span class="hl sym">];</span>
+    <span class="hl kwb">char const</span><span class="hl sym">*</span>                 pos<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         cpu_idx<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         physical_id<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         core_id<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         cpu_cores<span class="hl sym">;</span>
+    <span class="hl kwb">int</span>                         apic_id<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      cpu_count<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      i<span class="hl sym">;</span>
+
+    <span class="hl kwb">char const</span><span class="hl sym">*</span>                 processor_str       <span class="hl sym">=</span> <span class="hl str">&quot;processor&quot;</span><span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      processor_str_len   <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>processor_str<span class="hl sym">);</span>
+    <span class="hl kwb">char const</span><span class="hl sym">*</span>                 physical_id_str     <span class="hl sym">=</span> <span class="hl str">&quot;physical id&quot;</span><span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      physical_id_str_len <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>physical_id_str<span class="hl sym">);</span>
+    <span class="hl kwb">char const</span><span class="hl sym">*</span>                 core_id_str         <span class="hl sym">=</span> <span class="hl str">&quot;core id&quot;</span><span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      core_id_str_len     <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>core_id_str<span class="hl sym">);</span>
+    <span class="hl kwb">char const</span><span class="hl sym">*</span>                 cpu_cores_str       <span class="hl sym">=</span> <span class="hl str">&quot;cpu cores&quot;</span><span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      cpu_cores_str_len   <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>cpu_cores_str<span class="hl sym">);</span>
+
+    <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>active_cpus<span class="hl sym">);</span>
+    <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>active_cpus<span class="hl sym">), &amp;</span>active_cpus<span class="hl sym">);</span>
+    cpu_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">!=</span> CPU_SETSIZE<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>active_cpus<span class="hl sym">))</span>
+        <span class="hl sym">{</span>
+            cpu_count <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>cpu_count <span class="hl sym">==</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        is_smp<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">return</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    is_smp<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(</span>affinity1<span class="hl sym">);</span>
+    <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(</span>affinity2<span class="hl sym">);</span>
+
+    f <span class="hl sym">=</span> <span class="hl kwd">fopen</span><span class="hl sym">(</span>CPUINFO_FILENAME<span class="hl sym">,</span> <span class="hl str">&quot;r&quot;</span><span class="hl sym">);</span>
+
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>cpu_count <span class="hl sym">&lt;</span> <span class="hl num">4</span> <span class="hl sym">||</span> f <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">!=</span> CPU_SETSIZE<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl sym">{</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>active_cpus<span class="hl sym">))</span>
+            <span class="hl sym">{</span>
+                <span class="hl kwd">CPU_SET</span><span class="hl sym">(</span>i<span class="hl sym">,</span> affinity1<span class="hl sym">);</span>
+                <span class="hl kwd">CPU_SET</span><span class="hl sym">(</span>i<span class="hl sym">,</span> affinity2<span class="hl sym">);</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">return</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    cpu_idx <span class="hl sym">=</span> physical_id <span class="hl sym">=</span> core_id <span class="hl sym">=</span> cpu_cores <span class="hl sym">= -</span><span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> <span class="hl num">2048</span><span class="hl sym">,</span> f<span class="hl sym">))</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> <span class="hl kwd">strncmp</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> processor_str<span class="hl sym">,</span> processor_str_len<span class="hl sym">))</span>
+        <span class="hl sym">{</span>
+            pos <span class="hl sym">=</span> <span class="hl kwd">strchr</span><span class="hl sym">(</span>buf <span class="hl sym">+</span> processor_str_len<span class="hl sym">,</span> <span class="hl str">':'</span><span class="hl sym">);</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>pos<span class="hl sym">)</span>
+                cpu_idx <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>pos <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">else if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> <span class="hl kwd">strncmp</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> physical_id_str<span class="hl sym">,</span> physical_id_str_len<span class="hl sym">))</span>
+        <span class="hl sym">{</span>
+            pos <span class="hl sym">=</span> <span class="hl kwd">strchr</span><span class="hl sym">(</span>buf <span class="hl sym">+</span> physical_id_str_len<span class="hl sym">,</span> <span class="hl str">':'</span><span class="hl sym">);</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>pos<span class="hl sym">)</span>
+                physical_id <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>pos <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">else if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> <span class="hl kwd">strncmp</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> core_id_str<span class="hl sym">,</span> core_id_str_len<span class="hl sym">))</span>
+        <span class="hl sym">{</span>
+            pos <span class="hl sym">=</span> <span class="hl kwd">strchr</span><span class="hl sym">(</span>buf <span class="hl sym">+</span> core_id_str_len<span class="hl sym">,</span> <span class="hl str">':'</span><span class="hl sym">);</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>pos<span class="hl sym">)</span>
+                core_id <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>pos <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">else if</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">==</span> <span class="hl kwd">strncmp</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> cpu_cores_str<span class="hl sym">,</span> cpu_cores_str_len<span class="hl sym">))</span>
+        <span class="hl sym">{</span>
+            pos <span class="hl sym">=</span> <span class="hl kwd">strchr</span><span class="hl sym">(</span>buf <span class="hl sym">+</span> cpu_cores_str_len<span class="hl sym">,</span> <span class="hl str">':'</span><span class="hl sym">);</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>pos<span class="hl sym">)</span>
+                cpu_cores <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>pos <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>cpu_idx <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> physical_id <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> core_id <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> cpu_cores <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+        <span class="hl sym">{</span>
+            apic_id <span class="hl sym">=</span> physical_id <span class="hl sym">*</span> cpu_cores <span class="hl sym">+</span> core_id<span class="hl sym">;</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>apic_id <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">||</span> apic_id <span class="hl sym">==</span> <span class="hl num">1</span><span class="hl sym">)</span>
+                <span class="hl kwd">CPU_SET</span><span class="hl sym">(</span>cpu_idx<span class="hl sym">,</span> affinity1<span class="hl sym">);</span>
+            <span class="hl kwa">else if</span> <span class="hl sym">(</span>apic_id <span class="hl sym">==</span> <span class="hl num">2</span> <span class="hl sym">||</span> apic_id <span class="hl sym">==</span> <span class="hl num">3</span><span class="hl sym">)</span>
+                <span class="hl kwd">CPU_SET</span><span class="hl sym">(</span>cpu_idx<span class="hl sym">,</span> affinity2<span class="hl sym">);</span>
+            cpu_idx <span class="hl sym">=</span> physical_id <span class="hl sym">=</span> core_id <span class="hl sym">=</span> cpu_cores <span class="hl sym">= -</span><span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwd">fclose</span><span class="hl sym">(</span>f<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">init_and_start</span><span class="hl sym">(</span><span class="hl kwb">enum</span> color_t<span class="hl sym">*</span> initial_colors<span class="hl sym">,</span> <span class="hl kwb">size_t</span> chameneos_count<span class="hl sym">,</span>
+    <span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">**</span> place<span class="hl sym">,</span> <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">***</span> chameneos<span class="hl sym">,</span>
+    <span class="hl kwb">size_t</span> meet_count<span class="hl sym">,</span> <span class="hl kwb">int</span> is_smp<span class="hl sym">,</span> cpu_set_t<span class="hl sym">*</span> affinity<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">size_t</span>                      i<span class="hl sym">;</span>
+
+    place<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] = (</span><span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">*)</span>
+        <span class="hl kwd">cache_aligned_malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">));</span>
+    place<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]-&gt;</span>state <span class="hl sym">=</span> meet_count <span class="hl sym">&lt;&lt;</span> MEET_COUNT_SHIFT<span class="hl sym">;</span>
+    chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] = (</span><span class="hl kwb">struct</span> chameneos_t<span class="hl sym">**)</span>
+        <span class="hl kwd">cache_aligned_malloc</span><span class="hl sym">(</span>chameneos_count <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">struct</span> chameneos_t<span class="hl sym">*));</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">!=</span> chameneos_count<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">] = (</span><span class="hl kwb">struct</span> chameneos_t<span class="hl sym">*)</span>
+            <span class="hl kwd">cache_aligned_malloc</span><span class="hl sym">(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">struct</span> chameneos_t<span class="hl sym">));</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>place <span class="hl sym">=</span> place<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>chameneos <span class="hl sym">=</span> chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>id <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>is_smp <span class="hl sym">=</span> is_smp<span class="hl sym">;</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>meet_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>meet_same_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>color <span class="hl sym">=</span> initial_colors<span class="hl sym">[</span>i<span class="hl sym">];</span>
+        chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>meeting_completed <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">pthread_attr_init</span><span class="hl sym">(&amp;</span>chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>thread_attr<span class="hl sym">))</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>is_smp<span class="hl sym">)</span>
+            <span class="hl kwd">pthread_attr_setaffinity_np</span><span class="hl sym">(&amp;</span>chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>thread_attr<span class="hl sym">,</span>
+                <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cpu_set_t<span class="hl sym">),</span> affinity<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>thread<span class="hl sym">,</span>
+            <span class="hl sym">&amp;</span>chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]-&gt;</span>thread_attr<span class="hl sym">,</span> chameneos_func<span class="hl sym">,</span> chameneos<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">][</span>i<span class="hl sym">]))</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span> <span class="hl kwd">join_and_output</span><span class="hl sym">(</span><span class="hl kwb">enum</span> color_t<span class="hl sym">*</span> initial_colors<span class="hl sym">,</span> <span class="hl kwb">size_t</span> chameneos_count<span class="hl sym">,</span>
+    <span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">*</span> place<span class="hl sym">,</span> <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">**</span> chameneos<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">size_t</span>                      total_meet_count<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      i<span class="hl sym">;</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">!=</span> chameneos_count<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot; %s&quot;</span><span class="hl sym">,</span> color_names<span class="hl sym">[</span>initial_colors<span class="hl sym">[</span>i<span class="hl sym">]]);</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">!=</span> chameneos_count<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwd">pthread_join</span><span class="hl sym">(</span>chameneos<span class="hl sym">[</span>i<span class="hl sym">]-&gt;</span>thread<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+        <span class="hl kwd">pthread_attr_destroy</span><span class="hl sym">(&amp;</span>chameneos<span class="hl sym">[</span>i<span class="hl sym">]-&gt;</span>thread_attr<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    total_meet_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">!=</span> chameneos_count<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        total_meet_count <span class="hl sym">+=</span> chameneos<span class="hl sym">[</span>i<span class="hl sym">]-&gt;</span>meet_count<span class="hl sym">;</span>
+        <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%u%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> chameneos<span class="hl sym">[</span>i<span class="hl sym">]-&gt;</span>meet_count<span class="hl sym">,</span>
+            <span class="hl kwd">spell_number</span><span class="hl sym">(</span>chameneos<span class="hl sym">[</span>i<span class="hl sym">]-&gt;</span>meet_same_count<span class="hl sym">));</span>
+        <span class="hl kwd">cache_aligned_free</span><span class="hl sym">(</span>chameneos<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">spell_number</span><span class="hl sym">(</span>total_meet_count<span class="hl sym">));</span>
+
+    <span class="hl kwd">cache_aligned_free</span><span class="hl sym">(</span>chameneos<span class="hl sym">);</span>
+    <span class="hl kwd">cache_aligned_free</span><span class="hl sym">(</span>place<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">**</span> argv<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">enum</span> color_t                initial_colors1 <span class="hl sym">[] =</span>
+        <span class="hl sym">{</span>color_blue<span class="hl sym">,</span> color_red<span class="hl sym">,</span> color_yellow<span class="hl sym">};</span>
+
+    <span class="hl kwb">enum</span> color_t                initial_colors2 <span class="hl sym">[] =</span>
+        <span class="hl sym">{</span>color_blue<span class="hl sym">,</span> color_red<span class="hl sym">,</span> color_yellow<span class="hl sym">,</span> color_red<span class="hl sym">,</span> color_yellow<span class="hl sym">,</span>
+        color_blue<span class="hl sym">,</span> color_red<span class="hl sym">,</span> color_yellow<span class="hl sym">,</span> color_red<span class="hl sym">,</span> color_blue<span class="hl sym">};</span>
+
+    <span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">*</span>     place1<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">**</span>        chameneos1<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      chameneos_count1<span class="hl sym">;</span>
+
+    <span class="hl kwb">struct</span> meeting_place_t<span class="hl sym">*</span>     place2<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> chameneos_t<span class="hl sym">**</span>        chameneos2<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      chameneos_count2<span class="hl sym">;</span>
+
+    <span class="hl kwb">int</span>                         is_smp<span class="hl sym">;</span>
+    cpu_set_t                   affinity1<span class="hl sym">;</span>
+    cpu_set_t                   affinity2<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span>                      meet_count<span class="hl sym">;</span>
+
+    meet_count <span class="hl sym">=</span> <span class="hl num">6000000</span><span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;</span> <span class="hl num">1</span> <span class="hl sym">&amp;&amp;</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) &gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+        meet_count <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+
+    <span class="hl kwd">print_colors</span><span class="hl sym">();</span>
+
+    <span class="hl kwd">get_affinity</span><span class="hl sym">(&amp;</span>is_smp<span class="hl sym">, &amp;</span>affinity1<span class="hl sym">, &amp;</span>affinity2<span class="hl sym">);</span>
+
+    chameneos_count1 <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>initial_colors1<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>initial_colors1<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+    chameneos_count2 <span class="hl sym">=</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>initial_colors2<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>initial_colors2<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>is_smp<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwd">init_and_start</span><span class="hl sym">(</span>initial_colors1<span class="hl sym">,</span> chameneos_count1<span class="hl sym">, &amp;</span>place1<span class="hl sym">, &amp;</span>chameneos1<span class="hl sym">,</span> meet_count<span class="hl sym">,</span> is_smp<span class="hl sym">, &amp;</span>affinity1<span class="hl sym">);</span>
+        <span class="hl kwd">init_and_start</span><span class="hl sym">(</span>initial_colors2<span class="hl sym">,</span> chameneos_count2<span class="hl sym">, &amp;</span>place2<span class="hl sym">, &amp;</span>chameneos2<span class="hl sym">,</span> meet_count<span class="hl sym">,</span> is_smp<span class="hl sym">, &amp;</span>affinity2<span class="hl sym">);</span>
+        <span class="hl kwd">join_and_output</span><span class="hl sym">(</span>initial_colors1<span class="hl sym">,</span> chameneos_count1<span class="hl sym">,</span> place1<span class="hl sym">,</span> chameneos1<span class="hl sym">);</span>
+        <span class="hl kwd">join_and_output</span><span class="hl sym">(</span>initial_colors2<span class="hl sym">,</span> chameneos_count2<span class="hl sym">,</span> place2<span class="hl sym">,</span> chameneos2<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">else</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwd">init_and_start</span><span class="hl sym">(</span>initial_colors1<span class="hl sym">,</span> chameneos_count1<span class="hl sym">, &amp;</span>place1<span class="hl sym">, &amp;</span>chameneos1<span class="hl sym">,</span> meet_count<span class="hl sym">,</span> is_smp<span class="hl sym">, &amp;</span>affinity1<span class="hl sym">);</span>
+        <span class="hl kwd">join_and_output</span><span class="hl sym">(</span>initial_colors1<span class="hl sym">,</span> chameneos_count1<span class="hl sym">,</span> place1<span class="hl sym">,</span> chameneos1<span class="hl sym">);</span>
+        <span class="hl kwd">init_and_start</span><span class="hl sym">(</span>initial_colors2<span class="hl sym">,</span> chameneos_count2<span class="hl sym">, &amp;</span>place2<span class="hl sym">, &amp;</span>chameneos2<span class="hl sym">,</span> meet_count<span class="hl sym">,</span> is_smp<span class="hl sym">, &amp;</span>affinity2<span class="hl sym">);</span>
+        <span class="hl kwd">join_and_output</span><span class="hl sym">(</span>initial_colors2<span class="hl sym">,</span> chameneos_count2<span class="hl sym">,</span> place2<span class="hl sym">,</span> chameneos2<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
