@@ -358,7 +358,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <strong>Ubuntu&#8482; 9.04 Linux</strong> Kernel 2.6.28-11-generic</p>
+<dd><p>We use <strong>Ubuntu&#8482; 9.04 Linux</strong> Kernel 2.6.28-15-generic</p>
 
 <p>The old measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
