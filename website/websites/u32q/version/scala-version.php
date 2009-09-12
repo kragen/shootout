@@ -1,1 +1,1 @@
-<p>Scala compiler version 2.7.5.final -- Copyright 2002-2009, LAMP/EPFL</p>
+<p>Scala code runner version 2.7.6.final -- Copyright 2002-2009, LAMP/EPFL</p>
