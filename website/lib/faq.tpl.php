@@ -250,7 +250,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </dd>
 
 <dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
-<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points. The usual startup measurements and the "*Java 6 steady state" approximations are shown alongside for comparison.</p>
+<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points. The usual startup measurements and the "*Java 6 steady state" approximations are shown alongside for comparison. [java version "1.6.0_16"]</p>
 
 
 <table>
@@ -273,71 +273,81 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>meteor-contest&nbsp;&nbsp;</td>
-<td>0.25s</td>
-<td>0.03</td>
-<td>0.13s</td>
+<td>0.22s</td>
 <td>0.01</td>
-<td>0.30s</td>
-<td>0.13s</td>
+<td>0.12s</td>
+<td>0.00</td>
+<td>0.31s</td>
+<td>0.14s</td>
 </tr>
 
 <tr>
 <td>spectral-norm&nbsp;&nbsp;</td>
-<td>4.03s</td>
-<td>0.06</td>
-<td>3.97s</td>
+<td>4.04s</td>
+<td>0.04</td>
+<td>3.96s</td>
 <td>0.03</td>
-<td>4.07s</td>
-<td>4.11s</td>
+<td>4.09s</td>
+<td>3.97s</td>
 </tr>
 
 <tr>
 <td>pidigits&nbsp;&nbsp;</td>
-<td>6.83s</td>
+<td>6.86s</td>
 <td>0.04</td>
 <td>6.77s</td>
-<td>0.03</td>
-<td>6.93s</td>
-<td>6.76s</td>
+<td>0.07</td>
+<td>6.91s</td>
+<td>6.78s</td>
+</tr>
+
+<tr>
+<td>fasta&nbsp;&nbsp;</td>
+<td>7.48s</td>
+<td>0.05</td>
+<td>6.91s</td>
+<td>0.12</td>
+<td>7.51s</td>
+<td>-</td>
 </tr>
 
 <tr>
 <td>mandelbrot&nbsp;&nbsp;</td>
-<td>11.77s</td>
-<td>0.74</td>
-<td>10.24s</td>
-<td>0.18</td>
-<td>11.10s</td>
-<td>10.15s</td>
+<td>12.03s</td>
+<td>0.87</td>
+<td>9.92s</td>
+<td>0.09</td>
+<td>11.72s</td>
+<td>11.03s</td>
 </tr>
 
 <tr>
 <td>binary-trees&nbsp;&nbsp;</td>
-<td>19.96s</td>
-<td>0.58</td>
-<td>14.94s</td>
-<td>0.43</td>
-<td>19.64s</td>
-<td>15.43s</td>
+<td>20.64s</td>
+<td>0.62</td>
+<td>15.19s</td>
+<td>0.40</td>
+<td>19.57s</td>
+<td>15.60s</td>
 </tr>
 
 <td>fannkuch&nbsp;&nbsp;</td>
-<td>20.53s</td>
-<td>1.31</td>
-<td>17.87s</td>
-<td>0.11</td>
-<td>20.15s</td>
-<td>17.96s</td>
+<td>18.69s</td>
+<td>0.15</td>
+<td>18.40s</td>
+<td>0.08</td>
+<td>18.34s</td>
+<td>18.55s</td>
 </tr>
 
 <tr>
 <td>nbody&nbsp;&nbsp;</td>
-<td>23.77s</td>
-<td>0.04</td>
-<td>24.06s</td>
-<td>0.96</td>
-<td>23.88s</td>
-<td>23.88s</td>
+<td>25.00s</td>
+<td>0.03</td>
+<td>25.29s</td>
+<td>1.58</td>
+<td>25.21s</td>
+<td>24.78s</td>
 </tr>
 
 </table>
