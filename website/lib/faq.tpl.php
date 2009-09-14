@@ -250,12 +250,12 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </dd>
 
 <dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
-<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points. The usual startup measurements and the "*Java 6 steady state" approximations are shown alongside for comparison. [java version "1.6.0_16"]</p>
+<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points. The usual startup measurements and the "*Java 6 steady state" approximations are shown alongside for comparison.</p>
 
 
 <table>
 <tr>
-<th>&nbsp;</th>
+<th>"1.6.0_16"&nbsp;</th>
 <th colspan="2">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
 <th colspan="2">&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
 <th colspan="2">&nbsp;current&nbsp;measurements&nbsp;</th>
