@@ -5,17 +5,38 @@
 <p><a href="faq.php#dynamic"><strong>FAQ: What about Java dynamic compilation?</strong></a></p>
 
 <pre>
-$ java -server -XX:+PrintCompilation -XX:-PrintGC nbody 50000000
+$ java -server -XX:+PrintCompilation -XX:-PrintGC nbody_test 50000000 10
 -0.169075164
   1       NBodySystem::advance (374 bytes)
-  1%      nbody::program_main @ 49 (102 bytes)
+  1%      nbody_test::dotest @ 40 (82 bytes)
 -0.169059907
-23.728s
-  2       nbody::program_main (102 bytes)
+25.030
+  2       nbody_test::dotest (82 bytes)
 -0.169075164
 -0.169059907
-23.668s
+29.790
 -0.169075164
 -0.169059907
-23.705s
+24.906
+-0.169075164
+-0.169059907
+24.812
+-0.169075164
+-0.169059907
+24.802
+-0.169075164
+-0.169059907
+24.836
+-0.169075164
+-0.169059907
+24.817
+-0.169075164
+-0.169059907
+24.817
+-0.169075164
+-0.169059907
+24.839
+-0.169075164
+-0.169059907
+24.818
 </pre>
