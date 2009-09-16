@@ -5,17 +5,33 @@
 <p><a href="faq.php#dynamic"><strong>FAQ: What about Java dynamic compilation?</strong></a></p>
 
 <pre>
-$ java -server -XX:+PrintCompilation -XX:-PrintGC spectralnorm 5500
-  1       spectralnorm$Approximate::eval_A (21 bytes)
-  2       spectralnorm$Approximate::MultiplyAv (60 bytes)
-  1%      spectralnorm$Approximate::MultiplyAv @ 19 (60 bytes)
-  2%      spectralnorm$Approximate::MultiplyAtv @ 19 (60 bytes)
-  3       spectralnorm$Approximate::MultiplyAtv (60 bytes)
+$ java -server -XX:+PrintCompilation -XX:-PrintGC spectralnorm_test 5500 10
+  1       spectralnorm_test$Approximate::eval_A (21 bytes)
+  1%      spectralnorm_test$Approximate::MultiplyAv @ 19 (60 bytes)
+  2%      spectralnorm_test$Approximate::MultiplyAtv @ 19 (60 bytes)
+  2       spectralnorm_test$Approximate::MultiplyAv (60 bytes)
+  3       spectralnorm_test$Approximate::MultiplyAtv (60 bytes)
 1.274224153
-4.066s
+4.103
 1.274224153
-3.938s
-  4  !    spectralnorm::spectralnormGame (203 bytes)
+3.955
+  4  !    spectralnorm_test::spectralnormGame (203 bytes)
 1.274224153
-3.953s
+3.991
+1.274224153
+3.973
+  5       spectralnorm_test$Approximate::run (110 bytes)
+1.274224153
+4.005
+1.274224153
+3.994
+1.274224153
+3.965
+---   n   java.lang.Thread::currentThread (static)
+1.274224153
+3.969
+1.274224153
+3.969
+1.274224153
+3.969
 </pre>
