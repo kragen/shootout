@@ -1,0 +1,529 @@
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Jim Rogers
+-- Modified by Georg Bauhaus
+--
+-- This version uses the GNAT Spitbol Pattern matching libraries
+-- rather than the more commonly used Unix-style regex libraries
+
+with Gnat.Spitbol.Patterns; use Gnat.Spitbol.Patterns;
+use Gnat.Spitbol;
+
+package DNA is
+
+   subtype Variant_Index is Positive range 1..9;
+   Variant_Labels : constant array (Variant_Index) of Vstring := (
+      V("agggtaaa|tttaccct"),
+      V("[cgt]gggtaaa|tttaccc[acg]"),
+      V("a[act]ggtaaa|tttacc[agt]t"),
+      V("ag[act]gtaaa|tttac[agt]ct"),
+      V("agg[act]taaa|ttta[agt]cct"),
+      V("aggg[acg]aaa|ttt[cgt]ccct"),
+      V("agggt[cgt]aa|tt[acg]accct"),
+      V("agggta[cgt]a|t[acg]taccct"),
+      V("agggtaa[cgt]|[acg]ttaccct"));
+
+   Variant_Patterns : constant array(Variant_Index) of Pattern := (
+      "agggtaaa" or "tttaccct",
+      (Any("cgt") & "gggtaaa") or ("tttaccc" & Any("acg")),
+      ("a" & Any("act") & "ggtaaa") or ("tttacc" & Any("agt") & "t"),
+      ("ag" & Any("act") & "gtaaa") or ("tttac" & Any("agt") & "ct"),
+      ("agg" & Any("act") & "taaa") or ("ttta" & Any("agt") & "cct"),
+      ("aggg" & Any("acg") & "aaa") or ("ttt" & Any("cgt") & "ccct"),
+      ("agggt" & Any("cgt") & "aa") or ("tt" & Any("acg") & "accct"),
+      ("agggta" & Any("cgt") & "a") or ("t" & Any("acg") & "taccct"),
+      ("agggtaa" & Any("cgt")) or (Any("acg") & "ttaccct"));
+
+   type Iub is
+      record
+         Code         : Pattern;
+         Alternatives : VString;
+   end record;
+   subtype Codes_Index is Natural range 1..11;
+   type Codes_Array is array (Codes_Index) of Iub;
+   Codes : constant Codes_Array := (
+      (Any("B"), V("(c|g|t)")),
+      (Any("D"), V("(a|g|t)")),
+      (Any("H"), V("(a|c|t)")),
+      (Any("K"), V("(g|t)")),
+      (Any("M"), V("(a|c)")),
+      (Any("N"), V("(a|c|g|t)")),
+      (Any("R"), V("(a|g)")),
+      (Any("S"), V("(c|g)")),
+      (Any("V"), V("(a|c|g)")),
+      (Any("W"), V("(a|t)")),
+      (Any("Y"), V("(c|t)")));
+
+   type Lines is array(Positive range <>) of Vstring;
+
+end DNA;
+
+-- ----------------
+-- main subprogram
+-- ----------------
+with Ada.Text_Io; use Ada.Text_Io;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Gnat.Spitbol.Patterns; use Gnat.Spitbol.Patterns;
+use Gnat.Spitbol;
+
+with DNA.Matching;
+with DNA.Replacing;
+use DNA;
+
+procedure Regexdna is
+
+   function Length(Item : in DNA.Lines) return Natural is
+      Sum : Natural := 0;
+   begin
+      for I in Item'range loop
+         Sum := Sum + Size(Item(I));
+      end loop;
+      return Sum;
+   end Length;
+
+
+   Initial_Length : Natural := 0;
+   Code_Length : Natural;
+   Line : String(1..80);
+   Var_Line : Vstring_Var;
+   Line_Length : Natural;
+   Sequence : aliased Vstring_Var;
+   Fasta_Description : constant Pattern := Pos(0) & ">" & Rest;
+   Num_Lines : Natural;
+   Split_Length : constant := 80;
+begin
+
+   -- Read FASTA Sequence
+   -- Record length and remove the unwanted elements
+
+   while not End_Of_File loop
+      Get_Line(Item => Line, Last => Line_Length);
+      Var_Line := V(Line(1..Line_Length));
+      Initial_Length := Initial_Length + Size(Var_Line) + 1;
+      Match(Subject => Var_Line,
+         Pat => Fasta_Description, Replace => "");
+      Append(Source => Sequence, New_Item => Var_Line);
+   end loop;
+   Code_Length := Length(Sequence);
+
+
+   Matching_Part:
+   declare
+      Worker : array (Variant_Index) of Matching.Service(Sequence'Access);
+      Count : Natural;
+   begin
+      -- assign tasks
+      for Variant in Variant_Index loop
+         Worker(Variant).Match_Variant(Variant);
+      end loop;
+
+      -- print results so far
+      for Variant in Variant_Index Loop
+         Matching.Stats.Get(Variant)(Result => Count);
+         Put(To_String(Variant_Labels(Variant)) & " ");
+         Put(Item => Count, Width => 1);
+         New_Line;
+      end loop;
+
+   end Matching_Part;
+
+
+   -- regex substitution
+
+   Num_Lines := Length(Sequence) / Split_Length;
+   if Length(Sequence) mod Split_Length > 1 then
+      Num_Lines := Num_Lines + 1;
+   end if;
+
+   Replacing_Part:
+   declare
+      type Sequence_Lines_Access is access DNA.Lines;
+      Sequence_Lines_Pointer : constant Sequence_Lines_Access :=
+        new DNA.Lines(1..Num_Lines);
+      Sequence_Lines : DNA.Lines renames Sequence_Lines_Pointer.all;
+
+      Worker : array (Codes_Index) of Replacing.Service(Sequence_Lines_Pointer);
+      Low, Sub_Len : Natural;
+   begin
+      -- Distribute Sequence to Sequence_Lines
+      Low := 1;
+      Sub_Len := Split_Length;
+      for I in Sequence_Lines'range loop
+         Sequence_Lines(I) := Substr(Str => Sequence ,
+            Start => Low, Len => Sub_Len );
+         Low := Low + Sub_Len;
+         if Low + Sub_Len > Length(Sequence) then
+            Sub_Len := Length(Sequence) - Low + 1;
+         end if;
+      end loop;
+
+      -- replace
+      for L in Worker'Range loop
+         Worker(L).Replace (First_Line => L);
+      end loop;
+
+      -- wait for results and report
+      Replacing.Stats.Collect;
+      New_Line;
+      Put(Item => Initial_Length, Width => 1);
+      New_Line;
+      Put(Item => Code_Length, Width => 1);
+      New_Line;
+      Put(Item => Length(Sequence_Lines), Width => 1);
+      New_Line;
+   end Replacing_Part;
+
+end Regexdna;
+
+-- ----------------
+-- match
+-- ----------------
+package DNA.Matching is
+
+   task type Service(Sequence : access VString_Var) is
+      -- perform matching one pattern concurrently
+
+      entry Match_Variant(Variant : Variant_Index);
+   end Service;
+
+
+   type Occurrences is array (Variant_Index) of Natural;
+
+   No_Count : constant Natural := Natural'Last;
+
+   protected Stats is
+      -- collect counts from tasks, waiting to be printed
+
+      procedure Report(Variant : Variant_Index; Count : Natural);
+      entry Get(Variant_Index)(Result : out Natural);
+   private
+      Data : Occurrences := (Variant_Index => No_Count);
+   end Stats;
+
+end DNA.Matching;
+
+
+package body DNA.Matching is
+
+   task body Service is
+      Count : Natural := 0;
+      function Inc_Count return Boolean is
+      begin
+         Count := Count + 1;
+         return False;
+      end Inc_Count;
+      Variant : Variant_Index;
+   begin
+      accept Match_Variant(Variant : Variant_Index) do
+         Service.Variant := Variant;
+      end Match_Variant;
+
+      Count := 0;
+      Match(Subject => Sequence.all,
+            Pat => Variant_Patterns(Variant) & (+Inc_Count'Unrestricted_Access));
+      Stats.Report(Variant, Count);
+   end Service;
+
+
+   protected body Stats is
+      procedure Report(Variant : Variant_Index; Count : Natural) is
+      begin
+         Data(Variant) := Count;
+      end Report;
+
+      entry Get(for Variant in Variant_Index)(Result : out Natural)
+      when Data(Variant) /= No_Count is
+      begin
+         Result := Data(Variant);
+      end Get;
+   end Stats;
+
+end DNA.Matching;
+
+
+-- ----------------
+-- match-replace
+-- ----------------
+package DNA.Replacing is
+
+   task type Service(Sequence_Lines : access DNA.Lines)  is
+      --
+      --  replace in one bunch of lines
+      --
+      entry Replace(First_Line : Codes_Index);
+   end Service;
+
+   type Task_Status is array (Codes_Index) of Boolean;
+
+   protected Stats is
+      procedure Done(Who : Codes_Index);
+      entry Collect;
+      --  wait for all to have called `Done`
+   private
+      Finished : Task_Status := (Codes_Index => False);
+   end Stats;
+
+end DNA.Replacing;
+
+
+package body DNA.Replacing is
+
+   task body Service is
+
+      Offset : Positive range Codes_Index'Range;
+      Step : constant Positive := Codes_Index'Last;
+      --  the task's loop skips `Step` lines in `Sequence_Lines`
+
+      Limit : Natural;
+      I : Positive;
+   begin
+      accept Replace(First_Line : Codes_Index) do
+         Offset := First_Line;
+      end Replace;
+
+      Limit := Sequence_Lines'Last + Offset - Step;
+      I := Offset;
+
+      -- Perform the regex substitution.  Likely facing
+      --
+      -- (1a) the GREAT BIG subtstitution problem
+      --      (cf. D.W.E. Blatt, 1980)
+      -- (1b) replacements in Unbounded_String which
+      --      the pattern matching implementation is using
+      while I <= Limit loop
+         for C in Codes_Index loop
+            while
+               Match(Subject => Sequence_Lines(I),
+                     Pat => Codes(C).Code,
+                     Replace => Codes(C).Alternatives)
+            loop
+               null;
+            end loop;
+         end loop;
+         I := I + Step;
+      end loop;
+
+      Stats.Done(Offset);
+
+   end Service;
+
+
+   protected body Stats is
+      procedure Done(Who : Codes_Index) is
+      begin
+         Finished (Who) := True;
+      end Done;
+
+      entry Collect
+      when Finished = (Finished'Range => True) is
+      begin
+         null;
+      end Collect;
+   end Stats;
+
+end DNA.Replacing;
+
+-- spec of GNAT Pattern library package with Stack_Size setting
+with Ada.Strings.Maps; use Ada.Strings.Maps;
+with Ada.Text_IO;      use Ada.Text_IO;
+package GNAT.Spitbol.Patterns is
+   pragma Elaborate_Body;
+   type Pattern is private;
+   type Boolean_Func is access function return Boolean;
+   type Natural_Func is access function return Natural;
+   type VString_Func is access function return VString;
+   subtype PString is String;
+   subtype PChar is Character;
+   subtype VString_Var is VString;
+   subtype Pattern_Var is Pattern;
+   function "&"  (L : Pattern; R : Pattern) return Pattern;
+   function "&"  (L : PString; R : Pattern) return Pattern;
+   function "&"  (L : Pattern; R : PString) return Pattern;
+   function "&"  (L : PChar;   R : Pattern) return Pattern;
+   function "&"  (L : Pattern; R : PChar)   return Pattern;
+   function "or" (L : Pattern; R : Pattern) return Pattern;
+   function "or" (L : PString; R : Pattern) return Pattern;
+   function "or" (L : Pattern; R : PString) return Pattern;
+   function "or" (L : PString; R : PString) return Pattern;
+   function "or" (L : PChar;   R : Pattern) return Pattern;
+   function "or" (L : Pattern; R : PChar)   return Pattern;
+   function "or" (L : PChar;   R : PChar)   return Pattern;
+   function "or" (L : PString; R : PChar)   return Pattern;
+   function "or" (L : PChar;   R : PString) return Pattern;
+   function "*" (P : Pattern; Var : VString_Var)  return Pattern;
+   function "*" (P : PString; Var : VString_Var)  return Pattern;
+   function "*" (P : PChar;   Var : VString_Var)  return Pattern;
+   function "**" (P : Pattern; Var : VString_Var) return Pattern;
+   function "**" (P : PString; Var : VString_Var) return Pattern;
+   function "**" (P : PChar;   Var : VString_Var) return Pattern;
+   function "+" (Str : VString_Var)  return Pattern;
+   function "+" (Str : VString_Func) return Pattern;
+   function "+" (P : Pattern_Var)    return Pattern;
+   function "+" (P : Boolean_Func)   return Pattern;
+   function Arb                                             return Pattern;
+   function Arbno  (P : Pattern)                            return Pattern;
+   function Arbno  (P : PString)                            return Pattern;
+   function Arbno  (P : PChar)                              return Pattern;
+   function Any    (Str : String)                           return Pattern;
+   function Any    (Str : VString)                          return Pattern;
+   function Any    (Str : Character)                        return Pattern;
+   function Any    (Str : Character_Set)                    return Pattern;
+   function Any    (Str : not null access VString)          return Pattern;
+   function Any    (Str : VString_Func)                     return Pattern;
+   function Bal                                             return Pattern;
+   function Break  (Str : String)                           return Pattern;
+   function Break  (Str : VString)                          return Pattern;
+   function Break  (Str : Character)                        return Pattern;
+   function Break  (Str : Character_Set)                    return Pattern;
+   function Break  (Str : not null access VString)          return Pattern;
+   function Break  (Str : VString_Func)                     return Pattern;
+   function BreakX (Str : String)                           return Pattern;
+   function BreakX (Str : VString)                          return Pattern;
+   function BreakX (Str : Character)                        return Pattern;
+   function BreakX (Str : Character_Set)                    return Pattern;
+   function BreakX (Str : not null access VString)          return Pattern;
+   function BreakX (Str : VString_Func)                     return Pattern;
+   function Cancel                                          return Pattern;
+   function Fail                                            return Pattern;
+   function Fence                                           return Pattern;
+   function Fence  (P : Pattern)                            return Pattern;
+   function Len    (Count : Natural)                        return Pattern;
+   function Len    (Count : not null access Natural)        return Pattern;
+   function Len    (Count : Natural_Func)                   return Pattern;
+   function NotAny (Str : String)                           return Pattern;
+   function NotAny (Str : VString)                          return Pattern;
+   function NotAny (Str : Character)                        return Pattern;
+   function NotAny (Str : Character_Set)                    return Pattern;
+   function NotAny (Str : not null access VString)          return Pattern;
+   function NotAny (Str : VString_Func)                     return Pattern;
+   function NSpan  (Str : String)                           return Pattern;
+   function NSpan  (Str : VString)                          return Pattern;
+   function NSpan  (Str : Character)                        return Pattern;
+   function NSpan  (Str : Character_Set)                    return Pattern;
+   function NSpan  (Str : not null access VString)          return Pattern;
+   function NSpan  (Str : VString_Func)                     return Pattern;
+   function Pos    (Count : Natural)                        return Pattern;
+   function Pos    (Count : not null access Natural)        return Pattern;
+   function Pos    (Count : Natural_Func)                   return Pattern;
+   function Rest                                            return Pattern;
+   function Rpos   (Count : Natural)                        return Pattern;
+   function Rpos   (Count : not null access Natural)        return Pattern;
+   function Rpos   (Count : Natural_Func)                   return Pattern;
+   function Rtab   (Count : Natural)                        return Pattern;
+   function Rtab   (Count : not null access Natural)        return Pattern;
+   function Rtab   (Count : Natural_Func)                   return Pattern;
+   function Setcur (Var : not null access Natural)          return Pattern;
+   function Span   (Str : String)                           return Pattern;
+   function Span   (Str : VString)                          return Pattern;
+   function Span   (Str : Character)                        return Pattern;
+   function Span   (Str : Character_Set)                    return Pattern;
+   function Span   (Str : not null access VString)          return Pattern;
+   function Span   (Str : VString_Func)                     return Pattern;
+   function Succeed                                         return Pattern;
+   function Tab    (Count : Natural)                        return Pattern;
+   function Tab    (Count : not null access Natural)        return Pattern;
+   function Tab    (Count : Natural_Func)                   return Pattern;
+   Anchored_Mode : Boolean := False;
+   Pattern_Stack_Overflow : exception;
+   Stack_Size : constant Positive := 20;
+   function Match
+     (Subject : VString;
+      Pat     : Pattern) return Boolean;
+   function Match
+     (Subject : VString;
+      Pat     : PString) return Boolean;
+   function Match
+     (Subject : String;
+      Pat     : Pattern) return Boolean;
+   function Match
+     (Subject : String;
+      Pat     : PString) return Boolean;
+   function Match
+     (Subject : VString_Var;
+      Pat     : Pattern;
+      Replace : VString) return Boolean;
+   function Match
+     (Subject : VString_Var;
+      Pat     : PString;
+      Replace : VString) return Boolean;
+   function Match
+     (Subject : VString_Var;
+      Pat     : Pattern;
+      Replace : String) return Boolean;
+   function Match
+     (Subject : VString_Var;
+      Pat     : PString;
+      Replace : String) return Boolean;
+   procedure Match
+     (Subject : VString;
+      Pat     : Pattern);
+   procedure Match
+     (Subject : VString;
+      Pat     : PString);
+   procedure Match
+     (Subject : String;
+      Pat     : Pattern);
+   procedure Match
+     (Subject : String;
+      Pat     : PString);
+   procedure Match
+     (Subject : in out VString;
+      Pat     : Pattern;
+      Replace : VString);
+   procedure Match
+     (Subject : in out VString;
+      Pat     : PString;
+      Replace : VString);
+   procedure Match
+     (Subject : in out VString;
+      Pat     : Pattern;
+      Replace : String);
+   procedure Match
+     (Subject : in out VString;
+      Pat     : PString;
+      Replace : String);
+   type Match_Result is private;
+   subtype Match_Result_Var is Match_Result;
+   function Match
+     (Subject : VString_Var;
+      Pat     : Pattern;
+      Result  : Match_Result_Var) return Boolean;
+   procedure Match
+     (Subject : in out VString;
+      Pat     : Pattern;
+      Result  : out Match_Result);
+   procedure Replace
+     (Result  : in out Match_Result;
+      Replace : VString);
+   Debug_Mode : Boolean := False;
+   function "*"  (P : Pattern; Fil : File_Access)           return Pattern;
+   function "*"  (P : PString; Fil : File_Access)           return Pattern;
+   function "*"  (P : PChar;   Fil : File_Access)           return Pattern;
+   function "**" (P : Pattern; Fil : File_Access)           return Pattern;
+   function "**" (P : PString; Fil : File_Access)           return Pattern;
+   function "**" (P : PChar;   Fil : File_Access)           return Pattern;
+   Terminal : constant File_Access := Standard_Error;
+   Output   : constant File_Access := Standard_Output;
+   function Image (P : Pattern) return String;
+   function Image (P : Pattern) return VString;
+   procedure Dump (P : Pattern);
+private
+   type PE;
+   type PE_Ptr is access all PE;
+   type Pattern is new Controlled with record
+      Stk : Natural := 0;
+      P : PE_Ptr := null;
+   end record;
+   pragma Finalize_Storage_Only (Pattern);
+   procedure Adjust (Object : in out Pattern);
+   procedure Finalize (Object : in out Pattern);
+   type VString_Ptr is access all VString;
+   type Match_Result is record
+      Var : VString_Ptr;
+      Start : Natural := 1;
+      Stop : Natural := 0;
+   end record;
+   pragma Volatile (Match_Result);
+end GNAT.Spitbol.Patterns;
