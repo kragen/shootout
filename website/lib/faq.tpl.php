@@ -122,18 +122,13 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 </dd>
 
 
-<dt><a href="#history" name="history"><strong>Out-of-date measurements</strong></a></dt>
+<dt><a href="#history" name="history">Out-of-date measurements</a></dt>
 
 <dd>
 <p>It isn't worth asking why a program is better on a different test machine, because as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
 </dd>
 
 <dd>
-<p><img src="<?=IMAGE_PATH;?>fresh.png"
-   alt=""
-   title=""
-   width="400" height="225"
- /></p>
 <table class="layout">
 <tr class="test">
 <td>
@@ -150,6 +145,16 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </td>
 </tr>
 </table>
+</dd>
+
+<dt><a href="#fresh" name="fresh">Freshness!</a></dt>
+
+<dd>
+<p><img src="<?=IMAGE_PATH;?>fresh.png"
+   alt=""
+   title=""
+   width="400" height="225"
+ /></p>
 </dd>
 
 </dl>
