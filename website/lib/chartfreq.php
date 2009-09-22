@@ -87,7 +87,7 @@ $chart->steps(GP4,$d[0]);
 $chart->steps(DEBIAN,$d[1]);
 $chart->steps(U32Q,$d[2]);
 
-$chart->title('Cumulative Percentage of Current Measurements by Month');
+$chart->title('Cumulative Percentage of Measurements by Month');
 $chart->xAxisLegend('month');
 $chart->yAxisLegend('cumulative percentage');
 $chart->frame();

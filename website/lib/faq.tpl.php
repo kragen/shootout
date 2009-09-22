@@ -125,17 +125,12 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 
 
 <dd>
+<p>Back in the day -</p>
 <p><img src="<?=IMAGE_PATH;?>fresh.png"
    alt=""
    title=""
    width="400" height="225"
  /></p>
-</dd>
-
-
-
-<dd>
-<p>Back in the day -</p>
 <table class="layout">
 <tr class="test">
 <td>
