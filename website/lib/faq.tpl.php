@@ -110,7 +110,6 @@ href="../u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 </table>
 </dd>
 
-
 <dd>
 <table class="layout">
 <tr class="test">
@@ -125,8 +124,18 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 </dd>
 
 
+<dd>
+<p><img src="<?=IMAGE_PATH;?>fresh.png"
+   alt=""
+   title=""
+   width="400" height="225"
+ /></p>
+</dd>
+
+
 
 <dd>
+<p>Back in the day -</p>
 <table class="layout">
 <tr class="test">
 <td>
@@ -144,16 +153,6 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </tr>
 </table>
 </dd>
-
-<dd>
-<p><img src="<?=IMAGE_PATH;?>fresh.png"
-   alt=""
-   title=""
-   width="400" height="225"
- /></p>
-</dd>
-
-
 
 </dl>
 </dd>
