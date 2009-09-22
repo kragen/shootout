@@ -65,7 +65,7 @@
 <dt><a href="#current" name="current"><strong>Up-to-date measurements</strong></a></dt>
 
 <dd>
-<p><em>Caveat lector!</em> Check the source code!</p>
+<p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine. <em>Caveat lector!</em> Check the source code!</p>
 </dd>
 
 
@@ -123,6 +123,10 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 
 
 <dt><a href="#history" name="history"><strong>Out-of-date measurements</strong></a></dt>
+
+<dd>
+<p>It isn't worth asking why a program is better on a different test machine, because as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
+</dd>
 
 <dd>
 <p><img src="<?=IMAGE_PATH;?>fresh.png"
