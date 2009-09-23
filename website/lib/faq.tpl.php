@@ -248,7 +248,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 
 <dt><a href="#copts" name="copts">How did you set <strong>compiler options?</strong></a></dt>
-<dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=pentium4</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
+<dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=native</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
 </dd>
 
 <dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
@@ -366,13 +366,13 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
 <dd>
 <p>We use a quad-core 2.4Ghz Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine with 4GB of RAM and 250GB SATA II disk drive.</p>
-<p>The old measurements used a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512MB of RAM and 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and 80GB IDE disk drive.</p>
+<p>The out-of-date measurements used a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512MB of RAM and 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and 80GB IDE disk drive.</p>
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
 <dd><p>We use <strong>Ubuntu&#8482; 9.04 Linux</strong> Kernel 2.6.28-15-generic</p>
 
-<p>The old measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
+<p>The out-of-date measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
 
 
