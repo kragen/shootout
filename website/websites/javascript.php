@@ -4,10 +4,10 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="robots" content="noindex,noarchive" />
 <title>The Computer Language Benchmarks Game</title>
-<meta http-equiv="refresh" content="3;url=http://shootout.alioth.debian.org/debian/javascript.php">
+<meta http-equiv="refresh" content="3;url=http://shootout.alioth.debian.org/u32q/javascript.php">
 </head>
 <body>
 <p>Redirecting in 3 seconds</p> 
-<h3><a href="http://shootout.alioth.debian.org/debian/javascript.php">http://shootout.alioth.debian.org/debian/javascript.php</a></h3>
+<h3><a href="http://shootout.alioth.debian.org/u32q/javascript.php">http://shootout.alioth.debian.org/u32q/javascript.php</a></h3>
 </body>
 </html>

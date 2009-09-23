@@ -8,6 +8,6 @@
 </head>
 <body>
 <p>Redirecting in 3 seconds</p> 
-<h3><a href="http://shootout.alioth.debian.org/gp4/fbasic.php">http://shootout.alioth.debian.org/debian/pascal.php</a></h3>
+<h3><a href="http://shootout.alioth.debian.org/gp4/fbasic.php">http://shootout.alioth.debian.org/gp4/fbasic.php</a></h3>
 </body>
 </html>

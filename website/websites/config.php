@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004, 2005
+// Copyright (c) Isaac Gouy 2004-2009
 
 // FILE PATHS ///////////////////////////////////////////////////
 
