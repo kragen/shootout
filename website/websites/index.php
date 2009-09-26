@@ -15,7 +15,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="benchmarking fast faster fastest programming language performance comparison benchmarks game shootout" />
+<meta name="keywords" content="fastest programs programming languages performance comparisons benchmarks game shootout computers" />
 <meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Benchmarks Game</title>
@@ -87,19 +87,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 
 <?php
 
-/*
-<p><a title="Benchmark details and CPU time, memory use, program source code size, elapsed time measurements."
-href="./u32q/"><img src="./fresh.png"
-   alt=""
-   title=""
-   width="400" height="225"
- /></a></p>
-*/
-
-
 require_once('../lib/lib_whitelist.php');
-
-// Don't use library functions, define what we need here
 
 function ReadA($FileName){
    $f = @fopen($FileName,'r') or die('Cannot open '.$FileName);
@@ -173,8 +161,8 @@ $ubuntu = Keys( array( 'u32q' ));
 
 // Gentoo and Debian are not being updated, only show languages not on u32q
 $u32 = Keys( array( 'u32' ));
-$gentoo = Keys( array( 'gp4' ));
-$debian = Keys( array( 'debian' )); 
+//$gentoo = Keys( array( 'gp4' ));
+//$debian = Keys( array( 'debian' )); 
 
 foreach($Langs as $a){
    $notShown = PrintIncludedLanguages($ubuntu,$a,TRUE);
