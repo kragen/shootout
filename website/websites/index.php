@@ -194,6 +194,5 @@ foreach($Langs as $a){
 
 </div>
 
-<? include_once("analyticstracking.php") ?>
 </body>
 </html>

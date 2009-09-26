@@ -33,6 +33,5 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
    <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" /></a>
 </p>
 </div>
-<? include_once(IMAGE_PATH.'analyticstracking.php'); ?>
 </body>
 </html>

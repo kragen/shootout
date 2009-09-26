@@ -495,7 +495,7 @@ The system is going down for system halt NOW!
 <dd>
 <p>We use a simple script to <strong>split a single source file</strong> into multiple target source files.</p>
 <p>One of the target source files <em>must</em> have the same filename as the original single source file, and is expected to be the 'main' program.</p>
-<p>For example, the <a href="benchmark.php?test=nbody&amp;lang=se">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
+<p>For example, the <a href="http://shootout.alioth.debian.org/gp4/benchmark.php?test=nbody&amp;lang=se&amp;id=1">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
 each new target source file will start from the <strong>comment line</strong> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
  SPLITFILE=<em>target-filename</em> directive or end-of-file.</p>
 <p>So, the new target source file <em>body.e</em> will start with the line</p>
