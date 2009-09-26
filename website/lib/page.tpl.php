@@ -18,11 +18,8 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <?=$MetaKeywords;?>
 
 <title><?=$PageTitle;?></title>
+<link rel="stylesheet" type="text/css" href="./benchmark.css" />
 <link rel="shortcut icon" href="./favicon.ico" />
-<style type="text/css" media="all">
-   @import "<?=IMAGE_PATH;?>highlight.css";
-   @import "<?=IMAGE_PATH;?>benchmark.css";
-</style>
 </head>
 
 <body id="<?=SITE_NAME;?>">
