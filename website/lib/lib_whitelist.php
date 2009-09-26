@@ -49,6 +49,17 @@ define('PRG_ID_LEN',NAME_LEN+2);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
+
+function SetChartCacheControl(){
+   // website content changes at-most once an hour - say ten past the hour
+   $m = floor(time()/60); $h = floor($m/60); $after_the_hour = $m - $h*60; $countdown = 10;
+   if ($countdown <= $after_the_hour) { $countdown += 60; $h++; }
+   header("Pragma: public");
+   header("Cache-Control: maxage=".($countdown - $after_the_hour)*60);
+   header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
+}
+
+
 function WhiteListInEx(){
    $incl = array();
    $f = @fopen('./include.csv','r') or die('Cannot open ./include.csv');
