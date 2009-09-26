@@ -8,6 +8,8 @@ header("Content-type: image/png");
 require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_chart.php');
 
+SetChartCacheControl();
+
 
 // DATA ////////////////////////////////////////////////////
 

@@ -7,6 +7,8 @@ header("Content-type: image/png");
 require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_chart.php');
 
+SetChartCacheControl();
+
 list($in,$ex) = WhiteListInEx();
 $WhiteListTests = WhiteListUnique('test.csv',$in);
 

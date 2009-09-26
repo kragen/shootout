@@ -8,6 +8,8 @@ require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_common.php');
 require_once(LIB_PATH.'lib_fulldata.php');
 
+SetChartCacheControl();
+
 
 // DATA ////////////////////////////////////////////////////
 
