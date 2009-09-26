@@ -43,6 +43,12 @@
 <p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p>
 </dd>
 
+<dt><a href="#playing" name="playing"><strong>Who's playing?</strong></a></dt>
+<dd>
+<p>March 1 - August 31, 2009</p>
+<p>1,022,612 Unique Page Views; 150,802 Absolute Unique Visitors; 166 programs contributed.</p>
+</dd>
+
 <dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
 <dd>
 <p>When the facts exceed our curiousity.</p>
