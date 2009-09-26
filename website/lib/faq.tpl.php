@@ -33,6 +33,12 @@
 <p>Compare them directly <a href="fulldata.php?test=fannkuch&amp;p1=java-1&amp;p2=gcc-1&amp;p3=php-3&amp;p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
 </dd>
 
+<dt><a href="#playing" name="playing"><strong>Who's playing?</strong></a></dt>
+<dd>
+<p>March 1 - August 31, 2009</p>
+<p>1,022,612 Unique Page Views; 150,802 Absolute Unique Visitors; 166 programs contributed.</p>
+</dd>
+
 <dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
 <dd>
 <p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
@@ -41,12 +47,6 @@
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
 <dd>
 <p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p>
-</dd>
-
-<dt><a href="#playing" name="playing"><strong>Who's playing?</strong></a></dt>
-<dd>
-<p>March 1 - August 31, 2009</p>
-<p>1,022,612 Unique Page Views; 150,802 Absolute Unique Visitors; 166 programs contributed.</p>
 </dd>
 
 <dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
