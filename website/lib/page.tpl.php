@@ -18,7 +18,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <?=$MetaKeywords;?>
 
 <title><?=$PageTitle;?></title>
-<link rel="stylesheet" type="text/css" href="./benchmark.css" />
+<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark.css" />
 <link rel="shortcut icon" href="./favicon.ico" />
 </head>
 
