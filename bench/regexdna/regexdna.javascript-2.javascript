@@ -14,7 +14,7 @@ var i = "", ilen, clen, j, q = [ /agggtaaa|tttaccct/ig,
   /M/g, '(a|c)', /N/g, '(a|c|g|t)', /R/g, '(a|g)', /S/g, '(c|g)',
   /V/g, '(a|c|g)', /W/g, '(a|t)', /Y/g, '(c|t)']
 
-do{ try{ i += readline() + "\n" }catch(e){ break }}while(true) ilen = i.length
+while(j = readline()) i+=j+"\n"; ilen = i.length
 
 i = i.replace(/^>.*\n|\n/mg, ''); clen = i.length
 
