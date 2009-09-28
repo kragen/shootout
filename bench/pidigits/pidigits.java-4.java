@@ -6,6 +6,7 @@
    java port by Stefan Krause
    Data Parallel adaptation by Sassa NF
 */
+
 import java.util.concurrent.*;
 
 public class pidigits {
@@ -15,9 +16,12 @@ public class pidigits {
                     ES1 = 10, ER = 11, 
                     Q = 12, R = 13, T = 14, U = 15; // these are always available
 
+   final static int SPIN = 1000;
+
    long [] values = new long[ 16 ];
    Semaphore [] sema = new Semaphore[ values.length ];
    Semaphore allDone = new Semaphore( 0 );
+   Semaphore moreWork = new Semaphore( 0 );
    final static int ADD = 0, MUL = 1, DIV_Q_R = 2;
 
    ExecutorService executor = Executors.newFixedThreadPool( 3 );
@@ -31,12 +35,29 @@ public class pidigits {
       this.n=n;
    }
 
+   public static void acquire( Semaphore s, int permits )
+   {
+     int i = SPIN;
+     while( !s.tryAcquire( permits ) ) if ( --i <= 0 ) break;
+
+     // now, if i <= 0, then the semaphore is definitely not acquired
+     if ( i <= 0 )
+     {
+       try
+       {
+         s.acquire( permits );
+       }
+       catch( Exception e )
+       {}
+     }
+   }
+
    public class exec implements Runnable
    {
-     Runnable [] seq_tasks;
+     exec [] seq_tasks;
      int instr, dest, op1, op2, op3 = -1;
 
-     public exec( Runnable[] tasks )
+     public exec( exec[] tasks )
      {
        seq_tasks = tasks;
      }
@@ -53,16 +74,22 @@ public class pidigits {
 
      public void run()
      {
+       _run();
+       acquire( moreWork, 1 ); // leave the thread spinning until more work arrives - unparking takes ages on some boxes
+     }
+
+     public void _run()
+     {
        if ( seq_tasks != null )
        {
-         for( Runnable r: seq_tasks ) r.run();
+         for( exec r: seq_tasks ) r._run();
          allDone.release();
          return;
        }
 
        // the while loop makes sure the thread doesn't get preempted - don't care about the CPU going wild; it would be idle otherwise anyway
-       while( !sema[ op1 ].tryAcquire() ); sema[ op1 ].release();
-       while( !sema[ op2 ].tryAcquire() ); sema[ op2 ].release();
+       acquire( sema[ op1 ], 1 ); sema[ op1 ].release();
+       acquire( sema[ op2 ], 1 ); sema[ op2 ].release();
 
        if ( instr == MUL )
        {
@@ -90,30 +117,30 @@ public class pidigits {
    // extract = ( q*3 + r )/( s*3 + t ) compared to ( q*4 + r )/( s*4 + t )
    // the latter is the same as computing quotient and remainder of ( q*4 + r )/( s*4 + t ); if the remainder is greater or equal to q,
    // then the quotient is the same as of ( 3*q + r )/( s*3 + t ) since s==0
-   final Runnable[] COMPOSE_R = new Runnable[]{ 
-                         new exec( new Runnable[]{ new exec( MUL, Q1, Q, BQ ),
+   final exec[] COMPOSE_R = new exec[]{ 
+                         new exec( new exec[]{ new exec( MUL, Q1, Q, BQ ),
                                                    new exec( MUL, U1, Q1, FOUR ) } ), // now U is always Q*4
-                         new exec( new Runnable[]{ new exec( MUL, V, T, BR ),
+                         new exec( new exec[]{ new exec( MUL, V, T, BR ),
                                                    new exec( ADD, R1, R1, V ) } ),
-                         new exec( new Runnable[]{ new exec( MUL, R1, R, BQ ) } )
+                         new exec( new exec[]{ new exec( MUL, R1, R, BQ ) } )
                                               };
 
-   final Runnable[] COMPOSE_L = new Runnable[]{ 
+   final exec[] COMPOSE_L = new exec[]{ 
                          // digit extraction logic here
-                         new exec( new Runnable[]{ new exec( ADD, ES1, U, R ),
+                         new exec( new exec[]{ new exec( ADD, ES1, U, R ),
                                                    new exec( DIV_Q_R, ER, ER1, ES1, T ) } ), // DIV_Q_R is approx the same cost as two muls
                                                    // so this splits the work roughly equally
                          // compose_l
-                         new exec( new Runnable[]{ new exec( MUL, R1, R, BT ),
+                         new exec( new exec[]{ new exec( MUL, R1, R, BT ),
                                                    new exec( ADD, R1, R1, V ) } ),
-                         new exec( new Runnable[]{ new exec( MUL, V, Q, BR ),
+                         new exec( new exec[]{ new exec( MUL, V, Q, BR ),
                                                    new exec( MUL, T1, T, BT ) } ),
-                         new exec( new Runnable[]{ new exec( MUL, Q1, Q, BQ ),
+                         new exec( new exec[]{ new exec( MUL, Q1, Q, BQ ),
                                                    new exec( MUL, U1, Q1, FOUR ) } ) // now U is always Q*4
                                               };
 
 
-   private boolean multi_threaded_compute( Runnable[] code, int bq, int br, int bt, boolean compare )
+   private boolean multi_threaded_compute( exec[] code, int bq, int br, int bt, boolean compare )
    {
      allDone.drainPermits();
 
@@ -126,14 +153,18 @@ public class pidigits {
      values[ BT ] = bt;
      sema[ BT ].release();
 
-     for( int i = compare ? 1: 0; i < code.length; ++i ) executor.execute( code[ i ] ); // we are one thread, so skip code[ 0 ], if comparing the remainder is needed
+     for( int i = compare ? 1: 0; i < code.length; ++i )
+     {
+       executor.execute( code[ i ] ); // we are one thread, so skip code[ 0 ], if comparing the remainder is needed
+       moreWork.release();
+     }
 
      if ( !compare ) return false;
 
-     code[ 0 ].run();
+     code[ 0 ]._run();
      boolean r = GmpUtil.mpz_cmp( values[ ER1 ], values[ Q ] ) >= 0; // ER1 >= Q means the remainder of (4*q+r)/t contains q,
                                                                 // and the quotient is the same as (3*q+r)/t
-     while( !allDone.tryAcquire( code.length ) );
+     acquire( allDone, code.length );
 
      return r;
    }
@@ -176,7 +207,7 @@ public class pidigits {
        
          multi_threaded_compute( COMPOSE_R, 10, -10*y, 1, false ); // compare == false - computation is in background; foreground thread can print 
          boolean r = prdigit(y,isWarm);
-         while( !allDone.tryAcquire( COMPOSE_R.length ) ); // wait for the COMPOSE_R to complete
+         acquire( allDone,  COMPOSE_R.length ); // wait for the COMPOSE_R to complete
 
          if ( r ) {
            for( int i = V; i < values.length; ++i ) GmpUtil.mpz_clear( values[ i ] ); // don't have to be this nice in a one-shot run
