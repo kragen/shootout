@@ -15,7 +15,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="fastest programs programming languages performance comparisons benchmarks game shootout computers" />
+<meta name="keywords" content="fastest programs programming languages performance compare benchmarks game shootout computers" />
 <meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Benchmarks Game</title>
@@ -83,7 +83,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 </table>
 
 
-<h5><br/>Programming language measurements A to Z</h5><br/>
+<h5><br/>Compare fastest programs - language A to Z</h5><br/>
 
 <?php
 
