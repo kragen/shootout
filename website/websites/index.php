@@ -175,7 +175,7 @@ foreach($Langs as $a){
 
 
 <p class="imgfooter">
-<a href="http://shootout.alioth.debian.org/gp4/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+<a href="./u32q/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
