@@ -83,7 +83,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 </table>
 
 
-<h5><br/>Compare fastest programs - language A to Z</h5><br/>
+<h5><br/>Compare fastest programs - programming languages A to Z</h5><br/>
 
 <?php
 
