@@ -50,7 +50,7 @@ $Body->set('Download', DOWNLOAD_PATH.$T.SEPARATOR.$F.'.'.$E);
 $Body->set('Text', HtmlFragment( DOWNLOAD_PATH.$T.SEPARATOR.$F.'.'.$E ));
 
 $Page->set('PageBody', $Body->fetch('iofile.tpl.php'));
-$Page->set('Robots', '<meta name="robots" content="noindex,nofollow" />');
+$Page->set('Robots', '<meta name="robots" content="noindex,nofollow,noarchive" />');
 $Page->set('MetaKeywords', '');
 $Page->set('PageId', 'iofile');
 echo $Page->fetch('page.tpl.php');

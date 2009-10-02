@@ -46,7 +46,13 @@ $AboutTemplateName = 'shapes-about.tpl.php';
 if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 $Body->set('DataSet', $DataSet);
 $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
-$metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
+
+
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $metaRobots = '<meta name="robots" content="fall" /><meta name="revisit" content="10 days" />';
+} else {
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+}
 
 
 // TEMPLATE VARS ////////////////////////////////////////////////

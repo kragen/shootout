@@ -20,7 +20,13 @@ $Body->set('Download', DOWNLOAD_PATH);
 $Body->set('Changed', filemtime(LIB_PATH.'faq.tpl.php'));
 
 $Page->set('PageBody', $Body->fetch('faq.tpl.php'));
-$metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
+
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
+} else {
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+}
+
 $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', '');
 $Page->set('PageId', 'faq');

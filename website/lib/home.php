@@ -43,7 +43,11 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
-$metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="1 days" />';
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="1 days" />';
+} else {
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+}
 
 $Page->set('Robots', $metaRobots);
 $Page->set('PageId', 'nav');
