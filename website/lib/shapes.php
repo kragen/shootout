@@ -49,7 +49,7 @@ $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $In
 
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $metaRobots = '<meta name="robots" content="fall" /><meta name="revisit" content="10 days" />';
+   $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
