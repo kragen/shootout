@@ -231,6 +231,11 @@ if ($T=='all'){
 }
 
 
+if ( !(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q') ){
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+}
+
+
 // TEMPLATE VARS ////////////////////////////////////////////////
 
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
