@@ -71,7 +71,7 @@
 <dt><a href="#current" name="current"><strong>Up-to-date measurements</strong></a></dt>
 
 <dd>
-<p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine. <em>Caveat lector!</em> Check the source code!</p>
+<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages. Click one of these color-code links to see measurements for a particular OS/machine - </p>
 </dd>
 
 
@@ -125,6 +125,10 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 </td>
 </tr>
 </table>
+</dd>
+
+<dd>
+<p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine. <em>Caveat lector!</em> Check the source code!</p>
 </dd>
 
 
