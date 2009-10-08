@@ -90,12 +90,22 @@ if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-a
 
 $Body->set('Data', WhiteListSelected(DATA_PATH.'ndata.csv', $T, $Incl) );
 
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
+} else {
+   // Help people choose the up-to-date measurements
+   $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
+   $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php';
+}
+
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
+$Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqUrl', $faqUrl);
 
 $Body->set('Tests', $Tests);
 $Body->set('SelectedTest', $T);

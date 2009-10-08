@@ -22,18 +22,9 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <link rel="shortcut icon" href="./favicon.ico" />
 </head>
 
-<?
-if ( !(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q') ){
-   $BannerURL = 'index.php'; $FAQURL = 'faq.php';
-} else {
-   $BannerURL = 'http://shootout.alioth.debian.org/index.php'; 
-   $FAQURL = 'http://shootout.alioth.debian.org/u32q/faq.php';
-}
-?>
-
 <body id="<?=SITE_NAME;?>">
 <table class="banner"><tr>
-<td><h1><a href="<?=$BannerURL;?>"><?=$BannerTitle;?></a>&nbsp;(<a href="$FAQURL"><?=$FaqTitle;?></a>)</h1></td>
+<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;(<a href="<?=$FaqUrl;?>"><?=$FaqTitle;?></a>)</h1></td>
 </tr></table>
 
 <div id="<?=$PageId;?>">

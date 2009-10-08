@@ -35,6 +35,14 @@ if ($F == 'input'){ $Title = $TestName.' input file'; }
 elseif ($F == 'output'){ $Title = $TestName.' output file'; }
 else { $Title = $TestName; }
 
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
+} else {
+   // Help people choose the up-to-date measurements
+   $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
+   $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php';
+}
+
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
@@ -42,6 +50,8 @@ $Page = & new Template(LIB_PATH);
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
+$Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqUrl', $faqUrl);
 $Page->set('PageBody', BLANK);
 
 $Body = & new Template(LIB_PATH);

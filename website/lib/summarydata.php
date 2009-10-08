@@ -29,6 +29,14 @@ if (!isset($DataSet)){ $DataSet = 'data'; }
 
 $MetaKeywords = '';
 
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
+} else {
+   // Help people choose the up-to-date measurements
+   $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
+   $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php';
+}
+
 // PAGES ///////////////////////////////////////////////////
 
 $Page = & new Template(LIB_PATH);
@@ -51,6 +59,8 @@ $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
+$Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqUrl', $faqUrl);
 $Body->set('Mark', $mark);
 
 $Page->set('PageBody', $Body->fetch($TemplateName));

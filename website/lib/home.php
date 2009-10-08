@@ -43,14 +43,22 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
+
+$bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
+
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="1 days" />';
+   $faqUrl = 'faq.php';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+   // Help people choose the up-to-date measurements
+   $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php';
 }
 
 $Page->set('Robots', $metaRobots);
 $Page->set('PageId', 'nav');
+$Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqUrl', $faqUrl);
 
 echo $Page->fetch('homepage.tpl.php');
 ?>

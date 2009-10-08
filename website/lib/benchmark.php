@@ -233,6 +233,11 @@ if ($T=='all'){
 
 if ( !(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q') ){
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+   $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
+} else 
+   // Help people choose the up-to-date measurements
+   $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
+   $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php';
 }
 
 
@@ -241,6 +246,8 @@ if ( !(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_N
 $Page->set('PageTitle', $Title.BAR.SITE_TITLE);
 $Page->set('BannerTitle', BANNER_TITLE);
 $Page->set('FaqTitle', FAQ_TITLE);
+$Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqUrl', $faqUrl);
 $Page->set('Sort', $S);
 
 $Body->set('Tests', $Tests);
