@@ -234,7 +234,7 @@ if ($T=='all'){
 if ( !(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q') ){
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
-} else 
+} else {
    // Help people choose the up-to-date measurements
    $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
    $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php';
