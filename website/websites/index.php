@@ -35,9 +35,11 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
+<h5>The fastest programming language?</h5>
+<p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks?<br/> The fastest programming language from which sample of language implementations? <em>etc</em></p><br/>
 
-<h5><a href="./u32q/" title="Fastest in each programming language, 32 bit Ubuntu.">Fastest programs in each programming language</a></h5><br/>
 
+<h5><a href="./u32q/" title="Fastest in each programming language, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5><br/>
 
 <table class="layout">
 <tr class="test">
@@ -83,7 +85,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 </table>
 
 
-<h5><br/>Compare fastest programs - programming languages A to Z</h5><br/>
+<h5><br/>Compare fastest <em>programs</em> - programming languages A to Z</h5><br/>
 
 <?php
 
