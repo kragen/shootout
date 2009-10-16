@@ -12,6 +12,11 @@
 <p>A game begun years ago. A game with many players. A game with many winners.</p>
 </dd>
 
+<dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
+<dd>
+<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
+</dd>
+
 <dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
 <dd>
 <p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;time</a>, <a href="#memory">&darr;&nbsp;memory use</a> and <a href="#gzbytes">&darr;&nbsp;source code size</a>.</p>
@@ -37,11 +42,6 @@
 <dd>
 <p>March 1 - August 31, 2009</p>
 <p>1,022,612 Unique Page Views; 150,802 Absolute Unique Visitors; 166 programs contributed.</p>
-</dd>
-
-<dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
-<dd>
-<p>Write the best program in your chosen language. Write programs that improve the showing of your chosen language. Learn something new - look at several benchmarks, compare several language implementations, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>.</p>
 </dd>
 
 <dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
