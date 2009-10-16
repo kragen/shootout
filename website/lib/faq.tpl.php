@@ -658,7 +658,6 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <li>dispelling myths - <a href="http://ftp.openvms.compaq.com/openvms/journal/v10/openvms_journal.pdf">Java and OpenVMS: Myths and realities (pdf)</a></li>
 <li>gaining perspective - <a href="http://openquark.org/svn/openquark/tags/1.4.0_0/OpenQuark/docs/CAL%20and%20the%20Computer%20Language%20Shootout%20Benchmarks.pdf">CAL and the Computer Language Benchmarks Game (pdf)</a></li>
 <li>nostalgia - <a href="http://upsilon.cc/~zack/teaching/0607/labsomfosset/ocaml_hot.pdf">"we will show you 2004 data" (pdf)</a></li>
-<li>even <a href="http://java.sys-con.com/read/358792.htm">learning a little about some uncommon programming languages</a>.</li>
 </ul>
 </dd>
 </dl>
