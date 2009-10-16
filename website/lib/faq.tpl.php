@@ -646,7 +646,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
-<li>laughter for your presentation - <a href="http://www.dcs.warwick.ac.uk/~rlmw/talks/benchmarking.pdf">Benchmarking - End the decline of Western Civilization! (pdf)</a></li>
+<li>laughs for your talk - <a href="http://www.dcs.warwick.ac.uk/~rlmw/talks/benchmarking.pdf">Benchmarking - End the decline of Western Civilization! (pdf)</a></li>
 <li>visualization and analysis - <a href="http://gmarceau.qc.ca/blog/2009/05/speed-size-and-dependability-of.html">"rich in shapes, insight and stories"</a></li>
 <li>edge cases - <a href="http://ulf.wiger.net/weblog/wp-content/uploads/2009/01/damp09-erlang-multicore.pdf">"runs slower the more cores you throw at it" p22 (pdf)</a></li>
 <li>implementor fun - <a href="http://www.mirandabanda.org/cogblog/2009/01/14/under-cover-contexts-and-the-big-frame-up/#comments">"we get worth-while speedups for everything except"</a></li>
