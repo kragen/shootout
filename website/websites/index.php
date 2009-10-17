@@ -15,7 +15,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="fastest programming languages fastest programs speed performance compare benchmarks game shootout computers" />
+<meta name="keywords" content="fastest programming language programming languages fastest programs speed performance compare programs source code benchmarks game computers shootout" />
 <meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>The Computer Language Benchmarks Game</title>
@@ -36,7 +36,7 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <h5>The fastest programming language?</h5>
-<p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest programming<br/> language from which sample of language implementations? <em>etc.</em></p><br/>
+<p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest programming<br/> language from which sample of language implementations? <em>etc. etc.</em></p><br/>
 
 
 <h5><a href="./u32q/" title="Fastest in each programming language, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5><br/>
