@@ -39,7 +39,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest programming<br/> language from which sample of language implementations? <em>etc. etc.</em></p><br/>
 
 
-<h5><a href="./u32q/" title="Fastest in each programming language, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5><br/>
+<h5><a href="http://shootout.alioth.debian.org/u32/benchmark.php?test=all&lang=all&box=1" title="Fastest in each programming language, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5><br/>
 
 <table class="layout">
 <tr class="test">
