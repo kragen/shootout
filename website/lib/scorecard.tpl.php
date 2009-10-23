@@ -39,8 +39,9 @@ foreach($score as $k => $v){
    printf('<tr>');
    printf('<td>%s</td>', PFx($v[SCORE_RATIO]));
 
-   printf('<td><a href="benchmark.php?test=all&amp;lang=%s&amp;lang2=%s">%s</a></td>',
-      $k,$k,$HtmlName); echo "\n";
+   printf('<td><a href="benchmark.php?test=all&amp;lang=%s">%s</a></td>',
+      $k,$HtmlName); echo "\n";
+
    printf('<td>%0.2f</td><td>%s</td>',
       $v[SCORE_MEAN], PBlank($v[SCORE_TESTS])); echo "\n";
    echo "</tr>\n";
