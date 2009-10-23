@@ -38,7 +38,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></a> <sup>[smaller is better]</sup></th></tr>
 
 <tr>
-<th>Program&nbsp;&amp;&nbsp;Logs</th>
+<th>Benchmark Programs</th>
 <th>Time</th>
 <th>Memory&nbsp;Use</th>
 <th>Source&nbsp;Size</th>
@@ -72,18 +72,18 @@ foreach($sTests as $row){
 }
 
 foreach($noprogram as $tr){
-   printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
-      $tr[0],$tr[1],$tr[3],$tr[4]);
+   printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($nocomparison as $tr){
-      printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
-      $tr[0],$tr[1],$tr[2],$tr[3],$tr[4]);
+      printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
+      $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($failed as $tr){
-      printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
-      $tr[0],$tr[1],$tr[2],$tr[3],$tr[4]);
+      printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($sTests as $Row){
@@ -96,8 +96,8 @@ foreach($sTests as $Row){
       $v = $data[$Link];
 
       if ($v[N_LINES] >= 0){
-         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-            $Link, $SelectedLang, $v[N_ID], $Name);
+         printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td>',
+            $Link, $Name);
 
          if ($v[N_N]==0){ $n = '<td></td>';
          } else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }
