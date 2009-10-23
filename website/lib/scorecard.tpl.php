@@ -34,13 +34,16 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 
 <?
 foreach($score as $k => $v){
-   $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr>');
    printf('<td>%s</td>', PFx($v[SCORE_RATIO]));
 
-   printf('<td><a href="benchmark.php?test=all&amp;lang=%s">%s</a></td>',
-      $k,$HtmlName); echo "\n";
+   if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
+      printf('<td><a href="%s.php">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$HtmlName); 
+   } else {
+      printf('<td><a href="benchmark.php?test=all&amp;lang=%s">%s</a></td>', $k,$HtmlName); 
+   }
+   echo "\n";
 
    printf('<td>%0.2f</td><td>%s</td>',
       $v[SCORE_MEAN], PBlank($v[SCORE_TESTS])); echo "\n";
