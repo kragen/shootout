@@ -109,8 +109,19 @@
          printf('<td>&nbsp;');
          if (isset($cols[$col][$row])){
             $k = $cols[$col][$row];
+
+            if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
+               printf('<a href="%s.php">', $Langs[$k][LANG_SPECIALURL]); 
+            } else {
+               printf('<a href="benchmark.php?test=all&amp;lang=%s">', $k); 
+            }
+
             printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" width="150" height="120" />',
                Encode($k), Encode($Shapes[$k]), Encode($Centers[$k]) );
+
+            printf('</a>');
+
+
          } else {
             printf('&nbsp;');
          }

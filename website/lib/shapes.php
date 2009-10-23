@@ -68,6 +68,7 @@ $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
 $Body->set('Mark', $mark);
 $Body->set('About', $About->fetch($AboutTemplateName));
+$Body->set('Langs', $Langs);
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
