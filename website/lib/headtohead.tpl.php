@@ -110,6 +110,8 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
+<p>(<span class="num2">1</span> and <span class="num4"><sup>1</sup>/<sub>1'</sub></span>' represent a difference of less than 10%, and <span class="num2">-</span> a difference of less than 1%.)</p>
+
 
 <h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>
 <?=$About;?>
