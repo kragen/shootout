@@ -38,7 +38,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></a> <sup>[smaller is better]</sup></th></tr>
 
 <tr>
-<th>Benchmark Programs</th>
+<th>Programs</th>
 <th>Time</th>
 <th>Memory&nbsp;Use</th>
 <th>Source&nbsp;Size</th>
