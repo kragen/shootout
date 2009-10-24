@@ -274,7 +274,7 @@ function PF($d){
          $i = 1.0 / $d;
             if ($i>14.99){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
             elseif ($i>1.1){ return '<td class="num4"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
-            else { return '<td class="num2">--</td>'; }
+            else { return '<td class="num4">--</td>'; }
       } else { return '<td>&nbsp;</td>'; }
    }
 }
@@ -331,7 +331,7 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
             if ( ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]) 
                || (($Data[$j][DATA_TESTVALUE] == $row[DATA_TESTVALUE])
                 && ((ExcludeData($row,$Langs,$Excl)<=PROGRAM_TIMEOUT)
-                 || ((ExcludeData($Data[$j],$Langs,$--Excl)>PROGRAM_TIMEOUT)
+                 || ((ExcludeData($Data[$j],$Langs,$Excl)>PROGRAM_TIMEOUT)
                   && ($Data[$j][DATA_TIME]<$row[DATA_TIME])))) ){
 
                   $row = $Data[$j];              
