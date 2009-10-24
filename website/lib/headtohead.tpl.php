@@ -35,7 +35,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></a> <sup>[smaller is better]</sup></th></tr>
+<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></a> <sup>[rounded - smaller is better]</sup></th></tr>
 
 <tr>
 <th>Programs</th>
