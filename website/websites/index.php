@@ -85,7 +85,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 </table>
 
 
-<h5><br/>Compare fastest <em>programs</em> - programming languages A to Z</h5><br/>
+<h5><br/>Compare fastest <em>programs</em> - programming languages Z to A</h5><br/>
 
 <?php
 
@@ -114,7 +114,7 @@ function Keys($sites){
    return $siteKeys;
 }
 
-function CompareLangName($a, $b){
+function CompareLangName($b, $a){
    if (isset($a[LANG_FULL]) && isset($b[LANG_FULL])){
       return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
    } else {
