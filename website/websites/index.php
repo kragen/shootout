@@ -40,8 +40,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 
 <h5><a href="http://shootout.alioth.debian.org/u32/benchmark.php?test=all&lang=all&box=1" title="Fastest in each programming language forced onto one core, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5>
-<p>There are 4 sets of up-to-date measurements. Measurements for different <br/>OS/machine
- combinations are shown on different color-coded pages. Click one <br/>of these color-code links to see measurements for a particular OS/machine -</p><br/>
+<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see all measurements for a particular OS/machine -</p><br/>
 
 <table class="layout">
 <tr class="test">
