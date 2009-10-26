@@ -36,7 +36,7 @@ We can't - we benchmark programming language implementations.</p>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <h5>The fastest programming language?</h5>
-<p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest programming<br/> language from which sample of language implementations? <em>etc. etc.</em></p><br/>
+<p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest <br/>programming language from which sample of language implementations?</p><br/>
 
 
 <h5><a href="http://shootout.alioth.debian.org/u32/benchmark.php?test=all&lang=all&box=1" title="Fastest in each programming language forced onto one core, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5>
