@@ -30,12 +30,15 @@ if (!isset($T)){ $T = ''; }
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
+   if ($F == 'benchmarking'){ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit"  content="10 days" />'; }
+   else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
+
 } else {
    // Help people choose the up-to-date measurements
    $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
    $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php#means';
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
-
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
@@ -54,9 +57,6 @@ $Body->set('MiscFile', MISC_PATH.$F.'.php');
 $Body->set('Changed', filemtime(MISC_PATH.$F.'.php'));
 
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
-
-if ($F == 'benchmarking'){ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />'; }
-else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
 
 $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', '');
