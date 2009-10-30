@@ -4,7 +4,7 @@
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 ?>
 
-<h2><a href="#boxplot" name="boxplot">&nbsp;<?=$Title;?></a></h2>
+<h2><a href="#boxplot" name="boxplot">&nbsp;<?=$Title;?></a>&nbsp;<em>Le mieux est l'ennemi du bien.</em></h2>
 
 <?
    list($score,$labels,$stats,$selected) = $Data;
