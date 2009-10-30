@@ -25,7 +25,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <body id="core">
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;(<a href="./u32q/faq.php">Read the FAQ!</a>)</h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;(<a href="./u64/faq.php">Read the FAQ!</a>)</h1></td>
 </tr></table>
 
 <div id="home">
@@ -160,25 +160,23 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
 $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
-$ubuntu = Keys( array( 'u32q' )); 
+$ubuntu = Keys( array( 'u64' )); 
 
-// Gentoo and Debian are not being updated, only show languages not on u32q
+// languages not on u64
 $u32 = Keys( array( 'u32' ));
-//$gentoo = Keys( array( 'gp4' ));
-//$debian = Keys( array( 'debian' )); 
+ 
 
 foreach($Langs as $a){
    $notShown = PrintIncludedLanguages($ubuntu,$a,TRUE);
    if ($notShown){ $notShown = PrintIncludedLanguages($u32,$a,$notShown); }
-//   if ($notShown){ $notShown = PrintIncludedLanguages($gentoo,$a,$notShown); }
-//   if ($notShown){ PrintIncludedLanguages($debian,$a,$notShown); }
+//   if ($notShown){ $notShown = PrintIncludedLanguages($u32,$a,$notShown); }
 }
 ?>
 
 
 
 <p class="imgfooter">
-<a href="./u32q/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+<a href="./u64/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
