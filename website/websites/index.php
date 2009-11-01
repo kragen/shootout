@@ -1,5 +1,5 @@
 <?php // website content changes at-most once an hour - say ten past the hour
-$m = floor(time()/60); $h = floor($m/60); $after_the_hour = $m - $h*60; $countdown = 10;
+$m = floor(time()/60); $h = floor($m/60); $fivedays = floor($h/120); $after_the_hour = $m - $h*60; $countdown = 10;
 if ($countdown <= $after_the_hour) { $countdown += 60; $h++; }
 header("Pragma: public");
 header("Cache-Control: maxage=".($countdown - $after_the_hour)*60);
@@ -160,15 +160,24 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
 $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
-$ubuntu = Keys( array( 'u64' )); 
+$choices = array(
+   array('u32','u32q'),
+   array('u64q','u32'),
+   array('u32q','u32q'),
+   array('u64','u32'),
+   array('u32q','u32'),
+   array('u64','u32q'),
+   array('u32','u32'),
+   array('u64q','u32q')
+   );
 
-// languages not on u64
-$u32 = Keys( array( 'u32' ));
- 
+$chosen = $choices[$fivedays%8];
+$a_list = Keys( array( $chosen[0] ));
+$b_list = Keys( array( $chosen[1] ));
 
 foreach($Langs as $a){
-   $notShown = PrintIncludedLanguages($ubuntu,$a,TRUE);
-   if ($notShown){ $notShown = PrintIncludedLanguages($u32,$a,$notShown); }
+   $notShown = PrintIncludedLanguages($a_list,$a,TRUE);
+   if ($notShown){ $notShown = PrintIncludedLanguages($b_list,$a,$notShown); }
 //   if ($notShown){ $notShown = PrintIncludedLanguages($u32,$a,$notShown); }
 }
 ?>
