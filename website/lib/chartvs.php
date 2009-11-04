@@ -63,6 +63,7 @@ if ($valid){
    $label = 'Time';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
 
    // MEMORY USE PANEL
 
@@ -76,6 +77,7 @@ if ($valid){
    $label = 'Memory Use';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
 
    // SOURCE SIZE PANEL
 
@@ -89,14 +91,14 @@ if ($valid){
    $label = 'Source Size';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
 
    $chart->xo = $chart->defaultOriginX();
-   $chart->title($LangName[0].' / '.$LangName[1].' [smaller is better]');
+   $chart->title($LangName[0].' ÷ '.$LangName[1]);
    $chart->notice($Mark);
 }
 
 $chart->frame();
-$chart->yAxisLegend('ratio',$chart->h / 2);
 $chart->complete();
 
 ?>

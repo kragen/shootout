@@ -146,13 +146,24 @@ if ($T=='all'){
       $PageId = 'headtohead';
       require_once(LIB_PATH.'lib_headtohead.php');
       $LangName = $Langs[$L][LANG_FULL];
-      $Title = $LangName.' benchmarks';
+
+
+      if ($L!=$L2){
+         $Title = $LangName.' summary';
+         $TemplateName = 'headtohead.tpl.php';
+         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
+
+      } else {
+        $Title = $LangName.' measurements';
+        $TemplateName = 'language.tpl.php';
+        $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
+      }
       
       if (isset($metaRobots) && (SITE_NAME == 'u32q')){ // Assume it's one of our special pages which should be indexed
          $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content="'.
-         $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.
+            $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.
             '<meta name="description" content="'.
             'Compare '.$LangName.' performance on benchmark programs." />';
 
@@ -160,17 +171,6 @@ if ($T=='all'){
            $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
       }
 
-      $Title = $LangName.' benchmarks';
-
-      if ($L!=$L2){
-         $TemplateName = 'headtohead.tpl.php';
-         $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
-
-      } else {
-        $TemplateName = 'language.tpl.php';
-        $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
-      }
-      
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }

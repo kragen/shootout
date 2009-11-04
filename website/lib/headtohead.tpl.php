@@ -23,7 +23,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;The <?=$LangName;?> programs compared [smaller is better]</a></h2>
+<h2><a href="#title" name="title">&nbsp;<?=$LangName;?> summary</a></h2>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
@@ -35,7 +35,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;/&nbsp;<sub><?=$LangName2;?></sub></a> <sup>[rounded - smaller is better]</sup></th></tr>
+<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;&#247;&nbsp;<sub><?=$LangName2;?></sub><sup>&nbsp;(rounded)</sup></a></th></tr>
 
 <tr>
 <th>Programs</th>
@@ -110,7 +110,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num4"><sup>1</sup>/<sub>1</sub></span> and <span class="num2">1</span>  represent a rounded difference of less than 50%.<br/><span class="num2">--</span> represents a rounded difference of less than 10%.</p>
+<p><span class="num2">&#177;</span> represents a difference of less than 50%.</p>
 
 
 <h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>

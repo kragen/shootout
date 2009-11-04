@@ -29,7 +29,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          $ex = ExcludeData($row,$Langs,$Excl);
          if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
             $Data[] = $row;                                                                      
-         } 
+         }
       }
    }
    unset($rows);
@@ -267,14 +267,14 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 function PF($d){
    if ($d>14.99){ return '<td class="num1">'.number_format(round($d)).'</td>'; }
-   elseif ($d>1.1){ return '<td class="num2">'.number_format(round($d)).'</td>'; }
-   elseif ($d>1.01){ return '<td class="num2">--</td>'; }
+   elseif ($d>1.49){ return '<td class="num2">'.number_format(round($d)).'</td>'; }
+   elseif ($d>1.01){ return '<td class="num2">&#177;</td>'; }
    else {
       if ($d>0){
          $i = 1.0 / $d;
             if ($i>14.99){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
-            elseif ($i>1.1){ return '<td class="num4"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
-            else { return '<td class="num4">--</td>'; }
+            elseif ($i>1.49){ return '<td class="num2"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
+            else { return '<td class="num2">&#177;</td>'; }
       } else { return '<td>&nbsp;</td>'; }
    }
 }
