@@ -36,7 +36,9 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><a href="#ratio" name="ratio"><?=$LangName;?>&nbsp;&#247;&nbsp;<?=$LangName2;?>&nbsp;(rounded)</a></th></tr>
+<tr><th colspan="5" class="smaller"><a href="#ratio" name="ratio"><?=$LangName;?>&nbsp;&#247;&nbsp;<?=$LangName2;?>&nbsp;(rounded)</a></th></tr>
+
+<tr><th colspan="5">&lt; 1 <em>means</em> <?=$LangName;?> is better</th></tr>
 
 <tr>
 <th>Programs</th>
@@ -111,7 +113,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> means close enough that you should look at the measurements - so <em>open a new web browser</em> with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink;?>&amp;lang2=<?=$LangLink;?>"><?=$LangName;?> <strong>measurements</strong></a> and another with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink2;?>&amp;lang2=<?=$LangLink2;?>" ><?=$LangName2;?> <strong>measurements</strong></a>.</p>
+<p><span class="num2">&#177;</span> means close enough that you should look at the measurements - so <em>open a new web browser</em> with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink;?>&amp;lang2=<?=$LangLink;?>"><?=$LangName;?> measurements</a> and another with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink2;?>&amp;lang2=<?=$LangLink2;?>" ><?=$LangName2;?> measurements</a>.</p>
 
 
 <h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>
