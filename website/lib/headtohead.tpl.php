@@ -10,13 +10,14 @@ $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
-$Link = $Row[LANG_LINK];
+$LangLink = $Row[LANG_LINK];
+$LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 $ShortName = $Row[LANG_NAME];
 $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 ?>
 
-<p>Compare the performance of <strong><?=$LangName;?></strong> programs against some other language implementation, or check the <?=$Family;?> <a href="benchmark.php?test=all&amp;lang=<?=$Link;?>&amp;lang2=<?=$Link;?>" title="Show <?=$LangName;?> measurements">Time and Memory measurements</a>.</p>
+<p>Compare the performance of <strong><?=$LangName;?></strong> programs against some other language implementation.</p>
 
 <p>For more information about the <?=$Family;?> implementation we measured see
 <a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
@@ -35,7 +36,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5"><a href="#ratio" name="ratio"><sup><?=$LangName;?></sup>&nbsp;&#247;&nbsp;<sub><?=$LangName2;?></sub><sup>&nbsp;(rounded)</sup></a></th></tr>
+<tr><th colspan="5"><a href="#ratio" name="ratio"><?=$LangName;?>&nbsp;&#247;&nbsp;<?=$LangName2;?>&nbsp;(rounded)</a></th></tr>
 
 <tr>
 <th>Programs</th>
@@ -110,7 +111,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> represents a difference of less than 50%.</p>
+<p><span class="num2">&#177;</span> means close enough that you should look at the measurements - so <em>open a new web browser</em> with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink;?>&amp;lang2=<?=$LangLink;?>"><?=$LangName;?> measurements</a> and another with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink2;?>&amp;lang2=<?=$LangLink2;?>" ><?=$LangName2;?> measurements</a>.</p>
 
 
 <h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>

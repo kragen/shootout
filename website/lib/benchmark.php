@@ -147,9 +147,9 @@ if ($T=='all'){
       require_once(LIB_PATH.'lib_headtohead.php');
       $LangName = $Langs[$L][LANG_FULL];
 
-
       if ($L!=$L2){
-         $Title = $LangName.' summary';
+         $LangName2 = $Langs[$L2][LANG_FULL];
+         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2;
          $TemplateName = 'headtohead.tpl.php';
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
