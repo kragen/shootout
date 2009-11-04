@@ -92,8 +92,29 @@ if ($valid){
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
    ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
-
+   
    $chart->xo = $chart->defaultOriginX();
+
+   // LANGUAGE LABELS
+
+   $names0 = explode(' ',$LangName[0]);
+   $names1 = explode(' ',$LangName[1]);
+
+   $label = ($names0[0] == $names1[0]) ? $LangName[0] : $names0[0];
+   $size =$chart->yo - MARGIN;
+   $labelsize = strlen($label)*CHAR_WIDTH_3;
+   if ($size < $labelsize){ $label = $names0[1]; $labelsize = strlen($label)*CHAR_WIDTH_3; }
+   $inset = $size/2.0 + $labelsize/2.0;
+   ImageStringUp($chart->im, 3, $chart->w - MARGIN, $chart->yo + $inset, $label, $chart->colour[DARK_GRAY]);
+
+   $label = ($names0[0] == $names1[0]) ? $LangName[1] : $names1[0];
+   $labelsize = strlen($label)*CHAR_WIDTH_3;
+   if ($size < $labelsize){ $label = $names1[1]; $labelsize = strlen($label)*CHAR_WIDTH_3; }
+   $inset = $size/2.0 + $labelsize/2.0;
+   ImageStringUp($chart->im, 3, $chart->w - MARGIN, MARGIN + $inset, $label, $chart->colour[DARK_GRAY]);
+
+   //
+
    $chart->title($LangName[0].' ÷ '.$LangName[1]);
    $chart->notice($Mark);
 }
