@@ -273,7 +273,7 @@ function PF($d){
       if ($d>0){
          $i = 1.0 / $d;
             if ($i>14.99){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
-            elseif ($i>1.49){ return '<td class="num2"><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
+            elseif ($i>1.49){ return '<td><sup>1</sup>/<sub>'.number_format(round($i)).'</sub></td>'; }
             else { return '<td class="num2">&#177;</td>'; }
       } else { return '<td>&nbsp;</td>'; }
    }
