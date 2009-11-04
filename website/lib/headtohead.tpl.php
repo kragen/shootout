@@ -111,7 +111,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> means close enough that you should look at the measurements - so <em>open a new web browser</em> with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink;?>&amp;lang2=<?=$LangLink;?>"><?=$LangName;?> measurements</a> and another with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink2;?>&amp;lang2=<?=$LangLink2;?>" ><?=$LangName2;?> measurements</a>.</p>
+<p><span class="num2">&#177;</span> means close enough that you should look at the measurements - so <em>open a new web browser</em> with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink;?>&amp;lang2=<?=$LangLink;?>"><?=$LangName;?> <strong>measurements</strong></a> and another with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink2;?>&amp;lang2=<?=$LangLink2;?>" ><?=$LangName2;?> <strong>measurements</strong></a>.</p>
 
 
 <h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>
