@@ -112,7 +112,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> look at the comparison <strong>measurements -</strong></br></p>
+<p><span class="num2">&#177;</span> look at the measurements</br></p>
 
 <h2><a href="#measurements" name="measurements">&nbsp;<?=$LangName;?> comparison measurements</a></h2>
 
