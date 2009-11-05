@@ -140,7 +140,7 @@ foreach($sTests as $Row){
       if ($data[$Link][N_N]==0){
          $n = '';
       } else {
-         $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]);
+         $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
 
       printf('<tr><th class="txt" colspan="4">&nbsp;<a href="benchmark.php?test=%s">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Name, $n);
