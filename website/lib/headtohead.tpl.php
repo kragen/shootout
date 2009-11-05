@@ -36,9 +36,8 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
-<tr><th colspan="5" class="smaller"><a href="#ratio" name="ratio"><?=$LangName;?>&nbsp;&#247;&nbsp;<?=$LangName2;?>&nbsp;(rounded)</a></th></tr>
 
-<tr><th colspan="5">&lt; 1 <em>means</em> <?=$LangName;?> is better</th></tr>
+<tr><th colspan="5"><sup>1</sup>/<sub>2</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>4</sub>&nbsp;&#133;&nbsp;<?=$LangName;?> is better</th></tr>
 
 <tr>
 <th>Programs</th>
@@ -113,7 +112,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> means close enough that you should look at the comparison <strong>measurements</strong> instead of the summary -</br></p>
+<p><span class="num2">&#177;</span> look at the comparison <strong>measurements -</strong></br></p>
 
 <h2><a href="#measurements" name="measurements">&nbsp;<?=$LangName;?> comparison measurements</a></h2>
 
