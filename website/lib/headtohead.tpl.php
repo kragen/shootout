@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <?
-   list($data,$sTests,$ratios) = $Data;
+   list($data,$sTests,$ratios,$measurements) = $Data;
    unset($Data);
 ?>
 
@@ -24,7 +24,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;<?=$LangName;?> summary</a></h2>
+<h2><a href="#title" name="title">&nbsp;<?=$LangName;?> comparison summary</a></h2>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
@@ -103,7 +103,7 @@ foreach($sTests as $Row){
             $Link, $Name);
 
          if ($v[N_N]==0){ $n = '<td></td>';
-         } else { $n = '<td><span class="numN">&nbsp;'.number_format($v[N_N]).'</span></td>'; }
+         } else { $n = '<td class="smaller">&nbsp;'.number_format($v[N_N]).'</td>'; }
 
          if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
 
@@ -113,8 +113,61 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> means close enough that you should look at the measurements - so <em>open a new web browser</em> with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink;?>&amp;lang2=<?=$LangLink;?>"><?=$LangName;?> <strong>measurements</strong></a> and another with the <a href="benchmark.php?test=all&amp;lang=<?=$LangLink2;?>&amp;lang2=<?=$LangLink2;?>" ><?=$LangName2;?> <strong>measurements</strong></a>.</p>
+<p><span class="num2">&#177;</span> means close enough that you should look at the comparison <strong>measurements</strong> instead of the summary -</br></p>
 
+<h2><a href="#measurements" name="measurements">&nbsp;<?=$LangName;?> comparison measurements</a></h2>
+
+<p></p>
+<table>
+<tr>
+<th>Program &amp; Logs</th>
+<th>CPU&nbsp;secs</th>
+<th>Memory&nbsp;KB</th>
+<th>Size&nbsp;B</th>
+<th>Elapsed&nbsp;secs</th>
+<th>~&nbsp;CPU&nbsp;Load</th>
+</tr>
+
+<?
+foreach($sTests as $Row){
+   if ($Row[TEST_WEIGHT]<=0){ continue; }
+
+   $Link = $Row[TEST_LINK];
+   $Name = $Row[TEST_NAME];
+
+   if (isset($measurements[$Link])){
+      
+      if ($data[$Link][N_N]==0){
+         $n = '';
+      } else {
+         $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]);
+      }
+
+      printf('<tr><th class="txt" colspan="4">&nbsp;<a href="benchmark.php?test=%s">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Name, $n);
+
+      foreach($measurements[$Link] as $Row){
+         $k = $Row[DATA_LANG];
+         $Name = $Langs[$k][LANG_FULL];
+         $HtmlName = $Langs[$k][LANG_FULL].IdName($Row[DATA_ID]);
+         $id = $Row[DATA_ID];
+
+         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
+               $Link,$k,$id,$HtmlName); 
+
+         $fc = number_format($Row[DATA_FULLCPU],2);
+         if ($Row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$Row[DATA_MEMORY]); }
+         $gz = $Row[DATA_GZ];
+         if ($Row[DATA_ELAPSED]>0){ $e = number_format($Row[DATA_ELAPSED],2); } else { $e = ''; }
+         $ld = CpuLoad($Row);
+
+         printf('<td>%s</td><td>%s</td><td>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $kb, $gz, $e, $ld);
+      }
+
+   }
+}
+?>
+</table>
 
 <h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>
+<p></p>
 <?=$About;?>

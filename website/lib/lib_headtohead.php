@@ -40,9 +40,10 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
 // TRANSFORM SELECTED DATA
 
    $lang = ""; $id = ""; $test = ""; $n = 0;
-   $NData = array(); 
+   $NData = array();
    $comparable = array();
    $errorRowL1 = NULL;
+   $measurements = array();   
    
 
    $i=0; $j=0;
@@ -97,6 +98,8 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
             $lines = 1;
             $cpu = 1; 
             $gz = 1;
+            
+            $measurements[$r1[DATA_TEST]] = array($r1,$r2);
 
             if ($r2[DATA_TIME]>0){ $full = $r1[DATA_TIME] / $r2[DATA_TIME]; }
             if ($r2[DATA_MEMORY]>0){ $mem = $r1[DATA_MEMORY] / $r2[DATA_MEMORY]; }
@@ -187,7 +190,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
       }
    }
 
-   return array($NData,$SortedTests,$ratios);
+   return array($NData,$SortedTests,$ratios,$measurements);
 }
 
 
