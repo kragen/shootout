@@ -1,5 +1,5 @@
 <?=$Version;?>
 
-<p>Home Page: <a href="http://jruby.codehaus.org/">Java powered Ruby implementation</a></p>
+<p>Home Page: <a href="http://jruby.org/">100% Pure-Java Implementation of the Ruby Programming Language</a></p>
 
-<p>Download: <a href="http://dist.codehaus.org/jruby/">jruby-bin</a></p>
+<p>Download: <a href="http://jruby.org/download">http://jruby.org/download</a></p>
