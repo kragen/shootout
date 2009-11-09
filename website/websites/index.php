@@ -39,7 +39,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest <br/>programming language from which sample of language implementations?</p><br/>
 
 
-<h5><a href="http://shootout.alioth.debian.org/u32/benchmark.php?test=all&lang=all&box=1" title="Fastest in each programming language forced onto one core, 32 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5>
+<h5><a href="http://shootout.alioth.debian.org/u64/shapes.php" title="Fastest in each programming language forced onto one core, 64 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5>
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see all measurements for a particular OS/machine -</p><br/>
 
 <table class="layout">
