@@ -24,8 +24,27 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 </head>
 
 <body id="core">
+
+<?
+$choices = array(
+   array('u32q','/benchmark.php?test=all&lang=all&box=1'),
+   array('u64q','/shapes.php'),
+   array('u32','/benchmark.php?test=all&lang=all&box=1'),
+   array('u32','/shapes.php'),
+   array('u64q','/benchmark.php?test=all&lang=all&box=1'),
+   array('u32q','/shapes.php'),
+   array('u64','/benchmark.php?test=all&lang=all&box=1'),
+   array('u64','/shapes.php')
+   );
+
+$chosen = $choices[$fivedays%8];
+$ChosenSite = $chosen[0];
+$ChosenUrl = $chosen[1];
+?>
+
+
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;(<a href="./u64/faq.php">Read the FAQ!</a>)</h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;(<a href="./<?=$ChosenSite;?>/faq.php">Read the FAQ!</a>)</h1></td>
 </tr></table>
 
 <div id="home">
@@ -39,7 +58,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest <br/>programming language from which sample of language implementations?</p><br/>
 
 
-<h5><a href="http://shootout.alioth.debian.org/u64/shapes.php" title="Fastest in each programming language forced onto one core, 64 bit Ubuntu.">Fastest <em>programs</em> in each programming language</a></h5>
+<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>">Fastest <em>programs</em> in each programming language</a></h5>
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see all measurements for a particular OS/machine -</p><br/>
 
 <table class="layout">
