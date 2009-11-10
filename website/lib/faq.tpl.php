@@ -290,7 +290,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.12s</td>
 <td>0.00</td>
 <td>0.31s</td>
-<td>0.04s</td>
+<td>0.13s</td>
 </tr>
 
 <tr>
