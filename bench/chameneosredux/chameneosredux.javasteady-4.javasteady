@@ -1,0 +1,216 @@
+/* The Computer Language Benchmarks Game
+http://shootout.alioth.debian.org/
+
+contributed by Matthieu Bentot
+based on a contribution by Michael Barker
+based on a contribution by Luzius Meisser
+*/
+
+/**
+* This implementation uses standard Java threading (native threads).
+*
+* This implementation changes the one contributed by Michael Barker (itself based on the original
+* implementation by Luzius Meisser from old chameneos shootout) to
+* - operate in constant memory: everything is allocated during initialisation;
+* - change the Thread.yield() into a plain spinlock.
+*/
+
+public class chameneosredux {
+
+   enum Colour {
+      blue,
+      red,
+      yellow
+   }
+
+   static CreatureValue doCompliment(CreatureValue original, Colour c2, CreatureValue blue, CreatureValue red, CreatureValue yellow) {
+      Colour c1=original.colour;
+      if (c1==c2) return original;
+      
+      switch (c1) {
+         case blue:
+            return c2==Colour.red ? yellow : red;
+         case red:
+            return c2==Colour.blue ? yellow: blue;
+         case yellow:
+            return c2==Colour.blue ? red : blue;
+      }
+
+      throw new RuntimeException("Error");
+   }
+
+   static final class MeetingPlace {
+
+      private int meetingsLeft;
+
+      private CreatureValue firstValue=null;
+      
+      public MeetingPlace(int meetings) {
+         this.meetingsLeft = meetings;
+      }
+
+      public void meet(Creature creature) throws Exception {
+         CreatureValue creatureValue=creature.value, firstValue;
+         
+         synchronized(this) {
+            if (meetingsLeft==0) throw new Exception("Finished");
+            
+            firstValue=this.firstValue;
+
+            if (firstValue==null) {
+               this.firstValue=creature.value;
+               creature.value=null;
+            } else {
+               this.firstValue=null;
+               meetingsLeft--;
+            }
+         }
+         
+         // Wait for the other (or not, depending)
+         if (firstValue==null) {
+            while((firstValue=creature.value)==null) {} // Spin lock: creature.value is volatile
+         } else {
+            firstValue.creature.value=creatureValue; // Release spin lock
+         }
+         
+         // Update creature
+         creature.value=doCompliment(creatureValue, firstValue.colour, creature.blue, creature.red, creature.yellow);
+         creature.count++;
+         if (creature==firstValue.creature) creature.sameCount++;
+      }
+   }
+
+   static final class CreatureValue {
+      
+      final Creature creature;
+      
+      final Colour colour;
+      
+      CreatureValue(Creature creature, Colour colour) {
+         this.creature=creature;
+         this.colour=colour;
+      }
+
+   }
+   
+   static final class Creature extends Thread {
+
+      private final MeetingPlace place;
+      
+      private volatile CreatureValue value;
+      
+      private int count=0, sameCount=0;      
+
+      final CreatureValue blue, red, yellow;
+      
+      public Creature(MeetingPlace place, Colour colour) {
+         this.place = place;
+         this.value = new CreatureValue(this, colour);
+         blue=new CreatureValue(this, Colour.blue);
+         red=new CreatureValue(this, Colour.red);
+         yellow=new CreatureValue(this, Colour.yellow);
+      }
+
+      public void run() {
+         try {
+            for(;;) {
+               place.meet(this);
+            }
+         } catch (Exception e) {
+         }
+      }
+
+      public int getCount() {
+         return count;
+      }
+
+      public String toString() {
+         return String.valueOf(count) + getNumber(sameCount);
+      }
+   }
+
+   private static void run(int n,boolean isWarm, Colour...colours) {
+      // Initialise
+      MeetingPlace place = new MeetingPlace(n);
+      
+      Creature creatures[] = new Creature[colours.length];
+      for (int i = 0; i < creatures.length; i++) {
+         if (isWarm) System.out.print(" " + colours[i]);
+         creatures[i] = new Creature(place, colours[i]);
+      }
+      
+      if (isWarm) System.out.println();
+      
+      // Start creatures
+      for (int i = 0; i < creatures.length; i++) {
+         creatures[i].start();
+      }
+
+      // Wait...
+      int total = 0;
+      for (int i = 0; i < creatures.length; i++) {
+         Creature creature=creatures[i];
+         try {
+            creature.join();
+         } catch (InterruptedException e) {
+         }
+         if (isWarm) System.out.println(creature);
+         total += creature.getCount();
+      }
+
+      // Print result
+      if (isWarm) System.out.println(getNumber(total));
+      if (isWarm) System.out.println();
+   }
+
+   public static void main(String[] args){
+      for (int i=0; i<65; ++i) chameneosredux.program_main(args,false);
+      chameneosredux.program_main(args,true);
+   }
+
+   public static void program_main(String[] args, boolean isWarm) {
+      int n = 600;
+      try {
+         n = Integer.parseInt(args[0]);
+      } catch (Exception e) {
+      }
+
+        if (isWarm){        
+           printColours();
+           System.out.println();
+        }
+      
+      run(n, isWarm, Colour.blue, Colour.red, Colour.yellow);
+      run(n, isWarm, Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.yellow, Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.blue);
+   }
+
+   private static final String NUMBERS[] = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+
+   private static String getNumber(int n) {
+      StringBuilder sb = new StringBuilder(80);
+      String nStr = String.valueOf(n);
+      for (int i = 0; i < nStr.length(); i++) {
+         sb.append(' ').append(NUMBERS[Character.getNumericValue(nStr.charAt(i))]);
+      }
+
+      return sb.toString();
+   }
+
+   private static void printColours() {
+      CreatureValue blue=new CreatureValue(null, Colour.blue), red=new CreatureValue(null, Colour.red), yellow=new CreatureValue(null, Colour.yellow);
+      printColours(blue, Colour.blue, blue, red, yellow);
+      printColours(blue, Colour.red, blue, red, yellow);
+      printColours(blue, Colour.yellow, blue, red, yellow);
+      printColours(red, Colour.blue, blue, red, yellow);
+      printColours(red, Colour.red, blue, red, yellow);
+      printColours(red, Colour.yellow, blue, red, yellow);
+      printColours(yellow, Colour.blue, blue, red, yellow);
+      printColours(yellow, Colour.red, blue, red, yellow);
+      printColours(yellow, Colour.yellow, blue, red, yellow);
+   }
+
+   private static void printColours(CreatureValue c1, Colour c2, CreatureValue blue, CreatureValue red, CreatureValue yellow) {
+      System.out.println(c1.colour + " + " + c2 + " -> " + doCompliment(c1, c2, blue, red, yellow).colour);
+   }
+
+}
