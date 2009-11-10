@@ -262,7 +262,8 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 </dd>
 
 <dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
-<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points. The usual startup measurements and the "*Java 6 steady state" approximations are shown alongside for comparison.</p>
+<dd><p>In these examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
+<p>The usual startup measurements and the "*Java 6 steady state" approximations (and elapsed time) are shown alongside for comparison.</p>
 
 
 <table>
@@ -279,9 +280,9 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <th class="num">&#963;</th>
 <th class="num">mean</th>
 <th class="num">&#963;</th>
-<th class="num">startup</th>
+<th class="num">&nbsp;&nbsp;startup</th>
 <th class="num">approx.</th>
-<th class="num">(runtime)</th>
+<th class="num">(elapsed time)</th>
 </tr>
 
 <tr>
@@ -301,7 +302,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.04</td>
 <td>3.96s</td>
 <td>0.03</td>
-<td>4.09s</td>
+<td>4.11s</td>
 <td>3.96s</td>
 <td>(4 min)</td>
 </tr>
@@ -312,7 +313,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.04</td>
 <td>6.77s</td>
 <td>0.07</td>
-<td>5.14s</td>
+<td>5.00s</td>
 <td>4.55s</td>
 <td>(5 min)</td>
 </tr>
@@ -334,7 +335,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.87</td>
 <td>9.92s</td>
 <td>0.09</td>
-<td>11.72s</td>
+<td>10.95s</td>
 <td>11.40s</td>
 <td>(13 min)</td>
 </tr>
@@ -345,7 +346,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.62</td>
 <td>15.19s</td>
 <td>0.40</td>
-<td>19.57s</td>
+<td>19.18s</td>
 <td>15.40s</td>
 <td>(17 min)</td>
 </tr>
@@ -355,7 +356,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.15</td>
 <td>18.40s</td>
 <td>0.08</td>
-<td>18.34s</td>
+<td>18.43s</td>
 <td>18.59s</td>
 <td>(20 min)</td>
 </tr>
@@ -366,7 +367,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.03</td>
 <td>25.29s</td>
 <td>1.58</td>
-<td>25.21s</td>
+<td>25.03s</td>
 <td>24.69s</td>
 <td>(27 min)</td>
 </tr>
