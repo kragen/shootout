@@ -1,5 +1,5 @@
 <?php // website content changes at-most once an hour - say ten past the hour
-$m = floor(time()/60); $h = floor($m/60); $fivedays = floor($h/120); $after_the_hour = $m - $h*60; $countdown = 10;
+$m = floor(time()/60); $h = floor($m/60); $threedays = floor($h/72); $after_the_hour = $m - $h*60; $countdown = 10;
 if ($countdown <= $after_the_hour) { $countdown += 60; $h++; }
 header("Pragma: public");
 header("Cache-Control: maxage=".($countdown - $after_the_hour)*60);
@@ -37,7 +37,7 @@ $choices = array(
    array('u64','/shapes.php')
    );
 
-$chosen = $choices[$fivedays%8];
+$chosen = $choices[$threedays%8];
 $ChosenSite = $chosen[0];
 $ChosenUrl = $chosen[1];
 ?>
@@ -58,16 +58,42 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 <p>It depends: The fastest programming language for which programmers?<br/> The fastest programming language for which tasks? The fastest <br/>programming language from which sample of language implementations?</p><br/>
 
 
-<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>">Fastest <em>programs</em> in each programming language</a></h5>
-<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see all measurements for a particular OS/machine -</p><br/>
+<h5><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>">Fastest <em>programs</em> in each programming language</a></h5>
+<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>
+
+<?
+$choices = array(
+   'fannkuch'
+   ,'knucleotide'
+   ,'mandelbrot'
+   ,'nbody'
+   ,'fasta'
+   ,'spectralnorm'
+   ,'threadring'
+   ,'chameneosredux'
+   ,'regexdna'
+   ,'pidigits'
+   ,'binarytrees'
+   ,'revcomp'
+   );
+
+$nchoices = sizeof($choices);
+$k = 2+$threedays%$nchoices;
+
+$u32qChosen = $choices[$k];
+$u64qChosen = $choices[($k+3)%$nchoices];
+$u64Chosen = $choices[($k+6)%$nchoices];
+$u32Chosen = $choices[($k+9)%$nchoices];
+?>
+
 
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
 <h3><span class="u32q">
 <a title="Fastest in each programming language, 32 bit Ubuntu."
-href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+href="./u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -75,10 +101,10 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Fastest in each programming language, 64 bit Ubuntu."
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -87,9 +113,9 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
-<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -97,9 +123,9 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
 <h3><span class="u32">
-<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -190,7 +216,7 @@ $choices = array(
    array('u64q','u32q')
    );
 
-$chosen = $choices[$fivedays%8];
+$chosen = $choices[$threedays%8];
 $a_list = Keys( array( $chosen[0] ));
 $b_list = Keys( array( $chosen[1] ));
 
