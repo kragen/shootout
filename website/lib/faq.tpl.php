@@ -280,9 +280,9 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <th class="num">&#963;</th>
 <th class="num">mean</th>
 <th class="num">&#963;</th>
-<th class="num">usual startup</th>
+<th class="num">usual&nbsp;startup</th>
 <th class="num">approx.</th>
-<th class="num">(JVM time)</th>
+<th class="num">(JVM&nbsp;time)</th>
 </tr>
 
 <tr>
@@ -293,7 +293,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.00</td>
 <td>0.31s</td>
 <td>0.13s</td>
-<td>(14 sec)</td>
+<td>(14&nbsp;sec)</td>
 </tr>
 
 <tr>
@@ -304,7 +304,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.02</td>
 <td>4.11s</td>
 <td>3.96s</td>
-<td>(4 min)</td>
+<td>(4&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -315,7 +315,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.07</td>
 <td>5.00s</td>
 <td>4.55s</td>
-<td>(5 min)</td>
+<td>(5&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -337,7 +337,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.06</td>
 <td>10.95s</td>
 <td>11.40s</td>
-<td>(13 min)</td>
+<td>(13&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -348,7 +348,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.43</td>
 <td>19.18s</td>
 <td>15.40s</td>
-<td>(17 min)</td>
+<td>(17&nbsp;min)</td>
 </tr>
 
 <td>fannkuch&nbsp;&nbsp;</td>
@@ -358,7 +358,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>0.48</td>
 <td>18.43s</td>
 <td>18.59s</td>
-<td>(20 min)</td>
+<td>(20&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -369,7 +369,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <td>1.22</td>
 <td>25.03s</td>
 <td>24.69s</td>
-<td>(27 min)</td>
+<td>(27&nbsp;min)</td>
 </tr>
 
 </table>
