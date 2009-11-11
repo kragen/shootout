@@ -280,9 +280,9 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <th class="num">&#963;</th>
 <th class="num">mean</th>
 <th class="num">&#963;</th>
-<th class="num">usual&nbsp;startup</th>
-<th class="num">approx.</th>
-<th class="num">(JVM&nbsp;time)</th>
+<th class="num">&nbsp;&nbsp;usual&nbsp;startup</th>
+<th class="num">&nbsp;approx.</th>
+<th class="num">&nbsp;JVM&nbsp;time</th>
 </tr>
 
 <tr>
