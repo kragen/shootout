@@ -74,17 +74,17 @@ foreach($sTests as $row){
 }
 
 foreach($noprogram as $tr){
-   printf('<tr><td>&nbsp;&nbsp;%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+   printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[3],$tr[4]);
 }
 
 foreach($nocomparison as $tr){
-      printf('<tr><td>&nbsp;&nbsp;%s</td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
+      printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
       $tr[3],$tr[4]);
 }
 
 foreach($failed as $tr){
-      printf('<tr><td>&nbsp;&nbsp;%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[3],$tr[4]);
 }
 
