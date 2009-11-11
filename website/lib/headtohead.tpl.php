@@ -74,17 +74,17 @@ foreach($sTests as $row){
 }
 
 foreach($noprogram as $tr){
-   printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+   printf('<tr><td>%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($nocomparison as $tr){
-      printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
+      printf('<tr><td>%s</td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($failed as $tr){
-      printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      printf('<tr><td>%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
@@ -98,7 +98,7 @@ foreach($sTests as $Row){
       $v = $data[$Link];
 
       if ($v[N_LINES] >= 0){
-         printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td>',
+         printf('<tr><td><a href="#%s">&darr;&nbsp;%s</a></td>',
             $Link, $Name);
 
          if ($v[N_N]==0){ $n = '<td></td>';
