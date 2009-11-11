@@ -74,17 +74,17 @@ foreach($sTests as $row){
 }
 
 foreach($noprogram as $tr){
-   printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+   printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($nocomparison as $tr){
-      printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
+      printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($failed as $tr){
-      printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
@@ -98,7 +98,7 @@ foreach($sTests as $Row){
       $v = $data[$Link];
 
       if ($v[N_LINES] >= 0){
-         printf('<tr><td><a href="benchmark.php?test=%s">%s</a></td>',
+         printf('<tr><td><a href="%s">&darr;&nbsp;%s</a></td>',
             $Link, $Name);
 
          if ($v[N_N]==0){ $n = '<td></td>';
@@ -142,7 +142,7 @@ foreach($sTests as $Row){
          $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
 
-      printf('<tr><th class="txt" colspan="4">&nbsp;<a href="benchmark.php?test=%s">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Name, $n);
+      printf('<tr><th class="txt" colspan="4">&nbsp;<a href="#%s" name="%s">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Link, $Name, $n);
 
       foreach($measurements[$Link] as $Row){
          $k = $Row[DATA_LANG];
