@@ -261,9 +261,9 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=native</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
 </dd>
 
-<dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
+<dt><a href="#dynamic" name="dynamic">What about <strong>Java</strong>?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
-<p>The usual startup measurements and the "*Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
+<p>The usual startup measurements and the "Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
 
 
 <table>
@@ -309,10 +309,10 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>pidigits&nbsp;&nbsp;</td>
-<td>6.86s</td>
-<td>0.04</td>
-<td>6.77s</td>
-<td>0.07</td>
+<td>5.03s</td>
+<td>0.14</td>
+<td>4.65s</td>
+<td>0.10</td>
 <td>5.00s</td>
 <td>4.55s</td>
 <td>(5&nbsp;min)</td>
@@ -379,7 +379,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><strong>on-stack-replacement</strong></a>. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
-<p>To highlight that mismatch, "*Java 6 steady state" approximations are shown in the measurement tables alongside the usual startup measurements.</p>
+<p>To highlight that mismatch, "Java 6 steady state" approximations are shown in the measurement tables alongside the usual startup measurements.</p>
 
 </dd>
 

@@ -1,6 +1,6 @@
 <?=$Version;?>
 
-<p>The reported "*Java 6 steady state" program CPU secs and program Elapsed secs are <strong>averages</strong> that approximate steady state performance - see <a href="faq.php#dynamic"><strong>FAQ: What about Java dynamic compilation?</strong></a></p>
+<p>The reported "Java 6 steady state" program CPU secs and program Elapsed secs are <strong>averages</strong> that approximate steady state performance - see <a href="faq.php#dynamic"><strong>FAQ: What about Java?</strong></a></p>
 
 <p>Each program performs the same calculation 66 times, for example -</p>
 
@@ -11,7 +11,7 @@
    <span class="hl sym">}</span>
 </pre>
 
-<p>The "*Java 6 steady state" program CPU secs and program Elapsed secs measurements are made in the same way as all the other time measurements, but before display they are divided by 66 to give <strong>approximate averages</strong> that minimize the influence of mixed-mode method interpretation and <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><strong>on-stack-replacement</strong></a>, for example -</p>
+<p>The "Java 6 steady state" program CPU secs and program Elapsed secs measurements are made in the same way as all the other time measurements, but before display they are divided by 66 to give <strong>approximate averages</strong> that minimize the influence of mixed-mode method interpretation and <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><strong>on-stack-replacement</strong></a>, for example -</p>
 
 <pre>
 $ java -server -XX:+PrintCompilation -XX:-PrintGC binarytrees_test 20 10
