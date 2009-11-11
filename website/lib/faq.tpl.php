@@ -263,7 +263,7 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <dt><a href="#dynamic" name="dynamic">What about <strong>Java dynamic compilation</strong>?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
-<p>The usual startup measurements and the "*Java 6 steady state" approximations (and elapsed time) are shown alongside for comparison.</p>
+<p>The usual startup measurements and the "*Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
 
 
 <table>
@@ -280,14 +280,14 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 <th class="num">&#963;</th>
 <th class="num">mean</th>
 <th class="num">&#963;</th>
-<th class="num">&nbsp;&nbsp;startup</th>
+<th class="num">usual startup</th>
 <th class="num">approx.</th>
-<th class="num">(elapsed time)</th>
+<th class="num">(JVM time)</th>
 </tr>
 
 <tr>
 <td>meteor-contest&nbsp;&nbsp;</td>
-<td>0.22s</td>
+<td>0.23s</td>
 <td>0.01</td>
 <td>0.12s</td>
 <td>0.00</td>
@@ -298,10 +298,10 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>spectral-norm&nbsp;&nbsp;</td>
-<td>4.04s</td>
-<td>0.04</td>
+<td>4.08s</td>
+<td>0.23</td>
 <td>3.96s</td>
-<td>0.03</td>
+<td>0.02</td>
 <td>4.11s</td>
 <td>3.96s</td>
 <td>(4 min)</td>
@@ -320,8 +320,8 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>fasta&nbsp;&nbsp;</td>
-<td>7.48s</td>
-<td>0.05</td>
+<td>7.50s</td>
+<td>0.21</td>
 <td>6.91s</td>
 <td>0.12</td>
 <td>7.51s</td>
@@ -331,10 +331,10 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>mandelbrot&nbsp;&nbsp;</td>
-<td>12.03s</td>
-<td>0.87</td>
-<td>9.92s</td>
-<td>0.09</td>
+<td>11.91s</td>
+<td>0.81</td>
+<td>11.46s</td>
+<td>0.06</td>
 <td>10.95s</td>
 <td>11.40s</td>
 <td>(13 min)</td>
@@ -342,20 +342,20 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>binary-trees&nbsp;&nbsp;</td>
-<td>20.64s</td>
-<td>0.62</td>
-<td>15.19s</td>
-<td>0.40</td>
+<td>20.69s</td>
+<td>0.69</td>
+<td>15.35s</td>
+<td>0.43</td>
 <td>19.18s</td>
 <td>15.40s</td>
 <td>(17 min)</td>
 </tr>
 
 <td>fannkuch&nbsp;&nbsp;</td>
-<td>18.69s</td>
-<td>0.15</td>
-<td>18.40s</td>
-<td>0.08</td>
+<td>18.74s</td>
+<td>0.66</td>
+<td>18.56s</td>
+<td>0.48</td>
 <td>18.43s</td>
 <td>18.59s</td>
 <td>(20 min)</td>
@@ -363,10 +363,10 @@ For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was 
 
 <tr>
 <td>nbody&nbsp;&nbsp;</td>
-<td>25.00s</td>
-<td>0.03</td>
-<td>25.29s</td>
-<td>1.58</td>
+<td>24.94s</td>
+<td>0.02</td>
+<td>25.07s</td>
+<td>1.22</td>
 <td>25.03s</td>
 <td>24.69s</td>
 <td>(27 min)</td>
