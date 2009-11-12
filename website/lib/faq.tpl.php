@@ -656,6 +656,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
+<li>../test/bench - <a href="http://golang.org/doc/install.html">The Go Programming Language</a></li>
 <li>regression tests - <a href="http://jira.codehaus.org/browse/JRUBY-4157">"After fixing this, fannkuch runs correctly"</a></li>
 <li>performance regressions - <a href="http://www.scala-lang.org/node/360">"a quick and dirty benchmarking suite"</a></li>
 <li>cheap laughs - <a href="http://www.dcs.warwick.ac.uk/~rlmw/talks/benchmarking.pdf">Benchmarking - End the decline of Western Civilization! p54 (pdf)</a></li>
