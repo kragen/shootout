@@ -89,7 +89,7 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>"><?=$TestNa
 <th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
 <th><a href="faq.php#gzbytes">Size&nbsp;B</a></th>
 <th><a href="faq.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="faq.php#cpuload">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="faq.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

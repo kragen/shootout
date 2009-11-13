@@ -21,7 +21,7 @@ $Family = $Row[LANG_FAMILY];
 <th><a href="faq.php#measurecpu">Time&nbsp;secs</a></th>
 <th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
 <th><a href="faq.php#gzbytes">Size B</a></th>
-<th>&nbsp;N&nbsp;</th>
+<th><a href="faq.php#nmeans">&nbsp;N&nbsp;</a></th>
 </tr>
 
 <?
