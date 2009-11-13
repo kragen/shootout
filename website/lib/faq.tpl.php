@@ -233,14 +233,12 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>time?</strong></a></dt>
-<dd><p>The measurement techniques have changed a little:</p>
+<dd>
+<p>Each program was run as a child-process of a Python script using Popen.</p>
 <ul>
-<li>For the current measurements (Ubuntu Q6600) each program was run as a child-process of a Python script using Popen. The script child-process usr+sys rusage time was taken using os.wait3, and time was taken before forking the child-process and after the child-process exits, using time.time().</li>
-<li>
-For the old measurements (Gentoo Pentium 4 and Debian Sempron) each program was run as a child-process of a Perl script. The script child-process usr+sys time was taken before forking the child-process and after the child-process exits, using <a href="http://packages.debian.org/stable/perl/libbsd-resource-perl" title="Debian package 'perl BSD::Resource - BSD process resource limit and priority'">BSD::Resource::times</a>[2,3].
-</li>
+<li>CPU&nbsp;secs: The script child-process usr+sys rusage time was taken using os.wait3</li>
+<li>Elapsed&nbsp;secs: The time was taken before forking the child-process and after the child-process exits, using time.time()</li>
 </ul>
-
 <p><strong>Time measurements include program startup time.</strong></p>
 </dd>
 
