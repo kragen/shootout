@@ -206,13 +206,13 @@ $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
 $choices = array(
-   array('u32','u32q'),
+   array('u32','u64q'),
    array('u64q','u32'),
-   array('u32q','u32q'),
+   array('u32q','u64q'),
    array('u64','u32'),
-   array('u32q','u32'),
+   array('u32q','u64'),
    array('u64','u32q'),
-   array('u32','u32'),
+   array('u32','u64'),
    array('u64q','u32q')
    );
 
