@@ -242,8 +242,8 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <dd>
 <p>Each program was run as a child-process of a Python script using Popen.</p>
 <ul>
-<li>CPU&nbsp;secs: The script child-process usr+sys rusage time was taken using os.wait3</li>
-<li>Elapsed&nbsp;secs: The time was taken before forking the child-process and after the child-process exits, using time.time()</li>
+<li><strong>CPU&nbsp;secs</strong>: The script child-process usr+sys rusage time was taken using os.wait3<br /></li>
+<li><strong>Elapsed&nbsp;secs</strong>: The time was taken before forking the child-process and after the child-process exits, using time.time()</li>
 </ul>
 <p><strong>Time measurements include program startup time.</strong></p>
 </dd>
