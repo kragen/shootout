@@ -78,7 +78,7 @@ $choices = array(
    );
 
 $nchoices = sizeof($choices);
-$k = 2+$threedays%$nchoices;
+$k = $threedays%$nchoices;
 
 $u32qChosen = $choices[$k];
 $u64qChosen = $choices[($k+3)%$nchoices];

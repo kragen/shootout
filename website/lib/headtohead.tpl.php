@@ -41,9 +41,9 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <tr>
 <th>Programs</th>
-<th>Time</th>
-<th>Memory&nbsp;Use</th>
-<th>Source&nbsp;Size</th>
+<th><a href="faq.php#measurecpu">Time</a></th>
+<th><a href="faq.php#memory">Memory&nbsp;Use</a></th>
+<th><a href="faq.php#gzbytes">Source&nbsp;Size</a></th>
 <th>Reduced&nbsp;N</th>
 </tr>
 
@@ -120,11 +120,11 @@ foreach($sTests as $Row){
 <table>
 <tr>
 <th>Program &amp; Logs</th>
-<th>CPU&nbsp;secs</th>
-<th>Memory&nbsp;KB</th>
-<th>Size&nbsp;B</th>
-<th>Elapsed&nbsp;secs</th>
-<th>~&nbsp;CPU&nbsp;Load</th>
+<th><a href="faq.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="faq.php#gzbytes">Size&nbsp;B</a></th>
+<th><a href="faq.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="faq.php#cpuload">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

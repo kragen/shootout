@@ -18,9 +18,9 @@ $Family = $Row[LANG_FAMILY];
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
-<th>Time&nbsp;secs</th>
-<th>Memory&nbsp;KB</th>
-<th>Size B</th>
+<th><a href="faq.php#measurecpu">Time&nbsp;secs</a></th>
+<th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="faq.php#gzbytes">Size B</a></th>
 <th>&nbsp;N&nbsp;</th>
 </tr>
 
