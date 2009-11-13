@@ -1,0 +1,156 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by The Go Authors.</span>
+<span class="hl com"> * Based on C program by Joern Inge Vestgaarden</span>
+<span class="hl com"> * and Jorge Peixoto de Morais Neto.</span>
+<span class="hl com"> * flag.Arg hack by Isaac Gouy</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">package</span> main
+
+<span class="hl kwa">import</span> <span class="hl sym">(</span>
+   <span class="hl str">&quot;bufio&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;bytes&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;flag&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;os&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;strings&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;strconv&quot;</span><span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">var</span> out <span class="hl sym">*</span>bufio<span class="hl sym">.</span>Writer
+
+<span class="hl kwa">var</span> n <span class="hl sym">=</span> <span class="hl num">0</span>
+
+<span class="hl kwa">const</span> WIDTH <span class="hl sym">=</span> <span class="hl num">60</span>   <span class="hl sym">//</span> Fold lines after WIDTH bytes
+
+<span class="hl kwa">func</span> min<span class="hl sym">(</span>a<span class="hl sym">,</span> b int<span class="hl sym">)</span> int <span class="hl sym">{</span>
+   <span class="hl kwa">if</span> a <span class="hl sym">&lt;</span> b <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> a
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> b
+<span class="hl sym">}</span>
+
+<span class="hl kwa">type</span> AminoAcid <span class="hl kwa">struct</span> <span class="hl sym">{</span>
+   p   float<span class="hl sym">;</span>
+   c   byte<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">var</span>   lastrandom uint32 <span class="hl sym">=</span> <span class="hl num">42</span>
+
+<span class="hl sym">//</span> Random number between <span class="hl num">0.0</span> and <span class="hl num">1.0</span>
+<span class="hl kwa">func</span> myrandom<span class="hl sym">()</span> float <span class="hl sym">{</span>
+   <span class="hl kwa">const</span> <span class="hl sym">(</span>
+      IM <span class="hl sym">=</span> <span class="hl num">139968</span><span class="hl sym">;</span>
+      IA <span class="hl sym">=</span> <span class="hl num">3877</span><span class="hl sym">;</span>
+      IC <span class="hl sym">=</span> <span class="hl num">29573</span><span class="hl sym">;</span>
+   <span class="hl sym">)</span>
+   lastrandom <span class="hl sym">= (</span>lastrandom <span class="hl sym">*</span> IA <span class="hl sym">+</span> IC<span class="hl sym">) %</span> IM<span class="hl sym">;</span>
+   <span class="hl sym">//</span> Integer to float conversions are faster <span class="hl kwa">if</span> the integer is signed<span class="hl sym">.</span>
+   <span class="hl kwa">return</span> float<span class="hl sym">(</span>int32<span class="hl sym">(</span>lastrandom<span class="hl sym">)) /</span> IM<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> AccumulateProbabilities<span class="hl sym">(</span>genelist <span class="hl sym">[]</span>AminoAcid<span class="hl sym">) {</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> len<span class="hl sym">(</span>genelist<span class="hl sym">);</span> i<span class="hl sym">++ {</span>
+      genelist<span class="hl sym">[</span>i<span class="hl sym">].</span>p <span class="hl sym">+=</span> genelist<span class="hl sym">[</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">].</span>p<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">//</span> RepeatFasta prints the characters of the byte slice s<span class="hl sym">.</span> When it
+<span class="hl sym">//</span> reaches the end of the slice<span class="hl sym">,</span> it goes back to the beginning<span class="hl sym">.</span>
+<span class="hl sym">//</span> It stops after generating count characters<span class="hl sym">.</span>
+<span class="hl sym">//</span> After each WIDTH characters it prints a newline<span class="hl sym">.</span>
+<span class="hl sym">//</span> It assumes that WIDTH <span class="hl sym">&lt;=</span> len<span class="hl sym">(</span>s<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">.</span>
+<span class="hl kwa">func</span> RepeatFasta<span class="hl sym">(</span>s <span class="hl sym">[]</span>byte<span class="hl sym">,</span> count int<span class="hl sym">) {</span>
+   pos <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   s2 <span class="hl sym">:=</span> make<span class="hl sym">([]</span>byte<span class="hl sym">,</span> len<span class="hl sym">(</span>s<span class="hl sym">) +</span> WIDTH<span class="hl sym">);</span>
+   bytes<span class="hl sym">.</span>Copy<span class="hl sym">(</span>s2<span class="hl sym">,</span> s<span class="hl sym">);</span>
+   bytes<span class="hl sym">.</span>Copy<span class="hl sym">(</span>s2<span class="hl sym">[</span>len<span class="hl sym">(</span>s<span class="hl sym">):</span>len<span class="hl sym">(</span>s2<span class="hl sym">)],</span> s<span class="hl sym">);</span>
+   <span class="hl kwa">for</span> count <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      line <span class="hl sym">:=</span> min<span class="hl sym">(</span>WIDTH<span class="hl sym">,</span> count<span class="hl sym">);</span>
+      out<span class="hl sym">.</span>Write<span class="hl sym">(</span>s2<span class="hl sym">[</span>pos<span class="hl sym">:</span>pos<span class="hl sym">+</span>line<span class="hl sym">]);</span>
+      out<span class="hl sym">.</span>WriteByte<span class="hl sym">(</span>'\n'<span class="hl sym">);</span>
+      pos <span class="hl sym">+=</span> line<span class="hl sym">;</span>
+      <span class="hl kwa">if</span> pos <span class="hl sym">&gt;=</span> len<span class="hl sym">(</span>s<span class="hl sym">) {</span>
+         pos <span class="hl sym">-=</span> len<span class="hl sym">(</span>s<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+      count <span class="hl sym">-=</span> line<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">//</span> Each element of genelist is a <span class="hl kwa">struct</span> with a character and
+<span class="hl sym">//</span> a floating point number p between <span class="hl num">0</span> and <span class="hl num">1</span><span class="hl sym">.</span>
+<span class="hl sym">//</span> RandomFasta generates a random float r and
+<span class="hl sym">//</span> finds the first element such that p <span class="hl sym">&gt;=</span> r<span class="hl sym">.</span>
+<span class="hl sym">//</span> This is a weighted random selection<span class="hl sym">.</span>
+<span class="hl sym">//</span> RandomFasta then prints the character of the array element<span class="hl sym">.</span>
+<span class="hl sym">//</span> This sequence is repeated count times<span class="hl sym">.</span>
+<span class="hl sym">//</span> Between each WIDTH consecutive characters<span class="hl sym">,</span> the function prints a newline<span class="hl sym">.</span>
+<span class="hl kwa">func</span> RandomFasta<span class="hl sym">(</span>genelist <span class="hl sym">[]</span>AminoAcid<span class="hl sym">,</span> count int<span class="hl sym">) {</span>
+   buf <span class="hl sym">:=</span> make<span class="hl sym">([]</span>byte<span class="hl sym">,</span> WIDTH <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+   <span class="hl kwa">for</span> count <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      line <span class="hl sym">:=</span> min<span class="hl sym">(</span>WIDTH<span class="hl sym">,</span> count<span class="hl sym">);</span>
+      <span class="hl kwa">for</span> pos <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> pos <span class="hl sym">&lt;</span> line<span class="hl sym">;</span> pos<span class="hl sym">++ {</span>
+         r <span class="hl sym">:=</span> myrandom<span class="hl sym">();</span>
+         <span class="hl kwa">var</span> i int<span class="hl sym">;</span>
+         <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> genelist<span class="hl sym">[</span>i<span class="hl sym">].</span>p <span class="hl sym">&lt;</span> r<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+         <span class="hl sym">}</span>
+         buf<span class="hl sym">[</span>pos<span class="hl sym">] =</span> genelist<span class="hl sym">[</span>i<span class="hl sym">].</span>c<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      buf<span class="hl sym">[</span>line<span class="hl sym">] =</span> '\n'<span class="hl sym">;</span>
+      out<span class="hl sym">.</span>Write<span class="hl sym">(</span>buf<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">:</span>line <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">]);</span>
+      count <span class="hl sym">-=</span> line<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> main<span class="hl sym">() {</span>
+   out <span class="hl sym">=</span> bufio<span class="hl sym">.</span>NewWriter<span class="hl sym">(</span>os<span class="hl sym">.</span>Stdout<span class="hl sym">);</span>
+   <span class="hl kwa">defer</span> out<span class="hl sym">.</span>Flush<span class="hl sym">();</span>
+
+   flag<span class="hl sym">.</span>Parse<span class="hl sym">();</span>
+   <span class="hl kwa">if</span> flag<span class="hl sym">.</span>NArg<span class="hl sym">() &gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span> n<span class="hl sym">,</span>_ <span class="hl sym">=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span> flag<span class="hl sym">.</span>Arg<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) ) }</span>
+
+   iub <span class="hl sym">:= []</span>AminoAcid <span class="hl sym">{</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.27</span><span class="hl sym">,</span> 'a' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.12</span><span class="hl sym">,</span> 'c' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.12</span><span class="hl sym">,</span> 'g' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.27</span><span class="hl sym">,</span> 't' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'B' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'D' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'H' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'K' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'M' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'N' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'R' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'S' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'V' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'W' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.02</span><span class="hl sym">,</span> 'Y' <span class="hl sym">}</span>
+   <span class="hl sym">};</span>
+
+   homosapiens <span class="hl sym">:= []</span>AminoAcid <span class="hl sym">{</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.3029549426680</span><span class="hl sym">,</span> 'a' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.1979883004921</span><span class="hl sym">,</span> 'c' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.1975473066391</span><span class="hl sym">,</span> 'g' <span class="hl sym">},</span>
+      AminoAcid<span class="hl sym">{</span> <span class="hl num">0.3015094502008</span><span class="hl sym">,</span> 't' <span class="hl sym">}</span>
+   <span class="hl sym">};</span>
+
+   AccumulateProbabilities<span class="hl sym">(</span>iub<span class="hl sym">);</span>
+   AccumulateProbabilities<span class="hl sym">(</span>homosapiens<span class="hl sym">);</span>
+
+   alu <span class="hl sym">:=</span> strings<span class="hl sym">.</span>Bytes<span class="hl sym">(</span>
+      <span class="hl str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG&quot;</span>
+      <span class="hl str">&quot;GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA&quot;</span>
+      <span class="hl str">&quot;CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT&quot;</span>
+      <span class="hl str">&quot;ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA&quot;</span>
+      <span class="hl str">&quot;GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG&quot;</span>
+      <span class="hl str">&quot;AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC&quot;</span>
+      <span class="hl str">&quot;AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span><span class="hl sym">);</span>
+
+   out<span class="hl sym">.</span>WriteString<span class="hl sym">(</span><span class="hl str">&quot;&gt;ONE Homo sapiens alu</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   RepeatFasta<span class="hl sym">(</span>alu<span class="hl sym">,</span> <span class="hl num">2</span> <span class="hl sym">*</span> n<span class="hl sym">);</span>
+   out<span class="hl sym">.</span>WriteString<span class="hl sym">(</span><span class="hl str">&quot;&gt;TWO IUB ambiguity codes</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   RandomFasta<span class="hl sym">(</span>iub<span class="hl sym">,</span> <span class="hl num">3</span> <span class="hl sym">*</span> n<span class="hl sym">);</span>
+   out<span class="hl sym">.</span>WriteString<span class="hl sym">(</span><span class="hl str">&quot;&gt;THREE Homo sapiens frequency</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   RandomFasta<span class="hl sym">(</span>homosapiens<span class="hl sym">,</span> <span class="hl num">5</span> <span class="hl sym">*</span> n<span class="hl sym">);</span>
+<span class="hl sym">}</span>
