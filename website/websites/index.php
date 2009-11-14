@@ -27,13 +27,13 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <?
 $choices = array(
-   array('u32q','/benchmark.php?test=all&lang=all&box=1'),
+   array('u32q','/summary.php'),
    array('u64q','/shapes.php'),
-   array('u32','/benchmark.php?test=all&lang=all&box=1'),
+   array('u32','/summary.php'),
    array('u32','/shapes.php'),
-   array('u64q','/benchmark.php?test=all&lang=all&box=1'),
+   array('u64q','/summary.php'),
    array('u32q','/shapes.php'),
-   array('u64','/benchmark.php?test=all&lang=all&box=1'),
+   array('u64','/summary.php'),
    array('u64','/shapes.php')
    );
 
