@@ -36,7 +36,7 @@ define('HOMEPAGE_ROWS',0);          // show 26 rows of languages on the homepage
 define('SITE_NAME', 'debian');
 define('SITE_TITLE','Debian : AMD&#8482; Sempron&#8482; Computer Language Benchmarks Game');
 define('BANNER_TITLE','PLEASE CHOOSE THE UP-TO-DATE MEASUREMENTS INSTEAD OF THESE!&nbsp;');
-define('FAQ_TITLE','Read&nbsp;the&nbsp;FAQ!');
+define('FAQ_TITLE','Help!');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');
