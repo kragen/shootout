@@ -19,7 +19,7 @@ title="Show <?=$LangName;?> <?=TESTS_PHRASE;?> summary" >
 title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestName;?> full data</a>
 </p>
 
-<h2><a href="#program" name="program">&nbsp;<?=$Title;?></a></h2>
+<h2><a href="#prog" name="prog">&nbsp;<?=$Title;?></a></h2>
 <p>Read <a href="#log">&darr;&nbsp;the build log</a>.</p>
 
 <table>
