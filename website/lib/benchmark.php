@@ -206,8 +206,8 @@ if ($T=='all'){
    
       $S = '';
       $PageId = 'program';
-      $D = ProgramData(DATA_PATH.'data.csv',$T,$L,$I,$Langs,$Incl,$Excl);
-      if (sizeof($D)>0){ $I = $D[DATA_ID]; }
+      $D = ProgramData(DATA_PATH.'ndata.csv',$T,$L,$I,$Langs,$Incl,$Excl);
+      if (sizeof($D)>0){ $I = $D[0][DATA_ID]; }
       
       $TestName = $Tests[$T][TEST_NAME];
       $LangName = $Langs[$L][LANG_FULL];

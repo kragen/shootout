@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2008 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
@@ -32,30 +32,28 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
-<?
-if (sizeof($Data)>0){
-      if ($Id==$Data[DATA_ID]){
-         if ($Data[DATA_STATUS]<0){
+<?  
+foreach($Data as $d){
+      if ($Id==$d[DATA_ID]){
+         if ($d[DATA_STATUS]<0){
             $n = '&nbsp;'; $kb = '&nbsp;'; $fullcpu = '&nbsp;';$elapsed = '&nbsp;'; $load = '&nbsp;';
-            $fullcpu = StatusMessage($Data[DATA_STATUS]);
+            $fullcpu = StatusMessage($d[DATA_STATUS]);
          } else {
-            if ($Data[DATA_MEMORY]==0){
+            if ($d[DATA_MEMORY]==0){
                $kb = '?';
             } else {
                if ($TestName=='startup'){ $kb = '&nbsp;'; }
-               else { $kb = number_format((double)$Data[DATA_MEMORY]); }
+               else { $kb = number_format((double)$d[DATA_MEMORY]); }
             }
-            if ($Data[DATA_TESTVALUE]>0){ $n = number_format((double)$Data[DATA_TESTVALUE]); } else { $n = '?'; }
-            $fullcpu = sprintf('%0.2f',$Data[DATA_FULLCPU]);
-            $elapsed = ElapsedTime($Data);
-            $load = CpuLoad($Data);
+            if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }
+            $fullcpu = sprintf('%0.2f',$d[DATA_FULLCPU]);
+            $elapsed = ElapsedTime($d);
+            $load = CpuLoad($d);
          }
 
          printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">&nbsp;&nbsp;%s</td></tr>',
-            $n,$fullcpu,$kb,$Data[DATA_GZ],$elapsed,$load); echo "\n";
+            $n,$fullcpu,$kb,$d[DATA_GZ],$elapsed,$load); echo "\n";
       }
-} else {
-   echo '<tr class="a"><td></td> <td></td> <td></td> <td></td> <td></td></tr>'; echo "\n";
 }
 ?>
 </table>

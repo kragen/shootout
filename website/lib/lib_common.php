@@ -324,31 +324,34 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
 
       if (($row[DATA_TEST]==$T)&&($row[DATA_LANG]==$L)){
          settype($row[DATA_ID],'integer');
-         if (($I > -1)&&($row[DATA_ID]==$I)){ return $row; }
-         else { $data[] = $row; }
+         if ($I == -1){ $data[] = $row; }
+         elseif ($row[DATA_ID]==$I){ $data[] = $row; }
       }
    }
    @fclose($f);
-   usort($data, 'CompareFullCpuTime');
 
    if ($I == -1){
+      usort($data, 'CompareFullCpuTime');
+      $filtered = array();
       foreach($data as $ar){
          if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])
                && !ExcludeData($ar,$Langs,$Excl)){
-            return $ar;
+            $filtered[] = $ar;
          }
       }
-      foreach($data as $ar){
+      $data = array();
+      foreach($filtered as $ar){
          if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])){
            $ex = ExcludeData($ar,$Langs,$Excl);
            //if (($ex == PROGRAM_TIMEOUT)||($ex == PROGRAM_ERROR)){
            if ($ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
-              return $ar;
+              $data[] = $ar;
            }
          }
       }
    }
-   return array();
+
+   return $data;
 }
 
 
