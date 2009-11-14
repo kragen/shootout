@@ -36,7 +36,7 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 define('SITE_NAME', 'gp4');
 define('SITE_TITLE','Gentoo : Intel&#174; Pentium&#174;&nbsp;4 Computer Language Benchmarks Game');
 define('BANNER_TITLE','PLEASE CHOOSE THE UP-TO-DATE MEASUREMENTS INSTEAD OF THESE!&nbsp;');
-define('FAQ_TITLE','Help!');
+define('FAQ_TITLE','Help');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');

@@ -1,8 +1,6 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
-<p>This FAQ is short. You can read it really quickly.</p>
-
 
 <dl>
 <dt><a href="#game" name="game">&nbsp;What kind of game is this?</a></dt>
@@ -199,11 +197,6 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <p>See <a href="#pretest">&darr;&nbsp;How did you measure?</a></p>
 </dd>
 
-<dt><a href="#whatlanguage" name="whatlanguage">What language was used to write each initial benchmark program?</a></dt>
-<dd><p>Different benchmark programs, different authors - different languages.</p>
-<p>The benchmark descriptions sometimes refer to an article which included program source: Lisp and C for fannkuch; Java for binary-trees and meteor and chameneos-redux; Haskell for pidigits; Erlang for thread-ring. And others as the author provided: C for mandelbrot and spectral-norm; Java for n-body. And others in Nice or C# or Lua or &#8230; as the mood would have it.</p>
-</dd>
-
 <dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
 <dd><p>Interesting Alternative Program means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but <strong>we simply couldn't resist</strong> showing the program.</p>
 </dd>
@@ -211,7 +204,6 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
 <dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
 </dd>
-
 
 </dl>
 </dd>
@@ -258,11 +250,6 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 
 <dt><a href="#cpuload" name="cpuload">How did you measure <strong>~ CPU Load?</strong></a></dt>
 <dd><p>The GTop cpu idle and GTop cpu total was taken before forking the child-process and after the child-process exits, The percentages represent the proportion of cpu not-idle to cpu total for each core.</p>
-</dd>
-
-
-<dt><a href="#copts" name="copts">How did you set <strong>compiler options?</strong></a></dt>
-<dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=native</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
 </dd>
 
 <dt><a href="#dynamic" name="dynamic">What about <strong>Java</strong>?</a></dt>
@@ -386,6 +373,11 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <p>To highlight that mismatch, "Java 6 steady state" approximations are shown in the measurement tables alongside the usual startup measurements.</p>
 
 </dd>
+
+<dt><a href="#copts" name="copts">What <strong>compiler options</strong> did you set?</a></dt>
+<dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=native</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
+</dd>
+
 
 <dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
 <dd>

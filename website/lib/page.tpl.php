@@ -24,7 +24,13 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <body id="<?=SITE_NAME;?>">
 <table class="banner"><tr>
-<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;(<a href="<?=$FaqUrl;?>"><?=$FaqTitle;?></a>)</h1></td>
+<?
+if (isset($FaqUrl)){
+   printf('<td><h1><a href="%s">%s</a>&nbsp;(<a href="%s">%s</a>)</h1></td>', $BannerUrl, $BannerTitle, $FaqUrl, $FaqTitle);
+} else {
+   printf('<td><h1><a href="../">%s</a>&nbsp;<a>%s</a></h1></td>', $BannerTitle, $FaqTitle);
+}
+?>
 </tr></table>
 
 <div id="<?=$PageId;?>">

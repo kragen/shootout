@@ -44,7 +44,7 @@ $ChosenUrl = $chosen[1];
 
 
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;(<a href="./<?=$ChosenSite;?>/faq.php">Read the FAQ!</a>)</h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;(<a href="./<?=$ChosenSite;?>/faq.php">Help</a>)</h1></td>
 </tr></table>
 
 <div id="home">
