@@ -45,8 +45,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 
 <h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
-<p>Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.
-<?=$TestTag;?>&nbsp;<?=$NString;?></p>
+<p><?=$TestTag;?>&nbsp;<a href="faq.php#nmeans"><?=$NString;?></a>. <br />Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.</p>
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
 

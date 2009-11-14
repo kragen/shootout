@@ -20,6 +20,8 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 </p>
 
 <h2><a href="#program" name="program">&nbsp;<?=$Title;?></a></h2>
+<p>Read <a href="#log">&darr;&nbsp;the build log</a>.</p>
+
 <table>
 <colgroup span="4" class="num"></colgroup>
 <tr>
