@@ -18,10 +18,10 @@ $Family = $Row[LANG_FAMILY];
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program &amp; Logs</th>
-<th><a href="faq.php#measurecpu">Time&nbsp;secs</a></th>
-<th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="faq.php#gzbytes">Size B</a></th>
-<th><a href="faq.php#nmeans">&nbsp;N&nbsp;</a></th>
+<th><a href="help.php#measurecpu">Time&nbsp;secs</a></th>
+<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="help.php#gzbytes">Size B</a></th>
+<th><a href="help.php#nmeans">&nbsp;N&nbsp;</a></th>
 </tr>
 
 <?

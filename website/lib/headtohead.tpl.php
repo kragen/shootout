@@ -41,10 +41,10 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 
 <tr>
 <th>Programs</th>
-<th><a href="faq.php#measurecpu">Time</a></th>
-<th><a href="faq.php#memory">Memory&nbsp;Use</a></th>
-<th><a href="faq.php#gzbytes">Source&nbsp;Size</a></th>
-<th><a href="faq.php#nmeans">Reduced&nbsp;N</a></th>
+<th><a href="help.php#measurecpu">Time</a></th>
+<th><a href="help.php#memory">Memory&nbsp;Use</a></th>
+<th><a href="help.php#gzbytes">Source&nbsp;Size</a></th>
+<th><a href="help.php#nmeans">Reduced&nbsp;N</a></th>
 </tr>
 
 
@@ -120,11 +120,11 @@ foreach($sTests as $Row){
 <table>
 <tr>
 <th>Program &amp; Logs</th>
-<th><a href="faq.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="faq.php#gzbytes">Size&nbsp;B</a></th>
-<th><a href="faq.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="faq.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="help.php#gzbytes">Size&nbsp;B</a></th>
+<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

@@ -45,7 +45,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 
 <h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
-<p><?=$TestTag;?>&nbsp;<a href="faq.php#nmeans"><?=$NString;?></a>. <br />Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.</p>
+<p><?=$TestTag;?>&nbsp;<a href="help.php#nmeans"><?=$NString;?></a>. <br />Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.</p>
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
 
@@ -82,11 +82,11 @@ if ($TestName=='startup'){ $NString = ''; }
 <tr>
 <th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
 <th>Program &amp; Logs</th>
-<th><a href="faq.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="faq.php#gzbytes">Size&nbsp;B</a></th>
-<th><a href="faq.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="faq.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="help.php#gzbytes">Size&nbsp;B</a></th>
+<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

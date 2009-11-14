@@ -36,11 +36,11 @@ elseif ($F == 'output'){ $Title = $TestName.' output file'; }
 else { $Title = $TestName; }
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $bannerUrl = 'index.php'; $faqUrl = 'faq.php';
+   $bannerUrl = 'index.php'; $faqUrl = 'help.php';
 } else {
    // Help people choose the up-to-date measurements
    $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
-   $faqUrl = 'http://shootout.alioth.debian.org/u32q/faq.php#means';
+   $faqUrl = 'http://shootout.alioth.debian.org/u32q/help.php#means';
 }
 
 

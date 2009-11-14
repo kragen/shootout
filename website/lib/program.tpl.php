@@ -25,12 +25,12 @@ title="Check all the data for the <?=$TestName;?> <?=TESTS_PHRASE;?>" ><?=$TestN
 <table>
 <colgroup span="4" class="num"></colgroup>
 <tr>
-<th><a href="faq.php#nmeans">&nbsp;N&nbsp;</a></th>
-<th><a href="faq.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="faq.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="faq.php#gzbytes">Size B</a></th>
-<th><a href="faq.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="faq.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="help.php#nmeans">&nbsp;N&nbsp;</a></th>
+<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="help.php#gzbytes">Size B</a></th>
+<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?
 if (sizeof($Data)>0){
