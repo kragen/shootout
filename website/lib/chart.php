@@ -67,7 +67,7 @@ ImageStringUp($chart->im, 2, 5, $h-$y-8, $label, $chart->colour[BLACK]);
 ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+6, $chart->colour[BLACK]);
 
 
-$chart->title('Normalized Program Run Time and Memory Use');
+$chart->title('Normalized Time-used and Memory-used for each Program');
 $chart->frame();
 $chart->complete();
 
