@@ -14,16 +14,14 @@ $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 
-$ExplanatoryHeader = '&nbsp;'.$LangName.'<strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; '.$LangName2.'&nbsp;';
+$ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; '.$LangName2.'&nbsp;';
 ?>
 
-<p>Do the <strong><?=$LangName;?> programs</strong> use a fraction of the time used by others, or do they use several times more? What fraction? How many times more?</p>
+<p>Do the <strong><?=$LangName;?> programs</strong> use a fraction of the time used by others, or do they use several times more? <strong>What fraction? How many times more?</strong></p>
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
 <h2><a href="#title" name="title"><?=$ExplanatoryHeader;?></a></h2>
-
-<p>Read <a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""

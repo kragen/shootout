@@ -88,7 +88,7 @@ if ($valid){
    $chart->barwidth = 5;
    $x = $chart->bars(DARK_GRAY,$gz,FALSE);
 
-   $label = 'Source Code';
+   $label = 'Code';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
    ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);

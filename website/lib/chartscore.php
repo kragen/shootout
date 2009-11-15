@@ -30,7 +30,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->title('Weighted Geometric Mean: Time-used, Memory-used, Code-used');
+$chart->title('Weighted Geometric Mean   Time-used, Memory-used, Code-used');
 $chart->frame();
 $chart->complete();
 
