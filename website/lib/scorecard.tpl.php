@@ -75,7 +75,7 @@ foreach($score as $k => $v){
 <td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></td>
 </tr>
 <tr>
-<td><a href="help.php#gzbytes">Source Code size B</a></td>
+<td><a href="help.php#gzbytes">Source Code B</a></td>
 <td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></td>
 </tr>
 

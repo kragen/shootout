@@ -84,7 +84,7 @@ if ($TestName=='startup'){ $NString = ''; }
 <th>Program &amp; Logs</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Size&nbsp;B</a></th>
+<th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>

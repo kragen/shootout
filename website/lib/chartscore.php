@@ -30,8 +30,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->yAxisLegend('ratio to best');
-$chart->title('Weighted Geometric Mean of normalized Time, Memory and Size');
+$chart->title('Weighted Geometric Mean - Time-used, Memory-used, Code-used');
 $chart->frame();
 $chart->complete();
 
