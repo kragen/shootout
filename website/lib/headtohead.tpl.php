@@ -142,7 +142,7 @@ foreach($sTests as $Row){
          $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
 
-      printf('<tr><th class="txt" colspan="4">&nbsp;<a href="#%s" name="%s">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Link, $Name, $n);
+      printf('<tr><th class="txt" colspan="4">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Link, $Name, $n);
 
       foreach($measurements[$Link] as $Row){
          $k = $Row[DATA_LANG];
