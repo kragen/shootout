@@ -89,9 +89,10 @@ if ($valid){
    for ($i=0; $i<sizeof($vs1); $i++)
       $chart->lines($colours[$i],$testvalue,$vs1[$i]);
 
-   $label = 'Time';
+   $label = 'Time-used';
    $z = $x + ($panelWidth - strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
 
    // MEMORY USE PANEL
 
@@ -100,9 +101,10 @@ if ($valid){
    for ($i=0; $i<sizeof($vs2); $i++)
       $y[] = $chart->lines($colours[$i],$testvalue,$vs2[$i]);
 
-   $label = 'Memory Use';
+   $label = 'Memory-used';
    $z = $x + ($panelWidth -strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
 
    // PROGRAM NAME PANEL
 
@@ -115,9 +117,10 @@ if ($valid){
       ImageString($chart->im, 2, $x+6, $y[$i]-7, $label, $chart->colour[$colours[$i]]);
    }
 
-   $label = 'Program';
+   $label = 'Program name';
    $z = $x + ($panelWidth - strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
+   ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
    
    $chart->xo = $chart->defaultOriginX();
 
@@ -132,8 +135,7 @@ if ($valid){
    $chart->xAxisLegend($label,$x);
 }
 
-$chart->title('Normalized Run Times and Memory Use as workload N increases');
-$chart->yAxisLegend('ratio to best');
+$chart->title('Normalized Time-used Memory-used as workload N increases');
 $chart->frame();
 $chart->complete();
 

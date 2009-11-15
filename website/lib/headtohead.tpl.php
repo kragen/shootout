@@ -14,7 +14,7 @@ $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 
-$ExplanatoryHeader = '&nbsp;<?=$LangName;?> <strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; <?=$LangName2;?>&nbsp;';
+$ExplanatoryHeader = '&nbsp;'.$LangName.'<strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; '.$LangName2.'&nbsp;';
 ?>
 
 <p>Do the <strong><?=$LangName;?> programs</strong> use a fraction of the time used by others, or do they use several times more? What fraction? How many times more?</p>
@@ -42,7 +42,7 @@ $ExplanatoryHeader = '&nbsp;<?=$LangName;?> <strong>used</strong> &#133;<sup>1</
 <th>Programs</th>
 <th><a href="help.php#measurecpu">Time</a></th>
 <th><a href="help.php#memory">Memory</a></th>
-<th><a href="help.php#gzbytes">Source&nbsp;Code</a></th>
+<th><a href="help.php#gzbytes">Code</a></th>
 <th><a href="help.php#nmeans">Reduced&nbsp;N</a></th>
 </tr>
 
@@ -111,7 +111,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> look at the measurements - and then look at the programs!<br/></p>
+<p><span class="num2">&#177;</span> look at the measurements and then look at the programs.<br/></p>
 
 <h2><a href="#measurements" name="measurements">&nbsp;measurements</a></h2>
 
@@ -121,7 +121,7 @@ foreach($sTests as $Row){
 <th>Program &amp; Logs</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Size&nbsp;B</a></th>
+<th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>

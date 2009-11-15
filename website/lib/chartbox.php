@@ -33,7 +33,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->title('Normalized Time-used - Median and Quartiles');
+$chart->title('Normalized Time-used: Median and Quartiles');
 $chart->frame();
 $chart->complete();
 

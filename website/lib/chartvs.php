@@ -95,7 +95,7 @@ if ($valid){
    
    $chart->xo = $chart->defaultOriginX();
 
-   // LANGUAGE LABELS
+   // Y AXIS LABEL
 
    $names0 = explode(' ',$LangName[0]);
    $names1 = explode(' ',$LangName[1]);
