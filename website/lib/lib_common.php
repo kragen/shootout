@@ -218,6 +218,16 @@ function CompareTestName($a, $b){
    return strcasecmp($a[TEST_NAME],$b[TEST_NAME]);
 }
 
+function CompareProgramDataTime($a, $b){
+   if ($a[DATA_STATUS] < 0){
+      return 1;
+   } elseif ($b[DATA_STATUS] < 0){
+      return -1;
+   } else {
+      return  ($a[DATA_TIME] < $b[DATA_TIME]) ? -1 : 1;
+   }
+}
+
 
 function IdName($id){
    if ($id>1){ return '&nbsp;#'.$id; } else { return ''; }
@@ -331,7 +341,6 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
    @fclose($f);
 
    if ($I == -1){
-      usort($data, 'CompareFullCpuTime');
       $filtered = array();
       foreach($data as $ar){
          if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])
@@ -350,7 +359,7 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
          }
       }
    }
-
+   usort($data, 'CompareProgramDataTime');
    return $data;
 }
 

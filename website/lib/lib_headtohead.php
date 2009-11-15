@@ -56,11 +56,11 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          $dj = $Data[$j];
                               
          if ($dj[DATA_STATUS] > PROGRAM_TIMEOUT){
-            if (isset($comparable[$dj[DATA_LANG]])){ 
+            if (isset($comparable[$dj[DATA_LANG]])){
                if ($dj[DATA_TIME] < $comparable[$dj[DATA_LANG]][DATA_TIME]){
                   if ($isComparable){
-                     if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){                  
-                        $comparable[$dj[DATA_LANG]] = $Data[$j];   
+                     if ($dj[DATA_TESTVALUE]==$comparable[$dj[DATA_LANG]][DATA_TESTVALUE]){
+                        $comparable[$dj[DATA_LANG]] = $Data[$j];
                      }
                   }
                   else {
@@ -69,7 +69,8 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
                                 
                }
             } else {
-               $comparable[$dj[DATA_LANG]] = $Data[$j];              
+               $comparable[$dj[DATA_LANG]] = $Data[$j];
+               if ($dj[DATA_LANG] = $L1){ $errorRowMeasurement = $Data[$j]; }
             }
          }
          elseif ($dj[DATA_LANG]==$L1){
@@ -121,13 +122,14 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          }
          else {
             
-            $measurements[$r1[DATA_TEST]] = array($r1);
+            $measurements[$r1[DATA_TEST]] = array($errorRowMeasurement);
 
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]
                , $L2
                , $r1[DATA_ID]
-               , ($r1[DATA_TESTVALUE] == $n) ? 0 : $r1[DATA_TESTVALUE]
+               , ($errorRowMeasurement[DATA_TESTVALUE] == $n) ? 0 : $errorRowMeasurement[DATA_TESTVALUE]
+//               , ($r1[DATA_TESTVALUE] >= $n) ? 0 : $r1[DATA_TESTVALUE]
                , $Langs[$r1[DATA_LANG]][LANG_FULL].IdName($r1[DATA_ID])
                , $Langs[$r1[DATA_LANG]][LANG_HTML].IdName($r1[DATA_ID])
                , 0

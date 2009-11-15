@@ -132,14 +132,14 @@ foreach($sTests as $Row){
    $Name = $Row[TEST_NAME];
 
    if (isset($measurements[$Link])){
-
+      
       if ($data[$Link][N_N]==0){
          $n = '';
       } else {
          $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
-
       printf('<tr><th class="txt" colspan="4">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Link, $Name, $n);
+
 
       foreach($measurements[$Link] as $Row){
          $k = $Row[DATA_LANG];
@@ -160,7 +160,10 @@ foreach($sTests as $Row){
       if (sizeof($measurements[$Link])<2){
          printf('<td></td><td colspan="3"><span class="message">No %s</span></td><td></td><td></td></tr>', $LangName2);
       }
+   }
+   else {
 
+//print_r($Link);
    }
 }
 ?>
