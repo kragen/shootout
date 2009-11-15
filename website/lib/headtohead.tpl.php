@@ -18,10 +18,9 @@ $ShortName = $Row[LANG_NAME];
 $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 ?>
 
-<p>Compare the performance of <strong><?=$LangName;?></strong> programs against some other language implementation.</p>
+<p>Do the <strong><?=$LangName;?></strong> programs use a fraction of the time used by others, or do they use more? Do the <?=$LangName;?> programs use a fraction of the memory used by others, or do they use more?</p>
 
-<p>For more information about the <?=$Family;?> implementation we measured see
-<a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
+<p>Read <a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
