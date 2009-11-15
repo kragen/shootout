@@ -14,17 +14,16 @@ $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 
-$ShortName = $Row[LANG_NAME];
-$ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
+$ExplanatoryHeader = '&nbsp;<?=$LangName;?> <strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; <?=$LangName2;?>&nbsp;';
 ?>
 
-<p>Do the <strong><?=$LangName;?></strong> programs use a fraction of the time used by others, or do they use more? Do the <?=$LangName;?> programs use a fraction of the memory used by others, or do they use more?</p>
-
-<p>Read <a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
+<p>Do the <strong><?=$LangName;?> programs</strong> use a fraction of the time used by others, or do they use several times more? What fraction? How many times more?</p>
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;<?=$LangName;?> comparison summary</a></h2>
+<h2><a href="#title" name="title"><?=$ExplanatoryHeader;?></a></h2>
+
+<p>Read <a href="#about" title="Read about the <?=$LangName;?>language implementation">&darr;&nbsp;about <?=$LangName;?></a>.</p>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
@@ -37,7 +36,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
 
-<tr><th colspan="5">&nbsp;<?=$LangName;?> <strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; <?=$LangName2;?>&nbsp;</th></tr>
+<tr><th colspan="5"><?=$ExplanatoryHeader;?></th></tr>
 
 <tr>
 <th>Programs</th>
@@ -112,9 +111,9 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> look at the measurements<br/></p>
+<p><span class="num2">&#177;</span> look at the measurements - and then look at the programs!<br/></p>
 
-<h2><a href="#measurements" name="measurements">&nbsp;<?=$LangName;?> comparison measurements</a></h2>
+<h2><a href="#measurements" name="measurements">&nbsp;measurements</a></h2>
 
 <p></p>
 <table>
@@ -161,7 +160,7 @@ foreach($sTests as $Row){
          printf('<td>%s</td><td>%s</td><td>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $kb, $gz, $e, $ld);
       }
       if (sizeof($measurements[$Link])<2){
-         printf('<td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>');
+         printf('<td></td><td colspan="3"><span class="message">No %s</span></td><td></td><td></td></tr>', $LangName2);
       }
 
    }
