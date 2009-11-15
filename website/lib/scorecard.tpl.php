@@ -26,7 +26,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="2" class="num"></colgroup>
 <tr>
-<th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
 <th>language</th>
 <th>GM</th>
 <th>missing</th>
@@ -48,7 +48,7 @@ foreach($score as $k => $v){
    printf('<td>%0.2f</td><td>%s</td>',
       $v[SCORE_MEAN], PBlank($v[SCORE_TESTS])); echo "\n";
    echo "</tr>\n";
-}
+}&#215;
 ?>
 </table>
 

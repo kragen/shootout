@@ -13,6 +13,7 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
+
 $ShortName = $Row[LANG_NAME];
 $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 ?>
@@ -37,7 +38,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
 
-<tr><th colspan="5"><?=$LangName;?> <strong>uses</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133;</th></tr>
+<tr><th colspan="5"><?=$LangName;?> <strong>uses</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; <?=$LangName2;?></th></tr>
 
 <tr>
 <th>Programs</th>

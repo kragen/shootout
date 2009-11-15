@@ -80,7 +80,7 @@ if ($TestName=='startup'){ $NString = ''; }
 </tr>
 
 <tr>
-<th>&nbsp;&nbsp;/&nbsp;&nbsp;</th>
+<th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
 <th>Program &amp; Logs</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
