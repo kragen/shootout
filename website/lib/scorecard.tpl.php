@@ -27,9 +27,9 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 <colgroup span="2" class="num"></colgroup>
 <tr>
 <th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
-<th>language</th>
-<th>GM</th>
-<th>missing</th>
+<th>language&nbsp;implementation</th>
+<th><a href="#about">GM</a></th>
+<th><a href="#about">missing</a></th>
 </tr>
 
 <?

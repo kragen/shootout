@@ -53,14 +53,16 @@ if ($valid){
 
 // Y AXIS LEGEND
 
+$y = 2.5*MARGIN;
+
 $label = 'Time';
-ImageStringUp($chart->im, 2, 5, $h-$y-8, $label, $chart->colour[BLACK]);
-ImageFilledRectangle($chart->im, 11, $h-$y-4, 11+$barw, $h-$y+6, $chart->colour[GRAY]);
-$y = $y + strlen($label)*CHAR_WIDTH_2 + 18;
+ImageStringUp($chart->im, 3, 5, $h-$y-8, $label, $chart->colour[BLACK]);
+ImageFilledRectangle($chart->im, 11, $h-$y-4, 11+$barw, $h-$y+24, $chart->colour[GRAY]);
+$y = $y + strlen($label)*CHAR_WIDTH_2 + 3*MARGIN;
 
 $label = 'Memory';
-ImageStringUp($chart->im, 2, 5, $h-$y-8, $label, $chart->colour[BLACK]);
-ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+6, $chart->colour[BLACK]);
+ImageStringUp($chart->im, 3, 5, $h-$y-8, $label, $chart->colour[BLACK]);
+ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+24, $chart->colour[BLACK]);
 
 
 $chart->title('Normalized Time-used Memory-used for each Program');
