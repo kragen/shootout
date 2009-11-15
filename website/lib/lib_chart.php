@@ -473,8 +473,8 @@ function axis3000(){
 
 function axis3_10(){
    return array(
-      array(1,"1"), array(3,"3"), array(10,"10"), array(30,"30"),
-      array(100,"100"), array(300,"300"), array(1000,"1000")
+      array(1,""), array(3,"3×"), array(10,"10×"), array(30,"30×"),
+      array(100,"100×"), array(300,"300×"), array(1000,"1000×")
       );
 }
 

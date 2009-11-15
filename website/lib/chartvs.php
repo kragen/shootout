@@ -74,7 +74,7 @@ if ($valid){
    $chart->barwidth = 0;
    $x = $chart->bars(BLACK,$kb);
 
-   $label = 'Memory Use';
+   $label = 'Memory';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
    ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
@@ -88,7 +88,7 @@ if ($valid){
    $chart->barwidth = 5;
    $x = $chart->bars(DARK_GRAY,$gz,FALSE);
 
-   $label = 'Source Size';
+   $label = 'Source Code';
    $z = $x1 + ($x-$x1-strlen($label)*CHAR_WIDTH_2)/2.0;
    ImageString($chart->im, 2, $z, $chart->h - 30, $label, $chart->colour[BLACK]);
    ImageString($chart->im, 2, $z, 23, $label, $chart->colour[BLACK]);
@@ -105,21 +105,10 @@ if ($valid){
    $labelsize = strlen($label)*CHAR_WIDTH_3;
    if ($size < $labelsize){ $label = $names0[1]; $labelsize = strlen($label)*CHAR_WIDTH_3; }
    $inset = $size/2.0 + $labelsize/2.0;
-   ImageStringUp($chart->im, 3, $chart->w - 2*MARGIN, $chart->yo + $inset, $label, $chart->colour[BLACK]);
 
-   $label = ($names0[0] == $names1[0]) ? $LangName[1] : $names1[0];
+   $label = $label.' uses';
    $labelsize = strlen($label)*CHAR_WIDTH_3;
-   if ($size < $labelsize){ $label = $names1[1]; $labelsize = strlen($label)*CHAR_WIDTH_3; }
-   $inset = $size/2.0 + $labelsize/2.0;
-   ImageStringUp($chart->im, 3, $chart->w - 2*MARGIN, MARGIN + $inset, $label, $chart->colour[DARK_GRAY]);
-
-   $label = 'better';
-   $labelsize = strlen($label)*CHAR_WIDTH_3;
-   $inset = $size/2.0 + $labelsize/2.0;
-   ImageStringUp($chart->im, 3, $chart->w - MARGIN, $chart->yo + $inset, $label, $chart->colour[BLACK]);
-   $label = 'better';
-   ImageStringUp($chart->im, 3, $chart->w - MARGIN, MARGIN + $inset, $label, $chart->colour[DARK_GRAY]);
-
+   ImageStringUp($chart->im, 3, 0, $chart->yo - MARGIN/2.0 + $labelsize/2.0, $label, $chart->colour[BLACK]);
 
    //
 

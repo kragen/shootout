@@ -68,7 +68,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
                   }                                        
                                 
                }
-            } else {             
+            } else {
                $comparable[$dj[DATA_LANG]] = $Data[$j];              
             }
          }
@@ -77,21 +77,19 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          }
                     
          $isComparable = isset($comparable[$L1]) && isset($comparable[$L2])
-            && ($comparable[$L1][DATA_TESTVALUE]==$comparable[$L2][DATA_TESTVALUE]);  
+            && ($comparable[$L1][DATA_TESTVALUE]==$comparable[$L2][DATA_TESTVALUE]);
 
          $j++;
-         $hasMore = $j<sizeof($Data);                                    
+         $hasMore = $j<sizeof($Data);
          $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);
          
       } while ($isSameTest);
 
 
-                                    
-             
       if (isset($comparable[$L1])){
          $r1 = $comparable[$L1];
-      
-         if (isset($comparable[$L2])){           
+
+         if (isset($comparable[$L2])){
             $r2 = $comparable[$L2];            
             $full = 1;
             $mem = 1;
@@ -122,6 +120,8 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
             while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }
          }
          else {
+            
+            $measurements[$r1[DATA_TEST]] = array($r1);
 
             $NData[$r1[DATA_TEST]] = array(
                  $r1[DATA_TEST]
@@ -137,15 +137,15 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
                , 0
                );
          
-            while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }          
+            while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }
          }                                             
-      }          
+      }
       elseif (!$isSameTest && isset($errorRowL1)){
          $e = $errorRowL1;    
-         $exclude = ExcludeData($e,$Langs,$Excl);        
+         $exclude = ExcludeData($e,$Langs,$Excl);         
 
          $NData[$e[DATA_TEST]] = array(
-              $e[DATA_TEST]         
+              $e[DATA_TEST]
             , $e[DATA_LANG]
             , $e[DATA_ID]
             , $e[DATA_TESTVALUE]
@@ -156,8 +156,8 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
             , $exclude
             , 0
             , 0
-            );          
-              
+            );
+
       }
 
       unset($comparable[$L1]);
@@ -167,7 +167,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
    }
    uasort($NData,'CompareTimeRatio');
    
-   
+
    // sort by x times faster than ratio
    $SortedTests = array();
    $reorder = array();
@@ -270,8 +270,8 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
 
 function PF($d){
    $rounded = round($d);
-   if ($rounded>15){ return '<td class="num1">'.number_format($rounded).'</td>'; }
-   elseif ($rounded>1){ return '<td class="num2">'.number_format($rounded).'</td>'; }
+   if ($rounded>15){ return '<td class="num1">'.number_format($rounded).'&#215;</td>'; }
+   elseif ($rounded>1){ return '<td class="num2">'.number_format($rounded).'&#215;</td>'; }
    elseif ($d>1.01){ return '<td class="num2">&#177;</td>'; }
    else {
       if ($d>0){
@@ -281,7 +281,7 @@ function PF($d){
          elseif ($rounded>1){ return '<td><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
          else { return '<td class="num2">&#177;</td>'; }
       } else { 
-         return '<td>&nbsp;</td>'; 
+         return '<td>&nbsp;</td>';
       }
    }
 }

@@ -37,13 +37,13 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
 
-<tr><th colspan="5"><sup>1</sup>/<sub>2</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>4</sub>&nbsp;&#133;&nbsp;<?=$LangName;?> is better</th></tr>
+<tr><th colspan="5"><?=$LangName;?> <strong>uses</strong> <sup>1</sup>/<sub>2</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>4</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133;</th></tr>
 
 <tr>
 <th>Programs</th>
 <th><a href="help.php#measurecpu">Time</a></th>
-<th><a href="help.php#memory">Memory&nbsp;Use</a></th>
-<th><a href="help.php#gzbytes">Source&nbsp;Size</a></th>
+<th><a href="help.php#memory">Memory</a></th>
+<th><a href="help.php#gzbytes">Source&nbsp;Code</a></th>
 <th><a href="help.php#nmeans">Reduced&nbsp;N</a></th>
 </tr>
 
@@ -74,17 +74,17 @@ foreach($sTests as $row){
 }
 
 foreach($noprogram as $tr){
-   printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+   printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td colspan="2"><span class="message">%s</span></td><td></td><td></td></tr>',
       $tr[3],$tr[4]);
 }
 
 foreach($nocomparison as $tr){
-      printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td>&nbsp;</td><td>&nbsp;</td><td colspan="2"><span class="message">%s</span></td></tr>',
-      $tr[3],$tr[4]);
+      printf('<tr><td><a href="#%s">&darr;&nbsp;%s</a></td><td colspan="2"><span class="message">%s</span></td><td></td><td></td></tr>',
+      $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($failed as $tr){
-      printf('<tr><td>&nbsp;&nbsp;<a  href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      printf('<tr><td>&nbsp;&nbsp;<a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td colspan="2"><span class="message">%s</span></td><td></td><td></td></tr>',
       $tr[0],$tr[1],$tr[2],$tr[3],$tr[4]);
 }
 
@@ -135,7 +135,7 @@ foreach($sTests as $Row){
    $Name = $Row[TEST_NAME];
 
    if (isset($measurements[$Link])){
-      
+
       if ($data[$Link][N_N]==0){
          $n = '';
       } else {
@@ -147,11 +147,10 @@ foreach($sTests as $Row){
       foreach($measurements[$Link] as $Row){
          $k = $Row[DATA_LANG];
          $Name = $Langs[$k][LANG_FULL];
-         $HtmlName = $Langs[$k][LANG_FULL].IdName($Row[DATA_ID]);
          $id = $Row[DATA_ID];
 
          printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-               $Link,$k,$id,$HtmlName); 
+               $Link,$k,$id,$Langs[$k][LANG_HTML]);
 
          $fc = number_format($Row[DATA_FULLCPU],2);
          if ($Row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$Row[DATA_MEMORY]); }
@@ -160,6 +159,9 @@ foreach($sTests as $Row){
          $ld = CpuLoad($Row);
 
          printf('<td>%s</td><td>%s</td><td>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $kb, $gz, $e, $ld);
+      }
+      if (sizeof($measurements[$Link])<2){
+         printf('<td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>');
       }
 
    }
