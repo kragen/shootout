@@ -34,7 +34,7 @@ if ($valid){
 
 $chart->yAxisLegend('program sys + usr',224);
 $chart->xAxisLegend('benchmark');
-$chart->title('Program Run Time - Median and Quartiles - by Benchmark');
+$chart->title('Time-used   Median and Quartiles by Benchmark');
 $chart->frame();
 $chart->complete();
 

@@ -35,14 +35,14 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 
 <tr>
 <th>&nbsp;</th>
-<th>language</th>
-<th>&nbsp;|-</th>
-<th>&nbsp;|---</th>
-<th>&nbsp;25%</th>
-<th>median</th>
-<th>&nbsp;75%</th>
-<th>&nbsp;---|</th>
-<th>&nbsp;-|</th>
+<th>language implementation</th>
+<th><a href="#about">&nbsp;|-</a></th>
+<th><a href="#about">&nbsp;|---</a></th>
+<th><a href="#about">&nbsp;25%</a></th>
+<th><a href="#about">median</a></th>
+<th><a href="#about">&nbsp;75%</a></th>
+<th><a href="#about">&nbsp;---|</a></th>
+<th><a href="#about">&nbsp;-|</a></th>
 </tr>
 
 

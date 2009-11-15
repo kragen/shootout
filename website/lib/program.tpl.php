@@ -16,7 +16,7 @@ $P = $SelectedLang.'-'.$Id;
 <th><a href="help.php#nmeans">&nbsp;N&nbsp;</a></th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Size B</a></th>
+<th><a href="help.php#gzbytes">Code B</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>

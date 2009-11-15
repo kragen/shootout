@@ -17,7 +17,7 @@
 
 <dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
 <dd>
-<p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;time</a>, <a href="#memory">&darr;&nbsp;memory use</a> and <a href="#gzbytes">&darr;&nbsp;source code size</a>.</p>
+<p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;Time-used</a>, <a href="#memory">&darr;&nbsp;Memory-used</a> and <a href="#gzbytes">&darr;&nbsp;Code-used</a>.</p>
 </dd>
 
 <dt><a href="#oneone" name="oneone"><strong>How do I compare 2 language implementations?</strong></a></dt>
@@ -230,7 +230,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </ol>
 </dd>
 
-<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>time?</strong></a></dt>
+<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>Time-used?</strong></a></dt>
 <dd>
 <p>Each program was run as a child-process of a Python script using Popen.</p>
 <ul>
@@ -240,11 +240,11 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <p><strong>Time measurements include program startup time.</strong></p>
 </dd>
 
-<dt><a href="#memory" name="memory">How did you measure <strong>memory use?</strong></a></dt>
+<dt><a href="#memory" name="memory">How did you measure <strong>Memory-used?</strong></a></dt>
 <dd><p>By sampling GTop proc_mem for the program and it's child processes every 0.2 seconds. Obviously those measurements are unlikely to be reliable for programs that run for less than 0.2 seconds.</p>
 </dd>
 
-<dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>GZip Bytes?</strong></a></dt>
+<dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>Code-used?</strong></a></dt>
 <dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression.</p>
 </dd>
 
