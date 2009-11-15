@@ -23,16 +23,16 @@ $Page->set('PageBody', $Body->fetch('help.tpl.php'));
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
-   $bannerUrl = 'index.php'; $faqUrl = 'help.php';
+   $faqUrl = 'help.php';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
-   $bannerUrl = 'http://shootout.alioth.debian.org/index.php';
-   $faqUrl = 'http://shootout.alioth.debian.org/u32q/help.php#means';
+   $faqUrl = '../u64/help.php#means';
 }
 
 $Page->set('Robots', $metaRobots);
-$Page->set('BannerUrl', $bannerUrl);
+$Page->set('BannerUrl', '../index.php');
+$Page->set('FaqUrl', $faqUrl);
 $Page->set('MetaKeywords', '');
 $Page->set('PageId', 'faq');
 
