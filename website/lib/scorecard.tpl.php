@@ -48,7 +48,7 @@ foreach($score as $k => $v){
    printf('<td>%0.2f</td><td>%s</td>',
       $v[SCORE_MEAN], PBlank($v[SCORE_TESTS])); echo "\n";
    echo "</tr>\n";
-}&#215;
+}
 ?>
 </table>
 

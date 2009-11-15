@@ -38,7 +38,7 @@ $ShortName2 = $Langs[$SelectedLang2][LANG_NAME];
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
 
-<tr><th colspan="5"><?=$LangName;?> <strong>uses</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; <?=$LangName2;?></th></tr>
+<tr><th colspan="5">&nbsp;<?=$LangName;?> <strong>used</strong> &#133;<sup>1</sup>/<sub>4</sub>&nbsp;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; 4&#215;&#133; <?=$LangName2;?>&nbsp;</th></tr>
 
 <tr>
 <th>Programs</th>
@@ -63,7 +63,7 @@ foreach($sTests as $row){
       $v = $data[$Link];
       if ($v[N_LINES] < 0){
          if ($v[N_LINES] == NO_COMPARISON){
-            $nocomparison[] = array($Link,$SelectedLang,$v[N_ID],$Name,'No '.$Langs[$v[N_LANG]][LANG_NAME]);
+            $nocomparison[] = array($Link,$SelectedLang,$v[N_ID],$Name,'No '.$Langs[$v[N_LANG]][LANG_FULL]);
 
          } else {
             $failed[] = array($Link,$SelectedLang,$v[N_ID],$Name,StatusMessage($v[N_LINES]) );
@@ -75,17 +75,17 @@ foreach($sTests as $row){
 }
 
 foreach($noprogram as $tr){
-   printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td colspan="2"><span class="message">%s</span></td><td></td><td></td></tr>',
+   printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td colspan="3"><span class="message">%s</span></td><td></td></tr>',
       $tr[3],$tr[4]);
 }
 
 foreach($nocomparison as $tr){
-      printf('<tr><td><a href="#%s">&darr;&nbsp;%s</a></td><td colspan="2"><span class="message">%s</span></td><td></td><td></td></tr>',
+      printf('<tr><td><a href="#%s">&darr;&nbsp;%s</a></td><td colspan="3"><span class="message">%s</span></td><td></td></tr>',
       $tr[0],$tr[3],$tr[4]);
 }
 
 foreach($failed as $tr){
-      printf('<tr><td>&nbsp;&nbsp;<a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td colspan="2"><span class="message">%s</span></td><td></td><td></td></tr>',
+      printf('<tr><td>&nbsp;&nbsp;<a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td colspan="3"><span class="message">%s</span></td><td></td></tr>',
       $tr[0],$tr[1],$tr[2],$tr[3],$tr[4]);
 }
 

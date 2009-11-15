@@ -106,7 +106,7 @@ if ($valid){
    if ($size < $labelsize){ $label = $names0[1]; $labelsize = strlen($label)*CHAR_WIDTH_3; }
    $inset = $size/2.0 + $labelsize/2.0;
 
-   $label = $label.' uses';
+   $label = $label.' used';
    $labelsize = strlen($label)*CHAR_WIDTH_3;
    ImageStringUp($chart->im, 3, 0, $chart->yo - MARGIN/2.0 + $labelsize/2.0, $label, $chart->colour[BLACK]);
 
