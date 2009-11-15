@@ -84,8 +84,8 @@ foreach($nocomparison as $tr){
 }
 
 foreach($failed as $tr){
-      printf('<tr><td class="smaller">&nbsp;&nbsp;%s</td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
-      $tr[3],$tr[4]);
+      printf('<tr><td>&nbsp;&nbsp;<a  href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td><td><span class="message">%s</span></td><td></td><td></td><td></td></tr>',
+      $tr[0],$tr[1],$tr[2],$tr[3],$tr[4]);
 }
 
 foreach($sTests as $Row){
