@@ -15,7 +15,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <h3><a href="#benchmarks" name="benchmarks">&nbsp;Benchmarks &amp; Language Implementations</a></h3>
 
-<p>It can be fun to watch the Benchmarks Game and fun to <a href="shapes.php">interpret scatter plot shapes</a> or <a href="benchmark.php?test=all&amp;lang=all">create your own ranking</a> but like other games <a href="help.php#play">it's more fun to <strong>play!</strong></a></p>
+<p>It can be fun to watch the Benchmarks Game and fun to <a href="shapes.php">interpret scatter plot shapes</a> or <a href="fun.php">create your own ranking</a> but like other games <a href="help.php#play">it's more fun to <strong>play!</strong></a></p>
 
 
 <p class="img"><img src="charttests.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark.' '.SITE_NAME);?>&amp;<?='ww='.Encode($labels);?>"
