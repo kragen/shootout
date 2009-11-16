@@ -11,7 +11,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
    unset($Data);
 ?>
 
-<p>You choose the language implementations for robust <a href="#about">Box and Whiskers statistics</a> of <em>program time</em> measurements on the default benchmarks!</p>
+<p>Do the Time-used boxes overlap or is there separation between them? Is the median line in the middle or skewed to more/less Time-used?</p>
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
@@ -19,8 +19,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
    width="480" height="300"
  /></p>
 
-<form method="get" action="benchmark.php">
-<p><input type="hidden" name="test" value="all" /><input type="hidden" name="lang" value="all" /></p>
+<form method="get" action="summary.php">
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
@@ -60,7 +59,7 @@ foreach($score as $k => $v){
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
       printf('<td><a href="%s.php">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$HtmlName); 
    } else {
-      printf('<td><a href="benchmark.php?test=all&amp;lang=%s">%s</a></td>', $k,$HtmlName); 
+      printf('<td><a href="benchmark.php?test=all&amp;lang=%s">%s</a></td>', $k,$HtmlName);
    }
    echo "\n";
 
@@ -78,7 +77,7 @@ foreach($score as $k => $v){
 </td>
 </tr>
 </table>
-<p><input type="hidden" name="box" value="1" /></p>
+<?   // <p><input type="hidden" name="box" value="1" /></p>   ?>
 </form>
 
 
