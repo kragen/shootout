@@ -14,7 +14,7 @@ $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 
-$ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> &#133;<sup>1</sup>/<sub>3</sub>&nbsp;<sup>1</sup>/<sub>2</sub>&nbsp;&#133; 2&#215; 3&#215; &#133; '.$LangName2.'&nbsp;';
+$ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> <sup>1</sup>/<sub>3</sub>?&nbsp;<sup>1</sup>/<sub>2</sub>?&nbsp; 2&#215;? 3&#215;?'.$LangName2.'&nbsp;';
 ?>
 
 <p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <strong>What fraction? How many times more?</strong></p>
