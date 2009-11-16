@@ -21,7 +21,7 @@ $ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> what fracti
 
 <h2><a href="#title" name="title"><?=$ExplanatoryHeader;?></a></h2>
 
-<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <strong>What fraction? How many times more?</strong> Can you figure out why?</p>
+<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do the <?=$LangName;?> programs use several times more? <strong>What fraction? How many times more?</strong> Do they trade-off memory for time? Are they small simple programs or large optimized programs?</p>
 
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
