@@ -1,8 +1,5 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
-<p>Does the <?=$LangName;?> program work for each input value? Why not? Read <a href="#log">&darr;&nbsp;the log</a>.</p>
-<p>Are you able to understand the program? How could it be improved?</p>
-
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 $TestName = $Tests[$SelectedTest][TEST_NAME];
@@ -11,6 +8,8 @@ $P = $SelectedLang.'-'.$Id;
 ?>
 
 <h2><a href="#prog" name="prog">&nbsp;<?=$Title;?></a></h2>
+
+<p>Does the <?=$LangName;?> program work for each input value? Why not? Read <a href="#log">&darr;&nbsp;the log</a>.<br/>Are you able to understand the program? How could it be improved?</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>

@@ -17,11 +17,12 @@ $Family = $Row[LANG_FAMILY];
 $ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> what fraction? used how many times more?&nbsp;';
 ?>
 
-<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <strong>What fraction? How many times more?</strong> Can you figure out why?</p>
-
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
 <h2><a href="#title" name="title"><?=$ExplanatoryHeader;?></a></h2>
+
+<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <strong>What fraction? How many times more?</strong> Can you figure out why?</p>
+
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
    alt=""
