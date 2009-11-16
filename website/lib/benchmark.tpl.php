@@ -45,7 +45,8 @@ if ($TestName=='startup'){ $NString = ''; }
 
 
 <h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?> <?=TESTS_PHRASE;?></a></h2>
-<p><?=$TestTag;?>&nbsp;<a href="help.php#nmeans"><?=$NString;?></a>. <br />Read <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong>the benchmark rules</strong></a>.</p>
+<p><a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<?=$TestTag;?>,&nbsp;<a href="help.php#nmeans"><?=$NString;?></a>.</p>
+<p>Which program used most Memory? Which used least Code? Sort the data. Find several programs written for the same language implementation - how different are Time-used, Memory-used, Code-used? Which programs make use of all the processor cores?</p>
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
 
@@ -263,5 +264,5 @@ if (sizeof($No_Program_Langs)>0){
 ?>
 </table>
 
-<h3><a href="#about" name="about">&nbsp;the <?=$TestName;?> <?=TESTS_PHRASE;?> rules</a></h3>
+<h3><a href="#about" name="about">&nbsp;<?=$TestTag;?></a></h3>
 <?=$About;?>
