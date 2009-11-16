@@ -54,8 +54,7 @@ foreach($score as $k => $v){
 
 </td><td>
 
-<form class="score" method="get" action="benchmark.php">
-<p><input type="hidden" name="test" value="all" /><input type="hidden" name="lang" value="all" /></p>
+<form class="score" method="get" action="fun.php">
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
