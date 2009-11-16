@@ -15,7 +15,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <h3><a href="#benchmarks" name="benchmarks">&nbsp;Benchmarks &amp; Language Implementations</a></h3>
 
-<p>It can be fun to watch the Benchmarks Game and fun to <a href="shapes.php">interpret scatter plot shapes</a> or <a href="fun.php">create your own ranking</a> but like other games <a href="help.php#play">it's more fun to <strong>play!</strong></a></p>
+<p>What was the median Time-used on the binary-trees benchmark? What was the most Time-used on the mandelbrot benchmark? Do most of the measurements take more or less than 10 seconds? Is that <a href="help.php#measurecpu">CPU secs</a> or <a href="help.php#measurecpu">Elapsed secs</a>&nbsp;?</p>
 
 
 <p class="img"><img src="charttests.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark.' '.SITE_NAME);?>&amp;<?='ww='.Encode($labels);?>"
