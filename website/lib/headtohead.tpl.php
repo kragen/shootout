@@ -110,7 +110,7 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> look at the measurements and <strong>then look at the programs</strong>.<br/></p>
+<p><span class="num2">&#177;</span> look at the measurements and then <strong>look at the programs</strong>.<br/></p>
 
 <h2><a href="#measurements" name="measurements">&nbsp;measurements</a></h2>
 
