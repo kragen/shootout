@@ -9,7 +9,7 @@ $P = $SelectedLang.'-'.$Id;
 
 <h2><a href="#prog" name="prog">&nbsp;<?=$Title;?></a></h2>
 
-<p>Does the <?=$LangName;?> program work for each input value? Why not? Read&nbsp;<a href="#log">&darr;&nbsp;the&nbsp;log</a>. Are you able to understand the program? How could it be improved?</p>
+<p>Does this <?=$LangName;?> program work for all the input values? Why not? Read&nbsp;<a href="#log">&darr;&nbsp;the&nbsp;log</a>. Is this program small and simple, or very optimized? How could this program be improved?</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>
