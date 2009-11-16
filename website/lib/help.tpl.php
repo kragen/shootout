@@ -652,6 +652,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <dl>
 <dd><p>You'll come across a range of uses for the programs and measurements:</p>
 <ul>
+<li>example of profiling - <a href="http://www.haskell.org/~simonmar/bib/threadscope-09_abstract.html">Parallel Performance Tuning for Haskell</a></li>
 <li>../test/bench - <a href="http://golang.org/doc/install.html">The Go Programming Language</a></li>
 <li>regression tests - <a href="http://jira.codehaus.org/browse/JRUBY-4157">"After fixing this, fannkuch runs correctly"</a></li>
 <li>performance regressions - <a href="http://www.scala-lang.org/node/360">"a quick and dirty benchmarking suite"</a></li>
