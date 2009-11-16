@@ -12,7 +12,8 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
    unset($Data);
 ?>
 
-<p>What <strong>fun!</strong> Can you manipulate the multipliers and weights to make your favourite language <a href="#about">the best</a> programming language in the Benchmarks Game?</p>
+<p>What <strong>fun!</strong> Can you manipulate the multipliers and weights to put your favourite language at the top of the ranking? Increase the Code multiplier! Ignore Memory! Zero out those benchmarks that push your favourite language to the bottom!</p>
+<p>The fastest programming language? What are the trade-offs?</p>
 
 
 <p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>"
