@@ -232,10 +232,10 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 
 <dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>Time-used?</strong></a></dt>
 <dd>
-<p>Each program was run as a child-process of a Python script using Popen.</p>
+<p>Each program was run as a child-process of a Python script using <a href="http://docs.python.org/library/subprocess.html#popen-objects">Popen</a>.</p>
 <ul>
-<li><strong>CPU&nbsp;secs</strong>: The script child-process usr+sys rusage time was taken using os.wait3<br /></li>
-<li><strong>Elapsed&nbsp;secs</strong>: The time was taken before forking the child-process and after the child-process exits, using time.time()</li>
+<li><strong>CPU&nbsp;secs</strong>: The script child-process usr+sys rusage time was taken using <a href="http://docs.python.org/library/os.html?highlight=os.wait3#os.wait3">os.wait3</a><br /></li>
+<li><strong>Elapsed&nbsp;secs</strong>: The time was taken before forking the child-process and after the child-process exits, using <a href="http://docs.python.org/library/time.html?highlight=time.time#time.time">time.time()</a></li>
 </ul>
 <p><strong>Time measurements include program startup time.</strong></p>
 </dd>
