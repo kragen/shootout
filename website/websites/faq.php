@@ -3,11 +3,11 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="robots" content="noindex,noarchive" />
-<title>The Computer Language Shootout Benchmarks</title>
-<meta http-equiv="refresh" content="3;url=http://shootout.alioth.debian.org/u32q/faq.php">
+<title>The Computer Language Benchmarks Game</title>
+<meta http-equiv="refresh" content="3;url=http://shootout.alioth.debian.org/u64/help.php">
 </head>
 <body>
 <p>Redirecting in 3 seconds</p> 
-<h3><a href="http://shootout.alioth.debian.org/u32q/faq.php">http://shootout.alioth.debian.org/u32q/faq.php</a></h3>
+<h3><a href="http://shootout.alioth.debian.org/u64/help.php">http://shootout.alioth.debian.org/u64/help.php</a></h3>
 </body>
 </html>
