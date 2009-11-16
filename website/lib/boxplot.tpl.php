@@ -4,14 +4,14 @@
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 ?>
 
-<h2><a href="#boxplot" name="boxplot">&nbsp;<?=$Title;?></a>&nbsp;<em>Le mieux est l'ennemi du bien.</em></h2>
+<h2><a href="#box" name="box">&nbsp;<?=$Title;?></a>&nbsp;<em>Le mieux est l'ennemi du bien.</em></h2>
 
 <?
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);
 ?>
 
-<p>Do the Time-used boxes overlap or is there separation between them? Is the median line in the middle or skewed to more/less Time-used?</p>
+<p>Do the Time-used boxes overlap or is there separation between them? Is the median line in the middle of the box or skewed to more/less Time-used? Is the box short or tall? <a href="#about">What does that show?</a></p>
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
