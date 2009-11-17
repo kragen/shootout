@@ -22,7 +22,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <body id="<?=SITE_NAME;?>">
 
 <table class="banner"><tr>
-<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;(<a href="<?=$FaqUrl;?>"><?=$FaqTitle;?></a>)</h1></td>
+<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?=$FaqUrl;?>"><?=$FaqTitle;?></a></h1></td>
 </tr></table>
 
 <div id="nav">
