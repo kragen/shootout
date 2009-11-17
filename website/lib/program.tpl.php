@@ -16,9 +16,9 @@ $P = $SelectedLang.'-'.$Id;
 <tr>
 <th><a href="help.php#nmeans">&nbsp;N&nbsp;</a></th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
 <th><a href="help.php#gzbytes">Code B</a></th>
-<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?  
@@ -40,8 +40,8 @@ foreach($Data as $d){
             $load = CpuLoad($d);
          }
 
-         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">%s</td><td class="r">&nbsp;&nbsp;%s</td></tr>',
-            $n,$fullcpu,$kb,$d[DATA_GZ],$elapsed,$load); echo "\n";
+         printf('<tr class="a"><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%s</td><td class="r">%d</td><td class="r">&nbsp;&nbsp;%s</td></tr>',
+            $n,$fullcpu,$elapsed,$kb,$d[DATA_GZ],$load); echo "\n";
       }
 }
 ?>

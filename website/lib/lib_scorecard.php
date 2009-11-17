@@ -134,9 +134,14 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
    same language implementation - but it's completely negligible.
    */
 
+   $weightedTestsCount = 0;
+   foreach($W as $k => $v){
+      if ($v>0){ $weightedTestsCount++; }
+   }
+
    $score = array();
    foreach($data as $k => $test){
-      if (sizeof($test)/sizeof($Tests) > 0.5){
+      if ($weightedTestsCount>0 && (sizeof($test)/$weightedTestsCount > 0.5)){
 
          $s = 0.0; $ws = 0.0; $include = 0.0;
          foreach($test as $t => $testvalues){
@@ -173,7 +178,7 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
             }
          }
          if ($ws == 0.0){ $ws = 1.0; }
-         if ($include > 0){ $score[$k] = array(1.0,exp($s/$ws),sizeof($Tests)-sizeof($test)); }
+         if ($include > 0){ $score[$k] = array(1.0,exp($s/$ws),$weightedTestsCount-sizeof($test)); }
 
       }
    }

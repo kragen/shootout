@@ -1,6 +1,6 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
-<? 
+<?
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 ?>
 
@@ -9,7 +9,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 
 <?
    list($score,$ratio) = $Data;
-   unset($Data);
+   unset($Data);          
 ?>
 
 <p>What <strong>fun!</strong> Can you manipulate the multipliers and weights to put your favourite language at the top of the ranking? Increase the Code multiplier! Ignore Memory! Zero out those benchmarks that push your favourite language to the bottom!</p>

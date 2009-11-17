@@ -67,6 +67,10 @@ if ($TestName=='startup'){ $NString = ''; }
    title="Sort by CPU Time secs">sort</a>
 </th>
 <th>
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=elapsed"
+   title="Sort by Elapsed Time secs">sort</a>
+</th>
+<th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb"
    title="Sort by Memory Use KB">sort</a>
 </th>
@@ -74,19 +78,15 @@ if ($TestName=='startup'){ $NString = ''; }
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz"
    title="Sort by Compressed Source Code size Bytes">sort</a>
 </th>
-<th>
-   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=elapsed"
-   title="Sort by Elapsed Time secs">sort</a>
-</th>
 </tr>
 
 <tr>
 <th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
 <th>Program &amp; Logs</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
 <th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
-<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
@@ -155,8 +155,8 @@ foreach($Accepted as $d){
    printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
       PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-   printf('<td%s>%s</td><td%s>%s</td><td%s>%d</td><td%s>%s</td><td class="smaller">&nbsp;&nbsp;%s</td>',
-         $CPU, $fc, $MEM, $kb, $GZBYTES, $gz, $ELAPSED, $e, $ld); echo "\n";
+   printf('<td%s>%s</td><td%s>%s</td><td%s>%s</td><td%s>%d</td><td class="smaller">&nbsp;&nbsp;%s</td>',
+         $CPU, $fc, $ELAPSED, $e, $MEM, $kb, $GZBYTES, $gz, $ld); echo "\n";
 
    echo "</tr>\n";
 }
@@ -168,7 +168,7 @@ uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
    foreach($Rejected as $d){
       if ($d[DATA_LANG]==$k){
-         printf('<tr>'); echo "\n";             
+         printf('<tr>'); echo "\n";
          $Name = $v[LANG_FULL];
          $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
 
@@ -185,7 +185,7 @@ foreach($Langs as $k => $v){
             $ratio,$SelectedTest,$k,$id,$HtmlName); echo "\n";
 
          $message = StatusMessage($d[DATA_STATUS]);
-         printf('<td>%s</td><td></td><td>%d</td><td>%s</td><td></td>', $message, $gz, $e);
+         printf('<td>%s</td><td>%s</td><td></td><td>%s</td><td></td>', $message, $e, $gz);
 
          echo "</tr>\n";
          unset($No_Program_Langs[$k]);
@@ -228,12 +228,12 @@ if (sizeof($Special)>0){
          printf('<td>&nbsp;</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
             $SelectedTest,$k,$id,$HtmlName); echo "\n";
 
-         printf('<td>%s</td><td>&nbsp;</td><td>%d</td>', StatusMessage($status), $gz);
+         printf('<td>%s</td><td>&nbsp;</td><td>&nbsp;</td><td>%d</td>', StatusMessage($status), $gz);
       }
       else {
          printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
             PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
-         printf('<td>%0.2f</td><td>%s</td><td>%d</td><td>%0.2f</td><td></td>', $fullcpu, $kb, $gz, $e ); echo "\n";
+         printf('<td>%0.2f</td><td>%0.2f</td><td>%s</td><td>%d</td><td></td>', $fullcpu, $e, $kb, $gz ); echo "\n";
       }
       echo "</tr>\n";
    }
@@ -247,11 +247,11 @@ if (sizeof($No_Program_Langs)>0){
    echo '<tr><th colspan="7"><a href="#missing" name="missing">missing programs</a></th></tr>', "\n";
       
    foreach($Langs as $k => $v){
-      $no_program = isset($No_Program_Langs[$k]);        
+      $no_program = isset($No_Program_Langs[$k]);
       if ($no_program){  
          printf('<tr>'); echo "\n";             
          $Name = $v[LANG_FULL];
-         $HtmlName = $v[LANG_HTML];            
+         $HtmlName = $v[LANG_HTML];
 
          printf('<td></td><td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
             $SelectedTest,$k,$HtmlName); echo "\n";
