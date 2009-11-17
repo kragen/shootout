@@ -1,0 +1,517 @@
+<span class="hl slc">--</span>
+<span class="hl slc">--  The Computer Language Benchmarks Game</span>
+<span class="hl slc">--  http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">--  Contributed by Pascal Obry on 2005/03/19</span>
+<span class="hl slc">--  Modified by Bill Findlay  on 2005/04/04</span>
+<span class="hl slc">--  Modified by Jonathan Parker and Georg Bauhaus</span>
+
+
+<span class="hl kwa">with</span> Choice_Of_Line_Feed<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Text_Input<span class="hl sym">;</span> <span class="hl kwa">use</span> Text_Input<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Streamed_Line_IO<span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> Revcomp <span class="hl kwa">is</span>
+
+   Multitasking_Version_Desired <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Boolean</span> <span class="hl sym">:=</span> True<span class="hl sym">;</span>
+
+   End_Of_Line <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Choice_Of_Line_Feed.Separator<span class="hl sym">;</span>
+
+   Complement <span class="hl sym">:</span> <span class="hl kwa">constant array</span> <span class="hl sym">(</span><span class="hl kwb">Character</span><span class="hl sym">)</span> <span class="hl kwa">of</span> <span class="hl kwb">Character</span> <span class="hl sym">:=</span>
+     <span class="hl sym">('</span>A<span class="hl sym">' =&gt; '</span>T<span class="hl sym">', '</span>C<span class="hl sym">' =&gt; '</span>G<span class="hl sym">', '</span>G<span class="hl sym">' =&gt; '</span>C<span class="hl sym">', '</span>T<span class="hl sym">' =&gt; '</span>A<span class="hl sym">', '</span>U<span class="hl sym">' =&gt; '</span>A<span class="hl sym">',</span>
+      <span class="hl sym">'</span>M<span class="hl sym">' =&gt; '</span>K<span class="hl sym">', '</span>R<span class="hl sym">' =&gt; '</span>Y<span class="hl sym">', '</span>W<span class="hl sym">' =&gt; '</span>W<span class="hl sym">', '</span>S<span class="hl sym">' =&gt; '</span>S<span class="hl sym">', '</span>Y<span class="hl sym">' =&gt; '</span>R<span class="hl sym">',</span>
+      <span class="hl sym">'</span>K<span class="hl sym">' =&gt; '</span>M<span class="hl sym">', '</span>V<span class="hl sym">' =&gt; '</span>B<span class="hl sym">', '</span>H<span class="hl sym">' =&gt; '</span>D<span class="hl sym">', '</span>D<span class="hl sym">' =&gt; '</span>H<span class="hl sym">', '</span>B<span class="hl sym">' =&gt; '</span>V<span class="hl sym">',</span>
+      <span class="hl sym">'</span>N<span class="hl sym">' =&gt; '</span>N<span class="hl sym">',</span>
+      <span class="hl sym">'</span>a<span class="hl sym">' =&gt; '</span>T<span class="hl sym">', '</span>c<span class="hl sym">' =&gt; '</span>G<span class="hl sym">', '</span>g<span class="hl sym">' =&gt; '</span>C<span class="hl sym">', '</span>t<span class="hl sym">' =&gt; '</span>A<span class="hl sym">', '</span>u<span class="hl sym">' =&gt; '</span>A<span class="hl sym">',</span>
+      <span class="hl sym">'</span>m<span class="hl sym">' =&gt; '</span>K<span class="hl sym">', '</span>r<span class="hl sym">' =&gt; '</span>Y<span class="hl sym">', '</span>w<span class="hl sym">' =&gt; '</span>W<span class="hl sym">', '</span>s<span class="hl sym">' =&gt; '</span>S<span class="hl sym">', '</span>y<span class="hl sym">' =&gt; '</span>R<span class="hl sym">',</span>
+      <span class="hl sym">'</span>k<span class="hl sym">' =&gt; '</span>M<span class="hl sym">', '</span>v<span class="hl sym">' =&gt; '</span>B<span class="hl sym">', '</span>h<span class="hl sym">' =&gt; '</span>D<span class="hl sym">', '</span>d<span class="hl sym">' =&gt; '</span>H<span class="hl sym">', '</span>b<span class="hl sym">' =&gt; '</span>V<span class="hl sym">',</span>
+      <span class="hl sym">'</span>n<span class="hl sym">' =&gt; '</span>N<span class="hl sym">',</span>
+      <span class="hl kwa">others</span> <span class="hl sym">=&gt; '</span>?<span class="hl sym">');</span>
+
+   Max_Line_Length <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">60</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Reverse_Fasta
+     <span class="hl sym">(</span>Fasta_Line   <span class="hl sym">:</span> <span class="hl kwa">in</span>     String_Access<span class="hl sym">;</span>
+      Fasta_Start  <span class="hl sym">:</span> <span class="hl kwa">in</span>     <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Fasta_Finish <span class="hl sym">:</span> <span class="hl kwa">in</span>     <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Bundle       <span class="hl sym">:</span> <span class="hl kwa">in out</span> <span class="hl kwb">String</span><span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      L <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Bundle<span class="hl sym">'</span>First<span class="hl sym">;</span> <span class="hl slc">-- Leftmost char</span>
+      R <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Fasta_Finish<span class="hl sym">;</span> <span class="hl slc">-- Rightmost char</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">loop</span>
+         <span class="hl kwa">exit when</span> R <span class="hl sym">&lt;</span> Fasta_Start<span class="hl sym">;</span>
+         Bundle<span class="hl sym">(</span>L<span class="hl sym">) :=</span> Complement<span class="hl sym">(</span>Fasta_Line<span class="hl sym">(</span>R<span class="hl sym">));</span>
+         R <span class="hl sym">:=</span> R <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         L <span class="hl sym">:=</span> L <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Reverse_Fasta<span class="hl sym">;</span>
+
+   <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Reverse_Fasta<span class="hl sym">);</span>
+
+   <span class="hl kwa">procedure</span> Put_Reversed_Fasta
+     <span class="hl sym">(</span>Fasta_Section     <span class="hl sym">:</span> <span class="hl kwa">in</span> String_Access<span class="hl sym">;</span>
+      Fasta_Data_Length <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      Lines_per_Bundle <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">4000</span><span class="hl sym">;</span>
+      Line_Feed_Len    <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> Choice_Of_Line_Feed.Separator<span class="hl sym">'</span>Length<span class="hl sym">;</span>
+      Line_Bundle <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">(</span><span class="hl num">1</span> .. Lines_per_Bundle<span class="hl sym">*(</span>Max_Line_Length <span class="hl sym">+</span> Line_Feed_Len<span class="hl sym">));</span>
+      L        <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Fasta_Data_Length<span class="hl sym">;</span>
+      B_start  <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Line_Bundle<span class="hl sym">'</span>First<span class="hl sym">;</span>
+      B_finish <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> B_start <span class="hl sym">+</span> Max_Line_Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+
+      <span class="hl slc">--  Append line feed string (End_Of_Line) to 4000 Line_Bundle lines:</span>
+
+      <span class="hl kwa">while</span> L <span class="hl sym">&gt;=</span> Lines_per_Bundle <span class="hl sym">*</span> Max_Line_Length <span class="hl kwa">loop</span>
+         B_start <span class="hl sym">:=</span> Line_Bundle<span class="hl sym">'</span>First<span class="hl sym">;</span>
+         <span class="hl kwa">for</span> j <span class="hl kwa">in</span> <span class="hl num">1</span> .. Lines_per_Bundle <span class="hl kwa">loop</span>
+            B_finish <span class="hl sym">:=</span> B_start <span class="hl sym">+</span> Max_Line_Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            Reverse_Fasta
+              <span class="hl sym">(</span>Fasta_Line   <span class="hl sym">=&gt;</span> Fasta_Section<span class="hl sym">,</span>
+               Fasta_Start  <span class="hl sym">=&gt;</span> L <span class="hl sym">-</span> Max_Line_Length <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span>
+               Fasta_Finish <span class="hl sym">=&gt;</span> L<span class="hl sym">,</span>
+               Bundle       <span class="hl sym">=&gt;</span> Line_Bundle<span class="hl sym">(</span>B_start .. B_finish<span class="hl sym">));</span>
+            Line_Bundle<span class="hl sym">(</span>B_finish <span class="hl sym">+</span> <span class="hl num">1</span> .. B_finish <span class="hl sym">+</span> Line_Feed_Len<span class="hl sym">) :=</span> End_Of_Line<span class="hl sym">;</span>
+            B_start <span class="hl sym">:=</span> B_finish <span class="hl sym">+</span> Line_Feed_Len <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            L       <span class="hl sym">:=</span> L <span class="hl sym">-</span> Max_Line_Length<span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+         Streamed_Line_IO.Put <span class="hl sym">(</span>Line_Bundle<span class="hl sym">);</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">while</span> L <span class="hl sym">&gt;=</span> Max_Line_Length <span class="hl kwa">loop</span>
+         Reverse_Fasta
+           <span class="hl sym">(</span>Fasta_Line   <span class="hl sym">=&gt;</span> Fasta_Section<span class="hl sym">,</span>
+            Fasta_Start  <span class="hl sym">=&gt;</span> L <span class="hl sym">-</span> Max_Line_Length <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span>
+            Fasta_Finish <span class="hl sym">=&gt;</span> L<span class="hl sym">,</span>
+            Bundle       <span class="hl sym">=&gt;</span> Line_Bundle<span class="hl sym">(</span><span class="hl num">1</span> .. Max_Line_Length<span class="hl sym">));</span>
+         Streamed_Line_IO.Put_Line <span class="hl sym">(</span>Line_Bundle <span class="hl sym">(</span><span class="hl num">1</span>..Max_Line_Length<span class="hl sym">));</span>
+         L <span class="hl sym">:=</span> L <span class="hl sym">-</span> Max_Line_Length<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">if</span> L <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+         Reverse_Fasta
+           <span class="hl sym">(</span>Fasta_Line   <span class="hl sym">=&gt;</span> Fasta_Section<span class="hl sym">,</span>
+            Fasta_Start  <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">,</span>
+            Fasta_Finish <span class="hl sym">=&gt;</span> L<span class="hl sym">,</span>
+            Bundle       <span class="hl sym">=&gt;</span> Line_Bundle<span class="hl sym">(</span><span class="hl num">1</span> .. L<span class="hl sym">));</span>
+         Streamed_Line_IO.Put_Line <span class="hl sym">(</span>Line_Bundle <span class="hl sym">(</span><span class="hl num">1</span> .. L<span class="hl sym">));</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end</span> Put_Reversed_Fasta<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Read_Reverse_Write_a_Section_p
+     <span class="hl sym">(</span>Job_Is_Complete <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      Section_o_Fasta <span class="hl sym">:</span> String_Access <span class="hl sym">:=</span> <span class="hl kwa">new</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">20</span> <span class="hl sym">*</span> <span class="hl num">128</span><span class="hl sym">);</span>
+      Header          <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">(</span><span class="hl num">1</span>..Max_Line_Length<span class="hl sym">) := (</span><span class="hl kwa">others</span> <span class="hl sym">=&gt; '</span>?<span class="hl sym">');</span>
+      Section_Length  <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Header_Length   <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      Job_Is_Complete <span class="hl sym">:=</span> False<span class="hl sym">;</span>
+
+      Text_Input.Read_Section
+        <span class="hl sym">(</span>Data_Buffer     <span class="hl sym">=&gt;</span> Section_o_Fasta<span class="hl sym">,</span>
+         Data_Length     <span class="hl sym">=&gt;</span> Section_Length<span class="hl sym">,</span>
+         Next_Header     <span class="hl sym">=&gt;</span> Header<span class="hl sym">,</span>
+         Header_Length   <span class="hl sym">=&gt;</span> Header_Length<span class="hl sym">,</span>
+         Max_Line_Length <span class="hl sym">=&gt;</span> <span class="hl num">100</span><span class="hl sym">);</span> <span class="hl slc">-- use anything &gt;= actual limit of 60.</span>
+
+      <span class="hl kwa">if</span> Header_Length <span class="hl sym">&lt;</span> <span class="hl num">1</span> <span class="hl kwa">then</span>   <span class="hl slc">-- null Header marks final section.</span>
+         Job_Is_Complete <span class="hl sym">:=</span> True<span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">if</span> Section_Length <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+         Put_Reversed_Fasta <span class="hl sym">(</span>Section_o_Fasta<span class="hl sym">,</span> Section_Length<span class="hl sym">);</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      <span class="hl kwa">if</span> Header_Length <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+         Streamed_Line_IO.Put_Line <span class="hl sym">(</span>Header<span class="hl sym">(</span><span class="hl num">1</span>..Header_Length<span class="hl sym">));</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      Text_Input.Free <span class="hl sym">(</span>Section_o_Fasta<span class="hl sym">);</span>
+
+   <span class="hl kwa">end</span> Read_Reverse_Write_a_Section_p<span class="hl sym">;</span>
+
+   <span class="hl kwa">task type</span> Read_Reverse_Write_a_Section <span class="hl kwa">is</span>
+      <span class="hl kwa">entry</span> Start_Reading<span class="hl sym">;</span>
+      <span class="hl kwa">entry</span> Done_Reading_A_Section <span class="hl sym">(</span>Reached_End_Of_File <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">);</span>
+      <span class="hl kwa">entry</span> Done_Writing<span class="hl sym">;</span>
+      <span class="hl kwa">pragma</span> Storage_Size <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">20</span><span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Read_Reverse_Write_a_Section<span class="hl sym">;</span>
+
+   <span class="hl kwa">task body</span> Read_Reverse_Write_a_Section <span class="hl kwa">is</span>
+      Section_o_Fasta <span class="hl sym">:</span> String_Access <span class="hl sym">:=</span> <span class="hl kwa">new</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">20</span> <span class="hl sym">*</span> <span class="hl num">128</span><span class="hl sym">);</span>
+      Header          <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">(</span><span class="hl num">1</span>..Max_Line_Length<span class="hl sym">) := (</span><span class="hl kwa">others</span> <span class="hl sym">=&gt; '</span>?<span class="hl sym">');</span>
+      Section_Length  <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Header_Length   <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Hit_End_Of_File <span class="hl sym">:</span> <span class="hl kwb">Boolean</span> <span class="hl sym">:=</span> False<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">loop</span>
+      <span class="hl kwa">select</span>
+         <span class="hl kwa">accept</span> Start_Reading<span class="hl sym">;</span>
+
+         Text_Input.Read_Section
+           <span class="hl sym">(</span>Data_Buffer     <span class="hl sym">=&gt;</span> Section_o_Fasta<span class="hl sym">,</span>
+            Data_Length     <span class="hl sym">=&gt;</span> Section_Length<span class="hl sym">,</span>
+            Next_Header     <span class="hl sym">=&gt;</span> Header<span class="hl sym">,</span>
+            Header_Length   <span class="hl sym">=&gt;</span> Header_Length<span class="hl sym">,</span>
+            Max_Line_Length <span class="hl sym">=&gt;</span> <span class="hl num">100</span><span class="hl sym">);</span> <span class="hl slc">-- use anything &gt;= actual limit of 60.</span>
+
+         <span class="hl kwa">if</span> Header_Length <span class="hl sym">&lt;</span> <span class="hl num">1</span> <span class="hl kwa">then</span>   <span class="hl slc">-- null Header marks final section.</span>
+            Hit_End_Of_File <span class="hl sym">:=</span> True<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">accept</span> Done_Reading_A_Section <span class="hl sym">(</span>Reached_End_Of_File <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">)</span> <span class="hl kwa">do</span>
+            Reached_End_Of_File <span class="hl sym">:=</span> Hit_End_Of_File<span class="hl sym">;</span>
+         <span class="hl kwa">end</span> Done_Reading_A_Section<span class="hl sym">;</span>
+
+         <span class="hl kwa">if</span> Section_Length <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            Put_Reversed_Fasta <span class="hl sym">(</span>Section_o_Fasta<span class="hl sym">,</span> Section_Length<span class="hl sym">);</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         <span class="hl kwa">if</span> Header_Length <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            Streamed_Line_IO.Put_Line <span class="hl sym">(</span>Header<span class="hl sym">(</span><span class="hl num">1</span>..Header_Length<span class="hl sym">));</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">accept</span> Done_Writing<span class="hl sym">;</span>
+      <span class="hl kwa">or</span>
+         <span class="hl kwa">terminate</span><span class="hl sym">;</span>
+      <span class="hl kwa">end select</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      Text_Input.Free <span class="hl sym">(</span>Section_o_Fasta<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Read_Reverse_Write_a_Section<span class="hl sym">;</span>
+
+   Job_Is_Complete <span class="hl sym">:</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+
+<span class="hl kwa">begin</span>
+
+   <span class="hl kwa">if</span> Multitasking_Version_Desired <span class="hl kwa">then</span> <span class="hl slc">-- do computation concurrently with IO:</span>
+
+      <span class="hl kwa">declare</span>
+         <span class="hl kwa">type</span> Task_Id_Type <span class="hl kwa">is mod</span> <span class="hl num">2</span><span class="hl sym">;</span>
+         Do_a_Section <span class="hl sym">:</span> <span class="hl kwa">array</span> <span class="hl sym">(</span>Task_Id_Type<span class="hl sym">)</span> <span class="hl kwa">of</span> Read_Reverse_Write_a_Section<span class="hl sym">;</span>
+         i <span class="hl sym">:</span> Task_Id_Type <span class="hl sym">:=</span> Task_Id_Type<span class="hl sym">'</span>First<span class="hl sym">;</span>
+         Reached_End_Of_File <span class="hl sym">:</span> <span class="hl kwb">Boolean</span> <span class="hl sym">:=</span> False<span class="hl sym">;</span>
+      <span class="hl kwa">begin</span>
+
+         Read_Reverse_Write_a_Section_p <span class="hl sym">(</span>Job_Is_Complete<span class="hl sym">);</span>
+         <span class="hl slc">--  All this does is handle the 1st line of the file (the Header).</span>
+
+           Do_a_Section<span class="hl sym">(</span>i<span class="hl sym">)</span>.Start_Reading<span class="hl sym">;</span>
+           <span class="hl slc">--  Start 1st task reading 1st section.</span>
+
+          <span class="hl kwa">loop</span>
+
+             Do_a_Section<span class="hl sym">(</span>i<span class="hl sym">)</span>.Done_Reading_A_Section <span class="hl sym">(</span>Reached_End_Of_File<span class="hl sym">);</span>
+             <span class="hl slc">-- Block here until task i says its done reading the section.</span>
+
+             <span class="hl slc">-- Task i is done reading so tell task i+1 to start reading:</span>
+             <span class="hl kwa">if not</span> Reached_End_Of_File <span class="hl kwa">then</span>
+                Do_a_Section<span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>.Start_Reading<span class="hl sym">;</span>
+             <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+             Do_a_Section<span class="hl sym">(</span>i<span class="hl sym">)</span>.Done_Writing<span class="hl sym">;</span>
+             <span class="hl slc">-- Block here until task i says its done writing. (If task i+1 were</span>
+             <span class="hl slc">-- to write while task i writes, then their output is interleaved.)</span>
+
+             <span class="hl kwa">exit when</span> Reached_End_Of_File<span class="hl sym">;</span>
+             i <span class="hl sym">:=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+          <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+       <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">else</span> <span class="hl slc">-- Use a Procedure rather than Tasks:</span>
+
+      <span class="hl kwa">loop</span>
+         Read_Reverse_Write_a_Section_p <span class="hl sym">(</span>Job_Is_Complete<span class="hl sym">);</span>
+         <span class="hl kwa">exit when</span> Job_Is_Complete<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end if</span><span class="hl sym">;</span> <span class="hl slc">-- Multitasking_Version_Desired</span>
+
+   Streamed_Line_IO.Close<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Revcomp<span class="hl sym">;</span>
+
+
+<span class="hl kwa">package</span> Choice_Of_Line_Feed <span class="hl kwa">is</span>
+   Separator <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span><span class="hl sym">(</span><span class="hl num">1</span>.<span class="hl num">.1</span><span class="hl sym">) :=</span> <span class="hl kwb">String</span><span class="hl sym">'(</span><span class="hl num">1</span> <span class="hl sym">=&gt;</span> ASCII.LF<span class="hl sym">);</span> <span class="hl slc">--Unix</span>
+ <span class="hl slc">--Separator : constant String(1..2) := String'(ASCII.CR, ASCII.LF); --Windows</span>
+ <span class="hl slc">--Separator : constant String(1..1) := String'(1 =&gt; ASCII.CR); --MacOS</span>
+<span class="hl kwa">end</span> Choice_Of_Line_Feed<span class="hl sym">;</span>
+
+
+<span class="hl slc">-- Create package Streamed_Line_IO at the library level:</span>
+<span class="hl kwa">with</span> Line_IO<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Choice_Of_Line_Feed<span class="hl sym">;</span>
+<span class="hl kwa">package</span> Streamed_Line_IO <span class="hl kwa">is new</span> Line_IO
+  <span class="hl sym">(</span>Separator_Sequence <span class="hl sym">=&gt;</span> Choice_Of_Line_Feed.Separator<span class="hl sym">);</span>
+
+
+<span class="hl kwa">with</span> Streamed_Line_IO<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada.Unchecked_Deallocation<span class="hl sym">;</span>
+
+<span class="hl kwa">package</span> Text_Input <span class="hl kwa">is</span>
+
+   <span class="hl slc">-- Use Stream_IO to Read data from Standard_Input</span>
+
+   <span class="hl kwa">type</span> String_Access <span class="hl kwa">is access</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Read_Section
+     <span class="hl sym">(</span>Data_Buffer     <span class="hl sym">:</span> <span class="hl kwa">in out</span> String_Access<span class="hl sym">;</span>
+      Data_Length     <span class="hl sym">:</span>    <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Next_Header     <span class="hl sym">:</span>    <span class="hl kwa">out</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+      Header_Length   <span class="hl sym">:</span>    <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Max_Line_Length <span class="hl sym">:</span> <span class="hl kwa">in</span>     <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">1024</span><span class="hl sym">);</span>
+
+   Section_Marker <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Character</span> <span class="hl sym">:= '&gt;';</span>
+
+   <span class="hl slc">-- Read_Section reads until EOF or Section_Marker is found at start</span>
+   <span class="hl slc">-- of a line. Can accept any line of length &lt;= Max_Line_Length.</span>
+
+   <span class="hl kwa">procedure</span> Free <span class="hl kwa">is new</span> Ada.Unchecked_Deallocation <span class="hl sym">(</span><span class="hl kwb">String</span><span class="hl sym">,</span> String_Access<span class="hl sym">);</span>
+
+<span class="hl kwa">end</span> Text_Input<span class="hl sym">;</span>
+
+<span class="hl kwa">with</span> Ada.IO_Exceptions<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> Text_Input <span class="hl kwa">is</span>
+
+   <span class="hl kwa">procedure</span> Read_Section
+     <span class="hl sym">(</span>Data_Buffer     <span class="hl sym">:</span> <span class="hl kwa">in out</span> String_Access<span class="hl sym">;</span>
+      Data_Length     <span class="hl sym">:</span>    <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Next_Header     <span class="hl sym">:</span>    <span class="hl kwa">out</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+      Header_Length   <span class="hl sym">:</span>    <span class="hl kwa">out</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      Max_Line_Length <span class="hl sym">:</span> <span class="hl kwa">in</span>     <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">1024</span><span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      Ptr <span class="hl sym">:</span> String_Access<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      Data_Length   <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Header_Length <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+      Fill_Data_Buffer<span class="hl sym">:</span>
+      <span class="hl kwa">loop</span>
+         <span class="hl kwa">if</span> Data_Length <span class="hl sym">+</span> Max_Line_Length <span class="hl sym">&gt;</span> Data_Buffer<span class="hl sym">'</span>Length <span class="hl kwa">then</span>
+            Ptr <span class="hl sym">:=</span> Data_Buffer<span class="hl sym">;</span>
+            Data_Buffer <span class="hl sym">:=</span> <span class="hl kwa">new</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. <span class="hl num">2</span> <span class="hl sym">*</span> Data_Buffer<span class="hl sym">'</span>Length<span class="hl sym">);</span>
+            Data_Buffer <span class="hl sym">(</span><span class="hl num">1</span> .. Data_Length<span class="hl sym">) :=</span> Ptr <span class="hl sym">(</span><span class="hl num">1</span> .. Data_Length<span class="hl sym">);</span>
+            Free <span class="hl sym">(</span>Ptr<span class="hl sym">);</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+         Get_Next_Line<span class="hl sym">:</span>
+         <span class="hl kwa">declare</span>
+            Line <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Streamed_Line_IO.Get_Line<span class="hl sym">;</span>
+            Present_Line_Length <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> Line<span class="hl sym">'</span>Length<span class="hl sym">;</span>
+            Strt <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+         <span class="hl kwa">begin</span>
+
+            <span class="hl kwa">if</span> Present_Line_Length <span class="hl sym">&lt;</span> <span class="hl num">1</span> <span class="hl kwa">then</span>
+               Header_Length <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+               <span class="hl kwa">exit</span> Fill_Data_Buffer<span class="hl sym">;</span>
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+            <span class="hl kwa">if</span> Present_Line_Length <span class="hl sym">&gt;</span> Max_Line_Length <span class="hl kwa">then</span>
+               <span class="hl kwa">raise</span> Program_Error<span class="hl sym">;</span>
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+            <span class="hl kwa">if</span> Line<span class="hl sym">(</span>Line<span class="hl sym">'</span>First<span class="hl sym">) =</span> Section_Marker <span class="hl kwa">then</span>
+               Strt <span class="hl sym">:=</span> Next_Header<span class="hl sym">'</span>First<span class="hl sym">;</span>
+               Next_Header<span class="hl sym">(</span>Strt .. Strt <span class="hl sym">+</span> Present_Line_Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) :=</span> Line<span class="hl sym">;</span>
+               Header_Length <span class="hl sym">:=</span> Present_Line_Length<span class="hl sym">;</span>
+               <span class="hl kwa">exit</span> Fill_Data_Buffer<span class="hl sym">;</span>
+            <span class="hl kwa">else</span>
+               Data_Buffer<span class="hl sym">(</span>Data_Length<span class="hl sym">+</span><span class="hl num">1</span> .. Data_Length<span class="hl sym">+</span>Present_Line_Length<span class="hl sym">):=</span>Line<span class="hl sym">;</span>
+               Data_Length <span class="hl sym">:=</span> Data_Length <span class="hl sym">+</span> Present_Line_Length<span class="hl sym">;</span>
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">end</span> Get_Next_Line<span class="hl sym">;</span>
+
+      <span class="hl kwa">end loop</span> Fill_Data_Buffer<span class="hl sym">;</span>
+
+   <span class="hl kwa">exception</span>
+      <span class="hl kwa">when</span> Ada.IO_Exceptions.End_Error <span class="hl sym">=&gt;</span>
+        <span class="hl kwa">return</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Read_Section<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Text_Input<span class="hl sym">;</span>
+
+<span class="hl slc">---------------------------</span>
+<span class="hl slc">--  Stream I/O of lines --</span>
+<span class="hl slc">---------------------------</span>
+
+<span class="hl kwa">generic</span>
+   Separator_Sequence <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">String</span><span class="hl sym">;</span>  <span class="hl slc">--  ends a line</span>
+<span class="hl kwa">package</span> Line_IO <span class="hl kwa">is</span>
+
+   <span class="hl kwa">pragma</span> Elaborate_Body<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Put_Line <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">procedure</span> Put <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> Get_Line <span class="hl kwa">return</span> <span class="hl kwb">String</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Close<span class="hl sym">;</span>  <span class="hl slc">--  close output</span>
+
+<span class="hl kwa">end</span> Line_IO<span class="hl sym">;</span>
+
+
+<span class="hl kwa">with</span> Ada.Streams.Stream_IO<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Unchecked_Conversion<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> Line_IO <span class="hl kwa">is</span>
+
+   <span class="hl kwa">use</span> Ada.Streams<span class="hl sym">;</span>
+
+   Stdin  <span class="hl sym">:</span> Stream_IO.File_Type<span class="hl sym">;</span>
+   Stdout <span class="hl sym">:</span> Stream_IO.File_Type<span class="hl sym">;</span>
+
+   <span class="hl slc">-- ----------------</span>
+   <span class="hl slc">-- writing</span>
+   <span class="hl slc">-- ----------------</span>
+   <span class="hl slc">--  Put_Line calls Stream_IO.Write twice, once for the string, then for the</span>
+   <span class="hl slc">--  line separator (terminator).  The second call needs the separator as a</span>
+   <span class="hl slc">--  Stream_Element_Array.</span>
+
+   Separator_Bytes <span class="hl sym">:</span> Stream_Element_Array<span class="hl sym">(</span><span class="hl num">1</span> .. Separator_Sequence<span class="hl sym">'</span>Length<span class="hl sym">);</span>
+   <span class="hl kwa">for</span> Separator_Bytes<span class="hl sym">'</span>Address <span class="hl kwa">use</span> Separator_Sequence<span class="hl sym">'</span>Address<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Import <span class="hl sym">(</span>Ada<span class="hl sym">,</span> Separator_Bytes<span class="hl sym">);</span>
+
+   <span class="hl kwa">procedure</span> Put_Line <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+      <span class="hl kwa">subtype</span> Index <span class="hl kwa">is</span> Stream_Element_Offset <span class="hl kwa">range</span> <span class="hl num">1</span> .. Item<span class="hl sym">'</span>Length<span class="hl sym">;</span>
+      <span class="hl kwa">subtype</span> XBytes <span class="hl kwa">is</span> Stream_Element_Array <span class="hl sym">(</span>Index<span class="hl sym">);</span>
+      Item_Bytes<span class="hl sym">:</span> XBytes<span class="hl sym">;</span>
+      <span class="hl kwa">pragma</span> Import <span class="hl sym">(</span>Ada<span class="hl sym">,</span> Item_Bytes<span class="hl sym">);</span>
+      <span class="hl kwa">for</span> Item_Bytes<span class="hl sym">'</span>Address <span class="hl kwa">use</span> Item<span class="hl sym">'</span>Address<span class="hl sym">;</span>
+      <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>Item<span class="hl sym">'</span>Size <span class="hl sym">=</span> Item_Bytes<span class="hl sym">'</span>Size<span class="hl sym">);</span>
+   <span class="hl kwa">begin</span>
+      Stream_IO.Write <span class="hl sym">(</span>Stdout<span class="hl sym">,</span> Item_Bytes<span class="hl sym">);</span>
+      Stream_IO.Write <span class="hl sym">(</span>Stdout<span class="hl sym">,</span> Separator_Bytes<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Put_Line<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Put <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+      <span class="hl kwa">subtype</span> Index <span class="hl kwa">is</span> Stream_Element_Offset <span class="hl kwa">range</span> <span class="hl num">1</span> .. Item<span class="hl sym">'</span>Length<span class="hl sym">;</span>
+      <span class="hl kwa">subtype</span> XBytes <span class="hl kwa">is</span> Stream_Element_Array <span class="hl sym">(</span>Index<span class="hl sym">);</span>
+      Item_Bytes<span class="hl sym">:</span> XBytes<span class="hl sym">;</span>
+      <span class="hl kwa">pragma</span> Import <span class="hl sym">(</span>Ada<span class="hl sym">,</span> Item_Bytes<span class="hl sym">);</span>
+      <span class="hl kwa">for</span> Item_Bytes<span class="hl sym">'</span>Address <span class="hl kwa">use</span> Item<span class="hl sym">'</span>Address<span class="hl sym">;</span>
+      <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>Item<span class="hl sym">'</span>Size <span class="hl sym">=</span> Item_Bytes<span class="hl sym">'</span>Size<span class="hl sym">);</span>
+   <span class="hl kwa">begin</span>
+      Stream_IO.Write <span class="hl sym">(</span>Stdout<span class="hl sym">,</span> Item_Bytes<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Put<span class="hl sym">;</span>
+
+   <span class="hl slc">-- Types etc., status variables, and the buffer.</span>
+
+   BUFSIZ<span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">8</span>_192 <span class="hl sym">*</span> <span class="hl num">8</span><span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Assert<span class="hl sym">(</span><span class="hl kwb">Character</span><span class="hl sym">'</span>Size <span class="hl sym">=</span> Stream_Element<span class="hl sym">'</span>Size<span class="hl sym">);</span>
+
+   SL <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Natural</span>   <span class="hl sym">:=</span> Separator_Sequence<span class="hl sym">'</span>Length<span class="hl sym">;</span>
+
+   <span class="hl kwa">subtype</span> Extended_Buffer_Index <span class="hl kwa">is</span> <span class="hl kwb">Positive</span> <span class="hl kwa">range</span> <span class="hl num">1</span> .. BUFSIZ <span class="hl sym">+</span> SL<span class="hl sym">;</span>
+   <span class="hl kwa">subtype</span> Buffer_Index <span class="hl kwa">is</span> Extended_Buffer_Index
+     <span class="hl kwa">range</span> Extended_Buffer_Index<span class="hl sym">'</span>First .. Extended_Buffer_Index<span class="hl sym">'</span>Last <span class="hl sym">-</span> SL<span class="hl sym">;</span>
+   <span class="hl kwa">subtype</span> Extended_Bytes_Index <span class="hl kwa">is</span> Stream_Element_Offset
+     <span class="hl kwa">range</span> <span class="hl num">1</span> .. Stream_Element_Offset<span class="hl sym">(</span>Extended_Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">);</span>
+   <span class="hl kwa">subtype</span> Bytes_Index <span class="hl kwa">is</span> Extended_Bytes_Index
+     <span class="hl kwa">range</span> Extended_Bytes_Index<span class="hl sym">'</span>First
+     .. <span class="hl sym">(</span>Extended_Bytes_Index<span class="hl sym">'</span>Last <span class="hl sym">-</span> Stream_Element_Offset<span class="hl sym">(</span>SL<span class="hl sym">));</span>
+
+   <span class="hl kwa">subtype</span> Buffer_Data <span class="hl kwa">is</span> <span class="hl kwb">String</span><span class="hl sym">(</span>Extended_Buffer_Index<span class="hl sym">);</span>
+   <span class="hl kwa">subtype</span> Buffer_Bytes <span class="hl kwa">is</span> Stream_Element_Array<span class="hl sym">(</span>Extended_Bytes_Index<span class="hl sym">);</span>
+
+   Buffer <span class="hl sym">:</span> Buffer_Data<span class="hl sym">;</span>
+   Bytes  <span class="hl sym">:</span> Buffer_Bytes<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> Bytes<span class="hl sym">'</span>Address <span class="hl kwa">use</span> Buffer<span class="hl sym">'</span>Address<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Import <span class="hl sym">(</span>Ada<span class="hl sym">,</span> Bytes<span class="hl sym">);</span>
+
+   <span class="hl slc">-- start of next substring and last valid character in buffer</span>
+   Position <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Extended_Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   Last     <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   End_Of_Input <span class="hl sym">:</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">function</span> Get_Line <span class="hl kwa">return</span> <span class="hl kwb">String</span> <span class="hl kwa">is</span>
+
+      <span class="hl kwa">procedure</span> Reload <span class="hl kwa">is</span>
+         <span class="hl slc">--  fill Buffer with bytes available</span>
+         Last_Filled <span class="hl sym">:</span> Stream_Element_Offset<span class="hl sym">;</span>
+      <span class="hl kwa">begin</span>
+         <span class="hl kwa">if</span> Last <span class="hl sym">&lt;</span> Buffer_Index<span class="hl sym">'</span>Last <span class="hl kwa">then</span>
+            <span class="hl kwa">raise</span> Stream_IO.End_Error<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         Stream_IO.Read<span class="hl sym">(</span>Stdin<span class="hl sym">,</span>
+           Item <span class="hl sym">=&gt;</span> Bytes<span class="hl sym">(</span>Bytes_Index<span class="hl sym">),</span>
+           Last <span class="hl sym">=&gt;</span> Last_Filled<span class="hl sym">);</span>
+         Last <span class="hl sym">:=</span> <span class="hl kwb">Natural</span><span class="hl sym">(</span>Last_Filled<span class="hl sym">);</span>
+         Position <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         Buffer<span class="hl sym">(</span>Last <span class="hl sym">+</span> <span class="hl num">1</span> .. Last <span class="hl sym">+</span> SL<span class="hl sym">) :=</span> Separator_Sequence<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Reload<span class="hl sym">;</span>
+
+      <span class="hl kwa">function</span> Separator_Position <span class="hl kwa">return</span> <span class="hl kwb">Natural</span> <span class="hl kwa">is</span>
+         <span class="hl slc">--   index of next Separator_Sequence (may be sentinel)</span>
+         K <span class="hl sym">:</span> Extended_Buffer_Index <span class="hl sym">:=</span> Position<span class="hl sym">;</span>
+      <span class="hl kwa">begin</span>
+         <span class="hl kwa">loop</span>
+            <span class="hl kwa">if</span> Buffer<span class="hl sym">(</span>K<span class="hl sym">) =</span> Separator_Sequence<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+               <span class="hl kwa">exit</span><span class="hl sym">;</span>
+            <span class="hl kwa">elsif</span> Buffer<span class="hl sym">(</span>K<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) =</span> Separator_Sequence<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+               K <span class="hl sym">:=</span> K <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl kwa">exit</span><span class="hl sym">;</span>
+            <span class="hl kwa">else</span>
+               K <span class="hl sym">:=</span> K <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">;</span>
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+        <span class="hl kwa">return</span> K<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Separator_Position<span class="hl sym">;</span>
+
+      Next_Separator <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl kwa">range</span> <span class="hl num">0</span> .. Extended_Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>  <span class="hl slc">-- Get_Line</span>
+
+      <span class="hl kwa">if</span> End_Of_Input <span class="hl kwa">then</span>
+         <span class="hl kwa">raise</span> Stream_IO.End_Error<span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      Next_Separator <span class="hl sym">:=</span> Separator_Position<span class="hl sym">;</span>
+
+      <span class="hl kwa">if</span> Next_Separator <span class="hl sym">&gt;</span> Last <span class="hl kwa">then</span>
+         <span class="hl kwa">declare</span>
+            Result <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Buffer<span class="hl sym">(</span>Position .. Last<span class="hl sym">);</span>
+            <span class="hl kwa">subtype</span> XString <span class="hl kwa">is</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Last <span class="hl sym">-</span> Position <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+         <span class="hl kwa">begin</span>
+            <span class="hl kwa">begin</span>
+               Reload<span class="hl sym">;</span>
+               <span class="hl kwa">return</span> XString<span class="hl sym">(</span>Result<span class="hl sym">) &amp;</span> Get_Line<span class="hl sym">;</span>
+            <span class="hl kwa">exception</span>
+               <span class="hl kwa">when</span> Stream_IO.End_Error <span class="hl sym">=&gt;</span>
+                  End_Of_Input <span class="hl sym">:=</span> True<span class="hl sym">;</span>
+                  <span class="hl kwa">return</span> XString<span class="hl sym">(</span>Result<span class="hl sym">);</span>
+            <span class="hl kwa">end</span><span class="hl sym">;</span>
+         <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl kwa">else</span>
+         <span class="hl kwa">declare</span>
+            Result <span class="hl sym">:</span> <span class="hl kwb">String</span> <span class="hl kwa">renames</span> Buffer<span class="hl sym">(</span>Position .. Next_Separator <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+            <span class="hl kwa">subtype</span> XString <span class="hl kwa">is</span> <span class="hl kwb">String</span> <span class="hl sym">(</span><span class="hl num">1</span> .. Next_Separator <span class="hl sym">-</span> Position<span class="hl sym">);</span>
+         <span class="hl kwa">begin</span>
+            Position <span class="hl sym">:=</span> Next_Separator <span class="hl sym">+</span> SL<span class="hl sym">;</span>
+            <span class="hl kwa">return</span> XString <span class="hl sym">(</span>Result<span class="hl sym">);</span>
+         <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">raise</span> Program_Error<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Get_Line<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Close <span class="hl kwa">is</span>
+   <span class="hl kwa">begin</span>
+      Stream_IO.Close <span class="hl sym">(</span>Stdout<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Close<span class="hl sym">;</span>
+
+<span class="hl kwa">begin</span>
+   Stream_IO.Open <span class="hl sym">(</span>Stdout<span class="hl sym">,</span>
+      Mode <span class="hl sym">=&gt;</span> Stream_IO.Out_File<span class="hl sym">,</span>
+      Name <span class="hl sym">=&gt;</span> <span class="hl str">&quot;/dev/stdout&quot;</span><span class="hl sym">);</span>
+   Stream_IO.Open <span class="hl sym">(</span>Stdin<span class="hl sym">,</span>
+      Mode <span class="hl sym">=&gt;</span> Stream_IO.In_File<span class="hl sym">,</span>
+      Name <span class="hl sym">=&gt;</span> <span class="hl str">&quot;/dev/stdin&quot;</span><span class="hl sym">);</span>
+
+   Buffer<span class="hl sym">(</span>Buffer_Index<span class="hl sym">'</span>Last <span class="hl sym">+</span> <span class="hl num">1</span> .. Buffer<span class="hl sym">'</span>Last<span class="hl sym">) :=</span> Separator_Sequence<span class="hl sym">;</span>
+   Position <span class="hl sym">:=</span> Buffer_Index<span class="hl sym">'</span>Last <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   Last     <span class="hl sym">:=</span> Buffer_Index<span class="hl sym">'</span>Last<span class="hl sym">;</span>
+   End_Of_Input <span class="hl sym">:=</span> False<span class="hl sym">;</span>
+<span class="hl kwa">end</span> Line_IO<span class="hl sym">;</span>
