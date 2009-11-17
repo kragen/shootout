@@ -170,6 +170,6 @@ foreach($sTests as $Row){
 ?>
 </table>
 
-<h3><a href="#about" name="about">&nbsp;about <?=$LangName;?></a></h3>
+<h3><a href="#about" name="about">&nbsp;<?=$LangName;?></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
 <p></p>
 <?=$About;?>
