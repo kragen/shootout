@@ -1,0 +1,644 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by The Go Authors.</span>
+<span class="hl com"> * based on meteor-contest.c by Christian Vosteen</span>
+<span class="hl com"> * flag.Arg hack by Isaac Gouy</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">package</span> main
+
+<span class="hl kwa">import</span> <span class="hl sym">(</span>
+   <span class="hl str">&quot;flag&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;fmt&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;strconv&quot;</span><span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">var</span> max_solutions <span class="hl sym">=</span> <span class="hl num">0</span>
+
+
+<span class="hl kwa">func</span> boolInt<span class="hl sym">(</span>b bool<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   <span class="hl kwa">if</span> b <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl num">1</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* The board is a 50 cell hexagonal pattern.  For    . . . . .</span>
+<span class="hl com"> * maximum speed the board will be implemented as     . . . . .</span>
+<span class="hl com"> * 50 bits, which will fit into a 64 bit long long   . . . . .</span>
+<span class="hl com"> * int.                                               . . . . .</span>
+<span class="hl com"> *                                                   . . . . .</span>
+<span class="hl com"> * I will represent 0's as empty cells and 1's        . . . . .</span>
+<span class="hl com"> * as full cells.                                    . . . . .</span>
+<span class="hl com"> *                                                    . . . . .</span>
+<span class="hl com"> *                                                   . . . . .</span>
+<span class="hl com"> *                                                    . . . . .</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">var</span> board uint64 <span class="hl sym">=</span>  <span class="hl num">0xFFFC000000000000</span>
+
+<span class="hl com">/* The puzzle pieces must be specified by the path followed</span>
+<span class="hl com"> * from one end to the other along 12 hexagonal directions.</span>
+<span class="hl com"> *</span>
+<span class="hl com"> *   Piece 0   Piece 1   Piece 2   Piece 3   Piece 4</span>
+<span class="hl com"> *</span>
+<span class="hl com"> *  O O O O    O   O O   O O O     O O O     O   O</span>
+<span class="hl com"> *         O    O O           O       O       O O</span>
+<span class="hl com"> *                           O         O         O</span>
+<span class="hl com"> *</span>
+<span class="hl com"> *   Piece 5   Piece 6   Piece 7   Piece 8   Piece 9</span>
+<span class="hl com"> *</span>
+<span class="hl com"> *    O O O     O O       O O     O O        O O O O</span>
+<span class="hl com"> *       O O       O O       O       O O O        O</span>
+<span class="hl com"> *                  O       O O</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * I had to make it 12 directions because I wanted all of the</span>
+<span class="hl com"> * piece definitions to fit into the same size arrays.  It is</span>
+<span class="hl com"> * not possible to define piece 4 in terms of the 6 cardinal</span>
+<span class="hl com"> * directions in 4 moves.</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">const</span> <span class="hl sym">(</span>
+   E <span class="hl sym">=</span> iota<span class="hl sym">;</span>
+   ESE<span class="hl sym">;</span>
+   SE<span class="hl sym">;</span>
+   S<span class="hl sym">;</span>
+   SW<span class="hl sym">;</span>
+   WSW<span class="hl sym">;</span>
+   W<span class="hl sym">;</span>
+   WNW<span class="hl sym">;</span>
+   NW<span class="hl sym">;</span>
+   N<span class="hl sym">;</span>
+   NE<span class="hl sym">;</span>
+   ENE<span class="hl sym">;</span>
+   PIVOT<span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">var</span> piece_def <span class="hl sym">= [</span><span class="hl num">10</span><span class="hl sym">][</span><span class="hl num">4</span><span class="hl sym">]</span>int8 <span class="hl sym">{</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span> SE<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span> SE<span class="hl sym">,</span>  E<span class="hl sym">,</span> NE<span class="hl sym">,</span>  E<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span> SE<span class="hl sym">,</span> SW<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span> SW<span class="hl sym">,</span> SE<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span> SE<span class="hl sym">,</span>  E<span class="hl sym">,</span> NE<span class="hl sym">,</span>  S<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span> SW<span class="hl sym">,</span>  E<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span> SE<span class="hl sym">,</span> SE<span class="hl sym">,</span> NE<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span> SE<span class="hl sym">,</span> SE<span class="hl sym">,</span>  W<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span> SE<span class="hl sym">,</span>  E<span class="hl sym">,</span>  E<span class="hl sym">},</span>
+   <span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]</span>int8<span class="hl sym">{</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span>  E<span class="hl sym">,</span> SW<span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl com">/* To minimize the amount of work done in the recursive solve function below,</span>
+<span class="hl com"> * I'm going to allocate enough space for all legal rotations of each piece</span>
+<span class="hl com"> * at each position on the board. That's 10 pieces x 50 board positions x</span>
+<span class="hl com"> * 12 rotations.  However, not all 12 rotations will fit on every cell, so</span>
+<span class="hl com"> * I'll have to keep count of the actual number that do.</span>
+<span class="hl com"> * The pieces are going to be unsigned long long ints just like the board so</span>
+<span class="hl com"> * they can be bitwise-anded with the board to determine if they fit.</span>
+<span class="hl com"> * I'm also going to record the next possible open cell for each piece and</span>
+<span class="hl com"> * location to reduce the burden on the solve function.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">var</span> <span class="hl sym">(</span>
+   pieces<span class="hl sym">[</span><span class="hl num">10</span><span class="hl sym">][</span><span class="hl num">50</span><span class="hl sym">][</span><span class="hl num">12</span><span class="hl sym">]</span> uint64<span class="hl sym">;</span>
+   piece_counts<span class="hl sym">[</span><span class="hl num">10</span><span class="hl sym">][</span><span class="hl num">50</span><span class="hl sym">]</span> int<span class="hl sym">;</span>
+   next_cell<span class="hl sym">[</span><span class="hl num">10</span><span class="hl sym">][</span><span class="hl num">50</span><span class="hl sym">][</span><span class="hl num">12</span><span class="hl sym">]</span> int8<span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl com">/* Returns the direction rotated 60 degrees clockwise */</span>
+<span class="hl kwa">func</span> rotate<span class="hl sym">(</span>dir int8<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   <span class="hl kwa">return</span> <span class="hl sym">(</span>dir <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">) %</span> PIVOT<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Returns the direction flipped on the horizontal axis */</span>
+<span class="hl kwa">func</span> flip<span class="hl sym">(</span>dir int8<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   <span class="hl kwa">return</span> <span class="hl sym">(</span>PIVOT <span class="hl sym">-</span> dir<span class="hl sym">) %</span> PIVOT<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl com">/* Returns the new cell index from the specified cell in the</span>
+<span class="hl com"> * specified direction.  The index is only valid if the</span>
+<span class="hl com"> * starting cell and direction have been checked by the</span>
+<span class="hl com"> * out_of_bounds function first.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> shift<span class="hl sym">(</span>cell<span class="hl sym">,</span> dir int8<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   <span class="hl kwa">switch</span> dir <span class="hl sym">{</span>
+   <span class="hl kwa">case</span> E<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> ESE<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">7</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">6</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> SE<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">6</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">5</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> S<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">10</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> SW<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">5</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> WSW<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">+</span> <span class="hl num">3</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> W<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> WNW<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">6</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">7</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> NW<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">5</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">6</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> N<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">10</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> NE<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">5</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> ENE<span class="hl sym">:</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">3</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">return</span> cell <span class="hl sym">-</span> <span class="hl num">4</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> cell<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Returns wether the specified cell and direction will land outside</span>
+<span class="hl com"> * of the board.  Used to determine if a piece is at a legal board</span>
+<span class="hl com"> * location or not.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> out_of_bounds<span class="hl sym">(</span>cell<span class="hl sym">,</span> dir int8<span class="hl sym">)</span> bool <span class="hl sym">{</span>
+   <span class="hl kwa">switch</span><span class="hl sym">(</span>dir<span class="hl sym">) {</span>
+   <span class="hl kwa">case</span> E<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">%</span> <span class="hl num">5</span> <span class="hl sym">==</span> <span class="hl num">4</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> ESE<span class="hl sym">:</span>
+      i <span class="hl sym">:=</span> cell <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> i <span class="hl sym">==</span> <span class="hl num">4</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">8</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">9</span> <span class="hl sym">||</span> cell <span class="hl sym">&gt;=</span> <span class="hl num">45</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> SE<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">9</span> <span class="hl sym">||</span> cell <span class="hl sym">&gt;=</span> <span class="hl num">45</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> S<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">&gt;=</span> <span class="hl num">40</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> SW<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">||</span> cell <span class="hl sym">&gt;=</span> <span class="hl num">45</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> WSW<span class="hl sym">:</span>
+      i <span class="hl sym">:=</span> cell <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> i <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">1</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">5</span> <span class="hl sym">||</span> cell <span class="hl sym">&gt;=</span> <span class="hl num">45</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> W<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">%</span> <span class="hl num">5</span> <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> WNW<span class="hl sym">:</span>
+      i <span class="hl sym">:=</span> cell <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> i <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">1</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">5</span> <span class="hl sym">||</span> cell <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> NW<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">||</span> cell <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> N<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> NE<span class="hl sym">:</span>
+      <span class="hl kwa">return</span> cell <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">9</span> <span class="hl sym">||</span> cell <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> ENE<span class="hl sym">:</span>
+      i <span class="hl sym">:=</span> cell <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> i <span class="hl sym">==</span> <span class="hl num">4</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">8</span> <span class="hl sym">||</span> i <span class="hl sym">==</span> <span class="hl num">9</span> <span class="hl sym">||</span> cell <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> false<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Rotate a piece 60 degrees clockwise */</span>
+<span class="hl kwa">func</span> rotate_piece<span class="hl sym">(</span>piece int<span class="hl sym">) {</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span>i<span class="hl sym">] =</span> rotate<span class="hl sym">(</span>piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span>i<span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Flip a piece along the horizontal axis */</span>
+<span class="hl kwa">func</span> flip_piece<span class="hl sym">(</span>piece int<span class="hl sym">) {</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span>i<span class="hl sym">] =</span> flip<span class="hl sym">(</span>piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span>i<span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Convenience function to quickly calculate all of the indices for a piece */</span>
+<span class="hl kwa">func</span> calc_cell_indices<span class="hl sym">(</span>cell <span class="hl sym">[]</span>int8<span class="hl sym">,</span> piece int<span class="hl sym">,</span> index int8<span class="hl sym">) {</span>
+   cell<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> index<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      cell<span class="hl sym">[</span>i<span class="hl sym">] =</span> shift<span class="hl sym">(</span>cell<span class="hl sym">[</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">],</span> piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Convenience function to quickly calculate if a piece fits on the board */</span>
+<span class="hl kwa">func</span> cells_fit_on_board<span class="hl sym">(</span>cell <span class="hl sym">[]</span>int8<span class="hl sym">,</span> piece int<span class="hl sym">)</span> bool <span class="hl sym">{</span>
+   <span class="hl kwa">return</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>cell<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span><span class="hl num">0</span><span class="hl sym">]) &amp;&amp;</span>
+         <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>cell<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span><span class="hl num">1</span><span class="hl sym">]) &amp;&amp;</span>
+         <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>cell<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span><span class="hl num">2</span><span class="hl sym">]) &amp;&amp;</span>
+         <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>cell<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> piece_def<span class="hl sym">[</span>piece<span class="hl sym">][</span><span class="hl num">3</span><span class="hl sym">]);</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Returns the lowest index of the cells of a piece.</span>
+<span class="hl com"> * I use the lowest index that a piece occupies as the index for looking up</span>
+<span class="hl com"> * the piece in the solve function.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> minimum_of_cells<span class="hl sym">(</span>cell <span class="hl sym">[]</span>int8<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   minimum <span class="hl sym">:=</span> cell<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      <span class="hl kwa">if</span> cell<span class="hl sym">[</span>i<span class="hl sym">] &lt;</span> minimum <span class="hl sym">{</span>
+         minimum <span class="hl sym">=</span> cell<span class="hl sym">[</span>i<span class="hl sym">]</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> minimum<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Calculate the lowest possible open cell if the piece is placed on the board.</span>
+<span class="hl com"> * Used to later reduce the amount of time searching for open cells in the</span>
+<span class="hl com"> * solve function.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> first_empty_cell<span class="hl sym">(</span>cell <span class="hl sym">[]</span>int8<span class="hl sym">,</span> minimum int8<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   first_empty <span class="hl sym">:=</span> minimum<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> first_empty <span class="hl sym">==</span> cell<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ||</span> first_empty <span class="hl sym">==</span> cell<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ||</span>
+         first_empty <span class="hl sym">==</span> cell<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] ||</span> first_empty <span class="hl sym">==</span> cell<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">] ||</span>
+         first_empty <span class="hl sym">==</span> cell<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">] {</span>
+      first_empty<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> first_empty<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Generate the unsigned long long int that will later be anded with the</span>
+<span class="hl com"> * board to determine if it fits.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> bitmask_from_cells<span class="hl sym">(</span>cell <span class="hl sym">[]</span>int8<span class="hl sym">)</span> uint64 <span class="hl sym">{</span>
+   <span class="hl kwa">var</span> piece_mask uint64<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      piece_mask <span class="hl sym">|=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> uint<span class="hl sym">(</span>cell<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> piece_mask<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Record the piece and other important information in arrays that will</span>
+<span class="hl com"> * later be used by the solve function.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> record_piece<span class="hl sym">(</span>piece int<span class="hl sym">,</span> minimum int8<span class="hl sym">,</span> first_empty int8<span class="hl sym">,</span> piece_mask uint64<span class="hl sym">) {</span>
+   pieces<span class="hl sym">[</span>piece<span class="hl sym">][</span>minimum<span class="hl sym">][</span>piece_counts<span class="hl sym">[</span>piece<span class="hl sym">][</span>minimum<span class="hl sym">]] =</span> piece_mask<span class="hl sym">;</span>
+   next_cell<span class="hl sym">[</span>piece<span class="hl sym">][</span>minimum<span class="hl sym">][</span>piece_counts<span class="hl sym">[</span>piece<span class="hl sym">][</span>minimum<span class="hl sym">]] =</span> first_empty<span class="hl sym">;</span>
+   piece_counts<span class="hl sym">[</span>piece<span class="hl sym">][</span>minimum<span class="hl sym">]++;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl com">/* Fill the entire board going cell by cell.  If any cells are &quot;trapped&quot;</span>
+<span class="hl com"> * they will be left alone.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> fill_contiguous_space<span class="hl sym">(</span>board <span class="hl sym">[]</span>int8<span class="hl sym">,</span> index int8<span class="hl sym">) {</span>
+   <span class="hl kwa">if</span> board<span class="hl sym">[</span>index<span class="hl sym">] ==</span> <span class="hl num">1</span> <span class="hl sym">{</span>
+      <span class="hl kwa">return</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   board<span class="hl sym">[</span>index<span class="hl sym">] =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>index<span class="hl sym">,</span> E<span class="hl sym">) {</span>
+      fill_contiguous_space<span class="hl sym">(</span>board<span class="hl sym">,</span> shift<span class="hl sym">(</span>index<span class="hl sym">,</span> E<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>index<span class="hl sym">,</span> SE<span class="hl sym">) {</span>
+      fill_contiguous_space<span class="hl sym">(</span>board<span class="hl sym">,</span> shift<span class="hl sym">(</span>index<span class="hl sym">,</span> SE<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>index<span class="hl sym">,</span> SW<span class="hl sym">) {</span>
+      fill_contiguous_space<span class="hl sym">(</span>board<span class="hl sym">,</span> shift<span class="hl sym">(</span>index<span class="hl sym">,</span> SW<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>index<span class="hl sym">,</span> W<span class="hl sym">) {</span>
+      fill_contiguous_space<span class="hl sym">(</span>board<span class="hl sym">,</span> shift<span class="hl sym">(</span>index<span class="hl sym">,</span> W<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>index<span class="hl sym">,</span> NW<span class="hl sym">) {</span>
+      fill_contiguous_space<span class="hl sym">(</span>board<span class="hl sym">,</span> shift<span class="hl sym">(</span>index<span class="hl sym">,</span> NW<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> <span class="hl sym">!</span>out_of_bounds<span class="hl sym">(</span>index<span class="hl sym">,</span> NE<span class="hl sym">) {</span>
+      fill_contiguous_space<span class="hl sym">(</span>board<span class="hl sym">,</span> shift<span class="hl sym">(</span>index<span class="hl sym">,</span> NE<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl com">/* To thin the number of pieces, I calculate if any of them trap any empty</span>
+<span class="hl com"> * cells at the edges.  There are only a handful of exceptions where the</span>
+<span class="hl com"> * the board can be solved with the trapped cells.  For example:  piece 8 can</span>
+<span class="hl com"> * trap 5 cells in the corner, but piece 3 can fit in those cells, or piece 0</span>
+<span class="hl com"> * can split the board in half where both halves are viable.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> has_island<span class="hl sym">(</span>cell <span class="hl sym">[]</span>int8<span class="hl sym">,</span> piece int<span class="hl sym">)</span> bool <span class="hl sym">{</span>
+   temp_board <span class="hl sym">:=</span> make<span class="hl sym">([]</span>int8<span class="hl sym">,</span> <span class="hl num">50</span><span class="hl sym">);</span>
+   <span class="hl kwa">var</span> i int<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      temp_board<span class="hl sym">[</span>cell<span class="hl sym">[</span>i<span class="hl sym">]] =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   i <span class="hl sym">=</span> <span class="hl num">49</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> temp_board<span class="hl sym">[</span>i<span class="hl sym">] ==</span> <span class="hl num">1</span> <span class="hl sym">{</span>
+      i<span class="hl sym">--;</span>
+   <span class="hl sym">}</span>
+   fill_contiguous_space<span class="hl sym">(</span>temp_board<span class="hl sym">,</span> int8<span class="hl sym">(</span>i<span class="hl sym">));</span>
+   c <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">50</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      <span class="hl kwa">if</span> temp_board<span class="hl sym">[</span>i<span class="hl sym">] ==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         c<span class="hl sym">++;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> c <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">|| (</span>c <span class="hl sym">==</span> <span class="hl num">5</span> <span class="hl sym">&amp;&amp;</span> piece <span class="hl sym">==</span> <span class="hl num">8</span><span class="hl sym">) || (</span>c <span class="hl sym">==</span> <span class="hl num">40</span> <span class="hl sym">&amp;&amp;</span> piece <span class="hl sym">==</span> <span class="hl num">8</span><span class="hl sym">) ||</span>
+         <span class="hl sym">(</span>c <span class="hl sym">%</span> <span class="hl num">5</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> piece <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+      <span class="hl kwa">return</span> false<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> true<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl com">/* Calculate all six rotations of the specified piece at the specified index.</span>
+<span class="hl com"> * We calculate only half of piece 3's rotations.  This is because any solution</span>
+<span class="hl com"> * found has an identical solution rotated 180 degrees.  Thus we can reduce the</span>
+<span class="hl com"> * number of attempted pieces in the solve algorithm by not including the 180-</span>
+<span class="hl com"> * degree-rotated pieces of ONE of the pieces.  I chose piece 3 because it gave</span>
+<span class="hl com"> * me the best time ;)</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> calc_six_rotations<span class="hl sym">(</span>piece<span class="hl sym">,</span> index int<span class="hl sym">) {</span>
+   cell <span class="hl sym">:=</span> make<span class="hl sym">([]</span>int8<span class="hl sym">,</span> <span class="hl num">5</span><span class="hl sym">);</span>
+   <span class="hl kwa">for</span> rotation <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> rotation <span class="hl sym">&lt;</span> <span class="hl num">6</span><span class="hl sym">;</span> rotation<span class="hl sym">++ {</span>
+      <span class="hl kwa">if</span> piece <span class="hl sym">!=</span> <span class="hl num">3</span> <span class="hl sym">||</span> rotation <span class="hl sym">&lt;</span> <span class="hl num">3</span> <span class="hl sym">{</span>
+         calc_cell_indices<span class="hl sym">(</span>cell<span class="hl sym">,</span> piece<span class="hl sym">,</span> int8<span class="hl sym">(</span>index<span class="hl sym">));</span>
+         <span class="hl kwa">if</span> cells_fit_on_board<span class="hl sym">(</span>cell<span class="hl sym">,</span> piece<span class="hl sym">) &amp;&amp; !</span>has_island<span class="hl sym">(</span>cell<span class="hl sym">,</span> piece<span class="hl sym">) {</span>
+            minimum <span class="hl sym">:=</span> minimum_of_cells<span class="hl sym">(</span>cell<span class="hl sym">);</span>
+            first_empty <span class="hl sym">:=</span> first_empty_cell<span class="hl sym">(</span>cell<span class="hl sym">,</span> minimum<span class="hl sym">);</span>
+            piece_mask <span class="hl sym">:=</span> bitmask_from_cells<span class="hl sym">(</span>cell<span class="hl sym">);</span>
+            record_piece<span class="hl sym">(</span>piece<span class="hl sym">,</span> minimum<span class="hl sym">,</span> first_empty<span class="hl sym">,</span> piece_mask<span class="hl sym">);</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+      rotate_piece<span class="hl sym">(</span>piece<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Calculate every legal rotation for each piece at each board location. */</span>
+<span class="hl kwa">func</span> calc_pieces<span class="hl sym">() {</span>
+   <span class="hl kwa">for</span> piece <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> piece <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span> piece<span class="hl sym">++ {</span>
+      <span class="hl kwa">for</span> index <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> index <span class="hl sym">&lt;</span> <span class="hl num">50</span><span class="hl sym">;</span> index<span class="hl sym">++ {</span>
+         calc_six_rotations<span class="hl sym">(</span>piece<span class="hl sym">,</span> index<span class="hl sym">);</span>
+         flip_piece<span class="hl sym">(</span>piece<span class="hl sym">);</span>
+         calc_six_rotations<span class="hl sym">(</span>piece<span class="hl sym">,</span> index<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+
+<span class="hl com">/* Calculate all 32 possible states for a 5-bit row and all rows that will</span>
+<span class="hl com"> * create islands that follow any of the 32 possible rows.  These pre-</span>
+<span class="hl com"> * calculated 5-bit rows will be used to find islands in a partially solved</span>
+<span class="hl com"> * board in the solve function.</span>
+<span class="hl com"> */</span>
+ <span class="hl kwa">const</span> <span class="hl sym">(</span>
+   ROW_MASK <span class="hl sym">=</span> <span class="hl num">0x1F</span><span class="hl sym">;</span>
+   TRIPLE_MASK <span class="hl sym">=</span> <span class="hl num">0x7FFF</span><span class="hl sym">;</span>
+<span class="hl sym">)</span>
+<span class="hl kwa">var</span> <span class="hl sym">(</span>
+   all_rows <span class="hl sym">= [</span><span class="hl num">32</span><span class="hl sym">]</span>int8<span class="hl sym">{</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">,</span> <span class="hl num">4</span><span class="hl sym">,</span> <span class="hl num">5</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">,</span> <span class="hl num">7</span><span class="hl sym">,</span> <span class="hl num">8</span><span class="hl sym">,</span> <span class="hl num">9</span><span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">,</span> <span class="hl num">11</span><span class="hl sym">,</span> <span class="hl num">12</span><span class="hl sym">,</span> <span class="hl num">13</span><span class="hl sym">,</span> <span class="hl num">14</span><span class="hl sym">,</span> <span class="hl num">15</span><span class="hl sym">,</span> <span class="hl num">16</span><span class="hl sym">,</span>
+         <span class="hl num">17</span><span class="hl sym">,</span> <span class="hl num">18</span><span class="hl sym">,</span> <span class="hl num">19</span><span class="hl sym">,</span> <span class="hl num">20</span><span class="hl sym">,</span> <span class="hl num">21</span><span class="hl sym">,</span> <span class="hl num">22</span><span class="hl sym">,</span> <span class="hl num">23</span><span class="hl sym">,</span> <span class="hl num">24</span><span class="hl sym">,</span> <span class="hl num">25</span><span class="hl sym">,</span> <span class="hl num">26</span><span class="hl sym">,</span> <span class="hl num">27</span><span class="hl sym">,</span> <span class="hl num">28</span><span class="hl sym">,</span> <span class="hl num">29</span><span class="hl sym">,</span> <span class="hl num">30</span><span class="hl sym">,</span> <span class="hl num">31</span><span class="hl sym">};</span>
+   bad_even_rows <span class="hl sym">[</span><span class="hl num">32</span><span class="hl sym">][</span><span class="hl num">32</span><span class="hl sym">]</span>int8<span class="hl sym">;</span>
+   bad_odd_rows <span class="hl sym">[</span><span class="hl num">32</span><span class="hl sym">][</span><span class="hl num">32</span><span class="hl sym">]</span>int8<span class="hl sym">;</span>
+   bad_even_triple <span class="hl sym">[</span><span class="hl num">32768</span><span class="hl sym">]</span>int8<span class="hl sym">;</span>
+   bad_odd_triple <span class="hl sym">[</span><span class="hl num">32768</span><span class="hl sym">]</span>int8<span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">func</span> rows_bad<span class="hl sym">(</span>row1<span class="hl sym">,</span> row2 int8<span class="hl sym">,</span> even bool<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   <span class="hl com">/* even is referring to row1 */</span>
+   <span class="hl kwa">var</span> row2_shift int8<span class="hl sym">;</span>
+   <span class="hl com">/* Test for blockages at same index and shifted index */</span>
+   <span class="hl kwa">if</span> even <span class="hl sym">{</span>
+      row2_shift <span class="hl sym">= ((</span>row2 <span class="hl sym">&lt;&lt;</span> <span class="hl num">1</span><span class="hl sym">) &amp;</span> ROW_MASK<span class="hl sym">) |</span> <span class="hl num">0x01</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+      row2_shift <span class="hl sym">= (</span>row2 <span class="hl sym">&gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">) |</span> <span class="hl num">0x10</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   block <span class="hl sym">:= ((</span>row1 <span class="hl sym">^</span> row2<span class="hl sym">) &amp;</span> row2<span class="hl sym">) &amp; ((</span>row1 <span class="hl sym">^</span> row2_shift<span class="hl sym">) &amp;</span> row2_shift<span class="hl sym">);</span>
+   <span class="hl com">/* Test for groups of 0's */</span>
+   in_zeroes <span class="hl sym">:=</span> false<span class="hl sym">;</span>
+   group_okay <span class="hl sym">:=</span> false<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> uint8<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span> i <span class="hl sym">&lt;</span> <span class="hl num">5</span><span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      <span class="hl kwa">if</span> row1 <span class="hl sym">&amp; (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> i<span class="hl sym">) !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         <span class="hl kwa">if</span> in_zeroes <span class="hl sym">{</span>
+            <span class="hl kwa">if</span> <span class="hl sym">!</span>group_okay <span class="hl sym">{</span>
+               <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+            in_zeroes <span class="hl sym">=</span> false<span class="hl sym">;</span>
+            group_okay <span class="hl sym">=</span> false<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+         <span class="hl kwa">if</span> <span class="hl sym">!</span>in_zeroes <span class="hl sym">{</span>
+            in_zeroes <span class="hl sym">=</span> true<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>block <span class="hl sym">&amp; (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> i<span class="hl sym">)) ==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+            group_okay <span class="hl sym">=</span> true<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">if</span> in_zeroes <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> boolInt<span class="hl sym">(!</span>group_okay<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Check for cases where three rows checked sequentially cause a false</span>
+<span class="hl com"> * positive.  One scenario is when 5 cells may be surrounded where piece 5</span>
+<span class="hl com"> * or 7 can fit.  The other scenario is when piece 2 creates a hook shape.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> triple_is_okay<span class="hl sym">(</span>row1<span class="hl sym">,</span> row2<span class="hl sym">,</span> row3 int<span class="hl sym">,</span> even bool<span class="hl sym">)</span> bool <span class="hl sym">{</span>
+   <span class="hl kwa">if</span> even <span class="hl sym">{</span>
+      <span class="hl com">/* There are four cases:</span>
+<span class="hl com">       * row1: 00011  00001  11001  10101</span>
+<span class="hl com">       * row2: 01011  00101  10001  10001</span>
+<span class="hl com">       * row3: 011??  00110  ?????  ?????</span>
+<span class="hl com">       */</span>
+      <span class="hl kwa">return</span> <span class="hl sym">((</span>row1 <span class="hl sym">==</span> <span class="hl num">0x03</span><span class="hl sym">) &amp;&amp; (</span>row2 <span class="hl sym">==</span> <span class="hl num">0x0B</span><span class="hl sym">) &amp;&amp; ((</span>row3 <span class="hl sym">&amp;</span> <span class="hl num">0x1C</span><span class="hl sym">) ==</span> <span class="hl num">0x0C</span><span class="hl sym">)) ||</span>
+            <span class="hl sym">((</span>row1 <span class="hl sym">==</span> <span class="hl num">0x01</span><span class="hl sym">) &amp;&amp; (</span>row2 <span class="hl sym">==</span> <span class="hl num">0x05</span><span class="hl sym">) &amp;&amp; (</span>row3 <span class="hl sym">==</span> <span class="hl num">0x06</span><span class="hl sym">)) ||</span>
+            <span class="hl sym">((</span>row1 <span class="hl sym">==</span> <span class="hl num">0x19</span><span class="hl sym">) &amp;&amp; (</span>row2 <span class="hl sym">==</span> <span class="hl num">0x11</span><span class="hl sym">)) ||</span>
+            <span class="hl sym">((</span>row1 <span class="hl sym">==</span> <span class="hl num">0x15</span><span class="hl sym">) &amp;&amp; (</span>row2 <span class="hl sym">==</span> <span class="hl num">0x11</span><span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   <span class="hl com">/* There are two cases:</span>
+<span class="hl com">    * row1: 10011  10101</span>
+<span class="hl com">    * row2: 10001  10001</span>
+<span class="hl com">    * row3: ?????  ?????</span>
+<span class="hl com">    */</span>
+   <span class="hl kwa">return</span> <span class="hl sym">((</span>row1 <span class="hl sym">==</span> <span class="hl num">0x13</span><span class="hl sym">) &amp;&amp; (</span>row2 <span class="hl sym">==</span> <span class="hl num">0x11</span><span class="hl sym">)) ||</span>
+         <span class="hl sym">((</span>row1 <span class="hl sym">==</span> <span class="hl num">0x15</span><span class="hl sym">) &amp;&amp; (</span>row2 <span class="hl sym">==</span> <span class="hl num">0x11</span><span class="hl sym">));</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> calc_rows<span class="hl sym">() {</span>
+   <span class="hl kwa">for</span> row1 <span class="hl sym">:=</span> int8<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span> row1 <span class="hl sym">&lt;</span> <span class="hl num">32</span><span class="hl sym">;</span> row1<span class="hl sym">++ {</span>
+      <span class="hl kwa">for</span> row2 <span class="hl sym">:=</span> int8<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span> row2 <span class="hl sym">&lt;</span> <span class="hl num">32</span><span class="hl sym">;</span> row2<span class="hl sym">++ {</span>
+         bad_even_rows<span class="hl sym">[</span>row1<span class="hl sym">][</span>row2<span class="hl sym">] =</span> rows_bad<span class="hl sym">(</span>row1<span class="hl sym">,</span> row2<span class="hl sym">,</span> true<span class="hl sym">);</span>
+         bad_odd_rows<span class="hl sym">[</span>row1<span class="hl sym">][</span>row2<span class="hl sym">] =</span> rows_bad<span class="hl sym">(</span>row1<span class="hl sym">,</span> row2<span class="hl sym">,</span> false<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">for</span> row1 <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> row1 <span class="hl sym">&lt;</span> <span class="hl num">32</span><span class="hl sym">;</span> row1<span class="hl sym">++ {</span>
+      <span class="hl kwa">for</span> row2 <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> row2 <span class="hl sym">&lt;</span> <span class="hl num">32</span><span class="hl sym">;</span> row2<span class="hl sym">++ {</span>
+         <span class="hl kwa">for</span> row3 <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> row3 <span class="hl sym">&lt;</span> <span class="hl num">32</span><span class="hl sym">;</span> row3<span class="hl sym">++ {</span>
+            result1 <span class="hl sym">:=</span> bad_even_rows<span class="hl sym">[</span>row1<span class="hl sym">][</span>row2<span class="hl sym">];</span>
+            result2 <span class="hl sym">:=</span> bad_odd_rows<span class="hl sym">[</span>row2<span class="hl sym">][</span>row3<span class="hl sym">];</span>
+            <span class="hl kwa">if</span> result1<span class="hl sym">==</span><span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> result2<span class="hl sym">!=</span><span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> triple_is_okay<span class="hl sym">(</span>row1<span class="hl sym">,</span> row2<span class="hl sym">,</span> row3<span class="hl sym">,</span> true<span class="hl sym">) {</span>
+               bad_even_triple<span class="hl sym">[</span>row1<span class="hl sym">+(</span>row2<span class="hl sym">*</span><span class="hl num">32</span><span class="hl sym">)+(</span>row3<span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">)] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+               bad_even_triple<span class="hl sym">[</span>row1<span class="hl sym">+(</span>row2<span class="hl sym">*</span><span class="hl num">32</span><span class="hl sym">)+(</span>row3<span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">)] =</span> boolInt<span class="hl sym">(</span>result1<span class="hl sym">!=</span><span class="hl num">0</span> <span class="hl sym">||</span> result2<span class="hl sym">!=</span><span class="hl num">0</span><span class="hl sym">);</span>
+            <span class="hl sym">}</span>
+
+            result1 <span class="hl sym">=</span> bad_odd_rows<span class="hl sym">[</span>row1<span class="hl sym">][</span>row2<span class="hl sym">];</span>
+            result2 <span class="hl sym">=</span> bad_even_rows<span class="hl sym">[</span>row2<span class="hl sym">][</span>row3<span class="hl sym">];</span>
+            <span class="hl kwa">if</span> result1<span class="hl sym">==</span><span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> result2<span class="hl sym">!=</span><span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> triple_is_okay<span class="hl sym">(</span>row1<span class="hl sym">,</span> row2<span class="hl sym">,</span> row3<span class="hl sym">,</span> false<span class="hl sym">) {</span>
+               bad_odd_triple<span class="hl sym">[</span>row1<span class="hl sym">+(</span>row2<span class="hl sym">*</span><span class="hl num">32</span><span class="hl sym">)+(</span>row3<span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">)] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+               bad_odd_triple<span class="hl sym">[</span>row1<span class="hl sym">+(</span>row2<span class="hl sym">*</span><span class="hl num">32</span><span class="hl sym">)+(</span>row3<span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">)] =</span> boolInt<span class="hl sym">(</span>result1<span class="hl sym">!=</span><span class="hl num">0</span> <span class="hl sym">||</span> result2<span class="hl sym">!=</span><span class="hl num">0</span><span class="hl sym">);</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+
+<span class="hl com">/* Calculate islands while solving the board.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">func</span> boardHasIslands<span class="hl sym">(</span>cell int8<span class="hl sym">)</span> int8 <span class="hl sym">{</span>
+   <span class="hl com">/* Too low on board, don't bother checking */</span>
+   <span class="hl kwa">if</span> cell <span class="hl sym">&gt;=</span> <span class="hl num">40</span> <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   current_triple <span class="hl sym">:= (</span>board <span class="hl sym">&gt;&gt;</span> uint<span class="hl sym">((</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) *</span> <span class="hl num">5</span><span class="hl sym">)) &amp;</span> TRIPLE_MASK<span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>cell <span class="hl sym">/</span> <span class="hl num">5</span><span class="hl sym">) %</span> <span class="hl num">2</span> <span class="hl sym">!=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> bad_odd_triple<span class="hl sym">[</span>current_triple<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> bad_even_triple<span class="hl sym">[</span>current_triple<span class="hl sym">];</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl com">/* The recursive solve algorithm.  Try to place each permutation in the upper-</span>
+<span class="hl com"> * leftmost empty cell.  Mark off available pieces as it goes along.</span>
+<span class="hl com"> * Because the board is a bit mask, the piece number and bit mask must be saved</span>
+<span class="hl com"> * at each successful piece placement.  This data is used to create a 50 char</span>
+<span class="hl com"> * array if a solution is found.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">var</span> <span class="hl sym">(</span>
+   avail uint16 <span class="hl sym">=</span> <span class="hl num">0x03FF</span><span class="hl sym">;</span>
+   sol_nums <span class="hl sym">[</span><span class="hl num">10</span><span class="hl sym">]</span>int8<span class="hl sym">;</span>
+   sol_masks <span class="hl sym">[</span><span class="hl num">10</span><span class="hl sym">]</span>uint64<span class="hl sym">;</span>
+   solutions <span class="hl sym">[</span><span class="hl num">2100</span><span class="hl sym">][</span><span class="hl num">50</span><span class="hl sym">]</span>int8<span class="hl sym">;</span>
+   solution_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">func</span> record_solution<span class="hl sym">() {</span>
+   <span class="hl kwa">for</span> sol_no <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> sol_no <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span> sol_no<span class="hl sym">++  {</span>
+      sol_mask <span class="hl sym">:=</span> sol_masks<span class="hl sym">[</span>sol_no<span class="hl sym">];</span>
+      <span class="hl kwa">for</span> index <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> index <span class="hl sym">&lt;</span> <span class="hl num">50</span><span class="hl sym">;</span> index<span class="hl sym">++ {</span>
+         <span class="hl kwa">if</span> sol_mask <span class="hl sym">&amp;</span> <span class="hl num">1</span> <span class="hl sym">==</span> <span class="hl num">1</span> <span class="hl sym">{</span>
+            solutions<span class="hl sym">[</span>solution_count<span class="hl sym">][</span>index<span class="hl sym">] =</span> sol_nums<span class="hl sym">[</span>sol_no<span class="hl sym">];</span>
+            <span class="hl com">/* Board rotated 180 degrees is a solution too! */</span>
+            solutions<span class="hl sym">[</span>solution_count<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">][</span><span class="hl num">49</span><span class="hl sym">-</span>index<span class="hl sym">] =</span> sol_nums<span class="hl sym">[</span>sol_no<span class="hl sym">];</span>
+         <span class="hl sym">}</span>
+         sol_mask <span class="hl sym">=</span> sol_mask <span class="hl sym">&gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   solution_count <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> solve<span class="hl sym">(</span>depth<span class="hl sym">,</span> cell int8<span class="hl sym">) {</span>
+   <span class="hl kwa">if</span> solution_count <span class="hl sym">&gt;=</span> max_solutions <span class="hl sym">{</span>
+      <span class="hl kwa">return</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">for</span> board <span class="hl sym">&amp; (</span><span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> uint<span class="hl sym">(</span>cell<span class="hl sym">)) !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      cell<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">for</span> piece <span class="hl sym">:=</span> int8<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span> piece <span class="hl sym">&lt;</span> <span class="hl num">10</span><span class="hl sym">;</span> piece<span class="hl sym">++  {</span>
+      <span class="hl kwa">var</span> piece_no_mask uint16 <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> uint<span class="hl sym">(</span>piece<span class="hl sym">);</span>
+      <span class="hl kwa">if</span> avail <span class="hl sym">&amp;</span> piece_no_mask <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+         <span class="hl kwa">continue</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      avail <span class="hl sym">^=</span> piece_no_mask<span class="hl sym">;</span>
+      max_rots <span class="hl sym">:=</span> piece_counts<span class="hl sym">[</span>piece<span class="hl sym">][</span>cell<span class="hl sym">];</span>
+      piece_mask <span class="hl sym">:=</span> pieces<span class="hl sym">[</span>piece<span class="hl sym">][</span>cell<span class="hl sym">];</span>
+      <span class="hl kwa">for</span> rotation <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> rotation <span class="hl sym">&lt;</span> max_rots<span class="hl sym">;</span> rotation<span class="hl sym">++ {</span>
+         <span class="hl kwa">if</span> board <span class="hl sym">&amp;</span> piece_mask<span class="hl sym">[</span>rotation<span class="hl sym">] ==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+            sol_nums<span class="hl sym">[</span>depth<span class="hl sym">] =</span> piece<span class="hl sym">;</span>
+            sol_masks<span class="hl sym">[</span>depth<span class="hl sym">] =</span> piece_mask<span class="hl sym">[</span>rotation<span class="hl sym">];</span>
+            <span class="hl kwa">if</span> depth <span class="hl sym">==</span> <span class="hl num">9</span> <span class="hl sym">{</span>
+               <span class="hl com">/* Solution found!!!!!11!!ONE! */</span>
+               record_solution<span class="hl sym">();</span>
+               avail <span class="hl sym">^=</span> piece_no_mask<span class="hl sym">;</span>
+               <span class="hl kwa">return</span><span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+            board <span class="hl sym">|=</span> piece_mask<span class="hl sym">[</span>rotation<span class="hl sym">];</span>
+            <span class="hl kwa">if</span> boardHasIslands<span class="hl sym">(</span>next_cell<span class="hl sym">[</span>piece<span class="hl sym">][</span>cell<span class="hl sym">][</span>rotation<span class="hl sym">]) ==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+               solve<span class="hl sym">(</span>depth <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> next_cell<span class="hl sym">[</span>piece<span class="hl sym">][</span>cell<span class="hl sym">][</span>rotation<span class="hl sym">]);</span>
+            <span class="hl sym">}</span>
+            board <span class="hl sym">^=</span> piece_mask<span class="hl sym">[</span>rotation<span class="hl sym">];</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+      avail <span class="hl sym">^=</span> piece_no_mask<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* pretty print a board in the specified hexagonal format */</span>
+<span class="hl kwa">func</span> pretty<span class="hl sym">(</span>b <span class="hl sym">*[</span><span class="hl num">50</span><span class="hl sym">]</span>int8<span class="hl sym">) {</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">50</span><span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">10</span> <span class="hl sym">{</span>
+      fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%c %c %c %c %c</span> <span class="hl esc">\n</span> <span class="hl str">%c %c %c %c %c</span> <span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span>
+            b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">3</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">4</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">5</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">6</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span>
+            b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">7</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">8</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">,</span> b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">9</span><span class="hl sym">]+</span>'<span class="hl num">0</span>'<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+   fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Find smallest and largest solutions */</span>
+<span class="hl kwa">func</span> smallest_largest<span class="hl sym">() (</span>smallest<span class="hl sym">,</span> largest <span class="hl sym">*[</span><span class="hl num">50</span><span class="hl sym">]</span>int8<span class="hl sym">) {</span>
+   smallest <span class="hl sym">= &amp;</span>solutions<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+   largest <span class="hl sym">= &amp;</span>solutions<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> solution_count<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      candidate <span class="hl sym">:= &amp;</span>solutions<span class="hl sym">[</span>i<span class="hl sym">];</span>
+      <span class="hl kwa">for</span> j<span class="hl sym">,</span> s <span class="hl sym">:=</span> <span class="hl kwa">range</span> <span class="hl sym">*</span>smallest <span class="hl sym">{</span>
+         c <span class="hl sym">:=</span> candidate<span class="hl sym">[</span>j<span class="hl sym">];</span>
+         <span class="hl kwa">if</span> c <span class="hl sym">==</span> s <span class="hl sym">{</span>
+            <span class="hl kwa">continue</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">if</span> c <span class="hl sym">&lt;</span> s <span class="hl sym">{</span>
+            smallest <span class="hl sym">=</span> candidate<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">for</span> j<span class="hl sym">,</span> s <span class="hl sym">:=</span> <span class="hl kwa">range</span> <span class="hl sym">*</span>largest <span class="hl sym">{</span>
+         c <span class="hl sym">:=</span> candidate<span class="hl sym">[</span>j<span class="hl sym">];</span>
+         <span class="hl kwa">if</span> c <span class="hl sym">==</span> s <span class="hl sym">{</span>
+            <span class="hl kwa">continue</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">if</span> c <span class="hl sym">&gt;</span> s <span class="hl sym">{</span>
+            largest <span class="hl sym">=</span> candidate<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">break</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> main<span class="hl sym">() {</span>
+   flag<span class="hl sym">.</span>Parse<span class="hl sym">();</span>
+   <span class="hl kwa">if</span> flag<span class="hl sym">.</span>NArg<span class="hl sym">() &gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span> max_solutions<span class="hl sym">,</span>_ <span class="hl sym">=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span> flag<span class="hl sym">.</span>Arg<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) ) }</span>
+
+   calc_pieces<span class="hl sym">();</span>
+   calc_rows<span class="hl sym">();</span>
+   solve<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+   fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%d solutions found</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> solution_count<span class="hl sym">);</span>
+   smallest<span class="hl sym">,</span> largest <span class="hl sym">:=</span> smallest_largest<span class="hl sym">();</span>
+   pretty<span class="hl sym">(</span>smallest<span class="hl sym">);</span>
+   pretty<span class="hl sym">(</span>largest<span class="hl sym">);</span>
+<span class="hl sym">}</span>
