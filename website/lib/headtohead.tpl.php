@@ -14,7 +14,7 @@ $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 
-$ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> what fraction? used how many times more?&nbsp;';
+$ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'&nbsp;used</strong> what fraction? used how many times more?&nbsp;';
 ?>
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
