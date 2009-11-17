@@ -48,29 +48,6 @@ $ExplanatoryHeader = '&nbsp;'.$LangName.'&nbsp;<strong>used</strong> what fracti
 
 <?
 
-$noprogram = array();
-$nocomparison = array();
-$failed = array();
-
-foreach($sTests as $row){
-   if ($row[TEST_WEIGHT]<=0){ continue; }
-   $Link = $row[TEST_LINK];
-   $Name = $row[TEST_NAME];
-   if (isset($data[$Link])){
-      $v = $data[$Link];
-      if ($v[N_LINES] < 0){
-         if ($v[N_LINES] == NO_COMPARISON){
-            $nocomparison[] = array($Link,$SelectedLang,$v[N_ID],$Name,'No '.$Langs[$v[N_LANG]][LANG_FULL]);
-
-         } else {
-            $failed[] = array($Link,$SelectedLang,$v[N_ID],$Name,StatusMessage($v[N_LINES]) );
-         }
-      }
-   } else {
-      $noprogram[] = array($Link,$SelectedLang,0,$Name,'No&nbsp;program');
-   }
-}
-
 foreach($sTests as $Row){
    if ($Row[TEST_WEIGHT]<=0){ continue; }
 
@@ -97,7 +74,7 @@ foreach($sTests as $Row){
 </table>
 <p><span class="num2">&#177;</span> look at the measurements and then <strong>look at the programs</strong>.<br/></p>
 
-<h2><a href="#measurements" name="measurements">&nbsp;measurements and programs</a></h2>
+<h2><a href="#measurements" name="measurements">&nbsp;<?=$LangName;?> measurements and programs</a></h2>
 
 <p></p>
 <table>
@@ -111,49 +88,37 @@ foreach($sTests as $Row){
 </tr>
 
 <?
-foreach($sTests as $Row){
-   if ($Row[TEST_WEIGHT]<=0){ continue; }
+$noprogram = array();
+$nocomparison = array();
+$failed = array();
 
-   $Link = $Row[TEST_LINK];
-   $Name = $Row[TEST_NAME];
+foreach($sTests as $row){
+   if ($row[TEST_WEIGHT]<=0){ continue; }
+   $Link = $row[TEST_LINK];
+   $Name = $row[TEST_NAME];
+   if (isset($data[$Link])){
+      $v = $data[$Link];
+      if ($v[N_LINES] < 0){
+         if ($v[N_LINES] == NO_COMPARISON){
+            $nocomparison[] = array($Link,$SelectedLang,$v[N_ID],$Name,'No '.$Langs[$v[N_LANG]][LANG_FULL]);
 
-   if (isset($measurements[$Link]) && sizeof($measurements[$Link]) == 2){
-      
-      if ($data[$Link][N_N]==0){
-         $n = '';
-      } else {
-         $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
+         } else {
+            $failed[] = array($Link,$SelectedLang,$v[N_ID],$Name,StatusMessage($v[N_LINES]) );
+         }
       }
-      printf('<tr><th class="txt" colspan="4">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a>%s&nbsp;</th><th></th><th></th></tr>', $Link, $Link, $Name, $n);
-
-      foreach($measurements[$Link] as $Row){
-         $k = $Row[DATA_LANG];
-         $Name = $Langs[$k][LANG_FULL];
-         $id = $Row[DATA_ID];
-
-         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-               $Link,$k,$id,$Langs[$k][LANG_HTML]);
-
-         $fc = number_format($Row[DATA_FULLCPU],2);
-         if ($Row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$Row[DATA_MEMORY]); }
-         $gz = $Row[DATA_GZ];
-         if ($Row[DATA_ELAPSED]>0){ $e = number_format($Row[DATA_ELAPSED],2); } else { $e = ''; }
-         $ld = CpuLoad($Row);
-
-         printf('<td>%s</td><td>%s</td><td>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $kb, $gz, $e, $ld);
-      }
+   } else {
+      $noprogram[] = array($Link,$SelectedLang,0,$Name,'No&nbsp;program');
    }
 }
 
-//  No Lang2
+
 foreach($sTests as $Row){
    if ($Row[TEST_WEIGHT]<=0){ continue; }
 
    $Link = $Row[TEST_LINK];
    $Name = $Row[TEST_NAME];
 
-   if (isset($measurements[$Link]) && sizeof($measurements[$Link]) == 1){
-      
+   if (isset($measurements[$Link])){
       if ($data[$Link][N_N]==0){
          $n = '';
       } else {
@@ -176,26 +141,23 @@ foreach($sTests as $Row){
          $ld = CpuLoad($Row);
 
          printf('<td>%s</td><td>%s</td><td>%d</td><td>%s</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $kb, $gz, $e, $ld);
-         
+      }
+      if(sizeof($measurements[$Link]) == 1){
          printf('<td></td><td colspan="3"><span class="message">No %s</span></td><td></td><td></td></tr>', $LangName2);
       }
    }
-}
+   else {
+      printf('<tr><th class="txt" colspan="4">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a></th><th></th><th></th></tr>', $Link, $Link, $Name);
 
-foreach($failed as $tr){
-   printf('<tr><th class="txt" colspan="4">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a></th><th></th><th></th></tr>', $tr[0], $tr[0], $tr[3]);
-   
-   printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a><td colspan="3"><span class="message">%s</span></td><td></td><td></td></tr>',
-      $tr[0],$tr[1],$tr[2],$Langs[$tr[1]][LANG_HTML],$tr[4]);
-}
-
-foreach($noprogram as $tr){
-   printf('<tr><th class="txt" colspan="4">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a></th><th></th><th></th></tr>', $tr[0], $tr[0], $tr[3]);
-   printf('<tr><td>&nbsp;</td><td colspan="3"><span class="message">&nbsp;&nbsp;%s</span></td><td colspan="2"></td></tr>', $tr[4]);
+      if (isset($data[$Link])){
+         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a><td colspan="3"><span class="message">%s</span></td><td></td><td></td></tr>', $Link,$SelectedLang,$data[$Link][N_ID],$Langs[$SelectedLang][LANG_HTML],StatusMessage($data[$Link][N_LINES]));
+      } else {
+         printf('<tr><td>&nbsp;</td><td colspan="3"><span class="message">&nbsp;&nbsp;%s</span></td><td colspan="2"></td></tr>', 'No&nbsp;program');
+      }
+   }
 }
 
 ?>
-
 
 </table>
 

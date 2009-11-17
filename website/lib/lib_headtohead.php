@@ -44,7 +44,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
    $comparable = array();
    $errorRowL1 = NULL;
    $measurements = array();   
-   
+
 
    $i=0; $j=0;
    while ($i<sizeof($Data)){
@@ -144,7 +144,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
       }
       elseif (!$isSameTest && isset($errorRowL1)){
          $e = $errorRowL1;    
-         $exclude = ExcludeData($e,$Langs,$Excl);         
+         $exclude = ExcludeData($e,$Langs,$Excl);
 
          $NData[$e[DATA_TEST]] = array(
               $e[DATA_TEST]
@@ -168,9 +168,9 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
       $i = $j;
    }
    uasort($NData,'CompareTimeRatio');
-   
 
-   // sort by x times faster than ratio
+
+   // sort by x times faster
    $SortedTests = array();
    $reorder = array();
    foreach($NData as $k => $v){ $SortedTests[$k] = $Tests[$k]; }
@@ -197,14 +197,16 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
 
 
 function CompareTimeRatio($a, $b){
-   if ($a[N_FULLCPU] == $b[N_FULLCPU]){
-      if ($a[N_MEMORY] == $b[N_MEMORY]){
-         if ($a[N_GZ] == $b[N_GZ]){ return 0; }
-         else { return ($a[N_GZ] < $b[N_GZ]) ? -1 : 1; }
-      }
-      else { return ($a[N_MEMORY] < $b[N_MEMORY]) ? -1 : 1; }
+   if ($a[N_LINES] < 1 && $b[N_LINES] < 1){  
+      return ($a[TEST_LINK] < $b[TEST_LINK]) ? -1 : 1;
+   } 
+   elseif ($a[N_LINES] > 0 && $b[N_LINES] > 0){
+      if ($a[N_FULLCPU] == $b[N_FULLCPU]){ return 0; }
+      else { return ($a[N_FULLCPU] < $b[N_FULLCPU]) ? -1 : 1; }
    }
-   return  ($a[N_FULLCPU] < $b[N_FULLCPU]) ? -1 : 1;
+   else {
+      return ($a[N_LINES] < $b[N_LINES]) ? 1 : -1;
+   }
 }
 
 
