@@ -1,11 +1,11 @@
 /* The Computer Language Benchmarks Game
  * http://shootout.alioth.debian.org/
  *
- * Contributed by Martin Koistinen <mkoistinen@gmail.com>
+ * Contributed by Martin Koistinen 
  * Based on mandelbrot.c contributed by Greg Buchholz and The Go Authors
  * flag.Arg hack by Isaac Gouy
  *
- * Version 3
+ * Version 4
  */
 
 package main
@@ -17,6 +17,7 @@ import (
    "os";
    "strconv";
    "runtime";
+   "syscall";
 )
 
 const ZERO float64 = 0
@@ -27,16 +28,17 @@ const ITER = 50   // Benchmark parameter
 // and when complete writing it out to the file.
 func renderRow(w, h, y int, myChan chan bool, out *bufio.Writer) {
 
+   var row []byte;
+   var Zr, Zi, Tr, Ti, Cr float64;
+   var x, i int;
+
    bytes := int(w / 8);
    if w%8 > 0 {
       bytes++
    }
 
    // This will hold the pixels
-   row := make([]byte, bytes, bytes);
-
-   var Zr, Zi, Tr, Ti, Cr float64;
-   var x, i int;
+   row = make([]byte, bytes);
 
    Ci := (2*float64(y)/float64(h) - 1.0);
 
@@ -68,22 +70,6 @@ func renderRow(w, h, y int, myChan chan bool, out *bufio.Writer) {
    return;
 }
 
-// All file writing will be controlled from here
-// This goroutine signals each row, in order, to write their data,
-// Waits for it to complete, then allows the next row to go...
-func sequencer(control chan bool, rows int, chans [](chan bool)) {
-
-   <-control;   // Wait for the start signal
-
-   for i:=0; i<rows; i++ {
-      chans[i] <- true;   // Tell the row it can write when it is ready
-      <-chans[i];      // Wait until it signals it is finished
-   }
-
-   control <- true;   // Signal that we're done!
-   return;
-}
-
 func main() {
    runtime.GOMAXPROCS(8);   // This is the max. number of processors to use
 
@@ -100,22 +86,20 @@ func main() {
    defer out.Flush();
 
    rows := make([]chan bool, h, h);
-   control := make(chan bool);
 
    // First write the 'header' for the pbm file...
    fmt.Fprintf(out, "P4\n%d %d\n", w, h);
 
-   go sequencer(control, h, rows);
-
    // Spawn a new goroutine for each row...
    for row := 0; row < h; row++ {
+      syscall.Sleep(1e3);   // Wait a tiny bit to avoid a malloc bug in the runtime
       rows[row] = make(chan bool);
       go renderRow(w, h, row, rows[row], out);
    }
 
-   // Give the signal to start sequencing
-   control <- true;
-
-   // Wait for all the rows to be written...
-   <-control;
+   // Secquence the results to the file
+   for i:=0; i<h; i++ {
+      rows[i] <- true;   // Tell the row it can write when it is ready
+      <-rows[i];      // Wait until it signals it is finished
+   }
 }

@@ -98,7 +98,7 @@
 
 
 <h2><a href="#shapes" name="shapes">&nbsp;<?=$Title;?>&nbsp;[<?=$Mark;?>]</a></h2>
-<p>Scatter plots of normalized Code-used and normalized Time-used measurements give shape to each language implementation and position the programs in a broader context. From concise at the left to less-concise at the right, from slower at the top to faster at the bottom.</p>
+<p>Scatter plots of normalized Code-used and normalized Time-used measurements give shape to each language implementation and position the programs in a broader context. From <strong>concise at the left</strong> to less-concise at the right, from slower at the top to <strong>faster at the bottom</strong>.</p>
 
 <?
    printf('<table>');
