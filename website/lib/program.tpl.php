@@ -35,7 +35,7 @@ foreach($Data as $d){
                else { $kb = number_format((double)$d[DATA_MEMORY]); }
             }
             if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '?'; }
-            $fullcpu = sprintf('%0.2f',$d[DATA_FULLCPU]);
+            $fullcpu = number_format($d[DATA_FULLCPU],2); 
             $elapsed = ElapsedTime($d);
             $load = CpuLoad($d);
          }
