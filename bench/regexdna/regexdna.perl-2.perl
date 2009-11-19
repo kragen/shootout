@@ -13,7 +13,8 @@ my $l_file  = -s STDIN;
 my $content; read STDIN, $content, $l_file;
 # this is significantly faster than using <> in this case
 
-$content =~ s/(?:^>.*)?\n//g;
+$content =~ s/^>.*//mg;
+$content =~ tr/\n//d;
 my $l_code  =  length $content;
 
 my @seq = ( 'agggtaaa|tttaccct',
