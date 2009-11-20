@@ -19,9 +19,9 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title"><?=$ExplanatoryHeader;?></a></h2>
+<h2><a href="#title" name="title">Are the <?=$LangName;?> programs faster?</a></h2>
 
-<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do the <?=$LangName;?> programs use several times more? <strong>What fraction? How many times more?</strong> Do they trade-off memory for time? Do they use optimized assembly code libraries? Are they small simple programs or very optimized programs?</p>
+<p>Are the <?=$LangName;?> programs faster? Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <?=$ExplanatoryHeader;?> Do they use optimized assembly code libraries? Are they small simple programs or very optimized programs?</p>
 
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
@@ -74,7 +74,7 @@ foreach($sTests as $Row){
 </table>
 <p><span class="num2">&#177;</span> look at the measurements and then <strong>look at the programs</strong>.<br/></p>
 
-<h2><a href="#measurements" name="measurements">&nbsp;<?=$LangName;?> measurements and programs</a></h2>
+<h2><a href="#measurements" name="measurements">&nbsp;Are the <?=$LangName;?> programs faster?</a></h2>
 
 <p></p>
 <table>

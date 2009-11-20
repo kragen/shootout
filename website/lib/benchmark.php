@@ -230,7 +230,6 @@ if ($T=='all'){
 }
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    $bannerUrl = 'index.php'; $faqUrl = 'help.php';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
