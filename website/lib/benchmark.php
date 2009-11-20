@@ -152,18 +152,20 @@ if ($T=='all'){
          $TemplateName = 'headtohead.tpl.php';
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
+         $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
+         $Family = $Langs[$L][LANG_FAMILY];
+         $MetaKeywords = '<meta name="keywords" content=" '.
+            $Family.' programs '.$Family.' benchmark faster programs '.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
+            '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
+
       } else {
         $Title = $LangName.' measurements';
         $TemplateName = 'language.tpl.php';
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
+
+        $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
       }
       
-      $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
-      $Family = $Langs[$L][LANG_FAMILY];
-      $MetaKeywords = '<meta name="keywords" content=" '.
-         $Family.' programs '.$Family.' benchmark faster programs'.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
-         '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
-
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
