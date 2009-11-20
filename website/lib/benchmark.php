@@ -158,24 +158,17 @@ if ($T=='all'){
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
       }
       
-      if (isset($metaRobots)){ // Assume it's one of our special pages which should be indexed
-         $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
-         $Family = $Langs[$L][LANG_FAMILY];
-         $MetaKeywords = '<meta name="keywords" content=" '.
-            $Family.' programs '.$Family.' benchmark faster'.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
-            '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.'" />';
-
-      } else {
-           $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-      }
+      $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
+      $Family = $Langs[$L][LANG_FAMILY];
+      $MetaKeywords = '<meta name="keywords" content=" '.
+         $Family.' programs '.$Family.' benchmark faster'.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
+         '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.'" />';
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
       }
-
-
 
    } elseif ($L=='all'){ // Benchmark
    
