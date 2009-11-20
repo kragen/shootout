@@ -19,7 +19,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">Are the <?=$LangName;?> programs faster?</a></h2>
+<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs faster?</a></h2>
 
 <p>Are the <?=$LangName;?> programs faster? Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <?=$ExplanatoryHeader;?> Do they use optimized assembly code libraries? Are they small simple programs or very optimized programs?</p>
 

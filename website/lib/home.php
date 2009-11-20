@@ -47,7 +47,7 @@ $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $metaRobots = '<meta name="robots" content="follow,noindex,noarchive" />;
+   $metaRobots = '<meta name="robots" content="follow,noindex,noarchive" />';
    $faqUrl = 'help.php';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
