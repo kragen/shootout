@@ -115,6 +115,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
+         $MetaKeywords = '<meta name="keywords" content="benchmark faster summary median boxplot fastest time" />'; 
 
       }  else {
         // Scorecard
@@ -161,7 +162,7 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content=" '.
-            $Family.' programs '.$Family.' benchmark '.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
+            $Family.' programs '.$Family.' benchmark faster'.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
             '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.'" />';
 
       } else {
@@ -196,7 +197,7 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-
+      $MetaKeywords = '<meta name="keywords" content="benchmark faster programs secs memory time cpu" />'; 
 
 
    } else {              // Program
