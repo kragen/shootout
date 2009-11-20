@@ -191,7 +191,7 @@ if ($T=='all'){
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
       $MetaKeywords = '<meta name="keywords" content="benchmark programs faster secs memory time cpu" />'.
-         '<meta name="description" content="'.$TestName.' benchmark '.$Tests[$T][TEST_TAG]'" />';
+         '<meta name="description" content="'.$TestName.' benchmark '.$Tests[$T][TEST_TAG].'" />';
 
 
    } else {              // Program
