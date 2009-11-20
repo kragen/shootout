@@ -114,9 +114,7 @@ if ($T=='all'){
          if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
-         $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
-
-
+         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
 
       }  else {
         // Scorecard
@@ -135,7 +133,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('W', $W);
          $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
-         $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
+         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
       }
 
 
@@ -159,13 +157,12 @@ if ($T=='all'){
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
       }
       
-      if (isset($metaRobots) && (SITE_NAME == 'u32q')){ // Assume it's one of our special pages which should be indexed
+      if (isset($metaRobots)){ // Assume it's one of our special pages which should be indexed
          $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content="'.
             $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.
-            '<meta name="description" content="'.
-            'Compare '.$LangName.' performance on benchmark programs." />';
+            '<meta name="description" content="$Title" />';
 
       } else {
            $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
@@ -227,6 +224,7 @@ if ($T=='all'){
 
       $Body->set('Id', $I);
       $Body->set('Title', $Title);
+      $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
