@@ -158,7 +158,7 @@ if ($T=='all'){
       }
       
       if (isset($metaRobots)){ // Assume it's one of our special pages which should be indexed
-         $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="4 days" />';
+         $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content=" '.
             $Family.' programs '.$Family.' benchmark '.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
