@@ -161,8 +161,8 @@ if ($T=='all'){
       $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
       $Family = $Langs[$L][LANG_FAMILY];
       $MetaKeywords = '<meta name="keywords" content=" '.
-         $Family.' programs '.$Family.' benchmark faster '.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
-         '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.'" />';
+         $Family.' programs '.$Family.' benchmark faster programs'.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
+         '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
 
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
@@ -190,7 +190,8 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-      $MetaKeywords = '<meta name="keywords" content="benchmark faster programs secs memory time cpu" />'; 
+      $MetaKeywords = '<meta name="keywords" content="benchmark programs faster secs memory time cpu" />'.
+         '<meta name="description" content="'.$TestName.' benchmark '.$Tests[$T][TEST_TAG]'" />';
 
 
    } else {              // Program
