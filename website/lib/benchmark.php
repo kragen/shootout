@@ -158,11 +158,11 @@ if ($T=='all'){
       }
       
       if (isset($metaRobots)){ // Assume it's one of our special pages which should be indexed
-         $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />';
+         $metaRobots = '<meta name="robots" content="index,follow,archive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
-         $MetaKeywords = '<meta name="keywords" content="'.
-            $Title.' '.$Family.' programs '.$Family.' benchmark '.$Family.' language" />'.
-            '<meta name="description" content="$Title" />';
+         $MetaKeywords = '<meta name="keywords" content=" '.
+            $Family.' programs '.$Family.' benchmark '.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
+            '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.'" />';
 
       } else {
            $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
