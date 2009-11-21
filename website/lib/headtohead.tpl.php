@@ -21,7 +21,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs faster?</a></h2>
 
-<p>Are the <?=$LangName;?> programs faster? Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <?=$ExplanatoryHeader;?> Do they use optimized assembly code libraries? Are they small simple programs or very optimized programs?</p>
+<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <?=$ExplanatoryHeader;?> Do they use optimized assembly code libraries? Are they small simple programs or very optimized programs?</p>
 
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
