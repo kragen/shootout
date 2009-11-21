@@ -24,7 +24,7 @@ $Page->set('PageBody', $Body->fetch('help.tpl.php'));
 
 $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
 $faqUrl = 'help.php';
-$MetaKeywords = '<meta name="keywords" content="flawed benchmarks programs benchmark programming language measurements" /><meta name="description" content="" />';
+$MetaKeywords = '<meta name="keywords" content="flawed benchmarks programs benchmark programming language measurements" /><meta name="description" content="Help and information about The Computer Language Benchmarks Game" />';
 
 
 $Page->set('Robots', $metaRobots);
