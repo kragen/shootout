@@ -21,19 +21,16 @@ $Body->set('Changed', filemtime(LIB_PATH.'help.tpl.php'));
 
 $Page->set('PageBody', $Body->fetch('help.tpl.php'));
 
-if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
-   $faqUrl = 'help.php';
-} else {
-   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-   // Help people choose the up-to-date measurements
-   $faqUrl = '../u64/help.php#means';
-}
+
+$metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
+$faqUrl = 'help.php';
+$MetaKeywords = '<meta name="keywords" content="flawed benchmarks programs benchmark programming language measurements" /><meta name="description" content="" />';
+
 
 $Page->set('Robots', $metaRobots);
 $Page->set('BannerUrl', '../index.php');
 $Page->set('FaqUrl', $faqUrl);
-$Page->set('MetaKeywords', '');
+$Page->set('MetaKeywords', $MetaKeywords);
 $Page->set('PageId', 'faq');
 
 echo $Page->fetch('page.tpl.php');
