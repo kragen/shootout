@@ -11,7 +11,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
    unset($Data);
 ?>
 
-<p>Do the Time-used boxes overlap or is there separation between them? Is the median line in the middle of the box or skewed to more/less Time-used? Is the box short or tall? <a href="#about">What does that show?</a></p>
+<p>Do the Time-used boxes overlap or is there clear separation between them? Which programming language implementations have the fastest programs?</p>
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
@@ -81,7 +81,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;about the Boxplot Summary</a></h3>
+<h3><a href="#about" name="about">&nbsp;<?=$Title;?></a></h3>
 <?=$About;?>
 
 

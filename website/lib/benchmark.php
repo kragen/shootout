@@ -115,7 +115,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
-         $MetaKeywords = '<meta name="keywords" content="benchmark faster summary median boxplot fastest time" /><meta name="description" content="" />'; 
+         $MetaKeywords = '<meta name="keywords" content="fastest programming language benchmark fastest median boxplot" /><meta name="description" content="Which programs are fastest? Which programming language implementation has the fastest programs?" />'; 
 
       }  else {
         // Scorecard
