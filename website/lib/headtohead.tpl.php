@@ -21,7 +21,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs faster?</a></h2>
 
-<p>Do the <?=$LangName;?> programs use a fraction of the time used by others, or do they use several times more? <?=$ExplanatoryHeader;?> Do they use optimized assembly code libraries? Are they small simple programs or very optimized programs?</p>
+<p>Do the <?=$LangName;?> programs use optimized assembly code libraries? Are they small simple programs or very optimized programs? <strong>Do the <?=$LangName;?> programs use a fraction of the time used by others</strong>, or do they use several times more? </p>
 
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
@@ -103,6 +103,11 @@ foreach($sTests as $Row){
       }
       printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a>%s&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $Name, $n);
 
+      $ELAPSED = '';
+      if (isset($measurements[$Link][1]) && ($measurements[$Link][0][DATA_TIME] < $measurements[$Link][1][DATA_TIME])){
+         $ELAPSED = ' class="sort"';
+      }
+
       foreach($measurements[$Link] as $Row){
          $k = $Row[DATA_LANG];
          $Name = $Langs[$k][LANG_FULL];
@@ -117,9 +122,11 @@ foreach($sTests as $Row){
          if ($Row[DATA_ELAPSED]>0){ $e = number_format($Row[DATA_ELAPSED],2); } else { $e = ''; }
          $ld = CpuLoad($Row);
 
-         printf('<td>%s</td><td>%s</td><td>%s</td><td>%d</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $e, $kb, $gz, $ld);
+         printf('<td>%s</td><td %s>%s</td><td>%s</td><td>%d</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $ELAPSED, $e, $kb, $gz, $ld);
+
+         $ELAPSED = '';
       }
-      if(sizeof($measurements[$Link]) == 1){
+      if(!isset($measurements[$Link][1])){
          printf('<td></td><td colspan="2"><span class="message">No %s</span></td><td colspan="2"></td><td></td></tr>', $LangName2);
       }
    }

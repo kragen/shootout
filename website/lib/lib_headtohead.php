@@ -23,8 +23,9 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
    $Data = array();   
    foreach($rows as $row){ 
       if (isset($Incl[$row[DATA_TEST]])){   
-         settype($row[DATA_ID],'integer');                              
-           
+         settype($row[DATA_ID],'integer'); 
+         settype($row[DATA_TIME],'double');
+
          //if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){ 
          $ex = ExcludeData($row,$Langs,$Excl);
          if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
@@ -43,7 +44,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
    $NData = array();
    $comparable = array();
    $errorRowL1 = NULL;
-   $measurements = array();   
+   $measurements = array();
 
 
    $i=0; $j=0;

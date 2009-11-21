@@ -155,7 +155,7 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="keywords" content=" '.
-            $Family.' programs '.$Family.' benchmark faster programs '.$Family.' language '.$LangName.' ÷ '.$LangName2.'" />'.
+            $LangName.' programs '.$LangName.' benchmark faster programs '.$LangName.' language '.$LangName.' ÷ '.$LangName2.'" />'.
             '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
 
       } else {
