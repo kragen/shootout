@@ -1,3 +1,5 @@
+<p><br/>Which programming language implementations have the fastest programs?</p>
+
 <p><br/>Read <a href="http://www.lcgceurope.com/lcgceurope/data/articlestandard/lcgceurope/132005/152912/article.pdf"><strong>"Visual Presentation of Data by Means of Box Plots" (pdf)</strong></a></p>
 
 

@@ -28,7 +28,7 @@
 
 <dt><a href="#several" name="several"><strong>How do I compare 3 or 4 or more language implementations?</strong></a></dt>
 <dd>
-<p>Compare the <a href="fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><strong>boxplot summary</strong> of measurements for just those language implementations</a>.</p>
+<p>Compare the <a href="fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><strong>summary</strong> measurements for just those language implementations</a>.</p>
 </dd>
 
 <dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 or 4 programs?</strong></a></dt>
