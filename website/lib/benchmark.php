@@ -103,7 +103,7 @@ if ($T=='all'){
 
          require_once(LIB_PATH.'lib_scorecard.php');
 
-         $Title = 'Boxplot Summary';
+         $Title = 'Which programs are fastest?';
          if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'boxplot.tpl.php';
@@ -115,7 +115,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
-         $MetaKeywords = '<meta name="keywords" content="benchmark faster summary median boxplot fastest time" />'; 
+         $MetaKeywords = '<meta name="keywords" content="benchmark faster summary median boxplot fastest time" /><meta name="description" content="" />'; 
 
       }  else {
         // Scorecard
