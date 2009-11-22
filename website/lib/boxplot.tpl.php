@@ -4,7 +4,7 @@
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 ?>
 
-<h2><a href="#box" name="box">&nbsp;<?=$Title;?></a>&nbsp;<em>Le mieux est l'ennemi du bien.</em></h2>
+<h2><a href="#box" name="box">&nbsp;Which programs are fastest?</a>&nbsp;<em>Le mieux est l'ennemi du bien.</em></h2>
 
 <?
    list($score,$labels,$stats,$selected) = $Data;
@@ -81,7 +81,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;<?=$Title;?></a></h3>
+<h3><a href="#about" name="about">&nbsp;Which programs are fastest?</a></h3>
 <?=$About;?>
 
 
