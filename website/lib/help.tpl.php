@@ -31,10 +31,6 @@
 <p>Compare the <a href="fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><strong>summary</strong> measurements for just those language implementations</a>.</p>
 </dd>
 
-<dt><a href="#sideside" name="sideside"><strong>How do I compare 2 or 3 or 4 programs?</strong></a></dt>
-<dd>
-<p>Compare them directly <a href="fulldata.php?test=fannkuch&amp;p1=java-1&amp;p2=gcc-1&amp;p3=php-3&amp;p4=perl-1"><strong>side-by-side</strong> for all the measurements</a>.</p>
-</dd>
 
 <dt><a href="#playing" name="playing"><strong>Who's playing?</strong></a></dt>
 <dd>
