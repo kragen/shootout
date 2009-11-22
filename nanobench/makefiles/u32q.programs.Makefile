@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.35 2009-11-13 04:32:53 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.36 2009-11-22 19:51:39 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -167,7 +167,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-@$(SPLITFILE) $(TEST).li $(TEST).li
 
 %.lisaac_run: %.li
-	-$(LISAAC) -O -i20 $(TEST)
+	-$(LISAAC) -i 20 $(TEST)
 	-$(GCC) $(STD_COPTS) $(COPTS) $(TEST).c -o $@
 
 

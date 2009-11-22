@@ -1,1 +1,1 @@
-<p>Lisaac V 0.13.1</p>
+<p>Compiler version: 0.39 beta</p>
