@@ -103,7 +103,7 @@ if ($T=='all'){
 
          require_once(LIB_PATH.'lib_scorecard.php');
 
-         $Title = 'Which programs are fastest?';
+         $Title = 'Which programming languages have the fastest programs?';
          if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'boxplot.tpl.php';
@@ -114,8 +114,8 @@ if ($T=='all'){
          if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
-         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
-         $MetaKeywords = '<meta name="keywords" content="fastest programming language benchmark fastest median boxplot" /><meta name="description" content="Which programs are fastest? Which programming language implementation has the fastest programs?" />'; 
+         $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
+         $MetaKeywords = '<meta name="keywords" content="fastest programming language benchmark median boxplot" /><meta name="description" content="Which programming languages have the fastest programs?" />'; 
 
       }  else {
         // Scorecard
