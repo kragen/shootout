@@ -11,7 +11,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
    unset($Data);
 ?>
 
-<p>Do the Time-used boxes overlap or is there clear separation between them? Which programming language implementations have the fastest programs?</p>
+<p>Do the Time-used boxes overlap or is there clear separation between them? <strong>Which programming language implementations have the fastest programs?</strong></p>
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
