@@ -33,7 +33,7 @@ define('HOMEPAGE_ROWS',0);          // show 26 rows of languages on the homepage
 
 
 define('SITE_NAME', 'core');
-define('SITE_TITLE','The Computer Language Shootout Benchmarks');
+define('SITE_TITLE','Computer Language Benchmarks Game');
 define('BANNER_TITLE','The&nbsp;Computer&nbsp;Language&nbsp; <br/>Shootout&nbsp;Benchmarks');
 define('FAQ_TITLE','Read the FAQ!');
 define('BAR',' | ');
