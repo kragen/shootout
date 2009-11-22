@@ -572,12 +572,6 @@ language, benchmark, your-name, date, (version)<br />
 <p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"><strong>Play the Benchmarks Game tracker items</strong></a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
 </dd>
 
-<dt><a href="#seemore" name="seemore">Where can I see more about a <strong>Timeout</strong> or <strong>Error</strong>?</a></dt>
-<dd>
-<p>Sometimes a program may produce correct results, within the timeout, for smaller workloads - so check the data on the <a href="fulldata.php?test=nbody&amp;p1=ooc-1&amp;p2=se-1&amp;p3=gcc-1&amp;p4=gpp-1" title="full data"><strong>full data page</strong></a>.</p>
-<p>You may find information about an Error in the 'build &amp; benchmark results' section of the program page.</p>
-</dd>
-
 <dt><a href="#version" name="version">Where can I see which language version was used?</a></dt>
 <dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
 </dd>
@@ -658,7 +652,7 @@ correct result, but also <strong>use the same algorithm</strong> to calculate th
 <li>implementor fun - <a href="http://www.mirandabanda.org/cogblog/2009/01/14/under-cover-contexts-and-the-big-frame-up/#comments">"we get worth-while speedups for everything except"</a></li>
 <li>training a classifier - <a href="http://blog.chrislowis.co.uk/2009/01/04/identify-programming-languages-with-source-classifier.html">Identify Programming Languages with SourceClassifier</a></li>
 <li>more comparisons - <a href="http://www.cs.purdue.edu/homes/sbarakat/cs456/Scripting.pdf">Performance of Scripting Languages (pdf)</a></li>
-<li>performance testing - <a href="http://dromaeo.com/">Mozilla JavaScript performance testing</a></li>
+<li>performance testing - <a href="http://www2.webkit.org/perf/sunspider-0.9/sunspider.html">SunSpider JavaScript Benchmark</a></li>
 <li>lighthearted asides - <a href="http://research.microsoft.com/~simonpj/papers/history-of-haskell/history.pdf">A History of Haskell: Being Lazy With Class (pdf)</a></li>
 <li>diagnostics - <a href="http://smalltalk.gnu.org/project/issue/200">"awful memory usage with lots of big objects"</a></li>
 <li>dispelling myths - <a href="http://ftp.openvms.compaq.com/openvms/journal/v10/openvms_journal.pdf">Java and OpenVMS: Myths and realities (pdf)</a></li>
