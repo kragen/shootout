@@ -1,3 +1,5 @@
+<p><br/>Which balance between Code-used and Time-used and Memory-used is best for you?</p>
+
 <p><br/>Read <a href="http://portal.acm.org/citation.cfm?id=5666.5673"><strong>"How not to lie with statistics: the correct way to summarize benchmark results" (pdf)</strong></a>.</p>
 
 <p>For each benchmark, <strong>B</strong> is the best measurement; for each language implementation, the best measurement <strong>L</strong> is then normalized to <strong><sup>L</sup>/<sub>B</sub></strong></p>
