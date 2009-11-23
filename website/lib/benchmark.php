@@ -124,7 +124,7 @@ if ($T=='all'){
 
          require_once(LIB_PATH.'lib_scorecard.php');
 
-         $Title = 'Which are best for you?';
+         $Title = 'Which is best for you?';
          if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'scorecard.tpl.php';
