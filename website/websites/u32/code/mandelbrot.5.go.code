@@ -1,0 +1,110 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Contributed by Martin Koistinen &lt;mkoistinen&#64;gmail.com&gt;</span>
+<span class="hl com"> * Based on mandelbrot.c contributed by Greg Buchholz and The Go Authors</span>
+<span class="hl com"> * flag.Arg hack by Isaac Gouy</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Version 5</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">package</span> main
+
+<span class="hl kwa">import</span> <span class="hl sym">(</span>
+   <span class="hl str">&quot;bufio&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;flag&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;fmt&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;os&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;strconv&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;runtime&quot;</span><span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">const</span> ZERO float64 <span class="hl sym">=</span> <span class="hl num">0</span>
+<span class="hl kwa">const</span> LIMIT <span class="hl sym">=</span> <span class="hl num">2.0</span>
+<span class="hl kwa">const</span> SIZE <span class="hl sym">=</span> <span class="hl num">16000</span>
+<span class="hl kwa">const</span> ITER <span class="hl sym">=</span> <span class="hl num">50</span>
+<span class="hl kwa">const</span> ROWSPERGOROUTINE <span class="hl sym">=</span> <span class="hl num">100</span>
+<span class="hl kwa">const</span> MAXPROCS <span class="hl sym">=</span> <span class="hl num">4</span>
+
+<span class="hl kwa">var</span> data <span class="hl sym">[]</span>byte
+<span class="hl kwa">var</span> bytesPerRow int
+
+<span class="hl slc">// This func is responsible for rendering a slice of pixels,</span>
+<span class="hl slc">// and storing them in the data array.</span>
+<span class="hl kwa">func</span> renderRow<span class="hl sym">(</span>w<span class="hl sym">,</span> h<span class="hl sym">,</span> ys<span class="hl sym">,</span> iter int<span class="hl sym">,</span> mChan <span class="hl kwa">chan</span> bool<span class="hl sym">) {</span>
+
+   <span class="hl kwa">var</span> Zr<span class="hl sym">,</span> Zi<span class="hl sym">,</span> Tr<span class="hl sym">,</span> Ti<span class="hl sym">,</span> Cr float64<span class="hl sym">;</span>
+   <span class="hl kwa">var</span> i<span class="hl sym">,</span> x int<span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> y <span class="hl sym">:=</span> ys<span class="hl sym">;</span> y <span class="hl sym">&lt;</span> ys <span class="hl sym">+</span> ROWSPERGOROUTINE <span class="hl sym">&amp;&amp;</span> y <span class="hl sym">&lt;</span> h<span class="hl sym">;</span> y<span class="hl sym">++ {</span>
+
+      offset <span class="hl sym">:=</span> bytesPerRow <span class="hl sym">*</span> y<span class="hl sym">;</span>
+      Ci <span class="hl sym">:= (</span><span class="hl num">2</span><span class="hl sym">*</span>float64<span class="hl sym">(</span>y<span class="hl sym">)/</span>float64<span class="hl sym">(</span>h<span class="hl sym">) -</span> <span class="hl num">1.0</span><span class="hl sym">);</span>
+
+      <span class="hl kwa">for</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> w<span class="hl sym">;</span> x<span class="hl sym">++ {</span>
+         Zr<span class="hl sym">,</span> Zi<span class="hl sym">,</span> Tr<span class="hl sym">,</span> Ti <span class="hl sym">=</span> ZERO<span class="hl sym">,</span> ZERO<span class="hl sym">,</span> ZERO<span class="hl sym">,</span> ZERO<span class="hl sym">;</span>
+         Cr <span class="hl sym">= (</span><span class="hl num">2</span><span class="hl sym">*</span>float64<span class="hl sym">(</span>x<span class="hl sym">)/</span>float64<span class="hl sym">(</span>w<span class="hl sym">) -</span> <span class="hl num">1.5</span><span class="hl sym">);</span>
+
+         <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> iter <span class="hl sym">&amp;&amp;</span> Tr<span class="hl sym">+</span>Ti <span class="hl sym">&lt;=</span> LIMIT<span class="hl sym">*</span>LIMIT<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+            Zi <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">*</span>Zr<span class="hl sym">*</span>Zi <span class="hl sym">+</span> Ci<span class="hl sym">;</span>
+            Zr <span class="hl sym">=</span> Tr <span class="hl sym">-</span> Ti <span class="hl sym">+</span> Cr<span class="hl sym">;</span>
+            Tr <span class="hl sym">=</span> Zr <span class="hl sym">*</span> Zr<span class="hl sym">;</span>
+            Ti <span class="hl sym">=</span> Zi <span class="hl sym">*</span> Zi<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+
+         <span class="hl slc">// Store the value in the data array</span>
+         <span class="hl kwa">if</span> Tr<span class="hl sym">+</span>Ti <span class="hl sym">&lt;=</span> LIMIT<span class="hl sym">*</span>LIMIT <span class="hl sym">{</span>
+            data<span class="hl sym">[</span>offset<span class="hl sym">+</span>x<span class="hl sym">/</span><span class="hl num">8</span><span class="hl sym">] |= (</span>byte<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) &lt;&lt;</span> byte<span class="hl sym">(</span><span class="hl num">7</span><span class="hl sym">-(</span>x<span class="hl sym">%</span><span class="hl num">8</span><span class="hl sym">)))</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+
+   <span class="hl sym">}</span>
+
+   mChan <span class="hl sym">&lt;-</span> true<span class="hl sym">;</span>
+   <span class="hl kwa">return</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> main<span class="hl sym">() {</span>
+   runtime<span class="hl sym">.</span>GOMAXPROCS<span class="hl sym">(</span>MAXPROCS<span class="hl sym">);</span>   <span class="hl slc">// This is the max. number of processors to use</span>
+
+   size <span class="hl sym">:=</span> SIZE<span class="hl sym">;</span>   <span class="hl slc">// Contest settings</span>
+   iter <span class="hl sym">:=</span> ITER<span class="hl sym">;</span>   <span class="hl slc">// Contest settings</span>
+
+   <span class="hl slc">// Get input, if any...</span>
+   flag<span class="hl sym">.</span>Parse<span class="hl sym">();</span>
+   <span class="hl kwa">if</span> flag<span class="hl sym">.</span>NArg<span class="hl sym">() &gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      size<span class="hl sym">,</span> _ <span class="hl sym">=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span>flag<span class="hl sym">.</span>Arg<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">))</span>
+   <span class="hl sym">}</span>
+
+   w<span class="hl sym">,</span> h <span class="hl sym">:=</span> size<span class="hl sym">,</span> size<span class="hl sym">;</span>
+
+   <span class="hl slc">// The number of bytes to allocate for each row</span>
+   bytesPerRow <span class="hl sym">=</span> w <span class="hl sym">/</span> <span class="hl num">8</span><span class="hl sym">;</span>
+
+   out <span class="hl sym">:=</span> bufio<span class="hl sym">.</span>NewWriter<span class="hl sym">(</span>os<span class="hl sym">.</span>Stdout<span class="hl sym">);</span>
+   <span class="hl kwa">defer</span> out<span class="hl sym">.</span>Flush<span class="hl sym">();</span>
+
+   <span class="hl slc">// Allocate space for the data bytes</span>
+   data <span class="hl sym">=</span> make<span class="hl sym">([]</span>byte<span class="hl sym">,</span> bytesPerRow<span class="hl sym">*</span>h<span class="hl sym">);</span>
+
+   <span class="hl slc">// Create a comms channel...</span>
+   comm <span class="hl sym">:=</span> make<span class="hl sym">(</span><span class="hl kwa">chan</span> bool<span class="hl sym">);</span>
+
+   count <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl slc">// Spawn a new goroutine for each row...</span>
+   <span class="hl kwa">for</span> y <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> h<span class="hl sym">;</span> y <span class="hl sym">+=</span> ROWSPERGOROUTINE <span class="hl sym">{</span>
+      <span class="hl kwa">go</span> renderRow<span class="hl sym">(</span>w<span class="hl sym">,</span> h<span class="hl sym">,</span> y<span class="hl sym">,</span> iter<span class="hl sym">,</span> comm<span class="hl sym">);</span>
+      count<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// Wait for all the rows to complete...</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> count<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+      <span class="hl sym">&lt;-</span>comm
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// Write the 'header' for the pbm file...</span>
+   fmt<span class="hl sym">.</span>Fprintf<span class="hl sym">(</span>out<span class="hl sym">,</span> <span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> w<span class="hl sym">,</span> h<span class="hl sym">);</span>
+
+   out<span class="hl sym">.</span>Write<span class="hl sym">(</span>data<span class="hl sym">);</span>
+<span class="hl sym">}</span>

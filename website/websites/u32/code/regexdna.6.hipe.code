@@ -1,0 +1,123 @@
+<span class="hl slc">% The Computer Language Benchmarks Game</span>
+<span class="hl slc">% http://shootout.alioth.debian.org/</span>
+<span class="hl slc">% Contributed by: Hynek Vychodil 2009</span>
+<span class="hl slc">% Inspired by regex-dna Erlang HiPE #5 program</span>
+<span class="hl slc">%    by Sergei Matusevich 2007 and Thanassis Avgerinos 2009</span>
+
+<span class="hl slc">% Main changes:</span>
+<span class="hl slc">%   1/ Very fast Port line input instead stdio (~5x)</span>
+<span class="hl slc">%   2/ Faster IUB code alternatives explicit expansion</span>
+<span class="hl slc">%      using binary instead lists (~5x)</span>
+<span class="hl slc">%   3/ Precompile regexps in data loading phase</span>
+<span class="hl slc">%   4/ Simpler dispatch and result join code</span>
+
+<span class="hl slc">% Note: re module is damn slow. Boyer-Moore like binary matcher</span>
+<span class="hl slc">% written in Erlang should be magnitude faster (HiPE of course).</span>
+
+<span class="hl sym">-</span><span class="hl kwa">module</span><span class="hl sym">(</span>regexdna<span class="hl sym">).</span>
+
+<span class="hl sym">-</span><span class="hl kwd">compile</span><span class="hl sym">([</span>native<span class="hl sym">, {</span>hipe<span class="hl sym">, [</span>o3<span class="hl sym">]}]).</span>
+
+<span class="hl sym">-</span><span class="hl kwa">export</span><span class="hl sym">([</span>main<span class="hl sym">/</span><span class="hl num">0</span><span class="hl sym">]).</span>
+
+<span class="hl kwd">main</span><span class="hl sym">() -&gt;</span> <span class="hl kwd">do</span><span class="hl sym">(),</span> <span class="hl kwb">halt</span><span class="hl sym">().</span>
+
+<span class="hl kwd">do</span><span class="hl sym">() -&gt;</span>
+    S <span class="hl sym">=</span> <span class="hl kwb">self</span><span class="hl sym">(),</span>
+    Worker <span class="hl sym">=</span> <span class="hl kwb">spawn_link</span><span class="hl sym">(</span><span class="hl kwa">fun</span> <span class="hl sym">() -&gt;</span> <span class="hl kwd">work</span><span class="hl sym">(</span>S<span class="hl sym">)</span> <span class="hl kwa">end</span><span class="hl sym">),</span>
+    Worker <span class="hl sym">! {</span>data<span class="hl sym">,</span> <span class="hl kwd">read</span><span class="hl sym">()},</span>
+    <span class="hl kwa">receive</span> finish <span class="hl sym">-&gt;</span> ok <span class="hl kwa">end</span><span class="hl sym">.</span>
+
+<span class="hl kwd">work</span><span class="hl sym">(</span>Master<span class="hl sym">) -&gt;</span>
+    S <span class="hl sym">=</span> <span class="hl kwb">self</span><span class="hl sym">(),</span>
+    Patterns <span class="hl sym">= [{</span>Pat<span class="hl sym">,</span> re<span class="hl sym">:</span><span class="hl kwd">compile</span><span class="hl sym">(</span>Pat<span class="hl sym">, [</span>caseless<span class="hl sym">])}</span>
+		<span class="hl sym">||</span> Pat <span class="hl sym">&lt;-</span> <span class="hl kwd">patterns</span><span class="hl sym">()],</span>
+    <span class="hl sym">{</span>RawSize<span class="hl sym">, [</span>B3<span class="hl sym">,</span> B2<span class="hl sym">,</span> B1 <span class="hl sym">|</span> _<span class="hl sym">]} =</span> <span class="hl kwa">receive</span>
+				    <span class="hl sym">{</span>data<span class="hl sym">,</span> Data<span class="hl sym">} -&gt;</span> Data
+				  <span class="hl kwa">end</span><span class="hl sym">,</span>
+    <span class="hl sym">[</span>L1<span class="hl sym">,</span> L2<span class="hl sym">,</span> L3<span class="hl sym">] =</span> L <span class="hl sym">= [</span><span class="hl kwb">size</span><span class="hl sym">(</span>X<span class="hl sym">) ||</span> X <span class="hl sym">&lt;- [</span>B1<span class="hl sym">,</span> B2<span class="hl sym">,</span> B3<span class="hl sym">]],</span>
+    Size <span class="hl sym">=</span> lists<span class="hl sym">:</span><span class="hl kwd">sum</span><span class="hl sym">(</span>L<span class="hl sym">),</span>
+    PIDS <span class="hl sym">= [{</span><span class="hl kwb">spawn_link</span><span class="hl sym">(</span><span class="hl kwd">matcher</span><span class="hl sym">(</span>S<span class="hl sym">,</span> B2<span class="hl sym">,</span> B3<span class="hl sym">,</span> MR<span class="hl sym">)),</span>
+	     <span class="hl kwd">printer</span><span class="hl sym">(</span>Pat<span class="hl sym">)}</span>
+	    <span class="hl sym">|| {</span>Pat<span class="hl sym">, {</span>ok<span class="hl sym">,</span> MR<span class="hl sym">}} &lt;-</span> Patterns<span class="hl sym">],</span>
+    ExpandedSize <span class="hl sym">=</span> L1 <span class="hl sym">+</span> L3 <span class="hl sym">+</span> <span class="hl kwb">size</span><span class="hl sym">(</span><span class="hl kwd">expand</span><span class="hl sym">(</span>B2<span class="hl sym">,</span> L2<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, &lt;&lt;&gt;&gt;)),</span>
+    <span class="hl kwd">results</span><span class="hl sym">(</span>PIDS<span class="hl sym">),</span>
+    io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;~n~b~n~b~n~b~n&quot;</span><span class="hl sym">,</span>
+	      <span class="hl sym">[</span>RawSize<span class="hl sym">,</span> Size<span class="hl sym">,</span> ExpandedSize<span class="hl sym">]),</span>
+    Master <span class="hl sym">!</span> finish<span class="hl sym">.</span>
+
+<span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I<span class="hl sym">,</span> R<span class="hl sym">)</span> <span class="hl kwa">when</span> I <span class="hl sym">&lt;</span> S <span class="hl sym">-&gt;</span>
+    <span class="hl kwa">case</span> B <span class="hl kwa">of</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $B<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $D<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $H<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $K<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $M<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $N<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $R<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $S<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $V<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $W<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> $Y<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">&gt;&gt;);</span>
+      <span class="hl sym">&lt;&lt;</span>_<span class="hl sym">:</span>I<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> X<span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; -&gt;</span>
+	  <span class="hl kwd">expand</span><span class="hl sym">(</span>B<span class="hl sym">,</span> S<span class="hl sym">,</span> I <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">, &lt;&lt;</span>R<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">,</span> X<span class="hl sym">&gt;&gt;)</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span>
+<span class="hl kwd">expand</span><span class="hl sym">(</span>_<span class="hl sym">,</span> _<span class="hl sym">,</span> _<span class="hl sym">,</span> R<span class="hl sym">) -&gt;</span> R<span class="hl sym">.</span>
+
+<span class="hl kwd">matcher</span><span class="hl sym">(</span>S<span class="hl sym">,</span> B2<span class="hl sym">,</span> B3<span class="hl sym">,</span> MR<span class="hl sym">) -&gt;</span>
+    <span class="hl kwa">fun</span> <span class="hl sym">() -&gt;</span>
+	    S <span class="hl sym">!</span>
+	      <span class="hl sym">{</span><span class="hl kwb">self</span><span class="hl sym">(),</span> <span class="hl kwd">countMatches</span><span class="hl sym">(</span>B2<span class="hl sym">,</span> MR<span class="hl sym">) +</span> <span class="hl kwd">countMatches</span><span class="hl sym">(</span>B3<span class="hl sym">,</span> MR<span class="hl sym">)}</span>
+    <span class="hl kwa">end</span><span class="hl sym">.</span>
+
+<span class="hl kwd">printer</span><span class="hl sym">(</span>Pat<span class="hl sym">) -&gt;</span>
+    <span class="hl kwa">fun</span> <span class="hl sym">(</span>Num<span class="hl sym">) -&gt;</span> io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;~s ~b~n&quot;</span><span class="hl sym">, [</span>Pat<span class="hl sym">,</span> Num<span class="hl sym">])</span> <span class="hl kwa">end</span><span class="hl sym">.</span>
+
+<span class="hl kwd">countMatches</span><span class="hl sym">(</span>Data<span class="hl sym">,</span> RE<span class="hl sym">) -&gt;</span>
+    <span class="hl kwa">case</span> re<span class="hl sym">:</span><span class="hl kwd">run</span><span class="hl sym">(</span>Data<span class="hl sym">,</span> RE<span class="hl sym">, [</span>global<span class="hl sym">])</span> <span class="hl kwa">of</span>
+      <span class="hl sym">{</span>match<span class="hl sym">,</span> M<span class="hl sym">} -&gt;</span> <span class="hl kwb">length</span><span class="hl sym">(</span>M<span class="hl sym">);</span>
+      nomatch <span class="hl sym">-&gt;</span> <span class="hl num">0</span>
+    <span class="hl kwa">end</span><span class="hl sym">.</span>
+
+<span class="hl kwd">results</span><span class="hl sym">([{</span>PID<span class="hl sym">,</span> Fin<span class="hl sym">} |</span> R<span class="hl sym">]) -&gt;</span>
+    <span class="hl kwa">receive</span> <span class="hl sym">{</span>PID<span class="hl sym">,</span> Ret<span class="hl sym">} -&gt;</span> <span class="hl kwd">Fin</span><span class="hl sym">(</span>Ret<span class="hl sym">),</span> <span class="hl kwd">results</span><span class="hl sym">(</span>R<span class="hl sym">)</span> <span class="hl kwa">end</span><span class="hl sym">;</span>
+<span class="hl kwd">results</span><span class="hl sym">([]) -&gt;</span> ok<span class="hl sym">.</span>
+
+<span class="hl kwd">patterns</span><span class="hl sym">() -&gt;</span>
+    <span class="hl sym">[</span><span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+     <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="hl sym">].</span>
+
+<span class="hl kwd">read</span><span class="hl sym">() -&gt;</span>
+    Port <span class="hl sym">=</span> <span class="hl kwb">open_port</span><span class="hl sym">({</span>fd<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">}, [</span>in<span class="hl sym">,</span> <span class="hl kwb">binary</span><span class="hl sym">, {</span>line<span class="hl sym">,</span> <span class="hl num">256</span><span class="hl sym">}]),</span>
+    <span class="hl kwd">read</span><span class="hl sym">(</span>Port<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, [], []).</span>
+
+<span class="hl kwd">read</span><span class="hl sym">(</span>Port<span class="hl sym">,</span> Size<span class="hl sym">,</span> Seg<span class="hl sym">,</span> R<span class="hl sym">) -&gt;</span>
+    <span class="hl kwa">receive</span>
+      <span class="hl sym">{</span>Port<span class="hl sym">, {</span>data<span class="hl sym">, {</span>eol<span class="hl sym">, &lt;&lt;</span>$<span class="hl sym">&gt;:</span><span class="hl num">8</span><span class="hl sym">,</span> _<span class="hl sym">/</span><span class="hl kwb">binary</span><span class="hl sym">&gt;&gt; =</span> Line<span class="hl sym">}}} -&gt;</span>
+	  <span class="hl kwd">read</span><span class="hl sym">(</span>Port<span class="hl sym">,</span> Size <span class="hl sym">+</span> <span class="hl kwb">size</span><span class="hl sym">(</span>Line<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">, [],</span>
+	       <span class="hl sym">[</span><span class="hl kwd">iolist_to_binary</span><span class="hl sym">(</span>lists<span class="hl sym">:</span><span class="hl kwd">reverse</span><span class="hl sym">(</span>Seg<span class="hl sym">, [])) |</span> R<span class="hl sym">]);</span>
+      <span class="hl sym">{</span>Port<span class="hl sym">, {</span>data<span class="hl sym">, {</span>eol<span class="hl sym">,</span> Line<span class="hl sym">}}} -&gt;</span>
+	  <span class="hl kwd">read</span><span class="hl sym">(</span>Port<span class="hl sym">,</span> Size <span class="hl sym">+</span> <span class="hl kwb">size</span><span class="hl sym">(</span>Line<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">, [</span>Line <span class="hl sym">|</span> Seg<span class="hl sym">],</span> R<span class="hl sym">);</span>
+      <span class="hl sym">{</span><span class="hl str">'EXIT'</span><span class="hl sym">,</span> Port<span class="hl sym">,</span> normal<span class="hl sym">} -&gt;</span>
+	  <span class="hl sym">{</span>Size<span class="hl sym">, [</span><span class="hl kwd">iolist_to_binary</span><span class="hl sym">(</span>lists<span class="hl sym">:</span><span class="hl kwd">reverse</span><span class="hl sym">(</span>Seg<span class="hl sym">, [])) |</span> R<span class="hl sym">]};</span>
+      Other <span class="hl sym">-&gt;</span>
+	  io<span class="hl sym">:</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Wrong! ~p~n&quot;</span><span class="hl sym">, [</span>Other<span class="hl sym">]),</span>
+	  <span class="hl kwb">exit</span><span class="hl sym">(</span>bad_data<span class="hl sym">)</span>
+    <span class="hl kwa">end</span><span class="hl sym">.</span>
