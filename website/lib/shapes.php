@@ -37,7 +37,7 @@ $Body = & new Template(LIB_PATH);
 require_once(LIB_PATH.'lib_scorecard.php');
 
 $PageId = 'shapes';
-$Title = 'Shapes: Code-used and Time-used';
+$Title = 'Code-used Time-used Shapes';
 if ($DataSet == 'ndata'){ $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'shapes.tpl.php';
