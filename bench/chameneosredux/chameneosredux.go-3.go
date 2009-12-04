@@ -72,13 +72,13 @@ func main() {
          fmt.Printf("%s + %s -> %s\n", colname[c0], colname[c1], colname[complement[c0|c1<<2]])
       }
    }
+   fmt.Print("\n");
 
    pallmall([]int{blue, red, yellow});
    pallmall([]int{blue, red, yellow, red, yellow, blue, red, yellow, red, blue});
 }
 
 func pallmall(cols []int) {
-   fmt.Print("\n");
 
    // invariant: meetingplace always contains a value unless a creature
    // is currently dealing with it (whereupon it must put it back).
@@ -99,7 +99,7 @@ func pallmall(cols []int) {
       tot += result.met;
       fmt.Printf("%v%v\n", result.met, spell(result.same, true));
    }
-   fmt.Println(spell(tot, true));
+   fmt.Printf("%v\n\n", spell(tot, true));
 }
 
 // in this function, variables ending in 0 refer to the local creature,
