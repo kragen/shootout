@@ -1,15 +1,16 @@
 /* The Computer Language Benchmarks Game
  * http://shootout.alioth.debian.org/
  *
- * contributed by The Go Authors.
- * modified by Roger Peppe.
+ * contributed by Roger Peppe
  */
 
 package main
 
-import "fmt"
-import "flag"
-import "strconv"
+import (
+   "flag";
+   "fmt";
+   "strconv";
+)
 
 const (
    blue   = iota;
@@ -96,7 +97,7 @@ func pallmall(cols []int) {
    for _ = range (cols) {
       result := <-ended;
       tot += result.met;
-      fmt.Println(result.met, spell(result.same, true));
+      fmt.Printf("%v%v\n", result.met, spell(result.same, true));
    }
    fmt.Println(spell(tot, true));
 }
