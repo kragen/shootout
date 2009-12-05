@@ -4,14 +4,14 @@
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 ?>
 
-<h2><a href="#box" name="box">&nbsp;Which <strong>languages</strong> are <strong>fastest</strong>?</a>&nbsp;<em>Le mieux est l'ennemi du bien.</em></h2>
+<h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
 <?
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);
 ?>
 
-<p>Do the Time-used boxes overlap or is there clear separation between them? Which programming language implementations have the fastest programs?</p>
+<p>Do the Time-used boxes overlap or is there clear separation between them?<br/> Which programming language implementations have the fastest programs?</p>
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
@@ -81,7 +81,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;Which <strong>languages</strong> are <strong>fastest</strong>?</a></h3>
+<h3><a href="#about" name="about">&nbsp;<strong>Which languages are fastest?</strong></a></h3>
 <?=$About;?>
 
 
