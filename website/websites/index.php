@@ -53,7 +53,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Fastest</strong> <em>programs</em> in each <strong>programming language</strong></a></h5>
+<h5><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Fastest</strong> <i>programs</i> in each <strong>programming language</strong></a></h5>
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>
 
 <?
@@ -126,7 +126,7 @@ href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ub
 </table>
 
 
-<h5><br/>Compare <strong>fastest</strong> <em>programs</em> - <strong>programming languages</strong> Z to A</h5><br/>
+<h5><br/>Compare <strong>fastest</strong> <i>programs</i> - <strong>programming languages</strong> Z to A</h5><br/>
 
 <?php
 
