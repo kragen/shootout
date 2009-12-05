@@ -15,7 +15,6 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 
 <meta name="robots" content="index,follow,archive" /><meta name="revisit" content="1 days" />
 
-<meta name="keywords" content="fastest programming language faster programming languages fastest programs speed performance compare programs language comparison source code benchmarks game computers shootout" />
 <meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>Computer Language Benchmarks Game</title>
@@ -44,17 +43,17 @@ $ChosenUrl = $chosen[1];
 
 
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="./<?=$ChosenSite;?>/help.php">Help</a></h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="./<?=$ChosenSite;?>/help.php">Help</a></h1></td>
 </tr></table>
 
 <div id="home">
-<h5>Benchmarking programming languages?</h5>
+<h5><strong>Benchmarking programming languages</strong>?</h5>
 <p>How can we benchmark a programming language?<br/>
 We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>">Fastest <em>programs</em> in each programming language</a></h5>
+<h5><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Fastest</strong> <em>programs</em> in each <strong>programming language</strong></a></h5>
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>
 
 <?
@@ -127,7 +126,7 @@ href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ub
 </table>
 
 
-<h5><br/>Compare fastest <em>programs</em> - programming languages Z to A</h5><br/>
+<h5><br/>Compare <strong>fastest</strong> <em>programs</em> - <strong>programming languages</strong> Z to A</h5><br/>
 
 <?php
 

@@ -44,7 +44,7 @@ if ($TestName=='startup'){ $NString = ''; }
 ?>
 
 
-<h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?></a>&nbsp;benchmark&nbsp;<em>hypotheses non fingo</em></h2>
+<h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?></a>&nbsp;<strong>benchmark</strong>&nbsp;<em>hypotheses non fingo</em></h2>
 <p><a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<?=$TestTag;?>,&nbsp;<a href="help.php#nmeans"><?=$NString;?></a>.</p>
 <p>Which programs used least Code? Which programs use highly optimised assembly code libraries? Which programs make use of all the processor cores?</p>
 
@@ -264,5 +264,5 @@ if (sizeof($No_Program_Langs)>0){
 ?>
 </table>
 
-<h3><a href="#about" name="about">&nbsp;<?=$TestName;?>&nbsp;benchmark&nbsp;:&nbsp;<?=$TestTag;?></a></h3>
+<h3><a href="#about" name="about">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong>&nbsp;:&nbsp;<?=$TestTag;?></a></h3>
 <?=$About;?>

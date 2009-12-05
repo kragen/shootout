@@ -115,7 +115,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
-         $MetaKeywords = '<meta name="keywords" content="fastest programming language benchmark median boxplot" /><meta name="description" content="Which programming languages have the fastest programs?" />'; 
+         $MetaKeywords = '<meta name="description" content="Which programming languages have the fastest programs?" />';
 
       }  else {
         // Scorecard
@@ -154,9 +154,7 @@ if ($T=='all'){
 
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
-         $MetaKeywords = '<meta name="keywords" content=" '.
-            $LangName.' programs '.$LangName.' benchmark faster programs '.$LangName.' language '.$LangName.' ÷ '.$LangName2.'" />'.
-            '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
+         $MetaKeywords = '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
 
       } else {
         $Title = $LangName.' measurements';
@@ -192,8 +190,7 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-      $MetaKeywords = '<meta name="keywords" content="'.$TestName.' benchmark benchmarks program programs '.$Tests[$T][TEST_TAG].'" />'.
-         '<meta name="description" content="'.$TestName.' benchmark - '.$Tests[$T][TEST_TAG].'" />';
+      $MetaKeywords = '<meta name="description" content="'.$TestName.' benchmark - '.$Tests[$T][TEST_TAG].'" />';
 
 
    } else {              // Program

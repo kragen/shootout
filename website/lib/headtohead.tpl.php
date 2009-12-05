@@ -19,7 +19,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> programs faster?</a></h2>
+<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> <strong>programs</strong> <strong>faster</strong>?</a></h2>
 
 <p>Do the <?=$LangName;?> programs use optimized assembly code libraries? Are they small simple programs or very optimized programs? <strong>Do the <?=$LangName;?> programs use a fraction of the time used by other programs</strong> or do they use several times more? </p>
 
@@ -74,7 +74,7 @@ foreach($sTests as $Row){
 </table>
 <p><span class="num2">&#177;</span> look at the measurements and then <strong>look at the programs</strong>.<br/></p>
 
-<h2><a href="#measurements" name="measurements">&nbsp;Are the <?=$LangName;?> programs faster?</a></h2>
+<h2><a href="#measurements" name="measurements">&nbsp;Are the <?=$LangName;?> <strong>programs</strong> <strong>faster</strong>?</a></h2>
 
 <p></p>
 <table>
