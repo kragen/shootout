@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 10 with this 1KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><b>diff</b> program output N = 10 with this 1KB <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should</p>
@@ -21,7 +21,7 @@
 <p>Note: the tree should have tree-nodes all the way down, replacing the bottom nodes by some other value is not acceptable; and the bottom nodes should be at depth 0.</p>
 <p>Note: these programs are being measured with <em>the default initial heap size</em> - the measurements may be very different with a larger initial heap size or GC tuning.</p>
 
-<p><strong>Please don't implement your own custom <em>memory pool</em> or <em>free list</em></strong>.</p>
+<p><b>Please don't implement your own custom <em>memory pool</em> or <em>free list</em></b>.</p>
 <br />
 
 <p>The binary-trees benchmark is a simplistic adaptation of <a href="http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_bench/applet/GCBench.java">Hans Boehm's GCBench</a>,

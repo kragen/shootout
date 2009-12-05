@@ -19,9 +19,9 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;Are the <?=$LangName;?> <strong>programs</strong> <strong>faster</strong>?</a></h2>
+<h2><a href="#title" name="title">&nbsp;Are the <strong><?=$LangName;?></strong> <strong>programs</strong> <strong>faster</strong>?</a></h2>
 
-<p>Do the <?=$LangName;?> programs use optimized assembly code libraries? Are they small simple programs or very optimized programs? <strong>Do the <?=$LangName;?> programs use a fraction of the time used by other programs</strong> or do they use several times more? </p>
+<p>Do the <?=$LangName;?> programs use optimized assembly code libraries? Are they small simple programs or very optimized programs? <b>Do the <strong><?=$LangName;?></strong> programs use a fraction of the time used by other programs</b> or do they use several times more?</p>
 
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
@@ -74,7 +74,7 @@ foreach($sTests as $Row){
 </table>
 <p><span class="num2">&#177;</span> look at the measurements and then <strong>look at the programs</strong>.<br/></p>
 
-<h2><a href="#measurements" name="measurements">&nbsp;Are the <?=$LangName;?> <strong>programs</strong> <strong>faster</strong>?</a></h2>
+<h2><a href="#measurements" name="measurements">&nbsp;Are the <strong><?=$LangName;?></strong> <strong>programs</strong> <strong>faster</strong>?</a></h2>
 
 <p></p>
 <table>
@@ -145,6 +145,6 @@ foreach($sTests as $Row){
 
 </table>
 
-<h3><a href="#about" name="about">&nbsp;<?=$LangName;?></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
+<h3><a href="#about" name="about">&nbsp;<strong><?=$LangName;?></strong></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
 <p></p>
 <?=$About;?>
