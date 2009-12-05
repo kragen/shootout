@@ -41,7 +41,7 @@ object regexdna
       for ((pt, cres) <- patterns zip count_results)
          printf( "%s\t%d\n", pt, cres() )
 
-      printf( "%d\n%d\n%d\n", init_len, strip_len, replace_result() )
+      printf( "\n%d\n%d\n%d\n", init_len, strip_len, replace_result() )
    }
  
    @inline
