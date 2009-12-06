@@ -19,9 +19,14 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 
-<h2><a href="#title" name="title">&nbsp;<strong>Are the <?=$LangName;?> programs faster?</strong></a></h2>
 
-<p>Do the <?=$LangName;?> programs use optimized assembly code libraries? Are they small simple programs or very optimized programs? <b>Do the <strong><?=$LangName;?></strong> programs use a fraction of the time used by other programs</b> or do they use several times more?</p>
+<h2><a href="#ataglance" name="ataglance">&nbsp;1&nbsp;:&nbsp;<strong>Are the <?=$LangName;?> programs faster?</strong></a> <i>At a glance.</i></h2>
+
+<p>This chart shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used.</p>
+<p>Each chart bar shows, for one unidentified benchmark, how much the fastest <strong><?=$LangName;?></strong> program <i>used</i> compared to the fastest <?=$LangName2;?> program.</p>
+
+
+<!-- <p>Do the <?=$LangName;?> programs use optimized assembly code libraries? Are they small simple programs or very optimized programs? <b>Do the <strong><?=$LangName;?></strong> programs use a fraction of the time used by other programs</b> or do they use several times more?</p> -->
 
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
@@ -31,6 +36,12 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
  /></p>
 
 
+<h2><a href="#approximately" name="approximately">&nbsp;2&nbsp;:&nbsp;<strong>Are the <?=$LangName;?> programs faster?</strong></a> <i>Approximately.</i></h2>
+
+<p>This table shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used.</p>
+
+<p>Each table row shows, for one named benchmark, how much the fastest <strong><?=$LangName;?></strong> program <i>used</i> compared to the fastest <?=$LangName2;?> program.</p>
+
 <table>
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
@@ -38,7 +49,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 <tr><th colspan="5"><?=$ExplanatoryHeader;?></th></tr>
 
 <tr>
-<th>Programs</th>
+<th>Benchmark</th>
 <th><a href="help.php#measurecpu">Time</a></th>
 <th><a href="help.php#memory">Memory</a></th>
 <th><a href="help.php#gzbytes">Code</a></th>
@@ -58,8 +69,7 @@ foreach($sTests as $Row){
       $v = $data[$Link];
 
       if ($v[N_LINES] >= 0){
-         printf('<tr><td><a href="#%s">&darr;&nbsp;%s</a></td>',
-            $Link, $Name);
+         printf('<tr><td>&nbsp;%s</td>', $Name);
 
          if ($v[N_N]==0){ $n = '<td></td>';
          } else { $n = '<td class="smaller">&nbsp;'.number_format($v[N_N]).'</td>'; }
@@ -72,14 +82,17 @@ foreach($sTests as $Row){
 }
 ?>
 </table>
-<p><span class="num2">&#177;</span> look at the measurements and then <strong>look at the programs</strong>.<br/></p>
+<p><span class="num2">&#177;</span> read the measurements and then read the program source code.<br/></p>
 
-<h2><a href="#measurements" name="measurements">&nbsp;<strong>Are the <?=$LangName;?> programs faster?</strong></a></h2>
+<h2><a href="#measurements" name="measurements">&nbsp;3&nbsp;:&nbsp;<strong>Are the <?=$LangName;?> programs faster?</strong></a> <em>Measurements.</em></h2>
 
-<p></p>
+<p>This table shows <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
+
+<p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
+
 <table>
 <tr>
-<th>Program &amp; Logs</th>
+<th>Program Source Code</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
@@ -93,7 +106,7 @@ foreach($sTests as $Row){
    if ($Row[TEST_WEIGHT]<=0){ continue; }
 
    $Link = $Row[TEST_LINK];
-   $Name = $Row[TEST_NAME];
+   $TestName = $Row[TEST_NAME];
 
    if (isset($measurements[$Link])){
       if ($data[$Link][N_N]==0){
@@ -101,7 +114,7 @@ foreach($sTests as $Row){
       } else {
          $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a>%s&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $Name, $n);
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s programs">%s</a>%s&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName, $n);
 
       $ELAPSED = '';
       if (isset($measurements[$Link][1]) && ($measurements[$Link][0][DATA_TIME] < $measurements[$Link][1][DATA_TIME])){
@@ -113,8 +126,8 @@ foreach($sTests as $Row){
          $Name = $Langs[$k][LANG_FULL];
          $id = $Row[DATA_ID];
 
-         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-               $Link,$k,$id,$Langs[$k][LANG_HTML]);
+         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Program Source Code : %s %s">%s</a></td>',
+               $Link,$k,$id,$Name,$TestName,$Langs[$k][LANG_HTML]);
 
          $fc = number_format($Row[DATA_FULLCPU],2);
          if ($Row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$Row[DATA_MEMORY]); }

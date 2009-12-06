@@ -382,7 +382,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <strong>Ubuntu&#8482; 9.04 Linux</strong> Kernel 2.6.28-15-generic</p>
+<dd><p>We use <strong>Ubuntu&#8482; 9.04 Linux</strong> Kernel 2.6.28-17-generic</p>
 
 <p>The out-of-date measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
 </dd>
