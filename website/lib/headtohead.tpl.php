@@ -86,7 +86,7 @@ foreach($sTests as $Row){
 
 <h2><a href="#measurements" name="measurements">&nbsp;3&nbsp;:&nbsp;<strong>Are the <?=$LangName;?> programs faster?</strong></a> <em>Measurements.</em></h2>
 
-<p>This table shows <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
+<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
 
 <p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
 

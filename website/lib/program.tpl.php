@@ -7,9 +7,11 @@ $LangName = $Langs[$SelectedLang][LANG_FULL];
 $P = $SelectedLang.'-'.$Id;
 ?>
 
-<h2><a href="#prog" name="prog">&nbsp;<?=$Title;?></a></h2>
+<h2><a href="#prog" name="prog">&nbsp;<?=$Title;?> measurements</a></h2>
 
-<p>Does this <?=$LangName;?> program work for all the input values? Why not? Read&nbsp;<a href="#log">&darr;&nbsp;the&nbsp;log</a>. Does this program use optimized assembly code libraries? Is this program small and simple, or very optimized? How could this program be improved?</p>
+<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
+
+<p>Each table row shows, for this <?=$LangName;?> program, performance measurements made with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>
@@ -48,12 +50,18 @@ foreach($Data as $d){
 }
 ?>
 </table>
+
+<p>Read the <a href="#log">&darr;&nbsp;make, command line, and program output logs</a> for more details.</p>
+
+
+<h2><a href="#sourcecode" name="sourcecode">&nbsp;<?=$Title;?> source code</a></h2>
+
 <pre><?=$Code;?></pre>
 
-<h3><a href="#about" name="about">&nbsp;about the program</a></h3>
+<h3><a href="#about" name="about">&nbsp;notes</a></h3>
 <?=$About;?>
 
-<h3><a href="#log" name="log">&nbsp;build &amp; benchmark results</a></h3>
+<h3><a href="#log" name="log">&nbsp;make, command-line, and program output logs</a></h3>
 <pre><?=$Log;?></pre>
 
 

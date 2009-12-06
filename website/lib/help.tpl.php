@@ -189,7 +189,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#nmeans" name="nmeans">What does N mean?</a></dt>
-<dd><p>N means the value passed to the program on the command-line (or the value used to create the data file passed to the program on stdin). Larger N causes the program to do more work - measurements are shown for the largest N, the largest workload.</p>
+<dd><p>N means the value passed to the program on the command-line (or the value used to create the data file passed to the program on stdin). Larger N causes the program to do more work - mostly measurements are shown for the largest N, the largest workload.</p>
 <p>Read <a href="#pretest">&darr;&nbsp;How did you measure?</a></p>
 </dd>
 
@@ -241,7 +241,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>Code-used?</strong></a></dt>
-<dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression.</p>
+<dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression. The Code-used measurement is the size in bytes of that GZip compressed source-code file.</p>
 </dd>
 
 <dt><a href="#cpuload" name="cpuload">How did you measure <strong>~ CPU Load?</strong></a></dt>

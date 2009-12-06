@@ -148,13 +148,13 @@ if ($T=='all'){
 
       if ($L!=$L2){
          $LangName2 = $Langs[$L2][LANG_FULL];
-         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2.' benchmarks';
+         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2.' comparison';
          $TemplateName = 'headtohead.tpl.php';
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
-         $MetaKeywords = '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language benchmarks" />';
+         $MetaKeywords = '<meta name="description" content="'.$LangName.' ÷ '.$LangName2.' programming language comparison" />';
 
       } else {
         $Title = $LangName.' benchmarks';
