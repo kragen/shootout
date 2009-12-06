@@ -7,11 +7,9 @@ $LangName = $Langs[$SelectedLang][LANG_FULL];
 $P = $SelectedLang.'-'.$Id;
 ?>
 
-<h2><a href="#prog" name="prog">&nbsp;<?=$Title;?> measurements</a></h2>
+<h2><a href="#prog" name="prog">&nbsp;performance measurements</a></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
-
-<p>Each table row shows, for this <?=$LangName;?> program, performance measurements made with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
+<p>Each table row shows performance measurements of this <?=$LangName;?> program with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>

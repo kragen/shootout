@@ -82,7 +82,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <tr>
 <th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
-<th>Program &amp; Logs</th>
+<th>Program Source Code</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
@@ -134,6 +134,7 @@ foreach($Accepted as $d){
    unset($No_Program_Langs[$k]);
    $Name = $Langs[$k][LANG_FULL];
    $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
+   $TipName = $Name.IdName($d[DATA_ID]);
 
    $id = $d[DATA_ID];
    $fullcpu = $d[DATA_FULLCPU];
@@ -152,8 +153,8 @@ foreach($Accepted as $d){
    $gz = $d[DATA_GZ];
 
    printf('<tr>'); echo "\n";
-   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-      PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
+   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Program Source Code : %s">%s</a></td>',
+      PFx($ratio),$SelectedTest,$k,$id,$TipName,$HtmlName); echo "\n";
 
    printf('<td%s>%s</td><td%s>%s</td><td%s>%s</td><td%s>%d</td><td class="smaller">&nbsp;&nbsp;%s</td>',
          $CPU, $fc, $ELAPSED, $e, $MEM, $kb, $GZBYTES, $gz, $ld); echo "\n";
@@ -171,6 +172,7 @@ foreach($Langs as $k => $v){
          printf('<tr>'); echo "\n";
          $Name = $v[LANG_FULL];
          $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
+         $TipName = $Name.IdName($d[DATA_ID]);
 
          $id = $d[DATA_ID];
          $fullcpu = $d[DATA_FULLCPU];
@@ -181,8 +183,8 @@ foreach($Langs as $k => $v){
          } else { $ratio = ''; $e = ''; }
 
 
-         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-            $ratio,$SelectedTest,$k,$id,$HtmlName); echo "\n";
+         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Program Source Code : %s">%s</a></td>',
+            $ratio,$SelectedTest,$k,$id,$TipName,$HtmlName); echo "\n";
 
          $message = StatusMessage($d[DATA_STATUS]);
          printf('<td>%s</td><td>%s</td><td></td><td>%s</td><td></td>', $message, $e, $gz);
