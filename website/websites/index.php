@@ -85,7 +85,7 @@ $u32Chosen = $choices[($k+9)%$nchoices];
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
 <h3><span class="u32q">
 <a title="Fastest in each programming language, 32 bit Ubuntu."
 href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
@@ -96,7 +96,7 @@ href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Fastest in each programming language, 64 bit Ubuntu."
 href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
@@ -108,7 +108,7 @@ href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
@@ -118,7 +118,7 @@ href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
 <h3><span class="u32">
 <a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
