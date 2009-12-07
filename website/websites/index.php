@@ -18,8 +18,8 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <meta name="description" content="Compare programming language performance on a dozen flawed benchmarks and contribute faster more elegant programs." />
 
 <title>Computer Language Benchmarks Game</title>
-<link rel="stylesheet" type="text/css" href="./benchmark.css" />
-<link rel="shortcut icon" href="./favicon.ico" />
+<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark.css" />
+<link rel="shortcut icon" href="http://shootout.alioth.debian.org/favicon.ico" />
 </head>
 
 <body id="core">
@@ -43,7 +43,7 @@ $ChosenUrl = $chosen[1];
 
 
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="./<?=$ChosenSite;?>/help.php">Help</a></h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?>/help.php">Help</a></h1></td>
 </tr></table>
 
 <div id="home">
@@ -53,8 +53,8 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Fastest</strong> <i>programs</i> in each <strong>programming language</strong></a></h5>
-<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>
+<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Fastest</strong> <i>programs</i> in each <strong>programming language</strong></a></h5>
+<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>%s/%s.
 
 <?
 $choices = array(
@@ -85,10 +85,10 @@ $u32Chosen = $choices[($k+9)%$nchoices];
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u32q/data/data.csv'))) ?></a></p>
 <h3><span class="u32q">
 <a title="Fastest in each programming language, 32 bit Ubuntu."
-href="./u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -96,10 +96,10 @@ href="./u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#848
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u64q/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Fastest in each programming language, 64 bit Ubuntu."
-href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -108,9 +108,9 @@ href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ub
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u64/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
-<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -118,9 +118,9 @@ href="./u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ub
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('http://shootout.alioth.debian.org/u32/data/data.csv'))) ?></a></p>
 <h3><span class="u32">
-<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -147,7 +147,7 @@ function ReadA($FileName){
 function Keys($sites){
    $siteKeys = array();
    foreach($sites as $s){
-      $a = array_flip( array_keys( ReadA('./'.$s.'/include.csv') ));
+      $a = array_flip( array_keys( ReadA('http://shootout.alioth.debian.org/'.$s.'/include.csv') ));
       $akeys = array_keys($a);
       foreach($akeys as $k){ $a[$k] = $s; }
       $siteKeys[] = $a;
@@ -184,10 +184,10 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
             elseif ($site == 'gp4'){ $arch = '<em>Gentoo</em>'; }
 
             if (isset($a[LANG_SPECIALURL]) && !empty($a[LANG_SPECIALURL])){ // special_url
-                printf('<p><a href="./%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
+                printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php">%s</a> <span class="smaller">%s %s</span></p>',
                    $site, $a[LANG_SPECIALURL], $a[LANG_HTML], $tag, $arch);
             } else {
-                printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
+                printf('<p><a href="http://shootout.alioth.debian.org/%s/benchmark.php?test=all&amp;lang=%s">%s</a> <span class="smaller">%s %s</span></p>',
                    $site, $link, $a[LANG_HTML], $tag, $arch);
             }
 
@@ -225,8 +225,8 @@ foreach($Langs as $a){
 
 
 <p class="imgfooter">
-<a href="./u64/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
-   <img src="./open_source_button.png" alt="Revised BSD license" height="31" width="88" />
+<a href="http://shootout.alioth.debian.org/u64/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+   <img src="http://shootout.alioth.debian.org/open_source_button.png" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
 
