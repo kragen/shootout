@@ -55,7 +55,7 @@ foreach($score as $k => $v){
 
 </td><td>
 
-<form class="score" method="get" action="fun.php">
+<form class="score" method="get" action="which-language-is-best.php">
 
 <table>
 <colgroup span="2" class="txt"></colgroup>

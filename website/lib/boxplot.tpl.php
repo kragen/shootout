@@ -19,7 +19,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
    width="480" height="300"
  /></p>
 
-<form method="get" action="fastest.php">
+<form method="get" action="which-languages-are-fastest.php">
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
