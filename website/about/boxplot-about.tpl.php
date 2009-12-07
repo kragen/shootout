@@ -5,4 +5,4 @@
 
 <p>For each benchmark, <b>F</b> is the fastest time measurement; for each language implementation, each time measurement <b>T</b> is then normalized to <b><sup>T</sup>/<sub>F</sub></b></p>
 
-<p><br/>There are other ways to analyse and present this data: look for patterns in <a href="shapes.php?d=<?=$DataSet?>">Code-used Time-used Shapes</a> or ask <a href="fun.php?d=<?=$DataSet?>">Which language is best?</a> or take the <a href="summarydata.php?d=<?=$DataSet?>">Summary Data</a> and do your own analysis!</p>
+<p><br/>There are other ways to analyse and present this data: look for patterns in <a href="code-used-time-used-shapes.php?d=<?=$DataSet?>">Code-used Time-used Shapes</a> or ask <a href="which-language-is-best.php?d=<?=$DataSet?>">Which language is best?</a> or take the <a href="summarydata.php?d=<?=$DataSet?>">Summary Data</a> and do your own analysis!</p>
