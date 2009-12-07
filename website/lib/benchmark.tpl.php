@@ -44,9 +44,10 @@ if ($TestName=='startup'){ $NString = ''; }
 ?>
 
 
-<h2><a href="#bench" name="bench">&nbsp;<?=$TestName;?></a>&nbsp;<strong>benchmark</strong>&nbsp;<em>hypotheses non fingo</em></h2>
-<p><a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<?=$TestTag;?>,&nbsp;<a href="help.php#nmeans"><?=$NString;?></a>.</p>
-<p>Which programs used least Code? Which programs use highly optimised assembly code libraries? Which programs make use of all the processor cores?</p>
+<h2><a href="#chart" name="chart">&nbsp;How big is the <strong>measured performance difference</strong>?</a></h2>
+
+<p>Each chart bar shows <i>how much more</i> Time and Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<?=$TestName;?></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
+
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
 
@@ -55,6 +56,11 @@ if ($TestName=='startup'){ $NString = ''; }
    title=""
    width="480" height="225"
  /></p>
+ 
+
+<h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="help.php#nmeans"><?=$NString;?></a></h2>
+
+<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>               
 
 <table>
 <colgroup span="2" class="txt"></colgroup>

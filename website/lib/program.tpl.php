@@ -9,7 +9,7 @@ $P = $SelectedLang.'-'.$Id;
 
 <h2><a href="#prog" name="prog">&nbsp;performance measurements</a></h2>
 
-<p>Each table row shows performance measurements of this <?=$LangName;?> program with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
+<p>Each table row shows performance measurements for this <?=$LangName;?> program with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>

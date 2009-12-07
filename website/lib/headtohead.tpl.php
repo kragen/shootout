@@ -144,7 +144,7 @@ foreach($sTests as $Row){
       }
    }
    else {
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all">%s</a></th><th colspan="3"></th></tr>', $Link, $Link, $Name);
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s programs">%s</a></th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName);
 
       if (isset($data[$Link])){
          printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a><td colspan="2"><span class="message">%s</span></td><td colspan="3"></td></tr>', $Link,$SelectedLang,$data[$Link][N_ID],$Langs[$SelectedLang][LANG_HTML],StatusMessage($data[$Link][N_LINES]));

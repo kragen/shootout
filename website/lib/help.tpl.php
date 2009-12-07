@@ -573,12 +573,12 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 <dt><a href="#version" name="version">Where can I see which language version was used?</a></dt>
-<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="about the C gcc language"><strong>language comparison page</strong></a>.</p>
+<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="C GNU gcc : unchecked low-level programming"><strong>language measurements page</strong></a>.</p>
 </dd>
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
-<dd><p>You can see the build commands and runtime commands on each program page in the 
-<a href="benchmark.php?test=nbody&amp;lang=gcc&amp;id=1#log" title="build &amp; benchmark results"><strong>build &amp; benchmark results</strong></a> section.</p>
+<dd><p>You can see the build commands and runtime options at the bottom of each program page -
+<a href="benchmark.php?test=nbody&amp;lang=gcc&amp;id=1#log" title="make, command line, and program output logs"><b>make, command line, and program output logs</b></a>.</p>
 </dd>
 
 <dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
