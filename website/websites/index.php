@@ -27,13 +27,13 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <?
 $choices = array(
    array('u32q','/which-languages-are-fastest.php'),
-   array('u64q','/code-used-time-used-shapes.php'),
+   array('u64q','/shapes.php'),
    array('u32','/which-languages-are-fastest.php'),
-   array('u32','/code-used-time-used-shapes.php'),
+   array('u32','/shapes.php'),
    array('u64q','/fwhich-languages-are-fastest.php'),
-   array('u32q','/code-used-time-used-shapes.php'),
+   array('u32q','/shapes.php'),
    array('u64','/which-languages-are-fastest.php'),
-   array('u64','/code-used-time-used-shapes.php')
+   array('u64','/shapes.php')
    );
 
 $chosen = $choices[$threedays%8];
