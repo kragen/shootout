@@ -4,4 +4,4 @@
 <p>Thanks to Guillaume Marceau for demonstrating there was interest in this kind of presentation.</p>
 
 
-<p><br/>There are other ways to analyse and present this data: ask <a href="which-languages-are-fastest.php">Which languages are fastest?</a> or <a href="fun.php">Which language is best?</a> or take the <a href="summarydata.php">Summary Data</a> and do your own analysis!</p>
+<p><br/>There are other ways to analyse and present this data: ask <a href="which-languages-are-fastest.php">Which languages are fastest?</a> or <a href="which-language-is-best.php">Which language is best?</a> or take the <a href="summarydata.php">Summary Data</a> and do your own analysis!</p>
