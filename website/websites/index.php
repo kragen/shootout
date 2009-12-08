@@ -27,13 +27,13 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
 <?
 $choices = array(
    array('u32q','/which-languages-are-fastest.php'),
-   array('u64q','/shapes.php'),
+   array('u64q','/code-used-time-used-shapes.php'),
    array('u32','/which-languages-are-fastest.php'),
-   array('u32','/shapes.php'),
+   array('u32','/code-used-time-used-shapes.php'),
    array('u64q','/fwhich-languages-are-fastest.php'),
-   array('u32q','/shapes.php'),
+   array('u32q','/code-used-time-used-shapes.php'),
    array('u64','/which-languages-are-fastest.php'),
-   array('u64','/shapes.php')
+   array('u64','/code-used-time-used-shapes.php')
    );
 
 $chosen = $choices[$threedays%8];
@@ -53,7 +53,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Fastest</strong> <i>programs</i> in each <strong>programming language</strong></a></h5>
+<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>">Which <strong>programming language</strong> implementations have the <strong>fastest</strong> programs?</a></h5>
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>
 
 <?
