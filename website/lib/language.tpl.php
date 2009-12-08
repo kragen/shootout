@@ -9,7 +9,7 @@ $Link = $Row[LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 ?>
 
-<p>For more information about a Timeout or Error click the program name and scroll-down to the 'build &amp; benchmark results'.</p>
+<p>For more information about a Timeout or Error click the program name and scroll-down to the "make, command line, and program output logs".</p>
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
 <h2><a href="#title" name="title">&nbsp;<?=$LangName;?> measurements</a></h2>
 
@@ -17,7 +17,7 @@ $Family = $Row[LANG_FAMILY];
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
 <tr>
-<th>Program &amp; Logs</th>
+<th>Program Source Code</th>
 <th><a href="help.php#measurecpu">Time&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
 <th><a href="help.php#gzbytes">Size B</a></th>
