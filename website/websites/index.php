@@ -53,7 +53,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>">Which <strong>programming languages</strong> have the <strong>fastest</strong> programs?</a></h5>
+<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Which programming languages have the fastest programs?</strong></a></h5>
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p><br/>
 
 <?
@@ -126,7 +126,8 @@ href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>
 </table>
 
 
-<h5><br/>Compare <strong>fastest</strong> <i>programs</i> - <strong>programming languages</strong> Z to A</h5><br/>
+<h5><br/><strong>Programming language comparisons</strong> Z to A</h5><br/>
+
 
 <?php
 
