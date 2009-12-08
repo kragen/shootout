@@ -130,6 +130,7 @@ if ($T=='all'){
          $TemplateName = 'scorecard.tpl.php';
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'scorecard-about.tpl.php';
+         $About->set('DataSet', $DataSet);
          $W = Weights($Tests, $Action, $HTTP_GET_VARS);
          $Body->set('DataSet', $DataSet);
          $Body->set('W', $W);
