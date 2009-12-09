@@ -1,23 +1,30 @@
 <?   // Copyright (c) Isaac Gouy 2009 ?>
 
 <? 
-MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
-?>
+   MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 
-<h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
-
-<?
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);
 ?>
 
-<p>Do the Time-used boxes overlap or is there clear separation between them?<br/> Which programming language implementations have the fastest programs?</p>
+<h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a></h2>
+
+<p>This chart shows one <em>comparison</em> - <a href="help.php#measurecpu">Time-used</a>.</p>
+
+<p>Each chart box shows the middle 50% of program times measured for a programming language implementation. Each horizontal black bar shows the median program time measured.</p>
+
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
    title=""
    width="480" height="300"
  /></p>
+
+<h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
+
+<p>Select which language implementations to compare in the chart.</p>
+
+<p>Compare 2 language implementations directly, one-against-another for all the benchmarks.</p>
 
 <form method="get" action="which-languages-are-fastest.php">
 
@@ -34,7 +41,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 
 <tr>
 <th>&nbsp;</th>
-<th>language implementation</th>
+<th>compare 2</th>
 <th><a href="#about">&nbsp;|-</a></th>
 <th><a href="#about">&nbsp;|---</a></th>
 <th><a href="#about">&nbsp;25%</a></th>
@@ -57,9 +64,9 @@ foreach($score as $k => $v){
    printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', $k, $checked); echo "\n";
 
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
-      printf('<td><a href="%s.php">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$HtmlName); 
+      printf('<td><a href="%s.php" title="Compare %s against another language implementation">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Name,$HtmlName); 
    } else {
-      printf('<td><a href="benchmark.php?test=all&amp;lang=%s">%s</a></td>', $k,$HtmlName);
+      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s against another language implementation">%s</a></td>', $k,$Name,$HtmlName);
    }
    echo "\n";
 
