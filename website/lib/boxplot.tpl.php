@@ -11,7 +11,7 @@
 
 <p>This chart shows one <em>comparison</em> - <a href="help.php#measurecpu">Time-used</a>.</p>
 
-<p>Each chart box shows the middle 50% of program times measured for a programming language implementation. Each horizontal black bar shows the median program time measured for a programming language implementation.</p>
+<p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows the median program time measured.</p>
 
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
