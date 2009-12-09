@@ -22,9 +22,9 @@
 
 <h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
-<p>Select which language implementations to compare in the chart.</p>
+<p>Select which language implementations you want to compare in the chart.</p>
 
-<p>Compare 2 language implementations directly, one-against-another for all the benchmarks.</p>
+<p>Compare 2 language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 <form method="get" action="which-languages-are-fastest.php">
 
