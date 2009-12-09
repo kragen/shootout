@@ -62,7 +62,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>         
 
-<p>Compare how much Memory the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb" title="Sort by Memory-used KB">sort Memory KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" title="Sort by Compressed Source Code size Bytes">sort Code B</a></p>      
+<p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb" title="Sort by Memory-used KB">sort Memory KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" title="Sort by Compressed Source Code size Bytes">sort Code B</a></p>      
 
 <p>Column &#215; shows <i>how much</i> each program used compared to the program that used least.</p> 
 
