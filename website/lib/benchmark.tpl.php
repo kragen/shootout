@@ -46,7 +46,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#chart" name="chart">&nbsp;How big is the <strong>measured performance difference</strong>?</a></h2>
 
-<p>Each chart bar shows <i>how many times more</i> Time and Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong><?=$TestName;?></strong></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
+<p>Each chart bar shows <i>how many times more</i> Time and <i>how many times more</i> Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong><?=$TestName;?></strong></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
 
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
