@@ -22,7 +22,7 @@
 
 <h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
-<p>Select which language implementations you want to compare in the chart.</p>
+<p>Select which language implementations you want to compare and click <b>chart</b>.</p>
 
 <p>Compare 2 language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
@@ -34,7 +34,7 @@
 <tr class="score">
 <td colspan="2"><? MkDataSetMenu($DataSet); ?></td>
 <td colspan="7" class="num">
-<input type="submit" name="calc" value="calculate" />
+<input type="submit" name="calc" value="chart" />
 <input type="submit" name="calc" value="reset" />
 </td>
 </tr>
@@ -79,7 +79,7 @@ foreach($score as $k => $v){
 
 <tr class="score">
 <td colspan="9" class="num">
-<input type="submit" name="calc" value="calculate" />
+<input type="submit" name="calc" value="chart" />
 <input type="submit" name="calc" value="reset" />
 </td>
 </tr>
