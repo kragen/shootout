@@ -46,7 +46,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#chart" name="chart">&nbsp;How big is the <strong>measured performance difference</strong>?</a></h2>
 
-<p>Each chart bar shows <i>how much more</i> Time and Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<?=$TestName;?></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
+<p>Each chart bar shows <i>how much more</i> Time and Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong><?=$TestName;?></strong></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
 
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
@@ -58,9 +58,11 @@ if ($TestName=='startup'){ $NString = ''; }
  /></p>
  
 
-<h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="help.php#nmeans"><?=$NString;?></a></h2>
+<h2><a href="#table" name="table">&nbsp;<strong><?=$TestName;?>&nbsp;benchmark</strong></a>&nbsp;<a href="help.php#nmeans"><?=$NString;?></a></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>               
+<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>         
+
+<p>Compare how much Memory the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb" title="Sort by Memory-used KB">sort Memory KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" title="Sort by Compressed Source Code size Bytes">sort Code B</a></p>       
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
@@ -78,7 +80,7 @@ if ($TestName=='startup'){ $NString = ''; }
 </th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb"
-   title="Sort by Memory Use KB">sort</a>
+   title="Sort by Memory-used KB">sort</a>
 </th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz"
@@ -272,5 +274,5 @@ if (sizeof($No_Program_Langs)>0){
 ?>
 </table>
 
-<h3><a href="#about" name="about">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong>&nbsp;:&nbsp;<?=$TestTag;?></a></h3>
+<h3><a href="#about" name="about">&nbsp;<strong><?=$TestName;?>&nbsp;benchmark</strong>&nbsp;:&nbsp;<?=$TestTag;?></a></h3>
 <?=$About;?>
