@@ -7,7 +7,8 @@ define('TEST_LINK',0);
 define('TEST_NAME',1);
 define('TEST_TAG',2);
 define('TEST_WEIGHT',3);
-define('TEST_DATE',4);
+define('TEST_META',4);
+define('TEST_DATE',5);
 
 define('LANG_LINK',0);
 define('LANG_FAMILY',1);

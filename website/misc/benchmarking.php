@@ -1,9 +1,9 @@
-<p>"we have found that the <strong>CPU time is rarely the limiting factor</strong>; the expressibility of the language
+<p>"we have found that the <b>CPU time is rarely the limiting factor</b>; the expressibility of the language
 means that most programs are small and spend most of their time in I/O and native run-time code."
 </p>
 
 <dl>
-<dt><a href="#flawed" name="flawed">&nbsp;Flawed Benchmarks</a></dt>
+<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed Benchmarks</strong></a></dt>
 <dd>
 <dl>
 <dt><a href="#your" name="your">Are <strong>your programs</strong> even like these benchmarks?</a></dt>
@@ -57,18 +57,18 @@ means that most programs are small and spend most of their time in I/O and nativ
 </ul>
 </dd>
 
-<dt><a href="#app" name="app"><strong>"your application is the ultimate benchmark"</strong></a></dt>
+<dt><a href="#app" name="app"><b>"your application is the <strong>ultimate benchmark</strong>"</b></a></dt>
 <dd>
 <blockquote><p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric,
-the origin of which is unknown to me but that may very well be Wirth's own invention. He used <strong>the 
-compiler's self-compilation speed</strong> as a measure of the compiler's quality. Considering that Wirth's 
+the origin of which is unknown to me but that may very well be Wirth's own invention. He used <b>the 
+compiler's self-compilation speed</b> as a measure of the compiler's quality. Considering that Wirth's 
 compilers were written in the languages they compiled, and that compilers are substantial and non-trivial
 pieces of software in their own right, this introduced a highly practical benchmark that directly
 contested a compiler's complexity against its performance. Under the self compilation speed benchmark,
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
 that the intrinsic cost of the new code addition was fully compensated." <br/><a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf">Oberon: The Overlooked Jewel</a> (pdf) Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
-<blockquote><p>"<strong>Overall Performance: PHP is rarely the bottleneck</strong>" <br/><a href="http://talks.php.net/show/drupal08/7">Simple is Hard, DrupalCon 2008</a> (HTML slides) Rasmus Lerdorf</p></blockquote>
+<blockquote><p>"<strong>Overall Performance</strong><b>: PHP is rarely the bottleneck</b>" <br/><a href="http://talks.php.net/show/drupal08/7">Simple is Hard, DrupalCon 2008</a> (HTML slides) Rasmus Lerdorf</p></blockquote>
 </dd>
 
 </dl>
@@ -76,14 +76,14 @@ that the intrinsic cost of the new code addition was fully compensated." <br/><a
 
 
 
-<dt><a href="#comparison" name="comparison">&nbsp;Flawed Comparisons</a></dt>
+<dt><a href="#comparison" name="comparison">&nbsp;<strong>Flawed Comparisons</strong></a></dt>
 <dd>
 <dl>
 <dd><p>Programming language implementations are compared against each other as though
  the designers intended them to be used for the exact same purpose - that just isn't so.
 </p></dd>
 
-<dt><a href="#scope" name="scope"><strong>Different design intentions - scope</strong></a></dt>
+<dt><a href="#scope" name="scope"><b>Different design intentions - scope</b></a></dt>
 <dd><blockquote><p>"Lua is a tiny and simple language, partly because it does not try to do what C is already 
 good for, such as sheer performance, low-level operations, or interface with third-party 
 software. Lua relies on C for those tasks."<br />
@@ -95,7 +95,7 @@ software. Lua relies on C for those tasks."<br />
 </p></blockquote>
 </dd>
 
-<dt><a href="#scale" name="scale"><strong>Different design intentions - scale</strong></a></dt>
+<dt><a href="#scale" name="scale"><b>Different design intentions - scale</b></a></dt>
 <dd><blockquote><p>"Lua is not intended for building huge programs, where many programmers are involved
 for long periods. Quite the opposite, Lua aims at small to medium programs, usually part
  of a larger system, typically developed by one or a few programmers, or even by non 
@@ -112,7 +112,7 @@ components continues to be a central idea in the design."<br />
 
 </dd>
 
-<dt><a href="#domain" name="domain"><strong>Different design intentions - domain</strong></a></dt>
+<dt><a href="#domain" name="domain"><b>Different design intentions - domain</b></a></dt>
 <dd>
 <blockquote><p>'Our system [Erlang] was originally designed for building telecoms switching systems.
 Telecoms switching systems have demanding requirements in terms
