@@ -46,7 +46,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#chart" name="chart">&nbsp;How big is the <strong>measured performance difference</strong>?</a></h2>
 
-<p>Each chart bar shows <i>how much more</i> Time and Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong><?=$TestName;?></strong></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
+<p>Each chart bar shows <i>how many times more</i> Time and Memory some <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<strong><?=$TestName;?></strong></a> program used, compared to the program that used least Time and the program that used least Memory.</p>
 
 
 <? list($dtime,$dmem) = TimeMemoryRatios(&$Accepted,$Sort); ?>
@@ -62,9 +62,9 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>         
 
-<p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb" title="Sort by Memory-used KB">sort Memory KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz" title="Sort by Compressed Source Code size Bytes">sort Code B</a></p>      
+<p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz">sort Code&nbsp;B</a></p>      
 
-<p>Column &#215; shows <i>how much</i> each program used compared to the program that used least.</p> 
+<p>Column &#215; shows <i>how many times more</i> each program used compared to the program that used least.</p> 
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
@@ -86,13 +86,13 @@ if ($TestName=='startup'){ $NString = ''; }
 </th>
 <th>
    <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz"
-   title="Sort by Compressed Source Code size Bytes">sort</a>
+   title="Sort by Code-used Bytes">sort</a>
 </th>
 </tr>
 
 <tr>
 <th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
-<th>Program Source Code</th>
+<th>Program&nbsp;Source&nbsp;Code</th>
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
@@ -163,7 +163,7 @@ foreach($Accepted as $d){
    $gz = $d[DATA_GZ];
 
    printf('<tr>'); echo "\n";
-   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Program Source Code : %s">%s</a></td>',
+   printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s">%s</a></td>',
       PFx($ratio),$SelectedTest,$k,$id,$TipName,$HtmlName); echo "\n";
 
    printf('<td%s>%s</td><td%s>%s</td><td%s>%s</td><td%s>%d</td><td class="smaller">&nbsp;&nbsp;%s</td>',
@@ -193,7 +193,7 @@ foreach($Langs as $k => $v){
          } else { $ratio = ''; $e = ''; }
 
 
-         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Program Source Code : %s">%s</a></td>',
+         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s">%s</a></td>',
             $ratio,$SelectedTest,$k,$id,$TipName,$HtmlName); echo "\n";
 
          $message = StatusMessage($d[DATA_STATUS]);
@@ -213,6 +213,7 @@ if (sizeof($Special)>0){
    foreach($Special as $d){
       $k = $d[DATA_LANG];
       $Name = $Langs[$k][LANG_FULL];
+      $TipName = $Name.IdName($d[DATA_ID]);
       $HtmlName = $Langs[$k][LANG_HTML].IdName($d[DATA_ID]);
 
       if ($Sort=='fullcpu'){   
@@ -237,14 +238,14 @@ if (sizeof($Special)>0){
       printf('<tr>'); echo "\n";
 
       if ($status < 0){
-         printf('<td>&nbsp;</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-            $SelectedTest,$k,$id,$HtmlName); echo "\n";
+         printf('<td>&nbsp;</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s">%s</a></td>',
+            $SelectedTest,$k,$id,$TipName,$HtmlName); echo "\n";
 
          printf('<td>%s</td><td>&nbsp;</td><td>&nbsp;</td><td>%d</td>', StatusMessage($status), $gz);
       }
       else {
-         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>',
-            PFx($ratio),$SelectedTest,$k,$id,$HtmlName); echo "\n";
+         printf('<td>%s</td><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s">%s</a></td>',
+            PFx($ratio),$SelectedTest,$k,$id,$TipName,$HtmlName); echo "\n";
          printf('<td>%0.2f</td><td>%0.2f</td><td>%s</td><td>%d</td><td></td>', $fullcpu, $e, $kb, $gz ); echo "\n";
       }
       echo "</tr>\n";
