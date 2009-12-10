@@ -22,7 +22,7 @@
 
 <h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
-<p>Select which language implementations you want to compare and click <b>chart</b>.</p>
+<p>Select which language implementations you want to compare before you click the chart button.</p>
 
 <p>Compare 2 language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
