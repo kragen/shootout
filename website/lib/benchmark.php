@@ -115,7 +115,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
-         $MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') &amp; how your favorite language compares." />';
+         $MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 
       }  else {
         // Scorecard
@@ -149,7 +149,7 @@ if ($T=='all'){
 
       if ($L!=$L2){
          $LangName2 = $Langs[$L2][LANG_FULL];
-         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2.' comparison';
+         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2;
          $TemplateName = 'headtohead.tpl.php';
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
@@ -158,7 +158,7 @@ if ($T=='all'){
          $MetaKeywords = '<meta name="description" content="Compare '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.'). Which are faster?" />';
 
       } else {
-        $Title = $LangName.' benchmarks';
+        $Title = $LangName.' measurements';
         $TemplateName = 'language.tpl.php';
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
 
