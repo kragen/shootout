@@ -115,7 +115,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
-         $MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs on '.PLATFORM_NAME.', and how your favorite language compares." />';
+         $MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs on '.PLATFORM_NAME.' &amp; how your favorite language compares." />';
 
       }  else {
         // Scorecard
@@ -190,7 +190,7 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-      $MetaKeywords = '<meta name="description" content="Performance measurements and source code in ~30 different programming languages to '.$Tests[$T][TEST_META].'. Measured on '.PLATFORM_NAME.'." />';
+      $MetaKeywords = '<meta name="description" content="Compare programs in ~30 languages that '.$Tests[$T][TEST_META].' ('.PLATFORM_NAME.')." />';
 
 
    } else {              // Program
