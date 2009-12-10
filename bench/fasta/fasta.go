@@ -11,7 +11,6 @@ package main
 
 import (
    "bufio";
-   "bytes";
    "flag";
    "os";
    "strings";
@@ -64,8 +63,8 @@ func AccumulateProbabilities(genelist []AminoAcid) {
 func RepeatFasta(s []byte, count int) {
    pos := 0;
    s2 := make([]byte, len(s) + WIDTH);
-   bytes.Copy(s2, s);
-   bytes.Copy(s2[len(s):len(s2)], s);
+   copy(s2, s);
+   copy(s2[len(s):], s);
    for count > 0 {
       line := min(WIDTH, count);
       out.Write(s2[pos:pos+line]);
