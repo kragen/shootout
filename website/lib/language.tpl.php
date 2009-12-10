@@ -25,42 +25,40 @@ $Family = $Row[LANG_FAMILY];
 </tr>
 
 <?
-foreach($Tests as $Row){
-   printf('<tr>'); echo "\n";
-   $Link = $Row[TEST_LINK];
-   $Name = $Row[TEST_NAME];
+foreach($Data as $row){
+   $test = $row[N_TEST];
+   $id = $row[N_ID];
+   $TestName = $Tests[$row[N_TEST]][TEST_NAME];
 
-   if (isset($Data[$Link])){
-      $v = $Data[$Link];
+   $BAR = '';
+   if (isset($prevTest)&&isset($prevId)){
+      if ($test != $prevTest || $id != $prevId){ $BAR = ' class="bar"'; }
+   } 
+   $prevTest = $test;
+   $prevId = $id;
 
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d">%s</a></td>', 
-         $Link, $SelectedLang, $v[N_ID], $Name);
+   printf('<tr><td %s><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s %s</a></td>',
+      $BAR,$row[N_TEST],$row[N_LANG],$id,$TestName,IdName($id),$TestName,IdName($id)); echo "\n";
 
-      if ($v[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($v[N_N]); }
-                
-      if ($v[N_EXCLUDE] >= 0){    
-         if ($Name=='startup'){ $kb = '&nbsp;'; } else { $kb = number_format($v[N_MEMORY]); }
+   if ($row[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($row[N_N]); }
 
-         printf('<td>%0.2f</td><td>%s</td><td>%s</td><td><span class="numN">%s</span></td>', 
-            $v[N_FULLCPU], $kb, $v[N_GZ], $n);
+   if ($row[N_EXCLUDE] >= 0){
+      if ($test=='startup'){ $kb = '&nbsp;'; } 
+      elseif ($row[N_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$row[N_MEMORY]); }
 
-      } else {
-         $message = StatusMessage($v[N_EXCLUDE]);
-         printf('<td><span class="message">%s</span></td><td></td><td>%s</td><td><span class="numN">%s</span></td>', $message, $v[N_GZ], $n);
-      }
+      printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%s</td><td %s><span class="numN">%s</span></td>',
+         $BAR,$row[N_FULLCPU], $BAR,$kb, $BAR,$row[N_GZ], $BAR,$n);
 
    } else {
-      printf('<td><a href="benchmark.php?test=%s&amp;lang=%s">%s</a></td>', 
-         $Link, $SelectedLang, $Name); echo "\n";
-      $message = 'No&nbsp;program';
-      printf('<td><span class="message">%s</span></td><td></td><td></td><td></td>', $message); 
+      $message = StatusMessage($row[N_EXCLUDE]);
+      printf('<td %s><span class="message">%s</span></td><td %s></td><td %s>%s</td><td %s><span class="numN">%s</span></td>', $BAR,$message, $BAR, $BAR,$row[N_GZ], $BAR,$n);
    }
    echo "</tr>\n";
 }
-?> 
+?>
 </table>
 
 
 <h3><a href="#about" name="about">&nbsp;<?=$LangName;?></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
 <p></p>
-<?=$About;?> 
+<?=$About;?>

@@ -307,78 +307,41 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
       $lang = $row[DATA_LANG];                                  
       if ($lang==$L1){  $rows[] = $row;}
    }
-   @fclose($f);         
-      
+   @fclose($f);
+
    // Filter again in memory
    $Data = array();   
    foreach($rows as $row){ 
       if (isset($Incl[$row[DATA_TEST]])){   
-         settype($row[DATA_ID],'integer');                              
+         settype($row[DATA_ID],'integer');
 
          $ex = ExcludeData($row,$Langs,$Excl);
          if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
             $Data[] = $row;                                                                      
-         } 
+         }
       }      
-   }            
+   }
    unset($rows);     
-  
-// SELECTION DEPENDS ON THIS SORT ORDER
-   usort($Data,'CompareTestValue2');         
-
-// TRANSFORM SELECTED DATA
 
    $lang = ""; $id = ""; $test = ""; $n = 0;
-   $NData = array(); 
-   unset($row);    
+   $NData = array();
 
-   $i=0; $j=0;
-   while ($i<sizeof($Data)){
-    
-      $n = $Data[$i][DATA_TESTVALUE];
-      $test = $Data[$i][DATA_TEST];                
-            
-      do {                                
-         if (isset($row)){
-            if ( ($Data[$j][DATA_TESTVALUE] > $row[DATA_TESTVALUE]) 
-               || (($Data[$j][DATA_TESTVALUE] == $row[DATA_TESTVALUE])
-                && ((ExcludeData($row,$Langs,$Excl)<=PROGRAM_TIMEOUT)
-                 || ((ExcludeData($Data[$j],$Langs,$Excl)>PROGRAM_TIMEOUT)
-                  && ($Data[$j][DATA_TIME]<$row[DATA_TIME])))) ){
-
-                  $row = $Data[$j];              
-            }         
-         }
-         else {         
-            $row = $Data[$j];                           
-         }        
-                    
-         $j++;                                 
-         $hasMore = $j<sizeof($Data);                                    
-         $isSameTest = $hasMore && ($test==$Data[$j][DATA_TEST]);         
-      } while ($isSameTest);
-                                                 
-      if (isset($row)){                                                    
-         $NData[$row[DATA_TEST]] = array(
-              $row[DATA_TEST]
-            , $row[DATA_LANG]
-            , $row[DATA_ID]
-            , $row[DATA_TESTVALUE]
-            , $Langs[$row[DATA_LANG]][LANG_FULL].IdName($row[DATA_ID])
-            , $Langs[$row[DATA_LANG]][LANG_HTML].IdName($row[DATA_ID])
-            , $row[DATA_TIME]
-            , $row[DATA_MEMORY]
-            , 0 //$row[DATA_GZ]
-            , $row[DATA_GZ]
-            , ExcludeData($row,$Langs,$Excl)
-            );
-      }    
-
-      while ($j<sizeof($Data) && $test==$Data[$j][DATA_TEST]){ $j++; }
-
-      unset($row);
-      $i = $j;               
+   foreach($Data as $row){
+      $NData[] = array(
+           $row[DATA_TEST]
+         , $row[DATA_LANG]
+         , $row[DATA_ID]
+         , $row[DATA_TESTVALUE]
+         , $Langs[$row[DATA_LANG]][LANG_FULL].IdName($row[DATA_ID])
+         , $Langs[$row[DATA_LANG]][LANG_HTML].IdName($row[DATA_ID])
+         , $row[DATA_TIME]
+         , $row[DATA_MEMORY]
+         , 0 //$row[DATA_GZ]
+         , $row[DATA_GZ]
+         , ExcludeData($row,$Langs,$Excl)
+         );
    }
+
    return $NData;
 }
 
