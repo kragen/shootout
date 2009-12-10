@@ -138,7 +138,6 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
       }
 
-~30 languages
 
    } else {           // Head to Head
 
