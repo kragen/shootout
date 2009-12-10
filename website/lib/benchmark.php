@@ -191,7 +191,7 @@ if ($T=='all'){
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-      $MetaKeywords = '<meta name="description" content="'.$TestName.' benchmark - '.$Tests[$T][TEST_TAG].'" />';
+      $MetaKeywords = '<meta name="description" content="'.$TestName.' benchmark - '.$Tests[$T][TEST_TAG].TEST_META.'" />';
 
 
    } else {              // Program
