@@ -312,37 +312,19 @@ function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
    // Filter again in memory
    $Data = array();   
    foreach($rows as $row){ 
-      if (isset($Incl[$row[DATA_TEST]])){   
+      if (isset($Incl[$row[DATA_TEST]])){
          settype($row[DATA_ID],'integer');
+         settype($row[DATA_FULLCPU],'double');
+         settype($row[DATA_ELAPSED],'double');
 
          $ex = ExcludeData($row,$Langs,$Excl);
          if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
             $Data[] = $row;                                                                      
          }
-      }      
+      }
    }
    unset($rows);     
-
-   $lang = ""; $id = ""; $test = ""; $n = 0;
-   $NData = array();
-
-   foreach($Data as $row){
-      $NData[] = array(
-           $row[DATA_TEST]
-         , $row[DATA_LANG]
-         , $row[DATA_ID]
-         , $row[DATA_TESTVALUE]
-         , $Langs[$row[DATA_LANG]][LANG_FULL].IdName($row[DATA_ID])
-         , $Langs[$row[DATA_LANG]][LANG_HTML].IdName($row[DATA_ID])
-         , $row[DATA_TIME]
-         , $row[DATA_MEMORY]
-         , 0 //$row[DATA_GZ]
-         , $row[DATA_GZ]
-         , ExcludeData($row,$Langs,$Excl)
-         );
-   }
-
-   return $NData;
+   return $Data;
 }
 
 ?>

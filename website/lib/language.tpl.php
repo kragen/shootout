@@ -17,43 +17,46 @@ $Family = $Row[LANG_FAMILY];
 <colgroup span="1" class="txt"></colgroup>
 <colgroup span="4" class="num"></colgroup>
 <tr>
-<th>Program Source Code</th>
-<th><a href="help.php#measurecpu">Time&nbsp;secs</a></th>
-<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Size B</a></th>
+<th>Program&nbsp;Source&nbsp;Code</th>
 <th><a href="help.php#nmeans">&nbsp;N&nbsp;</a></th>
+<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="help.php#gzbytes">Size&nbsp;B</a></th>
 </tr>
 
 <?
 foreach($Data as $row){
-   $test = $row[N_TEST];
-   $id = $row[N_ID];
-   $TestName = $Tests[$row[N_TEST]][TEST_NAME];
+   $test = $row[DATA_TEST];
+   $id = $row[DATA_ID];
+   $TestName = $Tests[$row[DATA_TEST]][TEST_NAME];
 
    $BAR = '';
    if (isset($prevTest)&&isset($prevId)){
       if ($test != $prevTest || $id != $prevId){ $BAR = ' class="bar"'; }
-   } 
+   }
    $prevTest = $test;
    $prevId = $id;
 
-   printf('<tr><td %s><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s %s</a></td>',
-      $BAR,$row[N_TEST],$row[N_LANG],$id,$TestName,IdName($id),$TestName,IdName($id)); echo "\n";
+   printf('<tr><td %s><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s&nbsp;%s</a></td>', $BAR,$test,$row[DATA_LANG],$id,$TestName,IdName($id),$TestName,IdName($id)); echo "\n";
 
-   if ($row[N_N]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($row[N_N]); }
+   if ($row[DATA_TESTVALUE]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($row[DATA_TESTVALUE]); }
 
-   if ($row[N_EXCLUDE] >= 0){
-      if ($test=='startup'){ $kb = '&nbsp;'; } 
-      elseif ($row[N_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$row[N_MEMORY]); }
-
-      printf('<td %s>%0.2f</td><td %s>%s</td><td %s>%s</td><td %s><span class="numN">%s</span></td>',
-         $BAR,$row[N_FULLCPU], $BAR,$kb, $BAR,$row[N_GZ], $BAR,$n);
-
+   if ($row[DATA_STATUS]<0){
+      $kb = '&nbsp;'; $fullcpu = '&nbsp;';$elapsed = '&nbsp;'; $load = '&nbsp;';
+      $fullcpu = StatusMessage($row[DATA_STATUS]);
    } else {
-      $message = StatusMessage($row[N_EXCLUDE]);
-      printf('<td %s><span class="message">%s</span></td><td %s></td><td %s>%s</td><td %s><span class="numN">%s</span></td>', $BAR,$message, $BAR, $BAR,$row[N_GZ], $BAR,$n);
+      if ($row[DATA_MEMORY]==0){
+         $kb = '?';
+      } else {
+         if ($TestName=='startup'){ $kb = '&nbsp;'; }
+         else { $kb = number_format((double)$row[DATA_MEMORY]); }
+      }
+      $fullcpu = number_format($row[DATA_FULLCPU],2);
+      $elapsed = ElapsedTime($row);
    }
-   echo "</tr>\n";
+
+   printf('<td %s><span class="numN">%s</span></td><td %s>%s</td><td %s>%s</td><td %s>%s</td><td %s>%s</td></tr>', $BAR,$n, $BAR,$fullcpu, $BAR,$elapsed, $BAR,$kb, $BAR,$row[DATA_GZ]);
 }
 ?>
 </table>
