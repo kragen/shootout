@@ -8,6 +8,7 @@
 <?
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
+$NoSpaceLangName = str_replace(' ','&nbsp;',$LangName);
 $LangTag = $Row[LANG_TAG];
 $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $LangLink = $Row[LANG_LINK];
@@ -117,13 +118,18 @@ foreach($sTests as $Row){
          $ELAPSED = ' class="sort"';
       }
 
+      $firstRow = True;
       foreach($measurements[$Link] as $Row){
          $k = $Row[DATA_LANG];
          $Name = $Langs[$k][LANG_FULL];
+         $NoSpaceName = str_replace(' ','&nbsp;',$Name);
          $id = $Row[DATA_ID];
+         
+         if ($firstRow){ $tag0 = '<strong>'; $tag1 = '</strong>'; $firstRow = False; }
+         else { $tag0 = ''; $tag1 = ''; }
 
-         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s</a></td>',
-               $Link,$k,$id,$Name,$TestName,$Langs[$k][LANG_HTML]);
+         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s%s%s</a></td>',
+               $Link,$k,$id,$Name,$TestName,$tag0,$NoSpaceName,$tag1);
 
          $fc = number_format($Row[DATA_FULLCPU],2);
          if ($Row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$Row[DATA_MEMORY]); }
@@ -143,7 +149,7 @@ foreach($sTests as $Row){
       printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s programs">%s</a></th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName);
 
       if (isset($data[$Link])){
-         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s</a><td colspan="2"><span class="message">%s</span></td><td colspan="3"></td></tr>', $Link,$SelectedLang,$data[$Link][N_ID],$Langs[$SelectedLang][LANG_FULL],$TestName,$Langs[$SelectedLang][LANG_HTML],StatusMessage($data[$Link][N_LINES]));
+         printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s"><strong>%s</strong></a><td colspan="2"><span class="message">%s</span></td><td colspan="3"></td></tr>', $Link,$SelectedLang,$data[$Link][N_ID],$Langs[$SelectedLang][LANG_FULL],$TestName,$NoSpaceLangName,StatusMessage($data[$Link][N_LINES]));
       } else {
          printf('<tr><td>&nbsp;</td><td colspan="2"><span class="message">&nbsp;&nbsp;%s</span></td><td colspan="3"></td></tr>', 'No&nbsp;program');
       }
