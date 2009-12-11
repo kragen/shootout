@@ -28,7 +28,17 @@
 
 <dt><a href="#several" name="several"><strong>How do I compare 3 or 4 or more language implementations?</strong></a></dt>
 <dd>
-<p>Compare the <a href="fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><strong>summary</strong> measurements for just those language implementations</a>.</p>
+<p>Compare the <a href="which-languages-are-fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><strong>summary</strong> measurements for just those language implementations</a>.</p>
+</dd>
+
+<dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
+<dd>
+<p><a href="benchmark.php?test=all&lang=gpp&lang2=gpp">Select "- all benchmarks -" and that language implementation in both the other drop-down menus!</a> Measurements for all the accepted programs for that programming language implementation will be shown row-after-row.</p>
+</dd>
+
+<dt><a href="#samebenchmark" name="samebenchmark"><strong>How can I find all the programs for a benchmark?</strong></a></dt>
+<dd>
+<p><a href="benchmark.php?test=spectralnorm&lang=all">Select that benchmark and "- all languages -" in the drop-down menus.</a> Measurements for all the accepted programs for that benchmark will be shown row-after-row.</p>
 </dd>
 
 
