@@ -161,9 +161,11 @@ if ($T=='all'){
         $TemplateName = 'language.tpl.php';
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
 
-        $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+        $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
+        $MetaKeywords = '<meta name="description" content="Performance measurements for all the '.$LangName.' programs implementing ~12 flawed benchmarks ('.PLATFORM_NAME.')." />';
+
       }
-      
+
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }

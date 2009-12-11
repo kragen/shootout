@@ -9,9 +9,15 @@ $Link = $Row[LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 ?>
 
-<p>For more information about a Timeout or Error click the program name and scroll-down to the "make, command line, and program output logs".</p>
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
-<h2><a href="#title" name="title">&nbsp;<?=$LangName;?> measurements</a></h2>
+
+<h2><a href="#title" name="title">&nbsp;<strong><?=$LangName;?> measurements</strong></a></h2>
+
+<p>This table shows 4 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a> and <a href="help.php#gzbytes">Code</a>.</p>
+
+<p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
+
+<p>This table shows all the accepted <?=$LangName;?> programs.</p>
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
@@ -22,7 +28,7 @@ $Family = $Row[LANG_FAMILY];
 <th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
 <th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
 <th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Size&nbsp;B</a></th>
+<th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
 </tr>
 
 <?
@@ -30,19 +36,22 @@ foreach($Data as $row){
    $test = $row[DATA_TEST];
    $id = $row[DATA_ID];
    $TestName = $Tests[$row[DATA_TEST]][TEST_NAME];
+   $status = $row[DATA_STATUS];
 
    $BAR = '';
-   if (isset($prevTest)&&isset($prevId)){
+   if (isset($prevTest) && isset($prevId)){
       if ($test != $prevTest || $id != $prevId){ $BAR = ' class="bar"'; }
+      elseif (isset($prevStatus) && $prevStatus<0) { continue; }
    }
    $prevTest = $test;
    $prevId = $id;
+   $prevStatus = $status;
 
    printf('<tr><td %s><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s&nbsp;%s</a></td>', $BAR,$test,$row[DATA_LANG],$id,$TestName,IdName($id),$TestName,IdName($id)); echo "\n";
 
    if ($row[DATA_TESTVALUE]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($row[DATA_TESTVALUE]); }
 
-   if ($row[DATA_STATUS]<0){
+   if ($status<0){
       $kb = '&nbsp;'; $fullcpu = '&nbsp;';$elapsed = '&nbsp;'; $load = '&nbsp;';
       $fullcpu = StatusMessage($row[DATA_STATUS]);
    } else {
@@ -62,6 +71,6 @@ foreach($Data as $row){
 </table>
 
 
-<h3><a href="#about" name="about">&nbsp;<?=$LangName;?></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
+<h2><a href="#about" name="about">&nbsp;<strong><?=$LangName;?></strong></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h2>
 <p></p>
 <?=$About;?>
