@@ -1,9 +1,10 @@
-<?php // website content changes at-most once an hour - say ten past the hour
-$m = floor(time()/60); $h = floor($m/60); $threedays = floor($h/72); $after_the_hour = $m - $h*60; $countdown = 10;
-if ($countdown <= $after_the_hour) { $countdown += 60; $h++; }
+<?php 
+$s = time(); $m = floor($s/60); $h = floor($m/60); $threedays = floor($h/72); 
+// REVISED - don't have all pages expire at the same time!
+// EXPIRE pages 8 hours after they are visited.
 header("Pragma: public");
-header("Cache-Control: maxage=".($countdown - $after_the_hour)*60);
-header("Expires: " . gmdate("D, d M Y H:i:s", $h*3600 + 600) . " GMT");
+header("Cache-Control: maxage=".(8*3600));
+header("Expires: " . gmdate("D, d M Y H:i:s", $s + (8*3600)) . " GMT");
 ?>
 <?php echo '<?xml version="1.0" encoding="utf-8"?>'; ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
