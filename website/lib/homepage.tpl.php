@@ -4,7 +4,7 @@
 // EXPIRE pages 8 hours after they are visited.
 $s = time();
 header("Pragma: public");
-header("Cache-Control: maxage=".(8*3600));
+header("Cache-Control: maxage=".(8*3600).",public");
 header("Expires: " . gmdate("D, d M Y H:i:s", $s + (8*3600)) . " GMT");
 ?>
 <?php echo '<?xml version="1.0" encoding="utf-8"?>'; ?>
@@ -31,7 +31,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (8*3600)) . " GMT");
 
 <p class="img">
 <a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
-   <img src="<?=IMAGE_PATH;?>open_source_button.png" alt="Revised BSD license" height="31" width="88" /></a>
+   <img src="<?=IMAGE_PATH;?>open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" /></a>
 </p>
 </div>
 </body>

@@ -164,7 +164,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <dt><a href="#fresh" name="fresh">Freshness!</a></dt>
 
 <dd>
-<p><img src="<?=IMAGE_PATH;?>fresh.png"
+<p><img src="<?=IMAGE_PATH;?>fresh_png_11dec2009.php"
    alt=""
    title=""
    width="400" height="225"

@@ -3,7 +3,7 @@ $s = time(); $m = floor($s/60); $h = floor($m/60); $threedays = floor($h/72);
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 8 hours after they are visited.
 header("Pragma: public");
-header("Cache-Control: maxage=".(8*3600));
+header("Cache-Control: maxage=".(8*3600).",public");
 header("Expires: " . gmdate("D, d M Y H:i:s", $s + (8*3600)) . " GMT");
 ?>
 <?php echo '<?xml version="1.0" encoding="utf-8"?>'; ?>
@@ -228,7 +228,7 @@ foreach($Langs as $a){
 
 <p class="imgfooter">
 <a href="http://shootout.alioth.debian.org/u64/miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
-   <img src="http://shootout.alioth.debian.org/open_source_button.png" alt="Revised BSD license" height="31" width="88" />
+   <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
 
