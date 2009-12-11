@@ -4,9 +4,6 @@
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
-$LangName2 = $Langs[$SelectedLang2][LANG_FULL];
-$Link = $Row[LANG_LINK];
-$Family = $Row[LANG_FAMILY];
 ?>
 
 <? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
@@ -17,7 +14,7 @@ $Family = $Row[LANG_FAMILY];
 
 <p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
 
-<p>This table shows all the accepted <?=$LangName;?> programs.</p>
+<p>This table shows <b>all the accepted <strong><?=$LangName;?></strong> programs</b>.</p>
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
@@ -47,7 +44,7 @@ foreach($Data as $row){
    $prevId = $id;
    $prevStatus = $status;
 
-   printf('<tr><td %s><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s&nbsp;%s</a></td>', $BAR,$test,$row[DATA_LANG],$id,$TestName,IdName($id),$TestName,IdName($id)); echo "\n";
+   printf('<tr><td %s><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s %s">%s&nbsp;%s</a></td>', $BAR,$test,$row[DATA_LANG],$id,$TestName,$LangName,IdName($id),$TestName,IdName($id)); echo "\n";
 
    if ($row[DATA_TESTVALUE]==0){ $n = '?'; } else { $n = '&nbsp;'.number_format($row[DATA_TESTVALUE]); }
 
