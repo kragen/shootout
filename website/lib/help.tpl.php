@@ -10,25 +10,25 @@
 <p>A game begun years ago. A game with many players. A game with many winners.</p>
 </dd>
 
-<dt><a href="#win" name="win"><strong>How do I win?</strong></a></dt>
+<dt><a href="#win" name="win"><b>How do I win?</b></a></dt>
 <dd>
 <p>Learn something - look at several benchmarks and compare the program source code for a language you don't know with a language you do know, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>. Write programs that improve the showing of your chosen language. Write the best program in your chosen language. </p>
 </dd>
 
-<dt><a href="#scored" name="scored"><strong>How is the game scored?</strong></a></dt>
+<dt><a href="#scored" name="scored"><b>How is the game scored?</b></a></dt>
 <dd>
 <p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;Time-used</a>, <a href="#memory">&darr;&nbsp;Memory-used</a> and <a href="#gzbytes">&darr;&nbsp;Code-used</a>.</p>
 </dd>
 
-<dt><a href="#oneone" name="oneone"><strong>How do I compare 2 language implementations?</strong></a></dt>
+<dt><a href="#oneone" name="oneone"><b>How do I compare 2 language implementations?</b></a></dt>
 <dd>
-<p>Compare them directly <a href="benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><strong>one-against-another</strong> for all the benchmarks</a>.</p>
+<p>Compare them directly <a href="benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><b>one-against-another</b> for all the benchmarks</a>.</p>
 </dd>
 
 
-<dt><a href="#several" name="several"><strong>How do I compare 3 or 4 or more language implementations?</strong></a></dt>
+<dt><a href="#several" name="several"><b>How do I compare 3 or 4 or more language implementations?</b></a></dt>
 <dd>
-<p>Compare the <a href="which-languages-are-fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><strong>summary</strong> measurements for just those language implementations</a>.</p>
+<p>Compare the <a href="which-languages-are-fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><b>summary</b> measurements for just those language implementations</a>.</p>
 </dd>
 
 <dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
@@ -42,23 +42,23 @@
 </dd>
 
 
-<dt><a href="#playing" name="playing"><strong>Who's playing?</strong></a></dt>
+<dt><a href="#playing" name="playing"><b>Who's playing?</b></a></dt>
 <dd>
 <p>March 1 - August 31, 2009</p>
 <p>1,022,612 Unique Page Views; 150,802 Absolute Unique Visitors; 166 programs contributed.</p>
 </dd>
 
-<dt><a href="#winning" name="winning"><strong>Who's winning?</strong></a></dt>
+<dt><a href="#winning" name="winning"><b>Who's winning?</b></a></dt>
 <dd>
 <p>It varies from benchmark to benchmark. It varies from week to week. It depends which language implementations are compared. It depends which measures are compared.</p>
 </dd>
 
-<dt><a href="#end" name="end"><strong>When does the game end?</strong></a></dt>
+<dt><a href="#end" name="end"><b>When does the game end?</b></a></dt>
 <dd>
 <p>When the facts exceed our curiousity.</p>
 </dd>
 
-<dt><a href="#play" name="play"><strong>How do I play?</strong></a></dt>
+<dt><a href="#play" name="play"><b>How do I play?</b></a></dt>
 <dd>
 <p>Look at what we show for Ubuntu&#8482; Intel&#174; Q6600&#174; quad-core. Choose one of those programming languages. Choose one of those benchmarks. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Game Rules">the benchmarks game rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
@@ -72,7 +72,7 @@
 <dd>
 <dl>
 
-<dt><a href="#current" name="current"><strong>Up-to-date measurements</strong></a></dt>
+<dt><a href="#current" name="current"><b>Up-to-date measurements</b></a></dt>
 
 <dd>
 <p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages. Click one of these color-code links to see measurements for a particular OS/machine - </p>
@@ -132,7 +132,7 @@ href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 </dd>
 
 <dd>
-<p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <strong>the same</strong> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine. <em>Caveat lector!</em> Check the source code!</p>
+<p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <b>the same</b> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine. <em>Caveat lector!</em> Check the source code!</p>
 </dd>
 
 
@@ -180,14 +180,14 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <dd>
 <dl>
 
-<dt><a href="#fable" name="fable">What does <strong>"not fair"</strong> mean? (A fable)</a></dt>
+<dt><a href="#fable" name="fable">What does <b>"not fair"</b> mean? (A fable)</a></dt>
 <dd>
 <p>They raced up, and down, and around and around and around, and forwards and backwards and sideways and upside-down.</p>
-<p>Cheetah's friends said <strong>"it's not fair"</strong> - everyone knows Cheetah is the fastest creature but the races are too long and Cheetah gets tired!</p>
-<p>Falcon's friends said <strong>"it's not fair"</strong> - everyone knows Falcon is the fastest creature but Falcon doesn't walk very well, he soars across the sky!</p>
-<p>Horse's friends said <strong>"it's not fair"</strong> - everyone knows Horse is the fastest creature but this is only a yearling, you must stop the races until a stallion takes part!</p>
-<p>Man's friends said <strong>"it's not fair"</strong> - everyone knows that in the "real world" Man would use a motorbike, you must wait until Man has fueled and warmed up the engine!</p>
-<p>Snail's friends said <strong>"it's not fair"</strong> - everyone knows that a creature should leave a slime trail, all those other creatures are cheating!</p>
+<p>Cheetah's friends said <b>"it's not fair"</b> - everyone knows Cheetah is the fastest creature but the races are too long and Cheetah gets tired!</p>
+<p>Falcon's friends said <b>"it's not fair"</b> - everyone knows Falcon is the fastest creature but Falcon doesn't walk very well, he soars across the sky!</p>
+<p>Horse's friends said <b>"it's not fair"</b> - everyone knows Horse is the fastest creature but this is only a yearling, you must stop the races until a stallion takes part!</p>
+<p>Man's friends said <b>"it's not fair"</b> - everyone knows that in the "real world" Man would use a motorbike, you must wait until Man has fueled and warmed up the engine!</p>
+<p>Snail's friends said <b>"it's not fair"</b> - everyone knows that a creature should leave a slime trail, all those other creatures are cheating!</p>
 <p>Dalmatian's tail was banging on the ground. Dalmatian panted and between breaths said "Look at that beautiful mountain, let's race to the top!" </p>
 </dd>
 
@@ -204,7 +204,7 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>
-<dd><p>Interesting Alternative Program means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but <strong>we simply couldn't resist</strong> showing the program.</p>
+<dd><p>Interesting Alternative Program means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but <b>we simply couldn't resist</b> showing the program.</p>
 </dd>
 
 <dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
@@ -240,8 +240,8 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <dd>
 <p>Each program was run as a child-process of a Python script using <a href="http://docs.python.org/library/subprocess.html#popen-objects">Popen</a>.</p>
 <ul>
-<li><strong>CPU&nbsp;secs</strong>: The script child-process usr+sys rusage time was taken using <a href="http://docs.python.org/library/os.html?highlight=os.wait3#os.wait3">os.wait3</a><br /></li>
-<li><strong>Elapsed&nbsp;secs</strong>: The time was taken before forking the child-process and after the child-process exits, using <a href="http://docs.python.org/library/time.html?highlight=time.time#time.time">time.time()</a></li>
+<li><b>CPU&nbsp;secs</b>: The script child-process usr+sys rusage time was taken using <a href="http://docs.python.org/library/os.html?highlight=os.wait3#os.wait3">os.wait3</a><br /></li>
+<li><b>Elapsed&nbsp;secs</b>: The time was taken before forking the child-process and after the child-process exits, using <a href="http://docs.python.org/library/time.html?highlight=time.time#time.time">time.time()</a></li>
 </ul>
 <p><strong>Time measurements include program startup time.</strong></p>
 </dd>
@@ -254,11 +254,11 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 <dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression. The Code-used measurement is the size in bytes of that GZip compressed source-code file.</p>
 </dd>
 
-<dt><a href="#cpuload" name="cpuload">How did you measure <strong>~ CPU Load?</strong></a></dt>
+<dt><a href="#cpuload" name="cpuload">How did you measure <b>~ CPU Load?</b></a></dt>
 <dd><p>The GTop cpu idle and GTop cpu total was taken before forking the child-process and after the child-process exits, The percentages represent the proportion of cpu not-idle to cpu total for each core.</p>
 </dd>
 
-<dt><a href="#dynamic" name="dynamic">What about <strong>Java</strong>?</a></dt>
+<dt><a href="#dynamic" name="dynamic">What about <b>Java</b>?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
 <p>The usual startup measurements and the "Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
 
@@ -374,13 +374,13 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 
 <p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
 
-<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><strong>on-stack-replacement</strong></a>. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><b>on-stack-replacement</b></a>. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
 <p>To highlight that mismatch, "Java 6 steady state" approximations are shown in the measurement tables alongside the usual startup measurements.</p>
 
 </dd>
 
-<dt><a href="#copts" name="copts">What <strong>compiler options</strong> did you set?</a></dt>
+<dt><a href="#copts" name="copts">What <b>compiler options</b> did you set?</a></dt>
 <dd><p>Without any optimization option the GCC compiler goal is to reduce compilation cost and make debugging reasonable. Typically we might set <tt>-O3 -fomit-frame-pointer -march=native</tt>. For some benchmarks <tt>-mfpmath=sse -msse2</tt> makes a noticeable difference (note <a href="http://java.sun.com/j2se/1.4.2/1.4.2_whitepaper.html#7">J2SE use of SSE instruction sets</a>).</p>
 </dd>
 
@@ -392,9 +392,9 @@ href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;<
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <strong>Ubuntu&#8482; 9.04 Linux</strong> Kernel 2.6.28-17-generic</p>
+<dd><p>We use <b>Ubuntu&#8482; 9.04 Linux</b> Kernel 2.6.28-17-generic</p>
 
-<p>The out-of-date measurements used <strong>Debian Linux</strong> 'unstable', Kernel 2.6.18-3-k7 and <strong>Gentoo Linux</strong> gentoo-sources-2.6.20-r6</p>
+<p>The out-of-date measurements used <b>Debian Linux</b> 'unstable', Kernel 2.6.18-3-k7 and <b>Gentoo Linux</b> gentoo-sources-2.6.20-r6</p>
 </dd>
 
 
@@ -447,14 +447,14 @@ The system is going down for system halt NOW!
 <dl>
 
 
-<dt><a href="#aliothid" name="aliothid">Create an <strong>Alioth ID</strong> and login</a></dt>
-<dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth ID</strong></a> and login.</p>
-<p>Ask questions or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><strong>discussion&nbsp;forums</strong></a>.</p>
+<dt><a href="#aliothid" name="aliothid">Create an <b>Alioth ID</b> and login</a></dt>
+<dd><p>We no longer accept anonymous comments - please <a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a> and login.</p>
+<p>Ask questions or discuss the benchmarks in the <a href="http://alioth.debian.org/forum/?group_id=30402" title="Find Help, Share Opinions"><b>discussion&nbsp;forums</b></a>.</p>
 </dd>
 
 <dt><a href="#report" name="report">Where can I report bugs&#8230; request features?</a></dt>
-<dd><p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><strong>Report a Bug</strong></a>.</p> 
-<p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><strong>Feature Request</strong></a>.</p>
+<dd><p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em> - <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><b>Report a Bug</b></a>.</p> 
+<p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><b>Feature Request</b></a>.</p>
 <p>We use <a href="http://www.andre-simon.de/">Andre Simon's highlight</a> to convert program source code to XHTML, please contribute better language definition files.</p>
 </dd>
 
@@ -462,7 +462,7 @@ The system is going down for system halt NOW!
 
 <dt>&nbsp;</dt>
 <dd><p>Change the things you don't like - <em>convince us</em> that the change is a worthwhile improvement and then <em>expect to do all the work</em>.</p>
-<p><strong>Be Nice!</strong> Maybe we'll reject the program. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
+<p><b>Be Nice!</b> Maybe we'll reject the program. Maybe we'll prefer our own opinions. Maybe we'll decide not to change something.</p>
 </dd>
 </dl>
 </dd>
@@ -474,24 +474,24 @@ The system is going down for system halt NOW!
 <dl>
 
 <dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
-<dd><p>We prefer <strong>plain vanilla programs</strong> - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable - so please format your code to fit in less than 80 columns (we don't measure lines-of-code!).</p>
+<dd><p>We prefer <b>plain vanilla programs</b> - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable - so please format your code to fit in less than 80 columns (we don't measure lines-of-code!).</p>
 <p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> section.</p>
 </dd>
 
 <dt><a href="#correct" name="correct">How much effort should I put into getting the program correct?</a></dt>
-<dd><p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <strong>correct results</strong> on your machine - <strong>diff</strong> the program output with the provided output file. (Don't make-unnecessary-work for the committers.)</p>
-<p>Leave it a couple of days, and then see if there are any <strong>minor improvements</strong> that you'd like to make, before you Contribute Programs to The Computer Language Benchmarks Game.</p> 
+<dd><p>Do design-iteration on your machine, or in a language newsgroup. Only Contribute Programs which give <b>correct results</b> on your machine - <b>diff</b> the program output with the provided output file. (Don't make-unnecessary-work for the committers.)</p>
+<p>Leave it a couple of days, and then see if there are any <b>minor improvements</b> that you'd like to make, before you Contribute Programs to The Computer Language Benchmarks Game.</p> 
 </dd>
 
 
 
 <dt><a href="#datainput" name="datainput">How should I implement data-input?</a></dt>
-<dd><p>Programs are measured across a range of input-values; programs are expected to either take a <strong>single command-line parameter</strong> or read text from <strong>stdin</strong>.</p> 
+<dd><p>Programs are measured across a range of input-values; programs are expected to either take a <b>single command-line parameter</b> or read text from <b>stdin</b>.</p> 
 <p>(Look at what the other programs do.)</p>
 </dd>
 
 <dt><a href="#dataoutput" name="dataoutput">How should I implement data-output?</a></dt>
-<dd><p>Programs should write to <strong>stdout</strong>. Program output is redirected to a log-file and diff'd with the expected output.</p>
+<dd><p>Programs should write to <b>stdout</b>. Program output is redirected to a log-file and diff'd with the expected output.</p>
 <p>(Look at what the other programs do.)</p>
 </dd>
 
@@ -509,10 +509,10 @@ The system is going down for system halt NOW!
 
 <dt><a href="#split" name="split">How should I implement multiple source code files?</a></dt>
 <dd>
-<p>We use a simple script to <strong>split a single source file</strong> into multiple target source files.</p>
+<p>We use a simple script to <b>split a single source file</b> into multiple target source files.</p>
 <p>One of the target source files <em>must</em> have the same filename as the original single source file, and is expected to be the 'main' program.</p>
 <p>For example, the <a href="http://shootout.alioth.debian.org/gp4/benchmark.php?test=nbody&amp;lang=se&amp;id=1">Eiffel <em>nbody.e</em> source file</a> will be split into 3 target source files - <em>nbody.e, body.e, nbody_system.e</em> - 
-each new target source file will start from the <strong>comment line</strong> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
+each new target source file will start from the <b>comment line</b> which included the SPLITFILE=<em>target-filename</em> directive and run to the line preceding the next
  SPLITFILE=<em>target-filename</em> directive or end-of-file.</p>
 <p>So, the new target source file <em>body.e</em> will start with the line</p>
 <tt>-- SPLITFILE=body.e</tt>
@@ -524,7 +524,7 @@ each new target source file will start from the <strong>comment line</strong> wh
 <dd><p>Don't manually unroll loops!</p></dd>
 
 <dt><a href="#promo" name="promo">How should I advertise my company, services, website&#8230;?</a></dt>
-<dd><p><strong>We'll remove any promos</strong> that you add as comment text, so please don't waste our time.</p> 
+<dd><p><b>We'll remove any promos</b> that you add as comment text, so please don't waste our time.</p> 
 </dd>
 </dl>
 </dd>
@@ -538,26 +538,26 @@ each new target source file will start from the <strong>comment line</strong> wh
 <p>Attach the full source-code file of a tested program. Please don't paste source-code into the description field. Please don't contribute patch-files.</p>
 <p>Before contributing programs</p>
 <ul>
-<li>read and accept the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><strong>Revised&nbsp;BSD&nbsp;license</strong></a> - all contributed programs are published under this revised BSD license.</li>
-<li><a href="http://alioth.debian.org/account/register.php"><strong>create an Alioth ID</strong></a> and login.</li>
+<li>read and accept the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><b>Revised&nbsp;BSD&nbsp;license</b></a> - all contributed programs are published under this revised BSD license.</li>
+<li><a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a> and login.</li>
 </ul>
 
-<p>Follow these instructions <strong>step-by-step</strong></p>
+<p>Follow these instructions <b>step-by-step</b></p>
 <ol>
-<li>Start from the bottom. <strong>Attach</strong> the program source-code file - do this first because it's easy to forget.</li>
-<li>Say in the <strong>Description</strong> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
-<li>Each <strong>Summary</strong> text <em><strong>must</strong></em> be unique! Follow this convention:<br />  
+<li>Start from the bottom. <b>Attach</b> the program source-code file - do this first because it's easy to forget.</li>
+<li>Say in the <b>Description</b> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
+<li>Each <b>Summary</b> text <em><b>must</b></em> be unique! Follow this convention:<br />  
 language, benchmark, your-name, date, (version)<br />
 <em>Ruby nsieve Glenn Parker 2005-03-28</em><br />
 </li>
-<li><strong>Category</strong>: select the language implementation</li>
-<li><strong>Group</strong>: select the benchmark</li>
+<li><b>Category</b>: select the language implementation</li>
+<li><b>Group</b>: select the benchmark</li>
 <li>click the Submit button</li>
 </ol>
 
-<p>Now <strong>start from the bottom</strong> of the
+<p>Now <b>start from the bottom</b> of the
    <a href="https://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"  title="Play the Benchmarks Game - Submit New">
-   <strong>"Play the Benchmarks Game" Submit-New</strong></a> form and work your way up.
+   <b>"Play the Benchmarks Game" Submit-New</b></a> form and work your way up.
 </p>
 </dd>
 
@@ -578,12 +578,12 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#previous" name="previous">Where can I see previous programs?</a></dt>
 <dd>
-<p>Periodically we go through and remove slower programs from the website (if there's a faster program for the same language implementation). <strong>We don't remove those programs from the "Play the Benchmarks Game" tracker.</strong></p>
-<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"><strong>Play the Benchmarks Game tracker items</strong></a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
+<p>Periodically we go through and remove slower programs from the website (if there's a faster program for the same language implementation). <b>We don't remove those programs from the "Play the Benchmarks Game" tracker.</b></p>
+<p>You can see previous programs by browsing though the <a href="http://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"><b>Play the Benchmarks Game tracker items</b></a> and looking at the attached source code files. Log In with your Alioth Id, you will be able to create and save a query to search for particular tracker items.</p>
 </dd>
 
 <dt><a href="#version" name="version">Where can I see which language version was used?</a></dt>
-<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="C GNU gcc : unchecked low-level programming"><strong>language measurements page</strong></a>.</p>
+<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&lang=gpp&lang2=java#about"><strong>language comparison</strong> page</a> and at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="C GNU gcc : unchecked low-level programming"><strong>language measurements</strong> page</a>.</p>
 </dd>
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
@@ -595,15 +595,15 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <ul>
 <li><a
-href="summarydata.php?d=data"><strong>summary data</strong> for largest N</a></li>
+href="summarydata.php?d=data"><b>summary data</b> for largest N</a></li>
 <li><a
-href="summarydata.php?d=ndata"><strong>full summary data</strong> - smaller and largest N</a></li>
+href="summarydata.php?d=ndata"><b>full summary data</b> - smaller and largest N</a></li>
 </ul>
 </dd>
 
 
 <dt><a href="#downsource" name="downsource">Where can I see more?</a></dt>
-<dd><p>The <strong>project is hosted</strong> by <a href="http://alioth.debian.org/projects/shootout"  title="The Computer Language Benchmarks Game project page on Alioth FusionForge at Debian.org">Alioth&nbsp; FusionForge</a>.</p>
+<dd><p>The <b>project is hosted</b> by <a href="http://alioth.debian.org/projects/shootout"  title="The Computer Language Benchmarks Game project page on Alioth FusionForge at Debian.org">Alioth&nbsp; FusionForge</a>.</p>
 <p>You can <a href="http://alioth.debian.org/scm/?group_id=30402"  title="Browse the GComputer Language Benchmarks Game CVS tree">browse the CVS tree</a>.</p>
 </dd>
 </dl>
@@ -617,30 +617,30 @@ href="summarydata.php?d=ndata"><strong>full summary data</strong> - smaller and 
 <dl>
 <dt><a href="#contest" name="contest">Why don't you accept every program that gives the correct result?</a></dt>
 <dd><p>We are trying to show the performance of various programming language implementations - so we ask that contributed programs not only give the
-correct result, but also <strong>use the same algorithm</strong> to calculate that result.</p>
+correct result, but also <b>use the same algorithm</b> to calculate that result.</p>
 <p>Back in the day, Doug Bagley used both <em>same way</em> (same algorithm) and <em>same thing</em> (same result) benchmarks - so in many cases the performance
  differences were simply better algorithms.</p>
 <p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
- we should think of <em>same thing</em> (same result) tests as <strong>contests</strong>.</p>
+ we should think of <em>same thing</em> (same result) tests as <b>contests</b>.</p>
 <p>At present, we show just one contest - <a href="benchmark.php?test=meteor&amp;lang=all">meteor-contest</a>.</p>
 </dd>
 
 <dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
 <dd><p>Is the language implementation</p>
 <ul>
-<li><strong>Used?</strong> There are way too many dead languages and unused new languages - see <a href="http://people.ku.edu/~nkinners/LangList/Extras/langlist.htm">The Language List</a> and <a href="http://www.levenez.com/lang/">Computer Languages History</a></li>
-<li><strong>Interesting?</strong> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs? (But look closely and you'll notice that we sometimes include languages just because <em>we find them interesting</em>.)</li>
+<li><b>Used?</b> There are way too many dead languages and unused new languages - see <a href="http://people.ku.edu/~nkinners/LangList/Extras/langlist.htm">The Language List</a> and <a href="http://www.levenez.com/lang/">Computer Languages History</a></li>
+<li><b>Interesting?</b> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs? (But look closely and you'll notice that we sometimes include languages just because <em>we find them interesting</em>.)</li>
 </ul>
 <p>If that wasn't discouraging enough: in too many cases we've been asked to include a language implementation, and been told that of course programs would be contributed, but once the language didn't seem to perform as-well-as hoped no more programs were contributed. We're interested in the whole range of performance - not just in the 5 programs which show a language implementation at it's best.</p>
 <p>We have no ambition to measure every Python implementation or every Haskell implementation or every C implementation - that's a chore for all you Python enthusiasts and Haskell enthusiasts and C enthusiasts, a chore which might be straightforward if you <a href="faq.php#measurementscripts">use our measurement scripts</a>.</p>
 <p>We are unable to publish measurements for many commercial language implementations simply because their license conditions forbid it.</p>
-<p>We will accept <strong>and reject</strong> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
+<p>We will accept <b>and reject</b> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
 </dd>
 
-<dt><a href="#measurementscripts" name="measurementscripts">Use our <strong>measurement scripts</strong> to make your own measurents!</a></dt>
-<dd><p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><strong>download bencher</strong></a></p>
+<dt><a href="#measurementscripts" name="measurementscripts">Use our <b>measurement scripts</b> to make your own measurents!</a></dt>
+<dd><p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><b>download bencher</b></a></p>
 
-<p><strong>As an alternative</strong>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
+<p><b>As an alternative</b>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 </dl>
 </dd>
