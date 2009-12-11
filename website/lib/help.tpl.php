@@ -33,12 +33,12 @@
 
 <dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
 <dd>
-<p><a href="benchmark.php?test=all&lang=gpp&lang2=gpp">Select "- all benchmarks -" and that language implementation in both the other drop-down menus!</a> Measurements for all the accepted programs for that programming language implementation will be shown row-after-row.</p>
+<p><a href="benchmark.php?test=all&lang=gpp&lang2=gpp">Select <b>- all benchmarks -</b> and that language implementation in both the other drop-down menus!</a> Measurements for all the accepted programs for that programming language implementation will be shown row-after-row.</p>
 </dd>
 
 <dt><a href="#samebenchmark" name="samebenchmark"><strong>How can I find all the programs for a benchmark?</strong></a></dt>
 <dd>
-<p><a href="benchmark.php?test=spectralnorm&lang=all">Select that benchmark and "- all languages -" in the drop-down menus.</a> Measurements for all the accepted programs for that benchmark will be shown row-after-row.</p>
+<p><a href="benchmark.php?test=spectralnorm&lang=all">Select that benchmark and <b>- all languages -</b> in the drop-down menus.</a> Measurements for all the accepted programs for that benchmark will be shown row-after-row.</p>
 </dd>
 
 
